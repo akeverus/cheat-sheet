@@ -41,20 +41,21 @@ updated: "2026-05-15"
 ```kotlin
 // build.gradle.kts
 plugins {
-    kotlin("jvm") version "2.0.0"
-    kotlin("plugin.spring") version "2.0.0"       // open Spring-бинов
-    kotlin("plugin.jpa") version "2.0.0"           // no-arg конструктор для @Entity
-    kotlin("plugin.allopen") version "2.0.0"       // кастомные открытия
-    id("org.springframework.boot") version "3.2.0"
-    id("io.spring.dependency-management") version "1.1.4"
+    val kotlinVersion = "2.2.0"                          // версии здесь — пример,
+    kotlin("jvm") version kotlinVersion                  // ветку сверяйте с актуальной
+    kotlin("plugin.spring") version kotlinVersion        // open Spring-бинов
+    kotlin("plugin.jpa") version kotlinVersion           // no-arg конструктор для @Entity
+    kotlin("plugin.allopen") version kotlinVersion       // кастомные открытия
+    id("org.springframework.boot") version "3.5.0"
+    id("io.spring.dependency-management") version "1.1.7"
 }
 ```
 
-**Суть:** Spring и Hibernate генерируют прокси-подклассы во время выполнения (CGLIB), а для `@Entity` нужен no-arg конструктор. Но в Kotlin классы по умолчанию `final`, и no-arg конструктора у них нет. Плагины снимают эти ограничения автоматически — иначе пришлось бы вручную помечать каждый класс `open` и дописывать default-значения.
+**Суть:** Spring генерирует прокси-подклассы через CGLIB, Hibernate — через ByteBuddy (CGLIB там не используется с 5.3), а для `@Entity` нужен ещё и no-arg конструктор. Но в Kotlin классы по умолчанию `final`, и no-arg конструктора у них нет. Плагины снимают эти ограничения автоматически — иначе пришлось бы вручную помечать каждый класс `open` и дописывать default-значения.
 
 Что делает каждый плагин:
-- **`kotlin-spring`** — делает `open` все классы со Spring-аннотациями (`@Service`, `@Configuration`, `@Transactional` и т.п.). Без него CGLIB не может создать прокси для AOP, и Spring падает на старте с ошибкой `method is final and cannot be proxied`.
-- **`kotlin-jpa`** — генерирует синтетический no-arg конструктор для классов с `@Entity`, `@MappedSuperclass`, `@Embeddable`. Без него JPA не может инстанцировать сущность через рефлексию.
+- **`kotlin-spring`** — делает `open` все классы со Spring-аннотациями (`@Service`, `@Configuration`, `@Transactional` и т.п.). Без него final-класс нельзя проксировать подклассом: `@Configuration` роняет старт сообщением «@Configuration class ... may not be final», обычный бин — `AopConfigException: Could not generate CGLIB subclass`. Final-методы в нефинальном классе CGLIB не роняют сборку, а молча пропускает с WARN — advice на них просто не срабатывает.
+- **`kotlin-jpa`** — генерирует синтетический no-arg конструктор для классов с `@Entity`, `@MappedSuperclass`, `@Embeddable`. Без него сущность придётся готовить вручную: либо задать значения по умолчанию всем параметрам конструктора, либо дописать пустой вторичный конструктор — иначе JPA не создаст экземпляр через рефлексию.
 - **`kotlin-allopen`** — обобщение: делает классы `open` по любым аннотациям, которые вы перечислите сами. По сути `kotlin-spring` — это `allopen`, заранее настроенный на Spring-аннотации.
 
 ```kotlin
@@ -110,14 +111,14 @@ data class Order(
 Что именно ломается:
 1. **`equals`/`hashCode` по всем полям.** JPA считает две сущности одной и той же, если совпадает их ID. Но `data class` сравнивает все поля — поэтому одна и та же строка БД до и после изменения `total` будет «не равна сама себе». А раз `hashCode` тоже зависит от изменяемых полей, сущность ломается внутри `HashSet`/`HashMap` (например, в `@OneToMany`-коллекции): объект кладут с одним хэшем, а после загрузки полей он меняется.
 2. **`copy()` создаёт оторванный от БД объект.** Копия выглядит как сущность, но Hibernate её не отслеживает (она не в persistence context) — изменения такой копии молча не сохранятся.
-3. **`final`-поля мешают прокси и ленивой загрузке.** Hibernate подменяет сущность прокси-подклассом и инициализирует `@ManyToOne`/lazy-поля по требованию; на `final`-полях это не работает.
+3. **`final` мешает прокси и ленивой загрузке.** Hibernate подменяет сущность прокси-подклассом (ByteBuddy) и инициализирует `@ManyToOne`/lazy-поля по требованию. Kotlin-класс и его геттеры `final` по умолчанию, поэтому подкласс не построить — класс нужно открывать плагином `allopen`, настроенным на `jakarta.persistence.Entity`.
 
-**Решение:** обычный `class` с `var`-полями и ручным `equals`/`hashCode` по ID:
+**Решение:** обычный `class` с `var`-полями и ручными `equals`/`hashCode`. Класс открывает плагин `allopen` (настроенный на `jakarta.persistence.Entity`), no-arg конструктор даёт `kotlin-jpa` — без них этот листинг Hibernate не запустит:
 
 ```kotlin
 @Entity
 class Order(
-    @Id @GeneratedValue val id: Long = 0,
+    @Id @GeneratedValue var id: Long = 0,
     var customerId: String,
     var total: BigDecimal,
     @OneToMany(cascade = [CascadeType.ALL])
@@ -126,7 +127,9 @@ class Order(
     override fun equals(other: Any?): Boolean =
         this === other || (other is Order && id != 0L && id == other.id)
 
-    override fun hashCode(): Int = id.hashCode()
+    // хэш не должен зависеть от id: у новой сущности он 0, а после save меняется,
+    // и объект теряется в HashSet, куда его положили до сохранения
+    override fun hashCode(): Int = javaClass.hashCode()
 
     override fun toString(): String = "Order(id=$id)"
 }
@@ -138,13 +141,13 @@ class Order(
 
 ```kotlin
 plugins {
-    kotlin("plugin.jpa") version "2.0.0"
+    kotlin("plugin.jpa") version "2.2.0"
 }
 ```
 
 Плагин на этапе компиляции синтезирует no-arg конструктор для классов с `@Entity`, `@MappedSuperclass`, `@Embeddable`. Этот конструктор не виден из обычного кода (его нельзя вызвать вручную) — он нужен только Hibernate, который зовёт его через рефлексию, а затем заполняет поля.
 
-Альтернатива без плагина — задать default-значение каждому параметру: тогда Kotlin сам сгенерирует синтетический no-arg конструктор. Минус — приходится придумывать «пустые» значения для всех полей, что засоряет модель.
+Альтернатива без плагина — задать default-значение каждому параметру: тогда Kotlin дополнительно сгенерирует обычный публичный конструктор без аргументов. В отличие от плагинного, его можно вызвать и руками — `User()`. Минус — приходится придумывать «пустые» значения для всех полей, что засоряет модель.
 
 ```kotlin
 // Без kotlin-jpa плагина: ручные default значения
@@ -196,6 +199,9 @@ class OrderService(private val repo: OrderRepository) {
 
     fun findAll(): Flow<Order> =
         repo.findAll().asFlow()
+
+    fun streamOrders(): Flow<Order> =
+        repo.findAllByOrderByCreatedAt().asFlow()
 }
 ```
 
@@ -203,7 +209,7 @@ class OrderService(private val repo: OrderRepository) {
 
 ## Q6. Что такое CoroutineCrudRepository?
 
-`CoroutineCrudRepository` — это корутинная версия `CrudRepository` из Spring Data для реактивных хранилищ. Её методы возвращают не `Mono`/`Flux`, а `suspend fun ... : T?` для одиночных результатов и `Flow<T>` для множественных. То есть с репозиторием работаешь идиоматичным Kotlin без реактивных типов в сигнатурах.
+`CoroutineCrudRepository` — это корутинная версия `CrudRepository` из Spring Data для реактивных хранилищ. Её методы возвращают не `Mono`/`Flux`, а обычные `suspend`-функции для одиночных результатов и `Flow<T>` для множественных. Nullable там, где результата может не быть (`findById`), а `save`, `count`, `existsById` возвращают non-null. То есть с репозиторием работаешь идиоматичным Kotlin без реактивных типов в сигнатурах.
 
 ```kotlin
 // Spring Data расширение для корутин
@@ -223,7 +229,7 @@ interface OrderRepository : CoroutineCrudRepository<Order, Long> {
 }
 ```
 
-**Где работает:** R2DBC, MongoDB Reactive, Redis Reactive — то есть только поверх реактивных драйверов. Для классического блокирующего JDBC/JPA эта абстракция не подходит (там обычный `CrudRepository`). Под капотом запросы выполняет реактивный движок, а мост `kotlinx-coroutines-reactor` превращает его `Mono`/`Flux` в `suspend`/`Flow`.
+**Где работает:** R2DBC, MongoDB Reactive, Cassandra Reactive — то есть в модулях Spring Data с реактивными репозиториями. У Spring Data Redis реактивных репозиториев нет: там только `ReactiveRedisTemplate`. Для классического блокирующего JDBC/JPA эта абстракция не подходит (там обычный `CrudRepository`). Под капотом запросы выполняет реактивный движок, а мост `kotlinx-coroutines-reactor` превращает его `Mono`/`Flux` в `suspend`/`Flow`.
 
 ## Q7. Как тестировать Kotlin Spring приложения?
 
@@ -245,7 +251,7 @@ class OrderServiceTest @Autowired constructor(
         val order = service.create(CreateOrderRequest("customer-1", BigDecimal.TEN))
 
         assertThat(order.id).isNotZero()
-        assertThat(repository.findById(order.id)).isPresent
+        assertThat(repository.findById(order.id)).isPresent()
     }
 }
 ```
@@ -274,7 +280,7 @@ class OrderControllerTest {
 @Test
 fun `should process order asynchronously`() = runTest {
     val result = service.processAsync(order)  // suspend функция
-    assertThat(result).isNotNull
+    assertThat(result).isNotNull()
 }
 ```
 
@@ -299,18 +305,20 @@ class UserService(private val repo: UserRepository) {
 }
 ```
 
-**На границе с Java** Kotlin читает аннотации nullability и переносит их в типы. Если аннотаций нет — тип становится *platform type* (`User!`): компилятор не знает, может ли значение быть null, и снимает все проверки. Это самое опасное место: присвоение platform type в non-null проходит компиляцию, но падает NPE в рантайме, если Java вернула null. Spring API частично размечен (`@Nullable`/`@NonNull`), но не везде, поэтому platform types стоит явно сужать до `User?` и обрабатывать.
+**На границе с Java** Kotlin читает аннотации nullability и переносит их в типы. Если аннотаций нет — тип становится *platform type* (`User!`): компилятор не знает, может ли значение быть null, и не требует обработки на этапе компиляции. Проверка при этом не исчезает, а переезжает в рантайм: при присваивании в non-null компилятор вставляет `Intrinsics.checkNotNullExpressionValue`, и она бросает NPE ровно в точке присваивания, если Java вернула null. Spring API частично размечен (`@Nullable`/`@NonNull`), но не везде, поэтому platform types стоит явно сужать до `User?` и обрабатывать.
 
-```kotlin
+```java
 // @NotNull / @Nullable в Java → автоматические non-null / nullable в Kotlin
 public interface JavaService {
     @Nullable User findUser(String id);   // → Kotlin видит как User?
     @NotNull User getUser(String id);     // → Kotlin видит как User
-    User unknown(String id);               // → Kotlin видит как User! (platform type)
+    User unknown(String id);              // → Kotlin видит как User! (platform type)
 }
+```
 
-// Platform types (User!) — опасны, компилятор не знает null-safety
-val user: User = javaService.unknown("1")  // может упасть NPE в runtime
+```kotlin
+// Platform type (User!) — компилятор не требует проверки, но вставляет её в рантайм
+val user: User = javaService.unknown("1")  // NPE прямо здесь, если Java вернула null
 ```
 
 ## Q9. Как использовать Kotlin DSL для конфигурации Spring?
@@ -322,18 +330,21 @@ Spring предоставляет типобезопасные Kotlin-DSL для
 
 ```kotlin
 // functional bean DSL (Spring 5+)
-@Configuration
-class AppConfig {
+// beans { } возвращает ApplicationContextInitializer, поэтому его подключают
+// до refresh контекста, а не объявляют как @Bean
+val appBeans = beans {
+    bean<OrderService>()
+    bean { OrderController(ref()) }       // ref() — auto-wiring
+    bean<OrderRepository>()
 
-    @Bean
-    fun beans() = beans {
-        bean<OrderService>()
-        bean { OrderController(ref()) }       // ref() — auto-wiring
-        bean<OrderRepository>()
+    profile("dev") {
+        bean<InMemoryOrderRepository>(isPrimary = true)
+    }
+}
 
-        profile("dev") {
-            bean<InMemoryOrderRepository>(primary = true)
-        }
+fun main(args: Array<String>) {
+    runApplication<Application>(*args) {
+        addInitializers(appBeans)
     }
 }
 ```
@@ -343,13 +354,13 @@ class AppConfig {
 @Configuration
 class RouterConfig {
 
+    private val logger = LoggerFactory.getLogger(RouterConfig::class.java)
+
     @Bean
     fun routes(handler: OrderHandler) = coRouter {
         "/orders".nest {
             GET("", handler::getAll)
             GET("/{id}", handler::getById)
-            POST("", handler::create)
-            DELETE("/{id}", handler::delete)
         }
 
         filter { request, next ->
@@ -378,7 +389,7 @@ class OrderHandler(private val service: OrderService) {
 
 Контроллер на Kotlin почти не отличается от Java: те же `@RestController`, `@Valid`, `@RequestBody`, а DTO удобно описывать `data class`. Идиоматичные детали — тело метода через выражение (`fun ... = ...`) и обработка отсутствия через elvis (`?: throw ...`) вместо `if (x == null)`.
 
-Главная Kotlin-специфика — префикс `@field:` у валидационных аннотаций (см. примечание ниже).
+Главная Kotlin-специфика — явная цель (`@field:` или `@get:`) у валидационных аннотаций (см. примечание ниже).
 
 ```kotlin
 @RestController
@@ -410,7 +421,7 @@ data class CreateUserRequest(
 )
 ```
 
-**Важно про `@field:`.** Свойство `data class` порождает сразу несколько Java-элементов: параметр конструктора, поле и getter. Без указания цели Kotlin вешает аннотацию на параметр конструктора, а валидатор Bean Validation ищет её на поле — и проверка молча не срабатывает. Префикс `@field:` явно адресует аннотацию полю, поэтому для валидации на свойствах `data class` он обязателен.
+**Важно про `@field:`.** Свойство `data class` порождает сразу несколько Java-элементов: параметр конструктора, поле и getter. Без указания цели Kotlin вешает аннотацию на параметр конструктора, а валидатор Bean Validation читает ограничения с полей и геттеров — параметры конструктора он проверяет только при валидации самого вызова конструктора, поэтому проверка молча не срабатывает. Явная цель нужна обязательно, но целей две: `@field:` адресует аннотацию полю, `@get:` — геттеру, и обе работают.
 
 ## Q11. Как обрабатывать исключения в Kotlin Spring приложении?
 
@@ -458,7 +469,7 @@ fun ServerHttpRequest.authToken(): String? =
 
 // Использование
 @RestController
-class SecureController {
+class SecureController(private val userService: UserService) {
     @GetMapping("/me")
     fun me(request: ServerHttpRequest): Mono<User> {
         val token = request.authToken() ?: throw UnauthorizedException()
@@ -466,20 +477,22 @@ class SecureController {
     }
 }
 
-// Extension на Spring типах
+// Extension на типах из JDK и Reactor, с которыми Spring работает постоянно
+private val log = LoggerFactory.getLogger("extensions")
+
 fun <T> Optional<T>.toKotlinNullable(): T? = orElse(null)
 fun <T> Mono<T>.logOnError(tag: String): Mono<T> = doOnError { log.error("[$tag]", it) }
 ```
 
-**Итог:** extension functions держат адаптеры к Java-API Spring рядом с местом использования, не плодя классы-утилиты. Важно помнить: расширения резолвятся статически (по объявленному типу, без полиморфизма) и не имеют доступа к `private`-членам типа — это синтаксический сахар, а не настоящее добавление методов в класс.
+**Итог:** extension functions держат адаптеры к Java-API Spring рядом с местом использования, не плодя классы-утилиты. Важно помнить: расширения резолвятся статически (по объявленному типу, без полиморфизма) — это синтаксический сахар, а не настоящее добавление методов в класс. Доступа к `private`-членам у расширения, объявленного снаружи, нет; исключение — member extension, объявленный внутри самого класса или его companion object.
 
 ## Q13. Как интегрировать Kotlin с Spring Security?
 
 Spring Security даёт Kotlin-DSL для `SecurityFilterChain`: вместо цепочки `http.csrf().disable().authorizeHttpRequests()...` пишут вложенные блоки `http { csrf { disable() }; authorizeHttpRequests { ... } }`. Читается декларативнее, правила доступа группируются явно.
 
-Текущего пользователя достают двумя способами в зависимости от стека:
-- **MVC / синхронный** — внедрить `@AuthenticationPrincipal Jwt` (или `UserDetails`) прямо в параметр метода контроллера.
-- **Реактивный / корутины** — контекст безопасности лежит не в `ThreadLocal`, а в Reactor Context, поэтому его берут из `ReactiveSecurityContextHolder` и разворачивают через `awaitSingle()`.
+Текущего пользователя в обоих стеках проще всего внедрить параметром метода — `@AuthenticationPrincipal Jwt` (или `UserDetails`) работает и в MVC, и в WebFlux. Разница в том, откуда контекст берут вне контроллера:
+- **MVC / синхронный** — `SecurityContextHolder`, контекст лежит в `ThreadLocal`.
+- **Реактивный / корутины** — `ThreadLocal` не годится, контекст живёт в Reactor Context, поэтому его берут из `ReactiveSecurityContextHolder` и разворачивают через `awaitSingle()`.
 
 ```kotlin
 @Configuration
@@ -487,17 +500,19 @@ Spring Security даёт Kotlin-DSL для `SecurityFilterChain`: вместо �
 class SecurityConfig {
 
     @Bean
-    fun filterChain(http: HttpSecurity): SecurityFilterChain = http {
-        // Kotlin DSL для HttpSecurity
-        csrf { disable() }
-        authorizeHttpRequests {
-            authorize("/api/public/**", permitAll)
-            authorize("/api/admin/**", hasRole("ADMIN"))
-            authorize(anyRequest, authenticated)
+    fun filterChain(http: HttpSecurity): SecurityFilterChain {
+        http {                                  // Kotlin DSL для HttpSecurity: возвращает Unit,
+            csrf { disable() }                  // поэтому цепочку собираем и билдим отдельно
+            authorizeHttpRequests {
+                authorize("/api/public/**", permitAll)
+                authorize("/api/admin/**", hasRole("ADMIN"))
+                authorize(anyRequest, authenticated)
+            }
+            oauth2ResourceServer {
+                jwt { }
+            }
         }
-        oauth2ResourceServer {
-            jwt { }
-        }
+        return http.build()
     }
 }
 
@@ -508,7 +523,9 @@ fun me(@AuthenticationPrincipal jwt: Jwt): Map<String, Any> = mapOf(
     "roles" to (jwt.getClaimAsStringList("roles") ?: emptyList<String>())
 )
 
-// В coroutine контексте
+// Реактивное приложение — другая конфигурация: @EnableWebFluxSecurity и
+// fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain.
+// Внутри suspend-обработчика контекст достают так:
 @GetMapping("/me-reactive")
 suspend fun meReactive(): User {
     val auth = ReactiveSecurityContextHolder.getContext()
@@ -524,32 +541,40 @@ suspend fun meReactive(): User {
 
 1. **`data class` для `@Entity`** — см. Q3. Используйте обычный класс.
 
-2. **Забытый `kotlin-spring` plugin** — классы `final`, Spring не может создать proxy:
+2. **Забытый `kotlin-spring` plugin** — классы `final`, Spring не может создать подкласс-прокси:
 
 ```
-Error: @Transactional method 'X' is final and cannot be proxied
+AopConfigException: Could not generate CGLIB subclass of class com.example.OrderService:
+Common causes of this problem include using a final class
 ```
 
 3. **Поля без `@field:` в data class-валидациях** — аннотация попадает не на поле:
 
 ```kotlin
-// ПЛОХО — аннотация на конструкторе
+// ПЛОХО — аннотация уходит на параметр конструктора и валидатору бина не видна
 data class Req(@NotBlank val name: String)
 
-// ХОРОШО — аннотация на поле
+// ХОРОШО — цель задана явно: поле (или геттер через @get:)
 data class Req(@field:NotBlank val name: String)
 ```
 
-4. **Platform types (User!) из Java API** — не проверяются на null:
+4. **Platform types (`User!`) из Java API** — компилятор не требует проверки, и NPE прилетает в рантайме:
+
+```kotlin
+// getName() в неразмеченном Java-классе виден как String!
+val name: String = javaBean.getName()   // вернул null → NPE прямо на этой строке
+```
+
+5. **`Optional.get()` вместо безопасного разворачивания** — исключение вместо null-обработки:
 
 ```kotlin
 // repo.findById(id) из JpaRepository возвращает Optional<User>
 val user: User = repo.findById(1L).get()  // если не найдено → NoSuchElementException
 ```
 
-5. **Использование `lateinit` вместо конструктор-injection** — усложняет тестирование.
+6. **Использование `lateinit` вместо конструктор-injection** — усложняет тестирование.
 
-6. **`runBlocking` в реактивном контроллере** — блокирует event loop:
+7. **`runBlocking` в реактивном контроллере** — блокирует event loop:
 
 ```kotlin
 // ПЛОХО
@@ -575,13 +600,13 @@ suspend fun getOrders(): List<Order> = orderService.findAll()
 - **Smart casts** — после `if (x is T)` компилятор сам кастует, явных приведений меньше.
 
 **Минусы:**
-- **Зависимость от плагинов** — без `kotlin-spring`/`kotlin-jpa` Spring и Hibernate просто не стартуют.
+- **Зависимость от плагинов** — без `kotlin-spring` падают места, где нужен подкласс-прокси (`@Configuration` с `proxyBeanMethods = true`, class-based `@Transactional` и AOP), без `kotlin-jpa` Hibernate не создаст сущность. Приложение без прокси и без JPA стартует и так, но в типовом проекте эти плагины нужны сразу.
 - **Platform types** — компилятор не видит nullability неразмеченного Java-API, отсюда скрытые NPE.
 - **Скорость компиляции** — обычно медленнее Java (компилятор K2 это подтягивает).
 - **Меньше материалов** — большинство Spring-гайдов и Stack Overflow-ответов на Java.
 - **Шероховатости библиотек** — часть инструментов (например, отдельные возможности Mockito) требует Kotlin-обёрток.
 
-**Вывод:** для новых проектов, особенно на WebFlux + корутинах, Kotlin почти всегда выигрывает. Legacy на Java мигрируют постепенно — по модулям, пользуясь полной двусторонней совместимостью.
+**Вывод:** для новых проектов, особенно на WebFlux + корутинах, Kotlin почти всегда выигрывает. Legacy на Java мигрируют постепенно — по модулям, пользуясь взаимной совместимостью: Kotlin вызывает Java почти без ограничений, а вот обратный вызов требует `@JvmStatic`/`@JvmOverloads`/`@JvmName` и не покрывает suspend-функции и inline с reified.
 
 ## See also
 
