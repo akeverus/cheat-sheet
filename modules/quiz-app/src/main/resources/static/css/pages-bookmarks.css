@@ -72,11 +72,8 @@ html[data-design] .bookmarks-page .bookmark-list {
    разъезжает ряды по высоте. */
 html[data-design] .bookmarks-page .bookmark-list > li { margin-bottom: 0; }
 html[data-design] .bookmarks-page .bookmark-item {
-  display: flex;
-  gap: var(--space-4);
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: var(--space-4);
+  display: block;
+  padding: var(--space-3) var(--space-4);
   border: var(--rule-weight) solid var(--color-border-secondary);
   border-radius: var(--border-radius-md);
   background: var(--color-bg-secondary);
@@ -87,18 +84,84 @@ html[data-design] .bookmarks-page .bookmark-item {
      остальную коробку. */
   --control-surface: var(--color-bg-primary);
 }
+
+
+/* СТРОКА КОЛЛЕКЦИИ. Замер до перестройки (28 закладок: 12 с заметками, 16 без):
+   медиана карточки с заметкой 257px на 1512 и 364px на 390, максимум 499px, весь
+   список 3353/8318px — на телефоне помещалось полторы закладки на экран. Причина
+   не в количестве, а в том, что каждая строка печатала РЕДАКТОР заметки: textarea
+   плюс кнопка сохранения у карточек с заметкой и свёрнутое поле, раскрывавшееся
+   на :focus-within, у остальных. Теперь заметка показана прозой, а правка живёт
+   за нативным раскрытием. */
 html[data-design] .bookmarks-page .bookmark-main {
-  min-width: 0;
-  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  min-width: 0;
 }
-html[data-design] .bookmarks-page .bookmark-text {
+/* Ссылка — сам вопрос: кликают по тексту, а не по кнопке рядом с ним. */
+html[data-design] .bookmarks-page .bookmark-question {
   font-size: var(--font-size-sm);
-  color: var(--color-text-primary);
   line-height: 1.45;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
 }
+html[data-design] .bookmarks-page .bookmark-question:hover {
+  color: var(--color-accent-strong);
+  text-decoration: underline;
+}
+/* Заметка прозой, две строки. Полный текст — в раскрытии ниже, поэтому клампа
+   достаточно: он экономит высоту, ничего не пряча безвозвратно. */
+html[data-design] .bookmarks-page .bookmark-note-text {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  border-left: var(--rule-weight-strong) solid var(--color-border-secondary);
+  padding-left: var(--space-3);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+/* Подвал строки: раскрытие заметки и «Убрать» — оба тихие и мелкие, чтобы вес
+   строки нёс вопрос, а не её обслуживание. */
+html[data-design] .bookmarks-page .bookmark-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+html[data-design] .bookmarks-page .bookmark-note-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  padding: var(--space-1) 0;
+  list-style: none;
+}
+html[data-design] .bookmarks-page .bookmark-note-summary::-webkit-details-marker { display: none; }
+html[data-design] .bookmarks-page .bookmark-note-summary::before {
+  content: "";
+  flex: none;
+  width: 0.45em;
+  height: 0.45em;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+}
+html[data-design] .bookmarks-page .bookmark-note-disclosure[open] .bookmark-note-summary::before {
+  transform: rotate(45deg);
+}
+html[data-design] .bookmarks-page .bookmark-note-summary:hover { color: var(--color-text-primary); }
+html[data-design] .bookmarks-page .bookmark-note-disclosure { min-width: 0; }
+html[data-design] .bookmarks-page .bookmark-note-disclosure[open] {
+  flex: 1 1 100%;
+  margin-top: var(--space-2);
+}
+
 html[data-design] .bookmarks-page .bookmark-meta {
   display: flex;
   flex-wrap: wrap;
@@ -122,50 +185,12 @@ html[data-design] .bookmarks-page .bookmark-note-actions {
   gap: var(--space-3);
   margin-top: var(--space-2);
 }
-/* Карточки без заметки: свернуть форму заметки до компактного «плюс-поля»,
-   чтобы список закладок сканировался (главный сценарий), а не тонул в пустых
-   textarea. Раскрывается на :focus-within для написания — CSS-only, работает
-   без JS, a11y цела (таб в поле → раскрытие → кнопка). motion гейтит reset-layout. */
-html[data-design] .bookmarks-page .bookmark-item.no-note .bookmark-note-form textarea {
-  min-height: 0;
-  height: 2.75rem;               /* одна строка: перебивает rows="3" (rows = пол, не потолок) */
-  /* rows="3" держит intrinsic-контент ~3 строки (scrollHeight ~55px), а height 44px
-     его меньше → overflow-y:auto рисовал спурьёзный вертикальный скроллбар на ПУСТОМ
-     свёрнутом поле (визуальный глитч, ломал компактный «плюс-филд»). Свёрнутое поле —
-     одностро́чная превью-аффорданс, скроллить нечего → прячем overflow. На :focus-within
-     (раскрытие до 7.4rem) overflow возвращаем для ввода длинного текста. */
-  overflow-y: hidden;
-  transition: height var(--duration-fast) var(--easing-default);
-}
-/* Карточки С заметкой: auto-grow по контенту (bookmarks.js). Короткая заметка
-   («Повторить equals/hashCode») больше не резервирует ~118px как rows="3" — JS
-   ужимает к высоте текста, растит при вводе. Понижаем min-height, чтобы JS мог
-   ужать до одной строки; без JS rows="3" остаётся разумным дефолтом. */
-html[data-design] .bookmarks-page .bookmark-item.has-note .bookmark-note-form textarea {
-  min-height: 2.75rem;
-  /* Без transition на height: auto-grow измеряет контент через height:0 +
-     scrollHeight, а анимация height не даёт боксу синхронно схлопнуться →
-     scrollHeight застревает на старой высоте и сжатие ломается. Мгновенный
-     ресайз — стандарт для авто-растущих textarea. */
-}
-html[data-design] .bookmarks-page .bookmark-item.no-note .bookmark-note-form:focus-within textarea {
-  height: 7.4rem;                /* раскрытие под ~3 строки, как у карточек с заметкой */
-  overflow-y: auto;              /* раскрыто → длинный ввод скроллится (свёрнутое поле прячет overflow) */
-}
-html[data-design] .bookmarks-page .bookmark-item.no-note .bookmark-note-actions {
-  display: none;
-}
-html[data-design] .bookmarks-page .bookmark-item.no-note .bookmark-note-form:focus-within .bookmark-note-actions {
-  display: flex;
-}
-html[data-design] .bookmarks-page .bookmark-actions {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  align-items: stretch;
-  min-width: 7.5rem;
-}
+
+
+
+
+
+
 /* Форму растягивает `align-items: stretch` колонки, а кнопку внутри — нет:
    «Убрать» получалось у́же «Открыть», и правый край колонки действий рвался на
    каждой карточке. Ширину задаём кнопке, а не колонке. */
@@ -195,22 +220,10 @@ html[data-design] .bookmarks-page .bookmark-remove-btn {
     flex-direction: column;
     align-items: stretch;
   }
-  /* Действия строки — РЯДОМ, а не столбиком. Столбиком две кнопки стоили
-     каждой карточке 52 лишних пикселя, а карточек на телефоне 28: замер на
-     390×844 давал документ 11046px. Ширины хватает с запасом — на 360 это две
-     кнопки по 132px. Столбик тут был не решением, а наследством десктопной
-     колонки действий, которая на узком экране всё равно разворачивается. */
-  html[data-design] .bookmarks-page .bookmark-actions {
-    flex-direction: row;
-    gap: var(--space-3);
-  }
-  html[data-design] .bookmarks-page .bookmark-actions > * {
-    flex: 1 1 0;
-  }
+  
+  
   html[data-design] .bookmarks-page .bookmark-actions .btn,
-  html[data-design] .bookmarks-page .bookmark-actions button {
-    width: 100%;
-  }
+  
   /* Главное действие на всю строку: в заголовке списка оно единственное, и
      обрезанная по содержимому кнопка оставляла бы справа от себя полосу
      пустоты — то же, что §6 запрещает у полосы отбора. */

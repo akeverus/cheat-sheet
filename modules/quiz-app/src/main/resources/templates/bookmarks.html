@@ -154,45 +154,69 @@
         <li th:each="item : ${bookmarks}" class="bookmark-item"
             th:classappend="${item.note != null and !item.note.isBlank()} ? ' has-note' : ' no-note'"
             th:id="${'q-' + item.questionId}">
+            <!--/* СТРОКА КОЛЛЕКЦИИ, А НЕ РЕДАКТОР. Раньше каждая закладка печатала
+                 форму заметки развёрнутой: у карточки с заметкой это textarea с
+                 текстом плюс кнопка «Сохранить», у карточки без заметки — свёрнутое
+                 до одной строки поле, которое раскрывалось на :focus-within.
+                 Замер на живой коллекции (28 закладок: 12 с заметками, 16 без):
+                 медиана карточки с заметкой 257px на 1512 и 364px на 390, максимум
+                 499px; весь список — 3353px и 8318px, то есть на телефоне помещалось
+                 полторы закладки на экран.
+
+                 Коллекцию открывают, чтобы НАЙТИ сохранённое и открыть его, а не
+                 чтобы редактировать заметки: правка — второй по частоте сценарий и
+                 живёт теперь за раскрытием. Сама заметка при этом никуда не прячется —
+                 она показана прозой, потому что она и есть ценность закладки.
+                 Раскрытие нативное (<details>): работает без JS, доступно с
+                 клавиатуры, объявляется скринридером с состоянием — тот же приём,
+                 что несут каталог тем и аналитика. Вместе с ним снят и
+                 :focus-within-механизм раскрытия: две системы для одного действия
+                 держать нельзя. */-->
             <div class="bookmark-main">
-                <div class="bookmark-text" th:text="${item.questionPreview}">Текст вопроса</div>
+                <!--/* Ссылка — сам вопрос. Кнопка «Открыть» рядом с текстом была
+                     двадцать восьмой одинаковой кнопкой на странице и повторяла
+                     цель, которую несёт сам текст. */-->
+                <a class="bookmark-question" th:href="@{/(questionId=${item.questionId})}"
+                   th:text="${item.questionPreview}">Текст вопроса</a>
                 <div class="bookmark-meta muted">
                     <span th:text="${item.topicDisplayName}" th:title="${item.topic}">Тема</span>
                     <span aria-hidden="true">·</span>
                     <span class="bookmark-note-status"
                           th:text="${item.note != null and !item.note.isBlank()} ? 'есть заметка' : 'без заметки'">без заметки</span>
                 </div>
-                <form class="bookmark-note-form" method="post" th:action="@{/bookmarks/note}"
-                      th:attr="data-question-id=${item.questionId}">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                    <input type="hidden" name="questionId" th:value="${item.questionId}">
-                    <label class="field bookmark-note-field">
-                        <span class="field-label visually-hidden">Заметка</span>
-                        <textarea name="note" rows="3" maxlength="2000"
-                                  placeholder="Короткая заметка к вопросу…"
-                                  th:text="${item.note}">Заметка</textarea>
-                    </label>
-                    <div class="bookmark-note-actions">
-                        <button type="submit" class="btn secondary-btn">Сохранить заметку</button>
-                        <span class="bookmark-save-status muted tiny" aria-live="polite"></span>
-                    </div>
-                </form>
-            </div>
-            <div class="bookmark-actions">
-                <!--/* secondary, а не next-btn: акцентная заливка повторялась на КАЖДОЙ
-                     строке списка и обнуляла собственный акцент страницы — «Тренировать
-                     избранные» вверху тонул среди N одинаковых бирюзовых плашек.
-                     Заливка на странице теперь ровно одна, у главного действия. */-->
-                <a class="btn secondary-btn"
-                   th:href="@{/(questionId=${item.questionId})}"
-                   th:aria-label="${'Открыть вопрос: ' + item.questionPreview}">Открыть</a>
-                <form method="post" th:action="@{/bookmarks/remove}" class="bookmark-remove-form"
-                      th:attr="data-question-id=${item.questionId}">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                    <input type="hidden" name="questionId" th:value="${item.questionId}">
-                    <button type="submit" class="btn secondary-btn bookmark-remove-btn"
-                            th:aria-label="${'Убрать закладку: ' + item.questionPreview}">Убрать</button>
-                </form>
+                <!--/* Заметка прозой: её читают, а не правят. Клампится двумя
+                     строками — полный текст доступен в раскрытии ниже. */-->
+                <p class="bookmark-note-text" th:if="${item.note != null and !item.note.isBlank()}"
+                   th:text="${item.note}">Текст заметки</p>
+                <div class="bookmark-row-actions">
+                    <details class="bookmark-note-disclosure">
+                        <summary class="bookmark-note-summary"
+                                 th:text="${item.note != null and !item.note.isBlank()} ? 'Изменить заметку' : 'Добавить заметку'"
+                                 th:attr="aria-label=${(item.note != null and !item.note.isBlank() ? 'Изменить заметку к вопросу: ' : 'Добавить заметку к вопросу: ') + item.questionPreview}">Заметка</summary>
+                        <form class="bookmark-note-form" method="post" th:action="@{/bookmarks/note}"
+                              th:attr="data-question-id=${item.questionId}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <input type="hidden" name="questionId" th:value="${item.questionId}">
+                            <label class="field bookmark-note-field">
+                                <span class="field-label visually-hidden">Заметка</span>
+                                <textarea name="note" rows="3" maxlength="2000"
+                                          placeholder="Короткая заметка к вопросу…"
+                                          th:text="${item.note}">Заметка</textarea>
+                            </label>
+                            <div class="bookmark-note-actions">
+                                <button type="submit" class="btn secondary-btn">Сохранить заметку</button>
+                                <span class="bookmark-save-status muted tiny" aria-live="polite"></span>
+                            </div>
+                        </form>
+                    </details>
+                    <form method="post" th:action="@{/bookmarks/remove}" class="bookmark-remove-form"
+                          th:attr="data-question-id=${item.questionId}">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <input type="hidden" name="questionId" th:value="${item.questionId}">
+                        <button type="submit" class="btn quiet-btn bookmark-remove-btn"
+                                th:aria-label="${'Убрать закладку: ' + item.questionPreview}">Убрать</button>
+                    </form>
+                </div>
             </div>
         </li>
     </ul>

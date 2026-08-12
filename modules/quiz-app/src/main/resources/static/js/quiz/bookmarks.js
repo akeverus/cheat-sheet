@@ -99,10 +99,15 @@ export function initBookmarksPage() {
     });
   });
 
-  // Auto-grow заметок с содержимым (см. autosizeNote). no-note исключены —
-  // их сжатие/раскрытие держит CSS :focus-within.
-  document.querySelectorAll('.bookmark-item.has-note .bookmark-note-form textarea[name="note"]').forEach((textarea) => {
-    autosizeNote(textarea);
+  // Auto-grow заметки. Считать размер на ЗАКРЫТОМ раскрытии нельзя: у скрытого
+  // поля scrollHeight равен нулю, и высота залипла бы на нуле до перезагрузки.
+  // Поэтому первый расчёт — на открытии <details>, дальше на ввод.
+  document.querySelectorAll('.bookmark-note-disclosure').forEach((disclosure) => {
+    const textarea = disclosure.querySelector('textarea[name="note"]');
+    if (!textarea) return;
+    disclosure.addEventListener('toggle', () => {
+      if (disclosure.open) autosizeNote(textarea);
+    });
     textarea.addEventListener('input', () => autosizeNote(textarea));
   });
 
