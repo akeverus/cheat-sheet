@@ -49,10 +49,13 @@ class StateIllustrationContractTest {
     /** Ситуация (заголовок пустого состояния) → глиф, который её изображает. */
     private static final Map<String, String> SITUATION_GLYPH = new LinkedHashMap<>();
 
+    /**
+     * Ситуации, которые показывает ГЛИФ (16×16, 64px на экране): событие мелкое и
+     * поправимое — «поправь запрос», «данных пока нет».
+     */
     static {
         SITUATION_GLYPH.put("Каталог пуст", "px-shelf");
         SITUATION_GLYPH.put("Ничего не нашлось", "px-spyglass");
-        SITUATION_GLYPH.put("Пока нет закладок", "px-chest");
         SITUATION_GLYPH.put("Под отбор ничего не подошло", "px-spyglass");
         SITUATION_GLYPH.put("Под отбор не попала ни одна тема", "px-spyglass");
         SITUATION_GLYPH.put("Пока нет данных по темам", "px-chronicle");
@@ -61,10 +64,21 @@ class StateIllustrationContractTest {
         SITUATION_GLYPH.put("Сейчас нет вопросов", "px-portcullis");
     }
 
+    /**
+     * Ситуации, которые показывает СЦЕНА (40×25, 320×200): пустая коллекция целиком —
+     * событие крупное, и место действия объясняет его лучше одного предмета (iter-120).
+     */
+    private static final Map<String, String> SITUATION_SCENE = new LinkedHashMap<>();
+
+    static {
+        SITUATION_SCENE.put("Пока нет закладок", "scene-shelf");
+        SITUATION_SCENE.put("Журнал пуст", "scene-desk");
+    }
+
     @Test
     void spriteHasNoDeadGlyphs() {
         Set<String> declared = new LinkedHashSet<>();
-        Matcher symbols = Pattern.compile("<symbol id=\"(px-[\\w-]+)\"").matcher(read(SPRITE));
+        Matcher symbols = Pattern.compile("<symbol id=\"((?:px|scene)-[\\w-]+)\"").matcher(read(SPRITE));
         while (symbols.find()) {
             declared.add(symbols.group(1));
         }
@@ -102,6 +116,24 @@ class StateIllustrationContractTest {
             String actual = before.substring(lastUse + 7, before.indexOf('"', lastUse + 7));
             if (!glyph.equals(actual)) {
                 wrong.add("«" + title + "»: ожидался " + glyph + ", стоит " + actual);
+            }
+        });
+
+        SITUATION_SCENE.forEach((title, scene) -> {
+            int at = markup.indexOf(title);
+            if (at < 0) {
+                wrong.add("состояние «" + title + "» пропало из разметки");
+                return;
+            }
+            String before = markup.substring(Math.max(0, at - 800), at);
+            int lastUse = before.lastIndexOf("href=\"#scene-");
+            if (lastUse < 0) {
+                wrong.add("у состояния «" + title + "» не осталось сцены");
+                return;
+            }
+            String actual = before.substring(lastUse + 7, before.indexOf('"', lastUse + 7));
+            if (!scene.equals(actual)) {
+                wrong.add("«" + title + "»: ожидалась сцена " + scene + ", стоит " + actual);
             }
         });
 

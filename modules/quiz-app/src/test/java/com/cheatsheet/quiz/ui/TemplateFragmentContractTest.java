@@ -484,7 +484,9 @@ class TemplateFragmentContractTest {
         // стояли предметные иконки Lucide `#bookmark` и `#search`: они называли
         // СТРАНИЦУ, а не положение человека, и жили в другом языке, чем глифы
         // тех же состояний на /stats и на экране вопроса.
-        assertThat(bookmarks).contains("<use href=\"#px-chest\">").contains("<use href=\"#px-spyglass\">");
+        // iter-120: пустая коллекция целиком получила СЦЕНУ (место, где пусто), пустой
+        // отбор остался с глифом (предмет). Разводит их величина события, а не вкус.
+        assertThat(bookmarks).contains("<use href=\"#scene-shelf\">").contains("<use href=\"#px-spyglass\">");
         // Из отобранной пустоты есть выход, и он не «иди тренируйся».
         assertThat(bookmarks).contains("Показать все закладки");
         // Запрос повторяется дословно и ломается по месту: 160 символов без
