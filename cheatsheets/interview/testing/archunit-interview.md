@@ -127,11 +127,11 @@ JavaClasses prodClasses = new ClassFileImporter()
 
 ## Q3. (!) Как устроено базовое правило: classes().that().should()
 
-Ядро DSL — статические фабрики из `ArchRuleDefinition`: `classes()`, `noClasses()`, `methods()`, `fields()`, `constructors()`. Дальше идёт fluent-цепочка из трёх логических частей.
+Ядро DSL — статические фабрики из `ArchRuleDefinition`: `classes()`, `noClasses()`, `methods()`, `fields()`, `constructors()`. Дальше идёт fluent-цепочка из двух логических частей, а её результат — объект `ArchRule`, который потом применяют к классам.
 
 - **Селектор** — `that()` отбирает подмножество классов: `resideInAPackage("..service..")`, `haveSimpleNameEndingWith("Controller")`, `areAnnotatedWith(Service.class)`.
-- **Условие** (`ArchCondition`) — `should()` задаёт проверку: `dependOnClassesThat()`, `beAnnotatedWith(...)`, `onlyBeAccessed()`, `notBePublic()`. Предикат же — это то, что принимает `that()` (`DescribedPredicate`).
-- **Применение** — `check(classes)` или (в JUnit-расширении) автоматическое исполнение.
+- **Условие** (`ArchCondition`) — `should()` задаёт проверку: `beAnnotatedWith(...)`, `notBePublic()` завершают правило сразу, а `dependOnClassesThat()` и `onlyBeAccessed()` требуют продолжения — `resideInAPackage(...)`, `byAnyPackage(...)`. Предикат же — это то, что принимает `that()` (`DescribedPredicate`).
+- **Применение** — отдельный шаг уже поверх готового правила: `rule.check(classes)` вручную или автоматическое исполнение `@ArchTest`-полей. Само построение цепочки ничего не проверяет — правило существует до того, как ему покажут классы.
 
 Разница `classes()` и `noClasses()` ключевая:
 
