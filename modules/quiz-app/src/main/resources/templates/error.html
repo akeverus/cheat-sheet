@@ -4,6 +4,9 @@
 <body class="error-page">
 <a class="skip-link" href="#main-content">Перейти к сообщению об ошибке</a>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
+<!--/* Спрайт состояний нужен здесь с iter-119: иллюстрация ошибки — его глиф
+     (решётка на 404, сбой на прочих кодах), а не растровый маскот. */-->
+<svg th:replace="~{fragments/state-illustrations :: sprite}"></svg>
 <div class="app">
     <aside th:replace="~{fragments/sidebar :: sidebar(active='focus')}"></aside>
     <div class="shell-main">
@@ -58,9 +61,17 @@
          и GlobalExceptionHandler#errorView). Кнопки «копировать» здесь нет
          намеренно: страница ошибки обязана быть полезной и при неподнявшемся JS. */-->
     <div class="error-dossier">
-        <img class="error-pixel-art"
-             th:src="@{${code == 404 ? '/img/pixel/portal.png' : '/img/pixel/mascot.png'}}"
-             width="120" height="120" alt="" decoding="async">
+        <!--/* Иллюстрация ошибки — глиф спрайта состояний, а не растр. Растровый маскот
+             (mascot.png) ушёл вместе с брендом: PNG не знает темы, и на пергаменте он
+             оставался тёмным пятном из тёмной темы. Здесь же он был не к месту и по
+             смыслу — «лицо продукта» на странице сбоя ничего не объясняет.
+
+             Теперь смысл несёт положение: 404 — путь закрыт (опущенная решётка),
+             остальные коды — сбой (тот же глиф, что показывает несостоявшийся рендер
+             диаграммы). Размер 128px = 16×16 ×8, целочисленный масштаб сетки. */-->
+        <svg class="error-pixel-art px-illus" width="128" height="128" aria-hidden="true">
+            <use th:attr="href=${code == 404 ? '#px-portcullis' : '#px-diagram-error'}"></use>
+        </svg>
         <h2 class="error-dossier-title">Что известно</h2>
         <dl class="error-meta">
             <dt th:if="${path != null}">Путь</dt>

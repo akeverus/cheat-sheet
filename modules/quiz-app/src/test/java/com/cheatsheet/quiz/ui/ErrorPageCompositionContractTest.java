@@ -155,11 +155,16 @@ class ErrorPageCompositionContractTest {
                 .as("идентификатор запроса не выводится: он есть в логе и в ProblemDetail API, "
                         + "но пользовательская жалоба «упало» без него не соединяется с лог-строкой")
                 .contains("${correlationId}");
+        // Иллюстрация ошибки декоративна и обязана быть скрыта от скринридера. В iter-119
+        // растровый <img> заменён глифом спрайта, у <svg> атрибута alt не бывает —
+        // эквивалент здесь aria-hidden. Проверяется СВОЙСТВО (скрыта), а не тег.
         assertThat(html)
-                .as("декоративный pixel-art без пустого alt озвучится скринридером как мусор "
+                .as("иллюстрация ошибки исчезла со страницы")
+                .contains("class=\"error-pixel-art");
+        assertThat(html)
+                .as("декоративная иллюстрация не скрыта от скринридера — озвучится мусором "
                         + "между заголовком дозора и его содержимым")
-                .contains("class=\"error-pixel-art\"")
-                .containsPattern("(?s)class=\"error-pixel-art\".{0,400}?alt=\"\"");
+                .containsPattern("(?s)class=\"error-pixel-art.{0,400}?(alt=\"\"|aria-hidden=\"true\")");
     }
 
     @Test

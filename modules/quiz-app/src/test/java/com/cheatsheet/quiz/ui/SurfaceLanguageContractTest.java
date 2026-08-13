@@ -83,6 +83,38 @@ class SurfaceLanguageContractTest {
                 .isEmpty();
     }
 
+    /**
+     * Литеральный радиус мимо токена — вторая точка правды о форме.
+     *
+     * <p>Пойман замером в iter-119: `.avatar` бренд-знака держал {@code border-radius: 9px}
+     * прямо в shell.css. Обнуление токенов его не касалось, и знак оставался скруглённым в
+     * продукте, где всё прямоугольное. Виден он стал только когда рядом убрали
+     * перекрывавшее его {@code border-radius: 0}.</p>
+     */
+    @Test
+    void radiusIsNeverWrittenAsALiteral() {
+        List<String> offenders = new ArrayList<>();
+        for (Path css : cssFiles()) {
+            String[] lines = stripComments(readFile(css)).split("\n", -1);
+            for (int i = 0; i < lines.length; i++) {
+                Matcher radius = Pattern.compile("border-radius:\\s*([^;]+);").matcher(lines[i]);
+                while (radius.find()) {
+                    String value = radius.group(1).trim();
+                    boolean fromToken = value.startsWith("var(--border-radius")
+                            || value.equals("0") || value.equals("inherit");
+                    if (!fromToken) {
+                        offenders.add(css.getFileName() + ":" + (i + 1) + " → " + value);
+                    }
+                }
+            }
+        }
+        assertThat(offenders)
+                .as("радиус записан числом мимо токена. Так форма получает вторую точку "
+                        + "правды: обнуление токена её не достанет, и элемент останется "
+                        + "скруглённым в прямоугольном продукте")
+                .isEmpty();
+    }
+
     @Test
     void theDecorativeLayerDoesNotEraseShapeAnymore() {
         List<String> offenders = new ArrayList<>();

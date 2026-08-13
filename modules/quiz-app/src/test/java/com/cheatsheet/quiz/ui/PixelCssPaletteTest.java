@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -234,6 +236,38 @@ class PixelCssPaletteTest {
                 .as("цветной rgb()/rgba()-литерал в пиксельном слое. Прозрачный оттенок "
                         + "продуктового цвета берётся как color-mix(in srgb, var(--token) N%, "
                         + "transparent); бесцветные тени и блики (чёрный/белый/серый) разрешены")
+                .isEmpty();
+    }
+
+    /**
+     * Декоративная рампа не зависит от темы.
+     *
+     * <p>Проверка пришла из {@code PixelSpriteContractTest}, снятого в iter-119 вместе с
+     * последним растровым ассетом. Смысл её не изменился, только основание: раньше роли
+     * нельзя было менять по теме, потому что PNG растровый и один и тот же байт лежал под
+     * обеими темами. Теперь роль красит маску или свечение, и разветвление по теме тоже
+     * запрещено — но по другой причине: {@code --pixel-*} это ИМЕНОВАННЫЙ ЦВЕТ пиксельной
+     * графики, а темозависимые значения живут в продуктовых токенах
+     * ({@code --color-*}). Двухветочная роль означала бы, что у одного имени два цвета.</p>
+     */
+    @Test
+    void decorativeRampIsNotRedefinedPerTheme() throws IOException {
+        // Комментарии вырезаются: проза, объясняющая роли, сама называет их имена, и
+        // ссылка на «--pixel-gold» в разборе ниже светлой ветки читалась бы как
+        // переопределение. На этой ловушке проект спотыкался уже дважды.
+        String css = Files.readString(Path.of("src/main/resources/static/css/tokens.css"),
+                StandardCharsets.UTF_8).replaceAll("(?s)/\\*.*?\\*/", "\n");
+        int light = css.indexOf(":root[data-theme=\"light\"]");
+        assertThat(light).as("светлая ветка в tokens.css").isGreaterThan(0);
+
+        Matcher matcher = Pattern.compile("(--pixel-[a-z-]+):").matcher(css.substring(light));
+        Set<String> redefined = new LinkedHashSet<>();
+        while (matcher.find()) {
+            redefined.add(matcher.group(1));
+        }
+
+        assertThat(redefined)
+                .as("--pixel-* переопределены под тему: у одного имени стало два цвета")
                 .isEmpty();
     }
 

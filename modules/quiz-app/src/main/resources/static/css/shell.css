@@ -96,7 +96,11 @@ html[data-design] .avatar {
   width: 34px;
   height: 34px;
   border: 1px solid var(--color-border-primary);
-  border-radius: 9px;
+  /* Литерал 9px пережил обнуление токенов радиуса (iter-117): гейт проверял токены и
+     !important-затирания, но не литеральные значения. Всплыл он, когда бренд-знак
+     потерял собственное `border-radius: 0` вместе с растровым маскотом — коробка знака
+     осталась скруглённой в продукте, где всё прямоугольное. Замер: 9px. */
+  border-radius: var(--border-radius-sm);
   display: grid;
   place-items: center;
   background: var(--color-surface-soft);
@@ -394,7 +398,9 @@ html[data-design] .result-xp {
   color: var(--color-accent-strong);
   background: var(--color-accent-wash);
   border: 1px solid var(--color-accent-strong);
-  border-radius: 999px;
+  /* Литерал 999px снят (iter-119): «таблетка» была последней круглой формой в
+     прямоугольном продукте. */
+  border-radius: var(--border-radius-full);
   padding: 2px var(--space-3);
   white-space: nowrap;
 }
@@ -425,7 +431,6 @@ html[data-design] .distractor-row {
 }
 html[data-design] .distractor-row-mine {
   background: var(--color-status-error-wash);
-  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
   padding: var(--space-2) var(--space-3);
 }
 html[data-design] .distractor-letter { color: var(--color-status-error); }
@@ -502,9 +507,15 @@ html[data-design] .brand:focus-visible {
     text-decoration: none;
   }
   html[data-design] .mobile-header .avatar {
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
+    /* Знак в мобильной шапке: коробка 32px под герб 16px (×1 от сетки). Прежние
+       26px под растр 22px давали дробный масштаб, а 7px радиуса — вторую форму. */
+    width: 32px;
+    height: 32px;
+    border-radius: var(--border-radius-sm);
+  }
+  html[data-design] .mobile-header .avatar .brand-crest {
+    width: 16px;
+    height: 16px;
   }
   html[data-design] .mobile-header .avatar img {
     width: 22px;

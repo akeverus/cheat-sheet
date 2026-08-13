@@ -158,11 +158,13 @@ html[data-design][data-js] .ed-page {
   to   { opacity: 1; }
 }
 
-/* Error page */
+/* Иллюстрация ошибки. Ступени пересчитаны в iter-119 под сетку 16×16: было 120px
+   (×5 от растрового источника 24×24, но ×7.5 от сетки — дробный масштаб), стало 128px
+   (×8). Пиксельный слой ведёт размер намеренно: он побеждает page-файл, и разводить
+   ступени по двум файлам значило бы снова получить два размера одного глифа. */
 html[data-design] .error-pixel-art {
-  width: 120px;
-  height: auto;
-  image-rendering: pixelated;
+  width: 128px;
+  height: 128px;
   margin: 0 auto var(--space-4);
   display: block;
   filter: drop-shadow(0 0 16px color-mix(in srgb, var(--color-status-error) 45%, transparent));
@@ -171,9 +173,9 @@ html[data-design] .error-pixel-art {
    pages-error mobile (live SE: artH=120 при нужных 40–64). */
 @media (max-width: 600px) {
   html[data-design] .error-page .error-pixel-art {
-    /* 72px = 3× от 24-источника (целочисленный, height:auto держит квадрат). */
-    width: 72px;
-    height: auto;
+    /* 64px = ×4 от сетки 16. Прежние 72px были ×3 от растровых 24. */
+    width: 64px;
+    height: 64px;
     margin-bottom: var(--space-2);
   }
 }
@@ -185,9 +187,10 @@ html[data-design] .error-pixel-art {
     margin-bottom: var(--space-1);
   }
 }
-html[data-design][data-pixel="high"] .error-pixel-art {
-  animation: mascotBounce 0.9s steps(3) infinite;
-}
+/* Бесконечный подскок иллюстрации ошибки снят в iter-119. Страница ошибки — не сцена,
+   а сообщение; прыгающая решётка рядом с «Такой страницы нет» читается как игрушка и
+   спорит с тоном страницы. Движение в продукте живёт внутри пиксельных сцен, а не в
+   сообщениях (тот же довод, по которому снято «дыхание» знака бренда). */
 /* Крупный номер статуса был набран «хроматической аберрацией» — бирюзовая и
    коралловая тени вразбег плюс анимация glitchText, дёргающая цифру раз в две
    секунды. Это цитата из сломанного ЭЛТ-экрана: сигнатура ровно того
@@ -449,15 +452,7 @@ html[data-design] .pixel-stage-intro-inner {
   max-width: min(90vw, 360px);
   animation: stageIntroPop 0.35s steps(4) both;
 }
-html[data-design] .pixel-stage-intro-mascot {
-  width: 48px;
-  height: 48px;
-  image-rendering: pixelated;
-  display: block;
-  margin: 0 auto 12px;
-  animation: mascotBounce 0.5s steps(3) infinite;
-  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--color-accent-primary) 55%, transparent));
-}
+
 html[data-design] .pixel-stage-intro-title {
   font-family: inherit;
   font-size: 1.25rem;
@@ -552,12 +547,7 @@ html[data-design] .pixel-portal-wipe {
 
 
 
-/* Mascot idle polish (no setInterval src-swap) */
-html[data-design] img.pixel-mascot-anim {
-  animation: mascotSrcHint 1s steps(2) infinite;
-}
-@keyframes mascotSrcHint {
-  0%, 100% { filter: none; transform: translateY(0); }
+
   50% { filter: brightness(1.08); transform: translateY(-1px); }
 }
 /* Filter chips / skip / grade — ensure checkbox/radio chrome + press affordance */

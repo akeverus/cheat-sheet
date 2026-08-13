@@ -206,6 +206,39 @@ class IconLanguageContractTest {
                 .isEmpty();
     }
 
+    /**
+     * Знак продукта — символ спрайта, а не растр, и он один.
+     *
+     * <p>До iter-119 бренд рисовал {@code mascot.png} 24×24: растр не знал темы (на
+     * пергаменте оставался тёмным пятном из тёмной темы) и не ложился на сетку — 24 это
+     * ×1.5 от 16×16. Он же стоял на странице ошибки для кодов, кроме 404, — «лицо
+     * продукта» на экране сбоя ничего не объясняло.</p>
+     *
+     * <p>Теперь знак — символ {@code #crest} (щит с раскрытой книгой), 32px = ×2 от
+     * сетки, цвет от темы. Растровых ассетов в продукте не осталось вовсе.</p>
+     */
+    @Test
+    void theBrandMarkIsASpriteSymbolAndRasterAssetsAreGone() {
+        String sidebar = COMMENT.matcher(read(FRAGMENTS.resolve("sidebar.html"))).replaceAll("\n");
+        String header = COMMENT.matcher(read(FRAGMENTS.resolve("shell-head.html"))).replaceAll("\n");
+        for (String markup : List.of(sidebar, header)) {
+            assertThat(markup).as("знак бренда снова растровый").doesNotContain("mascot.png");
+            assertThat(markup).as("знак бренда не берёт символ спрайта")
+                    .contains("<use href=\"#crest\">");
+        }
+        assertThat(symbols(ICONS)).as("герб исчез из спрайта").contains("crest");
+
+        Path raster = RESOURCES.resolve("static/img/pixel");
+        List<String> files = list(raster).stream()
+                .map(p -> p.getFileName().toString())
+                .filter(name -> name.endsWith(".png"))
+                .toList();
+        assertThat(files)
+                .as("в продукт вернулся растровый пиксельный ассет: PNG не знает темы и не "
+                        + "тянется целочисленно от сетки 16×16")
+                .isEmpty();
+    }
+
     private static Set<String> symbols(Path sprite) {
         Set<String> found = new LinkedHashSet<>();
         Matcher m = SYMBOL.matcher(COMMENT.matcher(read(sprite)).replaceAll("\n"));
