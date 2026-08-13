@@ -301,7 +301,7 @@ ArchRule serviceConvention = classes()
 
 Есть набор «канонических» правил, которые встречаются почти в каждом проекте. Часть из них предопределена в `GeneralCodingRules`.
 
-- **Нет field injection** — `GeneralCodingRules.NO_CLASSES_SHOULD_USE_FIELD_INJECTION` (поля с `@Autowired`, `@Value`, `@Inject`, `@PersistenceContext`/`@PersistenceUnit`; для `@Resource` нужно своё правило); поощряет конструкторную инъекцию.
+- **Нет field injection** — `GeneralCodingRules.NO_CLASSES_SHOULD_USE_FIELD_INJECTION` (поля с `@Autowired` и `@Value` из Spring, `@Inject` из javax, jakarta или Guice и `@Resource` из javax/jakarta); поощряет конструкторную инъекцию.
 - **Нет стандартного логирования JDK** — `NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING` (используйте SLF4J).
 - **Нет `System.out`/`System.err`** — `NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS`.
 - **Нет бросков обобщённых исключений** (`Exception`, `RuntimeException`, `Throwable`) — `NO_CLASSES_SHOULD_THROW_GENERIC_EXCEPTIONS`.
