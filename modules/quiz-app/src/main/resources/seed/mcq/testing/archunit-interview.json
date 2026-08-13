@@ -863,13 +863,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Границы слоёв закрывает одно готовое правило `JMoleculesArchitectureRules.ensureOnionSimple()` под `@ArchTest`, поэтому описывать пакеты в тесте вручную не приходится.",
               "correct": false,
+              "text": "Роли слоёв проект берёт из аннотаций jMolecules, поэтому перечислять пакеты в правилах `LayeredArchitectureTest` не приходится, а стиль проверяется готовым правилом.",
               "sections": {
-                "what_actually": "В quiz-app работает чистый ArchUnit: `LayeredArchitectureTest` содержит `domainIsIndependent`, `serviceDoesNotDependOnApi` и `persistenceDoesNotDependOnApi`. Пакеты там перечислены руками через `resideInAPackage(\"..domain..\")` и `resideInAnyPackage(...)`.",
-                "source_of_confusion": "Пример с `ensureOnionSimple()` и разбор устройства теста проекта стоят рядом, поэтому два фрагмента кода склеиваются в одну картину.",
-                "if_it_were_true": "Тогда в quiz-app была бы зависимость на `jmolecules-archunit` и разметка классов ролевыми аннотациями, а вместо трёх правил хватило бы одного поля. Пакетные предикаты в тесте были бы не нужны.",
-                "how_it_should_be": "Границы слоёв держат три правила `noClasses()` с явными пакетами, объявленные под `@ArchTest` в `LayeredArchitectureTest`."
+                "what_actually": "В проекте стоит чистый ArchUnit без jMolecules: три правила `noClasses()` перечисляют пакеты прямо в тесте — `..domain..`, `..api..`, `..service..`, `..persistence..`, `..config..`. Аннотаций jMolecules в этих правилах нет вовсе.",
+                "source_of_confusion": "Раздел сначала подробно расписывает связку jMolecules с ArchUnit, а пример проекта идёт следом — легко прочитать второй как иллюстрацию первого. Вывод раздела разводит их прямо: связка мощная, но здесь она не используется.",
+                "if_it_were_true": "Тогда в `@AnalyzeClasses` не понадобился бы параметр `packages`, а правила не ссылались бы на строковые паттерны пакетов — роли приходили бы из аннотаций на самих классах.",
+                "how_it_should_be": "Роли из аннотаций — это про jMolecules; в проекте слои закрыты тремя правилами `noClasses()` с явными паттернами пакетов."
               }
             },
             {
