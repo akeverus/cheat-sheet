@@ -393,6 +393,9 @@ public class MvcModelAttributeMapper {
         model.addAttribute("groupCatalog", state.groupCatalog());
         model.addAttribute("progression", state.progression());
         model.addAttribute("sessionHistory", state.sessionHistory());
+        model.addAttribute("achievements", state.achievements());
+        model.addAttribute("achievementsEarned",
+                com.cheatsheet.quiz.domain.Achievement.earnedCount(state.achievements()));
         // Передаём max(count) уже вычисленный — Thymeleaf 3.1 запрещает
         // T(java.util.Collections) в SpEL, считать в шаблоне нельзя.
         long maxForecast = state.reviewForecast() == null ? 1L

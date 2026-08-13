@@ -48,6 +48,9 @@ class IconLanguageContractTest {
     private static final Path STATE = FRAGMENTS.resolve("state-illustrations.html");
     private static final Path NAV_SECTION =
             Path.of("src/main/java/com/cheatsheet/quiz/config/web/NavSection.java");
+    /** Каталог знаков отличия — второй источник имён глифов, живущий в Java. */
+    private static final Path ACHIEVEMENTS =
+            Path.of("../quiz-domain/src/main/java/com/cheatsheet/quiz/domain/Achievement.java");
 
     private static final Pattern COMMENT = Pattern.compile("<!--.*?-->", Pattern.DOTALL);
     private static final Pattern SYMBOL = Pattern.compile("<symbol id=\"([^\"]+)\"");
@@ -271,6 +274,14 @@ class IconLanguageContractTest {
         Matcher icons = Pattern.compile("\"[a-z]+\", \"[^\"]*\", \"[^\"]*\", \"([a-z-]+)\"").matcher(nav);
         while (icons.find()) {
             found.add(icons.group(1));
+        }
+
+        // Знаки отличия ссылаются на свои глифы ДИНАМИЧЕСКИ («#» + id из каталога), поэтому
+        // прямой строки `#badge-…` в разметке нет — источник имени здесь Java, как и у
+        // навигации. Не читать его значило бы объявить шесть живых глифов мёртвыми.
+        Matcher badges = Pattern.compile("new Achievement\\(\"([a-z-]+)\"").matcher(read(ACHIEVEMENTS));
+        while (badges.find()) {
+            found.add(badges.group(1));
         }
         return found;
     }

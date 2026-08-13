@@ -67,6 +67,49 @@
     <div th:replace="~{fragments/progression :: rank(p=${progression}, sessionXp=null)}"></div>
 </div>
 
+<!--/* ЗНАКИ ОТЛИЧИЯ — ФАКТЫ, А НЕ НАГРАДЫ. Каждый знак вычисляется из тех же метрик,
+     что показывает страница: ответы, точность первых попыток, освоенные карточки, серия
+     дней. Ничего не хранится и не начисляется — потерять знак нельзя, подделать тоже.
+
+     Стоит под ступенью: оба блока отвечают на «где я», только ступень непрерывна, а
+     знаки дискретны. Неполученные показаны наравне с полученными и с ЧИСЛОМ, сколько
+     осталось: список из одних достижений превращает витрину в поздравление, а из
+     достижений с расстоянием — в ориентир.
+
+     Состояние не передаётся одним цветом: у полученного знака есть слово «получен» и
+     полная полоса, у остального — счёт «N из M» (WCAG 1.4.1). */-->
+<section class="card badges" th:if="${not #lists.isEmpty(achievements)}"
+         aria-labelledby="badges-title">
+    <h2 class="section-title" id="badges-title">Знаки отличия</h2>
+    <p class="badges-lead muted">
+        <span th:text="${achievementsEarned} + ' из ' + ${#lists.size(achievements)}">0 из 6</span>
+        <span> · считаются из твоей статистики, а не начисляются</span>
+    </p>
+    <ul class="badges-grid">
+        <li th:each="b : ${achievements}" class="badge-card"
+            th:classappend="${b.earned()} ? ' is-earned' : ''">
+            <svg class="badge-glyph" aria-hidden="true">
+                <use th:attr="href='#' + ${b.achievement().id()}"></use>
+            </svg>
+            <div class="badge-body">
+                <h3 class="badge-title" th:text="${b.achievement().title()}">Знак</h3>
+                <p class="badge-goal muted" th:text="${b.achievement().goal()}">условие</p>
+                <p class="badge-state">
+                    <span th:if="${b.earned()}">Получен</span>
+                    <span th:unless="${b.earned()}"
+                          th:text="${b.current()} + ' из ' + ${b.achievement().target()}">0 из 1</span>
+                </p>
+                <!--/* Полоса — нативный progress, как у шкалы уровня: работает без JS и
+                     приносит роль progressbar со значениями. Подпись выше повторяет
+                     число прозой. */-->
+                <progress class="badge-bar" th:value="${b.current()}"
+                          th:max="${b.achievement().target()}"
+                          th:text="${b.percent()} + '%'">0%</progress>
+            </div>
+        </li>
+    </ul>
+</section>
+
 <!--/* Рекомендованное действие — ПЕРВЫЙ рабочий блок страницы, а не четвёртый.
      Замер iter-61: карточка «Повторить сегодня» стояла на y=728 и не помещалась
      в окно на 1280×720, 1280×800, 1366×768 и 1440×900 — то есть ровно на ходовых

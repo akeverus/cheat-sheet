@@ -117,6 +117,8 @@ public class StatsPageService {
                 .stream()
                 .map(this::toWrongQuestionItem)
                 .toList();
+        Progression progression = Progression.of(
+                experienceService.snapshot(), experienceService.currentStreak());
         List<AccuracyTrendDay> accuracyTrend = buildAccuracyTrend(
                 dailyActivityRepository.findRecentDays(ACCURACY_TREND_DAYS));
         String accuracyTrendJson = writeJsonForHtml(accuracyTrend, "stats_page_accuracy_trend_json_failed");
@@ -166,10 +168,12 @@ public class StatsPageService {
                 // Прогрессия НЕ зависит от отбора: ступень — про человека, а не про срез
                 // банка, который он сейчас смотрит. Считать её по выборке значило бы, что
                 // фильтр «только важные» понижает человека в ранге.
-                Progression.of(experienceService.snapshot(), experienceService.currentStreak()),
+                progression,
                 // История не зависит от отбора по темам: сессия — это событие, а не срез
                 // банка. Фильтровать её значило бы прятать занятия, которые были.
-                sessionHistoryService.recent()
+                sessionHistoryService.recent(),
+                // Ни одного нового запроса: и метрики, и прогрессия уже посчитаны выше.
+                com.cheatsheet.quiz.domain.Achievement.evaluate(metrics, progression)
         );
     }
 
@@ -496,7 +500,13 @@ public class StatsPageService {
              * HttpSession и терялась при следующем старте — «сколько я занимался и как
              * шёл» продукт не отвечал нигде.
              */
-            List<com.cheatsheet.quiz.domain.SessionRecord> sessionHistory
+            List<com.cheatsheet.quiz.domain.SessionRecord> sessionHistory,
+            /**
+             * Знаки отличия. Считаются из тех же метрик и прогрессии, что уже собраны
+             * страницей: знак — это ФАКТ о накопленном, а не запись в отдельной таблице,
+             * которая умеет разойтись с данными.
+             */
+            List<com.cheatsheet.quiz.domain.Achievement.Earned> achievements
     ) {
         public StatsPageState(InterviewStats stats, List<String> topics, List<?> groups,
                               String selectedGroup, InterviewFilter filter, String searchQuery,
@@ -507,7 +517,10 @@ public class StatsPageService {
                     List.of(), List.of(), LearningMetrics.EMPTY,
                     List.of(), "[]", MetricDefinitions.catalog(), null, 0L,
                     List.of(), List.of(), "[]", List.of(),
-                    Progression.of(com.cheatsheet.quiz.domain.UserExperience.EMPTY, 0), List.of());
+                    Progression.of(com.cheatsheet.quiz.domain.UserExperience.EMPTY, 0), List.of(),
+                    com.cheatsheet.quiz.domain.Achievement.evaluate(
+                            LearningMetrics.EMPTY,
+                            Progression.of(com.cheatsheet.quiz.domain.UserExperience.EMPTY, 0)));
         }
     }
 
