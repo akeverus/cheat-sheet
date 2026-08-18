@@ -69,7 +69,7 @@ updated: 2026-05-31
     <artifactId>spring-boot-starter-data-r2dbc</artifactId>
 </dependency>
 <dependency>
-    <groupId>io.r2dbc</groupId>
+    <groupId>org.postgresql</groupId>
     <artifactId>r2dbc-postgresql</artifactId>
 </dependency>
 ```
@@ -99,11 +99,13 @@ public ConnectionFactory connectionFactory() {
             .option(PASSWORD, "secret")
             .build()
     );
-    return ConnectionPoolConfiguration.builder(factory)
-        .maxSize(20)
-        .initialSize(5)
-        .maxIdleTime(Duration.ofMinutes(30))
-        .build();
+    return new ConnectionPool(
+        ConnectionPoolConfiguration.builder(factory)
+            .maxSize(20)
+            .initialSize(5)
+            .maxIdleTime(Duration.ofMinutes(30))
+            .build()
+    );
 }
 ```
 
@@ -217,7 +219,7 @@ public class OrderProcessingService {
     @Transactional
     public Mono<Order> processOrder(PlaceOrderCommand cmd) {
         return orderRepository.save(new Order(cmd))
-            .flatMap(order -> paymentRepository.reserve(order.getId(), order.total())
+            .flatMap(order -> paymentRepository.reserve(order.id(), order.total())
                 .thenReturn(order))
             .onErrorResume(e -> Mono.error(new OrderProcessingException(e)));
         // При ошибке — автоматический rollback
@@ -234,7 +236,7 @@ public TransactionalOperator transactionalOperator(ReactiveTransactionManager tx
 
 public Mono<Order> processWithOperator(PlaceOrderCommand cmd) {
     return orderRepository.save(new Order(cmd))
-        .flatMap(order -> paymentRepository.reserve(order.getId(), order.total())
+        .flatMap(order -> paymentRepository.reserve(order.id(), order.total())
             .thenReturn(order))
         .as(transactionalOperator::transactional);
 }
@@ -280,7 +282,7 @@ public Flux<OrderWithItems> loadOrdersBatched(String customerId) {
                 .flatMapMany(itemsByOrder ->
                     Flux.fromIterable(orders)
                         .map(o -> new OrderWithItems(o,
-                            itemsByOrder.getOrDefault(o.id(), List.of())))
+                            List.copyOf(itemsByOrder.getOrDefault(o.id(), List.of()))))
                 );
         });
 }
@@ -394,9 +396,11 @@ class OrderIntegrationTest {
 
 Ошибки в реактивной цепочке обрабатываются не `try/catch`, а операторами Reactor — они работают с сигналом ошибки внутри потока:
 - **`switchIfEmpty`** — превращает «пусто» в осмысленную ошибку (`findById` вернул пустой `Mono` → `OrderNotFoundException`). Без этого вызывающий код молча получит пустой результат.
-- **`retryWhen`** — повтор при транзиентных сбоях (`R2dbcTransientResourceException`: разрыв соединения, дедлок) с экспоненциальной задержкой. Повторять имеет смысл только заведомо временные ошибки, а не нарушение констрейнтов.
-- **`onErrorMap`** — перевод низкоуровневого исключения драйвера в доменное (`R2dbcDataIntegrityViolationException` → `DuplicateOrderException`), чтобы детали БД не протекали в верхние слои.
+- **`retryWhen`** — повтор при транзиентных сбоях (`TransientDataAccessResourceException`: разрыв соединения, дедлок) с экспоненциальной задержкой. Повторять имеет смысл только заведомо временные ошибки, а не нарушение констрейнтов.
+- **`onErrorMap`** — перевод инфраструктурного исключения в доменное (`DataIntegrityViolationException` → `DuplicateOrderException`), чтобы детали БД не протекали в верхние слои.
 - **`@RestControllerAdvice`** — глобальный маппинг оставшихся исключений в HTTP-ответы (нарушение констрейнта → 409 Conflict).
+
+**Какие типы ловить.** Репозитории, `R2dbcEntityTemplate` и `DatabaseClient` не отдают исключения драйвера как есть: конфигурация R2DBC (`AbstractR2dbcConfiguration`, а с 1.2 — модуль `spring-r2dbc`) ставит ExceptionTranslator, который переводит `R2dbcException` в переносимую иерархию Spring `DataAccessException`. Поэтому в цепочке ловят `DataIntegrityViolationException` и `TransientDataAccessResourceException`, а исходные `R2dbcDataIntegrityViolationException`/`R2dbcTransientResourceException` видны только при работе с `io.r2dbc.spi.Connection` напрямую, мимо Spring-обёрток.
 
 ```java
 public Mono<Order> findOrThrow(Long id) {
@@ -407,14 +411,14 @@ public Mono<Order> findOrThrow(Long id) {
 public Mono<Order> saveWithRetry(Order order) {
     return orderRepository.save(order)
         .retryWhen(Retry.backoff(3, Duration.ofMillis(100))
-            .filter(e -> e instanceof R2dbcTransientResourceException))
-        .onErrorMap(R2dbcDataIntegrityViolationException.class,
+            .filter(e -> e instanceof TransientDataAccessResourceException))
+        .onErrorMap(DataIntegrityViolationException.class,
             e -> new DuplicateOrderException(order.id()));
 }
 
 // Глобальный обработчик в @RestControllerAdvice
-@ExceptionHandler(R2dbcDataIntegrityViolationException.class)
-public ResponseEntity<ErrorDto> handleR2dbcError(R2dbcDataIntegrityViolationException e) {
+@ExceptionHandler(DataIntegrityViolationException.class)
+public ResponseEntity<ErrorDto> handleDataIntegrityError(DataIntegrityViolationException e) {
     return ResponseEntity.status(409).body(new ErrorDto("Constraint violation: " + e.getMessage()));
 }
 ```
@@ -455,7 +459,7 @@ public class ReportService {
 
 ## Q12. Как работают custom converters в R2DBC?
 
-Конвертеры управляют тем, как тип Java превращается в значение колонки и обратно, когда стандартного маппинга недостаточно. Типичный повод — enum: по умолчанию R2DBC может сохранить его по порядковому индексу (ordinal), а это хрупко — добавление нового значения в середину enum «сдвинет» смысл уже записанных строк. Конвертер фиксирует хранение по имени (`OrderStatus.name()`), и порядок объявления перестаёт влиять на данные.
+Конвертеры управляют тем, как тип Java превращается в значение колонки и обратно, когда стандартного маппинга недостаточно. С enum важно не перепутать дефолт: Spring Data R2DBC ради переносимости пишет enum **строкой** (`name()`), а не по порядковому индексу. Конвертеры нужны в обратную сторону — когда колонка объявлена нативным enum-типом БД (тогда пишущий конвертер наследуют от `EnumWriteSupport`, чтобы значение уехало собственным типом) или когда в колонке лежит своё представление вроде короткого кода.
 
 Конвертеры всегда идут парой и регистрируются вместе:
 - **`@WritingConverter`** — Java → колонка (при сохранении).
@@ -463,12 +467,12 @@ public class ReportService {
 - Оба регистрируются в `getCustomConverters()` конфигурации `AbstractR2dbcConfiguration`.
 
 ```java
-// Для хранения enum как строки (по умолчанию — по индексу)
+// Своё представление в колонке: короткий код вместо name()
 @WritingConverter
 public class OrderStatusWriteConverter implements Converter<OrderStatus, String> {
     @Override
     public String convert(OrderStatus source) {
-        return source.name();
+        return source.getCode();   // "P", "C", "X"
     }
 }
 
@@ -476,7 +480,7 @@ public class OrderStatusWriteConverter implements Converter<OrderStatus, String>
 public class OrderStatusReadConverter implements Converter<String, OrderStatus> {
     @Override
     public OrderStatus convert(String source) {
-        return OrderStatus.valueOf(source);
+        return OrderStatus.byCode(source);
     }
 }
 
@@ -495,7 +499,7 @@ public class R2dbcConfig extends AbstractR2dbcConfiguration {
 - **`repository.saveAll(...)`** — просто и читаемо, но под капотом отправляет **отдельный INSERT на каждую запись**. Для десятков строк нормально, для тысяч — много round-trip'ов к БД.
 - **Нативный batch через `DatabaseClient`** — собирает несколько строк в один `Statement` через `.add()` и шлёт их одной командой. Это настоящий батчинг на уровне драйвера, дающий выигрыш на больших объёмах.
 
-В батч-варианте записи бьют на блоки через `.buffer(500)`, чтобы не собирать в памяти один гигантский `Statement` и не упереться в лимиты протокола.
+В батч-варианте записи бьют на блоки через `.buffer(500)`, чтобы не собирать в памяти один гигантский `Statement` и не упереться в лимиты протокола. Ловушка — `add()`: он закрывает текущий набор привязок и открывает следующий, поэтому вызывать его после последней строки не нужно — иначе в батч уедет лишний пустой набор.
 
 ```java
 // Вариант 1 — через Repository (по одному, но асинхронно)
@@ -511,11 +515,15 @@ public Mono<Void> batchInsert(List<Order> orders) {
             .flatMap(batch -> {
                 Statement stmt = conn.createStatement(
                     "INSERT INTO orders(customer_id, total, status) VALUES($1, $2, $3)");
-                batch.forEach(o -> stmt
-                    .bind(0, o.customerId())
-                    .bind(1, o.total())
-                    .bind(2, o.status().name())
-                    .add());
+                for (Iterator<Order> it = batch.iterator(); it.hasNext(); ) {
+                    Order o = it.next();
+                    stmt.bind(0, o.customerId())
+                        .bind(1, o.total())
+                        .bind(2, o.status().name());
+                    if (it.hasNext()) {
+                        stmt.add();   // add() разделяет наборы, после последнего его не зовут
+                    }
+                }
                 return stmt.execute();
             })
     ).then();
