@@ -3,6 +3,7 @@ import { initTopicCharts } from './topic-charts.js';
 import { initDifficultyDonut } from './difficulty-donut.js';
 import { initAccuracyTrend } from './accuracy-trend.js';
 import { initForecastDates } from './forecast-dates.js';
+import { initMobileDisclosures } from './mobile-disclosures.js';
 
 /**
  * Вкладки аналитики: Темы / Динамика / Ошибки.
@@ -36,4 +37,5 @@ export function initStatsPage() {
   initAccuracyTrend();
   initForecastDates();
   initStatsTabs();
+  initMobileDisclosures();
 }

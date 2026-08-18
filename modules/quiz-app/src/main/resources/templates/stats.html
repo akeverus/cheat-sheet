@@ -336,11 +336,24 @@
      полная полоса, у остального — счёт «N из M» (WCAG 1.4.1). */-->
 <section class="card badges" th:if="${not #lists.isEmpty(achievements)}"
          aria-labelledby="badges-title">
-    <h2 class="section-title" id="badges-title">Знаки отличия</h2>
-    <p class="badges-lead muted">
-        <span th:text="${achievementsEarned} + ' из ' + ${#lists.size(achievements)}">0 из 6</span>
-        <span> · считаются из твоей статистики, а не начисляются</span>
-    </p>
+    <!--/* ВИТРИНА ЗНАКОВ — ПОД РАСКРЫТИЕМ, И СВОДКА ОСТАЁТСЯ ВИДНОЙ ВСЕГДА.
+
+         Замер 390×844: шесть знаков в колонку — 766px, почти экран, и лежат они между
+         метриками и вкладками, то есть на пути к темам. Знаки смотрят изредка, а
+         проходят мимо них каждый раз.
+
+         `<details open>` в разметке: без JS витрина раскрыта — это рабочее состояние,
+         просто длинное. На телефоне её закрывает скрипт (progressive enhancement), и
+         в свёрнутом виде остаётся то, ради чего на витрину и смотрят мельком: сколько
+         знаков взято из скольких. */-->
+    <details class="badges-disclosure" open data-mobile-collapsed>
+        <summary class="badges-summary">
+            <h2 class="section-title" id="badges-title">Знаки отличия</h2>
+            <span class="badges-lead muted">
+                <span th:text="${achievementsEarned} + ' из ' + ${#lists.size(achievements)}">0 из 6</span>
+                <span class="badges-lead-tail"> · считаются из твоей статистики, а не начисляются</span>
+            </span>
+        </summary>
     <ul class="badges-grid">
         <li th:each="b : ${achievements}" class="badge-card"
             th:classappend="${b.earned()} ? ' is-earned' : ''">
@@ -364,6 +377,7 @@
             </div>
         </li>
     </ul>
+    </details>
 </section>
 
 <!--/* Оговорка о границе отбора. Четыре плитки ниже считает LearningMetricsService
@@ -441,7 +455,14 @@
          `group=` (пусто). Одна форма снимает это структурно: каждый параметр
          существует ровно в одном экземпляре и все уезжают вместе. */-->
     <section class="card filter-bar" aria-labelledby="filter-bar-heading">
-        <h2 id="filter-bar-heading" class="mt-0">Отбор</h2>
+        <!--/* Отбор — 345px формы на телефоне, и открывают его осознанно, а не при
+             каждом заходе. Под раскрытием, как и витрина знаков: без JS раскрыт,
+             на телефоне закрывается скриптом. Что именно отобрано, видно и в
+             свёрнутом виде — строка состояния стоит в самой шапке. */-->
+        <details class="filter-bar-disclosure" open data-mobile-collapsed>
+            <summary class="filter-bar-summary">
+                <h2 id="filter-bar-heading" class="mt-0">Отбор</h2>
+            </summary>
         <!--/* Что сейчас отобрано — прозой, а не только состоянием контролов.
              Строка появляется, лишь когда отбор действительно сужен: иначе она
              сообщала бы «показано всё», то есть ничего.
@@ -544,6 +565,7 @@
                 <button type="submit" class="btn secondary-btn">Показать</button>
             </div>
         </form>
+        </details>
     </section>
 
     <!--/* Здесь стоял каталог «Разделы» — десять карточек разделов со своим
