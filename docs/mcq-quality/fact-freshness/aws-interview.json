@@ -1,14 +1,36 @@
 {
   "topic_slug": "aws-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
+  "round": "ROUND-10-LINKAGE-FIRST",
+  "status": "CHECKED",
+  "version_sensitive": true,
+  "product_version": "AWS-сервисы по состоянию на август 2026: Aurora PostgreSQL/MySQL, CloudFront, Kinesis Data Streams, EBS gp3/io2 Block Express, Well-Architected Framework (6 опор)",
+  "checked_date": "2026-08-19",
+  "sources": [
+    "docs.aws.amazon.com/rds/latest/auroraextendedcontent/aurora-faq.html — «automatically scales up to 256 TiB per database instance», «up to 15 low-latency read replicas»",
+    "docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Concepts.AuroraHighAvailability.html — «service is typically restored in less than 60 seconds, and often less than 30 seconds» при наличии реплик; failover автоматический",
+    "aws.amazon.com/rds/aurora/ — актуальная формулировка производительности: «Aurora offers 6x the throughput of PostgreSQL and MySQL» (прежнее «3–5x» снято)",
+    "docs.aws.amazon.com/AmazonRDS/latest/AuroraPostgreSQLReleaseNotes/AuroraPostgreSQL.Extensions.html — расширения Aurora PostgreSQL перечислены поддерживаемым списком по версиям движка",
+    "aws.amazon.com/cloudfront/features/ — «CloudFront has 750+ POPs in 100+ cities across 50+ countries»",
+    "docs.aws.amazon.com/streams/latest/dev/kinesis-extended-retention.html — «stores records from 24 hours by default, up to 8760 hours (365 days)»",
+    "aws.amazon.com/free — Free Tier для новых аккаунтов кредитный (проверено 2026-08-14, коммит c047517f)"
+  ],
+  "version_sensitive_claims": [
+    "Q14: автоматический рост хранилища Aurora — до 256 TiB на инстанс (было устаревшее «10 GB → 128 TB»)",
+    "Q14: failover Aurora автоматический и обычно укладывается в минуту; у обычного RDS с Multi-AZ он тоже автоматический, но занимает 1–2 мин — прежняя формулировка «Вручную» противоречила Q13",
+    "Q14: кратность выигрыша по производительности — маркетинговая величина AWS, менялась (3–5x → до 6x), поэтому вынесена из вариантов в текст с явной атрибуцией",
+    "Q14: совместимость Aurora PostgreSQL описана через список поддерживаемых расширений, а не через «99% PG»",
+    "Q21: число точек присутствия CloudFront растёт (600 → 750+), в вариантах числа не используются",
+    "Q28: retention Kinesis до 365 дней против настраиваемой недели у MSK — основа дистрактора C",
+    "Q6/Q11: потолки томов EBS (16 TiB gp3, 64 TiB io2 Block Express) — проверены 2026-08-14",
+    "Q31: опор Well-Architected шесть, Sustainability добавлена в 2021"
+  ],
+  "staleness_risks": [
+    "Цены ($/GB классов S3, тариф NAT Gateway, $0.40 за секрет) устаревают быстрее всего — в вариантах A/B/C/D чисел нет, они остались только в тексте шпаргалки",
+    "Число точек присутствия CDN и маркетинговая кратность throughput Aurora меняются от релиза к релизу",
+    "Формулировки «в 2025 по умолчанию берут X» (Aurora, Redis, EventBridge) — рекомендации на момент написания, не версионный факт"
+  ],
   "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+    "Проверка выполнена после авторинга всех 34 блоков; 4 дефекта теории исправлены в источнике (Aurora storage, Aurora performance, Aurora compatibility, CloudFront PoP) плюс выровнена строка failover, противоречившая Q13",
+    "Дистрактор Q14/D переанкорен с оси «расширения» на ось «скорость failover», так как утверждение о недоступных расширениях перестало быть надёжно опровержимым"
   ]
 }
