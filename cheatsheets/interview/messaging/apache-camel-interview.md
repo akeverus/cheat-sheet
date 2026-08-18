@@ -345,7 +345,7 @@ onException(IOException.class)
     .log("Сдались после ретраев: ${exception.message}");
 ```
 
-**2. `DeadLetterChannel` — стратегия error handler по умолчанию для «непереваренных» сообщений.** После исчерпания ретраев сообщение уходит в dead-letter эндпоинт, маршрут продолжает работать дальше.
+**2. `DeadLetterChannel` — стратегия error handler для «непереваренных» сообщений.** Её задают явно: после исчерпания ретраев сообщение уходит в dead-letter эндпоинт, а маршрут продолжает работать дальше.
 
 ```java
 errorHandler(deadLetterChannel("kafka:dlq")
@@ -353,7 +353,7 @@ errorHandler(deadLetterChannel("kafka:dlq")
     .redeliveryDelay(2000));
 ```
 
-Альтернатива — `defaultErrorHandler()` (ретраит, но при провале пробрасывает исключение наверх, без DLQ) и `noErrorHandler()`.
+По умолчанию же работает `defaultErrorHandler()`: ретраи в нём настраиваются (из коробки их нет), dead-letter-очереди он не знает и при провале пробрасывает исключение наверх. Третий вариант — `noErrorHandler()`, который не делает ничего.
 
 **3. `doTry/doCatch/doFinally` — локальный try-catch прямо в DSL.** Java-эквивалент try-catch-finally для одного участка маршрута, когда ошибку надо обработать «здесь и сейчас», а не глобально.
 
@@ -532,7 +532,7 @@ AdviceWith.adviceWith(context, "order-import", in ->
 
 **В Spring Boot** используют `@SpringBootTest` + `@CamelSpringBootTest` (исторически `@CamelSpringBootRunner`), `@MockEndpoints` для авто-подмены и `@EndpointInject` для инъекции mock-эндпоинта.
 
-**Подвох:** при использовании `AdviceWith` маршрут нужно «адвайзить» до старта контекста (или не автостартовать его), иначе изменения не применятся. В JUnit 5 для этого ставят `isUseAdviceWith()` → `true`.
+**Подвох:** при использовании `AdviceWith` маршрут нужно «адвайзить» до старта контекста (или не автостартовать его), иначе изменения не применятся. Для этого в тесте переопределяют `isUseAdviceWith()` → `true`.
 
 ## Q16. Type converters и observability (Micrometer, tracing)
 

@@ -1,14 +1,33 @@
 {
   "topic_slug": "apache-camel-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
+  "round": "ROUND-10-LINKAGE-FIRST",
+  "status": "CHECKED",
+  "version_sensitive": true,
+  "product_version": "Apache Camel 4.x (JDK 17+, пара со Spring Boot 3.x); camel-spring-boot-starter, camel-observation-starter, camel-test-spring-junit6",
+  "checked_date": "2026-08-19",
+  "sources": [
+    "context7 /apache/camel — what-are-the-dependencies.adoc: «Camel 4.0.0+ requires JDK 17 and supports JDK 21»; camel-4-migration-guide.adoc: «Camel 4 supports Java 17. Support for Java 11 is dropped»",
+    "context7 /apache/camel — error-handler.adoc: «The DefaultErrorHandler is the standard error handler in Camel. It differs from the Dead Letter Channel as it does not include a dead letter queue and does not handle exceptions by default»",
+    "context7 /apache/camel — dead-letter-channel.adoc: maximumRedeliveries «-1 for unlimited, 0 to disable», maximumRedeliveryDelay по умолчанию 1 минута",
+    "context7 /apache/camel — saga-eip.adoc: InMemorySagaService «not recommended for production as it lacks persistence and remote context propagation»; LRASagaService «based on the MicroProfile LRA specification, supporting remote context propagation and providing consistency guarantees through an external coordinator»; «Compensating actions must be idempotent»; заголовок Long-Running-Action",
+    "context7 /apache/camel-spring-boot — starters/observation.adoc: артефакт camel-observation-starter, аннотация @CamelObservation на главном классе или конфигурации",
+    "context7 /apache/camel-spring-boot — spring-boot.adoc: @CamelSpringBootTest вместе с @MockEndpoints и @EndpointInject; тестовый артефакт camel-test-spring-junit6"
+  ],
+  "version_sensitive_claims": [
+    "Q10: обработчик ошибок по умолчанию — DefaultErrorHandler, а не DeadLetterChannel; последний задают явно (дефект теории исправлен в источнике)",
+    "Q10: DefaultErrorHandler не ретраит из коробки — повторы в нём настраиваются (формулировка «ретраит» убрана)",
+    "Q11: крайние значения числа повторов — 0 отключает, -1 означает бесконечные попытки",
+    "Q12: две реализации saga-сервиса и их гарантии; компенсации обязаны быть идемпотентными",
+    "Q13: Camel 4.x требует JDK 17 и идёт в паре со Spring Boot 3.x — версии согласуют общим BOM",
+    "Q15: упоминание isUseAdviceWith сделано версионно-нейтральным: тестовый артефакт уже перешёл на JUnit 6",
+    "Q16: camel-observation-starter и @CamelObservation существуют и настраивают метрики и спаны"
+  ],
+  "staleness_risks": [
+    "Мажорная ветка Camel и её пара по Spring Boot двигаются с релизами — в вариантах A/B/C/D номера версий не используются",
+    "Счётчик компонентов («300+») растёт от релиза к релизу; в вариантах он не фигурирует",
+    "Имя тестового артефакта следует за мажорной версией JUnit (junit5 → junit6)"
+  ],
   "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+    "Проверка выполнена до авторинга блоков; 3 дефекта теории исправлены в источнике (DeadLetterChannel как «стратегия по умолчанию», поведение defaultErrorHandler, привязка isUseAdviceWith к JUnit 5)"
   ]
 }
