@@ -145,11 +145,10 @@ class TemplateFragmentContractTest {
         // весь блок атомарно; туда переносится focus, детали читаются в своём темпе.
         assertThat(postAnswerControls).contains("id=\"result-announce\"");
         assertThat(postAnswerControls).contains("aria-atomic=\"true\"");
-        // Кнопка «доп. анализ» раскрывает sink #extra-analysis-content,
-        // стоящий ПОСЛЕ неё (appendAnalysisBlock складывает блоки под кнопку).
-        assertThat(postAnswerControls).contains("aria-controls=\"extra-analysis-content\"");
-        assertThat(postAnswerControls).contains("id=\"extra-analysis-content\"");
-
+        // Второй зоны под разбором больше нет: похожие вопросы живут вкладкой внутри
+        // #result-feedback. Пока маркеры живы, вторая зона возвращается одной строкой.
+        assertThat(postAnswerControls).doesNotContain("id=\"extra-analysis-toggle\"");
+        assertThat(postAnswerControls).doesNotContain("id=\"extra-analysis-content\"");
         // Слот сообщения. `data-notice-host` — контракт поиска хоста из ui/alerts.js:
         // страничный слот (`scope='page'`) выигрывает у общего (`scope='shell'`).
         // До iter-82 скрипт искал `#interview-alert`, который печатали ровно две
@@ -210,7 +209,9 @@ class TemplateFragmentContractTest {
         assertThat(focusTraining).contains("hintText='Сначала разбор ответа, затем итог и дополнительные блоки'");
         assertThat(focusTraining).contains("focus-session-more");
         assertThat(focusTraining).contains("data-confirm-title=\"Завершить сессию?\"");
-        assertThat(focusTraining).contains("extraButtonText='Похожие вопросы'");
+        // iter-127: параметр extraButtonText снят вместе с кнопкой доп.анализа —
+        // похожие вопросы стали вкладкой разбора, и подпись кнопки описывать нечего.
+        assertThat(focusTraining).doesNotContain("extraButtonText");
         // Трек гейтится th:if="${interviewSession != null}" (вне сессии пустой
         // progressbar 0/0 не рендерится) → null-ветки тернарников не нужны.
         assertThat(focusTraining).contains("aria-valuemax=${interviewSession.getTotal()}");

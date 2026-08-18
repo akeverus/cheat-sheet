@@ -6,6 +6,7 @@ import { renderDynamicContent } from '../content/dynamic-content.js';
 import { clearInlineAlert, setInlineAlert } from '../ui/alerts.js';
 import { confirmModal } from '../ui/modals.js';
 import { setPending, clearPending } from '../ui/pending.js';
+import { initTablist } from '../ui/tablist.js';
 import { refreshStatsFromServer, updateSessionProgress } from './session-stats.js';
 
 let interviewBound = false;
@@ -122,7 +123,6 @@ export function initInterviewForm() {
   const submitBtn = document.getElementById('interview-submit');
   const feedbackDiv = document.getElementById('result-feedback');
   const nextLink = document.getElementById('next-question');
-  const extraAnalysisBtn = document.getElementById('extra-analysis-toggle');
   const answerFlowHint = document.getElementById('answer-flow-hint');
   if (!form || !optionsContainer) return;
   interviewBound = true;
@@ -318,18 +318,54 @@ export function initInterviewForm() {
         + `</details>`
       : '';
 
+    // РАЗБОР — ВКЛАДКИ, А НЕ ЛЕНТА В ТРИ ЭКРАНА.
+    //
+    // Замер до правки (Chromium, экзамен с кодом): документ после ответа рос с 1205 до
+    // 3369 на 1440×900 и с 2146 до 5278 на 390×844, то есть в 2.5–2.8 раза. Три четверти
+    // прироста давала одна панель — разбор неверных вариантов (1499px из 1955).
+    //
+    // Вердикт и мета остаются ВНЕ вкладок: это результат, он нужен всегда. Переключаются
+    // объяснения — почему верно, почему остальные нет, что почитать рядом. Панель без
+    // содержимого не создаётся, и если панель осталась одна, переключателя нет вовсе:
+    // вкладка, у которой нет соседей, — это заголовок, притворяющийся управлением.
+    const panels = [];
+    if (explanationPanel || additionalPanel) {
+      panels.push({ id: 'why', label: 'Почему это так', html: explanationPanel + additionalPanel });
+    }
+    const distractors = buildDistractorPanel(data);
+    if (distractors) {
+      panels.push({ id: 'others', label: 'Другие варианты', html: distractors });
+    }
+    const related = buildRelatedPanel(data);
+    if (related) {
+      panels.push({ id: 'related', label: 'Похожие вопросы', html: related });
+    }
+
+    const tablist = panels.length > 1
+      ? `<div class="section-tabs feedback-tabs" role="tablist" id="feedback-tablist" aria-label="Разбор ответа">`
+        + panels.map((panel, i) => `<button type="button" class="section-tab" role="tab"`
+            + ` id="feedback-tab-${panel.id}" aria-controls="feedback-panel-${panel.id}"`
+            + ` aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${panel.label}</button>`).join('')
+        + `</div>`
+      : '';
+    const panelsHtml = panels.map((panel, i) => `<div class="feedback-panel${i === 0 ? ' is-active' : ''}"`
+      + ` id="feedback-panel-${panel.id}" role="tabpanel" aria-labelledby="feedback-tab-${panel.id}">`
+      + panel.html + `</div>`).join('');
+
     feedbackDiv.innerHTML = `
       <div class="feedback-verdict result-banner ${isCorrect ? 'result-correct' : 'result-wrong'}">
         <strong class="result-verdict">${buildVerdictLine(data)}</strong>
       </div>
-      ${explanationPanel}
-      ${buildDistractorPanel(data)}
-      ${additionalPanel}
+      ${tablist}
+      ${panelsHtml}
       <div class="feedback-meta">
         ${buildXpBadge(data)}
         ${buildNextReviewLine(data)}
       </div>
     `;
+    if (panels.length > 1) {
+      initTablist(document.getElementById('feedback-tablist'));
+    }
     feedbackDiv.classList.remove('hidden');
     renderDynamicContent(feedbackDiv);
     // WCAG 4.1.3: лаконичный статус — только строка вердикта, а не весь разбор.
@@ -384,14 +420,15 @@ export function initInterviewForm() {
     });
   }
 
-  function appendAnalysisBlock(el) {
-    const sink = document.getElementById('extra-analysis-content');
-    if (sink) sink.appendChild(el);
-    else feedbackDiv.after(el);
-  }
-
-  function renderRelatedQuestions(data) {
-    if (!data.relatedQuestions?.length) return;
+  /**
+   * Похожие вопросы. Раньше они лежали за отдельной кнопкой «Похожие вопросы» и
+   * дописывались в зону #extra-analysis-content ПОД разбором — то есть под лентой в
+   * полторы тысячи пикселей, куда доскроллить успевали немногие. Теперь это третья
+   * вкладка разбора: то же содержимое, но в одном переключателе с остальными
+   * объяснениями, без второй кнопки и второй зоны.
+   */
+  function buildRelatedPanel(data) {
+    if (!data.relatedQuestions?.length) return '';
     const currentGroup = form.querySelector('input[name="group"]')?.value || '';
     const currentOrdered = form.querySelector('input[name="ordered"]')?.value || 'true';
     const currentImportant = form.querySelector('input[name="important"]')?.value === 'true';
@@ -399,8 +436,6 @@ export function initInterviewForm() {
     const currentShuffle = form.querySelector('input[name="shuffle"]')?.value === 'true';
     const currentWeakTopics = form.querySelector('input[name="weakTopics"]')?.value === 'true';
 
-    const relatedDiv = document.createElement('div');
-    relatedDiv.className = 'related-questions';
     let relatedHtml = '<h2 class="related-questions-title">' + icon('link', 'px-icon-lead') + 'Похожие вопросы для закрепления:</h2>';
     relatedHtml += '<div class="related-questions-list" role="list">';
     data.relatedQuestions.forEach((rq) => {
@@ -414,8 +449,7 @@ export function initInterviewForm() {
         + '">' + escapeHtml(rq.text) + '</a></div>';
     });
     relatedHtml += '</div>';
-    relatedDiv.innerHTML = relatedHtml;
-    appendAnalysisBlock(relatedDiv);
+    return '<div class="related-questions">' + relatedHtml + '</div>';
   }
 
   function attachConfidenceButtons(data) {
@@ -525,23 +559,6 @@ export function initInterviewForm() {
     setInteractionBusy(false);
     feedbackDiv.setAttribute('tabindex', '-1');
     feedbackDiv.focus();
-
-    const hasRelated = Array.isArray(data.relatedQuestions) && data.relatedQuestions.length > 0;
-    if (extraAnalysisBtn && hasRelated) {
-      extraAnalysisBtn.classList.remove('hidden');
-      extraAnalysisBtn.removeAttribute('aria-disabled');
-      extraAnalysisBtn.setAttribute('aria-expanded', 'false');
-      let relatedRevealed = false;
-      extraAnalysisBtn.onclick = () => {
-        if (relatedRevealed) return;
-        relatedRevealed = true;
-        extraAnalysisBtn.setAttribute('aria-expanded', 'true');
-        renderRelatedQuestions(data);
-        extraAnalysisBtn.classList.add('hidden');
-      };
-    } else if (extraAnalysisBtn) {
-      extraAnalysisBtn.classList.add('hidden');
-    }
 
     nextLink.onclick = (e) => {
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;

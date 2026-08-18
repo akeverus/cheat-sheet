@@ -815,10 +815,13 @@ class InterviewControllerTest {
         assertThat(body).contains("id=\"interview-form\"");
         assertThat(body).contains("id=\"interview-alert\"");
         assertThat(body).contains("id=\"result-feedback\"");
-        assertThat(body).contains("id=\"extra-analysis-toggle\"");
-        assertThat(body).contains("aria-controls=\"extra-analysis-content\"");
         assertThat(body).contains("aria-atomic=\"true\"");
-        assertThat(body).contains("id=\"extra-analysis-content\"");
+        // iter-127: кнопка «Похожие вопросы» и зона #extra-analysis-content УДАЛЕНЫ —
+        // похожие стали третьей вкладкой разбора. Проверяем именно отсутствие: пока
+        // маркеры живы, легко вернуть вторую зону под разбором, а она и была обходом
+        // длины (замер: разбор 1955px, похожие дописывались ПОД ним).
+        assertThat(body).doesNotContain("id=\"extra-analysis-toggle\"");
+        assertThat(body).doesNotContain("id=\"extra-analysis-content\"");
     }
 
     @Test
@@ -828,9 +831,10 @@ class InterviewControllerTest {
         assertThat(body).contains("id=\"interview-form\"");
         assertThat(body).contains("Пост-разбор");
         assertThat(body).contains("Сначала разбор ответа, затем итог и дополнительные блоки");
-        // AIR-1: AI-разбор вырезан → единственный пост-ответный блок «Похожие
-        // вопросы» (кнопка extra-analysis раскрывает relatedQuestions).
-        assertThat(body).contains("Похожие вопросы");
+        // Разбор со вкладками строится ПОСЛЕ ответа: до него на странице не должно быть
+        // ни панелей, ни переключателя — иначе пустые вкладки видны в первом кадре.
+        assertThat(body).doesNotContain("id=\"feedback-tablist\"");
+        assertThat(body).doesNotContain("class=\"feedback-panel");
         // Раскрывашка «Подробнее» — часть страницы результата, до ответа её
         // быть не должно. Проверяем сам контрол, а не слово: «Подробнее»
         // легально встречается в комментариях подключённых фрагментов.
