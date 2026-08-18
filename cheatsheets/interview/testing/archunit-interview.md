@@ -160,7 +160,7 @@ ArchRule r2 = noClasses()
 
 ## Q4. (!) Как описать слоистую архитектуру через layeredArchitecture()
 
-`layeredArchitecture()` из Library API (`Architectures`) — декоратор, который позволяет описать слои и разрешённые направления доступа в несколько строк вместо десятка отдельных `noClasses()`-правил.
+`layeredArchitecture()` из Library API (`Architectures`) — фабричный метод, возвращающий составное правило (`LayeredArchitecture` сам реализует `ArchRule`): оно позволяет описать слои и разрешённые направления доступа в несколько строк вместо десятка отдельных `noClasses()`-правил.
 
 Шаги:
 
@@ -186,10 +186,9 @@ flowchart TD
     C["Controller<br/>..controller.."]
     S["Service<br/>..service.."]
     P["Persistence<br/>..persistence.."]
-    C -->|mayOnlyBeAccessedByLayers Controller| S
-    S -->|mayOnlyBeAccessedByLayers Service| P
-    note["Persistence -> Service запрещён<br/>(обратная зависимость = нарушение)"]
-    P -.->|нарушение| S
+    C -->|"whereLayer(Service).mayOnlyBeAccessedByLayers(Controller)"| S
+    S -->|"whereLayer(Persistence).mayOnlyBeAccessedByLayers(Service)"| P
+    P -.->|"обратная зависимость = нарушение"| S
 ```
 
 Нюансы:
@@ -202,7 +201,7 @@ flowchart TD
 
 ## Q5. Чем onionArchitecture() отличается от layeredArchitecture()
 
-`onionArchitecture()` (он же гексагональная / clean) — специализированный декоратор для архитектуры с доменным ядром в центре и адаптерами по краям. В отличие от линейной слойки, здесь зависимости направлены **внутрь**: внешние кольца могут зависеть от домена, а домен не зависит ни от application-сервисов, ни от адаптеров. Зависимости на JDK и внешние библиотеки правило не трогает — оно проверяет только объявленные пакеты.
+`onionArchitecture()` (он же гексагональная / clean) — специализированное составное правило из того же Library API для архитектуры с доменным ядром в центре и адаптерами по краям. В отличие от линейной слойки, здесь зависимости направлены **внутрь**: внешние кольца могут зависеть от домена, а домен не зависит ни от application-сервисов, ни от адаптеров. Зависимости на JDK и внешние библиотеки правило не трогает — оно проверяет только объявленные пакеты.
 
 Метод принимает заранее именованные роли:
 
@@ -215,7 +214,7 @@ ArchRule onion = onionArchitecture()
         .adapter("persistence", "..adapter.persistence..");
 ```
 
-Сравнение двух декораторов:
+Сравнение двух составных правил:
 
 | Критерий | `layeredArchitecture()` | `onionArchitecture()` |
 |----------|-------------------------|------------------------|
