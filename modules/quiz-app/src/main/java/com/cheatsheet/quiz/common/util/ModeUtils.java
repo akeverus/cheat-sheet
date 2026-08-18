@@ -50,6 +50,7 @@ public class ModeUtils {
      *
      * @param name         имя enum-константы — значение, уходящее на сервер
      * @param label        русская подпись
+     * @param glyph        имя пиксельной сцены режима в спрайте (fragments/icons.html)
      * @param startAction  подпись кнопки старта (винительный падеж; из подписи не выводится)
      * @param defaultCount число вопросов, которое подставится при выборе режима
      * @param unlimited    режим без счётчика вопросов — поле «Вопросов» прячется
@@ -59,6 +60,7 @@ public class ModeUtils {
             String name,
             String label,
             String description,
+            String glyph,
             String startAction,
             int defaultCount,
             boolean unlimited,
@@ -107,6 +109,40 @@ public class ModeUtils {
             case CODE_CHALLENGE -> "Начать код-челлендж";
             case EXAM -> "Начать экзамен";
             case MARATHON -> "Начать интенсив";
+        };
+    }
+
+    /**
+     * Имя пиксельной сцены режима в спрайте.
+     *
+     * <p>Восемь режимов в конструкторе различались только текстом: восемь одинаковых
+     * плиток, и чтобы отличить одну от другой, надо было прочитать все описания подряд.
+     * Сцена даёт режиму силуэт, который узнаётся до чтения.
+     *
+     * <p>Имя символа живёт ЗДЕСЬ, рядом с подписью и описанием, а не в шаблоне: копия
+     * таблицы режимов в разметке однажды уже показала пользователю имя enum-константы
+     * вместо подписи (round-01 C22), и гейт с тех пор запрещает такие копии.
+     *
+     * <p>{@code switch} исчерпывающий: новый режим не соберётся, пока для него не
+     * нарисована сцена — безымянная плитка в ряду из восьми silhouette-карточек
+     * читалась бы как сбой загрузки.
+     *
+     * @param mode режим тестирования (может быть {@code null})
+     * @return имя символа; для {@code null} — сцена тренировки как нейтральная
+     */
+    public String glyph(InterviewMode mode) {
+        if (mode == null) {
+            return "mode-training";
+        }
+        return switch (mode) {
+            case TRAINING -> "mode-training";
+            case STUDY -> "mode-study";
+            case FLASHCARD -> "mode-flashcard";
+            case TYPED_RECALL -> "mode-typed";
+            case INTERVIEW -> "mode-interview";
+            case CODE_CHALLENGE -> "mode-forge";
+            case EXAM -> "mode-exam";
+            case MARATHON -> "mode-path";
         };
     }
 
@@ -209,6 +245,7 @@ public class ModeUtils {
                         mode.name(),
                         displayName(mode),
                         description(mode),
+                        glyph(mode),
                         startAction(mode),
                         mode == InterviewMode.EXAM || mode.usesTypedInput() ? examCount : marathonCount,
                         mode.isUnlimited(),

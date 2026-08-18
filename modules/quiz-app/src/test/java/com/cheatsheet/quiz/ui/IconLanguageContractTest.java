@@ -49,6 +49,9 @@ class IconLanguageContractTest {
     private static final Path NAV_SECTION =
             Path.of("src/main/java/com/cheatsheet/quiz/config/web/NavSection.java");
     /** Каталог знаков отличия — второй источник имён глифов, живущий в Java. */
+    /** Сцены режимов подставляются по имени из ModeUtils — как навигация и знаки. */
+    private static final Path MODE_UTILS =
+            Path.of("src/main/java/com/cheatsheet/quiz/common/util/ModeUtils.java");
     private static final Path ACHIEVEMENTS =
             Path.of("../quiz-domain/src/main/java/com/cheatsheet/quiz/domain/Achievement.java");
 
@@ -282,6 +285,13 @@ class IconLanguageContractTest {
         Matcher badges = Pattern.compile("new Achievement\\(\"([a-z-]+)\"").matcher(read(ACHIEVEMENTS));
         while (badges.find()) {
             found.add(badges.group(1));
+        }
+
+        // Сцены режимов — тот же случай: карточка конструктора берёт имя символа из
+        // ModeUtils#glyph, поэтому строки `#mode-…` в разметке тоже нет.
+        Matcher modes = Pattern.compile("-> \"(mode-[a-z-]+)\";").matcher(read(MODE_UTILS));
+        while (modes.find()) {
+            found.add(modes.group(1));
         }
         return found;
     }

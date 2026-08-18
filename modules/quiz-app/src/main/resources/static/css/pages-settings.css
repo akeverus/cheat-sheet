@@ -441,13 +441,34 @@ html[data-design] .settings-page .mode-card-input {
 }
 html[data-design] .settings-page .mode-card-body {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  align-items: flex-start;
+  gap: var(--space-3);
   height: 100%;
   padding: var(--space-4);
   background: var(--color-bg-secondary);
   border: var(--rule-weight) solid var(--color-border-primary);
   border-radius: var(--border-radius-md);
+}
+/* СЦЕНА РЕЖИМА — СИЛУЭТ, КОТОРЫЙ УЗНАЁТСЯ ДО ЧТЕНИЯ.
+
+   Восемь карточек различались только текстом: чтобы выбрать между «Печатным
+   ответом», «Интервью» и «Код-челленджем», приходилось прочитать все восемь
+   описаний. Сцена берёт на себя первый взгляд, описание — второй.
+
+   Размер строго целократный сетке 16×16 (×2 = 32px): нецелый масштаб размывает
+   пиксель, ради которого сцена и рисовалась. Цвет — токен текста, поэтому сцена
+   живёт в обеих темах без второй палитры и темнеет вместе с подписью. */
+html[data-design] .settings-page .mode-card-glyph {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  color: var(--color-text-tertiary);
+}
+html[data-design] .settings-page .mode-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
 }
 html[data-design] .settings-page .mode-card-title {
   font-weight: var(--font-weight-medium);
@@ -475,6 +496,42 @@ html[data-design] .settings-page .mode-card-input:checked + .mode-card-body .mod
   font-weight: var(--font-weight-bold);
   color: var(--color-accent-strong);
 }
+/* Выбранная сцена загорается тем же акцентом, что и подпись: признак остаётся
+   не единственным (жирность заголовка и кромка на месте), но взгляд, ведомый
+   силуэтом, получает подтверждение там же, где искал. */
+html[data-design] .settings-page .mode-card-input:checked + .mode-card-body .mode-card-glyph {
+  color: var(--color-accent-strong);
+}
+
+/* В РУКЕ ОБЪЯСНЯЕТ СЕБЯ ВЫБРАННЫЙ РЕЖИМ, А НЕ ВСЕ ВОСЕМЬ СРАЗУ.
+
+   Замер 390×844: восемь карточек в одну колонку по 113px — сетка 969px, то есть
+   выбор режима длиннее целого экрана, и кнопка запуска оказывается на 2503.
+   Описание при этом читают один раз и для одного режима: остальные семь абзацев
+   человек пролистывает, чтобы добраться до счётчика.
+
+   Поэтому на телефоне описание остаётся у выбранного, а у прочих уходит из потока
+   — но НЕ из дерева доступности: `clip-path` вместо `display: none`, потому что
+   скринридер читает карточку целиком, и обрезанное до заголовка описание лишило бы
+   его ровно того, ради чего карточки и заводились. Силуэт при этом на месте у всех
+   восьми: он и должен работать до чтения. */
+@media (max-width: 767px) {
+  html[data-design] .settings-page .mode-card-input:not(:checked) + .mode-card-body .mode-card-desc {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  html[data-design] .settings-page .mode-card-body {
+    align-items: center;
+    padding: var(--space-3);
+  }
+  html[data-design] .settings-page .mode-card-input:checked + .mode-card-body {
+    align-items: flex-start;
+  }
+}
 
 /* Карточка «Сегодня» существует ровно тогда, когда ей есть что сказать.
    Полоса серии заполняется скриптом и до этого несёт класс `hidden`; без JS она
@@ -484,4 +541,48 @@ html[data-design] .settings-page .mode-card-input:checked + .mode-card-body .mod
    отдельный флаг: второй источник правды разошёлся бы с первым. */
 html[data-design] .settings-page #builder-stats-card:has(.streak-bar.hidden) {
   display: none;
+}
+
+/* ===========================================================================
+   ЗАПУСК ПОД РУКОЙ — ПЛАВАЮЩАЯ КНОПКА НА ТЕЛЕФОНЕ.
+
+   Замер 390×844: кнопка запуска стояла на 2129 при документе 2416 — чтобы начать
+   сессию, конструктор нужно было пролистать целиком. Страница существует ради
+   одного действия, и это действие было наименее достижимым там, где листать
+   дороже всего.
+
+   ПЕРВАЯ СБОРКА закрепляла всю полосу вместе с предпросмотром — снимок показал,
+   что в 358px ширины значение обрезается посреди слова («без огран…»), а кнопка
+   «наверх» ложится поверх запуска. Запись отозвана: плавает ТОЛЬКО действие,
+   предпросмотр остаётся в потоке, где его читают, настроив параметры.
+
+   ВТОРАЯ ошибка — слой: правило стояло в `shell`, а `position` кнопки задаётся в
+   `components`, то есть в слое ПОЗЖЕ, и молча выигрывал (замер: `position:
+   relative`, кнопка снова на 2057). Правило страницы живёт в слое страницы.
+
+   Наложение кнопки «наверх» на запуск оказалось и на десктопе — обе плавали в
+   одном углу; здесь их порядок задан явно на обоих концах диапазона.
+   =========================================================================== */
+@media (max-width: 900px) {
+  html[data-design] .settings-page .builder-start-cta {
+    position: fixed;
+    left: var(--space-4);
+    right: calc(var(--space-4) + 3.5rem);
+    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-2));
+    z-index: var(--z-sticky);
+    width: auto;
+    min-width: 0;
+  }
+  html[data-design] .settings-page .back-to-top {
+    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-2));
+  }
+  html[data-design] .settings-page .ed-page {
+    padding-bottom: calc(var(--mobile-nav-height) + 5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+@media (min-width: 901px) {
+  /* Полоса запуска закреплена у нижней кромки — кнопка «наверх» поднимается над ней. */
+  html[data-design] .settings-page .back-to-top {
+    bottom: calc(5.5rem + var(--space-3));
+  }
 }
