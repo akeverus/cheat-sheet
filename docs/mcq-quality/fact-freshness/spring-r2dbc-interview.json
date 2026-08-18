@@ -1,14 +1,27 @@
 {
   "topic_slug": "spring-r2dbc-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
+  "round": "ROUND-10-LINKAGE-FIRST",
+  "status": "CHECKED",
+  "version_sensitive": true,
+  "product_version": "Spring Data R2DBC в составе Spring Boot 3.x; реактивный драйвер Postgres org.postgresql:r2dbc-postgresql 1.1.2.RELEASE (версия из BOM Spring Boot)",
+  "checked_date": "2026-08-14",
+  "sources": [
+    "context7 /spring-projects/spring-boot — platform/spring-boot-dependencies/build.gradle: library(\"R2DBC Postgresql\", \"1.1.2.RELEASE\") в группе org.postgresql; io.r2dbc остался у r2dbc-h2",
+    "context7 /spring-projects/spring-data-relational — r2dbc/mapping.adoc: «Enums are mapped to String» в разделе Default Type Mapping; переопределение через @WritingConverter и EnumWriteSupport",
+    "context7 /spring-projects/spring-data-relational — r2dbc/getting-started.adoc: AbstractR2dbcConfiguration предоставляет ExceptionTranslator, переводящий исключения R2DBC в переносимую иерархию Spring DataAccessException"
+  ],
+  "version_sensitive_claims": [
+    "Q2: реактивный драйвер Postgres живёт в группе org.postgresql, а не io.r2dbc — координаты менялись при переходе на 0.9/1.0",
+    "Q10: репозитории, R2dbcEntityTemplate и DatabaseClient отдают переведённые исключения (DataIntegrityViolationException, TransientDataAccessResourceException), а не исходные R2dbc*-типы",
+    "Q12: по умолчанию enum пишется строкой; конвертеры нужны под нативный enum-тип БД или иное представление",
+    "Q13: Statement.add() закрывает набор привязок и открывает следующий — после последней строки его не вызывают",
+    "Q14: Flyway и Liquibase остаются JDBC-based, реактивного API у них нет; альтернатива с нативной поддержкой — r2dbc-migrate"
+  ],
+  "staleness_risks": [
+    "Версия драйвера в BOM растёт с каждым релизом Spring Boot — в тексте шпаргалки номер версии не называется, поэтому устаревание ограничено координатами артефакта",
+    "Набор предопределённых параметров пула r2dbc-pool может пополняться в минорных релизах"
+  ],
   "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+    "Проверка выполнена перед авторингом блоков; 7 дефектов теории исправлены коммитом 861c6658"
   ]
 }
