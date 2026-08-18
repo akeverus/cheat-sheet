@@ -1,2585 +1,373 @@
 {
   "topic_slug": "aws-interview",
-  "round": 9,
-  "reviewed_commit": null,
-  "status": "TODO",
-  "source_file": "modules/quiz-app/src/main/resources/seed/mcq/cloud/aws-interview.json",
-  "theory_file": "cheatsheets/interview/cloud/aws-interview.md",
-  "summary": {
-    "questions": 34,
-    "blocks": 34,
-    "blocks_done": 0,
-    "critical": 0,
-    "high": 0,
-    "medium": 0,
-    "low": 0
+  "round": "ROUND-10-LINKAGE-FIRST",
+  "status": "AUDITED",
+  "status_note": "Приёмка по критерию пользователя (2026-08-14): два полных чистых круга подряд без правок между ними. Фактически чистых кругов три (3-й — кросс-блочный и charset, 4-й — сверка всех чисел с материалом своего Q, 5-й — заземление опровержений). Круги проводились в основном контексте: агенты в этой сессии не используются.",
+  "source_file": "cheatsheets/interview/cloud/aws-interview.md",
+  "mcq_file": "modules/quiz-app/src/main/resources/seed/mcq/cloud/aws-interview.json",
+  "audited": "2026-08-19",
+  "rebuild": "полная пересборка с нуля: 34 блока, 136 вариантов; question_text = нормализованный заголовок ## Q<N>; старый сидер использован только как anti-baseline; позиции правильного ответа распределены заранее (A9/B9/C8/D8)",
+  "toolchain": "WebFetch по докам AWS: Aurora FAQ (256 TiB, до 15 реплик), Aurora HA (failover «typically less than 60 seconds, and often less than 30»), продуктовая страница Aurora (до 6× throughput), Aurora PostgreSQL Extensions (список поддерживаемых расширений), CloudFront Features (750+ PoP), Kinesis extended retention (8760 часов)",
+  "verification": {
+    "deterministic": {
+      "schema": "OK",
+      "linkage_errors": 0,
+      "linkage_warnings": 0,
+      "anti_tell_blocks": 0,
+      "answer_parity_gate": "PASS 12/12",
+      "correct_distribution": {
+        "A": 9,
+        "B": 9,
+        "C": 8,
+        "D": 8
+      }
+    },
+    "adversarial_rounds": [
+      {
+        "round": "1 (варианты против материала Q)",
+        "blocking": 1,
+        "note": "Q3/A обещал «дороже всего», источник говорит «чаще всего даёт неожиданный счёт» — переформулировано"
+      },
+      {
+        "round": "2 (секции)",
+        "blocking": 4,
+        "note": "источник противоречил сам себе: Q2 «более 600 edge-точек» против исправленного Q21 «750+»; плюс три правки читаемости (Q12/C, Q24/B, Q30/B)"
+      },
+      {
+        "round": "3 (кросс-блочный, neighbor leakage, посторонние письменности)",
+        "blocking": 0,
+        "note": "34 анкора различны; CJK и иные письменности — 0"
+      },
+      {
+        "round": "4 (сверка чисел)",
+        "blocking": 0,
+        "note": "все числа из вариантов и секций найдены в материале своего Q: 0 расхождений"
+      },
+      {
+        "round": "5 (заземление опровержений)",
+        "blocking": 0,
+        "note": "what_actually каждого дистрактора опирается на фразу своего Q; 13 низких по формальному покрытию проверены вручную — все заземлены"
+      }
+    ]
   },
-  "reset_baseline": {
-    "reset_date": "2026-07-17",
-    "old_pass_carried_forward": false,
-    "schema_precheck": "PASS",
-    "structural_invariants_precheck": "PASS",
-    "theory_file_present": true,
-    "json_q_numbers": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34
-    ],
-    "theory_q_numbers": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34
-    ],
-    "missing_theory_q_numbers": [],
-    "extra_theory_q_numbers": [],
-    "current_correct_positions": [
-      "A",
-      "D",
-      "C",
-      "C",
-      "A",
-      "D",
-      "A",
-      "B",
-      "D",
-      "C",
-      "D",
-      "D",
-      "C",
-      "B",
-      "D",
-      "A",
-      "C",
-      "C",
-      "B",
-      "A",
-      "A",
-      "D",
-      "A",
-      "D",
-      "C",
-      "A",
-      "B",
-      "B",
-      "B",
-      "C",
-      "B",
-      "B",
-      "B",
-      "A"
-    ],
-    "acceptance_note": "Baseline diagnostics are not ROUND 9 acceptance evidence."
-  },
+  "source_fixes": [
+    "Aurora: авто-рост хранилища «10 GB → 128 TB» → «до 256 TiB на инстанс» (FAQ)",
+    "Aurora: «в 3–5 раз быстрее» → «Выше (AWS заявляет до 6× throughput)»",
+    "Aurora: «99% PG (часть расширений недоступна)» → «Drop-in по протоколу; расширения — из списка Aurora»",
+    "Aurora/RDS: строка failover противоречила Q13 — у RDS с Multi-AZ переключение тоже автоматическое; различие в скорости",
+    "CloudFront: «более 600 edge locations» → «более 750 точек присутствия» (Q21 и Q2)"
+  ],
+  "known_backlog": [
+    "Структурные пересечения дистракторов между соседними Q (приняты по решению пользователя): Q9/A ↔ Q11/A — «S3 не монтируется как диск»; Q18/C ↔ Q23/A — направление трафика через NAT; Q10/C ↔ Q12/C — автоматизация переходов lifecycle. Анкоры блоков при этом различны.",
+    "Цены в тексте шпаргалки (классы S3, NAT Gateway, Secrets Manager) устаревают быстрее прочего; в вариантах A/B/C/D чисел нет, поэтому устаревание не бьёт по MCQ.",
+    "Формулировки «в 2025 по умолчанию берут X» (Aurora, Redis, EventBridge) — рекомендации, а не версионные факты; при следующем проходе стоит освежить год."
+  ],
   "blocks": [
     {
       "q_number": 1,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что такое AWS и какие основные категории сервисов?",
+      "tested_claim": "более 200 управляемых сервисов по категориям, оплата за использование, на практике нужно около 20",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 2,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что такое Regions, Availability Zones и Edge Locations?",
+      "tested_claim": "регион делится на изолированные AZ, edge-точки CDN стоят отдельно",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 3,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Как устроена модель тарификации AWS?",
+      "tested_claim": "pay-as-you-go, единица учёта своя у каждого сервиса, egress — источник неожиданного счёта",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 4,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "EC2 — какие бывают типы и семейства инстансов?",
+      "tested_claim": "сначала семейство под профиль нагрузки, затем размер; имя = семейство/поколение/процессор/размер",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 5,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Чем различаются On-Demand, Reserved Instances, Spot и Savings Plans?",
+      "tested_claim": "скидка — плата за обязательство: срок (RI, Savings Plans) или готовность к прерыванию (Spot)",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 6,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что такое AMI, EBS и instance store?",
+      "tested_claim": "AMI — образ для запуска, EBS переживает stop/start, instance store теряется при остановке",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 7,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Как работают Auto Scaling Groups?",
+      "tested_claim": "границы Min/Max плюс целевое значение метрики; число инстансов подбирает сама группа (target tracking)",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 8,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что такое AWS Lambda кратко (подробно — в отдельном файле)?",
+      "tested_claim": "запуск событием, инфраструктура на AWS, счёт из вызовов и миллисекунд × память",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 9,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "S3 — что это и какие основные понятия?",
+      "tested_claim": "объект в bucket адресуется ключом; имя bucket глобально, данные лежат в регионе",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 10,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Какие бывают классы хранения S3?",
+      "tested_claim": "класс выбирают по частоте доступа и допустимой задержке; переходы автоматизируют lifecycle-правилами",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 11,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Чем различаются EBS, EFS и S3?",
+      "tested_claim": "выбор определяется способом доступа: EBS — одна машина, EFS — многие, S3 — API",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 12,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что такое S3 versioning и lifecycle policies?",
+      "tested_claim": "versioning хранит версии при перезаписи, lifecycle переводит и удаляет по возрасту",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 13,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "RDS — какие движки и в чём суть managed-БД?",
+      "tested_claim": "managed снимает рутину эксплуатации, схема/запросы/индексы остаются на команде",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 14,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Чем Aurora отличается от RDS PostgreSQL/MySQL?",
+      "tested_claim": "совместимость по протоколу снаружи, распределённое cluster volume вместо подключённого тома внутри",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 15,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "DynamoDB — в чём его особенность?",
+      "tested_claim": "AWS шардирует по partition key, платой становится модель вокруг паттернов доступа",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 16,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что такое ElastiCache (Redis, Memcached)?",
+      "tested_claim": "управляемый in-memory кеш; движок выбирают по потребности в функционале",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 17,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Какие ещё специализированные БД есть в AWS (DocumentDB, Neptune, Timestream)?",
+      "tested_claim": "нишевые базы берут под профильную модель данных, по умолчанию — Aurora или DynamoDB",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 18,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что такое VPC, subnets и route tables?",
+      "tested_claim": "VPC — изолированная сеть в регионе из подсетей; публичность задаёт маршрут в IGW",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 19,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Чем Security Groups отличаются от NACLs?",
+      "tested_claim": "SG на уровне инстанса и stateful, NACL на уровне подсети и пакетный",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 20,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Какие бывают балансировщики нагрузки (ALB, NLB, CLB)?",
+      "tested_claim": "выбор балансировщика определяется уровнем OSI",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 21,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что такое CloudFront CDN?",
+      "tested_claim": "кеш в точках присутствия отдаёт с ближайшей: падает задержка, разгружается origin",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 22,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что такое Route53?",
+      "tested_claim": "политики маршрутизации превращают DNS в инструмент балансировки и отказоустойчивости",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 23,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Чем NAT Gateway отличается от Internet Gateway?",
+      "tested_claim": "направление: IGW двусторонний для публичных, NAT только исходящий для приватных",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 24,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "IAM — что такое Users, Roles и Policies?",
+      "tested_claim": "identity сами прав не имеют — права даёт прикреплённая политика",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 25,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Как правильно давать права EC2/Lambda через IAM-роли?",
+      "tested_claim": "роль вместо зашитых ключей: временные учётные данные с автоматической ротацией",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 26,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Зачем нужны KMS, Secrets Manager и Parameter Store?",
+      "tested_claim": "KMS — ключи, Secrets Manager — секреты с ротацией, Parameter Store — конфигурация",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 27,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Чем различаются SQS, SNS и EventBridge?",
+      "tested_claim": "различает модель доставки: очередь, топик, шина с маршрутизацией по правилам",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 28,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что выбрать для стриминга — Kinesis или MSK (Kafka)?",
+      "tested_claim": "одна задача, разное происхождение: свой сервис AWS против управляемой Kafka",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 29,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "CloudWatch — что такое metrics, logs и alarms?",
+      "tested_claim": "metrics — ряды, logs — сбор, alarms — реакция на выход метрики за порог",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 30,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Зачем нужен X-Ray для трейсинга?",
+      "tested_claim": "трейс проходит по цепочке и раскладывает задержку по шагам",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 31,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что такое Well-Architected Framework и какие у него опоры?",
+      "tested_claim": "чек-лист принципов, опор шесть: пять исходных плюс Sustainability",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 32,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Чем Multi-AZ отличается от Multi-Region?",
+      "tested_claim": "масштаб отказа и характер репликации: синхронная между зонами, асинхронная между регионами",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 33,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Как оптимизировать затраты в AWS?",
+      "tested_claim": "платить за реально используемое: right-sizing и удаление забытых ресурсов",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     },
     {
       "q_number": 34,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Какие частые ошибки допускают в AWS?",
+      "tested_claim": "частые ошибки — три группы: безопасность, деньги, надёжность",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 1–5, последние три без правок)"
     }
   ]
 }
