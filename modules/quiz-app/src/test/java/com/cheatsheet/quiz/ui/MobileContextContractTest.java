@@ -139,45 +139,102 @@ class MobileContextContractTest {
     /**
      * Справочный материал не стоит между вопросом и ответом, пока место одноколоночное.
      * Замер на 390×844 (экзамен с кодом): первый вариант 1216 → 809, вопрос 282 → 211.
+     *
+     * <p>iter-123 — УСЛОВИЕ БЫЛО ЗАПИСАНО ШИРИНОЙ, А ОЗНАЧАЛО ДРУГОЕ. Правило стояло в
+     * `@media (max-width: 1279px)` и работало, пока одноколоночность совпадала с узким
+     * окном. Как только рабочее место стало включаться по СОДЕРЖИМОМУ поверхности,
+     * совпадение кончилось: у флешкарты до раскрытия колонка одна на любой ширине, и
+     * справка снова встала между вопросом и действием (замер 1440×900: «Показать ответ»
+     * на 917 при сгибе 900). Правило теперь безусловное, а рабочее место перебивает его
+     * собственным `display: grid`.</p>
      */
     @Test
     void referenceMaterialFollowsTheWorkWhileTheDeskIsOneColumn() throws IOException {
-        String oneColumn = mediaBlocks(focusCss(), ONE_COLUMN);
+        String css = focusCss();
 
-        assertThat(oneColumn).as("рабочая колонка перестала быть flex-контейнером — "
+        assertThat(css).as("рабочая колонка перестала быть flex-контейнером — "
                         + "без него порядок блоков не переставить")
-                .contains("display: flex")
-                .contains("flex-direction: column");
-        assertThat(oneColumn).as("справка о теме снова стоит между вопросом и вариантами: "
+                .containsPattern("\\.focus-main \\{\\s*display: flex;\\s*flex-direction: column;");
+        assertThat(css).as("справка о теме снова стоит между вопросом и вариантами: "
                         + "305px поперёк пути к ответу")
                 .containsPattern("\\.topic-brief[^{]*\\{[^}]*order: 1");
-        assertThat(oneColumn).as("хвост страницы («сообщить о проблеме») обогнал справку")
+        assertThat(css).as("хвост страницы («сообщить о проблеме») обогнал справку")
                 .containsPattern("\\.report-zone \\{ order: 2");
+        assertThat(css).as("правило перестановки снова заперто в медиазапрос по ширине — "
+                        + "оно перестанет действовать там, где колонка одна на широком экране")
+                .doesNotContainPattern("@media \\(max-width: 1279px\\) \\{\\s*html\\[data-design\\] \\.focus-page \\.focus-main \\{");
     }
 
     /**
-     * Порог перестановки — тот же, что у рабочего места. Разъедутся — либо справка
-     * окажется в колонке задания И под работой одновременно, либо между 1279 и 1280
-     * появится ширина, где она снова разрезает путь к ответу.
+     * Рабочее место включается по СОДЕРЖИМОМУ поверхности, а не по списку режимов.
+     *
+     * <p>Перечень TYPED_RECALL / INTERVIEW / CODE_CHALLENGE был не полон: FLASHCARD и
+     * STUDY в него не входили, и их рабочая фаза жила стопкой под вопросом, материалами
+     * и справкой. Замер главного действия от верха документа: STUDY «Проверить себя»
+     * 768→1623, 1280→2353, 1440→2300, 1920→2319, 2560→2142 — ни на одной ширине от 768
+     * действие не попадало на первый экран.</p>
+     *
+     * <p>Обратная сторона так же важна: голая кнопка второй колонки не заслуживает.
+     * Первая сборка включала место по `.flashcard-phase`, и снимок 1440×900 показал
+     * правую колонку с бейджем сверху, кнопкой снизу и ~900px пустоты между ними.</p>
      */
     @Test
-    void thePhoneRuleMeetsTheDeskRuleWithoutAGap() throws IOException {
+    void theDeskIsGatedByItsSurfaceAndNotByAListOfModes() throws IOException {
+        String css = focusCss();
+        int desk = css.indexOf("grid-template-columns: minmax(0, var(--workspace-brief))");
+        assertThat(desk).as("правило рабочего места исчезло из pages-focus.css").isNotNegative();
+        String gate = css.substring(Math.max(0, desk - 1200), desk);
+
+        for (String surface : new String[] {
+                ":has(#interview-options)", ":has(.flashcard-answer)",
+                ":has(.typed-workspace)", ":has(.study-learn-phase)" }) {
+            assertThat(gate).as("поверхность %s выпала из гейта рабочего места — "
+                            + "её режим снова разложится стопкой под заданием", surface)
+                    .contains(surface);
+        }
+        assertThat(gate).as("место снова включается по СПИСКУ РЕЖИМОВ: перечень не полон "
+                        + "по построению — забытый режим молча остаётся стопкой")
+                .doesNotContain("data-session-mode=");
+        assertThat(gate).as("место включается по самой фазе, а не по её содержимому: "
+                        + "у флешкарты до раскрытия в поверхности одна кнопка, и правая "
+                        + "колонка вырождается в ~900px пустоты")
+                .doesNotContain(":has(.flashcard-phase)");
+    }
+
+    /**
+     * Меры принадлежат рабочему месту, а не одному его виду. Замер 1440×900, фаза
+     * изучения: без объявленных мер колонки встали «24.6px 892.2px» вместо «602px 512px».
+     */
+    @Test
+    void everyKindOfDeskDeclaresItsMeasures() throws IOException {
+        String css = focusCss();
+        int measures = css.indexOf("--workspace-brief: 48rem;");
+        assertThat(measures).as("меры рабочего места исчезли").isNotNegative();
+        String owners = css.substring(Math.max(0, measures - 800), measures);
+
+        for (String surface : new String[] {
+                ":has(#interview-options)", ":has(.flashcard-answer)",
+                ":has(.typed-workspace)", ":has(.study-learn-phase)" }) {
+            assertThat(owners).as("поверхность %s включает композицию, но мер не объявляет — "
+                            + "`minmax(var(--workspace-desk-min), 1fr)` разрешится в пустоту "
+                            + "и колонка задания схлопнется до 25px", surface)
+                    .contains(surface);
+        }
+    }
+
+    /**
+     * Главное действие фазы остаётся в поле зрения: разбор занимает 599–1311px, и кнопка
+     * под ним уезжает ровно настолько, насколько длинен текст.
+     */
+    @Test
+    void thePhaseActionStaysWithinReach() throws IOException {
         String css = focusCss();
 
-        assertThat(css).as("порог одноколоночного места исчез").contains(ONE_COLUMN);
-        assertThat(css).as("порог двухколоночного рабочего места исчез").contains(TWO_COLUMN);
-
-        Matcher max = Pattern.compile("@media \\(max-width: (\\d+)px\\)").matcher(css);
-        Matcher min = Pattern.compile("@media \\(min-width: 1280px\\)").matcher(css);
-        assertThat(min.find()).isTrue();
-        boolean meets = false;
-        while (max.find()) {
-            if (Integer.parseInt(max.group(1)) == 1279) {
-                meets = true;
-            }
-        }
-        assertThat(meets).as("правило перестановки и правило рабочего места разъехались: "
-                + "между ними появилась ширина без хозяина").isTrue();
+        assertThat(css).as("действие фазы перестало быть закреплённым — при длинном разборе "
+                        + "оно снова уедет за нижнюю кромку (замер: 768→1623, 1280→2353)")
+                .containsPattern("\\.flashcard-phase > form,[\\s\\S]{0,120}position: sticky");
+        assertThat(css).as("на телефоне закреплённое действие снова ляжет под таббар")
+                .contains("bottom: calc(var(--mobile-nav-height)");
     }
 
     /**
@@ -187,14 +244,14 @@ class MobileContextContractTest {
      */
     @Test
     void gapsBelongToBlocksAndDoNotLeakFromInside() throws IOException {
-        String oneColumn = mediaBlocks(focusCss(), ONE_COLUMN);
+        String css = focusCss();
 
-        assertThat(oneColumn).as("отступ снова задаёт строка ВНУТРИ шапки вопроса — "
+        assertThat(css).as("отступ снова задаёт строка ВНУТРИ шапки вопроса — "
                         + "конструкция ломается от смены контекста форматирования")
                 .containsPattern("\\.question-zone-head \\{ margin-bottom: 0");
-        assertThat(oneColumn).as("поля материалов вопроса снова работают снаружи блока")
+        assertThat(css).as("поля материалов вопроса снова работают снаружи блока")
                 .containsPattern("\\.question-materials > \\* \\{ margin-block: 0");
-        assertThat(oneColumn).as("между несколькими материалами (код и схема) пропал ритм")
+        assertThat(css).as("между несколькими материалами (код и схема) пропал ритм")
                 .containsPattern("\\.question-materials > \\* \\+ \\*");
     }
 }

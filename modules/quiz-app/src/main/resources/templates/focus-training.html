@@ -577,11 +577,15 @@
                     <button type="submit" class="flashcard-reveal-btn">Показать ответ</button>
                 </form>
             </div>
-            <div th:if="${sessionRecallMode and !flashcardRevealed and !typedInputMode}">
-                <form method="post" th:action="@{/flashcard-reveal}">
-                    <button type="submit" class="flashcard-reveal-btn">Показать ответ</button>
-                </form>
-            </div>
+            <!--/* Обёртки вокруг формы здесь БЫЛА и мешала: закреплённое действие держится
+                 в пределах своего родителя, а безымянный div высотой ровно в кнопку не
+                 давал ему ни пикселя запаса — форма уезжала за верхнюю кромку, как только
+                 листали задание (замер 1440×900: top −65 в Chromium). Условие переехало на
+                 саму форму, и она стала прямым ребёнком фазы. */-->
+            <form method="post" th:action="@{/flashcard-reveal}"
+                  th:if="${sessionRecallMode and !flashcardRevealed and !typedInputMode}">
+                <button type="submit" class="flashcard-reveal-btn">Показать ответ</button>
+            </form>
             <div th:if="${sessionRecallMode and flashcardRevealed}" class="flashcard-answer">
                 <!--/* Typed-recall / code-challenge / interview: эхо ответа пользователя
                      над эталоном для само-сверки («напиши → сравни»). Текст живёт в

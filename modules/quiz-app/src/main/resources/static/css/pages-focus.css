@@ -1664,9 +1664,17 @@ html[data-design] .focus-page .focus-training .focus-aside .focus-session-more-s
    Порядок DOM не меняется: справка описывает ОБЪЁМ темы и не содержит ни одного
    фокусируемого элемента (сетка карты помечена aria-hidden, ссылок внутри нет),
    поэтому таб-порядок не расходится с видимым, а порядок чтения остаётся тем же,
-   что был до правки. Переставлять её в разметке нельзя: выше 1280px пейн — реальная
-   колонка со `grid-row: 1 / -1`, и вынесенный блок лёг бы на неё поверх. */
-@media (max-width: 1279px) {
+   что был до правки. Переставлять её в разметке нельзя: в рабочем месте пейн —
+   реальная колонка со `grid-row: 1 / -1`, и вынесенный блок лёг бы на неё поверх.
+
+   iter-123 — УСЛОВИЕ БЫЛО ЗАПИСАНО ШИРИНОЙ, А ОЗНАЧАЛО ДРУГОЕ. Стоял
+   `@media (max-width: 1279px)`, и это работало, пока одноколоночность совпадала с
+   узким окном. Как только рабочее место стало включаться по СОДЕРЖИМОМУ поверхности,
+   совпадение кончилось: у флешкарты до раскрытия колонка одна на любой ширине, и
+   справка снова встала между вопросом и действием — замер 1440×900 показал «Показать
+   ответ» на 917 при сгибе 900. Правило теперь безусловное, а рабочее место перебивает
+   его собственным `display: grid` (там справка лежит внутри пейна и `order` к ней не
+   применяется — она не элемент грида). */
   html[data-design] .focus-page .focus-main {
     display: flex;
     flex-direction: column;
@@ -1696,7 +1704,6 @@ html[data-design] .focus-page .focus-training .focus-aside .focus-session-more-s
   html[data-design] .focus-page .focus-main .question-materials > * { margin-block: 0; }
   html[data-design] .focus-page .focus-main .question-materials > * + * { margin-top: var(--space-6); }
   html[data-design] .focus-page .focus-main .question-materials { margin-bottom: var(--space-6); }
-}
 
 /* Проза (hero-вопрос) держит меру ВНУТРИ рабочей колонки — крупный сериф не должен
    тянуться на всю её ширину. Опции/структура наполняют колонку целиком (их
@@ -1878,9 +1885,12 @@ html[data-design][data-js] .focus-page [role="tabpanel"] .content-toolbar { just
    переносится по тому же правилу, а не по новому медиазапросу.
    =========================================================================== */
 
-html[data-design] .focus-page[data-session-mode="TYPED_RECALL"],
-html[data-design] .focus-page[data-session-mode="INTERVIEW"],
-html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"],
+/* Здесь стояли ещё три селектора — TYPED_RECALL, INTERVIEW, CODE_CHALLENGE. Они
+   перечисляли режимы, у которых рабочая поверхность — поле ввода, и после перехода
+   гейта на содержимое стали дублем: во всех трёх рендерится `.typed-workspace`
+   (проверено на живых экранах 1440×900, а не предположено), а после раскрытия —
+   `.flashcard-answer`. Перечень режимов рядом с содержательным условием читался бы
+   как действующее правило и молча расходился бы с ним при добавлении режима. */
 /* ВОПРОС С ВАРИАНТАМИ — ТА ЖЕ КОМПОЗИЦИЯ, А НЕ ЧАСТНЫЙ СЛУЧАЙ (iter-18).
    Гейт по содержимому (`#interview-options` рендерится только там, где есть что
    выбирать), а не по именам режимов: MCQ живёт в TRAINING/EXAM/MARATHON и в
@@ -1901,6 +1911,15 @@ html[data-design] .focus-page:has(#interview-options),
    (1440 → 3242), скрипт уводил прокрутку на 1280, и ВОПРОС УХОДИЛ С ЭКРАНА
    (его верх оказывался на -1174) — человек читал разбор, не видя, о чём он.
    Слева при этом пустовало больше половины ширины. */
+/* Ввод, эталон с оценками, изучение — та же работа, только её предмет не выбор из
+   вариантов. Меры объявлялись лишь для вариантов и разбора, и нехватка ловилась
+   только замером: при включённой композиции без мер `minmax(var(--workspace-desk-min),
+   1fr)` разрешался в пустоту, и колонка задания схлопывалась до 25px (замер 1440×900,
+   фаза изучения: колонки «24.6px 892.2px» вместо «602px 512px»). Мера принадлежит
+   рабочему месту, а не одному его виду. */
+html[data-design] .focus-page:has(.flashcard-answer),
+html[data-design] .focus-page:has(.typed-workspace),
+html[data-design] .focus-page:has(.study-learn-phase),
 html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
   /* Колонка задания. Мера здесь считается по САМОМУ ШИРОКОМУ жильцу колонки —
      листингу (собственная ширина кода в банке доходит до ~750px), а не по прозе:
@@ -1985,10 +2004,28 @@ html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
    Ниже порога рабочее место остаётся стопкой, поле ввода уже во всю высоту, а
    листинг перестаёт быть главным содержимым (см. кап `.code-viewport`). */
 @media (min-width: 1280px) {
-  html[data-design] .focus-page[data-session-mode="TYPED_RECALL"] .focus-main,
-  html[data-design] .focus-page[data-session-mode="INTERVIEW"] .focus-main,
-  html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-main,
+  /* ГЕЙТ — ПО СОДЕРЖИМОМУ, А НЕ ПО СПИСКУ РЕЖИМОВ.
+
+     Здесь стоял перечень TYPED_RECALL / INTERVIEW / CODE_CHALLENGE, и он был не
+     полон: FLASHCARD и STUDY в него не входили, поэтому их рабочая фаза жила
+     стопкой под вопросом, материалами и справкой. Замер (Chromium и WebKit) —
+     положение главного действия фазы от верха документа:
+
+       STUDY «Проверить себя»  768→1623  1280→2353  1440→2300  1512→1654  1920→2319  2560→2142
+       FLASHCARD «Показать ответ»        1280→1124  1440→1171
+
+     В STUDY действие не попадало на первый экран НИ НА ОДНОЙ ширине от 768 и
+     выше, во FLASHCARD — на всём ноутбучном диапазоне. Перечень режимов не
+     чинится добавлением двух строк: он в принципе описывает не то. Композиция
+     нужна там, где у экрана есть рабочая ПОВЕРХНОСТЬ, и это ровно то, что
+     проверяется наличием `.flashcard-phase` (раскрытие, ввод, оценки, изучение)
+     или `#interview-options` (варианты). Режимные селекторы удалены: все три
+     покрыты `.flashcard-phase`, и оставленные рядом они читались бы как
+     действующее условие. */
   html[data-design] .focus-page .focus-main:has(#interview-options),
+  html[data-design] .focus-page .focus-main:has(.flashcard-answer),
+  html[data-design] .focus-page .focus-main:has(.typed-workspace),
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase),
   html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) {
     display: grid;
     grid-template-columns: minmax(0, var(--workspace-brief)) minmax(var(--workspace-desk-min), 1fr);
@@ -1997,10 +2034,10 @@ html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
   }
   /* Пейн вопроса перестаёт быть `display: contents` и становится настоящей
      колонкой — ровно так же, как он делает это в раскладке «Разделение». */
-  html[data-design] .focus-page[data-session-mode="TYPED_RECALL"] .focus-main > .focus-question-pane,
-  html[data-design] .focus-page[data-session-mode="INTERVIEW"] .focus-main > .focus-question-pane,
-  html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-main > .focus-question-pane,
   html[data-design] .focus-page .focus-main:has(#interview-options) > .focus-question-pane,
+  html[data-design] .focus-page .focus-main:has(.flashcard-answer) > .focus-question-pane,
+  html[data-design] .focus-page .focus-main:has(.typed-workspace) > .focus-question-pane,
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase) > .focus-question-pane,
   html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) > .focus-question-pane {
     display: flex;
     flex-direction: column;
@@ -2017,10 +2054,10 @@ html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
   /* Все прочие дети рабочей колонки (форма, разбор, вердикт, сообщения) идут во
      вторую колонку стопкой. Перечислять их поимённо нельзя: состав меняется по
      фазе, и забытый ребёнок молча уехал бы в первую колонку. */
-  html[data-design] .focus-page[data-session-mode="TYPED_RECALL"] .focus-main > *:not(.focus-question-pane),
-  html[data-design] .focus-page[data-session-mode="INTERVIEW"] .focus-main > *:not(.focus-question-pane),
-  html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-main > *:not(.focus-question-pane),
   html[data-design] .focus-page .focus-main:has(#interview-options) > *:not(.focus-question-pane),
+  html[data-design] .focus-page .focus-main:has(.flashcard-answer) > *:not(.focus-question-pane),
+  html[data-design] .focus-page .focus-main:has(.typed-workspace) > *:not(.focus-question-pane),
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase) > *:not(.focus-question-pane),
   html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) > *:not(.focus-question-pane) {
     grid-column: 2;
     min-width: 0;
@@ -2034,6 +2071,85 @@ html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
     max-width: none;
   }
 }
+
+/* ЧТЕНИЕ ШИРЕ ЗАДАНИЯ — ПРОПОРЦИИ ЗАДАЁТ ФАЗА, А НЕ РЕЖИМ.
+
+   В фазе изучения главный объект — разбор, а вопрос рядом лишь называет, о чём
+   читаешь. С общими пропорциями рабочего места (задание 48rem, поверхность —
+   остаток) разбор доставался колонке 512px и вытягивался в высоту: замер на
+   1512×982 — 843px, на 1280×800 — 1311px. Ширина колонки — единственное, чем это
+   лечится: тот же текст в 817px короче примерно на треть.
+
+   Гейт по ФАЗЕ (`.study-learn-phase`), а не по режиму: STUDY после подтверждения
+   переходит к вариантам, и там пропорции нужны обычные — слева задание с
+   листингом, справа варианты. Привязка к `data-session-mode` меняла бы ширину
+   листинга и в той фазе, где читать уже нечего. */
+@media (min-width: 1280px) {
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase) {
+    --workspace-brief: 26rem;
+  }
+}
+
+/* ФЛЕШКАРТА — СФОКУСИРОВАННАЯ КАРТОЧКА, А НЕ ДВЕ КОЛОНКИ С ПУСТОЙ ПРАВОЙ.
+
+   Композиция рабочего места включается по СОДЕРЖИМОМУ поверхности (см. гейт выше),
+   и до раскрытия у флешкарты в поверхности одна кнопка. Первая сборка этой итерации
+   включала место и здесь — снимок 1440×900 показал ровно то, что §6 запрещает:
+   правая колонка с бейджем сверху, кнопкой снизу и ~900px пустоты между ними. Запись
+   отозвана, гейт переписан: голое действие второй колонки не заслуживает.
+
+   Но у одной колонки своё требование: карточка обязана помещаться в экран целиком,
+   иначе «вспомнил — раскрыл» превращается в прокрутку. Замер до правки: «Показать
+   ответ» на 1124 (1280×800) и 1171 (1440×900) — за сгибом на всём ноутбучном
+   диапазоне. Держит это листинг: без капа он занимает 569px и сам решает, где будет
+   действие.
+
+   Поэтому в сфокусированной карточке листинг капается по высоте окна — тем же
+   приёмом, что ниже 1280, только с большим потолком: экран шире, и строк видно
+   больше. Код не теряется — вьюпорт листинга прокручивается внутри себя. */
+@media (min-width: 1280px) {
+  html[data-design] .focus-page .focus-main:has(.flashcard-phase):not(:has(.flashcard-answer, .typed-workspace, .study-learn-phase)) .code-viewport {
+    max-height: min(38vh, 420px);
+  }
+}
+
+
+/* ГЛАВНОЕ ДЕЙСТВИЕ ФАЗЫ ОСТАЁТСЯ В ПОЛЕ ЗРЕНИЯ.
+
+   Композиция колонок первый экран не спасает: разбор в фазе изучения занимает
+   599–1311px (замер обоих движков на матрице), эталон флешкарты с примером кода —
+   столько же, и кнопка под ними уезжает вниз ровно настолько, насколько длинен
+   текст. Замер до правки, «Проверить себя» от верха документа: 768→1623,
+   1280→2353, 1440→2300, 1920→2319, 2560→2142 — то есть НИ НА ОДНОЙ ширине от 768
+   действие не попадало на первый экран.
+
+   Поэтому действие закреплено у нижней кромки рабочей колонки: прочитал сколько
+   нужно — оно уже под рукой, и не надо прокручивать вниз, чтобы продолжить.
+   Закрепление, а не дубль кнопки: второй экземпляр того же действия — это два
+   места правды и лишний таб-стоп.
+
+   Фон обязателен: без него текст просвечивает под кнопкой при прокрутке. Кромка
+   сверху отделяет закреплённую полосу от текста, под который она подложена.
+
+   На телефоне полоса поднимается над таббаром: он `position: fixed` и перекрыл
+   бы кнопку, а тач-цель в 44px под чужой панелью — это промах вместо ответа. */
+html[data-design] .focus-page .flashcard-phase > form,
+html[data-design] .focus-page .flashcard-grade-buttons {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: var(--space-5);
+  padding-block: var(--space-4);
+  background: var(--color-bg-primary);
+  border-top: var(--rule-weight) solid var(--color-border-secondary);
+}
+@media (max-width: 900px) {
+  html[data-design] .focus-page .flashcard-phase > form,
+  html[data-design] .focus-page .flashcard-grade-buttons {
+    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 
 /* ДВЕ ЛИНЕЙКИ ПОДРЯД ПОД ВОПРОСОМ. Замер (Chromium, 2560, вопрос с листингом):
    `.focus-question` кончается рамкой-снизу на 472, её марджин 24 — и на 496
