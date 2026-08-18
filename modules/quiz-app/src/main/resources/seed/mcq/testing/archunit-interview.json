@@ -75,7 +75,7 @@
               "correct": true,
               "sections": {
                 "explanation": "Импортёр — точка входа: он загружает скомпилированный байт-код (`.class`-файлы) и собирает из него объект `JavaClasses`, коллекцию `JavaClass`. Что именно попадёт в эту коллекцию, решают `ImportOptions`, переданные импортёру до загрузки. Уже к готовой модели применяют правила через `rule.check(classes)`.",
-                "example": "`JavaClasses prodClasses = new ClassFileImporter().withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS).importPackages(\"com.myapp\")` — опция отбрасывает тестовые каталоги `target/test-classes` и `build/classes/test`, и в `prodClasses` остаётся только продовый код. Дальше правило проверяют этим же набором: `rule.check(prodClasses)`.",
+                "example": "`JavaClasses prodClasses = new ClassFileImporter().withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS).importPackages(\"com.myapp\")` — опция отбрасывает тестовые каталоги `target/test-classes` и `build/classes/java/test`, и в `prodClasses` остаётся только продовый код. Дальше правило проверяют этим же набором: `rule.check(prodClasses)`.",
                 "when_to_apply": "Когда собираешь модель для проверки правил и хочешь заранее сузить её: без тестов (`DO_NOT_INCLUDE_TESTS`), без JAR-зависимостей (`DO_NOT_INCLUDE_JARS`), без архивов (`DO_NOT_INCLUDE_ARCHIVES`). Если предопределённых опций мало — пишут свою, реализовав `ImportOption` с методом `boolean includes(Location location)`, например чтобы выбросить сгенерированные классы.",
                 "edge_cases": "Раз читается байт-код, проект должен быть собран до запуска, и «сходить» в исходники за комментариями или форматированием нельзя. Зато видны реальные зависимости после компиляции, включая неочевидные в исходнике синтетические классы и мосты. Отдельная ловушка — `importClasspath()`: он берёт classpath целиком, но по умолчанию без JAR-ов.",
                 "related": "Соседние способы загрузки: `importPackages(\"com.myapp\", \"com.other\")` для пакетов из classpath, `importPackagesOf(SomeClass.class)` для пакета указанного класса, `importJar(...)` и импорт по `URL` или `Path`. Чтобы забрать и классы из зависимостей, вызывают `importClasspath(new ImportOptions())` со своим набором опций."
@@ -158,10 +158,10 @@
               "text": "that() отбирает подмножество классов, should() задаёт условие, и проверка запускается прямо при построении цепочки.",
               "correct": false,
               "sections": {
-                "what_actually": "Цепочка описывает правило и возвращает объект ArchRule; проверка — отдельный шаг: check(classes) вручную либо автоматическое исполнение в JUnit-расширении.",
-                "source_of_confusion": "Fluent-цепочка читается как законченное предложение, поэтому кажется самодостаточной. В JUnit-расширении шаг применения действительно скрыт от глаз, и это подкрепляет иллюзию.",
+                "what_actually": "Цепочка описывает правило и возвращает объект ArchRule; проверка — отдельный шаг: check(classes) вручную либо автоматическое исполнение @ArchTest-полей движком archunit-junit5.",
+                "source_of_confusion": "Fluent-цепочка читается как законченное предложение, поэтому кажется самодостаточной. В интеграции с JUnit 5 шаг применения действительно скрыт от глаз, и это подкрепляет иллюзию.",
                 "if_it_were_true": "Правило нельзя было бы положить в переменную и переиспользовать, а именно так оно и записано: ArchRule r1 = ... и ArchRule r2 = ... существуют до всякой проверки и применимы к разным наборам классов.",
-                "how_it_should_be": "Третью часть надо назвать явно: «...а результат применяется к классам через check(classes) или автоматически в JUnit-расширении»."
+                "how_it_should_be": "Третью часть надо назвать явно: «...а результат применяется к классам через check(classes) или автоматически движком archunit-junit5»."
               }
             },
             {
@@ -551,26 +551,26 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Расширение только собирает поля под @ArchTest в отчёт, а check() у каждого правила разработчик вызывает сам в теле теста.",
+              "text": "Движок только собирает поля под @ArchTest в отчёт, а check() у каждого правила разработчик вызывает сам в теле теста.",
               "correct": false,
               "sections": {
-                "what_actually": "check() для каждого помеченного поля вызывает само расширение, разработчик только объявляет поле типа ArchRule. Отдельное отображение теста в отчёте — следствие этого механизма, а не единственная его функция.",
-                "source_of_confusion": "В core API без JUnit-расширения правило действительно проверяют руками, вызывая check() на импортированных JavaClasses, и этот навык машинально переносят на поля под @ArchTest.",
+                "what_actually": "check() для каждого помеченного поля вызывает сам движок archunit-junit5, разработчик только объявляет поле типа ArchRule. Отдельное отображение теста в отчёте — следствие этого механизма, а не единственная его функция.",
+                "source_of_confusion": "В core API без интеграции с JUnit правило действительно проверяют руками, вызывая check() на импортированных JavaClasses, и этот навык машинально переносят на поля под @ArchTest.",
                 "if_it_were_true": "Тогда поле no_field_injection = NO_CLASSES_SHOULD_USE_FIELD_INJECTION в показанном классе не проверяло бы ничего: правило объявлено, вызова нет, тест проходил бы зелёным при любых нарушениях.",
-                "how_it_should_be": "Достаточно объявить static final ArchRule под @ArchTest и не писать вызовов: расширение прогонит каждое такое поле само."
+                "how_it_should_be": "Достаточно объявить static final ArchRule под @ArchTest и не писать вызовов: движок прогонит каждое такое поле само."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "@AnalyzeClasses один раз задаёт пакеты и importOptions для всего класса, а check() для каждого поля под @ArchTest вызывает само расширение.",
+              "text": "@AnalyzeClasses один раз задаёт пакеты и importOptions для всего класса, а check() для каждого поля под @ArchTest вызывает сам движок интеграции.",
               "correct": true,
               "sections": {
-                "explanation": "Аннотация @AnalyzeClasses(packages = ...) указывает, какие пакеты импортировать один раз для всего класса, а importOptions внутри неё принимает те же ImportOption, что и core API. Поля типа ArchRule помечаются @ArchTest, и расширение само вызывает check() для каждого такого поля. Поэтому импорт происходит автоматически и кэшируется, а каждый @ArchTest отображается отдельным тестом в отчёте.",
+                "explanation": "Аннотация @AnalyzeClasses(packages = ...) указывает, какие пакеты импортировать один раз для всего класса, а importOptions внутри неё принимает те же ImportOption, что и core API. Поля типа ArchRule помечаются @ArchTest, и движок сам вызывает check() для каждого такого поля. Поэтому импорт происходит автоматически и кэшируется, а каждый @ArchTest отображается отдельным тестом в отчёте.",
                 "example": "Класс ArchitectureTest несёт @AnalyzeClasses(packages = \"com.myapp\", importOptions = {ImportOption.DoNotIncludeTests.class}) и два статических поля: services_do_not_depend_on_controllers с noClasses().that().resideInAPackage(\"..service..\").should().dependOnClassesThat().resideInAPackage(\"..controller..\") и no_field_injection = NO_CLASSES_SHOULD_USE_FIELD_INJECTION. В коде класса нет ни одного вызова check() и ни одного new ClassFileImporter(), но оба поля отрабатывают как два теста.",
                 "when_to_apply": "Когда архитектурные правила живут в тестах на JUnit 5 и не хочется повторять ручной импорт в каждом методе. Подключается отдельный артефакт archunit-junit5, после чего правила пишутся обычными тест-полями класса.",
                 "edge_cases": "Кроме полей @ArchTest помечает и методы вида void m(JavaClasses classes) — эта форма получает уже импортированные классы параметром. Набор правил выносится в отдельный класс-«библиотеку» и подключается как @ArchTest static final ArchTests myRules = ArchTests.in(MyRulesLibrary.class); до ArchUnit 1.0 этот тип назывался ArchRules.",
-                "related": "importOptions — это те же ImportOption, что и в core API, чаще всего DoNotIncludeTests, так что настройка импорта не меняется при переходе на расширение. Библиотечный приём с ArchTests.in позволяет переиспользовать один набор правил в нескольких модулях."
+                "related": "importOptions — это те же ImportOption, что и в core API, чаще всего DoNotIncludeTests, так что настройка импорта не меняется при переходе на интеграцию с JUnit 5. Библиотечный приём с ArchTests.in позволяет переиспользовать один набор правил в нескольких модулях."
               }
             },
             {
@@ -579,7 +579,7 @@
               "text": "@AnalyzeClasses вешается на каждое поле под @ArchTest и задаёт ему свои пакеты, поэтому импорт выполняется заново для каждого объявленного правила.",
               "correct": false,
               "sections": {
-                "what_actually": "@AnalyzeClasses стоит на классе ArchitectureTest и объявляет пакеты один раз для всех его правил, а импорт кэшируется. Именно поэтому расширение убирает бойлерплейт: вместо new ClassFileImporter() в каждом тесте — одна аннотация на классе.",
+                "what_actually": "@AnalyzeClasses стоит на классе ArchitectureTest и объявляет пакеты один раз для всех его правил, а импорт кэшируется. Именно поэтому движок убирает бойлерплейт: вместо new ClassFileImporter() в каждом тесте — одна аннотация на классе.",
                 "source_of_confusion": "importOptions задаются внутри той же аннотации, и настройка выглядит как параметр конкретной проверки, а не общего импорта.",
                 "if_it_were_true": "Тогда класс с двумя полями требовал бы двух @AnalyzeClasses, а обещанное кэширование импорта теряло бы смысл — пакеты читались бы заново под каждое правило.",
                 "how_it_should_be": "Одна @AnalyzeClasses(packages = \"com.myapp\", importOptions = {...}) на классе, а поля под @ArchTest просто перечисляются под ней."

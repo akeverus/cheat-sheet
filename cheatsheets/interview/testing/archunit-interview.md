@@ -26,7 +26,7 @@ updated: "2026-06-25"
 
 ### Официальная документация
 
-- [ArchUnit User Guide](https://www.archunit.org/userguide/html/000_Index.html) — официальный гайд: core API, Library API, JUnit-расширение, freezing
+- [ArchUnit User Guide](https://www.archunit.org/userguide/html/000_Index.html) — официальный гайд: core API, Library API, интеграция с JUnit, freezing
 - [TNG/ArchUnit (GitHub)](https://github.com/TNG/ArchUnit) — исходники, issues, релизы
 - [Baeldung: ArchUnit](https://www.baeldung.com/java-archunit-intro) — туториал
 - [Baeldung: DDD with jMolecules](https://www.baeldung.com/java-jmolecules-domain-driven-design) — jMolecules + ArchUnit-интеграция
@@ -111,7 +111,7 @@ void domainShouldNotDependOnSpring() {
 
 | Опция | Что делает |
 |-------|------------|
-| `ImportOption.Predefined.DO_NOT_INCLUDE_TESTS` | исключает тестовые классы (каталоги `target/test-classes`, `build/classes/test`) |
+| `ImportOption.Predefined.DO_NOT_INCLUDE_TESTS` | исключает тестовые классы по каталогу сборки: `target/test-classes` (Maven), `build/classes/<lang>/test` (Gradle), `out/test/classes` (IntelliJ) |
 | `ImportOption.Predefined.DO_NOT_INCLUDE_JARS` | исключает классы из JAR-зависимостей |
 | `ImportOption.Predefined.DO_NOT_INCLUDE_ARCHIVES` | исключает JAR и другие архивы |
 
@@ -393,11 +393,11 @@ class ArchitectureTest {
 
 - `@AnalyzeClasses(packages = ...)` — указывает, какие пакеты импортировать один раз для всего класса.
 - `importOptions = {...}` — те же `ImportOption`, что и в core API (часто `DoNotIncludeTests`).
-- `@ArchTest` помечает поля типа `ArchRule` (или методы `void m(JavaClasses classes)`) — расширение само вызовет `check()` для каждого.
+- `@ArchTest` помечает поля типа `ArchRule` (или методы `void m(JavaClasses classes)`) — движок `archunit-junit5` сам вызовет `check()` для каждого.
 
 Правила можно вынести в отдельный класс-«библиотеку» и подключать через `@ArchTest static final ArchTests myRules = ArchTests.in(MyRulesLibrary.class)` (до ArchUnit 1.0 тип назывался `ArchRules`), переиспользуя один набор в нескольких модулях.
 
-**Итог:** JUnit 5-расширение делает архитектурные правила обычными тест-полями — импорт происходит автоматически и кэшируется, а каждый `@ArchTest` отображается как отдельный тест в отчёте.
+**Итог:** интеграция с JUnit 5 делает архитектурные правила обычными тест-полями — импорт происходит автоматически и кэшируется, а каждый `@ArchTest` отображается как отдельный тест в отчёте.
 
 ## Q11. Как исключить тестовые классы: ImportOption.DoNotIncludeTests
 
@@ -425,7 +425,7 @@ class ArchitectureTest { /* ... */ }
 
 ## Q12. Как работает кэширование импорта и производительность
 
-Импорт байт-кода — одна из самых дорогих операций в ArchUnit: для большого проекта это разбор тысяч `.class`-файлов и построение графа. Сопоставимую цену могут иметь и тяжёлые правила — например, поиск циклов по срезам. Поэтому JUnit-расширение кэширует результат импорта по **локации** (комбинации URL-источников).
+Импорт байт-кода — одна из самых дорогих операций в ArchUnit: для большого проекта это разбор тысяч `.class`-файлов и построение графа. Сопоставимую цену могут иметь и тяжёлые правила — например, поиск циклов по срезам. Поэтому движок `archunit-junit5` кэширует результат импорта по **локации** (комбинации URL-источников).
 
 Режимы задаются параметром `cacheMode` в `@AnalyzeClasses`:
 
