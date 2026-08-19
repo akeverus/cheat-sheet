@@ -1,14 +1,27 @@
 {
   "topic_slug": "hibernate-relationships-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
+  "round": "ROUND-10-LINKAGE-FIRST",
+  "status": "CHECKED",
+  "version_sensitive": true,
+  "product_version": "Jakarta Persistence API 3.1.0 (артефакт с исходниками из кэша Gradle); Hibernate ORM 6.x как реализация",
+  "checked_date": "2026-08-19",
+  "sources": [
+    "артефакт jakarta.persistence-api-3.1.0-sources.jar, jakarta/persistence/CascadeType.java: перечисление ALL, PERSIST, MERGE, REMOVE, REFRESH, DETACH — ровно шесть значений таблицы Q5",
+    "артефакт jakarta.persistence-api-3.1.0-sources.jar: OneToMany.java — `FetchType fetch() default FetchType.LAZY`; ManyToMany.java — `default FetchType.LAZY`; ManyToOne.java — `default FetchType.EAGER`; OneToOne.java — `default FetchType.EAGER`",
+    "артефакт jakarta.persistence-api-3.1.0-sources.jar, jakarta/persistence/OneToMany.java: `boolean orphanRemoval() default false` с javadoc «Whether to apply the remove operation to entities that have been removed from the relationship» — отдельный атрибут, а не член CascadeType"
+  ],
+  "version_sensitive_claims": [
+    "Q3: умолчания стратегии загрузки — LAZY у коллекций, EAGER у одиночных ссылок (подтверждено сигнатурами аннотаций)",
+    "Q5: состав CascadeType — шесть значений, включая ALL (подтверждено перечислением)",
+    "Q5/Q6: удаление сирот не входит в CascadeType.ALL, это отдельный атрибут связи (подтверждено объявлением orphanRemoval)"
+  ],
+  "staleness_risks": [
+    "Поведение ленивой загрузки на обратной стороне @OneToOne (Q9) — деталь реализации Hibernate, а не спецификации; по артефакту API она не проверяется",
+    "MultipleBagFetchException (Q8, Q13) — исключение Hibernate, в jakarta.persistence-api его нет; утверждение опирается на текст шпаргалки",
+    "Сравнение стратегий решения N+1 (Q4: @BatchSize, @Fetch(SUBSELECT)) — аннотации Hibernate вне стандарта, по артефакту API не проверялись"
+  ],
   "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+    "Дефектов теории при сверке не обнаружено: все проверяемые по артефакту утверждения шпаргалки совпали с объявлениями Jakarta Persistence 3.1.0",
+    "Проверка выполнена до авторинга блоков; блоки Q3, Q5 и Q6 анкерятся именно на подтверждённых фактах"
   ]
 }
