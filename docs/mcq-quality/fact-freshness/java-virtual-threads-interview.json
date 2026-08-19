@@ -1,14 +1,30 @@
 {
   "topic_slug": "java-virtual-threads-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
+  "round": "ROUND-10-LINKAGE-FIRST",
+  "status": "CHECKED",
+  "version_sensitive": true,
+  "product_version": "Java 21 LTS (виртуальные потоки — стандарт с JEP 444); проверено по исходникам Amazon Corretto 21.0.4, доступные локально JDK — до 22.0.2",
+  "checked_date": "2026-08-19",
+  "sources": [
+    "артефакт corretto-21.0.4/lib/src.zip, java.base/java/lang/Thread.java: javadoc getAllStackTraces() — «Returns a map of stack traces for all live platform threads. The map does not include virtual threads»",
+    "артефакт corretto-21.0.4/lib/src.zip, java.base/java/lang/VirtualThread.java: планировщик создаётся как ForkJoinPool, parallelism по умолчанию = Runtime.getRuntime().availableProcessors() (переопределяется свойством jdk.virtualThreadScheduler.parallelism), asyncMode = true",
+    "артефакт corretto-21.0.4/lib/src.zip, java.base/java/util/concurrent/StructuredTaskScope.java: класс помечен @PreviewFeature(Feature.STRUCTURED_CONCURRENCY), внутри — вложенные классы ShutdownOnSuccess и ShutdownOnFailure",
+    "артефакт corretto-21.0.4/lib/src.zip: java.base/java/lang/ScopedValue.java присутствует в java.base"
+  ],
+  "version_sensitive_claims": [
+    "Q3: число несущих потоков по умолчанию равно числу доступных процессоров — подтверждено исходником VirtualThread",
+    "Q3: под несущие потоки используется ForkJoinPool — подтверждено исходником",
+    "Q8: Structured Concurrency остаётся preview (в JDK 21 класс под @PreviewFeature), режимы ShutdownOnFailure и ShutdownOnSuccess существуют именно в этом виде",
+    "Q11: обычный дамп виртуальные потоки не показывает, а getAllStackTraces возвращает только платформенные — подтверждено javadoc",
+    "Q4/Q10/Q15: пиннинг на synchronized актуален для JDK 21–23; утверждение шпаргалки о его устранении в JDK 24 (JEP 491) в этой сессии подтвердить не удалось"
+  ],
+  "staleness_risks": [
+    "Утверждения про JDK 24 (JEP 491, снятие пиннинга на мониторах) и про цепочку preview-JEP до Java 23 внешне не проверялись: openjdk.org отдаёт 403 на WebFetch, а локальные JDK — максимум 22.0.2. Ни один блок не построен на номере JDK: Q4 и Q15 анкерятся на механизме (монитор прибивает поток, ReentrantLock — нет), Q8 — на факте preview-статуса как такового.",
+    "Пример Structured Concurrency в шпаргалке использует API вида ShutdownOnFailure/ShutdownOnSuccess — он верен для preview в JDK 21, но сигнатуры между preview-итерациями меняются, о чём сама шпаргалка предупреждает.",
+    "Числа из Q12 (~1 мкс против ~100 мкс, несколько КБ против 512 КБ–8 МБ) — порядковые оценки; в вариантах A/B/C/D конкретные значения не используются."
+  ],
   "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+    "Дефектов теории при сверке по артефактам не обнаружено: все проверяемые локально утверждения шпаргалки совпали с исходниками JDK 21.",
+    "context7 по OpenJDK в этой сессии не использовался — предыдущая попытка обращения к нему по другой библиотеке завершилась таймаутом, а openjdk.org недоступен для WebFetch."
   ]
 }
