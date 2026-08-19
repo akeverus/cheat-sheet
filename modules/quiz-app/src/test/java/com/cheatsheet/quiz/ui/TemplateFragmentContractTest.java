@@ -1008,9 +1008,19 @@ class TemplateFragmentContractTest {
         assertThat(head).contains("setAttribute('data-theme'");
         assertThat(head).contains("setAttribute('data-motion'");
         assertThat(head).contains("setAttribute('data-pixel'");
-        // Остальные оси — personalization-bootstrap.js (module load).
-        assertThat(bootstrapJs).contains("setAttribute('data-reading-width'");
-        assertThat(bootstrapJs).contains("setAttribute('data-density'");
+        // iter-132: ширина чтения и плотность ПЕРЕЕХАЛИ СЮДА ЖЕ. Обе меняют
+        // раскладку — меру прозы и шкалу отступов, — и применялись после первого
+        // кадра, то есть перекладывали страницу на глазах. Гейт держит их здесь и
+        // одновременно запрещает второй реализации остаться в модуле.
+        assertThat(head).contains("setAttribute('data-reading-width'");
+        assertThat(head).contains("setAttribute('data-density'");
+        assertThat(bootstrapJs)
+                .as("две реализации одной оси разошлись бы молча")
+                .doesNotContain("setAttribute('data-reading-width'")
+                .doesNotContain("setAttribute('data-density'");
+        // После первого кадра остаётся только размер шрифта: он единственный из
+        // трёх не двигает геометрию блоков.
+        assertThat(bootstrapJs).contains("window.__fontScale");
         // OPS-005: vendor-ассеты self-hosted, без CDN SRI. @font-face едет первой строкой ленты.
         assertThat(manifest).contains("* /css/fonts-local.css");
         // PERF: preload двух критичных Inter-сабсетов (короче swap-флэш, above-the-fold на каждой странице).
@@ -1408,14 +1418,25 @@ class TemplateFragmentContractTest {
 
         assertThat(head).contains("setAttribute('data-pixel'");
         assertThat(head).contains("setAttribute('data-motion'");
-        assertThat(head).contains("PIXEL_LEVELS = ['low', 'med', 'high']");
-        // Каждый уровень, который объявляет head.html, обязан что-то менять в
-        // каскаде — иначе переключатель в настройках врёт пользователю.
-        // Проверяем по всему каскаду, а не по одному файлу: правила уровней
-        // распределены по pixel-*.css и мигрируют между ними.
-        assertThat(css).contains("[data-pixel=\"low\"]");
-        assertThat(css).contains("[data-pixel=\"med\"]");
-        assertThat(css).contains("[data-pixel=\"high\"]");
+        // Уровни пиксельного слоя больше не отдельная ось настроек: с iter-132 их
+        // выдаёт экранный пресет (`SCREEN_PRESETS`), и источник правды теперь он.
+        // Контракт от этого не ослаб, а усилился: КАЖДЫЙ уровень, который таблица
+        // способна выдать, обязан что-то менять в каскаде — иначе пресет обещает
+        // разницу, которой нет. Список берём из самой таблицы, а не переписываем
+        // рядом: вторая копия разошлась бы с ней молча.
+        Matcher pixelLevels = Pattern.compile("pixel:\\s*'([a-z]+)'").matcher(head);
+        Set<String> declaredLevels = new LinkedHashSet<>();
+        while (pixelLevels.find()) {
+            declaredLevels.add(pixelLevels.group(1));
+        }
+        assertThat(declaredLevels)
+                .as("таблица пресетов обязана объявлять уровни пиксельного слоя")
+                .isNotEmpty();
+        for (String level : declaredLevels) {
+            assertThat(css)
+                    .as("уровень %s ничего не меняет в каскаде — пресет обещает разницу, которой нет", level)
+                    .contains("[data-pixel=\"" + level + "\"]");
+        }
         assertThat(css).contains("[data-motion=\"off\"]");
     }
 

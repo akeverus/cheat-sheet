@@ -58,17 +58,12 @@ export function initPersonalization() {
     wireSegControl('motion-pref-control', 'data-motion-pref', 'Движение',
       () => window.__motion.current(), (v) => window.__motion.set(v), 'motionchange');
   }
-  if (window.__readingWidth) {
-    wireSegControl('reading-width-pref-control', 'data-reading-width-pref', 'Ширина чтения',
-      () => window.__readingWidth.current(), (v) => window.__readingWidth.set(v), 'readingwidthchange');
-  }
-  if (window.__density) {
-    wireSegControl('density-pref-control', 'data-density-pref', 'Плотность',
-      () => window.__density.current(), (v) => window.__density.set(v), 'densitychange');
-  }
-  if (window.__pixelIntensity) {
-    wireSegControl('pixel-pref-control', 'data-pixel-pref', 'Пиксель-эффекты',
-      () => window.__pixelIntensity.current(), (v) => window.__pixelIntensity.set(v), 'pixelintensitychange');
+  // Три «вкусовые» оси (ширина чтения, плотность, пиксель-эффекты) заменены одним
+  // вопросом «под какой экран»: таблица сочетаний живёт в бутстрапе head.html, и
+  // второй её копии здесь нет — модуль только связывает контрол с уже готовым API.
+  if (window.__screenPreset) {
+    wireSegControl('screen-preset-control', 'data-screen-preset', 'Под экран',
+      () => window.__screenPreset.current(), (v) => window.__screenPreset.set(v), 'screenpresetchange');
   }
 
   const valEl = document.getElementById('font-scale-value');

@@ -27,8 +27,11 @@
          что и в карте, поэтому адреса совпадают байт в байт и preload попадает
          ровно в тот запрос, который потом сделает загрузчик модулей. */-->
     <link rel="modulepreload" th:each="module : ${@jsPreload.pathsFor(page)}" th:href="@{${module}}">
-    <!--/* FOUC bootstrap: только theme / pixel / motion (+ маркеры JS/settings-tab).
-         Layout, reading-width, density, fontScale — settings/personalization-bootstrap.js */-->
+    <!--/* FOUC bootstrap: theme / экранный пресет / motion (+ маркеры JS/settings-tab).
+         Ширина чтения и плотность переехали СЮДА вместе с пресетом: обе меняют
+         раскладку (мера прозы и шкала отступов), и применять их после первого
+         кадра значило показывать перекладку. В personalization-bootstrap.js
+         остался только размер шрифта — он не меняет геометрию блоков. */-->
     <script th:attr="nonce=${cspNonce}">
       (function () {
         // Stamp CSP nonce on createElement('style') so Mermaid/hljs work without style unsafe-inline.
@@ -174,30 +177,81 @@
           reduced: function () { return motion === 'auto' ? systemReduced() : motion === 'off'; },
           set: setMotion
         };
-        var PIXEL_LEVELS = ['low', 'med', 'high'];
-        function readPixelIntensity() {
+        /* ЭКРАННЫЙ ПРЕСЕТ вместо трёх отдельных «вкусовых» осей.
+
+           Было шесть переключателей: тема, размер шрифта, ширина чтения,
+           плотность, движение, пиксель-эффекты. Три из них — ширина, плотность и
+           пиксель — не про доступность, а про то, НА ЧЁМ человек работает, и по
+           отдельности давали 2×2×3 = 12 сочетаний, которые никто никогда не
+           проверял; сами tokens.css называли две из этих осей legacy и обещали
+           удалить. Теперь их выбирает один вопрос — «под какой экран», — а
+           доступность (тема, размер текста, движение) осталась отдельными осями,
+           как и просил инвариант 2.
+
+           Таблица живёт ЗДЕСЬ, в единственном месте, где она нужна до первой
+           отрисовки: плотность меняет шкалу отступов, то есть раскладку, и
+           применять её после первого кадра значило бы показывать перекладку.
+
+           «Ноутбук» — значение по умолчанию, и оно даёт РОВНО прежний вид
+           (просторные отступы, мера 72ch, средняя пиксель-интенсивность): смена
+           умолчания перерисовала бы приложение всем, кто настройки не открывал. */
+        var SCREEN_PRESETS = {
+          phone:  { density: 'compact',  readingWidth: 'standard', pixel: 'low' },
+          laptop: { density: 'spacious', readingWidth: 'standard', pixel: 'med' },
+          wide:   { density: 'spacious', readingWidth: 'wide',     pixel: 'high' }
+        };
+        var PRESET_NAMES = ['phone', 'laptop', 'wide'];
+        function migrateLegacyPreset() {
+          /* Прежние ключи хранились по одной оси. Тем, кто их настраивал, отдаём
+             ближайший пресет, а не молча сбрасываем выбор: компактные отступы —
+             это «телефон», широкая мера — «большой монитор». Ключи после переноса
+             удаляем, чтобы вторая система хранения не пережила первую. */
           try {
-            var p = localStorage.getItem('pixelIntensity');
-            return PIXEL_LEVELS.indexOf(p) >= 0 ? p : 'med';
-          } catch (e) { return 'med'; }
+            var legacyDensity = localStorage.getItem('density');
+            var legacyWidth = localStorage.getItem('readingWidth');
+            var legacyPixel = localStorage.getItem('pixelIntensity');
+            if (!legacyDensity && !legacyWidth && !legacyPixel) return null;
+            var guess = legacyDensity === 'compact' ? 'phone'
+              : (legacyWidth === 'wide' ? 'wide' : 'laptop');
+            localStorage.removeItem('density');
+            localStorage.removeItem('readingWidth');
+            localStorage.removeItem('pixelIntensity');
+            localStorage.setItem('screenPreset', guess);
+            return guess;
+          } catch (e) { return null; }
         }
-        var pixelIntensity = readPixelIntensity();
-        root.setAttribute('data-pixel', pixelIntensity);
-        function setPixelIntensity(next) {
-          pixelIntensity = (PIXEL_LEVELS.indexOf(next) >= 0) ? next : 'med';
+        function readScreenPreset() {
           try {
-            if (pixelIntensity === 'med') localStorage.removeItem('pixelIntensity');
-            else localStorage.setItem('pixelIntensity', pixelIntensity);
+            var p = localStorage.getItem('screenPreset');
+            if (PRESET_NAMES.indexOf(p) >= 0) return p;
+          } catch (e) { return 'laptop'; }
+          return migrateLegacyPreset() || 'laptop';
+        }
+        var screenPreset = readScreenPreset();
+        function applyScreenPreset(name) {
+          var cfg = SCREEN_PRESETS[name] || SCREEN_PRESETS.laptop;
+          if (cfg.density === 'spacious') root.removeAttribute('data-density');
+          else root.setAttribute('data-density', cfg.density);
+          if (cfg.readingWidth === 'standard') root.removeAttribute('data-reading-width');
+          else root.setAttribute('data-reading-width', cfg.readingWidth);
+          root.setAttribute('data-pixel', cfg.pixel);
+        }
+        applyScreenPreset(screenPreset);
+        function setScreenPreset(next) {
+          screenPreset = (PRESET_NAMES.indexOf(next) >= 0) ? next : 'laptop';
+          try {
+            if (screenPreset === 'laptop') localStorage.removeItem('screenPreset');
+            else localStorage.setItem('screenPreset', screenPreset);
           } catch (e) {}
-          root.setAttribute('data-pixel', pixelIntensity);
+          applyScreenPreset(screenPreset);
           try {
-            document.dispatchEvent(new CustomEvent('pixelintensitychange', { detail: { pixelIntensity: pixelIntensity } }));
+            document.dispatchEvent(new CustomEvent('screenpresetchange', { detail: { screenPreset: screenPreset } }));
           } catch (e) {}
         }
-        window.__pixelIntensity = {
-          current: function () { return pixelIntensity; },
-          list: PIXEL_LEVELS.slice(),
-          set: setPixelIntensity
+        window.__screenPreset = {
+          current: function () { return screenPreset; },
+          list: PRESET_NAMES.slice(),
+          set: setScreenPreset
         };
       })();
     </script>

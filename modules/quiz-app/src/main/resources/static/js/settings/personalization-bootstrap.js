@@ -1,6 +1,7 @@
 /**
  * Non-FOUC-critical personalization: applied when module loads (after first paint).
- * Theme / pixel / motion stay in head.html inline bootstrap.
+ * Тема, экранный пресет и движение живут в inline-бутстрапе head.html — они влияют
+ * на первый кадр. Здесь остался размер шрифта.
  */
 
 const root = document.documentElement;
@@ -9,61 +10,11 @@ function dispatch(name, detail) {
   try { document.dispatchEvent(new CustomEvent(name, { detail })); } catch (_) { /* ignore */ }
 }
 
-// --- Reading width ---
-const READING_WIDTHS = ['standard', 'wide'];
-function readReadingWidth() {
-  try {
-    const w = localStorage.getItem('readingWidth');
-    return READING_WIDTHS.indexOf(w) >= 0 ? w : 'standard';
-  } catch (_) { return 'standard'; }
-}
-let readingWidth = readReadingWidth();
-function applyReadingWidth(w) {
-  if (w === 'standard') root.removeAttribute('data-reading-width');
-  else root.setAttribute('data-reading-width', w);
-}
-applyReadingWidth(readingWidth);
-window.__readingWidth = {
-  current() { return readingWidth; },
-  list: READING_WIDTHS.slice(),
-  set(next) {
-    readingWidth = READING_WIDTHS.indexOf(next) >= 0 ? next : 'standard';
-    try {
-      if (readingWidth === 'standard') localStorage.removeItem('readingWidth');
-      else localStorage.setItem('readingWidth', readingWidth);
-    } catch (_) { /* private mode */ }
-    applyReadingWidth(readingWidth);
-    dispatch('readingwidthchange', { readingWidth });
-  }
-};
-
-// --- Density ---
-const DENSITIES = ['spacious', 'compact'];
-function readDensity() {
-  try {
-    const d = localStorage.getItem('density');
-    return DENSITIES.indexOf(d) >= 0 ? d : 'spacious';
-  } catch (_) { return 'spacious'; }
-}
-let density = readDensity();
-function applyDensity(d) {
-  if (d === 'spacious') root.removeAttribute('data-density');
-  else root.setAttribute('data-density', d);
-}
-applyDensity(density);
-window.__density = {
-  current() { return density; },
-  list: DENSITIES.slice(),
-  set(next) {
-    density = DENSITIES.indexOf(next) >= 0 ? next : 'spacious';
-    try {
-      if (density === 'spacious') localStorage.removeItem('density');
-      else localStorage.setItem('density', density);
-    } catch (_) { /* private mode */ }
-    applyDensity(density);
-    dispatch('densitychange', { density });
-  }
-};
+/* Ширина чтения и плотность жили здесь двумя независимыми осями с собственным
+   хранением. Обе переехали в экранный пресет (fragments/head.html): по отдельности
+   они давали сочетания, которых никто не проверял, а применялись после первого
+   кадра — то есть меняли раскладку на глазах. Здесь остался размер шрифта: он
+   единственный из трёх не двигает геометрию блоков и не обязан быть в шапке. */
 
 // --- Font scale ---
 const FONT_MIN = 0.85;
