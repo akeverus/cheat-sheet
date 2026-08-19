@@ -44,7 +44,7 @@ updated: "2026-04-25"
 <dependency>
     <groupId>io.rest-assured</groupId>
     <artifactId>rest-assured</artifactId>
-    <version>5.4.0</version>
+    <version>6.0.1</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -489,7 +489,6 @@ void fileUpload() {
 
 ```java
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureMockMvc
 class UserApiIntegrationTest {
 
     @LocalServerPort
