@@ -175,8 +175,12 @@ class InterviewSessionTest {
                 InterviewMode.TYPED_RECALL, List.of(1L, 2L), null, null, null, null, Instant.now());
         session.revealFlashcard();
         assertThat(session.getFlashcardPhase()).isEqualTo(FlashcardPhase.REVEALED);
-        session.advanceFlashcard();
+        session.registerAnswer(true, "java/collections-interview.md");
         session.resetFlashcardPhase();
         assertThat(session.getFlashcardPhase()).isEqualTo(FlashcardPhase.QUESTION);
+        assertThat(session.getAnswerHistory())
+                .as("самооценка режима припоминания обязана попасть в историю — иначе итог сессии пуст")
+                .hasSize(1);
+        assertThat(session.getCorrect()).isEqualTo(1);
     }
 }

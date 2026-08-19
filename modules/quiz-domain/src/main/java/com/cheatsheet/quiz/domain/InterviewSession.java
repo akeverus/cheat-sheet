@@ -278,11 +278,16 @@ public class InterviewSession implements Serializable {
         }
     }
 
-    /** Продвигает сессию вперёд (для FLASHCARD — без correct/wrong, просто index++). */
-    public synchronized void advanceFlashcard() {
-        index++;
-    }
-
+    
+    /**
+     * Здесь стоял {@code advanceFlashcard()} — «продвинуть сессию, ничего не
+     * записав». Его звал единственный вызывающий (самооценка режимов припоминания),
+     * и ровно из-за него у четырёх режимов из восьми экран итогов был пуст при
+     * любом числе пройденных вопросов: индекс рос, а correct/wrong и история — нет.
+     * Самооценка теперь идёт через {@link #registerAnswer(boolean, String)}, как и
+     * ответ на вариантах, а метод удалён, чтобы «продвинуть, не записав» больше
+     * нельзя было позвать по ошибке.
+     */
     /** Проверяет, является ли сессия режимом active recall (флешкарта и typed-family). */
     public boolean isFlashcardMode() {
         return mode.isRecallMode();

@@ -28,6 +28,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 public class MvcModelAttributeMapper {
 
+    /**
+     * Сколько последних ответов показывает журнал сессии. Десять — это высота
+     * пустого хвоста колонки задания (замер 2560×1440: 492px) при строке в 28px,
+     * то есть предел выбран по месту, которое журнал закрывает, а не на глаз.
+     */
+    private static final int SESSION_LOG_LIMIT = 10;
+
     private final AppProperties appProperties;
     private final ModeUtils modeUtils;
     private final TopicCatalogService topicCatalogService;
@@ -139,6 +146,14 @@ public class MvcModelAttributeMapper {
         // подпись — свойство константы, и вторая её копия в JS расходилась бы молча
         // (fromString снисходителен, неизвестное имя уезжает в OTHER).
         model.addAttribute("reportCategories", QuestionIssueCategory.values());
+        // Ход сессии — из уже накопленной истории ответов, без единого нового запроса.
+        // Предел показа живёт здесь, а не в разметке: это правило представления, и в
+        // шаблоне оно было бы вторым местом, где его можно поменять.
+        model.addAttribute("sessionLog", SessionLog.of(
+                pageState.surface().interviewSession() != null
+                        ? pageState.surface().interviewSession().getAnswerHistory()
+                        : null,
+                SESSION_LOG_LIMIT));
         model.addAttribute("focusEmptyRetryHref", resolveFocusEmptyRetryHref(reviewMode, mode));
         model.addAttribute("focusEmptyRetryText", resolveFocusEmptyRetryText(reviewMode, mode));
         model.addAttribute("focusBrowseNextHref", resolveBrowseNextHref(pageState, reviewMode));

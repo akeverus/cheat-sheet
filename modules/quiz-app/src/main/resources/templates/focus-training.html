@@ -517,6 +517,41 @@
         </div>
     </section>
 
+    <!--/* ХОД СЕССИИ. Замер 2560×1440 (код-челлендж): колонка задания кончалась на
+         624, рабочая — на 1116, то есть под заданием оставалось 768×492 пустоты
+         внутри первого экрана. §38 велит сначала спросить, какую пользу человек
+         получит на свободной площади. Польза уже посчитана и лежит в сессии:
+         история ответов (`getAnswerHistory`) — по записи на вопрос, ни одного
+         нового запроса.
+
+         Журнал отвечает на «как идёт сейчас»: последние ответы свежими вперёд,
+         тема каждого и вердикт. Вердикт несёт ФОРМА (кольцо с галкой против
+         кольца с крестом) плюс слово в подписи для скринридера — цвет здесь не
+         единственный носитель (WCAG 1.4.1).
+
+         Блока нет, пока нечего показывать: на первом вопросе сессии и вне сессии
+         пустая рамка «Ход сессии» сообщала бы только о себе. Хвост длинной сессии
+         сворачивается в две цифры — на марафоне в 200 вопросов полный список был
+         бы длиннее страницы. */-->
+    <section class="session-log" th:if="${sessionLog != null and sessionLog.present()}"
+             aria-labelledby="session-log-title">
+        <h2 class="session-log-title" id="session-log-title">Ход сессии</h2>
+        <ol class="session-log-list">
+            <li th:each="entry : ${sessionLog.entries()}" class="session-log-entry"
+                th:classappend="${entry.correct()} ? ' is-correct' : ' is-wrong'">
+                <svg class="px-icon session-log-mark" aria-hidden="true">
+                    <use th:attr="href=${entry.correct()} ? '#circle-check' : '#circle-x'"></use>
+                </svg>
+                <span class="session-log-number" th:text="${entry.number()}">1</span>
+                <span class="session-log-topic" th:text="${@topicUtils.displayName(entry.topic())}">Тема</span>
+                <span class="visually-hidden" th:text="${entry.correct()} ? '— верно' : '— ошибка'">— верно</span>
+            </li>
+        </ol>
+        <p class="session-log-tail" th:if="${sessionLog.truncated()}"
+           th:text="'раньше: ' + ${sessionLog.hiddenCorrect()} + ' верных, ' + ${sessionLog.hiddenWrong()} + ' с ошибкой'">
+            раньше: 0 верных, 0 с ошибкой</p>
+    </section>
+
     <!--/* Опора рабочего места (`.workspace-support`) стояла ЗДЕСЬ, в колонке
          задания, и была списком-текстом с нарисованной клеткой в ::before. Она
          уехала в рабочую колонку и стала настоящими флажками (см. `.workspace-plan`

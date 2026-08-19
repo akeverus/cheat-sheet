@@ -69,13 +69,30 @@ public class SessionFlowService {
 
     /**
      * Применяет оценку flashcard-ответа и продвигает сессию.
+     *
+     * <p>Самооценка ЗАПИСЫВАЕТСЯ В СЕССИЮ, а не только уходит в планировщик. До
+     * iter-130 здесь стоял {@code advanceFlashcard()} — он двигал индекс и всё:
+     * ни {@code correct}/{@code wrong}, ни истории ответов. Замер на живом
+     * приложении (код-челлендж, три отвеченных вопроса, оценки «отлично» и «не
+     * помню»): рельс показывал «3/20» и ноль ошибок, а итог сессии — «Сессия
+     * завершена без ответов. Засчитывать нечего: ни опыта, ни ошибок для разбора,
+     * ни данных по темам». То есть у ЧЕТЫРЁХ режимов из восьми (флешкарта,
+     * печатный пересказ, интервью, код-челлендж) экран итогов был пуст всегда,
+     * сколько бы вопросов человек ни прошёл.
+     *
+     * <p>Верность берётся из той же таблицы, что и SM-2-оценка
+     * ({@link FlashcardGrade#isCorrect(int)}), — второй трактовки оценки в
+     * приложении не заводим. Тема нужна разбору по темам в итогах и журналу хода
+     * сессии; вопрос уже загружен планировщиком, поэтому запрос здесь один и
+     * только на действие пользователя.
      */
     public boolean applyFlashcardGrade(InterviewSession interviewSession, long questionId, int grade) {
         if (!canApplyFlashcardGrade(interviewSession)) {
             return false;
         }
         submitFlashcardGrade(questionId, grade);
-        advanceFlashcardSession(interviewSession);
+        interviewSession.registerAnswer(FlashcardGrade.isCorrect(grade), topicOf(questionId));
+        interviewSession.resetFlashcardPhase();
         return true;
     }
 
@@ -127,8 +144,14 @@ public class SessionFlowService {
         facade.submitFlashcardGrade(questionId, FlashcardGrade.isCorrect(grade), FlashcardGrade.toSm2Grade(grade));
     }
 
-    private static void advanceFlashcardSession(InterviewSession interviewSession) {
-        interviewSession.advanceFlashcard();
-        interviewSession.resetFlashcardPhase();
+    /**
+     * Тема вопроса для записи в сессию. Не нашли вопрос — пишем {@code null}: запись
+     * об ответе всё равно нужна счётчикам и журналу, а разбор по темам просто не
+     * увидит эту строку. Терять ответ из-за пропавшей темы нельзя.
+     */
+    private String topicOf(long questionId) {
+        return facade.questionById(questionId)
+                .map(question -> question.question().topic())
+                .orElse(null);
     }
 }

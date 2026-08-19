@@ -1680,7 +1680,8 @@ html[data-design] .focus-page .focus-training .focus-aside .focus-session-more-s
   /* Второе слагаемое (`.workspace-support`) снято в iter-129 вместе с блоком:
      план ответа больше не живёт в колонке задания и переставлять его не нужно —
      он стоит внутри рабочего места, там же, где поле ввода. */
-  html[data-design] .focus-page .focus-main .topic-brief { order: 1; }
+  html[data-design] .focus-page .focus-main .topic-brief,
+  html[data-design] .focus-page .focus-main .session-log { order: 1; }
   html[data-design] .focus-page .focus-main .report-zone { order: 2; }
 
   /* ЗАЗОР ПРИНАДЛЕЖИТ БЛОКУ, А НЕ ПРОТЕКАЕТ ИЗ ЕГО НУТРА.
@@ -2235,6 +2236,78 @@ html[data-design] .focus-page .typed-answer-input.is-code textarea {
   overflow-wrap: normal;
   overflow-x: auto;
   tab-size: 4;
+}
+
+/* ===========================================================================
+   ЖУРНАЛ СЕССИИ (iter-130) — хвост колонки задания.
+
+   Замер 2560×1440 до правки (код-челлендж, первый экран): низ колонки задания 624,
+   низ рабочей колонки 1116 — 768×492 пустоты рядом с работой. Журнал занимает эту
+   зону содержимым, которое РАСТЁТ по ходу сессии, а не украшением фиксированной
+   высоты.
+
+   Тон тихий: это спутник работы, а не второй её предмет. Никаких карточек и
+   заливок — линейка сверху и вторичный цвет, тот же приём, что у справки о теме.
+   =========================================================================== */
+html[data-design] .focus-page .session-log {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: var(--rule-weight) solid var(--color-border-secondary);
+}
+html[data-design] .focus-page .session-log-title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+html[data-design] .focus-page .session-log-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-1);
+}
+html[data-design] .focus-page .session-log-entry {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+/* Номер вопроса — то же число, что в «1/20» над вопросом, поэтому и набран так же:
+   моноширинным с табличными цифрами, иначе колонка тем дёргается на двузначных. */
+html[data-design] .focus-page .session-log-number {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
+}
+html[data-design] .focus-page .session-log-topic {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Вердикт несёт ФОРМА (кольцо с галкой против кольца с крестом) — цвет только
+   усиливает. Размер тот же, что у остальных интерфейсных глифов. */
+html[data-design] .focus-page .session-log-mark {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+html[data-design] .focus-page .session-log-entry.is-correct .session-log-mark {
+  color: var(--color-status-success);
+}
+html[data-design] .focus-page .session-log-entry.is-wrong .session-log-mark {
+  color: var(--color-status-error);
+}
+html[data-design] .focus-page .session-log-tail {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
 }
 
 /* ===========================================================================
