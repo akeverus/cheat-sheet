@@ -1,1460 +1,236 @@
 {
   "topic_slug": "zero-trust-interview",
-  "round": 9,
-  "reviewed_commit": null,
-  "status": "TODO",
-  "source_file": "modules/quiz-app/src/main/resources/seed/mcq/security/zero-trust-interview.json",
-  "theory_file": "cheatsheets/interview/security/zero-trust-interview.md",
-  "summary": {
-    "questions": 19,
-    "blocks": 19,
-    "blocks_done": 0,
-    "critical": 0,
-    "high": 0,
-    "medium": 0,
-    "low": 0
+  "round": "ROUND-10-LINKAGE-FIRST",
+  "status": "AUDITED",
+  "status_note": "Приёмка по критерию пользователя (2026-08-14): два полных чистых круга подряд без правок между ними — круги 3 (механические линзы) и 4 (симуляция студента + сверка с источником). Проверка велась в основном контексте, агенты в этой сессии не используются.",
+  "source_file": "cheatsheets/interview/security/zero-trust-interview.md",
+  "mcq_file": "modules/quiz-app/src/main/resources/seed/mcq/security/zero-trust-interview.json",
+  "audited": "2026-08-19",
+  "rebuild": "полная пересборка с нуля: 19 блоков, 76 вариантов; question_text = нормализованный заголовок ## Q<N> (совпадение 19/19); старый сидер использован только как anti-baseline; позиции правильного ответа распределены заранее (A5/B5/C5/D4)",
+  "toolchain": "сверка по первоисточнику NIST SP 800-207 (PDF прочитан постранично, §2.1 принципы, §2.2 допущения о сети, §3 логические компоненты); WebFetch-пересказ документа оказался недостоверным и был отвергнут",
+  "verification": {
+    "deterministic": {
+      "schema": "OK",
+      "linkage_errors": 0,
+      "linkage_warnings": 0,
+      "anti_tell_blocks": 0,
+      "answer_parity_gate": "PASS 12/12",
+      "correct_distribution": {
+        "A": 5,
+        "B": 5,
+        "C": 5,
+        "D": 4
+      },
+      "correct_longest_rate": 0.053,
+      "style_guessability": 0.25,
+      "position_sequence_run": 4,
+      "option_length_ratio_worst": 1.33
+    },
+    "adversarial_rounds": [
+      {
+        "round": "1 (варианты против материала Q)",
+        "blocking": 1,
+        "note": "Q12/D опровергался только через соседний Q15 (непрерывная проверка) — скрытый L2; переякорен на ось скорости, которая есть в самом Q12 («VPN медленнее (лишний hop)», «ZTNA быстрее — часто прямое соединение через брокер»)"
+      },
+      {
+        "round": "2 (секции)",
+        "blocking": 2,
+        "note": "орфографическая ошибка «односторонее» в Q10/A; латиница в вариантах встречалась только у дистракторов (5 из 5) — форма подсказывала неверный ответ, исправлено подстановкой терминов источника (identity, workload) в правильные варианты Q4, Q5, Q14 без изменения числа слов"
+      },
+      {
+        "round": "3 (механические линзы, после правок)",
+        "blocking": 0,
+        "note": "чужие письменности 0, смешанные слова 0, латиница теперь correct=3/wrong=5, question_text=заголовок 19/19, пересекающихся анкоров нет; словарный скан на редкие токены (74 шт.) опечаток не выявил"
+      },
+      {
+        "round": "4 (симуляция студента + сверка утверждений с источником)",
+        "blocking": 0,
+        "note": "все 19 блоков отвечаемы из своего Q; шесть худших по формальному заземлению опровержений (Q5/D, Q19/B, Q11/D, Q3/A, Q6/D, Q9/D) проверены вручную по тексту Q — все опровержимы фразой своего же вопроса"
+      }
+    ]
   },
-  "reset_baseline": {
-    "reset_date": "2026-07-17",
-    "old_pass_carried_forward": false,
-    "schema_precheck": "PASS",
-    "structural_invariants_precheck": "PASS",
-    "theory_file_present": true,
-    "json_q_numbers": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19
-    ],
-    "theory_q_numbers": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19
-    ],
-    "missing_theory_q_numbers": [],
-    "extra_theory_q_numbers": [],
-    "current_correct_positions": [
-      "A",
-      "B",
-      "D",
-      "C",
-      "A",
-      "B",
-      "D",
-      "C",
-      "A",
-      "B",
-      "D",
-      "C",
-      "A",
-      "B",
-      "D",
-      "C",
-      "A",
-      "C",
-      "B"
-    ],
-    "acceptance_note": "Baseline diagnostics are not ROUND 9 acceptance evidence."
-  },
+  "source_fixes": [
+    "Q3: первый принцип NIST был записан как «Любой ресурс требует аутентификации» — в документе это «All data sources and computing services are considered resources»; исправлено",
+    "Q3: тезис «сеть не является зоной неявного доверия» подавался как восьмой принцип — в NIST это отдельный блок допущений о сети; формулировка исправлена",
+    "Q7: Policy Engine назывался «это и есть PDP» — NIST разбивает PDP на PE и PA; исправлено",
+    "Q7: в перечне источников данных дублировались Identity Management и ID management — дубль убран, оставлено «ID management — управление идентичностями»"
+  ],
+  "known_backlog": [
+    "Структурные пересечения (приняты по решению пользователя): ось mTLS/взаимной проверки встречается в Q10, Q11/A и Q19; ось default-deny — в Q5/C, Q11/D и Q19; ось «личность вместо адреса» — в Q4, Q11/C. Источник сам повторяет эти тезисы в каждом из перечисленных Q, поэтому каждый дистрактор опровергается фразой своего же вопроса.",
+    "Формальное заземление опровержений низкое (14 из 57 ниже 0.45): источник плотно набит латинскими идентификаторами (Network Policies, AuthorizationPolicy, SPIFFE, OIDC/SAML), а варианты написаны русской прозой. Шесть худших проверены вручную, расхождений нет.",
+    "Вендорский ландшафт Q13 стареет быстрее всего; в вариантах A/B/C/D конкретные вендоры намеренно не названы, различия описаны через аудиторию и происхождение."
+  ],
   "blocks": [
     {
       "q_number": 1,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что такое Zero Trust?",
+      "tested_claim": "местоположение в сети прав не даёт: каждый запрос заново проходит аутентификацию, авторизацию и шифрование",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 2,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Чем периметровая модель отличается от Zero Trust?",
+      "tested_claim": "граница доверия переезжает с внешней стены на каждый отдельный ресурс; «мягкой середины» больше нет",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 3,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Какие принципы лежат в основе Zero Trust?",
+      "tested_claim": "принципов семь, и все они сводятся к решению о доступе на каждый запрос с учётом контекста",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 4,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что значит «identity — новый периметр»?",
+      "tested_claim": "решение строится вокруг подтверждённой identity, которая есть и у устройства, и у сервиса, и у workload",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 5,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что такое микросегментация (micro-segmentation)?",
+      "tested_claim": "сегментация доводится до уровня сервиса или workload ради ограничения радиуса поражения",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 6,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что такое Policy Decision Point и Policy Enforcement Point?",
+      "tested_claim": "решение отделено от применения: одна точка выносит вердикт, другая перехватывает запрос и исполняет",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 7,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Из каких компонентов состоит архитектура NIST 800-207?",
+      "tested_claim": "ядро NIST — три компонента: движок решает, администратор проводит решение в жизнь, точка применения стоит на трафике",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 8,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Как устроена модель Google BeyondCorp?",
+      "tested_claim": "BeyondCorp убрал привилегию внутренней сети: приложения в интернете без туннеля, доверие из двух личностей",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 9,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Какую роль играет Identity Provider (IdP)?",
+      "tested_claim": "IdP — единый авторитет по личности: единый вход, принудительный второй фактор, условный доступ, жизненный цикл",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 10,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Почему mTLS — фундамент Zero Trust для сервисов?",
+      "tested_claim": "взаимный протокол проверяет обе стороны, поэтому личность сервиса подтверждается криптографией, а не адресом",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 11,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Какую роль играет service mesh (Istio, Linkerd) в Zero Trust?",
+      "tested_claim": "сервисная сетка берёт шифрование, авторизацию вызовов и аудит на себя прозрачно, без правки кода",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 12,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Чем ZTNA отличается от VPN?",
+      "tested_claim": "различие ZTNA и VPN — гранулярность: сеть целиком против конкретного разрешённого приложения",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 13,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Какие вендоры ZTNA есть на рынке (Cloudflare, Zscaler, Palo Alto)?",
+      "tested_claim": "продукты различаются аудиторией и происхождением; выбор идёт от масштаба, бюджета и связей с вендорами",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 14,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "С чего начинать внедрение Zero Trust?",
+      "tested_claim": "начинать с identity как фундамента, дальше фазами к сети и нагрузкам, горизонт — годы",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 15,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что такое continuous verification (непрерывная проверка)?",
+      "tested_claim": "доверие не выдаётся разовым билетом: проверка перезапускается по смене контекста в течение сессии",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 16,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Что такое device posture (состояние устройства)?",
+      "tested_claim": "доступ пропорционален «здоровью» устройства: полный, урезанный или блокировка",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 17,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Какие частые ошибки совершают при внедрении Zero Trust?",
+      "tested_claim": "два корня провалов — купить подход коробкой и внедрять всё сразу, минуя фундамент личности",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 18,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Каковы выгоды и издержки Zero Trust (ROI и компромиссы)?",
+      "tested_claim": "ущерб от взлома падает ценой денег, инженерного времени и трения для пользователей; окупаемость зависит от защищаемого",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     },
     {
       "q_number": 19,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "visible_question": "Как реализовать Zero Trust для service-to-service?",
+      "tested_claim": "каждый вызов между сервисами аутентифицируется, авторизуется и логируется набором взаимодополняющих мер",
+      "linkage_level": "L4",
+      "answerable_from_source": true,
+      "adversarial_verdict": "CLEAN (круги 3-4 подряд без правок)"
     }
   ]
 }
