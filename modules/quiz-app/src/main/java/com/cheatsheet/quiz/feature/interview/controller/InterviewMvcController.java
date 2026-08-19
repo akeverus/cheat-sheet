@@ -320,6 +320,23 @@ public class InterviewMvcController {
         return interviewPageMvcService.saveBookmarkNote(questionId, note, redirectAttributes);
     }
 
+    /**
+     * Заметка к вопросу с экрана тренировки: сохранить и вернуться к тому же вопросу.
+     *
+     * <p>Форма — обычная, без JS: на экране вопроса заметку пишут в самый неудобный
+     * для скриптов момент (посреди сессии), и терять текст из-за выключенного JS
+     * недопустимо. Скрипт перехватывает отправку и сохраняет через тот же API, что
+     * заметки закладок, — одна реализация на два экрана.
+     */
+    @PostMapping("/question/note")
+    public String saveQuestionNote(
+            @RequestParam("questionId") @Positive long questionId,
+            @RequestParam(value = "note", required = false) String note,
+            RedirectAttributes redirectAttributes
+    ) {
+        return interviewPageMvcService.saveQuestionNote(questionId, note, redirectAttributes);
+    }
+
     @PostMapping("/bookmarks/remove")
     public String removeBookmark(
             @RequestParam("questionId") @Positive long questionId,

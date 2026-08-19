@@ -57,6 +57,8 @@ class FocusTrainingPageServiceTest {
     @Mock
     com.cheatsheet.quiz.feature.interview.mapper.ContentBlockMapper contentBlockMapper;
     @Mock
+    com.cheatsheet.quiz.feature.interview.service.progress.BookmarkService bookmarkService;
+    @Mock
     InterviewQuestion interviewQuestion;
 
     FocusTrainingPageService service;
@@ -75,6 +77,7 @@ class FocusTrainingPageServiceTest {
                 reviewReasonService,
                 learningMetricsService,
                 contentBlockMapper,
+                bookmarkService,
                 java.time.Clock.systemUTC());
     }
 

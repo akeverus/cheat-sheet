@@ -52,6 +52,24 @@ async function saveNote(form) {
     if (item?.classList.contains('has-note')) {
       autosizeNote(textarea);
     }
+    // Проза заметки на экране вопроса: без обновления она осталась бы прежней до
+    // перезагрузки, то есть экран показывал бы старый текст рядом с новым в поле.
+    const questionNote = form.closest('.question-note');
+    if (questionNote) {
+      let prose = questionNote.querySelector('.question-note-text');
+      if (data.note) {
+        if (!prose) {
+          prose = document.createElement('p');
+          prose.className = 'question-note-text';
+          questionNote.insertBefore(prose, questionNote.querySelector('.question-note-disclosure'));
+        }
+        prose.textContent = data.note;
+      } else if (prose) {
+        prose.remove();
+      }
+      const summary = questionNote.querySelector('.question-note-summary');
+      if (summary) summary.textContent = data.note ? 'Изменить заметку' : 'Записать мысль';
+    }
     const noteStatus = item?.querySelector('.bookmark-note-status');
     if (noteStatus) {
       noteStatus.textContent = data.note ? 'есть заметка' : 'без заметки';
@@ -87,9 +105,15 @@ async function removeBookmark(form) {
   }
 }
 
+/**
+ * Формы заметок — на ДВУХ экранах. Гейт был по классу страницы
+ * (`bookmarks-page`), и с появлением заметки на экране вопроса он означал бы
+ * «напиши второй такой же обработчик». Гейт теперь по наличию самих форм:
+ * страница, где их нет, выходит так же рано, как и раньше.
+ */
 export function initBookmarksPage() {
   if (bookmarksBound) return;
-  if (!document.body.classList.contains('bookmarks-page')) return;
+  if (!document.querySelector('.bookmark-note-form')) return;
   bookmarksBound = true;
 
   document.querySelectorAll('.bookmark-note-form').forEach((form) => {

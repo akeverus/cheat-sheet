@@ -224,14 +224,19 @@ class MvcModelAttributeMapperTest {
                 emptySurface(InterviewMode.TYPED_RECALL),
                 null,
                 List.of(),
-                null
-        ,
-                com.cheatsheet.quiz.domain.TopicMap.EMPTY);
+                null,
+                com.cheatsheet.quiz.domain.TopicMap.EMPTY,
+                null);
 
         ExtendedModelMap model = new ExtendedModelMap();
         mapper.applyFocusPageState(model, typedRecallState, false);
 
         assertThat(model.getAttribute("sessionRecallMode")).isEqualTo(true);
+        // Заметка к вопросу обязана доезжать до шаблона: без неё поле на экране
+        // приходит пустым и человек стирает собственный текст, не увидев его.
+        assertThat(model.containsAttribute("questionNote"))
+                .as("атрибут заметки объявлен всегда — даже когда заметки нет")
+                .isTrue();
         assertThat(model.getAttribute("typedInputMode")).isEqualTo(true);
         assertThat(model.getAttribute("codeChallengeMode")).isEqualTo(false);
         assertThat(model.getAttribute("focusModeChipText")).isEqualTo("Печатный ответ");

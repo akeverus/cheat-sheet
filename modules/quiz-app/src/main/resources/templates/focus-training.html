@@ -552,6 +552,48 @@
             раньше: 0 верных, 0 с ошибкой</p>
     </section>
 
+    <!--/* ЗАМЕТКА К ВОПРОСУ. До iter-133 записать мысль можно было только на
+         странице закладок: на экране, где вопрос перед глазами и мысль возникает,
+         поля не было вовсе — приходилось запоминать её до конца сессии и искать
+         вопрос в списке. Хранилище то же самое (`bookmark.note`), поэтому второй
+         системы заметок не появилось: одна запись, два места, где её видно.
+
+         Форма обычная, серверная: заметку пишут посреди сессии, и терять текст
+         из-за выключенного JS недопустимо. Скрипт перехватывает отправку и
+         сохраняет через тот же API, что заметки закладок (js/quiz/bookmarks.js) —
+         одна реализация на два экрана.
+
+         Уже написанный текст показан прозой НАД раскрытием: поле, приходящее
+         пустым, молча приглашает переписать собственную заметку заново. */-->
+    <section class="question-note" th:if="${current != null}" aria-labelledby="question-note-title"
+             th:with="hasNote=${questionNote != null and !#strings.isEmpty(questionNote)}">
+        <h2 class="question-note-title" id="question-note-title">Заметка</h2>
+        <p class="question-note-saved notice notice-success" role="status" th:if="${questionNoteSaved}">Заметка сохранена.</p>
+        <p class="question-note-text" th:if="${hasNote}" th:text="${questionNote}">Текст заметки</p>
+        <details class="question-note-disclosure bookmark-note-disclosure">
+            <summary class="question-note-summary"
+                     th:text="${hasNote} ? 'Изменить заметку' : 'Записать мысль'">Записать мысль</summary>
+            <form class="bookmark-note-form question-note-form" method="post" th:action="@{/question/note}"
+                  th:attr="data-question-id=${current.question.id}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <input type="hidden" name="questionId" th:value="${current.question.id}">
+                <label class="field">
+                    <span class="field-label visually-hidden">Заметка к вопросу</span>
+                    <textarea name="note" rows="3" th:text="${questionNote}"
+                              placeholder="Что здесь важно запомнить"></textarea>
+                </label>
+                <div class="question-note-actions">
+                    <button type="submit" class="btn secondary-btn">Сохранить</button>
+                    <span class="bookmark-save-status" role="status" aria-live="polite"></span>
+                </div>
+                <!--/* Говорим прямо о следствии: сохранение помечает вопрос
+                     избранным (BookmarkApiService.saveNote), и он появится в
+                     «Закладках». Молча менять состояние вопроса нельзя. */-->
+                <p class="question-note-hint">Вопрос попадёт в «Закладки» — заметка живёт там же.</p>
+            </form>
+        </details>
+    </section>
+
     <!--/* Опора рабочего места (`.workspace-support`) стояла ЗДЕСЬ, в колонке
          задания, и была списком-текстом с нарисованной клеткой в ::before. Она
          уехала в рабочую колонку и стала настоящими флажками (см. `.workspace-plan`

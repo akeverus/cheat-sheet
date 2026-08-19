@@ -5,6 +5,7 @@ import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,11 +69,26 @@ class SessionLogContractTest {
                 .contains("@topicUtils.displayName(entry.topic())");
     }
 
+    /**
+     * Проверяем ПРАВИЛО, а не его написание. Первая редакция гейта требовала точной
+     * строки с одним селектором, и добавление второго спутника (заметки к вопросу)
+     * уронило её, хотя правило осталось прежним: спутники уходят за работу.
+     */
     @Test
-    void onThePhoneTheLogFollowsTheWork() throws IOException {
+    void onThePhoneTheCompanionsFollowTheWork() throws IOException {
         String css = read("static/css/pages-focus.css");
-        assertThat(css)
+        Matcher rule = Pattern
+                .compile("([^{}]*\\.focus-main \\.session-log[^{}]*)\\{\\s*order:\\s*1;")
+                .matcher(css);
+        assertThat(rule.find())
                 .as("журнал — спутник, а не преграда между вопросом и ответом")
-                .contains("html[data-design] .focus-page .focus-main .session-log { order: 1; }");
+                .isTrue();
+        String selectors = rule.group(1);
+        assertThat(selectors)
+                .as("справка о теме уходит за работу тем же правилом")
+                .contains(".focus-main .topic-brief");
+        assertThat(selectors)
+                .as("заметка к вопросу — такой же спутник, как журнал и справка")
+                .contains(".focus-main .question-note");
     }
 }

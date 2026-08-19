@@ -62,6 +62,8 @@ public class FocusTrainingPageService {
     ReviewReasonService reviewReasonService;
     LearningMetricsService learningMetricsService;
     ContentBlockMapper contentBlockMapper;
+    /** Заметка к текущему вопросу: то же хранилище, что у заметок закладок. */
+    com.cheatsheet.quiz.feature.interview.service.progress.BookmarkService bookmarkService;
     /** Часы — для отсечки «срок повторения наступил» на карте темы. */
     java.time.Clock clock;
 
@@ -181,6 +183,13 @@ public class FocusTrainingPageService {
                         TOPIC_MAP_LIMIT)))
                 .orElse(TopicMap.EMPTY);
 
+        // Заметка к вопросу — ОДИН запрос и только когда вопрос есть. Читается всегда,
+        // а не по флагу «есть закладка»: поле на экране без уже написанного текста
+        // молча приглашало бы переписать собственную заметку заново.
+        String questionNote = current
+                .map(q -> bookmarkService.find(q.question().id()).map(b -> b.note()).orElse(null))
+                .orElse(null);
+
         return new FocusPageState(
                 current,
                 studyLearnPhase,
@@ -197,7 +206,8 @@ public class FocusTrainingPageService {
                 reviewReason,
                 contentBlocks,
                 questionRevisionId,
-                topicMap
+                topicMap,
+                questionNote
         );
     }
 
@@ -276,7 +286,14 @@ public class FocusTrainingPageService {
              * Карта темы текущего вопроса: по клетке на вопрос темы. Пустая карта —
              * вопроса нет или тема пуста; блок тогда не рендерится.
              */
-            TopicMap topicMap
+            TopicMap topicMap,
+            /**
+             * Заметка, уже написанная к этому вопросу ({@code bookmark.note}), или
+             * {@code null}. Читается на рендере вопроса: без неё поле заметки на
+             * экране тренировки каждый раз показывалось бы пустым, и человек стирал
+             * бы собственный текст, не увидев его.
+             */
+            String questionNote
     ) {
         public FocusPageState(Optional<InterviewQuestion> current,
                               boolean studyLearnPhase,
@@ -290,7 +307,7 @@ public class FocusTrainingPageService {
                               ReviewReason reviewReason) {
             this(current, studyLearnPhase, flashcardMode, flashcardRevealed, false, false, false,
                     diagram, studyAnswerHtml, difficulty, progressPercent, surface, reviewReason,
-                    List.of(), null, TopicMap.EMPTY);
+                    List.of(), null, TopicMap.EMPTY, null);
         }
 
         public FocusPageState(Optional<InterviewQuestion> current,
@@ -306,7 +323,7 @@ public class FocusTrainingPageService {
                               List<ContentBlock> contentBlocks) {
             this(current, studyLearnPhase, flashcardMode, flashcardRevealed, false, false, false,
                     diagram, studyAnswerHtml, difficulty, progressPercent, surface, reviewReason,
-                    contentBlocks, null, TopicMap.EMPTY);
+                    contentBlocks, null, TopicMap.EMPTY, null);
         }
 
         public FocusPageState {

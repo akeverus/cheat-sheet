@@ -193,6 +193,24 @@ public class InterviewPageMvcService {
         return "redirect:/bookmarks#q-" + questionId;
     }
 
+    /**
+     * Заметка, написанная НА ЭКРАНЕ ВОПРОСА.
+     *
+     * <p>Хранилище то же самое, что у заметок закладок ({@code bookmark.note}), и это
+     * не совпадение: заметка к вопросу и есть причина отложить вопрос. Поэтому
+     * сохранение помечает вопрос избранным — ровно как на странице закладок; UI об
+     * этом говорит прямо, а не делает молча.
+     *
+     * <p>Отличие от {@link #saveBookmarkNote} ровно одно — куда возвращаемся. Там
+     * человек в списке закладок и остаётся в нём; здесь он в тренировке, и увести
+     * его в список значило бы прервать сессию ради одной строки текста.
+     */
+    public String saveQuestionNote(long questionId, String note, RedirectAttributes redirectAttributes) {
+        bookmarkApiService.saveNote(questionId, note);
+        redirectAttributes.addFlashAttribute("questionNoteSaved", true);
+        return navigationService.focusQuestionRedirect(questionId);
+    }
+
     public String removeBookmark(long questionId, RedirectAttributes redirectAttributes) {
         bookmarkApiService.remove(questionId);
         redirectAttributes.addFlashAttribute("bookmarkRemoved", true);
