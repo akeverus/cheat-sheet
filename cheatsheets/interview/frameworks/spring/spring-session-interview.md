@@ -231,7 +231,7 @@ public class SessionEventListener {
 }
 ```
 
-**Важный нюанс для Redis.** Истёкший ключ в Redis удаляется молча — само по себе приложение об этом не узнает. Чтобы получать `SessionExpiredEvent` и `SessionDeletedEvent`, нужно включить keyspace notifications: `notify-keyspace-events Eg` (события по истечению `E` и обобщённые `g`). Без этой настройки эти события просто не придут.
+**Важный нюанс для Redis.** Истёкший ключ в Redis удаляется молча — само по себе приложение об этом не узнает. Чтобы получать `SessionExpiredEvent` и `SessionDeletedEvent`, нужны keyspace notifications со значением `notify-keyspace-events Egx`: `E` включает канал keyevent, `g` добавляет обобщённые команды (в том числе `DEL`), `x` — события по истечению ключа. Spring Session пытается выставить это значение сам при старте, но на защищённом Redis автоматическая настройка не проходит и флаги задают вручную. Без них эти события просто не придут.
 
 **Второй нюанс — тип репозитория.** События публикует только indexed-репозиторий: с `@EnableRedisIndexedHttpSession` (`RedisIndexedSessionRepository`) listener получает все три события, а с обычным `@EnableRedisHttpSession` (`RedisSessionRepository`) события не публикуются вообще — listener молчит без какой-либо ошибки. Если события нужны, включайте indexed-вариант.
 

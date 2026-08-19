@@ -1,14 +1,27 @@
 {
   "topic_slug": "spring-session-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
+  "round": "ROUND-10-LINKAGE-FIRST",
+  "status": "CHECKED",
+  "version_sensitive": true,
+  "product_version": "Spring Session 3.x в связке со Spring Boot 3.x (метаданные проверены по spring-boot-autoconfigure 3.0.13 и 3.3.2)",
+  "checked_date": "2026-08-19",
+  "sources": [
+    "spring-configuration-metadata.json из артефактов spring-boot-autoconfigure 3.0.13 и 3.3.2: свойства spring.session.* — timeout, redis.namespace, redis.flush-mode, redis.repository-type, redis.cleanup-cron, jdbc.cleanup-cron, jdbc.initialize-schema, jdbc.table-name; свойства spring.session.store-type в обеих версиях НЕТ, что подтверждает его удаление в Boot 3",
+    "context7 /websites/spring_io_spring-session, docs.spring.io/spring-session/reference/api.html: для SessionDeletedEvent и SessionExpiredEvent требуется notify-keyspace-events Egx; Spring Session сам пытается выставить это значение, а на защищённом Redis настройку делают вручную",
+    "context7 /websites/spring_io_spring-session, reference/configuration/redis.html: индексируемый репозиторий включается либо аннотацией, либо свойством spring.session.redis.repository-type=indexed"
+  ],
+  "version_sensitive_claims": [
+    "Q2 и Q3: store-type удалён в Boot 3, стор определяется по зависимости на classpath — подтверждено отсутствием свойства в метаданных обеих проверенных версий",
+    "Q6: требуемое значение keyspace-уведомлений — Egx, а не Eg; дефект теории исправлен в шпаргалке",
+    "Q3: расписание уборщика просроченных сессий задаётся spring.session.jdbc.cleanup-cron — свойство присутствует в метаданных",
+    "Q7: глобальный таймаут задаётся spring.session.timeout типа Duration — свойство присутствует в метаданных"
+  ],
+  "staleness_risks": [
+    "Имена аннотаций включения (@EnableRedisIndexedHttpSession, @EnableRedisWebSession) стабильны в линейке 3.x, но в блоках они намеренно названы описательно, а не буквально",
+    "Свойство spring.session.redis.repository-type=indexed — более новая альтернатива аннотации; шпаргалка описывает только аннотацию, блоки на конкретный способ включения не опираются",
+    "Метрик Micrometer у Spring Session по-прежнему нет из коробки (Q14); если они появятся, блок Q14 придётся пересмотреть"
+  ],
   "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+    "Проверка выполнена по метаданным артефактов Spring Boot и официальной доке Spring Session, а не по памяти модели"
   ]
 }
