@@ -252,7 +252,7 @@ input UserFilter {
 - `String` -- nullable строка (может быть `null`)
 - `String!` -- non-null строка (никогда не `null`)
 - `[String]` -- nullable список nullable строк (и сам список, и его элементы могут быть `null`)
-- `[String!]!` -- non-null список non-null строк (списка точно есть, и в нём нет `null`-элементов)
+- `[String!]!` -- non-null список non-null строк (сам список точно есть, и в нём нет `null`-элементов)
 
 ---
 
@@ -687,18 +687,19 @@ type PageInfo {
 @Controller
 public class BookController {
 
+    // Контроллер возвращает Window/Slice, а в Connection (edges + pageInfo)
+    // результат оборачивает ConnectionAdapter, зарегистрированный через
+    // ConnectionFieldTypeVisitor. Курсор разбирается в Subrange до вызова метода.
     @QueryMapping
-    public Connection<Book> books(
-            @Argument int first,
-            @Argument String after) {
-        // Spring for GraphQL поддерживает scroll-based пагинацию
-        ScrollSubrange subrange = ScrollSubrange.create(
-            ScrollPosition.forward(after), first, true);
-        Window<Book> window = bookRepository.findBy(subrange);
-        return ConnectionAdapter.from(window);
+    public Window<Book> books(ScrollSubrange subrange) {
+        ScrollPosition position = subrange.position().orElse(ScrollPosition.offset());
+        int count = subrange.count().orElse(20);
+        return bookRepository.findBooks(position, count);
     }
 }
 ```
+
+Аргумент `ScrollSubrange` подставляется только при наличии бина `CursorStrategy`; сами типы `BookConnection`/`BookEdge` в схему дописывает `ConnectionTypeDefinitionConfigurer`, поэтому руками их объявлять не нужно.
 
 **Global Object Identification** -- ещё одна часть Relay-спецификации: каждый объект должен иметь глобально уникальный `id` и быть доступен через поле `node(id: ID!)`.
 
@@ -1189,7 +1190,7 @@ query {
 # Итого: 500 + 100*(1 + 2 + 1) = 900
 ```
 
-**Директивы `@cost` и `@listSize`** (из спецификации GraphQL Demand Control):
+**Директивы `@cost` и `@listSize`** (демандконтроль Apollo Router, а не базовая спецификация языка):
 ```graphql
 type Query {
     users(first: Int): [User!]! @listSize(assumedSize: 50)
@@ -1876,7 +1877,7 @@ public class SubscriptionService {
 | Координация | На шлюзе — шлюз знает всё | Распределённая — каждый subgraph декларирует свои типы |
 | Добавление нового сервиса | Изменение конфига шлюза | Subgraph регистрируется в Registry |
 | Отказоустойчивость | Шлюз — единая точка сложности | Supergraph schema строится автоматически |
-| Поддержка | Deprecated в пользу Federation | Активно развивается, CNCF-проект |
+| Поддержка | Deprecated в пользу Federation | Активно развивается; спецификация Apollo, открытый стандарт готовит GraphQL Foundation |
 | Независимые деплои | Сложно | Да, каждый subgraph деплоится отдельно |
 
 **Пример Federation 2:**
