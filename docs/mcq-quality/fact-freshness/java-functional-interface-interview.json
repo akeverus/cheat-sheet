@@ -1,14 +1,27 @@
 {
   "topic_slug": "java-functional-interface-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
+  "round": 10,
+  "status": "CHECKED",
+  "version_sensitive": true,
+  "product_version": "Java SE 8+ (проверено на JDK 22.0.2, локальный javac)",
+  "checked_date": "2026-08-20",
+  "sources": [
+    "локальная проба компиляции javac 22.0.2: Comparator<String> comp = String::compareTo, Function<Integer,ArrayList<String>> withCap = ArrayList::new, Optional.empty().orElseGet(Supplier<LocalDate>), IntStream.range(...).map(IntUnaryOperator) — все компилируются",
+    "локальная проба javac 22.0.2: ThrowingFunction<String,byte[]> reader = Files::readAllBytes НЕ компилируется (String cannot be converted to Path); с Path компилируется",
+    "локальная проба java 22.0.2: незахватывающая лямбда даёт один и тот же инстанс (nonCapturing() == nonCapturing() → true), захватывающая — разные (false)"
+  ],
+  "version_sensitive_claims": [
+    "Predicate.not — статический метод, добавлен в Java 11 (Q10)",
+    "Функциональные интерфейсы, лямбды и method references появились в Java 8; Runnable существовал задолго до этого (Q2)",
+    "Лямбда транслируется через invokedynamic; переиспользование инстанса относится только к лямбдам без захвата (Q3)",
+    "java.util.function содержит примитивные специализации Int/Long/Double, включая BooleanSupplier (Q11)",
+    "Files.readAllBytes принимает только Path — перегрузки со String нет (Q13)"
+  ],
+  "staleness_risks": [
+    "Проект Valhalla в будущем может снять ограничение «дженерики не работают с примитивами» (Q11); на момент проверки ограничение в силе.",
+    "Переиспользование инстанса незахватывающей лямбды — свойство текущей реализации LambdaMetafactory, а не гарантия спецификации (Q3)."
+  ],
   "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+    "ROUND-10: значения проверены компилятором и рантаймом локальной JDK, а не по памяти."
   ]
 }
