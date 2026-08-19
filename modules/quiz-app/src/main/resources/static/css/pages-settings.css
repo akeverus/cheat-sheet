@@ -586,3 +586,122 @@ html[data-design] .settings-page #builder-stats-card:has(.streak-bar.hidden) {
     bottom: calc(5.5rem + var(--space-3));
   }
 }
+
+/* ===========================================================================
+   ШАГИ КОНСТРУКТОРА И ОТВЕТ НА НИХ (iter-131)
+
+   Конструктор читается как последовательность решений — что тренируем, как,
+   сколько, — и номер шага делает эту последовательность видимой. Номер рисует
+   счётчик CSS: он декоративен (порядок скринридер и так получает из дерева), а
+   в разметке цифра была бы четвёртым местом, где порядок надо держать в
+   согласии с остальными тремя.
+   =========================================================================== */
+html[data-design] .settings-page .session-builder {
+  counter-reset: builder-step;
+}
+html[data-design] .settings-page .builder-section {
+  counter-increment: builder-step;
+}
+html[data-design] .settings-page .builder-section > .builder-section-title::before {
+  content: counter(builder-step);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  margin-right: var(--space-3);
+  padding-inline: 0.25rem;
+  border: var(--rule-weight) solid var(--color-border-strong);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+/* ШАГ «СКОЛЬКО»: поле и пояснение в одну строку — на весь ряд их двое, и
+   растягивать поле на 1160px под трёхзначное число незачем. */
+html[data-design] .settings-page .volume-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3) var(--space-5);
+}
+html[data-design] .settings-page .volume-row .field-inline input[type="number"] {
+  width: 7rem;
+}
+html[data-design] .settings-page .volume-hint {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* «ЧТО ПОПАДЁТ»: ответ на первый шаг, стоящий рядом с ним. Не карточка с
+   заливкой — тот же тихий блок, что и сами шаги, иначе ответ спорит с вопросом
+   за внимание. Прилипает на широком экране: отбор меняют слева, и число в
+   наборе должно оставаться на глазах (замер до переезда: чип «Ошибки» на 758,
+   а число, которое он меняет, — на 1106). */
+html[data-design] .settings-page .builder-outcome {
+  margin: 0;
+}
+html[data-design] .settings-page .outcome-total {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+}
+html[data-design] .settings-page .outcome-value {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent-strong);
+}
+html[data-design] .settings-page .outcome-unit {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+html[data-design] .settings-page .outcome-facts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+}
+html[data-design] .settings-page .outcome-fact {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+html[data-design] .settings-page .outcome-fact-value {
+  font-family: var(--font-family-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+html[data-design] .settings-page .outcome-empty {
+  margin: var(--space-3) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+html[data-design] .settings-page .outcome-filters {
+  margin: var(--space-4) 0 0;
+  padding-top: var(--space-3);
+  border-top: var(--rule-weight) solid var(--color-border-secondary);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+html[data-design] .settings-page .outcome-filters-label {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-right: var(--space-2);
+}
+/* Липкости здесь НЕТ, и это проверено замером, а не вкусом: блок стоит в первом
+   ряду сетки рядом с самим отбором (чипы фильтров на y≈483, блок 243–506 — один
+   экран), а его область в сетке всего на 43px выше самого блока, то есть
+   `position: sticky` дал бы 43 пикселя хода и читался бы как работающий механизм,
+   которым он не является. Видимость ответа рядом с вопросом даёт композиция. */

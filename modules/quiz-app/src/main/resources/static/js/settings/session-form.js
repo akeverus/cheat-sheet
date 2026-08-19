@@ -66,7 +66,7 @@ export function initSessionModeForm() {
   const preview = document.getElementById('session-preview');
   const previewCount = preview?.querySelector('[data-preview-count]');
   const previewTime = preview?.querySelector('[data-preview-time]');
-  const previewFilters = preview?.querySelector('[data-preview-filters]');
+  const previewFilters = document.querySelector('[data-preview-filters]');
   const filtersForm = document.getElementById('filters-form');
   const SECONDS_PER_Q = 45;
 
@@ -110,8 +110,13 @@ export function initSessionModeForm() {
   };
 
   const updatePreview = () => {
-    if (!preview) return;
+    // Строка действующего отбора живёт в блоке «Что попадёт» рядом с самим
+    // отбором, а не в полосе запуска: она описывает НАБОР, а полоса — сессию.
+    // Поэтому её ищем в документе, а не внутри полосы.
     if (previewFilters) previewFilters.textContent = describeFilters();
+    if (!preview) return;
+    // Полоса приходит скрытой: без скрипта её числа были бы заглушками.
+    preview.hidden = false;
     if (selectedMode()?.dataset.unlimited === 'true') {
       // Формулировки короткие сознательно: предпросмотр переехал в закреплённую
       // строку запуска, и его высота теперь вычитается из видимой части
@@ -137,7 +142,11 @@ export function initSessionModeForm() {
 
   const sync = () => {
     const opt = selectedMode();
-    countField.classList.toggle('hidden', opt?.dataset.unlimited === 'true');
+    // Прячем ВЕСЬ шаг «Сколько», а не одно поле внутри него: у режима без
+    // счётчика шаг остался бы заголовком с номером над пустотой.
+    const unlimited = opt?.dataset.unlimited === 'true';
+    (document.getElementById('builder-volume') || countField)
+      .classList.toggle('hidden', unlimited);
     startBtn.textContent = opt?.dataset.cta || 'Начать сессию';
     const modeMirror = document.getElementById('filters-mode-mirror');
     if (modeMirror) modeMirror.value = selectedMode()?.value || '';

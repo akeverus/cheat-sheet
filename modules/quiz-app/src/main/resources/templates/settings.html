@@ -14,9 +14,9 @@
          «Сегодня»: на экране у страницы настроек не было заголовка вообще, а её верх
          занимала кнопка «Начать повторение», уводившая мимо конструктора, ради которого
          на страницу и приходят. Виджет снят целиком, и это не потеря информации — все
-         три его факта уже стоят на этой же странице: стрик в карточке «Статистика»
-         (#streak-bar), счётчик к повтору в карточке «Повторение» (#builder-review-card,
-         и там он посчитан по текущему фильтру, а не по всему банку), запуск — в
+         три его факта уже стоят на этой же странице: стрик в карточке «Сегодня»
+         (#streak-bar), счётчик к повтору — в блоке «Что попадёт» (#builder-outcome,
+         и там он посчитан по текущему отбору, а не по всему банку), запуск — в
          закреплённой панели «Начать тренировку». */-->
     <div class="page-head">
         <div class="page-head-title">
@@ -24,9 +24,9 @@
             <h1>Настройки</h1>
         </div>
         <p class="muted page-head-lead">
-            Здесь собирается следующая тренировка: охват, режим и объём — предпросмотр
-            покажет набор и примерное время до запуска.
-            Оформление и данные — в соседних разделах.
+            Здесь собирается следующая тренировка: что тренируем, как и сколько —
+            справа сразу видно, что попадёт в набор, а в полосе запуска — сколько
+            это займёт. Оформление и данные — в соседних разделах.
         </p>
     </div>
 
@@ -92,7 +92,7 @@
                     <!--/* Параметр 1: охват выборки (GET /settings — перезагружает страницу
                          с применённым фильтром; результат виден в сводке справа). */-->
                     <section class="builder-section builder-scope" aria-labelledby="builder-scope-title">
-                        <h3 class="builder-section-title" id="builder-scope-title">Охват</h3>
+                        <h3 class="builder-section-title" id="builder-scope-title">Что тренируем</h3>
                         <!--/* С JS фильтры применяются с debounce (initLiveFilters) —
                              кнопка «Применить» нужна только без JS. Режим зеркалим
                              скрытым полем, чтобы авто-GET не сбрасывал выбор. */-->
@@ -173,12 +173,58 @@
                         <p class="control-inline-hint" id="filter-mode-hint" role="status" aria-live="polite">Учебный порядок: от базы к более сложным идеям.</p>
                     </section>
 
+                    <!--/* ЧТО ПОПАДЁТ В НАБОР — ответ на шаг «что тренируем», стоящий
+                         рядом с ним. Раньше здесь была карточка «Повторение» с одним
+                         крупным числом, а состав набора и действующий отбор печатались
+                         третьей подписью в панели запуска, на ~350 пикселей ниже. Один
+                         вопрос — «что мне сейчас достанется» — имел два ответа в разных
+                         местах экрана, и ни один не был полным.
+
+                         Три числа разведены намеренно (это проверено на живых данных ещё
+                         в карточке): долг по повторениям, никогда не открытые вопросы и
+                         объём набора — разные вещи. Пока считалось одно число, набор без
+                         единого ответа обещал «626 карточек ждут повтора», хотя ждать там
+                         нечему; а набор, где всё уже выучено, объявлялся пустым, хотя в
+                         нём 27 вопросов.
+
+                         Блок серверный целиком: без JS показывает те же числа, что и с
+                         ним. Скрипт дописывает сюда только строку действующего отбора —
+                         её он и раньше считал по форме фильтров. */-->
+                    <aside class="builder-outcome" id="builder-outcome" aria-labelledby="builder-outcome-title"
+                           th:with="scope=${filteredStats != null ? filteredStats : stats},
+                                    repeats=${scope != null ? scope.dueRepeats() : 0},
+                                    fresh=${scope != null ? scope.fresh() : 0},
+                                    inSet=${scope != null ? scope.total() : 0}">
+                        <h3 class="builder-section-title" id="builder-outcome-title">Что попадёт</h3>
+                        <p class="outcome-total">
+                            <span class="outcome-value" th:text="${inSet}">0</span>
+                            <span class="outcome-unit"
+                                  th:text="${@plural.pick(inSet, 'вопрос в наборе', 'вопроса в наборе', 'вопросов в наборе')}">вопросов в наборе</span>
+                        </p>
+                        <ul class="outcome-facts">
+                            <li class="outcome-fact">
+                                <span class="outcome-fact-value" th:text="${repeats}">0</span>
+                                <span class="outcome-fact-label">ждут повтора — планировщик поставит их первыми</span>
+                            </li>
+                            <li class="outcome-fact">
+                                <span class="outcome-fact-value" th:text="${fresh}">0</span>
+                                <span class="outcome-fact-label">ещё ни разу не открывали</span>
+                            </li>
+                        </ul>
+                        <!--/* Пустой набор — единственное состояние, где нужен совет:
+                             остальные читаются по самим числам выше. */-->
+                        <p class="outcome-empty" th:if="${inSet == 0}">В наборе нет вопросов — расширь отбор слева.</p>
+                        <p class="outcome-filters">
+                            <span class="outcome-filters-label">Отбор:</span>
+                            <span data-preview-filters>все темы</span>
+                        </p>
+                    </aside>
                     <!--/* Параметр 2: режим (POST /start отправляет эта же форма — кнопка живёт
                          в закреплённой панели запуска ниже и связана атрибутом `form`).
                          Предпросмотр объёма/времени обновляет settings/session-form.js
                          (initSessionModeForm) при смене режима/числа. */-->
                     <section class="builder-section builder-mode" aria-labelledby="builder-mode-title">
-                        <h3 class="builder-section-title" id="builder-mode-title">Режим</h3>
+                        <h3 class="builder-section-title" id="builder-mode-title">Как тренируем</h3>
                         <form method="post" th:action="@{/start}" class="session-form" id="session-form" data-sidebar-form="session">
                             <input type="hidden" name="topic" th:value="${filter?.topic}">
                             <input type="hidden" name="group" th:value="${selectedGroup}">
@@ -237,16 +283,35 @@
                             <!--/* ТРЕНИРОВКА — бесконечный режим без сессии (SessionFlowService.startSession:
                                  TRAINING → clearSession). settings/session-form.js (initSessionModeForm) скрывает счётчик
                                  и переименовывает CTA в «Начать тренировку» при TRAINING. */-->
-                            <label class="field field-inline" id="session-count-field">
-                                <span class="field-label">Вопросов:</span>
-                                <input type="number" name="count" min="1" max="200" value="20">
-                            </label>
                         </form>
                         <form method="post" th:action="@{/finish}" class="d-inline" th:if="${interviewSession != null}">
                             <button type="submit" class="btn-finish-small"
                                     data-confirm-title="Завершить сессию?"
                                     data-confirm="Прогресс сохранится в итогах. Завершить сессию сейчас?">Завершить сессию</button>
                         </form>
+                    </section>
+
+                    <!--/* ШАГ 3: СКОЛЬКО. Поле «Вопросов» стояло последней строкой формы
+                         режима — за восемью карточками, то есть выглядело сноской к
+                         выбору режима, а не отдельным решением. Оно и есть отдельное
+                         решение: длина сессии определяет, сколько времени займёт
+                         тренировка, и спрашивается ровно один раз.
+
+                         Поле осталось полем ТОЙ ЖЕ формы (`form="session-form"`) — тем
+                         же приёмом, которым к ней привязана кнопка запуска. Без JS
+                         отправляется как раньше; у режимов без счётчика сервер значение
+                         игнорирует, а скрипт прячет весь шаг (data-unlimited). */-->
+                    <section class="builder-section builder-volume" id="builder-volume"
+                             aria-labelledby="builder-volume-title">
+                        <h3 class="builder-section-title" id="builder-volume-title">Сколько</h3>
+                        <div class="volume-row">
+                            <label class="field field-inline" id="session-count-field">
+                                <span class="field-label">Вопросов:</span>
+                                <input type="number" name="count" min="1" max="200" value="20"
+                                       form="session-form">
+                            </label>
+                            <p class="volume-hint" id="volume-hint">Столько вопросов войдёт в сессию. Дальше — разбор в итогах.</p>
+                        </div>
                     </section>
 
                     <!--/* Сводка: контекст решения. Обёртка <aside aria-label="Сводка
@@ -257,54 +322,6 @@
                          (h1 «Настройки» → h2 «Новая тренировка» → h3 Охват / Режим /
                          Повторение / Статистика). Скринридер получает ЧЕТЫРЕ адреса
                          вместо одного landmark'а на две карточки сразу (§31). */-->
-                    <!--/* Карточка отвечает на «что мне сейчас достанется по этому фильтру».
-                         Долг по повторениям и никогда не открытые вопросы разведены:
-                         пока считалось одно число, набор без единого ответа обещал
-                         «626 карточек ждут повтора», хотя ждать там нечему. */-->
-                    <!--/* НОЛЬ «к повтору» и ноль «новых» — это НЕ пустой набор. Карточка
-                         утверждала обратное: при выбранной теме с 27 вопросами она писала
-                         «в наборе пусто — расширь фильтр», пока полоса запуска в том же
-                         экране показывала «Фильтры · Перебор с возвратом» и «В наборе ·
-                         без ограничения». Один экран давал два ответа на один вопрос, и
-                         совет «расширь фильтр» был вредным: расширять было нечего.
-                         Различает их третье число — объём самого набора (scope.total()):
-                         пусто ли в наборе вообще или в нём просто нечего повторять
-                         прямо сейчас. */-->
-                    <div class="card builder-card builder-review" id="builder-review-card"
-                         th:with="scope=${filteredStats != null ? filteredStats : stats},
-                                  repeats=${scope != null ? scope.dueRepeats() : 0},
-                                  fresh=${scope != null ? scope.fresh() : 0},
-                                  inSet=${scope != null ? scope.total() : 0}">
-                        <h3 class="eyebrow" th:text="${repeats > 0 ? 'Повторение' : (fresh > 0 ? 'Новое' : 'Набор')}">Повторение</h3>
-                        <p class="muted tiny kpi-role"
-                           th:text="${repeats > 0 ? 'Фильтр · к повтору в выбранном наборе'
-                                       : (fresh > 0 ? 'Фильтр · ещё не открывали в выбранном наборе'
-                                                    : 'Фильтр · карточек в выбранном наборе')}">Фильтр · к повтору в выбранном наборе</p>
-                        <!--/* Число показывает ТО, О ЧЁМ карточка. Пока третьего состояния не
-                             было, оно показывало ноль «новых» и подписывалось объёмом набора —
-                             получалось «0 карточек в наборе уже открывались». */-->
-                        <p class="builder-card-value" th:text="${repeats > 0 ? repeats : (fresh > 0 ? fresh : inSet)}">0</p>
-                        <!--/* Склонение всей фразы под числом (@plural.pick): существительное,
-                             глагол и местоимение согласуются с числом. Жёсткое
-                             «карточек ждут … их» давало при 1 «1 карточек ждут … их»,
-                             при 2–4 «2 карточек ждут» вместо «карточки ждут». */-->
-                        <p class="muted tiny" th:text="${repeats > 0
-                               ? @plural.pick(repeats,
-                                   'карточка ждёт повтора — планировщик подмешает её в тренировку',
-                                   'карточки ждут повтора — планировщик подмешает их в тренировку',
-                                   'карточек ждут повтора — планировщик подмешает их в тренировку')
-                               : (fresh > 0
-                                   ? @plural.pick(fresh,
-                                       'карточка ещё ни разу не открывалась — повторять пока нечего',
-                                       'карточки ещё ни разу не открывались — повторять пока нечего',
-                                       'карточек ещё ни разу не открывались — повторять пока нечего')
-                                   : (inSet > 0
-                                       ? @plural.pick(inSet,
-                                           'карточка в наборе — уже открывалась, срок повтора ещё не наступил',
-                                           'карточки в наборе — уже открывались, срок повтора ещё не наступил',
-                                           'карточек в наборе — уже открывались, срок повтора ещё не наступил')
-                                       : 'в наборе нет карточек — расширь фильтр'))}">нет карточек к повтору</p>
-                    </div>
                     <!--/* Здесь стояла сводка «Статистика · весь банк вопросов» — шесть метрик
                          банка (карточек, к повтору, освоено, верных, ошибочных, точность).
                          Это ответ на вопрос «как я иду», а конструктор отвечает на «что
@@ -347,22 +364,24 @@
                      отправляет и ничего не отменяет.
                      Разметку читает settings/session-form.js через getElementById. */-->
                 <div class="builder-launch-bar">
-                    <div class="session-preview" id="session-preview" role="status" aria-live="polite"
+                    <!--/* В полосе запуска осталось то, что описывает САМУ СЕССИЮ и
+                         меняется живьём: сколько вопросов возьмём и сколько это займёт.
+                         Состав набора и действующий отбор уехали в блок «Что попадёт»
+                         рядом с шагом «что тренируем» — там они серверные и видны без JS,
+                         а здесь были третьей подписью в закреплённой строке.
+
+                         Обе метрики считает скрипт, поэтому строка приходит СКРЫТОЙ:
+                         прежние заглушки «по числу вопросов» без JS не сообщали ничего,
+                         кроме того, что тут что-то должно было быть. */-->
+                    <div class="session-preview" id="session-preview" role="status" aria-live="polite" hidden
                          th:attr="data-pool-total=${stats != null ? stats.total : 0}">
                         <span class="preview-metric">
-                            <span class="preview-label">В наборе</span>
-                            <span class="preview-value" data-preview-count
-                                  th:text="${stats != null and stats.total > 0 ? (stats.total + ' в пуле') : 'по числу вопросов'}">по числу вопросов</span>
+                            <span class="preview-label">В сессии</span>
+                            <span class="preview-value" data-preview-count>20 вопросов</span>
                         </span>
                         <span class="preview-metric">
                             <span class="preview-label">Примерно</span>
-                            <!--/* Без JS оценка не считается. Прежнее «оценка появится ниже» стало
-                                 враньём после переезда панели: поле «Вопросов» теперь ВЫШЕ строки. */-->
-                            <span class="preview-value" data-preview-time>по числу вопросов</span>
-                        </span>
-                        <span class="preview-metric preview-filters-metric">
-                            <span class="preview-label">Фильтры</span>
-                            <span class="preview-value" data-preview-filters>все темы</span>
+                            <span class="preview-value" data-preview-time>≈ 15 минут</span>
                         </span>
                     </div>
                     <!--/* data-pending-label — подпись на время ожидания. Кнопка живёт
