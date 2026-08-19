@@ -131,15 +131,56 @@ export function failDiagram(el) {
   }
 }
 
+/** Имя, под которым стили mermaid переносятся мимо парсера. */
+const CARRIED_STYLE = 'data-mmd-style';
+
+/**
+ * Возвращает перенесённые стили через CSSOM.
+ *
+ * <p>Политика приложения строгая: {@code style-src-attr 'none'} — то есть атрибут
+ * {@code style} в РАЗМЕТКЕ запрещён. CSSOM под эту директиву не подпадает:
+ * присваивание {@code element.style} — не разбор атрибута, а работа с объектной
+ * моделью, и браузер её пропускает. Тем же приёмом в приложении уже живут
+ * прогресс-полосы ({@code core/dom.js}: {@code style.setProperty('--progress')}).
+ */
+function restoreCarriedStyles(root) {
+  const carriers = [root, ...root.querySelectorAll('[' + CARRIED_STYLE + ']')];
+  carriers.forEach((node) => {
+    const declarations = node.getAttribute(CARRIED_STYLE);
+    if (!declarations) return;
+    node.style.cssText = declarations;
+    node.removeAttribute(CARRIED_STYLE);
+  });
+}
+
+/**
+ * Вставляет отрисованную mermaid SVG-строку в элемент.
+ *
+ * <p>ЗАМЕР, ИЗ КОТОРОГО ВЫРОСЛА ПОДМЕНА ИМЕНИ АТРИБУТА. На вопросе со схемой
+ * консоль давала 114 нарушений CSP в Chromium и 24 в WebKit («Applying inline style
+ * violates…»): mermaid проставляет на свои узлы атрибуты {@code style}, а политика
+ * приложения их запрещает. Нарушения были не только шумом — объявления
+ * ОТБРАСЫВАЛИСЬ: A/B-прогон с {@code bypassCSP} дал ту же схему размером 538×590
+ * против 550×604 с политикой, потому что маркеры стрелок теряли
+ * {@code stroke-width} и {@code stroke-dasharray}.
+ *
+ * <p>Поэтому атрибут переименовывается ДО разбора: парсер не видит ни одного
+ * {@code style=}, нарушать нечего, а объявления возвращаются на место через CSSOM
+ * уже в живом документе. Порядок важен: сначала стили mermaid, потом наши размеры —
+ * иначе перенос затёр бы ширину и высоту, которые задаёт страница.
+ */
 function applySvgToElement(el, svgString) {
-  const parsed = new DOMParser().parseFromString(svgString, 'text/html');
+  const carried = svgString.replace(/\sstyle="/g, ' ' + CARRIED_STYLE + '="');
+  const parsed = new DOMParser().parseFromString(carried, 'text/html');
   const svg = parsed.body.querySelector('svg');
   if (!svg) return false;
-  svg.removeAttribute('height');
-  svg.style.width = '100%';
-  svg.style.height = 'auto';
-  svg.style.maxHeight = '100%';
-  el.replaceChildren(document.importNode(svg, true));
+  const imported = document.importNode(svg, true);
+  imported.removeAttribute('height');
+  restoreCarriedStyles(imported);
+  imported.style.width = '100%';
+  imported.style.height = 'auto';
+  imported.style.maxHeight = '100%';
+  el.replaceChildren(imported);
   return true;
 }
 
