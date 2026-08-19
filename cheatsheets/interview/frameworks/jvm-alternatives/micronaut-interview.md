@@ -109,7 +109,7 @@ updated: "2026-04-25"
 | AOP | **Compile-time** (без рефлексии) | Runtime (CGLIB / JDK proxies) |
 | Cold start | 1-2 сек | 3-15 сек |
 | Memory | 50-100 MB | 150-300 MB |
-| Native image | First-class | Через Spring Native (Boot 3+) |
+| Native image | First-class | Встроенный AOT в Boot 3+ (раньше — отдельный Spring Native) |
 | Standard | Свой (но похож на Spring) | Spring |
 | HTTP-клиенты | Declarative + compile-time | RestTemplate / WebClient |
 | Cloud features | Built-in (Consul, Eureka, K8s) | Через Spring Cloud |
@@ -131,7 +131,7 @@ updated: "2026-04-25"
 | Reactive | Reactor по умолчанию | Mutiny |
 | ORM | Micronaut Data + Hibernate | Hibernate ORM Panache |
 | Dev experience | Hot reload через `./mvnw mn:run` | Live reload в `dev` mode (более развит) |
-| Dev Services | Test Resources (с 4.0) | Dev Services (developed first) |
+| Dev Services | Test Resources (с 3.5) | Dev Services (developed first) |
 | Cloud | Built-in | Через extensions |
 
 **Как выбрать:** по производительности (cold start, память) они практически равны. Quarkus популярнее, активнее развивается и сильнее в dev-эргономике (live reload, Dev Services появились раньше). Micronaut обычно легче заходит командам со Spring-бэкграундом — синтаксис почти тот же. То есть выбор чаще про экосистему и привычки команды, чем про числа.
@@ -282,7 +282,7 @@ public class UserController {
 
 Валидация — это стандартный Jakarta Bean Validation (`@NotBlank`, `@Email`, `@Min`/`@Max`), а обработка ошибок строится на аннотации `@Error`: локальной (внутри контроллера) или глобальной (`global = true`).
 
-**Валидация** — через `javax.validation` (Jakarta Bean Validation). Класс с ограничениями помечается `@Introspected` (чтобы валидатор читал поля без рефлексии), а в методе ставится `@Valid`:
+**Валидация** — через `jakarta.validation` (Jakarta Bean Validation; до Micronaut 4 пакет назывался `javax.validation`). Класс с ограничениями помечается `@Introspected` (чтобы валидатор читал поля без рефлексии), а в методе ставится `@Valid`:
 
 ```java
 @Introspected
@@ -467,7 +467,7 @@ Micronaut Data — это не один движок, а несколько бэ
 |---------|-------|
 | **JDBC** | Сами SQL queries, lightweight |
 | **JPA** | Через Hibernate |
-| **R2DBC** | Reactive JDBC |
+| **R2DBC** | Реактивный SQL-доступ (не JDBC) |
 | **MongoDB** | Sync и async |
 
 ```java
@@ -522,7 +522,7 @@ public class User { ... } // обязательно для DTO в native
 
 ## Q18. (!) Что умеет @MicronautTest?
 
-`@MicronautTest` поднимает полноценный application context для теста и позволяет инжектить бины и `@Client` прямо в тестовый класс — это интеграционный тест «как в проде», но в рамках JUnit. Мокать бины можно через `@MockBean`. По умолчанию каждый тест выполняется в транзакции с откатом после, а с Micronaut 4 поднимать инфраструктуру (Postgres, Kafka) помогают Test Resources.
+`@MicronautTest` поднимает полноценный application context для теста и позволяет инжектить бины и `@Client` прямо в тестовый класс — это интеграционный тест «как в проде», но в рамках JUnit. Мокать бины можно через `@MockBean`. По умолчанию каждый тест выполняется в транзакции с откатом после, а поднимать инфраструктуру (Postgres, Kafka) помогают Test Resources.
 
 ```java
 @MicronautTest
@@ -550,7 +550,7 @@ class ServiceTest {
 
 **Транзакционность по умолчанию:** каждый тест оборачивается в транзакцию, которая откатывается после завершения, — база остаётся чистой между тестами без ручного `cleanup`.
 
-**Test Resources (с Micronaut 4)** — аналог Quarkus Dev Services: автоматически поднимают Postgres, Kafka и т.п. в контейнерах на время тестов, чтобы не настраивать инфраструктуру вручную.
+**Test Resources (с Micronaut 3.5)** — аналог Quarkus Dev Services: автоматически поднимают Postgres, Kafka и т.п. в контейнерах на время тестов, чтобы не настраивать инфраструктуру вручную.
 
 ## Q19. (!) Как устроены service discovery и управление конфигурацией?
 
