@@ -517,13 +517,13 @@
         </div>
     </section>
 
-    <section class="workspace-support" th:if="${typedInputMode and not #lists.isEmpty(workspaceChecklist)}"
-             aria-labelledby="workspace-support-title">
-        <h2 class="workspace-support-title" id="workspace-support-title">Что стоит покрыть</h2>
-        <ul class="workspace-support-list">
-            <li th:each="item : ${workspaceChecklist}" th:text="${item}">Пункт</li>
-        </ul>
-    </section>
+    <!--/* Опора рабочего места (`.workspace-support`) стояла ЗДЕСЬ, в колонке
+         задания, и была списком-текстом с нарисованной клеткой в ::before. Она
+         уехала в рабочую колонку и стала настоящими флажками (см. `.workspace-plan`
+         в `.typed-workspace`): план ответа — часть работы, а не часть задания, и
+         отмечают по нему, пока пишут или говорят, а не пока читают вопрос.
+         Нарисованная клетка при этом была ложным аффордансом — она выглядела как
+         то, что можно отметить, и не отмечалась. */-->
 </div><!--/* /.focus-question-pane : конец колонки вопроса (col1 в split) */-->
 
         <div th:if="${flashcardMode}" class="flashcard-phase">
@@ -567,13 +567,118 @@
                  что проверяют в решении. Пустой список = блока нет вовсе, поэтому
                  разметка не знает, у каких режимов опора есть. */-->
             <div th:if="${sessionRecallMode and !flashcardRevealed and typedInputMode}" class="typed-workspace">
+                <!--/* ПЛАН ОТВЕТА — ФЛАЖКИ, А НЕ СПИСОК. Пункты приходят из
+                     ModeUtils#workspaceChecklist (свойство режима), но раньше
+                     печатались прозой в колонке задания с нарисованной клеткой в
+                     ::before: интерфейс показывал то, что просит отметить, и не
+                     давал отметить. Флажок нативный — работает без JS, доступен с
+                     клавиатуры, объявляется скринридером с состоянием. Состояние
+                     живёт ровно до следующего вопроса: это план текущего ответа, а
+                     не задача, которую надо помнить назавтра.
+
+                     Счётчик скрыт по умолчанию и раскрывается скриптом: без JS он
+                     застыл бы на «покрыто 0 из N» и врал бы после первого же
+                     флажка. */-->
+                <section class="workspace-plan" th:if="${not #lists.isEmpty(workspaceChecklist)}"
+                         aria-labelledby="workspace-plan-title">
+                    <!--/* НА ТЕЛЕФОНЕ ПЛАН СВЁРНУТ. Замер 390×844 (интервью) сразу
+                         после переезда: план 330px и часы 176px встали между
+                         вопросом и полем ввода, и поле уехало на 920-й пиксель при
+                         сгибе 844 — до работы надо было пролистать её опору. Приём
+                         общий с аналитикой (`data-mobile-collapsed`,
+                         ui/mobile-disclosures.js): на широком экране раскрыто, на
+                         телефоне закрыто один раз при загрузке и больше не
+                         закрывается, если человек открыл руками. Без JS остаётся
+                         `open` — план виден, страница просто длиннее. */-->
+                    <details class="workspace-plan-details" open data-mobile-collapsed>
+                        <summary class="disclosure-summary workspace-plan-summary">
+                            <h2 class="workspace-plan-title" id="workspace-plan-title">Что стоит покрыть</h2>
+                            <span class="workspace-plan-count" hidden aria-live="polite"
+                                  th:attr="data-total=${#lists.size(workspaceChecklist)}">покрыто 0</span>
+                        </summary>
+                    <ul class="workspace-plan-list">
+                        <li th:each="item, iter : ${workspaceChecklist}">
+                            <!--/* Строка-переключатель — общий компонент
+                                 (`.toggle-item`, components-controls.css): флажок,
+                                 за ним подпись, 44px под палец. Своего рисунка
+                                 флажка страница не заводит. */-->
+                            <label class="toggle-item workspace-plan-item">
+                                <input type="checkbox" class="workspace-plan-box"
+                                       th:id="${'workspace-plan-' + iter.index}">
+                                <span th:text="${item}">Пункт</span>
+                            </label>
+                        </li>
+                    </ul>
+                    </details>
+                </section>
+
+                <!--/* РЕПЕТИЦИЯ ВСЛУХ — ТОЛЬКО У ИНТЕРВЬЮ. Ответ на собеседовании
+                     держат в две-три минуты, и тренируется это секундомером, а не
+                     ощущением. Часы — прогрессивное улучшение (без JS секции нет
+                     вовсе, `hidden` снимает скрипт): к раскрытию эталона они
+                     отношения не имеют, и основной цикл без них цел.
+
+                     Секундомер запускается кнопкой, а не сам: самозапуск при
+                     открытии вопроса гнал бы время, пока человек читает задание.
+                     У циферблата `aria-live="off"` намеренно — <output> по
+                     умолчанию polite, и скринридер читал бы вслух каждую секунду;
+                     озвучивается только смена состояния строкой ниже. */-->
+                <section class="rehearsal-timer" th:if="${spokenRehearsalMode}" hidden
+                         aria-labelledby="rehearsal-timer-title">
+                    <h2 class="rehearsal-timer-title" id="rehearsal-timer-title">Время ответа</h2>
+                    <div class="rehearsal-timer-row">
+                        <button type="button" class="btn secondary-btn rehearsal-timer-toggle"
+                                data-state="idle">Засечь</button>
+                        <output class="rehearsal-timer-clock" aria-live="off">0:00</output>
+                    </div>
+                    <p class="rehearsal-timer-state" data-band="ready">Цель — уложиться в две минуты</p>
+                </section>
+
                 <form method="post" th:action="@{/flashcard-reveal}" class="typed-answer-input"
                       th:data-question-id="${current.question.id}"
                       th:classappend="${codeChallengeMode} ? ' is-code' : ''">
-                    <label class="field">
-                        <span class="field-label" th:text="${typedAnswerLabel}">Твой ответ</span>
-                        <textarea name="typedAnswer" rows="6" placeholder="Напиши ответ перед раскрытием эталона…"></textarea>
-                    </label>
+                    <!--/* Подпись отделена от поля (`for`), потому что между ними
+                         встала поверхность письма: `<label>` принимает только
+                         фразовый контент, и обёртка внутри него была бы невалидной
+                         разметкой. Структура ОДНА на все три печатных режима —
+                         различает их состав поверхности, а не вторая копия поля. */-->
+                    <div class="field">
+                        <!--/* Счёт написанного стоит В ШАПКЕ поля, а не под ним. Под
+                             полем он на 360×780 упирался в закреплённый док действия
+                             (замер: строка 650–670 при доке на 666) и читался как
+                             подпись к кнопке, а не к тексту. В шапке он рядом с тем,
+                             что считает, — тем же приёмом, что счёт плана в его
+                             раскрытии. */-->
+                        <div class="field-head">
+                            <label class="field-label" for="typed-answer" th:text="${typedAnswerLabel}">Твой ответ</label>
+                            <!--/* Счёт строк и знаков — прогрессивное улучшение
+                                 (скрыт без JS). Он не оценивает решение, а держит
+                                 масштаб: в код-челлендже длина решения — часть
+                                 ответа. */-->
+                            <p class="code-status" th:if="${codeChallengeMode}" hidden aria-live="off">0 строк</p>
+                        </div>
+                        <div class="answer-surface">
+                            <!--/* Нумерация строк — только у кода и только со
+                                 скриптом: колонка чисел, не совпадающая с
+                                 содержимым, хуже, чем её отсутствие. Разметка стоит
+                                 здесь, а не создаётся скриптом, чтобы поверхность
+                                 письма была видна в шаблоне целиком. */-->
+                            <div class="code-gutter" th:if="${codeChallengeMode}" aria-hidden="true" hidden></div>
+                            <!--/* rows="4", а не 6. Замер: собственная высота шести
+                                 строк — 189px, и она ПЕРЕБИВАЛА все объявленные полы
+                                 (`min-height` 8–10rem = 128–160), то есть высоту поля
+                                 на телефоне решала разметка, а стили лишь казались
+                                 действующими. На 360×780 это уводило низ поля под
+                                 закреплённый док действия (689 против 666). Четыре
+                                 строки — честный минимум и без стилей вовсе. */-->
+                            <textarea id="typed-answer" name="typedAnswer" rows="4"
+                                      th:placeholder="${typedAnswerPlaceholder}"
+                                      th:attr="spellcheck=${codeChallengeMode} ? 'false' : null,
+                                               autocapitalize=${codeChallengeMode} ? 'off' : null,
+                                               autocorrect=${codeChallengeMode} ? 'off' : null,
+                                               autocomplete=${codeChallengeMode} ? 'off' : null"></textarea>
+                        </div>
+                    </div>
                     <button type="submit" class="flashcard-reveal-btn">Показать ответ</button>
                 </form>
             </div>

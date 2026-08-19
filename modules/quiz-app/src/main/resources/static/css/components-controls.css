@@ -525,6 +525,47 @@ html[data-design] .toggle-item input[type="checkbox"] {
   cursor: pointer;
 }
 
+/* --------------------------------------------------------------------------
+   ШАПКА РАСКРЫТИЯ (`<summary class="disclosure-summary">`).
+
+   Прогрессивное раскрытие в приложении есть на трёх экранах — витрина знаков и
+   отбор в аналитике, план ответа в рабочем месте вопроса — и до iter-129 рецепт
+   жил под `.stats-page`. Второй экран заставил бы скопировать двадцать строк
+   в pages-focus.css, то есть завести второй рисунок одного элемента; вместо
+   этого рецепт поднят сюда дословно.
+
+   Страницам остаётся их собственное: зазоры, порядок в раскладке, что прятать
+   в свёрнутом состоянии.
+
+   На широком экране раскрытие стоит открытым и выглядит обычной шапкой секции:
+   маркер снят, курсор — указатель (щёлкнуть можно, приглашения нет, потому что
+   сворачивать там нечего). Стрелка появляется ровно в свёрнутом состоянии:
+   раскрытие, которое не показывает, что оно раскрытие, читается как заголовок,
+   по которому нечего нажимать.
+   -------------------------------------------------------------------------- */
+html[data-design] .disclosure-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+  cursor: pointer;
+  list-style: none;
+}
+html[data-design] .disclosure-summary::-webkit-details-marker {
+  display: none;
+}
+html[data-design] .disclosure-summary h2 {
+  margin: 0;
+}
+html[data-design] .disclosure-summary:focus-visible {
+  outline: var(--rule-weight-strong) solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+html[data-design] details:not([open]) > .disclosure-summary::after {
+  content: "\25BE";
+  color: var(--color-text-tertiary);
+}
+
 /* Press-feedback — лёгкий «нажим» на все реальные кнопки (перенесён с мёртвого
    .ed-btn). Disabled-кнопки :active не получают (браузер не шлёт событие).
    Перенесён из pages-focus.css при подготовке page-scope focus (Волна 3): блок

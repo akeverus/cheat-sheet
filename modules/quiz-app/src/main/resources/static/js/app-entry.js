@@ -50,17 +50,27 @@ async function loadQuizModules() {
   const [
     { initFlashcardShortcuts, initBrowseFlashcardReveal, initRecallTypedEcho },
     { initInterviewForm },
-    { initContentTabs }
+    { initContentTabs },
+    { initTypedWorkspace },
+    { initMobileDisclosures }
   ] = await Promise.all([
     import('./quiz/flashcard.js'),
     import('./quiz/interview.js'),
-    import('./content/materials-tabs.js')
+    import('./content/materials-tabs.js'),
+    import('./quiz/workspace.js'),
+    import('./ui/mobile-disclosures.js')
   ]);
   initBrowseFlashcardReveal();
   initFlashcardShortcuts();
   initRecallTypedEcho();
   initInterviewForm();
   initContentTabs();
+  initTypedWorkspace();
+  // План ответа сворачивается тем же приёмом, что витрина знаков и отбор в
+  // аналитике (ui/mobile-disclosures.js), но по своему условию: здесь он стоит
+  // НАД полем ввода, поэтому закрывается там, где композиция стала стопкой
+  // (уже 1280) или окно низкое (ниже 800) — иначе главное действие уходит за сгиб.
+  initMobileDisclosures('(max-width: 1279px), (max-height: 800px)');
 }
 
 async function loadStatsModules() {

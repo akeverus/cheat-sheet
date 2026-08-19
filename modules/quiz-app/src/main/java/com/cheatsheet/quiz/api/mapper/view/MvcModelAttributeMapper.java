@@ -124,9 +124,17 @@ public class MvcModelAttributeMapper {
         model.addAttribute("focusModeHintText", resolveFocusModeHintText(reviewMode, mode, flashcard, studyLearnPhase));
         model.addAttribute("recallBadgeText", resolveRecallBadgeText(mode, pageState.typedInputMode(), pageState.codeChallengeMode()));
         model.addAttribute("typedAnswerLabel", resolveTypedAnswerLabel(mode, pageState.codeChallengeMode()));
+        model.addAttribute("typedAnswerPlaceholder", modeUtils.typedAnswerPlaceholder(mode));
         // Опора рабочего места — свойство режима (ModeUtils#workspaceChecklist), а не
         // текст в шаблоне: три печатных режима отличаются именно методом работы.
         model.addAttribute("workspaceChecklist", modeUtils.workspaceChecklist(mode));
+        // Репетиция вслух: у интервью работа — речь, а поле рядом лишь держит тезисы.
+        // Признак считается ЗДЕСЬ, а не в шаблоне сравнением с именем режима: рядом
+        // уже лежат typedInputMode и codeChallengeMode, и третье свойство той же
+        // природы обязано приходить оттуда же. Условие на typedInputMode оставляет
+        // признак ложным вне recall-сессии — ровно как у двух соседей.
+        model.addAttribute("spokenRehearsalMode",
+                pageState.typedInputMode() && mode != null && mode.usesSpokenRehearsal());
         // Категории жалобы рисует <template> в разметке, а не таблица в modals.js:
         // подпись — свойство константы, и вторая её копия в JS расходилась бы молча
         // (fromString снисходителен, неизвестное имя уезжает в OTHER).

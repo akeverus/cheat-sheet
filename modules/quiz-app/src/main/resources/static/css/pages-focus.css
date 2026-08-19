@@ -1316,15 +1316,14 @@ html[data-design] .focus-page .empty-state { width: min(100%, var(--focus-measur
   html[data-design] .focus-page:has(form.study-confirm-form) .focus-training {
     padding-bottom: calc(var(--space-9) + var(--mobile-nav-height) + 5.5rem + env(safe-area-inset-bottom, 0px));
   }
-  html[data-design] .focus-page .typed-answer-input textarea {
-    min-height: 5.5rem;
-  }
-  /* is-code textarea заякорена под .focus-page (D4-batch3c, спец 0,4,1) → на мобиле
-     перебивала бы это generic-правило (0,3,1) и растягивалась до 10rem. Компаньон
-     возвращает мобильную компактность 5.5rem (было так до анкера). */
-  html[data-design] .focus-page .typed-answer-input.is-code textarea {
-    min-height: 5.5rem;
-  }
+  /* Здесь стояли два `min-height: 5.5rem` — мобильная компактность поля ввода.
+     Оба были МЁРТВЫ, и это поймал замер, а не чтение: селекторы дословно
+     совпадают с правилами поверхности письма ниже по файлу (строка ~2290), а при
+     равной специфичности выигрывает последний — медиазапрос на это не влияет.
+     Реальная высота поля на 390×844 считалась формулой `100svh − …` (замер: 428px
+     до iter-129 и 300px после), а не 88 пикселями отсюда. Правила удалены, а не
+     починены: компактность на телефоне даёт та же формула, потому что вычитаемое
+     в ней — преамбула и док, которые на телефоне и так занимают почти весь экран. */
 
   /* Ревью #3 / макет Instrument (focus-question.html: `.state--active .submit-row`
      fixed bottom + safe-area): на мобиле главное действие MCQ-ответа — закреплённая
@@ -1678,8 +1677,10 @@ html[data-design] .focus-page .focus-training .focus-aside .focus-session-more-s
   }
   /* Селектор — потомок, а не прямой ребёнок: пейн вопроса здесь `display: contents`,
      и справка становится flex-элементом .focus-main, оставаясь его внуком в разметке. */
-  html[data-design] .focus-page .focus-main .topic-brief,
-  html[data-design] .focus-page .focus-main .workspace-support { order: 1; }
+  /* Второе слагаемое (`.workspace-support`) снято в iter-129 вместе с блоком:
+     план ответа больше не живёт в колонке задания и переставлять его не нужно —
+     он стоит внутри рабочего места, там же, где поле ввода. */
+  html[data-design] .focus-page .focus-main .topic-brief { order: 1; }
   html[data-design] .focus-page .focus-main .report-zone { order: 2; }
 
   /* ЗАЗОР ПРИНАДЛЕЖИТ БЛОКУ, А НЕ ПРОТЕКАЕТ ИЗ ЕГО НУТРА.
@@ -2151,13 +2152,15 @@ html[data-design] .focus-page .flashcard-grade-buttons {
 /* ДВЕ ЛИНЕЙКИ ПОДРЯД ПОД ВОПРОСОМ. Замер (Chromium, 2560, вопрос с листингом):
    `.focus-question` кончается рамкой-снизу на 472, её марджин 24 — и на 496
    начинается собственная кромка карточки материалов. Две горизонтали в 24px
-   друг от друга читаются как сбой вёрстки, а не как ритм; в письменных режимах
-   тот же стык даёт линейка `.workspace-support` (border-top).
-   Разделителем в обоих случаях работает кромка следующего объекта — она есть
-   всегда, — поэтому снимаем линейку вопроса, а не кромку. Без соседа (вопрос
-   один в колонке) линейка остаётся: там ей нечего дублировать. */
-html[data-design] .focus-page .focus-question:has(+ .question-materials),
-html[data-design] .focus-page .focus-question:has(+ .workspace-support) {
+   друг от друга читаются как сбой вёрстки, а не как ритм.
+   Разделителем работает кромка следующего объекта — она есть всегда, — поэтому
+   снимаем линейку вопроса, а не кромку. Без соседа (вопрос один в колонке)
+   линейка остаётся: там ей нечего дублировать.
+
+   Второй случай (`+ .workspace-support`) снят в iter-129 вместе с блоком: план
+   ответа уехал в рабочую колонку, соседом вопроса быть перестал, и правило для
+   несуществующего соседа читалось бы как действующее. */
+html[data-design] .focus-page .focus-question:has(+ .question-materials) {
   border-bottom: 0;
 }
 
@@ -2185,10 +2188,46 @@ html[data-design] .focus-page .focus-question:has(+ .workspace-support) {
 
 /* Поверхность письма: поле растёт до дна вьюпорта, а не стоит в шесть строк.
    `svh` вместо `vh` — на мобильных Safari панель браузера иначе съедает низ поля
-   вместе с кнопкой (динамическая высота вьюпорта, WebKit). */
+   вместе с кнопкой (динамическая высота вьюпорта, WebKit).
+
+   iter-129 — ПОТОЛОК И НОВЫЙ ВЫЧЕТ. Формула была без верхней границы, и замер на
+   2560×1440 дал поле 1024px при колонке задания 630px: рабочая колонка вдвое
+   длиннее той, ради которой она работает.
+
+   Вычет 26rem считался, когда над полем стояла только подпись. С переездом плана
+   ответа в рабочую колонку преамбула выросла до 450px, и замер поймал цену:
+   «Показать ответ» уехало за сгиб на 1440×900 (970) и 1512×982 (1030). Вычет
+   пересчитан по замеренной преамбуле: 34rem = 544px — это шапка, вопрос, план и
+   сама кнопка с зазорами. Потолок 30rem (~26 строк кода) держит поле от
+   превращения в полосу пустоты на высоких экранах; кому нужно больше — ручка
+   `resize` на месте. */
 html[data-design] .focus-page .typed-answer-input textarea {
-  min-height: max(14rem, calc(100svh - 26rem));
+  min-height: max(14rem, min(calc(100svh - 34rem), 30rem));
   resize: vertical;
+}
+/* СТОПКА (уже 1280) СЧИТАЕТ ПРЕАМБУЛУ ПО-ДРУГОМУ. В две колонки над полем стоят
+   план и подпись (~450px), в стопке — ещё и сам вопрос: замер 768×1024 дал
+   преамбулу 574px, и с общим вычетом 34rem «Показать ответ» оставалось на 1091 при
+   сгибе 1024. Вычет здесь больше ровно на эту разницу (42rem = 672), потолок ниже
+   (24rem), пол — 8rem: на 360×780 поле выше этого уходит под закреплённый док
+   действия (замер: низ поля 689 при доке на 666; с 8rem — 657). На 390 и 430 пол
+   не работает вовсе — там формула даёт больше.
+
+   Правило стоит ПОСЛЕ базового и с той же специфичностью — так же, как оно и
+   выигрывает: медиазапрос специфичности не добавляет. Ровно на этом в файле уже
+   лежали два мёртвых правила (см. выше), поэтому порядок здесь назван явно. */
+@media (max-width: 1279px) {
+  html[data-design] .focus-page .typed-answer-input textarea {
+    min-height: max(8rem, min(calc(100svh - 42rem), 24rem));
+  }
+}
+
+/* ИНТЕРВЬЮ: ПОЛЕ — ЗАМЕТКИ, А НЕ ОТВЕТ. Ответ здесь произносят вслух, а в поле
+   держат тезисы, поэтому оно не занимает высоту письма: её забирают план и часы,
+   то есть настоящая работа режима. Гейт по содержимому рабочего места (часы есть
+   только у интервью), а не по имени режима — тем же правилом, что и весь файл. */
+html[data-design] .focus-page .typed-workspace:has(.rehearsal-timer) .typed-answer-input textarea {
+  min-height: 9rem;
 }
 html[data-design] .focus-page .typed-answer-input.is-code textarea {
   /* Код пишут длинными строками — перенос по словам ломает чтение отступов. */
@@ -2198,17 +2237,34 @@ html[data-design] .focus-page .typed-answer-input.is-code textarea {
   tab-size: 4;
 }
 
-/* Опора рабочего места. Это НЕ подсказка к вопросу и не разбор: список говорит,
-   из чего складывается полный ответ в этом режиме, и одинаков для любого
-   вопроса. Поэтому он тихий — вторичный тон, без рамки-карточки, чтобы не
-   спорить с самим вопросом за внимание. */
-html[data-design] .focus-page .workspace-support {
-  margin-top: var(--space-5);
-  padding-top: var(--space-4);
-  border-top: var(--rule-weight) solid var(--color-border-secondary);
+/* ===========================================================================
+   РАБОЧЕЕ МЕСТО ПЕЧАТНОГО РЕЖИМА (iter-129)
+
+   До этой итерации три режима семейства `usesTypedInput()` рисовали ОДИН экран:
+   замер (Chromium, 2560×1440 и 1512×982, один вопрос) давал у интервью и
+   код-челленджа попиксельно совпадающие коробки — колонки 768/640, поле 640×1100,
+   план в колонке задания. Отличались подпись поля, четыре строки плана и чип
+   режима. §14 называет это архитектурным дефектом, и лечится он не размером поля,
+   а составом поверхности: у кода — редактор с нумерацией строк и счётом, у
+   интервью — план вслух и секундомер, у пересказа — только план.
+   =========================================================================== */
+
+/* ПЛАН ОТВЕТА. Стоит НАД полем, а не под ним: по нему собирают ответ, а не
+   сверяются после. Тон тихий (без карточки, вторичный цвет заголовка) — план
+   помогает работать, а не спорит с вопросом за внимание. */
+html[data-design] .focus-page .workspace-plan {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: var(--rule-weight) solid var(--color-border-secondary);
 }
-html[data-design] .focus-page .workspace-support-title {
-  margin: 0 0 var(--space-3);
+/* Шапка раскрытия — общий компонент `.disclosure-summary` (строка, снятый
+   маркер, кольцо фокуса, стрелка в свёрнутом виде). Здесь только зазор под
+   раскрытой шапкой и вид самого заголовка. */
+html[data-design] .focus-page .workspace-plan-details[open] > .workspace-plan-summary {
+  margin-bottom: var(--space-2);
+}
+html[data-design] .focus-page .workspace-plan-title {
+  margin: 0;
   font-family: var(--font-family-mono);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
@@ -2216,31 +2272,128 @@ html[data-design] .focus-page .workspace-support-title {
   text-transform: uppercase;
   color: var(--color-text-tertiary);
 }
-html[data-design] .focus-page .workspace-support-list {
+html[data-design] .focus-page .workspace-plan-list {
   margin: 0;
   padding: 0;
   list-style: none;
-  display: grid;
-  gap: var(--space-2);
 }
-html[data-design] .focus-page .workspace-support-list li {
-  position: relative;
-  padding-left: var(--space-5);
-  max-width: 52ch;
+/* Строка выше базовых 44px не нужна, но пункт может переноситься на две строки —
+   тогда флажок держится у ПЕРВОЙ, а не уезжает в оптический центр абзаца. */
+html[data-design] .focus-page .workspace-plan-item {
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-block: var(--space-1);
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
-/* Маркер — пустая клетка списка дел, а не буллет: пункт можно мысленно
-   отметить, и это ровно то действие, которого список просит. Клетка
-   декоративна (`aria-hidden` не нужен — это ::before), смысл несёт текст. */
-html[data-design] .focus-page .workspace-support-list li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.35em;
-  width: 0.75em;
-  height: 0.75em;
-  border: var(--rule-weight-strong) solid var(--color-border-strong);
+html[data-design] .focus-page .workspace-plan-item input[type="checkbox"] {
+  margin-top: 0.55rem;
+}
+/* Отмеченный пункт гаснет — но не только цветом: рядом стоит галка самого
+   флажка, то есть состояние читается формой (WCAG 1.4.1). */
+html[data-design] .focus-page .workspace-plan-item:has(input:checked) {
+  color: var(--color-text-tertiary);
+}
+/* Счёт стоит В ШАПКЕ раскрытия: на телефоне план свёрнут, и «покрыто 3 из 5» —
+   единственное, что о нём видно; выносить его под список значило бы прятать
+   вместе со списком ровно то, ради чего в него заглядывают. */
+html[data-design] .focus-page .workspace-plan-count {
+  margin: 0;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* СЕКУНДОМЕР РЕПЕТИЦИИ (только интервью). */
+html[data-design] .focus-page .rehearsal-timer {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: var(--rule-weight) solid var(--color-border-secondary);
+}
+html[data-design] .focus-page .rehearsal-timer-title {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+html[data-design] .focus-page .rehearsal-timer-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+/* `tabular-nums` — иначе секунды дёргают ширину строки каждую секунду, и рядом
+   стоящая кнопка ездит по горизонтали. */
+html[data-design] .focus-page .rehearsal-timer-clock {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-2xl);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+html[data-design] .focus-page .rehearsal-timer-state {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+/* Полоса времени названа СЛОВОМ в самой строке (её пишет скрипт), цвет лишь
+   усиливает уже сказанное. */
+html[data-design] .focus-page .rehearsal-timer-state[data-band="over"] {
+  color: var(--color-status-warning);
+}
+
+/* ПОВЕРХНОСТЬ ПИСЬМА: поле и, у кода, колонка номеров строк слева.
+   Колонка появляется только со скриптом (он ставит `.is-numbered` и снимает
+   `hidden`): номера, разъехавшиеся с содержимым, хуже, чем их отсутствие.
+   Гейт классом, а не `:has()`, намеренно — состояние ставит тот же код, что
+   заполняет колонку, и разъехаться им негде. */
+html[data-design] .focus-page .answer-surface {
+  display: grid;
+  min-width: 0;
+}
+html[data-design] .focus-page .answer-surface.is-numbered {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+html[data-design] .focus-page .code-gutter {
+  margin: 0;
+  padding: var(--space-3) var(--space-2);
+  border: var(--rule-weight) solid var(--color-border-secondary);
+  border-right: 0;
+  background: var(--color-surface-raised, transparent);
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  /* Кегль и интерлиньяж обязаны совпадать с полем до пикселя, иначе номера
+     расходятся с кодом на десятой строке. Оба берутся из тех же токенов, что
+     компонент поля (`.field textarea`). */
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: pre;
+  color: var(--color-text-tertiary);
+  overflow: hidden;
+  user-select: none;
+}
+html[data-design] .focus-page .answer-surface.is-numbered textarea {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+/* Шапка поля: подпись слева, счёт справа — одна строка, поэтому счёт не добавляет
+   высоты рабочему месту вовсе. */
+html[data-design] .focus-page .field-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+}
+html[data-design] .focus-page .code-status {
+  margin: 0;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
 }
 
 /* Колонка задания после ответа — липкая полоса, а не первый экран, который
