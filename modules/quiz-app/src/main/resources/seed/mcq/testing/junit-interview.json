@@ -6,56 +6,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Из каких частей состоит `JUnit 5` и какую роль выполняет каждая?",
+          "question_text": "Что такое JUnit 5 и как он структурирован?",
           "options": [
             {
-              "text": "`JUnit 5` — один monolithic jar: test API, launcher, IDE integration, discovery и compatibility engine не разделены на отдельные modules или artifacts.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`JUnit 5` намеренно разбит на три подпроекта (`Platform`, `Jupiter`, `Vintage`), чтобы launcher и test API эволюционировали независимо и сторонние движки могли подключаться к `Platform`.",
-                "source_of_confusion": "В сборке обычно подключают один агрегатор `junit-jupiter`, поэтому модульность не видна и кажется, что это один монолит.",
-                "if_it_were_true": "Будь это монолит, нельзя было бы запускать `JUnit 4`-тесты через `Vintage` рядом с `Jupiter` — а на практике они спокойно работают в одной сборке.",
-                "how_it_should_be": "Правильно понимать `JUnit 5` как зонтик над тремя подпроектами: `Platform` для запуска, `Jupiter` для написания, `Vintage` для legacy."
-              },
+              "order": 0,
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`JUnit 5` состоит из Jupiter и встроенного Mockito engine; Platform является частью Gradle, не имеет собственного launcher API и не относится к JUnit project.",
+              "text": "`JUnit Vintage` нужен для новых тестов, а старые запускаются прямо на движке `Jupiter`.",
               "correct": false,
               "sections": {
-                "what_actually": "`Mockito` — отдельная библиотека, не входящая в `JUnit 5`; интеграция идёт через внешний `MockitoExtension`, а подпроектов у `JUnit 5` именно три (`Platform`, `Jupiter`, `Vintage`).",
-                "source_of_confusion": "`Mockito` почти всегда используют вместе с `JUnit`, поэтому его ошибочно считают частью самого фреймворка.",
-                "if_it_were_true": "Если бы `Mockito` был встроен, его классы тянулись бы транзитивно с `junit-jupiter` — но его нужно подключать отдельной зависимостью.",
-                "how_it_should_be": "`JUnit 5` отвечает за запуск и написание тестов; мокирование — задача внешних библиотек вроде `Mockito`, подключаемых через `Extensions`."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "Мост нужен ровно наоборот — чтобы старые тесты третьей и четвёртой версий шли на новой платформе.",
+                "source_of_confusion": "Слово «vintage» в названии связывают с чем угодно старым, включая целевой движок.",
+                "if_it_were_true": "Тогда мигрировать было бы некуда и отдельный движок-мост оказался бы лишним.",
+                "how_it_should_be": "Читать мост как временное средство совместимости на период миграции."
+              }
             },
             {
-              "text": "`JUnit 5` включает Platform для discovery/launch, Jupiter programming и extension model, а также optional Vintage engine для JUnit 3/4 tests.",
+              "order": 1,
+              "label": "B",
+              "text": "Это единый артефакт, внутри которого движок и пользовательский API совершенно неотделимы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подпроектов три, и они независимы — на этом и держится стабильность интерфейса запуска.",
+                "source_of_confusion": "В сборке подключают одну зависимость, и продукт кажется монолитным артефактом.",
+                "if_it_were_true": "Тогда среда разработки завязывалась бы на конкретный API написания тестов.",
+                "how_it_should_be": "Помнить про разделение фундамента, движка и моста совместимости."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это зонтик из трёх подпроектов — фундамент запуска, движок тестов и мост.",
               "correct": true,
               "sections": {
-                "explanation": "Platform отделяет запуск и discovery от конкретной test model. Jupiter предоставляет annotations, assertions и extension API, а Vintage является отдельным engine для migration legacy suites.",
-                "example": "Gradle запускает Platform, которая обнаруживает `junit-jupiter-engine`; при добавленном Vintage engine она также выполняет classes с JUnit 4 `@Test`.",
-                "when_to_apply": "Понимание модулей нужно при настройке dependencies, IDE/build runner, custom TestEngine, suites и миграции старых tests.",
-                "edge_cases": "`junit-jupiter` aggregation artifact удобен, но не превращает систему в один jar. Vintage требует JUnit 4 dependency и предназначен для migration, а не для новых tests.",
-                "related": "[[junit-interview#Q7]] Mockito extension; [[junit-interview#Q9]] extension model; [[junit-interview#Q13]] Spring integration."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Это не один артефакт, а зонтик из трёх независимых подпроектов, и такое разделение позволяет средам разработки и сборщикам работать через стабильный Platform API, не завязываясь на конкретный API написания тестов.",
+                "example": "Фундамент определяет `TestEngine` SPI, через который среда разработки и сборщик находят и запускают тесты, но сам тесты не пишет.",
+                "when_to_apply": "Движок `Jupiter` даёт и новый API, и реализацию запуска — именно его в обиходе называют пятой версией.",
+                "edge_cases": "Третий подпроект — мост для старых тестов третьей и четвёртой версий на той же платформе, нужный на время миграции.",
+                "related": "Из заметных отличий от четвёртой версии: аннотации жизненного цикла переименованы яснее, а громоздкий раннер заменён композируемым расширением."
+              }
             },
             {
-              "text": "`JUnit 5` — новое имя JUnit 4 с теми же `org.junit.Test`, `@Before` и single runner model, перенесёнными в другой package.",
+              "order": 3,
+              "label": "D",
+              "text": "`JUnit Platform` — это и есть привычный API для написания тестов с аннотацией `@Test`.",
               "correct": false,
               "sections": {
-                "what_actually": "В `Jupiter` аннотации переименованы: `@Before` стал `@BeforeEach`, `@BeforeClass` — `@BeforeAll`, `@Ignore` — `@Disabled`, `@RunWith` — `@ExtendWith`. Это не ребрендинг, а новый API.",
-                "source_of_confusion": "Многие аннотации концептуально похожи, поэтому кажется, что поменялся только пакет, а не сам API.",
-                "if_it_were_true": "Если бы имена совпадали, старые тесты компилировались бы под `Jupiter` без правок — но `@Before` из `org.junit` под `Jupiter` просто не сработает.",
-                "how_it_should_be": "`Jupiter` — это переработанный API с новыми именами аннотаций и поддержкой `Java 8+` (лямбды, `assertAll`, `assertThrows`), а не переименованный `JUnit 4`."
-              },
-              "label": "D",
-              "order": 3
+                "what_actually": "Фундамент только находит и запускает тесты, а привычный API написания даёт движок `Jupiter`.",
+                "source_of_confusion": "Название платформы звучит обобщённо, и его принимают за весь продукт целиком.",
+                "if_it_were_true": "Тогда мост для старых тестов не смог бы жить на той же платформе.",
+                "how_it_should_be": "Разводить фундамент запуска и движок, в котором объявлены аннотации тестов."
+              }
             }
           ]
         }
@@ -66,56 +66,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие основные аннотации жизненного цикла и теста есть в `JUnit 5`?",
+          "question_text": "Какие основные аннотации в JUnit 5?",
           "options": [
             {
-              "text": "`@BeforeEach`/`@AfterEach` окружают invocation, `@BeforeAll`/`@AfterAll` — class lifecycle; остальные annotations задают display, disable, timeout, repetition и nesting.",
+              "order": 0,
+              "label": "A",
+              "text": "Метод с `@BeforeAll` выполняется перед каждым тестом, поэтому статическим быть не может.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перед каждым тестом работает `@BeforeEach`, а метод уровня класса запускается один раз и обычно статичен.",
+                "source_of_confusion": "Названия аннотаций различаются одним словом, и роли легко перепутать.",
+                "if_it_were_true": "Тогда две пары аннотаций жизненного цикла делали бы одно и то же.",
+                "how_it_should_be": "Читать окончание имени как частоту: один раз на класс или на каждый тест."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@BeforeAll` выполняется один раз на класс и по умолчанию объявляется статическим.",
               "correct": true,
               "sections": {
-                "explanation": "Jupiter разделяет lifecycle scopes и предоставляет отдельные annotations вместо attributes JUnit 4 `@Test`. Class callbacks обычно static при PER_METHOD, но могут быть instance methods при PER_CLASS.",
-                "example": "`@BeforeEach` создаёт fresh fixture перед каждым parameterized invocation; `@BeforeAll` один раз поднимает expensive shared resource; `@Timeout(2)` ограничивает test execution.",
-                "when_to_apply": "Используйте smallest lifecycle scope, достаточный fixture-у; shared resources должны иметь clear cleanup и не создавать order-dependent tests.",
-                "edge_cases": "`@BeforeAll` в nested class зависит от lifecycle/Java version. `@Timeout` thread mode влияет на ThreadLocal/transaction semantics и требует осознанной настройки.",
-                "related": "[[junit-interview#Q6]] nested lifecycle; [[junit-interview#Q14]] PER_METHOD/PER_CLASS; [[junit-interview#Q10]] conditional execution."
-              },
-              "label": "A",
-              "order": 0
+                "explanation": "Аннотации жизненного цикла делятся по частоте запуска: пара `@BeforeAll` и `@AfterAll` срабатывает один раз на весь класс и по умолчанию должна быть статической.",
+                "example": "Пара `@BeforeEach` и `@AfterEach` работает перед каждым тестом и после него — туда выносят повторяющуюся подготовку.",
+                "when_to_apply": "Дорогую однократную инициализацию держат в методе уровня класса, а обнуление состояния — в методе уровня теста.",
+                "edge_cases": "Отдельная группа управляет выполнением: временное отключение с причиной, срок выполнения и повтор теста заданное число раз.",
+                "related": "Номер текущего повтора доступен через параметр `RepetitionInfo`, а читаемое имя в отчёте задаёт `@DisplayName`."
+              }
             },
             {
-              "text": "`@Timeout` пишет warning, но не fails test при превышении limit; для failure нужен отдельный assertion timer.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Timeout` проваливает тест с `TimeoutException`, если он не уложился в лимит, а не просто пишет предупреждение — это жёсткая граница времени выполнения.",
-                "source_of_confusion": "Звучит как мягкий мониторинг производительности, поэтому кажется, что это только предупреждение, а не fail.",
-                "if_it_were_true": "Будь это просто лог, зависший тест блокировал бы сборку навсегда — а `@Timeout` именно прерывает и помечает его упавшим.",
-                "how_it_should_be": "Правильно: `@Timeout(value = 5, unit = SECONDS)` фейлит тест при превышении лимита, защищая сборку от подвисаний."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Jupiter отключает tests аннотацией JUnit 4 `@Ignore`; `@Disabled` относится только к Platform engines и не работает с Jupiter methods.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В `Jupiter` отключение делается через `@Disabled`; `@Ignore` — это аннотация из `JUnit 4`, и `Platform` её для `Jupiter`-тестов не учитывает.",
-                "source_of_confusion": "Имена `@Ignore` и `@Disabled` решают одну задачу, а из-за привычки к `JUnit 4` рука тянется к старому имени.",
-                "if_it_were_true": "Если бы `@Ignore` работала в `Jupiter`, тест с ней пропускался бы — но на деле он выполнится как обычный, потому что аннотация проигнорирована движком.",
-                "how_it_should_be": "В `JUnit 5` для отключения теста применяют `@Disabled` (опционально с причиной), а `@Ignore` оставляют только legacy-тестам на `Vintage`."
-              },
+              "order": 2,
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`@BeforeAll` и `@AfterAll` выполняются перед и после каждого test method, а `@BeforeEach`/`@AfterEach` — один раз на class; различие только в naming.",
+              "text": "`@RepeatedTest` повторяет весь класс целиком, а номер текущего повтора взять негде.",
               "correct": false,
               "sections": {
-                "what_actually": "`@BeforeAll`/`@AfterAll` выполняются один раз на класс (и по умолчанию должны быть `static`), а `@BeforeEach`/`@AfterEach` — перед/после каждого теста.",
-                "source_of_confusion": "Все четыре аннотации относятся к setup/teardown, поэтому их частоту вызова легко перепутать.",
-                "if_it_were_true": "Если бы `@BeforeAll` звался перед каждым тестом, дорогой одноразовый setup (например, поднятие контекста) повторялся бы многократно и терял смысл.",
-                "how_it_should_be": "Правильно: `@BeforeAll`/`@AfterAll` — один раз на класс, `@BeforeEach`/`@AfterEach` — на каждый тест-метод."
-              },
+                "what_actually": "Повторяется один помеченный тест, а номер повтора приходит параметром `RepetitionInfo`.",
+                "source_of_confusion": "Повтор ассоциируется с прогоном всего набора, а не отдельного метода.",
+                "if_it_were_true": "Тогда ловить нестабильный сценарий пришлось бы перезапуском всего класса.",
+                "how_it_should_be": "Вешать аннотацию на конкретный метод и брать номер из параметра."
+              }
+            },
+            {
+              "order": 3,
               "label": "D",
-              "order": 3
+              "text": "`@Disabled` причину не принимает, поэтому её оставляют комментарием рядом с методом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Причину указывают прямо в скобках аннотации, и она видна в отчёте.",
+                "source_of_confusion": "Комментарий рядом с отключённым тестом — привычная практика из старого кода.",
+                "if_it_were_true": "Тогда в отчёте не было бы видно, почему тест пропущен.",
+                "how_it_should_be": "Писать причину аргументом аннотации, а не комментарием."
+              }
             }
           ]
         }
@@ -126,56 +126,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как писать параметризованные тесты в `JUnit 5` и какие источники аргументов есть?",
+          "question_text": "Как использовать параметризованные тесты?",
           "options": [
             {
-              "text": "Parameterized method помечается обычной `@Test`, а JUnit автоматически перебирает значения всех fields test instance без source annotation.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Параметризованный тест помечают `@ParameterizedTest` (не `@Test`) и обязательно дают источник аргументов: `@ValueSource`, `@CsvSource`, `@EnumSource`, `@MethodSource` и т.п. Без источника тест не запустится.",
-                "source_of_confusion": "И обычный, и параметризованный тест — это методы с проверками, поэтому кажется, что хватит `@Test`.",
-                "if_it_were_true": "Если пометить параметрический метод просто `@Test`, `JUnit` пожалуется, что у метода есть аргументы, но нет `ParameterResolver` — тест не выполнится.",
-                "how_it_should_be": "Правильно: `@ParameterizedTest` + источник вроде `@ValueSource(strings = {...})`, где каждый элемент даёт отдельный прогон метода."
-              },
+              "order": 0,
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`@EnumSource` передаёт весь enum values array одним invocation; loop по constants должен находиться внутри test body.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@EnumSource` запускает метод по разу на КАЖДУЮ константу enum, передавая одно значение `OrderStatus status` за прогон, а не весь массив сразу.",
-                "source_of_confusion": "Источники аргументов внешне похожи на «коллекцию данных», отсюда мысль, что передаётся весь набор целиком.",
-                "if_it_were_true": "Если бы он отдавал массив за один прогон, отчёт показывал бы один тест вместо отдельной строки на каждый статус — а `JUnit` рисует по строке на константу.",
-                "how_it_should_be": "Правильно: `@EnumSource` итерирует по значениям enum, давая по одному `status` на прогон; сузить набор можно параметрами `names`/`mode`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`@CsvSource` поддерживает только один String argument, поэтому input/expected pair или automatic conversion в primitives/enums невозможны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@CsvSource` как раз передаёт несколько колонок: строка `\"'hello', 5\"` маппится в `(String input, int expected)` с автоконвертацией типов — это его основной сценарий.",
-                "source_of_confusion": "`@ValueSource` действительно односторонний (один параметр), и его ограничение ошибочно переносят на `@CsvSource`.",
-                "if_it_were_true": "Будь `@CsvSource` одноколоночным, нельзя было бы проверять `assertThat(input.length()).isEqualTo(expected)` одним методом — а это его типовое применение.",
-                "how_it_should_be": "Правильно: `@CsvSource` поддерживает много колонок и конвертацию типов; для одного параметра берут `@ValueSource`, для сложных объектов — `@MethodSource`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`@ParameterizedTest` создаёт invocation для каждого argument set из value, CSV, enum, method, field, null/empty или custom sources.",
+              "text": "Метод помечают `@ParameterizedTest` и дают источник данных под природу аргументов.",
               "correct": true,
               "sections": {
-                "explanation": "Parameterized test является test template: provider выдаёт argument sets, framework конвертирует/агрегирует их и отображает отдельные invocations. Source выбирают по форме test data.",
-                "example": "`@ParameterizedTest @CsvSource({\"1,2,3\",\"-1,1,0\"}) void adds(int a,int b,int expected)` запускается дважды; complex objects поставляет `static Stream<Arguments> cases()`.",
-                "when_to_apply": "Используйте для одного behavior contract на наборе boundary/equivalence cases, не объединяя разные сценарии лишь ради уменьшения числа methods.",
-                "edge_cases": "`@MethodSource` factory обычно static при PER_METHOD lifecycle; при PER_CLASS может быть instance. Argument conversion failure означает проблему data contract, а не assertion failure.",
-                "related": "[[junit-interview#Q8]] dynamic tests; [[junit-interview#Q14]] lifecycle; [[rest-assured-interview#Q13]] API data sets."
-              },
+                "explanation": "Параметризованный тест прогоняет один метод на наборе входных данных: метод помечают отдельной аннотацией вместо обычной и добавляют источник данных.",
+                "example": "Каждый набор аргументов виден в отчёте как отдельный прогон, а не как одна общая попытка.",
+                "when_to_apply": "Простые значения и строки берут из `@ValueSource`, несколько параметров прямо в коде — из `@CsvSource`.",
+                "edge_cases": "Большие таблицы удобнее держать в ресурсе через `@CsvFileSource`, а перебор значений перечисления даёт `@EnumSource`.",
+                "related": "Самый мощный источник — метод, возвращающий поток аргументов: он нужен, когда данные это сложные объекты или их надо вычислять."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Источник `@EnumSource` требует перечислить значения руками, иначе новые элементы пропустятся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Источник берёт все значения перечисления и как раз гарантирует, что новый элемент не забудут.",
+                "source_of_confusion": "Возможность отобрать часть значений есть, и её принимают за обязательное перечисление.",
+                "if_it_were_true": "Тогда главное преимущество источника перед списком строк исчезло бы.",
+                "how_it_should_be": "Полагаться на автоматический перебор всех значений перечисления."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Источник `@ValueSource` умеет отдавать сразу несколько параметров на один прогон.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Этот источник отдаёт ровно один параметр — примитив или строку, это самый простой случай.",
+                "source_of_confusion": "В аннотации перечисляют несколько значений, и их принимают за несколько параметров.",
+                "if_it_were_true": "Тогда отдельный источник для нескольких параметров через запятую был бы не нужен.",
+                "how_it_should_be": "Считать перечисленные значения набором прогонов, а не набором аргументов одного прогона."
+              }
+            },
+            {
+              "order": 3,
               "label": "D",
-              "order": 3
+              "text": "Каждый набор аргументов попадает в отчёт одним общим прогоном метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый набор аргументов — отдельный прогон в отчёте, поэтому видно, какой именно случай упал.",
+                "source_of_confusion": "Физически метод в коде один, и отчёт ожидают увидеть тоже одной строкой.",
+                "if_it_were_true": "Тогда упавший набор данных пришлось бы искать вручную по логу.",
+                "how_it_should_be": "Ожидать в отчёте столько прогонов, сколько наборов дал источник."
+              }
             }
           ]
         }
@@ -186,56 +186,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `assertAll` и когда его использовать?",
+          "question_text": "Что такое assertAll и когда его использовать?",
           "options": [
             {
-              "text": "`assertAll` применяет один predicate к каждому element collection и является аналогом Stream `allMatch`, а не группировкой assertions.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`assertAll` группирует НЕЗАВИСИМЫЕ ассерты (часто по разным полям одного объекта), а проверка предиката на каждом элементе коллекции — задача `AssertJ` (`allMatch`) или цикла.",
-                "source_of_confusion": "Слово «all» наводит на мысль о переборе коллекции, хотя оно про «выполнить все ассерты».",
-                "if_it_were_true": "Будь это перебор коллекции, нельзя было бы передать в `assertAll` разнотипные лямбды (`assertEquals` имени, `assertNotNull` id) — а именно так его и используют.",
-                "how_it_should_be": "Правильно: `assertAll` агрегирует набор разных проверок одного объекта, а для условий по коллекции применяют `AssertJ` или `@ParameterizedTest`."
-              },
+              "order": 0,
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`assertAll` допускает максимум две проверки и предназначен только для пары expected/actual одного property или одного object field.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`assertAll` принимает произвольное число `Executable`-лямбд (пять и больше — нормально) и проверяет разные аспекты объекта, а не только одно поле.",
-                "source_of_confusion": "Примеры в документации часто короткие, отсюда ложное впечатление про лимит в два ассерта.",
-                "if_it_were_true": "Если бы лимит был два, нельзя было бы в одном `assertAll` проверить имя, email, возраст, id и активность пользователя — а это его типовой сценарий.",
-                "how_it_should_be": "Правильно: `assertAll` принимает сколько угодно проверок (`() -> assertEquals(...)`, `() -> assertTrue(...)`), выполняя их все."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`assertAll` выполняет группу independent assertions и агрегирует все failures в `MultipleFailuresError`, формируя единый report вместо остановки после первого mismatch.",
+              "text": "Он выполняет все проверки и показывает разом список всех провалившихся.",
               "correct": true,
               "sections": {
-                "explanation": "Каждая executable запускается отдельно, а assertion errors собираются. Это полезно для нескольких свойств одного результата, когда failures независимы и все диагностически ценны.",
-                "example": "`assertAll(\"user\", () -> assertEquals(\"Ann\", u.name()), () -> assertTrue(u.active()), () -> assertEquals(2, u.roles().size()))` показывает все failed properties.",
-                "when_to_apply": "Группируйте проверки одного behavior outcome; не используйте для последовательности, где поздняя assertion бессмысленна после раннего prerequisite failure.",
-                "edge_cases": "Некоторые unrecoverable errors могут прервать aggregation. Excessive assertAll blocks скрывают intent; custom object assertion иногда читается лучше.",
-                "related": "[[junit-interview#Q5]] exception assertions; [[junit-interview#Q11]] AssertJ; [[junit-interview#Q15]] test design."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Группирующий ассерт выполняет все переданные проверки, даже если какая-то упала, и в конце показывает список всех провалившихся сразу.",
+                "example": "Обычные ассерты работают по принципу «падаем на первом»: остальные проверки не выполнятся вовсе.",
+                "when_to_apply": "Типичный сценарий — несколько независимых полей одного объекта, когда за прогон хочется увидеть все расхождения.",
+                "edge_cases": "Зависимые проверки заворачивать нельзя: если вторая имеет смысл лишь при пройденной первой, на пустой ссылке она упадёт с ошибкой обращения.",
+                "related": "Такие проверки оставляют обычными — пусть тест останавливается раньше, чем дойдёт до заведомо невозможного шага."
+              }
             },
             {
-              "text": "`assertAll` прекращает выполнение на первой failed assertion, но меняет formatting stack trace и добавляет общий heading.",
+              "order": 1,
+              "label": "B",
+              "text": "Он останавливается на первой упавшей проверке, зато печатает её подробнее обычного.",
               "correct": false,
               "sections": {
-                "what_actually": "`assertAll` выполняет ВСЕ переданные проверки, даже если часть упала, и затем сообщает обо всех ошибках сразу — в этом его ключевое отличие от последовательных ассертов.",
-                "source_of_confusion": "Группировка ассертов внешне напоминает обычный блок, поэтому кажется, что поведение fail-fast сохраняется.",
-                "if_it_were_true": "Если бы он останавливался на первом fail, не было бы смысла группировать пять проверок объекта — вы всё равно видели бы только первую ошибку.",
-                "how_it_should_be": "Правильно: `assertAll` не fail-fast — он собирает результаты всех проверок и кидает `MultipleFailuresError` со списком всех падений."
-              },
+                "what_actually": "Он выполняет все проверки до конца, а останавливаются на первой как раз обычные ассерты.",
+                "source_of_confusion": "Любой упавший ассерт бросает исключение, и это поведение переносят на группу.",
+                "if_it_were_true": "Тогда увидеть сразу несколько расхождений было бы нечем.",
+                "how_it_should_be": "Читать группировку как обещание выполнить каждую проверку из списка."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В него полезно заворачивать зависимые проверки, чтобы разом увидеть все ошибки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Зависимые проверки как раз оставляют обычными: вторая падает с ошибкой обращения к пустой ссылке.",
+                "source_of_confusion": "Желание увидеть все ошибки распространяют и на проверки, которые связаны между собой.",
+                "if_it_were_true": "Тогда предупреждение про зависимые проверки в этом же ответе было бы лишним.",
+                "how_it_should_be": "Группировать только независимые проверки одного объекта."
+              }
+            },
+            {
+              "order": 3,
               "label": "D",
-              "order": 3
+              "text": "Обычные ассерты и без него показывают все расхождения за один прогон теста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычные ассерты фиксируют только первое расхождение, про остальные узнать не удастся.",
+                "source_of_confusion": "Тест выглядит выполненным целиком, раз он завершился с сообщением об ошибке.",
+                "if_it_were_true": "Тогда отдельная группирующая проверка не давала бы никакого выигрыша.",
+                "how_it_should_be": "Помнить, что после первого падения оставшийся код метода не выполняется."
+              }
             }
           ]
         }
@@ -246,56 +246,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как в `JUnit 5` проверять, что код выбрасывает исключение?",
+          "question_text": "Как проверять исключения?",
           "options": [
             {
-              "text": "`assertThrows` возвращает `void`, поэтому проверить message, cause, suppressed exceptions или custom fields caught exception после assertion невозможно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`assertThrows` возвращает пойманное исключение того типа, что указан, — именно поэтому можно сделать `assertEquals(\"...\", ex.getMessage())`.",
-                "source_of_confusion": "Многие ассерты `JUnit` действительно `void`, и это правило ошибочно переносят на `assertThrows`.",
-                "if_it_were_true": "Будь возврат `void`, нельзя было бы написать `IllegalArgumentException ex = assertThrows(...)` — а это стандартный паттерн проверки сообщения.",
-                "how_it_should_be": "Правильно: `assertThrows` возвращает экземпляр исключения, что даёт доступ к `getMessage()`, причине и любым полям для дальнейших ассертов."
-              },
+              "order": 0,
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`assertThrows` и `assertThrowsExactly` одинаково принимают subclasses expected type; второй отличается только display name и formatting failure message.",
+              "text": "Старый стиль с атрибутом аннотации точно показывает, какая строка бросила исключение.",
               "correct": false,
               "sections": {
-                "what_actually": "`assertThrows` принимает указанный тип И его подклассы, а `assertThrowsExactly` требует РОВНО указанный класс — подкласс уже не пройдёт.",
-                "source_of_confusion": "Имена методов похожи, и без чтения документации разница в строгости теряется.",
-                "if_it_were_true": "Если бы они были синонимами, не было бы смысла вводить отдельный `assertThrowsExactly` — он существует именно ради строгого совпадения типа.",
-                "how_it_should_be": "Правильно: для иерархии исключений берут `assertThrows`, а когда важен точный класс (без подклассов) — `assertThrowsExactly`."
-              },
+                "what_actually": "Старый стиль как раз не говорит, где именно бросили: подойдёт любая строка метода.",
+                "source_of_confusion": "Аннотация с ожидаемым типом выглядит точной, раз тип указан явно.",
+                "if_it_were_true": "Тогда переход на лямбду с проверяемым кодом не давал бы никакого выигрыша.",
+                "how_it_should_be": "Заворачивать в лямбду ровно тот вызов, от которого ждут исключения."
+              }
+            },
+            {
+              "order": 1,
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Expected exception задаётся `@Test(expected=...)`; Jupiter `assertThrows` предназначен только для migration JUnit 4 rules и не возвращает exception object.",
+              "text": "Ассерт только валит тест, а достать исключение для проверки сообщения нельзя.",
               "correct": false,
               "sections": {
-                "what_actually": "Атрибут `expected` существовал в `@Test` из `JUnit 4`; в `Jupiter` аннотация `@Test` его не имеет, и проверку делают через `assertThrows`.",
-                "source_of_confusion": "Старый стиль `@Test(expected=...)` глубоко въелся в привычку, поэтому кажется, что он остался.",
-                "if_it_were_true": "Если написать `@org.junit.jupiter.api.Test(expected = ...)`, код просто не скомпилируется — у `Jupiter`-аннотации нет такого элемента.",
-                "how_it_should_be": "Правильно: в `JUnit 5` исключения проверяют `assertThrows`/`assertThrowsExactly`, что точнее (можно ассертить сообщение) и локально по месту вызова."
-              },
-              "label": "C",
-              "order": 2
+                "what_actually": "Проверка возвращает пойманное исключение, поэтому сообщение и поля доступны сразу.",
+                "source_of_confusion": "От ассерта ждут только вердикта, а не значения для дальнейших проверок.",
+                "if_it_were_true": "Тогда первая из двух проблем старого стиля осталась бы нерешённой.",
+                "how_it_should_be": "Присваивать результат переменной и проверять сообщение обычным ассертом."
+              }
             },
             {
-              "text": "`assertThrows` возвращает caught exception для дальнейших assertions и допускает subtype; `assertThrowsExactly` требует exact class, `assertDoesNotThrow` проверяет отсутствие exception.",
+              "order": 2,
+              "label": "C",
+              "text": "`assertThrows` принимает тип или его подкласс и возвращает само пойманное исключение.",
               "correct": true,
               "sections": {
-                "explanation": "Lambda ограничивает участок кода, который должен бросить exception, а returned object позволяет проверить domain details. Exact и assignable semantics выбирают по contract.",
-                "example": "`var ex=assertThrows(NotFoundException.class, () -> service.load(id)); assertEquals(id, ex.id());` проверяет type и context.",
-                "when_to_apply": "Используйте smallest executable, чтобы test не прошёл из-за exception из unrelated setup. Exact type нужен только если subclass также должен считаться ошибкой contract.",
-                "edge_cases": "Слишком широкая expected base class (`Exception`) делает test слабым. Async exception нужно извлекать из future/reactive pipeline, обычный assertThrows вокруг submission его не поймает.",
-                "related": "[[junit-interview#Q4]] multiple assertions; [[spring-async-interview#Q7]] async errors; [[junit-interview#Q15]] behavior focus."
-              },
+                "explanation": "Проверка исключения принимает ожидаемый тип и лямбду с проверяемым кодом, возвращает само исключение и валит тест, если оно не выброшено.",
+                "example": "Возвращённое исключение позволяет проверить сообщение или поля — это первая проблема старого стиля, которую приём снимает.",
+                "when_to_apply": "Вторая проблема — уверенность, что упала именно нужная строка, а не случайный код в начале метода.",
+                "edge_cases": "Подходит и подкласс ожидаемого типа; когда нужен строго один тип, берут строгую разновидность проверки.",
+                "related": "Есть и обратная проверка — что код отработал без исключений вовсе, она полезна для регрессионных случаев."
+              }
+            },
+            {
+              "order": 3,
               "label": "D",
-              "order": 3
+              "text": "`assertThrowsExactly` тоже пропускает подклассы и отличается от него лишь текстом сообщения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Строгая разновидность требует ровно указанный тип, и подкласс её не устраивает.",
+                "source_of_confusion": "Имена отличаются одним словом, и разницу принимают за косметическую.",
+                "if_it_were_true": "Тогда двух проверок не понадобилось бы, хватило бы одной.",
+                "how_it_should_be": "Брать строгую разновидность, когда подкласс считается неверным ответом."
+              }
             }
           ]
         }
@@ -306,56 +306,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `@Nested` и зачем оно нужно?",
+          "question_text": "Что такое @Nested и зачем оно нужно?",
           "options": [
             {
-              "text": "`@Nested` обозначает non-static inner test class с собственной context и display hierarchy, а также lifecycle methods поверх outer `@BeforeEach` setup.",
+              "order": 0,
+              "label": "A",
+              "text": "Иерархия классов в отчёт не попадает, там видно одно лишь имя метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Иерархия как раз попадает в отчёт цепочкой имён от внешнего класса к тесту.",
+                "source_of_confusion": "Плоские отчёты привычнее, и от вложенности не ждут отражения в выводе.",
+                "if_it_were_true": "Тогда группировка теряла бы половину смысла — по имени контекст был бы неясен.",
+                "how_it_should_be": "Ожидать в отчёте полный путь: внешний класс, контекст, сам тест."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это нестатический внутренний класс, и внешний `@BeforeEach` отрабатывает для него тоже.",
               "correct": true,
               "sections": {
-                "explanation": "Nested class имеет reference на outer test instance и позволяет постепенно дополнять fixture. Каждый test остаётся отдельным node в test tree.",
-                "example": "Outer `OrderServiceTest` создаёт service, nested `WhenStockMissing` в `@BeforeEach` настраивает stock mock и содержит несколько expected outcomes.",
-                "when_to_apply": "Используйте для readable context hierarchy, если nesting реально уменьшает duplication и отражает scenarios; не превращайте test class в глубокое дерево.",
-                "edge_cases": "`@Nested` class non-static по contract. Static class является обычным nested test class без `@Nested` semantics. `@BeforeAll` possibilities зависят от PER_CLASS и Java version.",
-                "related": "[[junit-interview#Q2]] lifecycle annotations; [[junit-interview#Q14]] instance lifecycle; [[junit-interview#Q15]] readability."
-              },
-              "label": "A",
-              "order": 0
+                "explanation": "Аннотация помечает внутренний нестатический класс, тесты которого движок запускает как часть внешнего: так тесты группируют по контексту внутри одного файла.",
+                "example": "Типичная группировка — «когда заказ валиден» и «когда невалиден» рядом, а не в разных классах.",
+                "when_to_apply": "Приём разбивает длинный плоский тест-класс на смысловые секции.",
+                "edge_cases": "У каждого вложенного класса может быть свой метод подготовки, а метод внешнего класса выполняется и для вложенных тестов.",
+                "related": "Иерархия отражается в отчёте цепочкой имён, поэтому по названию теста сразу понятен контекст."
+              }
             },
             {
-              "text": "`@Nested` объединяет все methods inner class в один test result: setup выполняется один раз, а отдельные failures не показываются.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Nested` лишь группирует связанные тесты во вложенном классе — каждый `@Test` внутри остаётся отдельным тестом со своим результатом, а не сливается в один.",
-                "source_of_confusion": "Слово «вложенный» наводит на мысль об объединении в один блок-результат.",
-                "if_it_were_true": "Будь это один общий результат, в отчёте `OrderService › when order is valid` не появлялись бы отдельные строки `should create` и `should charge` — а они появляются.",
-                "how_it_should_be": "Правильно: `@Nested` структурирует тесты в иерархию, но каждый `@Test` исполняется и репортится независимо."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Класс `@Nested` обязан быть `static`; non-static inner class невозможно создать test engine-у и его methods не обнаруживаются.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: `@Nested`-класс обязан быть НЕстатическим внутренним классом — `JUnit` создаёт его привязанным к экземпляру внешнего класса; `static` отключит обнаружение.",
-                "source_of_confusion": "Привычка делать вложенные утилитные классы `static` переносится и на тестовые, хотя здесь правило обратное.",
-                "if_it_were_true": "Если сделать `@Nested`-класс `static`, его тесты просто не будут найдены движком — это типичная ошибка, из-за которой «тесты исчезают».",
-                "how_it_should_be": "Правильно: `@Nested`-классы — нестатические inner-классы, что и даёт им доступ к состоянию внешнего класса и его `@BeforeEach`."
-              },
+              "order": 2,
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`@Nested` существует только для reuse static `@BeforeAll`; nested methods не имеют собственного lifecycle, context hierarchy или отдельного reporting node.",
+              "text": "Вложенный класс обязан быть статическим, иначе движок его просто не подхватит.",
               "correct": false,
               "sections": {
-                "what_actually": "Главная цель `@Nested` — структурирование и читаемая иерархия отчёта с собственным `@BeforeEach` на группу, а не «переиспользование `@BeforeAll`».",
-                "source_of_confusion": "`@BeforeAll` действительно общий для иерархии, и эту деталь раздувают до главной цели аннотации.",
-                "if_it_were_true": "Будь дело только в `@BeforeAll`, не имело бы смысла давать каждому вложенному классу свой `@BeforeEach` и `@DisplayName` — а это их ключевые возможности.",
-                "how_it_should_be": "Правильно: `@Nested` группирует тесты по сценариям с индивидуальным setup и наглядными именами в отчёте; общий `@BeforeAll` — лишь побочное удобство."
-              },
+                "what_actually": "Класс должен быть именно нестатическим — на этом и держится доступ к состоянию внешнего класса.",
+                "source_of_confusion": "Вложенные классы в обычном коде чаще делают статическими, и привычка переносится.",
+                "if_it_were_true": "Тогда общая подготовка внешнего класса не работала бы для вложенных тестов.",
+                "how_it_should_be": "Объявлять вложенный класс без модификатора статичности."
+              }
+            },
+            {
+              "order": 3,
               "label": "D",
-              "order": 3
+              "text": "У вложенного класса своего `@BeforeEach` быть не может — только у внешнего.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Свой метод подготовки у вложенного класса есть: общий setup идёт снаружи, узкий — внутри.",
+                "source_of_confusion": "Вложенный класс кажется просто разделом внешнего, без собственного жизненного цикла.",
+                "if_it_were_true": "Тогда узкую подготовку пришлось бы тащить в общий метод и ветвить по контексту.",
+                "how_it_should_be": "Держать общий setup снаружи, а контекстный — во вложенном классе."
+              }
             }
           ]
         }
@@ -366,56 +366,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как `JUnit 5` интегрируется с `Mockito`?",
+          "question_text": "Как JUnit 5 интегрируется с Mockito?",
           "options": [
             {
-              "text": "`MockitoExtension` входит в `junit-jupiter-api`, поэтому Mockito dependency не нужна и mocks создаются самим JUnit engine.",
+              "order": 0,
+              "label": "A",
+              "text": "Незадействованная заглушка проходит молча, ведь строгой проверки в этом расширении нет.",
               "correct": false,
               "sections": {
-                "what_actually": "`MockitoExtension` поставляется библиотекой `Mockito` (артефакт `mockito-junit-jupiter`), а не `JUnit 5`; без этой зависимости класс не найдётся.",
-                "source_of_confusion": "Расширение тесно связано с `JUnit`, отсюда вывод, что оно встроено во фреймворк.",
-                "if_it_were_true": "Будь оно частью `junit-jupiter`, `import org.mockito.junit.jupiter.MockitoExtension` работал бы без добавления `Mockito` — но без него сборка не скомпилируется.",
-                "how_it_should_be": "Правильно: `MockitoExtension` тянется отдельной зависимостью `mockito-junit-jupiter`, а `JUnit 5` лишь предоставляет точку расширения `@ExtendWith`."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "Режим по умолчанию строгий: неиспользованная заглушка валит тест отдельной ошибкой.",
+                "source_of_confusion": "Лишняя заглушка выглядит безобидной, раз она ничего не ломает по логике.",
+                "if_it_were_true": "Тогда мёртвые заглушки копились бы в тестах незаметно.",
+                "how_it_should_be": "Удалять заглушку, которую тест не вызывает, либо ослаблять режим осознанно."
+              }
             },
             {
-              "text": "`MockitoExtension` из `mockito-junit-jupiter` initializes `@Mock`, resolves supported parameters и injects mocks в `@InjectMocks`; stubbing остаётся Mockito API.",
+              "order": 1,
+              "label": "B",
+              "text": "Расширение само создаёт моки по полям и внедряет их в объект.",
               "correct": true,
               "sections": {
-                "explanation": "Mockito публикует Jupiter extension отдельно. Она связывает mock lifecycle со test lifecycle, применяет strictness и закрывает manual initialization resources.",
-                "example": "`@ExtendWith(MockitoExtension.class) class ServiceTest { @Mock Repo repo; @InjectMocks Service service; }` создаёт subject и dependencies перед test.",
-                "when_to_apply": "Используйте для pure unit tests без Spring context; в Spring slice/integration tests применяйте Spring test doubles (`@MockitoBean`) только когда нужен container wiring.",
-                "edge_cases": "`@InjectMocks` не является dependency injection container и может выбрать constructor неожиданно; explicit constructor creation иногда яснее. Static/final mocking требует подходящей Mockito configuration.",
-                "related": "[[junit-interview#Q9]] extension API; [[junit-interview#Q13]] Spring tests; [[junit-interview#Q15]] mock overuse."
-              },
-              "label": "B",
-              "order": 1
+                "explanation": "Интеграция идёт через расширение: перед каждым тестом оно создаёт моки по полям с соответствующей аннотацией и внедряет их в объект, помеченный как получатель зависимостей.",
+                "example": "Ручной вызов инициализации моков при этом уже не нужен — расширение делает это само.",
+                "when_to_apply": "Дальше работа обычная: одна конструкция задаёт поведение мока, другая проверяет факт вызова метода.",
+                "edge_cases": "По умолчанию расширение работает в строгом режиме: заданная, но ни разу не вызванная заглушка валит тест.",
+                "related": "Такая строгость помогает вычищать мёртвые заглушки, оставшиеся после правок теста."
+              }
             },
             {
-              "text": "`@InjectMocks` создаёт subject, но намеренно не injects fields/constructor dependencies; каждый mock нужно установить reflection-ом или setter-ом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@InjectMocks` как раз внедряет созданные `@Mock` в тестируемый объект (через конструктор/поля/сеттеры), поэтому ручная проводка зависимостей не нужна.",
-                "source_of_confusion": "Иногда инъекция не срабатывает из-за неоднозначности типов, и этот частный сбой обобщают до «не внедряет вообще».",
-                "if_it_were_true": "Если бы моки не внедрялись, вызовы вроде `verify(repository).save(order)` падали бы на `NullPointerException` — а в типовом тесте они проходят.",
-                "how_it_should_be": "Правильно: `@InjectMocks` автоматически подставляет соответствующие `@Mock` в зависимости тестируемого объекта."
-              },
+              "order": 2,
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "JUnit 5 не имеет extension для Mockito: `MockitoAnnotations.openMocks(this)` обязателен в каждом `@BeforeEach`, независимо от configuration.",
+              "text": "Интеграция включается аннотацией `@Mock` на классе, расширение указывать не нужно.",
               "correct": false,
               "sections": {
-                "what_actually": "В `JUnit 5` достаточно повесить `@ExtendWith(MockitoExtension.class)` на класс: расширение само инициализирует `@Mock`/`@InjectMocks`, и ручной `openMocks` не нужен.",
-                "source_of_confusion": "`openMocks`/`initMocks` — классика `JUnit 4`-стиля, поэтому кажется обязательным и в `JUnit 5`.",
-                "if_it_were_true": "Будь ручной вызов обязателен, не было бы смысла в `MockitoExtension` — а его как раз и используют, чтобы убрать `openMocks` из `@BeforeEach`.",
-                "how_it_should_be": "Правильно: `@ExtendWith(MockitoExtension.class)` заменяет ручную инициализацию; `openMocks` оставляют лишь там, где расширение не подключают."
-              },
+                "what_actually": "Включает интеграцию именно расширение, а аннотация на поле лишь помечает будущий мок.",
+                "source_of_confusion": "Аннотация мока бросается в глаза первой и кажется точкой включения.",
+                "if_it_were_true": "Тогда поля с моками оставались бы пустыми, ведь создавать их некому.",
+                "how_it_should_be": "Ставить расширение на класс, а аннотацию мока — на поля."
+              }
+            },
+            {
+              "order": 3,
               "label": "D",
-              "order": 3
+              "text": "Моки создаются, но вызывать `MockitoAnnotations.openMocks` всё равно приходится своими руками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ручная инициализация как раз не нужна: расширение создаёт и внедряет моки перед каждым тестом.",
+                "source_of_confusion": "В коде без расширения этот вызов действительно обязателен, и привычка остаётся.",
+                "if_it_were_true": "Тогда выигрыш от подключения расширения сводился бы к нулю.",
+                "how_it_should_be": "Подключить расширение и убрать ручную инициализацию из подготовки."
+              }
             }
           ]
         }
@@ -426,56 +426,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое динамические тесты (`Dynamic Tests`) в `JUnit 5`?",
+          "question_text": "Что такое Dynamic Tests?",
           "options": [
             {
-              "text": "`@TestFactory` возвращает runtime-created `DynamicTest`/`DynamicContainer` nodes для data-driven generation с отдельными names и executables.",
+              "order": 0,
+              "label": "A",
+              "text": "Метод-фабрика решает в рантайме, сколько тестов создать и что каждый делает.",
               "correct": true,
               "sections": {
-                "explanation": "Factory выполняется на этапе test execution и выдаёт nodes test tree. Это отличается от parameterized test, у которого framework управляет invocation template и argument conversion.",
-                "example": "Factory читает contract files и возвращает `files.stream().map(f -> dynamicTest(f.getName(), () -> verify(f)))`; каждый файл появляется отдельным test.",
-                "when_to_apply": "Используйте, когда test structure сама определяется runtime data или нужны nested dynamic containers; для обычной таблицы inputs проще parameterized test.",
-                "edge_cases": "Lifecycle callbacks выполняются для factory method, а не отдельно перед каждым dynamic executable; mutable shared state между generated tests может создавать order dependency.",
-                "related": "[[junit-interview#Q3]] parameterized tests; [[junit-interview#Q14]] lifecycle; [[junit-interview#Q15]] deterministic data."
-              },
-              "label": "A",
-              "order": 0
+                "explanation": "Динамические тесты генерируются во время выполнения, а не объявляются методами на этапе компиляции: помеченный метод-фабрика возвращает набор тестов, каждый со своим именем и телом.",
+                "example": "Движок прогоняет их как отдельные тесты, а не как один общий метод.",
+                "when_to_apply": "Отличие от параметризованного теста именно здесь: там фиксированный набор данных и один заранее написанный метод.",
+                "edge_cases": "Вернуть можно и поток, и коллекцию — оба варианта одинаково допустимы.",
+                "related": "Сценарий применения — когда число тестов заранее неизвестно: по строке файла, по записи из базы или по файлу в каталоге."
+              }
             },
             {
-              "text": "Dynamic tests помечаются `@Test`, а их bodies и count фиксируются compiler-ом; `@TestFactory` является alias для lifecycle setup.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Динамические тесты помечают `@TestFactory`, а не `@Test`; их набор формируется ВО ВРЕМЯ ВЫПОЛНЕНИЯ из данных, а не известен при компиляции.",
-                "source_of_confusion": "И те и другие — тестовые методы, поэтому путают аннотацию и момент создания.",
-                "if_it_were_true": "Если бы они задавались `@Test` и компилировались, нельзя было бы генерировать по тесту на строку файла или запись БД — а в этом их смысл.",
-                "how_it_should_be": "Правильно: `@TestFactory` возвращает `DynamicTest`-ы, создаваемые в рантайме по данным, в отличие от статичных `@Test`."
-              },
+              "order": 1,
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Все `DynamicTest` factory сливаются в один result без отдельных names, IDs или failure reporting для generated cases.",
+              "text": "Фабрика возвращает набор данных, а тело теста пишут заранее одним методом.",
               "correct": false,
               "sections": {
-                "what_actually": "Каждый `DynamicTest` репортится ОТДЕЛЬНО под своим именем (`DynamicTest.dynamicTest(\"Validate user: alice\", ...)`), а не сливается в один результат.",
-                "source_of_confusion": "Раз тесты порождает один метод-фабрика, кажется, что и результат у них общий.",
-                "if_it_were_true": "Будь результат единым, нельзя было бы понять, какой именно сгенерированный кейс упал — а отчёт показывает падение конкретного `DynamicTest`.",
-                "how_it_should_be": "Правильно: каждый `DynamicTest` — самостоятельная строка отчёта со своим именем и статусом."
-              },
+                "what_actually": "Так устроен параметризованный тест, а фабрика сама решает и сколько тестов создать, и что они делают.",
+                "source_of_confusion": "Оба приёма дают много прогонов из одного метода, и роли смешиваются.",
+                "if_it_were_true": "Тогда два механизма отличались бы только синтаксисом объявления.",
+                "how_it_should_be": "Спрашивать, кто решает состав тестов: набор данных или код фабрики."
+              }
+            },
+            {
+              "order": 2,
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`@TestFactory` обязан возвращать `void`; assertions выполняются внутри factory body один раз, а returned collections и generated display names игнорируются engine-ом.",
+              "text": "Динамические тесты объявляются на этапе компиляции, просто иначе называются в отчёте.",
               "correct": false,
               "sections": {
-                "what_actually": "`@TestFactory`-метод обязан ВОЗВРАЩАТЬ коллекцию/`Stream`/итератор из `DynamicTest` (а не `void`); каждый `DynamicTest` несёт имя и `Executable` с проверкой.",
-                "source_of_confusion": "Привычка, что тест-метод `void`, переносится и на фабрику динамических тестов.",
-                "if_it_were_true": "Будь возврат `void`, движку нечего было бы исполнять как набор тестов — `@TestFactory` именно по возвращённым `DynamicTest` строит прогоны.",
-                "how_it_should_be": "Правильно: `@TestFactory` возвращает, например, `Stream<DynamicTest>`, и каждый элемент становится отдельным тестом в отчёте."
-              },
+                "what_actually": "Смысл приёма именно в генерации во время выполнения, а не в объявлении на этапе компиляции.",
+                "source_of_confusion": "Метод фабрики физически написан в классе, и тесты кажутся объявленными заранее.",
+                "if_it_were_true": "Тогда число тестов нельзя было бы вычислить из содержимого файла или базы.",
+                "how_it_should_be": "Считать тестами то, что фабрика создала на прогоне, а не то, что видно в коде."
+              }
+            },
+            {
+              "order": 3,
               "label": "D",
-              "order": 3
+              "text": "Фабрика обязана вернуть именно поток, коллекция динамических тестов не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Допустимы оба варианта: и поток, и коллекция динамических тестов.",
+                "source_of_confusion": "Примеры чаще начинают с потока, и второй вариант остаётся незамеченным.",
+                "if_it_were_true": "Тогда готовый список тестов пришлось бы каждый раз превращать в поток.",
+                "how_it_should_be": "Возвращать то, что удобнее: поток при вычислении на лету, коллекцию при готовом списке."
+              }
             }
           ]
         }
@@ -486,56 +486,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `JUnit Extensions` и как они устроены?",
+          "question_text": "Что такое JUnit Extensions?",
           "options": [
             {
-              "text": "На class допускается одно extension, как один JUnit 4 runner; несколько `@ExtendWith` конфликтуют и последнее заменяет предыдущие.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@ExtendWith` принимает массив и позволяет подключить НЕСКОЛЬКО расширений сразу (`{MockitoExtension.class, SpringExtension.class, TimingExtension.class}`) — это и есть преимущество над единственным `@RunWith`.",
-                "source_of_confusion": "Ограничение `JUnit 4` (один раннер на класс) по инерции переносят на модель расширений.",
-                "if_it_were_true": "Будь лимит в одно расширение, нельзя было бы совмещать `Mockito` и `Spring` в одном тесте — а это повседневный сценарий.",
-                "how_it_should_be": "Правильно: расширений можно навесить сколько нужно, они комбинируются и встраиваются в разные точки жизненного цикла."
-              },
+              "order": 0,
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`@ExtendWith` предназначен только для официальных integrations Mockito/Spring; custom extension для project infrastructure запрещён API stability rules.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Extensions` — общий механизм расширения для любых задач (тайминг, ресурсы, `Spring`, разрешение параметров); `MockitoExtension` лишь один из примеров, а не условие работы `@ExtendWith`.",
-                "source_of_confusion": "`MockitoExtension` — самый частый пример расширения, поэтому весь механизм сводят к мокированию.",
-                "if_it_were_true": "Будь это так, нельзя было бы написать собственный `TimingExtension` без `Mockito` — а он работает самостоятельно.",
-                "how_it_should_be": "Правильно: `Extensions` универсальны; мокирование — лишь одно из множества применений, реализуемых через callback-интерфейсы."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Любое extension обязано extends `TestWatcher` и может реагировать только на success/failure; parameter resolution и before/after callbacks недоступны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Расширения реализуют не один метод, а нужные интерфейсы-callbacks (`BeforeAllCallback`, `AfterTestExecutionCallback`, `ParameterResolver` и т.д.); единого `extend()` не существует.",
-                "source_of_confusion": "Привычный ООП-паттерн «наследовать базовый класс и переопределить метод» ошибочно проецируют на расширения.",
-                "if_it_were_true": "Будь один метод `extend()`, нельзя было бы выбирать конкретные фазы (до/после теста, разрешение параметров) — а именно это даёт набор интерфейсов.",
-                "how_it_should_be": "Правильно: расширение имплементирует один или несколько callback-интерфейсов, подключаясь только к нужным точкам жизненного цикла."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Extensions подключаются `@ExtendWith`, `@RegisterExtension` или auto-detection и реализуют lifecycle, parameters, conditions, handlers и interception для reusable test infrastructure.",
+              "text": "Расширений вешают сколько угодно, и они заменили два механизма четвёртой версии.",
               "correct": true,
               "sections": {
-                "explanation": "Extension model заменяет множество несочетаемых JUnit 4 mechanisms единым composable API. Extension реализует только нужные interfaces и хранит state через `ExtensionContext.Store` с правильным scope.",
-                "example": "Custom extension implements `BeforeEachCallback` для test fixture и `ParameterResolver` для injection clock; `MockitoExtension` подключается рядом отдельной annotation.",
-                "when_to_apply": "Используйте для повторяемой test infrastructure/cross-cutting behavior, не для сокрытия domain setup, который должен быть виден в test.",
-                "edge_cases": "Order и wrapping callbacks важны при нескольких extensions. Неправильный namespace/store scope может утекать между tests или удерживать resources.",
-                "related": "[[junit-interview#Q7]] Mockito; [[junit-interview#Q10]] conditions; [[junit-interview#Q13]] SpringExtension."
-              },
+                "explanation": "Расширения — единый механизм встраивания чужой логики в жизненный цикл теста: инициализации моков, подъёма контекста, замера времени.",
+                "example": "В четвёртой версии для этого было два разных механизма, причём раннер мог быть только один.",
+                "when_to_apply": "Здесь всё свелось к расширениям, и навесить их можно сколько угодно одной аннотацией.",
+                "edge_cases": "Расширение реализует один или несколько callback-интерфейсов, и движок зовёт его в нужный момент.",
+                "related": "Подстановка аргументов в тест-методы — тоже callback расширения; так работает внедрение служебных объектов и моков."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Расширение указывают только одно, ровно как раннер в четвёртой версии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ограничение «только один» было у раннера четвёртой версии, а расширений вешают сколько угодно.",
+                "source_of_confusion": "Старое ограничение помнят лучше, чем причину, по которой механизм переделали.",
+                "if_it_were_true": "Тогда моки и контекст приложения нельзя было бы поднять в одном тесте.",
+                "how_it_should_be": "Перечислять нужные расширения списком в одной аннотации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Аргументы в тест-методы подставляет отдельный внутренний механизм, а вовсе не расширение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подстановкой аргументов занимается именно расширение через соответствующий callback-интерфейс.",
+                "source_of_confusion": "Внедрение параметров выглядит встроенной магией движка, а не чужой логикой.",
+                "if_it_were_true": "Тогда своё расширение не могло бы добавлять параметры в тест-методы.",
+                "how_it_should_be": "Считать резолвер параметров одним из callback-интерфейсов расширения."
+              }
+            },
+            {
+              "order": 3,
               "label": "D",
-              "order": 3
+              "text": "Расширение реализует ровно один callback-интерфейс, иначе движок его не зарегистрирует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реализовать можно один или сразу несколько callback-интерфейсов — это обычная практика.",
+                "source_of_confusion": "Единый механизм ассоциируется с единственной точкой встраивания.",
+                "if_it_were_true": "Тогда замер длительности требовал бы двух отдельных расширений вместо одного.",
+                "how_it_should_be": "Смотреть, какие моменты жизненного цикла нужны, и реализовывать их вместе."
+              }
             }
           ]
         }
@@ -546,56 +546,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое условное выполнение тестов (`Conditional Test Execution`) в `JUnit 5`?",
+          "question_text": "Что такое Conditional Test Execution?",
           "options": [
             {
-              "text": "Если `@EnabledOnOs` condition false, test помечается failed, сохраняет stack trace и ломает build так же, как failed assertion.",
+              "order": 0,
+              "label": "A",
+              "text": "Условие проверяет логику самого кода, а не окружение вроде версии `JDK`.",
               "correct": false,
               "sections": {
-                "what_actually": "Невыполненное условие помечает тест как SKIPPED (пропущенный), а не failed — сборка от этого не краснеет.",
-                "source_of_confusion": "Невыполнение требования интуитивно ассоциируется с ошибкой, отсюда мысль про fail.",
-                "if_it_were_true": "Будь это fail, тест с `@EnabledOnOs(OS.LINUX)` ломал бы любую сборку на Windows/macOS — а он там просто пропускается.",
-                "how_it_should_be": "Правильно: при ложном условии тест получает статус skipped и не влияет на итог сборки."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "Условие смотрит именно на окружение, а не на логику проверяемого кода.",
+                "source_of_confusion": "Слово «условие» тянет за собой мысль о ветвлении внутри теста.",
+                "if_it_were_true": "Тогда отдельные аннотации про систему, версию среды и переменные были бы не нужны.",
+                "how_it_should_be": "Держать логику в теле теста, а окружение — в аннотации."
+              }
             },
             {
-              "text": "Jupiter имеет conditions по OS, architecture, JRE, native image, environment/system properties; custom logic реализует `ExecutionCondition`, disabled test пропускается.",
+              "order": 1,
+              "label": "B",
+              "text": "Аннотация `@Disabled` умеет включать тест по переменной окружения, условия избыточны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Простое отключение работает всегда и никаких переменных окружения не читает.",
+                "source_of_confusion": "Обе группы аннотаций приводят к пропуску теста, и их роли смешиваются.",
+                "if_it_were_true": "Тогда тест с реальной базой пришлось бы включать и выключать руками.",
+                "how_it_should_be": "Отключать навсегда одной аннотацией, а по окружению — условными."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Не прошедший условие тест считается упавшим, поэтому сборка краснеет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тест помечается пропущенным, поэтому сборка от невыполненного условия не краснеет.",
+                "source_of_confusion": "Невыполненное условие звучит как несработавшая проверка, то есть как провал.",
+                "if_it_were_true": "Тогда запускать один и тот же набор в разных окружениях было бы невозможно.",
+                "how_it_should_be": "Читать невыполненное условие как «здесь этот тест не нужен»."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Тест, не прошедший условие окружения, помечается пропущенным, а не упавшим.",
               "correct": true,
               "sections": {
-                "explanation": "Conditions участвуют в discovery/execution decision до test body. Built-in annotations делают environment assumptions явными, а extension API подходит для reusable custom policy.",
-                "example": "`@EnabledOnOs(OS.LINUX)` и `@EnabledForJreRange(min=JAVA_17)` ограничивают compatibility case; `@EnabledIfEnvironmentVariable(named=\"CI\", matches=\"true\")` запускает CI-only test.",
-                "when_to_apply": "Используйте только для genuinely platform-specific behavior; обычный unit test должен быть portable, а недоступный external service лучше предоставить controlled test environment.",
-                "edge_cases": "Слишком много skipped tests создаёт ложную зелёную сборку. Проверяйте CI reports и причины disabling; assumptions abort текущий test после начала execution и отличаются от conditions.",
-                "related": "[[junit-interview#Q2]] Disabled; [[junit-interview#Q9]] ExecutionCondition; [[junit-interview#Q15]] environment coupling."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`@EnabledIf(\"method\")` всегда вызывает instance method после `@BeforeEach`; static context, lifecycle, boolean return type и method visibility никак не ограничены.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Метод-условие для `@EnabledIf` обычно должен быть `static` (или класс — `@TestInstance(PER_CLASS)`) и вычисляется ДО выполнения теста, при решении, запускать ли его вообще.",
-                "source_of_confusion": "Раз метод лежит в тест-классе, кажется, что он инстансный и зовётся как обычный `@Test`.",
-                "if_it_were_true": "Будь он обычным инстанс-методом внутри теста, нельзя было бы решить о пропуске ДО создания/запуска теста — а условие как раз решает это заранее.",
-                "how_it_should_be": "Правильно: условный метод вычисляется на этапе фильтрации (обычно `static`) и определяет, выполнять тест или пометить skipped."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Условия записываются boolean expression внутри `@Disabled(os == LINUX)`; annotation принимает arbitrary Java code runtime и выполняет его перед test body.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Disabled` не принимает условие — он безусловно отключает тест; для условий есть отдельные аннотации `@EnabledOnOs`, `@EnabledForJreRange`, `@EnabledIfEnvironmentVariable`, `@EnabledIf` и т.д.",
-                "source_of_confusion": "`@Disabled` про «выключить тест», и его смешивают с условным включением.",
-                "if_it_were_true": "Будь у `@Disabled` параметр-условие, не понадобились бы `@EnabledOnOs`/`@DisabledIfSystemProperty` — а они существуют именно для этого.",
-                "how_it_should_be": "Правильно: для условий применяют семейство `@EnabledOnOs`/`@EnabledForJreRange`/`@EnabledIf...`, а `@Disabled` гасит тест безусловно."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Это набор аннотаций, которые пропускают тест в зависимости от окружения: операционной системы, версии среды, переменной окружения, системного свойства или собственного условия.",
+                "example": "Условие может смотреть на операционную систему, на диапазон версий среды или на системное свойство.",
+                "when_to_apply": "Так обходят тесты, которые в данном окружении заведомо не имеют смысла.",
+                "edge_cases": "Отличие от простого отключения в том, что отключение глушит тест всегда и везде.",
+                "related": "Условная аннотация, наоборот, включает тест именно там, где он должен работать: например, только в сборочном конвейере с поднятой базой."
+              }
             }
           ]
         }
@@ -606,56 +606,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем AssertJ дополняет встроенные assertions JUnit Jupiter?",
+          "question_text": "Как работает AssertJ и чем он лучше встроенных assertions JUnit?",
           "options": [
             {
-              "text": "AssertJ не умеет проверять exceptions, collections, maps или object graphs; для них всегда нужны только Jupiter assertions и ручные loops.",
+              "order": 0,
+              "label": "A",
+              "text": "Сообщения об ошибке приходится настраивать руками, из коробки они малоинформативны.",
               "correct": false,
               "sections": {
-                "what_actually": "У `AssertJ` есть `assertThatThrownBy(() -> ...).isInstanceOf(...).hasMessageContaining(...)`, который и проверяет тип, и матчит сообщение цепочкой — полноценная замена `assertThrows`.",
-                "source_of_confusion": "`assertThrows` настолько привычен, что кажется единственным способом проверить исключение.",
-                "if_it_were_true": "Будь у `AssertJ` пробел с исключениями, не существовало бы `assertThatThrownBy`/`catchThrowable` — а они есть и широко используются.",
-                "how_it_should_be": "Правильно: `AssertJ` проверяет исключения через `assertThatThrownBy`/`catchThrowable`, давая ту же fluent-выразительность, что и для значений."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "Понятные сообщения об ошибке она даёт из коробки — ради этого её и берут.",
+                "source_of_confusion": "Настройка сообщений привычна по встроенным ассертам с дополнительным аргументом.",
+                "if_it_were_true": "Тогда главное преимущество перед встроенными проверками исчезло бы.",
+                "how_it_should_be": "Полагаться на готовое сообщение, где видно фактическое значение."
+              }
             },
             {
-              "text": "AssertJ — отдельная fluent assertion library с type-specific APIs, extracting/filtering, recursive comparison и exception assertions; Jupiter assertions проще.",
+              "order": 1,
+              "label": "B",
+              "text": "Специализированных ассертов под коллекции и под тип `BigDecimal` в ней нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Специализированные ассерты есть: под коллекции, `BigDecimal`, даты, опциональные значения и исключения.",
+                "source_of_confusion": "Единая точка входа наводит на мысль об одном универсальном наборе проверок.",
+                "if_it_were_true": "Тогда сравнение `BigDecimal` по значению пришлось бы писать вручную.",
+                "how_it_should_be": "Ожидать под каждый тип свой набор проверок с подходящими именами."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Она дополняет движок, а проверки пишутся цепочкой от одной точки входа.",
               "correct": true,
               "sections": {
-                "explanation": "Assertion library не заменяет test engine. AssertJ делает complex object/collection checks выразительными и extensible, а Jupiter предоставляет небольшой стандартный набор.",
-                "example": "`assertThat(orders).extracting(Order::status).containsExactly(PAID, SHIPPED)` и `assertThatThrownBy(...).isInstanceOf(...).hasMessageContaining(...)`.",
-                "when_to_apply": "Используйте единый assertion style команды; AssertJ особенно полезен для collections, domain objects и custom assertions, Jupiter — для простых checks без дополнительного DSL.",
-                "edge_cases": "Fluent chain выполняется немедленно, terminal `.check()` нет. Для aggregation multiple failures у AssertJ есть soft assertions, которые требуют корректного `assertAll`/extension lifecycle.",
-                "related": "[[junit-interview#Q4]] assertAll; [[junit-interview#Q5]] exception checks; [[junit-interview#Q15]] readable tests."
-              },
-              "label": "B",
-              "order": 1
+                "explanation": "Это сторонняя библиотека ассертов с текучим интерфейсом: одна точка входа, дальше цепочка проверок через автодополнение среды разработки.",
+                "example": "Движок она не заменяет: тесты запускает он, а она проверяет результат выразительнее встроенных ассертов.",
+                "when_to_apply": "Ключевая идея — читаемость и точные сообщения: проверка размера сама напишет, какой размер был на самом деле.",
+                "edge_cases": "Встроенный аналог в том же случае скажет лишь, что ожидалась истина, а получилась ложь.",
+                "related": "Есть и специализированные ассерты под типы: коллекции с извлечением полей, `BigDecimal` по значению, даты и исключения."
+              }
             },
             {
-              "text": "AssertJ строит lazy assertion plan и ничего не проверяет до обязательного terminal `.check()`; без него test всегда проходит.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ассерты `AssertJ` выполняются СРАЗУ на каждом звене цепочки; терминального `.check()` нет — `hasSize(3)` падает немедленно, если размер не совпал.",
-                "source_of_confusion": "Fluent-цепочки внешне напоминают ленивые `Stream`, отсюда ложная аналогия с отложенным выполнением.",
-                "if_it_were_true": "Будь оценка ленивой и нужен `.check()`, забытый терминал делал бы тест зелёным при реальных ошибках — но `AssertJ` так не работает.",
-                "how_it_should_be": "Правильно: каждое звено цепочки проверяется немедленно; первое нарушение сразу роняет тест с понятным сообщением."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "AssertJ является package `org.junit.jupiter.api.Assertions`; dependency уже входит в Jupiter engine и отдельные imports не нужны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`AssertJ` — отдельная библиотека (`org.assertj.core.api.Assertions`), не входящая в `JUnit`; её подключают отдельной зависимостью и используют ВМЕСТЕ с `JUnit`.",
-                "source_of_confusion": "Оба дают `assertThat`-подобный API, отсюда вывод, что `AssertJ` встроен в `JUnit`.",
-                "if_it_were_true": "Будь он частью `JUnit`, цепочки вроде `.extracting(...).containsExactly(...)` работали бы из коробки — но без `assertj-core` их нет.",
-                "how_it_should_be": "Правильно: `AssertJ` — внешняя fluent-библиотека ассертов, дополняющая `JUnit`, а не её часть."
-              },
+              "order": 3,
               "label": "D",
-              "order": 3
+              "text": "Библиотека заменяет движок, беря на себя и запуск тестов, и проверку результата.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запуск тестов остаётся за движком, а библиотека отвечает только за проверки.",
+                "source_of_confusion": "Своя точка входа и свой стиль записи делают библиотеку похожей на самостоятельный инструмент.",
+                "if_it_were_true": "Тогда её пришлось бы подключать вместо движка, а не рядом с ним.",
+                "how_it_should_be": "Разводить роли: движок запускает, библиотека проверяет."
+              }
             }
           ]
         }
@@ -666,56 +666,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как в `JUnit 5` выполнять тесты параллельно?",
+          "question_text": "Как параллельно выполнять тесты?",
           "options": [
             {
-              "text": "Parallelism задаётся только `@Execution(4)` с integer thread count; Platform configuration properties, execution modes и pool strategies для parallel scheduler не существуют.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Параллелизм настраивают именно в `src/test/resources/junit-platform.properties` (`parallel.enabled`, `mode.default`, `config.strategy`, `fixed.parallelism`); `@Execution` лишь уточняет режим для класса/метода.",
-                "source_of_confusion": "Аннотация `@Execution` на виду в коде, поэтому кажется единственным местом конфигурации.",
-                "if_it_were_true": "Будь так, нельзя было бы задать `fixed.parallelism=4` глобально — а это стандартный способ ограничить пул потоков для всех тестов.",
-                "how_it_should_be": "Правильно: глобально параллелизм конфигурируют в `junit-platform.properties`, а аннотациями `@Execution`/`@ResourceLock` точечно управляют поведением отдельных тестов."
-              },
+              "order": 0,
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Jupiter запускает все tests concurrently по умолчанию; `@ResourceLock` является advisory performance hint, не различает read/write access и может быть проигнорирован engine-ом.",
+              "text": "Общий ресурс защищают режимом `same_thread`, потому что `@ResourceLock` этого не умеет.",
               "correct": false,
               "sections": {
-                "what_actually": "Параллелизм ВЫКЛЮЧЕН по умолчанию и включается свойством `junit.jupiter.execution.parallel.enabled=true`; `@ResourceLock` именно СЕРИАЛИЗУЕТ тесты, конкурирующие за общий ресурс.",
-                "source_of_confusion": "Хочется верить, что фреймворк ускоряет тесты «из коробки», отсюда миф о включённом по умолчанию параллелизме.",
-                "if_it_were_true": "Будь он включён по умолчанию, существующие непотокобезопасные тесты массово становились бы flaky после апгрейда — поэтому его специально оставили выключенным.",
-                "how_it_should_be": "Правильно: параллелизм включают явно в `junit-platform.properties`, а `@ResourceLock` защищает разделяемое состояние, заставляя такие тесты идти по очереди."
-              },
+                "what_actually": "Именно блокировка ресурса и решает задачу: тесты с одним ресурсом сериализуются, остальные идут параллельно.",
+                "source_of_confusion": "Перевод теста в последовательный режим выглядит более простым способом.",
+                "if_it_were_true": "Тогда ради одного общего ресурса пришлось бы отключать параллельность целым классам.",
+                "how_it_should_be": "Помечать блокировкой тесты, делящие ресурс, не трогая остальные."
+              }
+            },
+            {
+              "order": 1,
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`@ResourceLock` повышает priority test, чтобы он стартовал первым, но не влияет на simultaneous readers/writers или scheduling conflicts.",
+              "text": "Достаточно повесить аннотацию `@Execution` на класс, отдельная конфигурация не нужна.",
               "correct": false,
               "sections": {
-                "what_actually": "`@ResourceLock(value=\"database\", mode=READ_WRITE)` про СИНХРОНИЗАЦИЮ: тесты, держащие один lock в режиме записи, не идут параллельно друг с другом, чтобы не портить общий ресурс. Приоритет он не задаёт.",
-                "source_of_confusion": "Слово «lock» путают с приоритетом/блокировкой очереди вместо взаимного исключения по ресурсу.",
-                "if_it_were_true": "Будь это приоритет, нельзя было бы безопасно гонять `updateSharedResource()` параллельно с другими тестами по той же БД — а `@ResourceLock` именно это и предотвращает.",
-                "how_it_should_be": "Правильно: `@ResourceLock` сериализует доступ к именованному ресурсу (как читатели/писатели), защищая общее состояние от гонок."
-              },
-              "label": "C",
-              "order": 2
+                "what_actually": "Без флага в конфигурации параллельности не будет: аннотация лишь переопределяет режим.",
+                "source_of_confusion": "Аннотация выглядит достаточным средством, раз она прямо называет режим выполнения.",
+                "if_it_were_true": "Тогда файл настроек с флагом включения был бы не нужен вовсе.",
+                "how_it_should_be": "Сначала включить параллельность флагом, потом уточнять режим аннотацией."
+              }
             },
             {
-              "text": "Parallel execution включают configuration parameters и modes; `@Execution` уточняет mode, а `@ResourceLock` синхронизирует named resources с read/write access modes.",
+              "order": 2,
+              "label": "C",
+              "text": "Параллельный запуск включён по умолчанию, а флагом его наоборот ограничивают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию параллельный запуск выключен, и флаг именно включает его.",
+                "source_of_confusion": "Современные сборщики многое делают параллельно, и это ожидание переносится сюда.",
+                "if_it_were_true": "Тогда существующие тесты с общим состоянием начали бы падать сразу после обновления.",
+                "how_it_should_be": "Считать последовательный запуск поведением по умолчанию."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Параллельность включают флагом в файле конфигурации, по умолчанию она выключена.",
               "correct": true,
               "sections": {
-                "explanation": "Enabling flag и default execution modes независимы. Scheduler strategy определяет parallelism, а synchronization annotations описывают shared resource constraints внутри test plan.",
-                "example": "`junit.jupiter.execution.parallel.enabled=true`, modes `concurrent`, fixed/dynamic strategy; `@ResourceLock(value=\"db\", mode=READ_WRITE)` serializes tests mutating shared DB.",
-                "when_to_apply": "Включайте после устранения shared mutable fixtures и global configuration; parallel tests должны быть deterministic и иметь isolated data/resources.",
-                "edge_cases": "`PER_CLASS`, method orderers и same-thread annotations могут ограничить concurrency. Число threads не гарантирует simultaneous execution из-за locks и engine scheduling.",
-                "related": "[[junit-interview#Q14]] instance state; [[rest-assured-interview#Q14]] global REST Assured state; [[junit-interview#Q15]] flaky tests."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Параллельный запуск включается флагом конфигурации, а не аннотацией: по умолчанию он выключен, и файл настроек кладут в тестовые ресурсы.",
+                "example": "После включения задают стратегию числа потоков: фиксированное число или расчёт от числа ядер.",
+                "when_to_apply": "Режим по умолчанию задаётся отдельно для методов и для классов.",
+                "edge_cases": "На уровне конкретного класса или теста режим переопределяют аннотацией — так отдельный тест можно оставить последовательным.",
+                "related": "Параллельность вскрывает общее изменяемое состояние: статические поля, синглтоны, общую тестовую базу — такие тесты становятся нестабильными."
+              }
             }
           ]
         }
@@ -726,56 +726,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как Spring Boot test slices и полный context работают с JUnit Jupiter?",
+          "question_text": "Как Spring Boot интегрируется с JUnit 5?",
           "options": [
             {
-              "text": "JUnit Jupiter требует `@RunWith(SpringRunner.class)` на каждом class; без JUnit 4 runner `@SpringBootTest` не подключает Spring context и dependency injection.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@RunWith(SpringRunner.class)` — это `JUnit 4`; в `JUnit 5` контекст подключает `SpringExtension` (через `@ExtendWith` или неявно из `@SpringBootTest`), а `@RunWith` `Jupiter` вообще не обрабатывает.",
-                "source_of_confusion": "`SpringRunner` долго был стандартом, поэтому его по привычке пишут и в `JUnit 5`.",
-                "if_it_were_true": "Будь `@RunWith` рабочим в `Jupiter`, тесты с ним поднимали бы контекст — но `Jupiter` его игнорирует, и `@Autowired` останется `null`.",
-                "how_it_should_be": "Правильно: в `JUnit 5` Spring подключается `SpringExtension` (обычно неявно через `@SpringBootTest`/срезы), а не `@RunWith`."
-              },
+              "order": 0,
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`@DataJpaTest` всегда использует production database и commits transaction после каждого test, чтобы данные были доступны следующему case.",
+              "text": "Расширение `SpringExtension` приходится указывать явно, в готовые срезы оно не зашито.",
               "correct": false,
               "sections": {
-                "what_actually": "`@DataJpaTest` по умолчанию использует in-memory БД (например `H2`) и оборачивает каждый тест в транзакцию с откатом, а не коммитом, не трогая production-базу.",
-                "source_of_confusion": "Тест работает с репозиториями, отсюда мысль, что он ходит в настоящую БД.",
-                "if_it_were_true": "Будь это коммит в prod-БД, прогон тестов засорял бы боевые данные — а `@DataJpaTest` специально изолирует их через откат транзакции.",
-                "how_it_should_be": "Правильно: `@DataJpaTest` поднимает только JPA-слой на in-memory БД и откатывает транзакцию после каждого теста для изоляции."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "Расширение уже зашито и в основную аннотацию, и в тестовые срезы, поэтому явно его почти не пишут.",
+                "source_of_confusion": "Для других библиотек расширение действительно указывают руками, и привычка переносится.",
+                "if_it_were_true": "Тогда каждая тестовая аннотация требовала бы второй строки рядом.",
+                "how_it_should_be": "Писать расширение явно только в собственных нестандартных срезах."
+              }
             },
             {
-              "text": "`SpringExtension` подключает TestContext; `@SpringBootTest` загружает full context, slices ограничивают components, а collaborators добавляют test configuration или Mockito annotations.",
+              "order": 1,
+              "label": "B",
+              "text": "Контекст поднимается заново на каждый тест, поэтому единообразие конфигураций совсем неважно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контекст кэшируется и переиспользуется между тестами с одинаковой конфигурацией.",
+                "source_of_confusion": "Изоляция тестов наводит на мысль, что окружение поднимается заново каждый раз.",
+                "if_it_were_true": "Тогда советовать единообразие конфигураций ради скорости было бы бессмысленно.",
+                "how_it_should_be": "Держать конфигурации похожими, чтобы попадать в уже поднятый контекст."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Чем уже срез, тем меньше бинов поднимается и тем быстрее тест.",
               "correct": true,
               "sections": {
-                "explanation": "Spring Boot meta-annotations уже включают Jupiter integration. Slice filters сокращают context и auto-configure соответствующие test tools; full context проверяет реальное application wiring.",
-                "example": "`@WebMvcTest(OrderController.class)` + `@MockitoBean OrderService` проверяет MVC contract; `@DataJpaTest` обычно transactional/rollback и может использовать embedded DB или configured Testcontainers service.",
-                "when_to_apply": "Выбирайте narrowest context, который проверяет нужный integration contract; pure service logic тестируйте без Spring, end-to-end wiring — full context.",
-                "edge_cases": "`@MockBean` deprecated в новых Spring Boot lines в пользу Framework `@MockitoBean`; точный annotation зависит от version. Slice может случайно расшириться через imports/config scanning.",
-                "related": "[[junit-interview#Q7]] Mockito; [[junit-interview#Q9]] SpringExtension; [[rest-assured-interview#Q10]] HTTP integration tests."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Связующее звено — расширение, которое поднимает контекст и внедряет бины в тест; указывать его явно почти не нужно, оно уже зашито в основную аннотацию и в тестовые срезы.",
+                "example": "Главное — разница между полным контекстом и срезами: чем уже срез, тем быстрее тест и тем меньше лишних бинов.",
+                "when_to_apply": "Полный контекст приложения поднимают для сквозных сценариев, и это самый медленный вариант.",
+                "edge_cases": "Срез веб-слоя даёт контроллеры и фильтры с готовым клиентом, а сервисы и репозитории туда не попадают — их подменяют.",
+                "related": "Срез слоя доступа к данным поднимает репозитории и по умолчанию откатывает транзакцию после каждого теста."
+              }
             },
             {
-              "text": "`@WebMvcTest` поднимает весь application context, включая repositories, messaging и scheduled jobs, а отличие от `@SpringBootTest` только в MockMvc field.",
+              "order": 3,
+              "label": "D",
+              "text": "Срез `@WebMvcTest` поднимает и сервисы с репозиториями, поэтому подменять их незачем.",
               "correct": false,
               "sections": {
-                "what_actually": "`@WebMvcTest` загружает web slice: controllers, MVC infrastructure, filters и `MockMvc`; отсутствующие collaborators добавляют current `@MockitoBean`, test configuration или imports.",
-                "source_of_confusion": "Controller test всё ещё использует Spring context, поэтому slice ошибочно принимают за полный application context.",
-                "if_it_were_true": "При полном context repositories, messaging и scheduled components создавались бы автоматически, а explicit test doubles для controller collaborators обычно не требовались бы.",
-                "how_it_should_be": "Используйте `@WebMvcTest` для ограниченного MVC contract; full application wiring проверяет `@SpringBootTest`. В старых Boot versions аналогом `@MockitoBean` был `@MockBean`."
-              },
-              "label": "D",
-              "order": 3
+                "what_actually": "В этот срез сервисы и репозитории как раз не попадают, поэтому их и подменяют.",
+                "source_of_confusion": "Контроллер зависит от сервиса, и кажется, что срез обязан поднять всю цепочку.",
+                "if_it_were_true": "Тогда срез поднимал бы почти весь контекст и не давал выигрыша по скорости.",
+                "how_it_should_be": "Держать в срезе только веб-слой, а зависимости подменять на моки."
+              }
             }
           ]
         }
@@ -786,56 +786,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое жизненный цикл теста и в чём разница `PER_CLASS` и `PER_METHOD`?",
+          "question_text": "Что такое Test Lifecycle и PER_CLASS vs PER_METHOD?",
           "options": [
             {
-              "text": "Default `PER_METHOD` создаёт instance на invocation; `PER_CLASS` переиспользует instance, разрешает non-static `@BeforeAll` и разделяет mutable fields между test methods.",
+              "order": 0,
+              "label": "A",
+              "text": "В режиме одного экземпляра метод `@BeforeAll` по-прежнему обязан быть объявлен статическим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В режиме на класс метод подготовки как раз уже не обязан быть статическим.",
+                "source_of_confusion": "Требование статичности запоминается как свойство самой аннотации, а не режима.",
+                "if_it_were_true": "Тогда доступ к полям экземпляра из общей подготовки остался бы невозможным.",
+                "how_it_should_be": "Связывать требование статичности с режимом по умолчанию, а не с аннотацией."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Режим влияет лишь на отчёт, а изоляция полей от него не зависит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Режим определяет число экземпляров класса, а вместе с ним и изоляцию полей между тестами.",
+                "source_of_confusion": "Различие незаметно, пока в тестах нет изменяемых полей.",
+                "if_it_were_true": "Тогда предупреждение про общее состояние и зависимость от порядка было бы лишним.",
+                "how_it_should_be": "Проверять, что произойдёт с полями класса при выбранном режиме."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "По умолчанию класс создаётся однажды, поэтому поля остаются общими между тестами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию работает режим на каждый тест: объект создаётся заново, и поля не общие.",
+                "source_of_confusion": "В обычном коде класс инстанцируют один раз, и то же ожидают от тестов.",
+                "if_it_were_true": "Тогда счётчик из примера рос бы от теста к тесту без всяких аннотаций.",
+                "how_it_should_be": "Считать изоляцию поведением по умолчанию, а общие поля — осознанным выбором."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Режим задаёт, сколько экземпляров класса создаётся — один или на каждый тест.",
               "correct": true,
               "sections": {
-                "explanation": "Per-method isolation уменьшает accidental state coupling. Per-class полезен для expensive instance fixture и Kotlin non-static lifecycle methods, но требует reset/thread-safety discipline.",
-                "example": "В `PER_METHOD` counter field начинается с default value в каждом test; в `@TestInstance(PER_CLASS)` изменения остаются и parallel methods могут обращаться к одному object.",
-                "when_to_apply": "Сохраняйте default для unit tests; выбирайте PER_CLASS осознанно для instance `@MethodSource`, shared expensive fixture или language constraints.",
-                "edge_cases": "Parameterized/repeated tests также создают invocations согласно lifecycle. PER_CLASS вместе с concurrent execution требует synchronization shared fields.",
-                "related": "[[junit-interview#Q2]] class callbacks; [[junit-interview#Q3]] MethodSource; [[junit-interview#Q12]] parallel execution."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Default lifecycle — `PER_CLASS`: один instance обслуживает все tests и fields автоматически shared, пока annotation не переключит на per-method.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию действует `PER_METHOD`: на КАЖДЫЙ тест создаётся новый экземпляр класса, и поля сбрасываются — это изолирует тесты друг от друга.",
-                "source_of_confusion": "Привычка ООП «один объект на класс» переносится на тест-инстансы, отсюда путаница с дефолтом.",
-                "if_it_were_true": "Будь дефолтом `PER_CLASS`, поле `counter` накапливалось бы между тестами — а в `PER_METHOD` оно заново `0` в каждом тесте.",
-                "how_it_should_be": "Правильно: дефолт — `PER_METHOD` (свежий инстанс на тест); общий инстанс включается явно через `@TestInstance(PER_CLASS)`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "При `PER_CLASS` `@BeforeAll` всё равно обязан быть static на любой Java version и при любом interface default method, иначе engine игнорирует lifecycle method.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Как раз `PER_CLASS` СНИМАЕТ требование `static` с `@BeforeAll`/`@AfterAll`: при общем инстансе они могут быть обычными методами; `static` обязателен лишь при дефолтном `PER_METHOD`.",
-                "source_of_confusion": "Правило «`@BeforeAll` всегда `static`» из дефолтного режима ошибочно считают универсальным.",
-                "if_it_were_true": "Будь `static` обязателен и при `PER_CLASS`, не было бы смысла упоминать «`@BeforeAll` не `static` благодаря `PER_CLASS`» — а это его прямое следствие.",
-                "how_it_should_be": "Правильно: при `PER_CLASS` `@BeforeAll`/`@AfterAll` допускают нестатические методы, потому что инстанс класса один на все тесты."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Lifecycles влияют только на частоту `@BeforeEach`, но test instances и mutable fields всегда создаются один раз на class и shared между methods.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Разница именно в количестве ЭКЗЕМПЛЯРОВ тест-класса: `PER_METHOD` — новый объект (и обнулённые поля) на каждый тест, `PER_CLASS` — один объект на все. `@BeforeEach` зовётся перед каждым тестом в обоих режимах.",
-                "source_of_confusion": "И `@BeforeEach`, и режим инстанса относятся к «жизненному циклу», поэтому их эффекты смешивают.",
-                "if_it_were_true": "Будь дело лишь в частоте `@BeforeEach`, поле `counter` вело бы себя одинаково в обоих режимах — а оно сбрасывается в `PER_METHOD` и накапливается в `PER_CLASS`.",
-                "how_it_should_be": "Правильно: режим задаёт число инстансов класса (и судьбу его полей); частота `@BeforeEach` от него не зависит."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Жизненный цикл определяет, сколько экземпляров тест-класса создаёт движок: по умолчанию на каждый тест создаётся новый объект.",
+                "example": "Отсюда и изоляция: поля, изменённые в одном тесте, не протекают в другой, и порядок запуска не важен.",
+                "when_to_apply": "Второй режим создаёт один экземпляр на весь класс, и поля становятся общими между тестами.",
+                "edge_cases": "Зато метод подготовки уровня класса уже не обязан быть статическим и получает доступ к полям экземпляра.",
+                "related": "Берут этот режим ради дорогой подготовки или нестатического источника данных, но общее состояние легко делает тесты зависимыми от порядка."
+              }
             }
           ]
         }
@@ -846,56 +846,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие типичные ошибки допускают в юнит-тестах?",
+          "question_text": "Какие типичные ошибки в юнит-тестах?",
           "options": [
             {
-              "text": "Unit test должен ходить в real DB/network и использовать system clock, потому что максимальная близость production важнее speed, determinism, isolation и failure diagnostics.",
+              "order": 0,
+              "label": "A",
+              "text": "Десяток моков в одном тесте — нормальная цена изоляции, а не проблема.",
               "correct": false,
               "sections": {
-                "what_actually": "Реальные БД/сеть внутри unit-теста превращают его в интеграционный: он становится медленным и flaky; такие проверки выносят в отдельный профиль/папку integration-тестов.",
-                "source_of_confusion": "«Ближе к проду — надёжнее» звучит логично, поэтому внешние вызовы тащат прямо в unit-тест.",
-                "if_it_were_true": "Будь это нормой для unit-тестов, они не были бы быстрыми и детерминированными — а сетевой/БД-вызов делает их медленными и нестабильными.",
-                "how_it_should_be": "Правильно: unit-тест изолирован (зависимости замоканы), а реальные БД/сеть проверяют отдельные integration-тесты в своём профиле."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "Это как раз запах: либо у класса слишком много зависимостей, либо взят не тот уровень теста.",
+                "source_of_confusion": "Моки действительно нужны для изоляции, и их число кажется вопросом вкуса.",
+                "if_it_were_true": "Тогда переход на интеграционный тест никогда не был бы уместнее.",
+                "how_it_should_be": "Читать разросшийся список моков как сигнал о проблеме дизайна."
+              }
             },
             {
-              "text": "Избегайте assertions по implementation, excessive mocks, clock/random/order/network dependencies, нескольких причин failure и неясного Arrange–Act–Assert contract.",
+              "order": 1,
+              "label": "B",
+              "text": "Общий корень — тест держится за внутреннее устройство кода, а не за поведение.",
               "correct": true,
               "sections": {
-                "explanation": "Хороший unit test быстрый, deterministic и устойчивый к внутреннему refactoring. Mocks нужны на meaningful boundaries, а assertions должны доказывать behavior, а не копировать implementation steps.",
-                "example": "Clock и UUID generator injects, repository mock задаёт один contract, assertion проверяет returned state/event. SQL/network contract переносится в integration test с real dependency.",
-                "when_to_apply": "Review tests как production code: naming, data builders, один behavior, controlled nondeterminism, useful failure message и правильный test level.",
-                "edge_cases": "Interaction verification корректна, когда вызов сам является contract (например, publication exactly once). «Один assertion» не означает один вызов assertion API; assertAll может проверять один outcome.",
-                "related": "[[junit-interview#Q4]] assertion grouping; [[junit-interview#Q7]] mocks; [[junit-interview#Q12]] concurrency."
-              },
-              "label": "B",
-              "order": 1
+                "explanation": "Большинство проблем сводится к одному корню: тест привязан к тому, как код устроен внутри, а не к тому, что он делает снаружи.",
+                "example": "Такой тест ломается на любом рефакторинге, хотя поведение осталось прежним.",
+                "when_to_apply": "Отсюда и первое проявление — проверка приватных методов вместо публичного контракта.",
+                "edge_cases": "Второе — десяток моков на один тест: это сигнал о слишком многих зависимостях или о неверном уровне теста.",
+                "related": "Третье — проверка вызовов моков вместо результата: она фиксирует деталь реализации и потому хрупка."
+              }
             },
             {
-              "text": "Чем больше mocks, тем качественнее isolation: десять и более dependencies в одном test являются целевым design standard и не сигнализируют о coupling.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Изобилие моков — это СМЕЛЛ: обычно знак неправильного дизайна или неверного уровня теста; если зависимостей очень много, чаще нужен интеграционный тест, а не гора моков.",
-                "source_of_confusion": "Изоляция через моки — хорошая идея, и её ошибочно доводят до «чем больше моков, тем лучше».",
-                "if_it_were_true": "Будь много моков признаком качества, тесты на 10 моков были бы образцовыми — а на практике они хрупкие и плохо читаются.",
-                "how_it_should_be": "Правильно: много моков сигнализирует о слишком широкой ответственности класса или неверном слое теста; стоит упростить дизайн или взять integration-тест."
-              },
+              "order": 2,
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Private methods следует тестировать reflection-ом напрямую и отдельно от public API, иначе coverage недостаточно и behavior-oriented tests считаются неполными.",
+              "text": "Проверка вызова репозитория надёжнее проверки состояния, ведь она прямо фиксирует факт вызова.",
               "correct": false,
               "sections": {
-                "what_actually": "Тестирование приватной реализации (через рефлексию) делает тесты ХРУПКИМИ: любой рефакторинг внутренностей ломает их; правильно проверять поведение через публичный API.",
-                "source_of_confusion": "Высокое строчное покрытие кажется самоцелью, отсюда соблазн дотестировать приватные методы напрямую.",
-                "if_it_were_true": "Будь это хорошей практикой, переименование приватного метода не ломало бы тесты — а с рефлексией ломает, хотя поведение не изменилось.",
-                "how_it_should_be": "Правильно: проверять класс через публичный контракт (`order.total()`), а не приватные методы; покрытие приходит как следствие тестирования поведения."
-              },
+                "what_actually": "Проверка вызова фиксирует деталь реализации, поэтому предпочитают состояние или возвращённое значение.",
+                "source_of_confusion": "Факт вызова легко проверить, и это выглядит строгой гарантией.",
+                "if_it_were_true": "Тогда рекомендация оставлять такую проверку для взаимодействий без наблюдаемого результата была бы лишней.",
+                "how_it_should_be": "Проверять итог, а факт вызова оставлять для писем и событий."
+              }
+            },
+            {
+              "order": 3,
               "label": "D",
-              "order": 3
+              "text": "Проверка приватных методов через рефлексию делает тест устойчивее к любому рефакторингу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, такой тест хрупок: он ломается на любом изменении внутренностей.",
+                "source_of_confusion": "Прямая проверка внутреннего метода кажется более точной, чем проверка через публичный вызов.",
+                "if_it_were_true": "Тогда совет тестировать через публичный контракт не имел бы смысла.",
+                "how_it_should_be": "Проверять поведение через публичный интерфейс, оставляя внутренности свободными."
+              }
             }
           ]
         }

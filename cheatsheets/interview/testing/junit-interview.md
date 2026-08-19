@@ -31,7 +31,7 @@ updated: "2026-05-08"
 <dependency>
     <groupId>org.junit.jupiter</groupId>
     <artifactId>junit-jupiter</artifactId>
-    <version>5.10.0</version>
+    <version>5.14.4</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -39,7 +39,7 @@ updated: "2026-05-08"
 **Главные отличия от JUnit 4** (часто спрашивают на собеседовании):
 - Аннотации жизненного цикла переименованы яснее: `@Before` → `@BeforeEach`, `@BeforeClass` → `@BeforeAll`.
 - `@Ignore` → `@Disabled`, а громоздкий `@RunWith` заменён на композируемый `@ExtendWith` — расширений можно навесить несколько, в JUnit 4 раннер был один.
-- Требует Java 8+, что позволяет передавать ассерты как lambda (`assertThrows(..., () -> ...)`) и работать со streams в `@MethodSource`.
+- Требует Java 8+, что позволяет передавать ассерты как lambda (`assertThrows(..., () -> ...)`) и работать со streams в `@MethodSource`. Следующая мажорная линия, JUnit 6, поднимает планку до Java 17 — на 5.x это не влияет.
 - Выразительнее API ассертов: `assertThrows` возвращает само исключение для проверки сообщения, `assertAll` группирует проверки.
 
 ## Q2. Какие основные аннотации в JUnit 5?
@@ -215,9 +215,10 @@ void shouldNotThrow() {
 // assertThrowsExactly — ТОЛЬКО указанный тип, без подклассов
 @Test
 void shouldThrowExactType() {
-    assertThrowsExactly(NullPointerException.class,
-        () -> someMethod());
-    // RuntimeException не пройдёт, хотя NPE — подкласс
+    // код бросает NullPointerException:
+    assertThrows(RuntimeException.class, () -> someMethod());        // ПРОЙДЁТ: NPE — подкласс
+    assertThrowsExactly(RuntimeException.class, () -> someMethod()); // УПАДЁТ: тип не совпал точно
+    assertThrowsExactly(NullPointerException.class, () -> someMethod()); // ПРОЙДЁТ
 }
 ```
 
@@ -486,7 +487,7 @@ class ParallelTest {
 
 Главное на собеседовании — понимать разницу между **полным контекстом и срезами (test slices)**. Чем уже срез, тем быстрее тест и тем меньше лишних бинов поднимается:
 - **`@SpringBootTest`** — поднимает весь контекст приложения. Мощно, но медленно; для end-to-end сценариев.
-- **`@WebMvcTest`** — только web-слой (контроллеры, фильтры) с готовым `MockMvc`. Сервисы и репозитории сюда не попадают — их подменяют через `@MockBean`.
+- **`@WebMvcTest`** — только web-слой (контроллеры, фильтры) с готовым `MockMvc`. Сервисы и репозитории сюда не попадают — их подменяют через `@MockitoBean`.
 - **`@DataJpaTest`** — только JPA-слой: репозитории, `EntityManager`, по умолчанию in-memory БД и откат транзакции после каждого теста.
 
 ```java
@@ -500,7 +501,7 @@ class ApplicationIntegrationTest {
 @WebMvcTest(OrderController.class)
 class OrderControllerTest {
     @Autowired MockMvc mvc;
-    @MockBean OrderService service;
+    @MockitoBean OrderService service;   // org.springframework.test.context.bean.override.mockito
 }
 
 // Только JPA-слой с H2 in-memory
@@ -516,7 +517,9 @@ class OrderRepositoryTest {
 class SliceTest { }
 ```
 
-**Нюанс производительности:** Spring кэширует поднятый контекст и переиспользует его между тестами с одинаковой конфигурацией. Поэтому держите конфигурации тестов единообразными — каждый уникальный набор аннотаций/`@MockBean`/`properties` плодит новый контекст и замедляет сборку.
+**Про `@MockBean`:** старая аннотация из `spring-boot-test` объявлена устаревшей в Spring Boot 3.4 и удалена в Boot 4 — на замену пришла `@MockitoBean` из `spring-test`. В коде на Boot 3.x обе работают, в новом коде берите `@MockitoBean`.
+
+**Нюанс производительности:** Spring кэширует поднятый контекст и переиспользует его между тестами с одинаковой конфигурацией. Поэтому держите конфигурации тестов единообразными — каждый уникальный набор аннотаций/подменённых бинов/`properties` плодит новый контекст и замедляет сборку.
 
 ## Q14. Что такое Test Lifecycle и PER_CLASS vs PER_METHOD?
 
