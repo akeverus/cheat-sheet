@@ -155,9 +155,17 @@ class MobileContextContractTest {
         assertThat(css).as("рабочая колонка перестала быть flex-контейнером — "
                         + "без него порядок блоков не переставить")
                 .containsPattern("\\.focus-main \\{\\s*display: flex;\\s*flex-direction: column;");
+        // Правило переставляет теперь ОДИН узел — обёртку спутников, внутри которой
+        // живёт справка (и вместе с ней ход сессии и заметка). Проверять имя
+        // `.topic-brief` в селекторе больше нельзя: это было бы требование к
+        // написанию правила, а не к его смыслу. Смысл — справка идёт ЗА работой,
+        // и он держится двумя фактами: обёртка переставляется, справка внутри неё.
         assertThat(css).as("справка о теме снова стоит между вопросом и вариантами: "
                         + "305px поперёк пути к ответу")
-                .containsPattern("\\.topic-brief[^{]*\\{[^}]*order: 1");
+                .containsPattern("\\.focus-main \\.focus-companions \\{ order: 1");
+        assertThat(read("templates/focus-training.html"))
+                .as("справка вне обёртки спутников — правило перестановки её не достанет")
+                .containsPattern("(?s)class=\"focus-companions\".{0,4000}class=\"topic-brief\"");
         assertThat(css).as("хвост страницы («сообщить о проблеме») обогнал справку")
                 .containsPattern("\\.report-zone \\{ order: 2");
         assertThat(css).as("правило перестановки снова заперто в медиазапрос по ширине — "

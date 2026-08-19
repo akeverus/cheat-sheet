@@ -5,7 +5,7 @@ import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.regex.Matcher;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -70,25 +70,31 @@ class SessionLogContractTest {
     }
 
     /**
-     * Проверяем ПРАВИЛО, а не его написание. Первая редакция гейта требовала точной
-     * строки с одним селектором, и добавление второго спутника (заметки к вопросу)
-     * уронило её, хотя правило осталось прежним: спутники уходят за работу.
+     * Проверяем ПРАВИЛО, а не его написание. Первая редакция требовала точной строки
+     * с одним селектором и упала от второго спутника; вторая перечисляла три имени и
+     * упала, когда все три уехали в общую обёртку. Смысл всё это время был один:
+     * спутники идут ЗА работой, а не между вопросом и ответом.
      */
     @Test
     void onThePhoneTheCompanionsFollowTheWork() throws IOException {
         String css = read("static/css/pages-focus.css");
-        Matcher rule = Pattern
-                .compile("([^{}]*\\.focus-main \\.session-log[^{}]*)\\{\\s*order:\\s*1;")
-                .matcher(css);
-        assertThat(rule.find())
-                .as("журнал — спутник, а не преграда между вопросом и ответом")
-                .isTrue();
-        String selectors = rule.group(1);
-        assertThat(selectors)
-                .as("справка о теме уходит за работу тем же правилом")
-                .contains(".focus-main .topic-brief");
-        assertThat(selectors)
-                .as("заметка к вопросу — такой же спутник, как журнал и справка")
-                .contains(".focus-main .question-note");
+        assertThat(css)
+                .as("обёртка спутников не переставляется — они снова окажутся на пути к ответу")
+                .containsPattern("\\.focus-main \\.focus-companions \\{ order: 1");
+
+        // Границы обёртки берём из самой разметки, а не окном в N символов: окно —
+        // это допущение о длине блока, и первая редакция гейта на нём и споткнулась
+        // (заметка оказалась дальше 6000 знаков от начала обёртки).
+        String markup = read("templates/focus-training.html");
+        int open = markup.indexOf("class=\"focus-companions\"");
+        int close = markup.indexOf("/.focus-companions");
+        assertThat(open).as("обёртки спутников нет в разметке").isNotNegative();
+        assertThat(close).as("обёртка не закрыта — границы не определить").isGreaterThan(open);
+        String inside = markup.substring(open, close);
+        for (String companion : List.of("session-log", "topic-brief", "question-note")) {
+            assertThat(inside)
+                    .as("спутник вне обёртки — правило перестановки его не достанет: " + companion)
+                    .contains("class=\"" + companion + "\"");
+        }
     }
 }

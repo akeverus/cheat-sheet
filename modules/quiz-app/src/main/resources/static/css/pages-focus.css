@@ -1680,9 +1680,10 @@ html[data-design] .focus-page .focus-training .focus-aside .focus-session-more-s
   /* Второе слагаемое (`.workspace-support`) снято в iter-129 вместе с блоком:
      план ответа больше не живёт в колонке задания и переставлять его не нужно —
      он стоит внутри рабочего места, там же, где поле ввода. */
-  html[data-design] .focus-page .focus-main .topic-brief,
-  html[data-design] .focus-page .focus-main .session-log,
-  html[data-design] .focus-page .focus-main .question-note { order: 1; }
+  /* Спутники переставляет ОДНО правило на их общую обёртку. Раньше здесь стоял
+     список из трёх селекторов, и каждый новый спутник требовал четвёртой строки —
+     то есть порядок держался перечислением, а не структурой. */
+  html[data-design] .focus-page .focus-main .focus-companions { order: 1; }
   html[data-design] .focus-page .focus-main .report-zone { order: 2; }
 
   /* ЗАЗОР ПРИНАДЛЕЖИТ БЛОКУ, А НЕ ПРОТЕКАЕТ ИЗ ЕГО НУТРА.
@@ -1806,6 +1807,10 @@ html[data-design] .focus-page .focus-training .focus-question { max-width: var(-
    продолжают матчить. Реальной колонкой (и контейнером для кегля вопроса) пейн
    становится только в рабочем месте — см. медиазапрос рабочего места ниже. */
 html[data-design] .focus-question-pane { display: contents; }
+/* Узел «задание + спутники» вне рабочего места прозрачен: в стопке телефона его
+   дети остаются прямыми детьми .focus-main, и правило порядка спутников работает
+   там же, где работало до появления обёртки. */
+html[data-design] .focus-task { display: contents; }
 
 @media (min-width: 1200px) {
   /* Мета-бар: левый КЛАСТЕР вместо space-between край-в-край. Растянутый на всю
@@ -1929,6 +1934,10 @@ html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
   /* Рабочая поверхность — минимум, ниже которого писать неудобно; выше него она
      забирает весь остаток. */
   --workspace-desk-min: 32rem;
+  /* Колонка спутников (справка, ход сессии, заметка) — только на сверхшироком
+     экране. 22rem = 352px: столько нужно строке «ждут повтора — планировщик
+     поставит их первыми» и теме в журнале, чтобы не переноситься на каждом слове. */
+  --workspace-companions: 22rem;
   /* Плоское значение, а не `min(100%, …)`: слагаемое участвует в сумме
      --focus-band-sum и в сторожевом `min(…, (100% - sum + 1px) * 9999)` базы.
      Процент внутри слагаемого ломал этот сторож — замер дал полосу 1296 вместо
@@ -2034,11 +2043,11 @@ html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
   }
   /* Пейн вопроса перестаёт быть `display: contents` и становится настоящей
      колонкой — ровно так же, как он делает это в раскладке «Разделение». */
-  html[data-design] .focus-page .focus-main:has(#interview-options) > .focus-question-pane,
-  html[data-design] .focus-page .focus-main:has(.flashcard-answer) > .focus-question-pane,
-  html[data-design] .focus-page .focus-main:has(.typed-workspace) > .focus-question-pane,
-  html[data-design] .focus-page .focus-main:has(.study-learn-phase) > .focus-question-pane,
-  html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) > .focus-question-pane {
+  html[data-design] .focus-page .focus-main:has(#interview-options) > .focus-task,
+  html[data-design] .focus-page .focus-main:has(.flashcard-answer) > .focus-task,
+  html[data-design] .focus-page .focus-main:has(.typed-workspace) > .focus-task,
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase) > .focus-task,
+  html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) > .focus-task {
     display: flex;
     flex-direction: column;
     grid-column: 1;
@@ -2054,11 +2063,11 @@ html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
   /* Все прочие дети рабочей колонки (форма, разбор, вердикт, сообщения) идут во
      вторую колонку стопкой. Перечислять их поимённо нельзя: состав меняется по
      фазе, и забытый ребёнок молча уехал бы в первую колонку. */
-  html[data-design] .focus-page .focus-main:has(#interview-options) > *:not(.focus-question-pane),
-  html[data-design] .focus-page .focus-main:has(.flashcard-answer) > *:not(.focus-question-pane),
-  html[data-design] .focus-page .focus-main:has(.typed-workspace) > *:not(.focus-question-pane),
-  html[data-design] .focus-page .focus-main:has(.study-learn-phase) > *:not(.focus-question-pane),
-  html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) > *:not(.focus-question-pane) {
+  html[data-design] .focus-page .focus-main:has(#interview-options) > *:not(.focus-task),
+  html[data-design] .focus-page .focus-main:has(.flashcard-answer) > *:not(.focus-task),
+  html[data-design] .focus-page .focus-main:has(.typed-workspace) > *:not(.focus-task),
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase) > *:not(.focus-task),
+  html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) > *:not(.focus-task) {
     grid-column: 2;
     min-width: 0;
   }
@@ -2069,6 +2078,146 @@ html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
   html[data-design] .focus-page .focus-main:has(#interview-options) #interview-options {
     grid-template-columns: minmax(0, 1fr);
     max-width: none;
+  }
+}
+
+/* ===========================================================================
+   СВЕРХШИРОКИЙ ЭКРАН: ТРЕТЬЯ ЗОНА ВМЕСТО ЖЁЛОБОВ (iter-135)
+
+   ЗАМЕР, А НЕ ВПЕЧАТЛЕНИЕ (Chromium и WebKit, экзамен, один вопрос):
+
+     вьюпорт   оболочка  полоса  жёлоба      доля полосы
+     1512      1281      1160    60 / 60     91 %
+     1728      1488      1350    69 / 69     91 %
+     1920      1672      1456    108 / 108   87 %
+     2560      2309      1456    427 / 427   63 %
+     3440      3189      1456    867 / 867   46 %
+
+   С 1920 полоса упирается в свой кап (91rem = 1456) и больше не растёт: на 3440
+   почти половина рабочей области — фон по краям. Это ровно §13.1 брифа
+   («приложение внутри монитора»), и «поднять max-width» тут запрещено: мера полосы
+   не произвол, она сложена из меры вариантов (72ch) и окна листинга.
+
+   ПОЭТОМУ ШИРИНУ ЗАБИРАЕТ НЕ СТРОКА, А ТРЕТЬЯ ЗОНА. Спутники вопроса — справка о
+   теме, ход сессии и заметка — сегодня стоят под заданием и удлиняют его колонку,
+   пока справа пусто. На сверхшироком они уезжают в собственную колонку: полоса
+   растёт 91rem → 116rem (1456 → 1856), жёлоба на 2560 падают 427 → ~226, на 3440
+   867 → ~666, а колонка задания становится короче ровно на высоту спутников.
+
+   Ни строка варианта, ни окно листинга при этом не меняются: задание остаётся
+   48rem, работа — 40rem, добавленные 25rem уходят третьей колонке целиком.
+
+   ПОРОГ ВЗЯТ ИЗ АРИФМЕТИКИ, А НЕ ИЗ СПИСКА УСТРОЙСТВ. Полосе нужно 1856px плюс
+   жёлоба страницы; оболочка на этих ширинах равна вьюпорту минус ~251 (рельс
+   навигации и полоса прокрутки), поэтому нужен вьюпорт от ~2200. Берём 2240:
+   на 1920 и 2048 композиция остаётся прежней, двухколоночной. */
+@media (min-width: 2240px) {
+  /* Слагаемое меры объявляется на СТРАНИЦЕ, а не на рабочей колонке: сумма полосы
+     (--focus-measure) считается на `.focus-page`, и переопределение на потомке до
+     неё не доезжает. Первая редакция правила поставила 116rem на `.focus-main` —
+     замер показал полосу прежних 1456 и три колонки 496/512/352, то есть третья
+     зона отняла ширину у работы вместо того, чтобы её добавить. */
+  /* МЕРА — СУММА КОЛОНОК, А НЕ ЧИСЛО. Так её видно из слагаемых: задание + работа
+     + спутники + два жёлоба. Поставь сюда «116rem» — и при смене любой колонки
+     полоса молча разъедется с содержимым. */
+  html[data-design] .focus-page:has(#interview-options),
+  html[data-design] .focus-page:has(.flashcard-answer),
+  html[data-design] .focus-page:has(.typed-workspace),
+  html[data-design] .focus-page:has(.study-learn-phase),
+  html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
+    --focus-main-measure: calc(var(--workspace-brief) + 40rem
+                          + var(--workspace-companions) + var(--focus-rail-gap) * 2);
+  }
+  /* КОЛОНКА ЗАДАНИЯ ШИРОКА РАДИ ЛИСТИНГА, А НЕ РАДИ ВОПРОСА. 48rem измерены по
+     собственной ширине кода (до ~750px). У вопроса без материалов в этой колонке
+     нет ничего, кроме заголовка и меты: замер первой редакции трёхзонной раскладки
+     на 2560 — под вопросом оставалось 768×900 пустоты, то есть пустота не исчезла,
+     а переехала с краёв страницы внутрь композиции. Гейт по СОДЕРЖИМОМУ: есть
+     материалы — колонка под листинг, нет — под заголовок, и полоса сжимается
+     вместе с ней (мера считается формулой выше). */
+  html[data-design] .focus-page:has(#interview-options):not(:has(.question-materials)),
+  html[data-design] .focus-page:has(.flashcard-answer):not(:has(.question-materials)),
+  html[data-design] .focus-page:has(.typed-workspace):not(:has(.question-materials)),
+  html[data-design] .focus-page:has(.study-learn-phase):not(:has(.question-materials)),
+  html[data-design] .focus-page:has(.result-feedback:not(.hidden)):not(:has(.question-materials)) {
+    --workspace-brief: 30rem;
+  }
+  /* ПОЛОСА СТРАНИЦЫ НЕ МОЖЕТ БЫТЬ УЖЕ СВОЕЙ КОМПОЗИЦИИ. Общая шкала капнута на
+     112rem (потолок 1792, из них 1632 рабочих), и замер это поймал: третья зона
+     появилась, но полоса осталась 1632 — колонки стали 672/512/352, то есть новая
+     колонка отняла ширину у задания (768 → 672) и у работы (640 → 512). Листинг и
+     строка варианта от этого проигрывают, ради чего всё и делалось.
+
+     Здесь не новый замороженный кап (их в проекте сняли четыре подряд), а то же
+     правило, записанное формулой: страница ровно настолько широка, насколько
+     широка композиция плюс её жёлоба. Меняется мера — двигается и полоса. */
+  html[data-design] .focus-page:has(#interview-options) .ed-page,
+  html[data-design] .focus-page:has(.flashcard-answer) .ed-page,
+  html[data-design] .focus-page:has(.typed-workspace) .ed-page,
+  html[data-design] .focus-page:has(.study-learn-phase) .ed-page,
+  html[data-design] .focus-page:has(.result-feedback:not(.hidden)) .ed-page {
+    max-width: min(100%, calc(var(--focus-main-measure) + var(--page-gutter) * 2));
+  }
+  html[data-design] .focus-page .focus-main:has(#interview-options),
+  html[data-design] .focus-page .focus-main:has(.flashcard-answer),
+  html[data-design] .focus-page .focus-main:has(.typed-workspace),
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase),
+  html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) {
+    grid-template-columns:
+      minmax(0, var(--workspace-brief))
+      minmax(var(--workspace-desk-min), 1fr)
+      minmax(0, var(--workspace-companions));
+  }
+  /* Пейн перестаёт быть колонкой и снова становится «прозрачным»: его дети —
+     части задания и обёртка спутников — сами встают в сетку. Иначе спутники
+     остались бы запертыми внутри первой колонки. */
+  html[data-design] .focus-page .focus-main:has(#interview-options) > .focus-task,
+  html[data-design] .focus-page .focus-main:has(.flashcard-answer) > .focus-task,
+  html[data-design] .focus-page .focus-main:has(.typed-workspace) > .focus-task,
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase) > .focus-task,
+  html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) > .focus-task {
+    display: contents;
+  }
+  /* Части задания — первая колонка. Правило по ПОТОМКАМ пейна, а не перечень:
+     новый блок задания встаёт туда же, куда и остальные, без правки CSS. */
+  /* Пейн — первая колонка на всю высоту. Он снова ОДИН элемент сетки (внутри —
+     свой flex), поэтому ряды рабочей колонки на него не действуют: первая редакция
+     правила расступалась пейном, и вопрос вставал в ряд высотой со список
+     вариантов — замер 2560 показал вопрос на 603-м пикселе при спутниках на 108-м. */
+  html[data-design] .focus-page .focus-main:has(#interview-options) > .focus-task > .focus-question-pane,
+  html[data-design] .focus-page .focus-main:has(.flashcard-answer) > .focus-task > .focus-question-pane,
+  html[data-design] .focus-page .focus-main:has(.typed-workspace) > .focus-task > .focus-question-pane,
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase) > .focus-task > .focus-question-pane,
+  html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) > .focus-task > .focus-question-pane {
+    display: flex;
+    flex-direction: column;
+    grid-column: 1;
+    grid-row: 1 / -1;
+    min-width: 0;
+    position: sticky;
+    top: var(--space-5);
+    container-type: inline-size;
+  }
+  /* Спутники — третья колонка, от первого ряда. Явный ряд обязателен: при
+     автоматическом размещении обёртка встала бы ПОД частями задания, то есть
+     колонка началась бы там, где первая кончается. */
+  html[data-design] .focus-page .focus-main:has(#interview-options) > .focus-task > .focus-companions,
+  html[data-design] .focus-page .focus-main:has(.flashcard-answer) > .focus-task > .focus-companions,
+  html[data-design] .focus-page .focus-main:has(.typed-workspace) > .focus-task > .focus-companions,
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase) > .focus-task > .focus-companions,
+  html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) > .focus-task > .focus-companions {
+    grid-column: 3;
+    grid-row: 1 / -1;
+    align-self: start;
+    position: sticky;
+    top: var(--space-5);
+  }
+  /* Первый спутник в своей колонке не нуждается в линейке сверху: она отделяла его
+     от задания, а теперь над ним ничего нет. */
+  html[data-design] .focus-page .focus-companions > :first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
   }
 }
 
