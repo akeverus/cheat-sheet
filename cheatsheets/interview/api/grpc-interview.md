@@ -249,9 +249,9 @@ plugins {
 }
 
 dependencies {
-    implementation 'io.grpc:grpc-netty-shaded:1.65.0'
-    implementation 'io.grpc:grpc-protobuf:1.65.0'
-    implementation 'io.grpc:grpc-stub:1.65.0'
+    implementation 'io.grpc:grpc-netty-shaded:1.83.1'
+    implementation 'io.grpc:grpc-protobuf:1.83.1'
+    implementation 'io.grpc:grpc-stub:1.83.1'
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
 }
 
@@ -261,7 +261,7 @@ protobuf {
     }
     plugins {
         grpc {
-            artifact = 'io.grpc:protoc-gen-grpc-java:1.65.0'
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.83.1'
         }
     }
     generateProtoTasks {
@@ -2102,8 +2102,8 @@ Hedge отправляет повторный запрос через `hedgingDe
 
 ```kotlin
 dependencies {
-    implementation("net.devh:grpc-server-spring-boot-starter:2.15.0.RELEASE")
-    implementation("net.devh:grpc-client-spring-boot-starter:2.15.0.RELEASE")
+    implementation("net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE")
+    implementation("net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE")
 }
 ```
 
