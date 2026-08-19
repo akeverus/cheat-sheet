@@ -306,7 +306,7 @@ var rows = dsl.select(AUTHOR.FIRST_NAME, BOOK.TITLE)
 | `fetchOne()` | `Record` или `null` | 0 → `null`; 1 → запись; >1 → исключение |
 | `fetchOptional()` | `Optional<Record>` | 0 → empty; 1 → present; >1 → исключение |
 | `fetchOptionalInto(Class)` | `Optional<T>` | то же + маппинг в POJO |
-| `fetchAny()` | `Record` или `null` | Любое число, берёт произвольную одну |
+| `fetchAny()` | `Record` или `null` | Любое число, берёт первую строку результата |
 
 ```java
 // Список записей
@@ -328,7 +328,7 @@ Optional<BookRecord> opt = dsl.selectFrom(BOOK).where(BOOK.ID.eq(1)).fetchOption
 
 - `fetchOne()` бросает `TooManyRowsException` при >1 строке — не используйте его там, где запрос может вернуть несколько.
 - `fetchOne()` возвращает `null` при 0 строках; `fetchOptional()` безопаснее для «может не быть».
-- `fetchAny()` не бросает исключение на множестве строк — он просто берёт одну.
+- `fetchAny()` не бросает исключение на множестве строк — он возвращает первую строку результата.
 
 **Итог:** `fetch`/`fetchInto` — для коллекций, `fetchOne`/`fetchOptional` — для одиночных результатов; `Optional`-версии предпочтительнее для «возможно отсутствует».
 

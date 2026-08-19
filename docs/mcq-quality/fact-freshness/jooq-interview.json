@@ -1,14 +1,35 @@
 {
   "topic_slug": "jooq-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
+  "round": "ROUND-10-LINKAGE-FIRST",
+  "status": "CHECKED",
+  "version_sensitive": true,
+  "product_version": "jOOQ 3.19.11 (jooq, jooq-codegen; артефакты с sources из кэша Gradle)",
+  "checked_date": "2026-08-19",
+  "sources": [
+    "артефакт jooq-3.19.11-sources.jar, org/jooq/ResultQuery.java: `R fetchOne() throws DataAccessException, TooManyRowsException`, `Optional<R> fetchOptional() throws DataAccessException, TooManyRowsException`, а у `R fetchAny() throws DataAccessException` javadoc гласит «The first resulting record or null if the query returns no records»",
+    "артефакт jooq-3.19.11-sources.jar, org/jooq/impl/DSL.java: javadoc noCondition() — «When this condition is passed to SQL clauses, such as the WHERE clause, the entire clause is omitted»; рядом trueCondition() и falseCondition()",
+    "артефакт jooq-3.19.11-sources.jar, org/jooq/impl/TrueCondition.java → ctx.sql(\"1 = 1\"), org/jooq/impl/FalseCondition.java → ctx.sql(\"1 = 0\")",
+    "артефакт jooq-3.19.11-sources.jar, org/jooq/impl/DSL.java: `public static <R extends Record> Field<Result<R>> multiset(TableLike<R> table)`; org/jooq/conf/NestedCollectionEmulation.java — значения NATIVE, DEFAULT, XML, JSON, JSONB (подтверждает эмуляцию через SQL/JSON и SQL/XML)",
+    "артефакт jooq-3.19.11-sources.jar, org/jooq/Field.java: обе перегрузки `convertFrom(...)` (ad-hoc conversion)",
+    "артефакт jooq-3.19.11-sources.jar, org/jooq/UpdatableRecord.java: `int store() throws DataAccessException, DataChangedException` с javadoc про changed-флаги, INSERT и UPDATE",
+    "артефакт jooq-codegen-3.19.11-sources.jar, org/jooq/codegen/JavaGenerator.java: `generatePojosAsKotlinDataClasses()` подставляет префикс `data ` при генерации класса; рядом лежит KotlinGenerator.java",
+    "заголовок каждого файла jooq-3.19.11-sources.jar: «Licensed under the Apache License, Version 2.0 … Other licenses: Commercial licenses for this work are available. These replace the above Apache-2.0 license and offer limited warranties, support, maintenance, and commercial database integrations»"
+  ],
+  "version_sensitive_claims": [
+    "Q8: fetchAny() возвращает первую строку результата, а не «произвольную» — формулировка исправлена в источнике по javadoc",
+    "Q8: fetchOne() и fetchOptional() обе бросают TooManyRowsException при более чем одной строке",
+    "Q13: noCondition() убирает клаузу целиком, trueCondition() рендерится как 1 = 1, falseCondition() — как 1 = 0",
+    "Q15: MULTISET эмулируется через SQL/JSON или SQL/XML (перечень значений NestedCollectionEmulation), нативная поддержка тоже предусмотрена",
+    "Q16: двойное лицензирование Apache 2.0 + коммерческая редакция с интеграциями коммерческих БД подтверждено заголовком исходников",
+    "Q17: опция генерации POJO как Kotlin data class существует в кодогенераторе"
+  ],
+  "staleness_risks": [
+    "Номера версий (MULTISET с 3.15, ad-hoc conversion с 3.15) в вариантах A/B/C/D не используются — только в тексте шпаргалки",
+    "Детали коммерческой модели (оплата по рабочим местам разработчиков, бесплатные build- и тест-серверы) взяты из текста шпаргалки: страница jooq.org в этой сессии недоступна для проверки, в вариантах эта деталь используется только как дистрактор Q16/C",
+    "Правило маппинга «учитывается только jakarta.persistence.@Column» проверить по артефакту не успел — ни один блок на нём не построен"
+  ],
   "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+    "context7 по jOOQ в этой сессии отваливался по таймауту, WebFetch на jooq.org заблокирован сетью — сверка выполнена по локальным артефактам jOOQ 3.19.11 из кэша Gradle (путь, разрешённый методологией)",
+    "1 дефект теории исправлен в источнике: fetchAny «берёт произвольную одну» → «берёт первую строку результата»"
   ]
 }
