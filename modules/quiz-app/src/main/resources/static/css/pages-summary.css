@@ -37,6 +37,120 @@ html[data-design] .summary-page .summary-hero[data-summary-tone="low"] .score-ri
 html[data-design] .summary-page .summary-hero[data-summary-tone="low"].is-celebrating {
   animation: none;
 }
+/* ===========================================================================
+   ВЕРХ ИТОГОВ: СЧЁТ И ПРОГРЕСС (iter-142)
+
+   Замер до правки (Chromium и WebKit, экзамен на три вопроса):
+
+     вьюпорт     карточка счёта   главное действие   сгиб
+     390×844        903px            @1155           844   ← за экраном
+     768×1024       508              @720           1024
+     1280×720       336              @514            720
+     1512×982       336              @514            982
+
+   На телефоне карточка была выше экрана целиком, и продолжить после сессии без
+   прокрутки было нельзя. Разложение по частям (390): кольцо 144 + счёт 173 +
+   ступень 186 + плитки 204 + зазоры.
+
+   Теперь верх — два блока: «сколько» и «что это дало». На широком экране они
+   стоят рядом (ряд получает высоту большего, а не сумму), на телефоне —
+   `display: contents` у обёртки, и порядок задаёт страница: счёт → действие →
+   прогресс. Первый экран телефона отвечает на «сколько» и «что дальше».
+   =========================================================================== */
+html[data-design] .summary-page .summary-top {
+  display: grid;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+/* ПОРОГ РЯДА — 1100, А НЕ 901. Замер на 901×900 первой сборки: колонка выходила
+   303px, карточка счёта вытягивалась до 450px (кольцо и счёт снова вставали в
+   столб), и ряд оказывался ВЫШЕ стопки. Ряд имеет смысл там, где колонке хватает
+   ширины на кольцо рядом со счётом. */
+@media (min-width: 1100px) {
+  html[data-design] .summary-page .summary-top {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+  /* Кольцо и счёт держат строку и в колонке. Замер 1280 первой сборки: колонка
+     465px, перенос срабатывал, и карточка счёта вырастала с 208 до 365 — выше,
+     чем была до всей правки. Кольцо 144 + счёт ~300 в 465 помещаются, если не
+     давать им переноситься. */
+  html[data-design] .summary-page .summary-hero {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+}
+
+/* ВНУТРИ КАРТОЧКИ ПРОГРЕССА — ТОЖЕ РЯД, КОГДА ЕСТЬ ШИРИНА. Ступень и четыре
+   плитки в столб дают 302px; рядом — 208 и меньше. Замер 1920 первой сборки:
+   документ вырос с 1433 до 1485 ровно на этой разнице. */
+@media (min-width: 1280px) {
+  html[data-design] .summary-page .summary-progress {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+}
+
+/* ТЕЛЕФОН: ПОРЯДОК ЗАДАЁТ СТРАНИЦА. Обёртка растворяется, её дети становятся
+   детьми полосы, и `order` ставит действие между счётом и прогрессом. Порядок в
+   РАЗМЕТКЕ при этом остаётся прежним (счёт → прогресс → действия): для
+   скринридера и обхода с клавиатуры «что это дало» логично идёт за «сколько», а
+   визуальная перестановка нужна ровно для того, чтобы главное действие попало в
+   первый экран.
+
+   Порог тот же, что у ряда наверху (1100): один порог на одно событие — «есть ли
+   ширина под две колонки». */
+@media (max-width: 1099px) {
+  html[data-design] .summary-page .ed-page {
+    display: flex;
+    flex-direction: column;
+  }
+  html[data-design] .summary-page .summary-top { display: contents; }
+  html[data-design] .summary-page .page-head { order: 0; }
+  html[data-design] .summary-page .summary-hero { order: 1; }
+  html[data-design] .summary-page .summary-actions { order: 2; }
+  html[data-design] .summary-page .summary-progress { order: 3; }
+  html[data-design] .summary-page .summary-tools { order: 4; }
+  html[data-design] .summary-page .summary-breakdown { order: 5; }
+  /* Зазор между блоками верха задаёт сама полоса: обёртки, которая держала его
+     `gap`, на этой ширине больше нет. */
+  html[data-design] .summary-page .summary-hero,
+  html[data-design] .summary-page .summary-progress {
+    margin-bottom: var(--space-5);
+  }
+  /* Кольцо и счёт — в строку: два блока по 144 и 173 в столб съедали пол-экрана,
+     а рядом занимают высоту большего. */
+  html[data-design] .summary-page .summary-hero {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+}
+
+/* ТЕЛЕФОН: КОЛЬЦО ОТДАЁТ ШИРИНУ СЧЁТУ. Замер 390 первой сборки строки: полоса
+   карточки 279, кольцо 144 + жёлоб 32 — счёту оставалось 103px, и «0 из 1 верных
+   ответов» ломалось на ТРИ строки антиквой в 28px. Кольцо здесь — иллюстрация
+   доли, а не главный носитель: главное число уже стоит внутри него и повторено
+   прозой рядом. Уменьшаем кольцо и кегли, счёт получает 167px и две строки. */
+@media (max-width: 600px) {
+  html[data-design] .summary-page .score-ring {
+    --score-ring-size: 96px;
+  }
+  html[data-design] .summary-page .summary-hero {
+    gap: var(--space-4);
+  }
+  html[data-design] .summary-page .score-ring .summary-score-value {
+    font-size: var(--font-size-xl);
+  }
+  html[data-design] .summary-page .summary-hero-count {
+    font-size: var(--font-size-lg);
+  }
+  html[data-design] .summary-page .summary-headline {
+    font-size: var(--font-size-md);
+  }
+}
+
 /* Гасим градиент-текст из старого CSS, цвет даём через .text-* */
 html[data-design] .summary-page .summary-score-value {
   font-family: var(--font-family-display);
