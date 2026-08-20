@@ -1684,7 +1684,7 @@ public class OrderService {
 - `@Async` на `private` или `final` методах — не работает (прокси не перехватывает)
 - Self-invocation — не работает (обходит прокси)
 - Исключения из `void`-методов нужно перехватывать через `AsyncUncaughtExceptionHandler`
-- Без явного `Executor` используется `SimpleAsyncTaskExecutor` — **создаёт поток на каждый вызов**, что опасно в production
+- Без явного `Executor` в чистом `Spring Framework` берётся `SimpleAsyncTaskExecutor` — **создаёт поток на каждый вызов**, что опасно в production. В `Spring Boot` этот случай закрыт автоконфигурацией: она регистрирует бин сразу под двумя именами — `applicationTaskExecutor` и `taskExecutor` (второе — то, куда смотрит `@Async` при отсутствии `AsyncConfigurer`), и на платформенных потоках это ограниченный `ThreadPoolTaskExecutor`, а при `spring.threads.virtual.enabled=true` — `SimpleAsyncTaskExecutor` на виртуальных потоках
 
 ## Q39. (!) Что такое `@EventListener` и как публиковать события асинхронно?
 
