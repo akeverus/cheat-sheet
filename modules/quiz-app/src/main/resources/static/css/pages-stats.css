@@ -69,6 +69,40 @@ html[data-design] .stats-page .stats-next-actions-head {
   margin-bottom: var(--space-4);
 }
 
+/* СВОДКА В ОДИН РЯД: «что дальше» слева, «где я» справа. Порог 1280 взят по
+   содержимому, а не по вкусу: ниже него колонке действий не хватает ширины, чтобы
+   число и его расшифровка стояли в одной строке, и обе колонки начинают ломаться.
+   Ниже порога ряд распадается в стопку — тот же порядок, что был до правки. */
+html[data-design] .stats-page .stats-summary {
+  display: grid;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+@media (min-width: 1280px) {
+  html[data-design] .stats-page .stats-summary {
+    grid-template-columns: minmax(0, 27rem) minmax(0, 1fr);
+    align-items: start;
+  }
+  /* Внутри сводки стойка перестаёт быть рядом «ступень | метрики»: на неё остаётся
+     не вся полоса, а её правая часть. Ступень встаёт над метриками, метрики — по
+     две в ряд. Величина 27rem у колонки действий — ширина, при которой «1415» и
+     «ошибок в истории» стоят в строку (замер, а не оценка). */
+  html[data-design] .stats-page .stats-summary .stats-standing {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* На очень широком экране колонке «где я» достаётся больше 1000px, и метрики по две
+   в ряд оставляют половину её ширины пустой, а ряд сводки — высоким (замер 1920:
+   стойка 651px при ширине колонки 1063). Четыре в ряд дают по ~265px на карточку —
+   выше порога, на котором значение ломается посреди дроби (замер прежних итераций:
+   ~220px). Порог 1900 — ширина, начиная с которой колонка это выдерживает. */
+@media (min-width: 1900px) {
+  html[data-design] .stats-page .stats-summary .stats-standing .dashboard-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 /* Ряд «где я»: ступень слева, метрики справа. Порог — та же ширина, на которой
    метрики ещё встают по две в ряд; ниже строка распадается в стопку. */
 html[data-design] .stats-page .stats-standing {
@@ -166,15 +200,45 @@ html[data-design] .stats-page .metric-note {
   color: var(--color-text-tertiary);
 }
 
+/* ТРИ ДВЕРИ — КОЛОНКОЙ И В ДВЕ СТРОКИ КАЖДАЯ, А НЕ РЯДОМ ВЫСОКИХ ПЛИТОК.
+
+   Замер до правки (Chromium и WebKit): плитка 279×118 на 390, 211×218 на 768,
+   357×153 на 1512 — то есть в ряду из трёх подпись «1415 ошибок в истории»
+   переносилась на три-четыре строки и тянула ряд вверх. Вся карточка «Что делать
+   дальше» весила 588px на телефоне и 297–346 на широких экранах, и вместе со
+   «стойкой» (405–635) уводила ПЕРЕКЛЮЧАТЕЛЬ разделов аналитики на 1261–1634-й
+   пиксель: на всех вьюпортах, включая 1512×982, сама аналитика начиналась со
+   второго экрана.
+
+   Дверь — это ярлык, число и расшифровка. В компактной строке ярлык стоит сверху,
+   число и расшифровка — рядом на одной базовой линии: число читается сразу, а
+   расшифровка перестаёт спорить с ним за высоту. */
 html[data-design] .stats-page .stats-next-actions-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Число колонок выбирает ширина, а не медиазапрос. 13rem — минимум, при котором
+     дверь остаётся читаемой: ярлык, число и расшифровка (расшифровка при этом
+     переносится под число, и это дешевле, чем ряд из трёх высоких плиток).
+     На планшете (705–753) встают три двери, в колонке сводки (27rem) — две,
+     на телефоне — одна.
+
+     Первая редакция ставила одну колонку ВСЕГДА, и замер это отбраковал: на 768 и
+     1024, где сводка ещё стопкой, карточка действий выросла с 346/362 до 474/490,
+     а документ — с 3374/3536 до 3550/3712. Одна колонка хороша внутри узкой
+     колонки сводки и вредна во всю ширину полосы. */
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
   gap: var(--space-3);
 }
 
 html[data-design] .stats-page .stats-next-action {
   display: grid;
-  gap: var(--space-1);
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "label label"
+    "value detail"
+    "topic topic";
+  align-items: baseline;
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
   min-width: 0;
   position: relative;
   /* BASE-05 (редиз-программа iter-5): резерв справа под стрелку-афорданс. Карточки —
@@ -197,7 +261,10 @@ html[data-design] .stats-page .stats-next-action {
 html[data-design] .stats-page .stats-next-action::after {
   content: "\2192"; /* → */
   position: absolute;
-  top: var(--space-4);
+  /* Строка стала низкой (две строки текста вместо четырёх), и стрелка у верхней
+     кромки повисала над ярлыком. Центрируем по высоте самой строки. */
+  top: 50%;
+  transform: translateY(-50%);
   right: var(--space-4);
   font-family: var(--font-family-mono);
   font-size: var(--font-size-md);
@@ -217,7 +284,9 @@ html[data-design] .stats-page .stats-next-action:focus-visible {
 html[data-design] .stats-page .stats-next-action:hover::after,
 html[data-design] .stats-page .stats-next-action:focus-visible::after {
   color: var(--color-accent-strong);
-  transform: translateX(3px);
+  /* Сдвиг складывается с центрированием: без `translateY(-50%)` в этом же
+     объявлении стрелка на hover прыгала бы к верхней кромке. */
+  transform: translate(3px, -50%);
 }
 
 html[data-design] .stats-page .stats-next-action.is-recommended::after {
@@ -230,6 +299,7 @@ html[data-design] .stats-page .stats-next-action.is-recommended {
 }
 
 html[data-design] .stats-page .stats-next-action-label {
+  grid-area: label;
   font-family: var(--font-family-mono);
   font-size: var(--font-size-xs);
   letter-spacing: var(--letter-spacing-wide);
@@ -242,6 +312,7 @@ html[data-design] .stats-page .stats-next-action.is-recommended .stats-next-acti
 }
 
 html[data-design] .stats-page .stats-next-action strong {
+  grid-area: value;
   font-family: var(--font-family-display);
   font-size: var(--font-size-xl);
   line-height: var(--line-height-tight);
@@ -252,6 +323,7 @@ html[data-design] .stats-page .stats-next-action strong {
    четыре строки с одинаковым gap читались как один список, и было неясно, к чему
    относится название темы. */
 html[data-design] .stats-page .stats-next-action-topic {
+  grid-area: topic;
   margin-top: var(--space-2);
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
@@ -260,8 +332,30 @@ html[data-design] .stats-page .stats-next-action-topic {
 }
 
 html[data-design] .stats-page .stats-next-action-detail {
+  grid-area: detail;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+}
+
+/* ТАБЛИЦА-ДУБЛЬ ГРАФИКА НЕ ДОЛЖНА ЕЗДИТЬ ВБОК — НИ НА КАКОЙ ШИРИНЕ.
+
+   Замер до правки (Chromium и WebKit): жёлоб 310/279 на 390×844 и 310/297 на
+   1024×768 — таблица «Тема | Выучено | Осталось» требовала 310px. Своей `min-width`
+   у неё нет: ширину держали поля ячеек (12px с каждой стороны, шесть штук — 72px) и
+   неразрывное имя темы.
+
+   Первая редакция правила стояла под `@media (max-width: 767px)`, и замер это
+   отбраковал: на 1024 жёлоб остался — там карточка графика узкая не из-за
+   телефона, а из-за ДВУХ КОЛОНОК в ряду. Ограничение здесь не «маленький экран», а
+   «узкий контейнер», поэтому правило безусловное: у дубля графика поля дешевле
+   прокрутки на любой ширине. */
+html[data-design] .stats-page .chart-adjacent-table th,
+html[data-design] .stats-page .chart-adjacent-table td {
+  padding-inline: var(--space-2);
+}
+html[data-design] .stats-page .chart-adjacent-table td:first-child,
+html[data-design] .stats-page .chart-adjacent-table th:first-child {
+  overflow-wrap: anywhere;
 }
 
 /* Графики */

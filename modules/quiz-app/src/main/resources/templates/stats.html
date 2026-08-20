@@ -84,6 +84,18 @@
 
      Блок использует уже существующие маршруты/флаги: / — повторение due,
      onlyWrong — разбор ошибок, weakTopics — стратегия слабых тем. */-->
+<!--/* СВОДКА — ОДИН РЯД: «что дальше» слева, «где я» справа.
+
+     Замер до правки: карточка действий (297–588px) и стойка (405–635px) стояли
+     ЭТАЖАМИ, и переключатель разделов аналитики оказывался на 1261-м пикселе при
+     сгибе 982 (1512×982), на 1283 при 800 (1280×800), на 1533 при 768 (1024×768).
+     То есть рабочий интерфейс страницы — сами разделы — не попадал в первый экран
+     НИ НА ОДНОЙ ширине матрицы §10.
+
+     Оба блока — сводка: один отвечает «что делать», другой «где я». Рядом они
+     занимают высоту большего, а не сумму двух. Ниже 1280 ряд распадается в стопку:
+     там колонке действий не хватает ширины на число с расшифровкой в строку. */-->
+<div class="stats-summary">
 <section class="card stats-next-actions" aria-labelledby="stats-next-actions-title">
     <div class="stats-next-actions-head">
         <h2 id="stats-next-actions-title">Что делать дальше</h2>
@@ -321,64 +333,10 @@
     </details>
 </section>
 </div>
+</div><!--/* /.stats-summary */-->
 
 
-<!--/* ЗНАКИ ОТЛИЧИЯ — ФАКТЫ, А НЕ НАГРАДЫ. Каждый знак вычисляется из тех же метрик,
-     что показывает страница: ответы, точность первых попыток, освоенные карточки, серия
-     дней. Ничего не хранится и не начисляется — потерять знак нельзя, подделать тоже.
 
-     Стоит под ступенью: оба блока отвечают на «где я», только ступень непрерывна, а
-     знаки дискретны. Неполученные показаны наравне с полученными и с ЧИСЛОМ, сколько
-     осталось: список из одних достижений превращает витрину в поздравление, а из
-     достижений с расстоянием — в ориентир.
-
-     Состояние не передаётся одним цветом: у полученного знака есть слово «получен» и
-     полная полоса, у остального — счёт «N из M» (WCAG 1.4.1). */-->
-<section class="card badges" th:if="${not #lists.isEmpty(achievements)}"
-         aria-labelledby="badges-title">
-    <!--/* ВИТРИНА ЗНАКОВ — ПОД РАСКРЫТИЕМ, И СВОДКА ОСТАЁТСЯ ВИДНОЙ ВСЕГДА.
-
-         Замер 390×844: шесть знаков в колонку — 766px, почти экран, и лежат они между
-         метриками и вкладками, то есть на пути к темам. Знаки смотрят изредка, а
-         проходят мимо них каждый раз.
-
-         `<details open>` в разметке: без JS витрина раскрыта — это рабочее состояние,
-         просто длинное. На телефоне её закрывает скрипт (progressive enhancement), и
-         в свёрнутом виде остаётся то, ради чего на витрину и смотрят мельком: сколько
-         знаков взято из скольких. */-->
-    <details class="badges-disclosure" open data-mobile-collapsed>
-        <summary class="disclosure-summary badges-summary">
-            <h2 class="section-title" id="badges-title">Знаки отличия</h2>
-            <span class="badges-lead muted">
-                <span th:text="${achievementsEarned} + ' из ' + ${#lists.size(achievements)}">0 из 6</span>
-                <span class="badges-lead-tail"> · считаются из твоей статистики, а не начисляются</span>
-            </span>
-        </summary>
-    <ul class="badges-grid">
-        <li th:each="b : ${achievements}" class="badge-card"
-            th:classappend="${b.earned()} ? ' is-earned' : ''">
-            <svg class="badge-glyph" aria-hidden="true">
-                <use th:attr="href='#' + ${b.achievement().id()}"></use>
-            </svg>
-            <div class="badge-body">
-                <h3 class="badge-title" th:text="${b.achievement().title()}">Знак</h3>
-                <p class="badge-goal muted" th:text="${b.achievement().goal()}">условие</p>
-                <p class="badge-state">
-                    <span th:if="${b.earned()}">Получен</span>
-                    <span th:unless="${b.earned()}"
-                          th:text="${b.current()} + ' из ' + ${b.achievement().target()}">0 из 1</span>
-                </p>
-                <!--/* Полоса — нативный progress, как у шкалы уровня: работает без JS и
-                     приносит роль progressbar со значениями. Подпись выше повторяет
-                     число прозой. */-->
-                <progress class="badge-bar" th:value="${b.current()}"
-                          th:max="${b.achievement().target()}"
-                          th:text="${b.percent()} + '%'">0%</progress>
-            </div>
-        </li>
-    </ul>
-    </details>
-</section>
 
 <!--/* Оговорка о границе отбора. Четыре плитки ниже считает LearningMetricsService
      по всему счёту, и отбор их не сужает — в отличие от сводки выше и всех срезов
@@ -1190,6 +1148,68 @@
         </table>
         </div>
     </section>
+</section>
+
+<!--/* ЗНАКИ ОТЛИЧИЯ — ФАКТЫ, А НЕ НАГРАДЫ. Каждый знак вычисляется из тех же метрик,
+     что показывает страница: ответы, точность первых попыток, освоенные карточки, серия
+     дней. Ничего не хранится и не начисляется — потерять знак нельзя, подделать тоже.
+
+     Стоит ПОД РАЗДЕЛАМИ аналитики (iter-140). Раньше витрина стояла между сводкой и
+     переключателем разделов и весила 349–426px на широких экранах: путь к самой
+     аналитике она удлиняла на этаж, а отвечает не на «где я» и не на «что дальше», а
+     на «чего я достиг» — вопрос, который задают после разбора, а не до него. Замер
+     положения переключателя разделов подтвердил цену: 1261-й пиксель при сгибе 982.
+     Ступень при этом осталась в сводке: она непрерывна и отвечает «где я», а
+     знаки дискретны. Неполученные показаны наравне с полученными и с ЧИСЛОМ, сколько
+     осталось: список из одних достижений превращает витрину в поздравление, а из
+     достижений с расстоянием — в ориентир.
+
+     Состояние не передаётся одним цветом: у полученного знака есть слово «получен» и
+     полная полоса, у остального — счёт «N из M» (WCAG 1.4.1). */-->
+<section class="card badges" th:if="${not #lists.isEmpty(achievements)}"
+         aria-labelledby="badges-title">
+    <!--/* ВИТРИНА ЗНАКОВ — ПОД РАСКРЫТИЕМ, И СВОДКА ОСТАЁТСЯ ВИДНОЙ ВСЕГДА.
+
+         Замер 390×844: шесть знаков в колонку — 766px, почти экран, и лежат они между
+         метриками и вкладками, то есть на пути к темам. Знаки смотрят изредка, а
+         проходят мимо них каждый раз.
+
+         `<details open>` в разметке: без JS витрина раскрыта — это рабочее состояние,
+         просто длинное. На телефоне её закрывает скрипт (progressive enhancement), и
+         в свёрнутом виде остаётся то, ради чего на витрину и смотрят мельком: сколько
+         знаков взято из скольких. */-->
+    <details class="badges-disclosure" open data-mobile-collapsed>
+        <summary class="disclosure-summary badges-summary">
+            <h2 class="section-title" id="badges-title">Знаки отличия</h2>
+            <span class="badges-lead muted">
+                <span th:text="${achievementsEarned} + ' из ' + ${#lists.size(achievements)}">0 из 6</span>
+                <span class="badges-lead-tail"> · считаются из твоей статистики, а не начисляются</span>
+            </span>
+        </summary>
+    <ul class="badges-grid">
+        <li th:each="b : ${achievements}" class="badge-card"
+            th:classappend="${b.earned()} ? ' is-earned' : ''">
+            <svg class="badge-glyph" aria-hidden="true">
+                <use th:attr="href='#' + ${b.achievement().id()}"></use>
+            </svg>
+            <div class="badge-body">
+                <h3 class="badge-title" th:text="${b.achievement().title()}">Знак</h3>
+                <p class="badge-goal muted" th:text="${b.achievement().goal()}">условие</p>
+                <p class="badge-state">
+                    <span th:if="${b.earned()}">Получен</span>
+                    <span th:unless="${b.earned()}"
+                          th:text="${b.current()} + ' из ' + ${b.achievement().target()}">0 из 1</span>
+                </p>
+                <!--/* Полоса — нативный progress, как у шкалы уровня: работает без JS и
+                     приносит роль progressbar со значениями. Подпись выше повторяет
+                     число прозой. */-->
+                <progress class="badge-bar" th:value="${b.current()}"
+                          th:max="${b.achievement().target()}"
+                          th:text="${b.percent()} + '%'">0%</progress>
+            </div>
+        </li>
+    </ul>
+    </details>
 </section>
 
 </div>
