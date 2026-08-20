@@ -352,16 +352,31 @@ export function initInterviewForm() {
       + ` id="feedback-panel-${panel.id}" role="tabpanel" aria-labelledby="feedback-tab-${panel.id}">`
       + panel.html + `</div>`).join('');
 
+    // ПОРЯДОК ЧИТАЕТСЯ КАК РЕЗУЛЬТАТ: вердикт → что это дало → куда дальше →
+    // и только потом разбор. Ровно этот порядок уже стоит на серверной странице
+    // ответа (`/answer`, iter-136), а здесь оставался прежний: вердикт → вкладки →
+    // панель → мета → уверенность → «Следующий вопрос».
+    //
+    // Замер до правки (Chromium и WebKit, тренировка, один ответ): «Следующий
+    // вопрос» оказывался на 1728…2682-м пикселе, и после автопрокрутки к вердикту
+    // в первый экран он НЕ попадал на 390×844, 1280×720 и 2560×1440 в Chromium и
+    // на четырёх из шести ширин в WebKit. Один и тот же момент продукта имел два
+    // разных порядка — с JS и без него.
+    //
+    // Слот `#feedback-controls` — место, куда уверенность и «дальше» встают ПО
+    // РАЗМЕТКЕ, а не по `order`: обе врезки содержат фокусируемое, и визуальная
+    // перестановка развела бы порядок обхода с порядком чтения (FRD-184).
     feedbackDiv.innerHTML = `
       <div class="feedback-verdict result-banner ${isCorrect ? 'result-correct' : 'result-wrong'}">
         <strong class="result-verdict">${buildVerdictLine(data)}</strong>
       </div>
-      ${tablist}
-      ${panelsHtml}
       <div class="feedback-meta">
         ${buildXpBadge(data)}
         ${buildNextReviewLine(data)}
       </div>
+      <div class="feedback-controls" id="feedback-controls"></div>
+      ${tablist}
+      ${panelsHtml}
     `;
     if (panels.length > 1) {
       initTablist(document.getElementById('feedback-tablist'));
@@ -465,7 +480,9 @@ export function initInterviewForm() {
       <button type="button" class="confidence-btn confidence-hard" data-grade="4" aria-pressed="false" aria-label="Уровень уверенности: с трудом">С трудом</button>
       <button type="button" class="confidence-btn confidence-sure" data-grade="5" aria-pressed="false" aria-label="Уровень уверенности: знал точно">Знал точно</button>
     `;
-    feedbackDiv.after(confidenceDiv);
+    // Уверенность спрашивают о ТОЛЬКО ЧТО прошедшем ответе — её место рядом с
+    // вердиктом, до разбора, а не после него.
+    (document.getElementById('feedback-controls') || feedbackDiv).appendChild(confidenceDiv);
 
     let confidenceSubmitted = false;
     const questionId = (form.querySelector('input[name="questionId"]') || {}).value || '';
@@ -550,15 +567,27 @@ export function initInterviewForm() {
     attachConfidenceButtons(data);
     nextLink.classList.remove('hidden');
 
-    const postAnswerZone = document.querySelector('[data-ui-fragment="post-answer-controls"]');
+    // «Следующий вопрос» переезжает в слот управления сразу под вердиктом и мета.
+    // Прежде он дописывался в конец пост-ответной зоны, то есть ПОСЛЕ всего
+    // разбора; откат к прежнему месту — только если слота почему-то нет.
+    const controlsSlot = document.getElementById('feedback-controls');
+    const postAnswerZone = controlsSlot
+      || document.querySelector('[data-ui-fragment="post-answer-controls"]');
     if (postAnswerZone && nextLink.parentElement !== postAnswerZone) {
       postAnswerZone.appendChild(nextLink);
       const trainingActions = document.querySelector('[data-ui-fragment="training-actions"]');
       if (trainingActions) trainingActions.classList.add('is-answered');
     }
     setInteractionBusy(false);
+    // ПРОКРУТКА ЦЕЛИТСЯ В ВЕРХ РАЗБОРА, А НЕ «КУДА ПОЛУЧИТСЯ». Раньше её делал сам
+    // `focus()`, и точка остановки зависела от движка и высоты панели: замер WebKit
+    // 390×844 на длинном вопросе (документ 4296) показал прокрутку на 2241 при
+    // вердикте на 1805 — экран уезжал НИЖЕ вердикта, а вместе с ним и «Следующий
+    // вопрос», который теперь стоит сразу под ним. Фокус ставим без прокрутки, а
+    // прокрутку задаём явно: верх приёмника к верху экрана.
     feedbackDiv.setAttribute('tabindex', '-1');
-    feedbackDiv.focus();
+    feedbackDiv.focus({ preventScroll: true });
+    feedbackDiv.scrollIntoView({ block: 'start' });
 
     nextLink.onclick = (e) => {
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
