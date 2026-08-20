@@ -256,15 +256,15 @@ public final class ElevatorController {
     private final Scheduler scheduler;               // injected strategy
     private final BlockingQueue<Request> incoming;   // FIFO с приоритетом
 
-    public CompletableFuture<Elevator> submit(Request r) {
-        return CompletableFuture.supplyAsync(() -> {
-            Elevator chosen = scheduler.dispatch(r, elevators);
-            chosen.addStop(r.getSourceFloor(), r.getDirection());
-            if (r.getDestinationFloor() != null) {
-                chosen.addStop(r.getDestinationFloor(), r.getDirection());
-            }
-            return chosen;
-        }, dispatcherPool);
+    public void submit(Request r) { incoming.offer(r); }
+
+    /** Один шаг однопоточного цикла диспетчеризации (целиком — в Q10). */
+    private void dispatchOne(Request r) {
+        Elevator chosen = scheduler.dispatch(r, elevators);
+        chosen.addStop(r.getSourceFloor(), r.getDirection());
+        if (r.getDestinationFloor() != null) {
+            chosen.addStop(r.getDestinationFloor(), r.getDirection());
+        }
     }
 }
 
@@ -299,7 +299,7 @@ classDiagram
         +List~Elevator~ elevators
         +Scheduler scheduler
         +BlockingQueue~Request~ incoming
-        +submit(Request) Future~Elevator~
+        +submit(Request) void
     }
     class Scheduler {
         <<interface>>
@@ -343,8 +343,8 @@ classDiagram
         +onStateChange(Elevator)
     }
 
-    Building "1" o-- "*" Floor
-    Building "1" o-- "1" ElevatorController
+    Building "1" *-- "*" Floor
+    Building "1" *-- "1" ElevatorController
     ElevatorController "1" o-- "*" Elevator
     ElevatorController "1" --> "1" Scheduler
     Scheduler <|.. ScanScheduler
@@ -463,8 +463,11 @@ public class Elevator {
 
     private void arriveAt(int floor) {
         state.set(ElevatorState.STOPPED);
-        if (direction.get() == Direction.UP)   upStops.remove(floor);
-        else                                    downStops.remove(floor);
+        // Этаж обслужен — снимаем его из обоих множеств. Снять только из одного
+        // нельзя: при direction == IDLE остановка могла лежать в upStops, и тогда
+        // лифт открыл бы двери на этом этаже второй раз.
+        upStops.remove(floor);
+        downStops.remove(floor);
         door.open();
         // …timeout boarding…
         door.close();
@@ -802,7 +805,7 @@ SOLID — это тот же дизайн из предыдущих вопрос
 
 1. **Очередь запросов** — `BlockingQueue<Request>`: потокобезопасна по контракту JDK, и `take()` блокирует consumer, пока очередь пуста.
 2. **Состояние лифта** — `AtomicReference<ElevatorState>` и `AtomicReference<Direction>`: переходы через CAS, без блокировок.
-3. **Stop-sets** — `ConcurrentSkipListSet<Integer>`: единственный из concurrent-коллекций, что даёт и потокобезопасность, и сортированные операции `ceiling`/`floor`, нужные для SCAN/LOOK.
+3. **Stop-sets** — `ConcurrentSkipListSet<Integer>`: даёт и потокобезопасность, и сортированные операции `ceiling`/`floor`, нужные для SCAN/LOOK. Сортированный concurrent-вариант в JDK не единственный — рядом стоит `ConcurrentSkipListMap` с `ceilingKey`/`floorKey`, его берут, когда к этажу нужно привязать значение.
 4. **Listeners** — `CopyOnWriteArrayList`: подписчиков читают на каждом тике, а пишут редко — копирование при записи здесь дешевле блокировки.
 5. **Цикл диспетчеризации** — однопоточный consumer (`newSingleThreadExecutor`): сериализует выбор лифта и исключает гонку «два диспетчера назначили один и тот же лифт двум заявкам».
 6. **`Elevator.addStop` и `step`** — `synchronized` на инстансе лифта: мутация stop-set и логика разворота должны выполняться атомарно.
@@ -895,7 +898,7 @@ sequenceDiagram
 | **Power outage** | UPS/battery держит control logic. Лифты совершают controlled descent до ближайшего этажа, opens doors, freezes. |
 | **Sensor failure** | Doors fail-open (никогда не закрывать без подтверждения, что препятствий нет). |
 | **Stuck between floors** | Watchdog detects: state == MOVING > T → переход в STUCK → alert maintenance. |
-| **Bumper request** (нажали этаж ниже из IDLE поднимающегося) | `canAccept` отбрасывает — этот лифт нельзя; controller назначит другой лифт банка. |
+| **Bumper request** (заявка вниз с этажа позади лифта, идущего вверх) | `canAccept` отбрасывает — направление не совпадает; controller назначит другой лифт банка. Лифт в `IDLE` такую заявку, наоборот, принял бы. |
 
 Ключевая мысль, которую стоит подчеркнуть: все эти ветки — **переходы в state machine**, а не разбросанные по бизнес-коду `if`. Тогда добавление нового сценария (например, землетрясение) — это новое состояние и его переходы, а не правки в десятке мест.
 
@@ -937,10 +940,13 @@ public class BuildingDispatcher {
     private final ElevatorController lowBank;
     private final ElevatorController highBank;
     public void submit(Request r) {
-        if (r.getDestinationFloor() != null && r.getDestinationFloor() >= 20)
-            highBank.submit(r);
-        else
-            lowBank.submit(r);
+        // У external-заявки destination ещё неизвестен (Q1), поэтому банк выбираем
+        // по уже известному этажу: destination, если он есть, иначе source.
+        int floor = r.getDestinationFloor() != null
+            ? r.getDestinationFloor()
+            : r.getSourceFloor();
+        if (floor >= 20) highBank.submit(r);
+        else             lowBank.submit(r);
     }
 }
 ```
