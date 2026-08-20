@@ -148,10 +148,10 @@ graph TB
 2. **AOP** — сквозная логика (логирование, транзакции, безопасность) выносится в аспекты, поэтому бизнес-метод остаётся чистым и не обрастает техническими деталями
 3. **Модульность** — подключаешь только нужные модули; не нужно тянуть весь фреймворк ради `IoC`-контейнера
 4. **Интеграция** — готовые абстракции для `Hibernate`, `JPA`, `MyBatis`, `Kafka`, `RabbitMQ`, `Redis`: типовой код по подключению уже написан за тебя
-5. **Тестируемость** — `@MockBean`, `@SpringBootTest`, `TestRestTemplate` позволяют поднять кусок контекста в тесте, а не весь мир
+5. **Тестируемость** — `@MockitoBean`, `@SpringBootTest`, `TestRestTemplate` позволяют поднять кусок контекста в тесте, а не весь мир (прежний `@MockBean` из `spring-boot-test` убран, замена живёт в `spring-test`)
 6. **Экосистема** — [Spring Boot](spring-boot-interview.md) для быстрого старта, [Spring Cloud](spring-cloud-interview.md) для микросервисов, `Spring Batch` для пакетной обработки
 
-**Что ожидают на собеседовании:** не перечисление плюсов, а понимание компромиссов. Удобство `Spring` оплачивается временем старта: classpath scanning и создание прокси выполняются при запуске контекста, что заметно для serverless (холодный старт) и короткоживущих процессов. Ответ на это — `Spring Native` / `GraalVM`: AOT-компиляция переносит работу со старта на этап сборки.
+**Что ожидают на собеседовании:** не перечисление плюсов, а понимание компромиссов. Удобство `Spring` оплачивается временем старта: classpath scanning и создание прокси выполняются при запуске контекста, что заметно для serverless (холодный старт) и короткоживущих процессов. Ответ на это — встроенная в фреймворк AOT-обработка плюс сборка native image через `GraalVM`: работа переносится со старта на этап сборки. Отдельного проекта `Spring Native` больше нет, его роль забрал сам фреймворк.
 
 ## Q3. (!) Что такое `Inversion of Control` (`IoC`)?
 
@@ -304,7 +304,9 @@ graph LR
 
 ```java
 // BeanFactory — ленивая загрузка
-BeanFactory factory = new XmlBeanFactory(new ClassPathResource("beans.xml"));
+// (XmlBeanFactory из старых примеров удалён; читатель определений подключают явно)
+DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
+new XmlBeanDefinitionReader(factory).loadBeanDefinitions(new ClassPathResource("beans.xml"));
 MyService service = factory.getBean(MyService.class); // бин создаётся здесь
 
 // ApplicationContext — жадная загрузка
@@ -521,11 +523,11 @@ graph TD
     C -->|"Да"| D["NoSuchBeanDefinitionException"]
     C -->|"Нет"| E["null / не внедряется"]
     B -->|"1"| F["Внедряет единственный бин"]
-    B -->|"> 1"| G{"Есть @Primary?"}
+    B -->|"> 1"| I{"Есть @Qualifier?"}
+    I -->|"Да"| J["Внедряет бин из @Qualifier"]
+    I -->|"Нет"| G{"Есть @Primary?"}
     G -->|"Да"| H["Внедряет @Primary бин"]
-    G -->|"Нет"| I{"Есть @Qualifier?"}
-    I -->|"Да"| J["Внедряет по имени из @Qualifier"]
-    I -->|"Нет"| K{"Имя параметра<br/>совпадает с именем бина?"}
+    G -->|"Нет"| K{"Имя параметра<br/>совпадает с именем бина?"}
     K -->|"Да"| L["Внедряет по имени параметра"]
     K -->|"Нет"| M["NoUniqueBeanDefinitionException"]
 ```
