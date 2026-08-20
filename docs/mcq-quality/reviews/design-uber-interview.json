@@ -1,2285 +1,1230 @@
 {
   "topic_slug": "design-uber-interview",
-  "round": 9,
-  "reviewed_commit": null,
-  "status": "TODO",
-  "source_file": "modules/quiz-app/src/main/resources/seed/mcq/system-design/design-uber-interview.json",
-  "theory_file": "cheatsheets/interview/system-design/design-uber-interview.md",
-  "summary": {
-    "questions": 30,
-    "blocks": 30,
-    "blocks_done": 0,
-    "critical": 0,
-    "high": 0,
-    "medium": 0,
-    "low": 0
+  "source_cheatsheet": "cheatsheets/interview/system-design/design-uber-interview.md",
+  "seed_file": "modules/quiz-app/src/main/resources/seed/mcq/system-design/design-uber-interview.json",
+  "round": "ROUND-10 LINKAGE-FIRST FULL REBUILD",
+  "rebuilt_from_scratch": true,
+  "audited": "2026-08-21",
+  "blocks_total": 30,
+  "options_total": 120,
+  "source_repairs": {
+    "commits": [
+      "7d1a9f8e",
+      "6b317c21"
+    ],
+    "method": "проверка по артефактам, а не по памяти: h3-js 4.5.0, собственный энкодер geohash (сверен с четырьмя эталонами), s2sphere, доки Redis и Android, официальные таблицы разрешений H3 v3 и v4",
+    "items": [
+      "Q8: код Таймс-сквер dr5regw3 указывал на точку в пяти километрах оттуда; верный dr5ru7v2, поправлены и три префикса",
+      "Q8: пример проблемы границ был ложен по сути (dr5regw и dr5regx делят шесть символов); заменён посчитанной парой в 56 метрах — dr5rgxzw и dr7258p9, общее только dr",
+      "Q8: через антимеридиан соседствуют ячейки x и 8, а не 8 и r",
+      "Q10: индекс 8a2a1072b5b7fff это res 10, а не res 9, и его центр в девяти километрах от Таймс-сквер; верный res 9 индекс 892a100d67bffff",
+      "Q10, Q11, Q15: длина ребра res 9 равна 200.8 м — 174 м это число таблицы H3 v3, тогда как пример использует API v4",
+      "Q10: средняя площадь res 0 равна 4.36M км², а не 4.25M",
+      "Q10: детей у ячейки ровно семь, не укладывается геометрия — прежняя формулировка отрицала число",
+      "Q9, Q11: уровней S2 тридцать один (0..30), а не тридцать; «равная площадь» смягчена до сопоставимой — замер по 1260 ячейкам H3 res 5 даёт разброс 1.97 раза",
+      "Q9: закрывающая строка приведена в соответствие с исправленным пунктом (коммит 6b317c21)",
+      "Q12: сложность GEOSEARCH по докам Redis — O(N + log M), в шпаргалке буквы стояли наоборот",
+      "Q12, Q28: HTTP keep-alive не открывает соединение на каждый запрос; проблема в отсутствии push и переустановке соединений на мобильной сети",
+      "Q12: gRPC работает на мобильных клиентах — настоящая оговорка про браузер и прокси",
+      "Q24: Манхэттен это ~59 км², то есть ~80 ячеек res 8, а не 100 ячеек res 7 (полифилл контура: 8 ячеек на res 7, 65 на res 8)",
+      "Q26: в Android нет метода isMockLocation — есть Location.isMock() и isFromMockProvider() до API 31",
+      "Q9: идентификатор ячейки уровня 15 пересчитан s2sphere — 9926593653994684416"
+    ]
   },
-  "reset_baseline": {
-    "reset_date": "2026-07-17",
-    "old_pass_carried_forward": false,
-    "schema_precheck": "PASS",
-    "structural_invariants_precheck": "PASS",
-    "theory_file_present": true,
-    "json_q_numbers": [
-      1,
+  "acceptance": {
+    "criterion": "два полных чистых круга подряд без правок между ними",
+    "rounds": [
+      {
+        "n": 1,
+        "lenses": [
+          "опции против материала своего Q",
+          "секции"
+        ],
+        "findings": [
+          "Q9 источника: закрывающая строка противоречила исправленному пункту",
+          "род числительного в Q1, калька «в памяти» вместо Redis в Q30, оборот в Q16",
+          "семнадцать связок «это» без тире в секциях"
+        ]
+      },
+      {
+        "n": 2,
+        "lenses": [
+          "уникальность тезиса между блоками",
+          "обратная привязка",
+          "штатный NEIGHBOR-LEAK"
+        ],
+        "findings": [
+          "Q2 и Q27 утверждали одно и то же — Q2 переякорен на свои числа SLA",
+          "Q6 и Q20 утверждали одно и то же — Q6 переякорен на раздельное хранение поездок и локаций",
+          "Q20 и Q30 сближались — Q30 переякорен на цену каждого выбора",
+          "после переякоривания Q2 сканер поймал протечку в Q1: вариант про подбор за минуту жил лексически в соседнем Q",
+          "убран внесённый мной NOVEL-TERM NoSQL в Q20"
+        ]
+      },
+      {
+        "n": 3,
+        "lenses": [
+          "блок глазами читателя",
+          "неоднозначность дистракторов"
+        ],
+        "findings": [
+          "клиповые формулировки в Q13, Q18 и Q26"
+        ]
+      },
+      {
+        "n": 4,
+        "lenses": [
+          "три поля дистрактора по всем 90 неверным вариантам"
+        ],
+        "findings": [
+          "Q26: пояснение опиралось на число из таблицы Q2"
+        ]
+      },
+      {
+        "n": 5,
+        "lenses": [
+          "механическая батарея: инварианты, выравнивание, пунктуация, дубли, алфавиты, числа и латиница против своего Q"
+        ],
+        "findings": [
+          "Q5: термин write-heavy из соседнего Q в пояснении"
+        ]
+      },
+      {
+        "n": 6,
+        "lenses": [
+          "повтор механической батареи",
+          "числовые утверждения секций против материала"
+        ],
+        "findings": [],
+        "clean": true
+      },
+      {
+        "n": 7,
+        "lenses": [
+          "согласование тезиса верного варианта с его пятью секциями"
+        ],
+        "findings": [],
+        "clean": true
+      }
+    ]
+  },
+  "gates": {
+    "schema": "OK",
+    "linkage_errors": 0,
+    "linkage_warnings": 9,
+    "anti_tell": 0,
+    "parity": "PASS 12/12",
+    "correct_longest_rate": 0.033,
+    "option_length_ratio": 1.33,
+    "correct_wrong_avg_ratio": 1.035,
+    "style_guessability": 0.25,
+    "positions": {
+      "A": 8,
+      "B": 7,
+      "C": 8,
+      "D": 7
+    },
+    "longest_arithmetic_run": 3,
+    "extended_form_scan": "чисто по десяти каналам (абсолютив, хедж, двоеточие, точка с запятой, цифра, тире, кавычки, скобка, обратный апостроф, латиница)"
+  },
+  "low_coverage_manual_review": {
+    "blocks": [
       2,
-      3,
-      4,
-      5,
       6,
-      7,
-      8,
-      9,
-      10,
-      11,
       12,
-      13,
       14,
-      15,
-      16,
-      17,
       18,
-      19,
-      20,
-      21,
-      22,
-      23,
       24,
       25,
       26,
-      27,
-      28,
-      29,
       30
     ],
-    "theory_q_numbers": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30
-    ],
-    "missing_theory_q_numbers": [],
-    "extra_theory_q_numbers": [],
-    "current_correct_positions": [
-      "C",
-      "D",
-      "B",
-      "C",
-      "D",
-      "D",
-      "B",
-      "A",
-      "B",
-      "B",
-      "A",
-      "B",
-      "D",
-      "C",
-      "A",
-      "A",
-      "C",
-      "C",
-      "C",
-      "B",
-      "A",
-      "D",
-      "B",
-      "A",
-      "D",
-      "A",
-      "D",
-      "A",
-      "C",
-      "B"
-    ],
-    "acceptance_note": "Baseline diagnostics are not ROUND 9 acceptance evidence."
+    "verdict": "перифраза, не разрыв связности: материал этих Q во многом англоязычные таблицы, а варианты написаны по-русски; опровержимость каждого проверена вручную"
   },
+  "structural_notes": [
+    "Q10 и Q11 делят премису «шесть равноудалённых соседей у гексагона» — факт есть в материале обоих Q, принято как структурное пересечение соседних вопросов",
+    "старый сидер держал все тридцать question_text как переформулировки заголовка, восемь блоков с дрейфом темы и одиннадцать ошибок связности"
+  ],
   "blocks": [
     {
       "q_number": 1,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Функциональные требования к системе?",
+      "tested_claim": "Ядро закрывает заказ, подбор, трекинг, оплату, а карты берут готовые.",
+      "source_evidence": [
+        "Первые две-три минуты интервью уходят на список того, что система обязана уметь, и от него зависит вся дальнейшая архитектура.",
+        "Ядро без вариантов: заказ поездки с оценкой стоимости, подбор ближайшего водителя быстрее пяти секунд, трекинг обеих сторон на карте, жизненный цикл поездки."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Карты и навигация прямо вынесены за рамки: берут готовый внешний картовый сервис."
+        },
+        "B": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Совместные поездки названы сопутствующей возможностью, а не ядром."
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Онбординг и верификация водителей отнесены к тому, что в рамки типичного интервью не входит."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 2,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Нефункциональные требования и SLA?",
+      "tested_claim": "Доступность четыре девятки, а трекинг укладывают в одну секунду.",
+      "source_evidence": [
+        "Нефункциональные требования здесь весомее, чем в обычном приложении: система одновременно write-heavy и чувствительна к задержке.",
+        "Порядок величин задан сразу: сто миллионов активных пользователей, двадцать миллионов поездок в день, до пяти миллионов водителей в пике."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L3",
+      "linkage_note": "перифраза русскими терминами поверх англоязычных таблиц материала; опровержимость каждого варианта подтверждена вручную по тексту Q2",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Для позиций выбран мягкий режим: устаревшая на пару секунд координата признана приемлемой."
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Требование по сохранности сформулировано жёстко: терять записи поездок, чеки и платежи нельзя."
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Единого режима нет: локации и подбор живут по доступности, платежи по согласованности."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 3,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Прикидка нагрузки на салфетке (capacity estimation)?",
+      "tested_claim": "Горит поток локаций, и в горячем слое позиция перезаписывается, не копится.",
+      "source_evidence": [
+        "Цель прикидки — понять, какая часть системы горит сильнее всего, и здесь это однозначно поток обновлений локаций.",
+        "Пять миллионов водителей с обновлением раз в четыре секунды дают миллион с четвертью записей в секунду, а при ста байтах на запись это сто двадцать пять мегабайт в секунду."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "События поездок дают до ста тысяч в секунду в пике, то есть на порядок меньше потока локаций."
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Копится только в холодном слое: в горячем на водителя приходится ровно одна запись, всего пять миллионов ключей."
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Чтений на трекинг двести тысяч в секунду против миллиона с четвертью записей локаций."
+        },
+        "D": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 4,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Дизайн API — какие эндпоинты?",
+      "tested_claim": "Запрос поездки отвечает сразу, а ход подбора приходит по веб-сокету.",
+      "source_evidence": [
+        "Транспорт выбирают по задаче: обычные операции по HTTP, трекинг и поток координат по веб-сокету, внутренние вызовы по gRPC.",
+        "Ключевой приём — асинхронность: запрос поездки мгновенно отвечает кодом принятия и идентификатором, не дожидаясь результата подбора."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Соединение как раз не удерживают: запрос сразу отдаёт идентификатор со статусом подбора."
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Поток координат идёт по веб-сокету — это отмечено прямо у эндпоинта локации."
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Для внутренних вызовов между сервисами выбран gRPC, а не публичный интерфейс."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 5,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Высокоуровневая архитектура?",
+      "tested_claim": "Сервисы узкие, а связывает их шина, и событие читают несколько потребителей.",
+      "source_evidence": [
+        "Система раскладывается на узкоспециализированные сервисы, потому что у подсистем радикально разные профили нагрузки и консистентности.",
+        "Связующее звено между ними — шина событий: она даёт асинхронный веерный разбор, при котором аналитика и история не нагружают горячий путь подбора."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Аналитика подписана на шину и работает асинхронно, чтобы не нагружать горячий путь подбора."
+        },
+        "B": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Сервис локаций пишет в оба места: в горячее хранилище для чтений и в шину как долговечный поток."
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "У каждого сервиса своё хранилище: профили в реляционной, поездки в широких колонках, платежи в отдельной базе с ACID."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 6,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Модели данных — User, Driver, Trip, Location?",
+      "tested_claim": "Поездки хранят отдельно от локаций, ведь запросы к ним принципиально разные.",
+      "source_evidence": [
+        "Модели подобраны под разные паттерны доступа, и главная идея здесь — не хранить всё в одной базе.",
+        "Профили пользователей и водителей лежат в реляционной базе с шардингом по идентификатору: там обычные операции чтения и записи и поля с документами."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L3",
+      "linkage_note": "перифраза русскими терминами поверх англоязычных таблиц материала; опровержимость каждого варианта подтверждена вручную по тексту Q6",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Для поиска в радиусе не приспособлены ни реляционная база, ни широкие колонки — нужен гео-индекс."
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Единая база прямо отвергнута: у каждой сущности свой паттерн доступа и своё хранилище."
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Их держат раздельно ровно потому, что запросы к ним принципиально разные."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 7,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Зачем geo-spatial index — почему не SQL `WHERE lat BETWEEN ...`?",
+      "tested_claim": "Прямоугольник не круг, индекс не помогает, а частая запись убивает базу.",
+      "source_evidence": [
+        "Реляционный запрос по диапазону координат не умеет искать ближайших, ломается на частой записи и геометрически некорректен.",
+        "Прямоугольник — это не круг: угол квадрата дальше центра в корень из двух раз, поэтому кандидатов всё равно придётся перефильтровать по настоящему расстоянию."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Составной индекс по координатам работает по сути одной колонкой, и вторая проверяется перебором."
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Угол прямоугольника отстоит от центра в корень из двух раз дальше стороны, поэтому кандидатов приходится перефильтровывать."
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Нужны не просто ближайшие по прямой, а ближайшие по времени подъезда, а оно зависит от дорог."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 8,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Geohash — как работает, плюсы и минусы?",
+      "tested_claim": "Общий префикс geohash означает близость, и поиск сводится к сканированию префиксов.",
+      "source_evidence": [
+        "Geohash превращает пару координат в строку из символов base-32, рекурсивно деля плоскость пополам: сначала бит долготы, потом бит широты.",
+        "Алфавит из тридцати двух символов не содержит букв a, i, l и o, чтобы их не путали с цифрами, а биты группируются по пять на символ."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Ячейки неравномерны: ближе к полюсам они сжимаются по широте, и для глобальной системы это неудобно."
+        },
+        "B": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Кодирование ведётся в base-32, причём четыре похожие на цифры буквы из алфавита исключены."
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Именно это и есть проблема границ: соседние точки могут делить лишь пару первых символов."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 9,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Google S2 — иерархический индекс на сфере?",
+      "tested_claim": "Индекс строится на сфере через проекцию куба, поэтому у полюсов вырождения нет.",
+      "source_evidence": [
+        "Библиотека S2 появилась в картах Google, и главное её отличие в том, что индекс строится на сфере, а не на плоскости.",
+        "Сфера проецируется на куб из шести граней, каждая грань нумеруется по кривой Гильберта, а ячейка получает шестидесятичетырёхбитный идентификатор."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Идентификатор — это шестидесятичетырёхбитное число, и нечитаемость прямо названа минусом."
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Индекс строится именно на сфере, и это названо главным отличием от плоского подхода."
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Ячейки здесь квадратные, отсюда восемь соседей на разном расстоянии; гексагоны — это про другой индекс."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 10,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Uber H3 — гексагональный индекс, почему его выбрал Uber?",
+      "tested_claim": "Мир режется на гексагоны, у ячейки шесть равноудалённых соседей и нет угловых.",
+      "source_evidence": [
+        "Ключевая идея H3 — разбить мир на шестиугольники, у которых все соседи равноудалены; именно этого не хватало двум предыдущим индексам.",
+        "Сфера проецируется на икосаэдр, каждая грань замощается гексагонами, уровней шестнадцать, а ячейка кодируется шестидесятичетырёхбитным числом."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "На икосаэдре неизбежно появляются двенадцать пятиугольников, и это названо минусом."
+        },
+        "B": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Здесь сфера проецируется на икосаэдр из двадцати граней, а проекция на куб относится к другому индексу."
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Соседей у гексагона шесть, и все на одинаковом расстоянии; восемь соседей с углами — это про квадратные ячейки."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 11,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Geohash vs S2 vs H3 — сравнительная таблица?",
+      "tested_claim": "Отличаются формой ячейки и числом соседей, у гексагона их ровно шесть.",
+      "source_evidence": [
+        "Все три решают одну задачу — индексировать точки на поверхности, — но по-разному жертвуют простотой, равномерностью и удобством соседей.",
+        "Форма ячейки разная: прямоугольник на плоскости, квадрат на сфере и гексагон. Отсюда и соседи: восемь с углами против шести равноудалённых."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Встроенная поддержка в Redis есть только у префиксного индекса, двум другим нужна отдельная библиотека."
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Целым числом кодируются как раз два других, а префиксный индекс даёт строку в base-32."
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Для быстрого старта рекомендован Redis с префиксным индексом: запуститься можно за день. У гексагонального сложность интеграции средняя."
+        },
+        "D": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 12,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как водители стримят координаты — WebSocket / MQTT / HTTP?",
+      "tested_claim": "Берут веб-сокет, одно постоянное двустороннее соединение и липкую балансировку.",
+      "source_evidence": [
+        "Главная проблема здесь масштаб: пять миллионов водителей с обновлением раз в четыре секунды дают миллион с четвертью сообщений в секунду.",
+        "Нужен транспорт, который не открывает соединение на каждое сообщение и работает в обе стороны, потому что сервер тоже шлёт водителю офферы."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L3",
+      "linkage_note": "перифраза русскими терминами поверх англоязычных таблиц материала; опровержимость каждого варианта подтверждена вручную по тексту Q12",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "У обычного запроса как раз нет обратного канала: сервер не может сам отправить водителю оффер."
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Кодируют как раз в двоичном формате: размер падает в два-три раза по сравнению с текстовым."
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Протокол для устройств интернета вещей прямо назван вторым выбором для планшетов в машинах."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 13,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Где хранить локации водителей — Redis, Cassandra, in-memory grid?",
+      "tested_claim": "Позиция живёт на нескольких уровнях, от горячего до холодного архива.",
+      "source_evidence": [
+        "Одна логическая сущность — где сейчас водитель — хранится сразу на нескольких уровнях, потому что у каждой задачи свои требования к скорости и времени жизни.",
+        "Горячий уровень — это текущая позиция активных водителей: пять миллионов ключей на пятьсот мегабайт, чтение и запись быстрее миллисекунды."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Точные координаты хранят девяносто дней, дальше архив: бессрочное хранение нарушает требования к приватности."
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Уровней четыре, и у каждого своя задача: горячий для подбора, тёплый в памяти воркера, холодный для истории, аналитический для агрегатов."
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Встроенное время жизни здесь не используют: водитель перезаписывает свою запись, а ушедших удаляет отдельный сборщик."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 14,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Redis GEO vs собственный H3-grid — что выбрать?",
+      "tested_claim": "Свой grid по ячейкам разносит ключи по слотам, метаданные лежат рядом.",
+      "source_evidence": [
+        "Для прототипа берут встроенные гео-команды, для production — собственный grid по ячейкам поверх обычных хешей. Причина в том, как они шардятся и фильтруются.",
+        "Встроенный вариант удобен: писать пространственную логику не надо, операции атомарны. Но все водители лежат в одном ключе, и запрос всегда упирается в одну ноду."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L3",
+      "linkage_note": "перифраза русскими терминами поверх англоязычных таблиц материала; опровержимость каждого варианта подтверждена вручную по тексту Q14",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Роль времени жизни играет сборщик, который удаляет запись после тридцати секунд молчания."
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Горизонтально они как раз не масштабируются: все водители в одном ключе попадают в один слот и становятся горячим ключом."
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Фильтровать по другим полям встроенный вариант не умеет: за метаданными приходится идти отдельно в базу."
+        },
+        "D": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 15,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Алгоритм матчинга — pipeline от запроса до accept?",
+      "tested_claim": "Сначала ячейка подачи и кольцо соседей, затем фильтр и офферы.",
+      "source_evidence": [
+        "Конвейер начинается с ячейки точки подачи на нужном разрешении, где ребро гексагона около двухсот метров.",
+        "Дальше собирают кандидатов кольцом вокруг ячейки: два шага дают девятнадцать ячеек, параллельные чтения по ним объединяются в список из пятидесяти-двухсот водителей в плотном городе."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Ранжируют композитным score, где главный вклад даёт время подъезда, а не воздушная линия."
+        },
+        "B": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Кандидатов берут из ячейки подачи и кольца соседей, а не по всему городу."
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "На ответ даётся десять-пятнадцать секунд, а офферы уходят сразу нескольким верхним кандидатам."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 16,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Последовательный, широковещательный или батчевый матчинг?",
+      "tested_claim": "Батчевый копит запросы за окно и решает их разом, минимизируя суммарное ожидание.",
+      "source_evidence": [
+        "Три стратегии рассылки офферов — это компромисс между скоростью, справедливостью и оптимальностью распределения.",
+        "Последовательная шлёт оффер по одному и ждёт ответа: честно и без гонок, но если первые трое отказали, райдер ждёт уже больше тридцати секунд."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Батчевый вариант, наоборот, добавляет к задержке пять-десять секунд на окно накопления."
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Гонка при приёме названа как раз минусом широковещательной рассылки: принятие требует синхронизации."
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Общую пропускную способность оптимизирует батчевый вариант, а последовательный ценят за справедливость и простоту."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 17,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как ранжировать кандидатов — ETA, рейтинг, баланс спроса?",
+      "tested_claim": "Score композитный, главный вклад у времени подъезда, а пауза защищает водителя.",
+      "source_evidence": [
+        "Каждой паре райдер-водитель присваивают композитный score и сортируют кандидатов по нему.",
+        "Слагаемых несколько: обратное время подъезда, рейтинг водителя, доля принятых офферов, пауза после недавних предложений, бонус за долгий простой и штраф за отмены."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "При нехватке водителей кольцо поиска, наоборот, расширяют на дополнительный шаг."
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Веса подбирают офлайн на исторических данных под измеримую целевую метрику."
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Рейтинг лишь одно из слагаемых score, а главный вклад даёт время подъезда."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 18,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Surge pricing — как считается и где?",
+      "tested_claim": "Множитель считают на ячейку по спросу и предложению и ограничивают сверху.",
+      "source_evidence": [
+        "Цель подорожания — балансировать спрос и предложение в реальном времени, действуя сразу с двух сторон: часть райдеров отсеивается, а водители подтягиваются в зону.",
+        "Считают по ячейке: спрос — это запросы поездок за последние пять минут, предложение — это доступные водители в ячейке и соседних, дальше отношение идёт в модель."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L3",
+      "linkage_note": "перифраза русскими терминами поверх англоязычных таблиц материала; опровержимость каждого варианта подтверждена вручную по тексту Q18",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Потолок задан явно: множитель ограничен сверху, а в регулируемых регионах ограничение обязательно."
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Окно составляет пять минут, а пересчёт идёт раз в минуту."
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Множитель считают именно на ячейку, поэтому соседние районы могут иметь разную цену."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 19,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Машина состояний поездки — какие состояния и события?",
+      "tested_claim": "Каждый переход порождает событие, а конкурирующий приём отсекается условной записью.",
+      "source_evidence": [
+        "Поездка — это конечный автомат: строго определённый набор состояний и допустимых переходов между ними.",
+        "Каждый переход не просто меняет статус, а порождает событие в шине с идентификатором, типом, прежним и новым состоянием, автором и полезной нагрузкой."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Из подбора есть и второй путь — отмена, если водителей нет или райдер передумал."
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Сервис поездок пишет в базу и одновременно публикует событие — именно ради веерного разбора."
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Дедупликация обязательна, и ключом для неё служит идентификатор события."
+        },
+        "D": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 20,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Какую БД выбрать под поездки, локации и платежи?",
+      "tested_claim": "Хранилище выбирают по паттерну доступа, а платежи остаются в базе с ACID.",
+      "source_evidence": [
+        "Единого правильного хранилища нет, выбор делают по паттерну доступа подсистемы.",
+        "Правило простое: обычные операции чтения и записи в реляционную базу, write-heavy временной ряд в широкие колонки, горячий доступ быстрее миллисекунды в память."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Широкие колонки под платежи названы запрещённым вариантом: там нет ни ACID, ни многострочных транзакций."
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Универсального хранилища здесь нет: широкие колонки прямо запрещены под платежи, а у каждой подсистемы своё решение."
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Реляционная база под локации в реальном времени прямо запрещена: она захлебнётся на потоке записи."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 21,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Оценка ETA — Google Maps, ML: что и когда применять?",
+      "tested_claim": "Начинают с готового картового сервиса, свой граф и модель приходят позже.",
+      "source_evidence": [
+        "Оценка времени нужна в трёх точках сценария: до заказа для расчёта стоимости, для подачи машины и живая оценка прямо во время поездки.",
+        "Подход растёт вместе с объёмами: на старте берут готовый картовый сервис поштучно, потому что при десятке тысяч запросов в день это дешевле всего."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Модель ставят последней, когда накопились терабайты данных по реальным поездкам."
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Живую оценку пересчитывают каждые тридцать секунд по текущей позиции и остатку маршрута."
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Кеш как раз применяют: одинаковую пару точек за последние пять минут переиспользуют."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 22,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Поток оплаты — холд, списание, возвраты, выплата водителю?",
+      "tested_claim": "Сначала холд с запасом, при завершении списание по факту, журнал только дописывается.",
+      "source_evidence": [
+        "Платёж разбит на две фазы: при заказе делают холд, а при завершении реальное списание.",
+        "Холд берут с запасом в двадцать процентов от оценки, потому что итог может вырасти из-за платных дорог и простоя; если факт меньше холда, разницу освобождают."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "При заказе делают именно холд, а списание идёт по факту при завершении поездки."
+        },
+        "B": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Выплата идёт пакетно раз в день или неделю: банковский перевод занимает один-два дня."
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Журнал только дописывается: баланс считают суммой строк, а не хранят отдельным полем."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 23,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Геораспределение — региональные дата-центры и роутинг?",
+      "tested_claim": "Внутри региона строгая согласованность, между регионами асинхронная, кроме денег.",
+      "source_evidence": [
+        "Геораспределение обязательно: задержка между дальними континентами измеряется сотнями миллисекунд, и держать всех пользователей мира в одном центре нельзя.",
+        "Регионов четыре-шесть, каждый — это независимый деплой со своим набором сервисов, а пользователя направляет в ближайший центр географический DNS."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Активные поездки привязаны к региону создания и никуда не переезжают."
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Живые локации прямо названы тем, что не реплицируют: они нужны только в домашнем регионе."
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Профили как раз реплицируют асинхронно: они нужны во всех регионах для входа."
+        },
+        "D": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 24,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Горячие регионы (NYC, SF, London) — как масштабировать?",
+      "tested_claim": "Регион режут по ячейкам, масштабируют по прогнозу, а цена сдерживает спрос.",
+      "source_evidence": [
+        "В пик пятничного вечера на Манхэттене сотня тысяч активных водителей и пятьдесят тысяч одновременных запросов, и один регион становится узким местом.",
+        "Первое решение — шардинг внутри региона по ячейкам: площадь Манхэттена даёт около восьмидесяти ячеек, которые раздают по шардам сервиса подбора."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L3",
+      "linkage_note": "перифраза русскими терминами поверх англоязычных таблиц материала; опровержимость каждого варианта подтверждена вручную по тексту Q24",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Подорожание названо естественным механизмом сдерживания: повышенная цена реально снижает спрос."
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Активные поездки при аварии стараются завершить штатно, а переключают на соседний регион историю."
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Масштабируют по прогнозу нагрузки, поднимая мощности за полчаса до пика, а не по факту загрузки."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 25,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Стратегия шардинга — по какому ключу делить поездки, локации, платежи?",
+      "tested_claim": "Ключ выбирают под главный запрос, гео по ячейке, история по пользователю.",
+      "source_evidence": [
+        "Ключ шардинга выбирают под главный запрос подсистемы: типовой запрос должен попадать в один шард, а не разлетаться по всем.",
+        "Отсюда два разных измерения: гео-данные делят по ячейке, а пользовательские по идентификатору пользователя."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L3",
+      "linkage_note": "перифраза русскими терминами поверх англоязычных таблиц материала; опровержимость каждого варианта подтверждена вручную по тексту Q25",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Деление поездок по их идентификатору названо антипаттерном: запрос мои поездки превращается в обход всех шардов."
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Ключей два семейства: гео-данные по ячейке, пользовательские по идентификатору, и это разные измерения."
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Горячие ячейки делят дополнительно: внутри ячейки по остатку от идентификатора водителя."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 26,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Anti-fraud — подмена GPS, фейковые водители, платёжный фрод?",
+      "tested_claim": "Сигналы считают на лету, а по оценке отправляют случай на проверку.",
+      "source_evidence": [
+        "Принцип борьбы один: собирать сигналы в реальном времени, считать по ним оценку риска и блокировать или отправлять на ручную проверку при превышении порога.",
+        "Сигналы идут в потоковый движок, оценка считается на каждое событие, а помеченные случаи попадают в очередь ручного разбора отдельной команде."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L3",
+      "linkage_note": "перифраза русскими терминами поверх англоязычных таблиц материала; опровержимость каждого варианта подтверждена вручную по тексту Q26",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Признаков несколько: кроме скорости работают скачки координат, флаг мок-локации и модель по траектории."
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Модель переобучают пакетно на истории споров и обновляют еженедельно."
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Ручной разбор оставлен только для помеченных случаев, а основную массу закрывает автоматическая оценка."
+        },
+        "D": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 27,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "CAP — где выбираем AP, где CP?",
+      "tested_claim": "Выбор делают по подсистеме, и деньги требуют согласованности, а позиции доступности.",
+      "source_evidence": [
+        "Универсального ответа нет: разные подсистемы выбирают разные углы теоремы, и логика простая.",
+        "Там, где данные устаревают сами по себе, важнее доступность: живые позиции, подбор, множители подорожания, история поездок и уведомления."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Для платежей и журнала выбрана именно согласованность с синхронной межрегиональной репликацией."
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Для позиций выбрана доступность: пока читаешь согласованную координату, водитель уже в другой точке."
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Между регионами мягкие гарантии для всего, кроме денег: история поездок вполне может появиться с задержкой."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 28,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Антипаттерны — типичные ошибки в дизайне Uber?",
+      "tested_claim": "Список ошибок открывают запросы по координатам, общий ключ и синхронная оплата.",
+      "source_evidence": [
+        "Почти каждый пункт списка ошибок — это ловушка на интервью: сначала сама ошибка, потом чем её чинят.",
+        "Первая ошибка — запросы по диапазону координат под поток в миллион с четвертью записей в секунду: реляционная база этого не выдержит, нужен пространственный индекс."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Бессрочное хранение координат названо ошибкой: это нарушение требований к приватности."
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Строгая согласованность локаций стоит в списке ошибок: пока читаешь согласованную позицию, водитель уже уехал."
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Забытая идемпотентность названа отдельной ошибкой: повторный вызов провайдера приводит к двойному списанию."
+        },
+        "D": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 29,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Заказы заранее и поездки с остановками — отдельный поток?",
+      "tested_claim": "Их выносят в отдельные сервисы, а подбор запускают незадолго до времени.",
+      "source_evidence": [
+        "Заказ заранее и совместные поездки плохо ложатся на основной поток подбора, поэтому их выносят в отдельные сервисы с собственной оркестрацией.",
+        "Заказ заранее живёт в своей таблице, а за пятнадцать минут до времени поездки планировщик запускает обычный подбор."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Попытка переиспользовать основной поток прямо названа плохо работающей: оба сценария выносят в отдельные сервисы."
+        },
+        "B": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Подбор запускают за пятнадцать минут до времени поездки, а не в момент бронирования."
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Время считают суммой по всем сегментам маршрута, а не только до последней точки."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 30,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Главные компромиссы дизайна?",
+      "tested_claim": "Каждый выбор идёт вместе с ценой, которую за него платят.",
+      "source_evidence": [
+        "Хороший финал ответа на интервью — собрать ключевые развилки в одну таблицу: что выбрали и какой ценой.",
+        "Гексагональный индекс взят для production ценой более сложной интеграции, отсутствия встроенной поддержки в Redis и двенадцати пятиугольников как граничных случаев."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L3",
+      "linkage_note": "перифраза русскими терминами поверх англоязычных таблиц материала; опровержимость каждого варианта подтверждена вручную по тексту Q30",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Главный принцип обратный: унифицировать не нужно, именно разделение даёт системе работать в масштабе."
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "Цена названа прямо: сложнее интеграция, нет встроенной поддержки в Redis, двенадцать пятиугольников как граничные случаи."
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "За постоянное соединение платят липкой балансировкой, поддержкой соединений и сложным переключением при отказе."
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     }
   ]
 }
