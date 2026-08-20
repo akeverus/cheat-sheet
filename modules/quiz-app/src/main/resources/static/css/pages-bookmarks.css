@@ -213,6 +213,45 @@ html[data-design] .bookmarks-page .bookmark-remove-form {
    Заодно ушёл единственный на весь продукт глиф Lucide 28px в акцентном тоне
    внутри 48px-плашки: пустые состояния говорят px-спрайтом и currentColor. */
 
+/* ШАПКА РАСКРЫТИЯ ОТБОРА ВИДНА ТОЛЬКО ТАМ, ГДЕ ЕСТЬ ЧТО СВОРАЧИВАТЬ.
+
+   На широком экране форма отбора — одна строка в 72px, и подпись над ней ничего
+   не добавляет: ровно этим доводом отсюда сняли заголовок «Отбор» в iter-74
+   (57px ради слова над очевидным). Поэтому шапка раскрытия на десктопе не
+   рисуется вовсе, а `<details>` стоит открытым и сворачиваться там не умеет.
+
+   На телефоне всё наоборот: форма занимает 241px между шапкой страницы и
+   коллекцией, и шапка раскрытия — единственный способ отдать эти пиксели тому,
+   ради чего страницу открыли. */
+html[data-design] .bookmarks-page .filter-bar-summary { display: none; }
+
+@media (max-width: 767px) {
+  /* Пояснительный хвост шапки — не число, а объяснение; на телефоне он занимает
+     три строки из четырёх. Клип, а не `display: none`: скринридер читает его
+     по-прежнему, а страница отдаёт ~70px первому экрану коллекции. */
+  html[data-design] .bookmarks-page .bookmarks-lead-tail {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  html[data-design] .bookmarks-page .filter-bar-summary {
+    display: flex;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+  /* Зазор под раскрытой шапкой — то же, что на аналитике: страница описывает
+     только свой ритм, рецепт самой шапки лежит в компонентах. */
+  html[data-design] .bookmarks-page .filter-bar-disclosure[open] > .filter-bar-summary {
+    margin-bottom: var(--space-3);
+  }
+}
+
 @media (max-width: 768px) {
   html[data-design] .bookmarks-page .bookmark-item {
     flex-direction: column;
@@ -220,11 +259,13 @@ html[data-design] .bookmarks-page .bookmark-remove-form {
   }
   
   
-  html[data-design] .bookmarks-page .bookmark-actions .btn,
-  
   /* Главное действие на всю строку: в заголовке списка оно единственное, и
      обрезанная по содержимому кнопка оставляла бы справа от себя полосу
-     пустоты — то же, что §6 запрещает у полосы отбора. */
+     пустоты — то же, что §6 запрещает у полосы отбора.
+
+     Здесь же стоял `.bookmark-actions .btn` — селектор без единого носителя:
+     узла с таким классом в bookmarks.html нет ни одного (проверено поиском по
+     шаблону, а не по памяти). Удалён как мёртвый. */
   html[data-design] .bookmarks-page .bookmarks-list-head .btn {
     width: 100%;
     justify-content: center;

@@ -73,6 +73,14 @@ async function loadQuizModules() {
   initMobileDisclosures('(max-width: 1279px), (max-height: 800px)');
 }
 
+// Закладки: сворачивание формы отбора на телефоне. Модуль тот же, что у аналитики
+// и экрана вопроса, — условие своё (телефон), потому что ограничение здесь
+// горизонтальное: на 390 форма кладёт 241px между шапкой и коллекцией.
+async function loadBookmarksModules() {
+  const { initMobileDisclosures } = await import('./ui/mobile-disclosures.js');
+  initMobileDisclosures();
+}
+
 async function loadStatsModules() {
   const { initStatsPage } = await import('./stats/index.js');
   initStatsPage();
@@ -124,6 +132,10 @@ function boot() {
       // Аналитика: вкладки, графики, сортировка таблицы тем.
       if (pageIs('stats-page')) {
         tasks.push(loadStatsModules());
+      }
+      // Закладки: форма отбора под раскрытием на телефоне.
+      if (pageIs('bookmarks-page')) {
+        tasks.push(loadBookmarksModules());
       }
       // Итоги сессии: копирование и печать результата.
       if (pageIs('summary-page')) {
