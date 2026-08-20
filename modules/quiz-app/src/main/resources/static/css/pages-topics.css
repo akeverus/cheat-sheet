@@ -6,21 +6,82 @@
    собственная шапка, которой у `<div>` не было. */
 @layer pages {
 
+/* Ширина числовой колонки каталога. Одно значение на страницу: по нему считает
+   и шапка колонок, и шапка каждого раздела — иначе они разъедутся при первой же
+   правке одной из двух сеток. 5.5rem — самая длинная подпись («К повторению»)
+   в двух строках при `--font-size-xs`. */
+html[data-design] .topics-page {
+  --catalog-num-col: 5.5rem;
+  /* Последняя колонка шире прочих: её подпись — «К повторению», самая длинная.
+     В 5.5rem она переносилась на две строки, и «К» повисало над «ПОВТОРЕНИЮ». */
+  --catalog-num-col-last: 7.5rem;
+  --catalog-meter-col: 12rem;
+  --catalog-marker-col: 0.75rem;
+  --catalog-col-gap: var(--space-4);
+}
+
+/* СРЕДНЯЯ ПОЛОСА ШИРИН (1100–1439). Колонки те же, но уже: на 1280 замер с
+   «широкими» значениями оставил под имя раздела 220px, и заголовок ломался
+   ПОСЕРЕДИНЕ СЛОВА — «производитель / ность». Фиксированные колонки в сетке
+   забирают свой максимум раньше, чем 1fr получает остаток, поэтому лечится это
+   не минимумом у имени (он дал бы переполнение карточки), а тем, что на средних
+   ширинах дешевеют сами колонки. После правки под имя приходится 411px. */
+@media (min-width: 1100px) and (max-width: 1439px) {
+  html[data-design] .topics-page {
+    --catalog-num-col: 4.75rem;
+    --catalog-meter-col: 7rem;
+    --catalog-col-gap: var(--space-3);
+  }
+}
+
 /* Карточка отдаёт свои поля шапке и таблице. Иначе поля удваиваются, а клик по
    «пустому» полю карточки не открывает раздел — цель у шапки должна быть во всю
    ширину карточки, а не в её середине. */
 html[data-design] .topics-page .catalog-group { padding: 0; }
 
-/* Нативный треугольник снят и заменён своим: `display: flex` на `<summary>`
-   гасит маркер в обоих движках (он рождается из `display: list-item`), а без
-   flex шапку не разложить в строку. Свой маркер к тому же поворачивается по
-   состоянию раздела и красится текущим цветом, то есть виден в обеих темах. */
+/* ШАПКА КОЛОНОК. Числа десяти разделов сравнивают между собой — значит, они
+   обязаны стоять колонками, а у колонок обязано быть имя. Имя печатается один
+   раз над списком, а не в каждой из десяти строк.
+
+   `aria-hidden` на ней стоит намеренно: скринридер получает подпись у каждого
+   числа отдельно (`.catalog-num-label`), и вторая копия имён колонок ему только
+   мешала бы — раскрытия не образуют таблицу, связать заголовок со строкой
+   нечем. */
+html[data-design] .topics-page .catalog-legend,
 html[data-design] .topics-page .catalog-group-summary {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns:
+    var(--catalog-marker-col)
+    minmax(0, 1fr)
+    minmax(4rem, var(--catalog-meter-col))
+    repeat(3, var(--catalog-num-col))
+    var(--catalog-num-col-last);
+  column-gap: var(--catalog-col-gap);
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2) var(--space-5);
+}
+
+html[data-design] .topics-page .catalog-legend {
+  margin: var(--space-5) 0 var(--space-2);
+  padding: 0 var(--space-5);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+/* Пустая клетка под маркер раскрытия: без неё шапка колонок сдвинута
+   относительно строк ровно на ширину уголка. */
+html[data-design] .topics-page .catalog-legend::before { content: ""; }
+html[data-design] .topics-page .catalog-legend .catalog-num,
+html[data-design] .topics-page .catalog-legend-meter {
+  align-self: end;
+  line-height: var(--line-height-tight);
+}
+
+/* Нативный треугольник снят и заменён своим: `display: grid` на `<summary>`
+   гасит маркер в обоих движках (он рождается из `display: list-item`). Свой
+   маркер поворачивается по состоянию раздела и красится текущим цветом, то
+   есть виден в обеих темах. */
+html[data-design] .topics-page .catalog-group-summary {
   padding: var(--space-5);
   cursor: pointer;
   list-style: none;
@@ -30,10 +91,8 @@ html[data-design] .topics-page .catalog-group-summary::-webkit-details-marker { 
    поворот происходит сразу, и выключать в `prefers-reduced-motion` нечего. */
 html[data-design] .topics-page .catalog-group-summary::before {
   content: "";
-  flex: none;
   width: 0.5em;
   height: 0.5em;
-  margin-right: calc(-1 * var(--space-2));
   border-right: 2px solid var(--color-text-tertiary);
   border-bottom: 2px solid var(--color-text-tertiary);
   transform: rotate(-45deg);
@@ -53,7 +112,6 @@ html[data-design] .topics-page .catalog-group-headings {
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-  flex: 1 1 18rem;
 }
 html[data-design] .topics-page .catalog-group-title {
   margin: 0;
@@ -63,19 +121,166 @@ html[data-design] .topics-page .catalog-group-title {
 html[data-design] .topics-page .catalog-group-lead {
   font-size: var(--font-size-sm);
 }
-/* Числа раздела — одной строкой у правой кромки; на узкой ширине уезжают под
-   заголовок обычным переносом flex-строки, без медиазапроса. */
+
+/* Полоса освоения. Нативный <progress> без системного вида: дальше его рисуют
+   псевдоэлементы движков — `-webkit-` (Chromium и WebKit) и `-moz-`. Высота 8px =
+   тот же целочисленный шаг, что у пиксельной графики и у шкалы уровня. */
+html[data-design] .topics-page .catalog-meter {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 8px;
+  border: 0;
+  /* Пустая часть шкалы — НИЧЕГО, а не залитый жёлоб. Замер обеих тем показал, во
+     что превращается обычный жёлоб в этой колонке: у девяти разделов из десяти
+     освоено 0, и десять пустых прямоугольников подряд читались как десять
+     незаполненных полей ввода. Осталась линия основания, от которой поднимается
+     заполненная доля: ноль — тихая черта, 1.6% — короткий штрих над ней. */
+  border-bottom: 2px solid var(--color-border-strong);
+  color: var(--color-accent-primary);
+  background: transparent;
+}
+html[data-design] .topics-page .catalog-meter::-webkit-progress-bar { background: transparent; }
+html[data-design] .topics-page .catalog-meter::-webkit-progress-value { background: var(--color-accent-primary); }
+html[data-design] .topics-page .catalog-meter::-moz-progress-bar { background: var(--color-accent-primary); }
+
+/* Числа. `display: contents` — чтобы четыре ячейки встали в колонки сетки
+   шапки: обёртка нужна разметке (числа — одна смысловая группа), но своей
+   полосы в сетке ей занимать нельзя. */
 html[data-design] .topics-page .catalog-group-kpi {
-  margin: 0;
-  flex: 0 1 auto;
+  display: contents;
+}
+html[data-design] .topics-page .catalog-num {
+  justify-self: end;
+  text-align: right;
+  /* Моноширинные цифры: в колонке сравнивают длину числа, и пропорциональные
+     знаки делают 111 короче 999. */
+  font-variant-numeric: tabular-nums;
+}
+html[data-design] .topics-page .catalog-group-kpi .catalog-num {
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-tight);
+}
+/* Ноль в колонке «К повторению» — не новость, а тишина: он не должен весить
+   столько же, сколько 107. Смысл при этом несёт сама цифра, а не цвет. */
+html[data-design] .topics-page .catalog-num.is-empty { color: var(--color-text-tertiary); }
+
+/* Подпись числа. Это НЕ `.visually-hidden`: та утилита объявлена с `!important`
+   и означает «скрыто всегда», а здесь подпись обязана проявиться, как только
+   колонки схлопнутся. Утилиту, которая говорит «всегда», нельзя перебивать —
+   у клипа тут своя, узкая причина. */
+html[data-design] .topics-page .catalog-num-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* Открытый раздел: кромка отделяет шапку от таблицы, поля таблицы — свои. */
 html[data-design] .topics-page .catalog-group[open] .catalog-group-summary {
   border-bottom: var(--rule-weight) solid var(--color-border-secondary);
 }
+/* Действие раздела: взять в сессию весь раздел целиком. Стоит над таблицей —
+   первым, что видно после раскрытия. */
+html[data-design] .topics-page .catalog-group-action {
+  margin: 0;
+  padding: var(--space-4) var(--space-5) 0;
+}
 html[data-design] .topics-page .catalog-group .table-scroll {
   padding: var(--space-4) var(--space-5) var(--space-5);
+}
+
+/* ТАБЛИЦА РАЗДЕЛА ДЕЛИТ КОЛОНКИ С ЕГО ШАПКОЙ. Поля у шапки и у жёлоба таблицы
+   одинаковые (--space-5), поэтому правая кромка у них общая. Дальше колонки
+   считаются от правого края теми же величинами, что в сетке: ширина ячейки =
+   колонка + промежуток, промежуток уходит в левое поле ячейки, правого поля нет.
+   Тогда число в таблице встаёт РОВНО под своим итогом в шапке раздела.
+
+   Считается это только там, где колонки вообще есть (от 1100px): ниже шапка
+   раздела складывается в чипы, и подпирать нечего. */
+@media (min-width: 1100px) {
+  html[data-design] .topics-page .catalog-table { table-layout: fixed; }
+  html[data-design] .topics-page .catalog-table th,
+  html[data-design] .topics-page .catalog-table td {
+    padding-right: 0;
+    padding-left: var(--catalog-col-gap);
+  }
+  /* Имя темы встаёт под именем раздела: слева от него в сетке стоят маркер
+     раскрытия и промежуток. */
+  html[data-design] .topics-page .catalog-table th:first-child,
+  html[data-design] .topics-page .catalog-table td:first-child {
+    padding-left: calc(var(--catalog-marker-col) + var(--catalog-col-gap));
+  }
+  /* «Состояние» занимает в таблице место двух колонок шапки — «Освоение» и
+     «Тем»: у отдельной темы своего счётчика тем нет, и колонка под неё стояла бы
+     пустой. Начинается ячейка там же, где полоса освоения раздела, — оба ответа
+     на «как обстоит дело» в одной вертикали. */
+  html[data-design] .topics-page .catalog-table th:nth-child(2),
+  html[data-design] .topics-page .catalog-table td:nth-child(2) {
+    width: calc(var(--catalog-meter-col) + var(--catalog-num-col) + var(--catalog-col-gap));
+  }
+  html[data-design] .topics-page .catalog-table th:nth-child(3),
+  html[data-design] .topics-page .catalog-table td:nth-child(3),
+  html[data-design] .topics-page .catalog-table th:nth-child(4),
+  html[data-design] .topics-page .catalog-table td:nth-child(4) {
+    width: calc(var(--catalog-num-col) + var(--catalog-col-gap));
+  }
+  html[data-design] .topics-page .catalog-table th:last-child,
+  html[data-design] .topics-page .catalog-table td:last-child {
+    width: calc(var(--catalog-num-col-last) + var(--catalog-col-gap));
+  }
+}
+
+/* УЗКИЙ ЭКРАН: колонок нет — есть строка чипов. Порог взят по замеру: сетке
+   нужно 12rem под имя раздела, 4×5.5rem под числа и три промежутка; ниже
+   ~1100px вьюпорта на месте имени остаётся одно слово в строку. */
+@media (max-width: 1099px) {
+  html[data-design] .topics-page .catalog-legend { display: none; }
+
+  html[data-design] .topics-page .catalog-group-summary {
+    grid-template-columns: var(--catalog-marker-col) minmax(0, 1fr);
+    row-gap: var(--space-3);
+  }
+  /* Полоса не исчезает вместе с колонками: доля освоенного нужна и на телефоне.
+     Она встаёт своей строкой под именем раздела и меряет ту же ширину. */
+  html[data-design] .topics-page .catalog-meter {
+    grid-column: 2;
+    max-width: 18rem;
+  }
+  html[data-design] .topics-page .catalog-group-kpi {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    grid-column: 2;
+  }
+  html[data-design] .topics-page .catalog-group-summary::before { align-self: start; margin-top: 0.45em; }
+  html[data-design] .topics-page .catalog-num {
+    justify-self: start;
+    text-align: left;
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-1);
+  }
+  /* Та же подпись, что клипается на широком экране, — теперь единственный
+     носитель смысла числа, потому что шапки колонок над списком больше нет. */
+  html[data-design] .topics-page .catalog-num-label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-xs);
+  }
+  html[data-design] .topics-page .catalog-group-kpi .catalog-num {
+    font-size: var(--font-size-md);
+  }
 }
 
 }

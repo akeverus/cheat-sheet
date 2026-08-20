@@ -138,6 +138,23 @@
      При активном отборе разделы приходят РАСКРЫТЫМИ: человек искал строки, а не
      заголовки, и прятать найденное за вторым кликом нельзя. Атрибут ставит
      сервер, поэтому это верно и без JS. */-->
+<!--/* Шапка колонок каталога. Стоит НАД списком и повторяет его сетку, поэтому
+     числа разделов читаются как таблица, оставаясь раскрытиями. Прячется вместе со
+     списком: над пустым каталогом подписи колонок описывали бы ничего.
+
+     Не `<p>`: у абзаца в reset.css стоит `max-width: var(--measure)` — мера прозы.
+     Замер 1512 с `<p>`: строка шапки обрывалась на 818-м пикселе, её колонки
+     стояли на 486/590/694/798, а числа разделов — на 1101/1205/1309/1413. Шапка
+     подписывала пустоту в 615px левее самих чисел. */-->
+<div class="catalog-legend" th:if="${!#lists.isEmpty(catalogSections)}" aria-hidden="true">
+    <span class="catalog-legend-name">Раздел</span>
+    <span class="catalog-legend-meter">Освоение</span>
+    <span class="catalog-num">Тем</span>
+    <span class="catalog-num">Вопросов</span>
+    <span class="catalog-num">Освоено</span>
+    <span class="catalog-num">К повторению</span>
+</div>
+
 <details class="card catalog-group" th:each="section : ${catalogSections}"
          th:attr="open=${catalogFilterActive} ? 'open' : null">
     <summary class="catalog-group-summary">
@@ -145,19 +162,74 @@
             <h2 class="catalog-group-title" th:text="${section.group.title}">Раздел</h2>
             <span class="muted catalog-group-lead" th:text="${section.group.description}">Описание раздела</span>
         </span>
-        <span class="kpi-role catalog-group-kpi">
-            <!--/* Обращение к бину (@plural) обязано целиком стоять ВНУТРИ ${...}:
-                 вне блока Thymeleaf не разбирает выражение, а падает он на этапе
-                 парсинга шаблона — то есть ПОСЛЕ отправки заголовков. Ответ при
-                 этом обрывается посреди chunked-потока: код 200, тело неполное,
-                 curl отдаёт exit 18, а браузер ждёт до таймаута. */-->
-            <span th:text="${#lists.size(section.topics) + ' ' + @plural.pick(#lists.size(section.topics), 'тема', 'темы', 'тем')}">0 тем</span>
-            <span th:text="${' · ' + section.questionCount() + ' ' + @plural.pick(section.questionCount(), 'вопрос', 'вопроса', 'вопросов')}"> · 0 вопросов</span>
-            <span th:text="' · ' + ${section.learnedCount()} + ' освоено'"> · 0 освоено</span>
-            <span th:if="${section.repeatCount() > 0}"
-                  th:text="' · ' + ${section.repeatCount()} + ' к повторению'"> · 0 к повторению</span>
+        <!--/* ЧИСЛА РАЗДЕЛА — КОЛОНКАМИ, А НЕ СТРОКОЙ. Раньше здесь стояла одна
+             бегущая строка «20 тем · 626 вопросов · 10 освоено · 107 к повторению»,
+             и у десяти разделов эти числа не совпадали по вертикали: сравнить
+             «сколько ждёт повторения» между разделами можно было только чтением
+             каждой строки. Замер 1512: заголовок кончался на 600-м пикселе, числа
+             начинались на 930-м — между ними 330px пустоты в каждой из десяти
+             строк, а сама страница про сравнение.
+
+             У каждого числа своя подпись, и она в разметке ВСЕГДА: цифра без имени
+             колонки ничего не значит. На широком экране подпись клипает CSS —
+             имена колонок стоят один раз над списком (`.catalog-legend`), а
+             скринридер читает подпись у каждой ячейки. На узком экране колонок
+             нет, и та же подпись проявляется рядом с числом.
+
+             Обращение к бину (@plural) обязано целиком стоять ВНУТРИ ${...}: вне
+             блока Thymeleaf не разбирает выражение, а падает он на этапе парсинга
+             шаблона — то есть ПОСЛЕ отправки заголовков. Ответ при этом обрывается
+             посреди chunked-потока: код 200, тело неполное, curl отдаёт exit 18. */-->
+        <!--/* ДОЛЯ ОСВОЕННОГО — ПОЛОСОЙ. Числа «10» и «1» рядом с «626» и «961»
+             сравнить между собой нельзя: доля у них разная в сто раз, а разряд
+             один. Полоса показывает именно долю, и десять полос в колонке
+             сравниваются взглядом. Она же занимает середину строки, которая до
+             этого была пустой: замер 1512 — от конца описания раздела (590) до
+             первого числа (1065) шло 475px ничего.
+
+             Нативный <progress>, а не свой div: ширину заливки div потребовала бы
+             в инлайновом style (запрещён CSP `style-src-attr 'none'`) или в JS —
+             то есть без скриптов полоса была бы пустой. Тот же приём уже несут
+             шкала уровня и полосы значков.
+
+             `max` защищён от нуля: <progress> с max=0 становится НЕОПРЕДЕЛЁННЫМ и
+             начинает бесконечно анимироваться — декоративное движение, которое
+             нечем выключить.
+
+             `aria-hidden`: ту же величину скринридер получает числами «Вопросов»
+             и «Освоено» в той же строке, и третья её огласовка — шум. Элемент не
+             фокусируем, прятать его безопасно. */-->
+        <progress class="catalog-meter" aria-hidden="true"
+                  th:value="${section.learnedCount()}"
+                  th:max="${section.questionCount() > 0 ? section.questionCount() : 1}"></progress>
+        <span class="catalog-group-kpi">
+            <span class="catalog-num">
+                <span class="catalog-num-label">Тем </span>
+                <span th:text="${#lists.size(section.topics)}">0</span>
+            </span>
+            <span class="catalog-num">
+                <span class="catalog-num-label">Вопросов </span>
+                <span th:text="${section.questionCount()}">0</span>
+            </span>
+            <span class="catalog-num">
+                <span class="catalog-num-label">Освоено </span>
+                <span th:text="${section.learnedCount()}">0</span>
+            </span>
+            <span class="catalog-num" th:classappend="${section.repeatCount() == 0} ? ' is-empty' : ''">
+                <span class="catalog-num-label">К повторению </span>
+                <span th:text="${section.repeatCount()}">0</span>
+            </span>
         </span>
     </summary>
+
+    <!--/* Действие раздела — внутри раскрытия, а не в шапке: <summary> уже
+         кликабельна целиком, и ссылка внутри неё крала бы у раскрытия часть
+         площади и путала клавиатуру (две цели в одном элементе). Открыв раздел,
+         человек видит и список тем, и «взять весь раздел» — обе двери сразу. */-->
+    <p class="catalog-group-action">
+        <a class="btn secondary-btn" th:href="@{/settings(group=${section.group.id})}"
+           th:text="'Собрать сессию по разделу «' + ${section.group.title} + '»'">Собрать сессию по разделу</a>
+    </p>
 
     <!--/* Таблица, а не карточки: у строк одинаковый набор чисел, и глаз сравнивает
          их по столбцу. Жёлоб прокрутки и узкий режим — общий компонент. */-->
@@ -165,12 +237,17 @@
         <table class="data-table catalog-table">
             <caption class="visually-hidden" th:text="'Темы раздела «' + ${section.group.title} + '»'">Темы раздела</caption>
             <thead>
+            <!--/* Порядок колонок повторяет шапку раздела: три числа стоят
+                 у правой кромки в том же порядке и той же ширины, что итоги
+                 раздела над ними. Строка раздела читается как строка итогов
+                 своей таблицы — ради этого «Состояние» переехало со своего
+                 прежнего последнего места на второе, под колонку «Освоение». */-->
             <tr>
                 <th scope="col">Тема</th>
+                <th scope="col">Состояние</th>
                 <th scope="col" class="num">Вопросов</th>
                 <th scope="col" class="num">Освоено</th>
                 <th scope="col" class="num">К повторению</th>
-                <th scope="col">Состояние</th>
             </tr>
             </thead>
             <tbody>
@@ -179,16 +256,18 @@
                     <a th:href="@{/settings(topic=${row.topic})}" th:title="${row.topic}"
                        th:text="${@topicUtils.displayName(row.topic)}">тема</a>
                 </th>
-                <td class="num" th:text="${row.total}">0</td>
-                <td class="num" th:text="${row.learned}">0</td>
-                <td class="num" th:text="${row.repeats}">0</td>
                 <!--/* Состояние словом, а не только полосой: цвет и длина не должны
-                     быть единственным носителем смысла. */-->
+                     быть единственным носителем смысла. Отдельная колонка нужна и
+                     потому, что числа её не заменяют: «не начата» и «0% освоено» —
+                     это одинаковый ноль освоенного при разной истории. */-->
                 <td>
                     <span th:if="${row.untouched()}" class="muted">не начата</span>
                     <span th:unless="${row.untouched()}"
                           th:text="${#numbers.formatDecimal(row.learnedPercent(), 1, 0)} + '% освоено'">0% освоено</span>
                 </td>
+                <td class="num" th:text="${row.total}">0</td>
+                <td class="num" th:text="${row.learned}">0</td>
+                <td class="num" th:text="${row.repeats}">0</td>
             </tr>
             </tbody>
         </table>
