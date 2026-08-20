@@ -95,18 +95,22 @@ public final class Point {
 **Compact constructor** — компактная форма того же канонического конструктора: вы пишете тело **без списка параметров и без присваиваний**. Параметры неявно те же, что компоненты, а `this.x = x` для каждого поля компилятор подставляет сам в конце тела. Нужен, чтобы вставить валидацию или нормализацию входных данных, не дублируя присваивания.
 
 ```java
+// Вариант 1 — compact constructor
 public record Age(int years) {
-
-    // Compact constructor — без параметров в объявлении!
+    // без параметров в объявлении!
     public Age {
         if (years < 0) throw new IllegalArgumentException("Age cannot be negative");
         if (years > 150) throw new IllegalArgumentException("Age too large");
         // Присваивание this.years = years происходит АВТОМАТИЧЕСКИ в конце
     }
+}
 
-    // Каноничный конструктор (альтернатива compact)
-    public Age(int years) {
-        if (years < 0) throw new IllegalArgumentException(...);
+// Вариант 2 — явный канонический конструктор.
+// ВАЖНО: это ТА ЖЕ форма, что и выше, поэтому в одном record их не совместить —
+// компилятор скажет «constructor Age(int) is already defined».
+public record AgeExplicit(int years) {
+    public AgeExplicit(int years) {
+        if (years < 0) throw new IllegalArgumentException("Age cannot be negative");
         this.years = years;  // явное присваивание
     }
 }
