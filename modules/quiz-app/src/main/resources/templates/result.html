@@ -68,6 +68,57 @@
                  сказано один раз и ниже: лид в .explanation-panel и построчный разбор
                  неверных в .distractor-panel. Пояснение у каждого варианта повторяло бы
                  то же самое третий раз, рядом с текстом, который надо просто сверить. */-->
+            <!--/* ИТОГ И ДЕЙСТВИЕ — СРАЗУ ПОД ВЕРДИКТОМ, А НЕ ПОД РАЗБОРОМ.
+
+                 Замер страницы без JS (Chromium, экзамен, один вопрос): «Следующий
+                 вопрос» стоял на 6290-м пикселе при документе 7009 на 390×844 и на
+                 2188 при 2656 на 1512×982 — то есть после ответа до главного
+                 действия надо было пролистать семь экранов разбора. §8 брифа требует
+                 обратного: главное действие видно на первом экране.
+
+                 Порядок теперь читается как результат: вердикт → что это дало (опыт
+                 и срок следующего повтора) → куда дальше → и только потом разбор,
+                 который читают по желанию.
+
+                 Замер после первого переноса (под вердикт, но ПОСЛЕ вариантов):
+                 действие стояло на 2712 при сгибе 844 — список вариантов с полными
+                 текстами занимает 1832px и отодвигал его за два экрана. Поэтому итог
+                 и действие идут ДО вариантов: варианты с пометками — это уже разбор,
+                 а не результат. */-->
+            <!--/* Мета разбора: заработанный опыт и следующий повтор. Раньше строка
+                 повторения стояла ВЫШЕ, между лидом и разбором неверных вариантов, и
+                 разрывала объяснение служебной информацией; «+N XP» на этой странице
+                 не показывался вовсе, хотя опыт начислялся (листенер на AnswerEvent
+                 общий для MVC и REST) — no-JS молча забирал награду. */-->
+            <div class="feedback-meta">
+                <span th:if="${xpAwarded != null and xpAwarded > 0}" class="result-xp"
+                      th:attr="aria-label='Начислено ' + ${xpAwarded} + ' XP'"
+                      th:text="'+' + ${xpAwarded} + ' XP'">+10 XP</span>
+                <p class="next-review">
+                    <span class="next-review-eyebrow">Следующее повторение:</span>
+                    <span class="next-review-when" th:text="${nextReviewText}">—</span>
+                </p>
+            </div>
+
+            <div class="result-actions">
+                <a class="btn next-btn"
+                   th:with="nextBase=${filter != null and filter.onlyWrong == true}"
+                   th:href="${nextBase}
+                       ? @{/review(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}
+                       : @{/(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}">
+                    Следующий вопрос
+                </a>
+                <!--/* Завершение сессии — вторичное действие рядом с основным, а не
+                     кнопка в шапке. Тот же контракт, что на экране вопроса (UX-003):
+                     подтверждение перед finish, чтобы промах не обрывал сессию. */-->
+                <form method="post" th:action="@{/finish}" class="result-finish-form"
+                      th:if="${interviewSession != null and !interviewSession.finished}">
+                    <button type="submit" class="btn secondary-btn result-finish-btn"
+                            data-confirm-title="Завершить сессию?"
+                            data-confirm="Прогресс сохранится в итогах. Завершить сессию сейчас?">Завершить сессию</button>
+                </form>
+            </div>
+
             <div class="options" role="list" aria-label="Варианты ответа (результат)">
                 <!--/* div, не label: это display-only результат (нет <input>), а label
                      без управляемого контрола + вложенный блочный <div> внутри —
@@ -96,8 +147,13 @@
 
             <!--/* Хендофф-3, Этап 4: distractor-анализ НА ПОВЕРХНОСТИ — компактные строки
                  «B — неверно. <причина>» по каждому НЕверному варианту (не под «Подробнее»). */-->
-            <div class="explanation-panel distractor-panel" th:if="${hasDistractorAnalysis}">
-                <span class="explanation-eyebrow">Почему другие варианты не подходят</span>
+            <!--/* Разбор неверных вариантов — ПОД РАСКРЫТИЕМ. Замер 390×844: панель
+                 занимала 2660px из 7009 документа, то есть больше трети страницы
+                 разворачивалось всегда, хотя читают её выборочно — «почему НЕ этот
+                 вариант» спрашивают про один-два, а не про все. Раскрытие нативное:
+                 без JS работает, с клавиатуры доступно, состояние объявляется. */-->
+            <details class="explanation-panel distractor-panel" th:if="${hasDistractorAnalysis}">
+                <summary class="explanation-eyebrow">Почему другие варианты не подходят</summary>
                 <div class="distractor-list">
                     <div th:each="opt,it : ${result.options}"
                          th:if="${opt.explanation != null and !opt.explanation.isBlank() and opt.id != result.correct.id}"
@@ -106,7 +162,7 @@
                         <span class="distractor-reason markdown-content" th:utext="${@markdownRenderService.toInlineHtml(opt.explanation)}">причина</span>
                     </div>
                 </div>
-            </div>
+            </details>
 
             <!--/* «Подробнее»: остаток разбора (после лид-абзаца). Панель — сам
                  <details>, без div-обёртки: JS-путь строит именно так, а обёртка
@@ -118,26 +174,16 @@
                 <div class="answer markdown-content" th:utext="${answerRestHtml}"></div>
             </details>
 
-            <!--/* Мета разбора: заработанный опыт и следующий повтор. Раньше строка
-                 повторения стояла ВЫШЕ, между лидом и разбором неверных вариантов, и
-                 разрывала объяснение служебной информацией; «+N XP» на этой странице
-                 не показывался вовсе, хотя опыт начислялся (листенер на AnswerEvent
-                 общий для MVC и REST) — no-JS молча забирал награду. */-->
-            <div class="feedback-meta">
-                <span th:if="${xpAwarded != null and xpAwarded > 0}" class="result-xp"
-                      th:attr="aria-label='Начислено ' + ${xpAwarded} + ' XP'"
-                      th:text="'+' + ${xpAwarded} + ' XP'">+10 XP</span>
-                <p class="next-review">
-                    <span class="next-review-eyebrow">Следующее повторение:</span>
-                    <span class="next-review-when" th:text="${nextReviewText}">—</span>
-                </p>
+            <!--/* Правило интервальных повторений («верный ответ отодвигает карточку,
+                 ошибка возвращает её раньше») переехало СЮДА из строки результата.
+                 Оно объясняет механизм, а не этот ответ, и на телефоне занимало 46px
+                 в блоке, который должен уместиться в первый экран вместе с действием
+                 (замер 390×844: действие стояло на 856 при сгибе 844). */-->
+            <details th:if="${reviewState != null}" class="sm2-details">
+                <summary>SM-2 состояние</summary>
                 <p class="review-policy muted tiny">
                     Интервальные повторения: верный ответ отодвигает карточку, ошибка возвращает её раньше.
                 </p>
-            </div>
-
-            <details th:if="${reviewState != null}" class="sm2-details">
-                <summary>SM-2 состояние</summary>
                 <dl class="sm2-grid">
                     <dt>Повторений</dt><dd th:text="${reviewState.repetitions()}">0</dd>
                     <dt>Интервал</dt><dd><span th:text="${reviewState.intervalDays()}">0</span> дн.</dd>
@@ -163,24 +209,6 @@
                 hidden=false
             )}"></div>
             <div th:replace="~{fragments/notice :: notice-slot(id='interview-alert', scope='page')}"></div>
-            <div class="result-actions">
-                <a class="btn next-btn"
-                   th:with="nextBase=${filter != null and filter.onlyWrong == true}"
-                   th:href="${nextBase}
-                       ? @{/review(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}
-                       : @{/(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}">
-                    Следующий вопрос
-                </a>
-                <!--/* Завершение сессии — вторичное действие рядом с основным, а не
-                     кнопка в шапке. Тот же контракт, что на экране вопроса (UX-003):
-                     подтверждение перед finish, чтобы промах не обрывал сессию. */-->
-                <form method="post" th:action="@{/finish}" class="result-finish-form"
-                      th:if="${interviewSession != null and !interviewSession.finished}">
-                    <button type="submit" class="btn secondary-btn result-finish-btn"
-                            data-confirm-title="Завершить сессию?"
-                            data-confirm="Прогресс сохранится в итогах. Завершить сессию сейчас?">Завершить сессию</button>
-                </form>
-            </div>
             <!--/* «Похожие вопросы» рендерятся сервером ниже (#result-related-questions,
                  th:if relatedQuestions). AI-разбор (feedback/comparison/takeaway/трейс)
                  вырезан вместе с провайдерами — кнопка «доп. анализ» и её пустой

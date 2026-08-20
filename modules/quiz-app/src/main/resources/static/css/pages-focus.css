@@ -1254,7 +1254,16 @@ html[data-design] .focus-training .report-zone { margin-top: var(--space-5); }
    спрайта состояний (`#px-portcullis`). */
 html[data-design] .focus-page .empty-state { width: min(100%, var(--focus-measure)); margin: var(--space-8) auto; }
 
-@media (max-width: 600px) {
+/* ПОРОГ ДОКА РАВЕН ПОРОГУ НАВИГАЦИИ. Док главного действия жил под
+   `max-width: 600px`, а фиксированная нижняя навигация — под `max-width: 900px`
+   (shell.css). В полосе 601–900 навигация есть, а дока нет, и кнопка ответа
+   оказывалась ПОД ней. Замер (Chromium и WebKit, 768×1024, с JS и без):
+   «Проверить ответ» на 964, навигация на 960 — `elementFromPoint` в центре кнопки
+   возвращал `A.active`, то есть ссылку «Тренировка». Нажатие на главное действие
+   уводило со страницы вместо ответа. На 820×1180 без JS — то же самое.
+
+   Правило теперь одно: где висит навигация, там действие закреплено над ней. */
+@media (max-width: 900px) {
   html[data-design] .focus-page .flashcard-grade-buttons { grid-template-columns: 1fr 1fr; }
   /* На мобиле главное действие — full-width (крупная цель тапа, явный primary).
      Спецификой добиваем #interview-submit (1,2,0) и .flashcard-reveal-btn (0,2,0):
