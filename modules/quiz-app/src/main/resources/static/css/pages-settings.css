@@ -533,16 +533,6 @@ html[data-design] .settings-page .mode-card-input:checked + .mode-card-body .mod
   }
 }
 
-/* Карточка «Сегодня» существует ровно тогда, когда ей есть что сказать.
-   Полоса серии заполняется скриптом и до этого несёт класс `hidden`; без JS она
-   не заполнится никогда. Пока сводка банка занимала ту же карточку, это было
-   незаметно — сводка серверная. Убрав сводку, мы оставили бы заголовок над
-   пустотой: ровно «пустая панель» из §37. Признак — состояние самой полосы, а не
-   отдельный флаг: второй источник правды разошёлся бы с первым. */
-html[data-design] .settings-page #builder-stats-card:has(.streak-bar.hidden) {
-  display: none;
-}
-
 /* ===========================================================================
    ЗАПУСК ПОД РУКОЙ — ПЛАВАЮЩАЯ КНОПКА НА ТЕЛЕФОНЕ.
 
@@ -692,6 +682,30 @@ html[data-design] .settings-page .outcome-filters {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
+/* Хвост лида — про двухколоночный конструктор; ниже 901px колонок нет. Клип, а не
+   `display: none`: скринридеру описание раскладки не мешает, а первый экран телефона
+   получает обратно две строки. Порог тот же, что у самой сетки. */
+@media (max-width: 900px) {
+  html[data-design] .settings-page .settings-lead-tail {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* СТРОКА «СЕГОДНЯ» В РЕЛЬСЕ. Отделена той же кромкой, что и строка отбора: это
+   третий факт о наборе — «сколько я уже сделал сегодня», — а не отдельный блок.
+   Пока скрипт не ответил, строки нет вовсе (`.hidden` снимает её сам скрипт),
+   поэтому пустого заголовка над пустотой здесь не бывает. */
+html[data-design] .settings-page .builder-outcome .outcome-today {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: var(--rule-weight) solid var(--color-border-secondary);
+}
+
 html[data-design] .settings-page .outcome-filters-label {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-xs);
