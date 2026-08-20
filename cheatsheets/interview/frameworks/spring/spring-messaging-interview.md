@@ -42,7 +42,7 @@ updated: 2026-05-31
 
 **Поддерживаемые транспорты** (каждый — свой модуль):
 
-- **JMS** (Java Message Service) — ActiveMQ, IBM MQ, Oracle AQ; модуль `spring-jms`. Это стандарт Java EE, единый API для всех JMS-брокеров.
+- **JMS** (Java Message Service, ныне Jakarta Messaging) — ActiveMQ, IBM MQ, Oracle AQ; модуль `spring-jms`. Это стандарт Jakarta EE, единый API для всех JMS-брокеров; начиная со Spring 6 пакеты переехали из `javax.jms` в `jakarta.jms`.
 - **AMQP** (RabbitMQ) — модули `spring-amqp` / `spring-rabbit`. Даёт exchanges и routing keys, которых в JMS нет.
 - **STOMP поверх WebSocket** — модуль `spring-websocket`; для push-сообщений в браузер.
 - **Apache Kafka** — модуль `spring-kafka` (отдельный проект). Event streaming, а не классические очереди.
@@ -77,8 +77,10 @@ spring:
     template:
       default-destination: orders-queue
     listener:
-      acknowledge-mode: client  # или auto, dups-ok
-      concurrency: 3-10          # мин-макс consumers
+      session:
+        acknowledge-mode: client  # или auto, dups-ok
+      min-concurrency: 3          # диапазон consumers задаётся двумя свойствами
+      max-concurrency: 10
 ```
 
 **3. Продюсер:**
@@ -118,7 +120,7 @@ public class OrderProducer {
 **Подтверждение (ACK).** Частая ошибка на собеседовании — считать, что дефолтный `auto` «подтверждает после успешной обработки». Для `DefaultMessageListenerContainer` (именно его создаёт Spring Boot) всё наоборот:
 
 - **`AUTO_ACKNOWLEDGE` (дефолт)** — сообщение подтверждается **до** выполнения listener-а. Исключение в методе redelivery **не даёт**: брокер уже считает сообщение доставленным, и оно теряется.
-- **`CLIENT_ACKNOWLEDGE`** (`spring.jms.listener.acknowledge-mode: client`) — контейнер подтверждает **после** успешного выхода из метода; при исключении — best-effort redelivery: сообщение, как правило, вернётся в очередь.
+- **`CLIENT_ACKNOWLEDGE`** (`spring.jms.listener.session.acknowledge-mode: client`) — контейнер подтверждает **после** успешного выхода из метода; при исключении — best-effort redelivery: сообщение, как правило, вернётся в очередь.
 - **`sessionTransacted=true`** (транзакционная сессия) — самый надёжный вариант: получение и ACK входят в локальную транзакцию JMS-сессии. Коммит — после успешной обработки, при исключении — rollback и **гарантированный** redelivery.
 
 Вывод: если при ошибке сообщение обязано вернуться в очередь, дефолтный `auto` не подходит — нужен `client` или транзакционная сессия (детали транзакций — в Q8).
@@ -493,7 +495,7 @@ public OrderResult handleRequest(OrderRequest request) {
 
 ## Q11. Как настроить кастомный MessageConverter?
 
-`MessageConverter` отвечает за то, как Java-объект превращается в байты сообщения (`toMessage`) и обратно (`fromMessage`). По умолчанию Spring AMQP использует Java-сериализацию — она хрупкая (требует одинаковых классов на обеих сторонах) и не читается другими языками. Поэтому в проде почти всегда ставят `Jackson2JsonMessageConverter`: JSON кросс-языковой, человекочитаемый и не ломается от мелких изменений класса.
+`MessageConverter` отвечает за то, как Java-объект превращается в байты сообщения (`toMessage`) и обратно (`fromMessage`). По умолчанию Spring AMQP использует Java-сериализацию — она хрупкая (требует одинаковых классов на обеих сторонах) и не читается другими языками. Поэтому в проде почти всегда ставят JSON-конвертер: JSON кросс-языковой, человекочитаемый и не ломается от мелких изменений класса. В `spring-amqp` 4.x это `JacksonJsonMessageConverter` (Jackson 3); прежний `Jackson2JsonMessageConverter` под Jackson 2 помечен как устаревший.
 
 **Зачем нужен `ClassMapper`:** при десериализации Jackson нужно знать, в какой класс восстанавливать JSON. По умолчанию имя класса берётся из заголовка `__TypeId__` — но если на стороне продюсера пакет другой, десериализация упадёт. `ClassMapper` явно сопоставляет логическое имя типа с классом, делая контракт стабильным между сервисами.
 
@@ -501,7 +503,7 @@ public OrderResult handleRequest(OrderRequest request) {
 // JSON конвертер по умолчанию
 @Bean
 public MessageConverter jsonMessageConverter() {
-    Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
+    JacksonJsonMessageConverter converter = new JacksonJsonMessageConverter();
     converter.setClassMapper(idClassMapper());  // для type-safe десериализации
     return converter;
 }
@@ -622,7 +624,7 @@ class JmsIntegrationTest {
 class RabbitIntegrationTest {
 
     @Container
-    static RabbitMQContainer rabbit = new RabbitMQContainer("rabbitmq:3-management");
+    static RabbitMQContainer rabbit = new RabbitMQContainer("rabbitmq:4-management");
 
     @DynamicPropertySource
     static void props(DynamicPropertyRegistry registry) {
@@ -638,12 +640,12 @@ class RabbitIntegrationTest {
 
 | Критерий | JMS (ActiveMQ) | AMQP (RabbitMQ) |
 |----------|----------------|-----------------|
-| Стандарт | Java EE | Open protocol |
+| Стандарт | Jakarta EE (ранее Java EE) | Open protocol |
 | Exchanges | Нет (direct queue) | Да (direct/topic/fanout/headers) |
 | Routing | Queue name + selector | Routing key + exchange |
 | Message model | Queue или Topic | Exchange → Queue(s) |
 | Вендоры | Один стандарт, разные реализации | Специфично для AMQP брокеров |
-| Спецификация | JMS 2.0 | AMQP 0.9.1 / 1.0 |
+| Спецификация | Jakarta Messaging 3.1 | AMQP 0.9.1 / 1.0 |
 | Полезность | Legacy enterprise | Современные микросервисы |
 
 **Практический вывод:** JMS берут, когда уже есть Java EE-инфраструктура или корпоративный брокер (IBM MQ) и нужна совместимость со стандартом. AMQP/RabbitMQ — когда важна гибкая маршрутизация (exchanges, routing keys) и брокер выбирают с нуля под микросервисы. Ключевое: маршрутизацию в JMS делают селекторами и именами очередей, в AMQP — связкой exchange + routing key, что мощнее и нагляднее.
