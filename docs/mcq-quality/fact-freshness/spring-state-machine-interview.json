@@ -1,14 +1,60 @@
 {
-  "topic_slug": "spring-state-machine-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
-  "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
-  ]
+ "topic_slug": "spring-state-machine-interview",
+ "round": "ROUND-10-LINKAGE-FIRST",
+ "status": "CHECKED",
+ "version_sensitive": true,
+ "product_version": "spring-statemachine-core 4.0.0 (последний релиз в Maven Central, 2023-12-04); репозиторий в spring-attic, архивирован 2026-07",
+ "checked_date": "2026-08-20",
+ "sources": [
+  "https://search.maven.org/solrsearch/select?q=g:org.springframework.statemachine+AND+a:spring-statemachine-core",
+  "https://github.com/spring-attic/spring-statemachine",
+  "https://enterprise.spring.io/projects/spring-statemachine/",
+  "https://docs.spring.io/spring-statemachine/docs/current/reference/",
+  "байткод spring-statemachine-core-4.0.0.jar (javap) и компиляция примеров на corretto-21.0.4"
+ ],
+ "version_sensitive_claims": [
+  {
+   "q": 1,
+   "claim": "статус проекта",
+   "verified": "в Maven Central после 4.0.0 (декабрь 2023) релизов нет; репозиторий переехал в spring-attic и переведён в режим только для чтения в июле 2026; платная линия с исправлениями безопасности продолжается отдельно",
+   "action": "источник дополнен: оговорки про статус не было вовсе, фреймворк подавался как живой"
+  },
+  {
+   "q": 7,
+   "claim": "конструктор DefaultStateMachineContext",
+   "verified": "javap по 4.0.0: (S, E, Map<String,Object>, ExtendedState) — третий параметр это заголовки события. Компиляция примера из шпаргатки падает: incompatible types: Map<Object,Object> cannot be converted to Map<String,Object>",
+   "action": "источник исправлен: пример не компилировался и не сохранял Extended State"
+  },
+  {
+   "q": 3,
+   "claim": "типы результата отправки события",
+   "verified": "javap: StateMachineEventResult.ResultType содержит ACCEPTED, DENIED и DEFERRED — три значения, а не два",
+   "action": "источник дополнен третьим значением"
+  },
+  {
+   "q": 3,
+   "claim": "sendEvent возвращает boolean",
+   "verified": "в реактивном API возвращается Flux<StateMachineEventResult>; boolean отдаёт метод-обёртка из примера",
+   "action": "формулировка расшита, двусмысленность убрана"
+  },
+  {
+   "q": 6,
+   "claim": "ExtendedState — Map<Object, Object> и get(key, Class)",
+   "verified": "javap: getVariables() возвращает Map<Object,Object>, есть <T> T get(Object, Class<T>)",
+   "action": "подтверждено без правки"
+  },
+  {
+   "q": 10,
+   "claim": "конфигураторы fork и join",
+   "verified": "javap: ForkTransitionConfigurer имеет source/target, JoinTransitionConfigurer — source/sources/target; примеры шпаргалки синтаксически корректны",
+   "action": "подтверждено без правки"
+  }
+ ],
+ "staleness_risks": [
+  "проект в архиве: новых версий открытой линии не будет, но платная линия может выпускать исправления с иной нумерацией",
+  "дата архивации и наличие коммерческой поддержки — организационные факты, они могут измениться быстрее технических"
+ ],
+ "notes": [
+  "Гейт SOURCE_COVERAGE после снятия временных оборотов из вариантов показывает n/a, но факты в основе версионные — запись ведётся осознанно."
+ ]
 }
