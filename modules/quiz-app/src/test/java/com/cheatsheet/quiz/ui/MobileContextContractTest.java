@@ -193,19 +193,26 @@ class MobileContextContractTest {
         assertThat(desk).as("правило рабочего места исчезло из pages-focus.css").isNotNegative();
         String gate = css.substring(Math.max(0, desk - 1200), desk);
 
-        for (String surface : new String[] {
-                ":has(#interview-options)", ":has(.flashcard-answer)",
-                ":has(.typed-workspace)", ":has(.study-learn-phase)" }) {
-            assertThat(gate).as("поверхность %s выпала из гейта рабочего места — "
-                            + "её режим снова разложится стопкой под заданием", surface)
-                    .contains(surface);
-        }
+        // ПРАВИЛО ТО ЖЕ, НАПИСАНИЕ ДРУГОЕ (iter-138). Здесь стоял перечень из четырёх
+        // признаков поверхности, и гейт требовал ровно его. Перечень оказался неполон
+        // второй раз подряд (сначала были режимы, потом признаки): фаза вспоминания
+        // флешкарты не подходит ни под один из четырёх, и композиции у неё не было.
+        // Теперь каждая поверхность носит общий класс, и гейт проверяет ЕГО.
+        assertThat(gate).as("рабочее место включается не по признаку поверхности — "
+                        + "значит, снова по перечню, который уже дважды оказывался неполон")
+                .contains(":has(.workspace-surface:not(.hidden))");
+        assertThat(gate).as("`hidden` в гейте обязателен: приёмник разбора стоит в разметке "
+                        + "всегда, и до заполнения скриптом композиции быть не должно")
+                .doesNotContain(":has(.workspace-surface)}");
         assertThat(gate).as("место снова включается по СПИСКУ РЕЖИМОВ: перечень не полон "
                         + "по построению — забытый режим молча остаётся стопкой")
                 .doesNotContain("data-session-mode=");
-        assertThat(gate).as("место включается по самой фазе, а не по её содержимому: "
+        assertThat(gate).as("РАБОЧЕЕ МЕСТО включается по самой фазе, а не по её содержимому: "
                         + "у флешкарты до раскрытия в поверхности одна кнопка, и правая "
-                        + "колонка вырождается в ~900px пустоты")
+                        + "колонка вырождается в ~900px пустоты. (У фазы вспоминания с "
+                        + "iter-138 есть СВОЯ композиция — карточка и рельс спутников, — "
+                        + "но она объявлена отдельно и второй колонкой берёт спутников, "
+                        + "а не голое действие.)")
                 .doesNotContain(":has(.flashcard-phase)");
     }
 
@@ -220,14 +227,10 @@ class MobileContextContractTest {
         assertThat(measures).as("меры рабочего места исчезли").isNotNegative();
         String owners = css.substring(Math.max(0, measures - 800), measures);
 
-        for (String surface : new String[] {
-                ":has(#interview-options)", ":has(.flashcard-answer)",
-                ":has(.typed-workspace)", ":has(.study-learn-phase)" }) {
-            assertThat(owners).as("поверхность %s включает композицию, но мер не объявляет — "
-                            + "`minmax(var(--workspace-desk-min), 1fr)` разрешится в пустоту "
-                            + "и колонка задания схлопнется до 25px", surface)
-                    .contains(surface);
-        }
+        assertThat(owners).as("меры объявлены не для того же состава, который включает "
+                        + "композицию: `minmax(var(--workspace-desk-min), 1fr)` разрешится "
+                        + "в пустоту и колонка задания схлопнется до 25px")
+                .contains(":has(.workspace-surface:not(.hidden))");
     }
 
     /**

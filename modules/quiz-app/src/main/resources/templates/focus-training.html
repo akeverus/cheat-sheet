@@ -640,7 +640,7 @@
             <div th:if="${!sessionRecallMode}" class="flashcard-browse">
                 <details id="browse-details" class="flashcard-browse-details">
                     <summary id="browse-reveal-btn" class="flashcard-reveal-btn flashcard-reveal-summary">Показать ответ</summary>
-                    <div id="browse-answer" class="flashcard-answer">
+                    <div id="browse-answer" class="flashcard-answer workspace-surface">
                         <div class="answer markdown-content" th:utext="${studyAnswerHtml}"></div>
                     </div>
                 </details>
@@ -663,7 +663,7 @@
                  отсюда: у интервью это структура устного ответа, у код-челленджа —
                  что проверяют в решении. Пустой список = блока нет вовсе, поэтому
                  разметка не знает, у каких режимов опора есть. */-->
-            <div th:if="${sessionRecallMode and !flashcardRevealed and typedInputMode}" class="typed-workspace">
+            <div th:if="${sessionRecallMode and !flashcardRevealed and typedInputMode}" class="typed-workspace workspace-surface">
                 <!--/* ПЛАН ОТВЕТА — ФЛАЖКИ, А НЕ СПИСОК. Пункты приходят из
                      ModeUtils#workspaceChecklist (свойство режима), но раньше
                      печатались прозой в колонке задания с нарисованной клеткой в
@@ -788,7 +788,7 @@
                   th:if="${sessionRecallMode and !flashcardRevealed and !typedInputMode}">
                 <button type="submit" class="flashcard-reveal-btn">Показать ответ</button>
             </form>
-            <div th:if="${sessionRecallMode and flashcardRevealed}" class="flashcard-answer">
+            <div th:if="${sessionRecallMode and flashcardRevealed}" class="flashcard-answer workspace-surface">
                 <!--/* Typed-recall / code-challenge / interview: эхо ответа пользователя
                      над эталоном для само-сверки («напиши → сравни»). Текст живёт в
                      sessionStorage (сохраняется JS при сабмите reveal-формы, т.к.
@@ -828,9 +828,9 @@
              !flashcardMode: у вопроса без seed-вариантов LEARN вырождается во
              флешкарту (блок flashcard-browse выше уже раскрывает ответ), а QUIZ там
              всё равно был бы пуст — отдельная карточка изучения не нужна. */-->
-        <div th:if="${studyLearnPhase and !flashcardMode}" class="flashcard-phase study-learn-phase">
+        <div th:if="${studyLearnPhase and !flashcardMode}" class="flashcard-phase study-learn-phase workspace-surface">
             <div class="flashcard-badge">Изучение — прочитай ответ, затем проверь себя</div>
-            <div class="flashcard-answer">
+            <div class="flashcard-answer workspace-surface">
                 <div class="answer markdown-content" th:utext="${studyAnswerHtml}"></div>
             </div>
             <form method="post" th:action="@{/study-confirm}" class="study-confirm-form">
@@ -864,7 +864,7 @@
             <p class="zone-hint" id="options-flow-hint"
                th:text="${focusModeHintText}">Выбери один вариант. Проверка и разбор идут по шагам.</p>
 
-            <div class="options" id="interview-options" role="radiogroup" aria-label="Варианты ответа" aria-describedby="options-flow-hint">
+            <div class="options workspace-surface" id="interview-options" role="radiogroup" aria-label="Варианты ответа" aria-describedby="options-flow-hint">
                 <label th:each="opt, iterStat : ${current.options}"
                        th:data-option-id="${opt.id}"
                        th:aria-label="${'Вариант ' + (iterStat.index + 1) + ': ' + @markdownRenderService.toPlainText(opt.optionText)}">
