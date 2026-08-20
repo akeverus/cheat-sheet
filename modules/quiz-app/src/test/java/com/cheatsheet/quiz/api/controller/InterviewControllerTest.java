@@ -751,14 +751,27 @@ class InterviewControllerTest {
         assertThat(body).doesNotContain("empty-action-retry\" href=\"/training");
     }
 
+    /**
+     * Пустой разбор (iter-143): экран называет СОБЫТИЕ и ведёт дальше.
+     *
+     * <p>Здесь стояло обратное: тест закреплял общий текст «Нет вопросов с ошибками
+     * для повтора.» и кнопку «Обновить повтор ошибок» — перезагрузку того же адреса,
+     * на котором вопросов заведомо нет. Кнопка-петля снята, поэтому проверка
+     * переписана под новое поведение, а не ослаблена: список утверждений вырос.</p>
+     */
     @Test
-    void reviewFallbackStateKeepsReviewRecoveryActionWhenNoWrongQuestions() throws Exception {
+    void reviewFallbackStateNamesTheEventAndOffersAWayForward() throws Exception {
         String body = emptyFocusBody("/review");
         assertFocusPageRendered(body);
-        assertThat(body).contains("Нет вопросов с ошибками для повтора.");
-        assertThat(body).contains("empty-action-retry");
-        assertThat(body).contains("href=\"/review\"");
-        assertThat(body).contains("Обновить повтор ошибок");
+        // Фикстура зовёт `/review?topic=<несуществующая тема>`, то есть ОТФИЛЬТРОВАННЫЙ
+        // пустой разбор: экран обязан сказать, что пусто именно в этой выборке, и дать
+        // выход к остальным ошибкам. Ветку без отбора закрепляет разметочный гейт
+        // ReviewEmptyStateContractTest.
+        assertThat(body).contains("В этой выборке ошибок нет");
+        assertThat(body).contains("empty-action-review-all");
+        assertThat(body).contains("empty-action-train");
+        assertThat(body).as("перезагрузка того же пустого адреса — петля")
+                .doesNotContain("Обновить повтор ошибок");
     }
 
     @Test

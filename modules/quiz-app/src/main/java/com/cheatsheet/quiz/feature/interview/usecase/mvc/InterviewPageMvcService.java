@@ -217,6 +217,12 @@ public class InterviewPageMvcService {
         return "redirect:/bookmarks";
     }
 
+    /**
+     * Сколько тем показать в пустом разборе. Пять — это указатель «иди туда», а не
+     * оглавление: длинный список на пустом экране сам становится работой.
+     */
+    private static final int REVIEW_HOT_TOPICS_LIMIT = 5;
+
     private String renderFocusPage(
             InterviewSession interviewSession,
             InterviewFilter filter,
@@ -238,6 +244,14 @@ public class InterviewPageMvcService {
                 questionId
         );
         modelAttributeMapper.applyFocusPageState(model, pageState, reviewMode);
+        // ПУСТОЙ РАЗБОР ОТВЕЧАЕТ «А ГДЕ ОШИБКИ ЕСТЬ». Экран без вопроса — единственное
+        // место, где этот вопрос вообще возникает, и единственное, где за него не
+        // платит показ вопроса: страница ничем другим не занята. В остальных случаях
+        // список пуст и в разметку не попадает.
+        model.addAttribute("reviewHotTopics",
+                reviewMode && (pageState.current() == null || pageState.current().isEmpty())
+                        ? focusTrainingPageService.topicsWithMistakes(REVIEW_HOT_TOPICS_LIMIT)
+                        : java.util.List.of());
         // Метка показа вопроса для измерения времени ответа (Фаза 4): только когда
         // есть активная сессия и реальный вопрос на экране. Reload страницы
         // переставляет метку — think-time считается от последнего показа.

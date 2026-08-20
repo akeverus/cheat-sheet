@@ -23,6 +23,10 @@ import org.springframework.ui.Model;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -78,6 +82,48 @@ class InterviewPageMvcServiceTest {
                 requestMapper,
                 properties
         );
+    }
+
+    /**
+     * «Где ошибки есть» считается ТОЛЬКО для пустого экрана разбора. На экране с
+     * вопросом проход по всем темам был бы платой за весь банк ради одной строки —
+     * тем же доводом карта темы считается одним запросом по текущей теме.
+     */
+    @Test
+    void reviewHotTopicsAreQueriedOnlyWhenTheReviewScreenIsEmpty() {
+        var emptyState = org.mockito.Mockito.mock(FocusTrainingPageService.FocusPageState.class);
+        when(emptyState.current()).thenReturn(java.util.Optional.empty());
+        when(focusTrainingPageService.buildFocusPageState(
+                any(), any(), any(), anyBoolean(), any(), any())).thenReturn(emptyState);
+        when(focusTrainingPageService.topicsWithMistakes(anyInt()))
+                .thenReturn(java.util.List.of(
+                        new com.cheatsheet.quiz.domain.TopicStats("java/streams", 10, 1, 2, 3, 3, 7, 0.5)));
+
+        service.review(null, null, null, null, null, null, null, null, null, session, model);
+
+        verify(focusTrainingPageService).topicsWithMistakes(anyInt());
+        verify(model).addAttribute(eq("reviewHotTopics"),
+                argThat(v -> v instanceof java.util.List<?> l && l.size() == 1));
+    }
+
+    /**
+     * Обратная сторона того же правила: на экране С вопросом список не считается вовсе.
+     * Без этой проверки гейт ловил бы только «считается, когда надо», но не
+     * «не считается, когда не надо» — а цена как раз во втором.
+     */
+    @Test
+    void reviewHotTopicsAreNotQueriedWhenAQuestionIsOnTheScreen() {
+        var withQuestion = org.mockito.Mockito.mock(FocusTrainingPageService.FocusPageState.class);
+        when(withQuestion.current()).thenReturn(java.util.Optional.of(
+                org.mockito.Mockito.mock(com.cheatsheet.quiz.domain.InterviewQuestion.class)));
+        when(focusTrainingPageService.buildFocusPageState(
+                any(), any(), any(), anyBoolean(), any(), any())).thenReturn(withQuestion);
+
+        service.review(null, null, null, null, null, null, null, null, null, session, model);
+
+        verify(focusTrainingPageService, org.mockito.Mockito.never()).topicsWithMistakes(anyInt());
+        verify(model).addAttribute(eq("reviewHotTopics"),
+                argThat(v -> v instanceof java.util.List<?> l && l.isEmpty()));
     }
 
     @Test

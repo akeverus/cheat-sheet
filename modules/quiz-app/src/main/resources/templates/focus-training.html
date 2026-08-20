@@ -971,14 +971,34 @@
              некуда». Монохром через currentColor — один тон в обеих темах, и это
              тот же язык, которым говорят пустые состояния закладок и аналитики.
              Декоративный (aria-hidden) — смысл несёт заголовок ниже. */-->
-        <svg class="px-illus px-illus-lg empty-state-illus" aria-hidden="true"><use href="#px-portcullis"></use></svg>
-        <h1 class="empty-state-title">Сейчас нет вопросов</h1>
+        <!--/* КАРТИНКА НАЗЫВАЕТ СОБЫТИЕ, А НЕ СОСТОЯНИЕ ЭКРАНА. Опускная решётка
+             («путь закрыт») стояла здесь на ВСЕ причины сразу, включая разбор
+             ошибок, где пустота — хороший исход: ошибок не осталось. Глиф под этот
+             исход в продукте уже был и уже использовался на вкладке «Ошибки» в
+             аналитике — очищенная доска заданий. Одно событие, одна картинка. */-->
+        <svg class="px-illus px-illus-lg empty-state-illus" aria-hidden="true"
+             th:if="${reviewMode}"><use href="#px-clean-slate"></use></svg>
+        <svg class="px-illus px-illus-lg empty-state-illus" aria-hidden="true"
+             th:unless="${reviewMode}"><use href="#px-portcullis"></use></svg>
+        <!--/* Заголовок тоже про событие. «Сейчас нет вопросов» верно для пустого
+             отбора и неверно для разобранных ошибок: там нечего повторять не
+             потому, что не нашлось, а потому, что всё разобрано. */-->
+        <h1 class="empty-state-title" th:if="${reviewMode}"
+            th:with="filtered=${filter != null and (filter.topic() != null or filter.group() != null)}"
+            th:text="${filtered} ? 'В этой выборке ошибок нет' : 'Ошибок для повтора нет'">Ошибок для повтора нет</h1>
+        <h1 class="empty-state-title" th:unless="${reviewMode}">Сейчас нет вопросов</h1>
         <!--/* AIR-6 (R0.129): AI вырезан → generationUnavailable был зашит в false
              (всегда). Плечо `!generationUnavailable and` снято из guard'ов как
              всегда-истинное вместе с model-атрибутом и plumbing (FocusPageState +
              MvcModelAttributeMapper). Ветки взаимоисключающие по reviewMode / сессии. */-->
 
-        <p class="empty-state-text" th:if="${reviewMode}">Нет вопросов с ошибками для повтора.</p>
+        <!--/* Причина названа честно и по-разному: разобранная история — это одно,
+             а сузивший всё в ноль отбор — другое. */-->
+        <p class="empty-state-text" th:if="${reviewMode}"
+           th:with="filtered=${filter != null and (filter.topic() != null or filter.group() != null)}"
+           th:text="${filtered}
+             ? 'В этой теме или разделе ошибок не осталось — по остальным они могли сохраниться.'
+             : 'Все ошибки из истории разобраны. Вопрос вернётся сам, когда планировщик назначит повтор.'">Ошибок нет.</p>
         <p class="empty-state-text" th:if="${!reviewMode and interviewSession == null}">Нет доступных вопросов по выбранным фильтрам. Открой настройки и расширь выборку.</p>
         <p class="empty-state-text" th:if="${!reviewMode and interviewSession != null and !interviewSession.finished}">Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.</p>
         <p class="empty-state-text" th:if="${!reviewMode and interviewSession != null and interviewSession.finished}"><svg class="px-icon px-icon-lead" aria-hidden="true"><use href="#flag"></use></svg>Сессия завершена.</p>
@@ -999,14 +1019,58 @@
                  инструкцией). В прочих ветках (AI недоступен / сессия не готова) refresh
                  осмыслен → там он остаётся primary. settingsPrimary и finished взаимо-
                  исключающи (finished ⇒ interviewSession != null). */-->
-            <a class="btn empty-action-settings" th:classappend="${settingsPrimary} ? ' next-btn' : ' secondary-btn'"
+            <!--/* РАЗБОР ОШИБОК: ДЕЙСТВИЯ ВЕДУТ ДАЛЬШЕ, А НЕ ПО КРУГУ. Здесь главным
+                 стояло «Обновить повтор ошибок» — перезагрузка того же адреса, на
+                 котором вопросов заведомо нет. Тот же довод уже снял такую кнопку
+                 из ветки пустого отбора («перезагрузка того же фильтра — no-op»),
+                 а в разборе она осталась.
+
+                 Если ошибок нет во всей истории — идти дальше некуда, кроме
+                 тренировки: она и есть primary. Если пусто из-за отбора — есть куда:
+                 к остальным ошибкам. */-->
+            <!--/* Куда идти за ошибками — списком тем, а не советом «поищи сам».
+                 Данные считает страница только в этом состоянии (пустой разбор):
+                 см. InterviewPageMvcService#renderFocusPage. Пустой список — блока
+                 нет вовсе. */-->
+            <th:block th:if="${reviewMode}"
+                      th:with="filtered=${filter != null and (filter.topic() != null or filter.group() != null)}">
+                <a th:if="${filtered}" class="btn next-btn empty-action-review-all" th:href="@{/review}">Разобрать все ошибки</a>
+                <a class="btn empty-action-train" th:classappend="${filtered} ? ' secondary-btn' : ' next-btn'"
+                   th:href="@{/}">Продолжить тренировку</a>
+                <a class="btn secondary-btn empty-action-stats" th:unless="${filtered}" th:href="@{/stats}">Посмотреть аналитику</a>
+            </th:block>
+            <a class="btn empty-action-settings" th:unless="${reviewMode}"
+               th:classappend="${settingsPrimary} ? ' next-btn' : ' secondary-btn'"
                th:href="@{/settings}">Открыть настройки</a>
             <!--/* retry: primary по умолчанию; опускаем до secondary при finished (primary —
                  «итоги») ИЛИ при settingsPrimary (primary — настройки).
                  th:href/th:text фиксирует TemplateFragmentContractTest. */-->
-            <a class="btn empty-action-retry" th:classappend="${finished or settingsPrimary} ? ' secondary-btn' : ' next-btn'"
+            <a class="btn empty-action-retry" th:unless="${reviewMode}"
+               th:classappend="${finished or settingsPrimary} ? ' secondary-btn' : ' next-btn'"
                th:href="${focusEmptyRetryHref}" th:text="${focusEmptyRetryText}">Обновить тренировку</a>
         </div>
+
+        <!--/* ГДЕ ОШИБКИ ЕСТЬ. Замер пустого разбора (Chromium и WebKit): карточка
+             960×247 на 1512 и 1296×247 на 2560, под ней 412 и 641px пустоты — экран
+             сообщал «здесь ничего нет» и не говорил, где есть. Список тем с числом
+             ошибок превращает тупик в развилку и занимает ту самую пустоту.
+
+             Стоит ПОСЛЕ действий, а не перед ними. Первая сборка ставила список
+             выше: на 390×844 карточка выросла с 395 до 891px, и главное действие
+             ушло за сгиб — пять ссылок оттеснили ту самую кнопку, ради которой
+             экран и открывают. Порядок в разметке и на экране один и тот же на
+             всех ширинах: сначала «что сделать», потом «куда ещё пойти», — поэтому
+             обход с клавиатуры совпадает с чтением. */-->
+        <ul class="empty-state-routes" th:if="${reviewMode and reviewHotTopics != null and !reviewHotTopics.isEmpty()}"
+            aria-label="Темы, где ошибки остались">
+            <li th:each="t : ${reviewHotTopics}">
+                <a th:href="@{/review(topic=${t.topic()})}" th:title="${t.topic()}">
+                    <span class="empty-state-route-name" th:text="${@topicUtils.displayName(t.topic())}">Тема</span>
+                    <span class="empty-state-route-count"
+                          th:text="${t.wrong()} + ' ' + ${@plural.pick(t.wrong(), 'ошибка', 'ошибки', 'ошибок')}">0 ошибок</span>
+                </a>
+            </li>
+        </ul>
     </section>
 </main>
     </div>

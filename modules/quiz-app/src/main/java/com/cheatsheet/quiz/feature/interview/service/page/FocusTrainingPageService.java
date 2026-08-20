@@ -17,6 +17,7 @@ import com.cheatsheet.quiz.feature.interview.service.review.ReviewReasonService;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import com.cheatsheet.quiz.feature.interview.usecase.stats.LearningMetricsService;
 import com.cheatsheet.quiz.domain.QuestionDifficulty;
+import com.cheatsheet.quiz.domain.TopicStats;
 import com.cheatsheet.quiz.domain.ContentBlock;
 import com.cheatsheet.quiz.domain.FlashcardPhase;
 import com.cheatsheet.quiz.domain.StudyPhase;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Service;
 import lombok.Builder;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -209,6 +211,29 @@ public class FocusTrainingPageService {
                 topicMap,
                 questionNote
         );
+    }
+
+    /**
+     * Темы, в которых ошибки ещё остались — от самой «горячей» вниз.
+     *
+     * <p>Зовётся ТОЛЬКО когда экран разбора пуст: там вопроса нет, страница ничем
+     * другим не занята, и один проход по темам — честная цена за ответ на «а где
+     * ошибки тогда есть». На экране с вопросом этот запрос был бы платой за весь
+     * банк ради одной строки (тот же довод, по которому карта темы считается одним
+     * запросом по текущей теме, а не обходом всех).
+     *
+     * @param limit сколько тем показать; список короткий по смыслу — это указатель,
+     *              а не оглавление
+     */
+    public List<TopicStats> topicsWithMistakes(int limit) {
+        return questionStatsRepository.findTopicStats(
+                        clock.instant().getEpochSecond(),
+                        appProperties.getInterview().getLearnedRepetitions())
+                .stream()
+                .filter(t -> t.wrong() > 0)
+                .sorted(Comparator.comparingLong(TopicStats::wrong).reversed())
+                .limit(limit)
+                .toList();
     }
 
     /**
