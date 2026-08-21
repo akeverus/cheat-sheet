@@ -6,55 +6,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `Optional<T>` и зачем он нужен?",
+          "question_text": "Что такое Optional и зачем он нужен?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`Optional<T>` — value-based container для present non-null value или absence; обычно он выражает нормальное отсутствие в method return type.",
+              "order": 0,
+              "text": "Обёртка выносит возможное отсутствие значения прямо в сигнатуру метода.",
               "correct": true,
               "sections": {
-                "explanation": "Optional делает отсутствие частью API вместо неявного nullable return. Empty и present states обрабатываются operations `map`, `flatMap`, `filter`, `orElse*`, `or` и `ifPresent*`, но container не является универсальной заменой null.",
-                "example": "`Optional<User> findById(Id id)` сообщает caller-у, что запись может отсутствовать; `findById(id).map(User::email).orElseThrow(...)` обрабатывает обе ветви.",
-                "when_to_apply": "Используйте прежде всего как return type метода, где отсутствие является нормальным исходом и caller должен принять явное решение.",
-                "edge_cases": "Сам `Optional` по convention не должен быть `null`, но Java это не запрещает. Он value-based: не следует полагаться на identity, synchronization или singleton empty instance.",
-                "related": "[[java-optional-interview#Q2]] создание; [[java-optional-interview#Q7]] map/flatMap; [[java-optional-interview#Q12]] антипаттерны."
+                "explanation": "Optional — контейнер, который либо содержит значение, либо пуст, и его главная задача сделать отсутствие видимым прямо в сигнатуре.",
+                "example": "Когда метод возвращает null, об этом не сказано в типе: компилятор не подскажет, документация может врать, а вызывающий забудет проверку.",
+                "when_to_apply": "Optional в возвращаемом типе читается как явный сигнал: значения может не быть, обработай оба случая.",
+                "edge_cases": "Пример из шпаргалки показывает обе стороны: раньше поиск отдавал голый объект и падал на пустом, теперь возвращает контейнер и цепочку с дефолтом.",
+                "related": "Это контракт, выраженный в типе, а не комментарий, который можно проигнорировать. Null из кода он не убирает, но превращает забытую проверку в явное решение вызывающего."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "`Optional<T>` — synchronized holder, который делает чтение и обновление значения thread-safe и заменяет `AtomicReference` для shared mutable state.",
+              "order": 1,
+              "text": "Он полностью убирает null из кода, поэтому проверок больше нет.",
               "correct": false,
               "sections": {
-                "what_actually": "`Optional` не имеет отношения к многопоточности: он лишь моделирует наличие или отсутствие значения и не даёт никаких гарантий синхронизации.",
-                "source_of_confusion": "Слово «обёртка» наводит на мысль о потокобезопасных контейнерах вроде `AtomicReference`, поэтому назначение смешивают.",
-                "if_it_were_true": "Тогда `Optional` использовали бы в конкурентном коде вместо `synchronized`, но для атомарности по-прежнему берут `AtomicReference`.",
-                "how_it_should_be": "Это контейнер для явного выражения возможного отсутствия значения; потокобезопасность обеспечивают отдельные классы из `java.util.concurrent`."
+                "what_actually": "Null из кода он не убирает полностью — это прямо оговорено в итоге ответа.",
+                "source_of_confusion": "Обёртка вокруг возможного отсутствия выглядит как средство избавиться от null везде.",
+                "if_it_were_true": "Тогда внутри самого контейнера нечего было бы оборачивать через фабрику для возможного null.",
+                "how_it_should_be": "Считать пользой не исчезновение null, а явность отсутствия в типе."
               }
             },
             {
-              "order": 2,
               "label": "C",
-              "text": "`Optional<T>` — коллекция постоянной длины два: первый элемент хранит value, второй boolean flag; к ней применимы обычные collection operations.",
+              "order": 2,
+              "text": "Отсутствие значения он прячет так же, как это делает null.",
               "correct": false,
               "sections": {
-                "what_actually": "`Optional` хранит 0 или 1 значение, не реализует `Collection` и не является коллекцией — это контейнер на одно опциональное значение.",
-                "source_of_confusion": "Метод `stream()`, превращающий `Optional` в `Stream` из 0–1 элемента, наводит на мысль о коллекции.",
-                "if_it_were_true": "Тогда по `Optional` можно было бы итерироваться в `for-each` и вызывать `size()`, но таких методов у него нет.",
-                "how_it_should_be": "Это одноэлементный контейнер; представление как стрима из 0–1 элемента доступно только через `Optional.stream()`."
+                "what_actually": "Отсутствие он как раз делает видимым, а прячет его именно null.",
+                "source_of_confusion": "И то и другое означает «значения нет», разница только в том, видно ли это из сигнатуры.",
+                "if_it_were_true": "Тогда вызывающий по-прежнему узнавал бы о пустоте только при падении.",
+                "how_it_should_be": "Различать скрытое отсутствие через null и объявленное через тип."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "`Optional<T>` полностью исключает `null` и `NullPointerException` из приложения: после его появления ни один API или component уже не может вернуть `null`.",
+              "order": 3,
+              "text": "О возможной пустоте вызывающий узнаёт только в момент выполнения.",
               "correct": false,
               "sections": {
-                "what_actually": "`Optional` лишь делает обработку отсутствия явной в сигнатуре, но `null` остаётся в языке, а NPE возможен (например, при `null`-ссылке на сам `Optional`).",
-                "source_of_confusion": "Маркетинг «замены null» создаёт впечатление, что инструмент гарантированно вычищает все NPE.",
-                "if_it_were_true": "Тогда не существовало бы антипаттерна `Optional.of(null)`, бросающего NPE сразу, но он остаётся реальной ошибкой.",
-                "how_it_should_be": "Это контракт в типе: NPE становится менее вероятным, но дисциплина обращения с `null` всё ещё нужна."
+                "what_actually": "О возможной пустоте говорит сам возвращаемый тип, то есть ещё до запуска.",
+                "source_of_confusion": "Проверка пустоты и правда происходит в рантайме, и это переносят на сигнатуру.",
+                "if_it_were_true": "Тогда контракт ничем не отличался бы от прежнего возврата голого null.",
+                "how_it_should_be": "Отделять момент проверки значения от момента, когда о нём узнали."
               }
             }
           ]
@@ -66,55 +66,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как создать `Optional`?",
+          "question_text": "Как создать Optional?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`empty()` создаёт absence, `of(value)` требует non-null, а `ofNullable(value)` превращает nullable reference в present или empty Optional.",
+              "order": 0,
+              "text": "Пустой контейнер получают лишь через `ofNullable`, отдельной фабрики `empty` попросту нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отдельная фабрика для пустого контейнера есть, и она первая в перечне.",
+                "source_of_confusion": "Обёртывание null и правда даёт пустоту, и второй способ кажется лишним.",
+                "if_it_were_true": "Тогда явный возврат пустоты приходилось бы писать через фиктивный null.",
+                "how_it_should_be": "Держать в голове все три фабрики, а не две похожие."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Фабрика `of` падает на null сразу, а `ofNullable` даёт пустой контейнер.",
               "correct": true,
               "sections": {
-                "explanation": "Фабрики отражают исходный contract: `of` фиксирует невозможность null и быстро выявляет нарушение, `ofNullable` адаптирует legacy/nullable source, `empty` выражает заведомое отсутствие.",
-                "example": "`Optional.of(config)` подходит после обязательной validation; `Optional.ofNullable(row.getNickname())` безопасно преобразует nullable database value.",
-                "when_to_apply": "Выбирайте factory по реальной nullability, не используйте `ofNullable` как способ скрыть bug там, где value обязан существовать.",
-                "edge_cases": "Передача null в `map` result превращает результат в empty, но `flatMap` function обязана вернуть non-null Optional. Сам return Optional не должен быть null.",
-                "related": "[[java-optional-interview#Q1]] назначение; [[java-optional-interview#Q5]] отсутствие как ошибка; [[java-optional-interview#Q7]] transformations."
+                "explanation": "Фабричных метода три, и выбор между ними зависит от того, что известно про значение: пусто ли оно, не null ли, или может быть и тем и другим.",
+                "example": "Вызов of с null даёт NullPointerException немедленно, на месте вызова, а ofNullable с тем же null возвращает пустой контейнер.",
+                "when_to_apply": "Это не баг, а задумка: of предназначен для значений, которые точно не null, и быстро ловит нарушение контракта.",
+                "edge_cases": "Третья фабрика empty нужна, когда пустоту возвращают явно, не имея на руках никакого значения.",
+                "related": "Эмпирическое правило простое: of берут, когда null означал бы баг в собственной логике, а для значений из внешнего источника всегда ofNullable."
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Пустой container создают `Optional.ofNullable()` без arguments, а `empty()` является instance method заполненного Optional и очищает его текущее value.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Пустой контейнер создаёт `Optional.empty()`; `ofNullable` требует аргумент и без него не скомпилируется.",
-                "source_of_confusion": "Кажется логичным, что «без аргумента» автоматически означает пустоту, но для этого есть отдельный метод.",
-                "if_it_were_true": "Тогда `Optional.ofNullable()` был бы валиден, но у метода есть обязательный параметр `value`.",
-                "how_it_should_be": "Явно пустой `Optional` создают через `Optional.empty()`, а `ofNullable(null)` лишь даёт тот же результат при `null`-аргументе."
-              }
-            },
-            {
-              "order": 2,
               "label": "C",
-              "text": "`Optional.of(value)` и `ofNullable(value)` одинаково принимают `null` и возвращают empty, различаясь только названием и intended readability API.",
+              "order": 2,
+              "text": "Фабрика `of` спокойно принимает null и молча возвращает пустой контейнер `Optional`.",
               "correct": false,
               "sections": {
-                "what_actually": "`of(null)` бросает `NullPointerException`, а `ofNullable(null)` возвращает `Optional.empty()` — поведение на `null` принципиально разное.",
-                "source_of_confusion": "Похожие имена создают впечатление взаимозаменяемости методов при любом аргументе.",
-                "if_it_were_true": "Тогда не было бы смысла в двух методах, но `of` намеренно падает, чтобы поймать ошибочный `null` как можно раньше.",
-                "how_it_should_be": "`of` для гарантированно ненулевых значений (падает на `null`), `ofNullable` для возможного `null` (даёт `empty`)."
+                "what_actually": "На null эта фабрика падает немедленно, а пустой контейнер отдаёт другая.",
+                "source_of_confusion": "Обе фабрики принимают значение того же типа, и разницу в контракте легко упустить.",
+                "if_it_were_true": "Тогда быстрый отказ на нарушении контракта был бы невозможен вовсе.",
+                "how_it_should_be": "Помнить, что мягко обходится с null только фабрика для возможного null."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "Optional создают public constructor `new Optional<>(value)`; constructor автоматически преобразует `null` в empty и доступен для generic inference.",
+              "order": 3,
+              "text": "Фабрика `ofNullable` на null бросает исключение точно так же, как `of`.",
               "correct": false,
               "sections": {
-                "what_actually": "Конструктор `Optional` приватный; создавать экземпляры можно только статическими фабриками `empty`, `of` и `ofNullable`.",
-                "source_of_confusion": "Привычка создавать объекты через `new` переносится на `Optional`, у которого фабричный API.",
-                "if_it_were_true": "Тогда `new Optional<>(null)` был бы валиден, но конструктор недоступен извне и компиляция не пройдёт.",
-                "how_it_should_be": "Используют фабричные методы: `empty()`, `of(value)` и `ofNullable(value)` вместо `new`."
+                "what_actually": "Она как раз принимает null и превращает его в пустой контейнер.",
+                "source_of_confusion": "Имена фабрик похожи, и строгость одной переносят на обе сразу.",
+                "if_it_were_true": "Тогда безопасно завернуть результат внешнего вызова было бы нечем.",
+                "how_it_should_be": "Связывать исключение на null только с фабрикой для гарантированных значений."
               }
             }
           ]
@@ -126,55 +126,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем `isPresent()` отличается от `isEmpty()`?",
+          "question_text": "Чем isPresent() отличается от isEmpty()?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`isPresent()` возвращает contained value типа `T`, а `isEmpty()` возвращает boolean; первый заменяет `get()` и безопасно распаковывает container.",
+              "order": 0,
+              "text": "Метод `isEmpty` дополнительно проверяет, не пуста ли сама строка внутри `Optional`.",
               "correct": false,
               "sections": {
-                "what_actually": "Оба метода возвращают `boolean`; извлечение значения делают `get`, `orElse` и подобные, но не `isPresent`.",
-                "source_of_confusion": "Слово «present» путают с «получить присутствующее значение», хотя метод лишь проверяет наличие.",
-                "if_it_were_true": "Тогда `String s = opt.isPresent()` компилировалось бы, но это типовая ошибка несовместимости `boolean` и `String`.",
-                "how_it_should_be": "Оба — булевы проверки наполненности; значение извлекают отдельными методами вроде `orElse` или `get`."
+                "what_actually": "Содержимое метод не разглядывает: он смотрит только на факт наличия значения.",
+                "source_of_confusion": "Имя совпадает с методом проверки пустой строки, и смыслы смешиваются.",
+                "if_it_were_true": "Тогда контейнер с пустой строкой считался бы пустым, а он непустой.",
+                "how_it_should_be": "Проверять пустоту содержимого отдельно, через filter с предикатом."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "`isEmpty()` изменяет Optional и удаляет value, тогда как `isPresent()` выполняет read-only check без изменения состояния.",
+              "order": 1,
+              "text": "Для одного и того же `Optional` оба метода дружно отвечают `true`.",
               "correct": false,
               "sections": {
-                "what_actually": "`Optional` неизменяем: `isEmpty()` ничего не меняет, а только проверяет, пуст ли контейнер, и возвращает `boolean`.",
-                "source_of_confusion": "Глагол «empty» ассоциируется с действием очистки, как у `Collection.clear()`.",
-                "if_it_were_true": "Тогда вызов `opt.isEmpty()` обнулял бы значение, но повторные вызовы на наполненном `Optional` всегда дают `false` без изменений.",
-                "how_it_should_be": "Это чистая проверка без побочных эффектов; `Optional` иммутабелен и состояние после вызова не меняется."
+                "what_actually": "Ответы у них всегда противоположны: истинным на одном контейнере бывает ровно один.",
+                "source_of_confusion": "Оба метода про наличие значения, поэтому кажутся синонимами.",
+                "if_it_were_true": "Тогда замена одного на другой меняла бы поведение условия.",
+                "how_it_should_be": "Читать второй метод как отрицание первого, а не как его синоним."
               }
             },
             {
-              "order": 2,
               "label": "C",
-              "text": "Оба появились в Java 8 и являются synonyms с одинаковым result; выбор имени не меняет условие и нужен только для style.",
+              "order": 2,
+              "text": "Метод `isEmpty` появился заметно раньше и полностью вытеснил `isPresent` из обихода.",
               "correct": false,
               "sections": {
-                "what_actually": "`isPresent()` есть с Java 8, `isEmpty()` добавили только в Java 11, и результаты у них противоположны, а не одинаковы.",
-                "source_of_confusion": "Оба метода относятся к `Optional`, поэтому их ошибочно считают ровесниками и синонимами.",
-                "if_it_were_true": "`isEmpty()` был бы доступен уже в Java 8 и возвращал бы то же значение, что `isPresent()`, вместо противоположной проверки absence.",
-                "how_it_should_be": "`isPresent()` (Java 8) и `isEmpty()` (Java 11) противоположны: один `true` там, где другой `false`."
+                "what_actually": "Раньше появился isPresent, вместе с самим Optional; isEmpty добавили только в Java одиннадцать.",
+                "source_of_confusion": "Более читаемая форма кажется более старой и привычной.",
+                "if_it_were_true": "Тогда код на Java восемь не мог бы проверить наличие значения вовсе.",
+                "how_it_should_be": "Держать в голове порядок появления: сначала проверка наличия, потом её отрицание."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "`isPresent()` true при наличии value, `isEmpty()` — при отсутствии; добавленный в Java 11 метод проверяет absence без чтения содержимого.",
+              "order": 3,
+              "text": "Они дают противоположный ответ, а поздний `isEmpty` лишь убирает отрицание `isPresent`.",
               "correct": true,
               "sections": {
-                "explanation": "Optional immutable, поэтому проверки не меняют state. `isEmpty()` устраняет отрицание в условиях и делает intent явнее, но не предоставляет более безопасную распаковку сам по себе.",
-                "example": "`if (result.isEmpty()) return notFound();` читается прямее, чем `if (!result.isPresent())`; для transformation лучше chain `map`/`orElse` вместо branch + `get`.",
-                "when_to_apply": "Используйте при действительно imperative branching или guard clause; для преобразования значения предпочитайте functional operations.",
-                "edge_cases": "Проверка и последующий `get()` не создают race внутри immutable Optional, но делают код многословным и легче ломаются при refactoring control flow.",
-                "related": "[[java-optional-interview#Q6]] get; [[java-optional-interview#Q9]] conditional actions; [[java-optional-interview#Q12]] isPresent+get smell."
+                "explanation": "Оба проверяют наличие значения, но возвращают противоположный результат: первый истинен на непустом контейнере, второй на пустом.",
+                "example": "На контейнере со значением isPresent даёт true, а isEmpty false; на пустом ровно наоборот.",
+                "when_to_apply": "Появились они в разных версиях: isPresent пришёл с самим Optional, isEmpty добавили позже, в Java одиннадцать.",
+                "edge_cases": "Логики поздний метод не добавляет: это синтаксический сахар над отрицанием, которое легко не заметить при беглом чтении условия.",
+                "related": "Замечание из того же ответа важнее самой разницы: оба метода — признак того, что значение вытаскивают вручную, тогда как map, filter и orElse выражают ту же логику без явной проверки."
               }
             }
           ]
@@ -186,55 +186,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем `orElse()` отличается от `orElseGet()`?",
+          "question_text": "Чем orElse() отличается от orElseGet()?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`orElseGet` кэширует supplier result внутри Optional и выполняет его один раз на весь lifecycle приложения, даже для разных containers.",
+              "order": 0,
+              "text": "Оба метода, `orElse` и `orElseGet`, откладывают вычисление дефолта до пустого случая.",
               "correct": false,
               "sections": {
-                "what_actually": "`orElseGet` не кэширует ничего: `Supplier` исполняется при каждом вызове на пустом `Optional`, без межвызовного запоминания.",
-                "source_of_confusion": "Ленивость путают с мемоизацией, хотя это разные свойства.",
-                "if_it_were_true": "Тогда повторный `empty.orElseGet(() -> heavy())` не пересчитывал бы дефолт, но он пересчитывает каждый раз.",
-                "how_it_should_be": "Ленивость означает «вычислить при необходимости», а не «вычислить однократно и закэшировать»."
+                "what_actually": "Лениво работает только форма с функцией; форма с готовым аргументом вычисляет его всегда.",
+                "source_of_confusion": "Методы стоят рядом и решают одну задачу, поэтому кажутся взаимозаменяемыми.",
+                "if_it_were_true": "Тогда пример с походом в базу при попадании в кэш не имел бы смысла.",
+                "how_it_should_be": "Связывать ленивость с аргументом-функцией, а не с самим методом."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "Оба возвращают value или fallback, но `orElse` вычисляет argument заранее, а supplier `orElseGet` вызывается только для empty, избегая лишних side effects.",
+              "order": 1,
+              "text": "Метод `orElse` вычисляет дефолт только тогда, когда `Optional` уже оказался пустым.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аргумент вычисляется до вызова метода, независимо от того, пуст контейнер или нет.",
+                "source_of_confusion": "Слово «иначе» в описании подсказывает, что дефолт нужен только на пустом.",
+                "if_it_were_true": "Тогда дорогой дефолт был бы безопасен и в короткой форме.",
+                "how_it_should_be": "Помнить, что Java вычисляет аргументы до входа в метод."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Метод `orElseGet` вычисляет дефолт заранее, ещё до всякой проверки самого `Optional`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Функция вызывается только на пустом контейнере, а не заранее.",
+                "source_of_confusion": "Роли методов путают местами, потому что различие в одном слове их имён.",
+                "if_it_were_true": "Тогда у ленивой формы не осталось бы никакого преимущества.",
+                "how_it_should_be": "Проверять по имени: аргумент-функция означает отложенный вызов."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Аргумент `orElse` вычисляется всегда, а Supplier `orElseGet` работает только на пустом.",
               "correct": true,
               "sections": {
-                "explanation": "Java evaluates method arguments eagerly, поэтому выражение в `orElse(expensive())` уже выполнено. Supplier является объектом отложенного вычисления и вызывается только empty branch.",
-                "example": "`cached.orElse(loadFromDatabase())` обращается к БД даже при cache hit; `cached.orElseGet(this::loadFromDatabase)` делает lookup только при miss.",
-                "when_to_apply": "Используйте `orElse` для дешёвой готовой constant/value, `orElseGet` — для allocation, I/O, logging side effect или сложной computation.",
-                "edge_cases": "Supplier может быть вызван при каждом отдельном empty invocation — никакого caching нет. Он также может вернуть null, и тогда result `orElseGet` будет null.",
-                "related": "[[java-optional-interview#Q10]] optional fallback; [[java-optional-interview#Q12]] eager fallback smell; [[java-optional-interview#Q15]] overhead."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`orElse` возвращает `Optional<T>`, а `orElseGet` возвращает raw `T`; выбор определяется желанием сохранить wrapper и продолжить fluent chain.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оба возвращают развёрнутое значение типа `T`, а не `Optional`; разница — в момент вычисления дефолта, а не в типе результата.",
-                "source_of_confusion": "Метод `or()` действительно возвращает `Optional`, и его свойство переносят на `orElse`/`orElseGet`.",
-                "if_it_were_true": "Тогда `String s = opt.orElseGet(...)` не компилировался бы из-за `Optional`, но он возвращает именно `String`.",
-                "how_it_should_be": "Оба возвращают `T`; `Optional` возвращает только `or(Supplier)`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`orElse` лениво вычисляет fallback только при empty, а `orElseGet` всегда вызывает supplier до проверки present value и затем отбрасывает result.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`orElse` вычисляет аргумент всегда, а `orElseGet` запускает `Supplier` лениво лишь при пустом `Optional`.",
-                "source_of_confusion": "Имена похожи, и без знания семантики легко перепутать, какой из методов ленивый.",
-                "if_it_were_true": "Тогда `orElse(db.find(k))` не ходил бы в базу при попадании в кэш, но на практике он ходит туда всегда.",
-                "how_it_should_be": "`orElse` — eager (аргумент считается заранее), `orElseGet` — lazy (Supplier только при empty)."
+                "explanation": "Оба возвращают значение из контейнера, а на пустом — дефолт; разница в моменте вычисления этого дефолта.",
+                "example": "Первый принимает уже готовое значение, поэтому выражение в аргументе Java вычисляет до вызова метода, ещё не заглянув в контейнер.",
+                "when_to_apply": "Второй принимает функцию и вызывает её только на пустом контейнере, откладывая вычисление до момента, когда дефолт действительно понадобится.",
+                "edge_cases": "Классический пример — кэш и база: с готовым аргументом запрос уходит в базу даже при попадании в кэш, с функцией только при промахе.",
+                "related": "Для константы или дешёвого литерала разницы нет, короткая форма читается лучше. Но если дефолт дорогой или с побочными эффектами — запрос, сетевой вызов, тяжёлый объект, запись в лог — только ленивая форма."
               }
             }
           ]
@@ -246,55 +246,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Когда использовать `orElseThrow()`?",
+          "question_text": "Когда использовать orElseThrow()?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Безаргументный `orElseThrow()` при empty бросает `NullPointerException` с сообщением о container, полностью имитируя прямое разыменование отсутствующего reference напрямую.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Безаргументный `orElseThrow()` бросает `NoSuchElementException` с сообщением «No value present», а не `NullPointerException`.",
-                "source_of_confusion": "Тему `Optional` связывают с борьбой против NPE, поэтому ожидают именно его при пустоте.",
-                "if_it_were_true": "Тогда в стектрейсе был бы `NullPointerException`, но реально появляется `NoSuchElementException`.",
-                "how_it_should_be": "По умолчанию кидается `NoSuchElementException`; кастомный тип задают через `Supplier`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`orElseThrow(Supplier)` принимает только checked exception и требует объявить его в `throws`; runtime exception supplier не удовлетворяет generic signature.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Supplier` может вернуть любое исключение — и checked, и unchecked; ограничения «только checked» нет.",
-                "source_of_confusion": "Слово «throw» ассоциируется с `throws`-объявлением и checked-исключениями.",
-                "if_it_were_true": "Тогда `orElseThrow(() -> new RuntimeException())` не компилировался бы, но это валидный и частый вызов.",
-                "how_it_should_be": "Поставщик возвращает любой `Throwable`-наследник; чаще используют unchecked вроде `EntityNotFoundException`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`orElseThrow()` возвращает value или бросает `NoSuchElementException`; overload с supplier создаёт нужный domain-specific exception для нарушенного contract.",
+              "order": 0,
+              "text": "Когда пустой `Optional` сам по себе ошибка и продолжать бессмысленно.",
               "correct": true,
               "sections": {
-                "explanation": "Метод превращает normal empty state в exceptional outcome только на boundary, где value обязательно. Generic supplier позволяет создать contextual checked или unchecked exception.",
-                "example": "`repository.findById(id).orElseThrow(() -> new EntityNotFoundException(\"User \" + id))` переводит отсутствие repository result в domain/API error.",
-                "when_to_apply": "Используйте, когда caller не может корректно продолжить без value; если отсутствие ожидаемо, оставьте Optional или предоставьте fallback.",
-                "edge_cases": "Безаргументная версия существует с Java 10, но `get()` тоже бросает `NoSuchElementException`; supplier предпочтительнее для диагностики и domain semantics.",
-                "related": "[[java-optional-interview#Q6]] get; [[java-optional-interview#Q4]] fallback values; [[java-optional-interview#Q1]] absence contract."
+                "explanation": "Метод возвращает значение, а на пустом контейнере бросает исключение, поэтому его применяют там, где отсутствие само по себе ошибка.",
+                "example": "Типичный случай — запрос сущности по идентификатору, который обязан существовать: продолжать работу без неё бессмысленно.",
+                "when_to_apply": "Форм две: без аргументов бросается NoSuchElementException, коротко, но неинформативно; с функцией бросается ваше исключение с осмысленным сообщением.",
+                "edge_cases": "Функция ленивая: объект исключения создаётся только тогда, когда контейнер действительно оказался пустым.",
+                "related": "Хорошо ложится в слой сервиса: «не нашли» превращается в доменную ошибку, которую дальше поймает обработчик и отдаст, например, ответ о ненайденном ресурсе."
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`orElseThrow` всегда создаёт и бросает exception до проверки container, поэтому его используют как unconditional termination любой Optional chain.",
+              "label": "B",
+              "order": 1,
+              "text": "Форма `orElseThrow` без аргументов бросает ваше доменное исключение с сообщением.",
               "correct": false,
               "sections": {
-                "what_actually": "`orElseThrow` бросает исключение только при пустом `Optional`; если значение есть, оно просто возвращается.",
-                "source_of_confusion": "Слово «throw» в имени создаёт впечатление безусловного исключения.",
-                "if_it_were_true": "Тогда `Optional.of(user).orElseThrow()` всегда падал бы, но он спокойно возвращает `user`.",
-                "how_it_should_be": "Исключение бросается лишь при `empty`; на наполненном `Optional` метод отдаёт значение."
+                "what_actually": "Короткая форма бросает NoSuchElementException; доменное исключение даёт форма с функцией.",
+                "source_of_confusion": "Обе формы называются одинаково, и удобство короткой переносят на её содержимое.",
+                "if_it_were_true": "Тогда вторая форма с функцией была бы никому не нужна.",
+                "how_it_should_be": "Брать короткую форму, когда сообщение неважно, и функцию, когда важно."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Supplier исключения создаётся заранее, ещё до всякой проверки самого `Optional`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Функция ленивая: объект исключения создаётся только при пустом контейнере.",
+                "source_of_confusion": "Исключение выглядит как объект, который надо приготовить заранее.",
+                "if_it_were_true": "Тогда каждый успешный вызов оплачивал бы создание ненужного исключения.",
+                "how_it_should_be": "Считать создание исключения отложенным до пустого случая."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Его берут всюду, где нужен обычный запасной результат вместо значения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для обычного запасного значения берут дефолт, а исключение — для случая, когда продолжать нельзя.",
+                "source_of_confusion": "Оба метода завершают цепочку и возвращают значение, поэтому кажутся заменой друг другу.",
+                "if_it_were_true": "Тогда любой промах поиска ронял бы вызывающий код исключением.",
+                "how_it_should_be": "Выбирать по цене отсутствия: дефолт допустим или это уже ошибка."
               }
             }
           ]
@@ -306,55 +306,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему прямой `Optional.get()` обычно нежелателен?",
+          "question_text": "Почему get() считается плохой практикой?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`get()` бросает при empty и скрывает policy; `orElse*`, `orElseThrow`, `map` или branch делают fallback и error contract явными.",
+              "order": 0,
+              "text": "Метод `get` бросает исключение на пустом и обходит обязанность обработать пустоту.",
               "correct": true,
               "sections": {
-                "explanation": "Проблема не в самой exception, а в слепой распаковке, возвращающей hidden precondition. Более выразительный API показывает, почему absence допустимо или какое exception должно возникнуть.",
-                "example": "Вместо `opt.get()` используют `opt.orElseThrow(() -> new MissingConfigException(key))`; после pattern-like guard `if (opt.isEmpty()) return; use(opt.get())` риск локально контролируем.",
-                "when_to_apply": "Избегайте в public/business flow; допускайте только после очевидного local proof, в тесте или internal code, где invariant невозможно потерять.",
-                "edge_cases": "Сравнение с `NullPointerException` неточно: exception type другой и возникает сразу. IDE warning помогает, но static analyzer не всегда доказывает сложные invariants.",
-                "related": "[[java-optional-interview#Q3]] presence checks; [[java-optional-interview#Q5]] contextual exceptions; [[java-optional-interview#Q12]] anti-patterns."
+                "explanation": "На пустом контейнере метод бросает NoSuchElementException, то есть возвращает нас ровно к той проблеме, ради ухода от которой Optional и придуман.",
+                "example": "Вместо тихого null и отложенного падения получается падение по сути с тем же смыслом: значения не было, а его взяли.",
+                "when_to_apply": "Optional должен заставлять обработать пустой случай, а этот метод требование обходит; вместо него берут ifPresent, map или дефолт.",
+                "edge_cases": "Изредка он оправдан внутри проверки на наличие, где видно, что контейнер не пуст, но и там декларативные методы выражают намерение чище.",
+                "related": "Именно из-за этой ловушки в Java десять добавили короткую форму orElseThrow как явную замену: имя честно говорит, что метод может бросить исключение."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "При empty `get()` возвращает null без exception, а subsequent dereference создаёт обычный `NullPointerException` на следующей строке обычного business code.",
+              "order": 1,
+              "text": "Метод `get` возвращает на пустом null и снова приводит к NullPointerException.",
               "correct": false,
               "sections": {
-                "what_actually": "`get()` на пустом `Optional` не возвращает `null`, а бросает `NoSuchElementException` прямо в точке вызова.",
-                "source_of_confusion": "Кажется, что «пустой контейнер» отдаёт `null`, как несуществующее значение из мапы.",
-                "if_it_were_true": "Тогда `String s = Optional.empty().get()` присвоил бы `null`, но строка падает с исключением ещё до присваивания.",
-                "how_it_should_be": "Проблема в том, что `get()` бросает `NoSuchElementException`, а не возвращает `null`."
+                "what_actually": "На пустом контейнере он бросает NoSuchElementException, а не возвращает null.",
+                "source_of_confusion": "Ловушка та же, что у null, и способ падения додумывают по аналогии.",
+                "if_it_were_true": "Тогда результат метода пришлось бы проверять на null, как в старом коде.",
+                "how_it_should_be": "Помнить, что пустой контейнер отвечает исключением, а не пустым значением."
               }
             },
             {
-              "order": 2,
               "label": "C",
-              "text": "`get()` использует reflection и dynamic proxy для каждого access, поэтому его основная проблема — существенно более низкая performance на hot path.",
+              "order": 2,
+              "text": "Его переименовали в `orElseThrow`, а прежнее имя вовсе убрали из класса.",
               "correct": false,
               "sections": {
-                "what_actually": "`get()` просто возвращает поле `value` без рефлексии; проблема в безопасности (исключение на пустом), а не в скорости.",
-                "source_of_confusion": "Любые «плохие практики» иногда обобщённо списывают на производительность.",
-                "if_it_were_true": "Тогда `get()` был бы медленнее `orElse`, но оба — тривиальные обращения к полю.",
-                "how_it_should_be": "Недостаток `get()` — риск `NoSuchElementException`, а не накладные расходы на рефлексию."
+                "what_actually": "Короткую форму orElseThrow добавили как замену, но сам метод из класса никуда не делся.",
+                "source_of_confusion": "Слово «замена» читается как удаление старого метода из API.",
+                "if_it_were_true": "Тогда пример с падением на пустом контейнере не скомпилировался бы вовсе.",
+                "how_it_should_be": "Различать вытеснение из хорошей практики и удаление из класса."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "Первый `get()` извлекает и удаляет value из Optional, поэтому второй вызов того же immutable container всегда завершается неизбежным `NoSuchElementException`.",
+              "order": 3,
+              "text": "Внутри проверки `isPresent` метод `get` запрещён и не проходит стадию компиляции.",
               "correct": false,
               "sections": {
-                "what_actually": "`Optional` неизменяем: `get()` не очищает контейнер, повторные вызовы на наполненном `Optional` возвращают то же значение.",
-                "source_of_confusion": "Поведение путают с итераторами и очередями, где извлечение «съедает» элемент.",
-                "if_it_were_true": "Тогда второй `opt.get()` падал бы после первого успешного, но он стабильно отдаёт то же значение.",
-                "how_it_should_be": "`get()` не имеет побочных эффектов; его опасность — исключение именно на изначально пустом `Optional`."
+                "what_actually": "Внутри такой проверки он как раз изредка оправдан, и компилятор его пропускает.",
+                "source_of_confusion": "Метод называют плохой практикой, и запрет по стилю принимают за запрет языка.",
+                "if_it_were_true": "Тогда антипаттерн с проверкой и извлечением просто не собрался бы.",
+                "how_it_should_be": "Отделять рекомендацию по стилю от правил компиляции."
               }
             }
           ]
@@ -366,55 +366,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем `map()` отличается от `flatMap()` в `Optional`?",
+          "question_text": "Чем map() отличается от flatMap() в Optional?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Оба метода автоматически flatten любой nesting depth, поэтому function return type не влияет на result type и semantics.",
+              "order": 0,
+              "text": "Метод `flatMap` берёт обычную функцию и сам оборачивает её результат в `Optional`.",
               "correct": false,
               "sections": {
-                "what_actually": "`map` оборачивает результат и при функции, возвращающей `Optional`, даёт `Optional<Optional<R>>`; только `flatMap` разворачивает лишний уровень.",
-                "source_of_confusion": "В простых случаях с функцией `T → R` оба внешне дают похожий результат, и разницу не замечают.",
-                "if_it_were_true": "Тогда `Optional.of(user).map(User::getEmail)` давал бы `Optional<String>`, но реально получается `Optional<Optional<String>>`.",
-                "how_it_should_be": "`map` всегда добавляет обёртку; разворачивает вложенность именно `flatMap`."
+                "what_actually": "Обычную функцию берёт map; flatMap ждёт функцию, которая сама возвращает контейнер.",
+                "source_of_confusion": "Методы стоят рядом и отличаются одним словом в имени, поэтому роли путают.",
+                "if_it_were_true": "Тогда двойная обёртка возникала бы именно там, где её убирают.",
+                "how_it_should_be": "Смотреть на тип результата функции, а не на имя метода."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "`flatMap` проходит по символам, collection elements или fields внутри contained value, тогда как `map` всегда обрабатывает весь object целиком.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`flatMap` не разбивает значение на элементы: он применяет функцию ко всему значению целиком, просто функция возвращает `Optional`.",
-                "source_of_confusion": "Поведение `Stream.flatMap`, разворачивающего коллекции в элементы, переносят на одноэлементный `Optional`.",
-                "if_it_were_true": "Тогда `Optional.of(\"abc\").flatMap(...)` итерировал бы по 'a','b','c', но `Optional` хранит одно значение целиком.",
-                "how_it_should_be": "`flatMap` применяет функцию к единственному значению и разворачивает возвращённый ею `Optional`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`map` преобразует `T` в `R` и оборачивает result, `flatMap` принимает `T -> Optional<R>` и избегает nested wrapper при chained transformations.",
+              "order": 1,
+              "text": "Метод `map` сам оборачивает результат, а `flatMap` берёт функцию с готовой обёрткой.",
               "correct": true,
               "sections": {
-                "explanation": "Операции выполняются только для present state и пропускают empty. Отличие связано с shape mapper result: plain value против уже вычисленного Optional.",
-                "example": "`userOpt.map(User::address)` даёт `Optional<Address>`; если `findManager(User)` уже возвращает `Optional<User>`, нужен `flatMap(this::findManager)`.",
-                "when_to_apply": "Используйте `map` для property/calculation, `flatMap` для chaining operations, которые сами могут не вернуть value.",
-                "edge_cases": "`map` mapper, вернувший null, даёт empty. `flatMap` mapper, вернувший null вместо Optional, нарушает contract и вызывает `NullPointerException`.",
-                "related": "[[java-optional-interview#Q8]] filter; [[java-optional-interview#Q10]] fallback Optional; [[java-optional-interview#Q11]] stream flattening."
+                "explanation": "Оба преобразуют значение внутри контейнера, а разница в том, что возвращает ваша функция.",
+                "example": "Первый берёт обычную функцию из значения в значение и сам оборачивает результат; второй берёт функцию, которая возвращает контейнер уже готовым, и повторно его не оборачивает.",
+                "when_to_apply": "Без второго метода в таком случае получился бы контейнер внутри контейнера — ровно то, что показано в примере с получением почты пользователя.",
+                "edge_cases": "В цепочке любое звено короткозамыкается: как только один шаг вернул пустоту, остальные пропускаются и результат пуст, без проверок на каждом уровне.",
+                "related": "Итог простой: обычная функция — первый метод, функция, уже возвращающая контейнер, — второй. Ровно та же пара работает в Stream API, поэтому правило переносится без изменений."
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`map` поддерживает только primitive values, а `flatMap` только reference objects; выбор определяется component type, а не return shape mapper function.",
+              "label": "C",
+              "order": 2,
+              "text": "Метод `map` сам разворачивает вложенность, когда функция уже вернула готовый `Optional`.",
               "correct": false,
               "sections": {
-                "what_actually": "Выбор зависит от того, что возвращает функция (`R` или `Optional<R>`), а не от примитивности типа; `map` и `flatMap` работают с любыми ссылочными значениями.",
-                "source_of_confusion": "В `Stream` есть отдельные `mapToInt`/`flatMap`, и это деление по типам ошибочно переносят на `Optional`.",
-                "if_it_were_true": "Тогда `Optional<Integer>.map(...)` был бы запрещён, но он прекрасно работает с объектным `Integer`.",
-                "how_it_should_be": "Различие в форме функции: `map` для `T → R`, `flatMap` для `T → Optional<R>`."
+                "what_actually": "Разворачивает вложенность flatMap, а map в такой ситуации её создаёт.",
+                "source_of_confusion": "Оба метода преобразуют содержимое, и разницу в обёртке замечают не сразу.",
+                "if_it_were_true": "Тогда пример с контейнером внутри контейнера не получился бы никогда.",
+                "how_it_should_be": "Помнить, что лишнюю обёртку снимает только второй метод."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Пустое звено цепочки `flatMap` не мешает остальным шагам выполниться до конца.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пустое звено как раз останавливает цепочку: остальные шаги пропускаются, результат пуст.",
+                "source_of_confusion": "Цепочка выглядит как последовательность независимых преобразований.",
+                "if_it_were_true": "Тогда следующему шагу пришлось бы работать с отсутствующим значением.",
+                "how_it_should_be": "Считать короткое замыкание главным удобством цепочки."
               }
             }
           ]
@@ -426,55 +426,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как работает `filter()` в `Optional`?",
+          "question_text": "Как работает filter() в Optional?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`filter` заменяет contained value результатом predicate и возвращает `Optional<Boolean>`, сохраняя information о true/false для следующего chain step.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`filter` не заменяет значение на булев результат: он сохраняет исходное значение при `true` и делает `Optional` пустым при `false`, тип не меняется.",
-                "source_of_confusion": "Предикат возвращает `boolean`, и кажется, что этот булев результат и кладётся в `Optional`.",
-                "if_it_were_true": "Тогда `Optional.of(25).filter(a -> a >= 18)` дал бы `Optional[true]`, но он остаётся `Optional[25]`.",
-                "how_it_should_be": "Значение и его тип сохраняются; `filter` лишь решает, оставить значение или вернуть `empty`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`filter(predicate)` сохраняет present value при true и возвращает empty при false; для empty Optional predicate не вызывается благодаря short-circuit semantics.",
+              "order": 0,
+              "text": "Ложный предикат делает контейнер пустым, на пустом предикат не вызывается.",
               "correct": true,
               "sections": {
-                "explanation": "Filter сохраняет исходный Optional при successful predicate и превращает rejected value в absence. Это соответствует stream filtering для последовательности длины 0 или 1.",
-                "example": "`token.filter(this::notExpired).map(this::principal)` продолжает chain только для присутствующего и актуального token.",
-                "when_to_apply": "Используйте для простого gate в fluent chain; если требуется distinguish not-found from invalid, верните richer result type или exception.",
-                "edge_cases": "Predicate exception распространяется наружу. Side effects в predicate ухудшают читаемость; empty после filter теряет причину rejection.",
-                "related": "[[java-optional-interview#Q7]] map; [[java-optional-interview#Q5]] error policy; [[java-optional-interview#Q13]] richer contracts."
+                "explanation": "Метод применяет условие к значению внутри контейнера: истинный предикат оставляет контейнер прежним, ложный превращает его в пустой.",
+                "example": "Контейнер с числом двадцать пять переживает проверку на совершеннолетие и остаётся прежним, а проверку на пожилой возраст не проходит и становится пустым.",
+                "when_to_apply": "Это способ обнулить значение, не прошедшее проверку, прямо посреди цепочки, не разворачивая контейнер.",
+                "edge_cases": "На пустом контейнере предикат вообще не вызывается — вызывать его не на чем.",
+                "related": "Удобно для валидации подряд: каждая проверка отбрасывает неподходящее значение, а итог пуст, если не прошла хотя бы одна. Читается как «верни пользователя, только если он активный администратор»."
               }
             },
             {
-              "order": 2,
+              "label": "B",
+              "order": 1,
+              "text": "Проверку можно поставить лишь на самое последнее звено готовой цепочки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Проверок в цепочке может быть сколько угодно, и в примере их две подряд.",
+                "source_of_confusion": "Метод похож на терминальный, потому что решает судьбу значения.",
+                "if_it_were_true": "Тогда несколько условий пришлось бы склеивать в один громоздкий предикат.",
+                "how_it_should_be": "Считать метод промежуточным шагом, который возвращает контейнер."
+              }
+            },
+            {
               "label": "C",
-              "text": "Для empty container predicate всё равно вызывается с null, поэтому любой predicate обязан начинаться с null-check и не может предполагать present value.",
+              "order": 2,
+              "text": "На пустом контейнере предикат всё равно вызывается и получает null.",
               "correct": false,
               "sections": {
-                "what_actually": "На пустом `Optional` `filter` не вызывает предикат вообще и сразу возвращает `empty`, так что `null` в предикат не попадает.",
-                "source_of_confusion": "Кажется, что любая операция над `Optional` обязательно «дёргает» переданную функцию.",
-                "if_it_were_true": "Тогда `Optional.empty().filter(s -> s.length() > 0)` падал бы NPE, но он безопасно возвращает `empty`.",
-                "how_it_should_be": "Предикат запускается только при наличии значения; на пустом контейнере операция пропускается."
+                "what_actually": "На пустом контейнере предикат не вызывается вовсе, поэтому и null туда не попадает.",
+                "source_of_confusion": "Метод объявлен в цепочке, и кажется, что он отрабатывает на любом контейнере.",
+                "if_it_were_true": "Тогда каждый предикат пришлось бы писать с проверкой на null внутри.",
+                "how_it_should_be": "Считать пустой контейнер основанием пропустить шаг целиком."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "При false predicate `filter` бросает `IllegalArgumentException` с rejected value, а empty result возвращает только для исходного empty Optional.",
+              "order": 3,
+              "text": "Значение, не прошедшее проверку, заменяется здесь на заранее заданный дефолт.",
               "correct": false,
               "sections": {
-                "what_actually": "При ложном предикате `filter` тихо возвращает `Optional.empty()`, никаких исключений не бросает.",
-                "source_of_confusion": "Слово «filter» в валидации ассоциируют с выбрасыванием ошибки при невалидных данных.",
-                "if_it_were_true": "Тогда `Optional.of(25).filter(a -> a >= 60)` падал бы исключением, но он спокойно даёт `empty`.",
-                "how_it_should_be": "Несоответствие предикату превращает `Optional` в пустой; исключение при желании добавляют отдельным `orElseThrow`."
+                "what_actually": "Никакого дефолта здесь нет: непрошедшее значение превращает контейнер в пустой.",
+                "source_of_confusion": "Соседние методы действительно подставляют дефолт, и поведение переносят сюда.",
+                "if_it_were_true": "Тогда результат проверки нельзя было бы отличить от значения, которое её прошло.",
+                "how_it_should_be": "Разделять отбрасывание значения и подстановку запасного."
               }
             }
           ]
@@ -486,55 +486,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как работают `ifPresent()` и `ifPresentOrElse()`?",
+          "question_text": "Как работают ifPresent() и ifPresentOrElse()?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`ifPresent` появился в Java 9, а `ifPresentOrElse` существовал с Java 8; поэтому второй совместим с более старыми runtimes.",
+              "order": 0,
+              "text": "Метод `ifPresent` на пустом контейнере выполняет действие и передаёт туда null.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: `ifPresent` есть с Java 8, а `ifPresentOrElse` добавили в Java 9; на Java 8 доступен именно `ifPresent`.",
-                "source_of_confusion": "Версии двух родственных методов легко перепутать местами.",
-                "if_it_were_true": "Тогда `ifPresentOrElse` компилировался бы на Java 8, но там его нет, а `ifPresent` есть.",
-                "how_it_should_be": "`ifPresent` — Java 8, `ifPresentOrElse` — Java 9; на старых JDK берут только первый."
+                "what_actually": "На пустом контейнере он не делает ничего — действие просто не выполняется.",
+                "source_of_confusion": "Имя обещает действие, и кажется, что оно происходит при любом состоянии.",
+                "if_it_were_true": "Тогда обработчику пришлось бы отличать настоящее значение от подставленного.",
+                "how_it_should_be": "Читать имя буквально: действие только при наличии значения."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "`ifPresent` выполняет consumer для present value; `ifPresentOrElse` выбирает consumer или empty-action, и оба methods возвращают `void`.",
+              "order": 1,
+              "text": "Второй аргумент `ifPresentOrElse` тоже получает на вход значение из самого контейнера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Второй аргумент выполняется без аргументов, ведь значения в этот момент нет.",
+                "source_of_confusion": "Первая ветка получает значение, и симметрию достраивают ко второй.",
+                "if_it_were_true": "Тогда ветка для пустого случая работала бы с отсутствующим значением.",
+                "how_it_should_be": "Помнить, что ветка пустоты не получает на вход ничего."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Оба ничего не возвращают, поэтому `ifPresent` только завершает цепочку побочным эффектом.",
               "correct": true,
               "sections": {
-                "explanation": "Это terminal side-effect operations, а не transformations. Они выбирают одну ветвь по state и не возвращают Optional/value для дальнейшей цепочки.",
-                "example": "`result.ifPresentOrElse(this::send, () -> metrics.incrementMissing())` выполняет ровно одно действие.",
-                "when_to_apply": "Используйте на boundary, где нужен side effect. Для вычисления нового значения предпочтительнее `map`, `flatMap` и fallback methods.",
-                "edge_cases": "Consumer/runnable могут бросить exception. Многословная логика в lambdas сигнализирует, что лучше обычный `if` или отдельный method.",
-                "related": "[[java-optional-interview#Q3]] checks; [[java-optional-interview#Q7]] transformations; [[java-optional-interview#Q12]] imperative smells."
+                "explanation": "Это терминальные методы для побочных эффектов: из значения ничего не извлекают и не преобразуют, а просто что-то с ним делают.",
+                "example": "Печать, отправка, запись в лог — типичные случаи; на пустом контейнере первый метод не делает ничего.",
+                "when_to_apply": "Оба объявлены как void, поэтому в цепочку с преобразованием и фильтром их не вставить: они её завершают.",
+                "edge_cases": "Второй метод, добавленный в Java девять, обрабатывает оба случая: функция получает значение, а на пустом выполняется действие без аргументов.",
+                "related": "По сути это декларативная замена связки условия с ветками: те же две ветки, но без ручного извлечения значения и без проверки наличия."
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`ifPresentOrElse` всегда запускает empty runnable после consumer, поэтому present case выполняет обе ветви последовательно и возвращает результат второй.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`runnable` запускается строго при пустом `Optional`; при наличии значения работает только `consumer`, и ровно одна из веток.",
-                "source_of_confusion": "Имя `OrElse` ассоциируют с `orElse`, который вычисляет дефолт всегда.",
-                "if_it_were_true": "Тогда для непустого `Optional` сработали бы оба коллбэка, но реально вызывается лишь один из двух.",
-                "how_it_should_be": "Выполняется ровно одна ветка: `consumer` при значении или `runnable` при пустоте."
-              }
-            },
-            {
-              "order": 3,
               "label": "D",
-              "text": "`ifPresent` возвращает contained value после consumer и может быть присвоен переменной либо продолжен через `map` без повторного wrapping.",
+              "order": 3,
+              "text": "Оба всегда возвращают прежний `Optional`, поэтому цепочку после них легко продолжить.",
               "correct": false,
               "sections": {
-                "what_actually": "`ifPresent` возвращает `void` и предназначен для побочного эффекта; извлекать значение в переменную им нельзя.",
-                "source_of_confusion": "Префикс `if` наводит на мысль о выражении-условии, дающем результат.",
-                "if_it_were_true": "Тогда `String s = opt.ifPresent(f)` компилировался бы, но это ошибка: метод не возвращает значение.",
-                "how_it_should_be": "Для получения значения берут `orElse`/`orElseGet`/`map`; `ifPresent` лишь выполняет действие при наличии."
+                "what_actually": "Оба объявлены как void и не возвращают ничего, поэтому продолжать цепочку нечем.",
+                "source_of_confusion": "Остальные методы контейнера возвращают контейнер, и правило распространяют на все.",
+                "if_it_were_true": "Тогда их не называли бы терминальными и ставили бы в середину цепочки.",
+                "how_it_should_be": "Ставить методы с побочным эффектом в конец цепочки."
               }
             }
           ]
@@ -546,55 +546,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что делает метод `or()` в `Optional`?",
+          "question_text": "Что делает метод or() в Optional?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`or` принимает готовый Optional и вычисляет alternative до проверки source, поэтому он eager, не принимает supplier и не поддерживает lazy fallback.",
+              "order": 0,
+              "text": "Он разворачивает контейнер в голое значение точно так же, как `orElse`.",
               "correct": false,
               "sections": {
-                "what_actually": "`or` принимает `Supplier<Optional<T>>` и вызывает его лениво — только когда исходный `Optional` пуст.",
-                "source_of_confusion": "По аналогии с `orElse(value)` ждут, что аргумент — это готовое значение, а не поставщик.",
-                "if_it_were_true": "Тогда `tryCache().or(tryDatabase())` исполнял бы запрос в БД даже при попадании в кэш, но `Supplier` это предотвращает.",
-                "how_it_should_be": "Аргумент — `Supplier`, тело которого выполняется лениво лишь при пустом исходном `Optional`."
+                "what_actually": "Он возвращает снова контейнер, а голое значение отдают методы с дефолтом.",
+                "source_of_confusion": "Имена начинаются одинаково, и результат достраивают по аналогии.",
+                "if_it_were_true": "Тогда выстроить несколько запасных источников подряд было бы нечем.",
+                "how_it_should_be": "Смотреть на тип результата: контейнер или уже развёрнутое значение."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "`or` объединяет два present values arithmetic или concatenation operation и возвращает один Optional с комбинированным result независимо от generic type.",
+              "order": 1,
+              "text": "Альтернативу он вычисляет всегда, даже когда значение в `Optional` уже есть.",
               "correct": false,
               "sections": {
-                "what_actually": "`or` не объединяет значения: если исходный `Optional` непуст, он возвращается как есть, а альтернатива игнорируется.",
-                "source_of_confusion": "Имя `or` вызывает ассоциацию с побитовым/логическим объединением операндов.",
-                "if_it_were_true": "Тогда `Optional.of(\"a\").or(() -> Optional.of(\"b\"))` дал бы `\"ab\"`, но результат — `Optional[\"a\"]`.",
-                "how_it_should_be": "Возвращается первый непустой `Optional`; альтернатива нужна лишь когда исходный пуст."
+                "what_actually": "Функция вызывается лениво, только на пустом контейнере.",
+                "source_of_confusion": "Аргумент выглядит как готовая альтернатива, которую надо приготовить заранее.",
+                "if_it_were_true": "Тогда цепочка запасных источников опрашивала бы их все подряд.",
+                "how_it_should_be": "Связывать аргумент-функцию с отложенным вызовом."
               }
             },
             {
-              "order": 2,
               "label": "C",
-              "text": "`or(Supplier<Optional<T>>)` лениво выбирает alternative Optional только при empty source, сохраняя wrapper для chained fallback sources.",
+              "order": 2,
+              "text": "На пустом он подставляет другой `Optional` и сам остаётся внутри контейнера.",
               "correct": true,
               "sections": {
-                "explanation": "Supplier alternative вычисляется только при empty, а return type остаётся Optional. Это позволяет последовательно пробовать несколько источников без ручного wrapping/unwrapping.",
-                "example": "`fromCache(key).or(() -> fromDatabase(key)).or(() -> fromRemote(key))` останавливается на первом present result.",
-                "when_to_apply": "Используйте для lazy fallback sources, каждый из которых естественно возвращает Optional.",
-                "edge_cases": "Supplier обязан вернуть non-null Optional. Повторные I/O fallbacks требуют timeout, metrics и понимания latency; Optional не реализует retry/circuit breaker.",
-                "related": "[[java-optional-interview#Q4]] value fallback; [[java-optional-interview#Q7]] flatMap; [[java-optional-interview#Q15]] appropriate use."
+                "explanation": "Метод из Java девять: на пустом контейнере он возвращает альтернативный контейнер от функции, а если значение есть, исходный остаётся как был.",
+                "example": "Пустой контейнер с функцией, отдающей запасное значение, превращается в контейнер с этим значением.",
+                "when_to_apply": "Функция вызывается лениво — только когда контейнер действительно пуст.",
+                "edge_cases": "Ключевое отличие от методов с дефолтом: те завершают цепочку, разворачивая контейнер в голое значение.",
+                "related": "Этот же остаётся внутри контейнера, поэтому запасные источники выстраиваются друг за другом — кэш, база, удалённый сервис, — а итог разворачивают один раз в конце дефолтом или исключением."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "`or` возвращает unwrapped `T`, полностью эквивалентен `orElse`, принимает обычный fallback value и не может участвовать в chain Optional alternatives.",
+              "order": 3,
+              "text": "Цепочку из нескольких запасных источников через `or` выстроить уже не получится.",
               "correct": false,
               "sections": {
-                "what_actually": "`or` возвращает `Optional<T>`, а не `T`; распаковка по-прежнему нужна, например через последующий `orElse`.",
-                "source_of_confusion": "Семейство `or*`-методов воспринимают как однотипное, и свойство `orElse` переносят на `or`.",
-                "if_it_were_true": "Тогда `String s = opt.or(() -> ...)` компилировался бы, но тип результата — `Optional<String>`, а не `String`.",
-                "how_it_should_be": "`or` отдаёт `Optional<T>`; голое значение возвращают `orElse`, `orElseGet`, `orElseThrow`."
+                "what_actually": "Цепочка запасных источников — как раз главный сценарий этого метода.",
+                "source_of_confusion": "Методы с дефолтом цепочку обрывают, и ограничение переносят сюда.",
+                "if_it_were_true": "Тогда у метода не осталось бы отличия от обычного дефолта.",
+                "how_it_should_be": "Считать возврат контейнера основанием продолжать цепочку."
               }
             }
           ]
@@ -606,55 +606,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Для чего нужен `Optional.stream()`?",
+          "question_text": "Для чего нужен Optional.stream()?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`Optional.stream()` существовал в Java 8 и заменил удалённый `map`; начиная с Java 9 transformations выполняются только Stream API.",
+              "order": 0,
+              "text": "Прежний способ через `filter` и `get` заметно короче, поэтому его и предпочитают.",
               "correct": false,
               "sections": {
-                "what_actually": "`Optional.stream()` добавлен в Java 9, а `Optional.map()` существует с Java 8 и никуда не удалялся.",
-                "source_of_confusion": "Появление новых Java 9+ методов путают с заменой и удалением старых.",
-                "if_it_were_true": "Тогда `Optional.map` не работал бы на Java 9, но он остаётся базовым и широко используемым методом.",
-                "how_it_should_be": "`stream()` — дополнение Java 9; `map()` существует с Java 8 и продолжает работать."
+                "what_actually": "Прежний способ длиннее и опирается на небезопасное извлечение значения.",
+                "source_of_confusion": "Старая связка привычна и на глаз кажется не сложнее новой.",
+                "if_it_were_true": "Тогда добавлять новый метод в Java девять не было бы смысла.",
+                "how_it_should_be": "Сравнивать способы не только по длине, но и по безопасности."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "`stream()` создаёт stream из нуля или одного element; `flatMap(Optional::stream)` удаляет empty values из `Stream<Optional<T>>`.",
+              "order": 1,
+              "text": "Метод `stream` раскладывает целую коллекцию внутри контейнера в поток элементов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод смотрит только на само значение контейнера и отдаёт не более одного элемента.",
+                "source_of_confusion": "Развёртывание коллекций в поток — привычная задача, и её достраивают сюда.",
+                "if_it_were_true": "Тогда контейнер с одиночным значением превращать в поток было бы нечем.",
+                "how_it_should_be": "Считать результат потоком длиной ноль или один."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Пустой контейнер он превращает в поток с единственным элементом null.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пустой контейнер даёт пустой поток: элементов там ноль, а не один.",
+                "source_of_confusion": "Пустоту привычно представляют значением, а не отсутствием элемента.",
+                "if_it_were_true": "Тогда собранный список получал бы null вместо пропуска пустых.",
+                "how_it_should_be": "Читать пустой контейнер как ноль элементов потока."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Метод `stream` даёт пустой поток на пустом и одноэлементный на непустом.",
               "correct": true,
               "sections": {
-                "explanation": "Optional behaves as zero-or-one sequence. Method bridges Optional API and Stream pipelines without explicit `isPresent`/`get` filtering.",
-                "example": "`users.stream().map(this::findEmail).flatMap(Optional::stream).toList()` собирает только найденные email addresses.",
-                "when_to_apply": "Используйте внутри Stream API для flattening optional results; вне stream chain обычные Optional operations обычно читаются проще.",
-                "edge_cases": "Это не parallelization и не reflection. Creating many Optional objects may be avoidable by returning stream directly in performance-sensitive pipeline.",
-                "related": "[[java-optional-interview#Q7]] flatMap; [[java-optional-interview#Q8]] filter; [[java-optional-interview#Q15]] performance context."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Mетод отражает fields contained object в stream, создавая отдельный element на каждое его property через reflection.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Стрим содержит само значение целиком как единственный элемент, а не его поля по отдельности.",
-                "source_of_confusion": "`flatMap` в Stream разворачивает структуры в элементы, и это поведение ошибочно ждут от `Optional.stream`.",
-                "if_it_were_true": "Тогда `Optional.of(user).stream()` давал бы поток из полей `user`, но он даёт поток из одного `user`.",
-                "how_it_should_be": "Элемент стрима — это хранимое значение целиком; на поля он не раскладывается."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Он создаёт infinite stream, повторяющий present value; для empty stream также бесконечен и содержит null, поэтому нужен `limit`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Optional.stream()` даёт конечный стрим из 0 или 1 элемента; повторения значения и бесконечности нет.",
-                "source_of_confusion": "Бесконечные стримы вроде `Stream.generate` ассоциируют с любым «стримом из одного источника».",
-                "if_it_were_true": "Тогда `optional.stream().collect(toList())` зависал бы, но он мгновенно возвращает список из 0–1 элемента.",
-                "how_it_should_be": "Это конечный стрим длиной 0 (для empty) или 1 (для наполненного `Optional`)."
+                "explanation": "Метод из Java девять превращает контейнер в поток ровно из одного элемента, если значение есть, и в пустой поток, если его нет.",
+                "example": "Это мост между контейнером и Stream API: список контейнеров пропускают через развёртывание в потоки и за один шаг получают только непустые значения.",
+                "when_to_apply": "До Java девять ту же фильтрацию делали в два шага — сначала отсеять пустые, потом распаковать через небезопасное извлечение.",
+                "edge_cases": "Новый способ короче и не использует извлечение, поэтому его и считают идиоматичным.",
+                "related": "Смысл в том, что пустой контейнер даёт ноль элементов и просто исчезает из потока, а непустой отдаёт своё значение — отдельная проверка на наличие становится не нужна."
               }
             }
           ]
@@ -666,55 +666,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие способы использования `Optional` часто считаются антипаттернами и почему?",
+          "question_text": "Какие антипаттерны использования Optional существуют?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`orElseGet` всегда является антипаттерном: supplier делает результат nondeterministic, усложняет debugging и поэтому любой fallback нужно вычислять eagerly только через eager `orElse`.",
+              "order": 0,
+              "text": "Возвращать пустой список вместо контейнера со списком считается ошибкой.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: `orElseGet` с дорогим дефолтом предпочтителен, а антипаттерн — это `orElse` с дорогим вычислением, которое запускается всегда.",
-                "source_of_confusion": "Ленивость кажется «сложнее», поэтому её ошибочно записывают в плохие практики.",
-                "if_it_were_true": "Тогда `orElseGet(() -> db.find(k))` был бы хуже `orElse(db.find(k))`, но первый экономит обращения к БД.",
-                "how_it_should_be": "Антипаттерн — `orElse` с дорогим дефолтом; `orElseGet` его и решает за счёт ленивости."
+                "what_actually": "Пустой список — как раз рекомендованный ответ, а ошибкой считается обёртка над коллекцией.",
+                "source_of_confusion": "Пустая коллекция выглядит менее выразительной, чем явная пустота контейнера.",
+                "if_it_were_true": "Тогда вызывающему пришлось бы разбирать два разных вида пустоты.",
+                "how_it_should_be": "Возвращать пустую коллекцию и не заворачивать её в контейнер."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "Главный антипаттерн — Optional return type: container следует использовать только в fields и parameters, а методы должны возвращать null с внешней документацией contract.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Возврат `Optional` из метода — это рекомендованное, основное назначение `Optional`, а не антипаттерн; ошибочны параметры и поля.",
-                "source_of_confusion": "Запрет на `Optional` в параметрах и полях по ошибке распространяют и на возвращаемые значения.",
-                "if_it_were_true": "Тогда `Optional<User> findById(...)` считался бы плохой практикой, но это как раз канонический пример правильного использования.",
-                "how_it_should_be": "`Optional` создан именно для возврата значений; антипаттерны — параметры, поля, обёртки коллекций."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Optional<List<T>>` всегда лучше empty list: он обязан различать «не загружено» и «загружено пустым» даже если API не имеет такого состояния.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оборачивание коллекций в `Optional` — антипаттерн: пустой список уже выражает отсутствие элементов, и `Optional` лишь усложняет API.",
-                "source_of_confusion": "Желание различить «нет данных» и «пустой результат» подталкивает к лишней обёртке.",
-                "if_it_were_true": "Тогда все API возвращали бы `Optional<List<...>>`, но идиома — отдавать `Collections.emptyList()`.",
-                "how_it_should_be": "Коллекции возвращают напрямую; отсутствие элементов выражают пустым списком, а не `Optional`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Smells включают `isPresent()+get`, nullable Optional, expensive `orElse`, необоснованные fields/parameters и wrapper вокруг collections без domain distinction.",
+              "order": 1,
+              "text": "Параметры, поля, обёртка над коллекцией и ручное извлечение значения.",
               "correct": true,
               "sections": {
-                "explanation": "Optional эффективен, когда state действительно бинарный «значение/отсутствие» на return boundary. Он ухудшает API, если дублирует empty collection, допускает собственный null или конфликтует с serialization/ORM conventions.",
-                "example": "Вместо `if(opt.isPresent()) use(opt.get())` применяют `opt.ifPresent(this::use)`; вместо `Optional<List<Row>>` часто возвращают empty immutable list, если третьего состояния нет.",
-                "when_to_apply": "Оценивайте semantic states и consumers, а не применяйте blanket ban. Parameter/field Optional иногда оправдан в internal immutable API, но должен быть осознанным contract.",
-                "edge_cases": "`Optional<List<T>>` может быть корректен, если «не вычислено» отлично от «вычислено пусто». Framework/Jackson modules могут поддерживать field Optional, но JPA/basic serialization остаются отдельными ограничениями.",
-                "related": "[[java-optional-interview#Q6]] get; [[java-optional-interview#Q13]] parameters; [[java-optional-interview#Q14]] fields."
+                "explanation": "Общий принцип один: Optional создан как возвращаемый тип для значения, которого может не быть, и большинство антипаттернов — использование не по назначению.",
+                "example": "Список из ответа такой: проверка с извлечением вместо дефолта, контейнер в параметре метода, контейнер в поле сущности, дорогой аргумент у дефолта и обёртка вокруг коллекции.",
+                "when_to_apply": "Ручное извлечение через проверку и получение значения заменяется одним вызовом дефолта, а необязательный параметр — перегрузкой метода.",
+                "edge_cases": "У коллекции уже есть естественное пустое состояние — пустой список, поэтому обёртка создаёт два разных способа сказать «ничего нет».",
+                "related": "Поле сущности в контейнере не сериализуется в JSON и не ложится на колонку таблицы, а дорогой аргумент у дефолта вычисляется даже при непустом контейнере."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Возвращать контейнер из метода поиска считается здесь главным антипаттерном.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Возврат из метода поиска — это прямое назначение контейнера, а не антипаттерн.",
+                "source_of_confusion": "В списке ошибок много запретов, и запрет достраивают к главному случаю.",
+                "if_it_were_true": "Тогда у контейнера не осталось бы ни одного законного применения.",
+                "how_it_should_be": "Считать возвращаемое значение той самой ролью, ради которой он создан."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Дорогое вычисление опасно именно в `orElseGet`, а не в быстром `orElse`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Опасен как раз аргумент, который вычисляется всегда; функция вызывается только на пустом.",
+                "source_of_confusion": "Имена методов различаются одним словом, и роли путают местами.",
+                "if_it_were_true": "Тогда ленивую форму пришлось бы избегать в дорогих сценариях.",
+                "how_it_should_be": "Держать в голове, какой из двух методов вычисляет дефолт заранее."
               }
             }
           ]
@@ -726,55 +726,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему `Optional` обычно не рекомендуют как параметр публичного метода?",
+          "question_text": "Почему Optional нельзя использовать как параметр метода?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Java compiler запрещает parameterized type `Optional<T>` в method signature; такой source code не проходит type checking и не создаёт bytecode.",
+              "order": 0,
+              "text": "Перегрузка метода здесь не спасает, и других альтернатив попросту нет.",
               "correct": false,
               "sections": {
-                "what_actually": "Компилятор не запрещает `Optional`-параметры: `void notify(Optional<String> e)` компилируется без ошибок; это лишь стилевой антипаттерн.",
-                "source_of_confusion": "Сильную рекомендацию «не делай так» путают с жёстким запретом компилятора.",
-                "if_it_were_true": "Тогда сборка падала бы на объявлении метода, но она проходит, а проблема возникает в рантайме при `null`.",
-                "how_it_should_be": "Это соглашение, а не ограничение языка: код компилируется, но `null` вместо `Optional` ломает его в рантайме."
+                "what_actually": "Перегрузка названа первой альтернативой: необязательность выражается набором сигнатур.",
+                "source_of_confusion": "Проблема выглядит безвыходной, если считать контейнер единственным способом сказать «значения может не быть».",
+                "if_it_were_true": "Тогда необязательный параметр вообще нечем было бы выразить.",
+                "how_it_should_be": "Начинать с перегрузки, а к аннотации переходить, когда перегрузок много."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "Optional parameter становится compile-time constant и не может быть передан дальше, reassigned, inspected или сохранён внутри method body.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Optional` иммутабелен всегда, но это не мешает передавать его в другие методы; неизменяемость не связана с проблемой параметров.",
-                "source_of_confusion": "Иммутабельность `Optional` подают как ограничение, мешающее работе с параметром.",
-                "if_it_were_true": "Тогда `Optional`-значение нельзя было бы прокинуть дальше, но его свободно передают в любые методы.",
-                "how_it_should_be": "Неизменяемость тут ни при чём; проблема — возможность получить `null` вместо `Optional.empty()`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Caller может передать `null` вместо empty; параметр Optional часто уступает overload, nullability annotation, parameter object или domain sum type.",
+              "order": 1,
+              "text": "Вызывающий передаст null вместо пустого, и защита от null пропадает.",
               "correct": true,
               "sections": {
-                "explanation": "Optional parameter добавляет два способа выразить отсутствие — null container и empty container — если contract не запрещает первый внешними средствами. Он также переносит wrapping ceremony на каждого caller-а.",
-                "example": "Вместо `search(Optional<String> query)` используют `search()`/`search(String query)`, `@Nullable String`, либо `SearchCriteria`, если optional fields являются частью command model.",
-                "when_to_apply": "Избегайте в stable public APIs, особенно вызываемых из других языков/frameworks. Допускайте в узком internal functional API, если callers уже естественно имеют Optional.",
-                "edge_cases": "Это рекомендация, не запрет Java. Overloads могут вызвать ambiguity, nullable annotations требуют tooling, а parameter object лучше масштабируется при нескольких optional arguments.",
-                "related": "[[java-optional-interview#Q12]] context-dependent smells; [[java-optional-interview#Q14]] fields; [[java-optional-interview#Q1]] intended role."
+                "explanation": "Главная причина в том, что параметр-контейнер не даёт той защиты от null, ради которой его взяли.",
+                "example": "Вызывающий по-прежнему может передать null вместо пустого контейнера — компилятор это не запретит, а внутри метода первое же обращение к параметру уронит код.",
+                "when_to_apply": "Вместо одного возможного null теперь приходится проверять и сам контейнер, и его содержимое.",
+                "edge_cases": "К тому же параметр навязывает обёртку каждому вызывающему: обычную строку придётся заворачивать при каждом вызове.",
+                "related": "Правильные альтернативы известны: перегрузка методов, аннотация о допустимом null со статическим анализом или явный null с проверкой внутри. Разница с возвращаемым значением в том, кто отвечает за контракт — автор метода или чужой вызывающий."
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Главная проблема — обязательная wrapper allocation делает любой method call медленнее business logic независимо от JIT optimization и actual workload.",
+              "label": "C",
+              "order": 2,
+              "text": "Компилятор такой параметр запрещает, и код с ним не соберётся.",
               "correct": false,
               "sections": {
-                "what_actually": "Проблема не в производительности, а в том, что параметр-`Optional` не спасает от `null` и усложняет API; накладные расходы обёртки незначительны.",
-                "source_of_confusion": "Любые предостережения против `Optional` обобщённо приписывают накладным расходам.",
-                "if_it_were_true": "Тогда запрет касался бы только горячих путей, но его рекомендуют повсеместно из-за семантики, а не скорости.",
-                "how_it_should_be": "Главная причина — caller может передать `null`, и `Optional` в параметре не добавляет гарантий."
+                "what_actually": "Компилятор такой параметр разрешает — именно поэтому проблема и всплывает в рантайме.",
+                "source_of_confusion": "Строгий запрет на уровне стиля принимают за запрет языка.",
+                "if_it_were_true": "Тогда пример с передачей null в метод не скомпилировался бы.",
+                "how_it_should_be": "Отделять рекомендацию по проектированию от правил компиляции."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Проблема только в аллокации, а защиту от null параметр обеспечивает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Защиты от null параметр как раз не даёт: вместо контейнера туда придёт null.",
+                "source_of_confusion": "Лишняя обёртка и правда стоит аллокации, и её выносят на первое место.",
+                "if_it_were_true": "Тогда контейнер в параметре был бы допустим везде, кроме горячего пути.",
+                "how_it_should_be": "Считать главным доводом отсутствие гарантии, а не цену обёртки."
               }
             }
           ]
@@ -786,55 +786,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Когда поле типа `Optional` может быть проблемой и является ли оно запрещённым?",
+          "question_text": "Можно ли хранить Optional в полях класса?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Optional field возможен, но часто мешает serialization, JPA и bean tools; entity обычно хранит nullable value, возвращая Optional через API.",
+              "order": 0,
+              "text": "Тип `Optional` реализует Serializable, поэтому с JPA и Jackson проблем нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Serializable он не реализует, и отсюда как раз проблемы с этими инструментами.",
+                "source_of_confusion": "Класс лежит в стандартной библиотеке, и сериализуемость считают само собой разумеющейся.",
+                "if_it_were_true": "Тогда хранить контейнер в поле сущности было бы совершенно безопасно.",
+                "how_it_should_be": "Проверять сериализуемость типа, прежде чем класть его в состояние."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Геттер тоже обязан отдавать голое поле, иначе Hibernate падает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Геттер с контейнером как раз рекомендован: инструменты работают с полем, а не с ним.",
+                "source_of_confusion": "Ограничение на поле распространяют на весь класс целиком.",
+                "if_it_were_true": "Тогда выразить необязательность в контракте чтения было бы нечем.",
+                "how_it_should_be": "Держать контейнер в геттере, а поле оставлять простым."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Такое поле прямо запрещено языком, объявить его попросту не выйдет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Технически такое поле объявить можно — компилятор его пропускает.",
+                "source_of_confusion": "Рекомендацию не хранить контейнер в состоянии читают как запрет языка.",
+                "if_it_were_true": "Тогда пример с падающей сущностью не дошёл бы до запуска.",
+                "how_it_should_be": "Различать «не рекомендуется» и «не компилируется»."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Технически можно, но поле оставляют обычным, а контейнер отдаёт геттер.",
               "correct": true,
               "sections": {
-                "explanation": "Язык не запрещает Optional fields. Ограничения приходят от design intent и integrations: `Optional` не `Serializable`, JPA не рассматривает его как обычный persistent attribute, а JSON support зависит от datatype module/configuration.",
-                "example": "Entity хранит `String nickname` и repository method возвращает `Optional<Entity>`; immutable application settings object может хранить Optional, если tooling и API явно это поддерживают.",
-                "when_to_apply": "Предпочитайте raw nullable field на persistence/serialization boundary и Optional return. Используйте Optional field только когда model действительно требует wrapper и весь toolchain проверен.",
-                "edge_cases": "Jackson JDK8 module поддерживает Optional; это не делает его хорошим JPA field. Getter, возвращающий Optional, может изменить JSON shape, если mapper treats it as property.",
-                "related": "[[java-optional-interview#Q12]] антипаттерны; [[java-optional-interview#Q13]] parameters; [[java-optional-interview#Q15]] когда не нужен."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Java compiler запрещает fields типа Optional и выдаёт compile error независимо от visibility, static modifier, generic argument или initialization expression или annotation.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Поле типа `Optional` объявить можно — компиляция пройдёт; проблемы возникают в рантайме при сериализации и ORM-маппинге, а не на уровне языка.",
-                "source_of_confusion": "Сильную рекомендацию «не храни» воспринимают как запрет компилятора.",
-                "if_it_were_true": "Тогда `private Optional<String> phone;` не компилировался бы, но он компилируется без проблем.",
-                "how_it_should_be": "Технически поле допустимо; не рекомендуется из-за несериализуемости и проблем с JPA/Jackson."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Optional field является стандартным JPA basic type и Jackson property без дополнительных modules; Hibernate автоматически maps present/empty на nullable column и сохраняет wrapper.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Hibernate не умеет маппить `Optional<String>` на колонку, а Jackson без настройки сериализует его некорректно — поэтому поле-`Optional` как раз не рекомендуют.",
-                "source_of_confusion": "Удобство `Optional` в API ошибочно переносят на хранение в полях сущности.",
-                "if_it_were_true": "Тогда `@Entity` с полем `Optional<String> phone` работал бы штатно, но Hibernate на нём падает.",
-                "how_it_should_be": "Поле делают обычного типа (`String`), а `Optional` отдают из геттера через `ofNullable`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Поле Optional разрешено только как `static final`, потому что instance Optional всегда пытается сериализоваться и JVM запрещает construction любого enclosing object instance.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Рекомендация против `Optional` в полях не зависит от `static`; обычные поля сущности именно не статические, и проблема в несериализуемости инстансных полей.",
-                "source_of_confusion": "`static`-поля и правда исключаются из сериализации, и это правило натягивают на решение проблемы.",
-                "if_it_were_true": "Тогда `static Optional<String>` решал бы вопрос, но поля сущностей по смыслу инстансные, а не статические.",
-                "how_it_should_be": "Корректное решение — инстансное поле обычного типа и `Optional` в геттере, без опоры на `static`."
+                "explanation": "Технически компилятор это разрешает, но на практике так не делают: контейнер не задумывался как часть состояния объекта.",
+                "example": "Он не реализует Serializable, поэтому возникают проблемы с JPA, JSON и удалёнными вызовами; Jackson без отдельной настройки его не сериализует, а Hibernate не маппит на колонку таблицы.",
+                "when_to_apply": "Решение — разделить хранение и контракт чтения: поле остаётся обычным, где null означает отсутствие.",
+                "edge_cases": "Наружу необязательность выражает геттер, возвращающий контейнер из этого поля.",
+                "related": "Инструменты работают с простым полем, а вызывающий код всё равно получает явный сигнал о возможном отсутствии. Поле обычного типа и геттер с контейнером — золотой стандарт для сущностей."
               }
             }
           ]
@@ -846,55 +846,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Когда `Optional` не добавляет полезной семантики?",
+          "question_text": "Когда Optional не нужен?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Optional особенно нужен в каждом hot path: wrapper гарантированно уменьшает allocations, исключает branch prediction misses и быстрее прямой проверки nullable reference.",
+              "order": 0,
+              "text": "Для пустой коллекции он подходит лучше, чем обычный пустой список.",
               "correct": false,
               "sections": {
-                "what_actually": "На горячем пути `Optional` как раз избыточен: каждый его экземпляр — дополнительная аллокация, тогда как `null` не аллоцирует ничего.",
-                "source_of_confusion": "Пользу `Optional` для читаемости ошибочно трактуют как пользу для производительности.",
-                "if_it_were_true": "Тогда замена `null` на `Optional` снижала бы давление на GC, но она его повышает за счёт лишних объектов.",
-                "how_it_should_be": "На горячем пути ради производительности возвращаются к `null`; `Optional` добавляет, а не убирает аллокации."
+                "what_actually": "Для пустой коллекции рекомендован именно пустой список, а не обёртка над ним.",
+                "source_of_confusion": "Явная пустота контейнера выглядит выразительнее, чем список нулевой длины.",
+                "if_it_were_true": "Тогда у вызывающего появилось бы два разных способа узнать, что ничего нет.",
+                "how_it_should_be": "Пользоваться естественным пустым состоянием самой коллекции."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "Optional не нужен только для `void`; любой reference или primitive return обязан быть Optional, даже если absence невозможен по domain invariant.",
+              "order": 1,
+              "text": "Аллокаций он не добавляет, поэтому в горячем пути совершенно безразличен.",
               "correct": false,
               "sections": {
-                "what_actually": "`Optional` избыточен во многих случаях помимо `void`: пустые коллекции, поля, параметры, горячий путь — там предпочтительнее `null` или пустой контейнер.",
-                "source_of_confusion": "Правило «возвращай Optional» абсолютизируют, считая обёртку обязательной везде, кроме `void`.",
-                "if_it_were_true": "Тогда поля сущностей и пустые списки тоже оборачивали бы в `Optional`, но это признанные антипаттерны.",
-                "how_it_should_be": "`Optional` не нужен в коллекциях, полях, параметрах, на горячем пути; он уместен для опциональных возвращаемых значений."
+                "what_actually": "Каждый экземпляр — дополнительный объект в куче, поэтому в горячем пути его и избегают.",
+                "source_of_confusion": "Обёртка вокруг одного значения кажется бесплатной абстракцией.",
+                "if_it_were_true": "Тогда горячий путь не значился бы в таблице случаев без контейнера.",
+                "how_it_should_be": "Считать аллокацию платой, которая окупается только на границе API."
               }
             },
             {
-              "order": 2,
               "label": "C",
-              "text": "Для отсутствующей коллекции только `Optional<List<T>>` корректен; empty list устарел и смешивает ошибку загрузки с valid result во всех API.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для отсутствующих элементов как раз рекомендуют пустую коллекцию (`Collections.emptyList()`), а оборачивание коллекции в `Optional` — антипаттерн.",
-                "source_of_confusion": "Желание обозначить «данных нет» подталкивает к обёртке вместо естественного пустого списка.",
-                "if_it_were_true": "Тогда `emptyList()` был бы deprecated, но он остаётся идиоматичным способом вернуть «нет элементов».",
-                "how_it_should_be": "Пустую коллекцию возвращают напрямую через `emptyList()`; `Optional` поверх коллекции не нужен."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Optional обычно лишний для collections, `void`, обязательных values, primitive hot paths и framework fields; основной use case — nullable return result.",
+              "order": 2,
+              "text": "Поля, параметры, приватные методы и горячие пути обходятся без него.",
               "correct": true,
               "sections": {
-                "explanation": "Container полезен не сам по себе, а когда заставляет обработать meaningful absence. Если type уже имеет естественный empty result или value обязано существовать, Optional добавляет ceremony и иногда allocation.",
-                "example": "`findAll()` возвращает empty list; `count()` возвращает primitive; `findOne()` возвращает Optional. Для primitive absence существуют `OptionalInt/Long/Double`, но они также нужны только при реальном optional state.",
-                "when_to_apply": "Выбирайте по semantics public contract и profile performance только после измерений; не вводите Optional как универсальное style rule.",
-                "edge_cases": "JIT может устранять некоторые allocations, поэтому blanket performance claims ненадёжны. Empty collection и absent collection различаются только если domain явно моделирует третье состояние.",
-                "related": "[[java-optional-interview#Q1]] purpose; [[java-optional-interview#Q12]] smells; [[java-optional-interview#Q14]] framework fields."
+                "explanation": "Контейнер не универсальная замена null: каждый его экземпляр — дополнительный объект в куче, а польза проявляется только на границах API.",
+                "example": "Таблица из ответа перечисляет случаи прямо: пустая коллекция, поле сущности, параметр метода, приватный метод, горячий путь и метод без возвращаемого значения.",
+                "when_to_apply": "Для каждого из них есть более естественная замена: пустой список, обычный null с аннотацией, перегрузка или простая проверка на null.",
+                "edge_cases": "Оправдан он тогда, когда метод возвращает значение, которого может не быть, когда нужно вынудить обработать оба случая или когда строится цепочка преобразований.",
+                "related": "Эмпирическое правило: контейнер — для возвращаемых значений на публичных границах, а для полей, параметров, внутренней логики и коллекций почти всегда лучше null или пустая коллекция."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "На публичных границах возврата он как раз избыточен и мешает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Возврат на публичной границе — единственное место, где он безусловно оправдан.",
+                "source_of_confusion": "Список случаев «не нужен» длинный, и запрет достраивают до всех подряд.",
+                "if_it_were_true": "Тогда у контейнера не осталось бы ни одной рекомендованной роли.",
+                "how_it_should_be": "Отделять границы API, где он уместен, от внутренней логики."
               }
             }
           ]
