@@ -509,17 +509,18 @@ class ChatServiceTest {
 }
 ```
 
-**Вариант 2 — `TestChatModel`.** Готовый stub от Spring AI: вместо жёсткого ответа задаёте функцию «по входу — выход». Удобно для интеграционных тестов, где ответ должен зависеть от запроса, но без похода к реальному API.
+**Вариант 2 — собственный стаб `ChatModel`.** Готового тестового класса Spring AI не поставляет, но интерфейс `ChatModel` маленький — его легко реализовать самому: функция «по входу — выход». Удобно для интеграционных тестов, где ответ должен зависеть от запроса, но без похода к реальному API.
 
 ```java
-// TestChatModel — Spring AI тестовый stub
+// свой stub: реализуем интерфейс ChatModel лямбдо-подобным классом
 @Bean
 @Profile("test")
-public ChatModel testChatModel() {
-    return new TestChatModel(request -> {
-        String userMessage = request.getInstructions().get(0).getContent();
-        return new ChatResponse(List.of(new Generation("Test response for: " + userMessage)));
-    });
+public ChatModel stubChatModel() {
+    return prompt -> {   // ChatModel.call(Prompt): ответ зависит от входа
+        String userMessage = prompt.getUserMessage().getText();
+        return new ChatResponse(List.of(new Generation(
+                new AssistantMessage("Test response for: " + userMessage))));
+    };
 }
 ```
 
@@ -528,7 +529,7 @@ public ChatModel testChatModel() {
 Прежде чем VectorStore сможет искать по документам, их надо туда загрузить — этим занимается **ETL-пайплайн** Spring AI. Это та же триада, что в классическом ETL, но под векторный поиск:
 
 - **Extract** — прочитать сырой документ через `DocumentReader` (PDF, Markdown, HTML, JSON). Реализация знает формат: `PagePdfDocumentReader` достаёт текст постранично, можно отрезать колонтитулы.
-- **Transform** — разбить текст на чанки через `TextSplitter`. Это **ключевой шаг**: целый документ не влезет в context window, а слишком крупные чанки размывают релевантность. `TokenTextSplitter(512, 50)` режет по 512 токенов с перекрытием в 50 — overlap не даёт «разрезать» мысль на границе чанков.
+- **Transform** — разбить текст на чанки через `TextSplitter`. Это **ключевой шаг**: целый документ не влезет в context window, а слишком крупные чанки размывают релевантность. `TokenTextSplitter` собирают билдером: `withChunkSize(512)` задаёт целевой размер чанка в токенах (по умолчанию 800), `withMinChunkSizeChars(350)` — минимум символов, до которого чанк дорезается по границе предложения. Перекрытия (overlap) у этого сплиттера нет — границы он сглаживает за счёт разрезания по знакам препинания.
 - **Load** — `vectorStore.add(chunks)` сам считает embedding для каждого чанка и сохраняет. Отдельно векторизовать не нужно (см. Q5).
 
 ```java
@@ -549,7 +550,10 @@ public class DocumentIndexingService {
                 .build());
 
         // Transform (разбивка на чанки)
-        TextSplitter splitter = new TokenTextSplitter(512, 50);  // 512 токенов, 50 overlap
+        TextSplitter splitter = TokenTextSplitter.builder()
+                .withChunkSize(512)          // целевой размер чанка в токенах
+                .withMinChunkSizeChars(350)  // дорезка по границе предложения
+                .build();
 
         // Load (индексирование с автоматическим embedding)
         List<Document> chunks = splitter.apply(reader.get());
@@ -562,7 +566,7 @@ public class DocumentIndexingService {
         List<Document> docs = reader.get().stream()
             .map(d -> new Document(d.getText(), metadata))
             .toList();
-        TextSplitter splitter = new TokenTextSplitter();
+        TextSplitter splitter = TokenTextSplitter.builder().build();
         vectorStore.add(splitter.apply(docs));
     }
 }
@@ -577,7 +581,7 @@ public class DocumentIndexingService {
 | Портируемость | Только OpenAI | 10+ провайдеров |
 | Интеграция с Spring | Вручную | Автоконфигурация |
 | RAG / VectorStore | Нет | Встроено |
-| Function Calling | Вручную | Декларативно (`@Description`) |
+| Function Calling | Вручную | Декларативно (`@Tool`) |
 | Тестируемость | Сложнее (HTTP клиент) | Легко (мок ChatModel) |
 | Retry / Resilience | Вручную | Встроено через Spring |
 | Chat Memory | Нет | Встроено |
