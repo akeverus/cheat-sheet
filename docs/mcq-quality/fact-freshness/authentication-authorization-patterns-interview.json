@@ -1,14 +1,32 @@
 {
-  "topic_slug": "authentication-authorization-patterns-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
-  "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
-  ]
+ "topic_slug": "authentication-authorization-patterns-interview",
+ "round": 10,
+ "status": "VERIFIED",
+ "version_sensitive": true,
+ "product_version": "Spring Security 6.x (SecurityFilterChain как бин, @EnableMethodSecurity, authorizeHttpRequests; PKCE для конфиденциальных клиентов с 6.3), OAuth 2.0 + OIDC, RFC 7519 (JWT), RFC 7636 (PKCE), RFC 8471 (Token Binding), RFC 9449 (DPoP)",
+ "checked_date": "2026-08-21",
+ "sources": [
+  "context7 → /spring-projects/spring-security: PKCE включается автоматически для публичных клиентов и по явной настройке клиента, что покрывает и конфиденциальный случай",
+  "https://docs.spring.io/spring-security/reference/",
+  "внутренняя сверка примеров кода и таблиц между вопросами файла"
+ ],
+ "version_sensitive_claims": [
+  "Spring Security 6: конфигурация через бин SecurityFilterChain вместо удалённого WebSecurityConfigurerAdapter, @EnableMethodSecurity вместо прежней аннотации, authorizeHttpRequests вместо authorizeRequests",
+  "PKCE рекомендуют для всех клиентов обмена кода, включая конфиденциальные (поддержка с 6.3); Implicit Flow объявлен устаревшим",
+  "Token Binding (RFC 8471) в браузерах отменён, живые альтернативы — DPoP (RFC 9449), короткий TTL с ротацией и токены, привязанные к сертификату",
+  "User.withDefaultPasswordEncoder() объявлен устаревшим и годится только для примеров — оговорка добавлена в Q1",
+  "Рекомендованные функции хэширования паролей: bcrypt, Argon2, scrypt, PBKDF2; SHA-256 и MD5 непригодны из-за скорости",
+  "Keycloak кладёт роли в нестандартное утверждение realm_access.roles, поэтому нужен свой JwtAuthenticationConverter"
+ ],
+ "staleness_risks": [
+  "Ветка Spring Security движется быстро: имена настроек и аннотаций менялись в 6.0 и продолжат меняться в 7.x",
+  "Статус механизмов привязки токенов (Token Binding против DPoP) стоит перепроверять раз в полгода",
+  "Рекомендации по параметрам хэширования паролей (стоимость bcrypt, профили Argon2) обновляются вслед за железом"
+ ],
+ "notes": [
+  "Гейт FACTS выполнен ДО авторинга: три дефекта исправлены коммитом 0aa532bf",
+  "Главный из них — миф о пуле строк как причине использовать char[] для паролей: в пул попадают только литералы",
+  "Второй — внутреннее противоречие между Q2 и Q12 о том, какой протокол стоит за входом через популярные сервисы",
+  "В текстах вариантов версий и имён API нет: TEMPORAL_CLAIMS гейта = 0, номера версий живут только в разборах"
+ ]
 }
