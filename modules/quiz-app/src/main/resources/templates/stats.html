@@ -193,6 +193,26 @@
      заполнена тем, что отвечает на тот же вопрос, а страница стала короче на этаж.
      Ниже 1200px строка распадается в стопку: там колонке метрик уже не хватает ширины
      на две карточки в ряд. */-->
+<!--/* СТОЙКА «ГДЕ Я» — ПОД РАСКРЫТИЕМ НА ТЕЛЕФОНЕ (iter-157). Замер 390×844: между
+     дверями «что дальше» и вкладками разделов лежали 706px статуса (ранг 319 +
+     четыре метрики 283 + легенда), и вкладки — рабочий интерфейс страницы —
+     вставали на 1505-й пиксель при сгибе 844, почти на два экрана ниже. Статус
+     смотрят мельком, а разделы — работают; тот же довод уже решил витрину знаков
+     (766px) и форму отбора (345px), и приём взят их же: без JS раскрыто, на
+     телефоне закрывает скрипт, в свёрнутой шапке остаётся то, ради чего на статус
+     смотрят мельком — ступень, уровень и точность. */-->
+<details class="stats-standing-disclosure" open data-mobile-collapsed>
+    <summary class="disclosure-summary stats-standing-summary">
+        <h2 class="section-title" id="stats-standing-title">Где я сейчас</h2>
+        <span class="stats-standing-lead muted" th:if="${progression != null}">
+            <span th:text="${progression.rank().title()} + ' · уровень ' + ${progression.level()}">Ученик · уровень 1</span>
+            <!--/* Тот же источник и то же форматирование, что у плитки «Точность
+                 попыток» ниже: расхождение шапки с содержимым — ложь. У пустого
+                 прогресса точности нет, и хвост просто не печатается. */-->
+            <span class="stats-standing-lead-tail" th:if="${metrics != null and metrics.hasOverallAccuracy()}"
+                  th:text="' · точность ' + ${#numbers.formatDecimal(metrics.overallAccuracy, 1, 1)} + '%'"> · точность 0%</span>
+        </span>
+    </summary>
 <div class="stats-standing">
 <div class="card">
     <div th:replace="~{fragments/progression :: rank(p=${progression}, sessionXp=null)}"></div>
@@ -333,6 +353,7 @@
     </details>
 </section>
 </div>
+</details><!--/* /.stats-standing-disclosure */-->
 </div><!--/* /.stats-summary */-->
 
 

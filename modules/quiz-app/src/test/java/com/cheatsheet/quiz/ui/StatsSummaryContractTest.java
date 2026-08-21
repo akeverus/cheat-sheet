@@ -75,6 +75,55 @@ class StatsSummaryContractTest {
     }
 
     /**
+     * Стойка «где я» на телефоне сворачивается, и свёрнутая шапка несёт факты.
+     *
+     * <p>Замер 390×844 (iter-157): между дверями «что дальше» и вкладками разделов
+     * лежали 706px статуса (ранг 319 + четыре метрики 283 + легенда), и вкладки —
+     * рабочий интерфейс страницы — вставали на 1505-й пиксель при сгибе 844. После
+     * правки вкладки на 917 (документ 2493 против 3081), на 430 — в первом экране.
+     * Тот же довод и тот же приём, что у витрины знаков (766px) и формы отбора
+     * (345px): статус смотрят мельком, разделами работают.</p>
+     */
+    @Test
+    void theStandingCollapsesOnPhonesAndItsSummaryCarriesTheFacts() throws IOException {
+        String markup = statsMarkup();
+        assertThat(markup)
+                .as("стойка «где я» перестала быть раскрытием: на телефоне 706px статуса "
+                        + "снова встанут между дверями и разделами")
+                .containsPattern("<details class=\"stats-standing-disclosure\" open data-mobile-collapsed>");
+        assertThat(markup)
+                .as("шапка стойки не общий компонент раскрытия — второй рисунок одного элемента")
+                .contains("class=\"disclosure-summary stats-standing-summary\"");
+        assertThat(markup)
+                .as("в свёрнутой шапке нет фактов: свёрнутый статус обязан отвечать «где я» "
+                        + "одной строкой — ступень, уровень, точность")
+                .containsPattern("progression\\.rank\\(\\)\\.title\\(\\).+уровень");
+        assertThat(markup)
+                .as("точность в шапке считается не тем же выражением, что плитка «Точность "
+                        + "попыток», — при первой правке форматирования они разойдутся")
+                .containsPattern("stats-standing-lead-tail[^>]*th:if=\"\\$\\{metrics != null and metrics\\.hasOverallAccuracy\\(\\)}\"");
+        // Маркер-комментарий у закрывающего тега срезает фильтр комментариев этого же
+        // гейта (тот же случай ловил SummaryTopContractTest в iter-142), поэтому
+        // закрытие проверяется БАЛАНСОМ: до вкладок разделов все открытые <details>
+        // обязаны закрыться — иначе стойка проглотила бы и вкладки, и панели.
+        // Точка отсчёта — начало ТЕГА, а не имени класса: класс стоит внутри тега, и
+        // сегмент от него терял первый `<details`, из-за чего баланс всегда бился.
+        int details = markup.indexOf("<details class=\"stats-standing-disclosure\"");
+        int standing = markup.indexOf("<div class=\"stats-standing\">");
+        int tabs = markup.indexOf("id=\"stats-tablist\"");
+        assertThat(details).isNotNegative();
+        assertThat(standing).as("стойка ушла из-под раскрытия").isGreaterThan(details);
+        assertThat(tabs).as("вкладок разделов нет").isGreaterThan(standing);
+        String beforeTabs = markup.substring(details, tabs);
+        long opened = Pattern.compile("<details").matcher(beforeTabs).results().count();
+        long closed = Pattern.compile("</details>").matcher(beforeTabs).results().count();
+        assertThat(closed)
+                .as("раскрытие стойки не закрывается до вкладок: вкладки и панели окажутся "
+                        + "ВНУТРИ свёрнутого статуса и исчезнут вместе с ним")
+                .isEqualTo(opened);
+    }
+
+    /**
      * Витрина знаков отвечает на «чего я достиг» — это вопрос после разбора, а не до
      * него. Стоя перед разделами, она удлиняла путь к аналитике на 137–426px.
      */
