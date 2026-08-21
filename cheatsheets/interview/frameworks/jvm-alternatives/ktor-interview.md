@@ -114,7 +114,7 @@ updated: "2026-04-25"
 |----------|------|-------------|
 | Язык | Kotlin (first-class) | Java/Kotlin |
 | Стиль | Functional + DSL | Annotation-based |
-| DI | Внешний (Koin/Kodein) | Встроенный |
+| DI | Встроенный с 3.2, до того только внешний (Koin/Kodein) | Встроенный |
 | Magic | Минимум | Много (autoconfig, AOP) |
 | Размер JAR | ~5-10 MB | 20-50 MB |
 | Cold start | < 1 сек | 3-15 сек |
@@ -166,8 +166,9 @@ embeddedServer(CIO, port = 8080) { ... }.start(wait = true)
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("io.ktor:ktor-server-core-jvm:2.3.7")
-    implementation("io.ktor:ktor-server-netty-jvm:2.3.7")
+    // ktorVersion задают в gradle.properties: актуальная ветка — 3.x
+    implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
+    implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
 }
 
 // Application.kt
@@ -717,14 +718,25 @@ install(HSTS) {
 
 ## Q23. (!) Как реализовать DI в Ktor?
 
-В Ktor **нет встроенного DI-контейнера** — в отличие от Spring, фреймворк не управляет жизненным циклом зависимостей сам. Это осознанное решение в духе минимализма: способ внедрения зависимостей выбирает разработчик.
+Долгое время встроенного DI-контейнера в Ktor не было, и способ внедрения зависимостей выбирал разработчик. **С версии 3.2 в Ktor есть собственный DI-плагин**: зависимости регистрируют в блоке `dependencies` и достают типобезопасно, он умеет асинхронную загрузку, автоматическую очистку ресурсов и подмену зависимостей в тестах.
+
+```kotlin
+fun Application.module() {
+    dependencies {
+        provide<UserRepository> { UserRepositoryImpl() }
+        provide<UserService>(::UserServiceImpl)   // конструктор резолвится сам
+    }
+    routing { /* ... */ }
+}
+```
 
 Основные подходы — от самого простого к более масштабируемым:
 
 1. **Manual DI** — создавать зависимости вручную и передавать их параметрами в функции конфигурации; достаточно для небольших проектов
-2. **Koin** — самый популярный DI-контейнер в экосистеме Kotlin, есть готовая интеграция `koin-ktor`
-3. **Kodein-DI** — альтернативный лёгкий контейнер
-4. **Dagger/Hilt** — реже, в основном для multiplatform/Android-сценариев
+2. **Встроенный DI (3.2+)** — штатный плагин: регистрация в `dependencies`, интеграция с конфигом и `testApplication`
+3. **Koin** — самый популярный сторонний DI-контейнер в экосистеме Kotlin, есть готовая интеграция `koin-ktor`
+4. **Kodein-DI** — альтернативный лёгкий контейнер
+5. **Dagger/Hilt** — реже, в основном для multiplatform/Android-сценариев
 
 ## Q24. Что выбрать — Koin или ручное внедрение зависимостей?
 
@@ -732,8 +744,8 @@ install(HSTS) {
 
 ```kotlin
 // build.gradle.kts
-implementation("io.insert-koin:koin-ktor:3.5.0")
-implementation("io.insert-koin:koin-logger-slf4j:3.5.0")
+implementation("io.insert-koin:koin-ktor:$koinVersion")
+implementation("io.insert-koin:koin-logger-slf4j:$koinVersion")
 
 // Application.kt
 val appModule = module {
@@ -766,7 +778,7 @@ fun Application.module(userService: UserService = UserService()) {
 }
 ```
 
-**Итог:** ручной DI достаточно для маленьких проектов и даёт максимальную прозрачность; Koin окупается на проектах побольше, где зависимостей много и их хочется собирать декларативно.
+**Итог:** ручной DI достаточно для маленьких проектов и даёт максимальную прозрачность; Koin окупается на проектах побольше, где зависимостей много и их хочется собирать декларативно. С версии 3.2 у этой развилки появился третий вариант — штатный DI-плагин Ktor (см. Q23), который закрывает типовые случаи без сторонней библиотеки.
 
 ## Q25. Как организовать конфигурацию (application.conf)?
 
@@ -866,10 +878,10 @@ class UserApiTest {
 
 | Подход | Версия |
 |--------|--------|
-| `withTestApplication { handleRequest(...) }` | Ktor 1.x (deprecated) |
+| `withTestApplication { handleRequest(...) }` | Ktor 1.x; объявлен устаревшим в 2.0 и удалён в 3.0 |
 | `testApplication { client.get(...) }` | Ktor 2.x+ |
 
-Принципиальная разница в том, как формируется запрос. Старый `withTestApplication` работает через низкоуровневый `handleRequest`, где заголовки и тело собираются вручную. Новый `testApplication` использует тот же `HttpClient`, что и production-код, поэтому тесты читаются идиоматичнее и ближе к реальному вызову. В новых проектах используют только `testApplication`.
+Принципиальная разница в том, как формируется запрос. Старый `withTestApplication` работает через низкоуровневый `handleRequest`, где заголовки и тело собираются вручную. Новый `testApplication` использует тот же `HttpClient`, что и production-код, поэтому тесты читаются идиоматичнее и ближе к реальному вызову. Выбора сегодня и нет: в 3.0 старые функции удалены из `ktor-server-test-host` вместе с `handleRequest`.
 
 ## Q29. (!) Когда выбирать Ktor вместо Spring Boot?
 
@@ -938,7 +950,7 @@ server.start(wait = true)
 Почти все минусы — обратная сторона минимализма: чего нет в ядре, то приходится добавлять и поддерживать самому.
 
 1. **Меньше готовых интеграций** — для PostgreSQL, Redis, Kafka обёртки нередко пишут самостоятельно
-2. **Нет встроенного DI** — приходится выбирать сторонний (Koin/Kodein)
+2. **Встроенный DI появился только в 3.2** — он моложе и проще Spring-контейнера, а на старых версиях его нет вовсе
 3. **Меньше документации и ответов на StackOverflow** по сравнению со Spring
 4. **Нет security-настроек по умолчанию** — CORS, CSRF, rate limiting конфигурируют руками
 5. **Меньшее community** — меньше библиотек, плагинов и статей
