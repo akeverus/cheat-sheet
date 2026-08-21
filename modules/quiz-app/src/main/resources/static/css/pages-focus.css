@@ -1119,8 +1119,24 @@ html[data-design] .focus-page .question-diagram { overflow-x: auto; }
    (прямой .question-diagram в .focus-training), поэтому дублируем hide-until-rendered
    и центрирование — иначе до отрисовки мелькает сырой `graph LR ...`. */
 html[data-design] .focus-page .question-diagram .mermaid:not([data-rendered="true"]) { visibility: hidden; }
-html[data-design] .focus-page .question-diagram .mermaid { display: block; margin: var(--space-4) 0; overflow-x: auto; text-align: center; }
-html[data-design] .focus-page .question-diagram .mermaid svg { max-width: 100%; height: auto; transition: transform 120ms ease; }
+/* ОДНА прокручиваемая коробка на схему — окно материала. `overflow-x: auto` стоял
+   ещё и здесь, и прокрутка съедалась вложенным блоком: у окна `scrollWidth`
+   совпадал с `clientWidth`, то есть окно не знало, что схема шире него, и ни
+   кромки, ни остановки клавиатуры не появлялось. `max-width: 100%` у SVG тоже
+   снят: ширину схемы теперь считает правило читаемости (mermaid-renderer), а этот
+   потолок молча возвращал «вписать по ширине». `transition: transform` удалён
+   вместе с трансформным зумом — двигать нечего.
+
+   `overflow: visible` тут не украшение, а отмена наследства: носитель схемы — это
+   `<pre>`, и общее правило кода делает любой `<pre>` прокручиваемым. Замер после
+   первой правки: SVG 1435px внутри `.mermaid` со `scrollWidth` 1467 при окне 600 —
+   прокрутку съедала внутренняя коробка, а окно считало, что всё поместилось. */
+html[data-design] .focus-page .question-diagram .mermaid {
+  display: block; margin: var(--space-4) 0; overflow: visible;
+}
+html[data-design] .focus-page .question-diagram .mermaid svg {
+  max-width: none; height: auto; display: block; margin-inline: auto;
+}
 /* Раскладку полосы задаёт .content-toolbar в shell.css — она одинакова у кода и
    диаграммы. Здесь стоял её дубль под `.code-toolbar` (те же flex/align/justify),
    доставшийся от эпохи до content-box. Дубль не просто повторял: он лежал в слое
@@ -1171,14 +1187,30 @@ html[data-design] .focus-page .diagram-viewport {
   html[data-design] .focus-page .diagram-viewport { max-height: min(38vh, 320px); }
 }
 
-/* Хват и перехват тача — только у mermaid-схемы: там их обслуживает панорама SVG.
-   Текстовая схема прокручивается как обычный блок, и `touch-action: none` на ней
-   означал бы, что палец по схеме не листает страницу вообще. */
+/* Хват — у mermaid-схемы: её таскают мышью. Но таскается ПРОКРУТКА окна, а не сам
+   SVG, поэтому `touch-action: none` снят: он выключал нативную прокрутку, ради
+   которой перевод и делался. Палец теперь двигает схему теми же осями, что мышь и
+   клавиатура; чтобы страница не уезжала вместе со схемой, работает
+   `overscroll-behavior: contain` базового правила окна. */
 html[data-design] .focus-page .question-diagram[data-content-type="MERMAID"] .diagram-viewport {
   cursor: grab;
-  touch-action: none;
 }
 html[data-design] .focus-page .diagram-viewport.is-panning { cursor: grabbing; user-select: none; }
+
+/* Окно схемы стало прокручиваемой областью с остановкой клавиатуры (WCAG 2.1.1) —
+   значит у него обязано быть видимое кольцо фокуса того же рода, что у кнопок. */
+html[data-design] .focus-page .diagram-viewport:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+/* Схема шире окна — это надо ВИДЕТЬ, а не обнаруживать случайно. Кромка сделана
+   ВНУТРЕННЕЙ ТЕНЬЮ, а не маской: маска гасит и сами подписи у края, то есть роняет
+   контраст ровно там, где мы его чинили. Тень статична — reduced-motion выключать
+   нечего; цвет берётся из токена рамки, поэтому работает в обеих темах. */
+html[data-design] .focus-page .diagram-viewport[data-diagram-overflow="x"] {
+  box-shadow: inset -18px 0 16px -18px var(--color-border-strong);
+}
 
 /* Схема, нарисованная псевдографикой в самой шпаргалке. Рамки в ней держатся на
    том, что все символы одной ширины, поэтому: моноширинный шрифт, никаких

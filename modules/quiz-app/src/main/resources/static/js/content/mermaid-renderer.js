@@ -18,8 +18,28 @@ let diagramObserver = null;
 const THEME_RERENDER_MS = 120;
 /** Начинаем тянуть библиотеку чуть раньше, чем схема доедет до вьюпорта. */
 const DIAGRAM_PRELOAD_MARGIN = '300px';
-/** Per-diagram pan/zoom state; survives theme re-render without rebinding listeners. */
+/** Per-diagram zoom state; survives theme re-render without rebinding listeners. */
 const diagramUiState = new WeakMap();
+/**
+ * Порог читаемости подписи в схеме. Ниже него масштаб «вписать по ширине» не
+ * опускается — иначе схема превращается в узор.
+ *
+ * Замер (Chromium, 1512×982, окно схемы 550px, случайная выборка 40 схем из 1260
+ * в корпусе): медиана масштаба 0.58, у 68% схем подпись выходила ниже 12px, у 40% —
+ * ниже 8px, худшая 0.19 (подпись ~3px). Одновременно под окном схемы пустовало
+ * 497px на 1512×982 и 807px на 2560×1440: место было, а материал был нечитаем.
+ */
+const MIN_LABEL_PX = 12;
+/** Пределы ручного зума — доля натуральной величины схемы. */
+const MIN_MANUAL_SCALE = 0.05;
+const MAX_MANUAL_SCALE = 3;
+/**
+ * Шаг зума — МНОЖИТЕЛЬ, а не слагаемое. Масштабы схем разъезжаются на порядок
+ * (замер по выборке: от 0.11 у самой широкой до 1.0), и слагаемое 0.15 означало
+ * для одной схемы шаг в 2.4 раза, а для другой — в 1.15.
+ */
+const ZOOM_STEP = 1.25;
+let resizeTimer = null;
 
 function readThemeVars() {
   const mmStyle = getComputedStyle(document.documentElement);
@@ -177,9 +197,11 @@ function applySvgToElement(el, svgString) {
   const imported = document.importNode(svg, true);
   imported.removeAttribute('height');
   restoreCarriedStyles(imported);
+  // Ширину ставит sizeDiagram — в пикселях, а не в процентах: масштаб схемы это
+  // раскладка (окно тогда прокручивается нативно), а не `transform`, который
+  // рисует крупно поверх коробки прежнего размера.
   imported.style.width = '100%';
   imported.style.height = 'auto';
-  imported.style.maxHeight = '100%';
   el.replaceChildren(imported);
   return true;
 }
@@ -317,17 +339,13 @@ export async function renderAllMermaid(force, root) {
       if (applySvgToElement(el, safeSvg)) {
         el.setAttribute('data-rendered', 'true');
         const qd = el.closest('.question-diagram');
-        if (qd) {
-          qd.removeAttribute('data-render-failed');
-          // Свежий <svg> заменяет старый без inline-transform, но pan/zoom-state
-          // в diagramUiState переживает ре-рендер (WeakMap по .question-diagram).
-          // После смены темы переносим transform на новый SVG — иначе визуал
-          // сбрасывается в scale=1, а следующий zoom прыгает от сохранённого стейта.
-          const st = diagramUiState.get(qd);
-          if (st && (st.scale !== 1 || st.panX !== 0 || st.panY !== 0)) {
-            applyDiagramTransform(qd, st);
-          }
-        }
+        if (qd) qd.removeAttribute('data-render-failed');
+        // Свежий <svg> приходит без наших размеров, а состояние зума в
+        // diagramUiState переживает ре-рендер (WeakMap по элементу схемы).
+        // sizeDiagram и назначает масштаб по умолчанию, и возвращает ручной:
+        // при `auto: false` он берёт сохранённый `scale` как есть. Схемы в разборе
+        // (проза) идут тем же путём — материал один и тот же.
+        sizeDiagram(el);
       } else {
         failDiagram(el);
       }
@@ -351,18 +369,26 @@ export function wireDiagramToolbar(root) {
       const qd = btn.closest('.question-diagram');
       if (!qd) return;
       const action = btn.getAttribute('data-diagram-action');
-      const state = ensureDiagramState(qd);
+      const diagram = qd.querySelector('.mermaid');
+      if (!diagram) return;
+      const state = ensureDiagramState(diagram);
       if (action === 'zoom-in') {
-        state.scale = Math.min(2.5, Math.round((state.scale + 0.15) * 100) / 100);
-        applyDiagramTransform(qd, state);
+        state.auto = false;
+        state.scale = zoomed(state.scale, ZOOM_STEP);
+        applyDiagramSize(diagram, state);
       } else if (action === 'zoom-out') {
-        state.scale = Math.max(0.5, Math.round((state.scale - 0.15) * 100) / 100);
-        applyDiagramTransform(qd, state);
+        state.auto = false;
+        state.scale = zoomed(state.scale, 1 / ZOOM_STEP);
+        applyDiagramSize(diagram, state);
       } else if (action === 'fit') {
-        state.scale = 1;
-        state.panX = 0;
-        state.panY = 0;
-        applyDiagramTransform(qd, state);
+        // «Вписать» — показать схему целиком. Это ручной выбор: он может дать
+        // подпись мельче порога, и правило читаемости его не отменяет.
+        state.auto = false;
+        const svg = diagram.querySelector('svg');
+        const natural = svg && naturalSize(svg);
+        state.scale = natural ? fitScaleOf(scrollHostOf(diagram), natural) : 1;
+        scrollHostOf(diagram).scrollTo({ left: 0, top: 0 });
+        applyDiagramSize(diagram, state);
       } else if (action === 'fullscreen') {
         if (!document.fullscreenElement && qd.requestFullscreen) qd.requestFullscreen();
         else if (document.exitFullscreen) document.exitFullscreen();
@@ -381,7 +407,6 @@ export function wireDiagramToolbar(root) {
   // У текстовой схемы (ASCII_DIAGRAM) SVG нет — панорама там перехватывала бы
   // pointer-события и мешала выделять текст, ничего при этом не двигая.
   scope.querySelectorAll('.question-diagram[data-content-type="MERMAID"]').forEach((qd) => {
-    ensureDiagramState(qd);
     qd.querySelectorAll('[data-diagram-action]').forEach((btn) => {
       if (!btn.hasAttribute('tabindex')) btn.setAttribute('tabindex', '0');
       const actionLabels = {
@@ -405,24 +430,25 @@ export function wireDiagramToolbar(root) {
     let originX = 0;
     let originY = 0;
 
+    // Мышью схему таскают, а не прокручивают колесом до края — но двигаем мы
+    // ПРОКРУТКУ окна, а не сам SVG. Тогда мышь, трекпад, палец, клавиатура и
+    // полосы прокрутки двигают одно и то же, и ни один из этих способов не
+    // оказывается «вторым», который надо согласовывать с первым.
     viewport.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
       if (e.target.closest('button, a, summary, details')) return;
-      const state = ensureDiagramState(qd);
       dragging = true;
       startX = e.clientX;
       startY = e.clientY;
-      originX = state.panX;
-      originY = state.panY;
+      originX = viewport.scrollLeft;
+      originY = viewport.scrollTop;
       viewport.classList.add('is-panning');
       try { viewport.setPointerCapture(e.pointerId); } catch (_) {}
     });
     viewport.addEventListener('pointermove', (e) => {
       if (!dragging) return;
-      const state = ensureDiagramState(qd);
-      state.panX = originX + (e.clientX - startX);
-      state.panY = originY + (e.clientY - startY);
-      applyDiagramTransform(qd, state);
+      viewport.scrollLeft = originX - (e.clientX - startX);
+      viewport.scrollTop = originY - (e.clientY - startY);
     });
     function endPan(e) {
       if (!dragging) return;
@@ -435,23 +461,175 @@ export function wireDiagramToolbar(root) {
   });
 }
 
-function ensureDiagramState(qd) {
-  let state = diagramUiState.get(qd);
+function ensureDiagramState(el) {
+  let state = diagramUiState.get(el);
   if (!state) {
-    state = { scale: 1, panX: 0, panY: 0 };
-    diagramUiState.set(qd, state);
+    // `auto` — масштаб выбран правилом читаемости и обязан пересчитаться при смене
+    // ширины окна. Первое же ручное действие снимает флаг: выбор человека сильнее.
+    state = { scale: null, auto: true };
+    diagramUiState.set(el, state);
   }
   return state;
 }
 
-function applyDiagramTransform(qd, state) {
-  const viewport = qd.querySelector('.diagram-viewport') || qd;
-  viewport.setAttribute('data-diagram-scale', String(state.scale));
-  const svg = qd.querySelector('.mermaid svg');
-  if (svg) {
-    svg.style.transform = 'translate(' + state.panX + 'px,' + state.panY + 'px) scale(' + state.scale + ')';
-    svg.style.transformOrigin = 'center top';
+/** Направление графа берём из исходника: он лежит рядом, в `data-mermaid-source`. */
+function isVerticalFlow(el) {
+  const source = (el.getAttribute('data-mermaid-source') || '').trim();
+  return /^\s*(flowchart|graph)\s+(TD|TB|BT)\b/.test(source);
+}
+
+/** Натуральная величина схемы — из `viewBox`, а не из нарисованного прямоугольника. */
+function naturalSize(svg) {
+  const vb = (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+  if (vb.length !== 4 || !(vb[2] > 0) || !(vb[3] > 0)) return null;
+  return { width: vb[2], height: vb[3] };
+}
+
+/** Ширина, в которую схему можно вписать целиком (без полей окна). */
+function fitScaleOf(viewport, natural) {
+  const cs = getComputedStyle(viewport);
+  const inner = viewport.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0);
+  return inner > 0 ? inner / natural.width : 1;
+}
+
+/**
+ * Масштаб по умолчанию — не «сколько влезет», а «сколько можно прочитать».
+ *
+ * Подпись меряется на натуральной величине: у SVG масштаб равномерный, поэтому
+ * высота подписи при масштабе s равна замеренной, умноженной на s. Отсюда
+ * требуемый масштаб = MIN_LABEL_PX / замер. Больше натуральной величины схему не
+ * растягиваем — размывать нечего, это векторная графика, но и смысла нет.
+ */
+function legibleScale(svg, natural) {
+  const labels = Array.from(svg.querySelectorAll('.nodeLabel, foreignObject div, text'))
+    .filter((node) => (node.textContent || '').trim())
+    .slice(0, 24);
+  if (!labels.length) return 1;
+  const previous = svg.style.width;
+  svg.style.width = natural.width + 'px';
+  // Считаем по САМОЙ МЕЛКОЙ подписи, а не по первой попавшейся: в схеме рядом
+  // живут заголовок узла и подпись стрелки, и «читаемо» — про меньшую из них.
+  let smallest = Infinity;
+  for (const node of labels) {
+    const height = node.getBoundingClientRect().height;
+    if (height > 0 && height < smallest) smallest = height;
   }
+  svg.style.width = previous;
+  if (!isFinite(smallest)) return 1;
+  return Math.min(1, MIN_LABEL_PX / smallest);
+}
+
+/**
+ * Ставит схеме размер и приводит окно в состояние честной прокручиваемой области:
+ * с клавиатуры доступно, читалке названо, глазу видно, что содержимое шире окна.
+ */
+/**
+ * Прокручиваемая коробка схемы. На экране вопроса это окно материала (у него кап
+ * высоты и тулбар), в разборе — сам блок схемы внутри прозы.
+ */
+function scrollHostOf(el) {
+  return el.closest('.diagram-viewport') || el;
+}
+
+function applyDiagramSize(el, state) {
+  const host = scrollHostOf(el);
+  const svg = el.querySelector('svg');
+  if (!svg) return;
+  const natural = naturalSize(svg);
+  if (!natural) return;
+
+  const scale = state.scale || 1;
+  svg.style.width = Math.round(natural.width * scale) + 'px';
+  svg.style.height = 'auto';
+  host.setAttribute('data-diagram-scale', scale.toFixed(2));
+
+  const overflowsX = host.scrollWidth - host.clientWidth > 1;
+  const overflowsY = host.scrollHeight - host.clientHeight > 1;
+
+  // С какого места смотреть схему, которая шире окна. У потока слева направо
+  // (`graph LR`) начало — это левый край, и он же начало чтения. У дерева сверху вниз
+  // (`graph TD`, 464 таких в корпусе против 568 LR) корень стоит ПО ЦЕНТРУ, и левый
+  // край показывает лист без корня: на 390px в окне 325 при содержимом 995 первым в
+  // кадре оказывался «ArrayDeque (push/pop)», а не вопрос «Что нужно?». Центрируем
+  // один раз и только пока масштаб не трогали руками.
+  if (overflowsX && state.auto && !state.centered && isVerticalFlow(el)) {
+    host.scrollLeft = Math.round((host.scrollWidth - host.clientWidth) / 2);
+    state.centered = true;
+  }
+  if (overflowsX) host.setAttribute('data-diagram-overflow', 'x');
+  else host.removeAttribute('data-diagram-overflow');
+  // Прокручиваемая область без доступа с клавиатуры — недостижимое содержимое
+  // (WCAG 2.1.1). Стоп появляется ровно тогда, когда есть что прокручивать.
+  if (overflowsX || overflowsY) {
+    host.setAttribute('tabindex', '0');
+    host.setAttribute('role', 'group');
+    if (!host.getAttribute('aria-label')) {
+      host.setAttribute('aria-label', 'Схема — прокручиваемая область');
+    }
+  } else {
+    host.removeAttribute('tabindex');
+    host.removeAttribute('role');
+    host.removeAttribute('aria-label');
+  }
+}
+
+/** Пересчитывает масштаб по умолчанию и применяет его. */
+function sizeDiagram(el) {
+  const svg = el && el.querySelector('svg');
+  if (!svg) return;
+  const natural = naturalSize(svg);
+  if (!natural) return;
+  const state = ensureDiagramState(el);
+  state.fit = fitScaleOf(scrollHostOf(el), natural);
+  if (state.auto || !state.scale) {
+    state.scale = Math.min(1, Math.max(state.fit, legibleScale(svg, natural)));
+  }
+  applyDiagramSize(el, state);
+}
+
+function zoomed(scale, factor) {
+  const next = (scale || 1) * factor;
+  return Math.min(MAX_MANUAL_SCALE, Math.max(MIN_MANUAL_SCALE, Math.round(next * 1000) / 1000));
+}
+
+/**
+ * Прокрутка окна схемы с клавиатуры.
+ *
+ * Chromium прокручивает сфокусированную коробку стрелками сам, WebKit — нет: замер
+ * на широкой схеме (2871×278) дал `scrollLeft` 0→74 в Chromium и 0→0 в WebKit при
+ * фокусе на окне. Своя обработка выравнивает движки и делает шаг предсказуемым.
+ */
+function handleDiagramKeys(e) {
+  const host = e.target;
+  if (!host || !host.matches || !host.matches('[data-diagram-overflow], .diagram-viewport[tabindex], .mermaid[tabindex]')) return;
+  const stepX = Math.max(48, Math.round(host.clientWidth * 0.2));
+  const stepY = Math.max(48, Math.round(host.clientHeight * 0.2));
+  const moves = {
+    ArrowRight: [stepX, 0], ArrowLeft: [-stepX, 0],
+    ArrowDown: [0, stepY], ArrowUp: [0, -stepY],
+    PageDown: [0, host.clientHeight], PageUp: [0, -host.clientHeight]
+  };
+  if (e.key === 'Home' || e.key === 'End') {
+    e.preventDefault();
+    host.scrollTo({ left: e.key === 'Home' ? 0 : host.scrollWidth, top: host.scrollTop });
+    return;
+  }
+  const move = moves[e.key];
+  if (!move) return;
+  e.preventDefault();
+  host.scrollBy({ left: move[0], top: move[1] });
+}
+
+/** Смена ширины окна меняет «вписать» — значит и масштаб по умолчанию. */
+function scheduleDiagramResize() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    document.querySelectorAll('.mermaid[data-rendered="true"]').forEach((el) => {
+      const state = diagramUiState.get(el);
+      if (state && !state.auto) return;
+      sizeDiagram(el);
+    });
+  }, 150);
 }
 
 function scheduleThemeRerender() {
@@ -477,6 +655,12 @@ function bootMermaidModule() {
   window.renderAllMermaid = renderAllMermaid;
 
   document.addEventListener('DOMContentLoaded', () => observeDiagrams(document));
+  window.addEventListener('resize', scheduleDiagramResize);
+  // Полный экран — та же смена доступной ширины, что и ресайз окна: замер показал
+  // окно 600 → 1463, а масштаб оставался прежним, пока никто не пересчитает.
+  document.addEventListener('fullscreenchange', scheduleDiagramResize);
+  document.addEventListener('webkitfullscreenchange', scheduleDiagramResize);
+  document.addEventListener('keydown', handleDiagramKeys);
   document.addEventListener('contenttabsready', (e) => observeDiagrams(e.detail && e.detail.root));
   document.addEventListener('themechange', scheduleThemeRerender);
 

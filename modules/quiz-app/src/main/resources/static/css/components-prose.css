@@ -54,10 +54,22 @@ html[data-design] .markdown-content s { color: var(--color-text-tertiary); }
    До рендера .mermaid держит сырой текст графа — прячем (visibility:hidden), чтобы
    не мелькал `graph LR ...`; после рендера data-rendered=true показывает SVG. */
 html[data-design] .markdown-content .mermaid:not([data-rendered="true"]) { visibility: hidden; }
+/* Схема в разборе — тот же материал, что на экране вопроса, и правило читаемости
+   у них общее (mermaid-renderer.sizeDiagram). Поэтому здесь прокручивается сам
+   блок схемы (окна материала в прозе нет), а `max-width: 100%` снят: он молча
+   возвращал «вписать по ширине» поверх посчитанного масштаба. Центрирование —
+   авто-полями у SVG, а не `text-align`: у схемы шире коробки текстовое
+   центрирование увело бы её ЛЕВЫЙ край за границу прокрутки. */
 html[data-design] .markdown-content .mermaid {
-  display: block; margin: var(--space-4) 0; overflow-x: auto; text-align: center;
+  display: block; margin: var(--space-4) 0; overflow: auto; overscroll-behavior: contain;
 }
-html[data-design] .markdown-content .mermaid svg { max-width: 100%; height: auto; }
+html[data-design] .markdown-content .mermaid svg {
+  max-width: none; height: auto; display: block; margin-inline: auto;
+}
+html[data-design] .markdown-content .mermaid:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+html[data-design] .markdown-content .mermaid[data-diagram-overflow="x"] {
+  box-shadow: inset -18px 0 16px -18px var(--color-border-strong);
+}
 
 /* Инлайн-`code` в ТЕКСТЕ ВОПРОСА/ВАРИАНТА — гашение глобального beige-чипа
    (:not(pre)>code, @reset). ВЫНЕСЕНО из pages-result.css (Волна 3, ШАГ R / Cluster A):
