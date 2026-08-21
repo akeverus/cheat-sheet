@@ -214,6 +214,80 @@ function applySvgToElement(el, svgString) {
  * создан кодом, который сам уже прошёл проверку. Пробрасывать сюда nonce значило бы
  * копировать его в ещё одно место без выигрыша в безопасности.
  */
+/**
+ * ОКНО РЕНДЕРА: инлайновые стили mermaid идут через CSSOM, а не атрибутом.
+ *
+ * Политика `style-src-attr 'none'` запрещает атрибутные стили, и mermaid во
+ * временном контейнере рендера давал 125 нарушений на вопрос — консоль тонула в
+ * шуме, а настоящие ошибки в нём. Замер по путям (iter-159): 45 нарушений —
+ * атрибутные записи стиля, остальные 80 — d3-шные `setAttributeNS` и парсинг
+ * `innerHTML` со `style="…"`. В ИТОГОВОМ DOM отброшенного нет (carry-перенос
+ * возвращает всё при вставке строки SVG) — дефект именно консольный.
+ *
+ * Маршрут через `style.cssText` политикой разрешён (проверено трёхвариантным
+ * экспериментом) и семантически эквивалентен: те же объявления, тот же
+ * сериализованный атрибут — carry-перенос ниже работает как работал.
+ *
+ * Патчи действуют ТОЛЬКО НА ОКНО РЕНДЕРА и снимаются в finally. Глобальный патч
+ * ослабил бы политику для всего приложения: `style-src-attr 'none'` — защита от
+ * атрибутной инъекции стилей в пользовательском контенте, и включать обход для
+ * чужих innerHTML нельзя.
+ */
+async function withInlineStylesRouted(work) {
+  const proto = Element.prototype;
+  const setAttr = proto.setAttribute;
+  const setAttrNS = proto.setAttributeNS;
+  const innerDesc = Object.getOwnPropertyDescriptor(proto, 'innerHTML');
+  const viaCssom = (el, value) => {
+    try {
+      el.style.cssText = value;
+      return true;
+    } catch (_) {
+      return false; // экзотический хозяин без CSSOM — обычный путь
+    }
+  };
+  proto.setAttribute = function (name, value) {
+    if (name === 'style' && typeof value === 'string' && viaCssom(this, value)) return;
+    return setAttr.call(this, name, value);
+  };
+  proto.setAttributeNS = function (ns, name, value) {
+    if (!ns && name === 'style' && typeof value === 'string' && viaCssom(this, value)) return;
+    return setAttrNS.call(this, ns, name, value);
+  };
+  Object.defineProperty(proto, 'innerHTML', {
+    ...innerDesc,
+    set(value) {
+      if (typeof value === 'string' && value.indexOf(' style="') !== -1) {
+        innerDesc.set.call(this, value.replace(/\sstyle="/g, ' ' + CARRIED_STYLE + '="'));
+        restoreCarriedStyles(this);
+        return;
+      }
+      return innerDesc.set.call(this, value);
+    },
+  });
+  // Последний путь — DOMPurify внутри mermaid: он парсит строку DOMParser-ом в
+  // ИНЕРТНЫЙ документ, и Chromium репортит нарушение на каждый style-атрибут,
+  // хотя в инертном документе стили даже не применяются (цель события —
+  // HTMLDocument; замер фазовой пробой). Переименовываем атрибут ДО парса —
+  // нарушать нечего; в итоговую строку атрибут едет под carry-именем, и его
+  // возвращает тот же restoreCarriedStyles в applySvgToElement, что и остальные. */
+  const parseFrom = DOMParser.prototype.parseFromString;
+  DOMParser.prototype.parseFromString = function (text, type, ...rest) {
+    if (typeof text === 'string' && text.indexOf(' style="') !== -1) {
+      text = text.replace(/\sstyle="/g, ' ' + CARRIED_STYLE + '="');
+    }
+    return parseFrom.call(this, text, type, ...rest);
+  };
+  try {
+    return await work();
+  } finally {
+    proto.setAttribute = setAttr;
+    proto.setAttributeNS = setAttrNS;
+    Object.defineProperty(proto, 'innerHTML', innerDesc);
+    DOMParser.prototype.parseFromString = parseFrom;
+  }
+}
+
 function loadMermaid() {
   if (typeof mermaid !== 'undefined') return Promise.resolve(true);
   if (mermaidLoad) return mermaidLoad;
@@ -334,7 +408,7 @@ export async function renderAllMermaid(force, root) {
     }
     try {
       const id = 'mmd-' + Math.random().toString(36).slice(2);
-      const res = await mermaid.render(id, withSemanticClassDefs(source));
+      const res = await withInlineStylesRouted(() => mermaid.render(id, withSemanticClassDefs(source)));
       const safeSvg = stripScriptsFromSvg(res.svg);
       if (applySvgToElement(el, safeSvg)) {
         el.setAttribute('data-rendered', 'true');

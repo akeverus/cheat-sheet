@@ -106,4 +106,43 @@ class DiagramCspContractTest {
                 .as("htmlLabels:false замером отвергнут (69 → 76) и не должен вернуться молча")
                 .doesNotContain("htmlLabels");
     }
+
+    /**
+     * Инлайновые стили ВРЕМЕННОЙ фазы рендера идут через CSSOM, и патчи снимаются.
+     *
+     * <p>Замер (iter-159): в итоговом DOM отброшенных объявлений нет, но mermaid давал
+     * 125 CSP-нарушений на вопрос из временного контейнера — консоль тонула в шуме.
+     * Маршрутизация `setAttribute`/`setAttributeNS`/`innerHTML`/`DOMParser` через
+     * CSSOM в окне рендера сняла 45 из них (125 → 80; остаток — парсинг в инертном
+     * документе, недостижимый из главного realm, задокументирован в реестре).
+     * Патчи обязаны СНИМАТЬСЯ в finally: глобальный обход ослабил бы политику
+     * `style-src-attr 'none'` для всего приложения.</p>
+     */
+    @Test
+    void inlineStylesOfTheRenderWindowAreRoutedThroughCssomAndRestored() throws IOException {
+        String js = read("static/js/content/mermaid-renderer.js");
+        assertThat(js)
+                .as("окно маршрутизации пропало: mermaid снова даёт 125 CSP-нарушений на "
+                        + "вопрос со схемой")
+                .contains("async function withInlineStylesRouted(");
+        assertThat(js)
+                .as("рендер больше не завёрнут в окно маршрутизации")
+                .contains("withInlineStylesRouted(() => mermaid.render(");
+        boolean restored = false;
+        java.util.regex.Matcher block = java.util.regex.Pattern.compile(
+                "finally \\{([\\s\\S]{0,400}?)\\}").matcher(js);
+        while (block.find()) {
+            String body = block.group(1);
+            if (body.contains("proto.setAttribute = setAttr")
+                    && body.contains("proto.setAttributeNS = setAttrNS")
+                    && body.contains("Object.defineProperty(proto, 'innerHTML', innerDesc)")
+                    && body.contains("DOMParser.prototype.parseFromString = parseFrom")) {
+                restored = true;
+            }
+        }
+        assertThat(restored)
+                .as("патчи окна не снимаются в finally: обход политики становится "
+                        + "ГЛОБАЛЬНЫМ, и style-src-attr перестаёт защищать остальное приложение")
+                .isTrue();
+    }
 }
