@@ -17,8 +17,10 @@ module.exports = defineConfig({
       animations: 'disabled',
     },
   },
-  // Tracked golden baselines (not under gitignored *-snapshots/)
-  snapshotPathTemplate: '{testDir}/visual-baselines/{arg}{ext}',
+  // Tracked golden baselines (not under gitignored *-snapshots/).
+  // {projectName} обязателен: у Chromium и WebKit разные шрифтовые метрики,
+  // общий путь означал бы, что второй движок перезаписывает голдены первого.
+  snapshotPathTemplate: '{testDir}/visual-baselines/{projectName}/{arg}{ext}',
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
   workers: 1,
@@ -30,9 +32,9 @@ module.exports = defineConfig({
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    // WebKit гоняет ТОЛЬКО клавиатурный спек: visual-baselines сняты в Chromium,
-    // и полный webkit-прогон матрицы дал бы ложные пиксельные диффы.
-    { name: 'webkit', use: { ...devices['Desktop Safari'] }, testMatch: /keyboard-quiz\.spec\.js/ },
+    // WebKit гоняет ВСЁ, включая визуальную матрицу: базлайны разведены по
+    // {projectName}, ложных кросс-движковых диффов больше нет (iter-164).
+    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
   webServer: process.env.E2E_START_SERVER === '1'
     ? {

@@ -43,19 +43,25 @@ class KeyboardE2eContractTest {
         return Files.readString(path);
     }
 
+    /**
+     * С iter-164 WebKit гоняет ВСЁ, включая визуальную матрицу: базлайны
+     * разведены по {@code {projectName}}. Прежний контракт «webkit ограничен
+     * клавиатурным спеком» снят вместе со своей причиной — общим путём голденов,
+     * в котором второй движок перезаписывал бы снимки первого.
+     */
     @Test
-    void theWebkitProjectExistsAndIsScopedToTheKeyboardSpec() throws IOException {
+    void theWebkitProjectRunsEverythingOnItsOwnBaselines() throws IOException {
         String config = read("e2e/playwright.config.js");
         assertThat(config)
-                .as("WebKit-проект пропал: клавиатура снова проверяется только в Chromium")
+                .as("WebKit-проект пропал: «Chromium недостаточен» — обязательный гейт")
                 .contains("name: 'webkit'");
         assertThat(config)
-                .as("WebKit без testMatch погонит и визуальную матрицу — baselines сняты "
-                        + "в Chromium, диффы будут ложными")
-                .containsPattern("name: 'webkit'.*testMatch: /keyboard-quiz\\\\.spec\\\\.js/");
-        // `.*` без DOTALL не перейдёт строку: проект-объявление обязано быть одной
-        // строкой вместе со своим testMatch. Первая редакция с `[^}]*` падала на
-        // верном конфиге — обрывалась на `}` внутри use: { ...devices }.
+                .as("testMatch у webkit вернулся: матрица снова слепа в Safari")
+                .doesNotContainPattern("name: 'webkit'.*testMatch");
+        assertThat(config)
+                .as("{projectName} в пути голденов обязателен: без него движки "
+                        + "перезаписывают снимки друг друга")
+                .contains("visual-baselines/{projectName}/{arg}{ext}");
     }
 
     @Test

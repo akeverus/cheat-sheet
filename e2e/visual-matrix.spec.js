@@ -11,15 +11,52 @@ const path = require('path');
  * CI: .github/workflows/visual-goldens.yml (workflow_dispatch).
  */
 const OUT_DIR = path.join(__dirname, 'visual-results');
+
+/* Матрица стережёт ДИЗАЙН, а не содержимое банка. Голдены падали от живого
+   состояния: клавиатурный спек отвечает на вопрос, очередь сдвигается, и на
+   home рендерится другой вопрос (найдено webkit-прогоном iter-164: дифф 7% —
+   целиком текст вопроса/вариантов и счётчики). Всё, что меняется от
+   ИСПОЛЬЗОВАНИЯ приложения, маскируется; каркас, навигация, карточки,
+   контролы и типографика статичных подписей остаются под охраной пикселей. */
+/* Home рендерит ТЕКУЩИЙ вопрос очереди, а его двигает любое использование —
+   маскировать мало: другой вопрос меняет ГЕОМЕТРИЮ (высота заголовка, код-блок).
+   Пин: ?topic&ordered=true отдаёт первый вопрос темы независимо от SRS-истории
+   (проверено с мутацией между прогонами: id 2060 оба раза). Слаг констатен
+   нарочно: переименование темы должно уронить тест громко, а не молча сдвинуть
+   голден. После реимпорта банка id меняются, но первый вопрос темы — тот же. */
+const PINNED_HOME =
+  '/?topic=' + encodeURIComponent('algorithms/algorithmic-paradigms/backtracking-interview')
+  + '&ordered=true&shuffle=false';
+
+const DYNAMIC_CONTENT = [
+  '.focus-question', '#interview-options', '.topic-brief', '.question-code',
+  '.focus-bank-progress', '.today-chip', '.focus-aside .btn',
+  '.stats-next-actions-grid', '.dashboard-grid', '.stats-standing', '.metrics-legend',
+  '.page-head-lead',
+];
+
+/* Маска лечит ЗНАЧЕНИЯ, но не ПРИСУТСТВИЕ: блок, который то есть, то нет
+   (причина повторения зависит от истории ответов, баннер — от незавершённой
+   сессии), сдвигает всю геометрию ниже на свою высоту, и снимок краснеет
+   вокруг масок. Такие блоки на время снимка скрываются целиком — их пиксели
+   матрица честно НЕ стережёт (поведение причин закрыто контрактами разметки,
+   баннера — клавиатурным спеком). */
+/* .today-chip не исчезает, но МЕНЯЕТ РАЗМЕР от охвата очереди (полный банк ↔
+   фильтр сессии): маска повторяет бокс элемента, и вокруг неё краснеют полосы.
+   Прячем вместе с presence-волатильными. shuffle=false в пине — той же природы:
+   перемешивание вариантов меняло высоты карточек ответов между прогонами. */
+const VOLATILE_PRESENCE = ['.focus-question-reason', '.resume-banner', '.notice', '.today-chip'];
+const stabilizePresence = (page) =>
+  page.addStyleTag({ content: VOLATILE_PRESENCE.join(', ') + ' { display: none !important; }' });
 const GOLDEN = process.env.VISUAL_GOLDEN === '1';
 
 /** @type {Array<{ id: string, path: string, theme: string, pixel: string, motion: string }>} */
 const MATRIX = [
-  { id: 'home-dark-med-auto', path: '/', theme: 'dark', pixel: 'med', motion: 'auto' },
-  { id: 'home-light-med-on', path: '/', theme: 'light', pixel: 'med', motion: 'on' },
-  { id: 'home-dark-low-off', path: '/', theme: 'dark', pixel: 'low', motion: 'off' },
-  { id: 'home-dark-high-on', path: '/', theme: 'dark', pixel: 'high', motion: 'on' },
-  { id: 'home-light-high-off', path: '/', theme: 'light', pixel: 'high', motion: 'off' },
+  { id: 'home-dark-med-auto', path: PINNED_HOME, theme: 'dark', pixel: 'med', motion: 'auto' },
+  { id: 'home-light-med-on', path: PINNED_HOME, theme: 'light', pixel: 'med', motion: 'on' },
+  { id: 'home-dark-low-off', path: PINNED_HOME, theme: 'dark', pixel: 'low', motion: 'off' },
+  { id: 'home-dark-high-on', path: PINNED_HOME, theme: 'dark', pixel: 'high', motion: 'on' },
+  { id: 'home-light-high-off', path: PINNED_HOME, theme: 'light', pixel: 'high', motion: 'off' },
   { id: 'settings-dark-med-off', path: '/settings', theme: 'dark', pixel: 'med', motion: 'off' },
   { id: 'settings-light-med-on', path: '/settings', theme: 'light', pixel: 'med', motion: 'on' },
   { id: 'stats-dark-med-off', path: '/stats', theme: 'dark', pixel: 'med', motion: 'off' },
@@ -71,6 +108,7 @@ test.describe('visual preference matrix', () => {
 
       const response = await page.goto(combo.path, { waitUntil: 'domcontentloaded' });
       expect(response?.ok(), `HTTP ${response?.status()} for ${combo.path}`).toBeTruthy();
+      await stabilizePresence(page);
 
       await expect(page.locator('body')).toBeVisible();
       await expect(page.locator('#main-content')).toBeVisible({ timeout: 20_000 });
@@ -94,6 +132,7 @@ test.describe('visual preference matrix', () => {
         await expect(page).toHaveScreenshot(`${combo.id}.png`, {
           maxDiffPixelRatio: 0.03,
           animations: 'disabled',
+          mask: DYNAMIC_CONTENT.map((sel) => page.locator(sel)),
         });
       }
     });
@@ -107,7 +146,8 @@ test.describe('visual preference matrix', () => {
         pixel: 'med',
         motion: 'off',
       });
-      const response = await page.goto('/', { waitUntil: 'domcontentloaded' });
+      const response = await page.goto(PINNED_HOME, { waitUntil: 'domcontentloaded' });
+      await stabilizePresence(page);
       expect(response?.ok()).toBeTruthy();
       await expect(page.locator('#main-content')).toBeVisible({ timeout: 20_000 });
       const file = path.join(OUT_DIR, `home-dark-med-${vp.id}.png`);
@@ -118,6 +158,7 @@ test.describe('visual preference matrix', () => {
         await expect(page).toHaveScreenshot(`home-dark-med-${vp.id}.png`, {
           maxDiffPixelRatio: 0.03,
           animations: 'disabled',
+          mask: DYNAMIC_CONTENT.map((sel) => page.locator(sel)),
         });
       }
     });
