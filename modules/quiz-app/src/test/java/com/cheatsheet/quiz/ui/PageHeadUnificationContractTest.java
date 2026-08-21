@@ -245,8 +245,27 @@ class PageHeadUnificationContractTest {
         throw new AssertionError("кегль '" + value + "' не разобран: тест умеет токен, rem и px");
     }
 
-    /** Объявление кегля → пара «пол, потолок» в rem. Для не-clamp пол равен потолку. */
+    /** Сырое значение токена кегля из tokens.css — включая clamp-токены шкалы заголовков. */
+    private String rawFontSizeToken(String name) {
+        Matcher m = Pattern.compile("--font-size-" + Pattern.quote(name) + ":\\s*([^;]+);")
+                .matcher(withoutComments(read(STATIC.resolve("css/tokens.css"))));
+        return m.find() ? m.group(1).trim() : null;
+    }
+
+    /** Объявление кегля → пара «пол, потолок» в rem. Для не-clamp пол равен потолку.
+     *  С iter-161 кламп шапки живёт не в правиле, а в токене текучей шкалы
+     *  (--font-size-heading-page): ссылка на токен разворачивается в его сырое
+     *  значение, и контракт «пол заголовка выше потолка пояснения» меряется как
+     *  и прежде — по фактическим границам клампа. */
     private double[] floorAndCeiling(String declaration, java.util.Map<String, Double> tokens) {
+        Matcher reference = Pattern.compile("^var\\(\\s*--font-size-([a-z0-9-]+)\\s*\\)$")
+                .matcher(declaration.trim());
+        if (reference.find()) {
+            String raw = rawFontSizeToken(reference.group(1));
+            if (raw != null && !raw.equals(declaration.trim())) {
+                return floorAndCeiling(raw, tokens);
+            }
+        }
         Matcher clamp = Pattern.compile("clamp\\(([^,]+),([^,]+),([^,]+?)\\)\\s*$")
                 .matcher(declaration.trim());
         if (clamp.find()) {
