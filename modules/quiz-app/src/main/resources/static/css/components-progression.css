@@ -223,29 +223,19 @@ html[data-design] .rank-ladder {
   border-top: 1px solid var(--color-border-primary);
   padding-top: var(--space-2);
 }
+/* Сводка витрины — ОБЩИЙ компонент раскрытия (`.disclosure-summary`), а не свой
+   рисунок. Первая сборка описала его заново: флекс со своей стрелкой, прижатой
+   `margin-left: auto` к правому краю. В широкой карточке аналитики это выглядело
+   нормально, а в узкой колонке итогов сессии (карточка прогрессии ~280px) строка
+   разъезжалась: «Весь путь / гильдии» переносилось, «7 / ступеней» переносилось
+   отдельно, а стрелка висела в стороне — то есть заголовок читался как сломанный.
+
+   Странице остаётся только своё: кегль, цвет и запрет разрывать счёт ступеней. */
 html[data-design] .rank-ladder-summary {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-2);
-  cursor: pointer;
-  list-style: none;
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
-html[data-design] .rank-ladder-summary::-webkit-details-marker { display: none; }
-/* Стрелка — та же, что у остальных раскрытий продукта (.disclosure-summary):
-   поворачивается на раскрытии и подчиняется reduced-motion общим правилом. */
-html[data-design] .rank-ladder-summary::after {
-  content: "▾";
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
-  margin-left: auto;
-}
-html[data-design] .rank-ladder[open] .rank-ladder-summary::after { content: "▴"; }
-html[data-design] .rank-ladder-summary:focus-visible {
-  outline: none;
-  box-shadow: var(--shadow-focus);
-}
+html[data-design] .rank-ladder-count { white-space: nowrap; }
 html[data-design] .rank-ladder-list {
   list-style: none;
   margin: var(--space-3) 0 0;
@@ -254,13 +244,38 @@ html[data-design] .rank-ladder-list {
   flex-direction: column;
   gap: var(--space-1);
 }
+/* РЯД СТУПЕНИ ОТВЕЧАЕТ НА ШИРИНУ СВОЕЙ КОЛОНКИ, А НЕ ОКНА.
+
+   Первая сборка описала ряд четырьмя колонками (`32px 1fr auto auto`) и сузила его
+   медиазапросом `max-width: 600px`. Экран итогов сессии это поймал: там карточка
+   прогрессии стоит в узкой колонке — 240px при вьюпорте 1512, то есть медиазапрос
+   не срабатывает, а `auto`-колонки не могут сжаться ниже содержимого. Замер
+   скриншотом: название ступени и диапазон уровней НАЛЕЗАЛИ друг на друга («Ученик»
+   поверх «уровни 1–2»), а у текущей строки поверх обоих печаталось «СЕЙЧАС».
+
+   Поэтому здесь запрос к КОНТЕЙНЕРУ: пока витрина уже 22rem, ряд стоит в две
+   колонки (герб | название), а уровни и отметка переносятся под название. Тот же
+   приём, что у кегля вопроса (FRD-092): правило работает там, где колонка есть, и
+   не зависит от того, какой ширины окно вокруг. */
+html[data-design] .rank-ladder { container-type: inline-size; }
 html[data-design] .rank-step {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) auto auto;
+  grid-template-columns: 32px minmax(0, 1fr);
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1) var(--space-2);
   padding: var(--space-1) var(--space-2);
   border: 1px solid transparent;
+}
+html[data-design] .rank-step > * { min-width: 0; }
+html[data-design] .rank-step-levels,
+html[data-design] .rank-step-now { grid-column: 2; }
+
+@container (min-width: 22rem) {
+  html[data-design] .rank-step {
+    grid-template-columns: 32px minmax(0, 1fr) auto auto;
+  }
+  html[data-design] .rank-step-levels,
+  html[data-design] .rank-step-now { grid-column: auto; }
 }
 /* 32px, а не 16: на ×1 отличие ступеней — один пиксель пояса, и лестница
    перестаёт читаться (замер скриншотом: «Ученик», «Подмастерье» и «Ремесленник»
@@ -298,15 +313,7 @@ html[data-design] .rank-step-now {
   color: var(--color-accent-primary);
 }
 
-@media (max-width: 600px) {
-  /* На телефоне четыре колонки не помещаются: уровни уходят под название, отметка
-     остаётся в первой строке справа. */
-  html[data-design] .rank-step {
-    grid-template-columns: 32px minmax(0, 1fr) auto;
-  }
-  html[data-design] .rank-step-levels {
-    grid-column: 2 / -1;
-  }
-}
+/* Медиазапрос ряда удалён: его работу делает контейнерный запрос выше. Он и был
+   неверным — ширину ряда задаёт колонка карточки, а не окно (см. замер итогов). */
 
 }

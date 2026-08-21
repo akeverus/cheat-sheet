@@ -8,6 +8,8 @@ import org.springframework.core.io.ClassPathResource;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -96,6 +98,65 @@ class RankLadderContractTest {
                     .as("витрина подсвечивает не ту ступень, что показывает карточка")
                     .isEqualTo(rank.title());
         }
+    }
+
+    /**
+     * Ряд ступени отвечает на ширину СВОЕЙ колонки, а не окна.
+     *
+     * <p>Первая сборка витрины описала ряд четырьмя колонками и сузила его
+     * медиазапросом `max-width: 600px`. Экран итогов сессии это поймал: там карточка
+     * прогрессии стоит в узкой колонке — <b>240px при вьюпорте 1512</b>, то есть
+     * медиазапрос не срабатывает, а `auto`-колонки не сжимаются ниже содержимого.
+     * Замер скриншотом: название ступени и диапазон уровней НАЛЕЗАЛИ друг на друга,
+     * а у текущей строки поверх обоих печаталось «СЕЙЧАС». После правки замер
+     * перекрытий по обоим экранам, четырём ширинам и двум движкам — ноль.</p>
+     */
+    @Test
+    void theStepRowAnswersToItsContainerAndNotToTheWindow() throws IOException {
+        String css = CssRules.stripComments(CssRules.read("static/css/components-progression.css"));
+
+        assertThat(css)
+                .as("витрина перестала быть контейнером запросов — ряд снова будет слушать "
+                        + "окно, хотя ширину ему задаёт колонка карточки")
+                .containsPattern("\\.rank-ladder \\{[^}]*container-type:\\s*inline-size");
+
+        Matcher container = Pattern.compile("@container[^{]*\\{(.*?\\.rank-step\\s*\\{[^}]*\\}.*?)\\n\\}",
+                Pattern.DOTALL).matcher(css);
+        assertThat(container.find())
+                .as("многоколоночный ряд ступени объявлен не в `@container`: на узкой карточке "
+                        + "итогов (240px при окне 1512) колонки налезут друг на друга")
+                .isTrue();
+        assertThat(container.group(1))
+                .as("в контейнерном запросе нет полного ряда из четырёх колонок")
+                .containsPattern("grid-template-columns:\\s*32px minmax\\(0, 1fr\\) auto auto");
+
+        for (String block : mediaBlocks(css)) {
+            assertThat(block)
+                    .as("ширину ряда ступени снова меняет МЕДИАзапрос: он смотрит на окно, а "
+                            + "решает колонка — ровно та ошибка, что дала наложение на итогах")
+                    .doesNotContainPattern("\\.rank-step\\s*\\{[^}]*grid-template-columns");
+        }
+    }
+
+    /** Тела всех `@media`-блоков файла. */
+    private java.util.List<String> mediaBlocks(String css) {
+        java.util.List<String> blocks = new java.util.ArrayList<>();
+        Matcher m = Pattern.compile("@media[^{]*\\{").matcher(css);
+        while (m.find()) {
+            int depth = 0;
+            for (int i = m.end() - 1; i < css.length(); i++) {
+                char c = css.charAt(i);
+                if (c == '{') depth++;
+                if (c == '}') {
+                    depth--;
+                    if (depth == 0) {
+                        blocks.add(css.substring(m.end(), i));
+                        break;
+                    }
+                }
+            }
+        }
+        return blocks;
     }
 
     @Test
