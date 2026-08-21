@@ -65,7 +65,7 @@ User u3 = anotherEm.find(User.class, 1L);  // если L2 включён — б�
 Из него вытекают три ключевых свойства:
 
 - **Identity (тождество объектов)** — один объект на один ID в пределах сессии. Повторный `find` по тому же ID вернёт тот же самый инстанс, без нового SQL.
-- **Dirty checking (отслеживание изменений)** — Hibernate запоминает исходное состояние загруженных объектов и сам генерирует UPDATE для тех полей, что изменились. Вызывать `save`/`update` руками не нужно.
+- **Dirty checking (отслеживание изменений)** — Hibernate запоминает исходное состояние загруженных объектов и сам генерирует UPDATE для изменившихся. Вызывать `save`/`update` руками не нужно. Нюанс: по умолчанию в UPDATE попадают **все колонки** (SQL генерируется статически); только изменённые поля — с аннотацией `@DynamicUpdate`, ценой генерации SQL в рантайме.
 - **Automatic flush (автосброс)** — накопленные изменения пишутся в БД при commit транзакции или явном `flush()`, а не сразу при изменении поля.
 
 ```java
@@ -208,8 +208,8 @@ public class ProductRepository {
         return em.createQuery(
                 "FROM Product WHERE category = :cat", Product.class)
             .setParameter("cat", category)
-            .setHint(QueryHints.HINT_CACHEABLE, true)
-            .setHint(QueryHints.HINT_CACHE_REGION, "products-by-category")
+            .setHint(HibernateHints.HINT_CACHEABLE, true)
+            .setHint(HibernateHints.HINT_CACHE_REGION, "products-by-category")
             .getResultList();
     }
 }
@@ -281,7 +281,7 @@ Hibernate сам данные не хранит — за это отвечает
 <!-- Infinispan для cluster -->
 <dependency>
     <groupId>org.infinispan</groupId>
-    <artifactId>infinispan-hibernate-cache-v60</artifactId>
+    <artifactId>infinispan-hibernate-cache-v62</artifactId>
 </dependency>
 ```
 
@@ -292,7 +292,7 @@ spring:
       hibernate:
         cache:
           region:
-            factory_class: org.infinispan.hibernate.cache.v60.InfinispanRegionFactory
+            factory_class: org.infinispan.hibernate.cache.v62.InfinispanRegionFactory
           infinispan:
             statistics: true
 ```
@@ -306,7 +306,7 @@ spring:
 - **L1 (текущая сессия):** `evict(obj)` убирает один объект, `clear()` — все.
 - **L2 точечно:** `evict(User.class, id)` — конкретный entity по ID.
 - **L2 по типу:** `evictEntityData(User.class)` — все экземпляры этого класса.
-- **L2 полностью:** `evictQueryRegions()` — весь query cache, `evictAll()` — весь L2.
+- **L2 полностью:** `evictQueryRegions()` — весь query cache, `evictAll()` — только entity-данные (JPA-семантика), `evictAllRegions()` — действительно всё: entities, коллекции, natural-id и query-регионы.
 
 Чем шире сброс, тем больше последующих промахов и нагрузки на БД, поэтому предпочитают точечную инвалидацию.
 
@@ -324,7 +324,8 @@ SessionFactory sessionFactory = em.getEntityManagerFactory()
 sessionFactory.getCache().evict(User.class, 1L);          // один entity
 sessionFactory.getCache().evictEntityData(User.class);    // все User
 sessionFactory.getCache().evictQueryRegions();            // все query cache
-sessionFactory.getCache().evictAll();                     // весь L2 cache
+sessionFactory.getCache().evictAll();                     // entity-данные (не query/collections)
+sessionFactory.getCache().evictAllRegions();              // весь L2 целиком
 
 // JPA Cache API
 Cache cache = emf.getCache();
