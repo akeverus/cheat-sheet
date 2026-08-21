@@ -595,9 +595,9 @@ public class ProductService {
 - **Нет TTL и вытеснения у дефолта** — `ConcurrentMapCacheManager` хранит данные вечно: ни TTL, ни ограничения размера. Это прямой риск утечки памяти, поэтому в проде он не годится.
 - **TTL и eviction policy зависят от провайдера** — у Caffeine и Redis они есть, у дефолта нет; единого механизма абстракция не предоставляет.
 - **Кэш по умолчанию локальный** — для общего на весь кластер нужен внешний провайдер (Redis/Hazelcast).
-- **Не поддерживает реактивный стек** — `@Cacheable` оборачивает возвращаемое значение, а для `Mono`/`Flux` это означало бы кэшировать сам издатель, а не данные. Нужен кастомный подход (`Mono.cache()` / отдельный слой).
+- **Реактивный стек — только со Spring Framework 6.1** — раньше `@Cacheable` кэшировал бы сам издатель `Mono`/`Flux`, а не данные. С 6.1 аннотация понимает `CompletableFuture` и `Mono`/`Flux`: кэшируется именно значение, издатель обрабатывается асинхронно.
 - **Сериализация для Redis хрупкая** — объекты должны быть сериализуемы, а смена структуры класса ломает уже сохранённые записи (см. Q13).
-- **`null` по умолчанию не кэшируется** — повторные вызовы с «пустым» результатом каждый раз идут в метод; кэширование `null` включается через `allowCachingNullValues()`.
+- **`null` по умолчанию кэшируется** — стандартные менеджеры (`ConcurrentMap`, Caffeine, Redis) хранят его как маркер `NullValue`; отключается через `setAllowNullValues(false)` у менеджера или `disableCachingNullValues()` у `RedisCacheConfiguration`. Точечно не кэшировать «пустой» результат — `unless = "#result == null"`.
 - **Self-invocation не работает** — вызовы через `this` обходят прокси (см. Q15).
 
 ---
@@ -616,7 +616,7 @@ class ProductServiceCacheTest {
 
     @Autowired ProductService productService;
     @Autowired CacheManager cacheManager;
-    @MockBean ProductRepository repository;
+    @MockitoBean ProductRepository repository; // бывший @MockBean: устарел с Boot 3.4, удалён в Boot 4
 
     @BeforeEach
     void clearCaches() {
@@ -681,7 +681,7 @@ public Product getProduct(Long id) { return repository.findById(id).orElseThrow(
 | Hazelcast | Зависит от конфигурации | Поддерживает distributed lock через `IMap.executeOnKey` |
 
 **Чего `sync = true` НЕ делает (и о чём важно знать на собеседовании):**
-- **Не сочетается** с `unless`, `condition`, `CompletableFuture`/`Mono` и с несколькими кэшами сразу (`cacheNames = {"a", "b"}`) — Spring выбросит `IllegalStateException` ещё на старте.
+- **Не сочетается** с `unless`, с другими кэш-операциями на том же методе и с несколькими кэшами сразу (`cacheNames = {"a", "b"}`) — Spring выбросит `IllegalStateException` при первом вызове метода. `condition` при этом разрешён, а с Spring Framework 6.1 `sync` работает и с `CompletableFuture`/`Mono`.
 - **Не защищает в кластере.** Single-flight локален: на каждом из N узлов он отработает свой раз, и до БД дойдёт до N запросов вместо одного. На один узел — спасает, на весь кластер — нет.
 
 **Полная защита в кластере** требует уже распределённого лока — например, Redisson `RLock`: один узел берёт лок и идёт в БД, остальные ждут, пока он положит значение в кэш:
