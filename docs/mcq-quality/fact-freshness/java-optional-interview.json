@@ -1,14 +1,37 @@
 {
-  "topic_slug": "java-optional-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
-  "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
-  ]
+ "topic_slug": "java-optional-interview",
+ "round": 10,
+ "status": "VERIFIED",
+ "version_sensitive": true,
+ "product_version": "java.util.Optional, JDK 8–22; проверка выполнена на Amazon Corretto 22.0.2 и через javac --release 8/9/10/11",
+ "checked_date": "2026-08-21",
+ "sources": [
+  "javap java.util.Optional (JDK 22) — полный список методов и отсутствие implements Serializable",
+  "прогон пробы на JDK 22: of(null), orElse/orElseGet, filter на пустом, map с функцией T->Optional, or, stream, get, orElseThrow",
+  "javac --release 8/9/10/11 — граница версий для isEmpty, or, stream, ifPresentOrElse, orElseThrow()",
+  "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html"
+ ],
+ "version_sensitive_claims": [
+  "or, stream и ifPresentOrElse не компилируются под --release 8 и компилируются под --release 9 — Java 9 подтверждена",
+  "orElseThrow() без аргументов не компилируется под --release 9 и компилируется под --release 10 — Java 10 подтверждена",
+  "isEmpty не компилируется под --release 10 и компилируется под --release 11 — Java 11 подтверждена",
+  "Optional.of(null) даёт NullPointerException немедленно (прогон)",
+  "orElse вычисляет аргумент и на непустом контейнере: счётчик вызовов 1 против 0 у orElseGet (прогон)",
+  "filter на пустом контейнере предикат не вызывает (прогон, флаг остался false)",
+  "map с функцией T -> Optional даёт Optional[Optional[x]], flatMap — Optional[x] (прогон)",
+  "or на непустом контейнере supplier не вызывает: счётчик 0 (прогон)",
+  "stream() даёт 0 элементов на пустом и 1 на непустом (прогон)",
+  "get() и orElseThrow() на пустом бросают NoSuchElementException с сообщением «No value present» (прогон)",
+  "java.io.Serializable.class.isAssignableFrom(Optional.class) == false; компилятор даже отвергает instanceof Serializable как несовместимый тип"
+ ],
+ "staleness_risks": [
+  "API Optional стабилен с Java 11; новые методы в него не добавлялись, риск устаревания низкий",
+  "Формулировка про Jackson («без отдельной конфигурации не сериализует») зависит от версии Jackson и наличия модуля поддержки типов JDK 8",
+  "Ссылка на JavaDoc привязана к версии 21: при смене LTS сегмент javase/<version> стоит обновить"
+ ],
+ "notes": [
+  "Гейт FACTS выполнен ДО авторинга MCQ: три расхождения исправлены коммитом 3470f970",
+  "Один из них — смешанный алфавит («орElse»), который не ловится ни одним из MCQ-гейтов, только сканом по словам с кириллицей и латиницей внутри одного токена",
+  "В текстах вариантов версий и годов нет: TEMPORAL_CLAIMS гейта = 0, номера версий живут только в секциях разбора и записаны прописью"
+ ]
 }
