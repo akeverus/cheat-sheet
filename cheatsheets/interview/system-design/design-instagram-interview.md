@@ -139,7 +139,7 @@ Total per photo: ~350 KB
 Per day: 100M × 350 KB ≈ 35 TB/day
 Per year: 35 TB × 365 ≈ 12.7 PB/year (только новый контент)
 
-С video (≈ 20% от загрузок, ~3 MB средний): ещё +20 TB/day = +7 PB/year
+С video (≈ 20% от загрузок, ~1 MB в среднем после сжатия): ещё +20 TB/day = +7 PB/year
 Total: ≈ 20 PB/year
 ```
 
@@ -399,7 +399,7 @@ s3.completeMultipartUpload(b -> b
 
 ```sql
 -- shard_id = hash(user_id) % NUM_SHARDS
--- N = 1024 shards (16 physical hosts × 64 logical = легко rebalance)
+-- N = 1024 shards (64 physical hosts × 16 logical на хост = легко rebalance)
 
 -- Routing layer:
 SELECT * FROM photos WHERE user_id = ? AND photo_id = ?
@@ -424,7 +424,7 @@ SELECT * FROM photos WHERE user_id = ? AND photo_id = ?
 **Проблема горячего шарда** (hot shard): один пост знаменитости порождает миллионы записей в ленты подписчиков, разбросанные по всем shards.
 
 - Знаменитость (например, @cristiano с 600M followers) → не делаем fan-out по всем shards.
-- Решение: для top-1000 пользователей — pull-модель (на чтении ленты обращаемся к их inbox), для остальных — push (fan-out на запись).
+- Решение: для аккаунтов выше celebrity-порога (~100k подписчиков, см. Q11) — pull-модель (на чтении ленты обращаемся к их inbox), для остальных — push (fan-out на запись).
 
 **Решардинг**: consistent hashing с 1024 виртуальными bucket-ами → при добавлении ноды перемещается всего 1/1024 данных, а не половина, как при `hash % N`.
 
