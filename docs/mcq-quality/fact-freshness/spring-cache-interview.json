@@ -1,14 +1,18 @@
 {
   "topic_slug": "spring-cache-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
-  "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+  "version_sensitive": true,
+  "product_version": "Spring Framework 6.1+ (reactive caching, sync-валидация в CacheAspectSupport), Spring Boot 3.4+ (@MockitoBean), Spring Data Redis 3.x",
+  "checked_date": "2026-09-02",
+  "sources": [
+    "https://github.com/spring-projects/spring-framework (raw main: ConcurrentMapCacheManager.java, SpringCacheAnnotationParser.java, CacheAspectSupport.java)",
+    "https://github.com/spring-projects/spring-data-redis (raw main: RedisCacheConfiguration.java)"
+  ],
+  "version_sensitive_claims": [
+    "null по умолчанию КЭШИРУЕТСЯ: ConcurrentMapCacheManager.allowNullValues = true; RedisCacheConfiguration.defaultCacheConfig — «cache null values: yes»; отключение — setAllowNullValues(false)/disableCachingNullValues(); метода allowCachingNullValues() не существует (дефект источника исправлен).",
+    "sync=true: запрещены unless, другие кэш-операции на методе, несколько кэшей (IllegalStateException при первом вызове — проверки в CacheAspectSupport, не на старте); condition РАЗРЕШЁН.",
+    "С Spring Framework 6.1 @Cacheable поддерживает CompletableFuture и Mono/Flux, включая sync-режим (reactiveCachingHandler.executeSynchronized).",
+    "key и keyGenerator взаимоисключающи (validateCacheOperation в SpringCacheAnnotationParser).",
+    "Дефолт сериализации значений RedisCache — JdkSerializationRedisSerializer (javadoc defaultCacheConfig).",
+    "@MockBean устарел с Boot 3.4, удалён в Boot 4 — в тестах @MockitoBean."
   ]
 }
