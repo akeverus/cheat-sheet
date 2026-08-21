@@ -211,8 +211,14 @@
             var legacyWidth = localStorage.getItem('readingWidth');
             var legacyPixel = localStorage.getItem('pixelIntensity');
             if (!legacyDensity && !legacyWidth && !legacyPixel) return null;
+            /* Пиксельность участвует в выборе: тот, кто настраивал ТОЛЬКО её,
+               иначе молча получал laptop/med — его единственный выбор пропадал
+               (нашлось visual-матрицей: pixelIntensity=low давал data-pixel=med).
+               Оси раскладки сильнее: явные compact/wide решают первыми. */
             var guess = legacyDensity === 'compact' ? 'phone'
-              : (legacyWidth === 'wide' ? 'wide' : 'laptop');
+              : (legacyWidth === 'wide' ? 'wide'
+              : (legacyPixel === 'low' ? 'phone'
+              : (legacyPixel === 'high' ? 'wide' : 'laptop')));
             localStorage.removeItem('density');
             localStorage.removeItem('readingWidth');
             localStorage.removeItem('pixelIntensity');

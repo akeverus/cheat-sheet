@@ -122,4 +122,24 @@ class ScreenPresetContractTest {
                     .contains("localStorage.removeItem(" + key + ")");
         }
     }
+
+    /**
+     * Пиксельность участвует в выборе пресета, а не только читается.
+     *
+     * <p>Дефект найден visual-матрицей (iter-163): {@code pixelIntensity=low} давал
+     * {@code data-pixel="med"} — {@code migrateLegacyPreset} читал legacyPixel и не
+     * использовал его в выборе, то есть человек, настроивший ТОЛЬКО пиксельность,
+     * молча получал laptop/med. Оси раскладки сильнее (явные compact/wide решают
+     * первыми), пиксельность — следом: low → phone, high → wide. Живой прогон —
+     * два migration-теста в e2e/visual-matrix.spec.js.</p>
+     */
+    @Test
+    void theLonePixelChoiceSurvivesTheMigration() throws IOException {
+        String head = read("templates/fragments/head.html");
+        assertThat(head)
+                .as("legacyPixel выпал из выбора пресета: одноосевой выбор пиксельности "
+                        + "снова молча теряется при переносе")
+                .contains("legacyPixel === 'low' ? 'phone'")
+                .contains("legacyPixel === 'high' ? 'wide'");
+    }
 }

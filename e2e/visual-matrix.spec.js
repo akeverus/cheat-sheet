@@ -33,12 +33,19 @@ const VIEWPORTS = [
   { id: 'vp-1280', width: 1280, height: 800 },
 ];
 
-function applyPrefsScript({ theme, pixel, motion }) {
+/* Пиксельность с редизайна персонализации (0aad5535) не хранится своей осью:
+   её задаёт пресет экрана (phone→low, laptop→med, wide→high). Прежний ключ
+   pixelIntensity — легаси, он мигрирует в пресет при первой загрузке; матрица
+   говорит на живом контракте, а миграцию проверяет отдельный тест ниже. */
+const PRESET_FOR_PIXEL = { low: 'phone', med: 'laptop', high: 'wide' };
+
+function applyPrefsScript({ theme, pixel, motion, preset }) {
   try {
     if (theme) localStorage.setItem('theme', theme);
     else localStorage.removeItem('theme');
-    if (pixel && pixel !== 'med') localStorage.setItem('pixelIntensity', pixel);
-    else localStorage.removeItem('pixelIntensity');
+    if (preset) localStorage.setItem('screenPreset', preset);
+    else localStorage.removeItem('screenPreset');
+    localStorage.removeItem('pixelIntensity');
     if (motion && motion !== 'auto') localStorage.setItem('motion', motion);
     else localStorage.removeItem('motion');
   } catch (_) { /* private mode */ }
@@ -59,6 +66,7 @@ test.describe('visual preference matrix', () => {
         theme: combo.theme,
         pixel: combo.pixel,
         motion: combo.motion,
+        preset: combo.pixel === 'med' ? null : PRESET_FOR_PIXEL[combo.pixel],
       });
 
       const response = await page.goto(combo.path, { waitUntil: 'domcontentloaded' });
@@ -112,6 +120,33 @@ test.describe('visual preference matrix', () => {
           animations: 'disabled',
         });
       }
+    });
+  }
+
+  /**
+   * Легаси-ключ одной оси мигрирует в ближайший пресет, а не молча в laptop/med.
+   * Дефект найден этой матрицей: pixelIntensity=low давал data-pixel="med" —
+   * migrateLegacyPreset читал legacyPixel и не использовал его в выборе.
+   */
+  for (const [legacy, wantPreset, wantPixel] of [
+    ['low', 'phone', 'low'],
+    ['high', 'wide', 'high'],
+  ]) {
+    test(`legacy pixelIntensity=${legacy} migrates to ${wantPreset}`, async ({ page }) => {
+      await page.addInitScript((v) => {
+        try {
+          localStorage.clear();
+          localStorage.setItem('pixelIntensity', v);
+        } catch (_) { /* private mode */ }
+      }, legacy);
+      await page.goto('/', { waitUntil: 'domcontentloaded' });
+      await expect(page.locator('html')).toHaveAttribute('data-pixel', wantPixel);
+      const stored = await page.evaluate(() => ({
+        preset: localStorage.getItem('screenPreset'),
+        legacyGone: localStorage.getItem('pixelIntensity') === null,
+      }));
+      expect(stored.preset).toBe(wantPreset);
+      expect(stored.legacyGone, 'легаси-ключ обязан быть удалён после переноса').toBe(true);
     });
   }
 });
