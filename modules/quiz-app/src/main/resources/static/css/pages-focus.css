@@ -639,10 +639,20 @@ html[data-design] .focus-page .question-code-wrap pre {
 /* Рамка листинга — та же прокручиваемая область, что .diagram-viewport у соседней
    диаграммы: длинный код скроллится внутри блока, а не выдавливает варианты за
    нижний край экрана. max-height в vh, потому что «поместиться» — это про вьюпорт,
-   а не про абсолютные пиксели; на низком окне лимит ужимается вместе с ним. */
+   а не про абсолютные пиксели; на низком окне лимит ужимается вместе с ним.
+
+   ВТОРОЕ СЛАГАЕМОЕ — ПРО ВЫСОКИЙ ЭКРАН, и оно поймано замером. Абсолютный потолок
+   (520px листингу, 640px схеме) на 1440-пиксельном окне резал материал там, где
+   места было в избытке: 28 подряд вопросов на 2560×1440 дали материал у 54%, из
+   них 5 из 15 упирались в потолок (срезано медиана 133px, максимум 411px), а ПОД
+   композицией в это же время пустовало 236px по медиане и 383px в худшем случае.
+   Теперь потолок — большее из двух: прежний кап и «высота окна минус преамбула».
+   30rem = 480px это замеренная преамбула худшего случая (верх материала 454px на
+   2560×1440) плюс воздух снизу. На низком и среднем окне `max()` возвращает
+   прежнее число, то есть правка не может ухудшить то, что уже работало. */
 html[data-design] .focus-page .question-code-wrap .code-viewport {
   overflow: auto;
-  max-height: min(60vh, 520px);
+  max-height: max(min(60vh, 520px), 100dvh - 30rem);
   overscroll-behavior: contain;
   padding: var(--space-2);
 }
@@ -1156,7 +1166,11 @@ html[data-design] .focus-page .diagram-toolbar-actions { display: flex; flex-wra
    высоту кнопки до 32px, из-за чего компакт доезжал и до тача. Страница держит
    только раскладку полос (см. .diagram-toolbar-actions выше). */
 html[data-design] .focus-page .diagram-viewport {
-  overflow: auto; max-height: min(70vh, 640px); padding: var(--space-2);
+  overflow: auto;
+  /* Тот же довод, что у листинга выше: на высоком окне потолок задаёт окно, а не
+     константа. `max()` не даёт правке ухудшить низкие окна. */
+  max-height: max(min(70vh, 640px), 100dvh - 30rem);
+  padding: var(--space-2);
   background: var(--color-bg-tertiary);
 }
 
@@ -2304,7 +2318,14 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)) {
    приёмом, что ниже 1280, только с большим потолком: экран шире, и строк видно
    больше. Код не теряется — вьюпорт листинга прокручивается внутри себя. */
 @media (min-width: 1280px) {
-  html[data-design] .focus-page .focus-main:has(.flashcard-phase):not(:has(.flashcard-answer, .typed-workspace, .study-learn-phase)) .code-viewport {
+  /* ОБА ВИДА МАТЕРИАЛА, а не только листинг. Урок iter-145 (там кап на узком экране
+     стоял у листинга и не стоял у схемы) повторился здесь: замер 2560×1440 с высокой
+     схемой (содержимое 2647px) дал окно 960 и «Показать ответ» на 1548 при сгибе
+     1440, а на 1512×982 — окно 640 и действие на 1209 при сгибе 982. В карточке
+     материал и действие стоят в ОДНОЙ колонке, поэтому высота материала выдавливает
+     кнопку — в отличие от рабочего места, где работа живёт в соседней колонке. */
+  html[data-design] .focus-page .focus-main:has(.flashcard-phase):not(:has(.flashcard-answer, .typed-workspace, .study-learn-phase)) .code-viewport,
+  html[data-design] .focus-page .focus-main:has(.flashcard-phase):not(:has(.flashcard-answer, .typed-workspace, .study-learn-phase)) .diagram-viewport {
     max-height: min(38vh, 420px);
   }
 }

@@ -46,7 +46,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MaterialCapContractTest {
 
     private static final Pattern COMMENT = Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL);
-    private static final Pattern MIN_HEIGHT = Pattern.compile("max-height:\\s*min\\(([\\d.]+)vh,\\s*(\\d+)px\\)");
+    /**
+     * Доля окна и потолок в пикселях. Ищутся ВНУТРИ объявления, а не с его начала: с
+     * iter-147 у базовых правил два слагаемых — прежний кап и «высота окна минус
+     * преамбула», — и сравнивать узкий кап надо с первым из них.
+     */
+    private static final Pattern MIN_HEIGHT = Pattern.compile("min\\(([\\d.]+)vh,\\s*(\\d+)px\\)");
     private static final Pattern MAX_WIDTH = Pattern.compile("max-width:\\s*(\\d+)px");
 
     /** Правило таблицы стилей вместе с медиаусловием, в котором оно лежит. */
@@ -138,8 +143,37 @@ class MaterialCapContractTest {
 
     private double[] limits(Rule rule) {
         Matcher m = MIN_HEIGHT.matcher(rule.body());
-        assertThat(m.find()).as("высота задана не через `min(<vh>, <px>)`: %s", rule.body()).isTrue();
+        assertThat(m.find())
+                .as("в высоте нет слагаемого `min(<доля окна>, <потолок px>)`: %s", rule.body())
+                .isTrue();
         return new double[] { Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)) };
+    }
+
+    /**
+     * Высокий экран: потолок материала обязан считаться от окна, а не константой.
+     *
+     * <p>Замер (Chromium, 2560×1440, 28 подряд вопросов): материал у 54%, из них 5 из 15
+     * упирались в абсолютный потолок — срезано медиана 133px, максимум 411px, — а под
+     * композицией в это же время пустовало 236px по медиане и 383px в худшем случае.
+     * После правки на той же выборке в потолок не упёрся НИ ОДИН материал (0 из 16), а
+     * синтетически высокая схема (содержимое 2647px) получила окно 560/640/720/960 на
+     * 1280×800 / 1512×982 / 1920×1200 / 2560×1440 — против 520/640/640/640 до.</p>
+     */
+    @Test
+    void theCeilingGrowsWithTheWindowOnTallScreens() throws IOException {
+        List<Rule> rules = focusRules();
+        for (String carrier : List.of(".code-viewport", ".diagram-viewport")) {
+            String body = base(rules, carrier).body();
+            assertThat(body)
+                    .as("потолок %s снова константа: на 1440-пиксельном окне он режет материал "
+                            + "там, где под композицией пустуют сотни пикселей", carrier)
+                    .contains("max(")
+                    .containsPattern("100dvh\\s*-");
+            assertThat(body)
+                    .as("прежний кап пропал из формулы: `max()` обязан оставлять низкому окну "
+                            + "то число, с которым оно уже работало")
+                    .containsPattern("min\\([\\d.]+vh,\\s*\\d+px\\)");
+        }
     }
 
     @Test
@@ -208,5 +242,35 @@ class MaterialCapContractTest {
                 .as("между порогом капа (%d) и ближайшим порогом раскладки появилась полоса "
                         + "ширин, где нет ни капа, ни второй колонки", capEdge)
                 .contains(capEdge + 1);
+    }
+
+    /**
+     * В сфокусированной карточке материал и действие стоят в ОДНОЙ колонке, поэтому у
+     * неё свой, более низкий потолок — и он обязан покрывать оба вида материала.
+     *
+     * <p>Замер до правки (синтетическая высокая схема, содержимое 2647px): 1512×982 —
+     * окно 640, «Показать ответ» на 1209 при сгибе 982; 2560×1440 — окно 960, действие
+     * на 1548 при сгибе 1440. После: окно 373 и 420, действие на 942 и 1027, то есть в
+     * первом экране в обоих движках.</p>
+     */
+    @Test
+    void theFocusedCardCapsBothKindsOfMaterial() throws IOException {
+        List<Rule> rules = focusRules();
+        List<Rule> cardCaps = rules.stream()
+                .filter(r -> r.selectors().contains(".flashcard-phase"))
+                .filter(r -> r.body().contains("max-height"))
+                .toList();
+        assertThat(cardCaps).as("у карточки нет собственного потолка материала").isNotEmpty();
+        Rule cap = cardCaps.get(cardCaps.size() - 1);
+        for (String carrier : List.of(".code-viewport", ".diagram-viewport")) {
+            String wanted = carrier;
+            assertThat(splitSelectors(cap.selectors()).stream().anyMatch(sel -> sel.endsWith(wanted)))
+                    .as("потолок карточки снова не покрывает %s: там материал выдавливает "
+                            + "«Показать ответ» за сгиб (замер: действие на 1548 при сгибе 1440)", carrier)
+                    .isTrue();
+        }
+        assertThat(limits(cap)[1])
+                .as("потолок карточки перестал быть НИЖЕ общего — тогда он ничего не ограничивает")
+                .isLessThan(limits(base(rules, ".diagram-viewport"))[1]);
     }
 }
