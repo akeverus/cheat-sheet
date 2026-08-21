@@ -194,7 +194,7 @@ public class Address {
 public class ShippingInfo {
     @Id Long id;
     String address;
-    // FK order_id автоматически добавляется Spring Data JDBC
+    // back-reference-колонка добавляется автоматически; дефолтное имя — «orders»
 }
 
 @Table("orders")
@@ -203,7 +203,7 @@ public class Order {
     ShippingInfo shippingInfo;  // FK: shipping_info.order_id
 }
 ```
-Spring Data JDBC автоматически добавит FK `order_id` в таблицу `shipping_info`.
+Spring Data JDBC сам добавит back-reference-колонку в `shipping_info`, но по умолчанию она называется по **имени таблицы владельца** — `orders` (`NamingStrategy.getReverseColumnName`). Имя вроде `order_id` задаётся переопределением `NamingStrategy`; у коллекций — явным `@MappedCollection(idColumn = "order_id")`.
 
 ---
 
