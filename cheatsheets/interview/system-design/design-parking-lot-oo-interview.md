@@ -127,7 +127,7 @@ Actors — это внешние роли, которые взаимодейст
 
 - shuttle bus между терминалами — нет;
 - license plate recognition (CV) — считаем чёрным ящиком, который вернёт строку;
-- интеграция с банком — `PaymentGateway` это интерфейс с одним методом `charge(amount)`;
+- интеграция с банком — `PaymentGateway` это интерфейс с единственной операцией `charge` (в примерах Q8 и Q15 она принимает реквизиты и сумму);
 - мобильное приложение клиента — отдельная задача;
 - multi-tenant (сеть парковок) — на этом интервью одна сущность `ParkingLot`.
 
@@ -284,6 +284,8 @@ public class ParkingFloor {
     }
 }
 ```
+
+Табло здесь дёргается напрямую (`displayBoard.notifySpotTaken`) — это упрощение ради краткости примера. В Q17 эта связь заменена подпиской: этаж рассылает событие списку слушателей и про табло ничего не знает.
 
 **Ключевая идея — гранулярность блокировки.** Метод `assignVehicleToSpot` делает «найти + занять» под одним `floorLock`, поэтому два потока не уведут одно место. Почему именно этаж — золотая середина: блокировать всю парковку медленно (один lock на весь поток въезжающих), а блокировать отдельный spot недостаточно — выбор места это перебор кандидатов, который сам должен быть атомарным. Floor балансирует параллелизм и простоту (подробнее — Q22).
 
@@ -480,7 +482,7 @@ public class ParkingRate {
 
 ## Q10. Class diagram целиком (!) <a id="q10"></a>
 
-Собранная картина классов и их связей. Обратите внимание на типы связей: `*--` (композиция) означает «часть владеет целым и не живёт без него» (этаж без парковки не существует), `<|--` — наследование, `-->` — слабую ассоциацию (билет ссылается на платёж, но не владеет им).
+Собранная картина классов и их связей. Обратите внимание на типы связей: `*--` (композиция) означает «целое владеет частью, и часть не живёт без целого» (этаж без парковки не существует), `<|--` — наследование, `-->` — слабую ассоциацию (билет ссылается на платёж, но не владеет им).
 
 ```mermaid
 classDiagram
@@ -676,7 +678,7 @@ stateDiagram-v2
 | Singleton | `ParkingLot` | один физический объект ⇒ одно состояние в памяти |
 | Strategy | `Payment` (Cash/Card/UPI), `SpotAllocationStrategy` | менять способ оплаты или поиска spot без модификации клиента |
 | Factory Method | `SpotFactory`, `VehicleFactory` | создавать конкретный тип по входному `enum` |
-| Abstract Factory | `ParkingLotBuilder` для разных конфигов (mall vs airport) | различные семейства sittings |
+| Abstract Factory | `ParkingLotBuilder` для разных конфигов (mall vs airport) | собирать согласованные семейства объектов под конфигурацию |
 | Observer | `DisplayBoard` ← `ParkingFloor` | реактивно показывать число свободных мест |
 | State | `Ticket` (ACTIVE/PAID/LOST/EXPIRED) | разное поведение в разных состояниях |
 | Decorator | `DiscountedRate` поверх `ParkingRate` | сезонные скидки без модификации тарифа |
@@ -789,8 +791,9 @@ public class DisplayBoard implements SpotListener {
     private final Map<SpotSize, AtomicInteger> freeBySize = new EnumMap<>(SpotSize.class);
 
     public DisplayBoard(ParkingFloor floor) {
-        for (SpotSize s : SpotSize.values()) freeBySize.put(s, new AtomicInteger(0));
-        floor.subscribe(this);
+        // стартуем от фактической занятости этажа, а не от нуля:
+        // иначе первое же onSpotTaken уводит счётчик в минус
+        for (SpotSize s : SpotSize.values()) freeBySize.put(s, new AtomicInteger(floor.freeCount(s)));
     }
 
     @Override public void onSpotTaken(ParkingSpot s) { freeBySize.get(s.getSize()).decrementAndGet(); }
@@ -802,6 +805,8 @@ public class DisplayBoard implements SpotListener {
     }
 }
 ```
+
+Подписку вызывают **снаружи**, после того как оба объекта достроены: `floor.subscribe(board)`. Если бы табло подписывало себя прямо в конструкторе (`floor.subscribe(this)`), в чужой список попала бы ссылка на ещё не достроенный объект — другой поток мог бы увидеть его в промежуточном состоянии.
 
 **Почему `CopyOnWriteArrayList`:** профиль нагрузки — подписчиков мало, список читается часто (на каждое событие), а меняется редко (подписка происходит при старте). Для такого паттерна COW-список оптимален: чтение без блокировок, копирование только при редкой записи. Альтернатива — Reactive Streams (`Flux<SpotEvent>`), но для LLD-интервью достаточно классического Observer, и его проще объяснить.
 
