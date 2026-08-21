@@ -165,6 +165,43 @@ class SummaryTopContractTest {
                 .containsPattern("@media \\(max-width: 600px\\) \\{[\\s\\S]{0,300}?--score-ring-size: \\d+px");
     }
 
+    /**
+     * Число плиток KPI в ряду выбирает ширина, а не константа (та же доктрина, что у
+     * дверей аналитики). Сетка `repeat(4, 1fr)` и `flex: 1 1 560px` остались от эпохи,
+     * когда полоса жила в карточке счёта во всю её ширину; с iter-142 плитки стоят в
+     * колонке карточки прогресса (125–294px), и константа давала плитку 38–81px при
+     * бюджете значения 110px — замер показал переполнение ВСЕХ плиток на 1280–1512 и
+     * «Серии» даже на 2560, а четвёртая колонка пустовала (плиток три). После правки
+     * плитки 141–279px, переполнений 0 на 360…2560 в обоих движках.
+     */
+    @Test
+    void theKpiColumnCountFollowsTheWidth() throws IOException {
+        String shell = CssRules.stripComments(CssRules.read("static/css/shell.css"));
+        java.util.regex.Matcher kpis = Pattern.compile(
+                "\\.summary-kpis \\{([^}]*)\\}").matcher(shell);
+        assertThat(kpis.find()).as("правила полосы KPI нет").isTrue();
+        String body = kpis.group(1);
+        assertThat(body)
+                .as("число колонок KPI снова константа: в узкой колонке карточки прогресса "
+                        + "плитки сожмутся ниже своего бюджета (замер: 38–81px при бюджете 136)")
+                .containsPattern("repeat\\(auto-fit, minmax\\(min\\(8\\.5rem, 100%\\), 1fr\\)\\)");
+        assertThat(body)
+                .as("`flex` вернулся на полосу KPI: в обоих её домах (грид карточки и блочная "
+                        + "стопка) он мёртв и лишь маскирует настоящую раскладку")
+                .doesNotContain("flex:");
+        // Разбором правил, а не регуляркой по сырому тексту: первая редакция искала
+        // `@media…[^@]*.summary-kpis` и ловила ЛОЖНОЕ срабатывание — `[^@]*`
+        // перепрыгивал закрывающую скобку медиаблока и дотягивался до правила вне его.
+        java.util.List<CssRules.Rule> insideMedia = CssRules.parse("static/css/shell.css").stream()
+                .filter(r -> r.hasSelector("html[data-design] .summary-kpis"))
+                .filter(r -> r.media() != null)
+                .filter(r -> r.value("grid-template-columns") != null)
+                .toList();
+        assertThat(insideMedia)
+                .as("медиазапрос снова решает число колонок KPI: auto-fit делает это из ширины")
+                .isEmpty();
+    }
+
     /** Тело секции от её открывающего тега до парного `</section>`. */
     private String sectionBody(String markup, int from) {
         int depth = 0;
