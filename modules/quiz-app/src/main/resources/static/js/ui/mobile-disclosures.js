@@ -36,8 +36,14 @@ export function initMobileDisclosures(query = '(max-width: 767px)') {
     }, { once: true });
   });
 
+  /* Печатная раскладка A4 (~816px CSS) сама ФЛИПАЕТ phone-медиазапрос: у
+     десктопного окна beforeprint стреляет до перестройки, находит всё открытым,
+     а затем change-событие print-раскладки зовёт apply() и схлопывает разделы
+     ПРЯМО В ЛИСТ (замер iter-165: PDF с 1280-окна печатал «Где я сейчас» одной
+     строкой, хотя на экране раздел открыт). Пока идёт печать — не сворачиваем. */
+  const printing = window.matchMedia('print');
   const apply = () => {
-    if (!phone.matches) {
+    if (printing.matches || !phone.matches) {
       return;
     }
     targets.forEach((details) => {
@@ -49,4 +55,23 @@ export function initMobileDisclosures(query = '(max-width: 767px)') {
 
   apply();
   phone.addEventListener('change', apply);
+
+  /* Печать. Лист A4 раскладывается ~816px CSS — уже порога, и свёрнутое «для
+     телефона» уезжало и на бумагу: PDF аналитики печатал «Где я сейчас» и
+     «Знаки отличия» одной строкой с ▾, пряча ранг, XP и метрики (замер
+     iter-165). На бумаге раскрытие нажать нельзя — перед печатью открываем
+     всё свёрнутое и после возвращаем как было. Без скрипта страница печатается
+     открытой изначально (сворачивает только этот модуль) — инвариант no-JS
+     цел. Список держим замыканием: первый же programmatic-close снимает
+     data-mobile-collapsed (toggle-пометка «трогали»), по атрибуту к моменту
+     печати уже ничего не найти. */
+  let printRestore = [];
+  window.addEventListener('beforeprint', () => {
+    printRestore = targets.filter((details) => !details.open);
+    printRestore.forEach((details) => { details.open = true; });
+  });
+  window.addEventListener('afterprint', () => {
+    printRestore.forEach((details) => { details.open = false; });
+    printRestore = [];
+  });
 }
