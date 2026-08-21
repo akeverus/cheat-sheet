@@ -245,17 +245,17 @@ public class OrderBatchResolver {
 **Решение 2 — DataLoader** (низкоуровневый, из GraphQL Java). Регистрируете batch-loader по имени; движок откладывает вызовы, собирает все запрошенные ключи и зовёт loader один раз за «тик» выполнения:
 
 ```java
-@Bean
-public BatchLoaderRegistry batchLoaderRegistry(OrderItemService itemService) {
-    return registrar -> registrar
-        .<String, List<OrderItem>>forName("orderItemsLoader")
-        .registerBatchLoader((orderIds, env) ->
-            Flux.fromIterable(itemService.findByOrderIds(orderIds))
-                .collectMultimap(OrderItem::getOrderId)
-                .map(m -> orderIds.stream()
-                    .map(id -> m.getOrDefault(id, List.of()))
-                    .toList())
-        );
+@Configuration
+public class OrderDataLoaderConfig {
+
+    // BatchLoaderRegistry создаёт автоконфигурация — его инжектят и в него регистрируются,
+    // а не объявляют своим @Bean
+    public OrderDataLoaderConfig(BatchLoaderRegistry registry, OrderItemService itemService) {
+        registry.<String, List<OrderItem>>forName("orderItemsLoader")
+            .registerMappedBatchLoader((orderIds, env) -> Mono.fromCallable(() ->
+                itemService.findByOrderIds(List.copyOf(orderIds)).stream()
+                    .collect(Collectors.groupingBy(OrderItem::getOrderId))));
+    }
 }
 ```
 
@@ -351,7 +351,7 @@ public class OrderController {
 
 Два инструмента работают в паре:
 
-- **`@GraphQlTest`** — слайс-аннотация: поднимает только GraphQL-слой (схему и указанные контроллеры), без полного контекста и без БД. Сервисы подменяются `@MockBean`. Быстро, как `@WebMvcTest` для REST.
+- **`@GraphQlTest`** — слайс-аннотация: поднимает только GraphQL-слой (схему и указанные контроллеры), без полного контекста и без БД. Сервисы подменяются `@MockitoBean` (в Spring Boot до 3.4 — `@MockBean`, теперь эта аннотация объявлена устаревшей). Быстро, как `@WebMvcTest` для REST.
 - **`GraphQlTester`** — fluent-клиент для запросов: шлёт документ, а проверки делает по JSON-пути результата (`path("order.id")`) и по массиву `errors()`.
 
 Запрос задают двумя способами: `documentName("getOrder")` — вынести `.graphql`-файл в `src/test/resources`, либо `document("{ ... }")` — заинлайнить строку.
@@ -364,7 +364,7 @@ class OrderControllerTest {
     @Autowired
     private GraphQlTester tester;
 
-    @MockBean
+    @MockitoBean
     private OrderService orderService;
 
     @Test
@@ -575,16 +575,17 @@ spring:
 ```
 
 ```java
-// Или через конфигурацию GraphQL Java
+// Или через GraphQL Java: убрать интроспекционные поля из видимости схемы
+// import static graphql.schema.visibility.NoIntrospectionGraphqlFieldVisibility.NO_INTROSPECTION_FIELD_VISIBILITY;
 @Bean
-public GraphQlSourceBuilderCustomizer customizer() {
-    return builder -> builder.configureGraphQl(graphQL ->
-        graphQL.queryExecutionStrategy(new DisableIntrospectionStrategy())
+public GraphQlSourceBuilderCustomizer introspectionCustomizer() {
+    return builder -> builder.configureRuntimeWiring(wiring ->
+        wiring.fieldVisibility(NO_INTROSPECTION_FIELD_VISIBILITY)
     );
 }
 ```
 
-Способов два: флаг `spring.graphql.schema.introspection.enabled: false` (Spring Boot 3.x) либо ручная стратегия в GraphQL Java через `GraphQlSourceBuilderCustomizer`.
+Способов два: флаг `spring.graphql.schema.introspection.enabled: false` (Spring Boot 3.x) либо ограничение видимости полей средствами GraphQL Java через `GraphQlSourceBuilderCustomizer`.
 
 ## Q14. Как обрабатывать файловый upload в Spring GraphQL?
 
