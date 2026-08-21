@@ -1,14 +1,18 @@
 {
   "topic_slug": "reactive-testing-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
-  "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+  "version_sensitive": true,
+  "product_version": "reactor-test 3.x (TestPublisher.Violation, RetryBackoffSpec-эпоха), Spring Boot 3.4+/Framework 6.2 (@MockitoBean), Framework 6.1 (реактивные транзакции в тестах)",
+  "checked_date": "2026-08-30",
+  "sources": [
+    "https://github.com/reactor/reactor-core (raw main: TestPublisher.java, BlockingSingleSubscriber.java)",
+    "https://docs.spring.io/spring-framework/reference/testing.html"
+  ],
+  "version_sensitive_claims": [
+    "TestPublisher.Violation: DEFER_CANCELLATION — игнор cancel («as if the cancellation lost race»); CLEANUP_ON_TERMINATE — повторные терминальные сигналы; ALLOW_NULL — null в next; REQUEST_OVERFLOW — эмиссия сверх спроса (javadoc enum).",
+    "assertMinRequested и assertMaxRequested существуют оба (TestPublisher.java, абстрактные методы).",
+    "block()/blockFirst()/blockLast() бросают IllegalStateException только на потоках NonBlocking (условие в BlockingSingleSubscriber) — поток JUnit обычный, block() в нём отрабатывает.",
+    "@MockBean устарел с Boot 3.4, удалён в Boot 4 — в срезах @WebFluxTest используется @MockitoBean из Spring Framework 6.2.",
+    "Реактивные транзакции в тестовом @Transactional (ReactiveTransactionManager) поддерживаются со Spring Framework 6.1.",
+    "emit(...) у TestPublisher = next(...) + complete() одним вызовом."
   ]
 }
