@@ -24,6 +24,47 @@ import org.springframework.stereotype.Component;
 @Component("rankUtils")
 public class RankUtils {
 
+    /**
+     * Ступень в витрине пути.
+     *
+     * @param title    название ступени
+     * @param glyph    имя герба в спрайте
+     * @param fromLevel уровень, с которого ступень начинается
+     * @param toLevel  последний уровень ступени; {@code null} у последней — «и выше»
+     * @param current  ступень, на которой человек стоит сейчас
+     */
+    public record RankStep(String title, String glyph, int fromLevel, Integer toLevel, boolean current) {
+
+        /** Подпись диапазона: «уровни 10–14» либо «уровень 30 и выше». */
+        public String levels() {
+            if (toLevel == null) {
+                return "уровень " + fromLevel + " и выше";
+            }
+            if (toLevel == fromLevel) {
+                return "уровень " + fromLevel;
+            }
+            return "уровни " + fromLevel + "–" + toLevel;
+        }
+    }
+
+    /**
+     * Весь путь гильдии снизу вверх, с отметкой текущей ступени.
+     *
+     * <p>Диапазон уровней НЕ хранится в enum и не пишется руками: он выводится из порогов
+     * соседних ступеней. Иначе список порогов и список подписей разъехались бы при первой
+     * же правке лестницы — ровно так расходились подписи режимов до {@link ModeUtils}.</p>
+     */
+    public java.util.List<RankStep> ladder(GuildRank current) {
+        java.util.List<GuildRank> all = GuildRank.all();
+        java.util.List<RankStep> steps = new java.util.ArrayList<>(all.size());
+        for (int i = 0; i < all.size(); i++) {
+            GuildRank rank = all.get(i);
+            Integer to = i + 1 < all.size() ? all.get(i + 1).minLevel() - 1 : null;
+            steps.add(new RankStep(rank.title(), glyph(rank), rank.minLevel(), to, rank == current));
+        }
+        return steps;
+    }
+
     /** Имя символа в спрайте для ступени. */
     public String glyph(GuildRank rank) {
         if (rank == null) {

@@ -70,6 +70,38 @@
         <p class="rank-next muted" th:if="${p.nextRankTitle() == null}">Последняя ступень гильдии — дальше только удержание.</p>
         <p class="rank-session" th:if="${sessionXp != null and sessionXp > 0}"
            th:text="'Эта сессия дала +' + ${sessionXp} + ' XP'">Эта сессия дала +0 XP</p>
+
+        <!--/* ВИТРИНА ПУТИ. Карточка отвечала на «где я сейчас» и «сколько до следующей»,
+             но сам путь был невидим: названия старших ступеней («Хранитель», «Магистр»)
+             человек впервые узнавал, только дойдя до них, а `GuildRank.all()` — метод,
+             написанный в домене со словами «для витрины пути», — не вызывал никто, кроме
+             тестов.
+
+             `<details>`, а не постоянный блок: путь смотрят изредка, и семь строк над
+             полосой опыта были бы преамбулой к тому, ради чего карточку открывают.
+             Нативное раскрытие работает без JS и приносит клавиатуру и роль бесплатно.
+
+             Текущая ступень помечена СЛОВОМ («сейчас») и `aria-current`, а не только
+             начертанием: состояние не держится на цвете. */-->
+        <details class="rank-ladder">
+            <summary class="rank-ladder-summary">
+                <span>Весь путь гильдии</span>
+                <span class="rank-ladder-count muted"
+                      th:text="${#lists.size(@rankUtils.ladder(p.rank()))} + ' ступеней'">7 ступеней</span>
+            </summary>
+            <ol class="rank-ladder-list">
+                <li th:each="step : ${@rankUtils.ladder(p.rank())}" class="rank-step"
+                    th:classappend="${step.current()} ? 'is-current' : ''"
+                    th:attr="aria-current=${step.current()} ? 'step' : null">
+                    <svg class="rank-step-emblem" aria-hidden="true" focusable="false">
+                        <use th:attr="href='#' + ${step.glyph()}" href="#px-rank-apprentice"></use>
+                    </svg>
+                    <span class="rank-step-title" th:text="${step.title()}">Ученик</span>
+                    <span class="rank-step-levels muted" th:text="${step.levels()}">уровни 1–2</span>
+                    <span class="rank-step-now" th:if="${step.current()}">сейчас</span>
+                </li>
+            </ol>
+        </details>
     </div>
 </section>
 </body>

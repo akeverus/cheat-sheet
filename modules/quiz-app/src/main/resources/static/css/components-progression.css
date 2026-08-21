@@ -15,9 +15,10 @@ html[data-design] .rank {
   gap: var(--space-4);
 }
 
-/* Эмблема — тот же щит, что у раздела «Тренировка» в навигации: ступень зарабатывается
-   тренировкой, и знак у них общий. Размер 48px — целочисленный масштаб сетки 16×16
-   (×3), иначе пиксельный глиф размывается (FRD-117). */
+/* Эмблема — ГЕРБ СТУПЕНИ (iter-151): у каждой из семи ступеней свой знак, и он же
+   стоит в витрине пути ниже. Прежде здесь печатался щит раздела «Тренировка» из
+   навигации — один и тот же у «Ученика» и «Магистра». Размер 48px — целочисленный
+   масштаб сетки 16×16 (×3), иначе пиксельный глиф размывается (FRD-117). */
 html[data-design] .rank-emblem {
   display: block;
   width: 48px;
@@ -205,5 +206,107 @@ html[data-design] .badge-bar {
 html[data-design] .badge-bar::-webkit-progress-bar { background: var(--color-bg-tertiary); }
 html[data-design] .badge-bar::-webkit-progress-value { background: var(--color-accent-primary); }
 html[data-design] .badge-bar::-moz-progress-bar { background: var(--color-accent-primary); }
+
+
+/* ВИТРИНА ПУТИ — семь ступеней под раскрытием.
+
+   Раскрытие, а не постоянный список: путь смотрят изредка, и семь строк над полосой
+   опыта были бы преамбулой к тому, ради чего карточку открывают. Замер: закрытая
+   витрина добавляет карточке 33px (строка-заголовок), раскрытая — 300px на десктопе.
+
+   Строка ступени — сетка «герб | название | уровни | отметка», а не флекс с полями:
+   названия ступеней разной длины («Ученик» против «Старший мастер»), и колонка
+   уровней обязана стоять по одной вертикали, иначе лестница читается как список
+   разной длины строк, а не как шкала. */
+html[data-design] .rank-ladder {
+  margin-top: var(--space-2);
+  border-top: 1px solid var(--color-border-primary);
+  padding-top: var(--space-2);
+}
+html[data-design] .rank-ladder-summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+html[data-design] .rank-ladder-summary::-webkit-details-marker { display: none; }
+/* Стрелка — та же, что у остальных раскрытий продукта (.disclosure-summary):
+   поворачивается на раскрытии и подчиняется reduced-motion общим правилом. */
+html[data-design] .rank-ladder-summary::after {
+  content: "▾";
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  margin-left: auto;
+}
+html[data-design] .rank-ladder[open] .rank-ladder-summary::after { content: "▴"; }
+html[data-design] .rank-ladder-summary:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+html[data-design] .rank-ladder-list {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+html[data-design] .rank-step {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid transparent;
+}
+/* 32px, а не 16: на ×1 отличие ступеней — один пиксель пояса, и лестница
+   перестаёт читаться (замер скриншотом: «Ученик», «Подмастерье» и «Ремесленник»
+   различались одной строкой в один пиксель). ×2 — целый масштаб сетки, глиф
+   остаётся резким; цена замерена ниже в комментарии витрины. */
+html[data-design] .rank-step-emblem {
+  width: 32px;
+  height: 32px;
+  fill: currentColor;
+  shape-rendering: crispEdges;
+  color: var(--color-text-tertiary);
+  justify-self: center;
+}
+html[data-design] .rank-step-title {
+  font-family: var(--font-family-display, var(--font-family-body));
+  color: var(--color-text-secondary);
+}
+html[data-design] .rank-step-levels {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+/* Текущая ступень отмечена рамкой, цветом И СЛОВОМ «сейчас»: состояние не держится
+   на одном признаке (§2.2 брифа). */
+html[data-design] .rank-step.is-current {
+  border-color: var(--color-border-strong);
+  background: var(--color-bg-tertiary);
+}
+html[data-design] .rank-step.is-current .rank-step-emblem { color: var(--color-accent-primary); }
+html[data-design] .rank-step.is-current .rank-step-title { color: var(--color-text-primary); }
+html[data-design] .rank-step-now {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent-primary);
+}
+
+@media (max-width: 600px) {
+  /* На телефоне четыре колонки не помещаются: уровни уходят под название, отметка
+     остаётся в первой строке справа. */
+  html[data-design] .rank-step {
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+  }
+  html[data-design] .rank-step-levels {
+    grid-column: 2 / -1;
+  }
+}
 
 }
