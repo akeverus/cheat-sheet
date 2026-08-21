@@ -1843,11 +1843,12 @@ class OrderComponentTest {
         registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
     }
 
-    @Autowired
-    private RestAssuredMockMvc mockMvc;
+    @LocalServerPort
+    private int port;
 
     @BeforeEach
     void setUp() {
+        RestAssured.port = port; // RestAssured бьёт по реальному HTTP-порту
         // WireMock стаб для внешнего Payment Service
         stubFor(post("/payments/charge")
             .willReturn(aResponse()
