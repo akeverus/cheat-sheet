@@ -125,7 +125,7 @@ class HeadingScaleContractTest {
                 new Site("pages-topics.css", ".catalog-group-title", "card"),
                 new Site("pages-result.css", ".question-header h1", "section"),
                 new Site("components-empty-state.css", ".empty-state-title", "card"),
-                new Site("components-modals.css", ".kbd-help-modal h3", "card"),
+                new Site("components-modals.css", ".kbd-help-modal h2", "card"),
                 new Site("components-modals.css", ".prompt-modal-title", "card"),
                 new Site("components-progression.css", ".rank-title", "card"),
                 new Site("pages-error.css", ".error-title", "display"));
