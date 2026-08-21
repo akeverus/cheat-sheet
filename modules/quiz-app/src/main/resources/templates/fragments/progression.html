@@ -38,7 +38,12 @@
 */-->
 <section th:fragment="rank(p, sessionXp)" class="rank" th:if="${p != null}"
          aria-labelledby="rank-title">
-    <svg class="rank-emblem" aria-hidden="true"><use href="#training"></use></svg>
+    <!--/* Герб СТУПЕНИ, а не знак раздела «Тренировка». Раньше здесь стоял `#training`:
+         одна и та же картинка у всех семи ступеней, то есть самый крупный элемент
+         карточки (48px) о прогрессии молчал, да ещё и повторял знак пункта меню.
+         Обращение к бину целиком внутри ${...} — иначе Thymeleaf падает на разборе
+         уже после отправки заголовков (см. заметку про @plural выше). */-->
+    <svg class="rank-emblem" aria-hidden="true"><use th:attr="href='#' + ${@rankUtils.glyph(p.rank())}" href="#px-rank-apprentice"></use></svg>
     <div class="rank-body">
         <h2 class="rank-title" id="rank-title">
             <span class="rank-name" th:text="${p.rank().title()}">Ученик</span>

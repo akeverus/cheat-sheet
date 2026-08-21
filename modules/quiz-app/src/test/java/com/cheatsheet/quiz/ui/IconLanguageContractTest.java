@@ -52,6 +52,9 @@ class IconLanguageContractTest {
     /** Сцены режимов подставляются по имени из ModeUtils — как навигация и знаки. */
     private static final Path MODE_UTILS =
             Path.of("src/main/java/com/cheatsheet/quiz/common/util/ModeUtils.java");
+    /** Гербы ступеней подставляются по имени из RankUtils — третий такой источник. */
+    private static final Path RANK_UTILS =
+            Path.of("src/main/java/com/cheatsheet/quiz/common/util/RankUtils.java");
     private static final Path ACHIEVEMENTS =
             Path.of("../quiz-domain/src/main/java/com/cheatsheet/quiz/domain/Achievement.java");
 
@@ -292,6 +295,15 @@ class IconLanguageContractTest {
         Matcher modes = Pattern.compile("-> \"(mode-[a-z-]+)\";").matcher(read(MODE_UTILS));
         while (modes.find()) {
             found.add(modes.group(1));
+        }
+
+        // Гербы ступеней — третий источник имён, живущий в Java: карточка прогрессии
+        // берёт символ из RankUtils#glyph по текущей ступени, поэтому в разметке нет ни
+        // одной строки `#px-rank-…`. Не читать этот файл значило бы объявить семь живых
+        // гербов мёртвыми — ровно та ошибка, от которой этот гейт и защищает.
+        Matcher rankEmblems = Pattern.compile("\"(px-rank-[a-z-]+)\"").matcher(read(RANK_UTILS));
+        while (rankEmblems.find()) {
+            found.add(rankEmblems.group(1));
         }
         return found;
     }
