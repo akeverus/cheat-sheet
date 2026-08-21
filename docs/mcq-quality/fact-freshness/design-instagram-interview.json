@@ -1,14 +1,22 @@
 {
   "topic_slug": "design-instagram-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
-  "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+  "version_sensitive": true,
+  "product_version": "AWS S3 (лимиты префикса, multipart), CloudFront (invalidation pricing, Functions), OAuth 2.0, HTTP/3 (RFC 9114), APNs HTTP/2, Redis HyperLogLog",
+  "checked_date": "2026-08-22",
+  "sources": [
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance.html (5500 GET/HEAD в сек на префикс)",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html (части multipart 5 MB..5 GB, кроме последней)",
+    "https://aws.amazon.com/cloudfront/pricing/ (invalidation: 1000 путей/месяц бесплатно, далее $0.005 за путь)",
+    "https://redis.io/docs/latest/develop/data-types/probabilistic/hyperloglogs/ (стандартная ошибка 0.81%)"
+  ],
+  "version_sensitive_claims": [
+    "Лимит S3 — 5500 GET/HEAD запросов в секунду на префикс (3500 на запись); случайные суффиксы ключей распределяют горячий трафик по префиксам.",
+    "S3 Multipart Upload: каждая часть от 5 MB (кроме последней) — resumable-механизм для больших файлов, маленьким остаётся одиночный PUT.",
+    "CloudFront invalidation: свыше 1000 путей в месяц — $0.005 за путь, применение занимает минуты — поэтому основной механизм удаления это soft delete у origin.",
+    "OAuth 2.0 bearer-token — актуальная схема аутентификации API; refresh в HttpOnly cookie.",
+    "HTTP/3 (QUIC): устраняет TCP head-of-line blocking, 0-RTT для повторных подключений — выгода на мобильных сетях.",
+    "APNs работает по HTTP/2 с мультиплексированием: пул постоянных соединений, сотни push в секунду на соединение; BadDeviceToken означает удаление токена, а не ретрай.",
+    "Redis HyperLogLog: стандартная ошибка ≈ 0.81% при константной памяти — замена точного SADD-множества зрителей у знаменитостей.",
+    "Пороговые числа дизайна (100k подписчиков — celebrity, ×3 пиковость, топ-500 кандидатов Explore, 0.5–0.9 зона human-review) — внутренние константы материала, сверены на внутреннюю согласованность (коммит 7db7dca6)."
   ]
 }
