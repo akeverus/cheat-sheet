@@ -57,6 +57,12 @@ html[data-design] .focus-page {
      (карточка | спутники). Вторая копия того же числа была бы второй точкой
      правды о ширине одной и той же колонки. */
   --workspace-companions: 22rem;
+  /* Колонка чтения — это МЕРА ПЛЮС ПОЛЯ КАРТОЧКИ, а не мера сама по себе. Карточка
+     разбора (`.answer.markdown-content`) держит поля `--space-5` и рамку 1px: замер
+     1920×1200 — колонка 818 при прозе 768, то есть мера теряла 50px и строка выходила
+     68 знаков вместо 72. Слагаемые названы поимённо, чтобы правка полей карточки
+     двигала и колонку. */
+  --reading-column: calc(var(--measure) + var(--space-5) * 2 + 2px);
   --focus-band-sum: calc(var(--focus-main-measure) + var(--focus-rail-gap) + var(--focus-rail-width));
   --focus-measure: max(
     var(--focus-main-measure),
@@ -223,6 +229,13 @@ html[data-design] .focus-page #interview-form > .zone-hint {
 }
 html[data-design] .focus-question {
   color: var(--color-text-primary);
+  /* Русское слово в узкой колонке рвётся БЕЗ дефиса: глобальный `overflow-wrap:
+     break-word` разрешает разрыв, когда слово не помещается в строку целиком, и
+     заголовок «Как готовиться к алгоритмическому интервью?» в колонке 256px вставал
+     как «алгоритмическом|у». Переносы по правилам языка (`lang="ru"` стоит на
+     <html>) дают дефис там, где он должен быть, и оставляют `break-word` последним
+     средством для нечленимых токенов вроде путей и идентификаторов. */
+  hyphens: auto;
 }
 html[data-design] #interview-options label {
   font-size: var(--font-size-md);
@@ -2322,6 +2335,72 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)) {
 @media (min-width: 1280px) {
   html[data-design] .focus-page .focus-main:has(.study-learn-phase) {
     --workspace-brief: 26rem;
+  }
+
+  /* КОЛОНКА ЧТЕНИЯ РАВНА МЕРЕ, А НЕ ОСТАТКУ.
+
+     Ширина колонки задания (26rem) лечила симптом: текст получал ОСТАТОК полосы, и
+     остаток зависел от ширины окна, а не от того, сколько знаков читается удобно.
+     Замер длины строки в фазе изучения (Chromium, один и тот же вопрос):
+
+       вьюпорт     1280   1366   1440   1512   1680   1920
+       знаков       41     46     52     57     70     72
+
+     То есть на всём ноутбучном диапазоне строка короче нижней границы читаемости
+     (60 знаков), а на 1920 колонка, наоборот, ШИРЕ прозы: замер показал 992px
+     колонки при 818px текста — 174px мёртвой полосы внутри колонки.
+
+     Теперь мера объявлена прямо: колонка чтения — `var(--measure)` (72ch), остаток
+     достаётся заданию. Пол колонки задания зависит от того, что в ней лежит: без
+     материалов хватает 16rem на заголовок и спутников, с материалами нужен прежний
+     26rem — иначе листинг и схема ужимаются ради прозы, которая и так получила свою
+     меру.
+
+     Пол 18rem, а не 16rem, — из замера ПЕРЕНОСА, а не из вкуса: в колонке 256px самое
+     длинное слово заголовка («алгоритмическому», 260px при кегле этой колонки) не
+     помещалось в строку, и глобальный `overflow-wrap: break-word` рвал его без дефиса
+     («алгоритмическом|у»). 288px слово держат. Цена замерена — три знака строки чтения
+     (54 → 51 на 1280, 66 → 63 на 1440); разрыв слова в заголовке дороже.
+
+     Замер после (тот же вопрос, Chromium и WebKit): 1280 — 51–52 знака и документ
+     3342 → 2945; 1366 — 57–59 и 3067 → 2883; 1440 — 63–64 и 2924 → 2802; 1512 — 68–72
+     и 2863 → 2802; 1680 и 1920 — 72 знака; 2560 — 58 → 72 знака. Мёртвая полоса внутри
+     колонки чтения исчезает (на 1920 было 174px). Текст короче по высоте — потому что
+     строка длиннее. */
+  /* Вес селектора взят не «на всякий случай»: общее правило рабочего места читает
+     `:has(.workspace-surface:not(.hidden))` — это три класса внутри `:has`, и оно
+     перебивало короткое `:has(.study-learn-phase)` при любом порядке в файле.
+     Замер первой сборки: сетка оставалась 416 + 512, то есть правка не работала. */
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase.workspace-surface:not(.hidden)) {
+    grid-template-columns: minmax(18rem, 1fr) minmax(0, var(--reading-column));
+  }
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase.workspace-surface:not(.hidden)):has(.question-materials) {
+    grid-template-columns: minmax(26rem, 1fr) minmax(0, var(--reading-column));
+  }
+}
+
+/* Три зоны: к чтению и заданию добавляются спутники. Мера полосы объявляется теми же
+   слагаемыми, что и колонки, иначе полоса окажется уже своей композиции и мера чтения
+   схлопнется первой (у неё `minmax(0, …)`). */
+@media (min-width: 2240px) {
+  /* Тот же вес, что у общего правила рабочего места (`:has(.workspace-surface:not(.hidden))`):
+     иначе полоса считается по чужой формуле. Замер первой сборки на 2560 — колонки
+     288 + 832 + 352 вместо 288 + 868 + 352, то есть мера чтения теряла 36px. */
+  html[data-design] .focus-page:has(.study-learn-phase.workspace-surface:not(.hidden)) {
+    --focus-main-measure: calc(18rem + var(--reading-column) + var(--workspace-companions)
+                          + var(--focus-rail-gap) * 2);
+  }
+  html[data-design] .focus-page:has(.study-learn-phase.workspace-surface:not(.hidden)):has(.question-materials) {
+    --focus-main-measure: calc(26rem + var(--reading-column) + var(--workspace-companions)
+                          + var(--focus-rail-gap) * 2);
+  }
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase.workspace-surface:not(.hidden)) {
+    grid-template-columns: minmax(18rem, 1fr) minmax(0, var(--reading-column))
+                           minmax(0, var(--workspace-companions));
+  }
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase.workspace-surface:not(.hidden)):has(.question-materials) {
+    grid-template-columns: minmax(26rem, 1fr) minmax(0, var(--reading-column))
+                           minmax(0, var(--workspace-companions));
   }
 }
 
