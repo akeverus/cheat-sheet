@@ -92,9 +92,9 @@ try (JMSContext ctx = factory.createContext()) {
 | Пакет | `javax.jms.*` | `jakarta.jms.*` |
 | API/семантика | — | функционально эквивалентна 2.0 |
 | Связка | старый Java EE / Spring Boot 2.x | Jakarta EE 9+ / Spring Boot 3.x |
-| Артефакт | `javax.jms:javax.jms-api` | `jakarta.jms:jakarta.jms-api:3.0.x` |
+| Артефакт | `javax.jms:javax.jms-api` | `jakarta.jms:jakarta.jms-api` (актуальная — 3.1.0) |
 
-Ключевая мысль: Jakarta Messaging 3.0 функционально равна JMS 2.0 — изменились только имена пакетов и констант. Например, `javax.jms.Connection` стал `jakarta.jms.Connection`.
+Ключевая мысль: Jakarta Messaging 3.0 функционально равна JMS 2.0 — изменились только имена пакетов и констант. Например, `javax.jms.Connection` стал `jakarta.jms.Connection`. Следующая ревизия, 3.1, тоже осталась совместимой: она лишь навела порядок в спецификации и стала текущим релизом артефакта.
 
 При миграции реального кода обычно достаточно переписать `import`-ы (часто автоматически, например рецептом OpenRewrite `javax.jms` → `jakarta.jms`) и обновить зависимости. Полноценная новизна была раньше — в JMS 2.0: упрощённый API `JMSContext` (объединил `Connection` + `Session`), shared subscriptions, delivery delay.
 
