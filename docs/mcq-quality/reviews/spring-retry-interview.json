@@ -1,1314 +1,769 @@
 {
   "topic_slug": "spring-retry-interview",
-  "round": 9,
-  "reviewed_commit": "54bce33c",
-  "status": "FINAL",
-  "source_file": "modules/quiz-app/src/main/resources/seed/mcq/frameworks/spring/spring-retry-interview.json",
-  "theory_file": "cheatsheets/interview/frameworks/spring/spring-retry-interview.md",
-  "summary": {
-    "questions": 17,
-    "blocks": 17,
-    "blocks_done": 17,
-    "critical": 0,
-    "high": 0,
-    "medium": 0,
-    "low": 0
+  "source_cheatsheet": "cheatsheets/interview/frameworks/spring/spring-retry-interview.md",
+  "seed_file": "modules/quiz-app/src/main/resources/seed/mcq/frameworks/spring/spring-retry-interview.json",
+  "round": "ROUND-10 LINKAGE-FIRST FULL REBUILD",
+  "rebuilt_from_scratch": true,
+  "audited": "2026-08-28",
+  "blocks_total": 17,
+  "options_total": 68,
+  "source_repairs": {
+    "commit": "2483a762",
+    "fact_freshness": "docs/mcq-quality/fact-freshness/spring-retry-interview.json",
+    "items": [
+      "Q2: «Boot подтянет spring-retry через стартер» — стартера нет; Boot лишь управляет версией через BOM.",
+      "Q8: роли openTimeout/resetTimeout были перевёрнуты (проза и комментарии кода) — сверено с javadoc сеттеров.",
+      "Q10: «retry на одном методе бесполезен, повторы в rollback-only» — неверно для современного spring-retry: с 2.0.2 @EnableRetry.order = LOWEST_PRECEDENCE-1, javadoc прямо ставит retry-advice раньше транзакционного; переписано на «работает, но хрупко — держится на числах order».",
+      "Q12: выдуманный template.setRetryState(...) → execute(callback, new DefaultRetryState(key)); несуществующий RetryStateGenerator убран; SeekToCurrentErrorHandler (удалён в kafka 3.0) → DefaultErrorHandler.",
+      "Q13: RetryListenerSupport (deprecated 2.0.1 forRemoval) → анонимный RetryListener с default-методами.",
+      "Q16: противоречие примеров (тест ждал проброс IOException при живом @Recover) устранено; @MockBean → @MockitoBean.",
+      "Q17: строка таблицы «Boot auto-config: Частичная» → «Нет (@EnableRetry вручную)» — согласование с Q2."
+    ],
+    "verified_no_change": [
+      "все 7 политик таблицы Q7 существуют в main",
+      "@Backoff(random = true) = ExponentialRandomBackOffPolicy",
+      "RetryTemplate.builder(): maxAttempts/exponentialBackoff/retryOn/withListener",
+      "Retry.backoff/.filter/.jitter/.onRetryExhaustedThrow у Reactor",
+      "@Retryable применим к классу (@Target TYPE)",
+      "требования к сигнатуре @Recover и выбор специфичного"
+    ]
   },
-  "reset_baseline": {
-    "reset_date": "2026-07-17",
-    "old_pass_carried_forward": false,
-    "schema_precheck": "PASS",
-    "structural_invariants_precheck": "PASS",
-    "theory_file_present": true,
-    "json_q_numbers": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17
-    ],
-    "theory_q_numbers": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17
-    ],
-    "missing_theory_q_numbers": [],
-    "extra_theory_q_numbers": [],
-    "current_correct_positions": [
-      "A",
-      "A",
-      "C",
-      "A",
-      "B",
-      "C",
-      "B",
-      "D",
-      "A",
-      "C",
-      "D",
-      "B",
-      "B",
-      "A",
-      "D",
-      "C",
-      "D"
-    ],
-    "acceptance_note": "Baseline diagnostics are not ROUND 9 acceptance evidence."
+  "acceptance": {
+    "criterion": "два полных чистых круга подряд без правок между ними",
+    "rounds": [
+      {
+        "n": 1,
+        "lenses": [
+          "форма: длины, спаны"
+        ],
+        "findings": [
+          "16 проблемных блоков первой раскладки (корректы длиннее, ratio 1.28) — закрыто батчами"
+        ]
+      },
+      {
+        "n": 2,
+        "lenses": [
+          "anti-tell"
+        ],
+        "findings": [
+          "9 блоков с uniq-colon/uniq-semicolon у верных — пунктуация роздана дистракторам"
+        ]
+      },
+      {
+        "n": 3,
+        "lenses": [
+          "novel-термины опций против своего Q"
+        ],
+        "findings": [
+          "RetryTemplate в дистракторах Q2 и Q14, @Backoff(random = true) в Q11, backoff в Q8 — заменены осями из своих Q; LOW-COVERAGE Q15 D принят ручным ревью"
+        ]
+      },
+      {
+        "n": 4,
+        "lenses": [
+          "категоричность как канал"
+        ],
+        "findings": [
+          "0.417 при шансе 0.25, p=1.0 в Q6 и Q10 — честные маркеры верным («вовсе без AOP», «ровно», «всегда после цикла»), лишние сняты у дистракторов; итог 0.186"
+        ]
+      },
+      {
+        "n": 5,
+        "lenses": [
+          "длина после маркеров"
+        ],
+        "findings": [
+          "STYLE_GUESSABILITY по длине 0.407 FAIL — подняты кратчайшие дистракторы Q2/Q6/Q13; итог 0.319"
+        ]
+      },
+      {
+        "n": 6,
+        "lenses": [
+          "секции: THIN, 5-граммы, мета-аргументы, межблочные ссылки"
+        ],
+        "findings": [
+          "THIN example Q6; два шаблона 5-грамм (Q3/Q5 backoff-параметры, Q3/Q11 «ошибка валидации»); четыре if_it_were_true спорили с текстом («довод», «фраза», javadoc-цитата) — переписаны от системы; ссылка «из Q13» в Q17; «решение №2/№3» в Q9"
+        ]
+      },
+      {
+        "n": 7,
+        "lenses": [
+          "полный механический прогон: jsonschema, linkage, anti-tell, parity, батарея, категоричность, цифры, CJK/here, детерминизм"
+        ],
+        "findings": [],
+        "clean": true
+      },
+      {
+        "n": 8,
+        "lenses": [
+          "симуляция студента по 17 блокам + сверка correct-секций с материалом"
+        ],
+        "findings": [],
+        "clean": true
+      }
+    ]
   },
+  "gates": {
+    "jsonschema": "OK",
+    "mcq-linkage-scan": "errors=0, warnings=1 (LOW-COVERAGE q15 — принят ручным ревью)",
+    "mcq-anti-tell-scan": "0 подсказок на 17 блоков",
+    "mcq-answer-parity-gate": "PASS 12/12",
+    "parity_detail": {
+      "CORRECT_LONGEST_RATE": 0.0,
+      "OPTION_LENGTH_RATIO": 1.27,
+      "CORRECT_WRONG_AVG_RATIO": 1.049,
+      "SENTENCE_PARITY": 0,
+      "DETAIL_PARITY": 0.0,
+      "ABSOLUTE_MARKER_GAP": 0.059,
+      "CORRECT_POSITION_DISTRIBUTION": 1.25,
+      "CORRECT_POSITION_SEQUENCE": 3,
+      "DUPLICATE_NGRAMS": 0,
+      "SOURCE_COVERAGE": "n/a (вне KNOWN_VOLATILE; fact-freshness написан по существу)",
+      "STYLE_GUESSABILITY": 0.319
+    },
+    "own_scans": {
+      "категоричность_как_канал": 0.186,
+      "смешанный_скрипт": 0,
+      "посторонние_символы": 0,
+      "кросс-блочные_дубли_опций": 0,
+      "межблочные_повторы_5-грамм": 0,
+      "what_actually≈how_it_should_be": 0,
+      "цифры_vs_свой_Q": 0
+    }
+  },
+  "low_coverage_manual_review": {
+    "verdict": "q15b0 D принят",
+    "items": [
+      "Q15 D (каскад recover-методов): опровержим фразами Q15 «recover — последний рубеж» и «пробрасывается как обычное»; правдоподобие оси — из выбора специфичного recover в Q4 (структурное премисное пересечение)"
+    ]
+  },
+  "structural_overlaps": [
+    "Q2, Q9 и Q16 — сквозная нить AOP-прокси: включение инфраструктуры, self-invocation, необходимость контекста в тестах",
+    "Q3 и Q14 делят параметры @Retryable: механика одной аннотации против раскладки политик по методам",
+    "Q6, Q9 и Q12 делят RetryTemplate: назначение, обход self-invocation, stateful-перегрузка execute",
+    "Q4 и Q15 — пара @Recover: сигнатура и связывание против терминальности; ось дистрактора Q15 D опирается на выбор специфичного из Q4",
+    "Q7 и Q8 делят CircuitBreakerRetryPolicy: строка таблицы против развёрнутого разбора",
+    "Q5 и Q11 — джиттер против thundering herd в двух мирах: @Backoff(random) и Retry.backoff().jitter()",
+    "Q1 и Q17 оба про границы: «только retry» против полной таблицы сравнения с Resilience4j"
+  ],
+  "notes": [
+    "question_text во всех 17 блоках — нормализованная копия видимого заголовка ## Q<N> (проверено машинно)",
+    "Пересборка детерминирована: srr_specs_[ab].py + srr_build.py + srr_target.txt дают побайтово тот же файл",
+    "Позиции подобраны перебором против точной копии run-функции гейта: A/B/C/D = 5/4/4/4, длиннейший прогон 3 при пороге 5",
+    "Варианты написаны терминами своего Q: retryFor, maxAttempts, @Recover, @Backoff, maxDelay, RetryTemplate, execute, SimpleRetryPolicy, openTimeout/resetTimeout, this.method(), @Lazy, order, retryWhen, DefaultRetryState, open/onError/close, verify, Resilience4j"
+  ],
   "blocks": [
     {
       "q_number": 1,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Что такое Spring Retry и для каких задач он предназначен?",
+      "tested_claim": "Автоматически повторяет операцию — закрывает временные (transient) сбои: таймауты, 5xx, дедлоки, проходящие сами.",
+      "source_evidence": [
+        "`Spring Retry` — библиотека, которая автоматически повторяет операцию, если та упала с заданным исключением.",
+        "Границы применимости. Spring Retry — это именно retry, и больше ничего."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 2,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как подключить Spring Retry?",
+      "tested_claim": "Добавить spring-retry и spring-aspects (AOP обязателен), а на конфигурацию — `@EnableRetry`, иначе повторов не будет вовсе.",
+      "source_evidence": [
+        "Аннотационный подход требует `@EnableRetry` — именно эта аннотация включает AOP-инфраструктуру, которая обрабатывает `@Retryable`:",
+        "И `@EnableRetry` тоже ставится руками — без неё аннотации `@Retryable` просто игнорируются, метод выполняется один раз и никакого повтора не происходит."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 3,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как работает @Retryable?",
+      "tested_claim": "Прокси ловит исключение из `retryFor` и повторяет метод: `maxAttempts = 3` — ровно вызов плюс два повтора.",
+      "source_evidence": [
+        "То есть `maxAttempts = 3` — это один обычный вызов плюс два повтора, а не три повтора",
+        "`@Retryable` — это AOP-обёртка: при вызове метода прокси ловит исключение, и если оно подходит под фильтр — вызывает метод заново, выдерживая паузу из `backoff`."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 4,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Что такое @Recover и каковы требования к сигнатуре?",
+      "tested_claim": "В том же классе, первым аргументом — исключение, тип возврата совпадает; из нескольких берётся специфичный.",
+      "source_evidence": [
+        "`@Recover` — это fallback-метод: Spring вызывает его, когда все попытки `@Retryable` исчерпаны, чтобы вернуть «запасной» результат вместо проброса исключения.",
+        "Без него после последней неудачи наружу полетит исходное исключение; с ним — то, что вернёт `@Recover`."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 5,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Какие backoff-стратегии поддерживает Spring Retry?",
+      "tested_claim": "Фиксированная пауза, экспоненциальный рост, потолок `maxDelay` и джиттер `random = true` против thundering herd.",
+      "source_evidence": [
+        "Это компромисс между «дать ресурсу восстановиться» и «не ждать слишком долго».",
+        "Чаще всего по умолчанию берут экспоненциальный backoff с потолком: паузы растут (1s → 2s → 4s…), но не разбегаются до бесконечности благодаря `maxDelay`."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 6,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Что такое RetryTemplate и когда его использовать?",
+      "tested_claim": "Императивный API вовсе без AOP: код оборачивают в `execute(...)` с recover-callback-ом, работает вне Spring bean.",
+      "source_evidence": [
+        "Ты сам оборачиваешь нужный код в `execute(...)`, а шаблон управляет попытками и backoff.",
+        "`RetryTemplate` — программный (императивный) API для retry, без аннотаций и без AOP."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 7,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Какие RetryPolicy реализации есть в Spring Retry?",
+      "tested_claim": "Дефолт — именно `SimpleRetryPolicy`: число попыток плюс фильтр типов; `ExceptionClassifierRetryPolicy` даёт исключениям разные политики.",
+      "source_evidence": [
+        "`ExceptionClassifierRetryPolicy` особенно полезен, когда одни ошибки заслуживают больше попыток, чем другие, а часть — не заслуживают повтора вовсе:",
+        "`RetryPolicy` отвечает на один вопрос: стоит ли делать ещё одну попытку? Это точка расширения, по которой Spring Retry решает, продолжать или остановиться."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L3",
+      "linkage_note": "ложность дистрактора про NeverRetryPolicy выводится из определения «политика решает, делать ли ЕЩЁ ОДНУ попытку», а не прямой фразой",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 8,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Что такое CircuitBreakerRetryPolicy?",
+      "tested_claim": "Исчерпание попыток быстрее `openTimeout` размыкает цепь: вызовы падают быстро, а закрытие происходит по `resetTimeout`.",
+      "source_evidence": [
+        "Идея в том, что бесконечно ретраить заведомо упавший сервис вредно.",
+        "`openTimeout` — окно детекции: если вложенная политика исчерпала попытки быстрее, чем за `openTimeout`, значит сервис падает стабильно — цепь размыкается (open)."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 9,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Почему @Retryable не работает при self-invocation?",
+      "tested_claim": "Retry добавляет AOP-прокси, а `this.method()` минует его — не видно ни вызова, ни исключения.",
+      "source_evidence": [
+        "Spring оборачивает bean в прокси-объект, и всю retry-логику добавляет именно прокси — снаружи.",
+        "Вынести `@Retryable`-метод в отдельный bean (рекомендуется). Вызов из другого бина идёт через прокси целевого бина, и retry работает."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 10,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как правильно комбинировать @Retryable и @Transactional?",
+      "tested_claim": "Retry снаружи, транзакция внутри: с дефолтным порядком у `@EnableRetry` каждая попытка получает свежую транзакцию.",
+      "source_evidence": [
+        "Так каждая попытка получает новую транзакцию: предыдущая полностью откатилась, состояние чистое, и повтор имеет шанс пройти.",
+        "С версии 2.0.2 у `@EnableRetry` есть `order` со значением по умолчанию `Ordered.LOWEST_PRECEDENCE - 1` — на единицу «раньше» транзакционного advice (у того `LOWEST_PRECEDENCE`)."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 11,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как Spring Retry интегрируется с Reactor/WebClient?",
+      "tested_claim": "Никак напрямую: ошибка возникает позже, в пайплайне — туда и вешают повтор через `retryWhen`.",
+      "source_evidence": [
+        "Поэтому повтор вешают прямо на пайплайн через `retryWhen`:",
+        "`@Retryable` бесполезен с методами, возвращающими `Mono`/`Flux`: метод-фабрика отрабатывает мгновенно и возвращает ещё «холодный» паблишер, не выбросив никакого исключения — ошибка возникнет позже, асинхронно, в реактивном пайплайне, куда AOP-обёртка уже не до"
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 12,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Что такое Stateful Retry и когда он нужен?",
+      "tested_claim": "Сохраняет состояние между отдельными вызовами: по ключу `DefaultRetryState` ведёт сквозной счётчик поверх повторных доставок.",
+      "source_evidence": [
+        "Разница между обычным (stateless) и stateful retry — в том, где живёт счётчик попыток.",
+        "Stateful retry, наоборот, сохраняет состояние между отдельными вызовами — по ключу (`RetryState`), который идентифицирует конкретную единицу работы."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 13,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как добавить метрики и логирование через RetryListener?",
+      "tested_claim": "open — перед циклом, `onError` — на каждой неудачной попытке, `close` — всегда после цикла, успешного или нет.",
+      "source_evidence": [
+        "`onError` — на каждой неудачной попытке (сюда вешают счётчик ретраев и предупреждающий лог)",
+        "`RetryListener` — это хук в жизненный цикл retry: он даёт перехватывать ключевые события, не засоряя бизнес-логику."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 14,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как настроить разные retry-политики для разных методов?",
+      "tested_claim": "Свой `@Retryable` на каждом методе; общий дефолт выносят на сам класс, методы переопределяют точечно.",
+      "source_evidence": [
+        "Если у большинства методов класса политика одинаковая, её выносят на уровень класса как значение по умолчанию, а у отдельных методов переопределяют точечно — меньше дублирования:",
+        "Политика срабатывает «по месту»: для разных операций — разное число попыток, свой набор исключений и свой backoff."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 15,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Что произойдёт, если @Recover выбросит исключение?",
+      "tested_claim": "Пробрасывается вызывающему коду как обычное: recover вне retry-цикла, его ошибку никто не перехватывает.",
+      "source_evidence": [
+        "`@Recover` находится вне retry-цикла: к моменту его вызова попытки уже исчерпаны, и Spring Retry брошенное им исключение не перехватывает и не ретраит.",
+        "Исключение из `@Recover` пробрасывается вызывающему коду как обычное — никаких повторов."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L3",
+      "linkage_note": "дистрактор про каскад recover-методов опровергается фразами «последний рубеж» и «пробрасывается как обычное»; ось каскада — премисное пересечение с выбором специфичного recover из Q4 (принято как структурное)",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 16,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как протестировать логику retry в тестах?",
+      "tested_claim": "Бин поднимают из Spring-контекста: `new` даёт объект без прокси; зависимость мокают и считают вызовы.",
+      "source_evidence": [
+        "Нужен `@SpringBootTest` (или `@SpringJUnitConfig` с включённым AOP), чтобы инжектировался именно прокси.",
+        "Главное, что проверяют на собеседовании: retry живёт в прокси, поэтому бин нужно поднимать через Spring-контекст."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 17,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Чем Spring Retry отличается от Resilience4j?",
+      "tested_claim": "Spring Retry умеет лишь повторять; Rate Limiter, Bulkhead, реактивный стек, встроенные метрики — у Resilience4j.",
+      "source_evidence": [
+        "Коротко: Spring Retry умеет только повторять, Resilience4j — это полный набор паттернов отказоустойчивости.",
+        "Берём Resilience4j, когда: это production-микросервисы, и нужен Circuit Breaker с HALF_OPEN, встроенные метрики и observability, а часто ещё и Rate Limiter с Bulkhead."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     }
-  ],
-  "acceptance": {
-    "basis": "golden-reference-batch-01",
-    "note": "golden-reference-batch-01: поставлен пользователем как эталон качества ROUND-9. schema+ролевая sections-схема валидны; форма спот-проверена (естественная, не угадываемая по длине/стилю/пунктуации). Старые численные gate'ы (answer-parity/skel) — вытесненная диагностика: golden осознанно favors живой текст над механической parity (skill §13)."
-  }
+  ]
 }

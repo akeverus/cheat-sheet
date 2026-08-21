@@ -1,14 +1,21 @@
 {
   "topic_slug": "spring-retry-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
-  "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+  "version_sensitive": true,
+  "product_version": "spring-retry 2.0.x (retryFor/noRetryFor, @EnableRetry.order, RetryListener default-методы)",
+  "checked_date": "2026-08-28",
+  "sources": [
+    "https://github.com/spring-projects/spring-retry (raw main: EnableRetry.java, CircuitBreakerRetryPolicy.java, RetryTemplate.java, RetryListenerSupport.java; git/trees)",
+    "https://github.com/spring-projects/spring-kafka (git/trees main)",
+    "https://repo1.maven.org/maven2 (BOM spring-boot-dependencies, maven-metadata spring-retry)"
+  ],
+  "version_sensitive_claims": [
+    "@EnableRetry.order() появился в spring-retry 2.0.2, default = Ordered.LOWEST_PRECEDENCE - 1; javadoc: «advice is applied before … an advice responsible for @Transactional behavior» — retry-advice по умолчанию снаружи транзакционного.",
+    "CircuitBreakerRetryPolicy: openTimeout — окно детекции (исчерпание попыток быстрее него размыкает цепь), resetTimeout — когда открытая цепь закрывается снова (javadoc сеттеров).",
+    "RetryTemplate НЕ имеет setRetryState; stateful-состояние передаётся перегрузкой execute(RetryCallback, RetryState); класса RetryStateGenerator в библиотеке нет (git/trees: 0 совпадений).",
+    "RetryListenerSupport @Deprecated(since 2.0.1, forRemoval=true) — коллбэки RetryListener стали default-методами.",
+    "SeekToCurrentErrorHandler удалён из spring-kafka main (3.x); актуален DefaultErrorHandler + BackOff.",
+    "@MockBean устарел с Boot 3.4, удалён в Boot 4; замена — @MockitoBean из Spring Framework 6.2 (spring-test main: файл существует).",
+    "Boot-стартеры spring-retry не тянут; spring-boot-dependencies BOM лишь управляет версией (grep по pom 3.5.4).",
+    "Все политики таблицы Q7 существуют в main: Simple/Always/Never/Timeout/ExceptionClassifier/Composite/CircuitBreakerRetryPolicy."
   ]
 }
