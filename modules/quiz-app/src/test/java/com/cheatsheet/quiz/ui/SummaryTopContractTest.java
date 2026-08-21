@@ -123,6 +123,26 @@ class SummaryTopContractTest {
                 .isLessThan(progressOrder);
     }
 
+    /**
+     * Карточки ряда выровнены по ОБЕИМ кромкам. Карточка счёта фиксированные 208px, а
+     * карточка прогресса 278–363 в зависимости от ширины: `align-items: start` оставлял
+     * под счётом рваный край — 70px пустоты на 2560 и 155px на 1512, читавшиеся как
+     * незаполненный layout. Стретч выравнивает ряд (замер после: разница высот 0 на
+     * 1100/1280/1512/2560 в обоих движках), а кольцо остаётся вертикально
+     * центрированным собственным флексом карточки (замер: зазоры 67/67…167/167).
+     */
+    @Test
+    void theRowCardsShareBothEdges() throws IOException {
+        String c = css();
+        java.util.regex.Matcher row = Pattern.compile(
+                "@media \\(min-width: 1100px\\) \\{[\\s\\S]{0,400}?\\.summary-top \\{([^}]*)\\}").matcher(c);
+        assertThat(row.find()).as("блока ряда нет").isTrue();
+        assertThat(row.group(1))
+                .as("ряд снова `align-items: start`: под короткой карточкой счёта остаётся "
+                        + "рваный край 70–155px, который читается как сломанный layout")
+                .contains("align-items: stretch");
+    }
+
     /** Порог ряда и порог перестановки — одно событие «есть ли ширина на две колонки». */
     @Test
     void bothThresholdsAreTheSameNumber() throws IOException {
