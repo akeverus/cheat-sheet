@@ -95,7 +95,7 @@ updated: "2026-05-15"
 public class AppConfig {}
 ```
 
-**Частая ошибка на собеседовании:** считать, что в Spring Boot ничего настраивать не нужно. Boot подтянет `spring-retry` через стартер, но `@EnableRetry` всё равно надо поставить руками — без неё аннотации `@Retryable` просто игнорируются, метод выполняется один раз и никакого повтора не происходит.
+**Частая ошибка на собеседовании:** считать, что в Spring Boot ничего настраивать не нужно. Стартеры Boot `spring-retry` не тянут — зависимость добавляют руками (Boot лишь управляет её версией через свой BOM, поэтому `<version>` выше не указан). И `@EnableRetry` тоже ставится руками — без неё аннотации `@Retryable` просто игнорируются, метод выполняется один раз и никакого повтора не происходит.
 
 ## Q3. (!) Как работает @Retryable?
 
@@ -239,14 +239,14 @@ policy.setPolicyMap(Map.of(
 
 ## Q8. Что такое CircuitBreakerRetryPolicy?
 
-`CircuitBreakerRetryPolicy` — это политика, добавляющая поверх обычного retry логику «предохранителя» (Circuit Breaker). Идея в том, что бесконечно ретраить заведомо упавший сервис вредно: после серии неудач цепь **размыкается** (open), и на время `openTimeout` запросы перестают уходить вовсе — они быстро падают, не нагружая лежащий ресурс. По истечении `resetTimeout` цепь сбрасывается и попытки возобновляются.
+`CircuitBreakerRetryPolicy` — это политика, добавляющая поверх обычного retry логику «предохранителя» (Circuit Breaker). Идея в том, что бесконечно ретраить заведомо упавший сервис вредно. `openTimeout` — окно детекции: если вложенная политика исчерпала попытки **быстрее**, чем за `openTimeout`, значит сервис падает стабильно — цепь **размыкается** (open). Пока цепь открыта, запросы не уходят вовсе: они быстро падают, не нагружая лежащий ресурс. Закрывается цепь по истечении `resetTimeout` — тогда попытки возобновляются.
 
 ```java
 CircuitBreakerRetryPolicy circuitBreakerPolicy = new CircuitBreakerRetryPolicy(
     new SimpleRetryPolicy(3)
 );
-circuitBreakerPolicy.setOpenTimeout(5000);    // цепь открыта 5 сек
-circuitBreakerPolicy.setResetTimeout(20000);  // сбросить через 20 сек
+circuitBreakerPolicy.setOpenTimeout(5000);    // исчерпались быстрее 5 сек → разомкнуть
+circuitBreakerPolicy.setResetTimeout(20000);  // закрыть цепь снова через 20 сек
 
 RetryTemplate template = new RetryTemplate();
 template.setRetryPolicy(circuitBreakerPolicy);
@@ -306,20 +306,22 @@ public class PaymentService {
 
 Главное правило: **retry должен быть снаружи транзакции, а транзакция — внутри**, чтобы каждая попытка шла в собственной свежей транзакции.
 
-Если повесить `@Transactional` и `@Retryable` на **один и тот же** метод, retry становится бесполезным. Порядок прокси таков, что транзакция оборачивает вызов изнутри retry: когда внутри ловится исключение и срабатывает повтор, транзакция уже помечена rollback-only. Все повторные попытки идут в той же «грязной» транзакции, которой суждено откатиться, — то есть retry крутится впустую.
+Хорошая новость: современный spring-retry сам выстраивает этот порядок, даже если обе аннотации висят на **одном** методе. С версии 2.0.2 у `@EnableRetry` есть `order` со значением по умолчанию `Ordered.LOWEST_PRECEDENCE - 1` — на единицу «раньше» транзакционного advice (у того `LOWEST_PRECEDENCE`). Javadoc прямо объясняет дефолт: «чтобы advice применялся раньше advice, отвечающего за `@Transactional`». Retry-обёртка оказывается снаружи, и каждая попытка заново проходит через транзакционный интерцептор — то есть получает свежую транзакцию.
 
-**Неправильно:**
+Опасен **перевёрнутый порядок**: если `order` переопределили (или проект сидит на старом spring-retry, где у retry-advice своего порядка не было и «кто снаружи» не гарантировалось), транзакция оборачивает retry. Тогда первая же ошибка вроде `OptimisticLockException` помечает транзакцию rollback-only, и все повторы крутятся в той же «грязной» транзакции, которой суждено откатиться, — retry работает впустую.
+
+**Хрупко — обе аннотации на одном методе, порядок держится на числах `order`:**
 ```java
 @Transactional
 @Retryable(retryFor = OptimisticLockException.class)
 public void updateWithOptimisticLock(Entity e) {
-    // OptimisticLockException → rollback → retry запускается
-    // → но транзакция уже откатилась и объект в dirty state
+    // с дефолтным order retry снаружи транзакции — работает;
+    // но сломается молча, если порядок advice переопределят
     repository.save(e);
 }
 ```
 
-**Правильно — retry снаружи, транзакция внутри:**
+**Надёжно — retry снаружи, транзакция внутри, порядок зафиксирован структурой кода:**
 ```java
 @Retryable(retryFor = OptimisticLockException.class, maxAttempts = 3)
 public void updateWithRetry(Entity e) {
@@ -371,16 +373,15 @@ webClient.get()
 RetryTemplate template = new RetryTemplate();
 template.setRetryPolicy(new SimpleRetryPolicy(3));
 
-// RetryStateGenerator идентифицирует конкретное сообщение
-template.setRetryState(ctx -> new DefaultRetryState(messageKey));
-
+// DefaultRetryState с ключом сообщения идентифицирует единицу работы;
+// состояние передаётся вторым аргументом execute
 template.execute(ctx -> {
     processMessage(message);
     return null;
-});
+}, new DefaultRetryState(messageKey));
 ```
 
-В `spring-kafka` stateful retry настраивается через `SeekToCurrentErrorHandler` + `BackOff`.
+В `spring-kafka` ту же задачу решает `DefaultErrorHandler` + `BackOff` (старый `SeekToCurrentErrorHandler` удалён в spring-kafka 3.0).
 
 ## Q13. Как добавить метрики и логирование через RetryListener?
 
@@ -389,7 +390,7 @@ template.execute(ctx -> {
 - `onError` — на каждой неудачной попытке (сюда вешают счётчик ретраев и предупреждающий лог)
 - `close` — после завершения цикла, успешного или нет (удобно подвести итог: сколько попыток ушло)
 
-Без листенера ретраи «немые» — в проде ты не увидишь, что какой-то вызов втихую повторяется по три раза. Именно `onError` + `MeterRegistry` превращают это в наблюдаемую метрику:
+Все коллбэки у `RetryListener` — default-методы (с spring-retry 2.0), поэтому анонимный класс реализует только нужные; старый базовый класс `RetryListenerSupport` помечен deprecated. Без листенера ретраи «немые» — в проде ты не увидишь, что какой-то вызов втихую повторяется по три раза. Именно `onError` + `MeterRegistry` превращают это в наблюдаемую метрику:
 
 ```java
 @Bean
@@ -398,7 +399,7 @@ public RetryTemplate retryTemplate(MeterRegistry meterRegistry) {
         .maxAttempts(3)
         .build();
 
-    template.registerListener(new RetryListenerSupport() {
+    template.registerListener(new RetryListener() {
         @Override
         public <T, E extends Throwable> void onError(
                 RetryContext ctx, RetryCallback<T, E> cb, Throwable t) {
@@ -480,15 +481,14 @@ class PaymentServiceTest {
     @Autowired
     PaymentService paymentService;
 
-    @MockBean
+    @MockitoBean  // бывший @MockBean: устарел с Boot 3.4, удалён в Boot 4
     PaymentGateway gateway;
 
     @Test
     void shouldRetry3TimesOnIOException() {
         when(gateway.charge(any())).thenThrow(new IOException("timeout"));
 
-        assertThatThrownBy(() -> paymentService.processPayment(request))
-            .isInstanceOf(IOException.class);
+        paymentService.processPayment(request); // после 3 неудач управление уйдёт в @Recover
 
         verify(gateway, times(3)).charge(any()); // проверяем 3 попытки
     }
@@ -520,7 +520,7 @@ class PaymentServiceTest {
 | TimeLimiter | Нет | Есть |
 | Реактивный стек | Нет | Reactor, RxJava |
 | Метрики Micrometer | Через listener вручную | Встроенные out-of-the-box |
-| Spring Boot auto-config | Частичная | Полная (через starter) |
+| Spring Boot auto-config | Нет (`@EnableRetry` вручную) | Полная (через starter) |
 
 **Берём Spring Retry, когда:** нужен простой retry, проект уже на Spring Batch/Integration (там Spring Retry встроен внутри), полноценный Circuit Breaker не требуется.
 
