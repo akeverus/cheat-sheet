@@ -1,14 +1,19 @@
 {
   "topic_slug": "reactive-patterns-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
-  "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+  "version_sensitive": true,
+  "product_version": "Project Reactor 3.4+ (Retry-спецификация с 3.3, Mono.firstWithValue/zipDelayError), Resilience4j 2.x (reactor-модуль)",
+  "checked_date": "2026-09-01",
+  "sources": [
+    "https://github.com/reactor/reactor-core (raw main: Mono.java — firstWithValue/zipDelayError перегрузки)",
+    "https://github.com/resilience4j/resilience4j (CircuitBreakerStateMachine: HalfOpenState считает failure rate)"
+  ],
+  "version_sensitive_claims": [
+    "Mono.firstWithValue существует в двух перегрузках (varargs и Iterable) — сверено с Mono.java main; ошибки источников игнорируются, пока есть надежда на значение.",
+    "Mono.zipDelayError: 8 позиционных перегрузок + (Iterable, combinator) — дожидается всех, ошибку пробрасывает в конце.",
+    "Retry.backoff/fixedDelay + jitter/filter/onRetryExhaustedThrow/doBeforeRetry — спецификация Reactor 3.3+.",
+    "flatMap default concurrency = 256 (Queues.SMALL_BUFFER_SIZE).",
+    "В HALF_OPEN Resilience4j считает долю ошибок среди пробных против порога (классика паттерна — первый же провал); формулировка Q2 источника уточнена обоими вариантами.",
+    "debounce/throttleFirst — имена RxJava; реакторные эквиваленты sampleTimeout(Function)/sampleFirst(Duration).",
+    "CallNotPermittedException — открытый CircuitBreaker; BulkheadFullException — переполненный Bulkhead."
   ]
 }

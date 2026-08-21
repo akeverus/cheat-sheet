@@ -6,56 +6,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `Circuit Breaker` и зачем он нужен в реактивной системе?",
+          "question_text": "Что такое Circuit Breaker и зачем он нужен в реактивной системе?",
           "options": [
             {
-              "text": "`Circuit Breaker` прекращает вызовы к нестабильной зависимости и быстро отклоняет новые запросы, пока пробные обращения не подтвердят восстановление сервиса.",
+              "label": "A",
+              "order": 0,
+              "text": "В реактивном мире `Circuit Breaker` менее важен: каждый вызов держит свой отдельный поток.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: свой поток на вызов — блокирующий мир; в реактивном пул общий и маленький.",
+                "source_of_confusion": "Интуиция thread-per-request переносится на реактивный стек.",
+                "if_it_were_true": "Зависшие вызовы вредили бы только себе — а они топят весь пул.",
+                "how_it_should_be": "Именно общий event-loop-пул делает breaker критичным в реактиве."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Временно прекращает вызовы к упавшему сервису: быстрый отказ, защита от каскадов, автоматическое восстановление.",
               "correct": true,
               "sections": {
-                "explanation": "Цель — `fail fast`: вместо долгого ожидания таймаута запрос мгновенно отклоняется, защищая вызывающую сторону от истощения ресурсов. Восстановление происходит автоматически через периодические пробные вызовы.",
-                "example": "Аналогия — электрический предохранитель: при коротком замыкании он размыкает цепь, чтобы не сгорело остальное. Так и брейкер «размыкает» вызовы к упавшему downstream-сервису.",
-                "when_to_apply": "Применяют при вызовах внешних сервисов, БД и любых нестабильных зависимостей, особенно когда таймауты длинные и есть риск исчерпать пул соединений или потоков.",
-                "edge_cases": "Брейкер не лечит сам сбой и не заменяет fallback: если открытое состояние не сопровождать кэшем или заглушкой, пользователь всё равно получит ошибку, просто быструю.",
-                "related": "[[reactive-patterns-interview#Q2]] состояния брейкера; [[reactive-patterns-interview#Q3]] интеграция с Reactor; [[reactive-patterns-interview#Q4]] fallback при открытом брейкере."
-              },
-              "label": "A",
-              "order": 0
+                "explanation": "Не тратить ресурсы на заведомо обречённые запросы и не добивать упавшую зависимость.",
+                "example": "Аналогия — электрический предохранитель: размыкает цепь, защищая проводку.",
+                "when_to_apply": "Реактивные цепочки делят небольшой пул event-loop-ов — зависшие вызовы забивают его целиком.",
+                "edge_cases": "Встаёт вся система, а не один сервис, — breaker рвёт цепочку накопления отказов.",
+                "related": "Быстрый отказ: открытый breaker сразу возвращает ошибку, потоки не простаивают."
+              }
             },
             {
-              "text": "`Circuit Breaker` буферизует запросы при перегрузке consumer и постепенно выпускает их после освобождения ресурсов, сглаживая всплески без отказа клиентам.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Накопление запросов при перегрузке — это backpressure-буфер (`onBackpressureBuffer`), а брейкер ничего не буферизует, он отклоняет вызовы к downstream.",
-                "source_of_confusion": "И брейкер, и буферизация защищают систему от перегрузки, поэтому их роли смешивают в один «защитный» механизм.",
-                "if_it_were_true": "Если бы брейкер буферизовал запросы, он копил бы их к падающему сервису, что только усугубило бы отказ вместо защиты.",
-                "how_it_should_be": "Брейкер прерывает вызовы к нестабильному сервису; управление потоком данных при перегрузке — это backpressure, отдельная тема."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Circuit Breaker` ограничивает число одновременных вызовов семафором; после достижения лимита новые запросы ожидают свободный слот либо немедленно отклоняются.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ограничение конкурентных вызовов — это `Bulkhead`, а брейкер реагирует на долю ошибок, а не на число параллельных вызовов.",
-                "source_of_confusion": "Bulkhead и брейкер изолируют сбои и часто настраиваются вместе, поэтому их легко спутать по назначению.",
-                "if_it_were_true": "Если бы брейкер ограничивал конкурентность, он бы не реагировал на рост ошибок и не давал бы `fail fast` при недоступности сервиса.",
-                "how_it_should_be": "Брейкер открывается по проценту ошибок; лимит параллельных вызовов держит Bulkhead — это разные паттерны устойчивости."
-              },
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Circuit Breaker` повторяет неудачный вызов заданное число раз с экспоненциальным backoff и прекращает попытки только после исчерпания лимита retry.",
+              "order": 2,
+              "text": "Открытый breaker честно ждёт полного таймаута каждого пришедшего запроса; лишь затем возвращает ошибку.",
               "correct": false,
               "sections": {
-                "what_actually": "Описанное поведение — это `retry` с backoff, а не брейкер. Брейкер, наоборот, прекращает попытки и быстро отклоняет вызовы, пока сервис не восстановится.",
-                "source_of_confusion": "И retry, и брейкер относятся к resilience-паттернам и часто стоят рядом в цепочке, поэтому их функции легко перепутать.",
-                "if_it_were_true": "Если бы брейкер сам ретраил, он усиливал бы нагрузку на упавший сервис, тогда как его задача — снять нагрузку и дать восстановиться.",
-                "how_it_should_be": "Брейкер размыкает цепь и делает `fail fast`; повторные попытки с backoff — это отдельный паттерн retry, который применяют осознанно."
-              },
+                "what_actually": "Открытый breaker отвечает мгновенно — в этом и смысл fail fast.",
+                "source_of_confusion": "«Дождаться таймаута» кажется честнее, но именно от него и уходят.",
+                "if_it_were_true": "Потоки простаивали бы в ожиданиях — выигрыша не было бы вовсе.",
+                "how_it_should_be": "Мгновенная ошибка вместо ожидания полного таймаута."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "После восстановления сервиса breaker включают обратно вручную — сам он не решится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Breaker сам пропускает пробные вызовы и сам решает, когда зависимость здорова.",
+                "source_of_confusion": "Рубильники ассоциируются с ручным управлением.",
+                "if_it_were_true": "Каждый инцидент требовал бы дежурного с кнопкой.",
+                "how_it_should_be": "Автоматическое восстановление — ручного вмешательства не требуется."
+              }
             }
           ]
         }
@@ -66,56 +66,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие состояния есть у `Circuit Breaker`?",
+          "question_text": "Какие состояния есть у Circuit Breaker?",
           "options": [
             {
-              "text": "У брейкера два состояния: в `OPEN` вызовы проходят, в `CLOSED` блокируются; отдельное пробное состояние не требуется, а переключение выполняется сразу.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Состояний три, а смысл перепутан: при `CLOSED` вызовы как раз проходят, а при `OPEN` блокируются. Есть ещё промежуточное `HALF_OPEN`.",
-                "source_of_confusion": "Слова `open`/`closed` интуитивно ассоциируются с «открыт = работает», тогда как в терминах электрической цепи всё наоборот.",
-                "if_it_were_true": "Если бы состояний было два и без `HALF_OPEN`, брейкер не мог бы безопасно проверять восстановление и оставался бы открытым навсегда или рисковал лавиной.",
-                "how_it_should_be": "Состояний три: `CLOSED` (пропускает и считает ошибки), `OPEN` (отклоняет), `HALF_OPEN` (пробные вызовы) — и семантика open/closed обратна интуиции."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Брейкер имеет `CLOSED`, `OPEN` и `HALF_OPEN`, но в `OPEN` запросы всё равно доходят до сервиса и лишь помечаются как потенциально рискованные.",
+              "order": 0,
+              "text": "`CLOSED` — цепь разомкнута и все запросы мгновенно отклоняются; `OPEN` — это обычная штатная нормальная работа.",
               "correct": false,
               "sections": {
-                "what_actually": "В `OPEN` запросы не доходят до сервиса вовсе — они мгновенно отклоняются с `CallNotPermittedException`, в этом и смысл `fail fast`.",
-                "source_of_confusion": "Кажется, что «открытая» цепь должна что-то пропускать, поэтому делают вывод о доходящих, но помеченных запросах.",
-                "if_it_were_true": "Если бы в `OPEN` запросы доходили, брейкер не снимал бы нагрузку с упавшего сервиса и не давал бы ему восстановиться.",
-                "how_it_should_be": "Состояния названы верно, но в `OPEN` вызовы блокируются полностью; пробные вызовы возможны только в `HALF_OPEN`."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "Имена перевёрнуты: CLOSED — нормальная работа (цепь замкнута), OPEN — отказ.",
+                "source_of_confusion": "В быту «закрыто» значит «не работает» — у электрической цепи наоборот.",
+                "if_it_were_true": "Любая схема состояний из документации читалась бы задом наперёд.",
+                "how_it_should_be": "Помнить аналогию предохранителя: замкнутая цепь проводит ток."
+              }
             },
             {
-              "text": "В `CLOSED` вызовы проходят и учитываются, в `OPEN` отклоняются, а `HALF_OPEN` пропускает ограниченное число пробных запросов для проверки восстановления.",
+              "label": "B",
+              "order": 1,
+              "text": "CLOSED считает долю ошибок в окне; `OPEN` мгновенно отклоняет все запросы с CallNotPermittedException; `HALF_OPEN` пропускает пробные.",
               "correct": true,
               "sections": {
-                "explanation": "Переход `CLOSED → OPEN` происходит при превышении порога ошибок, `OPEN → HALF_OPEN` — после `waitDurationInOpenState`, а из `HALF_OPEN` брейкер уходит в `CLOSED` при успехе проб или обратно в `OPEN` при провале.",
-                "example": "В `resilience4j` это видно по событиям: успешные пробы в `HALF_OPEN` закрывают цепь, провалившиеся снова открывают её на полный период ожидания.",
-                "when_to_apply": "Знание трёх состояний нужно при настройке `slidingWindowSize`, `failureRateThreshold` и числа проб в `HALF_OPEN`, а также при разборе инцидентов по метрикам брейкера.",
-                "edge_cases": "В `HALF_OPEN` число пробных вызовов ограничено: лишние запросы сверх `permittedNumberOfCallsInHalfOpenState` отклоняются, чтобы не залить ещё не восстановившийся сервис.",
-                "related": "[[reactive-patterns-interview#Q1]] зачем нужен брейкер; [[reactive-patterns-interview#Q3]] настройка порогов в Reactor; [[reactive-patterns-interview#Q4]] поведение fallback в `OPEN`."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Конечный автомат: переходы зависят от доли ошибок и таймеров ожидания.",
+                "example": "CLOSED → (порог ошибок) → OPEN → (время вышло) → HALF_OPEN → CLOSED или снова OPEN.",
+                "when_to_apply": "OPEN защищает упавший сервис от добивания нагрузкой.",
+                "edge_cases": "Провал пробных (в классике — первый же, в Resilience4j — доля выше порога) возвращает в OPEN.",
+                "related": "HALF_OPEN прощупывает восстановление, не открывая шлюз всему трафику."
+              }
             },
             {
-              "text": "Брейкер использует `CLOSED`, `OPEN` и `BUFFERED`; последнее состояние накапливает запросы, пока зависимость не восстановится и очередь не сможет быть обработана.",
+              "label": "C",
+              "order": 2,
+              "text": "В состоянии `OPEN` запросы продолжают идти к сервису — просто со значительно увеличенными паузами между соседними попытками.",
               "correct": false,
               "sections": {
-                "what_actually": "Третье состояние называется `HALF_OPEN` и пропускает пробные вызовы, а не буферизует запросы; буферизации в брейкере нет вообще.",
-                "source_of_confusion": "Логично предположить, что брейкер «придерживает» запросы во время отказа, отсюда выдуманное состояние с буфером.",
-                "if_it_were_true": "Если бы существовал `BUFFERED`, брейкер копил бы запросы к упавшему сервису и при восстановлении обрушил бы его лавиной отложенных вызовов.",
-                "how_it_should_be": "Корректный набор — `CLOSED`/`OPEN`/`HALF_OPEN`; промежуточное состояние делает несколько пробных вызовов, а не складирует запросы."
-              },
+                "what_actually": "В OPEN запросы к сервису не идут вообще — мгновенный отказ без обращения.",
+                "source_of_confusion": "Паузы между попытками — это retry с backoff, другой паттерн.",
+                "if_it_were_true": "Упавший сервис продолжал бы получать нагрузку — суть OPEN исчезла бы.",
+                "how_it_should_be": "Разомкнутая цепь: ошибка отдаётся сразу, сервис отдыхает."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "`HALF_OPEN` сразу открывает шлюз всему накопленному за `OPEN` трафику: лишь так видно реальное восстановление.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HALF_OPEN пропускает ограниченное число пробных запросов — не весь трафик.",
+                "source_of_confusion": "«Полуоткрытый» звучит как «наполовину пропускает всё».",
+                "if_it_were_true": "Едва ожившую зависимость тут же накрыла бы полная волна.",
+                "how_it_should_be": "Аккуратные пробные вызовы; шлюз открывается после их успеха."
+              }
             }
           ]
         }
@@ -126,56 +126,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как интегрировать `Resilience4j` `Circuit Breaker` с `Project Reactor`?",
+          "question_text": "Как интегрировать Resilience4j Circuit Breaker с Project Reactor?",
           "options": [
             {
-              "text": "Нужно обернуть бизнес-метод аннотацией `@CircuitBreaker` из `spring-retry` — для `Mono`/`Flux` этого достаточно, оператор не требуется. Аннотационный стиль привычен по императивному коду.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для реактивных типов нужен `CircuitBreakerOperator` из `resilience4j-reactor`, применяемый через `transformDeferred`; аннотация `spring-retry` к Reactor неприменима.",
-                "source_of_confusion": "Аннотационный стиль привычен по императивному коду, поэтому его по инерции переносят на реактивные цепочки.",
-                "if_it_were_true": "Если бы хватало аннотации `spring-retry`, брейкер не видел бы асинхронные ошибки `Mono`/`Flux` и считал бы вызов успешным до подписки.",
-                "how_it_should_be": "Подключают `resilience4j-reactor` и оборачивают поток: `.transformDeferred(CircuitBreakerOperator.of(circuitBreaker))`."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Нужно вызвать `circuitBreaker.executeMono(() -> webClient...)` синхронно в начале метода, тогда брейкер обернёт всю цепочку. В `resilience4j` действительно есть decorate/execute-хелперы для императивного кода.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В Reactor брейкер подключают декларативно оператором `transformDeferred(CircuitBreakerOperator.of(...))`, а не императивным `executeMono`-вызовом до построения цепочки.",
-                "source_of_confusion": "В `resilience4j` действительно есть decorate/execute-хелперы для императивного кода, поэтому их пытаются применить и к Reactor.",
-                "if_it_were_true": "Если бы брейкер вешался императивным вызовом до сборки `Mono`, он отрабатывал бы на этапе сборки, а не на этапе реальной подписки и выполнения запроса.",
-                "how_it_should_be": "Правильно — реактивный оператор `CircuitBreakerOperator` через `transformDeferred`, чтобы брейкер видел сигналы подписки, успеха и ошибки."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Нужно подписаться на `Mono` через `.subscribe()` внутри `CircuitBreaker.decorateSupplier(...)` и вернуть результат блокирующим `block()`. `decorateSupplier`/`block()` знакомы по императивной интеграции.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Блокирующий `block()` убивает неблокирующую модель Reactor и не нужен — брейкер вешается реактивным оператором без блокировки потока.",
-                "source_of_confusion": "`decorateSupplier`/`block()` знакомы по императивной интеграции, поэтому их ошибочно тащат в WebFlux-стек.",
-                "if_it_were_true": "Если бы интеграцию делали через `block()`, реактивный сервер блокировал бы event-loop поток и терял главное преимущество неблокирующего стека.",
-                "how_it_should_be": "Корректно — неблокирующий `transformDeferred(CircuitBreakerOperator.of(...))`; `block()` в реактивной цепочке недопустим вне тестов."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Подключают зависимость `io.github.resilience4j:resilience4j-reactor`, берут `CircuitBreaker` из `CircuitBreakerRegistry` и оборачивают `Mono`/`Flux` через `.transformDeferred(CircuitBreakerOperator.of(circuitBreaker))`.",
+              "order": 0,
+              "text": "`CircuitBreakerOperator` из resilience4j-reactor вешают через `transformDeferred` — breaker срабатывает на каждую подписку заново.",
               "correct": true,
               "sections": {
-                "explanation": "`transformDeferred` гарантирует, что оператор применяется при каждой подписке, поэтому брейкер корректно отслеживает успехи и ошибки реактивного вызова и переключает состояния.",
-                "example": "Типичная настройка: `failureRateThreshold(50)`, `waitDurationInOpenState(Duration.ofSeconds(30))`, `slidingWindowSize(10)`, `permittedNumberOfCallsInHalfOpenState(3)` — и затем оборачивание `webClient.get()...bodyToMono(...)`.",
-                "when_to_apply": "Подход применяют для любого реактивного вызова внешнего сервиса через `WebClient`, чтобы брейкер автоматически реагировал на долю ошибок в скользящем окне.",
-                "edge_cases": "Важно использовать именно `transformDeferred`, а не `transform`: при `transform` оператор зафиксируется один раз при сборке и не будет переинициализироваться на повторных подписках.",
-                "related": "[[reactive-patterns-interview#Q1]] назначение брейкера; [[reactive-patterns-interview#Q2]] состояния, которыми он управляет; [[reactive-patterns-interview#Q4]] добавление fallback поверх оператора."
-              },
+                "explanation": "Отложенный вариант нужен, чтобы breaker срабатывал на каждую подписку, а не однажды.",
+                "example": "bodyToMono(UserDto.class).transformDeferred(CircuitBreakerOperator.of(circuitBreaker)) — врезка в цепочку WebClient.",
+                "when_to_apply": "Любая реактивная интеграция Resilience4j — Mono и Flux одинаково.",
+                "edge_cases": "Конфиг: 50% ошибок в окне из 10 вызовов, OPEN 30 секунд, 3 пробных в HALF_OPEN.",
+                "related": "Зависимость — io.github.resilience4j:resilience4j-reactor, отдельный реакторный модуль."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Правильнее обычный `transform`: breaker применяется один раз при сборке цепочки — это заметно экономнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужен именно transformDeferred: breaker должен применяться на каждую подписку заново.",
+                "source_of_confusion": "«Один раз при сборке» звучит эффективнее — но ломает семантику повторных подписок.",
+                "if_it_were_true": "Повторная подписка ускользала бы от учёта breaker-а.",
+                "how_it_should_be": "Отложенное применение — на каждый фактический вызов."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`failureRateThreshold(50)` — это пятьдесят ошибок подряд, а не доля; окно тут ни при чём.",
+              "correct": false,
+              "sections": {
+                "what_actually": "failureRateThreshold(50) — доля ошибок 50% в скользящем окне из 10, а не серия подряд.",
+                "source_of_confusion": "Порог «числом подряд» интуитивнее, но breaker считает долю в окне.",
+                "if_it_were_true": "Редкие, но регулярные ошибки никогда не открыли бы цепь.",
+                "how_it_should_be": "slidingWindowSize задаёт окно, failureRateThreshold — процент."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Оператор оборачивает только `Flux`; для одиночного `Mono` модуль поддержки не даёт вовсе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оператор оборачивает любой Mono/Flux — пример как раз на Mono.",
+                "source_of_confusion": "Слово «поток» в описаниях намекает на Flux-эксклюзив.",
+                "if_it_were_true": "Одиночные вызовы WebClient остались бы без breaker-а.",
+                "how_it_should_be": "Единый оператор для обоих реактивных типов."
+              }
             }
           ]
         }
@@ -186,56 +186,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как настроить fallback при открытом `Circuit Breaker`?",
+          "question_text": "Как настроить fallback при открытом Circuit Breaker?",
           "options": [
             {
-              "text": "Fallback вешают через `doOnError(ex -> return cachedValue)`, который заменяет ошибочный сигнал на закэшированное значение.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`doOnError` — это side-effect-callback, он не меняет сигнал и не подставляет fallback; подмену делает `onErrorResume`/`onErrorReturn`.",
-                "source_of_confusion": "Оба оператора начинаются с `onError`/`doOnError` и реагируют на ошибку, поэтому их функции путают.",
-                "if_it_were_true": "Если бы `doOnError` подменял значение, ошибка всё равно прошла бы дальше по цепочке и подписчик получил бы её, а не fallback.",
-                "how_it_should_be": "Для подмены ошибки на fallback используют `onErrorResume(...)` (вернуть новый `Mono`) или `onErrorReturn(...)` (вернуть готовое значение)."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Нужно обернуть вызов в `try/catch` вокруг `block()` и в блоке `catch` вернуть закэшированное значение.",
+              "order": 0,
+              "text": "Fallback вешают на любой `Exception` без фильтра: чем шире сеть, тем надёжнее.",
               "correct": false,
               "sections": {
-                "what_actually": "Реактивный fallback строят через `onErrorResume`, а не через `try/catch` вокруг блокирующего `block()`, который ломает неблокирующую модель.",
-                "source_of_confusion": "Императивная обработка исключений привычнее, поэтому её механически переносят на реактивный код.",
-                "if_it_were_true": "Если бы fallback делали через `block()` и `catch`, реактивный поток блокировался бы, а ошибки до подписки вообще не попадали бы в `catch`.",
-                "how_it_should_be": "Корректно — оператор `onErrorResume(CallNotPermittedException.class, ex -> getCachedUser(id))` прямо в цепочке `Mono`."
-              },
+                "what_actually": "Реагируют на конкретный тип ошибки — разным причинам разные fallback-и.",
+                "source_of_confusion": "Широкая сеть кажется страховкой, но смешивает разные причины отказа.",
+                "if_it_were_true": "Баг в коде маскировался бы кэшем так же, как открытый breaker.",
+                "how_it_should_be": "CallNotPermittedException — кэш; WebClientResponseException — дефолт."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Достаточно задать `fallbackUri` в конфигурации брейкера — `resilience4j` сам подставит ответ при `OPEN`, код менять не нужно.",
+              "order": 1,
+              "text": "Порядок `onErrorResume` в цепочке не важен; каждый сам найдёт свою ошибку.",
               "correct": false,
               "sections": {
-                "what_actually": "В Reactor fallback задаётся в самой цепочке через `onErrorResume`, перехватывающий `CallNotPermittedException`; отдельного `fallbackUri` у `resilience4j` нет.",
-                "source_of_confusion": "В `Spring Cloud Gateway` действительно есть `fallbackUri` для брейкера, отсюда перенос идеи на сервисный код.",
-                "if_it_were_true": "Если бы fallback задавался только конфигом, нельзя было бы вернуть кэш по конкретному `id` или разный fallback для разных ошибок.",
-                "how_it_should_be": "Fallback пишут явно: `.onErrorResume(CallNotPermittedException.class, ex -> getCachedUser(id))` поверх оператора брейкера."
-              },
-              "label": "C",
-              "order": 2
+                "what_actually": "Порядок важен: каждый ловит свой тип, специфичные ставят раньше.",
+                "source_of_confusion": "Кажется, что тип-фильтр сам разрулит порядок — но цепочка идёт сверху вниз.",
+                "if_it_were_true": "Широкий обработчик, стоящий раньше, съедал бы все ошибки.",
+                "how_it_should_be": "От специфичного к общему — как catch-блоки в Java."
+              }
             },
             {
-              "text": "Fallback добавляют операторами `onErrorResume` поверх обёрнутого брейкером вызова: один обрабатывает `CallNotPermittedException` и отдаёт кэш, другой — `WebClientResponseException` и отдаёт значение-заглушку.",
+              "label": "C",
+              "order": 2,
+              "text": "Через `onErrorResume` на конкретный тип: открытый breaker бросает `CallNotPermittedException` — на неё отдают кэш.",
               "correct": true,
               "sections": {
-                "explanation": "Когда брейкер в `OPEN`, вызов сразу падает с `CallNotPermittedException`, и `onErrorResume(CallNotPermittedException.class, ex -> getCachedUser(id))` мгновенно переключает на резервный источник без обращения к сервису.",
-                "example": "Например: `.transformDeferred(CircuitBreakerOperator.of(cb)).onErrorResume(CallNotPermittedException.class, ex -> getCachedUser(id)).onErrorResume(WebClientResponseException.class, ex -> Mono.just(UserDto.unknown(id)))`.",
-                "when_to_apply": "Такой многоуровневый fallback применяют, когда нужно отличать «брейкер открыт» от «сервис ответил ошибкой» и реагировать на них по-разному — кэш против заглушки.",
-                "edge_cases": "Порядок `onErrorResume` важен: более специфичные типы исключений ставят раньше, иначе общий обработчик перехватит ошибку первым и специфичная ветка не сработает.",
-                "related": "[[reactive-patterns-interview#Q1]] почему брейкер делает `fail fast`; [[reactive-patterns-interview#Q3]] как навесить оператор брейкера; [[reactive-patterns-interview#Q23]] цепочка fallback из нескольких источников."
-              },
+                "explanation": "Пользователь получает хоть какой-то результат вместо ошибки — заглушку или кэш.",
+                "example": "onErrorResume(CallNotPermittedException.class, ex -> getCachedUser(id)).",
+                "when_to_apply": "Различать причины: breaker открыт — кэш; сервис ответил ошибкой — дефолтное «неизвестно».",
+                "edge_cases": "Более специфичные типы ставят раньше в цепочке.",
+                "related": "Кэш — например, ReactiveRedisTemplate: opsForValue().get(\"user:\" + id)."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "При открытом breaker-е прилетает `WebClientResponseException` — её перехватывают через `onErrorResume`, отдавая кэш.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Открытый breaker бросает CallNotPermittedException; WebClientResponseException — ответ сервиса.",
+                "source_of_confusion": "Оба сбоя приходят из одного вызова WebClient — типы легко смешать.",
+                "if_it_were_true": "Нельзя было бы отличить «breaker закрыл» от «сервис ответил 500».",
+                "how_it_should_be": "Своя ошибка на каждую причину — и свой fallback."
+              }
             }
           ]
         }
@@ -249,53 +249,53 @@
           "question_text": "Как реализовать retry с экспоненциальным backoff?",
           "options": [
             {
-              "text": "Для экспоненциального backoff достаточно `retry(3)`: Reactor автоматически увеличивает паузу между попытками и добавляет случайный jitter без дополнительной конфигурации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`retry(n)` повторяет немедленно, без какой-либо паузы; backoff появляется только при `retryWhen(Retry.backoff(...))`.",
-                "source_of_confusion": "Кажется, что у `retry` «под капотом» есть разумная задержка, поэтому ему приписывают backoff.",
-                "if_it_were_true": "Если бы `retry(3)` сам делал backoff, не нужен был бы отдельный `Retry.backoff`, но именно его и добавили для экспоненциальной задержки.",
-                "how_it_should_be": "`retry(3)` — мгновенные повторы; для экспоненциальной паузы и jitter нужен `retryWhen(Retry.backoff(...))`."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Backoff строят через `repeat(3)` и возрастающий `delayElements`; оператор повторяет завершившуюся цепочку, а задержка управляет интервалом между повторными подписками.",
+              "order": 0,
+              "text": "Экспоненциальный `backoff` сокращает задержку с каждой попыткой: добить восстановление предельно быстро.",
               "correct": false,
               "sections": {
-                "what_actually": "`repeat` повторяет источник при успешном завершении, а retry — при ошибке; экспоненциальный backoff задаётся `Retry.backoff`, а не `delayElements`.",
-                "source_of_confusion": "`repeat` и `retry` похожи по названию и оба «повторяют», поэтому их роли путают.",
-                "if_it_were_true": "Если бы retry делали через `repeat`, поток повторялся бы и при успехе, а реальные сбои не перезапускались бы вовсе.",
-                "how_it_should_be": "Для повторов после ошибки с backoff применяют `retryWhen(Retry.backoff(...))`; `repeat` — для повторного выполнения успешного источника."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "Задержка растёт: каждая следующая пауза длиннее — сервису дают отдышаться.",
+                "source_of_confusion": "«Быстрее добить» звучит решительно, но перегружает восстанавливающийся сервис.",
+                "if_it_were_true": "Самая частая долбёжка приходилась бы на самый уязвимый момент.",
+                "how_it_should_be": "500мс → 1с → 2с — направление строго вверх, до потолка."
+              }
             },
             {
-              "text": "Используют `retryWhen(Retry.backoff(...))`, задавая число повторов, начальную и максимальную задержку, фильтр ошибок и при необходимости случайный `jitter`.",
+              "label": "B",
+              "order": 1,
+              "text": "`maxBackoff` задаёт суммарное время всех повторов; по его истечении `retryWhen` немедленно прекращается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "maxBackoff — потолок одной задержки, чтобы экспонента не разрослась до минут.",
+                "source_of_confusion": "Ограничение по общему времени существует, но это не maxBackoff.",
+                "if_it_were_true": "Число повторов зависело бы от суммы пауз, а не от параметра 3.",
+                "how_it_should_be": "Потолок паузы; число попыток задаётся первым аргументом."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`retryWhen(Retry.backoff(...))`: задержка растёт по экспоненте, `maxBackoff` — потолок, jitter — разброс против thundering herd.",
               "correct": true,
               "sections": {
-                "explanation": "Экспоненциальный backoff удваивает паузу между попытками, а `jitter(0.5)` добавляет +/-50% случайности, чтобы клиенты не повторяли синхронно и не создавали `thundering herd`.",
-                "example": "Пример: `.retryWhen(Retry.backoff(3, Duration.ofMillis(500)).maxBackoff(Duration.ofSeconds(5)).jitter(0.5).doBeforeRetry(s -> log.warn(\"Retry {}\", s.totalRetries())))`.",
-                "when_to_apply": "Применяют при transient-сбоях внешних сервисов и сети, когда повтор имеет шанс на успех, а нагрузку нужно размазать во времени.",
-                "edge_cases": "Backoff не помогает при невосстановимых ошибках (валидация, 4xx): такие исключения нужно отсечь `filter`, иначе ретраи лишь жгут ресурсы впустую.",
-                "related": "[[reactive-patterns-interview#Q6]] чем `retryWhen` отличается от `retry`; [[reactive-patterns-interview#Q7]] фильтрация retry по типу исключения; [[reactive-patterns-interview#Q4]] fallback когда ретраи исчерпаны."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Растущие паузы (500мс, 1с, 2с...) не добивают восстанавливающийся сервис.",
+                "example": "Retry.backoff(3, ofMillis(500)).maxBackoff(ofSeconds(5)).jitter(0.5).doBeforeRetry(...) — вся политика одной цепочкой.",
+                "when_to_apply": "Встроено в Reactor с 3.3 — спецификация повторов без ручных велосипедов.",
+                "edge_cases": "3 — максимум повторов после первой неудачи: всего до 4 попыток.",
+                "related": "doBeforeRetry даёт залогировать номер попытки и причину: signal.totalRetries(), failure()."
+              }
             },
             {
-              "text": "Экспоненциальную задержку реализуют через `delaySubscription`, вручную удваивая `Duration` перед каждой повторной подпиской после ошибки исходного потока.",
+              "label": "D",
+              "order": 3,
+              "text": "`jitter` — чистая косметика: синхронные повторы сотни клиентов ничем системе не угрожают.",
               "correct": false,
               "sections": {
-                "what_actually": "`delaySubscription` лишь откладывает первую подписку и не управляет повторами; backoff между ретраями обеспечивает `Retry.backoff`.",
-                "source_of_confusion": "И backoff, и `delaySubscription` связаны с задержками во времени, поэтому их назначение смешивают.",
-                "if_it_were_true": "Если бы backoff строили на `delaySubscription`, задержка применялась бы один раз к старту, а не росла бы между последовательными попытками.",
-                "how_it_should_be": "Правильный инструмент — `retryWhen(Retry.backoff(maxAttempts, firstBackoff).maxBackoff(...).jitter(...))`, а не ручной `delaySubscription`."
-              },
-              "label": "D",
-              "order": 3
+                "what_actually": "Без jitter клиенты, упавшие в одну секунду, повторят синхронно — thundering herd.",
+                "source_of_confusion": "Разброс выглядит мелочью, пока волна не накрыла сервис.",
+                "if_it_were_true": "Восстанавливающийся сервис получал бы синхронные волны нагрузки.",
+                "how_it_should_be": "jitter(0.5) — плюс-минус половина задержки, повторы размазаны во времени."
+              }
             }
           ]
         }
@@ -306,56 +306,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем `retryWhen` отличается от `retry`?",
+          "question_text": "Чем retryWhen отличается от retry?",
           "options": [
             {
-              "text": "`retry(n)` и `retryWhen(spec)` равнозначны: оба поддерживают количество попыток, фильтр исключений, задержку и jitter через один и тот же контракт.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`retry(n)` повторяет немедленно и без фильтра на любую ошибку, а вся гибкость (задержка, фильтр, jitter, callback) есть только у `retryWhen(RetrySpec)`.",
-                "source_of_confusion": "Имена операторов почти совпадают, и оба относятся к повторам, поэтому кажется, что это одно и то же с разным синтаксисом.",
-                "if_it_were_true": "Если бы они были идентичны, не было бы смысла в отдельном `retryWhen`, а на практике именно он даёт контроль над стратегией повтора.",
-                "how_it_should_be": "`retry(n)` — простое немедленное повторение; `retryWhen(RetrySpec)` — гибкий повтор с задержкой, фильтром и обработкой исчерпания попыток."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`retry` доступен только для `Mono`, а `retryWhen` только для `Flux`; выбор оператора определяется кардинальностью источника, а не требуемой политикой повторов.",
+              "order": 0,
+              "text": "`retryWhen` умеет лишь фиксированную задержку: экспоненциальный `backoff` в спецификацию не входит.",
               "correct": false,
               "sections": {
-                "what_actually": "Оба оператора есть и у `Mono`, и у `Flux`; разница в гибкости стратегии, а не в реактивном типе.",
-                "source_of_confusion": "Некоторые операторы действительно специфичны для `Mono` или `Flux`, отсюда ложное обобщение и для retry.",
-                "if_it_were_true": "Если бы `retry` был только для `Mono`, нельзя было бы повторять `Flux`-потоки, что противоречит реальному API.",
-                "how_it_should_be": "Оба применимы к обоим типам; выбирают между ними по нужной гибкости — простой `retry(n)` против настраиваемого `retryWhen`."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "Спецификация умеет и fixedDelay, и backoff c jitter — на выбор.",
+                "source_of_confusion": "Пример с fixedDelay легко принять за единственный режим.",
+                "if_it_were_true": "Экспоненциальные повторы пришлось бы писать вручную.",
+                "how_it_should_be": "Retry.backoff и Retry.fixedDelay — две готовые стратегии."
+              }
             },
             {
-              "text": "`retry(n)` немедленно повторяет источник ограниченное число раз, а `retryWhen` позволяет настроить backoff, jitter, фильтрацию ошибок и действия перед повтором.",
+              "label": "B",
+              "order": 1,
+              "text": "`retry(n)` повторяет избирательно: только transient-ошибки, всё остальное честно сразу пробрасывает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "retry(n) не различает ошибок — повторяет любую; фильтр есть только у retryWhen.",
+                "source_of_confusion": "Разумная избирательность ожидается по умолчанию — но её нет.",
+                "if_it_were_true": "ValidationException не повторялся бы и без фильтра.",
+                "how_it_should_be": "Избирательность включается явно: .filter(predicate) на спецификации."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`retry(n)` делает разумные паузы между повторами по умолчанию; торопиться он не станет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "retry(n) повторяет немедленно, без паузы — потому и опасен для падающей зависимости.",
+                "source_of_confusion": "Хочется верить в разумный дефолт — а его здесь нет.",
+                "if_it_were_true": "retry(3) был бы безопасен в проде — а он усиливает нагрузку.",
+                "how_it_should_be": "Паузы и рост задержки — только через retryWhen со спецификацией."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "`retry(n)` бьёт немедленно и на любую ошибку; `retryWhen` берёт спецификацию: задержка, фильтр, jitter.",
               "correct": true,
               "sections": {
-                "explanation": "`retry(n)` годится разве что для прототипов: мгновенные повторы на любую ошибку легко превращаются в `thundering herd` и ретраят даже невосстановимые ошибки вроде 4xx.",
-                "example": "Продакшен-вариант: `.retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2)).filter(ex -> ex instanceof TransientException).onRetryExhaustedThrow((spec, sig) -> new MaxRetriesExceededException(sig.failure())))`.",
-                "when_to_apply": "`retryWhen` выбирают, когда нужна задержка, отбор только transient-ошибок или собственное исключение после исчерпания попыток — то есть почти всегда в реальных сервисах.",
-                "edge_cases": "Даже у `retryWhen` повтор без `filter` опасен: он повторит и валидационные, и `4xx`-ошибки, поэтому фильтрация по типу исключения почти обязательна.",
-                "related": "[[reactive-patterns-interview#Q5]] backoff через `retryWhen`; [[reactive-patterns-interview#Q7]] фильтрация retry по типу исключения; [[reactive-patterns-interview#Q1]] брейкер как дополнение к ретраям."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`retry(n)` всегда использует паузу по умолчанию, тогда как `retryWhen` может выполнять только мгновенные повторы и не поддерживает задержки между попытками.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: `retry(n)` повторяет мгновенно без паузы, а задержку как раз можно настроить только в `retryWhen`.",
-                "source_of_confusion": "Логично ожидать, что «умное» имя `retryWhen` означает «по условию = сразу», но именно он даёт контроль над задержкой.",
-                "if_it_were_true": "Если бы `retryWhen` всегда повторял мгновенно, в нём нельзя было бы выразить backoff и fixedDelay, но они там центральные.",
-                "how_it_should_be": "`retry(n)` — без паузы; `retryWhen(RetrySpec)` позволяет задать любую задержку, включая фиксированную и экспоненциальную."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "«Повторить тупо N раз сразу» против «повторить по заданным правилам».",
+                "example": "Retry.fixedDelay(3, ofSeconds(2)).filter(ex -> ex instanceof TransientException).onRetryExhaustedThrow(...).",
+                "when_to_apply": "Для прода — retryWhen: контроль пауз, типов ошибок, callback-ов.",
+                "edge_cases": "retry(3) при недоступном сервисе мгновенно выстрелит серию запросов подряд.",
+                "related": "onRetryExhaustedThrow задаёт, что бросить после исчерпания попыток."
+              }
             }
           ]
         }
@@ -369,53 +369,53 @@
           "question_text": "Как ограничить retry по типу исключения?",
           "options": [
             {
-              "text": "Используют `.filter(Predicate)` на `RetrySpec`: предикат пропускает к повтору только нужные исключения (например, `SocketTimeoutException` или `ServiceUnavailableException`), а остальные сразу пробрасываются без ретраев.",
+              "label": "A",
+              "order": 0,
+              "text": "Через `.filter(predicate)` на спецификации: повторяют только transient-сбои — таймауты, временную недоступность, 503.",
               "correct": true,
               "sections": {
-                "explanation": "Так из ретраев исключают невосстановимые ошибки — `ValidationException`, `4xx` и подобные, — для которых повтор бессмысленен и лишь жжёт ресурсы.",
-                "example": "Пример: `.retryWhen(Retry.backoff(3, Duration.ofSeconds(1)).filter(ex -> ex instanceof SocketTimeoutException || ex instanceof ServiceUnavailableException))`.",
-                "when_to_apply": "Фильтр применяют всегда, когда повторять стоит лишь transient-сбои сети и доступности, а бизнес- и клиентские ошибки должны падать сразу.",
-                "edge_cases": "Если предикат не задан, `retryWhen` повторяет любую ошибку, включая клиентские `4xx` — это частый баг, дающий лишние повторы и нагрузку на сервис.",
-                "related": "[[reactive-patterns-interview#Q5]] backoff с jitter; [[reactive-patterns-interview#Q6]] почему `retryWhen` гибче `retry`; [[reactive-patterns-interview#Q4]] fallback после исчерпания попыток."
-              },
-              "label": "A",
-              "order": 0
+                "explanation": "Повтор срабатывает, только если предикат вернул true.",
+                "example": "filter(ex -> ex instanceof SocketTimeoutException || ex instanceof ServiceUnavailableException).",
+                "when_to_apply": "Гигиена retry: transient может исчезнуть сам, детерминированное — нет.",
+                "edge_cases": "4xx при повторе провалится точно так же — только зря нагрузит сервис.",
+                "related": "Фильтр дополняет backoff и jitter в одной спецификации."
+              }
             },
             {
-              "text": "Используют отдельный `onErrorResume` для каждого исключения, который вызывает `retry()` внутри себя для нужных типов. `onErrorResume` тоже умеет ловить конкретный тип исключения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Повторы по типу ошибки выражают предикатом `.filter()` на `RetrySpec`, а не вложенными `retry()` внутри `onErrorResume`.",
-                "source_of_confusion": "`onErrorResume` тоже умеет ловить конкретный тип исключения, поэтому кажется естественным крутить retry прямо в нём.",
-                "if_it_were_true": "Если бы retry вкладывали в `onErrorResume`, легко получить непредсказуемую вложенную рекурсию повторов вместо единой управляемой стратегии.",
-                "how_it_should_be": "Правильно — один `retryWhen(Retry.backoff(...).filter(predicate))`, где предикат решает, повторять ли конкретное исключение."
-              },
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Используют `onErrorMap`, который превращает все ошибки в один тип, после чего `retry` повторяет только его. И `onErrorMap`, и фильтр работают «по типу исключения».",
+              "order": 1,
+              "text": "Первые кандидаты на повтор — `ValidationException` и 4xx: вдруг запрос станет верным.",
               "correct": false,
               "sections": {
-                "what_actually": "`onErrorMap` лишь преобразует тип ошибки и не управляет повторами; фильтрация повторов делается через `.filter()` на `RetrySpec`.",
-                "source_of_confusion": "И `onErrorMap`, и фильтр работают «по типу исключения», поэтому их роли смешивают.",
-                "if_it_were_true": "Если бы фильтрация шла через `onErrorMap`, все ошибки сводились бы к одному типу и потеряли бы исходную семантику, нужную для решения о повторе.",
-                "how_it_should_be": "Ограничение по типу задаётся `Retry.backoff(...).filter(ex -> ex instanceof TransientException)`, а не подменой типа через `onErrorMap`."
-              },
+                "what_actually": "ValidationException и 4xx — детерминированные: повтор бессмыслен и вреден.",
+                "source_of_confusion": "Надежда «вдруг пройдёт» — но неверный запрос не исправится сам.",
+                "if_it_were_true": "Попытки тратились бы на заведомый провал.",
+                "how_it_should_be": "Повторять только то, что может исчезнуть само."
+              }
+            },
+            {
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Используют параметр `retry(n, errorTypes...)`, передавая список разрешённых классов исключений вторым аргументом. По аналогии с `catch (A | B e)` ожидают.",
+              "order": 2,
+              "text": "`.filter(...)` задаёт, сколько раз повторять каждый конкретный тип исключения в цепочке.",
               "correct": false,
               "sections": {
-                "what_actually": "У `retry` нет перегрузки со списком типов исключений; отбор по типу делается предикатом `.filter()` на `RetrySpec` внутри `retryWhen`.",
-                "source_of_confusion": "По аналогии с `catch (A | B e)` ожидают, что и `retry` принимает набор типов ошибок.",
-                "if_it_were_true": "Если бы такая перегрузка существовала, не понадобился бы `retryWhen().filter()`, но именно он — штатный способ отбора в Reactor.",
-                "how_it_should_be": "Корректно — `retryWhen(Retry.backoff(...).filter(ex -> ...))`; сигнатуры `retry(n, types...)` в API нет."
-              },
+                "what_actually": "filter — булев предикат «повторять ли вообще»; число попыток задаётся отдельно.",
+                "source_of_confusion": "Слово «фильтр» растягивается до менеджера квот.",
+                "if_it_were_true": "Предикат возвращал бы число, а не true/false.",
+                "how_it_should_be": "Количество — аргумент backoff/fixedDelay; фильтр — только отбор типов."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Без фильтра спецификация сама повторяет только transient-ошибки; явный `filter` — избыточная перестраховка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Спецификация не знает ваших типов — отбор transient задаёте сами предикатом.",
+                "source_of_confusion": "Разумность дефолтов переоценивают; у Reactor нет списка «временных» ошибок.",
+                "if_it_were_true": "Фильтр в API был бы не нужен — а он центральная часть гигиены.",
+                "how_it_should_be": "Явный filter со своими типами transient-сбоев."
+              }
             }
           ]
         }
@@ -429,53 +429,53 @@
           "question_text": "Как задать таймаут на реактивную операцию?",
           "options": [
             {
-              "text": "Оборачивают вызов в `Mono.fromFuture(future.orTimeout(3, SECONDS))`, полагаясь на таймаут `CompletableFuture`.",
+              "label": "A",
+              "order": 0,
+              "text": "Для `Flux` оператор `timeout` меряет время всего потока целиком, а вовсе не паузу до следующего элемента.",
               "correct": false,
               "sections": {
-                "what_actually": "В Reactor таймаут задаётся встроенным оператором `timeout(Duration)`, а не конвертацией в `CompletableFuture` с его собственным механизмом.",
-                "source_of_confusion": "`CompletableFuture` знаком по императивному коду и тоже умеет таймауты, отсюда соблазн его подмешать.",
-                "if_it_were_true": "Если бы таймаут шёл через `Future`, терялась бы реактивная отмена upstream и единый стиль обработки `TimeoutException` в цепочке.",
-                "how_it_should_be": "Правильно — `.timeout(Duration.ofSeconds(3))` прямо на `Mono`/`Flux`, при необходимости с fallback-вторым аргументом."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "Для Flux отсчёт идёт до следующего элемента, а не по всей длительности потока.",
+                "source_of_confusion": "«Таймаут операции» звучит как общий бюджет времени.",
+                "if_it_were_true": "Долгие, но живые стримы падали бы по «общему» таймауту.",
+                "how_it_should_be": "Пауза между сигналами — вот что ограничивает timeout у Flux."
+              }
             },
             {
-              "text": "Используют оператор `.timeout(Duration)`: он выбрасывает `TimeoutException`, если подписчик не получает сигнал за указанное время.",
+              "label": "B",
+              "order": 1,
+              "text": "`timeout` дожидается завершения источника, не отменяя его; просто помечает опоздавший результат навсегда устаревшим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оператор отменяет источник — зависший вызов прекращается, а не доживает в фоне.",
+                "source_of_confusion": "«Пометить просроченным» звучит бережно, но ресурс продолжал бы висеть.",
+                "if_it_were_true": "Зависшие вызовы копились бы, несмотря на таймауты.",
+                "how_it_should_be": "Отмена источника плюс TimeoutException — жёсткий дедлайн."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Fallback-перегрузки с запасным `Mono` не существует вовсе: единственный возможный исход — только `TimeoutException` наружу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть перегрузка timeout(duration, fallbackMono) — запасное значение вместо ошибки.",
+                "source_of_confusion": "Базовая форма действительно бросает — но она не единственная.",
+                "if_it_were_true": "Мягкая деградация при таймауте потребовала бы ручного onErrorResume.",
+                "how_it_should_be": "Вторая перегрузка отдаёт запасной Mono при срабатывании дедлайна."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "`.timeout(Duration)` отменяет источник и сразу бросает `TimeoutException`; перегрузка с запасным Mono отдаёт fallback вместо ошибки.",
               "correct": true,
               "sections": {
-                "explanation": "Пример: `userService.findById(id).timeout(Duration.ofSeconds(3)).onErrorMap(TimeoutException.class, ex -> new ServiceTimeoutException(\"User service timeout after 3s\"))`.",
-                "example": "Есть и перегрузка с fallback: `.timeout(Duration.ofSeconds(3), Mono.just(UserDto.unknown(id)))` подставляет резервное значение вместо ошибки при просрочке.",
-                "when_to_apply": "Таймаут ставят на любой внешний вызов, чтобы ограничить хвостовые задержки и не держать ресурсы в ожидании зависшего сервиса.",
-                "edge_cases": "Таймаут отменяет upstream-подписку, но не гарантирует, что внешний сервис прекратит работу — серверу всё ещё нужны свои дедлайны и идемпотентность.",
-                "related": "[[reactive-patterns-interview#Q9]] чем `timeout` отличается от `delaySubscription`; [[reactive-patterns-interview#Q4]] fallback при ошибке; [[reactive-patterns-interview#Q24]] hedging против хвостовых задержек."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Используют `.take(Duration)`, который завершает поток с ошибкой по истечении времени ожидания.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`take(Duration)` завершает поток нормально (без ошибки), отдавая то, что успело прийти; дедлайн с `TimeoutException` ставит `timeout`.",
-                "source_of_confusion": "Оба оператора ограничивают поток по времени, поэтому их семантику смешивают.",
-                "if_it_were_true": "Если бы дедлайн делали через `take`, операция завершалась бы успешно по таймауту, и вызывающий код не узнал бы о просрочке.",
-                "how_it_should_be": "Для дедлайна с ошибкой используют `.timeout(Duration)`; `take(Duration)` — это нормальное завершение по времени, а не таймаут-ошибка."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Используют `delayElements(Duration)`, который прерывает поток, если элемент не пришёл за указанное время.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`delayElements` добавляет задержку между эмиссиями и ничего не прерывает; дедлайн на сигнал ставит оператор `timeout(Duration)`.",
-                "source_of_confusion": "Оба оператора оперируют `Duration`, поэтому их назначение легко спутать.",
-                "if_it_were_true": "Если бы таймаут делал `delayElements`, поток замедлялся бы вместо того, чтобы падать с `TimeoutException` при отсутствии сигнала.",
-                "how_it_should_be": "Дедлайн задаёт `.timeout(Duration.ofSeconds(3))`, выбрасывающий `TimeoutException`, если сигнала нет за отведённое время."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Страховка от зависших вызовов, которые держали бы цепочку бесконечно.",
+                "example": "timeout(ofSeconds(3)) + onErrorMap(TimeoutException.class, ex -> new ServiceTimeoutException(...)).",
+                "when_to_apply": "Любой внешний вызов с дедлайном ожидания ответа.",
+                "edge_cases": "timeout(ofSeconds(3), Mono.just(UserDto.unknown(id))) — fallback второй перегрузкой.",
+                "related": "onErrorMap переименовывает низкоуровневую ошибку в доменную с понятным сообщением."
+              }
             }
           ]
         }
@@ -486,56 +486,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем `timeout()` отличается от `delaySubscription()`?",
+          "question_text": "Чем timeout() отличается от delaySubscription()?",
           "options": [
             {
-              "text": "`timeout(Duration)` ограничивает время ожидания сигнала и завершает цепочку ошибкой, а `delaySubscription(Duration)` лишь откладывает начало подписки без дедлайна.",
+              "label": "A",
+              "order": 0,
+              "text": "`timeout(Duration)` сдвигает старт запроса на время `T` — до этого он не уйдёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сдвигает старт delaySubscription; timeout — дедлайн уже идущей подписки.",
+                "source_of_confusion": "Роли зеркальны, а имена абстрактны — перестановка напрашивается.",
+                "if_it_were_true": "Дедлайн ожидания задать было бы нечем.",
+                "how_it_should_be": "timeout ждёт и отменяет; delaySubscription медлит и запускает."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Оба оператора про одно и то же; в цепочке `Mono` они полностью взаимозаменяемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Операторы про разные вещи: замена одного другим меняет семантику цепочки.",
+                "source_of_confusion": "Оба принимают Duration — сигнатура маскирует разницу.",
+                "if_it_were_true": "Hedging из запасного запроса превратился бы в пару дедлайнов.",
+                "how_it_should_be": "Выбирать по вопросу: «сколько ждать» или «когда начать»."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`delaySubscription` задерживает каждый элемент потока на заданный интервал — весь стрим растягивается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Откладывается сам момент подписки — один раз; элементы внутри не задерживаются.",
+                "source_of_confusion": "Похоже звучащий delayElements правда задерживает каждый — но это другой оператор.",
+                "if_it_were_true": "Поток растягивался бы весь, а не стартовал позже.",
+                "how_it_should_be": "Один сдвиг на старте: запрос не уйдёт раньше времени T."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "`timeout` — дедлайн ожидания ответа уже идущей подписки; `delaySubscription` — отложенный старт подписки на источник.",
               "correct": true,
               "sections": {
-                "explanation": "То есть `timeout` ставит дедлайн на ответ, а `delaySubscription` лишь задерживает старт запроса — это разные точки жизненного цикла потока.",
-                "example": "`externalService.call().timeout(Duration.ofSeconds(5))` отменит вызов, если ответа нет за 5 секунд; `externalService.call().delaySubscription(Duration.ofSeconds(2))` подождёт 2 секунды перед первым запросом.",
-                "when_to_apply": "`timeout` применяют для ограничения длительности вызова, а `delaySubscription` — для ленивого старта, например после прогрева или для разнесения запросов во времени.",
-                "edge_cases": "`delaySubscription` не ограничивает длительность: после старта операция может выполняться сколь угодно долго, если на неё дополнительно не навесить `timeout`.",
-                "related": "[[reactive-patterns-interview#Q8]] как задать таймаут; [[reactive-patterns-interview#Q24]] `delaySubscription` для отложенного hedging-запроса; [[reactive-patterns-interview#Q5]] задержки в retry."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Оба оператора задают дедлайн ответа; `delaySubscription` отличается только тем, что по истечении времени завершает поток без `TimeoutException`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`delaySubscription` вообще не задаёт дедлайн — он только откладывает старт подписки; дедлайн на ответ ставит исключительно `timeout`.",
-                "source_of_confusion": "Оба принимают `Duration`, поэтому кажется, что оба ограничивают время выполнения.",
-                "if_it_were_true": "Если бы `delaySubscription` был «мягким таймаутом», он отменял бы зависший вызов, но он лишь сдвигает его начало.",
-                "how_it_should_be": "`timeout` — дедлайн на длительность с `TimeoutException`; `delaySubscription` — задержка перед стартом, без какого-либо ограничения длительности."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`timeout` откладывает начало подписки на заданное время, а `delaySubscription` запускает источник сразу и отменяет его при превышении длительности выполнения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Роли перепутаны: длительность ограничивает `timeout`, а старт подписки откладывает `delaySubscription`.",
-                "source_of_confusion": "Названия не самоочевидны, и `delay` в обоих контекстах ассоциируется с ожиданием, что и приводит к перестановке.",
-                "if_it_were_true": "Если бы `timeout` откладывал подписку, он не выбрасывал бы `TimeoutException` при зависании, что противоречит его API.",
-                "how_it_should_be": "Правильно наоборот: `timeout(Duration)` — дедлайн с ошибкой, `delaySubscription(Duration)` — отложенный старт без ошибки."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`timeout` и `delaySubscription` одинаково добавляют паузу перед запросом; различие касается только типа возвращаемого реактивного объекта.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Паузу перед стартом добавляет только `delaySubscription`; `timeout` не задерживает старт, а прерывает уже идущую операцию по дедлайну.",
-                "source_of_confusion": "Оба оператора связаны со временем и `Duration`, поэтому их сводят к «добавить паузу».",
-                "if_it_were_true": "Если бы `timeout` тоже задерживал старт, каждый защищённый дедлайном вызов искусственно стартовал бы с опозданием, чего на деле нет.",
-                "how_it_should_be": "Это разные операторы: `delaySubscription` сдвигает начало, `timeout` обрывает выполнение при превышении лимита времени."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Разные концы жизненного цикла: один ограничивает ожидание сверху, другой сдвигает начало.",
+                "example": "call().timeout(ofSeconds(5)) — отменить, если молчит; call().delaySubscription(ofSeconds(2)) — стартовать позже.",
+                "when_to_apply": "timeout — контроль «как долго ждём»; delaySubscription — контроль «когда начинаем».",
+                "edge_cases": "В Hedging запасной запрос стартуют delaySubscription-ом чуть позже основного.",
+                "related": "Путаются легко по названию — держать в голове «дедлайн» против «ленивый старт»."
+              }
             }
           ]
         }
@@ -546,56 +546,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое паттерн `Bulkhead`?",
+          "question_text": "Что такое паттерн Bulkhead?",
           "options": [
             {
-              "text": "`Bulkhead` — паттерн, который объединяет одинаковые параллельные запросы в один, чтобы снизить нагрузку. Оба паттерна снижают нагрузку при параллельных вызовах.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Объединение одинаковых запросов — это Request Coalescing; `Bulkhead` не схлопывает запросы, а ограничивает их общее число одновременно.",
-                "source_of_confusion": "Оба паттерна снижают нагрузку при параллельных вызовах, отсюда смешение.",
-                "if_it_were_true": "Если бы bulkhead схлопывал запросы, разные по аргументам вызовы тоже сливались бы в один, что исказило бы результаты.",
-                "how_it_should_be": "`Bulkhead` лимитирует конкурентность; слияние идентичных запросов в один — это Request Coalescing."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Bulkhead` — паттерн, который повторяет упавшие вызовы, изолируя ошибку повторными попытками к тому же ресурсу. И bulkhead, и retry относятся к resilience-паттернам.",
+              "order": 0,
+              "text": "В реактивном мире предпочитают именно thread pool `bulkhead`; отдельный выделенный пул потоков на каждый сервис.",
               "correct": false,
               "sections": {
-                "what_actually": "Повторы — это retry; `Bulkhead` же ограничивает число конкурентных вызовов к ресурсу, изолируя сервисы по потреблению ресурсов.",
-                "source_of_confusion": "И bulkhead, и retry относятся к resilience-паттернам, поэтому их функции смешивают.",
-                "if_it_were_true": "Если бы bulkhead ретраил вызовы, он увеличивал бы нагрузку, тогда как его смысл — ограничить и изолировать потребление ресурсов.",
-                "how_it_should_be": "`Bulkhead` ограничивает конкурентность (semaphore- или thread-pool-based), а повторные попытки — это отдельный паттерн retry."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "В реактиве thread pool bulkhead менее уместен: вызов не привязан к потоку.",
+                "source_of_confusion": "Из блокирующего мира Hystrix привычна изоляция пулами.",
+                "if_it_were_true": "Реактивная модель без thread-per-call не дала бы пулам работы.",
+                "how_it_should_be": "Semaphore bulkhead или concurrency у flatMap."
+              }
             },
             {
-              "text": "`Bulkhead` — ограничение числа конкурентных вызовов к ресурсу. Он изолирует сервисы друг от друга, чтобы деградация одного не поглотила все ресурсы системы.",
+              "label": "B",
+              "order": 1,
+              "text": "Главная цель `Bulkhead`: заметно ускорить каждый отдельный вызов к общему разделяемому ресурсу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bulkhead — про изоляцию отказов, а не про скорость отдельного вызова.",
+                "source_of_confusion": "Слово «ограничение» рядом с «ресурсами» читается как оптимизация.",
+                "if_it_were_true": "Квота на вызовы волшебно ускоряла бы каждый — но она лишь сдерживает.",
+                "how_it_should_be": "Ограничить конкурентность, чтобы захлёбывание не топило систему."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Ограничение числа одновременных вызовов: деградирующий сервис не съест общие ресурсы; в реактиве — semaphore-вариант.",
               "correct": true,
               "sections": {
-                "explanation": "Название — из корабельных переборок: пробоина в одном отсеке не топит весь корабль. Так и лимит на один зависимый сервис не даёт ему выесть все потоки или соединения.",
-                "example": "В реактивном мире thread-pool-bulkhead менее применим, поэтому обычно используют semaphore-based вариант или ограничение конкурентности прямо в `flatMap`.",
-                "when_to_apply": "Паттерн применяют, когда несколько зависимостей делят общий пул и нужно не дать медленному сервису исчерпать ресурсы, нужные остальным.",
-                "edge_cases": "Semaphore-bulkhead не создаёт очередь и при `maxWaitDuration(Duration.ZERO)` сразу отклоняет лишние вызовы — это намеренный `fail fast`, а не подвисание.",
-                "related": "[[reactive-patterns-interview#Q11]] реализация через `Resilience4j`; [[reactive-patterns-interview#Q12]] ограничение конкурентности через `flatMap`; [[reactive-patterns-interview#Q1]] брейкер как дополняющий паттерн."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Аналогия — переборки корабля: пробоина затапливает один отсек, а не весь трюм.",
+                "example": "Semaphore-based — счётчик конкурентных вызовов; thread pool — отдельный пул на сервис.",
+                "when_to_apply": "Чтобы один захлебнувшийся сервис не утянул за собой остальных.",
+                "edge_cases": "Реактивный код не привязывает вызов к выделенному потоку — thread pool здесь менее уместен.",
+                "related": "Альтернатива без библиотек — ограничение конкурентности прямо в flatMap."
+              }
             },
             {
-              "text": "`Bulkhead` — паттерн кэширования, который хранит копию ответа на случай отказа основного источника. И bulkhead, и кэш помогают пережить деградацию.",
+              "label": "D",
+              "order": 3,
+              "text": "Превышение семафорной квоты всегда ставит запрос в общую очередь ожидания свободного слота.",
               "correct": false,
               "sections": {
-                "what_actually": "Хранение копии ответа — это Cache-Aside/fallback; `Bulkhead` ничего не кэширует, он лишь лимитирует конкурентные вызовы.",
-                "source_of_confusion": "И bulkhead, и кэш помогают пережить деградацию, поэтому их роли путают.",
-                "if_it_were_true": "Если бы bulkhead кэшировал ответы, он отдавал бы устаревшие данные, тогда как его задача — изоляция по ресурсам, а не подмена данных.",
-                "how_it_should_be": "`Bulkhead` изолирует потребление ресурсов лимитом конкурентности; кэширование ответа — это Cache-Aside, отдельный паттерн."
-              },
-              "label": "D",
-              "order": 3
+                "what_actually": "Semaphore-вариант при превышении отказывает мгновенно — без очереди.",
+                "source_of_confusion": "Семафор из java.util.concurrent умеет ждать — но паттерн выбирает отказ.",
+                "if_it_were_true": "Очередь ожидания копила бы ту самую перегрузку, от которой защищаемся.",
+                "how_it_should_be": "Мгновенный отказ; ожидание — лишь если явно задать maxWaitDuration."
+              }
             }
           ]
         }
@@ -606,56 +606,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как реализовать `Bulkhead` через `Resilience4j`?",
+          "question_text": "Как реализовать Bulkhead через Resilience4j?",
           "options": [
             {
-              "text": "Нужно задать `slidingWindowSize` и `failureRateThreshold` в `BulkheadConfig`, чтобы bulkhead открывался при росте ошибок. Брейкер и bulkhead настраивают рядом в `resilience4j`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`slidingWindowSize` и `failureRateThreshold` — параметры `CircuitBreaker`, а не `BulkheadConfig`; bulkhead настраивают через `maxConcurrentCalls` и `maxWaitDuration`.",
-                "source_of_confusion": "Брейкер и bulkhead настраивают рядом в `resilience4j`, поэтому их параметры путают.",
-                "if_it_were_true": "Если бы bulkhead открывался по доле ошибок, он дублировал бы брейкер и не выполнял свою задачу — лимит конкурентности.",
-                "how_it_should_be": "Bulkhead конфигурируют `maxConcurrentCalls`/`maxWaitDuration`; реакция на долю ошибок — это `CircuitBreaker` с `failureRateThreshold`."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Нужно вызвать `bulkhead.acquirePermission()` и `releasePermission()` вручную вокруг `block()` реактивного вызова. Ручное управление разрешениями знакомо по семафорам.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В Reactor bulkhead подключают декларативно через `BulkheadOperator`, а не ручным управлением permission вокруг блокирующего `block()`.",
-                "source_of_confusion": "Ручное управление разрешениями знакомо по семафорам, поэтому его переносят и на реактивный код.",
-                "if_it_were_true": "Если бы bulkhead применяли через `block()`, реактивный поток блокировался бы, теряя смысл неблокирующего стека.",
-                "how_it_should_be": "Корректно — реактивный оператор `transformDeferred(BulkheadOperator.of(bulkhead))`, который сам берёт и освобождает permission."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Достаточно навесить `@Async` с ограниченным `ThreadPoolTaskExecutor`, и `resilience4j` сам учтёт лимит как bulkhead. `@Async` с пулом тоже ограничивает параллелизм.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Bulkhead в `resilience4j` конфигурируют отдельно (`BulkheadConfig`/`BulkheadRegistry`) и применяют реактивным `BulkheadOperator`, а не через `@Async`-исполнитель Spring.",
-                "source_of_confusion": "`@Async` с пулом тоже ограничивает параллелизм, поэтому кажется, что это и есть bulkhead.",
-                "if_it_were_true": "Если бы лимит брали из `@Async`-пула, не было бы `BulkheadFullException` и единых метрик `resilience4j`, на которые опирается мониторинг.",
-                "how_it_should_be": "Правильно — взять `Bulkhead` из `BulkheadRegistry` и обернуть поток `transformDeferred(BulkheadOperator.of(bulkhead))`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Создают `Bulkhead` из `BulkheadRegistry` с `BulkheadConfig` (например `maxConcurrentCalls(10)` и `maxWaitDuration`) и оборачивают `Mono`/`Flux` через `.transformDeferred(BulkheadOperator.of(bulkhead))`, добавляя `onErrorResume`.",
+              "order": 0,
+              "text": "`BulkheadOperator` — тем же `transformDeferred`: квота десять, ноль ожидания — отказ, `BulkheadFullException` — в onErrorResume.",
               "correct": true,
               "sections": {
-                "explanation": "При исчерпании лимита и `maxWaitDuration(Duration.ZERO)` вызов сразу падает с `BulkheadFullException`, что и есть желаемый `fail fast` без накопления ожидающих запросов.",
-                "example": "Пример: `webClient.post()...bodyToMono(ApiResponse.class).transformDeferred(BulkheadOperator.of(bulkhead)).onErrorResume(BulkheadFullException.class, ex -> Mono.error(new ServiceOverloadedException(\"Too many requests\")))`.",
-                "when_to_apply": "Так защищают вызовы внешнего API, чтобы не более N параллельных запросов уходило к нему одновременно и медленный сервис не выедал пул соединений.",
-                "edge_cases": "`maxWaitDuration(Duration.ZERO)` означает отказ без ожидания; ненулевое значение добавит короткую очередь ожидания, но рискует подвесить вызовы при затяжной перегрузке.",
-                "related": "[[reactive-patterns-interview#Q10]] суть паттерна Bulkhead; [[reactive-patterns-interview#Q12]] альтернатива через `flatMap` concurrency; [[reactive-patterns-interview#Q3]] похожая интеграция брейкера через оператор."
-              },
+                "explanation": "Семафорный bulkhead держит счётчик активных вызовов и отсекает лишние.",
+                "example": "BulkheadConfig.custom().maxConcurrentCalls(10).maxWaitDuration(Duration.ZERO).build() — квота и мгновенный отказ.",
+                "when_to_apply": "Превышение превращают в осмысленную «сервис перегружен», не пуская запрос дальше.",
+                "edge_cases": "onErrorResume(BulkheadFullException.class, ex -> Mono.error(new ServiceOverloadedException(...))).",
+                "related": "Врезка в цепочку не отличается от врезки Circuit Breaker-а."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "`maxWaitDuration(Duration.ZERO)` означает буквально: терпеливо ждать освобождения слота в `Bulkhead` бесконечно долго.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ZERO — «не ждать вовсе»: слот занят — мгновенный отказ.",
+                "source_of_confusion": "Ноль легко прочитать как «без ограничения времени».",
+                "if_it_were_true": "Запросы висели бы в ожидании, накапливая ту самую давку.",
+                "how_it_should_be": "Нулевое ожидание = немедленный BulkheadFullException."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "При переполнении квоты bulkhead бросает `CallNotPermittedException` — ровно как это делает открытый `CircuitBreaker`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Переполненный bulkhead бросает BulkheadFullException; CallNotPermittedException — у breaker-а.",
+                "source_of_confusion": "Оба отказа из Resilience4j, и классы исключений смешиваются.",
+                "if_it_were_true": "Нельзя было бы отличить перегрузку от разомкнутой цепи.",
+                "how_it_should_be": "Каждому паттерну — своё исключение и свой обработчик."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "`BulkheadOperator` требует особого способа подключения: обычный `transformDeferred` для него не годится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подключается ровно тем же transformDeferred, что и CircuitBreakerOperator.",
+                "source_of_confusion": "Разные паттерны наводят на мысль о разных механизмах врезки.",
+                "if_it_were_true": "Комбинировать операторы Resilience4j в одной цепочке было бы мукой.",
+                "how_it_should_be": "Единый способ подключения любого оператора: transformDeferred(XxxOperator.of(...))."
+              }
             }
           ]
         }
@@ -666,56 +666,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как ограничить конкурентность через `flatMap` concurrency?",
+          "question_text": "Как ограничить конкурентность через flatMap concurrency?",
           "options": [
             {
-              "text": "Конкурентность ограничивают через `limitRate(n)`, который не даёт `flatMap` запустить больше `n` параллельных вызовов. Оба оператора связаны с «темпом» обработки.",
+              "label": "A",
+              "order": 0,
+              "text": "По умолчанию `flatMap` строго последователен: concurrency = 1, всё по очереди.",
               "correct": false,
               "sections": {
-                "what_actually": "`limitRate` управляет размером запроса элементов у upstream (backpressure prefetch), а не числом параллельных inner-подписок `flatMap`.",
-                "source_of_confusion": "Оба оператора связаны с «темпом» обработки, поэтому их функции путают.",
-                "if_it_were_true": "Если бы конкурентность задавал `limitRate`, нельзя было бы независимо настроить prefetch и число параллельных вызовов, но это разные параметры.",
-                "how_it_should_be": "Лимит параллелизма задаёт `flatMap(mapper, concurrency)`; `limitRate` влияет на prefetch upstream, а не на конкурентность inner."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "Дефолт — 256 одновременных inner-потоков, а вовсе не один.",
+                "source_of_confusion": "Незаметный дефолт: пока поток мал, лавина не видна.",
+                "if_it_were_true": "Никакой лавины вызовов не было бы — и параметр был бы не нужен.",
+                "how_it_should_be": "Помнить про 256 и ставить свой потолок под ресурс."
+              }
             },
             {
-              "text": "Используют перегрузку `flatMap(mapper, concurrency)`: второй аргумент ограничивает число одновременно активных inner-подписок. Для сохранения порядка есть `flatMapSequential(mapper, concurrency)`.",
+              "label": "B",
+              "order": 1,
+              "text": "Вторым аргументом: `flatMap(mapper, 5)` держит максимум 5 активных inner-подписок; default — 256.",
               "correct": true,
               "sections": {
-                "explanation": "Так встроенными средствами Reactor получают эффект, близкий к semaphore-bulkhead, не подключая `resilience4j`: не больше `concurrency` параллельных вызовов downstream.",
-                "example": "Пример: `Flux.fromIterable(ids).flatMap(id -> userService.findById(id), 5)` — максимум 5 параллельных вызовов; в паре с `buffer(100)` это даёт обработку батчами по 3 батча параллельно.",
-                "when_to_apply": "Приём применяют при обработке коллекций ID или событий, когда нужно ограничить нагрузку на downstream и не открыть сотни одновременных запросов.",
-                "edge_cases": "По умолчанию `flatMap` имеет concurrency = `Queues.SMALL_BUFFER_SIZE` (256), поэтому без явного лимита он легко перегрузит downstream при большом источнике.",
-                "related": "[[reactive-patterns-interview#Q10]] bulkhead как идея ограничения конкурентности; [[reactive-patterns-interview#Q11]] semaphore-bulkhead через `Resilience4j`; [[reactive-patterns-interview#Q19]] backpressure при быстром producer."
-              },
-              "label": "B",
-              "order": 1
+                "explanation": "Потолок inner-подписок: остальные ждут освобождения слота.",
+                "example": "Flux.fromIterable(ids).flatMap(id -> userService.findById(id), 5).",
+                "when_to_apply": "Большой входной поток без потолка лавиной создаёт сотни параллельных вызовов.",
+                "edge_cases": "buffer(100) + flatMap(batch -> processBatch(batch), 3) — батчи по 100, три разом.",
+                "related": "flatMapSequential(mapper, N) — та же конкурентность, но порядок сохранён."
+              }
             },
             {
-              "text": "Конкурентность ограничивают, заменив `flatMap` на `concatMap`, у которого второй аргумент задаёт число параллельных подписок. `concatMap` и `flatMap` взаимозаменяемы по форме вызова.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`concatMap` всегда последователен (concurrency = 1) и не принимает аргумент конкурентности; лимит параллелизма задаёт `flatMap(mapper, concurrency)`.",
-                "source_of_confusion": "`concatMap` и `flatMap` взаимозаменяемы по форме вызова, поэтому кажется, что у обоих есть параметр конкурентности.",
-                "if_it_were_true": "Если бы `concatMap` принимал concurrency > 1, он перестал бы гарантировать строгий порядок, ради которого его и выбирают.",
-                "how_it_should_be": "Для лимита параллелизма используют `flatMap(mapper, concurrency)` или порядко-сохраняющий `flatMapSequential(mapper, concurrency)`."
-              },
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Конкурентность задают через `subscribeOn(Schedulers.parallel(n))`, где `n` ограничивает число одновременных inner-подписок `flatMap`. И scheduler, и concurrency влияют на параллелизм.",
+              "order": 2,
+              "text": "`flatMap(mapper, N)` гарантирует исходный порядок результатов; никакой доплаты производительностью при этом не потребуется.",
               "correct": false,
               "sections": {
-                "what_actually": "Число одновременных inner-подписок задаёт второй аргумент `flatMap(mapper, concurrency)`, а `subscribeOn` лишь переносит выполнение на другой Scheduler.",
-                "source_of_confusion": "И scheduler, и concurrency влияют на параллелизм, поэтому их роли смешивают.",
-                "if_it_were_true": "Если бы лимит брался из размера пула `Schedulers.parallel`, `flatMap` всё равно мог бы открыть тысячи inner-подписок одновременно.",
-                "how_it_should_be": "Правильно — `flatMap(id -> userService.findById(id), 5)`, где второй аргумент явно ограничивает конкурентность."
-              },
+                "what_actually": "flatMap порядок не гарантирует; за порядком — flatMapSequential.",
+                "source_of_confusion": "Вход упорядочен — и кажется, что выход тоже.",
+                "if_it_were_true": "Отдельный flatMapSequential был бы лишним.",
+                "how_it_should_be": "Быстрее без порядка — flatMap; порядок нужен — Sequential."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Ограничить конкурентность встроенно нельзя: только внешней библиотекой `Resilience4j` с её bulkhead-ом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параметр concurrency — самый лёгкий встроенный bulkhead, без библиотек.",
+                "source_of_confusion": "Слово bulkhead прочно связано с Resilience4j.",
+                "if_it_were_true": "Простое «не больше 5 параллельно» требовало бы зависимости.",
+                "how_it_should_be": "Второй аргумент flatMap — и лимит готов."
+              }
             }
           ]
         }
@@ -726,56 +726,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое паттерн `Scatter-Gather`?",
+          "question_text": "Что такое паттерн Scatter-Gather?",
           "options": [
             {
-              "text": "`Scatter-Gather` объединяет несколько одинаковых конкурентных запросов в один общий вызов, а затем раздаёт полученный результат всем ожидающим подписчикам.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Слияние идентичных запросов — это Request Coalescing; `Scatter-Gather` рассылает разные запросы к разным источникам и агрегирует их ответы.",
-                "source_of_confusion": "Оба паттерна работают с несколькими параллельными вызовами, поэтому их путают.",
-                "if_it_were_true": "Если бы scatter схлопывал одинаковые запросы, он не мог бы собирать данные из разнородных источников, что является его сутью.",
-                "how_it_should_be": "`Scatter-Gather` — fan-out к разным получателям и агрегация; схлопывание дублей в один вызов — это Request Coalescing."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Scatter-Gather` параллельно рассылает один запрос нескольким получателям и агрегирует их ответы в единый результат после завершения выбранной политики сбора.",
+              "order": 0,
+              "text": "Разослать запрос всем получателям параллельно и собрать ответы: общее время — как у самого медленного.",
               "correct": true,
               "sections": {
-                "explanation": "Паттерн распараллеливает независимые вызовы: вместо последовательного опроса источников все они стартуют одновременно, а суммарное время приближается к времени самого медленного из них.",
-                "example": "Типичные сценарии — fan-out в поисковых системах (запрос к разным индексам), сбор котировок от нескольких провайдеров и сборка профиля из нескольких сервисов.",
-                "when_to_apply": "Применяют, когда результат складывается из независимых частей, которые можно запросить параллельно, а итог нужен только после получения всех (или большинства) ответов.",
-                "edge_cases": "Главный риск — частичные отказы: если один источник упал, наивный `gather` через `Mono.zip` уронит весь результат, поэтому отказам нужна отдельная обработка.",
-                "related": "[[reactive-patterns-interview#Q14]] реализация через `Mono.zip`; [[reactive-patterns-interview#Q15]] обработка частичных отказов; [[reactive-patterns-interview#Q24]] hedging как родственный fan-out."
-              },
+                "explanation": "Вызовы идут одновременно — в этом выигрыш против последовательного опроса.",
+                "example": "Профиль = пользователь + заказы + отзывы: три сервиса одним заходом.",
+                "when_to_apply": "Составной ответ, fan-out по шардам поиска, сравнение котировок провайдеров.",
+                "edge_cases": "Граничный вопрос — частичные отказы: что делать, если один источник упал.",
+                "related": "Для фиксированного набора источников в Reactor это Mono.zip."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Scatter-Gather` последовательно обходит источники: следующий вызов начинается только после результата предыдущего, а общий ответ строится в конце цепочки.",
+              "order": 1,
+              "text": "Общее время `Scatter-Gather`: простая арифметическая сумма времён всех последовательно опрошенных источников по очереди.",
               "correct": false,
               "sections": {
-                "what_actually": "Последовательный обход по зависимости — это цепочка `flatMap`, а `Scatter-Gather` рассылает запросы параллельно и независимо.",
-                "source_of_confusion": "И тот, и другой собирают итог из нескольких вызовов, поэтому параллельность легко упустить.",
-                "if_it_were_true": "Если бы scatter был последовательным, исчезло бы его главное преимущество — суммарное время равнялось бы сумме, а не максимуму задержек.",
-                "how_it_should_be": "`Scatter-Gather` — параллельная рассылка и агрегация; последовательный обход с зависимостями — это уже другая структура цепочки."
-              },
+                "what_actually": "Параллельность даёт время самого медленного, а не сумму всех.",
+                "source_of_confusion": "Интуиция последовательного кода: три вызова — три времени подряд.",
+                "if_it_were_true": "Паттерн не давал бы выигрыша против цикла с вызовами.",
+                "how_it_should_be": "Одновременный старт — итог по медленнейшему."
+              }
+            },
+            {
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Scatter-Gather` возвращает первый успешный ответ из нескольких параллельных вызовов и немедленно отменяет остальные, не выполняя агрегацию результатов.",
+              "order": 2,
+              "text": "`scatter` — это сбор всех ответов воедино, а `gather` — ровно наоборот, предварительная рассылка запросов адресатам.",
               "correct": false,
               "sections": {
-                "what_actually": "Взять первый ответ и отбросить прочие — это Hedging (`firstWithValue`); `Scatter-Gather`, наоборот, агрегирует ответы всех источников.",
-                "source_of_confusion": "Оба запускают вызовы параллельно, поэтому разницу в способе сбора результата упускают.",
-                "if_it_were_true": "Если бы scatter брал лишь первый ответ, агрегация (`gather`) была бы не нужна, но именно она и есть вторая половина паттерна.",
-                "how_it_should_be": "`Scatter-Gather` собирает и объединяет все ответы; выбор первого успешного из дубликатов — это Hedging."
-              },
+                "what_actually": "Наоборот: scatter — рассылка, gather — сбор.",
+                "source_of_confusion": "Английские глаголы легко перепутать местами.",
+                "if_it_were_true": "Название паттерна читалось бы задом наперёд.",
+                "how_it_should_be": "scatter «разбросать» запросы, gather «собрать» ответы."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Паттерн опрашивает все источники строго последовательно и честно останавливается на самом первом успешно ответившем из них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запросы идут одновременно всем; «первый ответивший» — это про Hedging.",
+                "source_of_confusion": "Родственные паттерны конкурентных запросов сливаются.",
+                "if_it_were_true": "Составной DTO из трёх сервисов собрать не удалось бы.",
+                "how_it_should_be": "Ждём всех участников и агрегируем их ответы."
+              }
             }
           ]
         }
@@ -786,56 +786,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как реализовать `Scatter-Gather` через `Mono.zip`?",
+          "question_text": "Как реализовать Scatter-Gather через Mono.zip?",
           "options": [
             {
-              "text": "Через `Mono.first(a, b, c)` — он дожидается, пока все три источника ответят, и комбинирует их результаты. Оба оператора работают с несколькими источниками.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Mono.firstWithValue`/`first` берёт ровно один (первый) ответ и отменяет остальные, а не агрегирует все три источника.",
-                "source_of_confusion": "Оба оператора работают с несколькими источниками, поэтому их назначение путают.",
-                "if_it_were_true": "Если бы `first` агрегировал все ответы, не было бы паттерна Hedging, который как раз на нём и строится для выбора одного ответа.",
-                "how_it_should_be": "Для агрегации всех ответов нужен `Mono.zip`; `firstWithValue` выбирает один результат и относится к Hedging."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Для Scatter-Gather запускают независимые `Mono` и объединяют их через `Mono.zip`; в `map` собирают общий DTO, а ошибки и таймауты задают для каждой ветви.",
+              "order": 0,
+              "text": "`Mono.zip` подписывается на все источники сразу и собирает значения в Tuple; для списка — `zip(list, combinator)`.",
               "correct": true,
               "sections": {
-                "explanation": "`Mono.zip` подписывается на все источники параллельно и эмитит кортеж, когда все они завершились значением, давая истинный fan-out с агрегацией в одном результате.",
-                "example": "Пример: `Mono.zip(userService.findById(userId), orderService.findByUserId(userId).collectList(), reviewService.findByUserId(userId).collectList()).map(t -> UserProfileDto.builder().user(t.getT1()).orders(t.getT2()).reviews(t.getT3()).build())`.",
-                "when_to_apply": "Подход применяют для сборки агрегированного ответа из независимых сервисов; для переменного числа источников используют `Mono.zip(List, combinator)` или `zipDelayError`.",
-                "edge_cases": "`Mono.zip` падает, как только любой источник эмитит ошибку, и обрывает остальные; чтобы стерпеть частичный отказ, на источники вешают `onErrorResume` или берут `zipDelayError`.",
-                "related": "[[reactive-patterns-interview#Q13]] суть Scatter-Gather; [[reactive-patterns-interview#Q15]] обработка частичных отказов в `zip`; [[reactive-patterns-interview#Q12]] ограничение параллелизма при множестве вызовов."
-              },
+                "explanation": "Источники выполняются параллельно — это scatter; zip — gather.",
+                "example": "Mono.zip(user, orders, reviews).map(t -> ProfileDto.builder().user(t.getT1())...).",
+                "when_to_apply": "Фиксированный набор — перечислить и разобрать getT1()/getT2(); переменный — List + combinator.",
+                "edge_cases": "zipDelayError дожидается остальных и пробрасывает ошибку только в конце.",
+                "related": "Дальше .map превращает кортеж в нужный DTO."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Через `Mono.when(a, b, c)` — он дожидается всех источников и возвращает кортеж их результатов для агрегации. Оба оператора дожидаются всех источников.",
+              "order": 1,
+              "text": "`Mono.zip` подписывается на источники строго по очереди: следующий стартует лишь после завершения предыдущего.",
               "correct": false,
               "sections": {
-                "what_actually": "`Mono.when` отбрасывает значения и возвращает `Mono<Void>` (только сигнал завершения); кортеж со значениями для агрегации даёт `Mono.zip`.",
-                "source_of_confusion": "Оба оператора дожидаются всех источников, поэтому их функции смешивают.",
-                "if_it_were_true": "Если бы агрегацию делали через `Mono.when`, у нас не было бы значений `T1`/`T2`/`T3`, и собрать `ProfileDto` было бы нечем.",
-                "how_it_should_be": "Для агрегации значений используют `Mono.zip(...).map(tuple -> ...)`; `Mono.when` годится лишь чтобы дождаться завершения без результатов."
-              },
+                "what_actually": "Подписка на все источники одновременно — параллельность и есть суть.",
+                "source_of_confusion": "Перечисление аргументов слева направо выглядит очередью.",
+                "if_it_were_true": "Время сложилось бы в сумму — выигрыш scatter исчез бы.",
+                "how_it_should_be": "Одновременная подписка, ожидание каждого значения, сбор в Tuple."
+              }
+            },
+            {
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Через `Flux.merge(a, b, c).collectList()` — он гарантирует, что результаты лягут в кортеж в порядке источников. `merge` тоже запускает источники параллельно.",
+              "order": 2,
+              "text": "`Mono.zipDelayError` падает мгновенно на первой же ошибке любого из своих источников.",
               "correct": false,
               "sections": {
-                "what_actually": "`Flux.merge` объединяет потоки в порядке прихода элементов, а не источников, и отдаёт плоский список, а не типизированный кортеж для агрегации.",
-                "source_of_confusion": "`merge` тоже запускает источники параллельно, поэтому его принимают за способ собрать кортеж.",
-                "if_it_were_true": "Если бы `merge` сохранял порядок источников в кортеже, он не мог бы эмитить элементы по мере готовности, в чём его смысл.",
-                "how_it_should_be": "Для упорядоченной агрегации по источникам берут `Mono.zip`; `Flux.merge` даёт неупорядоченный объединённый поток."
-              },
+                "what_actually": "zipDelayError как раз дожидается остальных; ошибка — только в конце.",
+                "source_of_confusion": "Обычный zip правда падает сразу — свойства перепутаны.",
+                "if_it_were_true": "Разницы между zip и zipDelayError не существовало бы.",
+                "how_it_should_be": "Быстрый провал — zip; собрать всё возможное — zipDelayError."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Комбинировать можно максимум три источника в `Tuple`; все остальные перегрузки `zip` отклоняет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для переменного числа есть zip(Iterable, combinator) — размер не ограничен тройкой.",
+                "source_of_confusion": "Примеры на три источника выглядят пределом API.",
+                "if_it_were_true": "Агрегация котировок от N провайдеров не собралась бы.",
+                "how_it_should_be": "List<Mono<...>> плюс combinator — сколько угодно источников."
+              }
             }
           ]
         }
@@ -846,56 +846,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как обработать частичные отказы в `Scatter-Gather`?",
+          "question_text": "Как обработать частичные отказы в Scatter-Gather?",
           "options": [
             {
-              "text": "Достаточно повесить один `onErrorResume` после `Mono.zip`: при отказе любого источника он сохранит успешные значения и подставит fallback только вместо упавшего.",
+              "label": "A",
+              "order": 0,
+              "text": "Обязательные источники тоже оборачивают дефолтом; пусть составной запрос выживает абсолютно всегда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Критичный источник без fallback-а: упал он — должен упасть весь запрос.",
+                "source_of_confusion": "«Выживать всегда» звучит как надёжность, но прячет фатальные сбои.",
+                "if_it_were_true": "Профиль без пользователя отдавался бы как ни в чём не бывало.",
+                "how_it_should_be": "Дефолт — привилегия опциональных блоков данных."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "`onErrorResume` вешают на весь `zip` целиком: одного общего обработчика более чем достаточно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обработчик на весь zip теряет частичные результаты: сработает после провала целого.",
+                "source_of_confusion": "Один общий catch выглядит экономнее россыпи мелких.",
+                "if_it_were_true": "Ответившие источники пропадали бы вместе с упавшим.",
+                "how_it_should_be": "Дефолты — на каждом опциональном источнике, до сборки."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "При падении одного источника `zip` сам молча продолжает сборку итога с оставшимися живыми.",
+              "correct": false,
+              "sections": {
+                "what_actually": "zip — «всё или ничего»: одна ошибка завершает весь результат.",
+                "source_of_confusion": "Хочется от механизма сборки умной деградации — но её нужно строить самому.",
+                "if_it_were_true": "Обёртки onErrorResume были бы не нужны вовсе.",
+                "how_it_should_be": "Устойчивость к сбоям добавляется явными fallback-ами."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "`onErrorResume` — на каждый необязательный источник по отдельности, до `zip`; критичные пусть роняют запрос целиком.",
               "correct": true,
               "sections": {
-                "explanation": "Так сбой некритичной части (например, сервиса заказов или подписок) не рушит весь профиль: пользователь получает данные с дырой вместо полной ошибки.",
-                "example": "Пример: `orderService.findByUserId(id).collectList().onErrorResume(ex -> Mono.just(List.of()))` и `subscriptionService.findByUserId(id).map(Optional::of).onErrorResume(ex -> Mono.just(Optional.empty()))`, после чего всё собирают в `Mono.zip`.",
-                "when_to_apply": "Приём применяют, когда часть источников обязательна, а часть — опциональна, и допустимо отдать частично заполненный ответ вместо полного отказа.",
-                "edge_cases": "Обязательные источники намеренно оставляют без `onErrorResume`: их падение должно ронять весь запрос, иначе клиент получит профиль без ключевых данных и не узнает об ошибке.",
-                "related": "[[reactive-patterns-interview#Q13]] суть Scatter-Gather; [[reactive-patterns-interview#Q14]] базовая агрегация через `Mono.zip`; [[reactive-patterns-interview#Q4]] fallback при ошибке отдельного вызова."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "На весь `zip` добавляют `retry`, чтобы любой частичный отказ повторно запустил все источники и гарантировал полный результат без отдельных fallback-политик.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Retry повторяет все источники, включая успевшие успешно, и не помогает, если источник стабильно недоступен; частичный отказ решается fallback'ами на источниках.",
-                "source_of_confusion": "Retry — привычный ответ на сбой, поэтому его пытаются применить и здесь.",
-                "if_it_were_true": "Если бы retry лечил частичный отказ, при постоянно лежащем сервисе заказов профиль не собрался бы никогда, лишь множа повторы.",
-                "how_it_should_be": "Для частичного отказа нужен `onErrorResume` с дефолтом на каждом необязательном источнике, а не повтор всего `zip`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Необязательные источники восстанавливают собственным `onErrorResume` до `zip`, а ошибки обязательных зависимостей оставляют терминальными для всей агрегации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Один общий `onErrorResume` поверх `zip` превращает любой сбой в полностью пустой результат, теряя данные успешных источников; обрабатывать нужно каждый источник по отдельности.",
-                "source_of_confusion": "Кажется логичным ловить ошибку в одном месте на выходе, отсюда соблазн внешнего `onErrorResume`.",
-                "if_it_were_true": "Если бы хватало внешнего обработчика, падение одного некритичного источника обнуляло бы и обязательные данные пользователя.",
-                "how_it_should_be": "`onErrorResume` вешают на каждый необязательный источник отдельно, чтобы заменить его частный сбой на дефолт, не теряя остальные."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`zipDelayError` автоматически заменяет ошибки отдельных источников значением `null`, поэтому успешные результаты сохраняются без локального `onErrorResume`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`zipDelayError` лишь откладывает проброс ошибки до завершения остальных, но в итоге всё равно падает — он не подставляет `null` вместо упавшего источника.",
-                "source_of_confusion": "Название «delayError» наводит на мысль, что ошибка будет «проглочена» и заменена дефолтом.",
-                "if_it_were_true": "Если бы `zipDelayError` подставлял `null`, частичный отказ всегда давал бы успешный результат, и отдельная обработка источников была бы не нужна.",
-                "how_it_should_be": "Чтобы стерпеть отказ, на каждый необязательный источник ставят `onErrorResume`, возвращающий fallback (пустой список, `Optional.empty()`)."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Сбой опционального источника превращается в безопасный дефолт — zip спокойно собирает итог.",
+                "example": "orders.collectList().onErrorResume(ex -> Mono.just(List.of())) — пустой список как fallback.",
+                "when_to_apply": "Эмпирика: разделить источники на критичные и опциональные.",
+                "edge_cases": "Optional.empty() — дефолт для одиночного необязательного значения.",
+                "related": "Профиль можно показать и без блока заказов — но не без самого пользователя."
+              }
             }
           ]
         }
@@ -906,56 +906,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `Saga Pattern` и при чём тут реактивность?",
+          "question_text": "Что такое Saga Pattern и при чём тут реактивность?",
           "options": [
             {
-              "text": "`Saga` — это паттерн, где каждый шаг откатывается автоматически средствами БД при ошибке последующего шага. Привычка к транзакционному `ROLLBACK` в монолите переносится на распределённый сценарий.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Автоматического `ROLLBACK` между сервисами нет: каждая локальная транзакция уже закоммичена, поэтому отмену выполняют явные компенсирующие операции.",
-                "source_of_confusion": "Привычка к транзакционному `ROLLBACK` в монолите переносится на распределённый сценарий.",
-                "if_it_were_true": "Если бы БД откатывала уже закоммиченные шаги других сервисов, не нужны были бы компенсации, но именно они — суть Saga.",
-                "how_it_should_be": "В Saga отмена делается компенсирующими транзакциями (`cancelOrder`, `releaseStock`), а не автоматическим откатом БД."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Saga` применима только в императивном коде и несовместима с реактивным стилем, потому что требует синхронных блокирующих шагов.",
+              "order": 0,
+              "text": "При сбое компенсации выполняются в прямом порядке — от первого шага к упавшему.",
               "correct": false,
               "sections": {
-                "what_actually": "Saga прекрасно ложится на реактивность: её выражают цепочкой `flatMap` с `onErrorResume`-компенсациями, без блокировок.",
-                "source_of_confusion": "Кажется, что управление транзакциями требует синхронности, отсюда вывод о несовместимости с Reactor.",
-                "if_it_were_true": "Если бы Saga требовала блокирующих шагов, её нельзя было бы реализовать в WebFlux, но именно реактивная цепочка делает её естественной.",
-                "how_it_should_be": "Saga отлично сочетается с реактивностью — шаги и компенсации выражаются `flatMap` и обработкой ошибок неблокирующе."
-              },
+                "what_actually": "Компенсируют в обратном порядке — от последнего выполненного к первому.",
+                "source_of_confusion": "Прямой порядок привычен по спискам шагов.",
+                "if_it_were_true": "Отменяли бы заказ раньше, чем сняли зависящий от него резерв.",
+                "how_it_should_be": "Разматывать стек шагов с конца, как вложенные вызовы."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Saga` — это распределённая `2PC`-транзакция (two-phase commit), где координатор атомарно коммитит все шаги разом. Обе техники решают задачу согласованности между сервисами.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Saga намеренно отказывается от `2PC` и глобальных блокировок: это цепочка локальных транзакций с компенсациями, а не атомарный двухфазный коммит.",
-                "source_of_confusion": "Обе техники решают задачу согласованности между сервисами, поэтому их путают.",
-                "if_it_were_true": "Если бы Saga была `2PC`, она держала бы блокировки на всех ресурсах до общего коммита, теряя главное преимущество — отсутствие распределённых локов.",
-                "how_it_should_be": "Saga — серия локальных транзакций с компенсирующими действиями при ошибке; `2PC` — отдельный, блокирующий подход к распределённым транзакциям."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Saga` — паттерн управления распределёнными транзакциями: длинная транзакция разбивается на цепочку локальных транзакций, у каждой из которых есть компенсирующее действие на случай ошибки последующего шага.",
+              "order": 1,
+              "text": "Цепочка локальных транзакций, к каждому шагу — компенсирующее действие; итоговая согласованность, не атомарность.",
               "correct": true,
               "sections": {
-                "explanation": "Поскольку распределённый ACID-коммит невозможен, при сбое шага N выполняются компенсации шагов N-1...1 в обратном порядке, возвращая систему к согласованному состоянию.",
-                "example": "Схема: `createOrder → reserveStock → processPayment → sendNotification`, а компенсации — `cancelOrder`, `releaseStock`, `refundPayment` — откатывают уже выполненные шаги при ошибке.",
-                "when_to_apply": "Saga применяют, когда бизнес-операция затрагивает несколько сервисов с собственными БД и нужна согласованность без распределённых блокировок и `2PC`.",
-                "edge_cases": "Saga даёт лишь eventual-согласованность и допускает промежуточные несогласованные состояния; компенсации должны быть идемпотентными, иначе повторный откат всё испортит.",
-                "related": "[[reactive-patterns-interview#Q17]] хореографическая и оркестрационная сага; [[reactive-patterns-interview#Q18]] реализация компенсирующей транзакции; [[reactive-patterns-interview#Q4]] компенсация через `onErrorResume`."
-              },
+                "explanation": "Распределённой ACID-транзакции через сервисы нет — сагой управляют согласованностью.",
+                "example": "createOrder → reserveStock → processPayment; компенсации: cancelOrder, releaseStock, refundPayment.",
+                "when_to_apply": "Длинная бизнес-операция через несколько сервисов с откатами.",
+                "edge_cases": "Реактивно ложится один в один: шаг — flatMap, компенсация — onErrorResume.",
+                "related": "Не «отменить списание», а «вернуть деньги» — семантический анти-шаг."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Компенсация в саге — это обычный rollback базы данных; выполняет его сама СУБД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Компенсация — семантический анти-шаг, а не rollback БД.",
+                "source_of_confusion": "«Откат» рефлекторно связывается с транзакцией СУБД.",
+                "if_it_were_true": "СУБД одного сервиса умела бы откатывать чужие сервисы.",
+                "how_it_should_be": "Явная бизнес-операция отмены: вернуть деньги, снять резерв."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "`Saga` возвращает системе полную ACID-атомарность прямо через границы всех сервисов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сага даёт итоговую согласованность — промежуточные состояния видимы.",
+                "source_of_confusion": "Слово «транзакция» в названии обещает ACID.",
+                "if_it_were_true": "Распределённая ACID существовала бы бесплатно — и саги бы не понадобились.",
+                "how_it_should_be": "Согласованность в итоге; атомарности через сервисы нет."
+              }
             }
           ]
         }
@@ -969,53 +969,53 @@
           "question_text": "Как реализовать хореографическую сагу через события?",
           "options": [
             {
-              "text": "В хореографии есть центральный оркестратор, который последовательно вызывает каждый сервис и сам решает, когда запускать компенсации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Центральный координатор шагов — это оркестрация, а не хореография; в хореографии сервисы реагируют на события самостоятельно, без дирижёра.",
-                "source_of_confusion": "Оба варианта саги легко перепутать, так как оба управляют последовательностью шагов.",
-                "if_it_were_true": "Если бы в хореографии был оркестратор, исчезла бы децентрализация — главное отличие хореографии от оркестрации.",
-                "how_it_should_be": "Хореография — реакция сервисов на события без координатора; явный координатор шагов — это оркестрационная сага."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "При хореографии нет центрального координатора: каждый сервис подписывается на события, выполняет свой локальный шаг и публикует собственное событие, на которое реагирует следующий сервис.",
+              "order": 0,
+              "text": "Дирижёра нет: каждый сервис подписан на события и публикует свои; компенсации — события отмены.",
               "correct": true,
               "sections": {
-                "explanation": "Хореография децентрализована: логика саги «размазана» по сервисам через события, в отличие от оркестрации, где один компонент явно дирижирует шагами.",
-                "example": "Например, `OrderService` публикует `OrderCreated`, `StockService` ловит его, резервирует товар и публикует `StockReserved`, а при ошибке — компенсирующее `StockReservationFailed`, запускающее откат у предыдущего сервиса.",
-                "when_to_apply": "Хореографию выбирают, когда шагов немного и нужна слабая связанность без единой точки отказа; при росте числа шагов её сложнее отлаживать и наблюдать.",
-                "edge_cases": "Минус хореографии — нет единого места, где видна вся сага: цепочки событий труднее трассировать, а циклические зависимости событий легко создать по неосторожности.",
-                "related": "[[reactive-patterns-interview#Q16]] что такое Saga; [[reactive-patterns-interview#Q18]] компенсирующая транзакция; [[reactive-patterns-interview#Q4]] компенсация шага через `onErrorResume`."
-              },
+                "explanation": "Связность низкая, но общий ход саги «размазан» по сервисам.",
+                "example": "OrderCreated → StockService резервирует → StockReserved → PaymentService платит → PaymentCompleted/Failed.",
+                "when_to_apply": "Шина — брокер (Kafka/RabbitMQ); каждый сервис знает только «свои» события.",
+                "edge_cases": "На PaymentFailed подписан StockService — снимает резерв; «обратных» событий столько же, сколько шагов.",
+                "related": "Каждый участник — reactive-consumer: reactor-kafka или Spring Cloud Stream."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Хореографическая сага требует, чтобы все сервисы писали в одну общую БД и читали события из её таблиц.",
+              "order": 1,
+              "text": "Компенсации в хореографии делаются прямыми вызовами соседних сервисов, в обход общего брокера.",
               "correct": false,
               "sections": {
-                "what_actually": "Сервисы саги владеют собственными БД и обмениваются событиями через брокер/шину, а не делят одну общую базу.",
-                "source_of_confusion": "Идея «общего журнала событий» наводит на мысль об одной общей БД для всех.",
-                "if_it_were_true": "Если бы все писали в общую БД, нарушился бы Database-per-Service, и сервисы перестали бы быть независимыми.",
-                "how_it_should_be": "В хореографии каждый сервис имеет свою БД и публикует события в брокер; общая база противоречит изоляции сервисов."
-              },
+                "what_actually": "Компенсации — тоже события отмены, а не прямые вызовы.",
+                "source_of_confusion": "Откат кажется «срочным» и потому прямым — но стиль един.",
+                "if_it_were_true": "Сервисы узнали бы адреса друг друга — связность вернулась бы.",
+                "how_it_should_be": "Реакция на событие сбоя: подписчик сам снимает свой резерв."
+              }
+            },
+            {
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Хореографию реализуют синхронными `WebClient`-вызовами по цепочке, где каждый сервис напрямую зовёт следующий и ждёт ответа. Реактивные `WebClient`-цепочки выглядят как «события».",
+              "order": 2,
+              "text": "Код из материала — образец чистой хореографии; длинная цепочка `flatMap` с прямыми вызовами сервисов.",
               "correct": false,
               "sections": {
-                "what_actually": "Прямые синхронные вызовы между сервисами — это оркестрация по цепочке, а хореография строится на асинхронном обмене событиями.",
-                "source_of_confusion": "Реактивные `WebClient`-цепочки выглядят как «события», поэтому их принимают за хореографию.",
-                "if_it_were_true": "Если бы хореография держалась на синхронных вызовах, она наследовала бы сильную связанность и каскадные отказы, которых событийный подход избегает.",
-                "how_it_should_be": "Хореография опирается на публикацию и подписку на события; прямые синхронные вызовы по цепочке — это другой, оркестрационный стиль."
-              },
+                "what_actually": "Пример в материале — оркестрационный контраст: класс-дирижёр с прямыми вызовами.",
+                "source_of_confusion": "Код стоит в вопросе про хореографию — легко приписать ему её.",
+                "if_it_were_true": "В «хореографии» нашёлся бы центральный класс — противоречие определению.",
+                "how_it_should_be": "Хореография — без единого класса: шаги живут реакциями на брокер."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Хореография: один единый центральный оркестратор-класс, который явно и последовательно зовёт все шаги строго по порядку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Центральный дирижёр — это оркестрация; в хореографии его нет вообще.",
+                "source_of_confusion": "Оба стиля координируют одни и те же шаги — термины скользят.",
+                "if_it_were_true": "Поток саги был бы виден в одном месте — а он размазан.",
+                "how_it_should_be": "Хореография — реакции на события; оркестрация — явные вызовы."
+              }
             }
           ]
         }
@@ -1029,53 +1029,53 @@
           "question_text": "Как реализовать компенсирующую транзакцию в реактивной саге?",
           "options": [
             {
-              "text": "Компенсацию заменяют `retryWhen`: неудачный шаг повторяют до успеха, поэтому отдельный откат уже выполненных действий в реактивной саге не требуется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Retry повторяет тот же шаг, но не отменяет уже выполненные предыдущие шаги; компенсация — это именно явный откат сделанного, а не повтор.",
-                "source_of_confusion": "Retry и компенсация оба реагируют на ошибку, поэтому их функции смешивают.",
-                "if_it_were_true": "Если бы retry заменял компенсацию, при невосстановимой ошибке шага зарезервированный товар и созданный заказ остались бы навсегда, нарушая согласованность.",
-                "how_it_should_be": "Компенсацию выполняют `onErrorResume` с откатом предыдущих шагов; retry лишь повторяет текущий шаг и отмену не делает."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Компенсацию запускают из `doFinally(...subscribe())`, чтобы она выполнялась как независимый side effect при успехе, ошибке и отмене основной цепочки.",
+              "order": 0,
+              "text": "Сбой `compensation` пробрасывают наверх немедленно через `Mono.error`, тут же прерывая всю обработку исходной ошибки.",
               "correct": false,
               "sections": {
-                "what_actually": "`doFinally` срабатывает на любое завершение — включая успешное, — поэтому компенсация выполнялась бы и при удачном шаге, отменяя корректный результат.",
-                "source_of_confusion": "`doFinally` ассоциируется с `finally` из try/catch, где принято делать cleanup, отсюда соблазн положить туда откат.",
-                "if_it_were_true": "Если бы откат шёл в `doFinally`, успешные шаги саги тут же компенсировались бы, и операция никогда не завершалась бы успешно.",
-                "how_it_should_be": "Компенсацию запускают только по ошибке через `onErrorResume`, а не на каждое завершение через `doFinally`."
-              },
+                "what_actually": "Ошибку компенсации гасят (Mono.empty()) после логирования — не пробрасывают.",
+                "source_of_confusion": "«Не терять ошибку» читается как «бросить дальше» — а нужен лог.",
+                "if_it_were_true": "Сбой отката маскировал бы исходную причину аварии.",
+                "how_it_should_be": "Лог для следа, empty для потока, исходная ошибка — наружу."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Компенсацию запускают через `doOnError(...subscribe())`; вложенная подписка становится частью исходной транзакции и гарантированно завершается до передачи ошибки downstream.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`doOnError` — синхронный callback, и `compensation.subscribe()` внутри него запускает откат вне основной цепочки, не дожидаясь его завершения и не управляя ошибками компенсации.",
-                "source_of_confusion": "`doOnError` действительно реагирует на ошибку, поэтому его принимают за место для компенсации.",
-                "if_it_were_true": "Если бы откат запускали `subscribe()` в `doOnError`, исходная ошибка прокинулась бы раньше, чем компенсация отработает, и согласованность не гарантировалась бы.",
-                "how_it_should_be": "Компенсацию встраивают в поток через `onErrorResume`, чтобы дождаться её завершения и затем пробросить исходную ошибку через `then(Mono.error(ex))`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Компенсирующий `Mono` встраивают через `onErrorResume`, дожидаются его завершения и затем возвращают исходную ошибку, не создавая отдельной подписки.",
+              "order": 1,
+              "text": "При сбое `action` выполняется `compensation`, её ошибку логируют и гасят, а наверх пробрасывают исходную причину.",
               "correct": true,
               "sections": {
-                "explanation": "Ключевая идея — дождаться завершения отката (через `then`) перед тем как сообщить об ошибке вверх, чтобы система пришла в согласованное состояние до того, как вызывающий узнает о сбое.",
-                "example": "Пример-хелпер: `action.onErrorResume(ex -> compensation.onErrorResume(compEx -> { log.error(...); return Mono.empty(); }).then(Mono.error(ex)))`, используемый как `runWithCompensation(stockService.reserve(order), orderService.cancel(order.id()))`.",
-                "when_to_apply": "Приём применяют для каждого обратимого шага саги, где после успешного выполнения требуется гарантированная отмена при сбое последующих шагов.",
-                "edge_cases": "Сбой самой компенсации не должен прятать исходную ошибку: его логируют и подавляют (`Mono.empty()`), но факт неудавшегося отката требует алертов и часто ручного вмешательства.",
-                "related": "[[reactive-patterns-interview#Q16]] суть Saga и компенсаций; [[reactive-patterns-interview#Q17]] хореографическая сага; [[reactive-patterns-interview#Q4]] переключение на fallback через `onErrorResume`."
-              },
+                "explanation": "Иначе диагностировать, что реально сломалось, станет невозможно.",
+                "example": "action.onErrorResume(ex -> compensation.onErrorResume(logAndEmpty).then(Mono.error(ex))) — каркас хелпера.",
+                "when_to_apply": "Хелпер runWithCompensation(action, compensation) — переиспользуемая обвязка шага.",
+                "edge_cases": "Сбой компенсации нельзя потерять молча — но и нельзя дать ему перебить исходную ошибку.",
+                "related": "Успешный шаг не откатывают: компенсация — только при ошибке action."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Ошибка компенсации полностью замещает исходную: наверх из `runWithCompensation` уходит именно она, самая свежая.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наверх уходит первоначальная причина; ошибку отката лишь логируют.",
+                "source_of_confusion": "Последняя по времени ошибка кажется главной.",
+                "if_it_were_true": "Диагноз подменялся бы: чинили бы откат вместо настоящей поломки.",
+                "how_it_should_be": "then(Mono.error(ex)) — исходная ошибка переживает компенсацию."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Компенсацию запускают и при успехе `action` — ради полной и честной симметрии учёта всех выполненных операций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Компенсация выполняется только при ошибке action — успех не откатывают.",
+                "source_of_confusion": "«Симметрия» звучит аккуратно, но отменяла бы сделанную работу.",
+                "if_it_were_true": "Каждый успешный резерв тут же снимался бы обратно.",
+                "how_it_should_be": "Откат — ветка onErrorResume, а не безусловный шаг."
+              }
             }
           ]
         }
@@ -1086,56 +1086,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие стратегии backpressure есть в `Project Reactor`?",
+          "question_text": "Какие стратегии backpressure есть в Project Reactor?",
           "options": [
             {
-              "text": "В Reactor доступны только `buffer()` для накопления и `block()` для остановки producer; отдельные drop- или error-стратегии библиотека не предоставляет.",
+              "label": "A",
+              "order": 0,
+              "text": "Backpressure в `Reactor` всегда требует специальных защитных операторов: из коробки его не бывает.",
               "correct": false,
               "sections": {
-                "what_actually": "Стратегий четыре (`buffer`, `drop`, `latest`, `error`), а `block` к backpressure не относится — он блокирует поток и убивает неблокирующую модель.",
-                "source_of_confusion": "Блокировка кажется простым способом «притормозить» producer, отсюда выдуманная стратегия `block`.",
-                "if_it_were_true": "Если бы backpressure делался через `block()`, реактивный конвейер блокировал бы потоки, теряя главное преимущество неблокирующего стека.",
-                "how_it_should_be": "Стратегий четыре: `onBackpressureBuffer`, `onBackpressureDrop`, `onBackpressureLatest`, `onBackpressureError` — и ни одна не блокирует поток."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "Cold-источники (коллекции, БД, WebClient) поддерживают спрос из коробки.",
+                "source_of_confusion": "Заметные операторы onBackpressure* затмевают невидимую pull-модель.",
+                "if_it_were_true": "Каждая цепочка обрастала бы операторами защиты — а базовый механизм нативен.",
+                "how_it_should_be": "Операторы нужны лишь там, где источник игнорирует request(n)."
+              }
             },
             {
-              "text": "Основные варианты — `onBackpressureBuffer`, `onBackpressureDrop`, `onBackpressureLatest` и `onBackpressureError`; выбор определяет поведение при недостаточном спросе.",
+              "label": "B",
+              "order": 1,
+              "text": "Нативная pull-модель: cold-источники дают ровно столько, сколько запрошено; `onBackpressure*` — для игнорирующих спрос hot.",
               "correct": true,
               "sections": {
-                "explanation": "Выбор стратегии — это компромисс между памятью, полнотой данных и свежестью: буфер бережёт данные ценой памяти, drop/latest жертвуют элементами ради ограниченного потребления.",
-                "example": "Например, метрики и live-стримы переживают `Drop`/`Latest` без вреда, а финансовые события чаще требуют `Buffer` или явной ошибки `Error`, чтобы не потерять данные молча.",
-                "when_to_apply": "Стратегию backpressure выбирают, когда producer быстрее consumer и нужно явно решить судьбу лишних элементов вместо бесконтрольного роста очереди.",
-                "edge_cases": "Эти операторы нужны для горячих/неуправляемых источников (`Flux.interval`, внешние события); «холодные» источники с честным backpressure часто обходятся без них.",
-                "related": "[[reactive-patterns-interview#Q20]] детали `onBackpressureBuffer`; [[reactive-patterns-interview#Q21]] `onBackpressureDrop` и `Latest`; [[reactive-patterns-interview#Q12]] ограничение конкурентности как смежный приём."
-              },
-              "label": "B",
-              "order": 1
+                "explanation": "Подписчик объявляет спрос через request(n); limitRate(n) управляет им в середине цепочки.",
+                "example": "Буфер, drop, latest, error — выбор по семантике данных.",
+                "when_to_apply": "Producer быстрее consumer-а: решить, что важнее — полнота или память.",
+                "edge_cases": "Главный компромисс: буферизация рискует OOM, сброс теряет данные.",
+                "related": "onBackpressureError бросает OverflowException — перегрузка как явный баг."
+              }
             },
             {
-              "text": "Backpressure настраивается размером scheduler-пула: чем больше worker-потоков, тем быстрее consumer обрабатывает данные и тем меньше риск переполнения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Backpressure управляет потоком данных через `request(n)` и операторы переполнения (`onBackpressure*`), а не размером пула потоков.",
-                "source_of_confusion": "Кажется, что «не успевает обработать» лечится добавлением потоков, отсюда подмена backpressure на тюнинг пула.",
-                "if_it_were_true": "Если бы backpressure решался пулом, при бесконечно быстром producer память всё равно переполнялась бы — нужен именно контроль спроса.",
-                "how_it_should_be": "Стратегии задаются операторами `onBackpressureBuffer/Drop/Latest/Error`, управляющими тем, что делать с лишними элементами."
-              },
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Стратегиями backpressure являются `retry`, `timeout` и `onErrorResume`: они повторяют, ограничивают либо восстанавливают поток после перегрузки consumer.",
+              "order": 2,
+              "text": "Hot-источники вроде `Flux.interval` прилежно уважают `request(n)` и терпеливо ждут спроса подписчика.",
               "correct": false,
               "sections": {
-                "what_actually": "Перечисленное — операторы обработки ошибок и устойчивости, а не стратегии backpressure; переполнением управляют операторы семейства `onBackpressure*`.",
-                "source_of_confusion": "И backpressure, и устойчивость защищают систему от деградации, поэтому их операторы смешивают.",
-                "if_it_were_true": "Если бы переполнение лечили `retry`/`timeout`, лишние элементы всё равно копились бы или терялись бесконтрольно, без явной стратегии.",
-                "how_it_should_be": "Backpressure задают `onBackpressureBuffer/Drop/Latest/Error`; `retry`/`timeout`/`onErrorResume` — это про ошибки, а не про переполнение потока."
-              },
+                "what_actually": "Hot-источники эмитят в собственном ритме, не глядя на request(n).",
+                "source_of_confusion": "Раз всё «реактивное», кажется, что спрос уважают все.",
+                "if_it_were_true": "Стратегии onBackpressure* были бы никому не нужны.",
+                "how_it_should_be": "Для interval, UI-событий и брокера — явная стратегия."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Универсальная стратегия одна — всегда буферизовать; остальные три варианта чисто декоративны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Универсального ответа нет: выбор диктует семантика данных.",
+                "source_of_confusion": "Буфер выглядит безопасным — пока не съел всю память.",
+                "if_it_were_true": "Выбор из четырёх стратегий схлопнулся бы в одну-единственную.",
+                "how_it_should_be": "Метрикам — drop, котировкам — latest, багам — error, всплескам — буфер."
+              }
             }
           ]
         }
@@ -1146,56 +1146,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что делает `onBackpressureBuffer`?",
+          "question_text": "Что делает onBackpressureBuffer?",
           "options": [
             {
-              "text": "`onBackpressureBuffer` буферизует элементы, которые producer отправил быстрее, чем consumer успевает обработать, складывая их в очередь.",
+              "label": "A",
+              "order": 0,
+              "text": "Безлимитный буфер вполне безопасен; очередь сама сжимается при первой нехватке памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Неограниченный буфер растёт до OutOfMemoryError — сам он не сжимается.",
+                "source_of_confusion": "Хочется верить в самоочистку — но очередь просто копится.",
+                "if_it_were_true": "Граница maxSize и стратегии переполнения были бы не нужны.",
+                "how_it_should_be": "Явный maxSize плюс осознанная BufferOverflowStrategy."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "`DROP_OLDEST` при полном буфере выбрасывает самый свежий из только что пришедших элементов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DROP_OLDEST выкидывает самый старый элемент, освобождая место свежему.",
+                "source_of_confusion": "Симметричная DROP_LATEST правда жертвует свежим — константы зеркальны.",
+                "if_it_were_true": "В очереди старела бы вечная голова, а актуальное терялось.",
+                "how_it_should_be": "OLDEST — жертвуем старым; LATEST — новым; ERROR — падаем."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`onBackpressureBuffer` теряет данные ровно так же, как и `Drop`, — просто заметно медленнее и дороже.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Буфер бережёт данные ценой памяти; теряет лишь при переполнении границы.",
+                "source_of_confusion": "Обе стратегии «борются с напором» — но противоположны по цене.",
+                "if_it_were_true": "Выбор между ними не имел бы смысла.",
+                "how_it_should_be": "Буфер — полнота ценой памяти; drop — память ценой полноты."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Лишнее — в очередь; в проде обязательно задают границу `maxSize` и стратегию переполнения буфера.",
               "correct": true,
               "sections": {
-                "explanation": "Буфер сглаживает кратковременные всплески, но за это платят памятью: при устойчивом перекосе producer/consumer очередь упирается в лимит и срабатывает стратегия переполнения.",
-                "example": "Пример: `Flux.interval(Duration.ofMillis(1)).onBackpressureBuffer(1000, dropped -> log.warn(\"Dropped: {}\", dropped), BufferOverflowStrategy.DROP_OLDEST).flatMap(i -> processSlowly(i), 1)`.",
-                "when_to_apply": "Применяют, когда нельзя терять элементы при коротких пиках и есть память под очередь — например, при обработке сообщений с неравномерным темпом поступления.",
-                "edge_cases": "Без лимита размера буфер растёт неограниченно и грозит `OutOfMemoryError`; поэтому задают и размер, и `BufferOverflowStrategy` (`DROP_OLDEST`/`DROP_LATEST`/`ERROR`).",
-                "related": "[[reactive-patterns-interview#Q19]] обзор стратегий backpressure; [[reactive-patterns-interview#Q21]] `onBackpressureDrop` против буфера; [[reactive-patterns-interview#Q12]] согласование темпа через concurrency."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`onBackpressureBuffer` отбрасывает элементы, которые consumer не успевает обработать, оставляя только последний. Все операторы семейства `onBackpressure*` решают одну проблему переполнения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Отбрасывание лишнего — это `onBackpressureDrop`/`Latest`; `onBackpressureBuffer`, наоборот, накапливает элементы в очереди, а не выкидывает их.",
-                "source_of_confusion": "Все операторы семейства `onBackpressure*` решают одну проблему переполнения, поэтому их поведение путают.",
-                "if_it_were_true": "Если бы `Buffer` отбрасывал элементы, он не давал бы `BufferOverflowException` и не нуждался бы в лимите размера буфера.",
-                "how_it_should_be": "`onBackpressureBuffer` копит элементы в очереди; отбрасывание лишних делают `onBackpressureDrop` и `onBackpressureLatest`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`onBackpressureBuffer` хранит ровно один последний элемент, перезаписывая предыдущий при поступлении нового. `Buffer` и `Latest` оба «удерживают» элементы при перегрузке.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Хранение только последнего элемента — это `onBackpressureLatest`; `Buffer` копит много элементов в очереди заданного размера.",
-                "source_of_confusion": "`Buffer` и `Latest` оба «удерживают» элементы при перегрузке, поэтому их смешивают.",
-                "if_it_were_true": "Если бы `Buffer` хранил один элемент, параметр размера буфера (например `1000`) и стратегии переполнения были бы бессмысленны.",
-                "how_it_should_be": "`onBackpressureBuffer` держит очередь из многих элементов; единственное последнее значение хранит `onBackpressureLatest`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`onBackpressureBuffer` блокирует producer до тех пор, пока consumer не освободит место в очереди. Идея «придержать producer» интуитивна для переполнения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оператор не блокирует producer — он складывает элементы в неблокирующую очередь, а при её переполнении применяет заданную `BufferOverflowStrategy`.",
-                "source_of_confusion": "Идея «придержать producer» интуитивна для переполнения, отсюда вывод о блокировке.",
-                "if_it_were_true": "Если бы `Buffer` блокировал producer, для горячих источников вроде `Flux.interval` это привело бы к зависанию таймера, что не так.",
-                "how_it_should_be": "`onBackpressureBuffer` неблокирующе копит элементы; при переполнении он не блокирует, а отбрасывает по стратегии (`DROP_OLDEST`/`DROP_LATEST`) или падает."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Спасает от потери данных при коротких всплесках нагрузки.",
+                "example": "onBackpressureBuffer(1000, dropped -> log.warn(...), BufferOverflowStrategy.DROP_OLDEST).",
+                "when_to_apply": "Терять нельзя, всплески коротки — иначе очередь растёт без предела.",
+                "edge_cases": "Producer стабильно быстрее — неограниченная очередь кончается OutOfMemoryError.",
+                "related": "Callback на сброшенный элемент — для учёта потерь."
+              }
             }
           ]
         }
@@ -1206,56 +1206,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что делает `onBackpressureDrop` и когда его использовать?",
+          "question_text": "Что делает onBackpressureDrop и когда его использовать?",
           "options": [
             {
-              "text": "`onBackpressureDrop` хранит только последний элемент, заменяя предыдущий, пока consumer не заберёт его. `Drop` и `Latest` оба «теряют» элементы при перегрузке.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Хранение только последнего значения — это `onBackpressureLatest`; `Drop` не удерживает последний элемент, а просто отбрасывает все, что не помещаются.",
-                "source_of_confusion": "`Drop` и `Latest` оба «теряют» элементы при перегрузке, поэтому их легко перепутать.",
-                "if_it_were_true": "Если бы `Drop` хранил последнее значение, не было бы отдельного оператора `Latest` именно для этого поведения.",
-                "how_it_should_be": "`onBackpressureDrop` отбрасывает лишнее без удержания; хранение последнего значения обеспечивает `onBackpressureLatest`."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`onBackpressureDrop` бросает `OverflowException`, как только consumer перестаёт успевать за producer. `Drop` и `Error` оба реагируют на «лишние» элементы.",
+              "order": 0,
+              "text": "`Drop` идеален даже для финансовых транзакций: пропуск денежного перевода — вполне обычное штатное рабочее дело.",
               "correct": false,
               "sections": {
-                "what_actually": "Бросает `OverflowException` при переполнении `onBackpressureError`; `Drop` молча отбрасывает элементы, а не падает с ошибкой.",
-                "source_of_confusion": "`Drop` и `Error` оба реагируют на «лишние» элементы, поэтому их исходы смешивают.",
-                "if_it_were_true": "Если бы `Drop` падал с ошибкой, поток метрик или live-стрима обрывался бы при первом же всплеске, что противоречит его назначению.",
-                "how_it_should_be": "`onBackpressureDrop` тихо роняет лишние элементы; `OverflowException` при переполнении кидает `onBackpressureError`."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "Drop уместен там, где потеря отдельных значений терпима, — метрики, стримы.",
+                "source_of_confusion": "Скорость финансовых потоков наводит на «лёгкие» стратегии.",
+                "if_it_were_true": "Пропавшие переводы считались бы нормой работы.",
+                "how_it_should_be": "Для критичных данных — буфер с границей или явная ошибка."
+              }
             },
             {
-              "text": "`onBackpressureDrop()` отбрасывает элементы, которые consumer не успевает принять, и опционально вызывает callback на каждый отброшенный.",
+              "label": "B",
+              "order": 1,
+              "text": "`onBackpressureDrop` выбрасывает не принятое — без всякой очереди и памяти; уместен для метрик и live-стриминга.",
               "correct": true,
               "sections": {
-                "explanation": "В отличие от буфера, `Drop` ограничивает потребление памяти ценой данных: лишние элементы просто исчезают, поэтому он подходит для потоков, где важна свежесть, а не полнота.",
-                "example": "Пример: `Flux.interval(Duration.ofMillis(10)).onBackpressureDrop(dropped -> metrics.incrementCounter(\"events.dropped\")).flatMap(i -> heavyProcessing(i), 2)`; рядом часто стоит `onBackpressureLatest()` для котировок и датчиков.",
-                "when_to_apply": "Выбирают `Drop`, когда обработка не успевает за быстрым источником, старые значения бесполезны, а буферизация всех элементов привела бы к росту памяти.",
-                "edge_cases": "Минус — молчаливая потеря данных: без callback'а на dropped невозможно отследить, сколько и каких элементов потеряно, поэтому метрику потерь почти всегда логируют.",
-                "related": "[[reactive-patterns-interview#Q19]] все стратегии backpressure; [[reactive-patterns-interview#Q20]] `onBackpressureBuffer` как альтернатива без потерь; [[reactive-patterns-interview#Q26]] sample/throttle как смежное прореживание."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Противоположность буферу: экономим память ценой данных.",
+                "example": "onBackpressureDrop(dropped -> metrics.incrementCounter(\"events.dropped\")) — потери хотя бы посчитаны.",
+                "when_to_apply": "Актуальность важнее полноты: пропуск замера среди тысяч некритичен.",
+                "edge_cases": "Callback на сброшенный элемент — хотя бы посчитать потери.",
+                "related": "Родственник onBackpressureLatest всегда хранит последнее — для котировок и датчиков."
+              }
             },
             {
-              "text": "`onBackpressureDrop` копит лишние элементы в очереди и отдаёт их consumer'у, когда тот освободится. Оба оператора реагируют на перегрузку consumer.",
+              "label": "C",
+              "order": 2,
+              "text": "`onBackpressureLatest` отбрасывает вообще всё подряд, включая даже самое последнее только что пришедшее значение.",
               "correct": false,
               "sections": {
-                "what_actually": "Копит элементы `onBackpressureBuffer`; `Drop` именно отбрасывает лишнее, не сохраняя его для последующей отдачи.",
-                "source_of_confusion": "Оба оператора реагируют на перегрузку consumer, поэтому их поведение путают.",
-                "if_it_were_true": "Если бы `Drop` копил элементы, он не ограничивал бы память и не годился бы для бесконечных быстрых источников вроде датчиков.",
-                "how_it_should_be": "`onBackpressureDrop` выбрасывает лишние элементы; буферизация для последующей отдачи — это `onBackpressureBuffer`."
-              },
+                "what_actually": "Latest всегда хранит последнее значение — отбрасывает лишь устаревшие.",
+                "source_of_confusion": "«Тоже отбрасывает» — но с гарантией актуального снимка.",
+                "if_it_were_true": "Датчики и котировки теряли бы текущее состояние.",
+                "how_it_should_be": "Latest = drop с карманом на одно самое свежее значение."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "`onBackpressureDrop` копит все лишние элементы в очереди; терпеливо ждёт полного освобождения consumer-а.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Drop не копит ничего: лишние элементы выбрасываются сразу.",
+                "source_of_confusion": "Очередь — атрибут соседнего буфера, свойства смешиваются.",
+                "if_it_were_true": "Память расходовалась бы так же, как у буфера, — без его гарантий.",
+                "how_it_should_be": "Никакой очереди: не успел — потерял, память свободна."
+              }
             }
           ]
         }
@@ -1266,56 +1266,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое паттерн `Cache-Aside` в реактивном контексте?",
+          "question_text": "Что такое паттерн Cache-Aside в реактивном контексте?",
           "options": [
             {
-              "text": "`Cache-Aside` — это когда кэш сам синхронно загружает данные из БД при промахе, а приложение лишь обращается к кэшу.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Самостоятельная загрузка кэшем при промахе — это Read-Through; в `Cache-Aside` именно приложение управляет логикой проверки кэша и заполнения его при промахе.",
-                "source_of_confusion": "Оба паттерна про кэш и lazy-загрузку, поэтому их часто путают.",
-                "if_it_were_true": "Если бы загрузкой ведал сам кэш, приложению не нужен был бы код `switchIfEmpty(... set(...))`, но в `Cache-Aside` он обязателен.",
-                "how_it_should_be": "В `Cache-Aside` приложение само проверяет кэш, при промахе грузит из источника и кладёт результат обратно; автозагрузка кэшем — это Read-Through."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Cache-Aside` означает, что данные пишутся только в кэш, а в БД попадают позже асинхронным фоном. Разные write-стратегии кэша звучат похоже.",
+              "order": 0,
+              "text": "Данные загружаются в кэш строго заранее, при старте приложения, — сразу целиком.",
               "correct": false,
               "sections": {
-                "what_actually": "Отложенная фоновая запись в БД — это Write-Behind; `Cache-Aside` касается чтения и ленивого заполнения кэша, а не асинхронной записи.",
-                "source_of_confusion": "Разные write-стратегии кэша звучат похоже, поэтому их приписывают `Cache-Aside`.",
-                "if_it_were_true": "Если бы `Cache-Aside` писал лишь в кэш, потеря кэша означала бы потерю данных, чего этот read-паттерн не подразумевает.",
-                "how_it_should_be": "`Cache-Aside` — про чтение с заполнением кэша при промахе; отложенная запись в БД — это Write-Behind."
-              },
+                "what_actually": "Наполнение ленивое: значение попадает в кэш при первом запросе.",
+                "source_of_confusion": "Прогрев кэша существует как отдельная техника — не как суть Cache-Aside.",
+                "if_it_were_true": "Второе имя паттерна — Lazy Loading — потеряло бы смысл.",
+                "how_it_should_be": "Промах → загрузка → запись: кэш строится по мере обращений."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Cache-Aside` — это когда запись всегда идёт одновременно и в кэш, и в БД в одной операции (`Write-Through`).",
+              "order": 1,
+              "text": "Промах кэша ловят через `onErrorResume`; пустой ответ приходит из него настоящей ошибкой.",
               "correct": false,
               "sections": {
-                "what_actually": "Синхронная запись в кэш и БД разом — это Write-Through; `Cache-Aside` описывает чтение с ленивым заполнением кэша, а не стратегию записи.",
-                "source_of_confusion": "Кэш-паттернов несколько (read/write), и их легко смешать по названию.",
-                "if_it_were_true": "Если бы `Cache-Aside` был про запись через кэш, не было бы характерного `switchIfEmpty`-чтения, которое его и определяет.",
-                "how_it_should_be": "`Cache-Aside` — это lazy-чтение с заполнением кэша при промахе; синхронная двойная запись — это Write-Through."
-              },
-              "label": "C",
-              "order": 2
+                "what_actually": "Промах — это пустой Mono, его подхватывает switchIfEmpty, а не обработчик ошибок.",
+                "source_of_confusion": "«Промах» звучит как сбой — но это штатная пустота.",
+                "if_it_were_true": "Кэш кидал бы исключения на каждый холодный ключ.",
+                "how_it_should_be": "Пустота — сигнал ветвления, ошибка — сигнал аварии."
+              }
             },
             {
-              "text": "`Cache-Aside` — приложение само управляет кэшем: сначала проверяет кэш, при промахе загружает данные из источника и сохраняет их обратно в кэш.",
+              "label": "C",
+              "order": 2,
+              "text": "Кэшем управляет само приложение: проверить → загрузить → положить обратно в кэш; промах ловит `switchIfEmpty`.",
               "correct": true,
               "sections": {
-                "explanation": "Кэш заполняется лениво — только по факту запроса промахнувшегося ключа, что экономит память на редко используемых данных ценой «холодного» первого обращения.",
-                "example": "Пример: `redis.opsForValue().get(key).switchIfEmpty(userRepository.findById(id).flatMap(u -> redis.opsForValue().set(key, u, Duration.ofMinutes(10)).thenReturn(u)))`.",
-                "when_to_apply": "Паттерн применяют для read-heavy данных, которые меняются нечасто и допускают TTL-инвалидацию, чтобы снять нагрузку с основного хранилища.",
-                "edge_cases": "У `Cache-Aside` есть риск stale-данных между обновлением источника и истечением TTL, а при cache-промахе под нагрузкой возможен cache stampede — его гасят Request Coalescing.",
-                "related": "[[reactive-patterns-interview#Q25]] Request Coalescing против stampede; [[reactive-patterns-interview#Q23]] Fallback Chain с кэшем как звеном; [[reactive-patterns-interview#Q4]] кэш как fallback при открытом брейкере."
-              },
+                "explanation": "Три шага складываются в цепочку: get(key) → switchIfEmpty(load + set + thenReturn).",
+                "example": "redis.opsForValue().get(key).switchIfEmpty(repo.findById(id).flatMap(u -> redis.set(key, u, ttl).thenReturn(u))).",
+                "when_to_apply": "Ленивое наполнение: данные попадают в кэш по первому запросу.",
+                "edge_cases": "Под нагрузкой одновременные промахи бьют в БД — cache stampede.",
+                "related": "Смягчение stampede — паттерн Request Coalescing."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "В `Cache-Aside` кэшем прозрачно управляет библиотека за кулисами: приложение о нём даже не знает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cache-Aside — управление кэшем самим приложением, не библиотекой за кулисами.",
+                "source_of_confusion": "Прозрачные кэши (аннотации) существуют — но это другой паттерн.",
+                "if_it_were_true": "Явные шаги get/set в коде были бы не нужны.",
+                "how_it_should_be": "Приложение явно читает, пишет и назначает TTL."
+              }
             }
           ]
         }
@@ -1326,56 +1326,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как реализовать паттерн `Fallback Chain`?",
+          "question_text": "Как реализовать паттерн Fallback Chain?",
           "options": [
             {
-              "text": "`Fallback Chain` последовательно переключается на следующий источник при ошибке: основной сервис, резерв, кэш и финальная заглушка через цепочку `onErrorResume`.",
+              "label": "A",
+              "order": 0,
+              "text": "Ловить любую `Exception` без фильтра надёжнее: чем шире перехват, тем стабильнее цепочка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фильтруют по типу: широкий перехват маскирует баги вроде NPE.",
+                "source_of_confusion": "Широкая сеть выглядит надёжной — но прячет то, что надо чинить.",
+                "if_it_were_true": "Баг тихо подменялся бы заглушкой и жил вечно.",
+                "how_it_should_be": "Только ожидаемые сбои: ServiceUnavailable, CacheMiss."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Цепочка честно останавливает работу на первом же сбое: следующий источник не пробуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Суть паттерна — переключение на следующий источник при ошибке очередного.",
+                "source_of_confusion": "Поведение без fallback-ов и правда таково — паттерн его и чинит.",
+                "if_it_were_true": "Никакой цепочки не было бы — просто первый источник с ошибкой.",
+                "how_it_should_be": "Сбой звена — переход к следующему, пока кто-то не ответит."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Заглушку в конец не ставят: честнее упасть, чем отдать неполный ответ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Заглушка в конце гарантирует ответ всегда — пусть и неполный.",
+                "source_of_confusion": "«Честное падение» звучит принципиально, но рушит UX.",
+                "if_it_were_true": "Исчерпание цепочки роняло бы запрос после всех стараний.",
+                "how_it_should_be": "placeholder(sku) — финальный рубеж плавной деградации."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Источники по убыванию приоритета: каждое звено — `onErrorResume` на свой тип, заглушка гарантирует ответ.",
               "correct": true,
               "sections": {
-                "explanation": "Резервные источники нагружаются лениво — только когда предыдущий упал, поэтому в норме работает лишь основной путь, а деградация включается по мере отказов.",
-                "example": "Пример: `primaryCatalogService.findBySku(sku).onErrorResume(ServiceUnavailableException.class, ex -> secondaryCatalogService.findBySku(sku)).onErrorResume(ServiceUnavailableException.class, ex -> localCacheService.findBySku(sku)).onErrorResume(CacheMissException.class, ex -> Mono.just(ProductDto.placeholder(sku)))`.",
-                "when_to_apply": "Паттерн применяют, когда у данных есть несколько источников разной свежести и доступности и допустимо отдать менее свежий результат вместо полного отказа.",
-                "edge_cases": "Важно ловить конкретные типы ошибок: ловля общего `Throwable` на каждом звене скроет баги и преждевременно перейдёт на заглушку даже при программной ошибке.",
-                "related": "[[reactive-patterns-interview#Q4]] базовый fallback через `onErrorResume`; [[reactive-patterns-interview#Q22]] кэш как звено цепочки; [[reactive-patterns-interview#Q24]] hedging как параллельная альтернатива."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Fallback Chain` реализуют через `Mono.zip` всех источников сразу, выбирая из кортежа первый непустой результат.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Mono.zip` запускает все источники параллельно и ждёт всех, тогда как Fallback Chain переключается на следующий источник лишь после ошибки предыдущего, последовательно.",
-                "source_of_confusion": "Оба паттерна работают с несколькими источниками, поэтому их способы сборки смешивают.",
-                "if_it_were_true": "Если бы chain строился на `zip`, резервные источники нагружались бы всегда, даже когда основной успешно ответил.",
-                "how_it_should_be": "Fallback Chain строят цепочкой `onErrorResume`, где каждый следующий источник пробуется только при ошибке предыдущего."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Fallback Chain` реализуют через `retryWhen`, повторяя один и тот же источник, пока он не ответит.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Retry повторяет тот же источник, а Fallback Chain переключается на другой, резервный источник при ошибке текущего.",
-                "source_of_confusion": "И retry, и fallback реагируют на ошибку, поэтому их роли путают.",
-                "if_it_were_true": "Если бы chain был retry, при стабильно лежащем основном источнике резервные так и не были бы задействованы.",
-                "how_it_should_be": "Fallback Chain — последовательное переключение между разными источниками через `onErrorResume`, а не повтор одного и того же."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Fallback Chain` реализуют через `Mono.firstWithValue`, отправляя запросы во все источники параллельно и беря первый ответ.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Параллельная отправка во все источники с выбором первого ответа — это Hedging; Fallback Chain последователен и обращается к резерву только после ошибки.",
-                "source_of_confusion": "Оба паттерна используют несколько источников и термин «резерв», поэтому их смешивают.",
-                "if_it_were_true": "Если бы chain слал запросы во все источники сразу, он постоянно грузил бы резерв и кэш, теряя смысл «включать резерв только при отказе».",
-                "how_it_should_be": "Fallback Chain — последовательный `onErrorResume`; параллельный выбор первого ответа из нескольких источников — это Hedging."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Система деградирует плавно: основной → резерв → локальный кэш → заглушка.",
+                "example": "onErrorResume(ServiceUnavailableException.class, ex -> secondaryCatalogService.findBySku(sku)).",
+                "when_to_apply": "Каждое звено ловит свой тип и подставляет следующий источник.",
+                "edge_cases": "Без фильтра под фоллбэк попадёт и NullPointerException, который надо чинить.",
+                "related": "Перехватывать только ожидаемые сбои источника, не баги."
+              }
             }
           ]
         }
@@ -1386,56 +1386,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как реализовать паттерн `Hedging` (дублирующие запросы)?",
+          "question_text": "Как реализовать паттерн Hedging (дублирующие запросы)?",
           "options": [
             {
-              "text": "`Hedging` реализуют через `Mono.zip(primary, secondary)`, агрегируя оба ответа в один результат.",
+              "label": "A",
+              "order": 0,
+              "text": "`Hedging` одинаково хорош и для неидемпотентной записи; дубль запроса совершенно безвреден.",
               "correct": false,
               "sections": {
-                "what_actually": "`Mono.zip` ждёт оба источника и объединяет их, тогда как Hedging берёт только первый успешный ответ через `firstWithValue` и отменяет остальные.",
-                "source_of_confusion": "Оба паттерна запускают несколько вызовов параллельно, поэтому способ сбора результата путают.",
-                "if_it_were_true": "Если бы Hedging агрегировал оба ответа, он ждал бы самый медленный источник, что противоречит цели — снизить хвостовые задержки.",
-                "how_it_should_be": "Hedging берёт первый успешный ответ через `Mono.firstWithValue(...)`; агрегация всех ответов — это Scatter-Gather через `zip`."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "Применять стоит к идемпотентным чтениям: дубль записи — двойная операция.",
+                "source_of_confusion": "Выигрыш латентности заслоняет побочный эффект дубля.",
+                "if_it_were_true": "Два списания за один платёж стали бы штатным исходом.",
+                "how_it_should_be": "Чтения — можно; запись — только с гарантией идемпотентности."
+              }
             },
             {
-              "text": "`Hedging` — отправить запрос нескольким серверам одновременно и взять первый успешный ответ; это снижает хвостовые задержки.",
+              "label": "B",
+              "order": 1,
+              "text": "`Hedging` в разы снижает среднюю латентность абсолютно всех запросов приложения, а не хвосты p999.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Средняя латентность почти не меняется — hedging лечит именно хвосты p99/p999.",
+                "source_of_confusion": "«Быстрее отвечает» обобщается со случая хвоста на всё распределение.",
+                "if_it_were_true": "Дублировать стоило бы каждый запрос всегда — а это дорого и зря.",
+                "how_it_should_be": "Оценивать эффект по перцентилям хвоста, не по среднему."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Дублирующий запрос и первый успешный ответ (`Mono.firstWithValue`); запасной стартует позже через `delaySubscription` — срезает p99-хвосты.",
               "correct": true,
               "sections": {
-                "explanation": "Второй запрос стартует с небольшой задержкой (например 50 мс): если основной ответил быстро, дубль не понадобится, а если завис — первый успешный ответ придёт от резерва.",
-                "example": "Пример: `Mono.firstWithValue(primaryService.findById(id), secondaryService.findById(id).delaySubscription(Duration.ofMillis(50)))`; для N источников — `Mono.firstWithValue(node1.search(q), node2.search(q), node3.search(q))`.",
-                "when_to_apply": "Hedging применяют для read-only идемпотентных запросов с жёсткими требованиями к хвостовой задержке, где допустимо потратить лишние ресурсы ради стабильного p99.",
-                "edge_cases": "Hedging увеличивает нагрузку (дублирующие запросы) и опасен для неидемпотентных операций — два списания вместо одного; поэтому его ограничивают чтениями и задержкой старта дубля.",
-                "related": "[[reactive-patterns-interview#Q9]] `delaySubscription` для отложенного дубля; [[reactive-patterns-interview#Q13]] Scatter-Gather как агрегирующий fan-out; [[reactive-patterns-interview#Q23]] Fallback Chain как последовательная альтернатива."
-              },
-              "label": "B",
-              "order": 1
+                "explanation": "Медленный отдельный узел не задержит весь запрос: ответит другой.",
+                "example": "Mono.firstWithValue(primary, secondary.delaySubscription(ofMillis(50))) — запасной стартует позже.",
+                "when_to_apply": "Редкие «застрявшие» запросы перестают тянуть хвост распределения вверх.",
+                "edge_cases": "Задержка запасного бережёт бэкенд: дубль уйдёт, лишь если основной не уложился.",
+                "related": "Компромисс — рост суммарного объёма запросов к бэкенду."
+              }
             },
             {
-              "text": "`Hedging` реализуют через `retryWhen`, быстро повторяя запрос к тому же серверу при медленном ответе.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Retry повторяет к тому же серверу после завершения попытки, а Hedging параллельно дублирует запрос на другой сервер, не отменяя первый сразу.",
-                "source_of_confusion": "Retry и Hedging оба борются с неудачным/медленным вызовом, поэтому их смешивают.",
-                "if_it_were_true": "Если бы Hedging был retry к тому же серверу, медленный сервер так и оставался бы медленным на повторе, не снижая p99.",
-                "how_it_should_be": "Hedging шлёт параллельный дубль на другой источник и берёт первый ответ; повтор к тому же серверу — это retry."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Hedging` реализуют через `onErrorResume`, переключаясь на второй сервис только после ошибки первого.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Переключение на резерв после ошибки — это Fallback Chain; Hedging запускает дублирующий запрос параллельно (часто с небольшой задержкой), не дожидаясь ошибки первого.",
-                "source_of_confusion": "И Hedging, и Fallback используют несколько источников, поэтому их стратегии путают.",
-                "if_it_were_true": "Если бы Hedging ждал ошибки первого, он не помогал бы против медленного (но не упавшего) ответа, ради чего его и применяют.",
-                "how_it_should_be": "Hedging стартует дубликаты параллельно и берёт первый успешный; последовательное переключение по ошибке — это Fallback Chain."
-              },
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "`Mono.firstWithValue` мгновенно пробрасывает наружу первую же ошибку любого из своих источников.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ошибки игнорируются, пока есть надежда на другие источники.",
+                "source_of_confusion": "Привычка zip-семантики «первая ошибка валит всё».",
+                "if_it_were_true": "Быстрый отказ одного узла отменял бы медленный успех другого.",
+                "how_it_should_be": "firstWithValue ждёт первое значение, а не первый сигнал."
+              }
             }
           ]
         }
@@ -1446,56 +1446,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое паттерн `Request Coalescing`?",
+          "question_text": "Что такое паттерн Request Coalescing?",
           "options": [
             {
-              "text": "`Request Coalescing` объединяет одновременно выполняемые одинаковые запросы в один вызов и передаёт общий результат всем ожидающим клиентам.",
+              "label": "A",
+              "order": 0,
+              "text": "Одинаковые одновременные запросы схлопываются в один: computeIfAbsent и `cache()` раздают результат всем, `doFinally` чистит карту.",
               "correct": true,
               "sections": {
-                "explanation": "Это защита от cache stampede: при промахе кэша на популярном ключе без coalescing все сразу ломятся в БД, а с ним один запрос «лидирует», остальные ждут его результата.",
-                "example": "Реализация в Reactor — `ConcurrentHashMap` in-flight запросов плюс `Mono.cache()`: `inFlight.computeIfAbsent(id, key -> repo.findById(key).cache().doFinally(s -> inFlight.remove(key)))`.",
-                "when_to_apply": "Паттерн применяют для дорогих идемпотентных чтений по одному ключу под высокой конкурентной нагрузкой — горячие товары, профили, конфигурации.",
-                "edge_cases": "Важно убрать запись из in-flight карты в `doFinally`, иначе устаревший `cache()`-результат залипнет навсегда; а ключ должен точно идентифицировать «одинаковость» запроса.",
-                "related": "[[reactive-patterns-interview#Q22]] Cache-Aside, чьи промахи и порождают stampede; [[reactive-patterns-interview#Q24]] Hedging как противоположность (наоборот, дублирует запросы); [[reactive-patterns-interview#Q26]] debounce как родственное прореживание."
-              },
-              "label": "A",
-              "order": 0
+                "explanation": "100 одновременных запросов одного ресурса — в источник уходит ровно один.",
+                "example": "inFlight.computeIfAbsent(id, key -> repo.findById(key).cache().doFinally(s -> inFlight.remove(key))).",
+                "when_to_apply": "Прямое лекарство от cache stampede при промахах кэша.",
+                "edge_cases": "cache() memoize-ит результат для всех подписчиков одного Mono.",
+                "related": "doFinally убирает запись, чтобы следующий запрос пошёл в источник заново."
+              }
             },
             {
-              "text": "`Request Coalescing` собирает разные запросы одного клиента в пакет ради уменьшения числа сетевых round trip, даже когда ключи и результаты не совпадают.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Coalescing объединяет одинаковые (по ключу) запросы от разных вызывающих в один, а не разнородные запросы одного клиента в батч.",
-                "source_of_confusion": "И батчинг, и coalescing «объединяют запросы», поэтому их легко перепутать.",
-                "if_it_were_true": "Если бы coalescing батчил разные запросы, ему не нужен был бы общий `Mono.cache()` на один ключ, на котором он и держится.",
-                "how_it_should_be": "`Request Coalescing` схлопывает идентичные параллельные запросы в один разделяемый результат; объединение разных запросов в пачку — это batching."
-              },
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Request Coalescing` отклоняет все дубликаты ошибкой «уже выполняется», оставляя результат только первому запросу и не связывая его с остальными ожидающими.",
+              "order": 1,
+              "text": "При `coalescing` каждый ожидающий всё равно самостоятельно ходит в источник данных — просто строго по очереди.",
               "correct": false,
               "sections": {
-                "what_actually": "Coalescing не отклоняет дубликаты, а подключает их к одному выполняющемуся запросу и раздаёт всем общий результат.",
-                "source_of_confusion": "Идея «лишние дубли не нужны» подталкивает к выводу об их отклонении вместо разделения результата.",
-                "if_it_were_true": "Если бы дубли отклонялись ошибкой, 99 из 100 пользователей получили бы отказ вместо данных, что противоречит цели паттерна.",
-                "how_it_should_be": "`Request Coalescing` отдаёт всем дубликатам один общий результат через `Mono.cache()`, а не отклоняет их."
-              },
+                "what_actually": "Работа выполняется один раз; остальные подписываются на тот же Mono.",
+                "source_of_confusion": "«По очереди» кажется вежливым вариантом — но это всё ещё сто запросов.",
+                "if_it_were_true": "Нагрузка на источник не снизилась бы, лишь растянулась.",
+                "how_it_should_be": "Один полёт — один запрос; результат раздаётся всем ожидающим."
+              }
+            },
+            {
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Request Coalescing` разбивает один крупный запрос на несколько независимых параллельных частей, а затем объединяет их ответы для сокращения общей задержки.",
+              "order": 2,
+              "text": "Запись из карты «летящих» вовсе не убирают: пусть результат `cache()` хранится там вечно.",
               "correct": false,
               "sections": {
-                "what_actually": "Разбиение одного запроса на параллельные части — это fan-out/Scatter-Gather, а coalescing, наоборот, схлопывает много одинаковых запросов в один.",
-                "source_of_confusion": "Слово «coalescing» неочевидно и его принимают за «распараллеливание», а не «слияние».",
-                "if_it_were_true": "Если бы coalescing разбивал запрос, он увеличивал бы число обращений к источнику, а его цель прямо противоположна — уменьшить их.",
-                "how_it_should_be": "`Request Coalescing` сливает дубликаты в один вызов; разбиение запроса на параллельные части — это Scatter-Gather."
-              },
+                "what_actually": "doFinally удаляет запись после завершения — иначе результат застынет навечно.",
+                "source_of_confusion": "«Раз уж закэшировали» — но карта полётов не кэш данных.",
+                "if_it_were_true": "Обновлённые данные никогда бы не перечитались из источника.",
+                "how_it_should_be": "Карта хранит только «летящие» запросы, не их историю."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "`Request Coalescing` лишь усугубляет cache stampede: суммарных запросов к источнику становится только больше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Coalescing — лекарство от stampede: бьёт только первый, остальные ждут.",
+                "source_of_confusion": "Слова «сто ожидающих» пугают — но они ждут один результат.",
+                "if_it_were_true": "Паттерн рекомендовали бы избегать, а не применять.",
+                "how_it_should_be": "Промахи схлопываются: БД видит один запрос вместо ста."
+              }
             }
           ]
         }
@@ -1506,56 +1506,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как реализовать паттерн `Debounce`/`Throttle` в Reactor?",
+          "question_text": "Как реализовать паттерн Debounce/Throttle в Reactor?",
           "options": [
             {
-              "text": "`sampleTimeout`, `sampleFirst` и `sample` буферизуют все элементы за период и отдают их пачкой по истечении времени. И прореживание, и `buffer` группируют события по времени.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Эти операторы прореживают поток, оставляя одно значение (первое/последнее/после паузы), а не собирают пачку; батч по времени делает `buffer(Duration)`.",
-                "source_of_confusion": "И прореживание, и `buffer` группируют события по времени, поэтому их поведение смешивают.",
-                "if_it_were_true": "Если бы они отдавали пачку, поиск по вводу запускался бы на каждый символ скопом, а не один раз после паузы.",
-                "how_it_should_be": "`sampleTimeout`/`sampleFirst`/`sample` эмитят одиночные значения для разрядки потока; пачку за период собирает `buffer(Duration)`."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`sampleTimeout` и `sampleFirst` гарантируют доставку каждого элемента, лишь равномерно растягивая их во времени с фиксированной задержкой. «Притормозить поток» звучит как «задержать всё».",
+              "order": 0,
+              "text": "`sampleFirst(Duration)` отдаёт самый последний элемент каждого периода, глуша все ранние.",
               "correct": false,
               "sections": {
-                "what_actually": "Эти операторы намеренно отбрасывают часть элементов (промежуточные значения теряются), а не доставляют все с задержкой; равномерную задержку даёт `delayElements`.",
-                "source_of_confusion": "«Притормозить поток» звучит как «задержать всё», отсюда вывод о доставке каждого элемента.",
-                "if_it_were_true": "Если бы `sampleTimeout` доставлял каждый символ ввода с задержкой, он не уменьшал бы число поисковых запросов, ради чего его и берут.",
-                "how_it_should_be": "`sampleTimeout`/`sampleFirst`/`sample` прореживают поток, теряя лишние элементы; равномерную задержку без потерь даёт `delayElements(Duration)`."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "sampleFirst пропускает первый элемент периода; последний отдаёт sample.",
+                "source_of_confusion": "Три sample-имени различаются одним словом — роли плывут.",
+                "if_it_were_true": "Защита от дабл-клика пропускала бы последний клик серии.",
+                "how_it_should_be": "First — первый в окне; sample — последний; Timeout — после паузы."
+              }
             },
             {
-              "text": "`sampleTimeout` откладывает элемент, пока поток не замолчит на заданное время; `sampleFirst(Duration)` пропускает только первый элемент за период; `sample(Duration)` берёт последний элемент за период.",
+              "label": "B",
+              "order": 1,
+              "text": "`sampleTimeout` принимает самый обычный `Duration` — одно общее фиксированное окно тишины сразу для всех элементов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "sampleTimeout принимает функцию-компаньон: окно тишины вычисляется на элемент.",
+                "source_of_confusion": "Соседние операторы берут Duration — сигнатура обобщается.",
+                "if_it_were_true": "Вызов sampleTimeout(v -> Mono.delay(d)) не компилировался бы.",
+                "how_it_should_be": "Функция от элемента к Publisher-таймеру тишины."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`sampleTimeout` ждёт тишины (поиск по вводу), `sampleFirst` — первый в окне (дабл-клики), `sample` — только последний (метрики).",
               "correct": true,
               "sections": {
-                "explanation": "Все три прореживают слишком частый поток, но по-разному: `sampleTimeout` реагирует на «тишину», `sampleFirst` ограничивает частоту по первому событию, `sample` снимает значение по таймеру.",
-                "example": "Пример: `searchInput.sampleTimeout(q -> Mono.delay(Duration.ofMillis(300))).distinctUntilChanged().flatMap(q -> searchService.search(q))` для поиска и `clickEvents.sampleFirst(Duration.ofSeconds(1))` для ограничения кликов.",
-                "when_to_apply": "Эти операторы применяют для UI-событий (ввод, клики), потоков датчиков и котировок, где обрабатывать каждое событие избыточно и нужна разрядка нагрузки.",
-                "edge_cases": "`sampleTimeout` может вообще не эмитить элемент, если поток никогда не замолкает (непрерывный ввод), а `sample`/`sampleFirst` теряют промежуточные значения — это осознанный компромисс прореживания.",
-                "related": "[[reactive-patterns-interview#Q21]] `onBackpressureDrop`/`Latest` как смежное прореживание; [[reactive-patterns-interview#Q25]] Request Coalescing для дублей; [[reactive-patterns-interview#Q19]] backpressure при быстром источнике."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Три способа проредить частый поток — выбор по нужному элементу периода.",
+                "example": "searchInput.sampleTimeout(q -> Mono.delay(ofMillis(300))).distinctUntilChanged().flatMap(search) — поиск после паузы ввода.",
+                "when_to_apply": "Запрос уходит, когда пользователь перестал печатать, а не на каждое нажатие.",
+                "edge_cases": "sample(ofSeconds(5)) — свежий снимок раз в период для котировок.",
+                "related": "Соответствие имён: debounce → sampleTimeout, throttleFirst → sampleFirst."
+              }
             },
             {
-              "text": "`sampleTimeout` пропускает первый элемент за период и игнорирует остальные, а `sampleFirst` ждёт тишины перед эмиссией. Оба оператора прореживают поток по времени.",
+              "label": "D",
+              "order": 3,
+              "text": "В `Reactor` есть свой родной встроенный оператор `debounce` — ровно как в привычной всем `RxJava`.",
               "correct": false,
               "sections": {
-                "what_actually": "Роли перепутаны: тишины ждёт `sampleTimeout` (эмитит элемент после паузы во вводе), а первый за период пропускает `sampleFirst`.",
-                "source_of_confusion": "Оба оператора прореживают поток по времени, поэтому их поведение легко поменять местами.",
-                "if_it_were_true": "Если бы `sampleTimeout` пропускал первый элемент сразу, он не годился бы для поиска по вводу, где нужна именно пауза в наборе.",
-                "how_it_should_be": "`sampleTimeout` эмитит элемент после паузы в потоке; `sampleFirst` пропускает первый элемент за период — это разные стратегии."
-              },
-              "label": "D",
-              "order": 3
+                "what_actually": "debounce и throttleFirst — операторы RxJava; в Reactor их просто нет.",
+                "source_of_confusion": "Известные имена из RxJava ищут в Reactor по привычке.",
+                "if_it_were_true": "Маппинг имён между двумя библиотеками был бы не нужен.",
+                "how_it_should_be": "Искать sampleTimeout/sampleFirst — реакторные эквиваленты."
+              }
             }
           ]
         }
