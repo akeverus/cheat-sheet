@@ -28,7 +28,12 @@ module.exports = defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    // WebKit гоняет ТОЛЬКО клавиатурный спек: visual-baselines сняты в Chromium,
+    // и полный webkit-прогон матрицы дал бы ложные пиксельные диффы.
+    { name: 'webkit', use: { ...devices['Desktop Safari'] }, testMatch: /keyboard-quiz\.spec\.js/ },
+  ],
   webServer: process.env.E2E_START_SERVER === '1'
     ? {
         command: '../gradlew :quiz-app:bootRun -q',

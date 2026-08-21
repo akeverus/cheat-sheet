@@ -1,9 +1,18 @@
 const { test, expect } = require('@playwright/test');
 
 /**
- * TEST-006 — полный MCQ-ответ только с клавиатуры (без мыши).
+ * TEST-006 — основной цикл только с клавиатуры (без мыши), в обоих движках.
  * Предусловие: приложение на E2E_BASE_URL (default http://localhost:8080).
+ *
+ * Конвенция движков (замер iter-160): WebKit, как и настольный Safari, по
+ * умолчанию НЕ включает кнопки и ссылки в обход по Tab — по ним ходит
+ * Option+Tab (в Playwright — 'Alt+Tab'). 80 нажатий Tab в WebKit так и не
+ * дошли до кнопки старта, Alt+Tab дошёл за 19 — как и Tab в Chromium.
+ * Это поведение платформы, а не дефект продукта; спек обязан говорить
+ * с каждым движком на его языке, иначе WebKit-прогон ложно красный.
  */
+const tabKey = (browserName) => (browserName === 'webkit' ? 'Alt+Tab' : 'Tab');
+
 test.describe('keyboard quiz flow', () => {
   test('skip-link activates main, digit selects, Enter submits feedback', async ({ page }) => {
     await page.goto('/');
@@ -54,5 +63,65 @@ test.describe('keyboard quiz flow', () => {
 
     await page.keyboard.press('ArrowDown');
     await expect(options.nth(1)).toBeChecked();
+  });
+
+  /**
+   * Полная цепочка: конструктор → старт → выбор → отправка → фокус в разборе →
+   * «Следующий вопрос». Раньше проверялся только ответ на уже открытом вопросе;
+   * старт сессии и переход к следующему вопросу клавиатурой не покрывались нигде.
+   */
+  test('full cycle: start from builder, answer, reach next question', async ({ page, browserName }) => {
+    const TAB = tabKey(browserName);
+    await page.goto('/settings');
+
+    // 1. Табом до кнопки старта конструктора (по пути — поля формы, это нормально)
+    let reachedStart = false;
+    for (let i = 0; i < 80; i++) {
+      await page.keyboard.press(TAB);
+      const cls = await page.evaluate(() => (document.activeElement.className || '').toString());
+      if (cls.includes('builder-start-cta')) { reachedStart = true; break; }
+    }
+    expect(reachedStart, 'кнопка старта недостижима с клавиатуры').toBe(true);
+
+    // 2. Enter стартует сессию и приводит на вопрос
+    await Promise.all([
+      page.waitForURL(/\/(\?.*)?$/, { timeout: 20_000 }),
+      page.keyboard.press('Enter'),
+    ]);
+
+    const options = page.locator('#interview-options input[type="radio"]');
+    test.skip((await options.count()) === 0, 'Первый вопрос без вариантов (flashcard)');
+
+    // 3. Горячая клавиша «1» выбирает, стрелка меняет выбор
+    await page.keyboard.press('1');
+    await expect(options.nth(0)).toBeChecked();
+    await page.keyboard.press('ArrowDown');
+    await expect(options.nth(1)).toBeChecked();
+
+    // 4. Enter отправляет; вердикт появляется, фокус — в приёмнике разбора
+    await page.keyboard.press('Enter');
+    const feedback = page.locator('#result-feedback');
+    await expect(feedback).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('.feedback-verdict').first()).toBeVisible();
+    const focusInFeedback = await page.evaluate(() =>
+      !!document.activeElement.closest('#result-feedback, .result-feedback'));
+    expect(focusInFeedback, 'фокус после ответа обязан быть в разборе').toBe(true);
+
+    // 5. Первый же таб из разбора — «Следующий вопрос» (порядок FRD-186/AnsweredOrder)
+    let reachedNext = false;
+    for (let i = 0; i < 30; i++) {
+      await page.keyboard.press(TAB);
+      const text = await page.evaluate(() => (document.activeElement.textContent || '').trim());
+      if (/Следующий вопрос/.test(text)) { reachedNext = true; break; }
+    }
+    expect(reachedNext, '«Следующий вопрос» недостижим с клавиатуры').toBe(true);
+
+    // 6. Enter ведёт к следующему вопросу
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'load' }).catch(() => null),
+      page.keyboard.press('Enter'),
+    ]);
+    await expect(page.locator('#interview-options, .flashcard-phase').first())
+      .toBeVisible({ timeout: 20_000 });
   });
 });
