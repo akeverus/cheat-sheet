@@ -1,14 +1,23 @@
 {
   "topic_slug": "spring-async-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
-  "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+  "version_sensitive": true,
+  "product_version": "Spring Framework 6.x/7.x, Spring Boot 3.x",
+  "checked_date": "2026-08-23",
+  "sources": [
+    "https://github.com/spring-projects/spring-framework/blob/main/spring-aop/src/main/java/org/springframework/aop/interceptor/AsyncExecutionInterceptor.java",
+    "https://github.com/spring-projects/spring-framework/blob/main/spring-aop/src/main/java/org/springframework/aop/interceptor/AsyncExecutionAspectSupport.java",
+    "https://github.com/spring-projects/spring-framework/blob/main/framework-docs/modules/ROOT/pages/integration/scheduling.adoc",
+    "https://github.com/spring-projects/spring-framework/wiki/Spring-Framework-6.0-Release-Notes",
+    "https://github.com/spring-projects/spring-boot/blob/main/core/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/task/TaskExecutionProperties.java",
+    "https://github.com/spring-projects/spring-boot/blob/main/core/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/task/TaskExecutorConfigurations.java",
+    "https://github.com/spring-projects/spring-boot/blob/main/core/spring-boot/src/main/java/org/springframework/boot/thread/Threading.java"
+  ],
+  "version_sensitive_claims": [
+    "AsyncExecutionInterceptor.getDefaultExecutor подставляет SimpleAsyncTaskExecutor, только если бина TaskExecutor (и бина с именем taskExecutor) в контексте нет.",
+    "Spring Boot автоконфигурирует applicationTaskExecutor: ThreadPoolTaskExecutor с core-size 8, max-size и queue-capacity = Integer.MAX_VALUE (TaskExecutionProperties).",
+    "При spring.threads.virtual.enabled=true на Java 21+ Boot отдаёт SimpleAsyncTaskExecutor на виртуальных потоках (Threading.VIRTUAL, @ConditionalOnThreading).",
+    "С 6.0 тип возврата @Async проверяется активно: AsyncExecutionAspectSupport.doSubmit бросает IllegalArgumentException «Invalid return type for async method (only Future and void supported)». До 6.0 метод молча возвращал null.",
+    "ListenableFuture: deprecated с 6.0, удалён в 7.0 — файла нет в ветке main, есть в 6.1.x и 6.2.x.",
+    "ThreadPoolTaskExecutor наследует InitializingBean через ExecutorConfigurationSupport, поэтому у @Bean initialize() вызывает контейнер; в примере из документации Spring его не зовут."
   ]
 }

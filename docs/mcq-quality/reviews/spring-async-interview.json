@@ -1,1170 +1,677 @@
 {
   "topic_slug": "spring-async-interview",
-  "round": 9,
-  "reviewed_commit": "b51d1edf",
-  "status": "FINAL",
-  "source_file": "modules/quiz-app/src/main/resources/seed/mcq/frameworks/spring/spring-async-interview.json",
-  "theory_file": "cheatsheets/interview/frameworks/spring/spring-async-interview.md",
-  "summary": {
-    "questions": 15,
-    "blocks": 15,
-    "blocks_done": 15,
-    "critical": 0,
-    "high": 0,
-    "medium": 0,
-    "low": 0
+  "source_cheatsheet": "cheatsheets/interview/frameworks/spring/spring-async-interview.md",
+  "seed_file": "modules/quiz-app/src/main/resources/seed/mcq/frameworks/spring/spring-async-interview.json",
+  "round": "ROUND-10 LINKAGE-FIRST FULL REBUILD",
+  "rebuilt_from_scratch": true,
+  "audited": "2026-08-23",
+  "blocks_total": 15,
+  "options_total": 60,
+  "source_repairs": {
+    "commit": "bff736bd",
+    "fact_freshness": "docs/mcq-quality/fact-freshness/spring-async-interview.json",
+    "items": [
+      "Q4: развилка «до Spring Boot 3.2 SimpleAsyncTaskExecutor, 3.2+ ThreadPoolTaskExecutor» построена не на той оси. По коду AsyncExecutionInterceptor.getDefaultExecutor фолбэк на SimpleAsyncTaskExecutor срабатывает, только когда бина TaskExecutor нет вовсе; Boot автоконфигурирует applicationTaskExecutor, и до фолбэка не доходит. В 3.2 появились виртуальные потоки: при spring.threads.virtual.enabled=true Boot снова отдаёт SimpleAsyncTaskExecutor, но уже на виртуальных потоках. Раздел переписан по двум реальным осям.",
+      "Q2: «Любой другой тип возврата → вернётся null» — поведение до Spring 6.0. С 6.0 проверка активная: doSubmit бросает IllegalArgumentException «only Future and void supported».",
+      "Q2: ListenableFuture помечен просто deprecated — он deprecated с 6.0 и удалён в 7.0 (файла нет в main, есть в 6.1.x и 6.2.x).",
+      "Q5: «обязательно вызовите initialize(), иначе бин не работает» неверно для @Bean: ThreadPoolTaskExecutor наследует InitializingBean, afterPropertiesSet() дёргает контейнер. Явный вызов нужен только вне контейнера — в AsyncConfigurer.getAsyncExecutor()."
+    ]
   },
-  "reset_baseline": {
-    "reset_date": "2026-07-17",
-    "old_pass_carried_forward": false,
-    "schema_precheck": "PASS",
-    "structural_invariants_precheck": "PASS",
-    "theory_file_present": true,
-    "json_q_numbers": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15
-    ],
-    "theory_q_numbers": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15
-    ],
-    "missing_theory_q_numbers": [],
-    "extra_theory_q_numbers": [],
-    "current_correct_positions": [
-      "B",
-      "D",
-      "C",
-      "A",
-      "D",
-      "C",
-      "A",
-      "A",
-      "A",
-      "C",
-      "C",
-      "B",
-      "D",
-      "B",
-      "B"
-    ],
-    "acceptance_note": "Baseline diagnostics are not ROUND 9 acceptance evidence."
+  "acceptance": {
+    "criterion": "два полных чистых круга подряд без правок между ними",
+    "rounds": [
+      {
+        "n": 1,
+        "lenses": [
+          "все 60 вариантов против материала своего Q: выводимость верного и опровержимость каждого дистрактора"
+        ],
+        "findings": [
+          "Q15: верный вариант утверждал, что supplyAsync «требует передать executor», хотя в таблице стоит «ForkJoinPool или custom»; формулировка не только неточна, но и противоречила соседнему дистрактору про поведение без явного executor"
+        ]
+      },
+      {
+        "n": 2,
+        "lenses": [
+          "секции против материала: латиница вне своего Q, числа, мета-отсылки"
+        ],
+        "findings": [
+          "Q6: в секциях стояли future и exceptionally, которых в материале Q6 нет (они из Q7)",
+          "Q3: англицизм «прокси-based»",
+          "Q5: отсылка к «документации Spring», которой в Q5 нет",
+          "Q15: свойство spring.task.execution из материала Q4"
+        ]
+      },
+      {
+        "n": 3,
+        "lenses": [
+          "логика if_it_were_true во всех 45 дистракторах"
+        ],
+        "findings": [
+          "Q1: следствие про приватные методы говорило про внутренние вызовы — другая ось",
+          "Q5: следствие ссылалось на пример, который как раз зовёт initialize()",
+          "Q9: «заметен по пропавшему результату» у void-метода",
+          "Q12: расплывчатое «типизированный результат появлялся бы сам собой»"
+        ]
+      },
+      {
+        "n": 4,
+        "lenses": [
+          "язык: слова-затычки, канцелярит, согласование"
+        ],
+        "findings": [
+          "пять правок: «остаётся здесь именно», «голый фреймворк», «требования идут из одного», «зовут императивно вручную», «тоже всегда исправно»"
+        ]
+      },
+      {
+        "n": 5,
+        "lenses": [
+          "числа и сущности против своего Q",
+          "посторонние символы",
+          "детерминизм пересборки",
+          "полная батарея гейтов"
+        ],
+        "findings": [],
+        "clean": true,
+        "note": "расхождений по цифрам ноль; словесные числительные (два шага, восемь потоков, три политики отклонения, две вещи AsyncConfigurer, три параметра обработчика, три вызова и три future, три решения для тестов, два способа в Q15) сверены поштучно"
+      },
+      {
+        "n": 6,
+        "lenses": [
+          "симуляция студента: прочитан только свой Q",
+          "проверка утечки материала соседних Q"
+        ],
+        "findings": [],
+        "clean": true,
+        "note": "во всех 15 блоках верный вариант находится по прямой фразе своего Q. Термины соседних тем (@PostConstruct в Q3, @Async(\"имя\") в Q6, CompletableFuture в Q8, @Transactional и @Cacheable в Q9, new в Q11) встречаются в материале самого Q"
+      }
+    ]
   },
+  "gates": {
+    "jsonschema": "OK",
+    "mcq-linkage-scan": "errors=0, warnings=1 (LOW-COVERAGE q11, разобран вручную)",
+    "mcq-anti-tell-scan": "0 подсказок на 15 блоков",
+    "mcq-answer-parity-gate": "PASS 12/12",
+    "parity_detail": {
+      "CORRECT_LONGEST_RATE": 0.0,
+      "OPTION_LENGTH_RATIO": 1.22,
+      "CORRECT_WRONG_AVG_RATIO": 1.04,
+      "SENTENCE_PARITY": 0,
+      "DETAIL_PARITY": 0.0,
+      "ABSOLUTE_MARKER_GAP": 0.044,
+      "CORRECT_POSITION_DISTRIBUTION": 1.33,
+      "CORRECT_POSITION_SEQUENCE": 3,
+      "DUPLICATE_NGRAMS": 0,
+      "SOURCE_COVERAGE": "n/a",
+      "STYLE_GUESSABILITY": 0.311
+    },
+    "own_scans": {
+      "категоричность_как_канал": 0.244,
+      "смешанный_скрипт": 0,
+      "посторонние_символы": 0,
+      "кросс-блочные_дубли_опций": 0,
+      "повторы_5-грамм_между_блоками": 0,
+      "what_actually≈how_it_should_be": 0
+    }
+  },
+  "low_coverage_manual_review": {
+    "verdict": "опровержим из своего Q",
+    "items": [
+      "Q11: дистрактор про объект, созданный через new, опровергается пунктом «Класс — это Spring bean: прокси создаётся только для бинов контейнера; на new MyService() AOP не действует». Низкое лексическое пересечение — артефакт русского пересказа"
+    ]
+  },
+  "structural_overlaps": [
+    "Q1, Q3, Q9 и Q11 опираются на один механизм прокси: в Q1 это итоговая ремарка, в Q3 — сам механизм, в Q9 — self-invocation, в Q11 — требования к методу; якорные тезисы разные",
+    "Q4 и Q5 идут парой про исполнителя: в Q4 проверяется, откуда берётся дефолт, в Q5 — порядок заполнения пула и очереди",
+    "Q6, Q7 и Q8 делят тему обработки ошибок: конфигуратор, выбор способа по типу возврата и сам обработчик",
+    "Q2, Q12 и Q15 упоминают CompletableFuture: как допустимый тип возврата, как способ склейки и как императивную альтернативу",
+    "Q10 и Q13 оба про ThreadLocal, но в Q10 это транзакция, а в Q13 — контекст безопасности и логирования"
+  ],
+  "notes": [
+    "question_text во всех 15 блоках — нормализованная копия видимого заголовка ## Q<N> (проверено машинно)",
+    "Пересборка детерминирована: sa_specs_a.py + sa_specs_b.py + sa_build.py + sa_target.txt дают побайтово тот же файл",
+    "Позиции верного подобраны перебором против точной копии функции прогонов из гейта: A/B/C/D = 4/4/4/3, длиннейший арифметический прогон 3 при пороге 5",
+    "Все 60 вариантов написаны реальными именами API из своего Q (@EnableAsync, TaskExecutor, corePoolSize, CallerRunsPolicy, AsyncConfigurer, ThreadLocal, CGLIB, allOf, TaskDecorator, SyncTaskExecutor, supplyAsync)"
+  ],
   "blocks": [
     {
       "q_number": 1,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Что такое @Async и как его включить?",
+      "tested_claim": "Нужны ровно два шага — `@EnableAsync` на конфигурации и пометка нужных методов аннотацией.",
+      "source_evidence": [
+        "Чтобы `@Async` заработал, нужно два шага: включить поддержку аннотацией `@EnableAsync` и пометить методы `@Async`.",
+        "`@Async` — аннотация, которая заставляет Spring выполнять метод в отдельном потоке вместо текущего."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 2,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Какие типы возврата поддерживает @Async?",
+      "tested_claim": "Допустимы только `void` и `Future`-типы, на любом другом вызов падает с исключением.",
+      "source_evidence": [
+        "Раньше такой метод молча возвращал `null`, и ошибку замечали не сразу.",
+        "Метод может либо ничего не возвращать (`void`), либо возвращать «обещание» результата — `Future`-подобный тип, через который вызывающий код потом заберёт значение."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 3,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как работает @Async под капотом?",
+      "tested_claim": "Прокси не выполняет тело, а отдаёт задачу `TaskExecutor` и сразу возвращает управление.",
+      "source_evidence": [
+        "При старте `@EnableAsync` находит бины с `@Async`-методами и оборачивает каждый в прокси.",
+        "Когда вы зовёте такой метод, обращение сначала попадает в прокси: он не выполняет тело сам, а упаковывает его в задачу и отдаёт `TaskExecutor`, после чего мгновенно возвращает управление вызывающему (`CompletableFuture`, если метод его возвращает, либо `null`)"
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 4,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Какой executor используется по умолчанию?",
+      "tested_claim": "Boot автоконфигурирует пул, а чистый Spring без бина `TaskExecutor` даёт поток на вызов.",
+      "source_evidence": [
+        "Spring Boot: автоконфигурация сама создаёт бин `applicationTaskExecutor`, и до фолбэка дело не доходит.",
+        "Чистый Spring Framework, без Boot: если подходящего бина `TaskExecutor` в контексте нет, `AsyncExecutionInterceptor` подставляет `SimpleAsyncTaskExecutor`."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 5,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как сконфигурировать кастомный TaskExecutor?",
+      "tested_claim": "Сначала заполняется `corePoolSize`, потом очередь, и лишь после её переполнения пул растёт.",
+      "source_evidence": [
+        "Поэтому при большой `queueCapacity` `maxPoolSize` почти никогда не достигается — об этом часто спрашивают.",
+        "Объявите бин `ThreadPoolTaskExecutor` и настройте размеры пула и очередь."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L3",
+      "linkage_note": "опровержение дистрактора про initialize() читается из оговорки в конце раздела, а не из основного тезиса",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 6,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Что такое AsyncConfigurer?",
+      "tested_claim": "Он задаёт сразу две вещи — пул по умолчанию и обработчик исключений `void`-методов.",
+      "source_evidence": [
+        "`AsyncConfigurer` — интерфейс конфигурации, который задаёт сразу две вещи для всего приложения: executor по умолчанию (используется для `@Async` без явного имени) и обработчик необработанных исключений для `void`-методов.",
+        "`AsyncConfigurer` задаёт executor по умолчанию — его получают все `@Async` без аргумента."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 7,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как обрабатывать исключения в @Async методах?",
+      "tested_claim": "`try/catch` вокруг вызова бесполезен — метод падает позже и в чужом потоке.",
+      "source_evidence": [
+        "Способ зависит от типа возврата, потому что метод выполняется на другом потоке — обычный `try/catch` вокруг вызова бесполезен: к моменту его выхода async-метод ещё даже не начал работать, исключение возникнет позже и в чужом потоке.",
+        "Метод возвращает `CompletableFuture` — исключение «упаковывается» в future, и его ловят на стороне вызывающего через `.exceptionally()` / `.handle()` (или оно вылетит при `.get()`)."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 8,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Что такое AsyncUncaughtExceptionHandler?",
+      "tested_claim": "Он срабатывает только на `void`-методах, получая исключение, метод и аргументы.",
+      "source_evidence": [
+        "`AsyncUncaughtExceptionHandler` — глобальный обработчик исключений, вылетевших из `void @Async`-методов.",
+        "В `handleUncaughtException` приходят само исключение, отражённый `Method` и аргументы вызова — то есть всё, чтобы залогировать, отправить алерт или метрику."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 9,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Почему @Async не работает при self-invocation?",
+      "tested_claim": "Вызов через `this` идёт напрямую к объекту мимо прокси, и метод работает синхронно.",
+      "source_evidence": [
+        "Потому что `@Async` живёт в прокси, а не в самом объекте.",
+        "Spring внедряет другим бинам не ваш объект, а прокси-обёртку вокруг него; именно прокси отправляет вызов на пул потоков."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 10,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как @Async взаимодействует с @Transactional?",
+      "tested_claim": "Транзакция лежит в `ThreadLocal`, поэтому на потоке пула её просто нет.",
+      "source_evidence": [
+        "`@Async` уходит на другой поток пула, где этот `ThreadLocal` пуст, — значит, метод не видит транзакцию вызывающего и работает вне её.",
+        "Ключевое: транзакция не передаётся в async-метод. Spring хранит активную транзакцию (соединение с БД, статус) в `ThreadLocal`, то есть привязывает её к конкретному потоку."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 11,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Какие есть требования к @Async методам?",
+      "tested_claim": "Требования следуют из одного — прокси обязан переопределить метод, поэтому он `public` и не `final`.",
+      "source_evidence": [
+        "Все требования — следствие одного факта: `@Async` реализован через CGLIB-прокси (подкласс вашего класса).",
+        "Метод не `final` — CGLIB наследуется от класса и переопределяет методы; `final` переопределить нельзя."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 12,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как комбинировать несколько @Async вызовов?",
+      "tested_claim": "Три вызова идут параллельно, поэтому общее время равно самому медленному из них.",
+      "source_evidence": [
+        "Запустите независимые операции как `@Async`-методы, возвращающие `CompletableFuture`, а потом объедините их через `CompletableFuture.allOf(...)`.",
+        "Это типичный приём для сбора одного ответа из нескольких источников (профиль + заказы + данные пользователя)."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 13,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как передать контекст (SecurityContext, MDC) в @Async?",
+      "tested_claim": "Контекст лежит в `ThreadLocal` вызывающего, поэтому его копируют в задачу явно.",
+      "source_evidence": [
+        "Чтобы их не терять, контекст нужно явно скопировать в задачу перед запуском на другом потоке.",
+        "`SecurityContext` (текущий пользователь) и `MDC` (контекст логирования, например `traceId`) хранятся в `ThreadLocal`, то есть живут на потоке вызывающего."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 14,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Как тестировать @Async методы?",
+      "tested_claim": "Подмена пула на `SyncTaskExecutor` убирает асинхронность и делает тест детерминированным.",
+      "source_evidence": [
+        "Лучший вариант, когда сама многопоточность не является предметом проверки.",
+        "Проблема: async-метод выполняется на другом потоке, поэтому в момент проверки (`verify`/`assert`) результат может быть ещё не готов — тест становится «плавающим» (то проходит, то нет)."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L4",
+      "linkage_note": "",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "B": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     },
     {
       "q_number": 15,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
+      "visible_question": "Чем @Async отличается от CompletableFuture.supplyAsync?",
+      "tested_claim": "Аннотация декларативна и берёт пул у Spring, а `supplyAsync` вызывают из кода.",
+      "source_evidence": [
+        "`CompletableFuture.supplyAsync` императивен: вы сами вызываете API, сами передаёте executor и сами строите цепочку — больше контроля, но и больше кода.",
+        "Это два способа сделать одно и то же — выполнить код на другом потоке, — но на разных уровнях."
       ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
+      "linkage_level": "L3",
+      "linkage_note": "часть дистракторов опровергается строками таблицы сравнения, а не прозой",
+      "answerable_from_source": true,
+      "options": {
+        "A": {
+          "correct": true,
+          "supported_or_refuted_by_source": true,
+          "delta": "прямое утверждение проверяемого тезиса"
+        },
+        "B": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "C": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        },
+        "D": {
+          "correct": false,
+          "supported_or_refuted_by_source": true,
+          "delta": "контролируемое искажение одной оси того же тезиса"
+        }
       },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+      "novel_required_facts": []
     }
-  ],
-  "acceptance": {
-    "method": "blind ROUND-9",
-    "merit": "2 независимых ревьюера, 15/15 single-defensible, 0 issues",
-    "form_adversary": "~0.85 угадываемости по форме — паритет с golden spring-transaction (~0.80); остаток жанровый",
-    "fixes": [
-      "Q4: версия дефолтного executor исправлена (context7-verified: Boot=ThreadPoolTaskExecutor/applicationTaskExecutor core-size 8; 3.2+ virtual->SimpleAsyncTaskExecutor)",
-      "Q7: дистрактор C был фактически истинным (SimpleAsyncUncaughtExceptionHandler логирует ERROR) -> переделан в ложное @ControllerAdvice"
-    ],
-    "length": "correct rank-1 15/15 -> 3/15; worst ratio 1.33"
-  }
+  ]
 }
