@@ -504,7 +504,8 @@ publisher.assertMaxRequested(Long.MAX_VALUE);
 `TestPublisher.createNoncompliant(Violation...)` отключает соответствующие проверки. Доступные нарушения:
 - `ALLOW_NULL` — разрешить эмиссию `null`.
 - `REQUEST_OVERFLOW` — эмитировать больше, чем запрошено.
-- `DEFER_CANCELLATION` — продолжить эмиссию после сигнала завершения.
+- `DEFER_CANCELLATION` — игнорировать `cancel` и продолжать эмиссию, как будто отмена «не успела».
+- `CLEANUP_ON_TERMINATE` — слать терминальные сигналы (`complete`/`error`/`emit`) повторно.
 
 ```java
 // Нарушение: эмитировать null (обычно запрещено)
@@ -515,8 +516,8 @@ TestPublisher<String> noncompliant = TestPublisher.createNoncompliant(
 TestPublisher<Integer> overflowing = TestPublisher.createNoncompliant(
         TestPublisher.Violation.REQUEST_OVERFLOW);
 
-// Нарушение: эмитировать после complete
-TestPublisher<String> postComplete = TestPublisher.createNoncompliant(
+// Нарушение: продолжить эмиссию после cancel
+TestPublisher<String> afterCancel = TestPublisher.createNoncompliant(
         TestPublisher.Violation.DEFER_CANCELLATION);
 ```
 
@@ -531,7 +532,7 @@ TestPublisher<String> postComplete = TestPublisher.createNoncompliant(
 
 ## Q20. Как настроить WebTestClient для тестирования WebFlux-контроллера?
 
-Самый частый подход — срез `@WebFluxTest(Controller.class)`: Spring поднимает **только** веб-слой (один контроллер), а зависимости подставляют `@MockBean`. Это быстро и изолированно. `WebTestClient` при этом уже сконфигурирован — достаточно `@Autowired`.
+Самый частый подход — срез `@WebFluxTest(Controller.class)`: Spring поднимает **только** веб-слой (один контроллер), а зависимости подставляют `@MockitoBean` (бывший `@MockBean`: устарел с Boot 3.4, удалён в Boot 4). Это быстро и изолированно. `WebTestClient` при этом уже сконфигурирован — достаточно `@Autowired`.
 
 Альтернатива для функциональных эндпоинтов (`RouterFunction`) — собрать клиент вручную через `bindToRouterFunction(...)`, без контекста Spring вообще.
 
@@ -546,7 +547,7 @@ class UserControllerTest {
     @Autowired
     private WebTestClient webTestClient;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
     @Test
@@ -726,15 +727,18 @@ void backpressureDrop_shouldDropExcessElements() {
 
 ## Q25. Почему нельзя вызывать block() в тестах Spring WebFlux?
 
-Потому что `block()` блокирует поток до завершения publisher, а в `WebFlux` всё крутится на нескольких потоках event loop (`Netty`, `reactor-http-nio-*`). Заблокировать такой поток — значит застопорить обработку всех остальных запросов. Reactor это распознаёт и превентивно бросает `IllegalStateException: block()/blockFirst()/blockLast() are blocking, which is not supported in thread reactor-xxx`.
+Потому что `block()` блокирует поток до завершения publisher, а в `WebFlux` всё крутится на нескольких потоках event loop (`Netty`, `reactor-http-nio-*`). Заблокировать такой поток — значит застопорить обработку всех остальных запросов. Поэтому потоки event loop помечены как `NonBlocking`, и `block()` на них Reactor пресекает сразу: `IllegalStateException: block()/blockFirst()/blockLast() are blocking, which is not supported in thread reactor-xxx`.
 
-**Правильно:** не извлекать значение через `block()`, а проверять поток как поток — через `StepVerifier`. Если `block()` всё же неизбежен (например, в интеграционном тесте вне event loop), его выносят на `Schedulers.boundedElastic()` или запускают тест под `@SpringBootTest`, где главный поток не принадлежит event loop.
+Важный нюанс: сам поток JUnit — обычный, и `block()` прямо в тесте технически отработает без исключения. Плохим тест делает другое: `block()` вытаскивает одно значение, теряя сигналы (тип завершения, порядок, ошибки), виснет на бесконечных потоках и не дружит с виртуальным временем. А тот же код, оказавшись на `NonBlocking`-потоке (внутри реактивной цепочки или обработчика WebFlux), упадёт с исключением выше.
+
+**Правильно:** не извлекать значение через `block()`, а проверять поток как поток — через `StepVerifier`. Если блокирующее извлечение неизбежно внутри реактивной цепочки, его уводят с event loop на `Schedulers.boundedElastic()`.
 
 ```java
-// НЕПРАВИЛЬНО — block() в тесте вызовет исключение
+// ПЛОХО — block() отработает (поток JUnit обычный), но проверит лишь значение:
+// сигналы и тайминги мимо, а на NonBlocking-потоке такой вызов падает
 @Test
 void bad() {
-    UserDto user = userController.getById(1L).block(); // исключение!
+    UserDto user = userController.getById(1L).block();
     assertThat(user.name()).isEqualTo("Alice");
 }
 
@@ -746,8 +750,8 @@ void good() {
             .verifyComplete();
 }
 
-// Если всё же нужен block() — добавить .publishOn(Schedulers.boundedElastic())
-// или использовать @SpringBootTest вне event loop
+// Блокирующий шаг внутри реактивной цепочки уводят с event loop:
+// mono.publishOn(Schedulers.boundedElastic()).map(v -> blockingCall(v))
 ```
 
 ## Q26. Что произойдёт, если не вызвать verify() / verifyComplete()?
@@ -777,7 +781,7 @@ void good() {
 
 ## Q27. Как тестировать реактивные методы с @Transactional?
 
-В реактивном стеке транзакция привязана к контексту подписки (Reactor Context), а не к потоку, поэтому нужен **реактивный** `TransactionManager` (`R2dbcTransactionManager`), а не классический потоко-локальный. Срез `@DataR2dbcTest` поднимает только слой данных и подставляет его автоматически, а `@Transactional` на тестовом классе откатывает изменения после каждого теста — БД остаётся чистой.
+В реактивном стеке транзакция привязана к контексту подписки (Reactor Context), а не к потоку, поэтому нужен **реактивный** `TransactionManager` (`R2dbcTransactionManager`), а не классический потоко-локальный. Срез `@DataR2dbcTest` поднимает только слой данных и подставляет его автоматически, а `@Transactional` на тестовом классе откатывает изменения после каждого теста — БД остаётся чистой (реактивные транзакции в тестовом `@Transactional` поддерживаются со Spring Framework 6.1).
 
 **Подводный камень:** обычный `@Transactional` из JDBC-мира с блокирующим менеджером в реактивном коде не сработает — транзакция просто не «подхватится» цепочкой. Сам тест по-прежнему строится на `StepVerifier`.
 
