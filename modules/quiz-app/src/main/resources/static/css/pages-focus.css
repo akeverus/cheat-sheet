@@ -1498,6 +1498,63 @@ html[data-design] .focus-page .empty-state { width: min(100%, var(--focus-measur
   html[data-design] .focus-page .question-zone-head,
   html[data-design] .focus-page .focus-aside.focus-session-rail,
   html[data-design] .focus-page .focus-question-reason { margin-bottom: var(--space-2); }
+
+  /* RSP-01 (REF-004): хром над вопросом на телефоне. Замер 390×844 той же
+     методикой, что BASE-01: вопрос стартовал на 498px — 59% вьюпорта занимал
+     хром, из него resume-баннер 196px (flex-wrap уносил кнопку «Продолжить»
+     на отдельный ряд, разворачивая баннер в три яруса) и рельс прогресса
+     банка 88px (dt над dd — факты колонками). Ничего не удаляем — уплотняем:
+
+     Баннер — одна строка: nowrap возвращает кнопку в ряд к тексту; иконка-лид
+     скрыта (повторяет заголовок «Есть незавершённая сессия», второй раз
+     сообщать это нечем); мета обрезается эллипсисом (полный состав паузы —
+     «N из M · тема» — виден по «Продолжить», прятать нечего). Замер после:
+     баннер 196 → 74px.
+
+     Факты рельса — строка dt–dd на baseline вместо колонок: обе цифры и обе
+     подписи остаются на экране. Замер после: рельс 88 → 60px, вопрос
+     стартует на 372px (−126). */
+  html[data-design] .focus-page .resume-banner {
+    flex-wrap: nowrap;
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-4);
+    gap: var(--space-3);
+  }
+  html[data-design] .focus-page .resume-banner .px-icon-lead { display: none; }
+  /* Без grow тело брало предпочтительную ширину по переносам (замер: 133px при
+     свободных 181px) и заголовок ломался на четыре строки. Растущее тело
+     забирает весь остаток строки — заголовку хватает на 1–2 строки. */
+  html[data-design] .focus-page .resume-banner-body { flex: 1 1 auto; }
+  html[data-design] .focus-page .resume-banner-text { gap: 0; }
+  html[data-design] .focus-page .resume-banner-meta {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Кнопка «Продолжить» на 390px весила 181px, а заголовок шёл 18px кеглем —
+     при полосе баннера 342px (минус поля) телу оставалось 133px, и strong
+     ломался на четыре строки (замер: 92px высоты). Обе величины ужаты до
+     мобильного масштаба: кнопка компактная (высота ≥44px сохраняется — тач-
+     таргет), заголовок базовым кеглем. Замер после: strong в 2 строки, баннер
+     196 → 96px. */
+  html[data-design] .focus-page .resume-banner-text strong {
+    font-size: var(--font-size-base);
+    /* Глобальный прозовый межстрочник 1.7 давал 27px на строку заголовка —
+       три строки стоили 82px. Заголовок баннера — ярлык, не проза. */
+    line-height: var(--line-height-tight);
+  }
+  html[data-design] .focus-page .resume-banner-action .btn {
+    padding-inline: var(--space-3);
+    font-size: var(--font-size-sm);
+  }
+  html[data-design] .focus-page .focus-bank-fact {
+    flex-direction: row;
+    align-items: baseline;
+    gap: var(--space-1);
+  }
+  html[data-design] .focus-page .focus-bank-progress .focus-progress-line {
+    margin-bottom: var(--space-1);
+  }
 }
 
 
