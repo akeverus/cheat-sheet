@@ -6,56 +6,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `ScyllaDB`?",
+          "question_text": "Что такое ScyllaDB?",
           "options": [
             {
-              "text": "`ScyllaDB` — это in-memory key-value кэш в духе `Redis`, который хранит данные только в RAM и теряет их при перезапуске.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Scylla` — durable wide-column СУБД с дисковым LSM-tree хранилищем (MemTable + SSTable), а не volatile in-memory кэш.",
-                "source_of_confusion": "`Seastar`-framework `Scylla` действительно использовали и для Redis-подобных проектов, отсюда путаница с in-memory кэшем.",
-                "if_it_were_true": "Если бы данные жили только в RAM, `Scylla` нельзя было бы использовать как primary store для IoT и time-series, но именно так её и применяют.",
-                "how_it_should_be": "`Scylla` персистит данные на диск через SSTable и WAL-подобный commitlog; in-memory роль играет лишь MemTable и кэш."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`ScyllaDB` написана на `Java` и работает поверх той же JVM, что и `Cassandra`, лишь добавляя более агрессивный тюнинг garbage collector.",
+              "order": 0,
+              "text": "Scylla — форк кодовой базы Cassandra на той же Java: ускорение достигнуто точечными патчами.",
               "correct": false,
               "sections": {
-                "what_actually": "Ключевая идея `Scylla` — отказ от JVM: она написана на `C++` с ручным управлением памятью, поэтому GC-пауз нет вовсе, а не «лучше затюнен».",
-                "source_of_confusion": "`Scylla` совместима с `Cassandra`, поэтому кажется, что технологический стек у них общий, включая JVM.",
-                "if_it_were_true": "Если бы `Scylla` крутилась на JVM, у неё были бы те же stop-the-world паузы, ради устранения которых её и создавали.",
-                "how_it_should_be": "`Scylla` — нативный `C++` без JVM и без GC; совместимость с `Cassandra` ограничена API и протоколом, а не рантаймом."
-              },
+                "what_actually": "Переписана с нуля на C++ — не форк и не Java.",
+                "source_of_confusion": "API-совместимость наводит на мысль об общем коде.",
+                "if_it_were_true": "JVM и паузы GC никуда бы не делись.",
+                "how_it_should_be": "Общие — модель и протокол; реализация полностью своя."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`ScyllaDB` — это форк `PostgreSQL`, добавляющий распределённость и горизонтальное масштабирование поверх реляционной модели с полным SQL и JOIN-ами.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Scylla` — wide-column NoSQL на модели `Cassandra` (CQL), без JOIN-ов и без реляционной модели `PostgreSQL`; общего кода с `PostgreSQL` у неё нет.",
-                "source_of_confusion": "`PostgreSQL` тоже популярен и тоже умеет масштабироваться расширениями, поэтому распределённые СУБД ошибочно приписывают к его форкам.",
-                "if_it_were_true": "Если бы это был форк `PostgreSQL`, в `Scylla` работали бы SQL JOIN и транзакции, но CQL их не поддерживает по дизайну.",
-                "how_it_should_be": "`Scylla` — самостоятельная NoSQL на `C++`, совместимая с `Cassandra`, а не реляционная СУБД на базе `PostgreSQL`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`ScyllaDB` — open-source NoSQL wide-column СУБД, API-совместимая с `Apache Cassandra`, но переписанная с нуля на `C++` со `shard-per-core` архитектурой ради значительно лучшей производительности (заявлено ~10x ниже latency, 3-5x выше throughput при той же data model: CQL, репликация, consistency).",
+              "order": 1,
+              "text": "Wide-column база, переписанная с нуля на C++; API-совместима с Cassandra: тот же CQL.",
               "correct": true,
               "sections": {
-                "explanation": "`Scylla` сохраняет ту же модель данных и протокол `Cassandra`, поэтому клиенты и CQL работают как есть, а выигрыш достигается заменой JVM на нативный `C++` и шардингом по ядрам без GC-пауз.",
-                "example": "Создана в 2014 ex-KVM (`Cloudius Systems`, ныне `ScyllaDB Inc.`); применяется для time-series, IoT, ad-tech (real-time bidding), мессенджеров (`Discord`) и high-throughput логирования.",
-                "when_to_apply": "Применяют когда уже есть `Cassandra` и нужен прирост скорости без переписывания приложения, или когда нужен предсказуемый low-latency NoSQL под высокий поток записей.",
-                "edge_cases": "`Scylla` не на 100% drop-in: часть продвинутых фич `Cassandra` реализована иначе, а операционные инструменты и тюнинг отличаются, поэтому миграцию всегда тестируют.",
-                "related": "[[scylladb-interview#Q2]] отличия от Cassandra; [[scylladb-interview#Q3]] shard-per-core; [[scylladb-interview#Q16]] насколько drop-in."
-              },
+                "explanation": "Идея: взять архитектуру Cassandra и убрать главный тормоз — JVM с паузами GC.",
+                "example": "Приложение под Cassandra в большинстве случаев работает без изменения кода.",
+                "when_to_apply": "Заявленные метрики: задержка до 10× ниже, пропускная способность в 3-5× выше.",
+                "edge_cases": "Создана в 2014 выходцами из проекта KVM (Cloudius Systems).",
+                "related": "Discord перешёл на Scylla ради предсказуемой задержки."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "У Scylla свой собственный язык запросов, несовместимый с CQL; приложения переписывают целиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Язык тот же — CQL; в этом суть совместимости.",
+                "source_of_confusion": "«Другая база» обычно значит «другой язык» — не здесь.",
+                "if_it_were_true": "Миграция с Cassandra требовала бы переписывания слоя данных.",
+                "how_it_should_be": "Тот же CQL, та же репликация, те же уровни согласованности."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Эта база оптимизирована прежде всего под тяжёлую read-heavy аналитику; запись — второстепенный для неё сценарий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сценарии — write-heavy: time-series, IoT, ad-tech, логирование.",
+                "source_of_confusion": "«Быстрая база» ассоциируется с аналитикой чтения.",
+                "if_it_were_true": "Профиль применения совпадал бы с ClickHouse, а не с Cassandra.",
+                "how_it_should_be": "Высоконагруженная запись — родная стихия LSM-движка."
+              }
             }
           ]
         }
@@ -66,56 +66,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "`ScyllaDB` vs `Cassandra` — основные отличия?",
+          "question_text": "ScyllaDB vs Cassandra — основные отличия?",
           "options": [
             {
-              "text": "Главные отличия: язык реализации (`C++` vs `Java`/JVM), архитектура (`shard-per-core` на `Seastar` vs thread-pool), отсутствие GC-пауз у `Scylla`, ниже p99 latency (~1-5 ms vs ~5-50 ms) и в 3-5x выше throughput на том же железе — при идентичной модели данных и совместимом API.",
+              "label": "A",
+              "order": 0,
+              "text": "Scylla — более зрелый продукт: она развивается с 2008 года, Cassandra моложе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: Cassandra — с 2008, Scylla — с 2014.",
+                "source_of_confusion": "Годы в таблице легко перепутать местами.",
+                "if_it_were_true": "«Меньшая зрелость» была бы аргументом против Cassandra.",
+                "how_it_should_be": "Зрелость и распространённость — козыри Cassandra."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Модель и протокол одинаковые, расходится движок: JVM с пулом потоков против C++ shard-per-core.",
               "correct": true,
               "sections": {
-                "explanation": "`Scylla` выигрывает за счёт нативного кода без JVM и шардинга по ядрам, что убирает lock contention и GC; на одинаковом железе она обычно в 3-10x быстрее.",
-                "example": "На 8-ядерной ноде `Cassandra` упирается в plateau из-за блокировок, а `Scylla` держит 8 независимых shard'ов и масштабируется линейно с числом ядер.",
-                "when_to_apply": "Сравнение приводят при выборе между ними: если нужен прирост скорости и снижение числа нод при том же приложении — это аргумент за `Scylla`.",
-                "edge_cases": "`Cassandra` зрелее (с 2008) и шире распространена, а `Scylla` новее (с 2014) и догоняет по adoption, поэтому отличие не только техническое, но и экосистемное.",
-                "related": "[[scylladb-interview#Q1]] что такое Scylla; [[scylladb-interview#Q13]] почему быстрее; [[scylladb-interview#Q14]] отсутствие GC-пауз."
-              },
-              "label": "A",
-              "order": 0
+                "explanation": "Cassandra — пул потоков, разделяемая память, блокировки; Scylla — shard на ядро.",
+                "example": "Задержка p99: ~5-50 мс у Cassandra против ~1-5 мс у Scylla.",
+                "when_to_apply": "Обычный выигрыш на идентичном железе — от трёх до десяти раз.",
+                "edge_cases": "Плата — меньшая зрелость и более узкая экосистема.",
+                "related": "Та же нагрузка держится меньшим числом узлов."
+              }
             },
             {
-              "text": "Основное отличие — `ScyllaDB` отказалась от распределённости и работает как single-node СУБД, в отличие от кластерной `Cassandra`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Scylla` — полноценная распределённая shared-nothing СУБД с репликацией и multi-DC, ровно как `Cassandra`, а не single-node.",
-                "source_of_confusion": "Акцент на «better performance» иногда читают как «упростили до одной ноды ради скорости».",
-                "if_it_were_true": "Если бы `Scylla` была single-node, она не подошла бы для IoT-кластеров на миллионы записей/сек, но именно там её и применяют.",
-                "how_it_should_be": "`Scylla` распределена так же, как `Cassandra` (gossip, vnodes, RF); ускорение даёт движок, а не отказ от кластера."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`ScyllaDB` отличается тем, что заменяет LSM-tree на B-tree хранилище, как в реляционных СУБД, ради ускорения чтений.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Scylla` использует то же LSM-tree хранилище, что и `Cassandra` (MemTable → SSTable → compaction), а не B-tree.",
-                "source_of_confusion": "B-tree ассоциируется с «быстрыми чтениями», поэтому прирост скорости приписывают смене структуры хранения.",
-                "if_it_were_true": "Если бы стоял B-tree, пропал бы выигрыш на write-heavy нагрузках, ради которых LSM и выбирают.",
-                "how_it_should_be": "Хранилище у `Scylla` — LSM-tree; скорость даёт нативный код и shard-per-core, а не замена структуры данных."
-              },
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Главное отличие в том, что `ScyllaDB` использует другую модель данных и другой язык запросов, несовместимые с `Cassandra`.",
+              "order": 2,
+              "text": "Модель данных у Scylla другая: схемы Cassandra приходится конвертировать при переносе.",
               "correct": false,
               "sections": {
-                "what_actually": "Модель данных и язык у них одинаковые (CQL, wide-column, та же репликация и consistency) — отличается реализация движка, а не модель.",
-                "source_of_confusion": "Слова «другая СУБД» наводят на мысль, что и модель данных другая, хотя совместимость — главная фича `Scylla`.",
-                "if_it_were_true": "Если бы CQL был несовместим, `Cassandra`-клиенты не подключались бы к `Scylla`, но они работают без изменений.",
-                "how_it_should_be": "Отличие — в рантайме (`C++` vs JVM) и архитектуре (shard-per-core vs thread-pool), а модель данных и CQL общие."
-              },
+                "what_actually": "Модель данных и протокол совпадают — конвертация не нужна.",
+                "source_of_confusion": "Разные движки предполагают разные схемы — но не тут.",
+                "if_it_were_true": "Простой миграции с Cassandra не существовало бы.",
+                "how_it_should_be": "Схемы переезжают как есть."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Cassandra тоже прекрасно работает без GC: сборщик мусора отключается обычным флагом конфигурации JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GC — неотъемлемая часть JVM; флага «выключить» нет.",
+                "source_of_confusion": "Тюнинг сборщиков путается с их отключением.",
+                "if_it_were_true": "Java-сервисы жили бы без пауз — и без Scylla.",
+                "how_it_should_be": "Паузы GC устраняются только уходом с JVM."
+              }
             }
           ]
         }
@@ -126,56 +126,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `shard-per-core` архитектура?",
+          "question_text": "Что такое shard-per-core архитектура?",
           "options": [
             {
-              "text": "`Shard-per-core` (shared-nothing per core) — на каждое CPU-ядро выделяется один shard, владеющий своим подмножеством данных; между ядрами нет общей памяти и нет блокировок, а сетевые запросы маршрутизируются на ядро-владельца. Это даёт линейное масштабирование по ядрам и предсказуемую latency.",
+              "label": "A",
+              "order": 0,
+              "text": "За каждым ядром закреплён shard со своим срезом данных: без блокировок и разделяемой памяти.",
               "correct": true,
               "sections": {
-                "explanation": "Поскольку у каждого ядра свой shard и свои данные, исчезают locks и cross-core contention, которые в thread-pool модели `Cassandra` ограничивают масштабирование.",
-                "example": "Каждый shard работает как мини-нода внутри ноды: 8-ядерная нода = 8 shard'ов, каждый со своим диапазоном данных, без contention между ними.",
-                "when_to_apply": "Применяют для выжимания максимума из современных multi-core CPU: `Cassandra` упирается в plateau из-за блокировок, а `Scylla` масштабируется линейно с числом ядер.",
-                "edge_cases": "Из-за привязки к ядрам критичен тюнинг connection pool на клиенте: запрос к чужому ядру требует cross-core hop, поэтому драйверы делают shard-aware routing.",
-                "related": "[[scylladb-interview#Q4]] Seastar framework; [[scylladb-interview#Q8]] shared-nothing; [[scylladb-interview#Q13]] почему быстрее."
-              },
-              "label": "A",
-              "order": 0
+                "explanation": "Shared-nothing, перенесённый с уровня узлов на уровень ядер внутри узла.",
+                "example": "8-core node: Core 0 — shard 0 (A-D), Core 1 — shard 1 (E-H)…",
+                "when_to_apply": "Линейное масштабирование с числом ядер — у Cassandra рост выходит на плато.",
+                "edge_cases": "Поток жёстко прибит к ядру (pinned) — миграций между ядрами нет.",
+                "related": "Запрос маршрутизируется сразу на ядро-владельца данных."
+              }
             },
             {
-              "text": "`Shard-per-core` — это когда каждая нода кластера обслуживает ровно один CPU-ядро, а для масштабирования добавляют новые ноды.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Shard'ы живут внутри одной ноды (по числу её ядер); нода с 8 ядрами держит 8 shard'ов, а не использует только одно ядро.",
-                "source_of_confusion": "Понятия «нода» и «ядро» смешивают, считая, что нода = одно ядро.",
-                "if_it_were_true": "Если бы нода использовала одно ядро, остальные ядра простаивали бы, что противоречит цели — утилизации всех ядер.",
-                "how_it_should_be": "`Shard-per-core` распараллеливает работу по всем ядрам внутри ноды; масштабирование по нодам — отдельный, ортогональный механизм."
-              },
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Shard-per-core` — это шардирование на уровне дисков: каждый SSD получает свой shard данных независимо от числа CPU-ядер.",
+              "order": 1,
+              "text": "Все ядра Scylla работают через один общий пул потоков с work-stealing; так балансировка получается ровнее.",
               "correct": false,
               "sections": {
-                "what_actually": "Шардинг в `Scylla` привязан к CPU-ядрам, а не к дискам: каждое ядро владеет подмножеством данных и обрабатывает их без блокировок.",
-                "source_of_confusion": "Слово «shard» в БД часто ассоциируется с разбиением по дискам/хранилищу, отсюда подмена.",
-                "if_it_were_true": "Если бы shard привязывался к диску, число shard'ов определялось бы числом SSD, но оно определяется числом ядер.",
-                "how_it_should_be": "`Shard-per-core` означает один shard на CPU-ядро; диски — отдельный уровень и в это понятие не входят."
-              },
+                "what_actually": "Общий пул с work-stealing — модель Cassandra, от неё Scylla ушла.",
+                "source_of_confusion": "Пул потоков — привычный дизайн серверов на JVM.",
+                "if_it_were_true": "Вернулись бы блокировки и конкуренция за структуры.",
+                "how_it_should_be": "Один shard на ядро, без миграции потоков."
+              }
+            },
+            {
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Shard-per-core` означает, что один shard данных обслуживается пулом из всех CPU-ядер ноды одновременно через work-stealing, как в `Cassandra`.",
+              "order": 2,
+              "text": "Shard-ы делят общую память узла: это экономит RAM ценой блокировок при доступе.",
               "correct": false,
               "sections": {
-                "what_actually": "Это описание `Cassandra` (thread-pool с work-stealing). В `Scylla` наоборот: на каждое ядро — свой отдельный shard без разделения.",
-                "source_of_confusion": "Work-stealing thread-pool и shard-per-core оба «про многоядерность», поэтому их легко перепутать.",
-                "if_it_were_true": "Если бы все ядра делили один shard, оставались бы locks и contention, ради устранения которых `Scylla` и придумала свой подход.",
-                "how_it_should_be": "`Shard-per-core` — это «одно ядро = один shard», без общей памяти и без блокировок между ядрами."
-              },
+                "what_actually": "Разделяемой памяти нет — каждое ядро держит свою область.",
+                "source_of_confusion": "«Экономия RAM» кажется разумным компромиссом.",
+                "if_it_were_true": "CPU-кэш страдал бы от чужих обращений, вернулись бы блокировки.",
+                "how_it_should_be": "Своя память на ядро бережёт кэш и убирает синхронизацию."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Обычный драйвер сам попадает в нужное ядро: специальная поддержка shard-awareness не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный драйвер попадает на случайное ядро — запрос перенаправляется.",
+                "source_of_confusion": "Прозрачность маршрутизации хочется получить бесплатно.",
+                "if_it_were_true": "Shard-aware драйверы не понадобились бы.",
+                "how_it_should_be": "Shard-aware драйвер бьёт сразу в нужное ядро."
+              }
             }
           ]
         }
@@ -186,56 +186,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `Seastar` framework?",
+          "question_text": "Что такое фреймворк Seastar?",
           "options": [
             {
-              "text": "`Seastar` — это формат хранения SSTable-файлов на диске, оптимизированный `ScyllaDB` для последовательной записи.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Seastar` — это application framework для async-исполнения и сети, а не дисковый формат файлов; хранение — это LSM/SSTable.",
-                "source_of_confusion": "И то, и другое — низкоуровневые механизмы `Scylla`, поэтому их роли путают.",
-                "if_it_were_true": "Если бы `Seastar` был форматом файлов, его нельзя было бы переиспользовать в сетевых приложениях вне БД, но его так используют.",
-                "how_it_should_be": "`Seastar` — это framework для shared-nothing async-приложений; SSTable — отдельная сущность уровня хранения."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Seastar` — это инструмент миграции данных из `Cassandra` в `ScyllaDB`, основанный на `Apache Spark`.",
+              "order": 0,
+              "text": "Seastar — известная Java-библиотека асинхронности; Scylla просто подключает её поверх обычной JVM.",
               "correct": false,
               "sections": {
-                "what_actually": "Инструмент миграции называется `Scylla Migrator` (на Spark); `Seastar` — это runtime-framework самого движка `Scylla`.",
-                "source_of_confusion": "Оба связаны со `Scylla`, и оба «инфраструктурные», поэтому их названия смешивают.",
-                "if_it_were_true": "Если бы `Seastar` был мигратором, он не был бы ядром производительности `Scylla`, но именно на нём построен движок.",
-                "how_it_should_be": "`Seastar` — фундамент рантайма `Scylla` (async I/O, shard-per-core); миграцию делает `Scylla Migrator`/`sstableloader`."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "Seastar — C++ фреймворк; JVM в стеке Scylla нет вовсе.",
+                "source_of_confusion": "Асинхронные фреймворки знакомы по Java-миру (Netty).",
+                "if_it_were_true": "Паузы GC вернулись бы вместе с JVM.",
+                "how_it_should_be": "Весь стек — нативный C++."
+              }
             },
             {
-              "text": "`Seastar` — open-source `C++` framework, созданный авторами `ScyllaDB` под современное железо (multi-core CPU, быстрые NIC). Его принципы: shared-nothing per-core, асинхронный неблокирующий I/O, user-space networking (опция DPDK) и абстракция future/promise. Именно он лежит в основе движка `Scylla`.",
+              "label": "B",
+              "order": 1,
+              "text": "I/O в Seastar блокирующий: поток честно ждёт диск, это заметно упрощает отладку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "I/O полностью асинхронный — поток никогда не блокируется.",
+                "source_of_confusion": "Блокирующий стиль привычнее и «проще».",
+                "if_it_were_true": "Ядра простаивали бы в ожидании диска и сети.",
+                "how_it_should_be": "Поток переключается на другую готовую работу."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "C++ фреймворк авторов Scylla: реализует shard-per-core, полностью асинхронный I/O и модель Future/Promise.",
               "correct": true,
               "sections": {
-                "explanation": "`Seastar` исполняет код на каждом ядре в собственном event-loop без блокировок, что и даёт `Scylla` линейное масштабирование и отсутствие GC-пауз.",
-                "example": "Операция I/O в `Seastar` возвращает future, а continuation навешивается через .then(), так что ядро не блокируется в ожидании диска или сети, а обрабатывает другие запросы.",
-                "when_to_apply": "Применяют не только в `Scylla`: на `Seastar` строят Redis-подобные хранилища и высоконагруженные сетевые приложения, где нужна та же per-core модель.",
-                "edge_cases": "User-space networking через DPDK — опциональная фича: она даёт максимум throughput, но требует совместимых NIC и усложняет деплой, поэтому включается не всегда.",
-                "related": "[[scylladb-interview#Q3]] shard-per-core; [[scylladb-interview#Q8]] shared-nothing; [[scylladb-interview#Q13]] почему быстрее."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Scylla — по сути база данных, построенная поверх Seastar.",
+                "example": "Сеть в user-space — опционально через DPDK, в обход TCP-стека ядра.",
+                "when_to_apply": "Спроектирован под многоядерные CPU и быстрые сетевые карты.",
+                "edge_cases": "Главный враг производительности — синхронизация и переключения контекста.",
+                "related": "Future/Promise — асинхронный код без колбэков-лапши."
+              }
             },
             {
-              "text": "`Seastar` — это Java-библиотека для асинхронного I/O, которую `ScyllaDB` использует поверх JVM вместо стандартных thread-pool'ов.",
+              "label": "D",
+              "order": 3,
+              "text": "Seastar — закрытая внутренняя часть Scylla; вне базы данных он не используется.",
               "correct": false,
               "sections": {
-                "what_actually": "`Seastar` — это `C++` framework, а не Java-библиотека; именно он позволяет `Scylla` работать без JVM.",
-                "source_of_confusion": "Async-фреймворки часто ассоциируются с Java (Netty, Reactor), отсюда ошибочная привязка к JVM.",
-                "if_it_were_true": "Если бы `Seastar` был на JVM, у `Scylla` сохранялись бы GC-паузы, которых она как раз избегает.",
-                "how_it_should_be": "`Seastar` — нативный `C++` framework с future/promise и shared-nothing моделью, без всякой JVM."
-              },
-              "label": "D",
-              "order": 3
+                "what_actually": "Seastar — самостоятельная инфраструктура, используется и вне Scylla.",
+                "source_of_confusion": "«Фреймворк от авторов базы» звучит как её потроха.",
+                "if_it_were_true": "Другие высокопроизводительные проекты не могли бы его брать.",
+                "how_it_should_be": "Открытый фреймворк для сетевых приложений."
+              }
             }
           ]
         }
@@ -246,56 +246,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое wide-column data model в `ScyllaDB`?",
+          "question_text": "Как устроена wide-column модель данных?",
           "options": [
             {
-              "text": "Wide-column означает, что `Scylla` хранит данные построчно как в реляционной СУБД, с фиксированным набором колонок и обязательными NOT NULL.",
+              "label": "A",
+              "order": 0,
+              "text": "На каком узле живёт строка — решает clustering key; partition key лишь сортирует.",
               "correct": false,
               "sections": {
-                "what_actually": "Wide-column — это не строго реляционная row-store схема: партиция может содержать множество строк с одним partition key, а модель денормализованная.",
-                "source_of_confusion": "Термин «column» наводит на мысль о классических таблицах SQL с жёсткими колонками.",
-                "if_it_were_true": "Если бы модель была чисто реляционной, работали бы JOIN и нормализация, но CQL их не поддерживает.",
-                "how_it_should_be": "Wide-column — это keyspace/таблицы/партиции/строки модели `Cassandra`, ориентированной на денормализацию под запросы."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "Узел определяет partition key (хеш в токен); clustering — порядок внутри.",
+                "source_of_confusion": "Роли двух ключей зеркальны и легко меняются местами.",
+                "if_it_were_true": "Строки одной партиции разлетелись бы по узлам.",
+                "how_it_should_be": "Partition — «где», clustering — «в каком порядке»."
+              }
             },
             {
-              "text": "Wide-column model в `Scylla` идентична `Cassandra`: данные организованы в keyspace (= схема/БД), внутри — таблицы из строк; PRIMARY KEY состоит из partition key (определяет, на какой ноде лежит строка) и clustering key (задаёт порядок строк внутри партиции). Колонки описаны в схеме.",
+              "label": "B",
+              "order": 1,
+              "text": "Wide-column — та же таблица с фиксированными колонками, что в SQL; отличий от реляционной модели нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это вложенная структура «партиция → строки → колонки», не SQL-таблица.",
+                "source_of_confusion": "CQL-синтаксис CREATE TABLE выглядит по-эскюэльному.",
+                "if_it_were_true": "JOIN-ы и произвольные WHERE работали бы как в SQL.",
+                "how_it_should_be": "За фасадом SQL-синтаксиса — wide-column хранение."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Модель совпадает с Cassandra: партиция → отсортированные строки → колонки; partition key — узел, clustering — порядок.",
               "correct": true,
               "sections": {
-                "explanation": "Это та же модель, что у `Cassandra`, отличается только производительность движка; запрос идёт по partition key, а clustering key упорядочивает строки внутри одной партиции.",
-                "example": "Например, таблица `users` с `PRIMARY KEY (user_id, timestamp)` хранит все события одного `user_id` как одну партицию, упорядоченную по `timestamp`.",
-                "when_to_apply": "Применяют для денормализованных данных под конкретные запросы: таблицу проектируют от паттерна чтения, а не наоборот, как в реляционных СУБД.",
-                "edge_cases": "Колонки фиксируются схемой, но партиция может содержать множество строк (wide row); неконтролируемый рост партиции (> 100 MB) приводит к hot partition и проблемам.",
-                "related": "[[scylladb-interview#Q6]] partition и clustering key; [[scylladb-interview#Q7]] CQL; [[scylladb-interview#Q12]] LSM-хранилище."
-              },
-              "label": "B",
-              "order": 1
+                "explanation": "Строки с одним partition key физически живут вместе и сортируются по clustering key.",
+                "example": "PRIMARY KEY (user_id, timestamp) WITH CLUSTERING ORDER BY (timestamp DESC).",
+                "when_to_apply": "Лента событий пользователя читается одним запросом по партиции.",
+                "edge_cases": "Keyspace — аналог базы данных; в нём задаётся стратегия репликации.",
+                "related": "Отличается только скорость движка под капотом."
+              }
             },
             {
-              "text": "Wide-column означает, что у `Scylla` нет понятия первичного ключа — строки идентифицируются только порядком вставки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "PRIMARY KEY обязателен: partition key определяет размещение, clustering key — порядок; без ключа строку нельзя ни разместить, ни найти.",
-                "source_of_confusion": "«Wide» (много колонок) ошибочно читают как «без ключа, лишь бы колонок было много».",
-                "if_it_were_true": "Если бы ключа не было, нельзя было бы выполнить SELECT по partition key, но это базовый паттерн доступа.",
-                "how_it_should_be": "В wide-column модели PRIMARY KEY (partition + clustering) — центральная сущность, а не опциональная."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Wide-column в `Scylla` — это документная модель, где каждая запись хранится как вложенный JSON-документ произвольной структуры.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Scylla` использует схему с заранее объявленными колонками (wide-column), а не schemaless документную модель как `MongoDB`.",
-                "source_of_confusion": "NoSQL ассоциируется с JSON-документами, поэтому wide-column путают с document store.",
-                "if_it_were_true": "Если бы это была документная модель, не требовалось бы CREATE TABLE со столбцами, но в CQL схема обязательна.",
-                "how_it_should_be": "Wide-column — это табличная модель `Cassandra` со схемой; документная модель — это другой класс NoSQL (`MongoDB`)."
-              },
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Модель данных Scylla заметно отличается от Cassandra: пришлось изменить её ради скорости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модель полностью совпадает — ускорение дал движок, не модель.",
+                "source_of_confusion": "«Быстрее» приписывают изменённой модели данных.",
+                "if_it_were_true": "Совместимый API Cassandra стал бы недостижим.",
+                "how_it_should_be": "Та же модель, тот же CQL — другой движок."
+              }
             }
           ]
         }
@@ -309,53 +309,53 @@
           "question_text": "Чем отличаются partition key и clustering key?",
           "options": [
             {
-              "text": "Partition key хешируется и определяет, какая нода владеет строкой; clustering key задаёт порядок строк внутри партиции. В записи `PRIMARY KEY ((partition_key), clustering_key1, clustering_key2)` первая часть в скобках — partition key (может быть составным), остальное — clustering keys.",
+              "label": "A",
+              "order": 0,
+              "text": "Партиции стоит держать как можно крупнее: чем больше каждая партиция, тем быстрее идёт её чтение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендация обратная: меньше 100 МБ на партицию.",
+                "source_of_confusion": "«Всё в одном месте — быстрее» игнорирует цену compaction.",
+                "if_it_were_true": "Гигантские партиции не считались бы анти-паттерном.",
+                "how_it_should_be": "Крупные партиции дробят составным ключом (bucket)."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Partition key — где хранится строка (хеш в токен); clustering key — порядок строк внутри партиции.",
               "correct": true,
               "sections": {
-                "explanation": "`PRIMARY KEY ((user_id, date), timestamp)` партиционирует по комбинации `user_id+date` и сортирует строки внутри по `timestamp` — типичный паттерн для time-series.",
-                "example": "Например, `PRIMARY KEY ((user_id), event_id)` кладёт все события пользователя на одну ноду и сортирует их по `event_id` внутри партиции.",
-                "when_to_apply": "Выбор ключей делают под query pattern: высокая cardinality partition key избегает hot partitions, а порядок clustering keys подбирают под запросы диапазона.",
-                "edge_cases": "Размер одной партиции держат < 100 MB; низкая cardinality partition key (например, по дню без bucket) приводит к слишком большим горячим партициям.",
-                "related": "[[scylladb-interview#Q5]] wide-column model; [[scylladb-interview#Q11]] токены и vnodes; [[scylladb-interview#Q19]] time-series схемы."
-              },
-              "label": "A",
-              "order": 0
+                "explanation": "Оба входят в PRIMARY KEY, но отвечают за разное: «где» против «в каком порядке».",
+                "example": "PRIMARY KEY ((user_id, date), timestamp) — партиция «пользователь + день».",
+                "when_to_apply": "Запросы со знанием partition key бьют точно в один узел.",
+                "edge_cases": "Размер партиции держать меньше 100 МБ — иначе страдают чтение и compaction.",
+                "related": "Порядок clustering keys подбирают под реальные паттерны запросов."
+              }
             },
             {
-              "text": "Partition key упорядочивает строки внутри партиции, а clustering key определяет, на какой ноде хранится строка.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: partition key (через hash) определяет ноду-владельца, а clustering key упорядочивает строки внутри партиции.",
-                "source_of_confusion": "Оба входят в PRIMARY KEY и легко меняются ролями в памяти при путанице.",
-                "if_it_were_true": "Если бы clustering key выбирал ноду, сортировка строк зависела бы от топологии кластера, что не так.",
-                "how_it_should_be": "Partition key → размещение (hash → node), clustering key → порядок строк внутри партиции."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Partition key и clustering key — это синонимы: оба просто части первичного ключа без разницы в назначении.",
-              "correct": false,
-              "sections": {
-                "what_actually": "У них разные роли: partition key отвечает за размещение по нодам, clustering key — за порядок внутри партиции; это не синонимы.",
-                "source_of_confusion": "Оба находятся в PRIMARY KEY, поэтому кажутся взаимозаменяемыми.",
-                "if_it_were_true": "Если бы они были синонимами, нельзя было бы отдельно управлять распределением и сортировкой, но CQL это позволяет.",
-                "how_it_should_be": "Partition key и clustering key выполняют принципиально разные функции в одном составном PRIMARY KEY."
-              },
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Clustering key обязателен в каждой таблице `Scylla`, а partition key — опционален и может отсутствовать.",
+              "order": 2,
+              "text": "Для равномерной нагрузки partition key берут низкой кардинальности; меньше уникальных значений — ровнее.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: partition key обязателен (без него негде разместить строку), а clustering key опционален.",
-                "source_of_confusion": "Раз clustering key упорядочивает данные, кажется, что он важнее и обязателен.",
-                "if_it_were_true": "Если бы partition key был опционален, движок не знал бы, на какую ноду класть строку.",
-                "how_it_should_be": "Partition key — обязательная часть PRIMARY KEY; clustering keys можно не указывать вовсе."
-              },
+                "what_actually": "Нужна ВЫСОКАЯ кардинальность — иначе горячие партиции.",
+                "source_of_confusion": "«Меньше значений — проще» переворачивает правило.",
+                "if_it_were_true": "Нагрузка сгрудилась бы на паре узлов.",
+                "how_it_should_be": "Много уникальных ключей — равномерное размазывание."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Составной partition key нужен ради сортировки: порядок строк внутри партиции задаёт именно он.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Составной partition key дробит партиции; сортировка — дело clustering key.",
+                "source_of_confusion": "«Составной ключ» из SQL ассоциируется с сортировкой.",
+                "if_it_were_true": "Роль clustering key растворилась бы.",
+                "how_it_should_be": "((user_id, date), timestamp): пара — партиция, timestamp — порядок."
+              }
             }
           ]
         }
@@ -366,56 +366,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое CQL (Cassandra Query Language) и его ограничения?",
+          "question_text": "Что такое CQL (Cassandra Query Language)?",
           "options": [
             {
-              "text": "CQL поддерживает произвольный WHERE по любой колонке без ограничений, как в реляционных СУБД, за счёт автоматических индексов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "WHERE в CQL ограничен partition+clustering key или secondary index; произвольная фильтрация требует ALLOW FILTERING и неэффективна.",
-                "source_of_confusion": "Привычка к SQL заставляет ожидать свободный WHERE по любым колонкам.",
-                "if_it_were_true": "Если бы любой WHERE работал эффективно, не нужны были бы secondary index и тщательный дизайн ключей.",
-                "how_it_should_be": "CQL ограничивает WHERE ключами таблицы; фильтрация по прочим колонкам — дорогой full scan или отдельный индекс."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "CQL — это бинарный протокол низкого уровня, на котором нельзя писать DDL/DML, а только отправлять get/put по ключу.",
+              "order": 0,
+              "text": "CQL полноценно поддерживает JOIN-ы между таблицами: его синтаксис полностью повторяет привычный SQL.",
               "correct": false,
               "sections": {
-                "what_actually": "CQL — это текстовый SQL-подобный язык с DDL (CREATE KEYSPACE/TABLE) и DML (INSERT/SELECT/UPDATE/DELETE), а не сырой key-value протокол.",
-                "source_of_confusion": "У `Cassandra`/`Scylla` есть бинарный wire-протокол, и его смешивают с самим языком CQL.",
-                "if_it_were_true": "Если бы CQL был лишь get/put, нельзя было бы объявить схему через CREATE TABLE, но это базовая операция.",
-                "how_it_should_be": "CQL — полноценный язык запросов с DDL и DML; wire-протокол — отдельный транспортный уровень под ним."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "JOIN-ов нет — данные дублируют под нужные запросы.",
+                "source_of_confusion": "SQL-подобный синтаксис обещает SQL-возможности.",
+                "if_it_were_true": "Кластер соединял бы партиции через сеть — дорого.",
+                "how_it_should_be": "Данные дублируются под каждый запрос — вместо дорогих соединений."
+              }
             },
             {
-              "text": "CQL — SQL-подобный язык для `Cassandra`/`Scylla` с DDL (`CREATE KEYSPACE`, `CREATE TABLE`) и DML (`INSERT`, `SELECT`, `UPDATE`, `DELETE`). Ключевые ограничения vs SQL: нет JOIN-ов (данные денормализуют), нет агрегаций между партициями, WHERE только по partition+clustering key (или secondary index), нет подзапросов. `Scylla` добавляет CDC и Materialized Views.",
+              "label": "B",
+              "order": 1,
+              "text": "WHERE в CQL свободен: фильтровать можно по любой колонке без индексов и ограничений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "WHERE — только по partition/clustering key или вторичному индексу.",
+                "source_of_confusion": "Свободный WHERE — базовое ожидание из SQL.",
+                "if_it_were_true": "Каждый запрос мог бы сканировать весь кластер.",
+                "how_it_should_be": "Фильтрация без ключа запрещена по умолчанию."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Похож на SQL, но: нет JOIN и подзапросов, WHERE — по ключам; схема — от запросов.",
               "correct": true,
               "sections": {
-                "explanation": "`CREATE KEYSPACE mykeyspace WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3};` — типичный DDL; `SELECT * FROM users WHERE user_id = ?` — доступ строго по ключу.",
-                "example": "Например, `SELECT * FROM users WHERE name = ?` без индекса вернёт ошибку, а `SELECT * FROM users WHERE user_id = ?` по ключу отработает мгновенно.",
-                "when_to_apply": "CQL применяют, проектируя таблицы от запросов: одну сущность нередко дублируют в нескольких таблицах под разные паттерны чтения.",
-                "edge_cases": "WHERE по не-ключевой колонке без secondary index запрещён (или требует ALLOW FILTERING с full scan), что легко упустить при переходе с SQL.",
-                "related": "[[scylladb-interview#Q5]] wide-column model; [[scylladb-interview#Q6]] ключи в PRIMARY KEY; [[scylladb-interview#Q9]] consistency levels."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "За привычным фасадом — wide-column модель; данные намеренно денормализуют.",
+                "example": "CREATE KEYSPACE … replication_factor: 3; INSERT/SELECT/UPDATE/DELETE как в SQL.",
+                "when_to_apply": "Соединять партиции с разных узлов было бы дорого — потому JOIN-ов нет.",
+                "edge_cases": "Расширения Scylla поверх CQL: CDC и Materialized Views.",
+                "related": "Агрегации между партициями ограничены — движок не для аналитики по таблице."
+              }
             },
             {
-              "text": "CQL поддерживает полный набор SQL-операций, включая JOIN между таблицами и подзапросы, что делает его эквивалентом ANSI SQL.",
+              "label": "D",
+              "order": 3,
+              "text": "Схему в CQL проектируют классически — от сущностей и связей; сначала полная нормализация, потом запросы.",
               "correct": false,
               "sections": {
-                "what_actually": "CQL намеренно не поддерживает JOIN, подзапросы и агрегации между партициями — данные денормализуют под запросы.",
-                "source_of_confusion": "SQL-подобный синтаксис CQL создаёт иллюзию, что доступны все возможности SQL.",
-                "if_it_were_true": "Если бы JOIN работали, отпала бы нужда в денормализации, но именно она — основа модели `Cassandra`/`Scylla`.",
-                "how_it_should_be": "CQL — это SQL-подобный, но ограниченный язык: без JOIN, без подзапросов, с WHERE по ключам."
-              },
-              "label": "D",
-              "order": 3
+                "what_actually": "Главный принцип обратный: сначала запросы, потом схема.",
+                "source_of_confusion": "Реляционное проектирование — глубокая привычка.",
+                "if_it_were_true": "Нормализованная схема упёрлась бы в отсутствие JOIN-ов.",
+                "how_it_should_be": "Раскладывать данные под конкретные запросы."
+              }
             }
           ]
         }
@@ -426,56 +426,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что означает shared-nothing distributed архитектура в `ScyllaDB`?",
+          "question_text": "Что такое shared-nothing распределённая архитектура?",
           "options": [
             {
-              "text": "Shared-nothing требует master-ноды, которая координирует все остальные и хранит метаданные кластера.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В shared-nothing нет master: координация идёт peer-to-peer через gossip-протокол, все ноды равноправны.",
-                "source_of_confusion": "Многие распределённые системы имеют master, поэтому его наличие ошибочно приписывают и сюда.",
-                "if_it_were_true": "Если бы был master, он стал бы single point of failure, чего shared-nothing избегает.",
-                "how_it_should_be": "Shared-nothing у `Scylla`/`Cassandra` — masterless: gossip вместо центрального координатора."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Shared-nothing означает, что все ноды разделяют общую память и общий диск для согласованности, но имеют отдельные CPU.",
+              "order": 0,
+              "text": "Кластером управляет выделенный мастер-узел; он маршрутизирует запросы и следит за членством.",
               "correct": false,
               "sections": {
-                "what_actually": "Shared-nothing — это ровно отсутствие общего состояния: у каждой ноды свои CPU, память и диск; ничего общего между нодами нет.",
-                "source_of_confusion": "Слово «shared» в названии вводит в заблуждение — на деле это «nothing shared».",
-                "if_it_were_true": "Если бы ноды делили память/диск, появился бы single point of failure, который shared-nothing как раз исключает.",
-                "how_it_should_be": "Shared-nothing = каждая нода полностью независима (свои CPU, RAM, disk), координация только через gossip."
-              },
+                "what_actually": "Мастера нет — любой узел принимает запрос и координирует его.",
+                "source_of_confusion": "Мастер-слейв — привычная топология из реляционного мира.",
+                "if_it_were_true": "Мастер стал бы единой точкой отказа и узким местом.",
+                "how_it_should_be": "Peer-to-peer: равноправные узлы, gossip-протокол."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Shared-nothing гарантирует strong consistency по умолчанию, поскольку ноды не делят состояние и не конфликтуют.",
+              "order": 1,
+              "text": "Узлы кластера делят одно общее сетевое хранилище: данные лежат централизованно, а вычисления распределены.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию shared-nothing даёт eventual consistency (настраиваемую через R+W>N), а не strong; отсутствие общего состояния не означает сильную согласованность.",
-                "source_of_confusion": "Кажется, что независимость нод автоматически даёт согласованность, но это про доступность и масштабирование.",
-                "if_it_were_true": "Если бы strong consistency была по умолчанию, не нужны были бы tunable consistency levels, но они есть.",
-                "how_it_should_be": "Shared-nothing даёт linear scaling и отказоустойчивость; consistency по умолчанию eventual и тюнится отдельно."
-              },
-              "label": "C",
-              "order": 2
+                "what_actually": "Общего хранилища нет — каждый узел владеет своим диском.",
+                "source_of_confusion": "SAN/NAS-архитектуры знакомы по классическим кластерам.",
+                "if_it_were_true": "Хранилище стало бы общим ресурсом-бутылочным горлышком.",
+                "how_it_should_be": "Shared-nothing: диск, память и CPU — только свои."
+              }
             },
             {
-              "text": "Shared-nothing — каждая нода независима и не делит состояние: у неё свои данные, CPU, память и диск. Координация идёт через gossip-протокол (peer-to-peer, без master). Это даёт линейное масштабирование, отсутствие single point of failure и лёгкое добавление/удаление нод; trade-off — eventual consistency по умолчанию (настраиваемая).",
+              "label": "C",
+              "order": 2,
+              "text": "По умолчанию кластер всегда даёт строгую согласованность: eventual включается отдельно, по запросу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолт — eventual; строгость собирают уровнями согласованности.",
+                "source_of_confusion": "Хочется строгих гарантий «из коробки».",
+                "if_it_were_true": "Доступность и задержка пострадали бы по умолчанию.",
+                "how_it_should_be": "Per-запрос CL — вплоть до строгой при необходимости."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Каждый узел самостоятелен: свои данные, CPU, память, диск; координация — gossip, любой узел — координатор.",
               "correct": true,
               "sections": {
-                "explanation": "Нода 1, нода 2, нода 3 хранят свои данные и общаются gossip-ом; падение одной не валит кластер, а новую ноду просто добавляют в ring.",
-                "example": "Например, при отказе ноды 2 запросы обслуживают её реплики на нодах 1 и 3, а вернувшаяся нода 2 догоняет состояние через repair, без участия master.",
-                "when_to_apply": "Применяют там, где нужна горизонтальная масштабируемость и высокая доступность без единой точки отказа — типичные сценарии IoT и time-series.",
-                "edge_cases": "Eventual consistency как побочный эффект: запись могла ещё не разойтись по всем репликам, поэтому уровни consistency настраивают под требования (R+W>N для strong).",
-                "related": "[[scylladb-interview#Q3]] shard-per-core; [[scylladb-interview#Q9]] репликация и consistency; [[scylladb-interview#Q10]] tunable consistency R+W>N."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Нет общего хранилища, нет мастера, нет единой точки прохождения запросов.",
+                "example": "Gossip: узлы peer-to-peer обмениваются состоянием, знание расходится эпидемически.",
+                "when_to_apply": "Линейное масштабирование: добавили узел — выросли ёмкость и пропускная способность.",
+                "edge_cases": "Цена — eventual consistency по умолчанию; подкручивается per-запрос.",
+                "related": "Выпадение одного узла не роняет кластер — все равноправны."
+              }
             }
           ]
         }
@@ -486,56 +486,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как устроены репликация и consistency levels в `ScyllaDB`?",
+          "question_text": "Как работают репликация и уровни согласованности?",
           "options": [
             {
-              "text": "Consistency level задаётся один раз на уровне keyspace и применяется ко всем запросам без возможности менять его per-query.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Consistency level выбирается per-query (через USING CONSISTENCY или в драйвере), а на keyspace задаётся replication factor, а не CL.",
-                "source_of_confusion": "RF задают на keyspace, поэтому кажется, что и CL тоже фиксируется там же.",
-                "if_it_were_true": "Если бы CL был глобальным, нельзя было бы делать быстрые `ONE`-чтения и строгие `QUORUM`-записи в одном приложении, но это типичный приём.",
-                "how_it_should_be": "RF — свойство keyspace, а consistency level — параметр конкретного запроса."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Replication factor задаётся per-query вместе с consistency level и может меняться от запроса к запросу.",
-              "correct": false,
-              "sections": {
-                "what_actually": "RF фиксируется на уровне keyspace при его создании (или ALTER), а per-query меняется только consistency level.",
-                "source_of_confusion": "И RF, и CL влияют на надёжность чтения, поэтому их область действия путают.",
-                "if_it_were_true": "Если бы RF менялся per-query, число копий данных было бы непредсказуемым, что ломает модель хранения.",
-                "how_it_should_be": "RF — статическое свойство keyspace; per-query настраивается лишь уровень согласованности."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`QUORUM` означает подтверждение от всех реплик (RF), а `ALL` — только от одной любой реплики.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: `QUORUM` — это большинство (N/2+1), а `ALL` требует подтверждения от всех RF реплик.",
-                "source_of_confusion": "Слово «quorum» звучит сильнее «all», отсюда перестановка смысла.",
-                "if_it_were_true": "Если бы `QUORUM` требовал все реплики, он не отличался бы от `ALL` и был бы бесполезен как уровень.",
-                "how_it_should_be": "`QUORUM` = большинство (N/2+1), `ALL` = все реплики; `ONE` = одна."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Replication factor (RF) задаёт число копий данных (например, `NetworkTopologyStrategy` с `dc1: 3`). Consistency level выбирается per-query и определяет, сколько реплик должны подтвердить операцию: `ONE`/`TWO`/`THREE`, `QUORUM` (большинство, N/2+1), `ALL`, `LOCAL_QUORUM` (кворум в локальном DC), `EACH_QUORUM` (кворум в каждом DC), `ANY` (хотя бы одна, включая hinted handoff).",
+              "order": 0,
+              "text": "RF на keyspace — сколько копий хранить; CL на запрос — со сколькими репликами говорит координатор.",
               "correct": true,
               "sections": {
-                "explanation": "`SELECT * FROM users WHERE user_id = ? USING CONSISTENCY QUORUM;` — кворумное чтение; при RF=3 это означает подтверждение от 2 реплик.",
-                "example": "Например, при RF=3 запись с `W=QUORUM` ждёт подтверждения от 2 реплик из 3, а оставшаяся догоняется фоном через hinted handoff.",
-                "when_to_apply": "RF задают на уровне keyspace под требования отказоустойчивости, а consistency level крутят per-query под баланс latency/согласованности.",
-                "edge_cases": "`LOCAL_QUORUM` чаще выбирают в multi-DC, чтобы не ходить за кворумом в удалённый DC; `EACH_QUORUM` дороже, т.к. требует кворум в каждом DC.",
-                "related": "[[scylladb-interview#Q8]] shared-nothing; [[scylladb-interview#Q10]] формула R+W>N; [[scylladb-interview#Q11]] токены и vnodes."
-              },
+                "explanation": "Две независимые настройки, которые легко спутать.",
+                "example": "NetworkTopologyStrategy: своё число реплик на каждый дата-центр (dc1: 3, dc2: 3).",
+                "when_to_apply": "QUORUM — большинство (N/2 + 1); LOCAL_QUORUM не ждёт другие DC через WAN.",
+                "edge_cases": "ALL — максимальная согласованность, но любая недоступная реплика рушит запрос.",
+                "related": "Уровень задаёт драйвер на сессию или statement; в cqlsh — команда CONSISTENCY."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Consistency level жёстко фиксируется на keyspace при создании; менять его per-запрос нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CL задаётся на каждый отдельный запрос — в этом его гибкость.",
+                "source_of_confusion": "RF правда живёт на keyspace — свойство переносится на CL.",
+                "if_it_were_true": "Нельзя было бы читать слабо, а писать строго.",
+                "how_it_should_be": "RF — на keyspace один раз; CL — per-запрос."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`ANY` — самый строгий уровень записи из всех: подтверждение требуется сразу от всех живых реплик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ANY — самый СЛАБЫЙ: хватит одной записи, хоть через hinted handoff.",
+                "source_of_confusion": "«Any» можно прочитать как «все какие есть».",
+                "if_it_were_true": "Шкала уровней перевернулась бы с ног на голову.",
+                "how_it_should_be": "От слабого к строгому: ANY → ONE → QUORUM → ALL."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Уровень задаётся прямо в тексте каждого запроса: суффиксом USING CONSISTENCY QUORUM в его конце.",
+              "correct": false,
+              "sections": {
+                "what_actually": "USING CONSISTENCY давно удалён из CQL3 — уровень задаёт драйвер или cqlsh-команда.",
+                "source_of_confusion": "Старые примеры из ранних версий CQL до сих пор гуляют по сети.",
+                "if_it_were_true": "Каждый запрос таскал бы уровень в своём тексте.",
+                "how_it_should_be": "CONSISTENCY QUORUM; отдельной командой, затем запрос."
+              }
             }
           ]
         }
@@ -546,56 +546,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое tunable consistency и формула R + W > N?",
+          "question_text": "Как работает настраиваемая согласованность (R + W > N)?",
           "options": [
             {
-              "text": "Tunable consistency: согласованность настраивается per-query через уровни чтения (R) и записи (W) при заданном RF (N). Strong consistency достигается, когда `R + W > N` — тогда множества реплик чтения и записи гарантированно пересекаются. Higher consistency → выше latency и ниже availability; lower → быстрее, но eventually consistent.",
+              "label": "A",
+              "order": 0,
+              "text": "Правило R + W > N: множества чтения и записи пересекаются — чтение всегда зацепит свежую реплику.",
               "correct": true,
               "sections": {
-                "explanation": "При RF=3: `W=QUORUM(2)+R=QUORUM(2)` даёт 2+2 > 3 — strong; `W=ONE(1)+R=ONE(1)` даёт 1+1 < 3 — eventual.",
-                "example": "Например, для денежных операций берут `W=QUORUM`+`R=QUORUM` (strong), а для ленты событий — `W=ONE`+`R=ONE` (быстро, eventual).",
-                "when_to_apply": "Формулу применяют, подбирая баланс: частый практичный выбор — `LOCAL_QUORUM` и на чтение, и на запись.",
-                "edge_cases": "Сильная согласованность повышает latency и снижает доступность при падении реплик, поэтому её включают только там, где это реально нужно.",
-                "related": "[[scylladb-interview#Q9]] consistency levels; [[scylladb-interview#Q8]] shared-nothing eventual; [[scylladb-interview#Q18]] когда выбирать Scylla."
-              },
-              "label": "A",
-              "order": 0
+                "explanation": "Строгая согласованность без полного ALL на запись.",
+                "example": "RF=3: QUORUM(2) + QUORUM(2) = 4 > 3 — чтение всегда видит последнюю запись.",
+                "when_to_apply": "Эмпирика: LOCAL_QUORUM на чтение и запись — баланс без WAN.",
+                "edge_cases": "ONE + ONE = 2 < 3 — пересечения может не быть, чтение рискует устареть.",
+                "related": "Выше R и W — строже, но медленнее и чувствительнее к падениям."
+              }
             },
             {
-              "text": "Tunable consistency означает, что `Scylla` автоматически выбирает уровень согласованности за разработчика, исходя из нагрузки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Tunable — значит разработчик сам задаёт R и W per-query; автоматического подбора уровня движком нет.",
-                "source_of_confusion": "«Tunable» звучит как «самонастраиваемая», отсюда идея авто-выбора.",
-                "if_it_were_true": "Если бы движок выбирал сам, нельзя было бы гарантировать strong consistency для критичных операций.",
-                "how_it_should_be": "Tunable consistency — это ручная настройка R/W под запрос, а не автоматика."
-              },
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Формула `R + W > N` означает, что для strong consistency сумма реплик чтения и записи должна быть строго меньше replication factor.",
+              "order": 1,
+              "text": "Вполне достаточно простого равенства R + W = N: его всегда хватает для гарантированного пересечения множеств.",
               "correct": false,
               "sections": {
-                "what_actually": "Условие strong consistency — сумма строго больше N (`R + W > N`), а не меньше; при меньшей сумме согласованность лишь eventual.",
-                "source_of_confusion": "Знак неравенства легко перепутать, особенно под стрессом собеседования.",
-                "if_it_were_true": "Если бы хватало `R + W < N`, чтение могло бы не пересечься с записью и вернуть устаревшие данные.",
-                "how_it_should_be": "`R + W > N` гарантирует пересечение наборов реплик чтения и записи — отсюда strong consistency."
-              },
+                "what_actually": "Нужно строгое неравенство: при R+W=N множества могут не пересечься.",
+                "source_of_confusion": "«Ровно N» выглядит достаточным покрытием.",
+                "if_it_were_true": "QUORUM+ONE при RF=3 (2+1=3) давал бы строгость — а не даёт.",
+                "how_it_should_be": "Пересечение гарантирует только R + W > N."
+              }
+            },
+            {
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "В формуле `R + W > N` величина N — это число нод в кластере, а не replication factor.",
+              "order": 2,
+              "text": "W=ONE плюс R=ONE при RF=3 дают полностью строгую согласованность: одна реплика точно свежая.",
               "correct": false,
               "sections": {
-                "what_actually": "N в формуле — это replication factor (число копий данных), а не общее число нод кластера.",
-                "source_of_confusion": "И RF, и размер кластера — «количество нод», поэтому N трактуют как все ноды.",
-                "if_it_were_true": "Если бы N был числом всех нод, strong consistency требовала бы кворума по всему кластеру, что неверно и неэффективно.",
-                "how_it_should_be": "N = replication factor; пересечение R и W считается относительно числа реплик, а не всех нод."
-              },
+                "what_actually": "1 + 1 < 3 — чтение может попасть на устаревшую реплику.",
+                "source_of_confusion": "«Хоть одна свежая есть» — но читаем-то не обязательно её.",
+                "if_it_were_true": "Правило пересечения было бы не нужно.",
+                "how_it_should_be": "ONE+ONE — быстрый, но лишь eventual вариант."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Чем выше R и W, тем ниже задержка запросов: больше реплик — быстрее ответ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выше R и W — БОЛЬШЕ задержка: ждём больше узлов.",
+                "source_of_confusion": "«Больше реплик работает» звучит как «параллельнее — быстрее».",
+                "if_it_were_true": "ALL был бы и самым строгим, и самым быстрым.",
+                "how_it_should_be": "Строгость покупается задержкой и доступностью."
+              }
             }
           ]
         }
@@ -606,56 +606,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое токены и virtual nodes (vnodes)?",
+          "question_text": "Что такое tokens и virtual nodes (vnodes)?",
           "options": [
             {
-              "text": "Без vnodes каждая нода владеет случайными разрозненными диапазонами, а включение vnodes даёт ей один непрерывный диапазон.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: без vnodes нода держит один непрерывный диапазон, а с vnodes — множество случайных диапазонов.",
-                "source_of_confusion": "Логично предположить, что «виртуальные» ноды упрощают до одного диапазона, но эффект обратный.",
-                "if_it_were_true": "Если бы vnodes давали один диапазон, пропал бы выигрыш в балансировке и параллельном восстановлении.",
-                "how_it_should_be": "vnodes разбивают владение на много случайных диапазонов ради лучшей балансировки, а не на один непрерывный."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Главное преимущество vnodes — они увеличивают replication factor, создавая дополнительные копии данных на каждой ноде.",
+              "order": 0,
+              "text": "С vnodes каждый узел владеет одним сплошным диапазоном вместо 256; так проще балансировать.",
               "correct": false,
               "sections": {
-                "what_actually": "vnodes не меняют RF: они разбивают владение диапазонами токенов ради балансировки и восстановления, а число копий задаёт отдельно RF.",
-                "source_of_confusion": "И vnodes, и RF связаны с распределением данных, поэтому их эффекты смешивают.",
-                "if_it_were_true": "Если бы vnodes повышали RF, добавление ноды меняло бы число копий данных, но RF остаётся прежним.",
-                "how_it_should_be": "vnodes улучшают балансировку и recovery; replication factor — независимый параметр."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "Vnodes — это МНОЖЕСТВО мелких диапазонов; сплошной — как раз без них.",
+                "source_of_confusion": "Термины «с vnodes» и «без vnodes» меняются местами.",
+                "if_it_were_true": "Балансировка осталась бы грубой, ребилд — медленным.",
+                "how_it_should_be": "256 случайных кусочков на узел против одного сплошного."
+              }
             },
             {
-              "text": "Token ring — хеш-пространство (`-2^63` до `2^63-1`); partition key каждой строки хешируется в токен, а токен маппится на ноду-владельца его диапазона. С vnodes каждая физическая нода владеет множеством виртуальных диапазонов (например, 256 случайных), вместо одного большого. `Scylla` поддерживает vnodes (и обычные токены).",
+              "label": "B",
+              "order": 1,
+              "text": "Восстановление упавшего узла всегда идёт последовательно с одного соседа: так надёжнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С vnodes данные тянутся параллельно со многих соседей.",
+                "source_of_confusion": "«Один источник — меньше хаоса» — интуиция против скорости.",
+                "if_it_were_true": "Ребилд узла упирался бы в пропускную способность одного соседа.",
+                "how_it_should_be": "Кусочки упавшего узла лежат на многих — тянем отовсюду."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Чтобы найти узел-владелец конкретной строки, координатор каждый раз обязан спрашивать специальный центральный справочник токенов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Справочника нет: хеш ключа сам указывает владельца.",
+                "source_of_confusion": "Каталог метаданных — привычная деталь других систем.",
+                "if_it_were_true": "Справочник превратился бы в bottleneck и точку отказа.",
+                "how_it_should_be": "Детерминированный хеш — децентрализованный поиск."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Кольцо токенов от -2^63 до 2^63-1: ключ хешируется в токен; vnodes — 256 мелких диапазонов.",
               "correct": true,
               "sections": {
-                "explanation": "Без vnodes: нода 1 владеет токенами 0-1000, нода 2 — 1001-2000. С 256 vnodes на ноду каждая держит 256 случайных диапазонов.",
-                "example": "Например, при добавлении новой ноды с 256 vnodes она забирает по куску данных сразу у многих нод, а не у одного соседа — ребаланс идёт параллельно.",
-                "when_to_apply": "vnodes применяют для лучшей балансировки нагрузки, быстрого восстановления (параллельная передача данных от многих нод) и простого масштабирования (новая нода тянет данные сразу от многих).",
-                "edge_cases": "При неудачном partition key хеш-распределение всё равно может дать hot partition: vnodes балансируют диапазоны токенов, но не спасают от перекоса одного ключа.",
-                "related": "[[scylladb-interview#Q6]] partition key и hashing; [[scylladb-interview#Q8]] shared-nothing ring; [[scylladb-interview#Q22]] миграция и rebalancing."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Token ring — это список всех клиентских соединений, а vnodes — это виртуальные клиенты, подключённые к кластеру.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Token ring — это хеш-пространство (`-2^63`..`2^63-1`) для размещения данных, а vnodes — виртуальные диапазоны токенов на ноде; к клиентам это отношения не имеет.",
-                "source_of_confusion": "Слово «node» в vnodes наводит на мысль о клиентах/подключениях.",
-                "if_it_were_true": "Если бы это были соединения, добавление ноды не перераспределяло бы данные, но именно это и происходит.",
-                "how_it_should_be": "Token ring — пространство хешей для данных; vnodes — поддиапазоны токенов внутри ноды."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Владелец находится расчётом хеша — без запроса к мастеру.",
+                "example": "Без vnodes: node 1 — токены 0-1000; с vnodes — 256 случайных кусочков.",
+                "when_to_apply": "Новый узел забирает по чуть-чуть со всех — нагрузка размазана.",
+                "edge_cases": "Scylla поддерживает и режим с обычными едиными токенами.",
+                "related": "Мелкие случайные диапазоны в среднем выравнивают объёмы узлов."
+              }
             }
           ]
         }
@@ -666,56 +666,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое LSM-tree хранилище в `ScyllaDB`?",
+          "question_text": "Как устроено хранение на LSM-tree?",
           "options": [
             {
-              "text": "LSM-tree оптимизирован прежде всего для случайных чтений за счёт хранения всех данных в одном отсортированном B-tree-индексе.",
-              "correct": false,
-              "sections": {
-                "what_actually": "LSM-tree оптимизирован для быстрых последовательных записей; данные размазаны по нескольким SSTable, что даёт read amplification, а не идеальные чтения.",
-                "source_of_confusion": "«Tree» в названии наводит на ассоциацию с B-tree и быстрыми чтениями.",
-                "if_it_were_true": "Если бы всё лежало в одном отсортированном индексе, не было бы compaction и нескольких SSTable, но они есть.",
-                "how_it_should_be": "LSM = log-structured merge: быстрые записи в MemTable→SSTable, чтения требуют проверки нескольких файлов."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "В LSM-tree записи идут напрямую в immutable SSTable на диск, минуя память, поэтому запись медленная и случайная.",
+              "order": 0,
+              "text": "SSTable — изменяемый файл; compaction дописывает изменения прямо внутрь него.",
               "correct": false,
               "sections": {
-                "what_actually": "Запись сначала попадает в in-memory MemTable (быстро, последовательно), и лишь при заполнении flush'ится в immutable SSTable.",
-                "source_of_confusion": "Раз SSTable на диске, кажется, что и запись идёт сразу на диск случайным образом.",
-                "if_it_were_true": "Если бы записи шли напрямую в SSTable, терялось бы главное преимущество LSM — быстрая последовательная запись.",
-                "how_it_should_be": "Поток записи: MemTable (RAM) → flush → SSTable (disk) → background compaction; запись быстрая и последовательная."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "SSTable неизменяемы; compaction пишет НОВЫЕ файлы.",
+                "source_of_confusion": "«Слияние» звучит как правка существующего.",
+                "if_it_were_true": "Гарантия последовательной записи разрушилась бы.",
+                "how_it_should_be": "Старые файлы сливаются в новый и удаляются."
+              }
             },
             {
-              "text": "LSM-tree (Log-Structured Merge-tree) — структура хранения `Cassandra`/`Scylla` (а также `RocksDB`, `ClickHouse`). Запись идёт в in-memory сортированную MemTable, при заполнении flush'ится в immutable SSTable на диск, а фоновый compaction сливает SSTable в более крупные. Плюс — быстрые последовательные записи; минусы — read amplification (проверка нескольких SSTable) и накладные расходы на compaction.",
+              "label": "B",
+              "order": 1,
+              "text": "Запись — в MemTable (+commit log), flush в неизменяемые SSTable, фоновый compaction; STCS/LCS/TWCS.",
               "correct": true,
               "sections": {
-                "explanation": "Стратегии compaction: `STCS` (SizeTieredCompactionStrategy, default), `LCS` (LeveledCompactionStrategy, для read-heavy), `TWCS` (TimeWindowCompactionStrategy, для time-series).",
-                "example": "Например, тысяча подряд идущих INSERT'ов сначала копится в MemTable, затем одним flush'ем ложится в SSTable, а ночью compaction сольёт мелкие SSTable в крупные.",
-                "when_to_apply": "LSM выбирают под write-heavy нагрузки (логи, метрики, IoT), где важна высокая скорость вставки, а чтения ускоряют кэшем и Bloom-фильтрами.",
-                "edge_cases": "Если скорость записи превышает скорость compaction, накапливается compaction backlog — растёт число SSTable и деградируют чтения; это частая production-проблема.",
-                "related": "[[scylladb-interview#Q5]] wide-column model; [[scylladb-interview#Q19]] TWCS для time-series; [[scylladb-interview#Q23]] compaction backlog в проде."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Изменения копятся в памяти и сбрасываются крупными последовательными блоками.",
+                "example": "Write → MemTable → flush → SSTable → compaction → крупные SSTable.",
+                "when_to_apply": "STCS — дефолт; LCS — read-heavy; TWCS — временные ряды.",
+                "edge_cases": "Отстающий compaction копит SSTable — чтения деградируют.",
+                "related": "Bloom filter позволяет не трогать SSTable без нужного ключа."
+              }
             },
             {
-              "text": "Compaction в LSM-tree — это процесс, который удаляет MemTable из памяти, чтобы освободить RAM под новые записи.",
+              "label": "C",
+              "order": 2,
+              "text": "Read amplification в LSM отсутствует: значение всегда лежит ровно в одном файле.",
               "correct": false,
               "sections": {
-                "what_actually": "Compaction объединяет несколько SSTable на диске в более крупные (убирая дубли и tombstones), а не очищает MemTable; MemTable освобождается при flush.",
-                "source_of_confusion": "И flush, и compaction — фоновые операции LSM, поэтому их назначение путают.",
-                "if_it_were_true": "Если бы compaction чистил RAM, он не уменьшал бы read amplification, ради чего его и запускают.",
-                "how_it_should_be": "Compaction сливает SSTable'ы на диске; за освобождение MemTable отвечает flush."
-              },
+                "what_actually": "Значение может быть размазано по нескольким SSTable — их сливают на лету.",
+                "source_of_confusion": "Хочется думать, что compaction всегда всё догнал.",
+                "if_it_were_true": "LCS-стратегия против read amplification была бы не нужна.",
+                "how_it_should_be": "Read amplification — известный компромисс LSM."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "LSM-tree правит данные на месте на диске: случайные записи — его сильная сторона.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: правок на месте нет, запись всегда последовательная.",
+                "source_of_confusion": "B-tree-модель update-in-place переносится на LSM.",
+                "if_it_were_true": "Дорогие случайные записи съели бы главный плюс.",
+                "how_it_should_be": "Только последовательный ввод-вывод — отсюда скорость записи."
+              }
             }
           ]
         }
@@ -726,56 +726,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему `ScyllaDB` быстрее `Cassandra`?",
+          "question_text": "Почему Scylla быстрее Cassandra?",
           "options": [
             {
-              "text": "`Scylla` быстрее, потому что отказалась от репликации и consistency levels, сократив сетевые накладные расходы.",
+              "label": "A",
+              "order": 0,
+              "text": "Scylla быстрее прежде всего из-за ослабленных гарантий согласованности: часть строгих уровней CL просто отброшена.",
               "correct": false,
               "sections": {
-                "what_actually": "`Scylla` сохраняет репликацию и tunable consistency как у `Cassandra`; скорость даёт движок, а не урезание надёжности.",
-                "source_of_confusion": "«Меньше координации — быстрее» — соблазнительный, но неверный вывод применительно к `Scylla`.",
-                "if_it_were_true": "Если бы репликации не было, `Scylla` была бы непригодна для отказоустойчивых кластеров, но она их поддерживает.",
-                "how_it_should_be": "Репликация и consistency у `Scylla` те же; ускорение — от нативного кода и shard-per-core."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "Уровни согласованности те же — гарантии не ослаблены.",
+                "source_of_confusion": "«Быстрее — значит, где-то срезали» — не здесь.",
+                "if_it_were_true": "Семантика уровней перестала бы совпадать с Cassandra.",
+                "how_it_should_be": "Тот же QUORUM/ALL — быстрее за счёт движка."
+              }
             },
             {
-              "text": "Скорость складывается из нескольких факторов: `C++` без JVM и без GC-пауз, shard-per-core без lock contention, async I/O на `Seastar`, прямой disk I/O (в части конфигов), лучшая утилизация multi-core CPU, более плотное управление памятью без Java heap overhead и опциональный custom networking (DPDK) в обход kernel TCP-стека. Итог — на том же железе `Scylla` часто в 3-10x быстрее.",
+              "label": "B",
+              "order": 1,
+              "text": "Выигрыш проявляется только на чтениях: запись у обеих баз одинакова по скорости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выигрыш и на записи, и на чтении — источники общие.",
+                "source_of_confusion": "Сценарии write-heavy наводят на «читает так же».",
+                "if_it_were_true": "Write-heavy профиль не был бы главным сценарием.",
+                "how_it_should_be": "Пропускная способность выше в 3-5 раз по всем операциям."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Главный источник скорости — упрощённая модель данных: Scylla хранит данные иначе, чем Cassandra.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модель данных та же самая — быстрее стал движок.",
+                "source_of_confusion": "Радикальный прирост хочется объяснить сменой модели.",
+                "if_it_were_true": "API-совместимость с Cassandra была бы невозможна.",
+                "how_it_should_be": "Та же модель — переписанная реализация."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Три источника выигрыша: уход от JVM (нет GC), shard-per-core без блокировок, эффективный async I/O.",
               "correct": true,
               "sections": {
-                "explanation": "Предсказуемая p99 latency — прямое следствие отсутствия GC: нет stop-the-world пауз, ломающих хвост распределения.",
-                "example": "Например, кластер из 30 нод `Cassandra` после миграции на `Scylla` нередко ужимается до 6-10 нод при той же нагрузке за счёт лучшей утилизации CPU.",
-                "when_to_apply": "Эти аргументы приводят, обосновывая миграцию с `Cassandra`: тот же объём нагрузки обслуживается меньшим числом нод.",
-                "edge_cases": "Часть выигрыша (DPDK, direct I/O) зависит от конфигурации и железа, поэтому реальный прирост варьируется и его проверяют бенчмарком на своей нагрузке.",
-                "related": "[[scylladb-interview#Q3]] shard-per-core; [[scylladb-interview#Q4]] Seastar; [[scylladb-interview#Q14]] отсутствие GC-пауз."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Scylla` быстрее исключительно потому, что хранит все данные в оперативной памяти, а `Cassandra` — на диске.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Обе персистят данные на диск через LSM/SSTable; ускорение даёт нативный движок и shard-per-core, а не отказ от диска.",
-                "source_of_confusion": "In-memory СУБД ассоциируются со скоростью, отсюда вывод о хранении всего в RAM.",
-                "if_it_were_true": "Если бы `Scylla` была чисто in-memory, она теряла бы данные при перезапуске, но она durable.",
-                "how_it_should_be": "Скорость `Scylla` — от `C++`/Seastar/shard-per-core; хранение остаётся дисковым LSM."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Главная причина — `Scylla` использует более новую версию JVM с улучшенным сборщиком мусора, чем `Cassandra`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Scylla` вообще не использует JVM — она написана на `C++` без GC; «более новая JVM» здесь неприменима.",
-                "source_of_confusion": "Обе из мира `Cassandra`, поэтому ошибочно считают рантайм общим (JVM).",
-                "if_it_were_true": "Если бы дело было в версии JVM, оставались бы GC-паузы, которые `Scylla` устраняет полностью.",
-                "how_it_should_be": "`Scylla` быстрее из-за отказа от JVM в пользу нативного `C++`, а не из-за нового GC."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Все причины сводятся к трём: JVM, конкуренция ядер, работа с ОС.",
+                "example": "Прямой дисковый I/O и своя сеть (DPDK) — в обход буферов и стека ядра.",
+                "when_to_apply": "Итог: на том же железе часто в 3-10 раз быстрее.",
+                "edge_cases": "Меньшим числом узлов держится та же нагрузка.",
+                "related": "Паузы GC рвали задержку p99 — их устранение выправляет хвост."
+              }
             }
           ]
         }
@@ -786,56 +786,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Правда ли, что отсутствие JVM означает отсутствие GC-пауз, и почему это важно?",
+          "question_text": "Нет JVM — значит нет пауз GC?",
           "options": [
             {
-              "text": "Отсутствие GC означает, что `Scylla` не освобождает память вообще и неизбежно упирается в OOM при долгой работе.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Память освобождается явно (ручное управление в `C++`), просто без отдельного фонового сборщика; утечки — это баг, а не норма архитектуры.",
-                "source_of_confusion": "«Нет GC» ошибочно читают как «память никогда не освобождается».",
-                "if_it_were_true": "Если бы память не освобождалась, `Scylla` не работала бы под постоянной нагрузкой годами, но она работает.",
-                "how_it_should_be": "Ручное управление памятью освобождает её детерминированно; GC-паузы при этом отсутствуют."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Scylla` тоже использует garbage collector, просто запускает его реже, что и снижает частоту пауз.",
+              "order": 0,
+              "text": "Тщательный тюнинг G1GC полностью и навсегда устраняет паузы Cassandra: вопрос лишь в правильной настройке.",
               "correct": false,
               "sections": {
-                "what_actually": "`Scylla` не использует GC вообще — память управляется вручную в `C++`; речь не о «более редком GC», а о его полном отсутствии.",
-                "source_of_confusion": "Трудно поверить, что СУБД работает без GC, поэтому додумывают «редкий GC».",
-                "if_it_were_true": "Если бы GC всё же был, оставались бы периодические паузы, ломающие предсказуемость latency.",
-                "how_it_should_be": "GC в `Scylla` отсутствует как механизм; стабильная latency — следствие именно этого."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "Тюнинг смягчает, но не устраняет: паузы присущи JVM.",
+                "source_of_confusion": "Вера в «правильные флаги JVM» неистребима.",
+                "if_it_were_true": "Постоянная эксплуатационная головная боль исчезла бы.",
+                "how_it_should_be": "Подбор сборщика — паллиатив; убирает паузы только уход с JVM."
+              }
             },
             {
-              "text": "Да: `Scylla` написана на `C++` с ручным управлением памятью, поэтому GC отсутствует как класс. `Cassandra` же страдает от stop-the-world пауз (10-500 ms), которые дают спайки в p99 latency и требуют сложного тюнинга (G1GC, ZGC). У `Scylla` latency предсказуема, а p99 в 5-10x ниже — это одна из главных причин миграций (`Discord`, `Comcast`).",
+              "label": "B",
+              "order": 1,
+              "text": "Да: C++ и ручное управление памятью — пауз GC нет; выигрыш именно в хвосте p99.",
               "correct": true,
               "sections": {
-                "explanation": "Без GC хвост распределения latency остаётся ровным под нагрузкой, тогда как у `Cassandra` периодические паузы создают видимые спайки p99.",
-                "example": "Например, у `Cassandra` под нагрузкой p99 может скакнуть с 5 ms до 200 ms в момент GC-паузы, тогда как у `Scylla` p99 остаётся ровным около 1-5 ms.",
-                "when_to_apply": "Этот аргумент решающий там, где критична предсказуемая low-latency (p99 < 10 ms): real-time bidding, мессенджеры, торговые системы.",
-                "edge_cases": "Ручное управление памятью убирает GC, но требует аккуратной работы движка с RAM: ошибки управления памятью проявляются иначе, чем в managed-рантайме.",
-                "related": "[[scylladb-interview#Q13]] почему быстрее; [[scylladb-interview#Q1]] C++ vs JVM; [[scylladb-interview#Q18]] когда выбирать Scylla."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Для базы под нагрузкой это ключевой фактор предсказуемости задержки.",
+                "example": "Stop-the-world в Cassandra: 10-500 мс, узел не отвечает вообще.",
+                "when_to_apply": "Интерактивным системам важно «никогда не залипает», а не «обычно быстро».",
+                "edge_cases": "Задержка p99 в 5-10 раз ниже — выигрыш в хвосте, не в среднем.",
+                "related": "Предсказуемость хвоста — главная причина миграций Discord и Comcast."
+              }
             },
             {
-              "text": "GC-паузы в `Cassandra` несущественны и не влияют на latency, так как современные сборщики (G1GC, ZGC) убрали их полностью.",
+              "label": "C",
+              "order": 2,
+              "text": "Внутри Scylla работает собственный компактный GC; паузы есть, просто они короче.",
               "correct": false,
               "sections": {
-                "what_actually": "Даже современные GC дают stop-the-world паузы (10-500 ms), которые бьют по p99 latency; полностью их не убирает ни G1GC, ни ZGC.",
-                "source_of_confusion": "Маркетинг low-pause сборщиков создаёт впечатление, что проблема GC решена.",
-                "if_it_were_true": "Если бы GC-паузы были несущественны, `Discord` и `Comcast` не мигрировали бы ради них на `Scylla`.",
-                "how_it_should_be": "GC-паузы реальны и заметны в хвосте latency; `Scylla` устраняет их отказом от JVM."
-              },
+                "what_actually": "GC нет вовсе — память управляется вручную в C++.",
+                "source_of_confusion": "«Совсем без сборщика» кажется невозможным.",
+                "if_it_were_true": "Остались бы редкие, но реальные паузы.",
+                "how_it_should_be": "Ноль stop-the-world — ровный хвост распределения."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Паузы GC портят среднюю задержку, а хвост p99 от них не зависит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ровно наоборот: средняя может быть хорошей, хвост портят паузы.",
+                "source_of_confusion": "«Паузы редки — на p99 не влияют» — а p99 и есть редкие случаи.",
+                "if_it_were_true": "Мигрировать ради хвоста не было бы смысла.",
+                "how_it_should_be": "GC-паузы — классическая причина рваного p99."
+              }
             }
           ]
         }
@@ -846,56 +846,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое workload prioritization в `ScyllaDB`?",
+          "question_text": "Что такое приоритизация нагрузок (workload prioritization)?",
           "options": [
             {
-              "text": "Workload prioritization распределяет данные между нодами так, чтобы критичные таблицы лежали на более мощных серверах.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Она делит ресурсы CPU/IO между типами нагрузок внутри кластера, а не размещает таблицы по «мощным» нодам.",
-                "source_of_confusion": "«Prioritization» наводит на мысль о приоритетном размещении данных, а не о квотировании ресурсов.",
-                "if_it_were_true": "Если бы речь шла о размещении данных, это ломало бы равномерное распределение по token ring.",
-                "how_it_should_be": "Workload prioritization — это шаринг CPU/IO между нагрузками; размещение данных определяется токенами."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Workload prioritization автоматически отключает фоновые задачи (compaction, repair), когда растёт OLTP-нагрузка.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Она задаёт доли ресурсов между нагрузками, но не отключает compaction/repair — это обязательные фоновые процессы LSM.",
-                "source_of_confusion": "Идея «дать приоритет OLTP» ошибочно расширяется до «выключить фон».",
-                "if_it_were_true": "Если бы compaction отключался под нагрузкой, копился бы backlog и деградировали чтения.",
-                "how_it_should_be": "Workload prioritization лишь делит ресурсы; служебные фоновые процессы продолжают работать."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Workload prioritization (фича `ScyllaDB Enterprise`) — разным типам нагрузки выделяются разные доли CPU/IO. Например, критичным OLTP-запросам — 80% ресурсов, фоновой аналитике — 20%. Это позволяет гонять смешанные нагрузки (OLTP + reporting) на одном кластере без взаимного влияния.",
+              "order": 0,
+              "text": "Нагрузкам на одном кластере выделяются доли CPU и I/O: OLTP не проседает от аналитики.",
               "correct": true,
               "sections": {
-                "explanation": "Тяжёлый аналитический отчёт не задушит латентность транзакционных запросов, потому что для него зарезервирована лишь меньшая доля ресурсов.",
-                "example": "Например, ночной batch-отчёт, помеченный low-priority, получает лишь 20% IO и не роняет latency онлайн-запросов от мобильного приложения.",
-                "when_to_apply": "Применяют, когда на одном кластере нужно совмещать критичный OLTP и фоновую аналитику без выноса последней в отдельный кластер.",
-                "edge_cases": "В `Cassandra` нативного эквивалента нет — там для изоляции обычно поднимают отдельные кластеры, что дороже в эксплуатации.",
-                "related": "[[scylladb-interview#Q21]] Enterprise vs open-source; [[scylladb-interview#Q18]] mixed workloads как критерий; [[scylladb-interview#Q13]] эффективность CPU."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Жёсткая граница между нагрузками: аналитика не съедает ресурсы OLTP.",
+                "example": "Critical OLTP — 80% ресурсов; background analytics — 20%.",
+                "when_to_apply": "Смешанная нагрузка на одном кластере без деградации критичной части.",
+                "edge_cases": "Фича корпоративной поставки (Enterprise-линия).",
+                "related": "В Cassandra для изоляции поднимают отдельные кластеры — дороже."
+              }
             },
             {
-              "text": "Workload prioritization — это open-source фича `Scylla`, доступная по умолчанию во всех редакциях.",
+              "label": "B",
+              "order": 1,
+              "text": "В Cassandra есть встроенный аналог приоритизации: отдельные кластеры не нужны и там.",
               "correct": false,
               "sections": {
-                "what_actually": "Это фича `ScyllaDB Enterprise`, а не open-source: в бесплатной редакции её нет.",
-                "source_of_confusion": "Многие фичи `Scylla` открыты, поэтому и эту считают доступной бесплатно.",
-                "if_it_were_true": "Если бы она была в open-source, не было бы смысла выделять её как enterprise-преимущество.",
-                "how_it_should_be": "Workload prioritization — enterprise-функция; в open-source изоляцию нагрузок делают отдельными кластерами."
-              },
+                "what_actually": "Встроенного аналога в Cassandra нет — только отдельные кластеры.",
+                "source_of_confusion": "Столь полезную фичу ждёшь у обеих систем.",
+                "if_it_were_true": "Аргумент экономии железа за Scylla ослаб бы.",
+                "how_it_should_be": "Изоляция в Cassandra — ценой дублирования кластеров."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Приоритизация делит между нагрузками только дисковый I/O: процессор им не разграничивается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Разграничиваются и CPU, и I/O — обе оси ресурсов.",
+                "source_of_confusion": "«Диск — главный ресурс БД» сужает картину.",
+                "if_it_were_true": "Аналитика душила бы OLTP по процессору.",
+                "how_it_should_be": "Доли выделяются по CPU и по вводу-выводу."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Эта фича всегда была доступна во всех вариантах поставки одинаково: включая исторический Open Source.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это фича Enterprise-линии — в исторической OSS её не было.",
+                "source_of_confusion": "После смены модели границы редакций размылись.",
+                "if_it_were_true": "Различие редакций по фичам исчезло бы задним числом.",
+                "how_it_should_be": "Приоритизация — часть корпоративной обвязки."
+              }
             }
           ]
         }
@@ -906,56 +906,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Насколько `ScyllaDB` действительно drop-in replacement для `Cassandra`?",
+          "question_text": "Насколько Scylla — настоящая drop-in замена Cassandra?",
           "options": [
             {
-              "text": "`Scylla` высоко совместима: тот же CQL, тот же wire-протокол (клиенты `Cassandra` работают), та же модель данных, репликация и consistency levels — миграция приложения обычно идёт без изменений кода. Но не 100% drop-in: часть продвинутых фич `Cassandra` отсутствует или реализована иначе, отличаются операции/мониторинг, параметры тюнинга и версии расходятся со временем.",
+              "label": "A",
+              "order": 0,
+              "text": "Параметры тюнинга Cassandra переносятся один в один: конфиги копируются как есть.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Настройки напрямую не переносятся — у Scylla своё (shard-per-core).",
+                "source_of_confusion": "Совместимость API обобщается на конфигурацию.",
+                "if_it_were_true": "Эксплуатация была бы drop-in — а она нет.",
+                "how_it_should_be": "Тюнинг собирается заново под архитектуру Scylla."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "На уровне приложения — почти полностью (CQL, wire-протокол); на уровне эксплуатации — нет.",
               "correct": true,
               "sections": {
-                "explanation": "Существующее приложение чаще всего подключается к `Scylla` тем же драйвером и теми же CQL-запросами, но Scylla-специфичный тюнинг и инструменты эксплуатации придётся осваивать заново.",
-                "example": "Например, приложение на драйвере `DataStax` подключается к `Scylla` сменой только адреса кластера, и те же CQL-запросы работают без правок.",
-                "when_to_apply": "Совместимость учитывают, планируя миграцию с `Cassandra`: код почти не трогают, но операционные процедуры пересматривают.",
-                "edge_cases": "Best practice — тщательно тестировать и использовать `Scylla Migration Tools`: расхождение версий и иная реализация отдельных фич всплывают именно на тестах.",
-                "related": "[[scylladb-interview#Q2]] отличия от Cassandra; [[scylladb-interview#Q17]] DynamoDB API (Alternator); [[scylladb-interview#Q22]] миграция Cassandra → Scylla."
-              },
-              "label": "A",
-              "order": 0
+                "explanation": "Код чаще всего переезжает без изменений, процессы DevOps — пересобираются.",
+                "example": "Существующие драйверы Cassandra подключаются к Scylla как есть.",
+                "when_to_apply": "Свой стек метрик, свои операционные команды, свои параметры тюнинга.",
+                "edge_cases": "Часть продвинутых фич Cassandra отсутствует или реализована иначе.",
+                "related": "Относиться как к совместимой, но самостоятельной системе; Scylla Migration Tools."
+              }
             },
             {
-              "text": "`Scylla` несовместима на уровне wire-протокола, поэтому существующие `Cassandra`-драйверы не подключаются и требуют замены.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Wire-протокол совместим — стандартные `Cassandra`-клиенты работают со `Scylla` без замены драйверов.",
-                "source_of_confusion": "Раз движок переписан, кажется, что и протокол стал другим.",
-                "if_it_were_true": "Если бы протокол был несовместим, нельзя было бы мигрировать приложение без изменения кода, но в большинстве случаев можно.",
-                "how_it_should_be": "`Scylla` сохраняет wire-протокол `Cassandra`; несовместимы лишь отдельные продвинутые фичи и операции."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Scylla` — 100% drop-in: любое приложение и любая операционная процедура `Cassandra` работают без единого изменения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Совместимость высокая, но не 100%: часть продвинутых фич реализована иначе, а операции, мониторинг и тюнинг отличаются.",
-                "source_of_confusion": "Маркетинг «drop-in replacement» преувеличивают до абсолютной идентичности.",
-                "if_it_were_true": "Если бы совместимость была полной, не требовалось бы тщательно тестировать миграцию, но это обязательный шаг.",
-                "how_it_should_be": "`Scylla` совместима по CQL/протоколу/модели, но operations и часть фич различаются — нужен тест."
-              },
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Совместимость ограничена только тем, что в `Scylla` другой CQL-синтаксис, требующий переписывания всех запросов.",
+              "order": 2,
+              "text": "Совместимость требует переписать код приложения: CQL-запросы под Scylla другие.",
               "correct": false,
               "sections": {
-                "what_actually": "CQL у `Scylla` тот же, что у `Cassandra`; запросы переписывать не нужно. Различия — в операциях, тюнинге и части фич.",
-                "source_of_confusion": "«Не на 100% drop-in» ошибочно читают как «другой язык запросов».",
-                "if_it_were_true": "Если бы CQL отличался, миграция требовала бы переписывания всех запросов, но обычно она прозрачна для приложения.",
-                "how_it_should_be": "CQL идентичен; реальные различия — в operations/monitoring и продвинутых возможностях."
-              },
+                "what_actually": "CQL тот же — правки кода обычно не нужны.",
+                "source_of_confusion": "«Не 100% drop-in» читается как «код переписывать».",
+                "if_it_were_true": "Главный козырь совместимости пропал бы.",
+                "how_it_should_be": "Не drop-in — эксплуатация, а не код приложения."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Драйверы Cassandra к Scylla не подключаются; протокол другой, клиентов меняют первыми.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Wire-протокол тот же — существующие драйверы работают.",
+                "source_of_confusion": "«Другая база» подразумевает другой протокол — не тут.",
+                "if_it_were_true": "Миграция начиналась бы с переписывания клиентов.",
+                "how_it_should_be": "Драйверы подключаются как есть; shard-aware — опционально лучше."
+              }
             }
           ]
         }
@@ -966,56 +966,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое DynamoDB API (Alternator) в `ScyllaDB`?",
+          "question_text": "Что такое DynamoDB API (Alternator)?",
           "options": [
             {
-              "text": "Alternator требует переписать приложение с boto3 на специальный Scylla-SDK, несовместимый со стандартным DynamoDB-клиентом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Смысл Alternator в том, что стандартный DynamoDB-клиент (boto3) работает без переписывания — меняется только endpoint.",
-                "source_of_confusion": "Раз это «другая» БД, кажется, что нужен и другой SDK.",
-                "if_it_were_true": "Если бы требовался особый SDK, терялась бы совместимость, ради которой Alternator и сделан.",
-                "how_it_should_be": "Alternator принимает обычные DynamoDB-вызовы boto3; менять нужно лишь `endpoint_url`."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Scylla Alternator` — реализация DynamoDB API поверх `ScyllaDB`: стандартный клиент (например, `boto3`) работает с `Scylla`, указав `endpoint_url`. Это даёт self-hosted DynamoDB-совместимое хранилище без AWS lock-in — DynamoDB-нагрузки можно гонять on-premise или multi-cloud, нередко дешевле DynamoDB на масштабе.",
+              "order": 0,
+              "text": "Реализация API DynamoDB поверх Scylla: приложение под DynamoDB ходит в Scylla, меняется только endpoint.",
               "correct": true,
               "sections": {
-                "explanation": "`dynamodb = boto3.resource('dynamodb', endpoint_url='http://scylla:8000'); table.put_item(Item={'PK':'user#123','name':'Alice'})` — обычный boto3-код, но за ним `Scylla`, а не AWS.",
-                "example": "Например, существующий сервис на `boto3` начинает писать в `Scylla` вместо AWS, изменив только `endpoint_url` на адрес Alternator.",
-                "when_to_apply": "Применяют, когда приложение уже спроектировано под DynamoDB, но хочется уйти от vendor lock-in или снизить стоимость на больших объёмах.",
-                "edge_cases": "Alternator реализует DynamoDB API, но это отдельный интерфейс от CQL: смешивать CQL- и DynamoDB-доступ к одним данным напрямую не предполагается.",
-                "related": "[[scylladb-interview#Q16]] насколько drop-in для Cassandra; [[scylladb-interview#Q21]] редакции Scylla; [[scylladb-interview#Q18]] когда выбирать Scylla."
-              },
+                "explanation": "Помимо родного CQL, Scylla отвечает и по протоколу DynamoDB.",
+                "example": "boto3.resource('dynamodb', endpoint_url='http://scylla:8000') — стандартный клиент.",
+                "when_to_apply": "Уход от vendor lock-in: DynamoDB-совместимое хранилище у себя.",
+                "edge_cases": "На больших объёмах модель оплаты DynamoDB дорожает — self-hosted нет.",
+                "related": "Жизнеспособная альтернатива для приложений, спроектированных под DynamoDB."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Alternator — это инструмент, который переносит таблицы из DynamoDB в формат CQL, после чего DynamoDB-клиенты перестают работать.",
+              "order": 1,
+              "text": "Для перехода на Alternator слой доступа к данным переписывают целиком: boto3-клиент несовместим.",
               "correct": false,
               "sections": {
-                "what_actually": "Alternator — это live DynamoDB-совместимый API на `Scylla`, а не разовый конвертер; DynamoDB-клиенты продолжают работать против него.",
-                "source_of_confusion": "Слово ассоциируется с «alternation/конвертацией», отсюда идея миграционного инструмента.",
-                "if_it_were_true": "Если бы это был конвертер, не требовался бы `endpoint_url` для рантайм-доступа boto3, но он нужен.",
-                "how_it_should_be": "Alternator — постоянный API-слой DynamoDB поверх `Scylla`, а не одноразовая конвертация схемы."
-              },
+                "what_actually": "Стандартный boto3 работает — достаточно подменить endpoint.",
+                "source_of_confusion": "«Другая база» подсказывает переписывание клиента.",
+                "if_it_were_true": "Главная ценность Alternator обнулилась бы.",
+                "how_it_should_be": "endpoint_url на Scylla — и код не трогаем."
+              }
+            },
+            {
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Alternator работает только в `ScyllaDB Cloud` на AWS и недоступен в self-hosted инсталляциях.",
+              "order": 2,
+              "text": "Alternator работает исключительно внутри облака AWS: режим on-premise для него попросту недоступен.",
               "correct": false,
               "sections": {
-                "what_actually": "Alternator доступен и в self-hosted `Scylla` — его смысл как раз в DynamoDB-совместимости без AWS, on-premise или multi-cloud.",
-                "source_of_confusion": "DynamoDB ассоциируется с AWS, поэтому и Alternator привязывают к облаку AWS.",
-                "if_it_were_true": "Если бы он требовал AWS, пропал бы его главный плюс — уход от AWS lock-in.",
-                "how_it_should_be": "Alternator запускается где угодно, включая on-premise; именно отсутствие привязки к AWS — его ценность."
-              },
+                "what_actually": "Ровно наоборот: смысл — DynamoDB-нагрузки on-premise и multi-cloud.",
+                "source_of_confusion": "DynamoDB — сервис AWS; совместимый API от облака не зависит.",
+                "if_it_were_true": "Незачем было бы делать совместимую замену.",
+                "how_it_should_be": "Scylla с Alternator живёт где угодно."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Alternator — просто прокси, пересылающий все запросы в настоящий AWS DynamoDB; данные при этом хранит Amazon.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Данные хранит сама Scylla — AWS в цепочке нет.",
+                "source_of_confusion": "«API DynamoDB» звучит как мост к сервису Amazon.",
+                "if_it_were_true": "Замок vendor lock-in остался бы закрытым.",
+                "how_it_should_be": "Совместимый протокол поверх собственного хранилища."
+              }
             }
           ]
         }
@@ -1026,56 +1026,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Когда стоит выбирать `ScyllaDB`?",
+          "question_text": "Когда выбрать Scylla?",
           "options": [
             {
-              "text": "`Scylla` выбирают, когда: уже есть `Cassandra` и нужен прирост производительности; требуется предсказуемая low latency (p99 < 10 ms); нужен высокий throughput (10K+ записей/сек на ноду); важна экономия (меньше нод на тот же объём); смешанные нагрузки требуют изоляции; задачи типа IoT, time-series, ad-tech. Не выбирают, когда нужен полный SQL (JOIN, агрегации, транзакции), масштаб мал (хватит `PostgreSQL`), требуется строгий ACID или у команды нет NoSQL-опыта.",
+              "label": "A",
+              "order": 0,
+              "text": "Эта база даёт полные многострочные ACID-транзакции: строгие гарантии — её главная сильная сторона.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это eventual-consistency NoSQL — строгих ACID-гарантий нет.",
+                "source_of_confusion": "Настраиваемая согласованность путается с транзакциями.",
+                "if_it_were_true": "Банковские переводы жили бы на Scylla без оговорок.",
+                "how_it_should_be": "Нужны ACID — смотри реляционные БД."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Для сложных JOIN-ов и тяжёлых агрегаций Scylla подходит даже значительно лучше самых классических реляционных СУБД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JOIN-ов нет вовсе, агрегации ограничены — это анти-сценарий.",
+                "source_of_confusion": "«Быстрее» ошибочно распространяется на все операции.",
+                "if_it_were_true": "CQL не запрещал бы соединения.",
+                "how_it_should_be": "Полноценный SQL — к реляционным СУБД."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Брать: p99 до 10 мс, 10K+ записей/сек, упор в потолок Cassandra; не брать под SQL/ACID.",
               "correct": true,
               "sections": {
-                "explanation": "Команда на `Cassandra`, упирающаяся в p99 и число нод, мигрирует на `Scylla` и обслуживает ту же нагрузку меньшим кластером.",
-                "example": "Например, ad-tech платформа с требованием p99 < 5 ms и потоком 50K bids/сек — классический кейс под `Scylla`, а CRM с отчётами и JOIN — нет.",
-                "when_to_apply": "Критерии применяют при выборе хранилища: сначала проверяют, что задача — это high-throughput NoSQL без потребности в SQL/ACID.",
-                "edge_cases": "Граница не всегда чёткая: при умеренном масштабе и потребности в транзакциях `PostgreSQL` проще и дешевле, чем разворачивать кластер `Scylla`.",
-                "related": "[[scylladb-interview#Q14]] предсказуемая latency; [[scylladb-interview#Q19]] time-series; [[scylladb-interview#Q20]] IoT."
-              },
-              "label": "A",
-              "order": 0
+                "explanation": "Масштаб и предсказуемо низкая задержка write-heavy NoSQL — её ниша.",
+                "example": "Самый прямой сценарий: уже на Cassandra и упёрся в производительность.",
+                "when_to_apply": "Экономия железа: та же нагрузка меньшим числом узлов.",
+                "edge_cases": "Без NoSQL-опыта команда споткнётся о проектирование «от запросов».",
+                "related": "IoT, временные ряды, ad-tech — типичные сценарии Cassandra."
+              }
             },
             {
-              "text": "`Scylla` подходит только для команд без опыта в NoSQL, так как она проще в эксплуатации, чем реляционные СУБД.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: эксплуатация распределённого кластера `Scylla` требует NoSQL-опыта (дизайн ключей, consistency, compaction); для команды без него это риск.",
-                "source_of_confusion": "«Drop-in» создаёт иллюзию простоты освоения с нуля.",
-                "if_it_were_true": "Если бы она была проще реляционных СУБД, в списке «не выбирать» не стояло бы отсутствие NoSQL-опыта.",
-                "how_it_should_be": "`Scylla` требует понимания NoSQL и shard-per-core; новичкам в NoSQL она усложняет эксплуатацию."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Scylla` — оптимальный выбор, когда нужны полноценный SQL с JOIN-ами, агрегациями и ACID-транзакциями.",
-              "correct": false,
-              "sections": {
-                "what_actually": "При потребности в полном SQL, JOIN-ах и строгом ACID `Scylla` как раз не подходит — это сценарий для реляционных СУБД.",
-                "source_of_confusion": "Раз `Scylla` мощная, кажется, что она годится и для реляционных задач.",
-                "if_it_were_true": "Если бы она давала полный SQL и ACID, не было бы ограничений CQL (нет JOIN, нет cross-partition агрегаций), но они есть.",
-                "how_it_should_be": "`Scylla` выбирают для NoSQL-сценариев с высоким throughput и low latency, а не для SQL/ACID-нагрузок."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Scylla` стоит выбирать в первую очередь для небольших проектов, где `PostgreSQL` был бы избыточен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для небольшого масштаба обычно достаточно `PostgreSQL`; преимущества `Scylla` (shard-per-core, кластер) раскрываются на больших объёмах.",
-                "source_of_confusion": "«Быстрая БД» кажется хорошей и для маленьких проектов, но операционная сложность кластера это перевешивает.",
-                "if_it_were_true": "Если бы `Scylla` была выбором для малого масштаба, её не позиционировали бы как замену кластерной `Cassandra`.",
-                "how_it_should_be": "`Scylla` выбирают под высокий throughput и большой масштаб; для малых задач уместнее `PostgreSQL`."
-              },
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Scylla — отличный выбор даже для бизнес-CRUD на умеренных 10K строк; она заметно проще PostgreSQL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для умеренных объёмов это перебор — хватит PostgreSQL.",
+                "source_of_confusion": "«Быстрая база» кажется универсально полезной.",
+                "if_it_were_true": "Сложность распределённой эксплуатации была бы бесплатной.",
+                "how_it_should_be": "Малый масштаб — реляционка; Scylla — для масштаба."
+              }
             }
           ]
         }
@@ -1086,56 +1086,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему `ScyllaDB` хорошо подходит для time-series нагрузок?",
+          "question_text": "Как Scylla работает с time-series нагрузками?",
           "options": [
             {
-              "text": "Для time-series в `Scylla` используют партицирование по одному sensor_id без bucket'инга по времени.",
+              "label": "A",
+              "order": 0,
+              "text": "Стратегия `TWCS` намеренно перемешивает свежие SSTable со старыми: так фоновый compaction идёт равномернее.",
               "correct": false,
               "sections": {
-                "what_actually": "Партицируют по `(sensor_id, bucket)` с bucket по дню, иначе партиция одного сенсора растёт бесконечно и становится hot.",
-                "source_of_confusion": "Кажется логичным класть все точки сенсора в одну партицию по sensor_id.",
-                "if_it_were_true": "Если бы bucket'а не было, партиция превысила бы 100 MB и деградировала бы по чтениям и compaction.",
-                "how_it_should_be": "Time-series схему партицируют по `(sensor_id, bucket)`; bucket по времени ограничивает размер партиции."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "TWCS как раз НЕ перемешивает окна — группирует по времени.",
+                "source_of_confusion": "«Равномерный compaction» звучит как перемешивание.",
+                "if_it_were_true": "Дешёвое снятие старых окон стало бы невозможным.",
+                "how_it_should_be": "SSTable группируются по временным окнам."
+              }
             },
             {
-              "text": "Time-series идеальны для `Scylla`/`Cassandra`: данные append-only, высокий write throughput, чтения по временным окнам. Партицию ограничивают bucket'ом по времени (например, `PRIMARY KEY ((sensor_id, bucket), timestamp)` с bucket по дню), а под compaction берут `TWCS` (TimeWindowCompactionStrategy), которая эффективно сжимает старые данные; устаревшие SSTable затем дропаются по TTL.",
+              "label": "B",
+              "order": 1,
+              "text": "Bucket в partition key не нужен; партиция «один датчик за всю историю» — норма.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без bucket партиция датчика разрослась бы в гигантскую.",
+                "source_of_confusion": "«Все данные датчика вместе» кажется удобным.",
+                "if_it_were_true": "Правило «партиция меньше 100 МБ» нарушалось бы по расписанию.",
+                "how_it_should_be": "Пара «датчик + день» ограничивает размер партиции."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Идеальная нагрузка: append-only ложится на LSM; партиция «датчик + день»; TWCS; TTL снимает окна целиком.",
               "correct": true,
               "sections": {
-                "explanation": "`CLUSTERING ORDER BY (timestamp DESC)` + `TWCS` с окном в 1 день — типичная схема `sensor_data`, удобная для запросов «последние N точек».",
-                "example": "Например, `PRIMARY KEY ((sensor_id, bucket), timestamp)` с bucket по дню ограничивает партицию суткой данных одного сенсора, удобной для `TWCS`.",
-                "when_to_apply": "Применяют для метрик, телеметрии, логов: при правильном bucket'е и TTL старые окна удаляются дёшево, без тяжёлых удалений отдельных строк.",
-                "edge_cases": "TTL-истечение порождает tombstones, но `TWCS` смягчает это, дропая целые старые SSTable; без bucket'инга по времени TTL-удаления стали бы дорогими.",
-                "related": "[[scylladb-interview#Q12]] LSM и стратегии compaction; [[scylladb-interview#Q6]] составной partition key; [[scylladb-interview#Q20]] IoT нагрузки."
-              },
-              "label": "B",
-              "order": 1
+                "explanation": "Природа временных рядов точно ложится на сильные стороны LSM-tree.",
+                "example": "PRIMARY KEY ((sensor_id, bucket), timestamp) + compaction TimeWindowCompactionStrategy.",
+                "when_to_apply": "Чтения по временным окнам ложатся на сортировку clustering key.",
+                "edge_cases": "Истёкшие окна удаляются целыми SSTable — без шлейфа tombstone-ов.",
+                "related": "Compaction старых данных не трогает свежие записи."
+              }
             },
             {
-              "text": "Для time-series в `Scylla` рекомендуют `STCS` как стратегию compaction, специально оптимизированную под временные окна.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Под time-series берут `TWCS` (TimeWindowCompactionStrategy); `STCS` — это default общего назначения, не заточенный под временные окна.",
-                "source_of_confusion": "`STCS` — стратегия по умолчанию, поэтому её ошибочно считают универсально лучшей, в т.ч. для time-series.",
-                "if_it_were_true": "Если бы `STCS` была оптимальна для time-series, не существовало бы отдельной `TWCS`.",
-                "how_it_should_be": "Для time-series применяют `TWCS`, дропающую старые SSTable окнами; `STCS` — общий дефолт."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Time-series плохо ложится на `Scylla`, потому что append-only данные требуют частых UPDATE существующих строк.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Time-series как раз идеальны для `Scylla`: данные append-only (новые точки, а не UPDATE старых), что отлично ложится на LSM.",
-                "source_of_confusion": "UPDATE-heavy нагрузки путают с time-series, хотя последние преимущественно вставочные.",
-                "if_it_were_true": "Если бы требовались частые UPDATE, терялось бы преимущество LSM на последовательной записи.",
-                "how_it_should_be": "Time-series — append-only с высоким write throughput; это сильная сторона `Scylla`, а не слабость."
-              },
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "TTL в связке с TWCS удаляет данные строго построчно: каждый просроченный ряд честно оставляет tombstone.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Целые SSTable старых окон удаляются разом — без построчных надгробий.",
+                "source_of_confusion": "Обычное DELETE-поведение переносится на TTL с TWCS.",
+                "if_it_were_true": "Чтения тонули бы в tombstone-ах — главной боли удалений.",
+                "how_it_should_be": "Окно истекло — файл снят целиком."
+              }
             }
           ]
         }
@@ -1146,56 +1146,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему `ScyllaDB` подходит для IoT?",
+          "question_text": "Чем Scylla хороша для IoT?",
           "options": [
             {
-              "text": "`Scylla` плохо подходит для IoT, так как не справляется с высоким потоком записей от множества устройств.",
+              "label": "A",
+              "order": 0,
+              "text": "Старую телеметрию вычищают ручными фоновыми job-ами: автоматического истечения нет.",
               "correct": false,
               "sections": {
-                "what_actually": "`Scylla` как раз тянет миллионы записей/сек на кластер — высокий write throughput её сильная сторона, идеальная для IoT.",
-                "source_of_confusion": "Распределённые СУБД иногда считают медленными на записи, что неверно для LSM-хранилищ.",
-                "if_it_were_true": "Если бы `Scylla` не держала поток записей, её не выбирали бы `Comcast` и `Tubi` для IoT/стриминга.",
-                "how_it_should_be": "`Scylla` обрабатывает огромный write throughput; для IoT это ключевое преимущество, а не проблема."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "TTL истекает автоматически — без ручных чисток.",
+                "source_of_confusion": "Cron-очистки — привычка реляционного мира.",
+                "if_it_were_true": "Эксплуатация обросла бы самописными джобами.",
+                "how_it_should_be": "Срок жизни задаётся при записи — дальше само."
+              }
             },
             {
-              "text": "IoT — это миллионы устройств, непрерывно шлющих данные. `Scylla` хорошо ложится сюда: высокий write throughput (миллионы записей/сек на кластер), хранение time-series, geo-distributed multi-DC и авто-экспирация по TTL. Среди адоптеров — `Comcast`, `Tubi`, `Discord`, `Numberly`.",
+              "label": "B",
+              "order": 1,
+              "text": "Профиль IoT — read-heavy: устройства редко пишут, но постоянно перечитывают телеметрию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запись доминирует — устройства непрерывно льют телеметрию.",
+                "source_of_confusion": "Дашборды и графики наводят на «читают больше».",
+                "if_it_were_true": "Write-throughput не был бы главным требованием.",
+                "how_it_should_be": "Write-heavy: поглотить миллионы записей в секунду."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Геораспределение Scylla не поддерживает: все узлы обязаны жить в одном дата-центре.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multi-DC — штатный режим: география — сильная сторона.",
+                "source_of_confusion": "Сложность мультирегиона отпугивает — но она встроена.",
+                "if_it_were_true": "Глобальные IoT-парки Scylla не обслужила бы.",
+                "how_it_should_be": "NetworkTopologyStrategy: реплики по дата-центрам."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "IoT — экстремальный time-series: миллионы записей/сек, multi-DC география, TTL-очистка сама.",
               "correct": true,
               "sections": {
-                "explanation": "Поток телеметрии от датчиков пишется в `Scylla` потоково, старые точки удаляются по TTL, а multi-DC раскладывает данные ближе к регионам устройств.",
-                "example": "Например, флот из миллиона датчиков пишет показания каждую секунду, данные живут 30 дней по TTL, а multi-DC держит копии ближе к регионам устройств.",
-                "when_to_apply": "Применяют для телеметрии, трекинга и сенсорных сетей, где нужны высокий поток записей и недорогое истечение старых данных.",
-                "edge_cases": "Без продуманного partition key (например, по `(device_id, bucket)`) даже мощный кластер упрётся в hot partitions при перекошенном потоке от части устройств.",
-                "related": "[[scylladb-interview#Q19]] time-series схемы; [[scylladb-interview#Q6]] выбор partition key; [[scylladb-interview#Q18]] критерии выбора Scylla."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Для IoT `Scylla` неприменима, потому что не поддерживает автоматическое истечение данных по TTL.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Scylla` поддерживает TTL — данные авто-истекают, что для IoT удобно (старая телеметрия удаляется сама).",
-                "source_of_confusion": "Раз это не реляционная СУБД, ошибочно полагают, что и TTL у неё нет.",
-                "if_it_were_true": "Если бы TTL не было, пришлось бы вручную чистить старые данные, но `Scylla` делает это автоматически.",
-                "how_it_should_be": "`Scylla` умеет TTL и авто-экспирацию; для IoT это один из плюсов."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Scylla` подходит для IoT, но только в single-DC конфигурации, так как multi-DC репликация в ней отсутствует.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Scylla` поддерживает geo-distributed multi-DC репликацию, что важно для географически распределённых IoT-устройств.",
-                "source_of_confusion": "Сложность multi-DC заставляет думать, что её нет.",
-                "if_it_were_true": "Если бы multi-DC отсутствовала, `Scylla` не подошла бы для глобальных IoT-сетей, но её там используют.",
-                "how_it_should_be": "`Scylla` поддерживает multi-DC (geo-distributed); это плюс для распределённого IoT, а не ограничение."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Тот же профиль, что у временных рядов, только в экстремальном масштабе.",
+                "example": "Comcast, Tubi, Discord, Numberly — пользователи Scylla.",
+                "when_to_apply": "Multi-DC репликация держит данные близко к устройствам.",
+                "edge_cases": "Запись доминирует; поток телеметрии от миллионов устройств.",
+                "related": "TTL удаляет старую телеметрию без отдельных задач очистки."
+              }
             }
           ]
         }
@@ -1206,56 +1206,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем отличаются Open Source, Enterprise и `ScyllaDB Cloud`?",
+          "question_text": "Чем различаются Open Source, Enterprise и ScyllaDB Cloud?",
           "options": [
             {
-              "text": "Workload prioritization доступен в Open Source-редакции, а Enterprise отличается лишь наличием платной поддержки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Workload prioritization — именно enterprise-фича, как и LDAP/шифрование; Enterprise отличается не только поддержкой, но и функциональностью.",
-                "source_of_confusion": "Кажется, что разница между редакциями — только в support-контракте.",
-                "if_it_were_true": "Если бы workload prioritization была в open-source, её не приводили бы как enterprise-преимущество.",
-                "how_it_should_be": "Enterprise добавляет функциональность (workload prioritization, security) поверх support, а не только поддержку."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`ScyllaDB Cloud` — это self-managed дистрибутив, который пользователь сам разворачивает и обслуживает на своём железе.",
+              "order": 0,
+              "text": "Историческая Open Source-редакция жила под свободной лицензией Apache 2.0: самой либеральной из всех возможных.",
               "correct": false,
               "sections": {
-                "what_actually": "`ScyllaDB Cloud` — полностью managed сервис в публичных облаках; self-managed — это Open Source/Enterprise на своём железе.",
-                "source_of_confusion": "Слово «Cloud» путают с «развернуть в своём облаке вручную».",
-                "if_it_were_true": "Если бы Cloud был self-managed, не было бы авто-бэкапов и pay-as-you-go, которые его и отличают.",
-                "how_it_should_be": "`ScyllaDB Cloud` управляется вендором (managed); self-hosted — это Open Source и Enterprise."
-              },
+                "what_actually": "Сервер жил под AGPL 3.0; Apache 2.0 — у драйверов и оператора.",
+                "source_of_confusion": "«Open source» рефлекторно достраивается до Apache.",
+                "if_it_were_true": "Копилефт-обязательства AGPL не существовали бы.",
+                "how_it_should_be": "AGPL для ядра; смена модели — на source-available."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Open Source-редакция `Scylla` распространяется под GPL-лицензией, запрещающей коммерческое использование без покупки Enterprise.",
+              "order": 1,
+              "text": "OSS-ветка развивается параллельно Enterprise и сегодня; релизы выходят в двух линиях.",
               "correct": false,
               "sections": {
-                "what_actually": "Open Source `Scylla` — под Apache 2.0 (очень пермиссивная), коммерческое использование разрешено; GPL-ограничений тут нет.",
-                "source_of_confusion": "GPL ассоциируется с ограничениями на коммерцию, и это переносят на `Scylla`.",
-                "if_it_were_true": "Если бы коммерческое использование было запрещено, `Scylla` не применяли бы в продакшене бесплатно, но это распространённая практика.",
-                "how_it_should_be": "Open Source `Scylla` — Apache 2.0; коммерческое применение свободно, Enterprise добавляет фичи и поддержку, а не право на коммерцию."
-              },
-              "label": "C",
-              "order": 2
+                "what_actually": "OSS-ветка закрыта: 6.2.x — последний AGPL-релиз.",
+                "source_of_confusion": "Двухлинейная модель была правдой — до декабря 2024.",
+                "if_it_were_true": "Единая source-available линия не объявлялась бы.",
+                "how_it_should_be": "Одна линия Enterprise 2025.1+ с бесплатным tier."
+              }
             },
             {
-              "text": "Open Source (бесплатно) — Apache 2.0, ядро фич, self-managed. `ScyllaDB Enterprise` (платно) — workload prioritization, LDAP, шифрование, compliance, более быстрые стратегии compaction и 24/7 поддержка. `ScyllaDB Cloud` (managed) — полностью управляемый сервис на AWS/GCP/Azure с multi-region, авто-бэкапами и оплатой pay-as-you-go.",
+              "label": "C",
+              "order": 2,
+              "text": "`ScyllaDB Cloud` — это обычная self-managed поставка: свой кластер там целиком обслуживает команда самого клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cloud — полностью управляемый сервис: эксплуатация на ScyllaDB.",
+                "source_of_confusion": "«Свой кластер в облаке» путается с managed-сервисом.",
+                "if_it_were_true": "Cloud не снимал бы главную боль — эксплуатацию.",
+                "how_it_should_be": "Сервис управляется провайдером в трёх облаках; бэкапы и multi-region из коробки."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Исторически: OSS (AGPL, последний — 6.2.x), Enterprise, Cloud; с декабря 2024 — единая source-available линия.",
               "correct": true,
               "sections": {
-                "explanation": "Команда без compliance-требований берёт Open Source; банку с требованиями к шифрованию и аудиту нужен Enterprise; стартапу без DBA удобнее managed Cloud.",
-                "example": "Например, банк с требованием шифрования at-rest и LDAP берёт Enterprise, а pet-проект — бесплатный Open Source под Apache 2.0.",
-                "when_to_apply": "Выбор делают по требованиям: open-source закрывает большинство нагрузок, Enterprise — security/compliance-тяжёлые, Cloud — когда не хотят управлять кластером сами.",
-                "edge_cases": "Грань между редакциями смещается со временем: часть enterprise-фич может появляться в open-source и наоборот, поэтому актуальный набор сверяют с документацией.",
-                "related": "[[scylladb-interview#Q15]] workload prioritization (Enterprise); [[scylladb-interview#Q1]] что такое Scylla; [[scylladb-interview#Q23]] эксплуатация в проде."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "С Enterprise 2025.1 отдельной OSS-ветки нет; community — бесплатный tier Enterprise.",
+                "example": "6.2.x остаётся под AGPL навсегда; под Apache 2.0 — драйверы и оператор.",
+                "when_to_apply": "Платная подписка — поддержка 24/7 и compliance; Cloud — managed на AWS/GCP/Azure.",
+                "edge_cases": "Enterprise-обвязка: workload prioritization, LDAP, шифрование.",
+                "related": "Бесплатный tier закрывает большинство нагрузок."
+              }
             }
           ]
         }
@@ -1266,56 +1266,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как проходит миграция Cassandra → `ScyllaDB`?",
+          "question_text": "Как мигрировать с Cassandra на Scylla?",
           "options": [
             {
-              "text": "Единственный поддерживаемый способ переноса данных — ручной экспорт через CQL `SELECT` и повторная вставка `INSERT` скриптом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для bulk-copy есть специальные инструменты — `Scylla Migrator` (Spark) и `sstableloader`, а не ручные SELECT/INSERT.",
-                "source_of_confusion": "Раз CQL общий, кажется, что проще всего переливать данные запросами.",
-                "if_it_were_true": "Если бы это был единственный способ, перенос терабайтов занял бы недопустимо долго, но инструменты делают это эффективно.",
-                "how_it_should_be": "Bulk-copy выполняют `Scylla Migrator`/`sstableloader`; ручные INSERT-скрипты не масштабируются."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Шаги миграции: проверка совместимости фич версии `Cassandra`; разворачивание параллельного кластера `Scylla`; dual-write (приложение пишет в обе БД или через CDC-стрим); bulk-copy исторических данных (`Scylla Migrator` на Spark или `sstableloader`); валидация паритета данных; переключение чтений на `Scylla` по одной ноде; остановка dual-write; вывод `Cassandra`. Часто прозрачно для приложения — тот же CQL.",
+              "order": 0,
+              "text": "Постепенно и обратимо: параллельный кластер → dual-write → массовая заливка → паритет → перевод чтений.",
               "correct": true,
               "sections": {
-                "explanation": "`Scylla Migrator` на Spark льёт историю в новый кластер, пока dual-write держит свежие записи синхронными, затем reads переводят на `Scylla`.",
-                "example": "Например, dual-write держит свежие записи в обеих БД, `Scylla Migrator` на Spark переливает историю, затем reads переключают на `Scylla` по одной ноде.",
-                "when_to_apply": "Так мигрируют действующие `Cassandra`-кластеры на `Scylla` без простоя: приложение почти не трогают благодаря совместимому CQL.",
-                "edge_cases": "Критичен шаг валидации паритета: расхождения между кластерами всплывают именно здесь, до переключения чтений; иначе можно потерять данные.",
-                "related": "[[scylladb-interview#Q16]] насколько drop-in; [[scylladb-interview#Q11]] токены и rebalancing; [[scylladb-interview#Q23]] частые проблемы в проде."
-              },
+                "explanation": "Новый кластер живёт параллельно, трафик переводится плавно и обратимо.",
+                "example": "Массовая заливка — Scylla Migrator (на базе Spark) или sstableloader.",
+                "when_to_apply": "Dual-write: приложение пишет в оба, либо новый питается CDC-потоком.",
+                "edge_cases": "Проверка паритета данных перед переводом чтений; откат — лёгкий.",
+                "related": "Совместимость по CQL делает переход прозрачным для кода."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Миграция требует полной остановки `Cassandra`, экспорта всех данных в файл и импорта в `Scylla` за одно окно простоя.",
+              "order": 1,
+              "text": "Сначала переключают чтения на Scylla, а запись переводят в самом конце; так безопаснее.",
               "correct": false,
               "sections": {
-                "what_actually": "Типовая миграция идёт без большого простоя: dual-write и постепенное переключение чтений, а не stop-the-world экспорт/импорт.",
-                "source_of_confusion": "Привычка к «выгрузить-загрузить» переносится с реляционных миграций.",
-                "if_it_were_true": "Если бы требовался полный простой, миграцию нельзя было бы назвать прозрачной для приложения, но обычно она такая.",
-                "how_it_should_be": "Миграция инкрементальна: dual-write + bulk-copy исторических данных + поэтапное переключение reads."
-              },
+                "what_actually": "Порядок обратный: сначала dual-write, чтения переводят позже.",
+                "source_of_confusion": "«Чтения безопаснее» — но без записи в Scylla читать нечего.",
+                "if_it_were_true": "Чтения били бы в пустой кластер.",
+                "how_it_should_be": "Сначала данные (записи+заливка), потом чтения."
+              }
+            },
+            {
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Dual-write не нужен: достаточно один раз скопировать данные, ведь во время копирования новые записи не появляются.",
+              "order": 2,
+              "text": "Код приложения при такой миграции обязательно переписывается: CQL-слой под Scylla совсем другой.",
               "correct": false,
               "sections": {
-                "what_actually": "Dual-write (или CDC) обязателен именно потому, что во время bulk-copy продолжают идти новые записи — иначе они потеряются.",
-                "source_of_confusion": "Кажется, что копирование «снимка» достаточно, если забыть про живой поток записей.",
-                "if_it_were_true": "Если бы новых записей не было, можно было бы обойтись снапшотом, но прод пишет непрерывно.",
-                "how_it_should_be": "Dual-write/CDC удерживают свежие записи синхронными, пока историю переносят bulk-copy."
-              },
+                "what_actually": "Тот же CQL и протокол — переход для приложения обычно прозрачен.",
+                "source_of_confusion": "Слово «миграция» тянет за собой правки кода.",
+                "if_it_were_true": "Совместимость Q16 не имела бы смысла.",
+                "how_it_should_be": "Меняется инфраструктура, не приложение."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Единственный путь миграции — big-bang с даунтаймом: остановить запись, перелить, переключить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Идея — постепенное переключение БЕЗ даунтайма.",
+                "source_of_confusion": "Классика миграции баз — окно простоя; тут оно не нужно.",
+                "if_it_were_true": "Высоконагруженные сервисы не могли бы мигрировать.",
+                "how_it_should_be": "Параллельная жизнь кластеров и плавный перевод."
+              }
             }
           ]
         }
@@ -1326,56 +1326,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие частые проблемы `ScyllaDB` в production?",
+          "question_text": "Какие частые проблемы Scylla в production?",
           "options": [
             {
-              "text": "Частые проблемы `Scylla` уникальны и не пересекаются с `Cassandra`, так как у неё другая модель данных.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Многие проблемы общие с `Cassandra` (hot partitions, tombstones, compaction backlog), потому что модель данных та же.",
-                "source_of_confusion": "Раз `Scylla` быстрее, кажется, что и набор проблем у неё иной.",
-                "if_it_were_true": "Если бы проблемы не пересекались, советы по дизайну ключей из `Cassandra` были бы неприменимы, но они применимы.",
-                "how_it_should_be": "Большинство production-проблем `Scylla` те же, что у `Cassandra`, плюс специфика shard-per-core."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Бэкапы `Scylla` не нужны: shared-nothing репликация полностью защищает данные от любой потери.",
+              "order": 0,
+              "text": "Отставание compaction совершенно безвредно для чтений: фоновая работа на них не влияет.",
               "correct": false,
               "sections": {
-                "what_actually": "Репликация защищает от падения нод, но не от логических ошибок, дропа таблицы или порчи данных — бэкапы (`Scylla Manager`/snapshots) обязательны.",
-                "source_of_confusion": "Высокая отказоустойчивость создаёт ложное чувство, что бэкапы избыточны.",
-                "if_it_were_true": "Если бы репликации хватало, отсутствие бэкапов не значилось бы в списке частых проблем, но оно там есть.",
-                "how_it_should_be": "Репликация и бэкапы решают разные задачи; `Scylla Manager` для бэкапов и repair обязателен в проде."
-              },
+                "what_actually": "Не поспевающее слияние наваливает SSTable, и чтение проседает.",
+                "source_of_confusion": "«Фоновое» звучит как «не влияющее».",
+                "if_it_were_true": "Мониторить compaction не было бы смысла.",
+                "how_it_should_be": "Скорость слияния должна поспевать за записью."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Главная production-проблема `Scylla` — GC-паузы, которые приходится тщательно тюнить через параметры JVM.",
+              "order": 1,
+              "text": "Бэкапы кластеру не нужны: replication factor сам защищает от любой потери данных.",
               "correct": false,
               "sections": {
-                "what_actually": "У `Scylla` нет JVM и нет GC, поэтому GC-паузы в принципе не входят в список её проблем — это проблема `Cassandra`.",
-                "source_of_confusion": "Список проблем `Cassandra` механически переносят на `Scylla`, забыв про отсутствие JVM.",
-                "if_it_were_true": "Если бы GC-паузы были у `Scylla`, терялось бы её ключевое преимущество предсказуемой latency.",
-                "how_it_should_be": "Проблемы `Scylla` — hot partitions, tombstones, compaction backlog, тюнинг под shard-per-core; GC-пауз нет."
-              },
-              "label": "C",
-              "order": 2
+                "what_actually": "RF не спасает от логических ошибок и катастроф — нужны бэкапы.",
+                "source_of_confusion": "«Три копии» звучат как страховка от всего.",
+                "if_it_were_true": "Ошибочный DELETE реплицировался бы во все три копии.",
+                "how_it_should_be": "Scylla Manager или снапшоты — иначе потеря невосстановима."
+              }
             },
             {
-              "text": "Частые проблемы: hot partitions (неудачный PK), tombstones (много удалений перегружает чтения), compaction backlog (скорость записи > скорости compaction), disk I/O bottleneck, неверный consistency level (слишком строгий — медленно, слишком слабый — несогласованности), мало нод, отсутствие бэкапов (нужен `Scylla Manager`/snapshots), недостаточный мониторинг, медленные schema migrations на больших таблицах и непонимание shard-per-core (критичен тюнинг connection pool).",
+              "label": "C",
+              "order": 2,
+              "text": "Классы граблей: горячие партиции и tombstones, отставание compaction и диска, неверный CL, не-shard-aware драйвер.",
               "correct": true,
               "sections": {
-                "explanation": "Connection pool без shard-aware маршрутизации шлёт запросы на чужие ядра — cross-core hop'ы съедают часть выигрыша shard-per-core; это специфичная для `Scylla` ловушка.",
-                "example": "Например, ключ `PRIMARY KEY (country)` на 5 стран создаёт hot partition: почти весь трафик идёт в одну партицию, и одно ядро перегружено.",
-                "when_to_apply": "Список используют как production-чеклист: дизайн ключей, стратегия compaction, бэкапы через `Scylla Manager` и обязательный `Scylla Monitoring`.",
-                "edge_cases": "Tombstones особенно опасны: при большом числе удалений чтение партиции сканирует множество надгробий, что резко роняет latency даже на быстром `Scylla`.",
-                "related": "[[scylladb-interview#Q12]] LSM и compaction backlog; [[scylladb-interview#Q6]] hot partitions и выбор ключа; [[scylladb-interview#Q3]] shard-per-core и connection pool."
-              },
+                "explanation": "Большинство граблей — типичные ошибки моделирования Cassandra-подобных систем.",
+                "example": "Scylla Manager закрывает бэкапы, repair-ы и управление схемой разом.",
+                "when_to_apply": "Мониторинг стеком Scylla Monitoring — иначе отставание замечают поздно.",
+                "edge_cases": "Миграции схемы на больших таблицах идут медленно — закладывать в план.",
+                "related": "Партиция = один shard: горячая партиция грузит одно ядро."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Горячие партиции лечатся выбором ключа низкой кардинальности: чем меньше партиций — тем ровнее и предсказуемее нагрузка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: горячие партиции порождает НИЗКАЯ кардинальность ключа.",
+                "source_of_confusion": "Причина и лекарство меняются местами.",
+                "if_it_were_true": "Ключ-константа давал бы идеальный баланс — абсурд.",
+                "how_it_should_be": "Высокая кардинальность размазывает нагрузку по узлам."
+              }
             }
           ]
         }
