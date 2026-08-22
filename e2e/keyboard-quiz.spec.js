@@ -124,4 +124,43 @@ test.describe('keyboard quiz flow', () => {
     await expect(page.locator('#interview-options, .flashcard-phase').first())
       .toBeVisible({ timeout: 20_000 });
   });
+
+  /**
+   * Флешкарта клавиатурой: Space раскрывает, цифра оценивает, приходит следующая.
+   * До iter-166 карточный цикл не покрывался вовсе — MCQ-тесты скипались на
+   * флешкартах («Нет #interview-form»), а собственного теста у режима не было.
+   * Выбор режима в конструкторе — предусловие, а не предмет теста: кликаем.
+   */
+  test('flashcard: Space reveals, digit grades, next card arrives', async ({ page }) => {
+    await page.goto('/settings');
+    await page.locator('label:has(input[name="mode"][value="FLASHCARD"])').first().click();
+    await Promise.all([
+      page.waitForURL(/\/(\?.*)?$/, { timeout: 20_000 }),
+      page.locator('.builder-start-cta').click(),
+    ]);
+
+    const question = page.locator('.focus-question');
+    await expect(question).toBeVisible({ timeout: 20_000 });
+
+    // до раскрытия оценки скрыты — иначе они подсказывают, что ответ уже виден
+    const grades = page.locator('.flashcard-grade-buttons');
+    await expect(grades).toBeHidden();
+
+    await page.keyboard.press(' ');
+    await expect(grades).toBeVisible({ timeout: 10_000 });
+
+    // «2» = Трудно. Следующая карта приезжает ЗАКРЫТОЙ — оценки снова спрятаны.
+    // Сравнивать ТЕКСТ вопроса нельзя: «Трудно» в SRS может тут же вернуть ту же
+    // карту (relearn-шаг), и «текст сменился» ложно краснеет — поймано первым же
+    // прогоном в обоих движках. Нажатие — с повтором: в WebKit «видимость оценок»
+    // опережает подвес их клавиатурного обработчика, и одиночная цифра теряется
+    // (поймано вторым прогоном; лишняя цифра на закрытой карте — no-op).
+    await expect
+      .poll(async () => {
+        await page.keyboard.press('2');
+        return grades.isHidden();
+      }, { timeout: 20_000, intervals: [400, 800, 1500] })
+      .toBe(true);
+    await expect(question).toBeVisible();
+  });
 });

@@ -89,4 +89,22 @@ class KeyboardE2eContractTest {
                 .as("фокус после ответа обязан проверяться в приёмнике разбора")
                 .contains("closest('#result-feedback, .result-feedback')");
     }
+
+    /**
+     * Карточный цикл покрыт отдельно: MCQ-тесты скипаются на флешкартах, и до
+     * iter-166 Space-раскрытие с оценкой 1–4 не проверялись нигде. Оценка
+     * жмётся с повтором — в WebKit видимость оценок опережает подвес их
+     * клавиатурного обработчика, и одиночная цифра теряется (замер iter-166).
+     */
+    @Test
+    void theFlashcardCycleIsCoveredWithARetriedGrade() throws IOException {
+        String spec = read("e2e/keyboard-quiz.spec.js");
+        assertThat(spec)
+                .as("флешкарточный тест пропал: Space и оценка снова без покрытия")
+                .contains("flashcard: Space reveals, digit grades, next card arrives");
+        assertThat(spec)
+                .as("оценка обязана жаться с повтором — одиночное нажатие в WebKit гонится "
+                        + "с подвесом обработчика")
+                .containsPattern("poll\\(async \\(\\) => \\{\\s*await page\\.keyboard\\.press\\('2'\\);");
+    }
 }
