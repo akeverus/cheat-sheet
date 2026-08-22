@@ -182,9 +182,9 @@ public class DynamicDbService {
         String username = (String) lease.getData().get("username");
         String password = (String) lease.getData().get("password");
         String leaseId = lease.getLeaseId();
-        Duration leaseDuration = lease.getLeaseDuration();
+        long leaseSeconds = lease.getLeaseDuration();  // секунды, тип long
 
-        log.info("Got dynamic credentials, TTL: {}", leaseDuration);
+        log.info("Got dynamic credentials, TTL: {}s", leaseSeconds);
         // username = vault-token-abc123, TTL = 1 hour
         // Vault автоматически удалит этого пользователя из PostgreSQL
     }
@@ -323,7 +323,8 @@ public class CertificateService {
             .ttl(Duration.ofHours(24))
             .build();
 
-        return vaultTemplate.opsForPki().issueCertificate("pki/issue/myapp-role", request);
+        return vaultTemplate.opsForPki().issueCertificate("myapp-role", request);
+        // путь {mount}/issue/{roleName} шаблон строит сам; mount по умолчанию — "pki"
         // Возвращает: certificate, private_key, issuing_ca, serial_number
     }
 }
@@ -499,7 +500,7 @@ Vault Agent монтирует отрендеренный файл `/vault/secre
 | Путь | `secret/myapp` | `secret/data/myapp` |
 | Мягкое удаление | Нет | Да (recover возможен) |
 | Metadata | Нет | Да (creation time, version) |
-| Spring Cloud Vault | По умолчанию | `kv.version: 2` |
+| Spring Cloud Vault | — | **дефолт**: `backend-version: 2` (deprecated — версия определяется автоматически) |
 
 ```yaml
 spring:
@@ -507,7 +508,7 @@ spring:
     vault:
       kv:
         backend: secret
-        version: 2  # использовать KV v2
+        backend-version: 2  # это и так дефолт; свойство deprecated — версия определяется при чтении
 ```
 
 **Подводный камень с путём**: в KV v2 физический путь содержит `data/` (`secret/data/myapp/config`), хотя логически ты работаешь с `secret/myapp/config`. Spring Cloud Vault сам подставляет префикс `data/` при указании `version: 2`, поэтому в конфиге пишешь логический путь. А вот при ручных запросах через `VaultTemplate` к KV v2 префикс нужно учитывать самому — частый источник «секрет не читается, хотя он там есть».
