@@ -326,26 +326,27 @@ int bfsShortestPath(List<List<Integer>> adj, int start, int end) {
 int bidirBFS(List<List<Integer>> adj, int start, int end) {
     if (start == end) return 0;
 
-    Set<Integer> visitedFromStart = new HashSet<>(Set.of(start));
-    Set<Integer> visitedFromEnd = new HashSet<>(Set.of(end));
+    Set<Integer> frontStart = new HashSet<>(Set.of(start));
+    Set<Integer> frontEnd = new HashSet<>(Set.of(end));
+    Set<Integer> visited = new HashSet<>(Set.of(start, end)); // глобальная пометка
     int distance = 0;
 
-    while (!visitedFromStart.isEmpty() && !visitedFromEnd.isEmpty()) {
+    while (!frontStart.isEmpty() && !frontEnd.isEmpty()) {
         // Расширяем меньший фронт
-        if (visitedFromStart.size() > visitedFromEnd.size()) {
-            Set<Integer> tmp = visitedFromStart;
-            visitedFromStart = visitedFromEnd;
-            visitedFromEnd = tmp;
+        if (frontStart.size() > frontEnd.size()) {
+            Set<Integer> tmp = frontStart;
+            frontStart = frontEnd;
+            frontEnd = tmp;
         }
 
         Set<Integer> next = new HashSet<>();
-        for (int u : visitedFromStart) {
+        for (int u : frontStart) {
             for (int v : adj.get(u)) {
-                if (visitedFromEnd.contains(v)) return distance + 1;
-                next.add(v);
+                if (frontEnd.contains(v)) return distance + 1;
+                if (visited.add(v)) next.add(v); // без visited фронт «дышит» назад
             }
         }
-        visitedFromStart = next;
+        frontStart = next;
         distance++;
     }
     return -1;
@@ -964,7 +965,7 @@ int ladderLength(String begin, String end, List<String> wordList) {
 }
 ```
 
-**Сложность:** `O(N · L · 26)`, где N — число слов, L — длина слова (на каждое слово перебираем L позиций × 26 букв). **Оптимизация:** двунаправленный BFS из Q9 заметно ускоряет, ведя поиск с обоих концов навстречу.
+**Сложность:** `O(N · L² · 26)`, где N — число слов, L — длина слова: на каждое слово L позиций × 26 букв, и каждая подстановка создаёт строку за `O(L)`. **Оптимизация:** двунаправленный BFS из Q9 заметно ускоряет, ведя поиск с обоих концов навстречу.
 
 
 ## Q30. Как решить Network Delay Time (задача на Dijkstra)?
