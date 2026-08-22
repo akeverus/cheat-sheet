@@ -195,9 +195,9 @@ vertx.deployVerticle(new MyVerticle());
 | **Multi-Threaded Worker** | Несколько threads параллельно | Очень тяжёлая параллельная работа (deprecated в 4.0+) |
 
 ```java
-// Worker verticle
+// Worker verticle (Vert.x 4.5+: ThreadingModel; старый setWorker(true) удалён в 5.x)
 vertx.deployVerticle(MyWorkerVerticle.class.getName(),
-    new DeploymentOptions().setWorker(true));
+    new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER));
 ```
 
 **Главное правило выбора:** Standard verticle нельзя блокировать — иначе встанет event loop и Vert.x выдаст warning. Если работа блокирующая по своей природе (JDBC, чтение файла, тяжёлый расчёт) — выноси её в Worker, где блокировать можно, но сообщения для одного экземпляра обрабатываются последовательно (по одному за раз).
@@ -260,15 +260,15 @@ Vert.x детектирует блокировки больше **2 секунд
 `executeBlocking` — штатный способ выполнить блокирующую операцию, не нарушив золотое правило (Q7). Он перебрасывает блокирующий код с event loop на отдельный **worker pool**, а результат возвращает обратно на event loop:
 
 ```java
-vertx.executeBlocking(promise -> {
+vertx.executeBlocking(() -> {
     // выполняется на worker pool thread
-    String result = doExpensiveOperation();
-    promise.complete(result);
-}, asyncResult -> {
+    return doExpensiveOperation();
+}).onSuccess(result -> {
     // обратно на event loop
-    String result = asyncResult.result();
     httpResponse.end(result);
 });
+// Старая двухколбэчная сигнатура (Handler<Promise>, Handler<AsyncResult>)
+// deprecated в 4.5 и удалена в Vert.x 5 — актуальна Callable-форма.
 ```
 
 Под капотом — **внутренний worker pool** (по умолчанию 20 threads), размер настраивается.
@@ -467,6 +467,7 @@ PgConnectOptions connectOptions = new PgConnectOptions()
 
 PoolOptions poolOptions = new PoolOptions().setMaxSize(5);
 SqlClient client = PgPool.client(vertx, connectOptions, poolOptions);
+// В Vert.x 4.5+ появился builder-стиль: PgBuilder.pool().connectingTo(...).using(vertx).build()
 
 client.query("SELECT * FROM users")
     .execute()
