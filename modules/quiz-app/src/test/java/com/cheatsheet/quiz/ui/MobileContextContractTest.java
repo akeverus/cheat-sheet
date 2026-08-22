@@ -120,6 +120,70 @@ class MobileContextContractTest {
     }
 
     /**
+     * Низкое мобильное окно (ландшафт телефона): хром не съедает половину высоты
+     * (RSP-02, REF-008).
+     *
+     * <p>Замер 667×375 (Chromium, эмуляция landscape): sticky-шапка 44 + fixed-док
+     * 64 = 108px постоянного налога (29% высоты), окно контента 267px; заголовок
+     * вопроса стартовал на y=451 — целиком за сгибом. Orientation/max-height-
+     * запросов в CSS не было вовсе: вертикальный бюджет никем не управлялся.</p>
+     *
+     * <p>Закреплено (@media низкого мобильного окна, порог по ВЫСОТЕ — довод
+     * вертикальный бюджет, а не поворот): шапка уходит в поток (после прокрутки
+     * не ест высоту; бренд и тема доступны прокруткой вверх — перенос, не потеря);
+     * док компактен — ярус один, иконка В СТРОКУ с подписью, а высоту диктует
+     * токен --mobile-nav-height, который читает и body-отступ (переопределение
+     * токена держит их синхронными; литерал высоты в двух местах разъехался бы).</p>
+     */
+    @Test
+    void lowMobileWindowGetsCompactChrome() throws IOException {
+        String shell = CSS_COMMENT.matcher(read("static/css/shell.css")).replaceAll("");
+        String low = "@media (max-width: 900px) and (max-height: 480px)";
+        int at = shell.indexOf(low);
+        assertThat(at)
+                .as("компакт-композиции низкого мобильного окна нет: на 667×375 хром "
+                        + "снова 108px из 375, вопрос за сгибом целиком")
+                .isNotNegative();
+        String block = shell.substring(at, shell.indexOf("\n}", at));
+        assertThat(block)
+                .as("шапка осталась липкой: 44px вычитаются из каждого прокрученного экрана")
+                .contains("position: static");
+        assertThat(block)
+                .as("высота дока задана не токеном --mobile-nav-height: body-отступ "
+                        + "разъедется с реальной высотой полосы")
+                .contains("--mobile-nav-height: 44px");
+        assertThat(block)
+                .as("пункт дока не перестроен в строку: два яруса (иконка над подписью) "
+                        + "не помещаются в 44px честно")
+                .containsPattern("\\.mobile-nav a \\{[^}]*flex-direction: row");
+    }
+
+    /**
+     * Компакт баннера незавершённой сессии (RSP-01) действует и в НИЗКОМ окне.
+     *
+     * <p>Замер 667×375: баннер разжался обратно до 148px — компакт жил только в
+     * `@media (max-width: 600px)`, а ландшафт телефона шире (667) и ниже (375).
+     * Довод компакта — дефицит МЕСТА, а не конкретная ось: условие блока обязано
+     * покрывать оба дефицита (узко ИЛИ низко-мобильно).</p>
+     */
+    @Test
+    void resumeBannerCompactCoversTheLowWindowToo() throws IOException {
+        String focus = read("static/css/pages-focus.css");
+        assertThat(focus)
+                .as("компакт-блок баннера не расширен на низкое окно: в ландшафте "
+                        + "телефона баннер снова трёхъярусный (148px)")
+                .containsPattern("@media \\(max-width: 600px\\),\\s*"
+                        + "\\(max-width: 900px\\) and \\(max-height: 480px\\)");
+
+        String controls = read("static/css/components-controls.css");
+        assertThat(controls)
+                .as("ранг .btn-compact не действует в низком окне — кнопка «Продолжить» "
+                        + "снова полноразмерная в самом тесном хроме")
+                .containsPattern("@media \\(max-width: 600px\\),\\s*"
+                        + "\\(max-width: 900px\\) and \\(max-height: 480px\\)");
+    }
+
+    /**
      * Перенос, а не потеря: всё, что ушло с телефонной полосы, читается на странице
      * аналитики. Без этой проверки правило выше — просто «спрятали, чтобы влезло».
      */
