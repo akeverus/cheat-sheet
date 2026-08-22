@@ -6,55 +6,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что делает `@SpringBootTest` и когда его использовать?",
+          "question_text": "Что делает `@SpringBootTest` и когда использовать?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`@SpringBootTest` создаёт контекст приложения через `SpringApplication`, находя основную `@SpringBootConfiguration` и применяя Boot-конфигурацию и свойства. Его используют для интеграционных сценариев между несколькими слоями; реальный HTTP получают только с `RANDOM_PORT` или `DEFINED_PORT`.",
+              "order": 0,
+              "text": "Каждый тест поднимает контекст заново — кеширование и переиспользование к нему не применяются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контекст кешируется и переиспользуется в тестах с такой же конфигурацией.",
+                "source_of_confusion": "Раз тест «поднимает контекст», кажется, что это происходит каждый раз.",
+                "if_it_were_true": "Тогда прогон тестов был бы недопустимо медленным.",
+                "how_it_should_be": "По классу с `@SpringBootApplication` контекст строится и кешируется."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Поднимает полный ApplicationContext с бинами и автоконфигурациями — самый реалистичный, но медленный тип теста.",
               "correct": true,
               "sections": {
-                "explanation": "Это тест полного Boot-приложения, а не срез одного слоя. Условные автоконфигурации и обычные бины создаются так же, как при запуске приложения, с учётом тестовых профилей и переопределённых свойств; совместимый контекст кешируется.",
-                "example": "`@SpringBootTest` с внедрёнными `OrderService` и `OrderRepository` проверяет транзакцию через сервис и реальную persistence-конфигурацию; `@SpringBootTest(webEnvironment = RANDOM_PORT)` дополнительно позволяет вызвать endpoint по HTTP.",
-                "when_to_apply": "Выбирайте аннотацию для проверки взаимодействия нескольких подсистем, Boot-автоконфигурации, миграций и внешних сервисов через Testcontainers либо для end-to-end HTTP-теста.",
-                "edge_cases": "В режиме `MOCK` сервер не стартует, а `MockMvc` появляется только после `@AutoConfigureMockMvc`. Для одного контроллера или репозитория обычно быстрее и точнее `@WebMvcTest` или `@DataJpaTest`.",
-                "related": "[[spring-testing-interview#Q2]] режимы `webEnvironment`; [[spring-testing-interview#Q3]] test slices; [[spring-testing-interview#Q13]] кеш контекста."
+                "explanation": "Код выполняется в окружении, максимально близком к production: все бины и настройки из `application.yml`.",
+                "example": "Сервис + репозиторий + транзакции проверяют вместе — связку нескольких слоёв.",
+                "when_to_apply": "Когда важна достоверность: интеграция слоёв, реальная БД, Testcontainers, end-to-end по HTTP.",
+                "edge_cases": "Для контроллеров лучше `@WebMvcTest`, для репозиториев — `@DataJpaTest`.",
+                "related": "Аннотация кеширует контекст и переиспускает его в тестах с той же конфигурацией."
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`@SpringBootTest` строит полный `ApplicationContext` через `SpringApplication`, но такой контекст всегда закрывается после каждого тестового метода. Его выбирают, когда каждому `@Test` нужны заново созданные бины и гарантированно чистое состояние контейнера.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Spring TestContext кеширует совместимые контексты и повторно использует их между методами и классами в пределах одного процесса. Пересоздание вызывают изменения ключа кеша или `@DirtiesContext`.",
-                "source_of_confusion": "JUnit создаёт новый экземпляр тестового класса для каждого метода по умолчанию, но жизненный цикл тестового объекта не равен жизненному циклу Spring-контекста.",
-                "if_it_were_true": "Большой контекст стартовал бы заново для каждого метода, и кеш TestContext не давал бы основной экономии времени интеграционным тестам.",
-                "how_it_should_be": "Сохраняйте одинаковую конфигурацию тестов для переиспользования кеша, а изменяемое состояние изолируйте транзакциями, очисткой данных или точечными сбросами."
-              }
-            },
-            {
-              "order": 2,
               "label": "C",
-              "text": "`@SpringBootTest` строит полный `ApplicationContext` через `SpringApplication` и по умолчанию сразу запускает реальный web-сервер на случайном порту. Поэтому его используют прежде всего для сквозных HTTP-тестов, а для проверки сервисов без сети выбирают test slice.",
+              "order": 2,
+              "text": "Поднимает лишь один слой приложения, поэтому запускается так же быстро, как обычный test slice.",
               "correct": false,
               "sections": {
-                "what_actually": "Полный контекст действительно создаётся, но режим по умолчанию — `webEnvironment = MOCK`: реальный сервер и сетевой порт не запускаются. `RANDOM_PORT` нужно указать явно.",
-                "source_of_confusion": "Во многих интеграционных примерах `@SpringBootTest` сразу показывают вместе с `RANDOM_PORT`, и явную настройку легко принять за поведение по умолчанию.",
-                "if_it_were_true": "Любой тест сервиса с `@SpringBootTest` занимал бы сетевой порт и зависел от web-сервера, даже если HTTP-слой тесту не нужен.",
-                "how_it_should_be": "Используйте `@SpringBootTest` для интеграции нескольких частей приложения; реальный HTTP включайте явно через `RANDOM_PORT` или `DEFINED_PORT`."
+                "what_actually": "Поднимается именно весь контекст, а не один слой — это самый медленный тип теста.",
+                "source_of_confusion": "Хочется, чтобы полный тест был таким же быстрым, как срез.",
+                "if_it_were_true": "Тогда не понадобились бы отдельные test slices для скорости.",
+                "how_it_should_be": "Один слой поднимают срезы `@WebMvcTest`/`@DataJpaTest`, а не `@SpringBootTest`."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "`@SpringBootTest` находит основную `@SpringBootConfiguration`, но ограничивает сканирование web-компонентами и не создаёт обычные `@Service` и `@Repository`. Его используют для MVC-тестов, подменяя зависимости контроллера через `@MockitoBean`.",
+              "order": 3,
+              "text": "Это инструмент по умолчанию для unit-тестов отдельных классов без всякого Spring-контекста.",
               "correct": false,
               "sections": {
-                "what_actually": "Ограниченный набор web-компонентов загружает `@WebMvcTest`. `@SpringBootTest` не применяет такой type-exclude filter и создаёт полный контекст согласно основной конфигурации приложения.",
-                "source_of_confusion": "Обе аннотации умеют участвовать в mock-based MVC-тестах, если к `@SpringBootTest` добавить `@AutoConfigureMockMvc`, но объём загружаемого контекста у них различается.",
-                "if_it_were_true": "Сервисы и репозитории не внедрялись бы в `@SpringBootTest` без ручных импортов, а аннотация дублировала бы назначение `@WebMvcTest`.",
-                "how_it_should_be": "Для полного интеграционного контекста используйте `@SpringBootTest`; для изолированного MVC-слоя — `@WebMvcTest` и `@MockitoBean` для внешних зависимостей контроллера."
+                "what_actually": "Для unit-теста отдельного класса Spring-контекст не нужен вовсе — достаточно Mockito.",
+                "source_of_confusion": "«Boot Test» звучит как универсальный тип теста на все случаи.",
+                "if_it_were_true": "Тогда каждый unit-тест тянул бы весь тяжёлый контекст.",
+                "how_it_should_be": "Полный контекст берут для интеграции, unit-логику — через Mockito."
               }
             }
           ]
@@ -66,55 +66,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие режимы `webEnvironment` есть у `@SpringBootTest` и чем они отличаются?",
+          "question_text": "Какие режимы `webEnvironment` есть в `@SpringBootTest`?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Режимов четыре: `MOCK` по умолчанию загружает mock web-контекст без сервера и автоматически предоставляет `MockMvc`; `RANDOM_PORT` и `DEFINED_PORT` запускают сервер, а `NONE` создаёт обычный не-web контекст.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`MOCK` действительно является режимом по умолчанию и не запускает сервер, но один `@SpringBootTest` не создаёт `MockMvc`. Для этого нужна `@AutoConfigureMockMvc`.",
-                "source_of_confusion": "`@WebMvcTest` автоматически конфигурирует `MockMvc`, поэтому это удобство нередко переносят на `@SpringBootTest(webEnvironment = MOCK)`.",
-                "if_it_were_true": "В любом `@SpringBootTest` web-приложения можно было бы внедрить `MockMvc` без дополнительной аннотации, однако такой бин сам по себе не создаётся.",
-                "how_it_should_be": "Сочетайте `@SpringBootTest` с `@AutoConfigureMockMvc` для mock MVC; при `RANDOM_PORT` используйте клиент, связанный с реально запущенным сервером."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Режимов четыре: `MOCK` по умолчанию создаёт mock web-контекст без сервера; `RANDOM_PORT` запускает реальный сервер на случайном порту, `DEFINED_PORT` — на настроенном или стандартном порту, а `NONE` создаёт контекст без web-окружения.",
+              "order": 0,
+              "text": "Задаёт, поднимать ли реальный сервер — `MOCK` даёт MockMvc без сервера, а `RANDOM_PORT` — настоящий.",
               "correct": true,
               "sections": {
-                "explanation": "`MOCK` загружает web-`ApplicationContext`, но не открывает сокет; `RANDOM_PORT` и `DEFINED_PORT` создают `WebServerApplicationContext` с работающим сервером; `NONE` запускает `SpringApplication` как не-web приложение.",
-                "example": "`@SpringBootTest(webEnvironment = RANDOM_PORT)` с `@AutoConfigureRestTestClient` позволяет внедрить `RestTestClient` и обращаться к относительным URI реально запущенного приложения.",
-                "when_to_apply": "`MOCK` подходит для проверок через `MockMvc` с `@AutoConfigureMockMvc`, `RANDOM_PORT` — для HTTP end-to-end, `DEFINED_PORT` — для редких сценариев с фиксированным адресом, `NONE` — для не-web интеграции.",
-                "edge_cases": "В транзакционном тесте с реальным сервером клиент и сервер работают в разных потоках и транзакциях, поэтому серверные изменения не откатываются транзакцией тестового метода.",
-                "related": "[[spring-testing-interview#Q1]] полный контекст; [[spring-testing-interview#Q7]] `MockMvc`; [[spring-testing-interview#Q16]] `RestTestClient`."
+                "explanation": "От режима зависит, чем тестировать контроллеры: MockMvc без сервера или HTTP-клиентом по сети.",
+                "example": "`RANDOM_PORT` + `TestRestTemplate` шлёт реальный POST и проверяет статус 201.",
+                "when_to_apply": "`RANDOM_PORT` — для end-to-end по HTTP, `MOCK` — для быстрых тестов через MockMvc.",
+                "edge_cases": "`NONE` не загружает web-environment вообще; `DEFINED_PORT` нужен редко.",
+                "related": "`RANDOM_PORT` берёт свободный порт, чтобы параллельные тесты не конфликтовали."
               }
             },
             {
-              "order": 2,
+              "label": "B",
+              "order": 1,
+              "text": "Режим `MOCK` запускает настоящий web-сервер на случайном свободном порту, совсем как `RANDOM_PORT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MOCK` — фиктивный web-environment с MockMvc, реальный сервер он не поднимает.",
+                "source_of_confusion": "Случайный порт для сервера — это `RANDOM_PORT`, а не `MOCK`.",
+                "if_it_were_true": "Тогда режим по умолчанию был бы самым медленным.",
+                "how_it_should_be": "Реальный сервер на случайном порту поднимает `RANDOM_PORT`."
+              }
+            },
+            {
               "label": "C",
-              "text": "Режимов четыре: `RANDOM_PORT` используется по умолчанию и запускает сервер на свободном порту; `MOCK` создаёт mock web-контекст, `DEFINED_PORT` запускает сервер на настроенном порту, а `NONE` создаёт обычный не-web контекст.",
+              "order": 2,
+              "text": "Режим `RANDOM_PORT` сервер вообще не поднимает — это просто быстрый вариант с `MockMvc`.",
               "correct": false,
               "sections": {
-                "what_actually": "Определения режимов верны, кроме значения по умолчанию: без явного `webEnvironment` Spring Boot выбирает `MOCK`, а не `RANDOM_PORT`.",
-                "source_of_confusion": "Для полноценных HTTP-интеграционных тестов документация часто показывает `RANDOM_PORT`, из-за чего самый популярный явный режим принимают за стандартный.",
-                "if_it_were_true": "Даже простой `@SpringBootTest` занимал бы сетевой порт и запускал web-сервер, хотя по умолчанию тест не открывает порт.",
-                "how_it_should_be": "Указывайте `RANDOM_PORT` явно, когда нужна сеть; без атрибута рассчитывайте на `MOCK` и при необходимости добавляйте mock-клиент отдельной автоконфигурацией."
+                "what_actually": "`RANDOM_PORT` как раз запускает реальный сервер на случайном свободном порту.",
+                "source_of_confusion": "Быстрый MockMvc-режим — это `MOCK`, его путают с `RANDOM_PORT`.",
+                "if_it_were_true": "Тогда через него нельзя было бы проверить сетевой слой.",
+                "how_it_should_be": "Без сервера тестируют в режиме `MOCK` через MockMvc."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "Режимов четыре: `MOCK` загружает mock web-контекст без сервера; `RANDOM_PORT` запускает сервер на порту из конфигурации, `DEFINED_PORT` — на случайном свободном порту, а `NONE` создаёт обычный не-web контекст.",
+              "order": 3,
+              "text": "Режим `DEFINED_PORT` берёт случайный свободный порт, чтобы параллельные тесты между собой не конфликтовали.",
               "correct": false,
               "sections": {
-                "what_actually": "Назначения двух серверных режимов переставлены местами: `RANDOM_PORT` выбирает случайный свободный порт, а `DEFINED_PORT` использует настроенный `server.port` или стандартный 8080.",
-                "source_of_confusion": "Оба режима запускают настоящий `WebServerApplicationContext`, поэтому по названию легко запомнить сам факт сервера, но перепутать источник номера порта.",
-                "if_it_were_true": "`RANDOM_PORT` мог бы конфликтовать за фиксированный порт в параллельных тестах, а `DEFINED_PORT`, наоборот, каждый раз менял бы адрес сервера.",
-                "how_it_should_be": "Для безопасного end-to-end теста выбирайте `RANDOM_PORT`; `DEFINED_PORT` нужен только когда тесту принципиален заранее известный `server.port`."
+                "what_actually": "`DEFINED_PORT` берёт порт из конфигурации (8080); случайный порт — у `RANDOM_PORT`.",
+                "source_of_confusion": "«Порт» в названии наводит на мысль о случайном выборе.",
+                "if_it_were_true": "Тогда `DEFINED_PORT` не отличался бы от `RANDOM_PORT`.",
+                "how_it_should_be": "`DEFINED_PORT` — фиксированный адрес, нужен редко для внешних систем."
               }
             }
           ]
@@ -126,55 +126,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое test slices и зачем они нужны?",
+          "question_text": "Что такое test slices и зачем нужны?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Test slice — составная тестовая аннотация, которая загружает полный контекст приложения, а затем скрывает от теста бины чужих слоёв. Она улучшает изоляцию API теста, но время старта остаётся примерно как у `@SpringBootTest`.",
+              "order": 0,
+              "text": "Slice поднимает весь контекст, но помечает нерелевантные бины соседних слоёв как неактивные.",
               "correct": false,
               "sections": {
-                "what_actually": "Срез не загружает полный набор приложения: type-exclude filters и ограниченный набор автоконфигураций предотвращают создание большинства нерелевантных компонентов.",
-                "source_of_confusion": "Внутри всё равно используется настоящий `ApplicationContext`, поэтому можно ошибочно решить, что разница состоит только в доступности бинов из тестового класса.",
-                "if_it_were_true": "Срезы почти не ускоряли бы suite и продолжали бы запускать внешние клиенты, планировщики и репозитории, которые тестируемому слою не нужны.",
-                "how_it_should_be": "Считайте slice урезанным контекстом: он создаёт инфраструктуру выбранного слоя и явно добавленные зависимости, а не весь граф приложения."
+                "what_actually": "Slice грузит только бины своего слоя; всё остальное в контексте отсутствует.",
+                "source_of_confusion": "Кажется, что проще поднять всё и «выключить» лишнее.",
+                "if_it_were_true": "Тогда срез не давал бы выигрыша в скорости.",
+                "how_it_should_be": "В контекст попадает лишь слой среза, соседние зависимости мокают."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "Test slice — составная аннотация для одного слоя, которая автоматически включает все транзитивные `@Service` и `@Repository` его компонентов. Поэтому `@WebMvcTest` проверяет контроллер вместе с настоящей бизнес-логикой без `@MockitoBean`.",
+              "order": 1,
+              "text": "Slice грузит больше бинов, чем полный контекст, поэтому тест стартует ощутимо медленнее.",
               "correct": false,
               "sections": {
-                "what_actually": "Срез ограничивает обычное компонентное сканирование. Зависимость контроллера из service-слоя нужно предоставить явно, обычно через `@MockitoBean` или точечный `@Import`.",
-                "source_of_confusion": "Spring DI действительно строит транзитивный граф в полном контексте, но slice-фильтры намеренно не дают соседним слоям попасть в набор кандидатов.",
-                "if_it_were_true": "`@WebMvcTest` незаметно втягивал бы репозитории и БД через сервисы и перестал бы быть изолированным web-тестом.",
-                "how_it_should_be": "Оставляйте в срезе реальную инфраструктуру тестируемого слоя, а границы с другими слоями задавайте тестовыми bean overrides или осознанными импортами."
+                "what_actually": "Slice поднимает на порядок меньше бинов, поэтому тест стартует быстрее.",
+                "source_of_confusion": "Дополнительная инфраструктура среза кажется накладными расходами.",
+                "if_it_were_true": "Тогда срезы были бы бесполезны — их берут именно ради скорости.",
+                "how_it_should_be": "Меньше бинов — быстрее старт, это одна из целей среза."
               }
             },
             {
-              "order": 2,
               "label": "C",
-              "text": "Test slice — составная аннотация, которая ограничивает component scanning и автоконфигурации выбранным слоем: MVC, JPA, JSON, REST-клиентом и т. п. Меньший контекст стартует быстрее, а зависимости за границей среза добавляют явно или заменяют через `@MockitoBean`.",
+              "order": 2,
+              "text": "Всё, что лежит вне среза, slice поднимает автоматически, так что `@MockBean` подставлять не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё вне среза в контексте отсутствует — иначе контекст не соберётся без `@MockBean`.",
+                "source_of_confusion": "Раз это тоже Spring-тест, кажется, что бины найдутся сами.",
+                "if_it_were_true": "Тогда изоляция слоя ничего не значила бы.",
+                "how_it_should_be": "Соседние зависимости подставляют через `@MockBean`."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Поднимает только один слой вместо всего контекста — быстрее и изолированнее, соседние зависимости мокают.",
               "correct": true,
               "sections": {
-                "explanation": "Каждый slice задаёт собственные type-exclude filters и набор `@ImportAutoConfiguration`. Поэтому тест получает настоящую инфраструктуру слоя, но не случайно подключает всё приложение.",
-                "example": "`@WebMvcTest(OrderController.class)` создаёт MVC-инфраструктуру и `MockMvc`, а `OrderService` заменяется через `@MockitoBean`; `@DataJpaTest` создаёт JPA-репозитории и тестовую БД без контроллеров.",
-                "when_to_apply": "Используйте срез, когда контракт можно проверить на границе одного слоя: HTTP mapping и validation, запросы репозитория, JSON mapping или исходящий REST-клиент.",
-                "edge_cases": "Явный `@ComponentScan` на основном классе приложения может отключить стандартные exclude filters и нарушить ожидаемую изоляцию. `@Import` реального сервиса также осознанно расширяет срез.",
-                "related": "[[spring-testing-interview#Q4]] `@WebMvcTest`; [[spring-testing-interview#Q5]] `@DataJpaTest`; [[spring-testing-interview#Q6]] другие срезы."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Test slice — составная аннотация для одного слоя, которая создаёт его контекст только после запуска реального web-сервера или внешней БД. Она предназначена для end-to-end сценариев, а ускорение получают за счёт повторного использования контейнеров.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Большинство срезов не требует live-сервера; web-срез работает с mock request/response, а data-срез может использовать доступную embedded database. Testcontainers подключаются только при необходимости.",
-                "source_of_confusion": "Срезы часто комбинируют с Testcontainers для реалистичной БД, но контейнер — выбор тестовой инфраструктуры, а не условие работы slice-аннотации.",
-                "if_it_were_true": "Лёгкий `@WebMvcTest` не мог бы работать полностью в памяти, а `@JsonTest` пришлось бы запускать вместе с сервером или базой.",
-                "how_it_should_be": "Выбирайте slice ради ограниченного контекста; подключайте реальную инфраструктуру отдельно только там, где она важна для проверяемого контракта."
+                "explanation": "Для теста контроллера незачем грузить JPA и БД, а для репозитория — web и Security.",
+                "example": "`@DataJpaTest` подключает in-memory H2 и `TestEntityManager` — готовую инфраструктуру слоя.",
+                "when_to_apply": "Когда нужен тест одного слоя быстро и с чёткой локализацией падения.",
+                "edge_cases": "Всё вне среза отсутствует в контексте — подставляют через `@MockBean`.",
+                "related": "Падение теста однозначно указывает на проблему в этом слое, а не в соседнем."
               }
             }
           ]
@@ -186,55 +186,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `@WebMvcTest` и чем он отличается от `@SpringBootTest`?",
+          "question_text": "Что такое `@WebMvcTest` и чем отличается от `@SpringBootTest`?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`@WebMvcTest` загружает MVC-инфраструктуру, выбранные контроллеры и все `@Service`, от которых они зависят, но исключает репозитории. В отличие от `@SpringBootTest` он не запускает БД, поэтому сервисный слой проверяется на заглушённых DAO.",
+              "order": 0,
+              "text": "Грузит заметно больше бинов, чем весь полный `@SpringBootTest`, поэтому web-тест стартует медленнее.",
               "correct": false,
               "sections": {
-                "what_actually": "Обычные `@Service` не входят в web slice автоматически. Зависимости контроллера нужно заменить через `@MockitoBean` или добавить точечным `@Import`.",
-                "source_of_confusion": "Контроллер невозможно создать без constructor dependencies, и кажется естественным, что Spring достроит граф хотя бы до service-слоя.",
-                "if_it_were_true": "Срез проверял бы бизнес-логику вместе с MVC и для каждого сервиса пришлось бы дополнительно решать, чем заменить его репозитории.",
-                "how_it_should_be": "Проверяйте в `@WebMvcTest` MVC-контракт, а service boundary задавайте mock- или stub-бином; интеграцию слоёв оставляйте `@SpringBootTest`."
+                "what_actually": "`@WebMvcTest` грузит узкий срез, поэтому стартует заметно быстрее полного контекста.",
+                "source_of_confusion": "Дополнительные web-бины кажутся тяжелее полного набора.",
+                "if_it_were_true": "Тогда не было бы смысла брать срез вместо `@SpringBootTest`.",
+                "how_it_should_be": "Меньше бинов у среза — быстрее старт теста."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "`@WebMvcTest` создаёт ограниченный MVC-контекст: выбранные контроллеры, MVC-конфигурацию, converters, advice, filters и `MockMvc`. Обычные сервисы и репозитории не сканируются, поэтому внешние зависимости контроллера обычно заменяют через `@MockitoBean`.",
+              "order": 1,
+              "text": "В `@WebMvcTest` слой Spring Security не загружается вовсе, поэтому доступ по ролям не проверить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `@WebMvcTest` Spring Security как раз загружается — доступ по ролям проверяют здесь.",
+                "source_of_confusion": "Раз это узкий web-срез, кажется, что Security в него не входит.",
+                "if_it_were_true": "Тогда тесты авторизации контроллеров были бы невозможны.",
+                "how_it_should_be": "Security-слой в срезе есть, что видно из таблицы сравнения."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Поднимает только web-слой MVC (контроллеры, фильтры, валидацию), а сервисы и репозитории подставляют через `@MockBean`.",
               "correct": true,
               "sections": {
-                "explanation": "Это web slice, а не полный Boot-контекст. Он настраивает обработку запроса через `DispatcherServlet` и mock request/response, сохраняя mapping, binding, validation, сериализацию и зарегистрированные фильтры.",
-                "example": "`@WebMvcTest(OrderController.class)`, `@MockitoBean OrderService` и внедрённый `MockMvc` позволяют застабить сервис и проверить `POST /orders`, статус, заголовки и JSON ответа.",
-                "when_to_apply": "Выбирайте его для контракта контроллера: маршрутизации, `@Valid`, exception handlers, security-фильтров и сериализации без запуска реального сервера и persistence-слоя.",
-                "edge_cases": "Если Spring Security есть в classpath, security-конфигурация и фильтры могут влиять на ответы. Для полного контекста с mock MVC используют `@SpringBootTest` вместе с `@AutoConfigureMockMvc`.",
-                "related": "[[spring-testing-interview#Q3]] срезы; [[spring-testing-interview#Q7]] `MockMvc`; [[spring-testing-interview#Q9]] `@MockitoBean`."
+                "explanation": "Бизнес-бины ниже контроллера в контекст не попадают — каждую зависимость мокают.",
+                "example": "`@WebMvcTest(OrderController.class)` + `@MockBean OrderService` + `MockMvc` проверяют web-контракт.",
+                "when_to_apply": "Для маршрутизации, валидации `@Valid`, HTTP-статусов и сериализации тела.",
+                "edge_cases": "`MockMvc` здесь автонастроен; в `@SpringBootTest(MOCK)` нужен `@AutoConfigureMockMvc`.",
+                "related": "Бизнес-логику тестируют отдельно unit-тестом сервиса, здесь сервис замокан."
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`@WebMvcTest` создаёт ограниченный MVC-контекст и `MockMvc`, но намеренно исключает servlet-фильтры, `SecurityFilterChain` и `@ControllerAdvice`. В отличие от `@SpringBootTest` эти компоненты нужно каждый раз импортировать вручную.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Web slice включает поддерживаемые MVC-компоненты, в том числе `Filter`, `SecurityFilterChain` и `@ControllerAdvice`, если они попадают в конфигурацию среза.",
-                "source_of_confusion": "Сервисы и репозитории действительно исключены, поэтому ограничение component scanning иногда ошибочно распространяют на всю инфраструктуру вокруг контроллера.",
-                "if_it_were_true": "Тест мог бы пройти без production-фильтров и глобальной обработки ошибок, хотя именно их влияние на HTTP-контракт часто нужно проверить.",
-                "how_it_should_be": "Учитывайте автоматически включённую web-инфраструктуру и точечно настраивайте фильтры; вручную добавляйте только действительно отсутствующие пользовательские компоненты."
-              }
-            },
-            {
-              "order": 3,
               "label": "D",
-              "text": "`@WebMvcTest` создаёт ограниченный MVC-контекст, но запускает реальный servlet-контейнер на случайном порту. В отличие от `@SpringBootTest` запросы отправляют через `RestTestClient` по сети, а `MockMvc` для этого среза не конфигурируется.",
+              "order": 3,
+              "text": "Поднимает и контроллеры, и реальные сервисы с репозиториями, точно как полный `@SpringBootTest`.",
               "correct": false,
               "sections": {
-                "what_actually": "`@WebMvcTest` не запускает сервер и автоматически конфигурирует `MockMvc`. `RestTestClient` можно дополнительно настроить поверх той же MockMvc-инфраструктуры без сети.",
-                "source_of_confusion": "Название web-теста и HTTP-подобный API клиентов создают впечатление настоящего сокета, хотя Spring MVC обрабатывает mock request/response в процессе теста.",
-                "if_it_were_true": "Каждый web slice занимал бы порт и зависел от жизненного цикла контейнера, утратив преимущество быстрого mock-based тестирования.",
-                "how_it_should_be": "Для реальной сети используйте `@SpringBootTest(webEnvironment = RANDOM_PORT)`; для MVC без сервера — `@WebMvcTest` с `MockMvc` или MockMvc-backed `RestTestClient`."
+                "what_actually": "Реальные сервисы и репозитории в срез не попадают — их подставляют через `@MockBean`.",
+                "source_of_confusion": "Оба — Spring-тесты, поэтому кажется, что бины те же самые.",
+                "if_it_were_true": "Тогда `@WebMvcTest` не отличался бы от `@SpringBootTest`.",
+                "how_it_should_be": "В контекст попадает только web-слой, всё ниже контроллера мокают."
               }
             }
           ]
@@ -246,55 +246,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `@DataJpaTest` и как его настроить?",
+          "question_text": "Что такое `@DataJpaTest` и как настроить?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`@DataJpaTest` загружает JPA-инфраструктуру, сущности и репозитории без сервисов и контроллеров. По умолчанию каждый тест коммитит транзакцию, чтобы следующий метод видел данные; автоматический rollback включают отдельной аннотацией `@Rollback`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Data JPA tests транзакционны и откатываются после каждого теста по умолчанию. `@Commit` или `@Rollback(false)`, наоборот, явно меняют это поведение.",
-                "source_of_confusion": "В production транзакции обычно коммитятся, а `@Rollback` существует как отдельная аннотация, поэтому её принимают за обязательный переключатель тестового режима.",
-                "if_it_were_true": "Порядок тестовых методов влиял бы на данные БД, а suite быстро накопил бы состояние и потерял воспроизводимость.",
-                "how_it_should_be": "Рассчитывайте на rollback внутри стандартного среза; разрешайте commit только в редком сценарии, где это является частью самой проверки."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`@DataJpaTest` загружает JPA-инфраструктуру, сущности и репозитории без сервисов и контроллеров. Тесты транзакционны с rollback, но по умолчанию всегда сохраняют `DataSource` приложения; embedded database подключается только после явного `@AutoConfigureTestDatabase`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Если подходящая embedded database доступна, data slice по умолчанию заменяет обычный datasource. `@AutoConfigureTestDatabase(replace = NONE)` нужен для обратного: не заменять настроенную реальную БД.",
-                "source_of_confusion": "В полном `@SpringBootTest` используется обычная конфигурация datasource, и это поведение легко ошибочно перенести на более специализированный data slice.",
-                "if_it_were_true": "Случайно настроенный production-like datasource использовался бы каждым repository-тестом, даже когда в classpath есть тестовая embedded database.",
-                "how_it_should_be": "Положитесь на embedded replacement для лёгкого теста или явно отключите replacement, когда подключаете Testcontainers либо другой тестовый datasource."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`@DataJpaTest` загружает JPA-инфраструктуру, `@Entity` и Spring Data JPA repositories, но не обычные сервисы и контроллеры. Тесты транзакционны с rollback; доступная embedded database подставляется автоматически, а для настроенной реальной БД используют `@AutoConfigureTestDatabase(replace = NONE)`.",
+              "order": 0,
+              "text": "Поднимает слой JPA (репозитории, `TestEntityManager`), по умолчанию подменяет БД на H2 и откатывает транзакцию.",
               "correct": true,
               "sections": {
-                "explanation": "Срез настраивает EntityManager, репозитории и связанные JPA-компоненты; при наличии embedded database заменяет ею обычный datasource. Каждый тест по умолчанию выполняется в транзакции и откатывается.",
-                "example": "`@DataJpaTest` с внедрёнными `TestEntityManager` и `UserRepository` сохраняет entity, вызывает repository query и проверяет результат; PostgreSQL из Testcontainers оставляют через `replace = NONE`.",
-                "when_to_apply": "Используйте для запросов репозитория, mapping сущностей, constraints и поведения persistence provider без загрузки web- и service-слоёв.",
-                "edge_cases": "Конкретная embedded database, например H2, должна быть в classpath — аннотация не приносит её сама. Rollback тестового потока не заменяет очистку, если код пишет в другой транзакции или процессе.",
-                "related": "[[spring-testing-interview#Q3]] test slices; [[spring-testing-interview#Q15]] Testcontainers и service connections."
+                "explanation": "Срез персистентности не трогает сервисы и web, только JPA-конфигурацию и репозитории.",
+                "example": "`TestEntityManager.persist` + `flush`, затем `repository.findByEmail` возвращает сохранённого.",
+                "when_to_apply": "Для тестов репозиториев с быстрой изоляцией через rollback.",
+                "edge_cases": "Для реальной СУБД подмену отключают: `@AutoConfigureTestDatabase(replace = NONE)`.",
+                "related": "H2 проверит специфичный SQL PostgreSQL/MySQL неполно — тогда Testcontainers."
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`@DataJpaTest` загружает JPA-инфраструктуру, сущности, репозитории и все сервисы, которые используют эти репозитории, но не MVC-контроллеры. Тесты транзакционны с rollback, поэтому им можно покрывать бизнес-сценарии service-слоя на embedded database.",
+              "label": "B",
+              "order": 1,
+              "text": "По умолчанию `@DataJpaTest` работает с настроенной production-БД, а не с in-memory H2.",
               "correct": false,
               "sections": {
-                "what_actually": "Обычные `@Component` и `@Service` не сканируются data slice. Нужный сервис добавляют осознанным `@Import`, но это уже расширение стандартного среза.",
-                "source_of_confusion": "Репозитории обычно вызываются через сервисы, и кажется удобным автоматически поднять ближайший слой, однако цель среза — изолировать persistence.",
-                "if_it_were_true": "Граф сервисов мог бы втянуть внешние клиенты и другие репозитории, делая объём контекста непредсказуемым и близким к полному.",
-                "how_it_should_be": "Проверяйте стандартным `@DataJpaTest` persistence-контракт; интеграцию сервиса с репозиторием тестируйте через точечный импорт или `@SpringBootTest`."
+                "what_actually": "По умолчанию `@DataJpaTest` подменяет реальную БД на in-memory H2.",
+                "source_of_confusion": "Хочется, чтобы тест сразу шёл по «настоящей» базе.",
+                "if_it_were_true": "Тогда не нужен был бы флаг `replace = NONE` для реальной БД.",
+                "how_it_should_be": "Настроенную БД включают явно через `@AutoConfigureTestDatabase(replace = NONE)`."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Поднимает вместе с JPA ещё и все сервисы, и весь web-слой приложения целиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@DataJpaTest` — срез персистентности: сервисы и web он не поднимает.",
+                "source_of_confusion": "«Тест с базой» ассоциируется с полным контекстом приложения.",
+                "if_it_were_true": "Тогда срез не отличался бы от `@SpringBootTest`.",
+                "how_it_should_be": "В контекст попадают только Entity, репозитории и JPA-конфигурация."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Отката транзакции здесь нет, поэтому данные свободно перетекают из теста в тест.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый тест обёрнут в транзакцию с откатом, так что данные между тестами не текут.",
+                "source_of_confusion": "Кажется, что сохранённое в тесте остаётся в базе.",
+                "if_it_were_true": "Тогда тесты влияли бы друг на друга через общие данные.",
+                "how_it_should_be": "Rollback после каждого теста даёт изоляцию бесплатно."
               }
             }
           ]
@@ -306,55 +306,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие ещё test slices, помимо `@WebMvcTest` и `@DataJpaTest`, есть в Spring Boot?",
+          "question_text": "Какие ещё test slices есть в Spring Boot?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Есть `@WebFluxTest` и `@GraphQlTest` для endpoint-слоёв, `@JsonTest` для mapping, `@RestClientTest` и `@WebClientTest` для исходящих клиентов, `@JdbcTest`, `@DataJdbcTest`, `@DataR2dbcTest`, `@JooqTest` и срезы Spring Data для MongoDB, Redis, Neo4j, Elasticsearch и других хранилищ.",
+              "order": 0,
+              "text": "Кроме `@WebMvcTest` и `@DataJpaTest`, других готовых срезов в Spring Boot нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Boot даёт срез почти под каждый слой — их около десятка.",
+                "source_of_confusion": "`@WebMvcTest` и `@DataJpaTest` — самые известные, поэтому кажутся единственными.",
+                "if_it_were_true": "Тогда для WebFlux или JSON пришлось бы всегда брать полный контекст.",
+                "how_it_should_be": "Есть `@WebFluxTest`, `@DataJdbcTest`, `@JsonTest`, `@RestClientTest` и другие."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Аннотация `@JsonTest` поднимает целый web-слой с контроллерами, а не срез сериализации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@JsonTest` поднимает срез сериализации (Jackson `ObjectMapper`), а не web-слой.",
+                "source_of_confusion": "JSON ассоциируется с web-контроллерами и HTTP.",
+                "if_it_were_true": "Тогда он дублировал бы `@WebMvcTest`.",
+                "how_it_should_be": "Для контроллеров есть `@WebMvcTest`, а `@JsonTest` — про сериализацию."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Аннотация `@RestClientTest` предназначена именно для тестов репозиториев Spring Data JPA.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@RestClientTest` — про HTTP-клиенты (`RestTemplate`, `RestClient`), а не репозитории.",
+                "source_of_confusion": "«Rest» в названии наводит на слой данных или REST-контроллеры.",
+                "if_it_were_true": "Тогда он пересекался бы с `@DataJpaTest`.",
+                "how_it_should_be": "Репозитории JPA тестируют `@DataJpaTest`, HTTP-клиенты — `@RestClientTest`."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "На каждый технологический слой есть свой срез — `@WebFluxTest`, `@DataJdbcTest` и ещё несколько.",
               "correct": true,
               "sections": {
-                "explanation": "Spring Boot поставляет набор специализированных составных аннотаций. Каждая ограничивает контекст и импортирует профильные автоконфигурации: например, `@RestClientTest` — builders и `MockRestServiceServer`, а `@JsonTest` — JSON testers.",
-                "example": "Для класса, вызывающего внешний REST API через `RestClient.Builder`, `@RestClientTest(RemoteCatalogClient.class)` предоставляет `MockRestServiceServer` без запуска приложения или реального удалённого сервера.",
-                "when_to_apply": "Выбирайте самый узкий slice, который содержит реальную инфраструктуру проверяемой границы; это делает тест быстрее и точнее полного контекста.",
-                "edge_cases": "Наличие аннотации и её модуль в Spring Boot 4 зависят от подключённой технологии. Slice не создаёт пользовательские collaborators автоматически — их импортируют или заменяют явно.",
-                "related": "[[spring-testing-interview#Q3]] назначение срезов; [[spring-testing-interview#Q4]] MVC; [[spring-testing-interview#Q5]] JPA."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Есть `@WebFluxTest`, `@GraphQlTest`, `@JsonTest`, `@RestClientTest`, `@WebClientTest`, `@JdbcTest`, `@DataJdbcTest`, `@DataR2dbcTest` и срезы Spring Data для MongoDB, Redis, Neo4j и других хранилищ. Каждый из них автоматически предоставляет `MockMvc` для вызова тестируемого API.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`MockMvc` относится к Spring MVC и автоматически конфигурируется `@WebMvcTest`. Другие срезы предоставляют профильные инструменты: `WebTestClient`, JSON testers, `MockRestServiceServer`, templates или repositories.",
-                "source_of_confusion": "У большинства срезов есть готовый тестовый клиент или helper, и наиболее известный `MockMvc` ошибочно принимают за универсальный интерфейс ко всем слоям.",
-                "if_it_were_true": "Data- и JSON-срезам пришлось бы поднимать `DispatcherServlet` и servlet API, хотя их предмет тестирования не имеет HTTP endpoint.",
-                "how_it_should_be": "Используйте инструмент конкретного среза: MVC-клиент для MVC, reactive-клиент для WebFlux, repository/template для data и tester для сериализации."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Есть `@WebFluxTest`, `@GraphQlTest`, `@JsonTest`, `@RestClientTest`, `@WebClientTest`, `@JdbcTest`, `@DataJdbcTest`, `@DataR2dbcTest` и срезы Spring Data для MongoDB, Redis, Neo4j и других хранилищ. Каждый из них загружает полный Boot-контекст с тематическими тестовыми утилитами.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Перечень аннотаций в целом корректен, но slice по определению ограничивает сканирование и набор автоконфигураций. Полный контекст загружает `@SpringBootTest`.",
-                "source_of_confusion": "Каждый срез всё равно является Boot-тестом и может поднимать довольно много инфраструктуры, поэтому его ошибочно считают полным приложением с дополнительным helper API.",
-                "if_it_were_true": "`@JsonTest` запускал бы контроллеры, БД и внешние клиенты ради одной сериализации, а выигрыш от специализации исчез бы.",
-                "how_it_should_be": "Выбирайте аннотацию по границе теста: каждый slice даёт только относящиеся к ней компоненты и автоконфигурации."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Есть `@WebFluxTest`, `@GraphQlTest`, `@JsonTest`, `@RestClientTest`, `@WebClientTest`, `@JdbcTest`, `@DataJdbcTest`, `@DataR2dbcTest` и срезы Spring Data для MongoDB, Redis, Neo4j и других хранилищ. Все отсутствующие collaborators они автоматически заменяют Mockito-моками.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Срезы исключают нерелевантные компоненты, но не угадывают и не создают Mockito mocks для пользовательских зависимостей. Их объявляют через `@MockitoBean` или предоставляют иным способом.",
-                "source_of_confusion": "Boot автоматически конфигурирует тестовую инфраструктуру слоя, например `MockMvc` или `MockRestServiceServer`, что похоже на автоматическое создание замен для dependencies.",
-                "if_it_were_true": "Неуточнённые интерфейсы и классы превращались бы в моки без явного намерения теста, скрывая ошибки wiring и делая поведение зависимостей неочевидным.",
-                "how_it_should_be": "Получайте инфраструктурные test beans из slice, а границы с пользовательскими collaborators описывайте явно через bean override, import или test configuration."
+                "explanation": "Идея одна — поднять только нужную часть контекста, — отличается набор автоконфигураций.",
+                "example": "`@JsonTest` + `JacksonTester<OrderDto>` проверяет сериализацию против ожидаемого JSON.",
+                "when_to_apply": "Берут срез под конкретный слой: WebFlux, JDBC, Mongo, Redis, JSON, HTTP-клиент.",
+                "edge_cases": "Есть и `@DataMongoTest`, `@DataRedisTest`, `@DataNeo4jTest`, `@WebServiceClientTest`.",
+                "related": "`@RestClientTest` — для HTTP-клиентов (`RestTemplate`, `RestClient`)."
               }
             }
           ]
@@ -369,52 +369,52 @@
           "question_text": "Что такое `MockMvc` и как им пользоваться?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`MockMvc` тестирует Spring MVC без работающего сервера: mock request проходит через `DispatcherServlet` и настроенный MVC pipeline. `perform(request)` выполняет запрос, `andExpect(matcher)` проверяет результат, `andDo(handler)` обрабатывает его, а `andReturn()` возвращает `MvcResult`.",
+              "order": 0,
+              "text": "Проверки статуса и тела делают через `andReturn`, а `andExpect` при этом не применяют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Проверки делают через `andExpect`; `andReturn` берут лишь для ручного разбора `MvcResult`.",
+                "source_of_confusion": "`andReturn` кажется главным способом добраться до ответа.",
+                "if_it_were_true": "Тогда цепочка matcher-проверок была бы бесполезна.",
+                "how_it_should_be": "Статус и тело проверяют цепочкой `andExpect`."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Тестирует web-слой без запуска HTTP-сервера — прогоняет запрос через `DispatcherServlet` всем конвейером MVC.",
               "correct": true,
               "sections": {
-                "explanation": "Инструмент сохраняет серверную семантику MVC — mapping, binding, converters, validation, filters и exception handling — но заменяет servlet request/response тестовыми объектами и не открывает порт.",
-                "example": "`mockMvc.perform(get(\"/orders/{id}\", 42).accept(APPLICATION_JSON)).andExpect(status().isOk()).andExpect(jsonPath(\"$.id\").value(42));`",
-                "when_to_apply": "Используйте для быстрых проверок Spring MVC-контракта в `@WebMvcTest` либо полного контекста с `@AutoConfigureMockMvc`, когда реальная сеть не является предметом теста.",
-                "edge_cases": "Standalone setup содержит только явно зарегистрированные компоненты и может отличаться от application-context setup. Для AssertJ-стиля Spring также предлагает `MockMvcTester`.",
-                "related": "[[spring-testing-interview#Q4]] `@WebMvcTest`; [[spring-testing-interview#Q8]] JSON; [[spring-testing-interview#Q16]] `RestTestClient`."
+                "explanation": "Запрос проходит весь конвейер MVC (маппинг, фильтры, валидация), но сокет не открывается.",
+                "example": "`perform(get(\"/api/orders/1\"))` затем `andExpect(status().isOk())` и `jsonPath`.",
+                "when_to_apply": "Когда нужен быстрый и стабильный тест web-слоя без сети.",
+                "edge_cases": "`andReturn()` даёт `MvcResult` для ручных проверок, когда matchers не хватает.",
+                "related": "`andDo(print())` выводит запрос и ответ в лог при отладке."
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`MockMvc` запускает встроенный servlet-контейнер на свободном порту и отправляет настоящий HTTP-запрос через `perform(...)`. Результат приходит как `ResponseEntity`, после чего статус, заголовки и тело проверяют обычными AssertJ assertions.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`MockMvc` не запускает сервер и работает с mock request/response через Spring MVC. `perform(...)` возвращает `ResultActions`, а `andReturn()` — `MvcResult`, не `ResponseEntity`.",
-                "source_of_confusion": "Запрос проходит полноценный MVC pipeline и выглядит как HTTP, поэтому внутренняя обработка в памяти легко принимается за сетевой вызов.",
-                "if_it_were_true": "Тест занимал бы порт, зависел от socket transport и имел бы ограничения настоящего клиента, хотя основная цель `MockMvc` — тест без сервера.",
-                "how_it_should_be": "Формируйте mock request builder, вызывайте `perform` и проверяйте результат через `andExpect` либо используйте AssertJ-обёртку `MockMvcTester`."
-              }
-            },
-            {
-              "order": 2,
               "label": "C",
-              "text": "`MockMvc` прогоняет mock request через Spring MVC без сервера, но работает только с полным `@SpringBootTest`. Его строят из `WebApplicationContext` вручную; `@WebMvcTest` не предоставляет готовый экземпляр, поскольку загружает лишь контроллеры.",
+              "order": 2,
+              "text": "Поднимает реальный HTTP-сервер и отправляет запросы к нему по сети через настоящий сокет.",
               "correct": false,
               "sections": {
-                "what_actually": "`@WebMvcTest` как раз автоматически конфигурирует `MockMvc`. В полном `@SpringBootTest` его добавляют через `@AutoConfigureMockMvc` или собирают вручную.",
-                "source_of_confusion": "Standalone и `webAppContextSetup` действительно позволяют создать клиент вручную, но это альтернативы автоконфигурации, а не обязательное условие.",
-                "if_it_were_true": "Основной MVC slice не имел бы собственного инструмента вызова контроллеров и требовал бы полного контекста ради каждого mapping-теста.",
-                "how_it_should_be": "Внедряйте готовый `MockMvc` в `@WebMvcTest`; для полного mock web-контекста сочетайте `@SpringBootTest` с `@AutoConfigureMockMvc`."
+                "what_actually": "`MockMvc` работает без реального сервера и сети — сокет не открывается.",
+                "source_of_confusion": "Тест HTTP-эндпоинта ассоциируется с настоящим сетевым запросом.",
+                "if_it_were_true": "Тогда терялись бы скорость и стабильность MockMvc.",
+                "how_it_should_be": "Запрос прогоняется напрямую через `DispatcherServlet`."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "`MockMvc` вызывает метод контроллера напрямую без `DispatcherServlet`, поэтому проверяет только возвращаемое значение метода. URL mapping, argument resolvers, filters, `@Valid` и exception handlers в таком тесте не выполняются.",
+              "order": 3,
+              "text": "Запрос идёт прямо в метод контроллера, минуя фильтры, маппинг и всю валидацию MVC.",
               "correct": false,
               "sections": {
-                "what_actually": "Запрос проходит через `DispatcherServlet` и настроенную MVC-инфраструктуру с mapping, binding, validation, filters и обработчиками исключений, насколько они включены в setup.",
-                "source_of_confusion": "Реального сетевого сервера нет, и это иногда ошибочно приравнивают к обычному unit-вызову Java-метода.",
-                "if_it_were_true": "Тест не находил бы ошибки маршрутизации, сериализации и HTTP-обработки, ради которых `MockMvc` и используется.",
-                "how_it_should_be": "Для прямого unit-теста вызывайте контроллер как объект; для поведения MVC используйте `MockMvc` и проверяйте итоговый HTTP-подобный response."
+                "what_actually": "Запрос проходит весь конвейер MVC — маппинг, фильтры, валидацию, сериализацию.",
+                "source_of_confusion": "«Без сервера» кажется, что и конвейер MVC пропускается.",
+                "if_it_were_true": "Тогда MockMvc не проверял бы реальное поведение web-слоя.",
+                "how_it_should_be": "Идёт полный конвейер, не открывается лишь сокет."
               }
             }
           ]
@@ -426,55 +426,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как тестировать REST-эндпоинт с JSON через `MockMvc`?",
+          "question_text": "Как тестировать REST endpoint с JSON через MockMvc?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Поля DTO передают через `param(\"field\", value)` и ставят `contentType(APPLICATION_JSON)`; Spring MVC собирает из параметров JSON body перед deserialization. Ответ затем проверяют через `status()` и `jsonPath(...)`, а пропущенный param даёт validation error.",
+              "order": 0,
+              "text": "Ответ обязательно десериализуют в объект целиком, проверять его по отдельным полям нельзя.",
               "correct": false,
               "sections": {
-                "what_actually": "`param(...)` создаёт request parameters и не формирует JSON body. `@RequestBody` читает содержимое `content(...)` через message converter.",
-                "source_of_confusion": "Для `@RequestParam` и form-urlencoded endpoints параметры действительно являются правильным способом передачи данных, но у JSON `@RequestBody` другой канал.",
-                "if_it_were_true": "Один и тот же запрос одновременно считался бы JSON body и набором query/form parameters, скрывая различие контрактов контроллера.",
-                "how_it_should_be": "Для `@RequestBody` отправляйте сериализованный JSON в `content(...)`; `param(...)` оставляйте для query или form parameters."
+                "what_actually": "`jsonPath()` проверяет конкретные поля ответа, не десериализуя его в объект целиком.",
+                "source_of_confusion": "Привычно распарсить ответ в DTO и сверять поля объекта.",
+                "if_it_were_true": "Тогда нельзя было бы точечно проверить одно поле JSON.",
+                "how_it_should_be": "Поля адресуют выражениями `jsonPath`, например `$.id`."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "DTO сериализуют настроенным `ObjectMapper` в bytes или строку, передают через `content(...)` и задают `contentType(APPLICATION_JSON)`. Ответ проверяют через `status()`, `header()` и `jsonPath(...)`; отдельным тестом отправляют невалидный JSON и проверяют ожидаемый 4xx.",
+              "order": 1,
+              "text": "Пустое тело с нарушением `@NotNull` всё равно вернёт успешный статус 201, а не 400.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пустое тело нарушает `@NotNull`, и валидация вернёт 400, а не 201.",
+                "source_of_confusion": "Кажется, что без явной проверки запрос «пройдёт».",
+                "if_it_were_true": "Тогда невалидные данные молча создавали бы ресурс.",
+                "how_it_should_be": "Нарушение `@Valid`/`@NotNull` даёт ответ 400 Bad Request."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Тело формируют готовым `ObjectMapper` с заголовком application/json, ответ и код 400 проверяют через jsonPath.",
               "correct": true,
               "sections": {
-                "explanation": "`MockMvc` принимает готовое тело запроса, поэтому тест должен сериализовать DTO тем же JSON mapper, который настроен для приложения. MVC затем выполняет deserialization, validation и сериализацию ответа.",
-                "example": "`mockMvc.perform(post(\"/orders\").contentType(APPLICATION_JSON).content(mapper.writeValueAsBytes(request))).andExpect(status().isCreated()).andExpect(jsonPath(\"$.id\").isNumber());`",
-                "when_to_apply": "Так проверяют контракт request/response, media type, bean validation, обработку malformed body и отображение исключений в HTTP-ошибки.",
-                "edge_cases": "`accept(APPLICATION_JSON)` описывает желаемый тип ответа и не заменяет `contentType` тела запроса. Статус validation error зависит от настроенного exception handler, а не всегда обязан быть одинаковым.",
-                "related": "[[spring-testing-interview#Q4]] web slice; [[spring-testing-interview#Q7]] API `MockMvc`."
+                "explanation": "Обязательно покрывают и «несчастливый» путь: невалидный запрос должен вернуть 400.",
+                "example": "Отправляют `content(objectMapper.writeValueAsString(request))`, затем сверяют поле `jsonPath(\"$.id\").value(42)`.",
+                "when_to_apply": "Для проверки web-контракта REST-эндпоинта: статусы, заголовки, поля тела.",
+                "edge_cases": "`jsonPath`: `$` — корень, `$.field` — поле, `$.array[0]` — элемент, `.length()` — функция.",
+                "related": "Так адресуют конкретные поля ответа, не десериализуя его целиком."
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "DTO передают непосредственно в `content(request)`, а `MockMvc` выбирает `HttpMessageConverter` и сам сериализует объект. После `contentType(APPLICATION_JSON)` ответ проверяют через `status()` и `jsonPath(...)`, включая отдельный 4xx-сценарий.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`content(...)` принимает готовые bytes или строковое содержимое, а не произвольный DTO. Автоматическая сериализация тела есть у client APIs с `body(...)`, но не у request builder `MockMvc`.",
-                "source_of_confusion": "`RestClient`, `WebTestClient` и `RestTestClient` умеют принимать объект тела, поэтому похожее fluent API ожидают и от `MockMvcRequestBuilders`.",
-                "if_it_were_true": "Request builder должен был бы выбирать mapper и generic type сам, но такой overload для DTO отсутствует.",
-                "how_it_should_be": "Вызовите `ObjectMapper.writeValueAsBytes(request)` или передайте заранее подготовленную JSON-строку в `content(...)`."
-              }
-            },
-            {
-              "order": 3,
               "label": "D",
-              "text": "DTO сериализуют через `ObjectMapper` и передают в `content(...)`, но тип тела задают только `accept(APPLICATION_JSON)`. Этот заголовок одновременно сообщает формат запроса и ответа.",
+              "order": 3,
+              "text": "Готовый `ObjectMapper` для теста нужно создавать вручную — Spring Boot его совсем не автонастраивает.",
               "correct": false,
               "sections": {
-                "what_actually": "`Accept` описывает форматы ответа, а `Content-Type` — формат отправленного тела. Для JSON `@RequestBody` обычно нужен `contentType(APPLICATION_JSON)`.",
-                "source_of_confusion": "Оба заголовка содержат media types и часто устанавливаются рядом, поэтому их направления легко смешать.",
-                "if_it_were_true": "Сервер определял бы способ deserialization тела по предпочтению ответа и не мог бы независимо согласовать request и response representations.",
-                "how_it_should_be": "Укажите `contentType` для JSON request; добавляйте `accept` отдельно, если хотите проверить negotiation формата ответа."
+                "what_actually": "Spring Boot автонастраивает `ObjectMapper` — его достаточно внедрить `@Autowired`.",
+                "source_of_confusion": "Кажется, что сериализатор всегда создают вручную.",
+                "if_it_were_true": "Тогда каждый тест дублировал бы настройку Jackson.",
+                "how_it_should_be": "Готовый `ObjectMapper` берут прямо из контекста."
               }
             }
           ]
@@ -486,55 +486,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем `@MockitoBean` из Spring Test отличается от `@Mock` из Mockito?",
+          "question_text": "Чем `@MockBean` отличается от `@Mock` из Mockito?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`@Mock` создаёт Mockito mock и при наличии `SpringExtension` автоматически регистрирует его как bean, поэтому зависимости приложения получают этот объект. `@MockitoBean` отличается только тем, что не требует Mockito extension и доступен как поле теста.",
+              "order": 0,
+              "text": "Аннотация `@MockBean` тоже не участвует в Spring-контексте — это просто обёртка над `@Mock`.",
               "correct": false,
               "sections": {
-                "what_actually": "`SpringExtension` сам по себе не превращает `@Mock` в Spring bean. `@Mock` инициализирует Mockito, а `@MockitoBean` выполняет bean override в `ApplicationContext`.",
-                "source_of_confusion": "Обе аннотации можно увидеть в тестах со Spring extension, и mock доступен как поле, но наличие объекта в тесте не означает его регистрацию в контейнере.",
-                "if_it_were_true": "Любой `@Mock` незаметно менял бы wiring приложения, а unit- и integration-механизмы не требовали бы разных аннотаций.",
-                "how_it_should_be": "Для Spring DI объявляйте `@MockitoBean`; для локального Mockito mock используйте `@Mock` и передавайте его объекту под тестом явно."
+                "what_actually": "`@MockBean` добавляет mock в `ApplicationContext` и внедряет его через Spring DI.",
+                "source_of_confusion": "Оба про моки, поэтому кажется, что уровень у них один.",
+                "if_it_were_true": "Тогда `@MockBean` не влиял бы на кеш контекста.",
+                "how_it_should_be": "Вне Spring живёт `@Mock`, а `@MockBean` — часть контекста."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "`@Mock` создаёт обычный Mockito mock вне Spring и требует инициализации через Mockito extension или `openMocks`. `@MockitoBean` участвует в TestContext: по умолчанию заменяет подходящий bean или создаёт новый, поэтому все Spring-зависимости получают mock.",
+              "order": 1,
+              "text": "Аннотация `@Mock` тоже входит в общий ключ кеша контекста и заставляет пересобирать `ApplicationContext` заново.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Mock` вне Spring и на кеш контекста не влияет; ключ загрязняет `@MockBean`.",
+                "source_of_confusion": "Раз оба моки, кажется, что оба трогают контекст.",
+                "if_it_were_true": "Тогда чистые Mockito-тесты тоже пересобирали бы контекст.",
+                "how_it_should_be": "В ключ кеша входит `@MockBean`, а не `@Mock`."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Аннотация `@MockBean` требует ручного внедрения через `@InjectMocks`, ровно так же как и `@Mock`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@MockBean` внедряется автоматически через Spring DI, ручной `@InjectMocks` не нужен.",
+                "source_of_confusion": "Механику `@Mock` переносят и на `@MockBean`.",
+                "if_it_were_true": "Тогда пропал бы смысл подмены бина в контексте.",
+                "how_it_should_be": "Ручной `@InjectMocks` нужен для `@Mock`, а `@MockBean` внедряет Spring."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "`@Mock` — чистый Mockito с ручным `@InjectMocks`, а `@MockBean` подменяет бин в контексте через Spring DI.",
               "correct": true,
               "sections": {
-                "explanation": "`@MockitoBean` использует стратегию `REPLACE_OR_CREATE` и является механизмом переопределения bean в тестовом `ApplicationContext`. `@Mock` ничего не знает о контейнере и применяется в изолированном unit-тесте вместе с ручной сборкой объекта или `@InjectMocks`.",
-                "example": "В `@WebMvcTest` поле `@MockitoBean OrderService orderService` удовлетворяет constructor dependency контроллера; в unit-тесте `@Mock OrderRepository repository` передают в новый `OrderService(repository)` без Spring.",
-                "when_to_apply": "Используйте `@Mock`, когда контейнер не нужен; `@MockitoBean` — когда существующий Spring bean требуется заменить на границе slice- или integration-теста.",
-                "edge_cases": "При нескольких кандидатах нужен qualifier или имя. `enforceOverride = true` запрещает неявное создание отсутствующего bean. Даже разные имена полей могут повлиять на qualifier и привести к отдельным кешированным контекстам.",
-                "related": "[[spring-testing-interview#Q3]] зависимости среза; [[spring-testing-interview#Q10]] `@MockitoSpyBean`; [[spring-testing-interview#Q13]] ключ кеша."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`@Mock` создаёт обычный Mockito mock вне Spring, а `@MockitoBean` находит существующий bean, сохраняет его экземпляр и оборачивает в partial mock. Поэтому незастабленные методы Spring bean продолжают выполнять реальную логику.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Так ведёт себя `@MockitoSpyBean`. `@MockitoBean` заменяет bean полным mock, чьи незастабленные методы возвращают стандартные Mockito defaults.",
-                "source_of_confusion": "Названия mock и spy похожи, а обе Spring-аннотации переопределяют bean и позволяют вызывать `verify(...)`.",
-                "if_it_were_true": "`@MockitoBean` мог бы неожиданно обращаться к реальной БД или внешнему API через незастабленный метод, что противоречило бы семантике полного mock.",
-                "how_it_should_be": "Выбирайте `@MockitoBean` для полной замены поведения; `@MockitoSpyBean` — только когда намеренно сохраняете реальную реализацию большинства методов."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`@Mock` создаёт обычный Mockito mock вне Spring, а `@MockitoBean` может только заменить уже существующий bean того же типа. Если кандидата в контексте нет, тест всегда завершается ошибкой до выполнения методов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию `@MockitoBean` использует `REPLACE_OR_CREATE` и создаёт bean, если подходящего нет. Строго требовать существующий bean можно через `enforceOverride = true`.",
-                "source_of_confusion": "Bean override обычно применяют именно к существующей зависимости, а `@MockitoSpyBean` действительно требует ровно одного кандидата для обёртки.",
-                "if_it_were_true": "Нельзя было бы через `@MockitoBean` предоставить отсутствующую зависимость ограниченному slice-контексту без отдельной test configuration.",
-                "how_it_should_be": "Рассчитывайте на replace-or-create по умолчанию; включайте `enforceOverride`, если отсутствие production bean должно обнаруживаться как ошибка тестовой конфигурации."
+                "explanation": "Оба создают mock, но `@Mock` живёт вне Spring, а `@MockBean` — внутри `ApplicationContext`.",
+                "example": "`@Mock` + `@InjectMocks` — unit-тест; `@MockBean OrderService` — Spring подставит mock в контроллер.",
+                "when_to_apply": "`@Mock` — для unit-тестов, `@MockBean` — для slice- и `@SpringBootTest`.",
+                "edge_cases": "`@MockBean` входит в ключ кеша и плодит новые контексты; `@Mock` на кеш не влияет.",
+                "related": "С Spring Boot 3.4 `@MockBean` deprecated, замена — `@MockitoBean` из Framework 6.2."
               }
             }
           ]
@@ -546,55 +546,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `@MockitoSpyBean` и когда он нужен?",
+          "question_text": "Что такое `@SpyBean` и когда нужен?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`@MockitoSpyBean` находит подходящий Spring bean и оборачивает его Mockito spy; если bean отсутствует, аннотация создаёт новый экземпляр через default constructor. Она нужна, когда реальную логику сохраняют, но отдельные вызовы стабят или проверяют.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Обёртка реального bean описана верно, но стратегия `WRAP` требует ровно одного существующего кандидата. Отсутствующий bean автоматически не создаётся.",
-                "source_of_confusion": "`@MockitoBean` по умолчанию умеет создать отсутствующий bean, и эту стратегию легко перенести на похожую spy-аннотацию.",
-                "if_it_were_true": "Spring должен был бы самостоятельно выбрать constructor и зависимости нового реального объекта, хотя spy предназначен для уже созданного экземпляра контекста.",
-                "how_it_should_be": "Сначала предоставьте ровно один реальный bean, затем оборачивайте его через `@MockitoSpyBean`; для отсутствующей зависимости используйте другой тестовый bean или mock."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`@MockitoSpyBean` оборачивает существующий Spring bean и оставляет реальные методы, но `when(spy.method()).thenReturn(value)` никогда не вызывает этот метод при настройке. Поэтому такой stubbing безопасен даже для записи в БД или отправки сообщения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "При синтаксисе `when(...)` выражение внутри скобок вычисляется, и реальный метод spy может выполниться уже во время настройки. Для предотвращения этого используют `doReturn(...).when(spy)...`.",
-                "source_of_confusion": "У полного mock вызов в `when(...)` не делает реальной работы, и привычный синтаксис автоматически переносят на partial mock.",
-                "if_it_were_true": "Оба стиля stubbing были бы одинаково безопасны для spy и отдельные рекомендации `doReturn`/`doThrow` не требовались бы.",
-                "how_it_should_be": "Не вызывайте потенциально опасный реальный метод в `when(...)`; используйте do-style stubbing или замените bean полным `@MockitoBean`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`@MockitoSpyBean` заменяет Spring bean полным Mockito mock, но копирует в него текущее состояние исходного объекта. Реальные методы после замены не выполняются; аннотация нужна, чтобы проверять `verify(...)` без риска побочных эффектов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Spy делегирует незастабленные вызовы реальному объекту. Полную замену с Mockito defaults выполняет `@MockitoBean`.",
-                "source_of_confusion": "И mock, и spy поддерживают stubbing и verification, а Spring в обоих случаях меняет bean, поэтому различие в поведении незастабленных методов можно пропустить.",
-                "if_it_were_true": "Spy не позволял бы оставить настоящую реализацию большинства методов и по смыслу полностью совпадал бы с mock.",
-                "how_it_should_be": "Учитывайте реальные вызовы и их side effects; если они не нужны, используйте `@MockitoBean`, а не spy."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`@MockitoSpyBean` использует стратегию `WRAP`: требует ровно один существующий Spring bean и оборачивает его Mockito spy. Незаписанные методы выполняют реальную логику; отдельные вызовы можно переопределить через `doReturn`/`doThrow` и проверить через `verify`.",
+              "order": 0,
+              "text": "Частичный mock: реальный бин, где переопределяют методы (`doReturn`/`doThrow`) или проверяют факт вызова, остальное настоящее.",
               "correct": true,
               "sections": {
-                "explanation": "Spring захватывает ранний экземпляр bean и публикует spy вместо него, поэтому зависимости контекста обращаются к обёртке. Это частичная подмена, а не безопасный по умолчанию полный mock.",
-                "example": "`@MockitoSpyBean PaymentService paymentService` оставляет реальный расчёт, `doReturn(rate).when(paymentService).loadRate()` изолирует внешний источник, а `verify(paymentService).audit(...)` подтверждает взаимодействие.",
-                "when_to_apply": "Используйте, когда важна большая часть реального поведения bean, но один метод нужно контролировать или требуется проверить вызов из другого компонента.",
-                "edge_cases": "`when(spy.method())` вызывает реальный метод во время stubbing; для методов с side effects безопаснее семейство `doReturn`/`doThrow`. Scoped proxy обернуть таким spy нельзя.",
-                "related": "[[spring-testing-interview#Q9]] полный mock через `@MockitoBean`; [[spring-testing-interview#Q13]] bean overrides в кеше."
+                "explanation": "Всё, что вы не переопределили, у spy продолжает работать как у настоящего бина.",
+                "example": "`verify(eventPublisher).publish(...)` проверяет вызов реального бина, не подменяя логику.",
+                "when_to_apply": "Когда нужно проверить вызов или точечно сломать один метод, оставив остальное настоящим.",
+                "edge_cases": "`@MockBean` — заглушка целиком; `@SpyBean` — реальный бин с точечной подменой.",
+                "related": "С Spring Boot 3.4 `@SpyBean` deprecated, замена — `@MockitoSpyBean` из Framework 6.2."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Это полная заглушка: по умолчанию все методы возвращают `null`, реальной логики в бине нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полная заглушка с `null`-методами — это `@MockBean`; `@SpyBean` держит реальную логику.",
+                "source_of_confusion": "Слово «mock» в описании spy наводит на полную заглушку.",
+                "if_it_were_true": "Тогда `@SpyBean` не отличался бы от `@MockBean`.",
+                "how_it_should_be": "У spy работает реальный бин, мокают лишь явно переопределённые методы."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "В отличие от `@MockBean`, аннотация `@SpyBean` вовсе не входит в ключ кеша контекста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Как и `@MockBean`, `@SpyBean` участвует в ключе кеша — злоупотреблять им не стоит.",
+                "source_of_confusion": "«Реальный бин» кажется не влияющим на кеш.",
+                "if_it_were_true": "Тогда spy можно было бы вешать где угодно без вреда для скорости.",
+                "how_it_should_be": "`@SpyBean` входит в ключ кеша так же, как `@MockBean`."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Через `@SpyBean` проверить факт вызова метода нельзя — доступно лишь переопределение поведения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`verify` как раз и проверяет факт вызова метода реального бина.",
+                "source_of_confusion": "Spy ассоциируется только с подменой поведения.",
+                "if_it_were_true": "Тогда пропал бы один из двух его основных сценариев.",
+                "how_it_should_be": "Через `verify` проверяют вызов, через `doThrow` — ломают метод."
               }
             }
           ]
@@ -606,55 +606,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `@TestConfiguration` и зачем она нужна?",
+          "question_text": "Что такое `@TestConfiguration` и зачем нужна?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`@TestConfiguration` описывает дополнительные тестовые beans и автоматически подключается ко всем `@SpringBootTest` модуля, если top-level класс лежит в test source set. `@Import` нужен только для выбора между несколькими такими конфигурациями.",
+              "order": 0,
+              "text": "Объявленные в `@TestConfiguration` бины попадают и в production-контекст основного приложения тоже.",
               "correct": false,
               "sections": {
-                "what_actually": "Top-level `@TestConfiguration` намеренно исключена из обычного component scan и должна быть импортирована там, где нужна. Вложенную конфигурацию Boot может обнаружить вместе с тестом.",
-                "source_of_confusion": "Класс находится в test classpath и сам аннотирован как configuration, поэтому кажется, что source set уже задаёт область автоматического применения.",
-                "if_it_were_true": "Любой случайный тестовый bean попадал бы во все контексты suite, меняя wiring и дробя кеш без явной связи с тестом.",
-                "how_it_should_be": "Импортируйте top-level конфигурацию явно через `@Import` или поместите локальную static nested `@TestConfiguration` рядом с конкретным Boot-тестом."
+                "what_actually": "В production-контекст её бины не попадают — она работает только в тестах.",
+                "source_of_confusion": "«Configuration» ассоциируется с бинами основного приложения.",
+                "if_it_were_true": "Тогда тестовые заглушки оказались бы в проде.",
+                "how_it_should_be": "Тестовые бины остаются рядом с тестом, не загрязняя прод."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "`@TestConfiguration` — тестовая разновидность `@Configuration` для дополнительных beans и инфраструктуры. Она исключена из обычного component scan: top-level класс подключают через `@Import`, а static nested класс Boot-теста может быть обнаружен локально и добавлен к основной конфигурации.",
+              "order": 1,
+              "text": "Она лишь подменяет настройки приложения в тестах, а объявлять бины через неё нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Её главная роль — как раз добавлять и переопределять бины для тестов.",
+                "source_of_confusion": "Слово «configuration» связывают только с настройками, не с бинами.",
+                "if_it_were_true": "Тогда она была бы просто заменой property-файла.",
+                "how_it_should_be": "Через неё объявляют тестовые `@Bean`, подключая явно."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Добавляет или переопределяет бины в тестах, не подхватывается component scan, подключается через `@Import`.",
               "correct": true,
               "sections": {
-                "explanation": "Аннотация позволяет держать тестовые factories, stubs или Testcontainers рядом с тестами, не рискуя включить их в production scan. Вложенная конфигурация дополняет, а не заменяет найденную `@SpringBootConfiguration`.",
-                "example": "`@TestConfiguration(proxyBeanMethods = false) class ContainersConfig` объявляет `@Bean @ServiceConnection PostgreSQLContainer<?>`, а тест подключает её через `@Import(ContainersConfig.class)`.",
-                "when_to_apply": "Используйте для повторно используемой тестовой инфраструктуры, clock/fake implementations и дополнительной конфигурации, которую не следует помещать в основной код.",
-                "edge_cases": "Одинаковое имя bean не гарантирует разрешённое переопределение: безопаснее использовать `@Primary`, bean override API или осознанно настроить политику. Обычный nested `@Configuration` может заменить primary config вместо дополнения.",
-                "related": "[[spring-testing-interview#Q1]] поиск основной конфигурации; [[spring-testing-interview#Q15]] контейнеры как Spring beans."
+                "explanation": "Позволяет держать тестовые бины (заглушку Security, фиксированный `Clock`) рядом с тестом.",
+                "example": "`@Import(TestSecurityConfig.class)` подключает тестовый конфиг к `@WebMvcTest`.",
+                "when_to_apply": "Когда нужны тестовые бины без загрязнения production-контекста.",
+                "edge_cases": "Вложенный `@TestConfiguration static class` внутри теста Spring подхватит автоматически.",
+                "related": "Отличие от `@Configuration` — именно отсутствие в общем component scan."
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`@TestConfiguration` — обычная `@Configuration` с другим названием: основной `@SpringBootApplication` сканирует её вместе с production beans. Чтобы тестовые реализации не попали в рабочий контекст, класс дополнительно помечают `@Profile(\"test\")`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Специальный type-exclude filter не даёт `@TestConfiguration` попасть в обычный component scan. Профиль для самой защиты production-контекста не требуется.",
-                "source_of_confusion": "Аннотация является специализированной формой `@Configuration` и создаёт обычные beans после подключения, но правила обнаружения у неё намеренно иные.",
-                "if_it_were_true": "Top-level test configuration из classpath могла бы случайно изменить production wiring при сканировании пакета.",
-                "how_it_should_be": "Рассчитывайте на исключение из основного scan и подключайте конфигурацию в тест явно; профиль применяйте только если он нужен логике beans."
-              }
-            },
-            {
-              "order": 3,
               "label": "D",
-              "text": "`@TestConfiguration` описывает дополнительные тестовые beans, но разрешена только для static nested класса внутри теста. Top-level класс с этой аннотацией не считается конфигурацией и не может быть подключён через `@Import`.",
+              "order": 3,
+              "text": "Аннотация подхватывается общим component scan всего приложения точно так же, как обычная `@Configuration`.",
               "correct": false,
               "sections": {
-                "what_actually": "Аннотация поддерживает и top-level классы. Они не сканируются автоматически, но штатно подключаются обычным `@Import(TestConfig.class)`.",
-                "source_of_confusion": "Примеры часто используют вложенный класс для локальной настройки, а его автоматическое обнаружение воспринимают как единственный допустимый способ.",
-                "if_it_were_true": "Переиспользовать одну Testcontainers- или client-конфигурацию в нескольких тестах можно было бы только копированием вложенного класса.",
-                "how_it_should_be": "Используйте nested класс для локальной конфигурации, а top-level + `@Import` — для явного повторного использования."
+                "what_actually": "`@TestConfiguration` как раз не подхватывается component scan — только явным подключением.",
+                "source_of_confusion": "Она похожа на `@Configuration`, отсюда путаница.",
+                "if_it_were_true": "Тогда тестовые бины протекали бы в production-контекст.",
+                "how_it_should_be": "Подключают через `@Import` или вложенным `static`-классом."
               }
             }
           ]
@@ -666,55 +666,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `@DirtiesContext` и когда его использовать?",
+          "question_text": "Что такое `@DirtiesContext` и когда использовать?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`@DirtiesContext` пересоздаёт только те beans, к которым тест обращался или которые были помечены dirty, сохраняя остальной `ApplicationContext` в кеше. Поэтому аннотация почти бесплатна и подходит для регулярного сброса mock и spy между методами.",
+              "order": 0,
+              "text": "По умолчанию `classMode` — `BEFORE_CLASS`, то есть контекст пересоздаётся до начала тестов класса.",
               "correct": false,
               "sections": {
-                "what_actually": "Грязным становится весь выбранный уровень контекста, а не отдельные beans. Mockito mocks сбрасываются тестовой интеграцией и не требуют пересоздания контейнера ради каждого метода.",
-                "source_of_confusion": "Некоторые scopes и caches умеют точечный reset, поэтому такую гранулярность ошибочно приписывают TestContext cache.",
-                "if_it_were_true": "Spring мог бы частично пересобрать dependency graph, сохранив ссылки на старые экземпляры без риска рассогласования, но такой семантики у аннотации нет.",
-                "how_it_should_be": "Не применяйте `@DirtiesContext` для routine mock reset; используйте его как дорогой механизм удаления целого контекста."
+                "what_actually": "По умолчанию `classMode` — `AFTER_CLASS`: контекст пересоздают после всех тестов класса.",
+                "source_of_confusion": "Значений несколько, и дефолт легко перепутать.",
+                "if_it_were_true": "Тогда контекст пересобирался бы ещё до первого теста.",
+                "how_it_should_be": "Дефолт — `AFTER_CLASS`, а `BEFORE_CLASS` задают явно."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "`@DirtiesContext` помечает тестовый `ApplicationContext` грязным: TestContext удаляет его из кеша и закрывает, а следующий тест с тем же ключом строит новый. Момент задают `methodMode` или `classMode`; аннотация нужна лишь при изменении состояния самого контекста.",
+              "order": 1,
+              "text": "Помечает `ApplicationContext` грязным — Spring выбрасывает его из кеша и пересоздаёт, нужен в редких случаях.",
               "correct": true,
               "sections": {
-                "explanation": "На методе доступны `BEFORE_METHOD` и `AFTER_METHOD`, на классе — `BEFORE_CLASS`, `BEFORE_EACH_TEST_METHOD`, `AFTER_EACH_TEST_METHOD` и стандартный `AFTER_CLASS`. Цена — полный повторный запуск контейнера.",
-                "example": "Тест программно меняет состояние singleton registry, которое нельзя надёжно вернуть назад; `@DirtiesContext(methodMode = AFTER_METHOD)` не даёт следующему тесту получить изменённый экземпляр.",
-                "when_to_apply": "Используйте для редких тестов, которые меняют bean definitions, глобальное состояние singleton bean или иным образом повреждают переиспользуемый контекст.",
-                "edge_cases": "Аннотация не является заменой rollback или очистки БД и резко замедляет suite при массовом применении. В context hierarchy параметр `hierarchyMode` определяет, какие уровни удалить.",
-                "related": "[[spring-testing-interview#Q13]] кеширование контекста; [[spring-testing-interview#Q5]] транзакционный rollback."
+                "explanation": "Когда именно пересоздавать контекст, задаёт `classMode` (по умолчанию `AFTER_CLASS`).",
+                "example": "`AFTER_EACH_TEST_METHOD` пересоздаёт контекст после каждого метода теста.",
+                "when_to_apply": "Когда тест правит схему БД, переопределяет бины или ломает статический стейт.",
+                "edge_cases": "Сначала пробуют дешёвую изоляцию: rollback, очистку в `@BeforeEach`, Testcontainers.",
+                "related": "Пересоздание бьёт по кешу и резко замедляет прогон — потому и редко."
               }
             },
             {
-              "order": 2,
               "label": "C",
-              "text": "`@DirtiesContext` очищает состояние singleton beans и Spring Cache, но оставляет тот же `ApplicationContext` в TestContext cache. Его используют после каждого интеграционного теста, чтобы получить чистые объекты без повторного старта контейнера.",
+              "order": 2,
+              "text": "Контекст остаётся в кеше и переиспользуется — аннотация лишь логирует само изменение его состояния.",
               "correct": false,
               "sections": {
-                "what_actually": "Аннотация не знает, как очистить произвольные beans: она удаляет контекст из кеша, закрывает его, а следующему совместимому тесту приходится строить новый.",
-                "source_of_confusion": "Слово dirty похоже на операцию очистки данных, тогда как механизм очищает именно кешированную ссылку на весь контейнер.",
-                "if_it_were_true": "Spring должен был бы универсально восстановить внутреннее состояние любых пользовательских singleton objects без знания их API.",
-                "how_it_should_be": "Применяйте аннотацию только когда состояние контейнера действительно необратимо изменено и более дешёвой точечной очистки нет."
+                "what_actually": "Spring именно выбрасывает грязный контекст из кеша и пересоздаёт его.",
+                "source_of_confusion": "«Пометка» звучит как безобидный флаг без последствий.",
+                "if_it_were_true": "Тогда следующий тест получил бы испорченное окружение.",
+                "how_it_should_be": "Грязный контекст удаляют из кеша и строят заново."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "`@DirtiesContext` откатывает изменения тестовой БД и очищает persistence context, но не влияет на кеш `ApplicationContext`. Её ставят вместо `@Transactional`, когда данные меняются в нескольких репозиториях или транзакциях.",
+              "order": 3,
+              "text": "Аннотацию стоит вешать на большинство тестов ради надёжной изоляции окружения.",
               "correct": false,
               "sections": {
-                "what_actually": "Аннотация управляет жизненным циклом Spring-контекста, а не транзакциями и данными внешней БД. Новый контекст может подключиться к тем же сохранённым данным.",
-                "source_of_confusion": "Перезапуск beans иногда визуально убирает in-memory state, поэтому его принимают за универсальный rollback всех ресурсов.",
-                "if_it_were_true": "Закрытие контекста должно было бы отменять уже committed записи в PostgreSQL или сообщения в брокере, чего оно сделать не может.",
-                "how_it_should_be": "Для БД используйте тестовые транзакции, truncate или cleanup strategy; `@DirtiesContext` оставляйте для повреждённого контейнера."
+                "what_actually": "В большинстве случаев аннотация избыточна — пересоздание дорого и бьёт по кешу.",
+                "source_of_confusion": "Кажется, что чаще пересоздавать — надёжнее.",
+                "if_it_were_true": "Тогда прогон тестов был бы неоправданно медленным.",
+                "how_it_should_be": "Сначала берут дешёвую изоляцию: rollback, очистку данных, Testcontainers."
               }
             }
           ]
@@ -726,55 +726,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как Spring кеширует `ApplicationContext` в тестах и как этим управлять?",
+          "question_text": "Как Spring Boot кеширует ApplicationContext в тестах?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "TestContext использует общий ключ из конфигурации, profiles, properties и bean overrides, но кеш ограничен восемью контекстами. Лимит меняют обычным application property `spring.test.context.cache.maxSize`, которое читается из `application-test.yml` при старте каждого контекста.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Стандартный максимум равен 32. Параметр нужно передать как JVM system property или через `SpringProperties`; обычное свойство внутри загружаемого application context не управляет кешем, который нужен до его создания.",
-                "source_of_confusion": "Имя похоже на Boot configuration property, а во многих кешах встречаются небольшие defaults, поэтому и источник, и число легко запомнить неверно.",
-                "if_it_were_true": "Чтобы решить, можно ли создать девятый контекст, framework пришлось бы сначала загрузить очередной контекст и только потом прочитать его локальную настройку.",
-                "how_it_should_be": "Оставьте default 32 либо задайте `-Dspring.test.context.cache.maxSize=N` в test JVM/build script и наблюдайте hit/miss statistics."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "TestContext кеширует контекст по комбинации конфигурационных classes/locations, initializers, loader, parent, profiles, test properties и context customizers, включая `@DynamicPropertySource` и `@MockitoBean`/`@MockitoSpyBean`. Одинаковый ключ переиспользуется; стандартный максимум — 32 контекста с LRU.",
+              "order": 0,
+              "text": "Контекст кешируется и переиспользуется, а ключ кеша — аннотации, конфигурации, профили, `properties` и `@MockBean`.",
               "correct": true,
               "sections": {
-                "explanation": "Кеш статический и действует в пределах одного процесса test suite. При достижении максимума старый контекст вытесняется и закрывается; размер задаётся JVM system property `spring.test.context.cache.maxSize` или через `SpringProperties`.",
-                "example": "Два `@WebMvcTest` с одинаковой конфигурацией и одинаково именованным `@MockitoBean OrderService` могут разделить контекст; другой профиль, test property или набор bean overrides формирует иной ключ.",
-                "when_to_apply": "Для ускорения suite унифицируйте действительно общую конфигурацию, согласуйте qualifiers и имена полей overrides, избегайте случайных уникальных properties и не ставьте `@DirtiesContext` без необходимости.",
-                "edge_cases": "Кеш не переживает fork нового JVM-процесса. Бесконтрольный общий базовый класс с десятками ненужных mocks тоже вреден: он раздувает каждый контекст, хотя уменьшает число ключей.",
-                "related": "[[spring-testing-interview#Q9]] `@MockitoBean`; [[spring-testing-interview#Q10]] spy; [[spring-testing-interview#Q12]] удаление dirty-контекста."
+                "explanation": "Поднять контекст — самая дорогая часть теста, поэтому Spring его кеширует.",
+                "example": "Совпал ключ — тот же контекст; отличается хоть что-то — Spring собирает новый.",
+                "when_to_apply": "Сводят конфигурации к нескольким вариантам — чем меньше ключей, тем выше попадание.",
+                "edge_cases": "Размер кеша по умолчанию 32 (`spring.test.context.cache.maxSize`), при переполнении LRU-вытеснение.",
+                "related": "Общие мок-бины выносят в базовый класс, чтобы ключ совпадал."
               }
             },
             {
-              "order": 2,
+              "label": "B",
+              "order": 1,
+              "text": "Каждый тест-класс всегда поднимает свежий контекст — кеширование в тестах отключено по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контекст как раз кешируется и переиспользуется между тест-классами с тем же ключом.",
+                "source_of_confusion": "Раз каждый тест «поднимает контекст», кажется, что каждый раз заново.",
+                "if_it_were_true": "Тогда прогон тестов был бы неоправданно медленным.",
+                "how_it_should_be": "При совпадении ключа тесты получают один кешированный контекст."
+              }
+            },
+            {
               "label": "C",
-              "text": "TestContext кеширует контекст внутри экземпляра тестового класса, поэтому два разных класса никогда его не разделяют, даже при одинаковых profiles, properties и bean overrides. Управлять производительностью можно только объединением методов в один крупный test class.",
+              "order": 2,
+              "text": "Набор `@MockBean` и `@SpyBean` на ключ кеша не влияет, контекст переиспользуется независимо от моков.",
               "correct": false,
               "sections": {
-                "what_actually": "Кеш хранится статически и переиспользуется между test classes в одной suite и JVM, если их итоговый ключ одинаков.",
-                "source_of_confusion": "Контекст внедряется в конкретный test instance, из-за чего его владельцем кажется сам класс, хотя TestContext framework ведёт общий кеш.",
-                "if_it_were_true": "Каждый новый класс заново запускал бы одинаковое приложение, и ключ из множества конфигурационных параметров был бы практически не нужен.",
-                "how_it_should_be": "Разделяйте тесты по смыслу, но держите совместимую конфигурацию одинаковой; TestContext сам повторно использует контекст между классами."
+                "what_actually": "`@MockBean` входит в ключ кеша: каждый уникальный набор плодит новый контекст.",
+                "source_of_confusion": "Мок кажется деталью теста, не влияющей на состав контекста.",
+                "if_it_were_true": "Тогда разнобой моков не замедлял бы прогон.",
+                "how_it_should_be": "Одинаковые наборы моков выносят в общий базовый класс."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "TestContext строит ключ только из classes и locations в `@ContextConfiguration`. Активные профили, test properties, `@DynamicPropertySource` и `@MockitoBean`/`@MockitoSpyBean` меняют beans уже после получения контекста и не создают отдельную запись кеша.",
+              "order": 3,
+              "text": "Размер кеша контекстов не ограничен, вытеснения по мере накопления не происходит.",
               "correct": false,
               "sections": {
-                "what_actually": "Все перечисленные параметры участвуют в уникальности: profiles и property sources входят напрямую, а dynamic properties и bean overrides — через context customizers.",
-                "source_of_confusion": "Часть настроек применяется customizer-ами, а не выглядит как основной configuration class, поэтому её вклад в ключ неочевиден.",
-                "if_it_were_true": "Тест с другим профилем или mock-набором мог бы получить ранее созданный контекст с неправильными beans и значениями свойств.",
-                "how_it_should_be": "Рассматривайте любую настройку загрузки контекста как потенциальную часть ключа и проверяйте статистику кеша через DEBUG category `org.springframework.test.context.cache`."
+                "what_actually": "Размер кеша ограничен (по умолчанию 32); при переполнении контексты вытесняются по LRU.",
+                "source_of_confusion": "Кеш представляется бесконечным хранилищем.",
+                "if_it_were_true": "Тогда десятки разных контекстов жили бы одновременно без вытеснения.",
+                "how_it_should_be": "Лимит задаёт `spring.test.context.cache.maxSize`, лишнее вытесняется."
               }
             }
           ]
@@ -786,55 +786,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как тестировать аутентификацию и авторизацию Spring Security?",
+          "question_text": "Как тестировать Spring Security (аутентификацию/авторизацию)?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Подключают `spring-security-test`: `@WithMockUser` задаёт пользователя и роли, а `jwt()` добавляет Bearer token, который проходит обычную проверку подписи через настроенный `JwtDecoder`.",
+              "order": 0,
+              "text": "Для JWT-теста токен обязательно подписывают и валидируют по-настоящему, как в проде.",
               "correct": false,
               "sections": {
-                "what_actually": "MockMvc post-processor `jwt()` создаёт тестовый `Jwt` и authentication без реального декодирования и проверки подписи. Он проверяет авторизацию после аутентификации, но не криптографию decoder.",
-                "source_of_confusion": "Запрос выглядит как JWT-authenticated и доходит до security chain, поэтому кажется, что был выполнен полный Bearer-token pipeline.",
-                "if_it_were_true": "Каждому тесту понадобились бы корректно подписанный token и реальные keys, а изменение claims без пересоздания подписи было бы невозможно.",
-                "how_it_should_be": "Используйте `jwt()` для правил доступа и mapping principal; `JwtDecoder` и интеграцию с настоящим issuer проверяйте отдельным тестом."
+                "what_actually": "Для JWT токен не подписывают: post-processor `jwt()` кладёт в контекст готовый `Jwt`.",
+                "source_of_confusion": "JWT ассоциируется с обязательной криптографической проверкой.",
+                "if_it_were_true": "Тогда пришлось бы поднимать реальную выдачу и валидацию токенов.",
+                "how_it_should_be": "Готовый `Jwt` с нужными claim’ами кладут через `jwt()`."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "Подключают `spring-security-test`, но `@WithMockUser` работает только в полном `@SpringBootTest`. `@WebMvcTest` исключает `SecurityFilterChain` и security filters, поэтому роли в web slice не влияют на ответ, пока не импортирована вся конфигурация приложения.",
+              "order": 1,
+              "text": "Роль пользователя на доступ к эндпоинту в тесте не влияет — запрос всегда вернёт 200.",
               "correct": false,
               "sections": {
-                "what_actually": "Spring Boot web slice включает security-related MVC infrastructure при наличии Security и поддерживает `@WithMockUser` с `MockMvc`. Конкретную пользовательскую конфигурацию иногда действительно нужно импортировать.",
-                "source_of_confusion": "`@WebMvcTest` исключает обычные services, и это ограничение ошибочно распространяют на все filter beans и тестовую security-интеграцию.",
-                "if_it_were_true": "Быстрый slice-тест статусов 401/403 и controller authorization был бы невозможен без полного контекста.",
-                "how_it_should_be": "Оставьте security filters включёнными, предоставьте нужную `SecurityFilterChain` и задавайте principal через `@WithMockUser` или request post-processors."
+                "what_actually": "Роль как раз и решает: нужная → 200, чужая → 403, без входа → 401.",
+                "source_of_confusion": "Кажется, что в тесте авторизация отключена целиком.",
+                "if_it_were_true": "Тогда нельзя было бы проверить разграничение доступа.",
+                "how_it_should_be": "Доступ к эндпоинту в тесте зависит от роли пользователя."
               }
             },
             {
-              "order": 2,
               "label": "C",
-              "text": "Подключают `spring-security-test` и указывают `@WithMockUser(roles = \"ROLE_ADMIN\")`, потому что значение `roles` должно уже содержать префикс `ROLE_`. Для JWT тот же префикс помещают в `subject`; после этого `hasRole(\"ADMIN\")` разрешает запрос.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`roles = \"ADMIN\"` автоматически создаёт authority `ROLE_ADMIN`; значение `roles` не должно начинаться с `ROLE_`. `subject` — имя principal и не является набором authorities.",
-                "source_of_confusion": "В access rules используется `hasRole(\"ADMIN\")`, а фактический `GrantedAuthority` называется `ROLE_ADMIN`, поэтому префикс добавляют не на том уровне.",
-                "if_it_were_true": "Spring добавил бы ещё один префикс либо был бы вынужден трактовать subject как роль, смешивая identity и authorization.",
-                "how_it_should_be": "Для `@WithMockUser` задайте `roles = \"ADMIN\"` или явно `authorities = \"ROLE_ADMIN\"`; для `jwt()` задайте authorities отдельным методом или проверяемые claims."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Подключают `spring-security-test` и проверяют матрицу доступа через `MockMvc`: `@WithMockUser(roles = \"ADMIN\")` создаёт authority `ROLE_ADMIN`, другая роль должна получить настроенный denial, а аноним — ответ configured entry point.",
+              "order": 2,
+              "text": "Подключают модуль `spring-security-test` и подменяют вход через `@WithMockUser`, а по роли проверяют статусы 200/403/401.",
               "correct": true,
               "sections": {
-                "explanation": "Тестовые listeners и request post-processors помещают authentication в `SecurityContext` без реального login/issuer. Так отдельно проверяются URL- и method-authorization, преобразование principal и поведение анонимного запроса.",
-                "example": "`mockMvc.perform(get(\"/admin\").with(jwt().authorities(new SimpleGrantedAuthority(\"ROLE_ADMIN\")))).andExpect(status().isOk());`; с `ROLE_USER` ожидают 403, а код анонима сверяют с настроенным entry point.",
-                "when_to_apply": "Используйте для role/authority matrix, `@PreAuthorize`, OAuth2 resource server endpoints и проверки того, какие claims доступны контроллеру.",
-                "edge_cases": "401 для анонима зависит от entry point и не универсален; login-приложение может вернуть redirect. Для POST/PUT/DELETE дополнительно учитывайте CSRF через `csrf()`. `jwt()` не проверяет подпись.",
-                "related": "[[spring-testing-interview#Q4]] Security в web slice; [[spring-testing-interview#Q7]] `MockMvc`."
+                "explanation": "Реальную аутентификацию подменяют заранее заданным пользователем — логин прогонять не нужно.",
+                "example": "`@WithMockUser(roles = \"ADMIN\")` → 200, `roles = \"USER\"` → 403, без входа → 401.",
+                "when_to_apply": "Когда проверяют, что доступ к эндпоинту зависит от роли.",
+                "edge_cases": "Для ресурс-сервера токен подставляют post-processor’ом `jwt()` — готовый `Jwt` с claim’ами.",
+                "related": "Для form-login и basic есть аналогичные `user()`, `httpBasic()`."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Для каждого теста нужно прогнать настоящий логин через `spring-security-test` и получить реальный `Jwt`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Настоящий логин прогонять не нужно — аутентификацию подменяют `@WithMockUser`.",
+                "source_of_confusion": "Тест доступа ассоциируется с полным сценарием входа.",
+                "if_it_were_true": "Тогда тесты были бы медленными и хрупкими из-за реальных токенов.",
+                "how_it_should_be": "Пользователя с ролями подставляют в `SecurityContext` заранее."
               }
             }
           ]
@@ -846,55 +846,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как использовать Testcontainers со Spring Boot?",
+          "question_text": "Как использовать Testcontainers с Spring Boot?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Контейнер объявляют `@Bean @ServiceConnection`, но перед созданием `ApplicationContext` обязательно вызывают `container.start()` в `@BeforeAll`. Spring управляет только остановкой bean; без ручного старта connection details прочитают mapped port слишком рано.",
+              "order": 0,
+              "text": "Testcontainers запускает лёгкую in-memory H2 внутри самого теста, а не базу в контейнере.",
               "correct": false,
               "sections": {
-                "what_actually": "Container bean запускается и останавливается Spring Boot в правильной фазе lifecycle; вручную вызывать `start()` для такого bean не требуется.",
-                "source_of_confusion": "Обычный контейнер, созданный вручную без JUnit или Spring lifecycle, действительно нужно стартовать явно, и это правило переносят на managed bean.",
-                "if_it_were_true": "Каждая импортированная container configuration требовала бы дублирующего imperative setup и могла бы запустить один экземпляр дважды.",
-                "how_it_should_be": "Позвольте Spring управлять `@Bean`-контейнером; для fields используйте `@Testcontainers` и `@Container`, не смешивая lifecycle-модели без необходимости."
+                "what_actually": "Testcontainers поднимает реальную СУБД в Docker, а не in-memory H2.",
+                "source_of_confusion": "Оба — про тестовую базу, поэтому H2 и контейнер путают.",
+                "if_it_were_true": "Тогда пропало бы главное преимущество — та же БД, что в проде.",
+                "how_it_should_be": "H2 подменяет `@DataJpaTest`; Testcontainers даёт настоящую БД."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "Контейнер можно объявить static `@Container @ServiceConnection` field под `@Testcontainers` либо `@Bean @ServiceConnection` в импортированной `@TestConfiguration`. Spring Boot создаёт подходящие connection details для JDBC, Redis, Kafka и других поддерживаемых сервисов.",
+              "order": 1,
+              "text": "Аннотация `@ServiceConnection` всё равно требует вручную прописать в конфиге все свойства подключения `spring.datasource.*`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@ServiceConnection` сам настраивает нужные свойства, избавляя от ручного `@DynamicPropertySource`.",
+                "source_of_confusion": "Ручной способ через `@DynamicPropertySource` привычнее и переносится сюда.",
+                "if_it_were_true": "Тогда нативная интеграция Boot 3.1+ не давала бы выигрыша.",
+                "how_it_should_be": "Свойства прописывают вручную только в старом способе, без `@ServiceConnection`."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Контейнер как `static`-поле стартует заново на каждый отдельный вызов тестового метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`static`-поле контейнера стартует один раз на класс, а не на каждый метод.",
+                "source_of_confusion": "Инициализацию поля путают с запуском на каждый тест.",
+                "if_it_were_true": "Тогда каждый метод платил бы за старт контейнера заново.",
+                "how_it_should_be": "Один контейнер на класс объявляют через `static`-поле."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Поднимает БД в Docker, в Boot 3.1+ креды идут через `@ServiceConnection`, а раньше — вручную.",
               "correct": true,
               "sections": {
-                "explanation": "`spring-boot-testcontainers` находит `ContainerConnectionDetailsFactory` по типу контейнера или image name и передаёт приложению connection details. У container bean жизненным циклом управляет Spring; field lifecycle ведёт Testcontainers JUnit integration.",
-                "example": "`@Bean @ServiceConnection PostgreSQLContainer<?> postgres() { return new PostgreSQLContainer<>(\"postgres:17\"); }` в `@TestConfiguration` плюс `@Import` подключают реальный PostgreSQL без ручных datasource URL и credentials.",
-                "when_to_apply": "Используйте, когда важны особенности реальной БД, брокера или кеша, которые embedded/fake реализация не воспроизводит, и нужен изолированный воспроизводимый integration environment.",
-                "edge_cases": "Для `GenericContainer` может потребоваться `@ServiceConnection(name = \"redis\")`, потому что тип не раскрывает image. Service connection покрывает только известные factories; кастомные свойства по-прежнему задают вручную.",
-                "related": "[[spring-testing-interview#Q5]] JPA с реальной БД; [[spring-testing-interview#Q11]] импортируемая test configuration."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Контейнер помечают `@ServiceConnection`, но встроенные factories настраивают только JDBC и R2DBC. Для Redis, Kafka, MongoDB и Neo4j всё равно обязательны static `@Container` и `@DynamicPropertySource` с ручной передачей host и mapped ports.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Spring Boot поставляет connection-details factories не только для SQL, но и для Redis, Kafka, MongoDB, Neo4j, RabbitMQ, Elasticsearch и ряда других сервисов.",
-                "source_of_confusion": "Первые примеры service connections чаще всего показывают PostgreSQL, а список поддерживаемых integrations находится отдельно.",
-                "if_it_were_true": "`@ServiceConnection` почти не помогала бы типичному набору инфраструктуры приложения за пределами datasource.",
-                "how_it_should_be": "Проверьте официальный список factories и используйте автоматическую связь для поддерживаемого типа; ручные properties нужны только вне списка или при особой настройке."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Контейнер объявляют `@Bean` в импортированной `@TestConfiguration`, и Spring Boot автоматически выводит connection details из любого container bean. `@ServiceConnection` не нужна; `@DynamicPropertySource` оставляют только для static `@Container` fields.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Сам тип bean не всегда означает, что его нужно связать с приложением. Для поддерживаемой автоматической связи bean/field помечают `@ServiceConnection`; иначе свойства передают вручную.",
-                "source_of_confusion": "Spring управляет жизненным циклом container bean, и это легко принять за автоматическую настройку клиента или datasource.",
-                "if_it_were_true": "Маркер service connection был бы избыточен, а любой вспомогательный container bean неожиданно менял бы конфигурацию приложения.",
-                "how_it_should_be": "Добавьте `@ServiceConnection` для поддерживаемого сервиса или зарегистрируйте нужные свойства через `@DynamicPropertySource`/test properties."
+                "explanation": "Реальная СУБД в Docker даёт ту же базу, что и в production, в отличие от H2.",
+                "example": "`@ServiceConnection PostgreSQLContainer` сам настраивает `spring.datasource.*`.",
+                "when_to_apply": "Когда важна достоверность БД — специфичный SQL и типы production-СУБД.",
+                "edge_cases": "Старый способ — `@DynamicPropertySource` с `postgres::getJdbcUrl` и кредами.",
+                "related": "`@ServiceConnection` настраивает и datasource, и Redis, и Kafka по типу контейнера."
               }
             }
           ]
@@ -906,55 +906,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `RestTestClient` в Spring Framework 7 и когда он лучше `MockMvc` или `WebTestClient`?",
+          "question_text": "Что такое `RestTestClient` в Spring Framework 7 и когда он лучше `MockMvc`/`WebTestClient`?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`RestTestClient` — тестовая оболочка над reactive `WebClient`. Она поддерживает mock MVC и live server тем же fluent API, но, как и `WebTestClient`, требует `spring-webflux`; преимущество перед `MockMvc` состоит только в других названиях assertions.",
+              "order": 0,
+              "text": "При пустом теле `getResponseBody()` возвращает пустой `byte[]`, точно так же как у `WebTestClient`.",
               "correct": false,
               "sections": {
-                "what_actually": "Клиент оборачивает blocking `RestClient`, а не `WebClient`, и предназначен в том числе для MVC-приложений без зависимости от reactive client stack.",
-                "source_of_confusion": "API ожиданий намеренно похож на `WebTestClient`, поэтому сходство внешнего DSL принимают за одинаковую внутреннюю реализацию.",
-                "if_it_were_true": "Новый клиент не решал бы задачу fluent HTTP-style тестов для servlet stack без `spring-webflux`.",
-                "how_it_should_be": "Выбирайте `RestTestClient` для blocking/MVC стека; `WebTestClient` оставляйте для reactive WebFlux либо когда его API уже является общим стандартом проекта."
+                "what_actually": "При пустом теле `getResponseBody()` у него возвращает `null`, а не пустой `byte[]`.",
+                "source_of_confusion": "Поведение `WebTestClient` переносят на `RestTestClient`.",
+                "if_it_were_true": "Тогда не было бы отдельного подвоха при проверке пустого ответа.",
+                "how_it_should_be": "Пустой ответ проверяют `expectBody().isEmpty()`."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "`RestTestClient` — оболочка над `RestClient`, которая работает только поверх MockMvc и никогда не отправляет реальный HTTP. Поэтому она быстрее `WebTestClient`, но не подходит для `@SpringBootTest(webEnvironment = RANDOM_PORT)` и end-to-end проверки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Клиент поддерживает обе модели: MockMvc-backed bindings без сервера и `bindToServer` для реального HTTP. Spring Boot умеет автоконфигурировать его для `RANDOM_PORT`.",
-                "source_of_confusion": "Интеграция с MockMvc — важное отличие от обычного `RestClient`, и её принимают за единственный transport.",
-                "if_it_were_true": "Нельзя было бы сохранить те же fluent expectations при переходе от slice-теста к запущенному приложению.",
-                "how_it_should_be": "Используйте mock binding для скорости и live binding для transport-level уверенности, не меняя основной API проверок."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`RestTestClient` — появившаяся в Framework 7 тестовая оболочка над `RestClient`. Она связывается с controller, `WebApplicationContext` или router function через MockMvc без сервера либо с live server и после `exchange()` даёт fluent expectations.",
+              "order": 1,
+              "text": "Новый fluent-клиент (Spring Framework 7.0) поверх `RestClient` — читаемее `MockMvc`, без реактивных зависимостей, для блокирующего стека.",
               "correct": true,
               "sections": {
-                "explanation": "До `exchange()` API совпадает с `RestClient`, после него доступны проверки status, headers и body, а также AssertJ integration. Один стиль можно сохранить при переходе от mock MVC к реальному HTTP.",
-                "example": "`RestTestClient.bindToController(controller).build().get().uri(\"/orders/1\").exchange().expectStatus().isOk().expectBody(Order.class);`; для Boot live server используют `@AutoConfigureRestTestClient` с `RANDOM_PORT`.",
-                "when_to_apply": "Он удобнее `MockMvc`, когда команде нужен client-oriented fluent DSL и одинаковые проверки для mock/live; удобнее `WebTestClient` в blocking MVC-проекте, где не хотят подключать WebFlux.",
-                "edge_cases": "Mock binding не проверяет реальную сеть, TLS и servlet-container behavior; для этого нужен `bindToServer` или Boot `RANDOM_PORT`. В `@WebMvcTest` клиент включают через `@AutoConfigureRestTestClient`.",
-                "related": "[[spring-testing-interview#Q2]] `RANDOM_PORT`; [[spring-testing-interview#Q4]] MVC slice; [[spring-testing-interview#Q7]] `MockMvc`."
+                "explanation": "Внутри использует `RestClient`, а снаружи даёт fluent-цепочку проверок ответа.",
+                "example": "`bindToController(new OrderController())` затем `get().uri(...).exchange().expectStatus().isOk()`.",
+                "when_to_apply": "Когда стек блокирующий: читаемее `MockMvc`, легче реактивного `WebTestClient`.",
+                "edge_cases": "Привязывается к live-серверу, `MockMvc`, `WebApplicationContext`, контроллеру, `RouterFunction`.",
+                "related": "При пустом теле проверяют `expectBody().isEmpty()`."
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`RestTestClient` — оболочка над `RestClient`, которая работает только с уже запущенным HTTP-сервером через `bindToServer()`. В отличие от `MockMvc` она проверяет сеть, но не умеет привязываться к controller или `WebApplicationContext` без порта.",
+              "label": "C",
+              "order": 2,
+              "text": "Клиент `RestTestClient` из Spring Framework 7 предназначен для реактивного стека и тянет реактивные зависимости.",
               "correct": false,
               "sections": {
-                "what_actually": "Помимо `bindToServer` доступны `bindToController`, `bindToApplicationContext` и `bindToRouterFunction`; mock-варианты используют MockMvc infrastructure без сервера.",
-                "source_of_confusion": "Класс называется HTTP client и действительно умеет end-to-end соединение, поэтому mock server setups легко не заметить.",
-                "if_it_were_true": "Его нельзя было бы использовать как современный fluent facade поверх MVC slice, и каждый тест требовал бы `RANDOM_PORT`.",
-                "how_it_should_be": "Выберите binding по цели: mock setup для MVC-контракта, `bindToServer` для сетевого end-to-end."
+                "what_actually": "`RestTestClient` нужен именно для блокирующего стека — реактивные зависимости он не тянет.",
+                "source_of_confusion": "Fluent-API как у `WebTestClient` наводит на реактивность.",
+                "if_it_were_true": "Тогда он ничем не отличался бы от `WebTestClient`.",
+                "how_it_should_be": "Реактивные зависимости у `WebTestClient`, а `RestTestClient` — блокирующий."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Он умеет привязываться только к одному live-серверу по HTTP; к `MockMvc` или контроллеру — нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он привязывается и к `MockMvc`, и к контроллеру, и к `WebApplicationContext`.",
+                "source_of_confusion": "«HTTP-клиент» кажется работающим только по реальной сети.",
+                "if_it_were_true": "Тогда он не заменял бы `MockMvc` в mock-режиме.",
+                "how_it_should_be": "Целей несколько: live-сервер, `MockMvc`, контроллер, `RouterFunction`."
               }
             }
           ]
