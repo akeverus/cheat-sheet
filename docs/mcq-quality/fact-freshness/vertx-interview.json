@@ -1,14 +1,19 @@
 {
   "topic_slug": "vertx-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
-  "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+  "version_sensitive": true,
+  "product_version": "Eclipse Vert.x 4.5+/5.x; Akka 2.7 (BSL, 2022); Vert.x с 2012, Eclipse Foundation с 2014",
+  "checked_date": "2026-08-22",
+  "sources": [
+    "https://github.com/eclipse-vertx/vert.x (master Vertx.java: executeBlocking — только Callable-формы; DeploymentOptions: только setThreadingModel, setWorker отсутствует)",
+    "Vert.x docs: BlockedThreadChecker default 2 секунды; worker pool default 20 потоков; 2 event loops на ядро",
+    "Akka: смена лицензии на BSL с версии 2.7 (2022) → форк Pekko (Apache 2.0)"
+  ],
+  "version_sensitive_claims": [
+    "setWorker(true) удалён в Vert.x 5 — worker-деплой через DeploymentOptions.setThreadingModel(ThreadingModel.WORKER), введено в 4.5. Дефект источника исправлен (6d26c256), дистрактор — нет, факт в secтions Q5.",
+    "Двухколбэчная сигнатура executeBlocking(Handler<Promise>, Handler) deprecated в 4.5 и удалена в 5 — актуальна Callable-форма (Q8, дистрактор B).",
+    "Multi-Threaded Worker deprecated с 4.0 (Q5, дистрактор B).",
+    "Akka 2.7+ — BSL (2022), что подтолкнуло к Pekko/Vert.x/корутинам (Q27).",
+    "Константы Vert.x: BlockedThreadChecker — 2 секунды; worker pool — 20 потоков; 2 event loops на ядро; cold start ~500 ms против 3-15 сек; память ~50-100 MB против 150-300 MB.",
+    "PgBuilder — builder-стиль пулов клиентов с 4.5 (примечание в Q16)."
   ]
 }
