@@ -1,10 +1,18 @@
 <!DOCTYPE html>
 <html lang="ru" data-design="instrument" xmlns:th="http://www.thymeleaf.org">
-<!--/* Title режим-зависимый: /review (reviewMode) и / рендерят один focus-training.html,
-     но раньше оба давали одинаковый <title> «Подготовка к собеседованию» → неразличимы во
-     вкладках браузера и SR не сообщал уникальное назначение (WCAG 2.4.2 Page Titled). Как в
-     sidebar/mobile-nav (active=reviewMode?…), title теперь ветвится по reviewMode. */-->
-<head th:replace="~{fragments/head :: head(title=${reviewMode != null and reviewMode} ? 'Разбор ошибок — Подготовка к собеседованию' : 'Подготовка к собеседованию', includeMermaid=${needsMermaid == true}, includeChart=false, includeHighlight=true, page='focus')}"></head>
+<!--/* Title режим-зависимый (WCAG 2.4.2), а в сессии — ещё и прогресс-зависимый:
+     цикл «ответ → следующий вопрос» — это MPA-навигации, и SR объявляет на каждую
+     ровно <title>. Пока он был статичен, смена вопроса была НЕСЛЫШНА: каждый переход
+     объявлял одно и то же «Подготовка к собеседованию» (замер iter-168: шесть
+     навигаций цикла — шесть одинаковых объявлений), а вкладки двух тренировок были
+     неразличимы. Теперь в сессии title несёт позицию и режим («Вопрос 3 из 20 —
+     Тренировка — …»): SR слышит прогресс без единого Tab, вкладка показывает, где
+     ты остановился. TRAINING живёт БЕЗ interviewSession (сессия только у
+     EXAM/MARATHON/STUDY/флешкарт) — там позицию нести нечем, и title несёт сам
+     ВОПРОС (обрезка 80, бэктики инлайн-кода срезаны): переход к следующему
+     вопросу озвучивает его первым же объявлением. Elvis на chip-тексте —
+     защита от 'null' в строке, если модель режима не положила подпись. */-->
+<head th:replace="~{fragments/head :: head(title=${interviewSession != null} ? ('Вопрос ' + (${interviewSession.getIndex() + 1}) + ' из ' + ${interviewSession.getTotal()} + ' — ' + (${focusModeChipText != null} ? ${focusModeChipText} : 'Тренировка') + ' — Подготовка к собеседованию') : (${reviewMode != null and reviewMode} ? 'Разбор ошибок — Подготовка к собеседованию' : (${current != null} ? (${#strings.abbreviate(#strings.replace(current.question.questionText,'`',''),80)} + ' — Подготовка к собеседованию') : 'Подготовка к собеседованию')), includeMermaid=${needsMermaid == true}, includeChart=false, includeHighlight=true, page='focus')}"></head>
 <!--/* data-session-mode стоит на <body>, а не на .app: у режима есть КОМПОЗИЦИЯ,
      а токены композиции (--focus-main-measure и сумма полосы --focus-measure)
      объявлены на .focus-page. Пока атрибут висел на потомке, переопределить
