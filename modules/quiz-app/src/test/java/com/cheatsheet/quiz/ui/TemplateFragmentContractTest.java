@@ -274,34 +274,53 @@ class TemplateFragmentContractTest {
     @Test
     void settingsTemplateUsesTabStructure() throws IOException {
         String settings = readTemplate("templates/settings.html");
-        // Редизайн: 4-карточная стопка заменена вкладками (Сессия | Оформление |
-        // Данные). Один раздел за раз вместо ~3.6 экрана скролла. PE-гейт полосы
-        // с iter-80 живёт в CSS (`:not([data-js]) [role="tablist"]`), а не в
-        // разметке: утилита `.hidden` с полосы снята — см. TabPanelContractTest.
+        // UXD-001: вкладка «Сессия» выделена в собственную поверхность /train —
+        // /settings держит только свои панели (Оформление | Данные). Полоса вкладок
+        // условная: без «Данных» (single-user без admin-гейта) остаётся одна панель,
+        // и tablist из одной кнопки не рендерится вовсе (th:if в разметке).
         assertThat(settings).contains("id=\"main-content\"");
         assertThat(settings).contains("id=\"settings-tablist\"");
         assertThat(settings).contains("role=\"tablist\"");
         assertThat(settings).contains("class=\"settings-tablist\"");
         assertThat(settings).contains("type=\"button\"");
-        // Три панели-tabpanel.
-        assertThat(settings).contains("id=\"panel-session\"");
         assertThat(settings).contains("id=\"panel-appearance\"");
         assertThat(settings).contains("id=\"panel-data\"");
         assertThat(settings).contains("role=\"tabpanel\"");
-        // Функциональные ID форм/контролов сохранены (relayout, не смена поведения).
-        assertThat(settings).contains("id=\"filters-form\"");
-        assertThat(settings).contains("id=\"session-form\"");
-        // Режим — группа радиокнопок (карточки), а не <select>: сторожим носитель
-        // выбора, а не тег. Контракт прежний — поле формы называется mode и уходит
-        // на сервер без JS.
-        assertThat(settings).contains("id=\"session-mode-choice\"");
-        assertThat(settings).contains("type=\"radio\" name=\"mode\"");
-        assertThat(settings).doesNotContain("id=\"session-mode-select\"");
         assertThat(settings).contains("id=\"personalization-card\"");
         assertThat(settings).contains("id=\"data-export-block\"");
+        // Конструктор с /settings снят целиком — его возвращение означало бы
+        // повторный слом information scent (все CTA «Собрать сессию» → «Настройки»).
+        assertThat(settings).doesNotContain("id=\"panel-session\"");
+        assertThat(settings).doesNotContain("id=\"filters-form\"");
+        assertThat(settings).doesNotContain("id=\"session-form\"");
+        // Мост для мышечной памяти: из настроек виден путь к сборке сессии.
+        assertThat(settings).contains("@{/train}");
         // Старый sidebar-каркас и его мёртвый тоггл сворачивания убраны редизайном.
         assertThat(settings).doesNotContain("id=\"left-sidebar-card\"");
         assertThat(settings).doesNotContain("id=\"sidebar-collapse-toggle\"");
+    }
+
+    @Test
+    void trainTemplateHostsSessionBuilder() throws IOException {
+        // UXD-001: поверхность session-start. Функциональные ID конструктора
+        // сохранены байт-в-байт (контракты GET-фильтра и POST /start не менялись) —
+        // просто живут теперь во фрагменте, который включает train.html.
+        String builder = readTemplate("templates/fragments/session-builder.html");
+        assertThat(builder).contains("id=\"filters-form\"");
+        assertThat(builder).contains("id=\"session-form\"");
+        assertThat(builder).contains("id=\"session-mode-choice\"");
+        assertThat(builder).contains("type=\"radio\" name=\"mode\"");
+        assertThat(builder).doesNotContain("id=\"session-mode-select\"");
+        // GET-фильтр целится в собственную страницу, а не в /settings.
+        assertThat(builder).contains("th:action=\"@{/train}\"");
+
+        String train = readTemplate("templates/train.html");
+        assertThat(train).contains("~{fragments/session-builder :: session-builder}");
+        assertThat(train).contains("<h1>Собрать сессию</h1>");
+        // Активный раздел — «Тренировка»: /train — поверхность-действие, не раздел
+        // первого уровня (javadoc NavSection, прецедент /review).
+        assertThat(train).contains("sidebar(active='focus')");
+        assertThat(train).contains("mobile-nav(active='focus')");
     }
 
     @Test

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru" data-design="instrument" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head(title='Настройки сессии — Подготовка к собеседованию', includeMermaid=false, includeChart=false, includeHighlight=false, page='settings')}"></head>
+<head th:replace="~{fragments/head :: head(title='Настройки — Подготовка к собеседованию', includeMermaid=false, includeChart=false, includeHighlight=false, page='settings')}"></head>
 <body class="settings-page">
 <a class="skip-link" href="#main-content">Перейти к настройкам</a>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
@@ -32,10 +32,8 @@
              Хвост клипается ровно по тому же порогу, по которому схлопывается сетка
              (901px) — правило и реальность берут одно число. */-->
         <p class="muted page-head-lead">
-            Здесь собирается следующая тренировка: что тренируем, как и сколько.
-            <span class="settings-lead-tail">Справа сразу видно, что попадёт в набор,
-            а в полосе запуска — сколько это займёт. Оформление и данные — в соседних
-            разделах.</span>
+            Оформление тренажёра и управление данными.
+            <a class="settings-train-bridge" th:href="@{/train}">Собрать сессию →</a>
         </p>
     </div>
 
@@ -54,11 +52,13 @@
          и срабатывает ДО первого кадра. Так убираем «3.6 экрана скролла»:
          один раздел за раз. */-->
     <div class="settings-shell" id="settings-shell">
-        <div class="settings-tablist" role="tablist" aria-label="Разделы настроек" id="settings-tablist">
-            <button type="button" class="settings-tab" role="tab" id="tab-session"
-                    aria-controls="panel-session" aria-selected="true" tabindex="0">Сессия</button>
+        <!--/* Полоса вкладок нужна только при >1 вкладки: после переезда «Сессии» на /train
+             (UXD-001) в дефолтном single-user без admin-гейта остаётся одна «Оформление» —
+             tablist из одной кнопки был бы шумом. Условие то же, что у вкладки «Данные». */-->
+        <div class="settings-tablist" role="tablist" aria-label="Разделы настроек" id="settings-tablist"
+             th:if="${optionsBankResetAllowed or multiSecurityMode}">
             <button type="button" class="settings-tab" role="tab" id="tab-appearance"
-                    aria-controls="panel-appearance" aria-selected="false" tabindex="-1">Оформление</button>
+                    aria-controls="panel-appearance" aria-selected="true" tabindex="0">Оформление</button>
             <!--/* Вкладка «Данные» — только когда в панели реально есть контент: экспорт/
                  опасная зона (optionsBankResetAllowed) или аккаунт (multiSecurityMode).
                  В дефолтном single-user без admin-гейта оба флага false → панель была бы
@@ -70,353 +70,6 @@
                     aria-controls="panel-data" aria-selected="false" tabindex="-1">Данные</button>
         </div>
 
-        <!--/* ============================ ПАНЕЛЬ: СЕССИЯ ============================ */-->
-        <!--/* Конструктор сессии (docs 2.5): слева — параметры набора (охват + режим)
-             и запуск с живым предпросмотром объёма/времени; справа — сводка
-             (Повторение + Статистика) как контекст решения. App-настройки
-             (Оформление/Данные) вынесены в соседние вкладки. */-->
-        <section class="settings-panel is-active" role="tabpanel" id="panel-session"
-                 aria-labelledby="tab-session" tabindex="0">
-            <!--/* Заголовок панели — прямой ребёнок панели, как у «Оформления» и «Данных».
-                 До iter-62 он лежал двумя уровнями глубже, внутри левой колонки сетки, и
-                 нёс поверх общего .settings-panel-title второй класс .builder-title с тем
-                 же кеглем. Под вкладками заголовок визуально скрыт (его роль играет вкладка),
-                 поэтому надзаголовок «Конструктор» надписывал невидимое — снят. Пояснение
-                 конструктора поднято в шапку страницы: два ведущих абзаца подряд на первом
-                 экране — это один абзац, разложенный на два места. */-->
-            <h2 class="settings-panel-title tabpanel-title">Новая тренировка</h2>
-            <!--/* Пять прямых детей сетки, без обёрток .builder-main / .builder-aside
-                 (iter-65, FRD-016). Обёртки делали из конструктора две НЕЗАВИСИМО
-                 растущие колонки, и правая была вдвое выше левой: замер WebKit@2 на
-                 1512 — .builder-main 628px против .builder-aside 896px, то есть 268px
-                 пустого прямоугольника под левой колонкой на КАЖДОЙ десктопной ширине.
-                 Высокой правую колонку делала не информация, а её ширина: 6 плиток KPI
-                 в сетке 256px укладывались по две (122px), подписи вроде «Ошибочных
-                 попыток» переносились, плитки вырастали до 103–133px, сетка — до 393px.
-                 Теперь плитки стоят под конструктором во всю полосу и разворачиваются
-                 в один ряд, а короткие блоки (Режим + Повторение) делят вторую колонку
-                 с высоким «Охватом». Раскладку задаёт grid-template-areas в shell.css —
-                 порядок в разметке остаётся порядком чтения и табуляции. */-->
-            <div class="session-builder">
-                    <!--/* Параметр 1: охват выборки (GET /settings — перезагружает страницу
-                         с применённым фильтром; результат виден в сводке справа). */-->
-                    <section class="builder-section builder-scope" aria-labelledby="builder-scope-title">
-                        <h3 class="builder-section-title" id="builder-scope-title">Что тренируем</h3>
-                        <!--/* С JS фильтры применяются с debounce (initLiveFilters) —
-                             кнопка «Применить» нужна только без JS. Режим зеркалим
-                             скрытым полем, чтобы авто-GET не сбрасывал выбор. */-->
-                        <form method="get" th:action="@{/settings}" class="filters-form" id="filters-form" data-sidebar-form="filters">
-                            <input type="hidden" name="mode" id="filters-mode-mirror"
-                                   th:value="${mode != null ? mode.name() : 'TRAINING'}">
-                            <div class="filters-fields">
-                                <label class="field">
-                                    <span class="field-label">Группа:</span>
-                                    <select name="group">
-                                        <option value="">Все</option>
-                                        <option th:each="group : ${groups != null ? groups : T(java.util.Collections).emptyList()}"
-                                                th:value="${group.id()}"
-                                                th:text="${group.title() + ' - ' + group.description() + ' (' + group.topicCount() + ')'}"
-                                                th:selected="${selectedGroup != null and selectedGroup == group.id()}">
-                                        </option>
-                                    </select>
-                                </label>
-                                <label class="field">
-                                    <span class="field-label">Тема:</span>
-                                    <!--/* ~320 тем: без <optgroup> это плоская простыня, в которой
-                                         каталожная группировка (она уже есть в порядке сортировки)
-                                         не видна ни глазами, ни скринридеру. Секции приходят из
-                                         topicSections; порядок тем внутри секции — тот же, что в
-                                         плоском списке, поэтому «Учебный/Свободный» не ломается. */-->
-                                    <select name="topic">
-                                        <option value="">Все</option>
-                                        <optgroup th:each="section : ${topicSections != null ? topicSections : T(java.util.Collections).emptyList()}"
-                                                  th:label="${section.title()}">
-                                            <option th:each="topic : ${section.topics()}"
-                                                    th:value="${topic}"
-                                                    th:text="${@topicUtils.displayName(topic)}"
-                                                    th:title="${topic}"
-                                                    th:selected="${filter != null and filter.topic != null and filter.topic == topic}">
-                                            </option>
-                                        </optgroup>
-                                    </select>
-                                </label>
-                                <!--/* «Порядок» стоит в одной сетке с «Группой» и «Темой»
-                                     (iter-65): это третий параметр ТОГО ЖЕ охвата, и в
-                                     ряд селектов он встаёт без остатка. Отдельной строкой
-                                     ниже чипов он занимал всю ширину формы под один
-                                     двухпунктовый выбор и добавлял «Охвату» лишний ряд. */-->
-                                <label class="field">
-                                    <span class="field-label">Порядок:</span>
-                                    <select name="ordered" aria-describedby="filter-mode-hint">
-                                        <option value="true" th:selected="${filter == null or filter.ordered != false}">Учебный</option>
-                                        <option value="false" th:selected="${filter != null and filter.ordered == false}">Свободный</option>
-                                    </select>
-                                </label>
-                            </div>
-                            <div class="filters-toggles filter-chips" role="group" aria-label="Быстрые фильтры">
-                                <label class="filter-chip">
-                                    <input type="checkbox" name="important" value="true" th:checked="${filter?.importantOnly}">
-                                    <span class="filter-chip-label">Избранные</span>
-                                    <span class="filter-chip-count" data-filter-count="favorites"
-                                          th:text="${filterFavoritesCount != null ? filterFavoritesCount : 0}">0</span>
-                                </label>
-                                <label class="filter-chip">
-                                    <input type="checkbox" name="onlyWrong" value="true" th:checked="${filter?.onlyWrong}">
-                                    <span class="filter-chip-label">Ошибки</span>
-                                    <span class="filter-chip-count" data-filter-count="wrong"
-                                          th:text="${filterWrongCount != null ? filterWrongCount : 0}">0</span>
-                                </label>
-                                <label class="filter-chip">
-                                    <input type="checkbox" name="shuffle" value="true" th:checked="${filter?.shuffle}" id="shuffle-checkbox" aria-describedby="filter-mode-hint">
-                                    <span class="filter-chip-label">Микс тем</span>
-                                </label>
-                                <label class="filter-chip">
-                                    <input type="checkbox" name="weakTopics" value="true" th:checked="${weakTopics}">
-                                    <span class="filter-chip-label">Слабые темы</span>
-                                    <span class="filter-chip-count" data-filter-count="weak"
-                                          th:text="${filterWeakTopicsCount != null ? filterWeakTopicsCount : 0}">0</span>
-                                </label>
-                            </div>
-                            <button type="submit" class="filters-apply-btn" data-filters-apply>Применить фильтры</button>
-                        </form>
-                        <p class="control-inline-hint" id="filter-mode-hint" role="status" aria-live="polite">Учебный порядок: от базы к более сложным идеям.</p>
-                    </section>
-
-                    <!--/* ЧТО ПОПАДЁТ В НАБОР — ответ на шаг «что тренируем», стоящий
-                         рядом с ним. Раньше здесь была карточка «Повторение» с одним
-                         крупным числом, а состав набора и действующий отбор печатались
-                         третьей подписью в панели запуска, на ~350 пикселей ниже. Один
-                         вопрос — «что мне сейчас достанется» — имел два ответа в разных
-                         местах экрана, и ни один не был полным.
-
-                         Три числа разведены намеренно (это проверено на живых данных ещё
-                         в карточке): долг по повторениям, никогда не открытые вопросы и
-                         объём набора — разные вещи. Пока считалось одно число, набор без
-                         единого ответа обещал «626 карточек ждут повтора», хотя ждать там
-                         нечему; а набор, где всё уже выучено, объявлялся пустым, хотя в
-                         нём 27 вопросов.
-
-                         Блок серверный целиком: без JS показывает те же числа, что и с
-                         ним. Скрипт дописывает сюда только строку действующего отбора —
-                         её он и раньше считал по форме фильтров. */-->
-                    <aside class="builder-outcome" id="builder-outcome" aria-labelledby="builder-outcome-title"
-                           th:with="scope=${filteredStats != null ? filteredStats : stats},
-                                    repeats=${scope != null ? scope.dueRepeats() : 0},
-                                    fresh=${scope != null ? scope.fresh() : 0},
-                                    inSet=${scope != null ? scope.total() : 0}">
-                        <h3 class="builder-section-title" id="builder-outcome-title">Что попадёт</h3>
-                        <p class="outcome-total">
-                            <span class="outcome-value" th:text="${inSet}">0</span>
-                            <span class="outcome-unit"
-                                  th:text="${@plural.pick(inSet, 'вопрос в наборе', 'вопроса в наборе', 'вопросов в наборе')}">вопросов в наборе</span>
-                        </p>
-                        <ul class="outcome-facts">
-                            <li class="outcome-fact">
-                                <span class="outcome-fact-value" th:text="${repeats}">0</span>
-                                <span class="outcome-fact-label">ждут повтора — планировщик поставит их первыми</span>
-                            </li>
-                            <li class="outcome-fact">
-                                <span class="outcome-fact-value" th:text="${fresh}">0</span>
-                                <span class="outcome-fact-label">ещё ни разу не открывали</span>
-                            </li>
-                        </ul>
-                        <!--/* Пустой набор — единственное состояние, где нужен совет:
-                             остальные читаются по самим числам выше. */-->
-                        <p class="outcome-empty" th:if="${inSet == 0}">В наборе нет вопросов — расширь отбор слева.</p>
-                        <p class="outcome-filters">
-                            <span class="outcome-filters-label">Отбор:</span>
-                            <span data-preview-filters>все темы</span>
-                        </p>
-                        <!--/* СЕГОДНЯ — СТРОКА В РЕЛЬСЕ, А НЕ СВОЯ КАРТОЧКА.
-
-                             Карточка «Сегодня» стояла отдельной областью сетки
-                             (`today`) в третьем ряду, рядом с шагом «Сколько». У
-                             режимов без ограничения объёма (тренировка, изучение,
-                             флешкарты — и это состояние по умолчанию) шаг «Сколько»
-                             скрыт, и ряд оставался наполовину пустым: замер 1512×982 —
-                             728×229 пустоты слева от карточки, документ 1397 при сгибе
-                             982. Вдобавок карточка стояла ПОСЛЕ полосы запуска, то есть
-                             после главного действия страницы.
-
-                             Пустого заголовка над пустотой при этом не было: у карточки
-                             стояло собственное правило `:has(.streak-bar.hidden) →
-                             display: none`, то есть страница держала ДВА состояния
-                             одного блока и отдельное правило, чтобы их развести.
-                             Строка в рельсе такого правила не требует: стрик приходит
-                             из API, и пока его нет — нет и строки. */-->
-                        <div class="streak-bar outcome-today hidden" id="streak-bar" data-streak-bar>
-                            <span class="streak-fire"><svg class="px-icon" aria-hidden="true"><use href="#flame"></use></svg></span>
-                            <span class="streak-days" id="streak-days" data-streak-days>0 дней</span>
-                            <div class="streak-progress">
-                                <div class="streak-progress-fill" id="streak-progress-fill" data-streak-fill></div>
-                            </div>
-                            <span id="streak-count" class="streak-count-text" data-streak-count title="Дневная цель ответов">Дневная цель — 0 из 10</span>
-                        </div>
-                    </aside>
-                    <!--/* Параметр 2: режим (POST /start отправляет эта же форма — кнопка живёт
-                         в закреплённой панели запуска ниже и связана атрибутом `form`).
-                         Предпросмотр объёма/времени обновляет settings/session-form.js
-                         (initSessionModeForm) при смене режима/числа. */-->
-                    <section class="builder-section builder-mode" aria-labelledby="builder-mode-title">
-                        <h3 class="builder-section-title" id="builder-mode-title">Как тренируем</h3>
-                        <form method="post" th:action="@{/start}" class="session-form" id="session-form" data-sidebar-form="session">
-                            <input type="hidden" name="topic" th:value="${filter?.topic}">
-                            <input type="hidden" name="group" th:value="${selectedGroup}">
-                            <input type="hidden" name="important" th:if="${filter?.importantOnly}" value="true">
-                            <input type="hidden" name="onlyWrong" th:if="${filter?.onlyWrong}" value="true">
-                            <input type="hidden" name="shuffle" th:if="${filter?.shuffle}" value="true">
-                            <input type="hidden" name="weakTopics" th:if="${weakTopics}" value="true">
-                            <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
-                            <!--/* Режим — НЕ выпадающий список. Восемь режимов различались в нём
-                                 только именем, а несколько имён звучат похоже: чем они
-                                 отличаются, можно было узнать лишь запустив сессию. Список не
-                                 даёт места объяснить — набор радиокнопок даёт, и при этом
-                                 остаётся тем же полем формы:
-                                 name="mode" уходит на сервер без единой строки JS, клавиатура
-                                 работает нативно (стрелки внутри группы), а состояние выбора
-                                 несёт :checked, а не класс.
-
-                                 Пункты по-прежнему приходят из ModeUtils.options() (модель:
-                                 sessionModes) — там же живут порядок, русские подписи, описания
-                                 и подпись кнопки старта. Раньше всё это было вписано сюда руками
-                                 и сверялось с Java на глаз — расхождение таких копий однажды
-                                 показало пользователю имя enum-константы вместо подписи
-                                 (round-01 C22). Гейт EnumLabelSourceContractTest читает файл
-                                 целиком, включая комментарии, и это верно: копия таблицы
-                                 подписей опасна и прозой, потому что её никто не сверяет.
-                                 data-default-count — серверный per-mode дефолт из application.yml
-                                 по правилу SessionFlowService.resolveSessionTotal;
-                                 settings/session-form.js подставляет его в счётчик при СМЕНЕ
-                                 режима (SET-15). data-unlimited — режим без счётчика. */-->
-                            <fieldset class="field mode-choice" id="session-mode-choice">
-                                <legend class="field-label">Режим:</legend>
-                                <div class="mode-choice-grid">
-                                    <label class="mode-card" th:each="m : ${sessionModes}">
-                                        <input type="radio" name="mode" class="mode-card-input"
-                                               th:value="${m.name}"
-                                               th:checked="${m.selected}"
-                                               th:attr="data-default-count=${m.defaultCount},
-                                                        data-cta=${m.startAction},
-                                                        data-unlimited=${m.unlimited}">
-                                        <span class="mode-card-body">
-                                            <!--/* Сцена режима: имя символа приходит из ModeUtils рядом с подписью
-                                                 и описанием, а не выбирается здесь по имени константы. Помечена
-                                                 aria-hidden — она повторяет то, что уже сказано подписью, и
-                                                 второй раз объявлять это скринридеру нечего. */-->
-                                            <svg class="mode-card-glyph" aria-hidden="true" focusable="false">
-                                                <use th:attr="href='#' + ${m.glyph}"></use>
-                                            </svg>
-                                            <span class="mode-card-text">
-                                                <span class="mode-card-title" th:text="${m.label}">Тренировка</span>
-                                                <span class="mode-card-desc" th:text="${m.description}">описание</span>
-                                            </span>
-                                        </span>
-                                    </label>
-                                </div>
-                            </fieldset>
-                            <!--/* ТРЕНИРОВКА — бесконечный режим без сессии (SessionFlowService.startSession:
-                                 TRAINING → clearSession). settings/session-form.js (initSessionModeForm) скрывает счётчик
-                                 и переименовывает CTA в «Начать тренировку» при TRAINING. */-->
-                        </form>
-                        <form method="post" th:action="@{/finish}" class="d-inline" th:if="${interviewSession != null}">
-                            <button type="submit" class="btn-finish-small"
-                                    data-confirm-title="Завершить сессию?"
-                                    data-confirm="Прогресс сохранится в итогах. Завершить сессию сейчас?">Завершить сессию</button>
-                        </form>
-                    </section>
-
-                    <!--/* ШАГ 3: СКОЛЬКО. Поле «Вопросов» стояло последней строкой формы
-                         режима — за восемью карточками, то есть выглядело сноской к
-                         выбору режима, а не отдельным решением. Оно и есть отдельное
-                         решение: длина сессии определяет, сколько времени займёт
-                         тренировка, и спрашивается ровно один раз.
-
-                         Поле осталось полем ТОЙ ЖЕ формы (`form="session-form"`) — тем
-                         же приёмом, которым к ней привязана кнопка запуска. Без JS
-                         отправляется как раньше; у режимов без счётчика сервер значение
-                         игнорирует, а скрипт прячет весь шаг (data-unlimited). */-->
-                    <section class="builder-section builder-volume" id="builder-volume"
-                             aria-labelledby="builder-volume-title">
-                        <h3 class="builder-section-title" id="builder-volume-title">Сколько</h3>
-                        <div class="volume-row">
-                            <label class="field field-inline" id="session-count-field">
-                                <span class="field-label">Вопросов:</span>
-                                <input type="number" name="count" min="1" max="200" value="20"
-                                       form="session-form">
-                            </label>
-                            <p class="volume-hint" id="volume-hint">Столько вопросов войдёт в сессию. Дальше — разбор в итогах.</p>
-                        </div>
-                    </section>
-
-                    <!--/* Сводка: контекст решения. Обёртка <aside aria-label="Сводка
-                         прогресса"> снята вместе с колонками — карточки стали прямыми
-                         детьми сетки. Ориентир в дереве от этого не пропал: у обеих
-                         карточек надзаголовок повышен из <p class="eyebrow"> в
-                         настоящий <h3>, и цепочка заголовков панели стала полной
-                         (h1 «Настройки» → h2 «Новая тренировка» → h3 Охват / Режим /
-                         Повторение / Статистика). Скринридер получает ЧЕТЫРЕ адреса
-                         вместо одного landmark'а на две карточки сразу (§31). */-->
-                    <!--/* Здесь стояла сводка «Статистика · весь банк вопросов» — шесть метрик
-                         банка (карточек, к повтору, освоено, верных, ошибочных, точность).
-                         Это ответ на вопрос «как я иду», а конструктор отвечает на «что
-                         собрать»: те же шесть чисел уже есть на /stats, откуда они и
-                         приехали, а состав банка с iter-88 показывает ещё и /topics. Третья
-                         копия на экране сборки конкурировала с самой сборкой за внимание и
-                         давала лишние ~230px высоты между режимом и кнопкой запуска.
-
-                         Осталась ПОЛОСА СЕГОДНЯШНЕГО ДНЯ. Она отвечает на другой вопрос —
-                         «сделал ли я норму сегодня», — и это ровно тот вопрос, который
-                         человек задаёт себе ПЕРЕД запуском сессии, а не после. Ни на /stats,
-                         ни на /topics её нет. */-->
-
-                <!--/* Панель запуска: предпросмотр набора + старт.
-                     Стоит ЗДЕСЬ, а не последней строкой #session-form, сознательно.
-                     Замер (WebKit 18.2, DPR 2): чип «Ошибки» лежит на y≈758, а
-                     предпросмотр, который он меняет, — на y≈1106. Пользователь
-                     переключал фильтр и не видел, что ответила система: на всех
-                     вьюпортах §10, вплоть до 1920×1200, предпросмотр был за кадром.
-                     Закрепление (`position: sticky`) требует пробега у РОДИТЕЛЯ:
-                     внутри #session-form (412px, весь ниже сгиба) его нет, у
-                     .session-builder — есть. Панель — ребёнок сетки, а не левой
-                     колонки: во всю ширину (~960px) три метрики укладываются в одну
-                     строку, а в колонке 640px они разъезжались на три ряда и панель
-                     вырастала до 151px, накрывая собой чипы фильтров.
-                     Кнопка связана с формой атрибутом `form` (работает и без JS).
-                     Предпросмотр — не поле формы, перенос его наружу ничего не
-                     отправляет и ничего не отменяет.
-                     Разметку читает settings/session-form.js через getElementById. */-->
-                <div class="builder-launch-bar">
-                    <!--/* В полосе запуска осталось то, что описывает САМУ СЕССИЮ и
-                         меняется живьём: сколько вопросов возьмём и сколько это займёт.
-                         Состав набора и действующий отбор уехали в блок «Что попадёт»
-                         рядом с шагом «что тренируем» — там они серверные и видны без JS,
-                         а здесь были третьей подписью в закреплённой строке.
-
-                         Обе метрики считает скрипт, поэтому строка приходит СКРЫТОЙ:
-                         прежние заглушки «по числу вопросов» без JS не сообщали ничего,
-                         кроме того, что тут что-то должно было быть. */-->
-                    <div class="session-preview" id="session-preview" role="status" aria-live="polite" hidden
-                         th:attr="data-pool-total=${stats != null ? stats.total : 0}">
-                        <span class="preview-metric">
-                            <span class="preview-label">В сессии</span>
-                            <span class="preview-value" data-preview-count>20 вопросов</span>
-                        </span>
-                        <span class="preview-metric">
-                            <span class="preview-label">Примерно</span>
-                            <span class="preview-value" data-preview-time>≈ 15 минут</span>
-                        </span>
-                    </div>
-                    <!--/* data-pending-label — подпись на время ожидания. Кнопка живёт
-                         ВНЕ формы и привязана атрибутом form=, из-за чего до iter-84
-                         guard повторной отправки её не находил вовсе (замерено: гвард
-                         видел 0 контролов при одной реально отправляющей кнопке), и
-                         главное действие приложения не показывало ожидание ничем. */-->
-                    <button type="submit" form="session-form" id="session-start-btn"
-                            class="btn next-btn primary-btn builder-start-cta"
-                            data-pending-label="Готовлю…">Начать тренировку</button>
-                </div>
-            </div>
-        </section>
 
         <!--/* ========================== ПАНЕЛЬ: ОФОРМЛЕНИЕ ========================== */-->
         <!--/* Персонализация — клиентский блок (localStorage через window.__*). Сам
@@ -424,7 +77,7 @@
              (initPersonalization): без скриптов сегмент-контролы мертвы, поэтому их
              не показываем. Панель присутствует всегда (под вкладками прячется как
              вкладка; без JS — секция «Оформление» в стопке). */-->
-        <section class="settings-panel" role="tabpanel" id="panel-appearance"
+        <section class="settings-panel is-active" role="tabpanel" id="panel-appearance"
                  aria-labelledby="tab-appearance" tabindex="0">
             <h2 class="settings-panel-title tabpanel-title">Оформление</h2>
             <div class="personalization-card hidden" id="personalization-card" aria-labelledby="tab-appearance">

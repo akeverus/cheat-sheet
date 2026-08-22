@@ -106,6 +106,33 @@ class VisualBaselineContractTest {
         assertThat(signature).isEqualTo(readBaseline("visual-baseline/settings-shell.txt"));
     }
 
+    /**
+     * UXD-001: поверхность session-start /train — конструктор, выделенный из вкладок
+     * /settings. Сигнатура зеркальна settings-shell: у настроек больше нет ни панели
+     * сессии, ни поля mode, у /train — есть селектор режима и нет вкладок.
+     */
+    @Test
+    void trainShellMatchesVisualBaselineContract() throws Exception {
+        String body = mockMvc.perform(get("/train"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String signature = String.join("\n",
+                "title=" + firstGroup(body, "<title>([^<]+)</title>"),
+                "bodyClass=" + firstGroup(body, "<body class=\"([^\"]+)\""),
+                "navLabels=" + String.join("|", allGroups(body, "<nav[^>]*aria-label=\"([^\"]+)\"")),
+                "hasTablist=" + body.contains("id=\"settings-tablist\""),
+                "hasSessionPanel=" + body.contains("id=\"panel-session\""),
+                "hasSidebarToggle=" + body.contains("id=\"sidebar-collapse-toggle\""),
+                "hasMainContent=" + body.contains("id=\"main-content\""),
+                "hasSessionModeSelect=" + body.contains("name=\"mode\"")
+        );
+
+        assertThat(signature).isEqualTo(readBaseline("visual-baseline/train-shell.txt"));
+    }
+
     @Test
     void resultShellMatchesVisualBaselineContract() throws Exception {
         String focusBody = mockMvc.perform(get("/"))

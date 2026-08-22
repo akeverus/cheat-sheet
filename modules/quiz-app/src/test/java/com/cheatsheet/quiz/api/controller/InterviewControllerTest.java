@@ -324,19 +324,30 @@ class InterviewControllerTest {
         assertThat(body).doesNotContain("id=\"interview-submit\"");
     }
 
+    /**
+     * UXD-001: конструктор сессии живёт на собственной поверхности /train
+     * («Собрать сессию»), а /settings — честные настройки без него.
+     */
     @Test
-    void settingsContainsSessionConfigurationBlocks() throws Exception {
-        var result = mockMvc.perform(get("/settings"))
+    void trainContainsSessionConfigurationBlocks() throws Exception {
+        var result = mockMvc.perform(get("/train"))
                 .andReturn()
                 .getResponse();
         assertThat(result.getStatus()).isEqualTo(200);
         String body = result.getContentAsString();
-        // Редизайн на вкладки: лаунчер сессии живёт в панели «Сессия».
-        assertThat(body).contains("id=\"panel-session\"");
+        assertThat(body).contains("<h1>Собрать сессию</h1>");
         assertThat(body).contains("id=\"filters-form\"");
         assertThat(body).contains("id=\"session-form\"");
         assertThat(body).contains("Применить");
         assertThat(body).contains("Начать тренировку");
+
+        String settings = mockMvc.perform(get("/settings"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(settings).as("конструктор с /settings снят — иначе CTA «Собрать сессию» снова ведут в «Настройки»")
+                .doesNotContain("id=\"session-form\"");
     }
 
     @Test
@@ -349,11 +360,16 @@ class InterviewControllerTest {
 
         assertThat(body).contains("type=\"button\"");
         assertThat(body).contains("id=\"main-content\"");
-        // Вкладки с корректным ARIA: tablist + три tabpanel.
+        // UXD-001: вкладок ДВЕ (Оформление — дефолтная активная + Данные; в этом
+        // профиле admin-token задан, поэтому «Данные» рендерится и полоса нужна).
+        // В single-user без admin-гейта осталась бы одна панель — и tablist из
+        // одной кнопки не рендерился бы вовсе (th:if на полосе).
         assertThat(body).contains("role=\"tablist\"");
         assertThat(body).contains("role=\"tab\"");
         assertThat(body).contains("role=\"tabpanel\"");
-        assertThat(body).contains("aria-controls=\"panel-session\"");
+        assertThat(body).doesNotContain("aria-controls=\"panel-session\"");
+        assertThat(body).containsSubsequence("aria-controls=\"panel-appearance\"", "aria-selected=\"true\"");
+        assertThat(body).contains("settings-panel is-active");
         assertThat(body).contains("id=\"panel-appearance\"");
         assertThat(body).contains("id=\"panel-data\"");
         // Старый sidebar-каркас и мёртвый тоггл сворачивания убраны редизайном.
@@ -361,9 +377,20 @@ class InterviewControllerTest {
         assertThat(body).doesNotContain("id=\"sidebar-collapse-toggle\"");
     }
 
+    /**
+     * UXD-001: builder-параметры на /settings — легаси deep-link'и конструктора.
+     * Сохранённые ссылки не ломаются: 302 на /train с переносом параметров, и уже
+     * /train применяет их к форме (прежний контракт префилла — без изменений).
+     */
     @Test
-    void settingsAppliesWeakTopicsAndModeFromRequest() throws Exception {
-        var result = mockMvc.perform(get("/settings")
+    void legacySettingsBuilderParamsRedirectToTrainWhichAppliesThem() throws Exception {
+        mockMvc.perform(get("/settings")
+                        .param("weakTopics", "true")
+                        .param("mode", "FLASHCARD"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/train?weakTopics=true&mode=FLASHCARD"));
+
+        var result = mockMvc.perform(get("/train")
                         .param("weakTopics", "true")
                         .param("mode", "FLASHCARD"))
                 .andReturn()

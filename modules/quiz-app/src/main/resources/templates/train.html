@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru" data-design="instrument" xmlns:th="http://www.thymeleaf.org">
+<!--/* Поверхность session-start (UXD-001, REF-003). Конструктор сессии жил первой
+     вкладкой /settings, и все CTA «Собрать сессию» вели в раздел с именем и h1
+     «Настройки» — information scent был сломан (аудит IA-01; целевая IA прошлого
+     цикла прямо требовала выделения: 05_INFORMATION_ARCHITECTURE.md, маршрут /train).
+
+     Пункта первого уровня навигации у /train НЕТ намеренно: первый уровень — разделы,
+     а не действия (javadoc NavSection, прецедент /review). Активный раздел здесь —
+     «Тренировка»: сборка сессии — вход в неё. page='settings' переиспользует готовые
+     CSS/JS-бандлы конструктора (pages-settings.css, settings/*.js) — их разметка
+     перенесена без изменений (fragments/session-builder.html); собственный
+     page-бандл — вопрос CSS-итерации ARCH-02, не этой. */-->
+<head th:replace="~{fragments/head :: head(title='Собрать сессию — Подготовка к собеседованию', includeMermaid=false, includeChart=false, includeHighlight=false, page='settings')}"></head>
+<body class="settings-page train-page">
+<a class="skip-link" href="#main-content">Перейти к конструктору</a>
+<svg th:replace="~{fragments/icons :: sprite}"></svg>
+<div class="app">
+    <aside th:replace="~{fragments/sidebar :: sidebar(active='focus')}"></aside>
+    <div class="shell-main">
+        <th:block th:replace="~{fragments/shell-head :: shell-head}"></th:block>
+<main id="main-content" class="ed-page" tabindex="-1">
+    <div class="page-head">
+        <div class="page-head-title">
+            <span class="eyebrow">Тренажёр</span>
+            <h1>Собрать сессию</h1>
+        </div>
+        <!--/* Лид переехал сюда вместе с конструктором: он описывает именно сборку.
+             Хвост про «справа сразу видно» верен только в двухколоночной раскладке
+             (от 901px) — .settings-lead-tail клипается по тому же порогу, по которому
+             схлопывается сетка конструктора (правило и реальность берут одно число). */-->
+        <p class="muted page-head-lead">
+            Здесь собирается следующая тренировка: что тренируем, как и сколько.
+            <span class="settings-lead-tail">Справа сразу видно, что попадёт в набор,
+            а в полосе запуска — сколько это займёт.</span>
+        </p>
+    </div>
+
+    <th:block th:replace="~{fragments/session-builder :: session-builder}"></th:block>
+</main>
+    </div>
+</div>
+<nav th:replace="~{fragments/mobile-nav :: mobile-nav(active='focus')}"></nav>
+<script th:replace="~{fragments/scripts :: app-script}"></script>
+</body>
+</html>

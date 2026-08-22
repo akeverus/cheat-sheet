@@ -161,7 +161,7 @@ class CatalogColumnsContractTest {
                 .isGreaterThan(summaryEnd);
         assertThat(markup)
                 .as("действие обязано быть обычной ссылкой на серверный конструктор")
-                .containsPattern("catalog-group-action\"[^>]*>\\s*<a class=\"btn secondary-btn\" th:href=\"@\\{/settings\\(group=");
+                .containsPattern("catalog-group-action\"[^>]*>\\s*<a class=\"btn secondary-btn\" th:href=\"@\\{/train\\(group=");
     }
 
     /**

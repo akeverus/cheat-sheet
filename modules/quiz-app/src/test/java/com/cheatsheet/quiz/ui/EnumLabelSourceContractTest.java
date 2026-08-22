@@ -247,7 +247,7 @@ class EnumLabelSourceContractTest {
 
     @Test
     void sessionModeSelectIsRenderedFromTheServerList() {
-        String settings = read(TEMPLATES.resolve("settings.html"));
+        String settings = read(TEMPLATES.resolve("fragments/session-builder.html"));
         assertThat(settings)
                 .describedAs("селект режима должен рендериться из модели sessionModes, "
                         + "иначе подписи и порядок снова разъедутся с Java")

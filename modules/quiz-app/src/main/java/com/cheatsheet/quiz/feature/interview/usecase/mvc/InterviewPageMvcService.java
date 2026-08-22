@@ -142,6 +142,48 @@ public class InterviewPageMvcService {
         return navigationService.settingsView();
     }
 
+    /**
+     * Поверхность session-start «Собрать сессию» (/train, UXD-001). Конвейер модели —
+     * тот же, что у settings: конструктору нужны фильтр, темы/группы, счётчики и
+     * состояние сессии; отличается только view. После переезда конструктора чистый
+     * /settings этих параметров больше не принимает (легаси deep-link'и контроллер
+     * 302-редиректит сюда).
+     */
+    public String train(
+            String topic,
+            String group,
+            Boolean important,
+            Boolean onlyWrong,
+            Boolean shuffle,
+            Boolean weakTopics,
+            Boolean ordered,
+            String mode,
+            HttpSession session,
+            Model model
+    ) {
+        InterviewSession interviewSession = sessionSupport.getSession(session);
+        MvcRequestMapper.SettingsRequestContext context = requestMapper.resolveSettingsContext(
+                interviewSession,
+                topic,
+                group,
+                important,
+                onlyWrong,
+                shuffle,
+                ordered,
+                weakTopics,
+                mode
+        );
+        FocusTrainingPageService.SurfaceState surfaceState =
+                focusTrainingPageService.buildSurfaceState(
+                        context.filter(),
+                        context.selectedMode(),
+                        interviewSession,
+                        context.weakTopicsPriority()
+                );
+        modelAttributeMapper.applySurfaceState(model, surfaceState);
+        return navigationService.trainView();
+    }
+
     public String stats(
             String topic,
             String group,

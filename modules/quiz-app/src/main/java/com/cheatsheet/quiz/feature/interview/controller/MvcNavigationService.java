@@ -54,6 +54,14 @@ public class MvcNavigationService {
     }
 
     /**
+     * View поверхности session-start «Собрать сессию» (UXD-001): конструктор
+     * выделен из вкладок /settings в собственный маршрут /train.
+     */
+    public String trainView() {
+        return "train";
+    }
+
+    /**
      * View страницы результата ответа.
      */
     public String resultView() {

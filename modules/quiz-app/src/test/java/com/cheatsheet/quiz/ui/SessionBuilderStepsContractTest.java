@@ -44,7 +44,8 @@ class SessionBuilderStepsContractTest {
     }
 
     private String markup() throws IOException {
-        return COMMENT.matcher(read("templates/settings.html")).replaceAll("");
+        // UXD-001: конструктор живёт во фрагменте поверхности /train.
+        return COMMENT.matcher(read("templates/fragments/session-builder.html")).replaceAll("");
     }
 
     @Test

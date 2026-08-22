@@ -53,7 +53,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SessionBuilderLaunchReachContractTest {
 
     private static final Path SHELL_CSS = Path.of("src/main/resources/static/css/shell.css");
-    private static final Path SETTINGS_HTML = Path.of("src/main/resources/templates/settings.html");
+    // UXD-001: конструктор выделен из вкладок /settings во фрагмент поверхности /train.
+    private static final Path SETTINGS_HTML = Path.of("src/main/resources/templates/fragments/session-builder.html");
 
     /** Ширина, ниже которой {@code .session-builder} схлопывается в одну колонку. */
     private static final int SINGLE_COLUMN_UPPER_BOUND_PX = 900;
@@ -134,7 +135,7 @@ class SessionBuilderLaunchReachContractTest {
     @Test
     void pinnedBarIsADirectChildOfTheBuilderGrid() {
         assertThat(html)
-                .as("в settings.html вернулись обёртки-колонки .builder-main / .builder-aside. "
+                .as("во fragments/session-builder.html вернулись обёртки-колонки .builder-main / .builder-aside. "
                         + "Они делали из конструктора две независимо растущие колонки: замер "
                         + "WebKit@2 на 1512 — 628px против 896px, 268px пустого прямоугольника "
                         + "под левой на КАЖДОЙ десктопной ширине (§6). Раскладку задаёт "
@@ -178,7 +179,7 @@ class SessionBuilderLaunchReachContractTest {
      */
     private int depthInsideBuilder(String marker) {
         int start = html.indexOf("class=\"session-builder\"");
-        assertThat(start).as("в settings.html нет .session-builder").isNotNegative();
+        assertThat(start).as("во fragments/session-builder.html нет .session-builder").isNotNegative();
 
         Matcher tag = Pattern.compile("</?(div|section|aside|form|fieldset|main)\\b")
                 .matcher(html);

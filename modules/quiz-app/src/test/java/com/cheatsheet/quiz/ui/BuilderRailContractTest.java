@@ -51,7 +51,11 @@ class BuilderRailContractTest {
     }
 
     private String settingsMarkup() throws IOException {
-        return HTML_COMMENT.matcher(read("templates/settings.html")).replaceAll("");
+        // UXD-001: поверхность конструктора = train.html (лид с хвостом) + фрагмент
+        // session-builder.html (рельс «Что попадёт» со стриком). Контракты класса
+        // описывают обе части одной страницы — читаем их вместе.
+        return HTML_COMMENT.matcher(read("templates/train.html")
+                + read("templates/fragments/session-builder.html")).replaceAll("");
     }
 
     private String css(String name) throws IOException {

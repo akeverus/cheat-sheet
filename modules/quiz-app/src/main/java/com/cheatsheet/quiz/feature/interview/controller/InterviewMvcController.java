@@ -133,7 +133,72 @@ public class InterviewMvcController {
             HttpSession session,
             Model model
     ) {
+        // Легаси deep-link'и конструктора: сборка сессии переехала на /train (UXD-001).
+        // Чистый /settings — настройки; любой builder-параметр означает интент сборки,
+        // и сохранённые ссылки не должны ломаться — 302 с переносом параметров.
+        if (topic != null || group != null || important != null || onlyWrong != null
+                || shuffle != null || weakTopics != null || ordered != null || mode != null) {
+            org.springframework.web.util.UriComponentsBuilder redirect =
+                    org.springframework.web.util.UriComponentsBuilder.fromPath("/train");
+            if (topic != null) {
+                redirect.queryParam("topic", topic);
+            }
+            if (group != null) {
+                redirect.queryParam("group", group);
+            }
+            if (important != null) {
+                redirect.queryParam("important", important);
+            }
+            if (onlyWrong != null) {
+                redirect.queryParam("onlyWrong", onlyWrong);
+            }
+            if (shuffle != null) {
+                redirect.queryParam("shuffle", shuffle);
+            }
+            if (weakTopics != null) {
+                redirect.queryParam("weakTopics", weakTopics);
+            }
+            if (ordered != null) {
+                redirect.queryParam("ordered", ordered);
+            }
+            if (mode != null) {
+                redirect.queryParam("mode", mode);
+            }
+            return "redirect:" + redirect.build().toUriString();
+        }
         return interviewPageMvcService.settings(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                session,
+                model
+        );
+    }
+
+    /**
+     * Поверхность session-start «Собрать сессию» (UXD-001): конструктор выделен из
+     * вкладок /settings. Принимает те же параметры префилла, что раньше принимал
+     * /settings (ссылки «Собрать сессию по теме/разделу» с /topics и /stats).
+     */
+    @GetMapping("/train")
+    public String train(
+            @RequestParam(value = "topic", required = false) String topic,
+            @RequestParam(value = "group", required = false) String group,
+            @RequestParam(value = "important", required = false) Boolean important,
+            @RequestParam(value = "onlyWrong", required = false) Boolean onlyWrong,
+            @RequestParam(value = "shuffle", required = false) Boolean shuffle,
+            @RequestParam(value = "weakTopics", required = false) Boolean weakTopics,
+            @RequestParam(value = "ordered", required = false) Boolean ordered,
+            @RequestParam(value = "mode", required = false) String mode,
+            HttpSession session,
+            Model model
+    ) {
+        return interviewPageMvcService.train(
                 topic,
                 group,
                 important,
