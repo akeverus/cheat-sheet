@@ -1,14 +1,23 @@
 {
   "topic_slug": "java-serialization-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
-  "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+  "version_sensitive": true,
+  "product_version": "Java 8u121..21 (ObjectInputFilter JEP 290 в 9, бэкпорт 8u121; record 16+; sealed 17+; @java.io.Serial 14+; context-filter factory 17); Jackson 2.10 (DefaultTyping выключен, требует PolymorphicTypeValidator) / 2.12 (record); FST 2.57 (2021); OWASP A8:2017 → A08:2021",
+  "checked_date": "2026-08-22",
+  "sources": [
+    "context7 /fasterxml/jackson-databind: activateDefaultTyping(PolymorphicTypeValidator) обязателен; enableDefaultTyping без валидатора устарел с 2.10 — подтверждает Q25/Q38",
+    "JEP 290 Serialization Filtering: ObjectInputFilter добавлен в Java 9, бэкпортирован в 8u121/7u131/6u141 — Q17; context-specific filter factory (JEP 415) в 17",
+    "JLS/JEP: record (16), sealed classes (17), @java.io.Serial (14) — Q19/Q20/Q40",
+    "OWASP Top 10: A8:2017 Insecure Deserialization → влит в A08:2021 Software and Data Integrity Failures — Q33",
+    "CVE-2015-4852 (WebLogic Commons Collections), CVE-2016-0792 (Jenkins), CVE-2016-4437 (Shiro Shiro-550 RememberMe), CVE-2017-7525 (jackson-databind enableDefaultTyping) — Q33",
+    "Effective Java 3rd (Bloch): Item 3 (enum-синглтон), Item 88 (readObject-валидация), Item 90 (Serialization Proxy, ~14% overhead) — Q11/Q12/Q13/Q14/Q34"
+  ],
+  "version_sensitive_claims": [
+    "Q17: ObjectInputFilter — Java 9 + бэкпорт 8u121 (дистрактор Q17D «только Java 17» опровергается).",
+    "Q19/Q40: record не Serializable по умолчанию, восстановление каноническим конструктором (Java 16+).",
+    "Q20: sealed permits (Java 17+) — точный allow-list фильтра.",
+    "Q25: Jackson 2.10+ DefaultTyping выключен, требует PolymorphicTypeValidator (подтверждено context7).",
+    "Q38: полная поддержка record в Jackson 2.12+; Gson — с 2.10 (базовая).",
+    "Q39: FST 2.57, последний активный релиз ~2021, нет поддержки record/sealed.",
+    "Q33: OWASP-эволюция A8:2017→A08:2021 и CVE-таблица сверены."
   ]
 }
