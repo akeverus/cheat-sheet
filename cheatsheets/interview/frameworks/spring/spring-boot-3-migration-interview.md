@@ -189,16 +189,15 @@ WeatherClient weatherClient = HttpServiceProxyFactory
 }
 ```
 
-```java
-// Включение Problem Details
-@Configuration
-public class WebConfig {
-    @Bean
-    public ErrorHandler errorHandler() {
-        // По умолчанию включено в Spring Boot 3
-    }
-}
+```yaml
+# Включение Problem Details для MVC-ошибок — по умолчанию ВЫключено
+spring:
+  mvc:
+    problemdetails:
+      enabled: true   # для WebFlux — spring.webflux.problemdetails.enabled
+```
 
+```java
 // Кастомизация ответа
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -477,7 +476,7 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 com.example.MyAutoConfiguration
 ```
 
-Старый `spring.factories` всё ещё поддерживается для обратной совместимости, но для новых стартеров используют новый файл. Дополнительно появилась аннотация-маркер `@AutoConfiguration` — она заменяет связку `@Configuration` + порядковых аннотаций и явно помечает класс именно как авто-конфигурацию:
+Регистрация авто-конфигураций через `spring.factories` в Spring Boot 3.0 больше **не поддерживается** — работает только новый файл (переходный период был в 2.7, где принимались оба). Сам `spring.factories` жив для других ключей: listeners, initializers, environment post-processors. Дополнительно появилась аннотация-маркер `@AutoConfiguration` — она заменяет связку `@Configuration` + порядковых аннотаций и явно помечает класс именно как авто-конфигурацию:
 
 ```java
 // Также добавлено @AutoConfiguration — marker аннотация
@@ -544,7 +543,7 @@ management.metrics.export.*  → management.prometheus.*
 
 6. **Jackson 2.14+** — более строгая обработка типов; код, полагавшийся на мягкую десериализацию, может начать падать.
 
-7. **Изменились дефолты HikariCP** — таймауты стали короче, из-за чего ранее «проходившие» медленные соединения могут отваливаться.
+7. **Поведение пула соединений** — HikariCP обновлён до 5.x; после апгрейда встречаются плавающие таймауты под нагрузкой, поэтому дефолты пула (connectionTimeout, maxLifetime, размер) стоит зафиксировать явно и перепроверить.
 
 **Рекомендация:** разбить миграцию на этапы — сначала Java 17, потом зависимости до последних 2.x, затем 3.0, затем 3.x++. Каждый этап отдельно прогоняется тестами, и поломку видно сразу.
 
