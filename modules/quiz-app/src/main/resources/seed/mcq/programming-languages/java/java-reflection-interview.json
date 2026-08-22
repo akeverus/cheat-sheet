@@ -9,52 +9,52 @@
           "question_text": "Что такое Reflection в Java и для чего используется?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`Reflection` — это фаза компилятора `javac`, разворачивающая на этапе сборки `getDeclaredField`, `invoke` и `setAccessible` в статический байт-код: `Class`, `Field`, `Method`, `Constructor`. Готовый код уже не обращается к `Modifier` в рантайме.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Рефлексия работает в рантайме через объекты `Class`/`Method`, а не на этапе компиляции; проверками типов при компиляции занимается сам `javac` без участия рефлексии.",
-                "source_of_confusion": "И рефлексия, и компилятор работают со структурой классов, поэтому их роли смешивают, приписывая рефлексии compile-time активность.",
-                "if_it_were_true": "Тогда `Class.forName(\"...\")` нельзя было бы вызвать с именем, известным только в рантайме, но именно так работает загрузка `JDBC`-драйверов.",
-                "how_it_should_be": "Рефлексия — это runtime-API в `java.lang.reflect`, а генерацию байт-кода при компиляции выполняет компилятор, и это разные вещи."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Reflection` — runtime API из `java.lang.reflect`, позволяющий исследовать метаданные классов и динамически читать поля, вызывать методы и конструкторы либо работать с аннотациями через `Class`, `Field`, `Method` и `Constructor`. На нём строятся многие механизмы Spring, Hibernate, Jackson и JUnit.",
+              "order": 0,
+              "text": "Рефлексия исследует и меняет структуру классов, методов и полей в рантайме, когда тип заранее неизвестен.",
               "correct": true,
               "sections": {
-                "explanation": "После загрузки каждый тип представлен объектом `Class<?>`. Через него reflection получает сведения о members и выполняет операции над ними во время работы программы, когда конкретный тип может быть неизвестен компилятору вызывающего кода.",
-                "example": "`JUnit` находит методы с `@Test` через metadata и вызывает их; `Jackson` исследует constructors/properties, чтобы связать объект с внешним представлением.",
-                "when_to_apply": "Reflection применяют в framework infrastructure, serializers, dependency injection, тестовых утилитах и plugin systems, где код должен работать с заранее неизвестными пользовательскими типами.",
-                "edge_cases": "Reflection не добавляет новые поля или методы к уже загруженному классу. Оно ослабляет compile-time проверки и может упереться в access/module boundaries; для генерации либо изменения классов нужны другие механизмы.",
-                "related": "[[java-reflection-interview#Q2]] Как получить объект `Class<?>`?; [[java-reflection-interview#Q16]] Что такое `MethodHandle` и чем он лучше рефлексии?; [[java-reflection-interview#Q3]] Что можно узнать через объект `Class<?>`?"
+                "explanation": "Рефлексия работает поверх метаданных, которые компилятор кладёт в `.class`, уже после компиляции.",
+                "example": "JUnit находит `@Test`-методы в рантайме, не зная ваших классов на момент своей сборки.",
+                "when_to_apply": "Когда типы объектов заранее неизвестны — это фундамент почти всех фреймворков.",
+                "edge_cases": "Lombok использует ту же идею анализа метаданных, но на этапе компиляции (APT), а не рефлексией.",
+                "related": "Точка входа — объект `Class<?>`, доступный после загрузки типа класслоадером."
               }
             },
             {
-              "order": 2,
+              "label": "B",
+              "order": 1,
+              "text": "Рефлексия разрешает имена типов ещё на этапе компиляции, поэтому метаданные `.class` в рантайме ей не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рефлексия работает именно в рантайме, когда код уже скомпилирован, и читает метаданные `.class`.",
+                "source_of_confusion": "Обычный код действительно привязан к типам на компиляции — рефлексия снимает это ограничение.",
+                "if_it_were_true": "Тогда исчез бы весь смысл рефлексии — работать с типами, неизвестными при сборке.",
+                "how_it_should_be": "Метаданные `.class` доступны как `Class<?>` именно во время выполнения."
+              }
+            },
+            {
               "label": "C",
-              "text": "`Reflection` — это подсистема профилирования `JVM`: через `Method`, `Constructor` и `invoke` она считает длительность вызовов, а `Field` с `Modifier` метят горячие участки. Итоги по `Class` снимают `getDeclaredField` и `setAccessible`.",
+              "order": 2,
+              "text": "Рефлексия умеет лишь читать структуру классов; менять поля и вызывать методы через неё нельзя.",
               "correct": false,
               "sections": {
-                "what_actually": "Reflection исследует metadata и позволяет читать/изменять значения полей, вызывать методы и конструкторы; профилирование выполняют JFR, profilers и agents.",
-                "source_of_confusion": "Слово «исследовать» ассоциируется с измерением, поэтому рефлексию ошибочно сводят к профилированию.",
-                "if_it_were_true": "Тогда `Field.set()` и `Method.invoke()` не имели бы смысла, ведь профайлер ничего не меняет, а только наблюдает.",
-                "how_it_should_be": "Reflection — runtime-доступ к metadata и members; profiling — отдельная задача наблюдения за выполнением программы."
+                "what_actually": "Рефлексия и читает структуру, и вызывает методы, и меняет значения полей у объектов.",
+                "source_of_confusion": "Слово «исследовать» подсказывает лишь чтение, но API умеет и изменять.",
+                "if_it_were_true": "Тогда ни Hibernate, ни Jackson не смогли бы через рефлексию заполнять поля.",
+                "how_it_should_be": "API позволяет и самоанализ, и изменение структуры и состояния."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "`Reflection` — это встроенный в стандартную библиотеку с `Java 8` механизм сериализации объектов в `JSON`: он читает `Field` и `Method` через `getDeclaredField` и `setAccessible`, а `Modifier` отбирает поля вывода. Объект собирает `Constructor` по `Class`.",
+              "order": 3,
+              "text": "Lombok обрабатывает аннотации через рефлексию в рантайме, ровно как это делают Spring и Hibernate.",
               "correct": false,
               "sections": {
-                "what_actually": "Сериализацию в `JSON` делают библиотеки вроде `Jackson`, которые лишь используют рефлексию как механизм доступа к полям; сама рефлексия `JSON` не производит.",
-                "source_of_confusion": "`Jackson` опирается на рефлексию, поэтому её путают с самим процессом сериализации.",
-                "if_it_were_true": "Тогда в `java.lang.reflect` был бы класс-сериализатор `JSON`, но его там нет — есть только `Class`, `Field`, `Method`.",
-                "how_it_should_be": "Рефлексия — это низкоуровневый доступ к структуре; сериализация в `JSON` — задача внешних библиотек поверх неё."
+                "what_actually": "Lombok — это annotation processor (APT), он работает на компиляции, а не рефлексией в рантайме.",
+                "source_of_confusion": "Lombok анализирует те же метаданные, поэтому кажется рефлексией.",
+                "if_it_were_true": "Тогда сгенерированные методы появлялись бы в рантайме, а не в байткоде при сборке.",
+                "how_it_should_be": "Через рефлексию в рантайме работают Spring, Hibernate, Jackson, JUnit — но не Lombok."
               }
             }
           ]
@@ -69,52 +69,52 @@
           "question_text": "Как получить объект `Class<?>`?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Есть несколько способов: литерал `String.class` (compile-time), `obj.getClass()` у экземпляра, `Class.forName(\"java.util.ArrayList\")` по имени в рантайме, через `ClassLoader.loadClass()`, а для примитивов — `Integer.TYPE` (это `int`) против `Integer.class` (обёртка).",
+              "order": 0,
+              "text": "Единственный способ получить `Class<?>` — это литерал `.class`; по строковому имени класса `forName` применить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Получить `Class` по строке можно — именно для этого есть `Class.forName(\"имя\")`.",
+                "source_of_confusion": "Литерал `.class` самый привычный, поэтому кажется единственным.",
+                "if_it_were_true": "Тогда нельзя было бы загрузить класс, чьё имя пришло из конфига.",
+                "how_it_should_be": "По строковому имени работает `Class.forName`, а также `ClassLoader.loadClass`."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Через литерал `.class`, через `getClass()` экземпляра или по имени через `Class.forName` — он ещё и инициализирует класс.",
               "correct": true,
               "sections": {
-                "explanation": "Литерал `.class` и `getClass()` дают тип без инициализации, а `Class.forName(name)` ищет класс по строковому имени и по умолчанию запускает статическую инициализацию (`<clinit>`).",
-                "example": "В `JDBC` исторически писали `Class.forName(\"org.postgresql.Driver\")` — загрузка по имени запускала статический блок драйвера, который регистрировал себя в `DriverManager`.",
-                "when_to_apply": "`.class`/`getClass()` применяют, когда тип известен в коде; `Class.forName`/`loadClass` — когда имя класса приходит из конфигурации или строки в рантайме.",
-                "edge_cases": "`Class.forName` бросает `ClassNotFoundException`, если класса нет в classpath, и важно различать `Integer.TYPE` (примитив `int`) и `Integer.class` (обёртка) — это разные объекты `Class`.",
-                "related": "[[java-reflection-interview#Q3]] Что можно узнать через объект `Class<?>`?; [[java-reflection-interview#Q1]] Что такое Reflection в Java и для чего используется?; [[java-reflection-interview#Q4]] Как получить и изменить значение поля через рефлексию?"
+                "explanation": "`.class` — на компиляции, `getClass()` — реальный тип экземпляра, `forName` — по строковому имени.",
+                "example": "`Class.forName(\"org.postgresql.Driver\")` регистрировал JDBC-драйвер через свой статический блок.",
+                "when_to_apply": "Когда имя класса известно лишь строкой — из конфига или по имени драйвера — берут `forName`.",
+                "edge_cases": "Если инициализация не нужна, есть перегрузка `Class.forName(name, false, classLoader)`.",
+                "related": "`forName` может бросить `ClassNotFoundException`, если класса нет в classpath."
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Основной и надёжный путь один — `obj.getClass()` у экземпляра: литерал `String.class` возвращает `Class<?>` лишь для уже загруженных классов, иначе поможет `Class.forName()` или `ClassLoader.loadClass()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`getClass()` вернёт тип конкретного экземпляра (`Object`), а не нужный тип; есть ещё литерал `.class`, `Class.forName` и `ClassLoader.loadClass`.",
-                "source_of_confusion": "`getClass()` — самый наглядный способ, поэтому его принимают за единственный.",
-                "if_it_were_true": "Тогда нельзя было бы получить `String.class` без создания строки, но литерал `String.class` работает без экземпляров.",
-                "how_it_should_be": "Способов несколько: литерал `.class`, `getClass()`, `Class.forName(name)` и `ClassLoader.loadClass(name)` — выбор зависит от того, известно ли имя в рантайме."
-              }
-            },
-            {
-              "order": 2,
               "label": "C",
-              "text": "Форма `Class.forName(\"java.util.ArrayList\")` с одним аргументом даёт `Class<?>` без инициализации: статический блок и `static`-поля выполнятся позже, в отличие от `Class.forName(name, true, cl)`.",
+              "order": 2,
+              "text": "Вызов `Class.forName(name)` только загружает класс, но статический инициализатор `<clinit>` при этом не выполняет.",
               "correct": false,
               "sections": {
-                "what_actually": "Перегрузка `Class.forName(name)` по умолчанию инициализирует класс и запускает `<clinit>`; не инициализировать можно лишь через `forName(name, false, loader)`.",
-                "source_of_confusion": "Получение `Class`-объекта кажется чисто метаданным действием, поэтому считают, что инициализация не происходит.",
-                "if_it_were_true": "Тогда старый паттерн `Class.forName(\"org.postgresql.Driver\")` не регистрировал бы драйвер, ведь регистрация — в статическом блоке.",
-                "how_it_should_be": "Однопараметрический `Class.forName` инициализирует класс; чтобы избежать `<clinit>`, нужна трёхпараметрическая перегрузка с `initialize=false`."
+                "what_actually": "`forName(name)` не просто загружает, но и инициализирует класс — выполняет `<clinit>`.",
+                "source_of_confusion": "Загрузка и инициализация кажутся одним шагом, но это разные фазы.",
+                "if_it_were_true": "Старый паттерн регистрации JDBC-драйвера через статический блок не сработал бы.",
+                "how_it_should_be": "Чтобы пропустить инициализацию, берут `Class.forName(name, false, classLoader)`."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "Поля `Integer.TYPE` и `Integer.class` взаимозаменяемы: оба дают один `Class`, описывающий обёртку `java.lang.Integer`, поэтому для рефлексии над `int` подойдёт любое из них.",
+              "order": 3,
+              "text": "Метод `getClass()` возвращает тип, известный на этапе компиляции, а не фактический текущий класс объекта.",
               "correct": false,
               "sections": {
-                "what_actually": "`Integer.TYPE` представляет примитив `int`, а `Integer.class` — класс-обёртку `java.lang.Integer`; это два разных объекта `Class`.",
-                "source_of_confusion": "Оба относятся к целым числам и пишутся через `Integer`, отсюда вывод об их эквивалентности.",
-                "if_it_were_true": "Тогда `getMethod(\"m\", int.class)` и `getMethod(\"m\", Integer.class)` находили бы один и тот же метод, но они различают примитив и обёртку.",
-                "how_it_should_be": "`Integer.TYPE == int.class` (примитив), а `Integer.class` — обёртка; при поиске методов это два разных типа параметров."
+                "what_actually": "`getClass()` даёт именно фактический тип объекта в рантайме — для прокси и подклассов реальный класс.",
+                "source_of_confusion": "`.class` действительно compile-time, и `getClass()` путают с ним.",
+                "if_it_were_true": "Тогда для прокси-объекта нельзя было бы узнать его настоящий класс.",
+                "how_it_should_be": "`getClass()` — рантайм-тип; для compile-time берут литерал `.class`."
               }
             }
           ]
@@ -129,52 +129,52 @@
           "question_text": "Что можно узнать через объект `Class<?>`?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Через `Class<?>` доступны имя (`getName`, `getSimpleName`), иерархия (`getSuperclass`, `getInterfaces`), модификаторы (`getModifiers` + `Modifier`), члены класса (`getFields`/`getDeclaredFields`, `getMethods`/`getDeclaredMethods`, конструкторы) и аннотации (`getAnnotation`, `getAnnotations`).",
+              "order": 0,
+              "text": "Вызов `getDeclaredFields` отдаёт все поля класса, включая унаследованные от любого класса-родителя выше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`getDeclaredFields` видит только объявленные в этом классе поля, без унаследованных.",
+                "source_of_confusion": "Слово «Declared» путают с «полным списком, включая родителя».",
+                "if_it_were_true": "Тогда не пришлось бы подниматься по `getSuperclass()`, чтобы дойти до полей родителя.",
+                "how_it_should_be": "Унаследованные `public`-члены отдаёт `getFields`, а не `getDeclaredFields`."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Объект `Class<?>` даёт лишь имя и пакет типа; поля и методы через него недоступны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Через `Class<?>` доступны и члены (поля, методы, конструкторы), и аннотации — не только имя.",
+                "source_of_confusion": "`Class` называют «паспортом типа», что звучит как только идентификация.",
+                "if_it_were_true": "Тогда фреймворки не смогли бы находить ваши поля и методы через `Class`.",
+                "how_it_should_be": "Имена, иерархию, поля, методы и аннотации — всё это достают именно через `Class<?>`."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Метод `getFields` даёт `public`-члены вместе с унаследованными, а `getDeclaredFields` — все члены только этого класса.",
               "correct": true,
               "sections": {
-                "explanation": "Объект `Class` — это полная карта типа: по нему читают пакет и имя, предков и интерфейсы, флаги доступа через `Modifier.isPublic(mod)`, а также все поля, методы, конструкторы и аннотации.",
-                "example": "`cls.getDeclaredFields()` вернёт все поля класса (включая `private`), а `cls.getAnnotation(Entity.class)` — аннотацию `@Entity`, если она навешена и сохраняется в рантайме.",
-                "when_to_apply": "Применяют при сканировании классов фреймворком: найти все поля для маппинга, проверить модификаторы, прочитать аннотации конфигурации перед обработкой бина.",
-                "edge_cases": "Методы без `Declared` (`getFields`, `getMethods`) видят только `public`-члены, но включая унаследованные; `getDeclaredX` видят все модификаторы, но только этого класса — это легко перепутать.",
-                "related": "[[java-reflection-interview#Q4]] Как получить и изменить значение поля через рефлексию?; [[java-reflection-interview#Q2]] Как получить объект `Class<?>`?; [[java-reflection-interview#Q5]] В чём разница между `getField()` и `getDeclaredField()`?"
+                "explanation": "`getXxx` — только `public`, зато с наследованием; `getDeclaredXxx` — любая видимость, но лишь этот класс.",
+                "example": "`getDeclaredFields()` вернёт и `private`-поля класса, но не унаследованные от родителя.",
+                "when_to_apply": "Когда нужны только `public`-члены с учётом иерархии — берут `getFields`.",
+                "edge_cases": "То же правило действует для `getMethods`/`getDeclaredMethods` и конструкторов.",
+                "related": "Через `Class<?>` доступны также `getSuperclass()`, `getInterfaces()` и модификаторы."
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "У `Class` метод `getModifiers` возвращает готовую строку вроде `\"public abstract\"`, поэтому `Modifier.toString`, `Modifier.isPublic` и маски `Modifier.ABSTRACT` нужны лишь для `Field` и `Method`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`getModifiers()` возвращает `int` — битовую маску флагов; человекочитаемую строку даёт `Modifier.toString(mod)`, а проверки — `Modifier.isPublic(mod)`.",
-                "source_of_confusion": "Модификаторы в коде пишутся словами, поэтому ожидают строку и от метода.",
-                "if_it_were_true": "Тогда не нужен был бы класс `Modifier` с битовыми константами `PUBLIC`, `ABSTRACT`, но он существует именно для разбора маски.",
-                "how_it_should_be": "`getModifiers()` даёт `int`-маску; для интерпретации используют `Modifier.isXxx(mod)` или `Modifier.toString(mod)`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Через `Class<?>` метод `getMethods` отдаёт только публичные методы, а `getDeclaredFields`, `getDeclaredConstructors` и `getAnnotations` объявлены в `Field`, `Constructor`, `AnnotatedElement`, не в `Class`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Class` даёт доступ к полям (`getDeclaredFields`), конструкторам (`getDeclaredConstructors`) и аннотациям (`getAnnotations`), а не только к имени и методам.",
-                "source_of_confusion": "Имя и методы — самое частое, что достают из `Class`, поэтому остальное упускают из виду.",
-                "if_it_were_true": "Тогда `Hibernate` не смог бы прочитать поля `@Entity` через рефлексию, но он именно так строит маппинг.",
-                "how_it_should_be": "`Class` открывает полную структуру: имя, иерархию, модификаторы, поля, методы, конструкторы и аннотации."
-              }
-            },
-            {
-              "order": 3,
               "label": "D",
-              "text": "Вызов `getSuperclass` у `Class` для `Object` возвращает сам `Object`, замыкая иерархию в цикл, поэтому нужен ручной `clazz == Object.class`.",
+              "order": 3,
+              "text": "Метод `getFields` возвращает все поля только этого класса, а `getDeclaredFields` — лишь `public` вместе с унаследованными.",
               "correct": false,
               "sections": {
-                "what_actually": "`Object.class.getSuperclass()` возвращает `null`, потому что у `Object` нет родителя; цикла не образуется.",
-                "source_of_confusion": "Кажется, что у каждого класса есть суперкласс, и для `Object` его замыкают на себя.",
-                "if_it_were_true": "Тогда цикл `while (cls != null) cls = cls.getSuperclass()` никогда не завершался бы, но он корректно останавливается на `null`.",
-                "how_it_should_be": "У `Object` суперкласс `null`; обход иерархии вверх через `getSuperclass()` всегда конечен и завершается на `Object`."
+                "what_actually": "Всё наоборот: `getFields` — `public` с наследованием, `getDeclaredFields` — все члены этого класса.",
+                "source_of_confusion": "Два ортогональных ограничения — видимость и наследование — легко перепутать местами.",
+                "if_it_were_true": "Тогда `getFields` возвращал бы и `private`-поля, чего он не делает.",
+                "how_it_should_be": "`getFields` = `public` + унаследованные; `getDeclaredFields` = все, только этот класс."
               }
             }
           ]
@@ -189,52 +189,52 @@
           "question_text": "Как получить и изменить значение поля через рефлексию?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`getDeclaredField` открывает private поле без дополнительных проверок даже в закрытом named module, поэтому `canAccess`, `trySetAccessible` и `opens` не нужны.",
+              "order": 0,
+              "text": "Приватное поле можно писать `field.set` сразу после `getDeclaredField`, а вызывать `setAccessible(true)` вовсе не требуется.",
               "correct": false,
               "sections": {
-                "what_actually": "`getField` находит public inherited field, `getDeclaredField` — declared field любой visibility; доступ регулируют language/JPMS rules, а `trySetAccessible` может вернуть false.",
-                "source_of_confusion": "До strong encapsulation `setAccessible(true)` часто работал на classpath, поэтому поведение переносят на закрытые named modules.",
-                "if_it_were_true": "`getDeclaredField` автоматически открывал бы private member любому caller без `opens` и access checks.",
-                "how_it_should_be": "Выбирайте lookup по нужной области и проверяйте доступ; не рассчитывайте, что private или final field всегда можно изменить."
+                "what_actually": "Для `private`-поля `setAccessible(true)` обязателен, без него — `IllegalAccessException`.",
+                "source_of_confusion": "`getDeclaredField` находит приватное поле, поэтому кажется, что доступ уже открыт.",
+                "if_it_were_true": "Тогда инкапсуляция не защищала бы `private`-поля вообще.",
+                "how_it_should_be": "После `getDeclaredField` для `private` всегда нужен `setAccessible(true)`."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "Java Reflection разрешает только читать metadata поля; методы `Field.get` и `Field.set` не предоставляют доступ к значению экземпляра или static state.",
+              "order": 1,
+              "text": "Даже для открытого `public`-поля, полученного через `getField`, нужно сначала обязательно вызвать `setAccessible(true)`.",
               "correct": false,
               "sections": {
-                "what_actually": "`getField` находит public inherited field, `getDeclaredField` — declared field любой visibility; доступ регулируют language/JPMS rules, а `trySetAccessible` может вернуть false.",
-                "source_of_confusion": "Reflection часто используют для чтения metadata, поэтому mutable accessor methods `get`/`set` иногда упускают.",
-                "if_it_were_true": "`Field.set` отсутствовал бы для runtime values и применялся бы только к annotations.",
-                "how_it_should_be": "Выбирайте lookup по нужной области и проверяйте доступ; не рассчитывайте, что private или final field всегда можно изменить."
+                "what_actually": "Для `public`-поля через `getField` доступ открывать не нужно — пишут и читают сразу.",
+                "source_of_confusion": "`setAccessible(true)` ассоциируется со всеми полями, а не только с закрытыми.",
+                "if_it_were_true": "Тогда работа с открытыми полями была бы бессмысленно усложнена.",
+                "how_it_should_be": "`setAccessible(true)` нужен лишь для `private`, а не для `public`."
               }
             },
             {
-              "order": 2,
               "label": "C",
-              "text": "Static field можно читать и изменять только через экземпляр declaring class; передача `null` в `Field.get` или `Field.set` всегда вызывает `NullPointerException`.",
+              "order": 2,
+              "text": "Для статического поля в `field.get` и `field.set` всё равно передают любой экземпляр этого самого класса.",
               "correct": false,
               "sections": {
-                "what_actually": "`getField` находит public inherited field, `getDeclaredField` — declared field любой visibility; доступ регулируют language/JPMS rules, а `trySetAccessible` может вернуть false.",
-                "source_of_confusion": "Для instance field обычно передают объект, из-за чего это правило ошибочно распространяют на static field.",
-                "if_it_were_true": "`Field.get(null)` и `set(null, value)` для static member всегда бросали бы `NullPointerException`.",
-                "how_it_should_be": "Выбирайте lookup по нужной области и проверяйте доступ; не рассчитывайте, что private или final field всегда можно изменить."
+                "what_actually": "Для статического поля экземпляр не нужен — в `get`/`set` передают `null`.",
+                "source_of_confusion": "Обычные поля требуют объект, и статические ошибочно считают такими же.",
+                "if_it_were_true": "Тогда нельзя было бы прочитать статическое поле, не создав объект.",
+                "how_it_should_be": "Статическое поле принадлежит классу — получателем идёт `null`."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "Поле находят через `getField` или `getDeclaredField`; доступ проверяют `canAccess`, а `trySetAccessible` либо `setAccessible` может быть запрещён границами JPMS.",
+              "order": 3,
+              "text": "Значение поля читают и пишут через объект `Field`, а для закрытого берут `getDeclaredField` и обязательный `setAccessible(true)`.",
               "correct": true,
               "sections": {
-                "explanation": "`getDeclaredField` не обходит access control. Deep reflection зависит от visibility, module openness и security policy; `trySetAccessible()` безопаснее сообщает о невозможности доступа.",
-                "example": "`Field f = type.getDeclaredField(\"name\"); if (f.trySetAccessible()) f.set(target, value);` — минимальная схема, но production API лучше проектировать без private mutation.",
-                "when_to_apply": "Используйте в framework infrastructure, migration tooling и тестовых утилитах, когда обычный accessor недоступен.",
-                "edge_cases": "Final/static final поля имеют дополнительные ограничения и оптимизации JVM. Для модульного кода предпочтительны public API или `MethodHandles.privateLookupIn` при разрешённом доступе.",
-                "related": "[[java-reflection-interview#Q5]] В чём разница между `getField()` и `getDeclaredField()`?; [[java-reflection-interview#Q3]] Что можно узнать через объект `Class<?>`?; [[java-reflection-interview#Q6]] Как вызвать метод через рефлексию?"
+                "explanation": "Алгоритм один: получить `Field`, при нужде открыть доступ, затем `get`/`set` значения.",
+                "example": "`getDeclaredField(\"name\")` плюс `setAccessible(true)` — и `private`-поле доступно на чтение и запись.",
+                "when_to_apply": "Когда поле `private`, обязателен `setAccessible(true)`, иначе будет `IllegalAccessException`.",
+                "edge_cases": "В Java 17+ `setAccessible(true)` для закрытого модуля бросит `InaccessibleObjectException`.",
+                "related": "Для статического поля объект-получатель не нужен — передают `null`."
               }
             }
           ]
@@ -249,52 +249,52 @@
           "question_text": "В чём разница между `getField()` и `getDeclaredField()`?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`getDeclaredField(name)` обходит иерархию `Class`, собирая поля текущего класса и его родителей; поэтому приватный `Field` суперкласса достаётся напрямую, без вызова `getSuperclass()`. Останется лишь снять `Modifier` через `setAccessible(true)`.",
+              "order": 0,
+              "text": "Метод `getField` возвращает и `private`-поля, если только они объявлены в этом же самом классе.",
               "correct": false,
               "sections": {
-                "what_actually": "`getDeclaredField` ограничен полями самого класса; приватное поле родителя он не вернёт, для него нужен обход `getSuperclass()`.",
-                "source_of_confusion": "Слово «Declared» путают с «все объявленные в иерархии», хотя оно означает «объявленные в этом классе».",
-                "if_it_were_true": "Тогда `Child.class.getDeclaredField(\"parentPrivate\")` срабатывал бы, но он бросает `NoSuchFieldException`.",
-                "how_it_should_be": "`getDeclaredField` смотрит только в текущий класс; до приватных полей родителя добираются циклом по `getSuperclass()`."
+                "what_actually": "`getField` возвращает только `public`-поля; `private` он не отдаёт даже в своём классе.",
+                "source_of_confusion": "«Field без Declared» кажется универсальным доступом к любому полю.",
+                "if_it_were_true": "Тогда `getField` и `getDeclaredField` не различались бы по видимости.",
+                "how_it_should_be": "Любое `private`-поле достаётся через `getDeclaredField`, а не `getField`."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "`getField(name)` и `getDeclaredField(name)` возвращают тот же `Field`, отличаясь лишь именем; метод-дублёр оставлен ради обратной совместимости `Class` API. Модификаторы через `Modifier` и `setAccessible(true)` на выборку не влияют.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Методы различаются: `getField` ограничен `public` (но с наследованием), `getDeclaredField` берёт все модификаторы, но только из текущего класса.",
-                "source_of_confusion": "Похожие имена создают впечатление синонимов, добавленных для совместимости.",
-                "if_it_were_true": "Тогда `getField(\"privateName\")` находил бы приватное поле, но он бросает `NoSuchFieldException`.",
-                "how_it_should_be": "`getField` — только `public` с унаследованными; `getDeclaredField` — все модификаторы, но без унаследованных."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`getField(name)` видит только `public`-поля, включая унаследованные от родителей; `getDeclaredField(name)` видит ВСЕ поля (`private`/`protected`/`public`), но только объявленные в самом классе, без унаследованных. Аналогичное правило для методов и конструкторов.",
+              "order": 1,
+              "text": "Метод `getField` видит только `public`, зато с унаследованными, а `getDeclaredField` — любую видимость, но лишь в классе.",
               "correct": true,
               "sections": {
-                "explanation": "Разница в двух осях: уровень доступа (`getField` — только `public`, `getDeclaredField` — любой) и охват иерархии (`getField` — с унаследованными, `getDeclaredField` — только этот класс).",
-                "example": "`Child.class.getField(\"parentField\")` найдёт `public`-поле из `Parent`, но `getField(\"childField\")` для `private`-поля бросит `NoSuchFieldException` — его видит лишь `getDeclaredField`.",
-                "when_to_apply": "`getDeclaredField` берут, когда нужны все поля включая приватные (DI, сериализация); `getField` — когда достаточно публичного контракта с учётом наследования.",
-                "edge_cases": "Чтобы добраться до `private`-полей РОДИТЕЛЯ, ни один из методов сразу не подходит — нужно итерироваться вверх по `getSuperclass()` и на каждом уровне звать `getDeclaredField`.",
-                "related": "[[java-reflection-interview#Q6]] Как вызвать метод через рефлексию?; [[java-reflection-interview#Q4]] Как получить и изменить значение поля через рефлексию?; [[java-reflection-interview#Q7]] Как вызвать статический метод через рефлексию?"
+                "explanation": "Это два ортогональных ограничения: видимость у `getField`, локальность у `getDeclaredField`.",
+                "example": "`getField(\"childField\")` на приватном поле бросит `NoSuchFieldException` — оно не `public`.",
+                "when_to_apply": "Когда нужно приватное поле самого класса — берут `getDeclaredField`.",
+                "edge_cases": "То же правило действует для `getMethod`/`getDeclaredMethod` и конструкторов.",
+                "related": "Чтобы дойти до приватного поля родителя, поднимаются по `getSuperclass()` в цикле."
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`getField(name)` возвращает объявленные в самом `Class` поля любого уровня — `private`, `protected`, `public`; унаследованные от родителей `Field` в выдачу не входят. За ними обращаются к `getSuperclass()`.",
+              "label": "C",
+              "order": 2,
+              "text": "Метод `getField` видит любую видимость в самом классе, а `getDeclaredField` — только `public` с наследованием.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: `getField` как раз включает унаследованные `public`-поля родителей, но не видит непубличные поля даже своего класса.",
-                "source_of_confusion": "Свойства двух методов переставляют местами, приписывая `getField` ограничение текущим классом.",
-                "if_it_were_true": "Тогда `Child.class.getField(\"parentField\")` для публичного поля `Parent` падал бы, но он успешно его находит.",
-                "how_it_should_be": "`getField` видит публичные поля с учётом наследования; ограничение текущим классом — это про `getDeclaredField`."
+                "what_actually": "Наоборот: `getField` — только `public` с наследованием, `getDeclaredField` — любая видимость в классе.",
+                "source_of_confusion": "Видимость и наследование — два разных ограничения, их легко поменять местами.",
+                "if_it_were_true": "Тогда `getField` доставал бы `private`-поля, чего он не умеет.",
+                "how_it_should_be": "`getField` = `public` + унаследованные; `getDeclaredField` = все, только этот класс."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Вызов `getDeclaredField` находит в том числе и унаследованные приватные поля любого класса-родителя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`getDeclaredField` не видит унаследованные приватные поля — только объявленные в этом классе.",
+                "source_of_confusion": "Кажется, что «Declared» охватывает всю иерархию, но это лишь текущий класс.",
+                "if_it_were_true": "Тогда не пришлось бы в цикле подниматься по `getSuperclass()` за полем родителя.",
+                "how_it_should_be": "Приватное поле родителя достают, спускаясь по иерархии `getSuperclass()`."
               }
             }
           ]
@@ -309,52 +309,52 @@
           "question_text": "Как вызвать метод через рефлексию?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Получают `Method` через `getMethod`/`getDeclaredMethod` с именем и типами параметров, для непубличного метода зовут `setAccessible(true)`, затем `method.invoke(target, args)`. Исключение из самого метода прилетает обёрнутым в `InvocationTargetException`.",
+              "order": 0,
+              "text": "Если вызванный метод бросит исключение, `invoke` пробросит его напрямую, безо всякой обёртки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исключение из тела метода `invoke` оборачивает в `InvocationTargetException`.",
+                "source_of_confusion": "Ожидают, что исключение просто «пролетит» наверх как при обычном вызове.",
+                "if_it_were_true": "Тогда нельзя было бы отличить сбой метода от сбоя самого вызова.",
+                "how_it_should_be": "Оригинал достают через `getCause()` у `InvocationTargetException`."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Исключение, брошенное телом вызванного метода, приходит из `invoke` наверх именно как `IllegalAccessException`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сбой тела метода — это `InvocationTargetException`; `IllegalAccessException` — про отсутствие доступа.",
+                "source_of_confusion": "Оба исключения относятся к `invoke`, поэтому их путают.",
+                "if_it_were_true": "Тогда причину падения метода нельзя было бы отделить от проблем доступа.",
+                "how_it_should_be": "`IllegalAccessException` = нет доступа; `InvocationTargetException` = метод бросил исключение."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Ищут метод по имени и типам параметров, затем `method.invoke(target, args)`; исключение из тела приходит в `InvocationTargetException`.",
               "correct": true,
               "sections": {
-                "explanation": "`getMethod(\"add\", int.class, int.class)` ищет метод по имени и сигнатуре, а `invoke(target, args)` его вызывает; чтобы достать оригинальную ошибку метода, ловят `InvocationTargetException` и берут `getCause()`.",
-                "example": "`Method addMethod = Calculator.class.getMethod(\"add\", int.class, int.class); int r = (int) addMethod.invoke(calc, 5, 3);` вернёт `8`.",
-                "when_to_apply": "Применяют, когда имя метода известно лишь в рантайме: вызов хендлеров по аннотациям, диспетчеризация по строковому имени, тестовые утилиты.",
-                "edge_cases": "`invoke` различает три ошибки: `IllegalAccessException` (нет доступа), `IllegalArgumentException` (неверные аргументы) и `InvocationTargetException` (исключение внутри метода обёрнуто) — их легко перепутать.",
-                "related": "[[java-reflection-interview#Q7]] Как вызвать статический метод через рефлексию?; [[java-reflection-interview#Q5]] В чём разница между `getField()` и `getDeclaredField()`?; [[java-reflection-interview#Q8]] Как вызвать приватный метод через рефлексию?"
+                "explanation": "Сигнатура нужна, чтобы отличить перегрузки; результат `invoke` приходит как `Object`.",
+                "example": "`getMethod(\"add\", int.class, int.class)` и `invoke(calc, 5, 3)` дают 8.",
+                "when_to_apply": "В обработчике почти всегда разворачивают причину через `getCause()`.",
+                "edge_cases": "`IllegalAccessException` — забыли `setAccessible(true)`; `IllegalArgumentException` — не те аргументы.",
+                "related": "Обёртка отделяет «метод упал» от «не смогли вызвать метод»."
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Достаточно имени: `getMethod(\"add\")` вернёт `Method`, а `invoke` сам сопоставит `args` с подходящей перегрузкой через `Class`-резолвер. Типы параметров в `getDeclaredMethod` передавать не требуется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`getMethod` ищет по имени И типам параметров; для перегруженного `add(int,int)` нужно передать `int.class, int.class`, иначе будет `NoSuchMethodException`.",
-                "source_of_confusion": "В вызове метода в коде типы не пишут, поэтому кажется, что и рефлексии хватит имени.",
-                "if_it_were_true": "Тогда нельзя было бы различить перегрузки `add(int,int)` и `add(double,double)`, но рефлексия их различает по сигнатуре.",
-                "how_it_should_be": "В `getMethod`/`getDeclaredMethod` после имени передают `Class`-типы параметров, чтобы выбрать конкретную перегрузку."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Исключение из тела метода `invoke` пробрасывает напрямую: в стеке окажется сам `NullPointerException`, ведь `Method` зовёт код обычным `Class`-диспатчем. `InvocationTargetException` возникает лишь при сбое `setAccessible`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Исключение из тела метода `invoke` оборачивает в `InvocationTargetException`; оригинал достают через `getCause()`, а не ловят напрямую.",
-                "source_of_confusion": "При прямом вызове исключение летит как есть, и того же ждут от `invoke`.",
-                "if_it_were_true": "Тогда не было бы смысла в классе `InvocationTargetException`, но он существует именно как обёртка.",
-                "how_it_should_be": "`invoke` оборачивает ошибку метода в `InvocationTargetException`; реальную причину получают через `e.getCause()`."
-              }
-            },
-            {
-              "order": 3,
               "label": "D",
-              "text": "Метод `invoke` объявлен возвращающим `void`, поэтому результат целевого вызова через `Method` не приходит — его вытаскивают из служебного `Field` рефлексией. Читают значение связкой `getDeclaredField` и `setAccessible`.",
+              "order": 3,
+              "text": "Метод находят только по имени; типы параметров не нужны даже при наличии перегрузок.",
               "correct": false,
               "sections": {
-                "what_actually": "`invoke` возвращает `Object` — результат метода; для `int add(...)` его кастуют: `(int) method.invoke(...)`.",
-                "source_of_confusion": "Имя `invoke` («вызвать») звучит как действие без возврата, отсюда вывод про `void`.",
-                "if_it_were_true": "Тогда `int r = (int) addMethod.invoke(calc, 5, 3)` не компилировался бы, но это рабочий код.",
-                "how_it_should_be": "`invoke` возвращает `Object` с результатом метода; для примитивов значение приходит в боксированном виде и кастуется."
+                "what_actually": "Без типов параметров рефлексия не отличит перегрузки — сигнатура обязательна.",
+                "source_of_confusion": "У метода с одним вариантом имя кажется достаточным.",
+                "if_it_were_true": "Тогда для перегруженного метода `getMethod` не знал бы, какой из них вернуть.",
+                "how_it_should_be": "`Method` ищут по имени и типам параметров."
               }
             }
           ]
@@ -369,52 +369,52 @@
           "question_text": "Как вызвать статический метод через рефлексию?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Сначала через `Constructor.newInstance()` создают экземпляр и передают в `method.invoke(obj, 5)`: рефлексии нужна привязка к `obj`. Статический `square` без реального инстанса `MathUtils` не вызвать.",
+              "order": 0,
+              "text": "Статическому методу в `invoke` всё равно нужен экземпляр класса первым аргументом.",
               "correct": false,
               "sections": {
-                "what_actually": "Статический метод не требует экземпляра — в `invoke` передают `null`; создавать объект `MathUtils` для вызова `square` не нужно.",
-                "source_of_confusion": "Сигнатура `invoke(Object, args)` намекает на обязательный объект, и его создают зря.",
-                "if_it_were_true": "Тогда нельзя было бы вызвать статический метод у класса без публичного конструктора, но `invoke(null, ...)` это позволяет.",
-                "how_it_should_be": "Для статического метода первым аргументом `invoke` идёт `null`; экземпляр не нужен."
+                "what_actually": "Статическому методу экземпляр не нужен — первым аргументом идёт `null`.",
+                "source_of_confusion": "Методы экземпляра требуют объект, и статические ошибочно считают такими же.",
+                "if_it_were_true": "Тогда пришлось бы создавать объект лишь ради статического вызова.",
+                "how_it_should_be": "Получателем статического метода служит `null`."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "Для статики есть отдельная точка входа `Class.invokeStatic(\"square\", 5)`, тогда как `Method.invoke` рассчитан на методы экземпляра. Разделение историческое: `getMethod` и `invoke` — для инстансов, `invokeStatic` — для `static`-членов.",
+              "order": 1,
+              "text": "Первым аргументом `invoke` здесь передают объект `Class`, например сам `MathUtils.class`, а не `null`.",
               "correct": false,
               "sections": {
-                "what_actually": "Отдельного `invokeStatic` не существует; статический метод вызывают тем же `Method.invoke`, просто передавая `null` как target.",
-                "source_of_confusion": "Кажется логичным, что для статики есть свой специальный метод вызова.",
-                "if_it_were_true": "Тогда в `Class` или `Method` был бы метод `invokeStatic`, но его нет в API рефлексии.",
-                "how_it_should_be": "И статические, и инстанс-методы вызывают через `Method.invoke`; разница лишь в значении первого аргумента."
+                "what_actually": "Первым аргументом передают `null`, а не объект `Class` вроде `MathUtils.class`.",
+                "source_of_confusion": "Статика связана с классом, поэтому туда «просится» объект `Class`.",
+                "if_it_were_true": "Тогда `invoke` ожидал бы `Class` там, где на деле стоит получатель метода.",
+                "how_it_should_be": "`invoke(null, args)` — вместо получателя стоит `null`, а не `Class`."
               }
             },
             {
-              "order": 2,
               "label": "C",
-              "text": "Объект `Method` для статики достают особым `getStaticMethod(\"square\", int.class)`, поскольку обычный `getMethod` индексирует методы экземпляра. Классы разводят members по спискам: `getMethod` — по инстанс-таблице, `getStaticMethod` — по `static`-таблице `MathUtils`.",
+              "order": 2,
+              "text": "Статические методы через рефлексию вызвать нельзя — только методы конкретного экземпляра.",
               "correct": false,
               "sections": {
-                "what_actually": "`getMethod`/`getDeclaredMethod` находят и статические, и инстанс-методы; отдельного `getStaticMethod` в API нет.",
-                "source_of_confusion": "Раз вызов статики особый (с `null`), ожидают и особый метод поиска.",
-                "if_it_were_true": "Тогда `MathUtils.class.getMethod(\"square\", int.class)` не находил бы статический `square`, но он его находит.",
-                "how_it_should_be": "Статический метод ищут обычным `getMethod`; «статичность» влияет только на `invoke`, где target — `null`."
+                "what_actually": "Статические методы прекрасно вызываются рефлексией — с `null` вместо получателя.",
+                "source_of_confusion": "Без экземпляра вызов кажется невозможным.",
+                "if_it_were_true": "Тогда рефлексия не смогла бы вызвать, например, `Math.max`.",
+                "how_it_should_be": "Статический вызов — это `invoke(null, args)`."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "Получают `Method` как обычно (`MathUtils.class.getMethod(\"square\", int.class)`), а при вызове передают `null` вместо экземпляра: `method.invoke(null, 5)`. Первый аргумент `null` означает «нет instance» — это и есть статический вызов.",
+              "order": 3,
+              "text": "Так же, как обычный, но первым аргументом `invoke` передают `null` вместо экземпляра.",
               "correct": true,
               "sections": {
-                "explanation": "У статического метода нет привязки к объекту, поэтому target-аргумент `invoke` не нужен; передача `null` явно говорит JVM, что вызов идёт на уровне класса, а не экземпляра.",
-                "example": "`Method m = MathUtils.class.getMethod(\"square\", int.class); int r = (int) m.invoke(null, 5);` даст `25` — экземпляр `MathUtils` создавать не требуется.",
-                "when_to_apply": "Применяют для вызова статических фабрик и утилит по имени, например при загрузке плагинов, где известно лишь строковое имя статического метода.",
-                "edge_cases": "Статический метод ищут теми же `getMethod`/`getDeclaredMethod`. При `invoke` conventionally передают `null`; если передать другой receiver, для static method он не используется. Access checks и `InvocationTargetException` обрабатываются как обычно.",
-                "related": "[[java-reflection-interview#Q8]] Как вызвать приватный метод через рефлексию?; [[java-reflection-interview#Q6]] Как вызвать метод через рефлексию?; [[java-reflection-interview#Q9]] Как создать объект через рефлексию?"
+                "explanation": "Статическому методу объект-получатель не нужен: он принадлежит классу, а не экземпляру.",
+                "example": "`getMethod(\"square\", int.class)` и `invoke(null, 5)` возвращают 25.",
+                "when_to_apply": "Всегда, когда метод статический — получателем идёт `null`.",
+                "edge_cases": "Сам `Method` получают тем же `getMethod`, что и для методов экземпляра.",
+                "related": "`invoke(null, args)` читается как «вызвать без получателя»."
               }
             }
           ]
@@ -429,52 +429,52 @@
           "question_text": "Как вызвать приватный метод через рефлексию?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`getMethod` находит private метод и автоматически открывает его caller-у из того же package, поэтому отдельный access override или module `opens` не требуется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Private method получают через `getDeclaredMethod`; вызов возможен только если access разрешён, package/module открыт caller-у или предоставлен подходящий lookup. Strong JPMS boundaries могут запретить deep reflection.",
-                "source_of_confusion": "`getMethod` ищет public methods, но его путают с `getDeclaredMethod`, который видит private declared member.",
-                "if_it_were_true": "Обычный `getMethod` находил бы private метод и автоматически отменял access checks внутри package.",
-                "how_it_should_be": "Не считайте `setAccessible` универсальным обходом: проектируйте `opens`, public API или controlled `MethodHandles.Lookup` для требуемого доступа."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Private метод получают через `getDeclaredMethod`; вызов требует разрешённого deep reflection через `trySetAccessible`/`setAccessible` и может завершиться `InaccessibleObjectException` в закрытом module.",
+              "order": 0,
+              "text": "Метод ищут через `getDeclaredMethod` и перед `invoke` вызывают `setAccessible(true)`, иначе JVM бросит ошибку доступа.",
               "correct": true,
               "sections": {
-                "explanation": "`private`-метод не виден через `getMethod`, поэтому нужен `getDeclaredMethod`; а вызвать его без `setAccessible(true)` нельзя — будет `IllegalAccessException` из-за проверки доступа.",
-                "example": "`Method m = SecretService.class.getDeclaredMethod(\"generateToken\", String.class); m.setAccessible(true); String t = (String) m.invoke(service, \"user-123\");`.",
-                "when_to_apply": "Иногда оправдано в тестах легаси-кода, когда рефакторинг рискован; в Spring-тестах удобнее `ReflectionTestUtils.invokeMethod(bean, \"privateMethod\", args)`.",
-                "edge_cases": "Доступ к `private`-методам в тестах — сигнал проблем с дизайном: лучше тестировать через публичный API; а в Java 17+ модулях `setAccessible(true)` может бросить `InaccessibleObjectException`.",
-                "related": "[[java-reflection-interview#Q9]] Как создать объект через рефлексию?; [[java-reflection-interview#Q7]] Как вызвать статический метод через рефлексию?; [[java-reflection-interview#Q10]] Как получить аннотации через рефлексию?"
+                "explanation": "Отличие от обычного вызова одно: `getDeclaredMethod` плюс `setAccessible(true)`.",
+                "example": "`getDeclaredMethod(\"generateToken\", String.class)`, `setAccessible(true)`, затем `invoke`.",
+                "when_to_apply": "Когда метод `private` — открытие доступа обязательно перед `invoke`.",
+                "edge_cases": "В Spring-тестах то же делает хелпер `ReflectionTestUtils.invokeMethod`.",
+                "related": "Без `setAccessible(true)` вызов упадёт с `IllegalAccessException`."
               }
             },
             {
-              "order": 2,
+              "label": "B",
+              "order": 1,
+              "text": "Приватный метод находят обычным поиском по имени, как и публичный, без `getDeclaredMethod`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`getMethod` видит только `public`; приватный метод достаёт `getDeclaredMethod`.",
+                "source_of_confusion": "`getMethod` кажется универсальным для любых методов.",
+                "if_it_were_true": "Тогда `getMethod` возвращал бы и закрытые методы, чего он не делает.",
+                "how_it_should_be": "Для `private` берут `getDeclaredMethod`, а не `getMethod`."
+              }
+            },
+            {
               "label": "C",
-              "text": "Любой private метод доступен с устаревшим флагом `--illegal-access=permit` на современных Java, поэтому `--add-opens` и изменение module descriptor не нужны.",
+              "order": 2,
+              "text": "Вызов `getDeclaredMethod` уже сам даёт право позвать закрытый `private`-метод, так что `setAccessible(true)` здесь лишний.",
               "correct": false,
               "sections": {
-                "what_actually": "Private method получают через `getDeclaredMethod`; вызов возможен только если access разрешён, package/module открыт caller-у или предоставлен подходящий lookup. Strong JPMS boundaries могут запретить deep reflection.",
-                "source_of_confusion": "Старый `--illegal-access` временно ослаблял часть JDK encapsulation, поэтому его считают актуальным универсальным switch.",
-                "if_it_were_true": "Современная Java позволяла бы любой private вызов через `--illegal-access=permit` без `--add-opens` и module declarations.",
-                "how_it_should_be": "Не считайте `setAccessible` универсальным обходом: проектируйте `opens`, public API или controlled `MethodHandles.Lookup` для требуемого доступа."
+                "what_actually": "Без `setAccessible(true)` JVM бросит `IllegalAccessException` даже после `getDeclaredMethod`.",
+                "source_of_confusion": "Раз метод найден, кажется, что его уже можно звать.",
+                "if_it_were_true": "Тогда модификатор `private` не защищал бы метод от вызова рефлексией.",
+                "how_it_should_be": "Перед `invoke` приватного метода обязателен `setAccessible(true)`."
               }
             },
             {
-              "order": 3,
               "label": "D",
-              "text": "Private методы вызываются только сгенерированным CGLIB subclass; стандартный Java Reflection API умеет находить и вызывать исключительно public members.",
+              "order": 3,
+              "text": "Дёргать `private`-методы из тестов рефлексией — рекомендуемая практика вместо публичного контракта.",
               "correct": false,
               "sections": {
-                "what_actually": "Private method получают через `getDeclaredMethod`; вызов возможен только если access разрешён, package/module открыт caller-у или предоставлен подходящий lookup. Strong JPMS boundaries могут запретить deep reflection.",
-                "source_of_confusion": "Proxy libraries действительно перехватывают методы, но это другой механизм и не ограничивает Reflection API только public members.",
-                "if_it_were_true": "Private method можно было бы вызвать исключительно через CGLIB, а `Method.invoke` не работал бы после разрешённого deep reflection.",
-                "how_it_should_be": "Не считайте `setAccessible` универсальным обходом: проектируйте `opens`, public API или controlled `MethodHandles.Lookup` для требуемого доступа."
+                "what_actually": "Тест приватных методов рефлексией — обычно запах дизайна; проверяют публичный контракт.",
+                "source_of_confusion": "Хочется протестировать логику напрямую, минуя публичный API.",
+                "if_it_were_true": "Тогда тесты завязывались бы на детали, которые автор не обещал сохранять.",
+                "how_it_should_be": "Приватную логику лучше выделить в отдельный класс с публичным API."
               }
             }
           ]
@@ -489,52 +489,52 @@
           "question_text": "Как создать объект через рефлексию?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Предпочтительнее вызвать `Class.newInstance()`: он короче связки `getDeclaredConstructor()` плюс `newInstance()` и штатно поддерживается. Метод оборачивает ошибки в `RuntimeException`, поэтому `Constructor` и `setAccessible(true)` обычно не нужны.",
+              "order": 0,
+              "text": "Вызов `Constructor.newInstance()` для абстрактного класса или любого интерфейса всё равно успешно создаст объект.",
               "correct": false,
               "sections": {
-                "what_actually": "`Class.newInstance()` помечен `@Deprecated` с Java 9, потому что скрывает checked-исключения конструктора; рекомендуется `Constructor.newInstance`.",
-                "source_of_confusion": "`Class.newInstance()` короче и исторически встречается в старом коде, отсюда вывод о предпочтительности.",
-                "if_it_were_true": "Тогда его не пометили бы `@Deprecated`, но в JavaDoc прямо рекомендуют `getDeclaredConstructor().newInstance()`.",
-                "how_it_should_be": "Объект создают через `Constructor.newInstance`, а `Class.newInstance()` считается устаревшим."
+                "what_actually": "Для абстрактного класса или интерфейса `newInstance` бросит `InstantiationException` — объект не создаётся.",
+                "source_of_confusion": "Кажется, что раз конструктор вызван, объект как-нибудь да получится.",
+                "if_it_were_true": "Тогда ошибку инстанцирования было бы легко пропустить.",
+                "how_it_should_be": "Невозможность создать объект сигнализируется исключением."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "Предпочтителен `Constructor`: `getDeclaredConstructor(types...)` находит конструктор, после проверки доступа вызывают `newInstance(args...)`. Устаревший `Class.newInstance()` требует no-arg constructor и может пробрасывать исключение конструктора, обходя обычную compile-time проверку checked exceptions.",
+              "order": 1,
+              "text": "JPA-провайдеру не важно наличие у `@Entity` пустого конструктора без аргументов для `newInstance`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JPA требует у `@Entity` no-arg constructor: Hibernate создаёт «голый» объект, потом заполняет поля.",
+                "source_of_confusion": "Раз есть конструктор с полями, пустой кажется необязательным.",
+                "if_it_were_true": "Тогда Hibernate не смог бы инстанцировать сущность перед заполнением.",
+                "how_it_should_be": "Пустой конструктор нужен — через него провайдер создаёт объект."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Объект создают через `getDeclaredConstructor(типы).newInstance(аргументы)`, а старый `Class.newInstance()` объявлен deprecated с Java 9.",
               "correct": true,
               "sections": {
-                "explanation": "`Class.newInstance()` устарел, потому что прятал checked-исключения конструктора; вместо него берут `Constructor` и зовут `newInstance(args)`, что корректно пробрасывает ошибки через `InvocationTargetException`.",
-                "example": "`Constructor<?> ctor = Order.class.getDeclaredConstructor(String.class, BigDecimal.class); Order o = (Order) ctor.newInstance(\"ref-001\", new BigDecimal(\"99.99\"));`.",
-                "when_to_apply": "Применяют ORM и сериализаторы: `Hibernate` создаёт `Entity` через no-arg конструктор, `Jackson` инстанцирует объекты при десериализации без знания их типов заранее.",
-                "edge_cases": "`Constructor.newInstance` бросает `InstantiationException` (например, для абстрактного класса), `IllegalAccessException` и `InvocationTargetException`, если конструктор сам кинул исключение.",
-                "related": "[[java-reflection-interview#Q10]] Как получить аннотации через рефлексию?; [[java-reflection-interview#Q8]] Как вызвать приватный метод через рефлексию?; [[java-reflection-interview#Q11]] Как получить generic-тип параметра через рефлексию?"
+                "explanation": "`Constructor.newInstance` лишён проблем `Class.newInstance`: тот умел только no-arg и «протаскивал» checked-исключения.",
+                "example": "`getDeclaredConstructor(String.class, BigDecimal.class).newInstance(\"ref-001\", ...)` создаёт объект.",
+                "when_to_apply": "Всегда, когда объект инстанцируют рефлексией — берут `Constructor.newInstance`.",
+                "edge_cases": "Для абстрактного класса или интерфейса будет `InstantiationException`.",
+                "related": "Hibernate создаёт `@Entity` через no-arg constructor, затем заполняет поля."
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Через рефлексию можно инстанцировать абстрактные классы и интерфейсы: `getDeclaredConstructor()` вернёт конструктор, а `newInstance()` подберёт реализацию. Проверять `Modifier.isAbstract()` необязательно, ведь `setAccessible(true)` на `Constructor` снимает это ограничение.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Абстрактный класс и интерфейс инстанцировать нельзя — `newInstance` бросит `InstantiationException`; реализацию рефлексия не подбирает.",
-                "source_of_confusion": "«Рефлексия всемогуща» порождает ожидание, что она обойдёт и абстрактность.",
-                "if_it_were_true": "Тогда `List.class.getDeclaredConstructor().newInstance()` создавал бы список, но он падает на абстрактности.",
-                "how_it_should_be": "Создаётся только конкретный класс; для абстракции нужно явно указать класс-реализацию."
-              }
-            },
-            {
-              "order": 3,
               "label": "D",
-              "text": "Чтобы получить конструктор, в `getDeclaredConstructor()` передают сами значения аргументов: например `getDeclaredConstructor(\"ref-001\")`, после чего `newInstance()` зовётся без параметров. Массив `Class` с типами нужен лишь для `Method` и `invoke()`.",
+              "order": 3,
+              "text": "Современный способ — `Class.newInstance()`, ведь он поддерживает конструкторы с 1 и более аргументами.",
               "correct": false,
               "sections": {
-                "what_actually": "`getDeclaredConstructor` принимает `Class`-типы параметров (`String.class`), а сами значения передают позже в `newInstance(args)`.",
-                "source_of_confusion": "Поиск и вызов сливают в одно действие, отсюда передача значений на этапе поиска.",
-                "if_it_were_true": "Тогда нельзя было бы найти конструктор, не имея готовых значений, но типы известны и без них.",
-                "how_it_should_be": "В `getDeclaredConstructor` идут типы (`Class`), а значения — в `newInstance`."
+                "what_actually": "`Class.newInstance()` deprecated с Java 9: умеет лишь no-arg и плохо обходится с checked-исключениями.",
+                "source_of_confusion": "Имя `newInstance` короче и кажется основным способом.",
+                "if_it_were_true": "Тогда его не пометили бы устаревшим в пользу `Constructor.newInstance`.",
+                "how_it_should_be": "Современно объект создают через `getDeclaredConstructor(...)` и затем `newInstance(...)`."
               }
             }
           ]
@@ -549,52 +549,52 @@
           "question_text": "Как получить аннотации через рефлексию?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Через `getAnnotation(Table.class)` на классе/поле/методе или `getAnnotations()` для всех; для параметров — `Parameter.isAnnotationPresent(...)`. Ключевое условие: аннотация должна иметь `@Retention(RetentionPolicy.RUNTIME)`, иначе в рантайме её не видно.",
+              "order": 0,
+              "text": "Без явного `@Retention` аннотация по умолчанию `RUNTIME` и потому сразу видна рефлексии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию политика `CLASS`, а не `RUNTIME`: она есть в байткоде, но рефлексии не видна.",
+                "source_of_confusion": "Раз аннотация «есть в классе», кажется, что она и в рантайме.",
+                "if_it_were_true": "Тогда любую аннотацию можно было бы читать без явного `@Retention`.",
+                "how_it_should_be": "Для чтения рефлексией нужен явный `@Retention(RUNTIME)`."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Даже `SOURCE`-аннотация вроде `@Override` доступна для чтения через рефлексию в рантайме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SOURCE`-аннотация в `.class` вообще не попадает — рефлексия её не увидит.",
+                "source_of_confusion": "`@Override` привычна, поэтому кажется доступной везде.",
+                "if_it_were_true": "Тогда `SOURCE` не отличалась бы от `RUNTIME` по видимости.",
+                "how_it_should_be": "`SOURCE` живёт лишь до компиляции; рефлексии доступна только `RUNTIME`."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Политика `@Retention` никак не влияет на то, увидит ли рефлексия эту аннотацию в рантайме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Retention` определяет всё: рефлексии доступна только политика `RUNTIME`.",
+                "source_of_confusion": "Аннотацию воспринимают как всегда видимую, независимо от политики.",
+                "if_it_were_true": "Тогда `@Override` читалась бы рефлексией наравне с `@Entity`.",
+                "how_it_should_be": "Видимость аннотации в рантайме задаёт именно `@Retention`."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Читают их методом `getAnnotation`, но лишь при условии, что аннотация объявлена с политикой `@Retention(RUNTIME)`.",
               "correct": true,
               "sections": {
-                "explanation": "`getAnnotation(X.class)` возвращает аннотацию нужного типа (или `null`), а её атрибуты читаются как методы: `table.name()`; то же доступно на `Field`, `Method` и `Parameter`.",
-                "example": "`Table table = Order.class.getAnnotation(Table.class); String name = table.name();` вернёт `\"orders\"`, если на классе висит `@Table(name = \"orders\")`.",
-                "when_to_apply": "Применяют фреймворки для конфигурации через аннотации: `Hibernate` читает `@Column(name=...)`, валидаторы — `@NotNull`, веб — `@RequestMapping`.",
-                "edge_cases": "При `@Retention(RetentionPolicy.SOURCE)` или `CLASS` аннотация недоступна в рантайме: `getAnnotation` вернёт `null`, хотя в коде она написана — частая причина «почему мой `@MyAnno` не видно».",
-                "related": "[[java-reflection-interview#Q11]] Как получить generic-тип параметра через рефлексию?; [[java-reflection-interview#Q9]] Как создать объект через рефлексию?; [[java-reflection-interview#Q12]] Что такое `java.lang.reflect.Proxy` и как он работает?"
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Метод `getAnnotation()` читает объявления прямо из байткода; уровень `@Retention` на видимость в рантайме не влияет. Возвращаются любые политики: и `SOURCE`, и `CLASS` доступны рефлексией.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В рантайме видны только аннотации с `@Retention(RUNTIME)`; при `SOURCE` или `CLASS` рефлексия их не увидит, `getAnnotation` вернёт `null`.",
-                "source_of_confusion": "Раз аннотация есть в коде, кажется, что она доступна всегда.",
-                "if_it_were_true": "Тогда `@Override` (с `SOURCE`-retention) читалась бы рефлексией, но её там нет.",
-                "how_it_should_be": "Для доступа через рефлексию аннотация обязана иметь `@Retention(RetentionPolicy.RUNTIME)`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Атрибуты читаются как поля прокси: значение берут через `Field.get()` после `setAccessible(true)`, а не вызовом метода. У аннотации есть поле `name`; `getDeclaredField(\"name\")` вернёт его напрямую.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Атрибуты аннотации — это методы, а не поля: значение берут вызовом `table.name()`, ведь аннотация представлена как интерфейс/прокси.",
-                "source_of_confusion": "В объявлении атрибуты выглядят как переменные, отсюда обращение как к полю.",
-                "if_it_were_true": "Тогда `table.name` без скобок компилировалось бы, но атрибут — это абстрактный метод аннотации-интерфейса.",
-                "how_it_should_be": "Значения атрибутов читают вызовом методов: `table.name()`, `column.nullable()`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Вызов `getAnnotations()` на `Class` обходит объект целиком: в список попадают аннотации класса, а также его `Field` и `Method`. Отдельно обходить члены не нужно; рефлексия собирает их рекурсивно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Class.getAnnotations()` возвращает аннотации только класса; аннотации полей и методов читают на их собственных `Field`/`Method` объектах.",
-                "source_of_confusion": "Кажется, что аннотации всего типа собираются в одном вызове на `Class`.",
-                "if_it_were_true": "Тогда `Order.class.getAnnotations()` содержал бы `@Column` с поля, но его получают через `field.getAnnotation`.",
-                "how_it_should_be": "Аннотации элемента читают на самом элементе: класс — на `Class`, поле — на `Field`, метод — на `Method`."
+                "explanation": "Только `RUNTIME` доживает до рантайма; `SOURCE` и `CLASS` рефлексии недоступны.",
+                "example": "`@Entity`, `@Autowired`, `@Test` помечены `RUNTIME` — потому и читаются рефлексией.",
+                "when_to_apply": "Если своя аннотация «не читается» — первым делом проверяют `@Retention`.",
+                "edge_cases": "Методы `getAnnotation`/`isAnnotationPresent` есть у `Class`, `Field`, `Method`, `Parameter`.",
+                "related": "`getAnnotations()` возвращает все, включая унаследованные с `@Inherited`."
               }
             }
           ]
@@ -609,52 +609,52 @@
           "question_text": "Как получить generic-тип параметра через рефлексию?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Type erasure стирает дженерики и из объектов, и из метаданных, поэтому `field.getGenericType()` отдаёт голый `List` без `ParameterizedType`. Извлечь `String` из `List<String>` рефлексией нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Стирание не затрагивает метаданные сигнатур: у полей и методов дженерик-аргументы сохраняются и читаются через `getGenericType()`/`ParameterizedType`.",
-                "source_of_confusion": "«Type erasure стирает дженерики» воспринимают абсолютно, забывая про сохранённые сигнатуры.",
-                "if_it_were_true": "Тогда `Jackson` не смог бы десериализовать `List<User>` по `TypeReference`, но он это делает.",
-                "how_it_should_be": "Для полей/методов/суперклассов дженерик доступен через `getGenericType()` и `getActualTypeArguments()`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Каст к `ParameterizedType` тут лишний: `field.getType()` уже возвращает `Class` вместе с аргументами, целиком `List<String>`, без чтения метаданных. Затем `getTypeParameters()` прямо на этом `Class` отдаёт `String`, минуя `getGenericType()` и `getActualTypeArguments()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`getType()` возвращает «сырой» `List` без аргументов; параметры доступны лишь через `getGenericType()` с приведением к `ParameterizedType`.",
-                "source_of_confusion": "`getType()` — очевидный метод для типа поля, и от него ждут полной информации.",
-                "if_it_were_true": "Тогда не нужен был бы отдельный `getGenericType()`, но он существует именно ради аргументов дженерика.",
-                "how_it_should_be": "«Сырой» тип даёт `getType()`, а параметры дженерика — `getGenericType()` → `ParameterizedType`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Метод `getActualTypeArguments()` отдаёт лишь примитивные `Type`-узлы верхнего уровня, поэтому из `Map<String, List<Integer>>` вложенный `List<Integer>` не вынуть. Обход через `ParameterizedType` тут не рекурсивен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Метод возвращает любые `Type`, включая вложенные `ParameterizedType`: для `Map<String, List<Integer>>` второй аргумент — это `List<Integer>`.",
-                "source_of_confusion": "Слово «actual type» сужают до примитивов, упуская вложенные дженерики.",
-                "if_it_were_true": "Тогда `cacheType.getActualTypeArguments()[1]` не дал бы `List<Integer>`, но он его возвращает.",
-                "how_it_should_be": "`getActualTypeArguments()` возвращает массив `Type`, и вложенные дженерики извлекаются рекурсивно."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Хотя `type erasure` стирает дженерики из самих объектов, в метаданных полей, методов и суперклассов они сохраняются. Берут `field.getGenericType()`, кастуют к `ParameterizedType` и читают `getActualTypeArguments()` — так извлекают `String` из `List<String>`.",
+              "order": 0,
+              "text": "Через `getGenericType()` и каст к `ParameterizedType`, затем `getActualTypeArguments()`, а сигнатуры полей переживают type erasure.",
               "correct": true,
               "sections": {
-                "explanation": "`getGenericType()` возвращает не «сырой» `List`, а `ParameterizedType` с сохранёнными аргументами; `getActualTypeArguments()[i]` даёт конкретный тип-параметр, недоступный из обычного `getType()`.",
-                "example": "`ParameterizedType pt = (ParameterizedType) namesField.getGenericType(); Type el = pt.getActualTypeArguments()[0];` для `List<String>` даст `class java.lang.String`.",
-                "when_to_apply": "Применяют сериализаторы: `Jackson` через `new TypeReference<List<User>>(){}` читает дженерик из `getGenericSuperclass()`, обходя стирание типов.",
-                "edge_cases": "Стирание не трогает только сигнатуры в метаданных (поля, методы, extends/implements); у локальной переменной с `List<String>` параметр действительно потерян и его не восстановить.",
-                "related": "[[java-reflection-interview#Q12]] Что такое `java.lang.reflect.Proxy` и как он работает?; [[java-reflection-interview#Q10]] Как получить аннотации через рефлексию?; [[java-reflection-interview#Q13]] Каковы недостатки и ограничения рефлексии?"
+                "explanation": "Erasure стирает типы не везде: объявления полей и сигнатуры хранятся в атрибуте `Signature`.",
+                "example": "`getGenericType()` поля `List<String>` через `getActualTypeArguments()[0]` даёт `String`.",
+                "when_to_apply": "Когда нужен параметр типа поля или суперкласса — читают generic-сигнатуру.",
+                "edge_cases": "Jackson применяет тот же приём в `new TypeReference<List<User>>() {}` через `getGenericSuperclass()`.",
+                "related": "Для значений erasure реальна: `new ArrayList<String>()` в рантайме просто `ArrayList`."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Из-за type erasure generic-типы объявленных полей в рантайме прочитать вообще нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Erasure стирает не везде: generic поля читаются через `getGenericType()`.",
+                "source_of_confusion": "Про type erasure помнят как про «стирает всё».",
+                "if_it_were_true": "Тогда Jackson не смог бы разбирать `TypeReference<List<User>>`.",
+                "how_it_should_be": "Сигнатуры полей и суперкласса сохраняются в метаданных."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "У созданного значения `new ArrayList<String>()` в рантайме якобы сохраняется и его параметр типа `String`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для значений erasure реальна: у `new ArrayList<String>()` в рантайме просто `ArrayList`.",
+                "source_of_confusion": "Раз generic-типы полей читаются, кажется, что и у значений тоже.",
+                "if_it_were_true": "Тогда не понадобился бы трюк `TypeReference` для передачи типа.",
+                "how_it_should_be": "Параметр сохраняется у объявлений полей и сигнатур, но не у значений."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Чтобы получить параметр, результат `getGenericType()` кастуют к `Class`, а не к `ParameterizedType`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Результат `getGenericType()` кастуют к `ParameterizedType`, а не к `Class`.",
+                "source_of_confusion": "Привычно каждое поле связывать с объектом `Class`.",
+                "if_it_were_true": "Тогда `getActualTypeArguments()` было бы неоткуда вызвать.",
+                "how_it_should_be": "Каст идёт к `ParameterizedType`, у него и берут аргументы типа."
               }
             }
           ]
@@ -666,55 +666,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `java.lang.reflect.Proxy` и как он работает?",
+          "question_text": "Что такое `java.lang.reflect.Proxy` и как работает?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "JDK Proxy генерирует subclass конкретного класса и поэтому не требует interfaces.",
+              "order": 0,
+              "text": "Каждому методу прокси назначают свой отдельный обработчик вызовов, а не один общий.",
               "correct": false,
               "sections": {
-                "what_actually": "JDK dynamic proxy реализует указанный набор interfaces и направляет method calls в `InvocationHandler`; для proxy concrete class нужны другие механизмы, например bytecode-generated subclass.",
-                "source_of_confusion": "CGLIB/Byte Buddy создают subclasses, и их поведение часто смешивают с `java.lang.reflect.Proxy`.",
-                "if_it_were_true": "`Proxy.newProxyInstance` принимал бы concrete superclass и генерировал его subclass без interfaces.",
-                "how_it_should_be": "Используйте JDK proxy для interface-based interception; не ожидайте перехвата private/final class methods как отдельных endpoints."
+                "what_actually": "Все вызовы прокси идут в один `InvocationHandler.invoke`, а не в отдельные обработчики.",
+                "source_of_confusion": "Разное поведение методов подсказывает мысль о разных обработчиках.",
+                "if_it_were_true": "Тогда терялся бы смысл единой точки перехвата вызовов.",
+                "how_it_should_be": "Один `InvocationHandler` принимает `method` и разводит логику внутри."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "Proxy копирует bytecode методов внутрь handler и вызывает их без reflection или dynamic dispatch.",
-              "correct": false,
-              "sections": {
-                "what_actually": "JDK dynamic proxy реализует указанный набор interfaces и направляет method calls в `InvocationHandler`; для proxy concrete class нужны другие механизмы, например bytecode-generated subclass.",
-                "source_of_confusion": "Generated proxy class содержит forwarding methods, что ошибочно описывают как копирование target bytecode в handler.",
-                "if_it_were_true": "InvocationHandler получал бы уже скопированную реализацию метода и обходился без dynamic dispatch через `invoke`.",
-                "how_it_should_be": "Используйте JDK proxy для interface-based interception; не ожидайте перехвата private/final class methods как отдельных endpoints."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Proxy.newProxyInstance` создаёт объект для набора interfaces и направляет calls в `InvocationHandler`.",
+              "order": 1,
+              "text": "Создаёт объект, реализующий интерфейсы, и шлёт вызовы в `InvocationHandler.invoke`, но работает лишь с интерфейсами.",
               "correct": true,
               "sections": {
-                "explanation": "JVM генерирует класс-прокси в рантайме, и любой вызов метода интерфейса попадает в единый `InvocationHandler`, где можно добавить логику до/после и при желании делегировать реальному объекту через `method.invoke(target, args)`.",
-                "example": "В Spring AOP при JDK-прокси `Proxy.newProxyInstance` оборачивает бин, а `InvocationHandler` прогоняет цепочку `MethodInterceptor`-ов (транзакции, логирование) вокруг реального вызова.",
-                "when_to_apply": "Применяют для сквозной логики без изменения исходного класса: AOP, транзакции, кеширование, mock-объекты — когда есть интерфейс для проксирования.",
-                "edge_cases": "Если у класса нет интерфейса, JDK `Proxy` не подходит — Spring переключается на `CGLIB`, который генерирует подкласс (а значит, `final`-класс/метод так не проксируется).",
-                "related": "[[java-reflection-interview#Q13]] Каковы недостатки и ограничения рефлексии?; [[java-reflection-interview#Q11]] Как получить generic-тип параметра через рефлексию?; [[java-reflection-interview#Q14]] Что такое `setAccessible(true)` и какие есть риски?"
+                "explanation": "Прокси добавляет поведение (логирование, транзакции) без правки исходного кода — основа AOP.",
+                "example": "`Proxy.newProxyInstance(loader, new Class<?>[]{OrderService.class}, handler)` создаёт прокси.",
+                "when_to_apply": "Когда у цели есть интерфейс — Spring AOP по умолчанию берёт JDK-прокси.",
+                "edge_cases": "Класс без интерфейса проксируют через CGLIB — наследованием.",
+                "related": "Отсюда ограничение CGLIB: `final`-классы и `final`-методы переопределить нельзя."
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "JDK proxy поддерживает final classes и private methods как отдельные interceptable endpoints.",
+              "label": "C",
+              "order": 2,
+              "text": "JDK-прокси через `Proxy` оборачивает любой класс, даже если у того нет ни одного интерфейса.",
               "correct": false,
               "sections": {
-                "what_actually": "JDK dynamic proxy реализует указанный набор interfaces и направляет method calls в `InvocationHandler`; для proxy concrete class нужны другие механизмы, например bytecode-generated subclass.",
-                "source_of_confusion": "Proxy object является runtime class, поэтому кажется, что он способен перехватывать любой member исходного класса.",
-                "if_it_were_true": "Final class и private method можно было бы передать как отдельные interceptable methods JDK proxy без interface declaration.",
-                "how_it_should_be": "Используйте JDK proxy для interface-based interception; не ожидайте перехвата private/final class methods как отдельных endpoints."
+                "what_actually": "JDK-прокси работает только с интерфейсами; класс без интерфейса им не обернуть.",
+                "source_of_confusion": "Прокси кажется универсальной обёрткой для любого объекта.",
+                "if_it_were_true": "Тогда CGLIB был бы не нужен для классов без интерфейсов.",
+                "how_it_should_be": "Для класса без интерфейса Spring использует CGLIB."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Прокси через CGLIB свободно оборачивает даже `final`-классы и спокойно переопределяет их `final`-методы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CGLIB порождает наследника, поэтому `final`-классы и `final`-методы проксировать нельзя.",
+                "source_of_confusion": "CGLIB мощнее JDK-прокси, отсюда иллюзия «может всё».",
+                "if_it_were_true": "Тогда `final` не мешал бы переопределению методов.",
+                "how_it_should_be": "`final`-класс не наследуется, а `final`-метод не переопределяется."
               }
             }
           ]
@@ -729,52 +729,52 @@
           "question_text": "Каковы недостатки и ограничения рефлексии?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Главные ограничения — потеря compile-time safety, access/module boundaries, сложность refactoring, возможная стоимость invocation и необходимость reachability metadata.",
+              "order": 0,
+              "text": "Reflective-вызов по скорости не отличается от прямого — JIT инлайнит его точно так же.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`method.invoke()` в 20-100 раз медленнее: его нельзя инлайнить, JIT не «схлопывает» вызов.",
+                "source_of_confusion": "Кажется, что после разогрева JVM разница исчезает.",
+                "if_it_were_true": "Тогда рефлексию можно было бы звать в любом горячем цикле.",
+                "how_it_should_be": "Reflective-вызов заметно дороже прямого и не инлайнится."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Ошибки в именах и типах рефлексия ловит заранее, ещё на этапе компиляции кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У рефлексии нет проверок на компиляции — ошибки в именах и типах вылезают в рантайме.",
+                "source_of_confusion": "Привыкли, что компилятор ловит опечатки в вызовах.",
+                "if_it_were_true": "Тогда переименование метода IDE не ломало бы reflective-код молча.",
+                "how_it_should_be": "Обращение по строковому имени проверяется только в рантайме."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Рефлексию нормально применять в hot path бизнес-логики, где метод зовётся миллионы раз.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В hot path рефлексию не применяют — там она недопустимо медленна.",
+                "source_of_confusion": "Раз фреймворки её используют, кажется, что можно везде.",
+                "if_it_were_true": "Тогда миллионы reflective-вызовов не били бы по производительности.",
+                "how_it_should_be": "Во фреймворках тяжёлый самоанализ делается однократно и кешируется."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Медленнее прямого вызова, без проверок типов и хрупкая, во фреймворках терпима благодаря кешированию.",
               "correct": true,
               "sections": {
-                "explanation": "Главные оси проблем: производительность (lookup и boxing аргументов, нет JIT-оптимизаций), безопасность (обход инкапсуляции), хрупкость (ошибки только в рантайме) и несовместимость со статическим анализом native-image.",
-                "example": "Прямой вызов метода ~1 ns/op, а через `method.invoke()` ~20-100 ns/op; с закешированным `setAccessible` — порядка 3-5 ns, но всё равно дороже прямого.",
-                "when_to_apply": "Рефлексия уместна во framework wiring, tooling и тестах. В часто вызываемом коде кэшируйте lookup и оптимизируйте только после измерений, если overhead значим.",
-                "edge_cases": "В GraalVM native image статический анализ не видит reflective-вызовы и они падают в рантайме, если класс не описан в `reflect-config.json` — отдельный класс проблем сборки.",
-                "related": "[[java-reflection-interview#Q14]] Что такое `setAccessible(true)` и какие есть риски?; [[java-reflection-interview#Q12]] Что такое `java.lang.reflect.Proxy` и как он работает?; [[java-reflection-interview#Q15]] Как рефлексия используется в Java-фреймворках?"
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Reflection всегда ровно в 100 раз медленнее direct call независимо от JDK, warmup, типа member и способа повторного использования lookup.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Refлексия снижает compile-time safety, усложняет refactoring и доступ через modules; invocation может стоить дороже прямого вызова, а AOT/native environments требуют reachability metadata.",
-                "source_of_confusion": "Microbenchmarks старых JDK часто цитируют как постоянный множитель, хотя optimizations, lookup caching и workload меняют результат.",
-                "if_it_were_true": "Каждый reflective call на любой JDK был бы ровно в 100 раз медленнее независимо от warmup, member и invocation API.",
-                "how_it_should_be": "Оценивайте reflection по maintainability, access и deployment model; не используйте фиксированный универсальный slowdown factor."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Единственный недостаток — checked `ClassNotFoundException`; после загрузки класса reflection равна прямому вызову по всем свойствам.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Refлексия снижает compile-time safety, усложняет refactoring и доступ через modules; invocation может стоить дороже прямого вызова, а AOT/native environments требуют reachability metadata.",
-                "source_of_confusion": "Checked exceptions заметны в API, поэтому остальные structural риски иногда недооценивают.",
-                "if_it_were_true": "После успешной загрузки reflection имела бы ту же type safety, refactoring support и native-image reachability, что прямой вызов.",
-                "how_it_should_be": "Оценивайте reflection по maintainability, access и deployment model; не используйте фиксированный универсальный slowdown factor."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Reflection запрещена начиная с Java 17 и работает только с `--enable-preview` и специальным разрешением для каждого reflected package.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Refлексия снижает compile-time safety, усложняет refactoring и доступ через modules; invocation может стоить дороже прямого вызова, а AOT/native environments требуют reachability metadata.",
-                "source_of_confusion": "Strong encapsulation Java 17 ограничила deep reflection, и это ошибочно трактуют как полный запрет API.",
-                "if_it_were_true": "`Class`, `Method` и `Field` перестали бы работать без `--enable-preview`, включая public members приложения.",
-                "how_it_should_be": "Оценивайте reflection по maintainability, access и deployment model; не используйте фиксированный универсальный slowdown factor."
+                "explanation": "Рефлексия жертвует производительностью, типобезопасностью и читаемостью ради гибкости.",
+                "example": "`method.invoke()` в 20-100 раз медленнее прямого вызова: lookup плюс упаковка аргументов.",
+                "when_to_apply": "Уместна во фреймворках и точечно в тестах, но не в горячей бизнес-логике.",
+                "edge_cases": "В GraalVM native image reflective-вызовы теряются без `reflect-config.json`.",
+                "related": "Переименование поля рефакторингом IDE молча ломает обращение по строковому имени."
               }
             }
           ]
@@ -789,52 +789,52 @@
           "question_text": "Что такое `setAccessible(true)` и какие есть риски?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`setAccessible(true)` безусловно отключает Java language и module boundaries, открывая любой JDK internal package без `opens` или JVM flags.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Метод лишь отключает проверку доступа для данного `AccessibleObject`-экземпляра; модификатор поля остаётся `private`, и для других ссылок ничего не меняется.",
-                "source_of_confusion": "«Открыть доступ» воспринимают как буквальное превращение в `public`.",
-                "if_it_were_true": "Тогда после `setAccessible` обычный код вне рефлексии тоже читал бы это поле, но он по-прежнему получит ошибку компиляции.",
-                "how_it_should_be": "`setAccessible(true)` снимает проверку только для конкретного reflective-объекта; сам модификатор не меняется."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Он меняет модификатор private на public в bytecode и сохраняет изменение в `.class` файле.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В Java 9+ для закрытого (не открытого/не экспортированного) пакета `setAccessible(true)` бросает `InaccessibleObjectException`; нужен `--add-opens` или `open module`.",
-                "source_of_confusion": "До Java 9 это работало всегда, и старое поведение считают актуальным.",
-                "if_it_were_true": "Тогда Spring Boot не проставлял бы `--add-opens` флаги, но он делает это именно ради модульных ограничений.",
-                "how_it_should_be": "Сильная инкапсуляция модулей может блокировать `setAccessible`; доступ открывают через `--add-opens`/`open`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Метод пытается подавить Java language access checks, но не может сам открыть закрытый package другого named module.",
+              "order": 0,
+              "text": "Метод `AccessibleObject` снимает проверку модификаторов доступа, а в Java 9+ без открытого пакета бросит `InaccessibleObjectException`.",
               "correct": true,
               "sections": {
-                "explanation": "Метод снимает проверку модификаторов, открывая доступ к `private`/`protected`; ценой становится зависимость от деталей реализации, обход защиты и конфликт с системой модулей.",
-                "example": "`field.setAccessible(true); field.set(obj, value);` позволяет записать приватное поле; в модульном приложении без `--add-opens java.base/java.lang=ALL-UNNAMED` это бросит `InaccessibleObjectException`.",
-                "when_to_apply": "Применяют во фреймворках и тестах для доступа к закрытым членам; результат `Field`/`Method` после `setAccessible` стоит кешировать, так как открытие доступа дорого.",
-                "edge_cases": "В Java 9+ если модуль не экспортирует/не открывает пакет, `setAccessible(true)` падает с `InaccessibleObjectException`; Spring Boot сам проставляет нужные `--add-opens`.",
-                "related": "[[java-reflection-interview#Q15]] Как рефлексия используется в Java-фреймворках?; [[java-reflection-interview#Q13]] Каковы недостатки и ограничения рефлексии?; [[java-reflection-interview#Q16]] Что такое `MethodHandle` и чем он лучше рефлексии?"
+                "explanation": "`AccessibleObject` — родитель `Field`, `Method`, `Constructor`; метод снимает проверку доступа.",
+                "example": "После `field.setAccessible(true)` можно читать и писать закрытое поле.",
+                "when_to_apply": "В модулях Java 9+ для закрытого пакета нужен `--add-opens` или `open module`.",
+                "edge_cases": "Обход доступа позволяет менять даже `final`-поля — это риск в недоверенной среде.",
+                "related": "Поиск члена и `setAccessible` недёшевы, поэтому фреймворки кешируют результат."
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "После одного вызова доступ становится глобальным для всех Field/Method объектов того же класса.",
+              "label": "B",
+              "order": 1,
+              "text": "Вызов `setAccessible(true)` разрешает лишь чтение `private`-полей, но не запись и не вызов методов.",
               "correct": false,
               "sections": {
-                "what_actually": "`setAccessible` объявлен в общем родителе `AccessibleObject`, поэтому одинаково работает на `Field`, `Method` и `Constructor`.",
-                "source_of_confusion": "Чаще всего метод встречают именно с полями, отсюда сужение до `Field`.",
-                "if_it_were_true": "Тогда приватный метод нельзя было бы вызвать рефлексией, но `method.setAccessible(true)` это позволяет.",
-                "how_it_should_be": "`setAccessible(true)` доступен для `Field`, `Method` и `Constructor` через общий `AccessibleObject`."
+                "what_actually": "`setAccessible(true)` открывает и запись полей, и вызов `private`/`protected`-методов.",
+                "source_of_confusion": "«Accessible» звучит как «доступный для чтения».",
+                "if_it_were_true": "Тогда через рефлексию нельзя было бы вызвать закрытый метод.",
+                "how_it_should_be": "Метод снимает проверку доступа целиком — и на чтение/запись, и на вызов."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "В Java 9+ `setAccessible(true)` открывает любой пакет любого модуля без каких-либо ограничений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Если модуль не открыл пакет, `setAccessible(true)` бросит `InaccessibleObjectException`.",
+                "source_of_confusion": "Раньше `setAccessible` действительно открывал почти всё.",
+                "if_it_were_true": "Тогда система модулей Java 9+ не давала бы никакой изоляции.",
+                "how_it_should_be": "Для закрытого пакета нужен явный `--add-opens`."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Полученные объекты `Field` и `Method` заметно дешевле пересоздавать заново на каждый вызов, чем однажды кешировать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поиск члена и `setAccessible` дороги, поэтому `Field`/`Method` кешируют и переиспользуют.",
+                "source_of_confusion": "Пересоздание объекта кажется дешевле хранения ссылки.",
+                "if_it_were_true": "Тогда рефлексия была бы недопустимо медленной под нагрузкой.",
+                "how_it_should_be": "Найденные объекты кладут, например, в `ConcurrentHashMap`."
               }
             }
           ]
@@ -849,52 +849,52 @@
           "question_text": "Как рефлексия используется в Java-фреймворках?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`Spring` собирает граф `@Autowired`-бинов сгенерированным на компиляции байт-кодом, где `Field.set` и `Method.invoke` заранее прошиты; рантайм-рефлексия с `Class.forName`, `getDeclaredField`, `setAccessible` и `Constructor.newInstance` подключается лишь для редкого XML-конфига. Поэтому `@Value` и `ParameterizedType` разрешаются без `getDeclaredMethods`.",
+              "order": 0,
+              "text": "Найденные объекты `Method` и `Field` фреймворк не кеширует, а ищет заново при каждом обращении.",
               "correct": false,
               "sections": {
-                "what_actually": "Spring выполняет инъекцию в рантайме через рефлексию (`field.setAccessible(true); field.set(...)`), а не кодогенерацией при компиляции.",
-                "source_of_confusion": "Compile-time-фреймворки вроде `MapStruct` существуют, и их модель переносят на Spring DI.",
-                "if_it_were_true": "Тогда Spring не нуждался бы в `--add-opens` и кешировании `Field`, но он работает с ними из-за рантайм-рефлексии.",
-                "how_it_should_be": "Spring DI — это рантайм-рефлексия по аннотированным полям/конструкторам, а не compile-time кодогенерация."
+                "what_actually": "Фреймворк кеширует найденные `Method`/`Field`, иначе рефлексия была бы слишком медленной.",
+                "source_of_confusion": "Раз поиск делается динамически, кажется, что он повторяется всякий раз.",
+                "if_it_were_true": "Тогда каждый вызов бина требовал бы дорогого повторного поиска.",
+                "how_it_should_be": "`ReflectionUtils` хранит найденное в `ConcurrentHashMap`."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "`Lombok` и `MapStruct` в рантайме через `Class.getDeclaredFields`, `getDeclaredMethods` и `Method.invoke` строят геттеры и мапперы при каждом вызове; `setAccessible(true)` вскрывает приватные `Field`, а `Constructor.newInstance` собирает целевой DTO. `RetentionPolicy.RUNTIME`-аннотации они читают через `AnnotatedElement.getAnnotation` и `Field.get` на горячем пути.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Lombok` и `MapStruct` — это annotation processors (APT): они генерируют реальный байт-код на этапе компиляции, а в рантайме рефлексии не делают.",
-                "source_of_confusion": "Оба «магически» добавляют код, и эту магию приписывают рантайм-рефлексии.",
-                "if_it_were_true": "Тогда в native image они требовали бы `reflect-config.json`, но сгенерированный код работает без него.",
-                "how_it_should_be": "`Lombok`/`MapStruct` — compile-time APT; рефлексия в рантайме у них не используется."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Spring` через рефлексию делает DI (`@Autowired` в поля/сеттеры), AOP-прокси, `@Value`; `Hibernate` маппит `@Entity`-поля и создаёт объекты no-arg конструктором; `Jackson` сериализует поля; `JUnit` находит `@Test`-методы; `Mockito` строит mock. `Lombok`/`MapStruct` — это compile-time APT, не рефлексия.",
+              "order": 1,
+              "text": "Фреймворк по аннотациям находит точки расширения и подключается рефлексией, а самоанализ однократен и кешируется.",
               "correct": true,
               "sections": {
-                "explanation": "Фреймворки сканируют классы пользователя в рантайме: находят аннотированные поля/методы, читают аннотации, подставляют зависимости и значения — всё это поверх `Class`/`Field`/`Method`.",
-                "example": "Упрощённо Spring для `@Autowired` делает `for (Field f : bean.getClass().getDeclaredFields()) if (f.isAnnotationPresent(Autowired.class)) { f.setAccessible(true); f.set(bean, ctx.getBean(f.getType())); }`.",
-                "when_to_apply": "Это объясняют на собеседовании, показывая, как «магия» аннотаций превращается в обычные reflective-вызовы при старте контейнера.",
-                "edge_cases": "Чтобы рефлексия не тормозила, Spring `ReflectionUtils` кеширует `Method`/`Field` в `ConcurrentHashMap`; `Lombok`/`MapStruct` вообще не рефлексия — они генерируют код на этапе компиляции (APT).",
-                "related": "[[java-reflection-interview#Q16]] Что такое `MethodHandle` и чем он лучше рефлексии?; [[java-reflection-interview#Q14]] Что такое `setAccessible(true)` и какие есть риски?; [[java-reflection-interview#Q1]] Что такое Reflection в Java и для чего используется?"
+                "explanation": "Общий паттерн: по аннотациям найти точки расширения и подключиться к ним рефлексией.",
+                "example": "Для `@Autowired` Spring в цикле по полям вызывает `setAccessible(true)` и `field.set(bean, dep)`.",
+                "when_to_apply": "При старте контекста, когда бины связываются и маппинги строятся один раз.",
+                "edge_cases": "Найденные `Method`/`Field` `ReflectionUtils` кеширует в `ConcurrentHashMap`.",
+                "related": "Lombok и MapStruct решают задачу иначе — генерацией кода при сборке (APT)."
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`Spring` и `Hibernate` держатся на рефлексии, поэтому кэшировать `Method`, `Field` и `Constructor` бессмысленно — оверхед `invoke` неустраним; каждый `getDeclaredField`, `setAccessible` и `Class.getDeclaredMethods` пересчитывается на горячем пути, а `Modifier`-проверки и `ParameterizedType`-резолвинг обесценивают прогрев кэша.",
+              "label": "C",
+              "order": 2,
+              "text": "Spring выполняет рефлективный самоанализ бинов заново на каждый входящий запрос, а не при старте.",
               "correct": false,
               "sections": {
-                "what_actually": "Рефлексия действительно лежит в основе, но оверхед снижают кешированием: Spring `ReflectionUtils` хранит `Method`/`Field` в `ConcurrentHashMap`, чтобы не искать их повторно.",
-                "source_of_confusion": "Из «рефлексия медленная и неизбежная» делают вывод, что бороться с её ценой нечем.",
-                "if_it_were_true": "Тогда не существовало бы кеширующих `ReflectionUtils`, но они есть именно ради производительности.",
-                "how_it_should_be": "Рефлексия — основа фреймворков, но её стоимость гасят кешированием reflective-объектов."
+                "what_actually": "Самоанализ Spring делает однократно при старте контекста, а не на каждый запрос.",
+                "source_of_confusion": "Кажется, что связывание бинов идёт при каждом обращении.",
+                "if_it_were_true": "Тогда рефлексия убивала бы производительность на каждом запросе.",
+                "how_it_should_be": "Найденные `Method`/`Field` кешируются и переиспользуются в рантайме."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Lombok подключается к вашим классам через рефлексию в рантайме, наравне со Spring и Hibernate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lombok — это APT-процессор: нужный код он генерирует при сборке, а не достаёт рефлексией.",
+                "source_of_confusion": "Lombok обрабатывает те же аннотации, поэтому кажется рефлексией.",
+                "if_it_were_true": "Тогда сгенерированные Lombok методы возникали бы во время работы программы, а не при её компиляции.",
+                "how_it_should_be": "Рефлексией в рантайме пользуются Spring и Hibernate; Lombok встраивает код при сборке."
               }
             }
           ]
@@ -909,52 +909,52 @@
           "question_text": "Что такое `MethodHandle` и чем он лучше рефлексии?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "`MethodHandle` — strongly typed callable из `java.lang.invoke`, создаваемый через `Lookup` и `MethodType`; JVM может оптимизировать стабильные call sites лучше обычной reflection.",
+              "order": 0,
+              "text": "Механизм `MethodHandle` на деле заметно медленнее обычной рефлексии и совсем не поддаётся JIT-оптимизации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MethodHandle` близок к прямому вызову после разогрева и может быть инлайнен JVM.",
+                "source_of_confusion": "Низкоуровневый API кажется медленнее удобной рефлексии.",
+                "if_it_were_true": "Тогда его не выбирали бы для горячего пути.",
+                "how_it_should_be": "JVM рассматривает `MethodHandle` как то, что можно оптимизировать."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Работает только с нетипизированным `Object` и вовсе не требует описывать сигнатуру вызова через `MethodType`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MethodHandle` типизирован через `MethodType`, а рефлексия отдаёт нетипизированный `Object`.",
+                "source_of_confusion": "Оба механизма вызывают методы, поэтому их type safety уравнивают.",
+                "if_it_were_true": "Тогда пропало бы преимущество `MethodHandle` в безопасности типов.",
+                "how_it_should_be": "Сигнатуру задают `MethodType`, и вызов типобезопасен."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Быстрая типизированная альтернатива рефлексии — доступ проверяется раз при `Lookup`, не на каждом вызове.",
               "correct": true,
               "sections": {
-                "explanation": "В отличие от `Method.invoke` (всё через `Object`, без инлайнинга), `MethodHandle` несёт точную сигнатуру `MethodType` и после разогрева вызывается почти как прямой вызов, а доступ задаётся объектом `Lookup`, а не `setAccessible`.",
-                "example": "`MethodHandle mh = lookup.findVirtual(String.class, \"substring\", MethodType.methodType(String.class, int.class, int.class)); String r = (String) mh.invoke(\"Hello, World!\", 0, 5);` даст `\"Hello\"`.",
-                "when_to_apply": "Применяют в горячих путях и инфраструктуре, где важна скорость и типобезопасность вызова: компилятор лямбд использует `invokedynamic` поверх `MethodHandle`.",
-                "edge_cases": "`VarHandle` (Java 9) — аналог для полей с поддержкой memory ordering (volatile/acquire/release); `MethodHandle` лежит в основе `invokedynamic`, на которой строятся лямбды Java.",
-                "related": "[[java-reflection-interview#Q1]] Что такое Reflection в Java и для чего используется?; [[java-reflection-interview#Q15]] Как рефлексия используется в Java-фреймворках?; [[java-reflection-interview#Q2]] Как получить объект `Class<?>`?"
+                "explanation": "`MethodHandle` (Java 7) — «прямая ссылка на код»: цель ищут раз, дальше вызовы почти как обычные.",
+                "example": "`lookup.findVirtual(String.class, \"substring\", ...)` и `mh.invoke(\"Hello\", 0, 5)` дают \"Hello\".",
+                "when_to_apply": "На горячем пути, где один вызов повторяется многократно, — его можно «разогреть».",
+                "edge_cases": "`VarHandle` (Java 9) — родственный механизм для полей с управлением memory ordering.",
+                "related": "`MethodHandle` — низкоуровневая основа `invokedynamic`, через который реализованы лямбды."
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`MethodHandle` является текстовым именем метода, которое заново разрешается при каждом вызове без фиксированной сигнатуры и проверки типов аргументов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`MethodHandle` — typed callable из `java.lang.invoke`, разрешённый через `Lookup` и `MethodType`; stable call sites JVM может оптимизировать, но access rules и performance зависят от способа использования.",
-                "source_of_confusion": "Название метода часто передают при lookup, поэтому handle ошибочно принимают за строковый descriptor, разрешаемый на каждом вызове.",
-                "if_it_were_true": "Handle не имел бы фиксированного `MethodType`, а несовместимые аргументы проходили бы без type checks до повторного lookup.",
-                "how_it_should_be": "Используйте method handles для dynamic invocation с явной signature и reusable lookup; не обещайте превосходство над direct call или обход JPMS."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Он всегда быстрее прямого Java-вызова и обходит module access checks независимо от privileges объекта `Lookup` и границ JPMS.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`MethodHandle` — typed callable из `java.lang.invoke`, разрешённый через `Lookup` и `MethodType`; stable call sites JVM может оптимизировать, но access rules и performance зависят от способа использования.",
-                "source_of_confusion": "JIT хорошо оптимизирует некоторые stable call sites, и условный выигрыш превращают в абсолютную гарантию.",
-                "if_it_were_true": "Любой `MethodHandle` всегда обгонял бы direct Java call и игнорировал privileges `Lookup` и module openness.",
-                "how_it_should_be": "Используйте method handles для dynamic invocation с явной signature и reusable lookup; не обещайте превосходство над direct call или обход JPMS."
-              }
-            },
-            {
-              "order": 3,
               "label": "D",
-              "text": "`MethodHandle` применяется только JNI и не связан с `invokedynamic`, реализацией lambda expressions или runtime динамических языков.",
+              "order": 3,
+              "text": "Каждый вызов `MethodHandle` заново проверяет права доступа к самой цели, точно как рефлексия.",
               "correct": false,
               "sections": {
-                "what_actually": "`MethodHandle` — typed callable из `java.lang.invoke`, разрешённый через `Lookup` и `MethodType`; stable call sites JVM может оптимизировать, но access rules и performance зависят от способа использования.",
-                "source_of_confusion": "Пакет `java.lang.invoke` связан с low-level runtime, поэтому его ошибочно сводят к JNI.",
-                "if_it_were_true": "`invokedynamic`, lambda metafactory и dynamic language runtimes не могли бы использовать method handles как targets.",
-                "how_it_should_be": "Используйте method handles для dynamic invocation с явной signature и reusable lookup; не обещайте превосходство над direct call или обход JPMS."
+                "what_actually": "Проверка доступа у `MethodHandle` проходит один раз при `Lookup`, а не на каждом вызове.",
+                "source_of_confusion": "Рефлексия проверяет доступ всякий раз, и это переносят на `MethodHandle`.",
+                "if_it_were_true": "Тогда исчезло бы преимущество `MethodHandle` в скорости.",
+                "how_it_should_be": "Права проверяются в момент `Lookup` — по контексту, где он создан."
               }
             }
           ]
