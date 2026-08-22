@@ -163,4 +163,27 @@ test.describe('keyboard quiz flow', () => {
       .toBe(true);
     await expect(question).toBeVisible();
   });
+
+  /**
+   * Раскрытие — серверная навигация (POST /flashcard-reveal): без autofocus фокус
+   * приземлялся на BODY во всех reveal-режимах (iter-167, оба движка), и
+   * клавиатуре приходилось табать весь каркас заново. Тест держит приземление.
+   */
+  test('typed recall: reveal lands focus in the reference answer', async ({ page }) => {
+    await page.goto('/settings');
+    await page.locator('label:has(input[name="mode"][value="TYPED_RECALL"])').first().click();
+    await Promise.all([
+      page.waitForURL(/\/(\?.*)?$/, { timeout: 20_000 }),
+      page.locator('.builder-start-cta').click(),
+    ]);
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'load' }).catch(() => null),
+      page.locator('.flashcard-reveal-btn').first().click(),
+    ]);
+    await expect
+      .poll(() => page.evaluate(() =>
+        document.activeElement?.closest?.('.flashcard-answer') != null), { timeout: 10_000 })
+      .toBe(true);
+    await expect(page.locator('.flashcard-grade-buttons')).toBeVisible();
+  });
 });

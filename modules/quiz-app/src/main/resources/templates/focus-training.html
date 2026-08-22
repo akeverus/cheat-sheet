@@ -788,7 +788,14 @@
                   th:if="${sessionRecallMode and !flashcardRevealed and !typedInputMode}">
                 <button type="submit" class="flashcard-reveal-btn">Показать ответ</button>
             </form>
-            <div th:if="${sessionRecallMode and flashcardRevealed}" class="flashcard-answer workspace-surface">
+            <!--/* Раскрытие — серверная навигация (POST /flashcard-reveal → новый
+                 документ), и фокус приземлялся на BODY: клавиатурному и SR-пользователю
+                 приходилось заново табать весь каркас до эталона (замер iter-167 — все
+                 четыре reveal-режима, оба движка). autofocus + tabindex=-1 сажают фокус
+                 в раскрытый ответ при загрузке; работает и без JS — это HTML, не скрипт.
+                 aria-label даёт SR имя приземления вместо чтения залпом. */-->
+            <div th:if="${sessionRecallMode and flashcardRevealed}" class="flashcard-answer workspace-surface"
+                 tabindex="-1" autofocus role="region" aria-label="Ответ раскрыт">
                 <!--/* Typed-recall / code-challenge / interview: эхо ответа пользователя
                      над эталоном для само-сверки («напиши → сравни»). Текст живёт в
                      sessionStorage (сохраняется JS при сабмите reveal-формы, т.к.

@@ -103,6 +103,9 @@ class KeyboardE2eContractTest {
                 .as("флешкарточный тест пропал: Space и оценка снова без покрытия")
                 .contains("flashcard: Space reveals, digit grades, next card arrives");
         assertThat(spec)
+                .as("тест приземления фокуса после раскрытия пропал (FRD-219)")
+                .contains("typed recall: reveal lands focus in the reference answer");
+        assertThat(spec)
                 .as("оценка обязана жаться с повтором — одиночное нажатие в WebKit гонится "
                         + "с подвесом обработчика")
                 .containsPattern("poll\\(async \\(\\) => \\{\\s*await page\\.keyboard\\.press\\('2'\\);");
