@@ -206,11 +206,14 @@
         <h2 class="section-title" id="stats-standing-title">Где я сейчас</h2>
         <span class="stats-standing-lead muted" th:if="${progression != null}">
             <span th:text="${progression.rank().title()} + ' · уровень ' + ${progression.level()}">Ученик · уровень 1</span>
-            <!--/* Тот же источник и то же форматирование, что у плитки «Точность
-                 попыток» ниже: расхождение шапки с содержимым — ложь. У пустого
-                 прогресса точности нет, и хвост просто не печатается. */-->
+            <!--/* Тот же источник, то же форматирование И ТО ЖЕ ИМЯ, что у плитки
+                 «Точность попыток» ниже: расхождение шапки с содержимым — ложь.
+                 Голое «точность» здесь стояло рядом с «Первой попыткой 23,3%» панели
+                 деталей — у страницы две точности с разными знаменателями, и
+                 безымянная читалась как противоречие, а не как вторая метрика
+                 (VIS-04). У пустого прогресса точности нет, и хвост не печатается. */-->
             <span class="stats-standing-lead-tail" th:if="${metrics != null and metrics.hasOverallAccuracy()}"
-                  th:text="' · точность ' + ${#numbers.formatDecimal(metrics.overallAccuracy, 1, 1)} + '%'"> · точность 0%</span>
+                  th:text="' · точность попыток ' + ${#numbers.formatDecimal(metrics.overallAccuracy, 1, 1)} + '%'"> · точность попыток 0%</span>
         </span>
     </summary>
 <div class="stats-standing">
@@ -224,9 +227,13 @@
         <span class="eyebrow">Точность попыток</span>
         <div class="metric-value"
              th:text="${metrics.hasOverallAccuracy()} ? ${#numbers.formatDecimal(metrics.overallAccuracy, 1, 1)} + '%' : '—'">—</div>
+        <!--/* Не «(без пропусков)»: в словаре пользователя «пропуск» — кнопка
+             «Не знаю», а она пишет UNKNOWN, который СЧИТАЕТСЯ ошибкой. Исключается
+             из знаменателя только outcome SKIP — мёртвая ветвь enum, её не пишет
+             ни один обработчик. Подпись называет живое правило, а не мёртвое. */-->
         <span class="muted tiny"
               th:with="nonSkip=${metrics.attemptsCorrect + metrics.attemptsIncorrect}"
-              th:text="${metrics.attemptsCorrect} + ' верных попыток из ' + ${nonSkip} + ' (без пропусков)'">0 верных попыток из 0</span>
+              th:text="${metrics.attemptsCorrect} + ' верных попыток из ' + ${nonSkip} + ' · «не знаю» — ошибка'">0 верных попыток из 0</span>
     </article>
     <!--/* Тон плитки считается по ТОМУ ЖЕ округлённому числу, которое она печатает.
          Раньше класс `good` стоял безусловно, и на пустом прогрессе «0%» светилось
@@ -875,7 +882,7 @@
                     <div class="metric-row"><dt>Все попытки</dt>
                         <dd th:text="${metrics.hasOverallAccuracy()} ? ${#numbers.formatDecimal(metrics.overallAccuracy, 1, 1)} + '%' : '—'">—</dd></div>
                 </dl>
-                <p class="metric-note">Знаменатель общей — верных + ошибочных (без пропусков).</p>
+                <p class="metric-note">Знаменатель общей — верных + ошибочных; «не знаю» считается ошибкой.</p>
             </article>
             <article class="metric-group">
                 <h3 class="metric-group-title">Удержание</h3>

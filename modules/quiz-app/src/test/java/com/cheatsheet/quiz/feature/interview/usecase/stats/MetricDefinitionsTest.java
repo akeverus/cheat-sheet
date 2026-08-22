@@ -19,6 +19,21 @@ class MetricDefinitionsTest {
     }
 
     /**
+     * Формула общей точности печатается в раскрытии «Формулы» на /stats. «Попытки
+     * без пропусков» отсылали к outcome SKIP, который не пишет ни один обработчик
+     * (мёртвая ветвь enum), и молчали про живое правило: кнопка «Не знаю» пишет
+     * UNKNOWN, и он стоит в знаменателе как ошибка (VIS-04).
+     */
+    @Test
+    void overallAccuracyFormulaExplainsTheFateOfDontKnowInsteadOfDeadSkip() {
+        var catalog = MetricDefinitions.catalog();
+
+        assertThat(catalog.get("overallAccuracy").formula())
+                .contains("не знаю")
+                .doesNotContain("без пропусков");
+    }
+
+    /**
      * Формула `dueNow` печатается в карточке «Очередь» прямо под числом, а число
      * включает вопросы без расписания. Пока формула говорила только про «срок
      * повторения наступил», подпись противоречила соседней строке «N к повтору ·

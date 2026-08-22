@@ -342,6 +342,27 @@ class TemplateFragmentContractTest {
         assertThat(train).contains("mobile-nav(active='focus')");
     }
 
+    /**
+     * КПИ банка на рельсе тренировки носит имя своего знаменателя (VIS-04).
+     *
+     * <p>Рельс печатал «Точность 23%» — точность ПЕРВЫХ попыток (выбор верный и
+     * объяснён комментарием шаблона), а /stats открывался «точностью попыток 8,1%».
+     * Разные знаменатели под одним словом на соседних экранах — те же два
+     * «противоречащих» числа, только между страницами. Имя знаменателя обязано
+     * стоять ПРИ числе, а не в комментарии для разработчика.</p>
+     */
+    @Test
+    void focusRailAccuracyKpiNamesItsDenominator() throws IOException {
+        String focus = readTemplate("templates/focus-training.html");
+        assertThat(focus)
+                .as("подпись КПИ рельса — голое «Точность»: рядом с «точностью попыток» "
+                        + "на /stats читается как то же число, а знаменатели разные")
+                .containsPattern("kpi-role\">Точность первой попытки<");
+        assertThat(focus)
+                .as("число КПИ перестало быть точностью первых попыток — подпись теперь лжёт")
+                .contains("firstAttemptAccuracy");
+    }
+
     @Test
     void settingsResetOptionsExplainsActualRecoveryFlow() throws IOException {
         String settings = readTemplate("templates/settings.html");

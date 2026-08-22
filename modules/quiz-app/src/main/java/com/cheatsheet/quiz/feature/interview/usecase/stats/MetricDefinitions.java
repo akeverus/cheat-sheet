@@ -26,8 +26,12 @@ public final class MetricDefinitions {
         m.put("attemptsIncorrect", def("Неверные попытки", "count", "неверные и «не знаю»", "lifetime", "attemptsTotal"));
         m.put("firstAttemptAccuracy", def("Точность первой попытки", "percent",
                 "верные среди первых попыток / число первых попыток", "lifetime", "firstAttempts"));
+        // «Все попытки» — правда словаря пользователя: outcome SKIP в знаменатель
+        // не входит, но его не пишет ни один обработчик (кнопка «Не знаю» пишет
+        // UNKNOWN, и он ошибка). Проза про «без пропусков» объясняла мёртвую ветвь
+        // и молчала про живую — читатель решал, что его «не знаю» не считаются.
         m.put("overallAccuracy", def("Общая точность", "percent",
-                "верные среди попыток без пропусков / попытки без пропусков", "lifetime", "nonSkipAttempts"));
+                "верные попытки / все попытки; «не знаю» считается ошибкой", "lifetime", "nonSkipAttempts"));
         m.put("retention7d", def("Удержание 7д", "percent",
                 "верные повторные попытки за 7 дней / повторные за 7 дней", "7d", "reviews7d"));
         m.put("retention30d", def("Удержание 30д", "percent",
