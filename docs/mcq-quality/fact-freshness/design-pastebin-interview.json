@@ -1,14 +1,19 @@
 {
   "topic_slug": "design-pastebin-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
-  "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+  "version_sensitive": false,
+  "product_version": "n/a — концептуальный system-design; числовые константы (62^7≈3.5T, zstd 3-4×, ~18TB @1M/день×5лет, S3 Glacier lifecycle 30/365/1825d) — стабильная арифметика/свойства алгоритмов, не версионируемый продукт",
+  "checked_date": "2026-08-22",
+  "sources": [
+    "Base62: 62^7 = 3,521,614,606,208 ≈ 3.5T комбинаций (Q4) — арифметика",
+    "Ёмкость: 1M×10KB=10GB/день, 5лет≈18TB raw, zstd 3-4×→5-7TB (Q2/Q7) — арифметика и известные свойства кодеков",
+    "Кодеки: zstd — существенно быстрее Brotli/gzip при близкой степени сжатия (Q7) — свойство алгоритмов, стабильно",
+    "S3 lifecycle: STANDARD_IA @30d, GLACIER @365d, expiration @1825d (Q22) — конфигурируемые пороги примера",
+    "Приватность: unlisted=obscurity, private=owner-check 403, password=bcrypt (Q17); поиск только public+Kafka async indexer в ES BM25 (Q18)",
+    "burn-after-read: FOR UPDATE row lock атомарность; 0bin/Privatebin — клиентское шифрование ключом во фрагменте URL (Q15)"
+  ],
+  "version_sensitive_claims": [
+    "Числа — арифметические (62^7, 18TB) или свойства алгоритмов (zstd vs Brotli скорость), не подверженные версионному дрейфу.",
+    "S3 lifecycle-пороги (30/365/1825d) — пример конфигурации, не фиксированный факт продукта.",
+    "Все продуктовые упоминания (Pastebin ~25M MAU, Gist) — иллюстративны, не тестируются как точные версии."
   ]
 }
