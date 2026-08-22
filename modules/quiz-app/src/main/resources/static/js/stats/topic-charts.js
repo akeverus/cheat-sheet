@@ -315,28 +315,47 @@ export function initTopicCharts() {
       progressCanvas.classList.remove('hidden');
       progressFallback?.classList.add('hidden');
       renderChartTable('topicProgressChartTable', 'Табличное представление прогресса по темам',
-        ['Тема', 'Выучено', 'Осталось'],
-        progressData.map((t) => [t.name, t.learned, Math.max(0, t.total - t.learned)]));
+        ['Тема', 'Освоено %', 'Выучено', 'Осталось'],
+        progressData.map((t) => [t.name, Math.round((t.learned / Math.max(1, t.total)) * 100),
+          t.learned, Math.max(0, t.total - t.learned)]));
       try {
         const names = progressData.map((t) => t.name);
         const measure = labelMeasurer(progressCanvas, LABEL_FONT_PX);
+        // VIS-01 (REF-005): стек «Выучено + Осталось» не показывал прогресс.
+        // Замер на живых данных: learned 0–4 против total до 54 — сегмент
+        // прогресса занимал ≤7% высоты бара и на большинстве тем был
+        // невидим; график отвечал «сколько осталось», а не «как я иду».
+        // Одна серия «Освоено %» делает сравнимой именно долю освоения;
+        // абсолютные объёмы никуда не делись — тултип говорит «X из N»,
+        // таблица-дубль несёт и %, и оба числа.
+        const shares = progressData.map((t) => Math.round((t.learned / Math.max(1, t.total)) * 100));
         charts.push(new Chart(progressCanvas, {
           type: 'bar',
           data: {
             labels: names,
             datasets: [
-              { label: 'Выучено', data: progressData.map((t) => t.learned), backgroundColor: palette.learned, borderRadius: 3 },
-              { label: 'Осталось', data: progressData.map((t) => Math.max(0, t.total - t.learned)), backgroundColor: palette.remaining, borderRadius: 3 }
+              { label: 'Освоено %', data: shares, backgroundColor: palette.learned, borderRadius: 3 }
             ]
           },
           options: {
             ...common,
             animation,
-            plugins: fullNameTooltip(common.plugins, names),
-            // Ось Y — количество карточек: только целые деления, без 0.5/1.5.
+            plugins: {
+              ...fullNameTooltip(common.plugins, names),
+              tooltip: {
+                ...common.plugins.tooltip,
+                callbacks: {
+                  title: (items) => names[items[0]?.dataIndex] ?? '',
+                  label: (item) => {
+                    const t = progressData[item.dataIndex];
+                    return `Освоено ${t.learned} из ${t.total} (${shares[item.dataIndex]}%)`;
+                  }
+                }
+              }
+            },
             scales: {
-              x: { ...budgetedAxis(common.scales.x, names, progressBudget, measure), stacked: true },
-              y: { ...common.scales.y, stacked: true, ticks: { ...common.scales.y.ticks, precision: 0 } }
+              x: budgetedAxis(common.scales.x, names, progressBudget, measure),
+              y: { ...common.scales.y, max: 100, ticks: { ...common.scales.y.ticks, callback: (v) => `${v}%` } }
             }
           }
         }));

@@ -97,6 +97,12 @@
           }
           if (rules) {
             var tabStyle = document.createElement('style');
+            // ID обязателен: ui/tablist.js СНИМАЕТ этот стиль, когда модуль
+            // взял управление панелями. Без снятия правило с ID-специфичностью
+            // (:has(#панель)) переживало клики и пиннило сохранённую панель на
+            // всю жизнь страницы — вкладки «меняли» классы, но не контент
+            // (VIS-02: «Динамика» открывалась только после перезагрузки).
+            tabStyle.id = 'tab-restore-style';
             tabStyle.textContent = rules;
             document.head.appendChild(tabStyle);
           }

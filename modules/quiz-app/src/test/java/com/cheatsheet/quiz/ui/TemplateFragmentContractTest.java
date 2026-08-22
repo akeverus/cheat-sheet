@@ -300,6 +300,25 @@ class TemplateFragmentContractTest {
         assertThat(settings).doesNotContain("id=\"sidebar-collapse-toggle\"");
     }
 
+    /**
+     * VIS-02 (REF-005): pre-paint стиль восстановления вкладок обязан быть
+     * СНЯТ, когда ui/tablist.js берёт управление панелями. Инжект несёт
+     * правило с ID-специфичностью (:has(#панель)), которое сильнее
+     * component-класса `.is-active`: не снять его — и сохранённая панель
+     * пиннится на всю жизнь страницы (клики переключали классы, но не
+     * контент; «Динамика» на /stats открывалась только после перезагрузки).
+     * Контракт держит ОБЕ стороны рукопожатия: id в head и снятие в модуле.
+     */
+    @Test
+    void tabRestorePrePaintStyleIsHandedOverToTablist() throws IOException {
+        String head = readTemplate("templates/fragments/head.html");
+        assertThat(head).contains("tabStyle.id = 'tab-restore-style'");
+
+        String tablist = Files.readString(
+                Path.of("src/main/resources/static/js/ui/tablist.js"), StandardCharsets.UTF_8);
+        assertThat(tablist).contains("document.getElementById('tab-restore-style')?.remove()");
+    }
+
     @Test
     void trainTemplateHostsSessionBuilder() throws IOException {
         // UXD-001: поверхность session-start. Функциональные ID конструктора
