@@ -477,7 +477,11 @@ class InterviewControllerTest {
         assertThat(body).contains("class=\"field filter-bar-field");
         assertThat(body).contains("class=\"field-label\"");
         assertThat(body).contains("class=\"toggle-item\"");
-        assertThat(body).contains("class=\"btn next-btn\"");
+        // Якорь «единой системы кнопок» — submit самой полосы отбора: он рендерится
+        // при ЛЮБЫХ данных. Прежний якорь `btn next-btn` живёт только в empty-state
+        // ветках (noTopics…) и молча зависел от порядка методов: первый же тест,
+        // записавший попытку, наполнял user_topic_stats — и ассерт падал.
+        assertThat(body).contains("class=\"btn secondary-btn\"");
         for (String retired : new String[] {
             "stats-filters-form", "stats-search-form", "stats-action-btn",
             "stats-apply-action", "stats-search-action", "stats-filter-pane",
@@ -788,6 +792,59 @@ class InterviewControllerTest {
         assertThat(empty).contains("empty-action-retry");
         assertThat(empty).contains("href=\"/?mode=FLASHCARD\"");
         assertThat(empty).contains("Обновить флешкарты");
+    }
+
+    /**
+     * UX-01 (refoundation, Phase A): вопрос без MCQ-вариантов внутри EXAM-сессии
+     * не должен быть тупиком. Форма {@code /answer} (вместе со своим «Не знаю
+     * ответа») гейтится {@code !flashcardMode}, а optionless-вопрос форсит
+     * {@code flashcardMode=true} — значит session-продвигающий контрол обязана
+     * нести сама флешкарт-ветка: POST {@code /skip} (честный UNKNOWN, та же
+     * идемпотентность и штрафной пул экзамена, что у MCQ-ветки).
+     *
+     * <p>GET-ссылка browse-режима внутри активной сессии запрещена: ветка
+     * {@code interviewSession} в {@code FocusTrainingPageService} приоритетна,
+     * и GET с {@code excludeQuestionId} всё равно рендерит тот же
+     * {@code session.currentQuestionId()} — ссылка выглядит рабочей, но
+     * возвращает тот же вопрос (живой репро: «Вопрос 1 из 5» не менялся).</p>
+     */
+    @Test
+    void optionlessQuestionInsideExamSessionOffersSkipAndAdvances() throws Exception {
+        String topic = "optionless-session-topic";
+        long questionId = questionRepository.insert(com.cheatsheet.quiz.TestQuestionBuilder.aQuestion()
+                .withSlug("optionless-session-fixture")
+                .withTopic(topic)
+                .withQuestionText("Optionless session contract question")
+                .build());
+        MockHttpSession session = new MockHttpSession();
+        mockMvc.perform(post("/start")
+                        .with(csrf())
+                        .session(session)
+                        .param("mode", "EXAM")
+                        .param("count", "1")
+                        .param("topic", topic))
+                .andExpect(status().is3xxRedirection());
+
+        String body = mockMvc.perform(get("/").session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(body).contains("Optionless session contract question");
+        assertThat(body).as("флешкарта внутри сессии обязана иметь POST-продвижение /skip")
+                .contains("action=\"/skip\"");
+        assertThat(body).as("GET-ссылка browse внутри сессии рендерит тот же вопрос — запрещена")
+                .doesNotContain("flashcard-browse-next");
+
+        mockMvc.perform(post("/skip")
+                        .with(csrf())
+                        .session(session)
+                        .param("questionId", String.valueOf(questionId)))
+                .andExpect(status().is3xxRedirection());
+
+        String after = mockMvc.perform(get("/").session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(after).as("после skip односложная сессия завершена — тот же вопрос не повторяется")
+                .doesNotContain("Optionless session contract question");
     }
 
     @Test

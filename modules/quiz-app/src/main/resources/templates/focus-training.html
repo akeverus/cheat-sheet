@@ -652,13 +652,33 @@
                         <div class="answer markdown-content" th:utext="${studyAnswerHtml}"></div>
                     </div>
                 </details>
-                <!--/* Выход к следующему вопросу. Без него browse-флешкарта была
-                     тупиком: формы ответа тут нет (её th:if гасит flashcardMode),
-                     кнопок само-оценки тоже (они только в recall-сессии), и после
-                     раскрытия ответа единственным путём дальше оставался сайдбар.
-                     Ссылка серверная (GET с тем же фильтром + excludeQuestionId),
-                     поэтому работает и без JS — как весь остальной browse-режим. */-->
-                <a class="btn secondary-btn flashcard-browse-next" th:href="${focusBrowseNextHref}">Следующий вопрос<span aria-hidden="true"> →</span></a>
+                <!--/* Выход к следующему вопросу — ДВА контекста с разными механиками.
+
+                     1) Browse БЕЗ сессии: серверная GET-ссылка (тот же фильтр +
+                        excludeQuestionId) — работает без JS, вопрос сменится.
+                        Без неё browse-флешкарта была тупиком: формы ответа тут
+                        нет (её th:if гасит flashcardMode), кнопок само-оценки
+                        тоже (они только в recall-сессии).
+
+                     2) ВНУТРИ активной EXAM/MARATHON/STUDY-сессии GET не двигает
+                        ничего: ветка interviewSession в FocusTrainingPageService
+                        приоритетна и рендерит session.currentQuestionId() снова —
+                        ссылка выглядела рабочей, но возвращала тот же вопрос
+                        (тупик UX-01, живой репро: «Вопрос 1 из 5» не менялся).
+                        Сессию двигает только POST: реюзим /skip — тот же честный
+                        UNKNOWN, та же идемпотентность и ограниченный штрафной пул
+                        экзамена, что у «Не знаю ответа» MCQ-ветки; _csrf
+                        инъектируется автоматически (th:action). В STUDY-фазе LEARN
+                        форму не показываем: там уже есть «Проверить себя», а
+                        повторный skip после switchToLearnPhase зациклил бы фазу. */-->
+                <a th:if="${interviewSession == null or interviewSession.finished}"
+                   class="btn secondary-btn flashcard-browse-next" th:href="${focusBrowseNextHref}">Следующий вопрос<span aria-hidden="true"> →</span></a>
+                <form th:if="${interviewSession != null and !interviewSession.finished and !studyLearnPhase}"
+                      method="post" th:action="@{/skip}" class="flashcard-session-skip">
+                    <input type="hidden" name="questionId" th:value="${current.question.id}">
+                    <button type="submit" class="btn secondary-btn flashcard-session-next"
+                            title="Флешкарту нельзя проверить автоматически: ответ засчитается как «не знаю», сессия продолжится">Не знаю — следующий вопрос<span aria-hidden="true"> →</span></button>
+                </form>
             </div>
 
             <!--/* Активная recall-сессия (FLASHCARD / typed-family): серверный reveal двигает SM-2 фазу. */-->
