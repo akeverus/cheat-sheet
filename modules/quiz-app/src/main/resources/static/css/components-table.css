@@ -59,18 +59,26 @@ html[data-design] .table-scroll { overflow-x: auto; min-width: 0; max-width: 100
    WebKit — ::-webkit-scrollbar) и даём контейнеру tabindex=0 (тоже из JS), чтобы к
    скрытым столбцам можно было доехать с клавиатуры (WCAG 2.1.1).
    outline-offset:-2px — кольцо рисуется внутрь, иначе его срежет overflow. */
-html[data-design] .table-scroll.is-scrollable {
+/* Тот же рецепт носит и КОД: база `html[data-design] pre` (reset-layout.css) —
+   overflow-x:auto на каждом pre, и переполненный листинг вне окна .code-viewport
+   (markdown-разбор, result) — такой же голый скролл-контейнер. Класс и tabindex
+   вешает тот же content/table-scroll.js (A11Y-01, WCAG 2.1.1). */
+html[data-design] .table-scroll.is-scrollable,
+html[data-design] pre.is-scrollable {
   scrollbar-width: thin;
   scrollbar-color: var(--color-accent-primary) transparent;
 }
-html[data-design] .table-scroll.is-scrollable::-webkit-scrollbar { height: 6px; }
-html[data-design] .table-scroll.is-scrollable::-webkit-scrollbar-thumb {
+html[data-design] .table-scroll.is-scrollable::-webkit-scrollbar,
+html[data-design] pre.is-scrollable::-webkit-scrollbar { height: 6px; }
+html[data-design] .table-scroll.is-scrollable::-webkit-scrollbar-thumb,
+html[data-design] pre.is-scrollable::-webkit-scrollbar-thumb {
   background: var(--color-accent-primary);
   /* Литерал 3px снят (iter-119): бегунок — часть интерфейса, а форма у продукта одна.
      Скруглённый бегунок в прямоугольном продукте выглядел деталью из чужой системы. */
   border-radius: var(--border-radius-sm);
 }
-html[data-design] .table-scroll:focus-visible {
+html[data-design] .table-scroll:focus-visible,
+html[data-design] pre.is-scrollable:focus-visible {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: -2px;
 }

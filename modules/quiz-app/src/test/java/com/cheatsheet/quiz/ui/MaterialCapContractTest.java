@@ -273,4 +273,59 @@ class MaterialCapContractTest {
                 .as("потолок карточки перестал быть НИЖЕ общего — тогда он ничего не ограничивает")
                 .isLessThan(limits(base(rules, ".diagram-viewport"))[1]);
     }
+
+    /**
+     * Прокручиваемая область листинга — ОДНА, и это сам `.code-viewport` (обе оси).
+     *
+     * <p>До A11Y-01 скроллеров было два вложенных: окно (overflow:auto + max-height,
+     * фокусируемое из code-toolbar.js) крутило вертикаль, а pre внутри со своим
+     * overflow-x:auto съедал горизонтальное переполнение — окно его «не видело»
+     * (замер 390: pre 566/324, окно scrollWidth==clientWidth). Клавиатурный фокус
+     * стоял на окне, стрелки вправо двигали НИЧТО — скрытые 242px кода были
+     * недостижимы (WCAG 2.1.1). Схема соседней диаграммы всегда была одноконной —
+     * листинг приведён к ней же.</p>
+     *
+     * <p>width:max-content — фон и рамку несёт pre (components-code-highlight.css:
+     * «фон принадлежит pre»), и панель обязана застилать всю прокручиваемую ширину;
+     * min-width:100% возвращает полную полосу короткому сниппету. В режиме переноса
+     * (.is-code-wrap) правило молчит: там строки ломаются и горизонтали нет,
+     * а max-content при pre-wrap мерил бы неразорванную строку и ломал перенос.</p>
+     */
+    @Test
+    void theViewportIsTheOnlyScrollerOfTheListing() throws IOException {
+        List<Rule> rules = focusRules();
+        Rule inner = rules.stream()
+                .filter(r -> r.selectors().contains(":not(.is-code-wrap) .code-viewport pre"))
+                .filter(r -> r.media() == null)
+                .reduce((a, b) -> b)
+                .orElseThrow(() -> new AssertionError(
+                        "нет экранного правила «pre внутри окна листинга не скроллер» — "
+                                + "горизонтальное переполнение снова съедает вложенный "
+                                + "нефокусируемый pre"));
+        assertThat(inner.body())
+                .as("pre внутри окна обязан отдать горизонтальное переполнение окну")
+                .contains("overflow-x: visible")
+                .contains("width: max-content")
+                .contains("min-width: 100%")
+                .contains("max-width: none");
+
+        Rule print = rules.stream()
+                .filter(r -> r.selectors().contains(":not(.is-code-wrap) .code-viewport pre"))
+                .filter(r -> r.media() != null && r.media().contains("print"))
+                .reduce((a, b) -> b)
+                .orElseThrow(() -> new AssertionError(
+                        "нет печатного отката: у бумаги прокрутки нет, и width:max-content "
+                                + "уводит панель листинга за поле листа"));
+        assertThat(print.body())
+                .as("на бумаге строка ценнее переносом, чем обрезком")
+                .contains("white-space: pre-wrap")
+                .contains("width: auto");
+
+        String js = new String(new ClassPathResource("static/js/ui/code-toolbar.js")
+                .getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        assertThat(js)
+                .as("фокусируемость окна оценивает только вертикаль: горизонтальный скролл "
+                        + "короткого по высоте листинга останется без tab-стопа")
+                .contains("viewport.scrollWidth > viewport.clientWidth");
+    }
 }

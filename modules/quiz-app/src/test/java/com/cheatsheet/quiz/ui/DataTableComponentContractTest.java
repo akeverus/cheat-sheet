@@ -232,6 +232,36 @@ class DataTableComponentContractTest {
                 .contains(SCROLL_CLASS);
     }
 
+    /**
+     * Рецепт «переполнен → фокусируем и подсвечен» обслуживает не только таблицы.
+     * Код — вторая полоса контента с горизонтальной прокруткой: база
+     * `html[data-design] pre` (reset-layout.css) несёт overflow-x:auto на КАЖДОМ
+     * pre приложения, и без этого контракта любой длинный листинг вне окна
+     * `.code-viewport` (markdown-разбор, result) — прокрутка, до которой нельзя
+     * дойти с клавиатуры (A11Y-01, WCAG 2.1.1).
+     */
+    @Test
+    void codeBlocksJoinTheSameScrollAccessRecipe() {
+        String js = read(RESOURCES.resolve("static/js/content/table-scroll.js"));
+        assertThat(js)
+                .as("модуль оценивает только .table-scroll: переполненный pre остаётся "
+                        + "недостижимым с клавиатуры")
+                .contains("'.table-scroll, pre'");
+        assertThat(js)
+                .as("остановка табуляции на коде обязана иметь имя — иначе скринридер "
+                        + "объявит безымянную «группу»")
+                .contains("'Код'");
+
+        String css = read(RESOURCES.resolve("static/css/components-table.css"));
+        assertThat(css)
+                .as("класс .is-scrollable на pre без визуального рецепта: фокус есть, а "
+                        + "стойкого скроллбара-подсказки нет")
+                .containsPattern("pre\\.is-scrollable");
+        assertThat(css)
+                .as("кольцо фокуса на pre не объявлено — фокус получен, но невидим")
+                .containsPattern("pre[^,{]*:focus-visible");
+    }
+
     @Test
     void scrollHintIsAttachedOnlyToOverflowingContainers() {
         String js = read(RESOURCES.resolve("static/js/content/table-scroll.js"));

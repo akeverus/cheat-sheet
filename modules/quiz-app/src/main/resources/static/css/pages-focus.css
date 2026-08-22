@@ -649,6 +649,38 @@ html[data-design] .focus-page .question-code-wrap pre {
      всю ширину колонки с 16px по краю читается тесно. Теперь отбивка одна и своя. */
   padding: var(--space-5);
 }
+/* Внутри окна листинга pre — НЕ скроллер: прокручиваемая область одна, сам
+   `.code-viewport` (обе оси), и только он несёт tabindex/имя из code-toolbar.js.
+   Собственный overflow-x pre съедал горизонтальное переполнение — фокус стоял
+   на окне, а стрелки вправо двигали ничто: скрытая часть строки была
+   недостижима с клавиатуры (A11Y-01, WCAG 2.1.1; замер 390: pre 566/324, окно
+   без горизонтали). width:max-content — фон и рамку носит pre, панель обязана
+   застилать всю прокручиваемую ширину; min-width:100% возвращает короткому
+   сниппету полную полосу. В режиме переноса (.is-code-wrap) правило молчит:
+   строки ломаются, горизонтали нет, а max-content при pre-wrap мерил бы
+   неразорванную строку и убивал сам перенос. */
+html[data-design] .focus-page .question-code-wrap:not(.is-code-wrap) .code-viewport pre.question-code,
+html[data-design] .focus-page .question-code-wrap:not(.is-code-wrap) .code-viewport pre {
+  overflow-x: visible;
+  max-width: none;
+  width: max-content;
+  min-width: 100%;
+}
+/* Печать: у бумаги прокрутки нет (print.css раскрывает окно листинга целиком:
+   max-height none, overflow visible), и width:max-content увёл бы панель за поле
+   листа. Возвращаем полосу и ломаем строки: длинная строка на бумаге ценнее
+   переносом, чем обрезком — до этого правила хвост строки на печати просто
+   терялся под обрезкой overflow-x. */
+@media print {
+  html[data-design] .focus-page .question-code-wrap:not(.is-code-wrap) .code-viewport pre.question-code,
+  html[data-design] .focus-page .question-code-wrap:not(.is-code-wrap) .code-viewport pre {
+    width: auto;
+    max-width: 100%;
+    min-width: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
 /* Рамка листинга — та же прокручиваемая область, что .diagram-viewport у соседней
    диаграммы: длинный код скроллится внутри блока, а не выдавливает варианты за
    нижний край экрана. max-height в vh, потому что «поместиться» — это про вьюпорт,

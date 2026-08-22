@@ -19,14 +19,17 @@ function announceCopyStatus(msg) {
   requestAnimationFrame(() => { region.textContent = msg; });
 }
 
-// .code-viewport ограничивает высоту листинга (pages-focus.css), а прокручиваемая
-// область, до которой нельзя дойти с клавиатуры, — недостижимый контент (WCAG 2.1.1).
-// Ставим tabindex/role/label ТОЛЬКО когда прокрутка реально есть: у короткого
-// сниппета лишний tab-stop перед вариантами ответа не нужен. Пересчитывается при
-// переносе строк (меняет высоту) и на resize.
+// .code-viewport — единственная прокручиваемая область листинга ОБЕИХ осей:
+// вертикаль ограничивает его max-height (pages-focus.css), горизонталь отдаёт ему
+// pre, который внутри окна не скроллер (A11Y-01: пока pre крутил горизонталь сам,
+// фокус стоял на окне, а стрелки вправо двигали ничто — скрытая часть строки была
+// недостижима с клавиатуры, WCAG 2.1.1). Ставим tabindex/role/label ТОЛЬКО когда
+// прокрутка реально есть по ЛЮБОЙ оси: у короткого сниппета лишний tab-stop перед
+// вариантами ответа не нужен. Пересчитывается при переносе строк и на resize.
 function syncCodeViewportFocusability(viewport) {
   if (!viewport) return;
-  const scrolls = viewport.scrollHeight > viewport.clientHeight + 1;
+  const scrolls = viewport.scrollHeight > viewport.clientHeight + 1
+    || viewport.scrollWidth > viewport.clientWidth + 1;
   if (scrolls) {
     viewport.setAttribute('tabindex', '0');
     viewport.setAttribute('role', 'region');
