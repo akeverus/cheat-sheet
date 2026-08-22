@@ -1,14 +1,21 @@
 {
   "topic_slug": "aws-sqs-sns-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
-  "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+  "version_sensitive": true,
+  "product_version": "AWS SQS (квоты 2026), SNS FIFO (с доставкой в Standard SQS, 2023-09), EventBridge, Lambda event source mapping",
+  "checked_date": "2026-08-22",
+  "sources": [
+    "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/quotas-messages.html (message size max 1 MiB; visibility default 30s max 12h; delay max 15 min; FIFO 300 TPS/partition, HTM до 70 000 TPS в us-east-1)",
+    "https://aws.amazon.com/about-aws/whats-new/2023/09/amazon-sns-fifo-topics-message-delivery-sqs-standard-queues/ (FIFO SNS → Standard SQS)",
+    "https://docs.aws.amazon.com/sns/latest/api/API_Subscribe.html (confirmation: HTTP/S, email и чужой аккаунт; SMS/SQS/Lambda — без подтверждения)",
+    "https://aws.amazon.com/sqs/pricing/ + https://aws.amazon.com/sns/pricing/ + https://aws.amazon.com/eventbridge/pricing/ ($0.40/M, $0.50/M, $1/M)"
+  ],
+  "version_sensitive_claims": [
+    "Лимит размера сообщения SQS: дефолт 256 КиБ (MaximumMessageSize), максимум 1 МиБ (с августа 2024); больше — Extended Client Library через S3 (до 2 ГБ). «256 КБ — жёсткий потолок» — протухший факт, исправлен в источнике (0aa5aedf) и используется как дистрактор Q10A.",
+    "FIFO SNS доставляет только в SQS-очереди: FIFO и (с сентября 2023) Standard; email/Lambda/HTTP — нет. «Только SQS FIFO» — протухший факт, дистрактор Q12B.",
+    "Confirmation подписки SNS: HTTP/S, email и подписки из чужого AWS-аккаунта; SMS, SQS и Lambda подтверждения не требуют. «SMS требует confirmation» — дефект источника, исправлен, дистрактор Q13A.",
+    "FIFO SQS: 300 TPS на партицию без батчинга (3000 msg/sec с батчами по 10); High Throughput Mode — до 70 000 TPS (us-east-1/us-west-2/eu-west-1), в остальных регионах ниже.",
+    "Дедупликация FIFO — окно 5 минут; visibility timeout — дефолт 30 секунд (максимум 12 часов); delay — максимум 15 минут; long polling — до 20 секунд; батч — до 10 сообщений; лимит 10 message attributes.",
+    "Цены: SQS Standard $0.40/M, FIFO $0.50/M (free tier 1M/мес); SNS $0.50/M publish + доставка (email $2/100K, SMS ~$0.00645 US); EventBridge $1/M — вдвое дороже SNS.",
+    "Lambda + SQS: event source mapping (с 2018), масштабирование поллеров до 1000 конкурентных вызовов, reserved concurrency как ограничитель; рекомендация visibility ≥ 6× таймаута функции."
   ]
 }
