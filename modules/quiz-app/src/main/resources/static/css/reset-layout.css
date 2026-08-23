@@ -159,14 +159,8 @@ html[data-design][data-motion="off"] *::after {
   scroll-behavior: auto !important;
 }
 
-/* Усиление контраста (OS-настройка «Increase contrast» / «Увеличить контраст» в
-   macOS·iOS·Windows·браузере → prefers-contrast: more). До этого приложение её
-   игнорировало: пользователь явно просит больше контраста, а получал тот же AA.
-   Блок ТОЛЬКО усиливает и срабатывает лишь когда ОС просит → дефолтный рендер
-   нетронут, сдержанные пер-дизайн палитры не конфликтуют. Алиасим блёклые токены
-   на уже определённые (пер-дизайн × пер-тема) более контрастные — один блок
-   покрывает все 10 дизайнов и обе темы, остаётся theme-correct (не хардкодим цвет).
-   Парный к prefers-reduced-motion выше: ещё один OS-pref, который теперь уважаем. */
+/* Усиление контраста (OS-настройка «Increase contrast» / «Увеличить контраст» в macOS·iOS·Windows·браузере → prefers-contrast: more).
+   Довод и история: docs/css-decisions/reset-layout.md#reset-layout-e01 */
 @media (prefers-contrast: more) {
   /* !important обязателен: токены задаются пер-дизайн×пер-тема селекторами вида
      html[data-design="x"][data-theme="dark"] (специфичность 0,2,1) — они бьют
@@ -188,21 +182,8 @@ html[data-design][data-motion="off"] *::after {
   html[data-design] a:not(.btn) { text-decoration: underline !important; }
 }
 
-/* Windows High Contrast / forced-colors: active (CSS MQ5) — браузер заменяет
-   авторские цвета системными и УБИРАЕТ box-shadow. Парный к prefers-contrast выше:
-   ещё один OS-pref, который теперь уважаем. Без блока: (1) фокус-кольца
-   .seg-btn/селектов — box-shadow-only (outline:none) → в High Contrast
-   невидимы; возвращаем системный outline (Highlight — системный цвет, не стрипается).
-   Вкладок в этом списке БОЛЬШЕ НЕТ и быть не должно: с iter-79 они дают настоящий
-   `outline` из components-tabs.css, а forced-colors outline не убирает — только
-   перекрашивает в системный цвет. Строка `.settings-tab:focus-visible` была пятым
-   и последним местом, где вкладка одевалась отдельно от остальных двух полос:
-   починка прилетала одной из трёх, а не вкладке как классу элементов.
-   (2) активный сегмент .seg-btn.is-active помечен ТОЛЬКО фоном accent → перетирается
-   системным цветом, выбранный дизайн/тема/раскладка неразличимы; кодируем системной
-   парой Highlight/HighlightText (гарантированный контраст). !important — как в
-   prefers-contrast: бьём более поздние по источнику не-!important правила
-   (outline:none на 1167/1249/1484/2577, background accent на 2574). */
+/* Windows High Contrast / forced-colors: active (CSS MQ5) — браузер заменяет авторские цвета системными и УБИРАЕТ box-shadow.
+   Довод и история: docs/css-decisions/reset-layout.md#reset-layout-e02 */
 @media (forced-colors: active) {
   html[data-design] .settings-page select:focus,
   html[data-design] .settings-page input[type="number"]:focus,
@@ -266,17 +247,8 @@ html[data-design][data-motion="off"] *::after {
   padding: var(--space-6) var(--page-gutter) var(--space-9);
 }
 
-/* Шапка (chrome) — ОДНА ширина на всех страницах (--max-width-page, дефолт 75rem):
-   при навигации хедер не прыгает по ширине, бренд-тайтл (≈665px) всегда умещается
-   с навигацией в один ряд (на узкой 60rem-мере он переносил nav на 2-ю строку —
-   выглядело незавершённо). Ширину КОНТЕНТА держим уже и per-page — на самих
-   слоях страниц: экран вопроса СЧИТАЕТ свою меру из колонок композиции
-   (--focus-measure, pages-focus.css), страница результата — из своих
-   (--result-measure, pages-result.css); до iter-69 она вместо этого держала
-   персональный замороженный кап --max-width-result прямо на .ed-page.
-   Персональные замороженные капы страниц сюда не возвращаются — их держит гейт
-   PageWidthScaleContractTest. Контент центрирован
-   под шапкой: фокус-квиз узкий и собранный, дашборд — во всю меру страницы. */
+/* Шапка (chrome) — ОДНА ширина на всех страницах (--max-width-page, дефолт 75rem): при навигации хедер не прыгает по ширине, бренд-тайтл (≈665px) всегда умещается с навигацией в о…
+   Довод и история: docs/css-decisions/reset-layout.md#reset-layout-e03 */
 
 /* Eyebrow — mono caps подпись (FOCUS, Q14/50, лейблы) */
 .ed-eyebrow {

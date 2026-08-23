@@ -42,13 +42,23 @@ class CssProseBudgetContractTest {
      *  инвариант укладываются с запасом; эссе — уже нет. */
     private static final int MAX_COMMENT_BYTES = 1536;
 
-    /** Файлы, чья проза вынесена в docs/css-decisions/. */
-    private static final List<String> MIGRATED = List.of("tokens.css", "pages-focus.css");
+    /** Весь каталог, кроме исключений. print.css временно вне гейта: файл несёт
+     *  чужую незакоммиченную дельту (HIST-03) — его эссе уедут в досье после
+     *  приземления того коммита. Убрать исключение = снять строку. */
+    private static final List<String> EXCLUDED = List.of("print.css");
 
     @Test
     void migratedFilesKeepEssaysInDocsNotInCss() throws IOException {
+        List<String> migrated;
+        try (var files = Files.list(CSS_DIR)) {
+            migrated = files.map(p -> p.getFileName().toString())
+                    .filter(n -> n.endsWith(".css"))
+                    .filter(n -> !EXCLUDED.contains(n))
+                    .sorted()
+                    .toList();
+        }
         List<String> offenders = new ArrayList<>();
-        for (String name : MIGRATED) {
+        for (String name : migrated) {
             String css = Files.readString(CSS_DIR.resolve(name), StandardCharsets.UTF_8);
             Matcher m = COMMENT.matcher(css);
             while (m.find()) {
@@ -59,10 +69,14 @@ class CssProseBudgetContractTest {
                 }
             }
             // Тесты quiz-app бегут с CWD modules/quiz-app — корень репозитория на два уровня выше.
-            Path dossier = Path.of("../../docs/css-decisions/" + name.replace(".css", ".md"));
-            assertThat(Files.exists(dossier))
-                    .as("%s переведён, но досье %s не существует — указатели ведут в никуда", name, dossier)
-                    .isTrue();
+            // Досье обязано существовать только у файлов, которые на него ссылаются:
+            // файл без эссе досье не заводил.
+            if (css.contains("docs/css-decisions/")) {
+                Path dossier = Path.of("../../docs/css-decisions/" + name.replace(".css", ".md"));
+                assertThat(Files.exists(dossier))
+                        .as("%s ссылается на досье %s, а его не существует — указатели ведут в никуда", name, dossier)
+                        .isTrue();
+            }
         }
         assertThat(offenders)
                 .as("эссе вернулись в переведённый CSS — история живёт в docs/css-decisions/<файл>.md, "
