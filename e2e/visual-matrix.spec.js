@@ -24,8 +24,15 @@ const OUT_DIR = path.join(__dirname, 'visual-results');
    (проверено с мутацией между прогонами: id 2060 оба раза). Слаг констатен
    нарочно: переименование темы должно уронить тест громко, а не молча сдвинуть
    голден. После реимпорта банка id меняются, но первый вопрос темы — тот же. */
+/* REF-022: пин темой оказался ложной стабильностью — browse-выборка идёт через
+   SRS-стратегию (due-first), и первая же тренировка по теме переставляет очередь:
+   home-dark-med-vp-768 упал сдвигом ВЫСОТЫ замаскированного контента. Якорь —
+   ЯВНЫЙ questionId (GET / его поддерживает, вопрос детерминирован независимо от
+   SRS-истории). После реимпорта банка id может уехать — тогда тест падает ГРОМКО
+   (другой вопрос = другой голден), и константу обновляют осознанно. */
 const PINNED_HOME =
-  '/?topic=' + encodeURIComponent('algorithms/algorithmic-paradigms/backtracking-interview')
+  '/?questionId=2060&topic='
+  + encodeURIComponent('algorithms/algorithmic-paradigms/backtracking-interview')
   + '&ordered=true&shuffle=false';
 
 const DYNAMIC_CONTENT = [

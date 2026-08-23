@@ -426,6 +426,28 @@ class TemplateFragmentContractTest {
                 .containsPattern("catalog-group-sign[^>]*alt=\"\"");
     }
 
+    /**
+     * Словарь имён разделов (UX-15-P3/IA-13, REF-022): страница зовётся именем
+     * пункта навигации — как у /topics (пункт «Темы» → h1 «Темы»). У аналитики
+     * было ТРИ имени (пункт «Аналитика», h1 «Твой прогресс», eyebrow «Учебная
+     * аналитика») — information scent ломался: пункт вёл на страницу с чужим
+     * заголовком. И вкладка внутри аналитики звалась «Темы» — именем ДРУГОГО
+     * раздела first-level: два одинаковых слова с разным содержанием.
+     */
+    @Test
+    void statsPageIsNamedAfterItsNavItem() throws IOException {
+        String stats = readTemplate("templates/stats.html");
+        assertThat(stats)
+                .as("h1 аналитики обязан совпадать с именем пункта навигации")
+                .contains("<h1>Аналитика</h1>");
+        assertThat(stats)
+                .as("«Твой прогресс» живёт как eyebrow-контекст, а не как чужое имя страницы")
+                .containsPattern("eyebrow\">Твой прогресс<");
+        assertThat(stats)
+                .as("вкладка аналитики не может зваться именем раздела /topics")
+                .containsPattern("data-tab-hash=\"topics\">По темам<");
+    }
+
     @Test
     void settingsResetOptionsExplainsActualRecoveryFlow() throws IOException {
         String settings = readTemplate("templates/settings.html");
