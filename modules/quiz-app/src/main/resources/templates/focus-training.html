@@ -46,6 +46,17 @@
         <form method="post" th:action="@{/resume}" class="resume-banner-action">
             <button type="submit" class="btn next-btn btn-compact">Продолжить</button>
         </form>
+        <!--/* Второй выход из паузы (UX-02): раньше PauseService.discard() не вызывал
+             никто, и баннер висел, пока сессию не пройдёшь. Тихий ранг — действие
+             легитимное, но не конкурирует с «Продолжить». data-confirm: деструктивно
+             (прогресс паузы пропадает без записи в журнал — это осознанный «выкинуть
+             черновик»), а кнопка стоит рядом с «Продолжить» — мисклик без
+             подтверждения стоил бы прогресса. Без JS сабмит прямой — форма явная. */-->
+        <form method="post" th:action="@{/pause/discard}" class="resume-banner-discard">
+            <button type="submit" class="btn quiet-btn"
+                    data-confirm="Незавершённая сессия будет удалена, её прогресс не попадёт в журнал."
+                    data-confirm-title="Отбросить незавершённую сессию?">Отбросить</button>
+        </form>
     </div>
     <section class="focus-training" th:if="${current != null}">
         <!--/* Топ-бар головы вопроса: eyebrow-chip режима + подсказка потока. Узкая

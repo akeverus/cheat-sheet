@@ -37,6 +37,9 @@ class InterviewControllerTest {
     @Autowired
     com.cheatsheet.quiz.persistence.AnswerOptionRepository answerOptionRepository;
 
+    @Autowired
+    com.cheatsheet.quiz.persistence.SessionHistoryRepository sessionHistoryRepository;
+
     /**
      * Вопрос-якорь этого класса. Без него `GET /` отдавал случайный вопрос из общей
      * тестовой базы: попадётся вопрос без seed-вариантов — MVC форсит флешкарту, и
@@ -872,6 +875,105 @@ class InterviewControllerTest {
                 .andReturn().getResponse().getContentAsString();
         assertThat(after).as("после skip односложная сессия завершена — тот же вопрос не повторяется")
                 .doesNotContain("Optionless session contract question");
+    }
+
+    /**
+     * Пауза перестала быть вечной (UX-02, REF-011). {@code PauseService.discard()}
+     * существовал с FLOW-01, но не вызывался никем: у баннера «Есть незавершённая
+     * сессия» было единственное действие «Продолжить», и избавиться от паузы можно
+     * было, только пройдя её. POST /pause/discard — второй выход, серверная форма
+     * (no-JS цел); подтверждение — data-confirm поверх (PE: без JS сабмит прямой,
+     * действие всё равно явное — отдельная кнопка с однозначной подписью).
+     */
+    @Test
+    void pausedSessionCanBeDiscardedFromTheBanner() throws Exception {
+        String topic = "discard-pause-topic";
+        questionRepository.insert(com.cheatsheet.quiz.TestQuestionBuilder.aQuestion()
+                .withSlug("discard-pause-fixture")
+                .withTopic(topic)
+                .withQuestionText("Discard pause contract question")
+                .build());
+        MockHttpSession session = new MockHttpSession();
+        mockMvc.perform(post("/start")
+                        .with(csrf())
+                        .session(session)
+                        .param("mode", "EXAM")
+                        .param("count", "1")
+                        .param("topic", topic))
+                .andExpect(status().is3xxRedirection());
+        mockMvc.perform(post("/pause").with(csrf()).session(session))
+                .andExpect(status().is3xxRedirection());
+
+        String withBanner = mockMvc.perform(get("/").session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(withBanner).contains("resume-banner");
+        assertThat(withBanner)
+                .as("у баннера паузы обязан быть второй выход — отбросить, а не только пройти")
+                .contains("action=\"/pause/discard\"");
+        assertThat(withBanner)
+                .as("отбрасывание деструктивно (прогресс паузы пропадает) — без "
+                        + "подтверждения оно слетает по мисклику рядом с «Продолжить»")
+                .contains("data-confirm");
+
+        mockMvc.perform(post("/pause/discard").with(csrf()).session(session))
+                .andExpect(status().is3xxRedirection());
+
+        String after = mockMvc.perform(get("/").session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(after)
+                .as("после отбрасывания баннер обязан исчезнуть — пауза удалена")
+                .doesNotContain("resume-banner");
+    }
+
+    /**
+     * Старт поверх активной сессии больше не молчаливое затирание (UX-03, REF-011):
+     * прогресс уходит в журнал session_history, а не в никуда. Пустые сессии журнал
+     * не засоряют — {@code SessionHistoryService.record()} сам отбрасывает summary
+     * без единого ответа, поэтому старт поверх нетронутой сессии записи не даёт.
+     */
+    @Test
+    void startingOverActiveSessionArchivesItsProgressToHistory() throws Exception {
+        String topic = "archive-on-restart-topic";
+        long first = questionRepository.insert(com.cheatsheet.quiz.TestQuestionBuilder.aQuestion()
+                .withSlug("archive-on-restart-1")
+                .withTopic(topic)
+                .withQuestionText("Archive-on-restart question one")
+                .build());
+        questionRepository.insert(com.cheatsheet.quiz.TestQuestionBuilder.aQuestion()
+                .withSlug("archive-on-restart-2")
+                .withTopic(topic)
+                .withQuestionText("Archive-on-restart question two")
+                .build());
+        MockHttpSession session = new MockHttpSession();
+        mockMvc.perform(post("/start")
+                        .with(csrf())
+                        .session(session)
+                        .param("mode", "EXAM")
+                        .param("count", "2")
+                        .param("topic", topic))
+                .andExpect(status().is3xxRedirection());
+
+        long beforeProgress = sessionHistoryRepository.count();
+        // Прогресс: skip первого вопроса записывает честный UNKNOWN и двигает сессию.
+        mockMvc.perform(post("/skip")
+                        .with(csrf())
+                        .session(session)
+                        .param("questionId", String.valueOf(first)))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/start")
+                        .with(csrf())
+                        .session(session)
+                        .param("mode", "EXAM")
+                        .param("count", "2")
+                        .param("topic", topic))
+                .andExpect(status().is3xxRedirection());
+
+        assertThat(sessionHistoryRepository.count())
+                .as("прогресс затёртой стартом сессии обязан быть зафиксирован в журнале")
+                .isEqualTo(beforeProgress + 1);
     }
 
     @Test

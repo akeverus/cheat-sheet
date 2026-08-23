@@ -42,11 +42,39 @@ public class InterviewFlowMvcService {
     SessionHistoryService sessionHistoryService;
 
     public String start(StartSessionRequest request, HttpSession session) {
+        archiveActiveSession(session);
         var selected = requestMapper.resolveStartMode(request);
         var filter = requestMapper.resolveStartFilter(request);
         SessionFlowService.StartFlowResult flowResult =
                 sessionFlowService.startSession(selected, request.getCount(), filter);
         applyStartSessionResult(session, flowResult);
+        return navigationService.focusRedirect();
+    }
+
+    /**
+     * Старт поверх активной сессии — не молчаливое затирание (UX-03): прогресс
+     * прежней сессии фиксируется в журнале, как если бы её завершили. Пустую
+     * сессию {@link SessionHistoryService#record} отбрасывает сам (ноль ответов —
+     * нечего фиксировать), завершённую уже записал {@link #finish}. В HTTP-сводку
+     * summary НЕ кладётся: {@link #applyStartSessionResult} тут же стёр бы её,
+     * а показывать итоги старой сессии при старте новой — шум, не ответ.
+     */
+    private void archiveActiveSession(HttpSession session) {
+        InterviewSession current = sessionSupport.getSession(session);
+        if (current == null || current.isFinished()) {
+            return;
+        }
+        sessionFlowService.buildSummary(current)
+                .ifPresent(sessionHistoryService::record);
+    }
+
+    /**
+     * Отбрасывает приостановленную сессию (UX-02): второй выход из баннера
+     * «Есть незавершённая сессия» — раньше единственным был «Продолжить», и
+     * {@link PauseService#discard} не вызывался никем, пауза была вечной.
+     */
+    public String discardPaused() {
+        pauseService.discard();
         return navigationService.focusRedirect();
     }
 
