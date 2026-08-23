@@ -202,6 +202,15 @@ export function initInterviewForm() {
       return;
     }
     const key = event.key;
+    /* A11Y-02 (REF-021): стрелки с фокуса внутри скролл-региона (код-листинг,
+       диаграмма, таблица — рецепт REF-007 «переполнен → фокусируем») остаются
+       браузерным скроллом. Без этого ArrowDown с код-региона ВЫБИРАЛ вариант
+       и угонял фокус — чтение кода с клавиатуры меняло ответ на экзамене. */
+    if ((key === 'ArrowDown' || key === 'ArrowUp')
+        && event.target instanceof Element
+        && event.target.closest('.code-viewport, .diagram-viewport, .table-scroll, pre[tabindex], .is-scrollable')) {
+      return;
+    }
     if (key === 'ArrowDown' || key === 'ArrowUp') {
       event.preventDefault();
       const currentIndex = optionInputs.findIndex((input) => input.checked);
