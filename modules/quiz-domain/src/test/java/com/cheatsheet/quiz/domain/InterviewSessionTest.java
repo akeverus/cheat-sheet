@@ -53,14 +53,18 @@ class InterviewSessionTest {
                 InterviewMode.EXAM, List.of(1L, 2L),
                 null, null, null, null, Instant.now());
 
-        session.registerUnknown("java");
+        session.registerUnknown(1L, "java");
 
         assertThat(session.getUnknown()).isEqualTo(1);
         assertThat(session.getCorrect()).isZero();
         assertThat(session.getWrong()).isZero();
         assertThat(session.getIndex()).isEqualTo(1);
-        // «Не знаю» НЕ добавляется в историю ответов (форма AnswerRecord неизменна).
-        assertThat(session.getAnswerHistory()).isEmpty();
+        // VIS-14: «не знаю» ПИШЕТ запись в историю с флагом unknown — иначе честный
+        // отказ от угадывания невидим в разборе итогов, хотя входит в счётчики.
+        assertThat(session.getAnswerHistory()).hasSize(1);
+        assertThat(session.getAnswerHistory().get(0).unknown()).isTrue();
+        assertThat(session.getAnswerHistory().get(0).correct()).isFalse();
+        assertThat(session.getAnswerHistory().get(0).questionId()).isEqualTo(1L);
     }
 
     @Test

@@ -178,7 +178,7 @@ public class InterviewSession implements Serializable {
         }
         Long qId = index < questionIds.size() ? questionIds.get(index) : null;
         if (qId != null) {
-            answerHistory.add(new AnswerRecord(qId, isCorrect, null));
+            answerHistory.add(new AnswerRecord(qId, isCorrect, null, false));
         }
         index++;
     }
@@ -192,19 +192,25 @@ public class InterviewSession implements Serializable {
         }
         Long qId = index < questionIds.size() ? questionIds.get(index) : null;
         if (qId != null) {
-            answerHistory.add(new AnswerRecord(qId, isCorrect, questionTopic));
+            answerHistory.add(new AnswerRecord(qId, isCorrect, questionTopic, false));
         }
         index++;
     }
 
     /**
      * Регистрирует исход «не знаю» (UNKNOWN, FLOW-03): продвигает сессию как ответ,
-     * но НЕ в correct/wrong — отдельный счётчик {@code unknown}. В {@code answerHistory}
-     * не добавляется (форма {@link AnswerRecord} неизменна ради совместимости сериализации),
-     * поэтому в разбор ошибок такой вопрос не попадает — только в headline-счётчик итогов.
+     * но НЕ в correct/wrong — отдельный счётчик {@code unknown}. Запись УХОДИТ и в
+     * {@code answerHistory} с флагом {@code unknown} (VIS-14): вопрос, на который
+     * человек честно сказал «не знаю», — кандидат на разбор №1, и до этой правки он
+     * был невидим в списке разбора итогов, хотя входил в headline-счётчики («Ошибки 2»
+     * против «Разобрать ошибки: 1» на одном экране). Прежний довод «форма AnswerRecord
+     * неизменна ради сериализации» снят: сериализация records терпит добавление
+     * компонента (отсутствующий в старом потоке {@code unknown} получает false),
+     * а блобов пауз на момент правки в БД не было.
      */
-    public synchronized void registerUnknown(String questionTopic) {
+    public synchronized void registerUnknown(long questionId, String questionTopic) {
         unknown++;
+        answerHistory.add(new AnswerRecord(questionId, false, questionTopic, true));
         index++;
     }
 
@@ -218,9 +224,11 @@ public class InterviewSession implements Serializable {
         return List.copyOf(answerHistory);
     }
 
-    /** Запись об ответе в сессии. */
+    /** Запись об ответе в сессии. {@code unknown} — честное «не знаю» (FLOW-03):
+     *  {@code correct=false}, но это не промах при попытке, а отказ от угадывания. */
     @Builder(toBuilder = true)
-    public record AnswerRecord(long questionId, boolean correct, String topic) implements java.io.Serializable {}
+    public record AnswerRecord(long questionId, boolean correct, String topic, boolean unknown)
+            implements java.io.Serializable {}
 
     public synchronized void addPenaltyQuestions(List<Long> ids) {
         if (ids != null && !ids.isEmpty()) {

@@ -32,7 +32,9 @@
          Второе не украшение: те же слова (точность, темы, ошибки) есть в
          аналитике за всё время, и без явной пометки экран читается как общая
          статистика, которая внезапно просела. */-->
-    <p class="muted page-head-lead">Счёт, разбор по темам и вопросы, которые стоит повторить.
+    <!--/* Копия сжата до одной строки (VIS-13): двухстрочный лид при align-self:
+         flex-end шапки снова поднимался выше линии заголовка. */-->
+    <p class="muted page-head-lead">Счёт, темы, вопросы к повтору.
         <span class="kpi-role">Только эта сессия</span></p>
 </div>
 
@@ -301,10 +303,17 @@
         </tr>
         </tbody>
     </table>
+    <!--/* Единая конвенция продукта (REF-006, /stats): «не знаю» стоит в знаменателе
+         как ошибка — с VIS-14 unknown-записи входят в историю сессии, и колонка
+         «Ошибки» их тоже считает. Подпись называет правило при самих числах. */-->
+    <p class="muted tiny summary-topics-note">«Не знаю» считается ошибкой.</p>
     </div>
 </section>
 
-<!--/* Ошибки: кликабельны — ведут на тренировку по теме вопроса */-->
+<!--/* Ошибки: кликабельны — ведут на тренировку по теме вопроса.
+     VIS-14: список включает и честные «не знаю» (их различает бейдж) — до этого
+     unknown входил в headline-счётчики («Ошибки 2»), но был невидим в разборе,
+     и «Разобрать ошибки: 1» рядом с «Ошибки 2» читалось как противоречие. */-->
 <section class="card" th:if="${!summary.mistakes.isEmpty()}">
     <h2 class="summary-section-title">Ошибки</h2>
     <p class="summary-mistakes-hint">Нажми на вопрос, чтобы потренироваться по этой теме, или «Повторить ошибки» выше.</p>
@@ -312,7 +321,10 @@
         <li th:each="m : ${summary.mistakes}">
             <a class="summary-mistake-item" th:href="@{/(topic=${m.topic()})}">
                 <span class="summary-mistake-question" th:utext="${@markdownRenderService.toInlineHtml(m.questionText())}">Вопрос</span>
-                <span class="summary-mistake-meta" th:text="${@topicUtils.displayName(m.topic())}">topic</span>
+                <span class="summary-mistake-meta">
+                    <span th:text="${@topicUtils.displayName(m.topic())}">topic</span><!--
+                    --><span th:if="${m.unknown()}" class="summary-mistake-unknown"> · не знал</span>
+                </span>
             </a>
         </li>
     </ul>

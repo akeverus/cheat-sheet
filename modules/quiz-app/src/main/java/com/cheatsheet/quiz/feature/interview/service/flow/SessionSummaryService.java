@@ -241,7 +241,7 @@ public class SessionSummaryService {
                 Question q = questionMap.get(record.questionId());
                 String text = q != null ? q.questionText() : "Вопрос #" + record.questionId();
                 String topic = record.topic() != null ? record.topic() : (q != null ? q.topic() : "unknown");
-                result.add(new SessionSummary.MistakeDetail(record.questionId(), text, topic));
+                result.add(new SessionSummary.MistakeDetail(record.questionId(), text, topic, record.unknown()));
             }
         }
         return result;

@@ -284,7 +284,7 @@ class InterviewSessionSupportTest {
 
         assertThat(result).isSameAs(interviewSession);
         verify(interviewService).submitUnknown(10L);
-        verify(interviewSession).registerUnknown("java");
+        verify(interviewSession).registerUnknown(10L, "java");
         verify(interviewService).addExamPenaltyQuestions(interviewSession);
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
         verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.UNKNOWN), eq(0), isNull(), isNull(), any(), anyString(), isNull(), isNull());
@@ -303,7 +303,7 @@ class InterviewSessionSupportTest {
 
         support.processSkip(31L, session);
 
-        verify(interviewSession).registerUnknown("java");
+        verify(interviewSession).registerUnknown(31L, "java");
         verify(interviewSession).switchToLearnPhase();
         verify(interviewService, never()).addExamPenaltyQuestions(any());
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
@@ -319,7 +319,7 @@ class InterviewSessionSupportTest {
 
         assertThat(result).isSameAs(interviewSession);
         verify(interviewService, never()).submitUnknown(anyLong());
-        verify(interviewSession, never()).registerUnknown(anyString());
+        verify(interviewSession, never()).registerUnknown(anyLong(), anyString());
         verify(interviewService, never()).addExamPenaltyQuestions(any());
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
         verify(attemptRecorder, never()).record(anyLong(), any(), any(), any(), any(), any(), any(), any());
@@ -333,7 +333,7 @@ class InterviewSessionSupportTest {
         support.processSkip(10L, session);
 
         verify(interviewService, never()).submitUnknown(anyLong());
-        verify(interviewSession, never()).registerUnknown(anyString());
+        verify(interviewSession, never()).registerUnknown(anyLong(), anyString());
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
     }
 

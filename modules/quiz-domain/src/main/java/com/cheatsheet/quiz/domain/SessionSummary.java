@@ -140,9 +140,11 @@ public class SessionSummary implements Serializable {
         }
     }
 
-    /** Детали ошибки. */
+    /** Детали ошибки. {@code unknown} — вопрос закрыт честным «не знаю», а не
+     *  промахом при попытке (VIS-14: различие несёт бейдж в списке разбора). */
     @lombok.Builder(toBuilder = true)
-    public record MistakeDetail(long questionId, String questionText, String topic) implements Serializable {
+    public record MistakeDetail(long questionId, String questionText, String topic, boolean unknown)
+            implements Serializable {
         public MistakeDetail {
             Objects.requireNonNull(questionText, "questionText must not be null");
             Objects.requireNonNull(topic, "topic must not be null");

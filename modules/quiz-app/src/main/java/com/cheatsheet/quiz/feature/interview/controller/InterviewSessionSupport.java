@@ -174,7 +174,7 @@ public class InterviewSessionSupport {
             Question question = interviewService.submitUnknown(questionId);
             topic = question.topic();
         }
-        interviewSession.registerUnknown(topic);
+        interviewSession.registerUnknown(questionId, topic);
         if (interviewSession.getMode() == InterviewMode.EXAM) {
             interviewService.addExamPenaltyQuestions(interviewSession);
         }

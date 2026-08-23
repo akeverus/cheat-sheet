@@ -150,16 +150,18 @@ class SessionSummaryServiceTest {
 
     @Test
     void buildSummaryCountsUnknownInTotalAndHeadline() {
-        // FLOW-03: «не знаю» продвигает сессию, но не в correct/wrong — отдельный
-        // счётчик unknown. Он входит в total (снижая accuracy), но НЕ попадает в
-        // разбор ошибок (registerUnknown не пишет в answerHistory).
+        // FLOW-03 + VIS-14: «не знаю» продвигает сессию, но не в correct/wrong —
+        // отдельный счётчик unknown. Он входит в total (снижая accuracy) И в разбор
+        // ошибок с флагом unknown: до VIS-14 headline говорил «Ошибки 2», а CTA —
+        // «Разобрать ошибки: 1», и честное «не знаю» было невидимо в разборе.
         Question q1 = aQuestion().withId(1).withTopic("java").build();
-        when(questionRepository.findByIds(anyList())).thenReturn(List.of(q1));
+        Question q2 = aQuestion().withId(2).withTopic("java").withQuestionText("Unknown Q").build();
+        when(questionRepository.findByIds(anyList())).thenReturn(List.of(q1, q2));
 
         InterviewSession session = new InterviewSession(
                 InterviewMode.EXAM, List.of(1L, 2L), "java", false, false, false);
         session.registerAnswer(true, "java");
-        session.registerUnknown("java");
+        session.registerUnknown(2L, "java");
 
         SessionSummary summary = service.buildSummary(session);
 
@@ -168,7 +170,14 @@ class SessionSummaryServiceTest {
         assertThat(summary.getUnknownCount()).isEqualTo(1);
         assertThat(summary.getTotalQuestions()).isEqualTo(2);
         assertThat(summary.getAccuracy()).isEqualTo(50.0);
-        assertThat(summary.getMistakes()).isEmpty();
+        assertThat(summary.getMistakes())
+                .as("«не знаю» обязан быть виден в разборе — это кандидат на разбор №1")
+                .hasSize(1);
+        assertThat(summary.getMistakes().get(0).unknown()).isTrue();
+        assertThat(summary.getMistakes().get(0).questionId()).isEqualTo(2L);
+        // Один знаменатель у одного слова: CTA «Разобрать ошибки: N» = wrong + unknown.
+        assertThat(summary.getNextActions())
+                .anySatisfy(na -> assertThat(na.label()).isEqualTo("Разобрать ошибки: 1"));
     }
 
     @Test
