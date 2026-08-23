@@ -293,3 +293,18 @@
 - **ACCESSIBILITY:** Восстановлен reveal-инвариант iter-167 (фокус в эталонном ответе после серверного раскрытия) без потери A11Y-11 (Tab-путь шага цикла = 1).
 - **REGRESSION:** Негативный кейс REF-014 не тронут; ui-пакет целиком GREEN; голден-дифф ограничен ровно 24 упавшими.
 - **RESULT:** Phase H-свип: дефектов ширин нет, WebKit-пояс снова зелёный, регрессия фокуса закрыта. Следующий bottleneck — по §263: Phase J (a11y full pass — семантика/landmarks/live-регионы сверх точечных фиксов) либо остаток P2/P3 замером; e2e-пояс теперь дёшев в прогоне — включать его в финальную проверку каждой крупной итерации.
+
+---
+
+## REF-018
+
+- **ID:** REF-018
+- **DATE:** 2026-08-23
+- **OBJECTIVE:** Phase J — полный a11y-проход (семантика, landmarks, labels, дубликаты ID, контрасты) по всем major-страницам; точечные a11y-итерации закрывали жалобы, полного прохода не было ни разу.
+- **PROBLEM / EVIDENCE:** Lighthouse (axe-набор) по /, /train, /stats, /topics, /bookmarks, /settings: Accessibility 100 всюду, но два живых нарушения WCAG 2.5.3 Label in Name (голосовое управление «нажми X» промахивается, когда видимый текст не входит в accessible name): (1) summary «Сессия» с aria-label «Действия сессии» (focus-training); (2) карточка «Тренировать слабые темы» на /stats — aria-label дублировал контент выборочно (без счётчика) и не содержал весь видимый текст. Собственный скан (DOMParser: дубликаты ID + label-in-name) по 7 страницам ВКЛЮЧАЯ result (Lighthouse туда не дошёл — POST): чисто после фиксов.
+- **DECISION:** (1) aria-label="Сессия — действия" — имя начинается с видимой метки. (2) aria-label карточки слабых тем СНЯТ — content-имя, как у двух соседних карточек: полный видимый текст и есть имя, рассинхрон невозможен. SEO-пара фейлов (meta-description, is-crawlable) — MOOT: локальный инструмент, индексация не нужна.
+- **IMPLEMENTATION:** focus-training.html, stats.html; контракт visibleLabelsAreContainedInAccessibleNames в TemplateFragmentContractTest.
+- **TESTS:** Контракт GREEN → мутация (возврат чужого label) → RED → откат → GREEN; ui-пакет целиком GREEN; e2e keyboard 10/10 оба движка после шаблонных правок.
+- **VISUAL REVIEW / ACCESSIBILITY:** Живой Lighthouse после фиксов: / passed 50→51, /stats 57→58, label-content-name-mismatch исчез; вкладки/фокус/SR-семантика не менялись (правки только имён).
+- **REGRESSION:** SR-фраза summary сменилась «Действия сессии»→«Сессия — действия» (информативность сохранена); карточка слабых тем теперь читается полным контентом (включая счётчик — информации больше).
+- **RESULT:** Phase J-проход чист: Lighthouse a11y 100 ×6 страниц, 0 дубликатов ID, 0 label-mismatch ×7 страниц (включая result). Следующий bottleneck — по §263: Phase K (performance full pass — perf-трейс главной, CSS/JS-бюджеты) либо остаток P2/P3; лайфхак пояса: Lighthouse-свип дёшев (~4с/страница) — гонять при шаблонных итерациях.

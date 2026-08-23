@@ -384,6 +384,28 @@ class TemplateFragmentContractTest {
                 .contains("firstAttemptAccuracy");
     }
 
+    /**
+     * WCAG 2.5.3 Label in Name (REF-018, Lighthouse-свип Phase J): у элемента
+     * с видимым текстом accessible name обязан содержать этот текст — иначе
+     * голосовое управление («нажми Сессия») промахивается. Два живых нарушения:
+     * summary «Сессия» с чужим aria-label и карточка слабых тем на /stats,
+     * чей aria-label не содержал весь видимый текст (и дублировал контент —
+     * рассинхрон гарантирован; соседние карточки живут content-именем).
+     */
+    @Test
+    void visibleLabelsAreContainedInAccessibleNames() throws IOException {
+        String focus = readTemplate("templates/focus-training.html");
+        assertThat(focus)
+                .as("aria-label summary «Сессия» обязан начинаться с видимой метки")
+                .containsPattern("aria-label=\"Сессия[^\"]*\">Сессия</summary>");
+
+        String stats = readTemplate("templates/stats.html");
+        assertThat(stats)
+                .as("карточка слабых тем говорит content-именем, как её соседи — "
+                        + "aria-label дублировал контент и не содержал весь видимый текст")
+                .doesNotContainPattern("stats-next-action-weak\"[\\s\\S]{0,400}?th:aria-label");
+    }
+
     @Test
     void settingsResetOptionsExplainsActualRecoveryFlow() throws IOException {
         String settings = readTemplate("templates/settings.html");
