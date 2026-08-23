@@ -30,6 +30,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -64,6 +66,9 @@ class InterviewFlowMvcServiceTest {
     @Mock
     com.cheatsheet.quiz.feature.interview.service.flow.SessionHistoryService sessionHistoryService;
 
+    @Mock
+    private com.cheatsheet.quiz.feature.interview.service.core.InterviewService interviewService;
+
     private InterviewFlowMvcService service;
 
     @BeforeEach
@@ -78,7 +83,8 @@ class InterviewFlowMvcServiceTest {
                 requestMapper,
                 answerPageService,
                 pauseService,
-                sessionHistoryService
+                sessionHistoryService,
+                interviewService
         );
     }
 
@@ -324,14 +330,52 @@ class InterviewFlowMvcServiceTest {
         verify(httpSessionStateService, never()).clearLastSessionSummary(any());
     }
 
+    /** Вне сессии processSkip — no-op (null): разбор не обещан, прежний redirect. */
     @Test
-    void skipDelegatesToSupportAndRedirectsToFocus() {
+    void skipOutsideSessionRedirectsToFocus() {
         when(sessionSupport.processSkip(42L, session)).thenReturn(null);
         when(navigationService.focusRedirect()).thenReturn("redirect:/");
 
-        String view = service.skip(42L, session);
+        String view = service.skip(42L, session, model);
 
         assertThat(view).isEqualTo("redirect:/");
         verify(sessionSupport).processSkip(42L, session);
+        verify(interviewService, never()).evaluateUnknown(anyLong());
+    }
+
+    /**
+     * UX-15: skip MCQ-вопроса внутри сессии рендерит разбор (result view), а не
+     * уводит к следующему вопросу — «не знаю» и есть запрос на объяснение.
+     */
+    @Test
+    void skipInsideSessionRendersTheBreakdown() {
+        InterviewSession interviewSession = mock(InterviewSession.class);
+        com.cheatsheet.quiz.domain.AnswerResult unknownResult = mock(com.cheatsheet.quiz.domain.AnswerResult.class);
+        InterviewFilter filter = new InterviewFilter(null, null, null, null, null, null);
+        AnswerPageService.AnswerPageState state = mock(AnswerPageService.AnswerPageState.class);
+        when(sessionSupport.processSkip(42L, session)).thenReturn(interviewSession);
+        when(interviewService.evaluateUnknown(42L)).thenReturn(java.util.Optional.of(unknownResult));
+        when(sessionSupport.sessionFilter(interviewSession)).thenReturn(filter);
+        when(answerPageService.build(unknownResult, filter, interviewSession)).thenReturn(state);
+        when(navigationService.resultView()).thenReturn("result");
+
+        String view = service.skip(42L, session, model);
+
+        assertThat(view).isEqualTo("result");
+        verify(modelAttributeMapper).applyAnswerPageState(model, state);
+    }
+
+    /** Optionless-ветка (флешкарта, ответ уже на экране): разбора нет — redirect. */
+    @Test
+    void skipOfOptionlessQuestionKeepsTheRedirect() {
+        InterviewSession interviewSession = mock(InterviewSession.class);
+        when(sessionSupport.processSkip(42L, session)).thenReturn(interviewSession);
+        when(interviewService.evaluateUnknown(42L)).thenReturn(java.util.Optional.empty());
+        when(navigationService.focusRedirect()).thenReturn("redirect:/");
+
+        String view = service.skip(42L, session, model);
+
+        assertThat(view).isEqualTo("redirect:/");
+        verify(answerPageService, never()).build(any(), any(), any());
     }
 }

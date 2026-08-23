@@ -9,7 +9,9 @@ import lombok.Builder;
  *
  * @param question          вопрос
  * @param options           все варианты ответа
- * @param selected          выбранный пользователем вариант
+ * @param selected          выбранный пользователем вариант; {@code null} — исход
+ *                          «не знаю» (UNKNOWN): вариант не выбирался, разбор
+ *                          показывает только правильный ответ
  * @param correct           правильный вариант
  * @param correctAnswer     true если пользователь ответил верно
  * @param updatedState      состояние интервального повторения после ответа
@@ -28,9 +30,13 @@ public record AnswerResult(
     public AnswerResult {
         Objects.requireNonNull(question, "question");
         Objects.requireNonNull(options, "options");
-        Objects.requireNonNull(selected, "selected");
         Objects.requireNonNull(correct, "correct");
         Objects.requireNonNull(updatedState, "updatedState");
         Objects.requireNonNull(answerDisplayMode, "answerDisplayMode");
+    }
+
+    /** Исход «не знаю»: пользователь не выбирал вариант. */
+    public boolean unknown() {
+        return selected == null;
     }
 }

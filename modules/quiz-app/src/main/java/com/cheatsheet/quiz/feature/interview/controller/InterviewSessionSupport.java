@@ -222,6 +222,15 @@ public class InterviewSessionSupport {
         }
     }
 
+    /**
+     * Фильтр активной сессии — для рендера разбора вне submit-пути (UX-15:
+     * страница результата после «не знаю» строится теми же атрибутами модели,
+     * что и после ответа, а фильтр там приходит из сессии).
+     */
+    public InterviewFilter sessionFilter(InterviewSession interviewSession) {
+        return resolveFilter(interviewSession, null, null, null, null, null, null);
+    }
+
     private InterviewFilter resolveFilter(
             InterviewSession interviewSession,
             String topic,

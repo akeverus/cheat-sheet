@@ -936,7 +936,7 @@ class InterviewControllerTest {
     @Test
     void startingOverActiveSessionArchivesItsProgressToHistory() throws Exception {
         String topic = "archive-on-restart-topic";
-        long first = questionRepository.insert(com.cheatsheet.quiz.TestQuestionBuilder.aQuestion()
+        questionRepository.insert(com.cheatsheet.quiz.TestQuestionBuilder.aQuestion()
                 .withSlug("archive-on-restart-1")
                 .withTopic(topic)
                 .withQuestionText("Archive-on-restart question one")
@@ -955,12 +955,24 @@ class InterviewControllerTest {
                         .param("topic", topic))
                 .andExpect(status().is3xxRedirection());
 
+        // Skip бьёт по ТЕКУЩЕМУ вопросу сессии, id которого берём с экрана:
+        // хвост сортировки набора — случайный (appendSessionPickOrder), и «первый
+        // вставленный» вопрос стоит первым лишь в половине прогонов; processSkip
+        // по чужому id — честный no-op, и тест флакал бы 50/50.
+        String focusBody = mockMvc.perform(get("/").session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        java.util.regex.Matcher current = java.util.regex.Pattern
+                .compile("name=\"questionId\" value=\"(\\d+)\"")
+                .matcher(focusBody);
+        assertThat(current.find()).as("на экране сессии обязан быть hidden questionId").isTrue();
+
         long beforeProgress = sessionHistoryRepository.count();
-        // Прогресс: skip первого вопроса записывает честный UNKNOWN и двигает сессию.
+        // Прогресс: skip текущего вопроса записывает честный UNKNOWN и двигает сессию.
         mockMvc.perform(post("/skip")
                         .with(csrf())
                         .session(session)
-                        .param("questionId", String.valueOf(first)))
+                        .param("questionId", current.group(1)))
                 .andExpect(status().is3xxRedirection());
 
         mockMvc.perform(post("/start")
@@ -1106,6 +1118,50 @@ class InterviewControllerTest {
         assertThat(body).doesNotContain("data-ui-fragment=\"focus-surface-tabs\"");
         assertThat(countOccurrences(body, "aria-label=\"Основная навигация\"")).isEqualTo(1);
         assertThat(countOccurrences(body, "aria-label=\"Навигация по режимам фокуса\"")).isEqualTo(0);
+    }
+
+    /**
+     * UX-15 (REF-016): «Не знаю ответа» на MCQ-вопросе — момент максимальной
+     * потребности в объяснении, поэтому исход UNKNOWN показывает разбор
+     * (вердикт «Не знал» + правильный вариант), а не молча уводит к следующему
+     * вопросу. Optionless-ветка (флешкарта, ответ уже на экране) сохраняет
+     * прежний redirect — это покрыто соседними skip-тестами.
+     */
+    @Test
+    void skippingMcqQuestionShowsTheAnswerBreakdownInstead() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        mockMvc.perform(post("/start")
+                        .with(csrf())
+                        .session(session)
+                        .param("mode", "EXAM")
+                        .param("count", "1")
+                        .param("topic", "interview-controller-fixture"))
+                .andExpect(status().is3xxRedirection());
+
+        String body = mockMvc.perform(post("/skip")
+                        .with(csrf())
+                        .session(session)
+                        .param("questionId", String.valueOf(fixtureQuestionId)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(body).as("вердикт называет исход честно, словами продукта")
+                .contains("Не знал");
+        assertThat(body).as("правильный вариант размечен в разборе")
+                .contains("option-correct");
+        assertThat(body).as("метки «Твой выбор» быть не может — вариант не выбирался")
+                .doesNotContain("Твой выбор");
+        assertThat(body).as("вердикт несёт собственный стиль исхода, не чужой «Неверно»")
+                .contains("result-unknown");
+    }
+
+    /** Вне сессии /skip — no-op с прежним redirect: разбор без сессии не обещан. */
+    @Test
+    void skippingOutsideSessionKeepsTheRedirect() throws Exception {
+        mockMvc.perform(post("/skip")
+                        .with(csrf())
+                        .param("questionId", String.valueOf(fixtureQuestionId)))
+                .andExpect(status().is3xxRedirection());
     }
 
     @Test

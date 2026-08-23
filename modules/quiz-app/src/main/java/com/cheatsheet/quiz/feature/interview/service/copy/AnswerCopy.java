@@ -34,8 +34,18 @@ public final class AnswerCopy {
         return isBlank(correctLetter) ? prefix + "Неверно" : prefix + "Правильный ответ " + correctLetter;
     }
 
-    /** {@link #verdict(boolean, String, String)} для доменного результата. */
+    /**
+     * {@link #verdict(boolean, String, String)} для доменного результата.
+     * Исход «не знаю» ({@code selected == null}, UX-15) называем его словами:
+     * «Не знал» — не «Неверно», пользователь не ошибался, он честно спросил.
+     */
     public static String verdict(AnswerResult result) {
+        if (result.unknown()) {
+            String correctLetter = optionLetter(result, result.correct());
+            return isBlank(correctLetter)
+                    ? "Не знал"
+                    : "Не знал. Правильный ответ " + correctLetter;
+        }
         return verdict(result.correctAnswer(),
                 optionLetter(result, result.selected()),
                 optionLetter(result, result.correct()));

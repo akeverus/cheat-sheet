@@ -10,6 +10,7 @@ import com.cheatsheet.quiz.api.mapper.request.MvcRequestMapper;
 import com.cheatsheet.quiz.api.mapper.view.MvcModelAttributeMapper;
 import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.SessionSummary;
+import com.cheatsheet.quiz.feature.interview.service.core.InterviewService;
 import com.cheatsheet.quiz.feature.interview.service.page.AnswerPageService;
 import com.cheatsheet.quiz.feature.interview.service.flow.PauseService;
 import com.cheatsheet.quiz.feature.interview.service.flow.SessionFlowService;
@@ -40,6 +41,7 @@ public class InterviewFlowMvcService {
     AnswerPageService answerPageService;
     PauseService pauseService;
     SessionHistoryService sessionHistoryService;
+    InterviewService interviewService;
 
     public String start(StartSessionRequest request, HttpSession session) {
         archiveActiveSession(session);
@@ -130,12 +132,33 @@ public class InterviewFlowMvcService {
     }
 
     /**
-     * Отмечает текущий вопрос как «не знаю» (UNKNOWN, FLOW-03) и продвигает сессию.
-     * Персистенцию и идемпотентность обеспечивает {@link InterviewSessionSupport#processSkip}.
+     * Отмечает текущий вопрос как «не знаю» (UNKNOWN, FLOW-03) и показывает
+     * разбор (UX-15): «не знаю» — момент максимальной потребности в объяснении,
+     * и уводить сразу к следующему вопросу значило терять его. Персистенцию и
+     * идемпотентность обеспечивает {@link InterviewSessionSupport#processSkip};
+     * повторный POST безопасен — SM-2 не дублируется, разбор просто рендерится
+     * снова (тот же replay-принцип, что у FLOW-02 на /answer).
+     *
+     * <p>Redirect остаётся в двух честных случаях: вне сессии (processSkip —
+     * no-op, разбор не обещан) и у optionless-вопроса (флешкарт-ветка: ответ
+     * уже на экране, {@code evaluateUnknown} пуст).</p>
      */
-    public String skip(long questionId, HttpSession session) {
-        sessionSupport.processSkip(questionId, session);
-        return navigationService.focusRedirect();
+    public String skip(long questionId, HttpSession session, Model model) {
+        InterviewSession interviewSession = sessionSupport.processSkip(questionId, session);
+        if (interviewSession == null) {
+            return navigationService.focusRedirect();
+        }
+        return interviewService.evaluateUnknown(questionId)
+                .map(result -> {
+                    AnswerPageService.AnswerPageState state = answerPageService.build(
+                            result,
+                            sessionSupport.sessionFilter(interviewSession),
+                            interviewSession
+                    );
+                    modelAttributeMapper.applyAnswerPageState(model, state);
+                    return navigationService.resultView();
+                })
+                .orElseGet(navigationService::focusRedirect);
     }
 
     /**

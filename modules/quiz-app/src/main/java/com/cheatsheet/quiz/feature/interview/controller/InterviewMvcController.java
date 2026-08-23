@@ -253,9 +253,10 @@ public class InterviewMvcController {
     @PostMapping("/skip")
     public String skip(
             @RequestParam("questionId") @Positive long questionId,
-            HttpSession session
+            HttpSession session,
+            Model model
     ) {
-        return interviewFlowMvcService.skip(questionId, session);
+        return interviewFlowMvcService.skip(questionId, session, model);
     }
 
     @PostMapping("/pause")

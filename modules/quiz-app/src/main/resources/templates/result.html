@@ -3,7 +3,7 @@
 <!--/* Вердикт — первым словом title: /answer это MPA-навигация, и SR объявляет
      title раньше, чем дойдёт до баннера. «Верно/Неверно» здесь — тот же принцип,
      что автофокус на вердикте (FRD-219): результат действия слышен немедленно. */-->
-<head th:replace="~{fragments/head :: head(title=${result != null and result.correctAnswer} ? 'Верно — Результат — Подготовка к собеседованию' : 'Неверно — Результат — Подготовка к собеседованию', includeMermaid=${needsMermaid == true}, includeChart=false, includeHighlight=true, page='result')}"></head>
+<head th:replace="~{fragments/head :: head(title=${result != null and result.correctAnswer} ? 'Верно — Результат — Подготовка к собеседованию' : (${result != null and result.unknown()} ? 'Не знал — Результат — Подготовка к собеседованию' : 'Неверно — Результат — Подготовка к собеседованию'), includeMermaid=${needsMermaid == true}, includeChart=false, includeHighlight=true, page='result')}"></head>
 <body class="result-page">
 <a class="skip-link" href="#main-content">Перейти к результату</a>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
@@ -62,11 +62,15 @@
                  документ, и без autofocus фокус оставался на BODY (JS-путь фокусирует
                  приёмник разбора явно — AnsweredOrder; серверный путь не отставал бы
                  от него только с этим атрибутом). */-->
-            <div class="feedback-verdict result-banner" th:with="ok=${result.correctAnswer}"
-                 th:classappend="${ok} ? 'result-correct' : 'result-wrong'"
+            <!--/* Третий исход — «Не знал» (UX-15, selected == null): свой стиль
+                 (warning, не error) — пользователь не ошибался, он честно спросил;
+                 в счёте это ошибка (конвенция REF-006), в подаче — отдельный исход,
+                 как бейдж « · не знал» в итогах сессии. */-->
+            <div class="feedback-verdict result-banner" th:with="ok=${result.correctAnswer},unknown=${result.unknown()}"
+                 th:classappend="${ok} ? 'result-correct' : (${unknown} ? 'result-unknown' : 'result-wrong')"
                  tabindex="-1" autofocus>
                 <strong class="result-verdict">
-                    <svg class="px-icon px-icon-lead" th:classappend="${ok} ? 'px-icon-success' : 'px-icon-error'" aria-hidden="true">
+                    <svg class="px-icon px-icon-lead" th:classappend="${ok} ? 'px-icon-success' : (${unknown} ? 'px-icon-warning' : 'px-icon-error')" aria-hidden="true">
                         <use th:attr="href=${ok} ? '#circle-check' : '#circle-x'"></use>
                     </svg><span th:text="${verdictText}">Статус</span>
                 </strong>
@@ -131,13 +135,15 @@
                 <!--/* div, не label: это display-only результат (нет <input>), а label
                      без управляемого контрола + вложенный блочный <div> внутри —
                      невалидный HTML. role=listitem несёт семантику списка. */-->
+                <!--/* result.selected null-safe: у исхода «не знаю» (UX-15) выбранного
+                     варианта нет — размечается только правильный, остальные гаснут. */-->
                 <div th:each="opt : ${result.options}"
                        role="listitem"
-                       th:classappend="${opt.id == result.correct.id ? 'option-correct' : (opt.id == result.selected.id ? 'option-wrong' : 'option-dimmed')}"
-                       th:aria-label="${(opt.id == result.correct.id ? 'Правильный ответ: ' : (opt.id == result.selected.id ? 'Твой выбор: ' : '')) + @markdownRenderService.toPlainText(opt.optionText)}">
+                       th:classappend="${opt.id == result.correct.id ? 'option-correct' : (result.selected != null and opt.id == result.selected.id ? 'option-wrong' : 'option-dimmed')}"
+                       th:aria-label="${(opt.id == result.correct.id ? 'Правильный ответ: ' : (result.selected != null and opt.id == result.selected.id ? 'Твой выбор: ' : '')) + @markdownRenderService.toPlainText(opt.optionText)}">
                     <span th:utext="${@markdownRenderService.toInlineHtml(opt.optionText)}">Вариант</span>
                     <span th:if="${opt.id == result.correct.id}" class="option-status-label option-status-correct">Правильный ответ</span>
-                    <span th:if="${opt.id == result.selected.id and opt.id != result.correct.id}" class="option-status-label option-status-selected">Твой выбор</span>
+                    <span th:if="${result.selected != null and opt.id == result.selected.id and opt.id != result.correct.id}" class="option-status-label option-status-selected">Твой выбор</span>
                 </div>
             </div>
 
@@ -165,7 +171,7 @@
                 <div class="distractor-list">
                     <div th:each="opt,it : ${result.options}"
                          th:if="${opt.explanation != null and !opt.explanation.isBlank() and opt.id != result.correct.id}"
-                         th:class="${opt.id == result.selected.id ? 'distractor-row distractor-row-mine' : 'distractor-row'}">
+                         th:class="${result.selected != null and opt.id == result.selected.id ? 'distractor-row distractor-row-mine' : 'distractor-row'}">
                         <strong class="distractor-letter" th:text="${'ABCDEFGH'.substring(it.index, it.index + 1)} + ' — неверно.'">B — неверно.</strong>
                         <span class="distractor-reason markdown-content" th:utext="${@markdownRenderService.toInlineHtml(opt.explanation)}">причина</span>
                     </div>

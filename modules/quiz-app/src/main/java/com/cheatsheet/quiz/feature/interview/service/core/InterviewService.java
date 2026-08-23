@@ -271,6 +271,32 @@ public class InterviewService {
     }
 
     /**
+     * Разбор для исхода «не знаю» (UNKNOWN, UX-15): тот же {@link AnswerResult},
+     * что строит {@link #evaluateAnswer}, но без выбранного варианта
+     * ({@code selected == null} — контракт исхода). Пусто, когда показывать
+     * нечего: у вопроса нет варианта с отметкой правильного (optionless-ветка —
+     * там ответ уже на экране флешкартой). Только чтение: SM-2 и событие ответа
+     * к этому моменту уже применены {@link #submitUnknown}.
+     */
+    public java.util.Optional<AnswerResult> evaluateUnknown(long questionId) {
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new QuestionNotFoundException("Вопрос не найден: id=" + questionId));
+        List<AnswerOption> options = answerOptionRepository.findByQuestionId(questionId);
+        return options.stream()
+                .filter(AnswerOption::correct)
+                .findFirst()
+                .map(correct -> new AnswerResult(
+                        question,
+                        options,
+                        null,
+                        correct,
+                        false,
+                        reviewService.currentState(questionId),
+                        AnswerDisplayMode.FULL
+                ));
+    }
+
+    /**
      * Отмечает вопрос как «не знаю» (UNKNOWN, FLOW-03): применяет SM-2-лапс
      * (грейд 0) и публикует событие ответа как незнание. Выбранного варианта нет.
      *
