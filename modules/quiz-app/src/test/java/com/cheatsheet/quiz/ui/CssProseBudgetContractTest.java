@@ -42,10 +42,9 @@ class CssProseBudgetContractTest {
      *  инвариант укладываются с запасом; эссе — уже нет. */
     private static final int MAX_COMMENT_BYTES = 1536;
 
-    /** Весь каталог, кроме исключений. print.css временно вне гейта: файл несёт
-     *  чужую незакоммиченную дельту (HIST-03) — его эссе уедут в досье после
-     *  приземления того коммита. Убрать исключение = снять строку. */
-    private static final List<String> EXCLUDED = List.of("print.css");
+    /** Весь каталог без исключений: inherited-дельта print.css приземлена
+     *  (e704b9e5), его эссе уехали в досье (REF-014) — ARCH-02 закрыт целиком. */
+    private static final List<String> EXCLUDED = List.of();
 
     @Test
     void migratedFilesKeepEssaysInDocsNotInCss() throws IOException {

@@ -14,6 +14,7 @@ import { initDangerousFormGuard, initSubmitOnceGuard } from './ui/form-guards.js
 import { initPendingGuard } from './ui/pending.js';
 import { initKeyboardHelp } from './ui/keyboard-help.js';
 import { initCopyCode, initCodeToolbar } from './ui/code-toolbar.js';
+import { initCycleFocusHandoff } from './ui/cycle-focus.js';
 import { initReportTriggers } from './ui/modals.js';
 import { initShell } from './ui/shell.js';
 
@@ -113,6 +114,7 @@ function boot() {
       initSubmitOnceGuard();
       initKeyboardHelp();
       initCopyCode();
+      initCycleFocusHandoff();
       initCodeToolbar();
       initReportTriggers();
 

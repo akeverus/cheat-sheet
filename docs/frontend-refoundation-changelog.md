@@ -225,3 +225,19 @@
 - **ACCESSIBILITY:** Бейдж — текст (не только цвет); DOM-порядок шапки не менялся (фикс визуальный); подпись конвенции — обычный текст при таблице.
 - **REGRESSION:** Совместимость пауз: старые блобы получили бы unknown=false (корректно); пауз в БД 0. Таблица тем сознательно изменила семантику («Ошибки» включает unknown) — конвенция продукта едина с /stats (REF-006).
 - **RESULT:** VIS-14 и VIS-13 закрыты. Следующий bottleneck — **A11Y-11** (фокус BODY после GET-переходов цикла: «Следующий вопрос» и redirect на summary; AJAX-планка уже выше — паттерн main tabindex=-1 существует).
+
+---
+
+## REF-014
+
+- **ID:** REF-014
+- **DATE:** 2026-08-23
+- **OBJECTIVE:** Закрыть A11Y-11 — фокус после MPA-переходов цикла приземлялся на BODY; adjacent — print.css-хвост ARCH-02 (гейт без исключений).
+- **PROBLEM:** AJAX-ответ сажал фокус на вердикт, серверный result — autofocus'ом, а GET «Следующий вопрос» и redirect'ы форм цикла (skip, finish → итоги, resume…) оставляли activeElement на BODY: клавиатурный пользователь после КАЖДОГО шага начинал Tab-путь с нуля (skip-link → шапка → навигация), SR терял место в цикле (§54; замеры REF-012).
+- **EVIDENCE:** Живой Chromium до/после (ниже); негативный кейс замерен отдельно.
+- **DECISION:** Рукопожатие через sessionStorage-флаг: клик по [data-cycle-next] (3 ссылки «Следующий вопрос»: AJAX-разбор, серверный result, browse) или submit формы цикла (skip/finish/resume/pause/discard/flashcard-*/study-confirm/#session-form) ставит флаг; после загрузки модуль ui/cycle-focus.js сажает фокус на main#main-content (tabindex=-1 уже в разметке всех страниц цикла) и снимает флаг. Обычные заходы/reload флага не имеют — skip-link остаётся первым Tab'ом, фокус никто не угоняет. data-confirm-формы отсекаются defaultPrevented (флаг ставит только подтверждённая отправка). PE: без JS — браузерное умолчание. Модуль — статический импорт app-entry (preload-манифест перечисляет только точки входа — транзитивные импорты подхватываются сами).
+- **IMPLEMENTATION:** static/js/ui/cycle-focus.js (новый), app-entry.js (init), data-cycle-next в training-actions.html, result.html, focus-training.html. Adjacent: print.css → досье docs/css-decisions/print.md (последний файл ARCH-02), EXCLUDED-список гейта пуст — бюджет прозы теперь держит ВЕСЬ каталог.
+- **TESTS:** TDD RED→GREEN: FocusHandoffContractTest (3 теста: полное рукопожатие модуля — set/remove/focus/формы; пометки на всех трёх ссылках; init в app-entry). ui-пакет целиком GREEN; css-leak-audit exit 0.
+- **VISUAL REVIEW / ACCESSIBILITY:** Живой e2e: ответ клавиатурой («2»+Enter) → фокус на вердикте (AJAX-планка цела) → клик «Следующий вопрос» → на новой странице **activeElement = MAIN#main-content, флаг снят**; следующий Tab — сразу первый интерактив ВНУТРИ контента («Разобрать ошибки»), минуя skip-link/шапку/навигацию: клавиатурный путь шага цикла сократился с ~8 Tab'ов до одного. Негативный кейс: обычная навигация — activeElement BODY, фокус не угнан, skip-link остаётся первым Tab'ом. Программный focus() не рисует кольца (точка отсчёта, не подсветка).
+- **REGRESSION:** AJAX-фокус и autofocus серверного result не тронуты; полный ui-пакет GREEN.
+- **RESULT:** A11Y-11 закрыт; ARCH-02 закрыт БЕЗ остатка. Следующий bottleneck — по §263 из P2: **UX-06** (незакрытый details на /stats: 8 открывающих против 7 закрывающих в живом DOM — документ невалиден; фикс + баланс-контракт уже есть прецедентом в StatsSummaryContractTest) либо RSP-06 (немонотонность жёлоба на 1200px) — решить на входе следующего тика замером обоих.
