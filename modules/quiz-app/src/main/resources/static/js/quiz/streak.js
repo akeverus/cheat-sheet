@@ -34,7 +34,11 @@ export function initStreakBar() {
         }
         if (fillEl) setProgressValue(fillEl, pct);
         if (countEl) {
-          countEl.textContent = 'Дневная цель — ' + d.today + ' из ' + d.goal;
+          /* §144 (REF-025): счётчик растёт и после цели — «60 из 10» абсурдна.
+             Выполненная цель называется словами, дробь остаётся до неё. */
+          countEl.textContent = d.goal > 0 && d.today >= d.goal
+            ? 'Дневная цель выполнена — ' + d.today + ' ' + pluralRu(d.today, 'ответ', 'ответа', 'ответов')
+            : 'Дневная цель — ' + d.today + ' из ' + d.goal;
           countEl.title = 'Дневная цель ответов (не прогресс банка карточек)';
         }
         if (d.streak > 0 || hasGoalProgress) bar.classList.remove('hidden');
