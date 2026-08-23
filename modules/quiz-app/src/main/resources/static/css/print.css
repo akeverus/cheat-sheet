@@ -93,6 +93,19 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+  /* Вкладки (аналитика: Темы/Динамика/Ошибки; настройки: Сессия/Оформление/
+     Данные): лист не кликается, и «печатается только активная панель» прятала
+     бы 2/3 содержимого (замер FRD-217). На бумаге — стопка всех панелей, как в
+     no-JS; полоса вкладок — мёртвый интерактив, прячем; заголовок панели
+     возвращаем из visually-hidden (под вкладками он спрятан как дубль активной
+     вкладки, в стопке он — единственная навигация по листу). */
+  html[data-design] [role="tablist"] { display: none !important; }
+  html[data-design] [role="tabpanel"]:not(.is-active) { display: block !important; }
+  html[data-design][data-js] [role="tabpanel"] .tabpanel-title {
+    position: static !important; width: auto !important; height: auto !important;
+    margin: 0 0 var(--space-4) !important; padding: 0 !important;
+    overflow: visible !important; clip: auto !important; white-space: normal !important;
+  }
   /* Код-блоки печатаются на белом листе (браузер не печатает фоны). В тёмной теме
      --color-text-primary = светлый крем (#F0EEE6) → светлый-по-белому, контраст
      ~1.2:1, невидимо. Форсим серый фон + чернильный текст для pre/inline-code/

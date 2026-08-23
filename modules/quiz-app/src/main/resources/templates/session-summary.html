@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru" data-design="instrument" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head(title='Итоги сессии — Подготовка к собеседованию', includeMermaid=false, includeChart=false, includeHighlight=false, page='summary')}"></head>
+<!--/* Счёт — первым словом title (принцип FRD-220: /session-summary — MPA-навигация
+     с «Завершить сессию», SR объявляет title раньше, чем дойдёт до ринга; вкладка
+     показывает исход без клика). Пустая сессия остаётся «Итогами» без числа —
+     «0 из 0» читался бы как провал, а это отсутствие данных. */-->
+<head th:replace="~{fragments/head :: head(title=${summary.totalQuestions == 0} ? 'Итоги сессии — Подготовка к собеседованию' : (${summary.correctCount} + ' из ' + ${summary.totalQuestions} + ' — Итоги сессии — Подготовка к собеседованию'), includeMermaid=false, includeChart=false, includeHighlight=false, page='summary')}"></head>
 <body class="summary-page">
 <a class="skip-link" href="#main-content">Перейти к итогам сессии</a>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
@@ -235,7 +239,7 @@
                         : (${d == 'MISTAKES'} ? @{/review}
                         : @{/})"
                th:text="${na.label()}">Действие</a>
-            <a class="summary-more-link" th:href="@{/settings}">Новая сессия</a>
+            <a class="summary-more-link" th:href="@{/train}">Новая сессия</a>
             <a class="summary-more-link" th:href="@{/stats}">Аналитика</a>
         </div>
     </details>
