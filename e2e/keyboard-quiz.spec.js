@@ -72,7 +72,7 @@ test.describe('keyboard quiz flow', () => {
    */
   test('full cycle: start from builder, answer, reach next question', async ({ page, browserName }) => {
     const TAB = tabKey(browserName);
-    await page.goto('/settings');
+    await page.goto('/train');
 
     // 1. Табом до кнопки старта конструктора (по пути — поля формы, это нормально)
     let reachedStart = false;
@@ -132,7 +132,7 @@ test.describe('keyboard quiz flow', () => {
    * Выбор режима в конструкторе — предусловие, а не предмет теста: кликаем.
    */
   test('flashcard: Space reveals, digit grades, next card arrives', async ({ page }) => {
-    await page.goto('/settings');
+    await page.goto('/train');
     await page.locator('label:has(input[name="mode"][value="FLASHCARD"])').first().click();
     await Promise.all([
       page.waitForURL(/\/(\?.*)?$/, { timeout: 20_000 }),
@@ -170,7 +170,7 @@ test.describe('keyboard quiz flow', () => {
    * клавиатуре приходилось табать весь каркас заново. Тест держит приземление.
    */
   test('typed recall: reveal lands focus in the reference answer', async ({ page }) => {
-    await page.goto('/settings');
+    await page.goto('/train');
     await page.locator('label:has(input[name="mode"][value="TYPED_RECALL"])').first().click();
     await Promise.all([
       page.waitForURL(/\/(\?.*)?$/, { timeout: 20_000 }),

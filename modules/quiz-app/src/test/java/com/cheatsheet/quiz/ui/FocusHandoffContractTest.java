@@ -69,4 +69,35 @@ class FocusHandoffContractTest {
                 .as("модуль не инициализируется — рукопожатие мёртвое")
                 .contains("initCycleFocusHandoff()");
     }
+
+    /**
+     * Рукопожатие уступает более специфичному приземлению страницы (REF-017).
+     *
+     * <p>Живая регрессия REF-014, пойманная только e2e (typed recall, оба движка):
+     * POST /flashcard-reveal — форма цикла, флаг ставился, и после загрузки
+     * cycle-focus сажал фокус на main УЖЕ ПОСЛЕ того, как сработал autofocus
+     * эталонного ответа (.flashcard-answer, инвариант iter-167) — то есть угонял
+     * фокус с точного приземления на общее. Правило: страница с [autofocus]
+     * знает лучше — флаг снимается, фокус не трогается.</p>
+     */
+    @Test
+    void handoffYieldsToThePagesOwnAutofocus() throws IOException {
+        // Комментарии стрипаются: упоминание [autofocus] в прозе не является кодом
+        // уступки (первая редакция контракта пропустила мутацию именно из-за этого).
+        String js = read("static/js/ui/cycle-focus.js")
+                .replaceAll("(?s)/\\*.*?\\*/", "")
+                .replaceAll("(?m)^\\s*//.*$", "");
+        assertThat(js)
+                .as("модуль обязан запрашивать [autofocus] кодом, не комментарием")
+                .contains("querySelector('[autofocus]')");
+        int autofocusCheck = js.indexOf("querySelector('[autofocus]')");
+        int mainFocus = js.indexOf("getElementById('main-content')");
+        assertThat(autofocusCheck)
+                .as("уступка autofocus должна стоять ДО общей посадки на main")
+                .isLessThan(mainFocus)
+                .isGreaterThan(-1);
+        assertThat(js)
+                .as("посадка на main обязана быть под условием отсутствия autofocus")
+                .containsPattern("if\\s*\\(!specific\\)");
+    }
 }

@@ -45,8 +45,16 @@ export function initCycleFocusHandoff() {
     if (flagged) sessionStorage.removeItem(FLAG);
   } catch { /* приватный режим */ }
   if (flagged) {
-    const main = document.getElementById('main-content');
-    if (main) main.focus();
+    /* Уступка точному приземлению страницы (REF-017): у страниц с [autofocus]
+       (серверный result — вердикт; reveal-режимы — эталонный ответ, iter-167)
+       фокус уже сидит там, где страница решила. Садиться на main поверх — значит
+       угонять фокус с точного на общее: живая регрессия typed recall, пойманная
+       e2e в обоих движках. Флаг к этому моменту уже снят — рукопожатие съедено. */
+    const specific = document.querySelector('[autofocus]');
+    if (!specific) {
+      const main = document.getElementById('main-content');
+      if (main) main.focus();
+    }
   }
 
   if (bound) return;
