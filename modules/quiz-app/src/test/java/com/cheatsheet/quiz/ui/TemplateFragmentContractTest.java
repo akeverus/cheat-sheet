@@ -406,6 +406,26 @@ class TemplateFragmentContractTest {
                 .doesNotContainPattern("stats-next-action-weak\"[\\s\\S]{0,400}?th:aria-label");
     }
 
+    /**
+     * Знаки разделов ВИДНЫ в каталоге (Phase I, REF-020). Ассеты «ровно по
+     * одному на раздел» существовали, конфиг их объявлял, DTO довозил до
+     * модели — и цепочка обрывалась: ни один шаблон не рендерил icon. Гейт
+     * StaticAssetInventoryTest считал их живыми по ссылке в yaml — мёртвый
+     * вес с алиби. Знак — визуальный якорь раздела (§167), декоративен при
+     * заголовке: пустой alt, чтобы SR не слышал имя раздела дважды.
+     */
+    @Test
+    void topicsCatalogRendersSectionSigns() throws IOException {
+        String topics = readTemplate("templates/topics.html");
+        assertThat(topics)
+                .as("знак раздела обязан рендериться в шапке группы каталога")
+                .contains("catalog-group-sign")
+                .contains("section.group.icon");
+        assertThat(topics)
+                .as("знак декоративен при заголовке — SR не должен слышать его как контент")
+                .containsPattern("catalog-group-sign[^>]*alt=\"\"");
+    }
+
     @Test
     void settingsResetOptionsExplainsActualRecoveryFlow() throws IOException {
         String settings = readTemplate("templates/settings.html");

@@ -107,11 +107,27 @@ html[data-design] .topics-page .catalog-group-summary:hover::before {
   border-color: var(--color-accent-strong);
 }
 
+/* Знак раздела слева от пары «заголовок+описание» (REF-020): локальная сетка
+   внутри клетки headings — summary-грид с его колонками чисел не трогаем.
+   Вторая колонка появляется только при знаке (:has), иначе одноколоночная
+   сетка без паразитного gap; со знаком автоплейсмент сам кладёт тексты во
+   вторую колонку (знак первый и держит обе строки). */
 html[data-design] .topics-page .catalog-group-headings {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 2px;
+  align-items: center;
   min-width: 0;
+}
+html[data-design] .topics-page .catalog-group-headings:has(> .catalog-group-sign) {
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-3);
+}
+html[data-design] .topics-page .catalog-group-sign {
+  grid-row: 1 / span 2;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
 }
 html[data-design] .topics-page .catalog-group-title {
   margin: 0;

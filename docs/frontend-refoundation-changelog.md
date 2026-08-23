@@ -325,3 +325,20 @@
 - **IMPLEMENTATION:** n/a (замерная итерация; троттлинг снят после замеров).
 - **TESTS:** n/a; существующие пояса не менялись.
 - **RESULT:** Phase K чист: LCP < 300 ms (обе ключевые страницы), CLS 0.00, reflow-мелочь, бюджеты без раздутий и зафиксированы. Из фазовых проходов остались Phase I (motion/assets review) и Phase M (final polish — только после структурных); либо остаток P2/P3 замером. Выбор на входе следующего тика по §263.
+
+---
+
+## REF-020
+
+- **ID:** REF-020
+- **DATE:** 2026-08-23
+- **OBJECTIVE:** Phase I — motion/assets review: роль каждого ассета (§17), reduced-motion (§58/§190), crisp-пиксели (§59/§220), бессмысленные анимации (§188).
+- **EVIDENCE / ЗАМЕРЫ:** Motion: 41 @keyframes (36 в pixel-слое); живьём на фокус-странице ВСЕГО 2 анимации (одноразовый pageEnter + ambient arrowNudge на CTA — функциональный аффорданс); kill-механика (глобальный duration 0.001ms + pixel-parity «animation:none» + ось data-motion auto/on/off) живьём: data-motion=off → 0 running. Ассеты: img/pixel/ ПУСТ (671c5c40 — хром ушёл в вектор), img/stickers/ — 10 знаков разделов 64×64 (~300 байт, чистые IHDR/IDAT/IEND, сгенерированы в репо, provenance-док на месте). Гейты живые (StaticAssetInventoryTest, SectionStickerPaletteTest).
+- **ГЛАВНАЯ НАХОДКА:** Знаки разделов — МЁРТВЫЙ ВЕС С АЛИБИ: yaml объявлял (icon:), DTO довозил (GroupOption/GroupProgress.icon()), гейт считал живыми по ссылке в конфиге — но НИ ОДИН шаблон не рендерил; живой fetch ×6 страниц: 0 вхождений stickers/. Ложная тревога по ходу (§258): первый grep-скан без yaml показал «10 unused» — гейт-инфраструктура оказалась умнее скана.
+- **DECISION:** По §2 (user value > maintainability) знаки ВОЗВРАЩЕНЫ в продукт, а не удалены: визуальные якоря сканирования текстового каталога /topics (§167), ассеты готовые и палитра согласована (24f5c311). Рендер в клетке headings локальной сеткой (:has-ветка — summary-грид колонок чисел не тронут); alt="" — декоративен при заголовке. Сопутствующие фиксы: (1) мёртвый селектор pixel-fx img[src*="/img/pixel/"] был ещё и СКЛЕЕН с размерами .px-icon (знак получал 16px и fill; в группе не было и image-rendering — «crisp» уехал при распиле монолита) → своё правило: только pixelated, размером владеет место; (2) THIRD_PARTY_ASSETS.md разъехался с диском («pixel/ 20 шт.» при 0 на диске) — таблица исправлена.
+- **IMPLEMENTATION:** topics.html (знак в headings), pages-topics.css (:has-сетка, 32px, pixelated), pixel-fx.css (развод селекторов), THIRD_PARTY_ASSETS.md.
+- **TESTS:** Контракт topicsCatalogRendersSectionSigns; ПЕРВАЯ мутация (переименование класса) НЕ покраснела — contains ловит подстроку; честная мутация (удаление img) → RED → возврат → GREEN. ui-пакет GREEN (включая оба ассет-гейта); css-leak-audit exit 0; e2e keyboard 10/10.
+- **VISUAL REVIEW:** Живьём 1512: 10/10 знаков, 32px, pixelated, integer 2:1 (retina 1:1), сетки legend/summary 7=7 колонок, тексты на линии. Обе темы: тёмные плашки знаков читаются и на камне, и на пергаменте («чернильная печать») — §184 без перекраски. 390: overflow нет, знак 32px, заголовок жив. Скрины ref020-section-signs-{dark,light}.png.
+- **ACCESSIBILITY:** alt="" — SR слышит раздел один раз (из h2); интерактивность не менялась.
+- **REGRESSION:** Колонки чисел каталога не сдвинуты (замер); reduced-motion пояс не тронут; ассет-гейты зелёные.
+- **RESULT:** Phase I закрыт: motion-дисциплина здорова (2 анимации на главном экране, kill работает), каждый ассет имеет роль И РЕНДЕРИТСЯ, provenance честен. Все сводные фазы пройдены (H/I/J/K); остаток: P2/P3 замером, decision-gated пункты у владельца, Phase M (final polish) — после решения по остатку. Следующий выбор — §263 на входе тика.
