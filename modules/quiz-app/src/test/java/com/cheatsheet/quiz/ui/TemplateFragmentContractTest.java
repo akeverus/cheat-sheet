@@ -448,6 +448,24 @@ class TemplateFragmentContractTest {
                 .containsPattern("data-tab-hash=\"topics\">По темам<");
     }
 
+    /**
+     * Лид настроек честен про содержимое (§144, REF-026): «управление данными»
+     * упоминается ТОЛЬКО когда секция «Данные» реально рендерится — тем же
+     * условием, что и её вкладка (optionsBankResetAllowed or multiSecurityMode).
+     * Живой скрин single-user конфига: лид обещал управление данными на
+     * странице, где его нет.
+     */
+    @Test
+    void settingsLeadPromisesOnlyWhatTheConfigRenders() throws IOException {
+        String settings = readTemplate("templates/settings.html");
+        assertThat(settings)
+                .as("лид обязан выбирать формулировку тем же условием, что вкладка «Данные»")
+                .containsPattern("(?s)page-head-lead[\\s\\S]{0,400}?optionsBankResetAllowed or multiSecurityMode[\\s\\S]{0,200}?управление данными");
+        assertThat(settings)
+                .as("вариант без данных существует")
+                .contains("'Оформление тренажёра.'");
+    }
+
     @Test
     void settingsResetOptionsExplainsActualRecoveryFlow() throws IOException {
         String settings = readTemplate("templates/settings.html");
