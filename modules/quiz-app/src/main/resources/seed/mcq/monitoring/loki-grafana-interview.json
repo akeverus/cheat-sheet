@@ -6,56 +6,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `Loki`?",
+          "question_text": "Что такое Loki?",
           "options": [
             {
-              "text": "`Loki` — полнотекстовая поисковая система, индексирующая каждое слово каждой строки лога ради максимально быстрого поиска по содержимому, как делает классический Elasticsearch.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Так работает Elasticsearch/ELK; `Loki` сознательно индексирует только labels и хранит строки сжатыми, поиск по тексту делается grep-ом.",
-                "source_of_confusion": "Обе системы решают задачу логов, поэтому модель индексации Elasticsearch ошибочно переносят на `Loki`.",
-                "if_it_were_true": "Тогда `Loki` не был бы дешевле ELK в разы и не назывался бы «like Prometheus, but for logs», ведь именно отказ от full-text индекса даёт экономию.",
-                "how_it_should_be": "`Loki` индексирует только метки потока, а полнотекстовый поиск выполняется фильтрами по сжатым чанкам."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Loki` — система трассировки распределённых запросов от `Grafana Labs`, прямой аналог `Jaeger`, работающая со spans и trace_id и не хранящая сами строки логов.",
+              "order": 0,
+              "text": "`Loki` хранит логи в собственной СУБД на локальных дисках.",
               "correct": false,
               "sections": {
-                "what_actually": "Трассировкой в стеке `Grafana` занимается `Tempo` (аналог `Jaeger`), а `Loki` отвечает именно за логи.",
-                "source_of_confusion": "Оба продукта от `Grafana Labs` и часто упоминаются вместе в LGTM-стеке, отсюда смешение ролей.",
-                "if_it_were_true": "Тогда `Loki` оперировал бы spans и trace_id как первичными сущностями, но его модель — это streams и chunks из строк логов.",
-                "how_it_should_be": "`Loki` — это про логи; за traces отвечает `Tempo`, за metrics — `Mimir`."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "Строки хранятся сжатыми в object storage (S3/GCS), а не в локальной СУБД.",
+                "source_of_confusion": "Привычную БД логов переносят на Loki.",
+                "if_it_were_true": "Тогда пропала бы дешевизна и масштаб до петабайтов.",
+                "how_it_should_be": "Данные лежат в самом дешёвом object storage."
+              }
             },
             {
-              "text": "`Grafana Loki` — open-source система агрегации логов от `Grafana Labs`, по принципу «как Prometheus, но для логов»: индексирует только labels.",
+              "label": "B",
+              "order": 1,
+              "text": "`Loki` заметно дороже ELK из-за своего огромного полнотекстового инвертированного словарного индекса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Loki` примерно в 10 раз дешевле ELK.",
+                "source_of_confusion": "«Большой индекс» ошибочно приписывают Loki.",
+                "if_it_were_true": "Тогда исчезла бы главная причина брать Loki.",
+                "how_it_should_be": "Индекс мал, потому и хранение дёшево."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`Loki` индексирует сами labels, а строки хранит сжатыми в object storage.",
               "correct": true,
               "sections": {
-                "explanation": "Loki индексирует labels потоков, а содержимое хранит сжатыми chunks в object storage. Это снижает index overhead и обычно делает длительное хранение дешевле полноиндексных log-search систем.",
-                "example": "Поток `{app=\"my-app\", env=\"prod\", level=\"error\"}` индексируется по labels, а сами строки лежат сжатыми чанками в `s3://loki-bucket/chunks/...` и читаются grep-ом при запросе.",
-                "when_to_apply": "Выбирают `Loki`, когда уже есть `Grafana` + `Prometheus`, важна стоимость хранения и фильтрация идёт в основном по labels (service, env), а не по произвольному тексту.",
-                "edge_cases": "Платой за дешевизну становится более медленный полнотекстовый поиск (grep по чанкам) и более слабые агрегации, чем у Elasticsearch; экосистема моложе.",
-                "related": "[[loki-grafana-interview#Q2]] философия index labels, not content; [[loki-grafana-interview#Q3]] PLG vs ELK; [[loki-grafana-interview#Q25]] сравнение стоимости."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Система агрегации логов от Grafana Labs: «как Prometheus, но для логов».",
+                "example": "Строки лежат сжатыми блоками в S3/GCS и не разбираются на слова.",
+                "when_to_apply": "Когда логи фильтруются по labels, а тяжёлый текстовый поиск редок.",
+                "edge_cases": "Индекс крошечный, основная масса данных — в дешёвом хранилище.",
+                "related": "Полнотекстовый поиск медленнее — это grep по сжатым блокам."
+              }
             },
             {
-              "text": "`Loki` — форк `Elasticsearch`, переписанный на `Go`, сохранивший ту же модель инвертированного индекса по всем полям ради совместимости запросов.",
+              "label": "D",
+              "order": 3,
+              "text": "`Loki` строит полнотекстовый индекс по каждому слову лога, как Elasticsearch.",
               "correct": false,
               "sections": {
-                "what_actually": "`Loki` написан с нуля и не использует инвертированный индекс по содержимому; индексируются только labels, как в `Prometheus`.",
-                "source_of_confusion": "Раз обе системы для логов и `Loki` на `Go`, кажется логичным считать его «лёгким Elasticsearch».",
-                "if_it_were_true": "Loki наследовал бы стоимость и query model полного inverted index. Его фактическая архитектура специально избегает индексации содержимого каждой строки.",
-                "how_it_should_be": "`Loki` — самостоятельный проект с label-based индексацией, вдохновлённый `Prometheus`, а не форк ELK."
-              },
-              "label": "D",
-              "order": 3
+                "what_actually": "Наоборот: `Loki` не индексирует текст, только labels.",
+                "source_of_confusion": "Полнотекстовый индекс ELK переносят на Loki.",
+                "if_it_were_true": "Тогда индекс был бы огромным, как у Elasticsearch.",
+                "how_it_should_be": "Индексируются только метки, строки — grep по блокам."
+              }
             }
           ]
         }
@@ -66,56 +66,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "В чём философия `Loki` — «index labels, not content»?",
+          "question_text": "Философия Loki — «индексировать labels, а не содержимое»?",
           "options": [
             {
-              "text": "Идея в том, что labels индексируются, но строки логов хранятся в несжатом виде, чтобы grep по ним был максимально быстрым и не тратил CPU на распаковку.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Строки как раз хранятся сжатыми (compressed chunks) в object storage; несжатое хранение взорвало бы стоимость, ради экономии которой `Loki` и создан.",
-                "source_of_confusion": "Кажется, что несжатые данные ускоряют grep, поэтому их «оставляют как есть».",
-                "if_it_were_true": "Тогда исчезла бы главная экономия `Loki` на хранении, и преимущество над ELK по стоимости пропало бы.",
-                "how_it_should_be": "Сырые строки хранятся сжатыми чанками; распаковка при grep — цена дешёвого хранения."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Смысл в том, чтобы вообще не использовать labels, а хранить всё одним большим текстовым потоком и искать линейным grep по всему хранилищу при каждом запросе.",
+              "order": 0,
+              "text": "Запрос `Loki` грепает весь текст сразу, без предварительного отбора по labels.",
               "correct": false,
               "sections": {
-                "what_actually": "Labels — центральная сущность `Loki`: именно они индексируются и позволяют не grep-ать весь объём, а сузить выборку до нужных потоков.",
-                "source_of_confusion": "Из тезиса «поиск через grep» делают вывод, что labels не нужны, хотя они как раз ограничивают область grep.",
-                "if_it_were_true": "Тогда любой запрос сканировал бы всё хранилище и был бы катастрофически медленным на петабайтах данных.",
-                "how_it_should_be": "Сначала фильтр по индексированным labels сужает потоки, и только затем grep по их чанкам."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "Сначала отбор по индексу labels, и только потом grep по блокам.",
+                "source_of_confusion": "Полнотекстовый поиск понимают как «грепать всё».",
+                "if_it_were_true": "Тогда пришлось бы читать все данные подряд.",
+                "how_it_should_be": "Labels-фильтр сужает выборку до нужных chunks."
+              }
             },
             {
-              "text": "Вместо индексации каждого слова (как ELK) `Loki` индексирует только labels, а сырые строки хранит сжатыми; запрос сначала фильтрует по labels, затем grep-ает по чанкам.",
+              "label": "B",
+              "order": 1,
+              "text": "Индексация labels делает хранилище дороже, но зато полнотекстовый поиск быстрее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: хранилище дёшево, а полнотекстовый поиск медленнее.",
+                "source_of_confusion": "Плату за дешевизну инвертируют.",
+                "if_it_were_true": "Тогда Loki был бы и дешевле, и быстрее ELK одновременно.",
+                "how_it_should_be": "За малый индекс платят скоростью текстового grep."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`Loki` индексирует только метаданные строки (labels), а не её текст.",
               "correct": true,
               "sections": {
-                "explanation": "Это сознательный trade-off: ELK индексирует всё (быстрый поиск, дорогое хранение и CPU), а `Loki` индексирует только метки (дёшево, но полнотекст медленнее). Для большинства запросов фильтра по service/env достаточно.",
-                "example": "Запрос `{app=\"my-app\"} |= \"error\"` сперва по индексу labels отбирает нужные потоки, а уже потом grep-ает строку `error` внутри сжатых чанков.",
-                "when_to_apply": "Подход выигрывает, когда логи структурированы и фильтрация идёт по ограниченному набору labels; full-text grep остаётся вторичным сценарием.",
-                "edge_cases": "Если основная нагрузка — именно произвольный полнотекстовый поиск по всем логам, модель `Loki` проигрывает индексированному поиску ELK.",
-                "related": "[[loki-grafana-interview#Q1]] что такое Loki; [[loki-grafana-interview#Q8]] что такое labels; [[loki-grafana-interview#Q9]] проблема cardinality."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Философия — индексировать метки, а не текст; это противоположность ELK.",
+                "example": "Запрос сначала по индексу labels отбирает блоки, затем грепает их содержимое.",
+                "when_to_apply": "Когда большинству запросов хватает фильтрации по labels.",
+                "edge_cases": "Индекс мал, хранилище дёшево — но текстовый поиск медленнее.",
+                "related": "ELK индексирует всё слово-за-словом: быстро, но дорого."
+              }
             },
             {
-              "text": "Философия в том, чтобы индексировать и labels, и полное содержимое строк, просто храня инвертированный индекс в сжатом виде ради экономии места на диске.",
+              "label": "D",
+              "order": 3,
+              "text": "`Loki`, как и ELK, строит инвертированный индекс по каждому слову строки.",
               "correct": false,
               "sections": {
-                "what_actually": "`Loki` принципиально НЕ индексирует содержимое строк; индексируются только labels, а строки лишь сжимаются без построения full-text индекса.",
-                "source_of_confusion": "Сжатие чанков путают со сжатием индекса, делая вывод, что индексируется всё, но компактно.",
-                "if_it_were_true": "Тогда полнотекстовый поиск был бы таким же быстрым, как в ELK, но он медленнее именно из-за отсутствия индекса по тексту.",
-                "how_it_should_be": "Индексируются только метки; содержимое не индексируется, поиск по нему — grep по сжатым чанкам."
-              },
-              "label": "D",
-              "order": 3
+                "what_actually": "Наоборот: `Loki` индексирует только labels, а ELK — каждое слово.",
+                "source_of_confusion": "Инвертированный индекс ELK переносят на Loki.",
+                "if_it_were_true": "Тогда индекс раздулся бы, и дешевизна пропала.",
+                "how_it_should_be": "Loki индексирует метки, а не слова."
+              }
             }
           ]
         }
@@ -126,56 +126,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем стек Alloy + Loki + Grafana отличается от Elastic Stack?",
+          "question_text": "PLG-стек (Promtail + Loki + Grafana) против ELK?",
           "options": [
             {
-              "text": "PLG и ELK по сути идентичны по стоимости: и Elasticsearch, и `Loki` хранят данные в object storage с одинаковыми операционными затратами на хранение и индекс.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Стоимость заметно различается: `Loki` хранит сжатые чанки в дешёвом object storage (`S3`), а Elasticsearch держит индекс на дорогих дата-нодах с JVM.",
-                "source_of_confusion": "Современный ELK тоже умеет в object storage (frozen tier), отсюда вывод о равенстве затрат.",
-                "if_it_were_true": "Storage и indexing model не влияли бы на TCO. На практике labels-only indexing и object storage могут существенно изменить стоимость, но итог зависит от workload.",
-                "how_it_should_be": "PLG дешевле за счёт object storage и отсутствия full-text индекса; ELK дороже по storage и compute."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Loki хранит сжатые chunks и индексирует labels, поэтому обычно дешевле Elastic; Elastic даёт более мощный полнотекстовый поиск и аналитику.",
+              "order": 0,
+              "text": "`PLG` — Promtail собирает логи, Loki хранит, Grafana показывает — это альтернатива ELK.",
               "correct": true,
               "sections": {
-                "explanation": "Выбор сводится к компромиссу: простой троблшутинг логов с упором на стоимость → PLG/`Loki`; сложный поиск, SIEM и аналитика → ELK. PLG-экосистема растёт, ELK — зрелая.",
-                "example": "Для «покажи ошибки сервиса api в prod за час» PLG идеален и дёшев; для сложного SIEM-запроса с агрегациями по десяткам полей сильнее ELK.",
-                "when_to_apply": "PLG берут cost-conscious команды в K8s, уже живущие в `Grafana`; ELK — там, где нужен тяжёлый full-text поиск и аналитика по логам.",
-                "edge_cases": "Search speed и full-text query в PLG медленнее (grep), а агрегации ограничены — это цена дешёвого хранения; ELK тянет JVM-ресурсы и операционную сложность.",
-                "related": "[[loki-grafana-interview#Q1]] что такое Loki; [[loki-grafana-interview#Q25]] сравнение стоимости Loki vs ELK; [[loki-grafana-interview#Q28]] когда не выбирать Loki."
-              },
+                "explanation": "Стек Grafana для логов; прямая альтернатива ELK (Elasticsearch + Logstash + Kibana).",
+                "example": "Различие в одном: Loki индексирует labels, Elasticsearch — весь текст.",
+                "when_to_apply": "Простой разбор логов по labels с экономией → PLG.",
+                "edge_cases": "Сложный полнотекстовый поиск, SIEM, аналитика → ELK.",
+                "related": "PLG на Go дешевле по ресурсам, ELK на JVM — тяжелее."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "PLG быстрее ELK по полнотекстовому поиску, потому что `Go`-сервисы всегда обгоняют `JVM`, а object storage читается быстрее, чем локальные диски Elasticsearch.",
+              "order": 1,
+              "text": "В `PLG` логи хранит Elasticsearch, а Loki только их визуализирует.",
               "correct": false,
               "sections": {
-                "what_actually": "Полнотекстовый поиск в PLG медленнее: `Loki` grep-ает сжатые чанки, тогда как ELK ищет по инвертированному индексу; язык рантайма тут не решающий.",
-                "source_of_confusion": "Лёгкость `Go` по памяти ошибочно переносят на скорость текстового поиска.",
-                "if_it_were_true": "Тогда у `Loki` не было бы известного недостатка «slower full-text search», но именно он указан как ключевой компромисс.",
-                "how_it_should_be": "ELK быстрее в поиске за счёт индекса; преимущество PLG — стоимость и простота, а не скорость текстового поиска."
-              },
+                "what_actually": "Логи в PLG хранит именно `Loki`; Grafana только показывает.",
+                "source_of_confusion": "Роли ELK переносят на компоненты PLG.",
+                "if_it_were_true": "Тогда PLG не был бы альтернативой ELK.",
+                "how_it_should_be": "Promtail собирает, Loki хранит, Grafana визуализирует."
+              }
+            },
+            {
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "PLG превосходит ELK по мощности агрегаций и аналитики, поэтому именно его рекомендуют для SIEM и сложного анализа безопасности по большому массиву логов.",
+              "order": 2,
+              "text": "`PLG`, ровно как и ELK, полностью индексирует сам текст логов.",
               "correct": false,
               "sections": {
-                "what_actually": "Агрегации и аналитика — сильная сторона ELK; у `Loki` они ограничены, и для SIEM/тяжёлой аналитики рекомендуют как раз ELK.",
-                "source_of_confusion": "LogQL умеет metric-запросы, что создаёт впечатление полноценной аналитики уровня Elasticsearch.",
-                "if_it_were_true": "Тогда строку «complex SIEM, analytics → ELK» в гайдах по выбору заменили бы на `Loki`.",
-                "how_it_should_be": "Для сложной аналитики и SIEM сильнее ELK; PLG — для простого, дешёвого троблшутинга логов."
-              },
+                "what_actually": "`PLG` индексирует только labels, в отличие от полнотекстового ELK.",
+                "source_of_confusion": "Подход ELK приписывают всему стеку логов.",
+                "if_it_were_true": "Тогда PLG не давал бы экономии на индексе.",
+                "how_it_should_be": "Индексация labels — ключевое отличие Loki от ES."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "У `PLG` хранение логов заметно дороже, чем у полнотекстового ELK.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: хранение у `PLG` дешевле за счёт object storage.",
+                "source_of_confusion": "Дороговизну ELK приписывают PLG.",
+                "if_it_were_true": "Тогда пропал бы смысл переходить на PLG.",
+                "how_it_should_be": "Object storage делает PLG заметно дешевле ELK."
+              }
             }
           ]
         }
@@ -186,56 +186,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Из каких компонентов состоит `Loki`?",
+          "question_text": "Из каких компонентов состоит Loki?",
           "options": [
             {
-              "text": "`Loki` состоит из `Master`-ноды и `Data`-нод, как Elasticsearch-кластер: master хранит метаданные и маршрутизацию, а data-ноды держат шарды полнотекстового индекса.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это архитектура Elasticsearch; у `Loki` другие роли — `Distributor`, `Ingester`, `Querier`, `Query Frontend`, `Compactor`, и storage внешний (object storage).",
-                "source_of_confusion": "Обе системы для логов, поэтому привычную master/data-модель ELK переносят на `Loki`.",
-                "if_it_were_true": "Тогда `Loki` хранил бы шарды индекса на data-нодах, но он держит данные в object storage и индексирует только labels.",
-                "how_it_should_be": "Роли `Loki` — это distributor/ingester/querier/frontend поверх внешнего object storage, без master/data-нод."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Loki` строится вокруг компонента `Indexer`, который индексирует полное содержимое каждой строки лога перед записью в storage, чтобы ускорить полнотекстовый поиск.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Такого компонента нет, и содержимое строк не индексируется; за индекс по labels отвечают `Ingester`/`Compactor`/`Index Gateway`, а строки лишь сжимаются.",
-                "source_of_confusion": "Привычка ELK строить full-text индекс рождает ожидание отдельного индексатора содержимого.",
-                "if_it_were_true": "Тогда `Loki` тратил бы CPU на индексацию каждого слова и потерял бы своё ключевое преимущество в стоимости.",
-                "how_it_should_be": "Индексируются только labels (`Ingester`, `Compactor`, `Index Gateway`); содержимое строк не индексируется."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Единственный компонент `Loki` — агент `Grafana Alloy`, который сам и принимает, и хранит сжатые чанки, и отдаёт логи на запрос.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Grafana Alloy` — внешний агент доставки логов, он не входит в серверную часть `Loki`; приём/хранение/чтение делают `Distributor`, `Ingester`, `Querier`.",
-                "source_of_confusion": "В PLG-стеке `Grafana Alloy` всегда рядом с `Loki`, отсюда вывод, что это и есть `Loki`.",
-                "if_it_were_true": "Тогда не существовало бы отдельных `Ingester` и `Querier`, но именно они отвечают за запись и чтение чанков.",
-                "how_it_should_be": "`Promtail/Alloy` лишь шлёт логи в `Distributor`; серверный `Loki` состоит из distributor/ingester/querier/frontend."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Loki включает write-path, read-path и backend-компоненты: distributor, ingester, querier, query frontend, compactor и index gateway; возможен single-binary режим.",
+              "order": 0,
+              "text": "Запись идёт через Distributor и Ingester, чтение — через Querier.",
               "correct": true,
               "sections": {
-                "explanation": "Путь записи: `Promtail/Alloy` → `Distributor` (приём и валидация логов) → `Ingester` (буферизация строк и сборка сжатых чанков, запись в storage) → object storage; путь чтения: `Grafana` → `Query Frontend` (разбиение и кэширование запросов) → `Querier` (чтение чанков из storage) → storage. `Compactor` уплотняет индексы, `Index Gateway` обслуживает запросы к индексу. Разделение на компоненты позволяет масштабировать чтение и запись независимо.",
-                "example": "В микросервисном режиме `Ingester` можно масштабировать под пик ingestion, а `Querier` — отдельно под тяжёлые запросы, не трогая запись.",
-                "when_to_apply": "Знание компонентов нужно при выборе режима деплоя и тюнинге: где буферизация (`Ingester`), где кэш (`Query Frontend`), где компакция (`Compactor`).",
-                "edge_cases": "В single-binary режиме все компоненты живут в одном процессе — просто разворачивать, но масштабировать по отдельности уже нельзя.",
-                "related": "[[loki-grafana-interview#Q6]] streams и chunks; [[loki-grafana-interview#Q7]] режимы деплоя; [[loki-grafana-interview#Q5]] storage backends."
-              },
+                "explanation": "Слабосвязанные компоненты; лог проходит по путям записи и чтения.",
+                "example": "Distributor валидирует и шардирует, Ingester буферизует и пишет chunks.",
+                "when_to_apply": "В крупных развёртываниях каждый компонент масштабируется отдельно.",
+                "edge_cases": "Compactor уплотняет индексы, Index Gateway обслуживает запросы к индексу.",
+                "related": "В single-binary всё собрано в один процесс."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Ingester исполняет запросы чтения, а Querier принимает входящие логи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: Querier читает и фильтрует, а Distributor принимает логи.",
+                "source_of_confusion": "Роли компонентов записи и чтения путают.",
+                "if_it_were_true": "Тогда путь запроса разрушился бы.",
+                "how_it_should_be": "Ingester пишет chunks, Querier достаёт их для чтения."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Все компоненты `Loki` обязаны всегда работать только отдельными изолированными процессами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В single-binary mode все компоненты живут в одном процессе.",
+                "source_of_confusion": "Микросервисный режим считают единственным.",
+                "if_it_were_true": "Тогда небольшое развёртывание было бы невозможно.",
+                "how_it_should_be": "Для малых нагрузок всё собрано в один бинарь."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Distributor сам упаковывает строки в chunks и сбрасывает их в хранилище.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chunks упаковывает и сбрасывает Ingester, а не Distributor.",
+                "source_of_confusion": "Distributor как точку входа путают с записью в хранилище.",
+                "if_it_were_true": "Тогда Ingester был бы не нужен.",
+                "how_it_should_be": "Distributor лишь раздаёт строки Ingester'ам."
+              }
             }
           ]
         }
@@ -246,56 +246,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие storage backends поддерживает `Loki`?",
+          "question_text": "Какие хранилища поддерживает Loki (S3, GCS, Cassandra)?",
           "options": [
             {
-              "text": "Рекомендуемой production-схемой индекса является `Cassandra`, а `TSDB` считается устаревшим экспериментальным форматом, который постепенно удаляют из новых релизов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`TSDB` со schema v13 — рекомендуемый формат индекса для новых Loki-развёртываний, а Cassandra относится к legacy backends.",
-                "source_of_confusion": "Cassandra долго использовалась как индексный backend, поэтому исторический выбор легко принять за современную рекомендацию.",
-                "if_it_were_true": "Документация новых версий рекомендовала бы Cassandra вместо TSDB и не развивала бы single-store TSDB-схему.",
-                "how_it_should_be": "Для нового production-кластера выбирайте TSDB и object storage; Cassandra рассматривайте только при сопровождении legacy-схем."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Единственный поддерживаемый backend `Loki` — PostgreSQL, где и индекс по labels, и сами сжатые строки логов лежат в обычных реляционных таблицах с JSONB-полями.",
+              "order": 0,
+              "text": "Под индекс `TSDB` обязательно нужна ещё отдельная выделенная база данных.",
               "correct": false,
               "sections": {
-                "what_actually": "`Loki` не использует реляционную СУБД для хранения логов; чанки идут в object storage, а индекс — в TSDB или legacy boltdb/Cassandra/DynamoDB.",
-                "source_of_confusion": "Реляционная БД кажется универсальным хранилищем, отсюда ошибочное предположение про PostgreSQL.",
-                "if_it_were_true": "Тогда хранение петабайтов логов в одной РСУБД было бы неподъёмно дорого и не масштабировалось.",
-                "how_it_should_be": "Строки — в object storage сжатыми чанками, индекс — в TSDB; реляционная БД здесь не применяется."
-              },
+                "what_actually": "`TSDB` хранит индекс в том же object storage — отдельная база не нужна.",
+                "source_of_confusion": "Старую модель «индекс в БД» переносят на TSDB.",
+                "if_it_were_true": "Тогда пропало бы упрощение схемы v13.",
+                "how_it_should_be": "TSDB убрал необходимость в отдельной базе индекса."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Loki` хранит чанки только на локальных дисках нод и принципиально не поддерживает object storage вроде `S3` или `GCS`, поэтому масштабируется лишь вертикально.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: object storage (`S3`, `GCS`, `Azure Blob`) — основной и рекомендуемый backend; `Filesystem` оставлен лишь для dev.",
-                "source_of_confusion": "Привычка хранить индексы на локальных дисках (как в ELK) рождает мысль, что `Loki` тоже про локальное хранение.",
-                "if_it_were_true": "Тогда `Loki` не масштабировался бы до петабайтов на дешёвом storage и потерял бы преимущество в стоимости.",
-                "how_it_should_be": "Чанки хранятся в дешёвом object storage (`S3`/`GCS`/`Azure`), а `Filesystem` — только для разработки."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Для production Loki рекомендует TSDB index и object storage для индекса и chunks; filesystem подходит малым установкам, а Cassandra и DynamoDB относятся к legacy backends.",
+              "order": 1,
+              "text": "Chunks хранят в object storage, а индекс `TSDB` лежит рядом.",
               "correct": true,
               "sections": {
-                "explanation": "В актуальных версиях Loki рекомендует TSDB со schema v13 и object storage. Индекс и chunks хранятся в масштабируемом object storage, а старые Cassandra и DynamoDB схемы поддерживают главным образом для legacy-развёртываний.",
-                "example": "Типовой production-кластер использует S3-совместимое хранилище и TSDB schema v13; filesystem оставляют для локальной или небольшой установки.",
-                "when_to_apply": "Выбирайте TSDB и object storage при проектировании нового production-кластера; legacy backends сохраняйте только при обоснованной миграционной зависимости.",
-                "edge_cases": "Filesystem технически поддерживается, но не даёт свойств распределённого object storage. Конкретные schema periods и migration steps проверяют по версии Loki.",
-                "related": "[[loki-grafana-interview#Q4]] компоненты Loki; [[loki-grafana-interview#Q6]] streams и chunks; [[loki-grafana-interview#Q25]] стоимость хранения."
-              },
+                "explanation": "Loki разделяет chunks (сжатые логи) и index (что где лежит).",
+                "example": "S3 — самый распространённый бэкенд chunks; Azure Blob и GCS тоже.",
+                "when_to_apply": "Для production берут S3-совместимое хранилище плюс схему TSDB.",
+                "edge_cases": "Cassandra/DynamoDB — legacy-схемы под отдельный индекс.",
+                "related": "TSDB (schema v13) компактнее и дешевле старых схем."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`Loki` хранит и chunks, и индекс только в базе Cassandra.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chunks лежат в object storage; Cassandra — лишь legacy-схема индекса.",
+                "source_of_confusion": "Старую схему индекса принимают за единственную.",
+                "if_it_were_true": "Тогда S3 и TSDB были бы не нужны.",
+                "how_it_should_be": "Современно chunks и index — в одном object storage."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "`Filesystem` — это рекомендованный основной production-бэкенд для надёжного хранения chunks Loki.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Filesystem` годится только для разработки и тестов.",
+                "source_of_confusion": "Локальный бэкенд считают production-ready.",
+                "if_it_were_true": "Тогда терялись бы масштаб и надёжность object storage.",
+                "how_it_should_be": "Для production берут S3-совместимое хранилище."
+              }
             }
           ]
         }
@@ -306,56 +306,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое streams и chunks в `Loki`?",
+          "question_text": "Что такое streams и chunks в Loki?",
           "options": [
             {
-              "text": "`Chunk` is a full-text inverted index over log content, while `stream` stores one index file per token like a Lucene segment.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Чанк — это просто сжатые сырые строки, без инвертированного индекса по словам; индексируются только labels потока.",
-                "source_of_confusion": "Термин «chunk» в ELK-контексте ассоциируется с сегментами индекса Lucene.",
-                "if_it_were_true": "Тогда `Loki` индексировал бы содержимое и потерял бы дешевизну хранения, ради которой создавался.",
-                "how_it_should_be": "Chunk хранит сжатые строки потока; индекс по содержимому не строится, только по labels."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Loki` создаёт ровно один chunk на stream в сутки, независимо от размера, активности и настроек ingester.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Chunks flush according to configurable target size, maximum age, idle period and lifecycle events; Loki does not mandate one daily chunk per stream.",
-                "source_of_confusion": "Daily file rotation and time-based indices are incorrectly transferred to Loki ingester chunk lifecycle.",
-                "if_it_were_true": "A busy stream could retain an enormous mutable chunk for a whole day and operators could not tune memory or object size.",
-                "how_it_should_be": "Treat chunk lifecycle as configurable size/time/idle behavior per stream, not fixed daily rotation."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Stream` задаётся уникальным label set; его log entries сжимаются в chunks, которые index находит по labels и time range.",
+              "order": 0,
+              "text": "Stream — поток логов с одним набором labels, chunk — сжатый блок.",
               "correct": true,
               "sections": {
-                "explanation": "Every unique label set identifies a stream. Ingester appends that stream’s entries to compressed chunks and flushes them based on configured size, age, idle time and lifecycle events; the index locates chunks by labels and time.",
-                "example": "Two label sets, `{app=\"orders\",level=\"error\"}` and `{app=\"orders\",level=\"info\"}`, create two streams. With current defaults, `chunk_target_size` is about 1.5 MiB and `max_chunk_age` is 2h, but operators can configure them.",
-                "when_to_apply": "Use this model when designing labels, estimating active-stream memory and investigating many small chunks or slow broad queries.",
-                "edge_cases": "Low-volume high-cardinality streams often flush underfilled chunks because of idle or age limits. Defaults vary by release and configuration, so do not treat one duration as a protocol guarantee.",
-                "related": "[[loki-grafana-interview#Q8]] labels; [[loki-grafana-interview#Q9]] cardinality; [[loki-grafana-interview#Q5]] storage backends."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Две базовые единицы: логический stream и физический chunk внутри него.",
+                "example": "`{app=\"x\", level=\"error\"}` — один stream; его сжатые строки — chunk.",
+                "when_to_apply": "Когда объясняют устройство хранения и кардинальность.",
+                "edge_cases": "Chunk закрывается по времени (~5–15 мин) или размеру (~1.5 MB).",
+                "related": "Больше уникальных streams — больше index (проблема кардинальности)."
+              }
             },
             {
-              "text": "A `stream` is one log line and a `chunk` is one character, enabling character-level content indexing.",
+              "label": "B",
+              "order": 1,
+              "text": "Chunk — это уникальная комбинация labels, а stream — сжатый блок данных.",
               "correct": false,
               "sections": {
-                "what_actually": "`Stream` — это уникальная комбинация labels (множество строк), а `chunk` — сжатый набор строк одного потока; посимвольной индексации в `Loki` нет.",
-                "source_of_confusion": "Слова «stream» и «chunk» звучат как мелкие единицы, отсюда трактовка на уровне строки и символа.",
-                "if_it_were_true": "Тогда `Loki` строил бы гигантский посимвольный индекс и был бы дороже ELK, что противоречит его идее.",
-                "how_it_should_be": "Stream = уникальный набор labels; chunk = сжатые строки этого потока за период или до размера."
-              },
+                "what_actually": "Наоборот: уникальная комбинация labels — это stream, а chunk — сжатый блок.",
+                "source_of_confusion": "Две единицы хранения путают местами.",
+                "if_it_were_true": "Тогда index не связывал бы labels с блоками.",
+                "how_it_should_be": "Stream задаётся метками, chunk — сжатые строки внутри."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Chunk накапливается вообще вечно и никогда сам не закрывается совсем.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chunk закрывается по времени или размеру и сбрасывается в хранилище.",
+                "source_of_confusion": "«Поток логов» ассоциируют с бесконечным блоком.",
+                "if_it_were_true": "Тогда chunk нельзя было бы записать в object storage.",
+                "how_it_should_be": "После ~1.5 MB или ~15 мин chunk закрывается."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Число уникальных streams никак не влияет на размер индекса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Больше уникальных streams — больше index, отсюда кардинальность.",
+                "source_of_confusion": "Связь streams и индекса недооценивают.",
+                "if_it_were_true": "Тогда высокая кардинальность не была бы проблемой.",
+                "how_it_should_be": "Каждый stream — отдельная запись в индексе."
+              }
             }
           ]
         }
@@ -366,56 +366,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем различаются режимы деплоя Monolithic, Microservices и Simple Scalable?",
+          "question_text": "Чем отличаются режимы Monolithic, Microservices и Simple Scalable?",
           "options": [
             {
-              "text": "`Simple Scalable` запускает все Loki-компоненты в одном процессе и отличается от monolithic только названием.",
+              "label": "A",
+              "order": 0,
+              "text": "Режим `Microservices` рекомендуют именно для самых маленьких небольших развёртываний Loki.",
               "correct": false,
               "sections": {
-                "what_actually": "Single-process topology относится к monolithic. Simple Scalable выделяет read, write и backend targets для независимого масштабирования групп компонентов.",
-                "source_of_confusion": "Слово simple создаёт впечатление single-binary режима, хотя простота здесь означает укрупнённые группы вместо полного набора микросервисов.",
-                "if_it_were_true": "Read, write и backend targets не существовали бы как отдельные deployment units в Simple Scalable.",
-                "how_it_should_be": "Monolithic — один процесс; Simple Scalable — три функциональные группы; Microservices — отдельные компоненты."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "`Microservices` — для очень больших масштабов (10+ TB/день), а не маленьких.",
+                "source_of_confusion": "Гибкость режима путают с простотой.",
+                "if_it_were_true": "Тогда небольшой кластер тянул бы лишнюю сложность.",
+                "how_it_should_be": "Для маленьких развёртываний берут Monolithic."
+              }
             },
             {
-              "text": "`Monolithic` объединяет роли в одном процессе; `Simple Scalable` разделяет read, write и backend; `Microservices` разворачивает компоненты независимо.",
+              "label": "B",
+              "order": 1,
+              "text": "Это три разных набора компонентов, а не один по-разному упакованный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это один и тот же набор компонентов, по-разному упакованный в процессы.",
+                "source_of_confusion": "Разные режимы принимают за разную архитектуру.",
+                "if_it_were_true": "Тогда переключение режима меняло бы саму систему.",
+                "how_it_should_be": "Меняется лишь упаковка компонентов в процессы."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`Monolithic` спокойно держит целые десятки TB сырых логов в сутки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Monolithic` держит лишь до ~100 GB/день.",
+                "source_of_confusion": "Простоту монолита путают с высокой ёмкостью.",
+                "if_it_were_true": "Тогда SSD и Microservices были бы не нужны.",
+                "how_it_should_be": "Десятки TB/день — это уровень Microservices."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "`SSD` (Read/Write) — это рекомендуемый режим для большинства реальных production-нагрузок самого Loki.",
               "correct": true,
               "sections": {
-                "explanation": "Monolithic запускает Loki как единый бинарник с несколькими ролями. Simple Scalable группирует компоненты в read, write и backend targets. Microservices позволяет независимо разворачивать и масштабировать отдельные компоненты.",
-                "example": "Небольшая установка запускает single-binary Loki, растущий production-кластер масштабирует read/write/backend отдельно, а крупная платформа выделяет querier, ingester, distributor и остальные компоненты.",
-                "when_to_apply": "Выбирайте топологию по нагрузке и операционной зрелости: начинайте с monolithic, переходите к Simple Scalable для раздельного масштабирования путей, а microservices используйте при необходимости тонкого контроля каждого компонента.",
-                "edge_cases": "Все режимы используют один код Loki и могут работать с object storage. Переход к более дробной топологии повышает гибкость, но увеличивает число deployment units, настроек и failure modes.",
-                "related": "[[loki-grafana-interview#Q4]] компоненты Loki; [[loki-grafana-interview#Q5]] storage backends; [[loki-grafana-interview#Q26]] production-риски."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Microservices` обязателен для любого production-кластера, даже когда независимо масштабировать компоненты не требуется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Microservices нужен, когда отдельные компоненты требуется масштабировать и эксплуатировать независимо; небольшие production-инсталляции могут использовать другие режимы.",
-                "source_of_confusion": "Самая дробная архитектура кажется автоматически самой production-ready, хотя её операционная стоимость оправдана не для каждой нагрузки.",
-                "if_it_were_true": "Monolithic и Simple Scalable не документировались бы как поддерживаемые варианты production-развёртывания.",
-                "how_it_should_be": "Выбирайте microservices по требованиям масштабирования и отказоустойчивости, а не только по признаку production."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Monolithic` и `Microservices` используют одинаковую топологию, но второй режим включает больше реплик одного бинарника.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Monolithic объединяет роли в процессе, а microservices запускает компоненты отдельными deployment units и масштабирует их независимо.",
-                "source_of_confusion": "Оба режима используют один Loki-дистрибутив, поэтому различие в target-конфигурации легко принять за простое изменение числа реплик.",
-                "if_it_were_true": "Нельзя было бы независимо изменять число querier, ingester или distributor в microservices-режиме.",
-                "how_it_should_be": "Различайте общий бинарник и topology: один артефакт поддерживает принципиально разные схемы развёртывания."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Три режима — компромисс простоты и масштабируемости из одних компонентов.",
+                "example": "SSD — два бинарника Read и Write, золотая середина.",
+                "when_to_apply": "Выбор диктуется объёмом логов в сутки.",
+                "edge_cases": "Monolithic — до ~100 GB/день, Microservices — 10+ TB/день.",
+                "related": "SSD держит до нескольких TB/день без сложности микросервисов."
+              }
             }
           ]
         }
@@ -426,56 +426,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое labels в `Loki`?",
+          "question_text": "Что такое labels в Loki?",
           "options": [
             {
-              "text": "`Labels` — пары ключ-значение, идентифицирующие поток логов; источники — статические (config), динамические (из содержимого) и Kubernetes-метки; нужны для выбора, индекса и агрегаций.",
+              "label": "A",
+              "order": 0,
+              "text": "Все labels задаются исключительно только статически прямо в самом конфиге.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Labels бывают и динамическими, и K8s, а не только статическими.",
+                "source_of_confusion": "Статические метки принимают за единственный источник.",
+                "if_it_were_true": "Тогда извлечение полей из строки было бы невозможно.",
+                "how_it_should_be": "Динамические labels берутся из содержимого в pipeline."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Labels — пары ключ-значение для log stream, единственное, что `Loki` индексирует.",
               "correct": true,
               "sections": {
-                "explanation": "Только labels индексируются, поэтому именно они определяют, какие потоки существуют и как быстро отбирается выборка; по ним же делают group by в агрегациях.",
-                "example": "Селектор `{job=\"my-app\", env=\"prod\"}` по индексу labels мгновенно отбирает нужные потоки, не трогая остальные данные в storage.",
-                "when_to_apply": "Labels проектируют так, чтобы их значения были ограничены (service, env, region); это основа и производительности, и контроля cardinality.",
-                "edge_cases": "Динамические labels, извлечённые из содержимого с неограниченными значениями (user_id, request_id), легко взрывают cardinality.",
-                "related": "[[loki-grafana-interview#Q9]] cardinality; [[loki-grafana-interview#Q10]] static vs dynamic labels; [[loki-grafana-interview#Q12]] stream selectors."
-              },
-              "label": "A",
-              "order": 0
+                "explanation": "Labels — центральное понятие: они и индекс, и единица группировки.",
+                "example": "`{job=\"x\", env=\"prod\", level=\"error\"}` идентифицирует stream.",
+                "when_to_apply": "Когда решают, что делать label'ом, а что оставить в тексте.",
+                "edge_cases": "От выбора labels прямо зависит стоимость и скорость (кардинальность).",
+                "related": "Источники: статические, динамические, K8s-labels."
+              }
             },
             {
-              "text": "Labels в `Loki` используются исключительно для отображения цвета строк в UI `Grafana` и никак не влияют ни на индексацию, ни на выборку потоков при запросе.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Labels — основа индексации и выбора потока; без них нельзя отобрать нужные логи, это не косметика интерфейса.",
-                "source_of_confusion": "В дашбордах labels действительно влияют на легенду и группировку, что сужает их роль в восприятии до визуала.",
-                "if_it_were_true": "Тогда селекторы вроде `{job=\"my-app\"}` ничего бы не фильтровали, но именно они отбирают потоки для чтения.",
-                "how_it_should_be": "Labels определяют поток и индексируются; выбор и агрегация логов строятся именно на них."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Labels` в `Loki` — это полнотекстовый индекс по всем словам строки лога, который строится автоматически при ingestion и занимает основной объём хранилища.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Labels — это ограниченный набор пар ключ-значение, идентифицирующих поток; полнотекстового индекса по словам `Loki` не строит.",
-                "source_of_confusion": "В ELK поиск идёт по проиндексированным полям, и это понятие переносят на labels `Loki`.",
-                "if_it_were_true": "Тогда любое слово лога стало бы label, cardinality взорвалась бы, и `Loki` потерял бы дешевизну.",
-                "how_it_should_be": "Labels — это компактный набор меток потока; содержимое строк не превращается в labels."
-              },
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Labels` могут быть только статическими из config; извлекать labels из содержимого лога в pipeline агента `Loki` принципиально не умеет ни в одной версии.",
+              "order": 2,
+              "text": "`Loki` индексирует и сами labels, и полный текст каждой строки.",
               "correct": false,
               "sections": {
-                "what_actually": "`Loki` умеет и динамические labels — их извлекают из содержимого в pipeline `Grafana Alloy`/`Alloy`, плюс есть авто-метки Kubernetes.",
-                "source_of_confusion": "Совет «держите labels статичными» воспринимают как запрет на динамические метки вообще.",
-                "if_it_were_true": "Тогда не было бы предупреждений про high-cardinality динамические labels, но именно они — частая проблема.",
-                "how_it_should_be": "Labels бывают статические, динамические (из содержимого) и Kubernetes; динамические надо применять осторожно."
-              },
+                "what_actually": "Индексируются только labels, а не полный текст строки.",
+                "source_of_confusion": "Полнотекстовый индекс приписывают Loki.",
+                "if_it_were_true": "Тогда индекс раздулся бы, как у Elasticsearch.",
+                "how_it_should_be": "Текст остаётся неиндексированным, грепается по chunks."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Labels в Loki нельзя использовать для группировки и агрегации результатов запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По labels как раз группируют результаты через `by (...)`.",
+                "source_of_confusion": "Роль индекса путают с невозможностью агрегации.",
+                "if_it_were_true": "Тогда metric-запросы нельзя было бы группировать.",
+                "how_it_should_be": "Labels — единица и фильтрации, и агрегации."
+              }
             }
           ]
         }
@@ -486,56 +486,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему cardinality — главная проблема `Loki`?",
+          "question_text": "Почему кардинальность — главная проблема Loki?",
           "options": [
             {
-              "text": "Проблему cardinality решают, добавляя поле user_id как ещё один label, чтобы индекс точнее разделял запросы пользователей и быстрее находил их строки в сжатых чанках хранилища.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это усугубляет проблему: user_id как label создаёт миллионы потоков; правильно — оставить его в содержимом и искать фильтром `|=`.",
-                "source_of_confusion": "Кажется, что отдельный label по пользователю ускорит его запросы, как индекс в РСУБД.",
-                "if_it_were_true": "Тогда рекомендация была бы «добавляйте user_id в labels», но советуют ровно обратное.",
-                "how_it_should_be": "user_id держат в строке лога и ищут через `{service=\"api\"} |= \"user_id=123\"`, не как label."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Cardinality относится только к числу строк логов в секунду (ingestion rate) и никак не связана с уникальностью labels или с количеством отдельных потоков в индексе кластера.",
+              "order": 0,
+              "text": "`user_id` — отличный кандидат в label с точки зрения кардинальности.",
               "correct": false,
               "sections": {
-                "what_actually": "Cardinality — это именно число уникальных комбинаций labels (потоков), а не скорость поступления строк.",
-                "source_of_confusion": "И rate, и cardinality звучат как «нагрузочные» метрики, отсюда их смешивают.",
-                "if_it_were_true": "Тогда совет «не делать user_id label» был бы про объём логов, но он про число уникальных потоков.",
-                "how_it_should_be": "Cardinality = количество уникальных наборов labels; ingestion rate — отдельная характеристика объёма."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "Наоборот: `user_id` — плохой label, он взрывает кардинальность.",
+                "source_of_confusion": "Удобство фильтра по user_id принимают за пользу label.",
+                "if_it_were_true": "Тогда миллионы ID породили бы миллионы streams.",
+                "how_it_should_be": "user_id держат в тексте и ищут фильтром `|=`."
+              }
             },
             {
-              "text": "`Cardinality` — число уникальных комбинаций labels; `{user_id=\"123\"}` даёт миллионы потоков и взрывает индекс, а `{service=\"api\"}` — ограниченное множество значений.",
+              "label": "B",
+              "order": 1,
+              "text": "Чем больше уникальных streams, тем быстрее запись и запросы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: больше streams — медленнее запись и запросы.",
+                "source_of_confusion": "Рост числа streams принимают за ускорение.",
+                "if_it_were_true": "Тогда раздувание кардинальности было бы полезным.",
+                "how_it_should_be": "Большой индекс замедляет и запись, и чтение."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Кардинальность — это число уникальных комбинаций labels, которое раздувает индекс.",
               "correct": true,
               "sections": {
-                "explanation": "Каждое уникальное сочетание меток — отдельный stream, поэтому неограниченные значения (user_id, request_id, IP) множат потоки и индекс; cardinality blowup — причина №1 проблем `Loki` в проде. Правило: не делать high-cardinality поля labels, держать < 10K потоков на tenant и < 10 labels, каждый с ограниченным набором значений.",
-                "example": "Если поиск по user_id нужен, его кладут в содержимое строки и ищут фильтром: `{service=\"api\"} |= \"user_id=123\"`, а не делают label `user_id`.",
-                "when_to_apply": "О cardinality думают при проектировании labels и pipeline-стейджей: любое поле-кандидат в label проверяют на ограниченность множества значений.",
-                "edge_cases": "Даже одно неудачное динамическое label с высокой cardinality способно положить индекс, при этом остальной config выглядит корректным.",
-                "related": "[[loki-grafana-interview#Q8]] что такое labels; [[loki-grafana-interview#Q10]] static vs dynamic labels; [[loki-grafana-interview#Q26]] частые проблемы в проде."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Проблема №1: каждый уникальный набор меток — отдельный stream и запись индекса.",
+                "example": "`{user_id=\"123\"}` — миллионы ID дают миллионы streams.",
+                "when_to_apply": "Когда выбирают, что можно безопасно вынести в label.",
+                "edge_cases": "Держитесь < 10K streams на tenant и < 10 меток.",
+                "related": "Поиск по user_id — фильтром `|=`, а не label'ом."
+              }
             },
             {
-              "text": "Высокая cardinality в `Loki` — это хорошо: чем больше уникальных значений у labels, тем быстрее и точнее идёт поиск по логам.",
+              "label": "D",
+              "order": 3,
+              "text": "Кардинальность — это объём текста в одной строке лога.",
               "correct": false,
               "sections": {
-                "what_actually": "Высокая cardinality вредна: она множит потоки и взрывает индекс; рекомендуют держать число потоков ограниченным (< 10K на tenant).",
-                "source_of_confusion": "В мире БД больше индексов кажется лучше, и это интуитивно переносят на labels.",
-                "if_it_were_true": "Тогда `{user_id=\"...\"}` как label был бы best practice, но именно его приводят как антипаттерн.",
-                "how_it_should_be": "Cardinality надо ограничивать; high-cardinality поля держат в содержимом, а не в labels."
-              },
-              "label": "D",
-              "order": 3
+                "what_actually": "Кардинальность — число уникальных наборов labels, а не длина строки.",
+                "source_of_confusion": "Понятие подменяют объёмом текста.",
+                "if_it_were_true": "Тогда она не влияла бы на размер индекса.",
+                "how_it_should_be": "Это число streams, то есть уникальных комбинаций меток."
+              }
             }
           ]
         }
@@ -546,56 +546,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем отличаются static и dynamic labels?",
+          "question_text": "Чем отличаются статические и динамические labels?",
           "options": [
             {
-              "text": "Любое поле можно безопасно сделать динамическим label: `Loki` сам автоматически ограничивает cardinality за вас, схлопывая редкие значения в общий поток.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Loki` не ограничивает cardinality автоматически; вынос неограниченного поля в label напрямую ведёт к blowup индекса.",
-                "source_of_confusion": "Хочется верить, что система сама защитит от ошибки конфигурации.",
-                "if_it_were_true": "Тогда cardinality blowup не был бы проблемой №1 в проде, но он именно ею и является.",
-                "how_it_should_be": "В labels выносят только bounded-поля; high-cardinality поля оставляют в содержимом строки."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Dynamic labels и static labels — это одно и то же, просто записанное в разных секциях YAML без какой-либо разницы в поведении.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Разница принципиальна: источник значения (config vs содержимое) и риск cardinality у динамических labels отличаются от статических.",
-                "source_of_confusion": "Обе сущности в итоге становятся labels, отсюда вывод об их эквивалентности.",
-                "if_it_were_true": "Тогда не было бы отдельной best practice про осторожность с динамическими метками.",
-                "how_it_should_be": "Static известны в config и ограничены, dynamic извлекаются из содержимого и требуют контроля cardinality."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Static labels` известны заранее из config (job, env), `dynamic labels` извлекаются из содержимого в pipeline; правило: делать labels только из ограниченных полей.",
+              "order": 0,
+              "text": "Статические labels берут из конфига, динамические — из строки, рискуют.",
               "correct": true,
               "sections": {
-                "explanation": "Динамические labels удобны, но опасны: извлечение неограниченного поля (например user_id регуляркой) превращает его в label и взрывает cardinality; статические labels по природе ограничены.",
-                "example": "Плохо — `regex: 'user_id=(?P<user_id>\\d+)'` + `labels: { user_id: }`; хорошо — оставить user_id в строке лога, как обычный текст без выноса в label.",
-                "when_to_apply": "Правило применяют при настройке pipeline_stages: динамический label оправдан только для полей с малым ограниченным набором значений (level, method).",
-                "edge_cases": "level (error/info/warn) — безопасный динамический label, а user_id или request_id — нет; граница проходит по ограниченности множества значений.",
-                "related": "[[loki-grafana-interview#Q8]] что такое labels; [[loki-grafana-interview#Q9]] cardinality; [[loki-grafana-interview#Q16]] pipeline stages в Promtail."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Разница в источнике метки, и от неё зависит риск кардинальности.",
+                "example": "`job`, `env` — статические; `user_id` из regex — опасный динамический.",
+                "when_to_apply": "Когда решают, выносить ли поле в label.",
+                "edge_cases": "Динамический label с непредсказуемыми значениями взрывает кардинальность.",
+                "related": "Безопасны только поля с заведомо ограниченным набором значений."
+              }
             },
             {
-              "text": "Static labels извлекаются из содержимого лога регулярками на лету, а dynamic labels жёстко прописаны в config и никогда не меняются от строки к строке.",
+              "label": "B",
+              "order": 1,
+              "text": "Динамические labels заметно безопаснее статических с точки зрения кардинальности.",
               "correct": false,
               "sections": {
-                "what_actually": "Всё наоборот: статические задаются в config (job, env), а динамические извлекаются из содержимого в pipeline `Grafana Alloy`.",
-                "source_of_confusion": "Слова «static» и «dynamic» легко перепутать местами без привязки к источнику значения.",
-                "if_it_were_true": "Тогда предупреждение «не извлекайте user_id динамически» относилось бы к config-меткам, но оно про извлечение из содержимого.",
-                "how_it_should_be": "Static — из config, dynamic — из содержимого лога через pipeline-стейджи."
-              },
+                "what_actually": "Наоборот: динамические опаснее — они и взрывают кардинальность.",
+                "source_of_confusion": "Гибкость динамических меток принимают за безопасность.",
+                "if_it_were_true": "Тогда `user_id` в label был бы безвреден.",
+                "how_it_should_be": "Статические заданы заранее и ограничены, потому безопасны."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Статические labels извлекаются из содержимого строки прямо в pipeline агента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Из содержимого строки извлекаются как раз динамические labels.",
+                "source_of_confusion": "Источники статических и динамических меток путают.",
+                "if_it_were_true": "Тогда статические зависели бы от текста лога.",
+                "how_it_should_be": "Статические заданы в конфиге, а не из строки."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Абсолютно любое поле можно спокойно безопасно вынести в динамический label.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Безопасны только поля с ограниченным набором значений.",
+                "source_of_confusion": "Возможность извлечь любое поле принимают за безопасность.",
+                "if_it_were_true": "Тогда `request_id` в label не ломал бы кластер.",
+                "how_it_should_be": "Высококардинальные поля оставляют в тексте строки."
+              }
             }
           ]
         }
@@ -606,56 +606,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое LogQL — язык запросов `Loki`?",
+          "question_text": "Что такое LogQL — язык запросов Loki?",
           "options": [
             {
-              "text": "В `LogQL` селектор по labels не нужен: можно сразу писать `|= \"error\"` и искать по всему хранилищу логов линейным grep без предварительной фильтрации потоков.",
+              "label": "A",
+              "order": 0,
+              "text": "`LogQL` синтаксически целиком основан на SQL, а вовсе не PromQL.",
               "correct": false,
               "sections": {
-                "what_actually": "Селектор потоков по labels обязателен — именно он сужает выборку; без `{...}` запрос невалиден и не выполнится.",
-                "source_of_confusion": "Из примеров с line-фильтрами кажется, что часть `{...}` опциональна.",
-                "if_it_were_true": "Тогда любой запрос сканировал бы весь storage и убивал производительность, чего архитектура `Loki` избегает.",
-                "how_it_should_be": "Запрос всегда начинается с обязательного селектора `{...}`, затем идут фильтры и парсеры."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "`LogQL` вдохновлён `PromQL`, а не `SQL`.",
+                "source_of_confusion": "Языки запросов путают по происхождению.",
+                "if_it_were_true": "Тогда синтаксис был бы табличным, а не потоковым.",
+                "how_it_should_be": "Структура и функции наследуют PromQL."
+              }
             },
             {
-              "text": "`LogQL` — язык запросов `Loki`, вдохновлённый `PromQL`; структура `{label_selector} | filter`: сначала выбор потоков по labels, затем фильтры и парсеры (`json`, `logfmt`).",
+              "label": "B",
+              "order": 1,
+              "text": "Фильтры строк в `LogQL` применяются как раз до селектора по labels.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Селектор идёт первым, фильтры строк — после него.",
+                "source_of_confusion": "Порядок этапов запроса инвертируют.",
+                "if_it_were_true": "Тогда grep шёл бы по всем streams сразу.",
+                "how_it_should_be": "Сначала отбор streams, затем фильтрация строк."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Любой запрос `LogQL` начинается с обязательного селектора по labels, затем фильтры.",
               "correct": true,
               "sections": {
-                "explanation": "Запрос всегда начинается с селектора потоков по labels (обязателен), а дальше навешиваются line-фильтры (`|=`, `!=`, `|~`, `!~`) и парсеры (`json`, `logfmt`, `regexp`); сходство с PromQL упрощает переход для тех, кто знает `Prometheus`.",
-                "example": "`{app=\"my-app\"} |~ \"user_id=\\d{6}\"` отберёт потоки app и grep-нет по regex; `{app=\"my-app\"} | json | level=\"error\"` распарсит JSON и отфильтрует по извлечённому полю.",
-                "when_to_apply": "LogQL используют и для троблшутинга в Explore, и для metric-запросов в дашбордах/алертах; точный селектор по labels критичен для скорости.",
-                "edge_cases": "Без селектора labels запрос невозможен; слишком широкий селектор + grep по большому диапазону времени даёт медленный запрос.",
-                "related": "[[loki-grafana-interview#Q12]] stream selectors; [[loki-grafana-interview#Q13]] filter expressions; [[loki-grafana-interview#Q14]] metric-запросы."
-              },
-              "label": "B",
-              "order": 1
+                "explanation": "Язык запросов Loki, вдохновлённый PromQL; селектор обязателен.",
+                "example": "`{app=\"x\"} |= \"error\"` — селектор сужает streams, фильтр просеивает строки.",
+                "when_to_apply": "Когда пишут любой запрос к логам в Loki.",
+                "edge_cases": "Без селектора по labels запрос невозможен.",
+                "related": "Сначала `{...}` по индексу, потом grep по строкам."
+              }
             },
             {
-              "text": "`LogQL` — это диалект SQL: запросы пишут как `SELECT * FROM logs WHERE app = 'my-app'` с JOIN-ами между потоками и подзапросами по содержимому строк.",
-              "correct": false,
-              "sections": {
-                "what_actually": "LogQL не SQL, а язык в стиле `PromQL`: `{app=\"my-app\"} |= \"error\"`; JOIN-ов между потоками и SELECT-синтаксиса в нём нет.",
-                "source_of_confusion": "Любой язык запросов по привычке ассоциируют с SQL.",
-                "if_it_were_true": "Тогда LogQL не описывали бы как «inspired by PromQL» и не использовали бы фигурные селекторы labels.",
-                "how_it_should_be": "LogQL — PromQL-подобный: селектор `{...}` плюс фильтры/парсеры через `|`, без SQL."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`LogQL` умеет только выбирать строки по labels и не способен парсить JSON или logfmt из содержимого логов прямо в запросе — это делают исключительно на ingestion.",
-              "correct": false,
-              "sections": {
-                "what_actually": "LogQL имеет парсер-стейджи `json`, `logfmt`, `regexp`, позволяющие извлекать поля и фильтровать по ним.",
-                "source_of_confusion": "Базовые примеры показывают лишь line-фильтры, создавая впечатление ограниченности языка.",
-                "if_it_were_true": "Тогда нельзя было бы написать `{app=\"my-app\"} | json | level=\"error\"`, но это валидный LogQL.",
-                "how_it_should_be": "LogQL поддерживает парсинг (`json`/`logfmt`/`regexp`) и фильтрацию по извлечённым полям."
-              },
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "В `LogQL` селектор по labels необязателен — можно грепать по всему тексту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Селектор по labels обязателен — без него запрос невозможен.",
+                "source_of_confusion": "Полнотекстовый поиск переносят на LogQL.",
+                "if_it_were_true": "Тогда Loki читал бы все данные подряд.",
+                "how_it_should_be": "`{...}` — обязательный первый шаг любого запроса."
+              }
             }
           ]
         }
@@ -666,56 +666,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое log stream selectors в `LogQL`?",
+          "question_text": "Что такое селекторы streams в LogQL?",
           "options": [
             {
-              "text": "Точность stream selector не влияет на производительность: `{env=\"prod\"}` и `{app=\"api\", env=\"prod\"}` читаются одинаково быстро, ведь индекс по labels одинаков.",
+              "label": "A",
+              "order": 0,
+              "text": "Селектор просеивает содержимое самих строк, а не выбирает streams.",
               "correct": false,
               "sections": {
-                "what_actually": "Точность селектора сильно влияет на скорость: чем уже набор отбираемых потоков, тем меньше данных читается и тем быстрее запрос.",
-                "source_of_confusion": "Кажется, что индекс labels всегда мгновенен, поэтому ширина селектора не важна.",
-                "if_it_were_true": "Тогда совет «точнее селектор — быстрее запрос» был бы бессмысленным, но он базовый для LogQL.",
-                "how_it_should_be": "Узкий селектор читает меньше потоков и работает заметно быстрее широкого."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "Селектор выбирает streams; содержимое строк просеивает line filter.",
+                "source_of_confusion": "Селектор путают с фильтром строк.",
+                "if_it_were_true": "Тогда он работал бы не по индексу, а по тексту.",
+                "how_it_should_be": "`{...}` отбирает streams до чтения содержимого."
+              }
             },
             {
-              "text": "`Stream selector` — `{label=\"value\"}`, отбирающий потоки; операторы `=`, `!=`, `=~`, `!~`, например `{app=~\"my-.*\"}`; точность сильно влияет на скорость — чем уже, тем быстрее.",
+              "label": "B",
+              "order": 1,
+              "text": "Оператор `=~` здесь означает точное равенство, а оператор = — совпадение по regex.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `=` — точное равенство, `=~` — совпадение по regex.",
+                "source_of_confusion": "Операторы сопоставления путают местами.",
+                "if_it_were_true": "Тогда простое равенство запускало бы regex-движок.",
+                "how_it_should_be": "`=~`/`!~` — это regex, `=`/`!=` — точное сравнение."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Точность селектора вообще никак не влияет на общую производительность запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Селектор сильно влияет на скорость — он задаёт число читаемых chunks.",
+                "source_of_confusion": "Влияние селектора на производительность недооценивают.",
+                "if_it_were_true": "Тогда широкий и узкий селектор работали бы одинаково.",
+                "how_it_should_be": "Чем точнее селектор, тем меньше данных распаковывается."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Селектор `{label=\"value\"}` задаёт, какие именно streams читать, и влияет на скорость.",
               "correct": true,
               "sections": {
-                "explanation": "Селектор работает по индексу labels и определяет, какие потоки вообще будут прочитаны; это первый и самый дешёвый этап фильтрации, поэтому его точность критична для производительности.",
-                "example": "`{env!=\"dev\"}` отберёт все потоки кроме dev, а `{app=~\"my-.*\"}` — все приложения с префиксом my по regex.",
-                "when_to_apply": "Селектор делают максимально узким (конкретный app/env), чтобы не тащить лишние потоки в последующий grep по содержимому.",
-                "edge_cases": "Слишком общий селектор (например, только `{env=\"prod\"}` на большом кластере) заставляет читать множество потоков и замедляет запрос.",
-                "related": "[[loki-grafana-interview#Q11]] LogQL; [[loki-grafana-interview#Q13]] filter expressions; [[loki-grafana-interview#Q8]] что такое labels."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Stream selector фильтрует по содержимому строк, поэтому `{\"error\"}` отберёт все строки со словом error в любом приложении без указания каких-либо labels.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Селектор фильтрует по labels потока, а не по содержимому; поиск слова error делают line-фильтром `|= \"error\"` после селектора.",
-                "source_of_confusion": "Фигурные скобки путают с фильтром по тексту, хотя они задают именно labels.",
-                "if_it_were_true": "Тогда не было бы отдельных line-фильтров `|=`/`!=`, но именно они ищут по содержимому.",
-                "how_it_should_be": "Селектор `{...}` отбирает потоки по labels; фильтрация по тексту — это `|=`/`|~` после селектора."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "В stream selector доступен только оператор `=`; regex-операторы вроде `=~` или `!~` в `LogQL` отсутствуют, поэтому шаблоны по имени приложения задать нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "LogQL поддерживает `=`, `!=`, `=~`, `!~` в селекторах, например `{app=~\"my-.*\"}` — это валидный regex-match по label.",
-                "source_of_confusion": "Базовые примеры используют только `=`, отсюда вывод об отсутствии regex.",
-                "if_it_were_true": "Тогда нельзя было бы написать `{env=~\"prod|staging\"}`, но это рабочий селектор.",
-                "how_it_should_be": "Селектор поддерживает четыре оператора, включая regex `=~` и `!~`."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Stream selector — первый и самый важный шаг: он работает по индексу.",
+                "example": "`{app=~\"my-.*\", env!=\"dev\"}` — regex и отрицание по меткам.",
+                "when_to_apply": "Когда сужают выборку streams перед фильтрацией строк.",
+                "edge_cases": "Операторы: `=`, `!=`, `=~` (regex), `!~` (не regex).",
+                "related": "Точный селектор читает меньше chunks — запрос быстрее."
+              }
             }
           ]
         }
@@ -726,56 +726,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое filter expressions и parser stages в `LogQL`?",
+          "question_text": "Что такое фильтрующие выражения в LogQL?",
           "options": [
             {
-              "text": "Line-фильтры применяются ДО селектора потоков, поэтому grep по содержимому идёт сразу по всем логам хранилища, а labels отбираются уже потом, на втором шаге.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Порядок обратный: сначала селектор `{...}` сужает потоки по labels, затем line-фильтры grep-ают только по их содержимому.",
-                "source_of_confusion": "Запись фильтров справа создаёт иллюзию, что они выполняются раньше селектора.",
-                "if_it_were_true": "Тогда любой фильтр сканировал бы весь storage до отбора потоков, что убило бы производительность.",
-                "how_it_should_be": "Сначала отбор потоков по labels, затем фильтрация по содержимому отобранных строк."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Оператор `|=` означает «не содержит», а `!=` означает «содержит» — в `LogQL` они работают противоположно своему привычному виду, что часто путает новичков.",
+              "order": 0,
+              "text": "Фильтрация по распарсенному полю заметно дешевле, чем по подстроке `|=`.",
               "correct": false,
               "sections": {
-                "what_actually": "`|=` означает «содержит», `!=` — «не содержит»; значения операторов прямо соответствуют, а не противоположны их виду.",
-                "source_of_confusion": "Символ `!` ассоциируется с отрицанием, и его ошибочно приписывают `|=`.",
-                "if_it_were_true": "Тогда `{app=\"x\"} |= \"error\"` исключал бы ошибки, но он наоборот отбирает строки с error.",
-                "how_it_should_be": "`|=` — содержит подстроку, `!=` — не содержит; `|~`/`!~` — regex-варианты."
-              },
+                "what_actually": "Наоборот: фильтр по подстроке `|=` дешевле разбора распарсенного поля.",
+                "source_of_confusion": "Стоимость этапов инвертируют.",
+                "if_it_were_true": "Тогда парсинг всего потока был бы бесплатным.",
+                "how_it_should_be": "Простой grep дешевле json-парсинга каждой строки."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "В `LogQL` нет парсеров: распарсить JSON или logfmt из строки лога прямо в запросе невозможно, это делают только на этапе ingestion в pipeline-стейджах агента.",
+              "order": 1,
+              "text": "Парсеры (`json`, logfmt) в LogQL применяются строго до фильтров строк.",
               "correct": false,
               "sections": {
-                "what_actually": "Парсер-стейджи `| json`, `| logfmt`, `| regexp` доступны прямо в запросе и извлекают поля на лету для фильтрации.",
-                "source_of_confusion": "Парсинг в pipeline `Grafana Alloy` реален, отсюда вывод, что в запросе его нет.",
-                "if_it_were_true": "Тогда нельзя было бы написать `{app=\"my-app\"} | json | level=\"error\"`, но это валидный LogQL.",
-                "how_it_should_be": "Парсить можно и в запросе через `| json`/`| logfmt`/`| regexp`, и в pipeline при ingestion."
-              },
-              "label": "C",
-              "order": 2
+                "what_actually": "Парсеры применяются после фильтров строк, а не до них.",
+                "source_of_confusion": "Порядок этапов путают.",
+                "if_it_were_true": "Тогда парсился бы весь поток, а не отфильтрованный.",
+                "how_it_should_be": "Сначала `|=` отсекает строки, затем `| json` их разбирает."
+              }
             },
             {
-              "text": "После селектора идут line-фильтры `|=` (содержит), `!=` (не содержит), `|~` / `!~` (regex), а также парсеры `| json`, `| logfmt`, `| regexp` для извлечения полей и фильтрации.",
+              "label": "C",
+              "order": 2,
+              "text": "Оператор `|=` означает, что строка как раз НЕ содержит нужную подстроку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `|=` означает, что строка содержит подстроку.",
+                "source_of_confusion": "Оператор содержания путают с отрицанием.",
+                "if_it_were_true": "Тогда `|= \"error\"` прятал бы ошибки.",
+                "how_it_should_be": "Отрицание — это `!=`, а `|=` — содержит."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Line filters (`|=`) просеивают выбранные строки по содержимому — обычный grep.",
               "correct": true,
               "sections": {
-                "explanation": "Line-фильтры грубо отсеивают строки по подстроке/regex (дёшево), а парсеры извлекают структурированные поля, по которым затем можно фильтровать как по label-подобным значениям.",
-                "example": "`{app=\"my-app\"} |= \"error\"!= \"timeout\" |~ \"user_id=\\d+\"` цепочкой сужает строки, а `| json | level=\"error\"` фильтрует уже по распарсенному полю.",
-                "when_to_apply": "Фильтры применяют после узкого селектора, чтобы grep шёл по меньшему объёму; парсеры — когда нужно фильтровать по конкретным полям JSON/logfmt.",
-                "edge_cases": "Тяжёлые regex-фильтры (`|~`) по широкому диапазону работают медленнее простых `|=`; парсинг JSON на каждой строке тоже добавляет CPU.",
-                "related": "[[loki-grafana-interview#Q11]] LogQL; [[loki-grafana-interview#Q12]] stream selectors; [[loki-grafana-interview#Q14]] metric-запросы."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "После селектора идут line filters — grep по содержимому строк.",
+                "example": "`|= \"error\" != \"timeout\"` — содержит error, но не timeout.",
+                "when_to_apply": "Когда сужают уже выбранные streams по тексту строк.",
+                "edge_cases": "Простые подстроки лучше отсекать фильтром до парсинга.",
+                "related": "Парсеры разбирают структуру и достают поля после фильтров."
+              }
             }
           ]
         }
@@ -786,56 +786,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое metric queries (LogQL → metrics)?",
+          "question_text": "Как из логов получить метрики (metric queries в LogQL)?",
           "options": [
             {
-              "text": "LogQL превращает логи в метрики через агрегации над окном `[...]`: `rate`, `count_over_time`, `quantile_over_time` дают Prometheus-style ряды из логов для дашбордов и алертинга.",
+              "label": "A",
+              "order": 0,
+              "text": "`LogQL` не умеет строить метрики из логов — он только выводит строки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LogQL` как раз строит метрики из логов через range-функции.",
+                "source_of_confusion": "Loki считают только средством просмотра строк.",
+                "if_it_were_true": "Тогда алерты по частоте ошибок были бы невозможны.",
+                "how_it_should_be": "`rate`/`count_over_time` дают числовые ряды из логов."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Metric-запросы `LogQL` прекрасно работают вообще без всякого указания временного окна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Range-функции требуют временного окна `[...]`.",
+                "source_of_confusion": "Метрику из логов путают с моментальным значением.",
+                "if_it_were_true": "Тогда `rate` не знал бы, за какой период считать.",
+                "how_it_should_be": "Окно `[5m]` задаёт интервал агрегации."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Полученные из логов метрики нельзя использовать в дашбордах и алертах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полученные метрики используют и в дашбордах, и в алертинге.",
+                "source_of_confusion": "Метрики из логов считают неполноценными.",
+                "if_it_were_true": "Тогда графики частоты ошибок были бы бесполезны.",
+                "how_it_should_be": "Это полноценные Prometheus-метрики для Grafana."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Обернув лог-запрос в функцию вроде `rate` с окном, получают метрику Prometheus-стиля.",
               "correct": true,
               "sections": {
-                "explanation": "Функции вроде `rate`, `count_over_time`, `quantile_over_time` агрегируют логи в числовые ряды; `unwrap` извлекает числовое поле (например duration_ms), позволяя считать перцентили прямо из логов. Примеры: `rate({app=\"my-app\"} |= \"error\" [5m])`, `topk(5, sum by (service) (rate({env=\"prod\"}[5m])))`, `quantile_over_time(0.95, {app=\"api\"} | json | unwrap duration_ms [5m])`.",
-                "example": "`sum by (service) (count_over_time({env=\"prod\"} |= \"error\" [1m]))` даёт число ошибок в минуту по сервисам — готовый ряд для графика и алерта в `Grafana`.",
-                "when_to_apply": "Metric-запросы используют, когда метрики нужны прямо из логов (нет отдельного counter в коде) — для дашбордов error rate, top-N по объёму, перцентилей latency.",
-                "edge_cases": "Тяжёлые metric-запросы по широкому диапазону и большому числу потоков нагружают `Querier`; их часто кэшируют через `Query Frontend`.",
-                "related": "[[loki-grafana-interview#Q11]] LogQL; [[loki-grafana-interview#Q13]] filter и parser; [[loki-grafana-interview#Q21]] alerting в Grafana."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Функция `unwrap` в LogQL отбрасывает строки логов целиком, оставляя только labels, и не извлекает из содержимого никаких числовых значений для агрегации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`unwrap` как раз извлекает числовое поле (например `duration_ms`) для агрегаций вроде `quantile_over_time`, а не отбрасывает данные.",
-                "source_of_confusion": "Название `unwrap` звучит как «развернуть/убрать обёртку», отсюда трактовка про отбрасывание.",
-                "if_it_were_true": "Тогда нельзя было бы посчитать перцентиль duration из логов, но `quantile_over_time(..., unwrap duration_ms)` это делает.",
-                "how_it_should_be": "`unwrap` достаёт числовое поле из лога, чтобы агрегировать его (перцентили, суммы)."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Metric-запросы LogQL работают только во встроенном CLI `Loki` (`logcli`) и не могут использоваться ни в дашбордах, ни в алертах `Grafana` из-за ограничений API.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Результаты metric-запросов — это Prometheus-style ряды, которые напрямую используются в дашбордах и unified alerting `Grafana`.",
-                "source_of_confusion": "Кажется, что логовый источник нельзя класть на график как метрику.",
-                "if_it_were_true": "Тогда нельзя было бы алертить на error rate из логов, но это типовой сценарий мониторинга.",
-                "how_it_should_be": "Metric-запросы LogQL идут в панели и алерты `Grafana` как обычные временные ряды."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "LogQL не способен агрегировать логи в метрики; чтобы получить error rate, нужно отдельно экспортировать данные в `Prometheus` через сторонний exporter и считать там.",
-              "correct": false,
-              "sections": {
-                "what_actually": "LogQL имеет metric-функции (`rate`, `count_over_time`, `quantile_over_time`), дающие Prometheus-style ряды прямо из логов без внешнего экспорта.",
-                "source_of_confusion": "Раз метрики обычно живут в `Prometheus`, кажется, что `Loki` так не умеет.",
-                "if_it_were_true": "Тогда нельзя было бы строить графики error rate напрямую из логов, но это стандартный сценарий LogQL.",
-                "how_it_should_be": "LogQL сам агрегирует логи в метрики; внешний экспорт в Prometheus не требуется."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "LogQL превращает поток логов в числовые ряды через range-функции.",
+                "example": "`rate({app=\"x\"} |= \"error\" [5m])` — частота ошибок как метрика.",
+                "when_to_apply": "Когда нужны графики или алерты прямо по логам, без отдельной метрики.",
+                "edge_cases": "Функции: `rate`, `count_over_time`, `quantile_over_time` с окном.",
+                "related": "Результат — метрики Prometheus-стиля из логов."
+              }
             }
           ]
         }
@@ -846,56 +846,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем различаются `Promtail`, `Grafana Alloy` и `Fluent Bit`?",
+          "question_text": "Чем отличаются Promtail, Alloy и Fluent Bit?",
           "options": [
             {
-              "text": "Promtail и Grafana Alloy — два названия одной актуальной версии специализированного Loki-agent.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Promtail — завершивший жизненный цикл специализированный агент, а Grafana Alloy — отдельный поддерживаемый collector и его рекомендуемый преемник.",
-                "source_of_confusion": "Alloy включает перенесённые возможности Promtail и инструменты миграции, поэтому продукты можно ошибочно принять за одну переименованную версию.",
-                "if_it_were_true": "У Promtail не было бы отдельной даты EOL, а для перехода не требовались бы конвертация конфигурации и проверка совместимости pipeline stages.",
-                "how_it_should_be": "Считайте Promtail legacy/EOL-компонентом, а Alloy — поддерживаемой платформой для новых Grafana telemetry pipelines."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Fluent Bit тяжелее Alloy и предназначен прежде всего для metrics и distributed traces.",
+              "order": 0,
+              "text": "Grafana официально рекомендует именно старый `Promtail` вместо своего более нового Alloy.",
               "correct": false,
               "sections": {
-                "what_actually": "Fluent Bit — компактный агент, ориентированный прежде всего на сбор, обработку и маршрутизацию логов; Alloy поддерживает более широкий набор telemetry signals.",
-                "source_of_confusion": "Fluent Bit путают с более тяжёлым Fluentd и переносят на него профиль ресурсов и назначение другого продукта.",
-                "if_it_were_true": "Fluent Bit не использовали бы как лёгкий DaemonSet или edge-agent для доставки container logs.",
-                "how_it_should_be": "Выбирайте Fluent Bit для компактного vendor-neutral log shipping, а Alloy — для объединённого Grafana/OTel pipeline."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "Наоборот: Grafana теперь рекомендует `Alloy` как преемника Promtail.",
+                "source_of_confusion": "Роли агента и преемника инвертируют.",
+                "if_it_were_true": "Тогда Alloy не создавали бы.",
+                "how_it_should_be": "Alloy объединил Grafana Agent и Promtail."
+              }
             },
             {
-              "text": "Promtail достиг EOL; Alloy — поддерживаемый multi-signal collector, Fluent Bit — лёгкий logs-focused агент.",
+              "label": "B",
+              "order": 1,
+              "text": "`Promtail` заточен только под Loki, Alloy — мультипротокольный преемник, Fluent Bit — вендор-независимый.",
               "correct": true,
               "sections": {
-                "explanation": "Promtail достиг EOL 2 марта 2026 года. Grafana Alloy продолжает его сценарии и поддерживает multi-signal pipelines, а Fluent Bit остаётся лёгким агентом сбора и маршрутизации логов.",
-                "example": "В Kubernetes новый deployment использует Alloy для pod logs, OTLP traces и Prometheus metrics; Fluent Bit выбирают, когда нужен компактный logs-only daemon.",
-                "when_to_apply": "Для нового Grafana observability pipeline выбирают Alloy. Fluent Bit подходит vendor-neutral log shipping, а существующий Promtail мигрируют.",
-                "edge_cases": "lambda-promtail имеет отдельный жизненный цикл. Совместимость pipeline stages проверяют при автоматической конвертации конфигурации Promtail в Alloy.",
-                "related": "[[loki-grafana-interview#Q16]] pipeline stages в Promtail; [[loki-grafana-interview#Q17]] K8s log discovery; [[loki-grafana-interview#Q23]] LGTM-стек."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Агенты собирают логи в Loki; различаются широтой охвата приёмников.",
+                "example": "Promtail (~50 MB) только под Loki; Alloy — Loki/Tempo/Mimir/OTLP разом.",
+                "when_to_apply": "Alloy — если вы в Grafana-стеке; Fluent Bit — если нужна вендор-независимость.",
+                "edge_cases": "Fluent Bit (~5 MB, CNCF) шлёт в Loki, Elasticsearch, Kafka.",
+                "related": "Vector (Rust) — быстрый агент с богатым языком трансформаций."
+              }
             },
             {
-              "text": "Grafana Alloy отправляет только логи в Loki и не поддерживает metrics, traces или OTLP.",
+              "label": "C",
+              "order": 2,
+              "text": "`Promtail` — мультипротокольный агент сразу для Loki, Tempo и Mimir.",
               "correct": false,
               "sections": {
-                "what_actually": "Grafana Alloy принимает и обрабатывает metrics, logs и traces, поддерживает OTLP и интеграции с Loki, Prometheus/Mimir и Tempo.",
-                "source_of_confusion": "Alloy наследует сценарии Promtail и часто показывается рядом с Loki, поэтому его возможности ошибочно ограничивают только логами.",
-                "if_it_were_true": "Alloy не мог бы заменять Grafana Agent и участвовать в multi-signal OpenTelemetry pipelines.",
-                "how_it_should_be": "Рассматривайте Alloy как multi-signal collector; Loki остаётся backend для логов, а не границей возможностей Alloy."
-              },
+                "what_actually": "Мультипротокольный агент — это `Alloy`, а не `Promtail`.",
+                "source_of_confusion": "Возможности преемника приписывают Promtail.",
+                "if_it_were_true": "Тогда Alloy был бы не нужен.",
+                "how_it_should_be": "Promtail заточен под Loki и только под него."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "`Fluent Bit` привязан жёстко только к Loki, ровно как и Promtail.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Fluent Bit` мультивендорный: Loki, Elasticsearch, Kafka и другие.",
+                "source_of_confusion": "Узость Promtail переносят на Fluent Bit.",
+                "if_it_were_true": "Тогда он не был бы независимой альтернативой.",
+                "how_it_should_be": "Fluent Bit не привязан к одному вендору."
+              }
             }
           ]
         }
@@ -906,56 +906,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что представляли собой pipeline stages в Promtail и куда их мигрировать?",
+          "question_text": "Что такое pipeline stages в Promtail?",
           "options": [
             {
-              "text": "Promtail pipeline stages последовательно парсили, преобразовывали и маркировали записи; конфигурации мигрируют в Alloy.",
+              "label": "A",
+              "order": 0,
+              "text": "Pipeline stages выполняются на стороне `Loki` уже после приёма строки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стадии выполняются на агенте до отправки, а не на стороне Loki.",
+                "source_of_confusion": "Обработку переносят на серверную сторону.",
+                "if_it_were_true": "Тогда агент слал бы сырые строки без обогащения.",
+                "how_it_should_be": "Pipeline работает в Promtail/Alloy перед отправкой."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Стадия `labels` полностью безопасна для кардинальности при любом извлечённом поле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стадия `labels` опасна: высококардинальное поле раздувает streams.",
+                "source_of_confusion": "Удобство повышения поля в label принимают за безопасность.",
+                "if_it_were_true": "Тогда `user_id` в стадии labels был бы безвреден.",
+                "how_it_should_be": "В label повышают только ограниченные по значениям поля."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Стадии применяются к строке в произвольном порядке, а не по очереди.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стадии применяются строго по очереди, а не в произвольном порядке.",
+                "source_of_confusion": "«Цепочку» понимают как независимые шаги.",
+                "if_it_were_true": "Тогда парсинг мог бы идти после извлечения полей.",
+                "how_it_should_be": "Порядок стадий определяет результат обработки."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Pipeline stages — упорядоченная цепочка обработки строки на агенте до отправки.",
               "correct": true,
               "sections": {
-                "explanation": "Стейджи выполняются последовательно: сначала парсят строку (json/regex), затем извлекают нужные поля в labels, корректируют timestamp и при необходимости дропают или склеивают многострочные записи перед отправкой в `Loki`. Полный набор: парсеры `regex`/`json`/`logfmt`, `labels` (вынос поля в метку), `template` (модификация значения), `timestamp` (разбор времени), `output` (изменение самой строки), `drop` (отбрасывание совпавших логов) и `multiline` (склейка многострочных записей, например stack traces).",
-                "example": "`json` извлекает `level` и `message`, `labels: { level: }` выносит level в метку, `timestamp` парсит поле времени в RFC3339 — типичная цепочка для структурированных логов.",
-                "when_to_apply": "Pipeline настраивают для структурирования сырых логов: парсинг JSON, извлечение ограниченных полей в labels, корректный timestamp, склейка стектрейсов.",
-                "edge_cases": "Вынос high-cardinality поля в `labels` на этом этапе — частая ошибка, взрывающая cardinality; `multiline` критичен, иначе стектрейс распадётся на десятки строк.",
-                "related": "[[loki-grafana-interview#Q10]] static vs dynamic labels; [[loki-grafana-interview#Q15]] Promtail vs Alloy; [[loki-grafana-interview#Q9]] cardinality."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Grafana Alloy не поддерживает обработку multiline logs, поэтому такие записи необходимо склеивать приложением.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Есть стейдж `multiline` именно для склейки многострочных записей; без него стектрейс распадётся на множество отдельных строк.",
-                "source_of_confusion": "Кажется, что `Loki` сам понимает границы многострочных записей.",
-                "if_it_were_true": "Тогда `multiline` не существовал бы как отдельный стейдж, но он есть и нужен для stack traces.",
-                "how_it_should_be": "Многострочные записи склеивает стейдж `multiline`; без него они дробятся построчно."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Stage `drop` удаляет только labels, но никогда не отбрасывает целую запись по условию.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`drop` отбрасывает целиком совпавшие записи логов (например шум), а не снимает с них labels.",
-                "source_of_confusion": "Название `drop` ассоциируют с «drop column» в БД, то есть удалением поля.",
-                "if_it_were_true": "Тогда `drop` не уменьшал бы объём отправляемых логов, но его применяют именно для отсева шума.",
-                "how_it_should_be": "`drop` полностью отбрасывает совпавшие строки логов до отправки в `Loki`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Pipeline stages выполняются параллельно и в произвольном порядке, поэтому результат недетерминирован.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Стейджи выполняются последовательно в заданном порядке; например, парсинг должен идти до извлечения labels из распарсенных полей.",
-                "source_of_confusion": "Слово «pipeline» иногда ассоциируют с параллельной обработкой потоков.",
-                "if_it_were_true": "Тогда `labels` мог бы выполниться до `json` и не найти полей, но порядок как раз гарантирует обратное.",
-                "how_it_should_be": "Стейджи идут строго по порядку: сначала парсинг, затем извлечение labels, timestamp и т.д."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Строка проходит стадии по очереди до отправки: парсинг, извлечение полей, время.",
+                "example": "`json` достаёт `level`, стадия `labels` повышает его до метки.",
+                "when_to_apply": "Когда на агенте разбирают и обогащают строки логов.",
+                "edge_cases": "Стадия `labels` опасна: высококардинальное поле взрывает streams.",
+                "related": "`timestamp` берёт время из строки, `drop` отбрасывает лишние строки."
+              }
             }
           ]
         }
@@ -966,56 +966,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как Grafana Alloy обнаруживает Kubernetes-логи и формирует labels?",
+          "question_text": "Как работает обнаружение логов в Kubernetes?",
           "options": [
             {
-              "text": "`relabel_configs` нужны только для смены адреса `Loki` и таймаутов отправки; на маппинг K8s-метаданных (`__meta_kubernetes_*`) в labels потоков они никак не влияют.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`relabel_configs` как раз мапят K8s meta-метки (`__meta_kubernetes_*`) в labels namespace/pod/app, формируя потоки.",
-                "source_of_confusion": "Слово «relabel» путают с переадресацией/реконфигурацией endpoint-а.",
-                "if_it_were_true": "Тогда из meta-меток нельзя было бы получить namespace/pod как labels, но это основной их сценарий.",
-                "how_it_should_be": "`relabel_configs` превращают K8s-метаданные в labels потоков логов."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "В K8s `Grafana Alloy` требует вручную прописывать путь к лог-файлу каждого пода в config, так как автоматического обнаружения подов через K8s API он не поддерживает.",
+              "order": 0,
+              "text": "Агент нужно вручную настраивать на каждый под по отдельности.",
               "correct": false,
               "sections": {
-                "what_actually": "`Grafana Alloy`/`Alloy` авто-обнаруживают поды через `kubernetes_sd_configs`, без ручного перечисления путей для каждого пода.",
-                "source_of_confusion": "В не-K8s окружении пути к файлам действительно задают руками, и это переносят на K8s.",
-                "if_it_were_true": "Тогда каждый новый под требовал бы правки config агента, что несовместимо с динамикой K8s.",
-                "how_it_should_be": "Service discovery (`role: pod`) сам находит поды; пути контейнерных логов подхватываются автоматически."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "Агент сам находит поды через K8s API, вручную его не настраивают.",
+                "source_of_confusion": "Ручную конфигурацию под каждый под считают необходимой.",
+                "if_it_were_true": "Тогда автосбор логов в кластере был бы невозможен.",
+                "how_it_should_be": "Service discovery делает всё автоматически."
+              }
             },
             {
-              "text": "Alloy использует Kubernetes discovery, relabeling и log-processing компоненты, чтобы найти pod logs, добавить контролируемые labels и отправить записи в Loki.",
+              "label": "B",
+              "order": 1,
+              "text": "Агент читает логи напрямую из stdout процесса, минуя файлы на ноде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Строки читаются из файлов логов на ноде (`/var/log/pods/...`).",
+                "source_of_confusion": "«Сбор stdout» понимают как прямое чтение из процесса.",
+                "if_it_were_true": "Тогда агент зависел бы от жизни каждого процесса.",
+                "how_it_should_be": "kubelet складывает stdout/stderr в файлы, агент читает их."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Агент разворачивают как один центральный `Deployment` на весь кластер сразу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Агент разворачивают как DaemonSet — по одному на ноду.",
+                "source_of_confusion": "Один центральный сборщик считают типовой схемой.",
+                "if_it_were_true": "Тогда один под собирал бы логи всего кластера.",
+                "how_it_should_be": "DaemonSet собирает stdout подов своей ноды."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Агент сам опрашивает `Kubernetes API` и через relabel_configs превращает метаданные подов в labels.",
               "correct": true,
               "sections": {
-                "explanation": "Service discovery опрашивает K8s API о подах, а relabeling превращает их meta-метки в стабильные labels потоков; чтение идёт прямо из файлов логов контейнеров на ноде, обычно через DaemonSet. Конкретно: `kubernetes_sd_configs: role: pod` находит поды, а `relabel_configs` мапит `__meta_kubernetes_namespace`, `__meta_kubernetes_pod_name`, `__meta_kubernetes_pod_label_app` в labels namespace/pod/app; строки берутся из container logs (`/var/log/pods/...`).",
-                "example": "`source_labels: [__meta_kubernetes_namespace] → target_label: namespace` навешивает namespace как label, чтобы потом писать `{namespace=\"prod\", app=\"api\"}`.",
-                "when_to_apply": "Этот механизм используют в любом K8s-кластере: DaemonSet-агент авто-подхватывает новые поды без ручной конфигурации источников.",
-                "edge_cases": "Бесконтрольный маппинг всех K8s-меток в labels легко создаёт high-cardinality; стоит выносить только ограниченные (namespace, app), а не pod-hash или uid.",
-                "related": "[[loki-grafana-interview#Q15]] Promtail vs Alloy; [[loki-grafana-interview#Q16]] pipeline stages; [[loki-grafana-interview#Q9]] cardinality."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Grafana Alloy` в K8s читает логи напрямую из контейнеров через `kubectl logs` по сети, а не из файлов на ноде.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Логи читаются из файлов container logs на ноде (`/var/log/pods/...`), и агент обычно разворачивают как DaemonSet на каждой ноде.",
-                "source_of_confusion": "Кажется, что логи берутся «из контейнера» как абстракции, а не из конкретных файлов.",
-                "if_it_were_true": "Тогда не требовался бы доступ к `/var/log/pods` и DaemonSet-топология, но они стандартны.",
-                "how_it_should_be": "Агент-DaemonSet читает файлы логов контейнеров с ноды (`/var/log/pods/...`)."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "В K8s агент находит поды через API и делает из их метаданных labels.",
+                "example": "`relabel_configs` мапит `__meta_kubernetes_namespace` в label `namespace`.",
+                "when_to_apply": "Когда собирают логи всех подов кластера без ручной настройки.",
+                "edge_cases": "Строки читаются из файлов `/var/log/pods/...`, куда пишет kubelet.",
+                "related": "Агент обычно крутится как DaemonSet — по одному на ноду."
+              }
             }
           ]
         }
@@ -1026,56 +1026,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `Grafana`?",
+          "question_text": "Что такое Grafana?",
           "options": [
             {
-              "text": "Grafana является собственной TSDB, которая хранит metrics, logs и traces на локальном диске.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Grafana` не хранит данные — это слой визуализации поверх внешних datasources вроде `Prometheus` и `Loki`.",
-                "source_of_confusion": "Поскольку графики видны именно в `Grafana`, кажется, что данные хранятся в ней.",
-                "if_it_were_true": "Тогда не нужны были бы отдельные `Prometheus`/`Loki`, но `Grafana` именно подключается к ним как к источникам.",
-                "how_it_should_be": "`Grafana` визуализирует данные из внешних источников; хранят их `Prometheus`, `Loki` и др."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Grafana — node-agent для сбора логов и прямой аналог Grafana Alloy.",
+              "order": 0,
+              "text": "`Grafana` — это полноценное собственное хранилище логов, прямая альтернатива самому Loki.",
               "correct": false,
               "sections": {
-                "what_actually": "Сбором логов занимаются агенты `Grafana Alloy`/`Alloy`; `Grafana` — платформа визуализации и алертинга, а не коллектор.",
-                "source_of_confusion": "Все продукты в стеке от `Grafana Labs`, отсюда смешение визуализатора и агента.",
-                "if_it_were_true": "Тогда `Grafana` ставили бы DaemonSet-ом на каждую ноду, но её роль — единый UI поверх источников.",
-                "how_it_should_be": "Логи собирают `Grafana Alloy`/`Alloy`; `Grafana` их визуализирует через datasource `Loki`."
-              },
+                "what_actually": "Grafana — визуализация, а логи хранит `Loki`.",
+                "source_of_confusion": "Роль хранилища приписывают Grafana.",
+                "if_it_were_true": "Тогда Loki был бы не нужен.",
+                "how_it_should_be": "Grafana рисует, Loki хранит логи."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Grafana подключает только Prometheus и не поддерживает Loki, Tempo или другие datasources.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Grafana` поддерживает 100+ datasources, включая `Loki`, `Tempo`, Elasticsearch, InfluxDB, SQL-базы и облачные провайдеры.",
-                "source_of_confusion": "Связка `Prometheus` + `Grafana` настолько популярна, что её принимают за единственную.",
-                "if_it_were_true": "Тогда нельзя было бы построить дашборд по логам `Loki`, но это типовой сценарий.",
-                "how_it_should_be": "`Grafana` мульти-источниковая: десятки типов datasources на одном дашборде."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Grafana визуализирует и алертит данные из внешних datasources, но сама не является их основным хранилищем.",
+              "order": 1,
+              "text": "`Grafana` — визуализация, сама ничего не хранит, лишь подключается к datasources.",
               "correct": true,
               "sections": {
-                "explanation": "`Grafana` сама не хранит данные, а подключается к множеству источников и рисует поверх них дашборды и алерты; единый UI над metrics, logs и traces — её главная ценность. Поддерживается 100+ datasources: `Prometheus`, `Loki`, `Tempo`, `Mimir`, Elasticsearch/OpenSearch, InfluxDB, Graphite, PostgreSQL/MySQL, CloudWatch, Datadog, New Relic и др. — именно эта универсальность сделала её стандартным инструментом для дашбордов наблюдаемости.",
-                "example": "Один дашборд может объединять latency-метрику из `Prometheus`, связанные логи из `Loki` и трейс из `Tempo` — данные из трёх источников на одном экране.",
-                "when_to_apply": "`Grafana` ставят как единый слой визуализации поверх любых источников: метрик, логов, трассировки, облачных провайдеров и SQL-баз.",
-                "edge_cases": "Будучи только слоем визуализации, `Grafana` зависит от качества datasource: медленный источник делает медленным и дашборд, сама она данные не ускоряет.",
-                "related": "[[loki-grafana-interview#Q19]] datasources; [[loki-grafana-interview#Q20]] dashboards и panels; [[loki-grafana-interview#Q22]] Explore mode."
-              },
+                "explanation": "Open-source платформа дашбордов и алертинга поверх любых данных.",
+                "example": "Одна панель видит данные из совершенно разных систем.",
+                "when_to_apply": "Когда нужны единые дашборды поверх разных источников.",
+                "edge_cases": "Поддерживает 100+ типов datasources.",
+                "related": "Prometheus, Loki, Tempo, Mimir — родной стек Grafana."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`Grafana` сама хранит метрики и логи в собственной базе данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Grafana ничего не хранит — она рисует данные из внешних источников.",
+                "source_of_confusion": "Визуализатор путают с хранилищем.",
+                "if_it_were_true": "Тогда datasources были бы не нужны.",
+                "how_it_should_be": "Данные лежат в подключённых системах, не в Grafana."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "`Grafana` вообще умеет работать только с одним источником — с Prometheus.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Grafana поддерживает 100+ типов datasources, не только Prometheus.",
+                "source_of_confusion": "Родной стек принимают за единственный источник.",
+                "if_it_were_true": "Тогда Grafana не стала бы универсальным стандартом.",
+                "how_it_should_be": "Elasticsearch, InfluxDB, PostgreSQL и десятки других."
+              }
             }
           ]
         }
@@ -1086,56 +1086,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое datasources в `Grafana`?",
+          "question_text": "Что такое datasources в Grafana и как их настраивают?",
           "options": [
             {
-              "text": "Все панели одного Grafana dashboard обязаны использовать один datasource; mixed queries запрещены.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Mixed datasources разрешены — на одном дашборде можно сочетать Prometheus-метрику, Loki-логи и Tempo-трейс.",
-                "source_of_confusion": "Простые дашборды часто используют один источник, отсюда вывод о запрете смешивания.",
-                "if_it_were_true": "Тогда корреляция metrics↔logs↔traces на одном экране была бы невозможна, но это ключевая фича.",
-                "how_it_should_be": "Дашборд может смешивать источники; панели обращаются каждая к своему datasource."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Datasource содержит только display name, но не тип, URL, authentication или дополнительные settings.",
+              "order": 0,
+              "text": "Одна `Grafana` способна подключать ровно один-единственный datasource только за раз.",
               "correct": false,
               "sections": {
-                "what_actually": "Datasource обязательно задаётся типом (`prometheus`/`loki`/`tempo`) и URL; без них `Grafana` не знает протокол и адрес.",
-                "source_of_confusion": "Имя datasource на виду в UI, а тип и URL воспринимаются как необязательные детали.",
-                "if_it_were_true": "Тогда конфиг `type: loki, url: http://loki:3100` был бы лишним, но он обязателен.",
-                "how_it_should_be": "Datasource = тип + URL (+ имя); по ним `Grafana` маршрутизирует запросы."
-              },
+                "what_actually": "Одна Grafana подключает много datasources сразу.",
+                "source_of_confusion": "Единственный источник принимают за ограничение.",
+                "if_it_were_true": "Тогда смешивать данные в одном дашборде было бы нельзя.",
+                "how_it_should_be": "Именно много источников дают корреляцию сигналов."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Один инстанс Grafana допускает ровно один datasource для всех организаций и dashboards.",
+              "order": 1,
+              "text": "Datasource сам хранит данные, а не подключается к внешнему источнику.",
               "correct": false,
               "sections": {
-                "what_actually": "Один `Grafana` подключает много datasources одновременно и даже смешивает их в одном дашборде (mixed).",
-                "source_of_confusion": "Кажется, что инстанс «привязан» к одному backend, как простой UI.",
-                "if_it_were_true": "Тогда нельзя было бы строить дашборд с метриками и логами вместе, но это стандарт.",
-                "how_it_should_be": "Один `Grafana` → много datasources → единая визуализация и mixed-дашборды."
-              },
-              "label": "C",
-              "order": 2
+                "what_actually": "Datasource лишь подключается к источнику, данные хранит сам источник.",
+                "source_of_confusion": "Подключение путают с хранилищем.",
+                "if_it_were_true": "Тогда Grafana дублировала бы данные у себя.",
+                "how_it_should_be": "Datasource — это тип и URL, а не база данных."
+              }
             },
             {
-              "text": "Datasource описывает подключённый backend и его параметры, например Loki, Prometheus, Tempo или Elasticsearch.",
+              "label": "C",
+              "order": 2,
+              "text": "Datasource — подключение к источнику (тип и URL), описанное как код.",
               "correct": true,
               "sections": {
-                "explanation": "Каждый datasource описывается типом и адресом; `Grafana` маршрутизирует запросы панели к нужному источнику, а режим mixed позволяет на одном дашборде смешивать источники разных типов. Типовые записи: `prometheus` на `http://prometheus:9090`, `loki` на `http://loki:3100`, `tempo` на `http://tempo:3200`; mixed-дашборд даёт unified visualization — метрика из Prometheus, логи из Loki и трейс из Tempo на одном экране.",
-                "example": "В provisioning-конфиге три записи (`prometheus`, `loki`, `tempo`) дают единый дашборд, где latency берётся из Prometheus, а связанные логи — из Loki.",
-                "when_to_apply": "Datasources настраивают при подключении `Grafana` к стеку observability; provisioning как код (YAML) позволяет версионировать их в git.",
-                "edge_cases": "Неверный URL или недоступный источник делает панели пустыми, хотя сам дашборд валиден; mixed-режим требует, чтобы запросы каждой панели шли к своему источнику.",
-                "related": "[[loki-grafana-interview#Q18]] что такое Grafana; [[loki-grafana-interview#Q20]] dashboards и panels; [[loki-grafana-interview#Q24]] корреляция logs/traces/metrics."
-              },
+                "explanation": "Datasource описывает тип и URL источника; хранят как код в git.",
+                "example": "`type: loki, url: http://loki:3100` — декларативное описание.",
+                "when_to_apply": "Когда подключают источники к Grafana воспроизводимо.",
+                "edge_cases": "Одна Grafana подключает много datasources и сводит их вместе.",
+                "related": "Provisioning позволяет версионировать и катить через CI."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Datasource настраивают только руками в UI, а не кодом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Datasources обычно описывают декларативно (provisioning), а не кликами.",
+                "source_of_confusion": "Ручную настройку в UI считают единственным путём.",
+                "if_it_were_true": "Тогда их нельзя было бы версионировать в git.",
+                "how_it_should_be": "Источники хранят как код и катят через CI."
+              }
             }
           ]
         }
@@ -1146,56 +1146,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое dashboards, panels и variables в `Grafana`?",
+          "question_text": "Что такое dashboards, panels и variables?",
           "options": [
             {
-              "text": "В `Grafana` существует только один тип панели — time series; stat, gauge, table и logs-панели в open-source-редакции не поддерживаются и доступны лишь в Enterprise.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Grafana` поддерживает множество типов панелей: time series, stat, gauge, table, logs, heatmap, pie chart, world map и др.",
-                "source_of_confusion": "Графики временных рядов — самый частый тип, отсюда вывод, что других нет.",
-                "if_it_were_true": "Тогда нельзя было бы показать одно число (stat) или таблицу, но эти типы стандартны.",
-                "how_it_should_be": "Типов панелей много; time series — лишь один из них."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Dashboard` — набор панелей разных типов; `variables` — выпадающие фильтры вроде `${env}`, подставляемые прямо в запросы панелей для параметризации под окружения.",
+              "order": 0,
+              "text": "Dashboard — набор panels, а variables делают его параметризуемым выпадающими списками.",
               "correct": true,
               "sections": {
-                "explanation": "Панели визуализируют запросы, а переменные параметризуют их значениями из источника, так что один дашборд через `${env}`/`${service}` обслуживает множество окружений без копирования. Типы панелей: time series, stat, gauge, table, logs, heatmap, pie chart, world map. Переменные — выпадающие списки (`${env}` из query по env-меткам, `${service}` с мультивыбором); сами дашборды по практике dashboards as code хранят как JSON в git.",
-                "example": "Переменная `${env}` подтягивает значения из labels env, и при выборе prod все панели разом перестраиваются под prod-окружение.",
-                "when_to_apply": "Variables применяют, чтобы не плодить одинаковые дашборды на каждое окружение; provisioning JSON в git даёт версионирование и review.",
-                "edge_cases": "Переменная без m(ulti)-обработки в запросе ломается при мультивыборе; «голый» дашборд без variables приходится дублировать под каждое окружение.",
-                "related": "[[loki-grafana-interview#Q18]] что такое Grafana; [[loki-grafana-interview#Q19]] datasources; [[loki-grafana-interview#Q21]] alerting в Grafana."
-              },
+                "explanation": "Три уровня: dashboard из panels, а variables его параметризуют.",
+                "example": "`${env}` подтягивает значения прямо из labels для фильтрации.",
+                "when_to_apply": "Когда один дашборд нужен для многих сервисов и окружений.",
+                "edge_cases": "Типы panel: time series, stat, gauge, table, logs, heatmap.",
+                "related": "Дашборды хранят как код (JSON) в git."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Dashboard в `Grafana` нельзя хранить как код: его конфигурацию невозможно экспортировать в JSON и положить в git, провижинятся только datasources через YAML-файлы.",
+              "order": 1,
+              "text": "Variables — это типы панелей, а panels — переменные дашборда.",
               "correct": false,
               "sections": {
-                "what_actually": "Дашборды экспортируются в JSON и провижинятся как код в git — это стандартная практика dashboards as code.",
-                "source_of_confusion": "Дашборды создают мышкой в UI, отсюда вывод, что кода под ними нет.",
-                "if_it_were_true": "Тогда provisioning через JSON не существовал бы, но он широко используется.",
-                "how_it_should_be": "Дашборд = JSON, который коммитят в git и провижинят при старте `Grafana`."
-              },
+                "what_actually": "Panels — это графики/виджеты, а variables — параметры-переменные.",
+                "source_of_confusion": "Три уровня устройства дашборда путают.",
+                "if_it_were_true": "Тогда фильтрация по окружениям была бы невозможна.",
+                "how_it_should_be": "Dashboard содержит panels, variables их параметризуют."
+              }
+            },
+            {
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Variables в `Grafana` — это глобальные настройки сервера в `grafana.ini`, задаваемые только администратором при старте, и на запросы конкретных панелей они не влияют.",
+              "order": 2,
+              "text": "Один готовый дашборд никак нельзя переиспользовать для разных окружений сразу.",
               "correct": false,
               "sections": {
-                "what_actually": "Variables — это выпадающие фильтры внутри дашборда (например `${env}`), которые подставляются прямо в запросы панелей.",
-                "source_of_confusion": "Слово «variables» путают с серверными environment-переменными процесса.",
-                "if_it_were_true": "Тогда один дашборд не мог бы переключаться между окружениями, но это их прямое назначение.",
-                "how_it_should_be": "Variables — дашбордные фильтры, подставляемые в запросы (`{env=\"$env\"}`)."
-              },
+                "what_actually": "Один дашборд переиспользуют для разных окружений через variables.",
+                "source_of_confusion": "Статичность дашборда преувеличивают.",
+                "if_it_were_true": "Тогда пришлось бы копировать его под каждый stage.",
+                "how_it_should_be": "Переменные `${env}`/`${service}` делают его универсальным."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Дашборды настраивают только кликами, их нельзя хранить как код.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дашборды хранят как код (JSON) в git, а не только кликами.",
+                "source_of_confusion": "UI-настройку считают единственным способом.",
+                "if_it_were_true": "Тогда их нельзя было бы версионировать и катить в CI.",
+                "how_it_should_be": "Provisioning позволяет держать дашборды как код."
+              }
             }
           ]
         }
@@ -1206,56 +1206,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как устроен alerting в `Grafana`?",
+          "question_text": "Как устроен алертинг в Grafana?",
           "options": [
             {
-              "text": "Alert rules в `Grafana` можно строить только по одному datasource — `Prometheus`; алертить напрямую по логам `Loki` через metric-запросы LogQL движок не позволяет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Unified Alerting описывает правила сразу по нескольким datasources, включая metric-запросы LogQL из `Loki`.",
-                "source_of_confusion": "Исторически алертинг ассоциируется с `Prometheus`/`Alertmanager`, отсюда ограничение в восприятии.",
-                "if_it_were_true": "Тогда нельзя было бы алертить на error rate из логов, но это типовой сценарий.",
-                "how_it_should_be": "Правила охватывают несколько источников; алерт по логам `Loki` поддерживается."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Поле `for` в alert rule задаёт интервал опроса datasource (как scrape_interval), а не длительность удержания истинного условия перед фактическим срабатыванием алерта.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`for` — это сколько условие должно держаться истинным до срабатывания (гасит флаппинг), а не частота опроса.",
-                "source_of_confusion": "`for` звучит как «каждые N минут», отсюда трактовка про интервал scrape.",
-                "if_it_were_true": "Тогда `for: 5m` означало бы опрос раз в 5 минут, но он означает удержание условия 5 минут.",
-                "how_it_should_be": "`for` — длительность непрерывного выполнения условия до алерта."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Grafana` не умеет отправлять уведомления во внешние системы: алерты видны только внутри UI на странице Alerting и не доходят ни в Slack, ни в PagerDuty.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Unified Alerting поддерживает notification channels — Slack, PagerDuty, email, webhook и др.",
-                "source_of_confusion": "Кажется, что визуализатор не интегрируется с системами оповещения.",
-                "if_it_were_true": "Тогда дежурные не получали бы пейджинг, но именно это и есть смысл алертинга.",
-                "how_it_should_be": "Алерты `Grafana` уходят во внешние каналы (Slack/PagerDuty/email/webhook)."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Unified Alerting` (`Grafana` 8+) задаёт alert rules по нескольким datasources с notification channels и routing; правило несёт query, `for`, labels, annotations.",
+              "order": 0,
+              "text": "`Unified Alerting` — единая система правил поверх всех datasources, включая метрики и запросы LogQL.",
               "correct": true,
               "sections": {
-                "explanation": "Правило срабатывает, когда условие держится дольше `for` (это гасит флаппинг); labels определяют маршрутизацию по каналам, а annotations несут человекочитаемое описание инцидента. Уведомления уходят в notification channels (Slack, PagerDuty, email, webhook), а управление шумом — через routing/silencing/inhibition. Альтернативный движок доставки — `Alertmanager` из экосистемы `Prometheus`, который `Grafana` тоже умеет использовать.",
-                "example": "`rate(http_errors_total[5m]) > 10` с `for: 5m` и `severity: critical` шлёт в PagerDuty только если высокая ошибочность держится 5 минут, а не на одиночном всплеске.",
-                "when_to_apply": "Unified Alerting используют, когда нужны алерты поверх разных источников (metrics + logs) из одного места; routing/silencing управляет шумом и дежурствами.",
-                "edge_cases": "`for: 0` делает алерт чувствительным к одиночным всплескам (флаппинг); забытый silencing во время планового обслуживания заваливает дежурных ложными срабатываниями.",
-                "related": "[[loki-grafana-interview#Q14]] metric-запросы LogQL; [[loki-grafana-interview#Q18]] что такое Grafana; [[loki-grafana-interview#Q20]] dashboards и variables."
-              },
+                "explanation": "С Grafana 8+ — единый алертинг поверх всех источников.",
+                "example": "Правило — хоть метрика Prometheus, хоть запрос LogQL к Loki.",
+                "when_to_apply": "Когда нужны алерты по разнородным источникам из одного места.",
+                "edge_cases": "Умеет routing, silencing и inhibition оповещений.",
+                "related": "Alertmanager — альтернативный движок доставки."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Правило алерта в Grafana можно строить только по одному datasource.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Правило можно строить сразу по нескольким datasources.",
+                "source_of_confusion": "Ограничение одним источником придумывают.",
+                "if_it_were_true": "Тогда пропала бы «единость» алертинга.",
+                "how_it_should_be": "Unified Alerting работает поверх всех источников."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Алерты Grafana работают только по метрикам Prometheus, но не по логам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Алерты строят и по LogQL к Loki, не только по метрикам Prometheus.",
+                "source_of_confusion": "Метрический алертинг принимают за единственный.",
+                "if_it_were_true": "Тогда нельзя было бы алертить по частоте ошибок в логах.",
+                "how_it_should_be": "Правило можно строить по любому источнику."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "`Unified Alerting` вообще не умеет слать никакие уведомления во внешние каналы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Unified Alerting` шлёт в Slack, PagerDuty, email, webhook.",
+                "source_of_confusion": "Единую систему правил считают без доставки.",
+                "if_it_were_true": "Тогда об алерте никто бы не узнавал.",
+                "how_it_should_be": "Уведомления идут в разные внешние каналы."
+              }
             }
           ]
         }
@@ -1266,56 +1266,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Зачем нужен Explore mode для troubleshooting?",
+          "question_text": "Зачем нужен режим Explore при разборе инцидентов?",
           "options": [
             {
-              "text": "`Explore` — режим ad-hoc запросов (в отличие от дашбордов) для разбора инцидента: выполнить LogQL, посмотреть логи во времени, кликнуть trace_id и уйти в `Tempo`.",
+              "label": "A",
+              "order": 0,
+              "text": "`Explore` — это заранее собранные готовые дашборды для уже известных вопросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Explore` — для ad-hoc запросов, а известные вопросы — за дашбордами.",
+                "source_of_confusion": "Два режима работы Grafana путают.",
+                "if_it_were_true": "Тогда исследовать неизвестную проблему было бы негде.",
+                "how_it_should_be": "Дашборд отвечает на известное, Explore — на новое."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "`Explore` показывает только один единственный datasource, вообще без split view.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Explore` показывает два datasource бок о бок в split view.",
+                "source_of_confusion": "Одиночный вид принимают за единственный.",
+                "if_it_were_true": "Тогда сравнивать логи и трейс рядом было бы нельзя.",
+                "how_it_should_be": "Split view — ключевое удобство Explore."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Из `Explore` нельзя перейти по trace_id к распределённому трейсу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Из `Explore` ссылка по `trace_id` ведёт прямо в Tempo.",
+                "source_of_confusion": "Возможность drill-down недооценивают.",
+                "if_it_were_true": "Тогда путь «лог → трейс» рвался бы.",
+                "how_it_should_be": "Клик по trace_id открывает полный трейс."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "`Explore` — режим разовых исследовательских запросов для ситуации «неясно, что искать».",
               "correct": true,
               "sections": {
-                "explanation": "Explore не требует заранее собранного дашборда — это интерактивная консоль для гипотез на лету; split view и кликабельные trace_id связывают логи и трейсы в одном сеансе расследования. Сценарий: открыть Explore с datasource `Loki`, выполнить `{app=\"my-app\", env=\"prod\"} |= \"error\"`, посмотреть логи во времени, кликнуть по trace_id и переключиться на `Tempo`, увидев полный распределённый трейс. Split view показывает два datasource рядом, а drill-down по кликабельным trace_id ведёт прямо в трейс.",
-                "example": "Из строки лога с trace_id один клик ведёт в `Tempo` к полному трейсу запроса — переход logs → traces без ручного копирования id.",
-                "when_to_apply": "Explore используют именно во время инцидента для быстрых ad-hoc запросов и корреляции, а устойчивые представления потом оформляют как дашборд.",
-                "edge_cases": "Кликабельные trace_id работают только при настроенных derived fields; без них переход к трейсу придётся делать вручную.",
-                "related": "[[loki-grafana-interview#Q11]] LogQL; [[loki-grafana-interview#Q24]] корреляция logs/traces/metrics; [[loki-grafana-interview#Q23]] LGTM-стек."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Explore — это режим постоянных, версионируемых дашбордов в git, который заменяет ad-hoc запросы и хранит сохранённые представления как код для воспроизводимости расследований.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Explore — наоборот, режим ad-hoc интерактивных запросов; постоянные версионируемые представления — это дашборды.",
-                "source_of_confusion": "Оба показывают данные `Loki`, поэтому Explore путают с дашбордами.",
-                "if_it_were_true": "Тогда не было бы смысла в отдельном Explore рядом с дашбордами, но он именно для разовых запросов.",
-                "how_it_should_be": "Explore — ad-hoc консоль для расследования; устойчивые виды оформляют дашбордом."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Переход от лога к трейсу в Explore невозможен: trace_id в строке лога остаётся обычным текстом, не кликабелен, и автоматической связи logs-панели с `Tempo` тут нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "При настроенных derived fields trace_id в логах кликабелен и ведёт к полному трейсу в `Tempo`.",
-                "source_of_confusion": "Кажется, что логи и трейсы живут изолированно в разных инструментах.",
-                "if_it_were_true": "Тогда не было бы drill-down logs→traces, но это ключевая ценность Explore для инцидентов.",
-                "how_it_should_be": "trace_id в логах кликабелен (derived fields) и переключает на трейс в `Tempo`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "В Explore можно работать только с одним datasource за раз; split view для сравнения двух источников рядом (например `Loki` и `Tempo`) в этом режиме не поддерживается вовсе.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Explore поддерживает split view — два datasource бок о бок (например `Loki` и `Tempo`) для корреляции.",
-                "source_of_confusion": "Базовый сценарий с одним источником создаёт впечатление ограничения.",
-                "if_it_were_true": "Тогда нельзя было бы сопоставить логи и трейс на одном экране, но split view это позволяет.",
-                "how_it_should_be": "Explore умеет split view: два источника рядом для совместного анализа."
-              },
-              "label": "D",
-              "order": 3
+                "explanation": "Explore — ad-hoc запросы в противовес заранее собранным дашбордам.",
+                "example": "Разбор инцидента: логи Loki → клик trace_id → трейс в Tempo.",
+                "when_to_apply": "Когда что-то сломалось и ещё неясно, что именно искать.",
+                "edge_cases": "Split view показывает два datasource бок о бок.",
+                "related": "Drill-down по trace_id ведёт из лога прямо в Tempo."
+              }
             }
           ]
         }
@@ -1326,56 +1326,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое стек `Loki` + `Grafana` + `Tempo` + `Mimir` (LGTM)?",
+          "question_text": "Что такое стек Loki + Grafana + Tempo + Mimir?",
           "options": [
             {
-              "text": "Компоненты LGTM проприетарны и платны по подписке, каждый со своим собственным типом хранилища.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Все компоненты LGTM open-source, все label-based и все хранятся в дешёвом object storage (`S3`).",
-                "source_of_confusion": "Полнота стека ассоциируется с дорогими вендорскими решениями вроде Datadog.",
-                "if_it_were_true": "Тогда LGTM не был бы «альтернативой expensive vendor stacks», но именно ею он и является.",
-                "how_it_should_be": "LGTM — open-source, единая label-модель, общее object storage для всех сигналов."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "LGTM-стек покрывает только логи: `Loki`, `Grafana`, `Tempo` и `Mimir` — это четыре разных агента доставки логов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Компоненты покрывают разные сигналы: `Loki` — логи, `Tempo` — трейсы, `Mimir` — метрики, `Grafana` — визуализация; это не четыре лог-агента.",
-                "source_of_confusion": "`Loki` про логи, и эту роль ошибочно распространяют на весь стек.",
-                "if_it_were_true": "Тогда стек не был бы full observability, но он покрывает logs+traces+metrics(+profiles).",
-                "how_it_should_be": "Каждый компонент LGTM — свой сигнал; вместе они дают полную наблюдаемость."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "В LGTM-стеке `Tempo` отвечает за метрики и их долгое хранение (как Prometheus).",
-              "correct": false,
-              "sections": {
-                "what_actually": "Роли обратные: `Tempo` — это трейсы (аналог Jaeger), а `Mimir` — метрики (Prometheus для долгого хранения).",
-                "source_of_confusion": "Названия `Tempo` и `Mimir` не намекают на роль, поэтому их легко перепутать.",
-                "if_it_were_true": "Тогда `Tempo` называли бы «like Prometheus», но он позиционируется «like Jaeger».",
-                "how_it_should_be": "`Tempo` — traces (как Jaeger), `Mimir` — metrics (как Prometheus long-term)."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`LGTM` — Grafana-стек: Loki для логов, Grafana для UI, Tempo для трасс и Mimir для метрик.",
+              "order": 0,
+              "text": "`LGTM` — Loki (логи), Grafana (визуализация), Tempo (трейсы) и Mimir (метрики).",
               "correct": true,
               "sections": {
-                "explanation": "Каждый компонент закрывает свой сигнал (logs/traces/metrics/profiles), но все они разделяют одну модель labels и дешёвое object storage (`S3`); это превращает LGTM в недорогую альтернативу дорогим вендорским стекам. Аналоги: `Loki` — «как ELK», `Tempo` — «как Jaeger», `Mimir` — «как Prometheus для долгого хранения». Сверх четырёх основных продуктов стек включает `Pyroscope` (профили) и `Beyla`/`Faro` (авто-инструментация, RUM).",
-                "example": "Метрики в `Mimir`, логи в `Loki`, трейсы в `Tempo` — единый набор labels (service, env) позволяет переходить между ними по одному клику в `Grafana`.",
-                "when_to_apply": "LGTM выбирают, когда нужен полный observability на open-source с упором на стоимость, особенно в K8s/cloud-native среде.",
-                "edge_cases": "Чтобы корреляция работала, нужна консистентность labels (service.name) и общих идентификаторов (trace_id) во всех сигналах, иначе переходы между ними рвутся.",
-                "related": "[[loki-grafana-interview#Q24]] корреляция logs/traces/metrics; [[loki-grafana-interview#Q18]] что такое Grafana; [[loki-grafana-interview#Q1]] что такое Loki."
-              },
+                "explanation": "Полный observability-стек Grafana: логи, трейсы, метрики плюс визуализация.",
+                "example": "Loki↔ELK, Tempo↔Jaeger, Mimir↔Prometheus по назначению.",
+                "when_to_apply": "Когда собирают экономичную альтернативу вендорским платформам.",
+                "edge_cases": "Всё open-source, на единой модели labels, в object storage.",
+                "related": "Pyroscope добавляет профили, Beyla/Faro — авто-инструментирование."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "В `LGTM` Tempo отвечает за метрики, а Mimir — за трейсы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: Tempo — трейсы, Mimir — метрики.",
+                "source_of_confusion": "Назначения компонентов путают местами.",
+                "if_it_were_true": "Тогда стек не покрывал бы три сигнала.",
+                "how_it_should_be": "Tempo — как Jaeger, Mimir — как Prometheus."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Компоненты `LGTM` хранят данные в разных несовместимых форматах без общих labels.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все компоненты построены на единой модели labels и object storage.",
+                "source_of_confusion": "Разрозненность форматов приписывают стеку.",
+                "if_it_were_true": "Тогда связывать сигналы было бы нечем.",
+                "how_it_should_be": "Общие labels и позволяют легко коррелировать данные."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "`Loki` в стеке LGTM отвечает как раз именно за визуализацию и дашборды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Визуализацию даёт Grafana, а `Loki` отвечает за логи.",
+                "source_of_confusion": "Роли Loki и Grafana инвертируют.",
+                "if_it_were_true": "Тогда логи были бы негде хранить.",
+                "how_it_should_be": "Loki — логи, Grafana — визуализация."
+              }
             }
           ]
         }
@@ -1386,56 +1386,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как работает корреляция logs ↔ traces ↔ metrics?",
+          "question_text": "Как связать между собой логи, трейсы и метрики?",
           "options": [
             {
-              "text": "Workflow: всплеск latency в метриках → клик по trace_id ведёт к трейсу в `Tempo` → оттуда к логам в `Loki` с тем же trace_id → ERROR раскрывает root cause.",
+              "label": "A",
+              "order": 0,
+              "text": "`derived fields` в Grafana полностью скрывают сам trace_id из панели логов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `derived fields` делают `trace_id` кликабельной ссылкой.",
+                "source_of_confusion": "Механизм связывания принимают за сокрытие.",
+                "if_it_were_true": "Тогда drill-down из лога в трейс был бы невозможен.",
+                "how_it_should_be": "derived fields распознают trace_id и ведут в Tempo."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Сквозной `trace_id` и единое service.name во всех сигналах связывают их вместе.",
               "correct": true,
               "sections": {
-                "explanation": "Связующее звено — общие идентификаторы (trace_id) и единые labels (service.name) во всех сигналах; они позволяют переходить metrics→traces→logs без ручного поиска, сокращая время до root cause. Всплеск latency виден в метриках `Prometheus`, клик по trace_id ведёт к медленному трейсу в `Tempo`, дальше к логам в `Loki` с тем же trace_id, и ERROR-сообщение раскрывает причину. Для этого `trace_id` пробрасывают в каждую строку лога, консистентно проставляют `service.name`, а derived fields в `Grafana` делают trace_id кликабельным в logs-панели.",
-                "example": "`logger.info(\"Processing\", extra={\"trace_id\": current_span.context.trace_id})` кладёт trace_id в лог, и в `Grafana` derived field делает его кликабельной ссылкой к трейсу в `Tempo`.",
-                "when_to_apply": "Корреляцию настраивают для быстрого расследования инцидентов: от симптома (метрика) к причине (лог) за пару кликов, а не grep-ом вручную.",
-                "edge_cases": "Если trace_id не пробрасывается в логи или service.name называется по-разному в сигналах, цепочка рвётся и переходы перестают работать.",
-                "related": "[[loki-grafana-interview#Q22]] Explore mode; [[loki-grafana-interview#Q23]] LGTM-стек; [[loki-grafana-interview#Q19]] datasources в Grafana."
-              },
-              "label": "A",
-              "order": 0
+                "explanation": "Корреляция строится на общем идентификаторе и едином имени сервиса.",
+                "example": "Latency-всплеск → trace_id в Tempo → те же логи в Loki по trace_id.",
+                "when_to_apply": "Когда нужно от метрики за пару кликов дойти до строки лога.",
+                "edge_cases": "Без общего ключа три сигнала — три несвязанных окна.",
+                "related": "`derived fields` делают trace_id в логе кликабельной ссылкой."
+              }
             },
             {
-              "text": "Для перехода от лога к трейсу `Grafana` использует совпадение по timestamp: лог и трейс с близким временем в пределах окна считаются относящимися к одному и тому же запросу.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Связь строится по общему trace_id, а не по близости timestamp; одинаковое время не означает один и тот же запрос.",
-                "source_of_confusion": "Логи и трейсы сортируются по времени, отсюда идея связывать их по timestamp.",
-                "if_it_were_true": "Тогда параллельные запросы в одну миллисекунду путались бы между собой, чего trace_id избегает.",
-                "how_it_should_be": "Связь идёт по уникальному trace_id, проброшенному и в лог, и в трейс."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Derived fields в `Grafana` нужны только для подсветки и раскраски строк логов по уровню и никак не превращают trace_id внутри строки в кликабельную ссылку на трейс в `Tempo`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Derived fields как раз делают trace_id в logs-панели кликабельной ссылкой к трейсу в `Tempo`.",
-                "source_of_confusion": "Поле «derived» воспринимают как чисто визуальную трансформацию строки.",
-                "if_it_were_true": "Тогда drill-down logs→traces был бы невозможен, но это их основное назначение.",
-                "how_it_should_be": "Derived fields извлекают trace_id из лога и делают его ссылкой на трейс в `Tempo`."
-              },
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Корреляция работает автоматически без каких-либо общих идентификаторов: `Grafana` сама эвристически догадывается по содержимому, какой лог относится к какому трейсу и метрике.",
+              "order": 2,
+              "text": "Без общего ключа три сигнала всё равно связываются автоматически.",
               "correct": false,
               "sections": {
-                "what_actually": "Корреляция требует общих идентификаторов (trace_id) и консистентного service.name в логах/трейсах; без них связь не построить.",
-                "source_of_confusion": "Бесшовные переходы в UI создают иллюзию полностью автоматической магии.",
-                "if_it_were_true": "Тогда не нужно было бы класть trace_id в логи, но именно это и есть условие корреляции.",
-                "how_it_should_be": "Нужны общие trace_id и единый service.name во всех сигналах, плюс derived fields."
-              },
+                "what_actually": "Без общего ключа сигналы остаются тремя несвязанными окнами.",
+                "source_of_confusion": "Автосвязывание сигналов принимают за данность.",
+                "if_it_were_true": "Тогда `service.name` и `trace_id` были бы не нужны.",
+                "how_it_should_be": "Связывает именно сквозной идентификатор."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "`trace_id` должен быть только в трейсах — в логи класть не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`trace_id` прокидывают в каждую строку лога, иначе связывать нечем.",
+                "source_of_confusion": "Место trace_id ограничивают трейсами.",
+                "if_it_were_true": "Тогда из лога нельзя было бы дойти до трейса.",
+                "how_it_should_be": "trace_id нужен во всех трёх сигналах."
+              }
             }
           ]
         }
@@ -1446,56 +1446,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как сравнивать стоимость Loki и Elastic Stack?",
+          "question_text": "Насколько Loki дешевле ELK?",
           "options": [
             {
-              "text": "Loki и Elastic всегда имеют одинаковую стоимость, поскольку архитектура индекса и query load не влияют на TCO.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Архитектура индекса, retention, query profile и операционная модель напрямую влияют на стоимость; одинаковый ingest volume не делает TCO одинаковым.",
-                "source_of_confusion": "Object storage может присутствовать в обоих стеках, поэтому стоимость ошибочно сводят только к цене сохранённых bytes.",
-                "if_it_were_true": "Изменение количества индексируемых полей, частоты queries и compute topology не меняло бы итоговый счёт.",
-                "how_it_should_be": "Считайте полный TCO для своего workload: storage, index, compute, queries, egress, licensing и operations."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Loki снижает стоимость без компромиссов: full-text запросы всегда столь же быстры, как в полноиндексном Elastic.",
+              "order": 0,
+              "text": "Экономия `Loki` достигается за счёт более быстрого полнотекстового поиска.",
               "correct": false,
               "sections": {
-                "what_actually": "Экономия Loki достигается trade-off: содержимое не получает полноценный inverted index, поэтому широкие content queries могут быть медленнее и дороже на query path.",
-                "source_of_confusion": "Одинаковый Grafana UI скрывает различия backend architecture и создаёт впечатление одинаковой скорости поиска.",
-                "if_it_were_true": "Labels-only indexing давал бы ту же latency для произвольного полнотекстового поиска, что и заранее построенный inverted index.",
-                "how_it_should_be": "Оценивайте одновременно стоимость хранения и реальные расследовательские запросы, а не только ingest price."
-              },
+                "what_actually": "За дешевизну платят скоростью, а не выигрывают в поиске.",
+                "source_of_confusion": "Причину экономии путают со скоростью.",
+                "if_it_were_true": "Тогда Loki был бы и дешевле, и быстрее ELK.",
+                "how_it_should_be": "Экономия — от дешёвого хранилища, не от скорости."
+              }
+            },
+            {
               "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Elastic всегда дешевле Loki, потому что Loki обязан хранить chunks и index только на дорогих локальных SSD.",
+              "order": 1,
+              "text": "Итоговая стоимость `Loki` и ELK на практике выходит примерно совершенно одинаковой.",
               "correct": false,
               "sections": {
-                "what_actually": "Loki рассчитан на object storage для chunks и TSDB index; локальные SSD не являются обязательной моделью хранения всего массива.",
-                "source_of_confusion": "Single-binary development setup с filesystem ошибочно переносят на distributed production architecture.",
-                "if_it_were_true": "Loki не мог бы использовать S3, GCS или Azure-compatible storage как основной scalable backend.",
-                "how_it_should_be": "Сравнивайте production topologies: Loki обычно хранит основную массу данных в object storage."
-              },
-              "label": "C",
-              "order": 2
+                "what_actually": "Экономия достигает 70–90%, стоимости далеко не равны.",
+                "source_of_confusion": "Разницу в цене недооценивают.",
+                "if_it_were_true": "Тогда переход на Loki не имел бы смысла.",
+                "how_it_should_be": "В примере Loki примерно впятеро дешевле."
+              }
             },
             {
-              "text": "Loki часто снижает storage и indexing cost через labels и object storage, но итоговый TCO зависит от workload и operations.",
+              "label": "C",
+              "order": 2,
+              "text": "Экономия `Loki` — из дешёвого object storage и лёгкого compute, впятеро дешевле.",
               "correct": true,
               "sections": {
-                "explanation": "Loki обычно уменьшает index overhead и использует object storage, поэтому может быть дешевле при больших объёмах и длительном retention. Elastic оправдывает более высокую стоимость развитым полнотекстовым поиском и аналитикой.",
-                "example": "Для архива container logs с редкими запросами labels plus object storage могут дать Loki преимущество. Для интенсивного расследования по произвольным полям команда может принять стоимость Elastic ради скорости поиска.",
-                "when_to_apply": "Сравнивайте ingest volume, retention, cardinality labels, query frequency, egress, compute, лицензии и трудозатраты эксплуатации, а не одну цену гигабайта.",
-                "edge_cases": "Frozen tiers и object-storage features уменьшают стоимость Elastic, а плохо спроектированные labels или широкие LogQL queries увеличивают стоимость Loki. Универсального множителя экономии нет.",
-                "related": "[[loki-grafana-interview#Q1]] модель Loki; [[loki-grafana-interview#Q3]] сравнение стеков; [[loki-grafana-interview#Q26]] production-риски."
-              },
+                "explanation": "Дешёвое object storage вместо дисков Elasticsearch и лёгкий Go вместо JVM.",
+                "example": "1 TB/день, 7 дней: ELK $2200+/мес против Loki $460/мес.",
+                "when_to_apply": "Когда стоимость логирования — ключевой критерий выбора.",
+                "edge_cases": "Enterprise сообщают об экономии 70–90% при переходе.",
+                "related": "За дешевизну платят скоростью запросов, особенно grep."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "`Loki` заметно дороже ELK именно из-за своего огромного полнотекстового словарного индекса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Loki` дешевле — индекс мал, хранение в S3.",
+                "source_of_confusion": "«Большой индекс» ошибочно приписывают Loki.",
+                "if_it_were_true": "Тогда исчезла бы главная причина брать Loki.",
+                "how_it_should_be": "Малый индекс и object storage дают экономию."
+              }
             }
           ]
         }
@@ -1506,56 +1506,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие частые проблемы возникают в `Loki` в production?",
+          "question_text": "Какие частые проблемы у Loki в production?",
           "options": [
             {
-              "text": "Cardinality labels не влияет на Loki, потому что labels не участвуют в индексе.",
+              "label": "A",
+              "order": 0,
+              "text": "Ошибки в конфиге `Promtail` всегда падают с явной ошибкой, логи не теряются.",
               "correct": false,
               "sections": {
-                "what_actually": "High-cardinality labels — проблема №1: они взрывают индекс и кладут кластер; число потоков надо ограничивать.",
-                "source_of_confusion": "Лёгкость добавления label создаёт ложное ощущение бесконечной масштабируемости индекса.",
-                "if_it_were_true": "Тогда не было бы правила «< 10K потоков на tenant», но оно базовое для эксплуатации.",
-                "how_it_should_be": "Cardinality — ключевой источник прод-проблем; её нужно жёстко контролировать."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "Ошибки конфига Promtail теряют логи тихо, без явной ошибки.",
+                "source_of_confusion": "Наличие явных ошибок принимают за данность.",
+                "if_it_were_true": "Тогда потерю логов замечали бы сразу.",
+                "how_it_should_be": "Именно тихая потеря делает это опасным."
+              }
             },
             {
-              "text": "Основные риски — высокая cardinality, широкие LogQL-запросы, неверные limits/retention и перегрузка путей.",
+              "label": "B",
+              "order": 1,
+              "text": "Высокая кардинальность labels заметно ускоряет работу всего индекса Loki.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: высокая кардинальность раздувает индекс и всё замедляет.",
+                "source_of_confusion": "Рост числа streams принимают за пользу.",
+                "if_it_were_true": "Тогда user_id в label был бы безвреден.",
+                "how_it_should_be": "Кардинальность — причина №1 проблем Loki."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Большинство проблем `Loki` сводятся к кардинальности и неаккуратной эксплуатации (потеря логов, расходы).",
               "correct": true,
               "sections": {
-                "explanation": "Большинство проблем вращается вокруг cardinality, производительности запросов и эксплуатационных мелочей (retention, tenant isolation, мониторинг самого пайплайна доставки логов). Полный список: high-cardinality labels (взрыв индекса), медленные запросы (широкий диапазон + grep), слабая tenant isolation (один tenant душит кластер), затраты object storage на list/read-операции, out-of-order ingestion (старый `Loki` не принимал, новый ОК), тюнинг размера чанков (слишком мелкие = overhead), забытый retention/TTL (рост затрат), ошибки config `Grafana Alloy` (тихая потеря логов) и отсутствие алертинга на сбои ingestion.",
-                "example": "Забытый TTL retention тихо копит чанки в S3 месяцами, и счёт за storage растёт, хотя сами логы давно не нужны.",
-                "when_to_apply": "Этот чек-лист используют при ревью прод-конфигурации `Loki` и при разборе деградаций: первым делом проверяют cardinality, диапазон запросов и retention.",
-                "edge_cases": "Особенно коварны тихие сбои: ошибка config `Grafana Alloy` теряет логи без явной ошибки, а отсутствие алертинга на ingestion-сбои оставляет это незамеченным.",
-                "related": "[[loki-grafana-interview#Q9]] cardinality; [[loki-grafana-interview#Q6]] streams и chunks; [[loki-grafana-interview#Q16]] pipeline stages."
-              },
-              "label": "B",
-              "order": 1
+                "explanation": "Две темы граблей: кардинальность (раздувает индекс) и эксплуатация.",
+                "example": "Медленные запросы — широкий диапазон вместе с grep по тексту.",
+                "when_to_apply": "Когда разбирают типовые production-инциденты Loki.",
+                "edge_cases": "Ошибки конфига Promtail теряют логи тихо, без явной ошибки.",
+                "related": "Нужен алертинг на сбои ingestion, иначе потерю заметят поздно."
+              }
             },
             {
-              "text": "Любая ошибка Alloy-конфигурации немедленно останавливает агент и автоматически создаёт понятный alert.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ошибки config `Grafana Alloy` часто ведут к тихой потере логов без явного падения — это коварный класс прод-проблем.",
-                "source_of_confusion": "Кажется, что любая ошибка конфигурации обязательно крашит процесс.",
-                "if_it_were_true": "Тогда «silent log loss» не входил бы в список частых проблем, но он там есть.",
-                "how_it_should_be": "Часть ошибок `Grafana Alloy` приводит к тихой потере логов; нужен алертинг на ingestion-сбои."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Главная production-проблема Loki — чрезмерно быстрый полнотекстовый поиск по неиндексированному содержимому.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Полнотекстовый поиск в `Loki`, наоборот, медленнее (grep по чанкам); реальные проблемы — cardinality, медленные запросы, retention и tenant isolation.",
-                "source_of_confusion": "Подмена: реальную слабость (медленный grep) переворачивают в несуществующую «слишком быстро».",
-                "if_it_were_true": "Тогда `Loki` хвалили бы за молниеносный full-text, но это как раз его слабое место.",
-                "how_it_should_be": "Проблемы — это cardinality blowup, медленные запросы и эксплуатационные просчёты, а не «избыточная скорость»."
-              },
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Главная проблема `Loki` — это его слишком быстрый полнотекстовый поиск логов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полнотекстовый поиск в Loki как раз медленный, а не быстрый.",
+                "source_of_confusion": "Сильную сторону ELK приписывают Loki.",
+                "if_it_were_true": "Тогда Loki не экономил бы на индексе.",
+                "how_it_should_be": "Grep по большому диапазону — медленный сценарий."
+              }
             }
           ]
         }
@@ -1566,56 +1566,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Когда стоит выбирать `Loki`?",
+          "question_text": "Когда стоит выбирать Loki?",
           "options": [
             {
-              "text": "`Loki` выбирают ради стоимости, при наличии `Grafana` + `Prometheus`, структурированных логов и фильтрации по labels в K8s-среде с упором на операционную простоту.",
+              "label": "A",
+              "order": 0,
+              "text": "`Loki` подходит именно тогда, когда бюджет на observability вообще неограничен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Loki` выбирают как раз при важности экономии, а не неограниченном бюджете.",
+                "source_of_confusion": "Условие выбора инвертируют.",
+                "if_it_were_true": "Тогда главный довод — стоимость — терял бы смысл.",
+                "how_it_should_be": "Loki берут, когда стоимость критична."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "`Loki` выбирают, когда важна стоимость и фильтрация идёт по labels.",
               "correct": true,
               "sections": {
-                "explanation": "`Loki` максимально раскрывается там, где запросы строятся вокруг labels и интеграции с `Prometheus`, а команда ценит дешевизну и простоту эксплуатации больше, чем тяжёлый полнотекстовый поиск. Критерии за: важна стоимость, уже есть `Grafana` + `Prometheus`, логи в основном структурированы (JSON, key-value), фильтрация идёт преимущественно по labels, есть K8s-экосистема и важна операционная простота. Лучший fit — современный cloud-native shop на K8s с микросервисами и вниманием к затратам.",
-                "example": "K8s-кластер с микросервисами, где логи в JSON и фильтр обычно `{service=\"api\", env=\"prod\"}`, — почти эталонный сценарий для `Loki`.",
-                "when_to_apply": "Этот набор критериев применяют при выборе системы логирования: если большинство пунктов совпадает, `Loki` — рациональный выбор.",
-                "edge_cases": "Даже при удачном профиле остаётся ограничение по полнотекстовому поиску; если он станет основным сценарием, выгода `Loki` сократится.",
-                "related": "[[loki-grafana-interview#Q28]] когда не выбирать Loki; [[loki-grafana-interview#Q3]] PLG vs ELK; [[loki-grafana-interview#Q25]] сравнение стоимости."
-              },
-              "label": "A",
-              "order": 0
+                "explanation": "Loki — выбор, когда бюджет и простота важнее богатства полнотекстового поиска.",
+                "example": "Уже есть Grafana/Prometheus и логи структурированы (JSON, key-value).",
+                "when_to_apply": "Когда фильтрация идёт по labels, а не полнотекстовым поиском.",
+                "edge_cases": "K8s даёт готовый service discovery для сбора логов.",
+                "related": "Идеальный профиль — cloud-native-команда с ограниченным бюджетом."
+              }
             },
             {
-              "text": "`Loki` имеет смысл только если в инфраструктуре НЕТ `Grafana` и `Prometheus`, иначе он дублирует их и оказывается избыточным звеном в уже сложившемся стеке мониторинга.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ровно наоборот: наличие `Grafana` + `Prometheus` — один из главных аргументов ЗА `Loki` (единые labels и UI).",
-                "source_of_confusion": "Кажется, что добавлять ещё один продукт в уже занятый стек избыточно.",
-                "if_it_were_true": "Тогда критерий «already use Grafana + Prometheus» был бы аргументом против, но он за.",
-                "how_it_should_be": "Существующие `Grafana`/`Prometheus` усиливают выбор `Loki` за счёт общей label-модели."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Loki` оптимален только для неструктурированных логов с произвольным текстом и плохо работает со структурированными JSON-логами, где поля приходится каждый раз парсить заново.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: `Loki` особенно хорош для структурированных логов (JSON, key-value), где фильтрация удобно ложится на labels.",
-                "source_of_confusion": "Раз поиск по тексту медленный, кажется, что система «для сырого текста».",
-                "if_it_were_true": "Тогда критерий «logs largely structured → Loki» был бы обратным, но он именно такой.",
-                "how_it_should_be": "Структурированные логи — сильная сторона `Loki`; неструктурированный full-text — слабая."
-              },
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Loki` стоит выбирать прежде всего тогда, когда нужен максимально мощный полнотекстовый поиск по всем логам, сложная аналитика и зрелые SIEM-функции из коробки.",
+              "order": 2,
+              "text": "`Loki` выбирают, когда основная нагрузка — это сложный тяжёлый полнотекстовый поиск.",
               "correct": false,
               "sections": {
-                "what_actually": "Для тяжёлого full-text поиска и аналитики лучше ELK; `Loki` хорош при фильтрации по labels и структурированных логах, а не для search-heavy сценариев.",
-                "source_of_confusion": "Любую лог-систему интуитивно связывают с мощным поиском по тексту.",
-                "if_it_were_true": "Тогда `Loki` рекомендовали бы для SIEM и аналитики, но там советуют ELK.",
-                "how_it_should_be": "`Loki` берут ради стоимости и label-based фильтрации; для full-text/аналитики — ELK."
-              },
+                "what_actually": "Сложный полнотекстовый поиск — как раз довод против Loki.",
+                "source_of_confusion": "Сильную сторону ELK принимают за сценарий Loki.",
+                "if_it_were_true": "Тогда медленный grep не был бы недостатком.",
+                "how_it_should_be": "Под тяжёлый поиск берут ELK, а не Loki."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "`Loki` оправдан только целиком вне экосистемы самой Grafana и Prometheus.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Loki` особенно хорош внутри стека Grafana и Prometheus.",
+                "source_of_confusion": "Пользу единого стека инвертируют.",
+                "if_it_were_true": "Тогда общие labels были бы недостатком.",
+                "how_it_should_be": "Loki ложится в тот же стек и те же labels."
+              }
             }
           ]
         }
@@ -1626,56 +1626,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Когда `Loki` выбирать НЕ стоит?",
+          "question_text": "Когда Loki выбирать не стоит?",
           "options": [
             {
-              "text": "Если нужен полноценный APM в одном инструменте, `Loki` — лучший выбор, так как он включает распределённую трассировку и continuous profiling прямо из коробки без доп. компонентов.",
+              "label": "A",
+              "order": 0,
+              "text": "`Loki` — правильный выбор, когда нужен полноценный APM в том же инструменте.",
               "correct": false,
               "sections": {
-                "what_actually": "`Loki` — про логи; полный APM в одном инструменте — это сценарий для `SigNoz`, а не для `Loki`.",
-                "source_of_confusion": "Принадлежность к observability-стеку создаёт впечатление, что `Loki` закрывает и APM.",
-                "if_it_were_true": "Тогда `SigNoz` не упоминали бы как альтернативу для full APM, но именно его и советуют.",
-                "how_it_should_be": "Для единого APM берут `SigNoz`; `Loki` отвечает только за логи в составе стека."
-              },
-              "label": "A",
-              "order": 0
+                "what_actually": "Под полноценный `APM` берут `SigNoz`, а не Loki.",
+                "source_of_confusion": "Возможности APM приписывают Loki.",
+                "if_it_were_true": "Тогда Loki покрывал бы трейсинг и метрики приложений.",
+                "how_it_should_be": "APM в одном инструменте даёт SigNoz."
+              }
             },
             {
-              "text": "`Loki` не выбирают при сложном full-text поиске, тяжёлой аналитике, SIEM/compliance или нужде в едином APM; альтернативы — ELK, `ClickHouse`, `SigNoz`.",
+              "label": "B",
+              "order": 1,
+              "text": "`Loki` не стоит брать, когда нагрузка — полнотекстовый поиск и тяжёлая аналитика.",
               "correct": true,
               "sections": {
-                "explanation": "Слабые места `Loki` — именно full-text поиск, мощные агрегации и зрелые SIEM/compliance-возможности; там, где это основное требование, выигрывают другие инструменты. Против `Loki` играют: сложный полнотекстовый поиск по всем логам, тяжёлые агрегации/аналитика, compliance/SIEM-функции, глубокая инвестиция команды в ELK или нужда в APM в одном инструменте. Альтернативы по сценарию: ELK для search-heavy, `ClickHouse` для analytics-heavy, `SigNoz` для полного APM.",
-                "example": "Команде, которой нужен SIEM с корреляцией событий безопасности и тяжёлой аналитикой, ближе ELK или `ClickHouse`, а не `Loki`.",
-                "when_to_apply": "Этот список «анти-критериев» применяют, чтобы не навязать `Loki` там, где он структурно проигрывает специализированным системам.",
-                "edge_cases": "Глубокая инвестиция в ELK — отдельный аргумент против: миграция может не окупить переход, даже если по цене `Loki` дешевле.",
-                "related": "[[loki-grafana-interview#Q27]] когда выбрать Loki; [[loki-grafana-interview#Q3]] PLG vs ELK; [[loki-grafana-interview#Q25]] сравнение стоимости."
-              },
-              "label": "B",
-              "order": 1
+                "explanation": "Там, где нагрузка — полнотекстовый поиск и аналитика, слабости Loki перевешивают.",
+                "example": "Нужны тяжёлые агрегации, compliance/SIEM или APM — берут другое.",
+                "when_to_apply": "Когда полнотекстовый поиск и аналитика — основная нагрузка.",
+                "edge_cases": "ELK — под поиск, ClickHouse — под аналитику, SigNoz — под APM.",
+                "related": "Зеркало вопроса «когда выбирать Loki»."
+              }
             },
             {
-              "text": "Для тяжёлой аналитики по логам `Loki` подходит лучше всего благодаря metric-запросам LogQL, поэтому `ClickHouse` в качестве альтернативного движка для агрегаций никогда не рассматривают.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для analytics-heavy нагрузок как раз рекомендуют `ClickHouse`; агрегации `Loki` ограничены и проигрывают ему.",
-                "source_of_confusion": "Наличие metric-запросов LogQL создаёт иллюзию мощной аналитики уровня аналитической СУБД.",
-                "if_it_were_true": "Тогда `ClickHouse` не значился бы альтернативой для analytics-heavy, но он прямо указан.",
-                "how_it_should_be": "Тяжёлую аналитику отдают `ClickHouse`; агрегации `Loki` слабее и ограничены."
-              },
               "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Loki` не стоит выбирать только в одном случае — если для команды важна низкая стоимость хранения логов; во всех остальных сценариях он остаётся практически идеальным выбором.",
+              "order": 2,
+              "text": "`Loki` не стоит брать, когда логи фильтруются в основном по labels.",
               "correct": false,
               "sections": {
-                "what_actually": "Стоимость — как раз аргумент ЗА `Loki`; против него играют need в full-text поиске, тяжёлой аналитике, SIEM/compliance и APM.",
-                "source_of_confusion": "Переворот: сильную сторону `Loki` (дешевизну) ошибочно записывают в его слабости.",
-                "if_it_were_true": "Тогда дешевизна была бы поводом отказаться от `Loki`, но она — его главное преимущество.",
-                "how_it_should_be": "Против `Loki` играют full-text/аналитика/SIEM/APM, а стоимость — довод в его пользу."
-              },
+                "what_actually": "Фильтрация по labels — как раз сценарий для Loki, а не против.",
+                "source_of_confusion": "Сильную сторону Loki принимают за противопоказание.",
+                "if_it_were_true": "Тогда Loki нельзя было бы применять по назначению.",
+                "how_it_should_be": "По labels фильтруют именно в Loki."
+              }
+            },
+            {
               "label": "D",
-              "order": 3
+              "order": 3,
+              "text": "Под тяжёлый полнотекстовый поиск вместо `ELK` советуют сам Loki.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Под тяжёлый полнотекстовый поиск советуют `ELK`, а не Loki.",
+                "source_of_confusion": "Замену путают с самим Loki.",
+                "if_it_were_true": "Тогда совет противоречил бы слабости Loki.",
+                "how_it_should_be": "ELK берут там, где grep Loki слишком медленный."
+              }
             }
           ]
         }
