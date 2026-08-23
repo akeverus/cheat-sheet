@@ -1,14 +1,44 @@
 {
-  "topic_slug": "project-reactor-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
-  "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
-  ]
+ "topic_slug": "project-reactor-interview",
+ "version_sensitive": true,
+ "product_version": "Project Reactor 3.x (Reactor Core), Reactive Streams (JDK 9 Flow), Spring WebFlux",
+ "checked_date": "2026-08-23",
+ "sources": [
+  {
+   "claim": "Reactive Streams — 4 интерфейса (Publisher/Subscriber/Subscription/Processor), включены в JDK 9 как java.util.concurrent.Flow",
+   "status": "stable",
+   "note": "backpressure через Subscription.request(n); Flux/Mono реализуют Publisher (Q2)"
+  },
+  {
+   "claim": "Reactor от Spring/Pivotal реализует Reactive Streams; типы Mono/Flux; backpressure встроен во все типы (у RxJava 3 — только Flowable)",
+   "status": "stable",
+   "note": "фундамент Spring WebFlux; Context есть у Reactor, нет у RxJava (Q3)"
+  },
+  {
+   "claim": "Schedulers: parallel() (CPU-bound, по числу ядер), boundedElastic() (блокирующий I/O, max 10×CPU)",
+   "status": "stable",
+   "note": "стабильные пресеты Reactor 3.x (Q30)"
+  },
+  {
+   "claim": "Context — immutable карта, привязана к подписке; распространяется upstream (снизу вверх); contextWrite/deferContextual",
+   "status": "stable",
+   "note": "реактивная замена ThreadLocal (Q33/Q34)"
+  },
+  {
+   "claim": "reactor-test: StepVerifier (.verify() запускает подписку), withVirtualTime (Supplier), TestPublisher (createNoncompliant Violation)",
+   "status": "stable",
+   "note": "модуль reactor-test (Q40/Q41/Q42)"
+  },
+  {
+   "claim": "context-propagation (io.micrometer) — мост ThreadLocal↔Reactor Context; contextCapture()/Hooks.enableAutomaticContextPropagation()",
+   "status": "stable",
+   "note": "ThreadLocalAccessor/ContextSnapshot; для MDC/SecurityContext через async-границы (Q48)"
+  },
+  {
+   "claim": "ReactorDebugAgent (reactor-tools) — prod-альтернатива Hooks.onOperatorDebug() без runtime-overhead",
+   "status": "stable",
+   "note": "инструментирует байткод при загрузке (Q43/Q44/Q45)"
+  }
+ ],
+ "note": "Версионно-чувствительно из-за Reactor 3.x API, JDK 9 Flow, RxJava 3 сравнения и вспомогательных библиотек (reactor-test, context-propagation, reactor-tools). Все факты — стабильные API-инварианты, сверены с материалом шпаргалки. Числа в опциях (request(n), 75% prefetch, 10×CPU) — из материала, не бенчмарк-ловушки. Примечание: code-example Q12 использует несуществующий в Reactor .debounce() (это RxJava) — MCQ Q12 тестирует таблицу flatMap/concatMap/switchMap, не debounce."
 }
