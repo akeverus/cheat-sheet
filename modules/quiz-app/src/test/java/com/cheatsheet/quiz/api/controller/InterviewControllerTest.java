@@ -976,6 +976,51 @@ class InterviewControllerTest {
                 .isEqualTo(beforeProgress + 1);
     }
 
+    /**
+     * Живой рендер /stats балансирует details (UX-06, REF-015).
+     *
+     * <p>Живой DOM отдавал 8 открывающих против 7 закрывающих: details «Таблица
+     * по темам» не закрывался в своей секции, а его {@code </details>} уехал в
+     * ЧУЖУЮ секцию «Пробелы в банке» под th:if — когда пробелов нет (обычный
+     * случай зрелого банка), закрытие не рендерилось вовсе. Документ невалиден,
+     * строгие парсеры хрупки, details-«проглатывание» уже кусалось (баланс-гейт
+     * стойки ловил ровно этот класс дефекта на своём участке). Рендер-тест ловит
+     * дисбаланс ЛЮБОЙ условной ветки, до которой доехал этот запрос.</p>
+     */
+    @Test
+    void statsPageRendersBalancedDetailsTags() throws Exception {
+        // Данные, включающие ОБЕ условные ветки дефекта: непустая таблица тем
+        // (рендерит открывающий details) и непустые «Пробелы в банке» (тема с
+        // <5 вопросами рендерила ЧУЖОЙ закрывающий). На пустой БД обе ветки
+        // отсутствуют и счёт сходится случайно; а на данных счёт может сойтись
+        // ПЕРЕКРЁСТНО — поэтому проверяется не счёт, а вложенность стеком.
+        questionRepository.insert(com.cheatsheet.quiz.TestQuestionBuilder.aQuestion()
+                .withSlug("details-balance-fixture")
+                .withTopic("details-balance-topic")
+                .withQuestionText("Details balance question")
+                .build());
+        String body = mockMvc.perform(get("/stats"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        java.util.Deque<String> stack = new java.util.ArrayDeque<>();
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("<details\\b|</details>|<section\\b|</section>").matcher(body);
+        while (m.find()) {
+            switch (m.group()) {
+                case "</details>" -> assertThat(stack.poll())
+                        .as("лишний либо чужой </details> на смещении %s", m.start())
+                        .isEqualTo("details");
+                case "</section>" -> assertThat(stack.poll())
+                        .as("section закрылась при открытом details (смещение %s): details не "
+                                + "закрыт в своей секции — его закрывает чужой тег ниже по документу", m.start())
+                        .isEqualTo("section");
+                default -> stack.push(m.group().startsWith("<details") ? "details" : "section");
+            }
+        }
+        assertThat(stack).as("незакрытые details/section в конце документа").isEmpty();
+    }
+
     @Test
     void studyModeKeepsContextualCopyAndRecoveryContract() throws Exception {
         String body = focusBody("/", "STUDY");
