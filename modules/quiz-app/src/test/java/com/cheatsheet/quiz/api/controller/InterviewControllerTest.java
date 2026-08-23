@@ -1164,6 +1164,83 @@ class InterviewControllerTest {
                 .andExpect(status().is3xxRedirection());
     }
 
+    /**
+     * UXR-01 (REF-024): browse-CTA («Тренировать слабые темы», «Тренировать
+     * избранные») при активной сессии молча показывали вопрос СЕССИИ — обещание
+     * не исполнялось. Теперь фокус при явном browse-намерении и живой сессии
+     * рендерит развилку: отложить сессию и перейти к фильтру (POST /pause с
+     * целью) либо продолжить сессию.
+     */
+    @Test
+    void browseIntentAgainstActiveSessionShowsHonestFork() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        mockMvc.perform(post("/start")
+                        .with(csrf())
+                        .session(session)
+                        .param("mode", "EXAM")
+                        .param("count", "1")
+                        .param("topic", "interview-controller-fixture"))
+                .andExpect(status().is3xxRedirection());
+
+        String body = mockMvc.perform(get("/")
+                        .session(session)
+                        .param("weakTopics", "true")
+                        .param("ordered", "true"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(body).as("развилка обязана быть на экране").contains("intent-banner");
+        assertThat(body).as("вопрос сессии остаётся на экране — сессию никто не рвёт")
+                .contains("Что делает фикстура этого теста?");
+        assertThat(body).as("действие «отложить и перейти» несёт цель фильтра")
+                .containsPattern("(?s)intent-banner[\\s\\S]*?action=\"/pause\"[\\s\\S]*?name=\"weakTopics\" value=\"true\"");
+
+        // Без browse-параметров развилки нет — обычный экран сессии.
+        String plain = mockMvc.perform(get("/").session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(plain).doesNotContain("intent-banner");
+    }
+
+    /** Пауза с целью фильтра возвращает на browse-URL этой цели (белый список параметров). */
+    @Test
+    void pauseCarriesTheBrowseTargetInRedirect() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        mockMvc.perform(post("/start")
+                        .with(csrf())
+                        .session(session)
+                        .param("mode", "EXAM")
+                        .param("count", "1")
+                        .param("topic", "interview-controller-fixture"))
+                .andExpect(status().is3xxRedirection());
+
+        String location = mockMvc.perform(post("/pause")
+                        .with(csrf())
+                        .session(session)
+                        .param("weakTopics", "true")
+                        .param("ordered", "true"))
+                .andExpect(status().is3xxRedirection())
+                .andReturn().getResponse().getRedirectedUrl();
+
+        assertThat(location).as("redirect ведёт к обещанному фильтру")
+                .contains("weakTopics=true");
+
+        // Обычная пауза без цели — прежний redirect на голый фокус.
+        mockMvc.perform(post("/start")
+                        .with(csrf())
+                        .session(session)
+                        .param("mode", "EXAM")
+                        .param("count", "1")
+                        .param("topic", "interview-controller-fixture"))
+                .andExpect(status().is3xxRedirection());
+        String plainLocation = mockMvc.perform(post("/pause")
+                        .with(csrf())
+                        .session(session))
+                .andExpect(status().is3xxRedirection())
+                .andReturn().getResponse().getRedirectedUrl();
+        assertThat(plainLocation).doesNotContain("weakTopics");
+    }
+
     @Test
     void keyPagesAvoidInlineStylesAndInlineEvents() throws Exception {
         var index = mockMvc.perform(get("/")).andReturn().getResponse();

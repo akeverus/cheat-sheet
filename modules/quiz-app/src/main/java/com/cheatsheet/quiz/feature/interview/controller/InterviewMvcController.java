@@ -260,8 +260,17 @@ public class InterviewMvcController {
     }
 
     @PostMapping("/pause")
-    public String pause(HttpSession session) {
-        return interviewFlowMvcService.pause(session);
+    public String pause(
+            @RequestParam(value = "weakTopics", required = false) Boolean weakTopics,
+            @RequestParam(value = "important", required = false) Boolean important,
+            @RequestParam(value = "onlyWrong", required = false) Boolean onlyWrong,
+            @RequestParam(value = "topic", required = false) String topic,
+            @RequestParam(value = "group", required = false) String group,
+            @RequestParam(value = "ordered", required = false) Boolean ordered,
+            HttpSession session
+    ) {
+        return interviewFlowMvcService.pause(session,
+                new InterviewFlowMvcService.BrowseTarget(weakTopics, important, onlyWrong, topic, group, ordered));
     }
 
     @PostMapping("/resume")

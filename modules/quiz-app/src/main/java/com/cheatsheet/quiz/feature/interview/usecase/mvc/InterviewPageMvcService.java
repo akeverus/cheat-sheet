@@ -62,6 +62,13 @@ public class InterviewPageMvcService {
         InterviewFilter filter = requestMapper.resolveFilter(
                 interviewSession, topic, group, important, onlyWrong, shuffle, ordered
         );
+        // UXR-01 (REF-024): при активной сессии resolveFilter игнорирует параметры
+        // запроса — фильтр берётся из сессии. Раньше browse-CTA («Тренировать
+        // слабые темы», «Тренировать избранные») из-за этого молча показывали
+        // вопрос сессии. Явное намерение фиксируется здесь — единственном месте,
+        // где сырые параметры ещё видны, — и шаблон рендерит честную развилку.
+        model.addAttribute("blockedBrowseIntent",
+                blockedBrowseIntent(interviewSession, topic, group, important, onlyWrong, weakTopics, ordered));
         return renderFocusPage(
                 interviewSession,
                 filter,
@@ -264,6 +271,41 @@ public class InterviewPageMvcService {
      * оглавление: длинный список на пустом экране сам становится работой.
      */
     private static final int REVIEW_HOT_TOPICS_LIMIT = 5;
+
+    /**
+     * Явное browse-намерение, заблокированное активной сессией (UXR-01).
+     * Не-null только когда сессия жива И запрос несёт параметры отбора —
+     * пустой «/» и завершённая сессия развилку не показывают.
+     */
+    private BrowseIntent blockedBrowseIntent(
+            InterviewSession interviewSession,
+            String topic,
+            String group,
+            Boolean important,
+            Boolean onlyWrong,
+            Boolean weakTopics,
+            Boolean ordered
+    ) {
+        if (interviewSession == null || interviewSession.isFinished()) {
+            return null;
+        }
+        boolean intent = Boolean.TRUE.equals(weakTopics)
+                || Boolean.TRUE.equals(important)
+                || Boolean.TRUE.equals(onlyWrong)
+                || topic != null;
+        return intent ? new BrowseIntent(weakTopics, important, onlyWrong, topic, group, ordered) : null;
+    }
+
+    /** Параметры заблокированного browse-намерения — для подписи и hidden-полей развилки. */
+    public record BrowseIntent(
+            Boolean weakTopics,
+            Boolean important,
+            Boolean onlyWrong,
+            String topic,
+            String group,
+            Boolean ordered
+    ) {
+    }
 
     private String renderFocusPage(
             InterviewSession interviewSession,

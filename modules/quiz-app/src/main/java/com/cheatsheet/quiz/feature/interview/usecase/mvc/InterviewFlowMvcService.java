@@ -107,12 +107,60 @@ public class InterviewFlowMvcService {
      * HTTP-сессию. Пустую/завершённую сессию {@link PauseService} игнорирует.
      */
     public String pause(HttpSession session) {
+        return pause(session, null);
+    }
+
+    /**
+     * Пауза с целью перехода (UXR-01, REF-024): развилка «отложить сессию и
+     * тренировать фильтр» несёт параметры цели, и redirect ведёт на browse-URL
+     * этой цели. Собирается из БЕЛОГО СПИСКА параметров — никаких raw-URL,
+     * open-redirect невозможен. Без цели — прежний redirect на голый фокус.
+     */
+    public String pause(HttpSession session, BrowseTarget target) {
         InterviewSession interviewSession = sessionSupport.getSession(session);
         if (interviewSession != null && !interviewSession.isFinished()) {
             pauseService.pause(interviewSession);
             httpSessionStateService.clearInterviewSession(session);
         }
-        return navigationService.focusRedirect();
+        if (target == null || target.isEmpty()) {
+            return navigationService.focusRedirect();
+        }
+        org.springframework.web.util.UriComponentsBuilder uri =
+                org.springframework.web.util.UriComponentsBuilder.fromPath("/");
+        if (target.weakTopics() != null) {
+            uri.queryParam("weakTopics", target.weakTopics());
+        }
+        if (target.important() != null) {
+            uri.queryParam("important", target.important());
+        }
+        if (target.onlyWrong() != null) {
+            uri.queryParam("onlyWrong", target.onlyWrong());
+        }
+        if (target.topic() != null) {
+            uri.queryParam("topic", target.topic());
+        }
+        if (target.group() != null) {
+            uri.queryParam("group", target.group());
+        }
+        if (target.ordered() != null) {
+            uri.queryParam("ordered", target.ordered());
+        }
+        return "redirect:" + uri.build().encode().toUriString();
+    }
+
+    /** Цель browse-перехода после паузы (белый список параметров отбора). */
+    public record BrowseTarget(
+            Boolean weakTopics,
+            Boolean important,
+            Boolean onlyWrong,
+            String topic,
+            String group,
+            Boolean ordered
+    ) {
+        public boolean isEmpty() {
+            return weakTopics == null && important == null && onlyWrong == null
+                    && topic == null && group == null && ordered == null;
+        }
     }
 
     /**

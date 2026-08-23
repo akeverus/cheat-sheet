@@ -58,6 +58,41 @@
                     data-confirm-title="Отбросить незавершённую сессию?">Отбросить</button>
         </form>
     </div>
+    <!--/* UXR-01 (REF-024): browse-намерение при живой сессии. «Тренировать слабые
+         темы» (/stats) и «Тренировать избранные» (/bookmarks) ведут на browse-URL,
+         а фокус при активной сессии рендерит вопрос СЕССИИ — раньше обещание CTA
+         молча не исполнялось. Развилка честная: отложить сессию (существующий
+         pause, прогресс не теряется, resume-баннер вернёт) и перейти к фильтру —
+         либо продолжить сессию (ссылка на «/» снимает параметры). Redirect паузы
+         собирается сервером из БЕЛОГО СПИСКА параметров — никаких raw-URL. */-->
+    <div class="resume-banner intent-banner" role="region" aria-label="Фильтр не применён — идёт сессия"
+         th:if="${blockedBrowseIntent != null}"
+         th:with="bi=${blockedBrowseIntent}">
+        <div class="resume-banner-body">
+            <svg class="px-icon px-icon-lead" aria-hidden="true"><use href="#flag"></use></svg>
+            <div class="resume-banner-text">
+                <strong>Фильтр не применён — идёт сессия</strong>
+                <span class="resume-banner-meta"
+                      th:with="label=${(bi.weakTopics() != null and bi.weakTopics()) ? 'слабые темы'
+                              : ((bi.important() != null and bi.important()) ? 'избранное'
+                              : ((bi.onlyWrong() != null and bi.onlyWrong()) ? 'ошибки'
+                              : (bi.topic() != null ? @topicUtils.displayName(bi.topic()) : 'выбранный фильтр')))}"
+                      th:text="'Отложи или закончи сессию, чтобы тренировать: ' + ${label}">цель</span>
+            </div>
+        </div>
+        <form method="post" th:action="@{/pause}" class="resume-banner-action">
+            <input type="hidden" name="weakTopics" th:if="${bi.weakTopics() != null}" th:value="${bi.weakTopics()}">
+            <input type="hidden" name="important" th:if="${bi.important() != null}" th:value="${bi.important()}">
+            <input type="hidden" name="onlyWrong" th:if="${bi.onlyWrong() != null}" th:value="${bi.onlyWrong()}">
+            <input type="hidden" name="topic" th:if="${bi.topic() != null}" th:value="${bi.topic()}">
+            <input type="hidden" name="group" th:if="${bi.group() != null}" th:value="${bi.group()}">
+            <input type="hidden" name="ordered" th:if="${bi.ordered() != null}" th:value="${bi.ordered()}">
+            <button type="submit" class="btn secondary-btn btn-compact">Отложить сессию и перейти</button>
+        </form>
+        <div class="resume-banner-discard">
+            <a class="btn quiet-btn" th:href="@{/}">Продолжить сессию</a>
+        </div>
+    </div>
     <section class="focus-training" th:if="${current != null}">
         <!--/* Топ-бар головы вопроса: eyebrow-chip режима + подсказка потока. Узкая
              мета-полоса в ГЛАВНОЙ колонке (не путать с правым рельсом ниже). Раньше
