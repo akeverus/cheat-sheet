@@ -1,14 +1,44 @@
 {
-  "topic_slug": "design-youtube-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
-  "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
-  ]
+ "topic_slug": "design-youtube-interview",
+ "version_sensitive": true,
+ "product_version": "System-design концепт (YouTube-масштаб); версионны годы кодеков/протоколов и статусы стандартов",
+ "checked_date": "2026-08-23",
+ "sources": [
+  {
+   "claim": "Кодеки: H.264/AVC (2003), H.265/HEVC (2013), VP9 (2013), AV1 (2018); AV1 -30% vs VP9, но медленный encode",
+   "status": "stable",
+   "note": "YouTube кодирует VP9 (приоритет, royalty-free) + H.264 (fallback), AV1 для топ-видео (Q5)"
+  },
+  {
+   "claim": "Протоколы стриминга: HLS (Apple, 2009, .m3u8), DASH (MPEG, 2012, .mpd), CMAF (MPEG, 2018, .cmfv единый контейнер)",
+   "status": "stable",
+   "note": "CMAF даёт один набор сегментов под HLS+DASH; YouTube перешёл на CMAF ~2018-2020 (Q7/Q26)"
+  },
+  {
+   "claim": "DRM: Widevine (Google), FairPlay (Apple), PlayReady (Microsoft); CENC — один зашифрованный файл на все",
+   "status": "stable",
+   "note": "различаются только license-серверы (Q23)"
+  },
+  {
+   "claim": "VPAID deprecated в пользу SIMID для интерактивной рекламы; VAST — XML-стандарт IAB",
+   "status": "stable",
+   "note": "SSAI/CSAI сшивка, VAST 4.x (Q21)"
+  },
+  {
+   "claim": "Live: RTMP-ingest (5-30s latency), LL-HLS (парты 200-500ms, EXT-X-PART, 2-5s), WebRTC (<1s, плохо масштабируется)",
+   "status": "stable",
+   "note": "стабильные протокольные факты (Q20)"
+  },
+  {
+   "claim": "NFR-порядки величин: 2.5B MAU, 500h/min upload, egress 126 Tbps avg / 250-400 Tbps peak, ~200K QPS peak",
+   "status": "stable",
+   "note": "оценки порядка величины из материала, не точные значения (Q1/Q2)"
+  },
+  {
+   "claim": "144p (80-100 kbps) актуален в 2026 для развивающихся рынков и плохого 3G",
+   "status": "stable",
+   "note": "TEMPORAL_CLAIMS: '2026' — из материала Q6, обоснованный, не устаревший"
+  }
+ ],
+ "note": "System-design тема: факты концептуальные и стабильные (архитектурные паттерны, компромиссы). Версионно-чувствительны годы кодеков (H.264 2003 … AV1 2018) и протоколов (HLS 2009 … CMAF 2018), статус VPAID→SIMID. Числа в опциях (Tbps, kbps, 30s, 200M, 500 токенов FCM) — порядки величин или конкретные правила из материала, не бенчмарк-ловушки."
 }
