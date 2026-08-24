@@ -1,2285 +1,308 @@
 {
-  "topic_slug": "design-url-shortener-interview",
-  "round": 9,
-  "reviewed_commit": null,
-  "status": "TODO",
-  "source_file": "modules/quiz-app/src/main/resources/seed/mcq/system-design/design-url-shortener-interview.json",
-  "theory_file": "cheatsheets/interview/system-design/design-url-shortener-interview.md",
-  "summary": {
-    "questions": 30,
-    "blocks": 30,
-    "blocks_done": 0,
-    "critical": 0,
-    "high": 0,
-    "medium": 0,
-    "low": 0
+ "topic_slug": "design-url-shortener-interview",
+ "round": "ROUND-10 LINKAGE-FIRST",
+ "reviewer": "Opus 4.8",
+ "note": "30 блоков с нуля, все L4. Заголовки-вопросы совпадают с телами → source-fix не нужен. HTTP-коды (301/302/410/404) и версии/децималы держались вне опций как проза/backtick (301→«постоянный», 302→«временный», 410→`Gone`) → TEMPORAL 0, fact-freshness sidecar не нужен. Neighbor-leak кластеры Q23/29 (создание vs аналитика), Q27/28 (hot key vs stampede), Q9/20 (кеш vs read/write split), Q11/25 (consistent hashing vs dual-write) — каждый correct заякорен на собственную суб-тезу и различим (Round B verified). anti-tell 0, linkage errors 0/warnings 0.",
+ "blocks": [
+  {
+   "q_number": 1,
+   "block_idx": 0,
+   "visible_question": "Какие функциональные и нефункциональные требования у сервиса?",
+   "tested_claim": "ядро — shorten+redirect; alias/аналитика опциональны, сервис read-heavy, коды непредсказуемы",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "D",
+   "novel_required_facts": []
   },
-  "reset_baseline": {
-    "reset_date": "2026-07-17",
-    "old_pass_carried_forward": false,
-    "schema_precheck": "PASS",
-    "structural_invariants_precheck": "PASS",
-    "theory_file_present": true,
-    "json_q_numbers": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30
-    ],
-    "theory_q_numbers": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30
-    ],
-    "missing_theory_q_numbers": [],
-    "extra_theory_q_numbers": [],
-    "current_correct_positions": [
-      "C",
-      "D",
-      "B",
-      "C",
-      "D",
-      "D",
-      "B",
-      "A",
-      "B",
-      "B",
-      "A",
-      "B",
-      "D",
-      "C",
-      "A",
-      "A",
-      "C",
-      "C",
-      "C",
-      "B",
-      "A",
-      "D",
-      "B",
-      "A",
-      "D",
-      "A",
-      "D",
-      "A",
-      "C",
-      "B"
-    ],
-    "acceptance_note": "Baseline diagnostics are not ROUND 9 acceptance evidence."
+  {
+   "q_number": 2,
+   "block_idx": 0,
+   "visible_question": "Сколько нужно storage и какой ожидается QPS (capacity estimation)?",
+   "tested_claim": "узкое место — read latency, а не объём хранилища (единицы TB); кеш обязателен",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "A",
+   "novel_required_facts": []
   },
-  "blocks": [
-    {
-      "q_number": 1,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 2,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 3,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 4,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 5,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 6,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 7,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 8,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 9,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 10,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 11,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 12,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 13,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 14,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 15,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 16,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 17,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 18,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 19,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 20,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 21,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 22,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 23,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 24,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 25,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 26,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 27,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 28,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 29,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    },
-    {
-      "q_number": 30,
-      "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
-    }
-  ]
+  {
+   "q_number": 3,
+   "block_idx": 0,
+   "visible_question": "Какие нужны API endpoints и как выглядит flow запроса?",
+   "tested_claim": "read-путь редиректа лёгкий (lookup+302), тяжёлая логика на write-пути; 99% трафика — GET",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "A",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 4,
+   "block_idx": 0,
+   "visible_question": "Как генерировать short code (hash, counter, random)?",
+   "tested_claim": "hash→дедуп+коллизии, counter→перечислим (небезопасен), random→непредсказуем; hash не исключает коллизии",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "A",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 5,
+   "block_idx": 0,
+   "visible_question": "Почему Base62, а не Base64?",
+   "tested_claim": "Base64 содержит +/ (не URL-safe), Base62 обходится без них; ёмкостная разница несущественна",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "D",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 6,
+   "block_idx": 0,
+   "visible_question": "Как избежать коллизий кодов?",
+   "tested_claim": "главная защита от коллизий — UNIQUE+retry, полностью избежать нельзя; pre-gen pool убирает с критпути",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "B",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 7,
+   "block_idx": 0,
+   "visible_question": "Как спроектировать схему БД?",
+   "tested_claim": "схему делят по паттерну доступа: urls(PK short_code) vs clicks(партиц.); счётчик денормализован",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "D",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 8,
+   "block_idx": 0,
+   "visible_question": "SQL или NoSQL — что выбрать?",
+   "tested_claim": "для масштаба KV NoSQL (lookup по ключу); SQL — вертикальный потолок; Redis=кеш не primary",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "A",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 9,
+   "block_idx": 0,
+   "visible_question": "Как масштабировать чтения (cache, CDN)?",
+   "tested_claim": "чтения масштабируют многослойным кешем ближе к пользователю; origin видит доли процента",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "A",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 10,
+   "block_idx": 0,
+   "visible_question": "Какую стратегию кеширования выбрать (write-through или cache-aside)?",
+   "tested_claim": "cache-aside: 90% long tail не читают; write-behind опасен (404 после падения Redis)",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "C",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 11,
+   "block_idx": 0,
+   "visible_question": "Как шардировать данные?",
+   "tested_claim": "шардируют по short_code через consistent hashing (двигает 1/N); user_id ломает редирект; mod N двигает всё",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "A",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 12,
+   "block_idx": 0,
+   "visible_question": "Как реализовать custom aliases?",
+   "tested_claim": "custom alias — атомарный UNIQUE+ON CONFLICT; distributed lock избыточен; системные имена резервируют",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "B",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 13,
+   "block_idx": 0,
+   "visible_question": "Как реализовать TTL и истечение ссылок?",
+   "tested_claim": "истечение логическое (Gone, не удаляя) + физическое фоном; grace-окно; TTL DynamoDB eventual",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "B",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 14,
+   "block_idx": 0,
+   "visible_question": "Как устроить pipeline аналитики кликов?",
+   "tested_claim": "аналитика асинхронна через Kafka (не синхронный UPDATE); read-путь read-only; счётчик батчем",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "A",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 15,
+   "block_idx": 0,
+   "visible_question": "Как обеспечить надёжность и устранить SPOF?",
+   "tested_claim": "надёжность = нет SPOF (каждый слой дублируют) + graceful degradation; ручной failover не в бюджете 99.99%",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "C",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 16,
+   "block_idx": 0,
+   "visible_question": "Как защититься от спама и фишинга?",
+   "tested_claim": "защита от спама — defense in depth (скан+rate limit+пере-скан); одного GSB мало; сайт может стать вредоносным позже",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "D",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 17,
+   "block_idx": 0,
+   "visible_question": "Как сделать rate limiting?",
+   "tested_claim": "rate limiting — token bucket в Redis с Lua (атомарно), счётчик общий; in-memory обходится N×limit",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "A",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 18,
+   "block_idx": 0,
+   "visible_question": "HTTP 301 vs 302 vs 307 — как это влияет на аналитику?",
+   "tested_claim": "постоянный редирект кешируется браузером → ломает аналитику/отзыв; дефолт — временный",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "C",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 19,
+   "block_idx": 0,
+   "visible_question": "Как сделать распределённый счётчик (Snowflake, ZooKeeper key ranges)?",
+   "tested_claim": "распределённый счётчик — диапазоны/Snowflake (machine_id); глобальный auto-increment = contention+SPOF",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "C",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 20,
+   "block_idx": 0,
+   "visible_question": "Как выглядит высокоуровневая архитектура (CDN → LB → API → Redis → DB)?",
+   "tested_claim": "два независимых пути (read лёгкий, write тяжёлый) + асинхронный хвост аналитики; redirect≫shorten",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "C",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 21,
+   "block_idx": 0,
+   "visible_question": "Как поддержать кастомные домены (white-label `brand.com`)?",
+   "tested_claim": "кастомные домены: CNAME+верификация(TXT)+TLS, ключ (domain_id, short_code)",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "B",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 22,
+   "block_idx": 0,
+   "visible_question": "Как сделать bulk-API с батчами и идемпотентностью?",
+   "tested_claim": "bulk-API идемпотентен двухуровнево (Idempotency-Key батч + client_ref элемент); большие батчи async 202",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "B",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 23,
+   "block_idx": 0,
+   "visible_question": "Как детектить ботов (one-time токены, эскалация до CAPTCHA)?",
+   "tested_claim": "ботов при создании — эскалация трения (CAPTCHA только подозрительным); auth проходит без CAPTCHA; honeypot заполняют боты",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "D",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 24,
+   "block_idx": 0,
+   "visible_question": "Как сделать гео-распределённую систему (multi-region DNS, edge reads)?",
+   "tested_claim": "гео-распределение active-active + latency DNS; редиректы read-only терпят eventual; записи за home-регионом",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "D",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 25,
+   "block_idx": 0,
+   "visible_question": "Как мигрировать и решардить без downtime?",
+   "tested_claim": "resharding без downtime — dual-write (читают старые, пишут новые, backfill); mod N двигает всё",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "B",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 26,
+   "block_idx": 0,
+   "visible_question": "Какие метрики мониторинга обязательны?",
+   "tested_claim": "мониторят redirect p99, cache hit ratio, злоупотребления (429/GSB), analytics lag",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "B",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 27,
+   "block_idx": 0,
+   "visible_question": "Как обрабатывать горячий ключ (viral URL)?",
+   "tested_claim": "горячий ключ (1 код=1 партиция) не размазать шардированием; борются реплик. кеша (CDN+in-process)",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "B",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 28,
+   "block_idx": 0,
+   "visible_question": "Как бороться с cache stampede на популярном коде?",
+   "tested_claim": "cache stampede на истечении популярного кода → single-flight mutex + negative cache 404",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "C",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 29,
+   "block_idx": 0,
+   "visible_question": "Как отделить трафик ботов от реальных редиректов в аналитике?",
+   "tested_claim": "аналитика: классифицировать клик при приёме, хранить raw+human clicks; до 50% боты; превьюшники не human",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "C",
+   "novel_required_facts": []
+  },
+  {
+   "q_number": 30,
+   "block_idx": 0,
+   "visible_question": "Какие антипаттерны и подводные камни тут типичны?",
+   "tested_claim": "антипаттерны: UUID/глобальный счётчик, синхр.операции на read-пути, write-through/LRU/single Redis",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "correct_label": "D",
+   "novel_required_facts": []
+  }
+ ]
 }
