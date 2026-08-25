@@ -581,3 +581,16 @@
 - **TESTS:** BookmarkTouchTargetContractTest (RED→GREEN + mutation: без маргин-компенсации краснеет).
 - **VERIFICATION:** Live 390px: однострочные ссылки 36px (было 20), computed padding/margin на месте, зазор до следующей цели 22px.
 - **RESULT:** Главное действие списка закладок на таче стало выцеливаемым без изменения визуального ритма.
+
+---
+
+## REF-045 (maintenance)
+
+- **ID:** REF-045
+- **DATE:** 2026-08-25
+- **OBJECTIVE:** Поддерживающий тик: сквозной no-JS цикл (§55/§202) + фикс пустой секции настроек в no-JS.
+- **EVIDENCE:** Живой no-JS тур: вопрос → label-клик ставит radio → submit полной навигацией на /answer с вердиктом → «Следующий» открывает второй вопрос с сохранением фильтров; /stats в no-JS — 3/3 панели стопкой. Ядро no-JS здорово. Находка: /settings в no-JS — секция «Оформление» без единого контрола (personalization-card рендерится с `hidden`, снимаемым только скриптом); общий баннер шелла говорит про «часть элементов», но голый заголовок секции читается как баг рендера (§39: empty state без WHY/ACTION).
+- **DECISION:** `<noscript>` с `notice notice-info` внутри panel-appearance: почему пусто (настройки живут в браузере, нужен JS) + что дальше (тренировка доступна, ссылка «собрать сессию»).
+- **TESTS:** settingsAppearancePanelExplainsItselfWithoutJs в TemplateFragmentContractTest (RED→GREEN + mutation, откат мутации точечный).
+- **VERIFICATION:** Live no-JS: notice видим, ссылка на / есть; с включённым JS notice не рендерится.
+- **RESULT:** Единственная страница, которую no-JS оставлял без объяснения, теперь объясняет себя; ядро тренировки без JS подтверждено сквозным прогоном.

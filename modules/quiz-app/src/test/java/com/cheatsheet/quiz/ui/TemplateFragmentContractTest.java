@@ -466,6 +466,23 @@ class TemplateFragmentContractTest {
                 .contains("'Оформление тренажёра.'");
     }
 
+    /**
+     * Секция «Оформление» объясняет себя без JS (§39/§55, REF-045): карточка
+     * персонализации рендерится с классом {@code hidden}, который снимает только
+     * скрипт, — в no-JS секция оставалась голым заголовком и читалась как баг
+     * рендера. Общий баннер шелла говорит про «часть интерактивных элементов»,
+     * но не про то, что именно эта секция целиком живёт в браузере.
+     */
+    @Test
+    void settingsAppearancePanelExplainsItselfWithoutJs() throws IOException {
+        String settings = readTemplate("templates/settings.html");
+        assertThat(settings)
+                .as("внутри panel-appearance обязан быть noscript-notice: без него " +
+                        "no-JS пользователь видит пустую секцию без объяснения")
+                .containsPattern("(?s)id=\"panel-appearance\"[\\s\\S]{0,900}?<noscript>\\s*" +
+                        "<div class=\"notice notice-info\">[\\s\\S]{0,400}?JavaScript");
+    }
+
     @Test
     void settingsResetOptionsExplainsActualRecoveryFlow() throws IOException {
         String settings = readTemplate("templates/settings.html");
