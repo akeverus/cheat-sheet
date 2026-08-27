@@ -127,6 +127,9 @@ class KeyboardE2eContractTest {
                 .as("двухфазный STUDY-цикл (LEARN → Проверить себя → варианты) снова без покрытия")
                 .contains("study: learn phase confirms into the quiz sub-phase");
         assertThat(spec)
+                .as("MARATHON-смоук пропал — последний режим снова только на пробах")
+                .contains("marathon: starts a positioned session");
+        assertThat(spec)
                 .as("оценка обязана жаться с повтором — одиночное нажатие в WebKit гонится "
                         + "с подвесом обработчика")
                 .containsPattern("poll\\(async \\(\\) => \\{\\s*await page\\.keyboard\\.press\\('2'\\);");

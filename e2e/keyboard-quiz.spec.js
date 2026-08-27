@@ -212,4 +212,20 @@ test.describe('keyboard quiz flow', () => {
     await expect(page.locator('#interview-options input[type="radio"]')).toHaveCount(4, { timeout: 20_000 });
     await expect(page).toHaveTitle(/Проверка/);
   });
+
+  /**
+   * MARATHON — смоук старта: сессия с позицией и вопросом. Ассерты намеренно
+   * НЕ завязаны на имя режима: «Интенсив/Марафон» — открытый продуктовый пункт
+   * владельца (IA-14), и тест не должен голосовать за вариант.
+   */
+  test('marathon: starts a positioned session', async ({ page }) => {
+    await page.goto('/train');
+    await page.locator('label:has(input[name="mode"][value="MARATHON"])').first().click();
+    await Promise.all([
+      page.waitForURL(/\/(\?.*)?$/, { timeout: 20_000 }),
+      page.locator('.builder-start-cta').click(),
+    ]);
+    await expect(page.locator('.focus-question')).toBeVisible({ timeout: 20_000 });
+    await expect(page).toHaveTitle(/Вопрос 1 из \d+/);
+  });
 });
