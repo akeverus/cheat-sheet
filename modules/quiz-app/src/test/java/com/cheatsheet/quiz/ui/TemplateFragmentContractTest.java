@@ -1202,11 +1202,14 @@ class TemplateFragmentContractTest {
         assertThat(bootstrapJs).contains("window.__fontScale");
         // OPS-005: vendor-ассеты self-hosted, без CDN SRI. @font-face едет первой строкой ленты.
         assertThat(manifest).contains("* /css/fonts-local.css");
-        // PERF: preload двух критичных Inter-сабсетов (короче swap-флэш, above-the-fold на каждой странице).
-        // Cyrillic = русский блок U+0400-045F (файл ...SjIa0Z...), НЕ cyrillic-ext (...SjIa2J... = "unused preload").
-        assertThat(head).contains("rel=\"preload\" as=\"font\" type=\"font/woff2\" crossorigin");
-        assertThat(head).contains("th:href=\"@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa0ZL7W0Q5n-wU.woff2}\"");
-        assertThat(head).contains("th:href=\"@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2}\"");
+        // PERF: preload шрифтов создаёт head-скрипт, НЕ статические линки — для
+        // same-origin woff2 движки зеркально расходятся в матчинге crossorigin
+        // (iter-178: статический вариант двоит загрузку в одном из движков).
+        // Полный контракт — шесть путей, связка с fonts-local.css, UA-ветвление —
+        // в FontPreloadContractTest; здесь только факт скриптовой формы.
+        assertThat(head).contains("link.rel = 'preload';");
+        assertThat(head).contains("[[@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa0ZL7W0Q5n-wU.woff2}]]");
+        assertThat(head).contains("[[@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2}]]");
         assertThat(head).contains("th:src=\"@{/vendor/hljs/highlight.min.js}\"");
         // mermaid — единственный vendor без своего <script>: 2.7 МБ грузит
         // mermaid-renderer.js по видимости схемы, а путь (с content-hash в prod)

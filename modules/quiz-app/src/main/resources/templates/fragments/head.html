@@ -283,19 +283,6 @@
     <title th:text="${title}">Подготовка к собеседованию</title>
     <!--/* OPS-005: Literata + Inter + JetBrains Mono self-hosted (static/fonts + css/fonts-local.css).
          Семейства совпадают с --font-family-* в tokens.css; pixel-слой body не подменяет. */-->
-    <!--/* PERF: preload трёх критичных сабсетов (above-the-fold на КАЖДОЙ странице):
-         Cyrillic (U+0400-045F — русские А-я, весь UI) + basic Latin (U+0000-00FF — цифры/пунктуация).
-         ВАЖНО: русский блок = U+0400-045F (файл ...SjIa0ZL7W0Q5n-wU), НЕ cyrillic-ext U+0460-052F
-         (...SjIa2JL7W0Q5n-wU) — последний почти не используется, дал бы "unused preload".
-         Старт fetch'а ДО парса CSS → короче swap-флэш. crossorigin обязателен: шрифты в CORS-режиме.
-         Mono не в preload, хотя выше сгиба он есть (чипы и счётчики в шапке — «2 дня», «Тренировка»):
-         это третий шрифт в критической волне ради нескольких коротких надписей. Раньше он ждал
-         конца очереди из 33 CSS-запросов; теперь CSS один, и mono стартует сразу за ним. */-->
-          th:href="@{/fonts/PROTUX.woff2}">
-    <!--/* Literata, кириллический сабсет: заголовок страницы (h1) стоит выше сгиба на
-         КАЖДОМ адресе, поэтому антиква — часть критической волны, а не хвоста. Латинский
-         сабсет Literata не преднагружаем: в заголовках латиница встречается вкраплениями
-         (термины вроде «pruning»), swap на них не двигает композицию. */-->
     <!--/* PERF: один блокирующий CSS-запрос на страницу вместо 33 <link>.
          Порядок каскада и постраничные гейты — в css-bundle-manifest.txt; лента
          склеивается CssBundleService, имя несёт хеш содержимого. Замер на Slow 4G
@@ -308,15 +295,41 @@
          трёх семейств: латиница нужна коду, терминам и самому «Cheat Sheet»),
          уходят в полёт параллельно бандлу. Первая редакция прелоадила четыре —
          повторный трейс показал латиницу JBMono/Literata всё ещё в хвосте цепи.
-         crossorigin обязателен и для same-origin font-preload — иначе браузер
-         качает файл дважды. Имена файлов зашиты — их сверяет с fonts-local.css
-         FontPreloadContractTest: протухший preload = двойная загрузка молча. */-->
-    <link rel="preload" as="font" type="font/woff2" crossorigin th:href="@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa0ZL7W0Q5n-wU.woff2}">
-    <link rel="preload" as="font" type="font/woff2" crossorigin th:href="@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2}">
-    <link rel="preload" as="font" type="font/woff2" crossorigin th:href="@{/fonts/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxTcwgknk-6nFg.woff2}">
-    <link rel="preload" as="font" type="font/woff2" crossorigin th:href="@{/fonts/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwgknk-4.woff2}">
-    <link rel="preload" as="font" type="font/woff2" crossorigin th:href="@{/fonts/or3PQ6P12-iJxAIgLa78DkTtAoDhk0oVpaK3YLanFLHpPf2TbLi4J_XWTEKVt8m1ow.woff2}">
-    <link rel="preload" as="font" type="font/woff2" crossorigin th:href="@{/fonts/or3PQ6P12-iJxAIgLa78DkTtAoDhk0oVpaK3YLanFLHpPf2TbLi4J_HWTEKVt8k.woff2}">
+         Основная кириллица = U+0400-045F (...SjIa0ZL7W0Q5n-wU), НЕ cyrillic-ext
+         U+0460-052F (...SjIa2JL7W0Q5n-wU) — тот почти не используется и дал бы
+         unused preload. Имена файлов зашиты — их сверяет с fonts-local.css
+         FontPreloadContractTest: протухший preload = двойная загрузка молча.
+         Линки создаёт СКРИПТ, а не разметка: для same-origin шрифтов движки
+         зеркально расходятся в матчинге preload и @font-face-загрузки (замер
+         iter-178, сетевые запросы на 6 файлов): Chromium с crossorigin — 6,
+         без — 12; WebKit с crossorigin — 12, без — 6. Любой статический
+         вариант атрибута = двойная загрузка каждого woff2 в одном из движков,
+         поэтому crossOrigin ветвится по UA. Ошибка классификации будущего UA
+         деградирует в двойную загрузку, не в поломку. Без JS preload просто
+         нет — шрифты приходят по старой цепи через CSS, цикл невредим. */-->
+    <script th:attr="nonce=${cspNonce}" th:inline="javascript">
+      (function () {
+        var fonts = [
+          [[@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa0ZL7W0Q5n-wU.woff2}]],
+          [[@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2}]],
+          [[@{/fonts/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxTcwgknk-6nFg.woff2}]],
+          [[@{/fonts/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwgknk-4.woff2}]],
+          [[@{/fonts/or3PQ6P12-iJxAIgLa78DkTtAoDhk0oVpaK3YLanFLHpPf2TbLi4J_XWTEKVt8m1ow.woff2}]],
+          [[@{/fonts/or3PQ6P12-iJxAIgLa78DkTtAoDhk0oVpaK3YLanFLHpPf2TbLi4J_HWTEKVt8k.woff2}]]
+        ];
+        var safari = /AppleWebKit/.test(navigator.userAgent)
+          && !/Chrome|Chromium|Edg\/|OPR\//.test(navigator.userAgent);
+        for (var i = 0; i < fonts.length; i++) {
+          var link = document.createElement('link');
+          link.rel = 'preload';
+          link.as = 'font';
+          link.type = 'font/woff2';
+          link.href = fonts[i];
+          if (!safari) link.crossOrigin = 'anonymous';
+          document.head.appendChild(link);
+        }
+      })();
+    </script>
     <link rel="stylesheet" th:href="@{__${@cssBundle.pathFor(page)}__}">
     <!--/* OPS-005: highlight.js 11.9.0 self-hosted. PERF: гейт includeHighlight —
          скрипт hljs (~110 КБ) грузится ТОЛЬКО на страницах с кодом (focus-training/result),

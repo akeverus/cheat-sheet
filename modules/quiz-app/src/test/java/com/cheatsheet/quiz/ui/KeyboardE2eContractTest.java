@@ -109,6 +109,24 @@ class KeyboardE2eContractTest {
     }
 
     /**
+     * Шрифтовая сеть — постоянный страж обоих движков (iter-178): для
+     * same-origin шрифтов Chromium и WebKit зеркально расходятся в матчинге
+     * preload и @font-face-загрузки (6 против 12 сетевых запросов), поэтому
+     * crossOrigin ветвится по UA в head-скрипте, а спек держит инвариант
+     * «каждый woff2 — ровно один запрос» и «преднагруженное реально пришло».
+     */
+    @Test
+    void theFontNetworkSpecGuardsBothDoubleLoadEnds() throws IOException {
+        String spec = read("e2e/font-network.spec.js");
+        assertThat(spec)
+                .as("страж двойной загрузки пропал: рассинхрон crossorigin снова невидим")
+                .contains("every woff2 is fetched exactly once");
+        assertThat(spec)
+                .as("проверка «преднагруженное запрошено» пропала: мёртвый preload невидим")
+                .contains("так и не запрошен сетью");
+    }
+
+    /**
      * WCAG 1.4.10 Reflow — постоянный страж: 320px без горизонтальной прокрутки
      * на всех семи поверхностях (замер iter-175 — чисто в обоих движках; спек
      * держит достигнутое, а перечень поверхностей закреплён здесь).
