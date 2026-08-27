@@ -62,6 +62,38 @@ class PrintContractTest {
                 .containsPattern("progress \\{[^}]*print-color-adjust: exact");
     }
 
+    /**
+     * Вкладки на листе — стопка всех панелей, как в no-JS.
+     *
+     * <p>Замер (FRD-217→221): печатался только активный «Темы» — 2/3 аналитики
+     * (Динамика с журналом занятий и прогнозом повторений, Ошибки) не попадали
+     * на бумагу вовсе. После правки PDF аналитики — 11 страниц со всеми тремя
+     * панелями и видимыми заголовками (под вкладками заголовок панели спрятан
+     * как дубль активной вкладки — на листе он единственная навигация).
+     * Canvas-графики скрыты: их заливки не печатаются (пустая дыра), а данные
+     * печатает табличное представление, стоящее ВНЕ .chart-wrapper по доктрине
+     * accessible-alternative.</p>
+     */
+    @Test
+    void theTabsPrintAsAStackWithVisibleTitles() throws IOException {
+        String print = printBlock();
+        assertThat(print)
+                .as("стопка панелей пропала: на бумагу снова попадает только активная")
+                .containsPattern("\\[role=\"tabpanel\"\\]:not\\(\\.is-active\\) \\{ display: block !important; \\}");
+        assertThat(print)
+                .as("полоса вкладок — мёртвый интерактив на листе")
+                .containsPattern("\\[role=\"tablist\"\\] \\{ display: none !important; \\}");
+        assertThat(print)
+                .as("заголовок панели обязан вернуться из visually-hidden")
+                .containsPattern("\\.tabpanel-title \\{\\s*position: static !important;");
+        assertThat(print)
+                .as("canvas-график печатается пустой дырой — данные печатает таблица-двойник")
+                .containsPattern("\\.chart-wrapper \\{ display: none !important; \\}");
+        assertThat(print)
+                .as("th колонки действий (topic-col-actions) печатался без своих ячеек")
+                .containsPattern("\\.topic-col-actions[\\s,{]");
+    }
+
     @Test
     void theCollapsedDisclosuresOpenForPrintAndComeBack() throws IOException {
         String js = CssRules.read("static/js/ui/mobile-disclosures.js");

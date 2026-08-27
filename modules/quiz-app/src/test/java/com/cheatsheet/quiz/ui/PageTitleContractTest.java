@@ -71,6 +71,22 @@ class PageTitleContractTest {
     }
 
     /**
+     * Итог сессии — счёт первым словом: /session-summary приходит MPA-навигацией
+     * с «Завершить сессию», и SR слышит исход раньше ринга. Замер (оба движка):
+     * «0 из 1 — Итоги сессии — …». Пустая сессия остаётся без числа — «0 из 0»
+     * читался бы как провал, а это отсутствие данных.
+     */
+    @Test
+    void theSummaryTitleLeadsWithTheScore() throws IOException {
+        String head = read("templates/session-summary.html");
+        assertThat(head)
+                .contains("${summary.correctCount} + ' из ' + ${summary.totalQuestions} + ' — Итоги сессии");
+        assertThat(head)
+                .as("пустая сессия не показывает «0 из 0»")
+                .contains("${summary.totalQuestions == 0} ? 'Итоги сессии — Подготовка к собеседованию'");
+    }
+
+    /**
      * Autofocus в шаблоне ровно один — на раскрытом эталоне (FRD-219). Второй
      * autofocus — невалидный HTML с непредсказуемым победителем; в частности,
      * его НЕТ на самом вопросе: загрузка / — не результат действия, и захват
