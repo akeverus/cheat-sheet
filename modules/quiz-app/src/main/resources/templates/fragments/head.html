@@ -291,21 +291,32 @@
          Mono не в preload, хотя выше сгиба он есть (чипы и счётчики в шапке — «2 дня», «Тренировка»):
          это третий шрифт в критической волне ради нескольких коротких надписей. Раньше он ждал
          конца очереди из 33 CSS-запросов; теперь CSS один, и mono стартует сразу за ним. */-->
-    <link rel="preload" as="font" type="font/woff2" crossorigin
-          th:href="@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa0ZL7W0Q5n-wU.woff2}">
-    <link rel="preload" as="font" type="font/woff2" crossorigin
-          th:href="@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2}">
+          th:href="@{/fonts/PROTUX.woff2}">
     <!--/* Literata, кириллический сабсет: заголовок страницы (h1) стоит выше сгиба на
          КАЖДОМ адресе, поэтому антиква — часть критической волны, а не хвоста. Латинский
          сабсет Literata не преднагружаем: в заголовках латиница встречается вкраплениями
          (термины вроде «pruning»), swap на них не двигает композицию. */-->
-    <link rel="preload" as="font" type="font/woff2" crossorigin
-          th:href="@{/fonts/or3PQ6P12-iJxAIgLa78DkTtAoDhk0oVpaK3YLanFLHpPf2TbLi4J_XWTEKVt8m1ow.woff2}">
     <!--/* PERF: один блокирующий CSS-запрос на страницу вместо 33 <link>.
          Порядок каскада и постраничные гейты — в css-bundle-manifest.txt; лента
          склеивается CssBundleService, имя несёт хеш содержимого. Замер на Slow 4G
          до склейки: 33 запроса стартуют одновременно, сериализуются в шесть волн
          HTTP/1.1 и держат FCP на 4,4 с — платили не 130 КБ, а латентность. */-->
+    <!--/* Preload критичных шрифтовых субсетов. Замер (iter-177, Slow 4G + CPU 4x):
+         woff2 стартовали только ПОСЛЕ парса CSS-бандла — хвост критической цепи
+         1793ms (html 889 → бандл 625 → шрифты). Шесть субсетов, без которых не
+         рисуется ни одна страница русского UI (основная кириллица И латиница всех
+         трёх семейств: латиница нужна коду, терминам и самому «Cheat Sheet»),
+         уходят в полёт параллельно бандлу. Первая редакция прелоадила четыре —
+         повторный трейс показал латиницу JBMono/Literata всё ещё в хвосте цепи.
+         crossorigin обязателен и для same-origin font-preload — иначе браузер
+         качает файл дважды. Имена файлов зашиты — их сверяет с fonts-local.css
+         FontPreloadContractTest: протухший preload = двойная загрузка молча. */-->
+    <link rel="preload" as="font" type="font/woff2" crossorigin th:href="@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa0ZL7W0Q5n-wU.woff2}">
+    <link rel="preload" as="font" type="font/woff2" crossorigin th:href="@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2}">
+    <link rel="preload" as="font" type="font/woff2" crossorigin th:href="@{/fonts/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxTcwgknk-6nFg.woff2}">
+    <link rel="preload" as="font" type="font/woff2" crossorigin th:href="@{/fonts/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwgknk-4.woff2}">
+    <link rel="preload" as="font" type="font/woff2" crossorigin th:href="@{/fonts/or3PQ6P12-iJxAIgLa78DkTtAoDhk0oVpaK3YLanFLHpPf2TbLi4J_XWTEKVt8m1ow.woff2}">
+    <link rel="preload" as="font" type="font/woff2" crossorigin th:href="@{/fonts/or3PQ6P12-iJxAIgLa78DkTtAoDhk0oVpaK3YLanFLHpPf2TbLi4J_HWTEKVt8k.woff2}">
     <link rel="stylesheet" th:href="@{__${@cssBundle.pathFor(page)}__}">
     <!--/* OPS-005: highlight.js 11.9.0 self-hosted. PERF: гейт includeHighlight —
          скрипт hljs (~110 КБ) грузится ТОЛЬКО на страницах с кодом (focus-training/result),
