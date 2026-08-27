@@ -15,7 +15,7 @@ graphify-граф не перестраивался (граф в этом реп
 | Рубрика | Факт | Главный якорь |
 |---|---|---|
 | 1. Framework | Server-rendered Spring MVC + Thymeleaf, без SPA/бандлера/npm-рантайма | `modules/quiz-app/src/main/resources/templates/fragments/scripts.html:5` |
-| 2. Routing | 26 маршрутов страниц/форм + 11 `/api/*` + `/login` + `/export` + `/css/bundle/*` = 39 точек входа | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/interview/controller/InterviewMvcController.java:45-426` |
+| 2. Routing | 23 маршрута страниц/форм + 11 `/api/*` + `/login` + `/export` + `/css/bundle/*` = 37 точек входа | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/interview/controller/InterviewMvcController.java:45-426` |
 | 3. Pages | 10 шаблонов, 4218 строк, 9 CSS page-гейтов (train.html делит гейт с settings) | `modules/quiz-app/src/main/resources/templates/*.html` |
 | 4. Layouts/shell | shell-head + sidebar (рельс) + mobile-nav (нижняя полоса), единый источник разделов — enum `NavSection` | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/config/web/NavSection.java:42-48` |
 | 5. Components | 16 переиспользуемых фрагментов, включения 1–10 файлов каждый | `modules/quiz-app/src/main/resources/templates/fragments/*.html` |
@@ -24,14 +24,14 @@ graphify-граф не перестраивался (граф в этом реп
 | 8. API layer | `modules/quiz-app/src/main/resources/static/js/core/api-client.js` — единый `apiFetch`: CSRF, 30s timeout, ProblemDetail-парсинг | `modules/quiz-app/src/main/resources/static/js/core/api-client.js:64-113` |
 | 9. Forms | Thymeleaf-формы, CSRF из cookie `XSRF-TOKEN`, no-JS фоллбэк на `/answer` | `modules/quiz-app/src/main/resources/static/js/core/csrf.js:1-7` |
 | 10. Validation | Jakarta Bean Validation на DTO (`@Positive`/`@Min`/`@Max`) + клиентские form-guards | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/api/dto/request/interview/SubmitAnswerRequest.java:27-73` |
-| 11. Styling | 44 CSS-файла, 12069 строк, `@layer`-каскад из 7 слоёв, порядок — `css-bundle-manifest.txt` (94 строки) | `css-bundle-manifest.txt` |
+| 11. Styling | 44 CSS-файла, 12069 строк, `@layer`-каскад из 7 слоёв, порядок — `css-bundle-manifest.txt` (161 строка, 43 записи) | `css-bundle-manifest.txt` |
 | 12. Design tokens | `tokens.css`, 376 строк, тёмная тема — дефолт (`color-scheme: dark`), light — оверрайд атрибутом | `modules/quiz-app/src/main/resources/static/css/tokens.css:1-9` |
 | 13. Assets | 20 woff2, 25 SVG-символов, 10 растровых PNG-стикеров (design.md ошибочно считал img/ без PNG), 3 vendor-библиотеки | `modules/quiz-app/src/main/resources/static/img/stickers/*.png` |
 | 14. Fonts/icons | Literata (текст) + Inter (интерфейс), локально; один пиксельный SVG-спрайт (Lucide изгнан контрактным тестом) | `modules/quiz-app/src/test/java/com/cheatsheet/quiz/ui/IconLanguageContractTest.java:20-30` |
 | 15. Animations | 3 CSS-файла motion/FX, `pixel-motion-parity.css` гасит под `prefers-reduced-motion`/`data-motion=off` | `modules/quiz-app/src/main/resources/static/css/pixel-motion-parity.css` |
 | 16. Tests | 74 Java-файла в `ui/` (73 контракта + 1 хелпер), 2 Playwright-спеки, 28 голден-PNG (chromium+webkit) | `modules/quiz-app/src/test/java/com/cheatsheet/quiz/ui/*ContractTest.java` |
 | 17. Дельта vs аудит 2026-08-22 | 105 коммитов, 100 файлов `modules/quiz-app/src/main/resources/**` с даты создания аудита | `git diff --stat 3ba1845c..HEAD` |
-| 18. Белые пятна | 5 пунктов, все требуют живого рендера/DOM | см. §18 |
+| 18. Белые пятна | 6 пунктов, все требуют живого рендера/DOM | см. §18 |
 
 ---
 
@@ -44,11 +44,11 @@ JS-бандлера (webpack/vite/esbuild) и npm-зависимостей в р
 - Единая точка входа фронтенд-скриптов — один `<script type="module">` с
   CSP-nonce: `modules/quiz-app/src/main/resources/templates/fragments/scripts.html:5` →
   `<script type="module" th:src="@{/js/app-entry.js}" th:attr="nonce=${cspNonce}">`.
-  `app-entry.js` (109 строк) статически импортирует ядро (lifecycle, dom,
+  `app-entry.js` (156 строк) статически импортирует ядро (lifecycle, dom,
   highlight, table-scroll, streak, favorites, bookmarks, form-guards, pending,
   keyboard-help, code-toolbar, cycle-focus, modals, shell) и динамически
   (`import()`) — модули настроек и экспорта, чтобы не тащить их бандлы на
-  страницы, где они не нужны (`modules/quiz-app/src/main/resources/static/js/app-entry.js:27-33`).
+  страницы, где они не нужны (`modules/quiz-app/src/main/resources/static/js/app-entry.js:29-40`).
 - CSP: nonce генерируется на сервер-стороне и пробрасывается в `<script>`
   через `th:attr="nonce=${cspNonce}"` — инлайн-скрипты (pre-paint в `head.html`)
   и внешний модуль используют один и тот же nonce. Гейт —
@@ -67,7 +67,7 @@ JS-бандлера (webpack/vite/esbuild) и npm-зависимостей в р
 Пять контроллеров, единый источник маршрутов. Таблица покрывает все
 `@GetMapping`/`@PostMapping` из перечисленных в AC контроллеров.
 
-### `InterviewMvcController.java` (26 маршрутов, страницы + form-POST)
+### `InterviewMvcController.java` (23 маршрута, страницы + form-POST)
 
 | URL | Метод | Контроллер:строка | View / редирект | Назначение |
 |---|---|---|---|---|
@@ -125,7 +125,7 @@ View-имена разрешаются через единственный ис�
 | URL | Метод | Контроллер:строка | Условие/гейт |
 |---|---|---|---|
 | `/login` | GET | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/auth/controller/LoginController.java:35` | Только `app.security.mode=multi` (`@ConditionalOnProperty` :19) |
-| `/export` | GET | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/export/controller/ExportController.java:44` | `produces=json,csv`; admin-token/`ROLE_ADMIN` через `SensitiveEndpointAccessService`, доп. rate-limit |
+| `/export` | GET | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/export/controller/ExportController.java:46` | `produces=json,csv`; admin-token/`ROLE_ADMIN` через `SensitiveEndpointAccessService`, доп. rate-limit |
 | `/css/bundle/{page}.{hash}.css` | GET | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/config/web/CssBundleController.java:34` | Content-hash в имени → `Cache-Control: max-age=365d, immutable` |
 
 ## 3. Pages
@@ -318,8 +318,10 @@ required/pattern-атрибуты в формах настроек (`modules/qui
 ```
 
 Единственный источник порядка и постраничных гейтов —
-`css-bundle-manifest.txt` (94 строки, читают его `config/web/CssBundleService`
-и `ui/TemplateFragmentContractTest`). Формат строки: `<гейт> <путь>`, где гейт
+`css-bundle-manifest.txt` (161 строка, 43 непустые некомментарные записи —
+остальное комментарии-обоснования порядка; читают его
+`config/web/CssBundleService` и `ui/TemplateFragmentContractTest`). Формат
+строки: `<гейт> <путь>`, где гейт
 — `*` (все страницы) либо список значений `page` через запятую.
 
 Файл размечен развёрнутыми комментариями-обоснованиями порядка (не голый
@@ -346,16 +348,15 @@ required/pattern-атрибуты в формах настроек (`modules/qui
 токен в файле снабжён комментарием с ссылкой на конкретный пункт этого
 журнала (`tokens-e02` и далее).
 
-- `color-scheme: dark` — тёмная тема дефолтная (`tokens.css:9`), light
-  включается атрибутом `[data-theme="light"]` (упомянуто в комментарии
-  `tokens.css:9-10`); переключение — та же pre-paint логика `head.html`, что
-  и у screen-preset.
+- `color-scheme: dark` — тёмная тема дефолтная (`tokens.css:11`), light
+  включается атрибутом `[data-theme="light"]` (реализовано на `tokens.css:267`);
+  переключение — та же pre-paint логика `head.html`, что и у screen-preset.
 - Группы токенов в `:root`, видимые в первых 40 строках: фон (`--color-bg-*`,
   5 переменных + `--color-bg-canvas-2` для градиента оболочки), текст
   (`--color-text-*`, 5 переменных), границы (`--color-border-*`, 3 переменные,
   включая отдельный контраст-таргетированный тон поля ввода —
   комментарий `tokens.css:33-40` про WCAG 1.4.11 3:1).
-- Полный файл (`grep -c "^\s*--"`) содержит **198** объявлений
+- Полный файл (`grep -c "^\s*--"`) содержит **193** объявления
   токенов/комментариев-заголовков секций — палитра явно многогранна (цвет,
   типографика, spacing, radii, motion, layering, судя по структуре
   `@layer tokens { :root { … } }`).
@@ -424,7 +425,7 @@ required/pattern-атрибуты в формах настроек (`modules/qui
 **74 файла** (73 тестовых класса + 1 вспомогательный `CssRules.java`, не
 тестовый класс сам по себе). Группировка по предмету (по имени файла):
 
-- **Composition/layout** (10): `FocusWideCompositionContractTest`,
+- **Composition/layout** (11): `FocusWideCompositionContractTest`,
   `SummaryWideCompositionContractTest`, `RecallCompositionContractTest`,
   `UltrawideWorkspaceContractTest`, `PageWidthScaleContractTest`,
   `CatalogColumnsContractTest`, `BuilderRailContractTest`,
@@ -448,7 +449,7 @@ required/pattern-атрибуты в формах настроек (`modules/qui
   `TemplateExpressionContractTest`, `PageHeadUnificationContractTest`,
   `DomIdUniquenessContractTest`, `HeadingScaleContractTest`,
   `PageTitleContractTest`.
-- **Экран-специфика** (стats/summary/bookmarks/topics/settings, ~20 файлов):
+- **Экран-специфика** (стats/summary/bookmarks/topics/settings, 29 файлов):
   `StatsSummaryContractTest`, `TopicBriefContractTest`, `TopicMapContractTest`,
   `BookmarksFilterContractTest`, `BookmarkTouchTargetContractTest`,
   `QuestionNoteContractTest`, `SessionBuilderStepsContractTest`,
