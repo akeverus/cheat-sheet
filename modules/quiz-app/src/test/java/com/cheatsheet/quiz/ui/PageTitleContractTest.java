@@ -87,6 +87,24 @@ class PageTitleContractTest {
     }
 
     /**
+     * Превью ссылки и приватность: description для закладок/шеринга ЕСТЬ, а
+     * noindex НЕ тронут. Замер Lighthouse (iter-176): a11y 100, BP 100; из двух
+     * SEO-провалов meta-description закрыт, is-crawlable оставлен намеренно —
+     * локальный приватный инструмент не индексируется. Гейт держит ОБА конца:
+     * будущий «SEO-фикс» не должен снести noindex ради балла.
+     */
+    @Test
+    void theHeadCarriesADescriptionButKeepsNoindex() throws IOException {
+        String head = read("templates/fragments/head.html");
+        assertThat(head)
+                .as("description пропал: превью ссылки снова показывает случайный срез разметки")
+                .contains("<meta name=\"description\" content=\"Тренажёр подготовки");
+        assertThat(head)
+                .as("noindex снят: приватный локальный инструмент попадёт в индекс")
+                .contains("<meta name=\"robots\" content=\"noindex,nofollow\">");
+    }
+
+    /**
      * Autofocus в шаблоне ровно один — на раскрытом эталоне (FRD-219). Второй
      * autofocus — невалидный HTML с непредсказуемым победителем; в частности,
      * его НЕТ на самом вопросе: загрузка / — не результат действия, и захват
