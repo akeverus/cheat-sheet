@@ -91,6 +91,24 @@ class KeyboardE2eContractTest {
     }
 
     /**
+     * Конструктор сессии — собственная поверхность /train (b0a45a6f, UXD-001) и
+     * ключевая страница цикла: обязана жить в визуальной матрице обоих движков.
+     * Волатильные счётчики набора (.builder-outcome, чипы, превью) — в масках.
+     */
+    @Test
+    void theTrainSurfaceIsGuardedByTheVisualMatrix() throws IOException {
+        String spec = read("e2e/visual-matrix.spec.js");
+        assertThat(spec)
+                .as("/train выпал из матрицы: ключевая поверхность без визуальной страховки")
+                .contains("{ id: 'train-dark-med-auto', path: '/train'")
+                .contains("{ id: 'train-light-med-on', path: '/train'");
+        assertThat(spec)
+                .as("счётчики набора обязаны быть в масках — иначе голден краснеет от " 
+                        + "каждого ответа")
+                .contains("'.builder-outcome', '.filter-chip-count', '.session-preview',");
+    }
+
+    /**
      * Карточный цикл покрыт отдельно: MCQ-тесты скипаются на флешкартах, и до
      * iter-166 Space-раскрытие с оценкой 1–4 не проверялись нигде. Оценка
      * жмётся с повтором — в WebKit видимость оценок опережает подвес их

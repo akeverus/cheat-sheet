@@ -39,6 +39,7 @@ const DYNAMIC_CONTENT = [
   '.focus-question', '#interview-options', '.topic-brief', '.question-code',
   '.focus-bank-progress', '.today-chip', '.focus-aside .btn',
   '.stats-next-actions-grid', '.dashboard-grid', '.stats-standing', '.metrics-legend',
+  '.builder-outcome', '.filter-chip-count', '.session-preview',
   '.page-head-lead',
 ];
 
@@ -64,6 +65,11 @@ const MATRIX = [
   { id: 'home-dark-low-off', path: PINNED_HOME, theme: 'dark', pixel: 'low', motion: 'off' },
   { id: 'home-dark-high-on', path: PINNED_HOME, theme: 'dark', pixel: 'high', motion: 'on' },
   { id: 'home-light-high-off', path: PINNED_HOME, theme: 'light', pixel: 'high', motion: 'off' },
+  // /train — конструктор сессии (собственная поверхность с b0a45a6f, UXD-001):
+  // ключевая страница цикла, обязана жить в матрице. Волатильные счётчики
+  // набора и стрика — в масках ниже.
+  { id: 'train-dark-med-auto', path: '/train', theme: 'dark', pixel: 'med', motion: 'auto' },
+  { id: 'train-light-med-on', path: '/train', theme: 'light', pixel: 'med', motion: 'on' },
   { id: 'settings-dark-med-off', path: '/settings', theme: 'dark', pixel: 'med', motion: 'off' },
   { id: 'settings-light-med-on', path: '/settings', theme: 'light', pixel: 'med', motion: 'on' },
   { id: 'stats-dark-med-off', path: '/stats', theme: 'dark', pixel: 'med', motion: 'off' },
