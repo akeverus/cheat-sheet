@@ -109,6 +109,21 @@ class KeyboardE2eContractTest {
     }
 
     /**
+     * WCAG 1.4.10 Reflow — постоянный страж: 320px без горизонтальной прокрутки
+     * на всех семи поверхностях (замер iter-175 — чисто в обоих движках; спек
+     * держит достигнутое, а перечень поверхностей закреплён здесь).
+     */
+    @Test
+    void theReflowSpecGuardsAllSevenSurfaces() throws IOException {
+        String spec = read("e2e/reflow.spec.js");
+        assertThat(spec)
+                .as("перечень reflow-поверхностей похудел")
+                .contains("const SURFACES = ['/', '/train', '/stats', '/topics', "
+                        + "'/bookmarks', '/settings', '/nope-404'];");
+        assertThat(spec).contains("toBeLessThanOrEqual(1)");
+    }
+
+    /**
      * Карточный цикл покрыт отдельно: MCQ-тесты скипаются на флешкартах, и до
      * iter-166 Space-раскрытие с оценкой 1–4 не проверялись нигде. Оценка
      * жмётся с повтором — в WebKit видимость оценок опережает подвес их
