@@ -40,8 +40,12 @@ class PrintContractTest {
     @Test
     void theInteractiveChromeStaysOffThePaper() throws IOException {
         String print = printBlock();
+        // .builder-launch-bar — липкая панель «Начать тренировку» на /train:
+        // печаталась ПОВЕРХ карточек режимов (замер PDF iter-170, после переезда
+        // конструктора на /train параллельным циклом рефаундации, UXD-001).
         for (String selector : List.of(".resume-banner", ".code-toolbar-actions",
-                ".question-note-disclosure", ".report-zone", ".filter-bar", ".topic-actions")) {
+                ".question-note-disclosure", ".report-zone", ".filter-bar", ".topic-actions",
+                ".builder-launch-bar")) {
             // Граница после имени обязательна: первая редакция ловила `.filter-bar`
             // ПОДСТРОКОЙ в `.filter-bar-actions`, и укус изъятием правила прошёл
             // зелёным — гейт держал не селектор, а совпадение букв.
