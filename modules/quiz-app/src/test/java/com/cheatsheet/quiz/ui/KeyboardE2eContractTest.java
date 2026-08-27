@@ -124,6 +124,9 @@ class KeyboardE2eContractTest {
                 .as("тест приземления фокуса после раскрытия пропал (FRD-219)")
                 .contains("typed recall: reveal lands focus in the reference answer");
         assertThat(spec)
+                .as("двухфазный STUDY-цикл (LEARN → Проверить себя → варианты) снова без покрытия")
+                .contains("study: learn phase confirms into the quiz sub-phase");
+        assertThat(spec)
                 .as("оценка обязана жаться с повтором — одиночное нажатие в WebKit гонится "
                         + "с подвесом обработчика")
                 .containsPattern("poll\\(async \\(\\) => \\{\\s*await page\\.keyboard\\.press\\('2'\\);");

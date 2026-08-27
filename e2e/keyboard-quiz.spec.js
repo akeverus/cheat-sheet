@@ -186,4 +186,30 @@ test.describe('keyboard quiz flow', () => {
       .toBe(true);
     await expect(page.locator('.flashcard-grade-buttons')).toBeVisible();
   });
+
+  /**
+   * STUDY — двухфазный режим: LEARN (полный эталон + «Проверить себя») → QUIZ
+   * (варианты). До iter-172 цикл не покрывался. Тема закреплена той же, что у
+   * визуального пина: на вопросе БЕЗ вариантов LEARN по дизайну вырождается во
+   * флешкарту (чип-доктрина resolveFocusModeChipText), и без пина тест плавал бы
+   * между двумя легитимными ветками. Title ведёт под-фазы: «Изучение» → «Проверка».
+   */
+  test('study: learn phase confirms into the quiz sub-phase', async ({ page }) => {
+    await page.goto('/train?topic=' + encodeURIComponent('algorithms/algorithmic-paradigms/backtracking-interview'));
+    await page.locator('label:has(input[name="mode"][value="STUDY"])').first().click();
+    await Promise.all([
+      page.waitForURL(/\/(\?.*)?$/, { timeout: 20_000 }),
+      page.locator('.builder-start-cta').click(),
+    ]);
+
+    await expect(page.locator('.study-learn-phase')).toBeVisible({ timeout: 20_000 });
+    await expect(page).toHaveTitle(/Изучение/);
+
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'load' }).catch(() => null),
+      page.locator('.study-confirm-btn').click(),
+    ]);
+    await expect(page.locator('#interview-options input[type="radio"]')).toHaveCount(4, { timeout: 20_000 });
+    await expect(page).toHaveTitle(/Проверка/);
+  });
 });
