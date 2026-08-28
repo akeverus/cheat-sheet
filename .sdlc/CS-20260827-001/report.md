@@ -179,7 +179,14 @@ View-имена разрешаются через единственный ис�
 навигацию наравне с разделами путало модель (`NavSection.java:29-35`).
 
 `modules/quiz-app/src/main/resources/templates/fragments/shell-head.html` (89 строк) — общая верхняя обвязка/топбар,
-включена в 9 из 10 шаблонов (все, кроме `error.html`).
+включена в 9 из 10 шаблонов (все, кроме `login.html`; `error.html` её
+включает — `templates/error.html:18`, `grep -rL "fragments/shell-head ::"
+modules/quiz-app/src/main/resources/templates/*.html` даёт ровно
+`login.html`). Тот же `login.html` — единственный шаблон без
+`sidebar`/`mobile-nav` (`grep -rL "fragments/sidebar ::"` и `grep -rL
+"fragments/mobile-nav ::"` по тому же каталогу дают тот же единственный файл),
+то есть единственный chrome-less экран приложения — вход без топбара, рельса
+и нижней полосы.
 
 Пресеты экрана (`phone`/`laptop`/`wide`) управляют плотностью раскладки
 до первого кадра — см. §6 и §7.
@@ -498,12 +505,13 @@ required/pattern-атрибуты в формах настроек (`modules/qui
   motion. Голдены — `e2e/visual-baselines/{chromium,webkit}/`, **28 PNG** (14
   на движок), `VISUAL_GOLDEN=1` включает сравнение со снапшотами.
 - Два проекта: `chromium` (`Desktop Chrome`) и `webkit` (`Desktop Safari`) —
-  раздельные baseline-директории объясняются разными шрифтовыми метриками
-  движков (`playwright.config.js:21-23`).
+  блок `projects` (`e2e/playwright.config.js:33-37`); раздельные
+  baseline-директории объясняются разными шрифтовыми метриками движков
+  (комментарий `playwright.config.js:21-23`).
 
 **Чего не покрыто** (по инвентарю, без проверки живым запуском): Firefox не
 входит ни в один project (`devices['Desktop Chrome']`/`['Desktop Safari']` —
-оба десктопные, `playwright.config.js:21-23`); e2e-спек всего 2 (клавиатура +
+оба десктопные, `e2e/playwright.config.js:33-37`); e2e-спек всего 2 (клавиатура +
 визуальная матрица) — нет отдельного e2e для форм-фоллбэка (`result.html` без
 JS) и для API-слоя (`/api/*`) как HTTP-контракта вне Java-интеграционных
 тестов. Мобильные вьюпорты сами по себе покрыты: `visual-matrix.spec.js:79-83`
