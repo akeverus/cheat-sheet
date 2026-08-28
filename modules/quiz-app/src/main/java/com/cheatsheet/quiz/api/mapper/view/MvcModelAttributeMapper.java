@@ -124,14 +124,22 @@ public class MvcModelAttributeMapper {
         // флешкарту при любом session-mode. Чип/подсказка должны отражать именно
         // его, иначе над флешкардой висело «Выбери один вариант» (MCQ-копирайт).
         boolean flashcard = pageState.flashcardMode();
+        // Активная сессия главнее подачи (iter-180, REOPEN решения round-01):
+        // живой прогон EXAM-сессии с вопросом без вариантов показал титул
+        // «Вопрос 2 из 8 — Флешкарты» и хинт «раскрой и оцени себя» — при том,
+        // что сессия экзаменационная и оценок в ней нет (только «Не знаю»).
+        // Внутри сессии чип/титул зовут режим сессии; вне сессии подача — вся
+        // правда контекста, и «Флешкарты» в браузинге остаётся честным.
+        boolean inSession = pageState.surface().interviewSession() != null
+                && !pageState.surface().interviewSession().isFinished();
         // STUDY проходит две под-фазы: LEARN (читаем эталон) и QUIZ (отвечаем на
         // MCQ после /study-confirm). Чип/подсказка обязаны отражать под-фазу —
         // иначе на этапе проверки над вариантами висит «Изучение: разберись…»,
         // инструктируя сделать уже сделанное (та же MCQ-копирайт-рассинхронизация,
         // что чинилась для флешкарты выше).
         boolean studyLearnPhase = pageState.studyLearnPhase();
-        model.addAttribute("focusModeChipText", resolveFocusModeChipText(reviewMode, mode, flashcard, studyLearnPhase));
-        model.addAttribute("focusModeHintText", resolveFocusModeHintText(reviewMode, mode, flashcard, studyLearnPhase));
+        model.addAttribute("focusModeChipText", resolveFocusModeChipText(reviewMode, mode, flashcard, studyLearnPhase, inSession));
+        model.addAttribute("focusModeHintText", resolveFocusModeHintText(reviewMode, mode, flashcard, studyLearnPhase, inSession));
         model.addAttribute("recallBadgeText", resolveRecallBadgeText(mode, pageState.typedInputMode(), pageState.codeChallengeMode()));
         model.addAttribute("typedAnswerLabel", resolveTypedAnswerLabel(mode, pageState.codeChallengeMode()));
         model.addAttribute("typedAnswerPlaceholder", modeUtils.typedAnswerPlaceholder(mode));
@@ -247,18 +255,27 @@ public class MvcModelAttributeMapper {
      * («Focus mode»/«Study mode»/…) в полностью русском UI и не различал режимы:
      * EXAM/MARATHON/TRAINING все показывали «Focus mode» (критика round-01
      * C-live-3). Теперь — русское имя реального режима из {@link ModeUtils}
-     * (единый словарь, как на /settings и в итогах), с приоритетом
-     * review/flashcard над session-mode (flashcard форсится при вопросе без
-     * вариантов независимо от режима сессии).
+     * (единый словарь, как на /settings и в итогах).
+     *
+     * <p>Приоритет «flashcard над session-mode» из round-01 ОТОЗВАН (iter-180):
+     * живой прогон EXAM-сессии с вопросом без вариантов дал титул «Вопрос 2 из
+     * 8 — Флешкарты» — человек в экзамене терял контекст сессии. Внутри
+     * активной сессии чип зовёт режим СЕССИИ (подачу объясняет бейдж над
+     * карточкой); вне сессии подача — вся правда контекста, и браузинг
+     * флешкартой по-прежнему зовётся «Флешкарты».</p>
      */
-    private String resolveFocusModeChipText(boolean reviewMode, InterviewMode mode, boolean flashcard, boolean studyLearnPhase) {
+    private String resolveFocusModeChipText(boolean reviewMode, InterviewMode mode, boolean flashcard,
+                                            boolean studyLearnPhase, boolean inSession) {
         if (reviewMode) {
             return "Повтор ошибок";
         }
         if (mode != null && mode.usesTypedInput()) {
             return modeUtils.displayName(mode);
         }
-        if (flashcard || mode == InterviewMode.FLASHCARD) {
+        if (!inSession && (flashcard || mode == InterviewMode.FLASHCARD)) {
+            return modeUtils.displayName(InterviewMode.FLASHCARD);
+        }
+        if (mode == InterviewMode.FLASHCARD) {
             return modeUtils.displayName(InterviewMode.FLASHCARD);
         }
         if (mode == null) {
@@ -273,7 +290,8 @@ public class MvcModelAttributeMapper {
         return modeUtils.displayName(mode);
     }
 
-    private String resolveFocusModeHintText(boolean reviewMode, InterviewMode mode, boolean flashcard, boolean studyLearnPhase) {
+    private String resolveFocusModeHintText(boolean reviewMode, InterviewMode mode, boolean flashcard,
+                                            boolean studyLearnPhase, boolean inSession) {
         if (reviewMode) {
             return "Повтор ошибок: отвечай на вопросы, где раньше были ошибки.";
         }
@@ -286,8 +304,18 @@ public class MvcModelAttributeMapper {
         if (mode == InterviewMode.CODE_CHALLENGE) {
             return "Код-челлендж: напиши решение, затем раскрой эталон и оцени себя.";
         }
-        if (flashcard || mode == InterviewMode.FLASHCARD) {
+        // «Оцени себя» честно только в recall-СЕССИИ флешкарт: там сервер ведёт
+        // SM-2 и рисует кнопки оценок. В браузинге оценок нет (details + переход
+        // дальше), в чужой сессии (EXAM/MARATHON/STUDY-проверка) — тоже: там
+        // вопрос без вариантов продвигается честным «Не знаю» (iter-180).
+        if (mode == InterviewMode.FLASHCARD && inSession) {
             return "Флешкарты: сначала вспомни ответ, затем раскрой и оцени себя.";
+        }
+        if (flashcard && inSession && !(mode == InterviewMode.STUDY && studyLearnPhase)) {
+            return "Вопрос без вариантов: вспомни ответ и раскрой для сверки; не вспомнил — отметь «Не знаю».";
+        }
+        if (!inSession && (flashcard || mode == InterviewMode.FLASHCARD)) {
+            return "Флешкарта: вспомни ответ, раскрой для сверки и переходи к следующему вопросу.";
         }
         if (mode == InterviewMode.STUDY) {
             // Под-фаза: LEARN направляет к изучению, QUIZ — к выбору варианта.

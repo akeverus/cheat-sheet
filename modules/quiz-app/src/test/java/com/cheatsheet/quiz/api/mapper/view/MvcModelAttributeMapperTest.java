@@ -5,6 +5,7 @@ import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewQuestion;
+import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.InterviewStats;
 import com.cheatsheet.quiz.domain.ReviewReason;
 import com.cheatsheet.quiz.domain.SessionSummary;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ui.ExtendedModelMap;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -176,8 +178,10 @@ class MvcModelAttributeMapperTest {
         ExtendedModelMap flashcardModel = new ExtendedModelMap();
         mapper.applyFocusPageState(flashcardModel, flashcardState, false);
         assertThat(flashcardModel.getAttribute("focusModeChipText")).isEqualTo("Флешкарты");
+        // Сессии нет (браузинг ?mode=FLASHCARD) — кнопок само-оценки нет, и хинт
+        // не обещает «оцени себя» (iter-180).
         assertThat(flashcardModel.getAttribute("focusModeHintText"))
-                .isEqualTo("Флешкарты: сначала вспомни ответ, затем раскрой и оцени себя.");
+                .isEqualTo("Флешкарта: вспомни ответ, раскрой для сверки и переходи к следующему вопросу.");
         assertThat(flashcardModel.getAttribute("focusEmptyRetryHref")).isEqualTo("/?mode=FLASHCARD");
         assertThat(flashcardModel.getAttribute("focusEmptyRetryText")).isEqualTo("Обновить флешкарты");
         // Подпись над формой раскрытия считает сервер: в шаблоне она была
@@ -305,8 +309,9 @@ class MvcModelAttributeMapperTest {
 
     @Test
     void flashcardChipAndHintWhenQuestionHasNoOptionsInTrainingMode() {
-        // Вопрос без вариантов форсит флешкарту даже при session-mode=TRAINING.
-        // Чип/подсказка обязаны отражать флешкарту, а не «Выбери один вариант».
+        // Вопрос без вариантов форсит флешкарту при браузинге (сессии нет).
+        // Чип обязан отражать флешкарту, а не «Выбери один вариант»; хинт —
+        // без «оцени себя»: кнопок само-оценки в браузинге нет (iter-180).
         FocusTrainingPageService.FocusPageState trainingFlashcard = new FocusTrainingPageService.FocusPageState(
                 Optional.empty(),
                 false,
@@ -325,6 +330,56 @@ class MvcModelAttributeMapperTest {
 
         assertThat(model.getAttribute("focusModeChipText")).isEqualTo("Флешкарты");
         assertThat(model.getAttribute("focusModeHintText"))
+                .isEqualTo("Флешкарта: вспомни ответ, раскрой для сверки и переходи к следующему вопросу.");
+    }
+
+    @Test
+    void sessionModeOutranksFlashcardDeliveryInsideAnActiveSession() {
+        // REOPEN решения round-01 (iter-180): живой прогон EXAM-сессии с вопросом
+        // без вариантов давал титул «Вопрос 2 из 8 — Флешкарты» и хинт «раскрой и
+        // оцени себя», хотя оценок в экзамене нет — только «Не знаю». Внутри
+        // активной сессии чип зовёт режим СЕССИИ, хинт объясняет подачу честно.
+        InterviewSession examSession = new InterviewSession(
+                InterviewMode.EXAM, List.of(10L, 11L, 12L), null, null, null, null, Instant.now());
+        FocusTrainingPageService.FocusPageState examFlashcard = new FocusTrainingPageService.FocusPageState(
+                Optional.empty(),
+                false,
+                true,
+                false,
+                null,
+                null,
+                null,
+                0.0,
+                emptySurface(InterviewMode.EXAM).toBuilder().interviewSession(examSession).build(),
+                null
+        );
+
+        ExtendedModelMap model = new ExtendedModelMap();
+        mapper.applyFocusPageState(model, examFlashcard, false);
+
+        assertThat(model.getAttribute("focusModeChipText")).isEqualTo("Экзамен");
+        assertThat(model.getAttribute("focusModeHintText"))
+                .isEqualTo("Вопрос без вариантов: вспомни ответ и раскрой для сверки; не вспомнил — отметь «Не знаю».");
+
+        // Родная FLASHCARD-сессия оценки имеет — «оцени себя» остаётся честным.
+        InterviewSession flashcardSession = new InterviewSession(
+                InterviewMode.FLASHCARD, List.of(10L, 11L, 12L), null, null, null, null, Instant.now());
+        FocusTrainingPageService.FocusPageState recall = new FocusTrainingPageService.FocusPageState(
+                Optional.empty(),
+                false,
+                true,
+                false,
+                null,
+                null,
+                null,
+                0.0,
+                emptySurface(InterviewMode.FLASHCARD).toBuilder().interviewSession(flashcardSession).build(),
+                null
+        );
+        ExtendedModelMap recallModel = new ExtendedModelMap();
+        mapper.applyFocusPageState(recallModel, recall, false);
+        assertThat(recallModel.getAttribute("focusModeChipText")).isEqualTo("Флешкарты");
+        assertThat(recallModel.getAttribute("focusModeHintText"))
                 .isEqualTo("Флешкарты: сначала вспомни ответ, затем раскрой и оцени себя.");
     }
 

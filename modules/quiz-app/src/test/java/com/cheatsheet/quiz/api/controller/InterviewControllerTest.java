@@ -814,7 +814,9 @@ class InterviewControllerTest {
         assertFocusPageRendered(body);
         assertThat(body).contains("class=\"zone-chip\"");
         assertThat(body).contains("Флешкарты");
-        assertThat(body).contains("Флешкарты: сначала вспомни ответ, затем раскрой и оцени себя.");
+        // Браузинг ?mode=FLASHCARD — сессии нет, кнопок само-оценки нет, поэтому
+        // хинт не обещает «оцени себя» (iter-180).
+        assertThat(body).contains("Флешкарта: вспомни ответ, раскрой для сверки и переходи к следующему вопросу.");
         assertThat(body).doesNotContain("Выбери один вариант. Проверка и разбор идут по шагам.");
 
         String empty = emptyFocusBody("/", "FLASHCARD");
