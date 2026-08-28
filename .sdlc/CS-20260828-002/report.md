@@ -29,7 +29,7 @@ CS-20260827-001 и BACKEND CS-20260827-002); закрывает рубрики I
 | integration | 21 `@SpringBootTest`, 8 Testcontainers, 18 упоминаний `AbstractPostgresRepositoryTest` | §8 |
 | E2E | 6 Playwright-спеков в `e2e/`, ни один не триггерится в `ci.yml` (paths-фильтр) | §9 |
 | visual | 14 голденов×2 движка в `e2e/visual-baselines/`, автоматизирован только chromium | §10 |
-| accessibility | Нет axe/pa11y; a11y живёт в `docs/accessibility.md` + 76 `ui/*ContractTest` | §11 |
+| accessibility | Нет axe/pa11y; a11y живёт в `docs/accessibility.md` + 71 `ui/*ContractTest` | §11 |
 | API | 15 файлов на `MockMvc`, `@WebMvcTest` — 0 (все API-тесты через полный контекст) | §12 |
 
 ---
@@ -132,8 +132,18 @@ Registry-push нигде не настроен: `docker-build` job в `ci.yml` �
 только на `push` в `master` (`if: github.event_name == 'push' &&
 github.ref == 'refs/heads/master'`, `ci.yml:81`) — на PR job вообще не
 запускается. Внешнего деплой-механизма (Helm/K8s-манифесты, ArgoCD-конфиг,
-Terraform) в репозитории нет — `find . -iname '*.yaml' -path '*k8s*' -o
--iname '*helm*'` пуст (не встречено при обходе `.github/`, корня, `docs/`).
+Terraform) в репозитории нет — команда, ищущая именно деплой-манифесты (а не
+упоминания «helm»/«k8s» в шпаргалках/MCQ-сидерах), пуста:
+
+```bash
+$ find . -path ./.git -prune -o \( -iname 'Chart.yaml' -o -iname 'values.yaml' \
+    -o -ipath '*/k8s/*' -o -ipath '*/helm/*' \) -print
+(пусто)
+```
+
+(Наивная `find . -iname '*.yaml' -path '*k8s*' -o -iname '*helm*'` даёт 5
+ложных совпадений — это шпаргалки/MCQ про Helm в `cheatsheets/`/`docs/`, не
+инфраструктурные манифесты.)
 
 ## 3. Environment
 
@@ -253,7 +263,7 @@ Spring Boot **не содержит** `%X{correlationId}` — MDC-значени
 `spring-boot-starter-actuator` + `runtimeOnly("io.micrometer:micrometer-registry-prometheus")`
 (`modules/quiz-app/build.gradle.kts:18-20`). Экспозиция эндпоинтов —
 `management.endpoints.web.exposure.include: health,info,metrics,prometheus`
-(`application.yml:190`, комментарий рядом поясняет разделение
+(`application.yml:192`, комментарий рядом поясняет разделение
 metrics/prometheus).
 
 Health-конфигурация (`application.yml:194-222`):
@@ -272,10 +282,10 @@ Health-конфигурация (`application.yml:194-222`):
   (`modules/quiz-app/src/main/java/com/cheatsheet/quiz/infrastructure/health/SeedCoverageHealthIndicator.java`)
   сознательно **не** входит: неполнота MCQ-сидеров — контентный вопрос, не
   вопрос готовности принимать трафик (extensive rationale в комментарии
-  `application.yml:210-221`).
+  `application.yml:210-217`).
 
 `management.metrics.tags: {application: interview-prep, env: ${APP_ENV:dev}}`
-(`application.yml:224-232`) — единый тег на все Micrometer-метрики, чтобы
+(`application.yml:233-236`) — единый тег на все Micrometer-метрики, чтобы
 Prometheus-скрейп нескольких сервисов не давал коллизию по имени метрики.
 `build.gradle.kts` подключает `springBoot { buildInfo {} }` → `/actuator/info`
 отдаёт версию/время сборки (`management.info.build.enabled: true`,
@@ -320,7 +330,8 @@ TestInterviewPath.java  TestQuestionBuilder.java  TestResources.java
 ```
 
 `architecture/` — ArchUnit-правила (`LayeredArchitectureTest`, упомянут в
-CLAUDE.md); `ui/` — 76 контрактных классов (§11); `bootstrap/` — тесты
+CLAUDE.md); `ui/` — 76 `.java`-файлов, из них 71 контрактный класс (§11);
+`bootstrap/` — тесты
 стартового импорта (`StartupRunner`, TRUNCATE/переимпорт, см.
 `app.interview-reset-on-startup`).
 
@@ -377,7 +388,7 @@ e2e/reflow.spec.js
 e2e/visual-matrix.spec.js
 ```
 
-`playwright.config.js` (49 строк): `testDir: '.'`, `timeout: 60_000`,
+`playwright.config.js` (48 строк): `testDir: '.'`, `timeout: 60_000`,
 `expect.timeout: 15_000`; 2 проекта — `chromium` и `webkit`
 (`devices['Desktop Chrome']`/`devices['Desktop Safari']`), оба гоняют полный
 набор спеков, включая визуальную матрицу; `fullyParallel: false`,
@@ -413,10 +424,26 @@ $ ls e2e/visual-baselines/webkit | wc -l
 14
 ```
 
-По 14 PNG-голденов на движок — матрица `{home, settings, stats, train}` ×
-`{light, dark}` × вьюпорты `{375, 768, 1280}` (комбинаторно даёт больше 14,
-т.е. не полный декартов перебор — конкретную развёртку задаёт сам
-`visual-matrix.spec.js`, здесь фиксируется только счёт файлов на диске).
+По 14 PNG-голденов на движок, имена кодируют оси `{page}-{theme}-{density}-
+{motion}[-vp-{viewport}]`:
+
+```bash
+$ ls e2e/visual-baselines/chromium
+home-dark-high-on.png    home-light-high-off.png       stats-dark-med-off.png
+home-dark-low-off.png    home-light-med-on.png         stats-light-low-off.png
+home-dark-med-auto.png   settings-dark-med-off.png     train-dark-med-auto.png
+home-dark-med-vp-1280.png  settings-light-med-on.png   train-light-med-on.png
+home-dark-med-vp-375.png
+home-dark-med-vp-768.png
+```
+
+— `page` ∈ `{home, settings, stats, train}`, `theme` ∈ `{light, dark}`,
+`density` ∈ `{high, med, low}` (плотность экрана), `motion` ∈ `{on, off,
+auto}` (`prefers-reduced-motion`); суффикс `-vp-{375|768|1280}` (вьюпорт)
+есть только у 3 из 14 файлов — все `home-dark-med-*`. Это не полный
+декартов перебор осей (14 ≪ 4×2×3×3): конкретную развёртку задаёт сам
+`visual-matrix.spec.js`, здесь фиксируется только счёт и имена файлов на
+диске.
 Сравнение — `toHaveScreenshot({ maxDiffPixelRatio: 0.03, animations:
 'disabled' })` (`playwright.config.js:15-18`).
 
@@ -451,16 +478,19 @@ $ grep -n 'axe\|pa11y' e2e/package.json
    Структура документа, Клавиатура, Динамический контент и живые области,
    Цвет и контраст, Движение, Графика, Чем это удерживается, Известные
    пробелы) — описательный документ, сам честно признаёт границы
-   (`docs/accessibility.md:187-189`: «Ручная проверка живым скринридером
+   (`docs/accessibility.md:188-189`: «Ручная проверка живым скринридером
    (VoiceOver / NVDA) не проводилась»).
-2. **`ui/*ContractTest`** (76 файлов, §7) — JVM-тесты, статически
-   проверяющие шаблоны/DOM/CSS без браузера: примеры из
+2. **`ui/*ContractTest`** (76 `.java`-файлов в `ui/`, из них 71
+   `*ContractTest` + хелпер `CssRules.java` + 4 теста без этого суффикса —
+   `PixelCssPaletteTest`, `ReviewReasonPaletteTest`,
+   `SectionStickerPaletteTest`, `StaticAssetInventoryTest`; §7) — JVM-тесты,
+   статически проверяющие шаблоны/DOM/CSS без браузера: примеры из
    `docs/accessibility.md:171-184` — `TemplateFragmentContractTest`
    (резолвятся ли `aria-labelledby`/`aria-controls` на существующий `id`),
    `…osResolvedAxesSubscribeToTheMediaQueryTheyRead` (подписка на смену
-   `prefers-*`-осей через `matchMedia`), `PixelSpriteContractTest`
-   (цвет спрайта строго из палитры `tokens.css`), `SummaryRoutingContractTest`
-   (дублирующиеся CTA/ссылки на экране).
+   `prefers-*`-осей через `matchMedia`), `PixelCssPaletteTest`
+   (цвет пиксель-арта строго из палитры `--px-*` в `tokens.css`),
+   `SummaryRoutingContractTest` (дублирующиеся CTA/ссылки на экране).
 
 То есть a11y-«тестирование» в проекте — это компиляция статических
 инвариантов шаблонов через JUnit, а не runtime-аудит браузерной страницы.
@@ -563,7 +593,7 @@ Playwright-спеков (§9), 5 из них — и в ручном `visual-gold
    `CLAUDE.md` не обновили.
 3. **`CLAUDE.md:86-92`** («Testing Conventions») перечисляет 5 пунктов
    (unit-тесты рядом с классами, `TestQuestionBuilder`, `TestInterviewPath`,
-   Testcontainers, ArchUnit) и не упоминает ни 76 `ui/*ContractTest`
+   Testcontainers, ArchUnit) и не упоминает ни 71 `ui/*ContractTest`
    (§11 — значимая часть тестовой базы `quiz-app`), ни `e2e/` Playwright-слой
    (§9-10), ни MockMvc/API-тесты (§12) вообще. Документ, специально
    адресованный AI-ассистентам работы с этим репозиторием, не описывает три
@@ -579,6 +609,19 @@ Playwright-спеков (§9), 5 из них — и в ручном `visual-gold
    ```
    Разработчик, читающий README целиком, не узнает о существовании CI или
    визуального регрессионного тестирования.
+5. **`docs/accessibility.md:181`** ссылается на класс `PixelSpriteContractTest`
+   как на существующий контракт-тест (цвет спрайта мимо рампы `tokens.css`).
+   Такого класса в репозитории нет:
+   ```bash
+   $ find modules -iname 'PixelSpriteContractTest.java'
+   (пусто)
+   ```
+   Ближайший реальный класс с тем же назначением —
+   `modules/quiz-app/src/test/java/com/cheatsheet/quiz/ui/PixelCssPaletteTest.java`
+   (§11) — по всей видимости, класс переименовали при рефакторинге
+   пиксель-арт-палитры, а `docs/accessibility.md` не обновили. Тот же класс
+   дефектов, что и п.2 (устаревшее имя класса в документации), в другом
+   документе.
 
 ## 15. Белые пятна разведки
 
