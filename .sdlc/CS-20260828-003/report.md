@@ -23,11 +23,13 @@ Follow-up к CS-20260827-001. Отчёт `.sdlc/CS-20260827-001/report.md:560-59
   `.sdlc/CS-20260828-003/data/user-db-guard.txt`). Datasource прокинут переменной
   `SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/interview_recon`.
 - **Старт:** `SERVER_PORT=8091 SPRING_PROFILES_ACTIVE=qa SPRING_DATASOURCE_URL=... ./gradlew :quiz-app:bootRun --no-daemon`,
-  лог — `data/boot.log` (213 КБ), старт подтверждён строкой
-  `data/boot.log:51`: `Tomcat started on port 8091 (http) with context path '/'`
-  в `21:09:04 UTC` (`00:09:04 MSK`) 2026-08-29.
-- **Браузер:** Chromium `149.0.7827.55` через `Playwright` `1.61.1`
-  (`e2e/package.json`), взят из общего кэша `~/Library/Caches/ms-playwright`.
+  лог — `data/boot.log.txt` (213 КБ; закоммичен под `.txt`-именем, т.к.
+  `*.log` игнорируется `.gitignore:14`), старт подтверждён строкой
+  `data/boot.log.txt:51`: `Tomcat started on port 8091 (http) with context path '/'`
+  в `00:09:04 MSK 2026-08-29` (`21:09:04 UTC 2026-08-28`).
+- **Браузер:** Chromium `149.0.7827.55` через `Playwright` `^1.52.0`
+  (`e2e/package.json:14`, резолвнутая версия из общего `node_modules` — `1.61.1`),
+  взят из общего кэша `~/Library/Caches/ms-playwright`.
   Способ драйвера: **основной**, без фолбэков — симлинк
   `e2e/node_modules → ~/IdeaProjects/cheat-sheet/e2e/node_modules` (путь
   gitignored, `e2e/.gitignore:1`, удалён по завершении разведки) плюс
@@ -175,17 +177,21 @@ MCQ-вопросов) почти равномерное — 25.7% / 25.5% / 24.8
    `opacity: 0.55`, `cursor: not-allowed`) — при равной специфичности (0,3,1)
    выигрывает components-pending.css, потому что стоит позже в манифесте
    (`css-bundle-manifest.txt:39` после `:25`). Обоснование манифеста
-   (`components-pending.css:33-38`) подтверждено вычислением, а не чтением.
+   (`components-pending.css:7-8`) подтверждено вычислением, а не чтением.
    `data/cascade-pending.json`.
 4. **Пара равной специфичности, где `pixel` бьёт `components`.** `.card` на
    `/stats`: `components-card.css:5` задаёт `background: var(--color-bg-secondary)`
    (шорт-хенд, неявно `background-image: none`), `pixel-cards.css:7-15` тем же
    селектором `html[data-design] .card` задаёт
    `background-image: var(--px-grain-surface)`. Оба правила совпадают по
-   селектору → равная специфичность → решает порядок исходника → побеждает
-   `pixel` (идёт позже, `css-bundle-manifest.txt:140` shell → `:144` pixel).
-   Живой узел подтвердил: победитель `background-image` — правило
-   `pixel-cards.css`, значение `var(--px-grain-surface)`.
+   селектору → равная специфичность → решает порядок слоёв, объявленный
+   `@layer tokens, reset, shell, components, pages, utilities, pixel;`
+   (`tokens.css:4`): `components` идёт раньше `pixel`, поэтому побеждает
+   `pixel` независимо от физического порядка файлов в ленте
+   (`components-card.css` — `css-bundle-manifest.txt:43`, `pixel-cards.css` —
+   `css-bundle-manifest.txt:149`). Живой узел подтвердил: победитель
+   `background-image` — правило `pixel-cards.css`, значение
+   `var(--px-grain-surface)`.
    `data/cascade-pixel-vs-components.json`.
 
 **Вердикт: ПОДТВЕРЖДЕНО** — реальный каскад в браузере совпадает с
@@ -228,7 +234,7 @@ MCQ-вопросов) почти равномерное — 25.7% / 25.5% / 24.8
 
 - `#141413` (7×, `print.css`), `#fff` (3×, `print.css`), `#999488` (2×,
   `print.css`), `#f0f0f0` (2×, `components-prose.css`, `print.css`),
-  `#444440`, `#66625a`, `#f5f5f5` (по 1×, все `print.css`) — **9 из 15**
+  `#444440`, `#66625a`, `#f5f5f5` (по 1×, все `print.css`) — **7 из 15**
   палитровых литералов без токена живут в `print.css`: печатная версия по
   конструкции не наследует тему экрана (`@media print`), поэтому хардкоды тут
   отчасти оправданы дизайном, но остаются вне охвата любого аудитора.
@@ -252,7 +258,7 @@ MCQ-вопросов) почти равномерное — 25.7% / 25.5% / 24.8
 **Дыра в существующем аудиторе — подтверждена.** `scripts/design-token-audit.py:206-213`
 проверяет хардкод-hex действительно только в `BASE` (`base.css`, 829 Б),
 гейт pre-commit `.pre-commit-config.yaml:43-48` называется «хардкоды в
-base.css» честно, но покрытие остальных **43** файлов (~450 КБ CSS-корпуса)
+base.css» честно, но покрытие остальных **43** файлов (~712 КБ CSS-корпуса)
 равно нулю — 6 реальных дублей токена (T) и 15 палитровых литералов без
 токена (P) в этих файлах не проверяет никто.
 
@@ -268,8 +274,8 @@ base.css» честно, но покрытие остальных **43** фай�
 **Метод:** `.sdlc/CS-20260828-003/recon/pixel-layer.js`. На `/` (пин id 2060) и `/stats`, тёмная
 тема, 1440×900, `screenPreset=wide` (худший случай `data-pixel=high`,
 подтверждено живьём: оба прогона дали `data-pixel: "high"`) — обход до 400
-узлов внутри `#main-content` (получено 95 и 78 уникальных селекторов
-соответственно). Слой `pixel` определён НЕ эвристикой по имени файла, а
+узлов внутри `#main-content` (обойдено 95 и 78 узлов соответственно,
+уникальных селекторов среди правил слоя `pixel` — 191 и 400). Слой `pixel` определён НЕ эвристикой по имени файла, а
 разбором самой отданной ленты: все `@layer pixel { ... }` блоки (по одному на
 каждый из 9 файлов `pixel-*.css`, скобки сбалансированы) дают пары
 `(селектор, свойство) → значение`, которые точно принадлежат слою pixel в
@@ -358,7 +364,7 @@ height: 40px; }` (`pixel-brand.css:10-11`) — размер знака брен�
 | WS-1 | Визуальное состояние обеих тем (§18.1) + мёртвое пространство (§17) | ПОДТВЕРЖДЕНО | 50 снимков; `data-pixel` везде `med` по умолчанию; на 2560px train/stats/topics используют 70% ширины |
 | WS-2 | Живое состояние БД (§18.2) | ПОДТВЕРЖДЕНО | 9818 вопросов / 42 optionless — recon-БД = пользовательская БД = аудит 2026-08-22 |
 | WS-3 | Реальный порядок каскада (§18.3) | ПОДТВЕРЖДЕНО | `@layer` порядок, гейт `.filter-bar`, спор pending/controls и pixel/components — все 4 подтверждены CDP |
-| WS-4 | Дублирование палитры вне tokens.css (§18.4) | ПОДТВЕРЖДЕНО | 6 T + 15 P литералов из 116; аудитор покрывает только `base.css` (829 Б из ~450 КБ) |
+| WS-4 | Дублирование палитры вне tokens.css (§18.4) | ПОДТВЕРЖДЕНО | 6 T + 15 P литералов из 116; аудитор покрывает только `base.css` (829 Б из ~712 КБ) |
 | WS-5 | «pixel ничего структурного не меняет» (§18.5) | ОПРОВЕРГНУТО | `position:relative` на `.card`, `display:grid` на `.brand .avatar` — оба в слое pixel |
 | WS-6 | `/review` как режим, а не раздел (§18.6) | ПОДТВЕРЖДЕНО | 1 активный пункт «Тренировка» на обеих поверхностях, `onlyWrong` форсирован, счётчик читается живьём |
 
@@ -369,7 +375,7 @@ height: 40px; }` (`pixel-brand.css:10-11`) — размер знака брен�
 | LIVE-01 | P2 | `data-pixel` не зависит от реальной ширины окна — только от `screenPreset` в `localStorage` (по умолчанию `laptop`→`med`). На 2560px без ручного действия пользователя плотность пиксель-арта та же, что на 1280px | `data/shots-index.json` (40/40 записей `dataPixel:"med"`); `modules/quiz-app/src/main/resources/templates/fragments/head.html:204-241` | Продуктовое решение (миссия §41 ultrawide): либо авто-детект пресета по `window.innerWidth` при первом визите, либо явный онбординг в `/settings` на широких экранах |
 | LIVE-02 | P1 | На 2560×1440 `/train`, `/stats`, `/topics` используют только 70% ширины вьюпорта (`mainWidthRatio=0.700`), крупнейший жёлоб — 495px слева от `#main-content`; `/` в тех же условиях — 86.3% | `data/space-metrics.json` (4 записи `2560x1440`) | Прямой вход для миссии §17 «беспощадный аудит пустого пространства»: разобраться, почему `home` устроен шире, чем 3 других Tier A экрана, и выровнять либо содержимым, либо мерой |
 | LIVE-03 | P2 | Слой `pixel` объявляет структурные свойства вопреки собственному манифесту: `position:relative` на группе `.card`/`.panel`/... (`pixel-cards.css:18`), `display:grid`+`width:40px`+`height:40px` на `.brand .avatar` (`pixel-brand.css:10-16`) — размер знака бренда живёт ЦЕЛИКОМ в pixel-слое | `data/pixel-layer-scan.json`, `data/cascade-pixel-vs-components.json` | Либо перенести `width/height/display` знака бренда в `components-*.css` (структура) и оставить в `pixel-brand.css` только декор, либо переформулировать комментарий `css-bundle-manifest.txt:142-143`, если решение осознанное |
-| LIVE-04 | P1 | `scripts/design-token-audit.py:206-213` проверяет хардкод-hex только в `base.css` (829 Б); 43 остальных файла (~450 КБ, 99.8% корпуса) не проверяет никто. Найдено 6 точных дублей значений токенов (T) вне `tokens.css` и 4 ad-hoc локальных токена в `pixel-fx.css`, минующих единый источник | `data/hex-inventory.tsv` (116 строк, классы T/P поимённо в разделе 5) | Follow-up (уже в design.md): расширить аудитор на весь `static/css/*.css`, allow-list — из класса `T`/`P` этого инвентаря |
+| LIVE-04 | P1 | `scripts/design-token-audit.py:206-213` проверяет хардкод-hex только в `base.css` (829 Б); 43 остальных файла (~712 КБ, 99.9% корпуса) не проверяет никто. Найдено 6 точных дублей значений токенов (T) вне `tokens.css` и 4 ad-hoc локальных токена в `pixel-fx.css`, минующих единый источник | `data/hex-inventory.tsv` (116 строк, классы T/P поимённо в разделе 5) | Follow-up (уже в design.md): расширить аудитор на весь `static/css/*.css`, allow-list — из класса `T`/`P` этого инвентаря |
 | LIVE-05 | P3 | `var(--color-status-error, #B3261E)` (`components-controls.css:359-360`, `pages-stats.css:468`) — fallback-значение НЕ совпадает ни с dark (`#e8705c`, `tokens.css:65`), ни с light (`#a5342a`, `tokens.css:313`) токеном; токен всегда определён, поэтому fallback практически не достижим, но несёт рассинхронизированное значение | `data/hex-inventory.tsv` (строка `#b3261e`), `tokens.css:65,313` | Косметика: удалить fallback либо привести его к текущему dark-значению `#e8705c` |
 
 ## 10. Приложение A. Команды воспроизведения
@@ -381,7 +387,7 @@ docker exec quiz-postgres psql -U interview -d postgres \
   -c "CREATE DATABASE interview_recon OWNER interview"
 SERVER_PORT=8091 SPRING_PROFILES_ACTIVE=qa \
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/interview_recon \
-  ./gradlew :quiz-app:bootRun --no-daemon > .sdlc/CS-20260828-003/data/boot.log 2>&1 &
+  ./gradlew :quiz-app:bootRun --no-daemon > .sdlc/CS-20260828-003/data/boot.log.txt 2>&1 &
 
 # --- Драйвер браузера (из корня worktree) ---
 ln -s ~/IdeaProjects/cheat-sheet/e2e/node_modules e2e/node_modules
@@ -421,7 +427,7 @@ docker exec quiz-postgres psql -U interview -d interview -tAc \
 
 # --- Демонтаж ---
 rm e2e/node_modules
-kill <pid Tomcat на 8091>   # см. data/boot.log:51 за PID процесса
+kill <pid Tomcat на 8091>   # см. data/boot.log.txt:51 за PID процесса
 docker exec quiz-postgres psql -U interview -d postgres -c \
   "DROP DATABASE interview_recon"
 ```
