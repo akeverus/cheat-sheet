@@ -156,6 +156,12 @@ class KeyboardE2eContractTest {
                 .contains("const SURFACES = ['/', '/train', '/stats', '/topics', "
                         + "'/bookmarks', '/settings', '/nope-404'];");
         assertThat(spec).contains("toBeLessThanOrEqual(1)");
+        // Зум-матрица macOS (iter-183): ширины реальных зумов 90/110/125% ложатся
+        // МЕЖДУ брейкпоинтами респонсив-матрицы — их переломы невидимы стандартным
+        // прогонам. 1152 = 1440@125%, 1382 = 1728@125%, 1571 = 1728@110%.
+        assertThat(spec)
+                .as("зум-матрица пропала: переломы между брейкпоинтами снова невидимы")
+                .contains("const ZOOM_WIDTHS = [1152, 1382, 1571];");
     }
 
     /**
