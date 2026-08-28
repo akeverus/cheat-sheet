@@ -253,6 +253,33 @@ class ModeWorkspaceContractTest {
      * читался в 542px. После переноса гейта в базовый блок мер — 480 | 830;
      * вопрос С материалами держит прежние 768 | 542 (проверено живьём).
      */
+    /**
+     * В LEARN-фазе STUDY материалы вопроса не рендерятся (iter-187).
+     *
+     * <h2>Найденный живым прогоном дефект</h2>
+     * Эталон LEARN в шпаргалках почти всегда содержит тот же листинг, что и
+     * codeSnippet вопроса: замер (Rat in a Maze, 1728) показал ОДНУ И ТУ ЖЕ
+     * программу дважды на одном экране. Своего кода для сверки в LEARN нет —
+     * левая копия была чистым дублем; её снятие заодно включает гейт «нет
+     * материалов → узкая колонка задания» (замер: 288 | 1022 — чтению эталона
+     * отдана почти вся полоса). В QUIZ-под-фазе материалы возвращаются: там
+     * эталона на экране нет, и код — единственная опора ответа (проверено
+     * живьём: чип «Проверка», материалы и варианты на месте).
+     */
+    @Test
+    void studyLearnPhaseDropsTheDuplicatedMaterials() throws IOException {
+        String m = markupWithoutComments();
+        assertThat(m)
+                .as("гейт LEARN-фазы пропал: эталон и его копия-листинг снова видны одновременно")
+                .contains("th:if=\"${(hasCode or hasDiagram) and !studyLearnPhase}\"");
+
+        String css = read("static/css/pages-focus.css");
+        assertThat(css)
+                .as("зазор кнопки раскрытия пропал: «Показать ответ» снова слипается "
+                        + "с поверхностью письма (textarea bottom == button top)")
+                .contains(".typed-answer-input .flashcard-reveal-btn { margin-top: var(--space-3); }");
+    }
+
     @Test
     void theBriefColumnShrinksWithoutMaterialsOnEveryWorkspaceWidth() throws IOException {
         String css = read("static/css/pages-focus.css");
