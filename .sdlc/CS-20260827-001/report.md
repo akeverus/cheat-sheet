@@ -180,7 +180,7 @@ View-имена разрешаются через единственный ис�
 
 `modules/quiz-app/src/main/resources/templates/fragments/shell-head.html` (89 строк) — общая верхняя обвязка/топбар,
 включена в 9 из 10 шаблонов (все, кроме `login.html`; `error.html` её
-включает — `templates/error.html:18`, `grep -rL "fragments/shell-head ::"
+включает — `modules/quiz-app/src/main/resources/templates/error.html:18`, `grep -rL "fragments/shell-head ::"
 modules/quiz-app/src/main/resources/templates/*.html` даёт ровно
 `login.html`). Тот же `login.html` — единственный шаблон без
 `sidebar`/`mobile-nav` (`grep -rL "fragments/sidebar ::"` и `grep -rL
