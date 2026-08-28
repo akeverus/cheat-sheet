@@ -242,4 +242,34 @@ class ModeWorkspaceContractTest {
                 .as("мёртвые мобильные полы 5.5rem удалены, а не оставлены висеть")
                 .doesNotContain("min-height: 5.5rem");
     }
+
+    /**
+     * Колонка задания широка ради листинга — на любой ширине workspace-грида.
+     *
+     * <h2>Найденный замером дефект (iter-186)</h2>
+     * Гейт «нет материалов → --workspace-brief: 30rem» жил только в блоке
+     * ≥2240px, и на 1728 (typed recall, эталон раскрыт) вопрос БЕЗ кода держал
+     * колонки 768 | 542: под заголовком пустовало ~60% высоты, а эталон
+     * читался в 542px. После переноса гейта в базовый блок мер — 480 | 830;
+     * вопрос С материалами держит прежние 768 | 542 (проверено живьём).
+     */
+    @Test
+    void theBriefColumnShrinksWithoutMaterialsOnEveryWorkspaceWidth() throws IOException {
+        String css = read("static/css/pages-focus.css");
+        String gate = ":has(.workspace-surface:not(.hidden)):not(:has(.question-materials))";
+        int gatePos = css.indexOf(gate);
+        int ultraWide = css.indexOf("@media (min-width: 2240px)");
+        assertThat(gatePos)
+                .as("гейт «нет материалов → узкий brief» пропал: пустая колонка "
+                        + "задания вернётся на 1280–2239")
+                .isNotNegative();
+        assertThat(gatePos)
+                .as("гейт обязан жить в БАЗОВОМ блоке мер, до сверхширокого медиа — "
+                        + "иначе он снова действует только с 2240px")
+                .isLessThan(ultraWide);
+        assertThat(css.indexOf(gate, ultraWide))
+                .as("в ≥2240 не должно быть второй копии гейта: два источника "
+                        + "разъезжаются молча")
+                .isNegative();
+    }
 }
