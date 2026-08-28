@@ -1,14 +1,30 @@
 {
   "topic_slug": "java-collections-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
+  "round": 10,
+  "status": "AUDITED",
+  "version_sensitive": true,
+  "product_version": "Java SE 21 LTS / 25 (JCF — стабильное ядро java.base с Java 2; проверено по официальному API Java SE 25 через context7)",
+  "checked_date": "2026-08-29",
+  "sources": [
+    "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/SequencedMap.html — SequencedMap.reversed()/firstEntry/lastEntry/pollFirstEntry/pollLastEntry присутствуют в актуальном API",
+    "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collections.html — Collections.newSequencedSetFromMap + LinkedHashMap.removeEldestEntry (LRU-паттерн из Q19/Q43 актуален)",
+    "https://docs.oracle.com/en/java/javase/25/docs/api/allclasses-index.html — SequencedCollection / SequencedSet / SequencedMap как часть java.util"
+  ],
+  "version_sensitive_claims": [
+    "SequencedCollection / SequencedSet / SequencedMap введены в Java 21 (тело Q41) — подтверждено наличием в API Java SE 25.",
+    "Набор default-методов Map (getOrDefault, putIfAbsent, computeIfAbsent/Present, compute, merge, replaceAll, forEach) добавлен в Java 8 (тело Q23).",
+    "Неизменяемые фабрики List.of / Set.of / Map.of и Collectors.toUnmodifiable* добавлены в Java 9 (тело Q9/Q36).",
+    "Treeification бакета HashMap при пороге 8 и обратное превращение при 6, minimum capacity 64 (тело Q13) — деталь реализации HotSpot, не спецификации.",
+    "Переход ConcurrentHashMap с сегментов на CAS + синхронизацию по голове бакета — начиная с Java 8 (тело Q15/Q42)."
+  ],
+  "staleness_risks": [
+    "Номера версий, вводящих фичи, историчны и задним числом не меняются.",
+    "Пороговые константы treeification и стратегия роста ArrayList — детали реализации JDK и могут меняться между релизами; держать их вне текстов опций.",
+    "Сторонние библиотеки коллекций (Guava, Eclipse Collections, Caffeine — тело Q40) развиваются независимо от JDK."
+  ],
   "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+    "ROUND-10 LINKAGE-FIRST: опции держатся TIMELESS — ни один вариант не утверждает номер версии Java или год.",
+    "TEMPORAL_CLAIMS гейта (Q32 B/C/D) — ложное срабатывание: подстрока 'current' ловится внутри имени `ConcurrentModificationException`, которое и есть ПРЕДМЕТ вопроса Q32, а не версионное утверждение.",
+    "Sidecar заполнен для прохождения SOURCE_COVERAGE; тема version-sensitive по ТЕЛАМ (какая версия что ввела), но семантика самих коллекций стабильна."
   ]
 }
