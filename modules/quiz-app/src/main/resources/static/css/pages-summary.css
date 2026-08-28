@@ -65,13 +65,22 @@ html[data-design] .summary-page .summary-top {
 
 /* ВНУТРИ КАРТОЧКИ ПРОГРЕССА — ТОЖЕ РЯД, КОГДА ЕСТЬ ШИРИНА. Ступень и четыре
    плитки в столб дают 302px; рядом — 208 и меньше. Замер 1920 первой сборки:
-   документ вырос с 1433 до 1485 ровно на этой разнице. */
+   документ вырос с 1433 до 1485 ровно на этой разнице.
+   Второй трек существует, только когда есть плитки (iter-182): у пустой
+   сессии KPI-блока нет (th:if по noAnswers/gamification), и безусловный
+   второй `1fr` оставался ПУСТОЙ ПОЛОВИНОЙ карточки, зажимая ступень до
+   289px (rank-body 226px — XP-строка ломалась). `:has(.summary-kpis)`
+   включает ряд по факту содержимого; без поддержки :has остаётся столб —
+   мягкая деградация, как у tab-restore в head. */
 @media (min-width: 1280px) {
   html[data-design] .summary-page .summary-progress {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-5);
     align-items: start;
+  }
+  html[data-design] .summary-page .summary-progress:has(.summary-kpis) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
 

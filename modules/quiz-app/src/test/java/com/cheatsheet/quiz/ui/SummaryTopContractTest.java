@@ -62,6 +62,39 @@ class SummaryTopContractTest {
         return CSS_COMMENT.matcher(read("static/css/pages-summary.css")).replaceAll("");
     }
 
+    /**
+     * Ряд «ступень | плитки» существует только вместе с плитками (iter-182).
+     *
+     * <h2>Найденный живым прогоном дефект</h2>
+     * У пустой сессии KPI-блока нет (th:if по noAnswers/gamification), а второй
+     * трек `1fr` был безусловным: правая половина карточки прогресса стояла
+     * ПУСТОЙ, ступень зажималась до 289px (rank-body 226px), и XP-строка
+     * ломалась с висячим «·». Ряд включает `:has(.summary-kpis)`; сирота-точка
+     * убита отдельно — сепаратора больше нет (роздых даёт column-gap), а
+     * стрелка раскрытия живёт на последнем ребёнке summary, не на контейнере
+     * (::after flex-контейнера переносился один на вторую строку).
+     */
+    @Test
+    void theProgressRowExistsOnlyTogetherWithKpiTiles() throws IOException {
+        String c = css();
+        assertThat(c)
+                .as("ряд снова безусловный: у пустой сессии вернётся пустая половина карточки")
+                .contains(".summary-progress:has(.summary-kpis)");
+
+        String progression = HTML_COMMENT.matcher(read("templates/fragments/progression.html")).replaceAll("");
+        assertThat(progression)
+                .as("сепаратор-точка вернулась: в узкой колонке она виснет в конце строки")
+                .doesNotContain("rank-scale-sep");
+
+        String controls = CSS_COMMENT.matcher(read("static/css/components-controls.css")).replaceAll("");
+        assertThat(controls)
+                .as("стрелка раскрытия обязана жить на последнем ребёнке — контейнерный "
+                        + "::after переносится один на вторую строку (сирота-«▾»)")
+                .contains(".disclosure-summary > :last-child::after");
+        assertThat(controls)
+                .doesNotContainPattern("\\.disclosure-summary::after\\s*\\{");
+    }
+
     @Test
     void theTopOfTheSummaryIsTwoCardsAndNotOneColumn() throws IOException {
         String m = markup();

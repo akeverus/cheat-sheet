@@ -412,8 +412,13 @@ html[data-design] .disclosure-summary:focus-visible {
   outline: var(--rule-weight-strong) solid var(--color-focus-ring);
   outline-offset: 2px;
 }
-html[data-design] details:not([open]) > .disclosure-summary::after {
-  content: "\25BE";
+/* Стрелка живёт на ПОСЛЕДНЕМ ребёнке, а не на контейнере (iter-182): ::after
+   flex-контейнера — самостоятельный flex-итем, и в узкой колонке (карточка
+   прогрессии итогов, 289px) он переносился ОДИН на вторую строку — сирота-«▾»
+   под заголовком. Приклеенная к последнему тексту, стрелка переносится только
+   вместе с ним. */
+html[data-design] details:not([open]) > .disclosure-summary > :last-child::after {
+  content: " \25BE";
   color: var(--color-text-tertiary);
 }
 
