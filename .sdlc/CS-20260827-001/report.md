@@ -308,9 +308,13 @@ React-хуков нет — стек не React. Рубрика миссии о�
 `bookmarks.html`, `result.html`, `settings.html`, `focus-training.html` и три
 фрагмента (`shell-head.html`, `session-builder.html`, `sidebar.html`).
 
-CSRF-токен как скрытое поле (`_csrf`) явно выведен в 6 из них:
-`shell-head.html`, `sidebar.html`, `login.html`, `bookmarks.html`,
-`settings.html`, `focus-training.html`.
+CSRF-токен как ручное скрытое поле `<input type="hidden" th:name="${_csrf.parameterName}">`
+выведен в 5 файлах: `shell-head.html:79`, `sidebar.html:67`, `bookmarks.html:244,260`,
+`settings.html:211,226`, `focus-training.html:656`. `login.html` — единственная форма
+БЕЗ ручной копии: токен вставляет автоинъекция `CsrfRequestDataValueProcessor` Spring
+Security через `th:action` — это и есть реальный механизм CSRF для MPA-форм без ручного
+поля (якорь-комментарий `login.html:45-51`, зафиксировавший, что ручная копия здесь
+была удалена в iter-71 как дублирующая автоинъекцию и дававшая два `_csrf` в теле POST).
 
 **No-JS фоллбэк** — `result.html` (270 строк): `/answer` при обычной
 form-отправке (без `fetch`) рендерит эту страницу целиком на сервере
