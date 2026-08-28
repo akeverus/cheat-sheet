@@ -355,8 +355,15 @@
         <script th:replace="~{fragments/mermaid-init :: mermaid-init}"></script>
     </th:block>
     <th:block th:if="${includeChart}">
-        <!--/* chart.js 4.5.0 UMD self-hosted (OPS-005). defer → Chart готов до DOMContentLoaded. */-->
-        <script defer th:src="@{/vendor/chart/chart.umd.min.js}" th:attr="nonce=${cspNonce}"></script>
+        <!--/* chart.js 4.5.0 UMD self-hosted (OPS-005). Тега <script> здесь нет
+             намеренно — как у mermaid: библиотеку подгружает stats/chart-loader.js,
+             когда канвас реально попадает в вид. Замер (iter-179): жадный defer
+             качал ~200 КБ на КАЖДОМ заходе /stats, хотя все канвасы лежат на
+             51–62% документа, вне первого экрана — не скроллящий пользователь
+             платил за графики, которых не видел. (Гипотеза «defer держит LCP»
+             опровергнута контрольным замером — FRD-231.) Путь через meta: @{...}
+             проходит ResourceUrlProvider и в prod несёт content-hash. */-->
+        <meta name="chart-src" th:content="@{/vendor/chart/chart.umd.min.js}">
     </th:block>
 </head>
 </html>

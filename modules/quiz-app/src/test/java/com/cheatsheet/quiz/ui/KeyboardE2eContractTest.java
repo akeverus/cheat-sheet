@@ -127,6 +127,23 @@ class KeyboardE2eContractTest {
     }
 
     /**
+     * Chart.js оплачивается просмотром (iter-179): библиотека приезжает по
+     * видимости канваса, как mermaid. Спек держит оба конца в обоих движках:
+     * наверху /stats запроса chart.umd нет; после скролла к канвасу — есть,
+     * и график реально отрисован.
+     */
+    @Test
+    void theChartLazySpecGuardsBothEnds() throws IOException {
+        String spec = read("e2e/chart-lazy.spec.js");
+        assertThat(spec)
+                .as("страж ленивой загрузки пропал: жадный chart.umd снова невидим")
+                .contains("chart.umd arrives only when a canvas becomes visible");
+        assertThat(spec)
+                .as("проверка отрисовки пропала: библиотека может приезжать и молча не рисовать")
+                .contains("но график не отрисован");
+    }
+
+    /**
      * WCAG 1.4.10 Reflow — постоянный страж: 320px без горизонтальной прокрутки
      * на всех семи поверхностях (замер iter-175 — чисто в обоих движках; спек
      * держит достигнутое, а перечень поверхностей закреплён здесь).

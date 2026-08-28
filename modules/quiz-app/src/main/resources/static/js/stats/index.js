@@ -1,9 +1,10 @@
 import { initTablist } from '../ui/tablist.js';
-import { initTopicCharts } from './topic-charts.js';
+import { initTopicCharts, collapseDetailOnNarrow } from './topic-charts.js';
 import { initDifficultyDonut } from './difficulty-donut.js';
 import { initAccuracyTrend } from './accuracy-trend.js';
 import { initForecastDates } from './forecast-dates.js';
 import { initMobileDisclosures } from '../ui/mobile-disclosures.js';
+import { whenChartNeeded } from './chart-loader.js';
 
 /**
  * Вкладки аналитики: Темы / Динамика / Ошибки.
@@ -32,11 +33,26 @@ function initStatsTabs() {
 }
 
 export function initStatsPage() {
-  initTopicCharts();
-  initDifficultyDonut();
-  initAccuracyTrend();
+  // Немедленная фаза — всё, что не требует Chart.js: вкладки, прогноз дат,
+  // сворачивание таблицы деталей на узком экране (позже нельзя — вырвет
+  // открытую пользователем таблицу из-под руки).
+  collapseDetailOnNarrow();
   initForecastDates();
   initStatsTabs();
+  // Графики — по видимости первого канваса (iter-179): chart.umd (~200 КБ)
+  // грузился жадно из head на каждом заходе, хотя канвасы лежат на 51–62%
+  // документа, вне первого экрана — не скроллящий платил за графики, которых
+  // не видел. Скрытые панели вкладок дают нулевой прямоугольник — наблюдатель
+  // молчит до открытия, как у mermaid. start() зовётся и при недоехавшей
+  // библиотеке: chartsAvailable() внутри модулей показывает таблицы-фоллбэки.
+  whenChartNeeded(
+    ['difficultyDonut', 'topicProgressChart', 'topicAccuracyChart', 'accuracyTrendChart'],
+    () => {
+      initTopicCharts();
+      initDifficultyDonut();
+      initAccuracyTrend();
+    }
+  );
   // До 1199, а не до 767 (iter-158). Планшетная щель 768–1199 давала вкладкам
   // разделов 1326–1375-й пиксель при сгибах 768–1194: стойка «где я» (585–700px),
   // витрина и отбор не сворачивались, хотя довод «статус смотрят мельком, разделами

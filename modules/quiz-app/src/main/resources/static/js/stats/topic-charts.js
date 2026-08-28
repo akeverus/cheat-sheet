@@ -234,8 +234,12 @@ function baseOptions(palette) {
  *
  * <p>Один раз при загрузке, без подписки на resize: состояние раскрытия — выбор
  * пользователя, и вырывать его из-под руки при повороте экрана нельзя.
+ *
+ * <p>Экспортирована отдельно (iter-179): initTopicCharts теперь стартует лениво,
+ * по видимости канваса, а сворачивание обязано случиться сразу при загрузке —
+ * поздний вызов вырывал бы уже открытую пользователем таблицу из-под руки.
  */
-function collapseDetailOnNarrow() {
+export function collapseDetailOnNarrow() {
   const disclosure = document.getElementById('topic-detail-disclosure');
   if (!disclosure) return;
   if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
@@ -244,7 +248,6 @@ function collapseDetailOnNarrow() {
 }
 
 export function initTopicCharts() {
-  collapseDetailOnNarrow();
   const progressCanvas = document.getElementById('topicProgressChart');
   const accuracyCanvas = document.getElementById('topicAccuracyChart');
   const progressFallback = document.getElementById('topicProgressChartFallback');

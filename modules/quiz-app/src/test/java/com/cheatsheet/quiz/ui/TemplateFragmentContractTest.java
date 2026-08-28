@@ -1211,16 +1211,56 @@ class TemplateFragmentContractTest {
         assertThat(head).contains("[[@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa0ZL7W0Q5n-wU.woff2}]]");
         assertThat(head).contains("[[@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2}]]");
         assertThat(head).contains("th:src=\"@{/vendor/hljs/highlight.min.js}\"");
-        // mermaid — единственный vendor без своего <script>: 2.7 МБ грузит
-        // mermaid-renderer.js по видимости схемы, а путь (с content-hash в prod)
-        // получает из этой meta. Тег скрипта здесь = возврат блокирующей загрузки.
+        // mermaid и chart — vendor'ы без своего <script>: их грузят по видимости
+        // mermaid-renderer.js и stats/chart-loader.js, а путь (с content-hash в
+        // prod) отдаёт meta. Тег скрипта здесь = возврат жадной загрузки: chart
+        // (iter-179) делил полосу Slow 4G с документом /stats и держал LCP на
+        // 3.75 с при канвасах вне первого экрана.
         assertThat(head).contains("<meta name=\"mermaid-src\" th:content=\"@{/vendor/mermaid/mermaid.min.js}\">");
         assertThat(head).doesNotContain("th:src=\"@{/vendor/mermaid/mermaid.min.js}\"");
-        assertThat(head).contains("th:src=\"@{/vendor/chart/chart.umd.min.js}\"");
+        assertThat(head).contains("<meta name=\"chart-src\" th:content=\"@{/vendor/chart/chart.umd.min.js}\">");
+        assertThat(head).doesNotContain("th:src=\"@{/vendor/chart/chart.umd.min.js}\"");
         assertThat(head).doesNotContain("cdnjs.cloudflare.com");
         assertThat(head).doesNotContain("cdn.jsdelivr.net");
         assertThat(head).doesNotContain("fonts.googleapis.com");
         assertThat(head).doesNotContain("integrity=\"sha512-");
+    }
+
+    /**
+     * Chart.js приезжает по видимости канваса, и цепочка не рвётся молча.
+     *
+     * <h2>Найденный замером дефект (iter-179)</h2>
+     * Жадный {@code <script defer>} с chart.umd (~200 КБ) качался на КАЖДОМ
+     * заходе /stats, хотя все канвасы лежат на 51–62% документа, вне первого
+     * экрана — не скроллящий пользователь платил за графики, которых не видел.
+     * (Попутная гипотеза «defer держит стрессовый LCP» опровергнута контрольным
+     * замером — разбор в FRD-231.)
+     *
+     * <p>Гейт держит все три звена: meta с путём (head, выше), загрузчик читает
+     * именно эту meta, а stats/index.js реально подключает загрузчик ко всем
+     * четырём канвасам. Оборванное звено = графики молча мертвы или библиотека
+     * снова жадная.</p>
+     */
+    @Test
+    void theChartLibraryLoadsOnCanvasVisibility() throws IOException {
+        String loader = readTemplate("static/js/stats/chart-loader.js");
+        assertThat(loader)
+                .as("загрузчик перестал читать meta chart-src — путь с content-hash потерян")
+                .contains("meta[name=\"chart-src\"]");
+        assertThat(loader)
+                .as("наблюдатель видимости пропал: библиотека снова оплачивается до показа")
+                .contains("IntersectionObserver");
+
+        String stats = readTemplate("static/js/stats/index.js");
+        assertThat(stats)
+                .as("stats/index.js не зовёт whenChartNeeded — графики молча мертвы")
+                .contains("whenChartNeeded(");
+        for (String canvas : List.of("difficultyDonut", "topicProgressChart",
+                "topicAccuracyChart", "accuracyTrendChart")) {
+            assertThat(stats)
+                    .as("канвас %s выпал из ленивого запуска", canvas)
+                    .contains("'" + canvas + "'");
+        }
     }
 
     /**
