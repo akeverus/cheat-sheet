@@ -23,9 +23,9 @@ Follow-up к CS-20260827-001. Отчёт `.sdlc/CS-20260827-001/report.md:560-59
   `.sdlc/CS-20260828-003/data/user-db-guard.txt`). Datasource прокинут переменной
   `SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/interview_recon`.
 - **Старт:** `SERVER_PORT=8091 SPRING_PROFILES_ACTIVE=qa SPRING_DATASOURCE_URL=... ./gradlew :quiz-app:bootRun --no-daemon`,
-  лог — `data/boot.log.txt` (213 КБ; закоммичен под `.txt`-именем, т.к.
-  `*.log` игнорируется `.gitignore:14`), старт подтверждён строкой
-  `data/boot.log.txt:51`: `Tomcat started on port 8091 (http) with context path '/'`
+  лог — `.sdlc/CS-20260828-003/data/boot.log.txt` (213 КБ; закоммичен под
+  `.txt`-именем, т.к. `*.log` игнорируется `.gitignore:14`), старт подтверждён строкой
+  `.sdlc/CS-20260828-003/data/boot.log.txt:51`: `Tomcat started on port 8091 (http) with context path '/'`
   в `00:09:04 MSK 2026-08-29` (`21:09:04 UTC 2026-08-28`).
 - **Браузер:** Chromium `149.0.7827.55` через `Playwright` `^1.52.0`
   (`e2e/package.json:14`, резолвнутая версия из общего `node_modules` — `1.61.1`),
@@ -274,8 +274,11 @@ base.css» честно, но покрытие остальных **43** фай�
 **Метод:** `.sdlc/CS-20260828-003/recon/pixel-layer.js`. На `/` (пин id 2060) и `/stats`, тёмная
 тема, 1440×900, `screenPreset=wide` (худший случай `data-pixel=high`,
 подтверждено живьём: оба прогона дали `data-pixel: "high"`) — обход до 400
-узлов внутри `#main-content` (обойдено 95 и 78 узлов соответственно,
-уникальных селекторов среди правил слоя `pixel` — 191 и 400). Слой `pixel` определён НЕ эвристикой по имени файла, а
+узлов внутри `#main-content` (`.sdlc/CS-20260828-003/recon/pixel-layer.js:110`, на `/stats` это упор
+в кап `slice(0, 400)`: узлов-кандидатов там ≥400, выборка усечена, на `/` —
+191 узел без усечения). Из узлов-кандидатов после дедупликации селектора
+реально опрошено через CDP `DOM.querySelector`/`CSS.getMatchedStylesForNode` —
+95 и 78 узлов соответственно (`nodesScanned`). Слой `pixel` определён НЕ эвристикой по имени файла, а
 разбором самой отданной ленты: все `@layer pixel { ... }` блоки (по одному на
 каждый из 9 файлов `pixel-*.css`, скобки сбалансированы) дают пары
 `(селектор, свойство) → значение`, которые точно принадлежат слою pixel в
