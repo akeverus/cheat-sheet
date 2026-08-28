@@ -100,7 +100,11 @@ class StateIllustrationContractTest {
         String markup = templatesMarkup();
 
         SITUATION_GLYPH.forEach((title, glyph) -> {
-            int at = markup.indexOf(title);
+            // Текстовый УЗЕЛ (>титул<), а не любое вхождение строки: с iter-188
+            // «Сейчас нет вопросов» живёт ещё и в <title> пустого состояния
+            // (head-выражение), а там иллюстрации не бывает по определению.
+            int at = markup.indexOf(">" + title + "<") + 1;
+            if (at == 0) at = -1;
             if (at < 0) {
                 wrong.add("состояние «" + title + "» пропало из разметки");
                 return;

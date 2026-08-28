@@ -12,7 +12,12 @@
      ВОПРОС (обрезка 80, бэктики инлайн-кода срезаны): переход к следующему
      вопросу озвучивает его первым же объявлением. Elvis на chip-тексте —
      защита от 'null' в строке, если модель режима не положила подпись. */-->
-<head th:replace="~{fragments/head :: head(title=${interviewSession != null} ? ('Вопрос ' + (${interviewSession.getIndex() + 1}) + ' из ' + ${interviewSession.getTotal()} + ' — ' + (${focusModeChipText != null} ? ${focusModeChipText} : 'Тренировка') + ' — Подготовка к собеседованию') : (${reviewMode != null and reviewMode} ? 'Разбор ошибок — Подготовка к собеседованию' : (${current != null} ? (${#strings.abbreviate(#strings.replace(current.question.questionText,'`',''),80)} + ' — Подготовка к собеседованию') : 'Подготовка к собеседованию')), includeMermaid=${needsMermaid == true}, includeChart=false, includeHighlight=true, page='focus')}"></head>
+<!--/* Счётная ветка титула гейтится наличием ВОПРОСА, а не только сессии
+     (iter-188): пустая STUDY-сессия давала «Вопрос 1 из 0 — Изучение» на
+     странице «Сейчас нет вопросов» — вкладка называла вопросом то, чего нет.
+     Сессия без текущего вопроса и браузинг без вопроса говорят титулом то же,
+     что их h1: «Сейчас нет вопросов». */-->
+<head th:replace="~{fragments/head :: head(title=${interviewSession != null and current != null and interviewSession.getTotal() > 0} ? ('Вопрос ' + (${interviewSession.getIndex() + 1}) + ' из ' + ${interviewSession.getTotal()} + ' — ' + (${focusModeChipText != null} ? ${focusModeChipText} : 'Тренировка') + ' — Подготовка к собеседованию') : (${reviewMode != null and reviewMode} ? 'Разбор ошибок — Подготовка к собеседованию' : (${current != null} ? (${#strings.abbreviate(#strings.replace(current.question.questionText,'`',''),80)} + ' — Подготовка к собеседованию') : 'Сейчас нет вопросов — Подготовка к собеседованию')), includeMermaid=${needsMermaid == true}, includeChart=false, includeHighlight=true, page='focus')}"></head>
 <!--/* data-session-mode стоит на <body>, а не на .app: у режима есть КОМПОЗИЦИЯ,
      а токены композиции (--focus-main-measure и сумма полосы --focus-measure)
      объявлены на .focus-page. Пока атрибут висел на потомке, переопределить

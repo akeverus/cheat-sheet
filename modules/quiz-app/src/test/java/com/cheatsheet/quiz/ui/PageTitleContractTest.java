@@ -52,6 +52,26 @@ class PageTitleContractTest {
                 .contains("${focusModeChipText != null} ? ${focusModeChipText}");
     }
 
+    /**
+     * Счётная ветка титула гейтится наличием ВОПРОСА, а не только сессии.
+     *
+     * <h2>Найденный живым прогоном дефект (iter-188)</h2>
+     * Пустая STUDY-сессия (0 вопросов под фильтр) давала титул «Вопрос 1 из 0 —
+     * Изучение» на странице «Сейчас нет вопросов»: вкладка называла вопросом
+     * то, чего нет. Титул пустого состояния обязан говорить то же, что его h1.
+     */
+    @Test
+    void theEmptySessionTitleSaysThereAreNoQuestions() throws IOException {
+        String head = read("templates/focus-training.html");
+        assertThat(head)
+                .as("гейт счётной ветки пропал: пустая сессия снова зовётся «Вопрос 1 из 0»")
+                .contains("${interviewSession != null and current != null "
+                        + "and interviewSession.getTotal() > 0}");
+        assertThat(head)
+                .as("титул пустого состояния обязан совпадать с его h1")
+                .contains("'Сейчас нет вопросов — Подготовка к собеседованию'");
+    }
+
     @Test
     void theTrainingTitleCarriesTheQuestionItself() throws IOException {
         assertThat(read("templates/focus-training.html"))
