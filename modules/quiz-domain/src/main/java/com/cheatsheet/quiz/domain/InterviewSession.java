@@ -32,6 +32,15 @@ public class InterviewSession implements Serializable {
     /** Список ID вопросов в порядке прохождения (может расти при штрафных). */
     final List<Long> questionIds;
 
+    /**
+     * Сколько вопросов было при старте — до штрафных. Точка отсчёта потолка
+     * эскалации экзамена (iter-181): без него каждый неверный ответ добавлял
+     * +examPenaltyQuestions без границы, и «экзамен на 3 вопроса» у слабого
+     * ученика рос 3 → 8 → 13 → … до исчерпания банка.
+     */
+    @Getter(AccessLevel.NONE)
+    final int initialQuestionCount;
+
     /** Фильтр: тема. */
     final String topic;
 
@@ -111,6 +120,7 @@ public class InterviewSession implements Serializable {
                             Boolean importantOnly, Boolean onlyWrong, Boolean shuffle, Boolean ordered, Instant startedAt) {
         this.mode = mode;
         this.questionIds = new ArrayList<>(questionIds);
+        this.initialQuestionCount = questionIds.size();
         this.topic = topic;
         this.group = group;
         this.importantOnly = importantOnly;
@@ -238,6 +248,11 @@ public class InterviewSession implements Serializable {
 
     public synchronized int getIndex() {
         return index;
+    }
+
+    /** Размер сессии при старте, до штрафных вопросов. */
+    public synchronized int getInitialQuestionCount() {
+        return initialQuestionCount;
     }
 
     public synchronized int getCorrect() {

@@ -103,4 +103,33 @@ class TrainingSessionServiceTest {
 
         assertThat(session.getQuestionIds()).contains(101L, 102L);
     }
+
+    @Test
+    void examPenaltyPoolIsCappedAtDoubleTheInitialSize() {
+        // iter-181: до потолка каждый неверный ответ добавлял +examPenaltyQuestions
+        // без границы — живой прогон дал рост 3 → 8 → 13 от двух «Не знаю», а при
+        // низкой точности экзамен эскалировал бы до исчерпания банка. Потолок:
+        // сессия не растёт выше удвоенного стартового размера.
+        InterviewSession session = new InterviewSession(
+                InterviewMode.EXAM,
+                List.of(10L, 20L),
+                "java",
+                null,
+                false,
+                false,
+                false,
+                true
+        );
+        when(questionRepository.findQuestionIdsExcluding(anyList(), any(), anyBoolean(), anyBoolean(), anyLong(), anyInt()))
+                .thenReturn(List.of(101L, 102L, 103L));
+
+        service.addExamPenaltyQuestions(session);
+
+        // initial=2 → cap=4: из трёх кандидатов добавились ровно два.
+        assertThat(session.getQuestionIds()).hasSize(4).contains(101L, 102L).doesNotContain(103L);
+
+        // Потолок достигнут — следующая ошибка сессию больше не растит.
+        service.addExamPenaltyQuestions(session);
+        assertThat(session.getQuestionIds()).hasSize(4);
+    }
 }

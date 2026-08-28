@@ -69,10 +69,25 @@ public class TrainingSessionService {
     /**
      * Добавляет штрафные вопросы в EXAM-сессию после ошибки и предзагружает их.
      *
+     * <p>Пул ОГРАНИЧЕН (iter-181): сессия не растёт выше удвоенного стартового
+     * размера (и никогда — выше maxSessionCount). До потолка каждый неверный
+     * ответ добавлял +examPenaltyQuestions без границы: живой прогон EXAM на
+     * 3 вопроса дал рост тотала 3 → 8 → 13 от двух «Не знаю», а при точности
+     * банка ~9% двадцативопросный экзамен эскалировал бы до исчерпания банка —
+     * прогресс-бар превращался в убегающую цель. Комментарий focus-training
+     * обещал «ограниченный штрафной пул» — теперь это правда.</p>
+     *
      * @param session активная сессия
      */
     public void addExamPenaltyQuestions(InterviewSession session) {
         if (session.getMode() != InterviewMode.EXAM) {
+            return;
+        }
+        int cap = Math.min(session.getInitialQuestionCount() * 2,
+                appProperties.getInterview().getMaxSessionCount());
+        int room = cap - session.getQuestionIds().size();
+        if (room <= 0) {
+            log.info("exam_penalty_pool_exhausted cap={} size={}", cap, session.getQuestionIds().size());
             return;
         }
         List<Long> penaltyIds = questionRepository.findQuestionIdsExcluding(
@@ -102,9 +117,13 @@ public class TrainingSessionService {
                     appProperties.getInterview().getExamPenaltyQuestions()
             );
         }
+        if (penaltyIds.size() > room) {
+            penaltyIds = penaltyIds.subList(0, room);
+        }
         if (!penaltyIds.isEmpty()) {
             session.addPenaltyQuestions(penaltyIds);
-            log.info("exam_penalty_questions_added sessionMode={} added={}", session.getMode(), penaltyIds.size());
+            log.info("exam_penalty_questions_added sessionMode={} added={} cap={}",
+                    session.getMode(), penaltyIds.size(), cap);
         }
     }
 
