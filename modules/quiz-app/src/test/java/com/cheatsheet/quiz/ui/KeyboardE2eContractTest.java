@@ -144,6 +144,26 @@ class KeyboardE2eContractTest {
     }
 
     /**
+     * Консоль и сеть чисты на каждой поверхности (iter-184): до этого спека
+     * тихий pageerror (сломанный модуль, битый импорт) проходил все сетки
+     * молча — клавиатурный e2e ловит только сценарий, визуальный — пиксели.
+     */
+    @Test
+    void theConsoleCleanSpecGuardsEverySurface() throws IOException {
+        String spec = read("e2e/console-clean.spec.js");
+        assertThat(spec)
+                .as("страж консоли пропал: JS-ошибка в проде снова невидима")
+                .contains("no console errors or broken requests");
+        assertThat(spec)
+                .as("перечень поверхностей похудел")
+                .contains("const SURFACES = ['/', '/train', '/stats', '/topics', "
+                        + "'/bookmarks', '/settings', '/review', '/nope-404'];");
+        assertThat(spec)
+                .as("pageerror перестал ловиться — именно он был слепым пятном")
+                .contains("pageerror");
+    }
+
+    /**
      * WCAG 1.4.10 Reflow — постоянный страж: 320px без горизонтальной прокрутки
      * на всех семи поверхностях (замер iter-175 — чисто в обоих движках; спек
      * держит достигнутое, а перечень поверхностей закреплён здесь).
