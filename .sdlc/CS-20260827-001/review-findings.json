@@ -2,25 +2,17 @@
   {
     "severity": "major",
     "file": ".sdlc/CS-20260827-001/report.md",
-    "line": 213,
-    "what": "§6 заявляет «полный список» localStorage-ключей (4 активных + 3 legacy), но метод сбора — grep только по строковым литералам, поэтому пропущены все ключи, задаваемые константами/шаблонами: `cheatsheet-admin-token` (js/core/constants.js:21, пишет/читает js/ui/export.js:10-16), семейство `tabPanel:<key>` (js/ui/tablist.js:37,57,92 + pre-paint-скан templates/fragments/head.html:88-99), `quiz.session.count` (js/settings/session-form.js:234-245), а также весь sessionStorage — `recall-typed-answer` (js/quiz/flashcard.js:7) и `cycleFocusMain` (js/ui/cycle-focus.js:18). design.md прямо называл admin-token и ключ вкладки настроек как известные ключи, отчёт их потерял.",
-    "why": "Рубрика State — один из 16 обязательных пунктов §5 и вход для следующих фаз; карта клиентского состояния, объявленная полной, но не содержащая admin-токена в localStorage и sessionStorage-слоя, уведёт редизайн и security-разбор мимо реального состояния.",
-    "fix": "Дополнить таблицу §6 недостающими ключами (включая sessionStorage отдельной группой), заменить команду в Приложении A на такую, что ловит и константы (grep по `localStorage\\.|sessionStorage\\.` с последующим резолвом импортируемых констант), либо снять слово «полный» и явно очертить границы метода."
+    "line": 181,
+    "what": "§4 утверждает: «shell-head.html (89 строк) … включена в 9 из 10 шаблонов (все, кроме error.html)». Число 9 верно, но исключённый шаблон назван неправильно: error.html содержит `<th:block th:replace=\"~{fragments/shell-head :: shell-head}\">` (templates/error.html:18), а единственный шаблон без обвязки — login.html. Он же единственный без sidebar и mobile-nav (`grep -rL \"fragments/sidebar ::\" templates/*.html` и то же для mobile-nav дают ровно login.html), то есть login — единственный chrome-less экран приложения, и отчёт этого факта не фиксирует, приписывая отсутствие shell чужой странице.",
+    "why": "Рубрика Layouts/shell — вход для редизайна оболочки: агент следующей фазы, читая отчёт, будет проектировать shell без учёта того, что именно /login живёт вне оболочки (нет топбара, рельса, нижней полосы), и одновременно ложно считать error.html особым случаем, хотя тот полностью в оболочке.",
+    "fix": "В §4 заменить «все, кроме error.html» на «все, кроме login.html» с якорями `templates/error.html:18` (включение есть) и командой `grep -rL \"fragments/shell-head ::\" modules/quiz-app/src/main/resources/templates/*.html`; добавить строку, что login.html — единственный шаблон без shell-head/sidebar/mobile-nav (chrome-less вход)."
   },
   {
-    "severity": "major",
+    "severity": "minor",
     "file": ".sdlc/CS-20260827-001/report.md",
-    "line": 56,
-    "what": "§1 утверждает, что pre-paint инлайн-скрипты head.html применяют «тему, screen-preset …, font-scale и motion до первого кадра», а §6 приписывает чтение ключа `fontScale` файлу head.html. Код говорит обратное: `fontScale` не встречается в templates/ вообще, он читается и пишется в js/settings/personalization-bootstrap.js:29,47-48, чей заголовочный javadoc (:1-4) прямо гласит «Non-FOUC-critical personalization: applied when module loads (after first paint) … Здесь остался размер шрифта».",
-    "why": "Ложный факт ровно о том свойстве, ради которого рубрика существует — что применяется до первого кадра, а что после. Агент следующей фазы, опираясь на отчёт, не будет искать (и не устранит) реальный FOUC размера шрифта либо, наоборот, потратит время на «регрессию», которой нет.",
-    "fix": "В §1 убрать font-scale из перечня pre-paint и назвать его отдельно как post-paint-персонализацию с якорем personalization-bootstrap.js:1-4,29,47-48; в таблице §6 заменить читателя/писателя `fontScale` на этот модуль; поправить строку 7 сводки §0."
-  },
-  {
-    "severity": "major",
-    "file": ".sdlc/CS-20260827-001/report.md",
-    "line": 483,
-    "what": "§16 «Чего не покрыто» утверждает, что e2e не покрывает мобильные вьюпорты («devices['Desktop Chrome']/['Desktop Safari'] — оба десктопные»). Фактически e2e/visual-matrix.spec.js:79-83 объявляет VIEWPORTS 375/768/1280 и применяет их через setViewportSize (:154-156); соответствующие голдены существуют — `home-dark-med-vp-375.png`, `vp-768`, `vp-1280` в обеих baseline-директориях, они же входят в посчитанные отчётом 28 PNG.",
-    "why": "Секция «чего не покрыто» — прямой вход для follow-up'ов миссии; ложный пробел порождает задачу на уже существующее покрытие и одновременно маскирует настоящие границы (голдены сняты только для home, не для остальных экранов).",
-    "fix": "Переписать пункт: мобильные вьюпорты покрыты visual-matrix.spec.js:79-83,154-156, но только для одного экрана (home) и только скриншотами; настоящий пробел — отсутствие мобильных вьюпортов для settings/stats/train и отсутствие интеракционных e2e на узких ширинах."
+    "line": 500,
+    "what": "§16 привязывает утверждение о двух проектах Playwright и об отсутствии Firefox к `playwright.config.js:21-23`; на этих строках лежит комментарий про `snapshotPathTemplate`/шрифтовые метрики, а блок `projects` с `devices['Desktop Chrome']`/`['Desktop Safari']` — на :33-37.",
+    "why": "Сам факт верен, но якорь ведёт не туда — проверяющему придётся искать руками, что нарушает правило 1 дизайна (факт + якорь).",
+    "fix": "Для утверждения про проекты/Firefox указать `e2e/playwright.config.js:33-37`, оставив :21-23 только при объяснении раздельных baseline-директорий."
   }
 ]
