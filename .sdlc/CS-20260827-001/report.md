@@ -19,8 +19,8 @@ graphify-граф не перестраивался (граф в этом реп
 | 3. Pages | 10 шаблонов, 4218 строк, 9 CSS page-гейтов (train.html делит гейт с settings) | `modules/quiz-app/src/main/resources/templates/*.html` |
 | 4. Layouts/shell | shell-head + sidebar (рельс) + mobile-nav (нижняя полоса), единый источник разделов — enum `NavSection` | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/config/web/NavSection.java:42-48` |
 | 5. Components | 16 переиспользуемых фрагментов, включения 1–10 файлов каждый | `modules/quiz-app/src/main/resources/templates/fragments/*.html` |
-| 6. State | Серверное — сессия интервью в БД; клиентское — 4 активных localStorage-ключа + 3 legacy (авто-мигрируются) | `modules/quiz-app/src/main/resources/templates/fragments/head.html:210-268` |
-| 7. «Hooks» | Pre-paint инлайн-скрипт в `<head>` (без FOUC) + `modules/quiz-app/src/main/resources/static/js/core/lifecycle.js` init/destroy-реестр | `modules/quiz-app/src/main/resources/templates/fragments/head.html:242-268`, `modules/quiz-app/src/main/resources/static/js/core/lifecycle.js:1-42` |
+| 6. State | Серверное — сессия интервью в БД; клиентское — 3 pre-paint localStorage-ключа + 3 legacy + 4 post-paint/константных localStorage-ключа + 2 sessionStorage-ключа | `modules/quiz-app/src/main/resources/templates/fragments/head.html:210-268`, `modules/quiz-app/src/main/resources/static/js/core/constants.js:21` |
+| 7. «Hooks» | Pre-paint инлайн-скрипт в `<head>` (тема/пресет/motion, без FOUC; font-scale — post-paint) + `modules/quiz-app/src/main/resources/static/js/core/lifecycle.js` init/destroy-реестр | `modules/quiz-app/src/main/resources/templates/fragments/head.html:242-268`, `modules/quiz-app/src/main/resources/static/js/core/lifecycle.js:1-42` |
 | 8. API layer | `modules/quiz-app/src/main/resources/static/js/core/api-client.js` — единый `apiFetch`: CSRF, 30s timeout, ProblemDetail-парсинг | `modules/quiz-app/src/main/resources/static/js/core/api-client.js:64-113` |
 | 9. Forms | Thymeleaf-формы, CSRF из cookie `XSRF-TOKEN`, no-JS фоллбэк на `/answer` | `modules/quiz-app/src/main/resources/static/js/core/csrf.js:1-7` |
 | 10. Validation | Jakarta Bean Validation на DTO (`@Positive`/`@Min`/`@Max`) + клиентские form-guards | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/api/dto/request/interview/SubmitAnswerRequest.java:27-73` |
@@ -54,9 +54,14 @@ JS-бандлера (webpack/vite/esbuild) и npm-зависимостей в р
   и внешний модуль используют один и тот же nonce. Гейт —
   `modules/quiz-app/src/test/java/com/cheatsheet/quiz/ui/DiagramCspContractTest.java`.
 - Pre-paint инлайн-скрипты в `modules/quiz-app/src/main/resources/templates/fragments/head.html` (333 строки) применяют тему,
-  screen-preset (density/readingWidth/pixel-intensity), font-scale и motion
+  screen-preset (density/readingWidth/pixel-intensity) и motion
   **до первого кадра** — иначе смена этих атрибутов после отрисовки дала бы
   видимую перекладку (`modules/quiz-app/src/main/resources/templates/fragments/head.html:197-203`).
+  Font-scale в этот набор НЕ входит: он применяется post-paint модулем
+  `modules/quiz-app/src/main/resources/static/js/settings/personalization-bootstrap.js`, чей заголовочный
+  javadoc (`:1-4`) прямо называет себя «Non-FOUC-critical personalization:
+  applied when module loads (after first paint) … Здесь остался размер
+  шрифта» — не двигает геометрию блоков, поэтому не обязан быть в шапке.
 - Модуль `feature/interview/` организован как vertical slice:
   `controller/` → `usecase/` (page/flow MVC-сервисы) → `dto/`/`mapper/` —
   контроллер не содержит бизнес-логики, только маршрутизацию и биндинг DTO
@@ -210,15 +215,18 @@ View-имена разрешаются через единственный ис�
 POST/GET-обработчики `InterviewMvcController` как параметр `HttpSession
 session`). Реактивного клиентского стора (Redux/Zustand-аналог) нет.
 
-**Клиентское** — `localStorage`, полный список ключей
-(`grep -rhoE "localStorage\.(getItem|setItem|removeItem)\(...\)"` по
-`static/js/` и `templates/`):
+**Клиентское.** Первый прогон `grep -rhoE "localStorage\.(getItem|setItem|removeItem)\(['\"][A-Za-z0-9_.-]+['\"]"`
+по `static/js/`+`templates/` ловит только строковые литералы и пропускает
+ключи, заданные константами (`ADMIN_TOKEN_KEY`) или шаблонной конкатенацией
+(`` `tabPanel:${storageKey}` ``). Ниже — таблица, дополненная ручным резолвом
+таких констант/шаблонов; она же учтена в обновлённой команде Приложения A.
+
+*localStorage — pre-paint (до первого кадра, влияет на раскладку/тему):*
 
 | Ключ | Пишет | Читает | Статус |
 |---|---|---|---|
 | `theme` | `modules/quiz-app/src/main/resources/templates/fragments/head.html` (pre-paint) | `modules/quiz-app/src/main/resources/templates/fragments/head.html` | активен |
 | `motion` | `modules/quiz-app/src/main/resources/templates/fragments/head.html` | `modules/quiz-app/src/main/resources/templates/fragments/head.html` | активен |
-| `fontScale` | JS-модуль настроек (через `js/`) | `modules/quiz-app/src/main/resources/templates/fragments/head.html` | активен |
 | `screenPreset` | `modules/quiz-app/src/main/resources/templates/fragments/head.html:256` (`setScreenPreset`) | `modules/quiz-app/src/main/resources/templates/fragments/head.html:237` | активен, значения `phone`\|`laptop`\|`wide` |
 | `density` | — (только `removeItem`) | — (только `getItem` в миграции) | **legacy**, авто-мигрируется |
 | `readingWidth` | — (только `removeItem`) | — (только `getItem` в миграции) | **legacy**, авто-мигрируется |
@@ -230,6 +238,22 @@ session`). Реактивного клиентского стора (Redux/Zusta
 иначе по `pixelIntensity`), пишет `screenPreset`, удаляет три старых ключа.
 Одноразовое событие `screenpresetchange` (`modules/quiz-app/src/main/resources/templates/fragments/head.html:260`) уведомляет
 модули настроек о смене без перезагрузки.
+
+*localStorage — post-paint / константные (не влияют на первый кадр):*
+
+| Ключ | Пишет/читает | Назначение |
+|---|---|---|
+| `fontScale` | `modules/quiz-app/src/main/resources/static/js/settings/personalization-bootstrap.js:29,47-48` | размер шрифта, применяется после загрузки модуля (см. §1, §7) |
+| `cheatsheet-admin-token` (константа `ADMIN_TOKEN_KEY`, `modules/quiz-app/src/main/resources/static/js/core/constants.js:21`) | `modules/quiz-app/src/main/resources/static/js/ui/export.js:10-16` (`readStoredToken`/`storeToken`/`clearStoredToken`) | admin-токен для `/export` |
+| `tabPanel:<область>` (шаблон-ключ, семейство) | `modules/quiz-app/src/main/resources/static/js/ui/tablist.js:37,57,92` (пишет/читает активную панель) + pre-paint-скан `modules/quiz-app/src/main/resources/templates/fragments/head.html:88-99` (собирает `style`-правило по всем найденным `tabPanel:*`, чтобы восстановить открытую вкладку до подключения `tablist.js`) | какая вкладка настроек была открыта последней, per-область |
+| `quiz.session.count` | `modules/quiz-app/src/main/resources/static/js/settings/session-form.js:234-245` | последнее выбранное количество вопросов в конструкторе сессии |
+
+*sessionStorage (отдельный от localStorage слой):*
+
+| Ключ | Пишет/читает | Назначение |
+|---|---|---|
+| `recall-typed-answer` (константа `RECALL_ECHO_KEY`, `modules/quiz-app/src/main/resources/static/js/quiz/flashcard.js:7`) | пишет/читает/удаляет `flashcard.js:39,51,78` | эхо введённого ответа для сравнения с эталоном во флешкарт-режиме |
+| `cycleFocusMain` (константа `FLAG`, `modules/quiz-app/src/main/resources/static/js/ui/cycle-focus.js:18`) | пишет `:36`, читает/удаляет `:44-45` | одноразовый флаг «после MPA-перехода посадить фокус на main» (A11Y-11) |
 
 ## 7. «Hooks» и жизненный цикл
 
@@ -478,11 +502,17 @@ required/pattern-атрибуты в формах настроек (`modules/qui
   движков (`playwright.config.js:21-23`).
 
 **Чего не покрыто** (по инвентарю, без проверки живым запуском): Firefox не
-входит ни в один project; e2e-спек всего 2 (клавиатура + визуальная матрица)
-— нет отдельного e2e для форм-фоллбэка (`result.html` без JS), для мобильных
-вьюпортов в Playwright-проектах (`devices['Desktop Chrome']`/`['Desktop
-Safari']` — оба десктопные), для API-слоя (`/api/*`) как HTTP-контракта вне
-Java-интеграционных тестов.
+входит ни в один project (`devices['Desktop Chrome']`/`['Desktop Safari']` —
+оба десктопные, `playwright.config.js:21-23`); e2e-спек всего 2 (клавиатура +
+визуальная матрица) — нет отдельного e2e для форм-фоллбэка (`result.html` без
+JS) и для API-слоя (`/api/*`) как HTTP-контракта вне Java-интеграционных
+тестов. Мобильные вьюпорты сами по себе покрыты: `visual-matrix.spec.js:79-83`
+объявляет `VIEWPORTS` 375/768/1280 и применяет их через `setViewportSize`
+(`:154-156`), голдены существуют (`home-dark-med-vp-375.png`, `vp-768`,
+`vp-1280` в обеих baseline-директориях, входят в посчитанные 28 PNG) — но
+только для одного экрана (`/` home) и только скриншотами. Настоящий пробел —
+отсутствие мобильных вьюпортов для `settings`/`stats`/`train` и отсутствие
+интеракционных (не только визуальных) e2e-проверок на узких ширинах.
 
 ## 17. Дельта против аудита 2026-08-22
 
@@ -575,9 +605,14 @@ find modules/quiz-app/src/main/resources/static/css -name "*.css" | wc -l
 find modules/quiz-app/src/main/resources/static/css -name "*.css" | xargs wc -l | tail -1
 cat modules/quiz-app/src/main/resources/css-bundle-manifest.txt
 
-# localStorage-ключи
-grep -rhoE "localStorage\.(getItem|setItem|removeItem)\(['\"][A-Za-z0-9_.-]+['\"]" \
+# localStorage/sessionStorage-ключи: строковые литералы
+grep -rhoE "(local|session)Storage\.(getItem|setItem|removeItem)\(['\"][A-Za-z0-9_.-]+['\"]" \
   modules/quiz-app/src/main/resources/static/js modules/quiz-app/src/main/resources/templates | sort -u
+
+# localStorage/sessionStorage-ключи: обращения через константу/шаблонную строку
+# (литеральный grep выше их не ловит — далее резолвить руками, см. §6)
+grep -rnE "(local|session)Storage\.(getItem|setItem|removeItem)\(\s*[A-Za-z_][A-Za-z0-9_]*\s*[,)]|(local|session)Storage\.(getItem|setItem|removeItem)\(\`" \
+  modules/quiz-app/src/main/resources/static/js modules/quiz-app/src/main/resources/templates
 
 # API-эндпоинты, вызываемые с фронта
 grep -rn "'/api\|\"/api\|/api/" modules/quiz-app/src/main/resources/static/js \
