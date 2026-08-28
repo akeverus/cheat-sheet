@@ -1,0 +1,41 @@
+== recon-БД interview_recon ==
+-- Q1: всего вопросов --
+SELECT count(*) FROM questions;
+9818
+
+-- Q2: вопросов без единого варианта (optionless) --
+SELECT count(*) FROM questions q WHERE NOT EXISTS (SELECT 1 FROM answer_options ao WHERE ao.question_id = q.id);
+42
+
+-- Q3: распределение вопросов по числу вариантов (0/2/3/4/5+) --
+SELECT CASE WHEN cnt=0 THEN '0' WHEN cnt=2 THEN '2' WHEN cnt=3 THEN '3' WHEN cnt=4 THEN '4' ELSE '5+' END AS bucket, count(*) FROM (SELECT q.id, count(ao.id) AS cnt FROM questions q LEFT JOIN answer_options ao ON ao.question_id = q.id GROUP BY q.id) t GROUP BY bucket ORDER BY bucket;
+0|42
+4|9774
+5+|2
+
+-- Q4: распределение правильного варианта по позициям (display_order, is_correct=1) --
+SELECT display_order, count(*) FROM answer_options WHERE is_correct = 1 GROUP BY display_order ORDER BY display_order;
+0|2514
+1|2491
+2|2421
+3|2352
+
+-- Q5: число тем --
+SELECT count(DISTINCT topic) FROM questions;
+319
+
+-- Q6: число категорий (первый сегмент topic до '/') --
+SELECT count(DISTINCT split_part(topic, '/', 1)) FROM questions;
+25
+
+== пользовательская БД interview (read-only сверка) ==
+-- Q1u: всего вопросов --
+9818
+
+-- Q2u: optionless --
+42
+
+-- Q3u: distribution --
+0|42
+4|9774
+5+|2
