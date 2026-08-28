@@ -6,11 +6,9 @@
 **Метод:** статическое чтение репозитория (`find`, `wc`, `grep`, `sed`) на
 зафиксированном SHA. Приложение не поднималось (порт 8080 занят живым
 bootRun пользователя), БД не читалась, graphify-граф не перестраивался
-(AST-only по `modules/`, `CLAUDE.md` §6). Карта URL уже снята
-предшественником (`.sdlc/CS-20260827-001/report.md` §2) — здесь не
-дублируется, разбирается только серверная сторона.
-
----
+(AST-only по `modules/`, `CLAUDE.md` §6). Карта URL уже снята предшественником
+(`.sdlc/CS-20260827-001/report.md` §2) — здесь не дублируется, разбирается
+только серверная сторона.
 
 ## 0. Сводка одним экраном
 
@@ -34,8 +32,6 @@ bootRun пользователя), БД не читалась, graphify-граф
 | 16. Конфигурация | `app.*` — 302-строчный `AppProperties`, 236-строчный `application.yml`, 10+ under-групп | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/config/app/AppProperties.java:1-302` |
 | 17. Тесты | 114 бэкенд-`*Test.java` в `quiz-app` (189 всего минус 75 `ui/`) + 20 persistence + 21 domain; jacoco 0.915/0.764 | `modules/quiz-app/build.gradle.kts:117` |
 | 18. Белые пятна | 5 пунктов, все требуют живого прогона | см. §18 |
-
----
 
 ## 1. Модули и границы
 
@@ -71,8 +67,6 @@ bootRun пользователя), БД не читалась, graphify-граф
 
 Сумма 75+25+23+22+17+7+2 = 171, совпадает со счётчиком модуля.
 
----
-
 ## 2. Controllers
 
 Ровно 5 классов с `@RestController`/`@Controller` на верхнем уровне (не
@@ -95,50 +89,52 @@ bootRun пользователя), БД не читалась, graphify-граф
 `InterviewMvcController` — единственный контроллер, отвечающий за оба легаси-
 и канонический маршрут (`TRAINING_QUERY_PARAMS`,
 `InterviewMvcController.java:36-38`, перенос параметров с `/training` на `/`).
-Полная таблица из 37 точек входа (23 страницы + 11 `/api/*` + `/login` +
-`/export` + `/css/bundle/*`) — в предшественнике,
-`.sdlc/CS-20260827-001/report.md` §2. `LoginController` — единственный
-контроллер, поднимаемый условно: `@ConditionalOnProperty(prefix =
-"app.security", name = "mode", havingValue = "multi")`
-(`LoginController.java:18`); в `local`-режиме бина нет, значит `/login`
-резолвится в 404 (или редиректом на `/`, зависит от `SecurityConfig`), а не
-рендерит форму.
-
-`InterviewApiController` — единственный REST-контроллер интервью-домена, все
-11 хендлеров ответственность делегируют, сам класс без бизнес-логики: тело
-метода — вызов usecase + маппинг DTO
-(`InterviewApiController.java:67-171`).
-
----
+Полная таблица из 37 точек входа — в предшественнике,
+`.sdlc/CS-20260827-001/report.md` §2. `LoginController` поднимается условно
+(`@ConditionalOnProperty(prefix = "app.security", name = "mode",
+havingValue = "multi")`, `:18`) — в `local`-режиме бина нет. `InterviewApiController`
+делегирует все 11 хендлеров без бизнес-логики в теле (`:67-171`).
 
 ## 3. Services
 
 49 файлов с суффиксом `*Service.java` в `quiz-app` (проверка:
-`find modules/quiz-app/src/main -name '*Service.java' | wc -l`). Плюс 4 файла
-в `service/strategy/` без суффикса `Service` (`QuestionSelectionStrategy` +
-3 реализации) и по одному файлу в `service/cache`, `service/diagram`,
-`service/event`, `service/admin`, `service/imports` без суффикса — они
-образуют cross-cutting-каркас, на котором `*Service`-классы держатся.
+`find modules/quiz-app/src/main -name '*Service.java' | wc -l`). Разбивка:
+25 в `feature/interview/service/**` (§3.1), 2 в `feature/interview/controller/`
+(§3.1a — не в `service/` и не в `usecase/`: `HttpSessionStateService`,
+`MvcNavigationService` — хелперы `InterviewMvcController`, легко пропустить
+при подсчёте по каталогам), 11 в `feature/interview/usecase/**` (§3.2), 11 в
+прочих пакетах (§3.3) — 25+2+11+11=49. Плюс не-`Service`-классы
+cross-cutting каркаса вне счётчика: 4 в `service/strategy/`
+(`QuestionSelectionStrategy` + 3 реализации), 2 в `service/cache`
+(`OptionCache`, `CaffeineOptionCache`), 3 в `service/diagram`
+(`AsciiDiagramDetector`, `DiagramPaletteNormalizer`, `MermaidValidator`), 1 в
+`service/event` (`AnswerEvent.java`), 1 в `service/admin`
+(`SeniorRulePriorityOverrideStore.java`), 5 в `service/imports`
+(`InvalidMcqSeedException`, `MarkdownQuestionParser`, `McqJsonLoader`,
+`McqLoadResult`, `TopicTitleReader`).
 
-### 3.1 `feature/interview/service/*` — ядро (11 подпакетов)
+### 3.1 `feature/interview/service/*` — ядро (8 подпакетов, 25 файлов `*Service.java`)
 
 | Подпакет | `*Service.java` | Назначение | Пример |
 |---|---|---|---|
 | `core` | 3 | оркестрация сессии/вопроса | `InterviewService.java`, `OptionLookupService.java`, `TrainingSessionService.java` |
-| `command` | 1 | команда с побочными эффектами | `SubmitAnswerCommand.java` (`@Transactional`) |
 | `flow` | 5 | шаги теста: пауза/резюме/итог | `PauseService`, `ReviewModeService`, `SessionFlowService`, `SessionHistoryService`, `SessionSummaryService` |
-| `facade` | 1 | единая точка входа для usecase-слоя | `InterviewFacade.java` |
 | `page` | 5 | сборка данных для конкретной страницы | `AnswerPageService`, `BookmarksPageService`, `FocusTrainingPageService`, `StatsPageService`, `TopicsPageService` |
 | `progress` | 4 | закладки/избранное/streak/XP | `BookmarkService`, `DailyStreakService`, `ExperienceService`, `FavoriteService` |
-| `review` | 4 (+2 без суффикса: `AttemptRecorder` §13, `RevisionMismatchException` §8) | интервальное повторение | `FsrsService`, `ReviewReasonService`, `ReviewService`, `SpacedRepetitionService` |
+| `review` | 4 | интервальное повторение | `FsrsService`, `ReviewReasonService`, `ReviewService`, `SpacedRepetitionService` |
 | `report` | 1 | жалобы на вопрос | `QuestionIssueService.java` |
 | `insight` | 1 | связанные вопросы | `RelatedQuestionsService.java` |
 | `topic` | 2 | подбор темы/сложности | `AdaptiveDifficultyService`, `TopicCatalogService` |
-| `copy` | 1 | не-`*Service`-хелпер копирайта ответа | `AnswerCopy.java` (без суффикса Service, не входит в счётчик 49) |
 
-`command`/`facade`/`copy` — по одному файлу: `SubmitAnswerCommand` держит
-транзакционную границу (§13), `InterviewFacade` — единственная точка входа
-usecase-слоя, `AnswerCopy` — генератор текста без side-effects.
+Сумма 3+5+5+4+4+1+1+2 = 25 (проверка: `find
+modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/interview/service
+-name '*Service.java' | wc -l`).
+
+В том же дереве, но без суффикса `Service` (не входят в счётчик 49):
+`command/SubmitAnswerCommand.java` — держит транзакционную границу (§13);
+`facade/InterviewFacade.java` — единственная точка входа usecase-слоя;
+`review/AttemptRecorder.java` (§13) и `review/RevisionMismatchException.java`
+(§8); `copy/AnswerCopy.java` — генератор текста без side-effects.
 
 ### 3.2 `feature/interview/usecase/*` — API/MVC-адаптеры (11 файлов, 2 подпакета)
 
@@ -160,9 +156,7 @@ usecase-слоя, `AnswerCopy` — генератор текста без side-e
 загрузка `seed/mcq/**.json`, не в счётчике 49). `api/security/` —
 `SensitiveEndpointAccessService`.
 
-Сумма: 27 (ядро §3.1) + 11 (§3.2) + 11 (§3.3) = 49.
-
----
+Сумма: 25 (ядро §3.1) + 2 (§3.1a) + 11 (§3.2) + 11 (§3.3) = 49.
 
 ## 4. Repositories
 
@@ -190,16 +184,14 @@ usecase-слоя, `AnswerCopy` — генератор текста без side-e
 | `QuestionRevisionRepository` | `question_revision` | класс |
 | `PausedSessionRepository` | `paused_session` | класс |
 | `FullTextSearchRepository` | — | **интерфейс**, контракт FTS |
-| `PostgresFullTextSearchRepository` | `questions` (`ts_vector`) | класс, `implements FullTextSearchRepository` |
+| `PostgresFullTextSearchRepository` | `questions` (`search_vector`) | класс, `implements FullTextSearchRepository` |
 
 Вне списка, но в том же пакете — `OwnerContext.java`, ThreadLocal-держатель
 `owner_key` для всех 16 (§10, §11), и `InterviewFilterSql`/`FtsQueryUtils` —
 SQL-билдеры без суффикса Repository (пример: `InterviewFilterSql.java:75`,
 условие `q.is_important = 1`). `QuestionRepository` — источник правды для
-`questions`: CRUD на 17 колонках (`:48`) + легаси `toggleImportant` (`:221`,
-см. §18).
-
----
+`questions`: CRUD на 18 колонках (`QUESTION_COLUMNS`,
+`QuestionRepository.java:47-50`) + `updateImportant` (`:220`, см. §18).
 
 ## 5. DTO и мапперы
 
@@ -226,14 +218,13 @@ Response-DTO режут поля под конкретный экран/эндп
 | `api/mapper/request/` | `ApiRequestMapper`, `MvcRequestMapper`, `MvcAnswerRequestMapper` | request DTO → доменные команды |
 | `feature/interview/mapper/` | `NextQuestionResponseMapper`, `ContentBlockMapper` | доменный `ContentBlock`/вопрос → DTO |
 
----
-
 ## 6. Domain model
 
 `quiz-domain` — 53 java-файла (51 тип + 2 `package-info.java`, в пакетах
 `domain/` и `domain/exception/`), без единой Spring-аннотации и без импортов
 JDBC (ArchUnit это закрепляет, §1). Крупнейшие типы —
-`SessionSummary.java` (14983 байт) и `InterviewSession.java` (13727 байт).
+`SessionSummary.java` (15217 байт) и `InterviewSession.java` (14022 байт;
+проверка — Приложение A).
 
 По смысловым кластерам (файловая раскладка плоская, кластеризация — по
 имени/назначению класса, не по пакету):
@@ -254,8 +245,6 @@ JDBC (ArchUnit это закрепляет, §1). Крупнейшие типы 
 персистентности (доменная валидация отделена от Jakarta-аннотаций на DTO,
 см. §7).
 
----
-
 ## 7. Validation
 
 Jakarta Bean Validation задействован на 5 request-DTO:
@@ -264,8 +253,9 @@ Jakarta Bean Validation задействован на 5 request-DTO:
 (`api/dto/request/interview/*.java`, найдено через `grep -rl
 '@NotNull\|@NotBlank\|@Size\|@Positive\|@Min\|@Max\|@Valid'`).
 Контроллеры активируют `@Valid`/`@Validated` на уровне класса
-(`InterviewMvcController.java:31` — `@Validated`; параметры хендлеров несут
-`@Min`/`@Max`/`@Positive`, например `InterviewMvcController.java:188-215`).
+(`InterviewMvcController.java:32` — `@Validated`); параметры хендлеров несут
+`@Min`/`@Max`/`@Positive` (`InterviewMvcController.java:241-242,255,396,413,422`
+— `@Positive long questionId` и `@Min(0) @Max(5) int grade`).
 
 Единственный кастомный валидатор — `@ValidIssueCategory`
 (`api/validation/ValidIssueCategory.java:29`): composed-аннотация +
@@ -277,8 +267,6 @@ Jakarta Bean Validation задействован на 5 request-DTO:
 (§6): DTO валидируется на входе HTTP, домен — при построении объекта. Слои
 не пересекаются файлово: ни один файл `quiz-domain` не даёт совпадений
 `@NotNull|@Valid` при `grep -rl` по модулю.
-
----
 
 ## 8. Error handling
 
@@ -317,8 +305,6 @@ UnsupportedExportFormatException}.java`,
 `service/imports/InvalidMcqSeedException.java` (последнее — исключение
 стартап-загрузки MCQ, не проходит через `GlobalExceptionHandler`, см. §18).
 
----
-
 ## 9. Authentication
 
 Единственный переключатель — `app.security.mode` (`local` | `multi`),
@@ -341,9 +327,7 @@ UnsupportedExportFormatException}.java`,
   `ROLE_ADMIN` через `OrgIdpGroupAuthoritiesMapper` (`api/security/`).
 
 `LoginPageService` собирает витрину вопросов (`bankOverview`) для
-неаутентифицированной `/login` (`LoginController.java:42-43`).
-
----
+неаутентифицированной `/login` (`LoginController.java:45`).
 
 ## 10. Authorization
 
@@ -362,16 +346,16 @@ UnsupportedExportFormatException}.java`,
 `OwnerContext.java` (`quiz-persistence`) хранит значение в `ThreadLocal`;
 `sanitize()` **бросает** исключение на небезопасный ключ вместо тихого
 fallback на `local` — `// Never collapse bad keys to shared "local" (would
-mix tenants)` (`OwnerContext.java:44`).
+mix tenants)` (`OwnerContext.java:45`).
 
 **2. Admin-token / ROLE_ADMIN на чувствительных endpoint.**
 `app.admin-token` (`application.yml:100`, дефолт пусто → эндпоинты закрыты)
 проверяется `SensitiveEndpointAccessService`
-(`api/security/SensitiveEndpointAccessService.java:38`) для `/export` и
+(`api/security/SensitiveEndpointAccessService.java:40`) для `/export` и
 `/settings/reset-options`; альтернатива — `ROLE_ADMIN` через
 `OrgIdpGroupAuthoritiesMapper`. Лимит частоты —
 `app.sensitive-rate-limit-per-minute` (дефолт 20, `application.yml:101`),
-окно 60с (`SensitiveEndpointAccessService.java:41-42`), считает
+окно 60с (`SensitiveEndpointAccessService.java:44-45`), считает
 `RequestRateLimiter` (61 строка). Отказ — единый `ProblemDetail` через
 `SensitiveEndpointAccessDeniedHandler`/`SensitiveEndpointAuthenticationEntryPoint`.
 
@@ -381,8 +365,6 @@ Owner-scoping покрывает 5 таблиц (`review_state`, `bookmark`,
 (`V26`) = все мутируемые таблицы прогресса **кроме** флага `is_important`
 на `questions` (см. §18 — глобальный, не per-owner).
 
----
-
 ## 11. Persistence
 
 14 таблиц (`grep -hoE 'CREATE TABLE( IF NOT EXISTS)? [a-z_]+'` по всем
@@ -391,26 +373,34 @@ Owner-scoping покрывает 5 таблиц (`review_state`, `bookmark`,
 `attempt`, `user_experience`, `bookmark`, `attempt_idempotency_claim`,
 `question_revision`, `review_state`, `user_topic_stats`, `session_history`.
 
-Каждая таблица владеется ровно одним репозиторием (см. таблицу §4), кроме
-`questions`, которую читают три: `QuestionRepository` (CRUD),
-`QuestionStatsRepository` (агрегаты + JOIN `review_state`),
-`PostgresFullTextSearchRepository` (полнотекстовый поиск через
-`to_tsvector`, колонка добавлена `V2__fulltext.sql`).
+Владение таблицей — не всегда «один репозиторий = одна таблица» (уточнение
+таблицы §4). Многочитаемые: `questions` — 3 класса (`QuestionRepository`
+CRUD, `QuestionStatsRepository` агрегаты+JOIN `review_state`,
+`PostgresFullTextSearchRepository` через `search_vector`, колонка добавлена
+`V2__fulltext.sql`); `answer_options` — 3 (`AnswerOptionRepository` CRUD,
+`QuestionRepository` JOIN на подсчёт вариантов, `AttemptRepository` JOIN на
+выбранный/верный вариант); `review_state` — 4 (`ReviewStateRepository` CRUD,
+`QuestionRepository`, `QuestionStatsRepository`, плюс SQL-билдер
+`InterviewFilterSql` — общий LEFT JOIN-фрагмент, не отдельный репозиторий).
+`attempt_idempotency_claim` — единственная из 14 таблиц (§12, `V22`), не
+закреплённая ни за одним классом в §4: пишет/читает `AttemptRepository`
+(`:98`), но в §4 у него указана только `attempt`.
 
 Уникальные ограничения/PK — 34 вхождения `UNIQUE`/`PRIMARY KEY` по всем
 миграциям (`grep -rn 'UNIQUE\|PRIMARY KEY' db/migration/*.sql | wc -l`).
 Показательные: составной `PRIMARY KEY (owner_key, question_id)` на
-`review_state` (`V24:6`); частичный `uq_attempt_first_per_owner_question ...
-WHERE is_first_attempt = true` (`V24:24-25`) — одна «первая попытка» на пару
+`review_state` (`V24:7`, после `DROP CONSTRAINT review_state_pkey` на
+`V24:6`); частичный `uq_attempt_first_per_owner_question ...
+WHERE is_first_attempt = true` (`V24:27-28`) — одна «первая попытка» на пару
 owner/question гарантирована constraint'ом БД, а не кодом;
-`uq_answer_options_single_correct_per_question` (`V13__answer_option_integrity.sql:3`)
-— ровно один correct-вариант на вопрос, тоже на уровне БД.
+`uq_answer_options_single_correct_per_question`
+(`V13__answer_option_integrity.sql:1-3`) — ровно один correct-вариант на
+вопрос, тоже на уровне БД.
 
 FTS — `PostgresFullTextSearchRepository implements FullTextSearchRepository`
-(`:23`), запрос против `questions` с `ts_vector`/`ts_rank` (`:49`) —
-единственная пара интерфейс/класс среди 16 репозиториев.
-
----
+(`:23`), запрос против `questions` через `search_vector` с
+`plainto_tsquery`/`ts_headline` (`PostgresFullTextSearchRepository.java:47-50`)
+— единственная пара интерфейс/класс среди 16 репозиториев.
 
 ## 12. Migrations
 
@@ -446,19 +436,21 @@ FTS — `PostgresFullTextSearchRepository implements FullTextSearchRepository`
 | 25 | `V25__owner_key_xp_activity.sql` | 19 | `+owner_key` на XP/streak/topic-mastery |
 | 26 | `V26__owner_key_question_issue.sql` | 6 | `+owner_key` на `question_issue` |
 | 27 | `V27__drop_regen_count.sql` | 6 | **DROP** `regen_count` (счётчик AI-перегенерации вариантов, больше не нужен) |
-| 28 | `V28__drop_view_only_review_state.sql` | 31 | **DROP** строк прогресса, заведённых показом без ответа |
+| 28 | `V28__drop_view_only_review_state.sql` | 31 | **DELETE** строк прогресса, заведённых показом без ответа (данные, не схема — DDL `DROP` в файле нет) |
 | 29 | `V29__session_history.sql` | 29 | таблица `session_history` |
 
-3 миграции содержат `DROP` (`V27`, `V28`, и `DROP CONSTRAINT`/`DROP INDEX`
-внутри `V24` при перестройке ограничений под owner_key). Применяются Flyway
+6 файлов содержат оператор `DROP` (`grep -ln 'DROP' db/migration/*.sql`):
+`V2` (`DROP TRIGGER`), `V8`/`V15` (`DROP INDEX` перед пересозданием), `V24`/
+`V25` (`DROP CONSTRAINT`/`DROP INDEX` при переводе PK/unique на owner_key),
+`V27` (`DROP COLUMN regen_count`). `V28`, несмотря на имя файла, схему не
+меняет — это чистка данных (`DELETE FROM review_state ...`), `DROP` в нём
+нет. Применяются Flyway
 из `quiz-persistence` при старте `quiz-app` (`application.yml:65-72`, секция
 `flyway`); в тестах — тот же путь миграций против Testcontainers-Postgres
 (`AbstractPostgresRepositoryTest`,
 `modules/quiz-persistence/src/test/java/com/cheatsheet/quiz/persistence/AbstractPostgresRepositoryTest.java`),
 чистых up-only без rollback-скриптов (Flyway community edition их не
 поддерживает).
-
----
 
 ## 13. Transactions
 
@@ -484,10 +476,10 @@ ExperienceService,FavoriteService}`,
 составным PK владельца), сервис поверх оборачивает несколько репозиториев в
 одну бизнес-операцию (`SubmitAnswerCommand` — попытка + XP + review_state
 одним ответом). `PROPAGATION_REQUIRED` — дефолт, ни разу не переопределён
-(`grep -rn 'propagation\s*=' ...` → 0). `readOnly` не используется ни разу
-(`grep -rn 'readOnly' ...` → 0) — все транзакции read-write по умолчанию.
-
----
+(`grep -rn 'propagation\s*=' ...` → 0). `readOnly = true` используется в 2
+местах — оба на чтение-only сценариях сервисного слоя:
+`InterviewService.java:259` и `ReviewService.java:153`. Остальные 14
+`@Transactional`-места — read-write по умолчанию.
 
 ## 14. Caching
 
@@ -501,17 +493,16 @@ modules/quiz-app/src/main` → 0 совпадений).
 - `CaffeineOptionCache` (52 строки) — единственная реализация.
 - `CacheConfig` (`config/runtime/CacheConfig.java`) — Caffeine-бин
   `optionCacheBackend`, размер/TTL из `AppProperties.Cache` (`:24-28`),
-  `recordStats()` обязателен для метрик (`:26`), публикуются в Micrometer
-  под тегом `cache=optionCache` (`:31`). Там же — `Striped<Lock>
-  questionLocks()` (128 полос) от гонки при загрузке одного вопроса.
+  `recordStats()` обязателен для метрик (комментарий `:25`, вызов `:29`),
+  публикуются в Micrometer под тегом `cache=optionCache` (`:31`). Там же —
+  `Striped<Lock> questionLocks()` (128 полос) от гонки при загрузке одного
+  вопроса.
 - Параметры: `app.cache.option-max-size=500`, `app.cache.ttl-hours=1`
-  (`application.yml:121-122`, `AppProperties.java:186,190`).
+  (`application.yml:121-122`, `AppProperties.java:187,191`).
 
 Инвалидация — точечная (`invalidate`) при изменении контента вопроса, либо
 полная (`invalidateAll`) при перегенерации; call site `invalidate*` не
 входили в скоуп статического чтения (поведение времени исполнения, §18).
-
----
 
 ## 15. External integrations
 
@@ -546,8 +537,6 @@ javadoc-`{@link AiClientConfig}` на класс, которого в репоз
 - PostgreSQL — единственная БД (`modules/quiz-persistence/build.gradle.kts`,
   `runtimeOnly(libs.postgresql)` в `quiz-app/build.gradle.kts:30`).
 
----
-
 ## 16. Конфигурация бэкенда
 
 `AppProperties.java` (302 строки, `@ConfigurationProperties(prefix =
@@ -567,7 +556,7 @@ javadoc-`{@link AiClientConfig}` на класс, которого в репоз
 | `app.interview.default-daily-goal` | 10 | `application.yml:116` |
 | `app.interview.learned-repetitions` | 3 | `application.yml:111` |
 | `app.interview.exam-penalty-questions` | 5 | `application.yml:112` |
-| `app.cache.option-max-size` / `ttl-hours` | 500 / 1 | `AppProperties.java:186,190` |
+| `app.cache.option-max-size` / `ttl-hours` | 500 / 1 | `AppProperties.java:187,191` |
 | `app.search.max-limit` | 100 | `application.yml:126` |
 | `app.import-settings.min-code-block-length` | 50 | `application.yml:132` |
 | `app.interview-reset-on-startup` | `false` | `application.yml:138` |
@@ -579,11 +568,19 @@ javadoc-`{@link AiClientConfig}` на класс, которого в репоз
 
 `application.yml` — 236 строк, также конфигурирует `server.port`
 (`${SERVER_PORT:8080}`), `spring.datasource.*`, `spring.flyway.*`,
-`spring.thymeleaf.*`, `management.*`. `CLAUDE.md` проекта утверждает, что
-prod-профиль отключает Swagger UI, но `application-prod.yml` в ресурсах не
-найден (см. §18).
+`spring.thymeleaf.*`, `management.*`.
 
----
+**`application-prod.yml`** (`modules/quiz-app/src/main/resources/`, 56 строк)
+существует и подтверждает `CLAUDE.md` («prod отключает Swagger UI»):
+`springdoc.swagger-ui.enabled: false` / `springdoc.api-docs.enabled: false`
+(`:42-46`). Дополнительно, чего нет в base `application.yml`:
+`app.admin-token: ${APP_ADMIN_TOKEN}` без дефолта — в prod токен обязателен,
+без него старт падает (`:50`); content-hash версионирование статики через
+`spring.web.resources.chain.strategy.content.enabled=true` +
+`cache.cachecontrol.max-age=${STATIC_RESOURCES_CACHE_SECONDS:31536000}s`
+(`:12-31`, OPS-004); `management.metrics.tags.env=${APP_ENV:prod}` (`:35-38`);
+`app.security.cors.allowed-origins=${APP_CORS_ALLOWED_ORIGINS:https://localhost}`
+(`:56`) — уже другой дефолт, чем `localhost:8080` origins base-профиля.
 
 ## 17. Тесты бэкенда
 
@@ -606,11 +603,8 @@ prod-профиль отключает Swagger UI, но `application-prod.yml` �
 `jacocoTestCoverageVerification` в скоуп этой артефакт-only задачи не
 входит.
 
-Архитектурные правила — `architecture/LayeredArchitectureTest.java` (§1).
-Чего не покрыто статическим чтением не видно — требует `jacocoTestReport`
-с построчной картой (§18).
-
----
+Архитектурные правила — `architecture/LayeredArchitectureTest.java` (§1);
+чего не покрыто, нужна построчная карта `jacocoTestReport` (§18).
 
 ## 18. Белые пятна разведки
 
@@ -625,24 +619,24 @@ prod-профиль отключает Swagger UI, но `application-prod.yml` �
    Проверка: `grep -rn 'optionCache.invalidate' modules/quiz-app/src/main`
    + трассировка каждого места.
 3. **`is_important` вне owner-scoping.** Флаг «избранное» на `questions`
-   (`V1__init.sql:8`) — глобальный столбец
-   (`QuestionRepository.toggleImportant`, `:214-224`), без `owner_key`, в
-   отличие от `bookmark` (owner-scoped с `V24`). В `multi`-режиме один
-   аккаунт потенциально переключает «избранное», видимое всем (легаси-
-   синхронизация с `bookmark`, UI-014, `BookmarkService.java:82`). Проверка:
-   наблюдение в `multi` на двух аккаунтах.
+   (`V1__init.sql:8`) — глобальный столбец (`QuestionRepository.
+   updateImportant`, `:220-223`), без `owner_key`, в отличие от `bookmark`
+   (owner-scoped с `V24`). В `multi`-режиме один аккаунт потенциально
+   переключает «избранное», видимое всем (легаси-синхронизация с
+   `bookmark`, UI-014, `BookmarkService.java:82`). Проверка: наблюдение в
+   `multi` на двух аккаунтах.
 4. **`InvalidMcqSeedException` при старте.** Не проходит через
    `GlobalExceptionHandler` (§8) — брошено при загрузке `seed/mcq/**.json`
    на старте. Неясно, падает ли весь контекст Spring или топик молча
    пропускается. Проверка: испортить один `seed/mcq/*.json`, поднять
    bootRun на 8091, прочитать лог/exit code.
-5. **`application-prod.yml`.** `CLAUDE.md` утверждает «prod отключает
-   Swagger UI», но отдельного YAML профиля `prod` не найдено (`find ...
-   -iname 'application-prod*'` → пусто) — вероятно, `@Profile`-аннотация в
-   коде. Проверка: `grep -rn '@Profile("prod")' modules/quiz-app/src/main`
-   + прогон с `SPRING_PROFILES_ACTIVE=prod`.
-
----
+5. **Фактическая граница транзакции репозиторного `@Transactional`.** 5
+   репозиториев несут собственный `@Transactional` (§13) поверх уже-
+   транзакционного сервиса — статика не показывает, всегда ли Spring
+   присоединяется к внешней транзакции (`PROPAGATION_REQUIRED`) или есть
+   путь вызова репозитория вне сервисной транзакции. Проверка:
+   `logging.level.org.springframework.transaction=TRACE` на bootRun 8091,
+   трассировка `submitAnswer`.
 
 ## Приложение A. Команды воспроизведения
 
@@ -663,8 +657,9 @@ grep -l 'JdbcTemplate' modules/quiz-persistence/src/main/java/com/cheatsheet/qui
 grep -rl 'NamedParameterJdbcTemplate' modules/quiz-persistence/src/main --include='*.java' | wc -l
 # §5 — DTO/mapper
 find modules/quiz-app/src/main -path '*/dto/*' -name '*.java' | wc -l && find modules/quiz-app/src/main -path '*/mapper/*' -name '*.java' | wc -l
-# §6 — domain (53 файла = 51 тип + 2 package-info)
+# §6 — domain (53 файла = 51 тип + 2 package-info; крупнейшие типы — размер в байтах)
 find modules/quiz-domain/src/main -name '*.java' | wc -l && find modules/quiz-domain/src/main -name 'package-info.java' | wc -l
+wc -c modules/quiz-domain/src/main/java/com/cheatsheet/quiz/domain/SessionSummary.java modules/quiz-domain/src/main/java/com/cheatsheet/quiz/domain/InterviewSession.java
 # §7 — validation
 grep -rl '@NotNull\|@NotBlank\|@Size\|@Positive\|@Min\|@Max\|@Valid' --include='*.java' modules/quiz-app/src/main/java/com/cheatsheet/quiz/api/dto modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/interview/dto
 find modules/quiz-app/src/main -path '*validation*' -name '*.java'
@@ -673,11 +668,16 @@ grep -n '@ExceptionHandler' modules/quiz-app/src/main/java/com/cheatsheet/quiz/c
 # §9/§10 — security
 grep -rn 'security.mode' modules/quiz-app/src/main/java --include='*.java'
 find modules/quiz-app/src/main/java/com/cheatsheet/quiz/api/security -name '*.java'
-# §11/§12 — persistence/migrations (14 таблиц, 29 миграций)
+# §11/§12 — persistence/migrations (14 таблиц, 29 миграций, 18 колонок questions, 6 файлов с DROP, search_vector не ts_rank)
 grep -rhoE 'CREATE TABLE( IF NOT EXISTS)? [a-z_]+' modules/quiz-persistence/src/main/resources/db/migration/*.sql | awk '{print $NF}' | sort -u
 ls modules/quiz-persistence/src/main/resources/db/migration/*.sql | wc -l
 grep -rn 'UNIQUE\|PRIMARY KEY' modules/quiz-persistence/src/main/resources/db/migration/*.sql | wc -l
-# §13 — transactions (16 файлов)
+sed -n '47,50p' modules/quiz-persistence/src/main/java/com/cheatsheet/quiz/persistence/QuestionRepository.java | grep -oE 'q\.[a-z_]+' | wc -l
+grep -ln 'DROP' modules/quiz-persistence/src/main/resources/db/migration/*.sql | wc -l
+grep -c 'ts_rank' modules/quiz-persistence/src/main/java/com/cheatsheet/quiz/persistence/PostgresFullTextSearchRepository.java; grep -c 'search_vector' modules/quiz-persistence/src/main/java/com/cheatsheet/quiz/persistence/PostgresFullTextSearchRepository.java
+grep -l 'answer_options' modules/quiz-persistence/src/main/java/com/cheatsheet/quiz/persistence/*.java | wc -l
+grep -l 'review_state' modules/quiz-persistence/src/main/java/com/cheatsheet/quiz/persistence/*.java | wc -l
+# §13 — transactions (16 файлов, 2 readOnly)
 grep -rl '@Transactional' --include='*.java' modules/quiz-app/src/main modules/quiz-persistence/src/main | sort
 grep -rl '@Transactional' --include='*.java' modules/quiz-app/src/main modules/quiz-persistence/src/main | wc -l
 grep -rn 'propagation\s*=\|readOnly' --include='*.java' modules/quiz-app/src/main modules/quiz-persistence/src/main | wc -l
