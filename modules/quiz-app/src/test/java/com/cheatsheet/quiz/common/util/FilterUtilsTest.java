@@ -26,6 +26,23 @@ class FilterUtilsTest {
         assertThat(FilterUtils.normalizeTopic(input)).isEqualTo(expected);
     }
 
+    /**
+     * Повторённый HTTP-параметр Spring склеивает в String через запятую: живой
+     * репро (iter-189) — серверный hidden topic формы /train плюс второй
+     * одноимённый параметр дали тему «a,a», которой в банке нет, и сессия
+     * стартовала с 0 вопросов. Слаги запятых не содержат — берём первое значение.
+     */
+    @ParameterizedTest
+    @CsvSource({
+            "'java,java', java",
+            "'java/collections,java/streams', java/collections",
+            "'java, java', java",
+            "',java', java"
+    })
+    void normalizeTopicTakesTheFirstValueOfADuplicatedParameter(String input, String expected) {
+        assertThat(FilterUtils.normalizeTopic(input)).isEqualTo(expected);
+    }
+
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = {" ", "   "})
