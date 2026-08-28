@@ -164,6 +164,26 @@ class KeyboardE2eContractTest {
     }
 
     /**
+     * Инвариант 4 под постоянным стражем (iter-190): prefers-reduced-motion
+     * гасит всё декоративное движение. Контроль эксперимента: без reduce на
+     * / и /train живёт arrowNudge — спеку есть что ловить; забытый media-гейт
+     * у нового keyframes = красный на семи поверхностях в обоих движках.
+     */
+    @Test
+    void theReducedMotionSpecGuardsEverySurface() throws IOException {
+        String spec = read("e2e/reduced-motion.spec.js");
+        assertThat(spec)
+                .as("страж reduced motion пропал: инвариант 4 снова без сетки")
+                .contains("no running animations under reduce");
+        assertThat(spec)
+                .as("спек обязан эмулировать reduce сам (test.use({reducedMotion}) на "
+                        + "Playwright 1.61 молча не применялся) и проверять, что эмуляция "
+                        + "реально дошла до страницы")
+                .contains("page.emulateMedia({ reducedMotion: 'reduce' })")
+                .contains("matchMedia('(prefers-reduced-motion: reduce)').matches");
+    }
+
+    /**
      * WCAG 1.4.10 Reflow — постоянный страж: 320px без горизонтальной прокрутки
      * на всех семи поверхностях (замер iter-175 — чисто в обоих движках; спек
      * держит достигнутое, а перечень поверхностей закреплён здесь).
