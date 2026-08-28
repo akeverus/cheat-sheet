@@ -16,7 +16,7 @@ bootRun пользователя), БД не читалась, graphify-граф
 |---|---|---|
 | 1. Модули | 3 Gradle-модуля: `quiz-domain` (53 файла/2934 LOC), `quiz-persistence` (21/3103), `quiz-app` (171/17040); границы держит ArchUnit | `settings.gradle.kts:9-13` |
 | 2. Controllers | Ровно 5 классов, 37 хендлеров суммарно (23+11+1+1+1) | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/interview/controller/InterviewMvcController.java:45-420` |
-| 3. Services | 49 файлов `*Service.java` + 4 файла в `service/strategy` без суффикса Service, разложены по 11 подпакетам `feature/interview/service/*` | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/interview/service/core/InterviewService.java:1` |
+| 3. Services | 49 файлов `*Service.java`: 25 в `feature/interview/service/*` (8 подпакетов), 2 в `feature/interview/controller/`, 11 в `usecase/*`, 11 прочих; плюс 4 файла в `service/strategy` без суффикса Service вне счётчика | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/interview/service/core/InterviewService.java:1` |
 | 4. Repositories | 16 классов/интерфейсов `*Repository*`, 15 держат `JdbcTemplate`, 14 таблиц | `modules/quiz-persistence/src/main/java/com/cheatsheet/quiz/persistence/QuestionRepository.java:44` |
 | 5. DTO/mapper | 27 DTO-файлов (4 пакета), 9 мапперов (2 пакета: `api/mapper`, `feature/interview/mapper`) | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/api/mapper/response/InterviewDtoMapper.java:1` |
 | 6. Domain model | 53 файла (51 тип + 2 `package-info`) в едином пакете `domain` + `domain/exception`, без Spring/JDBC | `modules/quiz-domain/src/main/java/com/cheatsheet/quiz/domain/InterviewSession.java:1` |
@@ -24,8 +24,8 @@ bootRun пользователя), БД не читалась, graphify-граф
 | 8. Error handling | `GlobalExceptionHandler` — 14 `@ExceptionHandler`, единая точка на 15 типов исключений | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/common/exception/GlobalExceptionHandler.java:42-209` |
 | 9. Authentication | `app.security.mode`=`local`\|`multi`; `SecurityConfig`+`MultiUserSecurityConfig`+`LoginController` (bean только в `multi`) | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/auth/controller/LoginController.java:18` |
 | 10. Authorization | `OwnerContextFilter`→`OwnerContext` (ThreadLocal, SAFE-regex), admin-token+`ROLE_ADMIN` на `/export`, `/settings/reset-options` | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/config/web/OwnerContextFilter.java:29` |
-| 11. Persistence | 14 таблиц из миграций, все с `id`/PK; owner_key частично внедрён (5 таблиц из V24-V26) | `modules/quiz-persistence/src/main/resources/db/migration/V24__owner_key_scoping.sql:1` |
-| 12. Migrations | 29 файлов `V1`..`V29`, 3 drop/чистки (`V27`,`V28`), 3 owner_key-миграции (`V24`-`V26`) | `modules/quiz-persistence/src/main/resources/db/migration/V27__drop_regen_count.sql:1` |
+| 11. Persistence | 14 таблиц из миграций, все с `id`/PK; owner_key частично внедрён (9 таблиц: V24: 5, V25: 3, V26: 1) | `modules/quiz-persistence/src/main/resources/db/migration/V24__owner_key_scoping.sql:1` |
+| 12. Migrations | 29 файлов `V1`..`V29`, 6 файлов с `DROP` (`V2`,`V8`,`V15`,`V24`,`V25`,`V27`; `V28` — DELETE данных, не DDL), 3 owner_key-миграции (`V24`-`V26`) | `modules/quiz-persistence/src/main/resources/db/migration/V27__drop_regen_count.sql:1` |
 | 13. Transactions | 16 main-файлов с `@Transactional`: 5 в `quiz-persistence`, 11 в `quiz-app`-сервисах | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/interview/service/core/InterviewService.java:1` |
 | 14. Caching | Ручной Caffeine-кэш (`OptionCache`/`CaffeineOptionCache`), `@Cacheable`/`@EnableCaching` в main-коде отсутствуют (0 хитов) | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/config/runtime/CacheConfig.java:23` |
 | 15. External integrations | HTTP-клиентов нет; `webflux`+`spring-ai-openai` объявлены в gradle, потребителей 0; источники — файлы + Postgres | `modules/quiz-app/build.gradle.kts:14,44` |
@@ -359,11 +359,11 @@ mix tenants)` (`OwnerContext.java:45`).
 `RequestRateLimiter` (61 строка). Отказ — единый `ProblemDetail` через
 `SensitiveEndpointAccessDeniedHandler`/`SensitiveEndpointAuthenticationEntryPoint`.
 
-Owner-scoping покрывает 5 таблиц (`review_state`, `bookmark`,
-`paused_session`, `attempt`, `attempt_idempotency_claim` — `V24`) + 2
-(`user_experience`/`daily_activity`-семейство — `V25`) + `question_issue`
-(`V26`) = все мутируемые таблицы прогресса **кроме** флага `is_important`
-на `questions` (см. §18 — глобальный, не per-owner).
+Owner-scoping покрывает 9 таблиц: 5 (`review_state`, `bookmark`,
+`paused_session`, `attempt`, `attempt_idempotency_claim` — `V24`) + 3
+(`user_experience`, `daily_activity`, `user_topic_stats` — `V25`) + 1
+(`question_issue` — `V26`) — все мутируемые таблицы прогресса **кроме**
+флага `is_important` на `questions` (см. §18 — глобальный, не per-owner).
 
 ## 11. Persistence
 
@@ -668,12 +668,12 @@ grep -n '@ExceptionHandler' modules/quiz-app/src/main/java/com/cheatsheet/quiz/c
 # §9/§10 — security
 grep -rn 'security.mode' modules/quiz-app/src/main/java --include='*.java'
 find modules/quiz-app/src/main/java/com/cheatsheet/quiz/api/security -name '*.java'
-# §11/§12 — persistence/migrations (14 таблиц, 29 миграций, 18 колонок questions, 6 файлов с DROP, search_vector не ts_rank)
+# §11/§12 — persistence/migrations (14 таблиц, 29 миграций, 18 колонок questions, 6 файлов с DROP, 9 owner_key-колонок, search_vector не ts_rank)
 grep -rhoE 'CREATE TABLE( IF NOT EXISTS)? [a-z_]+' modules/quiz-persistence/src/main/resources/db/migration/*.sql | awk '{print $NF}' | sort -u
 ls modules/quiz-persistence/src/main/resources/db/migration/*.sql | wc -l
 grep -rn 'UNIQUE\|PRIMARY KEY' modules/quiz-persistence/src/main/resources/db/migration/*.sql | wc -l
 sed -n '47,50p' modules/quiz-persistence/src/main/java/com/cheatsheet/quiz/persistence/QuestionRepository.java | grep -oE 'q\.[a-z_]+' | wc -l
-grep -ln 'DROP' modules/quiz-persistence/src/main/resources/db/migration/*.sql | wc -l
+grep -ln 'DROP' modules/quiz-persistence/src/main/resources/db/migration/*.sql | wc -l; grep -n 'ADD COLUMN IF NOT EXISTS owner_key' modules/quiz-persistence/src/main/resources/db/migration/*.sql | wc -l
 grep -c 'ts_rank' modules/quiz-persistence/src/main/java/com/cheatsheet/quiz/persistence/PostgresFullTextSearchRepository.java; grep -c 'search_vector' modules/quiz-persistence/src/main/java/com/cheatsheet/quiz/persistence/PostgresFullTextSearchRepository.java
 grep -l 'answer_options' modules/quiz-persistence/src/main/java/com/cheatsheet/quiz/persistence/*.java | wc -l
 grep -l 'review_state' modules/quiz-persistence/src/main/java/com/cheatsheet/quiz/persistence/*.java | wc -l
