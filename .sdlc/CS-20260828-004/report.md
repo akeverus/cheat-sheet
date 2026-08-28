@@ -21,7 +21,7 @@ Playwright, ни graphify-rebuild — порт 8080 может держать ж
 | 2 | Deployment | Двухстадийный `Dockerfile` (68 строк) + `docker-compose.yml` (2 сервиса, 111 строк) + 3 GitHub Actions workflow, push в registry нет | `Dockerfile:2` |
 | 3 | Environment | 4 профиля (default/prod/qa/test), 31 уникальная `${ENV_VAR}` в yml против 13 активных в `.env.example` | `modules/quiz-app/src/main/resources/application.yml:2` |
 | 4 | Configuration | `application.yml` 236 строк по блокам server/spring/app/management + prod/qa/test-оверлеи; мёртвый ключ `app.preload.*` | `modules/quiz-app/src/main/resources/application.yml:93` |
-| 5 | Logging | Нет `logback-spring.xml`/`log4j2.xml` — дефолт Spring Boot; 36 файлов с логгером (32 `@Slf4j` + 4 `LoggerFactory`), 39 warn/16 info/10 debug/4 error/0 trace | `modules/quiz-app/build.gradle.kts:96` |
+| 5 | Logging | Нет `logback-spring.xml`/`log4j2.xml` — дефолт Spring Boot; 36 файлов с логгером (32 `@Slf4j` + 4 `LoggerFactory`), 39 warn/16 info/10 debug/4 error/0 trace | `modules/quiz-app/src/main/resources/application-prod.yml:11` |
 | 6 | Monitoring | Actuator `health,info,metrics,prometheus`, 9 своих Micrometer-метрик в 3 классах, 1 `HealthIndicator` | `modules/quiz-app/src/main/resources/application.yml:192` |
 | 7 | Карта тестов | 236 тест-файлов / 1296 `@Test` в 3 модулях; профиль `test` форсится системным свойством | `modules/quiz-app/build.gradle.kts:80` |
 | 8 | Unit | Mockito в 43 файлах `quiz-app`, чистый JUnit+AssertJ в `quiz-domain`, 14+13 параметризованных, 1 `@Nested` | `modules/quiz-domain/build.gradle.kts:10-12` |
@@ -30,7 +30,7 @@ Playwright, ни graphify-rebuild — порт 8080 может держать ж
 | 11 | E2E | Playwright 1.52, 6 спеков (599 строк), 2 браузерных проекта; НЕ запускается ни в одном автоматическом workflow | `e2e/playwright.config.js:33-37` |
 | 12 | Visual | Матрица 11 сценариев + 3 доп. вьюпорта, 28 голденов (14×2 движка), порог `maxDiffPixelRatio: 0.03`, пин `questionId=2060` | `e2e/visual-matrix.spec.js:62-77` |
 | 13 | Accessibility | Ни axe-core, ни pa11y, ни lighthouse-a11y в репо нет; косвенное покрытие разметочными контрактами + контраст-гейт | `.pre-commit-config.yaml:43-49` |
-| 14 | Гейты вне тестов | 5 pre-commit хуков, ArchUnit (`LayeredArchitectureTest`, 4 правила), ~30 python-валидаторов в `scripts/`, из них к CI подключён 1 | `.pre-commit-config.yaml:1-49` |
+| 14 | Гейты вне тестов | 5 pre-commit хуков, ArchUnit (`LayeredArchitectureTest`, 3 правила), 38 файлов-валидаторов (`.py`+`.sh`) в `scripts/`, из них к CI подключён 1 | `.pre-commit-config.yaml:1-49` |
 
 ---
 
@@ -43,8 +43,8 @@ Gradle wrapper 8.9 (`gradle/wrapper/gradle-wrapper.properties:3`), собира�
 `options.encoding = "UTF-8"` для всех `JavaCompile` (:26-28). `gradle.properties`
 в репозитории отсутствует (`ls gradle.properties` → нет файла).
 
-Version catalog `gradle/libs.versions.toml` — 59 строк, 14 закреплённых версий
-(`[versions]`, :1-14), 40 модулей-библиотек (`[libraries]`, :16-55), 2 плагина
+Version catalog `gradle/libs.versions.toml` — 59 строк, 13 закреплённых версий
+(`[versions]`, :1-14), 36 модулей-библиотек (`[libraries]`, :16-55), 2 плагина
 (`[plugins]`, :57-59): `spring-boot=3.3.2`, `spring-ai=1.0.0`,
 `archunit=1.3.0`, `jacoco=0.8.12`, `springdoc=2.6.0`.
 
@@ -115,16 +115,16 @@ Version catalog `gradle/libs.versions.toml` — 59 строк, 14 закрепл
 `.github/` нет):
 - `.github/workflows/ci.yml` (110 строк) — 2 job'а: `build-test`
   (:28-73: `./gradlew build -x test` затем `./gradlew check` — тесты + jacoco
-  + ArchUnit одним гейтом) и `docker-build` (:75-111, `needs: build-test`,
+  + ArchUnit одним гейтом) и `docker-build` (:75-110, `needs: build-test`,
   только на `push` в `master`, :81, `push: false` — smoke-сборка образа без
   публикации, :100). Триггеры — `push`/`pull_request` с `paths` на
   `modules/**`, `gradle/**`, `*.gradle.kts`, `gradlew*` (:3-20).
 - `.github/workflows/visual-goldens.yml` (116 строк) — 1 job `visual`
-  (:19-117), триггер только `workflow_dispatch` с input'ом
+  (:20-116), триггер только `workflow_dispatch` с input'ом
   `update_snapshots` (:7-13) — поднимает postgres как GH Actions `services`
   (:25-38), стартует `bootRun` в фоне и ждёт готовности (:65-85), гоняет
   `visual-matrix.spec.js` в Chromium (:87-98).
-- `.github/workflows/cheatsheet-lint.yml` (35 строк) — 1 job `lint` (:14-36),
+- `.github/workflows/cheatsheet-lint.yml` (35 строк) — 1 job `lint` (:14-35),
   триггер `push`/`pull_request` на `paths: cheatsheets/**` +
   `scripts/cheatsheet-lint.py` (:3-11), запускает
   `python3 scripts/cheatsheet-lint.py cheatsheets` (:27).
@@ -235,8 +235,9 @@ compose-only, не читаются приложением). Ещё 7 перем
   (:83-88).
 - **`app`** (:93-184) — `interview-path`/`topic-groups-config` (:95-97),
   `admin-token`/`sensitive-rate-limit-per-minute` (:100-101),
-  `scheduling.algorithm` (:104-107), `interview.*` (7 числовых параметров,
-  :110-117), `cache.*` (:120-122), `search.*` (:125-128),
+  `scheduling.algorithm` (:104-107), `interview.*` (6 числовых параметров +
+  пустая map-настройка `senior-rule-priority-overrides`, :110-117),
+  `cache.*` (:120-122), `search.*` (:125-128),
   `import-settings.min-code-block-length` (:131-132),
   `interview-reset-on-startup` (:138), `security.*` (mode/allow-insecure-
   public/multi/oauth/cors, :141-184).
@@ -333,11 +334,11 @@ never` (:200-201). Health-агрегат кэшируется `${HEALTH_CACHE_SE
 **Один `HealthIndicator`** — `SeedCoverageHealthIndicator`
 (`modules/quiz-app/src/main/java/com/cheatsheet/quiz/infrastructure/health/
 SeedCoverageHealthIndicator.java`, 89 строк, `@Component("seedCoverage")`,
-:37). Отражает долю вопросов с загруженными MCQ-вариантами; порог
-`MIN_COVERAGE_RATIO = 0.05` (:40) намеренно низкий — проект мигрирует на
+:38). Отражает долю вопросов с загруженными MCQ-вариантами; порог
+`MIN_COVERAGE_RATIO = 0.05` (:41) намеренно низкий — проект мигрирует на
 JSON-сидеры постепенно, DOWN означает «импорт сломан», а не «контент не
 дозалит» (javadoc :9-18). Не входит в readiness-группу (не гейтит трафик,
-:19-22).
+:20-23).
 
 Общие теги на все метрики: `application=interview-prep`, `env=${APP_ENV:dev}`
 (default) / `env=${APP_ENV:prod}` (`application-prod.yml:38`)
@@ -436,11 +437,11 @@ springdoc:
     enabled: false
 ```
 
-(`application-prod.yml:42-46`). Контрактных тестов, которые сверяли бы
-итоговый `/v3/api-docs`-документ со снапшотом или схемой, в репозитории нет
-(нет ни одного теста, обращающегося к этому endpoint, — `grep -rn
-"v3/api-docs" modules --include='*.java'` не находит совпадений в
-`src/test`).
+(`application-prod.yml:42-46`). `SwaggerProdDisabledTest.java:59` обращается
+к `/v3/api-docs`, но проверяет только его выключенность в prod-профиле
+(тело ответа больше не содержит OpenAPI JSON); контрактного теста, который
+сверял бы итоговый документ со снапшотом или JSON-схемой в default/qa-
+профилях, в репозитории нет.
 
 ## 11. E2E
 
@@ -490,8 +491,8 @@ springdoc:
 {chromium,webkit}/<id>.png`. Раздельные каталоги на движок — комментарий в
 конфиге объясняет: у Chromium и WebKit разные шрифтовые метрики, общий путь
 означал бы перезапись голденов одного движка другим (`playwright.config.js`
-:17-19). Порог: `maxDiffPixelRatio: 0.03`, `animations: 'disabled'`
-(`playwright.config.js:12-15`).
+:20-22). Порог: `maxDiffPixelRatio: 0.03`, `animations: 'disabled'`
+(`playwright.config.js:16-17`).
 
 **Техника детерминизма:**
 - Пин по явному `questionId=2060` + `ordered=true&shuffle=false`
@@ -499,7 +500,7 @@ springdoc:
   в коде тремя комментариями (:15-32): сначала маскировали контент, затем
   пиновали темой (ломалось SRS-очередью), в итоге закрепили конкретный
   `questionId`.
-- `DYNAMIC_CONTENT` (:38-44) — 14 CSS-селекторов, маскируемых в
+- `DYNAMIC_CONTENT` (:38-44) — 15 CSS-селекторов, маскируемых в
   `toHaveScreenshot({ mask: [...] })` (:148, :174) — значения скрыты, но
   геометрия остаётся под охраной пикселей.
 - `VOLATILE_PRESENCE` (:56) — 4 селектора (`.focus-question-reason`,
@@ -561,18 +562,18 @@ pre-commit хук `design-token-audit`
 5. `design-token-audit` (:43-49) — см. §13.
 
 **ArchUnit** — `modules/quiz-app/src/test/java/com/cheatsheet/quiz/
-architecture/LayeredArchitectureTest.java` (45 строк, 4 правила через
+architecture/LayeredArchitectureTest.java` (45 строк, 3 правила через
 `@ArchTest`/`ArchRuleDefinition`), запускается как обычный JUnit-тест внутри
 `./gradlew check` — гейтуется в `ci.yml` job `build-test`, в отличие от
 pre-commit хуков: они локальны, отдельного CI-джоба «прогони pre-commit» нет
 (`grep -n "pre-commit" .github/workflows/*.yml` — 0 совпадений).
 
-**Python-валидаторы в `scripts/`** — 36 файлов (`*.py`+`*.sh`, команда в
+**Python-валидаторы в `scripts/`** — 38 файлов (`*.py`+`*.sh`, команда в
 Приложении A), из которых к автоматическому гейту подключены только 2:
 `cheatsheet-lint.py` (pre-commit хук №1 и отдельный CI-job
 `cheatsheet-lint.yml`) и опосредованно `design-token-audit.py`/
 `css-leak-audit.py` (только pre-commit, без дублирующего CI-job). Остальные
-~30 — MCQ-валидаторы (`mcq-answer-parity-gate.py`, `mcq-linkage-scan.py`,
+~35 — MCQ-валидаторы (`mcq-answer-parity-gate.py`, `mcq-linkage-scan.py`,
 `mcq-anti-tell-scan.py`, `mcq-structure-parity.py`, `mcq-skel-gate.py` и др.),
 генераторы (`gen-interview-plan.py`, `gen-section-stickers.py`) и
 одноразовые утилиты (`restore_mermaid.py`, `migrate-md-to-json.sh`,
