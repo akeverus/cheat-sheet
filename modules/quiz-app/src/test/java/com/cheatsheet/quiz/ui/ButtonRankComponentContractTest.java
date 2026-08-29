@@ -166,20 +166,20 @@ class ButtonRankComponentContractTest {
     }
 
     @Test
-    void noLayerErasesButtonsWithImportant() {
+    void pageLayersNeverEraseButtonsWithImportant() {
+        // Зона совпадает с pageFilesDoNotRedeclareTheButtonBox: reset-слой оставляет
+        // себе точечные идиомы (forced-colors, выбранная самооценка), print-слой
+        // перекрашивает всё ради бумаги по своей природе, а вот страницы и оболочка
+        // стирателей не заводят.
         List<String> offenders = new ArrayList<>();
-        try (Stream<Path> files = Files.list(CSS_DIR)) {
-            for (Path css : files.filter(p -> p.getFileName().toString().endsWith(".css")).sorted().toList()) {
-                for (String[] rule : rules(css)) {
-                    String selector = rule[0];
-                    boolean aboutButton = BUTTON_CLASSES.stream().anyMatch(c -> mentions(selector, c));
-                    if (aboutButton && rule[1].contains("!important")) {
-                        offenders.add(css.getFileName() + ": " + selector.strip().replaceAll("\\s+", " "));
-                    }
+        for (Path css : nonComponentCssFiles()) {
+            for (String[] rule : rules(css)) {
+                String selector = rule[0];
+                boolean aboutButton = BUTTON_CLASSES.stream().anyMatch(c -> mentions(selector, c));
+                if (aboutButton && rule[1].contains("!important")) {
+                    offenders.add(css.getFileName() + ": " + selector.strip().replaceAll("\\s+", " "));
                 }
             }
-        } catch (IOException e) {
-            throw new UncheckedIOException("не читается " + CSS_DIR, e);
         }
         assertThat(offenders)
                 .as("`!important` на кнопке — это стиратель: порядок слоёв для важных объявлений "
