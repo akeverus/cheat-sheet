@@ -103,8 +103,8 @@ class ScreenPresetContractTest {
     void theDefaultPresetKeepsTheCurrentLook() throws IOException {
         String head = read("templates/fragments/head.html");
         assertThat(head)
-                .as("умолчание — «ноутбук»: просторные отступы, мера 72ch, средний пиксель")
-                .contains("laptop: { density: 'spacious', readingWidth: 'standard', pixel: 'med' }");
+                .as("умолчание — «ноутбук»: просторные отступы, мера 72ch")
+                .contains("laptop: { density: 'spacious', readingWidth: 'standard' }");
         assertThat(head)
                 .as("умолчание не пишет атрибутов — иначе оно перестанет быть умолчанием")
                 .contains("if (cfg.density === 'spacious') root.removeAttribute('data-density');")
@@ -124,14 +124,14 @@ class ScreenPresetContractTest {
     }
 
     /**
-     * Пиксельность участвует в выборе пресета, а не только читается.
+     * Легаси-ключ пиксельности участвует в выборе пресета, а не только удаляется.
      *
-     * <p>Дефект найден visual-матрицей (iter-163): {@code pixelIntensity=low} давал
-     * {@code data-pixel="med"} — {@code migrateLegacyPreset} читал legacyPixel и не
-     * использовал его в выборе, то есть человек, настроивший ТОЛЬКО пиксельность,
-     * молча получал laptop/med. Оси раскладки сильнее (явные compact/wide решают
-     * первыми), пиксельность — следом: low → phone, high → wide. Живой прогон —
-     * два migration-теста в e2e/visual-matrix.spec.js.</p>
+     * <p>Дефект найден visual-матрицей (iter-163): {@code migrateLegacyPreset} читал
+     * legacyPixel и не использовал его в выборе — человек, настроивший ТОЛЬКО
+     * пиксельность, молча получал laptop. Сама ось снята вместе с pixel-слоем
+     * (FOLIO), но перенос сохранён: одноосевой выбор проецируется на ближайший
+     * пресет (low → phone, high → wide), оси раскладки решают первыми. Живой
+     * прогон — два migration-теста в e2e/visual-matrix.spec.js.</p>
      */
     @Test
     void theLonePixelChoiceSurvivesTheMigration() throws IOException {

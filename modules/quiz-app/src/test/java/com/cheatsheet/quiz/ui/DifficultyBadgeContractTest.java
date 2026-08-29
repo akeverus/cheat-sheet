@@ -141,26 +141,24 @@ class DifficultyBadgeContractTest {
     }
 
     /**
-     * Замер, а не вкус: пиксельный слой гасит рамку бейджа безусловно
-     * ({@code html[data-design] .badge { border: 0 !important }}) и рисует контур четырьмя
-     * тенями по {@code currentColor}. {@code border-color} в этих правилах не отменяется
-     * темой и не включается настройкой — он не действует никогда, зато выглядит как вторая
-     * ручка рядом с {@code color} и разъезжается с ней при первой же правке палитры.
+     * Пиксельного слоя, который безусловно гасил рамку бейджа
+     * ({@code border: 0 !important} в снятом pixel-nav-badges.css), больше нет:
+     * {@code border-color} на бейдже — снова живая ручка, и правило вправе её
+     * объявлять. Требование к ней то же, что и к {@code color}: значение идёт
+     * через {@code var()}, иначе экран вопроса заводит вторую копию палитры
+     * сложности мимо tokens.css.
      */
     @Test
-    void badgeRulesDoNotCarryADeadBorderColour() {
-        String pixelLayer = read(Path.of("src/main/resources/static/css/pixel-nav-badges.css"));
-        assertThat(stripComments(pixelLayer).replaceAll("\\s+", " "))
-                .as("вывод «border мёртв» держится на этом безусловном правиле — если пиксельный "
-                        + "слой перестанет гасить рамку, border-color снова станет живой ручкой")
-                .contains("border: 0 !important;");
-
+    void badgeBorderColourIfDeclaredGoesThroughTokens() {
         Matcher m = RULE.matcher(stripComments(read(FOCUS_CSS)));
         while (m.find()) {
-            assertThat(m.group(2))
-                    .as("бейдж %s объявляет border-color, которого не будет на экране: "
-                            + "контур идёт по currentColor, и ручка тут ровно одна — color", m.group(1))
-                    .doesNotContain("border-color");
+            Matcher border = Pattern.compile("border-color:\\s*([^;]+);").matcher(m.group(2));
+            while (border.find()) {
+                assertThat(border.group(1).trim())
+                        .as("бейдж %s объявляет border-color сырым значением «%s»: рамка обязана "
+                                + "идти через var(), как и color", m.group(1), border.group(1).trim())
+                        .matches("var\\(--[\\w-]+\\)");
+            }
         }
     }
 

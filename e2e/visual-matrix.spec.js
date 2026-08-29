@@ -3,12 +3,15 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * TEST-005 — визуальная матрица theme × pixel × motion.
+ * TEST-005 — визуальная матрица theme × screen-preset × motion.
  * Скриншоты → e2e/visual-results/ (gitignored).
  * Golden: VISUAL_GOLDEN=1 сравнивает с e2e/visual-baselines/
  *   (обновить: e2e/scripts/run-visual-goldens.sh --update
  *    или VISUAL_GOLDEN=1 npx playwright test visual-matrix --update-snapshots).
  * CI: .github/workflows/visual-goldens.yml (workflow_dispatch).
+ *
+ * Ось «пиксельность» снята вместе с pixel-слоем (FOLIO, миссия 2026-08-29):
+ * пресет экрана теперь несёт две оси — плотность и меру чтения.
  */
 const OUT_DIR = path.join(__dirname, 'visual-results');
 
@@ -20,16 +23,10 @@ const OUT_DIR = path.join(__dirname, 'visual-results');
    контролы и типографика статичных подписей остаются под охраной пикселей. */
 /* Home рендерит ТЕКУЩИЙ вопрос очереди, а его двигает любое использование —
    маскировать мало: другой вопрос меняет ГЕОМЕТРИЮ (высота заголовка, код-блок).
-   Пин: ?topic&ordered=true отдаёт первый вопрос темы независимо от SRS-истории
-   (проверено с мутацией между прогонами: id 2060 оба раза). Слаг констатен
-   нарочно: переименование темы должно уронить тест громко, а не молча сдвинуть
-   голден. После реимпорта банка id меняются, но первый вопрос темы — тот же. */
-/* REF-022: пин темой оказался ложной стабильностью — browse-выборка идёт через
-   SRS-стратегию (due-first), и первая же тренировка по теме переставляет очередь:
-   home-dark-med-vp-768 упал сдвигом ВЫСОТЫ замаскированного контента. Якорь —
-   ЯВНЫЙ questionId (GET / его поддерживает, вопрос детерминирован независимо от
-   SRS-истории). После реимпорта банка id может уехать — тогда тест падает ГРОМКО
-   (другой вопрос = другой голден), и константу обновляют осознанно. */
+   Пин: ЯВНЫЙ questionId (GET / его поддерживает, вопрос детерминирован
+   независимо от SRS-истории). После реимпорта банка id может уехать — тогда
+   тест падает ГРОМКО (другой вопрос = другой голден), и константу обновляют
+   осознанно (REF-022). */
 const PINNED_HOME =
   '/?questionId=2060&topic='
   + encodeURIComponent('algorithms/algorithmic-paradigms/backtracking-interview')
@@ -49,31 +46,27 @@ const DYNAMIC_CONTENT = [
    вокруг масок. Такие блоки на время снимка скрываются целиком — их пиксели
    матрица честно НЕ стережёт (поведение причин закрыто контрактами разметки,
    баннера — клавиатурным спеком). */
-/* .today-chip не исчезает, но МЕНЯЕТ РАЗМЕР от охвата очереди (полный банк ↔
-   фильтр сессии): маска повторяет бокс элемента, и вокруг неё краснеют полосы.
-   Прячем вместе с presence-волатильными. shuffle=false в пине — той же природы:
-   перемешивание вариантов меняло высоты карточек ответов между прогонами. */
 const VOLATILE_PRESENCE = ['.focus-question-reason', '.resume-banner', '.notice', '.today-chip'];
 const stabilizePresence = (page) =>
   page.addStyleTag({ content: VOLATILE_PRESENCE.join(', ') + ' { display: none !important; }' });
 const GOLDEN = process.env.VISUAL_GOLDEN === '1';
 
-/** @type {Array<{ id: string, path: string, theme: string, pixel: string, motion: string }>} */
+/** @type {Array<{ id: string, path: string, theme: string, preset: string, motion: string }>} */
 const MATRIX = [
-  { id: 'home-dark-med-auto', path: PINNED_HOME, theme: 'dark', pixel: 'med', motion: 'auto' },
-  { id: 'home-light-med-on', path: PINNED_HOME, theme: 'light', pixel: 'med', motion: 'on' },
-  { id: 'home-dark-low-off', path: PINNED_HOME, theme: 'dark', pixel: 'low', motion: 'off' },
-  { id: 'home-dark-high-on', path: PINNED_HOME, theme: 'dark', pixel: 'high', motion: 'on' },
-  { id: 'home-light-high-off', path: PINNED_HOME, theme: 'light', pixel: 'high', motion: 'off' },
+  { id: 'home-dark-laptop-auto', path: PINNED_HOME, theme: 'dark', preset: 'laptop', motion: 'auto' },
+  { id: 'home-light-laptop-on', path: PINNED_HOME, theme: 'light', preset: 'laptop', motion: 'on' },
+  { id: 'home-dark-phone-off', path: PINNED_HOME, theme: 'dark', preset: 'phone', motion: 'off' },
+  { id: 'home-dark-wide-on', path: PINNED_HOME, theme: 'dark', preset: 'wide', motion: 'on' },
+  { id: 'home-light-wide-off', path: PINNED_HOME, theme: 'light', preset: 'wide', motion: 'off' },
   // /train — конструктор сессии (собственная поверхность с b0a45a6f, UXD-001):
   // ключевая страница цикла, обязана жить в матрице. Волатильные счётчики
   // набора и стрика — в масках ниже.
-  { id: 'train-dark-med-auto', path: '/train', theme: 'dark', pixel: 'med', motion: 'auto' },
-  { id: 'train-light-med-on', path: '/train', theme: 'light', pixel: 'med', motion: 'on' },
-  { id: 'settings-dark-med-off', path: '/settings', theme: 'dark', pixel: 'med', motion: 'off' },
-  { id: 'settings-light-med-on', path: '/settings', theme: 'light', pixel: 'med', motion: 'on' },
-  { id: 'stats-dark-med-off', path: '/stats', theme: 'dark', pixel: 'med', motion: 'off' },
-  { id: 'stats-light-low-off', path: '/stats', theme: 'light', pixel: 'low', motion: 'off' },
+  { id: 'train-dark-laptop-auto', path: '/train', theme: 'dark', preset: 'laptop', motion: 'auto' },
+  { id: 'train-light-laptop-on', path: '/train', theme: 'light', preset: 'laptop', motion: 'on' },
+  { id: 'settings-dark-laptop-off', path: '/settings', theme: 'dark', preset: 'laptop', motion: 'off' },
+  { id: 'settings-light-laptop-on', path: '/settings', theme: 'light', preset: 'laptop', motion: 'on' },
+  { id: 'stats-dark-laptop-off', path: '/stats', theme: 'dark', preset: 'laptop', motion: 'off' },
+  { id: 'stats-light-phone-off', path: '/stats', theme: 'light', preset: 'phone', motion: 'off' },
 ];
 
 /** Extra viewports for Wave 8 responsive smoke (subset of full matrix). */
@@ -83,17 +76,20 @@ const VIEWPORTS = [
   { id: 'vp-1280', width: 1280, height: 800 },
 ];
 
-/* Пиксельность с редизайна персонализации (0aad5535) не хранится своей осью:
-   её задаёт пресет экрана (phone→low, laptop→med, wide→high). Прежний ключ
-   pixelIntensity — легаси, он мигрирует в пресет при первой загрузке; матрица
-   говорит на живом контракте, а миграцию проверяет отдельный тест ниже. */
-const PRESET_FOR_PIXEL = { low: 'phone', med: 'laptop', high: 'wide' };
+/* Пресет экрана раскладывается в атрибуты раскладки до первого кадра
+   (head.html): phone → data-density="compact", wide → data-reading-width="wide",
+   laptop — без атрибутов. Матрица проверяет живой контракт, а не localStorage. */
+const PRESET_ATTRS = {
+  phone:  { density: 'compact', readingWidth: null },
+  laptop: { density: null, readingWidth: null },
+  wide:   { density: null, readingWidth: 'wide' },
+};
 
-function applyPrefsScript({ theme, pixel, motion, preset }) {
+function applyPrefsScript({ theme, preset, motion }) {
   try {
     if (theme) localStorage.setItem('theme', theme);
     else localStorage.removeItem('theme');
-    if (preset) localStorage.setItem('screenPreset', preset);
+    if (preset && preset !== 'laptop') localStorage.setItem('screenPreset', preset);
     else localStorage.removeItem('screenPreset');
     localStorage.removeItem('pixelIntensity');
     if (motion && motion !== 'auto') localStorage.setItem('motion', motion);
@@ -114,9 +110,8 @@ test.describe('visual preference matrix', () => {
     test(combo.id, async ({ page }) => {
       await page.addInitScript(applyPrefsScript, {
         theme: combo.theme,
-        pixel: combo.pixel,
+        preset: combo.preset,
         motion: combo.motion,
-        preset: combo.pixel === 'med' ? null : PRESET_FOR_PIXEL[combo.pixel],
       });
 
       const response = await page.goto(combo.path, { waitUntil: 'domcontentloaded' });
@@ -128,7 +123,17 @@ test.describe('visual preference matrix', () => {
 
       const html = page.locator('html');
       await expect(html).toHaveAttribute('data-theme', expectedResolvedTheme(combo.theme));
-      await expect(html).toHaveAttribute('data-pixel', combo.pixel);
+      const attrs = PRESET_ATTRS[combo.preset];
+      if (attrs.density) {
+        await expect(html).toHaveAttribute('data-density', attrs.density);
+      } else {
+        await expect(html).not.toHaveAttribute('data-density');
+      }
+      if (attrs.readingWidth) {
+        await expect(html).toHaveAttribute('data-reading-width', attrs.readingWidth);
+      } else {
+        await expect(html).not.toHaveAttribute('data-reading-width');
+      }
       if (combo.motion === 'auto') {
         await expect(html).not.toHaveAttribute('data-motion');
       } else {
@@ -152,23 +157,23 @@ test.describe('visual preference matrix', () => {
   }
 
   for (const vp of VIEWPORTS) {
-    test(`home-dark-med-${vp.id}`, async ({ page }) => {
+    test(`home-dark-laptop-${vp.id}`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
       await page.addInitScript(applyPrefsScript, {
         theme: 'dark',
-        pixel: 'med',
+        preset: 'laptop',
         motion: 'off',
       });
       const response = await page.goto(PINNED_HOME, { waitUntil: 'domcontentloaded' });
       await stabilizePresence(page);
       expect(response?.ok()).toBeTruthy();
       await expect(page.locator('#main-content')).toBeVisible({ timeout: 20_000 });
-      const file = path.join(OUT_DIR, `home-dark-med-${vp.id}.png`);
+      const file = path.join(OUT_DIR, `home-dark-laptop-${vp.id}.png`);
       await page.screenshot({ path: file, fullPage: false });
       expect(fs.existsSync(file)).toBeTruthy();
 
       if (GOLDEN) {
-        await expect(page).toHaveScreenshot(`home-dark-med-${vp.id}.png`, {
+        await expect(page).toHaveScreenshot(`home-dark-laptop-${vp.id}.png`, {
           maxDiffPixelRatio: 0.03,
           animations: 'disabled',
           mask: DYNAMIC_CONTENT.map((sel) => page.locator(sel)),
@@ -178,13 +183,14 @@ test.describe('visual preference matrix', () => {
   }
 
   /**
-   * Легаси-ключ одной оси мигрирует в ближайший пресет, а не молча в laptop/med.
-   * Дефект найден этой матрицей: pixelIntensity=low давал data-pixel="med" —
-   * migrateLegacyPreset читал legacyPixel и не использовал его в выборе.
+   * Легаси-ключ одной оси мигрирует в ближайший пресет, а не молча в laptop.
+   * Дефект найден этой матрицей: pixelIntensity=low не участвовал в выборе —
+   * migrateLegacyPreset читал legacyPixel и не использовал его. Сама ось снята,
+   * но перенос сохранён: единственный выбор человека не должен пропасть.
    */
-  for (const [legacy, wantPreset, wantPixel] of [
-    ['low', 'phone', 'low'],
-    ['high', 'wide', 'high'],
+  for (const [legacy, wantPreset] of [
+    ['low', 'phone'],
+    ['high', 'wide'],
   ]) {
     test(`legacy pixelIntensity=${legacy} migrates to ${wantPreset}`, async ({ page }) => {
       await page.addInitScript((v) => {
@@ -194,7 +200,14 @@ test.describe('visual preference matrix', () => {
         } catch (_) { /* private mode */ }
       }, legacy);
       await page.goto('/', { waitUntil: 'domcontentloaded' });
-      await expect(page.locator('html')).toHaveAttribute('data-pixel', wantPixel);
+      const attrs = PRESET_ATTRS[wantPreset];
+      const html = page.locator('html');
+      if (attrs.density) {
+        await expect(html).toHaveAttribute('data-density', attrs.density);
+      }
+      if (attrs.readingWidth) {
+        await expect(html).toHaveAttribute('data-reading-width', attrs.readingWidth);
+      }
       const stored = await page.evaluate(() => ({
         preset: localStorage.getItem('screenPreset'),
         legacyGone: localStorage.getItem('pixelIntensity') === null,

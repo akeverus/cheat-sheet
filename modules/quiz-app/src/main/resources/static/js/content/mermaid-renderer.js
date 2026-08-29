@@ -46,29 +46,29 @@ function readThemeVars() {
   const mmTok = (name, fb) => (mmStyle.getPropertyValue(name) || '').trim() || fb;
   return {
     darkMode: document.documentElement.getAttribute('data-theme') !== 'light',
-    background: mmTok('--color-bg-secondary', '#1e1b16'),
+    background: mmTok('--color-bg-secondary', '#1e2025'),
     fontFamily: mmTok('--font-family-body', 'Inter, system-ui, sans-serif'),
-    primaryColor: mmTok('--color-surface-soft', '#221e18'),
-    primaryTextColor: mmTok('--color-text-primary', '#f2ece0'),
-    primaryBorderColor: mmTok('--color-border-strong', '#574e3f'),
+    primaryColor: mmTok('--color-surface-soft', '#1a1c20'),
+    primaryTextColor: mmTok('--color-text-primary', '#eceef0'),
+    primaryBorderColor: mmTok('--color-border-strong', '#4b505b'),
     secondaryColor: mmTok('--color-bg-tertiary', '#12252e'),
-    secondaryTextColor: mmTok('--color-text-primary', '#f2ece0'),
-    secondaryBorderColor: mmTok('--color-border-strong', '#574e3f'),
+    secondaryTextColor: mmTok('--color-text-primary', '#eceef0'),
+    secondaryBorderColor: mmTok('--color-border-strong', '#4b505b'),
     tertiaryColor: mmTok('--color-bg-tertiary', '#12252e'),
-    tertiaryTextColor: mmTok('--color-text-primary', '#f2ece0'),
-    tertiaryBorderColor: mmTok('--color-border-strong', '#574e3f'),
-    mainBkg: mmTok('--color-surface-soft', '#221e18'),
-    nodeBorder: mmTok('--color-border-strong', '#574e3f'),
-    nodeTextColor: mmTok('--color-text-primary', '#f2ece0'),
-    lineColor: mmTok('--color-text-tertiary', '#9d927e'),
-    edgeLabelBackground: mmTok('--color-bg-secondary', '#1e1b16'),
-    clusterBkg: mmTok('--color-bg-secondary', '#1e1b16'),
-    clusterBorder: mmTok('--color-border-strong', '#574e3f'),
-    titleColor: mmTok('--color-text-primary', '#f2ece0'),
-    labelColor: mmTok('--color-text-primary', '#f2ece0'),
-    labelTextColor: mmTok('--color-text-primary', '#f2ece0'),
-    textColor: mmTok('--color-text-secondary', '#bcb19c'),
-    accent: mmTok('--color-accent-primary', '#d0a33c')
+    tertiaryTextColor: mmTok('--color-text-primary', '#eceef0'),
+    tertiaryBorderColor: mmTok('--color-border-strong', '#4b505b'),
+    mainBkg: mmTok('--color-surface-soft', '#1a1c20'),
+    nodeBorder: mmTok('--color-border-strong', '#4b505b'),
+    nodeTextColor: mmTok('--color-text-primary', '#eceef0'),
+    lineColor: mmTok('--color-text-tertiary', '#8c929c'),
+    edgeLabelBackground: mmTok('--color-bg-secondary', '#1e2025'),
+    clusterBkg: mmTok('--color-bg-secondary', '#1e2025'),
+    clusterBorder: mmTok('--color-border-strong', '#4b505b'),
+    titleColor: mmTok('--color-text-primary', '#eceef0'),
+    labelColor: mmTok('--color-text-primary', '#eceef0'),
+    labelTextColor: mmTok('--color-text-primary', '#eceef0'),
+    textColor: mmTok('--color-text-secondary', '#b3b8c0'),
+    accent: mmTok('--color-accent-primary', '#366fc5')
   };
 }
 
@@ -101,7 +101,7 @@ function withSemanticClassDefs(source) {
   if (!DIAGRAM_CLASS_REFERENCE.test(source)) return source;
   const style = getComputedStyle(document.documentElement);
   const token = (name) => (style.getPropertyValue(name) || '').trim();
-  const ink = token('--color-text-primary') || '#f2ece0';
+  const ink = token('--color-text-primary') || '#eceef0';
 
   const defs = Object.entries(DIAGRAM_CLASS_TOKENS)
     .filter(([name]) => new RegExp('\\b' + name + '\\b').test(source))

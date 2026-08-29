@@ -13,7 +13,8 @@
     pointer-events: auto;
   }
 
-  /* Руна: квадрат с разомкнутой стороной, вращение шагами — механизм, а не плавный веб-спиннер.
+  /* Спиннер: кольцо с разомкнутой стороной, плавное вращение (FOLIO — шаговая
+     «руна» ушла вместе с pixel-механикой).
      Довод и история: docs/css-decisions/components-pending.md#components-pending-e03 */
   html[data-design] .pending-rune {
     display: inline-block;
@@ -23,8 +24,8 @@
     vertical-align: -0.15em;
     border: 2px solid currentColor;
     border-right-color: transparent;
-    border-radius: 0;
-    animation: pending-rune 0.5s steps(4) infinite;
+    border-radius: var(--border-radius-full);
+    animation: pending-rune 0.7s linear infinite;
   }
 
   @keyframes pending-rune { to { transform: rotate(360deg); } }
@@ -33,9 +34,8 @@
 
   /* Единственный скелетон в приложении. До iter-84 его не было вовсе: пустая
      рамка ждущей схемы объяснялась одной строкой в shell.css, а больше нигде
-     ожидание области не показывалось. Полотно — каменная кладка: диагональная
-     штриховка теми же токенами поверхности, что и у остальных панелей, без
-     собственного цвета. */
+     ожидание области не показывалось. Полотно — диагональная штриховка теми же
+     токенами поверхности, что и у остальных панелей, без собственного цвета. */
   html[data-design] [data-pending="block"] {
     position: relative;
     min-height: 96px;
@@ -47,7 +47,7 @@
       var(--color-bg-secondary) 8px 16px
     );
     background-size: 22.7px 22.7px; /* 16px × √2 — шаг штриховки по диагонали */
-    animation: pending-caravan 1.2s steps(4) infinite;
+    animation: pending-caravan 1.4s linear infinite;
   }
 
   /* Подпись скелетона — слово, а не только текстура. Его даёт вызывающая

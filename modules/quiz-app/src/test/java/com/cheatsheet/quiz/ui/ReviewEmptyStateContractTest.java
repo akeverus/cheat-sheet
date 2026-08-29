@@ -53,11 +53,12 @@ class ReviewEmptyStateContractTest {
     void theEmptyReviewUsesTheCleanSlateGlyph() throws IOException {
         String markup = focusMarkup();
         assertThat(markup)
-                .as("в разборе снова опускная решётка: «путь закрыт» вместо «разобрано»")
-                .containsPattern("th:if=\"\\$\\{reviewMode}\"><use href=\"#px-clean-slate\"");
+                .as("в разборе снова глиф «путь закрыт» вместо «разобрано»")
+                .containsPattern("th:if=\"\\$\\{reviewMode}\"><use href=\"#state-clean-slate\"");
         assertThat(markup)
-                .as("вне разбора решётка остаётся: там пустота действительно про «некуда идти»")
-                .containsPattern("th:unless=\"\\$\\{reviewMode}\"><use href=\"#px-portcullis\"");
+                .as("вне разбора «путь закрыт» (state-locked) остаётся: там пустота "
+                        + "действительно про «некуда идти»")
+                .containsPattern("th:unless=\"\\$\\{reviewMode}\"><use href=\"#state-locked\"");
     }
 
     @Test

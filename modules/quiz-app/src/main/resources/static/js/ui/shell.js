@@ -70,7 +70,7 @@ function initBackToTop() {
   btn.className = 'back-to-top';
   btn.setAttribute('aria-label', 'Наверх');
   btn.setAttribute('title', 'Наверх');
-  btn.innerHTML = '<svg class="px-icon" aria-hidden="true"><use href="#arrow-up"></use></svg>';
+  btn.innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="#arrow-up"></use></svg>';
   document.body.appendChild(btn);
 
   let shown = false;

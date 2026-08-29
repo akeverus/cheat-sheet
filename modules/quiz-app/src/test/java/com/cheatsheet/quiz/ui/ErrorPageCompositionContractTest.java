@@ -160,11 +160,11 @@ class ErrorPageCompositionContractTest {
         // эквивалент здесь aria-hidden. Проверяется СВОЙСТВО (скрыта), а не тег.
         assertThat(html)
                 .as("иллюстрация ошибки исчезла со страницы")
-                .contains("class=\"error-pixel-art");
+                .contains("class=\"error-glyph");
         assertThat(html)
                 .as("декоративная иллюстрация не скрыта от скринридера — озвучится мусором "
                         + "между заголовком дозора и его содержимым")
-                .containsPattern("(?s)class=\"error-pixel-art.{0,400}?(alt=\"\"|aria-hidden=\"true\")");
+                .containsPattern("(?s)class=\"error-glyph.{0,400}?(alt=\"\"|aria-hidden=\"true\")");
     }
 
     @Test

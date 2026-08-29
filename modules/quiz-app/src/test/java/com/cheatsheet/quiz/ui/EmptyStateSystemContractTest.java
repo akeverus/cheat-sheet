@@ -218,12 +218,14 @@ class EmptyStateSystemContractTest {
             int found = 0;
             while (m.find()) {
                 found++;
-                assertThat(m.group(1)).as("%s: глиф не из спрайта состояний", template).startsWith("px-");
+                assertThat(m.group(1)).as("%s: глиф не из спрайта состояний", template).startsWith("state-");
                 referenced.add(m.group(1));
             }
             assertThat(found).as("%s: глифы пустых состояний", template).isPositive();
+            // Каталога static/img больше нет вовсе: любая ссылка /img/ в пустом
+            // состоянии — это растровый маскот из снятой эры и гарантированный 404.
             assertThat(markup).as("%s: растровый маскот в пустом состоянии", template)
-                    .doesNotContain("/img/pixel/empty");
+                    .doesNotContain("/img/");
         }
 
         assertThat(referenced).as("ссылки на глифы состояний").isNotEmpty();

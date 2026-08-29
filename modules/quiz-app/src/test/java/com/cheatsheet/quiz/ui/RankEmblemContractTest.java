@@ -29,13 +29,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <h2>Что закреплено</h2>
  * <ol>
- *   <li>у каждой ступени есть герб, и все семь разные;</li>
+ *   <li>у каждой ступени есть герб `rank-*`, и все семь разные;</li>
  *   <li>каждый герб существует в спрайте (`fragments/icons.html`);</li>
- *   <li>гербы нарисованы на той же сетке и тем же языком, что остальные знаки:
- *       `viewBox="0 0 16 16"`, `currentColor`, `crispEdges`, только прогоны `<rect>`;</li>
  *   <li>карточка берёт герб из ступени, а не печатает знак навигации;</li>
  *   <li>герб не единственный носитель смысла: рядом стоит название ступени словом.</li>
  * </ol>
+ *
+ * <p>Язык самих символов (сетка 24×24, отсутствие цвета внутри `<symbol>`) —
+ * контракт всего спрайта, его стережёт {@code IconLanguageContractTest};
+ * здесь эти проверки не дублируются.</p>
  */
 class RankEmblemContractTest {
 
@@ -60,6 +62,9 @@ class RankEmblemContractTest {
         for (GuildRank rank : GuildRank.values()) {
             String glyph = ranks.glyph(rank);
             assertThat(glyph).as("у ступени %s нет герба", rank).isNotBlank();
+            assertThat(glyph)
+                    .as("герб ступени %s зовётся не по конвенции `rank-*` спрайта", rank)
+                    .startsWith("rank-");
             assertThat(seen.add(glyph))
                     .as("герб `%s` достался двум ступеням: лестница снова не читается — "
                             + "именно так «Ученик» и «Магистр» выглядели одинаково", glyph)
@@ -68,11 +73,14 @@ class RankEmblemContractTest {
         assertThat(seen).as("гербов меньше, чем ступеней").hasSize(GuildRank.values().length);
     }
 
+    /**
+     * Язык символа (24×24, без цвета внутри) здесь не перепроверяется:
+     * его для всего спрайта держит {@code IconLanguageContractTest}.
+     */
     @Test
-    void everyEmblemExistsInTheSpriteAndSpeaksTheSameLanguage() throws IOException {
-        String sprite = sprite();
+    void everyEmblemExistsInTheSprite() throws IOException {
         List<String> ids = new ArrayList<>();
-        Matcher m = SYMBOL.matcher(sprite);
+        Matcher m = SYMBOL.matcher(sprite());
         while (m.find()) ids.add(m.group(1));
 
         for (GuildRank rank : GuildRank.values()) {
@@ -80,25 +88,6 @@ class RankEmblemContractTest {
             assertThat(ids)
                     .as("герба `%s` нет в спрайте: `<use href=\"#%s\">` нарисует пустоту", glyph, glyph)
                     .contains(glyph);
-
-            Matcher one = Pattern.compile(
-                    "<symbol id=\"" + Pattern.quote(glyph) + "\" viewBox=\"([^\"]+)\">(.*?)</symbol>",
-                    Pattern.DOTALL).matcher(sprite);
-            assertThat(one.find()).as("символ %s не разобрался", glyph).isTrue();
-            assertThat(one.group(1))
-                    .as("герб %s нарисован не на сетке 16×16 — целый масштаб (32/48px) размоется",
-                            glyph)
-                    .isEqualTo("0 0 16 16");
-            String body = one.group(2);
-            assertThat(body)
-                    .as("герб %s не наследует цвет темы", glyph)
-                    .contains("currentColor")
-                    .as("герб %s без crispEdges — пиксель поедет на дробном масштабе", glyph)
-                    .contains("crispEdges");
-            assertThat(body.replaceAll("<rect[^>]*/>", "").replaceAll("<g[^>]*>|</g>", "").trim())
-                    .as("герб %s нарисован не прогонами `<rect>`: язык спрайта — пиксельная "
-                            + "сетка, а не произвольные контуры", glyph)
-                    .isEmpty();
         }
     }
 

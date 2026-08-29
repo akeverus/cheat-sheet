@@ -56,7 +56,6 @@ class TabComponentContractTest {
     private static final Path RESOURCES = Path.of("src/main/resources");
     private static final Path CSS_DIR = RESOURCES.resolve("static/css");
     private static final Path COMPONENT_CSS = CSS_DIR.resolve("components-tabs.css");
-    private static final Path PAINT_CSS = CSS_DIR.resolve("pixel-buttons.css");
     private static final Path SHELL_CSS = CSS_DIR.resolve("shell.css");
     private static final Path UTILITIES_CSS = CSS_DIR.resolve("utilities-overrides.css");
     private static final Path MANIFEST = RESOURCES.resolve("css-bundle-manifest.txt");
@@ -137,7 +136,7 @@ class TabComponentContractTest {
                         + "сочинять свою")
                 .contains("min-height: 44px")
                 .contains("padding: var(--space-3) var(--space-5)")
-                .contains("border-radius: 0");
+                .contains("border-radius: var(--border-radius-");
 
         assertThat(read(MANIFEST))
                 .as("компонент подключён гейтом `*`: полосы вкладок есть на трёх разных страницах, "
@@ -261,15 +260,4 @@ class TabComponentContractTest {
                 .isEmpty();
     }
 
-    @Test
-    void paintLayerKeepsTabsOutOfItsSelectorLists() {
-        List<String> offenders = rules(PAINT_CSS).stream()
-                .filter(r -> aboutTab(r[0]))
-                .map(r -> r[0].strip().replaceAll("\\s+", " "))
-                .toList();
-        assertThat(offenders)
-                .as("слой краски вкладку больше не трогает: её вид целиком принадлежит компоненту, "
-                        + "а pixel-характер держит квадратный маркер выбранного, а не растр")
-                .isEmpty();
-    }
 }

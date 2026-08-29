@@ -1,112 +1,89 @@
 /* tokens.css — TOKEN-DEFINITION LAYER.
    Довод и история: docs/css-decisions/tokens.md#tokens-e01 */
 
-@layer tokens, reset, shell, components, pages, utilities, pixel;
+@layer tokens, reset, shell, components, pages, utilities;
 
 @layer tokens {
 :root {
   /* Схема для нативного хрома (scrollbar, <select>, каретка). База — DARK
-     (реставр 2026-07-18: макеты handoff-3 все тёмные, dark — дефолт по решению
-     пользователя). light переопределяется явным [data-theme="light"]. */
+     (dark — дефолт по решению пользователя). light переопределяется явным
+     [data-theme="light"]. */
   color-scheme: dark;
 
-  /* Цвет — DARK: «камень при свече» — Художественное направление продукта — мастерская гильдии, а не терминал.
-     Довод и история: docs/css-decisions/tokens.md#tokens-e02 */
-  --color-bg-primary:   #14120f; /* bg-0 / канва — тёплый графит */
-  /* Плита карточки. Была #1e1b16 — контраст к канве 1.09, то есть без рамки плита
-     не читалась вовсе (замер Chromium, /stats). После снятия контура (iter-117)
-     границу держит сам тон, и перепад поднят до различимого. */
-  --color-bg-secondary: #232019; /* surface — плита карточки */
-  --color-bg-tertiary:  #272219; /* surface-raised — колодец поля, панель кода */
-  --color-surface-soft: #221e18; /* surface-soft */
-  --color-bg-inverse:   #f2ece0;
+  /* Цвет — DARK: «графит и чернила». Направление FOLIO (миссия 2026-08-29):
+     редакционная рабочая тетрадь, а не мастерская гильдии и не терминал.
+     Холодно-нейтральный графит вместо тёплого («black + gold» снят как клише),
+     иерархия поверхностей — светлотой, а не рамками. */
+  --color-bg-primary:   #141518; /* bg-0 / канва — холодный графит */
+  /* Плита карточки: перепад к канве держит границу сам, без контура —
+     принцип iter-117 сохранён, значения пересчитаны под нейтральную ось. */
+  --color-bg-secondary: #1e2025; /* surface — плита карточки */
+  --color-bg-tertiary:  #24262c; /* surface-raised — колодец поля, панель кода */
+  --color-surface-soft: #1a1c20; /* surface-soft */
+  --color-bg-inverse:   #f0f1f2;
   /* Соседняя ступень фона для градиента оболочки (bg-0 → bg-1). */
-  --color-bg-canvas-2:  #191612;
+  --color-bg-canvas-2:  #17191d;
 
-  --color-text-primary:   #f2ece0; /* тёплая слоновая кость, 15.7:1 к канве */
-  --color-text-secondary: #bcb19c; /* 8.4:1 к канве */
-  --color-text-tertiary:  #9d927e; /* 5.9:1 к канве, 5.0:1 к карточке */
-  --color-text-inverse:   #14120f;
-  --color-text-link:      #e3c07a;
+  --color-text-primary:   #eceef0; /* нейтральная бумага, ~15:1 к канве */
+  --color-text-secondary: #b3b8c0; /* ~8:1 к канве */
+  --color-text-tertiary:  #8c929c; /* ~5.5:1 к канве, ≥4.5 к карточке */
+  --color-text-inverse:   #141518;
+  --color-text-link:      #8ab6f2;
 
-  --color-border-primary:   #3a342a; /* грань плиты */
-  --color-border-secondary: #2a251e; /* мягче border (внутр. разделители) */
-  --color-border-strong:    #574e3f; /* border-strong (чипы/letter-боксы) */
-  /* Рамка поля ввода — отдельный тон, а не `border-primary`. У поля граница это
-     единственный признак, по которому его вообще видно (у кнопки есть ещё текст
-     и заливка), поэтому WCAG 1.4.11 требует для неё 3:1 к подложке. Замер
-     iter-77 на прежней палитре показал, что `border-primary` давал 1.42:1 и поле
-     опознавалось только по догадке. Здесь #8a7d66 даёт 4.25:1 к `bg-secondary`
-     и 4.64:1 к `bg-primary` — обе подложки, на которых поле реально стоит.
-     Разделители и рамки кнопок остаются на `border-primary`: там граница не
-     единственный носитель смысла. */
-  --color-control-border:   #8a7d66;
-  --color-border-focus:     #d9ae4d;
+  --color-border-primary:   #2e3138; /* грань плиты */
+  --color-border-secondary: #24272d; /* мягче border (внутр. разделители) */
+  --color-border-strong:    #4b505b; /* border-strong (чипы/letter-боксы) */
+  /* Рамка поля ввода — отдельный тон, а не `border-primary`: у поля граница —
+     единственный признак, по которому его видно, WCAG 1.4.11 требует 3:1 к
+     подложке. #7e8592 даёт ≥3.9:1 к карточке и ≥4.3:1 к канве. */
+  --color-control-border:   #7e8592;
+  --color-border-focus:     #5f9cf0;
   /* Кольцо клавиатурного фокуса — ярче рамки выбора (focus). */
-  --color-focus-ring:       #f0cd7f;
+  --color-focus-ring:       #8ab6f2;
 
-  --color-accent-primary:        #d0a33c; /* латунь-заливка (тёмная надпись AA) */
-  --color-accent-2:              #a97c2a; /* второй стоп градиента — потемневшая латунь */
-  --color-accent-strong:         #e3c07a; /* латунь-как-текст (крупный контраст) */
-  --color-accent-primary-hover:  #e0b455;
-  --color-accent-primary-active: #b98c2f;
-  --color-accent-on:             #1a1305; /* тёмная надпись на латуни */
-  --color-accent-secondary:      #e08a41; /* уголь (XP-бейдж, семья предупреждения) */
-  --color-accent-wash:           #2e2717; /* латунная подложка (выбранный, поверх surface) */
+  --color-accent-primary:        #366fc5; /* кобальт-заливка (белая надпись AA) */
+  --color-accent-2:              #2d5fae; /* второй стоп градиента — глубже */
+  --color-accent-strong:         #7fb0f2; /* кобальт-как-текст (крупный контраст) */
+  --color-accent-primary-hover:  #4a80d4;
+  --color-accent-primary-active: #2d61b0;
+  --color-accent-on:             #ffffff; /* надпись на кобальте */
+  --color-accent-secondary:      #dfa14b; /* янтарь (XP-бейдж, семья предупреждения) */
+  --color-accent-wash:           #1c2c44; /* кобальтовая подложка (выбранный, поверх surface) */
 
-  --color-status-success:      #8fbf6a; /* травяная зелень, не неон */
-  --color-status-success-on:   #0f1a07;
-  --color-status-success-wash: #1f2a16;
-  --color-status-warning:      #e08a41;
-  /* Единственный статус, у которого -wash не было: success/error/info свои
-     подложки имели, warning — нет, и семантика «предупреждение» не могла быть
-     фоном. Понадобилось для узлов диаграмм (см. mermaid-renderer.js). */
-  --color-status-warning-wash: #33230f;
-  --color-status-error:        #e8705c; /* сурик */
-  --color-status-error-on:     #2a0c07;
-  --color-status-error-wash:   #331815;
-  --color-status-info:         #7fa8d8; /* ультрамарин манускрипта, приглушённый */
-  --color-status-info-wash:    #1a2333;
-  --color-status-purple:       #a98fd8;
+  --color-status-success:      #7dc383; /* спокойная зелень, не неон */
+  --color-status-success-on:   #0c1a0e;
+  --color-status-success-wash: #182a1b;
+  --color-status-warning:      #dfa14b;
+  /* -wash предупреждения: фон для узлов диаграмм (см. mermaid-renderer.js). */
+  --color-status-warning-wash: #2d2310;
+  --color-status-error:        #ef7168;
+  --color-status-error-on:     #2a0b08;
+  --color-status-error-wash:   #321a18;
+  --color-status-info:         #6ea9dd; /* приглушённая сталь — не спорит с акцентом */
+  --color-status-info-wash:    #182430;
+  --color-status-purple:       #a893e6;
 
   --color-surface-overlay: rgba(0, 0, 0, 0.55);
 
 
   /* ---- Подсветка синтаксиса (highlight.js) ----
-     Код подсвечивается палитрой продукта, а не палитрой чужой IDE-темы. Раньше
-     работала вендорная atom-one-dark с восемью зашитыми HEX: она не реагировала
-     на тумблер темы, и на светлом фоне её жёлтый #e6c07b давал ~1.4:1 — подсветка
-     делала листинг ХУЖЕ, чем её отсутствие. Значения ниже откалиброваны на AA
-     (≥4.5) против трёх поверхностей, где реально лежит код: bg-tertiary (панель
-     «Пример кода»), surface-soft, bg-secondary; худшая пара в тёмной теме — 5.15.
+     Код подсвечивается палитрой продукта, а не чужой IDE-темой. Значения
+     откалиброваны на AA (≥4.5) против трёх поверхностей, где реально лежит
+     код: bg-tertiary (панель «Пример кода»), surface-soft, bg-secondary.
      Потребитель — components-code-highlight.css. */
-  --code-plain:   #f2ece0; /* базовый текст листинга */
-  --code-keyword: #c9a3e8; /* ключевые слова, литералы */
-  --code-string:  #8fbf6a; /* строки, regexp, значения атрибутов */
-  --code-number:  #e0a94f; /* числа, атрибуты, символы */
-  --code-type:    #e3c07a; /* типы и классы */
-  --code-func:    #8fb8e8; /* имена функций и методов */
-  --code-tag:     #e8705c; /* XML-теги, аннотации */
-  --code-comment: #9d927e; /* комментарии */
+  --code-plain:   #eceef0; /* базовый текст листинга */
+  --code-keyword: #c39df0; /* ключевые слова, литералы */
+  --code-string:  #86c48c; /* строки, regexp, значения атрибутов */
+  --code-number:  #dfab57; /* числа, атрибуты, символы */
+  --code-type:    #d9bc7e; /* типы и классы */
+  --code-func:    #82b4f0; /* имена функций и методов */
+  --code-tag:     #ef7168; /* XML-теги, аннотации */
+  --code-comment: #8c929c; /* комментарии */
 
-  /* Декоративная пиксельная рампа (static/img/pixel/) — Роли, которых нет в интерфейсной палитре и не должно быть: золото монеты — не «предупреждение», розовый сердца — не «ошибка».
-     Довод и история: docs/css-decisions/tokens.md#tokens-e03 */
-  /* Рампа сжалась дважды. В iter-118 ушли роли, существовавшие ради штриховки внутри
-     PNG-спрайтов (18 растровых значков заменены масками). В iter-119 растровых ассетов
-     не осталось вовсе: бренд стал гербом из спрайта, иллюстрация ошибки — глифом
-     состояния. Поэтому роль теперь ровно одна на каждый живой цвет, и живут они не в
-     файлах, а в CSS: `--pixel-gold` красит свечение вокруг латунных акцентов,
-     `--pixel-flame` — маску огонька серии. Проверено поиском var() по каскаду. */
-  --pixel-gold:      #ffe65a; /* свечение вокруг латуни: XP, звёзды, вердикт */
-  --pixel-flame:     #ff8c3c; /* пламя, серия дней */
-  /* Здесь стояли --pixel-rose (сердца, жизни), --pixel-cloud (облако),
-     --pixel-wood (дерево, рукоять) и --pixel-leaf (листва). Роли исчезли вместе
-     со своими ассетами: аркадный декоративный слой (сердца, мечи, щиты, облака,
-     вишни) снят целиком — см. заголовок pixel-fx.css. Гейт спрайтов назвал их
-     мёртвыми в ту же минуту, и это ровно то, ради чего он написан: объявленная
-     роль без ассета — приглашение завести под неё цвет. */
-  /* Здесь стояли --pixel-teal-hi (#b4fff0) и --pixel-teal-deep (#1a4a48) с подписями «блик/тень бирюзы на активной вкладке».
-     Довод и история: docs/css-decisions/tokens.md#tokens-e04 */
+  /* Декоративная рампа снята вместе с pixel-слоем (миссия 2026-08-29):
+     --pixel-gold и --pixel-flame жили ради свечения латуни и огонька серии —
+     ролей нового направления у них нет. Серию дней красит семантический
+     --color-accent-secondary. */
 
   /* Типографика — ТРИ роли, а не одна.
      Довод и история: docs/css-decisions/tokens.md#tokens-e05 */
@@ -141,12 +118,7 @@
   --line-height-normal:  1.6;
   --line-height-relaxed: 1.7;
 
-  /* Здесь стоял --letter-spacing-tight: -0.02em. Он был настроен на гротеск и
-     после перевода заголовков на антикву (FRD-064) остался без единого
-     потребителя: три страничные копии, которые его брали, сняты вместе с ним —
-     трекинг заголовка принадлежит компоненту в reset.css. Токен без потребителя
-     это не запас, а приглашение снова завести под него правило. */
-  --letter-spacing-wide:   0.08em; /* эйбрау (mono, uppercase) */
+  --letter-spacing-wide:   0.08em; /* эйбрау (caps) */
 
   --rule-weight: 1px;
   --rule-weight-strong: 2px;
@@ -173,27 +145,23 @@
   --max-width-page: min(100%, 112rem);
   --max-width-options:  60rem;
   /* Жёлоб страницы — ОДНА непрерывная формула на все ширины (RSP-06, REF-015).
-     Прежде база 24px сменялась медиа-ступенью ≥1200 на clamp от 48px: окно
-     росло на 2px (1199→1201), а рабочая полоса СУЖАЛАСЬ на ~46px — немонотонно.
-     8vw−4.5rem непрерывна в точке 1200 (=24px), к 1728 даёт ~66px (старые ~69),
-     кап 80px с ~2000. Монотонность «окно шире → полоса не уже» — инвариант. */
+     Монотонность «окно шире → полоса не уже» — инвариант. */
   --page-gutter: clamp(var(--space-5), 8vw - 4.5rem, 5rem);
 
-  /* Композиция страницы результата (FRD-020) — те же слагаемые, что у экрана вопроса, и та же роль: ЗДЕСЬ ЖИВУТ ТОЛЬКО СЛАГАЕМЫЕ, сумма объявлена на .result-page (pages-result.css) …
+  /* Композиция страницы результата (FRD-020) — ЗДЕСЬ ЖИВУТ ТОЛЬКО СЛАГАЕМЫЕ,
+     сумма объявлена на .result-page (pages-result.css).
      Довод и история: docs/css-decisions/tokens.md#tokens-e08 */
   --result-rail-min:     16rem;
   --result-rail-max:     22rem;
   --result-rail-gap:     var(--space-6);
   --result-main-measure: calc(var(--max-width-options) + 2 * var(--space-6));
 
-  /* Ширина правого рельса экрана вопроса (PROC-07). Вынесена в токен, потому что
-     из неё СЧИТАЕТСЯ общая ширина двухпейновой композиции: главная колонка ровно
-     --max-width-options, иначе между капнутыми вариантами и рельсом открывается
-     мёртвый центр (замер iter-56: 869px на 2560). См. pages-focus.css. */
+  /* Ширина правого рельса экрана вопроса (PROC-07): из неё СЧИТАЕТСЯ общая
+     ширина двухпейновой композиции (см. pages-focus.css). */
   --focus-rail-width:   18rem;
   --focus-rail-gap:     clamp(1.5rem, 3vw, 3rem);
 
-  /* Мера экрана вопроса — сумма его собственных колонок (FRD-003), но принадлежит она НЕ одной композиции, а всей странице: по ней стоят resume-баннер, сама композиция и пустое сост…
+  /* Мера экрана вопроса — сумма его собственных колонок (FRD-003).
      Довод и история: docs/css-decisions/tokens.md#tokens-e09 */
   --focus-main-measure: var(--max-width-options);
 
@@ -202,21 +170,20 @@
      Довод и история: docs/css-decisions/tokens.md#tokens-e10 */
   --sidebar-width:     clamp(208px, 4vw + 156px, 236px);
   --mobile-nav-height: 64px;   /* .mobile-nav height */
-  /* --header-height удалён (FRD-021) вместе с .topbar: 64px sticky-полосы,
-     в которой оставалась одна кнопка. Единственным потребителем токена была
-     высота этой полосы. Высота mobile-header (44px) живёт в своём @media-блоке
-     shell.css: у неё нет второго потребителя, ради которого нужен токен. */
 
-  /* Радиусы (макеты handoff-3: sm8 / md12 / lg18; xl24 — для крупных карт). */
-  /* ФОРМА У ПРОДУКТА ОДНА, И ОНА ПРЯМОУГОЛЬНАЯ (iter-117).
-     Довод и история: docs/css-decisions/tokens.md#tokens-e11 */
-  --border-radius-sm:   0;
-  --border-radius-md:   0;
-  --border-radius-lg:   0;
-  --border-radius-xl:   0;
-  --border-radius-full: 0;
+  /* Радиусы — FOLIO: форма мягкая, шкала короткая и системная.
+     «Всё прямоугольное» (iter-117) снято миссией 2026-08-29 вместе с
+     pixel-слоем: жёсткий квадрат был частью гильдейского костюма. Радиус —
+     из токена, литералы в компонентном CSS по-прежнему запрещены
+     (SurfaceLanguageContractTest). full — для пилюль счётчиков. */
+  --border-radius-xs:   2px;
+  --border-radius-sm:   4px;
+  --border-radius-md:   8px;
+  --border-radius-lg:   12px;
+  --border-radius-xl:   16px;
+  --border-radius-full: 999px;
 
-  /* Тени — dark-дефолт (макеты: мягкая глубокая тень под панелями). */
+  /* Тени — dark-дефолт (мягкая глубокая тень под панелями). */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30), 0 2px 10px rgba(0, 0, 0, 0.28);
   --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.28);
@@ -239,100 +206,81 @@
   --z-dropdown: 20;
   --z-overlay: 40;
   --z-modal: 100;
-  /* Верхняя ступень лестницы. Носитель один — `.skip-link` (reset-layout.css):
-     первая ссылка страницы обязана всплывать над всем, включая модалку. До
-     iter-82 ступень звалась `--z-toast` по компоненту, которого в проекте нет:
-     сообщения стоят в потоке (`.notice`), ничего не всплывает и z-index им не
-     нужен. Имя обещало плавающий слой и приглашало его завести. */
+  /* Верхняя ступень: единственный носитель — `.skip-link` (reset-layout.css). */
   --z-skip-link: 1000;
-
-  /* Здесь стоял мост коротких имён из redesign-kit (--color-teal, --color-bg900,
-     --radius-…, --font-body, --motion-… — 28 псевдонимов; ARCH-01: звёздочка со
-     слэшем в этом списке закрывала комментарий досрочно, и хвост прозы утекал
-     в :root всех девяти бандлов — разделители заменены). Он умер дважды: сначала
-     по потреблению (замер: 26 имён из 28 не читались нигде, у --radius-md было
-     два потребителя, переведённых на --border-radius-md), затем по смыслу — имя
-     --color-teal называет цвет, которого в продукте больше нет. Псевдоним без
-     потребителя это не «запас», а приглашение завести под него значение. */
 }
 
 /* ===========================================================================
-   Light — вторичная тема (реставр: dark — дефолт). Явный тумблер
-   [data-theme="light"] (head.html ставит pre-paint; JS-режим 'auto' тоже
-   выставляет data-theme явно). Значения — light-палитра макетов handoff-3
-   (assets/tokens/tokens.css), акценты приглушены до AA на белом фоне.
+   Light — «бумага и чернила». Явный тумблер [data-theme="light"] (head.html
+   ставит pre-paint; JS-режим 'auto' тоже выставляет data-theme явно).
+   Спроектирована ВМЕСТЕ с тёмной, не инверсией: бумажно-белая канва
+   («beige + brown» снят как клише), чернильный текст, тот же кобальт,
+   пересчитанный до AA на светлых поверхностях.
    Наследует структуру (spacing/radius/shell/motion/z) из :root.
    ========================================================================== */
 :root[data-theme="light"] {
   color-scheme: light;
 
-  /* Цвет — LIGHT: «пергамент и чернила» — Светлая тема спроектирована ВМЕСТЕ с тёмной, а не получена инверсией.
-     Довод и история: docs/css-decisions/tokens.md#tokens-e12 */
-  --color-bg-primary:   #ece4d3; /* bg-0 — пергамент */
-  /* Светлая ветка по тому же расчёту: #f9f4e9 давал 1.15 к пергаменту. */
-  --color-bg-secondary: #fdfaf2; /* surface — лист, светлее канвы */
-  --color-bg-tertiary:  #fdfbf5; /* surface-raised — колодец поля, панель кода */
-  --color-surface-soft: #e6dcc7; /* surface-soft */
-  --color-bg-inverse:   #1e1b16;
-  --color-bg-canvas-2:  #f5efe2;
+  --color-bg-primary:   #f9f8f6; /* bg-0 — тёплая бумага, не бежевый */
+  --color-bg-secondary: #ffffff; /* surface — лист, светлее канвы */
+  --color-bg-tertiary:  #f3f2ef; /* surface-raised — колодец поля, панель кода */
+  --color-surface-soft: #efedea; /* surface-soft */
+  --color-bg-inverse:   #1c1e21;
+  --color-bg-canvas-2:  #f2f1ee;
 
-  --color-text-primary:   #241e14; /* тёплые чернила, 14.6:1 к канве */
-  --color-text-secondary: #514736; /* 8.5:1 */
-  --color-text-tertiary:  #6d6250; /* 4.7:1 (AA-large; 5.5:1 к карточке) */
-  --color-text-inverse:   #f9f4e9;
-  --color-text-link:      #7a5312; /* охра, 5.4:1 к канве */
+  --color-text-primary:   #1b1d21; /* чернила, ~16:1 к канве */
+  --color-text-secondary: #46494f; /* ~9:1 */
+  --color-text-tertiary:  #62666d; /* ≥4.5:1 к обеим подложкам */
+  --color-text-inverse:   #f9f8f6;
+  --color-text-link:      #14549e;
 
-  --color-border-primary:   #d8cbb0; /* грань листа */
-  --color-border-secondary: #e6dcc7;
-  --color-border-strong:    #b5a487;
-  /* Светлая пара к `--color-control-border` (WCAG 1.4.11, 3:1 к подложке поля):
-     #857753 даёт 4.02:1 к карточке и 3.49:1 к канве. */
-  --color-control-border:   #857753;
-  --color-border-focus:     #8a6414;
-  --color-focus-ring:       #6b4f10;
+  --color-border-primary:   #e0dfdb; /* грань листа */
+  --color-border-secondary: #ebeae6;
+  --color-border-strong:    #b9b8b2;
+  /* Светлая пара к `--color-control-border` (WCAG 1.4.11, 3:1 к подложке). */
+  --color-control-border:   #83878f;
+  --color-border-focus:     #155ab2;
+  --color-focus-ring:       #0f3f78;
 
-  --color-accent-primary:        #8a6414; /* охра-заливка (светлая надпись AA 5.19:1) */
-  --color-accent-2:              #7a5512;
-  --color-accent-strong:         #6f4f0f; /* охра-как-текст */
-  --color-accent-primary-hover:  #7d5a11; /* светлая тема: hover темнее */
-  --color-accent-primary-active: #6d4e0e;
-  --color-accent-on:             #fdfbf5;
-  --color-accent-secondary:      #9c4f14; /* уголь-чернила */
-  --color-accent-wash:           #f0e4c8;
+  --color-accent-primary:        #155ab2; /* кобальт-заливка (белая надпись AA) */
+  --color-accent-2:              #124e9c;
+  --color-accent-strong:         #12468f; /* кобальт-как-текст */
+  --color-accent-primary-hover:  #124e9c; /* светлая тема: hover темнее */
+  --color-accent-primary-active: #10448a;
+  --color-accent-on:             #ffffff;
+  --color-accent-secondary:      #a35c12; /* янтарь-чернила */
+  --color-accent-wash:           #e7effb;
 
-  /* success/error как ТЕКСТ ложатся на свои -wash-фоны (напр. вердикт MCQ, ярлыки
-     «Правильный ответ»/«Твой выбор (ошибка)»). Пороги те же, что и в тёмной
-     ветке; здесь оба тона затемнены до AA против пергаментной канвы И против
-     своей подложки — худшая пара 5.06 (успех на своём wash). Washes тоже тёплые:
-     холодный мятный фон на пергаменте читался бы заплаткой из другой системы. */
-  --color-status-success:      #3a6b2c;
+  /* success/error как ТЕКСТ ложатся на свои -wash-фоны (вердикт MCQ, ярлыки
+     «Правильный ответ»/«Твой выбор (ошибка)»). Оба тона затемнены до AA
+     против бумажной канвы И против своей подложки. */
+  --color-status-success:      #2c7a3f;
   --color-status-success-on:   #ffffff;
-  --color-status-success-wash: #dfeacd;
-  --color-status-warning:      #8a5312;
-  --color-status-warning-wash: #f3e3c5;
-  --color-status-error:        #a5342a;
+  --color-status-success-wash: #e2f0e4;
+  --color-status-warning:      #8f5a08;
+  --color-status-warning-wash: #f6ead0;
+  --color-status-error:        #b3362e;
   --color-status-error-on:     #ffffff;
-  --color-status-error-wash:   #f5ddd7;
-  --color-status-info:         #1f5b91;
-  --color-status-info-wash:    #dde7f2;
-  --color-status-purple:       #5b3fa8;
+  --color-status-error-wash:   #f8e2df;
+  --color-status-info:         #17629d;
+  --color-status-info-wash:    #e3edf7;
+  --color-status-purple:       #5d43b8;
 
-  --color-surface-overlay: rgba(20, 18, 15, 0.42);
+  --color-surface-overlay: rgba(21, 23, 26, 0.45);
 
-  /* Подсветка синтаксиса — светлые аналоги. Тона те же (пурпур/зелёный/охра/
-     латунь/ультрамарин/сурик), затемнены до AA на светлых поверхностях. */
-  --code-plain:   #241e14;
-  --code-keyword: #5b3fa8;
-  --code-string:  #2f5f24;
-  --code-number:  #7a4f0d;
-  --code-type:    #6f4f0f;
-  --code-func:    #1f5b91;
-  --code-tag:     #a5342a;
-  --code-comment: #514736;
+  /* Подсветка синтаксиса — светлые аналоги тех же ролей, затемнены до AA. */
+  --code-plain:   #1b1d21;
+  --code-keyword: #6d3fc8;
+  --code-string:  #256e38;
+  --code-number:  #8a5a06;
+  --code-type:    #7d5a10;
+  --code-func:    #14549e;
+  --code-tag:     #b3362e;
+  --code-comment: #62666d;
 
-  --shadow-sm: 0 1px 2px rgba(36, 30, 20, 0.07), 0 2px 8px rgba(36, 30, 20, 0.05);
-  --shadow-md: 0 4px 14px rgba(36, 30, 20, 0.11);
-  --shadow-lg: 0 16px 42px rgba(36, 30, 20, 0.13);
+  --shadow-sm: 0 1px 2px rgba(23, 25, 29, 0.07), 0 2px 8px rgba(23, 25, 29, 0.05);
+  --shadow-md: 0 4px 14px rgba(23, 25, 29, 0.11);
+  --shadow-lg: 0 16px 42px rgba(23, 25, 29, 0.13);
   --shadow-focus: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-border-focus);
 }
 
@@ -370,7 +318,4 @@ html[data-density="compact"] {
   --space-11: 8rem;
   --space-12: 11rem;
 }
-
-  /* Медиа-ступень --page-gutter (≥1200: clamp от 48px) снята в REF-015: она
-     давала немонотонность на границе — единая формула живёт в :root выше. */
 }

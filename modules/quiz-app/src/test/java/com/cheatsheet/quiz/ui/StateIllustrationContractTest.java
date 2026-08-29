@@ -50,22 +50,24 @@ class StateIllustrationContractTest {
     private static final Map<String, String> SITUATION_GLYPH = new LinkedHashMap<>();
 
     /**
-     * Ситуации, которые показывает ГЛИФ (16×16, 64px на экране): событие мелкое и
-     * поправимое — «поправь запрос», «данных пока нет».
+     * Ситуации, которые показывает ГЛИФ ({@code state-*}, Lucide 24×24, ~64px на
+     * экране через {@code .ui-illus-lg}): событие мелкое и поправимое — «поправь
+     * запрос», «данных пока нет».
      */
     static {
-        SITUATION_GLYPH.put("Каталог пуст", "px-shelf");
-        SITUATION_GLYPH.put("Ничего не нашлось", "px-spyglass");
-        SITUATION_GLYPH.put("Под отбор ничего не подошло", "px-spyglass");
-        SITUATION_GLYPH.put("Под отбор не попала ни одна тема", "px-spyglass");
-        SITUATION_GLYPH.put("Пока нет данных по темам", "px-chronicle");
-        SITUATION_GLYPH.put("Пока нет динамики", "px-chronicle");
-        SITUATION_GLYPH.put("Пока нет ошибок", "px-clean-slate");
-        SITUATION_GLYPH.put("Сейчас нет вопросов", "px-portcullis");
+        SITUATION_GLYPH.put("Каталог пуст", "state-shelf");
+        SITUATION_GLYPH.put("Ничего не нашлось", "state-search");
+        SITUATION_GLYPH.put("Под отбор ничего не подошло", "state-search");
+        SITUATION_GLYPH.put("Под отбор не попала ни одна тема", "state-search");
+        SITUATION_GLYPH.put("Пока нет данных по темам", "state-chronicle");
+        SITUATION_GLYPH.put("Пока нет динамики", "state-chronicle");
+        SITUATION_GLYPH.put("Пока нет ошибок", "state-clean-slate");
+        SITUATION_GLYPH.put("Сейчас нет вопросов", "state-locked");
     }
 
     /**
-     * Ситуации, которые показывает СЦЕНА (40×25, 320×200): пустая коллекция целиком —
+     * Ситуации, которые показывает СЦЕНА ({@code scene-*}, крупный формат
+     * {@code .empty-state-scene}, 320px на широком экране): пустая коллекция целиком —
      * событие крупное, и место действия объясняет его лучше одного предмета (iter-120).
      */
     private static final Map<String, String> SITUATION_SCENE = new LinkedHashMap<>();
@@ -78,7 +80,7 @@ class StateIllustrationContractTest {
     @Test
     void spriteHasNoDeadGlyphs() {
         Set<String> declared = new LinkedHashSet<>();
-        Matcher symbols = Pattern.compile("<symbol id=\"((?:px|scene)-[\\w-]+)\"").matcher(read(SPRITE));
+        Matcher symbols = Pattern.compile("<symbol id=\"((?:state|scene)-[\\w-]+)\"").matcher(read(SPRITE));
         while (symbols.find()) {
             declared.add(symbols.group(1));
         }
@@ -89,8 +91,8 @@ class StateIllustrationContractTest {
 
         assertThat(dead)
                 .as("глиф объявлен, но никем не показан. Мёртвая иллюстрация — это обещание "
-                        + "состояния, которого в продукте нет: так в спрайте лежали px-sync и "
-                        + "px-revision-conflict, пока их не сняли")
+                        + "состояния, которого в продукте нет: так в спрайте пиксельной эры "
+                        + "лежали px-sync и px-revision-conflict, пока их не сняли")
                 .isEmpty();
     }
 
@@ -112,7 +114,7 @@ class StateIllustrationContractTest {
             // Глиф печатается ПЕРЕД заголовком внутри того же блока состояния.
             int from = Math.max(0, at - 800);
             String before = markup.substring(from, at);
-            int lastUse = before.lastIndexOf("href=\"#px-");
+            int lastUse = before.lastIndexOf("href=\"#state-");
             if (lastUse < 0) {
                 wrong.add("у состояния «" + title + "» не осталось иллюстрации");
                 return;

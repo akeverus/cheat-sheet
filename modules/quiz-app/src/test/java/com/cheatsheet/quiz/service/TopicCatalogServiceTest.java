@@ -86,7 +86,9 @@ class TopicCatalogServiceTest {
         assertThat(languages.dueCount()).isEqualTo(2L);
         assertThat(languages.accuracyPercent()).isEqualTo(90.0);
         assertThat(languages.learnedPercent()).isEqualTo(50.0);
-        assertThat(languages.icon()).isEqualTo("stickers/code.png");
+        // icon — id символа спрайта fragments/icons.html из topic-groups.yaml,
+        // а не путь к файлу: карточка раздела рисует его через <use href="#...">.
+        assertThat(languages.icon()).isEqualTo("section-languages");
     }
 
     /**

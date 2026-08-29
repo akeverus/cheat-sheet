@@ -6,7 +6,7 @@
     <!--/* CSP nonce for scripts + dynamically injected <style> (Mermaid/hljs). */-->
     <meta name="csp-nonce" th:content="${cspNonce}">
     <!--/* Цвет браузерного chrome для мобильных (Android Chrome, iOS Safari). */-->
-    <meta name="theme-color" content="#14120f">
+    <meta name="theme-color" content="#141518">
     <meta name="color-scheme" content="dark light">
     <!--/* Версия для модулей, которых не видит шаблонизатор. Относительные
          `import '../core/dom.js'` живут внутри .js, через @{...} не проходят и
@@ -72,8 +72,8 @@
         // Цвет хрома браузера = канва темы. Значения снятого направления
         // (#071116 / #f5f8f8) пережили смену палитры: строка адреса на
         // мобильных оставалась сине-зелёной над тёплой страницей.
-        var THEME_COLORS = { light: '#ece4d3', dark: '#14120f' };
-        root.setAttribute('data-design', 'instrument');
+        var THEME_COLORS = { light: '#f9f8f6', dark: '#141518' };
+        root.setAttribute('data-design', 'folio');
         root.setAttribute('data-js', '');
         // Запомненная вкладка — ДО первого кадра (iter-80). Раньше здесь читался
         // один ключ 'settingsTab', и его значение разбирали четыре CSS-правила по
@@ -169,7 +169,7 @@
         }
         /* Ось «движение» в режиме auto решается системной настройкой — значит на её
            смену надо реагировать так же, как на смену системной темы выше. CSS-медиа
-           перерисуется сам, а JS-потребители (pixel-fx, графики) читают
+           перерисуется сам, а JS-потребители (графики) читают
            prefers-reduced-motion вживую, но узнают о смене только из motionchange:
            без этой подписки они остаются с решением, принятым на загрузке. */
         if (motionMq) {
@@ -199,12 +199,13 @@
            применять её после первого кадра значило бы показывать перекладку.
 
            «Ноутбук» — значение по умолчанию, и оно даёт РОВНО прежний вид
-           (просторные отступы, мера 72ch, средняя пиксель-интенсивность): смена
-           умолчания перерисовала бы приложение всем, кто настройки не открывал. */
+           (просторные отступы, мера 72ch): смена умолчания перерисовала бы
+           приложение всем, кто настройки не открывал. Ось «пиксельность» снята
+           вместе с pixel-слоем (FOLIO, миссия 2026-08-29). */
         var SCREEN_PRESETS = {
-          phone:  { density: 'compact',  readingWidth: 'standard', pixel: 'low' },
-          laptop: { density: 'spacious', readingWidth: 'standard', pixel: 'med' },
-          wide:   { density: 'spacious', readingWidth: 'wide',     pixel: 'high' }
+          phone:  { density: 'compact',  readingWidth: 'standard' },
+          laptop: { density: 'spacious', readingWidth: 'standard' },
+          wide:   { density: 'spacious', readingWidth: 'wide' }
         };
         var PRESET_NAMES = ['phone', 'laptop', 'wide'];
         function migrateLegacyPreset() {
@@ -217,9 +218,9 @@
             var legacyWidth = localStorage.getItem('readingWidth');
             var legacyPixel = localStorage.getItem('pixelIntensity');
             if (!legacyDensity && !legacyWidth && !legacyPixel) return null;
-            /* Пиксельность участвует в выборе: тот, кто настраивал ТОЛЬКО её,
-               иначе молча получал laptop/med — его единственный выбор пропадал
-               (нашлось visual-матрицей: pixelIntensity=low давал data-pixel=med).
+            /* Снятая ось пиксельности всё ещё участвует в выборе ближайшего
+               пресета: тот, кто настраивал ТОЛЬКО её, выражал предпочтение
+               «спокойнее/насыщеннее», и compact/wide — честная проекция.
                Оси раскладки сильнее: явные compact/wide решают первыми. */
             var guess = legacyDensity === 'compact' ? 'phone'
               : (legacyWidth === 'wide' ? 'wide'
@@ -246,7 +247,6 @@
           else root.setAttribute('data-density', cfg.density);
           if (cfg.readingWidth === 'standard') root.removeAttribute('data-reading-width');
           else root.setAttribute('data-reading-width', cfg.readingWidth);
-          root.setAttribute('data-pixel', cfg.pixel);
         }
         applyScreenPreset(screenPreset);
         function setScreenPreset(next) {
@@ -282,7 +282,7 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" href="/favicon.svg">
     <title th:text="${title}">Подготовка к собеседованию</title>
     <!--/* OPS-005: Literata + Inter + JetBrains Mono self-hosted (static/fonts + css/fonts-local.css).
-         Семейства совпадают с --font-family-* в tokens.css; pixel-слой body не подменяет. */-->
+         Семейства совпадают с --font-family-* в tokens.css. */-->
     <!--/* PERF: один блокирующий CSS-запрос на страницу вместо 33 <link>.
          Порядок каскада и постраничные гейты — в css-bundle-manifest.txt; лента
          склеивается CssBundleService, имя несёт хеш содержимого. Замер на Slow 4G

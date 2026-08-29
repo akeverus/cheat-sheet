@@ -250,8 +250,8 @@ export function initInterviewForm() {
   // Java для no-JS-страницы, — и редакции разъезжались.
   function buildVerdictLine(data) {
     const name = data.correct ? 'circle-check' : 'circle-x';
-    const tone = data.correct ? 'px-icon-success' : 'px-icon-error';
-    return icon(name, 'px-icon-lead ' + tone)
+    const tone = data.correct ? 'ui-icon-success' : 'ui-icon-error';
+    return icon(name, 'ui-icon-lead ' + tone)
       + `<span>${escapeHtml(data.verdictText || '')}</span>`;
   }
 
@@ -460,7 +460,7 @@ export function initInterviewForm() {
     const currentShuffle = form.querySelector('input[name="shuffle"]')?.value === 'true';
     const currentWeakTopics = form.querySelector('input[name="weakTopics"]')?.value === 'true';
 
-    let relatedHtml = '<h2 class="related-questions-title">' + icon('link', 'px-icon-lead') + 'Похожие вопросы для закрепления:</h2>';
+    let relatedHtml = '<h2 class="related-questions-title">' + icon('link', 'ui-icon-lead') + 'Похожие вопросы для закрепления:</h2>';
     relatedHtml += '<div class="related-questions-list" role="list">';
     data.relatedQuestions.forEach((rq) => {
       relatedHtml += '<div role="listitem"><a class="related-question-item" href="/?topic=' + encodeURIComponent(rq.topic)

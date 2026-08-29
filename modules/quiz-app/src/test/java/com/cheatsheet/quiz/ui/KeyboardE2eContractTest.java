@@ -100,8 +100,8 @@ class KeyboardE2eContractTest {
         String spec = read("e2e/visual-matrix.spec.js");
         assertThat(spec)
                 .as("/train выпал из матрицы: ключевая поверхность без визуальной страховки")
-                .contains("{ id: 'train-dark-med-auto', path: '/train'")
-                .contains("{ id: 'train-light-med-on', path: '/train'");
+                .contains("{ id: 'train-dark-laptop-auto', path: '/train'")
+                .contains("{ id: 'train-light-laptop-on', path: '/train'");
         assertThat(spec)
                 .as("счётчики набора обязаны быть в масках — иначе голден краснеет от " 
                         + "каждого ответа")

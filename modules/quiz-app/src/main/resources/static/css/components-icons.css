@@ -1,34 +1,40 @@
 /* @layer components — геометрия ЕДИНСТВЕННОГО спрайта интерфейсных иконок
-   (.px-icon, fragments/icons.html). До iter-112 здесь описывалась геометрия
-   линейного Lucide-спрайта: `fill: none; stroke: currentColor; stroke-width: 2`.
-   Пиксельные глифы рисуются заливкой, поэтому старая база сделала бы их
-   невидимыми — замена реализации и замена языка идут вместе, иначе продукт
-   рендерил бы пустоту.
+   (.ui-icon, fragments/icons.html). Язык FOLIO: Lucide, сетка 24×24, линия 2px,
+   stroke=currentColor — иконка наследует цвет текста и одинаково живёт в обеих
+   темах. Пиксельный rect-язык (16×16, fill, crispEdges) снят вместе со слоем
+   pixel (миссия 2026-08-29).
 
    ⚠️ КАСКАД (D3b-урок, durable): база обязана жить в @layer components. Пока она
    стояла в @layer pages, контекстные оверрайды размера (0,2,2) подавлялись по
    слою и не срабатывали, хотя были специфичнее базы (0,2,1). */
 @layer components {
 
-/* Размер ТОЛЬКО целочисленный. У сетки 16×16 дробный масштаб — это мыло: при
-   кегле 18px прежняя база `1em` давала 1.125 device-пикселя на клетку, и глиф
-   размывался ровно там, где пиксельность и есть смысл. 16px = 1:1.
-
-   Оптическое смещение вниз оставлено: иконка в строке серифа садится на базовую
-   линию текста, а не висит по центру кегля. */
-html[data-design] .px-icon {
-  display: inline-block; width: 16px; height: 16px; vertical-align: -0.14em; flex: none;
-  fill: currentColor; stroke: none;
-  shape-rendering: crispEdges;
+/* Размер по умолчанию — 1em с оптическим смещением вниз: линейный глиф
+   масштабируется без мыла (в отличие от снятой пиксельной сетки, которой был
+   нужен целочисленный размер), поэтому иконка при тексте растёт вместе с
+   кеглем. */
+html[data-design] .ui-icon {
+  display: inline-block; width: 1em; height: 1em; vertical-align: -0.14em; flex: none;
+  fill: none; stroke: currentColor;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
 }
-/* Иконка-префикс перед заголовком/строкой: тот же размер, воздух справа.
-   Прежние 1.06em сняты — дробный масштаб сетки не бывает «чуть крупнее». */
-html[data-design] .px-icon-lead { margin-right: 0.45em; }
+/* Иконка-префикс перед заголовком/строкой: воздух справа. */
+html[data-design] .ui-icon-lead { margin-right: 0.45em; }
 /* Семантические статус-цвета (вердикт верно/неверно). */
-html[data-design] .px-icon-success { color: var(--color-status-success); }
-html[data-design] .px-icon-error { color: var(--color-status-error); }
-html[data-design] .px-icon-warning { color: var(--color-status-warning); }
+html[data-design] .ui-icon-success { color: var(--color-status-success); }
+html[data-design] .ui-icon-error { color: var(--color-status-error); }
+html[data-design] .ui-icon-warning { color: var(--color-status-warning); }
 /* Звезда «в избранном» — заливаем акцентом (активное состояние кнопки). */
-html[data-design] .btn-favorite.active .px-icon { fill: var(--color-accent-primary); }
+html[data-design] .btn-favorite.active .ui-icon { fill: var(--color-accent-primary); stroke: var(--color-accent-primary); }
+
+/* Глифы состояний (.ui-illus, fragments/state-illustrations.html) — тот же
+   линейный язык, но крупнее и тоньше: на 48–64px линия 2px от сетки 24
+   масштабируется в 4–5px и глиф тяжелеет — компенсируем толщиной штриха. */
+html[data-design] .ui-illus {
+  fill: none; stroke: currentColor;
+  /* В единицах viewBox 24: на 48px (×2) это визуальные ~2px, на 64px ~2.7px —
+     глиф состояния тоньше текстовой иконки, он декорация, а не знак действия. */
+  stroke-width: 1; stroke-linecap: round; stroke-linejoin: round;
+}
 
 }

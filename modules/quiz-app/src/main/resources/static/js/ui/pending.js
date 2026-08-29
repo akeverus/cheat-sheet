@@ -26,7 +26,7 @@ const WIDTH_SLOT = 'pendingWidthWas';
 
 /**
  * Последняя непустая текстовая нода контрола. Подпись меняем ТОЛЬКО в ней:
- * `textContent = '…'` стёр бы вложенную иконку (`<svg class="px-icon">`), а
+ * `textContent = '…'` стёр бы вложенную иконку (`<svg class="ui-icon">`), а
  * её исчезновение и возврат — это дёрганье вёрстки на ровном месте.
  */
 function labelNode(el) {
@@ -91,8 +91,8 @@ export function setPending(el, label, say) {
     }
   }
 
-  // Руна — реальный узел: оба псевдоэлемента главных кнопок заняты слоем pixel
-  // (стрелка и фаска), и спор за них компонент проиграл бы порядком слоёв.
+  // Индикатор — реальный узел, а не псевдоэлемент: узлом владеет ровно этот
+  // модуль, и никакой слой каскада не может занять его под другую роль.
   const rune = document.createElement('span');
   rune.className = 'pending-rune';
   rune.setAttribute('aria-hidden', 'true');

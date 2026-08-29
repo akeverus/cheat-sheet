@@ -14,8 +14,9 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Кнопка в приложении одна: коробку задаёт компонент, краску — слой pixel, страница
- * отвечает только за место в раскладке.
+ * Кнопка в приложении одна: коробку И краску задаёт компонент (FOLIO: слой pixel
+ * снят, краска рангов вернулась в components-controls.css), страница отвечает
+ * только за место в раскладке.
  *
  * <h2>Дефект, а не гипотеза (iter-78, замеры в WebKit@2)</h2>
  * Кнопка была описана 15 независимыми рецептами в 9 файлах, и почти все они не доезжали
@@ -50,7 +51,6 @@ class ButtonRankComponentContractTest {
     private static final Path RESOURCES = Path.of("src/main/resources");
     private static final Path CSS_DIR = RESOURCES.resolve("static/css");
     private static final Path COMPONENT_CSS = CSS_DIR.resolve("components-controls.css");
-    private static final Path PAINT_CSS = CSS_DIR.resolve("pixel-buttons.css");
     private static final Path SHELL_CSS = CSS_DIR.resolve("shell.css");
     private static final Path UTILITIES_CSS = CSS_DIR.resolve("utilities-overrides.css");
     private static final Path MANIFEST = RESOURCES.resolve("css-bundle-manifest.txt");
@@ -126,17 +126,11 @@ class ButtonRankComponentContractTest {
 
         String css = declarationsOnly(read(COMPONENT_CSS));
         assertThat(css)
-                .as("скелет кнопки: одна высота касания, один радиус, одна рамка и один контур "
+                .as("скелет кнопки: одна высота касания, один радиус и одна настоящая рамка "
                         + "на все ранги — иначе каждая страница снова начнёт сочинять свой")
                 .contains("min-height: 44px")
-                .contains("border: 0")
-                .contains("border-radius: 0")
-                // Контур базы — поверхностный: он идёт за заливкой, а не за формой.
-                // Раньше здесь стоял чернильный `--px-edge`, и он приезжал каждому
-                // рангу, включая поверхностные и прозрачные: замер дал 102 элемента
-                // с чернильным контуром и ни одного с акцентной заливкой. Требование
-                // «один контур на все ранги» не ослаблено — изменился сам контур.
-                .contains("box-shadow: var(--px-edge-surface)");
+                .contains("border: var(--rule-weight) solid var(--color-border-strong)")
+                .contains("border-radius: var(--border-radius-md)");
 
         assertThat(read(MANIFEST))
                 .as("компонент подключён гейтом `*`: кнопки есть на каждой странице приложения")
@@ -172,20 +166,26 @@ class ButtonRankComponentContractTest {
     }
 
     @Test
-    void paintLayerNeverErasesButtonsWithImportant() {
+    void noLayerErasesButtonsWithImportant() {
         List<String> offenders = new ArrayList<>();
-        for (String[] rule : rules(PAINT_CSS)) {
-            String selector = rule[0];
-            boolean aboutButton = BUTTON_CLASSES.stream().anyMatch(c -> mentions(selector, c));
-            if (aboutButton && rule[1].contains("!important")) {
-                offenders.add(selector.strip().replaceAll("\\s+", " "));
+        try (Stream<Path> files = Files.list(CSS_DIR)) {
+            for (Path css : files.filter(p -> p.getFileName().toString().endsWith(".css")).sorted().toList()) {
+                for (String[] rule : rules(css)) {
+                    String selector = rule[0];
+                    boolean aboutButton = BUTTON_CLASSES.stream().anyMatch(c -> mentions(selector, c));
+                    if (aboutButton && rule[1].contains("!important")) {
+                        offenders.add(css.getFileName() + ": " + selector.strip().replaceAll("\\s+", " "));
+                    }
+                }
             }
+        } catch (IOException e) {
+            throw new UncheckedIOException("не читается " + CSS_DIR, e);
         }
         assertThat(offenders)
                 .as("`!important` на кнопке — это стиратель: порядок слоёв для важных объявлений "
                         + "обратный, поэтому важное из раннего слоя бьёт даже страницу, и все "
-                        + "остальные рецепты становятся мёртвыми. Файла styles.css, ради которого "
-                        + "стиратель заводился, в проекте нет")
+                        + "остальные рецепты становятся мёртвыми. Именно так pixel-эра держала "
+                        + "15 мёртвых рецептов кнопки в 9 файлах")
                 .isEmpty();
     }
 
@@ -250,10 +250,9 @@ class ButtonRankComponentContractTest {
             throw new UncheckedIOException("не читается " + CSS_DIR, e);
         }
         assertThat(offenders)
-                .as("свечение через box-shadow — вторая идиома фокуса, и она занимает ровно то "
-                        + "свойство, в котором живёт pixel-контур кнопки: индикатор либо стирает "
-                        + "рамку, либо стирается сам. Замер до iter-78: у вкладок статистики "
-                        + "видимого фокуса не было вовсе (WCAG 2.4.7)")
+                .as("свечение через box-shadow — вторая идиома фокуса: индикатор либо стирает "
+                        + "тень контрола, либо стирается сам. Замер до iter-78: у вкладок "
+                        + "статистики видимого фокуса не было вовсе (WCAG 2.4.7)")
                 .isEmpty();
 
         assertThat(declarationsOnly(read(COMPONENT_CSS)))
@@ -264,10 +263,10 @@ class ButtonRankComponentContractTest {
 
     @Test
     void destructiveRankUsesThemeAwareRed() {
-        String paint = declarationsOnly(read(PAINT_CSS));
+        String paint = declarationsOnly(read(COMPONENT_CSS));
         assertThat(paint)
-                .as("разрушительный ранг красится тема-зависимым токеном: фиксированный --px-red "
-                        + "— цвет тёмной палитры, и в светлой теме он давал контраст 2.53 при "
+                .as("разрушительный ранг красится тема-зависимым токеном: фиксированный красный "
+                        + "— цвет одной палитры, в другой теме он давал контраст 2.53 при "
                         + "требуемых 4.5 (WCAG 1.4.3), то есть «необратимое действие» читалось "
                         + "бледной надписью")
                 .contains("color: var(--color-status-error)");
@@ -276,7 +275,7 @@ class ButtonRankComponentContractTest {
                         + "текст/фон подобрана в каждой теме")
                 .contains("background: var(--color-status-error-wash)");
 
-        List<String> offenders = rules(PAINT_CSS).stream()
+        List<String> offenders = rules(COMPONENT_CSS).stream()
                 .filter(r -> mentions(r[0], "danger-btn") || mentions(r[0], "btn-finish-small")
                         || mentions(r[0], "bookmark-remove-btn"))
                 .filter(r -> r[1].contains("--px-red") || r[1].contains("255, 113, 95"))

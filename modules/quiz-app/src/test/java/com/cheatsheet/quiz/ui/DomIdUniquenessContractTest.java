@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
  *   /nope-404       48            2               0   ← после
  * </pre>
  *
- * Повторяющийся id — это не косметика: `<use href="#px-…">` разрешается в ПЕРВОЕ
+ * Повторяющийся id — это не косметика: `<use href="#state-…">` разрешается в ПЕРВОЕ
  * определение, поэтому второй набор всегда мёртв, а `getElementById` и связи
  * `aria-labelledby` / `aria-controls` перестают быть однозначными.
  *
@@ -59,7 +59,7 @@ class DomIdUniquenessContractTest {
 
     private static final Pattern ID = Pattern.compile("\\sid=\"([^\"]+)\"");
     private static final Pattern SPRITE_INCLUDE =
-            Pattern.compile("th:replace=\"~\\{fragments/(state-illustrations|icons|pixel-sprite)\\s*::");
+            Pattern.compile("th:replace=\"~\\{fragments/(state-illustrations|icons)\\s*::");
 
     @DynamicPropertySource
     static void setInterviewPath(DynamicPropertyRegistry registry) {

@@ -41,27 +41,24 @@ html[data-design] .btn-favorite {
   min-height: 44px; padding: var(--space-2) var(--space-5);
   font-family: var(--font-family-body); font-size: var(--font-size-base); font-weight: var(--font-weight-medium);
   background: transparent; color: var(--color-text-primary);
-  /* Рамка кнопки — pixel-контур.
-     Довод и история: docs/css-decisions/components-controls.md#components-controls-e02 */
-  border: 0; border-radius: 0; box-shadow: var(--px-edge-surface);
+  /* Рамка кнопки — настоящая граница (FOLIO): pixel-контур из box-shadow снят
+     вместе со слоем. Прозрачная рамка у заливных рангов сохраняет метрику
+     коробки одинаковой у всех рангов. */
+  border: var(--rule-weight) solid var(--color-border-strong);
+  border-radius: var(--border-radius-md);
   text-decoration: none; cursor: pointer; touch-action: manipulation;
-  text-transform: none; image-rendering: pixelated; position: relative;
-  /* Переход гасится намеренно: pixel-нажатие — это ступенчатый сдвиг на 2px,
-     а не плавная заливка. Раньше `transition: none !important` приходил из
-     слоя-стирателя, и объявленный здесь плавный переход не работал. */
-  transition: none;
+  text-transform: none; position: relative;
+  transition: background-color var(--duration-fast) var(--easing-default),
+              border-color var(--duration-fast) var(--easing-default),
+              color var(--duration-fast) var(--easing-default);
 }
-
-/* Акцентным рангам контур даёт слой pixel (`--px-edge-brass`, глубокая латунь
-   под латунной заливкой) — правило здесь было бы мёртвым объявлением: замер
-   показывает у `.next-btn` контур rgb(107,82,24), то есть побеждает pixel. */
 
 /* Прозрачные ранги живут без контура в покое — рамка вокруг пустоты читается как
    «ненастоящая кнопка» (§63). Тот же приём уже держат `.skip-btn` и
    `.report-trigger` ниже; здесь он распространён на остальные прозрачные. */
 html[data-design] .quiet-btn,
 html[data-design] .icon-button {
-  box-shadow: none;
+  border-color: transparent;
 }
 /* Ранг «тихая кнопка в строке списка»: обслуживает элемент рядом с другим таким
    же контролом (раскрытием заметки), поэтому кегль и вес у них общие, а базовый
@@ -80,7 +77,7 @@ html[data-design] .quiet-btn {
 }
 html[data-design] .quiet-btn:hover:not(:disabled),
 html[data-design] .icon-button:hover:not(:disabled) {
-  box-shadow: var(--px-edge-surface);
+  background: var(--color-bg-tertiary);
 }
 
 /* Ранг «главное действие флоу»: на 4px выше базового и с бо́льшими полями —
@@ -173,12 +170,32 @@ html[data-design] .diagram-action {
 html[data-design] .btn:hover:not(:disabled),
 html[data-design] .secondary-btn:hover:not(:disabled),
 html[data-design] #extra-analysis-toggle:hover:not(:disabled) { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
-html[data-design] .next-btn { background: var(--color-accent-primary); color: var(--color-accent-on); border-color: var(--color-accent-primary); }
+html[data-design] .next-btn,
+html[data-design] .primary-btn { background: var(--color-accent-primary); color: var(--color-accent-on); border-color: var(--color-accent-primary); }
 /* .next-btn — primary (accent-fill): hover красит И фон, И бордер в accent-hover.
    Реальная кнопка = class="btn next-btn" → к ней применяется .btn:hover:not(:disabled)
    (0,4,1); голый .next-btn:hover (0,3,1) проигрывал бы. :not(:disabled) поднимает до
    0,4,1 (== .btn-правилу), и т.к. правило ниже по исходнику — выигрывает. */
-html[data-design] .next-btn:hover:not(:disabled) { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); color: var(--color-accent-on); }
+html[data-design] .next-btn:hover:not(:disabled),
+html[data-design] .primary-btn:hover:not(:disabled) { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); color: var(--color-accent-on); }
+html[data-design] .next-btn:active:not(:disabled),
+html[data-design] .primary-btn:active:not(:disabled) { background: var(--color-accent-primary-active); border-color: var(--color-accent-primary-active); }
+html[data-design] .btn:active:not(:disabled):not(.next-btn):not(.primary-btn),
+html[data-design] .secondary-btn:active:not(:disabled) { background: var(--color-surface-soft); }
+
+/* Разрушительный ранг: текст и рамка семьи ошибки, заливка — только на hover.
+   Краска жила в pixel-слое; теперь компонент отвечает за неё сам. Смысл несёт
+   не только цвет: у разрушительных действий остаётся подтверждение
+   (data-confirm) — WCAG 1.4.1. */
+html[data-design] .danger-btn {
+  color: var(--color-status-error);
+  border-color: var(--color-status-error);
+}
+html[data-design] .danger-btn:hover:not(:disabled) {
+  background: var(--color-status-error-wash);
+  border-color: var(--color-status-error);
+  color: var(--color-status-error);
+}
 
 /* Фокус — одна идиома на ВСЕ ранги: обводка снаружи коробки.
    Довод и история: docs/css-decisions/components-controls.md#components-controls-e05 */

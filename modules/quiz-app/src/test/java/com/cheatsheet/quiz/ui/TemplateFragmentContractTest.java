@@ -407,12 +407,13 @@ class TemplateFragmentContractTest {
     }
 
     /**
-     * Знаки разделов ВИДНЫ в каталоге (Phase I, REF-020). Ассеты «ровно по
+     * Знаки разделов ВИДНЫ в каталоге (Phase I, REF-020). Знаки «ровно по
      * одному на раздел» существовали, конфиг их объявлял, DTO довозил до
-     * модели — и цепочка обрывалась: ни один шаблон не рендерил icon. Гейт
-     * StaticAssetInventoryTest считал их живыми по ссылке в yaml — мёртвый
-     * вес с алиби. Знак — визуальный якорь раздела (§167), декоративен при
-     * заголовке: пустой alt, чтобы SR не слышал имя раздела дважды.
+     * модели — и цепочка обрывалась: ни один шаблон не рендерил icon. Тогдашний
+     * гейт инвентаря считал их живыми по ссылке в yaml — мёртвый вес с алиби.
+     * Сейчас знак — символ спрайта по id из topic-groups.yaml; он визуальный
+     * якорь раздела (§167) и декоративен при заголовке: aria-hidden (у svg не
+     * бывает alt), чтобы SR не слышал имя раздела дважды.
      */
     @Test
     void topicsCatalogRendersSectionSigns() throws IOException {
@@ -423,7 +424,7 @@ class TemplateFragmentContractTest {
                 .contains("section.group.icon");
         assertThat(topics)
                 .as("знак декоративен при заголовке — SR не должен слышать его как контент")
-                .containsPattern("catalog-group-sign[^>]*alt=\"\"");
+                .containsPattern("catalog-group-sign[^>]*aria-hidden=\"true\"");
     }
 
     /**
@@ -661,12 +662,12 @@ class TemplateFragmentContractTest {
         assertThat(bookmarks.substring(form, nothing)).doesNotContain("</section>");
         assertThat(bookmarks).contains("Пока нет закладок").contains("Под отбор ничего не подошло");
         // Глифы разные и оба — из спрайта состояний (iter-83). До него здесь
-        // стояли предметные иконки Lucide `#bookmark` и `#search`: они называли
-        // СТРАНИЦУ, а не положение человека, и жили в другом языке, чем глифы
-        // тех же состояний на /stats и на экране вопроса.
+        // стояли интерфейсные иконки `#bookmark` и `#search` из навигационного
+        // спрайта: они называли СТРАНИЦУ, а не положение человека, и жили в
+        // другом наборе, чем глифы тех же состояний на /stats и на экране вопроса.
         // iter-120: пустая коллекция целиком получила СЦЕНУ (место, где пусто), пустой
         // отбор остался с глифом (предмет). Разводит их величина события, а не вкус.
-        assertThat(bookmarks).contains("<use href=\"#scene-shelf\">").contains("<use href=\"#px-spyglass\">");
+        assertThat(bookmarks).contains("<use href=\"#scene-shelf\">").contains("<use href=\"#state-search\">");
         // Из отобранной пустоты есть выход, и он не «иди тренируйся».
         assertThat(bookmarks).contains("Показать все закладки");
         // Запрос повторяется дословно и ломается по месту: 160 символов без
@@ -1032,42 +1033,42 @@ class TemplateFragmentContractTest {
     }
 
     @Test
-    void tokensCssDefinesSingleInstrumentDesign() throws IOException {
+    void tokensCssDefinesSingleFolioDesign() throws IOException {
         // tokens.css — токен-слой. SINGLE-SOURCE + DARK-DEFAULT: значения живут ПРЯМО
         // в :root / :root[data-theme="light"], без html[data-design] override-слоя.
         // Дефолт — тёмная тема (решение пользователя), светлая — явный тумблер.
-        // Контракт:
-        // (1) :root несёт тёмную ветку арт-направления «мастерская гильдии»
-        //     (тёплый камень #14120f + латунь #d0a33c),
-        // (2) :root[data-theme="light"] несёт пергаментную светлую (#ece4d3),
+        // Контракт направления FOLIO (миссия 2026-08-29):
+        // (1) :root несёт тёмную ветку «графит и чернила» (холодный графит #141518
+        //     + кобальт #366fc5),
+        // (2) :root[data-theme="light"] несёт бумажную светлую (#f9f8f6),
         // (3) НИ ОДНОГО html[data-design="X"] scoped-цветоблока,
         // (4) снятые палитры не возвращаются ЗНАЧЕНИЯМИ токенов: ни warm ivory/clay
-        //     editorial (#FAF9F5 / #D97757), ни терминальная бирюза (#071116 / #39d0c7).
-        //     Последняя добавлена в список именно потому, что действовала до этой
-        //     итерации: гейт, который сторожит только позапрошлое направление,
-        //     молча пропускает откат к прошлому.
+        //     editorial (#FAF9F5 / #D97757), ни терминальная бирюза (#071116 /
+        //     #39d0c7), ни гильдейские «камень при свече» (#14120f) с латунью
+        //     (#d0a33c) и пергаментом (#ece4d3). Гейт, который сторожит только
+        //     позапрошлое направление, молча пропускает откат к прошлому.
         String css = readTemplate("static/css/tokens.css");
 
-        // База: :root с тёмной веткой направления (тёплый камень + латунь).
+        // База: :root с тёмной веткой направления (графит + кобальт).
         assertThat(css).contains(":root");
         assertThat(css).contains("--color-bg-primary");
         assertThat(css).contains("--color-accent-primary");
         assertThat(css)
-            .as(":root несёт тёмный canvas направления (тёплый камень #14120f)")
-            .contains("--color-bg-primary:   #14120f");
+            .as(":root несёт тёмный canvas направления (холодный графит #141518)")
+            .contains("--color-bg-primary:   #141518");
         assertThat(css)
             .as(":root[data-theme=\"light\"] несёт вторичную светлую тему")
             .contains(":root[data-theme=\"light\"]");
         assertThat(css)
-            .as("светлая канва — пергамент, а не офисный белый")
-            .contains("--color-bg-primary:   #ece4d3");
+            .as("светлая канва — бумага, а не бежевый пергамент")
+            .contains("--color-bg-primary:   #f9f8f6");
         assertThat(css)
-            .as("латунь — единственный интерактивный акцент")
-            .contains("--color-accent-primary:        #d0a33c");
+            .as("кобальт — единственный интерактивный акцент")
+            .contains("--color-accent-primary:        #366fc5");
 
         // SINGLE-SOURCE: НИ ОДНОГО html[data-design="X"] цвето-override-блока —
-        // включая instrument (промоут DEADCODE-1 перенёс его в :root).
-        for (String dead : new String[] { "instrument", "editorial", "linear", "swiss", "notion",
+        // включая folio (значения живут в :root).
+        for (String dead : new String[] { "folio", "instrument", "editorial", "linear", "swiss", "notion",
                                           "mintlify", "broadsheet", "superhuman", "stripe", "claude", "theverge" }) {
             assertThat(css)
                 .as("дизайн " + dead + " не должен иметь scoped-цветоблок в tokens.css (single-source :root)")
@@ -1091,6 +1092,13 @@ class TemplateFragmentContractTest {
         assertThat(css)
             .as("сине-зелёная канва снятого направления не должна быть значением токена")
             .doesNotContain(":   #071116").doesNotContain(":   #f5f8f8");
+        // Снятое гильдейское направление (латунь/пергамент) — тем же приёмом.
+        assertThat(css)
+            .as("латунный акцент снятого направления не должен быть значением токена")
+            .doesNotContain(": #d0a33c").doesNotContain(": #e3c07a");
+        assertThat(css)
+            .as("канвы снятого направления (тёплый камень / пергамент) не должны быть значениями токенов")
+            .doesNotContain(":   #14120f").doesNotContain(":   #ece4d3");
     }
 
     @Test
@@ -1186,7 +1194,6 @@ class TemplateFragmentContractTest {
         assertThat(head).contains("setAttribute('data-design'");
         assertThat(head).contains("setAttribute('data-theme'");
         assertThat(head).contains("setAttribute('data-motion'");
-        assertThat(head).contains("setAttribute('data-pixel'");
         // iter-132: ширина чтения и плотность ПЕРЕЕХАЛИ СЮДА ЖЕ. Обе меняют
         // раскладку — меру прозы и шкалу отступов, — и применялись после первого
         // кадра, то есть перекладывали страницу на глазах. Гейт держит их здесь и
@@ -1633,32 +1640,27 @@ class TemplateFragmentContractTest {
                 .containsExactlyInAnyOrderElementsOf(dynamic);
     }
 
+    /**
+     * Ось «пиксельность» снята вместе со всем pixel-слоем: пресеты
+     * ({@code SCREEN_PRESETS}) несут только density и readingWidth, атрибута
+     * {@code data-pixel} больше нет ни в head, ни в каскаде. Остался контракт
+     * движения: head ставит {@code data-motion} до первого кадра, а каскад
+     * обязан на «off» реально реагировать — иначе настройка обещает разницу,
+     * которой нет.
+     */
     @Test
-    void pixelAndMotionContractPresentInHeadAndCss() throws IOException {
+    void motionContractPresentInHeadAndCss() throws IOException {
         String head = readTemplate("templates/fragments/head.html");
         String css = readStructuralCss();
 
-        assertThat(head).contains("setAttribute('data-pixel'");
         assertThat(head).contains("setAttribute('data-motion'");
-        // Уровни пиксельного слоя больше не отдельная ось настроек: с iter-132 их
-        // выдаёт экранный пресет (`SCREEN_PRESETS`), и источник правды теперь он.
-        // Контракт от этого не ослаб, а усилился: КАЖДЫЙ уровень, который таблица
-        // способна выдать, обязан что-то менять в каскаде — иначе пресет обещает
-        // разницу, которой нет. Список берём из самой таблицы, а не переписываем
-        // рядом: вторая копия разошлась бы с ней молча.
-        Matcher pixelLevels = Pattern.compile("pixel:\\s*'([a-z]+)'").matcher(head);
-        Set<String> declaredLevels = new LinkedHashSet<>();
-        while (pixelLevels.find()) {
-            declaredLevels.add(pixelLevels.group(1));
-        }
-        assertThat(declaredLevels)
-                .as("таблица пресетов обязана объявлять уровни пиксельного слоя")
-                .isNotEmpty();
-        for (String level : declaredLevels) {
-            assertThat(css)
-                    .as("уровень %s ничего не меняет в каскаде — пресет обещает разницу, которой нет", level)
-                    .contains("[data-pixel=\"" + level + "\"]");
-        }
+        assertThat(head)
+                .as("ось data-pixel снята вместе с pixel-слоем и не должна вернуться в head")
+                .doesNotContain("setAttribute('data-pixel'");
+        assertThat(css)
+                .as("правила [data-pixel=…] мертвы без оси — их возврат означает вторую "
+                        + "реализацию снятого слоя")
+                .doesNotContain("[data-pixel=");
         assertThat(css).contains("[data-motion=\"off\"]");
     }
 
@@ -1666,7 +1668,7 @@ class TemplateFragmentContractTest {
      * Оси персонализации со значением «auto» разрешаются системной настройкой. Прочитать
      * её на загрузке недостаточно: настройку меняют при открытой странице, и ось, которая
      * только спросила `matchMedia(...).matches`, остаётся с решением, принятым один раз.
-     * CSS-медиа перерисуется сама, а JS-потребители (pixel-fx, графики) читают значение
+     * CSS-медиа перерисуется сама, а JS-потребители (графики) читают значение
      * вживую, но узнают о смене только из события — значит подписка обязательна.
      */
     @Test

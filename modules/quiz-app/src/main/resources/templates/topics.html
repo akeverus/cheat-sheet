@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" data-design="instrument" xmlns:th="http://www.thymeleaf.org">
+<html lang="ru" data-design="folio" xmlns:th="http://www.thymeleaf.org">
 <!--/* Каталог тем. Пункт «Темы» первого уровня вёл на /stats#topics — якорь ВНУТРИ
      аналитики. Подделка была записана в самой разметке: у этого пункта,
      единственного из шести, не было ни active-состояния, ни aria-current, а в
@@ -48,21 +48,21 @@
      Достижимо на чистой базе: до импорта банка показывать нечего. Гейт по ОБЩЕМУ
      числу тем, а не по списку разделов: после отбора список тоже бывает пуст, но
      это другое состояние с другим текстом и другим выходом (сбросить отбор). */-->
-<!--/* Глиф берёт ОБЩИЕ классы компонента (.px-illus + ступень .px-illus-lg),
+<!--/* Глиф берёт ОБЩИЕ классы компонента (.ui-illus + ступень .ui-illus-lg),
      а не собственное имя с размером в атрибутах. Первая сборка каталога завела
      здесь `empty-state-art` — класс, которому ни один файл не давал правил;
      замер Chromium 1512×982 на этом же состоянии дал расхождение с закладками
      ровно там, где система его и запрещает: цвет глифа rgb(242,236,224) против
      rgb(157,146,126) в dark (декорация ярче собственного заголовка состояния —
      контракт 80/15/5 наоборот), и мимо правила `@media (max-width: 600px)`,
-     которое уменьшает ступень 64→48: оно целится в `.px-illus-lg`, а такого
+     которое уменьшает ступень 64→48: оно целится в `.ui-illus-lg`, а такого
      класса здесь не было, и на телефоне глиф оставался 64px.
 
      Это тот же дефект, что уже вытеснен на других страницах (`stats-empty`,
      `bookmarks-empty`): не отдельная подача, а класс-пустышка. Гейт
      EmptyStateSystemContractTest теперь считает topics.html своим шаблоном. */-->
 <div th:if="${catalogTopicCount == 0}" class="empty-state" data-empty-bg="card">
-    <svg class="px-illus px-illus-lg empty-state-illus" aria-hidden="true"><use href="#px-shelf"></use></svg>
+    <svg class="ui-illus ui-illus-lg empty-state-illus" aria-hidden="true"><use href="#state-shelf"></use></svg>
     <h2 class="empty-state-title">Каталог пуст</h2>
     <p class="empty-state-text">Банк вопросов ещё не импортирован — как только он появится, разделы и темы будут здесь.</p>
 </div>
@@ -118,7 +118,7 @@
 
 <!--/* Отбор не дал ничего — состояние с собственным выходом. */-->
 <div th:if="${#lists.isEmpty(catalogSections)}" class="empty-state" data-empty-bg="card">
-    <svg class="px-illus px-illus-lg empty-state-illus" aria-hidden="true"><use href="#px-spyglass"></use></svg>
+    <svg class="ui-illus ui-illus-lg empty-state-illus" aria-hidden="true"><use href="#state-search"></use></svg>
     <h2 class="empty-state-title">Ничего не нашлось</h2>
     <p class="empty-state-text">Под этот отбор не подходит ни одна тема. Смягчи запрос или посмотри весь каталог.</p>
     <p class="empty-state-actions"><a class="btn secondary-btn" th:href="@{/topics}">Показать все темы</a></p>
@@ -159,15 +159,14 @@
          th:attr="open=${catalogFilterActive} ? 'open' : null">
     <summary class="catalog-group-summary">
         <span class="catalog-group-headings">
-            <!--/* Знак раздела (REF-020): ассеты img/stickers существовали «ровно
-                 по одному на раздел», конфиг и DTO их довозили, но ни один шаблон
-                 не рендерил — цепочка обрывалась у модели. Знак — визуальный якорь
-                 сканирования каталога (§167); живёт ВНУТРИ клетки headings, потому
-                 что summary — грид с фиксированными колонками и лишний прямой
-                 потомок сдвинул бы все числа. alt="" — декоративен при заголовке:
-                 имя раздела уже звучит из h2, дублировать его в img нечестно. */-->
-            <img class="catalog-group-sign" th:if="${section.group.icon != null}"
-                 th:src="@{'/img/' + ${section.group.icon}}" alt="" width="32" height="32">
+            <!--/* Знак раздела (REF-020): визуальный якорь сканирования каталога
+                 (§167) — символ спрайта по id из topic-groups.yaml. Живёт ВНУТРИ
+                 клетки headings, потому что summary — грид с фиксированными
+                 колонками и лишний прямой потомок сдвинул бы все числа.
+                 aria-hidden — декоративен при заголовке: имя раздела уже звучит
+                 из h2. */-->
+            <svg class="ui-icon catalog-group-sign" th:if="${section.group.icon != null}"
+                 aria-hidden="true"><use th:attr="href='#' + ${section.group.icon}"></use></svg>
             <h2 class="catalog-group-title" th:text="${section.group.title}">Раздел</h2>
             <span class="muted catalog-group-lead" th:text="${section.group.description}">Описание раздела</span>
         </span>

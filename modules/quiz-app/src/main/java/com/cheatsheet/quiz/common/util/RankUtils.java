@@ -68,16 +68,16 @@ public class RankUtils {
     /** Имя символа в спрайте для ступени. */
     public String glyph(GuildRank rank) {
         if (rank == null) {
-            return "px-rank-apprentice";
+            return "rank-apprentice";
         }
         return switch (rank) {
-            case APPRENTICE -> "px-rank-apprentice";
-            case JOURNEYMAN -> "px-rank-journeyman";
-            case CRAFTSMAN -> "px-rank-craftsman";
-            case MASTER -> "px-rank-master";
-            case SENIOR_MASTER -> "px-rank-senior-master";
-            case KEEPER -> "px-rank-keeper";
-            case MAGISTER -> "px-rank-magister";
+            case APPRENTICE -> "rank-apprentice";
+            case JOURNEYMAN -> "rank-journeyman";
+            case CRAFTSMAN -> "rank-craftsman";
+            case MASTER -> "rank-master";
+            case SENIOR_MASTER -> "rank-senior-master";
+            case KEEPER -> "rank-keeper";
+            case MAGISTER -> "rank-magister";
         };
     }
 }

@@ -18,25 +18,22 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * У иконок продукта ОДИН язык, и он пиксельный.
+ * У иконок продукта ОДИН язык, и он линейный (FOLIO: Lucide, 24×24, штрих 2px,
+ * currentColor).
  *
  * <h2>Найденный дефект, а не гипотеза</h2>
- * До iter-112 словарей было три: линейный Lucide-спрайт ({@code fragments/icons.html},
- * viewBox 24, stroke-width 2), «пиксельный» {@code fragments/pixel-sprite.html} — который
- * пиксельным не был, 15 из 25 его символов содержали дуги и диагонали, — и настоящий
- * пиксель 16×16 в {@code fragments/state-illustrations.html}. Замер по всем шаблонам, JS и
- * {@code NavSection}: из 25 символов второго спрайта живыми были ВОСЕМЬ, 17 не
- * использовались нигде. Шесть понятий имели по два глифа сразу (code, diagram, star, check,
- * copy, close/x), и во всех шести парах жил линейный, а пиксельный был мёртв. Каждая
- * страница при этом грузила оба спрайта.
+ * До iter-112 словарей было три (линейный, «пиксельный» с дугами и настоящий
+ * пиксель 16×16); из 25 символов среднего живыми были ВОСЕМЬ, шесть понятий имели
+ * по два глифа. Гейт остался от той чистки: язык сменился (миссия 2026-08-29,
+ * пиксельная сетка снята вместе со слоем pixel), инварианты — нет.
  *
  * <h2>Что закреплено</h2>
  * <ol>
- *   <li>спрайт интерфейсных иконок ровно один;</li>
- *   <li>каждый его символ кто-то использует — склад мёртвых глифов не копится;</li>
+ *   <li>спрайтов-словарей ровно два: иконка при тексте и глиф состояния;</li>
+ *   <li>каждый символ кто-то использует — склад мёртвых глифов не копится;</li>
  *   <li>каждая ссылка {@code <use href="#…">} резолвится в существующий символ;</li>
- *   <li>язык пиксельный: только прямоугольники по клеткам, никаких путей с дугами;</li>
- *   <li>размер целочисленный: у сетки 16×16 дробный масштаб — это мыло.</li>
+ *   <li>символы не несут цвета: тему даёт currentColor потребительского класса;</li>
+ *   <li>растровых значков нет вовсе — ни файлом, ни url() в CSS.</li>
  * </ol>
  */
 class IconLanguageContractTest {
@@ -48,22 +45,23 @@ class IconLanguageContractTest {
     private static final Path STATE = FRAGMENTS.resolve("state-illustrations.html");
     private static final Path NAV_SECTION =
             Path.of("src/main/java/com/cheatsheet/quiz/config/web/NavSection.java");
-    /** Каталог знаков отличия — второй источник имён глифов, живущий в Java. */
     /** Сцены режимов подставляются по имени из ModeUtils — как навигация и знаки. */
     private static final Path MODE_UTILS =
             Path.of("src/main/java/com/cheatsheet/quiz/common/util/ModeUtils.java");
-    /** Гербы ступеней подставляются по имени из RankUtils — третий такой источник. */
+    /** Знаки ступеней подставляются по имени из RankUtils — третий такой источник. */
     private static final Path RANK_UTILS =
             Path.of("src/main/java/com/cheatsheet/quiz/common/util/RankUtils.java");
     private static final Path ACHIEVEMENTS =
             Path.of("../quiz-domain/src/main/java/com/cheatsheet/quiz/domain/Achievement.java");
+    /** Знаки разделов каталога подставляются по id из topic-groups.yaml. */
+    private static final Path TOPIC_GROUPS = RESOURCES.resolve("topic-groups.yaml");
 
     private static final Pattern COMMENT = Pattern.compile("<!--.*?-->", Pattern.DOTALL);
     private static final Pattern SYMBOL = Pattern.compile("<symbol id=\"([^\"]+)\"");
 
     /**
-     * Спрайтов-словарей ровно два, и роли у них разные: иконка при тексте (16px) и
-     * hero-глиф состояния (64px). Третий файл с {@code <symbol>} — это третий язык.
+     * Спрайтов-словарей ровно два, и роли у них разные: иконка при тексте и глиф
+     * состояния. Третий файл с {@code <symbol>} — это третий язык.
      */
     @Test
     void thereIsExactlyOneSpriteOfInterfaceIcons() {
@@ -115,86 +113,56 @@ class IconLanguageContractTest {
     }
 
     /**
-     * Пиксельный язык проверяется по разметке, а не по названию файла. Прошлый спрайт
-     * назывался «pixel», но 15 его символов рисовались путями с дугами: {@code clock} был
-     * окружностью, {@code settings} — шестернёй. Имя файла ничего не гарантирует.
+     * Линейный язык проверяется по разметке, а не по названию файла: сетка 24×24 и
+     * НИ ОДНОГО presentation-атрибута цвета в символе. Цвет и штрих даёт
+     * потребительский класс через currentColor — символ с зашитым {@code fill="#…"}
+     * не знал бы темы (ровно так растровый чекбокс в светлой теме читался как
+     * «выбрано», см. историю гейта).
      */
     @Test
-    void everySymbolIsDrawnOnThePixelGrid() {
-        String source = COMMENT.matcher(read(ICONS)).replaceAll("\n");
-
+    void everySymbolIsThemeAgnosticLineArt() {
         List<String> offenders = new ArrayList<>();
-        Matcher symbol = Pattern.compile("<symbol id=\"([^\"]+)\"(.*?)</symbol>", Pattern.DOTALL)
-                .matcher(source);
         int checked = 0;
-        while (symbol.find()) {
-            checked++;
-            String name = symbol.group(1);
-            String body = symbol.group(2);
-            if (body.contains("<path") || body.contains("<circle") || body.contains("<line")) {
-                offenders.add(name + ": не прямоугольники");
-            }
-            if (!body.contains("shape-rendering=\"crispEdges\"")) {
-                offenders.add(name + ": без crispEdges — сглаженные клетки");
-            }
-            if (!body.contains("viewBox=\"0 0 16 16\"") && !symbol.group(0).contains("viewBox=\"0 0 16 16\"")) {
-                offenders.add(name + ": сетка не 16×16");
-            }
-            Matcher rect = Pattern.compile("<rect ([^/>]*)/>").matcher(body);
-            while (rect.find()) {
-                if (rect.group(1).contains(".")) {
-                    offenders.add(name + ": дробная координата");
+        for (Path sprite : List.of(ICONS, STATE)) {
+            String source = COMMENT.matcher(read(sprite)).replaceAll("\n");
+            Matcher symbol = Pattern.compile("<symbol id=\"([^\"]+)\"([^>]*)>(.*?)</symbol>", Pattern.DOTALL)
+                    .matcher(source);
+            while (symbol.find()) {
+                checked++;
+                String name = symbol.group(1);
+                String attrs = symbol.group(2);
+                String body = symbol.group(3);
+                if (!attrs.contains("viewBox=\"0 0 24 24\"")) {
+                    offenders.add(name + ": сетка не 24×24");
+                }
+                if (body.matches("(?s).*\\b(fill|stroke)=\"(?!none\")[^\"]*\".*")) {
+                    offenders.add(name + ": цвет зашит в символ — тема его не перекрасит");
                 }
             }
         }
-        assertThat(checked).as("символы в спрайте").isPositive();
-        assertThat(offenders).as("символ нарисован не по клеткам — пиксельный язык держится "
-                + "разметкой, а не названием файла").isEmpty();
+        assertThat(checked).as("символы в спрайтах").isPositive();
+        assertThat(offenders).as("символ выпал из линейного языка").isEmpty();
     }
 
     /**
-     * Размер иконки — целое число пикселей. При кегле 18px прежняя база {@code 1em} давала
-     * 1.125 device-пикселя на клетку сетки, то есть мыло ровно там, где пиксельность и есть
-     * смысл. Заодно ловится возврат снятых контекстных 14/15px.
+     * База потребительского класса живёт в components-icons.css и рисует штрихом:
+     * {@code fill: none; stroke: currentColor}. Без этой базы линейные символы
+     * рендерятся чёрной заливкой по умолчанию SVG — одинаково неверно в обеих темах.
      */
     @Test
-    void iconSizesStayOnWholePixels() {
-        List<String> offenders = new ArrayList<>();
-        for (Path css : list(RESOURCES.resolve("static/css"))) {
-            String source = css.getFileName().toString().endsWith(".css")
-                    ? read(css).replaceAll("(?s)/\\*.*?\\*/", "\n")
-                    : "";
-            Matcher rule = Pattern.compile("([^{}]*\\.px-icon[^{}]*)\\{([^}]*)}").matcher(source);
-            while (rule.find()) {
-                Matcher size = Pattern.compile("(width|height)\\s*:\\s*([^;]+);").matcher(rule.group(2));
-                while (size.find()) {
-                    String value = size.group(2).trim();
-                    boolean wholePixels = value.matches("\\d+px")
-                            || value.startsWith("var(--px-");
-                    if (!wholePixels) {
-                        offenders.add(css.getFileName() + ": " + rule.group(1).strip()
-                                .replaceAll("\\s+", " ") + " → " + size.group(1) + ": " + value);
-                    }
-                }
-            }
-        }
-        assertThat(offenders).as("размер иконки задан дробно (em/rem/проценты). Сетка 16×16 не "
-                + "масштабируется дробно — это мыло, а не «чуть крупнее»").isEmpty();
+    void theConsumerClassDrawsWithStroke() {
+        String css = read(RESOURCES.resolve("static/css/components-icons.css"))
+                .replaceAll("(?s)/\\*.*?\\*/", "\n");
+        Matcher base = Pattern.compile("html\\[data-design]\\s+\\.ui-icon\\s*\\{([^}]*)}").matcher(css);
+        assertThat(base.find()).as("база .ui-icon исчезла из components-icons.css").isTrue();
+        String body = base.group(1);
+        assertThat(body).contains("fill: none");
+        assertThat(body).contains("stroke: currentColor");
     }
 
     /**
-     * Значок интерфейса не бывает растровым.
-     *
-     * <p>После iter-112 язык иконок стал один — пиксельный SVG, — но мелкие значки,
-     * которые рисует не разметка, а псевдоэлемент, остались растровыми: восемнадцать PNG
-     * в CSS. Растр не наследует тему, и замер показал это буквально: один и тот же
-     * {@code checkbox-off.png} рисовался в обеих темах, поэтому в СВЕТЛОЙ теме маркер
-     * невыбранного чипа выглядел чёрным залитым квадратом — «не выбрано» читалось как
-     * «выбрано». Состояние врало.</p>
-     *
-     * <p>Теперь такие значки — маски ({@code mask-image} + {@code currentColor}), и цвет
-     * им даёт тема. Растровыми остаются только две вещи, которые значками не являются:
-     * бренд ({@code mascot.png}) и сцена страницы ошибки ({@code portal.png}).</p>
+     * Значок интерфейса не бывает растровым: ни файла-PNG в static/, ни {@code url(/img/…)}
+     * в CSS. Растр не наследует тему — см. историю гейта (чекбокс светлой темы).
      */
     @Test
     void interfaceGlyphsAreNeverRaster() {
@@ -204,48 +172,38 @@ class IconLanguageContractTest {
                 continue;
             }
             String source = read(css).replaceAll("(?s)/\\*.*?\\*/", "\n");
-            Matcher raster = Pattern.compile("url\\(\"?/img/pixel/([a-z0-9-]+\\.png)").matcher(source);
+            Matcher raster = Pattern.compile("url\\(\"?/img/[a-z0-9/_-]+\\.(png|gif|jpe?g|webp)").matcher(source);
             while (raster.find()) {
-                offenders.add(css.getFileName() + " → " + raster.group(1));
+                offenders.add(css.getFileName() + " → " + raster.group());
             }
         }
         assertThat(offenders)
                 .as("растровый значок вернулся в CSS. PNG не знает темы: именно так маркер "
                         + "невыбранного чипа в светлой теме выглядел закрашенным")
                 .isEmpty();
+
+        List<String> rasterFiles = list(RESOURCES.resolve("static")).stream()
+                .map(Path::toString)
+                .filter(name -> name.matches(".*\\.(png|gif|jpe?g|webp)$"))
+                .toList();
+        assertThat(rasterFiles)
+                .as("в static/ вернулся растровый ассет — вся графика продукта векторная")
+                .isEmpty();
     }
 
     /**
-     * Знак продукта — символ спрайта, а не растр, и он один.
-     *
-     * <p>До iter-119 бренд рисовал {@code mascot.png} 24×24: растр не знал темы (на
-     * пергаменте оставался тёмным пятном из тёмной темы) и не ложился на сетку — 24 это
-     * ×1.5 от 16×16. Он же стоял на странице ошибки для кодов, кроме 404, — «лицо
-     * продукта» на экране сбоя ничего не объясняло.</p>
-     *
-     * <p>Теперь знак — символ {@code #crest} (щит с раскрытой книгой), 32px = ×2 от
-     * сетки, цвет от темы. Растровых ассетов в продукте не осталось вовсе.</p>
+     * Знак продукта — символ спрайта {@code #crest} (книга с закладкой), и он один
+     * на сайдбар и мобильную шапку. Favicon рисует тот же знак теми же путями.
      */
     @Test
-    void theBrandMarkIsASpriteSymbolAndRasterAssetsAreGone() {
+    void theBrandMarkIsASpriteSymbol() {
         String sidebar = COMMENT.matcher(read(FRAGMENTS.resolve("sidebar.html"))).replaceAll("\n");
         String header = COMMENT.matcher(read(FRAGMENTS.resolve("shell-head.html"))).replaceAll("\n");
         for (String markup : List.of(sidebar, header)) {
-            assertThat(markup).as("знак бренда снова растровый").doesNotContain("mascot.png");
             assertThat(markup).as("знак бренда не берёт символ спрайта")
                     .contains("<use href=\"#crest\">");
         }
-        assertThat(symbols(ICONS)).as("герб исчез из спрайта").contains("crest");
-
-        Path raster = RESOURCES.resolve("static/img/pixel");
-        List<String> files = list(raster).stream()
-                .map(p -> p.getFileName().toString())
-                .filter(name -> name.endsWith(".png"))
-                .toList();
-        assertThat(files)
-                .as("в продукт вернулся растровый пиксельный ассет: PNG не знает темы и не "
-                        + "тянется целочисленно от сетки 16×16")
-                .isEmpty();
+        assertThat(symbols(ICONS)).as("знак исчез из спрайта").contains("crest");
     }
 
     private static Set<String> symbols(Path sprite) {
@@ -258,7 +216,7 @@ class IconLanguageContractTest {
         return found;
     }
 
-    /** Всё, чем продукт ссылается на символы: разметка, JS-хелпер, источник навигации. */
+    /** Всё, чем продукт ссылается на символы: разметка, JS-хелпер, источники имён в Java/YAML. */
     private static Set<String> references() {
         Set<String> found = new LinkedHashSet<>();
         for (Path file : sources()) {
@@ -297,13 +255,17 @@ class IconLanguageContractTest {
             found.add(modes.group(1));
         }
 
-        // Гербы ступеней — третий источник имён, живущий в Java: карточка прогрессии
-        // берёт символ из RankUtils#glyph по текущей ступени, поэтому в разметке нет ни
-        // одной строки `#px-rank-…`. Не читать этот файл значило бы объявить семь живых
-        // гербов мёртвыми — ровно та ошибка, от которой этот гейт и защищает.
-        Matcher rankEmblems = Pattern.compile("\"(px-rank-[a-z-]+)\"").matcher(read(RANK_UTILS));
+        // Знаки ступеней — источник имён в RankUtils#glyph: карточка прогрессии берёт
+        // символ по текущей ступени, в разметке строки `#rank-…` нет.
+        Matcher rankEmblems = Pattern.compile("\"(rank-[a-z-]+)\"").matcher(read(RANK_UTILS));
         while (rankEmblems.find()) {
             found.add(rankEmblems.group(1));
+        }
+
+        // Знаки разделов каталога — id символа в topic-groups.yaml (`icon: section-…`).
+        Matcher sections = Pattern.compile("icon:\\s*([a-z][a-z0-9-]*)").matcher(read(TOPIC_GROUPS));
+        while (sections.find()) {
+            found.add(sections.group(1));
         }
         return found;
     }
