@@ -1,5 +1,34 @@
 # Архитектура бэкенда
 
+## 0. Как читать этот документ
+
+Якоря `path:line` проверены на `3efc7883456de898464f65cb829ba20c9e0e7f9a`; перепроверка —
+`python3 scripts/check-arch-anchors.py`. Каждый следующий коммит в `modules/` может
+сдвинуть номера строк внутри файла — валидатор ловит вышедший за пределы файла якорь,
+но не сдвиг внутри того же файла; это осознанный размен на простоту.
+
+Пути записаны сокращённо, префикс перед двоеточием разворачивается по таблице:
+
+| Префикс | Разворачивается в |
+|---|---|
+| `app:` | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/` |
+| `dom:` | `modules/quiz-domain/src/main/java/com/cheatsheet/quiz/domain/` |
+| `per:` | `modules/quiz-persistence/src/main/java/com/cheatsheet/quiz/persistence/` |
+| `mig:` | `modules/quiz-persistence/src/main/resources/db/migration/` |
+| `res:` | `modules/quiz-app/src/main/resources/` |
+| `tst:` | `modules/quiz-app/src/test/java/com/cheatsheet/quiz/` |
+
+Пример: якорь `app:feature/interview/service/review/ReviewService.java:32` разворачивается
+в путь `modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/interview/service/review/ReviewService.java`, строка 32.
+
+Числа в документе бывают двух категорий. **Состояние на HEAD** (53 файла в
+`quiz-domain`, `V1…V29`, 9818 вопросов) — обязано сходиться с командой из соседнего
+кода прямо сейчас; такое число без якоря или без сопровождающей команды — дефект
+документа. **Исторические замеры** (1231 вопрос без диаграммы до бэкфилла, 79
+дублей код/схема, `↻1292 переразобрано`) — факты о произошедшем однажды событии,
+их не пересчитывают заново; такие числа помечены «на момент правки» и не участвуют
+в проверке актуальности.
+
 ## 1. Модули
 
 Три Gradle-модуля с односторонними зависимостями:
@@ -8,18 +37,33 @@
 quiz-domain  ←  quiz-persistence  ←  quiz-app
 ```
 
-- **`quiz-domain`** — 46 файлов (не считая `package-info`), чистая модель без Spring и без инфраструктуры:
-  `Question`, `InterviewQuestion`, `InterviewSession`, `InterviewFilter`, `ReviewState`,
-  `FsrsState`, `Attempt`, `Bookmark`, `TopicStats`, перечисления (`InterviewMode`,
-  `Difficulty`, `QuestionType`, `FlashcardGrade`, `ReviewReason`, …). Почти всё —
-  record'ы. Здесь же `RussianPlural` — склонение числительных для UI-копирайта.
-- **`quiz-persistence`** — 15 файлов `*Repository*` (14 JDBC-реализаций + интерфейс
-  `FullTextSearchRepository`) из 19 всего + Flyway (`db/migration/`, V1…V26).
-  PostgreSQL only; H2/встроенных БД нет. Полнотекстовый поиск — нативный PostgreSQL FTS
-  (`PostgresFullTextSearchRepository`, `FtsQueryUtils`).
+- **`quiz-domain`** — 53 файла (51 без `package-info`), чистая модель без Spring и без
+  инфраструктуры. Ключевые типы: `Question` (`dom:Question.java:31`),
+  `InterviewQuestion`, `InterviewSession`, `InterviewFilter`, `ReviewState`
+  (`dom:ReviewState.java:23`), `FsrsState` (`dom:FsrsState.java:24`), `Attempt`
+  (`dom:Attempt.java:27`), `Bookmark` (`dom:Bookmark.java:18`), `TopicStats`
+  (`dom:TopicStats.java:25`), перечисления (`InterviewMode`, `Difficulty`,
+  `QuestionType`, `FlashcardGrade`, `ReviewReason`, …). Почти всё — record'ы. Здесь же
+  `RussianPlural` — склонение числительных для UI-копирайта. С прошлой ревизии
+  добавились три семейства: прогрессия (`Achievement` `dom:Achievement.java:24`,
+  `GuildRank` `dom:GuildRank.java:27`, `Progression` `dom:Progression.java:26`,
+  `UserExperience` `dom:UserExperience.java:18`, `StreakInfo`
+  `dom:StreakInfo.java:10`, `DailyProgress` `dom:DailyProgress.java:10`), сессия
+  (`SessionRecord` `dom:SessionRecord.java:27`, `PausedSessionInfo`
+  `dom:PausedSessionInfo.java:19`, `StudyPhase` `dom:StudyPhase.java:11`,
+  `FlashcardPhase` `dom:FlashcardPhase.java:12`), экспорт и связи
+  (`ProgressExportRow` `dom:ProgressExportRow.java:19`, `RelatedQuestion`
+  `dom:RelatedQuestion.java:15`, `QuestionIssueStatus` `dom:QuestionIssueStatus.java:7`).
+- **`quiz-persistence`** — 16 файлов `*Repository*` (15 JDBC-реализаций + интерфейс
+  `FullTextSearchRepository` `per:FullTextSearchRepository.java:12`) из 21 всего +
+  Flyway (`db/migration/`, `V1…V29`). PostgreSQL only; H2/встроенных БД нет.
+  Полнотекстовый поиск — нативный PostgreSQL FTS (`PostgresFullTextSearchRepository`
+  `per:PostgresFullTextSearchRepository.java:23`, `FtsQueryUtils`
+  `per:FtsQueryUtils.java:12`).
 - **`quiz-app`** — Spring Boot: контроллеры, сервисы, Thymeleaf, конфигурация.
 
-Границы **проверяются тестом**, а не соглашением: `LayeredArchitectureTest` (ArchUnit)
+Границы **проверяются тестом**, а не соглашением:
+`LayeredArchitectureTest` (`tst:architecture/LayeredArchitectureTest.java:18`, ArchUnit)
 запрещает `domain → api/service/persistence/config`, `service → controller/security`,
 `persistence → api`.
 
@@ -42,38 +86,46 @@ infrastructure/      bootstrap · health · render · search
 
 Разделение `service/` и `usecase/` внутри `feature/interview` содержательное:
 `service/` — доменная механика (планировщик, сессии, страницы), `usecase/` — тонкие
-оркестраторы под конкретный HTTP-вызов (`AnswerApiService`, `NextQuestionApiService`,
-`FavoriteApiService`, `BookmarkApiService`, `ConfidenceApiService`,
-`IssueReportApiService`). Контроллер не содержит логики — он вызывает use-case.
+оркестраторы под конкретный HTTP-вызов (`AnswerApiService`
+`app:feature/interview/usecase/AnswerApiService.java:31`, `NextQuestionApiService`
+`app:feature/interview/usecase/NextQuestionApiService.java:23`, `FavoriteApiService`
+`app:feature/interview/usecase/FavoriteApiService.java:17`, `BookmarkApiService`
+`app:feature/interview/usecase/BookmarkApiService.java:25`, `ConfidenceApiService`
+`app:feature/interview/usecase/ConfidenceApiService.java:17`, `IssueReportApiService`
+`app:feature/interview/usecase/IssueReportApiService.java:19`). Контроллер не
+содержит логики — он вызывает use-case.
 
 Ключевые сервисы `feature/interview/service/`:
 
 | Пакет | Класс | Ответственность |
 |---|---|---|
-| `core` | `InterviewService` | Центральный оркестратор выдачи вопроса и записи ответа |
-| `core` | `OptionLookupService` | Варианты MCQ из seed-JSON |
-| `flow` | `SessionFlowService`, `PauseService`, `SessionSummaryService` | Жизненный цикл сессии |
-| `review` | `ReviewService`, `SpacedRepetitionService`, `FsrsService`, `AttemptRecorder` | Интервальное повторение |
-| `page` | `FocusTrainingPageService`, `StatsPageService`, `AnswerPageService`, `BookmarksPageService` | Сборка состояния экрана |
-| `progress` | `ExperienceService`, `DailyStreakService`, `BookmarkService`, `FavoriteService` | Прогресс и метки |
-| `topic` | `TopicCatalogService` | Каталог и гуманизация имён тем |
-| `copy` | `AnswerCopy` | Текст разбора: вердикт, срок повторения, буквы вариантов |
+| `core` | `InterviewService` (`app:feature/interview/service/core/InterviewService.java:54`) | Центральный оркестратор выдачи вопроса и записи ответа |
+| `core` | `OptionLookupService` (`app:feature/interview/service/core/OptionLookupService.java:27`) | Варианты MCQ из seed-JSON |
+| `flow` | `SessionFlowService` (`app:feature/interview/service/flow/SessionFlowService.java:29`), `PauseService` (`app:feature/interview/service/flow/PauseService.java:37`), `SessionSummaryService` (`app:feature/interview/service/flow/SessionSummaryService.java:36`) | Жизненный цикл сессии |
+| `review` | `ReviewService` (`app:feature/interview/service/review/ReviewService.java:32`), `SpacedRepetitionService` (`app:feature/interview/service/review/SpacedRepetitionService.java:36`), `FsrsService` (`app:feature/interview/service/review/FsrsService.java:30`), `AttemptRecorder` (`app:feature/interview/service/review/AttemptRecorder.java:28`) | Интервальное повторение |
+| `page` | `FocusTrainingPageService` (`app:feature/interview/service/page/FocusTrainingPageService.java:49`), `StatsPageService` (`app:feature/interview/service/page/StatsPageService.java:47`), `AnswerPageService` (`app:feature/interview/service/page/AnswerPageService.java:32`), `BookmarksPageService` (`app:feature/interview/service/page/BookmarksPageService.java:34`) | Сборка состояния экрана |
+| `progress` | `ExperienceService` (`app:feature/interview/service/progress/ExperienceService.java:34`), `DailyStreakService` (`app:feature/interview/service/progress/DailyStreakService.java:25`), `BookmarkService` (`app:feature/interview/service/progress/BookmarkService.java:26`), `FavoriteService` (`app:feature/interview/service/progress/FavoriteService.java:23`) | Прогресс и метки |
+| `topic` | `TopicCatalogService` (`app:feature/interview/service/topic/TopicCatalogService.java:35`) | Каталог и гуманизация имён тем |
+| `copy` | `AnswerCopy` (`app:feature/interview/service/copy/AnswerCopy.java:19`) | Текст разбора: вердикт, срок повторения, буквы вариантов |
 
 `AnswerCopy` — единственный автор формулировок разбора. Разбор рисуют два рендерера
 (SSR `result.html` и `quiz/interview.js`), и пока каждый собирал текст сам, у одного
 события было две редакции. Теперь MVC-модель получает `verdictText` / `nextReviewText`
-через `MvcModelAttributeMapper`, а `AnswerResponse` несёт те же поля в JSON — клиенты
-только печатают. Строки — единственное, что здесь считается: буквы A/B/C выводятся из
-позиции варианта в списке, срок — из `intervalDays` обновлённого `ReviewState`.
+через `MvcModelAttributeMapper` (`app:api/mapper/view/MvcModelAttributeMapper.java:29`),
+а `AnswerResponse` (`app:feature/interview/dto/response/answer/AnswerResponse.java:22`)
+несёт те же поля в JSON — клиенты только печатают. Строки — единственное, что здесь
+считается: буквы A/B/C выводятся из позиции варианта в списке, срок — из `intervalDays`
+обновлённого `ReviewState`.
 
 **Куда ведёт «следующий шаг» — свойство домена, а не шаблона.** `SessionSummaryService`
 собирает короткий план из `SessionSummary.NextAction`, и назначение каждого пункта несёт
-сам `NextActionType` (`Destination`: `TRAINING` / `MISTAKES` / `TOPIC`). Раньше ссылку
-выбирал шаблон, сравнивая имя константы со строкой, — из-за чего вопрос «сколько на
-экране *разных* назначений» нельзя было задать ни в сервисе, ни в тесте: `REVIEW_DUE` и
-`KEEP_GOING` вели в одно место и показывались как два выбора. Теперь сервис подавляет
-`KEEP_GOING`, когда долг повторений уже дал `REVIEW_DUE`, а шаблон только печатает.
-Держит `SummaryRoutingContractTest`.
+сам `NextActionType` (`dom:NextActionType.java:16`; вложенный `Destination`:
+`TRAINING` / `MISTAKES` / `TOPIC`). Раньше ссылку выбирал шаблон, сравнивая имя
+константы со строкой, — из-за чего вопрос «сколько на экране *разных* назначений»
+нельзя было задать ни в сервисе, ни в тесте: `REVIEW_DUE` и `KEEP_GOING` вели в одно
+место и показывались как два выбора. Теперь сервис подавляет `KEEP_GOING`, когда долг
+повторений уже дал `REVIEW_DUE`, а шаблон только печатает. Держит
+`SummaryRoutingContractTest` (`tst:ui/SummaryRoutingContractTest.java:43`).
 
 Точность и длительность сводки тоже считает домен, а не представление: знаменатель
 точности — число **отвеченных** вопросов (не запланированных), а `getAccuracyRounded()` /
@@ -311,12 +363,17 @@ FSRS-память, точность темы и признак избранно�
 
 ## 5. Безопасность
 
-Два режима, `app.security.mode`:
+Два режима, `app.security.mode` (`app:config/app/AppProperties.java:203`, дефолт
+`"local"`):
 
-- **`single`** (по умолчанию) — однопользовательский, без аутентификации.
-- **`multi`** — OAuth2 + owner-скоупинг: `OwnerContextFilter` кладёт ключ владельца в
-  `OwnerContext`, репозитории фильтруют по нему. Режим выключен и живой проверкой не
-  покрыт.
+- **`local`** (по умолчанию) — однопользовательский, без аутентификации.
+- **`multi`** — учётки в памяти (HTTP Basic / форма) плюс опциональный OAuth2/OIDC,
+  собирает `MultiUserSecurityConfig` (`app:config/web/MultiUserSecurityConfig.java:25`),
+  сам называющий себя в javadoc «skeleton multi-user identity» — режим не рассчитан на
+  реальную многопользовательскую эксплуатацию без доработки. Owner-скоупинг общий для
+  обоих способов входа: `OwnerContextFilter` кладёт ключ владельца в `OwnerContext`
+  (`per:OwnerContext.java:9`), репозитории фильтруют по нему. Режим выключен и живой
+  проверкой не покрыт.
 
 `SecurityModeStartupGuard` и `OAuthSecurityStartupGuard` валят приложение на старте
 при несогласованной конфигурации — молчаливый старт в полуоткрытом состоянии опаснее
@@ -358,10 +415,12 @@ CSP с nonce: `CspNonceFilter` генерирует nonce на запрос, `Cs
 `QuestionRepository.incrementRegenCount` остался без вызывающих, и колонка навсегда
 застыла на нуле. Этот ноль не был безобидным: `findTopicStats` агрегировал его
 `SUM(q.regen_count)`, домен нёс его полем `TopicStats.regenSum`, а публичный
-`GET /api/topic-stats` печатал `"regenSum": 0` в каждом из ~320 объектов ответа —
-контракт обещал метрику, которой не существует. Вертикаль удалена целиком: поле
-`Question.regenCount`, оба метода репозитория, поле домена, поле DTO
-`TopicStatsResponse`, столбец в SQL и сама колонка (`V27__drop_regen_count`).
+`GET /api/topic-stats` печатал `"regenSum": 0` в каждом из 320 объектов ответа (по
+числу тем — см. §6a) — контракт обещал метрику, которой не существует. Вертикаль
+удалена целиком: поле `Question.regenCount`, оба метода репозитория, поле домена, поле
+DTO `TopicStatsResponse` (`app:feature/interview/dto/response/progress/TopicStatsResponse.java:17`),
+столбец в SQL и сама колонка (`V27__drop_regen_count`,
+`mig:V27__drop_regen_count.sql:1`).
 
 Рендер markdown — `MarkdownRenderService` (flexmark) + `AnswerHtmlSplitter`, который
 режет ответ на блоки для пошагового раскрытия.
@@ -381,26 +440,28 @@ CSP с nonce: `CspNonceFilter` генерирует nonce на запрос, `Cs
 (`DISPLAY_NAMES` на 24 записи и списки токенов «пиши заглавными» / «пиши
 смешанным регистром»). Реконструкция из slug-а невозможна в принципе: slug —
 результат необратимого упрощения, из `cockroachdb` не выводится `CockroachDB`
-никакими правилами. Словари покрывали 5 тем из 319 — и то мимо: половина их
+никакими правилами. Словари покрывали 5 тем из 320 — и то мимо: половина их
 ключей (`acid`, `collections`, `gc`, `streams`) вообще не соответствовала ни
-одной существующей теме. Остальные 314 показывались как «Cockroachdb»,
+одной существующей теме. Остальные 315 показывались как «Cockroachdb»,
 «Archunit», «Clickhouse», «Argocd», «Apache airflow», «AWS lambda».
 
 Правильное имя уже есть — в самом файле темы, в его frontmatter
 (`title: "<раздел>: <название>"`). Импорт теперь его и читает:
 
-- `TopicTitleReader` берёт `title` из ведущего frontmatter-блока (чтение
-  обрывается на закрывающем `---`, файлы весят десятки килобайт) и отбрасывает
-  префикс раздела до первого двоеточия — раздел в UI задан навигацией.
-- `QuestionImportService.importFile` на каждый файл кладёт пару
-  «slug → название» в `TopicDisplayNames`.
-- `TopicUtils.displayName` (тот самый `@topicUtils` из шаблонов) читает реестр.
-  Тема не найдена — значит файл удалён, а вопросы ещё в БД: показываем slug с
-  заглавной буквы. Догадки о «настоящем» имени не строим.
+- `TopicTitleReader` (`app:service/imports/TopicTitleReader.java:26`) берёт `title` из
+  ведущего frontmatter-блока (чтение обрывается на закрывающем `---`, файлы весят
+  десятки килобайт) и отбрасывает префикс раздела до первого двоеточия — раздел в UI
+  задан навигацией.
+- `QuestionImportService.importFile` на каждый файл кладёт пару «slug → название» в
+  `TopicDisplayNames` (`app:common/util/TopicDisplayNames.java:23`).
+- `TopicUtils.displayName` (тот самый `@topicUtils` из шаблонов) читает реестр. Тема не
+  найдена — значит файл удалён, а вопросы ещё в БД: показываем slug с заглавной буквы.
+  Догадки о «настоящем» имени не строим.
 
 Реестр — in-memory (`ConcurrentHashMap`), без таблицы и миграции: банк вопросов
-и так переимпортируется из тех же файлов на каждом старте (`StartupRunner` →
-`importAll`), поэтому таблица была бы вторым источником правды, который умеет
+и так переимпортируется из тех же файлов на каждом старте (`StartupRunner`
+`app:infrastructure/bootstrap/StartupRunner.java:32` → `importAll`), поэтому таблица
+была бы вторым источником правды, который умеет
 расходиться с первым. Новая тема получает корректное имя без единой правки Java.
 
 ### 6b. Хеш сторожит текст, но не парсер, который его разбирает
@@ -499,28 +560,73 @@ CSP с nonce: `CspNonceFilter` генерирует nonce на запрос, `Cs
 ## 7. HTTP-поверхность
 
 MVC (возвращают HTML): `GET /`, `/review`, `/stats`, `/settings`, `/bookmarks`,
-`/session-summary`, `/login`, `/error`; `POST /answer`, `/start`, `/finish`, `/pause`,
-`/resume`, `/skip`, `/flashcard-reveal`, `/flashcard-grade`, `/study-confirm`,
-`/bookmarks/*`, `/settings/reset-options`. `GET /training` — легаси-редирект на `/`
-с переносом whitelisted query-параметров.
+`/session-summary`, `/login`, `/topics`, `/train`, `/error`; `POST /answer`, `/start`,
+`/finish`, `/pause`, `/pause/discard`, `/resume`, `/skip`, `/flashcard-reveal`,
+`/flashcard-grade`, `/study-confirm`, `/bookmarks/note`, `/bookmarks/remove`,
+`/question/note`, `/settings/reset-options`. `GET /training` — легаси-редирект на `/`
+с переносом whitelisted query-параметров. Из более новых страниц: `/topics` —
+каталог тем как самостоятельный адрес первого уровня (а не якорь внутри `/stats`),
+`/train` — конструктор «Собрать сессию», вынесенный из вкладок `/settings`
+(UXD-001), принимает те же параметры префилла, что раньше принимал `/settings`.
 
-REST: `GET /api/next`, `/api/stats`, `/api/streak`, `/api/topic-stats`;
-`POST /api/answer`, `/api/favorite`, `/api/bookmark*`, `/api/confidence`, `/api/report`.
-Экспорт — `/export/**`.
+REST: `GET /api/next`, `/api/stats`, `/api/streak`, `/api/topic-stats`; `POST
+/api/answer`, `/api/favorite`, `/api/confidence`, `/api/report`, а также три
+конкретных пути закладок — `/api/bookmark`, `/api/bookmark/note`,
+`/api/bookmark/remove` (в коде это три отдельных `@PostMapping`, не общий глоб).
+Экспорт — `ExportController` держит класс-уровневый `@RequestMapping("/export")`; сама
+выгрузка (`GET`, без литерального пути — `produces` перечисляет форматы) документируется
+здесь прозой, а не проверяется валидатором как литерал.
 
 Спецификация — springdoc, Swagger UI на `/swagger-ui.html` (отключён в профиле `prod`).
+CSS-бандл (`/css/bundle/{page}.{hash}.css`) собирается из `CssBundleService.URL_PREFIX`
+конкатенацией с именем файла — путь нелитеральный, валидатор C его не проверяет.
 
 ## 8. Идемпотентность и конкурентность
 
 - Ключ идемпотентности `POST /api/answer` — поле тела `clientAttemptId`
-  (`SubmitAnswerRequest` → `ApiRequestMapper` → `AttemptRecorder.normalizeKey`).
-  Заголовка `Idempotency-Key` сервер не читает. Уникальный индекс
-  `V22__attempt_idempotency_claim` не даёт двойной записи попытки при ретрае.
+  (`SubmitAnswerRequest` `app:api/dto/request/interview/SubmitAnswerRequest.java:25` →
+  `ApiRequestMapper` `app:api/mapper/request/ApiRequestMapper.java:13` →
+  `AttemptRecorder.normalizeKey`). Заголовка `Idempotency-Key` сервер не читает.
+  Уникальный индекс `V22__attempt_idempotency_claim` не даёт двойной записи попытки
+  при ретрае.
 - `V23__attempt_first_attempt_unique` гарантирует единственность первой попытки —
   от неё считается статистика освоенности.
-- Контент вопроса версионируется (`QuestionRevisionRepository`); ответ на устаревшую
-  ревизию отвергается `RevisionMismatchException` → 409 с внятной формулировкой, а не
-  молча засчитывается по новому тексту.
+- Контент вопроса версионируется (`QuestionRevisionRepository`
+  `per:QuestionRevisionRepository.java:26`); ответ на устаревшую ревизию отвергается
+  `RevisionMismatchException` `app:feature/interview/service/review/RevisionMismatchException.java:7`
+  → 409 с внятной формулировкой, а не молча засчитывается по новому тексту.
+
+## 8a. История сессий
+
+`session_history` (`V29__session_history.sql`,
+`mig:V29__session_history.sql:12`) хранит **итоги** завершённых сессий, а не сами
+ответы. До этой таблицы сводка жила только в `HttpSession`: экран `/session-summary`
+читал её ровно один раз и терял при следующем старте, перезагрузке страницы или
+закрытии вкладки — вопрос «сколько я занимался и как шёл» не имел ответа нигде, кроме
+момента сразу после финиша.
+
+Копировать подробности каждой попытки сюда — значило бы завести второй источник
+правды рядом с `attempt` и `review_state`, которые их уже несут. Поэтому в таблице
+только то, что нельзя восстановить из них: границы самой сессии — `owner_key`
+(дефолт `'local'`, тот же приём, что и в `V24`), `finished_at` (epoch-секунды), `mode`,
+счётчики `total_questions` / `correct_count` / `wrong_count` / `unknown_count`,
+`duration_seconds` и `session_xp`. Индекс `(owner_key, finished_at DESC)` — под
+единственный реальный запрос: «последние сессии владельца, свежие сверху».
+
+Пишет `SessionHistoryService.record`
+(`app:feature/interview/service/flow/SessionHistoryService.java:51`), вызывает его
+`InterviewFlowMvcService`
+(`app:feature/interview/usecase/mvc/InterviewFlowMvcService.java:276`) на завершении
+сессии. Пустая сессия (ни одного ответа) не пишется — строка «0 из 0» в истории
+выглядела бы занятием, которым не была. Ошибка записи не роняет завершение сессии:
+человек только что закончил работу, и потеря строки в истории — меньшая беда, чем
+500 вместо итогов. Читает `StatsPageService`
+(`app:feature/interview/service/page/StatsPageService.java:174`) тем же
+`SessionHistoryService.recent()`. `SessionHistoryService` — единственный посредник
+между `quiz-app` и `SessionHistoryRepository`
+(`per:SessionHistoryRepository.java:24`); домен новых типов под это не завёл —
+записи истории читаются и пишутся как `SessionRecord`, уже входящий в семейство
+«сессия» из §1.
 
 ## 9. Тесты
 
