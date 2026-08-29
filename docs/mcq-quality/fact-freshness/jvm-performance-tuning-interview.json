@@ -1,14 +1,31 @@
 {
   "topic_slug": "jvm-performance-tuning-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
+  "round": 10,
+  "status": "AUDITED",
+  "version_sensitive": true,
+  "product_version": "Java SE 21 LTS / 25 (набор сборщиков и контейнерные механизмы JVM)",
+  "checked_date": "2026-08-29",
+  "sources": [
+    "https://docs.oracle.com/en/java/javase/25/gctuning/ — HotSpot Virtual Machine Garbage Collection Tuning Guide (состав сборщиков, флаги G1)",
+    "https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html — справочник опций java, включая -XX:+UseZGC, -XX:+UseShenandoahGC, -XX:+UseContainerSupport",
+    "https://openjdk.org/jeps/439 — Generational ZGC (историческая привязка режима к версии JDK)"
+  ],
+  "version_sensitive_claims": [
+    "G1 — сборщик по умолчанию начиная с JDK 9 (тело Q4/Q5).",
+    "ZGC доступен как production-сборщик с JDK 15, поколенческий режим введён отдельным JEP (тело Q6/Q9).",
+    "Shenandoah доступен как production-сборщик с JDK 15 (тело Q7).",
+    "CMS удалён из JDK, поэтому в перечне актуальных сборщиков его нет (тело Q4).",
+    "Контейнерная осведомлённость JVM (-XX:+UseContainerSupport, MaxRAMPercentage) появилась в JDK 10 и включена по умолчанию (тело Q29/Q31).",
+    "CDS/AppCDS и автосоздание архива развивались по версиям JDK (тело Q34)."
+  ],
+  "staleness_risks": [
+    "Номера версий, вводящих сборщик или режим, историчны и задним числом не меняются.",
+    "Дефолтные значения флагов (например доля heap под регион G1) — детали реализации HotSpot и могут меняться между релизами; в текстах опций их нет.",
+    "Рекомендации по размерам heap и порогам пауз зависят от нагрузки, а не от версии."
+  ],
   "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+    "ROUND-10 LINKAGE-FIRST: опции держатся TIMELESS — ни один вариант не называет номер версии JDK, размер heap в гигабайтах или длительность паузы в миллисекундах.",
+    "TEMPORAL_CLAIMS гейта (Q4C, Q4D, Q6D, Q8B, Q9C) — ЛОЖНОЕ СРАБАТЫВАНИЕ: подстрока 'current' ловится внутри термина 'concurrent', который является предметом вопросов о сборщиках (concurrent-маркировка, concurrent-компактизация). Тот же класс ложных срабатываний, что 'deprecated' внутри @Deprecated и 'current' внутри ConcurrentModificationException.",
+    "ОГОВОРКА ОБ ИСТОЧНИКАХ: сверку через context7 в этом прогоне выполнить не удалось — MCP вернул превышение месячной квоты. Ссылки указывают на официальную документацию Oracle/OpenJDK как на канонические источники, но фактическая сверка отложена до следующего касания файла."
   ]
 }
