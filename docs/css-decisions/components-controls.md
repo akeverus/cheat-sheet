@@ -8,6 +8,12 @@
 <a id="components-controls-e01"></a>
 ## components-controls-e01 · components-controls.css:8
 
+> Эволюция FOLIO (2026-08-29): pixel-слой снят целиком. Принцип «коробка кнопки
+> объявлена здесь и больше нигде» действует, но рамку теперь даёт настоящий
+> `border: var(--rule-weight) solid var(--color-border-strong)` с радиусом `md`,
+> а заливку primary/armed — кобальт в самом компоненте; «краски» pixel больше
+> нет. Эссе ниже — история времён pixel-контура.
+
 **Контекст:** ``html[data-design] #session-start-btn` весит (1,1,1) и внутри слоя components`
 
 --------------------------------------------------------------------------
@@ -51,6 +57,10 @@
 <a id="components-controls-e02"></a>
 ## components-controls-e02 · components-controls.css:79
 
+> Эволюция FOLIO (2026-08-29): pixel-контур из `box-shadow` и токены `--px-edge*`
+> сняты; рамка кнопки — настоящая граница (components-controls.css:44–48).
+> Довод «контур идёт за заливкой» относится к снятому слою.
+
 **Контекст:** `border: 0; border-radius: 0; box-shadow: var(--px-edge-surface);`
 
 Рамка кнопки — pixel-контур. Не «border плюс декор поверх»: два контура на
@@ -74,6 +84,11 @@
 
 <a id="components-controls-e03"></a>
 ## components-controls-e03 · components-controls.css:202
+
+> Эволюция FOLIO (2026-08-29): pixel-edge снят вместе со слоем. Квадрат 44×44
+> пережил смену направления (components-controls.css:152); контур у `.icon-button`
+> теперь не «тот же, что у всех», а прозрачный в покое — ранг прозрачный (§63),
+> у `.btn-favorite` — общая рамка `--rule-weight`/`--color-border-strong`.
 
 **Контекст:** `html[data-design] .icon-button,`
 
@@ -114,6 +129,9 @@
 
 <a id="components-controls-e05"></a>
 ## components-controls-e05 · components-controls.css:258
+
+> Эволюция FOLIO (2026-08-29): pixel-контур в `box-shadow` снят; идиома фокуса —
+> обводка снаружи коробки — сохранена, и `box-shadow` она больше ни с кем не делит.
 
 **Контекст:** `html[data-design] .btn:focus-visible,`
 
@@ -251,6 +269,10 @@
 
 <a id="components-controls-e11"></a>
 ## components-controls-e11 · components-controls.css:584
+
+> Эволюция FOLIO (2026-08-29): слоя pixel и pixel-fx больше нет; press-feedback
+> этого правила (`transform: translateY(1px)`) — единственный active-transform
+> кнопок, доминировавших `!important`-конкурентов не осталось.
 
 **Контекст:** `html[data-design] .btn:active,`
 

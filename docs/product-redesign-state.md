@@ -67,6 +67,29 @@ MARATHON / STUDY.
 
 Записаны, потому что не выводятся из кода — это выбор из нескольких допустимых вариантов.
 
+**Направление FOLIO (2026-08-29).** Отдельная миссия сняла гильдейский pixel-скин
+целиком — её текст прямо запрещал black+gold, beige+brown и pixel-арт. Визуальная
+система заменена как одно целое, а не слоем поверх: токены «графит и чернила»
+(dark — холодный графит `#141518` с кобальтом `#366fc5`, light — бумага `#f9f8f6`
+с чернилами `#1b1d21` и кобальтом `#155ab2`; значения — `static/css/tokens.css`),
+иконки Lucide в двух спрайтах (`fragments/icons.html` — интерфейс,
+`fragments/state-illustrations.html` — состояния и сцены), радиус-шкала
+xs 2 / sm 4 / md 8 / lg 12 / xl 16 / full 999px вместо «всё прямоугольное»,
+uppercase-ярлыки — Inter semibold caps (mono остался коду, клавишам и табличным
+цифрам). Pixel-слой удалён без остатка: нет `pixel-*.css`, нет `@layer pixel`
+(порядок слоёв — tokens, reset, shell, components, pages, utilities), нет
+`--px-*`/`--pixel-*`-токенов и PNG-ассетов; вместе со слоем ушли его гейты
+`PixelCssPaletteTest` и `SectionStickerPaletteTest` (спрайтовый
+`PixelSpriteContractTest` был удалён ещё раньше, вместе с растровыми ассетами).
+Возврат прежней палитры
+«камень при свече» (латунь `#d0a33c`, пергамент `#ece4d3`) закрыт блок-листом
+`TemplateFragmentContractTest.tokensCssDefinesSingleFolioDesign`; литеральные
+радиусы вне токенов и остатки pixel-токенов ловит `SurfaceLanguageContractTest`.
+IA, режимы сессии, контракты разметки и no-JS пути миссия не трогала; e2e-голдены
+визуальной матрицы (theme × screen-preset × motion) пересняты — 14×2 в
+`e2e/visual-baselines/{chromium,webkit}`. Атрибут дизайна — `data-design="folio"`
+(был `instrument`), CSS-селекторы value-agnostic (`html[data-design]`).
+
 **Навигация — одна.** Топбар раньше дублировал разделы сайдбара icon-only ссылками:
 пять пунктов (`/`, `/stats`, `/review`, `/bookmarks`, `/settings`) плюс шестая кнопка
 «Выйти» под `th:if="${multiSecurityMode}"`. Две параллельные навигации по одним
@@ -449,11 +472,14 @@ markdown у 1231 вопроса, а в колонке `diagram_mermaid` — у �
   одним**, а держал 185 схем, показанных как исходный код.
 - Интеграционные тесты требуют Docker и переменных окружения — см.
   `docs/quality-report.md` §1.
-- Полноэкранный `pixel-fx` проверяется вручную. Автоматически закрыт **состав**:
-  карта спрайтов, палитра растра (`PixelSpriteContractTest`) и палитра стилей
-  (`PixelCssPaletteTest`) — цвет мимо рампы `tokens.css` и HEX в точке потребления
-  теперь красят сборку. Не закрыто то, **как слой выглядит в движении**: плотность
-  декора, тайминги, попадание частиц в кадр — это ревью глазами.
+- Ограничения «pixel-fx проверяется вручную» больше нет: слой удалён целиком
+  (см. §4, «Направление FOLIO»), проверять в движении нечего. Его гейты
+  (`PixelCssPaletteTest`, `SectionStickerPaletteTest`) держали палитру и знаки
+  разделов, пока слой был жив, и удалены вместе с ним. Актуальные гейты
+  визуальной системы — блок-лист прежней палитры
+  (`TemplateFragmentContractTest.tokensCssDefinesSingleFolioDesign`), запрет
+  литеральных радиусов и pixel-токенов (`SurfaceLanguageContractTest`) и
+  e2e-голдены 14×2 (chromium + webkit).
 
 ## 6. Как запустить
 

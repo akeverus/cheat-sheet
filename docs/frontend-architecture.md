@@ -23,8 +23,10 @@
 Опорные фрагменты: `head.html` (шрифты, vendor и один `<link>` на CSS-ленту;
 состав и порядок CSS — в `css-bundle-manifest.txt`),
 `sidebar.html` + `shell-head.html` + `mobile-nav.html` (shell)
-(тоггл темы + «наверх»), `icons.html` + `pixel-sprite.html` (SVG-спрайты),
-`state-illustrations.html` (пустые состояния), `scripts.html` (единственная точка
+(тоггл темы + «наверх»), два SVG-спрайта на языке Lucide (24×24,
+stroke=currentColor, генератор `scripts/gen-icon-sprite.py`) — `icons.html`
+(интерфейсные иконки, `.ui-icon`) и `state-illustrations.html` (иллюстрации
+состояний, `.ui-illus`), `scripts.html` (единственная точка
 подключения `app-entry.js`).
 
 ### Ориентиры (landmarks)
@@ -145,8 +147,10 @@ shellFragmentsExposeNavLandmarksAndActiveContract`.
 
 ## 2. CSS
 
-37 файлов в исходнике, **один запрос в браузере**. Каскад держится на `@layer`
-(см. `design-system.md` §3), поэтому порядок внутри слоя важен, а между слоями — нет.
+35 файлов в исходнике, **один запрос в браузере**. Каскад держится на `@layer`
+(порядок — `tokens, reset, shell, components, pages, utilities`, объявлен первой
+строкой `tokens.css`; см. `design-system.md` §3), поэтому порядок внутри слоя
+важен, а между слоями — нет.
 
 ### Одна лента на страницу
 
@@ -184,25 +188,27 @@ shellFragmentsExposeNavLandmarksAndActiveContract`.
 | старт JetBrains Mono | 4390 мс | **1682 мс** |
 
 Имя ленты несёт хеш содержимого, поэтому ответ отдаётся с годовым `immutable`, а
-устаревший хеш получает 404, а не молча свежее тело. Корневые `url(/fonts/…)` и
-`url(/img/pixel/…)` внутри ленты прогоняются через `ResourceUrlProvider`: сама лента
+устаревший хеш получает 404, а не молча свежее тело. Корневые `url(…)` внутри
+ленты (сейчас это только `url(/fonts/…)`; растровых картинок в CSS не осталось
+вместе со снятым pixel-слоем) прогоняются через `ResourceUrlProvider`: сама лента
 идёт мимо цепочки ресурсов Spring, и без этого в prod потерялся бы content-hash
 вложенных файлов. Пересборка — по метке времени файлов, поэтому в dev правка `.css`
 доезжает без рестарта, как и было с 33 `<link>`.
 
 ### Постраничные гейты
 
-Постранично заскоуплено 9 файлов (`pages-focus`, `pages-focus-confidence`,
-`pages-settings`, `pages-stats`, `pages-bookmarks`, `pages-summary`, `pages-error`,
-`pages-login`, `pages-result`). Инвариант: у такого файла **все** селекторы под
+Постранично заскоуплено 10 файлов (`pages-focus`, `pages-focus-confidence`,
+`pages-settings`, `pages-stats`, `pages-bookmarks`, `pages-topics`, `pages-summary`,
+`pages-error`, `pages-login`, `pages-result`). Инвариант: у такого файла **все** селекторы под
 `.{page}-page`, утечка = 0. Гейт — `scripts/css-leak-audit.py`; без него страничный
 файл нельзя гейтить в манифесте, иначе на других экранах молча исчезнут правила.
 
-Остальные под гейтом — `components-answer.css` (24 КБ) и `components-code-highlight.css`,
-оба из слоя `components`. Инвариант `.{page}-page` к ним неприменим: селекторы
-плоские (`.answer`, `.hljs`), заскоуплены они не префиксом, а **фактом
-употребления** — все их классы живут только в разметке `focus-training.html` и
-`result.html`. Гейт проверяет и это: файл с ненулевой утечкой по селекторам не
+Остальные под гейтом — `components-answer.css` и `components-code-highlight.css`
+(оба `focus,result`) и `components-filter-bar.css` (`stats,bookmarks,topics`),
+все из слоя `components`. Инвариант `.{page}-page` к ним неприменим: селекторы
+плоские (`.answer`, `.hljs`, `.filter-bar`), заскоуплены они не префиксом, а
+**фактом употребления** — все их классы живут только в разметке страниц своего
+гейта. Гейт проверяет и это: файл с ненулевой утечкой по селекторам не
 валится сразу, а идёт на вторую проверку — классы файла ищутся в шаблонах за
 пределами гейта, и в отчёте такой файл помечен `OK usage`. Проверка ловит
 положительное нарушение (взял `.answer` на `/stats`), но не доказывает отсутствие
@@ -238,25 +244,21 @@ shellFragmentsExposeNavLandmarksAndActiveContract`.
 поэтому не прятал реальный каркас — на бумагу уходили сайдбар и топбар. Гвард —
 `TemplateFragmentContractTest.structuralCssKeepsNoDeadMastheadRules`.
 
-Слой `pixel` разрезан на 10 файлов по concern'ам (fx / ambient / mascot / buttons /
-options / nav-badges / cards / result-banner / animations / motion-parity). Разрез
-сохранял относительный порядок исходного монолита — при добавлении нового
-`pixel-*.css` это надо учитывать.
+Слоя `pixel` в каскаде больше нет. Пиксельная графика жила отдельным слоем,
+разрезанным по concern'ам (к моменту сноса — девять `pixel-*.css`), и снята
+целиком со сменой направления на FOLIO (миссия 2026-08-29): удалены сами файлы,
+токены `--px-*`, растровые ассеты (`static/img`) и их гварды
+`PixelCssPaletteTest` / `PixelSpriteContractTest`. Единственность палитры теперь
+держит `TemplateFragmentContractTest.tokensCssDefinesSingleFolioDesign`: значения
+FOLIO объявляются в `tokens.css`, снятые цвета прежних направлений — в блок-листе.
 
-Порядок здесь не формальность: разрез оставил **один и тот же селектор в двух
-файлах**. Рамка MCQ-опций была объявлена и в `pixel-options.css` (свой concern), и
-дословной копией в `pixel-animations.css`; последний грузится позже, поэтому
-побеждал он — правка «правильного» файла не давала на странице ничего и читалась
-как «CSS не подхватился». Симптом уводит в кэш и сборку, а причина — вторая
-декларация. Гвард — `PixelCssPaletteTest.noSelectorGetsItsBorderFromTwoFilesAtOnce`
-(сверяет `box-shadow`: в этом слое именно он рисует контур; состояния `:hover`,
-`.option-correct` — другие селекторы и под запрет не попадают).
-
-Цвет внутри семейства подчинён одному правилу: **HEX законен только как акт
-именования** (`--name: #hex;` целиком значением), любая точка потребления идёт
-через `var()`. Иначе слой заводит вторую копию палитры — ровно то, что уже
-случилось с иконками разделов. Держат это `PixelCssPaletteTest` (стили) и
-`PixelSpriteContractTest` (растр), см. `docs/quality-report.md` §4.1.
+Урок того слоя пережил сам слой: разрез монолита оставил **один и тот же селектор
+в двух файлах**. Рамка MCQ-опций была объявлена и в `pixel-options.css` (свой
+concern), и дословной копией в `pixel-animations.css`; последний грузился позже,
+поэтому побеждал он — правка «правильного» файла не давала на странице ничего и
+читалась как «CSS не подхватился». Симптом уводит в кэш и сборку, а причина —
+вторая декларация; при любом будущем разрезе файла по concern'ам проверять, что
+селектор остался объявлен ровно один раз.
 
 `base.css` — dev-агрегатор через `@import`, в проде не подключён.
 
@@ -698,15 +700,20 @@ observer не срабатывает — то есть «вкладка закр
 
 ## 6. Bootstrap темы и персонализации
 
-Инлайн-скрипт в `<head>` (до первого рендера) ставит `data-design`, `data-js`,
-`data-theme`, `data-motion`, `data-pixel` и `data-settings-tab` из `localStorage` —
-это анти-FOUC. Остальные оси (раскладка, ширина чтения, плотность, масштаб шрифта)
-поднимает `settings/personalization-bootstrap.js`, потому что они не влияют на первый
-кадр так болезненно.
+Инлайн-скрипт в `<head>` (до первого рендера) ставит `data-design` (`folio`),
+`data-js`, `data-theme`, `data-motion`, экранный пресет (`phone`/`laptop`/`wide` →
+`data-density` + `data-reading-width`) и правила запомненных вкладок (ключи
+`tabPanel:*` через `:has()`) из `localStorage` — это анти-FOUC: всё перечисленное
+меняет раскладку первого кадра. Ось «пиксельность» (`data-pixel`) снята вместе с
+pixel-слоем; её legacy-ключ `pixelIntensity` скрипт мигрирует в ближайший экранный
+пресет и удаляет. Вне первого кадра остался только масштаб шрифта — его поднимает
+`settings/personalization-bootstrap.js`: единственная ось, не меняющая
+геометрию блоков.
 
-`window.__theme` / `__motion` / `__pixelIntensity` — публичный API этого bootstrap'а;
-события `themechange` / `motionchange` / `pixelintensitychange` позволяют модулям
-реагировать, не опрашивая `localStorage`.
+`window.__theme` / `__motion` / `__screenPreset` — публичный API этого bootstrap'а;
+события `themechange` / `motionchange` / `screenpresetchange` (плюс
+`fontscalechange` из personalization-bootstrap) позволяют модулям реагировать,
+не опрашивая `localStorage`.
 
 **Две оси разрешают `auto` не из `localStorage`, а из системной настройки** — тема через
 `prefers-color-scheme`, движение через `prefers-reduced-motion`. Для них событие — не
