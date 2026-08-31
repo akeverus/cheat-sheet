@@ -156,9 +156,9 @@ html[data-design] .settings-page .data-export-actions { display: flex; gap: var(
 /* Странице остаётся только поведение кнопки в ряду: не растягиваться.
    `border-radius: 0` снят в iter-78 — базовый ранг и так плоский, обнулять было
    нечего (комментарий «глобальный .btn даёт md» описывал состояние до того, как
-   слой pixel стал стирать радиус всем кнопкам подряд). Следом снят и ховер
-   `background/border-color`: он дословно повторял базовый, а красит кнопку
-   всё равно слой pixel, который идёт позже страницы. */
+   слой pixel стал стирать радиус всем кнопкам подряд; ныне слой снят — FOLIO,
+   и радиус кнопке даёт токен-скелет components-controls). Следом снят и ховер
+   `background/border-color`: он дословно повторял базовый. */
 html[data-design] .settings-page .data-export-actions .btn {
   flex: 0 0 auto;
 }
@@ -190,8 +190,8 @@ html[data-design] .settings-page .danger-zone-title {
 html[data-design] .settings-page .danger-zone .data-management-form { padding-top: 0; border-top: none; }
 /* Коробка кнопки сброса удалена в iter-78 — третья дословная копия базового
    ранга на одной странице. Красную кромку и заливку рисует ранг
-   «разрушительное действие» в pixel-buttons.css; страница про сброс данных
-   больше ничего не знает, кроме того, что он живёт в опасной зоне. */
+   «разрушительное действие» (.danger-btn, components-controls.css); страница
+   про сброс данных знает только то, что он живёт в опасной зоне. */
 
 /* Прогресс: streak + stats-grid */
 html[data-design] .settings-page .streak-bar {
@@ -209,7 +209,15 @@ html[data-design] .settings-page .streak-fire { display: inline-flex; color: var
 html[data-design] .settings-page .streak-days,
 html[data-design] .settings-page .streak-count-text { font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
 html[data-design] .settings-page .streak-progress { flex: 1; min-width: 80px; height: 4px; background: var(--color-bg-tertiary); border-radius: var(--border-radius-full); overflow: hidden; }
-html[data-design] .settings-page .streak-progress-fill { height: 100%; background: var(--color-accent-primary); }
+html[data-design] .settings-page .streak-progress-fill {
+  height: 100%;
+  /* Ширина — из --progress (ставит quiz/streak.js через setProgressValue).
+     Без width-правила div заполнял весь трек и полоса «0 из 10» выглядела
+     выполненной (второе ревью §104): индикатор обязан читать то же число,
+     что и подпись рядом. */
+  width: calc(var(--progress, 0) * 1%);
+  background: var(--color-accent-primary);
+}
 
 /* minmax(min(120px,100%)) + min-width:0 — без них при крупном масштабе шрифта
    (Персонализация A+) min-content плиток распирал треки шире контейнера → гориз.
@@ -276,9 +284,8 @@ html[data-design] .settings-page .stat-label { font-family: var(--font-family-bo
 /* ---- Filter chips охвата (ВОЛНА 4, type-B из shell.css @shell) ----------------
    Возвращены в свой page-файл: раньше жили в глобальном shell.css и грузились на
    всех 8 страницах, хотя матчат только .settings-page. Перенос @shell в @pages
-   каскад-нейтрален: pixel-fx @pixel на .filter-chip задаёт лишь position:relative +
-   pseudo-маркер checkbox на .filter-chip-label::before (дизъюнктные свойства);
-   @components/@pages-конкурентов на .filter-chip* нет (единств. pages-settings
+   каскад-нейтрален (в pixel-эру слой добавлял лишь дизъюнктные свойства; ныне
+   снят — FOLIO); @components/@pages-конкурентов на .filter-chip* нет (единств. pages-settings
    трогает .toggle-item:not(.filter-chip) — исключает). Декларации дословны из
    shell.css:910-960. */
 html[data-design] .settings-page .filter-chips {
@@ -592,19 +599,9 @@ html[data-design] .settings-page .outcome-filters {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
-/* Хвост лида — про двухколоночный конструктор; ниже 901px колонок нет. Клип, а не
-   `display: none`: скринридеру описание раскладки не мешает, а первый экран телефона
-   получает обратно две строки. Порог тот же, что у самой сетки. */
-@media (max-width: 900px) {
-  html[data-design] .settings-page .settings-lead-tail {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-}
+/* Хвост лида (.settings-lead-tail) удалён вместе с носителем: лид больше не
+   пересказывает собственную раскладку (второе ревью §104), и клип-правило
+   осталось бы селектором без носителя. */
 
 /* СТРОКА «СЕГОДНЯ» В РЕЛЬСЕ. Отделена той же кромкой, что и строка отбора: это
    третий факт о наборе — «сколько я уже сделал сегодня», — а не отдельный блок.

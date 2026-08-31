@@ -191,7 +191,7 @@ html[data-design] .focus-progress-line .session-progress { color: var(--color-te
    focus-only (рейка сессии / приостановленная-восстанавливаемая сессия отсутствуют в
    result.html и во всех фрагментах не-focus страниц). Заякорено под .focus-page, чтобы
    pages-focus.css стал page-pure для th:if page=='focus'. Каскад-нейтрально (замерено
-   0-diff, 140 точек, dark+light): pixel-fx (@pixel) выигрывает свои свойства и до/после;
+   0-diff, 140 точек, dark+light; слой pixel тогда ещё жил, ныне снят — FOLIO):
    reset-layout forced-colors (@reset, ниже) без изменений; pages-layout :has() (0,5,0)
    специфичнее моего 0,2,0 после анкеринга → всё ещё выигрывает width. */
 html[data-design] .focus-page .session-progress-track {
@@ -426,9 +426,8 @@ html[data-design] .focus-question-reason[data-reason-type="WEAK_SKILL"]::before 
 html[data-design] .focus-question-reason[data-reason-type="NEW"]::before {
   background: var(--color-status-info);
 }
-/* Закладка пользователя. Фиолетовый взят не произвольно: этим же токеном
-   покрашен пункт закладок в сайдбаре (pixel-nav-badges.css) — один смысл
-   держит один цвет. Teal сюда нельзя: он уже занят WEAK_SKILL. */
+/* Закладка пользователя. Фиолетовый — свой узнаваемый смысл «личная отметка»;
+   акцент сюда нельзя: он уже занят WEAK_SKILL. */
 html[data-design] .focus-question-reason[data-reason-type="BOOKMARK"]::before {
   background: var(--color-status-purple);
 }
@@ -470,7 +469,7 @@ html[data-design] .focus-question {
 /* D4-batch2 (анкер-фаза): question-code + diagram кластеры — focus-only (код-блок и
    диаграмма УСЛОВИЯ вопроса рендерятся в .focus-training; в result.html код идёт через
    .result-page .question-code / pages-result, диаграммы там нет — completeness sweep).
-   Заякорено под .focus-page. Каскад-нейтрально: pixel-fx (@pixel) выигрывает; shell
+   Заякорено под .focus-page. Каскад-нейтрально (pixel-слой снят — FOLIO): shell
    .content-box-оверрайды (@shell, ниже) @pages и так бьёт; pages-layout print
    `display:none !important` (@media print) иммунен к спец-бампу; pages-result scope
    .result-page отдельный. */
@@ -561,6 +560,10 @@ html[data-design] #interview-options label {
    срабатывает: ячейка уже 68ch. :not([class]) бьёт только по тексту, не по
    добавляемому quiz/interview.js .option-status-label. */
 html[data-design] #interview-options label > span:not([class]) { max-width: 68ch; }
+/* Инлайн-код в тексте варианта — неделимый токен: перенос внутри чипа
+   («O(log» / «n)») рвал термин и раздувал чип в двухстрочный блок
+   (второе ревью §104). Длинные сниппеты остаются переносимыми МЕЖДУ чипами. */
+html[data-design] #interview-options label code { white-space: nowrap; }
 html[data-design] #interview-options label::before {
   content: counter(opt, upper-latin);
   font-family: var(--font-family-mono);

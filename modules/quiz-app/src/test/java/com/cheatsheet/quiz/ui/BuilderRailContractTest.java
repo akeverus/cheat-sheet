@@ -109,19 +109,20 @@ class BuilderRailContractTest {
      * числом, по которому хвост и клипается: правило и реальность берут одно число.
      */
     @Test
-    void theLeadTailIsClippedExactlyWhereTheTwoColumnLayoutEnds() throws IOException {
+    void theLeadDoesNotNarrateItsOwnLayout() throws IOException {
+        // Эволюция контракта (второе ревью §104, FOLIO): хвост лида, пересказывавший
+        // раскладку («Справа сразу видно…»), снят ЦЕЛИКОМ вместе со своим клипом —
+        // заголовки секций самоописательны, а лид, существующий только чтобы его
+        // прятали на телефоне, был признаком лишней прозы, не композиции. Гейт
+        // теперь держит обратное: нарратив о собственной раскладке не возвращается
+        // ни хвостом, ни строкой лида.
         String markup = settingsMarkup();
         assertThat(markup)
-                .as("хвост лида не отделён — на телефоне он описывает колонку, которой там нет")
-                .contains("<span class=\"settings-lead-tail\">");
-
-        String settings = css("pages-settings.css");
-        assertThat(settings)
-                .as("хвост лида клипается не по порогу раскладки: правило и реальность "
-                        + "разойдутся при первой правке одной из них")
-                .containsPattern("@media \\(max-width: 900px\\) \\{[\\s\\S]{0,400}?\\.settings-lead-tail \\{[\\s\\S]{0,200}?clip-path");
-        assertThat(css("shell.css"))
-                .as("порог двухколоночной раскладки сдвинулся — клип хвоста надо пересчитать")
-                .contains("@media (min-width: 901px)");
+                .as("хвост-пересказ раскладки вернулся — лид снова описывает сам себя")
+                .doesNotContain("settings-lead-tail")
+                .doesNotContain("Справа сразу видно");
+        assertThat(css("pages-settings.css"))
+                .as("клип-правило снятого хвоста не должно возвращаться селектором без носителя")
+                .doesNotContainPattern("\\.settings-lead-tail \\{");
     }
 }

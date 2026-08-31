@@ -174,8 +174,8 @@ html[data-design] .shell-logout {
 /* Коробка `.icon-button` (38×38, radius 8px, border 1px) снята в iter-78: это
    было одно из четырёх расходящихся объявлений одного и того же квадрата, и на
    экран оно не попадало ни разу — его перекрывал `!important` из слоя pixel.
-   Ранг «иконка» теперь ровно один, в components-controls.css: 44×44 с общим
-   pixel-контуром. Оболочка кнопку не оформляет — она её только размещает. */
+   Ранг «иконка» теперь ровно один, в components-controls.css: 44×44.
+   Оболочка кнопку не оформляет — она её только размещает. */
 html[data-design] .mobile-header { display: none; }
 
 /* Колонка контента `.content` удалена в iter-64 — ОБА её правила: десктопное
@@ -297,7 +297,7 @@ html[data-design] .diagram-source {
    ставит data-render-failed → скрываем неотрисованный .mermaid, исходник
    остаётся видимым через раскрытый .diagram-source-details. */
 html[data-design] .question-diagram[data-render-failed] .mermaid { display: none; }
-/* GFX-008: fallback-сообщение с pixel-глифом видно ТОЛЬКО при ошибке рендера. */
+/* GFX-008: fallback-сообщение с глифом состояния видно ТОЛЬКО при ошибке рендера. */
 html[data-design] .diagram-fallback { display: none; }
 html[data-design] .question-diagram[data-render-failed] .diagram-fallback {
   display: flex;
@@ -437,14 +437,14 @@ html[data-design] .mobile-nav { display: none; }
 /* Свечение вместо обводки — идиома НАВИГАЦИИ: строка рельса подсвечивается
    целиком, как выделенный пункт списка. `.icon-button` из списка снят в
    iter-78: это кнопка, её фокус-обводку задаёт ранг в components-controls.css.
-   Свечение занимало `box-shadow`, где у кнопки лежит pixel-контур, — по Tab у
+   Свечение занимало `box-shadow` (в pixel-эру там жил контур кнопки) — по Tab у
    иконки пропадала рамка. */
 html[data-design] .nav a:focus-visible,
 html[data-design] .side-action:focus-visible,
 html[data-design] .mobile-nav a:focus-visible,
 html[data-design] .brand:focus-visible {
-  outline: none;
-  box-shadow: var(--shadow-focus);
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 /* ===========================================================================
@@ -546,8 +546,8 @@ html[data-design] .brand:focus-visible {
     min-width: 0;
     overflow: hidden;
   }
-  html[data-design] .mobile-nav a.active { color: var(--color-accent-strong); }
-  /* hover-well для неактивных (desktop-narrow с hover); active несёт teal-socket из pixel-fx */
+  html[data-design] .mobile-nav a.active { color: var(--color-accent-strong); font-weight: var(--font-weight-semibold); }
+  /* hover-well для неактивных (desktop-narrow с hover); active — вес+цвет (FOLIO) */
   html[data-design] .mobile-nav a:hover:not(.active) { background: var(--color-bg-tertiary); }
   /* P1.6: компактный заголовок итогов сессии на узких экранах. Парный клампинг
      заголовка ШАПКИ переехал вниз, к объявлению `.page-head-title h1` — здесь он
@@ -881,9 +881,7 @@ html[data-design] .dashboard-grid .metric.good .metric-value { color: var(--colo
 /* Вкладки аналитики (.stats-page .section-tabs/.section-tab) + панели
    (.stats-page .stats-panel) ВЫНЕСЕНЫ в pages-stats.css (Волна 4, type-B:
    страничное правило вернулось в свой page-файл, грузится только на stats).
-   Каскад-нейтрально: pixel-fx @pixel доминирует .section-tab bg/radius/box-shadow
-   независимо от слоя (выигрывает до и после переноса @shell в @pages);
-   @components/@pages-конкурентов на section-tab/section-tabs/stats-panel нет (grep). */
+   Каскад-нейтрален и после сноса pixel-слоя (FOLIO). */
 
 /* ===================== Конструктор сессии (Этап 8, panel-session) ===================== */
 /* FRD-016.
@@ -1053,10 +1051,7 @@ html[data-design] .builder-launch-bar .builder-start-cta {
 
 /* Filter chips (.settings-page .filter-chips/.filter-chip/.filter-chip-count)
    ВЫНЕСЕНЫ в pages-settings.css (Волна 4, type-B: страничное правило вернулось в
-   свой page-файл, грузится только на settings). Каскад-нейтрально: pixel-fx @pixel
-   на .filter-chip задаёт лишь position:relative + pseudo-маркер на .filter-chip-label
-   before (дизъюнктные свойства); @components/@pages-конкурентов нет; pages-settings
-   трогает только toggle-item:not(.filter-chip) (исключает). */
+   свой page-файл, грузится только на settings). Каскад-нейтрален и после сноса pixel-слоя (FOLIO). */
 
 /* Карточки-сводки. Значение крупное mono. Обёртка `.builder-aside` (flex-стопка
    на 320px) снята вместе с колонками: карточки стоят в разных областях сетки и

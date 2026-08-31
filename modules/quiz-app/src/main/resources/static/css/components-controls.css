@@ -1,8 +1,8 @@
 /* @layer components — shared control base + state matrix (P1-08).
    Базовая геометрия .btn/.secondary-btn/.next-btn/.primary-btn живёт
-   ЗДЕСЬ (перенесена из pages-focus при page-scope focus, Волна 3 D3a); pixel-fx
-   добавляет pixel-декор поверх. Этот файл держит base + hover/focus/active/
-   disabled/loading/error по всему приложению. */
+   ЗДЕСЬ (перенесена из pages-focus при page-scope focus, Волна 3 D3a); краска
+   рангов — тоже здесь (pixel-декор снят миссией FOLIO 2026-08-29). Файл держит
+   base + hover/focus/active/disabled/loading/error по всему приложению. */
 @layer components {
 
 /* КОРОБКА КНОПКИ — объявлена ЗДЕСЬ и больше нигде (iter-78, FRD-037).
@@ -80,6 +80,21 @@ html[data-design] .icon-button:hover:not(:disabled) {
   background: var(--color-bg-tertiary);
 }
 
+/* Тихая кнопка ВНУТРИ resume-баннера — «Отбросить»: действие разрушительное,
+   быть невидимым оно не имеет права (второе ревью §104: xs-кегль tertiary на
+   тонированном фоне пропадал в squint-тесте). Понижение остаётся (не спорит с
+   «Продолжить»), но кегль и цвет — читаемые, порог касания — полный. */
+html[data-design] .resume-banner .quiet-btn {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  min-height: 44px;
+  padding-inline: var(--space-3);
+}
+html[data-design] .resume-banner .quiet-btn:hover:not(:disabled) {
+  color: var(--color-status-error);
+  background: transparent;
+}
+
 /* Ранг «главное действие флоу»: на 4px выше базового и с бо́льшими полями —
    самая частая кнопка приложения не должна быть мельче соседних. Ранг задаётся
    ЗДЕСЬ, а не в pages-focus.css: до iter-78 эти 48px жили в странице вместе с
@@ -109,17 +124,30 @@ html[data-design] .summary-actions .btn {
    флешкарты. Это ОДИН контрол: одна высота, одни поля, одни полюса (низкий —
    ошибка, высокий — успех). До iter-78 он был объявлен дважды, в двух файлах, и
    копии разошлись радиусом (`0` против `md`), а комментарий у первой
-   утверждал, что она «единообразна» со второй. */
+   утверждал, что она «единообразна» со второй. Краску выбранного см. ниже —
+   она принадлежит этому же файлу (pixel-слоя больше нет). */
 html[data-design] .confidence-btn,
 html[data-design] .flashcard-grade-btn {
   min-height: 48px; padding: var(--space-2) var(--space-4);
 }
 /* Выбранный ответ не гасится и остаётся кликабельно-нейтральным: он единственный
    несёт итог самооценки. Правило было только у .confidence-btn — у оценки
-   флешкарты выбранная кнопка тускнела вместе с остальными, хотя контрол тот же.
-   Заливку выбранного и приглушение прочих красит слой pixel. */
+   флешкарты выбранная кнопка тускнела вместе с остальными, хотя контрол тот же. */
 html[data-design] .confidence-btn:disabled,
 html[data-design] .flashcard-grade-btn:disabled { cursor: default; pointer-events: none; }
+
+/* Краска выбранной самооценки. Жила в pixel-слое и умерла вместе с ним
+   (найдено вторым ревью §104): JS вешает .selected + aria-pressed, но в
+   обычном режиме выбранная кнопка ничем не отличалась от погашенных соседей.
+   Язык тот же, что у выбранного MCQ-варианта: кобальтовая рамка + wash.
+   Forced-colors-ветка в reset-layout.css остаётся второй половиной рецепта. */
+html[data-design] .confidence-btn.selected,
+html[data-design] .flashcard-grade-btn.selected {
+  background: var(--color-accent-wash);
+  border-color: var(--color-accent-primary);
+  color: var(--color-text-primary);
+  opacity: 1;
+}
 
 /* Ранг «тихое действие» — пропуск вопроса и жалоба на вопрос. Это кнопки, но
    они обязаны НЕ спорить с главным действием: моноширинный мелкий кегль,
@@ -213,6 +241,14 @@ html[data-design] .danger-btn {
 html[data-design] .danger-btn:hover:not(:disabled) {
   background: var(--color-status-error-wash);
   border-color: var(--color-status-error);
+  color: var(--color-status-error);
+}
+
+/* «Убрать» закладку — тихая кнопка с разрушительным исходом: в покое не
+   спорит с контентом, на hover/focus проговаривает семью ошибки. Красный
+   ховер жил в pixel-buttons.css и умер со слоем (второе ревью §104). */
+html[data-design] .bookmark-remove-btn:hover:not(:disabled),
+html[data-design] .bookmark-remove-btn:focus-visible {
   color: var(--color-status-error);
 }
 
