@@ -506,6 +506,17 @@ html[data-design] .focus-page .question-code-wrap:not(.is-code-wrap) .code-viewp
   width: max-content;
   min-width: 100%;
 }
+/* Перенос — СОСТОЯНИЕ ПО УМОЛЧАНИЮ (цель 2026-09: никаких полос прокрутки):
+   разметка приходит с .is-code-wrap, кнопка «Перенос» его снимает для тех, кому
+   нужна построчная структура (тогда возвращается горизонтальная прокрутка
+   жестами). Позитивного правила переноса раньше не было вовсе — класс лишь
+   снимал width:max-content, а white-space оставался pre, и «Перенос» ничего
+   не переносил. anywhere — длинные идентификаторы/URL не восстановят полосу. */
+html[data-design] .focus-page .question-code-wrap.is-code-wrap .code-viewport pre.question-code,
+html[data-design] .focus-page .question-code-wrap.is-code-wrap .code-viewport pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 /* Печать: у бумаги прокрутки нет (print.css раскрывает окно листинга целиком:
    max-height none, overflow visible), и width:max-content увёл бы панель за поле
    листа. Возвращаем полосу и ломаем строки: длинная строка на бумаге ценнее
@@ -528,6 +539,18 @@ html[data-design] .focus-page .question-code-wrap .code-viewport {
   max-height: max(min(60vh, 520px), 100dvh - 30rem);
   overscroll-behavior: contain;
   padding: var(--space-2);
+}
+/* Ползунок не рисуется (цель 2026-09 «никаких полос прокрутки»): прокрутка
+   остаётся — колесо/жесты/клавиатура (tabindex вешает code-toolbar.js, WCAG
+   2.1.1), обрез частично видимой строки сам является аффордансом продолжения.
+   То же — у окна схемы. */
+html[data-design] .focus-page .question-code-wrap .code-viewport,
+html[data-design] .focus-page .diagram-viewport {
+  scrollbar-width: none;
+}
+html[data-design] .focus-page .question-code-wrap .code-viewport::-webkit-scrollbar,
+html[data-design] .focus-page .diagram-viewport::-webkit-scrollbar {
+  display: none;
 }
 /* Ниже порога рабочего места композиция одноколоночная, и 60vh под листинг — это больше половины экрана под контекст, а задача (варианты) уезжает за два экрана.
    Довод и история: docs/css-decisions/pages-focus.md#pages-focus-e15 */

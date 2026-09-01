@@ -25,20 +25,30 @@ html[data-design] .table-scroll { overflow-x: auto; min-width: 0; max-width: 100
    overflow-x:auto на каждом pre, и переполненный листинг вне окна .code-viewport
    (markdown-разбор, result) — такой же голый скролл-контейнер. Класс и tabindex
    вешает тот же content/table-scroll.js (A11Y-01, WCAG 2.1.1). */
+/* Намёк на скрытые столбцы — scroll-тени, а не стойкий ползунок (цель 2026-09
+   «никаких полос прокрутки»): полоса-бегунок убрана, прокрутка остаётся
+   (колесо/жесты; tabindex из table-scroll.js — WCAG 2.1.1). Классический приём
+   background-attachment local/scroll: тень у кромки видна только пока за ней
+   реально есть контент — покрышка цвета подложки (local) едет вместе с
+   содержимым и закрывает тень (scroll) на исчерпанном краю. Подложку задаёт
+   --scroll-bg: у таблиц это карточка, у листингов — панель кода. */
 html[data-design] .table-scroll.is-scrollable,
 html[data-design] pre.is-scrollable {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-accent-primary) transparent;
+  --scroll-bg: var(--color-bg-secondary);
+  scrollbar-width: none;
+  background-image:
+    linear-gradient(to right, var(--scroll-bg) 40%, transparent),
+    linear-gradient(to left, var(--scroll-bg) 40%, transparent),
+    linear-gradient(to right, color-mix(in srgb, var(--color-text-primary) 16%, transparent), transparent),
+    linear-gradient(to left, color-mix(in srgb, var(--color-text-primary) 16%, transparent), transparent);
+  background-position: left center, right center, left center, right center;
+  background-size: 28px 100%, 28px 100%, 12px 100%, 12px 100%;
+  background-repeat: no-repeat;
+  background-attachment: local, local, scroll, scroll;
 }
+html[data-design] pre.is-scrollable { --scroll-bg: var(--color-bg-tertiary); }
 html[data-design] .table-scroll.is-scrollable::-webkit-scrollbar,
-html[data-design] pre.is-scrollable::-webkit-scrollbar { height: 6px; }
-html[data-design] .table-scroll.is-scrollable::-webkit-scrollbar-thumb,
-html[data-design] pre.is-scrollable::-webkit-scrollbar-thumb {
-  background: var(--color-accent-primary);
-  /* Литерал 3px снят (iter-119): бегунок — часть интерфейса, а форма у продукта одна.
-     Скруглённый бегунок в прямоугольном продукте выглядел деталью из чужой системы. */
-  border-radius: var(--border-radius-sm);
-}
+html[data-design] pre.is-scrollable::-webkit-scrollbar { display: none; }
 html[data-design] .table-scroll:focus-visible,
 html[data-design] pre.is-scrollable:focus-visible {
   outline: 2px solid var(--color-focus-ring);
