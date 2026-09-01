@@ -14,7 +14,7 @@
 |---|---|---|---|---|
 | 1 | spring-rest-client-interview | 13 | 13 | TODO |
 | 2 | java-functional-interface-interview | 14 | 14 | TODO |
-| 3 | hibernate-caching-interview | 15 | 15 | TODO |
+| 3 | hibernate-caching-interview | 15 | 0 | ГОТОВО |
 | 4 | java-optional-interview | 15 | 15 | TODO |
 | 5 | java-virtual-threads-interview | 15 | 15 | TODO |
 | 6 | archunit-interview | 15 | 15 | TODO |
