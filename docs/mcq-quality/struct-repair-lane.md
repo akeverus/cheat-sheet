@@ -15,7 +15,7 @@
 | 1 | spring-rest-client-interview | 13 | 0 | ГОТОВО |
 | 2 | java-functional-interface-interview | 14 | 0 | ГОТОВО |
 | 3 | hibernate-caching-interview | 15 | 0 | ГОТОВО |
-| 4 | java-optional-interview | 15 | 15 | TODO |
+| 4 | java-optional-interview | 15 | 0 | ГОТОВО |
 | 5 | java-virtual-threads-interview | 15 | 15 | TODO |
 | 6 | archunit-interview | 15 | 15 | TODO |
 | 7 | cucumber-bdd-interview | 15 | 15 | TODO |
