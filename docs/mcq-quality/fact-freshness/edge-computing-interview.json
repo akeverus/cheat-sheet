@@ -1,14 +1,31 @@
 {
   "topic_slug": "edge-computing-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
+  "round": 10,
+  "status": "CHECKED",
+  "version_sensitive": true,
+  "product_version": "Cloudflare Workers / Durable Objects / Workers KV (docs от 2026-04-23), AWS CloudFront Functions + Lambda@Edge (актуальный Developer Guide), Fastly Compute@Edge",
+  "checked_date": "2026-09-01",
+  "sources": [
+    "https://developers.cloudflare.com/workers/reference/how-workers-works/",
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cloudfront-functions.html",
+    "https://developers.cloudflare.com/durable-objects/",
+    "https://developers.cloudflare.com/kv/"
+  ],
+  "version_sensitive_claims": [
+    "Workers исполняются в V8-изолятах: один процесс рантайма держит сотни-тысячи изолятов, изолят создаётся внутри уже существующего окружения, что снимает cold start модели виртуальной машины (Q4, Q6, Q15).",
+    "CloudFront Functions — лёгкие JS-функции, доступные только на viewer request и viewer response; Lambda@Edge берёт полноценную логику и остальные триггеры (Q5).",
+    "Cold start: у Workers практически отсутствует (изолят стартует за микросекунды, ~в 100 раз быстрее Node-процесса в контейнере), у Lambda@Edge реальный, потому что поднимается контейнер (Q15).",
+    "Durable Objects дают строго консистентное хранилище, живущее вместе с объектом; Workers KV оптимизирован под высокий объём чтений с низкой задержкой, платя за это согласованностью (Q12, Q13).",
+    "Под рантаймом Workers нет полноценной ОС: файловая система и произвольные системные вызовы недоступны (Q14).",
+    "Тарификация edge-функций — за вызовы, с масштабированием до нуля (Q16)."
+  ],
+  "staleness_risks": [
+    "Cloudflare постепенно расширяет Node.js-совместимость (флаг nodejs_compat) — формулировка «нет файловой системы» со временем может смягчиться до «нет полноценной ФС хоста».",
+    "AWS может расширить набор триггеров CloudFront Functions за пределы viewer-этапов, тогда разделение обязанностей с Lambda@Edge в Q5 сдвинется.",
+    "Durable Objects развиваются (SQLite-backed storage, alarms) — детали модели хранения в Q12 стоит перепроверять раз в полгода."
+  ],
   "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+    "Все четыре источника загружены и прочитаны 2026-09-01; страница how-workers-works помечена «Last updated Apr 23, 2026».",
+    "Формулировки опций намеренно держатся на уровне модели исполнения (изолят/контейнер, viewer-этапы, консистентность), а не на числах лимитов и тарифов — числовых значений, которые устаревают за квартал, в опциях нет."
   ]
 }
