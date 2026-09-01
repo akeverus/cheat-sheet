@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""Выгрузка блоков вне коридора для ремонтного Workflow + применение результата.
-  struct_payload.py dump  <seed.json> <out.json>          — только нарушенные блоки
-  struct_payload.py apply <seed.json> <journal...>        — вписать новые тексты"""
+"""Выгрузка блоков к правке для ремонтного Workflow + применение результата.
+  struct_payload.py dump  <seed.json> <out.json> [source.md] — нарушенные блоки
+  struct_payload.py apply <seed.json> <journal...>           — вписать новые тексты
+
+С третьим аргументом добавляет к нарушениям дословность правильного ответа
+относительно тела своего Q (общий непрерывный отрезок слов), чтобы один прогон
+чинил и форму, и лексическое эхо."""
 import json, re, sys
 
 cl = lambda t: 1 + t.count(",") + t.count("—") + t.count(";")
@@ -42,6 +46,13 @@ def unique_marks(opts):
     return out
 
 
+# parity-гейт режет текст по пробелам: «по-прежнему» для него ОДНО слово,
+# а W() ниже считает его двумя. Разброс max/min по ЭТОМУ счёту не должен
+# превышать 1.35, иначе гейт валит файл, а коридор по W() при этом чист.
+GW = lambda t: len([w for w in re.sub(r"`[^`]*`", "", t).split()
+                    if any(ch.isalnum() for ch in w)])
+
+
 def violations(opts):
     c = [o for o in opts if o["correct"]][0]
     L, P, S, Wc = len(c["text"]), cl(c["text"]), SP(c["text"]), W(c["text"])
@@ -58,15 +69,68 @@ def violations(opts):
             bad.append(f"{x['label']}: код-спанов {SP(x['text'])} против {S}")
         if not 0.77 <= rw <= 1.30:
             bad.append(f"{x['label']}: слов {W(x['text'])} против {Wc} ({rw:.2f}x)")
+    gws = [GW(o["text"]) for o in opts]
+    if max(gws) / max(1, min(gws)) > 1.35:
+        bad.append("разброс длины по счёту через пробелы "
+                   f"{max(gws)}/{min(gws)} = {max(gws)/max(1,min(gws)):.2f} — выше 1.35; "
+                   "выровнять, НЕ добирая дефисными словами")
     return bad
+
+
+def wtok(t):
+    t = re.sub(r"`([^`]*)`", r"\1", t.lower())
+    return re.findall(r"[a-zа-яё0-9@._-]+", t)
+
+
+def lcs_run(a, b):
+    if not a or not b:
+        return 0, ""
+    prev = [0] * (len(b) + 1)
+    best, end = 0, 0
+    for i in range(1, len(a) + 1):
+        cur = [0] * (len(b) + 1)
+        for j in range(1, len(b) + 1):
+            if a[i - 1] == b[j - 1]:
+                cur[j] = prev[j - 1] + 1
+                if cur[j] > best:
+                    best, end = cur[j], i
+        prev = cur
+    return best, " ".join(a[end - best:end])
+
+
+def read_bodies(md):
+    bodies, cur, num = {}, [], None
+    for l in open(md, encoding="utf-8").read().split("\n"):
+        m = re.match(r"^## Q(\d+)\.", l)
+        if m:
+            if num:
+                bodies[num] = "\n".join(cur)
+            num, cur = int(m.group(1)), []
+        elif num:
+            cur.append(l)
+    if num:
+        bodies[num] = "\n".join(cur)
+    return bodies
 
 
 if sys.argv[1] == "dump":
     d = json.load(open(sys.argv[2], encoding="utf-8"))
+    bodies = read_bodies(sys.argv[4]) if len(sys.argv) > 4 else {}
     out = []
     for q in d["questions"]:
         for b in q["blocks"]:
             bad = violations(b["options"]) + unique_marks(b["options"])
+            if bodies:
+                c = [o for o in b["options"] if o["correct"]][0]
+                bw = wtok(bodies.get(q["q_number"], ""))
+                n, span = lcs_run(wtok(c["text"]), bw)
+                rc = n / max(1, len(wtok(c["text"])))
+                rw = max((lcs_run(wtok(x["text"]), bw)[0] / max(1, len(wtok(x["text"])))
+                          for x in b["options"] if not x["correct"]), default=0)
+                if rc >= 0.25 and rc > rw:
+                    bad.append(f"правильный дословно повторяет тело ({rc:.2f} против {rw:.2f} "
+                               f"у дистрактора), общий отрезок: «{span}» — ПЕРЕСКАЖИ СВОИМИ СЛОВАМИ, "
+                               f"утверждение и структуру сохрани")
             if not bad:
                 continue
             out.append({"q_number": q["q_number"], "нарушения": bad,
