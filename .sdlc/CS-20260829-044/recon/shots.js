@@ -307,7 +307,7 @@ const measureSpaceScript = () => {
   await browser.close();
   fs.rmSync(AUTH_STATE_FILE, { force: true });
 
-  fs.writeFileSync(path.join(DATA_DIR, 'shots-index.json'), JSON.stringify({ index, unreachable }, null, 2));
+  fs.writeFileSync(path.join(OUT_DIR, 'shots-index.json'), JSON.stringify({ index, unreachable }, null, 2));
   fs.writeFileSync(path.join(DATA_DIR, 'space-metrics.json'), JSON.stringify(spaceMetrics, null, 2));
   console.log(`Shots taken: ${index.length}`);
   console.log(`Unreachable: ${JSON.stringify(unreachable)}`);

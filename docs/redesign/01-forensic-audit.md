@@ -54,7 +54,7 @@ Playwright-спеков (`e2e/*.spec.js`), 36 досье решений (`docs/c
 - **Инструмент разведки:** 2 скрипта в `.sdlc/CS-20260829-044/recon/`
   (адаптация `.sdlc/CS-20260828-003/recon/shots.js` и `space.js`, объединённых в
   один проход):
-  - `shots.js` — снимает 26 PNG (матрица ниже) + `data/shots-index.json` +
+  - `shots.js` — снимает 26 PNG (матрица ниже) + `shots/shots-index.json` +
     `data/space-metrics.json` (§17-метрики в том же проходе, без второго запуска
     браузера);
   - `check-anchors.sh` — резолвит якоря этого документа (см. выше).
@@ -99,7 +99,7 @@ Playwright-спеков (`e2e/*.spec.js`), 36 досье решений (`docs/c
   design.md: закрыть §5 (все 18 названы хотя бы одним снимком или таблицей), §6
   (все 8 режимов — отдельным снимком workspace) и §17 (4 ultrawide-кадра).
 - **Экран preset НЕ автоопределяется по вьюпорту.** `readScreenPreset()`
-  (`modules/quiz-app/src/main/resources/templates/fragments/head.html:229-234`) читает `localStorage.screenPreset`
+  (`modules/quiz-app/src/main/resources/templates/fragments/head.html:236-241`) читает `localStorage.screenPreset`
   и при его отсутствии возвращает жёстко `'laptop'` — НЕ вычисляет пресет по
   `window.innerWidth`. Слова `phone`/`laptop`/`wide` в `SCREEN_PRESETS`
   (`modules/quiz-app/src/main/resources/templates/fragments/head.html:205-209`) — имена профилей, не автодетект устройства. Recon явно
@@ -111,7 +111,7 @@ Playwright-спеков (`e2e/*.spec.js`), 36 досье решений (`docs/c
   media-блоки `@media (min-width: 2240px)` в лучшем случае. Подробности —
   раздел «Мёртвое пространство».
 - **`interview_recon_044` — пустая по истории.** SRS-фикстур в профиле `qa`
-  всего 3 (`due=2/learned=1`, `modules/quiz-app/src/main/resources/application-qa.yml:16-17`), поэтому
+  всего 3 (`due=2/learned=1`, `modules/quiz-app/src/main/resources/application-qa.yml:18-19`), поэтому
   Summary/Review показывают ранние/пустые состояния, а не зрелые. Для §17 и
   композиции это не помеха (измеряется геометрия, а не данные), но там, где
   находка зависит от ОБЪЁМА истории (например, вид `/bookmarks` с сотней
@@ -159,7 +159,7 @@ Playwright-спеков (`e2e/*.spec.js`), 36 досье решений (`docs/c
 | `components-answer.css` | 239 | `focus,result` |
 | `components-widgets.css` | 216 | `*` |
 | `print.css` | 203 | `*` |
-| `fonts-local.css` | 203 | не в манифесте (подключается отдельно шрифтовым preload) |
+| `fonts-local.css` | 203 | `*` (`css-bundle-manifest.txt:20`) |
 | `components-filter-bar.css` | 187 | `stats,bookmarks,topics` |
 | `components-modals.css` | 180 | `*` |
 | `pages-login.css` | 141 | `login` |
@@ -173,7 +173,7 @@ Playwright-спеков (`e2e/*.spec.js`), 36 досье решений (`docs/c
 | `components-code-highlight.css` | 69 | `focus,result` |
 | `components-icons.css` | 40 | `*` |
 | `pages-focus-confidence.css` | 27 | `focus` |
-| `utilities-core.css` | 25 | не в манифесте |
+| `utilities-core.css` | 25 | `*` (`css-bundle-manifest.txt:23`) |
 | `components-signatures.css` | 24 | `*` |
 | `components-card.css` | 23 | `*` |
 | `base.css` | 17 | не в манифесте (см. «ЧТО УСТАРЕЛО») |
@@ -278,7 +278,7 @@ docs/css-decisions/$f.md || echo "NO DOC: $f"; done` даёт: `base`,
 | 5 | Bookmarks | `GET /bookmarks` (`:383`) | `bookmarks.html` | `bookmarks-dark-1440x900.png` |
 | 6 | Settings | `GET /settings` (`:123`) | `settings.html` | `settings-dark-1440x900.png`, `settings-light-1440x900.png` |
 | 7 | Session Summary | `GET /session-summary` (`:286`) | `session-summary.html` | `summary-dark-1440x900.png` + ultrawide/light-варианты |
-| 8 | Login | `GET /login` (`modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/auth/controller/LoginController.java:19-20`) | `login.html` | `login-dark-1440x900.png`; см. «ЧТО ПЛОХО» — недостижим в дефолтном режиме |
+| 8 | Login | `GET /login` (`modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/auth/controller/LoginController.java:35`) | `login.html` | `login-dark-1440x900.png`; см. «ЧТО ПЛОХО» — недостижим в дефолтном режиме |
 | 9 | Error | Spring error-mapping | `error.html` | `error-dark-1440x900.png` (404 на несуществующий путь) |
 | 10 | Result | `POST /answer` (`:291`) | `result.html` | `result-dark-1440x900.png` — no-JS SSR-фоллбэк |
 | 11 | Focus | `GET /` в TRAINING | `focus-training.html` (2205 строк CSS) | `workspace-training-dark-1440x900.png` |
@@ -302,30 +302,32 @@ docs/css-decisions/$f.md || echo "NO DOC: $f"; done` даёт: `base`,
 `modules/quiz-domain/src/main/java/com/cheatsheet/quiz/domain/InterviewMode.java`.
 Восемь значений различаются не именем, а ПРЕДИКАТАМИ (`isRecallMode()`,
 `usesTypedInput()`, `usesCodeEditor()`, `usesSpokenRehearsal()`, `isUnlimited()`
-— `modules/quiz-domain/src/main/java/com/cheatsheet/quiz/domain/InterviewMode.java:44-79`), и композицию каждого стерегут
+— `modules/quiz-domain/src/main/java/com/cheatsheet/quiz/domain/InterviewMode.java:44-85`), и композицию каждого стерегут
 `ModeWorkspaceContractTest` (302 строки) и `RecallCompositionContractTest`
 (175 строк). Выбор режима — радио-карточки в
-`modules/quiz-app/src/main/resources/templates/fragments/session-builder.html:212-229` (`th:each="m :
+`modules/quiz-app/src/main/resources/templates/fragments/session-builder.html:208-228` (`th:each="m :
 ${sessionModes}"`), подписи и дефолтный счётчик вопросов приходят из
 `EnumLabelSourceContractTest`-стерегомого источника, не дублируются в шаблоне
 (см. «ЧТО ФУНДАМЕНТАЛЬНО»).
 
 ### TRAINING
 
-`isUnlimited() = true` (`modules/quiz-domain/src/main/java/com/cheatsheet/quiz/domain/InterviewMode.java:79`) — единственный режим без
+`isUnlimited() = true` (`modules/quiz-domain/src/main/java/com/cheatsheet/quiz/domain/InterviewMode.java:83-85`) — единственный режим без
 сессии и счётчика вопросов (`data-unlimited="true"`,
 `modules/quiz-app/src/main/resources/templates/fragments/session-builder.html:216`). Композиция: вопрос → 4 MCQ-варианта
 (`#interview-options`, `modules/quiz-app/src/main/resources/templates/focus-training.html:965-988`) → мгновенная проверка →
 разбор. Снято `workspace-training-dark-1440x900.png`,
 `workspace-training-dark-2560x1440.png`, `workspace-training-light-1440x900.png`.
-Дефолт формы (`checked="checked"` без явного выбора) — тоже TRAINING
-(`modules/quiz-app/src/main/resources/templates/fragments/session-builder.html:212`).
+Дефолт формы (`th:checked="${m.selected}"` без явного выбора резолвится в TRAINING —
+`modules/quiz-app/src/main/java/com/cheatsheet/quiz/common/util/ModeUtils.java:269`,
+`current = selected != null ? selected : InterviewMode.TRAINING`)
+(`modules/quiz-app/src/main/resources/templates/fragments/session-builder.html:211`).
 
 ### EXAM
 
 Фиксированный набор вопросов, ошибки идут в штраф (глиф `#mode-exam`,
-`modules/quiz-app/src/main/resources/templates/fragments/icons.html:69`, единственный из восьми, чьё имя символа совпадает с именем
-режима как есть). Снято `workspace-exam-dark-1440x900.png`. Через EXAM же
+`modules/quiz-app/src/main/resources/templates/fragments/icons.html:69`, один из шести, чьё имя символа совпадает с именем
+режима как есть — исключения см. «ЧТО СЛУЧАЙНО»). Снято `workspace-exam-dark-1440x900.png`. Через EXAM же
 получен экран Session Summary (`POST /finish` после старта EXAM — TRAINING для
 `/finish` не годится, т.к. `isUnlimited()` не создаёт сессию, см. риск
 design.md).
@@ -333,9 +335,9 @@ design.md).
 ### MARATHON
 
 Большая серия вопросов подряд, тот же MCQ-интерфейс, что TRAINING/EXAM, но
-глиф — `#mode-path` (`modules/quiz-app/src/main/resources/templates/fragments/icons.html:70`), а не `#mode-marathon` — единственный
-случай, что символ называется по метафоре «путь», не по имени режима (см.
-«ЧТО СЛУЧАЙНО»). Снято `workspace-marathon-dark-1440x900.png`.
+глиф — `#mode-path` (`modules/quiz-app/src/main/resources/templates/fragments/icons.html:70`), а не `#mode-marathon` — один из
+двух режимов (второй — CODE_CHALLENGE → `#mode-forge`), где символ называется по
+метафоре, не по имени режима (см. «ЧТО СЛУЧАЙНО»). Снято `workspace-marathon-dark-1440x900.png`.
 
 ### STUDY
 
@@ -410,7 +412,7 @@ explicitTopics=39»). Восемь режимов прохождения (кар
 - **Манифест каскада — единственный источник правды**, а не 33 `<link>` в
   шапке: `css-bundle-manifest.txt` читают ОБА потребителя (`CssBundleService` и
   `TemplateFragmentContractTest`), и тест `cssBundleManifestCoversEveryProjectStylesheet`
-  (`modules/quiz-app/src/test/java/com/cheatsheet/quiz/ui/TemplateFragmentContractTest.java:1564-1565`) гарантирует, что новый CSS-файл
+  (`modules/quiz-app/src/test/java/com/cheatsheet/quiz/ui/TemplateFragmentContractTest.java:1566`) гарантирует, что новый CSS-файл
   не может остаться неподключённым молча.
 - **0 реальных CSS-протечек.** Живой прогон `python3 scripts/css-leak-audit.py`
   в этой сессии — `syntax: OK (35 файлов)`, `carriers: OK (0 носителей без
@@ -419,13 +421,13 @@ explicitTopics=39»). Восемь режимов прохождения (кар
   промаркированы аудитором как `OK usage` — намеренное кросс-страничное
   переиспользование, а не забытый селектор.
 - **Единственный источник подписей режима.** Радио-карточки режима
-  (`modules/quiz-app/src/main/resources/templates/fragments/session-builder.html:212-229`) не хранят своих текстов — подпись, глиф,
+  (`modules/quiz-app/src/main/resources/templates/fragments/session-builder.html:208-228`) не хранят своих текстов — подпись, глиф,
   дефолтный счётчик и текст CTA приходят из Java-модели (`EnumLabelSourceContractTest`),
   и комментарий в шаблоне (`:195-204`) явно называет исторический баг: было
   расхождение, пользователь видел имя enum-константы вместо подписи.
 - **`InterviewMode` — предикаты, не строковые сравнения.** `isRecallMode()`,
   `usesTypedInput()`, `usesCodeEditor()`, `usesSpokenRehearsal()`,
-  `isUnlimited()` (`modules/quiz-domain/src/main/java/com/cheatsheet/quiz/domain/InterviewMode.java:44-79`) — единое место ветвления
+  `isUnlimited()` (`modules/quiz-domain/src/main/java/com/cheatsheet/quiz/domain/InterviewMode.java:44-85`) — единое место ветвления
   поведения; Javadoc метода `usesSpokenRehearsal()` прямо документирует
   найденный и исправленный баг рассинхрона трёх копий одного условия.
 - **`/answer` имеет настоящий no-JS путь**, а не фиктивный: снятый в этой
@@ -451,7 +453,7 @@ explicitTopics=39»). Восемь режимов прохождения (кар
 
 - **Login недостижим в дефолтном режиме продакшена.** `LoginController`
   висит на `@ConditionalOnProperty(prefix = "app.security", name = "mode",
-  havingValue = "multi")` (`modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/auth/controller/LoginController.java:19-20`), а дефолт —
+  havingValue = "multi")` (`modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/auth/controller/LoginController.java:18`), а дефолт —
   `app.security.mode=local` (`modules/quiz-app/src/main/resources/application.yml:143`). Живой замер этой сессии:
   `curl http://localhost:8091/login` при дефолтном `local` → `HTTP 404`
   (страница просто не существует как бин, не «требует входа» — 404, не 401/403).
@@ -460,13 +462,13 @@ explicitTopics=39»). Восемь режимов прохождения (кар
   без override окружения, которого нет ни в одном месте конфигурации по
   умолчанию.
 - **`app.security.mode=multi` требует входа даже для GET-навигации**, хотя
-  собственный Javadoc `modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/auth/controller/LoginController.java:16` называет режим «Hybrid» и
+  собственный Javadoc `modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/auth/controller/LoginController.java:15` называет режим «Hybrid» и
   документация `modules/quiz-app/src/main/resources/application.yml:141` говорит «mutating endpoints require
   auth». Живой замер: `curl -D- http://localhost:8091/stats` в режиме `multi`
   → `302 Location: /login` — GET, не мутация. Комментарий и код расходятся
   ровно в описании того, что делает переключатель.
 - **Дефолтный пресет экрана не учитывает реальный вьюпорт даже на первом
-  визите.** `readScreenPreset()` (`modules/quiz-app/src/main/resources/templates/fragments/head.html:229-234`) без сохранённого
+  визите.** `readScreenPreset()` (`modules/quiz-app/src/main/resources/templates/fragments/head.html:236-241`) без сохранённого
   `localStorage` всегда возвращает `laptop`, независимо от
   `window.innerWidth`. Три снятых в этой сессии ultrawide-кадра
   (`workspace-training-dark-2560x1440.png`, `stats-dark-2560x1440.png`,
@@ -512,13 +514,6 @@ explicitTopics=39»). Восемь режимов прохождения (кар
   Ни в `docs/css-decisions/`, ни в комментариях `icons.html` метафора не
   объяснена — имя символа для двух режимов пришлось искать отдельно от имени
   enum-константы.
-- **`fonts-local.css` (203 строки) не в `css-bundle-manifest.txt`, но и не
-  дублируется как `base.css`** — единственный CSS-файл проекта, который
-  подключается собственным путём (font-preload, `FontPreloadContractTest`)
-  параллельно с манифестом, а не через него и не мимо него демонстративно
-  (`base.css`). Третий, промежуточный способ подключения CSS в проекте, где
-  задокументированы явно только два (манифест / намеренно вне ленты).
-
 ## ЧТО ФУНДАМЕНТАЛЬНО
 
 То, на чём держится каскад и код, и что редизайн обязан либо сохранить, либо
@@ -546,7 +541,7 @@ explicitTopics=39»). Восемь режимов прохождения (кар
   ОСОЗНАННО как часть задачи, а не обойти.
 - **Восемь режимов — предикаты одного enum, не восемь путей кода.** Все
   различия воркспейса выводятся из пяти булевых методов
-  (`modules/quiz-domain/src/main/java/com/cheatsheet/quiz/domain/InterviewMode.java:44-79`) — редизайн композиции применяется к предикату
+  (`modules/quiz-domain/src/main/java/com/cheatsheet/quiz/domain/InterviewMode.java:44-85`) — редизайн композиции применяется к предикату
   (например, «все recall-режимы»), а не к каждому имени режима по отдельности.
 
 ## ЧТО УСТАРЕЛО
@@ -566,9 +561,10 @@ explicitTopics=39»). Восемь режимов прохождения (кар
   показывают несуществующий дизайн. Метод (`recon/shots.js`) переиспользован
   в этом аудите, выводы — нет.
 - **`static/css/base.css` (17 строк) — сирота манифеста.** Файл
-  `@import`-ирует 12 модулей (`reset.css`, `utilities-core.css`,
-  `reset-layout.css`, четыре `pages-*.css`, `components-widgets.css`,
-  `print.css`, `components-signatures.css`, `utilities-overrides.css`) —
+  `@import`-ирует 13 модулей (`reset.css`, `utilities-core.css`,
+  `reset-layout.css`, шесть `pages-*.css` — focus/settings/stats/summary/error/
+  result, `components-widgets.css`, `print.css`, `components-signatures.css`,
+  `utilities-overrides.css`) —
   подмножество того, что и так собирает манифест по каждой странице отдельно.
   Комментарий `modules/quiz-app/src/main/resources/static/css/base.css:1-2` называет себя «aggregator (Wave C)», а
   `modules/quiz-app/src/test/java/com/cheatsheet/quiz/ui/TemplateFragmentContractTest.java:1562-1563` подтверждает: «dev-агрегатор
@@ -604,7 +600,8 @@ explicitTopics=39»). Восемь режимов прохождения (кар
   `.w-60`,`.w-80`,`.min-w-140` были удалены (единственный носитель — конкретная
   таблица на `/stats`), а не общее правило, когда добавлять утилиту в этот
   файл. Стоимость чтения файла (что тут есть) выше пользы, которую несут
-  оставшиеся 4 действующих класса.
+  оставшиеся 5 действующих классов (`.hidden`, `.d-inline`, `.text-center`,
+  `.mt-0`, `.mt-3`).
 - **Восемь режимов = восемь наборов E2E/контракт-веток поверх одного enum.**
   `ModeWorkspaceContractTest` (302 строки) + `RecallCompositionContractTest`
   (175 строк) = 477 строк тестов ради 8 предикатных веток — оправдано историей
@@ -616,13 +613,14 @@ explicitTopics=39»). Восемь режимов прохождения (кар
 
 - **Голдены покрывают 4 экрана из 18 и 0 режимов из 8.** 14 снимков
   `e2e/visual-baselines/chromium` (`ls e2e/visual-baselines/chromium | wc -l`)
-  стерегутся `e2e/visual-matrix.spec.js`, это `home`(7) + `train`(2) +
-  `settings`(2) + `stats`(3) — см. раздел «Тестовое покрытие». Ни один из
-  восьми `InterviewMode`-воркспейсов, ни `bookmarks`, ни `topics`, ни `login`,
-  ни `error`, ни `result`, ни `session-summary`, ни `review` пиксельно не
-  застрахован.
+  стерегутся `e2e/visual-matrix.spec.js`, это `home`(8 = 5 из `MATRIX` + 3 из
+  `VIEWPORTS`) + `train`(2) + `settings`(2) + `stats`(2) — см. раздел «Тестовое
+  покрытие». Ни один из восьми `InterviewMode`-воркспейсов, ни `bookmarks`, ни
+  `topics`, ни `login`, ни `error`, ни `result`, ни `session-summary`, ни
+  `review` пиксельно не застрахован.
 - **Ultrawide не проверяется голденами вовсе.** `e2e/visual-matrix.spec.js`
-  (14 записей `MATRIX`, проверено `grep -c "id: '"`) не содержит ни одного
+  (11 записей `MATRIX` + 3 записи `VIEWPORTS` = 14, проверено `grep -c "id: '"`)
+  не содержит ни одного
   вьюпорта шире 1440px в основной матрице — §17-регрессия (жёлоб 495-527px на
   2560px, измерено этой сессией) может появиться и исчезнуть незамеченной.
 - **Нет golden-покрытия recall-семейства (FLASHCARD/TYPED_RECALL/INTERVIEW/
@@ -635,16 +633,19 @@ explicitTopics=39»). Восемь режимов прохождения (кар
   открывает продукт впервые на 2560px-мониторе, обоснования сохранять
   «ноутбучный» вид уже нет: решение одно на обе категории пользователей, хотя
   причина решения относится только к одной.
-- **Login не участвует ни в одном автотесте продукта** (ни контракт-тест, ни
-  e2e-спек не упомянут `LoginController`/`login.html` — проверено `grep -rl
-  'LoginController\|login.html' modules/quiz-app/src/test` не даёт ничего
-  в `ui/*ContractTest.java`) — притом что это экран №8 из 18 в самой миссии
-  редизайна; живое доказательство, что экран вообще существует и как
-  выглядит, — только `login-dark-1440x900.png` из этого прохода.
-- **`/review` не имеет ни контракт-теста, ни строки в §5 миссии**, при том что
-  композиция страницы (собственный заголовок «Ошибок к разбору N», собственная
-  панель «Вся тренировка») — не копия Focus, а самостоятельный вариант
-  (`review-dark-1440x900.png`).
+- **Login проверен только структурой шапки, не поведением формы.**
+  `PageHeadUnificationContractTest.java:81,97,103,106` сверяет `login.html` по
+  DOM-классам шапки/алертов (`login-eyebrow`, `login-alert-error`, …) наравне с
+  остальными страницами, но ни один тест не гоняет форму логина целиком
+  (успешный вход, неверный пароль, редирект) — притом что это экран №8 из 18 в
+  самой миссии редизайна; живое доказательство композиции —
+  `login-dark-1440x900.png` из этого прохода.
+- **`/review` имеет контракт-тест, но только на пустое состояние, не на
+  основной сценарий.** `ReviewEmptyStateContractTest` (Javadoc) сам фиксирует,
+  что композиция страницы с ошибками совпадает с `/` до пикселя на
+  390/1280/1512/2560 в обоих движках — то есть `/review` НЕ самостоятельный
+  вариант, а Focus с фильтром; тест стережёт только пустое состояние (когда
+  ошибок нет), а не сам разбор (`review-dark-1440x900.png` из этого прохода).
 
 ## Тестовое покрытие и его дыры
 
@@ -676,8 +677,8 @@ explicitTopics=39»). Восемь режимов прохождения (кар
 ### Не покрыто голденами
 
 `e2e/visual-baselines` — 14 снимков (×2 движка = 28) ровно четырёх экранов:
-`home` (7 записей матрицы, разные theme×preset×motion×viewport), `train` (2),
-`settings` (2), `stats` (3). Всё остальное — без пиксельной защиты:
+`home` (8: 5 записей `MATRIX` разные theme×preset×motion + 3 записи `VIEWPORTS`),
+`train` (2), `settings` (2), `stats` (2). Всё остальное — без пиксельной защиты:
 
 1. Bookmarks (`/bookmarks`)
 2. Topics (`/topics`)
@@ -714,7 +715,7 @@ explicitTopics=39»). Восемь режимов прохождения (кар
 ширины, а самый широкий видимый блок внутри — 61.3-63.7%. Во всех четырёх
 кадрах наибольший непрерывный пустой промежуток — слева от рабочей области
 (495-527px, почти вдвое больше `--sidebar-width` в 236px,
-`modules/quiz-app/src/test/java/com/cheatsheet/quiz/ui/UltrawideWorkspaceContractTest.java:44`) — то есть жёлоб не объясняется одной
+`modules/quiz-app/src/test/java/com/cheatsheet/quiz/ui/UltrawideWorkspaceContractTest.java:53`) — то есть жёлоб не объясняется одной
 только шириной сайдбара, контент дополнительно центрирован в оставшемся поле.
 
 Это не противоречит `UltrawideWorkspaceContractTest` — тот стережёт другой
