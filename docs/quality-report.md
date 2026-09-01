@@ -46,18 +46,13 @@ pip install pre-commit && pre-commit install
 | Модуль | Тестов |
 |---|---|
 | `quiz-domain` | 246 |
-| `quiz-persistence` | 117 |
-| `quiz-app` | 1211 |
-| **Итого** | **1574** |
+| `quiz-persistence` | 119 |
+| `quiz-app` | 1873 |
+| **Итого** | **2238** |
 
-`failures=0 errors=0 skipped=2`. `BUILD SUCCESSFUL`.
-
-Двадцать два из 1211 — гейты редизайна, которые **ещё не закоммичены** (ждут отдельной
-команды вместе с правками `tokens.css`, `pages-focus.css`, `focus-training.html`,
-`shell.css`, `settings.html`, `session-form.js`): `FocusWideCompositionContractTest` (6),
-`FocusSplitCompositionContractTest` (5), `FocusPrimaryActionReachContractTest` (5),
-`SessionBuilderLaunchReachContractTest` (6). На `master` тотал `quiz-app` пока 1189 —
-расхождение ожидаемое и временное.
+`failures=0 errors=0 skipped=3`. `BUILD SUCCESSFUL`. Измерено 2026-09-01,
+SHA `27ab9171697bf35b3fe16ffd7aece84917ffbe33` (полный прогон и методика — в
+`.sdlc/CS-20260828-020/report.md`).
 
 **Тотал `quiz-app` привязан к корпусу, а не только к коду.** 318 из 1205 генерирует
 `SeedSchemaContractTest` — ровно по одному тесту на файл `seed/mcq/**/*.json`, плюс
@@ -111,18 +106,18 @@ CSS-класс, JS-`classDef`ы) была в `HEAD` целиком, произв
 
 | Счётчик | Покрыто | Всего | % |
 |---|---|---|---|
-| INSTRUCTION | 17985 | 19667 | 91.5 |
-| LINE | 3633 | 3970 | 91.5 |
-| CLASS | 184 | 186 | 98.9 |
-| BRANCH | 1366 | 1788 | 76.4 |
+| INSTRUCTION | 23230 | 25186 | 92.2 |
+| LINE | 4616 | 4992 | 92.5 |
+| CLASS | 221 | 223 | 99.1 |
+| BRANCH | 1966 | 2529 | 77.7 |
 
 Гейт `jacocoTestCoverageVerification` (входит в `check`) — два правила:
 
 | Уровень | Счётчик | Порог | Замер |
 |---|---|---|---|
-| BUNDLE | LINE | 0.85 | 0.915 |
-| BUNDLE | BRANCH | 0.70 | 0.764 |
-| PACKAGE (`api.*`, `service.*`, `feature.*`, без `*.dto.*`) | LINE | 0.55 | минимум 0.600 |
+| BUNDLE | LINE | 0.85 | 0.9247 |
+| BUNDLE | BRANCH | 0.70 | 0.7774 |
+| PACKAGE (`api.*`, `service.*`, `feature.*`, без `*.dto.*`) | LINE | 0.55 | минимум 0.706 |
 
 До 2026-08-04 гейт был декоративным: порог 0.20 при фактическом минимуме 0.850 по
 включённым пакетам, плюс мёртвый `persistence.*` (это отдельный gradle-модуль,
@@ -133,7 +128,7 @@ record-носителей JaCoCo видит одну-две строки от Lo
 лотерея, а не проверка. Работоспособность правила проверена подъёмом порога до
 0.99 — гейт упал с перечислением пакетов.
 
-Разрыв LINE 91.5 % против BRANCH 76.4 % — там, где ветки родились из защитного кода
+Разрыв LINE 92.5 % против BRANCH 77.7 % — там, где ветки родились из защитного кода
 (null-гарды, ранние выходы, деградация при отсутствующем сидере). Строки проходятся,
 редкая ветка — нет.
 
