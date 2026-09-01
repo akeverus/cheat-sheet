@@ -27,7 +27,7 @@
      (в репозиторий не кладётся). Внешний замер по `date +%s` (до/после): `DUR=2064s`
      (34м 24с); собственный таймер Gradle в конце лога — `BUILD SUCCESSFUL in 34m 20s`
      (2060s). Разница (~4с) — старт JVM/CLI-обвязка вне таймера Gradle.
-  2. `./gradlew :quiz-app:jacocoTestReport --no-daemon` — RC=0, `DUR=710s` (11м 47с),
+  2. `./gradlew :quiz-app:jacocoTestReport --no-daemon` — RC=0, `DUR=710s` (11м 50с),
      лог в `/tmp/CS-20260828-020-jacoco-app.log`. `:quiz-app:test` не был `UP-TO-DATE`
      и выполнился заново целиком (детерминированный итог: тот же счёт тестов, что и
      в прогоне check — 1873/0/0/3 — но иное время: 283.65с суммарно против 723.66с в
@@ -56,10 +56,11 @@
        SKIPPED` — задача `test` в графе задач вообще не появилась (не `UP-TO-DATE`, а
        отсутствует), XML/exec-отчёт не создан ни для одного модуля
        (`find modules/quiz-domain modules/quiz-persistence -iname "*.xml" -path
-       "*jacoco*"` → пусто). Автопривязка `jacocoTestReport → test`, которую даёт
-       плагин `jacoco` при совместном присутствии с `java`, здесь не сработала —
-       по всей видимости из-за порядка применения плагинов между глобальным
-       init-скриптом и `subprojects{}` корневого `build.gradle.kts:18-19`.
+       "*jacoco*"` → пусто). Причина — `JacocoReport` пропускается без exec-данных, а
+       задачу `test` эта команда в аргументах не запрашивала: сам плагин `jacoco`
+       никакой автопривязки `jacocoTestReport → test` не даёт, в `quiz-app` эта связь
+       прописана руками (`dependsOn(tasks.test)`, `modules/quiz-app/build.gradle.kts:99`).
+       В init-скрипте той строки нет.
      Итог: способ не сработал трижды из трёх попыток разными путями — `quiz-domain` и
      `quiz-persistence` помечены `не измерено` в §3 (AC-4), выдумывать числа не стал.
 
@@ -102,7 +103,7 @@
 
 | Модуль | INSTRUCTION | LINE | BRANCH | CLASS |
 |---|---|---|---|---|
-| `quiz-domain` | не измерено — jacoco не подключён, автопривязка `jacocoTestReport→test` через временный init-скрипт не сработала (`:quiz-domain:jacocoTestReport SKIPPED`, XML не создан). Команда: `./gradlew -I /tmp/CS-20260828-020-jacoco-all.gradle :quiz-domain:jacocoTestReport --no-daemon` | — | — | — |
+| `quiz-domain` | не измерено — задача `test` не была запрошена в командной строке, `jacocoTestReport` пропущен без exec-данных (`:quiz-domain:jacocoTestReport SKIPPED`, XML не создан); в `quiz-app` эту связь даёт ручной `dependsOn(tasks.test)`, в init-скрипте его нет. Команда: `./gradlew -I /tmp/CS-20260828-020-jacoco-all.gradle :quiz-domain:jacocoTestReport --no-daemon` | — | — | — |
 | `quiz-persistence` | не измерено — та же причина (`:quiz-persistence:jacocoTestReport SKIPPED`, XML не создан). Команда: `./gradlew -I /tmp/CS-20260828-020-jacoco-all.gradle :quiz-persistence:jacocoTestReport --no-daemon` | — | — | — |
 | `quiz-app` | 23230/25186 = 92.23% | 4616/4992 = 92.47% | 1966/2529 = 77.74% | 221/223 = 99.10% |
 
