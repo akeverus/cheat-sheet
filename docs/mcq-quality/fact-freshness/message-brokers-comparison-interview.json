@@ -1,14 +1,26 @@
 {
   "topic_slug": "message-brokers-comparison-interview",
-  "round": 9,
-  "status": "TODO",
-  "version_sensitive": null,
-  "product_version": null,
-  "checked_date": null,
-  "sources": [],
-  "version_sensitive_claims": [],
-  "staleness_risks": [],
+  "round": 10,
+  "status": "CHECKED",
+  "version_sensitive": true,
+  "product_version": "Apache Kafka, RabbitMQ, NATS, Apache Pulsar, Redpanda, ActiveMQ, AWS SQS/SNS/EventBridge — сравнение по актуальному поведению на 2026-09-02",
+  "checked_date": "2026-09-02",
+  "sources": [
+    "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues-understanding-logic.html"
+  ],
+  "version_sensitive_claims": [
+    "Очередь SQS FIFO держит строгий порядок в границах message group id: внутри группы сообщения приходят и обрабатываются строго по очереди, между разными группами порядок не гарантируется, а параллелизм достигается именно разными группами (Q12, Q13, Q22).",
+    "Порядок в остальных брокерах сравнения тоже привязан к единице разбиения — партиции у Kafka, очереди у RabbitMQ (Q12).",
+    "Redpanda сохраняет совместимость с Kafka API, будучи переписанной без JVM — отсюда и отсутствие пауз сборщика мусора, и подключение прежних клиентов без правок (Q7, Q11)."
+  ],
+  "staleness_risks": [
+    "Сравнительные таблицы по пропускной способности и задержке (Q10, Q11) устаревают быстрее всего — числа в варианты намеренно не выносились, утверждения держатся на уровне «кто быстрее по устройству».",
+    "Kafka уходит от ZooKeeper к KRaft, поэтому оценка сложности эксплуатации (Q16) сдвигается от релиза к релизу.",
+    "Состав управляемых сервисов AWS и границы EventBridge (Q8, Q22) меняются чаще прочего в этом файле."
+  ],
   "notes": [
-    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+    "Страница AWS про логику доставки FIFO загружена и прочитана 2026-09-02.",
+    "Документация Apache Kafka по прямым ссылкам отдаёт страницу перенаправления без содержимого — утверждения про Kafka опираются на тело шпаргалки и на перекрёстную проверку через сравнение с SQS FIFO; при следующем пересмотре стоит взять зеркало документации.",
+    "Конкретных чисел, версий и процентов в текстах вариантов нет, поэтому TEMPORAL-гейт чист."
   ]
 }
