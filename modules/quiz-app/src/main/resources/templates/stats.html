@@ -1106,13 +1106,21 @@
              aria-labelledby="wrong-questions-title">
         <h2 id="wrong-questions-title" class="mt-0">Последние ошибки</h2>
         <p class="muted chart-subtitle">До 30 вопросов с ошибками в истории, свежие сверху.
-           «Тренировать» открывает сессию по теме с фильтром ошибок.</p>
+           Тема ведёт в сессию по её ошибкам.</p>
+        <!--/* Кнопки «Тренировать» в каждой строке сняты (UX-проход 2026-09-01):
+             действие ведёт в сессию ПО ТЕМЕ, а не по вопросу, и у соседних строк
+             одной темы тридцать кнопок несли один и тот же href — колонка
+             одинаковых CTA конкурировала с двумя главными кнопками панели выше.
+             Тот же переход теперь несёт имя темы в мета-строке — как в таблице
+             «Где чаще ошибаешься», где темы тоже ссылки. Видимый текст ссылки =
+             доступное имя (SC 2.5.3), поведение названо в подзаголовке. */-->
         <ul class="wrong-question-list">
             <li th:each="item : ${recentWrongQuestions}" class="wrong-question-item">
                 <div class="wrong-question-main">
                     <div class="wrong-question-text" th:text="${item.questionPreview}">Текст вопроса</div>
                     <div class="wrong-question-meta muted">
-                        <span th:text="${item.topicDisplayName}" th:title="${item.topic}">Тема</span>
+                        <a th:href="@{/(topic=${item.topic}, onlyWrong=true, ordered=true)}"
+                           th:text="${item.topicDisplayName}" th:title="${item.topic}">Тема</a>
                         <span aria-hidden="true">·</span>
                         <span>
                             <span th:text="${item.wrongCount}">1</span>
@@ -1123,11 +1131,6 @@
                             <span th:text="${item.correctCount + ' верн.'}">0 верн.</span>
                         </th:block>
                     </div>
-                </div>
-                <div class="wrong-question-actions">
-                    <a class="btn secondary-btn"
-                       th:href="@{/(topic=${item.topic}, onlyWrong=true, ordered=true)}"
-                       th:aria-label="${'Тренировать ошибки: ' + item.topicDisplayName}">Тренировать</a>
                 </div>
             </li>
         </ul>
