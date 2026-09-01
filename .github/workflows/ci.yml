@@ -9,6 +9,8 @@ on:
       - '*.gradle.kts'
       - 'gradlew'
       - 'gradlew.bat'
+      - 'e2e/**'
+      - 'scripts/verify-ci-e2e-gate.sh'
       - '.github/workflows/ci.yml'
   pull_request:
     paths:
@@ -17,6 +19,8 @@ on:
       - '*.gradle.kts'
       - 'gradlew'
       - 'gradlew.bat'
+      - 'e2e/**'
+      - 'scripts/verify-ci-e2e-gate.sh'
       - '.github/workflows/ci.yml'
 
 # Не держать параллельные раны на одной ветке/PR — экономия минут раннера.
@@ -46,6 +50,9 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
 
+      - name: Verify e2e gate contract
+        run: bash scripts/verify-ci-e2e-gate.sh
+
       - name: Build (no tests)
         run: ./gradlew build -x test --no-daemon
 
@@ -71,6 +78,106 @@ jobs:
           name: jacoco-report
           path: modules/quiz-app/build/reports/jacoco/test/html/
           retention-days: 14
+
+  e2e:
+    name: E2E · Playwright (chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build-test
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: interview
+          POSTGRES_USER: interview
+          POSTGRES_PASSWORD: interview
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U interview -d interview"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      - name: Install e2e deps + Chromium
+        working-directory: e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      # Рецептура подъёма приложения — visual-goldens.yml (тот же job уже
+      # проверен в CI): service-контейнер postgres + фоновый bootRun + поллинг
+      # /actuator/health.
+      - name: Boot app (background)
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/interview
+          SPRING_DATASOURCE_USERNAME: interview
+          SPRING_DATASOURCE_PASSWORD: interview
+          APP_SECURITY_MODE: local
+          APP_ADMIN_TOKEN: ci-e2e-token
+        run: |
+          ./gradlew :quiz-app:bootRun -q > /tmp/bootRun.log 2>&1 &
+          echo $! > /tmp/bootRun.pid
+          for i in $(seq 1 90); do
+            if curl -sf http://localhost:8080/actuator/health >/dev/null \
+              || curl -sf http://localhost:8080/ >/dev/null; then
+              echo "app up after ${i}s"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "bootRun failed to become ready" >&2
+          tail -n 200 /tmp/bootRun.log >&2 || true
+          exit 1
+
+      - name: Run e2e specs
+        working-directory: e2e
+        env:
+          E2E_BASE_URL: http://localhost:8080
+        run: |
+          npx playwright test \
+            console-clean.spec.js \
+            reflow.spec.js \
+            keyboard-quiz.spec.js \
+            --project=chromium
+
+      - name: Upload e2e artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results-${{ github.run_id }}
+          path: |
+            e2e/test-results/
+            e2e/playwright-report/
+            /tmp/bootRun.log
+          retention-days: 7
+
+      - name: Stop app
+        if: always()
+        run: |
+          if [ -f /tmp/bootRun.pid ]; then
+            kill "$(cat /tmp/bootRun.pid)" 2>/dev/null || true
+          fi
 
   docker-build:
     name: Docker image · smoke build
