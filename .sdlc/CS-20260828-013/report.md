@@ -253,7 +253,8 @@ springdoc-openapi-starter-webmvc-ui зафиксирован версией 2.6.
 маршруты `/pause/discard` (REF-016, `b56fc164`) и `/question/note` (REF-024,
 `87f3433f`) уже входили в HEAD `af3f2db6`, на котором писался design.md; файл
 не менялся ни на одном коммите этой ветки
-(`git diff af3f2db6 -- .../InterviewMvcController.java` — пусто). Далее в
+(`git diff af3f2db6 -- modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/interview/controller/InterviewMvcController.java`
+— пусто). Далее в
 отчёте — актуальные числа.)
 
 Маршруты `InterviewMvcController`, отсутствующие в README §«Основные
@@ -517,7 +518,7 @@ for f in modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/interview/co
 done
 grep -rE '@(Get|Post|Put|Delete|Patch)Mapping' modules --include="*Controller.java" | grep '/src/main/' | wc -l  # 37
 grep -n '"/error"' modules/quiz-app/src/main --include="*.java" -r
-git diff af3f2db6 -- modules/quiz-app/.../InterviewMvcController.java     # пусто — файл не менялся на этой ветке
+git diff af3f2db6 -- modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/interview/controller/InterviewMvcController.java  # пусто — файл не менялся на этой ветке
 git merge-base --is-ancestor b56fc164 af3f2db6 && echo REF-016-in-af3f2db6
 git merge-base --is-ancestor 87f3433f af3f2db6 && echo REF-024-in-af3f2db6
 
