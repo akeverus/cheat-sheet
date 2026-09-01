@@ -62,7 +62,7 @@ class StatsSummaryContractTest {
     void theSummaryIsOneRowAndNotTwoFloors() throws IOException {
         String markup = statsMarkup();
         int summary = markup.indexOf("<div class=\"stats-summary\">");
-        int actions = markup.indexOf("class=\"card stats-next-actions\"");
+        int actions = markup.indexOf("class=\"stats-next-actions\"");
         int standing = markup.indexOf("<div class=\"stats-standing\">");
         assertThat(summary).as("обёртки сводки нет — действия и стойка снова этажами").isNotNegative();
         assertThat(summary).as("действия обязаны лежать внутри сводки").isLessThan(actions);
