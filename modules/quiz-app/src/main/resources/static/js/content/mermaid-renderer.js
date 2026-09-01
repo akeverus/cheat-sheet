@@ -163,12 +163,34 @@ const CARRIED_STYLE = 'data-mmd-style';
  * моделью, и браузер её пропускает. Тем же приёмом в приложении уже живут
  * прогресс-полосы ({@code core/dom.js}: {@code style.setProperty('--progress')}).
  */
+/* Применение строки деклараций ЧЕРЕЗ setProperty, а не cssText: в Chromium
+   139+ присваивание style.cssText само считается «применением inline-стиля» и
+   репортится style-src-attr (замер 2026-09 изолированной пробой; прежний
+   трёхвариантный эксперимент устарел). setProperty политикой не считается
+   атрибутом. Разбор нарочно простой: у mermaid-деклараций нет ';' внутри
+   значений (fill/stroke/width/font-*), а незнакомое браузер молча отбросит. */
+function applyDeclarations(node, declarations) {
+  declarations.split(';').forEach((decl) => {
+    const i = decl.indexOf(':');
+    if (i < 1) return;
+    const name = decl.slice(0, i).trim();
+    let value = decl.slice(i + 1).trim();
+    if (!name || !value) return;
+    let priority = '';
+    if (/!\s*important$/i.test(value)) {
+      value = value.replace(/!\s*important$/i, '').trim();
+      priority = 'important';
+    }
+    try { node.style.setProperty(name, value, priority); } catch (_) { /* чужое имя */ }
+  });
+}
+
 function restoreCarriedStyles(root) {
   const carriers = [root, ...root.querySelectorAll('[' + CARRIED_STYLE + ']')];
   carriers.forEach((node) => {
     const declarations = node.getAttribute(CARRIED_STYLE);
     if (!declarations) return;
-    node.style.cssText = declarations;
+    applyDeclarations(node, declarations);
     node.removeAttribute(CARRIED_STYLE);
   });
 }
@@ -224,15 +246,29 @@ function applySvgToElement(el, svgString) {
  * `innerHTML` со `style="…"`. В ИТОГОВОМ DOM отброшенного нет (carry-перенос
  * возвращает всё при вставке строки SVG) — дефект именно консольный.
  *
- * Маршрут через `style.cssText` политикой разрешён (проверено трёхвариантным
- * экспериментом) и семантически эквивалентен: те же объявления, тот же
- * сериализованный атрибут — carry-перенос ниже работает как работал.
+ * Маршрут через CSSOM setProperty политикой разрешён; cssText в современном
+ * Chromium сам репортится как inline-стиль (замер 2026-09) — поэтому все
+ * восстановления идут пер-декларационно через applyDeclarations.
  *
  * Патчи действуют ТОЛЬКО НА ОКНО РЕНДЕРА и снимаются в finally. Глобальный патч
  * ослабил бы политику для всего приложения: `style-src-attr 'none'` — защита от
  * атрибутной инъекции стилей в пользовательском контенте, и включать обход для
  * чужих innerHTML нельзя.
  */
+/* Перехват обязан покрывать ОБЕ формы кавычек и пробелы вокруг «=»: прежний
+   literal-матч ` style="` пропускал одинарные кавычки, и DOMParser репортил
+   style-src-attr на каждый такой атрибут (замер 2026-09: 70 нарушений на
+   вопросе со схемой — цель «чистая консоль» §79). */
+const CARRY_TEST = /(?<![-\w])style\s*=/i;
+function carryStyleAttrs(text) {
+  /* Максимальный перехват: любое `style=`, не являющееся хвостом другого имени
+     (font-style= не трогаем — lookbehind), в любом регистре и с любыми
+     кавычками. Цена: литеральный текст «style=» в подписи узла тоже уедет под
+     carry-имя и вернётся стилем — на реальных схемах не встречается, а
+     console-clean дороже (§79). */
+  return text.replace(/(?<![-\w])style(\s*=)/gi, CARRIED_STYLE + '$1');
+}
+
 async function withInlineStylesRouted(work) {
   const proto = Element.prototype;
   const setAttr = proto.setAttribute;
@@ -240,7 +276,8 @@ async function withInlineStylesRouted(work) {
   const innerDesc = Object.getOwnPropertyDescriptor(proto, 'innerHTML');
   const viaCssom = (el, value) => {
     try {
-      el.style.cssText = value;
+      if (!el.style) return false;
+      applyDeclarations(el, value);
       return true;
     } catch (_) {
       return false; // экзотический хозяин без CSSOM — обычный путь
@@ -257,8 +294,13 @@ async function withInlineStylesRouted(work) {
   Object.defineProperty(proto, 'innerHTML', {
     ...innerDesc,
     set(value) {
-      if (typeof value === 'string' && value.indexOf(' style="') !== -1) {
-        innerDesc.set.call(this, value.replace(/\sstyle="/g, ' ' + CARRIED_STYLE + '="'));
+      // То же разворачивание TrustedHTML, что и в парсе ниже: innerHTML —
+      // запасной путь DOMPurify (_initDocument), и он получает тот же тип.
+      const asString = typeof value === 'string'
+        ? value
+        : (value != null && typeof value.toString === 'function' ? String(value) : null);
+      if (asString !== null && CARRY_TEST.test(asString)) {
+        innerDesc.set.call(this, carryStyleAttrs(asString));
         restoreCarriedStyles(this);
         return;
       }
@@ -273,8 +315,16 @@ async function withInlineStylesRouted(work) {
   // возвращает тот же restoreCarriedStyles в applySvgToElement, что и остальные. */
   const parseFrom = DOMParser.prototype.parseFromString;
   DOMParser.prototype.parseFromString = function (text, type, ...rest) {
-    if (typeof text === 'string' && text.indexOf(' style="') !== -1) {
-      text = text.replace(/\sstyle="/g, ' ' + CARRIED_STYLE + '="');
+    // mermaid отдаёт разметку DOMPurify как TrustedHTML, а не строку: проверка
+    // typeof пропускала ГЛАВНЫЙ парс всего SVG, и его 22 сырых style= снова
+    // сыпались нарушениями (замер q181). Разворачиваем в строку — политика
+    // require-trusted-types-for в приложении не включена, парсер принимает обе
+    // формы одинаково; нетронутый TrustedHTML едет дальше как был.
+    const asString = typeof text === 'string'
+      ? text
+      : (text != null && typeof text.toString === 'function' ? String(text) : null);
+    if (asString !== null && CARRY_TEST.test(asString)) {
+      text = carryStyleAttrs(asString);
     }
     return parseFrom.call(this, text, type, ...rest);
   };
