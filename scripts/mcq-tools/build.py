@@ -60,6 +60,11 @@ for q in qnums:
     wrongs = [{"text": norm(w["text"]), "correct": False, "sections": {
         k: w[k] for k in ("what_actually", "source_of_confusion", "if_it_were_true", "how_it_should_be")}}
         for w in b["wrong"]]
+    # финальная пунктуация одинакова у всех четырёх: иначе «единственный без точки»
+    # выдаёт правильный ответ глазом, а счётчики слов и символов этого не видят
+    for o in [correct] + wrongs:
+        t = o["text"].rstrip()
+        o["text"] = t if t.endswith((".", "!", "?")) else t + "."
     slots = [None] * 4; slots[tg[q]] = correct; wi = 0
     for i in range(4):
         if slots[i] is None: slots[i] = wrongs[wi]; wi += 1

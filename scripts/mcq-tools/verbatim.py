@@ -5,28 +5,30 @@
 Печатает блоки, где correct дословнее порога И дословнее лучшего дистрактора."""
 import json, re, sys
 
-SEED, MD = sys.argv[1], sys.argv[2]
-THR = float(sys.argv[3]) if len(sys.argv) > 3 else 0.25
+ARGS = [a for a in sys.argv[1:] if a != "--spans"]
+SPANS = "--spans" in sys.argv
+SEED, MD = ARGS[0], ARGS[1]
+THR = float(ARGS[2]) if len(ARGS) > 2 else 0.25
 
 def words(t):
     t = re.sub(r"`([^`]*)`", r"\1", t.lower())
     return re.findall(r"[a-zа-яё0-9@._-]+", t)
 
-def lcs_run(a, b):
-    """Длина самого длинного общего непрерывного отрезка."""
+def lcs_run(a, b, want_text=False):
+    """Длина самого длинного общего непрерывного отрезка (и он сам при want_text)."""
     if not a or not b:
-        return 0
+        return ("", 0) if want_text else 0
     prev = [0] * (len(b) + 1)
-    best = 0
+    best, end = 0, 0
     for i in range(1, len(a) + 1):
         cur = [0] * (len(b) + 1)
         for j in range(1, len(b) + 1):
             if a[i - 1] == b[j - 1]:
                 cur[j] = prev[j - 1] + 1
                 if cur[j] > best:
-                    best = cur[j]
+                    best, end = cur[j], i
         prev = cur
-    return best
+    return (" ".join(a[end - best:end]), best) if want_text else best
 
 lines = open(MD, encoding="utf-8").read().split("\n")
 bodies, cur, num = {}, [], None
@@ -57,5 +59,11 @@ for q in d["questions"]:
             flagged.append((q["q_number"], cl, rc, rw))
 
 for n, l, rc, rw in flagged:
-    print(f"Q{n} correct={l} дословность={rc:.2f} (лучший дистрактор {rw:.2f})")
+    line = f"Q{n} correct={l} дословность={rc:.2f} (лучший дистрактор {rw:.2f})"
+    if SPANS:
+        q = [x for x in d["questions"] if x["q_number"] == n][0]
+        o = [x for x in q["blocks"][0]["options"] if x["correct"]][0]
+        txt, ln = lcs_run(words(o["text"]), words(bodies.get(n, "")), want_text=True)
+        line += f"\n     общий отрезок ({ln} сл.): «{txt}»"
+    print(line)
 print(f"--- блоков с дословным correct: {len(flagged)} из {sum(len(q['blocks']) for q in d['questions'])} (порог {THR})")
