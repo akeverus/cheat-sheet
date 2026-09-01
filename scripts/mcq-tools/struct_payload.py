@@ -21,6 +21,7 @@ HEDGE = re.compile(r"\b(обычно|как правило|зачастую|мо
 NEG = re.compile(r"\b(не|нет|ни|без)\b", re.I)
 CONTRAST = re.compile(r"\b(а|но|тогда как|зато|в отличие|вместо)\b", re.I)
 UNIQ = {
+    "длина":         len,
     "двоеточие":     lambda t: t.count(":"),
     "точка с запятой": lambda t: t.count(";"),
     "цифра":         lambda t: len(re.findall(r"\d", t)),
