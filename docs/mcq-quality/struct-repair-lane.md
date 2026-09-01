@@ -13,7 +13,7 @@
 | # | файл | блоков | вне коридора | статус |
 |---|---|---|---|---|
 | 1 | spring-rest-client-interview | 13 | 0 | ГОТОВО |
-| 2 | java-functional-interface-interview | 14 | 14 | TODO |
+| 2 | java-functional-interface-interview | 14 | 0 | ГОТОВО |
 | 3 | hibernate-caching-interview | 15 | 0 | ГОТОВО |
 | 4 | java-optional-interview | 15 | 15 | TODO |
 | 5 | java-virtual-threads-interview | 15 | 15 | TODO |

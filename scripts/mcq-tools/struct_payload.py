@@ -22,6 +22,7 @@ NEG = re.compile(r"\b(не|нет|ни|без)\b", re.I)
 CONTRAST = re.compile(r"\b(а|но|тогда как|зато|в отличие|вместо)\b", re.I)
 UNIQ = {
     "длина":         len,
+    "начало латиницей": lambda t: 1 if re.match(r"^[`A-Za-z@]", t.strip()) else 0,
     "двоеточие":     lambda t: t.count(":"),
     "точка с запятой": lambda t: t.count(";"),
     "цифра":         lambda t: len(re.findall(r"\d", t)),
