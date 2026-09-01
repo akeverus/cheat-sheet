@@ -15,3 +15,10 @@ PY
 echo "=== STRUCT (визуальный анти-телл, ОБЯЗАТЕЛЬНЫЙ) ==="
 python3 "$R/scripts/mcq-struct-scan.py" "$SEED" 2>&1 | tail -6
 python3 "$R/scripts/mcq-struct-report.py" "$SEED" 2>&1 | tail -1
+echo "=== VERBATIM (дословность correct, ОБЯЗАТЕЛЬНЫЙ) ==="
+MD="$(echo "$SEED" | sed 's#.*/seed/mcq/#'"$R"'/cheatsheets/interview/#; s#\.json$#.md#')"
+if [ -f "$MD" ]; then
+  python3 "$R/scripts/mcq-tools/verbatim.py" "$SEED" "$MD" 2>&1 | tail -6
+else
+  echo "источник не найден: $MD — замер пропущен"
+fi
