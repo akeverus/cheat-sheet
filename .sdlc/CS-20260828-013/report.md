@@ -17,11 +17,11 @@ follow-up. Конфигурация и метрики как таковые уж
 |---|---|---|---|
 | 1 | Инвентарь | 17 корневых `.md`, 851 файл в `docs/` (100 `.md`/745 `.json`/5 `.tsv`/1 `.csv`) в 17 подкаталогах | `docs/css-decisions/` (36 `.md`, крупнейший) |
 | 2 | README | 840 строк, 53 реальных заголовка (1×h1+24×h2+28×h3); список REST-эндпоинтов и «Структура проекта» неполны | `README.md:359-392` |
-| 3 | Архитектура | 4 md-документа (541–1234 строк) + `CLAUDE.md` + 12 `package-info.java`; один `@see` ссылается на несуществующий класс | `docs/backend-architecture.md:1-541` |
+| 3 | Архитектура | 4 md-документа (193–1234 строк) + `CLAUDE.md` + 12 `package-info.java`; один `@see` ссылается на несуществующий класс | `docs/backend-architecture.md:1-541` |
 | 4 | Продукт | `PRODUCT.md` (80, 2026-06-08) устарел рядом с `MASTER_PLAN_COMPLETE_PRODUCT_REDESIGN.md` (3301, 2026-08-04) и живым `docs/frontend-redesign-state.md` (9821, 2026-08-28) | `docs/frontend-redesign-state.md:1` |
 | 5 | Домен | 1165 `.md` в `cheatsheets/` (321 в `interview/`), 318 JSON-сидеров `seed/mcq/**`, 3 доменных доки (2097 строк) | `docs/mcq-quality-standard.md:1` |
 | 6 | API | springdoc 2.6.0 подключён, `OpenApiConfig` задаёт только title/version/description/contact/license, аннотаций `@Operation|@ApiResponse|@Tag|@Schema` в main — 0; в `prod` спека выключена | `modules/quiz-app/src/main/java/com/cheatsheet/quiz/config/web/OpenApiConfig.java:34-51` |
-| 7 | Свежесть | Диапазон правок 2026-04-10…2026-08-28; медиана свежих (`docs/*`) — 2026-08-11, у корневых `.md` разброс шире (2026-04-10…2026-08-28) | Приложение A |
+| 7 | Свежесть | Диапазон правок 2026-04-10 (`WIKI.md`, корень) …2026-08-28 (`docs/*`); корневые `.md` сами по себе уже — 2026-04-10…2026-08-11 | Приложение A |
 | 8 | Дельта doc↔код | 9/9 расхождений подтверждены командами: 2 битые ссылки на удалённый код, 1 неисполнимая инструкция (`graphify-out/`), 2 неполных перечня маршрутов, 1 вводящее в заблуждение «полный контракт», 1 чужеродный файл, 1 отсутствующий индекс | §8 ниже |
 | 9 | Связность | 12 локальных relative-ссылок в 7 «системных» доках, битых 0; 14 из 16 проверенных корневых документов — орфаны (нет входящих ссылок) | Приложение A |
 | 10 | Белые пятна | 3: живая OpenAPI-спека, содержимое 81 файла во вложенных `docs/**`, актуальность 100 `.md` `docs/` относительно кода | §10 ниже |
@@ -119,11 +119,12 @@ follow-up. Конфигурация и метрики как таковые уж
 Docker), источник MCQ-вариантов, переменные окружения, профили Spring, доступ
 к приложению, «как пользоваться» (8 подпунктов), health/наблюдаемость,
 управление данными, сборку/тесты, структуру проекта, troubleshooting
-(9 сценариев), безопасность, лицензию.
+(10 сценариев, `README.md:703-795`), безопасность, лицензию.
 
 **Список REST-эндпоинтов неполон** (`README.md:359-392`, секция «Основные
-REST-эндпоинты»): перечисляет 8 MVC POST-маршрутов и 9 REST-маршрутов, но не
-упоминает ни одного `GET`-маршрута, отдающего HTML напрямую (`/`, `/training`,
+REST-эндпоинты»): перечисляет 10 MVC POST-маршрутов (6 буллетов) и
+12 REST-маршрутов (8 буллетов), но не упоминает ни одного `GET`-маршрута,
+отдающего HTML напрямую (`/`, `/training`,
 `/review`, `/settings`, `/train`, `/stats`, `/topics`, `/bookmarks`,
 `/session-summary`, `/login`), ни `POST /bookmarks/note`,
 `POST /question/note`, `POST /bookmarks/remove`, `POST /pause/discard`, ни
@@ -139,11 +140,11 @@ CSS-бандл-маршрут. Разбор полного списка — §6,
 
 ## 3. Архитектурная документация
 
-- `docs/backend-architecture.md` — 541 строка, 9 разделов (`## 1`…`## 9`),
-  правка 2026-08-06: модули, пакеты `quiz-app`, планирование повторений
-  (SM-2/FSRS), обработка ошибок, безопасность, источник вопросов, HTTP-
-  поверхность (`docs/backend-architecture.md:499-511`), идемпотентность,
-  тесты.
+- `docs/backend-architecture.md` — 541 строка, 11 заголовков `## `
+  (`## 1`…`## 9`, плюс `## 3a`/`## 3b`), правка 2026-08-06: модули, пакеты
+  `quiz-app`, планирование повторений (SM-2/FSRS), обработка ошибок,
+  безопасность, источник вопросов, HTTP-поверхность
+  (`docs/backend-architecture.md:499-511`), идемпотентность, тесты.
 - `docs/frontend-architecture.md` — 737 строк, правка 2026-08-12.
 - `docs/design-system.md` — 1234 строки, правка 2026-08-12: токены,
   `@layer`-каскад, компоненты.
@@ -191,9 +192,10 @@ CSS-бандл-маршрут. Разбор полного списка — §6,
   крупнейший `.md` во всём репозитории.
 - Сопутствующие: `docs/frontend-redesign-loop-brief.md` (2124),
   `docs/product-redesign-state.md` (484), `docs/ui-critique/` (3 `.md`),
-  `docs/ux-decisions/` (1 `.md`), пять корневых `FRONTEND_*.md`
-  (`_BACKLOG`/`_DECISIONS`/`_EVIDENCE`/`_HISTORY`, все правлены 2026-07-15/16),
-  `PLAN_FRONTEND.md`, `PROMPT_PLAN_FRONTEND.md`.
+  `docs/ux-decisions/` (1 `.md`), четыре корневых `FRONTEND_*.md`
+  (`_BACKLOG`/`_DECISIONS`/`_EVIDENCE`/`_HISTORY`, все правлены 2026-07-15/16;
+  `FRONTEND_STATE.json` рядом — не `.md`), `PLAN_FRONTEND.md`,
+  `PROMPT_PLAN_FRONTEND.md`.
 
 Три поколения продуктовой документации (PRODUCT.md → MASTER_PLAN → живой
 frontend-redesign-state.md) сосуществуют без взаимных пометок «устарело» —
@@ -247,21 +249,30 @@ springdoc-openapi-starter-webmvc-ui зафиксирован версией 2.6.
 | `feature/auth/controller/LoginController.java` | 1 |
 | `feature/export/controller/ExportController.java` | 1 |
 
-(Дизайн этой задачи фиксировал 21 метод в `InterviewMvcController` — за время
-между design и implement туда добавлены ещё 2 маршрута (`REF-016`/`REF-024`,
-`git log --oneline` по файлу), сумма 37 не изменилась: параллельный loop
-frontend-refoundation правил файл в те же дни. Далее в отчёте — актуальные
-на HEAD `bf1ff278` числа.)
+(Дизайн этой задачи фиксировал 21 метод в `InterviewMvcController` — занижение:
+маршруты `/pause/discard` (REF-016, `b56fc164`) и `/question/note` (REF-024,
+`87f3433f`) уже входили в HEAD `af3f2db6`, на котором писался design.md; файл
+не менялся ни на одном коммите этой ветки
+(`git diff af3f2db6 -- .../InterviewMvcController.java` — пусто). Далее в
+отчёте — актуальные числа.)
 
 Маршруты `InterviewMvcController`, отсутствующие в README §«Основные
-REST-эндпоинты» и в `docs/backend-architecture.md` §7 одновременно: `GET /`,
-`/training`, `/review`, `/settings`, `/train`, `/stats`, `/topics`,
+REST-эндпоинты» (список шире — раздел вообще не описывает MVC GET-страницы):
+`GET /`, `/training`, `/review`, `/settings`, `/train`, `/stats`, `/topics`,
 `/bookmarks`, `/session-summary`; `POST /bookmarks/note`, `/question/note`,
-`/bookmarks/remove`, `/pause/discard`. `GET /login` (`LoginController.java:35`)
-описан в `docs/backend-architecture.md:499-511`, но не в README. CSS-бандл
-(`CssBundleController.java:34`, шаблон `{page}.{hash}.css`) не описан ни там,
-ни там. `/error` — не controller-маршрут: разрешён в `SecurityConfig.java:105`
-через `permitAll()`, обрабатывается дефолтным Spring Boot error-handler'ом.
+`/bookmarks/remove`, `/pause/discard` — 13 маршрутов.
+
+Маршруты, отсутствующие в `docs/backend-architecture.md:499-511` §7 (список
+короче: MVC GET-страницы там перечислены, `POST /bookmarks/*` покрывает
+`/bookmarks/note` и `/bookmarks/remove` как маска) — только: `GET /train`,
+`GET /topics`, `POST /question/note`, `POST /pause/discard` и CSS-бандл
+(`CssBundleController.java:34`, шаблон `{page}.{hash}.css`, не описан ни в
+README, ни в `docs/backend-architecture.md`) — 5 маршрутов.
+
+`GET /login` (`LoginController.java:35`) описан в
+`docs/backend-architecture.md:499-511`, но не в README. `/error` — не
+controller-маршрут: разрешён в `SecurityConfig.java:105` через `permitAll()`,
+обрабатывается дефолтным Spring Boot error-handler'ом.
 
 README прямым текстом утверждает «Полный контракт — Swagger UI»
 (`README.md:381`) — при нуле описательных аннотаций сгенерированная спека
@@ -320,8 +331,8 @@ README прямым текстом утверждает «Полный конт�
 параллельного loop'а фронтенд-рефаундации (Хартия §4). Корневые `FRONTEND_*`
 (2026-07-15/16) и оба `PROMPT_PLAN_*`/`PLAN_*` (2026-07-15/18) — заморожены
 одним днём каждая пара, признак единой сессии написания без последующей
-правки. `docs/` в среднем свежее корня: 12 из 19 файлов `docs/*.md` правлены
-в августе против 7 из 17 корневых.
+правки. `docs/` в среднем свежее корня: 15 из 19 файлов `docs/*.md` правлены
+в августе против 3 из 17 корневых.
 
 ## 8. Дельта «документ vs код»
 
@@ -347,14 +358,17 @@ README прямым текстом утверждает «Полный конт�
 4. **`README.md:664-686`** («Структура проекта») → 4 каталога верхнего
    уровня отсутствуют в дереве: `e2e/`, `prompts/`, `design/`, `.design/` —
    все четыре существуют (`find . -maxdepth 1 -mindepth 1 -type d`).
-5. **`README.md:359-392`** («Основные REST-эндпоинты») → список не содержит
-   `GET /train`, `GET /topics`, `POST /question/note`, `POST /pause/discard`,
-   ни CSS-бандл-маршрут (`CssBundleController.java:34`) — разбор полного
-   несовпадения в §6.
-6. **`docs/backend-architecture.md:499-511`** (§7 «HTTP-поверхность») → та же
-   неполнота: `GET /train`, `GET /topics`, `POST /question/note`,
-   `POST /pause/discard`, CSS-бандл не перечислены ни в MVC-, ни в
-   REST-списке.
+5. **`README.md:359-392`** («Основные REST-эндпоинты») → раздел вообще не
+   описывает MVC GET-страницы, список не содержит 13 маршрутов
+   (`GET /`, `/training`, `/review`, `/settings`, `/train`, `/stats`,
+   `/topics`, `/bookmarks`, `/session-summary`; `POST /bookmarks/note`,
+   `/question/note`, `/bookmarks/remove`, `/pause/discard`), ни CSS-бандл —
+   полный разбор в §6.
+6. **`docs/backend-architecture.md:499-511`** (§7 «HTTP-поверхность») →
+   список короче: MVC GET-страницы там перечислены, `POST /bookmarks/*`
+   покрывает `/bookmarks/note` и `/bookmarks/remove` как маска. Не хватает
+   только `GET /train`, `GET /topics`, `POST /question/note`,
+   `POST /pause/discard` и CSS-бандл — разбор в §6.
 7. **`README.md:381`** — «Полный контракт — Swagger UI» → при нуле
    springdoc-аннотаций (§6) сгенерированная спека не содержит описаний
    операций/кодов ответов/примеров — полнота ограничена списком путей.
@@ -458,8 +472,12 @@ grep -cE "^###[^#]" README.md                                         # 28
 sed -n '664,686p' README.md                                           # структура проекта
 find . -maxdepth 1 -mindepth 1 -type d -not -path "./.git" -not -path "./build" | sort
 sed -n '796,807p' README.md                                           # индекс документации
+sed -n '359,392p' README.md                                           # 6 буллетов MVC POST (10 маршрутов), 8 буллетов REST (12 маршрутов)
+awk '/^## Troubleshooting/{f=1} /^## Дополнительная документация/{f=0} f' README.md | grep -c '^### '  # 10
 
 # §3 — архитектура
+grep -cE '^## ' docs/backend-architecture.md                          # 11 (## 1..## 9 плюс ## 3a/## 3b)
+wc -l docs/backend-architecture.md docs/frontend-architecture.md docs/design-system.md docs/accessibility.md  # 541/737/1234/193
 git log -1 --format=%ad --date=short -- docs/backend-architecture.md  # 2026-08-06
 git log -1 --format=%ad --date=short -- docs/frontend-architecture.md # 2026-08-12
 git log -1 --format=%ad --date=short -- docs/design-system.md         # 2026-08-12
@@ -474,6 +492,7 @@ grep -n "AdminController" modules/quiz-app/src/main/java/com/cheatsheet/quiz/api
 # §4 — продукт
 wc -l PRODUCT.md docs/frontend-redesign-state.md MASTER_PLAN_COMPLETE_PRODUCT_REDESIGN.md
 sed -n '5,6p' DESIGN.md
+ls FRONTEND_*.md | wc -l                                              # 4 (FRONTEND_STATE.json не .md)
 
 # §5 — домен
 find cheatsheets -name "*.md" | wc -l                                 # 1165
@@ -498,10 +517,15 @@ for f in modules/quiz-app/src/main/java/com/cheatsheet/quiz/feature/interview/co
 done
 grep -rE '@(Get|Post|Put|Delete|Patch)Mapping' modules --include="*Controller.java" | grep '/src/main/' | wc -l  # 37
 grep -n '"/error"' modules/quiz-app/src/main --include="*.java" -r
+git diff af3f2db6 -- modules/quiz-app/.../InterviewMvcController.java     # пусто — файл не менялся на этой ветке
+git merge-base --is-ancestor b56fc164 af3f2db6 && echo REF-016-in-af3f2db6
+git merge-base --is-ancestor 87f3433f af3f2db6 && echo REF-024-in-af3f2db6
 
 # §7 — свежесть (пример на одном файле, остальные — та же команда)
 git log -1 --format=%ad --date=short -- docs/frontend-redesign-state.md   # 2026-08-28
 wc -l docs/frontend-redesign-state.md                                     # 9821
+for f in docs/*.md; do git log -1 --format=%ad --date=short -- "$f"; done | grep -c '^2026-08'  # 15 из 19
+for f in $(find . -maxdepth 1 -name "*.md"); do git log -1 --format=%ad --date=short -- "$f"; done | grep -c '^2026-08'  # 3 из 17
 
 # §8 — дельта doc↔код
 find modules -name "AiPrompts*"                                       # пусто
