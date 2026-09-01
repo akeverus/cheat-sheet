@@ -75,10 +75,18 @@ class DiagramCspContractTest {
 
     @Test
     void theDeclarationsComeBackThroughCssom() throws IOException {
+        // Эволюция пина (2026-09): раньше гейт требовал `node.style.cssText = …`.
+        // Замер изоляционной пробой показал, что в Chromium 139+ присваивание
+        // cssText САМО репортится как применение inline-стиля (style-src-attr),
+        // поэтому декларации возвращаются пер-свойственно через setProperty —
+        // единственный маршрут CSSOM, который политика не считает атрибутом.
         String js = read("static/js/content/mermaid-renderer.js");
         assertThat(js)
-                .as("CSSOM под style-src-attr не подпадает — этим перенос и работает")
-                .contains("node.style.cssText = declarations");
+                .as("setProperty — единственный CSSOM-маршрут, который не репортится")
+                .contains("node.style.setProperty(name, value, priority)");
+        assertThat(js)
+                .as("cssText в Chromium 139+ репортится style-src-attr — не возвращать")
+                .doesNotContain(".style.cssText =");
         assertThat(js)
                 .as("setAttribute('style') вернул бы ровно то нарушение, ради которого всё сделано")
                 .doesNotContain("setAttribute('style'");
