@@ -43,6 +43,25 @@ for l in lines:
 if num:
     bodies[num] = "\n".join(cur)
 
+def coverage(a, b, minrun=3):
+    """Доля слов опции, попавших хоть в один общий с телом отрезок длиной >= minrun.
+    Ловит СКЛЕЙКУ нескольких коротких цитат — её самый длинный отрезок не выдаёт."""
+    if not a or not b:
+        return 0.0
+    marked = [False] * len(a)
+    for i in range(len(a)):
+        for j in range(len(a), i + minrun - 1, -1):
+            seg = a[i:j]
+            if len(seg) < minrun:
+                break
+            if any(b[k:k + len(seg)] == seg for k in range(len(b) - len(seg) + 1)):
+                for t in range(i, j):
+                    marked[t] = True
+                break
+    return sum(marked) / len(a)
+
+
+COV_THR = 0.50
 d = json.load(open(SEED, encoding="utf-8"))
 flagged = []
 for q in d["questions"]:
@@ -55,15 +74,22 @@ for q in d["questions"]:
         cl = [k for k, v in rs.items() if v[1]][0]
         rc = rs[cl][0]
         rw = max(v[0] for k, v in rs.items() if not v[1])
-        if rc >= THR and rc > rw:
-            flagged.append((q["q_number"], cl, rc, rw))
+        c = [o for o in b["options"] if o["correct"]][0]
+        cvc = coverage(words(c["text"]), body)
+        cvw = max(coverage(words(x["text"]), body)
+                  for x in b["options"] if not x["correct"])
+        if (rc >= THR and rc > rw) or (cvc >= COV_THR and cvc > cvw):
+            flagged.append((q["q_number"], cl, rc, rw, cvc, cvw))
 
-for n, l, rc, rw in flagged:
-    line = f"Q{n} correct={l} дословность={rc:.2f} (лучший дистрактор {rw:.2f})"
+for n, l, rc, rw, cvc, cvw in flagged:
+    line = (f"Q{n} correct={l} отрезок={rc:.2f} (дистрактор {rw:.2f}) "
+            f"покрытие={cvc:.2f} (дистрактор {cvw:.2f})")
     if SPANS:
         q = [x for x in d["questions"] if x["q_number"] == n][0]
         o = [x for x in q["blocks"][0]["options"] if x["correct"]][0]
         txt, ln = lcs_run(words(o["text"]), words(bodies.get(n, "")), want_text=True)
         line += f"\n     общий отрезок ({ln} сл.): «{txt}»"
     print(line)
-print(f"--- блоков с дословным correct: {len(flagged)} из {sum(len(q['blocks']) for q in d['questions'])} (порог {THR})")
+print(f"--- блоков с дословным correct: {len(flagged)} из "
+      f"{sum(len(q['blocks']) for q in d['questions'])} "
+      f"(порог отрезка {THR}, порог покрытия {COV_THR})")
