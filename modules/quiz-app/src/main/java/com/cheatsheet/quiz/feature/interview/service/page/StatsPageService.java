@@ -550,8 +550,23 @@ public class StatsPageService {
         /** Значение параметра {@code rows}, включающее полный список. */
         public static final String ROWS_ALL = "all";
 
+        /**
+         * Умолчание — зрелость по возрастанию, а не алфавит.
+         *
+         * <p>Замер на живых данных (319 тем, 12 в окне): алфавитное умолчание
+         * открывало таблицу головой алфавита — Ansible 0/25, Apache Airflow 0/28…
+         * — двенадцатью нетронутыми строками с прочерками вместо точности и
+         * зрелости; собственная работа пользователя не попадала в окно вовсе.
+         * Зрелость по возрастанию показывает первыми начатые слабые темы (у любой
+         * начатой темы зрелость больше нуля — ease×interval появляется с первым
+         * ответом), а нетронутые (нет данных → в конец при любом направлении,
+         * см. {@link #comparator}) уходят за окно. Это же согласует таблицу с
+         * соседями: график над ней строит темы «сначала самые слабые», карточка
+         * «Тренировать слабые темы» зовёт туда же. Алфавит остаётся в одном клике
+         * — колонка «Тема».</p>
+         */
         public static TopicTableQuery empty() {
-            return new TopicTableQuery(SORT_NAME, DIR_ASC, false);
+            return new TopicTableQuery(SORT_MATURITY, DIR_ASC, false);
         }
 
         /** Собирает запрос из сырых параметров MVC. */
@@ -561,10 +576,10 @@ public class StatsPageService {
 
         public TopicTableQuery normalized() {
             String normalizedSort = switch (sort == null ? "" : sort.strip().toLowerCase(Locale.ROOT)) {
+                case SORT_NAME -> SORT_NAME;
                 case SORT_TOTAL -> SORT_TOTAL;
                 case SORT_ACCURACY -> SORT_ACCURACY;
-                case SORT_MATURITY -> SORT_MATURITY;
-                default -> SORT_NAME;
+                default -> SORT_MATURITY;
             };
             String normalizedDir = DIR_DESC.equalsIgnoreCase(dir) ? DIR_DESC
                     : DIR_ASC.equalsIgnoreCase(dir) ? DIR_ASC
