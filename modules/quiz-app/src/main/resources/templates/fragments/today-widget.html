@@ -63,13 +63,18 @@
               th:text="${filtered} ? 'Очередь · фильтр' : 'Очередь · весь банк'">Очередь · весь банк</span>
         <!--/* Показываем ведущее число, а не оба: долг важнее запаса, и только когда
              долга нет — счётчик новых. */-->
+        <!--/* Без «из N»: знаменатель банка уже стоит в соседнем блоке банды
+             («Пройдено по банку 241/9818»), и одно число 9818 печаталось дважды
+             в 330px друг от друга (аудит viewport-first 2026-09-01, §5 директивы:
+             два элемента об одном — объединить или убрать один). Границы выборки
+             называет подпись «Очередь · весь банк / фильтр» выше. */-->
         <span class="today-chip-due" th:if="${repeats > 0}">
             <svg class="ui-icon" aria-hidden="true"><use href="#target"></use></svg>
-            <span th:text="${scope.total > repeats} ? |${repeats} из ${scope.total} к повтору| : |${repeats} к повтору|">0 к повтору</span>
+            <span th:text="|${repeats} к повтору|">0 к повтору</span>
         </span>
         <span class="today-chip-due" th:if="${repeats == 0 and fresh > 0}">
             <svg class="ui-icon" aria-hidden="true"><use href="#target"></use></svg>
-            <span th:text="${scope.total > fresh} ? |${fresh} из ${scope.total} новых| : |${fresh} новых|">0 новых</span>
+            <span th:text="|${fresh} новых|">0 новых</span>
         </span>
     </span>
 </div>

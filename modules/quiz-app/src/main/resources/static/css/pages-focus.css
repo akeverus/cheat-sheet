@@ -230,7 +230,18 @@ html[data-design] .focus-page .resume-banner {
   border-radius: var(--border-radius-md);
 }
 html[data-design] .focus-page .resume-banner-body { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
-html[data-design] .focus-page .resume-banner-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+/* Заголовок и счёт — ОДНО сообщение, а не два этажа (аудит viewport-first
+   2026-09-01): колонка делала баннер 90px высотой, и вместе с бандой прогресса
+   до h1 вопроса набегало 265px пред-вопросных слоёв. Одна строка с переносом
+   по нужде — 56px; на узких ширинах медиа-блок ниже по-прежнему перестраивает
+   баннер в свои ярусы. */
+html[data-design] .focus-page .resume-banner-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-3);
+  min-width: 0;
+}
 html[data-design] .focus-page .resume-banner-text strong { font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
 html[data-design] .focus-page .resume-banner-meta { font-size: var(--font-size-sm); color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
 
@@ -254,16 +265,28 @@ html[data-design] .focus-page .session-progress-fill {
   transition: width var(--duration-slow) var(--easing-out);
 }
 
-/* Прогресс по банку — то, что рельс показывает ВНЕ сессии (iter-57). Отбивка от
-   строки охвата своя, а не сессионные --space-6: там зазор отделял трек от вопроса,
-   здесь под строкой сразу идут две цифры того же блока. */
-html[data-design] .focus-page .focus-bank-progress .focus-progress-line { margin-bottom: var(--space-3); }
+/* Прогресс по банку — то, что рельс показывает ВНЕ сессии (iter-57).
+   VIEWPORT-FIRST (аудит 2026-09-01): блок был двухэтажным — строка охвата и под
+   ней колонки-факты, — и банда над вопросом стоила 79px при том, что всё её
+   содержимое — одна строка состояния. Теперь охват и факты идут одной строкой
+   с переносом по нужде: h1 вопроса и «Проверить ответ» поднимаются на ~45px,
+   у сгиба 900 кнопка уходит от кромки. Значения и подписи не менялись —
+   слился только этаж. */
+html[data-design] .focus-page .focus-bank-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-5);
+  row-gap: var(--space-1);
+}
+html[data-design] .focus-page .focus-bank-progress .focus-progress-line { margin-bottom: 0; }
 html[data-design] .focus-page .focus-bank-facts {
   display: flex;
-  gap: var(--space-5);
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-5);
   margin: 0;
 }
-html[data-design] .focus-page .focus-bank-fact { display: flex; flex-direction: column; gap: 2px; }
+html[data-design] .focus-page .focus-bank-fact { display: flex; align-items: baseline; gap: var(--space-2); }
 html[data-design] .focus-page .focus-bank-fact dt { margin: 0; }
 html[data-design] .focus-page .focus-bank-fact dd {
   margin: 0;
@@ -1537,16 +1560,38 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
   html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)) {
     display: grid;
     grid-template-columns: minmax(0, var(--workspace-brief)) minmax(var(--workspace-desk-min), 1fr);
+    /* Явные ряды: по min-content на каждого жильца рабочей колонки и хвост-1fr.
+       Без них пейн задания (grid-row: 1/-1) сидел бы в одном первом ряду и
+       раздувал его своей высотой: замер 1440×900 после первой редакции —
+       форма кончалась на 879, а спутники начинались на 1098, потому что ряд 1
+       был высотой с пейн. Спанящий элемент, пересекающий flex-ряд, отдаёт весь
+       излишек высоты ЕМУ (спецификация трек-сайзинга), поэтому дети рабочей
+       колонки пакуются встык, а остаток высоты задания оседает в пустом
+       fr-хвосте. Запас в 12 рядов — потолок числа детей колонки; пустые
+       min-content-ряды стоят 0px (row-gap здесь нет). */
+    grid-template-rows: repeat(12, min-content) 1fr;
     column-gap: var(--focus-rail-gap);
     align-items: start;
   }
+  /* VIEWPORT-FIRST (аудит 2026-09-01): узел «задание + спутники» расступается на
+     ЛЮБОЙ композиции рабочего места, а не только с 2240px. Раньше колонкой 1
+     становился весь .focus-task, и спутники («О теме», карта темы, «Заметка»)
+     жили ПОД кодом в колонке задания: замер 1440×900 — правая колонка кончалась
+     на 879, левая на 1382, под «Проверить ответ» пустовало 512×527, а весь второй
+     экран страницы (docH 1535) состоял из спутников слева при пустой рабочей
+     колонке. Приём тот же, что в третьей зоне ≥2240 (ниже): пейн задания —
+     колонка, спутники — сеточные элементы; целевая колонка здесь — рабочая. */
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)) > .focus-task {
+    display: contents;
+  }
   /* Пейн вопроса перестаёт быть `display: contents` и становится настоящей
      колонкой — ровно так же, как он делает это в раскладке «Разделение». */
-  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)) > .focus-task {
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)) > .focus-task > .focus-question-pane {
     display: flex;
     flex-direction: column;
     grid-column: 1;
     grid-row: 1 / -1;
+    min-width: 0;
     position: sticky;
     top: var(--space-5);
     /* Колонка объявлена контейнером — от её ширины считается кегль вопроса (см.
@@ -1554,6 +1599,21 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
        что «быть колонкой» и «быть контейнером» — одно и то же событие: вне
        рабочего места пейн остаётся `display: contents` и коробки не имеет. */
     container-type: inline-size;
+  }
+  /* Спутники — в рабочую колонку ПОСЛЕ формы и разбора: auto-размещение сетки
+     идёт в order-модифицированном порядке документа, и order поднимает обёртку
+     за всех детей рабочей колонки (у них order: 0). Ряд не задаётся явно —
+     на ≥2240 явное `grid-column: 3; grid-row: 1/-1` третьей зоны (ниже по файлу)
+     перебивает это правило тем же весом селектора. */
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)) > .focus-task > .focus-companions {
+    grid-column: 2;
+    min-width: 0;
+    order: 10;
+  }
+  /* «Сообщить о проблеме» остаётся последним и в новой очерёдности: это tertiary,
+     и вставать между разбором и «О теме» ему не с чего. */
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)) > .report-zone {
+    order: 20;
   }
   /* Все прочие дети рабочей колонки (форма, разбор, вердикт, сообщения) идут во
      вторую колонку стопкой. Перечислять их поимённо нельзя: состав меняется по
