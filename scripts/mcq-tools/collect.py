@@ -41,7 +41,8 @@ if mode == "blocks":
     json.dump({"blocks": items}, open(out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     got = sorted(by)
     print(f"блоков: {len(items)}" + (f" | Q{got[0]}..Q{got[-1]}" if got else ""))
-    print("пропуски:", [n for n in range(1, (got[-1] if got else 0) + 1) if n not in by] or "нет")
+    qs = sorted({k[0] if isinstance(k, tuple) else k for k in by})
+    print("пропуски:", [n for n in range(1, (qs[-1] if qs else 0) + 1) if n not in qs] or "нет")
     print("не 3 дистрактора:", [n for n, b in by.items() if len(b["wrong"]) != 3] or "нет")
 else:
     by = load(journals, "verdicts")

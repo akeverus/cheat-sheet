@@ -24,7 +24,7 @@
 | 10 | spring-integration-interview | 15 | 0 | ГОТОВО |
 | 11 | graalvm-native-interview | 15 | 14 | ГОТОВО (PASS, blind 15/15) |
 | 12 | java-completable-future-interview | 15 | 14 | ГОТОВО (PASS, blind 15/15) |
-| 13 | java-pattern-matching-interview | 15 | 14 | TODO |
+| 13 | java-pattern-matching-interview | 15 | 14 | ГОТОВО (PASS, blind 15/15) |
 | 14 | rest-assured-interview | 15 | 14 | TODO |
 | 15 | spring-graphql-interview | 15 | 14 | TODO |
 | 16 | spring-messaging-interview | 15 | 14 | TODO |
