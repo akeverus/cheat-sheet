@@ -60,6 +60,14 @@ class StatsSummaryContractTest {
 
     @Test
     void theSummaryIsOneRowAndNotTwoFloors() throws IOException {
+        // Эволюция пина (viewport-first, 2026-09-01): прежний гейт требовал, чтобы
+        // сводка на ≥1280 становилась ДВУМЯ КОЛОННАМИ («что дальше» 27rem | «где я»).
+        // Замер 1440×900 показал цену колонн: левая кончалась на 605, правая на 970,
+        // под дверями пустовало 432×365 первого экрана, двери в колонке 210px ломали
+        // подписи, а вкладки не попадали в viewport (сводка 824px). Сводка теперь
+        // ЛЕНТАМИ: ряд дверей на всю ширину, под ним ряд «ступень | метрики»
+        // (базовая раскладка .stats-standing ≥1200). Гейт держит порядок внутри
+        // обёртки и НЕвозвращение колонной раскладки.
         String markup = statsMarkup();
         int summary = markup.indexOf("<div class=\"stats-summary\">");
         int actions = markup.indexOf("class=\"stats-next-actions\"");
@@ -70,8 +78,12 @@ class StatsSummaryContractTest {
 
         String css = statsCss();
         assertThat(css)
-                .as("сводка не становится рядом ни на какой ширине — тогда обёртка бессмысленна")
-                .containsPattern("@media \\(min-width: 1280px\\) \\{[\\s\\S]{0,400}?\\.stats-summary \\{[\\s\\S]{0,200}?grid-template-columns");
+                .as("колонная сводка (узкие двери слева от стойки) вернулась — с ней "
+                        + "вернутся пустота под дверями и вкладки за сгибом")
+                .doesNotContain("minmax(0, 27rem)");
+        assertThat(css)
+                .as("двери обязаны раскладываться рядом по доступной ширине")
+                .containsPattern("\\.stats-next-actions-grid \\{[\\s\\S]{0,300}?repeat\\(auto-fit");
     }
 
     /**
