@@ -230,6 +230,55 @@ html[data-design] .topics-page .catalog-group .table-scroll {
    Считается это только там, где колонки вообще есть (от 1100px): ниже шапка
    раздела складывается в чипы, и подпирать нечего. */
 @media (min-width: 1100px) {
+  /* КОМАНДНАЯ ПОЛОСА (аудит viewport-first 2026-09-01): отбор — в правой части
+     шапки, а не отдельным этажом (~110px) над списком из десяти строк. Отбор
+     фильтрует то, что видно сразу, — ему место рядом с заголовком, как у
+     инструментной панели. Ниже 1100 шапка остаётся потоком. */
+  html[data-design] .topics-page .page-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(24rem, 44rem);
+    grid-template-areas:
+      "title bar"
+      "lead  bar";
+    column-gap: var(--space-7);
+    align-items: start;
+  }
+  html[data-design] .topics-page .page-head-title { grid-area: title; }
+  html[data-design] .topics-page .page-head-lead { grid-area: lead; }
+  html[data-design] .topics-page .page-head .filter-bar { grid-area: bar; align-self: end; }
+
+  /* ОДНОЭТАЖНАЯ СТРОКА РАЗДЕЛА (аудит viewport-first 2026-09-01). Заголовок и
+     описание стояли двумя этажами, строка весила ~85-95px, и в первый viewport
+     1440×900 целиком входили лишь 6 разделов из 10 — при том, что цель страницы
+     «каталог сканируется одним взглядом» (см. шапку файла). Описание встаёт
+     в строку после имени и клипается многоточием: полный текст остаётся в
+     title-развороте раздела и скринридеру; на узких ширинах (<1100) этажи
+     возвращаются — там строке всё равно тесно. */
+  html[data-design] .topics-page .catalog-group-headings,
+  html[data-design] .topics-page .catalog-group-headings:has(> .catalog-group-sign) {
+    display: flex;
+    align-items: baseline;
+    column-gap: var(--space-3);
+  }
+  html[data-design] .topics-page .catalog-group-sign { align-self: center; flex: 0 0 auto; }
+  /* Заголовок сжимаем, а не даём вылезти: у «Архитектуры и системного дизайна»
+     max-content 385px при клетке 391 минус знак — бокс выезжал на 38px и въезжал
+     в колонку метра (замер). Длинное имя переносится второй строкой ВНУТРИ
+     клетки — это честнее наложения на соседнюю колонку. */
+  html[data-design] .topics-page .catalog-group-title { flex: 0 1 auto; min-width: 0; }
+  /* Клип лида — fade-маской, а не ellipsis: у разделов с длинным именем лиду
+     остаётся 0-30px, и text-overflow рисовал в них одинокое «…» — пунктуацию
+     без слова. Маска гасит текст к правому краю: при нуле места лид исчезает
+     целиком, без огрызков (замер: «Архитектура и системный дизайн» leadW=0). */
+  html[data-design] .topics-page .catalog-group-lead {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: clip;
+    white-space: nowrap;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
+  }
+
   html[data-design] .topics-page .catalog-table { table-layout: fixed; }
   html[data-design] .topics-page .catalog-table th,
   html[data-design] .topics-page .catalog-table td {
