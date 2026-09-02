@@ -22,7 +22,7 @@
 | 8 | spring-async-interview | 15 | 0 | ГОТОВО |
 | 9 | spring-boot-3-migration-interview | 15 | 0 | ГОТОВО |
 | 10 | spring-integration-interview | 15 | 0 | ГОТОВО |
-| 11 | graalvm-native-interview | 15 | 14 | TODO |
+| 11 | graalvm-native-interview | 15 | 14 | ГОТОВО (PASS, blind 15/15) |
 | 12 | java-completable-future-interview | 15 | 14 | TODO |
 | 13 | java-pattern-matching-interview | 15 | 14 | TODO |
 | 14 | rest-assured-interview | 15 | 14 | TODO |
