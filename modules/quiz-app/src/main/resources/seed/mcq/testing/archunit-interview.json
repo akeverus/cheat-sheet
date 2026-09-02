@@ -11,7 +11,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Архитектурные правила ArchUnit проверяет готовым внешним инструментом вне обычных `юнит-тестов` проекта.",
+              "text": "Архитектурные ограничения ArchUnit проверяет отдельный внешний инструмент, запускаемый вне тестов `JUnit`.",
               "correct": false,
               "sections": {
                 "what_actually": "Правила ArchUnit выражают обычными тестами JUnit или TestNG и гоняют в общем тест-сьюте, а не отдельным инструментом.",
@@ -23,7 +23,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Нарушение архитектурного правила ArchUnit не влияет на `сборку` и лишь предупреждает.",
+              "text": "Нарушение архитектурного правила выдаёт лишь предупреждение, никак не задевая `сборку` проекта.",
               "correct": false,
               "sections": {
                 "what_actually": "Нарушение правила роняет сборку как упавший тест — в этом и смысл исполняемой fitness function против деградации.",
@@ -71,7 +71,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`ClassFileImporter` читает скомпилированный байт-код классов, поэтому проект должен быть собран заранее.",
+              "text": "`ClassFileImporter` берёт классы прямо из байт-кода, и скомпилировать проект нужно до прогона правил.",
               "correct": true,
               "sections": {
                 "explanation": "ClassFileImporter — точка входа: он читает скомпилированные .class-файлы, а не .java-исходники, поэтому проект должен быть собран. Импортируют через importPackages, importPackagesOf, importClasspath или importJar.",
@@ -96,7 +96,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Метод `importClasspath()` по умолчанию затягивает в модель и классы из JAR-зависимостей.",
+              "text": "Метод `importClasspath()` по умолчанию затягивает в модель и классы из JAR, лежащие в зависимостях.",
               "correct": false,
               "sections": {
                 "what_actually": "importClasspath() по умолчанию не тянет JAR-ы — внутри уже применён DO_NOT_INCLUDE_JARS, а зависимости берут через явный ImportOptions.",
@@ -108,7 +108,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Свою `ImportOption` написать нельзя, доступны лишь готовые предопределённые фильтры импорта классов.",
+              "text": "Свою `ImportOption` написать нельзя, доступны лишь готовые предопределённые фильтры для импорта классов.",
               "correct": false,
               "sections": {
                 "what_actually": "Свою опцию написать можно: реализуют интерфейс ImportOption с методом includes(Location), например чтобы отсечь сгенерированные классы.",
@@ -131,7 +131,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Само построение цепочки `classes().that().should()` уже проверяет отобранные классы без вызова check.",
+              "text": "Готовая цепочка `classes()` уже проверяет отобранные классы, и вызов check не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Построение цепочки правило только описывает — проверка запускается отдельным шагом check(classes) или автоматически на @ArchTest-поле.",
@@ -167,7 +167,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "В правиле `that()` отбирает классы, а should() задаёт им условие проверки.",
+              "text": "В правиле `that()` отбирает нужные классы, а should() задаёт им условие проверки.",
               "correct": true,
               "sections": {
                 "explanation": "Ядро DSL — фабрики из ArchRuleDefinition (classes(), noClasses(), methods(), fields()). Дальше цепочка that() отбирает классы-селектор, а should() задаёт условие; результат — ArchRule, который применяют через check().",
@@ -191,7 +191,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Метод `layeredArchitecture()` возвращает предикат для that, а не готовое составное правило.",
+              "text": "Фабрика `layeredArchitecture()` отдаёт предикат для that, а не правило, готовое к прогону.",
               "correct": false,
               "sections": {
                 "what_actually": "layeredArchitecture() возвращает готовое составное правило (реализует ArchRule), а не предикат для that().",
@@ -203,7 +203,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Метод `layer().definedBy()` объявляет слой, а whereLayer задаёт, кто к нему обращается.",
+              "text": "Метод `layer().definedBy()` объявляет слой, а whereLayer задаёт, кто к нему обращается извне.",
               "correct": true,
               "sections": {
                 "explanation": "layeredArchitecture() из Library API возвращает составное правило (LayeredArchitecture сам реализует ArchRule). Слой объявляют через layer().definedBy(), а направление доступа задают whereLayer().mayOnlyBeAccessedByLayers() или mayNotBeAccessedByAnyLayer().",
@@ -216,7 +216,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Вызов `mayNotBeAccessedByAnyLayer()` означает, что слой сам не вправе никого напрямую вызывать.",
+              "text": "Вызов `mayNotBeAccessedByAnyLayer()` значит, что слой сам никого не вызывает, оставаясь пассивным.",
               "correct": false,
               "sections": {
                 "what_actually": "mayNotBeAccessedByAnyLayer() говорит, что в слой никто не входит (это верхний слой), а не что он сам никого не вызывает.",
@@ -228,7 +228,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Каждый слой в `layeredArchitecture()` приходится вручную описывать целым десятком отдельных noClasses-правил.",
+              "text": "Каждый слой в `layeredArchitecture()` описывают вручную, десятком отдельных правил, по одному на связь.",
               "correct": false,
               "sections": {
                 "what_actually": "Именно чтобы не писать десяток отдельных noClasses-правил, слои и описывают одним составным layeredArchitecture().",
@@ -251,7 +251,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "В `onionArchitecture()` зависимости направлены внутрь, к домену, а домен от адаптеров независим.",
+              "text": "В `onionArchitecture()` внешние слои ссылаются на домен, к ядру, а ядро от них независимо.",
               "correct": true,
               "sections": {
                 "explanation": "onionArchitecture() (clean/hexagonal) — составное правило из того же Library API для домена-ядра в центре и адаптеров по краям. Зависимости направлены внутрь: внешние кольца зависят от домена, а домен — ни от кого.",
@@ -264,7 +264,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "В `onionArchitecture()` домен зависит от адаптеров, а внешние кольца остаются полностью независимыми.",
+              "text": "Домен в `onionArchitecture()` подчинён адаптерам, зависит от их классов, а кольца снаружи независимы.",
               "correct": false,
               "sections": {
                 "what_actually": "В onion зависимости идут внутрь: внешние кольца зависят от домена, а домен не зависит ни от application, ни от адаптеров.",
@@ -276,7 +276,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Роли слоёв в `onionArchitecture()` задаёшь вручную через whereLayer, точно как в слоистой.",
+              "text": "Роли слоёв в `onionArchitecture()` задают вручную, через whereLayer, ровно как в слоистой архитектуре.",
               "correct": false,
               "sections": {
                 "what_actually": "onionArchitecture() принимает заранее именованные роли (domainModels, applicationServices, adapter), а не задаётся вручную через whereLayer.",
@@ -288,7 +288,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Разные `adapter()` в onion могут свободно зависеть один от другого напрямую.",
+              "text": "Любой `adapter()` в onion, наравне с прочими, зависит напрямую от соседнего адаптера.",
               "correct": false,
               "sections": {
                 "what_actually": "Один адаптер не должен зависеть от другого напрямую — onion изолирует адаптеры, и такую утечку правило ловит.",
@@ -323,7 +323,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Один `slice` это отдельный класс, а не группа классов по паттерну пакета.",
+              "text": "Один `slice` соответствует отдельному классу, а не группе классов по паттерну пакета.",
               "correct": false,
               "sections": {
                 "what_actually": "Slice — это группа классов, выделенная по паттерну пакета, а не одиночный класс.",
@@ -335,7 +335,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Capture-группа `(*)` в паттерне slices задаёт, по какому сегменту пакета резать срезы.",
+              "text": "Группа `(*)` внутри паттерна slices задаёт, какой сегмент пакета станет границей среза.",
               "correct": true,
               "sections": {
                 "explanation": "Циклы между пакетами ищут через slices() из SlicesRuleDefinition. Slice — группа классов по паттерну пакета; capture-группа (*) задаёт сегмент, по которому режут. Затем should().beFreeOfCycles() требует ацикличности.",
@@ -348,7 +348,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Метод `beFreeOfCycles()` проверяет циклы намного дешевле обычных правил, просто обходя граф зависимостей.",
+              "text": "Метод `beFreeOfCycles()` ищет циклы дешевле обычных правил, просто обходя граф зависимостей.",
               "correct": false,
               "sections": {
                 "what_actually": "Поиск циклов через beFreeOfCycles дороже простых правил — ArchUnit обходит граф зависимостей, поэтому срез держат узким.",
@@ -371,7 +371,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Двусторонняя проверка `naming` ловит класс не в своём пакете, но пропускает лишний.",
+              "text": "Двусторонняя проверка через `resideInAPackage` ловит чужой пакет, но лишний класс пропустит.",
               "correct": false,
               "sections": {
                 "what_actually": "Двусторонняя проверка ловит обе ошибки — и класс не в своём пакете, и лишний класс без суффикса в пакете.",
@@ -383,7 +383,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Метод `haveNameMatching()` принимает регулярное выражение по полному имени класса, не пакетную нотацию.",
+              "text": "Предикат `haveNameMatching()` ждёт регулярку по квалифицированному имени, а не пакетный шаблон.",
               "correct": true,
               "sections": {
                 "explanation": "Naming-соглашения описывают связкой «селектор по имени → ожидание по пакету или аннотации». Базовые предикаты: haveSimpleNameEndingWith, haveSimpleNameStartingWith, haveSimpleNameContaining и haveNameMatching — регулярка по полному имени класса.",
@@ -396,7 +396,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Метод `haveNameMatching()` понимает пакетную нотацию с её двумя точками как любой пакет.",
+              "text": "Метод `haveNameMatching()` понимает и пакетную нотацию, где две точки значат любой пакет.",
               "correct": false,
               "sections": {
                 "what_actually": "haveNameMatching принимает регулярное выражение java.util.regex, а не пакетную нотацию с двумя точками.",
@@ -408,7 +408,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Для типовой пары `UserService` и UserServiceImpl хватает одного простого should без orShould-ветки.",
+              "text": "Для пары `UserService` и UserServiceImpl хватает простого should, а ветка orShould не нужна.",
               "correct": false,
               "sections": {
                 "what_actually": "Для пары UserService и UserServiceImpl обычно нужен orShould, иначе правило ложно упадёт на одном из вариантов.",
@@ -443,7 +443,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Набор `GeneralCodingRules` разрешает бросать обобщённые исключения вроде Exception и Throwable.",
+              "text": "Набор `GeneralCodingRules` по умолчанию разрешает бросать обобщённые исключения вроде Exception и Throwable.",
               "correct": false,
               "sections": {
                 "what_actually": "GeneralCodingRules запрещает бросать обобщённые исключения Exception, RuntimeException и Throwable, а не разрешает их.",
@@ -455,7 +455,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Правило про контроллеры разрешает им напрямую обращаться к `репозиториям` минуя сервис.",
+              "text": "Правило про контроллеры разрешает им напрямую обращаться к `репозиториям` мимо сервисного слоя.",
               "correct": false,
               "sections": {
                 "what_actually": "Контроллер обязан ходить в репозиторий через сервисный слой, поэтому прямое обращение запрещают правилом.",
@@ -467,7 +467,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Правило `NO_CLASSES_SHOULD_USE_FIELD_INJECTION` запрещает field injection и поощряет конструкторную инъекцию зависимостей.",
+              "text": "Правило `NO_CLASSES_SHOULD_USE_FIELD_INJECTION` запрещает инъекцию в поля и поощряет конструкторное внедрение.",
               "correct": true,
               "sections": {
                 "explanation": "Есть набор канонических правил, часть которых предопределена в GeneralCodingRules: запрет field injection, запрет java.util.logging, запрет System.out/err, запрет бросков обобщённых исключений, а также «контроллеры не зовут репозитории напрямую».",
@@ -491,7 +491,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Кастомное условие наследует `ArchCondition` и переопределяет метод check с item и events.",
+              "text": "Кастомное условие наследует `ArchCondition`, переопределяя метод check с параметрами item и events.",
               "correct": true,
               "sections": {
                 "explanation": "Когда встроенных предикатов не хватает, пишут наследника ArchCondition<T> с методом check(T item, ConditionEvents events). Внутри проверяют объект и добавляют SimpleConditionEvent.violated или satisfied с вердиктом.",
@@ -504,7 +504,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Нарушение внутри условия фиксируют вызовом `SimpleConditionEvent.satisfied()` с текстом поясняющего краткого сообщения.",
+              "text": "Нарушение внутри условия фиксирует вызов `SimpleConditionEvent.satisfied()`, добавляющий запись в отчёт.",
               "correct": false,
               "sections": {
                 "what_actually": "Нарушение фиксируют вызовом SimpleConditionEvent.violated, а satisfied применяют реже — чтобы явно показать выполнение условия.",
@@ -551,7 +551,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Движок JUnit требует вручную вызывать `check()` у каждого поля с правилом.",
+              "text": "Движок JUnit требует вручную вызывать `check()` у каждого объявленного поля с правилом.",
               "correct": false,
               "sections": {
                 "what_actually": "Движок archunit-junit5 сам вызывает check() для каждого @ArchTest-поля, вручную дёргать проверку не нужно.",
@@ -563,7 +563,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Аннотацией `@ArchTest` помечают только методы, но не статические поля типа ArchRule.",
+              "text": "Аннотацией `@ArchTest` помечают методы и обходят стороной статические поля типа ArchRule.",
               "correct": false,
               "sections": {
                 "what_actually": "@ArchTest помечает статические поля типа ArchRule и методы void m(JavaClasses) — не только методы.",
@@ -575,7 +575,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Аннотация `@AnalyzeClasses` импортирует пакеты один раз для всего тестового класса.",
+              "text": "Аннотация `@AnalyzeClasses` импортирует указанные пакеты однократно на уровне тестового класса.",
               "correct": true,
               "sections": {
                 "explanation": "Для JUnit 5 есть артефакт archunit-junit5, убирающий ручной импорт. @AnalyzeClasses(packages=...) импортирует пакеты один раз на класс, importOptions задаёт фильтры, а @ArchTest помечает поля ArchRule — движок сам вызовет check().",
@@ -611,7 +611,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Тестовый класс, собранный в `main`-каталог, этой опцией тоже будет отфильтрован автоматически.",
+              "text": "Собранный в `main`-каталог тестовый класс тоже будет отфильтрован, а расположение здесь роли не играет.",
               "correct": false,
               "sections": {
                 "what_actually": "Тестовый класс, случайно собранный в main-каталог, не отфильтруется — фильтр смотрит на расположение, а не на роль класса.",
@@ -623,7 +623,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Опция `DoNotIncludeTests` фильтрует классы по каталогу сборки, а не по суффиксу имени.",
+              "text": "Фильтр `DoNotIncludeTests` отбирает классы по месту их компиляции, а имя самого класса ему не важно.",
               "correct": true,
               "sections": {
                 "explanation": "По умолчанию импортёр тянет и скомпилированные тестовые классы, а архитектурные правила пишут про production-код. ImportOption.DoNotIncludeTests исключает классы из тестовых каталогов сборки по их расположению.",
@@ -636,7 +636,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Опция `DoNotIncludeTests` отбрасывает классы по суффиксу Test прямо в их имени.",
+              "text": "Опция `DoNotIncludeTests` отбрасывает классы по суффиксу Test в имени, а каталог сборки не важен.",
               "correct": false,
               "sections": {
                 "what_actually": "DoNotIncludeTests отсекает классы по каталогу сборки (target/test-classes, build/classes/java/test), а не по суффиксу Test в имени.",
@@ -648,7 +648,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Без `DoNotIncludeTests` импортёр по умолчанию молча пропускает и тестовые классы сборки.",
+              "text": "Без `DoNotIncludeTests` импортёр молча пропускает тестовые классы, а в модель попадает только production.",
               "correct": false,
               "sections": {
                 "what_actually": "Без DoNotIncludeTests импортёр по умолчанию тянет и тестовые классы, а не пропускает их.",
@@ -671,7 +671,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Режим `CacheMode.PER_CLASS` переиспользует импортированные классы между всеми тестовыми классами целого проекта.",
+              "text": "Настройка `CacheMode.PER_CLASS` переиспользует уже импортированные классы между всеми тестовыми классами в проекте.",
               "correct": false,
               "sections": {
                 "what_actually": "PER_CLASS кэширует классы только в пределах одного тест-класса и другим их не отдаёт — переиспользует между классами как раз FOREVER.",
@@ -683,7 +683,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Кэш импорта в `ArchUnit` привязан к имени тест-класса, а не к локациям.",
+              "text": "Кэшированный импорт `ArchUnit` закреплён за именем конкретного тестового класса и локаций не учитывает.",
               "correct": false,
               "sections": {
                 "what_actually": "Кэш привязан к локации — комбинации URL-источников, а не к имени тест-класса.",
@@ -695,7 +695,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Импорт байт-кода в `ArchUnit` это дешёвая операция, поэтому кэширование почти не нужно.",
+              "text": "Разбор классов в `ArchUnit` остаётся довольно дешёвой операцией и кэширование импорта не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Импорт байт-кода — одна из самых дорогих операций, поэтому кэширование как раз и нужно.",
@@ -731,7 +731,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Архитектурные проверки идут в тест-фазе сборки, поэтому отдельной `CI`-инфраструктуры не нужно.",
+              "text": "Правила выполняются тем же тестовым таском сборки и отдельной `CI`-обвязки заводить не требуется.",
               "correct": true,
               "sections": {
                 "explanation": "Архитектурные проверки идут в тест-фазе сборки, поэтому отдельной CI-инфраструктуры не нужно — они запускаются той же командой, что и весь тест-сьют. Для JUnit 5 нужен archunit-junit5-engine и useJUnitPlatform() в Gradle.",
@@ -744,7 +744,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Для запуска `@ArchTest` в CI нужна отдельная выделенная инфраструктура помимо тест-фазы сборки.",
+              "text": "Для запуска `@ArchTest` в CI нужна отдельная выделенная инфраструктура помимо обычной тест-фазы сборки.",
               "correct": false,
               "sections": {
                 "what_actually": "Запуск @ArchTest не требует отдельной инфраструктуры — проверки идут в тест-фазе той же командой, что и весь сьют.",
@@ -768,7 +768,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Сборка Gradle успешно запускает `@ArchTest` даже без явного вызова useJUnitPlatform в тест-настройках.",
+              "text": "Сборка Gradle успешно запускает `@ArchTest` и без явного вызова useJUnitPlatform в тест-настройках.",
               "correct": false,
               "sections": {
                 "what_actually": "Для JUnit 5 нужен engine на тест-класспасе и useJUnitPlatform() в Gradle, без него @ArchTest не запустится.",
@@ -791,7 +791,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Исправленное нарушение `ViolationStore` навсегда сохраняет, поэтому известный технический долг не уменьшается.",
+              "text": "Исправленное нарушение `ViolationStore` хранит навсегда и известный технический долг никогда не уменьшается.",
               "correct": false,
               "sections": {
                 "what_actually": "Исправленное нарушение FreezingArchRule вычёркивает из ViolationStore — храповик, при котором известный долг только уменьшается.",
@@ -803,7 +803,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Хранилище нарушений `archunit_store` держат вне Git, не коммитя его в репозиторий.",
+              "text": "Каталог `archunit_store` с нарушениями держат вне Git и никогда не коммитят в репозиторий проекта.",
               "correct": false,
               "sections": {
                 "what_actually": "Хранилище нарушений версионируют в Git, иначе CI на чистой машине «заморозит» новое состояние вместо эталонного.",
@@ -815,7 +815,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "`FreezingArchRule` при первом запуске замораживает текущие нарушения и падает на новых.",
+              "text": "Обёртка `FreezingArchRule` записывает уже накопленный долг и роняет сборку только на свежих нарушениях.",
               "correct": true,
               "sections": {
                 "explanation": "FreezingArchRule.freeze оборачивает обычное правило и при первом запуске замораживает текущие нарушения в ViolationStore. Дальше тест падает только на новых нарушениях, а известные игнорирует — так правило внедряют в легаси без «большого взрыва».",
@@ -828,7 +828,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "`FreezingArchRule` при первом запуске падает сразу на всех текущих нарушениях легаси.",
+              "text": "Самый первый прогон `FreezingArchRule` валит тест сразу на всех текущих нарушениях легаси.",
               "correct": false,
               "sections": {
                 "what_actually": "При первом запуске FreezingArchRule замораживает текущие нарушения, а не роняет тест на всех сразу — иначе внедрять его в легаси было бы невозможно.",
@@ -851,7 +851,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Готовые DDD-правила даёт сам `jMolecules`, а не отдельный внешний модуль jmolecules-archunit.",
+              "text": "Готовые DDD-правила даёт только сам `jMolecules`, а не отдельно подключаемый модуль jmolecules-archunit.",
               "correct": false,
               "sections": {
                 "what_actually": "Готовые DDD-правила приносит модуль jmolecules-archunit, а не сам jMolecules-словарь аннотаций.",
@@ -863,7 +863,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Сам по себе `jMolecules` это словарь намерений через аннотации, не enforcement.",
+              "text": "Аннотации `jMolecules` только описывают роли и абстракции, а проверить их без ArchUnit не выйдет.",
               "correct": true,
               "sections": {
                 "explanation": "jMolecules — библиотека для выражения архитектурных абстракций аннотациями и интерфейсами (@AggregateRoot, @Entity, @ValueObject). Сам по себе это словарь намерений, а enforcement добавляет модуль jmolecules-archunit с готовыми правилами.",
@@ -876,7 +876,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Сам `jMolecules` это готовый enforcement, проверяющий целостность DDD-концептов без всякого ArchUnit.",
+              "text": "Сам `jMolecules` это готовый enforcement, а целостность DDD-концептов он проверяет без ArchUnit.",
               "correct": false,
               "sections": {
                 "what_actually": "Enforcement даёт не сам jMolecules, а модуль jmolecules-archunit — jMolecules лишь словарь намерений в аннотациях.",
@@ -888,7 +888,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "В этом проекте `LayeredArchitectureTest` использует jMolecules прямо поверх ArchUnit для DDD-правил.",
+              "text": "В этом проекте `LayeredArchitectureTest` опирается на jMolecules, а не на чистые noClasses-правила.",
               "correct": false,
               "sections": {
                 "what_actually": "В этом проекте LayeredArchitectureTest использует чистый ArchUnit без jMolecules — три noClasses()-правила на JUnit 5.",

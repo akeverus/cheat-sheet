@@ -17,7 +17,7 @@
 | 3 | hibernate-caching-interview | 15 | 0 | ГОТОВО |
 | 4 | java-optional-interview | 15 | 0 | ГОТОВО |
 | 5 | java-virtual-threads-interview | 15 | 0 | ГОТОВО |
-| 6 | archunit-interview | 15 | 15 | TODO |
+| 6 | archunit-interview | 15 | 0 | ГОТОВО |
 | 7 | cucumber-bdd-interview | 15 | 15 | TODO |
 | 8 | spring-async-interview | 15 | 15 | TODO |
 | 9 | spring-boot-3-migration-interview | 15 | 15 | TODO |
