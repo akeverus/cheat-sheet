@@ -1573,20 +1573,24 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
     column-gap: var(--focus-rail-gap);
     align-items: start;
   }
-  /* VIEWPORT-FIRST (аудит 2026-09-01): узел «задание + спутники» расступается на
-     ЛЮБОЙ композиции рабочего места, а не только с 2240px. Раньше колонкой 1
-     становился весь .focus-task, и спутники («О теме», карта темы, «Заметка»)
-     жили ПОД кодом в колонке задания: замер 1440×900 — правая колонка кончалась
-     на 879, левая на 1382, под «Проверить ответ» пустовало 512×527, а весь второй
-     экран страницы (docH 1535) состоял из спутников слева при пустой рабочей
-     колонке. Приём тот же, что в третьей зоне ≥2240 (ниже): пейн задания —
-     колонка, спутники — сеточные элементы; целевая колонка здесь — рабочая. */
-  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)) > .focus-task {
+  /* VIEWPORT-FIRST (аудит 2026-09-01): узел «задание + спутники» расступается,
+     когда у вопроса есть МАТЕРИАЛЫ. Раньше колонкой 1 был весь .focus-task, и
+     спутники жили ПОД кодом: замер 1440×900 — правая колонка кончалась на 879,
+     левая на 1382, под «Проверить ответ» пустовало 512×527, а второй экран
+     (docH 1535) состоял из спутников слева при пустой рабочей колонке. Приём
+     третьей зоны ≥2240 (ниже): пейн задания — колонка, спутники — сеточные
+     элементы; целевая колонка здесь — рабочая.
+
+     Гейт :has(.question-materials) добавлен адверсарной приёмкой: у вопроса
+     БЕЗ листинга колонка задания — ~390px заголовка, и спутники справа
+     оставляли слева пустоту 480×510+ — дыра меняла сторону. Тот же гейт уже
+     выбирает ширину задания (--workspace-brief: 30rem). */
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials) > .focus-task {
     display: contents;
   }
   /* Пейн вопроса перестаёт быть `display: contents` и становится настоящей
      колонкой — ровно так же, как он делает это в раскладке «Разделение». */
-  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)) > .focus-task > .focus-question-pane {
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials) > .focus-task > .focus-question-pane {
     display: flex;
     flex-direction: column;
     grid-column: 1;
@@ -1605,10 +1609,23 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
      за всех детей рабочей колонки (у них order: 0). Ряд не задаётся явно —
      на ≥2240 явное `grid-column: 3; grid-row: 1/-1` третьей зоны (ниже по файлу)
      перебивает это правило тем же весом селектора. */
-  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)) > .focus-task > .focus-companions {
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials) > .focus-task > .focus-companions {
     grid-column: 2;
     min-width: 0;
     order: 10;
+  }
+  /* Вопрос БЕЗ материалов: узел остаётся колонкой — спутники стоят под
+     вопросом и наполняют колонку задания (прежняя композиция, для короткой
+     левой колонки она верна). */
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):not(:has(.question-materials)) > .focus-task {
+    display: flex;
+    flex-direction: column;
+    grid-column: 1;
+    grid-row: 1 / -1;
+    min-width: 0;
+    position: sticky;
+    top: var(--space-5);
+    container-type: inline-size;
   }
   /* «Сообщить о проблеме» остаётся последним и в новой очерёдности: это tertiary,
      и вставать между разбором и «О теме» ему не с чего. */

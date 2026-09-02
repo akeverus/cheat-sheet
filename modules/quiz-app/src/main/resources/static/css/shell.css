@@ -927,11 +927,19 @@ html[data-design] .session-builder {
    пустым рядом) — 64px мёртвой вертикали в состоянии по умолчанию (тренировка).
    Ряд снимается вместе с шагом; без JS шаг виден и сетка остаётся четырёхрядной.
    (аудит viewport-first 2026-09-01) */
-html[data-design] .session-builder:has(#builder-volume.hidden) {
-  grid-template-areas:
-    "scope  outcome"
-    "mode   mode"
-    "launch launch";
+/* Правило живёт ТОЛЬКО на ширинах двухколоночной сетки. Первая редакция стояла
+   без медиазапроса, и ID внутри :has() давал специфичность (1,3,1), перебивая
+   мобильный сброс «grid-template-areas: none» (@media ≤900, (0,2,1)): на
+   телефоне в дефолтном режиме дети авторасселялись в фантомные две колонки из
+   карты областей — первая колонка 0px, заголовок по букве в строке, селекты
+   щелями (P0 адверсарной приёмки, замер 390×844: cols «0px 295px»). */
+@media (min-width: 901px) {
+  html[data-design] .session-builder:has(#builder-volume.hidden) {
+    grid-template-areas:
+      "scope  outcome"
+      "mode   mode"
+      "launch launch";
+  }
 }
 html[data-design] .session-builder > * { min-width: 0; }
 /* Привязка к областям — ТОЛЬКО по классам.
@@ -1066,7 +1074,11 @@ html[data-design] .builder-launch-bar .builder-start-cta {
      лежит ПОД закреплённой полосой: его не видно, он только удлиняет скролл
      (замер 1440×900: docH 1171, из них 96 — пустота за полосой). Ровно на тех
      ширинах, где полоса закреплена. (аудит viewport-first 2026-09-01) */
-  html[data-design] .train-page .ed-page { padding-bottom: var(--space-4); }
+  html[data-design] .train-page .ed-page { padding-bottom: 0; }
+  /* Раскрытый шаг «Сколько» подъезжает в вид с запасом над закреплённой полосой
+     (session-form.js скроллит его при появлении — P1 приёмки: шаг раскрывался
+     целиком за вьюпортом и под полосой, аффорданс нулевой). */
+  html[data-design] .builder-volume { scroll-margin-bottom: 6.5rem; }
 }
 
 /* Filter chips (.settings-page .filter-chips/.filter-chip/.filter-chip-count)

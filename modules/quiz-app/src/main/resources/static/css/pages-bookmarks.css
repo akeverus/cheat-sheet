@@ -15,16 +15,6 @@
    против 12px), а на телефоне сжимался только один из трёх. Кегль, ритм и
    мобильный clamp теперь у `.page-head-title h1`. Своих правил шапки у страницы
    не остаётся. */
-/* Правила `.bookmarks-toolbar` сняты в iter-74 вместе с самой карточкой.
-   Довод и история: docs/css-decisions/pages-bookmarks.md#pages-bookmarks-e01 */
-html[data-design] .bookmarks-page .bookmarks-list-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3) var(--space-5);
-  margin-bottom: var(--space-4);
-}
 /* Полоса отбора внутри карточки списка — не самостоятельный блок, а средняя
    ступень между заголовком и списком. Своего нижнего отступа у формы нет
    (карточка `.filter-bar` его раздавала, когда была отдельной секцией), и без
@@ -122,7 +112,7 @@ html[data-design] .bookmarks-page .bookmark-question:hover {
    вопрос в тренировке) не читалось. Стрелка — тот же глиф, что у CTA продукта
    («Тренировать избранные →»); пустая альтернатива прячет её от скринридера. */
 html[data-design] .bookmarks-page .bookmark-question::after {
-  content: " →" / "";
+  content: "\00a0→" / "";
   color: var(--color-text-tertiary);
 }
 html[data-design] .bookmarks-page .bookmark-question:hover::after {
@@ -269,23 +259,8 @@ html[data-design] .bookmarks-page .filter-bar-summary { display: none; }
 }
 
 @media (max-width: 768px) {
-  html[data-design] .bookmarks-page .bookmark-item {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  
-  /* Главное действие на всю строку: в заголовке списка оно единственное, и
-     обрезанная по содержимому кнопка оставляла бы справа от себя полосу
-     пустоты — то же, что §6 запрещает у полосы отбора.
-
-     Здесь же стоял `.bookmark-actions .btn` — селектор без единого носителя:
-     узла с таким классом в bookmarks.html нет ни одного (проверено поиском по
-     шаблону, а не по памяти). Удалён как мёртвый. */
-  html[data-design] .bookmarks-page .bookmarks-list-head .btn {
-    width: 100%;
-    justify-content: center;
-  }
+  /* Правило flex-direction у .bookmark-item снято (гигиена приёмки): элемент
+     display:block, флекс-свойства были no-op. */
   html[data-design] .bookmarks-page .ed-page {
     padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
   }

@@ -145,8 +145,16 @@ export function initSessionModeForm() {
     // Прячем ВЕСЬ шаг «Сколько», а не одно поле внутри него: у режима без
     // счётчика шаг остался бы заголовком с номером над пустотой.
     const unlimited = opt?.dataset.unlimited === 'true';
-    (document.getElementById('builder-volume') || countField)
-      .classList.toggle('hidden', unlimited);
+    const volumeStep = document.getElementById('builder-volume') || countField;
+    // Шаг подъезжает в вид, когда РАСКРЫВАЕТСЯ выбором счётного режима: без
+    // этого на 1440×900 он появлялся целиком за вьюпортом и под закреплённой
+    // полосой запуска — пользователь видел только смену подписи кнопки (P1
+    // адверсарной приёмки viewport-first). scroll-margin-bottom у шага держит
+    // запас над полосой; behavior не задаём — мгновенно и без конфликта с
+    // prefers-reduced-motion.
+    const wasHidden = volumeStep.classList.contains('hidden');
+    volumeStep.classList.toggle('hidden', unlimited);
+    if (wasHidden && !unlimited) volumeStep.scrollIntoView({ block: 'nearest' });
     startBtn.textContent = opt?.dataset.cta || 'Начать сессию';
     const modeMirror = document.getElementById('filters-mode-mirror');
     if (modeMirror) modeMirror.value = selectedMode()?.value || '';
