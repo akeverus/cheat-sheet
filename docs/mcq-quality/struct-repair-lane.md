@@ -19,7 +19,7 @@
 | 5 | java-virtual-threads-interview | 15 | 0 | ГОТОВО |
 | 6 | archunit-interview | 15 | 0 | ГОТОВО |
 | 7 | cucumber-bdd-interview | 15 | 0 | ГОТОВО |
-| 8 | spring-async-interview | 15 | 15 | TODO |
+| 8 | spring-async-interview | 15 | 0 | ГОТОВО |
 | 9 | spring-boot-3-migration-interview | 15 | 15 | TODO |
 | 10 | spring-integration-interview | 15 | 15 | TODO |
 | 11 | graalvm-native-interview | 15 | 14 | TODO |
