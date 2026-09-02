@@ -21,7 +21,7 @@
 | 7 | cucumber-bdd-interview | 15 | 0 | ГОТОВО |
 | 8 | spring-async-interview | 15 | 0 | ГОТОВО |
 | 9 | spring-boot-3-migration-interview | 15 | 0 | ГОТОВО |
-| 10 | spring-integration-interview | 15 | 15 | TODO |
+| 10 | spring-integration-interview | 15 | 0 | ГОТОВО |
 | 11 | graalvm-native-interview | 15 | 14 | TODO |
 | 12 | java-completable-future-interview | 15 | 14 | TODO |
 | 13 | java-pattern-matching-interview | 15 | 14 | TODO |
