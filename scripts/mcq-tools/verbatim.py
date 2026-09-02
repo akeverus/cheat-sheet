@@ -86,7 +86,7 @@ for n, l, rc, rw, cvc, cvw in flagged:
             f"покрытие={cvc:.2f} (дистрактор {cvw:.2f})")
     if SPANS:
         q = [x for x in d["questions"] if x["q_number"] == n][0]
-        o = [x for x in q["blocks"][0]["options"] if x["correct"]][0]
+        o = [x for b in q["blocks"] for x in b["options"] if x["correct"]][0]
         txt, ln = lcs_run(words(o["text"]), words(bodies.get(n, "")), want_text=True)
         line += f"\n     общий отрезок ({ln} сл.): «{txt}»"
     print(line)

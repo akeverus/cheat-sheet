@@ -13,6 +13,7 @@ const SCHEMA = {
         type: 'object', additionalProperties: false,
         properties: {
           q_number: { type: 'integer' },
+          block_idx: { type: 'integer' },
           options: {
             type: 'array',
             items: {
@@ -23,7 +24,7 @@ const SCHEMA = {
           },
           note: { type: 'string' },
         },
-        required: ['q_number', 'options', 'note'],
+        required: ['q_number', 'block_idx', 'options', 'note'],
       },
     },
   },
@@ -77,7 +78,7 @@ function prompt(c) {
 10. Если вариант уже в норме — верни его текст без изменений.
 
 Верни СТРОГО {"blocks":[...]} по тем блокам своего диапазона, КОТОРЫЕ ЕСТЬ В payload
-(остальные уже в норме, их не трогай): q_number, четыре
+(остальные уже в норме, их не трогай): q_number, block_idx (ПЕРЕПИСЫВАЙ ИЗ PAYLOAD: у одного Q может быть несколько блоков), четыре
 опции с меткой и новым текстом, и note — одной фразой, что ты выровнял.`
 }
 phase('Repair')

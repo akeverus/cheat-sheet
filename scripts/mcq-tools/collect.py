@@ -14,7 +14,7 @@ def load(journals, key):
         for line in open(p, encoding="utf-8"):
             o = json.loads(line)
             if o.get("type") == "result":
-                for x in (o.get("result") or {}).get(key, []): by[x["q_number"]] = x
+                for x in (o.get("result") or {}).get(key, []): by[(x["q_number"], x.get("block_idx", 0))] = x
     return by
 
 mode = sys.argv[1]

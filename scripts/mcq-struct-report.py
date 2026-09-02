@@ -13,7 +13,8 @@ W = lambda t: len(re.findall(r"\w+", re.sub(r"`[^`]*`", "", t), flags=re.U))
 d = json.load(open(S, encoding="utf-8"))
 bad = []
 for q in d["questions"]:
-    o = q["blocks"][0]["options"]
+  for _b in q["blocks"]:
+    o = _b["options"]
     c = [x for x in o if x["correct"]][0]
     w = [x for x in o if not x["correct"]]
     L, CL, SPc, Wc = len(c["text"]), cl(c["text"]), SP(c["text"]), W(c["text"])
@@ -33,7 +34,7 @@ for q in d["questions"]:
 for b in bad:
     print(f"Q{b['q_number']}: цель {b['target_chars']}c/{b['target_clauses']}ч/"
           f"{b['target_spans']}сп/{b['target_words']}сл — " + "; ".join(b["problems"]))
-print(f"блоков вне коридора: {len(bad)} из {len(d['questions'])}")
+print(f"блоков вне коридора: {len(bad)} из {sum(len(q['blocks']) for q in d['questions'])}")
 if "--json" in sys.argv:
     json.dump(bad, open(sys.argv[sys.argv.index("--json") + 1], "w", encoding="utf-8"),
               ensure_ascii=False, indent=1)

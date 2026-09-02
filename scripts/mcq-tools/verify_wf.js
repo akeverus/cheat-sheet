@@ -13,6 +13,7 @@ const VERDICT_SCHEMA = {
         type: 'object', additionalProperties: false,
         properties: {
           q_number: { type: 'integer' },
+          block_idx: { type: 'integer' },
           picked_label: { type: 'string', enum: ['A', 'B', 'C', 'D'] },
           linkage_level: { type: 'string', enum: ['L0', 'L1', 'L2', 'L3', 'L4'] },
           all_wrong_refutable_from_this_Q: { type: 'boolean' },
@@ -33,7 +34,7 @@ function prompt(c) {
 ЧИТАЙ ДВА ФАЙЛА:
 1. \`${A.md_path}\` с offset=${c.off}, limit=${c.lim} — это ИСТОЧНИК: видимые заголовки "## Q<N>"
    и тела ответов. Твой диапазон — Q${c.lo}..Q${c.hi}.
-2. \`${A.blind_path}\` — четыре НЕПОМЕЧЕННЫЕ опции для каждого q_number. Какая правильная — НЕ указано.
+2. \`${A.blind_path}\` — четыре НЕПОМЕЧЕННЫЕ опции для каждого q_number; если у q_number несколько записей с разным block_idx — это РАЗНЫЕ блоки, верни вердикт на каждый и укажи block_idx. Какая правильная — НЕ указано.
 
 Ты моделируешь пользователя: он прочитал видимый заголовок ## Q<N> и тело этого Q, после чего
 увидел четыре варианта. Больше у него ничего нет.
@@ -50,7 +51,7 @@ function prompt(c) {
   только чтением кода, а не прозы; дистрактор near-truth; правильный ответ заметно длиннее или
   сложнее устроен, чем остальные (визуальная подсказка).
 
-Верни СТРОГО {"verdicts":[...]} для всех блоков Q${c.lo}..Q${c.hi}.`
+В каждом вердикте укажи block_idx из blind-файла. Верни СТРОГО {"verdicts":[...]} для всех блоков Q${c.lo}..Q${c.hi}.`
 }
 phase('Verify')
 const results = await parallel(A.chunks.map(c => () =>
@@ -66,5 +67,5 @@ return {
   novel: all.filter(v => v.novel_fact_required).map(v => v.q_number),
   not_refutable: all.filter(v => !v.all_wrong_refutable_from_this_Q).map(v => v.q_number),
   axis_flags: all.filter(v => !v.same_axis_all_four).map(v => v.q_number),
-  picks: all.map(v => `${v.q_number}${v.picked_label}`).join(' '),
+  picks: all.map(v => `${v.q_number}${v.block_idx ? 'b' + v.block_idx : ''}${v.picked_label}`).join(' '),
 }

@@ -135,7 +135,7 @@ if sys.argv[1] == "dump":
                                f"утверждение и структуру сохрани")
             if not bad:
                 continue
-            out.append({"q_number": q["q_number"], "нарушения": bad,
+            out.append({"q_number": q["q_number"], "block_idx": b["block_idx"], "нарушения": bad,
                         "options": [{"label": o["label"], "correct": o["correct"], "text": o["text"]}
                                     for o in sorted(b["options"], key=lambda x: x["order"])]})
     json.dump(out, open(sys.argv[3], "w", encoding="utf-8"), ensure_ascii=False, indent=1)
@@ -150,7 +150,7 @@ elif sys.argv[1] == "apply":
             for m in re.finditer(r'\{"blocks":\s*\[.*?\]\s*\}', line):
                 try:
                     for b in json.loads(m.group(0))["blocks"]:
-                        new[b["q_number"]] = {o["label"]: o["text"] for o in b["options"]}
+                        new[(b["q_number"], b.get("block_idx", 0))] = {o["label"]: o["text"] for o in b["options"]}
                 except Exception:
                     pass
             try:
@@ -160,14 +160,16 @@ elif sys.argv[1] == "apply":
             r = j.get("result") if isinstance(j, dict) else None
             if isinstance(r, dict) and "blocks" in r:
                 for b in r["blocks"]:
-                    new[b["q_number"]] = {o["label"]: o["text"] for o in b["options"]}
+                    new[(b["q_number"], b.get("block_idx", 0))] = {o["label"]: o["text"] for o in b["options"]}
     d = json.load(open(seed, encoding="utf-8"))
     n = 0
     for q in d["questions"]:
-        if q["q_number"] not in new:
+      for blk in q["blocks"]:
+        key = (q["q_number"], blk["block_idx"])
+        if key not in new:
             continue
-        for o in q["blocks"][0]["options"]:
-            t = new[q["q_number"]].get(o["label"])
+        for o in blk["options"]:
+            t = new[key].get(o["label"])
             if t and t.strip() and t != o["text"]:
                 t = t.strip()
                 o["text"] = t if t.endswith((".", "!", "?")) else t + "."

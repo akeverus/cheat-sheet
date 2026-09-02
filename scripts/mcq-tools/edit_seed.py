@@ -7,7 +7,7 @@ S, E = sys.argv[1], sys.argv[2]
 d = json.load(open(S, encoding="utf-8")); Q = {q["q_number"]: q for q in d["questions"]}
 n = 0
 for e in json.load(open(E, encoding="utf-8")):
-    opts = Q[e["q"]]["blocks"][0]["options"]
+    opts = Q[e["q"]]["blocks"][e.get("block", 0)]["options"]
     if "section" in e:
         o = [x for x in opts if x["label"] == e["label"]][0]
         assert e["old"] in o["sections"][e["section"]], e

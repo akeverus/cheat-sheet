@@ -9,7 +9,8 @@ if "blocks" in d:
     items = [(b["q_number"], b["correct_text"], [("", w["text"]) for w in b["wrong"]]) for b in d["blocks"]]
 else:
     for q in d["questions"]:
-        o = sorted(q["blocks"][0]["options"], key=lambda x: x["order"])
+      for _b in q["blocks"]:
+        o = sorted(_b["options"], key=lambda x: x["order"])
         c = [x for x in o if x["correct"]][0]
         items.append((q["q_number"], c["text"], [(x["label"] + ": ", x["text"]) for x in o if not x["correct"]]))
 for n, c, ws in items:
