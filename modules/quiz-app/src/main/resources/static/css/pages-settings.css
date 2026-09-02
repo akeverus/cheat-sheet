@@ -57,10 +57,25 @@ html[data-design] .settings-page .settings-panel-title {
    их коробка — общая: components-tabs.css, одна на все три полосы приложения
    (iter-79), а панели материалов — в pages-focus.css, в своей странице. */
 
-/* Сетка персонализации: 7 настроек в адаптивных колонках вместо стопки 1410px. */
+/* Сетка персонализации: настройки в адаптивных колонках вместо стопки 1410px.
+   Эволюция (аудит viewport-first 2026-09-01): auto-fit по 300px давал на шелле
+   1125px три колонки, и четвёртый контрол падал рядом-сиротой — правые 2/3 ряда
+   пустовали в ЦЕНТРЕ первого вьюпорта (+166px вертикали). Контролов четыре —
+   сетка держит их парами: 2×2 на десктопе, 4 в ряд на очень широком, одна
+   колонка на телефоне. */
 html[data-design] .settings-page .personalization-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  display: grid; grid-template-columns: minmax(0, 1fr);
   gap: var(--space-6) var(--space-7); align-items: start;
+}
+@media (min-width: 640px) {
+  html[data-design] .settings-page .personalization-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1900px) {
+  html[data-design] .settings-page .personalization-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 html[data-design] .settings-page .personalization-grid .personalization-row { margin-bottom: 0; min-width: 0; }
 /* Модификатора `--wide` (`grid-column: 1 / -1`) здесь больше нет: его не носил ни один
@@ -82,7 +97,13 @@ html[data-design] .settings-page .control-inline-hint {
    ≥1200px в `1fr`: две встречные системы на одну сетку. */
 html[data-design] .settings-page .filters-fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  /* Мин-трек 13rem, а не 15rem: в колонке «Что тренируем» шириной 693px (1440)
+     три поля по 15rem не вставали — «Порядок» переносился на собственный ряд
+     (~90px лишней вертикали), а два оставшихся селекта растягивались до 330px
+     с мёртвым полем справа от коротких значений. 13rem даёт три поля в ряд
+     (3×208 + 2×16 = 656 ≤ 693); это минимум ТРЕКА, не размер контрола —
+     фактическая ширина поля ~215px. (аудит viewport-first 2026-09-01) */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
   gap: var(--space-4);
   margin-bottom: var(--space-4);
 }
@@ -461,23 +482,32 @@ html[data-design] .settings-page .mode-card-input:checked + .mode-card-body .mod
   color: var(--color-accent-strong);
 }
 
-/* В РУКЕ ОБЪЯСНЯЕТ СЕБЯ ВЫБРАННЫЙ РЕЖИМ, А НЕ ВСЕ ВОСЕМЬ СРАЗУ.
-   Довод и история: docs/css-decisions/pages-settings.md#pages-settings-e06 */
+/* ОБЪЯСНЯЕТ СЕБЯ ВЫБРАННЫЙ РЕЖИМ, А НЕ ВСЕ ВОСЕМЬ СРАЗУ.
+   Довод и история: docs/css-decisions/pages-settings.md#pages-settings-e06.
+   Эволюция (аудит viewport-first 2026-09-01): правило было телефонным, а на
+   десктопе стояла стена из восьми рамок 240×158 с постоянно развёрнутыми
+   описаниями равного веса — читают одно-два, вертикаль платят за все восемь,
+   и второй ряд карточек уходил под закреплённую полосу запуска (замер
+   1440×900: карточки до 906 при полосе с 831). Принцип «в руке» тот же на
+   любой ширине: невыбранные — силуэт + имя (описание остаётся скринридеру),
+   выбранный разворачивает своё описание на месте. */
+html[data-design] .settings-page .mode-card-input:not(:checked) + .mode-card-body .mode-card-desc {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+html[data-design] .settings-page .mode-card-body {
+  align-items: center;
+}
+html[data-design] .settings-page .mode-card-input:checked + .mode-card-body {
+  align-items: flex-start;
+}
 @media (max-width: 767px) {
-  html[data-design] .settings-page .mode-card-input:not(:checked) + .mode-card-body .mode-card-desc {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
   html[data-design] .settings-page .mode-card-body {
-    align-items: center;
     padding: var(--space-3);
-  }
-  html[data-design] .settings-page .mode-card-input:checked + .mode-card-body {
-    align-items: flex-start;
   }
 }
 
@@ -648,13 +678,20 @@ html[data-design] .settings-page .outcome-filters-label {
    Классы самодостаточны: CSS фокус-страницы сюда не приезжает (per-page
    бандл), а типографика берётся из глобальных токенов — то есть образец
    лжёт ровно настолько, насколько лгут сами токены (никак). */
+/* Преамбула образца — ОДНА служебная строка (аудит viewport-first 2026-09-01):
+   двойной зазор (margin-top 64 + padding-top 32 с линейкой) и заголовок с
+   подсказкой на двух этажах стоили 162px вертикали на три строки служебного
+   текста — из-за них низ образца резался сгибом 900. Ярлык и подсказка идут
+   в одну строку, зазор одинарный; линейка-разделитель остаётся — она и
+   отделяет настройки от их предпросмотра. */
 html[data-design] .settings-page .settings-preview {
-  margin-top: var(--space-8);
-  padding-top: var(--space-6);
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
   border-top: var(--rule-weight) solid var(--color-border-secondary);
 }
 html[data-design] .settings-page .settings-preview-title {
-  margin: 0 0 var(--space-1);
+  display: inline;
+  margin: 0 var(--space-3) 0 0;
   font-family: var(--font-family-body); font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-xs);
   letter-spacing: var(--letter-spacing-wide);
@@ -662,10 +699,13 @@ html[data-design] .settings-page .settings-preview-title {
   color: var(--color-text-tertiary);
 }
 html[data-design] .settings-page .settings-preview-hint {
-  margin: 0 0 var(--space-5);
+  display: inline;
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
 }
+/* Сцена отбивается от однострочной преамбулы сама: инлайновым элементам
+   выше нижний зазор не принадлежит. */
+html[data-design] .settings-page .settings-preview-stage { margin-top: var(--space-4); }
 html[data-design] .settings-page .settings-preview-stage {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -734,6 +774,11 @@ html[data-design] .settings-page .preview-option.is-picked {
   border-color: var(--color-accent-primary);
   background: var(--color-bg-primary);
 }
+/* Инлайн-код в варианте образца — неделимый токен, как в настоящих вариантах
+   (#interview-options label code, pages-focus.css): «O(log n)» ломался посреди
+   («O(log / n)») и читался как два обрывка. */
+html[data-design] .settings-page .preview-option code { white-space: nowrap; }
+html[data-design] .settings-page .preview-option-text { min-width: 0; }
 html[data-design] .settings-page .preview-key {
   flex: none;
   font-family: var(--font-family-mono);

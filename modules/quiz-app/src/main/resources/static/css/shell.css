@@ -922,6 +922,17 @@ html[data-design] .session-builder {
   gap: var(--space-6) var(--space-7);
   align-items: start;
 }
+/* У режимов без счётчика шаг «Сколько» скрыт скриптом (.hidden, session-form.js),
+   но именованный ряд `volume` оставался в сетке и стоил ДВА gap-а (над и под
+   пустым рядом) — 64px мёртвой вертикали в состоянии по умолчанию (тренировка).
+   Ряд снимается вместе с шагом; без JS шаг виден и сетка остаётся четырёхрядной.
+   (аудит viewport-first 2026-09-01) */
+html[data-design] .session-builder:has(#builder-volume.hidden) {
+  grid-template-areas:
+    "scope  outcome"
+    "mode   mode"
+    "launch launch";
+}
 html[data-design] .session-builder > * { min-width: 0; }
 /* Привязка к областям — ТОЛЬКО по классам.
    Довод и история: docs/css-decisions/shell.md#shell-e12 */
@@ -1051,6 +1062,11 @@ html[data-design] .builder-launch-bar .builder-start-cta {
   html[data-design] .session-builder :is(.filter-chip, select, input[type="number"], .filters-apply-btn) {
     scroll-margin-bottom: 8rem;
   }
+  /* Полоса запуска — последний ряд страницы, и глобальный низ .ed-page (96px)
+     лежит ПОД закреплённой полосой: его не видно, он только удлиняет скролл
+     (замер 1440×900: docH 1171, из них 96 — пустота за полосой). Ровно на тех
+     ширинах, где полоса закреплена. (аудит viewport-first 2026-09-01) */
+  html[data-design] .train-page .ed-page { padding-bottom: var(--space-4); }
 }
 
 /* Filter chips (.settings-page .filter-chips/.filter-chip/.filter-chip-count)
