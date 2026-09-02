@@ -33,20 +33,43 @@ html[data-design] .bookmarks-page .filter-bar {
   margin-bottom: var(--space-5);
 }
 
+/* Главное действие в шапке: на широком экране — справа от заголовка и лида
+   (шапка там пустовала), на узком — строкой под лидом. */
+html[data-design] .bookmarks-page .page-head-actions { margin: var(--space-3) 0 0; }
+@media (min-width: 900px) {
+  html[data-design] .bookmarks-page .page-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "title actions"
+      "lead  actions";
+    column-gap: var(--space-7);
+    align-items: center;
+  }
+  html[data-design] .bookmarks-page .page-head-title { grid-area: title; }
+  html[data-design] .bookmarks-page .page-head-lead { grid-area: lead; margin-bottom: 0; }
+  html[data-design] .bookmarks-page .page-head-actions { grid-area: actions; margin: 0; }
+}
+
 /* Сетка карточек по доступной ширине, а не одна колонка (§6/§7).
    Довод и история: docs/css-decisions/pages-bookmarks.md#pages-bookmarks-e02 */
+/* MASONRY-КОЛОНКИ ВМЕСТО GRID-РЯДОВ (аудит viewport-first 2026-09-01). Грид
+   давал ряду высоту самой высокой карточки, и под каждой короткой (no-note
+   115px рядом с has-note 190px) оставалась дыра —системно, потому что
+   сортировка «сначала новые» перемешивает оба вида. CSS-колонки пакуют
+   карточки встык: тот же ~420px на колонку, что был у трека грида; DOM- и
+   таб-порядок не меняются, меняется только упаковка. Замер: docH 2938→~2500. */
 html[data-design] .bookmarks-page .bookmark-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
-  align-items: start;
-  gap: var(--space-3);
+  columns: 26rem;
+  column-gap: var(--space-3);
 }
-/* Тот же reset вешает на li нижний отступ — в сетке он ложится поверх gap и
-   разъезжает ряды по высоте. */
-html[data-design] .bookmarks-page .bookmark-list > li { margin-bottom: 0; }
+html[data-design] .bookmarks-page .bookmark-list > li {
+  margin-bottom: var(--space-3);
+  break-inside: avoid;
+}
 html[data-design] .bookmarks-page .bookmark-item {
   display: block;
   padding: var(--space-3) var(--space-4);

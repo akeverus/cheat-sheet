@@ -601,7 +601,10 @@ class TemplateFragmentContractTest {
     void bookmarksSelectionBandStatesSelectionAboveItsControls() throws IOException {
         String bookmarks = readTemplate("templates/bookmarks.html");
 
-        int head = bookmarks.indexOf("class=\"bookmarks-list-head\"");
+        // Эволюция якоря (viewport-first, 2026-09-01): ряд .bookmarks-list-head нёс
+        // одну кнопку с мёртвой полосой справа и снят — CTA уехало в шапку страницы
+        // (.page-head-actions), а носителем имени секции остался клипнутый h2.
+        int head = bookmarks.indexOf("id=\"bookmarks-list-title\"");
         int band = bookmarks.indexOf("class=\"filter-bar\"");
         int state = bookmarks.indexOf("class=\"filter-bar-state\"");
         int form = bookmarks.indexOf("class=\"filter-bar-form\"");
@@ -695,7 +698,11 @@ class TemplateFragmentContractTest {
         String bookmarks = readTemplate("templates/bookmarks.html");
 
         assertThat(bookmarks).doesNotContain("bookmarks-toolbar");
-        assertThat(bookmarks).contains("class=\"bookmarks-list-head\"");
+        // Эволюция (viewport-first, 2026-09-01): главное действие живёт в шапке
+        // страницы (.page-head-actions), ряд .bookmarks-list-head снят — он нёс
+        // одну кнопку и ~78px вертикали. Акцент по-прежнему один.
+        assertThat(bookmarks).doesNotContain("class=\"bookmarks-list-head\"");
+        assertThat(bookmarks).contains("class=\"page-head-actions\"");
         assertThat(bookmarks).contains("class=\"btn next-btn primary-btn\"");
 
         // Строки списка — вторичные кнопки; акцент в них не возвращается.

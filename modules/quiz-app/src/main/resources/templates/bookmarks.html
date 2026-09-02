@@ -37,6 +37,13 @@
         <span class="kpi-role" th:if="${bookmarksTotal != null}"
               th:text="${bookmarksTotal + ' ' + @plural.pick(bookmarksTotal, 'закладка', 'закладки', 'закладок')}">0 закладок</span>
     </p>
+    <!--/* Главное действие — в шапке (аудит viewport-first 2026-09-01): ряд
+         .bookmarks-list-head нёс одну кнопку с мёртвой полосой справа (~78px
+         вертикали), при том что шапка справа от лида пустовала. Один этаж
+         вместо двух полупустых. */-->
+    <p class="page-head-actions" th:if="${bookmarks != null and !bookmarks.isEmpty()}">
+        <a class="btn next-btn primary-btn" th:href="@{/(important=true, ordered=true)}">Тренировать избранные</a>
+    </p>
 </div>
 
 <p th:if="${bookmarkSaved}" class="notice notice-success" role="status">Заметка сохранена.</p>
@@ -85,10 +92,7 @@
          Имя у секции остаётся: `aria-labelledby` ссылается на тот же h2,
          клипнутый визуально. Скринридер по-прежнему объявляет «Список», а
          страница отдаёт 41px тому, ради чего её открыли. */-->
-    <div class="bookmarks-list-head">
-        <h2 id="bookmarks-list-title" class="mt-0 visually-hidden">Список</h2>
-        <a class="btn next-btn primary-btn" th:href="@{/(important=true, ordered=true)}">Тренировать избранные</a>
-    </div>
+    <h2 id="bookmarks-list-title" class="mt-0 visually-hidden">Список</h2>
     <div class="filter-bar">
     <p class="filter-bar-state" th:if="${bookmarksFilterActive}">
         <span class="filter-bar-state-label">Отобрано:</span>
@@ -224,11 +228,12 @@
                      цель, которую несёт сам текст. */-->
                 <a class="bookmark-question" th:href="@{/(questionId=${item.questionId})}"
                    th:text="${item.questionPreview}">Текст вопроса</a>
+                <!--/* Статус «есть/без заметки» снят (аудит viewport-first 2026-09-01,
+                     §5 директивы): у карточки с заметкой доказательство — само превью
+                     строкой ниже, у карточки без — подпись раскрытия «Добавить
+                     заметку». Ярлык повторял то и другое на каждой из 30 карточек. */-->
                 <div class="bookmark-meta muted">
                     <span th:text="${item.topicDisplayName}" th:title="${item.topic}">Тема</span>
-                    <span aria-hidden="true">·</span>
-                    <span class="bookmark-note-status"
-                          th:text="${item.note != null and !item.note.isBlank()} ? 'есть заметка' : 'без заметки'">без заметки</span>
                 </div>
                 <!--/* Заметка прозой: её читают, а не правят. Клампится двумя
                      строками — полный текст доступен в раскрытии ниже. */-->
