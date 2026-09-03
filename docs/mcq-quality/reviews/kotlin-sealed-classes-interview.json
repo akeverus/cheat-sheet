@@ -1,238 +1,258 @@
 {
-  "topic_slug": "kotlin-sealed-classes-interview",
-  "round": "ROUND-10-LINKAGE-FIRST",
-  "source_file": "cheatsheets/interview/programming-languages/kotlin/kotlin-sealed-classes-interview.md",
-  "mcq_file": "modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-sealed-classes-interview.json",
-  "audited": "2026-08-12",
-  "rebuild": "полная пересборка с нуля: 15 блоков, 60 вариантов, 0 совпадений с прежним текстом",
-  "toolchain": "kotlinc 2.4.10 установлен по ходу тика — с этого момента код и диагностика Kotlin проверяются компиляцией",
-  "verification": {
-    "deterministic": {
-      "schema": "OK",
-      "linkage_errors": 0,
-      "anti_tell_blocks": 0,
-      "correct_distribution": {
-        "A": 4,
-        "B": 4,
-        "C": 4,
-        "D": 3
-      },
-      "note": "Q12 остаётся LOW-COVERAGE по лексике; враждебной проверкой признан CLEAN"
-    },
-    "blind_review": "source-blind рецензент выбрал задуманный ответ во всех 15 с первого захода (13×L4, 2×L3)",
-    "adversarial_rounds": [
-      {
-        "round": 1,
-        "scope": "15 блоков",
-        "blocking": 5,
-        "defect_blocks": 4,
-        "source_defects": 39
-      },
-      {
-        "round": 2,
-        "scope": "7",
-        "blocking": 4,
-        "defect_blocks": 3
-      },
-      {
-        "round": 3,
-        "scope": "5",
-        "blocking": 1,
-        "defect_blocks": 1
-      },
-      {
-        "round": 4,
-        "scope": "3",
-        "blocking": 0
-      },
-      {
-        "round": 5,
-        "scope": "2",
-        "blocking": 0
-      },
-      {
-        "round": 6,
-        "scope": "15 (после чистки 78 замечаний к теории — 51 правка)",
-        "blocking": 10,
-        "defect_blocks": 6,
-        "note": "массовая правка теории обесценила шесть чистых блоков"
-      },
-      {
-        "round": 7,
-        "scope": "6",
-        "blocking": 2,
-        "defect_blocks": 1
-      },
-      {
-        "round": 8,
-        "scope": "1",
-        "blocking": 0
-      },
-      {
-        "round": 9,
-        "scope": "15 (после закрытия 82 minor)",
-        "blocking": 6,
-        "defect_blocks": 4
-      },
-      {
-        "round": 10,
-        "scope": "8 (+ кросс-блочный круг: 2 дубля, 4 раскрытия)",
-        "blocking": 1,
-        "defect_blocks": 1
-      },
-      {
-        "round": 11,
-        "scope": "1",
-        "blocking": 0
-      }
-    ],
-    "final": "15/15 блоков CLEAN; гейты: схема OK, linkage 0/0, anti-tell 0, ролевая схема без нарушений, A4/B4/C4/D3",
-    "cross_block": {
-      "rounds": 2,
-      "round1": "2 дубля (Q4/Q7, Q5/Q9), 4 раскрытия (Q1→Q3, Q3→Q15, Q1+Q3→Q12, Q1→Q8) — Q1 переанкорен на определение и механику закрытости, Q7 и Q9 разведены",
-      "round2": "остались 1 дубль (Q4/Q7 по оси «нет полей у интерфейса») и 3 раскрытия",
-      "accepted": "остаток признан структурным: Q1 определяет sealed, поэтому неизбежно упоминает проверку разбора; Q12 и Q15 разбирают две стороны одной связи else↔exhaustive. Дальнейшее разведение увело бы блоки с центральных тезисов своих Q (§12)"
-    }
+ "topic_slug": "kotlin-sealed-classes-interview",
+ "round": "ROUND-10-LINKAGE-FIRST",
+ "source_file": "cheatsheets/interview/programming-languages/kotlin/kotlin-sealed-classes-interview.md",
+ "mcq_file": "modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-sealed-classes-interview.json",
+ "audited": "2026-08-12",
+ "rebuild": "полная пересборка с нуля: 15 блоков, 60 вариантов, 0 совпадений с прежним текстом",
+ "toolchain": "kotlinc 2.4.10 установлен по ходу тика — с этого момента код и диагностика Kotlin проверяются компиляцией",
+ "verification": {
+  "deterministic": {
+   "schema": "OK",
+   "linkage_errors": 0,
+   "anti_tell_blocks": 0,
+   "correct_distribution": {
+    "A": 4,
+    "B": 4,
+    "C": 4,
+    "D": 3
+   },
+   "note": "Q12 остаётся LOW-COVERAGE по лексике; враждебной проверкой признан CLEAN"
   },
-  "source_fixes": [
-    "Прямые наследники sealed обязаны быть в том же пакете И модуле — шпаргалка разрешала разные пакеты (проверено по docs Kotlin)",
-    "Хронология when: до 1.6 неполный statement компилировался молча, в 1.6 появилось предупреждение, с 1.7 — ошибка (было «до 1.6 давал warning»)",
-    "Приёмы .also { } появились ДО 1.6 — именно потому, что компилятор молчал; причинность восстановлена",
-    "Выдуманное сообщение компилятора «fun area: missing branch» заменено настоящей диагностикой Kotlin",
-    "«Никто извне не расширит тип» сведено к прямым наследникам: у open/abstract-наследника косвенные возможны и снаружи, у sealed — только внутри модуля и пакета",
-    "Sealed interface не хранит состояние, но реализацию методов нести умеет — довод в пользу sealed class сведён к общим полям",
-    "Число экземпляров подтипа определяет class против object, а не модификатор data",
-    "Оговорка про nullable subject: для Shape? нужна ветка null, либо else, либо снятие nullable до when",
-    "Запрет на локальные и анонимные объекты как прямых наследников (было «sealed нельзя объявить local или inner»); enum не наследует sealed class, но sealed interface реализует",
-    "Таблица сравнения с enum: пример из собственного кода вместо отсутствующего Success, английская вставка переведена, круговое «простые enum», двусмысленная строка про наследование",
-    "В пример Shape добавлен import kotlin.math.PI",
-    "Закрытость держится на правиле компилятора о месте объявления, а не на видимости конструктора: наследник из другого пакета отвергается («a class can only extend a sealed class or interface declared in the same package», kotlinc 2.4.10)",
-    "Разделитель sealed class и interface — хранимое состояние, а не реализация: интерфейс несёт дефолтные тела методов (проверено компиляцией)",
-    "Диагностика неполного when приведена к формулировке kotlinc 2.x",
-    "В примере Q4 исправлен порядок веток: TimeoutError входит в обе иерархии и разбирается первым",
-    "Закрыты все 78 замечаний к теории (51 правкой, 27 признаны уже исправленными) и 82 minor по блокам"
+  "blind_review": "source-blind рецензент выбрал задуманный ответ во всех 15 с первого захода (13×L4, 2×L3)",
+  "adversarial_rounds": [
+   {
+    "round": 1,
+    "scope": "15 блоков",
+    "blocking": 5,
+    "defect_blocks": 4,
+    "source_defects": 39
+   },
+   {
+    "round": 2,
+    "scope": "7",
+    "blocking": 4,
+    "defect_blocks": 3
+   },
+   {
+    "round": 3,
+    "scope": "5",
+    "blocking": 1,
+    "defect_blocks": 1
+   },
+   {
+    "round": 4,
+    "scope": "3",
+    "blocking": 0
+   },
+   {
+    "round": 5,
+    "scope": "2",
+    "blocking": 0
+   },
+   {
+    "round": 6,
+    "scope": "15 (после чистки 78 замечаний к теории — 51 правка)",
+    "blocking": 10,
+    "defect_blocks": 6,
+    "note": "массовая правка теории обесценила шесть чистых блоков"
+   },
+   {
+    "round": 7,
+    "scope": "6",
+    "blocking": 2,
+    "defect_blocks": 1
+   },
+   {
+    "round": 8,
+    "scope": "1",
+    "blocking": 0
+   },
+   {
+    "round": 9,
+    "scope": "15 (после закрытия 82 minor)",
+    "blocking": 6,
+    "defect_blocks": 4
+   },
+   {
+    "round": 10,
+    "scope": "8 (+ кросс-блочный круг: 2 дубля, 4 раскрытия)",
+    "blocking": 1,
+    "defect_blocks": 1
+   },
+   {
+    "round": 11,
+    "scope": "1",
+    "blocking": 0
+   }
   ],
-  "known_backlog": "закрыт: замечания к теории и minor по блокам разобраны полностью; остаток кросс-блочных пересечений признан структурным и описан выше",
-  "blocks": [
-    {
-      "q_number": 1,
-      "block_idx": 0,
-      "visible_question": "Что такое sealed class и какую проблему он решает?",
-      "linkage_level": "L4",
-      "answerable_from_source": true,
-      "adversarial_verdict": "CLEAN"
-    },
-    {
-      "q_number": 2,
-      "block_idx": 0,
-      "visible_question": "Чем sealed class отличается от enum?",
-      "linkage_level": "L4",
-      "answerable_from_source": true,
-      "adversarial_verdict": "CLEAN"
-    },
-    {
-      "q_number": 3,
-      "block_idx": 0,
-      "visible_question": "Что такое exhaustive when и как его добиться?",
-      "linkage_level": "L4",
-      "answerable_from_source": true,
-      "adversarial_verdict": "CLEAN"
-    },
-    {
-      "q_number": 4,
-      "block_idx": 0,
-      "visible_question": "Чем sealed interface отличается от sealed class?",
-      "linkage_level": "L4",
-      "answerable_from_source": true,
-      "adversarial_verdict": "CLEAN"
-    },
-    {
-      "q_number": 5,
-      "block_idx": 0,
-      "visible_question": "Как реализовать паттерн Result с sealed class?",
-      "linkage_level": "L4",
-      "answerable_from_source": true,
-      "adversarial_verdict": "CLEAN"
-    },
-    {
-      "q_number": 6,
-      "block_idx": 0,
-      "visible_question": "Что такое ADT (Algebraic Data Types) и как sealed class их реализует?",
-      "linkage_level": "L4",
-      "answerable_from_source": true,
-      "adversarial_verdict": "CLEAN"
-    },
-    {
-      "q_number": 7,
-      "block_idx": 0,
-      "visible_question": "Когда использовать sealed class vs interface?",
-      "linkage_level": "L4",
-      "answerable_from_source": true,
-      "adversarial_verdict": "CLEAN"
-    },
-    {
-      "q_number": 8,
-      "block_idx": 0,
-      "visible_question": "Какие ограничения у sealed class в Kotlin 1.5+?",
-      "linkage_level": "L4",
-      "answerable_from_source": true,
-      "adversarial_verdict": "CLEAN"
-    },
-    {
-      "q_number": 9,
-      "block_idx": 0,
-      "visible_question": "Как использовать sealed class в Kotlin DSL?",
-      "linkage_level": "L4",
-      "answerable_from_source": true,
-      "adversarial_verdict": "CLEAN"
-    },
-    {
-      "q_number": 10,
-      "block_idx": 0,
-      "visible_question": "Как сериализовать sealed class с kotlinx.serialization?",
-      "linkage_level": "L4",
-      "answerable_from_source": true,
-      "adversarial_verdict": "CLEAN"
-    },
-    {
-      "q_number": 11,
-      "block_idx": 0,
-      "visible_question": "Как моделировать состояния UI с sealed class?",
-      "linkage_level": "L4",
-      "answerable_from_source": true,
-      "adversarial_verdict": "CLEAN"
-    },
-    {
-      "q_number": 12,
-      "block_idx": 0,
-      "visible_question": "Как sealed class помогает избежать null и \"Stringly typed\" код?",
-      "linkage_level": "L4",
-      "answerable_from_source": true,
-      "adversarial_verdict": "CLEAN"
-    },
-    {
-      "q_number": 13,
-      "block_idx": 0,
-      "visible_question": "Как реализовать State Machine через sealed class?",
-      "linkage_level": "L4",
-      "answerable_from_source": true,
-      "adversarial_verdict": "CLEAN"
-    },
-    {
-      "q_number": 14,
-      "block_idx": 0,
-      "visible_question": "Что такое variance в sealed class (in/out)?",
-      "linkage_level": "L4",
-      "answerable_from_source": true,
-      "adversarial_verdict": "CLEAN"
-    },
-    {
-      "q_number": 15,
-      "block_idx": 0,
-      "visible_question": "Какие типичные ошибки при работе с sealed class?",
-      "linkage_level": "L4",
-      "answerable_from_source": true,
-      "adversarial_verdict": "CLEAN"
-    }
-  ]
+  "final": "15/15 блоков CLEAN; гейты: схема OK, linkage 0/0, anti-tell 0, ролевая схема без нарушений, A4/B4/C4/D3",
+  "cross_block": {
+   "rounds": 2,
+   "round1": "2 дубля (Q4/Q7, Q5/Q9), 4 раскрытия (Q1→Q3, Q3→Q15, Q1+Q3→Q12, Q1→Q8) — Q1 переанкорен на определение и механику закрытости, Q7 и Q9 разведены",
+   "round2": "остались 1 дубль (Q4/Q7 по оси «нет полей у интерфейса») и 3 раскрытия",
+   "accepted": "остаток признан структурным: Q1 определяет sealed, поэтому неизбежно упоминает проверку разбора; Q12 и Q15 разбирают две стороны одной связи else↔exhaustive. Дальнейшее разведение увело бы блоки с центральных тезисов своих Q (§12)"
+  }
+ },
+ "source_fixes": [
+  "Прямые наследники sealed обязаны быть в том же пакете И модуле — шпаргалка разрешала разные пакеты (проверено по docs Kotlin)",
+  "Хронология when: до 1.6 неполный statement компилировался молча, в 1.6 появилось предупреждение, с 1.7 — ошибка (было «до 1.6 давал warning»)",
+  "Приёмы .also { } появились ДО 1.6 — именно потому, что компилятор молчал; причинность восстановлена",
+  "Выдуманное сообщение компилятора «fun area: missing branch» заменено настоящей диагностикой Kotlin",
+  "«Никто извне не расширит тип» сведено к прямым наследникам: у open/abstract-наследника косвенные возможны и снаружи, у sealed — только внутри модуля и пакета",
+  "Sealed interface не хранит состояние, но реализацию методов нести умеет — довод в пользу sealed class сведён к общим полям",
+  "Число экземпляров подтипа определяет class против object, а не модификатор data",
+  "Оговорка про nullable subject: для Shape? нужна ветка null, либо else, либо снятие nullable до when",
+  "Запрет на локальные и анонимные объекты как прямых наследников (было «sealed нельзя объявить local или inner»); enum не наследует sealed class, но sealed interface реализует",
+  "Таблица сравнения с enum: пример из собственного кода вместо отсутствующего Success, английская вставка переведена, круговое «простые enum», двусмысленная строка про наследование",
+  "В пример Shape добавлен import kotlin.math.PI",
+  "Закрытость держится на правиле компилятора о месте объявления, а не на видимости конструктора: наследник из другого пакета отвергается («a class can only extend a sealed class or interface declared in the same package», kotlinc 2.4.10)",
+  "Разделитель sealed class и interface — хранимое состояние, а не реализация: интерфейс несёт дефолтные тела методов (проверено компиляцией)",
+  "Диагностика неполного when приведена к формулировке kotlinc 2.x",
+  "В примере Q4 исправлен порядок веток: TimeoutError входит в обе иерархии и разбирается первым",
+  "Закрыты все 78 замечаний к теории (51 правкой, 27 признаны уже исправленными) и 82 minor по блокам"
+ ],
+ "known_backlog": "закрыт: замечания к теории и minor по блокам разобраны полностью; остаток кросс-блочных пересечений признан структурным и описан выше",
+ "blocks": [
+  {
+   "q_number": 1,
+   "block_idx": 0,
+   "visible_question": "Что такое sealed class и какую проблему он решает?",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "adversarial_verdict": "CLEAN"
+  },
+  {
+   "q_number": 2,
+   "block_idx": 0,
+   "visible_question": "Чем sealed class отличается от enum?",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "adversarial_verdict": "CLEAN"
+  },
+  {
+   "q_number": 3,
+   "block_idx": 0,
+   "visible_question": "Что такое exhaustive when и как его добиться?",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "adversarial_verdict": "CLEAN"
+  },
+  {
+   "q_number": 4,
+   "block_idx": 0,
+   "visible_question": "Чем sealed interface отличается от sealed class?",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "adversarial_verdict": "CLEAN"
+  },
+  {
+   "q_number": 5,
+   "block_idx": 0,
+   "visible_question": "Как реализовать паттерн Result с sealed class?",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "adversarial_verdict": "CLEAN"
+  },
+  {
+   "q_number": 6,
+   "block_idx": 0,
+   "visible_question": "Что такое ADT (Algebraic Data Types) и как sealed class их реализует?",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "adversarial_verdict": "CLEAN"
+  },
+  {
+   "q_number": 7,
+   "block_idx": 0,
+   "visible_question": "Когда использовать sealed class vs interface?",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "adversarial_verdict": "CLEAN"
+  },
+  {
+   "q_number": 8,
+   "block_idx": 0,
+   "visible_question": "Какие ограничения у sealed class в Kotlin 1.5+?",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "adversarial_verdict": "CLEAN"
+  },
+  {
+   "q_number": 9,
+   "block_idx": 0,
+   "visible_question": "Как использовать sealed class в Kotlin DSL?",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "adversarial_verdict": "CLEAN"
+  },
+  {
+   "q_number": 10,
+   "block_idx": 0,
+   "visible_question": "Как сериализовать sealed class с kotlinx.serialization?",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "adversarial_verdict": "CLEAN"
+  },
+  {
+   "q_number": 11,
+   "block_idx": 0,
+   "visible_question": "Как моделировать состояния UI с sealed class?",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "adversarial_verdict": "CLEAN"
+  },
+  {
+   "q_number": 12,
+   "block_idx": 0,
+   "visible_question": "Как sealed class помогает избежать null и \"Stringly typed\" код?",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "adversarial_verdict": "CLEAN"
+  },
+  {
+   "q_number": 13,
+   "block_idx": 0,
+   "visible_question": "Как реализовать State Machine через sealed class?",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "adversarial_verdict": "CLEAN"
+  },
+  {
+   "q_number": 14,
+   "block_idx": 0,
+   "visible_question": "Что такое variance в sealed class (in/out)?",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "adversarial_verdict": "CLEAN"
+  },
+  {
+   "q_number": 15,
+   "block_idx": 0,
+   "visible_question": "Какие типичные ошибки при работе с sealed class?",
+   "linkage_level": "L4",
+   "answerable_from_source": true,
+   "adversarial_verdict": "CLEAN"
+  }
+ ],
+ "struct_parity": {
+  "checked": "2026-09-03",
+  "blocks": 15,
+  "out_of_corridor": 0,
+  "verdict": "PASS",
+  "lane": "struct-repair-lane #20",
+  "aligned_options": 41,
+  "was_out_of_corridor": 13,
+  "reverified_source_blind": true,
+  "note": "Самый тяжёлый вход линии: помимо 13 блоков вне коридора файл валил четыре гейта сразу — OPTION_LENGTH_RATIO 1.50, пять дублирующихся 10-грамм, STYLE_GUESSABILITY 0.433 по длине и SOURCE_COVERAGE из-за версии «1.7» в двух опциях Q3. Всё снято. После правок source-blind: 15/15 blind==correct, L4 14 и L3 1."
+ },
+ "axis_defect": {
+  "flagged_blocks": [
+   8,
+   9,
+   10
+  ],
+  "count": 3,
+  "of": 15
+ }
 }

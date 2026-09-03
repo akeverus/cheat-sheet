@@ -31,7 +31,7 @@
 | 17 | spring-r2dbc-interview | 15 | 15 | ГОТОВО (PASS, blind 15/15; ⚠ axis-дефект 13/15 → нужен тик пересборки) |
 | 18 | spring-vault-interview | 15 | 14 | ГОТОВО (57 опций выровнено; Q8 — ось дистрактора переписана; blind 15/15, L4) |
 | 19 | hibernate-relationships-interview | 15 | 13 | ГОТОВО (51 опция выровнено; blind 15/15, L4; ⚠ axis-дефект 7/15) |
-| 20 | kotlin-sealed-classes-interview | 15 | 13 | TODO |
+| 20 | kotlin-sealed-classes-interview | 15 | 13 | ГОТОВО (41 опция; сняты ratio 1.50, 5 дублей n-грамм, guessability 0.433, версия 1.7; blind 15/15) |
 | 21 | kotlin-spring-interview | 15 | 13 | TODO |
 | 22 | junit-interview | 15 | 13 | TODO |
 | 23 | spring-state-machine-interview | 15 | 13 | TODO |
