@@ -137,7 +137,22 @@
                         <!--/* Пустой набор — единственное состояние, где нужен совет:
                              остальные читаются по самим числам выше. */-->
                         <p class="outcome-empty" th:if="${inSet == 0}">В наборе нет вопросов — расширь отбор слева.</p>
-                        <p class="outcome-filters">
+                        <!--/* Строка отбора появляется только когда отбор ЕСТЬ
+                             (тихий интерфейс, аудит 2026-09-02): «Отбор: все темы»
+                             сообщал об ОТСУТСТВИИ отбора наравне с реальными
+                             фактами набора. Условие перечисляет те же поля, что
+                             считает describeFilters в session-form.js: сервер и
+                             скрипт обязаны прятать строку в одних случаях, иначе
+                             она мигнёт при загрузке. */-->
+                        <p class="outcome-filters"
+                           th:with="hasFilter=${filter != null and (
+                                       (filter.topic != null and !filter.topic.isBlank())
+                                       or (filter.group != null and !filter.group.isBlank())
+                                       or filter.importantOnly == true
+                                       or filter.onlyWrong == true
+                                       or filter.shuffle == true
+                                       or filter.ordered == false)}"
+                           th:attr="hidden=${hasFilter or weakTopics == true} ? null : 'hidden'">
                             <span class="outcome-filters-label">Отбор:</span>
                             <span data-preview-filters>все темы</span>
                         </p>

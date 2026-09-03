@@ -113,7 +113,16 @@ export function initSessionModeForm() {
     // Строка действующего отбора живёт в блоке «Что попадёт» рядом с самим
     // отбором, а не в полосе запуска: она описывает НАБОР, а полоса — сессию.
     // Поэтому её ищем в документе, а не внутри полосы.
-    if (previewFilters) previewFilters.textContent = describeFilters();
+    // Строка молчит, когда отбор пуст (тихий интерфейс, аудит 2026-09-02):
+    // «Отбор: все темы» — это отсутствие отбора, и ярлык сообщал о нём наравне
+    // с реальными фактами набора. Скрываем всю строку, а не только значение:
+    // одинокий ярлык «Отбор:» ничего не называет.
+    if (previewFilters) {
+      const text = describeFilters();
+      previewFilters.textContent = text;
+      const row = previewFilters.closest('.outcome-filters');
+      if (row) row.hidden = text === 'все темы';
+    }
     if (!preview) return;
     // Полоса приходит скрытой: без скрипта её числа были бы заглушками.
     preview.hidden = false;
