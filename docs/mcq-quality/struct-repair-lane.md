@@ -32,7 +32,7 @@
 | 18 | spring-vault-interview | 15 | 14 | ГОТОВО (57 опций выровнено; Q8 — ось дистрактора переписана; blind 15/15, L4) |
 | 19 | hibernate-relationships-interview | 15 | 13 | ГОТОВО (51 опция выровнено; blind 15/15, L4; ⚠ axis-дефект 7/15) |
 | 20 | kotlin-sealed-classes-interview | 15 | 13 | ГОТОВО (41 опция; сняты ratio 1.50, 5 дублей n-грамм, guessability 0.433, версия 1.7; blind 15/15) |
-| 21 | kotlin-spring-interview | 15 | 13 | TODO |
+| 21 | kotlin-spring-interview | 15 | 13 | ГОТОВО (41 опция; выравнивание обнажило 3 телля — сняты; blind 15/15, L4) |
 | 22 | junit-interview | 15 | 13 | TODO |
 | 23 | spring-state-machine-interview | 15 | 13 | TODO |
 | 24 | spring-transaction-interview | 15 | 13 | TODO |
