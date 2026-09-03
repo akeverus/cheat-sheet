@@ -220,7 +220,11 @@
         </span>
     </summary>
 <div class="stats-standing">
-<div class="card">
+<!--/* Хост больше не рисует коробку вокруг ранга (тихий интерфейс, аудит
+     2026-09-02): карточка-в-карточке была одним из десяти равновесных боксов
+     первого экрана. Ранг лежит на канве; фрагмент общий с /session-summary и
+     не тронут — коробкой владеет хост (ProgressionContractTest). */-->
+<div class="stats-rank-host">
     <div th:replace="~{fragments/progression :: rank(p=${progression}, sessionXp=null)}"></div>
 </div>
 <section class="dashboard-grid" th:if="${metrics != null}"
@@ -296,8 +300,12 @@
     <article class="card metric">
         <span class="eyebrow">Очередь</span>
         <div class="metric-value" th:text="${metrics.dueNow}">0</div>
-        <span class="muted tiny" th:with="repeats=${metrics.dueRepeats()}">
-            <span th:text="${repeats} + ' к повтору · ' + ${metrics.dueFresh} + ' новых'">0 к повтору · 0 новых</span><!--
+        <!--/* «N к повтору» отсюда снято (аудит 2026-09-02): это же число крупно
+             стоит в двери «Повторить сегодня» тремястами пикселями выше — оно
+             было главным дублем страницы. Слагаемые, которых в двери нет
+             (новые и просроченные), остаются. */-->
+        <span class="muted tiny">
+            <span th:text="${metrics.dueFresh} + ' новых'">0 новых</span><!--
             --><th:block th:if="${metrics.overdue > 0}"> · <strong class="metric-alarm"
                     th:text="${metrics.overdue} + ' просрочено'">0 просрочено</strong></th:block>
         </span>

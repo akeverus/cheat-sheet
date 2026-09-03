@@ -110,28 +110,58 @@ html[data-design] .stats-page .stats-summary {
   }
 }
 
+/* ФАКТ-ЛЕНТА ВМЕСТО ЧЕТЫРЁХ ПЛИТОК (аудит «тихий интерфейс» 2026-09-02).
+   Четыре окаймлённые карточки метрик стояли рядом с окаймлённой карточкой ранга
+   и тремя окаймлёнными дверями — десять равновесных боксов на одном экране, и
+   squint-тест не выделял ни одного. Числа те же, коробок нет: колонки ленты
+   разделяет волосяная линия, значения и знаменатели не тронуты. Коробка —
+   у одного героя ряда «что делать дальше», и это единственный акцент экрана. */
+html[data-design] .stats-page .dashboard-grid {
+  gap: 0;
+  margin: 0;
+}
+html[data-design] .stats-page .dashboard-grid .metric {
+  padding: 0 var(--space-4);
+  border: 0;
+  border-left: var(--rule-weight) solid var(--color-border-secondary);
+  border-radius: 0;
+  background: transparent;
+}
+html[data-design] .stats-page .dashboard-grid .metric:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+/* В стопке (<=480) вертикальная линейка не разделяет — разделяет горизонтальная. */
+@media (max-width: 480px) {
+  html[data-design] .stats-page .dashboard-grid .metric {
+    padding: var(--space-3) 0 0;
+    border-left: 0;
+    border-top: var(--rule-weight) solid var(--color-border-secondary);
+  }
+  html[data-design] .stats-page .dashboard-grid .metric:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
+}
 /* Ряд «где я»: ступень слева, метрики справа. Порог — та же ширина, на которой
    метрики ещё встают по две в ряд; ниже строка распадается в стопку. */
 html[data-design] .stats-page .stats-standing {
   display: grid;
-  gap: var(--space-5);
+  /* Ярусы стойки (ранг → лента фактов) — один блок «где я», а не два соседних
+     раздела: зазор между ними меньше межразделового (тихий интерфейс). */
+  gap: var(--space-4);
 }
+/* Ранг и лента — ярусами, а не колонками (тихий интерфейс, аудит 2026-09-02).
+   Пока метрики были карточками, им нужна была своя колонка рядом с рангом; став
+   лентой без коробок, они читаются строкой во всю ширину и встают ЧЕТЫРЬМЯ в
+   ряд вместо 2×2 — ярус ниже на ~180px, и вкладки разделов входят в первый
+   вьюпорт 1440×900. */
 @media (min-width: 1200px) {
   html[data-design] .stats-page .stats-standing {
-    grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
-    /* ОТОЗВАНО: пробовал `stretch`, чтобы выровнять ряд — ступень весит 190px против
-       400+ у метрик. Снимок показал, что лечение хуже болезни: карточка растянулась
-       до 434px, а содержимое (эмблема, полоса, две строки) осталось прежним и повисло
-       в середине почти пустой плиты. Колонки здесь разной природы и разной высоты;
-       карточка по содержимому честнее растянутой. */
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr);
   }
-  /* Четыре метрики в ряд правой колонки становятся по ~220px, и значение ломается
-     посреди дроби («1 /» и «9818» на разных строках), а знаменатель очереди уезжает
-     в четыре строки. Замер это и показал. В колонке они встают по две: ~460px на
-     карточку — дробь и подпись помещаются в строку. */
   html[data-design] .stats-page .stats-standing .dashboard-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -209,12 +239,43 @@ html[data-design] .stats-page .metric-note {
 
 /* ТРИ ДВЕРИ — КОЛОНКОЙ И В ДВЕ СТРОКИ КАЖДАЯ, А НЕ РЯДОМ ВЫСОКИХ ПЛИТОК.
    Довод и история: docs/css-decisions/pages-stats.md#pages-stats-e01 */
+/* ГЕРОЙ И ДВЕ ТИХИЕ СТРОКИ (аудит «тихий интерфейс» 2026-09-02). Три равные
+   двери в ряд конкурировали между собой: squint-тест не выделял ни одной, и
+   человек читал все три, чтобы выбрать. Планировщик уже знает, что делать
+   сейчас (.is-recommended), — этой двери отдан визуальный вес карточки,
+   остальные две стали строками-ссылками. Число колонок выбирает ширина
+   (auto-fit по-прежнему), но у ряда один герой во всю ширину и список под ним. */
 html[data-design] .stats-page .stats-next-actions-grid {
   display: grid;
-  /* Число колонок выбирает ширина, а не медиазапрос.
-     Довод и история: docs/css-decisions/pages-stats.md#pages-stats-e02 */
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+/* ТИХАЯ СТРОКА — вид по умолчанию для всех дверей, кроме героя: одна строка
+   «подпись · число · расшифровка →» без рамки и подложки. Коробка проявляется
+   на hover/focus — цель остаётся кликабельной и заметной под курсором. */
+html[data-design] .stats-page .stats-next-action:not(.stats-next-action-primary) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-2);
+  row-gap: 0;
+  padding: var(--space-2) calc(var(--space-4) + var(--space-5)) var(--space-2) var(--space-3);
+  border-color: transparent;
+  background: transparent;
+}
+html[data-design] .stats-page .stats-next-action:not(.stats-next-action-primary) strong {
+  font-size: var(--font-size-md);
+}
+html[data-design] .stats-page .stats-next-action:not(.stats-next-action-primary):hover,
+html[data-design] .stats-page .stats-next-action:not(.stats-next-action-primary):focus-visible {
+  transform: none;
+  background: var(--color-bg-secondary);
+  border-color: var(--color-border-secondary);
+}
+/* Уточнение слабейшей темы в строке — хвост той же фразы, а не свой этаж. */
+html[data-design] .stats-page .stats-next-action:not(.stats-next-action-primary) .stats-next-action-topic {
+  flex: 1 1 100%;
 }
 
 html[data-design] .stats-page .stats-next-action {
@@ -279,6 +340,14 @@ html[data-design] .stats-page .stats-next-action:focus-visible::after {
 
 html[data-design] .stats-page .stats-next-action.is-recommended::after {
   color: var(--color-accent-strong);
+}
+
+/* Герой — единственная карточка ряда и единственный акцент экрана. */
+html[data-design] .stats-page .stats-next-action-primary {
+  padding: var(--space-5) calc(var(--space-5) + var(--space-6)) var(--space-5) var(--space-5);
+}
+html[data-design] .stats-page .stats-next-action-primary strong {
+  font-size: var(--font-size-heading-section);
 }
 
 html[data-design] .stats-page .stats-next-action.is-recommended {
