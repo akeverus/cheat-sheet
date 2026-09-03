@@ -34,10 +34,15 @@ const PINNED_HOME =
 
 const DYNAMIC_CONTENT = [
   '.focus-question', '#interview-options', '.topic-brief', '.question-code',
-  '.focus-bank-progress', '.today-chip', '.focus-aside .btn',
+  '.focus-aside .btn',
   '.stats-next-actions-grid', '.dashboard-grid', '.stats-standing', '.metrics-legend',
   '.builder-outcome', '.filter-chip-count', '.session-preview',
   '.page-head-lead',
+  /* Тихий статус оболочки несёт живые числа (очередь, ошибки) и стоит на КАЖДОЙ
+     странице матрицы — без маски любой ответ пользователя красил бы все 32
+     снимка (аудит «тихий интерфейс», 2026-09-02). Маски `.focus-bank-progress`
+     и `.today-chip` сняты вместе со своими носителями. */
+  '.sidebar-status',
 ];
 
 /* Маска лечит ЗНАЧЕНИЯ, но не ПРИСУТСТВИЕ: блок, который то есть, то нет
@@ -46,7 +51,7 @@ const DYNAMIC_CONTENT = [
    вокруг масок. Такие блоки на время снимка скрываются целиком — их пиксели
    матрица честно НЕ стережёт (поведение причин закрыто контрактами разметки,
    баннера — клавиатурным спеком). */
-const VOLATILE_PRESENCE = ['.focus-question-reason', '.resume-banner', '.notice', '.today-chip'];
+const VOLATILE_PRESENCE = ['.focus-question-reason', '.resume-banner', '.notice'];
 const stabilizePresence = (page) =>
   page.addStyleTag({ content: VOLATILE_PRESENCE.join(', ') + ' { display: none !important; }' });
 const GOLDEN = process.env.VISUAL_GOLDEN === '1';
