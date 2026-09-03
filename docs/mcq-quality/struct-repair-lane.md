@@ -34,7 +34,7 @@
 | 20 | kotlin-sealed-classes-interview | 15 | 13 | ГОТОВО (41 опция; сняты ratio 1.50, 5 дублей n-грамм, guessability 0.433, версия 1.7; blind 15/15) |
 | 21 | kotlin-spring-interview | 15 | 13 | ГОТОВО (41 опция; выравнивание обнажило 3 телля — сняты; blind 15/15, L4) |
 | 22 | junit-interview | 15 | 13 | ГОТОВО (42 опции; guessability 0.411 снята ничьёй; blind 15/15; ⚠ axis-дефект 13/15 → пересборка) |
-| 23 | spring-state-machine-interview | 15 | 13 | TODO |
+| 23 | spring-state-machine-interview | 15 | 13 | ГОТОВО (48 опций; чисто с первого прогона; blind 15/15; ⚠ axis-дефект 10/15) |
 | 24 | spring-transaction-interview | 15 | 13 | TODO |
 | 25 | java-records-interview | 15 | 12 | TODO |
 | 26 | spring-modulith-interview | 15 | 12 | TODO |
