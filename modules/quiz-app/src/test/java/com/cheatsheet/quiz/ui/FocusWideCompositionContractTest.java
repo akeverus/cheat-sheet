@@ -293,6 +293,22 @@ class FocusWideCompositionContractTest {
         return open.contains(Boolean.TRUE);
     }
 
+    /**
+     * Эволюция контракта (аудит «тихий интерфейс», 2026-09-02).
+     *
+     * <p>Прежняя редакция требовала, чтобы гейт широкой композиции впускал рельс
+     * ВНЕ сессии — по {@code .focus-bank-progress}, банде «Пройдено по банку /
+     * Выучено / Точность / очередь». Замер живого экрана показал цену: над
+     * вопросом стояли шесть чисел аналитики, дублирующих /stats, и самый
+     * заметный элемент страницы говорил не о вопросе. Банда снята, вне сессии
+     * рельса нет вовсе, а числа получили один тихий дом — {@code .sidebar-status}
+     * в оболочке (см. {@code SidebarStatusAdvice}).</p>
+     *
+     * <p>Гейт остаётся двухсостоятельным, но второе состояние теперь —
+     * {@code .focus-review-context} (строка «Ошибок к разбору N» на /review):
+     * там рельсу по-прежнему есть что показать, и колонка не выродится в
+     * пустой жёлоб.</p>
+     */
     @Test
     void wideCompositionGateCoversBothRailStates() {
         String gate = wideRule().group(1);
@@ -302,54 +318,40 @@ class FocusWideCompositionContractTest {
                         + "а правой колонки не будет")
                 .contains(".session-progress-track");
         assertThat(gate)
-                .as("гейт композиции стоит только на сессии — вне сессии страница схлопывается "
-                        + "в колонку 960px по центру (замер: 683px пустоты с каждой стороны на 2560)")
-                .contains(".focus-bank-progress");
+                .as("гейт композиции стоит только на сессии — на /review рельс несёт размер "
+                        + "набора, и без второго состояния колонка там не включится")
+                .contains(".focus-review-context");
+        assertThat(gate)
+                .as("банда прогресса банка вернулась в гейт — вместе с ней вернутся шесть "
+                        + "чисел аналитики над вопросом")
+                .doesNotContain(".focus-bank-progress");
     }
 
     @Test
-    void railOutsideSessionActuallyCarriesContent() {
+    void theRailIsAbsentOutsideSessionAndReview() {
         String template = read(FOCUS_TEMPLATE);
 
         assertThat(template)
-                .as("вне сессии рельсу нечего показать, а гейт композиции его уже впускает — "
-                        + "это ровно «вторая колонка ради заполнения места», которую мандат запрещает")
-                .contains("interviewSession == null and metrics != null")
-                .contains("focus-bank-progress");
+                .as("рельс снова рендерится безусловно — вне сессии он станет пустым "
+                        + "лендмарком или снова наберётся дублями /stats")
+                .contains("th:if=\"${interviewSession != null or (reviewMode != null and reviewMode)}\"");
         assertThat(template)
-                .as("блок прогресса по банку читает поля, которых нет в InterviewStats — если "
-                        + "они пропадут из шаблона, рельс вне сессии снова выродится в один чип")
-                .contains("metrics.cardsSeen()")
-                .contains("metrics.cardsTotal()")
-                .contains("metrics.cardsMastered()");
+                .as("банда прогресса банка вернулась на экран вопроса")
+                .doesNotContain("focus-bank-progress")
+                .doesNotContain("metrics.cardsSeen()")
+                .doesNotContain("metrics.cardsMastered()");
+        assertThat(template)
+                .as("контекст режима повтора обязан остаться: экран, открытый ради набора, "
+                        + "должен называть его размер")
+                .contains("focus-review-context")
+                .contains("Ошибок к разбору");
     }
 
-    /**
-     * Метрики обязаны доезжать до модели вида целиком, а не через {@code InterviewStats}.
-     *
-     * <p>{@code InterviewStats.from(LearningMetrics)} — view-adapter на 6 полей из 14:
-     * {@code cardsSeen} и точность в него не проходят. Ровно поэтому рельсу вне сессии
-     * «нечего было показать» — данные считались на каждом рендере и терялись в горлышке.
-     * Если {@code metrics} снова уберут из {@code SurfaceState} или из модели, шаблонное
-     * условие тихо станет ложным, блок исчезнет, а гейт композиции останется — то есть
-     * вернётся дефект, но уже без видимой причины в CSS.
-     */
-    @Test
-    void metricsReachTheViewModelUnreduced() {
-        String surface = read(Path.of("src/main/java/com/cheatsheet/quiz/feature/interview/"
-                + "service/page/FocusTrainingPageService.java"));
-        String mapper = read(Path.of("src/main/java/com/cheatsheet/quiz/api/mapper/view/"
-                + "MvcModelAttributeMapper.java"));
-
-        assertThat(surface)
-                .as("LearningMetrics снова не входит в SurfaceState — рельс вне сессии останется "
-                        + "без данных, хотя метрики по-прежнему считаются на каждом рендере")
-                .contains("LearningMetrics metrics");
-        assertThat(mapper)
-                .as("metrics не кладутся в модель экрана вопроса — шаблонное условие блока "
-                        + "прогресса по банку станет ложным молча")
-                .contains("model.addAttribute(\"metrics\", surfaceState.metrics())");
-    }
+    /* Гейт metricsReachTheViewModelUnreduced снят вместе со своей причиной
+       (аудит «тихий интерфейс», 2026-09-02): он защищал доставку LearningMetrics
+       ради банды прогресса банка на экране вопроса. Банда снята, шаблон фокуса
+       метрик не читает — контракт остался бы защитой того, что никто не
+       использует. Числа банка живут на /stats, у своего сервиса. */
 
     @Test
     void railTokensAreDefinedOnce() {

@@ -58,7 +58,10 @@ public class MvcModelAttributeMapper {
      */
     public void applySurfaceState(Model model, FocusTrainingPageService.SurfaceState surfaceState) {
         model.addAttribute("stats", surfaceState.stats());
-        model.addAttribute("metrics", surfaceState.metrics());
+        // «metrics» экрану вопроса больше не кладутся (аудит «тихий интерфейс»,
+        // 2026-09-02): их единственным потребителем была банда прогресса банка
+        // над вопросом, снятая вместе с дублями /stats. Сам расчёт в
+        // SurfaceState остаётся — он же питает решения планировщика.
         model.addAttribute("filteredStats", surfaceState.filteredStats());
         applyTopics(model, surfaceState.topics());
         model.addAttribute("groups", surfaceState.groups());

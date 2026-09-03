@@ -49,7 +49,10 @@
             </div>
         </div>
         <form method="post" th:action="@{/resume}" class="resume-banner-action">
-            <button type="submit" class="btn next-btn btn-compact">Продолжить</button>
+            <!--/* Ранг понижен с next-btn (тихий фокус): заливной «Продолжить»
+                 конкурировал с рабочим CTA экрана. Строка-notice — вторичное
+                 предложение, оба её действия тихие. */-->
+            <button type="submit" class="btn secondary-btn btn-compact">Продолжить</button>
         </form>
         <!--/* Второй выход из паузы (UX-02): раньше PauseService.discard() не вызывал
              никто, и баннер висел, пока сессию не пройдёшь. Тихий ранг — действие
@@ -127,8 +130,16 @@
         <!--/* Статический aria-label="Сессия" рядом с th:aria-label убран: прототипное
              значение здесь не безобидно — оно повторяет ровно ту неверную метку,
              которую условие выше и исправляет, и всплыло бы при сбое выражения. */-->
+        <!--/* ТИХИЙ ФОКУС (аудит 2026-09-02): вне сессии и вне режима повтора рельс
+             не рендерится вовсе. Статусная банда («Пройдено по банку», Выучено,
+             Точность, чип очереди, кнопка «Разобрать ошибки») снята с экрана
+             вопроса: шесть чисел конкурировали с самим вопросом и дублировали
+             /stats. Их тихий дом теперь — сайдбар (.sidebar-status: очередь и
+             вход в ошибки) и аналитика. Пустой лендмарк «Мой прогресс» исчез
+             вместе с содержимым. */-->
         <aside class="focus-aside focus-session-rail"
-               th:aria-label="${interviewSession != null ? 'Сессия' : 'Мой прогресс'}">
+               th:if="${interviewSession != null or (reviewMode != null and reviewMode)}"
+               th:aria-label="${interviewSession != null ? 'Сессия' : 'Повтор ошибок'}">
                 <!--/* Прогресс-строка и трек гейтятся th:if: вне сессии раньше в DOM
                      висела видимая пустая полоска 254×2px с aria-valuemax="0"
                      (progressbar «0 из 0» для скринридера). round-01 C-live-1. */-->
@@ -151,109 +162,18 @@
                          th:attr="data-progress=${#numbers.formatDecimal(progressPercent, 1, 'NONE', 1, 'POINT')}"></div>
                 </div>
 
-                <!--/* Вне сессии рельс отвечает на тот же вопрос, но в другом масштабе:
-                     в сессии — «где я внутри этой сессии», вне её — «где я по банку».
-                     Раньше здесь не было ничего, кроме чипа очереди, и правая колонка
-                     на >=1080px гейтилась по .session-progress-track — иначе выродилась
-                     бы в одинокую фишку в пустом жёлобе. Итог: вне сессии вопрос стоял
-                     колонкой 960px по центру, оставляя 683px пустоты с каждой стороны
-                     на 2560 (59% рабочей области). Это чинится содержимым, а не CSS:
-                     §7 прямо запрещает вторую колонку ради заполнения места.
-
-                     Данные не пришлось добывать — они уже считались. Экран вопроса на
-                     каждом рендере строит LearningMetrics и складывал их в InterviewStats
-                     через from(), который берёт 6 полей из 14; cardsSeen и точность в
-                     это горлышко не проходили. Теперь metrics доезжает до модели целиком
-                     (FocusTrainingPageService.SurfaceState), лишнего запроса нет.
-
-                     Пустого состояния у блока нет by design (§27): у нового пользователя
-                     это честные «0 из 9818» и «—» вместо точности, а не исчезающий блок,
-                     иначе композиция схлопывалась бы обратно в жёлоб. */-->
-                <div class="focus-bank-progress" th:if="${interviewSession == null and metrics != null}">
-                    <!--/* РАЗБОР ОШИБОК ЗНАЕТ СВОЙ МАСШТАБ. На /review рельс показывал ту же
-                         строку «Пройдено по банку 129/9818», что и на тренировке, — то есть
-                         экран, открытый ради конкретного набора, о самом наборе не сообщал
-                         ничего: сколько ошибок ждёт разбора, видно было только в чипе
-                         конструктора сессии на /settings. Замер на живом экране: чип режима
-                         «Повтор ошибок», причина «Последний ответ был неверным», рельс —
-                         прогресс банка; размер набора не назван нигде.
-                         Число берётся из уже посчитанного `filterWrongCount` (тот же источник,
-                         что у чипа «Ошибки» в конструкторе): SurfaceState строится на каждом
-                         рендере экрана вопроса, второго запроса тут нет. */-->
-                    <div class="focus-progress-line" th:if="${reviewMode != null and reviewMode}">
-                        <span class="muted tiny kpi-role">Ошибок к разбору</span>
-                        <span th:text="${filterWrongCount != null ? filterWrongCount : 0}">0</span>
-                    </div>
-                    <div class="focus-progress-line" th:unless="${reviewMode != null and reviewMode}">
-                        <span class="muted tiny kpi-role">Пройдено по банку</span>
-                        <span>
-                            <span class="bank-progress-seen" th:text="${metrics.cardsSeen()}">0</span>/<span th:text="${metrics.cardsTotal()}">0</span>
-                        </span>
-                    </div>
-                    <!--/* Полосы прогресса здесь НЕТ, хотя сессионный рельс её показывает.
-                         Она тут была и снята по замеру на живых данных: доля пройденного
-                         от банка в 9818 карточек — 0.2% у нового пользователя, то есть
-                         заливка 0.5px на треке 263px. Сам пустой трек — bg-tertiary
-                         (247,251,250) на фоне focus-page (245,248,248), контраст 1.02:1,
-                         тоже невидим. Получалась пустая полоска между текстом, которая
-                         не говорит ничего сверх соседнего «23/9818» и читается как сбой
-                         рендера, а не как «ты в начале».
-
-                         Дело не в цвете трека: доля по банку такого размера мала у всех,
-                         кроме давних пользователей, поэтому инструмент выбран неверно, а
-                         не плохо покрашен. Одна цифра, работающая на любом значении,
-                         лучше двух, из которых одна работает иногда. */-->
-                    <!--/* Две цифры отвечают на «а что с качеством»: строка выше говорит
-                         только про охват. Точность — первых попыток (честная память), а
-                         не общая: общая растёт от повторов одного вопроса. Имя знаменателя
-                         стоит В ПОДПИСИ, не только здесь: /stats открывается «точностью
-                         попыток» с другим знаменателем, и голое «Точность» на соседних
-                         экранах читалось как два противоречащих числа (VIS-04).
-                         NO_DATA = -1 показывается как «—», не как 0%. */-->
-                    <dl class="focus-bank-facts">
-                        <div class="focus-bank-fact">
-                            <dt class="muted tiny kpi-role">Выучено</dt>
-                            <dd th:text="${metrics.cardsMastered()}">0</dd>
-                        </div>
-                        <div class="focus-bank-fact">
-                            <dt class="muted tiny kpi-role">Точность первой попытки</dt>
-                            <dd th:text="${metrics.hasFirstAttemptAccuracy()}
-                                         ? ${#numbers.formatDecimal(metrics.firstAttemptAccuracy(), 1, 'NONE', 0, 'POINT') + '%'}
-                                         : '—'">—</dd>
-                        </div>
-                    </dl>
+                <!--/* Контекст режима повтора: экран открыт ради конкретного набора,
+                     и его размер назван здесь. Число — из уже посчитанного
+                     filterWrongCount (тот же источник, что у чипа «Ошибки» в
+                     конструкторе), второго запроса нет. Ветки «Пройдено по банку»
+                     больше нет: вне сессии рельс не рендерится (тихий фокус),
+                     охват банка живёт на /stats. */-->
+                <div class="focus-progress-line focus-review-context"
+                     th:if="${interviewSession == null and reviewMode != null and reviewMode}">
+                    <span class="muted tiny kpi-role">Ошибок к разбору</span>
+                    <span th:text="${filterWrongCount != null ? filterWrongCount : 0}">0</span>
                 </div>
 
-                <!--/* Компактный «сегодня»-чип: стрик (🔥) + due. Информативный, без CTA. */-->
-                <div th:replace="~{fragments/today-widget :: today-chip(stats=${stats})}"></div>
-
-                <!--/* ВХОД В РАЗБОР ОШИБОК — ЗДЕСЬ, А НЕ В ПЕРВОМ УРОВНЕ НАВИГАЦИИ.
-                     Раньше «Ошибки» были шестым пунктом рельса и нижней полосы, наравне
-                     с разделами. Разделом этот пункт не был: /review и / рендерят ОДИН
-                     шаблон, вся разница — ReviewModeService, форсящий один флаг фильтра
-                     (onlyWrong=true), а тот же отбор уже включается чипом «Ошибки» в
-                     конструкторе сессии. Пункт меню при этом молчал о главном: есть ли
-                     вообще что разбирать — он выглядел одинаково и при 27 ошибках, и при нуле.
-
-                     Вход стоит внутри тренировки, среди фактов о моём прогрессе, и несёт
-                     ЧИСЛО. Появляется он тогда, когда есть что разбирать: вести человека
-                     в пустое состояние «Пока нет ошибок» одним из шести постоянных пунктов
-                     — это приглашение в тупик.
-
-                     Число берётся из уже посчитанного filterWrongCount (тот же источник,
-                     что у чипа конструктора и у строки «Ошибок к разбору» на самом
-                     /review): SurfaceState строится на каждом рендере экрана, второго
-                     запроса нет.
-
-                     Во время сессии входа нет: человек внутри набора, и увести его из
-                     набора — не помощь. */-->
-                <a class="btn secondary-btn focus-review-entry"
-                   th:if="${(reviewMode == null or !reviewMode) and interviewSession == null
-                            and filterWrongCount != null and filterWrongCount > 0}"
-                   th:href="@{/review}">
-                    <span>Разобрать ошибки</span>
-                    <span class="focus-review-entry-count" th:text="${filterWrongCount}">0</span>
-                </a>
 
                 <!--/* Обратный выход из режима: на /review активным разделом подсвечена
                      «Тренировка» (раздел тот же, режим другой), но клик по активному
@@ -373,6 +293,14 @@
                       th:text="${diff.label()}">Сложный</span>
                 <span class="zone-chip" th:text="${focusModeChipText}">Тренировка</span>
             </div>
+            <!--/* Причина повторения — в ТОЙ ЖЕ строке, что тема и режим (тихий
+                 фокус, аудит 2026-09-02). Отдельным этажом она была четвёртым
+                 голосом до заголовка вопроса, хотя отвечает на тот же вопрос
+                 «что передо мной». Строка переносится целиком, если не влезает. */-->
+            <p class="focus-question-reason"
+               th:if="${reviewReason != null}"
+               th:attr="data-reason-type=${reviewReason.type().name()}"
+               th:text="${reviewReason.message()}">Причина повторения</p>
         </div>
         <!--/* Explainable-причина повторения (FSRS/SM-2): почему вопрос сейчас перед
              тобой. Серверный рендер, без JS. Показывается только если планировщик
@@ -382,10 +310,7 @@
              перед вопросом экзамена подсказывают ответ. Раньше вместо них печаталось
              «Часть экзаменационной сессии» — факт о сессии, а не об этом вопросе,
              дублировавший чип режима строкой выше и рельс прогресса справа. */-->
-        <p class="focus-question-reason"
-           th:if="${reviewReason != null}"
-           th:attr="data-reason-type=${reviewReason.type().name()}"
-           th:text="${reviewReason.message()}">Причина повторения</p>
+
         <!--/* .focus-review-policy («Интервальные повторения: верный ответ
              отодвигает карточку…») отсюда убрана. Это описание МЕХАНИКИ, а не
              факт об этом вопросе: оно одинаково на каждом review-вопросе и
@@ -563,15 +488,27 @@
 
                  Ответ он не подсказывает: описание перечисляет ОБЪЁМ темы, а не решение
                  конкретного вопроса. */-->
+            <!--/* СВЁРНУТАЯ СТРОКА (тихий фокус, аудит 2026-09-02): развёрнутый блок
+                 «О теме» с картой был вторым по площади после кода конкурентом
+                 внимания при ответе. Контекст темы — secondary: строка-раскрытие
+                 несёт роль и счёт освоения, содержимое — в одном клике. Нативный
+                 <details>, тот же вид шапки, что у раскрытий /stats
+                 (.disclosure-summary). */-->
             <section class="topic-brief"
                      th:if="${current.question.topic != null and !current.question.topic.isBlank()
                               and @topicUtils.description(current.question.topic) != null}"
                      aria-labelledby="topic-brief-title">
+                <details class="topic-brief-disclosure">
                 <!--/* Заголовок называет РОЛЬ блока, а не тему: название темы уже стоит
                      строкой выше, в мета-строке вопроса. Первая сборка печатала его здесь
                      второй раз — на снимке WebKit 1512×982 «Перебор с возвратом» читалось
                      дважды на одном экране, в 350 пикселях друг от друга. */-->
-                <h2 class="topic-brief-title" id="topic-brief-title">О теме</h2>
+                <summary class="disclosure-summary topic-brief-summary">
+                    <h2 class="topic-brief-title" id="topic-brief-title">О теме</h2>
+                    <span class="muted tiny topic-brief-summary-count"
+                          th:if="${topicMap != null and topicMap.total() > 0}"
+                          th:text="${topicMap.learned() + ' из ' + topicMap.total() + ' освоено'}">0 из 0 освоено</span>
+                </summary>
                 <p class="topic-brief-text" th:text="${@topicUtils.description(current.question.topic)}">Описание темы</p>
                 <!--/* КАРТА ТЕМЫ. Замер нижней пустоты первого экрана (Chromium и WebKit):
                      1440×900 — 68px (8%), 1512×982 — 150px (15%), 1920×1200 — 434px (36%),
@@ -606,6 +543,7 @@
                         <span th:text="${'всего ' + topicMap.total()}">всего 0</span>
                     </p>
                 </div>
+                </details>
             </section>
 
             <!--/* ХОД СЕССИИ. Замер 2560×1440 (код-челлендж): колонка задания кончалась на
@@ -656,9 +594,20 @@
 
                  Уже написанный текст показан прозой НАД раскрытием: поле, приходящее
                  пустым, молча приглашает переписать собственную заметку заново. */-->
+            <!--/* СВЁРНУТАЯ СТРОКА (тихий фокус, аудит 2026-09-02): заметка — tertiary,
+                 при ответе её этаж (ярлык + проза + раскрытие формы) не должен
+                 звучать. Строка говорит, есть ли запись; содержимое — в клике.
+                 После серверного сохранения (questionNoteSaved) раскрытие приходит
+                 открытым — подтверждение обязано быть видно без JS. Внутренняя
+                 механика (текст прозой, форма за своим раскрытием, классы для
+                 bookmarks.js) не тронута. */-->
             <section class="question-note" th:if="${current != null}" aria-labelledby="question-note-title"
                      th:with="hasNote=${questionNote != null and !#strings.isEmpty(questionNote)}">
-                <h2 class="question-note-title" id="question-note-title">Заметка</h2>
+                <details class="question-note-outer" th:attr="open=${questionNoteSaved} ? 'open' : null">
+                <summary class="disclosure-summary question-note-outer-summary">
+                    <h2 class="question-note-title" id="question-note-title">Заметка</h2>
+                    <span class="muted tiny question-note-outer-mark" th:if="${hasNote}">есть</span>
+                </summary>
                 <p class="question-note-saved notice notice-success" role="status" th:if="${questionNoteSaved}">Заметка сохранена.</p>
                 <p class="question-note-text" th:if="${hasNote}" th:text="${questionNote}">Текст заметки</p>
                 <details class="question-note-disclosure bookmark-note-disclosure">
@@ -682,6 +631,7 @@
                              «Закладках». Молча менять состояние вопроса нельзя. */-->
                         <p class="question-note-hint">Вопрос попадёт в «Закладки» — заметка живёт там же.</p>
                     </form>
+                </details>
                 </details>
             </section>
 
@@ -960,7 +910,12 @@
                  написано в .flashcard-badge над кнопкой «Показать ответ». Условие
                  th:if здесь избыточно — вся форма гейтится !flashcardMode, — поэтому
                  его нет: ссылка aria-describedby не может повиснуть. */-->
-            <p class="zone-hint" id="options-flow-hint"
+            <!--/* Инструкция ЗВУЧИТ, но не занимает экран (тихий фокус, аудит
+                 2026-09-02): радиогруппа с кружками и хоткей-строкой под кнопкой
+                 самоописательна — зрячему «Выбери один вариант» повторяет то, что
+                 он и так видит, а слепому она нужна как описатель группы. Остаётся
+                 целью aria-describedby, только визуально скрыта. */-->
+            <p class="zone-hint visually-hidden" id="options-flow-hint"
                th:text="${focusModeHintText}">Выбери один вариант. Проверка и разбор идут по шагам.</p>
 
             <div class="options workspace-surface" id="interview-options" role="radiogroup" aria-label="Варианты ответа" aria-describedby="options-flow-hint">

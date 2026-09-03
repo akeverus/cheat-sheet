@@ -374,14 +374,18 @@ class TemplateFragmentContractTest {
      */
     @Test
     void focusRailAccuracyKpiNamesItsDenominator() throws IOException {
+        // Эволюция (аудит «тихий интерфейс», 2026-09-02): точность первых попыток
+        // ушла с экрана вопроса вместе со всей бандой прогресса банка — там она
+        // была одним из шести чисел, конкурировавших с самим вопросом. Дом
+        // точности — /stats, и правило «у процента назван знаменатель» держится
+        // теперь ТАМ (StatsSummaryContractTest.everyAccuracyPercentCarriesTheName…).
+        // Здесь гейт следит за обратным: точность не возвращается на фокус.
         String focus = readTemplate("templates/focus-training.html");
         assertThat(focus)
-                .as("подпись КПИ рельса — голое «Точность»: рядом с «точностью попыток» "
-                        + "на /stats читается как то же число, а знаменатели разные")
-                .containsPattern("kpi-role\">Точность первой попытки<");
-        assertThat(focus)
-                .as("число КПИ перестало быть точностью первых попыток — подпись теперь лжёт")
-                .contains("firstAttemptAccuracy");
+                .as("точность вернулась на экран вопроса — рядом с «точностью попыток» "
+                        + "на /stats это два числа с разными знаменателями на соседних экранах")
+                .doesNotContain("firstAttemptAccuracy")
+                .doesNotContain("Точность первой попытки");
     }
 
     /**
@@ -1313,11 +1317,18 @@ class TemplateFragmentContractTest {
                         + "а сколько их — не сказано нигде")
                 .contains("Ошибок к разбору")
                 .contains("${filterWrongCount != null ? filterWrongCount : 0}");
+        // Эволюция (аудит «тихий интерфейс», 2026-09-02): ветки th:unless больше
+        // нет — «Пройдено по банку» снято вместе со всей бандой, и вне режима
+        // повтора рельса не существует. Ветвление держится теперь самим условием
+        // строки: она рендерится ТОЛЬКО в режиме повтора и только вне сессии.
         assertThat(focus)
-                .as("строка масштаба не ветвится по reviewMode — либо «Пройдено по банку» "
-                        + "вернулось на разбор, либо «Ошибок к разбору» уехало на тренировку")
-                .contains("th:if=\"${reviewMode != null and reviewMode}\"")
-                .contains("th:unless=\"${reviewMode != null and reviewMode}\"");
+                .as("строка масштаба перестала быть привязанной к режиму повтора — "
+                        + "«Ошибок к разбору» уедет на обычную тренировку")
+                .contains("interviewSession == null and reviewMode != null and reviewMode");
+        assertThat(focus)
+                .as("«Пройдено по банку» вернулось в рельс — это дубль /stats "
+                        + "на экране, открытом ради конкретного набора")
+                .doesNotContain("Пройдено по банку");
     }
 
     @Test
@@ -1432,7 +1443,12 @@ class TemplateFragmentContractTest {
                       // сводку банка из конструктора сессии убрали как третью копию
                       // тех же шести чисел (/stats и /topics), и фрагмент осиротел.
                       "result-zone-head",
-                      "today-chip", "training-actions", "mermaid-init");
+                      // «today-chip» снят вместе со своим единственным носителем
+                      // (аудит «тихий интерфейс», 2026-09-02): чип стрика и очереди
+                      // жил в банде над вопросом, банда снята, а очередь получила
+                      // тихую строку в оболочке. Фрагмент осиротел — удалён целиком,
+                      // как до него «stats-grid-content».
+                      "training-actions", "mermaid-init");
 
         for (String name : fragmentNames) {
             // Ссылка — либо параметризованная `:: name(`, либо bare `:: name}`.

@@ -69,57 +69,12 @@ html[data-design] .code-copy-btn.is-error { color: var(--color-status-error); bo
   html[data-design] .code-copy-label { display: none; }
 }
 
-/* ===========================================================================
-   Виджет «Сегодня к повтору»: today-chip на /focus (парный hero снят в iter-62)
-   =========================================================================== */
-
-/* Инлайн-стрик: 🔥 + «N дней». Скрыт без JS (.hidden), quiz/streak.js снимает после /api/streak. */
-html[data-design] .streak-inline {
-  display: inline-flex; align-items: center; gap: var(--space-1);
-  font-family: var(--font-family-body); font-weight: var(--font-weight-semibold); font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide); color: var(--color-text-secondary);
-}
-html[data-design] .streak-inline .ui-icon { color: var(--color-accent-strong); }
-html[data-design] .streak-inline.streak-goal-reached { color: var(--color-accent-strong); }
-
-/* Hero-карточка «Сегодня» на /settings снята в iter-62 вместе с фрагментом
-   today-hero: контекст страницы несёт общий .page-head (shell.css), а её три
-   факта — стрик, счётчик к повтору и запуск — уже стояли на той же странице в
-   #streak-bar, #builder-review-card и закреплённой панели запуска. Правила
-   .today-hero* удалены здесь, в utilities-overrides.css (мобильный блок) и
-   ссылки на них вычищены из комментариев components-card.css/pages-settings.css. */
-
-/* Компактный чип на /focus: тонкая строка стрик + очередь, не спорит с вопросом.
-   Переносится: в рельсе шириной 288px стрик и группа очереди в строку не встают,
-   и без wrap каждый элемент ломался внутри себя — «Очередь ·» и «фильтр»
-   оказывались на разных строках. Строчный gap меньше колоночного: две строки
-   одного чипа должны читаться как один блок, а не как два. */
-html[data-design] .today-chip {
-  display: flex; align-items: center; flex-wrap: wrap;
-  column-gap: var(--space-4); row-gap: var(--space-1);
-  margin-bottom: var(--space-4); min-height: 1.25rem;
-}
-/* Подпись очереди и её число — неразрывная пара: переносится группа целиком,
-   иначе ярлык уезжает от числа, которое называет.
-
-   Внутри группы перенос допустим, но только между подписью и числом, не внутри
-   них: в самом узком случае («Очередь · весь банк» + «128 из 9818 к повтору»)
-   пара не влезает в рельс, и без nowrap ломались обе фразы — «Очередь ·» и
-   «весь банк» вставали на разные строки. Подпись над числом — законное чтение
-   от общего к частному, разорванная подпись — нет. Строки такой пары стоят
-   вплотную (row-gap: 0): это одна мысль в две строки. */
-html[data-design] .today-chip-queue {
-  display: inline-flex; align-items: center; flex-wrap: wrap;
-  column-gap: var(--space-2); row-gap: 0;
-}
-html[data-design] .today-chip-queue .kpi-role,
-html[data-design] .today-chip-due { white-space: nowrap; }
-html[data-design] .today-chip-due {
-  display: inline-flex; align-items: center; gap: var(--space-1);
-  font-family: var(--font-family-body); font-weight: var(--font-weight-semibold); font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide); color: var(--color-text-secondary);
-}
-html[data-design] .today-chip-due .ui-icon { color: var(--color-text-tertiary); }
+/* Виджет today-chip и инлайн-стрик сняты целиком (тихий фокус, аудит
+   2026-09-02) вместе с фрагментом today-widget.html: вне сессии рельс /focus
+   больше не рендерится, очередь живёт тихой строкой сайдбара (.sidebar-status,
+   shell.css), стрик — строкой «Дневная цель» конструктора (единственный
+   носитель data-streak-bar). Ранее тем же путём ушёл парный today-hero
+   (iter-62). */
 
 /* --- Instrument: /settings (C4-i, порт Фазы E — только дельты голоса) ---------
    Специфичность равна общим правилам (атрибут с/без значения — одинаковый вес),
