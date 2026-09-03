@@ -44,6 +44,29 @@
             <svg class="ui-icon" aria-hidden="true"><use th:attr="href='#' + ${section.icon()}"></use></svg><span th:text="${section.label()}">Раздел</span>
         </a>
     </nav>
+    <!--/* ТИХИЙ СТАТУС (аудит «тихий интерфейс», 2026-09-02). Очередь повторений
+         и вход в разбор ошибок раньше печатались статусной бандой прямо над
+         вопросом — шесть чисел конкурировали с работой и дублировали /stats.
+         Числам оставлен один дом, видимый отовсюду: две строки третичного
+         цвета. Это ссылки-действия, а не витрина: «к повтору» ведёт в тренажёр
+         (очередь и так идёт первой), «ошибки» — в разбор. Стрика здесь нет
+         намеренно: его дом — конструктор (строка «Дневная цель»), а второй
+         носитель data-streak-bar на странице запрещён BuilderRailContractTest.
+         Блок за пределами <nav> — это не разделы; при пустых числах и на
+         страницах без advice (логин) не рендерится вовсе. */-->
+    <div class="sidebar-status" th:if="${sidebarStatus != null and sidebarStatus.present()}">
+        <a class="sidebar-status-row" th:if="${sidebarStatus.dueRepeats() > 0}" th:href="@{/}"
+           th:title="${'Повторить: ' + sidebarStatus.dueRepeats() + ' вопросов ждут'}">
+            <svg class="ui-icon" aria-hidden="true"><use href="#target"></use></svg>
+            <span th:text="${sidebarStatus.dueRepeats() + ' к повтору'}">0 к повтору</span>
+        </a>
+        <a class="sidebar-status-row" th:if="${sidebarStatus.wrongCount() > 0}"
+           th:href="@{/(onlyWrong=true, ordered=true)}"
+           th:title="${'Разобрать ошибки: ' + sidebarStatus.wrongCount() + ' вопросов'}">
+            <svg class="ui-icon" aria-hidden="true"><use href="#flag"></use></svg>
+            <span th:text="${'Ошибки · ' + sidebarStatus.wrongCount()}">Ошибки · 0</span>
+        </a>
+    </div>
     <!--/* Футер рельса — глобальные действия приложения (не разделы). Отбит от
          навигации пустотой (margin-top:auto в shell.css) и линией, и лежит ЗА
          пределами <nav>: в списке ориентиров скринридера этих строк нет, так
