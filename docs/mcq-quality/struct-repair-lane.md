@@ -26,7 +26,7 @@
 | 12 | java-completable-future-interview | 15 | 14 | ГОТОВО (PASS, blind 15/15) |
 | 13 | java-pattern-matching-interview | 15 | 14 | ГОТОВО (PASS, blind 15/15) |
 | 14 | rest-assured-interview | 15 | 14 | ГОТОВО (PASS, blind 15/15) |
-| 15 | spring-graphql-interview | 15 | 14 | TODO |
+| 15 | spring-graphql-interview | 15 | 14 | ГОТОВО (PASS, blind 15/15) |
 | 16 | spring-messaging-interview | 15 | 14 | TODO |
 | 17 | spring-r2dbc-interview | 15 | 14 | TODO |
 | 18 | spring-vault-interview | 15 | 14 | TODO |
