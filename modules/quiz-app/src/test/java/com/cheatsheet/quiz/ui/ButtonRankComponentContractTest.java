@@ -51,6 +51,7 @@ class ButtonRankComponentContractTest {
     private static final Path RESOURCES = Path.of("src/main/resources");
     private static final Path CSS_DIR = RESOURCES.resolve("static/css");
     private static final Path COMPONENT_CSS = CSS_DIR.resolve("components-controls.css");
+    private static final Path TOKENS_CSS = CSS_DIR.resolve("tokens.css");
     private static final Path SHELL_CSS = CSS_DIR.resolve("shell.css");
     private static final Path UTILITIES_CSS = CSS_DIR.resolve("utilities-overrides.css");
     private static final Path MANIFEST = RESOURCES.resolve("css-bundle-manifest.txt");
@@ -284,5 +285,14 @@ class ButtonRankComponentContractTest {
         assertThat(offenders)
                 .as("ни одного фиксированного красного в разрушительном ранге не осталось")
                 .isEmpty();
+    }
+
+    @Test
+    void primaryButtonTextKeepsAaContrastInDarkTheme() {
+        String tokens = declarationsOnly(read(TOKENS_CSS));
+        assertThat(tokens)
+                .as("тёмная терракотовая кнопка требует графитовые чернила: белый текст давал 3.85:1")
+                .contains("--color-accent-on:             #141518")
+                .contains("--color-accent-primary-active: #bd6849");
     }
 }

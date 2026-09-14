@@ -62,7 +62,7 @@ class UltrawideWorkspaceContractTest {
     private CssRules.Rule ultrawideBrief(List<CssRules.Rule> rules) {
         List<CssRules.Rule> found = rules.stream()
                 .filter(r -> r.value("--workspace-brief") != null)
-                .filter(r -> r.selectors().contains(":has(.question-materials)"))
+                .filter(r -> r.selectors().contains(":has(.question-materials.is-ready)"))
                 .toList();
         assertThat(found)
                 .as("правила «широкая колонка задания при наличии материала» больше нет: "
@@ -93,7 +93,7 @@ class UltrawideWorkspaceContractTest {
                 .isGreaterThan(48);
 
         assertThat(rules.stream()
-                .anyMatch(r -> r.selectors().contains(":not(:has(.question-materials))")
+                .anyMatch(r -> r.selectors().contains(":not(:has(.question-materials.is-ready))")
                         && r.value("--workspace-brief") != null))
                 .as("правило «без материала колонка узкая» пропало: под вопросом без "
                         + "листинга и схемы снова окажется 768×900 пустоты")

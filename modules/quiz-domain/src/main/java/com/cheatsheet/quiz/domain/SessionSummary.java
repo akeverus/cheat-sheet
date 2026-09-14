@@ -21,6 +21,7 @@ import java.util.Objects;
 public class SessionSummary implements Serializable {
 
     int totalQuestions;
+    int plannedQuestions;
     int correctCount;
     int wrongCount;
     int unknownCount;
@@ -37,6 +38,7 @@ public class SessionSummary implements Serializable {
 
     private SessionSummary(Builder builder) {
         this.totalQuestions = builder.totalQuestions;
+        this.plannedQuestions = builder.plannedQuestions != null ? builder.plannedQuestions : builder.totalQuestions;
         this.correctCount = builder.correctCount;
         this.wrongCount = builder.wrongCount;
         this.unknownCount = builder.unknownCount;
@@ -61,6 +63,7 @@ public class SessionSummary implements Serializable {
     }
 
     public int getTotalQuestions() { return totalQuestions; }
+    public boolean isPartial() { return totalQuestions < plannedQuestions; }
     public int getCorrectCount() { return correctCount; }
     public int getWrongCount() { return wrongCount; }
     public int getUnknownCount() { return unknownCount; }
@@ -224,6 +227,7 @@ public class SessionSummary implements Serializable {
 
     public static class Builder {
         private int totalQuestions;
+        private Integer plannedQuestions;
         private int correctCount;
         private int wrongCount;
         private int unknownCount;
@@ -238,6 +242,7 @@ public class SessionSummary implements Serializable {
         private Gamification gamification;
 
         public Builder totalQuestions(int val) { this.totalQuestions = val; return this; }
+        public Builder plannedQuestions(int val) { this.plannedQuestions = val; return this; }
         public Builder correctCount(int val) { this.correctCount = val; return this; }
         public Builder wrongCount(int val) { this.wrongCount = val; return this; }
         public Builder unknownCount(int val) { this.unknownCount = val; return this; }
@@ -271,7 +276,8 @@ public class SessionSummary implements Serializable {
         public SessionSummary build() {
             Objects.requireNonNull(mode, "mode");
             Objects.requireNonNull(duration, "duration");
-            if (totalQuestions < 0 || correctCount < 0 || wrongCount < 0 || unknownCount < 0 || dueCount < 0) {
+            if (totalQuestions < 0 || (plannedQuestions != null && plannedQuestions < 0)
+                    || correctCount < 0 || wrongCount < 0 || unknownCount < 0 || dueCount < 0) {
                 throw new IllegalArgumentException(
                         "totalQuestions, correctCount, wrongCount, unknownCount and dueCount must be >= 0");
             }

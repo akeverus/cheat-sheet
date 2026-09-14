@@ -1,6 +1,7 @@
 package com.cheatsheet.quiz.feature.interview.controller;
 
 import com.cheatsheet.quiz.api.dto.request.interview.BookmarkNoteRequest;
+import com.cheatsheet.quiz.api.dto.request.interview.DailyGoalRequest;
 import com.cheatsheet.quiz.api.dto.request.interview.QuestionIdRequest;
 import com.cheatsheet.quiz.api.dto.request.interview.ReportIssueRequest;
 import com.cheatsheet.quiz.api.dto.request.interview.SubmitAnswerRequest;
@@ -87,6 +88,16 @@ public class InterviewApiController {
     @GetMapping("/api/streak")
     public ResponseEntity<StreakResponse> getStreak() {
         return streakApiService.toHttpResponse();
+    }
+
+    /**
+     * Обновляет дневную цель ответов. Тот же периметр доступа, что у {@code GET /api/streak}.
+     */
+    @PostMapping("/api/streak/goal")
+    public ResponseEntity<StreakResponse> updateDailyGoal(
+            @Valid @RequestBody DailyGoalRequest request
+    ) {
+        return streakApiService.updateGoalToHttpResponse(request.getGoal());
     }
 
     /**

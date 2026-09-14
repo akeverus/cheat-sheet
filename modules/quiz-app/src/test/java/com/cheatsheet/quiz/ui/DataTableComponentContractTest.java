@@ -246,7 +246,11 @@ class DataTableComponentContractTest {
         assertThat(js)
                 .as("модуль оценивает только .table-scroll: переполненный pre остаётся "
                         + "недостижимым с клавиатуры")
-                .contains("'.table-scroll, pre'");
+                .contains("'.table-scroll, pre:not(.mermaid)'");
+        assertThat(js)
+                .as("Mermaid уже получает единственный именованный scroll-host от своего "
+                        + "renderer; общий рецепт кода не должен добавлять внутрь второй tab-stop «Код»")
+                .doesNotContain("'.table-scroll, pre'");
         assertThat(js)
                 .as("остановка табуляции на коде обязана иметь имя — иначе скринридер "
                         + "объявит безымянную «группу»")

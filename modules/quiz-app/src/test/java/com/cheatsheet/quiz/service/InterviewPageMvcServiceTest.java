@@ -39,6 +39,8 @@ class InterviewPageMvcServiceTest {
     @Mock
     private FocusTrainingPageService focusTrainingPageService;
     @Mock
+    private com.cheatsheet.quiz.feature.interview.service.page.HomePageService homePageService;
+    @Mock
     private StatsPageService statsPageService;
     @Mock
     private com.cheatsheet.quiz.feature.interview.service.page.BookmarksPageService bookmarksPageService;
@@ -48,6 +50,8 @@ class InterviewPageMvcServiceTest {
     private com.cheatsheet.quiz.feature.interview.service.flow.PauseService pauseService;
     @Mock
     private ReviewModeService reviewModeService;
+    @Mock
+    private com.cheatsheet.quiz.feature.interview.service.progress.DailyStreakService dailyStreakService;
     @Mock
     private MvcNavigationService navigationService;
     @Mock
@@ -71,12 +75,14 @@ class InterviewPageMvcServiceTest {
         service = new InterviewPageMvcService(
                 sessionSupport,
                 focusTrainingPageService,
+                homePageService,
                 statsPageService,
                 topicsPageService,
                 bookmarksPageService,
                 bookmarkApiService,
                 pauseService,
                 reviewModeService,
+                dailyStreakService,
                 navigationService,
                 modelAttributeMapper,
                 requestMapper,

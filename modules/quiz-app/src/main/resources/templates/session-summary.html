@@ -12,7 +12,7 @@
     <aside th:replace="~{fragments/sidebar :: sidebar(active='focus')}"></aside>
     <div class="shell-main">
         <th:block th:replace="~{fragments/shell-head :: shell-head}"></th:block>
-<main id="main-content" class="ed-page" tabindex="-1">
+<main id="main-content" class="ed-page page-canvas" tabindex="-1">
 <!--/* Шапка страницы — общий компонент .page-head (shell.css), тот же, что на
      /stats, /bookmarks, /settings. До iter-63 экран итогов был единственным из
      шести без видимого заголовка: весь h1 сводился к visually-hidden строке
@@ -34,7 +34,7 @@
          статистика, которая внезапно просела. */-->
     <!--/* Копия сжата до одной строки (VIS-13): двухстрочный лид при align-self:
          flex-end шапки снова поднимался выше линии заголовка. */-->
-    <p class="muted page-head-lead">Счёт, темы, вопросы к повтору.
+    <p class="muted page-head-lead"><span th:text="${summary.partial} ? 'Завершена досрочно' : 'Сессия завершена'">Сессия завершена</span>.
         <span class="kpi-role">Только эта сессия</span></p>
 </div>
 
@@ -88,107 +88,30 @@
         <!--/* «0 из 0 верных ответов» — не факт, а форма без содержания: дробь
              сообщает долю, а доли нет. В пустой сессии строка снята целиком. */-->
         <p class="summary-hero-count" th:unless="${noAnswers}">
-            <strong th:text="${summary.correctCount}">0</strong> из
-            <strong th:text="${summary.totalQuestions}">0</strong> верных ответов
+            Верно <strong th:text="${summary.correctCount}">0</strong> из
+            <strong th:text="${summary.totalQuestions}">0</strong>
         </p>
         <!--/* FLOW-SUMMARY-b: краткий actionable-итог. «Требуют разбора» = неверные +
              «не знаю». Русская форма склоняется по mod-10/mod-100. */-->
         <p class="summary-headline"
            th:with="needs=${summary.wrongCount + summary.unknownCount},
                     w=${needs % 10 == 1 and needs % 100 != 11 ? 'вопрос требует' : ((needs % 10 >= 2 and needs % 10 <= 4) and (needs % 100 &lt; 12 or needs % 100 &gt; 14) ? 'вопроса требуют' : 'вопросов требуют')}"
-           th:text="${noAnswers ? 'Сессия завершена без ответов' : (needs > 0 ? needs + ' ' + w + ' разбора' : 'Без ошибок — отличный результат')}">Итог</p>
-        <p class="summary-empty-note" th:if="${noAnswers}">Засчитывать нечего: ни опыта, ни ошибок
-            для разбора, ни данных по темам. Серия за день от этого не пострадала — она считается
-            по дням с ответами.</p>
+           th:text="${noAnswers ? 'Сессия завершена без ответов' : (needs > 0 ? needs + ' ' + w + ' разбора' : 'Все ответы верны')}">Итог</p>
+        <p class="summary-empty-note" th:if="${noAnswers}">Ответов пока нет. Можно начать новую сессию, когда будешь готов.</p>
     </div>
 </section>
 
 <!--/* ПРОГРЕСС СЕССИИ — ВТОРАЯ КАРТОЧКА ВЕРХА: ступень и четыре показателя.
      Раньше оба блока лежали внутри карточки счёта, и на широком экране она
      раскладывала их в один ряд из четырёх, а на телефоне — в столб из четырёх. */-->
-<section class="card summary-progress" aria-label="Прогресс за сессию"
-         th:with="noAnswers=${summary.totalQuestions == 0}">
-    <!--/* МЕСТО В ПУТИ — ПЕРВОЕ, ЧТО ГОВОРЯТ ИТОГИ. Раньше прогрессия жила подписью
-         11px под числом опыта, четвёртой строкой внутри одного из четырёх равных
-         тайлов: «Уровень 7 · до следующего 902 XP». Замер на живой сессии показал
-         две беды сразу. Уровень был единственным местом в ПРОДУКТЕ, где виден путь
-         (аналитика и экран тренировки не показывали его вовсе), и при этом набран
-         самым мелким кеглем экрана. А «902 XP» — число без шкалы: цена уровня 7
-         равна 1300 XP, то есть пройдено 398, почти треть, но узнать это было
-         неоткуда.
-
-         Компонент один на два экрана (fragments/progression.html): на итогах он
-         добавляет строку «эта сессия дала +N XP», в аналитике стоит без неё. */-->
-    <div th:replace="~{fragments/progression :: rank(p=${progression}, sessionXp=${summary.gamification != null ? summary.gamification.sessionXp() : null})}"></div>
-
-    <!--/* Полоса KPI — отдельная строка геро во всю ширину карточки, а не блок
-         внутри текстового столбца. В столбце её ширину задавал сосед-кольцо: на
-         1440 под четыре тайла оставалось 463px, тайл выходил ~107px, и значения
-         вроде «+4000 XP» (марафон на 200 вопросов) в него не помещались. Своей
-         строкой полоса получает всю ширину карточки, и бюджет тайла перестаёт
-         зависеть от размера кольца. */-->
-    <!--/* Этап 5 (handoff-3): 4 KPI сессии — Опыт / Время / Ошибки / Серия.
-         Опыт и Серия — из реальной геймификации (summary.gamification, XP
-         суммирован из истории ответов). Когда геймификации нет (null) —
-         откат на прежний набор Время/Среднее/На повторение, без фабрикации. */-->
-    <div class="summary-kpis" th:if="${summary.gamification != null and !noAnswers}"
-         th:with="g=${summary.gamification},
-                  errs=${summary.wrongCount + summary.unknownCount},
-                  avg=${summary.duration != null and summary.totalQuestions > 0 ? summary.duration.toSeconds() / summary.totalQuestions : 0},
-                  st=${g.currentStreak()},
-                  dw=${st % 10 == 1 and st % 100 != 11 ? 'день' : ((st % 10 >= 2 and st % 10 <= 4) and (st % 100 &lt; 12 or st % 100 &gt; 14) ? 'дня' : 'дней')}">
-        <!--/* ШКАЛА У ОПЫТА ОБЯЗАТЕЛЬНА, А РЕКОРД СЕРИИ ЖИВЁТ В ТАЙЛЕ СЕРИИ.
-             Здесь стояло `newStreakRecord ? 'Новый рекорд' : 'Уровень N'`, и это
-             ломалось дважды. Во-первых, «рекорд» — факт про СЕРИЮ ДНЕЙ, а
-             напечатан был под опытом, при том что соседний тайл серии в ту же
-             секунду показывал «Рекорд N»: одно и то же сказано дважды и одно из
-             двух — не на своём месте. Во-вторых, рекорд ВЫТЕСНЯЛ уровень, а
-             уровень — единственная шкала у «+42 XP». Условие срабатывает при
-             `currentStreak >= bestStreak`, то есть у любого, кто просто держит
-             свою серию, — почти каждый день. Замер на живой сессии: подпись
-             тайла опыта — «Новый рекорд», уровень не показан нигде.
-             Теперь опыт всегда несёт свою шкалу: уровень и остаток до следующего
-             (оба уже считались в UserExperience). */-->
-        <div class="summary-kpi">
-            <span class="summary-kpi-label">Время</span>
-            <!--/* Компактная форма — тайл фиксированной ширины, см. SessionSummary#getCompactDuration.
-                 Свободная строка метрик ниже (summary-metrics) остаётся на полной форме. */-->
-            <b class="summary-kpi-value summary-duration" th:text="${summary.compactDuration}">—</b>
-            <span class="summary-kpi-sub" th:if="${avg > 0}"
-                  th:text="'Среднее ' + ${(avg / 60) + ':' + (avg % 60 < 10 ? '0' + (avg % 60) : (avg % 60))}">Среднее 0:00</span>
-        </div>
-        <div class="summary-kpi">
-            <span class="summary-kpi-label">Ошибки</span>
-            <b class="summary-kpi-value" th:classappend="${errs > 0} ? ' text-danger' : ' text-success'" th:text="${errs}">0</b>
-            <span class="summary-kpi-sub" th:text="${errs > 0} ? 'Нужен разбор' : 'Без ошибок'">Нужен разбор</span>
-        </div>
-        <div class="summary-kpi">
-            <span class="summary-kpi-label">Серия</span>
-            <b class="summary-kpi-value" th:text="${st} + ' ' + ${dw}">0 дней</b>
-            <!--/* Рекорд серии — здесь, и только здесь. Когда серия дошла до своего
-                 рекорда, подпись говорит об этом вместо повтора числа: «Рекорд 9»
-                 при серии в 9 дней — это то же самое число, сказанное второй раз. */-->
-            <span class="summary-kpi-sub"
-                  th:text="${g.newStreakRecord()} ? 'Новый рекорд' : ('Рекорд ' + ${g.bestStreak()})">Рекорд 0</span>
-        </div>
-    </div>
-    <div class="summary-metrics" th:if="${summary.gamification == null and !noAnswers}">
-        <div class="metric">
-            <span class="metric-label">Время</span>
-            <span class="metric-value summary-duration" th:text="${summary.formattedDuration}">—</span>
-        </div>
-        <div class="metric" th:if="${summary.duration != null and summary.totalQuestions > 0}"
-             th:with="avg=${summary.duration.toSeconds() / summary.totalQuestions}">
-            <span class="metric-label">Среднее</span>
-            <span class="metric-value"
-                  th:text="${(avg / 60) + ':' + (avg % 60 < 10 ? '0' + (avg % 60) : (avg % 60))}">0:00</span>
-        </div>
-        <div class="metric metric-due" th:if="${summary.dueCount > 0}">
-            <span class="metric-label">На повторение</span>
-            <span class="metric-value" th:text="${summary.dueCount}">0</span>
-        </div>
-    </div>
-
+<section class="summary-progress" aria-label="Ответы и время сессии">
+    <dl class="summary-facts">
+        <div><dt>Отвечено</dt><dd><span th:text="${summary.totalQuestions}">0</span> из <span th:text="${summary.plannedQuestions}">0</span></dd></div>
+        <div><dt>Неверно</dt><dd th:text="${summary.wrongCount}">0</dd></div>
+        <div><dt>Не знаю</dt><dd th:text="${summary.unknownCount}">0</dd></div>
+        <div><dt>Время сессии</dt><dd class="summary-duration" th:text="${summary.compactDuration}">—</dd></div>
+    </dl>
+    <p class="muted summary-time-note">От старта до завершения, включая чтение и паузы.</p>
 </section>
 </div><!--/* /.summary-top */-->
 
@@ -215,14 +138,14 @@
     <!--/* Primary: первое nextAction (обычно «Разобрать ошибки»). Пустой план → продолжить. */-->
     <a th:if="${hasPlan}" th:with="na=${summary.nextActions[0]}, t=${na.type().name()}, d=${primaryDest}"
        class="btn next-btn"
-       th:href="${d == 'TOPIC'} ? @{/(topic=${na.target()})}
+       th:href="${d == 'TOPIC'} ? @{/practice(topic=${na.target()})}
                 : (${d == 'MISTAKES'} ? @{/review}
                 : @{/})">
         <svg class="ui-icon ui-icon-lead" aria-hidden="true">
             <use th:attr="href=${t == 'REVIEW_MISTAKES' ? '#target' : (t == 'PRACTICE_WEAK_TOPIC' ? '#book-open' : (t == 'REVIEW_DUE' ? '#flag' : '#flame'))}"></use>
         </svg><span class="summary-next-label" th:text="${na.label()}">Действие</span>
     </a>
-    <a th:if="${!hasPlan}" class="btn next-btn" th:href="@{/}">
+    <a th:if="${!hasPlan}" class="btn next-btn" th:href="@{/practice}">
         <svg class="ui-icon ui-icon-lead" aria-hidden="true"><use href="#flame"></use></svg>
         <span class="summary-next-label">Продолжить тренировку</span>
     </a>
@@ -231,13 +154,13 @@
          ни в «Ещё». Понижение в меню не лечит дубль, а прячет его — подпись всё равно
          обещает второе место, которого нет. Ход в тренажёр при этом не теряется: его
          несёт сама primary-кнопка, но с числом и поводом. */-->
-    <a th:if="${hasPlan and primaryDest != 'TRAINING'}" class="btn secondary-btn" th:href="@{/}">Продолжить тренировку</a>
+    <a th:if="${hasPlan and primaryDest != 'TRAINING'}" class="btn secondary-btn" th:href="@{/practice}">Продолжить тренировку</a>
     <details class="summary-more">
         <summary class="summary-more-summary">Ещё</summary>
         <div class="summary-more-menu" role="group" aria-label="Дополнительные действия">
             <a th:each="na,it : ${summary.nextActions}" th:unless="${it.first}" th:with="d=${na.type().destination.name()}"
                class="summary-more-link"
-               th:href="${d == 'TOPIC'} ? @{/(topic=${na.target()})}
+               th:href="${d == 'TOPIC'} ? @{/practice(topic=${na.target()})}
                         : (${d == 'MISTAKES'} ? @{/review}
                         : @{/})"
                th:text="${na.label()}">Действие</a>
@@ -254,6 +177,10 @@
      стояли этажами, и каждая карточка держала половину своей ширины пустой (замер
      2560: таблица в одну строку против карточки во всю ширину полосы). С 1200px они
      идут рядом; ниже — стопкой, как и стояли. */-->
+<details class="summary-extras" th:if="${summary.gamification != null}">
+    <summary class="disclosure-summary"><span>Опыт и серия занятий</span></summary>
+    <div th:replace="~{fragments/progression :: rank(p=${progression}, sessionXp=${summary.gamification.sessionXp()})}"></div>
+</details>
 <div class="summary-breakdown">
 <section class="card" th:if="${!summary.topicResults.isEmpty()}">
     <h2 class="summary-section-title">Результаты по темам</h2>
@@ -282,7 +209,7 @@
         <tbody role="rowgroup">
         <tr th:each="tr : ${summary.topicResults}" role="row">
             <td role="rowheader">
-                <a class="summary-topic-link" th:href="@{/(topic=${tr.topic()})}"
+                <a class="summary-topic-link" th:href="@{/practice(topic=${tr.topic()})}"
                    th:text="${@topicUtils.displayName(tr.topic())}" th:title="${tr.topic()}">topic</a>
             </td>
             <td class="summary-td-center" role="cell" data-label="Всего" th:text="${tr.total()}">0</td>
@@ -316,10 +243,10 @@
      и «Разобрать ошибки: 1» рядом с «Ошибки 2» читалось как противоречие. */-->
 <section class="card" th:if="${!summary.mistakes.isEmpty()}">
     <h2 class="summary-section-title">Ошибки</h2>
-    <p class="summary-mistakes-hint">Нажми на вопрос, чтобы потренироваться по этой теме, или «Повторить ошибки» выше.</p>
+    <p class="summary-mistakes-hint">Открой вопрос для повторения или разбери все ошибки с помощью действия выше.</p>
     <ul class="summary-mistakes">
         <li th:each="m : ${summary.mistakes}">
-            <a class="summary-mistake-item" th:href="@{/(topic=${m.topic()})}">
+            <a class="summary-mistake-item" th:href="@{/practice(questionId=${m.questionId()},topic=${m.topic()})}">
                 <span class="summary-mistake-question" th:utext="${@markdownRenderService.toInlineHtml(m.questionText())}">Вопрос</span>
                 <span class="summary-mistake-meta">
                     <span th:text="${@topicUtils.displayName(m.topic())}">topic</span><!--
@@ -347,11 +274,7 @@
      разбора оставалось 310–444px фона. Сцена декоративна (aria-hidden) и появляется
      только когда есть что заверять — печать на пустой странице после сессии без
      ответов читалась бы насмешкой. */-->
-<div class="summary-seal" th:unless="${noAnswers}">
-    <svg class="summary-scene" aria-hidden="true" focusable="false">
-        <use href="#scene-chronicle-sealed"></use>
-    </svg>
-</div>
+
 
 </div>
 

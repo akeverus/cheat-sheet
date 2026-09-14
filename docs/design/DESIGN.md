@@ -1,7 +1,8 @@
 # DESIGN.md — quiz-app (cheat-sheet interview trainer)
 
-> **Status:** актуальная спека UI (Instrument + terminal handoff-3, 2026-07).
+> **Status:** актуальная спека UI (Folio runtime, Editorial Anki 2026-09).
 > Язык интерфейса — русский; имена файлов/токенов/классов — английские.
+> Продуктовый голос — [`PRODUCT.md`](../../PRODUCT.md): редакционный, сосредоточенный, честный.
 
 ---
 
@@ -12,52 +13,19 @@
 статистика (chart.js). Аудитория — разработчики. **Главная задача —
 безупречные читаемость и UX.**
 
-**Единственный скин:** `html[data-design="instrument"]` (SSR, без переключателя).
+**Единственный скин:** `html[data-design="folio"]` (SSR, без переключателя).
 `data-theme` ∈ {light, dark} — ортогональная ось (localStorage `theme`, дефолт dark).
 
+**IA (канон):** `/` — хаб «Сегодня» (Anki overview: один CTA); `/practice` — вопрос
+(Anki focus); `/train` — собрать сессию; `/stats` — прогресс без next-actions.
+
 **Шрифты runtime** (Google Fonts в `head.html`, токены `:root`):
-- **Inter** — display + body (`--font-family-display`, `--font-family-body`)
+- **Literata** — display (`--font-family-display`)
+- **Inter** — body / UI (`--font-family-body`)
 - **JetBrains Mono** — код, эйбрау, mono-лейблы (`--font-family-mono`)
 
-Pixel-слой **не** подменяет body/display шрифты — только иконки, спрайты, FX.
-
-### Пиксельный хром (arcade overlay)
-
-Поверх Instrument-скина живёт декоративный слой `pixel-fx` (`static/css|js/pixel-fx.*`,
-`static/img/pixel/*`):
-
-- **Текст и шрифты** — только design-system (не pixel-typeface).
-- **Пиксель** — functional SVG sprite (`fragments/pixel-sprite.html`, `currentColor`) + PNG-спрайты/FX.
-- **Интенсивность** — `html[data-pixel="low|med|high"]` (localStorage `pixelIntensity`,
-  дефолт `med`). CRT/scanlines/crumbs/trail — только на `high`.
-- **Motion** — уважает `prefers-reduced-motion` и `data-motion=off`.
-- Переключатель — Настройки → Персонализация; API `window.__pixelIntensity` /
-  `window.__pixelFx` (слой снят — API больше нет).
-
-#### Intensity matrix
-
-| FX / слой | low | med | high |
-|-----------|-----|-----|------|
-| Functional icons (SVG `<use>`, semantic `color`) | ✓ | ✓ | ✓ |
-| Chunky кнопки / MCQ chrome | ✓ | ✓ | ✓ |
-| Burst, float text, screen flash | — | ✓ (RU) | ✓ (+ EN arcade) |
-| Exam lives HUD (backend wrong count) | — | ✓ EXAM | ✓ EXAM |
-| Fake combo/XP HUD | — | — | ✓ |
-| Ambient crumbs, floaters, CRT | — | — | ✓ |
-| Pointer trail | — | — | ✓ + motion |
-| Stage intro / portal wipe / coin pickup | — | ✓ | ✓ |
-| Infinite filter/bg loops | — | — | ✓ |
-
-#### Asset inventory (PNG under `static/img/pixel/`)
-
-| Disposition | Assets |
-|-------------|--------|
-| **KEEP** | crumbs, dots, confetti, boom, coin*, gem, star, mascot, hero, UI chrome (tab/radio/checkbox/btn), xp-bar, corners, spark, skull, potion, trophy, heart-life, hp, portal frames |
-| **MERGE** | portal / coin-spin / heart / fire → `*-sheet.png` + CSS `steps()` |
-| **HIGH_ONLY** | pad, power, sword, shield, lightning, cloud, flag, cherry, key |
-| **REMOVE** | nav-home/stats/settings PNG (→ SVG sprite) |
-
-Canonical bitmap scale: `--px-s/m/l/xl` = 8/16/24/32; только целые кратные + `image-rendering: pixelated`.
+**Акцент:** терракотовый штамп на тёмной графитовой канве (`--color-accent-primary`),
+не кобальт SaaS. Pixel/arcade-слой снят; не восстанавливать.
 
 ### Принцип CSS (Wave C — cascade layers)
 

@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 /**
- * Use-case orchestration для API endpoint `/api/streak`.
+ * Use-case orchestration для API endpoints `/api/streak` и `/api/streak/goal`.
  */
 @Service
 @RequiredArgsConstructor
@@ -23,6 +23,14 @@ public class StreakApiService {
     }
 
     public ResponseEntity<StreakResponse> toHttpResponse() {
+        return ResponseEntity.ok(buildStreakResponse());
+    }
+
+    /**
+     * Обновляет дневную цель и возвращает актуальный streak-снимок.
+     */
+    public ResponseEntity<StreakResponse> updateGoalToHttpResponse(int goal) {
+        dailyStreakService.updateDailyGoal(goal);
         return ResponseEntity.ok(buildStreakResponse());
     }
 }

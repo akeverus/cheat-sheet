@@ -155,4 +155,40 @@ class HttpSessionStateServiceTest {
                 true
         );
     }
+
+    @Test
+    void recallAnswerSurvivesPauseAndRemainsBoundToItsQuestion() {
+        MockHttpSession session = new MockHttpSession();
+        InterviewSession interview = new InterviewSession(InterviewMode.TYPED_RECALL,
+                List.of(1L, 2L), "java", false, false, false);
+        localService.setInterviewSession(session, interview);
+        String text = "  Собственный ответ <code>\nС сохранёнными пробелами";
+        localService.setRecallAnswer(session, interview, text);
+        assertThat(localService.getRecallAnswer(session, interview)).isEqualTo(text);
+        localService.clearInterviewSession(session);
+        localService.setInterviewSession(session, interview);
+        assertThat(localService.getRecallAnswer(session, interview)).isEqualTo(text);
+        interview.registerAnswer(true, "java");
+        assertThat(localService.getRecallAnswer(session, interview)).isEmpty();
+        localService.clearRecallAnswer(session);
+        assertThat(localService.getRecallAnswer(session, interview)).isEmpty();
+    }
+
+    @Test
+    void recallAnswerDoesNotCrossPrincipalAfterPause() {
+        AppProperties multi = new AppProperties();
+        multi.getSecurity().setMode("multi");
+        HttpSessionStateService service = new HttpSessionStateService(new CurrentUserAccessor(), multi);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("alice", "n/a", List.of()));
+        MockHttpSession session = new MockHttpSession();
+        InterviewSession interview = sampleSession();
+        service.setInterviewSession(session, interview);
+        service.setRecallAnswer(session, interview, "Alice's answer");
+        service.clearInterviewSession(session);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken("bob", "n/a", List.of()));
+        assertThatThrownBy(() -> service.getRecallAnswer(session, interview))
+                .isInstanceOf(AccessDeniedException.class);
+    }
 }

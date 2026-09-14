@@ -34,6 +34,7 @@ class NoAiModeStartupIntegrationTest {
     void indexPageOpens_inNoAiMode() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
+                .andExpect(content().string(containsString("home-page")))
                 .andExpect(content().string(not(containsString("Сейчас нет вопросов"))));
     }
 
@@ -49,7 +50,7 @@ class NoAiModeStartupIntegrationTest {
 
     @Test
     void indexPageShowsFlashcardMode_whenQuestionsExist() throws Exception {
-        String body = mockMvc.perform(get("/"))
+        String body = mockMvc.perform(get("/practice"))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 

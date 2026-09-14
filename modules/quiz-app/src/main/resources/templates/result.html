@@ -66,6 +66,27 @@
                  (warning, не error) — пользователь не ошибался, он честно спросил;
                  в счёте это ошибка (конвенция REF-006), в подаче — отдельный исход,
                  как бейдж « · не знал» в итогах сессии. */-->
+            <!--/* Тихий прогресс сессии (аудит UI/UX 2026-09-04). Topbar ушёл, а
+                 на /result человек после ответа в EXAM/интенсиве не видел «N из M».
+                 Тот же контракт, что .focus-progress-line на экране вопроса: одна
+                 строка + трек, без KPI-банды. */-->
+            <!--/* После registerAnswer index = число отвеченных (не «текущий + 1»). */-->
+            <div class="result-session-progress" th:if="${interviewSession != null}">
+                <div class="focus-progress-line">
+                    <span class="muted tiny kpi-role">Прогресс сессии</span>
+                    <span>
+                        <span class="session-progress" th:text="${interviewSession.getIndex()}">1</span>/<span th:text="${interviewSession.getTotal()}">1</span>
+                    </span>
+                </div>
+                <div class="session-progress-track"
+                     role="progressbar"
+                     aria-label="Прогресс сессии"
+                     th:attr="aria-valuemin=0,aria-valuemax=${interviewSession.getTotal()},aria-valuenow=${interviewSession.getIndex()}">
+                    <div class="session-progress-fill"
+                         th:attr="data-progress=${#numbers.formatDecimal(progressPercent != null ? progressPercent : 0, 1, 'NONE', 1, 'POINT')}"></div>
+                </div>
+            </div>
+
             <div class="feedback-verdict result-banner" th:with="ok=${result.correctAnswer},unknown=${result.unknown()}"
                  th:classappend="${ok} ? 'result-correct' : (${unknown} ? 'result-unknown' : 'result-wrong')"
                  tabindex="-1" autofocus>
@@ -103,9 +124,6 @@
                  не показывался вовсе, хотя опыт начислялся (листенер на AnswerEvent
                  общий для MVC и REST) — no-JS молча забирал награду. */-->
             <div class="feedback-meta">
-                <span th:if="${xpAwarded != null and xpAwarded > 0}" class="result-xp"
-                      th:attr="aria-label='Начислено ' + ${xpAwarded} + ' XP'"
-                      th:text="'+' + ${xpAwarded} + ' XP'">+10 XP</span>
                 <p class="next-review">
                     <span class="next-review-eyebrow">Следующее повторение:</span>
                     <span class="next-review-when" th:text="${nextReviewText}">—</span>
@@ -117,8 +135,8 @@
                    th:with="nextBase=${filter != null and filter.onlyWrong == true}"
                    th:href="${nextBase}
                        ? @{/review(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}
-                       : @{/(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}">
-                    Следующий вопрос
+                       : @{/practice(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}">
+                    <span th:text="${interviewSession != null and interviewSession.finished} ? 'К итогам сессии' : 'Следующий вопрос'">Следующий вопрос</span>
                 </a>
                 <!--/* Завершение сессии — вторичное действие рядом с основным, а не
                      кнопка в шапке. Тот же контракт, что на экране вопроса (UX-003):
@@ -194,14 +212,15 @@
                  в блоке, который должен уместиться в первый экран вместе с действием
                  (замер 390×844: действие стояло на 856 при сгибе 844). */-->
             <details th:if="${reviewState != null}" class="sm2-details">
-                <summary>SM-2 состояние</summary>
+                <summary><span>Как запланировано повторение</span></summary>
+                <p th:if="${xpAwarded != null and xpAwarded > 0}" class="muted" th:text="'За ответ начислено ' + ${xpAwarded} + ' XP'">Опыт за ответ</p>
                 <p class="review-policy muted tiny">
                     Интервальные повторения: верный ответ отодвигает карточку, ошибка возвращает её раньше.
                 </p>
                 <dl class="sm2-grid">
                     <dt>Повторений</dt><dd th:text="${reviewState.repetitions()}">0</dd>
                     <dt>Интервал</dt><dd><span th:text="${reviewState.intervalDays()}">0</span> дн.</dd>
-                    <dt>Ease factor</dt><dd th:text="${#numbers.formatDecimal(reviewState.easeFactor(), 1, 2)}">2.50</dd>
+                    <dt>Коэффициент сложности</dt><dd th:text="${#numbers.formatDecimal(reviewState.easeFactor(), 1, 2)}">2.50</dd>
                     <dt>Следующее повторение</dt><dd th:text="${#dates.format(new java.util.Date(reviewState.nextReviewAt() * 1000), 'yyyy-MM-dd HH:mm')}">—</dd>
                     <!--/* Подпись — свойство константы (ReviewResult.label), а не разметки.
                          Раньше здесь был th:switch по пяти литералам с th:case="*",
@@ -254,7 +273,7 @@
     <div class="related-questions-list" role="list">
         <div th:each="rq : ${relatedQuestions}" role="listitem">
             <a class="related-question-item"
-               th:href="@{/(topic=${rq.topic()},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}"
+               th:href="@{/practice(questionId=${rq.id()},topic=${rq.topic()},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}"
                th:utext="${@markdownRenderService.toInlineHtml(rq.questionText())}">
             </a>
         </div>

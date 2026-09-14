@@ -1,303 +1,57 @@
-/* Wave C split from base.css — @pages layer */
+/* Recovery is the primary task; diagnostics remain available on demand. */
 @layer pages {
-/* C7 — Страница ошибки (.error-page).
-   Довод и история: docs/css-decisions/pages-error.md#pages-error-e01 */
-
-/* Карточку ошибки центрируем по вертикали в области под шапкой, а не вешаем в
-   верхней трети с огромной пустотой ниже (читалось как недогруженная страница).
-   min-height (а не фикс.) — при длинном пути/сообщении в дозоре блок растёт
-   штатно, без обрезки; 9rem ≈ компенсация шапки (одно/двухрядной). */
-html[data-design] .error-page .ed-page {
-  min-height: calc(100dvh - 9rem);
-  display: flex; flex-direction: column; justify-content: center;
-}
-
 html[data-design] .error-page .error-card {
-  width: min(100%, 76rem);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "statement" "dossier";
-  gap: var(--space-7);
-  align-items: start;
-  /* гасим карточку-с-тенью из старого styles.css */
-  background: transparent; border: 0; box-shadow: none; border-radius: 0;
-  padding: var(--space-8) 0;
-  text-align: left;
+  max-width: 52rem;
+  padding-block: var(--space-8);
 }
-
-html[data-design] .error-page .error-statement { grid-area: statement; min-width: 0; }
-html[data-design] .error-page .error-dossier   { grid-area: dossier;   min-width: 0; }
-
 html[data-design] .error-page .error-eyebrow {
-  font-family: var(--font-family-body); font-weight: var(--font-weight-semibold); font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-text-tertiary); margin: 0 0 var(--space-3);
-}
-
-/* Призрачный крупный номер статуса — декоративная типографика, не цвет-смысл
-   (aria-hidden; реальный заголовок — h1.error-title). */
-html[data-design] .error-page .error-code {
-  grid-area: code;
-  font-family: var(--font-family-display); font-weight: var(--font-weight-medium);
-  font-size: clamp(4rem, 2rem + 12vw, 8.5rem);
-  line-height: 0.95;
-  color: var(--color-border-primary);
-  /* гасим возможный градиент/заливку из styles.css */
-  background: none; -webkit-text-fill-color: currentColor;
   margin: 0 0 var(--space-4);
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
-
 html[data-design] .error-page .error-title {
-  grid-area: title;
-  font-family: var(--font-family-display); font-weight: var(--font-weight-medium);
-  font-size: var(--font-size-heading-display); line-height: var(--line-height-tight);
-  color: var(--color-text-primary); margin: 0 0 var(--space-4);
-  max-width: 20ch; text-wrap: balance;
-}
-
-html[data-design] .error-page .error-body {
-  grid-area: body;
-  font-family: var(--font-family-body); font-size: var(--font-size-md);
-  line-height: var(--line-height-relaxed); color: var(--color-text-secondary);
-  max-width: 56ch; margin: 0 0 var(--space-6);
-}
-
-html[data-design] .error-page .error-actions {
-  grid-area: actions;
-  display: flex; flex-wrap: wrap; justify-content: flex-start; gap: var(--space-3);
-}
-
-/* -----------------------------------------------------------------------------
-   Дозор — правая область. Виден всегда (раньше это был свёрнутый <details>,
-   который к тому же рендерился только на контейнерном dispatch): без него
-   вторая колонка была бы пустой рамкой ради симметрии, что §6 запрещает.
-   -------------------------------------------------------------------------- */
-html[data-design] .error-page .error-dossier {
-  border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-md);
-  background: var(--color-bg-tertiary);
-  padding: var(--space-5);
-}
-
-html[data-design] .error-page .error-scene {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 0.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  display: block;
-  margin: 0 0 var(--space-4);
-  /* Сцена 40×25: ступень ×7 → 280×175. Замер: ×8 (320) в арт-колонке грида
-     ужимался max-width до 318 — дробный масштаб, мыло (FRD-117); ×7 влезает
-     целиком. max-width — страховка совсем узких раскладок. */
-  width: 280px;
-  height: 175px;
-  max-width: 100%;
-}
-html[data-design] .error-page .error-glyph {
-  display: block; margin: 0 0 var(--space-4);
-  /* Линейный глиф на hero-размере: stroke-width в единицах viewBox наследуется
-     внутрь <use>; 0.4 при масштабе ×5.3 (128px от сетки 24) даёт ~2px штриха. */
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 0.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  width: 128px;
-  height: 128px;
-}
-
-html[data-design] .error-page .error-dossier-title {
-  font-family: var(--font-family-body); font-size: var(--font-size-xs);
+  margin: 0 0 var(--space-5);
+  font-family: var(--font-family-display);
   font-weight: var(--font-weight-medium);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-text-tertiary); margin: 0 0 var(--space-4);
+  font-size: var(--font-size-heading-display);
+  line-height: var(--line-height-tight);
+  max-width: 24ch;
+  overflow-wrap: anywhere;
 }
-
+html[data-design] .error-page .error-body {
+  margin: 0 0 var(--space-6);
+  max-width: 60ch;
+  color: var(--color-text-secondary);
+}
+html[data-design] .error-page .error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+html[data-design] .error-page .error-dossier {
+  margin-top: var(--space-7);
+  padding-block: var(--space-4);
+  border-block: var(--rule-weight) solid var(--color-border-primary);
+}
 html[data-design] .error-page .error-meta {
-  display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-1);
-  margin: 0 0 var(--space-4); padding: 0;
-}
-html[data-design] .error-page .error-meta dt {
-  font-family: var(--font-family-body); font-weight: var(--font-weight-semibold); font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-text-tertiary); margin: 0;
-}
-html[data-design] .error-page .error-meta dd {
-  margin: 0 0 var(--space-3); font-size: var(--font-size-sm);
-  color: var(--color-text-primary); word-break: break-word;
-}
-html[data-design] .error-page .error-meta dd:last-child { margin-bottom: 0; }
-/* Фон/паддинг/радиус/цвет даёт глобальное :not(pre) > code — оставляем только
-   явный размер sm (dd-контекст), чтобы чип был пиксель-в-пиксель идентичен
-   остальным инлайн-code. */
-html[data-design] .error-page .error-meta code {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3) var(--space-5);
+  margin: var(--space-5) 0;
   font-size: var(--font-size-sm);
 }
-
+html[data-design] .error-page .error-meta dt { color: var(--color-text-secondary); }
+html[data-design] .error-page .error-meta dd { margin: 0; overflow-wrap: anywhere; }
 html[data-design] .error-page .error-dossier-note {
-  margin: 0; font-size: var(--font-size-xs);
-  line-height: var(--line-height-relaxed); color: var(--color-text-tertiary);
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
-
-/* -----------------------------------------------------------------------------
-   601–1199px — области в стопке, но дозор получает всю ширину полосы. Вертикальной
-   лентой (арт 120px, затем четыре строки, затем сноска) он на 720–790px давал
-   высоту 509px при заполненной ширине ~40%: ровно «пустая правая половина» из §6.
-   Раскладываем арт в рельс, а мету — в пары dt|dd: та же информация, вдвое ниже.
-   -------------------------------------------------------------------------- */
-@media (min-width: 601px) and (max-width: 1199px) {
-  html[data-design] .error-page .error-dossier {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-      "art title"
-      "art meta"
-      "art note";
-    column-gap: var(--space-6);
-    align-content: start;
-  }
-  html[data-design] .error-page .error-glyph { grid-area: art; margin: 0; }
-  html[data-design] .error-page .error-scene { grid-area: art; margin: 0; }
-  html[data-design] .error-page .error-dossier-title { grid-area: title; }
-  html[data-design] .error-page .error-dossier-note { grid-area: note; }
-  html[data-design] .error-page .error-meta {
-    grid-area: meta;
-    grid-template-columns: auto minmax(0, 1fr);
-    column-gap: var(--space-5);
-  }
-  html[data-design] .error-page .error-meta dd { margin-bottom: var(--space-2); }
-}
-
-/* ≥1200px — две области рядом.
-   Довод и история: docs/css-decisions/pages-error.md#pages-error-e02 */
-@media (min-width: 1200px) {
-  html[data-design] .error-page .error-card {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 23rem);
-    grid-template-areas: "statement dossier";
-    gap: var(--space-8);
-  }
-}
-
-/* -----------------------------------------------------------------------------
-   ≥1400px — номер статуса уходит в левый рельс заявления. Иначе на широком
-   окне колонка заявления шире своей меры чтения (56ch) и справа от текста
-   остаётся пустая полоса ~300px: рельс занимает её содержимым, которое и так
-   есть на странице, и заодно срезает высоту композиции.
-   -------------------------------------------------------------------------- */
-@media (min-width: 1400px) {
-  html[data-design] .error-page .error-statement {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-      "code eyebrow"
-      "code title"
-      "code body"
-      "code actions";
-    column-gap: var(--space-8);
-    align-items: start;
-  }
-  html[data-design] .error-page .error-eyebrow { grid-area: eyebrow; }
-  html[data-design] .error-page .error-code { margin-bottom: 0; align-self: start; }
-}
-
-/* -----------------------------------------------------------------------------
-   Мобильные — стопка, действия закреплены над таббаром.
-   -------------------------------------------------------------------------- */
 @media (max-width: 600px) {
-  html[data-design] .error-page .ed-page {
-    justify-content: flex-start;
-    min-height: 0;
-    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
-  }
-  html[data-design] .error-page .error-card {
-    padding: var(--space-6) 0 var(--space-4);
-    gap: var(--space-6);
-  }
-  html[data-design] .error-page .error-code {
-    font-size: clamp(2.75rem, 1.5rem + 8vw, 4.5rem);
-    margin-bottom: var(--space-2);
-  }
-  html[data-design] .error-page .error-scene {
-    /* Телефон: ступень сцены ×4 = 160×100. */
-    width: 160px;
-    height: 100px;
-    margin-bottom: var(--space-3);
-  }
-  html[data-design] .error-page .error-glyph {
-    /* На телефоне ступень ниже: 16×16 ×4 = 64px. Целое кратное сетки, как и 96px
-       на десктопе; дробный масштаб пиксельной сетки даёт мыло (FRD-117). */
-    width: 64px;
-    height: 64px;
-    margin-bottom: var(--space-3);
-  }
-  html[data-design] .error-page .error-body,
-  html[data-design] .error-page .error-dossier,
-  html[data-design] .error-page .error-title {
-    scroll-margin-bottom: calc(var(--mobile-nav-height) + 5rem + env(safe-area-inset-bottom, 0px));
-  }
-  /* Только primary (и «Войти» в multi) закреплён над таббаром. Secondary
-     («Аналитика»/«Настройки») уже в таббаре — прячем, иначе dock ~150px
-     режет .error-body или уезжает под nav (live 390/320). */
-  html[data-design] .error-page .error-actions {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px));
-    z-index: var(--z-sticky);
-    width: auto;
-    margin: 0;
-    padding: var(--space-3) var(--page-gutter);
-    background: var(--color-bg-primary);
-    border-top: var(--rule-weight) solid var(--color-border-secondary);
-    gap: var(--space-2);
-  }
-  html[data-design] .error-page .error-actions .btn { width: 100%; }
-  html[data-design] .error-page .error-actions > .secondary-btn { display: none; }
+  html[data-design] .error-page .error-card { padding-block: var(--space-5); }
+  html[data-design] .error-page .error-title { font-size: var(--font-size-heading-section); }
+  html[data-design] .error-page .error-meta { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+  html[data-design] .error-page .error-meta dd { margin-bottom: var(--space-3); }
 }
-
-/* Низкий мобильный экран — сжимаем декор и типографику, дозор остаётся:
-   он несёт путь и идентификатор запроса, ради которых страницу и открывают. */
-@media (max-width: 600px) and (max-height: 700px) {
-  html[data-design] .error-page .error-scene {
-    /* Низкий экран: ступень сцены ×3 = 120×75. */
-    width: 120px;
-    height: 75px;
-    margin-bottom: var(--space-2);
-  }
-  html[data-design] .error-page .error-glyph {
-    /* Низкий экран — ступень 48px = ×3 от сетки 16. */
-    width: 48px;
-    height: 48px;
-    margin-bottom: var(--space-2);
-  }
-  html[data-design] .error-page .error-code {
-    font-size: clamp(1.75rem, 1rem + 5vw, 2.5rem);
-    margin-bottom: var(--space-1);
-    line-height: 1;
-  }
-  html[data-design] .error-page .error-card {
-    padding-top: var(--space-4);
-    padding-bottom: var(--space-2);
-    gap: var(--space-4);
-  }
-  html[data-design] .error-page .error-title {
-    font-size: var(--font-size-lg);
-    margin-bottom: var(--space-2);
-    max-width: none;
-  }
-  html[data-design] .error-page .error-body {
-    font-size: var(--font-size-sm);
-    margin-bottom: var(--space-3);
-    line-height: var(--line-height-snug, 1.35);
-  }
-  html[data-design] .error-page .error-eyebrow {
-    margin-bottom: var(--space-1);
-  }
-  html[data-design] .error-page .error-dossier {
-    padding: var(--space-4);
-  }
-}
-
 }

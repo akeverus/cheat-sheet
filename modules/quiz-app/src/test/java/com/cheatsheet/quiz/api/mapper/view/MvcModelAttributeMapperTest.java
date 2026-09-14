@@ -122,7 +122,7 @@ class MvcModelAttributeMapperTest {
         mapper.applyFocusPageState(model, pageState, false);
 
         assertThat((String) model.getAttribute("focusBrowseNextHref"))
-                .startsWith("/?")
+                .startsWith("/practice?")
                 .contains("topic=java/core")
                 .contains("group=backend")
                 .contains("important=true")
@@ -182,7 +182,7 @@ class MvcModelAttributeMapperTest {
         // не обещает «оцени себя» (iter-180).
         assertThat(flashcardModel.getAttribute("focusModeHintText"))
                 .isEqualTo("Флешкарта: вспомни ответ, раскрой для сверки и переходи к следующему вопросу.");
-        assertThat(flashcardModel.getAttribute("focusEmptyRetryHref")).isEqualTo("/?mode=FLASHCARD");
+        assertThat(flashcardModel.getAttribute("focusEmptyRetryHref")).isEqualTo("/practice?mode=FLASHCARD");
         assertThat(flashcardModel.getAttribute("focusEmptyRetryText")).isEqualTo("Обновить флешкарты");
         // Подпись над формой раскрытия считает сервер: в шаблоне она была
         // четырьмя взаимоисключающими th:if по имени константы, и переименование
@@ -195,7 +195,7 @@ class MvcModelAttributeMapperTest {
         assertThat(studyModel.getAttribute("focusModeChipText")).isEqualTo("Изучение");
         assertThat(studyModel.getAttribute("focusModeHintText"))
                 .isEqualTo("Изучение: разберись с материалом, затем переходи к проверке.");
-        assertThat(studyModel.getAttribute("focusEmptyRetryHref")).isEqualTo("/?mode=STUDY");
+        assertThat(studyModel.getAttribute("focusEmptyRetryHref")).isEqualTo("/practice?mode=STUDY");
         assertThat(studyModel.getAttribute("focusEmptyRetryText")).isEqualTo("Обновить изучение");
 
         // STUDY QUIZ-под-фаза (после /study-confirm): studyLearnPhase=false → чип и
@@ -246,7 +246,7 @@ class MvcModelAttributeMapperTest {
         assertThat(model.getAttribute("focusModeChipText")).isEqualTo("Печатный ответ");
         assertThat(model.getAttribute("focusModeHintText"))
                 .isEqualTo("Печатный ответ: напиши ответ, затем раскрой эталон и оцени себя.");
-        assertThat(model.getAttribute("focusEmptyRetryHref")).isEqualTo("/?mode=TYPED_RECALL");
+        assertThat(model.getAttribute("focusEmptyRetryHref")).isEqualTo("/practice?mode=TYPED_RECALL");
         assertThat(model.getAttribute("focusEmptyRetryText")).isEqualTo("Обновить печатный ответ");
         assertThat(model.getAttribute("recallBadgeText"))
                 .isEqualTo("Печатный ответ — напиши ответ, затем проверь себя");
@@ -292,6 +292,13 @@ class MvcModelAttributeMapperTest {
                 .describedAs("выбранным помечен ровно один режим — тот, что в состоянии")
                 .extracting(ModeUtils.ModeOption::name)
                 .containsExactly("EXAM");
+        assertThat(modes).filteredOn(ModeUtils.ModeOption::primary)
+                .describedAs("три повседневных режима видны без «Ещё режимы»")
+                .extracting(ModeUtils.ModeOption::name)
+                .containsExactly("TRAINING", "STUDY", "FLASHCARD");
+        assertThat(modes).filteredOn(m -> !m.primary())
+                .extracting(ModeUtils.ModeOption::name)
+                .contains("EXAM", "MARATHON");
         assertThat(modes).filteredOn(m -> "TRAINING".equals(m.name()))
                 .describedAs("бесконечный режим прячет поле «Вопросов» — признак приходит с сервера")
                 .extracting(ModeUtils.ModeOption::unlimited)
@@ -386,10 +393,13 @@ class MvcModelAttributeMapperTest {
     @Test
     void appliesAnswerAndStatsAndSummaryStates() {
         ExtendedModelMap model = new ExtendedModelMap();
+        InterviewSession examSession = new InterviewSession(
+                InterviewMode.EXAM, List.of(10L, 11L, 12L), null, null, null, null, Instant.now());
+        examSession.registerAnswer(true);
         AnswerPageService.AnswerPageState answerState = new AnswerPageService.AnswerPageState(
                 null, "<p>ok</p>", "FULL", new InterviewStats(1, 1, 0, 0, 1, 0),
                 List.of("java"), List.of(), "backend", new InterviewFilter("java", "backend", false, false, false, true),
-                InterviewMode.TRAINING, null, null, List.of(), null, 10L
+                InterviewMode.EXAM, examSession, null, List.of(), null, 10L
         );
         StatsPageService.StatsPageState statsState = new StatsPageService.StatsPageState(
                 new InterviewStats(2, 1, 0, 1, 1, 1), List.of("java"), List.of(), "backend",
@@ -410,6 +420,8 @@ class MvcModelAttributeMapperTest {
 
         assertThat(model.getAttribute("answerHtml")).isEqualTo("<p>ok</p>");
         assertThat(model.getAttribute("xpAwarded")).isEqualTo(10L);
+        // После одного ответа из трёх: index=1 → ~33.3%
+        assertThat(model.getAttribute("progressPercent")).isEqualTo(examSession.getIndex() * 100.0 / examSession.getTotal());
         assertThat(model.getAttribute("topicStatsJson")).isEqualTo("[]");
         assertThat(model.getAttribute("summary")).isEqualTo(summary);
     }

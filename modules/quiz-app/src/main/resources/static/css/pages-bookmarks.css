@@ -26,6 +26,12 @@ html[data-design] .bookmarks-page .filter-bar {
 /* Главное действие в шапке: на широком экране — справа от заголовка и лида
    (шапка там пустовала), на узком — строкой под лидом. */
 html[data-design] .bookmarks-page .page-head-actions { margin: var(--space-3) 0 0; }
+html[data-design] .bookmarks-page .bookmarks-training-hint {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
 @media (min-width: 900px) {
   html[data-design] .bookmarks-page .page-head {
     display: grid;
@@ -41,39 +47,21 @@ html[data-design] .bookmarks-page .page-head-actions { margin: var(--space-3) 0 
   html[data-design] .bookmarks-page .page-head-actions { grid-area: actions; margin: 0; }
 }
 
-/* Сетка карточек по доступной ширине, а не одна колонка (§6/§7).
-   Довод и история: docs/css-decisions/pages-bookmarks.md#pages-bookmarks-e02 */
-/* MASONRY-КОЛОНКИ ВМЕСТО GRID-РЯДОВ (аудит viewport-first 2026-09-01). Грид
-   давал ряду высоту самой высокой карточки, и под каждой короткой (no-note
-   115px рядом с has-note 190px) оставалась дыра —системно, потому что
-   сортировка «сначала новые» перемешивает оба вида. CSS-колонки пакуют
-   карточки встык: тот же ~420px на колонку, что был у трека грида; DOM- и
-   таб-порядок не меняются, меняется только упаковка. Замер: docH 2938→~2500. */
+/* One reading order: the visible list follows the DOM and keyboard order. */
 html[data-design] .bookmarks-page .bookmark-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  columns: 26rem;
-  column-gap: var(--space-3);
-}
-html[data-design] .bookmarks-page .bookmark-list > li {
-  margin-bottom: var(--space-3);
-  break-inside: avoid;
 }
 html[data-design] .bookmarks-page .bookmark-item {
-  display: block;
-  padding: var(--space-3) var(--space-4);
-  border: var(--rule-weight) solid var(--color-border-secondary);
-  border-radius: var(--border-radius-md);
-  background: var(--color-bg-secondary);
+  padding: var(--space-5) 0;
+  border-top: var(--rule-weight) solid var(--color-border-primary);
   scroll-margin-top: var(--space-6);
-  /* Карточка покрашена ровно в тот тон, которым коробка поля красит себя по
-     умолчанию, — поле заметки на ней сливалось бы в одно пятно. Ручка компонента
-     (components-controls.css) двигает подложку контрола на тон ниже, не трогая
-     остальную коробку. */
-  --control-surface: var(--color-bg-primary);
+  --control-surface: var(--color-bg-secondary);
 }
-
+html[data-design] .bookmarks-page .bookmark-main {
+  max-width: 84ch;
+}
 
 /* СТРОКА КОЛЛЕКЦИИ. Замер до перестройки (28 закладок: 12 с заметками, 16 без):
    медиана карточки с заметкой 257px на 1512 и 364px на 390, максимум 499px, весь
@@ -95,8 +83,8 @@ html[data-design] .bookmarks-page .bookmark-main {
    возвращает колонке прежний ритм: её гэп — те же 8px, так что расширенная
    зона ложится точно в зазор, не перекрывая раскрытие заметки под ней. */
 html[data-design] .bookmarks-page .bookmark-question {
-  font-size: var(--font-size-sm);
-  line-height: 1.45;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
   color: var(--color-text-primary);
   text-decoration: none;
   font-weight: var(--font-weight-medium);
@@ -118,6 +106,17 @@ html[data-design] .bookmarks-page .bookmark-question::after {
 html[data-design] .bookmarks-page .bookmark-question:hover::after {
   color: var(--color-accent-strong);
 }
+html[data-design] .bookmarks-page .bookmark-question-detail > summary {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+html[data-design] .bookmarks-page .bookmark-question-full {
+  margin: var(--space-2) 0;
+  max-width: var(--measure);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: var(--line-height-relaxed);
+}
 /* Заметка прозой, две строки. Полный текст — в раскрытии ниже, поэтому клампа
    достаточно: он экономит высоту, ничего не пряча безвозвратно. */
 html[data-design] .bookmarks-page .bookmark-note-text {
@@ -126,10 +125,9 @@ html[data-design] .bookmarks-page .bookmark-note-text {
   color: var(--color-text-secondary);
   border-left: var(--rule-weight-strong) solid var(--color-border-secondary);
   padding-left: var(--space-3);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 75ch;
 }
 /* Подвал строки: раскрытие заметки и «Убрать» — оба тихие и мелкие, чтобы вес
    строки нёс вопрос, а не её обслуживание. */
@@ -143,10 +141,11 @@ html[data-design] .bookmarks-page .bookmark-note-summary {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
   cursor: pointer;
-  padding: var(--space-1) 0;
+  min-height: calc(var(--space-6) + var(--space-3));
+  padding: var(--space-2) 0;
   list-style: none;
 }
 html[data-design] .bookmarks-page .bookmark-note-summary::-webkit-details-marker { display: none; }
@@ -259,6 +258,10 @@ html[data-design] .bookmarks-page .filter-bar-summary { display: none; }
 }
 
 @media (max-width: 768px) {
+  html[data-design] .bookmarks-page :is(.bookmark-question, .bookmark-note-summary, .bookmark-note-form button, .bookmark-remove-btn) {
+    scroll-margin-block: var(--space-4) calc(var(--mobile-nav-height) + var(--space-5));
+  }
+
   /* Правило flex-direction у .bookmark-item снято (гигиена приёмки): элемент
      display:block, флекс-свойства были no-op. */
   html[data-design] .bookmarks-page .ed-page {

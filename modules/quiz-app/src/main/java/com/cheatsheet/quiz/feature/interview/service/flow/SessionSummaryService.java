@@ -63,6 +63,7 @@ public class SessionSummaryService {
 
         SessionSummary.Builder builder = SessionSummary.builder()
                 .totalQuestions(session.getCorrect() + session.getWrong() + session.getUnknown())
+                .plannedQuestions(session.getTotal())
                 .correctCount(session.getCorrect())
                 .wrongCount(session.getWrong())
                 .unknownCount(session.getUnknown())

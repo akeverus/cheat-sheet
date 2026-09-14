@@ -86,7 +86,7 @@ class DomIdUniquenessContractTest {
 
     @Test
     void everyRenderedPageHasUniqueIds() throws Exception {
-        for (String path : List.of("/", "/topics", "/stats", "/bookmarks", "/settings", "/review")) {
+        for (String path : List.of("/", "/practice", "/topics", "/stats", "/bookmarks", "/settings", "/review")) {
             String html = render(path);
             assertThat(html)
                     .as("страница %s не отрендерилась — проверять нечего", path)

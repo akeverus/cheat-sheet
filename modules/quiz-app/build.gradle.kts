@@ -168,7 +168,7 @@ tasks.processResources {
     }
 }
 
-// Раньше тут жил task `seedOptions`, дёргавший scripts/seed-options.py для
+// Раньше тут жил task `seedOptions`, дёргавший удалённый SQLite-сидер для
 // офлайн-сидинга `answer_options` через Claude SDK напрямую в SQLite. После
 // миграции на PostgreSQL и переход к JSON-сидерам (modules/quiz-app/src/main/
 // resources/seed/mcq/) сам скрипт превращён в deprecation-stub. Workflow

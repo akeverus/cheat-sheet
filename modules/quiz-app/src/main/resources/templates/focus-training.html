@@ -17,7 +17,7 @@
      странице «Сейчас нет вопросов» — вкладка называла вопросом то, чего нет.
      Сессия без текущего вопроса и браузинг без вопроса говорят титулом то же,
      что их h1: «Сейчас нет вопросов». */-->
-<head th:replace="~{fragments/head :: head(title=${interviewSession != null and current != null and interviewSession.getTotal() > 0} ? ('Вопрос ' + (${interviewSession.getIndex() + 1}) + ' из ' + ${interviewSession.getTotal()} + ' — ' + (${focusModeChipText != null} ? ${focusModeChipText} : 'Тренировка') + ' — Подготовка к собеседованию') : (${reviewMode != null and reviewMode} ? 'Разбор ошибок — Подготовка к собеседованию' : (${current != null} ? (${#strings.abbreviate(#strings.replace(current.question.questionText,'`',''),80)} + ' — Подготовка к собеседованию') : 'Сейчас нет вопросов — Подготовка к собеседованию')), includeMermaid=${needsMermaid == true}, includeChart=false, includeHighlight=true, page='focus')}"></head>
+<head th:replace="~{fragments/head :: head(title=${interviewSession != null and current != null and interviewSession.getTotal() > 0} ? ('Вопрос ' + (${interviewSession.getIndex() + 1}) + ' из ' + ${interviewSession.getTotal()} + ' — ' + (${focusModeChipText != null} ? ${focusModeChipText} : 'Тренировка') + ' — Подготовка к собеседованию') : (${reviewMode != null and reviewMode} ? 'Разбор ошибок — Подготовка к собеседованию' : (${current != null} ? (${#strings.abbreviate(#strings.replace(current.question.questionText,'`',''),80)} + ' — Подготовка к собеседованию') : (${interviewSession != null and interviewSession.finished} ? 'Сессия завершена — Подготовка к собеседованию' : 'Сейчас нет вопросов — Подготовка к собеседованию'))), includeMermaid=${needsMermaid == true}, includeChart=false, includeHighlight=true, page='focus')}"></head>
 <!--/* data-session-mode стоит на <body>, а не на .app: у режима есть КОМПОЗИЦИЯ,
      а токены композиции (--focus-main-measure и сумма полосы --focus-measure)
      объявлены на .focus-page. Пока атрибут висел на потомке, переопределить
@@ -44,7 +44,7 @@
                 <strong>Есть незавершённая сессия</strong>
                 <span class="resume-banner-meta">
                     <span th:text="${pausedInfo.answered}">0</span>&nbsp;из&nbsp;<span th:text="${pausedInfo.total}">0</span>&nbsp;отвечено<span
-                        th:if="${pausedInfo.topic != null and !pausedInfo.topic.isBlank()}" th:text="' · ' + ${pausedInfo.topic}"></span>
+                        th:if="${pausedInfo.topic != null and !pausedInfo.topic.isBlank()}" th:text="' · ' + ${@topicUtils.displayName(pausedInfo.topic)}"></span>
                 </span>
             </div>
         </div>
@@ -71,7 +71,7 @@
          а фокус при активной сессии рендерит вопрос СЕССИИ — раньше обещание CTA
          молча не исполнялось. Развилка честная: отложить сессию (существующий
          pause, прогресс не теряется, resume-баннер вернёт) и перейти к фильтру —
-         либо продолжить сессию (ссылка на «/» снимает параметры). Redirect паузы
+         либо продолжить сессию (ссылка на «/practice» снимает параметры). Redirect паузы
          собирается сервером из БЕЛОГО СПИСКА параметров — никаких raw-URL. */-->
     <div class="resume-banner intent-banner" role="region" aria-label="Фильтр не применён — идёт сессия"
          th:if="${blockedBrowseIntent != null}"
@@ -84,7 +84,7 @@
                       th:with="label=${(bi.weakTopics() != null and bi.weakTopics()) ? 'слабые темы'
                               : ((bi.important() != null and bi.important()) ? 'избранное'
                               : ((bi.onlyWrong() != null and bi.onlyWrong()) ? 'ошибки'
-                              : (bi.topic() != null ? @topicUtils.displayName(bi.topic()) : 'выбранный фильтр')))}"
+                              : (bi.questionId() != null ? 'выбранный вопрос' : (bi.topic() != null ? @topicUtils.displayName(bi.topic()) : 'выбранный фильтр'))))}"
                       th:text="'Отложи или закончи сессию, чтобы тренировать: ' + ${label}">цель</span>
             </div>
         </div>
@@ -95,10 +95,11 @@
             <input type="hidden" name="topic" th:if="${bi.topic() != null}" th:value="${bi.topic()}">
             <input type="hidden" name="group" th:if="${bi.group() != null}" th:value="${bi.group()}">
             <input type="hidden" name="ordered" th:if="${bi.ordered() != null}" th:value="${bi.ordered()}">
+            <input type="hidden" name="questionId" th:if="${bi.questionId() != null}" th:value="${bi.questionId()}">
             <button type="submit" class="btn secondary-btn btn-compact">Отложить сессию и перейти</button>
         </form>
         <div class="resume-banner-discard">
-            <a class="btn quiet-btn" th:href="@{/}">Продолжить сессию</a>
+            <a class="btn quiet-btn" th:href="@{/practice}">Продолжить сессию</a>
         </div>
     </div>
     <section class="focus-training" th:if="${current != null}">
@@ -181,7 +182,7 @@
                      выход словами и стоит там же, где стоял вход. */-->
                 <a class="btn secondary-btn focus-review-entry"
                    th:if="${reviewMode != null and reviewMode}"
-                   th:href="@{/}">
+                   th:href="@{/practice}">
                     <span>Вся тренировка</span>
                 </a>
 
@@ -192,15 +193,14 @@
                      голосовая команда «нажми Сессия» промахивается (REF-018). */-->
                 <summary class="focus-session-more-summary btn secondary-btn"
                              aria-label="Сессия — действия">Сессия</summary>
-                    <div class="focus-session-more-menu" role="menu" aria-label="Действия сессии">
-                        <form method="post" th:action="@{/pause}" class="rail-pause" role="none">
+                    <div class="focus-session-more-menu" role="group" aria-label="Действия сессии">
+                        <form method="post" th:action="@{/pause}" class="rail-pause">
                             <button type="submit" class="focus-session-more-item btn secondary-btn rail-pause-btn"
-                                    role="menuitem">Пауза</button>
+                                    >Пауза</button>
                         </form>
-                        <form method="post" th:action="@{/finish}" class="rail-finish" role="none">
+                        <form method="post" th:action="@{/finish}" class="rail-finish">
                             <button type="submit"
                                     class="focus-session-more-item btn secondary-btn rail-finish-btn"
-                                    role="menuitem"
                                     data-confirm-title="Завершить сессию?"
                                     data-confirm="Прогресс сохранится в итогах. Завершить сессию сейчас?">Завершить сессию</button>
                         </form>
@@ -339,7 +339,8 @@
              достаётся широкая панель. В QUIZ-под-фазе материалы возвращаются:
              там эталона на экране нет, и код — единственная опора ответа. */-->
         <div class="question-materials"
-             th:if="${(hasCode or hasDiagram) and !studyLearnPhase}">
+             th:if="${(hasCode or hasDiagram) and !studyLearnPhase}"
+             th:classappend="${hasCode or (hasDiagram and !diagramBlock.type().rendersAsMermaid())} ? 'is-ready' : (hasDiagram ? 'is-diagram-pending' : '')">
 
             <div class="content-tablist" role="tablist" aria-label="Материалы к вопросу"
                  th:if="${hasCode and hasDiagram}">
@@ -462,187 +463,6 @@
          в естественном порядке: вопрос → что покрыть → писать.
          Список приходит из ModeUtils#workspaceChecklist; пустой = блока нет. */-->
     </div><!--/* /.focus-question-pane : конец колонки вопроса (col1 в split) */-->
-        <!--/* СПУТНИКИ ВОПРОСА — справка о теме, ход сессии и заметка. Обёртка нужна
-             не для стилей, а для РАСКЛАДКИ: на сверхшироком экране они уезжают в третью
-             колонку, и без единого узла пришлось бы расставлять их по сетке поимённо,
-             а порядок автоматического размещения увёл бы каждый следующий блок на ряд
-             ниже предыдущего. Внутри колонки задания (телефон, планшет, две колонки)
-             обёртка ничего не меняет: блоки идут тем же порядком, что и раньше. */-->
-        <div class="focus-companions">
-            <!--/* О ЧЁМ ТЕМА — В КОЛОНКЕ ЗАДАНИЯ, ПОД ВОПРОСОМ.
-                 Замер пустоты (Chromium и WebKit, вопрос без кода): под колонкой вопроса до
-                 нижней кромки вариантов пустует 336×602 px на 1512×982 и 253×768 на
-                 1920/2560 — около 200 тысяч пикселей рабочей области, не занятых ничем.
-                 Это §37 брифа: «одна карточка в центре большого экрана».
-
-                 Заполняется не декорацией, а материалом: одна строка о том, что вообще
-                 входит в тему. Текст берётся из frontmatter самой шпаргалки (`description`)
-                 — оттуда же, откуда приходит название темы, и по той же причине: тема
-                 описана в своём исходнике, а копия описания в БД разошлась бы с ним при
-                 первой правке .md.
-
-                 Блок стоит ПОСЛЕ материалов вопроса и ДО опоры рабочего места: сначала
-                 предмет («что спрашивают»), потом контекст («о чём это вообще»), потом
-                 метод («что покрыть в ответе»). У темы без описания блока нет — выдумывать
-                 текст из slug-а нельзя, пустота честнее подделки.
-
-                 Ответ он не подсказывает: описание перечисляет ОБЪЁМ темы, а не решение
-                 конкретного вопроса. */-->
-            <!--/* СВЁРНУТАЯ СТРОКА (тихий фокус, аудит 2026-09-02): развёрнутый блок
-                 «О теме» с картой был вторым по площади после кода конкурентом
-                 внимания при ответе. Контекст темы — secondary: строка-раскрытие
-                 несёт роль и счёт освоения, содержимое — в одном клике. Нативный
-                 <details>, тот же вид шапки, что у раскрытий /stats
-                 (.disclosure-summary). */-->
-            <section class="topic-brief"
-                     th:if="${current.question.topic != null and !current.question.topic.isBlank()
-                              and @topicUtils.description(current.question.topic) != null}"
-                     aria-labelledby="topic-brief-title">
-                <details class="topic-brief-disclosure">
-                <!--/* Заголовок называет РОЛЬ блока, а не тему: название темы уже стоит
-                     строкой выше, в мета-строке вопроса. Первая сборка печатала его здесь
-                     второй раз — на снимке WebKit 1512×982 «Перебор с возвратом» читалось
-                     дважды на одном экране, в 350 пикселях друг от друга. */-->
-                <summary class="disclosure-summary topic-brief-summary">
-                    <h2 class="topic-brief-title" id="topic-brief-title">О теме</h2>
-                    <span class="muted tiny topic-brief-summary-count"
-                          th:if="${topicMap != null and topicMap.total() > 0}"
-                          th:text="${topicMap.learned() + ' из ' + topicMap.total() + ' освоено'}">0 из 0 освоено</span>
-                </summary>
-                <p class="topic-brief-text" th:text="${@topicUtils.description(current.question.topic)}">Описание темы</p>
-                <!--/* КАРТА ТЕМЫ. Замер нижней пустоты первого экрана (Chromium и WebKit):
-                     1440×900 — 68px (8%), 1512×982 — 150px (15%), 1920×1200 — 434px (36%),
-                     2560×1440 — 674px (47%). На больших экранах почти половина окна не занята
-                     ничем — §37 брифа.
-
-                     Карта отвечает на «где я внутри этой темы» формой: клетка на каждый вопрос
-                     темы, закрытые видно сразу. Подпись рядом говорит то же прозой — цвет не
-                     может быть единственным носителем смысла (WCAG 1.4.1), поэтому состояния
-                     названы словами и числами, а сама сетка помечена aria-hidden: скринридеру
-                     сто одинаковых «элементов списка» не сообщают ничего, что не сказано в
-                     подписи.
-
-                     Данные — ОДИН запрос по текущей теме (findTopicQuestionStates), а не полный
-                     обход банка: findTopicStats читает 321 тему, и звать его на каждом вопросе
-                     значило бы платить за весь банк ради одной строки.
-
-                     Клетки не кликабельны и не подписаны: это ориентир, а не оглавление —
-                     подписи вопросов рядом с вопросом подсказывали бы ответ. */-->
-                <div class="topic-map" th:if="${topicMap != null and topicMap.total() > 0}">
-                    <ul class="topic-map-grid" aria-hidden="true">
-                        <li th:each="state : ${topicMap.cells()}"
-                            th:class="'topic-map-cell topic-map-cell--' + ${#strings.toLowerCase(state.name())}"></li>
-                    </ul>
-                    <p class="topic-map-legend">
-                        <span th:text="${topicMap.learned()} + ' освоено'">0 освоено</span>
-                        <span class="topic-map-sep" aria-hidden="true">·</span>
-                        <span th:text="${topicMap.due()} + ' к повторению'">0 к повторению</span>
-                        <span class="topic-map-sep" aria-hidden="true">·</span>
-                        <span th:text="${topicMap.fresh()} + ' не начато'">0 не начато</span>
-                        <span class="topic-map-sep" aria-hidden="true">·</span>
-                        <span th:text="${'всего ' + topicMap.total()}">всего 0</span>
-                    </p>
-                </div>
-                </details>
-            </section>
-
-            <!--/* ХОД СЕССИИ. Замер 2560×1440 (код-челлендж): колонка задания кончалась на
-                 624, рабочая — на 1116, то есть под заданием оставалось 768×492 пустоты
-                 внутри первого экрана. §38 велит сначала спросить, какую пользу человек
-                 получит на свободной площади. Польза уже посчитана и лежит в сессии:
-                 история ответов (`getAnswerHistory`) — по записи на вопрос, ни одного
-                 нового запроса.
-
-                 Журнал отвечает на «как идёт сейчас»: последние ответы свежими вперёд,
-                 тема каждого и вердикт. Вердикт несёт ФОРМА (кольцо с галкой против
-                 кольца с крестом) плюс слово в подписи для скринридера — цвет здесь не
-                 единственный носитель (WCAG 1.4.1).
-
-                 Блока нет, пока нечего показывать: на первом вопросе сессии и вне сессии
-                 пустая рамка «Ход сессии» сообщала бы только о себе. Хвост длинной сессии
-                 сворачивается в две цифры — на марафоне в 200 вопросов полный список был
-                 бы длиннее страницы. */-->
-            <section class="session-log" th:if="${sessionLog != null and sessionLog.present()}"
-                     aria-labelledby="session-log-title">
-                <h2 class="session-log-title" id="session-log-title">Ход сессии</h2>
-                <ol class="session-log-list">
-                    <li th:each="entry : ${sessionLog.entries()}" class="session-log-entry"
-                        th:classappend="${entry.correct()} ? ' is-correct' : ' is-wrong'">
-                        <svg class="ui-icon session-log-mark" aria-hidden="true">
-                            <use th:attr="href=${entry.correct()} ? '#circle-check' : '#circle-x'"></use>
-                        </svg>
-                        <span class="session-log-number" th:text="${entry.number()}">1</span>
-                        <span class="session-log-topic" th:text="${@topicUtils.displayName(entry.topic())}">Тема</span>
-                        <span class="visually-hidden" th:text="${entry.correct()} ? '— верно' : '— ошибка'">— верно</span>
-                    </li>
-                </ol>
-                <p class="session-log-tail" th:if="${sessionLog.truncated()}"
-                   th:text="'раньше: ' + ${sessionLog.hiddenCorrect()} + ' верных, ' + ${sessionLog.hiddenWrong()} + ' с ошибкой'">
-                    раньше: 0 верных, 0 с ошибкой</p>
-            </section>
-
-            <!--/* ЗАМЕТКА К ВОПРОСУ. До iter-133 записать мысль можно было только на
-                 странице закладок: на экране, где вопрос перед глазами и мысль возникает,
-                 поля не было вовсе — приходилось запоминать её до конца сессии и искать
-                 вопрос в списке. Хранилище то же самое (`bookmark.note`), поэтому второй
-                 системы заметок не появилось: одна запись, два места, где её видно.
-
-                 Форма обычная, серверная: заметку пишут посреди сессии, и терять текст
-                 из-за выключенного JS недопустимо. Скрипт перехватывает отправку и
-                 сохраняет через тот же API, что заметки закладок (js/quiz/bookmarks.js) —
-                 одна реализация на два экрана.
-
-                 Уже написанный текст показан прозой НАД раскрытием: поле, приходящее
-                 пустым, молча приглашает переписать собственную заметку заново. */-->
-            <!--/* СВЁРНУТАЯ СТРОКА (тихий фокус, аудит 2026-09-02): заметка — tertiary,
-                 при ответе её этаж (ярлык + проза + раскрытие формы) не должен
-                 звучать. Строка говорит, есть ли запись; содержимое — в клике.
-                 После серверного сохранения (questionNoteSaved) раскрытие приходит
-                 открытым — подтверждение обязано быть видно без JS. Внутренняя
-                 механика (текст прозой, форма за своим раскрытием, классы для
-                 bookmarks.js) не тронута. */-->
-            <section class="question-note" th:if="${current != null}" aria-labelledby="question-note-title"
-                     th:with="hasNote=${questionNote != null and !#strings.isEmpty(questionNote)}">
-                <details class="question-note-outer" th:attr="open=${questionNoteSaved} ? 'open' : null">
-                <summary class="disclosure-summary question-note-outer-summary">
-                    <h2 class="question-note-title" id="question-note-title">Заметка</h2>
-                    <span class="muted tiny question-note-outer-mark" th:if="${hasNote}">есть</span>
-                </summary>
-                <p class="question-note-saved notice notice-success" role="status" th:if="${questionNoteSaved}">Заметка сохранена.</p>
-                <p class="question-note-text" th:if="${hasNote}" th:text="${questionNote}">Текст заметки</p>
-                <details class="question-note-disclosure bookmark-note-disclosure">
-                    <summary class="question-note-summary"
-                             th:text="${hasNote} ? 'Изменить заметку' : 'Записать мысль'">Записать мысль</summary>
-                    <form class="bookmark-note-form question-note-form" method="post" th:action="@{/question/note}"
-                          th:attr="data-question-id=${current.question.id}">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <input type="hidden" name="questionId" th:value="${current.question.id}">
-                        <label class="field">
-                            <span class="field-label visually-hidden">Заметка к вопросу</span>
-                            <textarea name="note" rows="3" th:text="${questionNote}"
-                                      placeholder="Что здесь важно запомнить"></textarea>
-                        </label>
-                        <div class="question-note-actions">
-                            <button type="submit" class="btn secondary-btn">Сохранить</button>
-                            <span class="bookmark-save-status" role="status" aria-live="polite"></span>
-                        </div>
-                        <!--/* Говорим прямо о следствии: сохранение помечает вопрос
-                             избранным (BookmarkApiService.saveNote), и он появится в
-                             «Закладках». Молча менять состояние вопроса нельзя. */-->
-                        <p class="question-note-hint">Вопрос попадёт в «Закладки» — заметка живёт там же.</p>
-                    </form>
-                </details>
-                </details>
-            </section>
-
-            <!--/* Опора рабочего места (`.workspace-support`) стояла ЗДЕСЬ, в колонке
-                 задания, и была списком-текстом с нарисованной клеткой в ::before. Она
-                 уехала в рабочую колонку и стала настоящими флажками (см. `.workspace-plan`
-                 в `.typed-workspace`): план ответа — часть работы, а не часть задания, и
-                 отмечают по нему, пока пишут или говорят, а не пока читают вопрос.
-                 Нарисованная клетка при этом была ложным аффордансом — она выглядела как
-                 то, что можно отметить, и не отмечалась. */-->
-        </div><!--/* /.focus-companions */-->
     </div><!--/* /.focus-task */-->
 
         <div th:if="${flashcardMode}" class="flashcard-phase">
@@ -775,7 +595,9 @@
 
                 <form method="post" th:action="@{/flashcard-reveal}" class="typed-answer-input"
                       th:data-question-id="${current.question.id}"
+                      th:data-recall-key="${recallAnswerKey}"
                       th:classappend="${codeChallengeMode} ? ' is-code' : ''">
+                    <input type="hidden" name="questionId" th:value="${current.question.id}">
                     <!--/* Подпись отделена от поля (`for`), потому что между ними
                          встала поверхность письма: `<label>` принимает только
                          фразовый контент, и обёртка внутри него была бы невалидной
@@ -810,7 +632,8 @@
                                  действующими. На 360×780 это уводило низ поля под
                                  закреплённый док действия (689 против 666). Четыре
                                  строки — честный минимум и без стилей вовсе. */-->
-                            <textarea id="typed-answer" name="typedAnswer" rows="4"
+                            <textarea id="typed-answer" name="typedAnswer" rows="4" maxlength="100000"
+                                      th:text="${recallAnswer}"
                                       th:placeholder="${typedAnswerPlaceholder}"
                                       th:attr="spellcheck=${codeChallengeMode} ? 'false' : null,
                                                autocapitalize=${codeChallengeMode} ? 'off' : null,
@@ -818,7 +641,7 @@
                                                autocomplete=${codeChallengeMode} ? 'off' : null"></textarea>
                         </div>
                     </div>
-                    <button type="submit" class="flashcard-reveal-btn">Показать ответ</button>
+                    <button type="submit" class="flashcard-reveal-btn primary-btn">Показать ответ</button>
                 </form>
             </div>
             <!--/* Обёртки вокруг формы здесь БЫЛА и мешала: закреплённое действие держится
@@ -828,7 +651,8 @@
                  саму форму, и она стала прямым ребёнком фазы. */-->
             <form method="post" th:action="@{/flashcard-reveal}"
                   th:if="${sessionRecallMode and !flashcardRevealed and !typedInputMode}">
-                <button type="submit" class="flashcard-reveal-btn">Показать ответ</button>
+                <input type="hidden" name="questionId" th:value="${current.question.id}">
+                <button type="submit" class="flashcard-reveal-btn primary-btn">Показать ответ</button>
             </form>
             <!--/* Раскрытие — серверная навигация (POST /flashcard-reveal → новый
                  документ), и фокус приземлялся на BODY: клавиатурному и SR-пользователю
@@ -838,19 +662,18 @@
                  aria-label даёт SR имя приземления вместо чтения залпом. */-->
             <div th:if="${sessionRecallMode and flashcardRevealed}" class="flashcard-answer workspace-surface"
                  tabindex="-1" autofocus role="region" aria-label="Ответ раскрыт">
-                <!--/* Typed-recall / code-challenge / interview: эхо ответа пользователя
-                     над эталоном для само-сверки («напиши → сравни»). Текст живёт в
-                     sessionStorage (сохраняется JS при сабмите reveal-формы, т.к.
-                     серверный /flashcard-reveal его не персистит) и подставляется
-                     initRecallTypedEcho по совпадению data-question-id. По умолчанию
-                     hidden: без JS или при пустом вводе блок не появляется (PE). */-->
-                <div th:if="${typedInputMode}" class="recall-your-answer" hidden
+                <!--/* Эхо хранится в HTTP-сессии; th:text экранирует код и HTML.
+                     Клиентский черновик дополнительно сохраняет ввод до отправки. */-->
+                <div th:if="${typedInputMode}" class="recall-your-answer"
+                     th:hidden="${#strings.isEmpty(recallAnswer)}"
+                     th:data-recall-key="${recallAnswerKey}"
                      th:classappend="${codeChallengeMode} ? ' is-code' : ''"
                      th:data-question-id="${current.question.id}">
                     <div class="recall-answer-heading" th:text="${codeChallengeMode} ? 'Твой код' : 'Твой ответ'">Твой ответ</div>
-                    <pre class="recall-your-answer-body"></pre>
+                    <pre class="recall-your-answer-body" th:text="${recallAnswer}"></pre>
                 </div>
-                <div th:if="${typedInputMode}" class="recall-answer-heading recall-etalon-heading">Эталон</div>
+                <div th:if="${typedInputMode}" th:hidden="${#strings.isEmpty(recallAnswer)}"
+                     class="recall-answer-heading recall-etalon-heading">Эталон</div>
                 <div class="answer markdown-content" th:utext="${studyAnswerHtml}"></div>
                 <div class="flashcard-grade-buttons" role="group" aria-labelledby="flashcard-grade-label">
                     <span class="flashcard-grade-label" id="flashcard-grade-label">Насколько уверенно ты ответил?</span>
@@ -883,7 +706,7 @@
                 <div class="answer markdown-content" th:utext="${studyAnswerHtml}"></div>
             </div>
             <form method="post" th:action="@{/study-confirm}" class="study-confirm-form">
-                <button type="submit" class="flashcard-reveal-btn study-confirm-btn">Проверить себя<span aria-hidden="true"> →</span></button>
+                <button type="submit" class="flashcard-reveal-btn primary-btn study-confirm-btn">Проверить себя<span aria-hidden="true"> →</span></button>
             </form>
         </div>
 
@@ -986,6 +809,188 @@
         )}"></div>
         <div th:replace="~{fragments/post-answer-controls :: post-answer-controls}"></div>
 
+        <!--/* СПУТНИКИ ВОПРОСА — справка о теме, ход сессии и заметка. В DOM это
+             вторичный контекст ПОСЛЕ вопроса, работы и пост-разбора: клавиатурный
+             маршрут не должен вести через справку до вариантов ответа и CTA.
+             Обёртка остаётся единым прямым ребёнком .focus-main, чтобы раскладка
+             могла размещать спутников как одну спокойную зону. */-->
+        <div class="focus-companions stack-quiet">
+            <!--/* О ЧЁМ ТЕМА — ВТОРИЧНЫЙ КОНТЕКСТ ПОСЛЕ РАБОТЫ.
+                 Замер пустоты (Chromium и WebKit, вопрос без кода): под колонкой вопроса до
+                 нижней кромки вариантов пустует 336×602 px на 1512×982 и 253×768 на
+                 1920/2560 — около 200 тысяч пикселей рабочей области, не занятых ничем.
+                 Это §37 брифа: «одна карточка в центре большого экрана».
+
+                 Заполняется не декорацией, а материалом: одна строка о том, что вообще
+                 входит в тему. Текст берётся из frontmatter самой шпаргалки (`description`)
+                 — оттуда же, откуда приходит название темы, и по той же причине: тема
+                 описана в своём исходнике, а копия описания в БД разошлась бы с ним при
+                 первой правке .md.
+
+                 Блок стоит ПОСЛЕ ответа и пост-разбора: сначала предмет («что
+                 спрашивают») и действие, затем контекст («о чём это вообще»).
+                 У темы без описания блока нет — выдумывать текст из slug-а нельзя,
+                 пустота честнее подделки.
+
+                 Ответ он не подсказывает: описание перечисляет ОБЪЁМ темы, а не решение
+                 конкретного вопроса. */-->
+            <!--/* СВЁРНУТАЯ СТРОКА (тихий фокус, аудит 2026-09-02): развёрнутый блок
+                 «О теме» с картой был вторым по площади после кода конкурентом
+                 внимания при ответе. Контекст темы — secondary: строка-раскрытие
+                 несёт роль и счёт освоения, содержимое — в одном клике. Нативный
+                 <details>, тот же вид шапки, что у раскрытий /stats
+                 (.disclosure-summary). */-->
+            <section class="topic-brief"
+                     th:if="${current.question.topic != null and !current.question.topic.isBlank()
+                              and @topicUtils.description(current.question.topic) != null}"
+                     aria-labelledby="topic-brief-title">
+                <details class="topic-brief-disclosure stack-quiet">
+                <!--/* Заголовок называет РОЛЬ блока, а не тему: название темы уже стоит
+                     строкой выше, в мета-строке вопроса. Первая сборка печатала его здесь
+                     второй раз — на снимке WebKit 1512×982 «Перебор с возвратом» читалось
+                     дважды на одном экране, в 350 пикселях друг от друга. */-->
+                <summary class="disclosure-summary topic-brief-summary">
+                    <h2 class="topic-brief-title" id="topic-brief-title">О теме</h2>
+                    <span class="muted tiny topic-brief-summary-count"
+                          th:if="${topicMap != null and topicMap.total() > 0}"
+                          th:text="${topicMap.learned() + ' из ' + topicMap.total() + ' освоено'}">0 из 0 освоено</span>
+                </summary>
+                <p class="topic-brief-text" th:text="${@topicUtils.description(current.question.topic)}">Описание темы</p>
+                <!--/* КАРТА ТЕМЫ. Замер нижней пустоты первого экрана (Chromium и WebKit):
+                     1440×900 — 68px (8%), 1512×982 — 150px (15%), 1920×1200 — 434px (36%),
+                     2560×1440 — 674px (47%). На больших экранах почти половина окна не занята
+                     ничем — §37 брифа.
+
+                     Карта отвечает на «где я внутри этой темы» формой: клетка на каждый вопрос
+                     темы, закрытые видно сразу. Подпись рядом говорит то же прозой — цвет не
+                     может быть единственным носителем смысла (WCAG 1.4.1), поэтому состояния
+                     названы словами и числами, а сама сетка помечена aria-hidden: скринридеру
+                     сто одинаковых «элементов списка» не сообщают ничего, что не сказано в
+                     подписи.
+
+                     Данные — ОДИН запрос по текущей теме (findTopicQuestionStates), а не полный
+                     обход банка: findTopicStats читает 321 тему, и звать его на каждом вопросе
+                     значило бы платить за весь банк ради одной строки.
+
+                     Клетки не кликабельны и не подписаны: это ориентир, а не оглавление —
+                     подписи вопросов рядом с вопросом подсказывали бы ответ. */-->
+                <div class="topic-map" th:if="${topicMap != null and topicMap.total() > 0}">
+                    <ul class="topic-map-grid" aria-hidden="true">
+                        <li th:each="state : ${topicMap.cells()}"
+                            th:class="'topic-map-cell topic-map-cell--' + ${#strings.toLowerCase(state.name())}"></li>
+                    </ul>
+                    <p class="topic-map-legend">
+                        <span th:text="${topicMap.learned()} + ' освоено'">0 освоено</span>
+                        <span class="topic-map-sep" aria-hidden="true">·</span>
+                        <span th:text="${topicMap.due()} + ' к повторению'">0 к повторению</span>
+                        <span class="topic-map-sep" aria-hidden="true">·</span>
+                        <span th:text="${topicMap.fresh()} + ' не начато'">0 не начато</span>
+                        <span class="topic-map-sep" aria-hidden="true">·</span>
+                        <span th:text="${'всего ' + topicMap.total()}">всего 0</span>
+                    </p>
+                </div>
+                </details>
+            </section>
+
+            <!--/* ЗАМЕТКА К ВОПРОСУ. До iter-133 записать мысль можно было только на
+                 странице закладок: на экране, где вопрос перед глазами и мысль возникает,
+                 поля не было вовсе — приходилось запоминать её до конца сессии и искать
+                 вопрос в списке. Хранилище то же самое (`bookmark.note`), поэтому второй
+                 системы заметок не появилось: одна запись, два места, где её видно.
+
+                 Форма обычная, серверная: заметку пишут посреди сессии, и терять текст
+                 из-за выключенного JS недопустимо. Скрипт перехватывает отправку и
+                 сохраняет через тот же API, что заметки закладок (js/quiz/bookmarks.js) —
+                 одна реализация на два экрана.
+
+                 Уже написанный текст показан прозой НАД раскрытием: поле, приходящее
+                 пустым, молча приглашает переписать собственную заметку заново. */-->
+            <!--/* СВЁРНУТАЯ СТРОКА (тихий фокус, аудит 2026-09-02): заметка — tertiary,
+                 при ответе её этаж (ярлык + проза + раскрытие формы) не должен
+                 звучать. Строка говорит, есть ли запись; содержимое — в клике.
+                 После серверного сохранения (questionNoteSaved) раскрытие приходит
+                 открытым — подтверждение обязано быть видно без JS. Внутренняя
+                 механика (текст прозой, форма за своим раскрытием, классы для
+                 bookmarks.js) не тронута. */-->
+            <section class="question-note" th:if="${current != null}" aria-labelledby="question-note-title"
+                     th:with="hasNote=${questionNote != null and !#strings.isEmpty(questionNote)}">
+                <details class="question-note-outer stack-quiet" th:attr="open=${questionNoteSaved} ? 'open' : null">
+                <summary class="disclosure-summary question-note-outer-summary">
+                    <h2 class="question-note-title" id="question-note-title">Заметка</h2>
+                    <span class="muted tiny question-note-outer-mark" th:if="${hasNote}">есть</span>
+                </summary>
+                <p class="question-note-saved notice notice-success" role="status" th:if="${questionNoteSaved}">Заметка сохранена.</p>
+                <p class="question-note-text" th:if="${hasNote}" th:text="${questionNote}">Текст заметки</p>
+                <details class="question-note-disclosure bookmark-note-disclosure">
+                    <summary class="question-note-summary"
+                             th:text="${hasNote} ? 'Изменить заметку' : 'Записать мысль'">Записать мысль</summary>
+                    <form class="bookmark-note-form question-note-form" method="post" th:action="@{/question/note}"
+                          th:attr="data-question-id=${current.question.id}">
+                        <!--/* CSRF инжектит th:action — ручное поле удваивало токен. */-->
+                        <input type="hidden" name="questionId" th:value="${current.question.id}">
+                        <label class="field">
+                            <span class="field-label visually-hidden">Заметка к вопросу</span>
+                            <textarea name="note" rows="3" th:text="${questionNote}"
+                                      placeholder="Что здесь важно запомнить"></textarea>
+                        </label>
+                        <div class="question-note-actions">
+                            <button type="submit" class="btn secondary-btn">Сохранить</button>
+                            <span class="bookmark-save-status" role="status" aria-live="polite"></span>
+                        </div>
+                        <!--/* Говорим прямо о следствии: сохранение помечает вопрос
+                             избранным (BookmarkApiService.saveNote), и он появится в
+                             «Закладках». Молча менять состояние вопроса нельзя. */-->
+                        <p class="question-note-hint">Вопрос попадёт в «Закладки» — заметка живёт там же.</p>
+                    </form>
+                </details>
+                </details>
+            </section>
+
+            <!--/* ХОД СЕССИИ. Замер 2560×1440 (код-челлендж): колонка задания кончалась на
+                 624, рабочая — на 1116, то есть под заданием оставалось 768×492 пустоты
+                 внутри первого экрана. §38 велит сначала спросить, какую пользу человек
+                 получит на свободной площади. Польза уже посчитана и лежит в сессии:
+                 история ответов (`getAnswerHistory`) — по записи на вопрос, ни одного
+                 нового запроса.
+
+                 Журнал отвечает на «как идёт сейчас»: последние ответы свежими вперёд,
+                 тема каждого и вердикт. Вердикт несёт ФОРМА (кольцо с галкой против
+                 кольца с крестом) плюс слово в подписи для скринридера — цвет здесь не
+                 единственный носитель (WCAG 1.4.1).
+
+                 Блока нет, пока нечего показывать: на первом вопросе сессии и вне сессии
+                 пустая рамка «Ход сессии» сообщала бы только о себе. Хвост длинной сессии
+                 сворачивается в две цифры — на марафоне в 200 вопросов полный список был
+                 бы длиннее страницы. В DOM журнал идёт после темы и заметки — ровно в том
+                 порядке, в котором их показывает двухколоночная мета-строка. */-->
+            <section class="session-log" th:if="${sessionLog != null and sessionLog.present()}"
+                     aria-labelledby="session-log-title">
+                <h2 class="session-log-title" id="session-log-title">Ход сессии</h2>
+                <ol class="session-log-list">
+                    <li th:each="entry : ${sessionLog.entries()}" class="session-log-entry"
+                        th:classappend="${entry.correct()} ? ' is-correct' : ' is-wrong'">
+                        <svg class="ui-icon session-log-mark" aria-hidden="true">
+                            <use th:attr="href=${entry.correct()} ? '#circle-check' : '#circle-x'"></use>
+                        </svg>
+                        <span class="session-log-number" th:text="${entry.number()}">1</span>
+                        <span class="session-log-topic" th:text="${@topicUtils.displayName(entry.topic())}">Тема</span>
+                        <span class="visually-hidden" th:text="${entry.correct()} ? '— верно' : '— ошибка'">— верно</span>
+                    </li>
+                </ol>
+                <p class="session-log-tail" th:if="${sessionLog.truncated()}"
+                   th:text="'раньше: ' + ${sessionLog.hiddenCorrect()} + ' верных, ' + ${sessionLog.hiddenWrong()} + ' с ошибкой'">
+                    раньше: 0 верных, 0 с ошибкой</p>
+            </section>
+
+            <!--/* Опора рабочего места (`.workspace-support`) стояла ЗДЕСЬ, в колонке
+                 задания, и была списком-текстом с нарисованной клеткой в ::before. Она
+                 уехала в рабочую колонку и стала настоящими флажками (см. `.workspace-plan`
+                 в `.typed-workspace`): план ответа — часть работы, а не часть задания, и
+                 отмечают по нему, пока пишут или говорят, а не пока читают вопрос.
+                 Нарисованная клетка при этом была ложным аффордансом — она выглядела как
+                 то, что можно отметить, и не отмечалась. */-->
+        </div><!--/* /.focus-companions */-->
+
         <!--/* FLOW-REPORT-b: тихий триггер «Сообщить о проблеме» по текущему вопросу.
              JS-gated (hidden → quiz/interview.js раскрывает и вешает reportModal): без JS
              модалка не работает, поэтому мёртвой кнопки без скриптов не показываем
@@ -1040,7 +1045,8 @@
         <h1 class="empty-state-title" th:if="${reviewMode}"
             th:with="filtered=${filter != null and (filter.topic() != null or filter.group() != null)}"
             th:text="${filtered} ? 'В этой выборке ошибок нет' : 'Ошибок для повтора нет'">Ошибок для повтора нет</h1>
-        <h1 class="empty-state-title" th:unless="${reviewMode}">Сейчас нет вопросов</h1>
+        <h1 class="empty-state-title" th:unless="${reviewMode}"
+            th:text="${interviewSession != null and interviewSession.finished} ? 'Сессия завершена' : 'Сейчас нет вопросов'">Сейчас нет вопросов</h1>
         <!--/* AIR-6 (R0.129): AI вырезан → generationUnavailable был зашит в false
              (всегда). Плечо `!generationUnavailable and` снято из guard'ов как
              всегда-истинное вместе с model-атрибутом и plumbing (FocusPageState +
@@ -1055,7 +1061,7 @@
              : 'Все ошибки из истории разобраны. Вопрос вернётся сам, когда планировщик назначит повтор.'">Ошибок нет.</p>
         <p class="empty-state-text" th:if="${!reviewMode and interviewSession == null}">Нет доступных вопросов по выбранным фильтрам. Открой настройки и расширь выборку.</p>
         <p class="empty-state-text" th:if="${!reviewMode and interviewSession != null and !interviewSession.finished}">Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.</p>
-        <p class="empty-state-text" th:if="${!reviewMode and interviewSession != null and interviewSession.finished}"><svg class="ui-icon ui-icon-lead" aria-hidden="true"><use href="#flag"></use></svg>Сессия завершена.</p>
+        <p class="empty-state-text" th:if="${!reviewMode and interviewSession != null and interviewSession.finished}">Посмотри итоги занятия, чтобы увидеть результат и выбрать следующий шаг.</p>
         <div class="empty-state-actions" th:with="finished=${interviewSession != null and interviewSession.finished},
                                             settingsPrimary=${!reviewMode and interviewSession == null}">
             <!--/* Завершённая сессия: главный CTA — итоги, а не «обновить тренировку».
@@ -1090,7 +1096,7 @@
                       th:with="filtered=${filter != null and (filter.topic() != null or filter.group() != null)}">
                 <a th:if="${filtered}" class="btn next-btn empty-action-review-all" th:href="@{/review}">Разобрать все ошибки</a>
                 <a class="btn empty-action-train" th:classappend="${filtered} ? ' secondary-btn' : ' next-btn'"
-                   th:href="@{/}">Продолжить тренировку</a>
+                   th:href="@{/practice}">Продолжить тренировку</a>
                 <a class="btn secondary-btn empty-action-stats" th:unless="${filtered}" th:href="@{/stats}">Посмотреть аналитику</a>
             </th:block>
             <a class="btn empty-action-settings" th:unless="${reviewMode}"
@@ -1099,8 +1105,8 @@
             <!--/* retry: primary по умолчанию; опускаем до secondary при finished (primary —
                  «итоги») ИЛИ при settingsPrimary (primary — настройки).
                  th:href/th:text фиксирует TemplateFragmentContractTest. */-->
-            <a class="btn empty-action-retry" th:unless="${reviewMode}"
-               th:classappend="${finished or settingsPrimary} ? ' secondary-btn' : ' next-btn'"
+            <a class="btn empty-action-retry" th:unless="${reviewMode or finished}"
+               th:classappend="${settingsPrimary} ? ' secondary-btn' : ' next-btn'"
                th:href="${focusEmptyRetryHref}" th:text="${focusEmptyRetryText}">Обновить тренировку</a>
         </div>
 

@@ -2,112 +2,53 @@
 <html lang="ru" data-design="folio" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: head(title='Ошибка — Подготовка к собеседованию', includeMermaid=false, includeChart=false, includeHighlight=false, page='error')}"></head>
 <body class="error-page">
-<a class="skip-link" href="#main-content">Перейти к сообщению об ошибке</a>
+<a class="skip-link" href="#main-content">Перейти к сообщению</a>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
-<!--/* Спрайт состояний здесь БОЛЬШЕ НЕ ВКЛЮЧАЕТСЯ. Он нужен странице (иллюстрация
-     ошибки — его глиф: решётка на 404, сбой на прочих кодах), но с тех пор, как
-     `fragments/shell-head` печатает его для всех семи страниц, второй include
-     дублировал определения: замер живой страницы дал 58 <symbol> в трёх
-     спрайт-блоках против 48 в двух на остальных страницах и 10 повторяющихся
-     `id` (state-offline, state-locked, state-shelf, state-chronicle, state-diagram-error…).
-     Повторяющийся id — невалидный документ: `<use href="#px-…">` разрешается в
-     первый попавшийся, и второй набор определений всегда мёртв. */-->
 <div class="app">
-    <aside th:replace="~{fragments/sidebar :: sidebar(active='focus')}"></aside>
+    <aside th:replace="~{fragments/sidebar :: sidebar(active=${null})}"></aside>
     <div class="shell-main">
         <th:block th:replace="~{fragments/shell-head :: shell-head}"></th:block>
-<main id="main-content" class="ed-page" tabindex="-1">
-<!--/* Две области сетки: слева заявление (что случилось и что делать), справа
-     дозор (чем это подтверждается). Порядок в DOM = порядок чтения и обхода
-     табом; на узком экране области разъезжают в стопку тем же порядком. */-->
-<section class="error-card" aria-labelledby="error-heading"
-         th:with="code=${status != null ? status : 500}">
-
-    <div class="error-statement">
-        <p class="error-eyebrow" aria-hidden="true">Ошибка</p>
-
-        <!--/* Большой статус-номер как editorial-композиция (декоративный, реальный
-             заголовок — error-title ниже). Для не-числовых ошибок показываем знак. */-->
-        <div class="error-code" th:text="${status} ?: '×'" aria-hidden="true">500</div>
-
-        <h1 id="error-heading" class="error-title"
-            th:text="${code == 404 ? 'Такой страницы нет' :
-                      (code == 403 ? 'Доступ запрещён' :
-                      (code == 401 ? 'Требуется авторизация' :
-                      (code == 400 ? 'Некорректный запрос' :
-                      (code &gt;= 500 ? 'Внутренняя ошибка сервера' : 'Что-то пошло не так'))))}">
-            Ошибка
-        </h1>
-
-        <p class="error-body"
-           th:text="${code == 404 ? 'Возможно, ссылка устарела или ты свернул не туда. Загляни на главную и продолжи тренировку.' :
-                     (code == 403 ? 'Нет прав на это действие. Обнови страницу и повтори; если снова отказ — проверь admin-токен в настройках или войди заново.' :
-                     (code == 401 ? 'Нужно представиться, чтобы продолжить.' :
-                     (code == 400 ? 'Запрос составлен неверно — проверь введённые данные и попробуй ещё раз.' :
-                      'Запрос не дошёл до результата. Попробуй обновить страницу или вернуться на главную — если повторится, приложи идентификатор запроса к отчёту.')))}">
-            Что-то пошло не так
-        </p>
-
-        <nav class="error-actions" aria-label="Что дальше">
-            <a th:href="@{/}" class="btn next-btn">На главную</a>
-            <!--/* multiSecurityMode может быть null на /error вне ControllerAdvice —
-                 сравниваем с true, иначе SpEL EL1001E (null→boolean) валит весь error.html. */-->
-            <a th:if="${multiSecurityMode == true and status != null and (status == 401 or status == 403)}"
-               th:href="@{/login}" class="btn next-btn">Войти</a>
-            <a th:href="@{/stats}" class="btn secondary-btn">Аналитика</a>
-            <a th:href="@{/train}" class="btn secondary-btn">Собрать сессию</a>
-        </nav>
-    </div>
-
-    <!--/* Дозор виден всегда, а не спрятан в <details>: раньше он и рендерился
-         только на контейнерном dispatch (403/401), так что на 404 и 500 —
-         там, где сведения нужнее всего, — правая колонка была бы пустой.
-         Обе доставки модели теперь дают один набор ключей (ErrorViewAttributes
-         и GlobalExceptionHandler#errorView). Кнопки «копировать» здесь нет
-         намеренно: страница ошибки обязана быть полезной и при неподнявшемся JS. */-->
-    <div class="error-dossier">
-        <!--/* Иллюстрация ошибки — глиф спрайта состояний, а не растр. Растровый маскот
-             (mascot.png) ушёл вместе с брендом: PNG не знает темы, и на пергаменте он
-             оставался тёмным пятном из тёмной темы. Здесь же он был не к месту и по
-             смыслу — «лицо продукта» на странице сбоя ничего не объясняет.
-
-             Теперь смысл несёт положение: 404 — путь закрыт (опущенная решётка),
-             остальные коды — сбой (тот же глиф, что показывает несостоявшийся рендер
-             диаграммы). Размер 128px = 16×16 ×8, целочисленный масштаб сетки. */-->
-        <!--/* 404 — СЦЕНА «потерянная карта» (курс §56): событие крупное, место
-             действия объясняет его лучше одного предмета — как у пустой коллекции
-             закладок (scene-shelf). Прочие коды — сбой, глиф несостоявшегося
-             рендера. Ступени сцены 8:5 кратны сетке: 280×175 = 40×25 ×7 (×8 не влезал в арт-колонку — мыло). */-->
-        <svg th:if="${code == 404}" class="error-scene ui-illus" width="280" height="175" aria-hidden="true">
-            <use href="#scene-lost-map"></use>
-        </svg>
-        <svg th:unless="${code == 404}" class="error-glyph ui-illus" width="128" height="128" aria-hidden="true">
-            <use href="#state-diagram-error"></use>
-        </svg>
-        <h2 class="error-dossier-title">Что известно</h2>
-        <dl class="error-meta">
-            <dt th:if="${path != null}">Путь</dt>
-            <dd th:if="${path != null}"><code th:text="${path}">/</code></dd>
-            <dt>Статус</dt>
-            <dd><span th:text="${status} ?: '—'">500</span><span th:if="${error != null}" th:text="' · ' + ${error}"> · Internal Server Error</span></dd>
-            <!--/* «Сообщение» показываем, только если оно добавляет смысл к причине:
-                 на sendError(403,"Forbidden") message дословно повторял error. */-->
-            <dt th:if="${message != null and !#strings.isEmpty(message) and message != error}">Подробность</dt>
-            <dd th:if="${message != null and !#strings.isEmpty(message) and message != error}"><code th:text="${message}">—</code></dd>
-            <dt th:if="${errorTime != null}">Время</dt>
-            <dd th:if="${errorTime != null}" th:text="${errorTime}">—</dd>
-            <dt th:if="${correlationId != null}">Идентификатор запроса</dt>
-            <dd th:if="${correlationId != null}"><code th:text="${correlationId}">—</code></dd>
-        </dl>
-        <p class="error-dossier-note" th:if="${correlationId != null}">
-            По идентификатору запроса эта ошибка находится в логе приложения — приложи его к отчёту.
-        </p>
-    </div>
-</section>
-</main>
+        <main id="main-content" class="ed-page page-canvas" tabindex="-1">
+            <section class="error-card" aria-labelledby="error-heading"
+                     th:with="code=${status != null ? status : 500}">
+                <div class="error-statement">
+                    <p class="error-eyebrow">Не удалось открыть страницу <span th:text="'· ' + ${code}">· 500</span></p>
+                    <h1 id="error-heading" class="error-title"
+                        th:text="${code == 404 ? 'Такой страницы нет' :
+                                  (code == 403 ? 'Доступ запрещён' :
+                                  (code == 401 ? 'Нужно войти' :
+                                  (code == 400 ? 'Не удалось принять запрос' :
+                                  (code &gt;= 500 ? 'Сервис временно недоступен' : 'Не удалось выполнить действие'))))}">Не удалось открыть страницу</h1>
+                    <p class="error-body"
+                       th:text="${code == 404 ? 'Ссылка могла устареть. Открой главную или найди нужный материал в каталоге тем.' :
+                                 (code == 403 ? 'Для этого действия у текущей учётной записи нет доступа. Вернись к подготовке или войди с подходящей учётной записью.' :
+                                 (code == 401 ? 'Войди в свою учётную запись, чтобы продолжить подготовку.' :
+                                 (code == 400 ? 'Проверь введённые данные на предыдущей странице и повтори отправку.' :
+                                  'Не удалось завершить запрос. Попробуй вернуться к подготовке через некоторое время. Если ошибка повторится, сохрани идентификатор запроса ниже.')))}">Попробуй позже.</p>
+                    <nav class="error-actions" aria-label="Что дальше">
+                        <a th:if="${multiSecurityMode == true and (code == 401 or code == 403)}"
+                           th:href="@{/login}" class="btn next-btn primary-btn">Войти</a>
+                        <a th:unless="${multiSecurityMode == true and (code == 401 or code == 403)}"
+                           th:href="@{/}" class="btn next-btn primary-btn">На главную</a>
+                        <a th:href="@{/topics}" class="btn secondary-btn">Каталог тем</a>
+                    </nav>
+                </div>
+                <details class="error-dossier" th:if="${correlationId != null or errorTime != null}">
+                    <summary class="disclosure-summary"><span>Сведения для обращения</span></summary>
+                    <dl class="error-meta">
+                        <dt>Код ответа</dt><dd th:text="${code}">500</dd>
+                        <dt th:if="${errorTime != null}">Время</dt>
+                        <dd th:if="${errorTime != null}" th:text="${errorTime}">—</dd>
+                        <dt th:if="${correlationId != null}">Идентификатор запроса</dt>
+                        <dd th:if="${correlationId != null}"><code th:text="${correlationId}">—</code></dd>
+                    </dl>
+                    <p class="error-dossier-note">Эти сведения помогут найти причину ошибки.</p>
+                </details>
+            </section>
+        </main>
     </div>
 </div>
-<nav th:replace="~{fragments/mobile-nav :: mobile-nav(active='focus')}"></nav>
+<nav th:replace="~{fragments/mobile-nav :: mobile-nav(active=${null})}"></nav>
 <th:block th:replace="~{fragments/scripts :: app-script}"></th:block>
 </body>
 </html>

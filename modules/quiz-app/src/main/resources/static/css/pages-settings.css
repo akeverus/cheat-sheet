@@ -1,5 +1,6 @@
-/* Wave C split from base.css — @pages layer */
 @layer pages {
+/* Wave C split from base.css — @pages layer */
+
 /* ===========================================================================
    SETTINGS (C4) — «Настроить сессию». Старый .app-layout — сломанный sidebar-rail
    (всё в 230px). В editorial разворачиваем в чистую читаемую колонку. Структуру и
@@ -30,6 +31,11 @@
    молча: на 390px кегль вкладки настроек уходил в 16px против 18px у
    аналитики, а фокус рисовался свечением против обводки (iter-79). */
 html[data-design] .settings-page .settings-tablist { margin: 0 0 var(--space-7); }
+/* У настроек нет закреплённого footer действия. Общие 96px оставляли
+   пустую прокрутку даже тогда, когда последний образец помещался в окне. */
+html[data-design] .settings-page:not(.train-page) .page-canvas {
+  padding-bottom: var(--space-6);
+}
 
 /* Панель (tabpanel, tabindex=0) — БЕЗ локального гашения фокуса (R0.68):
    старое `.settings-panel:focus { outline: none }` глушило и КЛАВИАТУРНЫЙ фокус
@@ -77,7 +83,20 @@ html[data-design] .settings-page .personalization-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
-html[data-design] .settings-page .personalization-grid .personalization-row { margin-bottom: 0; min-width: 0; }
+html[data-design] .settings-page .personalization-grid .personalization-row {
+  margin-bottom: 0;
+  min-width: 0;
+  container: personalization / inline-size;
+}
+/* Сегменты переходят в строки, когда увеличенный текст не помещается целиком. */
+@container personalization (max-width: 17rem) {
+  html[data-design] .settings-page .seg-control { grid-auto-flow: row; }
+  html[data-design] .settings-page .seg-btn {
+    border-right: 0;
+    border-bottom: var(--rule-weight) solid var(--color-border-primary);
+  }
+  html[data-design] .settings-page .seg-btn:last-child { border-bottom: 0; }
+}
 /* Модификатора `--wide` (`grid-column: 1 / -1`) здесь больше нет: его не носил ни один
    из семи рядов — он остался от сетки с фиксированным числом колонок, где последнюю
    настройку приходилось растягивать руками. `auto-fit` раскладывает ряды сам, а все
@@ -375,7 +394,7 @@ html[data-design] .settings-page .filter-chip:has(input:checked) .filter-chip-co
    становилась форма — три селекта вставали столбиком и «Охват» вырастал на
    ~150px именно там, где ширины было в избытке. Раскладку полей теперь выбирает
    auto-fit по их собственной мере (см. .filters-fields выше). */
-}
+
 
 /* ВЫБОР РЕЖИМА — набор карточек вместо выпадающего списка.
    Довод и история: docs/css-decisions/pages-settings.md#pages-settings-e05 */
@@ -388,14 +407,41 @@ html[data-design] .settings-page .mode-choice {
 }
 html[data-design] .settings-page .mode-choice-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
   gap: var(--space-3);
   margin-top: var(--space-2);
-  /* Кап на 4 колонки (4×15rem + 3 зазора): восемь режимов складываются в
-     полный прямоугольник 4×2. Без капа auto-fit на ≥1500px давал 6+2 —
-     второй ряд с дырой в четыре пустых слота (low-бэклог второго ревью §104,
-     wide 1920). */
+  /* Кап: primary-ряд — 3 карточки; «Ещё» — до 4 в ряд. */
   max-width: 62.25rem;
+}
+html[data-design] .settings-page .mode-more {
+  margin-top: var(--space-4);
+}
+html[data-design] .settings-page .mode-more-summary {
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  list-style: none;
+  padding: var(--space-2) 0;
+}
+html[data-design] .settings-page .mode-more-summary::-webkit-details-marker { display: none; }
+html[data-design] .settings-page .mode-more-summary::before {
+  content: '';
+  display: inline-block;
+  width: 0.4em;
+  height: 0.4em;
+  margin-right: var(--space-2);
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  vertical-align: 0.15em;
+  transition: transform var(--duration-fast) var(--easing-default);
+}
+html[data-design] .settings-page .mode-more[open] > .mode-more-summary::before {
+  transform: rotate(45deg);
+}
+html[data-design] .settings-page .mode-choice-grid-more {
+  margin-top: var(--space-3);
 }
 html[data-design] .settings-page .mode-card {
   position: relative;
@@ -407,11 +453,11 @@ html[data-design] .settings-page .mode-card {
    `display: none`: скрытый через display элемент не фокусируется вовсе. */
 html[data-design] .settings-page .mode-card-input {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset-inline-start: var(--space-4);
+  top: var(--space-4);
+  width: 1.125rem;
+  height: 1.125rem;
   margin: 0;
-  opacity: 0;
   cursor: pointer;
 }
 html[data-design] .settings-page .mode-card-body {
@@ -423,6 +469,7 @@ html[data-design] .settings-page .mode-card-body {
   background: var(--color-bg-secondary);
   border: var(--rule-weight) solid var(--color-border-primary);
   border-radius: var(--border-radius-md);
+  padding-inline-start: var(--space-7);
 }
 /* СЦЕНА РЕЖИМА — СИЛУЭТ, КОТОРЫЙ УЗНАЁТСЯ ДО ЧТЕНИЯ.
 
@@ -491,43 +538,47 @@ html[data-design] .settings-page .mode-card-input:checked + .mode-card-body .mod
    1440×900: карточки до 906 при полосе с 831). Принцип «в руке» тот же на
    любой ширине: невыбранные — силуэт + имя (описание остаётся скринридеру),
    выбранный разворачивает своё описание на месте. */
-html[data-design] .settings-page .mode-card-input:not(:checked) + .mode-card-body .mode-card-desc {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-html[data-design] .settings-page .mode-card-body {
-  align-items: center;
-}
-html[data-design] .settings-page .mode-card-input:checked + .mode-card-body {
-  align-items: flex-start;
-}
 @media (max-width: 767px) {
   html[data-design] .settings-page .mode-card-body {
-    padding: var(--space-3);
+    padding: var(--space-3) var(--space-3) var(--space-3) var(--space-7);
   }
 }
 
-/* ЗАПУСК ПОД РУКОЙ — ПЛАВАЮЩАЯ КНОПКА НА ТЕЛЕФОНЕ.
-   Довод и история: docs/css-decisions/pages-settings.md#pages-settings-e07 */
+/* На телефоне кнопка и объём занятия видны вместе: раньше закреплялась только
+   кнопка, а ограничение набора оставалось в конце длинной формы. */
 @media (max-width: 900px) {
-  html[data-design] .settings-page .builder-start-cta {
+  html[data-design] .train-page .builder-launch-bar {
     position: fixed;
-    left: var(--space-4);
-    right: calc(var(--space-4) + 3.5rem);
-    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-2));
+    left: 0;
+    right: 0;
+    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px));
     z-index: var(--z-sticky);
-    width: auto;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    background: var(--color-bg-primary);
+    border-top: var(--rule-weight) solid var(--color-border-primary);
+  }
+  html[data-design] .train-page .builder-launch-bar .builder-start-cta {
+    width: 100%;
     min-width: 0;
   }
-  html[data-design] .settings-page .back-to-top {
-    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-2));
+  html[data-design] .train-page .builder-launch-bar .session-preview {
+    padding: 0;
+    border: 0;
+    background: transparent;
   }
-  html[data-design] .settings-page .ed-page {
-    padding-bottom: calc(var(--mobile-nav-height) + 5rem + env(safe-area-inset-bottom, 0px));
+  html[data-design] .train-page .session-preview .preview-metric:last-child {
+    display: none;
+  }
+  html[data-design] .train-page .back-to-top {
+    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + 8rem);
+  }
+  html[data-design] .train-page .ed-page {
+    padding-bottom: calc(var(--mobile-nav-height) + 9rem + env(safe-area-inset-bottom, 0px));
+  }
+  html[data-design] .train-page :is(select, input, summary, .mode-card, .filter-chip) {
+    scroll-margin-bottom: calc(var(--mobile-nav-height) + 9rem);
   }
 }
 @media (min-width: 901px) {
@@ -548,6 +599,20 @@ html[data-design] .settings-page .mode-card-input:checked + .mode-card-body {
    =========================================================================== */
 html[data-design] .settings-page .session-builder {
   counter-reset: builder-step;
+}
+
+/* /practice (body.train-page): плотнее шаг-стек, чтобы первый экран ~1117 без скролла. */
+html[data-design] .train-page.settings-page .builder-section {
+  margin-bottom: 0;
+}
+html[data-design] .train-page.settings-page .builder-section + .builder-section {
+  margin-top: var(--space-3);
+}
+html[data-design] .train-page.settings-page .builder-outcome {
+  gap: var(--space-2);
+}
+html[data-design] .train-page.settings-page .page-head-lead {
+  font-size: var(--font-size-sm);
 }
 html[data-design] .settings-page .builder-section {
   counter-increment: builder-step;
@@ -592,6 +657,11 @@ html[data-design] .settings-page .volume-hint {
    а число, которое он меняет, — на 1106). */
 html[data-design] .settings-page .builder-outcome {
   margin: 0;
+}
+html[data-design] .settings-page .builder-outcome-details > summary {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
 }
 html[data-design] .settings-page .outcome-total {
   display: flex;
@@ -641,6 +711,9 @@ html[data-design] .settings-page .outcome-filters {
   border-top: var(--rule-weight) solid var(--color-border-secondary);
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+}
+html[data-design] .settings-page [data-preview-filters] > span:not(:last-child)::after {
+  content: " · ";
 }
 /* Хвост лида (.settings-lead-tail) удалён вместе с носителем: лид больше не
    пересказывает собственную раскладку (второе ревью §104), и клип-правило
@@ -778,11 +851,39 @@ html[data-design] .settings-page .preview-option.is-picked {
    (#interview-options label code, pages-focus.css): «O(log n)» ломался посреди
    («O(log / n)») и читался как два обрывка. */
 html[data-design] .settings-page .preview-option code { white-space: nowrap; }
-html[data-design] .settings-page .preview-option-text { min-width: 0; }
+html[data-design] .settings-page .preview-option-text { min-width: 0; overflow-wrap: anywhere; }
 html[data-design] .settings-page .preview-key {
   flex: none;
   font-family: var(--font-family-mono);
   font-size: var(--font-size-xs);
   border: var(--rule-weight) solid var(--color-border-primary);
   padding: 0 var(--space-2);
+}
+
+/* Дневная цель (перенесена с / — Editorial Anki). */
+html[data-design] .settings-page .settings-goal-form {
+  margin: 0 0 var(--space-5);
+  max-width: 42rem;
+}
+html[data-design] .settings-page .settings-goal-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+html[data-design] .settings-page .settings-goal-form input[type="number"] {
+  width: 4.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+
+html[data-design] .settings-page:not(.train-page) .settings-save-explanation {
+  margin: 0 0 var(--space-5);
+  padding-top: var(--space-5);
+  border-top: var(--rule-weight) solid var(--color-border-primary);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
 }

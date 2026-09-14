@@ -201,6 +201,30 @@ class ShellChromeContractTest {
                 .as("в shell.css не осталось ни одного 100dvh — высоту оболочки задаёт что-то "
                         + "другое, контракт надо переписать под факт")
                 .contains("100dvh");
+        assertThat(shell)
+                .as("mobile body уже резервирует bottom-nav; .app должна вычесть тот же "
+                        + "клиренс, иначе короткая страница получает ложный второй экран")
+                .containsPattern("@media \\(max-width:\\s*900px\\)[\\s\\S]*?\\.app\\s*\\{[^}]*"
+                        + "min-height:\\s*calc\\(100dvh\\s*-\\s*var\\(--mobile-nav-height\\)");
+        assertThat(shell)
+                .as("border-box mobile-nav обязан прибавлять safe-area к высоте трека, а не "
+                        + "вычитать inset из 64px тач-зоны")
+                .contains("height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px))");
+        assertThat(shell)
+                .as("desktop stable-gutter не должен отрезать 15px у mobile shell")
+                .containsPattern("@media \\(max-width:\\s*900px\\)[\\s\\S]*?html\\[data-design]\\s*\\{[^}]*"
+                        + "scrollbar-gutter:\\s*auto");
+    }
+
+    @Test
+    void pageCanvasMeasureDoesNotJumpAtDesktopBreakpoint() {
+        String shell = cssDeclarationsOnly(read(SHELL_CSS));
+
+        assertThat(shell)
+                .as("ширина page-canvas должна расти непрерывно: жёсткий переход 72→90rem на "
+                        + "1728px сдвигал контент примерно на 143px за один пиксель окна")
+                .contains("clamp(72rem, 83.333vw, 90rem)")
+                .doesNotContain("@media (min-width: 1728px)");
     }
 
     @Test

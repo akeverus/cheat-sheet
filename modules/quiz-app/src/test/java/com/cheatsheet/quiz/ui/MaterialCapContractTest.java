@@ -96,13 +96,15 @@ class MaterialCapContractTest {
 
     /**
      * Правила, задающие высоту окна материала. Полноэкранный режим и составные контексты
-     * (`:has(...)`) — это отдельные состояния со своей высотой, они здесь ни при чём.
+     * (`:has(...)`) и no-JS — отдельные состояния со своей высотой.
+     * Без JS листинг раскрыт целиком, поскольку toolbar и динамический tab-stop недоступны.
      */
     private List<Rule> heightRules(List<Rule> rules, String carrier) {
         return rules.stream()
                 .filter(r -> r.body().contains("max-height"))
                 .filter(r -> splitSelectors(r.selectors()).stream()
-                        .anyMatch(s -> s.endsWith(carrier) && !s.contains(":fullscreen") && !s.contains(":has(")))
+                        .anyMatch(s -> s.endsWith(carrier) && !s.contains(":fullscreen")
+                                && !s.contains(":has(") && !s.contains(":not([data-js])")))
                 .toList();
     }
 

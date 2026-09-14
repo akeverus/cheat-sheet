@@ -1,5 +1,6 @@
 import { apiFetch, apiPostJson, parseApiError } from '../core/api-client.js';
 import { API } from '../core/constants.js';
+import { isSecondaryControl, isShortcutEventIgnored } from '../core/keyboard.js';
 import { icon, escapeHtml, pluralRu } from '../core/dom.js';
 import { sanitizeHtml } from '../content/sanitize.js';
 import { renderDynamicContent } from '../content/dynamic-content.js';
@@ -144,7 +145,9 @@ export function initInterviewForm() {
   // и `aria-busy` на форму — второй ключ того же состояния, ничего не менявший
   // ни на экране, ни в озвучке.
   function setInteractionBusy(busy) {
-    optionsContainer.setAttribute('aria-disabled', busy ? 'true' : 'false');
+    const disabled = busy || answered;
+    optionsContainer.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+    optionInputs.forEach((input) => { input.disabled = disabled; });
   }
 
   function currentClientAttemptId() {
@@ -166,15 +169,21 @@ export function initInterviewForm() {
       submitBtn.disabled = !armed;
       submitBtn.classList.toggle('is-disabled', !armed);
       submitBtn.classList.toggle('is-armed', armed);
-      submitBtn.textContent = armed ? 'Проверить выбранный ответ' : 'Проверить ответ';
+      submitBtn.textContent = 'Проверить ответ';
     }
   }
 
   function selectOptionByIndex(index) {
     const target = optionInputs[index];
-    if (!target) return false;
+    if (!target || target.disabled) return false;
     target.checked = true;
-    target.focus();
+    /* Скрытый radio занимает 1px у верхнего края label: нативный focus-scroll
+       показывал только этот пиксель, оставляя выбранный длинный вариант целиком
+       под сгибом/mobile-nav. Фокусируем без промежуточного скачка и прокручиваем
+       реальную тач-/визуальную цель с её scroll-margin. */
+    target.focus({ preventScroll: true });
+    const label = target.closest('label');
+    if (label) label.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     target.dispatchEvent(new Event('change', { bubbles: true }));
     updateSubmitAvailability();
     return true;
@@ -191,11 +200,10 @@ export function initInterviewForm() {
   }
 
   document.addEventListener('keydown', (event) => {
+    if (isShortcutEventIgnored(event)) return;
     if (document.querySelector('.kbd-help-overlay:not(.hidden)')) return;
     if (answered) return;
-    if (event.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) && event.target.type !== 'radio') return;
-    if (event.target && (event.key === 'Enter' || event.key === ' ') &&
-        ['SUMMARY', 'BUTTON', 'A'].includes(event.target.tagName)) return;
+    if (isSecondaryControl(event.target, optionsContainer)) return;
     if (event.target?.type === 'radio' && event.key === 'Enter') {
       event.preventDefault();
       form.dispatchEvent(new Event('submit', { cancelable: true }));
@@ -358,7 +366,8 @@ export function initInterviewForm() {
         + `</div>`
       : '';
     const panelsHtml = panels.map((panel, i) => `<div class="feedback-panel${i === 0 ? ' is-active' : ''}"`
-      + ` id="feedback-panel-${panel.id}" role="tabpanel" aria-labelledby="feedback-tab-${panel.id}">`
+      + ` id="feedback-panel-${panel.id}"`
+      + (panels.length > 1 ? ` role="tabpanel" aria-labelledby="feedback-tab-${panel.id}"` : '') + '>'
       + panel.html + `</div>`).join('');
 
     // ПОРЯДОК ЧИТАЕТСЯ КАК РЕЗУЛЬТАТ: вердикт → что это дало → куда дальше →
@@ -463,7 +472,8 @@ export function initInterviewForm() {
     let relatedHtml = '<h2 class="related-questions-title">' + icon('link', 'ui-icon-lead') + 'Похожие вопросы для закрепления:</h2>';
     relatedHtml += '<div class="related-questions-list" role="list">';
     data.relatedQuestions.forEach((rq) => {
-      relatedHtml += '<div role="listitem"><a class="related-question-item" href="/?topic=' + encodeURIComponent(rq.topic)
+      relatedHtml += '<div role="listitem"><a class="related-question-item" href="/practice?topic=' + encodeURIComponent(rq.topic)
+        + '&questionId=' + encodeURIComponent(rq.id)
         + '&group=' + encodeURIComponent(currentGroup)
         + '&ordered=' + encodeURIComponent(currentOrdered)
         + (currentImportant ? '&important=true' : '')
@@ -544,7 +554,7 @@ export function initInterviewForm() {
     if (excludeQuestionId) params.set('excludeQuestionId', String(excludeQuestionId));
     const query = params.toString();
     // Stay on /review surface when answering in mistake-review mode.
-    const base = location.pathname.startsWith('/review') ? '/review' : '/';
+    const base = location.pathname.startsWith('/review') ? '/review' : '/practice';
     return query ? base + '?' + query : base;
   }
 
@@ -662,12 +672,15 @@ export function initInterviewForm() {
       return;
     }
 
+    // Capture the checked radio before disabling the controls: disabled fields
+    // are deliberately omitted by FormData.
+    const formData = new FormData(form);
     answered = true;
     setPending(submitBtn, 'Проверяю…');
+    if (optionsContainer.contains(document.activeElement)) submitBtn.focus({ preventScroll: true });
     setInteractionBusy(true);
     clearInlineAlert();
 
-    const formData = new FormData(form);
     formData.set('clientAttemptId', currentClientAttemptId());
     formData.set('responseTimeMs', String(thinkTime.currentResponseTimeMs()));
 
@@ -682,7 +695,9 @@ export function initInterviewForm() {
         setInteractionBusy(false);
         updateSubmitAvailability();
         thinkTime.markQuestionShown();
-        setInlineAlert('Не удалось проверить ответ — возможно, вопрос устарел. Обнови страницу и загрузи новый вопрос.');
+        setInlineAlert(response.status === 409
+          ? 'Этот вопрос обновлён. Загрузи страницу заново, чтобы ответить на актуальную версию.'
+          : 'Не удалось проверить ответ. Выбранный вариант сохранён — повтори отправку.');
         if (document.activeElement === document.body) submitBtn.focus({ preventScroll: true });
         return;
       }

@@ -4,6 +4,7 @@ import com.cheatsheet.quiz.domain.InterviewMode;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * Преобразование {@link InterviewMode} в человекочитаемое русское название для UI.
@@ -33,6 +34,9 @@ public class ModeUtils {
      * а не в порядке констант {@link InterviewMode} (от него зависят ordinal'ы).
      *
      * <p>Полноту списка держит гейт: режим, забытый здесь, недостижим из интерфейса.
+     *
+     * <p>Первые три (TRAINING / STUDY / FLASHCARD) — primary: видны сразу в конструкторе.
+     * Остальные спрятаны за «Ещё режимы» (Hick: 8 карточек сразу перегружали выбор).
      */
     private static final List<InterviewMode> DISPLAY_ORDER = List.of(
             InterviewMode.TRAINING,
@@ -45,6 +49,9 @@ public class ModeUtils {
             InterviewMode.MARATHON
     );
 
+    /** Сколько первых режимов из {@link #DISPLAY_ORDER} показываются без раскрытия. */
+    private static final int PRIMARY_MODE_COUNT = 3;
+
     /**
      * Один пункт выпадающего списка режимов.
      *
@@ -55,6 +62,7 @@ public class ModeUtils {
      * @param defaultCount число вопросов, которое подставится при выборе режима
      * @param unlimited    режим без счётчика вопросов — поле «Вопросов» прячется
      * @param selected     текущий выбор
+     * @param primary      повседневный режим (виден без «Ещё режимы»)
      */
     public record ModeOption(
             String name,
@@ -64,7 +72,8 @@ public class ModeUtils {
             String startAction,
             int defaultCount,
             boolean unlimited,
-            boolean selected
+            boolean selected,
+            boolean primary
     ) {
     }
 
@@ -267,17 +276,21 @@ public class ModeUtils {
      */
     public List<ModeOption> options(InterviewMode selected, int examCount, int marathonCount) {
         InterviewMode current = selected != null ? selected : InterviewMode.TRAINING;
-        return DISPLAY_ORDER.stream()
-                .map(mode -> new ModeOption(
-                        mode.name(),
-                        displayName(mode),
-                        description(mode),
-                        glyph(mode),
-                        startAction(mode),
-                        mode == InterviewMode.EXAM || mode.usesTypedInput() ? examCount : marathonCount,
-                        mode.isUnlimited(),
-                        mode == current
-                ))
+        return IntStream.range(0, DISPLAY_ORDER.size())
+                .mapToObj(i -> {
+                    InterviewMode mode = DISPLAY_ORDER.get(i);
+                    return new ModeOption(
+                            mode.name(),
+                            displayName(mode),
+                            description(mode),
+                            glyph(mode),
+                            startAction(mode),
+                            mode == InterviewMode.EXAM || mode.usesTypedInput() ? examCount : marathonCount,
+                            mode.isUnlimited(),
+                            mode == current,
+                            i < PRIMARY_MODE_COUNT
+                    );
+                })
                 .toList();
     }
 }

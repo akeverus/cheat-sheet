@@ -7,16 +7,10 @@
    нет намеренно, иначе два правила снова начнут перебивать друг друга. */
 html[data-design] body {
   min-height: 100dvh;
-  /* «Терминальная» глубина макетов handoff-3: диагональный градиент холста
-     (bg-0→bg-1, prototype .shell) + мягкое teal-свечение в правом верхнем углу.
-     Оба слоя theme-safe: тянут --color-bg-primary/-canvas-2 текущей темы.
-     background-color отдельным свойством, а не внутри shorthand: под
-     градиентами нужен непрозрачный холст, иначе на overscroll (bounce в macOS)
-     и в местах, куда градиент не дотянулся, просвечивает системный белый. */
+  /* Folio: холст — сплошная заливка по токену. Диагональный градиент + radial
+     teal-свечение сняты (аудит UI/UX 2026-09-04): остаток terminal-handoff,
+     против «светлота поверхностей, не FX». */
   background-color: var(--color-bg-primary);
-  background-image:
-    radial-gradient(circle at 78% -18%, color-mix(in srgb, var(--color-accent-primary) 6%, transparent), transparent 34%),
-    linear-gradient(135deg, var(--color-bg-primary), var(--color-bg-canvas-2));
 }
 
 /* Skip-link: канон в reset-layout.css (transform off-screen → :focus on-screen).
@@ -46,6 +40,7 @@ html[data-design] .shell-main {
    держать структурное свойство (правило дизайн-системы), но само свойство нужно —
    рельс обязан лежать над содержимым колонки. */
 html[data-design] .sidebar {
+  min-width: 0;
   z-index: 1;
   position: sticky;
   top: 0;
@@ -54,12 +49,18 @@ html[data-design] .sidebar {
   padding: 18px 14px;
   display: flex;
   flex-direction: column;
-  /* Стеклянная панель макетов: полупрозрачный surface + blur (терминальная
-     глубина). color-mix тянет surface текущей темы → theme-safe. */
-  background: color-mix(in srgb, var(--color-bg-secondary) 92%, transparent);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  /* На низком окне и при увеличенном тексте все действия остаются достижимы. */
+  overflow-y: auto;
+  /* Folio: плита по светлоте, без стекла. backdrop-filter blur + полупрозрачность
+     были остатком terminal-handoff и спорили с принципом «светлота, не текстура». */
+  background: var(--color-bg-secondary);
 }
+html[data-design] .sidebar > * { flex-shrink: 0; }
+html[data-design] .sidebar :is(.brand, .nav a, .side-action, .sidebar-status-row) > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+html[data-design] .sidebar .ui-icon { flex-shrink: 0; }
 html[data-design] .sidebar .brand {
   display: flex;
   align-items: center;
@@ -70,6 +71,7 @@ html[data-design] .sidebar .brand {
   text-decoration: none;
 }
 html[data-design] .avatar {
+  flex-shrink: 0;
   width: 34px;
   height: 34px;
   border: 0;
@@ -125,10 +127,11 @@ html[data-design] .side-action:hover {
   color: var(--color-text-primary);
   background: var(--color-surface-soft);
 }
-html[data-design] .nav a.active {
-  color: var(--color-accent-on);
-  background: var(--color-accent-primary);
-  font-weight: var(--font-weight-bold);
+html[data-design] .nav a.active,
+html[data-design] .side-action.active {
+  color: var(--color-text-primary);
+  background: var(--color-accent-wash);
+  box-shadow: inset 2px 0 0 var(--color-accent-primary);
 }
 /* Правила .nav .is-disabled / .nav-soon удалены вместе с пунктами-заглушками
    «Вопросы» и «Достижения» (см. fragments/sidebar.html). В навигации нет
@@ -325,6 +328,9 @@ html[data-design] .diagram-source {
    ставит data-render-failed → скрываем неотрисованный .mermaid, исходник
    остаётся видимым через раскрытый .diagram-source-details. */
 html[data-design] .question-diagram[data-render-failed] .mermaid { display: none; }
+/* Без SVG действия масштаба и fullscreen не имеют цели. Ошибка оставляет
+   доступными объяснение и раскрытый исходник, а не мёртвый toolbar. */
+html[data-design] .question-diagram[data-render-failed] .diagram-toolbar-actions { display: none; }
 /* GFX-008: fallback-сообщение с глифом состояния видно ТОЛЬКО при ошибке рендера. */
 html[data-design] .diagram-fallback { display: none; }
 html[data-design] .question-diagram[data-render-failed] .diagram-fallback {
@@ -455,7 +461,9 @@ html[data-design] .additional-panel .answer > :last-child { margin-bottom: 0; }
    поверх любого из них и была бы вторым, спорящим источником правды о том, как
    выглядит главный заголовок. */
 html[data-design] .muted { color: var(--color-text-secondary); }
-html[data-design] .tiny { font-size: 12px; }
+/* 13px вместо 12: tertiary на wash остаётся AA, но 12px на KPI-лейблах
+   выглядел «мыльным» и проигрывал иерархии рядом с tabular-nums. */
+html[data-design] .tiny { font-size: 0.8125rem; }
 html[data-design] .mono { font-family: var(--font-family-mono); }
 
 /* ---- Bottom-nav (mobile) — на десктопе скрыт ------------------------- */
@@ -480,13 +488,27 @@ html[data-design] .brand:focus-visible {
    bottom-nav (safe-area). Контент — узкий паддинг.
    ========================================================================== */
 @media (max-width: 900px) {
-  /* nav height + safe-area: у .mobile-nav высота = --mobile-nav-height, плюс
-     padding-bottom: env(safe-area-inset-bottom) — иначе низ метрик/кнопок
-     остаётся под таббаром (live UI: /stats cards clipped). */
+  /* На узком/overlay-layout постоянный desktop-жёлоб превращает 375px в 360px
+     и оставляет справа полосу canvas, до которой не доходят header и bottom-nav. */
+  html[data-design] {
+    scrollbar-gutter: auto;
+    scroll-padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-4));
+  }
+  /* nav track + safe-area: .mobile-nav складывает обе величины в своей высоте,
+     а body резервирует ту же сумму — иначе border-box вычитает inset из трека
+     ссылок и одновременно оставляет под страницей лишний мёртвый зазор. */
   html[data-design] body {
     padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-4));
   }
-  html[data-design] .app { display: block; }
+  html[data-design] .app {
+    display: block;
+    /* body уже резервирует nav + safe-area + 16px ниже. Если оставить здесь
+       полные 100dvh, две независимые резервации складываются (live Home 375×812:
+       scrollHeight 892 при meaningful bottom 620). Короткая страница теперь
+       ровно заполняет окно, длинная по-прежнему растёт по содержимому. */
+    min-height: calc(100dvh - var(--mobile-nav-height)
+                     - env(safe-area-inset-bottom, 0px) - var(--space-4));
+  }
   html[data-design] .sidebar { display: none; }
   /* P1.5: компактный mobile-header — меньше высота/бренд/иконки. */
   html[data-design] .mobile-header {
@@ -542,8 +564,8 @@ html[data-design] .brand:focus-visible {
   html[data-design] .mobile-nav {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: minmax(0, 1fr);
-    height: var(--mobile-nav-height);
+    grid-auto-columns: auto;
+    height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px));
     position: fixed;
     bottom: 0;
     left: 0;
@@ -554,13 +576,10 @@ html[data-design] .brand:focus-visible {
     z-index: var(--z-overlay);
     background: var(--color-bg-secondary);
     border-top: 1px solid var(--color-border-secondary);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-  /* Кегль подписи текучий, потому что ячейка тоже текучая: ширина полосы делится
-     на число пунктов, и на 360px ячейка выходит 60px при подписи «Тренировка»
-     шириной 64px при 11px — подпись вылезала за свою ячейку к соседней (замер:
-     64/60 на 360, 64/65 на 390). Кап 11px оставляет прежний вид там, где место
-     есть (≥423px), пол 10px не даёт уйти ниже читаемого. */
+  /* Подписи масштабируются настройкой текста. На 320px длинное название
+     переносится внутри своей ячейки, вместо уменьшения или обрезания. */
   html[data-design] .mobile-nav a {
     position: relative;                 /* база под ::after socket-индикатор активного пункта */
     color: var(--color-text-tertiary);
@@ -568,13 +587,16 @@ html[data-design] .brand:focus-visible {
     display: grid;
     place-items: center;
     align-content: center;
-    gap: 2px;
-    font-size: clamp(10px, 2.6vw, 11px);                    /* было 9px — GFX-P2-11 / §16.2: подписи не мельче читаемого */
-    line-height: 1.15;
+    gap: 4px;
+    padding: 4px 2px;
+    font-size: var(--font-size-xs);
+    line-height: 1.2;
+    text-align: center;
+    overflow-wrap: anywhere;
     min-width: 0;
-    overflow: hidden;
   }
-  html[data-design] .mobile-nav a.active { color: var(--color-accent-strong); font-weight: var(--font-weight-semibold); }
+  html[data-design] .mobile-nav .ui-icon { font-size: 20px; }
+  html[data-design] .mobile-nav a.active { color: var(--color-accent-strong); }
   /* hover-well для неактивных (desktop-narrow с hover); active — вес+цвет (FOLIO) */
   html[data-design] .mobile-nav a:hover:not(.active) { background: var(--color-bg-tertiary); }
   /* P1.6: компактный заголовок итогов сессии на узких экранах. Парный клампинг
@@ -702,83 +724,6 @@ html[data-design] .summary-hero .summary-empty-note {
   line-height: var(--line-height-relaxed, 1.6);
   color: var(--color-text-tertiary);
 }
-/* 3 метрики: Время / Среднее / На повторение */
-html[data-design] .summary-metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  margin-top: var(--space-3);
-  /* Как и .summary-kpis — своя строка геро (flex-wrap), а не блок в текстовом
-     столбце: обе полосы метрик занимают ширину карточки целиком. */
-  flex: 1 1 100%;
-}
-html[data-design] .summary-metrics .metric {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--space-2) var(--space-4);
-  border: var(--rule-weight, 1px) solid var(--color-border-primary);
-  border-radius: var(--border-radius-md);
-  background: var(--color-bg-primary);
-  min-width: 0;
-}
-html[data-design] .summary-metrics .metric-label {
-  font-family: var(--font-family-body); font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide);
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-}
-html[data-design] .summary-metrics .metric-value {
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-}
-html[data-design] .summary-metrics .metric.metric-due .metric-value { color: var(--color-accent-strong); }
-
-/* ПЛИТКИ KPI СЕССИИ (Время / Ошибки / Серия).
-   Довод и история: docs/css-decisions/shell.md#shell-e05 */
-html[data-design] .summary-kpis {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(8.5rem, 100%), 1fr));
-  gap: var(--space-3);
-  margin-top: 0;
-}
-html[data-design] .summary-kpi {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--space-3);
-  border: var(--rule-weight, 1px) solid var(--color-border-primary);
-  border-radius: var(--border-radius-md);
-  background: var(--color-bg-primary);
-  min-width: 0;
-}
-html[data-design] .summary-kpi-label {
-  font-family: var(--font-family-body); font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide);
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-}
-/* Значение KPI — «число + единица» одной строкой: «+15 XP», «36 сек», «12 дней».
-   Довод и история: docs/css-decisions/shell.md#shell-e06 */
-html[data-design] .summary-kpi-value {
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  line-height: 1.15;
-  white-space: nowrap;
-}
-html[data-design] .summary-kpi-sub {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
-}
-/* Медиазапрос 2×2 на 640px удалён: auto-fit с полом 8.5rem даёт те же две
-   колонки на телефоне сам, из ширины, а не из константы окна. */
-
 /* Topic progress-bar в ячейке точности summary-table.
    min-width работает только в мобильном card-view (там td — блок). В таблице
    ширину колонки задаёт table-layout: fixed (11rem, pages-summary.css), поэтому
@@ -818,7 +763,6 @@ html[data-design] .summary-accuracy-num {
 @media (max-width: 640px) {
   html[data-design] .summary-hero { justify-content: center; text-align: center; }
   html[data-design] .summary-hero-body { align-items: center; }
-  html[data-design] .summary-metrics { justify-content: center; }
 }
 
 /* ==========================================================================
@@ -874,6 +818,80 @@ html[data-design] .page-head-title h1 {
   margin: var(--space-2) 0 0;
   line-height: 1.2;
   overflow-wrap: break-word;
+}
+
+/* ---- Layout primitives (IA Wave 2) -------------------------------------- */
+/* Горизонтальный скролл страницы запрещён: переполнение режут локальные
+   scroll-порты (.table-scroll, .code-viewport), а не документ. */
+html[data-design] {
+  overflow-x: clip;
+}
+
+/* Полосы прокрутки скрыты, прокрутка остаётся (колесо / жест / клавиатура). */
+html[data-design] .app,
+html[data-design] .shell-main,
+html[data-design] .ed-page,
+html[data-design] .table-scroll,
+html[data-design] .work-split-answer {
+  scrollbar-width: none;
+}
+html[data-design] .app::-webkit-scrollbar,
+html[data-design] .shell-main::-webkit-scrollbar,
+html[data-design] .ed-page::-webkit-scrollbar,
+html[data-design] .table-scroll::-webkit-scrollbar,
+html[data-design] .work-split-answer::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Рабочая мера страницы уже канона .ed-page (--max-width-page ≈112rem).
+   .page-canvas — более узкий холст хаба/настроек/прогресса: непрерывно растёт
+   от 72rem к 90rem. Жёсткий скачок 72→90rem на 1728px сдвигал Home на 143px
+   при изменении окна всего на один пиксель. */
+html[data-design] .ed-page.page-canvas,
+html[data-design] .page-canvas {
+  width: min(100%, clamp(72rem, 83.333vw, 90rem));
+  max-width: min(100%, clamp(72rem, 83.333vw, 90rem));
+  margin-inline: auto;
+}
+
+/* Двухколоночная рабочая плоскость (вопрос | ответ) — для practice / focus. */
+@media (min-width: 1280px) {
+  html[data-design] .focus-page .work-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: var(--space-6);
+    align-items: start;
+  }
+  html[data-design] .focus-page .work-split-prompt,
+  html[data-design] .focus-page .work-split-answer {
+    min-width: 0;
+  }
+  html[data-design] .focus-page .work-split-answer {
+    max-height: calc(100dvh - 6rem);
+    overflow-y: auto;
+  }
+}
+
+/* Вторичные блоки: меньше кегль, приглушённый тон, details без коробки. */
+html[data-design] .stack-quiet {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+}
+html[data-design] .stack-quiet > * + * {
+  margin-top: var(--space-3);
+}
+html[data-design] .stack-quiet details {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+html[data-design] .stack-quiet summary {
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 /* Четыре ключевые метрики. Карточка = .card (base) + вертикальный стек;
@@ -1047,6 +1065,10 @@ html[data-design] .builder-launch-bar {
   gap: var(--space-4) var(--space-5);
   align-items: center;
 }
+/* Нативная форма прокручивается документом: sticky-панель в WebKit
+   перехватывала клик по выбору режима после автоматической прокрутки. */
+html[data-design]:not([data-js]) .builder-launch-bar { position: static; }
+html[data-design]:not([data-js]) .session-builder:has(input[data-unlimited="true"]:checked) .builder-volume { display: none; }
 /* Панель закреплена, поэтому её высота — это прямой вычет из видимой части конструктора.
    Довод и история: docs/css-decisions/shell.md#shell-e14 */
 html[data-design] .builder-launch-bar .session-preview {
@@ -1095,7 +1117,7 @@ html[data-design] .builder-launch-bar .builder-start-cta {
   /* Клавиатурный обход конструктора (Tab по чипам, селектам, счётчику) скроллит
      контрол в вид — без запаса последние контролы приезжают ПОД панель и
      настраиваются вслепую. Тот же приём, что у закреплённой панели ответа. */
-  html[data-design] .session-builder :is(.filter-chip, select, input[type="number"], .filters-apply-btn) {
+  html[data-design] .session-builder :is(.mode-card, .filter-chip, select, input[type="number"], .filters-apply-btn) {
     scroll-margin-bottom: 8rem;
   }
   /* Полоса запуска — последний ряд страницы, и глобальный низ .ed-page (96px)
@@ -1103,6 +1125,16 @@ html[data-design] .builder-launch-bar .builder-start-cta {
      (замер 1440×900: docH 1171, из них 96 — пустота за полосой). Ровно на тех
      ширинах, где полоса закреплена. (аудит viewport-first 2026-09-01) */
   html[data-design] .train-page .ed-page { padding-bottom: 0; }
+  /* IA Wave 2: /practice (train-page) — поджать зазоры конструктора под ~1117. */
+  html[data-design] .train-page .page-head {
+    margin-bottom: var(--space-4);
+  }
+  html[data-design] .train-page .session-builder {
+    gap: var(--space-4) var(--space-5);
+  }
+  html[data-design] .train-page .builder-launch-bar {
+    padding: var(--space-2) 0;
+  }
   /* Раскрытый шаг «Сколько» подъезжает в вид с запасом над закреплённой полосой
      (session-form.js скроллит его при появлении — P1 приёмки: шаг раскрывался
      целиком за вьюпортом и под полосой, аффорданс нулевой). */

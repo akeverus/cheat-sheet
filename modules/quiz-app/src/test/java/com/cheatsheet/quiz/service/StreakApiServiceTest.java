@@ -49,4 +49,16 @@ class StreakApiServiceTest {
         assertThat(response.getBody()).isEqualTo(payload);
         verify(dailyStreakService).getTodayProgress();
     }
+
+    @Test
+    void updateGoalDelegatesThenReturnsFreshStreak() {
+        StreakResponse updated = new StreakResponse(4, 15, 2, false, 3, "2 дня");
+        when(dailyStreakService.getTodayProgress()).thenReturn(updated);
+
+        ResponseEntity<StreakResponse> response = service.updateGoalToHttpResponse(15);
+
+        verify(dailyStreakService).updateDailyGoal(15);
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isEqualTo(updated);
+    }
 }

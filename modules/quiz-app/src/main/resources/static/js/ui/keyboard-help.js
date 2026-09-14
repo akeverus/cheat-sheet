@@ -7,18 +7,39 @@
  * доступности приходилось дублировать. Теперь диалог один, различаются данные.
  */
 
+import { isShortcutEventIgnored } from '../core/keyboard.js';
+
 const HELP_KEY = '?';
 
 /** Экраны, где справка имеет смысл: маркер разметки → набор шорткатов. */
 const SURFACES = [
+  {
+    match: () => !!document.querySelector('.study-learn-phase'),
+    shortcuts: [
+      { keys: ['Space', 'Enter'], desc: 'Перейти к проверке вне поля ввода' },
+      { keys: ['Tab'], desc: 'Перейти к следующему действию' }
+    ]
+  },
+  {
+    match: () => !!document.querySelector('.flashcard-grade-buttons'),
+    shortcuts: [
+      { keys: ['1', '2', '3', '4'], desc: 'Оценить ответ: не помню, трудно, хорошо, легко' }
+    ]
+  },
+  {
+    match: () => !!document.querySelector('.flashcard-reveal-btn'),
+    shortcuts: [
+      { keys: ['Space', 'Enter'], desc: 'Раскрыть ответ вне поля ввода' },
+      { keys: ['Tab'], desc: 'Перейти к следующему действию' }
+    ]
+  },
   {
     match: () => !!document.querySelector('.focus-question'),
     shortcuts: [
       { keys: ['1', '2', '…', '9'], desc: 'Выбрать вариант ответа' },
       { keys: ['↑', '↓'], desc: 'Переключить вариант' },
       { keys: ['Enter'], desc: 'Отправить ответ' },
-      { keys: ['Space'], desc: 'Раскрыть флешкарту' },
-      { keys: ['1', '2', '3', '4'], desc: 'Оценить флешкарту (не помню → отлично)' }
+      { keys: ['Esc'], desc: 'Снять выбранный вариант' }
     ]
   },
   {
@@ -47,16 +68,6 @@ const COMMON_SHORTCUTS = [
 ];
 
 let bound = false;
-
-/**
- * Текстовые поля глушат хоткеи — там «?» и «/» легитимный ввод. Radio и checkbox
- * текст не принимают: с фокуса на фильтре-чекбоксе справка должна открываться.
- */
-function swallowsKeys(target) {
-  if (!target) return false;
-  if (target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') return true;
-  return target.tagName === 'INPUT' && !['radio', 'checkbox'].includes(target.type);
-}
 
 export function initKeyboardHelp() {
   if (bound) return;
@@ -128,6 +139,7 @@ export function initKeyboardHelp() {
   });
 
   document.addEventListener('keydown', (event) => {
+    if (event.isComposing || event.keyCode === 229) return;
     // Esc обрабатываем до проверки поля ввода: открытая модалка должна закрываться
     // с любого фокуса, иначе поле поиска внутри неё стало бы ловушкой.
     if (event.key === 'Escape' && isOpen()) {
@@ -135,7 +147,10 @@ export function initKeyboardHelp() {
       close();
       return;
     }
-    if (swallowsKeys(event.target)) return;
+    if (isShortcutEventIgnored(event)) return;
+    // Another tool owns focus and Escape until its dialog closes.
+    if (!isOpen() && event.target instanceof Element
+        && event.target.closest('[aria-modal="true"], dialog[open]')) return;
     if (event.key === HELP_KEY) {
       event.preventDefault();
       isOpen() ? close() : open();

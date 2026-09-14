@@ -81,12 +81,11 @@ class SessionBuilderStepsContractTest {
     @Test
     void theVolumeFieldStillBelongsToTheLaunchForm() throws IOException {
         String markup = markup();
-        int field = markup.indexOf("name=\"count\"");
-        assertThat(field).isNotNegative();
-        String around = markup.substring(field, Math.min(markup.length(), field + 220));
-        assertThat(around)
-                .as("без привязки к форме объём не уедет на сервер, и это сломает старт без JS")
-                .contains("form=\"session-form\"");
+        org.jsoup.nodes.Element field = org.jsoup.Jsoup.parse(markup).selectFirst("input[name=count]");
+        assertThat(field).isNotNull();
+        assertThat(field.attr("form"))
+                .as("Объём вне формы обязан передаваться при нативном запуске")
+                .isEqualTo("session-form");
         assertThat(markup)
                 .as("шаг прячется целиком: заголовок с номером над пустотой — не шаг")
                 .contains("id=\"builder-volume\"");

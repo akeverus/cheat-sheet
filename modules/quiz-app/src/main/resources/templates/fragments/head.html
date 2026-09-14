@@ -30,8 +30,8 @@
     <!--/* FOUC bootstrap: theme / экранный пресет / motion (+ маркеры JS/settings-tab).
          Ширина чтения и плотность переехали СЮДА вместе с пресетом: обе меняют
          раскладку (мера прозы и шкала отступов), и применять их после первого
-         кадра значило показывать перекладку. В personalization-bootstrap.js
-         остался только размер шрифта — он не меняет геометрию блоков. */-->
+         кадра значило показывать перекладку. Размер текста также применяется
+         здесь: он меняет rem-размеры меню и переносы на всех страницах. */-->
     <script th:attr="nonce=${cspNonce}">
       (function () {
         // Stamp CSP nonce on createElement('style') so Mermaid/hljs work without style unsafe-inline.
@@ -66,6 +66,44 @@
           }
         })();
         var root = document.documentElement;
+        // Размер текста применяем до CSS и первого кадра, даже при медленной загрузке модулей.
+        // --- Font scale ---
+        var FONT_MIN = 0.85;
+        var FONT_MAX = 1.4;
+        var FONT_STEP = 0.1;
+        function clampFont(v) {
+          v = Math.round(v * 100) / 100;
+          return Math.min(FONT_MAX, Math.max(FONT_MIN, v));
+        }
+        function readFont() {
+          try {
+            var f = parseFloat(localStorage.getItem('fontScale'));
+            return Number.isFinite(f) ? clampFont(f) : 1;
+          } catch (_) { return 1; }
+        }
+        var fontScale = readFont();
+        function applyFont(v) {
+          fontScale = clampFont(v);
+          root.style.fontSize = fontScale === 1 ? '' : (fontScale * 100) + '%';
+        }
+        applyFont(fontScale);
+        window.__fontScale = {
+          get() { return fontScale; },
+          min: FONT_MIN,
+          max: FONT_MAX,
+          STEP: FONT_STEP,
+          set(v) {
+            applyFont(v);
+            try {
+              if (fontScale === 1) localStorage.removeItem('fontScale');
+              else localStorage.setItem('fontScale', String(fontScale));
+            } catch (_) { /* private mode */ }
+            try { document.dispatchEvent(new CustomEvent('fontscalechange', { detail: { scale: fontScale } })); } catch (_) {}
+          },
+          stepBy(delta) { window.__fontScale.set(fontScale + delta); },
+          reset() { window.__fontScale.set(1); }
+        };
+
         function metaEl() { return document.querySelector('meta[name="theme-color"]'); }
         var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
         function systemTheme() { return (mq && mq.matches) ? 'light' : 'dark'; }

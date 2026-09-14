@@ -87,13 +87,18 @@ public class SessionFlowService {
      * только на действие пользователя.
      */
     public boolean applyFlashcardGrade(InterviewSession interviewSession, long questionId, int grade) {
-        if (!canApplyFlashcardGrade(interviewSession)) {
-            return false;
+        if (interviewSession == null) return false;
+        // Два одновременно пришедших POST должны проверить фазу и изменить индекс атомарно.
+        synchronized (interviewSession) {
+            if (!canApplyFlashcardGrade(interviewSession)
+                    || !Long.valueOf(questionId).equals(interviewSession.currentQuestionId())) {
+                return false;
+            }
+            submitFlashcardGrade(questionId, grade);
+            interviewSession.registerAnswer(FlashcardGrade.isCorrect(grade), topicOf(questionId));
+            interviewSession.resetFlashcardPhase();
+            return true;
         }
-        submitFlashcardGrade(questionId, grade);
-        interviewSession.registerAnswer(FlashcardGrade.isCorrect(grade), topicOf(questionId));
-        interviewSession.resetFlashcardPhase();
-        return true;
     }
 
     /**
@@ -137,7 +142,9 @@ public class SessionFlowService {
     }
 
     private boolean canApplyFlashcardGrade(InterviewSession interviewSession) {
-        return interviewSession != null && interviewSession.isFlashcardMode();
+        return interviewSession.isFlashcardMode()
+                && !interviewSession.isFinished()
+                && interviewSession.getFlashcardPhase() == com.cheatsheet.quiz.domain.FlashcardPhase.REVEALED;
     }
 
     private void submitFlashcardGrade(long questionId, int grade) {

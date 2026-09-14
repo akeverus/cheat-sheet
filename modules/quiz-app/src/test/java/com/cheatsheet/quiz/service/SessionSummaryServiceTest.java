@@ -63,6 +63,8 @@ class SessionSummaryServiceTest {
         SessionSummary summary = service.buildSummary(session);
 
         assertThat(summary.getTotalQuestions()).isEqualTo(2);
+        assertThat(summary.getPlannedQuestions()).isEqualTo(2);
+        assertThat(summary.isPartial()).isFalse();
         assertThat(summary.getCorrectCount()).isEqualTo(2);
         assertThat(summary.getWrongCount()).isEqualTo(0);
         assertThat(summary.getAccuracy()).isEqualTo(100.0);
@@ -146,6 +148,22 @@ class SessionSummaryServiceTest {
         // возвращал true (vacuous truth) → ложная похвала. Рекомендаций быть не должно.
         assertThat(summary.getRecommendations()).noneMatch(r -> r.contains("Отличный результат"));
         assertThat(summary.getRecommendations()).isEmpty();
+    }
+
+    @Test
+    void earlyFinishKeepsAnsweredAndPlannedCountsSeparate() {
+        Question q1 = aQuestion().withId(1).withTopic("java").build();
+        when(questionRepository.findByIds(anyList())).thenReturn(List.of(q1));
+        InterviewSession session = new InterviewSession(
+                InterviewMode.EXAM, List.of(1L, 2L, 3L), "java", false, false, false);
+        session.registerAnswer(true, "java");
+
+        SessionSummary summary = service.buildSummary(session);
+
+        assertThat(summary.getTotalQuestions()).isEqualTo(1);
+        assertThat(summary.getPlannedQuestions()).isEqualTo(3);
+        assertThat(summary.isPartial()).isTrue();
+        assertThat(summary.getAccuracy()).isEqualTo(100.0);
     }
 
     @Test

@@ -1,4 +1,5 @@
 import { pluralRu } from '../core/dom.js';
+import { setPending, clearPending, setBlockPending, clearBlockPending } from '../ui/pending.js';
 
 let shuffleBound = false;
 let sessionModeBound = false;
@@ -126,6 +127,12 @@ export function initSessionModeForm() {
     if (!preview) return;
     // Полоса приходит скрытой: без скрипта её числа были бы заглушками.
     preview.hidden = false;
+    const pool = Number.parseInt(preview.getAttribute('data-pool-total') || '', 10);
+    if (pool === 0) {
+      if (previewCount) previewCount.textContent = 'нет вопросов по этим условиям';
+      if (previewTime) previewTime.textContent = '';
+      return;
+    }
     if (selectedMode()?.dataset.unlimited === 'true') {
       // Формулировки короткие сознательно: предпросмотр переехал в закреплённую
       // строку запуска, и его высота теперь вычитается из видимой части
@@ -136,12 +143,18 @@ export function initSessionModeForm() {
       if (previewTime) previewTime.textContent = 'пока не остановишь';
       return;
     }
-    const n = countInput ? (Number.parseInt(countInput.value || '', 10) || 0) : 0;
-    const pool = Number.parseInt(preview.getAttribute('data-pool-total') || '', 10);
+    const requested = countInput ? (Number.parseInt(countInput.value || '', 10) || 0) : 0;
+    if (!Number.isFinite(requested) || requested < 1 || requested > 200) {
+      if (previewCount) previewCount.textContent = 'укажи от 1 до 200 вопросов';
+      if (previewTime) previewTime.textContent = '';
+      return;
+    }
+    const n = Number.isFinite(pool) ? Math.min(requested, pool) : requested;
     const mins = Math.max(1, Math.round((n * SECONDS_PER_Q) / 60));
     if (previewCount) {
       let label = n + ' ' + pluralRu(n, 'вопрос', 'вопроса', 'вопросов');
       if (!Number.isNaN(pool) && pool > 0) label += ' из ' + pool;
+      if (n < requested) label += ' · весь доступный набор';
       previewCount.textContent = label;
     }
     if (previewTime) {
@@ -170,7 +183,10 @@ export function initSessionModeForm() {
     updatePreview();
   };
 
-  if (countInput) countInput.addEventListener('input', updatePreview);
+  if (countInput) countInput.addEventListener('input', () => {
+    if (countInput.validity.valid) countInput.removeAttribute('aria-invalid');
+    updatePreview();
+  });
   modeChoice.addEventListener('change', () => {
     const def = selectedMode()?.dataset.defaultCount;
     if (countInput && def) countInput.value = def;
@@ -230,12 +246,27 @@ export function initLiveFilters() {
     const modeMirror = document.getElementById('filters-mode-mirror');
     if (checkedMode && modeMirror) modeMirror.value = checkedMode.value;
     clearTimeout(timer);
+    // До серверного GET состав набора ещё относится к прежним фильтрам.
+    // Запуск в эти 400 мс показывал старый объём с новым названием отбора.
+    const startBtn = document.getElementById('session-start-btn');
+    if (startBtn) {
+      setPending(startBtn, 'Применяю фильтры…');
+    }
+    const outcome = document.getElementById('builder-outcome');
+    setBlockPending(outcome, 'Обновляю набор…');
+    const preview = document.getElementById('session-preview');
+    if (preview) preview.hidden = true;
     timer = setTimeout(() => {
       if (typeof filtersForm.requestSubmit === 'function') filtersForm.requestSubmit();
       else filtersForm.submit();
     }, FILTER_DEBOUNCE_MS);
   };
 
+  window.addEventListener('pageshow', () => {
+    clearPending(document.getElementById('session-start-btn'));
+    clearBlockPending(document.getElementById('builder-outcome'));
+    if (typeof window.__updateSessionPreview === 'function') window.__updateSessionPreview();
+  });
   filtersForm.addEventListener('change', scheduleApply);
   syncSessionFromFilters();
 }
@@ -247,21 +278,23 @@ export function initSessionFormSync() {
   if (!filtersForm || !sessionForm) return;
   sessionSyncBound = true;
 
-  const countInput = sessionForm.querySelector('input[name="count"]');
+  const countInput = sessionForm.elements.namedItem('count');
   const sessionCountStorageKey = 'quiz.session.count';
   if (countInput) {
     let storedRaw = '';
     try { storedRaw = localStorage.getItem(sessionCountStorageKey) || ''; } catch (_) {}
     const storedCount = Number.parseInt(storedRaw, 10);
-    if (!Number.isNaN(storedCount) && storedCount >= 1 && storedCount <= 200) {
+    if (countInput.getAttribute('aria-invalid') !== 'true'
+        && !Number.isNaN(storedCount) && storedCount >= 1 && storedCount <= 200) {
       countInput.value = String(storedCount);
     }
-    countInput.addEventListener('change', () => {
+    countInput.addEventListener('input', () => {
       const value = Number.parseInt(countInput.value || '', 10);
       if (!Number.isNaN(value) && value >= 1 && value <= 200) {
         try { localStorage.setItem(sessionCountStorageKey, String(value)); } catch (_) {}
       }
     });
+    if (typeof window.__updateSessionPreview === 'function') window.__updateSessionPreview();
   }
 
   const getFilterField = (name) => filtersForm.querySelector('[name="' + name + '"]');

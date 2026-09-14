@@ -27,6 +27,7 @@ import org.springframework.ui.Model;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -186,6 +187,20 @@ class InterviewFlowMvcServiceTest {
 
         assertThat(view).isEqualTo("redirect:/focus");
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
+    }
+
+    @Test
+    void typedRevealStoresAnswerOnlyForCurrentQuestionOnFirstReveal() {
+        InterviewSession interview = new InterviewSession(InterviewMode.TYPED_RECALL,
+                List.of(55L, 56L), "java", false, false, false);
+        when(sessionSupport.getSession(session)).thenReturn(interview);
+        when(sessionFlowService.applyFlashcardReveal(interview)).thenReturn(true, false);
+        service.flashcardReveal(56L, "stale tab", session);
+        verify(sessionFlowService, never()).applyFlashcardReveal(any());
+        service.flashcardReveal(55L, "my answer", session);
+        service.flashcardReveal(55L, "repeated request", session);
+        verify(httpSessionStateService).setRecallAnswer(session, interview, "my answer");
+        verify(httpSessionStateService, never()).setRecallAnswer(session, interview, "repeated request");
     }
 
     @Test

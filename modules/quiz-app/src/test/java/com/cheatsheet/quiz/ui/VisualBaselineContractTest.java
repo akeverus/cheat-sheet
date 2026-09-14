@@ -38,7 +38,7 @@ class VisualBaselineContractTest {
 
     @Test
     void focusShellMatchesVisualBaselineContract() throws Exception {
-        String body = mockMvc.perform(get("/"))
+        String body = mockMvc.perform(get("/practice"))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -135,7 +135,7 @@ class VisualBaselineContractTest {
 
     @Test
     void resultShellMatchesVisualBaselineContract() throws Exception {
-        String focusBody = mockMvc.perform(get("/"))
+        String focusBody = mockMvc.perform(get("/practice"))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()

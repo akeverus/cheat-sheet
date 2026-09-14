@@ -12,10 +12,10 @@ import org.springframework.stereotype.Component;
 public class MvcNavigationService {
 
     /**
-     * Основной redirect на фокус-страницу.
+     * Redirect на фокус-тренировку ({@code /practice}).
      */
     public String focusRedirect() {
-        return "redirect:/";
+        return "redirect:/practice";
     }
 
     /**
@@ -29,7 +29,21 @@ public class MvcNavigationService {
      * сессии — возвращает ровно на тот вопрос.
      */
     public String focusQuestionRedirect(long questionId) {
-        return "redirect:/?questionId=" + questionId;
+        return "redirect:/practice?questionId=" + questionId;
+    }
+
+    /**
+     * View хаба «Сегодня» ({@code /}).
+     */
+    public String homeView() {
+        return "home";
+    }
+
+    /**
+     * Redirect на хаб «Сегодня».
+     */
+    public String homeRedirect() {
+        return "redirect:/";
     }
 
     /**

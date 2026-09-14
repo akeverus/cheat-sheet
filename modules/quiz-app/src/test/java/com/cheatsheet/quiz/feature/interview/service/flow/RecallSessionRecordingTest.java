@@ -84,7 +84,9 @@ class RecallSessionRecordingTest {
             questionExists(10L, "java/collections-interview.md");
             questionExists(11L, "spring/di-interview.md");
 
+            assertThat(flow.applyFlashcardReveal(session)).isTrue();
             assertThat(flow.applyFlashcardGrade(session, 10L, 4)).isTrue();
+            assertThat(flow.applyFlashcardReveal(session)).isTrue();
             assertThat(flow.applyFlashcardGrade(session, 11L, 1)).isTrue();
 
             assertThat(session.getIndex()).as("сессия продвигается, как и раньше: " + mode).isEqualTo(2);
@@ -105,6 +107,7 @@ class RecallSessionRecordingTest {
         InterviewSession session = recallSession(InterviewMode.INTERVIEW);
         lenient().when(facade.questionById(10L)).thenReturn(Optional.empty());
 
+        assertThat(flow.applyFlashcardReveal(session)).isTrue();
         assertThat(flow.applyFlashcardGrade(session, 10L, 3)).isTrue();
 
         assertThat(session.getAnswerHistory()).hasSize(1);

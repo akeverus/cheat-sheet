@@ -249,9 +249,11 @@ class EnumLabelSourceContractTest {
     void sessionModeSelectIsRenderedFromTheServerList() {
         String settings = read(TEMPLATES.resolve("fragments/session-builder.html"));
         assertThat(settings)
-                .describedAs("селект режима должен рендериться из модели sessionModes, "
-                        + "иначе подписи и порядок снова разъедутся с Java")
-                .contains("th:each=\"m : ${sessionModes}\"")
+                .describedAs("карточки режима рендерятся из модели sessionModes "
+                        + "(primary + «Ещё режимы»), иначе подписи разъедутся с Java")
+                .contains("primaryModes=${sessionModes.?[primary]}")
+                .contains("th:each=\"m : ${primaryModes}\"")
+                .contains("th:each=\"m : ${moreModes}\"")
                 .contains("data-cta=${m.startAction}")
                 .contains("data-unlimited=${m.unlimited}");
 

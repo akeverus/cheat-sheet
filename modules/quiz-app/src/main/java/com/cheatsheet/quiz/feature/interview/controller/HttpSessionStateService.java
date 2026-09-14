@@ -27,6 +27,7 @@ public class HttpSessionStateService {
     private static final String INTERVIEW_SESSION_KEY = "interviewSession";
     private static final String LAST_SESSION_SUMMARY_KEY = "lastSessionSummary";
     private static final String OWNERSHIP_KEY = "sessionOwnershipKey";
+    private static final String RECALL_ANSWER_KEY = "recallAnswer";
 
     private final CurrentUserAccessor currentUserAccessor;
     private final AppProperties appProperties;
@@ -64,6 +65,33 @@ public class HttpSessionStateService {
         session.setAttribute(INTERVIEW_SESSION_KEY, interviewSession);
     }
 
+    /** Ключ конкретного показа: одинаковый вопрос в новой сессии не получает старый ответ. */
+    public static String recallAnswerKey(InterviewSession interviewSession) {
+        if (interviewSession == null || interviewSession.currentQuestionId() == null) return "";
+        return interviewSession.getStartedAt() + ":" + interviewSession.getMode()
+                + ":" + interviewSession.getIndex() + ":" + interviewSession.currentQuestionId();
+    }
+
+    /** Эхо введённого ответа живёт в HTTP-сессии, не в учебной истории. */
+    public void setRecallAnswer(HttpSession session, InterviewSession interviewSession, String text) {
+        assertOwnership(session);
+        session.setAttribute(OWNERSHIP_KEY, currentUserAccessor.ownershipKey());
+        session.setAttribute(RECALL_ANSWER_KEY, new RecallAnswer(recallAnswerKey(interviewSession), text));
+    }
+
+    public String getRecallAnswer(HttpSession session, InterviewSession interviewSession) {
+        assertOwnership(session);
+        Object value = session.getAttribute(RECALL_ANSWER_KEY);
+        return value instanceof RecallAnswer answer && answer.key().equals(recallAnswerKey(interviewSession))
+                ? answer.text() : "";
+    }
+
+    public void clearRecallAnswer(HttpSession session) {
+        session.removeAttribute(RECALL_ANSWER_KEY);
+    }
+
+    private record RecallAnswer(String key, String text) implements java.io.Serializable { }
+
     /**
      * Удаляет активную interview-сессию из HttpSession.
      * Ownership tag retained while {@link #LAST_SESSION_SUMMARY_KEY} is still present
@@ -71,7 +99,7 @@ public class HttpSessionStateService {
      */
     public void clearInterviewSession(HttpSession session) {
         session.removeAttribute(INTERVIEW_SESSION_KEY);
-        if (session.getAttribute(LAST_SESSION_SUMMARY_KEY) == null) {
+        if (session.getAttribute(LAST_SESSION_SUMMARY_KEY) == null && session.getAttribute(RECALL_ANSWER_KEY) == null) {
             session.removeAttribute(OWNERSHIP_KEY);
         }
     }
@@ -101,7 +129,7 @@ public class HttpSessionStateService {
      */
     public void clearLastSessionSummary(HttpSession session) {
         session.removeAttribute(LAST_SESSION_SUMMARY_KEY);
-        if (session.getAttribute(INTERVIEW_SESSION_KEY) == null) {
+        if (session.getAttribute(INTERVIEW_SESSION_KEY) == null && session.getAttribute(RECALL_ANSWER_KEY) == null) {
             session.removeAttribute(OWNERSHIP_KEY);
         }
     }
@@ -109,12 +137,14 @@ public class HttpSessionStateService {
     private void assertOwnership(HttpSession session) {
         Object stored = session.getAttribute(OWNERSHIP_KEY);
         boolean hasPayload = session.getAttribute(INTERVIEW_SESSION_KEY) != null
-                || session.getAttribute(LAST_SESSION_SUMMARY_KEY) != null;
+                || session.getAttribute(LAST_SESSION_SUMMARY_KEY) != null
+                || session.getAttribute(RECALL_ANSWER_KEY) != null;
         if (stored == null) {
             // Multi: untagged payload is unsafe (e.g. after clear that dropped ownership early).
             if (isMultiMode() && hasPayload) {
                 session.removeAttribute(INTERVIEW_SESSION_KEY);
                 session.removeAttribute(LAST_SESSION_SUMMARY_KEY);
+                session.removeAttribute(RECALL_ANSWER_KEY);
                 throw new AccessDeniedException("HTTP session ownership missing");
             }
             return;
@@ -128,6 +158,7 @@ public class HttpSessionStateService {
         // Local mode: treat as empty rather than hard-fail.
         session.removeAttribute(INTERVIEW_SESSION_KEY);
         session.removeAttribute(LAST_SESSION_SUMMARY_KEY);
+        session.removeAttribute(RECALL_ANSWER_KEY);
         session.removeAttribute(OWNERSHIP_KEY);
     }
 

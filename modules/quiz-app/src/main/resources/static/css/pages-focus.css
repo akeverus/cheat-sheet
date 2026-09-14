@@ -10,6 +10,9 @@ html[data-design] .focus-page main { /* контейнер задаём чере
 /* Мера полосы.
    Довод и история: docs/css-decisions/pages-focus.md#pages-focus-e01 */
 html[data-design] .focus-page {
+  /* Смысловая мера заголовка вопроса: крупный serif читается короче обычной
+     прозы, но не превращается в узкую hero-колонку. */
+  --focus-question-measure: 38ch;
   /* Колонка спутников (справка о теме, карта темы, ход сессии, заметка). 22rem =
      352px: столько нужно строке «ждут повтора — планировщик поставит их первыми»
      и теме в журнале, чтобы не переноситься на каждом слове.
@@ -50,7 +53,6 @@ html[data-design] .focus-main { min-width: 0; }
    Довод и история: docs/css-decisions/pages-focus.md#pages-focus-e04 */
 html[data-design] .focus-page .ed-page {
   min-width: 0;
-  overflow-x: clip;
 }
 
 /* РАБОЧАЯ ОБЛАСТЬ НА ВЫСОКОМ ЭКРАНЕ — В ОПТИЧЕСКОМ ЦЕНТРЕ, А НЕ ПРИЖАТА К ВЕРХУ.
@@ -93,7 +95,7 @@ html[data-design] .focus-aside.focus-session-rail {
 }
 html[data-design] .focus-aside .focus-progress-line,
 html[data-design] .focus-aside .session-progress-track {
-  opacity: 0.88;
+  opacity: 1;
 }
 /* Отдельного .question-meta на focus больше нет: бейдж сложности переехал в .question-zone-head к чипу режима (см.
    Довод и история: docs/css-decisions/pages-focus.md#pages-focus-e06 */
@@ -248,7 +250,12 @@ html[data-design] .focus-page .resume-banner-text {
   min-width: 0;
 }
 html[data-design] .focus-page .resume-banner-text strong { font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
-html[data-design] .focus-page .resume-banner-meta { font-size: var(--font-size-sm); color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+html[data-design] .focus-page .resume-banner-meta {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
 
 /* Баннеры восстановления (offline / «Сессия истекла») ОТСЮДА УДАЛЕНЫ в iter-82.
    Их печатает shell-head.html — то есть все семь страниц, — а коробка стояла под
@@ -336,9 +343,9 @@ html[data-design] .focus-page .topic-map-legend {
    вторая рамка внутри рабочей области спорила бы с материалами вопроса над ней.
    Отделяется линией сверху, тем же приёмом, что и материалы. */
 html[data-design] .focus-page .topic-brief {
-  margin-top: var(--space-6);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border-subtle);
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
   max-width: var(--measure);
 }
 /* Свёрнутые строки спутников (тихий фокус): шапка — общий .disclosure-summary;
@@ -351,11 +358,11 @@ html[data-design] .focus-page .question-note-outer[open] > .question-note-outer-
   margin-bottom: var(--space-3);
 }
 html[data-design] .focus-page .topic-brief-title {
-  margin: 0 0 var(--space-2);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  margin: 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--color-text-tertiary);
 }
 html[data-design] .focus-page .topic-brief-text {
@@ -414,7 +421,7 @@ html[data-design] .focus-question-reason {
   align-items: baseline;
   gap: var(--space-2);
   font-size: var(--font-size-sm);
-  line-height: var(--line-height-snug);
+  line-height: var(--line-height-normal);
   color: var(--color-text-secondary);
   margin: 0 0 var(--space-4);
 }
@@ -461,7 +468,7 @@ html[data-design] .focus-page .result-feedback .review-policy {
 html[data-design] .focus-question {
   font-family: var(--font-family-display);
   font-weight: var(--font-weight-semibold);
-  font-size: clamp(1.75rem, 1.2rem + 2.4vw, var(--font-size-3xl));
+  font-size: clamp(var(--font-size-lg), 1.35rem + 1.3vw, var(--font-size-2xl));
   line-height: var(--line-height-tight);
   /* Трекинг НЕ переопределяется страницей: он принадлежит заголовку как
      компоненту (reset.css). Здесь стояла копия `--letter-spacing-tight` — она
@@ -472,16 +479,7 @@ html[data-design] .focus-question {
   padding-bottom: var(--space-5);
   border-bottom: var(--rule-weight) solid var(--color-border-primary);
   text-wrap: balance;
-  /* Одинаковый размер «окна вопроса» (прямая просьба пользователя). Резервируем
-     место под --focus-question-lines строк героя, чтобы короткий и длинный вопрос
-     давали одинаковый вертикальный след: блок вариантов начинается на одной и той
-     же высоте и не прыгает при переходе между вопросами. em → масштаб вместе с
-     размером шрифта/scale; вопросы длиннее резерва растут (текст не обрезаем).
-     Текст прижат к верху (читаем сверху вниз), короткий вопрос оставляет
-     воздушный зазор до подчёркивания. box-sizing border-box → min-height учитывает
-     padding-bottom + бордюр. */
   box-sizing: border-box;
-  min-height: calc(var(--focus-question-lines, 2) * var(--line-height-tight) * 1em + var(--space-5) + var(--rule-weight));
 }
 
 /* Код-блок условия вопроса */
@@ -556,21 +554,24 @@ html[data-design] .focus-page .question-code-wrap.is-code-wrap .code-viewport pr
 html[data-design] .focus-page .question-code-wrap .code-viewport {
   overflow: auto;
   max-height: max(min(60vh, 520px), 100dvh - 30rem);
-  overscroll-behavior: contain;
+  /* По вертикали прокрутка ПЕРЕДАЁТСЯ странице (auto), по горизонтали остаётся
+     запертой (contain). `contain` по обеим осям пришёл сюда от схемы, которую
+     таскают мышью, — там он нужен, чтобы страница не уезжала вместе с панорамой.
+     У листинга таскать нечего, а цена была высокой: замер 375×812 — окно кода
+     занимает 309px из 812 (38% экрана), стоит между вопросом и вариантами,
+     ползунка у него нет по решению выше, и колесо/свайп над ним не двигали
+     страницу ВООБЩЕ, даже когда внутренняя прокрутка уже в конце (scrollY 0→0
+     после шести оборотов). Это и есть вторая конкурирующая прокрутка на главном
+     экране. С `auto` листинг сначала доезжает сам, потом отдаёт движение
+     странице — одна главная прокрутка. Горизонталь оставлена contain: там
+     цепочка ушла бы в жест «назад» и в панорамирование страницы. */
+  overscroll-behavior: contain auto;
   padding: var(--space-2);
 }
 /* Ползунок не рисуется (цель 2026-09 «никаких полос прокрутки»): прокрутка
    остаётся — колесо/жесты/клавиатура (tabindex вешает code-toolbar.js, WCAG
    2.1.1), обрез частично видимой строки сам является аффордансом продолжения.
    То же — у окна схемы. */
-html[data-design] .focus-page .question-code-wrap .code-viewport,
-html[data-design] .focus-page .diagram-viewport {
-  scrollbar-width: none;
-}
-html[data-design] .focus-page .question-code-wrap .code-viewport::-webkit-scrollbar,
-html[data-design] .focus-page .diagram-viewport::-webkit-scrollbar {
-  display: none;
-}
 /* Ниже порога рабочего места композиция одноколоночная, и 60vh под листинг — это больше половины экрана под контекст, а задача (варианты) уезжает за два экрана.
    Довод и история: docs/css-decisions/pages-focus.md#pages-focus-e15 */
 
@@ -589,7 +590,7 @@ html[data-design] #interview-options label {
   border: var(--rule-weight) solid var(--color-border-primary);
   border-radius: var(--border-radius-md);
   background: var(--color-bg-secondary);
-  cursor: pointer;
+  cursor: default;
   transition: border-color var(--duration-fast) var(--easing-default), background var(--duration-fast) var(--easing-default), box-shadow var(--duration-fast) var(--easing-default);
   font-size: var(--font-size-md);
   color: var(--color-text-primary);
@@ -602,10 +603,17 @@ html[data-design] #interview-options label {
    срабатывает: ячейка уже 68ch. :not([class]) бьёт только по тексту, не по
    добавляемому quiz/interview.js .option-status-label. */
 html[data-design] #interview-options label > span:not([class]) { max-width: 68ch; }
-/* Инлайн-код в тексте варианта — неделимый токен: перенос внутри чипа
-   («O(log» / «n)») рвал термин и раздувал чип в двухстрочный блок
-   (второе ревью §104). Длинные сниппеты остаются переносимыми МЕЖДУ чипами. */
-html[data-design] #interview-options label code { white-space: nowrap; }
+/* Короткий токен (например O(log n)) переносится целиком. Очень длинный
+   идентификатор может переноситься внутри: nowrap выводил его за границы
+   label, а корневой overflow-x:clip скрывал потерянный текст от reflow-проверки. */
+html[data-design] #interview-options label code {
+  display: inline-block;
+  width: max-content;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: baseline;
+}
 html[data-design] #interview-options label::before {
   content: counter(opt, upper-latin);
   font-family: var(--font-family-mono);
@@ -619,7 +627,8 @@ html[data-design] #interview-options label::before {
   flex-shrink: 0;
   transition: inherit;
 }
-html[data-design] #interview-options label:hover { border-color: var(--color-text-secondary); background: var(--color-bg-tertiary); }
+html[data-design] #interview-options label:has(input:not(:disabled)) { cursor: pointer; }
+html[data-design] #interview-options label:has(input:not(:disabled)):hover { border-color: var(--color-text-secondary); background: var(--color-bg-tertiary); }
 html[data-design] #interview-options label input[type="radio"] {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
 }
@@ -638,6 +647,8 @@ html[data-design] #interview-options label:has(input:checked)::before {
    выбор — глушим; клавиатурный ринг идёт через :has(input:focus-visible). */
 html[data-design] #interview-options label:focus-within { outline: none; }
 html[data-design] #interview-options label:has(input:focus-visible) {
+  position: relative;
+  z-index: 1;
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
@@ -654,10 +665,13 @@ html[data-design] #interview-options label:has(input:focus-visible) {
 html[data-design] .focus-page #interview-options label.option-dimmed {
   color: var(--color-text-tertiary);
 }
-/* Пост-ответный статус-лейбл тянем на всю ширину карточки (под строку
-   «[A] текст»), чтобы auto-колонка badge не раздувалась статусом до 109px и
-   не зажимала текст в узкую колонку на мобиле. */
-html[data-design] #interview-options label .option-status-label { grid-column: 1 / -1; min-width: 0; }
+/* Статус продолжает текстовую колонку. Он не меняет ширину буквенного желоба. */
+html[data-design] #interview-options label .option-status-label {
+  grid-column: 2;
+  min-width: 0;
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-3);
+}
 
 /* =============================================================================
    C1-i — Instrument: фокус-тренировка. CSS-only рестайл СУЩЕСТВУЮЩИХ хуков
@@ -692,40 +706,72 @@ html[data-design] .focus-progress-line .session-progress {
   font-weight: var(--font-weight-medium);
 }
 
-/* Карты вариантов: paper-слой (не утопленная secondary); hover — щелчок
-   прибора: акцентная граница БЕЗ заливки (как hover ошибок в C6-i). */
+/* Редакционный индекс ответов: четыре варианта образуют один набор, а не четыре
+   одинаковые SaaS-карточки. Буквенный gutter остаётся постоянным якорем по всей
+   высоте строки; текст и индекс разделены hairline. */
+html[data-design] #interview-options {
+  gap: 0;
+}
 html[data-design] #interview-options label {
-  background: var(--color-bg-primary);
-  /* Компактные строки-варианты (макет): меньше воздуха и кегль ближе к базовому,
-     чтобы 4 варианта читались как список выбора, а не как крупные карточки. */
-  padding: 15px 16px;
-  gap: 12px;
+  grid-template-columns: var(--space-7) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
   font-size: var(--font-size-base);
-  line-height: 1.48;
-  align-items: start;
+  line-height: 1.5;
 }
-html[data-design] #interview-options label:hover {
+html[data-design] #interview-options label + label {
+  margin-top: calc(-1 * var(--rule-weight));
+}
+html[data-design] #interview-options label > span:not([class]) {
+  align-self: center;
+  padding: var(--space-3) var(--space-4);
+}
+html[data-design] #interview-options label:has(input:not(:disabled)):hover {
   border-color: var(--color-accent-strong);
-  background: var(--color-bg-primary);
+  background: var(--color-surface-soft);
+}
+html[data-design] #interview-options label:has(input:not(:disabled)):active {
+  background: var(--color-accent-wash);
 }
 
-/* Выбранный вариант: правило живёт НЕ здесь — секция «UX REVIEW PASS 2026-07-01»
-   ниже по файлу переопределяет checked-язык для всех дизайнов (равная
-   специфичность, позже по порядку), поэтому instrument-checked вставлен ТАМ,
-   после generic-правила (как это делает swiss). Найдено live-QA R0.54. */
-
-/* Ring-бейдж буквы: тише (tertiary); при выборе общий checked::before зальёт
-   его accent-ом — не дублируем.
-   Реставр handoff-3 (макет question-desktop): буква-чип КВАДРАТНАЯ (border-radius
-   sm, не круг), фикс 26px, mono 12px — «терминальные» letter-chips прототипа
-   (.letter 26px, radius 7px). При выборе общий checked::before красит фон teal. */
+/* Индекс привязан к первой строке, а не к середине ответа: на длинном MCQ
+   центр мог оказаться на 350px ниже начала текста. Заливка желоба сохраняет
+   общий выбранный статус, буква остаётся устойчивым адресом варианта. */
 html[data-design] #interview-options label::before {
   color: var(--color-text-secondary);
-  border-color: var(--color-border-strong);
-  border-radius: var(--border-radius-sm);
-  width: 26px; height: 26px;
-  font-size: 12px;
-  align-self: start;
+  border: 0;
+  border-inline-end: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: 0;
+  width: auto;
+  height: auto;
+  min-height: 100%;
+  font-size: var(--font-size-base);
+  line-height: inherit;
+  align-items: flex-start;
+  padding-top: var(--space-3);
+  align-self: stretch;
+  background: var(--color-surface-soft);
+  grid-row: 1 / span 2;
+}
+html[data-design] #interview-options label:has(input:checked)::before {
+  content: counter(opt, upper-latin) "  ✓";
+  border-inline-end-color: var(--color-accent-primary);
+  color: var(--color-text-inverse);
+}
+@media (max-width: 600px) {
+  /* Узкий индекс оставляет больше места полному тексту без уменьшения кегля. */
+  html[data-design] #interview-options label {
+    grid-template-columns: var(--space-6) minmax(0, 1fr);
+  }
+  html[data-design] #interview-options label > span:not([class]),
+  html[data-design] #interview-options label .option-status-label {
+    padding-inline: var(--space-3);
+  }
 }
 
 /* Здесь была ещё одна раскрывашка «Почему?» — `.option-explanation-disclosure`
@@ -907,7 +953,6 @@ html[data-design] .focus-page .recall-your-answer-body {
   padding: var(--space-4) var(--space-5);
   background: var(--color-bg-tertiary);
   border: var(--rule-weight) solid var(--color-border-primary);
-  border-left: 3px solid var(--color-accent-strong);
   border-radius: var(--border-radius-md);
   font-family: var(--font-family-body);
   font-size: var(--font-size-base);
@@ -991,6 +1036,13 @@ html[data-design] .focus-page .question-diagram .mermaid:not([data-rendered="tru
 html[data-design] .focus-page .question-diagram .mermaid {
   display: block; margin: var(--space-4) 0; overflow: visible;
 }
+/* @pages идёт после @shell в объявленном порядке слоёв: focus-база выше иначе
+   возвращает display:block поверх глобального failure-рецепта. Здесь явно
+   убираем пустой host и действия без SVG; fallback + раскрытый исходник остаются. */
+html[data-design] .focus-page .question-diagram[data-render-failed] .mermaid,
+html[data-design] .focus-page .question-diagram[data-render-failed] .diagram-toolbar-actions {
+  display: none;
+}
 html[data-design] .focus-page .question-diagram .mermaid svg {
   max-width: none; height: auto; display: block; margin-inline: auto;
 }
@@ -1026,6 +1078,17 @@ html[data-design] .focus-page .diagram-viewport {
      Довод и история: docs/css-decisions/pages-focus.md#pages-focus-e20 */
   html[data-design] .focus-page .question-code-wrap .code-viewport,
   html[data-design] .focus-page .diagram-viewport { max-height: min(38vh, 320px); }
+}
+
+/* Без JS нет обработчиков toolbar и динамической Tab-остановки окна кода.
+   Весь листинг остаётся в основном потоке; нерабочие действия не показываем. */
+html[data-design]:not([data-js]) .focus-page .code-toolbar-actions,
+html[data-design]:not([data-js]) .focus-page .diagram-toolbar-actions {
+  display: none;
+}
+html[data-design]:not([data-js]) .focus-page .question-code-wrap .code-viewport {
+  max-height: none;
+  overflow: visible;
 }
 
 /* Хват — у mermaid-схемы: её таскают мышью. Но таскается ПРОКРУТКА окна, а не сам
@@ -1145,6 +1208,11 @@ html[data-design] .focus-page .empty-state { width: min(100%, var(--focus-measur
    Правило теперь одно: где висит навигация, там действие закреплено над ней. */
 @media (max-width: 900px) {
   html[data-design] .focus-page .flashcard-grade-buttons { grid-template-columns: 1fr 1fr; }
+  /* AJAX приземляет фокус на #result-feedback и явно скроллит его к start.
+     Без отступа sticky mobile-header закрывал первые 44px — ровно вердикт. */
+  html[data-design] .focus-page .result-feedback {
+    scroll-margin-top: calc(44px + var(--space-3));
+  }
   /* На мобиле главное действие — full-width (крупная цель тапа, явный primary).
      Спецификой добиваем #interview-submit (1,2,0) и .flashcard-reveal-btn (0,2,0):
      раньше generic `.action-footer button[submit]` (0,2,1) проигрывал
@@ -1247,6 +1315,43 @@ html[data-design] .focus-page .empty-state { width: min(100%, var(--focus-measur
   html[data-design] .focus-page:has(#interview-form
       [data-ui-fragment="training-actions"]:not(.is-answered)) .back-to-top {
     bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-5) + 4.5rem);
+  }
+}
+
+/* На телефоне fixed-док перекрывал первый длинный вариант уже при начальной
+   позиции страницы (live 375×812: пересечение 73px). Главное действие остаётся
+   полноширинным и достижимым в естественном конце формы; нижний nav получает
+   собственный клиренс, поэтому ни кнопка, ни вариант не живут под оверлеем. */
+@media (max-width: 600px) {
+  html[data-design] .focus-page #interview-form
+      [data-ui-fragment="training-actions"]:not(.is-answered) .action-footer {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    width: auto;
+    margin: var(--space-5) 0 0;
+    padding: 0;
+    background: transparent;
+    border-top: 0;
+    box-shadow: none;
+  }
+  html[data-design] .focus-page:has(#interview-form
+      [data-ui-fragment="training-actions"]:not(.is-answered)) {
+    scroll-padding-bottom: calc(var(--mobile-nav-height) + var(--space-3) + env(safe-area-inset-bottom, 0px));
+  }
+  html[data-design] .focus-page:has(#interview-form
+      [data-ui-fragment="training-actions"]:not(.is-answered)) #interview-options > label {
+    scroll-margin-bottom: calc(var(--mobile-nav-height) + var(--space-3) + env(safe-area-inset-bottom, 0px));
+  }
+  html[data-design] .focus-page:has(#interview-form
+      [data-ui-fragment="training-actions"]:not(.is-answered)) .focus-training {
+    padding-bottom: calc(var(--space-8) + var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px));
+  }
+  html[data-design] .focus-page:has(#interview-form
+      [data-ui-fragment="training-actions"]:not(.is-answered)) .back-to-top {
+    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-5));
   }
 }
 
@@ -1395,11 +1500,36 @@ html[data-design] .focus-page .focus-training .focus-aside .focus-session-more-s
   /* Второе слагаемое (`.workspace-support`) снято в iter-129 вместе с блоком:
      план ответа больше не живёт в колонке задания и переставлять его не нужно —
      он стоит внутри рабочего места, там же, где поле ввода. */
-  /* Спутники переставляет ОДНО правило на их общую обёртку. Раньше здесь стоял
-     список из трёх селекторов, и каждый новый спутник требовал четвёртой строки —
-     то есть порядок держался перечислением, а не структурой. */
-  html[data-design] .focus-page .focus-main .focus-companions { order: 1; }
-  html[data-design] .focus-page .focus-main .report-zone { order: 2; }
+  /* Спутники стоят после работы и разбора в самом DOM: визуальный порядок
+     совпадает с порядком чтения и Tab, CSS-перестановка больше не нужна. */
+  html[data-design] .focus-page .focus-main .focus-companions.stack-quiet {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, max-content));
+    align-items: start;
+    gap: 0 var(--space-4);
+    margin-top: var(--space-6);
+    padding-top: var(--space-3);
+    border-top: var(--rule-weight) solid var(--color-border-secondary);
+  }
+  html[data-design] .focus-page .focus-companions.stack-quiet > * + * {
+    margin-top: 0;
+  }
+  html[data-design] .focus-page .focus-companions > .topic-brief,
+  html[data-design] .focus-page .focus-companions > .question-note {
+    order: 0;
+  }
+  html[data-design] .focus-page .focus-companions:has(> .topic-brief) > .question-note {
+    padding-inline-start: var(--space-4);
+    border-inline-start: var(--rule-weight) solid var(--color-border-secondary);
+  }
+  html[data-design] .focus-page .focus-companions:has(
+      > .topic-brief > details[open], > .question-note > details[open]) > .topic-brief,
+  html[data-design] .focus-page .focus-companions:has(
+      > .topic-brief > details[open], > .question-note > details[open]) > .question-note {
+    grid-column: 1 / -1;
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
 
   /* ЗАЗОР ПРИНАДЛЕЖИТ БЛОКУ, А НЕ ПРОТЕКАЕТ ИЗ ЕГО НУТРА.
      Довод и история: docs/css-decisions/pages-focus.md#pages-focus-e33 */
@@ -1414,7 +1544,21 @@ html[data-design] .focus-page .focus-training .focus-aside .focus-session-more-s
    --max-width-options равен мере колонки → cap не срабатывает, мёртвого поля
    справа нет). Медиазапроса у правила нет: на узком экране колонка сама уже меры,
    и кап становится no-op, а не «другим поведением». */
-html[data-design] .focus-page .focus-training .focus-question { max-width: var(--measure); }
+html[data-design] .focus-page .focus-training .focus-question {
+  max-width: min(100%, var(--focus-question-measure));
+}
+
+/* IA Wave 2: на широких вьюпортах MCQ держит пропорции work-split (вопрос | ответ)
+   поверх существующей сетки .focus-main — без DOM-обёртки, чтобы не ломать
+   display:contents / sticky пейн / рельс .focus-aside. */
+@media (min-width: 1280px) {
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):not(:has(.question-materials.is-ready)) {
+    display: flex;
+    flex-direction: column;
+    max-width: min(100%, var(--max-width-options));
+    margin-inline: auto;
+  }
+}
 
 @media (min-width: 1200px) {
   /* --page-gutter (жёлоб ≥1200) вынесен в tokens.css (Волна 5 под-шаг 2) — токен
@@ -1430,7 +1574,7 @@ html[data-design] .focus-page .focus-training .focus-question { max-width: var(-
   html[data-design] .focus-page #interview-options {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-3);
+    gap: 0;
     max-width: var(--max-width-options);
   }
   /* 2×2 разрешён только для сопоставимых по длине вариантов и только в wide/grid
@@ -1481,6 +1625,10 @@ html[data-design] .focus-task { display: contents; }
 @layer components {
 
 html[data-design] .focus-page .question-materials { margin: 0; }
+
+/* Pending-Mermaid сохраняет геометрию: IntersectionObserver должен увидеть
+   `.mermaid`, чтобы ленивый рендер вообще мог начаться. Сырой исходник до
+   data-rendered всё равно скрывает visibility-правило выше. */
 /* Видимость панелей отсюда ушла в components-tabs.css (iter-80): гасит их роль `[role="tabpanel"]` под гейтом `[data-js]`, одинаково на всех трёх полосах приложения.
    Довод и история: docs/css-decisions/pages-focus.md#pages-focus-e38 */
 html[data-design][data-js] .focus-page [role="tabpanel"] .content-toolbar { justify-content: flex-end; }
@@ -1509,6 +1657,8 @@ html[data-design][data-js] .focus-page [role="tabpanel"] .content-toolbar { just
    1fr)` разрешался в пустоту, и колонка задания схлопывалась до 25px (замер 1440×900,
    фаза изучения: колонки «24.6px 892.2px» вместо «602px 512px»). Мера принадлежит
    рабочему месту, а не одному его виду. */
+@layer pages {
+
 html[data-design] .focus-page:has(.workspace-surface:not(.hidden)) {
   /* Колонка задания. Мера здесь считается по САМОМУ ШИРОКОМУ жильцу колонки —
      листингу (собственная ширина кода в банке доходит до ~750px), а не по прозе:
@@ -1529,7 +1679,7 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)) {
    ~60% высоты, а эталон читался в 542px. Тот же гейт по содержимому здесь:
    вопрос без листинга отдаёт ширину работе — колонки становятся 480 | 830,
    и этап чтения эталона получает простор (iter-186). */
-html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.question-materials)) {
+html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.question-materials.is-ready)) {
   --workspace-brief: 30rem;
 }
 
@@ -1538,7 +1688,7 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
 @media (min-width: 1280px) {
   /* ГЕЙТ — ПО СОДЕРЖИМОМУ, А НЕ ПО СПИСКУ РЕЖИМОВ.
      Довод и история: docs/css-decisions/pages-focus.md#pages-focus-e43 */
-  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)) {
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials.is-ready) {
     display: grid;
     grid-template-columns: minmax(0, var(--workspace-brief)) minmax(var(--workspace-desk-min), 1fr);
     /* Явные ряды: по min-content на каждого жильца рабочей колонки и хвост-1fr.
@@ -1562,16 +1712,16 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
      третьей зоны ≥2240 (ниже): пейн задания — колонка, спутники — сеточные
      элементы; целевая колонка здесь — рабочая.
 
-     Гейт :has(.question-materials) добавлен адверсарной приёмкой: у вопроса
+     Гейт :has(.question-materials) / .is-ready добавлен адверсарной приёмкой: у вопроса
      БЕЗ листинга колонка задания — ~390px заголовка, и спутники справа
      оставляли слева пустоту 480×510+ — дыра меняла сторону. Тот же гейт уже
      выбирает ширину задания (--workspace-brief: 30rem). */
-  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials) > .focus-task {
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials.is-ready) > .focus-task {
     display: contents;
   }
   /* Пейн вопроса перестаёт быть `display: contents` и становится настоящей
      колонкой — ровно так же, как он делает это в раскладке «Разделение». */
-  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials) > .focus-task > .focus-question-pane {
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials.is-ready) > .focus-task > .focus-question-pane {
     display: flex;
     flex-direction: column;
     grid-column: 1;
@@ -1585,28 +1735,25 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
        рабочего места пейн остаётся `display: contents` и коробки не имеет. */
     container-type: inline-size;
   }
+  /* Рабочая колонка не должна начинаться раньше самого вопроса: контекстная
+     строка слева занимает один такт над заголовком. Такой же такт получает MCQ,
+     поэтому первый вариант визуально следует за вопросом, а не обгоняет его. */
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials.is-ready)
+      > #interview-form {
+    padding-top: var(--space-7);
+  }
   /* Спутники — в рабочую колонку ПОСЛЕ формы и разбора: auto-размещение сетки
      идёт в order-модифицированном порядке документа, и order поднимает обёртку
      за всех детей рабочей колонки (у них order: 0). Ряд не задаётся явно —
      на ≥2240 явное `grid-column: 3; grid-row: 1/-1` третьей зоны (ниже по файлу)
      перебивает это правило тем же весом селектора. */
-  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials) > .focus-task > .focus-companions {
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials.is-ready) > .focus-companions {
     grid-column: 2;
     min-width: 0;
-    order: 10;
   }
-  /* Вопрос БЕЗ материалов: узел остаётся колонкой — спутники стоят под
-     вопросом и наполняют колонку задания (прежняя композиция, для короткой
-     левой колонки она верна). */
-  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):not(:has(.question-materials)) > .focus-task {
-    display: flex;
-    flex-direction: column;
-    grid-column: 1;
-    grid-row: 1 / -1;
-    min-width: 0;
-    position: sticky;
-    top: var(--space-5);
-    container-type: inline-size;
+  /* Вопрос БЕЗ материалов: одна колонка, спутники уезжают вниз (display:contents + order). */
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):not(:has(.question-materials.is-ready)) > .focus-task {
+    display: contents;
   }
   /* «Сообщить о проблеме» остаётся последним и в новой очерёдности: это tertiary,
      и вставать между разбором и «О теме» ему не с чего. */
@@ -1616,7 +1763,7 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
   /* Все прочие дети рабочей колонки (форма, разбор, вердикт, сообщения) идут во
      вторую колонку стопкой. Перечислять их поимённо нельзя: состав меняется по
      фазе, и забытый ребёнок молча уехал бы в первую колонку. */
-  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)) > *:not(.focus-task) {
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials.is-ready) > *:not(.focus-task) {
     grid-column: 2;
     min-width: 0;
   }
@@ -1641,7 +1788,7 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
   /* МЕРА — СУММА КОЛОНОК, А НЕ ЧИСЛО. Так её видно из слагаемых: задание + работа
      + спутники + два жёлоба. Поставь сюда «116rem» — и при смене любой колонки
      полоса молча разъедется с содержимым. */
-  html[data-design] .focus-page:has(.workspace-surface:not(.hidden)) {
+  html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):has(.question-materials.is-ready) {
     --focus-main-measure: calc(var(--workspace-brief) + 40rem
                           + var(--workspace-companions) + var(--focus-rail-gap) * 2);
   }
@@ -1656,7 +1803,7 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
   html[data-design] .focus-page:has(.workspace-surface:not(.hidden)) .ed-page {
     max-width: min(100%, calc(var(--focus-main-measure) + var(--page-gutter) * 2));
   }
-  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)) {
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials.is-ready) {
     grid-template-columns:
       minmax(0, var(--workspace-brief))
       minmax(var(--workspace-desk-min), 1fr)
@@ -1665,7 +1812,7 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
   /* Пейн перестаёт быть колонкой и снова становится «прозрачным»: его дети —
      части задания и обёртка спутников — сами встают в сетку. Иначе спутники
      остались бы запертыми внутри первой колонки. */
-  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)) > .focus-task {
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials.is-ready) > .focus-task {
     display: contents;
   }
   /* Части задания — первая колонка. Правило по ПОТОМКАМ пейна, а не перечень:
@@ -1674,7 +1821,7 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
      свой flex), поэтому ряды рабочей колонки на него не действуют: первая редакция
      правила расступалась пейном, и вопрос вставал в ряд высотой со список
      вариантов — замер 2560 показал вопрос на 603-м пикселе при спутниках на 108-м. */
-  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)) > .focus-task > .focus-question-pane {
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials.is-ready) > .focus-task > .focus-question-pane {
     display: flex;
     flex-direction: column;
     grid-column: 1;
@@ -1687,12 +1834,15 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
   /* Спутники — третья колонка, от первого ряда. Явный ряд обязателен: при
      автоматическом размещении обёртка встала бы ПОД частями задания, то есть
      колонка началась бы там, где первая кончается. */
-  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)) > .focus-task > .focus-companions {
+  html[data-design] .focus-page .focus-main:has(.workspace-surface:not(.hidden)):has(.question-materials.is-ready) > .focus-companions {
     grid-column: 3;
     grid-row: 1 / -1;
     align-self: start;
     position: sticky;
     top: var(--space-5);
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
   }
   /* Первый спутник в своей колонке не нуждается в линейке сверху: она отделяла его
      от задания, а теперь над ним ничего нет. */
@@ -1706,7 +1856,7 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
 /* САМЫЙ ШИРОКИЙ ЖИЛЕЦ КОЛОНКИ ЗАДАНИЯ — СХЕМА, А НЕ ЛИСТИНГ (переоткрытие FRD-089).
    Довод и история: docs/css-decisions/pages-focus.md#pages-focus-e46 */
 @media (min-width: 2460px) {
-  html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):has(.question-materials) {
+  html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):has(.question-materials.is-ready) {
     --workspace-brief: 60rem;
   }
 }
@@ -1727,7 +1877,7 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
   html[data-design] .focus-page .focus-main:has(.study-learn-phase.workspace-surface:not(.hidden)) {
     grid-template-columns: minmax(18rem, 1fr) minmax(0, var(--reading-column));
   }
-  html[data-design] .focus-page .focus-main:has(.study-learn-phase.workspace-surface:not(.hidden)):has(.question-materials) {
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase.workspace-surface:not(.hidden)):has(.question-materials.is-ready) {
     grid-template-columns: minmax(26rem, 1fr) minmax(0, var(--reading-column));
   }
 }
@@ -1743,7 +1893,7 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
     --focus-main-measure: calc(18rem + var(--reading-column) + var(--workspace-companions)
                           + var(--focus-rail-gap) * 2);
   }
-  html[data-design] .focus-page:has(.study-learn-phase.workspace-surface:not(.hidden)):has(.question-materials) {
+  html[data-design] .focus-page:has(.study-learn-phase.workspace-surface:not(.hidden)):has(.question-materials.is-ready) {
     --focus-main-measure: calc(26rem + var(--reading-column) + var(--workspace-companions)
                           + var(--focus-rail-gap) * 2);
   }
@@ -1751,7 +1901,7 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
     grid-template-columns: minmax(18rem, 1fr) minmax(0, var(--reading-column))
                            minmax(0, var(--workspace-companions));
   }
-  html[data-design] .focus-page .focus-main:has(.study-learn-phase.workspace-surface:not(.hidden)):has(.question-materials) {
+  html[data-design] .focus-page .focus-main:has(.study-learn-phase.workspace-surface:not(.hidden)):has(.question-materials.is-ready) {
     grid-template-columns: minmax(26rem, 1fr) minmax(0, var(--reading-column))
                            minmax(0, var(--workspace-companions));
   }
@@ -1807,7 +1957,7 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
     padding: var(--space-6) var(--space-6) var(--space-4);
     /* У КАРТОЧКИ ЕСТЬ ПРОПОРЦИИ.
        Довод и история: docs/css-decisions/pages-focus.md#pages-focus-e50 */
-    min-height: min(56svh, 44rem);
+    min-height: 0;
   }
   html[data-design] .focus-page .focus-main:has(.flashcard-phase):not(:has(.workspace-surface:not(.hidden))):has(.focus-companions > *) > .flashcard-phase {
     background: var(--color-bg-secondary);
@@ -1834,7 +1984,7 @@ html[data-design] .focus-page:has(.workspace-surface:not(.hidden)):not(:has(.que
     container-type: inline-size;
   }
   /* Спутники — вторая колонка во всю высоту композиции. */
-  html[data-design] .focus-page .focus-main:has(.flashcard-phase):not(:has(.workspace-surface:not(.hidden))):has(.focus-companions > *) > .focus-task > .focus-companions {
+  html[data-design] .focus-page .focus-main:has(.flashcard-phase):not(:has(.workspace-surface:not(.hidden))):has(.focus-companions > *) > .focus-companions {
     grid-column: 2;
     grid-row: 1 / -1;
     min-width: 0;
@@ -1889,7 +2039,7 @@ html[data-design] .focus-page .focus-question:has(+ .question-materials) {
    Довод и история: docs/css-decisions/pages-focus.md#pages-focus-e53 */
 @container (min-width: 1px) {
   html[data-design] .focus-page .focus-question {
-    font-size: clamp(1.65rem, 0.4rem + 4.4cqi, 3rem);
+    font-size: clamp(var(--font-size-lg), 1.1rem + 2.6cqi, var(--font-size-2xl));
   }
 }
 
@@ -1923,24 +2073,24 @@ html[data-design] .focus-page .typed-answer-input.is-code textarea {
 }
 
 /* ===========================================================================
-   ЗАМЕТКА К ВОПРОСУ (iter-133) — в колонке задания, под журналом.
+   ЗАМЕТКА К ВОПРОСУ (iter-133) — рядом с темой, перед журналом сессии.
 
    Тон тот же, что у справки о теме и журнала: линейка сверху, вторичный цвет,
    никакой карточки. Заметка — спутник работы, а не второй её предмет, и спорить
    с самим вопросом за внимание ей нечем.
    =========================================================================== */
 html[data-design] .focus-page .question-note {
-  margin-top: var(--space-5);
-  padding-top: var(--space-4);
-  border-top: var(--rule-weight) solid var(--color-border-secondary);
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 html[data-design] .focus-page .question-note-title {
-  margin: 0 0 var(--space-3);
+  margin: 0;
   font-family: var(--font-family-body);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
-  letter-spacing: var(--letter-spacing-wide);
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--color-text-tertiary);
 }
 /* Уже написанное — прозой, читаемым кеглем: это ЦЕННОСТЬ заметки, а не подпись
@@ -1994,7 +2144,8 @@ html[data-design] .focus-page .question-note-saved {
    заливок — линейка сверху и вторичный цвет, тот же приём, что у справки о теме.
    =========================================================================== */
 html[data-design] .focus-page .session-log {
-  margin-top: var(--space-5);
+  grid-column: 1 / -1;
+  margin-top: var(--space-4);
   padding-top: var(--space-4);
   border-top: var(--rule-weight) solid var(--color-border-secondary);
 }
@@ -2286,4 +2437,6 @@ html[data-design] .focus-page .feedback-tabs {
 }
 html[data-design] .focus-page .feedback-panel {
   margin-top: var(--space-4);
+}
+
 }

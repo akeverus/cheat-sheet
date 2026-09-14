@@ -33,7 +33,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class InterviewMvcController {
-    /** Параметры выборки, которые переносим с легаси-адреса {@code /training} на канонический {@code /}. */
+    /** Параметры выборки, которые переносим с легаси-адреса {@code /training} и с
+     *  хаба {@code /} (когда query несёт интент тренировки) на канонический {@code /practice}. */
     static final List<String> TRAINING_QUERY_PARAMS = List.of(
             "topic", "group", "important", "onlyWrong", "shuffle",
             "weakTopics", "ordered", "excludeQuestionId", "questionId", "mode");
@@ -42,8 +43,24 @@ public class InterviewMvcController {
     InterviewFlowMvcService interviewFlowMvcService;
     AdminMaintenanceService adminMaintenanceService;
 
+    /**
+     * Хаб «Сегодня». Если в query есть параметры отбора тренировки — 302 на
+     * {@code /practice} с тем же whitelist (сохранённые ссылки на {@code /?topic=}
+     * не ломаются).
+     */
     @GetMapping("/")
-    public String index(
+    public String home(HttpServletRequest request, HttpSession session, Model model) {
+        if (hasTrainingQuery(request)) {
+            return redirectToPractice(request);
+        }
+        return interviewPageMvcService.home(session, model);
+    }
+
+    /**
+     * Канонический экран фокус-тренировки.
+     */
+    @GetMapping("/practice")
+    public String practice(
             @RequestParam(value = "topic", required = false) String topic,
             @RequestParam(value = "group", required = false) String group,
             @RequestParam(value = "important", required = false) Boolean important,
@@ -74,14 +91,28 @@ public class InterviewMvcController {
     }
 
     /**
-     * Легаси-адрес тренировки. Канонический URL один — {@code /}: иначе один и
+     * Легаси-адрес тренировки. Канонический URL — {@code /practice}: иначе один и
      * тот же экран живёт по двум адресам, что размывает историю браузера,
      * закладки и аналитику. Старые ссылки не ломаем — редиректим, перенося
      * известные параметры выборки (whitelist, чтобы не тащить чужой query).
      */
     @GetMapping("/training")
     public String training(HttpServletRequest request) {
-        UriComponentsBuilder canonical = UriComponentsBuilder.fromPath("/");
+        return redirectToPractice(request);
+    }
+
+    private static boolean hasTrainingQuery(HttpServletRequest request) {
+        for (String param : TRAINING_QUERY_PARAMS) {
+            String value = request.getParameter(param);
+            if (value != null && !value.isBlank()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String redirectToPractice(HttpServletRequest request) {
+        UriComponentsBuilder canonical = UriComponentsBuilder.fromPath("/practice");
         for (String param : TRAINING_QUERY_PARAMS) {
             String value = request.getParameter(param);
             if (value != null && !value.isBlank()) {
@@ -225,15 +256,13 @@ public class InterviewMvcController {
         return interviewFlowMvcService.studyConfirm(session);
     }
 
-    /**
-     * Раскрытие эталонного ответа во флешкарт-режиме. Введённый пользователем
-     * черновик ({@code typedAnswer} в форме) сервер намеренно не принимает и не
-     * персистит — эхо «Твой ответ» делает клиент через sessionStorage
-     * ({@code quiz/flashcard.js}, progressive enhancement).
-     */
+    /** Раскрывает эталон, сохраняя собственный ответ для сравнения и без JavaScript. */
     @PostMapping("/flashcard-reveal")
-    public String flashcardReveal(HttpSession session) {
-        return interviewFlowMvcService.flashcardReveal(session);
+    public String flashcardReveal(
+            @RequestParam(value = "questionId", required = false) Long questionId,
+            @RequestParam(value = "typedAnswer", required = false) @jakarta.validation.constraints.Size(max = 100000) String typedAnswer,
+            HttpSession session) {
+        return interviewFlowMvcService.flashcardReveal(questionId, typedAnswer, session);
     }
 
     @PostMapping("/flashcard-grade")
@@ -267,10 +296,11 @@ public class InterviewMvcController {
             @RequestParam(value = "topic", required = false) String topic,
             @RequestParam(value = "group", required = false) String group,
             @RequestParam(value = "ordered", required = false) Boolean ordered,
+            @RequestParam(value = "questionId", required = false) @Positive Long questionId,
             HttpSession session
     ) {
         return interviewFlowMvcService.pause(session,
-                new InterviewFlowMvcService.BrowseTarget(weakTopics, important, onlyWrong, topic, group, ordered));
+                new InterviewFlowMvcService.BrowseTarget(weakTopics, important, onlyWrong, topic, group, ordered, questionId));
     }
 
     @PostMapping("/resume")
@@ -295,6 +325,15 @@ public class InterviewMvcController {
             Model model
     ) {
         return interviewFlowMvcService.answer(request, session, model);
+    }
+
+    /** No-JS / progressive: дневная цель (форма на /settings). JS — POST /api/streak/goal. */
+    @PostMapping("/streak/goal")
+    public String updateDailyGoal(
+            @RequestParam("goal") @Min(1) @Max(100) int goal,
+            @RequestParam(value = "returnTo", required = false) String returnTo
+    ) {
+        return interviewPageMvcService.updateDailyGoal(goal, returnTo);
     }
 
     private String renderTrainingEntry(
@@ -395,8 +434,10 @@ public class InterviewMvcController {
     public String saveBookmarkNote(
             @RequestParam("questionId") @Positive long questionId,
             @RequestParam(value = "note", required = false) String note,
+            HttpServletRequest request,
             RedirectAttributes redirectAttributes
     ) {
+        preserveBookmarkFilters(request, redirectAttributes);
         return interviewPageMvcService.saveBookmarkNote(questionId, note, redirectAttributes);
     }
 
@@ -420,9 +461,25 @@ public class InterviewMvcController {
     @PostMapping("/bookmarks/remove")
     public String removeBookmark(
             @RequestParam("questionId") @Positive long questionId,
+            HttpServletRequest request,
             RedirectAttributes redirectAttributes
     ) {
+        preserveBookmarkFilters(request, redirectAttributes);
         return interviewPageMvcService.removeBookmark(questionId, redirectAttributes);
+    }
+
+    /** Keep the server-form return inside the same collection and filter context. */
+    private void preserveBookmarkFilters(HttpServletRequest request, RedirectAttributes redirectAttributes) {
+        addBookmarkFilter(redirectAttributes, "q", request.getParameter("returnQuery"));
+        addBookmarkFilter(redirectAttributes, "group", request.getParameter("returnGroup"));
+        addBookmarkFilter(redirectAttributes, "note", request.getParameter("returnNote"));
+        addBookmarkFilter(redirectAttributes, "sort", request.getParameter("returnSort"));
+    }
+
+    private void addBookmarkFilter(RedirectAttributes redirectAttributes, String name, String value) {
+        if (value != null && !value.isBlank()) {
+            redirectAttributes.addAttribute(name, value);
+        }
     }
 
 }

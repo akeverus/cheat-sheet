@@ -178,7 +178,7 @@ public void auditLog(String event) {
 | | `REQUIRES_NEW` | `NESTED` |
 |---|---|---|
 | Транзакция | Новая независимая | Savepoint внутри текущей |
-| Rollback дочерней | Не откатывает родительскую | Не откатывает до savepoint |
+| Rollback дочерней | Не откатывает родительскую | Откатывает до savepoint |
 | Rollback родительской | Не откатывает дочернюю | **Откатывает** дочернюю |
 | Commit | Независимый | При коммите родительской |
 | Поддержка | Все TX-менеджеры | Только JDBC savepoints |
@@ -481,7 +481,7 @@ public class UserServiceImpl implements UserService {
 public void processAsync() {
     CompletableFuture.runAsync(() -> {
         // Новый поток — НЕТ транзакции!
-        // repository.save() выполнится без TX
+        // Родительская TX не наследуется; repository.save() может открыть свою TX
     });
 }
 ```
@@ -535,7 +535,8 @@ class OrderServiceTest {
 void shouldCommitAuditEvenIfOrderFails() {
     assertThrows(RuntimeException.class, () -> orderService.processWithAudit(badOrder));
     // Audit должен закоммититься (REQUIRES_NEW), проверяем
-    // НО: если тест @Transactional, outer TX откатит и nested!
+    // НО: если тест @Transactional, outer TX откатит свои изменения;
+    // уже committed REQUIRES_NEW переживёт этот rollback и потребует cleanup.
     // Нужен @Transactional(propagation = NOT_SUPPORTED) на тесте
 }
 ```

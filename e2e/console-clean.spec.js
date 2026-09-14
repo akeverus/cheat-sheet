@@ -14,7 +14,7 @@ const { test, expect } = require('@playwright/test');
  * а не дефект. Любой другой console.error/warning, pageerror или ответ ≥400
  * (включая битую статику на самой странице 404) — красный.
  */
-const SURFACES = ['/', '/train', '/stats', '/topics', '/bookmarks', '/settings', '/review', '/nope-404'];
+const SURFACES = ['/', '/practice', '/train', '/stats', '/topics', '/bookmarks', '/settings', '/review', '/nope-404'];
 
 test.describe('console clean', () => {
   for (const path of SURFACES) {

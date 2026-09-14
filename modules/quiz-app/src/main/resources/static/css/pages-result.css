@@ -39,8 +39,13 @@ html[data-design] .result-page .result-layout {
   margin-inline: auto;
 }
 
-/* Своего `.card` у страницы вердикта нет — правило здесь дословно повторяло
-   общее (components-card.css) и ничем от него не отличалось. */
+/* Разбор лежит на странице: вложенные варианты и материалы уже обозначают свои границы. */
+html[data-design] .result-page #interview-card {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
 
 /* Верхняя полоса (.top-row: stats-grid + session-bar + .btn-finish) удалена вместе
    с разметкой — глобальные KPI и прогресс сессии на экране вердикта были дублем
@@ -63,16 +68,19 @@ html[data-design] .result-page .question-header h1 {
    и как @pages, и как @components. */
 html[data-design] .result-page .question-meta { display: inline-flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 html[data-design] .result-page .topic-badge {
-  font-family: var(--font-family-body); font-weight: var(--font-weight-semibold); font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-text-secondary); background: transparent;
-  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-full);
-  padding: 0.25em 0.75em;
-  /* Капсула (radius-full) держим в одну строку: при длинном топике (напр.
-     «AUTHENTICATION AUTHORIZATION PATTERNS») на 320-375px текст переносился на 2
-     строки ВНУТРИ пилюли и полукруглые торцы деформировались. nowrap + flex-wrap
-     родителя уводят весь бейдж на свою строку; ellipsis — страховка на самом узком. */
-  white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+  font-family: var(--font-family-body);
+  font-weight: var(--font-weight-normal);
+  font-size: var(--font-size-sm);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 100%;
 }
 /* Коробка `.btn-favorite` (44×44, border 0, поля, flex-центровка, fade) снята в
    iter-78: страница переобъявляла скелет иконочной кнопки целиком, чтобы
@@ -91,11 +99,11 @@ html[data-design] .result-page .btn-favorite.active { color: var(--color-accent-
 
 /* Варианты-результат (.options[role=list], элементы — div[role=listitem],
    без #interview-options-маркера). */
-html[data-design] .result-page .options { display: flex; flex-direction: column; gap: var(--space-3); max-width: var(--max-width-options); margin-top: var(--space-5); }
+html[data-design] .result-page .options { display: flex; flex-direction: column; gap: var(--space-2); max-width: var(--max-width-options); margin-top: var(--space-5); }
 html[data-design] .result-page .options > div {
-  display: block; padding: var(--space-4);
-  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
-  background: var(--color-bg-primary); color: var(--color-text-primary);
+  display: block; padding: var(--space-3) var(--space-4);
+  border: 0; border-bottom: var(--rule-weight) solid var(--color-border-primary); border-radius: 0;
+  background: transparent; color: var(--color-text-primary);
   font-size: var(--font-size-md); box-shadow: none;
   min-width: 0; overflow-wrap: break-word; word-break: break-word;
 }
@@ -105,7 +113,7 @@ html[data-design] .result-page .options > div {
    что переопределение нужно здесь, в том же слое, спецификой 0,4,1.
    Гасим цветом, а не opacity: прозрачность тянет вниз заодно рамку и чип, а
    на этом фоне 0.55 давала 3.71:1 — ниже AA. */
-html[data-design] .result-page .options > div.option-dimmed { color: var(--color-text-tertiary); }
+html[data-design] .result-page .options > div.option-dimmed { color: var(--color-text-secondary); }
 /* Чип статуса варианта (.option-status-label/-correct/-selected) живёт в
    components-answer.css (@layer components, глобально): поверхность разбора —
    ОБЩАЯ для result.html (no-JS) и JS-флоу focus, оба вешают те же классы.
@@ -163,6 +171,38 @@ html[data-design] .result-page .question-code code { font-family: var(--font-fam
    flex-direction:column из старого styles.css». Файла styles.css в проекте нет
    (замер iter-78) — ряд здесь не перебивание, а собственный выбор страницы. */
 html[data-design] .result-page .result-actions { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); }
+
+/* Тихий прогресс сессии на /result — те же примитивы, что на фокусе.
+   Ширину заливки ставит hydrateProgressBarsFromData (--progress из data-progress). */
+html[data-design] .result-page .result-session-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  max-width: 16rem;
+}
+html[data-design] .result-page .result-session-progress .focus-progress-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--font-size-sm);
+}
+html[data-design] .result-page .result-session-progress .session-progress {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+html[data-design] .result-page .result-session-progress .session-progress-track {
+  height: 2px;
+  background: var(--color-bg-tertiary);
+  overflow: hidden;
+}
+html[data-design] .result-page .result-session-progress .session-progress-fill {
+  height: 100%;
+  width: calc(var(--progress, 0) * 1%);
+  background: var(--color-accent-primary);
+}
 
 /* Похожие вопросы (#result-related-questions / .related-questions / -title /
    .related-question-item + :hover) ВЫНЕСЕНЫ в components-answer.css (@layer components,
@@ -255,11 +295,11 @@ html[data-design] .result-page .result-layout:has(> #result-related-questions) >
   position: sticky;
   top: var(--space-5);
   margin-top: 0;
-  border-top: 0;
-  border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-lg);
-  background: var(--color-bg-secondary);
-  padding: var(--space-5);
+  border: 0;
+  border-top: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: 0;
+  background: transparent;
+  padding: var(--space-4) 0;
 }
 }
 
@@ -271,6 +311,7 @@ html[data-design] .result-page .result-layout:has(> #result-related-questions) >
    Здесь остаётся только то, что принадлежит этой панели: зазор под раскрытой
    шапкой и стрелка, унаследованная от компонента.
    =========================================================================== */
+@layer pages {
 html[data-design] .result-page .distractor-panel > summary {
   display: flex;
   flex-wrap: wrap;
@@ -292,4 +333,6 @@ html[data-design] .result-page .distractor-panel:not([open]) > summary::after {
 }
 html[data-design] .result-page .distractor-panel[open] > summary {
   margin-bottom: var(--space-3);
+}
+
 }

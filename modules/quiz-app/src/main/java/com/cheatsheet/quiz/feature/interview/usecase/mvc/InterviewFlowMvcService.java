@@ -85,7 +85,23 @@ public class InterviewFlowMvcService {
     }
 
     public String flashcardReveal(HttpSession session) {
-        return updateSessionAndFocusRedirect(session, sessionFlowService::applyFlashcardReveal);
+        return flashcardReveal(null, null, session);
+    }
+
+    public String flashcardReveal(Long questionId, String typedAnswer, HttpSession session) {
+        InterviewSession interviewSession = sessionSupport.getSession(session);
+        if (interviewSession == null) return navigationService.focusRedirect();
+        synchronized (interviewSession) {
+            if (questionId != null && !questionId.equals(interviewSession.currentQuestionId())) {
+                return navigationService.focusRedirect();
+            }
+            boolean changed = sessionFlowService.applyFlashcardReveal(interviewSession);
+            if (changed && typedAnswer != null && interviewSession.getMode().usesTypedInput()) {
+                httpSessionStateService.setRecallAnswer(session, interviewSession, typedAnswer);
+            }
+            persistSessionIfChanged(session, interviewSession, changed);
+        }
+        return navigationService.focusRedirect();
     }
 
     public String flashcardGrade(long questionId, int grade, HttpSession session) {
@@ -98,6 +114,7 @@ public class InterviewFlowMvcService {
     public String finish(HttpSession session) {
         InterviewSession interviewSession = sessionSupport.getSession(session);
         persistSessionSummary(session, interviewSession);
+        httpSessionStateService.clearRecallAnswer(session);
         httpSessionStateService.clearInterviewSession(session);
         return navigationService.sessionSummaryRedirect();
     }
@@ -126,7 +143,7 @@ public class InterviewFlowMvcService {
             return navigationService.focusRedirect();
         }
         org.springframework.web.util.UriComponentsBuilder uri =
-                org.springframework.web.util.UriComponentsBuilder.fromPath("/");
+                org.springframework.web.util.UriComponentsBuilder.fromPath("/practice");
         if (target.weakTopics() != null) {
             uri.queryParam("weakTopics", target.weakTopics());
         }
@@ -142,6 +159,9 @@ public class InterviewFlowMvcService {
         if (target.group() != null) {
             uri.queryParam("group", target.group());
         }
+        if (target.questionId() != null) {
+            uri.queryParam("questionId", target.questionId());
+        }
         if (target.ordered() != null) {
             uri.queryParam("ordered", target.ordered());
         }
@@ -155,11 +175,12 @@ public class InterviewFlowMvcService {
             Boolean onlyWrong,
             String topic,
             String group,
-            Boolean ordered
+            Boolean ordered,
+            Long questionId
     ) {
         public boolean isEmpty() {
             return weakTopics == null && important == null && onlyWrong == null
-                    && topic == null && group == null && ordered == null;
+                    && topic == null && group == null && ordered == null && questionId == null;
         }
     }
 
@@ -242,6 +263,7 @@ public class InterviewFlowMvcService {
     }
 
     private void applyStartSessionResult(HttpSession session, SessionFlowService.StartFlowResult flowResult) {
+        httpSessionStateService.clearRecallAnswer(session);
         // Новая сессия обесценивает итоги прежней: держать их дальше — значит
         // однажды показать на /session-summary результат позапрошлого захода.
         // Именно здесь, а не после первого рендера (см. javadoc sessionSummary).

@@ -131,12 +131,11 @@ class FocusBandMeasureContractTest {
                 .doesNotContain("max-width");
 
         assertThat(body)
-                .as("из полосы пропала защита от переполнения. Обе строки обязательны: "
-                        + "`min-width: 0` снимает min-content-пол грид-элемента, `overflow-x: clip` "
-                        + "обрезает то, что всё же вылезло. Без них длинный `pre` в вопросе даёт "
-                        + "горизонтальный скролл всей страницы на мобиле")
+                .as("min-content ограничен, а выходящий текст не маскируется обрезкой; "
+                        + "естественное переполнение проверяется в browser geometry matrix")
                 .contains("min-width: 0")
-                .contains("overflow-x: clip");
+                .doesNotContain("overflow-x: clip")
+                .doesNotContain("overflow-x: hidden");
     }
 
     /**

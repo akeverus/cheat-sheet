@@ -52,7 +52,7 @@
             <form class="login-form" th:action="@{/login}" method="post">
                 <label class="field">
                     <span class="field-label">Логин</span>
-                    <input type="text" name="username" autocomplete="username" required autofocus
+                    <input type="text" name="username" autocomplete="username" required autofocus autocapitalize="none" spellcheck="false"
                            th:aria-invalid="${loginError}"
                            th:attr="aria-describedby=${loginError} ? 'login-error' : null">
                 </label>
@@ -72,9 +72,7 @@
                    th:text="|Войти через ${oauthDisplayName}|">Войти через OIDC</a>
             </div>
 
-            <p class="login-hint muted tiny">
-                API-клиенты могут использовать HTTP Basic с теми же учётными данными.
-            </p>
+
         </section>
 
         <!--/* Вторая колонка: обзор банка вопросов из LoginPageService — те же
@@ -83,9 +81,9 @@
              сообщить честно (прогресса у анонимного посетителя нет, и нули
              «изучено 0» рассказывали бы про отсутствие аккаунта, а не про банк).
              Пустой банк → колонки нет вовсе, форма занимает полосу целиком. */-->
-        <aside class="login-panel login-context" aria-labelledby="login-context-heading"
+        <details class="login-panel login-context" aria-labelledby="login-context-heading"
                th:if="${bankOverview != null and !bankOverview.empty}">
-            <h2 id="login-context-heading" class="login-panel-title">Что в банке вопросов</h2>
+            <summary id="login-context-heading" class="disclosure-summary"><span>Что в банке вопросов</span></summary>
             <p class="login-context-total">
                 <strong th:text="${bankOverview.questionCount}">0</strong> вопросов
                 в <strong th:text="${bankOverview.topicCount}">0</strong> темах
@@ -101,12 +99,10 @@
             <p class="login-context-note muted tiny">
                 Банк общий для всех учётных записей — личным остаётся только прогресс по нему.
             </p>
-        </aside>
+        </details>
     </div>
 
-    <p class="login-back">
-        <a th:href="@{/}" class="btn secondary-btn">На главную</a>
-    </p>
+
 </main>
 <th:block th:replace="~{fragments/scripts :: app-script}"></th:block>
 </body>

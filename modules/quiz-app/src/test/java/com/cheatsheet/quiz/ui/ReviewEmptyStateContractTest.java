@@ -69,8 +69,8 @@ class ReviewEmptyStateContractTest {
                         + "отбора и неверно для разобранных ошибок")
                 .contains("'В этой выборке ошибок нет' : 'Ошибок для повтора нет'");
         assertThat(markup)
-                .as("вне разбора заголовок остаётся прежним")
-                .containsPattern("<h1 class=\"empty-state-title\" th:unless=\"\\$\\{reviewMode}\">Сейчас нет вопросов</h1>");
+                .as("завершение сессии отличается от пустого отбора")
+                .contains("? 'Сессия завершена' : 'Сейчас нет вопросов'");
     }
 
     /**
@@ -82,7 +82,7 @@ class ReviewEmptyStateContractTest {
         assertThat(markup)
                 .as("«Обновить повтор ошибок» вернулось в разбор: это перезагрузка того же "
                         + "адреса, на котором вопросов нет")
-                .containsPattern("class=\"btn empty-action-retry\" th:unless=\"\\$\\{reviewMode}\"");
+                .containsPattern("class=\"btn empty-action-retry\" th:unless=\"\\$\\{reviewMode or finished}\"");
         assertThat(markup)
                 .as("в разборе обязаны быть свои действия: «все ошибки» и «продолжить»")
                 .contains("empty-action-review-all")

@@ -45,21 +45,44 @@ class InterviewMvcControllerTest {
     }
 
     @Test
-    void indexDelegatesToPageService() {
+    void practiceDelegatesToPageService() {
         when(interviewPageMvcService.index(
                 "java", "core", true, false, true, false, true, 77L, null, "EXAM", session, model))
                 .thenReturn("focus");
 
-        String indexView = controller.index(
+        String practiceView = controller.practice(
                 "java", "core", true, false, true, false, true, 77L, null, "EXAM", session, model);
 
-        assertThat(indexView).isEqualTo("focus");
+        assertThat(practiceView).isEqualTo("focus");
         verify(interviewPageMvcService)
                 .index("java", "core", true, false, true, false, true, 77L, null, "EXAM", session, model);
     }
 
     @Test
-    void legacyTrainingRouteRedirectsToCanonicalRootWithWhitelistedParamsOnly() {
+    void homeWithoutTrainingQueryDelegatesToHomePage() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        when(interviewPageMvcService.home(session, model)).thenReturn("home");
+
+        String view = controller.home(request, session, model);
+
+        assertThat(view).isEqualTo("home");
+        verify(interviewPageMvcService).home(session, model);
+    }
+
+    @Test
+    void homeWithTrainingQueryRedirectsToPractice() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setParameter("topic", "java");
+        request.setParameter("utm_source", "spam");
+
+        String view = controller.home(request, session, model);
+
+        assertThat(view).isEqualTo("redirect:/practice?topic=java");
+        verifyNoInteractions(interviewPageMvcService);
+    }
+
+    @Test
+    void legacyTrainingRouteRedirectsToPracticeWithWhitelistedParamsOnly() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setParameter("topic", "java");
         request.setParameter("mode", "EXAM");
@@ -71,7 +94,7 @@ class InterviewMvcControllerTest {
 
         String view = controller.training(request);
 
-        assertThat(view).isEqualTo("redirect:/?topic=java&mode=EXAM");
+        assertThat(view).isEqualTo("redirect:/practice?topic=java&mode=EXAM");
         verifyNoInteractions(interviewPageMvcService);
     }
 

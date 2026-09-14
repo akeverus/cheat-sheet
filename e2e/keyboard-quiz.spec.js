@@ -1,7 +1,12 @@
 const { test, expect } = require('@playwright/test');
 
+test.skip(process.env.E2E_ISOLATED_DATA !== '1'
+  || !/^http:\/\/(?:localhost|127\.0\.0\.1):8081\/?$/.test(process.env.E2E_BASE_URL || ''),
+  'Keyboard journeys submit real answers and require the isolated application on :8081');
+
 /**
- * TEST-006 — основной цикл только с клавиатуры (без мыши), в обоих движках.
+ * TEST-006 — основной цикл ответа с клавиатуры, в обоих движках.
+ * Выбор дополнительного режима в конструкторе остаётся тестовой предусловием.
  * Предусловие: приложение на E2E_BASE_URL (default http://localhost:8080).
  *
  * Конвенция движков (замер iter-160): WebKit, как и настольный Safari, по
@@ -15,7 +20,7 @@ const tabKey = (browserName) => (browserName === 'webkit' ? 'Alt+Tab' : 'Tab');
 
 test.describe('keyboard quiz flow', () => {
   test('skip-link activates main, digit selects, Enter submits feedback', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/practice');
 
     const skip = page.locator('a.skip-link').first();
     await expect(skip).toBeVisible();
@@ -49,7 +54,7 @@ test.describe('keyboard quiz flow', () => {
   });
 
   test('ArrowDown moves selection without mouse', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/practice');
     const form = page.locator('#interview-form');
     test.skip((await form.count()) === 0, 'Нет MCQ-формы');
 
@@ -85,7 +90,7 @@ test.describe('keyboard quiz flow', () => {
 
     // 2. Enter стартует сессию и приводит на вопрос
     await Promise.all([
-      page.waitForURL(/\/(\?.*)?$/, { timeout: 20_000 }),
+      page.waitForURL((url) => url.pathname === '/practice', { timeout: 20_000 }),
       page.keyboard.press('Enter'),
     ]);
 
@@ -107,7 +112,7 @@ test.describe('keyboard quiz flow', () => {
       !!document.activeElement.closest('#result-feedback, .result-feedback'));
     expect(focusInFeedback, 'фокус после ответа обязан быть в разборе').toBe(true);
 
-    // 5. Первый же таб из разбора — «Следующий вопрос» (порядок FRD-186/AnsweredOrder)
+    // 5. Табами из разбора можно предсказуемо дойти до «Следующего вопроса»
     let reachedNext = false;
     for (let i = 0; i < 30; i++) {
       await page.keyboard.press(TAB);
@@ -135,7 +140,7 @@ test.describe('keyboard quiz flow', () => {
     await page.goto('/train');
     await page.locator('label:has(input[name="mode"][value="FLASHCARD"])').first().click();
     await Promise.all([
-      page.waitForURL(/\/(\?.*)?$/, { timeout: 20_000 }),
+      page.waitForURL((url) => url.pathname === '/practice', { timeout: 20_000 }),
       page.locator('.builder-start-cta').click(),
     ]);
 
@@ -171,9 +176,10 @@ test.describe('keyboard quiz flow', () => {
    */
   test('typed recall: reveal lands focus in the reference answer', async ({ page }) => {
     await page.goto('/train');
-    await page.locator('label:has(input[name="mode"][value="TYPED_RECALL"])').first().click();
+    await page.locator('details.mode-more > summary').click();
+    await page.locator('#session-mode-choice input[name="mode"][value="TYPED_RECALL"]').check();
     await Promise.all([
-      page.waitForURL(/\/(\?.*)?$/, { timeout: 20_000 }),
+      page.waitForURL((url) => url.pathname === '/practice', { timeout: 20_000 }),
       page.locator('.builder-start-cta').click(),
     ]);
     await Promise.all([
@@ -198,7 +204,7 @@ test.describe('keyboard quiz flow', () => {
     await page.goto('/train?topic=' + encodeURIComponent('algorithms/algorithmic-paradigms/backtracking-interview'));
     await page.locator('label:has(input[name="mode"][value="STUDY"])').first().click();
     await Promise.all([
-      page.waitForURL(/\/(\?.*)?$/, { timeout: 20_000 }),
+      page.waitForURL((url) => url.pathname === '/practice', { timeout: 20_000 }),
       page.locator('.builder-start-cta').click(),
     ]);
 
@@ -215,14 +221,14 @@ test.describe('keyboard quiz flow', () => {
 
   /**
    * MARATHON — смоук старта: сессия с позицией и вопросом. Ассерты намеренно
-   * НЕ завязаны на имя режима: «Интенсив/Марафон» — открытый продуктовый пункт
-   * владельца (IA-14), и тест не должен голосовать за вариант.
+   * НЕ завязаны на имя режима: тест проверяет рабочий цикл, а не редактуру label.
    */
   test('marathon: starts a positioned session', async ({ page }) => {
     await page.goto('/train');
-    await page.locator('label:has(input[name="mode"][value="MARATHON"])').first().click();
+    await page.locator('details.mode-more > summary').click();
+    await page.locator('#session-mode-choice input[name="mode"][value="MARATHON"]').check();
     await Promise.all([
-      page.waitForURL(/\/(\?.*)?$/, { timeout: 20_000 }),
+      page.waitForURL((url) => url.pathname === '/practice', { timeout: 20_000 }),
       page.locator('.builder-start-cta').click(),
     ]);
     await expect(page.locator('.focus-question')).toBeVisible({ timeout: 20_000 });

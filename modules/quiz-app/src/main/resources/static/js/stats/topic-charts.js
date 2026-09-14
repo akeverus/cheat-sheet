@@ -110,20 +110,25 @@ function fullNameTooltip(basePlugins, labels) {
  */
 function renderChartTable(tableId, caption, headers, rows) {
   const table = document.getElementById(tableId);
-  if (!table || !rows.length) return;
+  if (!table) return;
+  const disclosure = table.closest('.chart-table-disclosure');
+  if (disclosure) disclosure.hidden = !rows.length;
+  if (!rows.length) return;
   const thead = '<thead><tr>'
     + headers.map((h) => `<th scope="col">${escapeHtml(h)}</th>`).join('')
     + '</tr></thead>';
   const tbody = '<tbody>'
-    + rows.map((row) => '<tr>' + row.map((cell) => `<td>${escapeHtml(String(cell))}</td>`).join('') + '</tr>').join('')
+    + rows.map((row) => '<tr>' + row.map((cell, index) => index === 0
+      ? `<th scope="row">${escapeHtml(String(cell))}</th>`
+      : `<td data-label="${escapeHtml(headers[index])}">${escapeHtml(String(cell))}</td>`).join('') + '</tr>').join('')
     + '</tbody>';
   table.innerHTML = `<caption>${escapeHtml(caption)}</caption>${thead}${tbody}`;
   table.classList.remove('hidden', 'visually-hidden');
+  table.classList.add('topic-chart-table');
   // Таблица живёт под раскрытием (details) и по умолчанию свёрнута: три
   // представления одних чисел разом — конкуренция за внимание, а не доступность.
   // НО если график не отрисовался, таблица остаётся единственным носителем
   // данных, и прятать её за нажатием нельзя — раскрываем.
-  const disclosure = table.closest('.chart-table-disclosure');
   if (disclosure && chartFailed(table.id)) disclosure.open = true;
   // Дубль наполняется ПОСЛЕ initScrollableTables (данные приходят из /api),
   // и до этого момента таблица была `hidden` → замер обёртки дал бы 0.
@@ -148,7 +153,14 @@ function showFallback(canvas, fallback, message, tableId) {
     failedCharts.add(tableId);
     const table = document.getElementById(tableId);
     table?.classList.remove('hidden', 'visually-hidden');
-    if (table) enhanceScrollableTables(table.parentElement);
+    if (table) {
+      const disclosure = table.closest('.chart-table-disclosure');
+      if (disclosure) {
+        disclosure.hidden = table.rows.length === 0;
+        if (table.rows.length) disclosure.open = true;
+      }
+      enhanceScrollableTables(table.parentElement);
+    }
   }
 }
 
@@ -157,13 +169,23 @@ function showFallback(canvas, fallback, message, tableId) {
  * карточки с progress bar, они читаются с одного взгляда.
  */
 function renderCompactCards(topics, canvases, fallbacks) {
+  // Числа доступны и в компактном представлении: раскрытие таблицы не должно быть пустым.
+  renderChartTable('topicProgressChartTable', 'Табличное представление прогресса по темам',
+    ['Тема', 'Освоено %', 'Выучено', 'Осталось'], topics.map((t) => [
+      displayTopicName(t), Math.round(((t.learned || 0) / Math.max(1, t.total || 1)) * 100),
+      t.learned || 0, Math.max(0, (t.total || 0) - (t.learned || 0))]));
+  renderChartTable('topicAccuracyChartTable', 'Табличное представление точности по темам',
+    ['Тема', 'Точность %', 'Попыток'], topics.map((t) => {
+      const attempts = (t.correct || 0) + (t.wrong || 0);
+      return [displayTopicName(t), attempts ? Math.round(((t.correct || 0) * 100) / attempts) : '—', attempts];
+    }));
   canvases.forEach((canvas) => canvas?.classList.add('hidden'));
   const markup = '<div class="topic-compact-list">' + topics.map((t) => {
     const learned = t.learned || 0;
     const total = Math.max(1, t.total || 1);
     const attempts = (t.correct || 0) + (t.wrong || 0);
     const accuracy = attempts === 0 ? null : Math.round(((t.correct || 0) * 100) / attempts);
-    const href = `/?topic=${encodeURIComponent(t.topic || '')}&amp;ordered=true`;
+    const href = `/practice?topic=${encodeURIComponent(t.topic || '')}&amp;ordered=true`;
     return '<div class="topic-compact-card">'
       + `<a class="topic-compact-name" href="${href}">${escapeHtml(displayTopicName(t))}</a>`
       + `<div class="topic-compact-bar" aria-hidden="true"><span class="topic-compact-bar-fill" data-progress="${Math.round((learned / total) * 100)}"></span></div>`
@@ -306,6 +328,15 @@ export function initTopicCharts() {
     charts.forEach((c) => { try { c.destroy(); } catch { /* уже уничтожен */ } });
     charts = [];
 
+    // Таблицам не нужна Chart.js: наполняем их до проверки загрузки библиотеки.
+    renderChartTable('topicProgressChartTable', 'Табличное представление прогресса по темам',
+      ['Тема', 'Освоено %', 'Выучено', 'Осталось'],
+      progressData.map((t) => [t.name, Math.round((t.learned / Math.max(1, t.total)) * 100),
+        t.learned, Math.max(0, t.total - t.learned)]));
+    renderChartTable('topicAccuracyChartTable', 'Табличное представление точности по темам',
+      ['Тема', 'Точность %', 'Попыток'],
+      accuracyData.map((t) => [t.name, t.accuracy, t.attempts]));
+
     if (!chartsAvailable()) {
       showFallback(progressCanvas, progressFallback,
         'График прогресса недоступен в текущем окружении. Используй таблицу ниже.', 'topicProgressChartTable');
@@ -317,10 +348,6 @@ export function initTopicCharts() {
     if (progressCanvas && progressData.length) {
       progressCanvas.classList.remove('hidden');
       progressFallback?.classList.add('hidden');
-      renderChartTable('topicProgressChartTable', 'Табличное представление прогресса по темам',
-        ['Тема', 'Освоено %', 'Выучено', 'Осталось'],
-        progressData.map((t) => [t.name, Math.round((t.learned / Math.max(1, t.total)) * 100),
-          t.learned, Math.max(0, t.total - t.learned)]));
       try {
         const names = progressData.map((t) => t.name);
         const measure = labelMeasurer(progressCanvas, LABEL_FONT_PX);
@@ -374,9 +401,6 @@ export function initTopicCharts() {
     if (accuracyCanvas && accuracyData.length) {
       accuracyCanvas.classList.remove('hidden');
       accuracyFallback?.classList.add('hidden');
-      renderChartTable('topicAccuracyChartTable', 'Табличное представление точности по темам',
-        ['Тема', 'Точность %', 'Попыток'],
-        accuracyData.map((t) => [t.name, t.accuracy, t.attempts]));
       try {
         const values = accuracyData.map((t) => t.accuracy);
         const names = accuracyData.map((t) => t.name);

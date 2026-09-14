@@ -124,6 +124,9 @@ class NavigationSourceContractTest {
     void everyActiveValuePagesPassExistsInTheSource() {
         Set<String> known = new LinkedHashSet<>();
         NavSection.all().forEach(section -> known.add(section.id()));
+        // Настройки сняты с первого уровня (IA Wave 1): подсветка футерного
+        // side-action на /settings передаёт active='settings'.
+        known.add("settings");
 
         List<String> unknown = new ArrayList<>();
         for (Path template : templates()) {
@@ -151,7 +154,7 @@ class NavigationSourceContractTest {
      * Первый уровень — РАЗДЕЛЫ, а не режимы одного и того же экрана.
      *
      * <p>Шестым пунктом здесь стояли «Ошибки» → {@code /review}. Разделом он не был:
-     * {@code /review} и {@code /} рендерят один шаблон {@code focus-training.html}, а вся
+     * {@code /review} и {@code /practice} рендерят один шаблон {@code focus-training.html}, а вся
      * разница между ними — {@code ReviewModeService}, который форсит один флаг фильтра
      * ({@code onlyWrong=true}); тот же отбор человек уже включал чипом «Ошибки» в
      * конструкторе сессии. Пункт при этом ничего не сообщал о главном — есть ли что
@@ -192,7 +195,7 @@ class NavigationSourceContractTest {
         assertThat(markup)
                 .as("на самом /review нет обратного выхода: клик по активному пункту навигации как "
                         + "способ выйти из режима — догадка, а не интерфейс")
-                .containsPattern("(?s)reviewMode != null and reviewMode\\}\"\\s*\\n?\\s*th:href=\"@\\{/\\}");
+                .containsPattern("(?s)reviewMode != null and reviewMode\\}\"\\s*\\n?\\s*th:href=\"@\\{/practice\\}");
     }
 
     /** Содержимое элемента {@code <nav>} фрагмента — только список пунктов. */

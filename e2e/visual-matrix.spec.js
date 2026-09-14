@@ -15,22 +15,12 @@ const path = require('path');
  */
 const OUT_DIR = path.join(__dirname, 'visual-results');
 
-/* Матрица стережёт ДИЗАЙН, а не содержимое банка. Голдены падали от живого
-   состояния: клавиатурный спек отвечает на вопрос, очередь сдвигается, и на
-   home рендерится другой вопрос (найдено webkit-прогоном iter-164: дифф 7% —
-   целиком текст вопроса/вариантов и счётчики). Всё, что меняется от
-   ИСПОЛЬЗОВАНИЯ приложения, маскируется; каркас, навигация, карточки,
-   контролы и типографика статичных подписей остаются под охраной пикселей. */
-/* Home рендерит ТЕКУЩИЙ вопрос очереди, а его двигает любое использование —
-   маскировать мало: другой вопрос меняет ГЕОМЕТРИЮ (высота заголовка, код-блок).
-   Пин: ЯВНЫЙ questionId (GET / его поддерживает, вопрос детерминирован
-   независимо от SRS-истории). После реимпорта банка id может уехать — тогда
-   тест падает ГРОМКО (другой вопрос = другой голден), и константу обновляют
-   осознанно (REF-022). */
-const PINNED_HOME =
-  '/?questionId=2060&topic='
-  + encodeURIComponent('algorithms/algorithmic-paradigms/backtracking-interview')
-  + '&ordered=true&shuffle=false';
+/* Матрица стережёт ДИЗАЙН, а не живые значения банка. Всё, что меняется от
+   ИСПОЛЬЗОВАНИЯ приложения, маскируется; каркас, навигация, композиция,
+   контролы и типографика статичных подписей остаются под охраной пикселей.
+   Home обязан оставаться каноническим GET /: тренировочные query-параметры
+   теперь перенаправляются на /practice и не могут служить визуальным пином. */
+const HOME_PATH = '/';
 
 const DYNAMIC_CONTENT = [
   '.focus-question', '#interview-options', '.topic-brief', '.question-code',
@@ -58,11 +48,11 @@ const GOLDEN = process.env.VISUAL_GOLDEN === '1';
 
 /** @type {Array<{ id: string, path: string, theme: string, preset: string, motion: string }>} */
 const MATRIX = [
-  { id: 'home-dark-laptop-auto', path: PINNED_HOME, theme: 'dark', preset: 'laptop', motion: 'auto' },
-  { id: 'home-light-laptop-on', path: PINNED_HOME, theme: 'light', preset: 'laptop', motion: 'on' },
-  { id: 'home-dark-phone-off', path: PINNED_HOME, theme: 'dark', preset: 'phone', motion: 'off' },
-  { id: 'home-dark-wide-on', path: PINNED_HOME, theme: 'dark', preset: 'wide', motion: 'on' },
-  { id: 'home-light-wide-off', path: PINNED_HOME, theme: 'light', preset: 'wide', motion: 'off' },
+  { id: 'home-dark-laptop-auto', path: HOME_PATH, theme: 'dark', preset: 'laptop', motion: 'auto' },
+  { id: 'home-light-laptop-on', path: HOME_PATH, theme: 'light', preset: 'laptop', motion: 'on' },
+  { id: 'home-dark-phone-off', path: HOME_PATH, theme: 'dark', preset: 'phone', motion: 'off' },
+  { id: 'home-dark-wide-on', path: HOME_PATH, theme: 'dark', preset: 'wide', motion: 'on' },
+  { id: 'home-light-wide-off', path: HOME_PATH, theme: 'light', preset: 'wide', motion: 'off' },
   // /train — конструктор сессии (собственная поверхность с b0a45a6f, UXD-001):
   // ключевая страница цикла, обязана жить в матрице. Волатильные счётчики
   // набора и стрика — в масках ниже.
@@ -121,6 +111,8 @@ test.describe('visual preference matrix', () => {
 
       const response = await page.goto(combo.path, { waitUntil: 'domcontentloaded' });
       expect(response?.ok(), `HTTP ${response?.status()} for ${combo.path}`).toBeTruthy();
+      expect(new URL(page.url()).pathname, `${combo.path} не должен перенаправлять матрицу на другую IA-поверхность`)
+        .toBe(new URL(combo.path, 'http://localhost').pathname);
       await stabilizePresence(page);
 
       await expect(page.locator('body')).toBeVisible();
@@ -169,9 +161,11 @@ test.describe('visual preference matrix', () => {
         preset: 'laptop',
         motion: 'off',
       });
-      const response = await page.goto(PINNED_HOME, { waitUntil: 'domcontentloaded' });
+      const response = await page.goto(HOME_PATH, { waitUntil: 'domcontentloaded' });
       await stabilizePresence(page);
       expect(response?.ok()).toBeTruthy();
+      expect(new URL(page.url()).pathname).toBe(HOME_PATH);
+      await expect(page.locator('.home-stage')).toBeVisible();
       await expect(page.locator('#main-content')).toBeVisible({ timeout: 20_000 });
       const file = path.join(OUT_DIR, `home-dark-laptop-${vp.id}.png`);
       await page.screenshot({ path: file, fullPage: false });

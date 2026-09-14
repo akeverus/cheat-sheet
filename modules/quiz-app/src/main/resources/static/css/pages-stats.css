@@ -1,5 +1,6 @@
-/* Wave C split from base.css — @pages layer */
 @layer pages {
+/* Wave C split from base.css — @pages layer */
+
 /* ==========================================================================
    C5 — STATS / Аналитика (editorial). Scoped html[data-design=editorial] .stats-page
    ========================================================================== */
@@ -72,7 +73,7 @@ html[data-design] .stats-page .stats-next-actions {
    97px над рядом карточек, из них ~40px — поясняющая строка, которой хватает
    места рядом с заголовком (аудит viewport-first 2026-09-01). На узких ширинах
    перенос вернёт подпись под заголовок сам. */
-html[data-design] .stats-page .stats-next-actions-head {
+html[data-design] .stats-page .stats-panel-intro {
   margin-bottom: var(--space-3);
   display: flex;
   flex-wrap: wrap;
@@ -161,15 +162,15 @@ html[data-design] .stats-page .stats-standing {
     grid-template-columns: minmax(0, 1fr);
   }
   html[data-design] .stats-page .stats-standing .dashboard-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
   }
 }
 
-html[data-design] .stats-page .stats-next-actions-head h2 {
+html[data-design] .stats-page .stats-panel-intro h2 {
   margin: 0;
 }
 
-html[data-design] .stats-page .stats-next-actions-head p {
+html[data-design] .stats-page .stats-panel-intro p {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
@@ -197,7 +198,7 @@ html[data-design] .stats-page .metric-group {
   padding: var(--space-4);
   border: var(--rule-weight) solid var(--color-border-primary);
   border-radius: var(--border-radius-md);
-  background: var(--color-surface-raised);
+  background: var(--color-bg-secondary);
 }
 html[data-design] .stats-page .metric-group-title {
   margin: 0 0 var(--space-1);
@@ -227,7 +228,7 @@ html[data-design] .stats-page .metric-row dd {
   color: var(--color-text-primary);
 }
 html[data-design] .stats-page .metric-denom {
-  font-weight: var(--font-weight-regular);
+  font-weight: var(--font-weight-normal);
   font-size: var(--font-size-sm);
   color: var(--color-text-tertiary);
 }
@@ -432,6 +433,44 @@ html[data-design] .stats-page .chart-fallback { color: var(--color-text-secondar
    компонента (.data-table.is-dense в components-table.css); здесь остаётся только
    отбивка от графика, которая к таблице как таковой отношения не имеет. */
 html[data-design] .stats-page .chart-adjacent-table { margin-top: var(--space-3); }
+html[data-design] .stats-page .chart-table-disclosure { container: chart-table / inline-size; }
+/* В узкой таблице имя темы занимает всю строку; каждое число сохраняет подпись. */
+@container chart-table (max-width: 32rem) {
+  html[data-design] .stats-page .topic-chart-table,
+  html[data-design] .stats-page .topic-chart-table :is(caption, tbody, tr) { display: block; }
+  html[data-design] .stats-page .topic-chart-table caption { white-space: normal; text-align: left; }
+  html[data-design] .stats-page .topic-chart-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  html[data-design] .stats-page .topic-chart-table tbody tr {
+    padding-block: var(--space-3);
+    border-bottom: var(--rule-weight) solid var(--color-border-primary);
+  }
+  html[data-design] .stats-page .topic-chart-table tbody th {
+    display: block;
+    width: 100%;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: var(--font-size-sm);
+    border: 0;
+  }
+  html[data-design] .stats-page .topic-chart-table tbody td {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    border: 0;
+  }
+  html[data-design] .stats-page .topic-chart-table tbody td::before {
+    content: attr(data-label);
+    color: var(--color-text-secondary);
+  }
+}
+html[data-design] .stats-page .chart-wrapper:has(> canvas.hidden) { height: auto; }
 /* BASE-02 (редиз-программа iter-6): в 14-дневной таблице «Динамика точности» дни без
    ответов (0/0/—) часто составляют большинство строк (напр. 11 из 14) и визуально
    забивают немногие дни с реальными данными. Данные НЕ удаляем и НЕ прячем — таблица
@@ -941,7 +980,7 @@ html[data-design] .stats-page .stats-panel-title {
   html[data-design] .stats-page .main-content > .review-forecast,
   html[data-design] .stats-page .main-content > .coverage-gaps { grid-column: 2; }
 }
-}
+
 
 /* Раскрытие табличного дубля графика. Носитель — нативный <details>: он
    работает без JS, доступен с клавиатуры и сам несёт состояние (open), поэтому
@@ -994,20 +1033,18 @@ html[data-design] .stats-page .topic-detail-disclosure > .chart-table-summary {
    одно на странице, и видов у него быть не должно. Список — определения, а не
    таблица: у каждой метрики ровно одно пояснение, сравнивать по столбцу нечего. */
 html[data-design] .stats-page .metrics-legend {
-  /* Раскрытие — ребёнок сетки метрик, и без этой строки оно вставало ПЯТОЙ
-     ячейкой: сетка заводила новый ряд высотой с карточку, и выигрыш от снятия
-     формул (−70px с каждой из четырёх) съедался целиком. Замер поймал это сразу:
-     вкладки после правки начинались на 781px вместо 778px, то есть стало хуже. */
-  grid-column: 1 / -1;
+  /* Пояснение находится после сетки: span на весь auto-fit удерживал пустую
+     пятую колонку и сжимал четыре показателя. */
   margin-top: var(--space-1);
 }
 html[data-design] .stats-page .metrics-legend-list {
   margin: var(--space-2) 0 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
   gap: var(--space-3) var(--space-5);
 }
 html[data-design] .stats-page .metrics-legend-list dt {
+  margin-bottom: var(--space-1);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
@@ -1039,7 +1076,7 @@ html[data-design] .stats-page .dashboard-grid .metric {
    Довод и история: docs/css-decisions/pages-stats.md#pages-stats-e06 */
 @media (max-width: 767px) {
   html[data-design] .stats-page .dashboard-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
     gap: var(--space-3);
   }
   html[data-design] .stats-page .dashboard-grid .metric {
@@ -1052,18 +1089,12 @@ html[data-design] .stats-page .dashboard-grid .metric {
     font-size: var(--font-size-xl);
     white-space: nowrap;
   }
-  /* Правило прятания пояснений — ВНУТРИ телефонного медиа: лишняя `}` строкой
-     выше выталкивала его в глобальный скоуп, и подписи KPI («N верных попыток
-     из M», состав очереди) были невидимы на ВСЕХ ширинах, включая десктоп, —
-     ровно против замысла комментария блока (ARCH-01/REF-008, syntax-гейт). */
+  /* Counts and units remain visible alongside every mobile metric. */
   html[data-design] .stats-page .dashboard-grid .metric .muted.tiny {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
   }
+
 }
 
 /* Легенда висела в пустоте между метриками и вкладками: ~77px сверху и ~90px
@@ -1096,28 +1127,16 @@ html[data-design] .stats-page .badges-disclosure[open] > .badges-summary {
 html[data-design] .stats-page .filter-bar-disclosure[open] > .filter-bar-summary {
   margin-bottom: var(--space-4);
 }
-/* Стойка «где я» — тот же приём (iter-157): зазор раскрытой шапки, и ничего больше.
-   Рецепт самой шапки — общий `.disclosure-summary`. */
-html[data-design] .stats-page .stats-standing-disclosure[open] > .stats-standing-summary {
-  margin-bottom: var(--space-2);
+html[data-design] .stats-page #stats-standing-title {
+  font-size: var(--font-size-heading-minor);
+  margin: 0 0 var(--space-4);
 }
-/* РАСКРЫТАЯ стойка уже показывает те же факты крупно: ступень и уровень — в
-   карточке ранга, точность попыток — в первой плитке метрик. Хвост шапки при
-   открытом раскрытии — третий носитель тех же чисел на одном экране (замер
-   1440: «Мастер · уровень 11 · точность 8,6%» стояло в 40px над карточкой
-   «Мастер, уровень 11» и плиткой «8,6%»). Дубль прячется; в СВЁРНУТОМ виде
-   (телефон, iter-157) строка остаётся единственным носителем и печатается. */
-html[data-design] .stats-page .stats-standing-disclosure[open] > .stats-standing-summary .stats-standing-lead {
-  display: none;
+html[data-design] .stats-page .stats-rank-disclosure {
+  border-top: var(--rule-weight) solid var(--color-border-primary);
+  margin-top: var(--space-4);
+  padding-block: var(--space-3);
 }
-/* Хвост шапки переносится ЦЕЛИКОМ. Имя метрики в нём стало длиннее голого
-   «точность» (VIS-04: безымянный процент рядом с «Первой попыткой» панели деталей
-   читался противоречием), и на 390 строка ломалась посреди имени: «…точность /
-   попыток 8,1%». Целый хвост ~200px — уже колонки даже на 320, переполнения нет;
-   строка ломается между фактами: «ступень · уровень» / «точность попыток N%». */
-html[data-design] .stats-page .stats-standing-lead-tail {
-  white-space: nowrap;
-}
+html[data-design] .stats-page .stats-rank-host { padding-top: var(--space-5); }
 @media (max-width: 767px) {
   /* Хвост подписи витрины («считаются из твоей статистики…») — пояснение, а не
      число; в свёрнутой строке оно занимает две строки из трёх. */
@@ -1146,4 +1165,5 @@ html[data-design] .stats-page .stats-standing-lead-tail {
   html[data-design] .stats-page .dashboard-grid .metric-value {
     font-size: var(--font-size-lg);
   }
+}
 }

@@ -98,6 +98,9 @@ class BookmarksPageServiceTest {
 
         assertThat(found.items()).hasSize(1);
         assertThat(found.items().get(0).questionPreview()).doesNotContain("kryo");
+        assertThat(found.items().get(0).questionText())
+                .as("найденное за пределами превью слово доступно при раскрытии без ухода из списка")
+                .isEqualTo(longQuestion);
         assertThat(found.shown()).isEqualTo(1L);
         assertThat(found.total()).isEqualTo(1L);
         assertThat(found.filtered()).isTrue();

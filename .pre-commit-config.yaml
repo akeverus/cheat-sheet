@@ -10,11 +10,12 @@ repos:
         stages: [pre-commit]
 
       - id: verify-mcq-json
-        name: verify mcq json seeds against schema
-        entry: bash scripts/verify-mcq-json.sh
+        name: MCQ schema, invariants and Markdown linkage
+        entry: bash scripts/verify-mcq-json.sh --all
         language: system
-        pass_filenames: true
-        files: ^modules/quiz-app/src/main/resources/seed/mcq/.*\.json$
+        # Раньше смена схемы/теории/валидатора не проверяла зависимые JSON-сидеры.
+        pass_filenames: false
+        files: ^(modules/quiz-app/src/main/resources/seed/.*\.json|cheatsheets/interview/.*\.md|scripts/(mcq_validation\.py|verify-mcq-json\.sh|requirements-mcq\.txt)|docs/mcq-quality-standard\.md)$
         stages: [pre-commit]
 
       - id: verify-md-no-mcq

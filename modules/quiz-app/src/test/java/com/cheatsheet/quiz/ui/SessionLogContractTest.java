@@ -77,24 +77,39 @@ class SessionLogContractTest {
      */
     @Test
     void onThePhoneTheCompanionsFollowTheWork() throws IOException {
-        String css = read("static/css/pages-focus.css");
-        assertThat(css)
-                .as("обёртка спутников не переставляется — они снова окажутся на пути к ответу")
-                .containsPattern("\\.focus-main \\.focus-companions \\{ order: 1");
+        String markup = read("templates/focus-training.html");
+        int question = markup.indexOf("class=\"focus-question\"");
+        int work = markup.indexOf("id=\"interview-form\"");
+        int postAnswer = markup.indexOf("fragments/post-answer-controls :: post-answer-controls");
+        // Ищем начало списка классов, а не точное значение: stack-quiet — корректный
+        // дополнительный класс и не меняет семантическую границу обёртки.
+        int open = markup.indexOf("class=\"focus-companions");
+        int close = markup.indexOf("/.focus-companions");
+        int report = markup.indexOf("class=\"report-zone\"");
+        assertThat(question).as("вопроса нет в разметке").isNotNegative();
+        assertThat(work).as("рабочей формы нет в разметке").isGreaterThan(question);
+        assertThat(postAnswer).as("пост-разбор обогнал рабочую форму").isGreaterThan(work);
+        assertThat(open).as("обёртки спутников нет в разметке").isNotNegative();
+        assertThat(open)
+                .as("спутники стоят до работы или пост-разбора и перехватывают фокус")
+                .isGreaterThan(postAnswer);
+        assertThat(close).as("обёртка не закрыта — границы не определить").isGreaterThan(open);
+        assertThat(report).as("жалоба должна оставаться хвостом страницы").isGreaterThan(close);
 
         // Границы обёртки берём из самой разметки, а не окном в N символов: окно —
         // это допущение о длине блока, и первая редакция гейта на нём и споткнулась
         // (заметка оказалась дальше 6000 знаков от начала обёртки).
-        String markup = read("templates/focus-training.html");
-        int open = markup.indexOf("class=\"focus-companions\"");
-        int close = markup.indexOf("/.focus-companions");
-        assertThat(open).as("обёртки спутников нет в разметке").isNotNegative();
-        assertThat(close).as("обёртка не закрыта — границы не определить").isGreaterThan(open);
         String inside = markup.substring(open, close);
         for (String companion : List.of("session-log", "topic-brief", "question-note")) {
             assertThat(inside)
                     .as("спутник вне обёртки — правило перестановки его не достанет: " + companion)
                     .contains("class=\"" + companion + "\"");
         }
+        assertThat(inside.indexOf("class=\"question-note\""))
+                .as("визуально заметка стоит рядом с темой, поэтому таков же порядок чтения")
+                .isGreaterThan(inside.indexOf("class=\"topic-brief\""));
+        assertThat(inside.indexOf("class=\"session-log\""))
+                .as("ход сессии — отдельный хвост после строки темы и заметки")
+                .isGreaterThan(inside.indexOf("class=\"question-note\""));
     }
 }

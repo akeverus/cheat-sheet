@@ -64,6 +64,11 @@ public class GlobalExceptionHandler {
                 ? manve.getBindingResult()
                 : ((BindException) ex).getBindingResult();
 
+        if ("/start".equals(request.getRequestURI()) && !isApiRequest(request)
+                && bindingResult.getTarget() instanceof com.cheatsheet.quiz.api.dto.request.interview.StartSessionRequest) {
+            return recoverSessionBuilder(bindingResult, request);
+        }
+
         for (FieldError fieldError : bindingResult.getFieldErrors()) {
             String message = fieldError.getDefaultMessage() != null
                     ? fieldError.getDefaultMessage()
@@ -77,6 +82,27 @@ public class GlobalExceptionHandler {
             errors.add(globalError.getObjectName() + ": " + message);
         });
         return badRequest(request, ApiErrorTypes.VALIDATION_ERROR, "Некорректные параметры запроса", errors);
+    }
+
+    /** Ошибка конструктора возвращает к исправлению поля, сохраняя выбранный набор. */
+    private ModelAndView recoverSessionBuilder(BindingResult result, HttpServletRequest request) {
+        var target = org.springframework.web.util.UriComponentsBuilder.fromPath("/train");
+        for (String field : List.of("mode", "topic", "group", "important", "onlyWrong", "shuffle", "ordered")) {
+            if (result.hasFieldErrors(field)) continue;
+            Object value = result.getFieldValue(field);
+            if (value != null && !value.toString().isBlank()) target.queryParam(field, value);
+        }
+        var flash = org.springframework.web.servlet.support.RequestContextUtils.getOutputFlashMap(request);
+        if (flash != null) {
+            boolean countInvalid = result.hasFieldErrors("count");
+            flash.put("startError", countInvalid
+                    ? "Сессия не начата. Укажи число вопросов от 1 до 200. Выбранные параметры сохранены."
+                    : "Сессия не начата. Проверь режим и параметры сессии. Остальные значения сохранены.");
+            flash.put("startCountInvalid", countInvalid);
+            Object count = result.getFieldValue("count");
+            if (count != null) flash.put("requestedCount", count.toString());
+        }
+        return new ModelAndView("redirect:" + target.build().encode().toUriString());
     }
 
     @ExceptionHandler(ConstraintViolationException.class)

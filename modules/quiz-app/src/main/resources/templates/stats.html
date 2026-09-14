@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru" data-design="folio" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head(title='Аналитика — Подготовка к собеседованию', includeMermaid=false, includeChart=true, includeHighlight=false, page='stats')}"></head>
+<head th:replace="~{fragments/head :: head(title='Прогресс — Подготовка к собеседованию', includeMermaid=false, includeChart=true, includeHighlight=false, page='stats')}"></head>
 <body class="stats-page">
 <a class="skip-link" href="#main-content">Перейти к аналитике</a>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
@@ -8,7 +8,7 @@
     <aside th:replace="~{fragments/sidebar :: sidebar(active='analytics')}"></aside>
     <div class="shell-main">
         <th:block th:replace="~{fragments/shell-head :: shell-head}"></th:block>
-<main id="main-content" class="ed-page" tabindex="-1">
+<main id="main-content" class="ed-page page-canvas" tabindex="-1">
 <div class="app-layout">
 <!--/* `topicFilterActive` — ОДНО определение «отбор сужает срезы по темам» на всю
      страницу. До iter-73 это же выражение стояло переписанным от руки в трёх местах
@@ -35,8 +35,8 @@
          пункт «Аналитика», h1 «Твой прогресс», eyebrow «Учебная аналитика» —
          ломали information scent. «Твой прогресс» остался eyebrow-контекстом. */-->
     <div class="page-head-title">
-        <span class="eyebrow">Твой прогресс</span>
-        <h1>Аналитика</h1>
+        <span class="eyebrow">Учебная аналитика</span>
+        <h1>Прогресс</h1>
     </div>
     <!--/* kpi-role здесь отвечает на «по чему это посчитано» (та же роль, что
          «Только эта сессия» на /session-summary). До iter-73 надпись была
@@ -62,176 +62,20 @@
              th:text="${topicFilterActive} ? 'Источник: выбранная часть банка' : 'Источник: весь банк вопросов'">Источник: весь банк вопросов</span></p>
 </div>
 
-<!--/* ПОРЯДОК СТРАНИЦЫ: СНАЧАЛА ЧТО ДЕЛАТЬ, ПОТОМ ГДЕ Я.
+<!--/* СВОДКА — «ГДЕ Я» (IA Wave 3).
 
-     Страница открывалась ступенью и витриной знаков: замер 390×844 — блок действий
-     стоял на 1246, то есть на телефоне до него нужно было пролистать полтора экрана
-     наград; на 1512×982 он занимал нижнюю кромку первого экрана (770 из 982).
-     Человек приходит в аналитику с вопросом «что делать дальше», и до iter-125
-     страница отвечала на него третьей.
-
-     Теперь первым идёт блок действий — три ссылки прямо в тренировку с числами
-     («повторить сегодня», «разобрать ошибки», «слабые темы»), и рекомендованное
-     помечено. Ступень, метрики и знаки — ниже: они отвечают на «где я», и этот
-     вопрос вторичен по отношению к «что делать». */-->
-<!--/* Рекомендованное действие — ПЕРВЫЙ рабочий блок страницы, а не четвёртый.
-     Замер iter-61: карточка «Повторить сегодня» стояла на y=728 и не помещалась
-     в окно на 1280×720, 1280×800, 1366×768 и 1440×900 — то есть ровно на ходовых
-     MacBook. Обещание в шапке («и одно рекомендованное действие») выполнялось
-     только после прокрутки.
-
-     Блок вынесен из вкладки «Обзор» на уровень страницы: рекомендация не
-     принадлежит одному разделу аналитики, она про страницу целиком, и, стоя во
-     вкладке, пропадала при переходе на «Темы». Вкладка «Обзор» после выноса
-     осталась пустой и удалена — она называла обзором не метрики (те и так всегда
-     на экране), а именно эту карточку.
-
-     Блок использует уже существующие маршруты/флаги: / — повторение due,
-     onlyWrong — разбор ошибок, weakTopics — стратегия слабых тем. */-->
-<!--/* СВОДКА — ОДИН РЯД: «что дальше» слева, «где я» справа.
-
-     Замер до правки: карточка действий (297–588px) и стойка (405–635px) стояли
-     ЭТАЖАМИ, и переключатель разделов аналитики оказывался на 1261-м пикселе при
-     сгибе 982 (1512×982), на 1283 при 800 (1280×800), на 1533 при 768 (1024×768).
-     То есть рабочий интерфейс страницы — сами разделы — не попадал в первый экран
-     НИ НА ОДНОЙ ширине матрицы §10.
-
-     Оба блока — сводка: один отвечает «что делать», другой «где я». Рядом они
-     занимают высоту большего, а не сумму двух. Ниже 1280 ряд распадается в стопку:
-     там колонке действий не хватает ширины на число с расшифровкой в строку. */-->
+     Блок «Что делать дальше» переехал на хаб «Сегодня» (/). Здесь остаётся
+     стойка метрик и ступень: страница отвечает на «где я», а не на «что дальше».
+     Обзор первого экрана — шапка + сводка «где я» + вкладки разделов. */-->
 <div class="stats-summary">
-<section class="stats-next-actions" aria-labelledby="stats-next-actions-title">
-    <div class="stats-next-actions-head">
-        <h2 id="stats-next-actions-title">Что делать дальше</h2>
-        <p th:if="${stats == null or stats.total > 0}">Выбери короткую следующую сессию по текущему состоянию банка.</p>
-        <!--/* Отбор, под который не попал ни один вопрос. Три карточки ниже считаются по
-             выборке (iter-73), и на пустой выборке они честно печатают нули — но нуль
-             там читается как оценка прогресса: «Повторить сегодня 0 · всё повторено»
-             сообщает, что человек всё выучил, тогда как повторять просто нечего.
-             Показываем причину вместо трёх нулей. */-->
-        <p th:if="${stats != null and stats.total == 0}">Под текущий отбор не попал ни один вопрос — предлагать сессию не из чего.
-           <a th:href="@{/stats}">Сбросить отбор</a>.</p>
-    </div>
-    <div class="stats-next-actions-grid" th:if="${stats == null or stats.total > 0}">
-        <!--/* Очередь = долг по повторениям + вопросы без единого ответа. Карточка
-             называет то, что действительно предстоит: на пустом прогрессе весь банк
-             лежит в due, и «9815 вопросов к повтору» обещало повторить непройденное.
-             Рекомендуем по-прежнему по due — показать есть что в обеих ветках. */-->
-        <a class="stats-next-action stats-next-action-primary"
-           th:href="@{/}"
-           th:with="repeats=${stats.dueRepeats()}, fresh=${stats.fresh}"
-           th:classappend="${stats.due > 0} ? ' is-recommended'">
-            <span class="stats-next-action-label"
-                  th:text="${repeats == 0 and fresh > 0 ? 'Учить новое' : 'Повторить сегодня'}">Повторить сегодня</span>
-            <strong th:text="${repeats > 0 ? repeats : fresh}">0</strong>
-            <span class="stats-next-action-detail"
-                  th:text="${repeats > 0
-                      ? @plural.pick(repeats, 'вопрос к повтору', 'вопроса к повтору', 'вопросов к повтору')
-                      : (fresh > 0
-                          ? @plural.pick(fresh, 'вопрос ещё не открывали', 'вопроса ещё не открывали', 'вопросов ещё не открывали')
-                          : 'всё повторено')}">вопросов к повтору</span>
-        </a>
-        <a class="stats-next-action"
-           th:href="@{/(onlyWrong=true, ordered=true)}"
-           th:classappend="${stats.due == 0 and stats.wrong > 0} ? ' is-recommended'">
-            <span class="stats-next-action-label">Разобрать ошибки</span>
-            <strong th:text="${stats.wrong}">0</strong>
-            <span class="stats-next-action-detail"
-                  th:text="${stats.wrong > 0 ? @plural.pick(stats.wrong, 'ошибка в истории', 'ошибки в истории', 'ошибок в истории') : 'ошибок пока нет'}">ошибок в истории</span>
-        </a>
-        <!--/* Слабую тему и их число считает сервер (QuestionStatsRepository.findWeakestTopic
-             / countWeakTopics) — тем же правилом и тем же порогом, по которому режим
-             «Слабые темы» потом выбирает вопрос. Подпись и deep-link верны без JS, и
-             карточка не может пообещать одну тему, а тренировка дать другую.
 
-             Счётчик — число слабых тем, а не всех тем в аналитике: соседние карточки
-             показывают объём работы (долг по повторениям, ошибки), и «320 тем в
-             аналитике» рядом с ними читалось бы как такой же backlog, которым не
-             является. */-->
-        <!--/* Без aria-label — content-имя, как у двух соседних карточек: полный
-             видимый текст и есть имя (WCAG 2.5.3, REF-018). Прежний label дублировал
-             контент выборочно — не содержал счётчик и жил бы в рассинхроне. */-->
-        <a class="stats-next-action stats-next-action-weak"
-           th:href="@{/(weakTopics=true, ordered=true, topic=${weakestTopic?.topic()})}"
-           th:with="hasAttempts=${stats.correct + stats.wrong > 0}"
-           th:classappend="${stats.due == 0 and stats.wrong == 0 and weakTopicCount > 0} ? ' is-recommended'">
-            <!--/* Порядок строк — тот же, что у двух соседних карточек: подпись →
-                 большое число → расшифровка. Карточка внутри — грид с авто-строками,
-                 и когда строка с темой стояла между подписью и числом, число этой
-                 карточки уезжало в третью строку, а у соседних оставалось во второй:
-                 три главные цифры блока читались с трёх разных базовых линий.
-                 Уточнение про конкретную тему — четвёртой строкой, снизу: оно
-                 дополняет счётчик, а не заменяет его. */-->
-            <span class="stats-next-action-label">Тренировать слабые темы</span>
-            <strong th:text="${weakTopicCount}">0</strong>
-            <!--/* Плюрализация как в соседних карточках (@plural.pick): «1 тема» / «4 темы» /
-                 «5 тем». Раньше суффикс «тем» был захардкожен → «1 тем»/«4 тем» (неверно
-                 для 1 и 2–4). */-->
-            <span class="stats-next-action-detail"
-                  th:text="${weakTopicCount > 0
-                    ? @plural.pick(weakTopicCount, 'слабая тема', 'слабые темы', 'слабых тем')
-                    : (hasAttempts ? 'слабых тем нет' : 'слабых тем пока нет')}">слабых тем</span>
-            <span class="stats-next-action-topic"
-                  th:title="${weakestTopic?.topic()}"
-                  th:text="${weakestTopic != null
-                    ? ('Слабее всего: ' + @topicUtils.displayName(weakestTopic.topic()) + ' · ' + weakestTopic.accuracyPercent() + '%')
-                    : (hasAttempts ? 'Слабых тем нет — все выше порога' : 'Появятся после первых ответов')}">Самая слабая тема</span>
-        </a>
-    </div>
-</section>
-
-<!--/* Ступень стоит на «Твоём прогрессе» не для украшения: страница отвечает на
-     вопрос «где я», и до этой итерации отвечала только цифрами точности и охвата.
-     Уровень же был виден лишь на итогах сессии — экране, до которого доезжают не
-     все режимы (TRAINING идёт без сессии вовсе). Компонент тот же, что на итогах;
-     строки «эта сессия дала» здесь нет — сессии здесь тоже нет. */-->
-<!--/* «ГДЕ Я» — ОДИН РЯД, А НЕ ДВА ЭТАЖА.
-
-     Ступень и четыре метрики отвечают на один вопрос — где я сейчас, — но стояли
-     через всю витрину знаков друг от друга, и каждая занимала свой этаж. Замер
-     1512×982: полоса опыта капнута 32rem и оставляла справа ~700px пустой карточки,
-     а метрики ехали ниже знаков, на 1874.
-
-     Теперь это одна строка: слева ступень, справа метрики — пустота справа от полосы
-     заполнена тем, что отвечает на тот же вопрос, а страница стала короче на этаж.
-     Ниже 1200px строка распадается в стопку: там колонке метрик уже не хватает ширины
-     на две карточки в ряд. */-->
-<!--/* СТОЙКА «ГДЕ Я» — ПОД РАСКРЫТИЕМ НА ТЕЛЕФОНЕ (iter-157). Замер 390×844: между
-     дверями «что дальше» и вкладками разделов лежали 706px статуса (ранг 319 +
-     четыре метрики 283 + легенда), и вкладки — рабочий интерфейс страницы —
-     вставали на 1505-й пиксель при сгибе 844, почти на два экрана ниже. Статус
-     смотрят мельком, а разделы — работают; тот же довод уже решил витрину знаков
-     (766px) и форму отбора (345px), и приём взят их же: без JS раскрыто, на
-     телефоне закрывает скрипт, в свёрнутой шапке остаётся то, ради чего на статус
-     смотрят мельком — ступень, уровень и точность. */-->
-<details class="stats-standing-disclosure" open data-mobile-collapsed>
-    <summary class="disclosure-summary stats-standing-summary">
-        <h2 class="section-title" id="stats-standing-title">Где я сейчас</h2>
-        <span class="stats-standing-lead muted" th:if="${progression != null}">
-            <span th:text="${progression.rank().title()} + ' · уровень ' + ${progression.level()}">Ученик · уровень 1</span>
-            <!--/* Тот же источник, то же форматирование И ТО ЖЕ ИМЯ, что у плитки
-                 «Точность попыток» ниже: расхождение шапки с содержимым — ложь.
-                 Голое «точность» здесь стояло рядом с «Первой попыткой 23,3%» панели
-                 деталей — у страницы две точности с разными знаменателями, и
-                 безымянная читалась как противоречие, а не как вторая метрика
-                 (VIS-04). У пустого прогресса точности нет, и хвост не печатается. */-->
-            <span class="stats-standing-lead-tail" th:if="${metrics != null and metrics.hasOverallAccuracy()}"
-                  th:text="' · точность попыток ' + ${#numbers.formatDecimal(metrics.overallAccuracy, 1, 1)} + '%'"> · точность попыток 0%</span>
-        </span>
-    </summary>
+<section class="stats-standing-disclosure" aria-labelledby="stats-standing-title">
+    <h2 class="section-title" id="stats-standing-title">Состояние подготовки</h2>
 <div class="stats-standing">
-<!--/* Хост больше не рисует коробку вокруг ранга (тихий интерфейс, аудит
-     2026-09-02): карточка-в-карточке была одним из десяти равновесных боксов
-     первого экрана. Ранг лежит на канве; фрагмент общий с /session-summary и
-     не тронут — коробкой владеет хост (ProgressionContractTest). */-->
-<div class="stats-rank-host">
-    <div th:replace="~{fragments/progression :: rank(p=${progression}, sessionXp=null)}"></div>
-</div>
 <section class="dashboard-grid" th:if="${metrics != null}"
-         th:with="periodLabels=${ {'lifetime':'всё время','now':'сейчас','7d':'7 дней','30d':'30 дней'} }"
          aria-label="Ключевые метрики обучения">
     <article class="card metric accent">
-        <span class="eyebrow">Точность попыток</span>
+        <span class="eyebrow">Точность всех попыток</span>
         <div class="metric-value"
              th:text="${metrics.hasOverallAccuracy()} ? ${#numbers.formatDecimal(metrics.overallAccuracy, 1, 1)} + '%' : '—'">—</div>
         <!--/* Не «(без пропусков)»: в словаре пользователя «пропуск» — кнопка
@@ -271,11 +115,11 @@
                             : masteredShown + '%')}">—</div>
         <span class="muted tiny"
               th:text="${masteredShown == 0 and metrics.cardsMastered > 0
-                          ? 'доля пока меньше одного процента — счёт честнее'
+                          ? 'вопросов освоено из всего выбранного банка'
                           : metrics.cardsMastered + ' из ' + metrics.cardsTotal + ' карточек'}">0 из 0 карточек</span>
     </article>
     <article class="card metric">
-        <span class="eyebrow">Среднее время</span>
+        <span class="eyebrow">Среднее время ответа</span>
         <!--/* Единица «с» отделена от числа УЗКИМ НЕРАЗРЫВНЫМ пробелом (U+202F), а не
              обычным (U+0020): в моноширинном JetBrains Mono display-число + обычный
              пробел = полная ячейка (~21px при 36px кегле) — «с» отрывалась от «33,3»
@@ -311,6 +155,7 @@
         </span>
     </article>
 
+    </section>
     <!--/* Формулы уехали из КАЖДОЙ карточки в одно раскрытие. Причина —
          ИЕРАРХИЯ, и это надо сказать прямо: первая версия этого комментария
          обещала выигрыш по высоте, которого замер не подтвердил.
@@ -336,7 +181,8 @@
          требованию. `<details>` работает без JS и с клавиатуры, заголовки берутся
          из того же каталога MetricDefinitions, что и сами метрики, поэтому второй
          копии подписей не заводится. */-->
-    <details class="metrics-legend" th:if="${metricDefinitions != null}">
+    <details class="metrics-legend" th:if="${metrics != null and metricDefinitions != null}"
+             th:with="periodLabels=${ {'lifetime':'всё время','now':'сейчас','7d':'7 дней','30d':'30 дней'} }">
         <summary class="chart-table-summary">Как считаются метрики</summary>
         <p class="muted tiny metrics-legend-intro">Метрики с явными знаменателями: у каждой ниже
            указано, из чего она считается. «—» значит «пока нет данных для этой доли», а не «ноль».</p>
@@ -347,31 +193,36 @@
                  замер поймал `dt=0 dd=0` при живой разметке. Литеральный доступ
                  такой же, каким метрики читались в карточках до этой правки,
                  и он проверен. */-->
-            <th:block th:if="${metricDefinitions['overallAccuracy'] != null}"
+            <div th:if="${metricDefinitions['overallAccuracy'] != null}"
                       th:with="def=${metricDefinitions['overallAccuracy']}">
                 <dt th:text="${def.title}">Метрика</dt>
                 <dd th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">формула</dd>
-            </th:block>
-            <th:block th:if="${metricDefinitions['cardsMastered'] != null}"
+            </div>
+            <div th:if="${metricDefinitions['cardsMastered'] != null}"
                       th:with="def=${metricDefinitions['cardsMastered']}">
                 <dt th:text="${def.title}">Метрика</dt>
                 <dd th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">формула</dd>
-            </th:block>
-            <th:block th:if="${metricDefinitions['averageResponseMs'] != null}"
+            </div>
+            <div th:if="${metricDefinitions['averageResponseMs'] != null}"
                       th:with="def=${metricDefinitions['averageResponseMs']}">
                 <dt th:text="${def.title}">Метрика</dt>
                 <dd th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">формула</dd>
-            </th:block>
-            <th:block th:if="${metricDefinitions['dueNow'] != null}"
+            </div>
+            <div th:if="${metricDefinitions['dueNow'] != null}"
                       th:with="def=${metricDefinitions['dueNow']}">
                 <dt th:text="${def.title}">Метрика</dt>
                 <dd th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">формула</dd>
-            </th:block>
+            </div>
         </dl>
     </details>
-</section>
 </div>
-</details><!--/* /.stats-standing-disclosure */-->
+</section>
+<details class="stats-rank-disclosure" th:if="${progression != null}">
+    <summary class="disclosure-summary">Опыт и уровни <span class="muted" th:text="'· уровень ' + ${progression.level()}">· уровень 1</span></summary>
+    <div class="stats-rank-host">
+        <div th:replace="~{fragments/progression :: rank(p=${progression}, sessionXp=null)}"></div>
+    </div>
+</details>
 </div><!--/* /.stats-summary */-->
 
 
@@ -453,14 +304,14 @@
          обратно — выбрать раздел, набрать запрос, нажать «Искать» → уходит
          `group=` (пусто). Одна форма снимает это структурно: каждый параметр
          существует ровно в одном экземпляре и все уезжают вместе. */-->
-    <section class="card filter-bar" aria-labelledby="filter-bar-heading">
+    <section class="filter-bar" aria-labelledby="filter-bar-heading">
         <!--/* Отбор — 345px формы на телефоне, и открывают его осознанно, а не при
              каждом заходе. Под раскрытием, как и витрина знаков: без JS раскрыт,
              на телефоне закрывается скриптом. Что именно отобрано, видно и в
              свёрнутом виде — строка состояния стоит в самой шапке. */-->
         <details class="filter-bar-disclosure" open data-mobile-collapsed>
             <summary class="disclosure-summary filter-bar-summary">
-                <h2 id="filter-bar-heading" class="mt-0">Отбор</h2>
+                <span id="filter-bar-heading">Поиск и отбор</span>
             </summary>
         <!--/* Что сейчас отобрано — прозой, а не только состоянием контролов.
              Строка появляется, лишь когда отбор действительно сужен: иначе она
@@ -597,7 +448,7 @@
                 <div class="search-question"><strong th:utext="${@markdownRenderService.toInlineHtml(item.questionText)}">Вопрос</strong></div>
                 <div class="muted" th:text="${@topicUtils.displayName(item.topic)}" th:title="${item.topic}">Тема</div>
                 <div class="search-answer-preview" th:text="${item.answerPreview}">Превью</div>
-                <a th:href="@{/(topic=${item.topic != null ? item.topic : ''}, group=${selectedGroup != null ? selectedGroup : ''}, ordered=${filter == null or filter.ordered != false}, important=${filter != null and filter.importantOnly == true}, onlyWrong=${filter != null and filter.onlyWrong == true})}">Перейти к теме<span aria-hidden="true"> →</span></a>
+                <a th:href="@{/practice(topic=${item.topic != null ? item.topic : ''}, group=${selectedGroup != null ? selectedGroup : ''}, ordered=${filter == null or filter.ordered != false}, important=${filter != null and filter.importantOnly == true}, onlyWrong=${filter != null and filter.onlyWrong == true})}">Перейти к теме<span aria-hidden="true"> →</span></a>
             </li>
         </ul>
     </section>
@@ -625,7 +476,7 @@
         <h2 class="empty-state-title">Пока нет данных по темам</h2>
         <p class="empty-state-text">Ответь на несколько вопросов — и здесь появятся прогресс по темам, точность ответов и прогноз повторений на неделю.</p>
         <p class="empty-state-actions">
-            <a class="btn next-btn" th:href="@{/}">Начать тренировку</a>
+            <a class="btn next-btn" th:href="@{/practice}">Начать тренировку</a>
         </p>
     </section>
     </th:block>
@@ -760,7 +611,7 @@
             <tbody>
             <tr th:each="item : ${topicTable.rows()}">
                 <th scope="row" class="topic-name" data-label="Тема">
-                    <a th:href="@{/(topic=${item.topic}, group=${selectedGroup != null ? selectedGroup : ''}, ordered=${filter == null or filter.ordered != false})}"
+                    <a th:href="@{/practice(topic=${item.topic}, group=${selectedGroup != null ? selectedGroup : ''}, ordered=${filter == null or filter.ordered != false})}"
                        th:text="${@topicUtils.displayName(item.topic)}"
                        th:title="${item.topic}">topic</a>
                 </th>
@@ -809,11 +660,11 @@
                 </td>
                 <td class="topic-actions" data-label="Действие">
                     <a class="topic-action-link"
-                       th:href="@{/(topic=${item.topic}, ordered=true)}"
+                       th:href="@{/practice(topic=${item.topic}, ordered=true)}"
                        th:classappend="${(item.correct + item.wrong) > 0 and (item.correct * 100.0 / (item.correct + item.wrong)) < 50} ? ' is-weak'">Тренировать</a>
                     <a class="topic-action-link topic-action-wrong"
                        th:if="${item.wrong > 0}"
-                       th:href="@{/(topic=${item.topic}, onlyWrong=true, ordered=true)}">Ошибки</a>
+                       th:href="@{/practice(topic=${item.topic}, onlyWrong=true, ordered=true)}">Ошибки</a>
                 </td>
             </tr>
             </tbody>
@@ -1095,15 +946,15 @@
     <h2 class="stats-panel-title tabpanel-title">Ошибки</h2>
 
     <section class="card stats-errors-actions" aria-labelledby="stats-errors-cta-title">
-        <div class="stats-next-actions-head">
+        <div class="stats-panel-intro">
             <h2 id="stats-errors-cta-title" class="mt-0">Разбор ошибок</h2>
             <p>Список вопросов, где уже были неверные ответы. Собери сессию только по ним
                или открой конкретную тему.</p>
         </div>
         <p>
-            <a class="btn next-btn primary-btn" th:href="@{/(onlyWrong=true, ordered=true)}"
+            <a class="btn secondary-btn" th:href="@{/practice(onlyWrong=true, ordered=true)}"
                th:if="${stats != null and stats.wrong > 0}">Разобрать все ошибки</a>
-            <a class="btn secondary-btn" th:href="@{/review}"
+            <a class="btn quiet-btn" th:href="@{/review}"
                th:if="${stats != null and stats.wrong > 0}">Открыть режим «Ошибки»</a>
             <span class="muted" th:if="${stats == null or stats.wrong == 0}">
                 Ошибок в истории нет — так держать!</span>
@@ -1127,7 +978,7 @@
                 <div class="wrong-question-main">
                     <div class="wrong-question-text" th:text="${item.questionPreview}">Текст вопроса</div>
                     <div class="wrong-question-meta muted">
-                        <a th:href="@{/(topic=${item.topic}, onlyWrong=true, ordered=true)}"
+                        <a th:href="@{/practice(topic=${item.topic}, onlyWrong=true, ordered=true)}"
                            th:text="${item.topicDisplayName}" th:title="${item.topic}">Тема</a>
                         <span aria-hidden="true">·</span>
                         <span>
@@ -1160,12 +1011,12 @@
         <svg class="ui-illus ui-illus-lg empty-state-illus" aria-hidden="true"><use href="#state-clean-slate"></use></svg>
         <h2 class="empty-state-title">Пока нет ошибок</h2>
         <p class="empty-state-text">После первых неверных ответов здесь появится список вопросов для разбора.</p>
-        <p class="empty-state-actions"><a class="btn next-btn" th:href="@{/}">Начать тренировку</a></p>
+        <p class="empty-state-actions"><a class="btn secondary-btn" th:href="@{/practice}">Начать тренировку</a></p>
     </section>
     </th:block>
 
     <section class="card">
-        <div class="stats-next-actions-head">
+        <div class="stats-panel-intro">
             <h2 class="mt-0">Где чаще ошибаешься</h2>
             <p>Темы, где уже были неверные ответы. Собери короткую сессию по ним.</p>
         </div>
@@ -1191,7 +1042,7 @@
             <tbody>
             <tr th:each="item : ${topicStats}" th:if="${item.wrong > 0}">
                 <td>
-                    <a th:href="@{/(topic=${item.topic}, onlyWrong=true, ordered=true)}"
+                    <a th:href="@{/practice(topic=${item.topic}, onlyWrong=true, ordered=true)}"
                        th:text="${@topicUtils.displayName(item.topic)}"
                        th:title="${item.topic}">тема</a>
                 </td>

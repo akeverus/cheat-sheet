@@ -16,7 +16,7 @@ WARN (не валят exit, печатаются):
 ═══════════════════════════════════════════════════════════════════════════
   • Exit 0  ≠  право ставить SKEL=✅ / llm_review.skel=true / PAR / FINAL.
   • Exit 1  =  pre-check красный: блок надо чинить или объяснить в notes.
-  • Приёмка скелета — только LLM (§18 / §31 PROMPT_PLAN_INTERVIEW.md):
+  • Приёмка скелета — только LLM (docs/mcq-quality-standard.md):
     зачин, клаузы, пунктуационный каркас, класс backticks/списков, тип ответа.
   • Скрипт не видит semantic skeleton (определение vs сравнение vs API-пара)
     и «почти тот же каркас» глазами. LLM-проверка вручную обязательна
@@ -195,7 +195,7 @@ def analyze_file(path: Path) -> dict:
         "results": blocks,
         "reminder": (
             "PRE-CHECK ONLY: exit color does not authorize SKEL=✅; "
-            "LLM §18/§31 surface-skeleton review remains mandatory."
+            "LLM surface-skeleton review remains mandatory."
         ),
     }
 

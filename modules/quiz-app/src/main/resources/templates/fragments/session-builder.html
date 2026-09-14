@@ -124,26 +124,6 @@
                             <span class="outcome-unit"
                                   th:text="${@plural.pick(inSet, 'вопрос в наборе', 'вопроса в наборе', 'вопросов в наборе')}">вопросов в наборе</span>
                         </p>
-                        <ul class="outcome-facts">
-                            <li class="outcome-fact">
-                                <span class="outcome-fact-value" th:text="${repeats}">0</span>
-                                <span class="outcome-fact-label">ждут повтора — планировщик поставит их первыми</span>
-                            </li>
-                            <li class="outcome-fact">
-                                <span class="outcome-fact-value" th:text="${fresh}">0</span>
-                                <span class="outcome-fact-label">ещё ни разу не открывали</span>
-                            </li>
-                        </ul>
-                        <!--/* Пустой набор — единственное состояние, где нужен совет:
-                             остальные читаются по самим числам выше. */-->
-                        <p class="outcome-empty" th:if="${inSet == 0}">В наборе нет вопросов — расширь отбор слева.</p>
-                        <!--/* Строка отбора появляется только когда отбор ЕСТЬ
-                             (тихий интерфейс, аудит 2026-09-02): «Отбор: все темы»
-                             сообщал об ОТСУТСТВИИ отбора наравне с реальными
-                             фактами набора. Условие перечисляет те же поля, что
-                             считает describeFilters в session-form.js: сервер и
-                             скрипт обязаны прятать строку в одних случаях, иначе
-                             она мигнёт при загрузке. */-->
                         <p class="outcome-filters"
                            th:with="hasFilter=${filter != null and (
                                        (filter.topic != null and !filter.topic.isBlank())
@@ -154,8 +134,29 @@
                                        or filter.ordered == false)}"
                            th:attr="hidden=${hasFilter or weakTopics == true} ? null : 'hidden'">
                             <span class="outcome-filters-label">Отбор:</span>
-                            <span data-preview-filters>все темы</span>
+                            <span data-preview-filters>
+                                <span th:each="g : ${groups}" th:if="${filter != null and !filter.isShuffled() and selectedGroup == g.id()}" th:text="${g.title()}">Раздел</span>
+                                <span th:if="${filter != null and filter.effectiveTopic() != null}" th:text="${@topicUtils.displayName(filter.effectiveTopic())}">Тема</span>
+                                <span th:if="${filter?.importantOnly == true}" th:text="${'избранные · ' + filterFavoritesCount}">избранные</span>
+                                <span th:if="${filter?.onlyWrong == true}" th:text="${'ошибки · ' + filterWrongCount}">ошибки</span>
+                                <span th:if="${filter?.shuffle == true}">микс тем</span>
+                                <span th:if="${weakTopics == true}" th:text="${'слабые темы · ' + filterWeakTopicsCount}">слабые темы</span>
+                                <span th:if="${filter?.ordered == false}">свободный порядок</span>
+                            </span>
                         </p>
+                        <p class="outcome-empty" th:if="${inSet == 0}">В наборе нет вопросов — расширь отбор.</p>
+                        <details class="builder-outcome-details" open data-mobile-collapsed="yes">
+                            <summary class="disclosure-summary"><span>Состав и прогресс</span></summary>
+                        <ul class="outcome-facts">
+                            <li class="outcome-fact">
+                                <span class="outcome-fact-value" th:text="${repeats}">0</span>
+                                <span class="outcome-fact-label">ждут повтора — планировщик поставит их первыми</span>
+                            </li>
+                            <li class="outcome-fact">
+                                <span class="outcome-fact-value" th:text="${fresh}">0</span>
+                                <span class="outcome-fact-label">ещё ни разу не отвечали</span>
+                            </li>
+                        </ul>
                         <!--/* СЕГОДНЯ — СТРОКА В РЕЛЬСЕ, А НЕ СВОЯ КАРТОЧКА.
 
                              Карточка «Сегодня» стояла отдельной областью сетки
@@ -181,6 +182,7 @@
                             </div>
                             <span id="streak-count" class="streak-count-text" data-streak-count title="Дневная цель ответов">Дневная цель — 0 из 10</span>
                         </div>
+                        </details>
                     </aside>
                     <!--/* Параметр 2: режим (POST /start отправляет эта же форма — кнопка живёт
                          в закреплённой панели запуска ниже и связана атрибутом `form`).
@@ -217,10 +219,17 @@
                                  по правилу SessionFlowService.resolveSessionTotal;
                                  settings/session-form.js подставляет его в счётчик при СМЕНЕ
                                  режима (SET-15). data-unlimited — режим без счётчика. */-->
-                            <fieldset class="field mode-choice" id="session-mode-choice">
+                            <fieldset class="field mode-choice" id="session-mode-choice"
+                                      th:with="primaryModes=${sessionModes.?[primary]},
+                                               moreModes=${sessionModes.?[!primary]},
+                                               moreSelected=${!#lists.isEmpty(sessionModes.?[!primary and selected])}">
                                 <legend class="field-label">Режим</legend>
+                                <!--/* Hick: сразу три повседневных режима. Остальные пять —
+                                     за «Ещё режимы». Раскрытие открыто, если выбран
+                                     вторичный (иначе человек не увидит свой выбор).
+                                     Все радио остаются в одной name="mode" группе. */-->
                                 <div class="mode-choice-grid">
-                                    <label class="mode-card" th:each="m : ${sessionModes}">
+                                    <label class="mode-card" th:each="m : ${primaryModes}">
                                         <input type="radio" name="mode" class="mode-card-input"
                                                th:value="${m.name}"
                                                th:checked="${m.selected}"
@@ -228,13 +237,6 @@
                                                         data-cta=${m.startAction},
                                                         data-unlimited=${m.unlimited}">
                                         <span class="mode-card-body">
-                                            <!--/* Сцена режима: имя символа приходит из ModeUtils рядом с подписью
-                                                 и описанием, а не выбирается здесь по имени константы. Помечена
-                                                 aria-hidden — она повторяет то, что уже сказано подписью, и
-                                                 второй раз объявлять это скринридеру нечего. */-->
-                                            <svg class="mode-card-glyph" aria-hidden="true" focusable="false">
-                                                <use th:attr="href='#' + ${m.glyph}"></use>
-                                            </svg>
                                             <span class="mode-card-text">
                                                 <span class="mode-card-title" th:text="${m.label}">Тренировка</span>
                                                 <span class="mode-card-desc" th:text="${m.description}">описание</span>
@@ -242,6 +244,25 @@
                                         </span>
                                     </label>
                                 </div>
+                                <details class="mode-more" th:attr="open=${moreSelected} ? 'open' : null">
+                                    <summary class="mode-more-summary">Ещё режимы</summary>
+                                    <div class="mode-choice-grid mode-choice-grid-more">
+                                        <label class="mode-card" th:each="m : ${moreModes}">
+                                            <input type="radio" name="mode" class="mode-card-input"
+                                                   th:value="${m.name}"
+                                                   th:checked="${m.selected}"
+                                                   th:attr="data-default-count=${m.defaultCount},
+                                                            data-cta=${m.startAction},
+                                                            data-unlimited=${m.unlimited}">
+                                            <span class="mode-card-body">
+                                                <span class="mode-card-text">
+                                                    <span class="mode-card-title" th:text="${m.label}">Экзамен</span>
+                                                    <span class="mode-card-desc" th:text="${m.description}">описание</span>
+                                                </span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </details>
                             </fieldset>
                             <!--/* ТРЕНИРОВКА — бесконечный режим без сессии (SessionFlowService.startSession:
                                  TRAINING → clearSession). settings/session-form.js (initSessionModeForm) скрывает счётчик
@@ -270,7 +291,9 @@
                         <div class="volume-row">
                             <label class="field field-inline" id="session-count-field">
                                 <span class="field-label">Вопросов</span>
-                                <input type="number" name="count" min="1" max="200" value="20"
+                                <input type="number" name="count" min="1" max="200" th:value="${requestedCount != null ? requestedCount : 20}"
+                                       th:attr="aria-invalid=${startCountInvalid == true} ? 'true' : null,
+                                                aria-describedby=${startCountInvalid == true} ? 'start-validation-error' : null"
                                        form="session-form">
                             </label>
                             <p class="volume-hint" id="volume-hint">Столько вопросов войдёт в сессию. Дальше — разбор в итогах.</p>
@@ -325,7 +348,7 @@
                          прежние заглушки «по числу вопросов» без JS не сообщали ничего,
                          кроме того, что тут что-то должно было быть. */-->
                     <div class="session-preview" id="session-preview" role="status" aria-live="polite" hidden
-                         th:attr="data-pool-total=${stats != null ? stats.total : 0}">
+                         th:attr="data-pool-total=${filteredStats != null ? filteredStats.total : (stats != null ? stats.total : 0)}">
                         <span class="preview-metric">
                             <span class="preview-label">В сессии</span>
                             <span class="preview-value" data-preview-count>20 вопросов</span>
@@ -342,7 +365,8 @@
                          главное действие приложения не показывало ожидание ничем. */-->
                     <button type="submit" form="session-form" id="session-start-btn"
                             class="btn next-btn primary-btn builder-start-cta"
-                            data-pending-label="Готовлю…">Начать тренировку</button>
+                            th:disabled="${filteredStats != null ? filteredStats.total == 0 : (stats == null or stats.total == 0)}"
+                            data-pending-label="Готовлю…">Начать занятие</button>
                 </div>
             </div>
 </th:block>

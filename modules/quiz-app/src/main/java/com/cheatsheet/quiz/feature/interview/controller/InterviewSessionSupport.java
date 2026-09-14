@@ -60,6 +60,10 @@ public class InterviewSessionSupport {
         return httpSessionStateService.getInterviewSession(session);
     }
 
+    public String recallAnswer(HttpSession session, InterviewSession interviewSession) {
+        return httpSessionStateService.getRecallAnswer(session, interviewSession);
+    }
+
     /**
      * Фиксирует момент показа текущего вопроса активной сессии (для измерения
      * времени ответа, Фаза 4). Вызывается при рендере страницы вопроса. Без

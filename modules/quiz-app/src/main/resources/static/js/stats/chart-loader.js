@@ -49,17 +49,26 @@ export function whenChartNeeded(canvasIds, start) {
   if (!els.length) return;
 
   let fired = false;
+  let observer = null;
   const fire = () => {
     if (fired) return;
     fired = true;
+    observer?.disconnect();
     ensureChart().then(() => start());
   };
+
+  // Переход по якорю может миновать канвас. Запрос таблицы также запускает данные.
+  document.querySelectorAll('.chart-table-disclosure').forEach((disclosure) => {
+    disclosure.addEventListener('toggle', () => { if (disclosure.open) fire(); });
+    if (disclosure.open) fire();
+  });
+  if (fired) return;
 
   if (typeof IntersectionObserver === 'undefined') {
     fire();
     return;
   }
-  const observer = new IntersectionObserver((entries) => {
+  observer = new IntersectionObserver((entries) => {
     if (entries.some((e) => e.isIntersecting)) {
       observer.disconnect();
       fire();

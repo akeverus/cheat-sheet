@@ -4,6 +4,7 @@ import com.cheatsheet.quiz.common.util.ModeUtils;
 import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
+import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.QuestionIssueCategory;
 import com.cheatsheet.quiz.domain.SessionSummary;
 import com.cheatsheet.quiz.infrastructure.render.AnswerHtmlSplitter;
@@ -11,6 +12,7 @@ import com.cheatsheet.quiz.feature.interview.service.copy.AnswerCopy;
 import com.cheatsheet.quiz.feature.interview.service.page.AnswerPageService;
 import com.cheatsheet.quiz.feature.interview.service.page.BookmarksPageService;
 import com.cheatsheet.quiz.feature.interview.service.page.FocusTrainingPageService;
+import com.cheatsheet.quiz.feature.interview.service.page.HomePageService;
 import com.cheatsheet.quiz.feature.interview.service.page.StatsPageService;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import lombok.RequiredArgsConstructor;
@@ -77,6 +79,23 @@ public class MvcModelAttributeMapper {
                 surfaceState.mode(),
                 appProperties.getInterview().getDefaultExamCount(),
                 appProperties.getInterview().getDefaultMarathonCount()));
+    }
+
+    /**
+     * Маппит state хаба «Сегодня» ({@code /}).
+     */
+    public void applyHomePageState(Model model, HomePageService.HomePageState state) {
+        model.addAttribute("stats", state.stats());
+        model.addAttribute("streak", state.streak());
+        model.addAttribute("streakLead", state.streakLead());
+        model.addAttribute("progression", state.progression());
+        model.addAttribute("pausedInfo", state.paused().orElse(null));
+        model.addAttribute("weakestTopic", state.weakestTopic());
+        model.addAttribute("weakTopicCount", state.weakTopicCount());
+        model.addAttribute("recentSessions", state.recentSessions());
+        model.addAttribute("bookmarksCount", state.bookmarksCount());
+        model.addAttribute("homePrimary", state.primary());
+        model.addAttribute("homeSecondary", state.secondary());
     }
 
     /**
@@ -189,7 +208,7 @@ public class MvcModelAttributeMapper {
      */
     private String resolveBrowseNextHref(FocusTrainingPageService.FocusPageState pageState, boolean reviewMode) {
         FocusTrainingPageService.SurfaceState surface = pageState.surface();
-        UriComponentsBuilder uri = UriComponentsBuilder.fromPath(reviewMode ? "/review" : "/");
+        UriComponentsBuilder uri = UriComponentsBuilder.fromPath(reviewMode ? "/review" : "/practice");
         InterviewFilter filter = surface.filter();
         if (filter != null) {
             if (filter.topic() != null) {
@@ -329,18 +348,18 @@ public class MvcModelAttributeMapper {
         return "Выбери один вариант. Проверка и разбор идут по шагам.";
     }
 
-    /** Канонический адрес тренировки — «/»; {@code /training} оставлен только как редирект. */
+    /** Канонический адрес тренировки — «/practice»; {@code /training} оставлен только как редирект. */
     private String resolveFocusEmptyRetryHref(boolean reviewMode, InterviewMode mode) {
         if (reviewMode) {
             return "/review";
         }
         if (mode != null && mode.isRecallMode()) {
-            return "/?mode=" + mode.name();
+            return "/practice?mode=" + mode.name();
         }
         if (mode == InterviewMode.STUDY) {
-            return "/?mode=STUDY";
+            return "/practice?mode=STUDY";
         }
-        return "/";
+        return "/practice";
     }
 
     private String resolveFocusEmptyRetryText(boolean reviewMode, InterviewMode mode) {
@@ -403,6 +422,9 @@ public class MvcModelAttributeMapper {
         model.addAttribute("filter", state.filter());
         model.addAttribute("mode", state.mode());
         model.addAttribute("interviewSession", state.interviewSession());
+        // На /result индекс уже сдвинут registerAnswer → progressPercent = доля
+        // отвеченных, а не «текущий + 1» как на фокусе до ответа.
+        model.addAttribute("progressPercent", answerProgressPercent(state.interviewSession()));
         if (state.diagram() != null) {
             model.addAttribute("diagram", state.diagram());
         }
@@ -417,6 +439,14 @@ public class MvcModelAttributeMapper {
         model.addAttribute("xpAwarded", state.xpAwarded());
         model.addAttribute("nextReviewText",
                 AnswerCopy.nextReview(state.reviewState() != null ? state.reviewState().intervalDays() : 0));
+    }
+
+    /** Доля отвеченных вопросов после registerAnswer (index уже = answered). */
+    private static double answerProgressPercent(InterviewSession interviewSession) {
+        if (interviewSession == null || interviewSession.getTotal() <= 0) {
+            return 0.0;
+        }
+        return (interviewSession.getIndex() * 100.0) / interviewSession.getTotal();
     }
 
     /**

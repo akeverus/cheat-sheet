@@ -10,6 +10,10 @@
    только вертикальный ритм между блоками итога. */
 html[data-design] .summary-page .card {
   margin: 0 0 var(--space-6);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 /* Геро-итог. Контейнера `.summary-score` больше нет — карточка называется
@@ -72,44 +76,50 @@ html[data-design] .summary-page .summary-top {
    289px (rank-body 226px — XP-строка ломалась). `:has(.summary-kpis)`
    включает ряд по факту содержимого; без поддержки :has остаётся столб —
    мягкая деградация, как у tab-restore в head. */
-@media (min-width: 1280px) {
-  html[data-design] .summary-page .summary-progress {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-5);
-    align-items: start;
-  }
-  html[data-design] .summary-page .summary-progress:has(.summary-kpis) {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
+html[data-design] .summary-page .summary-progress {
+  align-self: center;
+  padding-inline-start: var(--space-5);
+  border-inline-start: var(--rule-weight) solid var(--color-border-primary);
 }
-
-/* ТЕЛЕФОН: ПОРЯДОК ЗАДАЁТ СТРАНИЦА. Обёртка растворяется, её дети становятся
-   детьми полосы, и `order` ставит действие между счётом и прогрессом. Порядок в
-   РАЗМЕТКЕ при этом остаётся прежним (счёт → прогресс → действия): для
-   скринридера и обхода с клавиатуры «что это дало» логично идёт за «сколько», а
-   визуальная перестановка нужна ровно для того, чтобы главное действие попало в
-   первый экран.
-
-   Порог тот же, что у ряда наверху (1100): один порог на одно событие — «есть ли
-   ширина под две колонки». */
+html[data-design] .summary-page .summary-facts { margin: 0; }
+html[data-design] .summary-page .summary-facts > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-4);
+  padding-block: var(--space-2);
+  border-bottom: var(--rule-weight) solid var(--color-border-secondary);
+}
+html[data-design] .summary-page .summary-facts dt { color: var(--color-text-secondary); }
+html[data-design] .summary-page .summary-facts dd {
+  margin: 0;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  text-align: end;
+}
+html[data-design] .summary-page .summary-time-note {
+  font-size: var(--font-size-sm);
+  margin: var(--space-3) 0 0;
+}
+html[data-design] .summary-page .summary-extras {
+  margin-bottom: var(--space-6);
+  padding-block: var(--space-2);
+  border-block: var(--rule-weight) solid var(--color-border-secondary);
+}
+html[data-design] .summary-page .summary-extras .rank-block { max-width: var(--measure); }
 @media (max-width: 1099px) {
+  html[data-design] .summary-page .summary-progress { padding-inline-start: 0; border-inline-start: 0; }
   html[data-design] .summary-page .ed-page {
     display: flex;
     flex-direction: column;
   }
-  html[data-design] .summary-page .summary-top { display: contents; }
-  html[data-design] .summary-page .page-head { order: 0; }
-  html[data-design] .summary-page .summary-hero { order: 1; }
-  html[data-design] .summary-page .summary-actions { order: 2; }
-  html[data-design] .summary-page .summary-progress { order: 3; }
-  html[data-design] .summary-page .summary-tools { order: 4; }
-  html[data-design] .summary-page .summary-breakdown { order: 5; }
+
   /* Зазор между блоками верха задаёт сама полоса: обёртки, которая держала его
      `gap`, на этой ширине больше нет. */
   html[data-design] .summary-page .summary-hero,
   html[data-design] .summary-page .summary-progress {
-    margin-bottom: var(--space-5);
+    margin-bottom: 0;
   }
   /* Кольцо и счёт — в строку: два блока по 144 и 173 в столб съедали пол-экрана,
      а рядом занимают высоту большего. */
@@ -160,8 +170,8 @@ html[data-design] .summary-page .summary-score-value.text-danger { color: var(--
 html[data-design] .summary-page .summary-score-value.text-muted { color: var(--color-text-tertiary); }
 /* FLOW-SUMMARY-b: краткий actionable-подзаголовок под числом точности */
 html[data-design] .summary-page .summary-headline {
-  font-family: var(--font-family-display); font-size: var(--font-size-lg);
-  color: var(--color-text-primary); margin-top: var(--space-3);
+  font-family: var(--font-family-body); font-size: var(--font-size-base);
+  color: var(--color-text-secondary); margin: 0;
 }
 /* Плиточная сводка (.summary-score .stats-grid + .stat-item/.stat-value/.stat-label)
    удалена: итоги показывают четыре KPI сессии (.summary-kpi — опыт, время, ошибки,
@@ -399,41 +409,7 @@ html[data-design] .summary-page .summary-mistake-item:hover {
    случайный значок под левой карточкой, а не как печать в конце хроники. На 1512 и
    уже сетка одноколоночная, и дефект не виден — он живёт ровно там, где разбор
    встаёт в два столбца. */
-html[data-design] .summary-page .summary-seal {
-  grid-column: 1 / -1;
-  display: flex;
-  justify-content: center;
-  margin-top: var(--space-6);
-}
-html[data-design] .summary-page .summary-scene {
-  width: 160px;
-  height: 100px;
-  /* Линейный глиф из сетки 24 на hero-размере: stroke-width в единицах viewBox
-     наследуется внутрь <use>, ~0.35 при масштабе ×4 даёт визуальные ~1.5px. */
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 0.35;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  color: var(--color-text-tertiary);
-  opacity: 0.55;
-}
-@media (min-width: 768px) {
-  html[data-design] .summary-page .summary-scene {
-    width: 320px;
-    height: 200px;
-  }
-}
-/* Разбор в два столбца — по СОБСТВЕННОЙ мере таблицы, а не по ширине окна.
-
-   Первый вариант ставил порог 1200px «на глаз», и замер показал цену: на 1280 и 1440
-   колонка выходила 465–536px, ячейка темы схлопывалась до 0–32px, а «Алгоритмы
-   (обзор)» ломалось на СЕМНАДЦАТЬ строк высотой 405px. Таблице нужно ~680px, чтобы
-   имя темы и четыре числа встали в строку.
-
-   `auto-fit` с `minmax(42rem, 1fr)` и есть это условие: два столбца появляются, когда
-   каждому хватает 672px, и ни строкой раньше. Порог нигде не записан числом — он
-   вычисляется из меры, поэтому не разъедется с ней. */
+@layer pages {
 html[data-design] .summary-page .summary-breakdown {
   display: grid;
   /* `min(42rem, 100%)`, а не голые 42rem: на 360px колонка в 672px не помещается в
@@ -454,19 +430,5 @@ html[data-design] .summary-page .summary-breakdown {
    центр окна. Тот же приём и тот же порог, что у экрана вопроса (iter-116):
    `margin-block: auto`, а не `justify-content: center` — при длинном итоге margin
    схлопывается в ноль и верх страницы не уезжает за кромку. */
-@media (min-height: 1000px) {
-  html[data-design] .summary-page .ed-page {
-    min-height: calc(100dvh - 9rem);
-    display: flex;
-    flex-direction: column;
-  }
-  html[data-design] .summary-page .ed-page > * {
-    flex: 0 0 auto;
-  }
-  html[data-design] .summary-page .ed-page > .summary-hero {
-    margin-top: auto;
-  }
-  html[data-design] .summary-page .ed-page > :last-child {
-    margin-bottom: auto;
-  }
+
 }

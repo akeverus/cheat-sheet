@@ -16,7 +16,7 @@ const { test, expect } = require('@playwright/test');
  * страницы БЕЗ reduce — то есть не проверял ничего. emulateMedia бьёт в тот
  * же CDP-механизм напрямую и проверяется контрольным matchMedia в странице.
  */
-const SURFACES = ['/', '/train', '/stats', '/topics', '/bookmarks', '/settings', '/nope-404'];
+const SURFACES = ['/', '/practice', '/train', '/stats', '/topics', '/bookmarks', '/settings', '/nope-404'];
 
 test.describe('reduced motion', () => {
   for (const path of SURFACES) {

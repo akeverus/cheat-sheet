@@ -89,7 +89,8 @@ public class BookmarksPageService {
                     bookmark.note(),
                     bookmark.createdAt(),
                     bookmark.updatedAt(),
-                    normalizeForSearch(question.questionText())
+                    normalizeForSearch(question.questionText()),
+                    question.questionText()
             ));
         }
         // Счётчики разделов — по ВСЕЙ коллекции, а не по выборке: селект должен
@@ -230,6 +231,7 @@ public class BookmarksPageService {
             String note,
             long createdAt,
             long updatedAt,
-            String searchBlob
+            String searchBlob,
+            String questionText
     ) {}
 }

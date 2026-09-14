@@ -6,9 +6,10 @@
 #   bash scripts/verify-md-no-mcq.sh <file1.md> [file2.md ...]
 #   bash scripts/verify-md-no-mcq.sh                            # без аргументов: проверить staged files
 #
-# Возвращает 0 если все проверки прошли, 1 при обнаружении legacy MCQ-конструкций.
+# 0: проверенные файлы чисты или явно пустой staged-набор; 1: legacy MCQ; 2: ошибка запуска.
 
 set -euo pipefail
+MCQ_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # ──────────────── ANSI цвета (без зависимости от tput если non-tty) ──────────
 if [[ -t 1 ]]; then
@@ -22,19 +23,23 @@ else
 fi
 
 # ──────────────── Сбор списка файлов ──────────────────────────────────────────
-declare -a FILES
+declare -a FILES=()
 if [[ $# -gt 0 ]]; then
     FILES=("$@")
 else
-    # Staged files mode (для pre-commit hook) — portable version for bash 3.2
-    while IFS= read -r line; do
-        [[ -z "$line" ]] && continue
-        FILES+=("$line")
-    done < <(git diff --cached --name-only --diff-filter=AM | grep -E '^cheatsheets/interview/.*\.md$' || true)
+    # Проверяем ошибку Git отдельно; NUL-разделитель сохраняет пробелы и переносы в именах.
+    MCQ_LIST="$(mktemp)" || exit 2
+    trap 'rm -f "$MCQ_LIST"' EXIT
+    git -C "$MCQ_ROOT" diff --cached --name-only -z --diff-filter=ACMR > "$MCQ_LIST" || exit 2
+    while IFS= read -r -d '' line; do
+        case "$line" in
+            cheatsheets/interview/*.md) FILES+=("$MCQ_ROOT/$line");;
+        esac
+    done < "$MCQ_LIST"
 fi
 
 if [[ ${#FILES[@]} -eq 0 ]]; then
-    echo "verify-md-no-mcq: no md files to check"
+    echo "SKIP: no staged Markdown paths; corpus was not checked"
     exit 0
 fi
 
@@ -53,14 +58,23 @@ declare -a RULES=(
 ERR=0
 for file in "${FILES[@]}"; do
     if [[ ! -f "$file" ]]; then
-        continue
+        echo "ERROR: Markdown file not found: $file" >&2
+        exit 2
     fi
 
     file_err=0
     for rule in "${RULES[@]}"; do
         regex="${rule%%|*}"
         desc="${rule#*|}"
-        matches=$(grep -nE "$regex" "$file" 2>/dev/null || true)
+        if matches=$(grep -nE -- "$regex" "$file"); then
+            :
+        else
+            MCQ_GREP_EXIT=$?
+            if [[ $MCQ_GREP_EXIT -ne 1 ]]; then
+                echo "ERROR: Markdown scan failed: $file" >&2
+                exit 2
+            fi
+        fi
         if [[ -n "$matches" ]]; then
             echo -e "${RED}FAIL${NC} $file: $desc"
             echo "$matches" | head -3 | sed 's/^/    /'

@@ -203,10 +203,11 @@ class TabPanelContractTest {
                 continue;
             }
             for (String[] rule : rules(css)) {
-                boolean aboutPanel = rule[0].contains("tabpanel")
-                        || rule[0].contains("settings-panel")
-                        || rule[0].contains("stats-panel")
-                        || rule[0].contains("content-tabpanel");
+                // Проверяем саму панель: .stats-panel-intro — обычная шапка внутри неё.
+                boolean aboutPanel = rule[0].contains("[role=\"tabpanel\"]")
+                        || java.util.regex.Pattern.compile(
+                                "\\.(?:settings-panel|stats-panel|content-tabpanel)(?![\\w-])")
+                                .matcher(rule[0]).find();
                 if (aboutPanel && rule[1].contains("display:")) {
                     offenders.add(css.getFileName() + ": " + rule[0].strip().replaceAll("\\s+", " "));
                 }

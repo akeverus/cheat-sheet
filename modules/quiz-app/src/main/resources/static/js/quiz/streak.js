@@ -3,6 +3,7 @@ import { API } from '../core/constants.js';
 import { setProgressValue, pluralRu } from '../core/dom.js';
 
 let streakBound = false;
+let goalFormBound = false;
 
 export function initStreakBar() {
   if (streakBound) return;
@@ -46,4 +47,46 @@ export function initStreakBar() {
       });
     })
     .catch(() => {});
+}
+
+/** Quiet form on home pulse: POST /api/streak/goal. */
+export function initDailyGoalForm() {
+  if (goalFormBound) return;
+  const form = document.querySelector('[data-daily-goal-form]');
+  if (!form) return;
+  goalFormBound = true;
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const input = form.querySelector('[name="goal"]');
+    const hint = form.querySelector('.home-goal-hint');
+    if (!input) return;
+    const goal = Number(input.value);
+    if (!Number.isFinite(goal) || goal < 1 || goal > 100) return;
+
+    apiFetch(API.STREAK_GOAL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ goal })
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d || typeof d.goal !== 'number' || typeof d.today !== 'number') return;
+        input.value = String(d.goal);
+        const todayEl = document.querySelector('[data-home-streak-today]');
+        if (todayEl) {
+          todayEl.textContent = d.today + ' / ' + d.goal + ' сегодня';
+        }
+        if (hint) {
+          hint.hidden = false;
+          hint.textContent = 'Сохранено';
+        }
+      })
+      .catch(() => {
+        if (hint) {
+          hint.hidden = false;
+          hint.textContent = 'Не удалось сохранить';
+        }
+      });
+  });
 }

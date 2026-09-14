@@ -51,10 +51,10 @@ function readThemeVars() {
     primaryColor: mmTok('--color-surface-soft', '#1a1c20'),
     primaryTextColor: mmTok('--color-text-primary', '#eceef0'),
     primaryBorderColor: mmTok('--color-border-strong', '#4b505b'),
-    secondaryColor: mmTok('--color-bg-tertiary', '#12252e'),
+    secondaryColor: mmTok('--color-bg-tertiary', '#24262c'),
     secondaryTextColor: mmTok('--color-text-primary', '#eceef0'),
     secondaryBorderColor: mmTok('--color-border-strong', '#4b505b'),
-    tertiaryColor: mmTok('--color-bg-tertiary', '#12252e'),
+    tertiaryColor: mmTok('--color-bg-tertiary', '#24262c'),
     tertiaryTextColor: mmTok('--color-text-primary', '#eceef0'),
     tertiaryBorderColor: mmTok('--color-border-strong', '#4b505b'),
     mainBkg: mmTok('--color-surface-soft', '#1a1c20'),
@@ -149,6 +149,22 @@ export function failDiagram(el) {
   } else {
     el.remove();
   }
+}
+
+/** Editorial Anki: материалы участвуют в work-split только после готовности схемы. */
+function markMaterialsReady(el) {
+  const mats = el && el.closest ? el.closest('.question-materials') : null;
+  if (!mats) return;
+  mats.classList.add('is-ready');
+  mats.classList.remove('is-diagram-pending');
+}
+
+/** Ошибка завершает ожидание, но не выдаёт пустую схему за готовый материал. */
+function markMaterialsFailed(el) {
+  const mats = el && el.closest ? el.closest('.question-materials') : null;
+  if (!mats) return;
+  mats.classList.remove('is-ready');
+  mats.classList.remove('is-diagram-pending');
 }
 
 /** Имя, под которым стили mermaid переносятся мимо парсера. */
@@ -444,7 +460,10 @@ export async function renderAllMermaid(force, root) {
   const loaded = await loadMermaid();
   markDiagramLoading(scope, false);
   if (!loaded) {
-    els.forEach(failDiagram);
+    els.forEach((el) => {
+      failDiagram(el);
+      markMaterialsFailed(el);
+    });
     return;
   }
   if (!mermaidReady) initMermaid();
@@ -464,6 +483,7 @@ export async function renderAllMermaid(force, root) {
         el.setAttribute('data-rendered', 'true');
         const qd = el.closest('.question-diagram');
         if (qd) qd.removeAttribute('data-render-failed');
+        markMaterialsReady(el);
         // Свежий <svg> приходит без наших размеров, а состояние зума в
         // diagramUiState переживает ре-рендер (WeakMap по элементу схемы).
         // sizeDiagram и назначает масштаб по умолчанию, и возвращает ручной:
@@ -472,10 +492,12 @@ export async function renderAllMermaid(force, root) {
         sizeDiagram(el);
       } else {
         failDiagram(el);
+        markMaterialsFailed(el);
       }
     } catch (_) {
       scopedCleanupMermaidArtifacts(el.closest('.question-diagram') || el.parentElement || el);
       failDiagram(el);
+      markMaterialsFailed(el);
     }
   }
   wireDiagramToolbar(scope);

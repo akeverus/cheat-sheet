@@ -15,10 +15,13 @@ import com.cheatsheet.quiz.feature.interview.service.page.FocusTrainingPageServi
 import com.cheatsheet.quiz.feature.interview.service.flow.PauseService;
 import com.cheatsheet.quiz.feature.interview.service.flow.ReviewModeService;
 import com.cheatsheet.quiz.feature.interview.service.page.BookmarksPageService;
+import com.cheatsheet.quiz.feature.interview.service.page.HomePageService;
 import com.cheatsheet.quiz.feature.interview.service.page.StatsPageService;
 import com.cheatsheet.quiz.feature.interview.service.page.TopicsPageService;
+import com.cheatsheet.quiz.feature.interview.service.progress.DailyStreakService;
 import com.cheatsheet.quiz.feature.interview.usecase.BookmarkApiService;
 import jakarta.servlet.http.HttpSession;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -32,17 +35,47 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class InterviewPageMvcService {
     InterviewSessionSupport sessionSupport;
     FocusTrainingPageService focusTrainingPageService;
+    HomePageService homePageService;
     StatsPageService statsPageService;
     TopicsPageService topicsPageService;
     BookmarksPageService bookmarksPageService;
     BookmarkApiService bookmarkApiService;
     PauseService pauseService;
     ReviewModeService reviewModeService;
+    DailyStreakService dailyStreakService;
     MvcNavigationService navigationService;
     MvcModelAttributeMapper modelAttributeMapper;
     MvcRequestMapper requestMapper;
     AppProperties appProperties;
 
+    /**
+     * Хаб «Сегодня» — канонический {@code GET /}.
+     */
+    public String home(HttpSession session, Model model) {
+        InterviewSession interviewSession = sessionSupport.getSession(session);
+        HomePageService.HomePageState state = homePageService.build(
+                Optional.ofNullable(interviewSession),
+                pauseService.pausedInfo());
+        modelAttributeMapper.applyHomePageState(model, state);
+        return navigationService.homeView();
+    }
+
+    /**
+     * Сохранить дневную цель (no-JS form POST /streak/goal).
+     * Цель правится в /settings; {@code returnTo=settings} возвращает туда.
+     */
+    public String updateDailyGoal(int goal, String returnTo) {
+        dailyStreakService.updateDailyGoal(goal);
+        if ("settings".equalsIgnoreCase(returnTo)) {
+            return "redirect:/settings";
+        }
+        return navigationService.homeRedirect();
+    }
+
+    /**
+     * Фокус-тренировка ({@code GET /practice}). Имя {@code index} сохранено —
+     * исторический вход; контроллер зовёт его с канонического /practice.
+     */
     public String index(
             String topic,
             String group,
@@ -68,7 +101,7 @@ public class InterviewPageMvcService {
         // вопрос сессии. Явное намерение фиксируется здесь — единственном месте,
         // где сырые параметры ещё видны, — и шаблон рендерит честную развилку.
         model.addAttribute("blockedBrowseIntent",
-                blockedBrowseIntent(interviewSession, topic, group, important, onlyWrong, weakTopics, ordered));
+                blockedBrowseIntent(interviewSession, topic, group, important, onlyWrong, weakTopics, ordered, questionId));
         return renderFocusPage(
                 interviewSession,
                 filter,
@@ -146,6 +179,7 @@ public class InterviewPageMvcService {
                         context.weakTopicsPriority()
                 );
         modelAttributeMapper.applySurfaceState(model, surfaceState);
+        model.addAttribute("streak", dailyStreakService.getTodayProgress());
         return navigationService.settingsView();
     }
 
@@ -284,7 +318,8 @@ public class InterviewPageMvcService {
             Boolean important,
             Boolean onlyWrong,
             Boolean weakTopics,
-            Boolean ordered
+            Boolean ordered,
+            Long questionId
     ) {
         if (interviewSession == null || interviewSession.isFinished()) {
             return null;
@@ -292,8 +327,8 @@ public class InterviewPageMvcService {
         boolean intent = Boolean.TRUE.equals(weakTopics)
                 || Boolean.TRUE.equals(important)
                 || Boolean.TRUE.equals(onlyWrong)
-                || topic != null;
-        return intent ? new BrowseIntent(weakTopics, important, onlyWrong, topic, group, ordered) : null;
+                || topic != null || questionId != null;
+        return intent ? new BrowseIntent(weakTopics, important, onlyWrong, topic, group, ordered, questionId) : null;
     }
 
     /** Параметры заблокированного browse-намерения — для подписи и hidden-полей развилки. */
@@ -303,7 +338,8 @@ public class InterviewPageMvcService {
             Boolean onlyWrong,
             String topic,
             String group,
-            Boolean ordered
+            Boolean ordered,
+            Long questionId
     ) {
     }
 
@@ -328,6 +364,9 @@ public class InterviewPageMvcService {
                 questionId
         );
         modelAttributeMapper.applyFocusPageState(model, pageState, reviewMode);
+        model.addAttribute("recallAnswer", sessionSupport.recallAnswer(session, interviewSession));
+        model.addAttribute("recallAnswerKey",
+                com.cheatsheet.quiz.feature.interview.controller.HttpSessionStateService.recallAnswerKey(interviewSession));
         // ПУСТОЙ РАЗБОР ОТВЕЧАЕТ «А ГДЕ ОШИБКИ ЕСТЬ». Экран без вопроса — единственное
         // место, где этот вопрос вообще возникает, и единственное, где за него не
         // платит показ вопроса: страница ничем другим не занята. В остальных случаях

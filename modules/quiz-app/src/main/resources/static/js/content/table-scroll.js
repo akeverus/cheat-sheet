@@ -28,7 +28,11 @@
  *  и лишний регион только удлиняют путь. При ресайзе состояние переоценивается в
  *  обе стороны. */
 
-const SCROLL_QUERY = '.table-scroll, pre';
+/* Mermaid может быть размечена как <pre>, но её прокруткой управляет
+ * mermaid-renderer: на экране вопроса — внешний .diagram-viewport, в markdown —
+ * сам блок. Повторное усиление здесь создавало вложенный tab-stop «Код» внутри
+ * уже названной области «Схема — прокручиваемая область». */
+const SCROLL_QUERY = '.table-scroll, pre:not(.mermaid)';
 
 function scrollLabel(box) {
   if (box.dataset.scrollLabel) return box.dataset.scrollLabel;

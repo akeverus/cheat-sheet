@@ -24,6 +24,8 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -116,12 +118,30 @@ class SessionFlowServiceTest {
     @Test
     void applyFlashcardGradeUpdatesFlashcardSession() {
         InterviewSession session = new InterviewSession(InterviewMode.FLASHCARD, List.of(1L), "java", "backend", false, false, false, true);
+        service.applyFlashcardReveal(session);
 
         boolean updated = service.applyFlashcardGrade(session, 1L, 5);
 
         assertThat(updated).isTrue();
         verify(facade).submitFlashcardGrade(eq(1L), anyBoolean(), anyInt());
         assertThat(session.getIndex()).isEqualTo(1);
+    }
+
+    @Test
+    void gradeRequiresRevealedCurrentQuestionAndDoesNotReplay() {
+        InterviewSession session = new InterviewSession(InterviewMode.CODE_CHALLENGE,
+                List.of(1L, 2L), "java", "backend", false, false, false, true);
+        assertThat(service.applyFlashcardGrade(session, 1L, 3)).isFalse();
+        service.applyFlashcardReveal(session);
+        assertThat(service.applyFlashcardGrade(session, 2L, 3)).isFalse();
+        assertThat(session.getIndex()).isZero();
+        assertThat(service.applyFlashcardGrade(session, 1L, 3)).isTrue();
+        assertThat(service.applyFlashcardGrade(session, 1L, 3)).isFalse();
+        service.applyFlashcardReveal(session);
+        assertThat(service.applyFlashcardGrade(session, 1L, 3)).isFalse();
+        assertThat(session.getIndex()).isEqualTo(1);
+        verify(facade, times(1)).submitFlashcardGrade(eq(1L), anyBoolean(), anyInt());
+        verify(facade, never()).submitFlashcardGrade(eq(2L), anyBoolean(), anyInt());
     }
 
     @Test

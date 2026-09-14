@@ -10,6 +10,7 @@ export const API = Object.freeze({
   BOOKMARK_NOTE: '/api/bookmark/note',
   BOOKMARK_REMOVE: '/api/bookmark/remove',
   STREAK: '/api/streak',
+  STREAK_GOAL: '/api/streak/goal',
   REPORT: '/api/report'
 });
 

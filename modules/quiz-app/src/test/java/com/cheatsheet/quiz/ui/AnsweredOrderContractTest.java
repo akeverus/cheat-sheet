@@ -121,6 +121,13 @@ class AnsweredOrderContractTest {
         assertThat(js)
                 .as("явной прокрутки к верху разбора нет")
                 .contains("feedbackDiv.scrollIntoView({ block: 'start' })");
+
+        String css = CSS_COMMENT.matcher(read("static/css/pages-focus.css")).replaceAll("");
+        assertThat(css)
+                .as("mobile-header закрывает верх приземления — пользователь получает фокус, "
+                        + "но не видит вердикт")
+                .containsPattern("@media \\(max-width:\\s*900px\\)[\\s\\S]*?"
+                        + "\\.result-feedback\\s*\\{[^}]*scroll-margin-top:\\s*calc\\(44px");
     }
 
     /** Селектор без носителя — правило, которое никогда не сработает. */

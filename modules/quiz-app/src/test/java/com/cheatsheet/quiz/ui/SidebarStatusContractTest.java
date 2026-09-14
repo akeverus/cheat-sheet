@@ -78,7 +78,7 @@ class SidebarStatusContractTest {
         assertThat(markup)
                 .as("строки статуса перестали быть ссылками — витрина чисел в оболочке "
                         + "ничего не даёт сделать")
-                .containsPattern("<a class=\"sidebar-status-row\"[\\s\\S]{0,400}?th:href=\"@\\{/}\"")
+                .containsPattern("<a class=\"sidebar-status-row\"[\\s\\S]{0,400}?th:href=\"@\\{/practice}\"")
                 .containsPattern("<a class=\"sidebar-status-row\"[\\s\\S]{0,400}?onlyWrong=true");
         assertThat(markup)
                 .as("строка очереди показывается при нуле — ссылка в пустое состояние "
@@ -118,6 +118,12 @@ class SidebarStatusContractTest {
                 .as("статус считает собственные числа вместо готовых агрегатов — это "
                         + "третий источник правды о той же очереди")
                 .contains("interviewFacade.getStats(")
+                .contains("countAllFiltered(null, null, true)");
+        String homeService = new String(Files.readAllBytes(Path.of(
+                "src/main/java/com/cheatsheet/quiz/feature/interview/service/page/HomePageService.java")),
+                StandardCharsets.UTF_8);
+        assertThat(homeService)
+                .as("хаб «Сегодня» считает ошибки суммой попыток — сайдбар и CTA расходятся")
                 .contains("countAllFiltered(null, null, true)");
     }
 }

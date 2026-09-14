@@ -25,12 +25,13 @@ FEATS = {
     "starts_latin": lambda t: 1 if re.match(r"^[`A-Za-z@]", t.strip()) else 0,
     "final_dot":    lambda t: 1 if t.rstrip().endswith(".") else 0,
 }
-THRESHOLD = 0.28   # выше — признак реально выдаёт правильный ответ (случайность 0.25)
+THRESHOLD = 0.28   # Диагностический порог, не статистическое доказательство утечки.
 
 
 def measure(path):
     """-> (число блоков, {признак:direction -> накопленный guess})"""
-    d = json.load(open(path, encoding="utf-8"))
+    with open(path, encoding="utf-8") as source:
+        d = json.load(source)
     tot, hits, sep = 0, defaultdict(float), defaultdict(int)
     for q in d["questions"]:
         for b in q["blocks"]:
@@ -39,8 +40,6 @@ def measure(path):
             tot += 1
             for name, f in FEATS.items():
                 v = [f(x["text"]) for x in o]
-                if len(set(v)) == 1:
-                    continue                      # признак ничего не различает
                 for direction, val in (("max", max(v)), ("min", min(v))):
                     win = [i for i, x in enumerate(v) if x == val]
                     key = f"{name}:{direction}"
@@ -73,12 +72,16 @@ def main(argv):
         tot += t
         for k, v in h.items(): hits[k] += v
         for k, v in s.items(): sep[k] += v
-    print(f"блоков: {tot}   (случайный уровень = 0.250, порог = {THRESHOLD})")
+    if not tot:
+        raise ValueError("не проверен ни один блок")
+    print(f"блоков: {tot}   (случайный уровень = 0.250, диагностический порог = {THRESHOLD})")
     worst = [(k, v / tot) for k, v in hits.items() if v / tot >= THRESHOLD]
     for k, rate in sorted(worst, key=lambda x: -x[1]):
         print(f"{k:22} {rate:7.3f}   уникально выделяет correct: {sep[k]:>4} ({sep[k]/tot:.1%})")
     if not worst:
-        print("чисто: ни один визуальный признак не выдаёт правильный ответ")
+        print("нет превышений выбранного порога; отсутствие утечек НЕ доказано")
+    print("Диагностика нескольких осей на том же наборе: нужны независимая выборка и LLM-ревью.")
 
 
-main(sys.argv[1:])
+if __name__ == "__main__":
+    main(sys.argv[1:])

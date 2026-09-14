@@ -59,96 +59,64 @@ class StatsSummaryContractTest {
     }
 
     @Test
-    void theSummaryIsOneRowAndNotTwoFloors() throws IOException {
-        // Эволюция пина (viewport-first, 2026-09-01): прежний гейт требовал, чтобы
-        // сводка на ≥1280 становилась ДВУМЯ КОЛОННАМИ («что дальше» 27rem | «где я»).
-        // Замер 1440×900 показал цену колонн: левая кончалась на 605, правая на 970,
-        // под дверями пустовало 432×365 первого экрана, двери в колонке 210px ломали
-        // подписи, а вкладки не попадали в viewport (сводка 824px). Сводка теперь
-        // ЛЕНТАМИ: ряд дверей на всю ширину, под ним ряд «ступень | метрики»
-        // (базовая раскладка .stats-standing ≥1200). Гейт держит порядок внутри
-        // обёртки и НЕвозвращение колонной раскладки.
+    void theSummaryIsStandingOnlyWithoutNextActions() throws IOException {
+        // IA Wave 3: блок «Что делать дальше» переехал на хаб «Сегодня».
+        // На /stats остаётся сводка «где я» (стойка + метрики).
         String markup = statsMarkup();
+        assertThat(markup)
+                .as("двери «что дальше» снова на /stats — они должны жить на home")
+                .doesNotContain("class=\"stats-next-actions\"");
+        assertThat(markup)
+                .as("обёртки сводки нет")
+                .contains("<div class=\"stats-summary\">");
+        assertThat(markup)
+                .as("стойки «где я» нет")
+                .contains("class=\"stats-standing\"");
+
         int summary = markup.indexOf("<div class=\"stats-summary\">");
-        int actions = markup.indexOf("class=\"stats-next-actions\"");
         int standing = markup.indexOf("<div class=\"stats-standing\">");
-        assertThat(summary).as("обёртки сводки нет — действия и стойка снова этажами").isNotNegative();
-        assertThat(summary).as("действия обязаны лежать внутри сводки").isLessThan(actions);
-        assertThat(actions).as("стойка обязана лежать в той же сводке").isLessThan(standing);
+        assertThat(summary).isNotNegative();
+        assertThat(standing).as("стойка обязана лежать внутри сводки").isGreaterThan(summary);
 
         String css = statsCss();
         assertThat(css)
-                .as("колонная сводка (узкие двери слева от стойки) вернулась — с ней "
-                        + "вернутся пустота под дверями и вкладки за сгибом")
+                .as("колонная сводка (узкие двери слева от стойки) вернулась")
                 .doesNotContain("minmax(0, 27rem)");
-        // Ряд метрик — лента фактов без коробок, ярусом под рангом (аудит «тихий
-        // интерфейс»): четыре карточки рядом с карточкой ранга и карточками дверей
-        // давали десять равновесных боксов на экране.
         assertThat(css)
-                .as("плитки метрик снова получили коробку — вернутся десять равных "
-                        + "боксов первого экрана")
+                .as("плитки метрик снова получили коробку")
                 .containsPattern("\\.dashboard-grid \\.metric \\{[\\s\\S]{0,300}?background: transparent");
     }
 
     /**
-     * Стойка «где я» на телефоне сворачивается, и свёрнутая шапка несёт факты.
-     *
-     * <p>Замер 390×844 (iter-157): между дверями «что дальше» и вкладками разделов
-     * лежали 706px статуса (ранг 319 + четыре метрики 283 + легенда), и вкладки —
-     * рабочий интерфейс страницы — вставали на 1505-й пиксель при сгибе 844. После
-     * правки вкладки на 917 (документ 2493 против 3081), на 430 — в первом экране.
-     * Тот же довод и тот же приём, что у витрины знаков (766px) и формы отбора
-     * (345px): статус смотрят мельком, разделами работают.</p>
+     * Хаб «Сегодня» несёт primary CTA; /stats дверей больше не показывает.
      */
     @Test
-    void theStandingCollapsesOnPhonesAndItsSummaryCarriesTheFacts() throws IOException {
+    void homeCarriesPrimaryActionsAndStatsDoesNot() throws IOException {
+        String home = HTML_COMMENT.matcher(read("templates/home.html")).replaceAll("");
+        String stats = statsMarkup();
+        assertThat(home)
+                .as("на home нет primary CTA — «что делать дальше» потеряно")
+                .contains("class=\"home-primary");
+        assertThat(stats)
+                .as("stats-next-actions вернулся на /stats")
+                .doesNotContain("class=\"stats-next-actions\"");
+    }
+
+    /** Learning outcomes stay visible; optional XP must not precede them. */
+    @Test
+    void learningMetricsPrecedeOptionalExperience() throws IOException {
         String markup = statsMarkup();
-        assertThat(markup)
-                .as("стойка «где я» перестала быть раскрытием: на телефоне 706px статуса "
-                        + "снова встанут между дверями и разделами")
-                .containsPattern("<details class=\"stats-standing-disclosure\" open data-mobile-collapsed>");
-        assertThat(markup)
-                .as("шапка стойки не общий компонент раскрытия — второй рисунок одного элемента")
-                .contains("class=\"disclosure-summary stats-standing-summary\"");
-        assertThat(markup)
-                .as("в свёрнутой шапке нет фактов: свёрнутый статус обязан отвечать «где я» "
-                        + "одной строкой — ступень, уровень, точность")
-                .containsPattern("progression\\.rank\\(\\)\\.title\\(\\).+уровень");
-        assertThat(markup)
-                .as("точность в шапке считается не тем же выражением, что плитка «Точность "
-                        + "попыток», — при первой правке форматирования они разойдутся")
-                .containsPattern("stats-standing-lead-tail[^>]*th:if=\"\\$\\{metrics != null and metrics\\.hasOverallAccuracy\\(\\)}\"");
-        // Маркер-комментарий у закрывающего тега срезает фильтр комментариев этого же
-        // гейта (тот же случай ловил SummaryTopContractTest в iter-142), поэтому
-        // закрытие проверяется БАЛАНСОМ: до вкладок разделов все открытые <details>
-        // обязаны закрыться — иначе стойка проглотила бы и вкладки, и панели.
-        // Точка отсчёта — начало ТЕГА, а не имени класса: класс стоит внутри тега, и
-        // сегмент от него терял первый `<details`, из-за чего баланс всегда бился.
-        int details = markup.indexOf("<details class=\"stats-standing-disclosure\"");
-        int standing = markup.indexOf("<div class=\"stats-standing\">");
+        int metrics = markup.indexOf("<section class=\"dashboard-grid\"");
+        int experience = markup.indexOf("<details class=\"stats-rank-disclosure\"");
         int tabs = markup.indexOf("id=\"stats-tablist\"");
-        assertThat(details).isNotNegative();
-        assertThat(standing).as("стойка ушла из-под раскрытия").isGreaterThan(details);
-        assertThat(tabs).as("вкладок разделов нет").isGreaterThan(standing);
-        String beforeTabs = markup.substring(details, tabs);
+        assertThat(metrics).as("учебные метрики доступны без раскрытия опыта").isNotNegative();
+        assertThat(experience).as("опыт следует за учебными результатами").isGreaterThan(metrics);
+        assertThat(tabs).isGreaterThan(experience);
+        assertThat(markup).doesNotContain("<details class=\"stats-standing-disclosure\"");
+        String beforeTabs = markup.substring(metrics, tabs);
         long opened = Pattern.compile("<details").matcher(beforeTabs).results().count();
         long closed = Pattern.compile("</details>").matcher(beforeTabs).results().count();
-        assertThat(closed)
-                .as("раскрытие стойки не закрывается до вкладок: вкладки и панели окажутся "
-                        + "ВНУТРИ свёрнутого статуса и исчезнут вместе с ним")
-                .isEqualTo(opened);
-
-        // Порог сворачивания — до 1199, а не заводской 767 (iter-158): планшетная щель
-        // 768–1199 давала вкладкам 1326–1375-й пиксель при сгибах 768–1194. Замер после:
-        // 626/608/645 — в первом экране. Планшетный ряд стойки вместо сворачивания
-        // ОТОЗВАН замером: плитка метрики в колонке 340px оказалась ~165px высотой,
-        // и стойка выросла с 684 до 714.
-        String statsJs = CssRules.read("static/js/stats/index.js");
-        assertThat(statsJs)
-                .as("аналитика вернулась к заводскому порогу сворачивания (767): на "
-                        + "планшетах 768–1199 стойка снова встанет столбом 585–700px "
-                        + "между дверями и разделами")
-                .contains("initMobileDisclosures('(max-width: 1199px)')");
+        assertThat(closed).as("вкладки не должны оказаться внутри раскрытия").isEqualTo(opened);
     }
 
     /**
@@ -171,9 +139,8 @@ class StatsSummaryContractTest {
     void everyAccuracyPercentCarriesTheNameOfItsDenominator() throws IOException {
         String markup = statsMarkup();
         assertThat(markup)
-                .as("шапка стойки печатает безымянную «точность»: рядом с «Первой попыткой» "
-                        + "панели деталей это читается как противоречие, а не как вторая метрика")
-                .containsPattern("stats-standing-lead-tail[\\s\\S]{0,200}?точность попыток");
+                .as("общая точность должна явно отличаться от точности первых попыток")
+                .contains("Точность всех попыток");
         assertThat(markup)
                 .as("оговорка «без пропусков» описывает мёртвый outcome SKIP и отрицает "
                         + "живое правило: кнопка «Не знаю» пишет UNKNOWN, и он считается ошибкой")
@@ -203,23 +170,15 @@ class StatsSummaryContractTest {
     }
 
     @Test
-    void aDoorIsACompactRowWhoseColumnCountFollowsTheWidth() throws IOException {
-        // Эволюция (аудит «тихий интерфейс», 2026-09-02): три равные двери в ряд
-        // конкурировали между собой — squint не выделял ни одной, и человек читал
-        // все три. Теперь ряд — колонка «герой + тихие строки»: коробка и крупное
-        // число у одной двери, остальные две — строки-ссылки без рамок.
+    void nextActionDoorStylesRemainAvailableInCss() throws IOException {
+        // Разметка дверей ушла с /stats на home, но CSS-рецепт компактной двери
+        // остаётся в pages-stats (на случай переиспользования / регрессии формы).
         String css = statsCss();
         assertThat(css)
-                .as("двери снова раскладываются в равный ряд — вернётся конкуренция трёх "
-                        + "одинаковых карточек")
                 .containsPattern("\\.stats-next-actions-grid \\{[\\s\\S]{0,400}?grid-template-columns: minmax\\(0, 1fr\\)");
         assertThat(css)
-                .as("тихая дверь снова получила коробку: рамка и подложка обязаны быть "
-                        + "прозрачными в покое, иначе на экране опять три равных бокса")
                 .containsPattern("\\.stats-next-action:not\\(\\.stats-next-action-primary\\) \\{[\\s\\S]{0,400}?border-color: transparent");
         assertThat(css)
-                .as("дверь-герой перестала быть строкой: число и расшифровка обязаны стоять "
-                        + "на одной линии, иначе карточка снова вырастает вчетверо")
                 .containsPattern("\\.stats-next-action \\{[\\s\\S]{0,400}?grid-template-areas:\\s*\"label label\"\\s*\"value detail\"");
     }
 

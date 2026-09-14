@@ -283,7 +283,8 @@ class ModeWorkspaceContractTest {
     @Test
     void theBriefColumnShrinksWithoutMaterialsOnEveryWorkspaceWidth() throws IOException {
         String css = read("static/css/pages-focus.css");
-        String gate = ":has(.workspace-surface:not(.hidden)):not(:has(.question-materials))";
+        // Pending/failed Mermaid is not usable material and must not reserve a pane.
+        String gate = ":has(.workspace-surface:not(.hidden)):not(:has(.question-materials.is-ready))";
         int gatePos = css.indexOf(gate);
         int ultraWide = css.indexOf("@media (min-width: 2240px)");
         assertThat(gatePos)

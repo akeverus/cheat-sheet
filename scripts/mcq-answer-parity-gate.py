@@ -308,7 +308,7 @@ def analyze(data, topic_slug, has_sidecar, sidecar_ok):
     for b in blocks:
         for f in b["feats"]:
             toks = tokens_norm(f["text"])
-            key = (b["q"], f["label"])
+            key = (b["q"], b["bidx"], f["label"])
             for i in range(len(toks) - DUPLICATE_NGRAM_N + 1):
                 shingle = " ".join(toks[i:i + DUPLICATE_NGRAM_N])
                 if shingle in seen and seen[shingle] != key:
@@ -384,7 +384,7 @@ def load_sidecar(topic_slug, repo_root):
 def repo_root_of(path):
     p = os.path.abspath(path)
     while p != "/":
-        if os.path.isdir(os.path.join(p, ".git")):
+        if os.path.exists(os.path.join(p, ".git")):
             return p
         p = os.path.dirname(p)
     return os.getcwd()
@@ -395,16 +395,23 @@ def collect(paths):
     out = []
     for p in paths:
         if os.path.isdir(p):
-            out += sorted(glob.glob(os.path.join(p, "**", "*.json"), recursive=True))
-        elif p.endswith(".json"):
+            children = sorted(glob.glob(os.path.join(p, "**", "*.json"), recursive=True))
+            if not children:
+                raise ValueError(f"нет JSON-файлов: {p}")
+            out += children
+        elif os.path.isfile(p) and p.endswith(".json"):
             out.append(p)
-    return out
+        else:
+            raise ValueError(f"JSON-файл не найден: {p}")
+    if not out:
+        raise ValueError("не выбран ни один MCQ-файл")
+    return list(dict.fromkeys(out))
 
 
 def run_file(path):
     data = json.load(open(path, encoding="utf-8"))
     if "questions" not in data:
-        return None
+        raise ValueError("обязательное поле questions отсутствует")
     topic = data.get("topic_slug") or os.path.basename(path).replace(".json", "")
     root = repo_root_of(path)
     has_sidecar, sidecar_ok, _ = load_sidecar(topic, root)
@@ -414,36 +421,36 @@ def run_file(path):
 
 
 def blind_export(paths, out_path):
-    """JSONL для LLM blind-style / multiple-plausible проверок: correct скрыт, порядок как есть."""
-    n = 0
-    with open(out_path, "w", encoding="utf-8") as fh:
-        for path in collect(paths):
-            try:
-                data = json.load(open(path, encoding="utf-8"))
-            except Exception:
-                continue
-            if "questions" not in data:
-                continue
-            for qn, bidx, opts in iter_blocks(data):
-                rec = {
-                    "file": os.path.basename(path),
-                    "topic": data.get("topic_slug"),
-                    "q_number": qn, "block_idx": bidx,
-                    "question_text": opts and data,  # placeholder replaced below
-                }
-                # найти question_text
-                qt = None
-                for q in data["questions"]:
-                    if q.get("q_number") == qn:
-                        for b in q["blocks"]:
-                            if b.get("block_idx", 0) == bidx:
-                                qt = b.get("question_text")
-                rec["question_text"] = qt
-                rec["options"] = [{"label": o.get("label"), "text": o.get("text", "")} for o in opts]
-                rec["correct_label"] = next((o.get("label") for o in opts if o.get("correct")), None)
-                fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
-                n += 1
-    return n
+    """Слепой JSONL: видимый stem из Markdown, без ключа и sections.
+
+    Метки сохраняются для сопоставления ответов. Это экспорт для свежего
+    контекста, а не доказательство независимости уже видевшего ключ ревьюера.
+    """
+    from pathlib import Path
+    from mcq_validation import canonical_theory, read_json, question_sections, schema_validator, validate_seed
+    records = []
+    validator = schema_validator()
+    for path in collect(paths):
+        theory = canonical_theory(path)
+        if theory is None:
+            raise ValueError(f"нет канонической Markdown-пары: {path}")
+        report = validate_seed(path, validator, theory)
+        if report["status"] != "PASS":
+            raise ValueError(f"{path}: {report['errors']}")
+        visible = {q["q_number"]: q["title"] for q in question_sections(theory.read_text(encoding="utf-8"))}
+        data = read_json(path)
+        for qn, bidx, opts in iter_blocks(data):
+            records.append({
+                "file": str(Path(path).resolve().relative_to(Path(__file__).resolve().parents[1])),
+                "q_number": qn, "block_idx": bidx,
+                "visible_question": visible[qn],
+                "options": [{"label": o["label"], "text": o["text"]} for o in opts],
+            })
+    if not records:
+        raise ValueError("нет блоков для слепого ревью")
+    # Сначала проверяем ВЕСЬ набор; ошибка не оставляет частичный экспорт.
+    Path(out_path).write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records), encoding="utf-8")
+    return len(records)
 
 
 def render_human(results):
@@ -475,28 +482,41 @@ def main():
     if args.blind_export:
         if not args.paths:
             print("нужны пути", file=sys.stderr); return 2
-        n = blind_export(args.paths, args.blind_export)
+        try:
+            n = blind_export(args.paths, args.blind_export)
+        except (ImportError, OSError, ValueError, TypeError, KeyError) as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            return 2
         print(f"blind-export: {n} блоков → {args.blind_export}")
-        return 0
+        return 0 if n else 2
 
     if not args.paths:
         ap.print_help(); return 2
 
     results = []
-    for path in collect(args.paths):
+    try:
+        paths = collect(args.paths)
+    except ValueError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 2
+    failed_to_run = False
+    for path in paths:
         try:
             r = run_file(path)
         except Exception as e:
-            print(f"⚠ {path}: {e}", file=sys.stderr); continue
+            print(f"ERROR {path}: {e}", file=sys.stderr)
+            failed_to_run = True
+            results.append({"path": path, "pass": False, "status": "ERROR", "error": str(e)})
+            continue
         if r:
             results.append(r)
 
     if args.json:
         print(json.dumps(results, ensure_ascii=False, indent=2))
-        return 0 if all(r["pass"] for r in results) else 1
+        return 2 if failed_to_run else (0 if all(r["pass"] for r in results) else 1)
 
-    allpass = render_human(results)
-    return 0 if allpass else 1
+    allpass = render_human([r for r in results if "error" not in r])
+    return 2 if failed_to_run else (0 if allpass else 1)
 
 
 def selftest():

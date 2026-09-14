@@ -51,8 +51,9 @@ class QuestionNoteContractTest {
                 .contains("method=\"post\" th:action=\"@{/question/note}\"");
         assertThat(markup).contains("name=\"note\"");
         assertThat(markup)
-                .as("CSRF-поле обязательно, иначе форма без JS получит 403")
-                .containsPattern("question-note-form[\\s\\S]{0,400}_csrf\\.parameterName");
+                .as("CSRF инжектит th:action (CsrfRequestDataValueProcessor); "
+                        + "ручное поле удваивало токен в POST")
+                .doesNotContainPattern("question-note-form[\\s\\S]{0,400}_csrf\\.parameterName");
     }
 
     @Test
@@ -75,11 +76,11 @@ class QuestionNoteContractTest {
     void savingReturnsToTheSameQuestion() {
         MvcNavigationService navigation = new MvcNavigationService();
         assertThat(navigation.focusQuestionRedirect(7L))
-                .as("возврат на «/» вне сессии выдал бы СЛЕДУЮЩИЙ вопрос — заметка осталась бы у потерянного")
-                .isEqualTo("redirect:/?questionId=7");
+                .as("возврат на «/practice» вне сессии выдал бы СЛЕДУЮЩИЙ вопрос — заметка осталась бы у потерянного")
+                .isEqualTo("redirect:/practice?questionId=7");
         assertThat(navigation.focusRedirect())
                 .as("обычный возврат на экран вопроса остаётся прежним")
-                .isEqualTo("redirect:/");
+                .isEqualTo("redirect:/practice");
     }
 
     @Test

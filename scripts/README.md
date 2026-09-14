@@ -13,10 +13,8 @@
 | `cheatsheet-regenerate-toc.py` | Перегенерация блока `## Содержание` из реальных заголовков с GFM-совместимым slugify. | ✓ |
 | `cheatsheet-add-wikilinks.py` | Дополняет `### См. также` до 5 wikilinks по пересечению тегов frontmatter. | ✓ |
 | `cheatsheet-autofix-all.py` | Единая точка входа: прогоняет все 3 прохода + regenerate-toc по порядку. | ✓ |
-| `seed-options.py` | **DEPRECATED** (2026-05-25). Был оффлайн-сидером `answer_options` через Claude SDK прямо в SQLite. После перехода на PostgreSQL + JSON-сидеры заменён на stub. Текущий workflow — skill `mcq-quality-fixer` → JSON в `seed/mcq/`. | ✗ deprecated |
-| `insert-options.py` | **DEPRECATED** (2026-05-25). Ручной инсерт батча опций в SQLite. Тот же путь миграции — см. `seed-options.py`. | ✗ deprecated |
 | `healthcheck.sh` | Локальный smoke-test поднятого приложения: liveness/readiness probes + рендеринг страниц + static. Дефолт `http://localhost:8080`. | ✓ |
-| `verify-mcq-json.sh` | Валидирует MCQ JSON-сидеры по схеме `mcq-schema.json` (ajv или python jsonschema). Поддерживает staged-files режим для pre-commit. | ✓ |
+| `verify-mcq-json.sh` | Проверяет JSON Schema, межполевые инварианты и парный Markdown через Python jsonschema. `--all` — весь корпус; без аргументов — staged paths. | ✓ |
 | `verify-md-no-mcq.sh` | Гарантирует отсутствие legacy MCQ-конструкций (`> [!mcq]`, эмодзи-маркеров) в `cheatsheets/interview/**.md`. MCQ должны жить только в JSON-сидерах. | ✓ |
 
 ## Запуск
@@ -82,3 +80,18 @@ python3 scripts/cheatsheet-lint.py cheatsheets --summary || {
 Все скрипты исключают:
 - `cheatsheets/interview/` — свой формат Q&A
 - `cheatsheets/CHEATSHEETS_ARCHITECTURE_AND_RULES.md` — сам регламент, содержит примеры «плохих» паттернов внутри code fence
+
+## MCQ
+
+Стандарт: [mcq-quality-standard](../docs/mcq-quality-standard.md).
+Процесс для любой LLM: [PROMPT_PLAN_INTERVIEW](../PROMPT_PLAN_INTERVIEW.md).
+
+- `python3 -m pip install -r scripts/requirements-mcq.txt` — зависимости.
+- `bash scripts/verify-mcq-json.sh --all` — структурная проверка всего корпуса.
+- `bash scripts/mcq-tools/gates.sh <seed.json>` — предпроверки одной темы с сохранением exit codes.
+- `python3 scripts/mcq-audit.py --output docs/mcq-quality/audit-state.json --checklist-output docs/mcq-quality/file-checklist.md` — инвентарь, хеши и очередь.
+- `python3 -m unittest discover -s scripts/tests -p 'test_mcq*.py' -v` — контрпримеры валидаторов.
+
+Семантическое ревью обязательно отдельно. Мутирующие `mcq-form-balance.py`,
+`rebalance-mcq-rotation.py`, `mcq-tools/edit_*`, `mcq-struct/apply.py` не запускаются
+для диагностики. Исторические измерители в `audit/mcq/` сохранены для воспроизводимости.

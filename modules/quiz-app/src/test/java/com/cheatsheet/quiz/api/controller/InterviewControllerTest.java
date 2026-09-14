@@ -5,6 +5,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.cheatsheet.quiz.domain.InterviewSession;
@@ -41,7 +42,7 @@ class InterviewControllerTest {
     com.cheatsheet.quiz.persistence.SessionHistoryRepository sessionHistoryRepository;
 
     /**
-     * Вопрос-якорь этого класса. Без него `GET /` отдавал случайный вопрос из общей
+     * Вопрос-якорь этого класса. Без него `GET /practice` отдавал случайный вопрос из общей
      * тестовой базы: попадётся вопрос без seed-вариантов — MVC форсит флешкарту, и
      * половина разметки (форма, submit, прогресс) законно исчезает. Из-за этого
      * проверки писались условно и молча зеленели при сорванном рендере.
@@ -69,7 +70,7 @@ class InterviewControllerTest {
                 .build());
         answerOptionRepository.insertAll(id, java.util.List.of(
                 new com.cheatsheet.quiz.persistence.AnswerOptionRepository.AnswerOptionCreate(
-                        "Фиксирует вопрос, который отдаёт `GET /`", true, 0, "SEED", "Верно."),
+                        "Фиксирует вопрос, который отдаёт `GET /practice`", true, 0, "SEED", "Верно."),
                 new com.cheatsheet.quiz.persistence.AnswerOptionRepository.AnswerOptionCreate(
                         "Очищает базу перед каждым тестом", false, 1, "SEED", "Нет, база общая."),
                 new com.cheatsheet.quiz.persistence.AnswerOptionRepository.AnswerOptionCreate(
@@ -82,7 +83,7 @@ class InterviewControllerTest {
 
     /** Экран тренировки с закреплённым вопросом-фикстурой: разметка вариантов гарантирована. */
     private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder focusRequest() {
-        return get("/").param("questionId", String.valueOf(fixtureQuestionId));
+        return get("/practice").param("questionId", String.valueOf(fixtureQuestionId));
     }
 
     private String focusBody() throws Exception {
@@ -128,7 +129,7 @@ class InterviewControllerTest {
 
     /**
      * Экран тренировки с живой сессией: прогресс-рельс гейтится
-     * {@code th:if="${interviewSession != null}"}, поэтому на голом {@code GET /} его нет
+     * {@code th:if="${interviewSession != null}"}, поэтому на голом {@code GET /practice} его нет
      * вовсе — проверка рельса без старта сессии не может сработать в принципе.
      */
     private String sessionFocusBody(MockHttpSession session, int count) throws Exception {
@@ -138,7 +139,7 @@ class InterviewControllerTest {
                         .param("mode", "EXAM")
                         .param("count", String.valueOf(count)))
                 .andExpect(status().is3xxRedirection());
-        return mockMvc.perform(get("/").session(session))
+        return mockMvc.perform(get("/practice").session(session))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
     }
@@ -148,7 +149,7 @@ class InterviewControllerTest {
      *
      * <p>Нужна там, где проверяемая разметка живёт в {@code result.html}, а не на экране
      * вопроса. Кнопка избранного — ровно такой случай: на фокусе её нет вовсе, и проверка
-     * через {@code GET /} зеленела бы всегда, ничего не проверив.</p>
+     * через {@code GET /practice} зеленела бы всегда, ничего не проверив.</p>
      */
     private String resultBody() throws Exception {
         long optionId = extractLong(focusBody(), "name=\"optionId\"\\s+value=\"(\\d+)\"");
@@ -202,7 +203,7 @@ class InterviewControllerTest {
                         .param("mode", "EXAM")
                         .param("count", "10"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/"));
+                .andExpect(redirectedUrl("/practice"));
     }
 
     @Test
@@ -214,7 +215,7 @@ class InterviewControllerTest {
                         .param("mode", "EXAM")
                         .param("count", "99999"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/"))
+                .andExpect(redirectedUrl("/practice"))
                 .andReturn();
 
         InterviewSession interviewSession = (InterviewSession) session.getAttribute("interviewSession");
@@ -231,7 +232,10 @@ class InterviewControllerTest {
                         .param("mode", "EXAM")
                         .param("count", "-5"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/"))
+                .andExpect(redirectedUrl("/train?mode=EXAM"))
+                .andExpect(flash().attribute("requestedCount", "-5"))
+                .andExpect(flash().attribute("startCountInvalid", true))
+                .andExpect(flash().attribute("startError", "Сессия не начата. Укажи число вопросов от 1 до 200. Выбранные параметры сохранены."))
                 .andReturn();
 
         InterviewSession interviewSession = (InterviewSession) session.getAttribute("interviewSession");
@@ -258,7 +262,7 @@ class InterviewControllerTest {
         org.junit.jupiter.api.Assumptions.assumeTrue(
                 interviewSession != null, "STUDY-сессия не создана — нет вопросов в тестовой БД");
 
-        String learn = mockMvc.perform(get("/").session(session))
+        String learn = mockMvc.perform(get("/practice").session(session))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         // Вырожденный случай: вопрос без вариантов → флешкарта, отдельной карточки
@@ -277,7 +281,7 @@ class InterviewControllerTest {
         mockMvc.perform(post("/study-confirm").with(csrf()).session(session))
                 .andExpect(status().is3xxRedirection());
 
-        String quiz = mockMvc.perform(get("/").session(session))
+        String quiz = mockMvc.perform(get("/practice").session(session))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         // QUIZ: форма вариантов появилась, карточки изучения больше нет.
@@ -310,14 +314,14 @@ class InterviewControllerTest {
         assertThat(body).doesNotContain("id=\"left-sidebar-card\"");
         assertThat(body).contains("aria-label=\"Основная навигация\"");
         assertThat(body).contains(">Тренировка<");
-        assertThat(body).contains(">Аналитика<");
+        assertThat(body).contains(">Прогресс<");
         assertThat(body).contains(">Настройки<");
         assertThat(body).doesNotContain("tabindex=\"-1\">Следующий вопрос");
     }
 
     @Test
     void indexFallbackStateKeepsDegradedUxContract() throws Exception {
-        String body = emptyFocusBody("/");
+        String body = emptyFocusBody("/practice");
         assertFocusPageRendered(body);
         assertThat(body).contains("Нет доступных вопросов по выбранным фильтрам.");
         assertThat(body).contains("empty-action-settings");
@@ -461,7 +465,7 @@ class InterviewControllerTest {
                 .getContentAsString();
         assertThat(statsBody).doesNotContain("data-export-format=");
 
-        var indexResult = mockMvc.perform(get("/")).andReturn().getResponse();
+        var indexResult = mockMvc.perform(get("/practice")).andReturn().getResponse();
         assertThat(indexResult.getStatus()).isEqualTo(200);
         assertThat(indexResult.getContentAsString()).doesNotContain("data-export-format=");
     }
@@ -552,7 +556,7 @@ class InterviewControllerTest {
 
     @Test
     void focusRoutesExposeFocusPageNamespaceWhenRendered() throws Exception {
-        var indexResult = mockMvc.perform(get("/")).andReturn().getResponse();
+        var indexResult = mockMvc.perform(get("/practice")).andReturn().getResponse();
         assertThat(indexResult.getStatus()).isEqualTo(200);
         assertThat(indexResult.getContentAsString()).contains("<body class=\"focus-page\"");
     }
@@ -563,15 +567,15 @@ class InterviewControllerTest {
         // переносим, иначе редирект молча сбрасывал бы фильтр пользователя.
         mockMvc.perform(get("/training"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/"));
+                .andExpect(redirectedUrl("/practice"));
 
         mockMvc.perform(get("/training").param("topic", "java").param("mode", "STUDY"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/?topic=java&mode=STUDY"));
+                .andExpect(redirectedUrl("/practice?topic=java&mode=STUDY"));
 
         // Чужие параметры не тащим — редирект работает по whitelist.
         mockMvc.perform(get("/training").param("utm_source", "spam"))
-                .andExpect(redirectedUrl("/"));
+                .andExpect(redirectedUrl("/practice"));
     }
 
     @Test
@@ -774,7 +778,7 @@ class InterviewControllerTest {
      */
     @Test
     void trainingFallbackStateExposesRecoveryActionsWhenNoQuestion() throws Exception {
-        String body = emptyFocusBody("/");
+        String body = emptyFocusBody("/practice");
         assertFocusPageRendered(body);
         assertThat(body).contains("Нет доступных вопросов");
         assertThat(body).contains("empty-action-settings");
@@ -810,7 +814,7 @@ class InterviewControllerTest {
 
     @Test
     void flashcardModeKeepsContextualCopyAndRecoveryContract() throws Exception {
-        String body = focusBody("/", "FLASHCARD");
+        String body = focusBody("/practice", "FLASHCARD");
         assertFocusPageRendered(body);
         assertThat(body).contains("class=\"zone-chip\"");
         assertThat(body).contains("Флешкарты");
@@ -819,10 +823,10 @@ class InterviewControllerTest {
         assertThat(body).contains("Флешкарта: вспомни ответ, раскрой для сверки и переходи к следующему вопросу.");
         assertThat(body).doesNotContain("Выбери один вариант. Проверка и разбор идут по шагам.");
 
-        String empty = emptyFocusBody("/", "FLASHCARD");
+        String empty = emptyFocusBody("/practice", "FLASHCARD");
         assertThat(empty).contains("Нет доступных вопросов");
         assertThat(empty).contains("empty-action-retry");
-        assertThat(empty).contains("href=\"/?mode=FLASHCARD\"");
+        assertThat(empty).contains("href=\"/practice?mode=FLASHCARD\"");
         assertThat(empty).contains("Обновить флешкарты");
     }
 
@@ -857,7 +861,7 @@ class InterviewControllerTest {
                         .param("topic", topic))
                 .andExpect(status().is3xxRedirection());
 
-        String body = mockMvc.perform(get("/").session(session))
+        String body = mockMvc.perform(get("/practice").session(session))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         assertThat(body).contains("Optionless session contract question");
@@ -872,7 +876,7 @@ class InterviewControllerTest {
                         .param("questionId", String.valueOf(questionId)))
                 .andExpect(status().is3xxRedirection());
 
-        String after = mockMvc.perform(get("/").session(session))
+        String after = mockMvc.perform(get("/practice").session(session))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         assertThat(after).as("после skip односложная сессия завершена — тот же вопрос не повторяется")
@@ -906,7 +910,7 @@ class InterviewControllerTest {
         mockMvc.perform(post("/pause").with(csrf()).session(session))
                 .andExpect(status().is3xxRedirection());
 
-        String withBanner = mockMvc.perform(get("/").session(session))
+        String withBanner = mockMvc.perform(get("/practice").session(session))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         assertThat(withBanner).contains("resume-banner");
@@ -921,7 +925,7 @@ class InterviewControllerTest {
         mockMvc.perform(post("/pause/discard").with(csrf()).session(session))
                 .andExpect(status().is3xxRedirection());
 
-        String after = mockMvc.perform(get("/").session(session))
+        String after = mockMvc.perform(get("/practice").session(session))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         assertThat(after)
@@ -961,7 +965,7 @@ class InterviewControllerTest {
         // хвост сортировки набора — случайный (appendSessionPickOrder), и «первый
         // вставленный» вопрос стоит первым лишь в половине прогонов; processSkip
         // по чужому id — честный no-op, и тест флакал бы 50/50.
-        String focusBody = mockMvc.perform(get("/").session(session))
+        String focusBody = mockMvc.perform(get("/practice").session(session))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         java.util.regex.Matcher current = java.util.regex.Pattern
@@ -1037,7 +1041,7 @@ class InterviewControllerTest {
 
     @Test
     void studyModeKeepsContextualCopyAndRecoveryContract() throws Exception {
-        String body = focusBody("/", "STUDY");
+        String body = focusBody("/practice", "STUDY");
         assertFocusPageRendered(body);
         assertThat(body).contains("class=\"zone-chip\"");
         // У STUDY две под-фазы, и чип с подсказкой обязаны говорить об одной и той же.
@@ -1050,10 +1054,10 @@ class InterviewControllerTest {
         // Общая подсказка тренировки не должна протекать в STUDY.
         assertThat(body).doesNotContain("Выбери один вариант. Проверка и разбор идут по шагам.");
 
-        String empty = emptyFocusBody("/", "STUDY");
+        String empty = emptyFocusBody("/practice", "STUDY");
         assertThat(empty).contains("Нет доступных вопросов");
         assertThat(empty).contains("empty-action-retry");
-        assertThat(empty).contains("href=\"/?mode=STUDY\"");
+        assertThat(empty).contains("href=\"/practice?mode=STUDY\"");
         assertThat(empty).contains("Обновить изучение");
     }
 
@@ -1114,7 +1118,7 @@ class InterviewControllerTest {
     void focusPagesExposeSingleUnifiedPrimaryNavigation() throws Exception {
         // Editorial IA: дубль-навигация устранена — единая «Основная навигация» в
         // шапке на всех страницах; surface-tabs («Навигация по режимам фокуса») удалена.
-        var index = mockMvc.perform(get("/")).andReturn().getResponse();
+        var index = mockMvc.perform(get("/practice")).andReturn().getResponse();
         assertThat(index.getStatus()).isEqualTo(200);
         String body = index.getContentAsString();
         assertThat(body).doesNotContain("data-ui-fragment=\"focus-surface-tabs\"");
@@ -1184,7 +1188,7 @@ class InterviewControllerTest {
                         .param("topic", "interview-controller-fixture"))
                 .andExpect(status().is3xxRedirection());
 
-        String body = mockMvc.perform(get("/")
+        String body = mockMvc.perform(get("/practice")
                         .session(session)
                         .param("weakTopics", "true")
                         .param("ordered", "true"))
@@ -1198,10 +1202,65 @@ class InterviewControllerTest {
                 .containsPattern("(?s)intent-banner[\\s\\S]*?action=\"/pause\"[\\s\\S]*?name=\"weakTopics\" value=\"true\"");
 
         // Без browse-параметров развилки нет — обычный экран сессии.
-        String plain = mockMvc.perform(get("/").session(session))
+        String plain = mockMvc.perform(get("/practice").session(session))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         assertThat(plain).doesNotContain("intent-banner");
+    }
+
+    @Test
+    void pausingForAPinnedQuestionPreservesTheExactQuestion() throws Exception {
+        long targetId = questionRepository.insert(com.cheatsheet.quiz.TestQuestionBuilder.aQuestion()
+                .withSlug("pause-pinned-question-fixture")
+                .withTopic("pause-pinned-question-fixture")
+                .withQuestionText("Именно этот вопрос выбран для перехода после паузы")
+                .build());
+        MockHttpSession session = new MockHttpSession();
+        mockMvc.perform(post("/start").with(csrf()).session(session)
+                        .param("mode", "EXAM").param("count", "1")
+                        .param("topic", "interview-controller-fixture"))
+                .andExpect(status().is3xxRedirection());
+
+        String blocked = mockMvc.perform(get("/practice").session(session)
+                        .param("questionId", String.valueOf(targetId)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(blocked).contains("intent-banner")
+                .contains("name=\"questionId\" value=\"" + targetId + "\"")
+                .contains("Что делает фикстура этого теста?")
+                .doesNotContain("Именно этот вопрос выбран для перехода после паузы");
+
+        String location = mockMvc.perform(post("/pause").with(csrf()).session(session)
+                        .param("questionId", String.valueOf(targetId))
+                        .param("redirect", "https://invalid.example/"))
+                .andExpect(status().is3xxRedirection())
+                .andReturn().getResponse().getRedirectedUrl();
+        assertThat(location).isEqualTo("/practice?questionId=" + targetId);
+        String destination = mockMvc.perform(get(location).session(session))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(destination).contains("Именно этот вопрос выбран для перехода после паузы")
+                .doesNotContain("intent-banner");
+    }
+
+    @Test
+    void completedRecallSessionOffersSummaryWithoutAnEmptyFilterMessage() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        mockMvc.perform(post("/start").with(csrf()).session(session)
+                        .param("mode", "FLASHCARD").param("count", "1")
+                        .param("topic", "interview-controller-fixture"))
+                .andExpect(status().is3xxRedirection());
+        mockMvc.perform(post("/flashcard-reveal").with(csrf()).session(session)
+                        .param("questionId", String.valueOf(fixtureQuestionId)))
+                .andExpect(redirectedUrl("/practice"));
+        mockMvc.perform(post("/flashcard-grade").with(csrf()).session(session)
+                        .param("questionId", String.valueOf(fixtureQuestionId)).param("grade", "3"))
+                .andExpect(redirectedUrl("/practice"));
+        String completed = mockMvc.perform(get("/practice").session(session))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(completed).contains("Сессия завершена", "empty-action-summary", "Посмотреть итоги")
+                .doesNotContain("Сейчас нет вопросов", "empty-action-retry", "Обновить флешкарты");
+        mockMvc.perform(post("/finish").with(csrf()).session(session))
+                .andExpect(redirectedUrl("/session-summary"));
+        mockMvc.perform(get("/session-summary").session(session)).andExpect(status().isOk());
     }
 
     /** Пауза с целью фильтра возвращает на browse-URL этой цели (белый список параметров). */
@@ -1245,7 +1304,7 @@ class InterviewControllerTest {
 
     @Test
     void keyPagesAvoidInlineStylesAndInlineEvents() throws Exception {
-        var index = mockMvc.perform(get("/")).andReturn().getResponse();
+        var index = mockMvc.perform(get("/practice")).andReturn().getResponse();
         assertThat(index.getStatus()).isEqualTo(200);
         assertNoInlineUiAttributes(index.getContentAsString());
 

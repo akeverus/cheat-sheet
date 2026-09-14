@@ -174,6 +174,33 @@ class DiagramLegibilityContractTest {
                 .isNotEqualTo("none");
     }
 
+    @Test
+    void pendingDiagramRemainsObservableAndFailureClearsPendingState() throws IOException {
+        String css = CssRules.stripComments(CssRules.read("static/css/pages-focus.css"));
+        assertThat(css)
+                .as("display:none на pending-предке обнуляет rect Mermaid: IntersectionObserver "
+                        + "никогда не запускает ленивый рендер, а pending остаётся навсегда")
+                .doesNotContainPattern("is-diagram-pending[^\\{]*\\{[^}]*display\\s*:\\s*none");
+
+        String js = renderer();
+        assertThat(js)
+                .as("ошибка загрузки vendor должна снять pending и показать fallback, а не "
+                        + "оставить материал в бесконечном ожидании")
+                .containsPattern("if \\(!loaded\\)[\\s\\S]{0,220}failDiagram\\(el\\)[\\s\\S]{0,120}markMaterialsFailed\\(el\\)")
+                .doesNotContainPattern("if \\(!loaded\\)[\\s\\S]{0,220}markMaterialsReady\\(el\\)");
+
+        String shell = CssRules.stripComments(CssRules.read("static/css/shell.css"));
+        assertThat(shell)
+                .as("zoom/fit/fullscreen без SVG — мёртвые обещания; при failure видим только fallback и исходник")
+                .containsPattern("question-diagram\\[data-render-failed\\][^{]*diagram-toolbar-actions[^}]*display\\s*:\\s*none");
+
+        assertThat(css)
+                .as("focus page переопределяет display Mermaid в более позднем cascade-layer; "
+                        + "failure обязан повторно убрать и пустой host, и его toolbar")
+                .containsPattern("question-diagram\\[data-render-failed\\][^{]*mermaid[^,{]*,[^{]*"
+                        + "question-diagram\\[data-render-failed\\][^{]*diagram-toolbar-actions\\s*\\{[^}]*display\\s*:\\s*none");
+    }
+
     private CssRules.Rule lastWithSelector(List<CssRules.Rule> rules, String selector) {
         List<CssRules.Rule> found = rules.stream().filter(r -> r.hasSelector(selector)).toList();
         assertThat(found).as("правила `%s` нет вовсе", selector).isNotEmpty();

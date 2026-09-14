@@ -147,7 +147,7 @@ class RecallCompositionContractTest {
      * прижата, а на другом растянута.
      */
     @Test
-    void theCardPlateTakesItsToneFromTokensAndItsHeightFromTheViewport() throws IOException {
+    void theCardPlateTakesItsToneFromTokensWithoutReservingEmptyViewportSpace() throws IOException {
         String css = focusCss();
         int at = css.indexOf(":has(.focus-companions > *) > .focus-task > .focus-question-pane {");
         assertThat(at).as("правила плиты карточки нет").isNotNegative();
@@ -156,9 +156,8 @@ class RecallCompositionContractTest {
                 .as("тон плиты обязан браться из токена поверхности, а не быть своим цветом")
                 .contains("background: var(--color-bg-secondary)");
         assertThat(rule)
-                .as("высота карточки считается от окна: числом в пикселях она была бы "
-                        + "правильной ровно на одном экране")
-                .containsPattern("min-height: min\\(\\d+svh, \\d+rem\\)");
+                .as("действие следует за содержимым, короткий вопрос не резервирует пустой экран")
+                .doesNotContainPattern("min-height: min\\(\\d+svh, \\d+rem\\)");
     }
 
     /** Перечень режимов в правилах рельса — исторический дубль содержательного гейта. */

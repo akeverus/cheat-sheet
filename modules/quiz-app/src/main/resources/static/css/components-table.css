@@ -11,7 +11,19 @@
    `min-width: 0` снимает флекс/грид-минимум у жёлоба, но не запрещает ему
    вырасти по содержимому. Замер: страница уезжала вправо на 47px в обоих
    движках, узел-виновник — сама `table`, а не жёлоб. */
-html[data-design] .table-scroll { overflow-x: auto; min-width: 0; max-width: 100%; }
+html[data-design] .table-scroll {
+  overflow-x: auto;
+  min-width: 0;
+  max-width: 100%;
+  /* Полоса скрыта всегда (IA Wave 2): прокрутка остаётся; намёк — scroll-тени
+     у .is-scrollable ниже. */
+  scrollbar-width: none;
+}
+html[data-design] .table-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
 
 /* Подсказка о скрытых столбцах — ТОЛЬКО когда столбцы реально скрыты: класс вешает
    JS (assets/content/table-scroll.js), сравнив scrollWidth с clientWidth.

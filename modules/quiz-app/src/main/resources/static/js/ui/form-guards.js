@@ -30,6 +30,14 @@ export function initDangerousFormGuard() {
 export function initSubmitOnceGuard() {
   if (submitOnceBound) return;
   submitOnceBound = true;
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || event.defaultPrevented) return;
+    const disclosure = event.target.closest?.('.focus-session-more[open], .summary-more[open]');
+    if (!disclosure) return;
+    event.preventDefault();
+    disclosure.open = false;
+    disclosure.querySelector('summary')?.focus();
+  });
   const NAV_FORM_SELECTOR = [
     '#session-form',
     'form[action$="/flashcard-grade"]',
@@ -38,6 +46,9 @@ export function initSubmitOnceGuard() {
     'form[action$="/finish"]',
     'form[action$="/empty"]',
     'form[action$="/settings/reset-options"]',
+    'form[action$="/streak/goal"]',
+    'form[action$="/resume"]',
+    'form[action$="/pause/discard"]',
     // Вход — такая же навигационная отправка: POST уводит со страницы, и до
     // ответа сервера кнопка обязана показать «идёт», а второй клик не должен
     // порождать вторую попытку аутентификации.

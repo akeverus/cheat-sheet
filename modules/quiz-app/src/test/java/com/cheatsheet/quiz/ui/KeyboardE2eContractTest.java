@@ -156,7 +156,7 @@ class KeyboardE2eContractTest {
                 .contains("no console errors or broken requests");
         assertThat(spec)
                 .as("перечень поверхностей похудел")
-                .contains("const SURFACES = ['/', '/train', '/stats', '/topics', "
+                .contains("const SURFACES = ['/', '/practice', '/train', '/stats', '/topics', "
                         + "'/bookmarks', '/settings', '/review', '/nope-404'];");
         assertThat(spec)
                 .as("pageerror перестал ловиться — именно он был слепым пятном")
@@ -193,15 +193,14 @@ class KeyboardE2eContractTest {
         String spec = read("e2e/reflow.spec.js");
         assertThat(spec)
                 .as("перечень reflow-поверхностей похудел")
-                .contains("const SURFACES = ['/', '/train', '/stats', '/topics', "
+                .contains("const SURFACES = ['/', '/practice', '/train', '/stats', '/topics', "
                         + "'/bookmarks', '/settings', '/nope-404'];");
         assertThat(spec).contains("toBeLessThanOrEqual(1)");
-        // Зум-матрица macOS (iter-183): ширины реальных зумов 90/110/125% ложатся
-        // МЕЖДУ брейкпоинтами респонсив-матрицы — их переломы невидимы стандартным
-        // прогонам. 1152 = 1440@125%, 1382 = 1728@125%, 1571 = 1728@110%.
+        // Промежуточные CSS-ширины держат переходы между основными раскладками.
+        // Это reflow-проверка, а не проверка механизма масштабирования браузера.
         assertThat(spec)
-                .as("зум-матрица пропала: переломы между брейкпоинтами снова невидимы")
-                .contains("const ZOOM_WIDTHS = [1152, 1382, 1571];");
+                .as("промежуточная reflow-матрица пропала: переломы между брейкпоинтами снова невидимы")
+                .contains("const REFLOW_WIDTHS = [756, 1152, 1382, 1571];");
     }
 
     /**

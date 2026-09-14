@@ -22,7 +22,8 @@ class SessionSummaryTest {
     void accuracyUsesAnsweredNotPlannedTotal() {
         // Запланировано 5, отвечено 3 (2 верных, 1 неверный) — сессия прервана.
         SessionSummary summary = base()
-                .totalQuestions(5)
+                .totalQuestions(3)
+                .plannedQuestions(5)
                 .correctCount(2)
                 .wrongCount(1)
                 .unknownCount(0)
@@ -30,6 +31,9 @@ class SessionSummaryTest {
 
         // 2/3, а не 2/5=40 — неотвеченные не размывают точность.
         assertThat(summary.getAccuracy()).isEqualTo(200.0 / 3.0);
+        assertThat(summary.getTotalQuestions()).isEqualTo(3);
+        assertThat(summary.getPlannedQuestions()).isEqualTo(5);
+        assertThat(summary.isPartial()).isTrue();
     }
 
     @Test

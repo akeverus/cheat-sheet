@@ -1,16 +1,12 @@
-# MCQ Review Sidecars — ROUND 8
+# Исторические review-sidecars
 
-Per-file review records. One JSON per topic slug: `<topic_slug>.json`.
+Файлы тем содержат заявления разных раундов и разной структуры. Поле AUDITED,
+дата или список агентов сами по себе не доказывают полноту проверки.
 
-Каждый файл содержит запись на каждый `q_number/block_idx` со флагами проверок
-(stem / correct / каждый distractor / parity). `null` = не проверено (никогда не
-конвертировать автоматически в `true`). Файл не DONE, пока нет записи на каждый блок.
+Действующий стандарт: [mcq-quality-standard](../../mcq-quality-standard.md).
+Процесс: [PROMPT_PLAN_INTERVIEW](../../../PROMPT_PLAN_INTERVIEW.md).
+Текущая проверка применимости: [audit-state.json](../audit-state.json).
+Новые evidence текущего аудита: [audit-evidence.json](../audit-evidence.json).
 
-Схема записи блока — см. `PLAN_INTERVIEW.md` §2 и §4; LLM-поля — §31.5 в
-`PROMPT_PLAN_INTERVIEW.md`.
-
-**`SKEL` (HARD, LLM):** в `llm_review` обязательно `skel: true` — все 4
-`option.text` на одном surface skeleton. Pre-check:
-`python3 scripts/mcq-skel-gate.py <json>` ловит грубые mismatch, но **не**
-принимает `skel`. Без LLM-`skel: true` запрещены `four_option_pass: true`, а в
-мастер-плане — `PAR=✅` и `FINAL=✅`.
+Старые записи не переписываются в PASS нового стандарта. Хеши пары и покрытие
+проверяются отдельно; изменение контента инвалидирует зависимые результаты.

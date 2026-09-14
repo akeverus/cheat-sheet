@@ -11,7 +11,10 @@ class MvcNavigationServiceTest {
 
     @Test
     void returnsStableRedirectsAndViews() {
-        assertThat(service.focusRedirect()).isEqualTo("redirect:/");
+        assertThat(service.focusRedirect()).isEqualTo("redirect:/practice");
+        assertThat(service.focusQuestionRedirect(3L)).isEqualTo("redirect:/practice?questionId=3");
+        assertThat(service.homeRedirect()).isEqualTo("redirect:/");
+        assertThat(service.homeView()).isEqualTo("home");
         assertThat(service.sessionSummaryRedirect()).isEqualTo("redirect:/session-summary");
         assertThat(service.focusView()).isEqualTo("focus-training");
         assertThat(service.settingsView()).isEqualTo("settings");

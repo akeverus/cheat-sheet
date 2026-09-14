@@ -16,11 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Главное действие экрана вопроса достижимо без прокрутки на любом вьюпорте.
  *
  * <h2>Найденный дефект, а не гипотеза</h2>
- * Проект уже признал этот дефект дефектом — но только на мобиле. В блоке
- * {@code @media (max-width: 600px)} та же панель закреплена {@code position: fixed} с
- * обоснованием «главное действие MCQ-ответа — закреплённая нижняя панель, а не кнопка,
- * тонущая под длинным списком вариантов». Причина в этой формулировке не мобильная:
- * длина списка вариантов от ширины окна не зависит.
+ * На телефоне действие остаётся в потоке: fixed-панель перекрывала длинный первый
+ * вариант. На ширинах от 601px панель закрепляется sticky внутри собственной
+ * колонки, где её мера и клиренс вариантов контролируются формой.
  *
  * <p>Замер WebKit 18.2 (DPR 2, дефолтная раскладка, до правки) показал ровно то, что
  * обоснование и описывает — на самых ходовых MacBook-вьюпортах кнопка стояла НИЖЕ сгиба:
@@ -52,8 +50,8 @@ class FocusPrimaryActionReachContractTest {
 
     private static final Path FOCUS_CSS = Path.of("src/main/resources/static/css/pages-focus.css");
 
-    /** Верхняя граница мобильного блока, где та же панель закреплена {@code position: fixed}. */
-    private static final int MOBILE_PINNED_UPPER_BOUND_PX = 600;
+    /** Верхняя граница телефонного потока без overlay-панели. */
+    private static final int MOBILE_FLOW_UPPER_BOUND_PX = 600;
 
     /**
      * Правило ищется по намерению («панель вопроса закреплена»), а не по эталонному
@@ -151,20 +149,19 @@ class FocusPrimaryActionReachContractTest {
     }
 
     @Test
-    void desktopRangeButtsAgainstTheMobilePinnedRange() {
+    void desktopRangeButtsAgainstTheMobileFlowRange() {
         int minWidth = desktopPinBlock().minWidthPx();
 
         assertThat(minWidth)
-                .as("диапазон desktop-закрепления не стыкуется с мобильным: панель закреплена "
-                        + "fixed при max-width %dpx и sticky при min-width %dpx. Разрыв оставит "
-                        + "полосу ширин с утонувшей кнопкой, нахлёст — две закреплённые панели",
-                        MOBILE_PINNED_UPPER_BOUND_PX, minWidth)
-                .isEqualTo(MOBILE_PINNED_UPPER_BOUND_PX + 1);
+                .as("desktop sticky должен начинаться сразу после телефонного диапазона: "
+                        + "mobile-flow заканчивается на %dpx, sticky начинается на %dpx",
+                        MOBILE_FLOW_UPPER_BOUND_PX, minWidth)
+                .isEqualTo(MOBILE_FLOW_UPPER_BOUND_PX + 1);
         assertThat(css)
-                .as("мобильное закрепление панели (@media (max-width: %dpx)) исчезло — граница "
-                        + "стыка, на которую опирается desktop-правило, больше не существует",
-                        MOBILE_PINNED_UPPER_BOUND_PX)
-                .contains("@media (max-width: " + MOBILE_PINNED_UPPER_BOUND_PX + "px)");
+                .as("на телефоне нужен отдельный flow-override: fixed-док иначе перекрывает "
+                        + "вариант и нижнюю часть формы")
+                .contains("@media (max-width: " + MOBILE_FLOW_UPPER_BOUND_PX + "px)")
+                .containsPattern("#interview-form[^{]*training-actions[^{}]*\\.action-footer\\s*\\{[^}]*position:\\s*static");
     }
 
     @Test

@@ -7,7 +7,7 @@ import { initOfflineBanner } from './ui/alerts.js';
 import { hydrateProgressBarsFromData } from './core/dom.js';
 import { highlightPageCodeBlocks } from './content/highlight.js';
 import { initScrollableTables } from './content/table-scroll.js';
-import { initStreakBar } from './quiz/streak.js';
+import { initStreakBar, initDailyGoalForm } from './quiz/streak.js';
 import { initFavorites } from './quiz/favorites.js';
 import { initBookmarksPage } from './quiz/bookmarks.js';
 import { initDangerousFormGuard, initSubmitOnceGuard } from './ui/form-guards.js';
@@ -45,6 +45,8 @@ async function loadSettingsModules() {
   initExportButtons();
   initPersonalization();
   initSettingsTabs();
+  const { initMobileDisclosures } = await import('./ui/mobile-disclosures.js');
+  initMobileDisclosures('(max-width: 900px)');
 }
 
 async function loadQuizModules() {
@@ -107,6 +109,7 @@ function boot() {
       initFavorites();
       initBookmarksPage();
       initStreakBar();
+      initDailyGoalForm();
       initDangerousFormGuard();
       // Раньше initSubmitOnceGuard: перехват повторного действия обязан стоять
       // на фазе capture до того, как хоть один контрол успеет стать занятым.

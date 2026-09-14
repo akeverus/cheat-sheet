@@ -97,9 +97,9 @@ class StudyReadingContractTest {
     void theBriefFloorFollowsWhatTheColumnHolds() throws IOException {
         List<CssRules.Rule> grids = studyGrids(focus());
         List<CssRules.Rule> сМатериалом = grids.stream()
-                .filter(r -> r.selectors().contains(":has(.question-materials)")).toList();
+                .filter(r -> r.selectors().contains(":has(.question-materials.is-ready)")).toList();
         List<CssRules.Rule> безМатериала = grids.stream()
-                .filter(r -> !r.selectors().contains(":has(.question-materials)")).toList();
+                .filter(r -> !r.selectors().contains(":has(.question-materials.is-ready)")).toList();
         assertThat(сМатериалом).as("правила для колонки С материалами нет").isNotEmpty();
         assertThat(безМатериала).as("правила для колонки без материалов нет").isNotEmpty();
 

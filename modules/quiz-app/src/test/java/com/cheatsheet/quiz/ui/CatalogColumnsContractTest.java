@@ -70,7 +70,7 @@ class CatalogColumnsContractTest {
         assertThat(markup.indexOf("class=\"catalog-legend\""))
                 .as("шапка колонок обязана стоять ДО списка разделов, иначе она "
                         + "подписывает то, что уже прочитано")
-                .isLessThan(markup.indexOf("class=\"card catalog-group\""));
+                .isLessThan(markup.indexOf("class=\"catalog-group\""));
         assertThat(markup)
                 .as("шапка колонок печатается над пустым каталогом: подписи без строк")
                 .containsPattern("class=\"catalog-legend\"[^>]*th:if=\"\\$\\{!#lists.isEmpty\\(catalogSections\\)}\"");
@@ -171,7 +171,7 @@ class CatalogColumnsContractTest {
     @Test
     void whenTheColumnsCollapseTheLabelsAppear() throws IOException {
         String css = topicsCss();
-        String narrow = mediaBlock(css, "@media (max-width: 1099px)");
+        String narrow = mediaBlock(css, "@container topics (max-width: 56.249rem)");
         assertThat(narrow)
                 .as("на узком экране шапка колонок обязана уйти: её колонок больше нет")
                 .containsPattern("\\.catalog-legend \\{\\s*display: none");
@@ -224,10 +224,8 @@ class CatalogColumnsContractTest {
      */
     @Test
     void theTableColumnsAreDerivedFromTheSameTokens() throws IOException {
-        // Скобка в запросе обязательна: выше в файле стоит `@media (min-width: 1100px)
-        // and (max-width: 1439px)`, и поиск по префиксу возвращал ЕГО тело — гейт
-        // проверял не тот блок и падал на верном коде.
-        String block = mediaBlock(topicsCss(), "@media (min-width: 1100px) {");
+        // Порог зависит от ширины содержимого и размера текста, включая увеличенный шрифт.
+        String block = mediaBlock(topicsCss(), "@container topics (min-width: 56.25rem) {");
         assertThat(block)
                 .as("таблица раздела перестала считать колонки от шапки: без fixed "
                         + "ширины колонок определяет содержимое ячеек")

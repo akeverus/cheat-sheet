@@ -20,10 +20,11 @@ def compute_rotation(data):
 
 
 def ratio(pos):
-    vals = [v for v in pos.values() if v > 0]
-    if not vals:
+    # Нулевая частота B/C/D раньше исчезала: 100% ключей A считались ratio=1.
+    vals = [pos.get(label, 0) for label in 'ABCD']
+    if not any(vals):
         return 0
-    return max(vals) / max(min(vals), 1)
+    return max(vals) / min(vals) if min(vals) else float('inf')
 
 
 def rebalance(file_path, target_ratio=2.0):

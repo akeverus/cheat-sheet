@@ -213,37 +213,34 @@ class MobileContextContractTest {
      * Справочный материал не стоит между вопросом и ответом, пока место одноколоночное.
      * Замер на 390×844 (экзамен с кодом): первый вариант 1216 → 809, вопрос 282 → 211.
      *
-     * <p>iter-123 — УСЛОВИЕ БЫЛО ЗАПИСАНО ШИРИНОЙ, А ОЗНАЧАЛО ДРУГОЕ. Правило стояло в
-     * `@media (max-width: 1279px)` и работало, пока одноколоночность совпадала с узким
-     * окном. Как только рабочее место стало включаться по СОДЕРЖИМОМУ поверхности,
-     * совпадение кончилось: у флешкарты до раскрытия колонка одна на любой ширине, и
-     * справка снова встала между вопросом и действием (замер 1440×900: «Показать ответ»
-     * на 917 при сгибе 900). Правило теперь безусловное, а рабочее место перебивает его
-     * собственным `display: grid`.</p>
+     * <p>Порядок закреплён самой разметкой, а не визуальным {@code order}: так
+     * клавиатурный маршрут и порядок чтения совпадают с экраном на любой ширине.
+     * Сначала идут вопрос, работа и пост-разбор, затем вторичный контекст, последней —
+     * жалоба.</p>
      */
     @Test
     void referenceMaterialFollowsTheWorkWhileTheDeskIsOneColumn() throws IOException {
-        String css = focusCss();
+        String markup = read("templates/focus-training.html");
+        int question = markup.indexOf("class=\"focus-question\"");
+        int work = markup.indexOf("id=\"interview-form\"");
+        int postAnswer = markup.indexOf("fragments/post-answer-controls :: post-answer-controls");
+        int companions = markup.indexOf("class=\"focus-companions");
+        int companionClose = markup.indexOf("/.focus-companions");
+        int report = markup.indexOf("class=\"report-zone\"");
 
-        assertThat(css).as("рабочая колонка перестала быть flex-контейнером — "
-                        + "без него порядок блоков не переставить")
-                .containsPattern("\\.focus-main \\{\\s*display: flex;\\s*flex-direction: column;");
-        // Правило переставляет теперь ОДИН узел — обёртку спутников, внутри которой
-        // живёт справка (и вместе с ней ход сессии и заметка). Проверять имя
-        // `.topic-brief` в селекторе больше нельзя: это было бы требование к
-        // написанию правила, а не к его смыслу. Смысл — справка идёт ЗА работой,
-        // и он держится двумя фактами: обёртка переставляется, справка внутри неё.
-        assertThat(css).as("справка о теме снова стоит между вопросом и вариантами: "
-                        + "305px поперёк пути к ответу")
-                .containsPattern("\\.focus-main \\.focus-companions \\{ order: 1");
-        assertThat(read("templates/focus-training.html"))
-                .as("справка вне обёртки спутников — правило перестановки её не достанет")
-                .containsPattern("(?s)class=\"focus-companions\".{0,4000}class=\"topic-brief\"");
-        assertThat(css).as("хвост страницы («сообщить о проблеме») обогнал справку")
-                .containsPattern("\\.report-zone \\{ order: 2");
-        assertThat(css).as("правило перестановки снова заперто в медиазапрос по ширине — "
-                        + "оно перестанет действовать там, где колонка одна на широком экране")
-                .doesNotContainPattern("@media \\(max-width: 1279px\\) \\{\\s*html\\[data-design\\] \\.focus-page \\.focus-main \\{");
+        assertThat(question).as("вопроса нет в разметке").isNotNegative();
+        assertThat(work).as("рабочая форма должна идти после вопроса").isGreaterThan(question);
+        assertThat(postAnswer).as("пост-разбор должен идти после работы").isGreaterThan(work);
+        assertThat(companions)
+                .as("справка снова стоит между вопросом и ответом")
+                .isGreaterThan(postAnswer);
+        assertThat(companionClose).as("обёртка спутников не закрыта").isGreaterThan(companions);
+        assertThat(report).as("жалоба должна оставаться хвостом страницы").isGreaterThan(companionClose);
+
+        String inside = markup.substring(companions, companionClose);
+        assertThat(inside)
+                .as("справка о теме оказалась вне обёртки спутников")
+                .contains("class=\"topic-brief\"");
     }
 
     /**

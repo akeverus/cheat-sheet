@@ -2,6 +2,8 @@ package com.cheatsheet.quiz.ui;
 
 import com.cheatsheet.quiz.config.web.JsPreloadService;
 import com.cheatsheet.quiz.feature.interview.service.page.StatsPageService;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 
@@ -75,6 +77,17 @@ class TemplateFragmentContractTest {
         ClassPathResource resource = new ClassPathResource(classpathLocation);
         byte[] bytes = resource.getInputStream().readAllBytes();
         return new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void homeKeepsHeadingActionAndRecentHistoryInOneEditorialScene() throws IOException {
+        Element stage = Jsoup.parse(readTemplate("templates/home.html")).selectFirst(".home-stage");
+
+        assertThat(stage).as("у Home нет общей сцены").isNotNull();
+        assertThat(stage.children())
+                .as("заголовок, главное действие и история должны быть прямыми зонами одной сцены")
+                .extracting(Element::className)
+                .containsExactly("page-head", "home-primary", "home-recent stack-quiet");
     }
 
     /**
@@ -188,11 +201,21 @@ class TemplateFragmentContractTest {
         String stats = readTemplate("templates/stats.html");
         String result = readTemplate("templates/result.html");
         String settings = readTemplate("templates/settings.html");
+        String home = readTemplate("templates/home.html");
 
         assertThat(focusTraining).contains("<body class=\"focus-page\"");
         assertThat(stats).contains("<body class=\"stats-page\">");
         assertThat(settings).contains("<body class=\"settings-page\">");
         assertThat(result).contains("<body class=\"result-page\">");
+        assertThat(home).contains("<body class=\"home-page\">");
+        assertThat(home).contains("class=\"home-primary");
+        assertThat(home).contains("class=\"home-stage\"");
+        assertThat(home).contains("@modeUtils.displayName(rec.mode())");
+        assertThat(home).contains("rec.correctCount() + ' из ' + rec.answeredCount() + ' верно");
+        assertThat(home).doesNotContain("eyebrow\">Cheat Sheet");
+        assertThat(home).contains("ed-page page-canvas");
+        assertThat(stats).doesNotContain("class=\"stats-next-actions\"");
+        assertThat(stats).contains("ed-page page-canvas");
         assertThat(stats).contains("filter-bar-form");
 
         assertThat(focusTraining).contains("fragments/training-actions :: training-actions");
@@ -229,7 +252,7 @@ class TemplateFragmentContractTest {
         assertThat(focusTraining).contains("Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.");
         // Эмодзи 🏁 заменён глифом спрайта #flag (iter-112: язык один, префикса i- нет).
         assertThat(focusTraining).contains("#flag");
-        assertThat(focusTraining).contains("Сессия завершена.");
+        assertThat(focusTraining).contains("Сессия завершена");
         assertThat(focusTraining).doesNotContain("chipText='Результат'");
         assertThat(focusTraining).doesNotContain("extraButtonText='Подробнее'");
         assertThat(focusTraining).contains("empty-action-settings");
@@ -246,6 +269,11 @@ class TemplateFragmentContractTest {
         assertThat(result).contains("class=\"question-main flow-stack-md\"");
         assertThat(result).contains("class=\"result-actions\"");
         assertThat(result).contains("th:if=\"${interviewSession != null and interviewSession.finished}\"");
+        // Тихий прогресс сессии на /result: index уже = answered после registerAnswer.
+        assertThat(result).contains("result-session-progress");
+        assertThat(result).contains("aria-valuenow=${interviewSession.getIndex()}");
+        assertThat(result).contains("data-progress=${#numbers.formatDecimal(progressPercent != null ? progressPercent : 0, 1, 'NONE', 1, 'POINT')}");
+        assertThat(result).doesNotContain("aria-valuenow=${interviewSession.getIndex() + 1}");
         // Кнопка «доп. анализ» (#extra-analysis-toggle-result) удалена вместе с
         // AI-провайдерами (AIR-1) — на result.html остаётся только серверный блок
         // «Похожие вопросы» (#result-related-questions). Проверка порядка
@@ -434,7 +462,7 @@ class TemplateFragmentContractTest {
     /**
      * Словарь имён разделов (UX-15-P3/IA-13, REF-022): страница зовётся именем
      * пункта навигации — как у /topics (пункт «Темы» → h1 «Темы»). У аналитики
-     * было ТРИ имени (пункт «Аналитика», h1 «Твой прогресс», eyebrow «Учебная
+     * было ТРИ имени (пункт «Прогресс», h1 другое имя, eyebrow «Учебная
      * аналитика») — information scent ломался: пункт вёл на страницу с чужим
      * заголовком. И вкладка внутри аналитики звалась «Темы» — именем ДРУГОГО
      * раздела first-level: два одинаковых слова с разным содержанием.
@@ -444,10 +472,10 @@ class TemplateFragmentContractTest {
         String stats = readTemplate("templates/stats.html");
         assertThat(stats)
                 .as("h1 аналитики обязан совпадать с именем пункта навигации")
-                .contains("<h1>Аналитика</h1>");
+                .contains("<h1>Прогресс</h1>");
         assertThat(stats)
-                .as("«Твой прогресс» живёт как eyebrow-контекст, а не как чужое имя страницы")
-                .containsPattern("eyebrow\">Твой прогресс<");
+                .as("eyebrow даёт контекст «учебная аналитика», а имя страницы — «Прогресс»")
+                .containsPattern("eyebrow\">Учебная аналитика<");
         assertThat(stats)
                 .as("вкладка аналитики не может зваться именем раздела /topics")
                 .containsPattern("data-tab-hash=\"topics\">По темам<");
@@ -468,7 +496,7 @@ class TemplateFragmentContractTest {
                 .containsPattern("(?s)page-head-lead[\\s\\S]{0,400}?optionsBankResetAllowed or multiSecurityMode[\\s\\S]{0,200}?управление данными");
         assertThat(settings)
                 .as("вариант без данных существует")
-                .contains("'Оформление тренажёра.'");
+                .contains("'Параметры подготовки и оформление.'");
     }
 
     /**
@@ -486,6 +514,9 @@ class TemplateFragmentContractTest {
                         "no-JS пользователь видит пустую секцию без объяснения")
                 .containsPattern("(?s)id=\"panel-appearance\"[\\s\\S]{0,900}?<noscript>\\s*" +
                         "<div class=\"notice notice-info\">[\\s\\S]{0,400}?JavaScript");
+        assertThat(settings)
+                .as("ссылка «собрать сессию» ведёт на /train (UXD-001), не на экран вопроса")
+                .containsPattern("(?s)<noscript>[\\s\\S]{0,500}?th:href=\"@\\{/train\\}\"[\\s\\S]{0,80}?собрать сессию");
     }
 
     @Test
@@ -493,9 +524,9 @@ class TemplateFragmentContractTest {
         String settings = readTemplate("templates/settings.html");
 
         assertThat(settings).contains("<h3>Экспорт данных</h3>");
-        assertThat(settings).contains("Удалить варианты ответов у всех вопросов");
+        assertThat(settings).contains("Удалить текущие варианты ответов у всех вопросов");
         assertThat(settings).contains("До перезапуска приложения");
-        assertThat(settings).contains("при запуске варианты восстановятся из JSON-сидеров");
+        assertThat(settings).contains("При следующем запуске варианты загрузятся из банка заново");
         assertThat(settings).doesNotContain("сгенерированные AI варианты ответов");
         assertThat(settings).doesNotContain("сгенерированы заново при следующем показе");
         assertThat(settings).doesNotContain("будут перегенерированы заново");
@@ -565,7 +596,7 @@ class TemplateFragmentContractTest {
         String stats = readTemplate("templates/stats.html");
 
         int panel = stats.indexOf("id=\"stats-panel-topics\"");
-        int selection = stats.indexOf("class=\"card filter-bar\"");
+        int selection = stats.indexOf("class=\"filter-bar\"");
 
         assertThat(panel).isNotNegative();
         assertThat(selection).isGreaterThan(panel);
@@ -1050,7 +1081,7 @@ class TemplateFragmentContractTest {
         // Дефолт — тёмная тема (решение пользователя), светлая — явный тумблер.
         // Контракт направления FOLIO (миссия 2026-08-29):
         // (1) :root несёт тёмную ветку «графит и чернила» (холодный графит #141518
-        //     + кобальт #366fc5),
+        //     + терракотовый штамп #c26a4a),
         // (2) :root[data-theme="light"] несёт бумажную светлую (#f9f8f6),
         // (3) НИ ОДНОГО html[data-design="X"] scoped-цветоблока,
         // (4) снятые палитры не возвращаются ЗНАЧЕНИЯМИ токенов: ни warm ivory/clay
@@ -1060,7 +1091,7 @@ class TemplateFragmentContractTest {
         //     позапрошлое направление, молча пропускает откат к прошлому.
         String css = readTemplate("static/css/tokens.css");
 
-        // База: :root с тёмной веткой направления (графит + кобальт).
+        // База: :root с тёмной веткой направления (графит + терракота).
         assertThat(css).contains(":root");
         assertThat(css).contains("--color-bg-primary");
         assertThat(css).contains("--color-accent-primary");
@@ -1074,8 +1105,11 @@ class TemplateFragmentContractTest {
             .as("светлая канва — бумага, а не бежевый пергамент")
             .contains("--color-bg-primary:   #f9f8f6");
         assertThat(css)
-            .as("кобальт — единственный интерактивный акцент")
-            .contains("--color-accent-primary:        #366fc5");
+            .as("терракота — единственный интерактивный акцент Folio")
+            .contains("--color-accent-primary:        #c26a4a");
+        assertThat(css)
+            .as("предыдущий SaaS-кобальт не должен возвращаться значением акцента")
+            .doesNotContain("--color-accent-primary:        #366fc5");
 
         // SINGLE-SOURCE: НИ ОДНОГО html[data-design="X"] цвето-override-блока —
         // включая folio (значения живут в :root).
@@ -1125,9 +1159,9 @@ class TemplateFragmentContractTest {
         // код-номер (aria-hidden). Даёт SR-навигации якорь верхнего уровня.
         assertThat(error).contains("aria-labelledby=\"error-heading\"");
         assertThat(error).contains("<h1 id=\"error-heading\" class=\"error-title\"");
-        // Декоративные эйбрау и статус-номер скрыты от SR.
-        assertThat(error).contains("class=\"error-eyebrow\" aria-hidden=\"true\"");
-        assertThat(error).contains("class=\"error-code\"");
+        // The concise status is real text; there is no duplicate decorative code.
+        assertThat(error).contains("class=\"error-eyebrow\"");
+        assertThat(error).doesNotContain("class=\"error-code\"");
         // Явные пути дальше — nav с меткой (тупик IA исправлен).
         assertThat(error).contains("<nav class=\"error-actions\" aria-label=\"Что дальше\">");
     }
@@ -1215,9 +1249,10 @@ class TemplateFragmentContractTest {
                 .as("две реализации одной оси разошлись бы молча")
                 .doesNotContain("setAttribute('data-reading-width'")
                 .doesNotContain("setAttribute('data-density'");
-        // После первого кадра остаётся только размер шрифта: он единственный из
-        // трёх не двигает геометрию блоков.
-        assertThat(bootstrapJs).contains("window.__fontScale");
+        // Размер шрифта меняет rem-размеры и переносы: применяем его до первого
+        // кадра вместе с остальными осями, без второй реализации в модуле.
+        assertThat(head).contains("window.__fontScale", "applyFont(fontScale)");
+        assertThat(bootstrapJs).doesNotContain("root.style.fontSize", "localStorage.getItem");
         // OPS-005: vendor-ассеты self-hosted, без CDN SRI. @font-face едет первой строкой ленты.
         assertThat(manifest).contains("* /css/fonts-local.css");
         // PERF: preload шрифтов создаёт head-скрипт, НЕ статические линки — для
