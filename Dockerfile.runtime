@@ -1,0 +1,11 @@
+FROM eclipse-temurin:17-jre
+RUN groupadd -r -g 10001 app && useradd -r -u 10001 -g app -s /bin/false app
+WORKDIR /app
+COPY docker-dist/app.jar app.jar
+COPY cheatsheets /app/cheatsheets
+RUN chown -R app:app /app
+USER app
+ENV SPRING_PROFILES_ACTIVE=prod
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError"
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]

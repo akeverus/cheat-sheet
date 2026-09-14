@@ -1,0 +1,71 @@
+name: MCQ structural quality
+
+# Прежний CI не запускал MCQ CLI при изменениях теории и самих валидаторов.
+# Полный structural gate предотвращает пропуск парных Markdown и второго блока.
+on:
+  push:
+    paths:
+      - 'modules/quiz-app/src/main/resources/seed/**'
+      - 'cheatsheets/interview/**'
+      - 'scripts/mcq*'
+      - 'scripts/mcq-tools/**'
+      - 'scripts/verify-mcq-json.sh'
+      - 'scripts/verify-md-no-mcq.sh'
+      - 'scripts/tests/test_mcq*.py'
+      - 'scripts/requirements-mcq.txt'
+      - 'docs/mcq-quality*/**'
+      - 'docs/mcq-quality-standard.md'
+      - '.pre-commit-config.yaml'
+      - '.github/workflows/mcq-quality.yml'
+  pull_request:
+    paths:
+      - 'modules/quiz-app/src/main/resources/seed/**'
+      - 'cheatsheets/interview/**'
+      - 'scripts/mcq*'
+      - 'scripts/mcq-tools/**'
+      - 'scripts/verify-mcq-json.sh'
+      - 'scripts/verify-md-no-mcq.sh'
+      - 'scripts/tests/test_mcq*.py'
+      - 'scripts/requirements-mcq.txt'
+      - 'docs/mcq-quality*/**'
+      - 'docs/mcq-quality-standard.md'
+      - '.pre-commit-config.yaml'
+      - '.github/workflows/mcq-quality.yml'
+
+jobs:
+  structural:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install -r scripts/requirements-mcq.txt
+      - name: Validator counterexamples
+        run: python3 -m unittest discover -s scripts/tests -p 'test_mcq*.py' -v
+      - name: All seeds, cross-field invariants and Markdown pairs
+        run: bash scripts/verify-mcq-json.sh --all
+      - name: No legacy Markdown MCQ
+        run: |
+          python3 - <<'PY'
+          import pathlib, subprocess
+          paths = sorted(pathlib.Path('cheatsheets/interview').rglob('*.md'))
+          if not paths:
+              raise SystemExit('No interview Markdown files found')
+          subprocess.run(['bash', 'scripts/verify-md-no-mcq.sh', *map(str, paths)], check=True)
+          PY
+      # Эвристики всего корпуса — отчёт о backlog, не свидетельство семантической приёмки.
+      # Ошибка выполнения (2) блокирует CI; найденные старые нарушения (1) сохраняются.
+      - name: Corpus parity diagnostics
+        run: |
+          result=0
+          python3 scripts/mcq-answer-parity-gate.py modules/quiz-app/src/main/resources/seed/mcq --json > mcq-parity.json || result=$?
+          if [ "$result" -gt 1 ]; then exit "$result"; fi
+          if [ "$result" -eq 1 ]; then echo '::warning::MCQ parity backlog remains; see artifact'; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mcq-parity
+          path: mcq-parity.json
+          if-no-files-found: ignore

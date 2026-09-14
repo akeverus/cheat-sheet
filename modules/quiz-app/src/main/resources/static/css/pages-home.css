@@ -1,0 +1,289 @@
+/* Хаб «Сегодня» — одна редакционная сцена: план дня | действие. Без KPI/XP. */
+
+@layer pages {
+
+html[data-design] .home-page .ed-page.page-canvas {
+  padding-block: var(--space-5) var(--space-8);
+}
+
+html[data-design] .home-page .home-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "head"
+    "primary"
+    "recent";
+  gap: var(--space-7);
+  margin: 0;
+}
+
+html[data-design] .home-page .page-head {
+  grid-area: head;
+  display: block;
+  margin: 0;
+}
+
+html[data-design] .home-page .page-head-title h1 {
+  margin: 0;
+  font-size: clamp(3.25rem, 14vw, 4.75rem);
+  line-height: 1;
+  letter-spacing: normal;
+}
+
+html[data-design] .home-page .page-head-lead {
+  max-width: 38ch;
+  margin-top: var(--space-4);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+}
+
+html[data-design] .home-page .home-primary {
+  grid-area: primary;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-6) 0 0;
+  border: 0;
+  border-top: var(--rule-weight) solid var(--color-border-primary);
+  background: transparent;
+}
+
+html[data-design] .home-page .home-primary-label {
+  margin: 0;
+  max-width: 42ch;
+}
+
+html[data-design] .home-page .home-session-context {
+  display: grid;
+  gap: var(--space-1);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+html[data-design] .home-page .home-session-progress {
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+
+html[data-design] .home-page .home-primary-form,
+html[data-design] .home-page .home-primary-link {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+}
+
+html[data-design] .home-page .home-secondary {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: min(100%, 32rem);
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  border-top: var(--rule-weight) solid var(--color-border-secondary);
+}
+
+html[data-design] .home-page .home-secondary-link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding-block: var(--space-2);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  border-bottom: var(--rule-weight) solid var(--color-border-secondary);
+  font-size: var(--font-size-sm);
+}
+
+html[data-design] .home-page .home-secondary-link:hover {
+  color: var(--color-accent-strong);
+}
+
+html[data-design] .home-page .home-discard {
+  margin: 0;
+}
+/* Колонка решения висит на ОДНОЙ левой кромке: заголовок, статус, CTA и тихий
+   ход начинаются с одного пикселя. Боковые поля «Отбросить» приходят из ранга
+   (components-controls.css поднял кнопку до читаемого кегля вместе с
+   resume-баннером, где она стоит в строке и поля уместны) — здесь они сдвигали
+   подпись на 12px вправо от кромки колонки. Гасим только поле со стороны
+   кромки: порог касания держит min-height, а не padding. */
+html[data-design] .home-page .home-discard .quiet-btn {
+  padding-inline-start: 0;
+}
+
+html[data-design] .home-page .home-section-title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+html[data-design] .home-page .home-recent {
+  grid-area: recent;
+  min-width: 0;
+  margin: 0;
+}
+
+html[data-design] .home-page .home-recent-list {
+  list-style: none;
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: var(--rule-weight) solid var(--color-border-secondary);
+}
+
+html[data-design] .home-page .home-recent-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  align-items: baseline;
+  font-size: var(--font-size-sm);
+  padding-block: var(--space-2);
+  border-bottom: var(--rule-weight) solid var(--color-border-secondary);
+}
+
+html[data-design] .home-page .home-recent-row > :first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+html[data-design] .home-page .home-recent-row > :last-child {
+  flex: 0 0 auto;
+  text-align: end;
+}
+
+/* Одна сцена в две колонки: слева РЕШЕНИЕ (заголовок → статус → действие →
+   тихие ходы), справа ЖУРНАЛ. Hairline журнала спанит оба ряда — он делит
+   «что сделать | что уже сделано».
+   ИНВАРИАНТ: `head` и `primary` стоят в ОДНОЙ колонке. Заголовок, статус дня и
+   главное действие — одна группа (приёмка HOME: title+status+CTA as one group);
+   разводить их по колонкам нельзя, это уже было и давало 683px между «Сегодня»
+   и его CTA. DOM-порядок фиксирует TemplateFragmentContractTest.
+   Довод и история: docs/css-decisions/pages-home.md#pages-home-e01 */
+@media (min-width: 1024px) {
+  html[data-design] .home-page .home-stage {
+    grid-template-columns: minmax(0, 1.05fr) minmax(17rem, 0.95fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "head    recent"
+      "primary recent";
+    column-gap: clamp(var(--space-7), 3.5vw, var(--space-10));
+    row-gap: clamp(var(--space-5), 2.5vh, var(--space-7));
+    min-height: 0;
+    align-items: start;
+  }
+  html[data-design] .home-page .home-stage:not(:has(.home-recent)) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "head" "primary";
+    max-width: var(--max-width-options);
+    width: 100%;
+    margin-inline: auto;
+  }
+  html[data-design] .home-page .page-head {
+    align-self: start;
+    padding-top: 0;
+  }
+  html[data-design] .home-page .page-head-title h1 {
+    font-size: clamp(3.5rem, 4.1vw, 4.75rem);
+  }
+  /* Действие — продолжение головы страницы, поэтому отбивка сверху (как в
+     стопке), а не граница слева: боковая кромка отделяла бы его от заголовка,
+     с которым он теперь в одной группе. */
+  html[data-design] .home-page .home-primary {
+    align-self: start;
+    justify-content: flex-start;
+    margin: 0;
+    padding: var(--space-5) 0 0;
+    border-top: var(--rule-weight) solid var(--color-border-primary);
+    border-inline-start: 0;
+  }
+  html[data-design] .home-page .home-recent {
+    align-self: start;
+    max-width: none;
+    height: 100%;
+    padding-inline-start: clamp(var(--space-7), 3.5vw, var(--space-10));
+    border-inline-start: var(--rule-weight) solid var(--color-border-primary);
+  }
+  /* Кромка колонки решения — ОДНА: кап 32rem давал в одной колонке два разных
+     правых края (970 против 827 на 1728).
+     Довод: docs/css-decisions/pages-home.md#pages-home-e01 */
+  html[data-design] .home-page .home-secondary {
+    width: 100%;
+  }
+}
+
+/* КОРОТКАЯ СЦЕНА В ВЫСОКОМ ОКНЕ — В ОПТИЧЕСКОМ ЦЕНТРЕ, А НЕ ПРИЖАТА К ВЕРХУ
+   (идиома дома: так же centered у focus / summary / error).
+   ИНВАРИАНТЫ, которые здесь легко сломать:
+   1. Остаток берём flex'ом (`flex: 1 1 auto`), НЕ литералом `100dvh - 9rem`:
+      9rem — оценка шапки, и на хабе она врала на 144px.
+   2. `padding-block` СИММЕТРИЧНА: несимметричная сдвигает «центр» (было 241
+      сверху против 425 снизу на 1728, теперь 333/333).
+   3. Порог 700 (не 860): MacBook 1280×800 — целевой вьюпорт. Безопасно, т.к.
+      при `flex: 0 0 auto` auto-margins схлопываются, и высокая сцена сама
+      прижимается к верху.
+   Пустоту НЕЛЬЗЯ занимать метриками (KPI/XP на хабе запрещены) — распределяем
+   воздух, а не выдумываем содержимое.
+   Довод и история: docs/css-decisions/pages-home.md#pages-home-e02 */
+@media (min-width: 1024px) and (min-height: 700px) {
+  html[data-design] .home-page .ed-page.page-canvas {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    padding-block: var(--space-6);
+  }
+  html[data-design] .home-page .home-stage {
+    flex: 0 0 auto;
+    margin-block: auto;
+  }
+}
+
+/* Совсем низкое окно: центрировать нечего, зазоры поджаты, сцена у верха.
+   Порог разведён с центрированием (699 против 700) — иначе два блока спорили
+   бы за padding-block на 800px, и «центр» оказался бы сдвинут несимметричной
+   отбивкой, ради которой этот блок и существует. */
+@media (min-width: 1024px) and (max-height: 699px) {
+  html[data-design] .home-page .ed-page.page-canvas {
+    padding-block: var(--space-4) var(--space-5);
+  }
+  html[data-design] .home-page .home-primary {
+    padding-top: var(--space-4);
+  }
+}
+
+@media (max-width: 600px) {
+  html[data-design] .home-page .home-stage {
+    gap: var(--space-6);
+  }
+  /* Хаб ДОЛЖЕН умещаться в телефон без прокрутки: это сцена «что делать
+     сейчас», и полоса скролла ради 22px — чистый шум. Своя нижняя отбивка
+     холста (64px) здесь ДУБЛИРОВАЛА резервацию: `body` уже держит
+     mobile-nav + safe-area + 16px (shell.css). Замер 375×812: docH 834 при
+     окне 812; со space-5 — 794, и до кромки nav остаётся 34px, то есть
+     «Весь прогресс» не уезжает под панель. Тот же приём, что у /stats и
+     /bookmarks, только им нижнюю отбивку наоборот добавляли — там страница
+     длинная и упиралась в панель. */
+  html[data-design] .home-page .ed-page.page-canvas {
+    padding-bottom: var(--space-5);
+  }
+  html[data-design] .home-page .home-primary-form,
+  html[data-design] .home-page .home-primary-form .next-btn,
+  html[data-design] .home-page .home-primary-link {
+    width: 100%;
+  }
+  html[data-design] .home-page .home-recent-row {
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+  }
+  html[data-design] .home-page .home-recent-row > :last-child {
+    text-align: start;
+  }
+}
+
+}

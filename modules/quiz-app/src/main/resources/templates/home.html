@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru" data-design="folio" xmlns:th="http://www.thymeleaf.org">
+<!--/* Хаб «Сегодня» — Anki overview: одна сцена. KPI/XP/цель дня не здесь.
+     Honesty: wrong = вопросы (как сайдбар); lead не врёт «N из M» сверх цели. */-->
+<head th:replace="~{fragments/head :: head(title='Сегодня — Подготовка к собеседованию', includeMermaid=false, includeChart=false, includeHighlight=false, page='home')}"></head>
+<body class="home-page">
+<a class="skip-link" href="#main-content">Перейти к сегодняшнему плану</a>
+<svg th:replace="~{fragments/icons :: sprite}"></svg>
+<div class="app">
+    <aside th:replace="~{fragments/sidebar :: sidebar(active='home')}"></aside>
+    <div class="shell-main">
+        <th:block th:replace="~{fragments/shell-head :: shell-head}"></th:block>
+<main id="main-content" class="ed-page page-canvas" tabindex="-1">
+	    <div class="home-stage">
+	        <div class="page-head">
+	            <div class="page-head-title">
+                <h1>Сегодня</h1>
+            </div>
+            <p class="muted page-head-lead"
+               th:text="${streakLead != null ? streakLead : 'Что сделать дальше.'}">
+                Что сделать дальше.
+            </p>
+        </div>
+
+        <section class="home-primary" aria-label="Главное действие">
+            <div class="home-session-context" th:if="${homePrimary != null and homePrimary.session() != null}"
+                 th:with="training=${homePrimary.session()}">
+                <p class="home-primary-label" th:text="${@modeUtils.displayName(training.mode()) + ' · ' + training.topic()}">Режим и тема</p>
+                <p class="muted home-session-progress"
+                   th:text="${(homePrimary.post() ? 'На паузе' : 'В процессе') + ' · отвечено ' + training.answered() + ' из ' + training.total()}">Прогресс сессии</p>
+            </div>
+            <p class="home-primary-label muted"
+               th:if="${homePrimary != null and !homePrimary.guidance().isBlank()}"
+               th:text="${homePrimary.guidance()}">Контекст следующего действия</p>
+            <th:block th:if="${homePrimary != null and homePrimary.post()}">
+	                <form method="post" th:action="@{/resume}" class="home-primary-form">
+	                    <button type="submit" class="btn next-btn"
+	                            th:text="${homePrimary.label()}">Продолжить сессию</button>
+	                </form>
+                <form method="post" th:action="@{/pause/discard}" class="home-discard">
+                    <button type="submit" class="btn quiet-btn"
+                            data-confirm="Незавершённая сессия будет удалена, её прогресс не попадёт в журнал."
+                            data-confirm-title="Отбросить незавершённую сессию?">Отбросить сессию</button>
+                </form>
+            </th:block>
+	            <th:block th:unless="${homePrimary != null and homePrimary.post()}">
+	                <a class="btn next-btn home-primary-link"
+	                   th:href="${homePrimary != null ? homePrimary.href() : '/train'}"
+	                   th:text="${homePrimary != null and homePrimary.session() == null and homePrimary.count() > 0
+	                             ? (homePrimary.label() + ' · ' + homePrimary.count())
+	                             : (homePrimary != null ? homePrimary.label() : 'Собрать сессию')}">Собрать сессию</a>
+            </th:block>
+            <ul class="home-secondary" th:if="${homeSecondary != null and !homeSecondary.isEmpty()}">
+                <li th:each="action : ${homeSecondary}">
+                    <a class="home-secondary-link"
+                       th:href="${action.href()}"
+                       th:text="${action.count() > 0 ? (action.label() + ' · ' + action.count()) : action.label()}">Действие</a>
+	                </li>
+	            </ul>
+	        </section>
+
+	        <section class="home-recent stack-quiet"
+	                 th:if="${recentSessions != null and !recentSessions.isEmpty()}"
+	                 aria-label="Недавние сессии">
+	            <h2 class="home-section-title">Недавние сессии</h2>
+	            <ul class="home-recent-list">
+	                <li th:each="rec : ${recentSessions}" class="home-recent-row">
+	                    <span th:text="${@modeUtils.displayName(rec.mode())}">Тренировка</span>
+	                    <span class="muted"
+	                          th:text="${(rec.answeredCount() == 0 ? 'Без ответов' : rec.correctCount() + ' из ' + rec.answeredCount() + ' верно') + ' · ' + rec.compactDuration()}">Без ответов</span>
+	                </li>
+	            </ul>
+	            <a class="muted" th:href="@{/stats}">Весь прогресс</a>
+	        </section>
+	    </div><!--/* /.home-stage */-->
+	</main>
+    </div>
+</div>
+<nav th:replace="~{fragments/mobile-nav :: mobile-nav(active='home')}"></nav>
+<script th:replace="~{fragments/scripts :: app-script}"></script>
+</body>
+</html>
