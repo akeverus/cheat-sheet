@@ -1109,7 +1109,7 @@
                 "explanation": "`nack` умеет отклонить пачку (`multiple`), `reject` — только одно сообщение.",
                 "example": "`basicNack(tag,true,false)` отклоняет с `requeue=false` — в `DLX`.",
                 "when_to_apply": "Когда сообщение обработать не удалось и нужно решить его судьбу.",
-                "edge_cases": "`requeue=true` при стабильной ошибке даёт бесконечный цикл.",
+                "edge_cases": "В quorum queue RabbitMQ 4.3 явный basic.nack с requeue не увеличивает delivery-count, а basic.reject увеличивает; delivery-limit не гарантирует остановку nack-цикла.",
                 "related": "`requeue=false` — отбросить или в `DLX`; выбор для «ядовитых» сообщений."
               }
             },
@@ -1136,6 +1136,61 @@
                 "if_it_were_true": "Тогда битые данные крутились бы вечно.",
                 "how_it_should_be": "Для стабильных ошибок берут `requeue=false` и `DLX`."
               }
+            }
+          ]
+        },
+        {
+          "block_idx": 1,
+          "question_text": "Как в RabbitMQ 4.3 различаются basic.nack и basic.reject для delivery-limit quorum queue?",
+          "options": [
+            {
+              "text": "В версии 4.3 basic.nack и basic.reject одинаково увеличивают delivery-count; после лимита сообщение может пройти через настроенный DLX.",
+              "correct": false,
+              "sections": {
+                "what_actually": "basic.nack не увеличивает delivery-count в RabbitMQ 4.3; basic.reject увеличивает.",
+                "source_of_confusion": "Общий термин negative acknowledgement скрывает разные правила подсчёта.",
+                "if_it_were_true": "Тогда явный nack/requeue достигал бы встроенного лимита.",
+                "how_it_should_be": "Проверяйте версию и способ возврата, а также настраивайте DLX."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Явный basic.nack не увеличивает delivery-count, а basic.reject увеличивает; лимит срабатывает по неудачным доставкам и требует DLX для сохранения сообщения.",
+              "correct": true,
+              "sections": {
+                "explanation": "С RabbitMQ 4.3 delivery-limit quorum queue основан на delivery-count, а не на числе получений сообщения.",
+                "example": "При бесконечном nack/requeue на 4.3 встроенный лимит может не сработать; reject с повторной доставкой увеличивает счётчик.",
+                "when_to_apply": "Это важно при проектировании retry и poison-message защиты для quorum queue.",
+                "edge_cases": "По умолчанию лимит 20 с RabbitMQ 4.0; при его превышении без DLX сообщение удаляется.",
+                "related": "См. Q24 о dead-lettering и Q30 о quorum queue."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В 4.3 basic.nack увеличивает счётчик неудачных доставок, а basic.reject его не меняет; DLX маршрутизирует сообщения после лимита.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Правило обратное: basic.reject увеличивает delivery-count, basic.nack не увеличивает.",
+                "source_of_confusion": "Оба API отклоняют доставку, поэтому роли легко перепутать.",
+                "if_it_were_true": "Тогда reject-цикл обходил бы защиту от poison messages.",
+                "how_it_should_be": "Для RabbitMQ 4.3 сверяйте отдельные счётчики и маршрут DLX."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В RabbitMQ 4.3 оба отрицательных подтверждения оставляют delivery-count без изменений; потеря канала остаётся учитываемым отказом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "basic.reject увеличивает delivery-count, как и потеря канала с unacked сообщением.",
+                "source_of_confusion": "Счётчик отказов можно ошибочно связать только с падением consumer.",
+                "if_it_were_true": "Тогда явный reject никогда не достигал бы delivery-limit.",
+                "how_it_should_be": "Учитывайте reject и падение канала как неудачные доставки."
+              },
+              "label": "D",
+              "order": 3
             }
           ]
         }
@@ -1389,53 +1444,53 @@
           "question_text": "При каких условиях сообщение попадает в DLQ?",
           "options": [
             {
+              "text": "Если consumer отклонил сообщение с requeue=true, брокер отправит его через DLX в DLQ; такой же маршрут нужен при TTL, overflow и delivery-limit.",
+              "correct": false,
+              "sections": {
+                "what_actually": "requeue=true возвращает сообщение в исходную очередь, а не инициирует dead-lettering.",
+                "source_of_confusion": "Отклонение сообщения путают с отказом от повторной доставки.",
+                "if_it_were_true": "Тогда обычный requeue немедленно переводил бы сообщение в DLQ.",
+                "how_it_should_be": "Для явного dead-lettering используйте reject или nack с requeue=false."
+              },
               "label": "A",
-              "order": 0,
-              "text": "`requeue=true` тоже отправляет отклонённое consumer сообщение сразу напрямую в DLQ.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`requeue=true` возвращает сообщение в очередь, а в `DLX` ведёт `requeue=false`.",
-                "source_of_confusion": "`requeue` путают по направлению.",
-                "if_it_were_true": "Тогда любое отклонение шло бы в `DLQ`.",
-                "how_it_should_be": "Мёртвым делает именно `requeue=false`."
-              }
+              "order": 0
             },
             {
-              "label": "B",
-              "order": 1,
-              "text": "Служебный заголовок `x-death` при этом не хранит счётчик общего числа смертей сообщения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`x-death` хранит причину, исходную очередь и счётчик смертей.",
-                "source_of_confusion": "Заголовок кажется просто пометкой.",
-                "if_it_were_true": "Тогда ограничить число retry было бы нечем.",
-                "how_it_should_be": "Счётчик из `x-death` и служит порогом retry."
-              }
-            },
-            {
-              "label": "C",
-              "order": 2,
-              "text": "Сообщение уходит в `DLX` при reject, истёкшем TTL или переполнении очереди.",
+              "text": "RabbitMQ отправляет в DLX сообщения после reject/nack с requeue=false, истечения message TTL, вытеснения по лимиту длины и превышения delivery-limit quorum queue; для DLQ нужен маршрут из DLX.",
               "correct": true,
               "sections": {
-                "explanation": "Сообщение уходит в `DLX` при reject, истёкшем TTL или переполнении очереди.",
-                "example": "Reject — `basicNack`/`basicReject` с `requeue=false` (Q19).",
-                "when_to_apply": "Когда настраиваешь карантин и лимит retry.",
-                "edge_cases": "Брокер дописывает заголовок `x-death` со счётчиком смертей.",
-                "related": "По счётчику ограничивают число retry-попыток."
-              }
+                "explanation": "RabbitMQ описывает четыре причины dead-lettering. Без DLX сообщение может быть удалено вместо попадания в DLQ.",
+                "example": "Quorum queue с delivery-limit=20 и настроенным DLX направит превышенное сообщение в DLQ.",
+                "when_to_apply": "Это важно для карантина poison messages и настройки ограниченного retry.",
+                "edge_cases": "x-death считает dead-letter-события по паре очередь/причина, а не все доставки.",
+                "related": "См. Q19 о negative acknowledgements и Q30 о quorum queue."
+              },
+              "label": "B",
+              "order": 1
             },
             {
-              "label": "D",
-              "order": 3,
-              "text": "Сообщение попадает в `DLX` при явном basicReject со стороны самого consumer.",
+              "text": "У RabbitMQ есть три причины dead-lettering: reject/nack без requeue, истечение message TTL и переполнение очереди; превышение delivery-limit только удаляет сообщение.",
               "correct": false,
               "sections": {
-                "what_actually": "В `DLX` ведут три случая: reject, истёкший TTL и переполнение.",
-                "source_of_confusion": "Reject — самый очевидный путь, о двух других забывают.",
-                "if_it_were_true": "Тогда TTL- и overflow-карантин не работал бы.",
-                "how_it_should_be": "Причин ровно три, а не одна."
-              }
+                "what_actually": "Превышение delivery-limit — четвёртая причина; при настроенном DLX сообщение маршрутизируется туда.",
+                "source_of_confusion": "Старые списки причин содержали только три пункта.",
+                "if_it_were_true": "Тогда настройка DLX не помогала бы сохранить poison message.",
+                "how_it_should_be": "Учитывайте четвёртую причину и проверяйте маршрут DLX."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Успешный ack, просроченный message TTL, вытеснение по длине и превышенный лимит доставок одинаково вызывают dead-lettering, если DLX связан с DLQ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Успешный ack удаляет сообщение без dead-lettering; остальные перечисленные события могут направить его в DLX.",
+                "source_of_confusion": "Смешение подтверждения и отказа меняет смысл consumer API.",
+                "if_it_were_true": "Тогда каждое успешно обработанное сообщение попадало бы в DLQ.",
+                "how_it_should_be": "Для явного отказа используйте reject или nack с requeue=false."
+              },
+              "label": "D",
+              "order": 3
             }
           ]
         }
@@ -1458,7 +1513,7 @@
                 "example": "Цикл `main → DLX → retry-queue(TTL) → main exchange → main` даёт паузу.",
                 "when_to_apply": "Когда нужен повтор с задержкой, а не мгновенный.",
                 "edge_cases": "`TTL` retry-очереди и есть пауза между попытками.",
-                "related": "Без ограничения по `x-death[count]` цикл крутится бесконечно."
+                "related": "Для ограничения retry считайте подходящие x-death-события по очереди и причине; x-delivery-count quorum queue измеряет другой механизм."
               }
             },
             {
@@ -1488,12 +1543,12 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Такой замкнутый цикл `retry` сам останавливается вообще без всякой проверки счётчика попыток.",
+              "text": "Цикл DLX/TTL сам прекращает повторы, даже без счётчика попыток.",
               "correct": false,
               "sections": {
                 "what_actually": "Без проверки `x-death[count]` цикл retry крутится бесконечно.",
                 "source_of_confusion": "Кажется, что цикл сам собой затухнет.",
-                "if_it_were_true": "Тогда битое сообщение повторялось бы вечно.",
+                "if_it_were_true": "Тогда отдельный порог повторов не понадобился бы.",
                 "how_it_should_be": "Порог по счётчику отправляет его в финальную `DLQ`."
               }
             }
@@ -1754,10 +1809,10 @@
               "text": "`Quorum Queues` поддерживают все имеющиеся возможности самых обычных classic-очередей вообще без единого исключения.",
               "correct": false,
               "sections": {
-                "what_actually": "`Quorum Queues` не поддерживают часть classic-фич — `x-message-ttl`, priority.",
-                "source_of_confusion": "«Современнее — значит умеет всё» звучит логично.",
+                "what_actually": "Quorum queues поддерживают message TTL, а с RabbitMQ 4.3 и strict message priority, но не поддерживают non-durable или exclusive queues.",
+                "source_of_confusion": "Современный тип очереди ошибочно считают полным аналогом classic queue.",
                 "if_it_were_true": "Тогда не было бы компромисса за надёжность.",
-                "how_it_should_be": "Часть возможностей приходится обходить."
+                "how_it_should_be": "При миграции сверяйте матрицу функций конкретной версии."
               }
             },
             {
@@ -1770,7 +1825,7 @@
                 "example": "Тот же алгоритм, что в `etcd` и `Consul`.",
                 "when_to_apply": "Когда нужна надёжная реплицированная очередь.",
                 "edge_cases": "При split-brain меньшая часть перестаёт принимать записи — данные не расходятся.",
-                "related": "Ценой надёжности теряют часть classic-фич (`x-message-ttl`, priority)."
+                "related": "С RabbitMQ 4.0 classic queue mirroring удалён; quorum queue поддерживает message TTL и strict priority, а delivery-limit по умолчанию равен 20."
               }
             },
             {
@@ -1796,6 +1851,61 @@
                 "if_it_were_true": "Тогда split-brain снова расходил бы данные.",
                 "how_it_should_be": "Нужно подтверждение большинства узлов."
               }
+            }
+          ]
+        },
+        {
+          "block_idx": 1,
+          "question_text": "Какие возможности и ограничение poison messages важны у quorum queue?",
+          "options": [
+            {
+              "text": "С RabbitMQ 4.3 quorum queue поддерживает message TTL и strict priority, но delivery-limit по умолчанию отсутствует и всегда требует отдельной настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С RabbitMQ 4.0 delivery-limit по умолчанию равен 20; TTL и strict priority в 4.3 поддерживаются.",
+                "source_of_confusion": "Поведение RabbitMQ 3.13 без лимита переносят на 4.x.",
+                "if_it_were_true": "Тогда новые возможности и автоматический лимит не влияли бы на дизайн очереди.",
+                "how_it_should_be": "Проверяйте значение лимита на целевой версии и задавайте DLX."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В RabbitMQ 4.3 quorum queue имеет message TTL и strict priority, лимит доставок по умолчанию равен 20; после лимита сообщение сохранится без DLX.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TTL, priority и лимит верны, но без DLX превышенное сообщение удаляется.",
+                "source_of_confusion": "Надёжная репликация не равна автоматическому сохранению ошибочных доставок.",
+                "if_it_were_true": "Тогда карантин сообщений не требовал бы отдельного маршрута.",
+                "how_it_should_be": "Настройте DLX и убедитесь, что он ведёт в нужную DLQ."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "С RabbitMQ 4.3 quorum queue поддерживает message TTL и strict priority; delivery-limit по умолчанию 20 с версии 4.0, а для сохранения сообщения после лимита нужен DLX.",
+              "correct": true,
+              "sections": {
+                "explanation": "Raft-репликация и poison-message handling — отдельные свойства. Лимит возвращений не гарантирует карантин без dead-letter-настройки.",
+                "example": "При превышении лимита quorum queue с DLX направляет сообщение в DLQ; без DLX оно отбрасывается.",
+                "when_to_apply": "Учитывайте при миграции с mirrored classic queues и выборе retry-стратегии.",
+                "edge_cases": "В RabbitMQ 4.3 явный nack не увеличивает delivery-count, поэтому лимит не заменяет собственный контроль такого цикла.",
+                "related": "См. Q19 о nack/reject и Q24 о четырёх причинах dead-lettering."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В RabbitMQ 4.3 доступны message TTL и strict priority у quorum queue; лимит 20 действует по умолчанию, причём каждый basic.nack увеличивает delivery-count.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В 4.3 явный nack не увеличивает delivery-count; reject и потеря канала с unacked сообщением увеличивают.",
+                "source_of_confusion": "Отрицательные подтверждения выглядят одинаково с точки зрения consumer.",
+                "if_it_were_true": "Тогда встроенный лимит останавливал бы любой цикл nack/requeue.",
+                "how_it_should_be": "Различайте механизмы возврата и проверяйте версию RabbitMQ."
+              },
+              "label": "D",
+              "order": 3
             }
           ]
         }
