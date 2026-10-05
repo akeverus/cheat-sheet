@@ -23,10 +23,11 @@
 
 ## Текущий проверенный срез на 05.10.2026
 
-В каталоге 328 тематических Markdown-файлов и 9 879 заголовков Q в 25
-разделах; 327 файлов имеют парный production MCQ JSON. Девять новых тем
+В каталоге 329 тематических Markdown-файлов и 9 883 заголовка Q в 25
+разделах; 328 файлов имеют парный production MCQ JSON. Десять новых тем
 в текущем этапе: Python core, Python concurrency, Python testing, FastAPI,
-MySQL, JDBC/пулы, Java 26–27, Python typing и Python packaging.
+MySQL, JDBC/пулы, Java 26–27, Python typing, Python packaging и
+System Design Unique ID Generator.
 Навигация и инвентарь обновлены. Go database/sql углублён в
 go-stdlib-interview.md Q22–Q25: отдельный Go DB файл отвергнут из-за
 пересечения. Исправлены Go generics Q10/Q15/Q18–Q20, Spring Security Q30,
@@ -101,20 +102,32 @@ Repeatable Installs. Обе пары прошли структуру и полн
 исполнен на 3.14.4, TOML разобран `tomllib`. Независимой blind-приёмки MCQ
 нет. Ни один старый Python-файл не проходил полного аудита `П`.
 
+Первый кандидат `system-design-notes` выполнен коммитом `97c1a764`:
+`design-unique-id-generator-interview.md` Q1–Q4 и парный MCQ. Отдельный
+маршрут оправдан после сравнения с `system-design-interview.md` Q7,
+`design-url-shortener-interview.md` Q19 и SQL Q13: область уникальности,
+sequence/ticket/ranges, сбои Snowflake и выбор UUIDv4/v7. Официальные и
+первичные источники — RFC 9562, PostgreSQL 18, Flickr и Twitter/X Engineering.
+Соседний URL Shortener Q19 исправлен: математический предел одного worker
+не является throughput системы, ID не строго упорядочены между узлами;
+MCQ Q19 синхронизирован. Новая пара structure/pre-check PASS. Старый URL
+Shortener structure/parity PASS, но полный pre-check FAIL на старых блоках;
+Q19 локально без жёсткого сигнала, blind review нет. Полного аудита `П`
+старого файла не было. Параллельные AI/ML и MCQ-run правки не трогать.
+
 ## Точная точка продолжения
 
-Начни с P2-кандидата `system-design/design-unique-id-generator-interview.md`
-из раздела `system-design-notes` в плане. Прочитай целиком
-`system-design-interview.md` Q7 и `design-url-shortener-interview.md` Q19;
-проверь заголовки и релевантные ответы про sequence/UUID в `databases/`.
-Сверь факты с RFC 9562, документацией PostgreSQL sequence/identity и
-первичным описанием выбранной Snowflake-подобной реализации. Отдели выбор
-генератора от Base62 для URL. Создай отдельную тему только при трёх
-самостоятельных сценариях, иначе углуби существующий Q и парный MCQ.
-После этого проверь P2 notification system и остальные кандидаты блока.
+Начни с P2-кандидата notification system из раздела `system-design-notes`
+в плане. Прочитай целиком `system-design-interview.md` Q10 и ближайшие
+messaging/security-ответы; проверь по первичным источникам сценарии
+идемпотентной доставки, предпочтений пользователя, quiet hours и статуса
+отправки. Если несколько независимых пробелов подтверждены, создай тему
+с парным MCQ; иначе углуби Q10. После этого проверь остальные P2-кандидаты
+раздела в порядке плана.
 RabbitMQ/Kafka/Hibernate, новые Java и Python Q требуют независимого blind
-review MCQ; старый parity backlog Hibernate, Spring Data JPA, Java IO/NIO и
-Jackson открыт. Spring Data JDBC Q17 тоже ждёт содержательной приёмки.
+review MCQ; старый parity/pre-check backlog Hibernate, Spring Data JPA,
+Java IO/NIO, Jackson и URL Shortener открыт. Spring Data JDBC Q17 тоже ждёт
+содержательной приёмки.
 
 ## Как работать с каждой группой
 

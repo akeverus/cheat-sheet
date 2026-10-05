@@ -1,15 +1,15 @@
 # План покрытия interview-шпаргалок
 
 Состояние репозитория сверено **2026-10-05**. Этот документ ведёт очередь тем и
-фактический прогресс авторинга. Текущее поручение разрешает править шпаргалки
-и парные MCQ. [План MCQ](PLAN_INTERVIEW.md) ведёт отдельную независимую
+фактический прогресс авторинга. При написании вопросов синхронизировать
+шпаргалки и парные MCQ. [План MCQ](PLAN_INTERVIEW.md) ведёт отдельную независимую
 приёмку; автоматический PASS не даёт статус `FINAL`.
 
 ## Основание и предел проверки
 
-- Текущий корпус: **328** тематических Markdown-файлов, **9 879** заголовков
+- Текущий корпус: **329** тематических Markdown-файлов, **9 883** заголовка
   Q в **25** разделах. [Инвентарь](docs/interview-coverage/inventory.tsv)
-  обновлён после девяти новых шпаргалок и добавленных Q. **327** файлов имеют парный production
+  обновлён после десяти новых шпаргалок и добавленных Q. **328** файлов имеют парный production
   JSON; отдельная тема подготовки остаётся без пары.
 - `З` — пути и заголовки; `О` — точечная проверка ответа; `П` — полная
   содержательная проверка всех ответов существующего файла. **П в этом
@@ -100,6 +100,23 @@ FastAPI и смежных CI/CD-заголовков созданы две са�
 выполнены на локальном 3.14.4, TOML-примеры разобраны `tomllib`. Это
 авторская проверка, **не независимая blind-приёмка** и не уровень `П` для
 старых соседних файлов. Инвентарь и навигация обновлены (+2 файла, +8 Q).
+
+Первый P2-кандидат из источника `system-design-notes` выполнен **05.10.2026**
+коммитом `97c1a764`: создан `design-unique-id-generator-interview.md`
+Q1–Q4 (`NEW_TOPIC`, P2 · О) с парным MCQ. Соседи `system-design-interview.md`
+Q7, `design-url-shortener-interview.md` Q19 и `sql-interview.md` Q13 уже
+объясняли URL-код и базовый sequence, но не выбор ID по области уникальности,
+сбои Snowflake/диапазонов и границы UUIDv4/v7. Сверено по
+[RFC 9562](https://datatracker.ietf.org/doc/html/rfc9562),
+[PostgreSQL 18 sequence](https://www.postgresql.org/docs/18/functions-sequence.html),
+[Flickr ticket servers](https://code.flickr.net/2010/02/08/ticket-servers-distributed-unique-primary-keys-on-the-cheap/)
+и [исходному описанию Twitter](https://blog.x.com/engineering/en_us/a/2010/announcing-snowflake).
+В URL Shortener Q19 исправлены ошибочный общий throughput и строгое
+глобальное упорядочивание; MCQ Q19 переписан в согласии с ответом. Новая
+пара: структура/pre-check 4/4 PASS. URL Shortener: структура/parity 30/30
+PASS, но **полный pre-check FAIL** из-за старых сигналов формы (24 блока);
+обновлённый Q19 не даёт жёсткого локального сигнала. Независимой blind-
+приёмки нет, старый файл не получил уровень `П`. Инвентарь: +1 файл, +4 Q.
 
 ## Отсутствующие файлы: исходная очередь и оставшиеся кандидаты
 
@@ -350,6 +367,50 @@ Data 09.06 и Boot 10.06, PostgreSQL beta 4 24.09. Это выборка офи�
 между подходами. Количество Q не
 является целью. Версионные утверждения снабжать конкретной версией и датой проверки.
 
+## Новый источник для System Design: `system-design-notes`
+
+Добавлено **05.10.2026** по [репозиторию `liquidslr/system-design-notes`](https://github.com/liquidslr/system-design-notes).
+Это конспект 28 глав по книгам *System Design Interview* (Vol. 1–2), который
+сам автор помечает как незавершённый. Просмотрены оглавление репозитория и
+заголовки 14 глав, выбранных для проверки пробелов; сопоставлены названия
+наших прежних 22 файлов `system-design/` и близкие Q. Статус остальных строк
+ниже — **`З`**, кроме точечно прочитанного `system-design-interview.md` Q10;
+первый кандидат проверен и написан отдельно. Это не проверка
+правильности всех ответов и не готовое задание на авторинг каждого файла.
+Использовать конспект для постановки задач, а факты сверять по первичным
+источникам. Текст и иллюстрации чужого конспекта не переносить в шпаргалки.
+
+**Уже покрыто отдельным файлом или маршрутом Q:** главы 1–6 (масштабирование,
+оценки, ход интервью, rate limiter, consistent hashing, KV-store), 8–9
+(URL shortener, crawler), 11–15 (лента, чат, autocomplete, YouTube,
+Dropbox/Google Drive), 18 (карты) и 26 (платёжная система). Примеры точных
+пересечений: `system-design-interview.md` Q1–Q6/Q31, Q15;
+`design-key-value-store-interview.md` Q5–Q8;
+`design-payment-system-interview.md` Q1–Q30. Новые файлы с теми же названиями
+не нужны только ради переноса структуры источника.
+
+| Приоритет / статус | Глава источника и решение | Существующее покрытие и граница будущей шпаргалки | Черновик проверяемых вопросов |
+|---|---|---|---|
+| P2 · `NEW_TOPIC`, выполнено · О | 7. Distributed Unique ID Generator → `system-design/design-unique-id-generator-interview.md` Q1–Q4 | `system-design-interview.md` Q7, `design-url-shortener-interview.md` Q19 и SQL Q13 не раскрывали выбор генератора и сбои вне URL-кода. Q19 точечно исправлен. | Область уникальности и порядок; sequence/ticket/ranges; clock rollback/worker collision; UUIDv4/v7/Snowflake. Новая пара structure/pre-check PASS, старый URL Shortener full pre-check FAIL, blind review нет. |
+| P2 · КАНДИДАТ `NEW_TOPIC` или `DEEPEN` | 10. Notification System → `system-design/design-notification-system-interview.md` | `system-design-interview.md` Q10 уже даёт архитектуру каналов, preferences, очередей и retry. Новый файл оправдан, только если отделить несколько новых сценариев доставки; иначе углубить Q10. | Как обеспечить идемпотентную доставку через разные провайдеры? Как хранить предпочтения, тихие часы и статус отправки? Как разделить transactional и массовые уведомления? |
+| P2 · КАНДИДАТ `NEW_TOPIC` | 19. Distributed Message Queue → `system-design/design-message-queue-interview.md` | `messaging/kafka-interview.md` Q6–Q24 и `rabbitmq-interview.md` описывают продукты; `system-design-interview.md` Q21 — выбор очереди. Здесь проектирование самой очереди/лога, не пересказ Kafka. | Как распределить partitions и consumers? Где хранить offset/ack и как совместить ordering, replay, retention и отказ брокера? |
+| P2 · КАНДИДАТ `NEW_TOPIC` | 22. Hotel Reservation System → `system-design/design-reservation-system-interview.md` | `design-payment-system-interview.md` Q4/Q7/Q17 покрывает платёж, но не конкурентное бронирование ограниченного инвентаря. Не копировать платёжный ledger. | Как избежать overselling при одновременной броне? Чем отличаются hold с TTL, подтверждённая бронь и отмена? Как согласовать резерв с оплатой? |
+| P2 · КАНДИДАТ `NEW_TOPIC` | 24. S3-like Object Storage → `system-design/design-object-storage-interview.md` | `design-dropbox-interview.md` Q5/Q18 описывает CAS и синхронизацию файлов; `data-lake-lakehouse-interview.md` Q5 сравнивает object storage с HDFS. Здесь API и внутренняя организация самого хранилища. | Как разделить metadata и bytes? Как обеспечить загрузку больших объектов, восстановление после потери узла, проверку целостности и ожидаемую семантику чтения/перезаписи? |
+| P2 · КАНДИДАТ `NEW_TOPIC` | 25. Real-time Gaming Leaderboard → `system-design/design-leaderboard-interview.md` | Есть Redis/кеширование в соседних темах, но нет маршрута по rank/top-N при большом числе обновлений. | Как быстро получать top-N и место конкретного пользователя? Как обрабатывать равные очки, шардирование, сезонный reset и запоздавшие события? |
+| P3 · КАНДИДАТ `NEW_TOPIC` или `DEEPEN` | 20. Metrics Monitoring and Alerting System → `system-design/design-metrics-platform-interview.md` | `system-design-interview.md` Q23 и `monitoring/prometheus-grafana-interview.md` Q3/Q19–Q24 покрывают общую observability и Prometheus. Отдельный файл — только для проектирования многопользовательской платформы метрик. | Где агрегировать и хранить высококардинальные ряды? Как масштабировать ingest/query и изолировать правила алертинга разных команд? |
+| P3 · КАНДИДАТ `NEW_TOPIC` | 21. Ad Click Event Aggregation → `system-design/design-event-aggregation-interview.md` | `data-engineering/stream-processing-interview.md` Q8 объясняет окна, но нет сквозного кейса по событиям рекламы; общий stream processing оставить соседним. | Как различать event time и processing time, удалять дубли и пересчитывать поздние события? Как сверять оперативные счётчики с итоговой отчётностью? |
+| P3 · КАНДИДАТ `NEW_TOPIC` | 23. Distributed Email Service → `system-design/design-email-service-interview.md` | `system-design-interview.md` Q10 рассматривает email как один канал уведомлений; здесь отдельные доставка, bounce и репутация отправителя. | Как построить очередь отправки с повторами и дедупликацией? Что делать с bounce/complaint и как отслеживать доставляемость? |
+| P3 · КАНДИДАТ `NEW_TOPIC` | 27. Digital Wallet → `system-design/design-digital-wallet-interview.md` | `design-payment-system-interview.md` Q5/Q8/Q22 покрывает ledger, saga и упоминание кошелька; новый файл должен быть про переводы между балансами и инварианты, не про PSP/карточный платёж. | Как атомарно перевести средства между кошельками при повторах запроса? Как совместить доступный баланс, неизменяемый журнал и сверку? |
+| P3 · КАНДИДАТ `NEW_TOPIC` | 28. Stock Exchange → `system-design/design-exchange-interview.md` | Финансовый домен уже есть в платёжной системе, но order book и matching engine — отдельная задача. Подтвердить интерес к узкой предметной области до написания. | Как упорядочивать команды и обеспечивать детерминированное сопоставление заявок? Как разделить matching, рыночные данные и отчётность? |
+| P3 · КАНДИДАТ `DEEPEN`/`PROMOTE` | 16–17. Proximity Service / Nearby Friends | `design-uber-interview.md` Q7–Q14 и `design-google-maps-interview.md` Q19/Q27 уже покрывают geo index, POI и sharing location. Сначала проверить глубину соседних ответов; два новых файла сейчас не обоснованы. | Как индексировать обновляющиеся координаты и фильтровать радиус? Как сделать видимость «друзья рядом» с ограничением доступа к местоположению и высокой степенью вершины графа друзей? |
+
+Перед созданием каждого `NEW_TOPIC` прочитать полный ближайший файл,
+проверить заголовки Q соседних разделов, выбрать первичные источники и
+зафиксировать независимый маршрут нескольких вопросов. Если после проверки
+остаётся один полезный аспект, заменить новый файл на `DEEPEN`/`ADD_Q`.
+При написании синхронизировать production MCQ и навигацию по правилам этого
+плана; `З` здесь не означает готовности фактов или MCQ к приёмке.
+
 ## Вторая очередь: вопросы внутри существующих тем
 
 Это очередь возможных вопросов, а не задание немедленно их добавлять. К ним
@@ -503,28 +564,32 @@ correct самые длинные). Новый Q32 B1 и обновлённый 
 3 файла / 59 блоков с действующей полной приёмкой; `agentic-patterns` Q12
 остаётся открытым finding, остальные новые MCQ из этого плана ждут blind review.
 
-1. **Точная точка продолжения:** взять P2-кандидат
-   `system-design/design-unique-id-generator-interview.md` из блока
-   `system-design-notes`. Прочитать целиком `system-design-interview.md` Q7 и
-   `design-url-shortener-interview.md` Q19, затем заголовки и релевантные ответы
-   в `databases/` про sequence/UUID. Сверить варианты генерации и сбои по
-   первичным источникам (RFC 9562, PostgreSQL sequence/identity, документы
-   выбранной реализации Snowflake), отделить выбор генератора от кодирования
-   короткого URL. Если получатся минимум три самостоятельных сценария,
-   создать новую шпаргалку и парный MCQ; иначе углубить существующий Q.
-2. Затем проверить P2 notification system, distributed message queue,
+1. **Точная точка продолжения:** проверить P2-кандидат notification system
+   из блока `system-design-notes`: прочитать целиком
+   `system-design-interview.md` Q10, заголовки и ответы ближайших
+   messaging/security-файлов, затем выбрать первичные источники по
+   идемпотентности доставки, предпочтениям и статусу отправки. Создать
+   отдельную тему только при нескольких новых независимых сценариях;
+   иначе углубить Q10 и синхронизировать его MCQ.
+2. Затем проверить P2 distributed message queue,
    reservation, object storage и leaderboard в порядке таблицы ниже.
    Java 26–27, HTTP/3, Jackson 3 и Python typing/packaging уже написаны.
    Остальные P2/P3 без решения остаются кандидатами. Статусы Python 3.15 и
    PostgreSQL 19 перепроверять после финальных релизов.
 3. Отдельной задачей пройти независимую blind-приёмку новых MCQ и старый
-   parity backlog Hibernate, Spring Data JPA, Java IO/NIO и Jackson;
+   parity/pre-check backlog Hibernate, Spring Data JPA, Java IO/NIO, Jackson
+   и URL Shortener;
    положительный валидатор не означает `FINAL`.
 4. Продолжать выборку официальных публикаций за скользящие шесть месяцев;
    не выдавать выборку за полный охват. Для каждого решения фиксировать
    источник, ближайший файл/Q, пробел, приоритет и уровень `З`/`О`/`П`.
    Обновлять план и парный MCQ после каждой небольшой группы; `FINAL` MCQ
    только после независимого evidence по [правилам качества](docs/mcq-quality/workflow.md).
+5. По новому запросу пользователя продолжать
+   [блок `system-design-notes`](#новый-источник-для-system-design-system-design-notes):
+   первый P2-кандидат (генератор ID) написан; остальные строки пока
+   сопоставлены по структуре и Q (`З`). Проверять соседние ответы и отсекать
+   дубли перед новым файлом; при авторинге добавлять парный MCQ.
 
 [Самодостаточный промпт продолжения](PROMPT_PLAN_CHEATSHEETS.md) описывает
 порядок работы без истории чата.
