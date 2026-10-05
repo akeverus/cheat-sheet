@@ -478,13 +478,13 @@ graph TB
 
 ## Q16. В чём разница между auto-commit и manual commit?
 
-Вопрос на самом деле о гарантиях доставки. Момент коммита offset определяет, что произойдёт при падении consumer'а: потеряется ли необработанное сообщение или обработается повторно. Auto-commit коммитит по таймеру (потенциально *до* фактической обработки), manual commit — там, где это решит код.
+Вопрос на самом деле о гарантиях доставки. Момент коммита offset определяет, что произойдёт при падении consumer'а: потеряется ли необработанное сообщение или обработается повторно. Auto-commit коммитит периодически; manual commit — там, где это решит код. **Режим сам по себе не задаёт гарантию:** auto-commit тоже может дать at-least-once, если полностью обработать все записи из каждого `poll()` до следующего `poll()` или закрытия consumer. Если коммит опередит обработку, возможна потеря записи.
 
 | Аспект | Auto-commit | Manual commit |
 |--------|-------------|---------------|
 | Настройка | `enable.auto.commit=true` | `enable.auto.commit=false` |
 | Когда коммит | По таймеру (`auto.commit.interval.ms`) | Вызовом `commitSync()` / `commitAsync()` |
-| Гарантия | At-most-once (может потерять) | At-least-once (при коммите после обработки) |
+| Гарантия | Зависит от завершения обработки до следующего `poll()`/закрытия | At-least-once при успешном коммите после обработки |
 | Контроль | Минимальный | Полный |
 
 ```java
@@ -497,6 +497,8 @@ while (true) {
     consumer.commitSync(); // коммит после успешной обработки
 }
 ```
+
+**Если `commitSync()` выбросил `CommitFailedException`:** завершившийся rebalance мог передать партицию другому участнику группы. Коммит уже обработанных записей этим consumer не прошёл; просто повторять тот же commit нельзя — прежний offset может относиться к чужой партиции. Учитывайте возможность повторной обработки от последнего успешно сохранённого offset и делайте внешние побочные эффекты идемпотентными. Сначала выясните причину потери членства: например, обработка дольше `max.poll.interval.ms`; ограничьте размер пачки через `max.poll.records` или отделите обработку от частого `poll()`, не продвигая offset дальше реально завершённой работы. При управляемой смене назначения `ConsumerRebalanceListener.onPartitionsRevoked` позволяет сохранить **обработанные** offsets до передачи партиций; в `onPartitionsLost` они уже могут принадлежать другому consumer и коммитить их нельзя. `RebalanceInProgressException` — другой случай: завершите rebalance через `poll()`, затем заново оцените назначение и offsets перед новым коммитом. [KafkaConsumer API](https://kafka.apache.org/43/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html), [CommitFailedException](https://kafka.apache.org/43/javadoc/org/apache/kafka/clients/consumer/CommitFailedException.html), [ConsumerRebalanceListener](https://kafka.apache.org/43/javadoc/org/apache/kafka/clients/consumer/ConsumerRebalanceListener.html).
 
 ## Q17. Что такое `Cooperative Sticky Assignor`?
 

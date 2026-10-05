@@ -911,50 +911,105 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Выбор между auto-commit и `manual commit` вообще не влияет на гарантии доставки.",
+              "text": "Auto-commit всегда даёт at-most-once, даже если всю пачку из poll обработали до следующего poll.",
               "correct": false,
               "sections": {
-                "what_actually": "Выбор режима прямо определяет гарантию доставки при сбое.",
-                "source_of_confusion": "Кажется, что коммит — деталь без последствий.",
-                "if_it_were_true": "Тогда вопрос гарантий не стоял бы.",
-                "how_it_should_be": "Auto → at-most-once, manual → at-least-once."
+                "what_actually": "Auto-commit может дать at-least-once при полной обработке каждой полученной пачки до следующего poll или закрытия consumer.",
+                "source_of_confusion": "Периодический коммит принимают за неизбежный коммит до обработки.",
+                "if_it_were_true": "Порядок обработки внутри poll не влиял бы на гарантию.",
+                "how_it_should_be": "Сравнивайте момент фактической обработки и сохранения offset."
               }
             },
             {
               "label": "B",
               "order": 1,
-              "text": "`auto-commit` коммитит offset по внутреннему таймеру, что даёт семантику at-most-once.",
+              "text": "Auto-commit может дать at-least-once при обработке всей пачки до следующего poll; manual commit явно ставят после обработки.",
               "correct": true,
               "sections": {
-                "explanation": "Момент коммита offset определяет гарантию; `auto-commit` по таймеру → at-most-once.",
-                "example": "`manual commit` через `commitSync()` после обработки → at-least-once.",
-                "when_to_apply": "Когда выбираешь гарантию доставки на consumer.",
-                "edge_cases": "Auto-commit может закоммитить до фактической обработки — потеря при сбое.",
-                "related": "Полный контроль над моментом коммита — у manual commit."
+                "explanation": "Гарантия зависит от порядка обработки и коммита, а не только от флага enable.auto.commit.",
+                "example": "Если все записи из poll обработаны перед следующим poll, auto-commit тоже может дать at-least-once.",
+                "when_to_apply": "При выборе режима сохранения offsets и оценке риска повторов или потери записей.",
+                "edge_cases": "Коммит до завершения обработки создаёт риск пропуска записи после сбоя; manual commit после обработки тоже допускает повтор при сбое до коммита.",
+                "related": "См. Q15 о rebalance; CommitFailedException при commitSync разобран во втором блоке Q16."
               }
             },
             {
               "label": "C",
               "order": 2,
-              "text": "`manual commit` коммитит offset по внутреннему таймеру самой группы полностью автоматически.",
+              "text": "Manual commit после обработки гарантирует exactly-once для любого внешнего эффекта без защиты от повторной записи.",
               "correct": false,
               "sections": {
-                "what_actually": "`manual commit` выполняется вызовом кода, а не по внутреннему таймеру.",
-                "source_of_confusion": "Auto- и manual-режимы путают.",
-                "if_it_were_true": "Тогда контроль над коммитом терялся бы.",
-                "how_it_should_be": "commitSync/commitAsync вызывает сам код."
+                "what_actually": "После внешнего эффекта, но до коммита offset возможен сбой и повтор записи.",
+                "source_of_confusion": "Контроль над offset путают с атомарностью всех побочных эффектов.",
+                "if_it_were_true": "Идемпотентность внешней операции была бы не нужна.",
+                "how_it_should_be": "Закладывайте at-least-once и защищайте внешние эффекты от повторов."
               }
             },
             {
               "label": "D",
               "order": 3,
-              "text": "`auto-commit` уже после обработки гарантирует надёжную семантику at-least-once без потерь.",
+              "text": "При auto-commit можно продолжать обработку после следующего poll: Kafka подождёт подтверждения от кода перед коммитом.",
               "correct": false,
               "sections": {
-                "what_actually": "`auto-commit` даёт at-most-once с риском потери, а не at-least-once.",
-                "source_of_confusion": "Коммит после обработки приписывают авто-режиму.",
-                "if_it_were_true": "Тогда manual commit был бы не нужен.",
-                "how_it_should_be": "At-least-once требует manual commit после обработки."
+                "what_actually": "Auto-commit не знает, завершилась ли прикладная обработка, и offset может уйти вперёд.",
+                "source_of_confusion": "Периодический коммит принимают за подтверждение результата бизнес-логики.",
+                "if_it_were_true": "Незавершённая обработка никогда не приводила бы к пропуску записей.",
+                "how_it_should_be": "Обрабатывайте весь batch до следующего poll или используйте ручной коммит обработанных offsets."
+              }
+            }
+          ]
+        },
+        {
+          "block_idx": 1,
+          "question_text": "Что означает CommitFailedException от commitSync после rebalance?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Это временная задержка брокера: тот же commitSync нужно повторять без нового poll, пока Kafka не примет прежние offsets.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После завершившегося rebalance партиции могли уйти другому consumer; прежний commit обычно нельзя повторять.",
+                "source_of_confusion": "Любую ошибку commit считают сетевым timeout.",
+                "if_it_were_true": "Старый участник смог бы сохранить offset для уже чужой партиции.",
+                "how_it_should_be": "Проверьте назначение после poll и не коммитьте прежний набор вслепую."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Исключение подтверждает, что offset уже успешно сохранён в Kafka; достаточно продолжить обработку без повторного poll и проверки назначения партиций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CommitFailedException означает, что указанный коммит не выполнен и не может быть безопасно повторён как есть.",
+                "source_of_confusion": "Ошибка после обработки путается с подтверждением результата.",
+                "if_it_were_true": "Повторной обработки от последнего успешно сохранённого offset не было бы.",
+                "how_it_should_be": "Считайте возможными повторы и держите внешние эффекты идемпотентными."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Участник мог потерять партиции: прежний commit не повторяют вслепую, а после poll заново оценивают назначение и обработанные offsets.",
+              "correct": true,
+              "sections": {
+                "explanation": "Kafka считает CommitFailedException от commitSync невосстановимой для этого коммита ошибкой: после rebalance партиции могли перейти другому участнику.",
+                "example": "Долгая обработка превышает max.poll.interval.ms, участник выходит из группы и поздний commitSync не проходит.",
+                "when_to_apply": "При обработке ошибок manual commit и проектировании consumer с длительной работой.",
+                "edge_cases": "RebalanceInProgressException отличается: закончите rebalance через poll и затем пересмотрите offsets; onPartitionsLost не место для коммита.",
+                "related": "Ограничивайте max.poll.records или поддерживайте poll при отдельной обработке; не продвигайте offset дальше завершённой работы."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "После onPartitionsLost нужно сохранить старые offsets через commitSync: так новый владелец партиции не получит уже обработанные записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В onPartitionsLost партиции могут уже принадлежать другому участнику; коммитировать их поздно.",
+                "source_of_confusion": "Callback потери принимают за onPartitionsRevoked до передачи.",
+                "if_it_were_true": "Потерявший партицию мог бы сдвинуть позицию нового владельца.",
+                "how_it_should_be": "Обработанные offsets сохраняют до передачи в onPartitionsRevoked, если назначение ещё своё."
               }
             }
           ]
