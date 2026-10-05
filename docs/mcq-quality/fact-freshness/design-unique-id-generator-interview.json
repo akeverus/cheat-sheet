@@ -1,0 +1,29 @@
+{
+  "topic_slug": "design-unique-id-generator-interview",
+  "round": 9,
+  "status": "TODO",
+  "version_sensitive": true,
+  "product_version": "RFC 9562; PostgreSQL 18; описания Flickr 2010 и Twitter Snowflake 2010, checked 2026-10-05",
+  "checked_date": "2026-10-05",
+  "sources": [
+    "https://datatracker.ietf.org/doc/html/rfc9562",
+    "https://www.postgresql.org/docs/18/functions-sequence.html",
+    "https://www.postgresql.org/docs/18/sql-createsequence.html",
+    "https://code.flickr.net/2010/02/08/ticket-servers-distributed-unique-primary-keys-on-the-cheap/",
+    "https://blog.x.com/engineering/en_us/a/2010/announcing-snowflake",
+    "https://github.com/bwmarrin/snowflake"
+  ],
+  "version_sensitive_claims": [
+    "Q1: область уникальности, порядок, формат и координация — разные требования; RFC 9562 не даёт абсолютной гарантии глобальной уникальности без общей проверки.",
+    "Q2: PostgreSQL 18 nextval атомарен, но не откатывается и допускает пропуски; CACHE > 1 может изменить глобальный порядок выдачи; Flickr разделял пространство ID по чётности.",
+    "Q3: Twitter описывал Snowflake как примерно сортируемый; конкретная схема 41+10+12 даёт 4096 значений/мс на worker и требует уникального worker ID.",
+    "Q4: RFC 9562 задаёт UUIDv4 и UUIDv7; v7 содержит timestamp и не обещает строгий глобальный порядок, коллизии остаются вероятностным риском."
+  ],
+  "staleness_risks": [
+    "Разбиение битов Snowflake приведено как конкретный пример, не как требование для каждой Snowflake-подобной реализации.",
+    "MCQ Q1–Q4 прошли авторскую проверку и автоматические gates; независимого blind review нет."
+  ],
+  "notes": [
+    "Новый маршрут отделён от URL shortener Q19; старый Q19 исправлен в той же группе."
+  ]
+}

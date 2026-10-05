@@ -1091,50 +1091,50 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`Snowflake` требует координации буквально на каждый отдельно сгенерированный им ID.",
+              "text": "Для Snowflake координатор назначает каждый ID отдельно, а worker ID меняется на каждом запросе.",
               "correct": false,
               "sections": {
-                "what_actually": "Snowflake не требует координации после выдачи machine_id.",
-                "source_of_confusion": "Кажется, координация на каждый ID.",
-                "if_it_were_true": "Тогда throughput упал бы.",
-                "how_it_should_be": "Хост считает локально."
+                "what_actually": "После выдачи уникального worker ID узел формирует ID локально из времени и счётчика.",
+                "source_of_confusion": "Назначение worker ID путают с координацией каждого значения.",
+                "if_it_were_true": "Каждый запрос к генератору зависел бы от доступности координатора.",
+                "how_it_should_be": "Координируйте владение worker ID, а не каждый сформированный ID."
               }
             },
             {
               "label": "B",
               "order": 1,
-              "text": "Глобальный `INCR` в Redis без key ranges — это рекомендуемый надёжный паттерн.",
+              "text": "После failover диапазон ID сразу выдают другому хосту, даже если прежний хост ещё может продолжать выдачу.",
               "correct": false,
               "sections": {
-                "what_actually": "Глобальный INCR без key ranges — антипаттерн (bottleneck+SPOF).",
-                "source_of_confusion": "INCR кажется рекомендуемым.",
-                "if_it_were_true": "Тогда Redis был бы SPOF на shorten.",
-                "how_it_should_be": "Раздают диапазоны хостам."
+                "what_actually": "Старый узел может ожить и выдать значения из того же диапазона.",
+                "source_of_confusion": "Отказ узла ошибочно считают доказательством утраты его права выдачи.",
+                "if_it_were_true": "Повторное использование остатка не создавало бы конфликтов.",
+                "how_it_should_be": "Не переиспользуйте диапазон без надёжного исключения прежнего владельца."
               }
             },
             {
               "label": "C",
               "order": 2,
-              "text": "`Каждому` хосту раздают свой диапазон ID, убирая общую точку синхронизации.",
+              "text": "Узлам выдают непересекающиеся диапазоны или worker ID, а при failover исключают двух активных владельцев.",
               "correct": true,
               "sections": {
-                "explanation": "Каждому хосту — свой диапазон ID; глобальный auto-increment = contention + SPOF; Snowflake встраивает machine_id, ZK/Redis выдают диапазоны.",
-                "example": "Snowflake: timestamp + machine_id + sequence; ~4M ID/sec.",
-                "when_to_apply": "Когда делаешь распределённый счётчик.",
-                "edge_cases": "Snowflake чувствителен к clock drift (нужен NTP).",
-                "related": "UUID v7 — 22+ символа, слишком длинно."
+                "explanation": "Оба подхода распределяют пространство ID и убирают обращение к общему счётчику на каждый запрос.",
+                "example": "Snowflake соединяет timestamp, worker ID и sequence; диапазоны выдают заранее, затем считают локально.",
+                "when_to_apply": "Когда числовые ID нужны нескольким независимым узлам.",
+                "edge_cases": "Сбой часов, повторный worker ID и двойная выдача диапазона могут породить дубли.",
+                "related": "См. тему Design Unique ID Generator Q2–Q4."
               }
             },
             {
               "label": "D",
               "order": 3,
-              "text": "Глобальный auto-increment counter масштабируется вообще без bottleneck и без `SPOF`.",
+              "text": "Всем узлам назначают один worker ID, а timestamp сам исключает дубли при работе без координации.",
               "correct": false,
               "sections": {
-                "what_actually": "Глобальный auto-increment — это contention + SPOF, а не масштаб.",
-                "source_of_confusion": "Кажется, счётчик масштабируется.",
-                "if_it_were_true": "Тогда распределённые ID были бы не нужны.",
-                "how_it_should_be": "Общий счётчик ограничивает throughput."
+                "what_actually": "Два узла с одним worker ID могут совпасть по времени и sequence.",
+                "source_of_confusion": "Timestamp принимают за достаточный источник уникальности.",
+                "if_it_were_true": "Одно значение worker ID можно было бы безопасно делить между всеми узлами.",
+                "how_it_should_be": "Назначайте разные worker ID одновременно активным генераторам."
               }
             }
           ]

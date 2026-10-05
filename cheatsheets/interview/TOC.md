@@ -426,6 +426,7 @@ updated: "2026-10-05"
 ## system-design
 
 - [Вопросы на собеседовании: Системный дизайн](system-design/system-design-interview.md) — `41` вопрос
+- [Вопросы на собеседовании: Генератор уникальных ID](system-design/design-unique-id-generator-interview.md) — `4` вопроса
 - [Вопросы на собеседовании: `Design URL Shortener`](system-design/design-url-shortener-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Design Pastebin`](system-design/design-pastebin-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Design Rate Limiter`](system-design/design-rate-limiter-interview.md) — `30` вопросов
