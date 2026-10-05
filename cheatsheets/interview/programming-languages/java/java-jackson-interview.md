@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[java-jackson]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-10-05"
 ---
 # Вопросы на собеседовании: `Jackson`
 
@@ -27,6 +27,8 @@ updated: "2026-04-25"
 - [Jackson GitHub](https://github.com/FasterXML/jackson)
 - [Jackson Databind Javadoc](https://fasterxml.github.io/jackson-databind/javadoc/2.15/)
 - [Jackson Annotations Wiki](https://github.com/FasterXML/jackson-annotations/wiki)
+- [Jackson 3 Migration Guide](https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md) — официальный разбор несовместимостей 2 → 3
+- [Spring Boot 4.1: JSON](https://docs.spring.io/spring-boot/reference/features/json.html) — Jackson 3 по умолчанию и временная поддержка Jackson 2
 
 ### Baeldung
 - [Jackson Annotation Examples](https://www.baeldung.com/jackson-annotations)
@@ -90,6 +92,7 @@ updated: "2026-04-25"
 **Производительность и ошибки**
 - [Q30. (!) Частые ошибки и как их диагностировать?](#q30--частые-ошибки-и-как-их-диагностировать)
 - [Q31. Насколько Jackson быстр? Когда использовать альтернативы?](#q31-насколько-jackson-быстр-когда-использовать-альтернативы)
+- [Q32. (!) Что проверить при миграции Jackson 2 → 3 и Spring Boot 3 → 4?](#q32--что-проверить-при-миграции-jackson-2-3-и-spring-boot-3-4)
 
 ## Q1. (!) Что такое Jackson и из каких модулей он состоит?
 
@@ -583,16 +586,16 @@ Default Typing — это режим, включаемый `mapper.activateDefau
 
 ## Q24. (!) Почему `LocalDateTime` сериализуется как массив и как это исправить?
 
-«Голый» Jackson не знает типов `java.time` и обращается с `LocalDateTime` как с обычным бином — сериализует его геттеры/компоненты (год, месяц, день, час…), что и даёт массив чисел `[2026,4,20,12,0,0]`. Чтобы он трактовал дату как единое значение, нужен модуль поддержки `java.time`.
+В **Jackson 2** массив вида `[2026,4,20,12,0,0]` выдаёт сериализатор `LocalDateTime` из `JavaTimeModule`, когда включён `SerializationFeature.WRITE_DATES_AS_TIMESTAMPS`. `LocalDateTime` не имеет часового пояса, поэтому модуль представляет его компоненты массивом, а не одним числом timestamp. Без модуля современные Jackson 2 обычно сообщают, что тип `java.time` не поддерживается; отсутствие модуля **не является причиной массива**.
 
-Фикс — зарегистрировать модуль:
+Для Jackson 2 зарегистрируйте модуль, если его нет, и отключите запись дат в timestamp-формате:
 
 ```java
 mapper.registerModule(new JavaTimeModule());
 mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);   // → ISO-8601 строка
 ```
 
-В Spring Boot — делается автоматически, если зависимость `jackson-datatype-jsr310` на classpath (включена в `spring-boot-starter-json`).
+Spring Boot 3 обычно регистрирует `JavaTimeModule` из `jackson-datatype-jsr310` и настраивает даты как ISO-строки. В **Jackson 3** поддержка `java.time` встроена, а `DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS` по умолчанию выключен. Если массив появился после своей настройки, проверьте именно этот флаг и локальный `@JsonFormat`; отдельный `JavaTimeModule` для Jackson 3 не нужен.
 
 Для custom-форматов:
 
@@ -657,7 +660,7 @@ obj.putArray("items").add(1).add(2).add(3);
 
 ## Q28. (!) Как настроить `ObjectMapper` в Spring Boot?
 
-Spring Boot сам создаёт и автоконфигурирует `ObjectMapper`, поэтому в идеале нужно лишь скорректировать его, а не строить с нуля. Три способа — по нарастанию инвазивности: декларативно в `application.yml`, точечно через customizer (рекомендуемый) и полная замена своим bean-ом.
+В **Spring Boot 3 с Jackson 2** Boot создаёт и настраивает `ObjectMapper`, поэтому обычно достаточно скорректировать его. Три способа — по нарастанию инвазивности: декларативно в `application.yml`, точечно через customizer и замена своим bean-ом. Примеры ниже относятся именно к этой связке версий.
 
 **1. Через `application.yml`:**
 
@@ -699,7 +702,9 @@ public ObjectMapper objectMapper() {
 }
 ```
 
-**Рекомендация:** способ 2 (`Jackson2ObjectMapperBuilderCustomizer`) — золотая середина: он лишь дополняет авто-конфигурированный mapper, поэтому уже зарегистрированные Spring-ом модули (`JavaTimeModule` и пр.) остаются на месте. Полная замена своим `@Bean ObjectMapper` отключает авто-конфигурацию целиком — тогда все модули и настройки придётся прописывать вручную, иначе легко получить, например, даты-массивы из Q24.
+**Для Boot 3:** `Jackson2ObjectMapperBuilderCustomizer` дополняет builder автонастроенного mapper без полной замены bean. При собственном `@Bean ObjectMapper` Boot отступает от создания своего mapper, и его настройки/регистрацию модулей нужно проверить отдельно.
+
+**Для Spring Boot 4 с Jackson 3:** по умолчанию автоконфигурируется `JsonMapper`; для точечной донастройки используется `JsonMapperBuilderCustomizer`. Старый `Jackson2ObjectMapperBuilderCustomizer` относится к временной поддержке Jackson 2 и помечен deprecated. Конкретный порядок миграции — в Q32.
 
 ## Q29. Что такое `@JsonView` и когда его использовать?
 
@@ -764,6 +769,28 @@ Jackson — быстрый и зрелый: для подавляющего бо
 | `json-iter`, `moshi` | mobile/Android |
 
 **Итог:** для 99% backend-сервисов Jackson — правильный выбор. Switch на альтернативу — только при доказанном bottleneck в профилировщике.
+
+## Q32. (!) Что проверить при миграции Jackson 2 → 3 и Spring Boot 3 → 4?
+
+Миграция — это изменение API **и поведения JSON**, а не только номера зависимости. Jackson 3 требует Java 17 и переносит основные Maven group ID и Java-пакеты с `com.fasterxml.jackson` на `tools.jackson`. Исключение — `jackson-annotations`: его пакет `com.fasterxml.jackson.annotation` остаётся; аннотации из `jackson-databind`, например `@JsonSerialize`, переезжают вместе с databind. Версии модулей согласуют через BOM или управление зависимостями Spring Boot.
+
+Проверять стоит четыре слоя:
+
+1. **Код и зависимости.** Удалённые deprecated API и переименованные типы потребуют правок. Для JSON Jackson 3 предпочитает `JsonMapper.builder()`: mapper после создания неизменяем, его настраивают builder-ом или создают новую версию через `rebuild()`. Модули для `java.time`, `Optional` и имён параметров встроены; прежнюю ручную регистрацию и зависимости пересматривают. `JsonProcessingException` заменён на `JacksonException`, исключения Jackson стали unchecked — проверить `catch` и обработчики ошибок.
+2. **JSON-контракт.** Среди изменившихся умолчаний — сортировка свойств по имени, запись дат как ISO-строк вместо timestamp и включённый `FAIL_ON_TRAILING_TOKENS`. Сравнить эталонные JSON-ответы, чтение старых payload и сохранённых документов. Отдельно проверить кастомные сериализаторы, полиморфизм и код, полагающийся на порядок полей.
+3. **Spring Boot.** В Boot 4.1 Jackson 3 и `JsonMapper` — default. Для настроек остаются `spring.jackson.*` и `JsonMapperBuilderCustomizer`; старый `Jackson2ObjectMapperBuilderCustomizer` применяется к deprecated-поддержке Jackson 2. `spring.jackson.use-jackson2-defaults=true` помогает временно приблизить умолчания, но не исправляет несовместимые API. Если оба поколения на classpath, проверить выбранный JSON mapper для MVC/WebFlux и сторонних библиотек; переходный Jackson 2 использует `spring-boot-jackson2` и `spring.jackson2.*`.
+4. **Приёмка.** Прогнать контрактные тесты сериализации/десериализации, тесты HTTP-ответов и чтение реальных старых данных. Исправлять конкретные отличия через настройки builder-а; не отключать новые проверки формата вслепую ради зелёных тестов.
+
+Например, в Boot 4 настройку `JsonMapper` можно добавить, сохранив автонастройку:
+
+```java
+@Bean
+JsonMapperBuilderCustomizer jacksonCustomizer() {
+    return builder -> builder.enable(SerializationFeature.INDENT_OUTPUT);
+}
+```
+
+**Итог:** сначала зафиксируйте JSON-контракт и зависимые библиотеки, затем переносите код на Jackson 3 и проверяйте реальные изменения поведения. Версии Boot 3/Jackson 2 и Boot 4/Jackson 3 нельзя описывать одним набором настроек `ObjectMapper`.
 
 ## See also
 

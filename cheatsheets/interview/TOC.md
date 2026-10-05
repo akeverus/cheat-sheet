@@ -336,7 +336,7 @@ updated: "2026-10-05"
 - [Вопросы на собеседовании: Дженерики Java](programming-languages/java/java-generics-interview.md) — `40` вопросов
 - [Вопросы на собеседовании: Структура и инициализация классов Java](programming-languages/java/java-initialization-interview.md) — `27` вопросов
 - [Вопросы на собеседовании: Ввод-вывод Java (IO/NIO)](programming-languages/java/java-io-nio-interview.md) — `41` вопрос
-- [Вопросы на собеседовании: `Jackson` (JSON)](programming-languages/java/java-jackson-interview.md) — `31` вопрос
+- [Вопросы на собеседовании: `Jackson` (JSON)](programming-languages/java/java-jackson-interview.md) — `32` вопроса
 - [Вопросы на собеседовании: `Lombok`](programming-languages/java/java-lombok-interview.md) — `27` вопросов
 - [Вопросы на собеседовании: `MapStruct`](programming-languages/java/java-mapstruct-interview.md) — `28` вопросов
 - [Вопросы на собеседовании: Рефлексия Java](programming-languages/java/java-reflection-interview.md) — `16` вопросов
