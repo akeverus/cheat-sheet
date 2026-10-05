@@ -23,12 +23,13 @@
 
 ## Текущий проверенный срез на 05.10.2026
 
-В каталоге 334 тематических Markdown-файла и 9 905 заголовков Q в 25
-разделах; 333 файла имеют парный production MCQ JSON. Пятнадцать новых тем
+В каталоге 336 тематических Markdown-файлов и 9 913 заголовков Q в 25
+разделах; 335 файлов имеют парный production MCQ JSON. Семнадцать новых тем
 в текущем этапе: Python core, Python concurrency, Python testing, FastAPI,
 MySQL, JDBC/пулы, Java 26–27, Python typing, Python packaging и
 System Design Unique ID Generator, Notification System, Hotel Reservation System,
-Object Storage, Gaming Leaderboard и Metrics Platform.
+Object Storage, Gaming Leaderboard, Metrics Platform, Ad Click Event Aggregation
+и Distributed Email Service.
 Навигация и инвентарь обновлены. Go database/sql углублён в
 go-stdlib-interview.md Q22–Q25: отдельный Go DB файл отвергнут из-за
 пересечения. Исправлены Go generics Q10/Q15/Q18–Q20, Spring Security Q30,
@@ -138,17 +139,16 @@ JSON PASS; parity RabbitMQ/Kafka/сравнения PASS, event-driven FAIL на
 
 ## Точная точка продолжения
 
-Начни с P3-кандидата Ad Click Event Aggregation из раздела
-`system-design-notes` в плане. Сравни `stream-processing-interview.md`
-Q5–Q10/Q14–Q16, Kafka и event-driven Q. Проверь по первичным источникам
-несколько сквозных сценариев рекламного домена: event ID, deduplication,
-event-time окна, поздние конверсии, сверка с billing. Реши `NEW_TOPIC`
-против `DEEPEN`. Затем проверь Distributed Email Service с учётом
-Notification System Q1–Q4.
+Начни с P3-кандидата Digital Wallet из раздела `system-design-notes` в плане.
+Сравни `design-payment-system-interview.md` Q5/Q8/Q22, транзакции БД и Q по
+ledger/event sourcing. По первичным источникам проверь несколько самостоятельных
+сценариев перевода между кошельками и реши `NEW_TOPIC` против `DEEPEN`.
+Ad Click Event Aggregation и Distributed Email Service Q1–Q4 написаны,
+их MCQ требуют независимой приёмки.
 RabbitMQ/Kafka/Hibernate, новые Java и Python Q требуют независимого blind
 review MCQ; старый parity/pre-check backlog Hibernate, Spring Data JPA,
 Java IO/NIO, Jackson, URL Shortener, RabbitMQ, Kafka, сравнение брокеров и
-event-driven открыт. Metrics Platform Q1–Q4, Leaderboard Q1–Q5, Object Storage Q1–Q4,
+event-driven открыт. Ad Click Event Aggregation и Distributed Email Service Q1–Q4, Metrics Platform Q1–Q4, Leaderboard Q1–Q5, Object Storage Q1–Q4,
 Reservation System Q1–Q4, Notification System Q1–Q4, RabbitMQ Streams Q40–Q42
 и Spring Data JDBC Q17 тоже ждут
 содержательной приёмки.
