@@ -117,7 +117,7 @@ Q (`З`) от проверки ответа по официальному ист
 |---|---|---|---|
 | P0 · `DEEPEN`, выполнено | [Baeldung: MCP Logging in Spring AI](https://www.baeldung.com/spring-ai-mcp-logging), 06.09; [MCP 2026-07-28](https://blog.modelcontextprotocol.io/posts/2026-07-28/) | `ai-ml/mcp-interview.md` Q6/Q8/Q13/Q14/Q28–Q30: версия протокола и deprecated-механизмы не были разграничены. Новая Logging-тема пока не нужна: Q уже охватывают протокол, а Spring AI logging требует отдельного сравнения с `spring-ai-interview.md` Q15. | `О` по указанным Q и changelog; JSON обновлён, структура PASS, файл целиком не принят. |
 | P2 · `DEEPEN`, выполнено | [Baeldung: Anthropic prompt caching in Spring AI](https://www.baeldung.com/spring-ai-anthropic-claude-prompt-cache), 16.09; [Spring AI Anthropic reference](https://docs.spring.io/spring-ai/reference/api/chat/anthropic-chat.html#prompt-caching) | `frameworks/spring/spring-ai-interview.md` Q14 упоминал кеширование, но не отделял кеш префикса от готового ответа, write/read usage, TTL и ограничений провайдера. | `О`; Q14 и MCQ B1 обновлены, структура/parity PASS, blind review ожидается. |
-| P3 · `ADD_Q` или `DEEPEN`, кандидат | [Baeldung: Hibernate @Find](https://www.baeldung.com/java-hibernate-find-annotation), 26.09; [Hibernate 7.1 Javadoc](https://docs.hibernate.org/orm/7.1/javadocs/org/hibernate/annotations/processing/Find.html) | `databases/hibernate-jpql-criteria-interview.md` Q1 перечисляет способы запросов, но не generated finder через `@Find`; надо проверить применимость к Metamodel Generator, ограничения сигнатуры и версию (аннотация с 6.3, incubating). | `З` и официальный Javadoc; соседний ответ и MCQ ещё требуют точечной проверки. |
+| P3 · `DEEPEN`, выполнено | [Baeldung: Hibernate @Find](https://www.baeldung.com/java-hibernate-find-annotation), 26.09; [Hibernate 7.1 Javadoc](https://docs.hibernate.org/orm/7.1/javadocs/org/hibernate/annotations/processing/Find.html) и [Hibernate Processor](https://docs.hibernate.org/orm/7.1/introduction/html_single/) | `databases/hibernate-jpql-criteria-interview.md` Q1 перечисляет базовые способы запросов, Q6 описывает metamodel, но не generated finder. Углублён Q6: `@Find` с 6.3, в 7.1 incubating, параметры соответствуют полям, имя метода произвольно; артефакт процессора 7.1 исправлен. | `О` по Q1/Q6; Q6 и MCQ B1 написаны. JSON structure PASS, parity **всего старого файла FAIL**; новый блок проверен вручную, независимая приёмка не выполнена. |
 | `COVERED` по заголовку | FitNesse acceptance testing в [архиве Baeldung](https://www.baeldung.com/full_archive) | `testing/test-strategies-interview.md` Q8 уже объясняет ATDD и называет FitNesse; по одной публикации отдельный Q не оправдан. | `З`; содержательный аудит ответа не проводился. |
 
 
@@ -154,13 +154,13 @@ Q (`З`) от проверки ответа по официальному ист
 | P2 / КАНДИДАТ | 15.09 [JDK 27 release notes](https://www.oracle.com/java/technologies/javase/27all-relnotes.html), 29.09 [обзор Baeldung](https://www.baeldung.com/java-27-new-features) | `programming-languages/java/java-22-25-interview.md` Q8/Q14/Q22 | `NEW_TOPIC` для Java 26–27 **только если** после сверки JDK 26/27 получается несколько самостоятельных backend-вопросов: статус preview, совместимость при миграции, поведение JVM и диагностика. Не удлинять файл 22–25 механическим перечислением JEP. |
 | P2 / КАНДИДАТ | 10.09 [HTTP/3 в Java HttpClient](https://www.baeldung.com/java-httpclient-http-3-quic); [JDK 26 release notes](https://www.oracle.com/java/technologies/javase/26-relnote-issues.html) | `programming-languages/java/java-io-nio-interview.md` Q40 | `ADD_Q` или `DEEPEN`: включение HTTP/3, выбор версии, discovery/fallback и ограничения клиента. В файле версий Java дать ссылку, не дублировать полный разбор. |
 | P2 / КАНДИДАТ | 10.09 [Jackson 3](https://www.baeldung.com/java-jackson-3-updates); [материалы проекта](https://github.com/FasterXML/jackson) | `programming-languages/java/java-jackson-interview.md` Q28/Q30 | `ADD_Q`: что проверить при миграции Jackson 2 → 3 (координаты, пакеты, конфигурация, совместимость со Spring Boot), прежде сверив точные версии и официальный migration guide. |
-| P2 / КАНДИДАТ | 22.04 [Spring Data AOT Repositories](https://www.baeldung.com/spring-data-aot-repositories); [Spring Data JPA AOT](https://docs.spring.io/spring-data/jpa/reference/jpa/aot.html) | `frameworks/spring/spring-data-jpa-interview.md` Q4–Q6; общий AOT в `spring-boot-3-migration-interview.md` Q8 | `ADD_Q` или `DEEPEN` Q4: что генерируется для репозитория при AOT, какие query methods допустимы и что определяется на этапе сборки. Не повторять общий AOT/native image. |
+| P2 / `DEEPEN`, выполнено | 22.04 [Spring Data AOT Repositories](https://www.baeldung.com/spring-data-aot-repositories); [Spring Data JPA AOT 4.1.1](https://docs.spring.io/spring-data/jpa/reference/jpa/aot.html) | `frameworks/spring/spring-data-jpa-interview.md` Q4–Q6; общий AOT в `spring-boot-3-migration-interview.md` Q8 | Q4 углублён: генерация подходящих query methods при сборке, ограничения `ScrollPosition`/dynamic projections, отсутствие обращения к БД, фиксация диалекта; базовый CRUD остаётся. `О` по Q4–Q6, Q4 MCQ B0/B1 обновлён; structure PASS, parity **всего старого файла FAIL**, blind review ожидается. |
 | P2 / КАНДИДАТ | 25.07 [Application Startup Tracking](https://www.baeldung.com/spring-application-startup-tracking); [Spring Boot reference](https://docs.spring.io/spring-boot/reference/features/spring-application.html) | `frameworks/spring/spring-boot-actuator-interview.md` Q3/Q38, `spring-framework-interview.md` Q6/Q10 | `ADD_Q` или `DEEPEN` Q3: как собрать шаги запуска через `ApplicationStartup`, чем отличаются реализации и когда полезен `/actuator/startup`. Не путать с Kubernetes startup probe из Actuator Q42. |
 | P2 / КАНДИДАТ | 22.07 [MySQL: Incorrect string value](https://www.baeldung.com/java-mysql-sqlexception-incorrect-string-value), 28.05 [Communications link failure](https://www.baeldung.com/jdbc-connector-j-mysql-communications-link-failure); [MySQL charset](https://dev.mysql.com/doc/refman/8.4/en/charset-connection.html), [Connector/J troubleshooting](https://dev.mysql.com/doc/connector-j/en/connector-j-usagenotes-troubleshooting.html) | Будущая MySQL-тема; `databases/sql-interview.md` Q45 и кандидат JDBC/пулы | При решении о `NEW_TOPIC` использовать два самостоятельных диагностических сценария: charset/collation/`utf8mb4` для ошибок записи и разрыв соединения после простоя (таймауты, сеть, устаревшее соединение в пуле). Разнести ответственность MySQL и JDBC, не добавлять дублирующий общий SQL-вопрос. |
 | P2 / КАНДИДАТ | 23.06 [Spring AI 2.0: structured output](https://spring.io/blog/2026/06/23/spring-ai-self-correcting-structured-output/), 25.09 [Baeldung](https://www.baeldung.com/spring-ai-structured-output) | `frameworks/spring/spring-ai-interview.md` Q3 | `DEEPEN`: типизированный результат, provider-native schema, проверка/повтор при невалидном ответе, цена retry и ограничения streaming. Точную версию сверить с [reference](https://docs.spring.io/spring-ai/reference/api/structured-output.html). |
 | P2 / КАНДИДАТ | 15.06 [Spring AI 2.0: tool calling](https://spring.io/blog/2026/06/15/spring-ai-composable-tool-calling/) | `frameworks/spring/spring-ai-interview.md` Q7/Q15 | `DEEPEN`: цикл вызова инструмента, роль `ToolCallingAdvisor`, контроль side effects и наблюдаемость; проверить, не устарели ли ответы с моделью исполнения 1.x. |
 | P3 / КАНДИДАТ | 27.06 [Bean Background Initialization](https://www.baeldung.com/spring-bean-background-init); [Spring Framework reference](https://docs.spring.io/spring-framework/reference/core/beans/java/composing-configuration-classes.html) | `frameworks/spring/spring-framework-interview.md` Q10/Q38 | `DEEPEN` Q10 или `ADD_Q`: когда фоновая инициализация бина сокращает критический путь старта, как задаётся исполнитель и какие зависимости всё равно блокируют startup. Функция появилась в Spring Framework 6.2: новизна статьи не равна новизне API. |
-| P3 / КАНДИДАТ | 27.06 [Kafka CommitFailedException](https://www.baeldung.com/java-kafka-commitfailedexception) | `messaging/kafka-interview.md` Q16/Q45 | `DEEPEN`: почему manual commit может не пройти после rebalance и как проектировать обработку/повтор; сначала проверить точную семантику исключения по документации Kafka. |
+| P3 / `DEEPEN`, выполнено | 27.06 [Kafka CommitFailedException](https://www.baeldung.com/java-kafka-commitfailedexception); [KafkaConsumer 4.3.1](https://kafka.apache.org/43/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html) | `messaging/kafka-interview.md` Q15/Q16/Q45 | Q16 дополнен: `CommitFailedException` после потери партиции нельзя слепо повторять; auto-commit может дать at-least-once при полной обработке batch до следующего `poll()`. `О` по Q15/Q16/Q45; Q16/MCQ B1 написаны, structure/parity PASS, blind review ожидается. |
 | P3 / КАНДИДАТ | 21.06 [Spring Boot 4.1 и MongoDB JobRepository](https://spring.io/blog/2026/06/21/spring-boot-41-and-spring-batch/) | `frameworks/spring/spring-batch-interview.md` Q6/Q28/Q38 | `ADD_Q` лишь если подтверждена ценность сценария: где хранить metadata `JobRepository`, ограничения MongoDB и транзакций, отличие хранилища состояния job от источника/назначения данных. Spring Boot 4.1 уже выпущен; проверить версию Spring Batch и ограничения хранилища. |
 | P3 / КАНДИДАТ | 02.10 [Python 3.15.0rc3](https://www.python.org/downloads/release/python-3150rc3/), [черновик What's New](https://docs.python.org/3.15/whatsnew/3.15.html) | Будущий `programming-languages/python/python-interview.md` | После базовой Python-темы рассмотреть **один версионный блок**, если изменения полезны backend-разработчику. На 03.10 это RC; финальный релиз перенесён на 09.10.2026. Перед написанием снова проверить GA и окончательную документацию. |
 | P3 / КАНДИДАТ, **БЕТА** | 24.09 [PostgreSQL 19 beta 4](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/), [черновик release notes](https://www.postgresql.org/docs/19/release-19.html) | `databases/postgresql-interview.md` Q32/Q44–Q46 | После GA проверить `DEEPEN` Q32 о встроенном `REPACK` против `VACUUM FULL`/`pg_repack` и возможный Q о `WAIT` для read-your-writes на standby. Beta 4 уже отменила несколько функций: до релиза не описывать предложения как гарантированную функциональность PostgreSQL 19. |
@@ -259,8 +259,8 @@ memory/GC и testing. Седьмой файл о модулях не меняе�
 | P2 · `NEW_TOPIC` · ПРОВЕРЕНО · З | `databases/mysql-interview.md` отсутствует; `database-transactions-interview.md` Q9 — об изоляции, `database-replication-interview.md` Q15/Q18 — о репликации, `sql-interview.md` Q16/Q45 — общий SQL/JDBC. Нет MySQL-маршрута по InnoDB, плану/индексу, charset/collation и сбоям соединения. | [MySQL InnoDB](https://dev.mysql.com/doc/refman/8.4/en/innodb-introduction.html), [EXPLAIN](https://dev.mysql.com/doc/refman/8.4/en/using-explain.html), [charset соединения](https://dev.mysql.com/doc/refman/8.4/en/charset-connection.html), [Connector/J troubleshooting](https://dev.mysql.com/doc/connector-j/en/connector-j-usagenotes-troubleshooting.html); [Baeldung 22.07](https://www.baeldung.com/java-mysql-sqlexception-incorrect-string-value) дал пример ошибки. Будущие Q: InnoDB/изоляция → индекс/план → `utf8mb4` → отличить сервер/сеть/пул при `Communications link failure`. |
 | P2 · `NEW_TOPIC` · ПРОВЕРЕНО · З | `databases/jdbc-connection-pool-interview.md` отсутствует; `sql-interview.md` Q45 сравнивает JDBC/JPA, `database-transactions-interview.md` Q33–Q34 — связь пула и транзакции, `spring-data-jdbc-interview.md` Q1/Q16 — уровень выше JDBC. Нет цельного resource lifecycle и диагностики пула; [обычный JDBC-справочник](cheatsheets/languages/java/java-jdbc.md) вне interview. | [JDBC `DataSource`](https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html), [HikariCP settings](https://github.com/brettwooldridge/HikariCP#configuration-knobs-baby), [MySQL troubleshooting](https://dev.mysql.com/doc/connector-j/en/connector-j-usagenotes-troubleshooting.html). Будущие Q: `DataSource`/connection → autocommit/transaction → statement/result set/streaming → размер пула, `maxLifetime`, `keepaliveTime`, stale connection. |
 | P2 · `ADD_Q` · ПРОВЕРЕНО · З | `frameworks/spring/spring-data-jdbc-interview.md` Q13–Q16 описывают репозитории, запросы и транзакции; `databases/sql-interview.md` Q16 — SQL upsert. Нет вопроса о `JdbcAggregateTemplate.upsert` и отличии от `save`. | [Spring Data 2026.0 GA, 09.06](https://spring.io/blog/2026/06/09/spring-data-2026-0-0-generally-available/), [reference 4.1](https://docs.spring.io/spring-data/relational/reference/jdbc/entity-persistence.html). Возможный заголовок: «Когда `JdbcAggregateTemplate.upsert` заменяет `save` и какие у него ограничения?»; затронуть single-statement, обязательный ID, диалекты и границу aggregate. Сначала точечно прочитать ответы Q13–Q16 и SQL Q16. |
-| P3 · `DEEPEN` · КАНДИДАТ · З | `messaging/rabbitmq-interview.md` Q19/Q25/Q30 упоминают requeue, DLX/TTL и quorum; отдельного заголовка о delivery limit poison message нет. | [RabbitMQ quorum docs](https://www.rabbitmq.com/docs/quorum-queues): default 20 с версии 4.0. Прочитать Q19/Q25/Q30 и решить, достаточно ли дополнить Q30; новизна функции в 2026 году не заявляется. |
-| P3 · `DEEPEN` · КАНДИДАТ · З | `messaging/kafka-interview.md` Q15/Q16/Q45 покрывают rebalance и manual commit, но заголовки не выделяют `CommitFailedException` после потери владения партицией. | [Kafka consumer API](https://kafka.apache.org/43/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html). Прочитать Q15/Q16/Q45 и сверить точную семантику исключения; пока Q не добавлять. |
+| P3 · `DEEPEN` · НАПИСАНО · О | `messaging/rabbitmq-interview.md` Q19/Q24/Q25/Q30: прежний список DLX пропускал delivery-limit, сравнение quorum/classic устарело; отдельный Q не нужен. | [RabbitMQ quorum docs 4.3](https://www.rabbitmq.com/docs/quorum-queues), [DLX](https://www.rabbitmq.com/docs/dlx). Исправлены Q19/Q24/Q25/Q30 и MCQ B1 для Q19/Q30: default 20 с 4.0, `nack` не увеличивает delivery-count с 4.3, strict priority доступен с 4.3, причины DLX и `x-death`. Structure/parity PASS, независимая приёмка ожидается. |
+| P3 · `DEEPEN` · НАПИСАНО · О | `messaging/kafka-interview.md` Q15/Q16/Q45: rebalance и commit были, но без `CommitFailedException`; Q16 ошибочно считал auto-commit безусловным at-most-once. | [KafkaConsumer API 4.3.1](https://kafka.apache.org/43/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html), [CommitFailedException](https://kafka.apache.org/43/javadoc/org/apache/kafka/clients/consumer/CommitFailedException.html). Исправлены Q16 и MCQ B0, добавлен B1; structure/parity PASS, blind review ожидается. |
 
 **Отрицательные решения:** новый Go HTTP-файл отклонён по `go-stdlib-interview.md`
 Q1–Q5 и `go-testing-interview.md` Q14–Q15; отдельный profiling-файл — по
@@ -327,7 +327,7 @@ Data 09.06 и Boot 10.06, PostgreSQL beta 4 24.09. Это выборка офи�
 | P2 | ПРОВЕРЕНО · З | `databases/sql-interview.md` Q45 сравнивает JDBC и JPA; `database-transactions-interview.md` Q33–Q34 касаются пула; отдельного interview-файла нет | **JDBC и пулы**: `DataSource`, `PreparedStatement`, `ResultSet`, auto-commit, batch/streaming, жизненный цикл и диагностика. Граница с MySQL и Spring Data JDBC записана в пакете 05.10. | `NEW_TOPIC`: `databases/jdbc-connection-pool-interview.md` |
 | P4 | КАНДИДАТ | `monitoring/opentelemetry-interview.md`, Q14 о trace context; `metrics-tracing-interview.md` Q37 содержит Baggage в ответе | Когда Baggage нужен, как ограничивать размер и не передавать чувствительные данные через заголовки? | `DEEPEN` существующий Q или `PROMOTE`; избегать третьего общего объяснения context propagation |
 | P4 | КАНДИДАТ | `frameworks/spring/spring-testing-interview.md`, Q9/Q10 названы `@MockBean`/`@SpyBean`; замена `@MockitoBean` уже отмечена в Q9 | Нужен ли отдельный практический вопрос о миграции тестов Boot 3.4/4 и override-бинах, или достаточно актуализировать Q9/Q10 и примеры? | Скорее `DEEPEN`; не добавлять Q только ради нового имени |
-| P4 | КАНДИДАТ | `messaging/rabbitmq-interview.md`, Q25 о retry и Q30 о quorum queues | Есть ли пробел между retry, poison messages и delivery limit quorum queue; как избежать бесконечной requeue? Проверить версию RabbitMQ. | `DEEPEN` Q25/Q30 либо узкий `ADD_Q` |
+| P4 | ВЫПОЛНЕНО · О | `messaging/rabbitmq-interview.md`, Q19/Q24/Q25/Q30 | Пробел закрыт в существующих Q: DLX/TTL retry, delivery limit и 4.3 `nack` разграничены. | `DEEPEN`; отдельный Q не нужен, MCQ ждут независимой приёмки |
 | P4 | КАНДИДАТ | `ai-ml/ai-application-architecture-interview.md` и `llm-integration-patterns-interview.md` покрывают rate limit/retry | Есть ли отдельный вопрос о **планировании ёмкости** LLM-сервиса: очередь, concurrency cap, лимиты токенов и деградация при перегрузке? Не дублировать Q по стоимости и rate limit. | `ADD_Q` только если новый операционный сценарий подтверждён |
 
 ### Очистка перед расширением
@@ -404,39 +404,55 @@ Data 09.06 и Boot 10.06, PostgreSQL beta 4 24.09. Это выборка офи�
 **Checkpoint 05.10.2026:** P0 исправлен, включая версионные ответы MCP
 Q6/Q8/Q13/Q14/Q28–Q30; P1 Python core/concurrency написан,
 Go `database/sql` углублён в stdlib Q22–Q25. Из P2 написаны Python testing,
-FastAPI, MySQL и JDBC/пулы. Состав: 325 файлов, 9 863 Q; инвентарь и навигация обновлены.
+FastAPI, MySQL и JDBC/пулы. Следующая небольшая группа: RabbitMQ
+Q19/Q24/Q25/Q30, Kafka Q16, Hibernate JPQL/Criteria Q6 и Spring Data JPA
+Q4 углублены после
+точечной проверки соседних Q и официальных документов; отдельные файлы и
+новые номера Q не понадобились. Состав остаётся 325 файлов, 9 863 Q;
+инвентарь не менялся, потому что состав шпаргалок и заголовков Q прежний.
 Все новые/изменённые MCQ ещё ждут независимой содержательной приёмки.
 Для MCP структурная проверка PASS, parity всего старого файла FAIL; до
 исправления остальных блоков нельзя отмечать MCQ темы как принятый.
-Структурные и детерминированные проверки не заменяют её. Полного аудита
-ответов существующих файлов не было. Посторонние изменения рабочего дерева
-сохранены; после завершения пользователь поручил разнести **все** изменения
-репозитория по тематическим коммитам, push не запрошен.
+Структурные и детерминированные проверки не заменяют её. RabbitMQ: JSON
+41 Q / 43 блока, structure/parity PASS. Kafka: 50 Q / 51 блок,
+structure/parity PASS. Hibernate: 16 Q / 17 блоков, structure PASS, parity
+**FAIL из-за старых блоков всего файла**; добавленный Q6 B1 точечно проверен
+по теории и официальному Javadoc, но независимого blind review нет.
+Spring Data JPA: 43 Q / 44 блока, structure PASS, parity **FAIL из-за
+старого файла**; оба блока Q4 выровнены локально по содержанию и форме,
+но независимой приёмки тоже нет.
+Полного аудита ответов существующих файлов не было. Параллельно появились
+посторонние незавершённые правки `agentic-patterns` и новые MCQ run-файлы;
+их не смешивать с этой группой и не переписывать их audit-state. Пользователь
+поручил тематические коммиты, push не запрошен.
 
 Контрольная точка Git: `26a86918` (новые и обновлённые шпаргалки),
 `492eeeb8` (процесс MCQ), `1d925af5` (Spring Data JDBC Q17),
 `32b72efd` (ранее существовавшие правки четырёх теоретических пар),
-`e817fd82` (evidence и синхронизация MCQ). После них рабочее дерево было
-чистым; push не выполнялся. Сводка `sync`: 324 пары / 9 824 блока,
+`e817fd82` (evidence и синхронизация MCQ), `24efdeb7` (RabbitMQ),
+`c27a450d` (Kafka), `4d649610` (Hibernate `@Find`), `16bad0d0`
+(Spring Data JPA AOT). После первых пяти рабочее дерево было чистым;
+позднее возникли параллельные правки `agentic-patterns`. Push не выполнялся.
+Предыдущая сводка `sync` до этих четырёх тем: 324 пары / 9 824 блока;
+четыре темы добавили пять MCQ-блоков без новых Q, повторный полный `sync`
+во время параллельных MCQ runs не выполнялся.
 3 файла / 59 блоков с действующей полной приёмкой; `agentic-patterns` Q12
 остаётся открытым finding, остальные новые MCQ из этого плана ждут blind review.
 
-1. **Точная точка продолжения:** проверить `messaging/rabbitmq-interview.md`
-   Q19/Q25/Q30 и парный JSON по delivery limit quorum queue, после точечного
-   чтения ответа сверить официальную документацию RabbitMQ.
-2. Затем проверить `messaging/kafka-interview.md` Q15/Q16/Q45 по официальным
-   документам на `CommitFailedException`. Не считать отсутствие
-   слова в заголовке доказательством пробела.
-3. Затем проверить `databases/hibernate-jpql-criteria-interview.md`
-   Q1/Q6 на `@Find` и Metamodel Generator. Сначала точечно прочитать ответы,
-   затем решить `DEEPEN`/`ADD_Q`/`COVERED` и при правке синхронизировать MCQ.
-4. После этого небольшими группами проверить Spring Data JPA AOT Q4–Q6,
-   Actuator startup Q3/Q38, Spring AI Q3/Q7/Q15, затем Go `encoding/json/v2`
+1. **Точная точка продолжения:** проверить
+   `frameworks/spring/spring-boot-actuator-interview.md` Q3/Q38 и
+   `spring-framework-interview.md` Q6/Q10 на `ApplicationStartup` и
+   `/actuator/startup`. Сначала `З`, затем точечное чтение ответа и
+   официальной Spring Boot reference (`О`), решить `COVERED`/`DEEPEN`/`ADD_Q`.
+2. Затем проверить Spring AI Q3/Q7/Q15, после них Go `encoding/json/v2`
    и `goroutineleak`, Java 26–27/HTTP/3/Jackson 3. Старые P2/P3 без
    решения остаются гипотезами. Python typing/packaging тоже кандидаты;
    Django/Flask — вне текущего приоритета. Статусы Python 3.15 и PostgreSQL 19
    перепроверять после финальных релизов.
-5. Продолжать выборку официальных публикаций за скользящие шесть месяцев;
+3. Отдельной задачей пройти независимую blind-приёмку новых MCQ и старый
+   parity backlog Hibernate и Spring Data JPA; положительный валидатор не
+   означает `FINAL`.
+4. Продолжать выборку официальных публикаций за скользящие шесть месяцев;
    не выдавать выборку за полный охват. Для каждого решения фиксировать
    источник, ближайший файл/Q, пробел, приоритет и уровень `З`/`О`/`П`.
    Обновлять план и парный MCQ после каждой небольшой группы; `FINAL` MCQ

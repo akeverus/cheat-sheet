@@ -50,16 +50,34 @@ Spring AI Q14 дополнен prompt caching и MCQ B1:
 готовым по одному валидатору. Не меняй чужие MCQ audit-state/evidence без
 отдельной необходимости и их процесса.
 
+Следующая группа уже выполнена без новых файлов и номеров Q: RabbitMQ
+Q19/Q24/Q25/Q30 (delivery-limit, DLX, TTL, версия 4.3), Kafka Q16
+(`CommitFailedException` и условная гарантия auto-commit), Hibernate
+JPQL/Criteria Q6 (`@Find`, Hibernate Processor), Spring Data JPA Q4
+(AOT repositories). Соседние заголовки и
+ответы Q проверены точечно (`О`), весь файл (`П`) не проверялся. У RabbitMQ
+41 Q / 43 MCQ-блока, у Kafka 50 Q / 51 блок; structure/parity PASS.
+У Hibernate 16 Q / 17 блоков, structure PASS, parity всего старого файла
+FAIL из-за прежних вариантов; новый Q6 B1 не имеет независимой приёмки.
+У Spring Data JPA 43 Q / 44 блока, structure PASS, parity всего старого файла
+FAIL; два блока Q4 локально проверены, blind review ожидается. Источники и
+причины решений зафиксированы в PLAN_CHEATSHEETS.md. Инвентарь
+не менялся. В рабочем дереве параллельно появились чужие изменения
+`agentic-patterns` и MCQ runs; сохрани их отдельно.
+
 ## Точная точка продолжения
 
-Spring Data JDBC Q17 и парный JSON прошли структуру/parity, но независимая
-содержательная приёмка ещё не выполнена. Начни с RabbitMQ Q19/Q25/Q30 и
-Kafka Q15/Q16/Q45 на delivery limit quorum
-queue и CommitFailedException. Следом небольшими группами: Spring Data JPA
-AOT Q4–Q6, Actuator startup Q3/Q38, Spring AI Q3/Q7/Q15 и Hibernate
-JPQL/Criteria Q1/Q6 (`@Find`); потом Go
+Начни с `frameworks/spring/spring-boot-actuator-interview.md` Q3/Q38 и
+`spring-framework-interview.md` Q6/Q10: сравни заголовки и ответы с
+официальной документацией `ApplicationStartup` и `/actuator/startup`.
+Реши `COVERED`/`DEEPEN`/`ADD_Q`, при изменении Q обнови парный MCQ.
+Следом Spring AI Q3/Q7/Q15; потом Go
 encoding/json/v2 и goroutineleak, Java 26–27, HTTP/3, Jackson 3. Python
 typing/packaging остаются кандидатами. Django/Flask пока низкий приоритет.
+RabbitMQ/Kafka/Hibernate этого пакета требуют независимого blind review MCQ;
+старый parity backlog Hibernate и Spring Data JPA не считать закрытым.
+Spring Data JDBC Q17
+тоже ждёт содержательной приёмки.
 
 ## Как работать с каждой группой
 
