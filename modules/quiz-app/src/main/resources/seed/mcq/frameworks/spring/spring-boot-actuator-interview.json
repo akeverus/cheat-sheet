@@ -138,7 +138,7 @@
                 "example": "health отдаёт состояние приложения и зависимостей, beans — список всех Spring-бинов, loggers — конфигурацию логгеров с чтением и изменением, heapdump — дамп кучи в HPROF.",
                 "when_to_apply": "При выборе, что открывать наружу и чем пользоваться для мониторинга, отладки контекста или управления работающим приложением.",
                 "edge_cases": "Часть эндпоинтов web-only — heapdump, logfile, prometheus имеют смысл лишь по HTTP, потому что отдают бинарный файл или текст; shutdown по умолчанию отключён.",
-                "related": "По способу доступа большинство эндпоинтов technology-agnostic — доступны и через HTTP, и через JMX."
+                "related": "По способу доступа большинство эндпоинтов technology-agnostic — доступны и через HTTP, и через JMX. Q44 — настройка ApplicationStartup и диагностика /actuator/startup."
               }
             },
             {
@@ -2575,6 +2575,121 @@
                 "source_of_confusion": "Название «OpenTelemetry» ассоциируется прежде всего с трассировкой, а Prometheus в конце цепочки наводит на мысль, что метрики по-прежнему scrape'ятся.",
                 "if_it_were_true": "Зависимость `micrometer-registry-otlp` и секция `management.otlp.metrics.export` были бы не нужны, а коллектор пришлось бы настраивать на опрос приложения.",
                 "how_it_should_be": "И трейсы, и метрики приложение отправляет по OTLP в коллектор, а Prometheus получает метрики уже от него."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 44,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как найти медленный этап запуска через ApplicationStartup и /actuator/startup?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Назначьте BufferingApplicationStartup до run() и откройте startup для HTTP, чтобы Actuator показал накопленные шаги запуска.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для JSON-диагностики SpringApplication должен использовать BufferingApplicationStartup с начала запуска, а startup endpoint нужно отдельно экспонировать.",
+                "example": "application.setApplicationStartup(new BufferingApplicationStartup(2048)); затем management.endpoints.web.exposure.include=health,startup.",
+                "when_to_apply": "При поиске медленной инициализации бинов и других этапов старта приложения.",
+                "edge_cases": "Реализация по умолчанию не сохраняет шаги; буфер ограничен, а endpoint не открыт по HTTP по умолчанию.",
+                "related": "FlightRecorderApplicationStartup пишет JFR-события и сам по себе не наполняет JSON /actuator/startup."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Откройте startup для HTTP, поскольку реализация ApplicationStartup по умолчанию уже сохраняет шаги запуска в памяти приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартный ApplicationStartup — no-op; для JSON требуется BufferingApplicationStartup, назначенный до run().",
+                "source_of_confusion": "Наличие endpoint принимают за автоматический сбор его данных.",
+                "if_it_were_true": "Сразу после подключения Actuator был бы доступен полный timeline без изменения bootstrap-кода.",
+                "how_it_should_be": "Выберите реализацию сборщика шагов при создании SpringApplication."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Настройте FlightRecorderApplicationStartup, чтобы Actuator напрямую преобразовал его JFR-события в JSON на эндпоинте startup.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для /actuator/startup нужен BufferingApplicationStartup; FlightRecorderApplicationStartup пишет события в JFR.",
+                "source_of_confusion": "Обе реализации собирают StartupStep, но выводят данные разными путями.",
+                "if_it_were_true": "JFR-запись автоматически становилась бы буфером startup endpoint.",
+                "how_it_should_be": "Используйте Buffering для JSON endpoint, FlightRecorder для JVM-профилирования."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Вызовите setApplicationStartup после run(): тогда контейнер добавит завершённые шаги в буфер задним числом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сборщик надо назначить до run(); прошедшие шаги после запуска восстановить нельзя.",
+                "source_of_confusion": "Экспорт результатов путают с моментом начала измерения.",
+                "if_it_were_true": "Медленные этапы уже завершённого старта появились бы без заранее включённой записи.",
+                "how_it_should_be": "Настраивайте ApplicationStartup до запуска контекста."
+              }
+            }
+          ]
+        },
+        {
+          "block_idx": 1,
+          "question_text": "Как найти медленный этап запуска через /actuator/startup: что делают GET и POST?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "GET очищает буфер после ответа, а POST возвращает только снимок и оставляет шаги для последующего чтения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: GET читает snapshot, POST возвращает и удаляет накопленные шаги.",
+                "source_of_confusion": "Семантику двух операций легко переставить местами.",
+                "if_it_were_true": "Повторный GET после первого запроса уже не видел бы прежних шагов.",
+                "how_it_should_be": "GET для повторяемого чтения, POST для drain."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "GET возвращает снимок без очистки, POST возвращает шаги и опустошает буфер после чтения.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Boot startup API различает чтение snapshot через GET и drain через POST; BufferingApplicationStartup имеет ограниченную ёмкость.",
+                "example": "Повторный GET показывает прежние события, пока POST не забрал их из буфера.",
+                "when_to_apply": "При диагностике или экспорте timeline шагов запуска без случайной потери данных.",
+                "edge_cases": "После заполнения буфера новые шаги не записываются; application.started.time и application.ready.time дают только суммарные времена.",
+                "related": "Не путайте с Kubernetes startup probe: она управляет проверками контейнера, а не собирает StartupStep."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "GET и POST очищают буфер при каждом обращении, поэтому повторно прочитать шаги запуска через endpoint невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GET не удаляет шаги из буфера; очищает их POST.",
+                "source_of_confusion": "Чтение timeline принимают за одноразовый drain.",
+                "if_it_were_true": "Повторная диагностика через GET теряла бы данные сразу после первого запроса.",
+                "how_it_should_be": "Используйте GET, когда нужен снимок без очистки."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "GET не очищает буфер, а POST удаляет шаги с ошибкой и оставляет успешные события для следующего запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "POST возвращает и удаляет все накопленные шаги, а не только ошибочные.",
+                "source_of_confusion": "Диагностический endpoint ошибочно воспринимают как фильтр проблемных событий.",
+                "if_it_were_true": "Успешные шаги оставались бы после POST и повторно появлялись в следующем ответе.",
+                "how_it_should_be": "POST делает drain всего накопленного timeline."
               }
             }
           ]

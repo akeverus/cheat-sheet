@@ -1,6 +1,6 @@
 ---
 title: "Вопросы на собеседовании: Spring Boot Actuator"
-description: "Глубокие ответы по Spring Boot Actuator: встроенные эндпоинты, health indicators, Micrometer, Prometheus, кастомные метрики, безопасность, production readiness."
+description: "Глубокие ответы по Spring Boot Actuator: встроенные эндпоинты, health indicators, Micrometer, Prometheus, диагностика запуска, безопасность, production readiness."
 tags:
   - interview
   - frameworks
@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[spring-boot]]"
 next: []
-updated: "2026-05-07"
+updated: "2026-10-05"
 ---
 # Вопросы на собеседовании: `Spring Boot Actuator`
 
@@ -110,6 +110,7 @@ updated: "2026-05-07"
 - [Q41. Как настроить безопасность Actuator-эндпоинтов в production (whitelist)?](#q41-как-настроить-безопасность-actuator-эндпоинтов-в-production-whitelist)
 - [Q42. Liveness vs Readiness vs Startup проба Kubernetes — в чём разница?](#q42-liveness-vs-readiness-vs-startup-проба-kubernetes--в-чём-разница)
 - [Q43. Как настроить OTLP exporter для отправки трейсов и метрик в OpenTelemetry Collector?](#q43-как-настроить-otlp-exporter-для-отправки-трейсов-и-метрик-в-opentelemetry-collector)
+- [Q44. Как найти медленный этап запуска через ApplicationStartup и /actuator/startup?](#q44-как-найти-медленный-этап-запуска-через-applicationstartup-и-actuatorstartup)
 
 ---
 
@@ -192,7 +193,7 @@ dependencies {
 | `liquibase` | Применённые Liquibase-миграции |
 | `sessions` | Управление HTTP-сессиями |
 | `shutdown` | Graceful shutdown (по умолчанию отключён) |
-| `startup` | Данные о шагах запуска |
+| `startup` | Данные о шагах запуска, если настроен `BufferingApplicationStartup` (см. Q44) |
 | `httpexchanges` | Последние 100 HTTP-запросов |
 | `prometheus` | Метрики в формате Prometheus — только web |
 | `quartz` | Информация о задачах Quartz Scheduler |
@@ -2361,6 +2362,26 @@ Spring Boot App
 ```
 
 **Что проверяют на собеседовании:** понимание разницы между push (OTLP) и pull (Prometheus scrape) моделями экспорта метрик; знание что Micrometer Tracing — абстракция над OTel/Brave; умение настроить sampling в production (обычно 1-10%).
+
+---
+
+## Q44. Как найти медленный этап запуска через ApplicationStartup и /actuator/startup?
+
+`ApplicationStartup` записывает **шаги запуска** (`StartupStep`) с временем и тегами. По умолчанию реализация Spring Framework не сохраняет эти шаги, поэтому одного Actuator недостаточно. Для JSON-диагностики настройте `BufferingApplicationStartup` **до** вызова `run()` и откройте эндпоинт `startup`:
+
+```java
+SpringApplication app = new SpringApplication(MyApplication.class);
+app.setApplicationStartup(new BufferingApplicationStartup(2048));
+app.run(args);
+```
+
+```properties
+management.endpoints.web.exposure.include=health,startup
+```
+
+`GET /actuator/startup` возвращает снимок накопленных шагов, `POST /actuator/startup` возвращает их и **очищает буфер**. В ответе есть длительность шага, его имя, `id`/`parentId` и теги: так можно найти, например, дорогую инициализацию бина или сканирование пакетов. Буфер ограничен ёмкостью: когда она исчерпана, новые шаги не записываются. Эндпоинт по умолчанию не открыт по HTTP (обычно открыт только `health`); доступ к деталям запуска надо защищать как к диагностическим данным. [Spring Boot: Application Startup tracking](https://docs.spring.io/spring-boot/reference/features/spring-application.html), [Actuator startup API](https://docs.spring.io/spring-boot/api/rest/actuator/startup.html).
+
+Для корреляции шагов с событиями JVM (GC, загрузка классов, аллокации) используйте `FlightRecorderApplicationStartup` и запись JFR. Он решает другую задачу и сам по себе не является источником JSON для `/actuator/startup`, которому нужен именно `BufferingApplicationStartup`. Метрики `application.started.time` и `application.ready.time` дают итоговые длительности, но не разбивку по шагам. Не путайте эту диагностику с **Kubernetes startup probe** из Q42: проба определяет, когда приложение готово пройти проверки, а не объясняет, почему старт затянулся. [Spring Boot reference](https://docs.spring.io/spring-boot/reference/features/spring-application.html), [Spring Boot metrics](https://docs.spring.io/spring-boot/reference/actuator/metrics.html).
 
 ---
 
