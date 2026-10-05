@@ -140,8 +140,9 @@ JSON PASS; parity RabbitMQ/Kafka/сравнения PASS, event-driven FAIL на
 ## Точная точка продолжения
 
 Начни с P3-кандидата Digital Wallet из раздела `system-design-notes` в плане.
-Сравни `design-payment-system-interview.md` Q5/Q8/Q22, транзакции БД и Q по
-ledger/event sourcing. По первичным источникам проверь несколько самостоятельных
+`design-payment-system-interview.md` Q5/Q8/Q22 уже прочитаны точечно; сравни
+транзакции БД и Q по ledger/event sourcing. По документации TigerBeetle
+и PostgreSQL, указанной в плане, проверь несколько самостоятельных
 сценариев перевода между кошельками и реши `NEW_TOPIC` против `DEEPEN`.
 Ad Click Event Aggregation и Distributed Email Service Q1–Q4 написаны,
 их MCQ требуют независимой приёмки.
