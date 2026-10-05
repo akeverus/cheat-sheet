@@ -191,13 +191,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Имена методов вроде `findByEmail` разбираются и превращаются в запрос только при первом вызове в рантайме, а не на старте.",
+              "text": "При обычном запуске имена derived-методов разбирают только при первом вызове, а не при инициализации репозитория.",
               "correct": false,
               "sections": {
-                "what_actually": "Разбор имён и построение запросов происходит при инициализации репозиториев на старте контекста; ошибки в именах падают сразу, а не при первом вызове.",
+                "what_actually": "В обычном режиме query method готовится при инициализации репозитория; при AOT подходящие реализации генерируются ещё на сборке.",
                 "source_of_confusion": "Lazy-инициализация бинов существует, и кажется, что разбор тоже откладывается.",
                 "if_it_were_true": "Тогда опечатка в имени поля проявлялась бы только в проде при вызове, но обычно контекст не стартует.",
-                "how_it_should_be": "Метаданные методов разбираются при старте; некорректное имя ломает запуск приложения."
+                "how_it_should_be": "Учитывайте режим сборки и момент инициализации репозитория."
               }
             },
             {
@@ -215,26 +215,81 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Spring Data JPA` генерирует и компилирует `.java`-классы реализации репозиториев на диск во время сборки проекта.",
+              "text": "Даже без AOT Spring Data JPA всегда записывает скомпилированные классы реализаций репозиториев на диск при сборке приложения.",
               "correct": false,
               "sections": {
-                "what_actually": "Реализация создаётся в рантайме как динамический прокси через `JpaRepositoryFactoryBean`, никаких `.java`-файлов на диск не пишется.",
-                "source_of_confusion": "Аннотационные процессоры (например, для метамоделей) действительно генерируют код при сборке, и это переносят на репозитории.",
-                "if_it_were_true": "Тогда в `build/`-каталоге лежали бы сгенерированные классы репозиториев, но их там нет.",
-                "how_it_should_be": "Реализация — это рантайм-прокси поверх `SimpleJpaRepository`."
+                "what_actually": "При обычном запуске Spring создаёт прокси; исходники подходящих query methods генерируются только при включённой AOT-обработке.",
+                "source_of_confusion": "AOT-генерацию кода при сборке переносят на обычный запуск.",
+                "if_it_were_true": "В каждом build находились бы классы реализаций независимо от режима AOT.",
+                "how_it_should_be": "Различайте обычную фабрику прокси и AOT-фрагменты."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "При старте `@EnableJpaRepositories` сканирует интерфейсы и для каждого через `JpaRepositoryFactoryBean` создаёт прокси: базовый CRUD делегируется в `SimpleJpaRepository` (она использует `EntityManager`), методы вида `findByEmail` разбираются `PartTree`-парсером в `Criteria`/JPQL, а методы с `@Query` транслируются напрямую.",
+              "text": "При обычном старте Spring Data создаёт прокси репозитория: CRUD делегируется SimpleJpaRepository, а query methods готовятся по имени или @Query.",
               "correct": true,
               "sections": {
-                "explanation": "Реализации классов вы не пишете — Spring генерирует прокси. `SimpleJpaRepository` закрывает стандартные операции, а имена кастомных методов превращаются в дерево предикатов (`PartTree`) и далее в запрос.",
+                "explanation": "В обычном режиме фабрика создаёт прокси: SimpleJpaRepository обслуживает CRUD, а derived и аннотированные query methods готовятся при инициализации. В AOT подходящие методы могут быть сгенерированы заранее.",
                 "example": "`findByEmail(String email)` Spring превращает в `Criteria`-запрос с `cb.equal(root.get(\"email\"), email)` — без рукописного кода.",
                 "when_to_apply": "Понимание процесса нужно при отладке `PropertyReferenceException`, кастомных фабриках репозиториев и настройке базового класса репозитория.",
-                "edge_cases": "Если имя поля в методе не совпадает с полем сущности, парсер `PartTree` бросит ошибку уже на старте контекста, а не в рантайме.",
-                "related": "[[spring-data-jpa-interview#Q1]] что такое Spring Data JPA; [[spring-data-jpa-interview#Q5]] query methods; [[spring-data-jpa-interview#Q32]] custom repository."
+                "edge_cases": "AOT в Spring Data JPA 4.1.1 переносит анализ подходящих query methods на сборку; базовый CRUD и пользовательские fragments остаются своими реализациями.",
+                "related": "[[spring-data-jpa-interview#Q1]] что такое Spring Data JPA; [[spring-data-jpa-interview#Q5]] query methods; [[spring-data-jpa-interview#Q32]] custom repository.; AOT-ограничения — во втором блоке Q4."
+              }
+            }
+          ]
+        },
+        {
+          "block_idx": 1,
+          "question_text": "Что Spring Data JPA 4.1.1 генерирует для репозитория в AOT-режиме?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "AOT нужен только для native image: на обычной JVM query methods всё равно обязательно разбираются при каждом старте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Data AOT может ускорять старт и обычного JVM-приложения.",
+                "source_of_confusion": "AOT часто обсуждают вместе с GraalVM native image.",
+                "if_it_were_true": "Для JVM не было бы пользы от предгенерации query methods.",
+                "how_it_should_be": "Рассматривайте AOT как перенос подходящей работы на сборку в обоих режимах."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "AOT заранее генерирует реализации подходящих query methods, а базовый CRUD и пользовательские fragments продолжают работать через свои реализации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Data JPA 4.1.1 создаёт исходники для подходящих query methods и JSON-метаданные на этапе сборки.",
+                "example": "Derived method или @Query может получить AOT-фрагмент; метод CrudRepository остаётся за базовой реализацией.",
+                "when_to_apply": "Для ускорения запуска JVM/native приложения при известной на сборке модели репозитория.",
+                "edge_cases": "JPA AOT требует Hibernate; ScrollPosition/keyset и dynamic projections исключены, QueryRewriter bean не поддержан.",
+                "related": "Часть настроек, включая диалект, фиксируется при сборке; сгенерированный класс — внутренняя деталь."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "AOT выполняет SQL запросы к рабочей базе при сборке и сохраняет результаты; репозиторий затем читает их из JSON-метаданных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AOT не ходит в рабочую БД: для сбора JPA-метаданных создаётся in-memory Hibernate instance.",
+                "source_of_confusion": "Сбор метаданных принимают за выполнение бизнес-запросов.",
+                "if_it_were_true": "Сборка требовала бы живую production базу и устаревала после изменения данных.",
+                "how_it_should_be": "Отделяйте генерацию query methods от выполнения запроса в runtime."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "AOT создаёт код для всех методов, включая ScrollPosition и dynamic projections, поскольку любые сигнатуры известны уже на этапе сборки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Spring Data JPA 4.1.1 ScrollPosition/keyset и dynamic projections исключены из AOT-генерации.",
+                "source_of_confusion": "Известная сигнатура метода не означает поддержку всех форм запросов генератором.",
+                "if_it_were_true": "Официальный список ограничений был бы пуст.",
+                "how_it_should_be": "Проверяйте список поддерживаемых и исключённых методов для версии Spring Data JPA."
               }
             }
           ]
