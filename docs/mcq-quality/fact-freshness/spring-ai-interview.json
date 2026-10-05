@@ -1,19 +1,24 @@
 {
   "topic_slug": "spring-ai-interview",
   "version_sensitive": true,
-  "product_version": "Spring AI 1.x (ChatClient, @Tool, MCP-стартеры, MessageWindowChatMemory default 20)",
-  "checked_date": "2026-08-27",
+  "product_version": "Spring AI 2.0.1 (точечная проверка Q3/Q7/Q15; остальные Q не проверены по 2.x)",
+  "checked_date": "2026-10-05",
   "sources": [
-    "https://github.com/spring-projects/spring-ai (etl-pipeline.adoc via context7)",
-    "https://api.github.com/repos/spring-projects/spring-ai/git/trees/main",
-    "https://docs.spring.io/spring-ai/reference/"
+    "https://docs.spring.io/spring-ai/reference/api/structured-output.html",
+    "https://docs.spring.io/spring-ai/reference/api/structured-output/validation.html",
+    "https://docs.spring.io/spring-ai/reference/api/structured-output/native.html",
+    "https://docs.spring.io/spring-ai/reference/api/chatclient.html",
+    "https://docs.spring.io/spring-ai/reference/api/tools.html",
+    "https://docs.spring.io/spring-ai/reference/api/tools/tool-calling-advisor.html"
   ],
   "version_sensitive_claims": [
-    "Класса TestChatModel в spring-ai НЕТ (git/trees main: ноль совпадений) — тестовый стаб ChatModel пишут сами.",
-    "TokenTextSplitter не имеет параметра overlap; конфигурация через builder: chunkSize (default 800), minChunkSizeChars (350), minChunkLengthToEmbed, maxNumChunks, keepSeparator, punctuationMarks; прямые конструкторы deprecated.",
-    "Актуальная аннотация инструментов — @Tool (ранний путь через @Bean Function + @Description устарел).",
-    "MessageWindowChatMemory: default maxMessages = 20.",
-    "MCP: spring-ai-starter-mcp-client / spring-ai-starter-mcp-server; транспорты stdio и SSE/HTTP.",
-    "Evaluators: RelevancyEvaluator, FactCheckingEvaluator."
+    "Q3: обычный .entity() добавляет JSON-схему в промпт и преобразует ответ best effort; .entity() не работает через .stream().",
+    "Q3: system- и user-шаблоны получают свои значения параметров через соответствующие spec.param(...); подстановка параметра не является защитой от prompt injection.",
+    "Q3: useProviderStructuredOutput() требует поддержки провайдера; validateSchema() проверяет ответ и при ошибке повторяет вызов до трёх попыток по умолчанию.",
+    "Q7/Q15: Spring AI 2.0 ChatClient автоматически использует ToolCallingAdvisor и ToolCallingManager; обычный Function-бин больше не разрешается по имени через .toolNames(...), нужен явный ToolCallback.",
+    "Q7/Q15: положение memory advisor относительно цикла определяет видимость вызовов инструментов; для side effects приложение контролирует права, аргументы и повторные вызовы."
+  ],
+  "staleness_risks": [
+    "Прежние утверждения по Spring AI 1.x в остальных Q этого файла не перепроверены для 2.0.1; их нельзя считать подтверждёнными по этой записи."
   ]
 }

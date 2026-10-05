@@ -113,9 +113,9 @@ public ChatClient chatClient(ChatClient.Builder builder) {
 
 ## Q3. Как использовать Prompt Templates и получать структурированный ответ?
 
-**Prompt Template** — это промпт с плейсхолдерами `{name}`, которые подставляются через `.param()`. Это безопаснее ручной конкатенации строк: значения подставляются по имени, промпт остаётся читаемым, а его легко вынести в шаблон или ресурс.
+**Prompt Template** — это промпт с плейсхолдерами `{name}`, которые подставляются через `.param()`. Именованные параметры сохраняют промпт читаемым и позволяют вынести его в ресурс. Подстановка не делает недоверенный текст безопасным от prompt injection: границы доступа к данным и инструментам проверяет приложение.
 
-В примере ниже `{language}` и `{code}` подставляются и в system-, и в user-сообщение — один и тот же параметр можно использовать в нескольких местах.
+В примере ниже `{language}` используется в system- и user-шаблонах. Значение задаётся отдельно для каждого сообщения; внутри одного шаблона плейсхолдер можно повторять.
 
 ```java
 @Service
@@ -125,7 +125,8 @@ public class ReviewService {
 
     public String reviewCode(String code, String language) {
         return chatClient.prompt()
-            .system("You are a senior {language} developer. Be concise.")
+            .system(s -> s.text("You are a senior {language} developer. Be concise.")
+                .param("language", language))
             .user(u -> u.text("Review this code:\n```{language}\n{code}\n```")
                 .param("code", code)
                 .param("language", language))
@@ -136,9 +137,10 @@ public class ReviewService {
     // Структурированный ответ через BeanOutputConverter
     public CodeReview getStructuredReview(String code) {
         return chatClient.prompt()
-            .user("Review this Java code and provide structured feedback: " + code)
+            .user(u -> u.text("Review this Java code and provide structured feedback:\n{code}")
+                .param("code", code))
             .call()
-            .entity(CodeReview.class);  // автоматически парсит JSON ответ в POJO
+            .entity(CodeReview.class);
     }
 }
 
@@ -150,9 +152,20 @@ public record CodeReview(
 ) {}
 ```
 
-**Структурированный ответ через `.entity()`.** Вместо разбора сырого текста можно сразу получить POJO: Spring AI генерирует из record JSON-схему, добавляет её в промпт (модель отвечает строгим JSON) и через `BeanOutputConverter` парсит ответ в объект. Удобно, когда ответ нужно дальше использовать в коде, а не показывать пользователю.
+**Структурированный ответ через `.entity()`.** В Spring AI 2.0.1 схема генерируется из типа, добавляется к инструкциям модели, затем ответ преобразуется в объект. Обычный `.entity(CodeReview.class)` — режим best effort: схема в промпте сама по себе не гарантирует ни валидный JSON, ни соблюдение всех ограничений.
 
-**Подводный камень:** модель не гарантирует валидный JSON на 100%. Для продакшена снижайте `temperature` (детерминированность) и оборачивайте вызов в обработку ошибок парсинга.
+Если результат определяет дальнейшую логику, `useProviderStructuredOutput()` передаёт схему через API провайдера, который поддерживает этот режим; `validateSchema()` проверяет ответ в приложении и повторяет запрос при нарушении схемы (по умолчанию до трёх попыток). Их можно сочетать:
+
+```java
+CodeReview review = chatClient.prompt()
+    .user(u -> u.text("Review this Java code:\n{code}").param("code", code))
+    .call()
+    .entity(CodeReview.class, spec -> spec
+        .useProviderStructuredOutput()
+        .validateSchema());
+```
+
+Поддержка и ограничения нативной схемы зависят от провайдера; проверка с повтором увеличивает число вызовов и расход токенов, а после исчерпания попыток ошибку всё равно нужно обработать. `.entity()` работает с завершённым ответом через `.call()`, не с фрагментами `.stream()`. [Structured Output](https://docs.spring.io/spring-ai/reference/api/structured-output.html), [Schema Validation](https://docs.spring.io/spring-ai/reference/api/structured-output/validation.html).
 
 ## Q4. Что такое Embedding и как получить векторное представление текста?
 
@@ -311,18 +324,20 @@ public ChatClient ragChatClient(ChatClient.Builder builder, VectorStore vectorSt
 
 **Function Calling (tool calling)** даёт модели доступ к вашему коду. Сама по себе модель не умеет ходить в БД, дёргать API или узнавать текущую погоду — она лишь генерирует текст. Function calling это решает: вы описываете функции, а модель, видя их сигнатуры, сама решает, какую вызвать и с какими аргументами.
 
-Важно понимать, что **модель не выполняет код** — она лишь возвращает «вызови `getWeather` с такими аргументами». Дальше Spring AI выполняет ваш метод, отдаёт результат обратно модели, и та формирует финальный ответ. Весь этот round-trip фреймворк делает прозрачно.
+Важно понимать, что **модель не выполняет код** — она лишь возвращает «вызови `getWeather` с такими аргументами». В Spring AI 2.0 `ChatClient` автоматически включает `ToolCallingAdvisor`: тот обрабатывает запросы модели, передаёт их `ToolCallingManager`, возвращает результат модели и повторяет цикл до ответа без вызова инструмента. Приложение остаётся владельцем кода и его прав доступа.
 
 Инструмент объявляют методом с аннотацией `@Tool`. Ключевой элемент — `description`: модель по этому тексту понимает, **когда** инструмент звать, поэтому описание должно быть осмысленным. Типы аргументов и результата (record-ы) Spring AI превращает в JSON-схему для модели.
 
 ```java
 // Определяем инструмент как @Tool-метод в Spring-бине
 @Component
+@RequiredArgsConstructor
 public class WeatherTools {
+    private final WeatherService weatherService;
 
     @Tool(description = "Get current weather for a given city")
     public WeatherResponse getWeather(WeatherRequest request) {
-        return service.getWeather(request.city(), request.unit());
+        return weatherService.getWeather(request.city(), request.unit());
     }
 }
 
@@ -335,20 +350,19 @@ public record WeatherResponse(double temperature, String conditions) {}
 @RequiredArgsConstructor
 public class AssistantService {
     private final ChatClient chatClient;
+    private final WeatherTools weatherTools;
 
     public String askWithTools(String question) {
         return chatClient.prompt()
             .user(question)
-            .tools(new WeatherTools())  // объект с @Tool-методами
+            .tools(weatherTools)
             .call()
             .content();
-        // Если вопрос про погоду → модель вызовет getWeather,
-        // получит результат и сформирует финальный ответ
     }
 }
 ```
 
-`.tools(new WeatherTools())` подключает инструменты к запросу (либо `.toolNames("...")` — по имени бина). Передать можно несколько — модель сама выберет нужный (или ни одного, если вопрос не требует инструмента). Это фундамент для AI-агентов (Q15).
+`.tools(weatherTools)` подключает Spring-бин с `@Tool`-методами к конкретному запросу. Можно передать несколько инструментов или явные `ToolCallback`; модель может не выбрать ни одного. В Spring AI 2.0 прежнее разрешение обычного `Function`-бина по имени через `.toolNames(...)` удалено: для такого сценария зарегистрируйте явный `ToolCallback`. Порядок advisor-ов определяет, увидит ли memory каждый шаг цикла или только итоговый обмен; проверьте это при настройке истории. [Tool Calling](https://docs.spring.io/spring-ai/reference/api/tools.html), [ToolCallingAdvisor](https://docs.spring.io/spring-ai/reference/api/tools/tool-calling-advisor.html).
 
 ## Q8. Как работает потоковая генерация (Streaming)?
 
@@ -635,7 +649,7 @@ spring:
 
 ## Q15. Как реализовать AI-агента на Spring AI?
 
-**Агент** — это LLM, которая в цикле сама решает, какие инструменты вызывать для достижения цели, а не отвечает одним сообщением. Технически он строится на function calling (Q7): даёте модели набор функций и задачу, а она сама планирует последовательность вызовов. Связку «рассуждение → выбор инструмента → наблюдение результата → следующий шаг» называют **ReAct** (Reasoning + Acting).
+**Агент** — это приложение, в котором модель может последовательно запрашивать инструменты для достижения цели. Модель выбирает следующий вызов и аргументы, но код выполняет приложение через цикл `ToolCallingAdvisor` (Q7); такой цикл можно организовать в стиле **ReAct** («рассуждение → действие → наблюдение»). Один только system-промпт не гарантирует соблюдения бизнес-правил.
 
 System-промпт здесь — это инструкция агенту: какие инструменты есть и как ими пользоваться. Дальше модель сама выбирает, что и в каком порядке звать:
 
@@ -645,18 +659,16 @@ System-промпт здесь — это инструкция агенту: к�
 @RequiredArgsConstructor
 public class AgentService {
     private final ChatClient chatClient;
+    private final OrderTools orderTools;
 
     public String runAgent(String task) {
         return chatClient.prompt()
             .system("""
-                You are an autonomous agent. You have access to these tools:
-                - searchOrders: search customer orders
-                - getProductInfo: get product details
-                - createTicket: create support ticket
-                Use them to accomplish the task.
+                You help customers find their orders.
+                Use searchOrders when a customer ID is provided.
                 """)
             .user(task)
-            .tools(orderTools)  // объект(ы) с @Tool-методами
+            .tools(orderTools)
             .call()
             .content();
     }
@@ -664,18 +676,20 @@ public class AgentService {
 
 // ReAct pattern — цикл рассуждений
 @Component
+@RequiredArgsConstructor
 public class OrderTools {
+    private final OrderRepository orderRepository;
 
     @Tool(description = "Search orders by customer ID")
     public OrderSearchResult searchOrders(OrderSearchRequest req) {
-        return new OrderSearchResult(repo.findByCustomerId(req.customerId()));
+        return new OrderSearchResult(orderRepository.findByCustomerId(req.customerId()));
     }
 }
 ```
 
-Современные модели (GPT-4, Claude) умеют **parallel function calling** — запросить сразу несколько функций в одном шаге, если они независимы. Это ускоряет агента: например, проверить заказы и подтянуть данные о товаре можно параллельно, а не друг за другом.
+Некоторые модели могут запросить несколько независимых инструментов за один шаг. Не следует предполагать такое поведение для любого провайдера или строить на порядке вызовов бизнес-инварианты.
 
-**Подводный камень:** агент с инструментами, меняющими состояние (создание тикетов, изменение данных), требует осторожности — модель может вызвать функцию не вовремя или с неверными аргументами. Опасные действия стоит ограничивать (валидация, подтверждение, права доступа).
+**Подводный камень:** инструмент, меняющий состояние (создание тикета, изменение данных), проверяет права, аргументы и допустимость операции на стороне приложения; для повторяемых вызовов нужна идемпотентность, для критичных действий — подтверждение. Ограничивайте число шагов и наблюдайте вызовы инструментов: ошибка или зацикливание может увеличить расход токенов и вызвать действие несколько раз. [Tool Calling](https://docs.spring.io/spring-ai/reference/api/tools.html).
 
 ## Q16. (!) Как Spring AI интегрируется с MCP (Model Context Protocol)?
 
