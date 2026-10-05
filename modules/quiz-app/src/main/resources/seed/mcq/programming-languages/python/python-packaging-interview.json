@@ -1,0 +1,245 @@
+{
+  "topic_slug": "python-packaging-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что разделяют build-system, project и tool в pyproject.toml?",
+          "options": [
+            {
+              "text": "build-system задаёт настройки линтера, project выбирает build backend, а tool фиксирует runtime-зависимости приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "build-system задаёт backend сборки, project — metadata и зависимости, tool — настройки инструментов.",
+                "source_of_confusion": "Названия секций читают как равнозначные разделы конфигурации.",
+                "if_it_were_true": "Тогда публикация metadata зависела бы от секции конкретного линтера.",
+                "how_it_should_be": "Разделяйте сборку, metadata проекта и настройки tools."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "build-system задаёт backend сборки, project — metadata и runtime-зависимости, tool — настройки отдельных инструментов.",
+              "correct": true,
+              "sections": {
+                "explanation": "build requirements и зависимости пакета имеют разные назначения.",
+                "example": "setuptools в build-system не добавляется автоматически в runtime-зависимости orders-api.",
+                "when_to_apply": "Используйте при сборке и публикации Python-сервиса.",
+                "edge_cases": "pyproject.toml с диапазонами версий не фиксирует разрешённое дерево зависимостей.",
+                "related": "См. Q1 и спецификацию pyproject.toml."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "build-system содержит runtime-зависимости, project хранит lock-файл, а tool выбирает совместимость wheel с платформой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Runtime-зависимости объявляют в project, а pyproject.toml не является lock-файлом.",
+                "source_of_confusion": "Смешение декларации проекта и результата разрешения зависимостей.",
+                "if_it_were_true": "Тогда один файл project фиксировал бы все транзитивные версии.",
+                "how_it_should_be": "Для deployment отдельно фиксируйте результат разрешения."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "build-system и project содержат один набор зависимостей, а tool выбирает их версии перед запуском сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Build и runtime зависимости различаются; tool не обязан быть resolver.",
+                "source_of_confusion": "Похожие TOML-таблицы ошибочно считают одним контрактом.",
+                "if_it_were_true": "Тогда build backend всегда попадал бы в установленный сервис.",
+                "how_it_should_be": "Указывайте каждый тип зависимостей в своей секции."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем wheel отличается от sdist при установке сервиса?",
+          "options": [
+            {
+              "text": "Wheel хранит исходники для сборки на сервере, а sdist содержит уже собранные файлы для прямой установки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Wheel — собранный дистрибутив; sdist — исходный архив.",
+                "source_of_confusion": "Имена двух форматов меняют местами.",
+                "if_it_were_true": "Тогда из sdist не потребовалась бы сборка wheel.",
+                "how_it_should_be": "Выбирайте совместимый wheel или обеспечьте среду сборки sdist."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Wheel и sdist устанавливаются одинаково без сборки, поскольку оба содержат готовые расширения под любую платформу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sdist может требовать сборки; wheel с нативным кодом может быть платформенным.",
+                "source_of_confusion": "Pure-Python wheel ошибочно обобщают на все дистрибутивы.",
+                "if_it_were_true": "Тогда переход на другой ABI никогда не влиял бы на установку.",
+                "how_it_should_be": "Проверяйте wheel tags и возможность сборки на целевой платформе."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Wheel всегда платформенно независим, а sdist нужен лишь для публикации исходников и не используется installer.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нативные wheels имеют compatibility tags; pip может строить wheel из sdist.",
+                "source_of_confusion": "Универсальный wheel считают единственным видом wheel.",
+                "if_it_were_true": "Тогда отсутствие совместимого wheel прекращало бы установку без попытки сборки.",
+                "how_it_should_be": "Проверяйте доступные wheels и build-зависимости для fallback."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Wheel устанавливает собранные файлы, а sdist даёт исходники для сборки wheel при отсутствии подходящего артефакта.",
+              "correct": true,
+              "sections": {
+                "explanation": "pip может собрать wheel из sdist перед установкой.",
+                "example": "Нативный пакет на новом базовом образе может потребовать компилятора.",
+                "when_to_apply": "Проверяйте артефакты под Python, ОС и архитектуру deployment.",
+                "edge_cases": "Не всякий wheel подходит всем платформам.",
+                "related": "См. Q2 и PyPA Package Formats."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем зависимости проекта, extras и dependency groups отличаются друг от друга?",
+          "options": [
+            {
+              "text": "Dependencies входят в metadata пакета, extras добавляют выбираемые потребителем зависимости, groups остаются локальной конфигурацией.",
+              "correct": true,
+              "sections": {
+                "explanation": "Группы не становятся частью metadata собранного пакета.",
+                "example": "postgres extra выбирается потребителем, test group помогает CI.",
+                "when_to_apply": "Используйте extras для вариантов пакета, groups для локальных задач.",
+                "edge_cases": "Команда установки groups определяется инструментом, а не самой спецификацией.",
+                "related": "См. Q3 и PyPA Dependency Groups."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Dependencies нужны лишь для сборки, extras обслуживают тесты, а groups входят в runtime metadata каждого wheel.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Runtime dependencies и extras входят в metadata, groups туда не включаются.",
+                "source_of_confusion": "Зависимости сборки и разработки спутаны с публикуемыми.",
+                "if_it_were_true": "Тогда pytest из группы test ставился бы каждому потребителю wheel.",
+                "how_it_should_be": "Отделяйте runtime metadata от локальных групп."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Dependencies задают runtime, extras задают build backend, а groups публикуют дополнительные зависимости потребителю.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Extras — выбираемые зависимости пакета; build backend объявляется в build-system.",
+                "source_of_confusion": "Наличие нескольких таблиц с пакетами скрывает разные роли.",
+                "if_it_were_true": "Тогда выбор extra менял бы сборщик проекта.",
+                "how_it_should_be": "Для сборщика используйте build-system, для потребителя extras."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Dependencies и groups публикуются в wheel metadata, а extras остаются локальной настройкой разработчика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В metadata попадают dependencies и extras; groups не публикуются как интерфейс пакета.",
+                "source_of_confusion": "Роли extras и groups поменяны местами.",
+                "if_it_were_true": "Тогда потребитель пакета не мог бы запросить postgres extra.",
+                "how_it_should_be": "Дополнительный вариант пакета объявляйте как optional-dependencies."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сделать установку зависимостей повторяемой в CI и deployment?",
+          "options": [
+            {
+              "text": "Зафиксировать прямые зависимости в pyproject.toml, а транзитивные версии выбрать заново при каждом deployment.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Повторяемость требует фиксировать и транзитивные версии.",
+                "source_of_confusion": "Декларацию совместимости принимают за результат resolver.",
+                "if_it_were_true": "Тогда смена транзитивного релиза меняла бы работающий стек.",
+                "how_it_should_be": "Сохраняйте полное разрешённое дерево для CI и deployment."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Оставить диапазоны версий в pyproject.toml, поскольку build backend сохраняет одинаковые архивы при каждой сборке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Диапазоны допускают новые релизы, а backend не фиксирует внешний index.",
+                "source_of_confusion": "Сборку собственного пакета путают с разрешением зависимостей.",
+                "if_it_were_true": "Тогда новый релиз зависимости не влиял бы на установку.",
+                "how_it_should_be": "Фиксируйте версии и нужные артефакты отдельно от диапазонов."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Фиксировать полное дерево версий и hashes артефактов, затем проверять установку на целевых Python и платформе.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hashes проверяют загруженные файлы; wheelhouse может убрать сборку на сервере.",
+                "example": "Чистый CI-образ устанавливает утверждённые wheels и запускает тесты.",
+                "when_to_apply": "Применяйте для деплоя с контролируемыми зависимостями.",
+                "edge_cases": "Lock-формат и поддержка installer зависят от инструмента; wheelhouse может быть платформенным.",
+                "related": "См. Q4 и pip Repeatable Installs."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Добавить hashes прямых зависимостей, поскольку они фиксируют транзитивные версии и делают wheelhouse переносимым.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hashes относятся к конкретным файлам и не закрепляют сами по себе полное дерево.",
+                "source_of_confusion": "Контроль целостности архива путают с разрешением зависимостей.",
+                "if_it_were_true": "Тогда один hash прямого пакета закреплял бы все его зависимости.",
+                "how_it_should_be": "Фиксируйте транзитивные версии и проверяйте совместимость wheels."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

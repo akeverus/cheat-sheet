@@ -155,4 +155,6 @@ class Batch:
 ## See also
 
 - [Конкурентность в Python](python-concurrency-interview.md) — задачи, отмена, потоки и процессы.
+- [Типизация в Python](python-typing-interview.md) — статический контракт и граница runtime-валидации.
+- [Упаковка Python-приложений](python-packaging-interview.md) — сборка и повторяемая установка.
 - [SQL](../../databases/sql-interview.md) — общие принципы запросов и транзакций.

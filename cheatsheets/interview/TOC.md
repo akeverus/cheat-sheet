@@ -375,6 +375,8 @@ updated: "2026-10-05"
 - [Вопросы на собеседовании: Python — основы](programming-languages/python/python-interview.md) — `9` вопросов
 - [Вопросы на собеседовании: Конкурентность в Python](programming-languages/python/python-concurrency-interview.md) — `9` вопросов
 - [Вопросы на собеседовании: Тестирование в Python](programming-languages/python/python-testing-interview.md) — `7` вопросов
+- [Вопросы на собеседовании: Упаковка Python-приложений](programming-languages/python/python-packaging-interview.md) — `4` вопроса
+- [Вопросы на собеседовании: Типизация в Python](programming-languages/python/python-typing-interview.md) — `4` вопроса
 
 ## programming-languages/kotlin
 
