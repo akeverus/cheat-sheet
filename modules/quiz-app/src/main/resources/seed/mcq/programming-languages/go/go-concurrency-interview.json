@@ -1866,55 +1866,110 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое goroutine leak и как его избежать?",
+          "question_text": "Goroutine leak — что это и как избежать?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`runtime.NumGoroutine() == 0` гарантирует, что в программе нет goroutine leak.",
+              "text": "Goroutine leak — краткое ожидание на канале; сборщик мусора удалит такую горутину после следующего цикла.",
               "correct": false,
               "sections": {
-                "what_actually": "`NumGoroutine()` считает все живые goroutines (включая фоновые); значение 0 означает завершение программы, а нормальный сервис всегда держит N фоновых goroutines.",
-                "source_of_confusion": "Нулевой счётчик принимают за «всё убрано», игнорируя штатные фоновые goroutines.",
-                "if_it_were_true": "Тогда здоровый сервис показывал бы 0, но у него всегда есть фоновые goroutines, и информативно baseline-сравнение, а не нулевая отметка.",
-                "how_it_should_be": "Для поиска утечек сравнивают NumGoroutine с baseline; ноль означает лишь завершение программы."
+                "what_actually": "Заблокированная без пути выхода goroutine не завершается после очередного GC.",
+                "source_of_confusion": "Сборку ненужных объектов переносят на жизненный цикл goroutine.",
+                "if_it_were_true": "Работники, навсегда ожидающие отправителя, исчезали бы без исправления протокола канала.",
+                "how_it_should_be": "Обеспечить выход по отмене или завершению работы с каналом."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Goroutine leak — это goroutine, заблокированная навсегда (например, чтение из channel, который никто не закроет и не наполнит); она занимает память и слот в scheduler до конца программы. Профилактика: передавать `context` и `defer cancel()`, проверять `ctx.Done()` в `select`, закрывать channels для `range`.",
+              "text": "Goroutine leak — ожидание без пути завершения; нужны отмена, согласованное закрытие каналов и ожидание работников.",
               "correct": true,
               "sections": {
-                "explanation": "Классика: `go func(){ v := <-ch }()`, где в `ch` никто не пишет и не закрывает его — goroutine висит вечно; то же бывает при `range` по channel без `close`.",
-                "example": "Утечка: `ch := make(chan int); go func(){ v := <-ch; use(v) }()` — если в `ch` никто не пишет и не закрывает его, goroutine висит вечно; помогает `pprof` goroutine-профиль.",
-                "when_to_apply": "Применяется диагностика в production через pprof goroutine-профиль (стектрейсы всех goroutines) и leak-проверки в тестах конкурентного кода.",
-                "edge_cases": "У каждой goroutine должен быть гарантированный exit-path; `runtime.NumGoroutine()` помогает заметить рост числа goroutines относительно baseline.",
-                "related": "[[go-concurrency-interview#Q4]] остановка goroutine через context; [[go-concurrency-interview#Q11]] range и забытый close; [[go-concurrency-interview#Q31]] инструменты диагностики конкурентного кода."
+                "explanation": "Утёкшая goroutine продолжает занимать ресурсы, если никто больше не может разблокировать её операцию.",
+                "example": "Отправитель в unbuffered-канал зависнет, если получатель вышел раньше и больше не читает.",
+                "when_to_apply": "При проектировании фоновых задач задавайте владельца отмены и порядок завершения send/receive.",
+                "edge_cases": "`context` помогает только когда goroutine проверяет `ctx.Done()`; один `defer cancel()` без такого пути её не остановит.",
+                "related": "Для диагностики сравнивайте число goroutines и профили `goroutine`/`goroutineleak`; второй доступен с Go 1.27."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Goroutine leak не критичен: GC автоматически удаляет ненужные заблокированные goroutines.",
+              "text": "Goroutine leak — только рост heap-объектов; достаточно освободить map или slice, чтобы работа завершилась.",
               "correct": false,
               "sections": {
-                "what_actually": "GC не управляет goroutines; заблокированная goroutine живёт до конца программы, и при их накоплении сервис уходит в OOM.",
-                "source_of_confusion": "Сборку мусора для объектов ошибочно распространяют и на goroutines.",
-                "if_it_were_true": "Тогда зависшие goroutines тихо исчезали бы, но 100K leaking goroutines в long-running сервисе приведут к OOM.",
-                "how_it_should_be": "GC не освобождает goroutines; каждая заблокированная навсегда занимает ресурсы."
+                "what_actually": "Горутина может оставаться заблокированной на канале или `sync`-примитиве независимо от очистки map/slice.",
+                "source_of_confusion": "Рост памяти — заметный симптом утечки goroutine.",
+                "if_it_were_true": "Исправление владения каналом не требовалось бы для завершения worker.",
+                "how_it_should_be": "Исправить блокирующую операцию и путь к выходу goroutine."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Goroutine leak автоматически обнаруживается и логируется Go runtime при возникновении.",
+              "text": "Goroutine leak — всегда полный deadlock; runtime сам остановит процесс при первой зависшей фоновой задаче.",
               "correct": false,
               "sections": {
-                "what_actually": "Runtime не логирует leaks; он детектирует только полный deadlock (все goroutines заблокированы), а частичная утечка остаётся незаметной.",
-                "source_of_confusion": "Наличие детекции deadlock переносят на любую заблокированную goroutine.",
-                "if_it_were_true": "Тогда висящая на channel goroutine сразу бы залогировалась, но runtime молчит, пока хоть кто-то ещё работает.",
-                "how_it_should_be": "Частичные утечки runtime не ловит; их ищут через pprof и leak-проверки в тестах."
+                "what_actually": "Частичная утечка не вызывает автоматического аварийного завершения или логирования; детекция тотального deadlock — другой механизм.",
+                "source_of_confusion": "Сообщение `all goroutines are asleep` принимают за детектор любых утечек.",
+                "if_it_were_true": "Долгоживущие сервисы не могли бы накапливать заблокированные фоновые goroutines.",
+                "how_it_should_be": "Диагностировать частичные утечки по профилям и тестам, не ждать аварии runtime."
+              }
+            }
+          ]
+        },
+        {
+          "block_idx": 1,
+          "question_text": "Как профиль goroutineleak помогает обнаружить goroutine leak в Go 1.27?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Профиль `goroutineleak` выбирает только доказанные утечки на каналах и `sync`; пустой результат не исключает остальные.",
+              "correct": true,
+              "sections": {
+                "explanation": "Профиль использует анализ достижимости при GC и выделяет goroutines, которые уже не могут проснуться на поддерживаемых примитивах.",
+                "example": "`curl http://localhost:6060/debug/pprof/goroutineleak > leak.prof`, затем `go tool pprof leak.prof` и `list` для проблемной функции.",
+                "when_to_apply": "Когда обычный `goroutine`-профиль содержит много штатно ожидающих goroutines и нужно выделить доказанные утечки.",
+                "edge_cases": "Достижимый через global или живую goroutine примитив может скрыть утечку; I/O и пользовательские spinlock не охвачены.",
+                "related": "Профиль доступен по запросу с Go 1.27 и не заменяет счётчик, обычные стеки и тесты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Профиль `goroutineleak` перечисляет все ожидающие goroutines; пустой результат означает, что ожиданий в процессе нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Профиль выделяет доказанные утечки, а обычный `goroutine` перечисляет все текущие goroutines.",
+                "source_of_confusion": "Название нового профиля путают с общим снимком стеков.",
+                "if_it_were_true": "Штатные ожидания попадали бы в leak-профиль и скрывали бы сигнал.",
+                "how_it_should_be": "Использовать оба профиля для разных вопросов: все текущие goroutines и доказанные утечки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Профиль `goroutineleak` обнаруживает зависания сетевого I/O как утечки; обычный `goroutine` показывает только ожидания каналов и `sync`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, leak-профиль не классифицирует ожидание сетевого I/O как утечку; обычный профиль показывает стеки всех goroutines.",
+                "source_of_confusion": "Новый специализированный профиль кажется более широким, чем общий снимок.",
+                "if_it_were_true": "Ограничение детектора на поддерживаемые примитивы не существовало бы.",
+                "how_it_should_be": "Для I/O использовать обычный профиль и отдельную диагностику таймаутов/контекстов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Профиль `goroutineleak` сам логирует каждую утечку сразу; `pprof` нужен только для анализа heap-памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Профиль собирают по запросу через `runtime/pprof` или HTTP; автоматического лога каждого случая нет.",
+                "source_of_confusion": "Детекцию полного deadlock путают с on-demand профилированием.",
+                "if_it_were_true": "Не пришлось бы снимать профиль при диагностике накопленных работников.",
+                "how_it_should_be": "Запросить `/debug/pprof/goroutineleak` и анализировать снимок вместе с обычным профилем."
               }
             }
           ]

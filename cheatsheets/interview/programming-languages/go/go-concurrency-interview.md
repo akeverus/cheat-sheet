@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[go-concurrency]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-10-05"
 ---
 # Вопросы на собеседовании: Конкурентность в Go
 
@@ -31,6 +31,7 @@ Goroutines и channels — главная фича Go: они делают ко�
 - [The Go Scheduler — Ardan Labs](https://www.ardanlabs.com/blog/2018/08/scheduling-in-go-part1.html)
 - [Go by Example: Goroutines](https://gobyexample.com/goroutines)
 - [sync package documentation](https://pkg.go.dev/sync)
+- [Go 1.27: Goroutine Leak Profiles](https://go.dev/blog/goroutine-leak-profiles)
 
 ## Содержание
 
@@ -960,7 +961,7 @@ go func() {
 // Если никто не пишет в ch — goroutine висит навсегда
 ```
 
-**Корень проблемы** почти всегда один: goroutine заблокирована на канале (send или receive), а второй стороны больше не будет — никто не пишет, не читает или не закрывает канал. Goroutine не умеет «передумать» сама — её нужно дать возможность выйти.
+**Частый сценарий:** goroutine заблокирована на канале (send или receive), а второй стороны больше не будет — никто не пишет, не читает или не закрывает канал. Такое же постоянное ожидание возможно на `sync.Mutex`, `sync.Cond` и других примитивах. Goroutine не умеет «передумать» сама — ей нужно дать путь к завершению.
 
 **Профилактика:**
 - передавай `context.Context` и в долгих операциях слушай `ctx.Done()` в `select` — это даёт точку выхода;
@@ -971,6 +972,16 @@ go func() {
 **Как обнаружить:**
 - `runtime.NumGoroutine()` — счётчик: если он монотонно растёт под стабильной нагрузкой, есть утечка;
 - `pprof` goroutine-профиль — даёт стектрейсы всех goroutines и показывает, на какой строке они застряли.
+
+С **Go 1.27** `runtime/pprof` дополнительно предоставляет профиль `goroutineleak`. Обычный `goroutine` показывает **все** текущие goroutines, включая штатно ожидающие; `goroutineleak` отбирает те, для которых runtime может доказать невозможность разблокировки. Для этого он использует анализ достижимости при сборке мусора: если заблокировавший goroutine канал или `sync`-примитив недостижим из работающих goroutines, пробудить её уже некому. Профиль доступен по запросу, он **не означает**, что runtime автоматически логирует каждую утечку.
+
+```bash
+curl http://localhost:6060/debug/pprof/goroutineleak > leak.prof
+go tool pprof leak.prof
+# в интерактивном pprof: top, list <function>
+```
+
+Эндпоинт появляется при подключённом `net/http/pprof` и запущенном диагностическом HTTP-сервере (см. [Go Memory & GC Q15](go-memory-gc-interview.md#q15--как-снять-memory-профиль-через-pprof)). Если профиль пуст, это **не доказательство отсутствия утечек**: ожидание на примитиве, доступном через глобальную переменную или работающую goroutine, может быть пропущено. Профиль также не ищет блокировки на сетевом/файловом I/O и пользовательские spinlock. Сопоставляйте его со стеками обычного `goroutine`-профиля, счётчиком и тестами. [Go 1.27 release notes](https://go.dev/doc/go1.27#goroutine-leak-profile), [runtime/pprof](https://pkg.go.dev/runtime/pprof), [Go blog](https://go.dev/blog/goroutine-leak-profiles).
 
 ## Q33. (!) Deadlock в Go?
 
@@ -1045,4 +1056,3 @@ mu.Lock() // deadlock — pthread re-entry не поддерживается
 - [Event-driven паттерны](../../architecture/event-driven-patterns-interview.md) — channels вписываются
 - [Микросервисы](../../architecture/microservices-interview.md) — Go идеален для них
 - [gRPC](../../api/grpc-interview.md) — Go реализация сильна
-
