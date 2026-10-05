@@ -7,9 +7,9 @@
 
 ## Основание и предел проверки
 
-- Текущий корпус: **330** тематических Markdown-файлов, **9 888** заголовков
+- Текущий корпус: **331** тематический Markdown-файл, **9 892** заголовка
   Q в **25** разделах. [Инвентарь](docs/interview-coverage/inventory.tsv)
-  обновлён после одиннадцати новых шпаргалок и добавленных Q. **329** файлов имеют парный production
+  обновлён после двенадцати новых шпаргалок и добавленных Q. **330** файлов имеют парный production
   JSON; отдельная тема подготовки остаётся без пары.
 - `З` — пути и заголовки; `О` — точечная проверка ответа; `П` — полная
   содержательная проверка всех ответов существующего файла. **П в этом
@@ -203,8 +203,8 @@ Go — **7 / 209**, Scala — **2 / 56**. Тогда в interview-разделе
 | Messaging | 9 | 238 | Monitoring | 9 | 285 |
 | Performance | 8 | 253 | Preparation | 1 | 42 |
 | Programming languages | 57 | 1 651 | Reactive | 6 | 206 |
-| Security | 10 | 350 | System design | 24 | 652 |
-| Testing | 16 | 489 | **Итого** | **330** | **9 888** |
+| Security | 10 | 350 | System design | 25 | 656 |
+| Testing | 16 | 489 | **Итого** | **331** | **9 892** |
 
 ## Срез публикаций за последние полгода
 
@@ -435,7 +435,7 @@ Dropbox/Google Drive), 18 (карты) и 26 (платёжная система)
 | P2 · `NEW_TOPIC`, выполнено · О | 7. Distributed Unique ID Generator → `system-design/design-unique-id-generator-interview.md` Q1–Q4 | `system-design-interview.md` Q7, `design-url-shortener-interview.md` Q19 и SQL Q13 не раскрывали выбор генератора и сбои вне URL-кода. Q19 точечно исправлен. | Область уникальности и порядок; sequence/ticket/ranges; clock rollback/worker collision; UUIDv4/v7/Snowflake. Новая пара structure/pre-check PASS, старый URL Shortener full pre-check FAIL, blind review нет. |
 | P2 · `NEW_TOPIC`, выполнено · О | 10. Notification System → `system-design/design-notification-system-interview.md` Q1–Q4 | `system-design-interview.md` Q10 уже даёт архитектуру каналов, preferences, очередей и retry; новый файл раскрывает четыре независимых эксплуатационных сценария. | Принятие vs доставка; предел идемпотентности внешнего вызова; повторная проверка правил/TTL; классификация ошибок. FCM/APNs/SES/AWS сверены, 4 MCQ structure/pre-check PASS, blind review ожидается. |
 | P2 · `NEW_TOPIC` отклонён, `DEEPEN`/`ADD_Q` выполнены · О | 19. Distributed Message Queue → RabbitMQ Q40–Q42, Kafka Q42, сравнение брокеров Q15, event-driven Q3 | Kafka Q6–Q24 и RabbitMQ Q18–Q30 уже покрывают проектные механизмы; отдельная шпаргалка стала бы повтором. Обнаружен реальный пробел: сравнения отрицали RabbitMQ Streams и replay. | По официальным RabbitMQ 4.3/Kafka 4.3 источникам исправлены queue vs log, offset/retention и super stream. 4 JSON структуры PASS, локальные Q без hard-сигналов; full pre-check старых файлов FAIL, blind review ожидается. |
-| P2 · КАНДИДАТ `NEW_TOPIC` | 22. Hotel Reservation System → `system-design/design-reservation-system-interview.md` | `design-payment-system-interview.md` Q4/Q7/Q17 покрывает платёж, но не конкурентное бронирование ограниченного инвентаря. Не копировать платёжный ledger. | Как избежать overselling при одновременной броне? Чем отличаются hold с TTL, подтверждённая бронь и отмена? Как согласовать резерв с оплатой? |
+| P2 · `NEW_TOPIC`, выполнено · О | 22. Hotel Reservation System → `system-design/design-reservation-system-interview.md` Q1–Q4 | `design-ecommerce-delivery-interview.md` Q9 покрывает резерв товара с TTL, `design-payment-system-interview.md` Q4/Q7/Q17 — деньги, `database-transactions-interview.md` Q14 — блокировки. Не было интервала ночей и назначения одной комнаты. | Q1: остаток по ночам и непрерывное назначение; Q2: атомарный резерв всего интервала; Q3: гонка TTL/оплаты; Q4: координация с PSP и отмена. PostgreSQL 18 и Stripe сверены, MCQ structure/parity/pre-check PASS, blind review ожидается. |
 | P2 · КАНДИДАТ `NEW_TOPIC` | 24. S3-like Object Storage → `system-design/design-object-storage-interview.md` | `design-dropbox-interview.md` Q5/Q18 описывает CAS и синхронизацию файлов; `data-lake-lakehouse-interview.md` Q5 сравнивает object storage с HDFS. Здесь API и внутренняя организация самого хранилища. | Как разделить metadata и bytes? Как обеспечить загрузку больших объектов, восстановление после потери узла, проверку целостности и ожидаемую семантику чтения/перезаписи? |
 | P2 · КАНДИДАТ `NEW_TOPIC` | 25. Real-time Gaming Leaderboard → `system-design/design-leaderboard-interview.md` | Есть Redis/кеширование в соседних темах, но нет маршрута по rank/top-N при большом числе обновлений. | Как быстро получать top-N и место конкретного пользователя? Как обрабатывать равные очки, шардирование, сезонный reset и запоздавшие события? |
 | P3 · КАНДИДАТ `NEW_TOPIC` или `DEEPEN` | 20. Metrics Monitoring and Alerting System → `system-design/design-metrics-platform-interview.md` | `system-design-interview.md` Q23 и `monitoring/prometheus-grafana-interview.md` Q3/Q19–Q24 покрывают общую observability и Prometheus. Отдельный файл — только для проектирования многопользовательской платформы метрик. | Где агрегировать и хранить высококардинальные ряды? Как масштабировать ingest/query и изолировать правила алертинга разных команд? |
@@ -605,16 +605,16 @@ correct самые длинные). Новый Q32 B1 и обновлённый 
 3 файла / 59 блоков с действующей полной приёмкой; `agentic-patterns` Q12
 остаётся открытым finding, остальные новые MCQ из этого плана ждут blind review.
 
-1. **Точная точка продолжения:** проверить P2-кандидат Hotel Reservation
-   System (`system-design/design-reservation-system-interview.md`) из блока
-   `system-design-notes`. Сравнить `design-payment-system-interview.md`
-   Q4/Q7/Q17, заголовки SQL/transaction/isolation и имеющиеся кейсы
-   бронирования; по официальным источникам проверить конкуренцию за
-   ограниченный инвентарь, hold с TTL, отмену и согласование с оплатой.
+1. **Точная точка продолжения:** проверить P2-кандидат S3-like Object Storage
+   (`system-design/design-object-storage-interview.md`) из блока
+   `system-design-notes`. Сравнить `design-dropbox-interview.md` Q5/Q18,
+   `data-lake-lakehouse-interview.md` Q5 и заголовки про S3/MinIO в cloud;
+   по официальным источникам проверить семантику PUT/GET/overwrite,
+   multipart upload, metadata vs bytes, целостность и восстановление.
    При нескольких независимых сценариях создать тему с парным MCQ,
    иначе углубить существующий Q.
-2. Затем проверить P2 object storage и leaderboard в порядке таблицы выше.
-   Notification System Q1–Q4 и RabbitMQ Streams Q40–Q42 уже написаны и ждут
+2. Затем проверить P2 leaderboard в порядке таблицы выше.
+   Reservation System Q1–Q4, Notification System Q1–Q4 и RabbitMQ Streams Q40–Q42 ждут
    независимой MCQ-приёмки.
    Java 26–27, HTTP/3, Jackson 3 и Python typing/packaging уже написаны.
    Остальные P2/P3 без решения остаются кандидатами. Статусы Python 3.15 и
