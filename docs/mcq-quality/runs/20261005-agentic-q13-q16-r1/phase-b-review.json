@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "kind": "independent_phase_b_review",
+  "run": "20261005-agentic-q13-q16-r1",
+  "reviewer": "agentic_q1q4_blind",
+  "model": "gpt-6-luna",
+  "phase_a_sha256": "1509112d4e6616c2517593deff09f89ce4b1273885ec10e871596ce79fc75fa6",
+  "blocks": [
+    {
+      "q_number": 13,
+      "block_idx": 0,
+      "checks": {
+        "content_review": {
+          "status": "PASS",
+          "reason": "C передаёт заранее заданные вызовы, ссылки, подстановку Worker и итог Solver; A/B/D меняют роли либо исключают вопрос."
+        },
+        "factual_correctness": {
+          "status": "PASS",
+          "reason": "Исходная ReWOO работа подтверждает разделение планирования и наблюдений, а также потенциальную экономию токенов; зависимые вызовы допускают ссылки на будущие результаты."
+        },
+        "source_linkage": {
+          "status": "PASS",
+          "reason": "Видимый вопрос совпадает с JSON; A–D сравнивают ReWOO и ReAct по механизму и затратам."
+        },
+        "sections_consistency": {
+          "status": "PASS",
+          "reason": "C example E2 зависит от E1 и соответствует теории; sections A/B/D опровергают повторное планирование, смешение ролей и удаление вопроса."
+        },
+        "sfpl": {
+          "status": "PASS",
+          "reason": "A–D — полные однопредложные описания процесса и выигрыша близкой длины; фаза A не нашла формальных подсказок."
+        },
+        "ansc": {
+          "status": "PASS",
+          "reason": "Каждый вариант называет роли или порядок и предполагаемый эффект относительно ReAct."
+        },
+        "russian_readability": {
+          "status": "PASS",
+          "reason": "Роли Planner, Worker и Solver пояснены; теория, варианты и sections читаются последовательно."
+        }
+      },
+      "option_verdicts": {
+        "A": {
+          "status": "INCORRECT",
+          "reason": "Подменяет заранее заданный план пошаговым повторным планированием."
+        },
+        "B": {
+          "status": "INCORRECT",
+          "reason": "Приписывает исполнение инструментов Planner и повторное чтение наблюдений."
+        },
+        "C": {
+          "status": "CORRECT",
+          "reason": "Заранее заданные ссылки подставляет Worker; Solver отвечает по собранным данным."
+        },
+        "D": {
+          "status": "INCORRECT",
+          "reason": "Удаляет исходный вопрос из входа Solver, хотя он нужен для ответа."
+        }
+      },
+      "findings": []
+    },
+    {
+      "q_number": 14,
+      "block_idx": 0,
+      "checks": {
+        "content_review": {
+          "status": "PASS",
+          "reason": "D единственный называет новые результаты, опровергшие допущения, и сохранение выполненных шагов; A–C предлагают ненужный пересмотр при работающем плане."
+        },
+        "factual_correctness": {
+          "status": "PASS",
+          "reason": "Псевдокод сохраняет результат в history и заменяет pending_steps результатом replan, так что новый остаток действительно исполняется."
+        },
+        "source_linkage": {
+          "status": "PASS",
+          "reason": "Видимый вопрос совпадает с JSON; варианты проверяют причины пересмотра из Q14."
+        },
+        "sections_consistency": {
+          "status": "PASS",
+          "reason": "D соответствует коду; sections A–C различают детализацию, стабильное исполнение и проверку прогресса."
+        },
+        "sfpl": {
+          "status": "PASS",
+          "reason": "Все варианты однопредложные условия для пересмотра с близкой длиной и без уникального оформления D."
+        },
+        "ansc": {
+          "status": "PASS",
+          "reason": "Каждый вариант прямо отвечает, когда менять план, хотя три условия ложны."
+        },
+        "russian_readability": {
+          "status": "PASS",
+          "reason": "Вопрос, теория, A–D и sections понятны; re-planning обозначает пересмотр оставшегося плана."
+        }
+      },
+      "option_verdicts": {
+        "A": {
+          "status": "INCORRECT",
+          "reason": "Детализация не создаёт основание менять работающий план."
+        },
+        "B": {
+          "status": "INCORRECT",
+          "reason": "Стабильные входы уменьшают потребность в пересмотре."
+        },
+        "C": {
+          "status": "INCORRECT",
+          "reason": "Успешный шаг не требует автоматически перестроить оставшийся план."
+        },
+        "D": {
+          "status": "CORRECT",
+          "reason": "Новые результаты или требования опровергают исходные допущения; сохраняют выполненное."
+        }
+      },
+      "findings": []
+    },
+    {
+      "q_number": 15,
+      "block_idx": 0,
+      "checks": {
+        "content_review": {
+          "status": "PASS",
+          "reason": "C единственный связывает альтернативные мысли, оценку частичных путей, выбор ветвей и откат. A не применяет оценку, B оценивает только готовые листья, D не ветвится."
+        },
+        "factual_correctness": {
+          "status": "PASS",
+          "reason": "ToT paper описывает несколько reasoning paths, оценку и возврат; Q15 не делает оценку гарантией истинности."
+        },
+        "source_linkage": {
+          "status": "PASS",
+          "reason": "Заголовок совпадает с JSON; варианты проверяют структуру и evaluation Q15."
+        },
+        "sections_consistency": {
+          "status": "PASS",
+          "reason": "C согласуется с генерацией и оценкой; B не становится второй правильной опцией, поскольку исключает промежуточную оценку."
+        },
+        "sfpl": {
+          "status": "PASS",
+          "reason": "Варианты описывают поиск и роль оценки в сопоставимой форме, correct не выделен длиной."
+        },
+        "ansc": {
+          "status": "PASS",
+          "reason": "A–D содержат и структуру поиска, и назначение оценки."
+        },
+        "russian_readability": {
+          "status": "PASS",
+          "reason": "Мысль, состояние, путь и ветвь используются по смыслу; объяснения понятны."
+        }
+      },
+      "option_verdicts": {
+        "A": {
+          "status": "INCORRECT",
+          "reason": "Несколько ветвей без влияния оценки на поиск не реализуют ToT."
+        },
+        "B": {
+          "status": "INCORRECT",
+          "reason": "Поздняя оценка листьев не направляет продолжение промежуточных путей."
+        },
+        "C": {
+          "status": "CORRECT",
+          "reason": "Несколько мыслей, оценка частичных путей и выбор продолжения с откатом."
+        },
+        "D": {
+          "status": "INCORRECT",
+          "reason": "Один путь с перезапуском не сохраняет дерево альтернатив."
+        }
+      },
+      "findings": []
+    },
+    {
+      "q_number": 16,
+      "block_idx": 0,
+      "checks": {
+        "content_review": {
+          "status": "PASS",
+          "reason": "B верно противопоставляет фронт BFS и путь DFS; A/C меняют ресурсные свойства местами, D смешивает BFS с beam и отрицает backtracking."
+        },
+        "factual_correctness": {
+          "status": "PASS",
+          "reason": "Локальная теория корректно определяет BFS, DFS и beam; исходный ToT paper подтверждает применение разных стратегий поиска, подробные алгоритмические свойства проверены по определениям."
+        },
+        "source_linkage": {
+          "status": "PASS",
+          "reason": "Видимый вопрос совпадает с JSON и проверяет сравнение BFS/DFS Q16."
+        },
+        "sections_consistency": {
+          "status": "PASS",
+          "reason": "B соответствует общему смыслу теории; D опровергнут определением beam и DFS, остальные sections разбирают инверсию свойств."
+        },
+        "sfpl": {
+          "status": "PASS",
+          "reason": "A–D имеют общий двухчастный сравнительный каркас, близкую длину и нет поверхностного сигнала ключа."
+        },
+        "ansc": {
+          "status": "PASS",
+          "reason": "Каждый вариант сравнивает BFS и DFS; в B смысл понятен, хотя формулировка русского оборота требует правки."
+        },
+        "russian_readability": {
+          "status": "FAIL",
+          "reason": "В B «ограничивают глубину и риск тупика» неясно: кто задаёт предел глубины и как ограничивают риск; требуется редактура."
+        }
+      },
+      "option_verdicts": {
+        "A": {
+          "status": "INCORRECT",
+          "reason": "Меняет местами фронт BFS и путь DFS."
+        },
+        "B": {
+          "status": "CORRECT",
+          "reason": "BFS сравнивает уровни ценой памяти, DFS хранит меньше состояний, но рискует уйти в тупик."
+        },
+        "C": {
+          "status": "INCORRECT",
+          "reason": "Ошибочно приписывает BFS малую память, а DFS хранение уровня."
+        },
+        "D": {
+          "status": "INCORRECT",
+          "reason": "Смешивает полный BFS с beam search и отрицает возврат DFS."
+        }
+      },
+      "findings": [
+        {
+          "check": "russian_readability",
+          "reason": "В B «ограничивают глубину и риск тупика» неясно: кто задаёт предел глубины и как ограничивают риск; требуется редактура."
+        }
+      ]
+    }
+  ],
+  "source_limit": "ReWOO/ToT externally checked at title/abstract level; detailed Worker/placeholder and BFS/DFS properties checked against local theory and algorithm definitions."
+}

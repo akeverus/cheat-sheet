@@ -1,0 +1,92 @@
+{
+  "reviewer": "hibernate_final_blind",
+  "recorded_at": "2026-09-14T17:35:41Z",
+  "sources_checked": [
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/annotations/NaturalIdCache.html",
+      "claim": "@NaturalIdCache кэширует соответствия значений natural id идентификаторам entity в общем L2 и обычно используется вместе с @Cache, чтобы избежать обращения к БД при наличии entity в кэше.",
+      "version": "Hibernate ORM 6.6",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/SimpleNaturalIdLoadAccess.html",
+      "claim": "bySimpleNaturalId().load(value) предназначен для entity ровно с одним @NaturalId; для нескольких атрибутов применяется NaturalIdLoadAccess.",
+      "version": "Hibernate ORM 6.6",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/annotations/NaturalId.html",
+      "claim": "@NaturalId обозначает поле или свойство natural id, который может быть простым или составным; natural id отличается от primary identifier и может быть mutable.",
+      "version": "Hibernate ORM 6.6",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/annotations/BatchSize.html",
+      "claim": "@BatchSize задаёт максимальный размер batch; Hibernate может загрузить несколько entity или коллекций за один round trip, выбирая незагруженные прокси или роли коллекций Session.",
+      "version": "Hibernate ORM 6.6",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/userguide/html_single/Hibernate_User_Guide.html#caching-query",
+      "claim": "query cache использует default-update-timestamps-region для проверки актуальности; его expiry/eviction рекомендуется не настраивать, а при expiry держать timeout выше query caches. FULL/SHALLOW описывают варианты layout результатов.",
+      "version": "Hibernate ORM 6.6.57.Final",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/userguide/html_single/Hibernate_User_Guide.html#batch-fetching",
+      "claim": "В руководстве fetch join загружает association SQL join и помогает избежать N+1; @BatchSize на entity/collection группирует загрузки, но не обещает фиксированное число запросов.",
+      "version": "Hibernate ORM 6.6.57.Final",
+      "date": "2026-09-14"
+    }
+  ],
+  "answers": [
+    {
+      "q_number": 13,
+      "block_idx": 0,
+      "choice": "D",
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос проверяет определение natural-id cache; D единственный вариант, точно описывающий natural id → entity id и последующее получение состояния."},
+        "FACTS": {"verdict": "PASS", "reason": "NaturalIdCache Javadoc подтверждает кэширование mapping natural id values → entity id; SimpleNaturalIdLoadAccess подтверждает API для одного @NaturalId, а entity L2/БД остаются отдельным этапом."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Тело Q13 прямо объясняет mapping, @NaturalIdCache, bySimpleNaturalId и различие natural-id и entity cache; все варианты проверяют эти же границы."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У D присутствуют explanation/example/when_to_apply/edge_cases/related, раскрывающие механизм и ограничения; у A/B/C есть what_actually/source_of_confusion/if_it_were_true/how_it_should_be, и они опровергают текущие ошибки."},
+        "SFPL": {"verdict": "PASS", "reason": "A–D имеют одинаковый формат определения с продолжением после точки с запятой; длина и конкретность близки, а D не выделяется уникальным кодом или отдельным списком."},
+        "ANSC": {"verdict": "PASS", "reason": "A ошибочно превращает кэш в миграцию схемы, B — в индекс любого поля, C — в полную entity; каждое заблуждение правдоподобно сформулировано и получает отдельное опровержение."},
+        "RU": {"verdict": "PASS", "reason": "Вопрос, теория, все варианты и sections читаются естественно; англоязычные Hibernate/API термины сохранены как общепринятые, грамматических дефектов, мешающих выбору, нет."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Автором указан root, reviewer — hibernate_final_blind; это отдельный рецензент, production не редактировался."},
+        "BLIND": {"verdict": "PASS", "reason": "Ответ D зафиксирован в phase A до revealed_at; фаза B выполнена после раскрытия и явно отделена от слепого решения."}
+      }
+    },
+    {
+      "q_number": 14,
+      "block_idx": 0,
+      "choice": "A",
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос сопоставляет способы снижения N+1 с ролью L2; A корректно разделяет fetch plan, batch fetching и cache hits и не обещает эффекта на холодном кэше."},
+        "FACTS": {"verdict": "PASS", "reason": "User Guide описывает join fetch как SQL join для association и средство против N+1; BatchSize Javadoc говорит о нескольких загрузках и максимальном size, а не о строгом N/size."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Тело Q14 содержит fetch join, целевой класс Profile с @BatchSize(size=20), ограничения размера пачки и холодный/прогретый L2 — прямую основу всех четырёх вариантов."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У A все пять правильных полей раскрывают механизм, пример, применение и edge cases; у B/C/D четыре ошибочных поля точно отвечают их заявлениям о пустом L2, одиночной загрузке или зависимости от L2."},
+        "SFPL": {"verdict": "PASS", "reason": "Все варианты имеют единый трёхчастный каркас «JOIN FETCH; batch fetching; L2» с одним уточнением; правильный A не единственный по длине и не содержит уникального кода."},
+        "ANSC": {"verdict": "PASS", "reason": "B ошибочно считает пустой L2 готовым источником, C отрицает группировку и влияние size, D делает оба механизма зависимыми от L2; три ошибки технически различимы и полно опровергнуты sections."},
+        "RU": {"verdict": "PASS", "reason": "Русская проза последовательна, технические термины JOIN FETCH, batch fetching, L2 и Session уместны; все A–D грамматически сопоставимы и не используют язык как подсказку."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Автор root отличается от reviewer hibernate_final_blind; проверка выполнена отдельным проходом, production не изменялся."},
+        "BLIND": {"verdict": "PASS", "reason": "В phase A до раскрытия был зафиксирован A; текущая проверка использует раскрытый пакет и не переписывает исходное слепое решение."}
+      }
+    },
+    {
+      "q_number": 15,
+      "block_idx": 0,
+      "choice": "C",
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос просит практики работы с cache; C покрывает выбор данных, измерения, настройку регионов, внешние записи, стратегии доступа и оба режима нагрузки."},
+        "FACTS": {"verdict": "PASS", "reason": "User Guide подтверждает per-region concurrency strategies и специальную политику update-timestamps-region: не использовать expiry/eviction либо держать timeout выше query caches; это согласуется с C и отвергает D."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Тело Q15 последовательно раскрывает все тезисы C: измерения, READ_ONLY, topology, expiry, внешние batch-записи, query layouts FULL/SHALLOW и холодный/прогретый режим."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У C заполнены все correct-поля с конкретным справочником, условиями и edge case про timestamps; A/B/D имеют четыре поля, каждое адресует их текущую ошибочную практику."},
+        "SFPL": {"verdict": "PASS", "reason": "A–D используют одинаковый перечень из трёх практик, разделённый точкой с запятой; C лишь содержит необходимое согласование и проверку режимов, не выделяясь форматом, кодом или числом."},
+        "ANSC": {"verdict": "PASS", "reason": "A ошибочно полагается на автоматическое наблюдение внешних batch-записей, B игнорирует профиль данных, D навязывает общий TTL и раннее вытеснение timestamps; каждое заблуждение конкретно и опровержимо."},
+        "RU": {"verdict": "PASS", "reason": "Вопрос, теория и sections написаны понятным техническим русским; cache, TTL, READ_ONLY, query cache и update timestamps — уместные устоявшиеся термины, а варианты не выдают ключ плохим языком."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Автор root и reviewer hibernate_final_blind различаются; ревью проведено независимо, production и phase A не редактировались."},
+        "BLIND": {"verdict": "PASS", "reason": "В phase A до раскрытия был выбран C; B-проверка выполнена только после получения revealed-пакета, без подмены слепой записи."}
+      }
+    }
+  ]
+}

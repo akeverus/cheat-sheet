@@ -1,0 +1,239 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/ai-ml/agentic-patterns-interview.json",
+    "theory": "cheatsheets/interview/ai-ml/agentic-patterns-interview.md"
+  },
+  "sha256": {
+    "mcq": "c32035d3dec1bcbb2f9a3675075e3e6f36f83a879aa0c3cc31b3ee419a63a64a",
+    "theory": "c284fa65af0eafb8c385843302b4fec3c96ae91b11ae77286c1e0122126776a7"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hashes": {
+    "Q16:B0": {
+      "mcq": "67e0b6cb155f91c3265dd8944854ff482912eed9fd2af4ebffdc983cdede368a",
+      "theory": "6f951c9f0903cb25f464551e96f72e1e97cca59481eda313d9c20804b1c06348"
+    }
+  },
+  "preamble": "---\ntitle: \"Вопросы на собеседовании: Паттерны агентных систем\"\ndescription: \"Agentic patterns: ReAct, Reflexion, Plan-Execute, Tree-of-Thoughts, Self-Critique, CoVe, ReWOO, Self-Consistency; когда что выбирать и комбинировать.\"\ntags:\n  - interview\n  - ai-ml\n  - agentic-patterns\ntype: \"interview\"\ndifficulty: \"advanced\"\naliases:\n  - \"Agentic Patterns interview\"\n  - \"ReAct Reflexion Tree-of-Thoughts\"\n  - \"Agent design patterns собеседование\"\n  - \"LLM agentic workflows\"\nupdated: \"2026-05-23\"\n---\n# Вопросы на собеседовании: Паттерны агентных систем\n\n**Паттерн агентной системы** — способ организовать несколько шагов работы модели и приложения: выбор действия, обработку результата, проверку и завершение. Отдельный паттерн может включать рассуждение, инструменты или несколько исполнителей; все эти элементы сразу не обязательны.\n\nНиже разобраны подходы к организации агентных систем и близкие стратегии работы с моделью: `ReAct`, `Reflexion`, `Plan-and-Execute`, `Tree-of-Thoughts`, `Self-Refine`, `Chain-of-Verification`, `ReWOO`, `Self-Consistency`, `Best-of-N`, `Voyager`. Их можно сочетать, когда задача требует нескольких механизмов. На интервью полезно объяснять, что именно даёт каждый подход и при каких условиях он нужен.\n\n## Полезные ссылки\n\n### Original papers и авторитетные источники\n\n- [ReAct: Synergizing Reasoning and Acting in Language Models (Yao et al. 2022)](https://arxiv.org/abs/2210.03629) — базовый Thought→Action→Observation loop\n- [Reflexion: Language Agents with Verbal Reinforcement Learning (Shinn et al. 2023)](https://arxiv.org/abs/2303.11366) — self-reflection без gradient updates\n- [Tree of Thoughts (Yao et al. 2023)](https://arxiv.org/abs/2305.10601) — branching reasoning + evaluation\n- [Self-Refine (Madaan et al. 2023)](https://arxiv.org/abs/2303.17651) — generate → critique → refine\n- [Chain-of-Verification (Dhuliawala et al. 2023)](https://arxiv.org/abs/2309.11495) — снижение hallucinations через verification questions\n- [ReWOO (Xu et al. 2023)](https://arxiv.org/abs/2305.18323) — Plan/Worker/Solver без перепрогона LLM на каждом observation\n- [Plan-and-Solve Prompting (Wang et al. 2023)](https://arxiv.org/abs/2305.04091) — planner + executor\n- [Self-Consistency (Wang et al. 2022)](https://arxiv.org/abs/2203.11171) — majority vote по N CoT\n- [Voyager (Wang et al. 2023)](https://voyager.minedojo.org/) — skill library + curriculum\n- [Generative Agents (Park et al. 2023)](https://arxiv.org/abs/2304.03442) — memory stream + reflection\n- [Toolformer (Schick et al. 2023)](https://arxiv.org/abs/2302.04761) — self-supervised tool use\n- [Anthropic: Building Effective Agents](https://www.anthropic.com/research/building-effective-agents) — практические patterns от Anthropic\n\n## Содержание\n\n- [Полезные ссылки](#полезные-ссылки)\n- [See also](#see-also)\n\n**Основы**\n- [Q1. (!) Что такое agentic pattern и чем он отличается от prompt-техники?](#q1--что-такое-agentic-pattern-и-чем-он-отличается-от-prompt-техники)\n- [Q2. По какому принципу здесь группируют паттерны агентных систем?](#q2-по-какому-принципу-здесь-группируют-паттерны-агентных-систем)\n- [Q3. (!) Зачем нужны паттерны, если модель уже умеет рассуждать?](#q3--зачем-нужны-паттерны-если-модель-уже-умеет-рассуждать)\n\n**Базовые паттерны (ReAct / CoT / Self-Consistency)**\n- [Q4. (!) Что такое ReAct и как выглядит его цикл?](#q4--что-такое-react-и-как-выглядит-его-цикл)\n- [Q5. (!) Как завершается цикл в приведённом псевдокоде ReAct-агента?](#q5--как-завершается-цикл-в-приведённом-псевдокоде-react-агента)\n- [Q6. Что такое Self-Consistency и когда работает?](#q6-что-такое-self-consistency-и-когда-работает)\n- [Q7. Auto-CoT vs Manual CoT — в чём разница?](#q7-auto-cot-vs-manual-cot--в-чём-разница)\n\n**Reflection-based (Reflexion / Self-Critique / CoVe)**\n- [Q8. (!) Что такое Reflexion и чем отличается от обычного retry?](#q8--что-такое-reflexion-и-чем-отличается-от-обычного-retry)\n- [Q9. Self-Refine / Self-Critique — pattern и pseudo-code](#q9-self-refine--self-critique--pattern-и-pseudo-code)\n- [Q10. (!) Chain-of-Verification (CoVe) — как снижает hallucinations?](#q10--chain-of-verification-cove--как-снижает-hallucinations)\n- [Q11. Чем self-critique без external feedback опасен?](#q11-чем-self-critique-без-external-feedback-опасен)\n\n**Plan-based (Plan-Execute / ReWOO)**\n- [Q12. (!) Plan-and-Execute pattern — структура и use case](#q12--plan-and-execute-pattern--структура-и-use-case)\n- [Q13. (!) Что такое ReWOO и чем выигрывает у ReAct?](#q13--что-такое-rewoo-и-чем-выигрывает-у-react)\n- [Q14. Когда re-planning важнее изначального плана?](#q14-когда-re-planning-важнее-изначального-плана)\n\n**Tree-based (ToT / Best-of-N)**\n- [Q15. (!) Tree-of-Thoughts — структура дерева и evaluation](#q15--tree-of-thoughts--структура-дерева-и-evaluation)\n- [Q16. BFS vs DFS в ToT — когда что?](#q16-bfs-vs-dfs-в-tot--когда-что)\n- [Q17. Best-of-N sampling: pattern и trade-off с verifier](#q17-best-of-n-sampling-pattern-и-trade-off-с-verifier)\n\n**Memory patterns (Voyager / Generative Agents)**\n- [Q18. (!) Паттерн Voyager: библиотека навыков, авто-curriculum, итеративный prompting](#q18--паттерн-voyager-библиотека-навыков-авто-curriculum-итеративный-prompting)\n- [Q19. Generative Agents (Stanford): поток памяти и reflection](#q19-generative-agents-stanford-поток-памяти-и-reflection)\n- [Q20. OODA Loop (Observe-Orient-Decide-Act) — как адаптируется к LLM-агентам?](#q20-ooda-loop-observe-orient-decide-act--как-адаптируется-к-llm-агентам)\n- [Q21. Toolformer-подход: учим модель вызывать API через self-supervision](#q21-toolformer-подход-учим-модель-вызывать-api-через-self-supervision)\n\n**Composition и stopping**\n- [Q22. (!) Композиция паттернов: ReAct + Reflexion, Plan-Execute + Self-Critique](#q22--композиция-паттернов-react--reflexion-plan-execute--self-critique)\n- [Q23. (!) Stopping conditions: как агент решает, что закончить?](#q23--stopping-conditions-как-агент-решает-что-закончить)\n- [Q24. Implementation: LangChain / LlamaIndex / Vercel AI SDK — где какой pattern из коробки?](#q24-implementation-langchain--llamaindex--vercel-ai-sdk--где-какой-pattern-из-коробки)\n\n**Anti-patterns и evaluation**\n- [Q25. (!) Anti-patterns: pattern без необходимости, recursive без bound, context bloat](#q25--anti-patterns-pattern-без-необходимости-recursive-без-bound-context-bloat)\n- [Q26. Сравнительная таблица паттернов: complexity, latency, use case](#q26-сравнительная-таблица-паттернов-complexity-latency-use-case)\n- [Q27. Какой pattern когда выбирать: ReAct / Reflexion / ToT / Self-Critique / CoVe](#q27-какой-pattern-когда-выбирать-react--reflexion--tot--self-critique--cove)\n- [Q28. (!) Evaluation patterns: harness, метрики (success rate, # steps, tokens)](#q28--evaluation-patterns-harness-метрики-success-rate--steps-tokens)\n- [Q29. Reasoning models делают patterns внутри — нужны ли они снаружи?](#q29-reasoning-models-делают-patterns-внутри--нужны-ли-они-снаружи)\n- [Q30. Какие паттерны хорошо переносятся на multi-agent системы?](#q30-какие-паттерны-хорошо-переносятся-на-multi-agent-системы)\n",
+  "theory": [
+    {
+      "q_number": 16,
+      "title": "BFS vs DFS в ToT — когда что?",
+      "line": 511,
+      "body": "\nВыбор зависит от формы пространства поиска, бюджета памяти и того, можно ли рано отбрасывать бесперспективные состояния. В обоих случаях качество оценки и правила отсечения влияют на результат.\n\n**BFS (breadth-first):**\n- Расширяет состояния по уровням и хранит фронт текущего уровня. Без ограничения ширины память может быстро расти.\n- Удобен, если нужно систематически проверить короткие решения или сравнить несколько альтернатив одинаковой глубины.\n\n**DFS (depth-first):**\n- Развивает одну ветвь, при тупике возвращается к ещё не рассмотренной альтернативе. Порядок ветвей может задавать оценка.\n- Хранит меньше одновременных состояний, но без предела глубины может надолго уйти по неудачной ветви.\n\n**Beam search** — отдельный вариант: на каждом уровне сохраняют лишь несколько наиболее оценённых состояний. Это ограничивает память и вызовы, но может навсегда отбросить нужную ветвь; не следует называть такой проход полным BFS.\n\nДля ToT заранее задают предел глубины, ширины и вызовов, а итоговое решение проверяют по условиям задачи. Универсального выбора между BFS, DFS и beam search нет.\n\n"
+    }
+  ],
+  "blocks": [
+    {
+      "q_number": 16,
+      "block_idx": 0,
+      "visible_question": "BFS vs DFS в ToT — когда что?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "BFS vs DFS в ToT — когда что?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Вглубь одновременно хранят широкий уровень ради короткого решения, вширь идут одной ветвью при малой памяти.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Роли перепутаны: BFS хранит фронт уровня, DFS развивает одну ветвь и откатывается.",
+              "source_of_confusion": "Оба поиска могут использовать оценку состояния, поэтому их различие в хранении легко упустить.",
+              "if_it_were_true": "Названия breadth и depth перестали бы соответствовать порядку обхода.",
+              "how_it_should_be": "BFS сравнивает состояния уровня ценой памяти; DFS хранит путь и альтернативы для возврата."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Вширь сравнивают короткие пути ценой памяти, вглубь экономят память, рискуя уйти в тупик.",
+            "correct": true,
+            "sections": {
+              "explanation": "BFS расширяет фронт по уровням и полезен для систематического сравнения коротких решений; DFS идёт по одной ветви и возвращается при тупике.",
+              "example": "Если задача решается за несколько ходов, BFS сравнит варианты каждого уровня; при большом дереве DFS может изучить ветвь с меньшим числом состояний в памяти.",
+              "when_to_apply": "Выбор зависит от ожидаемой глубины, числа ветвей, памяти и качества правил отсечения.",
+              "edge_cases": "DFS нужен предел глубины или бюджета; BFS без ограничения ширины может потребовать много памяти. Beam search ограничивает фронт, но уже не полный BFS.",
+              "related": "Оценка промежуточного состояния помогает упорядочивать поиск, однако ошибочная оценка может направить его в тупик."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Вширь обходят ради минимальной памяти и неизвестной глубины, вглубь — чтобы держать все состояния уровня вместе.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Обычно память BFS выше из-за фронта уровня, а DFS хранит одну ветвь и нерассмотренные альтернативы.",
+              "source_of_confusion": "DFS может оказаться долгим, и длительность поиска легко спутать с его потребностью в памяти.",
+              "if_it_were_true": "Одновременное хранение фронта уровня пришлось бы приписать DFS вместо BFS.",
+              "how_it_should_be": "BFS расширяет уровни; DFS углубляется и возвращается к альтернативам."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Вширь всегда хранят только лучший луч, вглубь никогда не возвращаются к другим ветвям после тупика.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Ограниченный луч — beam search, не полный BFS; DFS использует backtracking к альтернативам.",
+              "source_of_confusion": "Beam search похож на BFS порядком расширения, а жадный спуск похож на DFS внешне.",
+              "if_it_were_true": "Оба метода потеряли бы характерные свойства систематического обхода и возврата.",
+              "how_it_should_be": "Различать полный BFS, DFS с возвратом и beam search с усечённым фронтом."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "open_issues": [],
+  "runtime_findings": [],
+  "checks": {
+    "content_review": {
+      "blocks": {
+        "Q16:B0": {
+          "status": "STALE",
+          "reason": "B верно противопоставляет фронт BFS и путь DFS; A/C меняют ресурсные свойства местами, D смешивает BFS с beam и отрицает backtracking.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q13-q16-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "factual_correctness": {
+      "blocks": {
+        "Q16:B0": {
+          "status": "STALE",
+          "reason": "Локальная теория корректно определяет BFS, DFS и beam; исходный ToT paper подтверждает применение разных стратегий поиска, подробные алгоритмические свойства проверены по определениям.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q13-q16-r1.json"
+          ]
+        }
+      },
+      "open_findings": [
+        {
+          "id": "agentic-q12-b0-facts-source-20261005",
+          "check": "factual_correctness",
+          "blocks": [
+            "Q12:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Специфика Plan-and-Execute и отличие от Plan-and-Solve не подтверждены доступным первичным источником.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261005-agentic-q9-q12-r1.json"
+        }
+      ]
+    },
+    "source_linkage": {
+      "blocks": {
+        "Q16:B0": {
+          "status": "STALE",
+          "reason": "Видимый вопрос совпадает с JSON и проверяет сравнение BFS/DFS Q16.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q13-q16-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "sections_consistency": {
+      "blocks": {
+        "Q16:B0": {
+          "status": "STALE",
+          "reason": "B соответствует общему смыслу теории; D опровергнут определением beam и DFS, остальные sections разбирают инверсию свойств.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q13-q16-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "sfpl": {
+      "blocks": {
+        "Q16:B0": {
+          "status": "STALE",
+          "reason": "A–D имеют общий двухчастный сравнительный каркас, близкую длину и нет поверхностного сигнала ключа.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q13-q16-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "ansc": {
+      "blocks": {
+        "Q16:B0": {
+          "status": "STALE",
+          "reason": "Каждый вариант сравнивает BFS и DFS; в B смысл понятен, хотя формулировка русского оборота требует правки.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q13-q16-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "russian_readability": {
+      "blocks": {
+        "Q16:B0": {
+          "status": "FAIL",
+          "reason": "В B оборот «ограничивают глубину и риск тупика» двусмысленен и неестественен.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q13-q16-r1.json"
+          ]
+        }
+      },
+      "open_findings": [
+        {
+          "id": "agentic-q16-b0-ru-depth-20261005",
+          "check": "russian_readability",
+          "blocks": [
+            "Q16:B0"
+          ],
+          "status": "OPEN",
+          "reason": "В B оборот «ограничивают глубину и риск тупика» двусмысленен и неестественен.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261005-agentic-q13-q16-r1.json"
+        }
+      ]
+    },
+    "independent_review": {
+      "blocks": {
+        "Q16:B0": {
+          "status": "STALE",
+          "reason": "Независимый разбор выявил неясный оборот в правильном варианте B.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q13-q16-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "blind_review": {
+      "blocks": {
+        "Q16:B0": {
+          "status": "STALE",
+          "reason": "Фаза A до раскрытия выбрала B, form_signals=[].",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q13-q16-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "final_acceptance": {
+      "blocks": {
+        "Q16:B0": {
+          "status": "FAIL",
+          "reason": "RU не прошёл: требуется переформулировать B и провести новый слепой проход.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q13-q16-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    }
+  },
+  "instructions": "Все A/B/C/D и sections. SFPL, ANSC, RU — отдельные вердикты. Дополнительные смысловые зависимости прочитать и указать в evidence. Сигналы не являются редакторской приёмкой."
+}

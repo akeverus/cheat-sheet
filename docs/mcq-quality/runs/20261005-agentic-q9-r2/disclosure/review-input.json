@@ -1,0 +1,239 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/ai-ml/agentic-patterns-interview.json",
+    "theory": "cheatsheets/interview/ai-ml/agentic-patterns-interview.md"
+  },
+  "sha256": {
+    "mcq": "a82add5279d0822be47cefade479bf25b95a904a185fa3cca3f38245d7342723",
+    "theory": "ce33488b901239d683585813c9f96f8e506b0e18565f5ed6f1aec309b27c655d"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hashes": {
+    "Q9:B0": {
+      "mcq": "207a8f9eec38147ca50d0dca3c6ab50f236921607dba0baca9e749b37efc188d",
+      "theory": "f58d0ef365ce8e362ea2d4da29e797a70ab89cdf60946c8961cdf69dadc55e81"
+    }
+  },
+  "preamble": "---\ntitle: \"Вопросы на собеседовании: Паттерны агентных систем\"\ndescription: \"Agentic patterns: ReAct, Reflexion, Plan-Execute, Tree-of-Thoughts, Self-Critique, CoVe, ReWOO, Self-Consistency; когда что выбирать и комбинировать.\"\ntags:\n  - interview\n  - ai-ml\n  - agentic-patterns\ntype: \"interview\"\ndifficulty: \"advanced\"\naliases:\n  - \"Agentic Patterns interview\"\n  - \"ReAct Reflexion Tree-of-Thoughts\"\n  - \"Agent design patterns собеседование\"\n  - \"LLM agentic workflows\"\nupdated: \"2026-05-23\"\n---\n# Вопросы на собеседовании: Паттерны агентных систем\n\n**Паттерн агентной системы** — способ организовать несколько шагов работы модели и приложения: выбор действия, обработку результата, проверку и завершение. Отдельный паттерн может включать рассуждение, инструменты или несколько исполнителей; все эти элементы сразу не обязательны.\n\nНиже разобраны подходы к организации агентных систем и близкие стратегии работы с моделью: `ReAct`, `Reflexion`, `Plan-and-Execute`, `Tree-of-Thoughts`, `Self-Refine`, `Chain-of-Verification`, `ReWOO`, `Self-Consistency`, `Best-of-N`, `Voyager`. Их можно сочетать, когда задача требует нескольких механизмов. На интервью полезно объяснять, что именно даёт каждый подход и при каких условиях он нужен.\n\n## Полезные ссылки\n\n### Original papers и авторитетные источники\n\n- [ReAct: Synergizing Reasoning and Acting in Language Models (Yao et al. 2022)](https://arxiv.org/abs/2210.03629) — базовый Thought→Action→Observation loop\n- [Reflexion: Language Agents with Verbal Reinforcement Learning (Shinn et al. 2023)](https://arxiv.org/abs/2303.11366) — self-reflection без gradient updates\n- [Tree of Thoughts (Yao et al. 2023)](https://arxiv.org/abs/2305.10601) — branching reasoning + evaluation\n- [Self-Refine (Madaan et al. 2023)](https://arxiv.org/abs/2303.17651) — generate → critique → refine\n- [Chain-of-Verification (Dhuliawala et al. 2023)](https://arxiv.org/abs/2309.11495) — снижение hallucinations через verification questions\n- [ReWOO (Xu et al. 2023)](https://arxiv.org/abs/2305.18323) — Plan/Worker/Solver без перепрогона LLM на каждом observation\n- [Plan-and-Solve Prompting (Wang et al. 2023)](https://arxiv.org/abs/2305.04091) — planner + executor\n- [Self-Consistency (Wang et al. 2022)](https://arxiv.org/abs/2203.11171) — majority vote по N CoT\n- [Voyager (Wang et al. 2023)](https://voyager.minedojo.org/) — skill library + curriculum\n- [Generative Agents (Park et al. 2023)](https://arxiv.org/abs/2304.03442) — memory stream + reflection\n- [Toolformer (Schick et al. 2023)](https://arxiv.org/abs/2302.04761) — self-supervised tool use\n- [Anthropic: Building Effective Agents](https://www.anthropic.com/research/building-effective-agents) — практические patterns от Anthropic\n\n## Содержание\n\n- [Полезные ссылки](#полезные-ссылки)\n- [See also](#see-also)\n\n**Основы**\n- [Q1. (!) Что такое agentic pattern и чем он отличается от prompt-техники?](#q1--что-такое-agentic-pattern-и-чем-он-отличается-от-prompt-техники)\n- [Q2. По какому принципу здесь группируют паттерны агентных систем?](#q2-по-какому-принципу-здесь-группируют-паттерны-агентных-систем)\n- [Q3. (!) Зачем нужны паттерны, если модель уже умеет рассуждать?](#q3--зачем-нужны-паттерны-если-модель-уже-умеет-рассуждать)\n\n**Базовые паттерны (ReAct / CoT / Self-Consistency)**\n- [Q4. (!) Что такое ReAct и как выглядит его цикл?](#q4--что-такое-react-и-как-выглядит-его-цикл)\n- [Q5. (!) Как завершается цикл в приведённом псевдокоде ReAct-агента?](#q5--как-завершается-цикл-в-приведённом-псевдокоде-react-агента)\n- [Q6. Что такое Self-Consistency и когда работает?](#q6-что-такое-self-consistency-и-когда-работает)\n- [Q7. Auto-CoT vs Manual CoT — в чём разница?](#q7-auto-cot-vs-manual-cot--в-чём-разница)\n\n**Reflection-based (Reflexion / Self-Critique / CoVe)**\n- [Q8. (!) Что такое Reflexion и чем отличается от обычного retry?](#q8--что-такое-reflexion-и-чем-отличается-от-обычного-retry)\n- [Q9. Self-Refine / Self-Critique — pattern и pseudo-code](#q9-self-refine--self-critique--pattern-и-pseudo-code)\n- [Q10. (!) Chain-of-Verification (CoVe) — как снижает hallucinations?](#q10--chain-of-verification-cove--как-снижает-hallucinations)\n- [Q11. Чем self-critique без external feedback опасен?](#q11-чем-self-critique-без-external-feedback-опасен)\n\n**Plan-based (Plan-Execute / ReWOO)**\n- [Q12. (!) Plan-and-Execute pattern — структура и use case](#q12--plan-and-execute-pattern--структура-и-use-case)\n- [Q13. (!) Что такое ReWOO и чем выигрывает у ReAct?](#q13--что-такое-rewoo-и-чем-выигрывает-у-react)\n- [Q14. Когда re-planning важнее изначального плана?](#q14-когда-re-planning-важнее-изначального-плана)\n\n**Tree-based (ToT / Best-of-N)**\n- [Q15. (!) Tree-of-Thoughts — структура дерева и evaluation](#q15--tree-of-thoughts--структура-дерева-и-evaluation)\n- [Q16. BFS vs DFS в ToT — когда что?](#q16-bfs-vs-dfs-в-tot--когда-что)\n- [Q17. Best-of-N sampling: pattern и trade-off с verifier](#q17-best-of-n-sampling-pattern-и-trade-off-с-verifier)\n\n**Memory patterns (Voyager / Generative Agents)**\n- [Q18. (!) Паттерн Voyager: библиотека навыков, авто-curriculum, итеративный prompting](#q18--паттерн-voyager-библиотека-навыков-авто-curriculum-итеративный-prompting)\n- [Q19. Generative Agents (Stanford): поток памяти и reflection](#q19-generative-agents-stanford-поток-памяти-и-reflection)\n- [Q20. OODA Loop (Observe-Orient-Decide-Act) — как адаптируется к LLM-агентам?](#q20-ooda-loop-observe-orient-decide-act--как-адаптируется-к-llm-агентам)\n- [Q21. Toolformer-подход: учим модель вызывать API через self-supervision](#q21-toolformer-подход-учим-модель-вызывать-api-через-self-supervision)\n\n**Composition и stopping**\n- [Q22. (!) Композиция паттернов: ReAct + Reflexion, Plan-Execute + Self-Critique](#q22--композиция-паттернов-react--reflexion-plan-execute--self-critique)\n- [Q23. (!) Stopping conditions: как агент решает, что закончить?](#q23--stopping-conditions-как-агент-решает-что-закончить)\n- [Q24. Implementation: LangChain / LlamaIndex / Vercel AI SDK — где какой pattern из коробки?](#q24-implementation-langchain--llamaindex--vercel-ai-sdk--где-какой-pattern-из-коробки)\n\n**Anti-patterns и evaluation**\n- [Q25. (!) Anti-patterns: pattern без необходимости, recursive без bound, context bloat](#q25--anti-patterns-pattern-без-необходимости-recursive-без-bound-context-bloat)\n- [Q26. Сравнительная таблица паттернов: complexity, latency, use case](#q26-сравнительная-таблица-паттернов-complexity-latency-use-case)\n- [Q27. Какой pattern когда выбирать: ReAct / Reflexion / ToT / Self-Critique / CoVe](#q27-какой-pattern-когда-выбирать-react--reflexion--tot--self-critique--cove)\n- [Q28. (!) Evaluation patterns: harness, метрики (success rate, # steps, tokens)](#q28--evaluation-patterns-harness-метрики-success-rate--steps-tokens)\n- [Q29. Reasoning models делают patterns внутри — нужны ли они снаружи?](#q29-reasoning-models-делают-patterns-внутри--нужны-ли-они-снаружи)\n- [Q30. Какие паттерны хорошо переносятся на multi-agent системы?](#q30-какие-паттерны-хорошо-переносятся-на-multi-agent-системы)\n",
+  "theory": [
+    {
+      "q_number": 9,
+      "title": "Self-Refine / Self-Critique — pattern и pseudo-code",
+      "line": 286,
+      "body": "\n**Self-Refine** (Madaan et al. 2023) — это цикл «создать черновик → получить от модели отзыв → исправить черновик» в рамках одной задачи. В базовой схеме модель формулирует отзыв по своему результату без обязательной внешней оценки. Дополнительные тесты или источники можно включить в прикладную систему, но это уже внешняя опора для проверки, а не свойство самого Self-Refine.\n\n```python\ndef self_refine(task, max_refinements=3):\n    draft = llm.complete(f\"Solve: {task}\")\n    for _ in range(max_refinements):\n        feedback = llm.complete(\n            f\"Task: {task}\\nDraft: {draft}\\n\"\n            \"Review the draft against the task. If no changes are needed, reply 'OK'.\"\n        )\n        if feedback.strip() == \"OK\":\n            break\n        draft = llm.complete(\n            f\"Task: {task}\\nDraft: {draft}\\nFeedback: {feedback}\\n\"\n            \"Revise the draft in light of the feedback.\"\n        )\n    return draft\n```\n\n**Где полезен:** для задач, где отзыв можно привязать к заданию и доступному материалу: проверить связность текста, требования к формату, полноту пересказа относительно исходника. Для кода тесты дают более надёжную проверку поведения, чем одна текстовая критика.\n\n**Ограничение:** модель может не заметить собственную ошибку или предложить ошибочную правку. Проверка фактов, вычислений и исполняемого кода требует источника, калькулятора или тестов, когда точность существенна. Предел итераций защищает от бесконечного цикла, но сам по себе не подтверждает качество.\n\n**Отличие от Reflexion:**\n- Self-Refine правит текущий черновик по отзыву модели; внешняя оценка не обязательна для базового цикла.\n- Reflexion сохраняет текстовый вывод по обратной связи о попытке и использует его в следующих попытках. Обратная связь может поступать от среды или проверяющего механизма и не обязана быть бинарной; повторные попытки могут относиться к той же задаче.\n\n"
+    }
+  ],
+  "blocks": [
+    {
+      "q_number": 9,
+      "block_idx": 0,
+      "visible_question": "Self-Refine / Self-Critique — pattern и pseudo-code",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Self-Refine / Self-Critique — pattern и pseudo-code",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Сначала запускают тесты, затем передают их вердикт модели для правки; цикл продолжают, пока все тесты не пройдут.",
+            "correct": false,
+            "sections": {
+              "what_actually": "В базовом Self-Refine модель сначала создаёт черновик, затем сама формулирует отзыв и правит текст; внешние тесты не являются обязательным шагом.",
+              "source_of_confusion": "Для кода тесты полезны как независимая проверка, поэтому их легко принять за основу любого цикла исправлений.",
+              "if_it_were_true": "Тогда схема зависела бы от внешнего тестового набора и не описывала бы самокритику по тексту черновика.",
+              "how_it_should_be": "Черновик → отзыв модели → правка в пределах заданного числа итераций; тесты можно добавить отдельно."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Сначала создают черновик, затем модель даёт отзыв и по нему правит черновик; цикл завершают по отзыву или лимиту правок.",
+            "correct": true,
+            "sections": {
+              "explanation": "Self-Refine повторяет создание отзыва по текущему черновику и его правку в рамках одной задачи. Внешний верификатор для базовой схемы не обязателен.",
+              "example": "Псевдокод получает draft, просит feedback по заданию, завершает цикл при ответе OK либо после max_refinements и возвращает последнюю версию.",
+              "when_to_apply": "Уместен, если замечания можно сверить с требованиями задания и доступным материалом, например с форматом или исходным текстом.",
+              "edge_cases": "Модель может пропустить ошибку или предложить неверную правку; факты, арифметику и поведение кода лучше проверять независимо.",
+              "related": "Reflexion сохраняет текстовый вывод по обратной связи о попытке для следующих попыток; они могут относиться к той же задаче."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Сначала сохраняют вывод о провале попытки, затем начинают новую задачу по памяти; текущий черновик внутри цикла не правят.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Self-Refine изменяет текущий черновик в рамках одной задачи, а не переносит вывод только на другую задачу.",
+              "source_of_confusion": "Reflexion тоже использует текстовый анализ ошибки и память между попытками, поэтому два способа легко смешать.",
+              "if_it_were_true": "Функция из примера возвращала бы исходный черновик без итеративной правки.",
+              "how_it_should_be": "В каждой итерации модель критикует актуальный draft и создаёт его следующую версию."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Сначала отдельный критик переписывает черновик за автора, затем модель принимает готовый ответ; собственной итерации правок здесь нет.",
+            "correct": false,
+            "sections": {
+              "what_actually": "В базовом Self-Refine модель сама формулирует отзыв и затем создаёт улучшенный черновик; критик не обязан быть отдельной моделью.",
+              "source_of_confusion": "Разделение ролей автора и судьи встречается в других схемах и кажется способом повысить независимость оценки.",
+              "if_it_were_true": "В показанном коде роль llm была бы заменена отдельным компонентом, который одновременно проверяет и пишет итог.",
+              "how_it_should_be": "Модель получает свой черновик и собственный feedback, затем правит черновик в ограниченном цикле."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "open_issues": [],
+  "runtime_findings": [],
+  "checks": {
+    "content_review": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "B передаёт черновик, отзыв той же модели, правку и ограниченный цикл; A подменяет самокритику тестами, C переносит вывод между попытками, D вводит отдельного критика.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q9-q12-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "factual_correctness": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "Первичная работа Self-Refine описывает генерацию, self-feedback и итеративную правку; локальный код показывает предел повторений.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q9-q12-r1.json"
+          ]
+        }
+      },
+      "open_findings": [
+        {
+          "id": "agentic-q12-b0-facts-source-20261005",
+          "check": "factual_correctness",
+          "blocks": [
+            "Q12:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Специфика Plan-and-Execute и отличие от Plan-and-Solve не подтверждены доступным первичным источником.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261005-agentic-q9-q12-r1.json"
+        }
+      ]
+    },
+    "source_linkage": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "Заголовок совпадает с question_text; варианты раскрывают последовательность из тела и псевдокода Q9.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q9-q12-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "sections_consistency": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "Sections B согласуются с теорией; A/C/D разбирают тесты, память Reflexion и отдельного критика.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q9-q12-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "sfpl": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "Все варианты — однопредложные последовательности близкой длины; слепая фаза A не выявила сигнала формы.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q9-q12-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "ansc": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "Каждый вариант описывает шаги предлагаемого цикла, но в B есть и условие остановки.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q9-q12-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "russian_readability": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "FAIL",
+          "reason": "В правильном B «правит его» можно отнести к отзыву, а не к черновику.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q9-q12-r1.json"
+          ]
+        }
+      },
+      "open_findings": [
+        {
+          "id": "agentic-q9-b0-ru-pronoun-20261005",
+          "check": "russian_readability",
+          "blocks": [
+            "Q9:B0"
+          ],
+          "status": "OPEN",
+          "reason": "В правильном B «правит его» можно отнести к отзыву, а не к черновику.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261005-agentic-q9-q12-r1.json"
+        }
+      ]
+    },
+    "independent_review": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "Независимый разбор выявил двусмысленность RU.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q9-q12-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "blind_review": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "Фаза A до раскрытия выбрала B и не выявила form_signals; после раскрытия ключ совпал.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q9-q12-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "final_acceptance": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "FAIL",
+          "reason": "RU не прошёл; требуется новая формулировка и повторная слепая проверка.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q9-q12-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    }
+  },
+  "instructions": "Все A/B/C/D и sections. SFPL, ANSC, RU — отдельные вердикты. Дополнительные смысловые зависимости прочитать и указать в evidence. Сигналы не являются редакторской приёмкой."
+}

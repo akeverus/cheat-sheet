@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "review_id": "hibernate-q9-q10",
+  "reviewer": "hibernate_metrics_blind",
+  "author": "root",
+  "model": "gpt-5.6-luna",
+  "date": "2026-09-14T17:35:06Z",
+  "kind": "independent_two_phase",
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/databases/hibernate-caching-interview.json",
+    "theory": "cheatsheets/interview/databases/hibernate-caching-interview.md"
+  },
+  "sha256": {
+    "mcq": "4b045a5214d0ff6009388bd2aba83d2b8916e26e60d04cf7a7e96c1a67031d1b",
+    "theory": "0175231b21f651e8f021f7140d9ddcb4066e14fe1b2f06fb9b83f1c7b5eee4f5"
+  },
+  "coverage": [
+    {
+      "q_number": 9,
+      "block_idx": 0,
+      "sha256": {
+        "mcq": "698b8e528125f5db94a533b0f4ea4e076c9426fbba4105fe1e04717221558b53",
+        "theory": "50a0bf68444f4f0258e68362217cbb73e819137fd2bef47bfb05c9149abeeccf"
+      },
+      "checks": {
+        "content_review": {
+          "status": "PASS",
+          "reason": "Вопрос о наблюдении за метриками; A даёт единственный защитимый ответ, B ошибочно трактует eviction, C ошибочно считает Statistics включённой по умолчанию, D подменяет эффект приложения одним hit ratio."
+        },
+        "factual_correctness": {
+          "status": "PASS",
+          "reason": "Hits, misses, puts, регионы, расходы и сопоставление с SQL/задержкой согласованы с теорией; default false подтверждён StatisticsSettings 6.6."
+        },
+        "source_linkage": {
+          "status": "PASS",
+          "reason": "Вопрос, все четыре варианта и sections прямо раскрыты в Q9 теории: счётчики, ratio, eviction, отдельная настройка сбора и query cache."
+        },
+        "sections_consistency": {
+          "status": "PASS",
+          "reason": "У A есть explanation/example/when_to_apply/edge_cases/related; у B/C/D есть все четыре соответствующие ролевые sections, и они опровергают именно текущие wrong."
+        },
+        "sfpl": {
+          "status": "PASS",
+          "reason": "A/B/C/D имеют сопоставимый каркас: общий перечень метрик и второе утверждение после точки с запятой; одинаковый вид прозы и пунктуации, без lone-longest или уникального кода."
+        },
+        "ansc": {
+          "status": "PASS",
+          "reason": "Каждый вариант отвечает на вопрос полноценной моделью: A корректная, B диагностическая ошибка про eviction, C ошибка про default и logging, D ошибка про доказательность ratio; wrong поддержаны конкретными sections."
+        },
+        "russian_readability": {
+          "status": "PASS",
+          "reason": "Фраза «Сбор Hibernate Statistics включают отдельно» допустима как неопределённо-личная конструкция с подразумеваемым субъектом во множественном числе («разработчики включают сбор»); «сбор» здесь винительное дополнение. Предыдущий finding был ложным согласованием и снят без изменения текста. Остальные поверхности Q9 читаемы."
+        },
+        "independent_review": {
+          "status": "PASS",
+          "reason": "Автором раскрытого пакета является root, reviewer — hibernate_metrics_blind; автор и рецензент различаются."
+        },
+        "blind_review": {
+          "status": "PASS",
+          "reason": "Исходный выбор A был записан до раскрытия 2026-09-14T17:32:40.874819+00:00; текущая фаза B выполняется после раскрытия и сама слепой не является."
+        },
+        "final_acceptance": {
+          "status": "PASS",
+          "reason": "Координатор проверил актуальные хеши, все независимые вердикты и хронологию слепой фазы; сигналы автоматических проверок разобраны отдельно."
+        }
+      }
+    },
+    {
+      "q_number": 10,
+      "block_idx": 0,
+      "sha256": {
+        "mcq": "8f5f4e5a583d695e490acc799bfc086e8a48622e00b20e95162fda91342c8b2f",
+        "theory": "0075149fcfedc1c3249ac292e2781c632f3c93f42cbc2f6df8674c2fb30c98e3"
+      },
+      "checks": {
+        "content_review": {
+          "status": "PASS",
+          "reason": "Вопрос о подводных камнях L2; D единственный защитимый ответ. A отрицает внешнее устаревание, B отрицает расходы распределённого хранения, C путает append-only с отсутствием повторных чтений."
+        },
+        "factual_correctness": {
+          "status": "PASS",
+          "reason": "Память, устаревание, прогрев, внешние записи, query spaces/timestamps, нагрузочные затраты и provider-dependent encoding согласованы с Hibernate 6.6. Историческая ошибка про обязательный Serializable для entity исправлена: в D edge_cases явно сказано, что это не универсальное требование."
+        },
+        "source_linkage": {
+          "status": "PASS",
+          "reason": "Все варианты и sections напрямую покрывают тело Q10: внешняя согласованность, память, query cache timestamps, кодирование/сеть, прогрев и append-only."
+        },
+        "sections_consistency": {
+          "status": "PASS",
+          "reason": "У A/B/C/D присутствуют требуемые ролевые sections; каждое explanation/what_actually и связанные поля объясняют собственное утверждение, включая Serializable в B how_it_should_be и D edge_cases."
+        },
+        "sfpl": {
+          "status": "PASS",
+          "reason": "Все четыре варианта начинаются одинаковым трёхэлементным перечнем рисков и затем дают причинное следствие; формат, длина и пунктуация сопоставимы, correct не выделен уникальным кодом или числом."
+        },
+        "ansc": {
+          "status": "PASS",
+          "reason": "A/B/C содержат полноценные, правдоподобные, но ошибочные модели с одним основным заблуждением; D полно отвечает на вопрос и sections дают механизм, пример, границы и связь с провайдером."
+        },
+        "russian_readability": {
+          "status": "PASS",
+          "reason": "Вопрос, теория, A/B/C/D и все sections читаемы на русском; англоязычные L2 cache, append-only, query spaces, codec и Serializable используются как технические термины, грамматика и связи ясны."
+        },
+        "independent_review": {
+          "status": "PASS",
+          "reason": "Автор root не совпадает с reviewer hibernate_metrics_blind."
+        },
+        "blind_review": {
+          "status": "PASS",
+          "reason": "Blind-фаза A для Q10 была завершена до раскрытия; B-фаза осознанно выполнена после revealed_at и не заявляется слепой."
+        },
+        "final_acceptance": {
+          "status": "PASS",
+          "reason": "Координатор проверил актуальные хеши, все независимые вердикты и хронологию слепой фазы; сигналы автоматических проверок разобраны отдельно."
+        }
+      }
+    }
+  ],
+  "findings": [],
+  "sources": [
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/stat/Statistics.html",
+      "used_for": "Statistics собирает счётчики L2/query cache и доступна через Statistics; сбор можно включать и выключать динамически.",
+      "version": "Hibernate ORM 6.6",
+      "checked_at": "2026-09-14"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/cfg/StatisticsSettings.html",
+      "used_for": "hibernate.generate_statistics включает сбор статистики; значение по умолчанию — false.",
+      "version": "Hibernate ORM 6.6",
+      "checked_at": "2026-09-14"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/userguide/html_single/",
+      "used_for": "Внешние изменения хранилища не отслеживаются автоматически; query cache использует timestamps связанных query spaces для проверки устаревания.",
+      "version": "Hibernate ORM 6.6.57.Final",
+      "checked_at": "2026-09-14"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/cache/spi/entry/CacheEntry.html",
+      "used_for": "Кэшируемый CacheEntry — сериализуемое представление состояния; это не означает обязательность Serializable для entity при распределённом хранении, поскольку формат задаёт интеграция провайдера.",
+      "version": "Hibernate ORM 6.6",
+      "checked_at": "2026-09-14"
+    }
+  ],
+  "limitations": [
+    "Независимый проход только перечисленных Q/B; исходный разбор сохранён неизменным."
+  ],
+  "phase_a": {
+    "path": "docs/mcq-quality/reviews/blind/hibernate-q9-q10-phase-a.json",
+    "sha256": "c76cf6bfda979f149e7d1b449537f12cba8046fcca2dec20bdf9df81de0bfcac"
+  },
+  "revealed_at": "2026-09-14T17:32:40.874819+00:00",
+  "review_artifact": {
+    "path": "docs/mcq-quality/reviews/blind/hibernate-q9-q10-phase-b.json",
+    "sha256": "15714b6fb71f70d3a9dde535ed6068fbf21bd76317b71ab353e48298eaad8f04"
+  },
+  "accepted_by": "root",
+  "accepted_at": "2026-09-14T17:35:44.496338+00:00",
+  "automatic_review": {
+    "path": "docs/mcq-quality/reviews/blind/hibernate-automatic-dispositions.json",
+    "sha256": "ab4fe71837117ca01679e4d105ee2e322288cdae03c35c27034c90461fa2ce2c"
+  }
+}

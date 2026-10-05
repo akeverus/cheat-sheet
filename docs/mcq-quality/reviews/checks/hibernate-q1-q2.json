@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "review_id": "hibernate-q1-q2",
+  "reviewer": "hibernate_context_blind",
+  "author": "root",
+  "model": "gpt-5.6-luna",
+  "date": "2026-09-14T17:24:17Z",
+  "kind": "independent_two_phase",
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/databases/hibernate-caching-interview.json",
+    "theory": "cheatsheets/interview/databases/hibernate-caching-interview.md"
+  },
+  "sha256": {
+    "mcq": "9445b87b997bd5ce2edade99be0b8539664316303e414f7339b5a520041d00d8",
+    "theory": "71717e3b06e16d23baae1911f69d0c58958d6f9a2d9450ffd59533e0034c7108"
+  },
+  "coverage": [
+    {
+      "q_number": 1,
+      "block_idx": 0,
+      "sha256": {
+        "mcq": "450ba3108b463936e1991a03448e4721a44e126613ff066d2aea267d51305917",
+        "theory": "f49f007374d598eebe36cd7cf4e024b885f3d626e19f497c6d3ece2345c5d905"
+      },
+      "checks": {
+        "content_review": {
+          "status": "PASS",
+          "reason": "Видимый вопрос прямо спрашивает уровни кэша; четыре варианта отвечают на него, один защитимый ответ — C."
+        },
+        "factual_correctness": {
+          "status": "PASS",
+          "reason": "Hibernate 6.6 подтверждает L1 как persistence context Session, общий L2 и query result cache для кэшируемых запросов; варианты A/B/D содержат по одному конкретному ложному тезису."
+        },
+        "source_linkage": {
+          "status": "PASS",
+          "reason": "Вопрос, варианты и sections Q1 говорят об уровнях L1/L2/query cache; объяснения раскрывают именно различие областей и назначения."
+        },
+        "sections_consistency": {
+          "status": "PASS",
+          "reason": "У C присутствуют explanation/example/when_to_apply/edge_cases/related, у wrong — what_actually/source_of_confusion/if_it_were_true/how_it_should_be; тексты опровергают текущие формулировки."
+        },
+        "sfpl": {
+          "status": "PASS",
+          "reason": "A/B/C/D имеют сопоставимый формат одного предложения и одинаковый каркас из L1, L2 и query cache; C не выделяется отдельным кодом, списком или оговоркой."
+        },
+        "ansc": {
+          "status": "PASS",
+          "reason": "Каждый вариант является полным ответом на перечень уровней и содержит одну различимую модель ошибки или корректное описание; wrong правдоподобны и опровержимы."
+        },
+        "russian_readability": {
+          "status": "PASS",
+          "reason": "Вопрос, четыре варианта и все sections читаются как связный русскоязычный технический текст; общепринятые термины SessionFactory, persistence context и query cache употреблены последовательно."
+        },
+        "independent_review": {
+          "status": "PASS",
+          "reason": "Reviewer hibernate_context_blind отличается от автора Q1/Q2 (координатор root); reviewer не изменял production-контент."
+        },
+        "blind_review": {
+          "status": "PASS",
+          "reason": "Двухфазный протокол соблюдён: фаза A сохранена по экспорту без ключа до раскрытия, ответы Q1=C и Q2=B зафиксированы; фаза B выполнялась после раскрытия и сама слепой не является."
+        },
+        "final_acceptance": {
+          "status": "PASS",
+          "reason": "Координатор проверил текущие блочные хеши, независимый разбор и двухфазный протокол; сигналы Q1–Q4 разобраны в отдельном artifact."
+        }
+      }
+    },
+    {
+      "q_number": 2,
+      "block_idx": 0,
+      "sha256": {
+        "mcq": "bb4e80069acbb43e62a5eaf7753c966d420b897460fd5639c8e580158d64df73",
+        "theory": "ddffa4bef82517043d7dee209c852f8e9b2bb284ab29bb1ebedde8ccd8d681f2"
+      },
+      "checks": {
+        "content_review": {
+          "status": "PASS",
+          "reason": "Видимый вопрос спрашивает механизм L1; варианты покрывают identity, dirty checking и момент синхронизации, единственный защитимый ответ — B."
+        },
+        "factual_correctness": {
+          "status": "PASS",
+          "reason": "Hibernate 6.6 Session описывает automatic change detection и flush; `@DynamicUpdate` подтверждает отдельное поведение SQL по изменённым колонкам, а варианты A/C/D содержат конкретные ложные тезисы."
+        },
+        "source_linkage": {
+          "status": "PASS",
+          "reason": "Вопрос, варианты и sections Q2 последовательно раскрывают persistence context, повторный find, dirty checking, flush и close."
+        },
+        "sections_consistency": {
+          "status": "PASS",
+          "reason": "У C/B и wrong присутствуют соответствующие ролевые sections; examples, edge_cases и related согласованы с текстами вариантов, включая flush не равен commit и detached после close."
+        },
+        "sfpl": {
+          "status": "PASS",
+          "reason": "A/B/C/D используют одинаковый формат с identity по типу и ID и вторым утверждением о поведении; длина и пунктуация сопоставимы, уникального формального маркера B нет."
+        },
+        "ansc": {
+          "status": "PASS",
+          "reason": "Все четыре варианта отвечают на вопрос механизмом L1; A, C и D выражают по одной правдоподобной ошибочной модели, B — корректную модель."
+        },
+        "russian_readability": {
+          "status": "PASS",
+          "reason": "Вопрос, варианты и все sections грамматически связны и используют устойчивую терминологию; английские имена API и dirty checking сохранены как общепринятые технические термины."
+        },
+        "independent_review": {
+          "status": "PASS",
+          "reason": "Reviewer hibernate_context_blind отличается от автора Q1/Q2 (координатор root); reviewer не изменял production-контент."
+        },
+        "blind_review": {
+          "status": "PASS",
+          "reason": "Двухфазный протокол соблюдён: фаза A сохранена по экспорту без ключа до раскрытия, ответы Q1=C и Q2=B зафиксированы; фаза B выполнялась после раскрытия и сама слепой не является."
+        },
+        "final_acceptance": {
+          "status": "PASS",
+          "reason": "Координатор проверил текущие блочные хеши, независимый разбор и двухфазный протокол; сигналы Q1–Q4 разобраны в отдельном artifact."
+        }
+      }
+    }
+  ],
+  "findings": [],
+  "sources": [
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/Session.html",
+      "used_for": "Session является persistence context; изменения persistent instances выявляются dirty checking и eventually flushed; SQL обычно не выполняется синхронно методами Session.",
+      "version": "Hibernate ORM 6.6",
+      "checked_at": "2026-09-14"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/annotations/DynamicUpdate.html",
+      "used_for": "@DynamicUpdate генерирует UPDATE только с фактически изменяемыми колонками.",
+      "version": "Hibernate ORM 6.6",
+      "checked_at": "2026-09-14"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/userguide/html_single/#caching-query-layout",
+      "used_for": "Query cache хранит результаты запросов; layout FULL хранит загруженные данные, SHALLOW — идентификатор/ключ владельца, AUTO выбирает SHALLOW для cacheable entities/collections и FULL иначе.",
+      "version": "Hibernate ORM 6.6, User Guide 14.7",
+      "checked_at": "2026-09-14"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hibernate/hibernate-orm/6.6.0/hibernate-core/src/main/java/org/hibernate/cfg/CacheSettings.java",
+      "used_for": "USE_QUERY_CACHE включает query results cache (default false), QUERY_CACHE_LAYOUT задаёт hibernate.cache.query_cache_layout; RegionFactory по умолчанию NoCachingRegionFactory.",
+      "version": "Hibernate ORM 6.6.0",
+      "checked_at": "2026-09-14"
+    }
+  ],
+  "limitations": [
+    "Независимый проход только перечисленных Q/B; исходный разбор сохранён неизменным."
+  ],
+  "phase_a": {
+    "path": "docs/mcq-quality/reviews/blind/hibernate-q1-q2-phase-a.json",
+    "sha256": "4af403e484a2743ee98336499c2049549b828375c21bda5f656ca96ca9a29e7b"
+  },
+  "revealed_at": "2026-09-14T17:21:37.437498+00:00",
+  "review_artifact": {
+    "path": "docs/mcq-quality/reviews/blind/hibernate-q1-q2-phase-b.json",
+    "sha256": "8b9f16620e049cad526aef56f7d227bb5aefe891708421a4d60641e1205ed29f"
+  },
+  "accepted_by": "root",
+  "accepted_at": "2026-09-14T17:30:28.301555+00:00",
+  "automatic_review": {
+    "path": "docs/mcq-quality/reviews/blind/hibernate-q1-q4-automatic-dispositions.json",
+    "sha256": "2e88a8f652d047f22eb5f2cd9e60504bb583d8a492d60f0fd7fdba8329b92be3"
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "kind": "blind_phase_b",
+  "reviewer": "functional_next_blind",
+  "model": "gpt-5.6-luna",
+  "recorded_at": "2026-09-14T16:47:55.327845+00:00",
+  "snapshot": {
+    "path": "work/mcq-audit/functional-q6-q10-revealed.json",
+    "sha256": {
+      "snapshot": "НЕ вычислялся заново: frozen snapshot принят по записи снимка",
+      "mcq": "4f88fc68b5bfd63da0b4f2a216c937227e714b02bbe0fef567d025eb79ed974f",
+      "theory": "1e7918b6bef38e67847325c9ae3836a60024585b758a1463d08c6a43bfc92f61"
+    }
+  },
+  "standards": {
+    "quality": {"path": "docs/mcq-quality-standard.md", "version": "актуализирован 2026-09-14"},
+    "surface": {"path": "docs/mcq-quality/surface-parity-rules.md", "version": "актуализирован 2026-09-14"},
+    "russian": {"path": "docs/mcq-quality/russian-readability-rules.md", "version": "прочитан в редакции snapshot-сессии"}
+  },
+  "pass_type": "независимое ревью с раскрытым ключом; blind-фаза A зафиксирована ранее, текущий snapshot содержит key и sections",
+  "sources_checked": [
+    {"claim": "UnaryOperator<T> extends Function<T,T>; BinaryOperator<T> extends BiFunction<T,T,T>", "source": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/UnaryOperator.html и https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/BinaryOperator.html", "version": "Java SE 21", "checked_at": "2026-09-14"},
+    {"claim": "Callable<T> возвращает T и объявляет throws Exception; Supplier<T> возвращает T без checked throws; Runnable.run возвращает void", "source": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Callable.html; https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Supplier.html; https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Runnable.html", "version": "Java SE 21", "checked_at": "2026-09-14"},
+    {"claim": "Четыре вида method reference: static, particular object, arbitrary object of type, constructor", "source": "https://docs.oracle.com/javase/tutorial/java/javaOO/methodreferences.html", "version": "официальный Java Tutorial (JDK 8; классификация проверена для Java 21)", "checked_at": "2026-09-14"},
+    {"claim": "Function.andThen: сначала this, затем after; compose: сначала before, затем this", "source": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html", "version": "Java SE 21", "checked_at": "2026-09-14"},
+    {"claim": "Predicate and/or/negate — default и возвращают составной/инвертированный предикат; Predicate.not — static с Java 11", "source": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Predicate.html", "version": "Java SE 21", "checked_at": "2026-09-14"},
+    {"claim": "Consumer имеет только andThen", "source": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Consumer.html", "version": "Java SE 21", "checked_at": "2026-09-14"}
+  ],
+  "answers": [
+    {
+      "q_number": 6, "block_idx": 0, "choice": "B",
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "B единственный верный ответ; A путает BinaryOperator с Function, C отрицает наследование, D неверно описывает List.replaceAll."},
+        "FACTS": {"verdict": "PASS", "reason": "Теория и sections согласованы с Java 21: UnaryOperator<T> extends Function<T,T>; replaceAll принимает UnaryOperator<E>."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Вопрос, варианты и теория напрямую проверяют отношение Function/UnaryOperator; уровень связи L4."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У B присутствуют все пять correct-полей; у wrong присутствуют четыре поля, и каждое объясняет именно текущую ошибочную модель."},
+        "SFPL": {"verdict": "PASS", "reason": "A–D имеют сопоставимый однофразовый формат с inline API; B не выделяется видимой длиной или уникальным оформлением."},
+        "ANSC": {"verdict": "PASS", "reason": "Все четыре полноценно отвечают на сравнение или содержат конкретную проверяемую ошибку; correct не является единственным вариантом с механизмом."},
+        "RU": {"verdict": "PASS", "reason": "Прочитаны пролог, тело Q6, вопрос и все A–D/sections; терминология и грамматика естественны."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Проверка выполнена после отдельной blind-фазы A, с раскрытым ключом snapshot; выводы не подменяют слепой результат."},
+        "BLIND": {"verdict": "PASS", "reason": "Слепой выбор A зафиксирован до snapshot: B; совпадает с ключом, но это отдельное содержательное наблюдение."}
+      },
+      "form_observations": {"A": "Два связанных утверждения и inline API; правдоподобная конкретная ошибка.", "B": "Одно определение с наследованием; кратко и по существу.", "C": "Одно отрицательное определение; тот же формат, техническая ошибка.", "D": "Одно утверждение с API List.replaceAll; тематически близкий, но неверный пример."},
+      "findings": []
+    },
+    {
+      "q_number": 7, "block_idx": 0, "choice": "D",
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "D корректно сводит различия к возвращаемому значению и checked throws; A–C содержат конкретные ошибки."},
+        "FACTS": {"verdict": "PASS", "reason": "Теория, sections и Java 21 API согласованы: Runnable void, Callable<T> throws Exception, Supplier<T> без checked throws."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Все варианты и объяснения отвечают на видимое сравнение трёх интерфейсов; L4."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У D заполнены explanation/example/when_to_apply/edge_cases/related; у A–C заполнены все четыре wrong-поля и они опровергают их тексты."},
+        "SFPL": {"verdict": "PASS", "reason": "A–D — короткие русские утверждения одного уровня; D не имеет уникального кода, списка или оформления."},
+        "ANSC": {"verdict": "PASS", "reason": "D отвечает по двум осям, а каждый wrong выражает отдельную правдоподобную ошибочную модель."},
+        "RU": {"verdict": "PASS", "reason": "Прочитаны пролог, тело Q7, вопрос, A–D и все sections; язык последователен и понятен."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Раскрытое ревью отделено от blind-фазы A и использует snapshot-хеши."},
+        "BLIND": {"verdict": "PASS", "reason": "Blind-фаза A заранее выбрала D; выбор согласуется с раскрытым ключом."}
+      },
+      "form_observations": {"A": "Два предложения с категоричным выводом о совместимости.", "B": "Одно широкое обобщение о всех трёх интерфейсах.", "C": "Одно узкое утверждение о throws.", "D": "Одно компактное перечисление двух осей сравнения."},
+      "findings": []
+    },
+    {
+      "q_number": 8, "block_idx": 0, "choice": "C",
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "C передаёт общий принцип, A/B/D ошибочны; фактический ключ snapshot — C."},
+        "FACTS": {"verdict": "PASS", "reason": "Теория и официальный tutorial подтверждают четыре категории и receiver-правило для String::compareTo/toUpperCase."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Все варианты связаны с вопросом о method references, а sections объясняют конкретные модели ошибок; L4."},
+        "SECTIONS": {"verdict": "PASS", "reason": "Все sections присутствуют и согласованы с текстами; у C объяснён общий критерий, у wrong — их точные ошибки."},
+        "SFPL": {"verdict": "PASS", "reason": "A–D имеют сопоставимый формат одного предложения и inline-кода; C не выделяется визуальной длиной."},
+        "ANSC": {"verdict": "FAIL", "reason": "Вопрос явно просит назвать 4 вида, но ни один вариант не перечисляет четыре вида. C даёт лишь общий принцип, поэтому не является полноценным ответом; это известный дефект snapshot."},
+        "RU": {"verdict": "PASS", "reason": "Прочитаны пролог, тело Q8, вопрос, все A–D и sections; русский текст естественен, дефект полноты не является языковым дефектом."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Проверен именно frozen snapshot; зафиксировано, что будущий ремонт Q8 делает snapshot stale."},
+        "BLIND": {"verdict": "PASS", "reason": "Blind-фаза A выбрала C; содержательная проверка выявила ANSC FAIL независимо от совпадения с ключом."}
+      },
+      "form_observations": {"A": "Конкретный пример с кодом и числом аргументов.", "B": "Категоричное обобщение о фиксированном receiver.", "C": "Короткий общий принцип без перечня четырёх видов.", "D": "Конкретный пример с кодом и утверждением о static."},
+      "findings": [{"severity": "BLOCKER", "code": "ANSC", "label": "C", "quote": "Четыре вида отличает именно то, каким способом задан объект для вызова метода.", "reason": "Не перечислены static method, instance method particular object, arbitrary object of type и constructor.", "repair": "Сформулировать вариант так, чтобы он явно перечислял четыре вида и сохранял критерий источника receiver."}]
+    },
+    {
+      "q_number": 9, "block_idx": 0, "choice": "A",
+      "checks": {
+        "CONTENT": {"verdict": "FAIL", "reason": "A помечен correct, но его первое предложение переворачивает оба порядка; пример в explanation уже даёт правильную семантику. Ключ и текст варианта внутренне противоречивы."},
+        "FACTS": {"verdict": "FAIL", "reason": "Java 21 Function API: andThen = this затем after; compose = before затем this. Утверждение A ложно, хотя его example частично верен."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Вопрос и вся теория прямо посвящены Function.compose/andThen; ошибка — внутри фактического содержания, не drift."},
+        "SECTIONS": {"verdict": "FAIL", "reason": "explanation и example противоречат text A: первый абзац повторяет неверный порядок, а формулы f.andThen(g)=g(f(x)) и f.compose(g)=f(g(x)) верны. related также ошибочно называет у Consumer «прямую композицию» вместо andThen."},
+        "SFPL": {"verdict": "PASS", "reason": "По видимой форме A–D сопоставимы: короткие русские утверждения с API; преимущество A определяется противоречивым содержанием, а не уникальным оформлением."},
+        "ANSC": {"verdict": "FAIL", "reason": "A не защищаем как единый ответ из-за перевёрнутого порядка; B и C дают ложные порядки/равенство, D меняет интерфейс на Consumer. В наборе нет корректного варианта."},
+        "RU": {"verdict": "FAIL", "reason": "Прочитаны пролог, тело Q9, вопрос, A–D и sections. Формулировки в целом естественны, но A и его explanation/example дают взаимоисключающие утверждения; related содержит неточное «прямая композиция»."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Сверка выполнена по frozen snapshot и официальному Java 21 API; вывод не подогнан под ключ."},
+        "BLIND": {"verdict": "PASS", "reason": "Blind-фаза A заранее отметила отсутствие правильного варианта и вынужденно выбрала A; Java 21 API подтверждает этот вывод."}
+      },
+      "form_observations": {"A": "Два противопоставленных порядка; тематически релевантен, но внутренне ложен.", "B": "Короткое обобщение о равенстве результатов.", "C": "Короткое объяснение одного порядка, приписанного compose.", "D": "Отдельное утверждение про Consumer, формат схожий, предмет смещён."},
+      "findings": [{"severity": "BLOCKER", "code": "CONTENT/ANSC", "label": "A", "quote": "andThen сначала применяет переданную функцию, а compose сначала применяет саму функцию", "reason": "Оба порядка инвертированы относительно Java 21 API; correct-key A незащитим.", "repair": "Исправить A на: andThen сначала применяет саму функцию, compose сначала применяет переданную; затем синхронно перепроверить все sections."}, {"severity": "MAJOR", "code": "SECTIONS", "label": "A.related", "quote": "У `Consumer` есть только прямая композиция", "reason": "У Consumer есть default andThen, но нет compose; слово «композиция» здесь маскирует отличие API.", "repair": "Написать: у Consumer есть только `andThen`, а `compose` нет."}]
+    },
+    {
+      "q_number": 10, "block_idx": 0, "choice": "A",
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "A единственный верный ответ; B и D ошибочно описывают мутацию/static, C неверно применяет negate к method reference."},
+        "FACTS": {"verdict": "PASS", "reason": "Java 21 Predicate API подтверждает default and/or/negate, новые предикаты и static not с Java 11; theory согласована."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Вопрос, варианты и тело Q10 прямо проверяют комбинаторы Predicate; L4."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У A заполнены пять correct-полей, включая корректное различение Predicate.not; у B–D заполнены четыре wrong-поля с адресным опровержением."},
+        "SFPL": {"verdict": "PASS", "reason": "A–D имеют сопоставимый однофразовый формат и inline API; правильность A не выдаётся уникальным оформлением."},
+        "ANSC": {"verdict": "PASS", "reason": "A покрывает default/новый объект/неизменность, а все wrong содержат конкретную ошибочную модель."},
+        "RU": {"verdict": "PASS", "reason": "Прочитаны пролог, тело Q10, вопрос, A–D и sections; язык естественный и последователен."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Раскрытое ревью отдельно от blind-фазы A, с проверкой официального источника."},
+        "BLIND": {"verdict": "PASS", "reason": "Blind-фаза A заранее выбрала A; выбор подтверждён ключом и API."}
+      },
+      "form_observations": {"A": "Короткое определение двух свойств.", "B": "Короткое категоричное утверждение о мутации.", "C": "Короткое утверждение о method reference и static not.", "D": "Короткое утверждение о статичности методов."},
+      "findings": []
+    }
+  ],
+  "summary": {"accepted_qb": ["Q6/B0", "Q7/B0", "Q10/B0"], "accepted_with_blocking_findings": ["Q8/B0 (ANSC FAIL)", "Q9/B0 (CONTENT, FACTS, SECTIONS, ANSC, RU FAIL)"], "whole_file_verdict": "FAIL", "reason": "Нельзя ставить PASS: Q8 не содержит полного перечисления четырёх видов, Q9 не имеет защитимого правильного варианта и содержит противоречивые sections."}
+}

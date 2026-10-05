@@ -1,0 +1,56 @@
+{
+  "kind": "blind_phase_b",
+  "reviewer": "hibernate_context_blind",
+  "model": "gpt-5.6-luna",
+  "recorded_at": "2026-09-14T17:24:17Z",
+  "standard": {
+    "path": "docs/mcq-quality-standard.md",
+    "version": "2026-09-14"
+  },
+  "reviewed": {
+    "revealed_path": "work/mcq-audit/hibernate-q1-q2-revealed.json",
+    "mcq_path": "modules/quiz-app/src/main/resources/seed/mcq/databases/hibernate-caching-interview.json",
+    "mcq_sha256": "9445b87b997bd5ce2edade99be0b8539664316303e414f7339b5a520041d00d8",
+    "theory_path": "cheatsheets/interview/databases/hibernate-caching-interview.md",
+    "theory_sha256": "71717e3b06e16d23baae1911f69d0c58958d6f9a2d9450ffd59533e0034c7108"
+  },
+  "answers": [
+    {
+      "q_number": 1,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Видимый вопрос прямо спрашивает уровни кэша; четыре варианта отвечают на него, один защитимый ответ — C."},
+        "FACTS": {"verdict": "PASS", "reason": "Hibernate 6.6 подтверждает L1 как persistence context Session, общий L2 и query result cache для кэшируемых запросов; варианты A/B/D содержат по одному конкретному ложному тезису."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Вопрос, варианты и sections Q1 говорят об уровнях L1/L2/query cache; объяснения раскрывают именно различие областей и назначения."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У C присутствуют explanation/example/when_to_apply/edge_cases/related, у wrong — what_actually/source_of_confusion/if_it_were_true/how_it_should_be; тексты опровергают текущие формулировки."},
+        "SFPL": {"verdict": "PASS", "reason": "A/B/C/D имеют сопоставимый формат одного предложения и одинаковый каркас из L1, L2 и query cache; C не выделяется отдельным кодом, списком или оговоркой."},
+        "ANSC": {"verdict": "PASS", "reason": "Каждый вариант является полным ответом на перечень уровней и содержит одну различимую модель ошибки или корректное описание; wrong правдоподобны и опровержимы."},
+        "RU": {"verdict": "PASS", "reason": "Вопрос, четыре варианта и все sections читаются как связный русскоязычный технический текст; общепринятые термины SessionFactory, persistence context и query cache употреблены последовательно."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Reviewer hibernate_context_blind отличается от автора Q1/Q2 (координатор root); reviewer не изменял production-контент."},
+        "BLIND": {"verdict": "PASS", "reason": "Двухфазный протокол соблюдён: фаза A сохранена по экспорту без ключа до раскрытия, ответы Q1=C и Q2=B зафиксированы; фаза B выполнялась после раскрытия и сама слепой не является."}
+      }
+    },
+    {
+      "q_number": 2,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Видимый вопрос спрашивает механизм L1; варианты покрывают identity, dirty checking и момент синхронизации, единственный защитимый ответ — B."},
+        "FACTS": {"verdict": "PASS", "reason": "Hibernate 6.6 Session описывает automatic change detection и flush; `@DynamicUpdate` подтверждает отдельное поведение SQL по изменённым колонкам, а варианты A/C/D содержат конкретные ложные тезисы."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Вопрос, варианты и sections Q2 последовательно раскрывают persistence context, повторный find, dirty checking, flush и close."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У C/B и wrong присутствуют соответствующие ролевые sections; examples, edge_cases и related согласованы с текстами вариантов, включая flush не равен commit и detached после close."},
+        "SFPL": {"verdict": "PASS", "reason": "A/B/C/D используют одинаковый формат с identity по типу и ID и вторым утверждением о поведении; длина и пунктуация сопоставимы, уникального формального маркера B нет."},
+        "ANSC": {"verdict": "PASS", "reason": "Все четыре варианта отвечают на вопрос механизмом L1; A, C и D выражают по одной правдоподобной ошибочной модели, B — корректную модель."},
+        "RU": {"verdict": "PASS", "reason": "Вопрос, варианты и все sections грамматически связны и используют устойчивую терминологию; английские имена API и dirty checking сохранены как общепринятые технические термины."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Reviewer hibernate_context_blind отличается от автора Q1/Q2 (координатор root); reviewer не изменял production-контент."},
+        "BLIND": {"verdict": "PASS", "reason": "Двухфазный протокол соблюдён: фаза A сохранена по экспорту без ключа до раскрытия, ответы Q1=C и Q2=B зафиксированы; фаза B выполнялась после раскрытия и сама слепой не является."}
+      }
+    }
+  ],
+  "sources_checked": [
+    {"url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/Session.html", "claim": "Session является persistence context; изменения persistent instances выявляются dirty checking и eventually flushed; SQL обычно не выполняется синхронно методами Session.", "version": "Hibernate ORM 6.6", "date": "2026-09-14"},
+    {"url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/annotations/DynamicUpdate.html", "claim": "@DynamicUpdate генерирует UPDATE только с фактически изменяемыми колонками.", "version": "Hibernate ORM 6.6", "date": "2026-09-14"},
+    {"url": "https://docs.hibernate.org/orm/6.6/userguide/html_single/#caching-query-layout", "claim": "Query cache хранит результаты запросов; layout FULL хранит загруженные данные, SHALLOW — идентификатор/ключ владельца, AUTO выбирает SHALLOW для cacheable entities/collections и FULL иначе.", "version": "Hibernate ORM 6.6, User Guide 14.7", "date": "2026-09-14"},
+    {"url": "https://raw.githubusercontent.com/hibernate/hibernate-orm/6.6.0/hibernate-core/src/main/java/org/hibernate/cfg/CacheSettings.java", "claim": "USE_QUERY_CACHE включает query results cache (default false), QUERY_CACHE_LAYOUT задаёт hibernate.cache.query_cache_layout; RegionFactory по умолчанию NoCachingRegionFactory.", "version": "Hibernate ORM 6.6.0", "date": "2026-09-14"}
+  ],
+  "findings": []
+}

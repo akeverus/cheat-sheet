@@ -1,0 +1,59 @@
+{
+  "kind": "blind_phase_b",
+  "reviewer": "spring_rollback_blind",
+  "model": "gpt-5.6-luna",
+  "recorded_at": "2026-09-14T17:11:01Z",
+  "answers": [
+    {
+      "q_number": 9,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Видимый вопрос, ключ A и теория проверяют default rollback для исключения, вышедшего через транзакционный перехватчик; ровно один защитимый ответ."},
+        "FACTS": {"verdict": "PASS", "reason": "Spring по умолчанию откатывает RuntimeException и Error; checked-исключение само по себе отката не требует. B/C/D корректно опровергнуты."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Q9 напрямую связан с одноимённым заголовком и телом теории; sections каждого варианта объясняют именно его утверждение."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У A присутствуют explanation/example/when_to_apply/edge_cases/related; у wrong B/C/D присутствуют what_actually/source_of_confusion/if_it_were_true/how_it_should_be, без противоречий тексту."},
+        "SFPL": {"verdict": "PASS", "reason": "A/B/C/D имеют сопоставимый двухчастный каркас с точкой с запятой: группы исключений и оговорка о третьей группе; ни один вариант не выделяется кодом или единственным условием."},
+        "ANSC": {"verdict": "PASS", "reason": "Каждый вариант отвечает на вопрос о группах исключений; wrong содержат конкретную единственную ошибочную перестановку/исключение, а sections раскрывают последствия и исправление."},
+        "RU": {"verdict": "PASS", "reason": "Вопрос, теория, все четыре варианта и все sections читаются естественно; англоязычные API и общепринятые термины сохранены уместно."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Полный пакет после раскрытия сопоставлен с ранее записанным слепым выбором; независимый выбор A подтверждён источниками, без изменения phase A."},
+        "BLIND": {"verdict": "PASS", "reason": "Фаза A была сохранена до доступа к ключу и теории; её выбор A совпал с содержательной проверкой."}
+      }
+    },
+    {
+      "q_number": 10,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос о настройке rollback для checked exceptions имеет единственный защитимый ответ B; пример и объяснение соответствуют назначению rollbackFor."},
+        "FACTS": {"verdict": "PASS", "reason": "rollbackFor принимает типы Throwable и задаёт откат для совпавшего типа и подклассов; noRollbackFor имеет противоположную семантику. A/C/D корректно опровергнуты."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Q10 напрямую связан с одноимённым заголовком и телом теории; sections всех вариантов объясняют выбор атрибута и соответствующее заблуждение."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У B присутствуют explanation/example/when_to_apply/edge_cases/related; у wrong A/C/D присутствуют what_actually/source_of_confusion/if_it_were_true/how_it_should_be, согласованные с вариантами."},
+        "SFPL": {"verdict": "PASS", "reason": "A/B/C/D используют сопоставимый формат одного утверждения с примером и одинаковый предмет; B не выделяется уникальным кодом, оговоркой или существенно большим каркасом."},
+        "ANSC": {"verdict": "PASS", "reason": "Каждый вариант отвечает, чем настраивать checked rollback; wrong A/C/D представляют конкретные правдоподобные ошибки о допустимых типах, noRollbackFor и направлении семантики."},
+        "RU": {"verdict": "PASS", "reason": "Вопрос, теория, все четыре варианта и все sections грамматически связны и понятны; англоязычные checked exceptions и API употреблены как предметные термины."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Полный пакет после раскрытия сопоставлен с ранее записанным слепым выбором; независимый выбор B подтверждён источниками, без изменения phase A."},
+        "BLIND": {"verdict": "PASS", "reason": "Фаза A была сохранена до доступа к ключу и теории; её выбор B совпал с содержательной проверкой."}
+      }
+    }
+  ],
+  "sources_checked": [
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/rolling-back.html",
+      "claim": "В default configuration RuntimeException и Error приводят к rollback, checked exceptions сами по себе — нет; rollback rules поддерживают checked types и rollbackFor/noRollbackFor.",
+      "version": "Spring Framework reference 6.2 (страница отображает 6.2.19)",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.7/spring-tx/src/main/java/org/springframework/transaction/support/AbstractPlatformTransactionManager.java",
+      "claim": "commit сначала проверяет local rollback-only и выполняет rollback; global rollback-only при commit обрабатывается отдельно, а участие в существующей транзакции может вызвать doSetRollbackOnly и UnexpectedRollbackException на внешней границе.",
+      "version": "Spring Framework v6.2.7 (git ref)",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/annotations.html",
+      "claim": "rollbackFor и noRollbackFor принимают Class-типы, производные от Throwable; с 6.2 rollbackOn=ALL_EXCEPTIONS глобально включает checked exceptions, а локальные правила уточняют default.",
+      "version": "Spring Framework reference 6.2 (страница отображает 6.2.19)",
+      "date": "2026-09-14"
+    }
+  ],
+  "findings": []
+}

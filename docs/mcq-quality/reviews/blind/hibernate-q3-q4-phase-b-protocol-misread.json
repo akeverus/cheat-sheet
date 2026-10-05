@@ -1,0 +1,87 @@
+{
+  "kind": "blind_phase_b",
+  "reviewer": "hibernate_config_blind",
+  "model": "gpt-5.6-luna",
+  "recorded_at": "2026-09-14T17:23:30Z",
+  "scope": {
+    "revealed": "work/mcq-audit/hibernate-q3-q4-revealed.json",
+    "mcq_sha256": "9445b87b997bd5ce2edade99be0b8539664316303e414f7339b5a520041d00d8",
+    "theory_sha256": "71717e3b06e16d23baae1911f69d0c58958d6f9a2d9450ffd59533e0034c7108",
+    "rules": [
+      "docs/mcq-quality-standard.md",
+      "docs/mcq-quality/surface-parity-rules.md",
+      "docs/mcq-quality/russian-readability-rules.md"
+    ],
+    "covered": ["Q3/B0", "Q4/B0", "all four options", "all option sections", "theory Q3/Q4", "Russian readability"]
+  },
+  "answers": [
+    {
+      "q_number": 3,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос проверяет практическую настройку L2; A даёт единственный защитимый полный ответ, а B/C/D содержат отдельные технические заблуждения."},
+        "FACTS": {"verdict": "PASS", "reason": "CacheSettings 6.6.0 подтверждает RegionFactory, условный default use_second_level_cache и отсутствие NoCachingRegionFactory по умолчанию; ConfigSettings подтверждает jcache, provider и uri; SharedCacheMode 3.1 подтверждает ENABLE_SELECTIVE и ALL."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Текст A и все sections связаны с вопросом; объяснения B/C/D опровергают именно их утверждения про автоконфигурацию, @Cacheable и универсальные TTL/ёмкость."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У A присутствуют explanation/example/when_to_apply/edge_cases/related, у B/C/D — what_actually/source_of_confusion/if_it_were_true/how_it_should_be; роли согласованы с текущими options."},
+        "SFPL": {"verdict": "PASS", "reason": "A/B/C/D имеют сопоставимый однофразовый каркас настройки с несколькими условиями и итоговым следствием после точки с запятой; уникального кода, списка или lone-longest нет."},
+        "ANSC": {"verdict": "PASS", "reason": "Каждый вариант отвечает на вопрос через связку интеграции, включения/выбора и политики кэша; каждый wrong содержит полноценную, различимую ошибочную модель."},
+        "RU": {"verdict": "PASS", "reason": "Вопрос, теория, четыре варианта и все sections читаются естественно; английские API-термины и имена Hibernate/JPA употреблены как общепринятые технические названия."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Слепое решение Q3/B0 зафиксировано в phase-a до раскрытия ключа; содержательная проверка B выполнена после него как отдельный проход, без изменения phase-a."},
+        "BLIND": {"verdict": "FAIL", "reason": "Фаза B использует раскрытый ключ и sections, поэтому сама не является слепой; blind-статус относится только к ранее записанной phase-a."}
+      }
+    },
+    {
+      "q_number": 4,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос просит перечислить concurrency strategies; B даёт единственный защитимый ответ, а A/C/D искажают механизм одной стратегии."},
+        "FACTS": {"verdict": "PASS", "reason": "Hibernate 6.6 Javadoc перечисляет NONE, READ_ONLY, NONSTRICT_READ_WRITE, READ_WRITE и TRANSACTIONAL; указывает no locking для NONSTRICT, soft locks для READ_WRITE и JTA/XA/fully transactional provider для TRANSACTIONAL."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Explanation/edge_cases/related B и контрфактические sections A/C/D согласованы с видимым вопросом и текущим текстом опций."},
+        "SECTIONS": {"verdict": "PASS", "reason": "Все четыре варианта имеют корректные ролевые sections; B раскрывает механизм и ограничения, wrong описываются через what_actually и how_it_should_be без противоречий."},
+        "SFPL": {"verdict": "PASS", "reason": "Все варианты начинаются одинаковым полным перечнем и затем дают одно утверждение о механизме; длина, пунктуация и формат сопоставимы."},
+        "ANSC": {"verdict": "PASS", "reason": "Каждый вариант покрывает перечень и механизм конкуренции; wrong отличаются конкретным заблуждением о soft locks, READ_ONLY или транзакционной атомарности."},
+        "RU": {"verdict": "PASS", "reason": "Вопрос, теория, A/B/C/D и все sections грамматичны и понятны при первом чтении; soft locks, READ_WRITE и TRANSACTIONAL являются уместными доменными терминами."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Слепое решение Q4/B0 зафиксировано в phase-a до раскрытия ключа; phase-b сохранила ранее сделанный выбор и провела отдельную проверку."},
+        "BLIND": {"verdict": "FAIL", "reason": "Ключ и sections доступны в раскрытом пакете этой фазы, поэтому phase-b не может считаться blind; blind-решение сохранено отдельно в phase-a."}
+      }
+    }
+  ],
+  "sources_checked": [
+    {
+      "url": "https://raw.githubusercontent.com/hibernate/hibernate-orm/6.6.0/hibernate-core/src/main/java/org/hibernate/cfg/CacheSettings.java",
+      "claim": "RegionFactory по умолчанию NoCachingRegionFactory; use_second_level_cache по умолчанию true при настроенном провайдере и false иначе; default concurrency strategy берётся у провайдера.",
+      "version": "Hibernate ORM 6.6.0",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hibernate/hibernate-orm/6.6.0/hibernate-jcache/src/main/java/org/hibernate/cache/jcache/ConfigSettings.java",
+      "claim": "JCache RegionFactory имеет short name jcache и свойства hibernate.javax.cache.provider и hibernate.javax.cache.uri.",
+      "version": "Hibernate ORM 6.6.0",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/annotations/CacheConcurrencyStrategy.html",
+      "claim": "Стратегии NONE, READ_ONLY, NONSTRICT_READ_WRITE, READ_WRITE и TRANSACTIONAL; soft locks только у READ_WRITE; TRANSACTIONAL требует fully transactional provider и JTA/XA.",
+      "version": "Hibernate ORM 6.6",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/sharedcachemode",
+      "claim": "SharedCacheMode: ALL кэширует все сущности, ENABLE_SELECTIVE — сущности с Cacheable(true), NONE отключает кэш.",
+      "version": "Jakarta Persistence 3.1",
+      "date": "2026-09-14"
+    }
+  ],
+  "findings": [
+    {
+      "label": "BLIND-PHASE-B",
+      "citation": "docs/mcq-quality-standard.md: раздел «Независимость и слепое ревью»; phase-b использует work/mcq-audit/hibernate-q3-q4-revealed.json",
+      "consequence": "Phase B не маркируется blind; это ожидаемая проверка после раскрытия. Слепая угадываемость формы и выборы сохранены в phase-a."
+    },
+    {
+      "label": "Q3-L2-DEFAULT-NUANCE",
+      "citation": "Теория Q3, edge_cases: «L2 разрешён по умолчанию при настроенной RegionFactory, отличной от NoCachingRegionFactory»; CacheSettings.java, строки 52–65 и 84–95",
+      "consequence": "Формулировка корректно не делает явное use_second_level_cache=true обязательным всегда; A остаётся защитимым ответом настройки."
+    }
+  ]
+}

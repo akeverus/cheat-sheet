@@ -1,0 +1,59 @@
+{
+  "reviewer": "spring_isolation_blind",
+  "model": "gpt-5.6-luna",
+  "recorded_at": "2026-09-14T17:10:54Z",
+  "answers": [
+    {
+      "q_number": 6,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос и варианты проверяют именно MANDATORY и NEVER; A — единственный защитимый ответ."},
+        "FACTS": {"verdict": "PASS", "reason": "Propagation.java подтверждает участие MANDATORY при наличии TX и исключение NEVER при наличии TX."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Ответ и sections прямо следуют телу Q6 и согласованы между собой."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У A заполнены explanation/example/when_to_apply/edge_cases/related, у wrong — все требуемые поля; опровержения соответствуют текстам."},
+        "SFPL": {"verdict": "PASS", "reason": "A/B/C/D имеют сопоставимый двухчастный каркас с условием и последствием; correct не выделен формой."},
+        "ANSC": {"verdict": "PASS", "reason": "Каждый wrong — полноценная правдоподобная перестановка или подмена NEVER/NOT_SUPPORTED с отдельным опровержением."},
+        "RU": {"verdict": "PASS", "reason": "Вопрос, теория, варианты и sections читаются естественно; технические термины употреблены единообразно."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Слепой выбор в phase A зафиксирован до раскрытия ключа; phase B выполнена после раскрытия по отдельному протоколу."},
+        "BLIND": {"verdict": "PASS", "reason": "Phase A содержит только видимые вопросы и A/B/C/D без ключа и sections; ключ доступен только в текущей фазе B."}
+      }
+    },
+    {
+      "q_number": 7,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос охватывает список уровней и роль Spring/ресурса; D отвечает на обе части."},
+        "FACTS": {"verdict": "PASS", "reason": "Isolation.java содержит DEFAULT и четыре JDBC-уровня; PostgreSQL 17 подтверждает ресурсную реализацию и поведение READ_UNCOMMITTED."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Варианты и sections непосредственно связаны с Q7, а оговорки theory не противоречат MCQ."},
+        "SECTIONS": {"verdict": "PASS", "reason": "Все четыре варианта имеют соответствующие explanatory sections; example, edge_cases и related у D согласованы с текстом."},
+        "SFPL": {"verdict": "PASS", "reason": "Все варианты используют одинаковый перечень и второе предложение с объяснением; дополнительная оговорка D необходима для ответа и не является уникальным кодом/примером."},
+        "ANSC": {"verdict": "PASS", "reason": "A/B/C содержат конкретные ошибочные модели, D полно отвечает на перечень и зависимость от ресурса."},
+        "RU": {"verdict": "PASS", "reason": "Формулировки ясны и профессиональны; англоязычные имена enum/API уместны."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Phase A была записана до доступа к revealed и теории; Q7 входил в слепой пакет."},
+        "BLIND": {"verdict": "PASS", "reason": "Выбор phase A сделан по экспорту без correct/sections; раскрытие использовано только для проверки."}
+      }
+    },
+    {
+      "q_number": 8,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос проверяет различение трёх аномалий, и A покрывает все три определения."},
+        "FACTS": {"verdict": "PASS", "reason": "PostgreSQL 17 даёт определения dirty/nonrepeatable/phantom и таблицу ограничений, совпадающую с A и theory."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Ответы и sections раскрывают ровно различия, запрошенные видимым Q8."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У каждого варианта есть полный набор ролевых полей; опровержения B/C/D адресуют их конкретные ошибки."},
+        "SFPL": {"verdict": "PASS", "reason": "Все варианты имеют одинаковый трёхчастный формат определений; A не выделяется длиной, кодом или уникальной пунктуацией."},
+        "ANSC": {"verdict": "PASS", "reason": "B меняет местами два явления, C искажает dirty read, D описывает отсутствие аномалий; каждое заблуждение правдоподобно и опровергнуто."},
+        "RU": {"verdict": "PASS", "reason": "Термины и смешанная русско-английская техническая лексика понятны, грамматика и пунктуация корректны."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Phase A по Q8 сохранена до раскрытия ключа и содержит самостоятельный выбор A."},
+        "BLIND": {"verdict": "PASS", "reason": "Предварительный слепой экспорт не содержал теории, sections или correct; текущая проверка не меняет запись phase A."}
+      }
+    }
+  ],
+  "sources_checked": [
+    {"url": "https://www.postgresql.org/docs/17/transaction-iso.html", "claim": "Определения аномалий, стандартные уровни, поведение PostgreSQL READ_UNCOMMITTED/REPEATABLE_READ и дефолт READ_COMMITTED.", "version": "PostgreSQL 17", "date": "2026-09-14"},
+    {"url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.7/spring-tx/src/main/java/org/springframework/transaction/annotation/Isolation.java", "claim": "Isolation содержит DEFAULT и четыре стандартных JDBC-уровня; DEFAULT делегирует уровню underlying data store.", "version": "Spring Framework 6.2.7", "date": "2026-09-14"},
+    {"url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.7/spring-tx/src/main/java/org/springframework/transaction/annotation/Propagation.java", "claim": "MANDATORY требует текущую TX, NOT_SUPPORTED приостанавливает её и выполняет без TX, NEVER требует отсутствия TX.", "version": "Spring Framework 6.2.7", "date": "2026-09-14"},
+    {"url": "https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html", "claim": "validateExistingTransaction может отклонять несовместимый isolation при присоединении к существующей TX.", "version": "Spring Framework reference 7.0.9 (страница также публикует stable 6.2.x)", "date": "2026-09-14"}
+  ],
+  "findings": []
+}

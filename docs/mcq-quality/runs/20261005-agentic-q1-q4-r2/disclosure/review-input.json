@@ -1,0 +1,589 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/ai-ml/agentic-patterns-interview.json",
+    "theory": "cheatsheets/interview/ai-ml/agentic-patterns-interview.md"
+  },
+  "sha256": {
+    "mcq": "d8e2f3c01747c1fb3e69aebb075afe3f09ee3a9365d1f72a540ee0fc1610f949",
+    "theory": "c960ec7c4cdeb80cf8bc43e7eadd21ee30ecc6c9613cc304dfdf324123332379"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hashes": {
+    "Q1:B0": {
+      "mcq": "46d993c62a17afc66d28cb7a9aecb781ad3ed4d17435f77907ef30ec2db6449a",
+      "theory": "f95a4c2d3aece6c3f81dcd1a1dbc336ccbe5265ac5d4fa0cfed9cb9a6788aef1"
+    },
+    "Q2:B0": {
+      "mcq": "e720d2f0a924d5decd3d54e0c2ed5b90938bfc66de9c2c168bba0fe36b174261",
+      "theory": "923dd29adb84d64466cb5a43e265cadb25d7c05642136b8e0599a5734f6bfbba"
+    },
+    "Q3:B0": {
+      "mcq": "8ee9c8a239c647fe51fbcd7f371a1bc39d5a9f7383c7ac8becb20c6749e0c383",
+      "theory": "60ad86217508ce8db202bdfaaf377f8ee0f7de061b7f8e8c506559a9e3e6b839"
+    },
+    "Q4:B0": {
+      "mcq": "baccdfefab34cda65fac4f19c8318ec9b63bd170532eed58b86d847385420f9a",
+      "theory": "19ee98f692099f5a0a08c8a8e4bd1ca8a1a2c30a5a847754affa9943a07290fd"
+    }
+  },
+  "preamble": "---\ntitle: \"Вопросы на собеседовании: Паттерны агентных систем\"\ndescription: \"Agentic patterns: ReAct, Reflexion, Plan-Execute, Tree-of-Thoughts, Self-Critique, CoVe, ReWOO, Self-Consistency; когда что выбирать и комбинировать.\"\ntags:\n  - interview\n  - ai-ml\n  - agentic-patterns\ntype: \"interview\"\ndifficulty: \"advanced\"\naliases:\n  - \"Agentic Patterns interview\"\n  - \"ReAct Reflexion Tree-of-Thoughts\"\n  - \"Agent design patterns собеседование\"\n  - \"LLM agentic workflows\"\nupdated: \"2026-05-23\"\n---\n# Вопросы на собеседовании: Паттерны агентных систем\n\n**Паттерн агентной системы** — способ организовать несколько шагов работы модели и приложения: выбор действия, обработку результата, проверку и завершение. Отдельный паттерн может включать рассуждение, инструменты или несколько исполнителей; все эти элементы сразу не обязательны.\n\nНиже разобраны подходы к организации агентных систем и близкие стратегии работы с моделью: `ReAct`, `Reflexion`, `Plan-and-Execute`, `Tree-of-Thoughts`, `Self-Refine`, `Chain-of-Verification`, `ReWOO`, `Self-Consistency`, `Best-of-N`, `Voyager`. Их можно сочетать, когда задача требует нескольких механизмов. На интервью полезно объяснять, что именно даёт каждый подход и при каких условиях он нужен.\n\n## Полезные ссылки\n\n### Original papers и авторитетные источники\n\n- [ReAct: Synergizing Reasoning and Acting in Language Models (Yao et al. 2022)](https://arxiv.org/abs/2210.03629) — базовый Thought→Action→Observation loop\n- [Reflexion: Language Agents with Verbal Reinforcement Learning (Shinn et al. 2023)](https://arxiv.org/abs/2303.11366) — self-reflection без gradient updates\n- [Tree of Thoughts (Yao et al. 2023)](https://arxiv.org/abs/2305.10601) — branching reasoning + evaluation\n- [Self-Refine (Madaan et al. 2023)](https://arxiv.org/abs/2303.17651) — generate → critique → refine\n- [Chain-of-Verification (Dhuliawala et al. 2023)](https://arxiv.org/abs/2309.11495) — снижение hallucinations через verification questions\n- [ReWOO (Xu et al. 2023)](https://arxiv.org/abs/2305.18323) — Plan/Worker/Solver без перепрогона LLM на каждом observation\n- [Plan-and-Solve Prompting (Wang et al. 2023)](https://arxiv.org/abs/2305.04091) — planner + executor\n- [Self-Consistency (Wang et al. 2022)](https://arxiv.org/abs/2203.11171) — majority vote по N CoT\n- [Voyager (Wang et al. 2023)](https://voyager.minedojo.org/) — skill library + curriculum\n- [Generative Agents (Park et al. 2023)](https://arxiv.org/abs/2304.03442) — memory stream + reflection\n- [Toolformer (Schick et al. 2023)](https://arxiv.org/abs/2302.04761) — self-supervised tool use\n- [Anthropic: Building Effective Agents](https://www.anthropic.com/research/building-effective-agents) — практические patterns от Anthropic\n\n## Содержание\n\n- [Полезные ссылки](#полезные-ссылки)\n- [See also](#see-also)\n\n**Основы**\n- [Q1. (!) Что такое agentic pattern и чем он отличается от prompt-техники?](#q1--что-такое-agentic-pattern-и-чем-он-отличается-от-prompt-техники)\n- [Q2. По какому принципу здесь группируют паттерны агентных систем?](#q2-по-какому-принципу-здесь-группируют-паттерны-агентных-систем)\n- [Q3. (!) Зачем нужны паттерны, если модель уже умеет рассуждать?](#q3--зачем-нужны-паттерны-если-модель-уже-умеет-рассуждать)\n\n**Базовые паттерны (ReAct / CoT / Self-Consistency)**\n- [Q4. (!) Что такое ReAct и как выглядит его цикл?](#q4--что-такое-react-и-как-выглядит-его-цикл)\n- [Q5. (!) Как завершается цикл в приведённом псевдокоде ReAct-агента?](#q5--как-завершается-цикл-в-приведённом-псевдокоде-react-агента)\n- [Q6. Что такое Self-Consistency и когда работает?](#q6-что-такое-self-consistency-и-когда-работает)\n- [Q7. Auto-CoT vs Manual CoT — в чём разница?](#q7-auto-cot-vs-manual-cot--в-чём-разница)\n\n**Reflection-based (Reflexion / Self-Critique / CoVe)**\n- [Q8. (!) Что такое Reflexion и чем отличается от обычного retry?](#q8--что-такое-reflexion-и-чем-отличается-от-обычного-retry)\n- [Q9. Self-Refine / Self-Critique — pattern и pseudo-code](#q9-self-refine--self-critique--pattern-и-pseudo-code)\n- [Q10. (!) Chain-of-Verification (CoVe) — как снижает hallucinations?](#q10--chain-of-verification-cove--как-снижает-hallucinations)\n- [Q11. Чем self-critique без external feedback опасен?](#q11-чем-self-critique-без-external-feedback-опасен)\n\n**Plan-based (Plan-Execute / ReWOO)**\n- [Q12. (!) Plan-and-Execute pattern — структура и use case](#q12--plan-and-execute-pattern--структура-и-use-case)\n- [Q13. (!) Что такое ReWOO и чем выигрывает у ReAct?](#q13--что-такое-rewoo-и-чем-выигрывает-у-react)\n- [Q14. Когда re-planning важнее изначального плана?](#q14-когда-re-planning-важнее-изначального-плана)\n\n**Tree-based (ToT / Best-of-N)**\n- [Q15. (!) Tree-of-Thoughts — структура дерева и evaluation](#q15--tree-of-thoughts--структура-дерева-и-evaluation)\n- [Q16. BFS vs DFS в ToT — когда что?](#q16-bfs-vs-dfs-в-tot--когда-что)\n- [Q17. Best-of-N sampling: pattern и trade-off с verifier](#q17-best-of-n-sampling-pattern-и-trade-off-с-verifier)\n\n**Memory patterns (Voyager / Generative Agents)**\n- [Q18. (!) Паттерн Voyager: библиотека навыков, авто-curriculum, итеративный prompting](#q18--паттерн-voyager-библиотека-навыков-авто-curriculum-итеративный-prompting)\n- [Q19. Generative Agents (Stanford): поток памяти и reflection](#q19-generative-agents-stanford-поток-памяти-и-reflection)\n- [Q20. OODA Loop (Observe-Orient-Decide-Act) — как адаптируется к LLM-агентам?](#q20-ooda-loop-observe-orient-decide-act--как-адаптируется-к-llm-агентам)\n- [Q21. Toolformer-подход: учим модель вызывать API через self-supervision](#q21-toolformer-подход-учим-модель-вызывать-api-через-self-supervision)\n\n**Composition и stopping**\n- [Q22. (!) Композиция паттернов: ReAct + Reflexion, Plan-Execute + Self-Critique](#q22--композиция-паттернов-react--reflexion-plan-execute--self-critique)\n- [Q23. (!) Stopping conditions: как агент решает, что закончить?](#q23--stopping-conditions-как-агент-решает-что-закончить)\n- [Q24. Implementation: LangChain / LlamaIndex / Vercel AI SDK — где какой pattern из коробки?](#q24-implementation-langchain--llamaindex--vercel-ai-sdk--где-какой-pattern-из-коробки)\n\n**Anti-patterns и evaluation**\n- [Q25. (!) Anti-patterns: pattern без необходимости, recursive без bound, context bloat](#q25--anti-patterns-pattern-без-необходимости-recursive-без-bound-context-bloat)\n- [Q26. Сравнительная таблица паттернов: complexity, latency, use case](#q26-сравнительная-таблица-паттернов-complexity-latency-use-case)\n- [Q27. Какой pattern когда выбирать: ReAct / Reflexion / ToT / Self-Critique / CoVe](#q27-какой-pattern-когда-выбирать-react--reflexion--tot--self-critique--cove)\n- [Q28. (!) Evaluation patterns: harness, метрики (success rate, # steps, tokens)](#q28--evaluation-patterns-harness-метрики-success-rate--steps-tokens)\n- [Q29. Reasoning models делают patterns внутри — нужны ли они снаружи?](#q29-reasoning-models-делают-patterns-внутри--нужны-ли-они-снаружи)\n- [Q30. Какие паттерны хорошо переносятся на multi-agent системы?](#q30-какие-паттерны-хорошо-переносятся-на-multi-agent-системы)\n",
+  "theory": [
+    {
+      "q_number": 1,
+      "title": "Что такое agentic pattern и чем он отличается от prompt-техники?",
+      "line": 91,
+      "body": "\nПромпт-техника задаёт **формулировку или структуру входа модели**: например, few-shot добавляет примеры в запрос. Паттерн агентной системы задаёт **организацию выполнения**: как выбирают следующий шаг, передают результат инструмента, проверяют промежуточный результат и завершают работу. Одна и та же промпт-техника может использоваться на разных шагах процесса.\n\n| Свойство | Промпт-техника | Паттерн выполнения |\n|----------|----------------|--------------------|\n| Что задаёт | Вход модели в отдельном шаге | Связь шагов, решений и результатов |\n| Число вызовов | Сама по себе не определяет | Зависит от задачи и хода выполнения |\n| Инструменты | Может описывать их использование | Может включать вызов и обработку результата |\n| Примеры | Few-shot, инструкция о формате ответа | ReAct, цепочка шагов, цикл оценки и доработки |\n\nЭто различие описывает **уровень управления**, а не обязательное число вызовов или наличие инструментов. Например, несколько выборок Chain-of-Thought с последующим голосованием образуют стратегию Self-Consistency; её не требуется считать агентом только из-за нескольких вызовов. См. [Building effective agents](https://www.anthropic.com/engineering/building-effective-agents) и [оригинальную работу о Self-Consistency](https://arxiv.org/abs/2203.11171).\n\n"
+    },
+    {
+      "q_number": 2,
+      "title": "По какому принципу здесь группируют паттерны агентных систем?",
+      "line": 104,
+      "body": "\nВ этой шпаргалке паттерны сгруппированы **по ведущему механизму**: какую организацию работы они добавляют к отдельному вызову модели. Это учебная группировка, а не общепринятая строгая таксономия.\n\n1. **Reasoning-action loops** — `ReAct`, `OODA`. Базовое чередование «думаю — действую».\n2. **Reflection-based** — `Reflexion`, `Self-Refine`, `Chain-of-Verification`. Агент критикует собственный вывод.\n3. **Plan-based** — `Plan-and-Execute`, `ReWOO`. Сначала план, потом исполнение.\n4. **Search/sampling-based** — `Tree-of-Thoughts`, `Best-of-N`, `Self-Consistency`. Несколько кандидатов и выбор результата; это близкие стратегии, не обязательно агентные циклы.\n5. **Memory-based** — `Voyager`, `Generative Agents`. Долговременная память, накопление навыков.\n6. **Multi-agent** — `Debate`, `Society-of-Mind` (в отдельной шпаргалке про orchestration).\n\nГруппы **не взаимоисключающие**: система может сочетать планирование, работу с инструментами и проверку результата. Например, исполнитель плана может использовать ReAct для получения данных, а отдельный шаг — оценивать итог. Другие источники выбирают иной набор групп; см. [практическую группировку Anthropic](https://www.anthropic.com/engineering/building-effective-agents).\n\n"
+    },
+    {
+      "q_number": 3,
+      "title": "Зачем нужны паттерны, если модель уже умеет рассуждать?",
+      "line": 117,
+      "body": "\nМодель с внутренним рассуждением может решать часть задач без инструкции «думай пошагово». Это **не организует работу приложения**: нужно решить, когда вызвать инструмент, передать модели его результат, сохранить состояние и остановить цикл. Модель может предложить вызов инструмента, но инструмент исполняет внешняя среда.\n\nДля простого вопроса может хватить одного вызова. Если ответ зависит от актуальных данных или действий во внешней системе, приложение должно организовать вызовы и проверить полученные результаты. При длинной задаче ему также нужны управление состоянием и условия остановки. Внутреннее рассуждение само по себе не подтверждает факты по независимому источнику и не гарантирует качество ответа.\n\nПромпты с явной цепочкой рассуждений для некоторых reasoning models избыточны; это **не означает**, что Self-Refine, Self-Consistency или внешняя проверка всегда становятся бесполезными. Их пользу оценивают на конкретной задаче. Возможности вызова инструментов зависят от модели и API. См. [рекомендации OpenAI по reasoning models](https://developers.openai.com/api/docs/guides/reasoning-best-practices) и [описание агентных циклов Anthropic](https://www.anthropic.com/engineering/building-effective-agents).\n\n"
+    },
+    {
+      "q_number": 4,
+      "title": "Что такое ReAct и как выглядит его цикл?",
+      "line": 125,
+      "body": "\n**ReAct** (Reasoning + Acting, Yao et al.) сочетает шаги рассуждения и действия: модель выбирает действие с учётом текущего контекста, среда выполняет его и возвращает наблюдение. В исходной работе модель порождает явные фрагменты рассуждения; конкретный API может не показывать внутреннее рассуждение пользователю. См. [статью ReAct](https://arxiv.org/abs/2210.03629).\n\nЦикл из трёх шагов:\n\n1. **Thought** — модель намечает следующий шаг в формате исходного ReAct.\n2. **Action** — модель предлагает действие, которое выполняет среда.\n3. **Observation** — среда возвращает результат действия в контекст следующего шага.\n\nПовтор до тех пор, пока модель не выдаст `Final Answer`.\n\n```mermaid\nflowchart LR\n    Start[User query] --> Thought[Thought<br/>«Мне нужно найти X»]\n    Thought --> Action[Action<br/>поиск X]\n    Action --> Obs[Observation<br/>результат tool]\n    Obs --> Decide{Goal<br/>reached?}\n    Decide -->|No| Thought\n    Decide -->|Yes| Final[Final Answer]\n```\n\n**Условный trace (вычисление):**\n```\nQuestion: Сколько будет 17 × 19?\nThought: Проверю умножение калькулятором.\nAction: calculator[\"17 * 19\"]\nObservation: 323\nThought: Вычисление получено; можно ответить.\nFinal Answer: 323.\n```\n\nЯвные шаги рассуждения в исходном ReAct показывают, почему выбран следующий запрос, и помогают разбирать траекторию решения. Это не гарантия правильного выбора инструмента или достоверности ответа.\n\n**Минусы:**\n- Если без ограничения передавать всю историю на каждом шаге, расход токенов растёт вместе с ней.\n- Ошибку инструмента нужно вернуть модели как наблюдение и предусмотреть обработку сбоя.\n- Без условия остановки и предела шагов агент может зациклиться.\n\n"
+    }
+  ],
+  "blocks": [
+    {
+      "q_number": 1,
+      "block_idx": 0,
+      "visible_question": "Что такое agentic pattern и чем он отличается от prompt-техники?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Что такое agentic pattern и чем он отличается от prompt-техники?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Промпт-техника задаёт порядок шагов, а паттерн определяет формулировку входа модели на каждом шаге.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Роли обратные: промпт-техника меняет вход отдельного шага, а паттерн связывает шаги и их результаты.",
+              "source_of_confusion": "Оба подхода влияют на работу модели, поэтому уровни входа и управления процессом легко смешать.",
+              "if_it_were_true": "Тогда выбор следующего шага был бы свойством few-shot-примера, а не логики выполнения.",
+              "how_it_should_be": "Промпт-техника оформляет вход модели; паттерн задаёт взаимодействие шагов и обработку результатов."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Оба термина описывают только вход модели, а порядок шагов и передачу результатов определяют отдельно.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Паттерн как раз описывает организацию шагов, решений и результатов; промпт-техника относится к входу модели.",
+              "source_of_confusion": "В примерах паттернов часто показывают промпты, хотя они лишь часть реализации.",
+              "if_it_were_true": "Тогда ReAct не описывал бы возврат наблюдения модели после действия.",
+              "how_it_should_be": "Различать вход отдельного шага и правила взаимодействия шагов."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Промпт-техника задаёт вход модели на шаге, а паттерн организует выполнение и передачу результатов между шагами.",
+            "correct": true,
+            "sections": {
+              "explanation": "Промпт-техника влияет на форму запроса; паттерн задаёт управление процессом, в том числе выбор шагов и передачу наблюдений.",
+              "example": "Few-shot добавляет примеры в запрос; ReAct связывает выбор действия, его выполнение и возврат наблюдения.",
+              "when_to_apply": "Различие полезно, когда проектируют процесс из нескольких действий и выбирают, что задать промптом, а что кодом выполнения.",
+              "edge_cases": "Само число вызовов и наличие инструментов не определяют границу: промпт-технику можно повторять, а систему не всегда нужно считать агентом.",
+              "related": "Self-Consistency использует несколько выборок и голосование, но один этот факт не делает стратегию агентом."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Паттерн всегда требует доступа к инструментам, а промпт-техника управляет шагами без обращения к внешней среде.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Вызов инструмента не обязателен для каждого паттерна; промпт-техника сама по себе не управляет ходом выполнения.",
+              "source_of_confusion": "Во многих демонстрациях агентов используются инструменты, поэтому их принимают за определяющий признак.",
+              "if_it_were_true": "Тогда цикл оценки и доработки без инструментов нельзя было бы описать как паттерн выполнения.",
+              "how_it_should_be": "Различать управление процессом и содержание запроса, не делая наличие инструмента обязательным."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 2,
+      "block_idx": 0,
+      "visible_question": "По какому принципу здесь группируют паттерны агентных систем?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "По какому принципу здесь группируют паттерны агентных систем?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Здесь группы задаёт предметная область, в которой каждый паттерн впервые применили.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Группировка в тексте опирается на ведущий механизм, а не на предметную область первых примеров.",
+              "source_of_confusion": "Исходные статьи часто демонстрируют паттерны на определённых задачах.",
+              "if_it_were_true": "ReAct относился бы к отдельной группе по задаче question answering, а не по чередованию действий и наблюдений.",
+              "how_it_should_be": "Для этой учебной группировки смотреть, какой механизм организует работу."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Здесь группы задаёт число агентов, от одного исполнителя до группы участников.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Число агентов здесь лишь один из признаков: остальные группы описывают планирование, память и другие механизмы.",
+              "source_of_confusion": "Слово «агент» подталкивает классифицировать всё только по числу участников.",
+              "if_it_were_true": "Планирование и работа с памятью оказались бы в одной группе одиночного агента без различия механизмов.",
+              "how_it_should_be": "В этой схеме группы названы по ведущему способу организации работы."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Здесь группы задаёт ведущий механизм, который паттерн добавляет к работе модели.",
+            "correct": true,
+            "sections": {
+              "explanation": "Это учебная группировка по ведущему механизму, а не универсальная таксономия агентных систем.",
+              "example": "ReAct иллюстрирует цикл действий и наблюдений; Plan-and-Execute — планирование, а Voyager — использование памяти навыков.",
+              "when_to_apply": "Группировка помогает сравнивать способы организации работы и выбирать нужную комбинацию.",
+              "edge_cases": "Одна система может сочетать несколько механизмов; другие источники выделяют группы иначе.",
+              "related": "Anthropic отдельно различает предзаданные workflow и системы, где модель сама выбирает действия."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Здесь группы задаёт библиотека, в которой каждый паттерн доступен как готовый компонент.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Перечень групп описывает механизмы и не привязан к конкретной библиотеке.",
+              "source_of_confusion": "Документация фреймворков часто группирует свои реализации под похожими названиями.",
+              "if_it_were_true": "Один и тот же способ организации работы менял бы группу после переноса между библиотеками.",
+              "how_it_should_be": "В этой схеме классифицировать по ведущему механизму, независимо от реализации."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 3,
+      "block_idx": 0,
+      "visible_question": "Зачем нужны паттерны, если модель уже умеет рассуждать?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Зачем нужны паттерны, если модель уже умеет рассуждать?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Модель рассуждает; приложение исполняет вызовы инструментов, сохраняет состояние и ограничивает число шагов.",
+            "correct": true,
+            "sections": {
+              "explanation": "Внутреннее рассуждение не выполняет внешнее действие и не хранит состояние приложения. Среда исполняет вызов инструмента, передаёт его результат модели и контролирует завершение процесса.",
+              "example": "Модель предлагает поиск документа; приложение выполняет поиск и возвращает найденное для следующего шага.",
+              "when_to_apply": "Паттерн нужен, когда задача требует актуальных внешних данных, нескольких действий или состояния между вызовами.",
+              "edge_cases": "Возможность предложить вызов инструмента зависит от модели и API; простому вопросу может хватить одного вызова без агентного цикла.",
+              "related": "Для некоторых reasoning models явная инструкция «думай пошагово» избыточна, но это не отменяет проверку результата по внешнему источнику."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Модель рассуждает; приложение просит её исполнить инструменты, сохраняет состояние и ограничивает число шагов.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Модель может выдать запрос на действие, но выполнять инструмент и вернуть наблюдение должна внешняя среда.",
+              "source_of_confusion": "В интерфейсе вызов инструмента может выглядеть как единое действие модели.",
+              "if_it_were_true": "Приложению не пришлось бы получать параметры вызова и передавать модели результат инструмента.",
+              "how_it_should_be": "Отделять выбор действия моделью от его исполнения приложением."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Модель рассуждает; приложение исполняет инструменты, полагается на её память и ограничивает число шагов.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Внутреннее рассуждение в одном вызове не заменяет хранение состояния задачи между сессиями.",
+              "source_of_confusion": "Модель может учитывать переданную историю и выглядеть так, будто помнит предыдущую работу самостоятельно.",
+              "if_it_were_true": "Приложению не потребовалось бы сохранять и снова передавать нужные данные при продолжении задачи.",
+              "how_it_should_be": "Состояние сохраняет и предоставляет система; модель рассуждает над переданным контекстом."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Модель рассуждает; приложение исполняет инструменты, сохраняет состояние и ждёт завершения без предела шагов.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Решение модели ответить не заменяет внешний предел шагов: приложение должно остановить цикл при достижении бюджета.",
+              "source_of_confusion": "В типичном случае модель сама выдаёт финальный ответ, и это похоже на полный контроль завершения.",
+              "if_it_were_true": "Даже при повторяющихся действиях без результата приложению не понадобился бы предел итераций.",
+              "how_it_should_be": "Приложение контролирует предел шагов и обрабатывает ситуацию, когда модель не завершает задачу."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 4,
+      "block_idx": 0,
+      "visible_question": "Что такое ReAct и как выглядит его цикл?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Что такое ReAct и как выглядит его цикл?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "ReAct чередует рассуждение и действие: сначала выполняют Action, затем Observation используют лишь для итогового ответа.",
+            "correct": false,
+            "sections": {
+              "what_actually": "В исходном ReAct рассуждение намечает действие; наблюдение возвращают модели для выбора следующего шага.",
+              "source_of_confusion": "Описание уже выполненного действия похоже на обычный отчёт после вызова инструмента.",
+              "if_it_were_true": "Первое действие не опиралось бы на текущий шаг рассуждения, а найденное нельзя было бы использовать для продолжения.",
+              "how_it_should_be": "Thought предшествует Action; Observation возвращают в контекст продолжения."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "ReAct чередует рассуждение и действие: Thought, Action и Observation выполняют ровно один раз перед ответом.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Тройка шагов может повторяться: модель использует новое наблюдение для дальнейшего рассуждения и действия.",
+              "source_of_confusion": "Короткий пример с единственным инструментом легко принять за обязательную форму любого запуска.",
+              "if_it_were_true": "После первого наблюдения нельзя было бы запросить недостающие данные вторым действием.",
+              "how_it_should_be": "Повторять шаги по мере необходимости до финального ответа или установленного предела."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "ReAct чередует рассуждение и действие: Thought и Action повторяют, не возвращая результат инструмента модели.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Observation — существенная часть цикла: результат действия возвращается в контекст модели.",
+              "source_of_confusion": "Работу инструмента можно ошибочно считать внутренней деталью приложения, не влияющей на следующий шаг.",
+              "if_it_were_true": "Следующее действие не могло бы учитывать результат предыдущего поиска или вычисления.",
+              "how_it_should_be": "После Action передавать Observation модели и выбирать продолжение с учётом результата."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "ReAct чередует рассуждение и действие: Thought, Action и Observation повторяют с учётом результата до ответа.",
+            "correct": true,
+            "sections": {
+              "explanation": "В исходном ReAct модель чередует шаги рассуждения и действия; среда возвращает наблюдение, которое влияет на продолжение.",
+              "example": "Модель решает проверить вычисление, вызывает калькулятор, получает результат и затем формирует ответ или следующий запрос.",
+              "when_to_apply": "Схема помогает проектировать задачи, в которых ответ зависит от результатов действий во внешней среде.",
+              "edge_cases": "Цикл может завершиться после одного действия или продолжиться; приложение задаёт предел шагов на случай зацикливания.",
+              "related": "Явный Thought в исходном методе помогает разбирать выбор действия, но сам по себе не гарантирует точность."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "open_issues": [],
+  "runtime_findings": [],
+  "checks": {
+    "content_review": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "STALE",
+          "reason": "Все A/B/C/D классифицированы в author-review; ключ единственный, альтернативные ответы имеют конкретные ложные предпосылки.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q2:B0": {
+          "status": "STALE",
+          "reason": "Все A/B/C/D классифицированы в author-review; ключ единственный, альтернативные ответы имеют конкретные ложные предпосылки.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q3:B0": {
+          "status": "STALE",
+          "reason": "Все A/B/C/D классифицированы в author-review; ключ единственный, альтернативные ответы имеют конкретные ложные предпосылки.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q4:B0": {
+          "status": "STALE",
+          "reason": "Все A/B/C/D классифицированы в author-review; ключ единственный, альтернативные ответы имеют конкретные ложные предпосылки.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "factual_correctness": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "STALE",
+          "reason": "Теория, ключ и объяснения сверены с перечисленными первичными источниками; недоказанные абсолютные и числовые утверждения удалены. Различие между входом модели и организацией workflow согласовано с Anthropic; Self-Consistency в первичной статье названа стратегией декодирования, а не обязательным агентом.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q2:B0": {
+          "status": "STALE",
+          "reason": "Теория, ключ и объяснения сверены с перечисленными первичными источниками; недоказанные абсолютные и числовые утверждения удалены. Группировка заявлена как учебная; примеры ReAct, ToT, Voyager и альтернативная группировка Anthropic сверены с первичными источниками.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q3:B0": {
+          "status": "STALE",
+          "reason": "Теория, ключ и объяснения сверены с перечисленными первичными источниками; недоказанные абсолютные и числовые утверждения удалены. OpenAI рекомендует не требовать явной цепочки рассуждений от некоторых reasoning models и описывает передачу результатов функций между вызовами; Anthropic описывает внешние инструменты, состояние и условия остановки.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q4:B0": {
+          "status": "STALE",
+          "reason": "Теория, ключ и объяснения сверены с перечисленными первичными источниками; недоказанные абсолютные и числовые утверждения удалены. Исходная работа ReAct подтверждает чередование reasoning traces и actions и обращение к внешней среде; документация Anthropic подтверждает необходимость stopping condition.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "source_linkage": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "STALE",
+          "reason": "Видимый Markdown-вопрос совпадает с JSON; каждый вариант отвечает именно на указанную в author-review часть локальной теории.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q2:B0": {
+          "status": "STALE",
+          "reason": "Видимый Markdown-вопрос совпадает с JSON; каждый вариант отвечает именно на указанную в author-review часть локальной теории.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q3:B0": {
+          "status": "STALE",
+          "reason": "Видимый Markdown-вопрос совпадает с JSON; каждый вариант отвечает именно на указанную в author-review часть локальной теории.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q4:B0": {
+          "status": "STALE",
+          "reason": "Видимый Markdown-вопрос совпадает с JSON; каждый вариант отвечает именно на указанную в author-review часть локальной теории.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "sections_consistency": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "STALE",
+          "reason": "Перечитаны все пять полей correct и четыре поля каждого wrong после правок; объяснения соответствуют новым текстам.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q2:B0": {
+          "status": "STALE",
+          "reason": "Перечитаны все пять полей correct и четыре поля каждого wrong после правок; объяснения соответствуют новым текстам.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q3:B0": {
+          "status": "STALE",
+          "reason": "Перечитаны все пять полей correct и четыре поля каждого wrong после правок; объяснения соответствуют новым текстам.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q4:B0": {
+          "status": "STALE",
+          "reason": "Перечитаны все пять полей correct и четыре поля каждого wrong после правок; объяснения соответствуют новым текстам.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "sfpl": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "STALE",
+          "reason": "Сравнены форма, каркас, детализация и смысловые части A–D; конкретные наблюдения по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q2:B0": {
+          "status": "STALE",
+          "reason": "Сравнены форма, каркас, детализация и смысловые части A–D; конкретные наблюдения по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q3:B0": {
+          "status": "STALE",
+          "reason": "Сравнены форма, каркас, детализация и смысловые части A–D; конкретные наблюдения по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q4:B0": {
+          "status": "STALE",
+          "reason": "Сравнены форма, каркас, детализация и смысловые части A–D; конкретные наблюдения по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "ansc": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "STALE",
+          "reason": "Каждый вариант покрывает все части видимого вопроса, включая неверные альтернативные модели; разбор по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q2:B0": {
+          "status": "STALE",
+          "reason": "Каждый вариант покрывает все части видимого вопроса, включая неверные альтернативные модели; разбор по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q3:B0": {
+          "status": "STALE",
+          "reason": "Каждый вариант покрывает все части видимого вопроса, включая неверные альтернативные модели; разбор по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q4:B0": {
+          "status": "STALE",
+          "reason": "Каждый вариант покрывает все части видимого вопроса, включая неверные альтернативные модели; разбор по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "russian_readability": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "STALE",
+          "reason": "Прочитаны пролог, вопрос, локальная теория, все варианты и sections; конкретные языковые правки и наблюдения по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q2:B0": {
+          "status": "STALE",
+          "reason": "Прочитаны пролог, вопрос, локальная теория, все варианты и sections; конкретные языковые правки и наблюдения по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q3:B0": {
+          "status": "STALE",
+          "reason": "Прочитаны пролог, вопрос, локальная теория, все варианты и sections; конкретные языковые правки и наблюдения по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        },
+        "Q4:B0": {
+          "status": "STALE",
+          "reason": "Прочитаны пролог, вопрос, локальная теория, все варианты и sections; конкретные языковые правки и наблюдения по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q1-q4-author.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "independent_review": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "blind_review": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "final_acceptance": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    }
+  },
+  "instructions": "Все A/B/C/D и sections. SFPL, ANSC, RU — отдельные вердикты. Дополнительные смысловые зависимости прочитать и указать в evidence. Сигналы не являются редакторской приёмкой."
+}

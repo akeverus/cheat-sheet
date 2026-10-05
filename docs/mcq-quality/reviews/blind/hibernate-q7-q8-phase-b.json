@@ -1,0 +1,110 @@
+{
+  "reviewer": "hibernate_provider_blind",
+  "recorded_at": "2026-09-14T17:30:31Z",
+  "sources_checked": [
+    {
+      "url": "https://docs.jboss.org/hibernate/orm/6.6/javadocs/org/hibernate/Cache.html",
+      "claim": "Hibernate Cache — API управления L2; evictAll() очищает entity-данные в смысле JPA, а evictAllRegions() — данные всех регионов, включая коллекции, natural-id и query results; доступны точечные entity, collection, natural-id и query eviction.",
+      "version": "Hibernate ORM 6.6.57.Final",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://redisson.pro/docs/cache-api-implementations/",
+      "claim": "Redisson предоставляет Hibernate L2 provider на Redis, публикует отдельные redisson-hibernate модули для веток Hibernate, включая 6.x, и документирует concurrency strategies READ_ONLY, NONSTRICT_READ_WRITE, READ_WRITE и TRANSACTIONAL.",
+      "version": "Redisson 4.7.0 (версия в примерах документации)",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://infinispan.org/docs/dev/titles/hibernate/hibernate.html",
+      "claim": "Infinispan реализует Hibernate 2LC SPI; модуль выбирают по ветке Hibernate (для Hibernate ORM 6.6 указан infinispan-hibernate-cache-v66), а провайдер документирует четыре стратегии и отдельные local/cluster конфигурации.",
+      "version": "dev documentation (номер версии страницы не указан)",
+      "date": "2026-09-14"
+    }
+  ],
+  "answers": [
+    {
+      "q_number": 7,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {
+          "verdict": "PASS",
+          "reason": "B — единственный защитимый ответ: JCache описан как API, которому нужна реализация, и учтены совместимость Hibernate-интеграции и стратегии. A ошибочно делает API самостоятельным хранилищем, C переносит одинаковую поддержку всех стратегий на любой вариант, D приписывает независимым провайдерам автоматическую синхронизацию. Все четыре варианта отвечают на вопрос перечислением и дополнительным тезисом."
+        },
+        "FACTS": {
+          "verdict": "PASS",
+          "reason": "Hibernate 6.6 подтверждает подключаемый backend и JCache-интеграцию, Redisson подтверждает Redis provider и четыре стратегии, Infinispan — отдельный SPI-модуль и зависимость версии от Hibernate. Утверждение B сформулировано как примеры, а не исчерпывающий каталог; его проверяемые ограничения согласуются с источниками."
+        },
+        "LINKAGE": {
+          "verdict": "PASS",
+          "reason": "Вопрос и четыре options находятся в блоке Q7/B0, а теория Q7 раскрывает именно JCache как API, примеры Ehcache/Infinispan/Redisson, совместимость, стратегии и отсутствие автоматического обмена между провайдерами. Поле related не содержит сломанной ссылки или несвязанного тезиса."
+        },
+        "SECTIONS": {
+          "verdict": "PASS",
+          "reason": "У каждого варианта есть роль-корректное объяснение: для B — explanation/example/when_to_apply/edge_cases/related, для A/C/D — what_actually/source_of_confusion/if_it_were_true/how_it_should_be. Sections опровергают ровно соответствующие ошибочные модели и не вводят второй правильный ответ."
+        },
+        "SFPL": {
+          "verdict": "PASS",
+          "reason": "A-D имеют сопоставимый каркас из перечисления провайдеров и второго предложения с поясняющим условием; одинаково используют JCache и точку с запятой. B не выделяется кодом, примером, числом или исключительной длиной; различие в содержательном условии является смыслом distractors, а не формальной подсказкой."
+        },
+        "ANSC": {
+          "verdict": "PASS",
+          "reason": "Каждый вариант самодостаточно отвечает на вопрос о провайдерах и содержит одну определённую модель ошибки либо корректное условие. A, C и D правдоподобны для читателя, смешивающего API, backend и межузловую синхронизацию; B покрывает выбор интеграции и стратегий без требования исчерпывающего списка."
+        },
+        "RU": {
+          "verdict": "PASS",
+          "reason": "Вопрос, options и все sections написаны естественным техническим русским; JCache, Hibernate, Redis, Serializable и concurrency strategies используются как имена технологий/API. Причинные связи ясны, грамматика и пунктуация не выдают правильный вариант."
+        },
+        "INDEPENDENT": {
+          "verdict": "PASS",
+          "reason": "В раскрытом пакете автор указан как root, reviewer — hibernate_provider_blind; reviewer — отдельный участник и production-файлы не редактировал."
+        },
+        "BLIND": {
+          "verdict": "PASS",
+          "reason": "Сохранённая фаза A содержит только ответы и хеш входа без ключа; её recorded_at (2026-09-14T17:28:46Z) предшествует revealed_at (2026-09-14T17:29:34.587019+00:00). Фаза B зафиксирована после раскрытия и поэтому не заявляется как слепая."
+        }
+      }
+    },
+    {
+      "q_number": 8,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {
+          "verdict": "PASS",
+          "reason": "D — единственный защитимый ответ: он сочетает обычную обработку Hibernate, необходимость согласования внешних изменений и конкретные области Cache API. A ошибочно расширяет JPA evictAll до всех Hibernate-регионов, B утверждает, что широкий сброс всегда улучшает cache hit rate, C приписывает Hibernate обнаружение внешнего SQL. Все варианты отвечают на вопрос механизмом инвалидизации."
+        },
+        "FACTS": {
+          "verdict": "PASS",
+          "reason": "Hibernate 6.6 Cache.html прямо различает evictAll() для entity-данных и evictAllRegions() для всех регионов, а также документирует evictEntityData и evictQueryRegions. Описание Cache как немедленной операции без транзакционной изоляции поддерживает оговорки theory; вывод о невидимости внешнего SQL следует из того, что кэш управляется через Hibernate API и provider, а не наблюдает произвольные соединения."
+        },
+        "LINKAGE": {
+          "verdict": "PASS",
+          "reason": "Вопрос Q8/B0, options и theory связаны одной задачей: внешние изменения, Cache API, области entity/query/natural-id/collection и границы L1. Пример getCache().evictEntityData(User.class, 1L) соответствует проверенному API; related продолжает тему, а не меняет её."
+        },
+        "SECTIONS": {
+          "verdict": "PASS",
+          "reason": "D раскрывает механизм, пример, применимость и edge cases, включая L1 и конкурентные загрузки; A/B/C имеют полные контрфактические поля и корректно объясняют, почему их тезисы ошибочны. Теория согласует evictAll с JPA и evictAllRegions с Hibernate."
+        },
+        "SFPL": {
+          "verdict": "PASS",
+          "reason": "У всех A-D одинаковый первый тезис о правках через Hibernate и внешних изменениях, за которым следует одно самостоятельное следствие. Нет уникального кода или номера; D использует только имя Cache API в обычной прозе, тогда как различие между вариантами определяется утверждением, а не длиной или оформлением."
+        },
+        "ANSC": {
+          "verdict": "PASS",
+          "reason": "Каждый вариант представляет полноценную и различимую модель инвалидизации: ошибочное расширение области JPA, ошибочную пользу полного сброса, ошибочное автоматическое обнаружение SQL или корректное адресное удаление. Ошибки правдоподобны и имеют один основной delta; D покрывает и внешние изменения, и выбор области eviction."
+        },
+        "RU": {
+          "verdict": "PASS",
+          "reason": "Формулировки читаются с первого раза, термины L2 cache, eviction, Cache API и внешние SQL-изменения употреблены последовательно. Sections ясно связывают условие и следствие; кодовые имена сохранены как API и не ухудшают русский текст."
+        },
+        "INDEPENDENT": {
+          "verdict": "PASS",
+          "reason": "Автор пакета root и reviewer hibernate_provider_blind различаются; reviewer не изменял production и проводит проверку после отдельной слепой фиксации."
+        },
+        "BLIND": {
+          "verdict": "PASS",
+          "reason": "Ответ D был записан в фазе A до revealed_at и до доступа к correct-полям; в фазе B он только сопоставлен с раскрытым ключом. Слепой статус относится к фазе A, а не к настоящей записи B."
+        }
+      }
+    }
+  ]
+}

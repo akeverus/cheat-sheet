@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "review_id": "hibernate-q5-q6",
+  "reviewer": "hibernate_query_blind",
+  "author": "root",
+  "model": "gpt-5.6-luna",
+  "date": "2026-09-14T17:30:25Z",
+  "kind": "independent_two_phase",
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/databases/hibernate-caching-interview.json",
+    "theory": "cheatsheets/interview/databases/hibernate-caching-interview.md"
+  },
+  "sha256": {
+    "mcq": "9df16802aa3bbeab07cdec11264181cf45cc89a4dac463aff579fc0bf246e3ba",
+    "theory": "2ca18f9d6bd25777be7d153112f3c0d0cf92504536a52203291bd4a5927da4e5"
+  },
+  "coverage": [
+    {
+      "q_number": 5,
+      "block_idx": 0,
+      "sha256": {
+        "mcq": "5d8b20c6dcc91e2f3998d3568c9d7f1c19f3db143bb7d50d3fdcee2f6d98d73e",
+        "theory": "d09c0374be9f8692e6024536b1fe3e7cceb5bede662c28b3e3ce0139113f7030"
+      },
+      "checks": {
+        "content_review": {
+          "status": "PASS",
+          "reason": "Вопрос о назначении и использовании Query Cache. A даёт единственное корректное сочетание: кэш результатов, глобальное включение, выбор запросов и зависимость entity/collection-представления от layout; B путает результат с планом, C ошибочно включает все запросы, D приписывает построчный анализ и точечную инвалидацию."
+        },
+        "factual_correctness": {
+          "status": "PASS",
+          "reason": "Документация 6.6 подтверждает кэширование query results, настройку hibernate.cache.use_query_cache, cacheable на запросе, layouts FULL/SHALLOW/AUTO и проверку через update timestamps; утверждения A и sections этому не противоречат."
+        },
+        "source_linkage": {
+          "status": "PASS",
+          "reason": "Вопрос, тело теории и A/B/C/D проверяют одну локальную мысль: что хранится, как включается и как валидируется query result cache; скрытого материала соседних вопросов для выбора не требуется."
+        },
+        "sections_consistency": {
+          "status": "PASS",
+          "reason": "У A присутствуют explanation, example, when_to_apply, edge_cases и related; все wrong имеют what_actually, source_of_confusion, if_it_were_true и how_it_should_be. Sections раскрывают именно текущие формулировки, включая SHALLOW-промахи и консервативную проверку query spaces."
+        },
+        "sfpl": {
+          "status": "PASS",
+          "reason": "A/B/C/D имеют сопоставимый каркас из определения Query Cache, условия включения/выбора и утверждения о поведении; одинаковая прозаическая форма, без уникального кода или несоразмерной длины, выдающей A."
+        },
+        "ansc": {
+          "status": "PASS",
+          "reason": "Каждый вариант отвечает на видимый вопрос как законченная модель: A описывает правильный механизм, B — правдоподобную подмену query plan cache, C — ошибку автоматического кэширования всех запросов, D — ошибку точной построчной инвалидации. Ни один wrong не является пустой или случайной фразой."
+        },
+        "russian_readability": {
+          "status": "PASS",
+          "reason": "Вопрос, теория, варианты и все sections написаны связным техническим русским языком; англоязычные Query Cache, layout, query spaces и API используются как устойчивые термины. Ссылки местоимений и причинные связи понятны с первого чтения."
+        },
+        "independent_review": {
+          "status": "PASS",
+          "reason": "В раскрытом пакете автор указан как root, а reviewer этой записи — hibernate_query_blind; это разные роли, поэтому условие независимого ревью выполнено."
+        },
+        "blind_review": {
+          "status": "PASS",
+          "reason": "Фаза A была сохранена до revealed_at 2026-09-14T17:29:34.586460+00:00 и до этой phase B; текущая проверка выполнена после раскрытия и потому корректно помечена как неслепая по содержанию."
+        },
+        "final_acceptance": {
+          "status": "PASS",
+          "reason": "Проверены текущие хеши, независимый полный разбор, исходная слепая фаза и её техническая нормализация, автоматические сигналы пакета."
+        }
+      }
+    },
+    {
+      "q_number": 6,
+      "block_idx": 0,
+      "sha256": {
+        "mcq": "db88b433929e9764af237a371047e9e0c7859e4c88971d6299dd0a82cff20f42",
+        "theory": "5b50ad6a8b81579d4b43b6c267518d2c4e6453d18249f4c506ba02bde445153a"
+      },
+      "checks": {
+        "content_review": {
+          "status": "PASS",
+          "reason": "Вопрос о природе и работе Cache Region. B единственно верно связывает именованную область, явное имя и независимые provider policies; A навязывает совпадение с SQL-таблицей, C отрицает provider-specific TTL, D отрицает разделение entity и collection regions."
+        },
+        "factual_correctness": {
+          "status": "PASS",
+          "reason": "Javadoc Hibernate 6.6 прямо описывает named cache region для entity или collection и параметр @Cache(region=...). User Guide подтверждает class-by-class/collection-by-collection настройку и provider-dependent TTL/политики, что поддерживает B и её sections."
+        },
+        "source_linkage": {
+          "status": "PASS",
+          "reason": "Теория, вопрос и варианты сосредоточены на одном понятии region: именование, область данных и политика провайдера; выбор B выводится из прочитанного Q6 без обращения к скрытым темам."
+        },
+        "sections_consistency": {
+          "status": "PASS",
+          "reason": "У B заполнены все пять обучающих ролей, у A/C/D — все четыре контрфактические роли. Sections объясняют default region, явный @Cache(region=...), разные entity/collection данные и provider XML/API, согласуясь с вариантами."
+        },
+        "sfpl": {
+          "status": "PASS",
+          "reason": "Все четыре варианта используют одинаковый формат определения региона с последующим утверждением о правилах именования или хранения; B не выделяется кодом, отдельным примером или заметно иной структурой."
+        },
+        "ansc": {
+          "status": "PASS",
+          "reason": "Каждый вариант представляет полноценную проверяемую модель работы региона: B — корректную, A — ложную связь с SQL-именем, C — ложное ограничение Hibernate TTL, D — ложную единственность L2. Ошибки правдоподобны и имеют конкретное опровержение в sections."
+        },
+        "russian_readability": {
+          "status": "PASS",
+          "reason": "Формулировки Q6 и его sections грамматически связны и используют нормальные термины «регион», «провайдер», TTL, ёмкость и вытеснение. Варианты сопоставимы по профессиональному уровню, технические имена оформлены понятно."
+        },
+        "independent_review": {
+          "status": "PASS",
+          "reason": "Автор раскрытого материала — root, reviewer — hibernate_query_blind; автор и рецензент различаются, что удовлетворяет проверке независимости."
+        },
+        "blind_review": {
+          "status": "PASS",
+          "reason": "Сохранённая фаза A предшествует revealed_at и текущей phase B; B намеренно содержит проверку уже раскрытого ключа и не заявляет слепоту содержательного прохода."
+        },
+        "final_acceptance": {
+          "status": "PASS",
+          "reason": "Проверены текущие хеши, независимый полный разбор, исходная слепая фаза и её техническая нормализация, автоматические сигналы пакета."
+        }
+      }
+    }
+  ],
+  "findings": [],
+  "sources": [
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/userguide/html_single/Hibernate_User_Guide.html#caching-query-layout",
+      "used_for": "Hibernate 6.6 описывает layout FULL, SHALLOW и AUTO; SHALLOW хранит идентификатор или ключ владельца и при промахе L2 может обратиться к БД.",
+      "version": "6.6.57.Final",
+      "checked_at": "2026-09-14"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/userguide/html_single/Hibernate_User_Guide.html#caching-query",
+      "used_for": "Query cache кэширует результаты, включается настройкой hibernate.cache.use_query_cache, а конкретный запрос помечается cacheable; timestamps связанных таблиц используются для проверки устаревания.",
+      "version": "6.6.57.Final",
+      "checked_at": "2026-09-14"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/annotations/Cache.html",
+      "used_for": "@Cache помечает root entity или collection для L2, задаёт именованный region и concurrency policy; параметр region является настраиваемым.",
+      "version": "6.6.57.Final",
+      "checked_at": "2026-09-14"
+    }
+  ],
+  "limitations": [
+    "Независимый проход только перечисленных Q/B; исходный разбор сохранён неизменным.",
+    "Формат фазы A нормализован отдельным файлом после раскрытия: kind добавлен, choice скопирован из selected_label. Исходный файл и фактическое время ответов сохранены; ссылка/SHA оригинала в normalization."
+  ],
+  "phase_a": {
+    "path": "docs/mcq-quality/reviews/blind/hibernate-q5-q6-phase-a-normalized.json",
+    "sha256": "83afff0790a500a466498d69a63e3f6353be8df6b21edc63b8f5b47b4557e57c"
+  },
+  "revealed_at": "2026-09-14T17:29:34.586460+00:00",
+  "review_artifact": {
+    "path": "docs/mcq-quality/reviews/blind/hibernate-q5-q6-phase-b.json",
+    "sha256": "3f79bc272f66629f5c31bd0e335a55ec3a4338f15f8561a302019148e297fe99"
+  },
+  "automatic_review": {
+    "path": "docs/mcq-quality/reviews/blind/hibernate-q5-q8-automatic-dispositions.json",
+    "sha256": "af840582c4f3bac243d120367c63959eff0754362b7766b6af0a34c66f7d571d"
+  },
+  "accepted_by": "root",
+  "accepted_at": "2026-09-14T17:32:36.008769+00:00"
+}

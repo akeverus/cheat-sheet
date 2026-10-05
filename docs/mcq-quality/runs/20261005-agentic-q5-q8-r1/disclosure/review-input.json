@@ -1,0 +1,589 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/ai-ml/agentic-patterns-interview.json",
+    "theory": "cheatsheets/interview/ai-ml/agentic-patterns-interview.md"
+  },
+  "sha256": {
+    "mcq": "d8e2f3c01747c1fb3e69aebb075afe3f09ee3a9365d1f72a540ee0fc1610f949",
+    "theory": "c960ec7c4cdeb80cf8bc43e7eadd21ee30ecc6c9613cc304dfdf324123332379"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hashes": {
+    "Q5:B0": {
+      "mcq": "9136fb12981e3b83a169796a6b38d60e5ff7883f74acc65eb30fe9cf68adce3f",
+      "theory": "572dcb181d7e53b61662a63f13aad7a1bec2a242da329fe47870f9fe02806500"
+    },
+    "Q6:B0": {
+      "mcq": "0a46e7154a88033ecd8993647fd0868b83b8d12625cfe4dd94ff815d73e83439",
+      "theory": "22d34b4e4e3a86115420f6fe3299fa610be03fad0e725b33d8b877a4ffa7855a"
+    },
+    "Q7:B0": {
+      "mcq": "8e7a062aab430c9a29d9982bbf8dda73f8aee03e973c204f7a619a8fa3c89647",
+      "theory": "c00cf526edac0534046403e1d7723a5e08bf5d52ac03abb225dda47899d35172"
+    },
+    "Q8:B0": {
+      "mcq": "4a0f4b13f43024ad9f88b826d36a52eb1320b0dfd1e224dee1573dc002082d8c",
+      "theory": "277750c4de289cb3f6448447bfb89a8919257b4f5a6625e5a8ff609d68ea3228"
+    }
+  },
+  "preamble": "---\ntitle: \"Вопросы на собеседовании: Паттерны агентных систем\"\ndescription: \"Agentic patterns: ReAct, Reflexion, Plan-Execute, Tree-of-Thoughts, Self-Critique, CoVe, ReWOO, Self-Consistency; когда что выбирать и комбинировать.\"\ntags:\n  - interview\n  - ai-ml\n  - agentic-patterns\ntype: \"interview\"\ndifficulty: \"advanced\"\naliases:\n  - \"Agentic Patterns interview\"\n  - \"ReAct Reflexion Tree-of-Thoughts\"\n  - \"Agent design patterns собеседование\"\n  - \"LLM agentic workflows\"\nupdated: \"2026-05-23\"\n---\n# Вопросы на собеседовании: Паттерны агентных систем\n\n**Паттерн агентной системы** — способ организовать несколько шагов работы модели и приложения: выбор действия, обработку результата, проверку и завершение. Отдельный паттерн может включать рассуждение, инструменты или несколько исполнителей; все эти элементы сразу не обязательны.\n\nНиже разобраны подходы к организации агентных систем и близкие стратегии работы с моделью: `ReAct`, `Reflexion`, `Plan-and-Execute`, `Tree-of-Thoughts`, `Self-Refine`, `Chain-of-Verification`, `ReWOO`, `Self-Consistency`, `Best-of-N`, `Voyager`. Их можно сочетать, когда задача требует нескольких механизмов. На интервью полезно объяснять, что именно даёт каждый подход и при каких условиях он нужен.\n\n## Полезные ссылки\n\n### Original papers и авторитетные источники\n\n- [ReAct: Synergizing Reasoning and Acting in Language Models (Yao et al. 2022)](https://arxiv.org/abs/2210.03629) — базовый Thought→Action→Observation loop\n- [Reflexion: Language Agents with Verbal Reinforcement Learning (Shinn et al. 2023)](https://arxiv.org/abs/2303.11366) — self-reflection без gradient updates\n- [Tree of Thoughts (Yao et al. 2023)](https://arxiv.org/abs/2305.10601) — branching reasoning + evaluation\n- [Self-Refine (Madaan et al. 2023)](https://arxiv.org/abs/2303.17651) — generate → critique → refine\n- [Chain-of-Verification (Dhuliawala et al. 2023)](https://arxiv.org/abs/2309.11495) — снижение hallucinations через verification questions\n- [ReWOO (Xu et al. 2023)](https://arxiv.org/abs/2305.18323) — Plan/Worker/Solver без перепрогона LLM на каждом observation\n- [Plan-and-Solve Prompting (Wang et al. 2023)](https://arxiv.org/abs/2305.04091) — planner + executor\n- [Self-Consistency (Wang et al. 2022)](https://arxiv.org/abs/2203.11171) — majority vote по N CoT\n- [Voyager (Wang et al. 2023)](https://voyager.minedojo.org/) — skill library + curriculum\n- [Generative Agents (Park et al. 2023)](https://arxiv.org/abs/2304.03442) — memory stream + reflection\n- [Toolformer (Schick et al. 2023)](https://arxiv.org/abs/2302.04761) — self-supervised tool use\n- [Anthropic: Building Effective Agents](https://www.anthropic.com/research/building-effective-agents) — практические patterns от Anthropic\n\n## Содержание\n\n- [Полезные ссылки](#полезные-ссылки)\n- [See also](#see-also)\n\n**Основы**\n- [Q1. (!) Что такое agentic pattern и чем он отличается от prompt-техники?](#q1--что-такое-agentic-pattern-и-чем-он-отличается-от-prompt-техники)\n- [Q2. По какому принципу здесь группируют паттерны агентных систем?](#q2-по-какому-принципу-здесь-группируют-паттерны-агентных-систем)\n- [Q3. (!) Зачем нужны паттерны, если модель уже умеет рассуждать?](#q3--зачем-нужны-паттерны-если-модель-уже-умеет-рассуждать)\n\n**Базовые паттерны (ReAct / CoT / Self-Consistency)**\n- [Q4. (!) Что такое ReAct и как выглядит его цикл?](#q4--что-такое-react-и-как-выглядит-его-цикл)\n- [Q5. (!) Как завершается цикл в приведённом псевдокоде ReAct-агента?](#q5--как-завершается-цикл-в-приведённом-псевдокоде-react-агента)\n- [Q6. Что такое Self-Consistency и когда работает?](#q6-что-такое-self-consistency-и-когда-работает)\n- [Q7. Auto-CoT vs Manual CoT — в чём разница?](#q7-auto-cot-vs-manual-cot--в-чём-разница)\n\n**Reflection-based (Reflexion / Self-Critique / CoVe)**\n- [Q8. (!) Что такое Reflexion и чем отличается от обычного retry?](#q8--что-такое-reflexion-и-чем-отличается-от-обычного-retry)\n- [Q9. Self-Refine / Self-Critique — pattern и pseudo-code](#q9-self-refine--self-critique--pattern-и-pseudo-code)\n- [Q10. (!) Chain-of-Verification (CoVe) — как снижает hallucinations?](#q10--chain-of-verification-cove--как-снижает-hallucinations)\n- [Q11. Чем self-critique без external feedback опасен?](#q11-чем-self-critique-без-external-feedback-опасен)\n\n**Plan-based (Plan-Execute / ReWOO)**\n- [Q12. (!) Plan-and-Execute pattern — структура и use case](#q12--plan-and-execute-pattern--структура-и-use-case)\n- [Q13. (!) Что такое ReWOO и чем выигрывает у ReAct?](#q13--что-такое-rewoo-и-чем-выигрывает-у-react)\n- [Q14. Когда re-planning важнее изначального плана?](#q14-когда-re-planning-важнее-изначального-плана)\n\n**Tree-based (ToT / Best-of-N)**\n- [Q15. (!) Tree-of-Thoughts — структура дерева и evaluation](#q15--tree-of-thoughts--структура-дерева-и-evaluation)\n- [Q16. BFS vs DFS в ToT — когда что?](#q16-bfs-vs-dfs-в-tot--когда-что)\n- [Q17. Best-of-N sampling: pattern и trade-off с verifier](#q17-best-of-n-sampling-pattern-и-trade-off-с-verifier)\n\n**Memory patterns (Voyager / Generative Agents)**\n- [Q18. (!) Паттерн Voyager: библиотека навыков, авто-curriculum, итеративный prompting](#q18--паттерн-voyager-библиотека-навыков-авто-curriculum-итеративный-prompting)\n- [Q19. Generative Agents (Stanford): поток памяти и reflection](#q19-generative-agents-stanford-поток-памяти-и-reflection)\n- [Q20. OODA Loop (Observe-Orient-Decide-Act) — как адаптируется к LLM-агентам?](#q20-ooda-loop-observe-orient-decide-act--как-адаптируется-к-llm-агентам)\n- [Q21. Toolformer-подход: учим модель вызывать API через self-supervision](#q21-toolformer-подход-учим-модель-вызывать-api-через-self-supervision)\n\n**Composition и stopping**\n- [Q22. (!) Композиция паттернов: ReAct + Reflexion, Plan-Execute + Self-Critique](#q22--композиция-паттернов-react--reflexion-plan-execute--self-critique)\n- [Q23. (!) Stopping conditions: как агент решает, что закончить?](#q23--stopping-conditions-как-агент-решает-что-закончить)\n- [Q24. Implementation: LangChain / LlamaIndex / Vercel AI SDK — где какой pattern из коробки?](#q24-implementation-langchain--llamaindex--vercel-ai-sdk--где-какой-pattern-из-коробки)\n\n**Anti-patterns и evaluation**\n- [Q25. (!) Anti-patterns: pattern без необходимости, recursive без bound, context bloat](#q25--anti-patterns-pattern-без-необходимости-recursive-без-bound-context-bloat)\n- [Q26. Сравнительная таблица паттернов: complexity, latency, use case](#q26-сравнительная-таблица-паттернов-complexity-latency-use-case)\n- [Q27. Какой pattern когда выбирать: ReAct / Reflexion / ToT / Self-Critique / CoVe](#q27-какой-pattern-когда-выбирать-react--reflexion--tot--self-critique--cove)\n- [Q28. (!) Evaluation patterns: harness, метрики (success rate, # steps, tokens)](#q28--evaluation-patterns-harness-метрики-success-rate--steps-tokens)\n- [Q29. Reasoning models делают patterns внутри — нужны ли они снаружи?](#q29-reasoning-models-делают-patterns-внутри--нужны-ли-они-снаружи)\n- [Q30. Какие паттерны хорошо переносятся на multi-agent системы?](#q30-какие-паттерны-хорошо-переносятся-на-multi-agent-системы)\n",
+  "theory": [
+    {
+      "q_number": 5,
+      "title": "Как завершается цикл в приведённом псевдокоде ReAct-агента?",
+      "line": 164,
+      "body": "\nНиже учебный вариант текстового протокола ReAct; `llm.complete`, `parse_action` и `extract_final_answer` обозначают операции, а не API конкретной библиотеки.\n\n```python\ndef react_agent(query, tools, max_steps=10):\n    history = [{\"role\": \"user\", \"content\": query}]\n    for step in range(max_steps):\n        # 1. LLM генерирует Thought + Action (или Final Answer)\n        response = llm.complete(\n            system=REACT_SYSTEM_PROMPT,  # описание tools, формат\n            messages=history,\n        )\n        history.append({\"role\": \"assistant\", \"content\": response})\n\n        # 2. Парсим ответ\n        if \"Final Answer:\" in response:\n            return extract_final_answer(response)\n\n        action_name, action_args = parse_action(response)\n\n        # 3. Выполняем tool\n        try:\n            observation = tools[action_name](**action_args)\n        except Exception:\n            observation = \"Tool error\"  # передаём безопасное описание сбоя\n\n        # 4. Кладём observation обратно\n        history.append({\n            \"role\": \"user\",\n            \"content\": f\"Observation: {observation}\",\n        })\n\n    raise RuntimeError(\"ReAct step limit reached\")\n```\n\n**Ключевые места, на которые смотрят на собеседовании:**\n- `parse_action` — уязвимое место текстового протокола: разбор свободного текста может ошибиться. Если API поддерживает структурированные вызовы инструментов, следует использовать их формат вместо разбора строки.\n- `max_steps` — защитный предел реализации. Сам ReAct может завершиться раньше, но без внешнего ограничения есть риск зацикливания.\n- Ошибку инструмента возвращают модели как `Observation`, чтобы она могла выбрать следующий шаг; текст исключения предварительно приводят к безопасному сообщению.\n\n"
+    },
+    {
+      "q_number": 6,
+      "title": "Что такое Self-Consistency и когда работает?",
+      "line": 205,
+      "body": "\n**Self-Consistency** (Wang et al.) — стратегия выбора ответа для задач с цепочками рассуждений: вместо одного пути получают несколько разных, извлекают итог каждого и выбирают наиболее частый ответ. Разные пути могут прийти к одному решению, но совпадение само по себе не доказывает его правильность. См. [исходную статью](https://arxiv.org/abs/2203.11171).\n\nТри шага:\n\n1. Получить `N` разных выборок цепочки рассуждений; параметры генерации подбирают так, чтобы пути не были одинаковыми.\n2. Извлечь и при необходимости нормализовать итоговый ответ из каждой.\n3. Выбрать наиболее частый ответ; заранее определить поведение при равенстве голосов.\n\n```python\ndef self_consistency(question, n=20, temperature=0.7):\n    answers = []\n    for _ in range(n):\n        cot = llm.complete(question, temperature=temperature)\n        answers.append(extract_answer(cot))\n    ranked = Counter(answers).most_common(2)\n    if len(ranked) > 1 and ranked[0][1] == ranked[1][1]:\n        raise ValueError(\"tie between answers\")\n    return ranked[0][0]\n```\n\n**Когда применять:**\n- Итоговые ответы можно надёжно привести к сравнимому виду: например, к числу или варианту из списка.\n- Задача допускает разные пути решения, а проверка на целевом наборе показывает выигрыш от дополнительных выборок.\n\n**Ограничения:**\n- Для развёрнутых ответов простое сравнение строк не подходит; нужен отдельный способ сопоставления ответов.\n- Если выборки повторяют одну и ту же ошибку, голосование её закрепит.\n- Дополнительные выборки увеличивают расход токенов; задержка зависит от того, выполняются ли вызовы последовательно или параллельно.\n\nДля reasoning models эффект дополнительного семплирования нужно измерять на своей задаче, а не выводить из предположений об их скрытом рассуждении.\n\n"
+    },
+    {
+      "q_number": 7,
+      "title": "Auto-CoT vs Manual CoT — в чём разница?",
+      "line": 238,
+      "body": "\nРазница в одном: **кто подбирает примеры рассуждений** для few-shot CoT-промпта — человек или сама модель. Всё остальное (показываем модели образцы `Question + Reasoning + Answer`, чтобы она рассуждала по аналогии) у них общее.\n\n**Manual CoT** — человек подбирает и пишет примеры `Question + Reasoning + Answer` для задачи. Их подготовка требует ручной работы; качество зависит от самих примеров.\n\n**Auto-CoT** (Zhang et al., [исходная статья](https://arxiv.org/abs/2210.03493)):\n1. Берём пул вопросов из задачи.\n2. Получаем embedding каждого, кластеризуем (K-means).\n3. Из каждого кластера выбираем вопрос-репрезентант.\n4. Для каждого репрезентанта генерируем CoT (`Let's think step by step`) — это и есть exemplars.\n5. Используем как few-shot для нового вопроса.\n\n**Плюс Auto-CoT:** подбор разных вопросов снижает ручной труд и помогает разнообразить примеры.\n**Ограничение:** сгенерированные рассуждения могут содержать ошибки, которые затем попадут в few-shot-промпт.\n\nПользу few-shot-примеров нужно проверять для выбранной модели и задачи; некоторые reasoning models не требуют явной инструкции «думай по шагам».\n\n"
+    },
+    {
+      "q_number": 8,
+      "title": "Что такое Reflexion и чем отличается от обычного retry?",
+      "line": 256,
+      "body": "\n**Reflexion** (Shinn et al., [исходная статья](https://arxiv.org/abs/2303.11366)) добавляет к повторным попыткам словесный разбор полученной обратной связи. Агент сохраняет вывод о предыдущей попытке в памяти и использует его в следующем запросе. Под «обычным повтором» здесь понимается новый запуск без такого вывода.\n\nАвторы называют это **verbal reinforcement learning**: веса модели не обновляются, а сохранённый текст помогает скорректировать последующую попытку. Обратная связь может быть числовой или текстовой, от внешнего проверяющего либо от внутренней оценки.\n\n```mermaid\nflowchart LR\n    Task[Task] --> Try[Attempt N<br/>ReAct/CoT]\n    Try --> Eval{Success?<br/>verifier}\n    Eval -->|Yes| Done[Done]\n    Eval -->|No| Reflect[Self-reflection<br/>«я провалился потому что…»]\n    Reflect --> Memory[Memory buffer<br/>append reflection]\n    Memory --> Try\n```\n\n**Чем отличается от обычного retry:**\n| Свойство | Plain retry | Reflexion |\n|----------|-------------|-----------|\n| Что передаётся между попытками | Нет сформулированного вывода | Текст разбора и нужная обратная связь |\n| Как меняется следующий запрос | Повтор без анализа ошибки | Учитывает сохранённый вывод |\n| Обратная связь | Может отсутствовать | Нужна для осмысленного разбора; формат зависит от задачи |\n\nВ экспериментах авторов результат на HumanEval достиг 91% pass@1 против 80% у приведённого ими базового GPT-4. Это результат конкретной настройки эксперимента, а не гарантия для других задач.\n\n**Что обязательно нужно, чтобы паттерн работал:**\n- **Обратная связь** о результате попытки: например, тесты для кода или оценка в среде. Она может быть не только бинарной.\n- Достаточный **контекст** для сохранённых выводов либо способ отбирать нужные воспоминания.\n- **Предел попыток** как защитное условие реализации: без него повтор может затянуться.\n\n"
+    }
+  ],
+  "blocks": [
+    {
+      "q_number": 5,
+      "block_idx": 0,
+      "visible_question": "Как завершается цикл в приведённом псевдокоде ReAct-агента?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Как завершается цикл в приведённом псевдокоде ReAct-агента?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Предел `max_steps` меняется после каждого вызова, а цикл завершает исчерпание списка `tools`.",
+            "correct": false,
+            "sections": {
+              "what_actually": "В псевдокоде предел итераций задаёт max_steps; инструменты выбирают по имени, а не расходуют по одному.",
+              "source_of_confusion": "Список инструментов можно ошибочно принять за конечный набор шагов.",
+              "if_it_were_true": "Повторный вызов того же инструмента был бы невозможен, хотя код его допускает.",
+              "how_it_should_be": "Завершение определяет финальный ответ модели или защитный предел числа итераций."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Исчерпание `max_steps` возвращает последний черновик, а `Final Answer:` нужен лишь для логов.",
+            "correct": false,
+            "sections": {
+              "what_actually": "При достижении max_steps псевдокод поднимает RuntimeError, а Final Answer возвращает нормальный результат.",
+              "source_of_confusion": "Некоторые приложения действительно возвращают последний черновик при исчерпании бюджета, но этот пример так не делает.",
+              "if_it_were_true": "Вызывающий код получал бы результат даже без успешного завершения задачи.",
+              "how_it_should_be": "Возврат происходит при Final Answer; превышение предела — отдельный исход ошибки."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Первый успешный `Observation` возвращает ответ и завершает цикл, а `max_steps` ограничивает размер `history`.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Результат инструмента добавляют в историю, затем цикл продолжается до финального ответа или предела.",
+              "source_of_confusion": "Первый успешный вызов инструмента может выглядеть как уже найденный ответ.",
+              "if_it_were_true": "Агент не мог бы выполнить второй шаг на основе первого наблюдения.",
+              "how_it_should_be": "Observation передают модели, а решение о следующем действии принимают в очередной итерации."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Цикл ограничен `max_steps`, а раньше он завершается по строке `Final Answer:` в ответе модели.",
+            "correct": true,
+            "sections": {
+              "explanation": "Псевдокод перебирает не более max_steps итераций и возвращает результат только после обнаружения Final Answer.",
+              "example": "Если за выделенные итерации финальный ответ не появился, функция поднимает RuntimeError.",
+              "when_to_apply": "При реализации агентного цикла нужны явный успешный исход и защитный предел шагов.",
+              "edge_cases": "Предел — свойство этой реализации, а не обязательная часть определения ReAct; без него возможен бесконечный повтор.",
+              "related": "После ошибки инструмента модель получает безопасное описание сбоя как Observation и может выбрать другой шаг."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 6,
+      "block_idx": 0,
+      "visible_question": "Что такое Self-Consistency и когда работает?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Что такое Self-Consistency и когда работает?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Self-Consistency выбирает самую убедительную цепочку; подходит, когда можно оценить качество объяснения.",
+            "correct": false,
+            "sections": {
+              "what_actually": "В исходном методе выбирают наиболее частый итоговый ответ, а не одну цепочку по её убедительности.",
+              "source_of_confusion": "Полная цепочка выглядит информативнее короткого ответа, поэтому её хочется ранжировать целиком.",
+              "if_it_were_true": "Подсчёт совпадений итоговых ответов был бы не нужен.",
+              "how_it_should_be": "Получить разные пути, извлечь сопоставимые ответы и выбрать самый частый."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Self-Consistency повторяет одну детерминированную цепочку; подходит, когда каждый прогон даёт одинаковый ответ.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Стратегия требует разных путей рассуждения; одинаковые прогоны не добавляют информации к одному ответу.",
+              "source_of_confusion": "Детерминированность часто связывают с надёжностью, хотя здесь нужен разброс путей.",
+              "if_it_were_true": "Несколько копий одного вывода автоматически создавали бы подтверждение, которого на деле нет.",
+              "how_it_should_be": "Семплировать разные пути и сравнивать извлечённые итоги."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Self-Consistency выбирает самый частый ответ из разных путей; подходит, когда итоги можно сопоставить.",
+            "correct": true,
+            "sections": {
+              "explanation": "Оригинальная стратегия семплирует разные цепочки рассуждения и выбирает наиболее частый нормализованный итог.",
+              "example": "Если три пути дают 42, а один — 41, частотный выбор возвращает 42; совпадение не является доказательством истинности.",
+              "when_to_apply": "Приём применяют к задачам с сопоставимым итогом, если проверка показывает пользу дополнительных выборок.",
+              "edge_cases": "При общей систематической ошибке выборки могут согласованно ошибаться; при равенстве голосов нужен отдельный критерий.",
+              "related": "Для свободного текста требуется отдельный способ сопоставления ответов; дополнительные вызовы повышают расход токенов."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Self-Consistency усредняет числовые ответы разных путей; подходит, когда важна средняя оценка.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Исходный метод выбирает наиболее частый ответ, а не среднее арифметическое или медиану чисел.",
+              "source_of_confusion": "Числовые итоги обычно агрегируют средним, но такой агрегатор может дать ответ, не встречавшийся ни в одной выборке.",
+              "if_it_were_true": "Для числовых ответов алгоритм считал бы среднее вместо частоты совпадений.",
+              "how_it_should_be": "Привести ответы к одному виду и выбрать самый частый; при ничьей применить заранее выбранное правило."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 7,
+      "block_idx": 0,
+      "visible_question": "Auto-CoT vs Manual CoT — в чём разница?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Auto-CoT vs Manual CoT — в чём разница?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "При Manual CoT человек пишет примеры, а Auto-CoT сама модель сочиняет новые вопросы без исходного пула.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Auto-CoT выбирает разные вопросы из имеющегося пула задачи; модель генерирует рассуждения для выбранных вопросов.",
+              "source_of_confusion": "Слово Auto может создать впечатление, что исходные вопросы тоже сочиняются автоматически.",
+              "if_it_were_true": "Процедуре не понадобились бы пул вопросов, кластеризация и выбор представителей.",
+              "how_it_should_be": "Человек готовит примеры в Manual CoT; Auto-CoT использует исходные вопросы и автоматически строит демонстрации."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "При Manual CoT человек пишет примеры, а Auto-CoT человек выбирает вопросы из кластеров и просит модель дописать шаги.",
+            "correct": false,
+            "sections": {
+              "what_actually": "В Auto-CoT выбор разных вопросов и генерация цепочек автоматизированы; ручной выбор представителей не является обязательным этапом метода.",
+              "source_of_confusion": "Человек часто просматривает результаты автоматической генерации, и это можно перепутать с принципом исходного алгоритма.",
+              "if_it_were_true": "Экономия ручного труда на подборе разнообразных демонстраций была бы неполной.",
+              "how_it_should_be": "В Manual CoT примеры готовит человек; в Auto-CoT процедура отбирает вопросы, а модель дописывает рассуждения."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "При Manual CoT человек пишет примеры, а Auto-CoT убирает примеры и оставляет только инструкцию думать по шагам.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Auto-CoT сохраняет few-shot-демонстрации, но строит их автоматически из выбранных вопросов и сгенерированных цепочек.",
+              "source_of_confusion": "Инструкция «думай по шагам» используется при генерации цепочек, поэтому её можно принять за итоговый промпт без примеров.",
+              "if_it_were_true": "Автоматический отбор разных вопросов для демонстраций не имел бы назначения.",
+              "how_it_should_be": "Оба подхода используют примеры; различается способ их подготовки."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "При Manual CoT человек пишет примеры, а Auto-CoT автоматически отбирает вопросы из пула и генерирует для них рассуждения.",
+            "correct": true,
+            "sections": {
+              "explanation": "В Manual CoT демонстрации готовит человек; Auto-CoT автоматически выбирает разные вопросы из пула и получает для них цепочки от модели.",
+              "example": "Из групп исходных вопросов выбираются представители, после чего модель генерирует для них рассуждения для будущего few-shot-промпта.",
+              "when_to_apply": "Auto-CoT полезен, когда есть пул вопросов и ручная подготовка разнообразных примеров требует много труда.",
+              "edge_cases": "Сгенерированные цепочки могут содержать ошибки; разнообразие вопросов снижает однотипность, но не гарантирует качество примеров.",
+              "related": "Для некоторых reasoning models явные CoT-примеры могут не улучшать результат; это проверяют на выбранной задаче."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 8,
+      "block_idx": 0,
+      "visible_question": "Что такое Reflexion и чем отличается от обычного retry?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Что такое Reflexion и чем отличается от обычного retry?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Reflexion обновляет веса модели после неудачи без текстового разбора, а обычный повтор лишь запускает задачу заново.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Reflexion не обновляет веса: вывод об ошибке сохраняется текстом и влияет на следующий запрос.",
+              "source_of_confusion": "Термин verbal reinforcement learning напоминает обучение модели, хотя механизм работает через контекст.",
+              "if_it_were_true": "После неудачи потребовался бы шаг оптимизации весов, а не сохранение текстовой рефлексии.",
+              "how_it_should_be": "При Reflexion хранить словесный вывод из обратной связи, при обычном повторе такого вывода нет."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Reflexion переносит текстовый вывод об ошибке в следующую попытку, а обычный повтор запускает её без такого вывода.",
+            "correct": true,
+            "sections": {
+              "explanation": "Reflexion получает обратную связь, формулирует разбор попытки и добавляет его в контекст следующего запроса; сравниваемый обычный повтор не делает этого.",
+              "example": "После проваленного теста агент записывает, какое допущение было неверным, и учитывает эту запись при следующем решении.",
+              "when_to_apply": "Подход полезен, когда доступна осмысленная обратная связь и ошибку можно использовать для улучшения следующей попытки.",
+              "edge_cases": "Сигнал может быть числовым или текстовым; нужен предел попыток и управление объёмом сохранённых выводов.",
+              "related": "Авторы называют механизм verbal reinforcement learning, но веса модели между попытками не обновляются."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Reflexion переносит только оценку успеха в следующую попытку, а обычный повтор сохраняет подробный разбор ошибки.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Оценка служит входом для Reflexion, но его отличительный переносимый результат — словесная рефлексия; обычный повтор её не создаёт.",
+              "source_of_confusion": "Оценка результата важна для запуска анализа, поэтому её можно принять за весь механизм памяти.",
+              "if_it_were_true": "Буфер словесных выводов не был бы нужен Reflexion, а появлялся бы у простого повтора.",
+              "how_it_should_be": "По обратной связи сформулировать вывод и передать его в следующий запрос."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Reflexion хранит прежний ответ без анализа, а обычный повтор добавляет в контекст вывод о причине ошибки.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Сохранение и использование вывода о неудаче — свойство Reflexion; обычный повтор здесь не анализирует прежний ответ.",
+              "source_of_confusion": "История ответа и его разбор могут выглядеть как один и тот же сохранённый контекст.",
+              "if_it_were_true": "Следующая попытка Reflexion не знала бы, что именно исправить, а обычный повтор уже содержал бы рефлексию.",
+              "how_it_should_be": "Передавать не только прежний ответ, но и сформулированный по обратной связи вывод об ошибке."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "open_issues": [],
+  "runtime_findings": [],
+  "checks": {
+    "content_review": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "PASS",
+          "reason": "Все A/B/C/D классифицированы в author-review, ключ единственный и каждый wrong содержит опровергаемую модель.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q6:B0": {
+          "status": "PASS",
+          "reason": "Все A/B/C/D классифицированы в author-review, ключ единственный и каждый wrong содержит опровергаемую модель.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q7:B0": {
+          "status": "PASS",
+          "reason": "Все A/B/C/D классифицированы в author-review, ключ единственный и каждый wrong содержит опровергаемую модель.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q8:B0": {
+          "status": "PASS",
+          "reason": "Все A/B/C/D классифицированы в author-review, ключ единственный и каждый wrong содержит опровергаемую модель.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "factual_correctness": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "PASS",
+          "reason": "Факты локальной теории, вариантов и sections сверены с первичными работами и документацией; неподтверждённые абсолютные утверждения удалены. Псевдокод проверен как локальный пример; ReAct paper подтверждает взаимодействие рассуждения, действия и наблюдения, а ограничение шагов прямо названо защитой реализации.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q6:B0": {
+          "status": "PASS",
+          "reason": "Факты локальной теории, вариантов и sections сверены с первичными работами и документацией; неподтверждённые абсолютные утверждения удалены. Исходная статья определяет sampling разных reasoning paths и выбор самого согласованного ответа; медиана не приписывается авторскому методу.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q7:B0": {
+          "status": "PASS",
+          "reason": "Факты локальной теории, вариантов и sections сверены с первичными работами и документацией; неподтверждённые абсолютные утверждения удалены. Первичная работа Auto-CoT описывает выбор разнообразных вопросов из пула и генерацию рассуждений для демонстраций; OpenAI рекомендует проверять пользу явного CoT у reasoning models.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q8:B0": {
+          "status": "PASS",
+          "reason": "Факты локальной теории, вариантов и sections сверены с первичными работами и документацией; неподтверждённые абсолютные утверждения удалены. Reflexion paper подтверждает словесную обратную связь и отсутствие обновления весов, допускает разные форматы feedback и приводит 91% pass@1 на HumanEval против 80% базового GPT-4.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "source_linkage": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "PASS",
+          "reason": "Ответы соответствуют видимому вопросу и локальной теории; Q5 уточнён как вопрос о завершении псевдокода.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q6:B0": {
+          "status": "PASS",
+          "reason": "Ответы соответствуют видимому вопросу и локальной теории; Q5 уточнён как вопрос о завершении псевдокода.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q7:B0": {
+          "status": "PASS",
+          "reason": "Ответы соответствуют видимому вопросу и локальной теории; Q5 уточнён как вопрос о завершении псевдокода.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q8:B0": {
+          "status": "PASS",
+          "reason": "Ответы соответствуют видимому вопросу и локальной теории; Q5 уточнён как вопрос о завершении псевдокода.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "sections_consistency": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "PASS",
+          "reason": "Перечитаны пять полей correct и четыре поля каждого wrong после исправления текста и теории.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q6:B0": {
+          "status": "PASS",
+          "reason": "Перечитаны пять полей correct и четыре поля каждого wrong после исправления текста и теории.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q7:B0": {
+          "status": "PASS",
+          "reason": "Перечитаны пять полей correct и четыре поля каждого wrong после исправления текста и теории.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q8:B0": {
+          "status": "PASS",
+          "reason": "Перечитаны пять полей correct и четыре поля каждого wrong после исправления текста и теории.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "sfpl": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "PASS",
+          "reason": "A–D сопоставлены по смысловому каркасу, детализации, коду, длине и языку; конкретное наблюдение по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q6:B0": {
+          "status": "PASS",
+          "reason": "A–D сопоставлены по смысловому каркасу, детализации, коду, длине и языку; конкретное наблюдение по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q7:B0": {
+          "status": "PASS",
+          "reason": "A–D сопоставлены по смысловому каркасу, детализации, коду, длине и языку; конкретное наблюдение по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q8:B0": {
+          "status": "PASS",
+          "reason": "A–D сопоставлены по смысловому каркасу, детализации, коду, длине и языку; конкретное наблюдение по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "ansc": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "PASS",
+          "reason": "Каждый вариант отвечает на все части видимого вопроса, включая ошибочные альтернативы; разбор по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q6:B0": {
+          "status": "PASS",
+          "reason": "Каждый вариант отвечает на все части видимого вопроса, включая ошибочные альтернативы; разбор по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q7:B0": {
+          "status": "PASS",
+          "reason": "Каждый вариант отвечает на все части видимого вопроса, включая ошибочные альтернативы; разбор по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q8:B0": {
+          "status": "PASS",
+          "reason": "Каждый вариант отвечает на все части видимого вопроса, включая ошибочные альтернативы; разбор по блоку в author-review.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "russian_readability": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "PASS",
+          "reason": "Прочитаны пролог, локальная теория, вопрос, A–D и sections; русские формулировки вычитаны.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q6:B0": {
+          "status": "PASS",
+          "reason": "Прочитаны пролог, локальная теория, вопрос, A–D и sections; русские формулировки вычитаны.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q7:B0": {
+          "status": "PASS",
+          "reason": "Прочитаны пролог, локальная теория, вопрос, A–D и sections; русские формулировки вычитаны.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        },
+        "Q8:B0": {
+          "status": "PASS",
+          "reason": "Прочитаны пролог, локальная теория, вопрос, A–D и sections; русские формулировки вычитаны.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261005-agentic-q5-q8-author.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "independent_review": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q6:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q7:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q8:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "blind_review": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q6:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q7:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q8:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "final_acceptance": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q6:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q7:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q8:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    }
+  },
+  "instructions": "Все A/B/C/D и sections. SFPL, ANSC, RU — отдельные вердикты. Дополнительные смысловые зависимости прочитать и указать в evidence. Сигналы не являются редакторской приёмкой."
+}

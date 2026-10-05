@@ -1,0 +1,72 @@
+{
+  "kind": "blind_phase_b",
+  "reviewer": "functional_complete_blind",
+  "model": "gpt-5.6-luna",
+  "recorded_at": "2026-09-14T16:52:57.780329000Z",
+  "snapshot": {
+    "path": "work/mcq-audit/functional-q6-q7-q10-revealed.json",
+    "sha256": "c743337aa09f5d00257c71fc37b6d70e3e2606907eff336d746bf9a47ee6d828"
+  },
+  "answers": [
+    {
+      "q_number": 6,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос проверяет различие Function<T,R> и UnaryOperator<T>; B отвечает на обе части, а A/C/D содержат разные конкретные ошибочные модели."},
+        "FACTS": {"verdict": "PASS", "reason": "Function допускает независимые T и R; UnaryOperator наследует Function<T,T>. Это согласуется с Java SE 21 API и теорией."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Q6 и все его варианты/опровержения держатся на локальном материале Function/UnaryOperator; соседние API используются только как уместный пример List.replaceAll."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У B присутствуют explanation/example/when_to_apply/edge_cases/related, у A/C/D — what_actually/source_of_confusion/if_it_were_true/how_it_should_be; каждый раздел опровергает именно текущий текст варианта."},
+        "SFPL": {"verdict": "PASS", "reason": "Все четыре варианта имеют сопоставимый сравнительный каркас и одинаковое оформление с двумя утверждениями; B не выделяется уникальным кодом, примером или единственным дополнительным условием."},
+        "ANSC": {"verdict": "PASS", "reason": "A/B/C/D каждый отвечает и о Function, и о UnaryOperator; A/C/D неполны или неверны по фактам, но не уходят в соседний вопрос."},
+        "RU": {"verdict": "PASS", "reason": "Вопрос, теория, варианты и все sections понятны при первом чтении; API и общепринятые термины сохранены, существенных грамматических или терминологических дефектов нет."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Независимое содержательное решение зафиксировано в фазе A до раскрытия ключа; текущая фаза B отдельно сверяет его с ключом."},
+        "BLIND": {"verdict": "PASS", "reason": "Фаза A выполнена по экспорту без correct/sections; ключ и sections использованы только после фиксации слепого выбора."}
+      },
+      "form_observations": {"A": "Сравнительный ответ по обеим сущностям, одна ошибка в переносе ограничения T на Function.", "B": "Полный сравнительный ответ: Function<T,R>, наследование UnaryOperator<T> от Function<T,T> и общий T.", "C": "Сравнительный ответ по обеим сущностям, одна ошибка о результате UnaryOperator и пропуск наследования.", "D": "Сравнительный ответ по обеим сущностям, одна ошибка в отрицании наследования."},
+      "findings": []
+    },
+    {
+      "q_number": 7,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос проверяет возвращаемый тип и checked-исключения у Runnable, Callable и Supplier; D отвечает на обе оси, A/B/C содержат по одному основному заблуждению."},
+        "FACTS": {"verdict": "PASS", "reason": "Runnable.run возвращает void, Callable.call и Supplier.get — T; только Callable.call объявляет throws Exception. Это согласуется с Java SE 21 API и теорией."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Q7 и все sections напрямую сопоставляют три интерфейса по результату и сигнатуре исключений; примеры Thread/Future/Optional поясняют применение без подмены вопроса."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У D есть все пять обучающих sections, у A/B/C — все четыре контрфактических sections; опровержения адресуют именно утверждения о типах и throws."},
+        "SFPL": {"verdict": "PASS", "reason": "Все варианты используют один сравнительный каркас для трёх интерфейсов и одинаковый порядок результата/исключений; D не является единственным заметно длинным или структурно особым вариантом."},
+        "ANSC": {"verdict": "PASS", "reason": "Каждый вариант перечисляет Runnable, Callable и Supplier по обеим проверяемым осям; ошибочность A/B/C не превращает их в неполные или соседние ответы."},
+        "RU": {"verdict": "PASS", "reason": "Вопрос, теория, варианты и все sections читаются естественно; англоязычные API/throws и checked/unchecked-термины уместны и не заменяют русскую прозу."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Независимый выбор D был зафиксирован в фазе A до раскрытия ключа; фаза B не подменяет этот результат."},
+        "BLIND": {"verdict": "PASS", "reason": "Слепой проход относится к фазе A: на входе были видимый вопрос и A/B/C/D без ключа и sections; раскрытый пакет применён после фиксации."}
+      },
+      "form_observations": {"A": "Перечисляет все три интерфейса по возврату и исключениям, но ошибочно объединяет их по checked-исключениям.", "B": "Перечисляет все три интерфейса и исключения, но ошибочно даёт Runnable результат Object.", "C": "Перечисляет все три интерфейса по обеим осям, но ошибочно приписывает throws Exception Supplier.", "D": "Полностью перечисляет все три интерфейса по возврату и throws Exception, без уникального формального сигнала."},
+      "findings": []
+    },
+    {
+      "q_number": 10,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос проверяет смысл and/or/negate и изменение исходных предикатов; A покрывает обе части, B/C/D содержат по одному точному заблуждению."},
+        "FACTS": {"verdict": "PASS", "reason": "Predicate.and/or/negate возвращают составные предикаты для И/ИЛИ/отрицания и не мутируют исходный; короткое замыкание также корректно отражено в theory/sections Java SE 21."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Q10 и sections напрямую раскрывают три названных default-метода Predicate; Predicate.not в related остаётся явно отделённым статическим API и не меняет проверяемый ответ."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У A есть explanation/example/when_to_apply/edge_cases/related, у B/C/D — what_actually/source_of_confusion/if_it_were_true/how_it_should_be; каждый раздел согласован с вариантом."},
+        "SFPL": {"verdict": "PASS", "reason": "Все варианты имеют одинаковый перечень трёх методов, логическую операцию и утверждение о состоянии исходных предикатов; A не получает уникального структурного преимущества."},
+        "ANSC": {"verdict": "PASS", "reason": "A/B/C/D отвечают про and, or, negate и мутабельность исходных предикатов; ошибки B/C/D локальны и не делают их ответами на другой вопрос."},
+        "RU": {"verdict": "PASS", "reason": "Формулировки вопроса, теории, вариантов и всех sections ясны; логические термины, API и inline-код оформлены единообразно."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Независимый выбор A был зафиксирован в фазе A до раскрытия ключа; содержательная проверка фазы B выполнена отдельно."},
+        "BLIND": {"verdict": "PASS", "reason": "Фаза A была слепой к correct и sections; эта запись фиксирует post-reveal проверку и не выдаёт её за новый слепой выбор."}
+      },
+      "form_observations": {"A": "Полный ответ по трём методам и неизменности исходных предикатов.", "B": "Полный по операциям и мутабельности, но ошибочно утверждает изменение исходного Predicate.", "C": "Полный по трём методам и неизменности, но ошибочно называет and исключающим ИЛИ.", "D": "Полный по and/or и неизменности, но ошибочно описывает negate как сохранение результата."},
+      "findings": []
+    }
+  ],
+  "sources_checked": [
+    {"url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html", "claim": "Function<T,R> принимает T и возвращает R; T и R могут различаться.", "version": "Java SE 21", "date": "2026-09-14"},
+    {"url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/UnaryOperator.html", "claim": "UnaryOperator<T> — Function<T,T> и возвращает результат того же типа.", "version": "Java SE 21", "date": "2026-09-14"},
+    {"url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html#replaceAll(java.util.function.UnaryOperator)", "claim": "List.replaceAll принимает UnaryOperator<E>.", "version": "Java SE 21", "date": "2026-09-14"},
+    {"url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Runnable.html", "claim": "Runnable.run возвращает void и не объявляет checked-исключение.", "version": "Java SE 21", "date": "2026-09-14"},
+    {"url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Callable.html", "claim": "Callable.call возвращает T и объявляет throws Exception.", "version": "Java SE 21", "date": "2026-09-14"},
+    {"url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Supplier.html", "claim": "Supplier.get возвращает T и не объявляет throws Exception.", "version": "Java SE 21", "date": "2026-09-14"},
+    {"url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Predicate.html", "claim": "Predicate.and/or/negate возвращают составные предикаты для И/ИЛИ/отрицания; and/or используют short-circuiting.", "version": "Java SE 21", "date": "2026-09-14"}
+  ]
+}

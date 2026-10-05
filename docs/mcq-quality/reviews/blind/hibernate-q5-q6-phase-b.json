@@ -1,0 +1,56 @@
+{
+  "reviewer": "hibernate_query_blind",
+  "recorded_at": "2026-09-14T17:30:25Z",
+  "sources_checked": [
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/userguide/html_single/Hibernate_User_Guide.html#caching-query-layout",
+      "claim": "Hibernate 6.6 описывает layout FULL, SHALLOW и AUTO; SHALLOW хранит идентификатор или ключ владельца и при промахе L2 может обратиться к БД.",
+      "version": "6.6.57.Final",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/userguide/html_single/Hibernate_User_Guide.html#caching-query",
+      "claim": "Query cache кэширует результаты, включается настройкой hibernate.cache.use_query_cache, а конкретный запрос помечается cacheable; timestamps связанных таблиц используются для проверки устаревания.",
+      "version": "6.6.57.Final",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/annotations/Cache.html",
+      "claim": "@Cache помечает root entity или collection для L2, задаёт именованный region и concurrency policy; параметр region является настраиваемым.",
+      "version": "6.6.57.Final",
+      "date": "2026-09-14"
+    }
+  ],
+  "answers": [
+    {
+      "q_number": 5,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос о назначении и использовании Query Cache. A даёт единственное корректное сочетание: кэш результатов, глобальное включение, выбор запросов и зависимость entity/collection-представления от layout; B путает результат с планом, C ошибочно включает все запросы, D приписывает построчный анализ и точечную инвалидацию."},
+        "FACTS": {"verdict": "PASS", "reason": "Документация 6.6 подтверждает кэширование query results, настройку hibernate.cache.use_query_cache, cacheable на запросе, layouts FULL/SHALLOW/AUTO и проверку через update timestamps; утверждения A и sections этому не противоречат."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Вопрос, тело теории и A/B/C/D проверяют одну локальную мысль: что хранится, как включается и как валидируется query result cache; скрытого материала соседних вопросов для выбора не требуется."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У A присутствуют explanation, example, when_to_apply, edge_cases и related; все wrong имеют what_actually, source_of_confusion, if_it_were_true и how_it_should_be. Sections раскрывают именно текущие формулировки, включая SHALLOW-промахи и консервативную проверку query spaces."},
+        "SFPL": {"verdict": "PASS", "reason": "A/B/C/D имеют сопоставимый каркас из определения Query Cache, условия включения/выбора и утверждения о поведении; одинаковая прозаическая форма, без уникального кода или несоразмерной длины, выдающей A."},
+        "ANSC": {"verdict": "PASS", "reason": "Каждый вариант отвечает на видимый вопрос как законченная модель: A описывает правильный механизм, B — правдоподобную подмену query plan cache, C — ошибку автоматического кэширования всех запросов, D — ошибку точной построчной инвалидации. Ни один wrong не является пустой или случайной фразой."},
+        "RU": {"verdict": "PASS", "reason": "Вопрос, теория, варианты и все sections написаны связным техническим русским языком; англоязычные Query Cache, layout, query spaces и API используются как устойчивые термины. Ссылки местоимений и причинные связи понятны с первого чтения."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "В раскрытом пакете автор указан как root, а reviewer этой записи — hibernate_query_blind; это разные роли, поэтому условие независимого ревью выполнено."},
+        "BLIND": {"verdict": "PASS", "reason": "Фаза A была сохранена до revealed_at 2026-09-14T17:29:34.586460+00:00 и до этой phase B; текущая проверка выполнена после раскрытия и потому корректно помечена как неслепая по содержанию."}
+      }
+    },
+    {
+      "q_number": 6,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос о природе и работе Cache Region. B единственно верно связывает именованную область, явное имя и независимые provider policies; A навязывает совпадение с SQL-таблицей, C отрицает provider-specific TTL, D отрицает разделение entity и collection regions."},
+        "FACTS": {"verdict": "PASS", "reason": "Javadoc Hibernate 6.6 прямо описывает named cache region для entity или collection и параметр @Cache(region=...). User Guide подтверждает class-by-class/collection-by-collection настройку и provider-dependent TTL/политики, что поддерживает B и её sections."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Теория, вопрос и варианты сосредоточены на одном понятии region: именование, область данных и политика провайдера; выбор B выводится из прочитанного Q6 без обращения к скрытым темам."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У B заполнены все пять обучающих ролей, у A/C/D — все четыре контрфактические роли. Sections объясняют default region, явный @Cache(region=...), разные entity/collection данные и provider XML/API, согласуясь с вариантами."},
+        "SFPL": {"verdict": "PASS", "reason": "Все четыре варианта используют одинаковый формат определения региона с последующим утверждением о правилах именования или хранения; B не выделяется кодом, отдельным примером или заметно иной структурой."},
+        "ANSC": {"verdict": "PASS", "reason": "Каждый вариант представляет полноценную проверяемую модель работы региона: B — корректную, A — ложную связь с SQL-именем, C — ложное ограничение Hibernate TTL, D — ложную единственность L2. Ошибки правдоподобны и имеют конкретное опровержение в sections."},
+        "RU": {"verdict": "PASS", "reason": "Формулировки Q6 и его sections грамматически связны и используют нормальные термины «регион», «провайдер», TTL, ёмкость и вытеснение. Варианты сопоставимы по профессиональному уровню, технические имена оформлены понятно."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Автор раскрытого материала — root, reviewer — hibernate_query_blind; автор и рецензент различаются, что удовлетворяет проверке независимости."},
+        "BLIND": {"verdict": "PASS", "reason": "Сохранённая фаза A предшествует revealed_at и текущей phase B; B намеренно содержит проверку уже раскрытого ключа и не заявляет слепоту содержательного прохода."}
+      }
+    }
+  ]
+}

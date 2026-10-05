@@ -1,0 +1,76 @@
+{
+  "kind": "blind_phase_b",
+  "reviewer": "functional_final_blind",
+  "model": "gpt-5.6-luna",
+  "recorded_at": "2026-09-14T16:54:29.740927000Z",
+  "snapshot": {
+    "path": "work/mcq-audit/functional-q8-q9-final-revealed.json",
+    "sha256": "2bc779ae11ef4f8fd35e2ce506ea7d9a33aa6ce249bd39a099beb0218b37cf9c"
+  },
+  "answers": [
+    {
+      "q_number": 8,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос проверяет четыре формы method reference; теория и варианты относятся именно к этой классификации."},
+        "FACTS": {"verdict": "PASS", "reason": "JLS §15.13 подтверждает различие static/reference-type, expression/primary и constructor reference; receiver у unbound instance reference является первым аргументом, bound expression вычисляется при создании ссылки."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Теория, видимый Q8 и все четыре варианта согласованно покрывают статический метод, bound instance, unbound instance и конструктор."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У correct присутствуют explanation/example/when_to_apply/edge_cases/related; у каждого wrong присутствуют what_actually/source_of_confusion/if_it_were_true/how_it_should_be, и секции опровергают именно текущий текст."},
+        "SFPL": {"verdict": "PASS", "reason": "A/B/C/D имеют одинаковый перечень из четырёх позиций, одинаковый порядок, inline-код и сопоставимую длину; correct не выделен уникальным каркасом или оговоркой."},
+        "ANSC": {"verdict": "PASS", "reason": "Каждый вариант отвечает на весь перечень из четырёх видов. A, B и D содержат по одному локальному заблуждению; C корректен. Ни один wrong не становится вторым истинным вариантом."},
+        "RU": {"verdict": "PASS", "reason": "Видимый вопрос, пролог Q8, теория, варианты и все sections читаются естественно; receiver, bound/unbound и method reference употреблены единообразно как технические термины."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Содержательное решение Q8 зафиксировано в Phase A до чтения раскрытого snapshot и ключа; Phase B проверяет его отдельно по теории и sections."},
+        "BLIND": {"verdict": "PASS", "reason": "Предварительный выбор C был сделан по blind input без correct и sections; раскрытие использовано только на последующей проверке."}
+      },
+      "form_observations": {
+        "A": "Полный четырёхчастный перечень с тем же порядком и кодовыми формами; одна содержательная ошибка в receiver static.",
+        "B": "Полный четырёхчастный перечень с тем же каркасом; одна ошибка в моменте фиксации bound receiver.",
+        "C": "Полный четырёхчастный перечень с тем же каркасом; корректно описывает все формы.",
+        "D": "Полный четырёхчастный перечень с тем же каркасом; одна ошибка в назначении `Type::new`."
+      },
+      "findings": []
+    },
+    {
+      "q_number": 9,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Вопрос проверяет порядок и результат методов compose() и andThen() у Function; это ровно содержание теории и вариантов."},
+        "FACTS": {"verdict": "PASS", "reason": "Официальный Java SE 21 API определяет compose как before → this, а andThen как this → after; оба возвращают составную Function и выполняются при apply."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Теория Q9, видимый вопрос и варианты прямо связаны с порядком композиции и моментом выполнения."},
+        "SECTIONS": {"verdict": "PASS", "reason": "У correct заполнены пять обучающих sections; у каждого wrong заполнены четыре контрфактические sections, согласованные с его конкретной ошибкой."},
+        "SFPL": {"verdict": "PASS", "reason": "A/B/C/D используют одинаковый предмет и компактный формат сравнения двух методов; где нужно, указывают составную функцию, а различия формы не выделяют correct."},
+        "ANSC": {"verdict": "PASS", "reason": "A, B и C явно задают оба порядка и результат композиции; D также отвечает о поведении обоих вызовов, ошибочно путая построение функции с вычислением. Только A истинен."},
+        "RU": {"verdict": "PASS", "reason": "Видимый вопрос, пролог Q9, теория, A/B/C/D и sections написаны понятным русским техническим языком; compose, andThen, Function и apply сохранены как имена API."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Содержательное решение Q9 зафиксировано в Phase A до чтения раскрытого snapshot и ключа; Phase B выполнена после чтения полного контекста."},
+        "BLIND": {"verdict": "PASS", "reason": "Предварительный выбор A был сделан по blind input без correct и sections; раскрытый материал не участвовал в первоначальном выборе."}
+      },
+      "form_observations": {
+        "A": "Полный ответ: оба порядка и факт возврата составной функции указаны в одном сопоставимом предложении.",
+        "B": "Полный ответ по двум методам и результату, но стирает фактическое различие порядков.",
+        "C": "Полный ответ по двум методам и результату, но инвертирует оба порядка.",
+        "D": "Полный ответ по двум вызовам, но ошибочно описывает немедленный результат вместо возвращаемой функции."
+      },
+      "findings": []
+    }
+  ],
+  "sources_checked": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html",
+      "claim": "§15.13 задаёт формы method reference, различает ссылку на выражение/объект и ссылку на тип, описывает constructor reference и отложенное выполнение; expression перед :: вычисляется при создании ссылки.",
+      "version": "Java Language Specification, Java SE 21",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Function.html",
+      "claim": "Function.compose возвращает составную функцию, сначала применяющую before, затем this; Function.andThen сначала применяет this, затем after.",
+      "version": "Java SE 21 API",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Consumer.html",
+      "claim": "Consumer.andThen возвращает составной Consumer и выполняет текущую операцию перед after над тем же входным аргументом; compose у Consumer отсутствует.",
+      "version": "Java SE 21 API",
+      "date": "2026-09-14"
+    }
+  ]
+}

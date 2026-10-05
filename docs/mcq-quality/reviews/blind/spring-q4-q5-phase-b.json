@@ -1,0 +1,68 @@
+{
+  "kind": "blind_phase_b",
+  "reviewer": "spring_propagation_blind",
+  "model": "gpt-5.6-luna",
+  "recorded_at": "2026-09-14T17:07:12Z",
+  "input": {
+    "path": "work/mcq-audit/spring-q4-q5-revealed.json",
+    "mcq_sha256": "ebbdbeb80fb6fed4de094d0fdf0ac772caba81c10cfcff4a26e0e9b4ae3d55d2",
+    "theory_sha256": "2a9d830d7e2e32299346a1d8d43a89060f7c20fd85046ec25aecb534306803f1",
+    "revealed_at": "2026-09-14T17:06:26.027390+00:00"
+  },
+  "standard_version": "актуализирован 2026-09-14",
+  "answers": [
+    {
+      "q_number": 4,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Видимый вопрос и тело Q4 совпадают по смыслу: требуется перечень Propagation, назначение и default; все четыре варианта отвечают на эту задачу."},
+        "FACTS": {"verdict": "PASS", "reason": "C правильно перечисляет REQUIRED, REQUIRES_NEW, NESTED, SUPPORTS, NOT_SUPPORTED, MANDATORY, NEVER, описывает участие в транзакции и default REQUIRED; A, B и D содержат соответственно подмену назначения, Isolation-константы и неверный default."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Каждая sections-группа прямо объясняет заявленную ошибку или правильный механизм своего варианта; теория связывает Propagation с транзакционным контекстом, Isolation — отдельно."},
+        "SECTIONS": {"verdict": "PASS", "reason": "Проверены все sections A/B/C/D: у wrong есть what_actually, source_of_confusion, if_it_were_true, how_it_should_be; у correct — explanation, example, when_to_apply, edge_cases, related, без противоречий ключу."},
+        "SFPL": {"verdict": "PASS", "reason": "Все варианты имеют одинаковый перечень-предложение и второе предложение с назначением и default; различия формы не выдают ключ."},
+        "ANSC": {"verdict": "PASS", "reason": "Каждый вариант полно отвечает на все части вопроса; wrong выражают конкретные правдоподобные модели ошибок, а не пустые или укороченные фразы."},
+        "RU": {"verdict": "PASS", "reason": "Вопрос, теория, A/B/C/D и все sections читаются естественно; термины Propagation/Isolation и транзакция употреблены последовательно."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Вывод проверен по раскрытому снимку и первичным источникам Spring, с отдельной проверкой каждой опции и sections."},
+        "BLIND": {"verdict": "PASS", "reason": "Фаза A была сохранена до раскрытия снимка; в настоящей фазе ключ доступен только для последующей проверки."}
+      },
+      "findings": []
+    },
+    {
+      "q_number": 5,
+      "block_idx": 0,
+      "checks": {
+        "CONTENT": {"verdict": "PASS", "reason": "Видимый вопрос задаёт внешнюю транзакцию и поддерживаемую JDBC-вложенность; теория и варианты отвечают именно сравнением REQUIRES_NEW и NESTED."},
+        "FACTS": {"verdict": "PASS", "reason": "C корректно описывает независимую физическую транзакцию REQUIRES_NEW, savepoint текущей транзакции для NESTED и последствия внешнего rollback; A, B и D содержат конкретные перестановки или неверное следствие."},
+        "LINKAGE": {"verdict": "PASS", "reason": "Все sections привязаны к механизму и последствиям соответствующего варианта; theory Q5 явно оговаривает прокси, менеджер, драйвер, savepoints и ограничения JPA."},
+        "SECTIONS": {"verdict": "PASS", "reason": "Проверены все sections A/B/C/D: они полно объясняют ошибочную или правильную модель, включая источник заблуждения, контрфактическое следствие и корректную формулировку."},
+        "SFPL": {"verdict": "PASS", "reason": "A/B/C/D — сопоставимые двухчастные сравнительные ответы с механизмом и последствием; у B отсутствие ';' лишь пунктуационное оформление одной связной фразы и не меняет тип или полноту ответа."},
+        "ANSC": {"verdict": "PASS", "reason": "Каждый вариант покрывает оба режима и внешний rollback; неправильность A/B/D содержательная и правдоподобная, а не следствие неполноты."},
+        "RU": {"verdict": "PASS", "reason": "Вопрос, теория, все варианты и sections написаны понятным техническим русским; причинно-следственные связи и условия явно выражены."},
+        "INDEPENDENT": {"verdict": "PASS", "reason": "Проверены все четыре опции и sections против раскрытого снимка и трёх заданных первичных источников, включая отдельную проверку JDBC и JPA оговорок."},
+        "BLIND": {"verdict": "PASS", "reason": "Фаза A с выбором C была зафиксирована до раскрытия; текущая проверка является разрешённой фазой B с доступом к ключу и теории."}
+      },
+      "findings": []
+    }
+  ],
+  "sources_checked": [
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/tx-propagation.html",
+      "claim": "REQUIRED присоединяется к существующей или создаёт физическую транзакцию; REQUIRES_NEW использует независимую физическую транзакцию; NESTED использует одну физическую транзакцию и savepoints.",
+      "version": "Spring Framework 6.2.19 (страница раздела 6.2)",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.7/spring-tx/src/main/java/org/springframework/transaction/annotation/Propagation.java",
+      "claim": "Enum содержит ровно семь значений; REQUIRED помечен как default; Javadoc описывает семантику всех режимов, включая NESTED как REQUIRED без текущей транзакции.",
+      "version": "v6.2.7",
+      "date": "2026-09-14"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.7/spring-orm/src/main/java/org/springframework/orm/jpa/JpaTransactionManager.java",
+      "claim": "JpaTransactionManager поддерживает JDBC savepoints при настройке, но по умолчанию nestedTransactionAllowed=false; savepoints применяются к JDBC Connection и не дают полноценной вложенной семантики JPA EntityManager.",
+      "version": "v6.2.7",
+      "date": "2026-09-14"
+    }
+  ],
+  "findings": []
+}
