@@ -126,56 +126,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое брокер сообщений и чем отличаются `Kafka` и `RabbitMQ` для EDA?",
+          "question_text": "Что такое брокер сообщений и чем отличаются Kafka и RabbitMQ для EDA?",
           "options": [
             {
-              "text": "Брокер — транспортный прокси: он маршрутизирует сообщения от producer к consumer, не сохраняя их между доставками.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Брокер — промежуточное хранилище: он персистит сообщения и гарантирует доставку, а не только проксирует трафик.",
-                "source_of_confusion": "Слово «брокер» ассоциируется с посредником-прокси, отсюда вывод об отсутствии хранения.",
-                "if_it_were_true": "Если бы брокер не хранил сообщения, падение consumer приводило бы к потере данных и устойчивость EDA исчезала.",
-                "how_it_should_be": "Брокер сохраняет сообщения (в `Kafka` — лог с retention, в `RabbitMQ` — очередь до потребления) и доставляет их потребителям."
-              },
               "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Kafka` и `RabbitMQ` работают одинаково: оба удаляют сообщение после доставки потребителю и не позволяют переиграть историю из лога.",
+              "order": 0,
+              "text": "Брокер лишь проксирует сообщения без хранения; Kafka и RabbitMQ Streams дают replay из сохранённого лога.",
               "correct": false,
               "sections": {
-                "what_actually": "`Kafka` — append-only лог с retention и чтением по offset (replay возможен), а `RabbitMQ` удаляет сообщение после потребления (replay нет).",
-                "source_of_confusion": "Оба называются «брокерами», поэтому их модели хранения ошибочно считают одинаковыми.",
-                "if_it_were_true": "Если бы `Kafka` удаляла сообщения как `RabbitMQ`, event sourcing и переигрывание истории были бы невозможны.",
-                "how_it_should_be": "Модели разные: `Kafka` хранит лог днями/неделями и читает по offset, `RabbitMQ` доставляет и удаляет."
-              },
-              "label": "B",
-              "order": 1
+                "what_actually": "Брокер может хранить сообщения по настройкам, а не только пересылать их.",
+                "source_of_confusion": "Слово «посредник» принимают за отсутствие устойчивого хранения.",
+                "if_it_were_true": "Тогда упавший consumer терял бы всякое ещё не полученное сообщение.",
+                "how_it_should_be": "Опишите модель хранения и доставки прежде чем сравнивать брокеры."
+              }
             },
             {
-              "text": "Брокер — промежуточное хранилище: принимает сообщения от producers и доставляет consumers с персистентностью и порядком.",
+              "label": "B",
+              "order": 1,
+              "text": "Брокер принимает и хранит сообщения; Kafka и RabbitMQ quorum queue дают replay по offset после ack.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Quorum queue удаляет подтверждённую задачу; пользовательского replay по offset нет.",
+                "source_of_confusion": "Внутренний Raft log репликации путают с журналом потребления Stream.",
+                "if_it_were_true": "Тогда worker мог бы перечитать обработанную задачу из quorum queue.",
+                "how_it_should_be": "Для replay сравнивайте Kafka и RabbitMQ Streams."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Брокер принимает, хранит и доставляет сообщения; Kafka и RabbitMQ Streams ведут лог, обычные очереди удаляют после ack.",
               "correct": true,
               "sections": {
-                "explanation": "`Kafka` — распределённый append-only лог с retention, чтением по offset и replay, высокий throughput; `RabbitMQ` — очереди с доставкой и удалением после потребления, push к consumer, порядок в пределах одной очереди.",
-                "example": "Для event streaming и возможности «переиграть» историю выбирают `Kafka` (миллионы msg/s); для task queue и гарантированной доставки до одного воркера с `RPC` — `RabbitMQ`.",
-                "when_to_apply": "Выбор брокера делают по сценарию: нужен replay и большой объём событий — `Kafka`; нужна классическая рабочая очередь с роутингом — `RabbitMQ`.",
-                "edge_cases": "`Kafka` хуже подходит под низколатентные точечные задачи с маленьким объёмом, а `RabbitMQ` не даёт переигрывание истории — у него сообщение исчезает после ack.",
-                "related": "[[event-driven-patterns-interview#Q1]] EDA против синхронного REST; [[event-driven-patterns-interview#Q4]] порядок обработки событий; [[event-driven-patterns-interview#Q16]] partition key в Kafka."
-              },
-              "label": "C",
-              "order": 2
+                "explanation": "Брокер развязывает producer и consumer, а способ хранения зависит от типа ресурса.",
+                "example": "Kafka topic и RabbitMQ Stream дают replay сохранённых записей, quorum queue — ack/requeue задач.",
+                "when_to_apply": "Применяйте при выборе event log или рабочей очереди в EDA.",
+                "edge_cases": "Срок replay ограничен retention; фиксированные рейтинги throughput не универсальны.",
+                "related": "См. Q3 и RabbitMQ Streams 4.3."
+              }
             },
             {
-              "text": "`RabbitMQ` обычно превосходит `Kafka` по throughput, потому что держит сообщения в памяти и реже обращается к диску при доставке.",
+              "label": "D",
+              "order": 3,
+              "text": "Брокер принимает и хранит сообщения; Kafka удаляет после consumer commit, RabbitMQ Streams оставляет историю по offset.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот, `Kafka` обычно даёт более высокий throughput (миллионы msg/s) за счёт sequential-записи в лог; `RabbitMQ` рассчитан на десятки тысяч msg/s.",
-                "source_of_confusion": "`RabbitMQ` исторически считают «лёгким», отсюда миф про его превосходство в throughput.",
-                "if_it_were_true": "Если бы `RabbitMQ` был быстрее на потоковых нагрузках, event streaming строили бы на нём, а не на `Kafka`.",
-                "how_it_should_be": "Для высокого потока событий лидирует `Kafka`; `RabbitMQ` силён в роутинге и гарантированной доставке до одного потребителя."
-              },
-              "label": "D",
-              "order": 3
+                "what_actually": "Kafka commit позиции consumer-а не удаляет запись из топика.",
+                "source_of_confusion": "Состояние обработки путают с политикой удаления журнала.",
+                "if_it_were_true": "Тогда новая группа Kafka не смогла бы прочесть уже обработанное событие.",
+                "how_it_should_be": "Отделяйте offset группы от retention самого лога."
+              }
             }
           ]
         }

@@ -371,15 +371,15 @@ Persistence определяет, переживут ли сообщения р�
 
 ## Q15. Кто умеет replay (перечитывать исторические сообщения)?
 
-Replay напрямую следует из persistence (Q14): если сообщения не удаляются при чтении, их можно перечитать. Поэтому отличный replay у лог-платформ (Kafka, Pulsar, Redpanda) — любой consumer возвращается на любой offset. У RabbitMQ replay ограничен (только через плагин Streams), а у SQS его нет вовсе: сообщение удаляется после обработки.
+Replay требует, чтобы запись **оставалась доступной после чтения**, и клиент мог выбрать прежнюю позицию; одной персистентности на диске недостаточно. Kafka, Pulsar и Redpanda читают сохранённый лог по offset. В RabbitMQ `classic`/`quorum` queue после ack запись удаляется, но **RabbitMQ Streams** поддерживают replay в пределах retention. У SQS обычная очередь удаляет сообщение после успешной обработки. [RabbitMQ Streams 4.3](https://www.rabbitmq.com/docs/streams), [Kafka topic configs](https://kafka.apache.org/43/configuration/topic-configs/).
 
 | Система | Replay |
 |--------|--------|
-| Kafka | **Отличный** (любой consumer, любой offset) |
+| Kafka | Да, любой независимый consumer в пределах сохранённых записей |
 | Pulsar | **Отличный** |
 | Redpanda | **Отличный** |
 | NATS JetStream | Да (ограничен по времени/размеру) |
-| RabbitMQ | Ограниченный (плагин Streams) |
+| RabbitMQ | Streams: да, пока запись сохранена; classic/quorum queue: нет после ack |
 | SQS | **Нет** (удаляется после обработки) |
 | EventBridge | Поддерживаются архив и replay |
 
@@ -389,7 +389,7 @@ Replay напрямую следует из persistence (Q14): если сооб
 - A/B-тестирования на исторических данных
 - Event sourcing
 
-**Если replay критичен** → streaming-платформа (Kafka, Pulsar).
+**Если replay критичен**, сравните Kafka, Pulsar, Redpanda и RabbitMQ Streams по сроку хранения, клиентам и эксплуатации; обычная очередь RabbitMQ не заменяет журнал.
 
 ## Q16. Насколько сложна эксплуатация (operational complexity)?
 

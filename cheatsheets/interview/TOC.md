@@ -287,7 +287,7 @@ updated: "2026-10-05"
 ## messaging
 
 - [Вопросы на собеседовании: `Apache Kafka`](messaging/kafka-interview.md) — `50` вопросов
-- [Вопросы на собеседовании: `RabbitMQ`](messaging/rabbitmq-interview.md) — `41` вопрос
+- [Вопросы на собеседовании: `RabbitMQ`](messaging/rabbitmq-interview.md) — `42` вопроса
 - [Вопросы на собеседовании: `NATS`](messaging/nats-interview.md) — `24` вопроса
 - [Вопросы на собеседовании: `Apache Pulsar`](messaging/pulsar-interview.md) — `22` вопроса
 - [Вопросы на собеседовании: `AWS SQS` и `SNS`](messaging/aws-sqs-sns-interview.md) — `22` вопроса

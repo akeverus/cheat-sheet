@@ -849,52 +849,52 @@
           "question_text": "Кто умеет replay (перечитывать исторические сообщения)?",
           "options": [
             {
-              "order": 0,
               "label": "A",
-              "text": "Очередь `SQS` отматывается к прошлым сообщениям, Kafka отдаёт лишь свежие записи, Pulsar устроен так же.",
+              "order": 0,
+              "text": "Kafka и RabbitMQ classic queue дают replay пока включена durable-запись; RabbitMQ Stream удаляет сообщение после ack.",
               "correct": false,
               "sections": {
-                "what_actually": "Таблица ставит у SQS «нет» с пояснением про удаление после обработки, а у Kafka и Pulsar — «отличный», с возвратом любого consumer-а на любой offset.",
-                "source_of_confusion": "Видимость сообщения в очереди до подтверждения похожа на историю, а термин offset у Kafka принимают за указатель только на конец лога.",
-                "if_it_were_true": "Тогда рекомендация брать streaming-платформу при критичном replay была бы перевёрнутой, а плагин Streams у RabbitMQ никому не понадобился бы.",
-                "how_it_should_be": "Kafka и Pulsar перечитывают историю с любого offset, а SQS удаляет сообщение после обработки и replay не даёт."
+                "what_actually": "Durability classic queue не даёт replay после ack; Stream сохраняет запись по retention.",
+                "source_of_confusion": "Переживание рестарта путают с возможностью вернуться к прошлой позиции.",
+                "if_it_were_true": "Тогда подтверждённая задача оставалась бы в обычной очереди RabbitMQ.",
+                "how_it_should_be": "Проверяйте не только persistence, но и неразрушающее чтение по offset."
               }
             },
             {
-              "order": 1,
               "label": "B",
-              "text": "Перечитывание опирается на удаление сообщения после обработки, поэтому `SQS` силён, Kafka заметно ограничен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Тело формулирует условие ровно наоборот: перечитать можно потому, что сообщения не удаляются при чтении, и именно удаление после обработки лишает SQS replay.",
-                "source_of_confusion": "Удаление читается как признак аккуратного учёта обработанного, из которого словно бы можно восстановить прошлое состояние очереди.",
-                "if_it_were_true": "Тогда replay был бы силён у очередей и слаб у логов, а вывод «replay напрямую следует из persistence» противоречил бы таблице.",
-                "how_it_should_be": "Replay держится на сохранении сообщений после чтения, поэтому он отличный у лог-платформ и отсутствует у SQS."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Штатный replay встроен в `RabbitMQ`, NATS JetStream ограничен одним проходом, EventBridge теряет архив.",
-              "correct": false,
-              "sections": {
-                "what_actually": "У RabbitMQ в таблице стоит «ограниченный» с оговоркой про плагин Streams, у JetStream — «да» с ограничением по времени или размеру, а у EventBridge поддерживаются архив и replay.",
-                "source_of_confusion": "Зрелость RabbitMQ заставляет ждать встроенной функции, а служебный характер EventBridge — сомневаться, что он хранит события.",
-                "if_it_were_true": "Тогда плагин Streams не упоминался бы как условие, а JetStream не отличался бы от систем, вовсе лишённых повторного чтения.",
-                "how_it_should_be": "У RabbitMQ replay ограничен плагином Streams, JetStream перечитывает в пределах ретенции, а EventBridge поддерживает архив и replay."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Лог-платформы возвращают consumer к любому offset, `RabbitMQ` опирается на плагин, SQS стирает сообщение.",
+              "order": 1,
+              "text": "Kafka и RabbitMQ Streams дают replay пока записи сохранены; SQS после удаления сообщения не даёт такого чтения.",
               "correct": true,
               "sections": {
-                "explanation": "Тело выводит replay прямо из persistence: если сообщения не удаляются при чтении, их можно перечитать. Поэтому у Kafka, Pulsar и Redpanda replay отличный, у RabbitMQ он ограничен плагином Streams, а у SQS его нет — сообщение удаляется после обработки.",
-                "example": "В таблице у Kafka стоит «отличный (любой consumer, любой offset)», у RabbitMQ — «ограниченный (плагин Streams)», у SQS — «нет (удаляется после обработки)».",
-                "when_to_apply": "Когда нужны восстановление после бага, подключение новых consumer-ов, A/B-тесты на исторических данных или event sourcing — тело перечисляет именно эти сценарии.",
-                "edge_cases": "NATS JetStream перечитывать умеет, но с ограничением по времени или размеру, а EventBridge закрывает задачу отдельными архивом и replay.",
-                "related": "Тот же Q завершает рекомендацией: если replay критичен, брать streaming-платформу вроде Kafka или Pulsar."
+                "explanation": "Лог остаётся доступным после чтения до истечения политики хранения.",
+                "example": "Stream consumer может начать с прежнего offset; SQS удаляет подтверждённую задачу.",
+                "when_to_apply": "Используйте при выборе транспорта для переигрывания событий.",
+                "edge_cases": "Граница replay — доступный диапазон истории; RabbitMQ classic/quorum queue после ack не подходит.",
+                "related": "См. Q15 и RabbitMQ Streams 4.3."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Kafka, RabbitMQ Streams и SQS дают replay по offset пока записи сохранены; различается лишь срок retention.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SQS не предоставляет журнал с выбором прежнего offset после удаления сообщения.",
+                "source_of_confusion": "Персистентность управляемой очереди принимают за логовую семантику.",
+                "if_it_were_true": "Тогда SQS consumer мог бы перечитать уже удалённую задачу.",
+                "how_it_should_be": "Разделяйте сохранение до обработки и историю после неё."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Kafka даёт replay по offset пока записи сохранены; RabbitMQ Streams и Pulsar удаляют запись после первого чтения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RabbitMQ Streams и Pulsar также поддерживают неразрушающее чтение истории.",
+                "source_of_confusion": "Очередную модель RabbitMQ ошибочно распространяют на Streams и другие логи.",
+                "if_it_were_true": "Тогда второй Stream consumer не смог бы увидеть ту же запись.",
+                "how_it_should_be": "Смотрите на конкретный тип ресурса и retention."
               }
             }
           ]

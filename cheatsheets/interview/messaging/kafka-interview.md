@@ -1098,22 +1098,16 @@ public DefaultErrorHandler errorHandler(KafkaTemplate<String, Object> template) 
 
 ## Q42. В чём разница между `Kafka` и `RabbitMQ`?
 
-Корень всех различий — модель хранения. Kafka это **лог**: сообщение остаётся в топике после прочтения, поэтому возможны replay и несколько независимых групп потребителей. RabbitMQ это **брокер очередей**: сообщение удаляется после подтверждения (ACK), зато доступна гибкая маршрутизация через exchange. Всё остальное в таблице — следствия этого выбора.
+Сравнивайте Kafka с **конкретным типом RabbitMQ**, а не со всем брокером сразу. Kafka хранит записи в партиционированном логе до удаления политикой хранения. Обычные RabbitMQ `classic`/`quorum` очереди удаляют подтверждённую задачу, но RabbitMQ **Streams** тоже дают append-only лог, offset и replay. [Kafka topic configs](https://kafka.apache.org/43/configuration/topic-configs/), [RabbitMQ Streams 4.3](https://www.rabbitmq.com/docs/streams).
 
-| Аспект | Kafka | RabbitMQ |
-|--------|-------|----------|
-| Модель | Distributed commit log | Message broker (AMQP) |
-| Хранение | На диске, retention-based | Удаление после ACK |
-| Порядок | В пределах партиции | В пределах очереди |
-| Throughput | Очень высокий (млн msg/sec) | Средний (тыс. msg/sec) |
-| Consumer model | Pull (poll) | Push + Pull |
-| Replay | Да (перемотка offset) | Нет (сообщение удаляется) |
-| Routing | По ключу → партиция | Exchange → routing key → queue |
-| Протокол | Kafka Protocol (binary) | AMQP, MQTT, STOMP |
-| Use case | Event streaming, data pipeline | Task queue, RPC, routing |
+| Аспект | Kafka topic | RabbitMQ classic/quorum queue | RabbitMQ Stream |
+|---|---|---|---|
+| Хранение | Лог с retention/compaction. | Сообщение удаляется после ack. | Лог с retention по времени/размеру. |
+| Replay | Пока нужная запись сохранена. | После ack из самой очереди невозможен. | Пока нужная запись сохранена; чтение с offset. |
+| Порядок и параллелизм | По партиции. | Зависит от очереди и числа consumer-ов. | По stream; super stream делится на партиции. |
+| Типовой выбор | Event log и инструменты Kafka-экосистемы. | Очередь задач, маршрутизация, ack/requeue. | История, независимые читатели, большой fan-out в RabbitMQ. |
 
-**Когда Kafka:** высокий throughput, event-sourcing, data pipeline, replay нужен.
-**Когда RabbitMQ:** task queues, сложный routing, request-reply, низкие объёмы.
+Replay сам по себе не делает Kafka единственным выбором. Сравните retention, маршрутизацию, клиентские протоколы, репликацию, эксплуатацию и измеренную нагрузку. Фиксированные цифры throughput и latency без одинаковых условий не помогают выбрать брокер. [RabbitMQ comparison](https://www.rabbitmq.com/docs/compare/kafka), [подробнее о Streams](rabbitmq-interview.md#q42-чем-rabbitmq-streams-отличаются-от-обычной-очереди-и-когда-они-нужны).
 
 ## Q43. Какие паттерны retry применяются с `Kafka`?
 

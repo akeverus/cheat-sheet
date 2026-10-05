@@ -2526,50 +2526,50 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`Kafka` удаляет сообщение сразу после ACK, как классический брокер очередей сообщений.",
+              "text": "Kafka удаляет запись после consumer commit; RabbitMQ classic queue хранит её для replay.",
               "correct": false,
               "sections": {
-                "what_actually": "`Kafka` хранит сообщение после чтения; удаляет после ACK именно RabbitMQ.",
-                "source_of_confusion": "Модели двух брокеров путают.",
-                "if_it_were_true": "Тогда replay в Kafka был бы невозможен.",
-                "how_it_should_be": "Kafka — лог с retention, RabbitMQ — очередь."
+                "what_actually": "Kafka commit offset не удаляет запись; classic queue после ack удаляет сообщение.",
+                "source_of_confusion": "Подтверждение позиции путают с удалением из лога.",
+                "if_it_were_true": "Тогда Kafka не могла бы дать независимое повторное чтение.",
+                "how_it_should_be": "Сравнивайте физическое хранение и состояние consumer-а отдельно."
               }
             },
             {
               "label": "B",
               "order": 1,
-              "text": "Replay перемоткой offset доступен в `RabbitMQ`, но при этом недоступен в Kafka.",
+              "text": "Kafka и RabbitMQ Streams удаляют запись после ack; replay остаётся только у classic queue.",
               "correct": false,
               "sections": {
-                "what_actually": "Replay перемоткой offset доступен в `Kafka`, а не в RabbitMQ.",
-                "source_of_confusion": "Свойства брокеров меняют местами.",
-                "if_it_were_true": "Тогда event sourcing вели бы на RabbitMQ.",
-                "how_it_should_be": "RabbitMQ удаляет сообщение — replay нет."
+                "what_actually": "Оба лога поддерживают повторное чтение сохранённых записей; classic queue после ack историю не хранит.",
+                "source_of_confusion": "Семантику очереди задач переносят на журналы.",
+                "if_it_were_true": "Тогда Stream не позволял бы читать по прежнему offset.",
+                "how_it_should_be": "Уточняйте тип RabbitMQ и его retention."
               }
             },
             {
               "label": "C",
               "order": 2,
-              "text": "У `Kafka` пропускная способность заметно ниже, чем у сравнимого брокера RabbitMQ.",
+              "text": "Kafka и RabbitMQ Streams поддерживают replay без политики хранения; classic queue удаляет после ack.",
               "correct": false,
               "sections": {
-                "what_actually": "У `Kafka` throughput очень высокий (млн msg/sec), выше RabbitMQ.",
-                "source_of_confusion": "«Умный брокер» RabbitMQ кажется быстрее.",
-                "if_it_were_true": "Тогда стриминг вели бы на RabbitMQ.",
-                "how_it_should_be": "Kafka спроектирована под высокий throughput."
+                "what_actually": "Replay ограничен сохранёнными записями и настройками retention/compaction.",
+                "source_of_confusion": "Неразрушающее чтение принимают за бессрочное хранение.",
+                "if_it_were_true": "Тогда удаление старого сегмента не влияло бы на доступный offset.",
+                "how_it_should_be": "Рассчитывайте срок истории и отставание consumer-а."
               }
             },
             {
               "label": "D",
               "order": 3,
-              "text": "`Kafka` хранит сообщение после чтения, а RabbitMQ удаляет его после ACK.",
+              "text": "Kafka и RabbitMQ Streams хранят лог для replay; classic/quorum queue удаляет сообщение после ack.",
               "correct": true,
               "sections": {
-                "explanation": "`Kafka` — лог: сообщение остаётся после чтения; RabbitMQ удаляет после ACK.",
-                "example": "Отсюда replay и несколько групп у Kafka; гибкая маршрутизация у RabbitMQ.",
-                "when_to_apply": "Когда выбираешь брокер под задачу.",
-                "edge_cases": "Kafka — pull (poll); RabbitMQ — push + pull.",
-                "related": "Kafka: event streaming; RabbitMQ: task queue, RPC, routing."
+                "explanation": "Kafka и RabbitMQ Stream разделяют модель неразрушающего чтения, обычные RabbitMQ очереди — модель задач.",
+                "example": "После ack quorum queue запись нельзя перечитать из неё; Stream позволяет читать сохранённый offset.",
+                "when_to_apply": "Используйте при выборе типа брокерного ресурса для event log или work queue.",
+                "edge_cases": "Replay зависит от retention; не сравнивайте продукты по фиксированному throughput.",
+                "related": "См. Kafka Q42 и RabbitMQ Q40/Q42, документацию Streams 4.3."
               }
             }
           ]

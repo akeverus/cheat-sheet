@@ -2456,55 +2456,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "В чём принципиальные отличия RabbitMQ от Kafka?",
+          "question_text": "Чем Kafka отличается от очередей и Streams в RabbitMQ?",
           "options": [
             {
               "label": "A",
               "order": 0,
-              "text": "`RabbitMQ` хранит сообщения в неизменяемом логе и спокойно допускает их replay.",
+              "text": "RabbitMQ classic/quorum queues сохраняют запись после ack для replay; Streams и Kafka хранят лог по retention.",
               "correct": false,
               "sections": {
-                "what_actually": "Неизменяемый лог с replay — это `Kafka`; `RabbitMQ` удаляет после `ack`.",
-                "source_of_confusion": "Свойства двух брокеров смешивают.",
-                "if_it_were_true": "Тогда `RabbitMQ` не отличался бы от `Kafka`.",
-                "how_it_should_be": "В `RabbitMQ` сообщение исчезает после подтверждения."
+                "what_actually": "Classic/quorum queue удаляет подтверждённое сообщение; replay доступен у Stream.",
+                "source_of_confusion": "Реплицированную очередь ошибочно считают неизменяемым журналом.",
+                "if_it_were_true": "Тогда подтверждённую задачу можно было бы перечитать из той же quorum queue.",
+                "how_it_should_be": "Сравнивайте тип RabbitMQ: queue для задач, Stream для повторного чтения."
               }
             },
             {
               "label": "B",
               "order": 1,
-              "text": "`Kafka` работает по push-модели, сама активно проталкивая сообщения своему consumer.",
+              "text": "RabbitMQ classic/quorum queues удаляют запись после ack; Streams тоже удаляют её и не позволяют replay.",
               "correct": false,
               "sections": {
-                "what_actually": "`Kafka` работает по pull-модели; push — это `RabbitMQ`.",
-                "source_of_confusion": "Модели доставки путают местами.",
-                "if_it_were_true": "Тогда consumer не тянул бы сам с нужного offset.",
-                "how_it_should_be": "Consumer `Kafka` сам вычитывает лог."
+                "what_actually": "У Stream подтверждение не удаляет запись; чтение неразрушающее.",
+                "source_of_confusion": "Правило обычной очереди переносят на другой тип хранения RabbitMQ.",
+                "if_it_were_true": "Тогда stream consumer не мог бы вернуться к сохранённому offset.",
+                "how_it_should_be": "Streams хранят записи по retention и позволяют читать повторно."
               }
             },
             {
               "label": "C",
               "order": 2,
-              "text": "У `RabbitMQ` пропускная способность заметно выше, чем у сравнимого по нагрузке Kafka.",
+              "text": "Подтверждённая задача исчезает из RabbitMQ queue; Kafka и Streams сохраняют любую прежнюю запись без срока.",
               "correct": false,
               "sections": {
-                "what_actually": "У `Kafka` пропускная способность выше, у `RabbitMQ` — умеренная.",
-                "source_of_confusion": "«Умная очередь» кажется быстрее лога.",
-                "if_it_were_true": "Тогда стриминг вели бы на `RabbitMQ`.",
-                "how_it_should_be": "Очень высокий throughput — сильная сторона `Kafka`."
+                "what_actually": "Оба лога ограничиваются настроенной политикой хранения; старые данные могут исчезнуть.",
+                "source_of_confusion": "Неразрушающее чтение путают с бессрочным архивом.",
+                "if_it_were_true": "Тогда отставший consumer всегда находил бы любой старый offset.",
+                "how_it_should_be": "Рассчитывайте retention и поведение при выходе за доступный диапазон."
               }
             },
             {
               "label": "D",
               "order": 3,
-              "text": "`RabbitMQ` удаляет сообщение после ack, а Kafka хранит лог заданное время.",
+              "text": "RabbitMQ classic/quorum queues удаляют запись после ack; Streams и Kafka хранят лог для replay в пределах retention.",
               "correct": true,
               "sections": {
-                "explanation": "`RabbitMQ` удаляет сообщение после `ack`, а `Kafka` хранит лог заданное время.",
-                "example": "`RabbitMQ` — умная очередь, `Kafka` — распределённый неизменяемый лог.",
-                "when_to_apply": "Когда выбираешь брокер под задачу.",
-                "edge_cases": "`RabbitMQ` — push, `Kafka` — pull.",
-                "related": "Replay возможен в `Kafka` с любого offset, в `RabbitMQ` — нет."
+                "explanation": "Модель RabbitMQ зависит от типа очереди; Stream тоже является реплицированным логом.",
+                "example": "Подтверждение задачи в quorum queue удаляет её, а Stream позволяет перечитать offset.",
+                "when_to_apply": "Используйте при сравнении режимов RabbitMQ с Kafka.",
+                "edge_cases": "Replay ограничен retention; фиксированные рейтинги latency/throughput не универсальны.",
+                "related": "См. Q40/Q42, RabbitMQ Streams 4.3 и Kafka topic configs."
               }
             }
           ]
@@ -2521,50 +2521,110 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`RabbitMQ` берут ради replay событий и очень высокого сквозного throughput.",
+              "text": "Для задач выбрать RabbitMQ quorum queue; для replay выбрать classic queue, поскольку ack сохраняет её историю.",
               "correct": false,
               "sections": {
-                "what_actually": "Replay и очень высокий throughput — это `Kafka`, а не `RabbitMQ`.",
-                "source_of_confusion": "Свойства брокеров путают.",
-                "if_it_were_true": "Тогда `Kafka` был бы избыточен.",
-                "how_it_should_be": "`RabbitMQ` хорош при умеренном объёме без долгого хранения."
+                "what_actually": "Classic queue удаляет сообщение после ack и не подходит для replay.",
+                "source_of_confusion": "Надёжность quorum ошибочно переносят на историю classic queue.",
+                "if_it_were_true": "Тогда уже подтверждённое сообщение оставалось бы доступным из classic queue.",
+                "how_it_should_be": "Для replay сравните RabbitMQ Stream и Kafka."
               }
             },
             {
               "label": "B",
               "order": 1,
-              "text": "Оба брокера в принципе не могут вместе сосуществовать в одной общей `системе`.",
+              "text": "Для задач выбрать Kafka topic; для replay выбрать RabbitMQ quorum queue, поскольку обе модели используют offset.",
               "correct": false,
               "sections": {
-                "what_actually": "Оба брокера прекрасно сосуществуют в одной системе.",
-                "source_of_confusion": "«Или/или» кажется обязательным выбором.",
-                "if_it_were_true": "Тогда гибридные архитектуры были бы невозможны.",
-                "how_it_should_be": "`Kafka` — для streaming, `RabbitMQ` — для task queues и RPC."
+                "what_actually": "Quorum queue предназначена для подтверждаемых задач и не даёт replay после ack.",
+                "source_of_confusion": "Наличие реплицированного Raft log внутри quorum queue путают с API потребления Stream.",
+                "if_it_were_true": "Тогда consumer quorum queue мог бы сам назначить старый offset.",
+                "how_it_should_be": "Разделяйте внутренний лог репликации и пользовательский журнал событий."
               }
             },
             {
               "label": "C",
               "order": 2,
-              "text": "`RabbitMQ` выбирают ради маршрутизации и очередей задач, Kafka — ради истории.",
+              "text": "Для задач выбрать RabbitMQ classic/quorum queue; для replay сравнить RabbitMQ Stream и Kafka по нагрузке и окружению.",
               "correct": true,
               "sections": {
-                "explanation": "`RabbitMQ` — ради маршрутизации и очередей задач, `Kafka` — ради истории.",
-                "example": "Оба могут сосуществовать: `Kafka` — streaming, `RabbitMQ` — task queues и RPC.",
-                "when_to_apply": "Когда решаешь, какой брокер взять под сценарий.",
-                "edge_cases": "`RabbitMQ`: сложная маршрутизация, низкая задержка, RPC.",
-                "related": "`Kafka`: replay, очень высокий throughput, event log."
+                "explanation": "Рабочая очередь и сохраняемый поток требуют разных моделей потребления.",
+                "example": "Существующий RabbitMQ Stream может закрыть replay без второго брокера.",
+                "when_to_apply": "Применяйте после требований к маршрутизации, retention и клиентским библиотекам.",
+                "edge_cases": "Наличие replay само по себе не выбирает Kafka; масштаб проверяют на своей нагрузке.",
+                "related": "См. Q41/Q42 и RabbitMQ vs Kafka 4.3."
               }
             },
             {
               "label": "D",
               "order": 3,
-              "text": "`Kafka` выбирают ради сложной гибкой маршрутизации и паттерна RPC через messaging.",
+              "text": "Для задач выбрать RabbitMQ Stream; для replay выбрать Kafka, поскольку Stream удаляет записи после ack.",
               "correct": false,
               "sections": {
-                "what_actually": "Сложная маршрутизация и RPC — сильная сторона `RabbitMQ`, а не `Kafka`.",
-                "source_of_confusion": "Оба «брокеры», отсюда перенос свойств.",
-                "if_it_were_true": "Тогда `RabbitMQ` был бы не нужен.",
-                "how_it_should_be": "`Kafka` берут ради replay и потока событий."
+                "what_actually": "Stream не удаляет записи после ack, а replay доступен до истечения retention.",
+                "source_of_confusion": "Поведение classic/quorum queue приписывают Stream.",
+                "if_it_were_true": "Тогда независимый читатель Stream не смог бы перечитать уже обработанную запись.",
+                "how_it_should_be": "Для задач обычно выбирают classic/quorum queue, для replay возможны Stream и Kafka."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 42,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем RabbitMQ Streams отличаются от обычной очереди и когда они нужны?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Stream хранит лог по retention, но consumer ack удаляет запись для всех; подходит для одноразовых задач.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ack у Stream не удаляет запись из общего лога.",
+                "source_of_confusion": "Семантику обычной очереди переносят на неразрушающее чтение.",
+                "if_it_were_true": "Тогда независимый читатель не смог бы получить уже подтверждённую запись.",
+                "how_it_should_be": "Для replay выбирают Stream, для задач с удалением после ack — classic/quorum queue."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Stream хранит лог по retention и позволяет читать по offset; подходит для replay и независимых читателей.",
+              "correct": true,
+              "sections": {
+                "explanation": "Запись живёт по политике возраста/размера, а не до подтверждения первого consumer-а.",
+                "example": "После перезапуска consumer возобновляет чтение с сохранённой позиции.",
+                "when_to_apply": "Используйте для истории событий, большого fan-out или backlog.",
+                "edge_cases": "Super stream масштабируется партициями, поэтому глобальный порядок не обещан.",
+                "related": "См. Q42 и RabbitMQ Streams 4.3."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Stream хранит лог по retention, но consumer может читать лишь новые записи; подходит для рассылки без истории.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Consumer может стартовать с доступного offset или времени и перечитать сохранённые записи.",
+                "source_of_confusion": "Старт по умолчанию с новых сообщений путают с запретом replay.",
+                "if_it_were_true": "Тогда аргумент x-stream-offset не имел бы смысла.",
+                "how_it_should_be": "Явно задайте позицию чтения и контролируйте срок хранения."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Stream хранит лог по retention и даёт глобальный порядок super stream; подходит для строго упорядоченного fan-out.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Super stream делится на партиции; порядок сохраняется внутри одной партиции.",
+                "source_of_confusion": "Логический единый поток путают с одной последовательностью всех событий.",
+                "if_it_were_true": "Тогда параллельная запись в разные партиции имела бы один общий offset.",
+                "how_it_should_be": "Для глобального порядка нужна одна последовательность или отдельная координация."
               }
             }
           ]

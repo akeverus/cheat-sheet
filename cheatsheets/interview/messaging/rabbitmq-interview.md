@@ -31,6 +31,8 @@ updated: "2026-10-05"
 - [AMQP 0-9-1 Model Explained](https://www.rabbitmq.com/tutorials/amqp-concepts) — концепции протокола
 - [RabbitMQ Reliability Guide](https://www.rabbitmq.com/docs/reliability) — гарантии доставки и надёжность
 - [Quorum Queues](https://www.rabbitmq.com/docs/quorum-queues) — современный тип HA-очередей
+- [Streams and Superstreams](https://www.rabbitmq.com/docs/streams) — журнал, replay, retention и партиционирование
+- [RabbitMQ vs Kafka](https://www.rabbitmq.com/docs/compare/kafka) — сравнение с учётом Streams
 
 ### Статьи Baeldung
 
@@ -110,8 +112,9 @@ updated: "2026-10-05"
 - [Q39. Какие метрики RabbitMQ наиболее важны?](#q39-какие-метрики-rabbitmq-наиболее-важны)
 
 **RabbitMQ vs Kafka**
-- [Q40. (!) В чём принципиальные отличия RabbitMQ от Kafka?](#q40--в-чём-принципиальные-отличия-rabbitmq-от-kafka)
+- [Q40. (!) Чем Kafka отличается от очередей и Streams в RabbitMQ?](#q40--чем-kafka-отличается-от-очередей-и-streams-в-rabbitmq)
 - [Q41. Когда выбрать RabbitMQ, а когда Kafka?](#q41-когда-выбрать-rabbitmq-а-когда-kafka)
+- [Q42. Чем RabbitMQ Streams отличаются от обычной очереди и когда они нужны?](#q42-чем-rabbitmq-streams-отличаются-от-обычной-очереди-и-когда-они-нужны)
 
 ---
 
@@ -1070,47 +1073,43 @@ rabbitmqadmin export config.json
 
 ---
 
-## Q40. (!) В чём принципиальные отличия RabbitMQ от Kafka?
+## Q40. (!) Чем Kafka отличается от очередей и Streams в RabbitMQ?
 
-Главное различие в одной фразе: **`RabbitMQ` — это умная очередь, `Kafka` — это распределённый лог.** В `RabbitMQ` сообщение существует, пока его не заберут и не подтвердят, после чего оно исчезает. В `Kafka` сообщения пишутся в неизменяемый лог и хранятся заданное время независимо от того, кто их прочитал, — поэтому возможен replay. Из этой разницы вытекают почти все остальные строки таблицы:
+Сравнивайте **модель хранения и потребления**, а не только названия продуктов. Обычные очереди RabbitMQ (`classic`/`quorum`) удаляют сообщение после подтверждения обработки; Kafka хранит записи в партиционированном логе по политике retention. Но RabbitMQ **Streams** тоже представляют собой реплицированный append-only лог с повторным чтением по offset. Поэтому утверждение «RabbitMQ не поддерживает replay» неверно для Streams. [Документация RabbitMQ 4.3](https://www.rabbitmq.com/docs/streams), [сравнение с Kafka](https://www.rabbitmq.com/docs/compare/kafka).
 
-| Характеристика | `RabbitMQ` | `Apache Kafka` |
-|----------------|------------|----------------|
-| Модель | Push (broker → consumer) | Pull (consumer тянет) |
-| Хранение | Сообщения удаляются после ack | Лог хранится N дней |
-| Порядок | В рамках одной очереди | В рамках партиции |
-| Replay | Нет (только DLQ) | Да (любой offset) |
-| Маршрутизация | Гибкая (exchange, binding) | По топику/партиции |
-| Пропускная способность | Умеренная (100K msg/s) | Очень высокая (1M+ msg/s) |
-| Latency | Низкая (<1ms) | Чуть выше (batch) |
-| Consumer groups | Конкуренция или подписка | Независимые группы |
-| Протокол | `AMQP`, `STOMP`, `MQTT` | Собственный |
-| Use case | Задачи, RPC, сложная маршрутизация | Стриминг, аналитика, event log |
+| Свойство | RabbitMQ classic/quorum queue | RabbitMQ Stream | Kafka topic |
+|---|---|---|---|
+| Потребление | Конкурирующие consumer-ы; ack завершает жизнь сообщения в очереди. | Чтение не удаляет запись; consumer выбирает позицию в логе. | Группы независимо отслеживают offset в партициях. |
+| История | После ack replay из самой очереди невозможен. | Replay возможен, пока запись сохраняется по retention. | Replay возможен, пока запись сохраняется по retention/compaction. |
+| Масштабирование | Несколько очередей и consumer-ов, при необходимости quorum-репликация. | Один stream или partitioned super stream для роста нагрузки. | Партиции распределяют нагрузку и задают область порядка. |
+| Сильная сторона | Маршрутизация через exchanges, очереди задач, ack/requeue. | Большой fan-out, replay и длительный backlog внутри RabbitMQ. | Распределённый event log и экосистема потоковой обработки. |
+
+Не закладывайте фиксированные числа «RabbitMQ 100K/s, Kafka 1M/s» или универсальное сравнение latency: результат зависит от типа очереди, размера сообщений, числа реплик, батчинга, дисков и сценария чтения. Для решения проверяйте нужные гарантии и измеряйте собственный профиль нагрузки. [RabbitMQ Streams](https://www.rabbitmq.com/docs/streams), [Kafka topic/retention](https://kafka.apache.org/43/configuration/topic-configs/).
 
 ---
 
 ## Q41. Когда выбрать RabbitMQ, а когда Kafka?
 
-Короткий ориентир: **`RabbitMQ` — когда важно, как сообщение доставить (маршрутизация, очереди задач, RPC); `Kafka` — когда важно, что сообщения остаются в истории (replay, поток событий, аналитика).** Детальнее по сценариям:
+Сначала уточните, нужна ли **очередь задач** или **сохраняемый поток событий**, а затем сравнивайте конкретные режимы:
 
-**Выбирайте `RabbitMQ` когда:**
-- Нужна сложная маршрутизация сообщений (topic patterns, headers)
-- Важна низкая задержка для отдельных сообщений
-- Нужен паттерн Work Queue с равномерным распределением нагрузки
-- Требуется RPC через messaging
-- Разные типы сообщений с разными получателями
-- Команда знакома с `AMQP`; интеграция через `STOMP` / `MQTT`
-- Объём сообщений умеренный, не требуется долгосрочное хранение
+- **RabbitMQ classic/quorum queue:** задача должна попасть одному worker-у, нужны exchanges, гибкая маршрутизация, ack/requeue, DLX и подходящий тип репликации. После ack сообщение не предназначено для replay.
+- **RabbitMQ Stream:** нужны повторное чтение, независимые подписчики или большой backlog, а RabbitMQ уже используется либо его маршрутизация и эксплуатационная модель подходят команде. Stream хранит записи до истечения retention; super stream добавляет партиционирование (Q42).
+- **Kafka:** нужен партиционированный event log, независимые consumer groups и совместимость с уже выбранной Kafka-экосистемой обработки/интеграций. Настраивайте число партиций, retention и гарантии подтверждения под конкретный поток.
 
-**Выбирайте `Kafka` когда:**
-- Нужен event log с возможностью replay
-- Очень высокий throughput (миллионы событий/сек)
-- Событийная история важна для аналитики или audit trail
-- Нужна интеграция с Big Data / stream processing (`Flink`, `Spark`)
-- Multiple independent consumer groups читают один поток
-- Долгосрочное хранение событий
+Наличие replay **само по себе не выбирает Kafka**: Streams дают его и в RabbitMQ. Сравните требования к маршрутизации, масштабу, времени хранения, клиентским протоколам и действующей инфраструктуре. Не переносите свойства одного типа RabbitMQ-очереди на весь брокер. [RabbitMQ comparison](https://www.rabbitmq.com/docs/compare/kafka), [Streams](https://www.rabbitmq.com/docs/streams), [Kafka topic configs](https://kafka.apache.org/43/configuration/topic-configs/).
 
-> Оба инструмента могут сосуществовать в одной системе: `Kafka` — для event streaming, `RabbitMQ` — для task queues и RPC.
+## Q42. Чем RabbitMQ Streams отличаются от обычной очереди и когда они нужны?
+
+`RabbitMQ Stream` — **постоянный реплицированный append-only лог**. Consumer читает по позиции; подтверждение обработки не удаляет запись для остальных. `Classic` и `quorum` очереди устроены иначе: после ack сообщение считается обработанным и исчезает из очереди. Streams подходят, когда нужны replay, несколько независимых читателей, большой fan-out или длительный backlog. В RabbitMQ 4.3 stream объявляют с `x-queue-type=stream`; для полного набора возможностей и высокой пропускной способности документация рекомендует отдельный Stream protocol client. [RabbitMQ Streams 4.3](https://www.rabbitmq.com/docs/streams), [Stream plugin](https://www.rabbitmq.com/docs/stream).
+
+| Вопрос дизайна | Решение для Stream |
+|---|---|
+| Откуда читать после перезапуска? | Сохранять позицию consumer-а; в AMQP можно задать `x-stream-offset`, в Stream protocol есть отслеживание offset. |
+| Когда данные исчезают? | Retention по возрасту и/или размеру, а не после ack; старый offset может выйти за доступный диапазон. |
+| Как масштабировать один поток? | `Super stream` делит его на партиции; порядок сохраняется внутри партиции, а не глобально. |
+| Что при отказе узла? | У stream есть leader и реплики; для работы нужен quorum доступных реплик. |
+
+При работе через AMQP 0-9-1 `ack` у stream участвует в продвижении потребления/кредитов, но **не удаляет запись из лога**. Для обычной очереди задач с точечным ack/requeue и DLQ выбирайте classic/quorum queue; для истории событий и replay — Stream, если подходят его ограничения и клиентская модель. Streams не означают бесконечного хранения: при проектировании задайте retention и сценарий, когда consumer отстал за его пределы. [RabbitMQ Streams: consumption, retention, super streams](https://www.rabbitmq.com/docs/streams), [quorum queues](https://www.rabbitmq.com/docs/quorum-queues).
 
 ---
 

@@ -1,22 +1,27 @@
 {
   "topic_slug": "message-brokers-comparison-interview",
   "round": 10,
-  "status": "CHECKED",
+  "status": "TODO",
   "version_sensitive": true,
-  "product_version": "Apache Kafka, RabbitMQ, NATS, Apache Pulsar, Redpanda, ActiveMQ, AWS SQS/SNS/EventBridge — сравнение по актуальному поведению на 2026-09-02",
-  "checked_date": "2026-09-02",
+  "product_version": "Apache Kafka, RabbitMQ 4.3, NATS, Apache Pulsar, Redpanda, ActiveMQ, AWS SQS/SNS/EventBridge — Q15 перепроверен 2026-10-05, остальные сравнения по прежнему срезу",
+  "checked_date": "2026-10-05",
   "sources": [
-    "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues-understanding-logic.html"
+    "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues-understanding-logic.html",
+    "https://www.rabbitmq.com/docs/streams",
+    "https://www.rabbitmq.com/docs/compare/kafka",
+    "https://kafka.apache.org/43/configuration/topic-configs/"
   ],
   "version_sensitive_claims": [
     "Очередь SQS FIFO держит строгий порядок в границах message group id: внутри группы сообщения приходят и обрабатываются строго по очереди, между разными группами порядок не гарантируется, а параллелизм достигается именно разными группами (Q12, Q13, Q22).",
     "Порядок в остальных брокерах сравнения тоже привязан к единице разбиения — партиции у Kafka, очереди у RabbitMQ (Q12).",
-    "Redpanda сохраняет совместимость с Kafka API, будучи переписанной без JVM — отсюда и отсутствие пауз сборщика мусора, и подключение прежних клиентов без правок (Q7, Q11)."
+    "Redpanda сохраняет совместимость с Kafka API, будучи переписанной без JVM — отсюда и отсутствие пауз сборщика мусора, и подключение прежних клиентов без правок (Q7, Q11).",
+    "Q15: RabbitMQ Streams в 4.3 поддерживают replay до истечения retention; classic/quorum queue после ack — нет. Persistence без неразрушающего чтения недостаточен для replay."
   ],
   "staleness_risks": [
     "Сравнительные таблицы по пропускной способности и задержке (Q10, Q11) устаревают быстрее всего — числа в варианты намеренно не выносились, утверждения держатся на уровне «кто быстрее по устройству».",
     "Kafka уходит от ZooKeeper к KRaft, поэтому оценка сложности эксплуатации (Q16) сдвигается от релиза к релизу.",
-    "Состав управляемых сервисов AWS и границы EventBridge (Q8, Q22) меняются чаще прочего в этом файле."
+    "Состав управляемых сервисов AWS и границы EventBridge (Q8, Q22) меняются чаще прочего в этом файле.",
+    "Q15 и MCQ точечно исправлены 2026-10-05; прежний CHECKED для всего файла нельзя автоматически переносить на изменённый блок, независимого blind review нет."
   ],
   "notes": [
     "Страница AWS про логику доставки FIFO загружена и прочитана 2026-09-02.",
