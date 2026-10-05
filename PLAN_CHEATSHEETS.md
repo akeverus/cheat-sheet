@@ -7,9 +7,9 @@
 
 ## Основание и предел проверки
 
-- Текущий корпус: **325** тематических Markdown-файлов, **9 863** заголовка
+- Текущий корпус: **325** тематических Markdown-файлов, **9 865** заголовков
   Q в **25** разделах. [Инвентарь](docs/interview-coverage/inventory.tsv)
-  обновлён из-за шести новых шпаргалок. **324** файла имеют парный production
+  обновлён из-за шести новых шпаргалок и двух добавленных Q. **324** файла имеют парный production
   JSON; отдельная тема подготовки остаётся без пары.
 - `З` — пути и заголовки; `О` — точечная проверка ответа; `П` — полная
   содержательная проверка всех ответов существующего файла. **П в этом
@@ -98,13 +98,13 @@ Go — **7 / 209**, Scala — **2 / 56**. Тогда в interview-разделе
 | Cloud | 6 | 177 | Code quality | 7 | 227 |
 | Data engineering | 8 | 236 | Databases | 23 | 736 |
 | Design patterns | 1 | 48 | DevOps | 13 | 448 |
-| Frameworks | 37 | 884 | JVM | 3 | 71 |
+| Frameworks | 37 | 885 | JVM | 3 | 71 |
 | Leadership | 7 | 187 | Logging | 1 | 42 |
 | Messaging | 9 | 237 | Monitoring | 9 | 285 |
 | Performance | 8 | 253 | Preparation | 1 | 42 |
-| Programming languages | 54 | 1 636 | Reactive | 6 | 206 |
+| Programming languages | 54 | 1 637 | Reactive | 6 | 206 |
 | Security | 10 | 350 | System design | 22 | 644 |
-| Testing | 16 | 489 | **Итого** | **325** | **9 863** |
+| Testing | 16 | 489 | **Итого** | **325** | **9 865** |
 
 ## Срез публикаций за последние полгода
 
@@ -149,16 +149,16 @@ Q (`З`) от проверки ответа по официальному ист
 | P0 / **ПРОВЕРЕНО** | 19.08 [Go 1.27](https://go.dev/blog/go1.27), 26.08 [Generic Methods](https://go.dev/blog/generic-methods) | `programming-languages/go/go-generics-interview.md` Q10/Q18–Q20 | `DEEPEN`/исправить Q10/Q18–Q19: в тексте категорически запрещены type-параметры методов, а Go 1.27 их поддерживает. Q20 проверить отдельно из-за расширенного вывода типов. Указать границу версий и проверить связанные примеры и MCQ при отдельном поручении на контент. |
 | P0 / **ПРОВЕРЕНО** | 07.04 [MFA в Spring Security 7](https://www.baeldung.com/spring-security-7-mfa); [официальный reference](https://docs.spring.io/spring-security/reference/7.0/servlet/authentication/mfa.html) | `frameworks/spring/spring-security-interview.md` Q30 | `DEEPEN`/исправить утверждение «встроенного 2FA из коробки нет»: с версии 7 есть поддержка требования нескольких факторов через `FactorGrantedAuthority` и `@EnableMultiFactorAuthentication`. Объяснить границы встроенного механизма и отдельной реализации TOTP/собственного flow; сверить совместимость с версией файла и будущий MCQ. |
 | P0 / **ПРОВЕРЕНО** | 22.08 [SSRF и `InetAddressFilter` в Spring Boot](https://www.baeldung.com/spring-boot-http-client-ssrf-mitigation-inetaddressfilter); [Spring Boot API](https://docs.spring.io/spring-boot/api/java/org/springframework/boot/http/client/InetAddressFilter.html), [OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html) | `security/owasp-top10-interview.md` Q34; `security/application-security-interview.md` Q13; соседний `frameworks/spring/spring-rest-client-interview.md` Q1 | `DEEPEN`/исправить оба примера: IP проверяется при отдельном DNS-запросе, а HTTP-клиент затем получает исходный URL и может резолвить его повторно; пример не доказывает защиту от DNS rebinding. Для Spring Boot 4.1+ проверить применение `InetAddressFilter` в конфигурации клиента, ограничения redirect и egress; для старых версий описать эквивалентную проверку на этапе фактического соединения. Не создавать новую SSRF-тему. |
-| P2 / КАНДИДАТ | 19.08 [Go 1.27](https://go.dev/blog/go1.27) | `programming-languages/go/go-stdlib-interview.md` Q7–Q10 | `ADD_Q` или `DEEPEN`: чем `encoding/json/v2`/`jsontext` отличаются от `encoding/json`, где меняются defaults и как выбирать API при миграции; не повторять базовую сериализацию. |
-| P2 / КАНДИДАТ | 02.09 [Goroutine Leak Profiles](https://go.dev/blog/goroutine-leak-profiles) | `programming-languages/go/go-concurrency-interview.md` Q32; `go-memory-gc-interview.md` Q15 | `DEEPEN`: чем специальный профиль `goroutineleak` полезнее обычных стеков goroutine, как его снять и где границы обнаружения. |
+| P2 / `ADD_Q`, написано · О | 19.08 [Go 1.27](https://go.dev/blog/go1.27); [release notes](https://go.dev/doc/go1.27#jsonv2), [json/v2 docs](https://pkg.go.dev/encoding/json/v2), [method sets](https://go.dev/ref/spec#Method_sets) | `programming-languages/go/go-stdlib-interview.md` Q7–Q10 описывали v1, но не выбор API и изменение JSON-контракта при миграции; Q10 ошибочно утверждал, что value receiver не входит в method set указателя. | Добавлен Q31: `json/v2`/`jsontext`, строгие defaults, совместимый v1 и проверка payload/golden JSON. Q10 исправлен, MCQ Q10 B0 и Q31 B0/B1 синхронизированы. Structure PASS, parity всего старого файла FAIL; новые блоки без жёстких локальных сигналов, blind review ожидается. Go 1.27 локально не установлен, пример сверялся по документации. Инвентарь +1 Q. |
+| P2 / `DEEPEN`, выполнено · О | 02.09 [Goroutine Leak Profiles](https://go.dev/blog/goroutine-leak-profiles); [Go 1.27 release notes](https://go.dev/doc/go1.27#goroutine-leak-profile), [runtime/pprof](https://pkg.go.dev/runtime/pprof) | `programming-languages/go/go-concurrency-interview.md` Q32 уже покрывал причину/профилактику утечек; `go-memory-gc-interview.md` Q15 объясняет HTTP-профили, но ни один не отличал новый профиль от полного списка goroutines. | Q32 углублён: on-demand `goroutineleak`, достижимость при GC, путь `/debug/pprof/goroutineleak`, пропуски для глобально достижимых примитивов и I/O. MCQ Q32 B0 исправлен, B1 добавлен; structure PASS, parity всего старого файла FAIL, локальные блоки без жёстких сигналов; blind review ожидается. Go 1.27 локально не установлен. |
 | P2 / КАНДИДАТ | 15.09 [JDK 27 release notes](https://www.oracle.com/java/technologies/javase/27all-relnotes.html), 29.09 [обзор Baeldung](https://www.baeldung.com/java-27-new-features) | `programming-languages/java/java-22-25-interview.md` Q8/Q14/Q22 | `NEW_TOPIC` для Java 26–27 **только если** после сверки JDK 26/27 получается несколько самостоятельных backend-вопросов: статус preview, совместимость при миграции, поведение JVM и диагностика. Не удлинять файл 22–25 механическим перечислением JEP. |
 | P2 / КАНДИДАТ | 10.09 [HTTP/3 в Java HttpClient](https://www.baeldung.com/java-httpclient-http-3-quic); [JDK 26 release notes](https://www.oracle.com/java/technologies/javase/26-relnote-issues.html) | `programming-languages/java/java-io-nio-interview.md` Q40 | `ADD_Q` или `DEEPEN`: включение HTTP/3, выбор версии, discovery/fallback и ограничения клиента. В файле версий Java дать ссылку, не дублировать полный разбор. |
 | P2 / КАНДИДАТ | 10.09 [Jackson 3](https://www.baeldung.com/java-jackson-3-updates); [материалы проекта](https://github.com/FasterXML/jackson) | `programming-languages/java/java-jackson-interview.md` Q28/Q30 | `ADD_Q`: что проверить при миграции Jackson 2 → 3 (координаты, пакеты, конфигурация, совместимость со Spring Boot), прежде сверив точные версии и официальный migration guide. |
 | P2 / `DEEPEN`, выполнено | 22.04 [Spring Data AOT Repositories](https://www.baeldung.com/spring-data-aot-repositories); [Spring Data JPA AOT 4.1.1](https://docs.spring.io/spring-data/jpa/reference/jpa/aot.html) | `frameworks/spring/spring-data-jpa-interview.md` Q4–Q6; общий AOT в `spring-boot-3-migration-interview.md` Q8 | Q4 углублён: генерация подходящих query methods при сборке, ограничения `ScrollPosition`/dynamic projections, отсутствие обращения к БД, фиксация диалекта; базовый CRUD остаётся. `О` по Q4–Q6, Q4 MCQ B0/B1 обновлён; structure PASS, parity **всего старого файла FAIL**, blind review ожидается. |
-| P2 / КАНДИДАТ | 25.07 [Application Startup Tracking](https://www.baeldung.com/spring-application-startup-tracking); [Spring Boot reference](https://docs.spring.io/spring-boot/reference/features/spring-application.html) | `frameworks/spring/spring-boot-actuator-interview.md` Q3/Q38, `spring-framework-interview.md` Q6/Q10 | `ADD_Q` или `DEEPEN` Q3: как собрать шаги запуска через `ApplicationStartup`, чем отличаются реализации и когда полезен `/actuator/startup`. Не путать с Kubernetes startup probe из Actuator Q42. |
+| P2 / `ADD_Q`, написано · О | 25.07 [Application Startup Tracking](https://www.baeldung.com/spring-application-startup-tracking); [Spring Boot reference 4.1.1](https://docs.spring.io/spring-boot/reference/features/spring-application.html), [startup API](https://docs.spring.io/spring-boot/api/rest/actuator/startup.html) | `frameworks/spring/spring-boot-actuator-interview.md` Q3 только перечислял endpoint; Q38 оказался про heapdump/threaddump, Q42 — про Kubernetes startup probe. `spring-framework-interview.md` Q6/Q10 описывают жизненный цикл без измерения его шагов. | Добавлен Actuator Q44 и MCQ B0/B1: Buffering vs FlightRecorder, GET snapshot/POST drain, экспозиция и ограниченная ёмкость. Structure/parity PASS; blind review ожидается. Инвентарь обновлён: +1 Q. |
 | P2 / КАНДИДАТ | 22.07 [MySQL: Incorrect string value](https://www.baeldung.com/java-mysql-sqlexception-incorrect-string-value), 28.05 [Communications link failure](https://www.baeldung.com/jdbc-connector-j-mysql-communications-link-failure); [MySQL charset](https://dev.mysql.com/doc/refman/8.4/en/charset-connection.html), [Connector/J troubleshooting](https://dev.mysql.com/doc/connector-j/en/connector-j-usagenotes-troubleshooting.html) | Будущая MySQL-тема; `databases/sql-interview.md` Q45 и кандидат JDBC/пулы | При решении о `NEW_TOPIC` использовать два самостоятельных диагностических сценария: charset/collation/`utf8mb4` для ошибок записи и разрыв соединения после простоя (таймауты, сеть, устаревшее соединение в пуле). Разнести ответственность MySQL и JDBC, не добавлять дублирующий общий SQL-вопрос. |
-| P2 / КАНДИДАТ | 23.06 [Spring AI 2.0: structured output](https://spring.io/blog/2026/06/23/spring-ai-self-correcting-structured-output/), 25.09 [Baeldung](https://www.baeldung.com/spring-ai-structured-output) | `frameworks/spring/spring-ai-interview.md` Q3 | `DEEPEN`: типизированный результат, provider-native schema, проверка/повтор при невалидном ответе, цена retry и ограничения streaming. Точную версию сверить с [reference](https://docs.spring.io/spring-ai/reference/api/structured-output.html). |
-| P2 / КАНДИДАТ | 15.06 [Spring AI 2.0: tool calling](https://spring.io/blog/2026/06/15/spring-ai-composable-tool-calling/) | `frameworks/spring/spring-ai-interview.md` Q7/Q15 | `DEEPEN`: цикл вызова инструмента, роль `ToolCallingAdvisor`, контроль side effects и наблюдаемость; проверить, не устарели ли ответы с моделью исполнения 1.x. |
+| P2 / `DEEPEN`, выполнено · О | 23.06 [Spring AI 2.0: structured output](https://spring.io/blog/2026/06/23/spring-ai-self-correcting-structured-output/), 25.09 [Baeldung](https://www.baeldung.com/spring-ai-structured-output); [Spring AI 2.0.1 reference](https://docs.spring.io/spring-ai/reference/api/structured-output.html) | `frameworks/spring/spring-ai-interview.md` Q3: `.entity()` ошибочно описывался как строгое JSON-поведение, пример конкатенировал код. | Q3 углублён: best effort, provider-native constraint, schema validation/retry и цена вызовов, предел `.stream()`, риск prompt injection. MCQ B0 обновлён, B1 добавлен; structure/parity PASS, blind review ожидается. |
+| P2 / `DEEPEN`, выполнено · О | 15.06 [Spring AI 2.0: tool calling](https://spring.io/blog/2026/06/15/spring-ai-composable-tool-calling/); [Spring AI 2.0.1 reference](https://docs.spring.io/spring-ai/reference/api/tools.html) | `frameworks/spring/spring-ai-interview.md` Q7/Q15: пример создавал Spring-бин через `new` без зависимости, текст советовал старый `.toolNames(...)`, агент использовал необъявленное поле. | Q7/Q15 исправлены: `ToolCallingAdvisor`/`ToolCallingManager`, явный `ToolCallback` для Function, внедрение бинов, memory order и контроль side effects. MCQ Q7 B0/B1 и Q15 B0 синхронизированы; structure/parity PASS, blind review ожидается. |
 | P3 / КАНДИДАТ | 27.06 [Bean Background Initialization](https://www.baeldung.com/spring-bean-background-init); [Spring Framework reference](https://docs.spring.io/spring-framework/reference/core/beans/java/composing-configuration-classes.html) | `frameworks/spring/spring-framework-interview.md` Q10/Q38 | `DEEPEN` Q10 или `ADD_Q`: когда фоновая инициализация бина сокращает критический путь старта, как задаётся исполнитель и какие зависимости всё равно блокируют startup. Функция появилась в Spring Framework 6.2: новизна статьи не равна новизне API. |
 | P3 / `DEEPEN`, выполнено | 27.06 [Kafka CommitFailedException](https://www.baeldung.com/java-kafka-commitfailedexception); [KafkaConsumer 4.3.1](https://kafka.apache.org/43/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html) | `messaging/kafka-interview.md` Q15/Q16/Q45 | Q16 дополнен: `CommitFailedException` после потери партиции нельзя слепо повторять; auto-commit может дать at-least-once при полной обработке batch до следующего `poll()`. `О` по Q15/Q16/Q45; Q16/MCQ B1 написаны, structure/parity PASS, blind review ожидается. |
 | P3 / КАНДИДАТ | 21.06 [Spring Boot 4.1 и MongoDB JobRepository](https://spring.io/blog/2026/06/21/spring-boot-41-and-spring-batch/) | `frameworks/spring/spring-batch-interview.md` Q6/Q28/Q38 | `ADD_Q` лишь если подтверждена ценность сценария: где хранить metadata `JobRepository`, ограничения MongoDB и транзакций, отличие хранилища состояния job от источника/назначения данных. Spring Boot 4.1 уже выпущен; проверить версию Spring Batch и ограничения хранилища. |
@@ -408,8 +408,10 @@ FastAPI, MySQL и JDBC/пулы. Следующая небольшая груп�
 Q19/Q24/Q25/Q30, Kafka Q16, Hibernate JPQL/Criteria Q6 и Spring Data JPA
 Q4 углублены после
 точечной проверки соседних Q и официальных документов; отдельные файлы и
-новые номера Q не понадобились. Состав остаётся 325 файлов, 9 863 Q;
-инвентарь не менялся, потому что состав шпаргалок и заголовков Q прежний.
+новые номера Q для этих четырёх тем не понадобились. После них добавлен
+Actuator Q44 о диагностике старта, затем Go stdlib Q31 о JSON v2 и
+Go concurrency Q32 о профиле `goroutineleak`.
+Состав: 325 файлов, 9 865 Q; инвентарь обновлён на два Q, новых файлов нет.
 Все новые/изменённые MCQ ещё ждут независимой содержательной приёмки.
 Для MCP структурная проверка PASS, parity всего старого файла FAIL; до
 исправления остальных блоков нельзя отмечать MCQ темы как принятый.
@@ -421,6 +423,24 @@ structure/parity PASS. Hibernate: 16 Q / 17 блоков, structure PASS, parity
 Spring Data JPA: 43 Q / 44 блока, structure PASS, parity **FAIL из-за
 старого файла**; оба блока Q4 выровнены локально по содержанию и форме,
 но независимой приёмки тоже нет.
+Actuator: 44 Q / 45 блоков, structure/parity PASS; новый Q44 прошёл
+авторскую точечную проверку по Spring Boot 4.1.1, blind review ожидается.
+Полный MCQ pre-check остаётся FAIL на прежних Q15/Q18/Q40 (surface skeleton),
+у нового Q44 этих сигналов нет.
+Spring AI: Q3/Q7/Q15 точечно проверены по reference 2.0.1; 18 Q / 21 блок,
+structure/parity PASS. Изменённые MCQ прочитаны автором, независимой
+содержательной приёмки нет. Полный MCQ pre-check остаётся FAIL на прежних
+Q1/Q6/Q8–Q10/Q14/Q16/Q17 (surface skeleton), локальные Q3/Q7/Q15 без
+жёстких сигналов. Остальные Q файла не получили П.
+Go stdlib: Q7–Q10 и Q31 точечно проверены по Go 1.27 release notes и
+package docs; 31 Q / 32 блока, структура PASS, parity всего старого файла
+FAIL (24/32 correct длиннее всех wrong; 25 блоков вне коридора длины).
+Q10 и Q31 B0/B1 без жёстких локальных сигналов после правок; полного П и
+blind review нет. Go 1.27 локально не установлен, код Q31 не выполнялся.
+Go concurrency: Q32 и соседний Q33 точечно проверены по Go blog/release notes;
+35 Q / 36 блоков, structure PASS, parity всего старого файла FAIL (34/36
+correct самые длинные). Новый Q32 B1 и обновлённый B0 не имеют жёстких
+локальных сигналов, blind review нет. Go 1.27 локально не установлен.
 Полного аудита ответов существующих файлов не было. Параллельно появились
 посторонние незавершённые правки `agentic-patterns` и новые MCQ run-файлы;
 их не смешивать с этой группой и не переписывать их audit-state. Пользователь
@@ -431,7 +451,9 @@ Spring Data JPA: 43 Q / 44 блока, structure PASS, parity **FAIL из-за
 `32b72efd` (ранее существовавшие правки четырёх теоретических пар),
 `e817fd82` (evidence и синхронизация MCQ), `24efdeb7` (RabbitMQ),
 `c27a450d` (Kafka), `4d649610` (Hibernate `@Find`), `16bad0d0`
-(Spring Data JPA AOT). После первых пяти рабочее дерево было чистым;
+(Spring Data JPA AOT), `b938557c` (Actuator), `58aca34b` (Spring AI),
+`6d69f1b3` (Go JSON v2), `e5618bb9` (Go goroutineleak).
+После первых пяти рабочее дерево было чистым;
 позднее возникли параллельные правки `agentic-patterns`. Push не выполнялся.
 Предыдущая сводка `sync` до этих четырёх тем: 324 пары / 9 824 блока;
 четыре темы добавили пять MCQ-блоков без новых Q, повторный полный `sync`
@@ -439,13 +461,17 @@ Spring Data JPA: 43 Q / 44 блока, structure PASS, parity **FAIL из-за
 3 файла / 59 блоков с действующей полной приёмкой; `agentic-patterns` Q12
 остаётся открытым finding, остальные новые MCQ из этого плана ждут blind review.
 
-1. **Точная точка продолжения:** проверить
-   `frameworks/spring/spring-boot-actuator-interview.md` Q3/Q38 и
-   `spring-framework-interview.md` Q6/Q10 на `ApplicationStartup` и
-   `/actuator/startup`. Сначала `З`, затем точечное чтение ответа и
-   официальной Spring Boot reference (`О`), решить `COVERED`/`DEEPEN`/`ADD_Q`.
-2. Затем проверить Spring AI Q3/Q7/Q15, после них Go `encoding/json/v2`
-   и `goroutineleak`, Java 26–27/HTTP/3/Jackson 3. Старые P2/P3 без
+1. **Точная точка продолжения:** проверить кандидат Java 26–27 против
+   `programming-languages/java/java-22-25-interview.md` Q8/Q14/Q22:
+   заголовки уже просмотрены (`З`), а [JDK 27 release notes](https://www.oracle.com/java/technologies/javase/27all-relnotes.html)
+   открыты: в GA указаны седьмой preview structured concurrency,
+   compact headers по умолчанию, JFR redaction и G1 как default во всех
+   окружениях. Это пока **кандидаты, не написанные ответы**. Следом точечно
+   прочитать Q8/Q14/Q22, release notes JDK 26 и первичные JEP (`О`),
+   решить пересечения. Новый файл создавать только при нескольких
+   самостоятельных backend-сценариях; иначе углубить существующий Q и MCQ.
+2. Затем проверить HTTP/3 в Java HttpClient и Jackson 3.
+   Старые P2/P3 без
    решения остаются гипотезами. Python typing/packaging тоже кандидаты;
    Django/Flask — вне текущего приоритета. Статусы Python 3.15 и PostgreSQL 19
    перепроверять после финальных релизов.

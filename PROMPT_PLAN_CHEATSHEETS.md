@@ -23,7 +23,7 @@
 
 ## Текущий проверенный срез на 05.10.2026
 
-В каталоге 325 тематических Markdown-файлов и 9 863 заголовка Q в 25
+В каталоге 325 тематических Markdown-файлов и 9 865 заголовков Q в 25
 разделах; 324 файла имеют парный production MCQ JSON. Шесть новых тем
 в текущем этапе: Python core, Python concurrency, Python testing, FastAPI,
 MySQL и JDBC/пулы. Навигация и инвентарь обновлены. Go database/sql углублён в
@@ -62,17 +62,41 @@ FAIL из-за прежних вариантов; новый Q6 B1 не имее
 У Spring Data JPA 43 Q / 44 блока, structure PASS, parity всего старого файла
 FAIL; два блока Q4 локально проверены, blind review ожидается. Источники и
 причины решений зафиксированы в PLAN_CHEATSHEETS.md. Инвентарь
-не менялся. В рабочем дереве параллельно появились чужие изменения
-`agentic-patterns` и MCQ runs; сохрани их отдельно.
+обновлён после добавления Actuator Q44: отдельный вопрос о
+`ApplicationStartup` и `/actuator/startup` с двумя MCQ-блоками,
+structure/parity PASS, blind review ожидается. Spring AI Q3/Q7/Q15
+точечно сверены с reference 2.0.1 (`О`): исправлены structured output,
+tool calling и примеры бинов; MCQ Q3/Q7 получили B1, Q15 B0 обновлён.
+18 Q / 21 блок, structure/parity PASS, независимая приёмка ожидается.
+Другие Q файла не проходили полной содержательной проверки (`П`).
+Полный MCQ pre-check обоих файлов остаётся FAIL на прежних блоках:
+Actuator Q15/Q18/Q40 и Spring AI Q1/Q6/Q8–Q10/Q14/Q16/Q17;
+локально изменённые Q44 и Q3/Q7/Q15 не дают жёстких сигналов.
+После этого в Go stdlib добавлен Q31 о `encoding/json/v2` и `jsontext`;
+Q10 исправлен по Go spec: метод с value receiver входит в method set
+указателя, но изменение его полей затрагивает копию. MCQ Q10 B0 и Q31 B0/B1
+синхронизированы. Go stdlib: 31 Q / 32 блока, structure PASS, parity всего
+старого файла FAIL; независимая приёмка и локальный запуск Go 1.27 отсутствуют.
+Инвентарь обновлён ещё на один Q. Остальные Q файла не получили `П`.
+Go concurrency Q32 углублён по Go 1.27 `goroutineleak` и соседнему
+`go-memory-gc` Q15: диагностика on-demand, пределы обнаружения, MCQ B0/B1.
+35 Q / 36 блоков, structure PASS, parity всего старого файла FAIL;
+локальные Q32 B0/B1 без жёстких сигналов, blind review не было.
+Go 1.27 в локальном окружении отсутствует.
+В рабочем дереве параллельно появились чужие изменения `agentic-patterns`
+и MCQ runs; сохрани их отдельно.
 
 ## Точная точка продолжения
 
-Начни с `frameworks/spring/spring-boot-actuator-interview.md` Q3/Q38 и
-`spring-framework-interview.md` Q6/Q10: сравни заголовки и ответы с
-официальной документацией `ApplicationStartup` и `/actuator/startup`.
-Реши `COVERED`/`DEEPEN`/`ADD_Q`, при изменении Q обнови парный MCQ.
-Следом Spring AI Q3/Q7/Q15; потом Go
-encoding/json/v2 и goroutineleak, Java 26–27, HTTP/3, Jackson 3. Python
+Начни с Java 26–27: заголовки
+`programming-languages/java/java-22-25-interview.md` Q8/Q14/Q22 уже
+просмотрены (`З`), JDK 27 release notes открыты (preview structured
+concurrency, default compact headers, JFR redaction, default G1 во всех
+окружениях), но ответы не проверены. Прочитай соседние ответы, JDK 26
+release notes и первичные JEP (`О`), затем проверь пересечения. Новый
+файл допустим при нескольких самостоятельных backend-сценариях;
+иначе углуби существующий Q и парный MCQ. Не объявляй старый файл целиком
+проверенным (`П`). Затем HTTP/3, Jackson 3. Python
 typing/packaging остаются кандидатами. Django/Flask пока низкий приоритет.
 RabbitMQ/Kafka/Hibernate этого пакета требуют независимого blind review MCQ;
 старый parity backlog Hibernate и Spring Data JPA не считать закрытым.
