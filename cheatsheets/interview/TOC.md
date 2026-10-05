@@ -17,7 +17,7 @@ updated: "2026-10-05"
 
 Полный индекс по всем содержательным файлам каталога `interview/` (без `README.md` и `TOC.md`).
 
-Всего файлов: **325**.
+Всего файлов: **330**.
 
 ## Быстрые маршруты подготовки
 
@@ -427,6 +427,7 @@ updated: "2026-10-05"
 
 - [Вопросы на собеседовании: Системный дизайн](system-design/system-design-interview.md) — `41` вопрос
 - [Вопросы на собеседовании: Генератор уникальных ID](system-design/design-unique-id-generator-interview.md) — `4` вопроса
+- [Вопросы на собеседовании: Система уведомлений](system-design/design-notification-system-interview.md) — `4` вопроса
 - [Вопросы на собеседовании: `Design URL Shortener`](system-design/design-url-shortener-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Design Pastebin`](system-design/design-pastebin-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Design Rate Limiter`](system-design/design-rate-limiter-interview.md) — `30` вопросов
