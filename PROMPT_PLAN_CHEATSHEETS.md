@@ -23,11 +23,11 @@
 
 ## Текущий проверенный срез на 05.10.2026
 
-В каталоге 331 тематический Markdown-файл и 9 892 заголовка Q в 25
-разделах; 330 файлов имеют парный production MCQ JSON. Двенадцать новых тем
+В каталоге 332 тематических Markdown-файла и 9 896 заголовков Q в 25
+разделах; 331 файл имеет парный production MCQ JSON. Тринадцать новых тем
 в текущем этапе: Python core, Python concurrency, Python testing, FastAPI,
 MySQL, JDBC/пулы, Java 26–27, Python typing, Python packaging и
-System Design Unique ID Generator, Notification System и Hotel Reservation System.
+System Design Unique ID Generator, Notification System, Hotel Reservation System и Object Storage.
 Навигация и инвентарь обновлены. Go database/sql углублён в
 go-stdlib-interview.md Q22–Q25: отдельный Go DB файл отвергнут из-за
 пересечения. Исправлены Go generics Q10/Q15/Q18–Q20, Spring Security Q30,
@@ -137,17 +137,16 @@ JSON PASS; parity RabbitMQ/Kafka/сравнения PASS, event-driven FAIL на
 
 ## Точная точка продолжения
 
-Начни с P2-кандидата S3-like Object Storage из раздела
-`system-design-notes` в плане. Сравни `design-dropbox-interview.md`
-Q5/Q18, `data-lake-lakehouse-interview.md` Q5 и соседние S3/MinIO Q.
-По первичной документации проверь семантику PUT/GET/overwrite,
-multipart upload, разделение metadata/bytes, целостность и восстановление.
-При нескольких новых сценариях создай тему и парный MCQ, иначе углуби
-существующий Q. Затем проверь leaderboard.
+Начни с P2-кандидата Real-time Gaming Leaderboard из раздела
+`system-design-notes` в плане. Сверь Redis sorted sets, кеширование,
+streaming/late events и соседние system-design Q. По первичной документации
+проверь `ZADD`/`ZREVRANK`/top-N, tie-break, сезонный reset и корректность
+при запоздавших событиях. При нескольких новых сценариях создай тему и
+парный MCQ, иначе углуби существующий Q. Затем перейди к P3-кандидатам.
 RabbitMQ/Kafka/Hibernate, новые Java и Python Q требуют независимого blind
 review MCQ; старый parity/pre-check backlog Hibernate, Spring Data JPA,
 Java IO/NIO, Jackson, URL Shortener, RabbitMQ, Kafka, сравнение брокеров и
-event-driven открыт. Reservation System Q1–Q4, Notification System Q1–Q4, RabbitMQ Streams Q40–Q42
+event-driven открыт. Object Storage Q1–Q4, Reservation System Q1–Q4, Notification System Q1–Q4, RabbitMQ Streams Q40–Q42
 и Spring Data JDBC Q17 тоже ждут
 содержательной приёмки.
 
