@@ -349,6 +349,7 @@ updated: "2026-10-05"
 - [Вопросы на собеседовании: Строки в Java](programming-languages/java/java-string-interview.md) — `39` вопросов
 - [Вопросы на собеседовании: `Java 17-21`](programming-languages/java/java-17-21-interview.md) — `42` вопроса
 - [Вопросы на собеседовании: `Java 22-25`](programming-languages/java/java-22-25-interview.md) — `22` вопроса
+- [Вопросы на собеседовании: `Java 26–27`](programming-languages/java/java-26-27-interview.md) — `4` вопроса
 - [Вопросы на собеседовании: Типы данных Java](programming-languages/java/java-types-interview.md) — `38` вопросов
 - [Вопросы на собеседовании: Виртуальные потоки Java](programming-languages/java/java-virtual-threads-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: Рекорды Java](programming-languages/java/java-records-interview.md) — `15` вопросов
