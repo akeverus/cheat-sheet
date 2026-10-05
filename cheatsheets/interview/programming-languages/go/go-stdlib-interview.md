@@ -1,6 +1,6 @@
 ---
 title: "Вопросы на собеседовании: Стандартная библиотека Go"
-description: "Стандартная библиотека Go: net/http, encoding/json, io/ioutil, strings, time, context, log/slog, database/sql, embed, sort, errors"
+description: "Стандартная библиотека Go: net/http, encoding/json и json/v2, io/ioutil, strings, time, context, log/slog, database/sql, embed, sort, errors"
 tags:
   - interview
   - programming-languages
@@ -27,6 +27,7 @@ updated: "2026-10-05"
 - [Standard Library](https://pkg.go.dev/std)
 - [net/http package](https://pkg.go.dev/net/http)
 - [encoding/json package](https://pkg.go.dev/encoding/json)
+- [encoding/json/v2 и jsontext (Go 1.27)](https://go.dev/doc/go1.27#jsonv2)
 - [database/sql tutorial](https://go.dev/doc/database/index)
 - [Отмена операций БД](https://go.dev/doc/database/cancel-operations) и [пул соединений](https://go.dev/doc/database/manage-connections)
 - [log/slog (Go 1.21+)](https://pkg.go.dev/log/slog)
@@ -88,6 +89,9 @@ updated: "2026-10-05"
 **Сортировка**
 - [Q29. Чем отличается sort.Slice от sort.Sort?](#q29-чем-отличается-sortslice-от-sortsort)
 - [Q30. (!) slices пакет в Go 1.21+?](#q30--slices-пакет-в-go-121)
+
+**Go 1.27: JSON**
+- [Q31. Когда выбрать encoding/json/v2 и как мигрировать с encoding/json?](#q31-когда-выбрать-encodingjsonv2-и-как-мигрировать-с-encodingjson)
 
 ## Q1. (!) HTTP-сервер на стандартном net/http?
 
@@ -433,7 +437,7 @@ func (c *Color) UnmarshalJSON(data []byte) error {
 - В примере `Color{R,G,B}` сериализуется не в объект `{"R":..,"G":..,"B":..}`, а в привычную строку `"#rrggbb"`, и обратно парсится из неё.
 - Те же сценарии: даты в нестандартном формате, IP-адреса как строки, enum как текстовая метка, деньги как строка.
 
-**Важная деталь сигнатур:** `MarshalJSON` объявлен на **значении** (`c Color`), а `UnmarshalJSON` — обязательно на **указателе** (`c *Color`), потому что должен изменить поля разбираемого значения. Если объявить `UnmarshalJSON` на значении, метод не попадёт в method set указателя для нужного интерфейса и просто не будет вызван при декодировании.
+**Важная деталь получателя:** в примере `MarshalJSON` объявлен на значении (`c Color`), а `UnmarshalJSON` — на указателе (`c *Color`), чтобы менять поля исходного `Color`. Это выбор для данного типа, а не обязательная форма интерфейсов: метод со значением-получателем входит и в method set `Color`, и в method set `*Color`. Если сделать `UnmarshalJSON` методом с получателем-значением и присваивать `c.R`/`c.G`/`c.B`, изменится копия, а не декодируемое значение. [Go spec: Method sets](https://go.dev/ref/spec#Method_sets), [encoding/json](https://pkg.go.dev/encoding/json).
 
 ## Q11. (!) strings.Builder vs конкатенация?
 
@@ -1015,6 +1019,33 @@ maps.Clone(m)
 
 ---
 
+## Q31. Когда выбрать encoding/json/v2 и как мигрировать с encoding/json?
+
+С **Go 1.27** `encoding/json/v2` — отдельный API для типизированного JSON с настраиваемыми `Options`; `encoding/json/jsontext` — нижний уровень для чтения и записи синтаксических `Token`/`Value`. Если обычный `encoding/json` уже соответствует контракту API, переписывать код ради новой версии не требуется: в Go 1.27 он работает поверх новой реализации с сохранением прежней семантики (текст ошибок может измениться).
+
+```go
+import (
+    jsonv2 "encoding/json/v2"
+    "io"
+)
+
+type Request struct {
+    ID string `json:"id"`
+}
+
+func decodeRequest(r io.Reader) (Request, error) {
+    var req Request
+    err := jsonv2.UnmarshalRead(r, &req, jsonv2.RejectUnknownMembers(true))
+    return req, err
+}
+```
+
+`UnmarshalRead` читает из `io.Reader`; `MarshalWrite` пишет в `io.Writer`. Для готовых `[]byte` остаются `Marshal`/`Unmarshal`. `jsontext.Decoder`/`Encoder` нужен, когда приложение само обрабатывает последовательность JSON-токенов, а не преобразует её в Go-структуру.
+
+**Проверка миграции:** у v2 по умолчанию имена полей сопоставляются с учётом регистра, дублирующиеся ключи и некорректный UTF-8 отклоняются. Совместимость с дублирующимися именами можно включить явно через `jsontext.AllowDuplicateNames(true)`, но тогда результат может зависеть от порядка членов объекта. Неизвестные поля по умолчанию по-прежнему игнорируются: `RejectUnknownMembers(true)` включает отказ явно. При кодировании nil slice/map v2 выдаёт `[]`/`{}` вместо `null`; `omitempty` ориентируется на пустое **JSON-значение**, поэтому для числового `0` и `false` поведение может отличаться от v1. Если нужен Go zero value, рассмотрите `omitzero`. Проверьте реальные входные payload и golden JSON, особенно регистр ключей, дубликаты, nil и теги, прежде чем менять импорт. [Go 1.27 release notes](https://go.dev/doc/go1.27#jsonv2), [json/v2 package](https://pkg.go.dev/encoding/json/v2).
+
+---
+
 ## See also
 
 - [Go (базовый)](go-interview.md) — основы языка
@@ -1026,4 +1057,3 @@ maps.Clone(m)
 - [PostgreSQL](../../databases/postgresql-interview.md) — database/sql + lib/pq
 - [Logging](../../logging/logging-interview.md) — slog vs zap vs zerolog
 - [Микросервисы](../../architecture/microservices-interview.md) — Go использует stdlib для большинства задач
-
