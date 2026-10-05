@@ -7,9 +7,9 @@
 
 ## Основание и предел проверки
 
-- Текущий корпус: **329** тематических Markdown-файлов, **9 883** заголовка
+- Текущий корпус: **330** тематических Markdown-файлов, **9 888** заголовков
   Q в **25** разделах. [Инвентарь](docs/interview-coverage/inventory.tsv)
-  обновлён после десяти новых шпаргалок и добавленных Q. **328** файлов имеют парный production
+  обновлён после одиннадцати новых шпаргалок и добавленных Q. **329** файлов имеют парный production
   JSON; отдельная тема подготовки остаётся без пары.
 - `З` — пути и заголовки; `О` — точечная проверка ответа; `П` — полная
   содержательная проверка всех ответов существующего файла. **П в этом
@@ -118,6 +118,47 @@ PASS, но **полный pre-check FAIL** из-за старых сигнало
 обновлённый Q19 не даёт жёсткого локального сигнала. Независимой blind-
 приёмки нет, старый файл не получил уровень `П`. Инвентарь: +1 файл, +4 Q.
 
+Следующий P2-кандидат `Notification System` выполнен **05.10.2026**
+коммитом `4441fc17`:
+`design-notification-system-interview.md` Q1–Q4 (`NEW_TOPIC`, P2 · О) и
+парный MCQ. Базовый `system-design-interview.md` Q10 уже покрывал каналы,
+предпочтения и очереди; `message-brokers-comparison-interview.md` Q24 —
+fan-out. Новый маршрут отделён по статусам принятия/доставки, дублям на
+границе провайдера, повторной проверке предпочтений и сроков, классификации
+ошибок. Сверено по [FCM lifespan](https://firebase.google.com/docs/cloud-messaging/customize-messages/setting-message-lifespan),
+[FCM scale/error codes](https://firebase.google.com/docs/cloud-messaging/scale-fcm),
+[APNs responses](https://developer.apple.com/documentation/usernotifications/handling-notification-responses-from-apns),
+[SES send process](https://docs.aws.amazon.com/ses/latest/dg/send-email-concepts-process.html)
+и [AWS outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html).
+Новая пара: структура/parity/pre-check 4/4 PASS, авторская проверка вариантов
+и ссылок завершена; **независимого blind review нет**. Существующий Q10
+точечно прочитан (`О`), весь старый файл не проверялся (`П`). Инвентарь:
++1 файл, +4 Q. Политики consent/quiet hours требуют продуктового решения,
+а не объявлены универсальным правилом провайдеров.
+
+P2-кандидат `Distributed Message Queue` проверен **05.10.2026** и закрыт
+как новый файл: `kafka-interview.md` Q6–Q24 уже разбирает partition,
+offset, репликацию, ack, replay и retention; `rabbitmq-interview.md`
+Q18–Q30 — подтверждения, повторы и отказ узла; `system-design-interview.md`
+Q21 — применение очереди. Отдельный общий файл повторил бы эти маршруты.
+Вместо него коммитом `a894e224` исправлена устаревшая граница «RabbitMQ
+не умеет replay»: RabbitMQ Q40/Q41, Kafka Q42,
+`message-brokers-comparison-interview.md` Q15 и
+`event-driven-patterns-interview.md` Q3 точечно обновлены (`DEEPEN`, P2 · О),
+добавлен RabbitMQ Q42 (`ADD_Q`, P2 · О) и парный MCQ. По
+[RabbitMQ Streams 4.3](https://www.rabbitmq.com/docs/streams),
+[официальному сравнению](https://www.rabbitmq.com/docs/compare/kafka)
+и [Kafka topic configs 4.3](https://kafka.apache.org/43/configuration/topic-configs/)
+Streams дают неразрушающее чтение по offset до retention, в отличие от
+classic/quorum queue после ack; super stream делится на партиции.
+Все четыре JSON прошли структуру; RabbitMQ/Kafka/сравнение брокеров —
+parity PASS, event-driven — parity FAIL из-за старых блоков. Полный pre-check
+всех четырёх JSON остаётся FAIL на прежних блоках: RabbitMQ 27, Kafka 36,
+сравнение 1, event-driven 24 hard-сигнала; **новые/изменённые Q локально
+без hard-сигналов**, независимого blind review нет. `CHECKED` sidecar
+сравнения брокеров сброшен в `TODO` после изменения Q15. Ни один из четырёх
+старых файлов не получил уровень `П`. Инвентарь: +1 Q, файлов без изменений.
+
 ## Отсутствующие файлы: исходная очередь и оставшиеся кандидаты
 
 Исходный срез до авторинга: Java — **28 файлов / 910 Q**, Kotlin — **12 / 370**,
@@ -159,11 +200,11 @@ Go — **7 / 209**, Scala — **2 / 56**. Тогда в interview-разделе
 | Design patterns | 1 | 48 | DevOps | 13 | 448 |
 | Frameworks | 37 | 885 | JVM | 3 | 71 |
 | Leadership | 7 | 187 | Logging | 1 | 42 |
-| Messaging | 9 | 237 | Monitoring | 9 | 285 |
+| Messaging | 9 | 238 | Monitoring | 9 | 285 |
 | Performance | 8 | 253 | Preparation | 1 | 42 |
-| Programming languages | 54 | 1 637 | Reactive | 6 | 206 |
-| Security | 10 | 350 | System design | 22 | 644 |
-| Testing | 16 | 489 | **Итого** | **325** | **9 865** |
+| Programming languages | 57 | 1 651 | Reactive | 6 | 206 |
+| Security | 10 | 350 | System design | 24 | 652 |
+| Testing | 16 | 489 | **Итого** | **330** | **9 888** |
 
 ## Срез публикаций за последние полгода
 
@@ -392,8 +433,8 @@ Dropbox/Google Drive), 18 (карты) и 26 (платёжная система)
 | Приоритет / статус | Глава источника и решение | Существующее покрытие и граница будущей шпаргалки | Черновик проверяемых вопросов |
 |---|---|---|---|
 | P2 · `NEW_TOPIC`, выполнено · О | 7. Distributed Unique ID Generator → `system-design/design-unique-id-generator-interview.md` Q1–Q4 | `system-design-interview.md` Q7, `design-url-shortener-interview.md` Q19 и SQL Q13 не раскрывали выбор генератора и сбои вне URL-кода. Q19 точечно исправлен. | Область уникальности и порядок; sequence/ticket/ranges; clock rollback/worker collision; UUIDv4/v7/Snowflake. Новая пара structure/pre-check PASS, старый URL Shortener full pre-check FAIL, blind review нет. |
-| P2 · КАНДИДАТ `NEW_TOPIC` или `DEEPEN` | 10. Notification System → `system-design/design-notification-system-interview.md` | `system-design-interview.md` Q10 уже даёт архитектуру каналов, preferences, очередей и retry. Новый файл оправдан, только если отделить несколько новых сценариев доставки; иначе углубить Q10. | Как обеспечить идемпотентную доставку через разные провайдеры? Как хранить предпочтения, тихие часы и статус отправки? Как разделить transactional и массовые уведомления? |
-| P2 · КАНДИДАТ `NEW_TOPIC` | 19. Distributed Message Queue → `system-design/design-message-queue-interview.md` | `messaging/kafka-interview.md` Q6–Q24 и `rabbitmq-interview.md` описывают продукты; `system-design-interview.md` Q21 — выбор очереди. Здесь проектирование самой очереди/лога, не пересказ Kafka. | Как распределить partitions и consumers? Где хранить offset/ack и как совместить ordering, replay, retention и отказ брокера? |
+| P2 · `NEW_TOPIC`, выполнено · О | 10. Notification System → `system-design/design-notification-system-interview.md` Q1–Q4 | `system-design-interview.md` Q10 уже даёт архитектуру каналов, preferences, очередей и retry; новый файл раскрывает четыре независимых эксплуатационных сценария. | Принятие vs доставка; предел идемпотентности внешнего вызова; повторная проверка правил/TTL; классификация ошибок. FCM/APNs/SES/AWS сверены, 4 MCQ structure/pre-check PASS, blind review ожидается. |
+| P2 · `NEW_TOPIC` отклонён, `DEEPEN`/`ADD_Q` выполнены · О | 19. Distributed Message Queue → RabbitMQ Q40–Q42, Kafka Q42, сравнение брокеров Q15, event-driven Q3 | Kafka Q6–Q24 и RabbitMQ Q18–Q30 уже покрывают проектные механизмы; отдельная шпаргалка стала бы повтором. Обнаружен реальный пробел: сравнения отрицали RabbitMQ Streams и replay. | По официальным RabbitMQ 4.3/Kafka 4.3 источникам исправлены queue vs log, offset/retention и super stream. 4 JSON структуры PASS, локальные Q без hard-сигналов; full pre-check старых файлов FAIL, blind review ожидается. |
 | P2 · КАНДИДАТ `NEW_TOPIC` | 22. Hotel Reservation System → `system-design/design-reservation-system-interview.md` | `design-payment-system-interview.md` Q4/Q7/Q17 покрывает платёж, но не конкурентное бронирование ограниченного инвентаря. Не копировать платёжный ledger. | Как избежать overselling при одновременной броне? Чем отличаются hold с TTL, подтверждённая бронь и отмена? Как согласовать резерв с оплатой? |
 | P2 · КАНДИДАТ `NEW_TOPIC` | 24. S3-like Object Storage → `system-design/design-object-storage-interview.md` | `design-dropbox-interview.md` Q5/Q18 описывает CAS и синхронизацию файлов; `data-lake-lakehouse-interview.md` Q5 сравнивает object storage с HDFS. Здесь API и внутренняя организация самого хранилища. | Как разделить metadata и bytes? Как обеспечить загрузку больших объектов, восстановление после потери узла, проверку целостности и ожидаемую семантику чтения/перезаписи? |
 | P2 · КАНДИДАТ `NEW_TOPIC` | 25. Real-time Gaming Leaderboard → `system-design/design-leaderboard-interview.md` | Есть Redis/кеширование в соседних темах, но нет маршрута по rank/top-N при большом числе обновлений. | Как быстро получать top-N и место конкретного пользователя? Как обрабатывать равные очки, шардирование, сезонный reset и запоздавшие события? |
@@ -564,21 +605,23 @@ correct самые длинные). Новый Q32 B1 и обновлённый 
 3 файла / 59 блоков с действующей полной приёмкой; `agentic-patterns` Q12
 остаётся открытым finding, остальные новые MCQ из этого плана ждут blind review.
 
-1. **Точная точка продолжения:** проверить P2-кандидат notification system
-   из блока `system-design-notes`: прочитать целиком
-   `system-design-interview.md` Q10, заголовки и ответы ближайших
-   messaging/security-файлов, затем выбрать первичные источники по
-   идемпотентности доставки, предпочтениям и статусу отправки. Создать
-   отдельную тему только при нескольких новых независимых сценариях;
-   иначе углубить Q10 и синхронизировать его MCQ.
-2. Затем проверить P2 distributed message queue,
-   reservation, object storage и leaderboard в порядке таблицы ниже.
+1. **Точная точка продолжения:** проверить P2-кандидат Hotel Reservation
+   System (`system-design/design-reservation-system-interview.md`) из блока
+   `system-design-notes`. Сравнить `design-payment-system-interview.md`
+   Q4/Q7/Q17, заголовки SQL/transaction/isolation и имеющиеся кейсы
+   бронирования; по официальным источникам проверить конкуренцию за
+   ограниченный инвентарь, hold с TTL, отмену и согласование с оплатой.
+   При нескольких независимых сценариях создать тему с парным MCQ,
+   иначе углубить существующий Q.
+2. Затем проверить P2 object storage и leaderboard в порядке таблицы выше.
+   Notification System Q1–Q4 и RabbitMQ Streams Q40–Q42 уже написаны и ждут
+   независимой MCQ-приёмки.
    Java 26–27, HTTP/3, Jackson 3 и Python typing/packaging уже написаны.
    Остальные P2/P3 без решения остаются кандидатами. Статусы Python 3.15 и
    PostgreSQL 19 перепроверять после финальных релизов.
 3. Отдельной задачей пройти независимую blind-приёмку новых MCQ и старый
-   parity/pre-check backlog Hibernate, Spring Data JPA, Java IO/NIO, Jackson
-   и URL Shortener;
+   parity/pre-check backlog Hibernate, Spring Data JPA, Java IO/NIO, Jackson,
+   URL Shortener, RabbitMQ, Kafka, сравнения брокеров и event-driven;
    положительный валидатор не означает `FINAL`.
 4. Продолжать выборку официальных публикаций за скользящие шесть месяцев;
    не выдавать выборку за полный охват. Для каждого решения фиксировать
@@ -587,7 +630,8 @@ correct самые длинные). Новый Q32 B1 и обновлённый 
    только после независимого evidence по [правилам качества](docs/mcq-quality/workflow.md).
 5. По новому запросу пользователя продолжать
    [блок `system-design-notes`](#новый-источник-для-system-design-system-design-notes):
-   первый P2-кандидат (генератор ID) написан; остальные строки пока
+   генератор ID и уведомления написаны, распределённая очередь закрыта
+   углублением соседей; остальные строки пока
    сопоставлены по структуре и Q (`З`). Проверять соседние ответы и отсекать
    дубли перед новым файлом; при авторинге добавлять парный MCQ.
 

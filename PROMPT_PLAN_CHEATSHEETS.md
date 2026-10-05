@@ -23,11 +23,11 @@
 
 ## Текущий проверенный срез на 05.10.2026
 
-В каталоге 329 тематических Markdown-файлов и 9 883 заголовка Q в 25
-разделах; 328 файлов имеют парный production MCQ JSON. Десять новых тем
+В каталоге 330 тематических Markdown-файлов и 9 888 заголовков Q в 25
+разделах; 329 файлов имеют парный production MCQ JSON. Одиннадцать новых тем
 в текущем этапе: Python core, Python concurrency, Python testing, FastAPI,
 MySQL, JDBC/пулы, Java 26–27, Python typing, Python packaging и
-System Design Unique ID Generator.
+System Design Unique ID Generator и Notification System.
 Навигация и инвентарь обновлены. Go database/sql углублён в
 go-stdlib-interview.md Q22–Q25: отдельный Go DB файл отвергнут из-за
 пересечения. Исправлены Go generics Q10/Q15/Q18–Q20, Spring Security Q30,
@@ -115,18 +115,40 @@ Shortener structure/parity PASS, но полный pre-check FAIL на стар�
 Q19 локально без жёсткого сигнала, blind review нет. Полного аудита `П`
 старого файла не было. Параллельные AI/ML и MCQ-run правки не трогать.
 
+Следующий P2-кандидат выполнен: `design-notification-system-interview.md`
+Q1–Q4 и парный MCQ. После сравнения с `system-design-interview.md` Q10
+и брокерным Q24 выделены новые сценарии: стадии доставки, неопределённый
+ответ провайдера и дубли, повторная проверка preferences/TTL, постоянные и
+временные ошибки. Факты сверены с FCM, APNs, SES и AWS outbox на 05.10.2026.
+Новая пара structure/parity/pre-check PASS, независимого blind review нет;
+старый Q10 проверен точечно, полного аудита файла не было.
+
+P2-кандидат Distributed Message Queue не стал новым файлом: Kafka Q6–Q24,
+RabbitMQ Q18–Q30 и system-design Q21 уже покрывают основные механизмы.
+Вместо дублирования исправлены RabbitMQ Q40/Q41, Kafka Q42, сравнение
+брокеров Q15, event-driven Q3 и добавлен RabbitMQ Q42 о Streams; MCQ
+синхронизированы. RabbitMQ 4.3 Streams — сохраняемый лог с replay по offset,
+в отличие от classic/quorum queue после ack. Источники — официальные
+RabbitMQ Streams/compare Kafka и Kafka topic configs. Структура всех четырёх
+JSON PASS; parity RabbitMQ/Kafka/сравнения PASS, event-driven FAIL на старых
+блоках. Полный pre-check каждого старого файла FAIL, изменённые Q локально
+без hard-сигналов, blind review нет. `CHECKED` sidecar сравнения брокеров
+сброшен в `TODO` после Q15. Файлов столько же, вопросов на один больше.
+
 ## Точная точка продолжения
 
-Начни с P2-кандидата notification system из раздела `system-design-notes`
-в плане. Прочитай целиком `system-design-interview.md` Q10 и ближайшие
-messaging/security-ответы; проверь по первичным источникам сценарии
-идемпотентной доставки, предпочтений пользователя, quiet hours и статуса
-отправки. Если несколько независимых пробелов подтверждены, создай тему
-с парным MCQ; иначе углуби Q10. После этого проверь остальные P2-кандидаты
-раздела в порядке плана.
+Начни с P2-кандидата Hotel Reservation System из раздела
+`system-design-notes` в плане. Сравни `design-payment-system-interview.md`
+Q4/Q7/Q17, SQL/transaction/isolation и соседние кейсы бронирования.
+По первичной документации проверь конкурентный hold ограниченного
+инвентаря, TTL, подтверждение/отмену и согласование с оплатой.
+При нескольких новых сценариях создай тему и парный MCQ, иначе углуби
+существующий Q. Затем проверь object storage и leaderboard.
 RabbitMQ/Kafka/Hibernate, новые Java и Python Q требуют независимого blind
 review MCQ; старый parity/pre-check backlog Hibernate, Spring Data JPA,
-Java IO/NIO, Jackson и URL Shortener открыт. Spring Data JDBC Q17 тоже ждёт
+Java IO/NIO, Jackson, URL Shortener, RabbitMQ, Kafka, сравнение брокеров и
+event-driven открыт. Notification System Q1–Q4, RabbitMQ Streams Q40–Q42
+и Spring Data JDBC Q17 тоже ждут
 содержательной приёмки.
 
 ## Как работать с каждой группой
