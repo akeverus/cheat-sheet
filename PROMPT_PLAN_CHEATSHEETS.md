@@ -23,7 +23,7 @@
 
 ## Текущий проверенный срез на 05.10.2026
 
-В каталоге 325 тематических Markdown-файлов и 9 862 заголовка Q в 25
+В каталоге 325 тематических Markdown-файлов и 9 863 заголовка Q в 25
 разделах; 324 файла имеют парный production MCQ JSON. Шесть новых тем
 в текущем этапе: Python core, Python concurrency, Python testing, FastAPI,
 MySQL и JDBC/пулы. Навигация и инвентарь обновлены. Go database/sql углублён в
@@ -40,7 +40,9 @@ OWASP SSRF Q34, Application Security Q13. Сверяй этот срез с те
 Ни один старый файл в этом этапе не получил П. Дополнительно исправлены
 `ai-ml/mcp-interview.md` Q6/Q8/Q13/Q14/Q28–Q30 и парные MCQ по ревизии
 MCP 2026-07-28; структура JSON PASS, parity старого файла FAIL, независимая
-приёмка не выполнена. Spring AI Q14 дополнен prompt caching и MCQ B1:
+приёмка не выполнена. Spring Data JDBC Q17 и JSON добавлены по reference
+4.1.1: назначенный ID, поддержка диалекта, без optimistic locking.
+Spring AI Q14 дополнен prompt caching и MCQ B1:
 структура/parity PASS, blind review ожидается. Новые Q авторски сверены с
 официальной документацией. Их MCQ имеют структурную и, кроме старых блоков
 двух Go-файлов, детерминированную parity-проверку. Ни один MCQ этого этапа
@@ -50,13 +52,9 @@ MCP 2026-07-28; структура JSON PASS, parity старого файла F
 
 ## Точная точка продолжения
 
-Spring Data JDBC Q13–Q16 и SQL Q16 уже точечно прочитаны: метода
-JdbcAggregateTemplate.upsert в них нет, но SQL Q16 объясняет общий upsert.
-Начни с официального Spring Data 4.1 reference и проверь точную семантику,
-ограничения и версию метода; в предыдущем проходе страница источника не
-открылась. Затем выбери ADD_Q, DEEPEN или COVERED и синхронизируй MCQ,
-если меняешь Q.
-Затем RabbitMQ Q19/Q25/Q30 и Kafka Q15/Q16/Q45 на delivery limit quorum
+Spring Data JDBC Q17 и парный JSON прошли структуру/parity, но независимая
+содержательная приёмка ещё не выполнена. Начни с RabbitMQ Q19/Q25/Q30 и
+Kafka Q15/Q16/Q45 на delivery limit quorum
 queue и CommitFailedException. Следом небольшими группами: Spring Data JPA
 AOT Q4–Q6, Actuator startup Q3/Q38, Spring AI Q3/Q7/Q15 и Hibernate
 JPQL/Criteria Q1/Q6 (`@Find`); потом Go

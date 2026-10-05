@@ -7,7 +7,7 @@
 
 ## Основание и предел проверки
 
-- Текущий корпус: **325** тематических Markdown-файлов, **9 862** заголовка
+- Текущий корпус: **325** тематических Markdown-файлов, **9 863** заголовка
   Q в **25** разделах. [Инвентарь](docs/interview-coverage/inventory.tsv)
   обновлён из-за шести новых шпаргалок. **324** файла имеют парный production
   JSON; отдельная тема подготовки остаётся без пары.
@@ -49,19 +49,15 @@
 | P2 · новый файл | `jdbc-connection-pool-interview.md` Q1–Q6; рядом `sql-interview.md` Q45, `database-transactions-interview.md` Q33–Q34, `spring-data-jdbc-interview.md` Q1/Q16 | `DataSource`, ресурсы, autocommit, batch, fetch и диагностика пула по [Java SE 25 JDBC API](https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/javax/sql/DataSource.html) и [HikariCP](https://github.com/brettwooldridge/HikariCP#configuration-knobs-baby). | 6/6 JSON, структура/parity PASS; независимая приёмка ожидается. |
 | P0 · исправлено · О | `ai-ml/mcp-interview.md` Q6/Q8/Q13/Q14/Q28–Q30 | Ответы смешивали ревизии MCP: обязательный handshake/session ID, старые подписки и Sampling выдавались за универсальные; Q30 содержал неподтверждённую хронологию внедрения. Исправлено по [релизу 2026-07-28](https://blog.modelcontextprotocol.io/posts/2026-07-28/) и [changelog](https://modelcontextprotocol.io/specification/2026-07-28/changelog). | JSON Q6/Q8/Q13/Q14/Q28–Q30 обновлён; структура PASS. Parity всего старого файла FAIL из-за 24/30 длинных correct и других старых блоков; свежесть всего файла TODO, независимая приёмка ожидается. |
 | P2 · углублено · О | `frameworks/spring/spring-ai-interview.md` Q14 | Кеш ответа был смешан с prompt caching провайдера; добавлены префикс, стратегии, TTL, предел breakpoint и показатели cache write/read по [Spring AI Anthropic reference](https://docs.spring.io/spring-ai/reference/api/chat/anthropic-chat.html#prompt-caching). | Добавлен JSON Q14:B1; структура/parity всего файла PASS, независимая приёмка ожидается. |
+| P2 · `ADD_Q`, выполнено · О | `frameworks/spring/spring-data-jdbc-interview.md` Q17; рядом Q12–Q16 и `databases/sql-interview.md` Q16 | Общий SQL upsert не объяснял API `JdbcAggregateTemplate.upsert`: назначенный ID, однокомандный диалект, отсутствие optimistic locking. Сверено с [Spring Data JDBC reference](https://docs.spring.io/spring-data/relational/reference/jdbc/entity-persistence.html#upsert) и [Javadoc 4.1.1](https://docs.spring.io/spring-data/relational/reference/api/java/org/springframework/data/jdbc/core/JdbcAggregateOperations.html#upsert(T)). | JSON Q17 добавлен; структура/parity всего файла PASS, независимая приёмка ожидается. |
 
 Новые файлы авторски сверены по каждому Q, но ни один production MCQ этого
 пакета не получил независимый blind review. Остальные Q изменённых старых
 файлов содержательно не проверены полностью.
 
-**Следующий кандидат P2 · `ADD_Q` или `DEEPEN` · О только по локальному тексту:**
-`frameworks/spring/spring-data-jdbc-interview.md` Q13–Q16 и
-`databases/sql-interview.md` Q16 прочитаны: `JdbcAggregateTemplate.upsert`
-там не описан. Общий SQL upsert в SQL Q16 не раскрывает поведение Spring
-Data JDBC. [Официальный reference](https://docs.spring.io/spring-data/relational/reference/jdbc/entity-persistence.html)
-нужно проверить перед решением о Q: страницу не удалось открыть в этом проходе.
-Версионные ограничения и сам ответ пока **гипотеза**, не написаны и не
-получили парный MCQ.
+Spring Data JDBC Q17 закрывает ранее открытый кандидат `upsert`; исходное
+сравнение с SQL Q16 и официальная семантика теперь проверены. Независимая
+приёмка нового MCQ ещё не выполнена.
 
 ## Отсутствующие файлы: исходная очередь и оставшиеся кандидаты
 
@@ -102,13 +98,13 @@ Go — **7 / 209**, Scala — **2 / 56**. Тогда в interview-разделе
 | Cloud | 6 | 177 | Code quality | 7 | 227 |
 | Data engineering | 8 | 236 | Databases | 23 | 736 |
 | Design patterns | 1 | 48 | DevOps | 13 | 448 |
-| Frameworks | 37 | 883 | JVM | 3 | 71 |
+| Frameworks | 37 | 884 | JVM | 3 | 71 |
 | Leadership | 7 | 187 | Logging | 1 | 42 |
 | Messaging | 9 | 237 | Monitoring | 9 | 285 |
 | Performance | 8 | 253 | Preparation | 1 | 42 |
 | Programming languages | 54 | 1 636 | Reactive | 6 | 206 |
 | Security | 10 | 350 | System design | 22 | 644 |
-| Testing | 16 | 489 | **Итого** | **325** | **9 862** |
+| Testing | 16 | 489 | **Итого** | **325** | **9 863** |
 
 ## Срез публикаций за последние полгода
 
@@ -408,7 +404,7 @@ Data 09.06 и Boot 10.06, PostgreSQL beta 4 24.09. Это выборка офи�
 **Checkpoint 05.10.2026:** P0 исправлен, включая версионные ответы MCP
 Q6/Q8/Q13/Q14/Q28–Q30; P1 Python core/concurrency написан,
 Go `database/sql` углублён в stdlib Q22–Q25. Из P2 написаны Python testing,
-FastAPI, MySQL и JDBC/пулы. Состав: 325 файлов, 9 862 Q; инвентарь и навигация обновлены.
+FastAPI, MySQL и JDBC/пулы. Состав: 325 файлов, 9 863 Q; инвентарь и навигация обновлены.
 Все новые/изменённые MCQ ещё ждут независимой содержательной приёмки.
 Для MCP структурная проверка PASS, parity всего старого файла FAIL; до
 исправления остальных блоков нельзя отмечать MCQ темы как принятый.
@@ -417,15 +413,11 @@ FastAPI, MySQL и JDBC/пулы. Состав: 325 файлов, 9 862 Q; инв
 сохранены; после завершения пользователь поручил разнести **все** изменения
 репозитория по тематическим коммитам, push не запрошен.
 
-1. **Точная точка продолжения авторинга:** локальные ответы
-   `frameworks/spring/spring-data-jdbc-interview.md` Q13–Q16 и
-   `databases/sql-interview.md` Q16 уже прочитаны. По [Spring Data 4.1
-   reference](https://docs.spring.io/spring-data/relational/reference/jdbc/entity-persistence.html)
-   проверить семантику/ограничения `JdbcAggregateTemplate.upsert`, затем
-   выбрать `ADD_Q`, `DEEPEN` или `COVERED` и синхронизировать MCQ при правке Q.
-2. Затем проверить `messaging/rabbitmq-interview.md` Q19/Q25/Q30 и
-   `messaging/kafka-interview.md` Q15/Q16/Q45 по официальным документам:
-   delivery limit quorum queue и `CommitFailedException`. Не считать отсутствие
+1. **Точная точка продолжения:** проверить `messaging/rabbitmq-interview.md`
+   Q19/Q25/Q30 и парный JSON по delivery limit quorum queue, после точечного
+   чтения ответа сверить официальную документацию RabbitMQ.
+2. Затем проверить `messaging/kafka-interview.md` Q15/Q16/Q45 по официальным
+   документам на `CommitFailedException`. Не считать отсутствие
    слова в заголовке доказательством пробела.
 3. Затем проверить `databases/hibernate-jpql-criteria-interview.md`
    Q1/Q6 на `@Find` и Metamodel Generator. Сначала точечно прочитать ответы,

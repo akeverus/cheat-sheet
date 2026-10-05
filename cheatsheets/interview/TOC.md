@@ -238,7 +238,7 @@ updated: "2026-10-05"
 - [Вопросы на собеседовании: `Spring Boot Actuator`](frameworks/spring/spring-boot-actuator-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Boot`](frameworks/spring/spring-boot-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Cloud`](frameworks/spring/spring-cloud-interview.md) — `43` вопроса
-- [Вопросы на собеседовании: `Spring Data JDBC`](frameworks/spring/spring-data-jdbc-interview.md) — `16` вопросов
+- [Вопросы на собеседовании: `Spring Data JDBC`](frameworks/spring/spring-data-jdbc-interview.md) — `17` вопросов
 - [Вопросы на собеседовании: `Spring Data JPA`](frameworks/spring/spring-data-jpa-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `Spring Framework`](frameworks/spring/spring-framework-interview.md) — `41` вопрос
 - [Вопросы на собеседовании: `Spring MVC`](frameworks/spring/spring-mvc-interview.md) — `43` вопроса

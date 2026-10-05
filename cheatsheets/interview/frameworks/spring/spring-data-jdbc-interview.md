@@ -15,13 +15,13 @@ aliases:
 prerequisites:
   - "[[spring-data-jdbc]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-10-05"
 ---
 # Вопросы на собеседовании: `Spring Data JDBC`
 
 `Spring Data JDBC` — простой persistence-фреймворк без ORM-магии: нет lazy loading, нет first-level cache, нет dirty checking. Опирается на концепции DDD (aggregate root). На собеседованиях проверяют понимание отличий от JPA, модели агрегатов и работы с кастомными запросами.
 
-Дата последнего обновления: 2026-04-20
+Дата последнего обновления: 2026-10-05
 
 ## Полезные ссылки
 
@@ -58,6 +58,7 @@ updated: "2026-04-25"
 - [Q14. (!) Как написать кастомный SQL-запрос в Spring Data JDBC?](#q14--как-написать-кастомный-sql-запрос-в-spring-data-jdbc)
 - [Q15. Как выполнять modifying-запросы?](#q15-как-выполнять-modifying-запросы)
 - [Q16. Как работает транзакционность в Spring Data JDBC?](#q16-как-работает-транзакционность-в-spring-data-jdbc)
+- [Q17. Когда использовать JdbcAggregateTemplate.upsert и каковы его ограничения?](#q17-когда-использовать-jdbcaggregatetemplateupsert-и-каковы-его-ограничения)
 
 ---
 
@@ -534,6 +535,26 @@ public class OrderService {
 ```
 
 **Отличие от JPA:** нет автоматического flush и merge из персистентного контекста — `save()` сразу выполняет явный SQL. В JPA изменения могут уйти в БД «сами» при flush; здесь же запись происходит ровно тогда, когда вы вызвали репозиторий, и ровно теми запросами, что видны в логе.
+
+---
+
+## Q17. Когда использовать JdbcAggregateTemplate.upsert и каковы его ограничения?
+
+В **Spring Data JDBC 4.1** `JdbcAggregateTemplate.upsert(instance)` сохраняет корень агрегата одним нативным SQL upsert: вставляет строку, если первичного ключа ещё нет, либо обновляет существующую. Это полезно, когда ID известен заранее и приложение хочет обойти предварительную проверку существования. В отличие от `save`, выбор INSERT/UPDATE делает СУБД по ключу, а не проверка признака «новый объект» в Spring Data.
+
+```java
+// template внедрён как Spring bean; product.id уже назначен
+Product saved = template.upsert(product);
+```
+
+Ограничения важнее краткости вызова:
+
+- **ID должен быть установлен** до вызова; сценарий с ещё не выданным автоинкрементным ключом сюда не подходит.
+- **Диалект должен поддерживать однокомандный upsert.** Reference перечисляет PostgreSQL, H2, MySQL, MariaDB, SQL Server, Oracle, DB2 и HSQLDB; SQL-синтаксис зависит от СУБД (`MERGE`, `INSERT ... ON CONFLICT` и др.).
+- **Optimistic locking пока не поддерживается.** Если корректность изменения зависит от `@Version` и обнаружения конфликтов, не подменяйте `save` вызовом `upsert`.
+- Метод описан для **корня агрегата**. Не приписывайте ему без проверки ту же семантику записи вложенных коллекций, что у обычного `save`; проверьте SQL и события на вашей версии и диалекте.
+
+[Spring Data JDBC reference: Upsert](https://docs.spring.io/spring-data/relational/reference/jdbc/entity-persistence.html#upsert) · [Javadoc `JdbcAggregateOperations.upsert`](https://docs.spring.io/spring-data/relational/reference/api/java/org/springframework/data/jdbc/core/JdbcAggregateOperations.html#upsert(T)).
 
 ---
 
