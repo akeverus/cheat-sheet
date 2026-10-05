@@ -71,14 +71,12 @@ formatting and responsibilities.
 
 ## Progressive loading
 
-Before any write:
-
-1. Read `references/full-guide.md` completely.
-2. Read the target `.md` completely.
-3. Read the parallel JSON when it exists.
-4. Read relevant repository instructions and parser code when the contract is unclear.
-5. Read `/mcq-quality-fixer` before creating or semantically updating JSON.
-6. Read `docs/golden-examples.md` before writing or reviewing MCQ options.
+Before a write, read the target `.md` and the parallel JSON when they exist.
+Read the relevant sections of `references/full-guide.md` for the chosen mode;
+its full 1,500-line text is not needed for a narrow edit. For semantic MCQ changes,
+load `/mcq-quality-fixer`, `docs/mcq-quality-standard.md`, and the relevant part
+of `docs/mcq-quality/workflow.md`. Golden examples are illustrations, not an
+acceptance source; inspect them only when a concrete example is useful.
 
 Do not rely on remembered rules when the repository contains an explicit contract.
 
@@ -235,7 +233,8 @@ bash scripts/verify-mcq-json.sh <json>
 python3 scripts/mcq-answer-parity-gate.py <json>
 ```
 
-Run additional structure/stamp/blind checks required by `/mcq-quality-fixer`.
+Use the targeted gates in `docs/mcq-quality/workflow.md` and preserve evidence
+for dependent checks; a structural gate does not grant semantic acceptance.
 
 ## Validation contract
 

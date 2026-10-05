@@ -974,31 +974,16 @@ Do not create a second JSON under a different basename for the same topic.
 
 When JSON must change, `/mcq-quality-fixer` is authoritative.
 
-At minimum enforce:
+Apply the current `docs/mcq-quality-standard.md` and
+`docs/mcq-quality/surface-parity-rules.md`: exactly four options, one defensible key,
+fact freshness where needed, a complete answer from each A/B/C/D, comparable form,
+and natural Russian. SKEL/anti-tell flags are diagnostic evidence to assess, not a
+replacement for SFPL or ANSC. Do not force identical punctuation, opening, word
+count, code-span class or a fixed length rank. The correct option must not be
+guessable from stronger prose or fuller coverage of the visible question.
 
-- exactly 4 options;
-- exactly 1 correct;
-- valid schema;
-- mental-model-first distractors;
-- Single-Delta where appropriate;
-- Option Parity;
-- Plausibility Parity;
-- Russian Readability Parity;
-- Visual Format Parity;
-- **shared surface skeleton (`SKEL`) for all 4 options — hard gate**;
-- no visually distinguishable correct option;
-- no inflated caricature;
-- no stamped clone;
-- fact freshness for version-sensitive topics.
-
-The test:
-
-```text
-If correct=true is hidden, the correct option must not be guessable by appearance.
-All four options share one surface skeleton (opening/clauses/punctuation/backticks class).
-```
-
-This guide does not duplicate the full distractor canon.
+For the independent two-phase review and check-by-check acceptance, use
+`docs/mcq-quality/workflow.md` and `/mcq-quality-fixer`.
 
 ---
 

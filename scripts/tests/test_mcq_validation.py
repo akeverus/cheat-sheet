@@ -117,12 +117,13 @@ class ValidationTest(unittest.TestCase):
         audit = load_module("audit_checklist", "mcq-audit.py")
         row = {"id": "category/sample.json", "mcq": "modules/seed/category/sample.json",
                "claimed_status": "AUDITED", "blocks": 1, "structure": "PASS",
+               "theory": "theory/sample.md", "all_block_ids": ["Q2:B0"],
                "reviewed_blocks_initial": ["Q2:B0"], "reviewed_blocks_current": ["Q2:B0"],
                "linkage": {"errors": [], "warnings": 0}, "form_precheck": {"signals": {}},
                "readability_precheck": {"blocks_with_signals": 0}}
         row["checks"] = audit.file_checks(row)
-        self.assertEqual(row["checks"]["russian_readability"]["status"], "UNVERIFIED")
-        self.assertEqual(row["checks"]["final_acceptance"]["status"], "UNVERIFIED")
+        self.assertEqual(row["checks"]["russian_readability"]["status"], "NOT_RUN")
+        self.assertEqual(row["checks"]["final_acceptance"]["status"], "NOT_RUN")
         rendered = audit.render_file_checklist({"files": [row]})
         self.assertIn("category/sample.json", rendered)
         self.assertIn("SFPL", rendered)

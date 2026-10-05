@@ -8,6 +8,7 @@ on:
       - 'modules/quiz-app/src/main/resources/seed/**'
       - 'cheatsheets/interview/**'
       - 'scripts/mcq*'
+      - 'scripts/audit-mcq-parity.py'
       - 'scripts/mcq-tools/**'
       - 'scripts/verify-mcq-json.sh'
       - 'scripts/verify-md-no-mcq.sh'
@@ -22,6 +23,7 @@ on:
       - 'modules/quiz-app/src/main/resources/seed/**'
       - 'cheatsheets/interview/**'
       - 'scripts/mcq*'
+      - 'scripts/audit-mcq-parity.py'
       - 'scripts/mcq-tools/**'
       - 'scripts/verify-mcq-json.sh'
       - 'scripts/verify-md-no-mcq.sh'
@@ -46,6 +48,12 @@ jobs:
         run: python3 -m unittest discover -s scripts/tests -p 'test_mcq*.py' -v
       - name: All seeds, cross-field invariants and Markdown pairs
         run: bash scripts/verify-mcq-json.sh --all
+      # Раньше CI проверял только seeds: повреждённые evidence могли попасть в план.
+      # Новый шаг проверяет реальные записи и сохраняет незакрытое покрытие без ложного DONE.
+      - name: Evidence and portable workflow
+        run: |
+          python3 scripts/mcq-workflow.py doctor
+          python3 scripts/mcq-workflow.py status > mcq-status.json
       - name: No legacy Markdown MCQ
         run: |
           python3 - <<'PY'
@@ -67,5 +75,7 @@ jobs:
         if: always()
         with:
           name: mcq-parity
-          path: mcq-parity.json
+          path: |
+            mcq-parity.json
+            mcq-status.json
           if-no-files-found: ignore

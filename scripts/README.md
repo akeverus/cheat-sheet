@@ -85,6 +85,12 @@ python3 scripts/cheatsheet-lint.py cheatsheets --summary || {
 
 Стандарт: [mcq-quality-standard](../docs/mcq-quality-standard.md).
 Процесс для любой LLM: [PROMPT_PLAN_INTERVIEW](../PROMPT_PLAN_INTERVIEW.md).
+Переносимый запуск и формат результатов: [workflow](../docs/mcq-quality/workflow.md).
+
+- `python3 scripts/mcq-workflow.py doctor` — готовность локальных инструментов и evidence.
+- `python3 scripts/mcq-workflow.py next --size 4` — актуальный следующий пакет, без LLM.
+- `python3 scripts/mcq-workflow.py --help` — подготовка пакета, две фазы, регистрация результата, checkpoint.
+- `python3 scripts/mcq-workflow.py sync` — снимок, таблица и точка продолжения из доказательств.
 
 - `python3 -m pip install -r scripts/requirements-mcq.txt` — зависимости.
 - `bash scripts/verify-mcq-json.sh --all` — структурная проверка всего корпуса.

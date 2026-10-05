@@ -65,6 +65,10 @@ API-ключи не нужны ни для чего.
 
 - Текст вопросов импортируется из `cheatsheets/interview/**/*.md` (`service/imports/`).
 - MCQ-варианты грузятся из `seed/mcq/<category>/<topic>.json` через `McqJsonLoader` на старте.
+- Для проверки и улучшения MCQ используй `/mcq-quality-fixer`: критерии в
+  `docs/mcq-quality-standard.md`, команды и evidence в `docs/mcq-quality/workflow.md`.
+  Полный проход ведётся по `PLAN_INTERVIEW.md` и `PROMPT_PLAN_INTERVIEW.md`;
+  `scripts/mcq-workflow.py next` показывает актуальный следующий пакет.
 - `OptionLookupService` ходит только в БД/кэш. Нет сидера → пустой список → MVC форсит
   `flashcardMode=true`, вопрос показывается флешкартой. Это штатное поведение, не деградация.
 

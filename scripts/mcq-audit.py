@@ -17,6 +17,7 @@ import subprocess
 import sys
 
 import mcq_validation as mcq
+import mcq_evidence as evidence_checks
 
 
 def sha256(path):
@@ -87,9 +88,12 @@ def form_review_queue(rows):
         if row["claimed_status"] != "AUDITED":
             continue
         signals = row.get("form_precheck", {}).get("signals", {})
-        blocks = row["all_block_ids"]
+        blocks = [b for b in row["all_block_ids"] if any(
+            b not in row.get("checks", {}).get(c, {}).get("passed_blocks", []) for c in ("sfpl", "ansc"))]
+        if not blocks:
+            continue
         flagged = [b for b in blocks if b in signals]
-        queue.append({"id": row["id"], "status": "UNVERIFIED",
+        queue.append({"id": row["id"], "status": evidence_checks.aggregate(row["checks"][c]["status"] for c in ("sfpl", "ansc")) if "checks" in row else "UNVERIFIED",
                       "blocks": flagged + [b for b in blocks if b not in signals],
                       "blocks_with_signals": flagged,
                       "reason": "Отдельно проверить SFPL и ANSC всех A/B/C/D; pre-check PASS не закрывает ревью"})
@@ -158,51 +162,17 @@ def readability_precheck(data, markdown, scanner):
             "acceptance": "UNVERIFIED: editorial Russian review required even without signals"}
 
 
-def file_checks(row):
-    """Единая матрица обязательных проверок; покрытие чтением не приравниваем к PASS."""
-    initial, current, count = len(row["reviewed_blocks_initial"]), len(row["reviewed_blocks_current"]), row["blocks"]
-    content = "NOT_RUN" if not initial else ("STALE" if current < initial else (
-        "REVIEWED" if current == count else "PARTIAL"))
-    result = {
-        "schema_structure": {"status": row["structure"]},
-        "content_review": {"status": content, "current_blocks": current, "required_blocks": count},
-        "factual_correctness": {"status": "UNVERIFIED"},
-        "source_linkage": {"status": "UNVERIFIED"},
-        "sections_consistency": {"status": "UNVERIFIED"},
-        "sfpl": {"status": "UNVERIFIED"},
-        "ansc": {"status": "UNVERIFIED"},
-        "russian_readability": {"status": "UNVERIFIED", "required_blocks": count,
-                                "scope": "visible question, theory, all A/B/C/D and every section"},
-        "independent_review": {"status": content, "current_blocks": current, "required_blocks": count},
-        "blind_review": {"status": "NOT_RUN"},
-        "final_acceptance": {"status": "UNVERIFIED"},
-    }
-    # Канонические технические имена evidence; старые ключи оставлены для совместимости.
-    result["file_checks"] = {
-        "CONTENT": result["content_review"], "FACTS": result["factual_correctness"],
-        "LINKAGE": {"status": "PASS" if not row.get("linkage", {}).get("errors") else "FAIL"},
-        "SECTIONS": result["sections_consistency"], "SFPL": result["sfpl"], "ANSC": result["ansc"],
-        "RU": result["russian_readability"], "INDEPENDENT": result["independent_review"],
-        "BLIND": result["blind_review"], "FINAL": result["final_acceptance"],
-    }
-    return result
-
-
-def file_actions(row):
-    actions = []
-    if row["structure"] != "PASS":
-        actions.append("Исправить ошибки структуры и повторить автопроверки")
-    if row["readability_precheck"].get("blocks_with_signals", 0):
-        actions.append("Разобрать RU-сигналы по полям и выполнить редакторскую вычитку")
-    else:
-        actions.append("Выполнить редакторскую RU-вычитку, включая блоки без автосигналов")
-    actions.append("Выполнить отдельное SFPL/ANSC-ревью всех четырёх вариантов")
-    if row["open_issues"]:
-        actions.append(f"Разобрать открытые содержательные замечания: {len(row['open_issues'])}")
-    if row["pending_content_review"]:
-        actions.append(f"Содержательно проверить блоки: {len(row['pending_content_review'])}")
-    actions.append("Подтвердить факты, linkage и sections; оформить независимую приёмку по актуальным хешам")
-    return actions
+def file_checks(row, records=(), hashes=None, rules=None):
+    """Единый источник матрицы: новые evidence и текущая структурная проверка."""
+    checks = evidence_checks.evaluate(row, records, hashes or {}, rules or {}, mcq.ROOT)
+    blocks = row["all_block_ids"]
+    checks["schema_structure"] = {
+        "status": row["structure"], "current_blocks": len(blocks) if row["structure"] == "PASS" else 0,
+        "required_blocks": len(blocks), "passed_blocks": blocks if row["structure"] == "PASS" else [],
+        "remaining_blocks": [] if row["structure"] == "PASS" else blocks,
+        "evidence": ["scripts/mcq_validation.py"], "sha256": row.get("sha256"),
+        "validator_sha256": sha256(Path(mcq.__file__)), "errors": row.get("errors", [])}
+    return checks
 
 
 def render_file_checklist(snapshot):
@@ -214,7 +184,7 @@ def render_file_checklist(snapshot):
              "U = UNVERIFIED; НП = NOT_RUN. «Прочитано» показывает покрытие, не приёмку содержания.",
              "Авто: JSON = структурный gate; L = linkage errors/warnings; F = блоки с сигналами формы; RU = блоки с языковыми сигналами.",
              "Факты, обучающая связь с источником, согласованность sections, SFPL, ANSC и RU принимаются отдельно.",
-             "Исторический AUDITED не даёт галочек. TODO темы остаются в плане, но вне текущего бюджетного прохода.", ""]
+             "Исторический AUDITED не даёт галочек. TODO темы обрабатываются после обновлённого множества.", ""]
     for claimed, title in (("AUDITED", "Исторически обновлённые темы"), ("TODO", "Оставшиеся TODO темы"), (None, "Прочие статусы")):
         rows = [r for r in snapshot["files"] if (r["claimed_status"] == claimed if claimed else r["claimed_status"] not in {"AUDITED", "TODO"})]
         if not rows:
@@ -227,24 +197,30 @@ def render_file_checklist(snapshot):
             status = lambda name: {"UNVERIFIED": "U", "NOT_RUN": "НП"}.get(checks[name]["status"], checks[name]["status"])
             linkage = row["linkage"]
             link = f"{len(linkage['errors'])}/{linkage['warnings']}" if "errors" in linkage else "НП"
-            read = f"{len(row['reviewed_blocks_current'])}/{row['blocks']} {status('content_review')}"
+            read = f"CONTENT {status('content_review')}: {checks['content_review'].get('current_blocks', 0)}/{row['blocks']}; исторически прочитано {len(row['reviewed_blocks_current'])}"
             form = len(row["form_precheck"]["signals"]) if "signals" in row["form_precheck"] else "НП"
             ru = row["readability_precheck"].get("blocks_with_signals", "НП")
-            name = f"[{row['id']}](../../{row['mcq']})"
+            name = f"[{row['mcq']}](../../{row['mcq']})<br>[{row.get('theory', 'не указана')}](../../{row.get('theory', '')})"
             action = "Сначала структура" if row["structure"] != "PASS" else ("RU-сигналы → RU + SFPL/ANSC" if ru else "RU + SFPL/ANSC")
             if row["claimed_status"] == "TODO":
-                action = "После выделения скоупа: полный цикл"
+                action = "После обновлённых тем: полный цикл"
             auto = f"JSON {status('schema_structure')}; L {link}; F {form}; RU {ru}"
             content = f"Факты {status('factual_correctness')}; связь {status('source_linkage')}; sections {status('sections_consistency')}"
             language = f"SFPL {status('sfpl')}; ANSC {status('ansc')}; **RU {status('russian_readability')}**"
             independence = f"Ревью {status('independent_review')}; слепое {status('blind_review')}; итог {status('final_acceptance')}"
-            values = [name, row["blocks"], auto, read, content, language, independence]
+            coverage = "; ".join(f"{c}: {v.get('current_blocks', 0)}/{row['blocks']}" for c, v in checks.items() if c != "schema_structure")
+            refs = sorted({ref for v in checks.values() for ref in v.get("evidence", [])})
+            proof = ", ".join(f"[evidence {i+1}](../../{ref})" for i, ref in enumerate(refs)) or "нет новых evidence"
+            version = f"JSON {row.get('sha256', {}).get('mcq', '')[:12]}; MD {row.get('sha256', {}).get('theory', '')[:12]}"
+            name += f"<br>{version}; Q={row.get('questions', '?')}<br>{proof}"
+            action = row.get("next_actions", [action])[0] if row.get("next_actions") else action
+            values = [name, row["blocks"], auto, read, content, language, independence + "<br>" + coverage]
             lines.append("| " + " | ".join(map(str, [*values, action])) + " |")
         lines.append("")
     return "\n".join(lines)
 
 
-def inventory():
+def inventory(topic=None):
     validator = mcq.schema_validator()
     parity = tool_module("mcq-answer-parity-gate.py")
     linkage = tool_module("mcq-linkage-scan.py")
@@ -261,11 +237,19 @@ def inventory():
     rows, requests, owners = [], [], []
     evidence_path = root / "docs/mcq-quality/audit-evidence.json"
     evidence = mcq.read_json(evidence_path) if evidence_path.exists() else {"reviews": []}
+    records = evidence_checks.load_records(root / "docs/mcq-quality/reviews/checks")
+    for record in records:
+        record["_evidence_path"] = Path(record["_evidence_path"]).relative_to(root).as_posix()
+        if not (root / record["paths"]["mcq"]).is_file():
+            raise ValueError(f"evidence seed missing: {record['review_id']}")
+    rules = {name: sha256(root / name) for name in evidence_checks.RULE_PATHS}
     reviews = {}
     for review in evidence["reviews"]:
         reviews.setdefault(review["paths"]["mcq"], []).append(review)
     for path in sorted(mcq.SEED.rglob("*.json")):
         relative = path.relative_to(root).as_posix()
+        if topic and topic not in (relative, path.relative_to(mcq.SEED).as_posix()):
+            continue
         theory = mcq.canonical_theory(path)
         theory_relative = theory.relative_to(root).as_posix()
         claim = claims.get(relative, {})
@@ -285,7 +269,7 @@ def inventory():
             "options": structural["options"], "structure": structural["status"],
             "errors": structural["errors"],
             "claimed_status": claim.get("status", "UNTRACKED"),
-            "work_scope": "CURRENT_UPDATED_SET" if claim.get("status") == "AUDITED" else "FUTURE_SCOPE",
+            "work_scope": "CURRENT_UPDATED_SET" if claim.get("status") == "AUDITED" else "TODO_AFTER_UPDATED_SET",
             "sidecar_status": sidecar.get("status", "UNSPECIFIED"),
             "sidecar": sidecar_path.relative_to(root).as_posix() if sidecar else None,
             "freshness_sidecar_present": freshness_path.is_file(),
@@ -293,7 +277,9 @@ def inventory():
             "semantic_acceptance": "UNVERIFIED",
             "fact_freshness": "UNVERIFIED: presence of a sidecar is not a fact check",
             "blind_review": "NOT_RUN_IN_THIS_AUDIT",
-            "open_issues": [item for item in evidence.get("open_issues", []) if item["mcq"] == relative],
+            "open_issues": [item for item in evidence.get("open_issues", []) if item["mcq"] == relative and item.get("status") not in {"RESOLVED", "CLOSED"}],
+            "runtime_findings": [item for item in evidence.get("runtime_findings", []) if item["mcq"] == relative],
+            "block_hashes": hashes,
             "reviewed_blocks_initial": [], "reviewed_blocks_current": [],
             "all_block_ids": block_ids,
             "form_acceptance": "UNVERIFIED: separate SFPL/ANSC evidence required",
@@ -343,8 +329,16 @@ def inventory():
         row["reviewed_blocks_initial"] = [b for b in block_ids if b in initial]
         row["reviewed_blocks_current"] = [b for b in block_ids if b in current]
         row["pending_content_review"] = [b for b in block_ids if b not in current]
-        row["checks"] = file_checks(row)
-        row["next_actions"] = file_actions(row)
+        row["checks"] = file_checks(row, records, hashes, rules)
+        row["pending_content_review"] = row["checks"]["content_review"]["remaining_blocks"]
+        row["semantic_acceptance"] = row["checks"]["final_acceptance"]["status"]
+        row["fact_freshness"] = row["checks"]["factual_correctness"]["status"]
+        row["blind_review"] = row["checks"]["blind_review"]["status"]
+        row["form_acceptance"] = {c: row["checks"][c]["status"] for c in ("sfpl", "ansc")}
+        row["next_actions"] = [f"{c}: проверить {len(v['remaining_blocks'])} блоков ({v['status']})"
+                               for c, v in row["checks"].items() if v["remaining_blocks"]]
+        if not row["next_actions"]:
+            row["next_actions"] = ["Файл принят; повторить только после изменения зависимостей"]
         row_index = len(rows)
         rows.append(row)
         for ref in dict.fromkeys(declared_commits(claim) + declared_commits(sidecar)):
@@ -382,6 +376,9 @@ def inventory():
             row["next_action"] = "Проверить изменения после заявленного ревью и повторить зависимые проверки"
     if not rows:
         raise ValueError("empty MCQ corpus")
+    for row in rows:
+        if row["sha256"] != {"mcq": sha256(root / row["mcq"]), "theory": sha256(root / row["theory"])}:
+            raise ValueError(f"content changed during inventory: {row['id']}; retry after writer finishes")
     names = Counter(Path(row["mcq"]).name for row in rows)
     expected_theory = {row["theory"] for row in rows}
     orphan_theory = []
@@ -391,15 +388,22 @@ def inventory():
             orphan_theory.append(relative)
     updated = [row for row in rows if row["claimed_status"] == "AUDITED"]
     return {
-        "schema_version": 1,
+        "schema_version": 2,
+        "partial_snapshot": bool(topic),
         "head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
         "standard_sha256": sha256(root / "docs/mcq-quality-standard.md"),
         "validator_sha256": sha256(Path(mcq.__file__)),
         "diagnostic_sha256": {name: sha256(root / "scripts" / name) for name in
-                              ("mcq-audit.py", "mcq-answer-parity-gate.py", "mcq-linkage-scan.py",
+                              ("mcq-audit.py", "mcq_evidence.py", "mcq-answer-parity-gate.py", "mcq-linkage-scan.py",
                                "mcq-skel-gate.py", "mcq-anti-tell-scan.py", "audit-mcq-parity.py")},
-        "scope": "working-tree; all production MCQ seeds",
+        "scope": f"working-tree; topic={topic}" if topic else "working-tree; all production MCQ seeds",
         "summary": {
+            "accepted_files": sum(r["checks"]["final_acceptance"]["status"] == "PASS" for r in rows),
+            "accepted_blocks": sum(r["checks"]["final_acceptance"]["current_blocks"] for r in rows),
+            "check_coverage": {c: {"passed_blocks": sum(r["checks"][c]["current_blocks"] for r in rows),
+                                   "remaining_blocks": sum(len(r["checks"][c]["remaining_blocks"]) for r in rows),
+                                   "file_statuses": dict(Counter(r["checks"][c]["status"] for r in rows))}
+                               for c in (*evidence_checks.CHECKS, "schema_structure")},
             "files": len(rows), "questions": sum(r["questions"] for r in rows),
             "paired_markdown_files": sum(r["sha256"]["theory"] is not None for r in rows),
             "review_sidecars": sum(r["sidecar"] is not None for r in rows),
@@ -417,22 +421,26 @@ def inventory():
             "current_review_pending_including_stale": sum(len(r["pending_content_review"]) for r in updated),
             "form_review_scope_blocks": sum(len(r["all_block_ids"]) for r in updated),
             "form_review_blocks_with_signals": sum(len(r["form_precheck"].get("signals", {})) for r in updated),
-            "form_review_status": "UNVERIFIED: automatic signals prioritize, never accept",
+            "form_review_status": dict(Counter(r["checks"]["sfpl"]["status"] for r in updated)),
             "readability_blocks_with_signals": sum(r["readability_precheck"].get("blocks_with_signals", 0) for r in rows),
             "updated_readability_blocks_with_signals": sum(r["readability_precheck"].get("blocks_with_signals", 0) for r in updated),
-            "semantic_acceptance": "UNVERIFIED: status/commit match is not proof of complete review",
+            "semantic_acceptance": dict(Counter(r["checks"]["final_acceptance"]["status"] for r in rows)),
         },
         "basename_collisions": [name for name, count in names.items() if count > 1],
         "theory_without_seed": orphan_theory,
         "manifest_without_seed": sorted(set(claims) - {r["mcq"] for r in rows}),
         "review_queue": [{"id": r["id"], "blocks": r["pending_content_review"],
                           "reason": r["next_action"]} for r in updated if r["pending_content_review"]],
-        "issue_queue": evidence.get("open_issues", []),
+        "check_queue": [{"id": r["id"], "stage": r["work_scope"], "check": c,
+                         "status": v["status"], "blocks": v["remaining_blocks"]}
+                        for r in sorted(rows, key=lambda r: (r["claimed_status"] != "AUDITED", r["id"]))
+                        for c, v in r["checks"].items() if v["remaining_blocks"]],
+        "issue_queue": [i for r in rows for i in r["open_issues"]] + [f for r in rows for v in r["checks"].values() for f in v.get("open_findings", [])],
         "form_review_queue": form_review_queue(rows),
         "readability_review_queue": sorted([
-            {"id": r["id"], "status": "UNVERIFIED", "blocks": sorted(r["all_block_ids"], key=lambda b: b not in r["readability_precheck"].get("signals", {})),
+            {"id": r["id"], "status": r["checks"]["russian_readability"]["status"], "blocks": sorted(r["checks"]["russian_readability"]["remaining_blocks"], key=lambda b: b not in r["readability_precheck"].get("signals", {})),
              "blocks_with_signals": list(r["readability_precheck"].get("signals", {}))}
-            for r in updated], key=lambda r: (-len(r["blocks_with_signals"]), r["id"])),
+            for r in updated if r["checks"]["russian_readability"]["remaining_blocks"]], key=lambda r: (-len(r["blocks_with_signals"]), r["id"])),
         "runtime_findings": evidence.get("runtime_findings", []),
         "files": rows,
     }
@@ -441,14 +449,20 @@ def inventory():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--topic", help="Относительный путь темы; отдельный снимок одной пары")
     parser.add_argument("--checklist-output", type=Path, help="Markdown matrix of required checks for every file")
     args = parser.parse_args()
     try:
-        result = inventory()
+        if args.topic and ((args.output and args.output.resolve() == (mcq.ROOT / "docs/mcq-quality/audit-state.json").resolve()) or args.checklist_output):
+            raise ValueError("--topic must not replace the global snapshot/checklist")
+        result = inventory(args.topic)
     except (ImportError, OSError, ValueError, KeyError, TypeError, subprocess.CalledProcessError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
     text = json.dumps(result, ensure_ascii=False, indent=2) + "\n"
+    # Списки Q/B остаются точными, но не занимают по строке на каждый NOT_RUN.
+    text = re.sub(r'\[\n\s+("Q\d+:B\d+"(?:,\n\s+"Q\d+:B\d+")*)\n\s+\]',
+                  lambda m: "[" + re.sub(r",\n\s+", ", ", m[1]) + "]", text)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(text, encoding="utf-8")

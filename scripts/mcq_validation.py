@@ -32,9 +32,12 @@ def _constant(value):
     raise ValueError(f"non-JSON number: {value}")
 
 
+def parse_json(text):
+    return json.loads(text, object_pairs_hook=_object, parse_constant=_constant)
+
+
 def read_json(path):
-    return json.loads(Path(path).read_text(encoding="utf-8"),
-                      object_pairs_hook=_object, parse_constant=_constant)
+    return parse_json(Path(path).read_text(encoding="utf-8"))
 
 
 def schema_validator():
