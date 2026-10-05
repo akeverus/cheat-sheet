@@ -7,9 +7,9 @@
 
 ## Основание и предел проверки
 
-- Текущий корпус: **332** тематических Markdown-файла, **9 896** заголовков
+- Текущий корпус: **333** тематических Markdown-файла, **9 901** заголовок
   Q в **25** разделах. [Инвентарь](docs/interview-coverage/inventory.tsv)
-  обновлён после тринадцати новых шпаргалок и добавленных Q. **331** файл имеет парный production
+  обновлён после четырнадцати новых шпаргалок и добавленных Q. **332** файла имеют парный production
   JSON; отдельная тема подготовки остаётся без пары.
 - `З` — пути и заголовки; `О` — точечная проверка ответа; `П` — полная
   содержательная проверка всех ответов существующего файла. **П в этом
@@ -203,8 +203,8 @@ Go — **7 / 209**, Scala — **2 / 56**. Тогда в interview-разделе
 | Messaging | 9 | 238 | Monitoring | 9 | 285 |
 | Performance | 8 | 253 | Preparation | 1 | 42 |
 | Programming languages | 57 | 1 651 | Reactive | 6 | 206 |
-| Security | 10 | 350 | System design | 26 | 660 |
-| Testing | 16 | 489 | **Итого** | **332** | **9 896** |
+| Security | 10 | 350 | System design | 27 | 665 |
+| Testing | 16 | 489 | **Итого** | **333** | **9 901** |
 
 ## Срез публикаций за последние полгода
 
@@ -437,7 +437,7 @@ Dropbox/Google Drive), 18 (карты) и 26 (платёжная система)
 | P2 · `NEW_TOPIC` отклонён, `DEEPEN`/`ADD_Q` выполнены · О | 19. Distributed Message Queue → RabbitMQ Q40–Q42, Kafka Q42, сравнение брокеров Q15, event-driven Q3 | Kafka Q6–Q24 и RabbitMQ Q18–Q30 уже покрывают проектные механизмы; отдельная шпаргалка стала бы повтором. Обнаружен реальный пробел: сравнения отрицали RabbitMQ Streams и replay. | По официальным RabbitMQ 4.3/Kafka 4.3 источникам исправлены queue vs log, offset/retention и super stream. 4 JSON структуры PASS, локальные Q без hard-сигналов; full pre-check старых файлов FAIL, blind review ожидается. |
 | P2 · `NEW_TOPIC`, выполнено · О | 22. Hotel Reservation System → `system-design/design-reservation-system-interview.md` Q1–Q4 | `design-ecommerce-delivery-interview.md` Q9 покрывает резерв товара с TTL, `design-payment-system-interview.md` Q4/Q7/Q17 — деньги, `database-transactions-interview.md` Q14 — блокировки. Не было интервала ночей и назначения одной комнаты. | Q1: остаток по ночам и непрерывное назначение; Q2: атомарный резерв всего интервала; Q3: гонка TTL/оплаты; Q4: координация с PSP и отмена. PostgreSQL 18 и Stripe сверены, MCQ structure/parity/pre-check PASS, blind review ожидается. |
 | P2 · `NEW_TOPIC`, выполнено · О | 24. S3-like Object Storage → `system-design/design-object-storage-interview.md` Q1–Q4 | `design-dropbox-interview.md` Q5–Q7/Q18 уже покрывает CAS, metadata/blob и Magic Pocket; `data-lake-lakehouse-interview.md` Q5 — сравнение с HDFS; `cloud/aws-interview.md` Q9/Q12 — обзор S3. Не было сквозного контракта объектного API и multipart. | Q1: PUT/GET/LIST, условная перезапись и версии; Q2: публикация metadata после bytes; Q3: multipart, checksum и abort; Q4: домены отказа и repair. AWS S3 и Ceph Squid сверены, MCQ structure/parity/pre-check PASS, blind review ожидается. |
-| P2 · КАНДИДАТ `NEW_TOPIC` | 25. Real-time Gaming Leaderboard → `system-design/design-leaderboard-interview.md` | Есть Redis/кеширование в соседних темах, но нет маршрута по rank/top-N при большом числе обновлений. | Как быстро получать top-N и место конкретного пользователя? Как обрабатывать равные очки, шардирование, сезонный reset и запоздавшие события? |
+| P2 · `NEW_TOPIC`, выполнено · О | 25. Real-time Gaming Leaderboard → `system-design/design-leaderboard-interview.md` Q1–Q5 | `databases/redis-interview.md` Q2/Q11 покрывает Sorted Set, `stream-processing-interview.md` Q5–Q10 — опоздавшие события; не было продукта рейтинга с правилами мест и сезонов. | Q1: top-N/rank и источник истины; Q2: равные очки; Q3: повторы и поздние матчи; Q4: сезоны; Q5: шардирование и глобальный rank. Redis/Flink сверены, MCQ structure/parity/pre-check PASS, blind review ожидается. |
 | P3 · КАНДИДАТ `NEW_TOPIC` или `DEEPEN` | 20. Metrics Monitoring and Alerting System → `system-design/design-metrics-platform-interview.md` | `system-design-interview.md` Q23 и `monitoring/prometheus-grafana-interview.md` Q3/Q19–Q24 покрывают общую observability и Prometheus. Отдельный файл — только для проектирования многопользовательской платформы метрик. | Где агрегировать и хранить высококардинальные ряды? Как масштабировать ingest/query и изолировать правила алертинга разных команд? |
 | P3 · КАНДИДАТ `NEW_TOPIC` | 21. Ad Click Event Aggregation → `system-design/design-event-aggregation-interview.md` | `data-engineering/stream-processing-interview.md` Q8 объясняет окна, но нет сквозного кейса по событиям рекламы; общий stream processing оставить соседним. | Как различать event time и processing time, удалять дубли и пересчитывать поздние события? Как сверять оперативные счётчики с итоговой отчётностью? |
 | P3 · КАНДИДАТ `NEW_TOPIC` | 23. Distributed Email Service → `system-design/design-email-service-interview.md` | `system-design-interview.md` Q10 рассматривает email как один канал уведомлений; здесь отдельные доставка, bounce и репутация отправителя. | Как построить очередь отправки с повторами и дедупликацией? Что делать с bounce/complaint и как отслеживать доставляемость? |
@@ -605,15 +605,18 @@ correct самые длинные). Новый Q32 B1 и обновлённый 
 3 файла / 59 блоков с действующей полной приёмкой; `agentic-patterns` Q12
 остаётся открытым finding, остальные новые MCQ из этого плана ждут blind review.
 
-1. **Точная точка продолжения:** проверить P2-кандидат Real-time Gaming
-   Leaderboard (`system-design/design-leaderboard-interview.md`) из блока
-   `system-design-notes`. Сверить заголовки и ответы Redis sorted sets,
-   кеширования, streaming/late events и соседние system-design Q; по
-   официальным источникам проверить `ZADD`/`ZREVRANK`/top-N, tie-break,
-   сезонный reset и корректность при запоздавших событиях. При нескольких
-   независимых сценариях создать тему с парным MCQ, иначе углубить Q.
-2. Затем перейти к P3-кандидатам таблицы по пользе для профиля.
-   Object Storage Q1–Q4, Reservation System Q1–Q4, Notification System Q1–Q4 и RabbitMQ Streams Q40–Q42 ждут
+1. **Точная точка продолжения:** проверить P3-кандидат Metrics Monitoring
+   and Alerting System из блока `system-design-notes`. Сравнить
+   `system-design-interview.md` Q23,
+   `monitoring/prometheus-grafana-interview.md` Q3/Q19–Q24,
+   OpenTelemetry и соседние Q по метрикам/алертам. Отдельный файл оправдан
+   только при нескольких новых сценариях платформы: многопользовательский
+   ingest, cardinality, изоляция запросов и правил, retention/rollups.
+   По официальным источникам решить `NEW_TOPIC` против `DEEPEN`.
+2. Затем рассмотреть P3 Ad Click Event Aggregation и Distributed Email Service;
+   последний заново проверить на пересечение с Notification System Q1–Q4.
+   Leaderboard Q1–Q5, Object Storage Q1–Q4, Reservation System Q1–Q4,
+   Notification System Q1–Q4 и RabbitMQ Streams Q40–Q42 ждут
    независимой MCQ-приёмки.
    Java 26–27, HTTP/3, Jackson 3 и Python typing/packaging уже написаны.
    Остальные P2/P3 без решения остаются кандидатами. Статусы Python 3.15 и

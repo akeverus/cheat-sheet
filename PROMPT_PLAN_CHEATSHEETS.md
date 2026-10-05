@@ -23,11 +23,12 @@
 
 ## Текущий проверенный срез на 05.10.2026
 
-В каталоге 332 тематических Markdown-файла и 9 896 заголовков Q в 25
-разделах; 331 файл имеет парный production MCQ JSON. Тринадцать новых тем
+В каталоге 333 тематических Markdown-файла и 9 901 заголовок Q в 25
+разделах; 332 файла имеют парный production MCQ JSON. Четырнадцать новых тем
 в текущем этапе: Python core, Python concurrency, Python testing, FastAPI,
 MySQL, JDBC/пулы, Java 26–27, Python typing, Python packaging и
-System Design Unique ID Generator, Notification System, Hotel Reservation System и Object Storage.
+System Design Unique ID Generator, Notification System, Hotel Reservation System,
+Object Storage и Gaming Leaderboard.
 Навигация и инвентарь обновлены. Go database/sql углублён в
 go-stdlib-interview.md Q22–Q25: отдельный Go DB файл отвергнут из-за
 пересечения. Исправлены Go generics Q10/Q15/Q18–Q20, Spring Security Q30,
@@ -137,16 +138,19 @@ JSON PASS; parity RabbitMQ/Kafka/сравнения PASS, event-driven FAIL на
 
 ## Точная точка продолжения
 
-Начни с P2-кандидата Real-time Gaming Leaderboard из раздела
-`system-design-notes` в плане. Сверь Redis sorted sets, кеширование,
-streaming/late events и соседние system-design Q. По первичной документации
-проверь `ZADD`/`ZREVRANK`/top-N, tie-break, сезонный reset и корректность
-при запоздавших событиях. При нескольких новых сценариях создай тему и
-парный MCQ, иначе углуби существующий Q. Затем перейди к P3-кандидатам.
+Начни с P3-кандидата Metrics Monitoring and Alerting System из раздела
+`system-design-notes` в плане. Сравни `system-design-interview.md` Q23,
+`monitoring/prometheus-grafana-interview.md` Q3/Q19–Q24 и соседние Q.
+Отдельный файл нужен только при нескольких новых сценариях платформы:
+многопользовательский ingest, cardinality, изоляция запросов и правил,
+retention/rollups. Сверь факты с официальными источниками и реши
+`NEW_TOPIC` против `DEEPEN`. Затем проверь P3 Ad Click Event Aggregation
+и Distributed Email Service с учётом Notification System Q1–Q4.
 RabbitMQ/Kafka/Hibernate, новые Java и Python Q требуют независимого blind
 review MCQ; старый parity/pre-check backlog Hibernate, Spring Data JPA,
 Java IO/NIO, Jackson, URL Shortener, RabbitMQ, Kafka, сравнение брокеров и
-event-driven открыт. Object Storage Q1–Q4, Reservation System Q1–Q4, Notification System Q1–Q4, RabbitMQ Streams Q40–Q42
+event-driven открыт. Leaderboard Q1–Q5, Object Storage Q1–Q4,
+Reservation System Q1–Q4, Notification System Q1–Q4, RabbitMQ Streams Q40–Q42
 и Spring Data JDBC Q17 тоже ждут
 содержательной приёмки.
 
