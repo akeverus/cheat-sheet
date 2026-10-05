@@ -2355,8 +2355,8 @@
                 "explanation": "Это современный стандартный HTTP-стек JDK (`java.net.http`), заменяющий устаревший `HttpURLConnection`, с богатым набором обработчиков тела ответа.",
                 "example": "Его выбирают для не-Spring приложений и lightweight-сервисов; в Spring чаще предпочитают `WebClient`/`RestClient`, а сам клиент создают как переиспользуемый singleton.",
                 "when_to_apply": "`HttpClient` применяют для HTTP-запросов в не-Spring приложениях; в Spring чаще берут `WebClient`/`RestClient`.",
-                "edge_cases": "Клиент thread-safe и переиспользуем (один инстанс на приложение), а ответы обрабатывают через `BodyHandlers` — например, `ofFile(Path)` для скачивания файла напрямую на диск.",
-                "related": "[[java-io-nio-interview#Q26]] memory-mapped files; [[java-io-nio-interview#Q38]] выбор между IO и NIO API; [[java-io-nio-interview#Q9]] сетевые классы Java IO."
+                "edge_cases": "Клиент thread-safe и переиспользуем (один инстанс на приложение), а ответы обрабатывают через `BodyHandlers` — например, `ofFile(Path)` для скачивания файла напрямую на диск. С JDK 26 HTTP/3 включают отдельно; выбранную версию сверяют по `HttpResponse.version()`.",
+                "related": "[[java-io-nio-interview#Q26]] memory-mapped files; [[java-io-nio-interview#Q38]] выбор между IO и NIO API; [[java-io-nio-interview#Q9]] сетевые классы Java IO. [[java-io-nio-interview#Q41]] выбор HTTP/3 в JDK 26."
               },
               "order": 0,
               "label": "A"
@@ -2393,6 +2393,66 @@
                 "source_of_confusion": "Многие старые HTTP-клиенты требовали per-request экземпляров, и это ожидание переносят на новый API.",
                 "if_it_were_true": "Если бы он был thread-unsafe, не было бы рекомендации держать singleton, но создание клиента в hot path лишь жжёт CPU и соединения.",
                 "how_it_should_be": "Один `HttpClient` создают на приложение и переиспользуют между потоками; он потокобезопасен."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 41,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как включить HTTP/3 в `HttpClient` JDK 26 и проверить фактически выбранный протокол?",
+          "options": [
+            {
+              "text": "Задать `HTTP_3` как предпочтение клиента или запроса; фактический протокол читать из `request.version()`, поскольку запрос обновляет это поле после сетевого вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HttpRequest.version()` содержит запрошенную версию, а не результат сетевого обмена. Фактическую версию возвращает `HttpResponse.version()`.",
+                "source_of_confusion": "У запроса и ответа есть метод `version()`, но первый относится к предпочтению, второй — к использованному протоколу.",
+                "if_it_were_true": "Тогда request object менялся бы после отправки и точно сообщал бы о fallback при недоступности HTTP/3.",
+                "how_it_should_be": "Указать предпочтение `HTTP_3`, отправить запрос и читать версию ответа."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Задать `HTTP_3` как предпочтение клиента или запроса; фактический протокол читать из `response.version()`, поскольку HTTPS, прокси и discovery могут повлиять на выбор.",
+              "correct": true,
+              "sections": {
+                "explanation": "С JDK 26 `HTTP_3` доступен как preferred version. Выбор остаётся условным: встроенная реализация использует HTTP/3 лишь при подходящем HTTPS-соединении и без прокси.",
+                "example": "`HttpClient.newBuilder().version(HttpClient.Version.HTTP_3).build()` задаёт предпочтение; после `send(...)` проверяют `response.version()`.",
+                "when_to_apply": "При проверке реального использования HTTP/3 после обновления JDK или сетевой конфигурации приложения.",
+                "edge_cases": "Если версия не задана, клиент предпочитает HTTP/2; `H3_DISCOVERY` сам по себе HTTP/3 не включает. Для `HTTP_3_URI_ONLY` нет обычного fallback.",
+                "related": "[[java-io-nio-interview#Q40]] базовый HttpClient; [[java-26-27-interview#Q1]] другие изменения JDK."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Оставить версию клиента и запроса по умолчанию; фактический протокол читать из `response.version()`, поскольку в JDK 26 HTTP/3 стал предпочитаемым автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию клиент предпочитает HTTP/2. Чтобы рассматривать HTTP/3, нужно задать preferred version `HTTP_3` у клиента или запроса.",
+                "source_of_confusion": "Поддержка протокола в новой версии JDK может казаться равной автоматическому включению.",
+                "if_it_were_true": "Тогда новый JDK менял бы поведение существующих клиентов без правки их настроек версии.",
+                "how_it_should_be": "Указать `HTTP_3` как предпочтение, а фактическую версию проверить в ответе."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Задать `H3_DISCOVERY` у запроса без изменения предпочтения версии; фактический протокол читать из `response.version()`, поскольку подсказка сама включает HTTP/3.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`H3_DISCOVERY` не действует, если ни клиент, ни запрос не предпочитают HTTP/3; это настройка способа поиска соединения, а не включатель протокола.",
+                "source_of_confusion": "Название discovery-опции похоже на самостоятельный переключатель HTTP/3, хотя оно настраивает поведение уже выбранного предпочтения.",
+                "if_it_were_true": "Тогда одного `setOption` хватало бы для выбора HTTP/3 даже при default HTTP/2.",
+                "how_it_should_be": "Сначала задать `HTTP_3` как preferred version, затем при необходимости выбрать режим discovery и прочитать `response.version()`."
               },
               "order": 3,
               "label": "D"

@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[java-io-nio]]"
 next: []
-updated: "2026-05-05"
+updated: "2026-10-05"
 ---
 # Вопросы на собеседовании: Ввод-вывод Java (IO/NIO)
 
@@ -27,6 +27,8 @@ updated: "2026-05-05"
 
 - [Java Tutorial — Basic I/O](https://docs.oracle.com/javase/tutorial/essential/io/) — официальное руководство Oracle
 - [Java NIO (java.nio)](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/package-summary.html) — Javadoc пакета `java.nio`
+- [HttpClient в JDK 26](https://docs.oracle.com/en/java/javase/26/docs/api/java.net.http/java/net/http/HttpClient.html) — HTTP/3 и ограничения реализации
+- [HTTP/3 discovery в JDK 26](https://docs.oracle.com/en/java/javase/26/docs/api/java.net.http/java/net/http/HttpOption.Http3DiscoveryMode.html) — режимы выбора соединения
 - [NIO.2 (Path, Files)](https://docs.oracle.com/javase/tutorial/essential/io/fileio.html) — руководство по `NIO.2`
 - [Java IO vs NIO — Baeldung](https://www.baeldung.com/java-io-vs-nio) — сравнение IO и NIO
 - [Guide to ByteBuffer — Baeldung](https://www.baeldung.com/java-bytebuffer) — руководство по `ByteBuffer`
@@ -96,6 +98,7 @@ updated: "2026-05-05"
 - [Q38. (!) Когда предпочесть `InputStream`/`OutputStream`, а когда `Channel`/`ByteBuffer`?](#q38--когда-предпочесть-inputstreamoutputstream-а-когда-channelbytebuffer)
 - [Q39. Что такое `Pipe` в `NIO` и для чего он используется?](#q39-что-такое-pipe-в-nio-и-для-чего-он-используется)
 - [Q40. Что такое `HttpClient` (`Java` 11+) и когда его использовать?](#q40-что-такое-httpclient-java-11-и-когда-его-использовать)
+- [Q41. Как включить HTTP/3 в `HttpClient` JDK 26 и проверить фактически выбранный протокол?](#q41-как-включить-http3-в-httpclient-jdk-26-и-проверить-фактически-выбранный-протокол)
 
 ---
 
@@ -1559,9 +1562,38 @@ HttpResponse<Path> fileResponse = client.send(
     HttpResponse.BodyHandlers.ofFile(Path.of("downloaded.zip")));
 ```
 
-**Возможности:** HTTP/1.1 и HTTP/2, синхронные и асинхронные вызовы, `WebSocket`, настраиваемые таймауты и редиректы, `BodyHandlers` под разные типы ответов (`String`, `byte[]`, `Path`, `InputStream`).
+**Возможности:** с Java 11 — HTTP/1.1 и HTTP/2, синхронные и асинхронные вызовы, `WebSocket`, настраиваемые таймауты и редиректы, `BodyHandlers` под разные типы ответов (`String`, `byte[]`, `Path`, `InputStream`). С JDK 26 клиент также поддерживает HTTP/3; его включение и ограничения разобраны в Q41.
 
 **Когда применять:** как замену `HttpURLConnection` и лёгкую альтернативу сторонним клиентам, когда хватает базовой функциональности. **В Spring-приложениях** обычно предпочитают `WebClient` или `RestClient` — они лучше интегрированы с экосистемой.
+
+## Q41. Как включить HTTP/3 в `HttpClient` JDK 26 и проверить фактически выбранный протокол?
+
+Начиная с **JDK 26**, стандартный `HttpClient` поддерживает HTTP/3 (JEP 517), но **не выбирает его по умолчанию**. Укажите `HttpClient.Version.HTTP_3` как предпочитаемую версию клиента или отдельного запроса. Это предпочтение, а не гарантия: после вызова проверьте `HttpResponse.version()`.
+
+```java
+HttpClient client = HttpClient.newBuilder()
+    .version(HttpClient.Version.HTTP_3)
+    .build();
+
+HttpRequest request = HttpRequest.newBuilder(URI.create("https://api.example.com/data"))
+    .GET()
+    .build();
+
+HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+System.out.println(response.version()); // фактически использованная версия
+```
+
+Предпочтение можно задать и у одного `HttpRequest` через `version(HTTP_3)` — оно имеет приоритет над настройкой клиента. Встроенная реализация при отсутствии специальной подсказки использует `H3_DISCOVERY=ANY`: она может пробовать QUIC и TLS/TCP, а также использовать известный `Alt-Svc`. Другие режимы задаются через `HttpRequest.Builder.setOption(HttpOption.H3_DISCOVERY, mode)`:
+
+| Режим | Поведение |
+|---|---|
+| `ANY` | Реализация сама выбирает путь; итогом может быть HTTP/1.1, HTTP/2 или HTTP/3. |
+| `ALT_SVC` | HTTP/3 выбирается после объявления сервером альтернативного `h3` endpoint; первые запросы могут идти по HTTP/1.1 или HTTP/2. |
+| `HTTP_3_URI_ONLY` | Пробует HTTP/3 только на host/port исходного URI; не использует `Alt-Svc` и не допускает обычный fallback. |
+
+Ограничения JDK 26: для URI без `https` HTTP/3 не применяется. Встроенный клиент не использует HTTP/3 через прокси: обычно перейдёт на HTTP/2 или HTTP/1.1, а с `HTTP_3_URI_ONLY` запрос завершится ошибкой. Неподходящие `SSLContext`/`SSLParameters` тоже могут привести к `UnsupportedProtocolVersionException`. Поэтому сценарий миграции проверяют на реальном сервере, с теми же прокси и TLS-настройками, что и в эксплуатации.
+
+**Итог:** включить HTTP/3 недостаточно; для вывода о реально использованном протоколе смотрят `response.version()` и условия соединения.
 
 ---
 
@@ -1573,6 +1605,7 @@ HttpResponse<Path> fileResponse = client.send(
 - [Java Stream API](java-stream-interview.md) — `Files.lines()`, `Files.walk()` возвращают `Stream<String>`/`Stream<Path>`
 - [Java Exceptions](java-exceptions-interview.md) — иерархия `IOException`: `FileNotFoundException`, `SocketException`, обработка ошибок I/O
 - [Java 17-21](java-17-21-interview.md) — `Virtual Threads` и NIO: Project Loom меняет подходы к блокирующему I/O
+- [Java 26–27](java-26-27-interview.md) — другие изменения JDK 26 и 27 для серверных приложений
 - [Spring Framework](../../frameworks/spring/spring-framework-interview.md) — `ResourceLoader`, `MultipartFile`, `WebClient` — Spring-абстракции над Java NIO
 
 - [Java 17-21](java-17-21-interview.md)
