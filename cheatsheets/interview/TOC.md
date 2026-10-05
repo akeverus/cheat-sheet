@@ -11,13 +11,13 @@ aliases:
   - "TOC: Interview"
 prerequisites: []
 next: []
-updated: "2026-04-20"
+updated: "2026-10-05"
 ---
 # TOC: Interview
 
 Полный индекс по всем содержательным файлам каталога `interview/` (без `README.md` и `TOC.md`).
 
-Всего файлов: **319**.
+Всего файлов: **325**.
 
 ## Быстрые маршруты подготовки
 
@@ -188,7 +188,9 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: Кэширование в Hibernate](databases/hibernate-caching-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: Связи в Hibernate](databases/hibernate-relationships-interview.md) — `15` вопросов
 - [Вопросы на собеседовании: JPQL и Criteria API в Hibernate](databases/hibernate-jpql-criteria-interview.md) — `16` вопросов
+- [Вопросы на собеседовании: JDBC и пулы соединений](databases/jdbc-connection-pool-interview.md) — `6` вопросов
 - [Вопросы на собеседовании: `MongoDB`](databases/mongodb-interview.md) — `46` вопросов
+- [Вопросы на собеседовании: MySQL](databases/mysql-interview.md) — `6` вопросов
 - [Вопросы на собеседовании: `PostgreSQL`](databases/postgresql-interview.md) — `55` вопросов
 - [Вопросы на собеседовании: `Redis`](databases/redis-interview.md) — `43` вопроса
 - [Вопросы на собеседовании: `SQL`](databases/sql-interview.md) — `53` вопроса
@@ -222,6 +224,10 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: `Quarkus`](frameworks/jvm-alternatives/quarkus-interview.md) — `31` вопрос
 - [Вопросы на собеседовании: `Micronaut`](frameworks/jvm-alternatives/micronaut-interview.md) — `26` вопросов
 - [Вопросы на собеседовании: `Vert.x`](frameworks/jvm-alternatives/vertx-interview.md) — `31` вопрос
+
+## frameworks/python
+
+- [Вопросы на собеседовании: FastAPI](frameworks/python/fastapi-interview.md) — `7` вопросов
 
 ## frameworks/spring
 
@@ -362,6 +368,12 @@ updated: "2026-04-20"
 - [Вопросы на собеседовании: Стандартная библиотека Go](programming-languages/go/go-stdlib-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: Тестирование в Go](programming-languages/go/go-testing-interview.md) — `28` вопросов
 - [Вопросы на собеседовании: Модули Go](programming-languages/go/go-modules-interview.md) — `27` вопросов
+
+## programming-languages/python
+
+- [Вопросы на собеседовании: Python — основы](programming-languages/python/python-interview.md) — `9` вопросов
+- [Вопросы на собеседовании: Конкурентность в Python](programming-languages/python/python-concurrency-interview.md) — `9` вопросов
+- [Вопросы на собеседовании: Тестирование в Python](programming-languages/python/python-testing-interview.md) — `7` вопросов
 
 ## programming-languages/kotlin
 

@@ -309,49 +309,49 @@
           "question_text": "Какие транспорты есть в MCP: stdio, HTTP+SSE, Streamable HTTP — и чем различаются?",
           "options": [
             {
-              "text": "В `stdio`-транспорте логи сервера тоже идут в stdout вперемешку с `JSON-RPC` сообщениями.",
+              "text": "stdio и Streamable HTTP передают JSON-RPC через один поток, а HTTP+SSE — через два; только для stdio логи сервера допустимо отправлять в stdout вперемешку с протоколом.",
               "correct": false,
               "sections": {
-                "what_actually": "Логи в stdio пишут в **stderr**; stdout зарезервирован строго под `JSON-RPC` кадры, иначе клиент не распарсит поток.",
-                "source_of_confusion": "Кажется логичным, что весь вывод процесса идёт в stdout.",
-                "if_it_were_true": "Если бы логи шли в stdout, любая отладочная строка ломала бы парсинг `JSON-RPC` сообщений по newline.",
-                "how_it_should_be": "stdout — только `JSON-RPC` (newline-delimited), а человекочитаемые логи — в stderr."
+                "what_actually": "В stdio stdout резервируют для протокольных сообщений; логи идут в stderr.",
+                "source_of_confusion": "Название механизма и старые примеры SDK легко принять за гарантию его работы и безопасности в любой версии.",
+                "if_it_were_true": "Это меняло бы семантику протокола и требования к транспорту или клиенту по сравнению со спецификацией.",
+                "how_it_should_be": "В stdio stdout резервируют для протокольных сообщений; логи идут в stderr."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "MCP поддерживает только один транспорт — `stdio`; HTTP-варианты являются сторонними расширениями вне спецификации.",
+              "text": "stdio обслуживает локальный процесс; HTTP+SSE и Streamable HTTP похожи по назначению, но оба являются сторонними надстройками и не входят в спецификацию MCP.",
               "correct": false,
               "sections": {
-                "what_actually": "Спецификация описывает несколько транспортов: `stdio`, устаревший `HTTP+SSE` и актуальный `Streamable HTTP` — все они часть стандарта.",
-                "source_of_confusion": "stdio — самый частый транспорт для локальных серверов, поэтому кажется единственным.",
-                "if_it_were_true": "Если бы HTTP не был частью спеки, не существовало бы remote MCP-серверов с OAuth, а они описаны в стандарте.",
-                "how_it_should_be": "Транспортов несколько; remote-серверы по `Streamable HTTP` — официальная часть протокола, а не расширение."
+                "what_actually": "Оба HTTP-транспорта описаны спецификацией, хотя HTTP+SSE устарел.",
+                "source_of_confusion": "Название механизма и старые примеры SDK легко принять за гарантию его работы и безопасности в любой версии.",
+                "if_it_were_true": "Это меняло бы семантику протокола и требования к транспорту или клиенту по сравнению со спецификацией.",
+                "how_it_should_be": "Оба HTTP-транспорта описаны спецификацией, хотя HTTP+SSE устарел."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "`Streamable HTTP` требует двух отдельных endpoints (POST для запросов и GET для SSE), как и предшественник.",
+              "text": "stdio работает через stdin/stdout; HTTP+SSE и Streamable HTTP используют два отдельных endpoint для запросов и ответов, поэтому оба требуют постоянного GET-канала SSE.",
               "correct": false,
               "sections": {
-                "what_actually": "Двух endpoints требовал именно устаревший `HTTP+SSE`; `Streamable HTTP` свёл всё к одному `POST /mcp`.",
-                "source_of_confusion": "Оба транспорта используют SSE для стриминга, поэтому их архитектуру путают.",
-                "if_it_were_true": "Если бы `Streamable HTTP` тоже требовал два endpoints, не было бы смысла его вводить — он именно упростил схему до одного.",
-                "how_it_should_be": "`Streamable HTTP` — один endpoint, отдающий `application/json` или `text/event-stream` по ситуации; два endpoints — это deprecated `HTTP+SSE`."
+                "what_actually": "Streamable HTTP объединяет обмен в одном endpoint POST /mcp; отдельный GET-канал старой схемы не требуется.",
+                "source_of_confusion": "Название механизма и старые примеры SDK легко принять за гарантию его работы и безопасности в любой версии.",
+                "if_it_were_true": "Это меняло бы семантику протокола и требования к транспорту или клиенту по сравнению со спецификацией.",
+                "how_it_should_be": "Streamable HTTP объединяет обмен в одном endpoint POST /mcp; отдельный GET-канал старой схемы не требуется."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`stdio` — локальный subprocess: Host запускает сервер, обмен `JSON-RPC` идёт через stdin/stdout, разделитель — newline, stderr под логи. `HTTP+SSE` — старая двухканальная схема (POST для запросов + отдельный SSE-канал для server→client), deprecated с 2025. `Streamable HTTP` — один `POST /mcp`: ответ либо `application/json` (одно сообщение), либо `text/event-stream` (стрим/server-initiated), поддерживает `Mcp-Session-Id`.",
+              "text": "stdio передаёт JSON-RPC через stdin/stdout локального процесса; HTTP+SSE использует прежнюю двухканальную схему; Streamable HTTP использует один endpoint и может вернуть JSON либо поток SSE. Session ID относился к прежним ревизиям.",
               "correct": true,
               "sections": {
-                "explanation": "MCP не привязан к одному транспорту: локальный сценарий обслуживает stdio, удалённый — HTTP. Streamable HTTP вытеснил HTTP+SSE, потому что свёл два endpoint'а к одному и подружился с балансерами.",
-                "example": "Локальный `filesystem`-сервер запускают через `npx` по stdio; корпоративный `Jira`-сервер за балансером — по `Streamable HTTP` с `Mcp-Session-Id` для session affinity.",
+                "explanation": "Транспорты различаются доставкой сообщений. Ревизия 2026-07-28 оставила Streamable HTTP, но удалила протокольные сессии и Mcp-Session-Id.",
+                "example": "Локальный инструмент можно запускать по stdio; удалённый сервер — по Streamable HTTP. Для ревизии 2026-07-28 каждый HTTP-вызов самодостаточен.",
                 "when_to_apply": "Выбор транспорта делают при дизайне сервера: локальный пользовательский tool → stdio, удалённый multi-tenant сервис → Streamable HTTP.",
-                "edge_cases": "`HTTP+SSE` был deprecated из-за двух endpoints (сложно за proxy/LB), плохой дружбы с serverless и потери SSE-канала при restart — поэтому новые серверы пишут на Streamable HTTP.",
+                "edge_cases": "Схемы со старым HTTP+SSE и с Mcp-Session-Id требуют версионной проверки: второе удалено в 2026-07-28.",
                 "related": "[[mcp-interview#Q5]] почему JSON-RPC под транспортом; [[mcp-interview#Q7]] когда выбирать stdio, а когда HTTP; [[mcp-interview#Q29]] stateful vs stateless trade-offs."
               },
               "label": "D",
@@ -426,53 +426,53 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Опишите lifecycle MCP-сессии: initialize → operations → shutdown.",
+          "question_text": "Как изменился жизненный цикл MCP в версии 2026-07-28?",
           "options": [
             {
-              "text": "Жизненный цикл: (1) Handshake — `initialize {protocolVersion, capabilities, clientInfo}` → ответ сервера → `notifications/initialized`. (2) Discovery — `tools/list`, `resources/list`. (3) Operations — `tools/call`, `resources/read`, плюс серверные `notifications/*/list_changed`. (4) Shutdown — закрытие stdin или HTTP DELETE сессии, после чего сервер делает cleanup.",
-              "correct": true,
+              "text": "Остался обязательный initialize, но сервер больше не выдаёт идентификатор сессии; после initialized клиент вызывает tools/list и только затем tools/call.",
+              "correct": false,
               "sections": {
-                "explanation": "Сессия проходит четыре фазы по порядку: сначала стороны договариваются (версия и capabilities), потом узнают доступные примитивы, затем работают, и в конце корректно завершаются.",
-                "example": "В `initialize` клиент предлагает `protocolVersion: \"2025-06-18\"`, сервер отвечает совместимой версией и объявляет `capabilities` вроде `resources: {\"subscribe\": true, \"listChanged\": true}`.",
-                "when_to_apply": "Знание lifecycle нужно при написании клиента или сервера: правильно завершить handshake перед первым `tools/list`, корректно обработать shutdown и cleanup.",
-                "edge_cases": "Если клиент предлагает версию, которую сервер не поддерживает, сервер отвечает совместимой или ошибкой — версия согласуется именно на шаге handshake.",
-                "related": "[[mcp-interview#Q5]] формат JSON-RPC сообщений; [[mcp-interview#Q6]] транспорты под сессией; [[mcp-interview#Q28]] notifications/*/list_changed в operations."
+                "what_actually": "Оба сообщения handshake удалены; discovery клиента не обязателен перед вызовом инструмента.",
+                "source_of_confusion": "Отказ от сессии можно ошибочно принять за удаление только её идентификатора.",
+                "if_it_were_true": "При таком устройстве клиент всё ещё обязан был бы ждать согласования перед первым вызовом.",
+                "how_it_should_be": "Для 2026-07-28 запрос сам несёт версию и возможности клиента; server/discover можно вызвать заранее."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "Версия протокола в MCP — это semver вроде `1.4.0`, и сервер обязан поддерживать все младшие версии.",
-              "correct": false,
+              "text": "Обязательный handshake и сессия удалены; каждый запрос сам несёт версию и возможности клиента, а server/discover доступен для необязательного предварительного обнаружения.",
+              "correct": true,
               "sections": {
-                "what_actually": "Версии протокола MCP — это **даты** (`2024-11-05`, `2025-03-26`, `2025-06-18`), а не semver, и согласуются в `initialize`.",
-                "source_of_confusion": "Поле `serverInfo.version` действительно semver (`1.4.0`), его путают с версией протокола.",
-                "if_it_were_true": "Если бы версия была semver, не было бы дат-версий в спеке, а они именно так и обозначены.",
-                "how_it_should_be": "`protocolVersion` — дата (например `2025-06-18`); semver — это версия конкретного сервера в `serverInfo`."
+                "explanation": "В 2026-07-28 удалены initialize, initialized и протокольный session ID. Сервер обслуживает независимый запрос без состояния транспорта.",
+                "example": "HTTP-запрос tools/call содержит MCP-Protocol-Version; метаданные клиента передаются в _meta.",
+                "when_to_apply": "Это важно при миграции клиента и балансировке MCP-серверов разных ревизий.",
+                "edge_cases": "Сервер обязан реализовать server/discover, но клиент может начать с другого вызова; старые клиенты требуют прежний протокол.",
+                "related": "См. Q6 о транспортах и Q29 о масштабировании."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "Capabilities нельзя согласовывать: и клиент, и сервер обязаны поддерживать весь набор фич протокола.",
+              "text": "Обязательный handshake удалён, но версию и возможности клиент передаёт только один раз в server/discover; затем сервер хранит их по Mcp-Session-Id.",
               "correct": false,
               "sections": {
-                "what_actually": "Capabilities именно согласуются: обе стороны рекламируют, что поддерживают (`tools.listChanged`, `resources.subscribe`, `prompts`), и опциональные фичи могут отсутствовать.",
-                "source_of_confusion": "Кажется, что «стандарт» означает обязательную поддержку всего набора.",
-                "if_it_were_true": "Если бы все фичи были обязательны, простой echo-сервер не мог бы существовать без `subscribe` и `sampling`.",
-                "how_it_should_be": "Большинство capabilities опциональны и объявляются в `initialize`; отсутствие фичи — нормальная ситуация."
+                "what_actually": "server/discover необязателен для клиента, а запросы самодостаточны; Mcp-Session-Id удалён.",
+                "source_of_confusion": "Название discovery похоже на новую фазу согласования с сохранением состояния.",
+                "if_it_were_true": "Иначе балансировщику пришлось бы сохранять привязку запроса к серверу.",
+                "how_it_should_be": "Передавайте сведения для каждого запроса в _meta и заголовке версии HTTP."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Сессия начинается сразу с `tools/call`: handshake `initialize` не нужен, версия протокола берётся из заголовка транспорта.",
+              "text": "Handshake удалён только для stdio; Streamable HTTP по-прежнему требует initialize, initialized и Mcp-Session-Id перед tools/call.",
               "correct": false,
               "sections": {
-                "what_actually": "Сессия обязана начинаться с `initialize` (согласование версии и capabilities) и `notifications/initialized`; только потом идут discovery и operations.",
-                "source_of_confusion": "Хочется сразу вызвать инструмент, поэтому handshake кажется лишним шагом.",
-                "if_it_were_true": "Если бы можно было сразу звать `tools/call`, стороны не договорились бы о версии протокола и поддержке `sampling`/`subscribe`.",
-                "how_it_should_be": "Порядок строгий: `initialize` → `initialized` → discovery (`tools/list`, `resources/list`) → operations → shutdown."
+                "what_actually": "Версия 2026-07-28 убрала протокольный handshake и session ID в целом, в том числе для HTTP.",
+                "source_of_confusion": "Старые схемы Streamable HTTP активно встречаются в примерах и реализациях.",
+                "if_it_were_true": "Тогда HTTP-вызов не смог бы независимо попасть на любой сервер за балансировщиком.",
+                "how_it_should_be": "Различайте ревизии протокола; старый порядок применим к старым клиентам и серверам."
               },
               "label": "D",
               "order": 3
@@ -729,49 +729,49 @@
           "question_text": "Что такое client capabilities sampling и roots?",
           "options": [
             {
-              "text": "`Sampling` — это когда сервер случайным образом выбирает, какой tool вызвать, чтобы снизить нагрузку.",
+              "text": "В прежних ревизиях Sampling позволял серверу случайно выбрать tool, а Roots задавали рабочие каталоги. В 2026-07-28 оба механизма deprecated и заменены MRTR для выбора tools.",
               "correct": false,
               "sections": {
-                "what_actually": "Sampling — это запрос сервера к клиенту выполнить **LLM-вызов** (`sampling/createMessage`), а не случайный выбор tool.",
-                "source_of_confusion": "Слово «sampling» в ML означает выбор из распределения, отсюда ассоциация со случайностью.",
-                "if_it_were_true": "Если бы sampling был случайным выбором tool, не требовался бы consent пользователя на LLM-вызов и не было бы поля `messages`.",
-                "how_it_should_be": "Sampling = «сервер просит клиента сходить в LLM»; никакого случайного выбора инструментов тут нет."
+                "what_actually": "Sampling был запросом LLM-вызова у клиента, а не выбором tool; MRTR переносит интерактивный обмен, но не является механизмом выбора инструментов.",
+                "source_of_confusion": "Название механизма и старые примеры SDK легко принять за гарантию его работы и безопасности в любой версии.",
+                "if_it_were_true": "Это меняло бы семантику протокола и требования к транспорту или клиенту по сравнению со спецификацией.",
+                "how_it_should_be": "Sampling был запросом LLM-вызова у клиента, а не выбором tool; MRTR переносит интерактивный обмен, но не является механизмом выбора инструментов."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "`Roots` — это список корневых URL удалённых API, к которым серверу разрешено делать HTTP-запросы.",
+              "text": "В прежних ревизиях Sampling запрашивал LLM-вызов у клиента, а Roots задавали URL разрешённых удалённых API. В 2026-07-28 они сохраняют прежнюю семантику без ограничений.",
               "correct": false,
               "sections": {
-                "what_actually": "Roots — это границы **файловой системы** (`file://`-каталоги), которые клиент сообщает серверу, а не whitelist HTTP-endpoint'ов.",
-                "source_of_confusion": "Слово «roots» можно прочитать как «корневые домены» сетевых запросов.",
-                "if_it_were_true": "Если бы roots ограничивали HTTP, они не помогали бы filesystem-серверу понять, в какие папки можно лезть.",
-                "how_it_should_be": "Roots задают файловые границы (`file:///Users/alice/projects/app1`); сетевой egress ограничивают отдельно на уровне sandbox."
+                "what_actually": "Roots относились к файловым каталогам; в 2026-07-28 механизм deprecated.",
+                "source_of_confusion": "Название механизма и старые примеры SDK легко принять за гарантию его работы и безопасности в любой версии.",
+                "if_it_were_true": "Это меняло бы семантику протокола и требования к транспорту или клиенту по сравнению со спецификацией.",
+                "how_it_should_be": "Roots относились к файловым каталогам; в 2026-07-28 механизм deprecated."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "`Roots` обеспечивают жёсткую защиту: сервер физически не может прочитать файлы вне заданных каталогов.",
+              "text": "В прежних ревизиях Sampling запрашивал LLM-вызов у клиента, а Roots жёстко изолировали сервер от файлов вне заданных каталогов. В 2026-07-28 Roots стали обязательными.",
               "correct": false,
               "sections": {
-                "what_actually": "Roots — это **soft boundary**: сервер «должен» их соблюдать, но физическую защиту даёт только ОС-sandboxing (контейнер, права пользователя).",
-                "source_of_confusion": "Раз клиент задаёт границы, кажется, что они принудительно энфорсятся.",
-                "if_it_were_true": "Если бы roots были жёсткой защитой, не нужны были бы контейнеры и `--read-only` для untrusted-серверов.",
-                "how_it_should_be": "Roots — декларативная подсказка серверу; реальную изоляцию делают OS-permissions, контейнеры, sandbox."
+                "what_actually": "Roots были мягкой декларативной границей и deprecated в 2026-07-28; реальную изоляцию задаёт ОС.",
+                "source_of_confusion": "Название механизма и старые примеры SDK легко принять за гарантию его работы и безопасности в любой версии.",
+                "if_it_were_true": "Это меняло бы семантику протокола и требования к транспорту или клиенту по сравнению со спецификацией.",
+                "how_it_should_be": "Roots были мягкой декларативной границей и deprecated в 2026-07-28; реальную изоляцию задаёт ОС."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Sampling` — сервер просит клиента выполнить LLM-вызов от его имени (`sampling/createMessage`), полезно серверам без своего ключа к LLM; host обязан показать запрос и дать одобрить. `Roots` — клиент сообщает серверу разрешённые границы файловой системы (`file:///Users/alice/projects/app1`); это soft boundary, реальную защиту даёт ОС-sandboxing.",
+              "text": "В прежних ревизиях Sampling позволял серверу запросить LLM-вызов у клиента, а Roots обозначали доступные каталоги без гарантии OS-изоляции. В 2026-07-28 оба механизма deprecated; интерактивный ввод переносится на MRTR.",
               "correct": true,
               "sections": {
-                "explanation": "Это две capabilities, которые объявляет клиент (а не сервер). Sampling даёт серверу доступ к LLM без своего ключа, roots очерчивают серверу видимую часть файловой системы.",
-                "example": "Сервер `summarize-large-file` шлёт `sampling/createMessage {messages, maxTokens: 500}`, host показывает пользователю и вызывает ту же LLM, что выбрал пользователь (consistency, единый billing).",
-                "when_to_apply": "Sampling применяют, когда сервер должен использовать LLM, но не хочет хранить свой API-ключ; roots — чтобы ограничить, какие каталоги видит filesystem-сервер.",
-                "edge_cases": "Roots — лишь декларативная граница: filesystem-сервер «должен» её соблюдать, но настоящую изоляцию обеспечивает sandbox на уровне ОС, а не доверие к серверу.",
+                "explanation": "Это механизмы старой модели client capabilities. Новая ревизия заменяет серверные запросы паттерном input_required и повтором вызова.",
+                "example": "Старый sampling/createMessage зависел от канала сервер → клиент; новый сервер возвращает input_required с нужными inputRequests.",
+                "when_to_apply": "При миграции существующего клиента проверьте поддержку старых методов и MRTR; для новой интеграции выбирайте актуальный механизм.",
+                "edge_cases": "Roots — мягкая граница, не замена sandbox. Политика согласия на LLM-вызов определяется host; нельзя без проверки обещать обязательный экран approval.",
                 "related": "[[mcp-interview#Q9]] server capabilities resources/tools/prompts; [[mcp-interview#Q21]] consent на sampling; [[mcp-interview#Q22]] capability scoping и sandboxing."
               },
               "label": "D",
@@ -786,53 +786,53 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как работают subscriptions: клиент подписывается на resource updates?",
+          "question_text": "Как менялись подписки на resource updates?",
           "options": [
             {
-              "text": "Подписка работает только если сервер написан на `TypeScript`; `Python`-серверы subscribe не поддерживают.",
+              "text": "В 2026-07-28 клиент продолжает посылать resources/subscribe для каждого URI, но session ID заменён на Mcp-Name.",
               "correct": false,
               "sections": {
-                "what_actually": "Subscribe доступен на любом SDK, если сервер объявил `capabilities.resources.subscribe: true`; язык реализации тут ни при чём.",
-                "source_of_confusion": "Reference-серверы часто на TS, отсюда впечатление о привязке фичи к языку.",
-                "if_it_were_true": "Если бы subscribe зависел от языка, спека не описывала бы capability-флаг, общий для всех реализаций.",
-                "how_it_should_be": "Поддержка subscribe определяется объявленным capability, а не языком (TS/Python/Java/Kotlin — все умеют)."
+                "what_actually": "resources/subscribe удалён; новая подписка открывается через subscriptions/listen.",
+                "source_of_confusion": "Смена транспорта похожа на простое переименование заголовка.",
+                "if_it_were_true": "Тогда старый метод оставался бы частью новой схемы подписок.",
+                "how_it_should_be": "Различайте старую подписку на URI и новый поток с выбранными типами уведомлений."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "`notifications/resources/updated` несёт в себе полное новое содержимое ресурса, поэтому `resources/read` после неё не нужен.",
+              "text": "В 2026-07-28 subscriptions/listen возвращает полный текст изменённого ресурса, поэтому resources/read больше не нужен.",
               "correct": false,
               "sections": {
-                "what_actually": "Notification несёт только `uri`; чтобы получить новый контент, клиент должен явно вызвать `resources/read`.",
-                "source_of_confusion": "Логично ожидать, что уведомление «обновилось» сразу принесёт обновлённые данные.",
-                "if_it_were_true": "Если бы notification несла весь контент, она была бы тяжёлой для крупных ресурсов (большие логи, файлы).",
-                "how_it_should_be": "`resources/updated` сообщает факт изменения и `uri`; данные клиент дочитывает отдельным `resources/read`."
+                "what_actually": "Уведомление сообщает об изменении; новое содержимое получают отдельным чтением ресурса.",
+                "source_of_confusion": "Потоковое соединение легко принять за поток содержимого ресурса.",
+                "if_it_were_true": "Если бы уведомление всегда несло данные, отдельный вызов чтения был бы избыточен.",
+                "how_it_should_be": "После уведомления перечитайте ресурс, если нужен актуальный контент."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "Если сервер декларирует `capabilities.resources.subscribe: true`, клиент шлёт `resources/subscribe {uri}`. При изменении сервер отправляет notification `notifications/resources/updated {uri}`, и клиент сам решает: перечитать `resources/read`, показать badge или инвалидировать кэш. Отписка — `resources/unsubscribe` или закрытие сессии.",
+              "text": "До 2026-07-28 клиент подписывался на URI через resources/subscribe; новая ревизия использует subscriptions/listen с выбором типов уведомлений. Новое содержимое клиент читает отдельно.",
               "correct": true,
               "sections": {
-                "explanation": "Stateful-канал позволяет серверу пушить события без long-polling: клиент один раз подписывается на URI, а дальше получает уведомления об изменениях по инициативе сервера.",
-                "example": "Подписка на `file:///tmp/log.txt` даёт live-tailing: сервер шлёт `resources/updated` при каждом дописывании в лог, клиент перечитывает хвост файла.",
-                "when_to_apply": "Subscriptions применяют для реактивных сценариев: tailing логов, отслеживание JIRA-issue, дашборды метрик из Grafana-сервера.",
-                "edge_cases": "Notification несёт только `uri` изменившегося ресурса, а не сам контент — клиент должен явно сделать `resources/read`, если хочет новые данные.",
-                "related": "[[mcp-interview#Q10]] resources и URI; [[mcp-interview#Q3]] адресность подписок в модели 1:1; [[mcp-interview#Q28]] list_changed vs updated notifications."
+                "explanation": "Новая ревизия заменила старые методы подписки и отдельный HTTP GET единым POST-потоком; request-scoped progress остаётся в ответе соответствующего запроса.",
+                "example": "Клиент подписывается на resourceSubscriptions, получает уведомление и затем вызывает resources/read.",
+                "when_to_apply": "Это нужно для наблюдения за меняющимся ресурсом без периодического опроса.",
+                "edge_cases": "Подписка не хранит автоматически данные ресурса и не заменяет прикладную проверку доступа.",
+                "related": "См. Q28 об изменении списков и Q8 о stateless-ядре."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Клиент опрашивает сервер по таймеру (`resources/read` каждые N секунд), потому что push-уведомлений в MCP нет.",
+              "text": "Раньше обновления приходили через subscriptions/listen; в 2026-07-28 вместо него ввели resources/subscribe и отдельную сессию.",
               "correct": false,
               "sections": {
-                "what_actually": "Push есть: при `capabilities.resources.subscribe: true` клиент шлёт `resources/subscribe`, а сервер сам отправляет `notifications/resources/updated` — polling не нужен.",
-                "source_of_confusion": "В stateless HTTP действительно часто используют polling, и это переносят на MCP.",
-                "if_it_were_true": "Если бы push не было, не существовало бы live-tailing логов «бесплатно» и notification-метода `resources/updated`.",
-                "how_it_should_be": "Клиент подписывается через `resources/subscribe`, а сервер пушит `notifications/resources/updated` при изменении."
+                "what_actually": "Порядок обратный: subscriptions/listen — механизм новой ревизии.",
+                "source_of_confusion": "Новые и старые имена API можно перепутать при чтении примеров SDK.",
+                "if_it_were_true": "Тогда новая ревизия вновь зависела бы от протокольной сессии.",
+                "how_it_should_be": "Проверяйте дату спецификации в примере и используйте соответствующий API."
               },
               "label": "D",
               "order": 3
@@ -1626,53 +1626,53 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Для чего нужны notifications/*/list_changed в MCP?",
+          "question_text": "Как клиент узнаёт об изменении списков tools и resources?",
           "options": [
             {
-              "text": "Сервер сообщает клиенту, что список изменился: `notifications/tools/list_changed`, `notifications/resources/list_changed`, `notifications/prompts/list_changed`. Нужно для динамических серверов: `database` при подключении к новой БД добавляет tools `query_<db>`, `feature-flags` добавляет toggling-tools для новых флагов, сервер подгрузил плагин. Реакция клиента — перечитать `tools/list` и обновить системный промпт. Возможность объявляется флагом `tools.listChanged: true` в `initialize`.",
+              "text": "Раньше сервер объявлял listChanged при initialize; в 2026-07-28 клиент выбирает типы через subscriptions/listen. После уведомления он перечитывает изменившийся список.",
               "correct": true,
               "sections": {
-                "explanation": "Эти уведомления делают набор capabilities динамическим: сервер может на лету менять список инструментов, а клиент узнаёт об этом без polling и перечитывает перечень.",
-                "example": "Сервер `feature-flags` после появления нового флага шлёт `notifications/tools/list_changed`, и клиент перечитывает `tools/list`, получая новый toggling-tool.",
-                "when_to_apply": "Применяют, когда набор tools/resources не фиксирован: подключение новой БД, загрузка плагина, появление новых флагов или сущностей.",
-                "edge_cases": "Без объявленного `listChanged: true` в `initialize` клиент не подписывается на такие notifications и не будет перечитывать список.",
-                "related": "[[mcp-interview#Q8]] list_changed в фазе operations; [[mcp-interview#Q14]] updated vs list_changed; [[mcp-interview#Q5]] notifications в JSON-RPC."
+                "explanation": "Механизм уведомления и способ подписки зависят от версии, но содержимое нового списка получают отдельным list-вызовом.",
+                "example": "После toolsListChanged клиент повторяет tools/list и обновляет каталог доступных инструментов.",
+                "when_to_apply": "Это важно для серверов, где инструменты или ресурсы появляются во время работы.",
+                "edge_cases": "Подсказки ttlMs и cacheScope для list-ответов помогают кешу, но не заменяют обработку уведомлений.",
+                "related": "См. Q14 о подписках и Q8 о новой ревизии."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "Сервер сообщает клиенту, что список изменился (`tools/list_changed` и аналоги для resources/prompts), и клиент перечитывает `tools/list`; при этом слать эти notifications можно без объявления `tools.listChanged` в `initialize` — отдельный флаг в capabilities не требуется.",
+              "text": "В 2026-07-28 сервер обязательно шлёт list_changed на каждый tools/call, даже если каталог инструментов не менялся.",
               "correct": false,
               "sections": {
-                "what_actually": "Сервер обязан объявить capability `tools.listChanged: true` в `initialize`, иначе клиент не ждёт таких notifications.",
-                "source_of_confusion": "Notifications кажутся «свободными» событиями, которые можно слать без предварительного объявления.",
-                "if_it_were_true": "Если бы объявление было не нужно, флаг `listChanged` в capabilities не имел бы смысла.",
-                "how_it_should_be": "Возможность слать `list_changed` декларируется флагом `listChanged: true` на этапе handshake."
+                "what_actually": "Уведомление связано с изменением списка, а не с каждым вызовом инструмента.",
+                "source_of_confusion": "Наличие отдельного потока уведомлений можно спутать с журналом всех операций.",
+                "if_it_were_true": "Такой поток породил бы лишние перечитывания каталога после каждого вызова.",
+                "how_it_should_be": "Подписывайтесь на изменения и перечитывайте список при реальном уведомлении."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "Сервер шлёт `notifications/tools/list_changed`, когда изменилось содержимое конкретного tool — его описание или схема; клиент в ответ перечитывает только этот tool и перевызывает его. Возможность объявляется флагом `tools.listChanged: true` в `initialize`.",
+              "text": "В 2026-07-28 изменение списка передаётся только через новый initialize, поэтому клиент должен заново установить сессию и запросить tools/list.",
               "correct": false,
               "sections": {
-                "what_actually": "`list_changed` сигнализирует, что изменился **список** tools/resources/prompts (появились/исчезли элементы), а не содержимое отдельного элемента.",
-                "source_of_confusion": "Изменение «чего-то» легко принять за изменение конкретного объекта, а не списка.",
-                "if_it_were_true": "Если бы это было про содержимое, не было бы отдельного `notifications/resources/updated` именно под изменение ресурса.",
-                "how_it_should_be": "`list_changed` → перечитать `tools/list`; изменение конкретного ресурса — это `resources/updated`."
+                "what_actually": "Handshake удалён; для событий служит subscriptions/listen, а список получают через tools/list.",
+                "source_of_confusion": "В старых материалах capability объявлялся при initialize.",
+                "if_it_were_true": "Это снова привязало бы клиента к протокольной сессии.",
+                "how_it_should_be": "Привязывайте объяснение к версии; в новой ревизии нет повторной инициализации."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Эти notifications (`tools/list_changed`, `resources/list_changed`, `prompts/list_changed`) отправляет клиент серверу, когда хочет заставить сервер пересобрать и переотдать список доступных инструментов; возможность объявляется в `initialize`.",
+              "text": "В 2026-07-28 кеш списка инвалидируется только после истечения ttlMs; сервер больше не может уведомить клиента о новых tools.",
               "correct": false,
               "sections": {
-                "what_actually": "`list_changed` шлёт **сервер** клиенту: это server→client уведомление о том, что набор tools/resources/prompts поменялся.",
-                "source_of_confusion": "Клиент инициирует большинство запросов, поэтому направление уведомления путают.",
-                "if_it_were_true": "Если бы их слал клиент, серверу незачем было бы объявлять capability `tools.listChanged: true`.",
-                "how_it_should_be": "Направление server→client: сервер уведомляет, что список изменился, а клиент в ответ перечитывает его."
+                "what_actually": "Новая ревизия поддерживает подписку на toolsListChanged и подсказки кеширования одновременно.",
+                "source_of_confusion": "Появление ttlMs может создать впечатление, что уведомления удалены.",
+                "if_it_were_true": "Клиент тогда узнавал бы о новых инструментах лишь по таймеру.",
+                "how_it_should_be": "Учитывайте и cache hints, и выбранные уведомления."
               },
               "label": "D",
               "order": 3
@@ -1686,53 +1686,53 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Каковы trade-offs между stateful-протоколом MCP и stateless HTTP?",
+          "question_text": "Компромиссы: stateful-протокол против stateless HTTP?",
           "options": [
             {
-              "text": "Плюс stateful MCP — subscriptions, но реализованы они постоянным long-polling со стороны клиента: клиент периодически опрашивает сервер об изменениях, а механизм server push протокол не задействует.",
+              "text": "В 2026-07-28 ядро осталось stateful, а масштабирование упростили за счёт общего хранилища сессий и обязательного Mcp-Session-Id.",
               "correct": false,
               "sections": {
-                "what_actually": "Stateful-канал даёт server push «бесплатно»: сервер сам шлёт уведомления, long-polling не нужен — это как раз преимущество перед stateless.",
-                "source_of_confusion": "В stateless мире подписки реализуют через polling, и это ошибочно переносят на MCP.",
-                "if_it_were_true": "Если бы нужен был long-polling, исчезло бы преимущество stateful-канала по реактивности и низкому overhead.",
-                "how_it_should_be": "Persistent connection позволяет серверу пушить события сам; long-polling — это решение для stateless HTTP."
+                "what_actually": "Новая ревизия убрала протокольные сессии и session ID; общее хранилище для ядра не требуется.",
+                "source_of_confusion": "В предыдущей ревизии сервер мог действительно хранить контекст сессии.",
+                "if_it_were_true": "При таком устройстве потеря общего хранилища ломала бы последующие вызовы.",
+                "how_it_should_be": "Прикладное состояние моделируйте явным handle, который клиент передаёт как аргумент."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "Stateless HTTP по всем параметрам предпочтительнее для LLM-контекста — тривиальный scaling и restart-friendly, — а persistent connection не даёт реальных преимуществ, поэтому MCP стоило проектировать stateless.",
+              "text": "В 2026-07-28 ядро стало stateless, поэтому сервер больше не может запросить ввод пользователя и отправлять уведомления об изменениях.",
               "correct": false,
               "sections": {
-                "what_actually": "MCP осознанно выбрал stateful ради UX (живой контекст, быстрая реакция, подписки); Streamable HTTP сочетает stateful-семантику с балансировкой.",
-                "source_of_confusion": "Stateless REST привычнее и проще в эксплуатации, отсюда вывод о его безусловном превосходстве.",
-                "if_it_were_true": "Если бы stateless всегда выигрывал, не было бы Streamable HTTP с `Mcp-Session-Id` для сохранения stateful-семантики.",
-                "how_it_should_be": "Для живого LLM-контекста stateful даёт лучший UX; Streamable HTTP — компромисс между stateful и масштабируемостью."
+                "what_actually": "Для ввода существует MRTR с input_required и повтором вызова, а для уведомлений subscriptions/listen.",
+                "source_of_confusion": "Удаление постоянной сессии кажется удалением любого взаимодействия в обе стороны.",
+                "if_it_were_true": "Это исключило бы интерактивные инструменты и подписки из новой ревизии.",
+                "how_it_should_be": "Отделяйте состояние каждого вызова и отдельную подписку от скрытой transport session."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "Stateful MCP — плюсы: persistent connection (handshake один раз), subscriptions «бесплатно» (server push без long-polling), согласованные protocol version/capabilities на сессию, меньше overhead на сообщение. Минусы: сложнее scaling (sticky sessions, привязка к инстансу), restart ломает активные сессии, нужен `Mcp-Session-Id` + session affinity, труднее наблюдать. Stateless HTTP — тривиальное scaling и restart-friendly, но нет server push без отдельного механизма и оверхед auth на каждый запрос.",
+              "text": "До 2026-07-28 сессия могла хранить контекст и усложнять балансировку; в новой ревизии запросы самодостаточны, а прикладное состояние и интерактивность моделируются явно.",
               "correct": true,
               "sections": {
-                "explanation": "Stateful выбран ради UX: живой контекст даёт быструю реакцию и подписки на изменения; цена — усложнение масштабирования и наблюдаемости по сравнению с REST.",
-                "example": "Streamable HTTP — компромисс: stateful-семантика, но за классическим балансером через `Mcp-Session-Id` (session affinity), что недостижимо для чистого long-lived stdio-канала.",
-                "when_to_apply": "Trade-offs учитывают при выборе транспорта и архитектуры remote-сервера: нужен ли server push и низкая латентность — или простое горизонтальное масштабирование.",
-                "edge_cases": "Restart stateful-сервера рвёт все активные сессии; stateless REST переживает рестарт инстанса прозрачно, но теряет «бесплатные» subscriptions.",
-                "related": "[[mcp-interview#Q6]] транспорты и Streamable HTTP; [[mcp-interview#Q14]] subscriptions как плюс stateful; [[mcp-interview#Q8]] handshake один раз за сессию."
+                "explanation": "Удаление handshake и session ID позволяет обслужить очередной вызов на любом инстансе. Прикладное состояние не исчезает, но перестаёт быть скрытым состоянием транспорта.",
+                "example": "Инструмент может вернуть handle для следующего вызова; при нехватке ввода сервер возвращает input_required, после чего клиент повторяет запрос с inputResponses.",
+                "when_to_apply": "Учитывайте это при проектировании удалённого сервера и миграции клиента между ревизиями.",
+                "edge_cases": "Уведомления идут через отдельный subscriptions/listen; поддержка старой и новой ревизий у клиента и сервера должна совпадать.",
+                "related": "См. Q8 о жизненном цикле и Q14 о подписках."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Stateful MCP масштабируется проще stateless HTTP: persistent connection уже установлено, поэтому sticky sessions и `Mcp-Session-Id` не нужны — любой инстанс за балансировщиком обслужит запрос без session affinity.",
+              "text": "В 2026-07-28 ядро стало stateless, но подписка и прикладное состояние автоматически сохраняются за счёт HTTP-заголовков Mcp-Method и Mcp-Name.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: stateful **сложнее** масштабировать (sticky sessions, привязка клиента к инстансу); stateless HTTP масштабируется тривиально — любой POST на любой инстанс.",
-                "source_of_confusion": "«Соединение уже есть» звучит как экономия, что путают с лёгкостью масштабирования.",
-                "if_it_were_true": "Если бы stateful масштабировался проще, не нужны были бы `Mcp-Session-Id` и session affinity за балансером.",
-                "how_it_should_be": "Stateless проще масштабировать; stateful требует sticky sessions и привязки к конкретному инстансу."
+                "what_actually": "Эти заголовки служат маршрутизации; прикладное состояние передаётся явным аргументом, подписка открывается отдельным вызовом.",
+                "source_of_confusion": "Транспортные заголовки легко принять за новое место хранения сессии.",
+                "if_it_were_true": "Тогда заголовков хватило бы для восстановления истории инструмента после перезапуска.",
+                "how_it_should_be": "Используйте явный handle для межвызовного состояния и subscriptions/listen для уведомлений."
               },
               "label": "D",
               "order": 3
@@ -1746,53 +1746,53 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Каково будущее MCP в 2025-2026 и industry adoption?",
+          "question_text": "Что проверить при внедрении MCP версии 2026-07-28?",
           "options": [
             {
-              "text": "К 2026 у `MCP` уже есть зрелый стандартизированный `RBAC` и единый observability между серверами: спецификация закрепила общую модель прав и трейсинга, поэтому отдельный security-аудит серверов больше не нужен.",
+              "text": "Проверить только обновление SDK: wire-протокол прежний, поэтому старые host и сервер автоматически совместимы с новой ревизией.",
               "correct": false,
               "sections": {
-                "what_actually": "Именно этого ещё **не хватает**: RBAC внутри сервера обычно on/off, а трейсинг между серверами не унифицирован — это открытые задачи.",
-                "source_of_confusion": "Раз протокол стал стандартом, кажется, что и enterprise-фичи уже зрелые.",
-                "if_it_were_true": "Если бы RBAC и observability были зрелыми, их не перечисляли бы в списке «чего ещё не хватает».",
-                "how_it_should_be": "Зрелый RBAC и единый observability — пока в развитии; широко принят сам протокол, но не все enterprise-аспекты."
+                "what_actually": "Изменились handshake, session ID, заголовки, подписки и формат интерактивных вызовов.",
+                "source_of_confusion": "Название SDK выглядит как полная гарантия совместимости всей интеграции.",
+                "if_it_were_true": "Тогда старые клиенты могли бы вызывать новые серверы без изменения сообщений.",
+                "how_it_should_be": "Проверяйте фактическую дату ревизии и поддержку изменений на обеих сторонах."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "Хронология: ноябрь 2024 — анонс и SDK (TS, Python); декабрь 2024 — первые community-серверы; Q1 2025 — `Cursor`/`Zed`/`Continue`; март 2025 — `Streamable HTTP` заменяет HTTP+SSE, версии по датам; Q2 2025 — ChatGPT desktop через бриджи, каталоги >2000 серверов; Q3 2025 — официальные серверы Notion/Linear/Stripe; Q4 2025 — `JetBrains AI Assistant`, `Windsurf`, `Gemini CLI`; 2026 — стандарт «как USB-C для AI». Движение: remote-first (OAuth 2.1, multi-tenant), marketplaces с security-аудитами, MCP-aware прокси (Layer 7 LLM-gateway), конвергенция с A2A.",
+              "text": "При миграции проверяют версии сторон, stateless-вызовы и заголовки, MRTR, подписки, issuer OAuth и deprecated API; поддержку каждого сценария подтверждают с конкретным SDK.",
               "correct": true,
               "sections": {
-                "explanation": "За год MCP прошёл путь от анонса одного вендора до межотраслевого стандарта: рост числа хостов, серверов и официальных интеграций, плюс развитие remote-сценариев и auth.",
-                "example": "В Q4 2025 `JetBrains AI Assistant`, `Windsurf` и `Gemini CLI` добавили MCP-поддержку — агент в любом из них подключается к любому MCP-серверу без custom-кода.",
-                "when_to_apply": "Понимание трендов помогает планировать интеграции на будущее: ставку на remote Streamable HTTP с OAuth 2.1 и на политики tool-calls через MCP-gateway.",
-                "edge_cases": "Чего ещё не хватает: зрелого RBAC внутри сервера (обычно on/off), унифицированного observability/трейсинга между серверами и policy-based consent UX вместо «yes/no» на каждый call.",
-                "related": "[[mcp-interview#Q6]] Streamable HTTP в хронологии; [[mcp-interview#Q7]] remote-first и выбор HTTP; [[mcp-interview#Q1]] USB-C для контекста — исходная метафора."
+                "explanation": "Ревизия 2026-07-28 затрагивает транспорт, интерактивность, авторизацию и расширения, поэтому одной проверки tools/call недостаточно.",
+                "example": "Интеграционный сценарий проверяет tools/call с Mcp-Method/Mcp-Name, input_required с повтором и подписку subscriptions/listen.",
+                "when_to_apply": "Это полезно при обновлении удалённого сервера и клиента со старой ревизии.",
+                "edge_cases": "Tasks вынесены в extension, а trace context в _meta — соглашение о передаче данных, не готовая система мониторинга.",
+                "related": "См. Q8 о жизненном цикле, Q14 о подписках и Q29 о состоянии."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "`MCP` и `A2A` (agent-to-agent) — конкурирующие протоколы, решающие одну и ту же задачу: рынок в итоге выберет один, а второй вытеснится, поэтому закладываться сразу на оба рискованно.",
+              "text": "Проверить только Mcp-Session-Id и sticky sessions: в новой ревизии именно они обеспечивают масштабирование и сохранность stateful-контекста.",
               "correct": false,
               "sections": {
-                "what_actually": "MCP и A2A **компонуются**, а не конкурируют: MCP покрывает «agent → tools», A2A — «agent → agent»; они дополняют друг друга.",
-                "source_of_confusion": "Два протокола в одной области agentic-систем кажутся соперниками за один и тот же слой.",
-                "if_it_were_true": "Если бы они конкурировали, не говорили бы о конвергенции MCP и A2A как тренде будущего.",
-                "how_it_should_be": "MCP (agent→tools) и A2A (agent→agent) — разные слои, которые сочетаются в одной системе."
+                "what_actually": "Session ID удалён, ядро stateless; для прикладного контекста нужен явный handle.",
+                "source_of_confusion": "Ранее session affinity действительно встречалась в Streamable HTTP.",
+                "if_it_were_true": "Тогда горизонтальная масштабируемость по-прежнему требовала бы общего состояния.",
+                "how_it_should_be": "Проверьте самостоятельность каждого вызова и явную модель прикладного состояния."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`MCP` остался нишевым форматом Anthropic: за пределами Claude его почти не внедряли, другие вендоры выпустили свои несовместимые протоколы, и единого стандарта интеграции инструментов к 2026 так и не сложилось.",
+              "text": "Проверить только каталог tools: авторизация, subscriptions и MRTR остались без изменений, а DCR и старый HTTP+SSE рекомендованы для новых серверов.",
               "correct": false,
               "sections": {
-                "what_actually": "К 2026 MCP стал де-факто стандартом: его поддержали `Cursor`, `Zed`, `Continue`, `JetBrains AI Assistant`, `Windsurf`, `Gemini CLI`, а ChatGPT desktop — через бриджи.",
-                "source_of_confusion": "Новый протокол одного вендора часто остаётся нишевым, и это ожидание переносят на MCP.",
-                "if_it_were_true": "Если бы MCP не приняли, не существовало бы каталогов на >2000 серверов (`Smithery`, `mcp.so`) и официальных серверов Notion/Linear/Stripe.",
-                "how_it_should_be": "MCP широко принят индустрией к 2026 — «как USB-C для AI», поддержан множеством хостов и SaaS."
+                "what_actually": "Новая ревизия меняет все эти области; DCR и HTTP+SSE deprecated.",
+                "source_of_confusion": "Каталог tools — самый заметный интерфейс MCP, поэтому миграцию сводят к нему.",
+                "if_it_were_true": "Это оставило бы ошибки OAuth и интерактивных операций незамеченными.",
+                "how_it_should_be": "Проверяйте и транспорт, и интерактивность, и авторизацию."
               },
               "label": "D",
               "order": 3

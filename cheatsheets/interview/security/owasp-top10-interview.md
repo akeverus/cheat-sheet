@@ -14,7 +14,7 @@ aliases:
   - "OWASP Top 10 собеседование"
 prerequisites: []
 next: []
-updated: "2026-05-08"
+updated: "2026-10-05"
 ---
 # Вопросы на собеседовании: `OWASP Top 10`
 
@@ -1304,71 +1304,27 @@ sequenceDiagram
 
 ## Q34. Как реализовать защиту от SSRF в Java?
 
-Надёжная защита — многоуровневая, потому что одной проверки мало: одной валидации схемы недостаточно, а DNS rebinding обходит проверку по имени хоста. Поэтому проверяем и схему, и хост (предпочтительно whitelist), и **реальный IP после резолва** — последнее ловит трюки, когда домен резолвится в `127.0.0.1` или `169.254.169.254`:
+Сначала сузьте назначение запроса: принимайте идентификатор ресурса или путь к **заранее настроенному** внешнему сервису, когда это возможно. Если пользовательский URL необходим, разрешайте только нужную схему и точные хосты, запрещайте перенаправления, ограничивайте исходящий трафик сетью. Проверку IP нельзя отделять от соединения: `InetAddress.getByName(host)` перед `client.get(uri)` оставляет окно для повторного DNS-разрешения и rebinding; результат предварительной проверки клиент не обязан использовать.
+
+Пример для **Spring Boot 4.1+**: клиент ограничен известным HTTPS-хостом, а `InetAddressFilter` применяется клиентом к адресу при установлении соединения. Здесь показан внешний сервис; если разрешён внутренний адрес, политику адресов надо задать отдельно.
 
 ```java
-@Service
-public class SafeUrlFetcher {
+InetAddressFilter onlyExternal = InetAddressFilter.externalAddresses();
+HttpClientSettings settings = HttpClientSettings.defaults()
+        .withInetAddressFilter(onlyExternal);
+ClientHttpRequestFactory factory = ClientHttpRequestFactoryBuilder.jdk()
+        .build(settings);
+RestClient client = RestClient.builder()
+        .requestFactory(factory)
+        .baseUrl("https://api.example.com")
+        .build();
 
-    private static final Set<String> ALLOWED_SCHEMES = Set.of("http", "https");
-    private static final Set<String> ALLOWED_HOSTS = Set.of(
-        "api.github.com", "api.example.com");
-
-    public String fetch(String urlString) {
-        // 1. Валидация URL
-        URI uri = validateUrl(urlString);
-        
-        // 2. DNS-резолюция и проверка IP
-        InetAddress address = resolveAndValidate(uri.getHost());
-        
-        // 3. Запрос с таймаутами
-        return executeRequest(uri);
-    }
-
-    private URI validateUrl(String urlString) {
-        URI uri;
-        try {
-            uri = new URI(urlString);
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Invalid URL");
-        }
-
-        // Проверка схемы
-        if (!ALLOWED_SCHEMES.contains(uri.getScheme())) {
-            throw new SecurityException("Scheme not allowed: " + uri.getScheme());
-        }
-
-        // Whitelist хостов (предпочтительно)
-        if (!ALLOWED_HOSTS.contains(uri.getHost())) {
-            throw new SecurityException("Host not allowed: " + uri.getHost());
-        }
-
-        return uri;
-    }
-
-    private InetAddress resolveAndValidate(String host) {
-        try {
-            InetAddress addr = InetAddress.getByName(host);
-
-            // Блокировка приватных и служебных диапазонов
-            if (addr.isLoopbackAddress()         // 127.0.0.0/8
-                || addr.isSiteLocalAddress()      // 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
-                || addr.isLinkLocalAddress()      // 169.254.0.0/16 (metadata endpoint!)
-                || addr.isAnyLocalAddress()) {    // 0.0.0.0
-                throw new SecurityException("Access to internal networks is forbidden");
-            }
-            return addr;
-        } catch (UnknownHostException e) {
-            throw new SecurityException("Cannot resolve host");
-        }
-    }
-}
+// Передаём только ID/сегмент пути, не произвольный URL пользователя.
+String body = client.get().uri("/items/{id}", itemId)
+        .retrieve().body(String.class);
 ```
 
-**Сетевой уровень** (defense in depth) — страховка на случай, если валидацию в коде обошли:
-- `Network Policy` в Kubernetes — ограничить egress-трафик подов, чтобы приложение физически не могло достучаться до внутренних адресов
-- `VPC Security Groups` / firewall — запретить обращение к metadata endpoint на уровне сети
-- `IMDSv2` в AWS — за токеном нужно сходить отдельным PUT-запросом, и только потом подставлять его в заголовок `X-aws-ec2-metadata-token`; простой GET, которым обычно и работает SSRF, метаданные уже не отдаст
+При работе с **произвольным URL** дополнительно валидируйте итоговый URI, порт и host allowlist; явно отключайте redirects у выбранного HTTP-клиента либо проверяйте **каждый** переход по тем же правилам. `externalAddresses()` не заменяет host allowlist и сетевой egress. Для старого Spring Boot выбирайте HTTP-клиент, где можно фильтровать адрес **на соединении**; простой DNS precheck перед `RestTemplate.getForObject(url)` защитой не является. См. [OWASP SSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html) и [Spring Boot REST clients](https://docs.spring.io/spring-boot/reference/io/rest-client.html).
 
 ---
 

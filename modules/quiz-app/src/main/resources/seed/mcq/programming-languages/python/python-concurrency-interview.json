@@ -1,0 +1,545 @@
+{
+  "topic_slug": "python-concurrency-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда выбрать asyncio, потоки или процессы?",
+          "options": [
+            {
+              "text": "Для чистого CPU-кода в обычном CPython используйте asyncio: `await` распределяет байткод по ядрам без процессов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Asyncio кооперативно переключает задачи, но не обеспечивает параллельный CPU на ядрах.",
+                "source_of_confusion": "Конкурентность путают с параллельностью.",
+                "if_it_were_true": "Тогда один loop одновременно выполнял бы несколько участков Python bytecode.",
+                "how_it_should_be": "Asyncio кооперативно переключает задачи, но не обеспечивает параллельный CPU на ядрах."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Потоки ускоряют чистый Python CPU-код, поскольку GIL снимается при запуске нового потока в одном интерпретаторе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В обычной сборке CPython GIL ограничивает одновременное исполнение Python-кода потоками.",
+                "source_of_confusion": "Утверждение о потоках из других runtime переносят на CPython.",
+                "if_it_were_true": "Тогда число потоков линейно ускоряло бы Python bytecode на ядрах.",
+                "how_it_should_be": "В обычной сборке CPython GIL ограничивает одновременное исполнение Python-кода потоками."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Процессы лучше для множества сетевых запросов с высокой задержкой: они дешевле coroutine и автоматически отменяются по timeout HTTP-клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Процессы имеют стоимость запуска и обмена; для множества I/O чаще подходят async или threads.",
+                "source_of_confusion": "Наличие параллельных ядер считают универсальным плюсом.",
+                "if_it_were_true": "Тогда сериализация и процессная память не имели бы цены для I/O.",
+                "how_it_should_be": "Процессы имеют стоимость запуска и обмена; для множества I/O чаще подходят async или threads."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Для множества async I/O подходит asyncio; для блокирующего I/O — потоки; для CPU Python-кода в обычном CPython — процессы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор зависит от профиля ожидания и используемых библиотек.",
+                "example": "Синхронный клиент можно вынести в поток; тяжёлый расчёт — в процессный пул.",
+                "when_to_apply": "Используйте это различие при проектировании и отладке backend-кода на Python.",
+                "edge_cases": "Издержки процессов и передача данных могут перевесить ускорение короткой задачи.",
+                "related": "См. полный ответ этого Q и соседние вопросы текущей шпаргалки."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что ограничивает GIL в обычном CPython?",
+          "options": [
+            {
+              "text": "GIL запрещает работу с I/O из нескольких потоков; второй поток ждёт завершения первого до конца запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Потоки полезны для I/O, когда выполнение отпускает GIL во время ожидания.",
+                "source_of_confusion": "GIL ошибочно приравнивают к полной последовательности всех операций.",
+                "if_it_were_true": "Тогда ThreadPoolExecutor не помогал бы блокирующему I/O.",
+                "how_it_should_be": "Потоки полезны для I/O, когда выполнение отпускает GIL во время ожидания."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "GIL делает последовательность чтения и записи общего dict атомарной, поэтому lock для бизнес-инварианта не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GIL не обеспечивает атомарность составного инварианта; требуется синхронизация.",
+                "source_of_confusion": "Защиту внутренних структур путают с транзакционностью бизнес-операции.",
+                "if_it_were_true": "Тогда проверка и последующая запись всегда выполнялись бы как единое действие.",
+                "how_it_should_be": "GIL не обеспечивает атомарность составного инварианта; требуется синхронизация."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "GIL обычного CPython ограничивает параллельное исполнение Python-кода потоками; I/O и некоторые расширения освобождают его, инварианты требуют lock.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ограничение относится к сборке и виду работы, а не к Python вообще.",
+                "example": "Два потока могут ожидать сеть параллельно; CPU-bound Python выбирает другую модель.",
+                "when_to_apply": "Используйте это различие при проектировании и отладке backend-кода на Python.",
+                "edge_cases": "Free-threaded сборка имеет другой режим, но не отменяет защиту общего состояния.",
+                "related": "См. полный ответ этого Q и соседние вопросы текущей шпаргалки."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "GIL действует одинаково в реализации Python и сборке CPython; отключить его или обойти процессами нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Режим зависит от реализации/сборки; отдельные процессы имеют собственные интерпретаторы.",
+                "source_of_confusion": "Название языка принимают за гарантию одной runtime-реализации.",
+                "if_it_were_true": "Тогда free-threaded CPython и ProcessPoolExecutor не могли бы работать.",
+                "how_it_should_be": "Режим зависит от реализации/сборки; отдельные процессы имеют собственные интерпретаторы."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем coroutine отличается от Task?",
+          "options": [
+            {
+              "text": "Вызов `async def` создаёт coroutine object; `await` исполняет его, а `create_task` планирует отдельную Task в event loop.",
+              "correct": true,
+              "sections": {
+                "explanation": "Создание coroutine ещё не запускает её тело.",
+                "example": "`task = asyncio.create_task(load())` планирует вызов и результат читают через `await task`.",
+                "when_to_apply": "Используйте это различие при проектировании и отладке backend-кода на Python.",
+                "edge_cases": "Фоновую Task следует удерживать ссылкой и обрабатывать исключение.",
+                "related": "См. полный ответ этого Q и соседние вопросы текущей шпаргалки."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Вызов `async def` немедленно запускает тело; `await` лишь ждёт уже выполненную работу, а Task хранит итог.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тело coroutine начинается при исполнении через await/Task, не при простом вызове.",
+                "source_of_confusion": "Асинхронную функцию трактуют как немедленный запуск потока.",
+                "if_it_were_true": "Тогда вызов coroutine без await всегда выполнял бы побочные эффекты.",
+                "how_it_should_be": "Тело coroutine начинается при исполнении через await/Task, не при простом вызове."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`create_task` создаёт отдельный поток ОС для каждой coroutine, поэтому её код исполняется параллельно даже без точек `await`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Task планируется в event loop; она не равна потоку ОС.",
+                "source_of_confusion": "Слово task связывают с threading scheduler.",
+                "if_it_were_true": "Тогда синхронный цикл в Task не блокировал бы остальные coroutine.",
+                "how_it_should_be": "Task планируется в event loop; она не равна потоку ОС."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Coroutine object автоматически выполнится позднее, даже если не использовать await и не планировать его как Task.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без await или планирования coroutine не выполняется и может вызвать warning.",
+                "source_of_confusion": "Создание объекта путают с запуском работы.",
+                "if_it_were_true": "Тогда забытый `load()` всё равно отправил бы сетевой запрос.",
+                "how_it_should_be": "Без await или планирования coroutine не выполняется и может вызвать warning."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем TaskGroup отличается от gather?",
+          "options": [
+            {
+              "text": "`gather` отменяет соседние задачи при первом исключении из группы; `TaskGroup` оставляет их работать независимо после выхода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При обычной ошибке TaskGroup отменяет siblings; gather по умолчанию этого не делает.",
+                "source_of_confusion": "Поведение двух API меняют местами.",
+                "if_it_were_true": "Тогда ошибка в gather гарантированно завершала бы все остальные awaitables.",
+                "how_it_should_be": "При обычной ошибке TaskGroup отменяет siblings; gather по умолчанию этого не делает."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`TaskGroup` ждёт дочерние задачи и отменяет остальных при первой обычной ошибке; `gather` по умолчанию передаёт ошибку без такой отмены.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это важное различие structured concurrency и агрегирования результатов.",
+                "example": "Два связанных запроса удобно запустить через TaskGroup и вместе завершить при сбое.",
+                "when_to_apply": "Используйте это различие при проектировании и отладке backend-кода на Python.",
+                "edge_cases": "Отмена самого gather распространяется на ещё работающие задачи — это другой случай.",
+                "related": "См. полный ответ этого Q и соседние вопросы текущей шпаргалки."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`TaskGroup` доступен с Python 3.7 и возвращает результаты списком в порядке задач без обращения к их `result()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TaskGroup добавлен в 3.11; результаты Task читают отдельно после блока.",
+                "source_of_confusion": "Синтаксис gather с ordered results переносят на TaskGroup.",
+                "if_it_were_true": "Тогда код для Python 3.10 мог бы использовать TaskGroup.",
+                "how_it_should_be": "TaskGroup добавлен в 3.11; результаты Task читают отдельно после блока."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`gather(return_exceptions=True)` гарантирует, что соседние задачи отменятся после первой ошибки, но сама ошибка попадёт в список.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Этот режим собирает исключения как результаты и не означает fail-fast отмену.",
+                "source_of_confusion": "Флаг обработки исключений принимают за режим отмены.",
+                "if_it_were_true": "Тогда частичная успешность была бы невозможна в таком gather.",
+                "how_it_should_be": "Этот режим собирает исключения как результаты и не означает fail-fast отмену."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают отмена и timeout в asyncio?",
+          "options": [
+            {
+              "text": "`cancel()` синхронно убивает Task и немедленно закрывает все сокеты, даже если coroutine не дошла до следующего `await`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отмена запрашивается и доставляется кооперативно; ресурсы закрывает код/клиент.",
+                "source_of_confusion": "Переносят модель принудительного завершения процесса на Task.",
+                "if_it_were_true": "Тогда `finally` не понадобился бы для освобождения ресурса.",
+                "how_it_should_be": "Отмена запрашивается и доставляется кооперативно; ресурсы закрывает код/клиент."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`CancelledError` наследует `Exception` и безопасно поглощается обычным `except Exception` без влияния на время жизни дочерних задач `TaskGroup`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В asyncio он наследует BaseException; проглатывание может ломать structured concurrency.",
+                "source_of_confusion": "Все ошибки считают наследниками Exception.",
+                "if_it_were_true": "Тогда `except Exception` ловил бы отмену по умолчанию.",
+                "how_it_should_be": "В asyncio он наследует BaseException; проглатывание может ломать structured concurrency."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`asyncio.timeout()` прерывает уже исполняющуюся работу в `to_thread`, включая зависший синхронный вызов без собственного timeout.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Timeout отменяет ожидание coroutine, а запущенный поток нельзя принудительно остановить этим API.",
+                "source_of_confusion": "Ограничение времени await принимают за отмену внешней операции.",
+                "if_it_were_true": "Тогда блокирующий драйвер без timeout завершался бы принудительно.",
+                "how_it_should_be": "Timeout отменяет ожидание coroutine, а запущенный поток нельзя принудительно остановить этим API."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`cancel()` запрашивает кооперативную отмену; `CancelledError` приходит на точке исполнения, cleanup делают в `finally` и обычно пробрасывают дальше.",
+              "correct": true,
+              "sections": {
+                "explanation": "TaskGroup и timeout используют отмену, поэтому её нельзя бездумно проглатывать.",
+                "example": "`asyncio.timeout(2)` ограничивает await внутри блока и снаружи даёт TimeoutError.",
+                "when_to_apply": "Используйте это различие при проектировании и отладке backend-кода на Python.",
+                "edge_cases": "Отмена ожидания to_thread не останавливает уже работающую функцию потока.",
+                "related": "См. полный ответ этого Q и соседние вопросы текущей шпаргалки."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что делать с блокирующим вызовом внутри event loop?",
+          "options": [
+            {
+              "text": "Вызвать `time.sleep()` прямо в coroutine: event loop продолжит обслуживать другие Task во время ожидания системного таймера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "time.sleep блокирует поток loop и задерживает остальные задачи.",
+                "source_of_confusion": "Слово sleep путают с `asyncio.sleep`.",
+                "if_it_were_true": "Тогда соседний Task мог бы исполняться во время синхронного sleep.",
+                "how_it_should_be": "time.sleep блокирует поток loop и задерживает остальные задачи."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Обернуть чистый CPU Python-код в `to_thread`: обычный CPython гарантирует линейное ускорение на нескольких ядрах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "to_thread полезен для блокирующего I/O; GIL ограничивает CPU bytecode в обычной сборке.",
+                "source_of_confusion": "Вынесение из loop путают с многоядерным ускорением.",
+                "if_it_were_true": "Тогда GIL не ограничивал бы CPU-потоки.",
+                "how_it_should_be": "to_thread полезен для блокирующего I/O; GIL ограничивает CPU bytecode в обычной сборке."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Предпочтите async API; синхронный I/O вынесите через `asyncio.to_thread`, задав клиенту собственный timeout и учитывая отмену ожидания.",
+              "correct": true,
+              "sections": {
+                "explanation": "Синхронный вызов блокирует loop, а to_thread освобождает его для других Task.",
+                "example": "`await asyncio.to_thread(blocking_fetch, url)` не держит loop во время I/O.",
+                "when_to_apply": "Используйте это различие при проектировании и отладке backend-кода на Python.",
+                "edge_cases": "Отмена await не гарантирует остановку функции, уже запущенной в потоке.",
+                "related": "См. полный ответ этого Q и соседние вопросы текущей шпаргалки."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Передайте результат синхронной функции в `create_task`: такой вызов автоматически станет неблокирующей coroutine без адаптера и освобождает loop.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сначала выполнится blocking_fetch в loop, а create_task ожидает coroutine/awaitable.",
+                "source_of_confusion": "Планирование Task принимают за универсальный wrapper вызова.",
+                "if_it_were_true": "Тогда синхронный вызов внутри аргумента не выполнялся бы до create_task.",
+                "how_it_should_be": "Сначала выполнится blocking_fetch в loop, а create_task ожидает coroutine/awaitable."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как ограничить число ожидающих задач?",
+          "options": [
+            {
+              "text": "`asyncio.Queue(maxsize=N)` создаёт backpressure для producer; `Semaphore` ограничивает активные операции, но сам по себе не ограничивает уже созданные задачи.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ожидание на заполненной очереди тормозит источник нагрузки до создания безграничной работы.",
+                "example": "Producer ждёт `queue.put`, а workers отмечают `task_done` и могут использовать `join`.",
+                "when_to_apply": "Используйте это различие при проектировании и отладке backend-кода на Python.",
+                "edge_cases": "Queue asyncio не thread-safe и не заменяет лимиты downstream клиента.",
+                "related": "См. полный ответ этого Q и соседние вопросы текущей шпаргалки."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Один `Semaphore(N)` гарантирует, что в системе существует не более N Task, даже если producer бесконечно вызывает `create_task`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Semaphore ограничивает вход в критическую секцию, не число уже созданных Task.",
+                "source_of_confusion": "Путают concurrency limit с backlog limit.",
+                "if_it_were_true": "Тогда память не росла бы от тысяч Task, ожидающих semaphore.",
+                "how_it_should_be": "Semaphore ограничивает вход в критическую секцию, не число уже созданных Task."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Queue(maxsize=N)` отбрасывает элементы при заполнении и не задерживает producer на обычном `put()`, даже когда consumers не успевают обрабатывать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный `put` ждёт свободного места; `put_nowait` может поднять QueueFull.",
+                "source_of_confusion": "Поведение неблокирующего API приписывают обычному put.",
+                "if_it_were_true": "Тогда producer не получал бы обратного давления от очереди.",
+                "how_it_should_be": "Обычный `put` ждёт свободного места; `put_nowait` может поднять QueueFull."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`asyncio.Queue` подходит для обмена между потоками ОС без дополнительной синхронизации; её `join()` автоматически завершает все worker-потоки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Queue asyncio не thread-safe; join отслеживает `task_done` для поставленных элементов.",
+                "source_of_confusion": "Название Queue напоминает thread-safe `queue.Queue`.",
+                "if_it_were_true": "Тогда можно было бы безопасно обращаться к asyncio.Queue из любого потока.",
+                "how_it_should_be": "Queue asyncio не thread-safe; join отслеживает `task_done` для поставленных элементов."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ограничения есть у ProcessPoolExecutor?",
+          "options": [
+            {
+              "text": "Worker-процессы разделяют все Python-объекты с родителем без сериализации, поэтому передача больших результатов бесплатна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Передаваемые аргументы и результаты сериализуются; обмен может быть дорогим.",
+                "source_of_confusion": "Процессы воспринимают как потоки с общей памятью.",
+                "if_it_were_true": "Тогда изменение обычного списка worker-ом сразу было бы видно родителю.",
+                "how_it_should_be": "Передаваемые аргументы и результаты сериализуются; обмен может быть дорогим."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`ProcessPoolExecutor` обходит GIL обычного CPython, но требует picklable задач/данных и импортируемого `__main__`; обмен имеет стоимость.",
+              "correct": true,
+              "sections": {
+                "explanation": "Отдельный процесс даёт CPU-параллелизм ценой передачи данных и запуска.",
+                "example": "Функцию верхнего уровня и компактный ввод можно передать worker-ам.",
+                "when_to_apply": "Используйте это различие при проектировании и отладке backend-кода на Python.",
+                "edge_cases": "Lambda и функции из REPL обычно не подходят; вложенные вызовы методов пула могут deadlock.",
+                "related": "См. полный ответ этого Q и соседние вопросы текущей шпаргалки."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Lambda и функции из REPL передаются в пул процессов, если результат и аргументы состоят из чисел.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сериализуемость нужна функции и аргументам, а `__main__` должен импортироваться.",
+                "source_of_confusion": "Смотрят только на простоту результата, забывая код worker-а.",
+                "if_it_were_true": "Тогда lambda выполнялась бы в новом процессе без доступного определения.",
+                "how_it_should_be": "Сериализуемость нужна функции и аргументам, а `__main__` должен импортироваться."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Из worker-а безопасно вызвать `executor.submit()` того же пула и дождаться `future.result()` для рекурсивного расчёта без риска deadlock.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Документация предупреждает о deadlock при вызове методов пула/Future из worker-а.",
+                "source_of_confusion": "Рекурсивное разбиение работы переносят без учёта занятых workers.",
+                "if_it_were_true": "Тогда все worker-ы могли бы бесконечно порождать вложенные ожидания без тупика.",
+                "how_it_should_be": "Документация предупреждает о deadlock при вызове методов пула/Future из worker-а."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что меняет free-threaded CPython?",
+          "options": [
+            {
+              "text": "Установка Python 3.13+ работает без GIL и автоматически делает операции над общим dict транзакционно безопасными.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужна отдельная сборка/режим, а бизнес-инварианты всё равно требуют синхронизации.",
+                "source_of_confusion": "Наличие возможности принимают за режим по умолчанию.",
+                "if_it_were_true": "Тогда sys._is_gil_enabled не различал бы установленные режимы.",
+                "how_it_should_be": "Нужна отдельная сборка/режим, а бизнес-инварианты всё равно требуют синхронизации."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Free-threaded сборка запрещает C extensions и исключает возвращение GIL после импорта несовместимого расширения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Неадаптированное расширение может снова включить GIL.",
+                "source_of_confusion": "Совместимость расширений считают бинарной — либо запрет, либо полный параллелизм.",
+                "if_it_were_true": "Тогда импорт расширения не менял бы runtime режим.",
+                "how_it_should_be": "Неадаптированное расширение может снова включить GIL."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Free-threaded режим ускоряет однопоточный backend-запрос и не имеет накладных расходов относительно обычной сборки CPython.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У режима есть overhead и результаты зависят от профиля нагрузки и железа.",
+                "source_of_confusion": "Параллелизм ошибочно приравнивают к ускорению одного потока.",
+                "if_it_were_true": "Тогда benchmark одного потока всегда становился бы быстрее без изменения работы.",
+                "how_it_should_be": "У режима есть overhead и результаты зависят от профиля нагрузки и железа."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Отдельная free-threaded сборка CPython 3.13+ допускает параллельные Python-потоки; проверьте runtime GIL и синхронизируйте общее состояние.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это особая сборка/настройка, а не гарантия языка Python.",
+                "example": "`sys._is_gil_enabled()` показывает реальное состояние GIL в поддерживаемой версии.",
+                "when_to_apply": "Используйте это различие при проектировании и отладке backend-кода на Python.",
+                "edge_cases": "Несовместимые расширения могут включить GIL, а контейнерные lock не защищают составные инварианты.",
+                "related": "См. полный ответ этого Q и соседние вопросы текущей шпаргалки."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

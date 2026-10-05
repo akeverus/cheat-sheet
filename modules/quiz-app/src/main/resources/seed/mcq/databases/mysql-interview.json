@@ -1,0 +1,365 @@
+{
+  "topic_slug": "mysql-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что даёт InnoDB и что меняет выбор storage engine?",
+          "options": [
+            {
+              "text": "InnoDB поддерживает транзакции, MVCC и внешние ключи; проверять ENGINE таблицы нужно до выводов о её семантике.",
+              "correct": true,
+              "sections": {
+                "explanation": "Движок таблицы определяет доступные гарантии, а не только формат хранения.",
+                "example": "Для старой таблицы сначала смотрят SHOW CREATE TABLE.",
+                "when_to_apply": "Проверяйте при миграции или расследовании отката.",
+                "edge_cases": "Внешний HTTP-вызов не откатывается SQL rollback.",
+                "related": "MySQL 8.4 InnoDB introduction и ACID model."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "SQL-сервер MySQL обеспечивает одинаковые транзакции и внешние ключи для разных движков, поэтому ENGINE таблицы влияет лишь на хранение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Свойства транзакций зависят от storage engine таблицы.",
+                "source_of_confusion": "SQL интерфейс общий, но возможности движков различаются.",
+                "if_it_were_true": "Иначе выбор ENGINE не менял бы откат и constraints.",
+                "how_it_should_be": "Для InnoDB верны транзакции и FK; проверьте фактический ENGINE."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "InnoDB гарантирует атомарность и откат SQL вместе с HTTP-запросами, отправленными в другой сервис из той же операции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Локальная SQL-транзакция не включает произвольный внешний сервис.",
+                "source_of_confusion": "Слово atomicity ошибочно расширено на распределённые побочные эффекты.",
+                "if_it_were_true": "Иначе rollback отменял бы уже принятый удалённый запрос.",
+                "how_it_should_be": "Для внешних эффектов проектируйте отдельную согласованность."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Undo log служит восстановлению после перезапуска сервера, а redo log хранит версии строк для обычного MVCC-чтения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redo помогает восстановлению; undo используется для отката и версий.",
+                "source_of_confusion": "Названия логов перепутаны по назначению.",
+                "if_it_were_true": "При таком устройстве снимок чтения зависел бы от redo.",
+                "how_it_should_be": "Смотрите InnoDB multi-versioning и recovery отдельно."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем clustered index InnoDB отличается от secondary index?",
+          "options": [
+            {
+              "text": "Вторичный индекс хранит физический адрес строки независимо от ширины PRIMARY KEY, что позволяет делать ключ сколь угодно широким.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запись secondary index содержит значения первичного ключа.",
+                "source_of_confusion": "Модель указателя на физический адрес перенесена из другой реализации.",
+                "if_it_were_true": "Тогда широкий PK не увеличивал бы secondary indexes.",
+                "how_it_should_be": "При lookup InnoDB может перейти по PK в clustered index."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "PRIMARY KEY обычно образует clustered index с данными; secondary index содержит свой ключ и значение PK.",
+              "correct": true,
+              "sections": {
+                "explanation": "Так устроены кластерный и вторичные индексы InnoDB.",
+                "example": "Индекс по email содержит email и PK строки.",
+                "when_to_apply": "Учитывайте ширину PK и дополнительные lookup.",
+                "edge_cases": "Без PK InnoDB всё равно создаст или выберет clustered index.",
+                "related": "MySQL 8.4 clustered and secondary indexes."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Таблица InnoDB без PRIMARY KEY не имеет clustered index и хранит все строки вне индексов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "InnoDB выбирает UNIQUE NOT NULL либо создаёт скрытый индекс.",
+                "source_of_confusion": "Отсутствие явного PK путают с отсутствием clustered index.",
+                "if_it_were_true": "Иначе данные не были бы размещены по кластерному ключу.",
+                "how_it_should_be": "Лучше явно задать подходящий PK."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Secondary index InnoDB содержит столбцы строки, поэтому дополнительный доступ к clustered index для выбранных данных не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычно secondary index содержит свои столбцы и PK.",
+                "source_of_confusion": "Covering index ошибочно считают свойством любого индекса.",
+                "if_it_were_true": "Иначе размер каждого индекса приближался бы к копии таблицы.",
+                "how_it_should_be": "Проверяйте, покрывает ли индекс конкретный запрос."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как читать EXPLAIN при медленном запросе MySQL?",
+          "options": [
+            {
+              "text": "Индекс в possible_keys будет выбран оптимизатором; key = NULL указывает на повреждение этого индекса или статистики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "possible_keys перечисляет кандидатов; key показывает выбранный.",
+                "source_of_confusion": "Наличие индекса ошибочно принимают за обязательный выбор.",
+                "if_it_were_true": "Для маленькой таблицы scan тогда был бы невозможен.",
+                "how_it_should_be": "Сопоставляйте оценки и реальную задержку."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "EXPLAIN сообщает точное время выполнения и фактическое число строк, поэтому измерять запрос отдельно не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный EXPLAIN прежде всего показывает оценки плана.",
+                "source_of_confusion": "План и фактическое исполнение смешаны.",
+                "if_it_were_true": "Тогда оценки rows всегда совпадали бы с измерением.",
+                "how_it_should_be": "EXPLAIN ANALYZE исполняет поддерживаемый запрос и измеряет его."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Смотрите type, key, rows, filtered, Extra и порядок join; сопоставляйте оценки с задержкой реального запроса.",
+              "correct": true,
+              "sections": {
+                "explanation": "План помогает найти дорогой доступ, но сам по себе не меряет latency.",
+                "example": "При смене индекса сравните план и время на репрезентативных данных.",
+                "when_to_apply": "Используйте при медленном запросе с реальными параметрами.",
+                "edge_cases": "EXPLAIN ANALYZE исполняет statement и требует учёта нагрузки и DML.",
+                "related": "MySQL 8.4 EXPLAIN statement и optimizing queries."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "EXPLAIN ANALYZE показывает оценку без исполнения SQL, поэтому пригоден для UPDATE и DELETE в рабочей базе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "EXPLAIN ANALYZE исполняет поддерживаемые statements.",
+                "source_of_confusion": "Его путают с обычным EXPLAIN.",
+                "if_it_were_true": "Тогда actual time и loops не могли бы появиться.",
+                "how_it_should_be": "Проверяйте последствия запуска на рабочей базе."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Почему обычный SELECT и SELECT FOR UPDATE могут вести себя по-разному?",
+          "options": [
+            {
+              "text": "При REPEATABLE READ обычный SELECT использует снимок; FOR UPDATE ставит блокировки по плану доступа.",
+              "correct": true,
+              "sections": {
+                "explanation": "Различаются consistent nonlocking read и блокирующее чтение.",
+                "example": "Для read-modify-write можно выбрать locking read или атомарный UPDATE.",
+                "when_to_apply": "Применяйте при конкурентном изменении одной записи.",
+                "edge_cases": "Границы блокировки зависят от индекса, условия и уровня изоляции.",
+                "related": "MySQL 8.4 consistent reads и locking reads."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "FOR UPDATE использует старый MVCC-снимок и ускоряет чтение, не блокируя конкурирующих writers в той же таблице.",
+              "correct": false,
+              "sections": {
+                "what_actually": "FOR UPDATE ставит блокировки и служит другой задаче.",
+                "source_of_confusion": "Синтаксис SELECT ошибочно считают одинаковой семантикой.",
+                "if_it_were_true": "Тогда параллельный UPDATE не ожидал бы блокировку.",
+                "how_it_should_be": "Обычный SELECT подходит для чтения снимка."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Обычный SELECT блокирует найденные строки до COMMIT, поэтому FOR UPDATE избыточен в операции read-modify-write.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный consistent read не резервирует строку для записи.",
+                "source_of_confusion": "Чтение и блокировку смешивают.",
+                "if_it_were_true": "Иначе конкурирующий writer ждал бы после любого SELECT.",
+                "how_it_should_be": "Для изменения используйте явный механизм конкуренции."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "REPEATABLE READ запрещает вставлять новые строки в таблицу после SELECT, даже если транзакция ничего не обновляет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Снимок чтения не означает глобальную блокировку таблицы.",
+                "source_of_confusion": "Гарантию повторяемости читают как запрет всех записей.",
+                "if_it_were_true": "Это остановило бы обычных writers при отчётах.",
+                "how_it_should_be": "Проверяйте конкретные locking reads и диапазоны."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как расследовать Incorrect string value при записи Unicode?",
+          "options": [
+            {
+              "text": "Смена collation колонки исправляет ошибку Unicode: charset и настройки соединения обычно не участвуют в передаче символов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужно проверить charset колонки и переменные charset соединения.",
+                "source_of_confusion": "Collation сравнения путают с кодировкой хранения.",
+                "if_it_were_true": "Тогда четырёхбайтовый символ поместился бы в utf8mb3.",
+                "how_it_should_be": "Сверяйте client, connection и целевой столбец."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "SET NAMES utf8mb4 перекодирует существующие TEXT-колонки базы и обновляет их схему без отдельной миграции данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SET NAMES устанавливает кодировки текущего соединения.",
+                "source_of_confusion": "Настройку session принимают за DDL миграцию.",
+                "if_it_were_true": "Тогда схема таблицы менялась бы на каждом подключении.",
+                "how_it_should_be": "Изменяйте charset таблицы/колонки осознанной миграцией."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "MySQL utf8mb3 и utf8mb4 сохраняют четырёхбайтовые Unicode-символы; ошибка скорее говорит о сетевой недоступности сервера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "utf8mb3 не покрывает четырёхбайтовые Unicode символы.",
+                "source_of_confusion": "Имя utf8 принимают за полную Unicode поддержку.",
+                "if_it_were_true": "Тогда emoji никогда не выявляли бы этот пробел.",
+                "how_it_should_be": "Используйте согласованный utf8mb4 по цепочке."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Проверьте charset столбца и соединения: utf8mb4 хранит четырёхбайтовые символы; SET NAMES не мигрирует колонку.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ошибка может возникнуть на разных звеньях передачи и хранения.",
+                "example": "Сверьте SHOW CREATE TABLE и character_set_% variables.",
+                "when_to_apply": "Применяйте при ошибке записи emoji или других Unicode символов.",
+                "edge_cases": "Миграция charset требует проверки существующих данных и длины.",
+                "related": "MySQL 8.4 connection character sets и utf8mb4."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как расследовать Communications link failure после простоя?",
+          "options": [
+            {
+              "text": "Ошибка указывает на неверный SQL-синтаксис; повтор INSERT безопасен, ведь потеря связи означает отсутствие COMMIT.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ошибка связи не доказывает исход уже отправленной записи.",
+                "source_of_confusion": "Синтаксическую ошибку и потерю ответа объединяют.",
+                "if_it_were_true": "Тогда клиент всегда знал бы серверный исход после разрыва.",
+                "how_it_should_be": "Для повторов нужна идемпотентность или установленный исход."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Сравните новое и idle-соединение, логи сервера и сети, timeout; проверьте срок жизни соединений в пуле.",
+              "correct": true,
+              "sections": {
+                "explanation": "Причины могут быть в сервере, сети или устаревшем pooled connection.",
+                "example": "Сбой только после простоя подсказывает исследовать idle timeout.",
+                "when_to_apply": "Применяйте при Connector/J Communications link failure.",
+                "edge_cases": "Не делайте blind retry неидемпотентной записи.",
+                "related": "MySQL Connector/J troubleshooting и server wait_timeout."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Ошибка указывает на отказ MySQL server, а настройки пула и использование закрытого connection здесь несущественны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пул может выдать connection, закрытый сервером или сетью.",
+                "source_of_confusion": "Серверную причину объявляют без сравнения нового подключения.",
+                "if_it_were_true": "Тогда возраст соединения не коррелировал бы со сбоем.",
+                "how_it_should_be": "Проверьте конфигурацию пула вместе с server timeout."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Увеличьте maxLifetime выше wait_timeout, чтобы соединение в пуле сохранялось пригодным после длительного простоя клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Срок жизни пула нужно согласовывать с более ранними лимитами; сеть тоже может закрыть socket.",
+                "source_of_confusion": "Параметры настраивают в противоположную сторону.",
+                "if_it_were_true": "Тогда пул хранил бы connection дольше, чем сервер.",
+                "how_it_should_be": "Проверяйте фактические timeout и keepalive/validation."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

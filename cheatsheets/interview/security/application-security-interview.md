@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[application-security]]"
 next: []
-updated: "2026-05-08"
+updated: "2026-10-05"
 ---
 # Вопросы на собеседовании: Безопасность приложений
 
@@ -746,43 +746,15 @@ ois.setObjectInputFilter(filter);
 
 ## Q13. Как защититься от `SSRF` (`Server-Side Request Forgery`)?
 
-`SSRF` -- атака, при которой приложение по `URL` от атакующего делает запрос туда, куда сам атакующий доступа не имеет. Сервер становится прокси: через него запрашивают внутренние сервисы (`http://localhost:8080/admin`), метаданные облака (`http://169.254.169.254/` -- кража IAM-credentials в AWS), порты внутренней сети. Защита -- не дать приложению ходить по произвольным адресам: whitelist хостов/схем плюс блокировка приватных IP-диапазонов.
+`SSRF` заставляет сервер запросить адрес, недоступный атакующему напрямую: внутренний API или облачный metadata endpoint. Для фиксированных интеграций лучше не принимать полный URL от пользователя: выберите сервис из конфигурации и подставьте только проверенный идентификатор ресурса.
 
 ### Защита
 
-```java
-@Service
-public class UrlFetchService {
+- **Назначение:** разрешённые схема, точный host и порт; не доверяйте похожим доменам, userinfo в URL и неожиданным схемам.
+- **Адрес соединения:** при необходимости обращения к внешним адресам проверяйте все фактически используемые IPv4/IPv6 адреса **в HTTP-клиенте при соединении**. Предварительный `InetAddress.getByName(host)` с последующим `restTemplate.getForObject(url)` небезопасен: второе разрешение DNS может вернуть другой адрес (DNS rebinding).
+- **Переадресации и сеть:** отключите автоматические redirects или применяйте всю политику к каждому переходу; ограничьте egress до нужных адресов/сетей, включая запрет metadata endpoint.
 
-    private static final Set<String> ALLOWED_HOSTS = Set.of(
-            "api.example.com", "cdn.example.com");
-
-    public String fetch(String url) {
-        URI uri = URI.create(url);
-
-        // 1. Проверка схемы
-        if (!"https".equals(uri.getScheme())) {
-            throw new SecurityException("Only HTTPS allowed");
-        }
-
-        // 2. Whitelist хостов
-        if (!ALLOWED_HOSTS.contains(uri.getHost())) {
-            throw new SecurityException("Host not allowed: " + uri.getHost());
-        }
-
-        // 3. Блокировка внутренних IP (127.0.0.1, 10.*, 172.16-31.*, 192.168.*)
-        InetAddress addr = InetAddress.getByName(uri.getHost());
-        if (addr.isLoopbackAddress() || addr.isSiteLocalAddress()
-                || addr.isLinkLocalAddress()) {
-            throw new SecurityException("Internal addresses blocked");
-        }
-
-        return restTemplate.getForObject(url, String.class);
-    }
-}
-```
-
-Ключевые меры: whitelist доменов, блокировка приватных `IP`-диапазонов, `DNS rebinding` protection (проверяйте resolved `IP`, а не hostname).
+Для Java-примера с фильтрацией адреса на соединении в Spring Boot 4.1+ см. [OWASP Top 10 Q34](owasp-top10-interview.md#q34-как-реализовать-защиту-от-ssrf-в-java). `InetAddressFilter.externalAddresses()` не подменяет allowlist хостов и сетевую политику. [OWASP SSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html).
 
 ## Q14. Как защититься от `Injection`-атак помимо `SQL`?
 

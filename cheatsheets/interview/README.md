@@ -9,7 +9,7 @@ aliases:
   - "Вопросы на собеседованиях"
 prerequisites: []
 next: []
-updated: "2026-04-18"
+updated: "2026-10-05"
 ---
 # Вопросы на собеседованиях
 
@@ -31,13 +31,14 @@ updated: "2026-04-18"
 - [CI/CD](cicd/) - вопросы по непрерывной интеграции и развертыванию
 - [Cloud](cloud/) - AWS, AWS Lambda, GCP, Azure, Serverless, Cloud-native Patterns
 - [Качество кода](code-quality/) - вопросы по code review, рефакторингу, техническому долгу
-- [Базы данных](databases/) - вопросы по SQL, NoSQL, Hibernate, Redis, MongoDB, Cassandra, Elasticsearch
+- [Базы данных](databases/) - вопросы по SQL, JDBC и пулам соединений, MySQL, PostgreSQL, NoSQL, Hibernate, Redis, MongoDB, Cassandra, Elasticsearch
 - [Data Engineering](data-engineering/) - Apache Spark, Flink, Kafka Streams, Airflow, dbt, Data Warehousing, Data Lake/Lakehouse, Stream Processing
 - [Паттерны проектирования](design-patterns/) - вопросы по паттернам проектирования
 - [DevOps](devops/) - вопросы по Docker, Kubernetes, Git
-- [Фреймворки](frameworks/) - JVM-фреймворки:
+- [Фреймворки](frameworks/) - серверные фреймворки:
   - [`spring/`](frameworks/spring/) — Spring Framework, Boot, Cloud, Data JPA, MVC, WebFlux, Security, Batch, Actuator
   - [`jvm-alternatives/`](frameworks/jvm-alternatives/) — Ktor, Quarkus, Micronaut, Vert.x
+  - [`python/`](frameworks/python/) — FastAPI
 - [JVM](jvm/) - вопросы по виртуальной машине Java
 - [Лидерство](leadership/) - вопросы по управлению командой и практикам code review
 - [Логирование](logging/) - вопросы по стратегиям логирования
@@ -50,6 +51,7 @@ updated: "2026-04-18"
   - [`kotlin/`](programming-languages/kotlin/) — основы, Coroutines, DSL, исключения, коллекции, сериализация, интероп с Java
   - [`scala/`](programming-languages/scala/) — основы Scala 2.x/3.x
   - [`go/`](programming-languages/go/) — Go (базовый), concurrency, memory & GC, generics, stdlib, testing, modules
+  - [`python/`](programming-languages/python/) — основы Python, asyncio, потоки, процессы и тестирование
   - [`typescript/`](programming-languages/typescript/) — TypeScript (базовый): система типов, generics, utility/conditional types, tsconfig
   - [`rust/`](programming-languages/rust/) — Rust (базовый): ownership/borrowing, lifetimes, traits, Option/Result, умные указатели, Send/Sync
 - [Реактивное программирование](reactive/) - вопросы по RxJava и реактивным подходам

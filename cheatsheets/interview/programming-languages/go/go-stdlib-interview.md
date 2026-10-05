@@ -14,7 +14,7 @@ aliases:
   - "Go standard library interview"
 prerequisites: []
 next: []
-updated: "2026-04-25"
+updated: "2026-10-05"
 ---
 # Вопросы на собеседовании: Стандартная библиотека Go
 
@@ -28,6 +28,7 @@ updated: "2026-04-25"
 - [net/http package](https://pkg.go.dev/net/http)
 - [encoding/json package](https://pkg.go.dev/encoding/json)
 - [database/sql tutorial](https://go.dev/doc/database/index)
+- [Отмена операций БД](https://go.dev/doc/database/cancel-operations) и [пул соединений](https://go.dev/doc/database/manage-connections)
 - [log/slog (Go 1.21+)](https://pkg.go.dev/log/slog)
 - [embed package](https://pkg.go.dev/embed)
 
@@ -790,118 +791,69 @@ slog.InfoContext(ctx, "query executed", "duration", time.Since(start))
 
 ## Q22. (!) Как работает database/sql?
 
+`*sql.DB` — конкурентно безопасный handle к пулу соединений, а не одно соединение. `database/sql` управляет запросами, транзакциями и пулом; конкретный протокол и формат плейсхолдеров предоставляет драйвер. `sql.Open` может не открыть соединение сразу — готовность проверяют `PingContext`.
+
+Для серверного запроса передавайте `ctx` от HTTP request (при необходимости с более коротким timeout) в `QueryContext`/`QueryRowContext`/`ExecContext`. Отмена поддерживается через контекст и драйвер; дедлайн HTTP не заменяет лимиты БД и контроль пула.
+
 ```go
-import (
-    "database/sql"
-    _ "github.com/lib/pq" // PostgreSQL driver
-)
+func userNames(ctx context.Context, db *sql.DB) ([]string, error) {
+    rows, err := db.QueryContext(ctx, "SELECT name FROM users WHERE active = $1", true)
+    if err != nil { return nil, err }
+    defer rows.Close()
 
-db, err := sql.Open("postgres", "host=localhost user=...")
-if err != nil { log.Fatal(err) }
-defer db.Close()
-
-// Один результат
-var name string
-err = db.QueryRow("SELECT name FROM users WHERE id = $1", 1).Scan(&name)
-
-// Множество
-rows, err := db.Query("SELECT id, name FROM users")
-defer rows.Close()
-for rows.Next() {
-    var id int
-    var name string
-    rows.Scan(&id, &name)
-    fmt.Println(id, name)
+    names := []string{}
+    for rows.Next() {
+        var name string
+        if err := rows.Scan(&name); err != nil { return nil, err }
+        names = append(names, name)
+    }
+    if err := rows.Err(); err != nil { return nil, err }
+    return names, nil
 }
-
-// Insert/Update
-result, err := db.Exec("INSERT INTO users (name) VALUES ($1)", "Alice")
-id, _ := result.LastInsertId()
-n, _ := result.RowsAffected()
 ```
 
-`database/sql` — это **обобщённый интерфейс** к SQL-базам: пул соединений, транзакции, плейсхолдеры. Сам он не умеет говорить с конкретной СУБД — за это отвечает **драйвер** (`lib/pq` для PostgreSQL, `go-sql-driver/mysql`, `mattn/go-sqlite3`). Драйвер подключают анонимным импортом `_ "..."`: пакет не используется по имени, но в `init()` регистрирует себя, чтобы `sql.Open("postgres", ...)` нашёл реализацию по имени.
-
-Три способа выполнить запрос:
-
-- **`QueryRow`** — ожидаешь **одну** строку. Результат сразу разбираешь в переменные через `.Scan(&dst)`.
-- **`Query`** — **много** строк. Идёшь по ним циклом `rows.Next()` + `rows.Scan(...)`. Обязательно `defer rows.Close()`, иначе соединение не вернётся в пул (см. Q23).
-- **`Exec`** — запрос **без выборки** (INSERT/UPDATE/DELETE). Возвращает `Result` с `RowsAffected()` и (где поддерживается) `LastInsertId()`.
-
-**Важно про безопасность:** значения подставляй **только** через плейсхолдеры (`$1` у Postgres, `?` у MySQL), а не конкатенацией строк. Драйвер передаёт их отдельно от текста запроса — это и есть защита от SQL-инъекций.
+`QueryRowContext(...).Scan(...)` возвращает `sql.ErrNoRows`, если строки нет; ошибку не проверяют на самом `QueryRowContext`. После цикла **обязательно проверяйте `Rows.Err()`**: ошибка может возникнуть во время итерации. Закрывайте `Rows` на всех путях, иначе удержите ресурсы/соединение. Для PostgreSQL при вставке ID обычно используют `INSERT ... RETURNING id` + `QueryRowContext(...).Scan(&id)`: `Result.LastInsertId()` поддерживают не все драйверы. Значения передавайте параметрами (`$1` у PostgreSQL, `?` у ряда других драйверов), не собирайте SQL конкатенацией. [Go database querying](https://go.dev/doc/database/querying), [cancel operations](https://go.dev/doc/database/cancel-operations).
 
 ## Q23. Connection pool в Go?
 
-У `database/sql` пул соединений **встроен** — отдельную библиотеку для пулинга подключать не нужно. Это и объясняет ключевой момент: `*sql.DB` — это **не одно соединение, а handle к пулу**. Поэтому его создают **один раз** на всё приложение (а не на запрос), он потокобезопасен, и под каждый запрос соединение автоматически берётся из пула и возвращается обратно.
-
-Что настраивают и зачем:
+`*sql.DB` уже управляет пулом и безопасен для совместного использования goroutine. Создавайте handle на жизненный цикл приложения, а не при каждом запросе; затем настройте пределы с учётом числа реплик сервиса и лимита БД:
 
 ```go
-db.SetMaxOpenConns(25)            // макс открытых connections
-db.SetMaxIdleConns(5)             // idle connections в пуле
-db.SetConnMaxLifetime(5 * time.Minute) // время жизни connection
-db.SetConnMaxIdleTime(time.Minute)     // макс idle время
+db.SetMaxOpenConns(25)
+db.SetMaxIdleConns(5)
+db.SetConnMaxLifetime(5 * time.Minute)
+db.SetConnMaxIdleTime(time.Minute)
 ```
 
-Смысл параметров:
+`MaxOpenConns` ограничивает одновременно открытые соединения; если предел достигнут, новый запрос **ждёт** доступное соединение, поэтому контекст с дедлайном нужен и при ожидании пула. Малый лимит может превратить пул в узкое место, большой — перегрузить сервер БД. `MaxIdleConns` уменьшает стоимость переоткрытия, а lifetime/idle time помогают согласовать пул с сервером и балансировщиком.
 
-- `SetMaxOpenConns` — потолок одновременных соединений к БД. Защищает базу от перегрузки; согласуй с её лимитом `max_connections` (особенно при нескольких инстансах сервиса).
-- `SetMaxIdleConns` — сколько простаивающих соединений держать наготове для переиспользования. Слишком мало — частые переоткрытия; должно быть не больше `MaxOpenConns`.
-- `SetConnMaxLifetime` — максимальный возраст соединения. Помогает равномерно перераспределять нагрузку при масштабировании БД и обходить серверные таймауты простоя/балансировщик.
-- `SetConnMaxIdleTime` — закрывать соединение, провисевшее без дела дольше указанного.
-
-**Главный подводный камень — утечка соединений.** Если не закрыть `Rows` (`defer rows.Close()`) или не завершить транзакцию, соединение **не вернётся в пул**. Накопится столько таких — упрёшься в `MaxOpenConns`, и новые запросы начнут висеть, ожидая свободного соединения (вплоть до дедлайна контекста). Это классическая причина «зависшего» под нагрузкой сервиса.
+Диагностика — `stats := db.Stats()`: смотрите `OpenConnections`, `InUse`, `Idle`, рост `WaitCount` и `WaitDuration` во времени. Большое ожидание при `InUse` около лимита — повод проверить длительные запросы, незакрытые `Rows`, незавершённые транзакции и размер пула. Одно значение счётчика без периода и нагрузки не доказывает проблему. [Managing connections](https://go.dev/doc/database/manage-connections), [`DB.Stats`](https://pkg.go.dev/database/sql#DB.Stats).
 
 ## Q24. (!) Зачем нужны prepared statements?
 
-```go
-stmt, err := db.Prepare("SELECT name FROM users WHERE id = $1")
-if err != nil { log.Fatal(err) }
-defer stmt.Close()
+`db.PrepareContext(ctx, query)` создаёт `*sql.Stmt` для повторного выполнения параметризованного запроса; закрывайте его через `defer stmt.Close()`. Если statement подготовлен на `*sql.DB`, он остаётся пригодным для работы с пулом и при необходимости готовится на новых underlying connections. Statement, подготовленный на `*sql.Tx` или `*sql.Conn`, привязан к их соединению.
 
-for _, id := range []int{1, 2, 3} {
-    var name string
-    stmt.QueryRow(id).Scan(&name)
-}
-```
-
-Prepared statement — это запрос, который БД **разбирает и компилирует один раз**, а потом ты много раз выполняешь его с разными параметрами. `db.Prepare` возвращает `*sql.Stmt`, привязанный к соединению; его обязательно закрывают через `defer stmt.Close()`.
-
-**Что это даёт:**
-
-- **Защита от SQL-инъекций** — параметры всегда передаются отдельно от текста запроса, их невозможно «подмешать» в SQL.
-- **Однократная компиляция** — план запроса строится один раз, а не на каждый вызов.
-- **Скорость на повторяющихся запросах** — в цикле (как выше с тремя `id`) экономится парсинг и планирование.
-
-**Ключевой нюанс для собеса:** в Go ради безопасности `Prepare` руками звать почти не нужно. Когда ты передаёшь параметры в `db.Query`/`db.Exec`, драйвер **сам** под капотом готовит statement, выполняет и закрывает его. То есть `?`/`$1` уже защищают от инъекций без явного `Prepare`. Явный `Prepare` оправдан только когда **один и тот же** запрос гоняется много раз подряд и хочется переиспользовать скомпилированный statement.
+Параметры передают отдельно от SQL-текста, поэтому **явный `Prepare` не требуется только ради защиты от injection**: `db.QueryContext(ctx, query, args...)` тоже принимает параметры. Не утверждайте, что каждый драйвер всегда сам кэширует/готовит statement или что СУБД непременно строит план ровно один раз: детали зависят от драйвера и базы. Явный statement полезен, когда один запрос многократно выполняется и измерения показывают выгоду; имена таблиц/колонок параметрами не заменяются, их выбирают из allowlist. [Prepared statements](https://go.dev/doc/database/prepared-statements), [`Stmt`](https://pkg.go.dev/database/sql#Stmt).
 
 ## Q25. Транзакции и идиома deferred Rollback?
+
+`BeginTx(ctx, nil)` закрепляет одно соединение за транзакцией. Все связанные запросы выполняйте через `tx`, иначе вызов `db.ExecContext` может попасть на другое соединение и пройти вне транзакции.
 
 ```go
 tx, err := db.BeginTx(ctx, nil)
 if err != nil { return err }
+defer tx.Rollback() // после успешного Commit вернёт ErrTxDone
 
-defer tx.Rollback() // safety net — если уже Commit, Rollback no-op
-
-_, err = tx.Exec("INSERT INTO ...")
-if err != nil { return err }
-
-_, err = tx.Exec("UPDATE ...")
-if err != nil { return err }
-
+if _, err := tx.ExecContext(ctx, "UPDATE accounts SET balance = balance - $1 WHERE id = $2", amount, fromID); err != nil {
+    return err
+}
+if _, err := tx.ExecContext(ctx, "UPDATE accounts SET balance = balance + $1 WHERE id = $2", amount, toID); err != nil {
+    return err
+}
 return tx.Commit()
 ```
 
-Транзакция (`tx`) группирует несколько запросов в одну атомарную единицу: либо применяются все, либо ни один. Важно, что после `Begin` все запросы идут через `tx.Exec`/`tx.Query`, а **не** через `db` — иначе они выполнятся вне транзакции, на другом соединении из пула.
-
-**Идиома `defer tx.Rollback()`** — главное, что здесь спрашивают. Ставим откат в `defer` сразу после `Begin` как страховку: при любом раннем `return` из-за ошибки транзакция гарантированно откатится, и не нужно вызывать `Rollback` вручную в каждой ветке. Это работает, потому что:
-
-- если выполнение дошло до `tx.Commit()` и он прошёл — последующий `Rollback` уже **ничего не делает** (вернёт `ErrTxDone`, который игнорируют);
-- если случилась ошибка и мы вышли раньше — `defer` откатит изменения.
-
-Так одна строка закрывает все пути выхода из функции и устраняет классическую утечку: незакрытую транзакцию, держащую соединение и блокировки в БД.
-
-**Рекомендация:** используй `BeginTx(ctx, ...)`, чтобы транзакция уважала отмену/таймаут контекста, и проверяй ошибку `Commit` — именно в ней всплывают конфликты сериализации и нарушения ограничений.
+`defer Rollback` закрывает ранние выходы; **ошибку `Commit` проверяют** и не считают операцию успешной до него. При отмене контекста `database/sql` откатывает транзакцию; драйверная реакция на отмену отдельного запроса может отличаться. Для денежного перевода дополнительно нужны проверки существования счетов, достаточности средств, уровня изоляции и повторов конфликтующих транзакций — одна идиома их не обеспечивает. [Transactions](https://go.dev/doc/database/execute-transactions).
 
 ## Q26. (!) io.Reader, io.Writer интерфейсы?
 

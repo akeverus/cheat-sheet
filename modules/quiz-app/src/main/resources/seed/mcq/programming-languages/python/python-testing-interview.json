@@ -1,0 +1,425 @@
+{
+  "topic_slug": "python-testing-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что выбрать: pytest или unittest?",
+          "options": [
+            {
+              "text": "`pytest` входит в стандартную библиотеку Python и не требует зависимости; `unittest` устанавливают отдельно для классовых тестов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "unittest — stdlib; pytest — отдельный пакет.",
+                "source_of_confusion": "Привычное использование pytest скрывает его статус зависимости.",
+                "if_it_were_true": "Тогда проект без зависимостей мог бы запускать pytest без установки.",
+                "how_it_should_be": "unittest — stdlib; pytest — отдельный пакет."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`unittest` — стандартный TestCase framework; `pytest` — отдельный runner с функциями, fixtures, параметризацией и подробным обычным assert.",
+              "correct": true,
+              "sections": {
+                "explanation": "Выбор определяется конвенциями проекта и нужными инструментами.",
+                "example": "Pytest запускает многие TestCase, но fixture-инъекция для их методов отличается от pytest-функций.",
+                "when_to_apply": "Используйте при тестировании Python backend-кода с выбранным в проекте runner.",
+                "edge_cases": "Не смешивайте API runner-ов без проверки ограничений интеграции.",
+                "related": "См. соответствующий Q шпаргалки Python testing и документацию pytest/unittest."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`unittest` не поддерживает setup/teardown и assertions; он запускает простые функции без классов и fixtures.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TestCase имеет setUp/tearDown и методы assert*.",
+                "source_of_confusion": "Упрощённый пример unittest путают с отсутствием API.",
+                "if_it_were_true": "Тогда типовые TestCase-тесты были бы невозможны.",
+                "how_it_should_be": "TestCase имеет setUp/tearDown и методы assert*."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`pytest` собирает классы TestCase; обычные функции `test_*` выполняются исключительно стандартным runner-ом unittest, без поддержки pytest.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pytest обычно собирает функции test_* и поддерживает также многие TestCase.",
+                "source_of_confusion": "Способы объявления тестов двух runner-ов поменяны местами.",
+                "if_it_were_true": "Тогда обычная pytest-функция не попадала бы в сборку.",
+                "how_it_should_be": "Pytest обычно собирает функции test_* и поддерживает также многие TestCase."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как fixture и yield управляют ресурсом?",
+          "options": [
+            {
+              "text": "Fixture pytest подставляется по имени; scope задаёт повторное использование, а код после `yield` делает teardown после теста.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ресурсный lifecycle fixture зависит от scope и момента yield.",
+                "example": "Function-scoped fixture создаёт новый client для теста и закрывает его после yield.",
+                "when_to_apply": "Используйте при тестировании Python backend-кода с выбранным в проекте runner.",
+                "edge_cases": "Если setup падает до yield, последующий teardown этой fixture ещё не выполнится.",
+                "related": "См. соответствующий Q шпаргалки Python testing и документацию pytest/unittest."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Fixture pytest выполняется один раз на весь файл независимо от scope; `yield` возвращает список значений как генератор тесту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию scope=function; yield отдаёт одно значение и отделяет setup от teardown.",
+                "source_of_confusion": "Путают генераторный синтаксис с потоком данных теста.",
+                "if_it_were_true": "Тогда тесты по умолчанию делили бы изменяемый fixture-state.",
+                "how_it_should_be": "По умолчанию scope=function; yield отдаёт одно значение и отделяет setup от teardown."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Fixture с `yield` сначала исполняет teardown, затем создаёт ресурс для теста; это гарантирует отсутствие утечек при setup.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Код после yield запускается после теста, но не при ошибке до yield.",
+                "source_of_confusion": "Порядок setup/teardown инвертирован.",
+                "if_it_were_true": "Тогда ресурс закрывался бы до передачи тесту.",
+                "how_it_should_be": "Код после yield запускается после теста, но не при ошибке до yield."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`session` scope создаёт отдельный ресурс для каждого теста; `function` scope делит один объект на весь процесс pytest.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Session scope переиспользуется в сессии; function scope создаёт экземпляр на тест.",
+                "source_of_confusion": "Области видимости scope перепутаны местами.",
+                "if_it_were_true": "Тогда function fixture приводила бы к межтестовому общему состоянию.",
+                "how_it_should_be": "Session scope переиспользуется в сессии; function scope создаёт экземпляр на тест."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как параметризовать граничные случаи в pytest?",
+          "options": [
+            {
+              "text": "`@pytest.mark.parametrize` создаёт отдельный прогон для каждого входа; `pytest.param(..., id=...)` делает граничный случай узнаваемым в отчёте.",
+              "correct": true,
+              "sections": {
+                "explanation": "Отчёт показывает конкретную строку, а не сбой безымянного цикла.",
+                "example": "`empty`, `unicode`, `overflow` можно задать отдельными id для одного контракта.",
+                "when_to_apply": "Используйте при тестировании Python backend-кода с выбранным в проекте runner.",
+                "edge_cases": "Не складывайте несвязанные требования в одну огромную таблицу.",
+                "related": "См. соответствующий Q шпаргалки Python testing и документацию pytest/unittest."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`@pytest.mark.parametrize` запускает функцию один раз со списком входов; отдельные кейсы не видны в отчёте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Декоратор создаёт отдельный прогон для каждого набора параметров.",
+                "source_of_confusion": "Табличный ввод путают с циклом внутри теста.",
+                "if_it_were_true": "Тогда сбой одной строки был бы неотделим от остальных.",
+                "how_it_should_be": "Декоратор создаёт отдельный прогон для каждого набора параметров."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Параметризацию применяют к fixtures; функции `test_*` нельзя снабдить несколькими наборами входных данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "parametrize работает и на тестовых функциях.",
+                "source_of_confusion": "Существование параметризованных fixtures воспринимают как единственный путь.",
+                "if_it_were_true": "Тогда обычный декоратор над test-функцией не собирался бы.",
+                "how_it_should_be": "parametrize работает и на тестовых функциях."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`pytest.param(id=...)` меняет результат функции под указанное имя, поэтому expected-value внутри набора больше не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "id влияет на имя/отчёт случая, не на данные и assertions.",
+                "source_of_confusion": "Название аргумента id воспринимают как значение результата.",
+                "if_it_were_true": "Тогда переименование case меняло бы проверяемый контракт.",
+                "how_it_should_be": "id влияет на имя/отчёт случая, не на данные и assertions."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Где patch должен заменить зависимость?",
+          "options": [
+            {
+              "text": "Патчите модуль определения объекта даже после импорта имени в service через `from gateway import send` при загрузке приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Патчить нужно namespace, где код под тестом ищет объект.",
+                "source_of_confusion": "Путают место объявления с местом lookup.",
+                "if_it_were_true": "Тогда патч gateway.send менял бы уже импортированную ссылку service.send.",
+                "how_it_should_be": "Патчить нужно namespace, где код под тестом ищет объект."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Патчите одноимённый атрибут в тестовом модуле; поиск имён в service автоматически перенаправится туда при вызове функции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя надо заменить именно в namespace, используемом SUT.",
+                "source_of_confusion": "Одинаковые имена ошибочно считают общей глобальной переменной.",
+                "if_it_were_true": "Тогда локальный mock влиял бы на импортированный service.",
+                "how_it_should_be": "Имя надо заменить именно в namespace, используемом SUT."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Для `patch` target не важен: autospec найдёт нужную зависимость по сигнатуре и исправит неверный путь автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "autospec проверяет API mock, но не выбирает target patch.",
+                "source_of_confusion": "Спецификацию интерфейса путают с разрешением имён.",
+                "if_it_were_true": "Тогда ошибка target никогда не приводила бы к реальному вызову.",
+                "how_it_should_be": "autospec проверяет API mock, но не выбирает target patch."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Для тестируемого вызова патчите имя в namespace, где код его ищет: после импорта send в service заменяйте `service.send`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Импорт связывает имя в namespace потребителя.",
+                "example": "`patch(\"service.send\", autospec=True)` перехватывает вызов process_order.",
+                "when_to_apply": "Используйте при тестировании Python backend-кода с выбранным в проекте runner.",
+                "edge_cases": "При `import gateway` и вызове `gateway.send` lookup может быть другим — смотрите код SUT.",
+                "related": "См. соответствующий Q шпаргалки Python testing и документацию pytest/unittest."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем отличаются monkeypatch и autospec?",
+          "options": [
+            {
+              "text": "`monkeypatch` проверяет сигнатуру метода, а `autospec` меняет переменные окружения и восстанавливает cwd без дополнительной fixture.",
+              "correct": false,
+              "sections": {
+                "what_actually": "monkeypatch управляет временной подменой; autospec ограничивает API mock.",
+                "source_of_confusion": "Две test-утилиты взаимозаменяют по названию.",
+                "if_it_were_true": "Тогда autospec сам менял бы окружение без patch.",
+                "how_it_should_be": "monkeypatch управляет временной подменой; autospec ограничивает API mock."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`monkeypatch` временно заменяет атрибуты, env или cwd; `autospec` создаёт mock с API и сигнатурой исходного объекта.",
+              "correct": true,
+              "sections": {
+                "explanation": "Первый инструмент отвечает за область подмены, второй — за форму mock-интерфейса.",
+                "example": "`monkeypatch.setenv(\"REGION\", \"test\")`; `patch(..., autospec=True)` проверяет вызовы mock.",
+                "when_to_apply": "Используйте при тестировании Python backend-кода с выбранным в проекте runner.",
+                "edge_cases": "Mock не проверяет реальный HTTP/SQL контракт, для него нужен интеграционный тест.",
+                "related": "См. соответствующий Q шпаргалки Python testing и документацию pytest/unittest."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`autospec=True` проверяет ответы реального HTTP-сервиса, а `monkeypatch` нужен для подмены объектов в базе данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Autospec ограничивает сигнатуру mock; monkeypatch умеет env/attrs и другие локальные подмены.",
+                "source_of_confusion": "Смешаны мокирование и интеграционная проверка.",
+                "if_it_were_true": "Тогда сетевой сбой обнаруживался бы без реального клиента.",
+                "how_it_should_be": "Autospec ограничивает сигнатуру mock; monkeypatch умеет env/attrs и другие локальные подмены."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`monkeypatch` оставляет изменённые env переменные после завершения теста; восстановление нужно писать через fixture с `yield`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "monkeypatch автоматически отменяет свои изменения после теста.",
+                "source_of_confusion": "Обычную ручную подмену путают с pytest fixture.",
+                "if_it_were_true": "Тогда следующий тест наследовал бы REGION из предыдущего.",
+                "how_it_should_be": "monkeypatch автоматически отменяет свои изменения после теста."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать async-код?",
+          "options": [
+            {
+              "text": "Обычный pytest без плагина сам исполняет `async def test_*` и создаёт event loop для каждого такого теста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для async тестов pytest нужен плагин вроде pytest-asyncio; stdlib даёт IsolatedAsyncioTestCase.",
+                "source_of_confusion": "Поддержку async syntax путают с runner-ом.",
+                "if_it_were_true": "Тогда marker/plugin не требовался бы для pytest async-тестов.",
+                "how_it_should_be": "Для async тестов pytest нужен плагин вроде pytest-asyncio; stdlib даёт IsolatedAsyncioTestCase."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`unittest.IsolatedAsyncioTestCase` выполняет все тесты класса в одном общем event loop и не имеет asyncSetUp.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он предоставляет изолированный loop для теста и asyncSetUp/asyncTearDown.",
+                "source_of_confusion": "Классовый TestCase воспринимают как общий lifecycle loop.",
+                "if_it_were_true": "Тогда задачи одного теста могли бы бесконтрольно доживать до другого.",
+                "how_it_should_be": "Он предоставляет изолированный loop для теста и asyncSetUp/asyncTearDown."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`IsolatedAsyncioTestCase` поддерживает async-тесты в stdlib; в pytest используют отдельный плагин, например pytest-asyncio, и его markers.",
+              "correct": true,
+              "sections": {
+                "explanation": "Обычный pytest не исполняет coroutine test без async runner-поддержки.",
+                "example": "Проверка async результата включает отмену, cleanup и отсутствие оставленных Task.",
+                "when_to_apply": "Используйте при тестировании Python backend-кода с выбранным в проекте runner.",
+                "edge_cases": "Порядок задач лучше задавать event/barrier, а не длительным sleep.",
+                "related": "См. соответствующий Q шпаргалки Python testing и документацию pytest/unittest."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Отмена Task не требует теста cleanup: `cancel()` немедленно закрывает ресурсы и гарантирует отсутствие фоновых задач.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отмена кооперативна; cleanup должен выполнить код coroutine/клиента.",
+                "source_of_confusion": "Отмену воспринимают как принудительное уничтожение.",
+                "if_it_were_true": "Тогда `finally` внутри coroutine был бы не нужен.",
+                "how_it_should_be": "Отмена кооперативна; cleanup должен выполнить код coroutine/клиента."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как изолировать БД и внешние сервисы?",
+          "options": [
+            {
+              "text": "Mock SQL-драйвера доказывает, что запрос корректен для реальной СУБД и её ограничений; integration test не добавляет ценности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Mock не исполняет SQL в СУБД; совместимость требует интеграционного теста.",
+                "source_of_confusion": "Стабильный unit test принимают за доказательство внешнего контракта.",
+                "if_it_were_true": "Тогда ошибка синтаксиса SQL находилась бы без запуска базы.",
+                "how_it_should_be": "Mock не исполняет SQL в СУБД; совместимость требует интеграционного теста."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Rollback каждого теста полностью воспроизводит поведение после COMMIT и проверяет конкурентные транзакции без отдельного сценария.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rollback может скрыть commit hooks и конкурентное поведение.",
+                "source_of_confusion": "Транзакционную изоляцию тестов путают с проверкой фиксации.",
+                "if_it_were_true": "Тогда событие после COMMIT возникало бы в откатываемом тесте.",
+                "how_it_should_be": "Rollback может скрыть commit hooks и конкурентное поведение."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Unit test подменяет зависимости для локальной логики; integration test с реальной БД проверяет SQL, транзакции, constraints и cleanup.",
+              "correct": true,
+              "sections": {
+                "explanation": "Слои дают разное доказательство и должны иметь независимые данные.",
+                "example": "Фикстура создаёт схему/строки, затем удаляет их; COMMIT сценарий тестируют отдельно.",
+                "when_to_apply": "Используйте при тестировании Python backend-кода с выбранным в проекте runner.",
+                "edge_cases": "Mock внешнего HTTP не заменяет тест формата запроса, статуса и timeout с сервером.",
+                "related": "См. соответствующий Q шпаргалки Python testing и документацию pytest/unittest."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Общий state БД между тестами безопасен, если каждый тест проходит отдельно; порядок запуска и параллельность на результат не влияют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Данные должны изолироваться и очищаться, иначе порядок влияет на тест.",
+                "source_of_confusion": "Локальный одиночный прогон скрывает межтестовую зависимость.",
+                "if_it_were_true": "Тогда параллельный прогон не находил бы flaky тесты.",
+                "how_it_should_be": "Данные должны изолироваться и очищаться, иначе порядок влияет на тест."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

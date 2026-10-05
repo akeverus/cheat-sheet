@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[spring-security]]"
 next: []
-updated: "2026-05-05"
+updated: "2026-10-05"
 ---
 # Вопросы на собеседовании: `Spring Security`
 
@@ -1287,59 +1287,28 @@ class ArticleControllerTest {
 
 ## Q30. Как настроить двухфакторную аутентификацию (2FA)?
 
-2FA добавляет второй фактор поверх пароля — обычно одноразовый код TOTP из приложения-аутентификатора. Встроенного «2FA из коробки» в `Spring Security` нет, поэтому вход разбивают на два шага: первый проверяет логин/пароль и выдаёт **частичную** аутентификацию (полного доступа ещё нет), второй проверяет TOTP-код и только тогда выдаёт полноценный токен. Реализуют это кастомным `AuthenticationProvider` плюс отдельным эндпоинтом проверки кода.
-
-Шаг 1 — проверка пароля, возврат частичной аутентификации:
+**Начиная со Spring Security 7**, MFA поддерживается на уровне авторизации: механизм входа добавляет `FactorGrantedAuthority` для пройденного фактора, а правила доступа могут требовать несколько факторов. Для распространённого сценария «пароль + одноразовый токен (OTT)» можно включить требование сразу для всех правил:
 
 ```java
-@Component
-public class TwoFactorAuthProvider implements AuthenticationProvider {
-
-    private final UserDetailsService userDetailsService;
-    private final PasswordEncoder passwordEncoder;
-    private final TotpService totpService;
-
-    @Override
-    public Authentication authenticate(Authentication auth) {
-        String username = auth.getName();
-        String password = auth.getCredentials().toString();
-        
-        UserDetails user = userDetailsService.loadUserByUsername(username);
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new BadCredentialsException("Invalid password");
-        }
-
-        // Возвращаем частичную аутентификацию — пользователь должен ввести TOTP
-        return new TwoFactorAuthenticationToken(user, user.getAuthorities());
-    }
-
-    @Override
-    public boolean supports(Class<?> auth) {
-        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(auth);
+@EnableMultiFactorAuthentication(authorities = {
+    FactorGrantedAuthority.PASSWORD_AUTHORITY,
+    FactorGrantedAuthority.OTT_AUTHORITY
+})
+@Configuration
+class SecurityConfig {
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+            .formLogin(Customizer.withDefaults())
+            .oneTimeTokenLogin(Customizer.withDefaults());
+        return http.build();
     }
 }
 ```
 
-Шаг 2 — проверка TOTP-кода и выдача полноценного токена:
+Аннотация добавляет к правилам авторизации требование обоих факторов; `formLogin` и `oneTimeTokenLogin` настраивают механизмы, которые могут их предоставить. Для отдельных маршрутов вместо глобального требования используют `AuthorizationManagerFactories.multiFactor()` или `hasAllAuthorities(...)`. **Одна аннотация без механизмов входа не создаёт второй фактор.**
 
-```java
-// Endpoint для проверки TOTP-кода
-@PostMapping("/api/auth/verify-2fa")
-public ResponseEntity<AuthResponse> verify2fa(
-        @RequestBody TotpRequest request,
-        @AuthenticationPrincipal UserDetails user) {
-    
-    if (!totpService.verifyCode(user.getUsername(), request.code())) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
-    
-    // Выдать полноценный JWT после успешной 2FA
-    String token = jwtService.generateToken(user, Duration.ofMinutes(15));
-    return ResponseEntity.ok(new AuthResponse(token));
-}
-```
-
-Сам TOTP не пишут руками — берут библиотеку (`dev.samstevens.totp` или `com.warrenstrange:googleauth`). При подключении 2FA пользователь сканирует QR-код в Google Authenticator, Authy или аналоге; дальше приложение и сервер независимо считают один и тот же код от общего секрета и текущего времени. Дополнительно стоит выдавать backup-коды — на случай потери устройства.
+OTT в Spring Security — одноразовый **токен входа**, а не автоматически TOTP из приложения-аутентификатора. Для TOTP, WebAuthn, выдачи и доставки токенов, восстановления доступа и JWT/API-клиентов нужно отдельно проектировать соответствующие механизмы и жизненный цикл факторов. Старые версии Spring Security не имеют этого API; там MFA собирают из собственных механизмов и правил, не выдавая полный доступ после проверки только пароля. [Документация Spring Security 7](https://docs.spring.io/spring-security/reference/7.0/servlet/authentication/mfa.html).
 
 ## Q31. (!) Как работает `SecurityContext` в async-методах и `@Async`?
 

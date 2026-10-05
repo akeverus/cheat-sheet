@@ -1266,56 +1266,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как работает `database/sql` в Go?",
+          "question_text": "Как выполнять отменяемый запрос и читать Rows в database/sql?",
           "options": [
             {
-              "text": "`QueryRow` возвращает ошибку только в случае отсутствия строк.",
+              "text": "`QueryRowContext` возвращает ошибку при вызове; `Scan` получает значение после запроса даже при отсутствии строки в таблице.",
               "correct": false,
               "sections": {
-                "what_actually": "`QueryRow` возвращает `*Row`, а ошибка (включая `sql.ErrNoRows` и другие DB-ошибки) доступна после `Scan()` — её нужно проверять.",
-                "source_of_confusion": "Кажется, что единственная проблема одиночного запроса — «нет данных».",
-                "if_it_were_true": "Тогда после успешного `Scan` ошибок не было бы вовсе, но возможны и таймауты, и ошибки соединения.",
-                "how_it_should_be": "После `QueryRow(...).Scan(...)` всегда проверяют `err`, отличая `sql.ErrNoRows` от прочих ошибок."
+                "what_actually": "Ошибка QueryRowContext откладывается до Scan; при отсутствии строки Scan возвращает sql.ErrNoRows.",
+                "source_of_confusion": "Название метода создаёт ожидание немедленной ошибки.",
+                "if_it_were_true": "Это меняло бы управление соединением, ошибками или безопасностью запроса в приведённом сценарии.",
+                "how_it_should_be": "Ошибка QueryRowContext откладывается до Scan; при отсутствии строки Scan возвращает sql.ErrNoRows."
               },
-              "label": "A",
-              "order": 0
+              "order": 0,
+              "label": "A"
             },
             {
-              "text": "Параметры запроса нужно экранировать вручную, чтобы предотвратить SQL-инъекции.",
+              "text": "После успешного `QueryContext` достаточно цикла `Rows.Next`; вызов `Rows.Err()` и закрытие Rows не требуются после полного прохода.",
               "correct": false,
               "sections": {
-                "what_actually": "`database/sql` с параметрами (`$1`, `?`) сам защищает от инъекций через prepared statements; ручное экранирование — антипаттерн, а `Sprintf` в запросе открывает дыру.",
-                "source_of_confusion": "Привычка из конкатенации строк в SQL заставляет «подстраховаться» ручным экранированием.",
-                "if_it_were_true": "Тогда параметризованные запросы были бы небезопасны, но они как раз и есть основной механизм защиты.",
-                "how_it_should_be": "Значения всегда передают параметрами плейсхолдеров; строку запроса никогда не собирают через `Sprintf`."
+                "what_actually": "Rows нужно закрывать и проверять Rows.Err после итерации.",
+                "source_of_confusion": "Завершение цикла ошибочно считают доказательством отсутствия ошибок чтения.",
+                "if_it_were_true": "Это меняло бы управление соединением, ошибками или безопасностью запроса в приведённом сценарии.",
+                "how_it_should_be": "Rows нужно закрывать и проверять Rows.Err после итерации."
               },
-              "label": "B",
-              "order": 1
+              "order": 1,
+              "label": "B"
             },
             {
-              "text": "`sql.Open` немедленно устанавливает соединение с базой данных.",
+              "text": "`sql.Open` сразу проверяет доступность БД, а `LastInsertId()` одинаково поддерживается всеми драйверами, включая PostgreSQL.",
               "correct": false,
               "sections": {
-                "what_actually": "`sql.Open` не коннектится — он лишь проверяет регистрацию драйвера; реальное соединение создаётся при первом запросе, а проверить связь можно через `db.PingContext`.",
-                "source_of_confusion": "Слово «Open» наводит на мысль о немедленном открытии TCP-соединения.",
-                "if_it_were_true": "Тогда ошибка подключения возвращалась бы из `Open`, но недоступную БД обнаружит только первый запрос или `Ping`.",
-                "how_it_should_be": "После `Open` для проверки доступности вызывают `db.PingContext(ctx)`; само соединение ленивое."
+                "what_actually": "Open может не подключаться сразу; LastInsertId зависит от драйвера.",
+                "source_of_confusion": "Унифицированный интерфейс принимают за унификацию всех особенностей СУБД.",
+                "if_it_were_true": "Это меняло бы управление соединением, ошибками или безопасностью запроса в приведённом сценарии.",
+                "how_it_should_be": "Open может не подключаться сразу; LastInsertId зависит от драйвера."
               },
-              "label": "C",
-              "order": 2
+              "order": 2,
+              "label": "C"
             },
             {
-              "text": "`database/sql` — абстракция; драйвер (`lib/pq`, `mysql`) импортируют blank-импортом (`_`); `sql.Open` не подключается сразу; `rows.Close()` обязателен, чтобы вернуть соединение в pool.",
+              "text": "`*sql.DB` управляет пулом; запрос получает контекст, `Rows` закрывают и проверяют `Rows.Err()` после цикла чтения.",
               "correct": true,
               "sections": {
-                "explanation": "Пакет даёт единый интерфейс поверх любого SQL-драйвера. `sql.Open` лишь проверяет регистрацию драйвера — реальное соединение возникает при первом запросе. Для healthcheck'а коннективности используют `db.PingContext(ctx)`.",
-                "example": "`db, _ := sql.Open(\"postgres\", dsn); defer db.Close(); rows, _ := db.Query(\"SELECT id, name FROM users\"); defer rows.Close(); for rows.Next() { rows.Scan(&id, &name) }`.",
-                "when_to_apply": "Любая работа с реляционной БД в Go: `QueryRow` для одной строки, `Query` для множества, `Exec` для INSERT/UPDATE; драйвер выбирают под СУБД.",
-                "edge_cases": "`QueryRow` возвращает `*Row`, ошибку (включая `sql.ErrNoRows`) проверяют после `Scan()`. Параметры (`$1`, `?`) сами защищают от SQL-инъекций — ручное экранирование через `Sprintf` запрещено.",
-                "related": "[[go-stdlib-interview#Q23]] connection pool; [[go-stdlib-interview#Q24]] prepared statements; [[go-stdlib-interview#Q25]] транзакции и Rollback."
+                "explanation": "Контекст ограничивает запрос, а ошибки итерации и ресурсный цикл требуют отдельных проверок.",
+                "example": "После `for rows.Next()` проверяют `if err := rows.Err(); err != nil`.",
+                "when_to_apply": "Применяйте при работе с database/sql в backend-сервисе.",
+                "edge_cases": "`QueryRowContext(...).Scan(...)` сообщает sql.ErrNoRows; драйвер может не поддержать LastInsertId.",
+                "related": "См. Go stdlib Q22–Q25 и официальное руководство Go по работе с БД."
               },
-              "label": "D",
-              "order": 3
+              "order": 3,
+              "label": "D"
             }
           ]
         }
@@ -1326,56 +1326,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Connection pool в Go — как устроен в `database/sql`?",
+          "question_text": "Как диагностировать ожидание пула database/sql?",
           "options": [
             {
-              "text": "`SetMaxOpenConns(0)` означает отсутствие соединений — полностью отключённый pool.",
+              "text": "`SetMaxOpenConns(0)` отключает соединения, поэтому все запросы будут ждать, пока администратор включит пул вручную.",
               "correct": false,
               "sections": {
-                "what_actually": "`0` означает unlimited (без лимита); это рискует упереться в `max_connections` Postgres и получить connection refused.",
-                "source_of_confusion": "Ноль интуитивно читается как «ничего», то есть как выключение пула.",
-                "if_it_were_true": "Тогда `SetMaxOpenConns(0)` блокировал бы все запросы, но на деле он снимает ограничение.",
-                "how_it_should_be": "Для безлимита оставляют `0` осознанно; чтобы ограничить — задают конкретное число под `max_connections` БД."
+                "what_actually": "Ноль означает отсутствие ограничения числа открытых соединений.",
+                "source_of_confusion": "Число 0 трактуют как размер пула без учёта API.",
+                "if_it_were_true": "Это меняло бы управление соединением, ошибками или безопасностью запроса в приведённом сценарии.",
+                "how_it_should_be": "Ноль означает отсутствие ограничения числа открытых соединений."
               },
-              "label": "A",
-              "order": 0
+              "order": 0,
+              "label": "A"
             },
             {
-              "text": "`database/sql` имеет встроенный pool; `db` — это handle, а не соединение; незакрытые `Rows` держат соединение и приводят к pool exhaustion. Размер регулируют `SetMaxOpenConns`/`SetMaxIdleConns`.",
+              "text": "`*sql.DB` — общий пул; лимиты и `DB.Stats()` показывают занятые/свободные соединения и время ожидания в динамике.",
               "correct": true,
               "sections": {
-                "explanation": "`db` управляет пулом: соединения автоматически берутся и возвращаются. Лимиты настраивают через `SetMaxOpenConns`, `SetMaxIdleConns`, `SetConnMaxLifetime`. За состоянием пула следят по `db.Stats()`.",
-                "example": "`db.SetMaxOpenConns(25); db.SetMaxIdleConns(5); db.SetConnMaxLifetime(5*time.Minute)` — и обязательный `defer rows.Close()` после каждого `Query`.",
-                "when_to_apply": "Настройку лимитов делают под ожидаемую нагрузку и лимит `max_connections` СУБД; мониторят `db.Stats()`, чтобы ловить нехватку соединений.",
-                "edge_cases": "`SetMaxOpenConns(0)` означает unlimited, а не отключённый pool — без лимита можно упереться в `max_connections` Postgres. `MaxIdleConns` автоматически ограничивается значением `MaxOpenConns`.",
-                "related": "[[go-stdlib-interview#Q22]] как работает database/sql; [[go-stdlib-interview#Q24]] prepared statements; [[go-stdlib-interview#Q25]] транзакции."
+                "explanation": "Рост ожидания при занятых соединениях помогает отличить узкий пул от других задержек.",
+                "example": "Сравнивают рост WaitCount за интервал с InUse и MaxOpenConnections.",
+                "when_to_apply": "Применяйте при работе с database/sql в backend-сервисе.",
+                "edge_cases": "Незакрытые Rows и транзакции могут удержать соединения; один снимок счётчика недостаточен.",
+                "related": "См. Go stdlib Q22–Q25 и официальное руководство Go по работе с БД."
               },
-              "label": "B",
-              "order": 1
+              "order": 1,
+              "label": "B"
             },
             {
-              "text": "`SetMaxIdleConns` больше `SetMaxOpenConns` — допустимая и осмысленная настройка.",
+              "text": "`SetMaxIdleConns` выше `SetMaxOpenConns` гарантирует дополнительный резерв подключений поверх открытого лимита для пиков нагрузки.",
               "correct": false,
               "sections": {
-                "what_actually": "`MaxIdleConns` автоматически ограничивается значением `MaxOpenConns`; задавать idle > open избыточно (не падает, но эффективный лимит = min из двух).",
-                "source_of_confusion": "Параметры выглядят независимыми, и кажется, что idle можно задать выше open.",
-                "if_it_were_true": "Тогда реально удерживалось бы больше idle-соединений, чем открытых, что физически невозможно.",
-                "how_it_should_be": "`MaxIdleConns` держат не больше `MaxOpenConns`; лишнее значение просто игнорируется."
+                "what_actually": "Idle-предел не создаёт соединения сверх MaxOpenConns.",
+                "source_of_confusion": "Два параметра трактуют как независимые пулы.",
+                "if_it_were_true": "Это меняло бы управление соединением, ошибками или безопасностью запроса в приведённом сценарии.",
+                "how_it_should_be": "Idle-предел не создаёт соединения сверх MaxOpenConns."
               },
-              "label": "C",
-              "order": 2
+              "order": 2,
+              "label": "C"
             },
             {
-              "text": "Каждый вызов `db.Query` создаёт новое соединение; pool используется только для транзакций.",
+              "text": "Каждый `db.QueryContext` создаёт новое соединение; `DB.Stats()` отражает лишь транзакции и не показывает ожидание пула.",
               "correct": false,
               "sections": {
-                "what_actually": "Pool обслуживает все операции — `Query`, `Exec`, `QueryRow`, а не только транзакции; иначе каждый запрос открывал бы новое TCP-соединение.",
-                "source_of_confusion": "Транзакции явно «держат» соединение, и pool ассоциируют только с ними.",
-                "if_it_were_true": "Тогда обычные SELECT'ы постоянно создавали бы новые соединения и давали огромный overhead.",
-                "how_it_should_be": "Все операции берут соединение из общего пула; транзакция лишь удерживает его на время `tx`."
+                "what_actually": "DB переиспользует соединения и Stats включает счётчики ожидания.",
+                "source_of_confusion": "Handle DB путают с одним запросным соединением.",
+                "if_it_were_true": "Это меняло бы управление соединением, ошибками или безопасностью запроса в приведённом сценарии.",
+                "how_it_should_be": "DB переиспользует соединения и Stats включает счётчики ожидания."
               },
-              "label": "D",
-              "order": 3
+              "order": 3,
+              "label": "D"
             }
           ]
         }
@@ -1386,56 +1386,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Prepared statements в Go — зачем нужны и когда явный `Prepare`?",
+          "question_text": "Когда в Go нужен явный PrepareContext?",
           "options": [
             {
-              "text": "Prepared statement компилируется один раз и выполняется многократно; `db.Query`/`db.Exec` с параметрами используют их внутренне автоматически, поэтому явный `Prepare` нужен лишь для часто повторяемых hot-запросов.",
+              "text": "`PrepareContext` полезен для повторного запроса; параметры `QueryContext` уже отделены от SQL, а DB-Statement работает с пулом соединений.",
               "correct": true,
               "sections": {
-                "explanation": "Преимущества — защита от SQL-инъекций, однократная компиляция запроса и скорость для повторов. Для не повторяющихся запросов хватает `db.Query` с параметрами; явный `stmt` оправдан, когда один и тот же запрос гоняют в цикле.",
-                "example": "`stmt, _ := db.Prepare(\"SELECT name FROM users WHERE id = $1\"); defer stmt.Close(); for _, id := range ids { stmt.QueryRow(id).Scan(&name) }`.",
-                "when_to_apply": "Явный `Prepare` — для горячих повторяемых запросов (цикл по множеству id); для разовых запросов достаточно `db.Query` с параметрами.",
-                "edge_cases": "`stmt.Close()` нужно вызывать явно (через `defer`), иначе prepared statement останется на сервере и накопит resource exhaustion. `database/sql` сам re-prepare'ит statement на другом соединении при необходимости.",
-                "related": "[[go-stdlib-interview#Q22]] базовый database/sql; [[go-stdlib-interview#Q23]] connection pool; [[go-stdlib-interview#Q25]] транзакции."
+                "explanation": "Явный Prepare не обязателен для защиты от injection; поведение подготовки зависит от драйвера и СУБД.",
+                "example": "`stmt, err := db.PrepareContext(ctx, query)` с `defer stmt.Close()` для повторов.",
+                "when_to_apply": "Применяйте при работе с database/sql в backend-сервисе.",
+                "edge_cases": "Statement на Tx/Conn привязан к их соединению; имена таблиц параметром не передаются.",
+                "related": "См. Go stdlib Q22–Q25 и официальное руководство Go по работе с БД."
               },
-              "label": "A",
-              "order": 0
+              "order": 0,
+              "label": "A"
             },
             {
-              "text": "Prepared statements несовместимы с connection pool: `stmt` привязан к конкретному соединению.",
+              "text": "Явный `PrepareContext` нужен против SQL injection: обычный `QueryContext(ctx, sql, args...)` вставляет значения в SQL строковой конкатенацией.",
               "correct": false,
               "sections": {
-                "what_actually": "`database/sql` прозрачно re-prepare'ит statement на другом соединении при необходимости — привязка к одному коннекту не нужна.",
-                "source_of_confusion": "На уровне протокола БД statement действительно живёт на соединении, и это переносят на абстракцию Go.",
-                "if_it_were_true": "Тогда `stmt` нельзя было бы использовать в многопоточном сервисе с пулом, но он работает прозрачно.",
-                "how_it_should_be": "Управление привязкой берёт на себя `database/sql`; разработчику достаточно держать один `*sql.Stmt`."
+                "what_actually": "QueryContext передаёт параметры отдельно; не составляйте SQL из пользовательского ввода.",
+                "source_of_confusion": "Плейсхолдеры ошибочно считают привилегией Prepare.",
+                "if_it_were_true": "Это меняло бы управление соединением, ошибками или безопасностью запроса в приведённом сценарии.",
+                "how_it_should_be": "QueryContext передаёт параметры отдельно; не составляйте SQL из пользовательского ввода."
               },
-              "label": "B",
-              "order": 1
+              "order": 1,
+              "label": "B"
             },
             {
-              "text": "`stmt.QueryRow` автоматически освобождает statement после выполнения.",
+              "text": "Statement, подготовленный через `db.PrepareContext`, навсегда привязан к одному соединению и не работает с пулом после его закрытия.",
               "correct": false,
               "sections": {
-                "what_actually": "`stmt.Close()` вызывают явно (через `defer`); без него prepared statement остаётся на сервере, и многие незакрытые `stmt` дают server-side resource exhaustion.",
-                "source_of_confusion": "Кажется, что после выполнения запроса связанный ресурс освобождается сам.",
-                "if_it_were_true": "Тогда `defer stmt.Close()` был бы не нужен, но без него серверные ресурсы утекают.",
-                "how_it_should_be": "Сразу после `Prepare` ставят `defer stmt.Close()`, чтобы освободить statement на сервере."
+                "what_actually": "DB-Statement пригоден для пула и подготавливается на новых underlying connections при необходимости.",
+                "source_of_confusion": "Правило для Tx/Conn-Statement переносят на DB-Statement.",
+                "if_it_were_true": "Это меняло бы управление соединением, ошибками или безопасностью запроса в приведённом сценарии.",
+                "how_it_should_be": "DB-Statement пригоден для пула и подготавливается на новых underlying connections при необходимости."
               },
-              "label": "C",
-              "order": 2
+              "order": 2,
+              "label": "C"
             },
             {
-              "text": "Явный `Prepare` обязателен для защиты от SQL-инъекций.",
+              "text": "Любой драйвер `database/sql` гарантирует один план на всё время жизни Statement и автоматический cache каждого вызова QueryContext.",
               "correct": false,
               "sections": {
-                "what_actually": "`db.Query($1, param)` уже использует prepared statements внутренне, и явный `Prepare` для защиты не нужен — он лишь добавит лишний round-trip к БД.",
-                "source_of_confusion": "Связь «prepared statement = безопасность» переносят на обязательность ручного `Prepare`.",
-                "if_it_were_true": "Тогда параметризованный `db.Query` без `Prepare` был бы уязвим, но он защищён точно так же.",
-                "how_it_should_be": "От инъекций защищают параметры плейсхолдеров; явный `Prepare` — это оптимизация, а не требование безопасности."
+                "what_actually": "Оптимизации подготовки и планирования зависят от драйвера и базы.",
+                "source_of_confusion": "API `database/sql` ошибочно принимают за контракт планировщика СУБД.",
+                "if_it_were_true": "Это меняло бы управление соединением, ошибками или безопасностью запроса в приведённом сценарии.",
+                "how_it_should_be": "Оптимизации подготовки и планирования зависят от драйвера и базы."
               },
-              "label": "D",
-              "order": 3
+              "order": 3,
+              "label": "D"
             }
           ]
         }
@@ -1446,56 +1446,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Транзакции и deferred Rollback в `database/sql` — какая идиома?",
+          "question_text": "Как завершать транзакцию database/sql и передавать context?",
           "options": [
             {
-              "text": "`db.Exec` внутри транзакции автоматически откатится при panic.",
+              "text": "После `BeginTx` следует вызывать `db.ExecContext`, чтобы запросы унаследовали транзакцию через переданный context.",
               "correct": false,
               "sections": {
-                "what_actually": "Go runtime не откатывает транзакции при panic; откат сделает `defer tx.Rollback()`, если defer успеет выполниться, либо `recover` в defer.",
-                "source_of_confusion": "Хочется верить, что panic «безопасно» отменит незавершённую работу с БД.",
-                "if_it_were_true": "Тогда о Rollback при panic можно было бы не думать, но без defer/recover транзакция останется открытой.",
-                "how_it_should_be": "Надёжность при panic дают `defer tx.Rollback()` и при необходимости `recover` в этом же defer."
+                "what_actually": "Запросы транзакции вызывают через tx; context сам не переносит её на db.ExecContext.",
+                "source_of_confusion": "Контекст запроса путают с объектом транзакции.",
+                "if_it_were_true": "Это меняло бы управление соединением, ошибками или безопасностью запроса в приведённом сценарии.",
+                "how_it_should_be": "Запросы транзакции вызывают через tx; context сам не переносит её на db.ExecContext."
               },
-              "label": "A",
-              "order": 0
+              "order": 0,
+              "label": "A"
             },
             {
-              "text": "`BeginTx(ctx, nil)` по умолчанию создаёт read-only транзакцию.",
+              "text": "`defer tx.Rollback()` запрещён: после успешного `Commit` он повторно откатит изменения уже зафиксированной транзакции.",
               "correct": false,
               "sections": {
-                "what_actually": "`nil` options = дефолт (read-write, уровень изоляции по умолчанию БД); для read-only передают `&sql.TxOptions{ReadOnly: true}`.",
-                "source_of_confusion": "`nil` воспринимают как «минимальные права», то есть как read-only.",
-                "if_it_were_true": "Тогда `tx.Exec(\"INSERT ...\")` падал бы по умолчанию, но он спокойно выполняет запись.",
-                "how_it_should_be": "Read-only режим включают явно через `TxOptions{ReadOnly: true}`; `nil` означает обычную read-write транзакцию."
+                "what_actually": "После Commit Rollback возвращает ErrTxDone и не откатывает зафиксированные изменения.",
+                "source_of_confusion": "Откат понимают как повторное действие над завершённой транзакцией.",
+                "if_it_were_true": "Это меняло бы управление соединением, ошибками или безопасностью запроса в приведённом сценарии.",
+                "how_it_should_be": "После Commit Rollback возвращает ErrTxDone и не откатывает зафиксированные изменения."
               },
-              "label": "B",
-              "order": 1
+              "order": 1,
+              "label": "B"
             },
             {
-              "text": "`tx.Rollback()` после успешного `Commit` вызывает ошибку, ломающую программу.",
+              "text": "Ошибку `Commit` можно пропустить, если оба `ExecContext` прошли: фиксация в таком случае гарантированно успешна.",
               "correct": false,
               "sections": {
-                "what_actually": "`Rollback` после `Commit` — no-op, он возвращает `sql.ErrTxDone`; именно поэтому идиома `defer tx.Rollback()` безопасна.",
-                "source_of_confusion": "Кажется логичным, что откат уже завершённой транзакции должен быть ошибкой.",
-                "if_it_were_true": "Тогда `defer tx.Rollback()` требовал бы флага `if !committed`, но дизайн API делает это излишним.",
-                "how_it_should_be": "Паттерн `defer tx.Rollback()` ставят сразу после `Begin`; на успешном пути откат тихо ничего не делает."
+                "what_actually": "Ошибку Commit нужно проверять, а результат не считать успешным до фиксации.",
+                "source_of_confusion": "Успех отдельных запросов путают с успехом всей транзакции.",
+                "if_it_were_true": "Это меняло бы управление соединением, ошибками или безопасностью запроса в приведённом сценарии.",
+                "how_it_should_be": "Ошибку Commit нужно проверять, а результат не считать успешным до фиксации."
               },
-              "label": "C",
-              "order": 2
+              "order": 2,
+              "label": "C"
             },
             {
-              "text": "Идиома: `defer tx.Rollback()` сразу после `Begin`. Если `Commit` выполнен, `Rollback` становится no-op; если из функции случился ранний return из-за ошибки — `Rollback` откатит транзакцию.",
+              "text": "После `BeginTx` выполняйте запросы через `tx`, поставьте отложенный `Rollback` и обязательно проверьте ошибку `Commit`.",
               "correct": true,
               "sections": {
-                "explanation": "`Rollback` после успешного `Commit` возвращает `sql.ErrTxDone` и ничего не ломает — это и делает паттерн с `defer` безопасным. В конце явно вызывают `tx.Commit()`; при любой ошибке по пути сработает отложенный откат.",
-                "example": "`tx, _ := db.BeginTx(ctx, nil); defer tx.Rollback(); if _, err := tx.Exec(...); err != nil { return err }; return tx.Commit()`.",
-                "when_to_apply": "Любая многошаговая транзакция: `BeginTx` с context для таймаута, `defer Rollback` как safety net, явный `Commit` в конце успешного пути.",
-                "edge_cases": "`BeginTx(ctx, nil)` создаёт read-write транзакцию с дефолтным уровнем изоляции БД; для read-only нужен `&sql.TxOptions{ReadOnly: true}`. При panic Go сам транзакцию не откатывает — для надёжности нужен `recover` в defer.",
-                "related": "[[go-stdlib-interview#Q22]] database/sql; [[go-stdlib-interview#Q23]] connection pool; [[go-stdlib-interview#Q18]] errors.Is для sql.ErrTxDone."
+                "explanation": "Tx закрепляет соединение и завершает его Commit/Rollback; defer страхует ранний выход.",
+                "example": "При ошибке второго Exec функция возвращает ошибку, после чего defer откатывает первый.",
+                "when_to_apply": "Применяйте при работе с database/sql в backend-сервисе.",
+                "edge_cases": "После успешного Commit отложенный Rollback вернёт ErrTxDone; бизнес-инварианты требуют отдельных проверок.",
+                "related": "См. Go stdlib Q22–Q25 и официальное руководство Go по работе с БД."
               },
-              "label": "D",
-              "order": 3
+              "order": 3,
+              "label": "D"
             }
           ]
         }
