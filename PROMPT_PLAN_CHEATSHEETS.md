@@ -23,10 +23,11 @@
 
 ## Текущий проверенный срез на 05.10.2026
 
-В каталоге 325 тематических Markdown-файлов и 9 865 заголовков Q в 25
-разделах; 324 файла имеют парный production MCQ JSON. Шесть новых тем
+В каталоге 328 тематических Markdown-файлов и 9 879 заголовков Q в 25
+разделах; 327 файлов имеют парный production MCQ JSON. Девять новых тем
 в текущем этапе: Python core, Python concurrency, Python testing, FastAPI,
-MySQL и JDBC/пулы. Навигация и инвентарь обновлены. Go database/sql углублён в
+MySQL, JDBC/пулы, Java 26–27, Python typing и Python packaging.
+Навигация и инвентарь обновлены. Go database/sql углублён в
 go-stdlib-interview.md Q22–Q25: отдельный Go DB файл отвергнут из-за
 пересечения. Исправлены Go generics Q10/Q15/Q18–Q20, Spring Security Q30,
 OWASP SSRF Q34, Application Security Q13. Сверяй этот срез с текущим деревом
@@ -86,22 +87,34 @@ Go 1.27 в локальном окружении отсутствует.
 В рабочем дереве параллельно появились чужие изменения `agentic-patterns`
 и MCQ runs; сохрани их отдельно.
 
+Группа Java/JDK выполнена тематическими коммитами `99970c22`, `95c046ca`,
+`02c4493d`: новый `java-26-27-interview.md` Q1–Q4; `java-io-nio-interview.md`
+Q41 о HTTP/3; `java-jackson-interview.md` Q32 о Jackson 3 и исправления Q24/Q28.
+Новые/затронутые MCQ синхронизированы. Java 26–27: структура и pre-check PASS.
+Java IO/NIO и Jackson: структура PASS, parity всего старого файла FAIL;
+локально изменённые Q проверены автором, blind review нет. На машине JDK 22,
+поэтому примеры 26/27 не запускались. Источники и точные версии — в плане.
+
+Группа Python typing/packaging выполнена коммитом `12411235`: две новые пары
+по четыре Q и MCQ. Сверены с Python typing spec, PyPA packaging specs и pip
+Repeatable Installs. Обе пары прошли структуру и полный pre-check; код Python
+исполнен на 3.14.4, TOML разобран `tomllib`. Независимой blind-приёмки MCQ
+нет. Ни один старый Python-файл не проходил полного аудита `П`.
+
 ## Точная точка продолжения
 
-Начни с Java 26–27: заголовки
-`programming-languages/java/java-22-25-interview.md` Q8/Q14/Q22 уже
-просмотрены (`З`), JDK 27 release notes открыты (preview structured
-concurrency, default compact headers, JFR redaction, default G1 во всех
-окружениях), но ответы не проверены. Прочитай соседние ответы, JDK 26
-release notes и первичные JEP (`О`), затем проверь пересечения. Новый
-файл допустим при нескольких самостоятельных backend-сценариях;
-иначе углуби существующий Q и парный MCQ. Не объявляй старый файл целиком
-проверенным (`П`). Затем HTTP/3, Jackson 3. Python
-typing/packaging остаются кандидатами. Django/Flask пока низкий приоритет.
-RabbitMQ/Kafka/Hibernate этого пакета требуют независимого blind review MCQ;
-старый parity backlog Hibernate и Spring Data JPA не считать закрытым.
-Spring Data JDBC Q17
-тоже ждёт содержательной приёмки.
+Начни с P2-кандидата `system-design/design-unique-id-generator-interview.md`
+из раздела `system-design-notes` в плане. Прочитай целиком
+`system-design-interview.md` Q7 и `design-url-shortener-interview.md` Q19;
+проверь заголовки и релевантные ответы про sequence/UUID в `databases/`.
+Сверь факты с RFC 9562, документацией PostgreSQL sequence/identity и
+первичным описанием выбранной Snowflake-подобной реализации. Отдели выбор
+генератора от Base62 для URL. Создай отдельную тему только при трёх
+самостоятельных сценариях, иначе углуби существующий Q и парный MCQ.
+После этого проверь P2 notification system и остальные кандидаты блока.
+RabbitMQ/Kafka/Hibernate, новые Java и Python Q требуют независимого blind
+review MCQ; старый parity backlog Hibernate, Spring Data JPA, Java IO/NIO и
+Jackson открыт. Spring Data JDBC Q17 тоже ждёт содержательной приёмки.
 
 ## Как работать с каждой группой
 
