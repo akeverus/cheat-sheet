@@ -15,13 +15,13 @@ aliases:
 prerequisites:
   - "[[hibernate-jpql-criteria]]"
 next: []
-updated: 2026-05-31
+updated: 2026-10-05
 ---
 # Вопросы на собеседовании: JPQL и Criteria API в Hibernate
 
 `JPQL` и `Criteria API` — два основных способа запросов в JPA/Hibernate. JPQL — текстовый DSL подобный SQL, Criteria API — type-safe программный API. Важная тема для middle/senior Java-разработчиков.
 
-Дата последнего обновления: 2026-04-20
+Дата последнего обновления: 2026-10-05
 
 ## Полезные ссылки
 
@@ -29,6 +29,7 @@ updated: 2026-05-31
 
 - [Hibernate JPQL Docs](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#hql) — JPQL/HQL документация
 - [Hibernate Criteria API](https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#criteria) — Criteria API
+- [Hibernate 7.1: `@Find`](https://docs.hibernate.org/orm/7.1/javadocs/org/hibernate/annotations/processing/Find.html) — генерация finder-методов
 - [Baeldung: JPA Criteria](https://www.baeldung.com/hibernate-criteria-queries) — практическое введение
 
 ## Содержание
@@ -204,18 +205,19 @@ cq.select(user)
   );
 ```
 
-**Генерация metamodel**:
+**Генерация metamodel:** для Hibernate 7.1 подключите `org.hibernate.orm:hibernate-processor` как *annotation processor* (например, через Gradle `annotationProcessor`), с версией, согласованной с `hibernate-core`. Прежний артефакт `hibernate-jpamodelgen` встречается в старых руководствах. Процессор при сборке создаёт `*_.java` классы. Главная выгода — рефакторинг становится безопасным: переименовали или удалили поле `User.email` → исчезает `User_.email` → код, где использовалось старое имя, перестаёт компилироваться. Со строковым `"email"` такая ошибка всплыла бы только в рантайме. [Hibernate 7: compile-time tooling](https://docs.hibernate.org/orm/7.1/introduction/html_single/).
 
-```xml
-<!-- Maven -->
-<dependency>
-    <groupId>org.hibernate.orm</groupId>
-    <artifactId>hibernate-jpamodelgen</artifactId>
-    <scope>provided</scope>
-</dependency>
+**Hibernate-расширение `@Find`:** начиная с Hibernate **6.3** процессор умеет генерировать реализацию finder-метода по сигнатуре интерфейса или абстрактного класса. Это не отдельный язык запросов: для поиска по ID генерируется вызов `EntityManager.find()`, для других полей — Criteria query. Имена **и типы параметров** должны совпадать с постоянными полями entity; имя самого метода условие поиска не определяет.
+
+```java
+interface BookQueries {
+    @Find Book byIsbn(String isbn); // Book.isbn — поле с @Id
+}
+
+Book book = BookQueries_.byIsbn(entityManager, isbn); // сгенерированный метод
 ```
 
-Annotation processor `hibernate-jpamodelgen` при сборке автоматически генерирует `*_.java` классы. Главная выгода — рефакторинг становится безопасным: переименовали или удалили поле `User.email` → исчезает `User_.email` → код, где использовалось старое имя, перестаёт компилироваться. Со строковым `"email"` такая ошибка всплыла бы только в рантайме.
+`@Find` остаётся Hibernate-специфичным и помечен `@Incubating` в 7.1. Его стоит рассматривать там, где проект уже использует Hibernate Processor; для переносимого JPA-кода остаются обычные JPQL/Criteria. [Hibernate `@Find` Javadoc](https://docs.hibernate.org/orm/7.1/javadocs/org/hibernate/annotations/processing/Find.html).
 
 ## Q7. Как делать subqueries?
 

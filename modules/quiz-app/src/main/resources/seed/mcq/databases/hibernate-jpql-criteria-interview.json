@@ -324,12 +324,12 @@
               "order": 1,
               "label": "B",
               "correct": false,
-              "text": "Metamodel генерируется автоматически в любом JPA-проекте без подключения дополнительных зависимостей.",
+              "text": "Metamodel появляется автоматически после объявления entity в любом JPA-проекте; подключать отдельный annotation processor к сборке не требуется.",
               "sections": {
-                "what_actually": "Генерацию static metamodel выполняет отдельный annotation processor — `hibernate-jpamodelgen` (со scope provided). Без этой зависимости классы `User_.java` не создаются.",
+                "what_actually": "Статический JPA metamodel создаёт подключённый annotation processor; для Hibernate 7.1 официальный артефакт — org.hibernate.orm:hibernate-processor.",
                 "source_of_confusion": "Многие фичи JPA работают 'из коробки', поэтому кажется, что и метамодель появляется сама. К тому же IDE иногда подключает процессор неявно, создавая иллюзию автоматизма.",
-                "if_it_were_true": "Если бы метамодель генерировалась всегда, проект без `hibernate-jpamodelgen` всё равно компилировал бы `user.get(User_.email)` — но на деле получите 'cannot find symbol User_'.",
-                "how_it_should_be": "Добавить зависимость hibernate-jpamodelgen (scope provided) и включить обработку аннотаций, чтобы классы метамодели генерировались."
+                "if_it_were_true": "Без процессора компилировалась бы ссылка на User_.email, но сгенерированного класса не будет.",
+                "how_it_should_be": "Подключите Hibernate Processor к сборке и включите обработку аннотаций."
               }
             },
             {
@@ -350,11 +350,66 @@
               "correct": true,
               "text": "Metamodel — это сгенерированные на этапе компиляции классы (User_.java), дающие type-safe доступ к полям entity в Criteria API.",
               "sections": {
-                "explanation": "Аннотационный процессор hibernate-jpamodelgen для каждой entity `User` генерирует абстрактный класс `User_` с аннотацией `@StaticMetamodel(User.class)`. В нём поля entity представлены статическими атрибутами: `SingularAttribute<User, String> email`, `ListAttribute<User, Order> orders` и т.д. Передавая в `user.get(User_.email)` атрибут вместо строки `\"email\"`, вы фиксируете и имя поля, и его тип на этапе компиляции. Это правило: type-safety метамодели работает только пока классы `*_.java` пересобираются вместе с entity. Главная выгода — переименование `User.email` ломает компиляцию во всех местах, где использовался `User_.email`, тогда как строковый литерал молча останется битым до runtime.",
+                "explanation": "Аннотационный процессор Hibernate Processor для каждой entity `User` генерирует абстрактный класс `User_` с аннотацией `@StaticMetamodel(User.class)`. В нём поля entity представлены статическими атрибутами: `SingularAttribute<User, String> email`, `ListAttribute<User, Order> orders` и т.д. Передавая в `user.get(User_.email)` атрибут вместо строки `\"email\"`, вы фиксируете и имя поля, и его тип на этапе компиляции. Это правило: type-safety метамодели работает только пока классы `*_.java` пересобираются вместе с entity. Главная выгода — переименование `User.email` ломает компиляцию во всех местах, где использовался `User_.email`, тогда как строковый литерал молча останется битым до runtime.",
                 "example": "```java\ncq.select(user)\n  .where(\n      cb.equal(user.get(User_.email), \"alice@example.com\"),   // type-safe\n      cb.greaterThan(user.get(User_.age), 18)\n  );\n```\nЗдесь `User_.age` имеет тип `SingularAttribute<User, Integer>`, поэтому `greaterThan` принимает только `Integer`, а опечатка в имени поля не скомпилируется.",
                 "when_to_apply": "Применяйте метамодель во всех Criteria-запросах в production-коде, особенно в крупных кодовых базах, где поля entity активно рефакторятся: команда получает компиляционные гарантии, и переименование поля автоматически подсвечивает все запросы, которые нужно поправить, ещё до запуска тестов.",
-                "edge_cases": "Если забыть подключить annotation processor (или IDE не настроена на запуск apt), классы `User_` не сгенерируются и код перестанет компилироваться целиком — нужно включить обработку аннотаций в настройках сборки и IDE. Также сгенерированные классы должны лежать в каталоге generated-sources и не должны коммититься в VCS как ручные.",
-                "related": "[[hibernate-jpql-criteria-interview#Q5]] — метамодель устраняет строковые литералы в базовом Criteria API\n[[hibernate-jpql-criteria-interview#Q8]] — в Spring Data Specifications метамодель тоже даёт type-safe root.get(...)"
+                "edge_cases": "Если забыть подключить Hibernate Processor (или IDE не настроена на запуск apt), классы `User_` не сгенерируются и код перестанет компилироваться целиком — нужно включить обработку аннотаций в настройках сборки и IDE. Также сгенерированные классы должны лежать в каталоге generated-sources и не должны коммититься в VCS как ручные.",
+                "related": "[[hibernate-jpql-criteria-interview#Q5]] — метамодель устраняет строковые литералы в базовом Criteria API\n[[hibernate-jpql-criteria-interview#Q8]] — в Spring Data Specifications метамодель тоже даёт type-safe root.get(...)\nHibernate @Find (с версии 6.3, incubating) тоже генерируется процессором, но это Hibernate-расширение, а не часть JPA metamodel."
+              }
+            }
+          ]
+        },
+        {
+          "block_idx": 1,
+          "question_text": "Как Hibernate Processor использует @Find для генерации finder-метода?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Процессор выводит условие поиска из имени метода, а параметры могут называться иначе, чем соответствующие поля entity.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя метода произвольное; имена и типы параметров должны совпадать с постоянными полями entity.",
+                "source_of_confusion": "@Find путают с derived methods Spring Data JPA.",
+                "if_it_were_true": "Переименование метода меняло бы запрос, а имя параметра не имело бы значения.",
+                "how_it_should_be": "Сопоставляйте параметры с полями entity, а не разбирайте имя метода."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Аннотация запускает поиск через reflection во время каждого вызова, поэтому annotation processor и генерируемый класс для неё не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реализацию finder создаёт Hibernate Processor при компиляции; без него @Find не даёт метода.",
+                "source_of_confusion": "Поведение ORM в runtime переносят на инструмент генерации кода.",
+                "if_it_were_true": "Метод работал бы без подключения процессора и без generated sources.",
+                "how_it_should_be": "Подключайте Hibernate Processor к сборке и вызывайте сгенерированный метод."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Hibernate Processor при сборке генерирует finder по именам и типам параметров, совпадающим с полями entity; имя метода не кодирует запрос.",
+              "correct": true,
+              "sections": {
+                "explanation": "@Find помечает метод интерфейса или абстрактного класса; процессор создаёт реализацию по полям entity, соответствующим параметрам.",
+                "example": "@Find Book byIsbn(String isbn) превращается в сгенерированный BookQueries_.byIsbn(entityManager, isbn), если isbn — поле Book.",
+                "when_to_apply": "Для простых типизированных finder-методов в проекте с Hibernate Processor.",
+                "edge_cases": "По @Id применяется EntityManager.find, по обычным полям — Criteria; @Find существует с 6.3 и остаётся incubating в 7.1.",
+                "related": "В отличие от Spring Data derived methods, имя метода не определяет predicate; это Hibernate-расширение, не стандарт JPA."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "@Find требует строковый JPQL в аргументе аннотации; без готового текста запроса процессор не может создать реализацию метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "@Find не принимает строку запроса: она выводится из сигнатуры; строковые запросы относятся к @HQL или @SQL.",
+                "source_of_confusion": "Рядом с @Find есть аннотации @HQL и @SQL.",
+                "if_it_were_true": "Аннотация не отличалась бы от задания статичного текстового запроса.",
+                "how_it_should_be": "Задавайте имена и типы полей через параметры метода."
               }
             }
           ]
