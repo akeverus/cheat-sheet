@@ -1102,15 +1102,37 @@ hard/warnings, Hibernate full parity PASS; JPA full parity FAIL из-за
 Полной проверки файлов (`П`) и независимой blind-приёмки нет. Коммит
 `adba6f9eb`.
 
-**Точная точка авторского продолжения:** Spring Data JPA Q30 B0 о soft
-delete. Сначала сравнить заголовки и точечные ответы других файлов по
-`@SoftDelete`/`@SQLRestriction`/`@Where` и соответствующие MCQ.
-По официальным Hibernate 7.4 и Spring Data JPA 4.1 проверить, что
-`@SQLRestriction` фильтрует чтение, но сам по себе не меняет семантику
-`remove`; где подходит встроенный `@SoftDelete`; как native SQL и JPQL
-bulk UPDATE взаимодействуют с фильтром, persistence context и
-транзакцией. Затем исправить Q30/MCQ/sidecar лишь по подтверждённым
-пробелам, не объявляя полный JPA-файл проверенным.
+**Контрольная точка 07.10.2026 — Spring Data JPA Q30 B0, soft delete · О.**
+Просмотр заголовков (`З`) показал, что отдельная тема не нужна: ближайший
+существующий вопрос — JPA Q30; Q8/Q33/Q39 покрывают смежные `@Modifying`,
+derived delete и bulk/auditing. Точечная проверка ответа (`О`) по
+[Hibernate ORM 7.4, soft delete](https://docs.hibernate.org/orm/7.4/userguide/html_single/#soft-delete),
+[`@SoftDelete` Javadoc](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/annotations/SoftDelete.html),
+[`@SQLRestriction` Javadoc](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/annotations/SQLRestriction.html),
+[Spring Data JPA, transactions](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html),
+[modifying queries](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html)
+и [PostgreSQL, partial indexes](https://www.postgresql.org/docs/current/indexes-partial.html)
+подтвердила: `@SQLRestriction` с 6.3 задаёт статическое ограничение, но
+не превращает `remove()` в `UPDATE`; `@SoftDelete` с 6.4 управляет
+удалением и обычной загрузкой, `TIMESTAMP` проверена для 7.4. Native
+SQL требует явного предиката; объявленный `@Modifying @Query` требует
+транзакционной границы, bulk UPDATE может оставить устаревшие сущности
+в контексте. Исправлены теория, четыре MCQ-варианта и sections, а
+также freshness-sidecar; отдельный файл и новый Q не создавались.
+Structure 43 Q/44 блока PASS, локальный Q30 без hard/warnings.
+Полный JPA parity по-прежнему FAIL из-за старых блоков, полной проверки
+файла (`П`) и независимой blind-приёмки Q30 нет. Коммит `24942dd8e`.
+Гипотеза о поведении
+произвольных bulk DELETE при soft-delete-маппинге оставлена за рамками
+без отдельной проверки конкретной версии/запроса.
+
+**Точная точка авторского продолжения:** Spring Data JPA Q31 B0,
+Hibernate Filters. Сверить заголовки и точечно прочитать Hibernate
+шпаргалку о `@Filter`, `@SQLRestriction` и multi-tenancy, затем проверить
+Q31 и MCQ по Hibernate ORM 7.4: включение в Session, параметры,
+ограничения для загрузки по ID и граница безопасности арендаторов.
+Исправить лишь подтверждённые пробелы, выполнить локальные проверки и
+обновить sidecar/план. Полный JPA-аудит (`П`) отдельно.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
 

@@ -409,14 +409,24 @@ parity PASS, Spring Data JPA full parity FAIL из-за старых блоко�
 full parity FAIL из-за старых блоков. Полного аудита и blind-приёмки
 нет. Коммит `adba6f9eb`.
 
-Следующий авторский пакет: Spring Data JPA Q30 B0 о soft delete.
-Сначала сравнить существующие заголовки/ответы/MCQ по `@SoftDelete`,
-`@SQLRestriction`, `@Where`. По Hibernate 7.4 и Spring Data JPA 4.1
-проверить границу read-filter и фактического удаления, native SQL,
-JPQL bulk UPDATE, persistence context и транзакцию. Исправить
-подтверждённое в Q30, парном MCQ и sidecar, затем локальные и файловые
-проверки. Полный аудит старого JPA-файла и независимую приёмку вести
-отдельно.
+07.10 Spring Data JPA Q30 B0 о soft delete: по Hibernate ORM 7.4,
+`@SoftDelete`/`@SQLRestriction` Javadoc, Spring Data JPA transactions/
+modifying queries и PostgreSQL partial indexes исправлены смешение
+read-filter с операцией удаления, версия `@SQLRestriction` (6.3),
+пропущенный встроенный `@SoftDelete` (с 6.4), пример времени удаления
+для 7.4, границы native SQL, bulk UPDATE и транзакции. Теория, MCQ и
+freshness-sidecar синхронизированы. Structure PASS (43 Q/44 блока),
+локальный Q30 без hard/warnings; полный JPA parity FAIL на прежних
+блоках. Полного содержательного аудита файла и независимого blind
+review Q30 нет. Коммит `24942dd8e`.
+
+Следующий авторский пакет: Spring Data JPA Q31 B0 о Hibernate Filters.
+Сравнить заголовки и точечные ответы Hibernate-шпаргалки о `@Filter`,
+`@SQLRestriction` и multi-tenancy. По официальному Hibernate ORM 7.4
+проверить включение в Session, параметры, загрузку по ID и границу
+безопасности арендаторов. Подтверждённые правки синхронизировать в Q31,
+парном MCQ и sidecar; затем локальные и файловые проверки. Полный аудит
+старого JPA-файла и независимую приёмку вести отдельно.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,
