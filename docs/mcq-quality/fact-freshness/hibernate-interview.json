@@ -1,14 +1,19 @@
 {
   "topic_slug": "hibernate-interview",
   "round": 10,
-  "status": "AUDITED",
+  "status": "TODO",
   "version_sensitive": true,
-  "product_version": "Hibernate ORM 7.4 / 8.0 (актуальные ветки на 2026-08; Jakarta Persistence, org.hibernate.*)",
-  "checked_date": "2026-08-28",
+  "product_version": "Hibernate ORM 7.4 / 8.0 (Q8 проверен по 7.4; Jakarta Persistence 3.2)",
+  "checked_date": "2026-10-07",
   "sources": [
     "context7 /hibernate/hibernate-orm (High reputation, 4549 snippets) — проверка актуальной ветки",
     "context7 /websites/hibernate_orm_8_0 — Hibernate ORM 8.0 (текущая мажорная)",
-    "context7 /websites/hibernate_orm_7_4 — Hibernate ORM 7.4 (предыдущая стабильная)"
+    "context7 /websites/hibernate_orm_7_4 — Hibernate ORM 7.4 (предыдущая стабильная)",
+    "https://docs.hibernate.org/orm/7.4/userguide/html_single/",
+    "https://docs.hibernate.org/orm/7.0/migration-guide/",
+    "https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/Session.html",
+    "https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/Session.html",
+    "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/flushmodetype"
   ],
   "version_sensitive_claims": [
     "Hibernate 6+ определяет Dialect автоматически по URL подключения — явное указание обычно не требуется (тело Q42).",
@@ -16,15 +21,18 @@
     "Hibernate 6+ даёт @Struct для маппинга @Embeddable на структурный тип БД (тело Q50).",
     "org.hibernate.Criteria устарел с Hibernate 5.2 в пользу стандартного JPA Criteria API (тело Q29).",
     "JPA переименован в Jakarta Persistence (пакет jakarta.persistence.*, ранее javax.persistence) — тело Q1.",
-    "GenerationType.IDENTITY несовместим с batch insert; для пакетов берут SEQUENCE (тело Q36) — стабильно."
+    "GenerationType.IDENTITY несовместим с batch insert; для пакетов берут SEQUENCE (тело Q36) — стабильно.",
+    "Q8: Hibernate ORM 7.4 AUTO flush'ит перед пересекающимся JPQL/HQL, native SQL без registered synchronization и commit, а не перед каждым SELECT. COMMIT может flush'ить раньше commit. JPA 3.2 определяет только AUTO/COMMIT; MANUAL специфичен Hibernate. Для dirty checking обычный diff-based snapshot и bytecode-enhanced in-line tracking являются разными механизмами.",
+    "Q9: Hibernate 6.6 Session.save/update были deprecated с 6.0; все формы удалены в Hibernate 7.0. Исторический Session.save возвращал Object (ID), не Serializable по контракту. JPA merge(new/detached) возвращает managed-экземпляр, который при detached может уже существовать в контексте; исходный detached-аргумент не переподключается."
   ],
   "staleness_risks": [
     "Конкретные номера версий (6/7/8) в ТЕЛАХ шпаргалки могут устареть при новых мажорных релизах; фичи (auto-dialect, JSON, @Struct) при этом сохраняются.",
-    "H6-фичи проверены как присутствующие в актуальных ветках 7.4/8.0 — не удалялись."
+    "H6-фичи проверены как присутствующие в актуальных ветках 7.4/8.0 — не удалялись.",
+    "Q8/Q9 после исправления требуют новой независимой содержательной MCQ-приёмки; прежний AUDITED относится к старому состоянию файла."
   ],
   "notes": [
     "ROUND-10 LINKAGE-FIRST: MCQ-опции держатся TIMELESS — ни одна опция не утверждает конкретную версию/год/semver.",
     "TEMPORAL_CLAIMS гейта (4 хита) — ложные срабатывания: 'Current' ловится внутри имени метода `getCurrentSession()` (Q41 A/B/C), а 'актуальн' — внутри слова про свежесть данных кэша NONSTRICT_READ_WRITE (Q27B). Оба — часть предмета вопроса, не версионные утверждения.",
-    "Sidecar заполнен для прохождения SOURCE_COVERAGE, т.к. тема реально version-sensitive по ТЕЛАМ (H6+ фичи), проверено context7 2026-08-28."
+    "Sidecar заполнен для прохождения SOURCE_COVERAGE, т.к. тема реально version-sensitive по ТЕЛАМ (H6+ фичи), проверено context7 2026-08-28. Q8/Q9 и парные MCQ точечно перепроверены по официальным Hibernate 6.6/7.0/7.4/Jakarta Persistence 3.2 источникам 2026-10-07; остальные Q в этом раунде не перепроверялись."
   ]
 }

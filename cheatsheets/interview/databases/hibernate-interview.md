@@ -14,7 +14,7 @@ aliases:
   - "Hibernate interview"
 prerequisites: []
 next: []
-updated: "2026-04-25"
+updated: "2026-10-07"
 ---
 # Вопросы на собеседовании: `Hibernate`
 
@@ -379,12 +379,9 @@ session.remove(merged);        // Removed — удалится при flush/comm
 
 **Dirty Checking** — механизм `Hibernate`, который автоматически обнаруживает изменённые (dirty) сущности в persistence context и генерирует `UPDATE` SQL при `flush`. Не требует явного вызова `update()`.
 
-**Как это работает**: при загрузке сущности `Hibernate` сохраняет **snapshot** её начального состояния. При `flush` сравнивает текущие значения полей с snapshot — если есть различия, генерируется `UPDATE`.
+**Как это работает**: в обычном diff-based механизме Hibernate хранит последнее известное состояние сущности и при `flush` сравнивает с текущим. При включённом bytecode enhancement возможен in-line dirty tracking: изменённые атрибуты отмечает сама сущность, а Hibernate запрашивает их при flush. В обоих случаях изменение managed-сущности может привести к `UPDATE` без вызова `update()`. [Hibernate ORM 7.4, in-line dirty tracking](https://docs.hibernate.org/orm/7.4/userguide/html_single/).
 
-**`flush()`** — синхронизация persistence context с БД. Происходит:
-1. Автоматически перед `commit()`
-2. Автоматически перед выполнением `JPQL`/`HQL` запроса (чтобы запрос видел актуальные данные)
-3. Вручную — `session.flush()`
+**`flush()`** — синхронизация persistence context с БД без подтверждения транзакции. При стандартном `AUTO` Hibernate выполняет её перед commit и перед JPQL/HQL-запросом, **если он пересекается с ожидающими изменениями**; нативный SQL без зарегистрированной синхронизации тоже может вызвать flush. Явно вызвать его можно через `session.flush()`.
 
 ```java
 @Transactional
@@ -396,21 +393,23 @@ public void updateUserName(Long id, String newName) {
 }
 ```
 
-**`FlushMode`** — управляет моментом flush:
-- `AUTO` (по умолчанию) — перед запросом и перед commit
-- `COMMIT` — только перед commit (может вернуть устаревшие данные из запроса)
-- `MANUAL` — только при явном вызове `flush()`
+**`FlushMode`** управляет моментом flush:
+- `AUTO` (по умолчанию) — при необходимости для согласованности запроса и перед commit, а не перед каждым SELECT;
+- `COMMIT` — старается отложить flush до commit, но может выполнить его раньше; JPA не определяет видимость ожидающих изменений в промежуточном запросе;
+- `MANUAL` — специфичный для Hibernate режим: только явный `flush()`.
+
+JPA стандартизирует `AUTO` и `COMMIT`, а Hibernate также предлагает `MANUAL` и `ALWAYS`. [Hibernate ORM 7.4, Flushing](https://docs.hibernate.org/orm/7.4/userguide/html_single/); [Jakarta Persistence 3.2, FlushModeType](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/flushmodetype).
 
 ## Q9. В чём разница между `persist()`, `save()`, `merge()` и `update()`?
 
-Коротко: `persist`/`save` — для **новых** (transient) объектов, `merge`/`update` — для **отсоединённых** (detached). `persist` и `merge` — стандарт `JPA`; `save` и `update` — устаревшие методы `Hibernate`, делающие почти то же. Главная ловушка — `merge` не делает переданный объект управляемым, а возвращает **новую** управляемую копию.
+`persist()` и `merge()` — методы JPA, доступные и через Hibernate `Session`. `Session.save()`/`update()` — старый API: в Hibernate 6.6 они были deprecated, а в Hibernate **7.0 удалены**. Не путайте их с `CrudRepository.save()` в Spring Data JPA — у него другая сигнатура и выбор между `persist`/`merge` (см. [Spring Data JPA Q19](../frameworks/spring/spring-data-jpa-interview.md#q19--какие-состояния-имеет-сущность-в-jpa)).
 
-| Метод | Стандарт | Поведение | Возврат |
-|-------|----------|-----------|---------|
-| `persist()` | JPA | Делает transient → persistent. Не гарантирует немедленный `INSERT` | `void` |
-| `save()` | Hibernate | Делает transient → persistent. Возвращает id. Может выполнить `INSERT` сразу | `Serializable` (id) |
-| `merge()` | JPA | Копирует состояние detached объекта в managed копию | Managed entity |
-| `update()` | Hibernate | Переприсоединяет detached объект. Выбрасывает исключение если уже есть в контексте | `void` |
+| Метод | Версия/контракт | Поведение |
+|-------|-----------------|-----------|
+| `persist()` | JPA, Hibernate 6/7 | Делает новый аргумент managed; возвращает `void`. SQL `INSERT` возможен при flush/commit или раньше, например при `IDENTITY`. |
+| `merge()` | JPA, Hibernate 6/7 | Копирует состояние нового или detached аргумента в возвращённый managed-экземпляр; исходный detached аргумент не переподключается. Если аргумент уже managed, возвращается он же. |
+| `Session.save()` | Hibernate 6.6: deprecated с 6.0; Hibernate 7: удалён | Исторический метод для нового объекта; в 6.6 возвращал `Object` (ID). Заменяйте на `persist()`. |
+| `Session.update()` | Hibernate 6.6: deprecated с 6.0; Hibernate 7: удалён | Исторически переподключал detached-аргумент, а при другой managed-сущности с тем же ID бросал исключение. Заменяйте на `merge()` и используйте его результат. |
 
 ```java
 // persist() — JPA стандарт, рекомендуется
@@ -420,11 +419,11 @@ entityManager.persist(user); // user теперь managed
 // merge() — для detached объектов
 User detached = ... ; // получен из другой сессии, десериализации и т.д.
 User managed = entityManager.merge(detached);
-// managed — управляемая копия, detached — по-прежнему detached!
+// managed — возвращённый управляемый экземпляр, detached — по-прежнему detached
 managed.setName("Bob"); // будет синхронизировано с БД
 ```
 
-**Рекомендация**: использовать `JPA`-стандартные `persist()` и `merge()` вместо `Hibernate`-специфичных `save()` и `update()`.
+При `merge(detached)` результат может быть уже существовавшей managed-сущностью того же ID, поэтому слово «новая копия» не всегда верно. На Hibernate 7 используйте `persist()` для нового объекта и `merge()` для передачи состояния detached-объекта. [Hibernate 7.0 Migration Guide](https://docs.hibernate.org/orm/7.0/migration-guide/); [Hibernate 6.6 `Session` API](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/Session.html); [Hibernate 7.4 `Session` API](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/Session.html); [Jakarta Persistence 3.2, merge](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
 
 ## Q10. В чём разница между `get()` и `load()`?
 

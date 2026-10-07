@@ -16,6 +16,8 @@
     "https://docs.spring.io/spring-data/jpa/reference/jpa/specifications.html",
     "https://docs.spring.io/spring-data/jpa/reference/auditing.html",
     "https://docs.spring.io/spring-data/jpa/reference/jpa/entity-persistence.html",
+    "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/flushmodetype",
+    "https://docs.hibernate.org/orm/7.4/userguide/html_single/",
     "https://docs.spring.io/spring-data/jpa/reference/api/java/org/springframework/data/jpa/repository/config/EnableJpaAuditing.html",
     "https://docs.spring.io/spring-security/reference/servlet/authentication/anonymous.html",
     "https://docs.spring.io/spring-security/reference/api/java/org/springframework/security/authentication/AuthenticationTrustResolver.html",
@@ -58,10 +60,11 @@
     "Q18: Spring Data JPA 4.1.1 требует включить инфраструктуру и подключить AuditingEntityListener к сущности либо через orm.xml. Даты не требуют AuditorAware, поля автора требуют соответствующий AuditorAware<T>. У @EnableJpaAuditing по умолчанию modifyOnCreate=true и setDates=true. AuthenticationTrustResolver в Spring Security 7.1.1 исключает анонимный токен из isAuthenticated.",
     "Q19: Jakarta Persistence 3.2 различает new, managed, detached и removed. merge(detached) возвращает managed-экземпляр, который может уже быть в контексте, и не переводит исходный аргумент в managed. Spring Data JPA 4.1.1 выбирает persist/merge через isNew: ссылочный @Version, затем @Id, либо собственный Persistable; назначенный вручную ID без версии может ошибочно направить новый объект в merge. Обязательного SELECT перед каждым merge спецификация не обещает.",
     "Q20: Jakarta Persistence 3.2 допускает callback в сущности или listener через @EntityListeners. @PrePersist вызывается при persist; IDENTITY ID недоступен до INSERT. @PostPersist и @PostRemove следуют за SQL, но не являются подтверждением commit. Для переносимого кода спецификация не рекомендует EntityManager/query/другие сущности и изменение отношений из callback. Spring @TransactionalEventListener по умолчанию AFTER_COMMIT; сам по себе не даёт надёжной доставки, для которой нужны outbox или publication registry.",
+    "Q21: JPA 3.2 AUTO требует видимости влияющих на результат запроса изменений, не обязательного flush перед каждым SELECT. COMMIT не определяет видимость таких изменений до commit, а провайдер вправе flush'ить и раньше. Hibernate ORM 7.4 AUTO flush'ит перед пересекающимся JPQL/HQL и native SQL без registered synchronization; MANUAL специфичен Hibernate. flush/clear управляют размером persistence context, не включают JDBC batching; IDENTITY отключает insert batching.",
     "Q39: фоновый системный автор — политика приложения, а не значение по умолчанию AuditorAware. JPQL bulk update/delete не вызывает lifecycle callbacks управляемых сущностей и не применяет автоматическую проверку @Version; persistence context после bulk может быть несогласован с БД."
   ],
   "staleness_risks": [
-    "07.10.2026 точечно перепроверены Q3 B0, Q4 B1, Q5–Q20 B0 и Q39 B0; остальные Q файла не проходили полный содержательный аудит."
+    "07.10.2026 точечно перепроверены Q3 B0, Q4 B1, Q5–Q21 B0 и Q39 B0; остальные Q файла не проходили полный содержательный аудит."
   ],
   "notes": [
     "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."

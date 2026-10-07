@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Dirty Checking` работает лишь после явного вызова update(), иначе изменения теряются.",
+              "text": "При dirty checking Hibernate требует явного `update` для managed-сущности; иначе изменения при `flush` не сохранятся.",
               "correct": false,
               "sections": {
                 "what_actually": "Dirty checking сам находит изменения и генерит UPDATE при flush — update() вызывать не нужно.",
@@ -443,38 +443,38 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Dirty Checking` сам генерирует UPDATE при flush без явного вызова update().",
+              "text": "При dirty checking Hibernate на `flush` определяет изменения managed-сущности; они дают `UPDATE` без явного `update`.",
               "correct": true,
               "sections": {
-                "explanation": "Dirty checking сам обнаруживает изменённые сущности в persistence context и генерирует UPDATE при flush — вызывать update() не нужно. При загрузке Hibernate запоминает snapshot начального состояния и на flush сравнивает поля с ним.",
+                "explanation": "Dirty checking обнаруживает изменение managed-сущности и создаёт UPDATE при flush без явного update(). Обычный механизм сравнивает текущее состояние с последним известным; при bytecode enhancement сама сущность может отмечать изменённые атрибуты.",
                 "example": "В @Transactional-методе find() + user.setName(newName) без save() даст UPDATE при commit.",
                 "when_to_apply": "Вспоминать при вопросе «почему изменение сохранилось без явного save()» и при настройке момента синхронизации.",
-                "edge_cases": "FlushMode.COMMIT синхронизирует только перед commit и может вернуть устаревшие данные из запроса.",
+                "edge_cases": "При `AUTO` Hibernate не flush'ит перед каждым запросом: JPQL/HQL к несвязанным таблицам может обойтись без flush. `COMMIT` старается отложить синхронизацию, но провайдер вправе выполнить её раньше; видимость ожидающих изменений запросу JPA не определяет.",
                 "related": "[[hibernate-interview#Q7]], [[hibernate-interview#Q9]]"
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "При режиме `AUTO` flush не срабатывает перед запросом, только при ручном вызове flush().",
+              "text": "При режиме `AUTO` Hibernate пропускает `flush` перед пересекающимся JPQL/HQL-запросом; изменения не влияют на его результат.",
               "correct": false,
               "sections": {
-                "what_actually": "AUTO делает flush перед запросом и перед commit; только ручной flush — это режим MANUAL.",
+                "what_actually": "При `AUTO` Hibernate flush'ит перед JPQL/HQL-запросом, если он пересекается с ожидающими изменениями, и перед commit; `MANUAL` требует явного flush.",
                 "source_of_confusion": "Режимов несколько, и их поведение легко перепутать местами.",
-                "if_it_were_true": "JPQL-запрос не видел бы свежих изменений в контексте, возвращая устаревшие данные.",
-                "how_it_should_be": "AUTO по умолчанию синхронизирует перед запросом и перед commit."
+                "if_it_were_true": "Даже запрос к изменённой таблице при `AUTO` не учитывал бы ожидающие изменения без ручного flush.",
+                "how_it_should_be": "`AUTO` синхронизирует перед влияющим JPQL/HQL-запросом и перед commit, но не перед каждым SELECT."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Hibernate` делает snapshot сущности в момент flush, а не при её загрузке.",
+              "text": "При `flush` Hibernate снимает исходный `snapshot` managed-сущности; он не хранит состояние с момента загрузки.",
               "correct": false,
               "sections": {
-                "what_actually": "Snapshot начального состояния снимается при загрузке, а на flush с ним сравнивают текущие поля.",
-                "source_of_confusion": "И snapshot, и сравнение связаны с flush, поэтому момент снятия смещают туда же.",
-                "if_it_were_true": "Сравнивать было бы не с чем — не было бы исходного состояния для diff.",
-                "how_it_should_be": "Snapshot сохраняется при загрузке, а на flush текущие поля сравнивают с ним."
+                "what_actually": "В diff-based механизме Hibernate хранит последнее известное состояние до flush и сравнивает его с текущим; bytecode-enhanced сущность может отслеживать изменения сама.",
+                "source_of_confusion": "Сравнение состояния и генерацию SQL выполняют при flush, поэтому туда ошибочно переносят создание исходного снимка.",
+                "if_it_were_true": "Diff-based dirty checking не имел бы исходного состояния для сравнения до flush; изменение нельзя было бы обнаружить таким способом.",
+                "how_it_should_be": "Различайте diff-based снимок последнего состояния и in-line tracking при bytecode enhancement; оба выявляют изменения к flush."
               }
             }
           ]
@@ -491,50 +491,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`merge()` возвращает новую управляемую копию, а переданный объект остаётся detached.",
+              "text": "В Hibernate 7 `Session.save/update` удалены; новый объект сохраняют через `persist`, а `merge` возвращает managed-результат, оставляя detached-аргумент detached.",
               "correct": true,
               "sections": {
-                "explanation": "merge() копирует состояние detached-объекта в managed-копию и возвращает именно её — переданный объект остаётся detached. Поэтому изменять и сохранять нужно то, что вернул merge(), а не исходный аргумент.",
-                "example": "User managed = entityManager.merge(detached); managed.setName(\"Bob\") синхронизируется с БД, а detached — нет.",
-                "when_to_apply": "Вспоминать при работе с объектами из другой сессии или после десериализации, когда их нужно вернуть в контекст.",
-                "edge_cases": "persist()/save() — для новых transient-объектов; update() бросит исключение, если объект уже есть в контексте.",
+                "explanation": "JPA `persist()` делает новый аргумент managed. `merge()` копирует состояние detached-аргумента в возвращённый managed-экземпляр; аргумент остаётся detached. Исторические `Session.save()`/`update()` были deprecated в Hibernate 6.6 и удалены с 7.0.",
+                "example": "`User managed = entityManager.merge(detached); managed.setName(\"Bob\");` меняет отслеживаемый экземпляр, а исходный detached остаётся вне контекста.",
+                "when_to_apply": "Различайте API при миграции Hibernate 6→7 и при передаче состояния объекта между persistence contexts.",
+                "edge_cases": "`merge(detached)` может вернуть уже существующую managed-сущность; `merge(managed)` возвращает тот же экземпляр. `merge(new)` тоже разрешён. В Hibernate 6.6 старый `Session.save()` возвращал `Object`, не обещанный `Serializable`.",
                 "related": "[[hibernate-interview#Q7]], [[hibernate-interview#Q10]]"
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`merge()` делает сам переданный detached-объект управляемым и не создаёт копию.",
+              "text": "В Hibernate 7 `Session.save/update` удалены; для detached-объекта `merge` переводит сам аргумент в managed, поэтому результат можно игнорировать.",
               "correct": false,
               "sections": {
-                "what_actually": "merge() возвращает новую managed-копию, а переданный объект остаётся detached.",
-                "source_of_confusion": "Логично ждать, что merge() «прикрепит» именно переданный объект.",
-                "if_it_were_true": "Правки исходного аргумента после merge() синхронизировались бы с БД, а они нет.",
-                "how_it_should_be": "Изменять и сохранять нужно результат merge(), а не переданный detached-объект."
+                "what_actually": "`merge(detached)` возвращает managed-экземпляр, который может уже существовать в контексте; исходный аргумент остаётся detached.",
+                "source_of_confusion": "Слово merge воспринимают как повторное прикрепление именно переданного объекта.",
+                "if_it_were_true": "Правки исходного аргумента после merge синхронизировались бы с БД, хотя JPA продолжает считать его detached.",
+                "how_it_should_be": "Продолжайте работу с возвращённым managed-экземпляром, не с исходным detached-аргументом."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`persist()` предназначен для отсоединённых detached-объектов, а merge — для новых transient.",
+              "text": "В Hibernate 7 `Session.save/update` остаются доступными; `save` возвращает ID, а `update` переподключает detached-объект без изменения API.",
               "correct": false,
               "sections": {
-                "what_actually": "persist()/save() — для новых transient; merge()/update() — для detached.",
-                "source_of_confusion": "Все четыре метода «сохраняют», и легко перепутать, кому какой вход.",
-                "if_it_were_true": "persist() на detached-объекте ожидаемо срабатывал бы, хотя он предназначен для новых.",
-                "how_it_should_be": "persist — для transient (новых), merge — для detached (отсоединённых)."
+                "what_actually": "Все формы `Session.save()`/`update()` удалены с Hibernate 7.0; в 6.6 эти методы были deprecated.",
+                "source_of_confusion": "Старые руководства для Hibernate 5/6 и код на них продолжают упоминать эти методы.",
+                "if_it_were_true": "Код `session.save(entity)` продолжал бы компилироваться после перехода на Hibernate 7 без миграции.",
+                "how_it_should_be": "В Hibernate 7 замените `Session.save` на `persist`, а `Session.update` на `merge` с использованием возвращённого результата."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`persist()` и merge() — специфичные методы Hibernate, а save() и update() — стандарт JPA.",
+              "text": "В Hibernate 7 `Session.save/update` удалены; `merge` принимает только detached-объект и не может сохранить новый transient-экземпляр.",
               "correct": false,
               "sections": {
-                "what_actually": "persist()/merge() — стандарт JPA; save()/update() — устаревшие Hibernate-специфичные методы.",
-                "source_of_confusion": "Все четыре доступны в Hibernate, и происхождение каждого путается.",
-                "if_it_were_true": "Переносимый JPA-код писали бы через save()/update(), которых в стандарте нет.",
-                "how_it_should_be": "Рекомендуют JPA-стандартные persist()/merge() вместо Hibernate-специфичных save()/update()."
+                "what_actually": "JPA `merge()` допускает и новый, и detached объект: для нового создаётся managed-экземпляр, в который копируется состояние.",
+                "source_of_confusion": "`merge` часто объясняют только как способ перенести изменения detached-объекта.",
+                "if_it_were_true": "Вызов `merge(newEntity)` должен был бы отвергаться, но спецификация создаёт managed-копию нового объекта.",
+                "how_it_should_be": "Предпочитайте `persist` для нового аргумента; `merge` тоже поддерживает новый объект, но управляемым станет возвращённый экземпляр."
               }
             }
           ]

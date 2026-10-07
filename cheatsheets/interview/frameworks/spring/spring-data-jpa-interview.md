@@ -1239,35 +1239,36 @@ public class Order {
 
 ## Q21. Что такое `FlushMode` и когда его менять?
 
-`FlushMode` определяет момент, когда [Hibernate](../../databases/hibernate-interview.md) сбрасывает накопленные изменения из persistence context в БД (`flush` — это генерация и отправка `INSERT`/`UPDATE`/`DELETE`, но ещё не `COMMIT`).
+`flush` синхронизирует изменения управляемых сущностей с БД (`INSERT`/`UPDATE`/`DELETE`), но не подтверждает транзакцию. Режим flush управляет тем, когда провайдер выполняет эту синхронизацию; вызов `EntityManager.flush()` остаётся явным способом потребовать её сейчас.
 
-По умолчанию `AUTO`: flush происходит и при коммите, и **перед каждым запросом** — чтобы запрос увидел ещё не сохранённые изменения и вернул согласованный результат. Менять режим стоит редко и осознанно — в основном при batch-обработке, где постоянные авто-flush'и создают лишний overhead.
+Стандарт JPA определяет `FlushModeType.AUTO` (по умолчанию) и `COMMIT`. При `AUTO` внутри присоединённой транзакции изменения, **способные повлиять на результат запроса**, должны быть видны ему; провайдер может выполнить flush или обеспечить видимость иным способом. Hibernate 7.4 перед JPQL/HQL делает flush при пересечении запроса с ожидающими изменениями, а также перед нативным SQL без зарегистрированной синхронизации. Это не означает flush перед каждым `SELECT`.
 
 | FlushMode | Когда flush | Использование |
 |-----------|------------|---------------|
-| `AUTO` (default) | Перед запросом и при commit | Стандартное поведение |
-| `COMMIT` | Только при commit | Batch-обработка (экономия flush) |
-| `MANUAL` | Только явный `flush()` | Редко — тесты, миграции |
+| JPA `AUTO` (default) | Перед commit и при необходимости для видимости изменений запросу | Обычная семантика чтения после записи |
+| JPA `COMMIT` | При commit; провайдер вправе выполнить flush и раньше | Результат запроса относительно ещё не сброшенных изменений не определён стандартом |
+| Hibernate `MANUAL` | Только явный `flush()` | Специфичный режим Hibernate; требует полного контроля приложения |
 
 ```java
 @Transactional
 public void batchInsertWithFlushControl(List<CreateUserRequest> requests) {
-    Session session = entityManager.unwrap(Session.class);
-    session.setHibernateFlushMode(FlushMode.COMMIT); // отключаем auto-flush
-
     for (int i = 0; i < requests.size(); i++) {
         User user = new User(requests.get(i));
         entityManager.persist(user);
 
-        if (i % 50 == 0) { // каждые 50 записей
-            entityManager.flush();  // отправляем INSERT в БД
-            entityManager.clear();  // очищаем persistence context (экономия RAM)
+        if ((i + 1) % 50 == 0) {
+            entityManager.flush(); // синхронизируем накопленные изменения
+            entityManager.clear(); // освобождаем managed-объекты из контекста
         }
+    }
+    if (requests.size() % 50 != 0) {
+        entityManager.flush();
+        entityManager.clear();
     }
 }
 ```
 
-Конкретный выигрыш в коде выше: переключив режим на `COMMIT`, мы убираем авто-flush перед каждым промежуточным `SELECT` и сами контролируем, когда отправлять накопленные `INSERT` в БД — пачками по 50, с последующим `clear()` для разгрузки памяти.
+Здесь **режим не меняется**: в цикле нет запросов, от которых нужно подавлять auto-flush. `flush()`/`clear()` каждые 50 объектов ограничивают размер persistence context, но сами по себе не включают JDBC batching; для него нужна настройка `hibernate.jdbc.batch_size`, а генерация ID через `IDENTITY` в Hibernate 7.4 отключает insert batching. `COMMIT` выбирайте только если промежуточные запросы не зависят от накопленных изменений и это проверено измерениями; в отличие от `AUTO`, JPA не определяет их видимость. [Jakarta Persistence 3.2, FlushModeType](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/flushmodetype); [Hibernate ORM 7.4, Flushing и Batching](https://docs.hibernate.org/orm/7.4/userguide/html_single/).
 
 ## Q22. (!) Что такое `FetchType LAZY` vs `EAGER`?
 
