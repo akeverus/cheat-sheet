@@ -399,13 +399,24 @@ Structure PASS, локальные блоки без hard/warnings, Hibernate fu
 parity PASS, Spring Data JPA full parity FAIL из-за старых блоков.
 Полного аудита и blind-приёмки нет. Коммит `851363aa4`.
 
-Следующий авторский пакет: Spring Data JPA Q29 B0 о L2 cache.
-Сравнить заголовки, ответы и MCQ Hibernate Q24–Q27. По официальным
-Hibernate 7.4 и Spring Data JPA источникам проверить срок жизни L1,
-JCache/Ehcache, `@Cacheable`/`@Cache`, кэш коллекций и границы
-`TRANSACTIONAL`. При подтверждении пробела исправить Q29/MCQ/sidecar,
-затем выполнить локальные и файловые проверки. Полный аудит старого
-файла и независимую приёмку вести отдельно.
+07.10 Spring Data JPA Q29 B0 и Hibernate Q24/Q25/Q27 B0: по Hibernate
+7.4 уточнены жизнь L1 до clear/закрытия EntityManager, L2 на фабрике,
+условный default `use_second_level_cache`, правильное вложение
+`hibernate.javax.cache.provider`, selective `@Cacheable`, роль `@Cache`,
+кэш ID коллекции, `READ_WRITE` и JTA-зависимый `TRANSACTIONAL`.
+Теория, четыре MCQ и sidecar синхронизированы. Structure PASS,
+локальные блоки без hard/warnings, Hibernate full parity PASS, JPA
+full parity FAIL из-за старых блоков. Полного аудита и blind-приёмки
+нет. Коммит `adba6f9eb`.
+
+Следующий авторский пакет: Spring Data JPA Q30 B0 о soft delete.
+Сначала сравнить существующие заголовки/ответы/MCQ по `@SoftDelete`,
+`@SQLRestriction`, `@Where`. По Hibernate 7.4 и Spring Data JPA 4.1
+проверить границу read-filter и фактического удаления, native SQL,
+JPQL bulk UPDATE, persistence context и транзакцию. Исправить
+подтверждённое в Q30, парном MCQ и sidecar, затем локальные и файловые
+проверки. Полный аудит старого JPA-файла и независимую приёмку вести
+отдельно.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,

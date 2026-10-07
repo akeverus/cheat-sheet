@@ -1083,14 +1083,34 @@ full parity FAIL по прежним блокам (22/44 с несоразмер
 другие сигналы). Полной проверки файлов (`П`) и независимой blind-
 приёмки нет. Коммит `851363aa4`.
 
-**Точная точка авторского продолжения:** Spring Data JPA Q29 B0 о L2
-cache. Сначала сравнить заголовки и ответы Hibernate Q24–Q27 и парные
-MCQ; проверить границу жизни L1 (EntityManager, не просто транзакция),
-настройку JCache/Ehcache для Hibernate 7.4, `@Cacheable`/`@Cache`, кэш
-коллекции и `TRANSACTIONAL` по официальным Hibernate/Spring Data
-источникам. Если пробел подтверждён, исправить теорию, MCQ и sidecar;
-разделять `З`, `О` и `П`, не считать старый JPA-файл принятым по
-локальному валидатору.
+**Контрольная точка 07.10.2026 — Spring Data JPA Q29 B0 + Hibernate Q24/Q25/Q27 B0 · О.**
+Просмотр заголовков (`З`) и точечное чтение Q24–Q27 показали пересечение:
+отдельная тема L2 не нужна, но в JPA Q29 L1 ошибочно ограничивался
+транзакцией, а JCache provider был задан не под `hibernate`.
+По [Hibernate ORM 7.4, caching/JCache](https://docs.hibernate.org/orm/7.4/userguide/html_single/)
+уточнены жизнь L1 до `clear()`/закрытия EntityManager, отсутствие L1 у
+`StatelessSession`, L2 на фабрике, default `use_second_level_cache=true`
+при настроенном `RegionFactory`, selective `@Cacheable`, роль Hibernate
+`@Cache`, отдельный кэш ID коллекции и границы `READ_WRITE`/
+`TRANSACTIONAL`. Убрано обещание полного XA/кластерного кэша от одного
+enum и категоричное «L2 всегда требует явного флага».
+Теория, четыре парных MCQ A/B/C/D/sections и freshness-sidecar
+синхронизированы; авторская точечная проверка выполнена (`О`).
+Structure 93 Q/94 блока PASS, локальные Q29/Q24/Q25/Q27 без
+hard/warnings, Hibernate full parity PASS; JPA full parity FAIL из-за
+прежних блоков (21/44 с несоразмерной длиной и другие сигналы).
+Полной проверки файлов (`П`) и независимой blind-приёмки нет. Коммит
+`adba6f9eb`.
+
+**Точная точка авторского продолжения:** Spring Data JPA Q30 B0 о soft
+delete. Сначала сравнить заголовки и точечные ответы других файлов по
+`@SoftDelete`/`@SQLRestriction`/`@Where` и соответствующие MCQ.
+По официальным Hibernate 7.4 и Spring Data JPA 4.1 проверить, что
+`@SQLRestriction` фильтрует чтение, но сам по себе не меняет семантику
+`remove`; где подходит встроенный `@SoftDelete`; как native SQL и JPQL
+bulk UPDATE взаимодействуют с фильтром, persistence context и
+транзакцией. Затем исправить Q30/MCQ/sidecar лишь по подтверждённым
+пробелам, не объявляя полный JPA-файл проверенным.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
 
@@ -1114,8 +1134,8 @@ MCQ; проверить границу жизни L1 (EntityManager, не про
    Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13/Q14, WebAuthn Q24/Q46, Spring Security Q44,
    Metrics & Tracing Q40, Spring Testing Q9/Q10, Uber Q6/Q7,
    Google Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1,
-   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q28 B0/Q39 B0,
-   Hibernate Q8–Q10 B0/Q14–Q16 B0/Q19–Q21 B0/Q23/Q36 B0,
+   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q29 B0/Q39 B0,
+   Hibernate Q8–Q10 B0/Q14–Q16 B0/Q19–Q21 B0/Q23–Q25/Q27/Q36 B0,
    Database Transactions Q15/Q22/Q23 B0
    и RabbitMQ Streams Q40–Q42 ждут
    независимой MCQ-приёмки.
@@ -1124,7 +1144,7 @@ MCQ; проверить границу жизни L1 (EntityManager, не про
    PostgreSQL 19 перепроверять после финальных релизов.
 3. Отдельной задачей пройти независимую blind-приёмку новых MCQ и старый
    parity/pre-check backlog Hibernate, Spring Data JPA (после Q3/Q4,
-   Q5–Q28 и Q39 ещё 13 hard-сигналов; Hibernate после Q8–Q10/Q14–Q16/Q19–Q21/Q23/Q36 — 15),
+   Q5–Q29 и Q39 ещё 12 hard-сигналов; Hibernate после Q8–Q10/Q14–Q16/Q19–Q21/Q23–Q25/Q27/Q36 — 15),
    Java IO/NIO, Jackson,
    URL Shortener, RabbitMQ, Kafka, сравнения брокеров и event-driven;
    положительный валидатор не означает `FINAL`.
