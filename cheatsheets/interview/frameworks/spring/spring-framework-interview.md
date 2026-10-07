@@ -14,7 +14,7 @@ aliases:
   - "Spring Framework собеседование"
 prerequisites: []
 next: []
-updated: "2026-05-05"
+updated: "2026-10-07"
 ---
 # Вопросы на собеседовании: `Spring Framework`
 
@@ -28,6 +28,7 @@ updated: "2026-05-05"
 
 - [Spring Framework Reference](https://docs.spring.io/spring-framework/reference/) — основная документация
 - [Spring Framework API (Javadoc)](https://docs.spring.io/spring-framework/docs/current/javadoc-api/) — API-документация
+- [Spring Framework 6.2: background initialization](https://docs.spring.io/spring-framework/reference/6.2/core/beans/java/composing-configuration-classes.html) — условия и ограничения фонового создания бинов
 
 ### Baeldung
 
@@ -445,6 +446,10 @@ public class CacheWarmer implements InitializingBean, DisposableBean {
 ```
 
 **Важный нюанс:** `BeanPostProcessor.postProcessAfterInitialization()` (шаг 10) — именно здесь Spring создаёт **прокси** для `@Transactional`, `@Cacheable`, `@Async` и других AOP-аннотаций. Поэтому вызов `this.method()` внутри того же бина обходит прокси и не запускает аспект.
+
+**Фоновое создание при запуске (Spring Framework 6.2+):** `@Bean(bootstrap = Bean.Bootstrap.BACKGROUND)` позволяет выполнять создание конкретного бина в фоне, если в контексте есть бин `Executor` с именем `bootstrapExecutor`. Без него маркер игнорируется. Это параллелизм этапа создания бинов, а не вызов метода через `@Async`.
+
+Для обычного singleton фоновые задачи **завершаются до конца `refresh()`**: пометка не разрешает завершить этот этап с недостроенным бином. Зависимый бин с обычной, не ленивой инъекцией ждёт его создания и может снова сделать главный поток критическим путём. Ленивая точка инъекции с `@Lazy` или `ObjectProvider` у потребителя откладывает доступ; если и сам фоновый бин помечен `@Lazy`, его завершение допускается при первом фактическом обращении. Собственные зависимости фонового бина должны быть созданы прежде него. Польза определяется измерением времени старта и графом зависимостей.
 
 ## Q11. Как создать статический `Bean`?
 
