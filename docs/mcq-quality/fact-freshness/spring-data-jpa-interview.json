@@ -25,6 +25,7 @@
     "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/cascadetype",
     "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/embeddable",
     "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/attributeoverride",
+    "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/checkconstraint",
     "https://jakarta.ee/specifications/persistence/3.2/",
     "https://docs.hibernate.org/orm/7.4/userguide/html_single/",
     "https://docs.spring.io/spring-data/jpa/reference/api/java/org/springframework/data/jpa/repository/config/EnableJpaAuditing.html",
@@ -75,10 +76,11 @@
     "Q24: Jakarta Persistence 3.2 fetchgraph трактует неуказанные атрибуты как LAZY, loadgraph оставляет их настройки маппинга, но провайдер вправе загрузить больше; Graph не фиксирует форму SQL. Spring Data JPA 4.1.1 attributePaths создаёт ad-hoc EntityGraph. Hibernate 6+ удаляет дубли корневых сущностей от fetch join в памяти; DISTINCT только ради них не требуется, Set не исправляет размножение SQL-строк.",
     "Q25: Jakarta Persistence 3.2 CascadeType.ALL включает PERSIST, MERGE, REMOVE, REFRESH, DETACH; MERGE — каскад операции merge, не каждое изменение managed-сущности. orphanRemoval применим к OneToOne/OneToMany для приватно принадлежащих детей: исключение управляемого ребёнка из связи вызывает remove при flush, а удаление родителя также каскадируется; new/detached/removed исключены. Cascade REMOVE на ManyToMany непереносим и может удалить общие целевые сущности при удалении владельца. Spring Data JPA save выбирает persist/merge по isNew.",
     "Q26: Java record доступен с Java 16; Jakarta Persistence 3.2 впервые стандартизует record как Embeddable без public/protected no-arg конструктора, который требуется обычному embeddable-классу. Embeddable разделяет persistent identity владельца, не имеет Id/EmbeddedId и собственной таблицы. AttributeOverride переопределяет колонку basic-атрибута при повторном встраивании, не Java-компонент. Одиночный Embedded хранится в таблице(ах) владельца, а ElementCollection embeddable использует таблицу коллекции.",
+    "Q27: Jakarta Persistence 3.2 требует SINGLE_TABLE и JOINED; TABLE_PER_CLASS необязателен и непереносим. SINGLE_TABLE имеет одну таблицу и nullable-поля отдельных подтипов, но условный CHECK по дискриминатору может проверять их обязательность. JOINED соединяет таблицы при материализации подтипа и полиморфном чтении, не обязательно при каждом запросе. TABLE_PER_CLASS обычно использует UNION или отдельные запросы по подтипам; Hibernate 7.4 показывает UNION ALL. Производительность требует проверки конкретного плана.",
     "Q39: фоновый системный автор — политика приложения, а не значение по умолчанию AuditorAware. JPQL bulk update/delete не вызывает lifecycle callbacks управляемых сущностей и не применяет автоматическую проверку @Version; persistence context после bulk может быть несогласован с БД."
   ],
   "staleness_risks": [
-    "07.10.2026 точечно перепроверены Q3 B0, Q4 B1, Q5–Q26 B0 и Q39 B0; остальные Q файла не проходили полный содержательный аудит."
+    "07.10.2026 точечно перепроверены Q3 B0, Q4 B1, Q5–Q27 B0 и Q39 B0; остальные Q файла не проходили полный содержательный аудит."
   ],
   "notes": [
     "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."

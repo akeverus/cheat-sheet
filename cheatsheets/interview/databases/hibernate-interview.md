@@ -543,7 +543,7 @@ public class Order {
 
 ## Q14. (!) Что такое `Hibernate Inheritance Mapping`?
 
-Inheritance Mapping — это способ уложить **иерархию Java-классов** (базовый класс и наследники) в реляционные таблицы, у которых наследования нет. `Hibernate` предлагает три стратегии, и каждая по-своему разменивает скорость запросов на нормализацию данных:
+Inheritance Mapping укладывает иерархию `@Entity` в таблицы. `Hibernate` поддерживает все три стратегии Jakarta Persistence; по JPA 3.2 только `SINGLE_TABLE` (умолчание) и `JOINED` обязательны для любого провайдера, а `TABLE_PER_CLASS` необязательна. Цена каждой стратегии зависит от полиморфного запроса и объёма данных:
 
 ```mermaid
 graph TD
@@ -589,9 +589,9 @@ TABLE_PER_CLASS
 
 | Стратегия | Аннотация | Плюсы | Минусы |
 |-----------|-----------|-------|--------|
-| **Single Table** | `@Inheritance(strategy = SINGLE_TABLE)` | Быстрые запросы, нет JOIN | NULL-колонки, нет NOT NULL constraint |
-| **Joined** | `@Inheritance(strategy = JOINED)` | Нормализовано, NOT NULL | Медленные полиморфные запросы (JOIN) |
-| **Table Per Class** | `@Inheritance(strategy = TABLE_PER_CLASS)` | Нет NULL, полные таблицы | Медленный UNION для полиморфных запросов |
+| **Single Table** | `@Inheritance(strategy = SINGLE_TABLE)` | Одна таблица, нет JOIN между таблицами иерархии | Поля подтипов допускают NULL в строках других типов; условную обязательность можно выразить CHECK |
+| **Joined** | `@Inheritance(strategy = JOINED)` | Таблицы подтипов допускают свои NOT NULL-ограничения | JOIN при материализации подтипа и полиморфном чтении |
+| **Table Per Class** | `@Inheritance(strategy = TABLE_PER_CLASS)` | Таблица каждого конкретного класса содержит и унаследованные поля | Для полиморфного чтения Hibernate использует UNION; стратегия непереносима по JPA 3.2 |
 
 ```java
 @Entity
@@ -616,7 +616,7 @@ public class Car extends Vehicle {
 }
 ```
 
-**На собеседовании**: `SINGLE_TABLE` — по умолчанию и чаще всего рекомендуется. `JOINED` — если важна нормализация и NOT NULL. `TABLE_PER_CLASS` — использовать редко.
+**На собеседовании:** `SINGLE_TABLE` — умолчание; `JOINED` позволяет разделить ограничения подтипов; `TABLE_PER_CLASS` стоит выбирать только после проверки поддержки провайдера и плана полиморфных запросов. SQL может отличаться в запросах к конкретному подтипу и ко всей иерархии. [Jakarta Persistence 3.2, inheritance mapping](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2); [Hibernate ORM 7.4, inheritance](https://docs.hibernate.org/orm/7.4/userguide/html_single/).
 
 ## Q15. Как маппить связь `One-To-Many` / `Many-To-One`?
 
