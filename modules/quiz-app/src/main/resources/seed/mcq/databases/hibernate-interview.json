@@ -551,50 +551,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`load()` возвращает proxy без запроса, откладывая SELECT до первого обращения.",
+              "text": "В Hibernate 7 `Session.load` удалён, `Session.get` deprecated. `find` даёт сущность или null, `getReference` не читает БД при вызове.",
               "correct": true,
               "sections": {
-                "explanation": "load() (JPA getReference()) возвращает прокси без похода в БД, а SELECT откладывается до первого обращения к полю объекта. get() же выполняет SELECT сразу и возвращает реальный объект.",
-                "example": "User ref = session.load(User.class, 1L) — SELECT ещё не выполнен; ref.getName() запускает его.",
-                "when_to_apply": "Вспоминать, когда нужно лишь сослаться на запись (например установить FK), не загружая всю сущность.",
-                "edge_cases": "Если записи нет, load() бросит ObjectNotFoundException именно при первом обращении, а не в момент вызова.",
+                "explanation": "Hibernate 7 удалил `Session.load` в пользу JPA `getReference` и deprecated `Session.get` в пользу `find`. `find` возвращает managed-экземпляр либо null; если он уже в контексте, нового SELECT нет. Hibernate `getReference` не обращается к БД при вызове и может вернуть proxy либо уже managed объект.",
+                "example": "`User ref = entityManager.getReference(User.class, id)` не читает строку в Hibernate; обращение к `ref.getName()` может инициировать загрузку состояния.",
+                "when_to_apply": "Выбирайте `find`, когда нужны данные или проверка существования; `getReference` — когда нужна ссылка по ID без чтения состояния.",
+                "edge_cases": "По JPA отсутствие строки у `getReference` может дать `EntityNotFoundException` уже при вызове либо при доступе к состоянию; ссылка не доказывает существование. `find` может взять managed объект из контекста без SQL.",
                 "related": "[[hibernate-interview#Q9]], [[hibernate-interview#Q11]]"
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`load()` выполняет SELECT немедленно и возвращает реальный объект, а не proxy.",
+              "text": "После перехода на Hibernate 7 `Session.load` остаётся доступным. Его используют вместо `getReference`, когда нужен FK без чтения состояния.",
               "correct": false,
               "sections": {
-                "what_actually": "load() ленив: возвращает proxy без запроса, а SELECT откладывается до обращения к полю.",
-                "source_of_confusion": "Слово «загрузить» звучит как немедленное чтение из БД.",
-                "if_it_were_true": "Не было бы смысла в getReference() для установки FK без SELECT для сущности.",
-                "how_it_should_be": "load()/getReference() возвращают proxy, а SELECT идёт при первом обращении к полю."
+                "what_actually": "Все формы `Session.load` удалены с Hibernate 7.0; используйте `Session.getReference` или `EntityManager.getReference`.",
+                "source_of_confusion": "Старые примеры Hibernate 5/6 продолжают показывать `load` как актуальный метод.",
+                "if_it_were_true": "Вызов `session.load(User.class, id)` компилировался бы в Hibernate 7, но метод удалён из API.",
+                "how_it_should_be": "В новом коде используйте `getReference` для ссылки по ID; не переносите `Session.load` в Hibernate 7."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`get()` при отсутствии записи бросает исключение ObjectNotFoundException вместо тихого возврата null.",
+              "text": "При вызове `find` Hibernate всегда выполняет SELECT, даже если объект с этим ID уже managed. `getReference` может отложить загрузку состояния.",
               "correct": false,
               "sections": {
-                "what_actually": "get()/find() возвращают null, если записи нет; исключение при обращении бросает load().",
-                "source_of_confusion": "Поведение get() и load() при отсутствии записи — типовая путаница.",
-                "if_it_were_true": "Проверку if (user == null) писать было бы негде — код падал бы исключением.",
-                "how_it_should_be": "get() возвращает null при отсутствии; ObjectNotFoundException — это про load()."
+                "what_actually": "`find` сначала может вернуть уже managed-экземпляр из persistence context без нового SQL; если сущности нет, возвращает null.",
+                "source_of_confusion": "Название `find` ассоциируют с обязательным запросом к БД и забывают о persistence context.",
+                "if_it_were_true": "Повторный `find` того же managed ID снова отправлял бы SELECT, хотя объект уже находится в контексте.",
+                "how_it_should_be": "`find` возвращает managed объект или null и не обещает SELECT при каждом вызове."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`load()` берут, когда не уверены в существовании записи и ждут возможного null.",
+              "text": "Для отсутствующей строки `getReference` возвращает null сразу, как `find`, поэтому подходит для проверки существования перед вставкой связи.",
               "correct": false,
               "sections": {
-                "what_actually": "load()/getReference() берут, когда уверены, что запись есть; при сомнении — get().",
-                "source_of_confusion": "Оба метода читают по id, и выбор между ними по «уверенности» неочевиден.",
-                "if_it_were_true": "load() возвращал бы null для отсутствующих, но вместо этого он бросает исключение.",
-                "how_it_should_be": "load() — когда точно знаете, что запись есть; при сомнении используйте get()."
+                "what_actually": "`getReference` не возвращает null как сигнал отсутствия. По JPA возможен `EntityNotFoundException` при вызове или первом доступе к состоянию; FK может обнаружить ошибку при INSERT.",
+                "source_of_confusion": "Оба метода принимают ID, поэтому их ошибочно считают равными проверками существования.",
+                "if_it_were_true": "`getReference` можно было бы использовать как дешёвый `exists`, но ссылка не подтверждает наличие строки.",
+                "how_it_should_be": "Когда нужно проверить наличие строки, используйте `find` или подходящий `exists`-запрос; `getReference` нужен для ссылки."
               }
             }
           ]

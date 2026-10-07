@@ -427,35 +427,32 @@ managed.setName("Bob"); // будет синхронизировано с БД
 
 ## Q10. В чём разница между `get()` и `load()`?
 
-Различие — в моменте запроса к БД и в поведении при отсутствии записи. `get()` (JPA: `find()`) выполняет `SELECT` сразу и вернёт `null`, если записи нет. `load()` (JPA: `getReference()`) возвращает **прокси без запроса**, а `SELECT` откладывается до первого обращения к полю; если записи нет — исключение прилетит именно тогда. Поэтому `load()`/`getReference()` берут, когда уверены в существовании записи и нужно лишь сослаться на неё.
+Это исторические имена Hibernate `Session`: `load()` **удалён с 7.0** в пользу JPA `getReference()`, а `get()` в 7.0 помечен deprecated в пользу `find()`. Для нового кода сравнивайте `EntityManager.find()` и `getReference()`.
 
-| Аспект | `get()` / `find()` | `load()` / `getReference()` |
+| Аспект | `find()` (`Session.get()` в старом коде) | `getReference()` (`Session.load()` до 7.0) |
 |--------|--------------------|-----------------------------|
-| Загрузка | Немедленная (`SELECT` сразу) | Ленивая (возвращает proxy) |
-| Если не найден | Возвращает `null` | Выбрасывает `ObjectNotFoundException` при обращении |
-| Proxy | Нет — реальный объект | Да — proxy до первого обращения к полю |
-| Когда использовать | Когда не уверены, что запись существует | Когда точно знаете, что запись существует |
+| Загрузка | Возвращает инициализированную сущность; если она уже managed, SQL не нужен | Hibernate 7.4 не читает БД при вызове; может вернуть proxy или уже имеющийся managed-экземпляр |
+| Если не найден | Возвращает `null` | JPA допускает `EntityNotFoundException` при вызове или первом обращении к состоянию; отсутствие строки не превращается в `null` |
+| Когда использовать | Нужны данные сущности или проверка существования | Нужна ссылка по ID, например для связи, без обязательной загрузки состояния |
 
 ```java
-// get/find — немедленный SELECT
-User user = session.get(User.class, 1L);       // Hibernate
-User user = entityManager.find(User.class, 1L); // JPA
-if (user == null) { /* не найден */ }
+User user = entityManager.find(User.class, 1L);
+if (user == null) { /* строки нет */ }
 
-// load/getReference — возвращает proxy, SELECT при первом обращении к полю
-User ref = session.load(User.class, 1L);          // Hibernate
-User ref = entityManager.getReference(User.class, 1L); // JPA
-// SELECT ещё не выполнен
-String name = ref.getName(); // SELECT выполняется здесь
+User ref = entityManager.getReference(User.class, 1L);
+// Для Hibernate это не требует SELECT; обращение к состоянию может его вызвать.
+String name = ref.getName();
 ```
 
-`getReference()` полезен, когда нужно только установить связь (FK), не загружая всю сущность:
+`getReference()` полезен, когда нужно только установить связь (FK), не загружая состояние связанной сущности:
 
 ```java
 Order order = new Order();
 order.setUser(entityManager.getReference(User.class, userId)); // без SELECT для User
 entityManager.persist(order);
 ```
+
+Ссылка **не доказывает существование** строки: неверный FK может обнаружиться лишь на SQL `INSERT`/commit. `find()` тоже не обязан делать новый `SELECT`, если объект уже есть в persistence context или может быть получен из кэша. [Hibernate 7.0 Migration Guide](https://docs.hibernate.org/orm/7.0/migration-guide/); [Hibernate 7.4 `Session` API](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/Session.html); [Jakarta Persistence 3.2 `EntityManager` API](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/entitymanager).
 
 ## Q11. Зачем `Entity` нужен конструктор без аргументов?
 
