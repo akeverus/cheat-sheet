@@ -675,74 +675,73 @@ public class AuditService {
 
 ## Q12. (!) Что такое `@Lock` и стратегии блокировок?
 
-`@Lock` задаёт стратегию блокировки строки при чтении — инструмент против гонок, когда несколько транзакций одновременно меняют одни и те же данные (классика — списание денег со счёта).
+`@Lock` в Spring Data JPA задаёт `LockModeType` для запроса репозитория; аннотацию можно поставить и на переобъявленный CRUD-метод. Это один из инструментов защиты от конфликтов, когда транзакции работают с одной сущностью.
 
-Два принципиально разных подхода:
-- **Пессимистический** (`PESSIMISTIC_*`) — блокируем строку в БД сразу при чтении (`SELECT ... FOR UPDATE`). Конкуренты ждут. Подходит, когда конфликты частые и важна гарантия.
-- **Оптимистический** (`OPTIMISTIC` + `@Version`) — не блокируем ничего, но при коммите проверяем, не изменил ли кто-то строку. Если изменил — `OptimisticLockException`. Подходит, когда конфликты редки и важна пропускная способность.
+Два подхода:
+- **Пессимистический** (`PESSIMISTIC_READ`/`PESSIMISTIC_WRITE`) — получает блокировку БД при запросе и удерживает её до конца транзакции. `READ` рассчитан на согласованное чтение, `WRITE` — на сериализацию конкурирующих изменений. Ожидание, таймаут и точный SQL зависят от БД и провайдера; `READ` разрешено реализовать как `WRITE`.
+- **Оптимистический** (`@Version`, при необходимости явный `OPTIMISTIC`) — версия автоматически проверяется при обновлении или удалении versioned-сущности. Явный `OPTIMISTIC` защищает также чтение versioned-сущности без последующего изменения. Типичный вариант не удерживает долгую блокировку сразу; спецификация допускает и другую реализацию. При конфликте возникает `OptimisticLockException`, проверка может откладываться до `flush`/`commit`.
 
 ```java
 public interface AccountRepository extends JpaRepository<Account, Long> {
 
-    // Пессимистическая блокировка на запись — SELECT ... FOR UPDATE
+    // Пессимистическая блокировка для конкурирующих обновлений
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT a FROM Account a WHERE a.id = :id")
     Optional<Account> findByIdForUpdate(@Param("id") Long id);
 
-    // Пессимистическая блокировка на чтение — SELECT ... FOR SHARE
+    // Согласованное чтение с блокировкой до конца транзакции
     @Lock(LockModeType.PESSIMISTIC_READ)
-    Optional<Account> findByAccountNumber(String accountNumber);
+    @Query("SELECT a FROM Account a WHERE a.id = :id")
+    Optional<Account> findByIdForConsistentRead(@Param("id") Long id);
 
-    // Оптимистическая блокировка — проверка @Version при коммите
+    // Явный OPTIMISTIC полезен и при чтении без последующего UPDATE
     @Lock(LockModeType.OPTIMISTIC)
-    Optional<Account> findById(Long id);
+    @Query("SELECT a FROM Account a WHERE a.id = :id")
+    Optional<Account> findByIdForVersionCheck(@Param("id") Long id);
 }
 ```
 
 ```java
-// Оптимистическая блокировка через @Version
+// Версия для автоматической проверки при изменении
 @Entity
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Version // автоматический инкремент при UPDATE
+    @Version
     private Long version;
 
     private BigDecimal balance;
 }
 
-// При конкурентном обновлении — OptimisticLockException
+// Для оптимистического обновления достаточно обычного чтения versioned-сущности
 @Transactional
-public void transfer(Long fromId, Long toId, BigDecimal amount) {
-    Account from = accountRepository.findByIdForUpdate(fromId)
-        .orElseThrow(); // PESSIMISTIC_WRITE — строка заблокирована
-    Account to = accountRepository.findByIdForUpdate(toId)
-        .orElseThrow();
-
-    from.setBalance(from.getBalance().subtract(amount));
-    to.setBalance(to.getBalance().add(amount));
-    // блокировки снимаются при COMMIT
+public void debitOptimistically(Long accountId, BigDecimal amount) {
+    Account account = accountRepository.findById(accountId).orElseThrow();
+    account.setBalance(account.getBalance().subtract(amount));
+    // UPDATE с проверкой версии при flush/commit; конфликт откатывает транзакцию
 }
 ```
 
-| Стратегия | SQL | Когда |
-|-----------|-----|-------|
-| `PESSIMISTIC_WRITE` | `SELECT ... FOR UPDATE` | Обновление с конкуренцией (платежи, остатки) |
-| `PESSIMISTIC_READ` | `SELECT ... FOR SHARE` | Чтение, которое не должно измениться до конца транзакции |
-| `OPTIMISTIC` | Проверка `@Version` при commit | Редкие конфликты, высокий параллелизм чтения |
+| Стратегия | Гарантия и применение |
+|-----------|-----------------------|
+| `PESSIMISTIC_WRITE` | Немедленная блокировка до конца транзакции; конкурирующие обновления |
+| `PESSIMISTIC_READ` | Немедленная блокировка для согласованного чтения; может быть усилена до `WRITE` |
+| `@Version` / `OPTIMISTIC` | Проверка версии при изменении или явном optimistic lock; редкие конфликты |
+
+Для пессимистической стратегии нужен активный транзакционный контекст; блокировки увеличивают риск ожиданий и deadlock. При оптимистическом конфликте повторяйте **всю** бизнес-операцию в новой транзакции после повторного чтения. Синтаксис `FOR UPDATE`/`FOR SHARE` — только возможное отображение, а не контракт JPA. [Spring Data JPA Locking](https://docs.spring.io/spring-data/jpa/reference/jpa/locking.html); [Jakarta Persistence 3.2 §3.5](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#locking-and-concurrency).
 
 ## Q13. (!) Что такое `Projections` и какие виды бывают?
 
-**Projections** — способ вернуть из репозитория не всю сущность, а только нужные поля. Это уменьшает объём данных из БД, трафик и потребление памяти — одна из ключевых оптимизаций в `Spring Data JPA`.
+**Projections** — способ вернуть из репозитория представление сущности через интерфейс или DTO. Для простых top-level полей это позволяет ограничить выборку, но форма проекции и запрос определяют, сколько данных реально загрузится.
 
-Зачем: грузить сущность целиком ради двух полей расточительно, особенно для «широких» таблиц с десятками колонок и LOB'ами. Проекция переносит выбор полей в `SELECT`-список — БД отдаёт ровно то, что нужно.
+Зачем: если экрану нужны два поля «широкой» сущности, можно не читать остальные колонки. Для вложенных свойств Spring Data JPA создаёт join и может материализовать связанное свойство целиком; проверяйте SQL и план запроса.
 
 ### Закрытая интерфейсная проекция
 
 ```java
-// Spring создаёт прокси, запрашивает ТОЛЬКО указанные поля
+// Spring создаёт интерфейсный прокси и может ограничить top-level SELECT
 public interface UserSummary {
     String getFirstName();
     String getLastName();
@@ -751,14 +750,13 @@ public interface UserSummary {
 
 public interface UserRepository extends JpaRepository<User, Long> {
     List<UserSummary> findByStatus(UserStatus status);
-    // SQL: SELECT first_name, last_name, email FROM users WHERE status = ?
 }
 ```
 
 ### DTO-проекция (class-based)
 
 ```java
-// Record или класс с конструктором — один запрос с явным списком полей
+// Record или класс с подходящим конструктором; DTO не проксируется
 public record UserDto(String firstName, String lastName, String email) {}
 
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -778,7 +776,7 @@ public interface UserFullName {
     String getLastName();
 
     @Value("#{target.firstName + ' ' + target.lastName}")
-    String getFullName(); // вычисляется на стороне Java
+    String getFullName(); // SpEL может обратиться к любому свойству target
 }
 ```
 
@@ -797,11 +795,12 @@ public interface OrderWithUser {
 }
 ```
 
-**Ключевое для собеседования — разница между закрытой и открытой проекцией:**
-- **Закрытая** (только геттеры существующих полей) — `Spring` знает заранее, какие колонки нужны, и генерирует `SELECT` ровно с ними. Самый эффективный вариант.
-- **Открытая** (есть геттер с `@Value`/SpEL) — `Spring` не может вычислить список колонок заранее, поэтому грузит сущность целиком и считает выражение в Java. Экономии на уровне БД нет — только удобство.
+**Ключевое для собеседования — границы оптимизации:**
+- **Закрытая интерфейсная** (геттеры свойств сущности) — Spring Data знает нужные атрибуты и может оптимизировать выборку top-level полей. Вложенный getter создаёт join; Spring Data JPA может материализовать связанную часть целиком.
+- **DTO/class-based** — JPA создаёт объект через конструктор, без интерфейсного прокси и без вложенных проекций. Для JPQL `SELECT new` нужен полный путь к типу и подходящий конструктор; сеттеры не требуются.
+- **Открытая интерфейсная** (`@Value`/SpEL) — выражение может читать любое свойство `target`, поэтому оптимизация закрытой проекции недоступна. Для вычисления только из уже выбранных геттеров можно использовать `default`-метод интерфейса и сохранить закрытую проекцию.
 
-Эмпирическое правило: нужна производительность — закрытая интерфейсная или DTO-проекция; нужно вычисляемое поле на лету — открытая, понимая её цену.
+Выбирайте минимальное представление под задачу, но не выводите фактический объём данных из названия проекции: проверьте сгенерированный SQL, особенно для вложенных свойств и явных `@Query`. [Spring Data JPA Projections](https://docs.spring.io/spring-data/jpa/reference/repositories/projections.html).
 
 ## Q14. Как использовать динамические проекции?
 

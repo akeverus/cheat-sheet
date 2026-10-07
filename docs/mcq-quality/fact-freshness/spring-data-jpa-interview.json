@@ -12,6 +12,8 @@
     "https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html",
     "https://docs.spring.io/spring-data/jpa/reference/repositories/query-methods-details.html",
     "https://docs.spring.io/spring-data/jpa/reference/repositories/query-return-types-reference.html",
+    "https://docs.spring.io/spring-data/jpa/reference/jpa/locking.html",
+    "https://docs.spring.io/spring-data/jpa/reference/repositories/projections.html",
     "https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html",
     "https://docs.spring.io/spring-data/jpa/reference/repositories/definition.html",
     "https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/annotations.html",
@@ -29,10 +31,12 @@
     "Q8: @Modifying применяется к изменяющему @Query, а не к derived deleteBy; flushAutomatically действует до, clearAutomatically после запроса. Объявленные query methods не получают транзакцию автоматически.",
     "Q9: #{#entityName} использует @Entity(name) либо простое имя класса; generic-интерфейс помечается @NoRepositoryBean, а выражения с аргументами оцениваются при выполнении запроса.",
     "Q10: proxy-mode перехватывает только вызовы через прокси; self-вызов не применяет настройки вызываемого метода, но существующая транзакция сохраняется. REQUIRED начинает или присоединяет транзакцию; по умолчанию rollback на RuntimeException/Error, ALL_EXCEPTIONS доступен с Spring Framework 6.2.",
-    "Q11: REQUIRES_NEW создаёт независимую физическую транзакцию, NESTED опирается на JDBC savepoint и не откатывает JPA EntityManager. JpaTransactionManager nestedTransactionAllowed по умолчанию true в 6.2.19 и false в 7.0."
+    "Q11: REQUIRES_NEW создаёт независимую физическую транзакцию, NESTED опирается на JDBC savepoint и не откатывает JPA EntityManager. JpaTransactionManager nestedTransactionAllowed по умолчанию true в 6.2.19 и false в 7.0.",
+    "Q12: Spring Data JPA @Lock задаёт LockModeType для query/CRUD метода. Jakarta Persistence 3.2 требует немедленной долгой блокировки для PESSIMISTIC_READ/WRITE, допускает усиление READ до WRITE и не определяет конкретный SQL. @Version проверяется при изменении, OPTIMISTIC может защищать и чтение; конфликт обнаруживается вплоть до flush/commit.",
+    "Q13: закрытая интерфейсная проекция позволяет оптимизировать top-level поля, но вложенные свойства через join могут материализоваться целиком. DTO использует конструктор и не поддерживает вложенные проекции; @Value/SpEL не даёт оптимизации закрытой проекции."
   ],
   "staleness_risks": [
-    "07.10.2026 точечно перепроверены Q3 B0, Q4 B1 и Q5–Q11 B0; остальные Q файла не проходили полный содержательный аудит."
+    "07.10.2026 точечно перепроверены Q3 B0, Q4 B1 и Q5–Q13 B0; остальные Q файла не проходили полный содержательный аудит."
   ],
   "notes": [
     "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
