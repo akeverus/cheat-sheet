@@ -1286,10 +1286,10 @@
               "text": "`Ingress` управляет TCP/UDP-трафиком на L4 по IP-адресам и портам в обход Ingress-контроллера.",
               "correct": false,
               "sections": {
-                "what_actually": "Ingress работает на L7 (HTTP/HTTPS) с маршрутизацией по host/path; для TCP/UDP нужен Gateway API или Service `LoadBalancer`.",
+                "what_actually": "Ingress описывает HTTP/HTTPS host/path-правила; TCP/UDP можно выставлять через Service LoadBalancer либо через поддерживаемые маршруты конкретной реализации Gateway API.",
                 "source_of_confusion": "Ingress — про вход в кластер, и его роль расширяют до любого протокола.",
                 "if_it_were_true": "Тогда PostgreSQL TCP проходил бы через Ingress, но манифест валиден, а трафик 5432 не маршрутизируется.",
-                "how_it_should_be": "Ingress — L7 для HTTP/HTTPS; TCP/UDP идут через Gateway API или LoadBalancer."
+                "how_it_should_be": "Проверять тип Service или поддержку нужного протокола у контроллера Gateway API, а не приписывать TCP/UDP обычному Ingress."
               }
             },
             {
@@ -2755,6 +2755,66 @@
                 "when_to_apply": "Это важно при обслуживании ноды или автоматическом уменьшении кластера, когда приложение должно сохранить доступность.",
                 "edge_cases": "Прямой delete обходит PDB, падение ноды им не предотвращается, а отсутствие ресурсов для замены может задержать drain до таймаута.",
                 "related": "Rolling update управляется стратегией Deployment из Q14; graceful termination вытесненного Pod разобран в Q42."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 47,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда выбрать Gateway API вместо Ingress и как связаны GatewayClass, Gateway и HTTPRoute?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "GatewayClass хранит host/path маршруты команды, а Gateway и HTTPRoute лишь включают общий контроллер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GatewayClass указывает реализацию через controllerName; точку входа описывает Gateway, а HTTP-правила — HTTPRoute.",
+                "source_of_confusion": "Все три ресурса относятся к входящему трафику, поэтому их ответственность легко поменять местами.",
+                "if_it_were_true": "Команды приложений меняли бы общий класс контроллера ради каждого нового host/path маршрута.",
+                "how_it_should_be": "Оператор выбирает GatewayClass и Gateway, а команда приложения присоединяет HTTPRoute к подходящему listener."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Gateway API встроен в кластер без установки, а любой его контроллер обязан поддерживать все маршруты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gateway API поставляется как custom resources и требует установки CRD и реализации; поддержку route и расширений проверяют отдельно.",
+                "source_of_confusion": "Слово Kubernetes API создаёт впечатление, что ресурс и его контроллер уже есть в любом кластере.",
+                "if_it_were_true": "После создания произвольного Route трафик маршрутизировался бы без установленного контроллера и проверки функций.",
+                "how_it_should_be": "Перед выбором смотреть документацию контроллера, conformance и поддерживаемые функции GatewayClass."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "GatewayClass выбирает контроллер, Gateway задаёт вход, HTTPRoute задаёт правила с учётом поддержки функций.",
+              "correct": true,
+              "sections": {
+                "explanation": "Gateway API разделяет роли: класс связывает реализацию, Gateway задаёт listeners, HTTPRoute через parentRefs присоединяет HTTP-правила и backend Service.",
+                "example": "Оператор настраивает HTTPS Gateway, а команда приложения публикует HTTPRoute с host/path и ссылкой на свой Service.",
+                "when_to_apply": "Такой выбор полезен, когда инфраструктурой входа управляет платформа, а маршруты независимо ведут команды приложений.",
+                "edge_cases": "Это custom resources и контроллер, не встроенный Ingress; TCP/UDP или расширенные фильтры зависят от реализации и conformance.",
+                "related": "Для простого host/path у существующего контроллера может хватить Ingress из Q22; Gateway принимает Route из других namespace только при разрешении."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Ingress не умеет host/path маршруты, поэтому Gateway API обязателен даже для одного простого сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ingress как раз описывает HTTP/HTTPS host/path-правила; Gateway API выбирают по потребности в разделении ролей или расширениях.",
+                "source_of_confusion": "Более новый API принимают за обязательную замену прежнего ресурса даже для обычного входа.",
+                "if_it_were_true": "Ни один Ingress-контроллер не мог бы маршрутизировать обычный HTTP-сервис по домену или пути.",
+                "how_it_should_be": "Сначала проверить требования и возможности существующего Ingress-контроллера, затем выбирать миграцию."
               }
             }
           ]

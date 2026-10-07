@@ -117,6 +117,9 @@ updated: "2026-10-07"
 **Обслуживание кластера**
 - [Q46. Как PodDisruptionBudget влияет на kubectl drain и чего он не гарантирует?](#q46-как-poddisruptionbudget-влияет-на-kubectl-drain-и-чего-он-не-гарантирует)
 
+**Сетевой API**
+- [Q47. Когда выбрать Gateway API вместо Ingress и как связаны GatewayClass, Gateway и HTTPRoute?](#q47-когда-выбрать-gateway-api-вместо-ingress-и-как-связаны-gatewayclass-gateway-и-httproute)
+
 ---
 
 ## Q1. (!) Что такое `Kubernetes` и какие задачи он решает?
@@ -887,7 +890,7 @@ spec:
 
 **Популярные Ingress-контроллеры:** `Nginx Ingress Controller`, `Traefik`, `HAProxy`, `Istio Gateway`, `AWS ALB Ingress Controller`.
 
-**`Ingress` vs `Gateway API`:** `Gateway API` — новый стандарт K8s (core-ресурсы `GatewayClass`/`Gateway`/`HTTPRoute` GA с v1.0), более гибкий и расширяемый. Поддерживает TCP/UDP, не только HTTP.
+**`Ingress` vs `Gateway API`:** для простых правил host/path достаточно `Ingress` с подходящим контроллером. Gateway API — отдельное дополнение с custom resources и контроллером; оно разделяет управление инфраструктурой и маршрутами приложения. Поддержка конкретных маршрутов и протоколов зависит от реализации, поэтому TCP/UDP нельзя обещать одним лишь фактом установки CRD. См. Q47.
 
 ## Q23. В чём разница между `targetPort`, `port` и `nodePort`?
 
@@ -1960,6 +1963,20 @@ kubectl kustomize k8s/overlays/prod
 - PDB не создаёт запас ресурсов и не распределяет реплики по нодам. Если замене негде запуститься или она не проходит readiness, `drain` может застрять. Для устойчивости нужны достаточная ёмкость, распределение реплик и корректные probes.
 
 См. [Disruptions](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/) и [Safely Drain a Node](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/) в официальной документации Kubernetes.
+
+## Q47. Когда выбрать Gateway API вместо Ingress и как связаны GatewayClass, Gateway и HTTPRoute?
+
+`Ingress` подходит, когда нужны обычные HTTP/HTTPS host/path-правила и существующий контроллер покрывает требования. `Gateway API` полезен, когда платформенная команда управляет точкой входа, а команды приложений независимо публикуют маршруты; также он стандартизует более выразительные HTTP-правила, например совпадение по заголовку и взвешенное распределение трафика. Переход не обязателен для каждого сервиса.
+
+| Ресурс | Кто обычно отвечает | Что задаёт |
+|---|---|---|
+| `GatewayClass` | Поставщик инфраструктуры / оператор | Класс и `controllerName` реализации. |
+| `Gateway` | Оператор кластера | Конкретную точку входа, listeners, протоколы, порты, TLS и какие Route можно присоединять. |
+| `HTTPRoute` | Команда приложения | `parentRefs` на Gateway, условия HTTP-запроса и `backendRefs` на Service. |
+
+Связь: `GatewayClass → Gateway → HTTPRoute → Service`. Например, оператор создаёт Gateway с HTTPS-listener, а команда приложения присоединяет HTTPRoute с host/path и backend Service. По умолчанию Gateway принимает Route из своего namespace; межпространственное присоединение разрешают явно через `allowedRoutes`.
+
+Gateway API поставляется как набор CRD: для работы нужно установить их и реализацию контроллера. Перед миграцией проверьте поддерживаемую версию Gateway API, conformance/`GatewayClass.status.supportedFeatures` и условия принятия Gateway/Route у выбранного контроллера. `HTTPRoute` и `GRPCRoute` перечислены в документации Kubernetes среди стабильных видов; возможности TCP/UDP и расширенные фильтры нельзя переносить между контроллерами без проверки. См. [Kubernetes Gateway API](https://kubernetes.io/docs/concepts/services-networking/gateway/) и [Gateway API Implementer's Guide](https://gateway-api.sigs.k8s.io/guides/implementers-guide/).
 
 ## See also
 
