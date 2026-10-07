@@ -2291,50 +2291,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`podAntiAffinity` с `topologyKey: kubernetes.io/hostname` собирает все поды на одной ноде для снижения latency.",
+              "text": "Anti-affinity собирает реплики на одной ноде, а PDB переносит их на другую при её отказе.",
               "correct": false,
               "sections": {
-                "what_actually": "Anti-affinity делает обратное — распределяет поды по разным нодам/зонам; собирает поды вместе ради latency `podAffinity`.",
-                "source_of_confusion": "Affinity и anti-affinity легко перепутать по смыслу притяжения/отталкивания.",
-                "if_it_were_true": "Тогда все 5 реплик стояли бы на одной ноде, но её падение (kernel panic) роняет сервис на 4 мин до rescheduling.",
-                "how_it_should_be": "`podAntiAffinity` разносит поды; собирает их `podAffinity`."
+                "what_actually": "Anti-affinity помогает разнести реплики при планировании, а PDB не переносит их при отказе ноды.",
+                "source_of_confusion": "Слова affinity и disruption можно ошибочно связать с автоматическим переносом Pod при аварии.",
+                "if_it_were_true": "Реплики оказались бы в одном домене отказа, а PDB якобы восстановил бы их без свободных ресурсов и нового планирования.",
+                "how_it_should_be": "Распределять реплики с помощью anti-affinity; восстановление после сбоя зависит от контроллера и ёмкости кластера."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`PodDisruptionBudget` и `podAntiAffinity` — взаимодополняющие механизмы высокой доступности.",
+              "text": "Anti-affinity разносит реплики по нодам, а PDB ограничивает их добровольное вытеснение.",
               "correct": true,
               "sections": {
-                "explanation": "PDB защищает во время voluntary disruptions (`kubectl drain`, rolling update, cluster upgrade), не давая выбить больше допустимого числа подов; `podAntiAffinity` действует при scheduling, распределяя реплики по разным нодам/зонам, чтобы не ставить их на одну ноду.",
-                "example": "Production payment-API с `PDB minAvailable=2` + `podAntiAffinity topologyKey=topology.kubernetes.io/zone` выживает при падении целой AZ.",
-                "when_to_apply": "PDB и anti-affinity сочетают для критичных сервисов, чтобы пережить и плановое обслуживание, и внезапное падение ноды/зоны.",
-                "edge_cases": "PDB с `minAvailable: 100%` блокирует drain первой ноды навсегда — кластер-апгрейд не проходит; Raft требует нечётное число etcd (3/5), а не 2.",
-                "related": "[[kubernetes-interview#Q11]] QoS и защита от eviction; [[kubernetes-interview#Q43]] anti-affinity и scheduling; [[kubernetes-interview#Q3]] кворум etcd."
+                "explanation": "PDB ограничивает добровольное вытеснение через Eviction API при обслуживании; podAntiAffinity при планировании помогает разнести реплики по нодам или зонам.",
+                "example": "Для трёх готовых реплик PDB minAvailable=2 позволяет один eviction; anti-affinity помогает не разместить все реплики на одной ноде.",
+                "when_to_apply": "Эти механизмы сочетают при плановом drain и снижении риска общей потери реплик при отказе ноды.",
+                "edge_cases": "PDB не останавливает отказ ноды или прямое удаление Pod; rollout Deployment задаётся его стратегией, а строгий бюджет может задержать drain.",
+                "related": "[[kubernetes-interview#Q46]] подробно разбирает drain и пределы PDB; [[kubernetes-interview#Q14]] — стратегию обновления."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`PodDisruptionBudget minAvailable: 2` запрещает любые voluntary disruptions и блокирует drain ноды.",
+              "text": "PDB удерживает число реплик при любом отказе, а readiness probe самостоятельно их пересоздаёт.",
               "correct": false,
               "sections": {
-                "what_actually": "PDB не запрещает disruptions, а гарантирует минимальное число доступных подов; drain идёт постепенно, ожидая ready новых реплик.",
-                "source_of_confusion": "«Budget» воспринимают как полный запрет, а не как лимит одновременных потерь.",
-                "if_it_were_true": "Тогда `minAvailable: 100%` был бы нормой, но drain первой ноды не проходит, и кластер-апгрейд блокируется навсегда.",
-                "how_it_should_be": "PDB ограничивает число одновременно недоступных подов, а не запрещает drain."
+                "what_actually": "PDB не предотвращает падение ноды, а readiness лишь убирает недоступный Pod из маршрутизации; реплики восстанавливает контроллер.",
+                "source_of_confusion": "Бюджет доступности и health probe звучат как полная автоматическая защита от любого отказа.",
+                "if_it_were_true": "Одна проверка готовности могла бы создать новую реплику даже без свободной ноды, а PDB предотвратил бы физический сбой.",
+                "how_it_should_be": "PDB применять к eviction при обслуживании, readiness — к маршрутизации, Deployment — к восстановлению числа реплик."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Multi-master Control Plane требует минимум 2 экземпляров etcd для кворума Raft при отказе ноды.",
+              "text": "HPA всегда поддерживает заданное число реплик, а Service восстанавливает Pod после падения ноды.",
               "correct": false,
               "sections": {
-                "what_actually": "Raft требует нечётное число узлов (3 или 5) с кворумом `(N/2)+1`; 2 узла не дают fault tolerance — потеря одного убивает кворум.",
-                "source_of_confusion": "Кажется, что «два — уже резервирование», достаточное для HA.",
-                "if_it_were_true": "Тогда 2 etcd были бы дешевле и достаточны, но один на maintenance → кластер read-only, новые поды не создаются.",
-                "how_it_should_be": "etcd разворачивают нечётным числом (3/5) для корректного кворума Raft."
+                "what_actually": "HPA меняет желаемое число реплик по метрикам, а Service маршрутизирует к доступным Pod; создание замены — задача контроллера.",
+                "source_of_confusion": "Все три механизма влияют на доступность и работают автоматически, поэтому их обязанности смешивают.",
+                "if_it_were_true": "Service мог бы создавать Pod без контроллера, а HPA заменял бы каждую упавшую реплику независимо от метрик.",
+                "how_it_should_be": "Deployment или ReplicaSet поддерживает заданные реплики; Service маршрутизирует, HPA корректирует их желаемое число."
               }
             }
           ]
@@ -2695,6 +2695,66 @@
                 "source_of_confusion": "Оба решают параметризацию манифестов под окружения, и подходы считают идентичными.",
                 "if_it_were_true": "Тогда у Kustomize были бы шаблоны вроде `{{ }}`, но он работает только со стратегическими merge-патчами.",
                 "how_it_should_be": "Helm шаблонизирует через Go templates; Kustomize накладывает overlay-патчи без шаблонов."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 46,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как PodDisruptionBudget влияет на kubectl drain и чего он не гарантирует?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "PDB сохраняет minAvailable при любом отказе ноды; drain лишь ускоряет замену недоступных Pod.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PDB не предотвращает involuntary disruption при отказе ноды; он ограничивает только добровольные eviction через API.",
+                "source_of_confusion": "Имя budget звучит как гарантия постоянного числа живых реплик независимо от причины потери.",
+                "if_it_were_true": "При отказе ноды нельзя было бы потерять больше реплик, чем разрешил PDB, хотя нода может исчезнуть сразу со всеми Pod.",
+                "how_it_should_be": "Считать PDB ограничением управляемого обслуживания и отдельно обеспечивать распределение и ёмкость реплик."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Drain удаляет Pod напрямую в обход PDB; ручное удаление через API, напротив, проверяет бюджет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "kubectl drain использует Eviction API, который учитывает PDB; прямое удаление Pod бюджет обходит.",
+                "source_of_confusion": "Обе операции выглядят как удаление Pod, но проходят через разные API-механизмы.",
+                "if_it_were_true": "При исчерпанном бюджете drain всегда продолжал бы обслуживание, а ручной delete мог бы блокироваться PDB.",
+                "how_it_should_be": "Для уважения к PDB использовать eviction; прямое удаление не считать безопасным аналогом drain."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "PDB блокирует rolling update Deployment, пока не готовы все Pod; drain не зависит от стратегии обновления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rolling update регулирует стратегия Deployment; PDB не ограничивает rollout, хотя его недоступные Pod учитываются в бюджете eviction.",
+                "source_of_confusion": "Оба процесса могут временно уменьшить число доступных реплик, поэтому их механизмы легко смешать.",
+                "if_it_were_true": "Параметры стратегии Deployment не определяли бы допустимую недоступность при обновлении приложения.",
+                "how_it_should_be": "Для rollout смотреть стратегию Deployment, для drain — Eviction API и PDB."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Drain запрашивает eviction с учётом PDB; следующий Pod ждёт бюджет, а отказ ноды PDB не предотвращает.",
+              "correct": true,
+              "sections": {
+                "explanation": "kubectl drain запрашивает Eviction API и повторяет временно отклонённые запросы; PDB ограничивает число добровольных вытеснений.",
+                "example": "При трёх готовых репликах и minAvailable: 2 первый eviction допускается, а второй ждёт готовности замены.",
+                "when_to_apply": "Это важно при обслуживании ноды или автоматическом уменьшении кластера, когда приложение должно сохранить доступность.",
+                "edge_cases": "Прямой delete обходит PDB, падение ноды им не предотвращается, а отсутствие ресурсов для замены может задержать drain до таймаута.",
+                "related": "Rolling update управляется стратегией Deployment из Q14; graceful termination вытесненного Pod разобран в Q42."
               }
             }
           ]

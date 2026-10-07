@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[kubernetes-basics]]"
 next: []
-updated: "2026-05-08"
+updated: "2026-10-07"
 ---
 # Вопросы на собеседовании: `Kubernetes`
 
@@ -113,6 +113,9 @@ updated: "2026-05-08"
 - [Q43. Что такое `Taints`, `Tolerations` и `Node Affinity`?](#q43-что-такое-taints-tolerations-и-node-affinity)
 - [Q44. Что такое `LimitRange` и чем он отличается от `ResourceQuota`?](#q44-что-такое-limitrange-и-чем-он-отличается-от-resourcequota)
 - [Q45. Что такое `Kustomize` и как он соотносится с `Helm`?](#q45-что-такое-kustomize-и-как-он-соотносится-с-helm)
+
+**Обслуживание кластера**
+- [Q46. Как PodDisruptionBudget влияет на kubectl drain и чего он не гарантирует?](#q46-как-poddisruptionbudget-влияет-на-kubectl-drain-и-чего-он-не-гарантирует)
 
 ---
 
@@ -1517,14 +1520,16 @@ kubectl config set-context --current --namespace=production  # Задать name
 |----------|----------|
 | **ReplicaSet / Deployment** | Несколько реплик пода, автоматический перезапуск |
 | **Health Probes** | Автоматический перезапуск (liveness) и вывод из балансировки (readiness) |
-| **Pod Disruption Budget** | Гарантирует минимальное количество доступных подов при обслуживании |
+| **Pod Disruption Budget** | Ограничивает добровольное вытеснение через Eviction API при обслуживании (детали в Q46) |
 | **Anti-affinity** | Распределение подов по разным нодам / availability zones |
 | **HPA / Cluster Autoscaler** | Автоматическое масштабирование под нагрузкой |
 | **Multi-master Control Plane** | Несколько экземпляров API Server, etcd (3 или 5) |
 | **Service** | Балансировка нагрузки между подами |
 
+`PodDisruptionBudget` действует только для добровольного вытеснения через Eviction API; это не обещание, что реплик всегда будет не меньше порога. При падении узла, прямом удалении Pod или rollout ограничения другие. Практический сценарий `kubectl drain` разобран в Q46.
+
 ```yaml
-# Pod Disruption Budget — минимум 2 пода всегда доступны
+# Pod Disruption Budget — eviction допускается, пока доступны минимум 2 пода
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -1940,6 +1945,21 @@ kubectl kustomize k8s/overlays/prod
 **На практике их часто комбинируют:** `Helm` — для сторонних зависимостей (`nginx-ingress`, `cert-manager`, `postgres`), которые приходят чужими чартами, а `Kustomize` — для собственных приложений, где важна прозрачность. `ArgoCD` нативно поддерживает оба, так что выбирать «или-или» необязательно.
 
 ---
+
+## Q46. Как PodDisruptionBudget влияет на kubectl drain и чего он не гарантирует?
+
+При плановом обслуживании `kubectl drain` помечает ноду недоступной для обычного планирования и пытается вытеснить её Pod через **Eviction API**. Для Pod, выбранных `PodDisruptionBudget` (PDB), API проверяет бюджет доступности; если очередное вытеснение нарушит `minAvailable` или `maxUnavailable`, запрос временно отклоняется. `drain` повторяет такие запросы и может ждать готовности замены или закончиться по таймауту.
+
+Например, у Deployment три готовые реплики и PDB `minAvailable: 2`. Первую реплику можно вытеснить; следующую — лишь когда замена станет доступной. Если готовых реплик уже две, новый eviction не пройдёт до восстановления доступности или изменения бюджета. Удаление через Eviction API соблюдает `terminationGracePeriodSeconds` (см. Q42).
+
+**Границы PDB:**
+
+- PDB ограничивает именно добровольные вытеснения через Eviction API. Прямое удаление Pod или Deployment его обходит.
+- Падение ноды и вытеснение из-за нехватки ресурсов PDB предотвратить не может, хотя уже недоступные Pod учитываются при расчёте бюджета.
+- Rolling update контролируется стратегией Deployment (Q14), а не блокируется PDB; недоступные во время него Pod влияют на оставшийся бюджет eviction.
+- PDB не создаёт запас ресурсов и не распределяет реплики по нодам. Если замене негде запуститься или она не проходит readiness, `drain` может застрять. Для устойчивости нужны достаточная ёмкость, распределение реплик и корректные probes.
+
+См. [Disruptions](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/) и [Safely Drain a Node](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/) в официальной документации Kubernetes.
 
 ## See also
 
