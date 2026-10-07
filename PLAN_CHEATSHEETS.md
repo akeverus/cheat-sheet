@@ -1062,15 +1062,35 @@ JPA full parity FAIL на старых блоках (24/44 с несоразме
 другие прежние сигналы). Полной содержательной проверки файлов (`П`)
 и независимой blind-приёмки нет. Коммит `5a480396b`.
 
-**Точная точка авторского продолжения:** Spring Data JPA Q28 B0 о
-batch-обработке. Сначала сопоставить заголовки и ответы Hibernate Q36,
-Spring Data JPA Q21 и существующий Q28/MCQ: отличить включение JDBC
-batching через `hibernate.jdbc.batch_size` от периодических `flush()`/
-`clear()` для памяти; проверить `IDENTITY` и `SEQUENCE`, `order_inserts`,
-`order_updates`, `saveAll` и границы транзакции по официальным Hibernate
-7.4/Spring Data JPA 4.1 источникам. Затем исправить теорию, MCQ и
-freshness-sidecar, проверить локальный блок и файлы; не объявлять весь
-JPA-файл принятым по локальному валидатору.
+**Контрольная точка 07.10.2026 — Spring Data JPA Q28 B0 + Hibernate Q36 B0 · О.**
+Сопоставлены заголовки и ответы (`З` → `О`) с JPA Q21 и Hibernate Q36.
+По [Hibernate ORM 7.4, batching](https://docs.hibernate.org/orm/7.4/userguide/html_single/#batch),
+[BatchSettings](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/cfg/BatchSettings.html),
+[Spring Data JPA, transactions](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html)
+и [`SimpleJpaRepository.saveAll`](https://docs.spring.io/spring-data/jpa/docs/current/api/org/springframework/data/jpa/repository/support/SimpleJpaRepository.html)
+исправлено смешение JDBC batching и размера persistence context:
+положительный `batch_size` включает пакеты, а периодические
+`flush()`/`clear()` ограничивают память; `flush()` не делает commit.
+`saveAll` не гарантирует JDBC batch, `IDENTITY` отключает именно insert
+batching, `SEQUENCE` может выдать ключ до INSERT. `order_inserts` и
+`order_updates` необязательны и требуют замера. В обоих примерах
+устранён ошибочный первый flush на первой записи/51-й записи; убрано
+неподтверждённое обещание одного round-trip ровно на 50 INSERT и
+категоричный `OutOfMemoryError`. Парные MCQ A/B/C/D/sections и
+freshness-sidecar синхронизированы. Structure 93 Q/94 блока PASS,
+изменённые блоки без hard/warnings, Hibernate full parity PASS; JPA
+full parity FAIL по прежним блокам (22/44 с несоразмерной длиной и
+другие сигналы). Полной проверки файлов (`П`) и независимой blind-
+приёмки нет. Коммит `851363aa4`.
+
+**Точная точка авторского продолжения:** Spring Data JPA Q29 B0 о L2
+cache. Сначала сравнить заголовки и ответы Hibernate Q24–Q27 и парные
+MCQ; проверить границу жизни L1 (EntityManager, не просто транзакция),
+настройку JCache/Ehcache для Hibernate 7.4, `@Cacheable`/`@Cache`, кэш
+коллекции и `TRANSACTIONAL` по официальным Hibernate/Spring Data
+источникам. Если пробел подтверждён, исправить теорию, MCQ и sidecar;
+разделять `З`, `О` и `П`, не считать старый JPA-файл принятым по
+локальному валидатору.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
 
@@ -1094,8 +1114,8 @@ JPA-файл принятым по локальному валидатору.
    Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13/Q14, WebAuthn Q24/Q46, Spring Security Q44,
    Metrics & Tracing Q40, Spring Testing Q9/Q10, Uber Q6/Q7,
    Google Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1,
-   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q27 B0/Q39 B0,
-   Hibernate Q8–Q10 B0/Q14–Q16 B0/Q19–Q21 B0/Q23 B0,
+   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q28 B0/Q39 B0,
+   Hibernate Q8–Q10 B0/Q14–Q16 B0/Q19–Q21 B0/Q23/Q36 B0,
    Database Transactions Q15/Q22/Q23 B0
    и RabbitMQ Streams Q40–Q42 ждут
    независимой MCQ-приёмки.
@@ -1104,7 +1124,7 @@ JPA-файл принятым по локальному валидатору.
    PostgreSQL 19 перепроверять после финальных релизов.
 3. Отдельной задачей пройти независимую blind-приёмку новых MCQ и старый
    parity/pre-check backlog Hibernate, Spring Data JPA (после Q3/Q4,
-   Q5–Q27 и Q39 ещё 14 hard-сигналов; Hibernate после Q8–Q10/Q14–Q16/Q19–Q21/Q23 — 16),
+   Q5–Q28 и Q39 ещё 13 hard-сигналов; Hibernate после Q8–Q10/Q14–Q16/Q19–Q21/Q23/Q36 — 15),
    Java IO/NIO, Jackson,
    URL Shortener, RabbitMQ, Kafka, сравнения брокеров и event-driven;
    положительный валидатор не означает `FINAL`.

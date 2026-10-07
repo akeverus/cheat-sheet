@@ -387,14 +387,25 @@ freshness-sidecar синхронизированы. Structure PASS, локаль
 parity FAIL из-за старых блоков. Полного аудита и blind-приёмки нет.
 Коммит `5a480396b`.
 
-Следующий авторский пакет: Spring Data JPA Q28 B0 о batch-обработке.
-Сравнить Hibernate Q36 и Spring Data JPA Q21 по заголовкам, ответам и
-MCQ. По официальным Hibernate 7.4 и Spring Data JPA 4.1 проверить,
-достаточность `hibernate.jdbc.batch_size`, роль `flush()`/`clear()` для
-памяти, `IDENTITY`/`SEQUENCE`, `order_inserts`/`order_updates`, `saveAll`
-и транзакционную границу. Затем синхронизировать Q28, MCQ и sidecar,
-запустить локальные и файловые проверки. Не считать весь JPA-файл
-проверенным после точечной правки.
+07.10 Spring Data JPA Q28 B0 и Hibernate Q36 B0: по Hibernate 7.4
+Batching/BatchSettings и Spring Data JPA Transactions/`saveAll`
+разделены положительный `batch_size` для JDBC batching и периодические
+`flush()`/`clear()` для размера persistence context; flush не commit,
+`saveAll` не гарантирует пакеты, IDENTITY мешает insert batching, а
+SEQUENCE может выдать ID заранее. Исправлены настройки, обе ошибки
+счётчика в примерах, необязательные order-флаги, категоричные обещания
+скорости и OOM. Теория, парные MCQ и sidecar синхронизированы.
+Structure PASS, локальные блоки без hard/warnings, Hibernate full
+parity PASS, Spring Data JPA full parity FAIL из-за старых блоков.
+Полного аудита и blind-приёмки нет. Коммит `851363aa4`.
+
+Следующий авторский пакет: Spring Data JPA Q29 B0 о L2 cache.
+Сравнить заголовки, ответы и MCQ Hibernate Q24–Q27. По официальным
+Hibernate 7.4 и Spring Data JPA источникам проверить срок жизни L1,
+JCache/Ehcache, `@Cacheable`/`@Cache`, кэш коллекций и границы
+`TRANSACTIONAL`. При подтверждении пробела исправить Q29/MCQ/sidecar,
+затем выполнить локальные и файловые проверки. Полный аудит старого
+файла и независимую приёмку вести отдельно.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,
