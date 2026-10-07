@@ -25,7 +25,7 @@ Push не запрошен.
 
 ## Текущий проверенный срез на 07.10.2026
 
-В каталоге 337 тематических Markdown-файлов и 9 921 заголовков Q в 25
+В каталоге 337 тематических Markdown-файлов и 9 923 заголовка Q в 25
 разделах; 336 файлов имеют парный production MCQ JSON. Восемнадцать новых тем
 в текущем этапе: Python core, Python concurrency, Python testing, FastAPI,
 MySQL, JDBC/пулы, Java 26–27, Python typing, Python packaging и
@@ -141,12 +141,49 @@ JSON PASS; parity RabbitMQ/Kafka/сравнения PASS, event-driven FAIL на
 
 ## Точная точка продолжения
 
-Начни с P3-кандидата про исходящий HTTP-вызов: прочитай
-`frameworks/spring/spring-rest-client-interview.md` Q5/Q12 и
-`resilience4j-interview.md`. По официальным Spring Framework/Boot и
-Resilience4j источникам проверь deadline, retry безопасной операции,
-connection pool, метрики и trace context. Реши `DEEPEN` Q12 или `ADD_Q`
-без дублирования общих паттернов; синхронизируй JSON и локальные gates.
+Начни с **независимой содержательной MCQ-приёмки** последней группы:
+`frameworks/spring/spring-batch-interview.md` Q6 B0/B1, Q28 B0,
+Q38 B0 и парный production JSON. Сверь каждый A/B/C/D с теорией и
+официальными Spring Batch 6 / Boot 4.1 docs, затем отдельно проверь
+SFPL/ANSC и русский текст по фазам A/B `docs/mcq-quality/workflow.md`.
+Авторские structure/parity/pre-check PASS не заменяют blind review.
+После Batch проверить Uber Q6/Q7, Google Maps Q27 и Spring Framework
+Q10 B1. Старые hard-сигналы Spring Batch Q2/Q26/Q27/Q39/Q42
+разбирать отдельным пакетом. Python 3.15 и PostgreSQL 19 перепроверять
+после GA; Stock Exchange остаётся кандидатом до подтверждения ценности.
+MongoDB `JobRepository` уже разобран в Batch Q6/Q28/Q38 без нового Q:
+различены resourceless/JDBC/MongoDB, транзакции metadata и данные шага.
+JSON Q6 B0/Q28/Q38 синхронизированы, Q6 B1 добавлен; 43 Q/44 блока,
+structure/parity PASS, общий pre-check FAIL только на старых блоках,
+blind review ожидается.
+Proximity Service/Nearby Friends уже разобраны без новых файлов:
+`design-uber-interview.md` Q6/Q7 исправлены по PostGIS и Redis,
+`design-google-maps-interview.md` Q27 углублён по GEOSEARCH, проверке
+прав доступа при каждом чтении и отзыву. Официальные PostGIS, Redis и
+OWASP сверены; пары JSON Q6/Q7/Q27 синхронизированы, structure/parity/
+pre-check PASS, независимый blind review ожидается. Spring Framework
+Q10 углублён по `@Bean(bootstrap=BACKGROUND)` с 6.2 и добавлен MCQ B1:
+structure/parity PASS, полный pre-check старого файла FAIL на прежних
+Q1/Q9, Q10 без hard-сигналов; blind review ожидается.
+Spring Testing Q9/Q10 уже углублены по `@MockitoBean`/`@MockitoSpyBean`,
+парный JSON обновлён; структура/parity PASS, полный pre-check старого
+файла FAIL на прежнем Q16, blind review ожидается. Отдельный Q не нужен.
+Metrics & Tracing Q40 уже углублён по Baggage, исправлен пример с
+неактивным Context и передачей `userId`. Парный JSON Q40 изменён,
+структура PASS; общий parity/pre-check старого файла FAIL, независимая
+приёмка ожидается. Отдельный Q не потребовался. Прежняя ссылка плана
+на Q37 была ошибочной: Baggage находится в Q40, Q37 — tail sampling.
+WebAuthn Q46 уже добавлен в общую тему; Q24 и Spring Security Q44
+исправлены по W3C/FIDO/Spring Security, включая различие synced и
+device-bound passkeys, отдельный модуль и CVE-2026-47841.
+Парные JSON синхронизированы, структура/parity PASS. Полный pre-check
+общей темы PASS, Spring Security FAIL на прежних блоках; изменённый Q44
+без hard-сигнала. Независимая MCQ-приёмка ожидается, freshness общей
+темы сброшен в TODO.
+Spring Rest Client Q12 уточнён, Q14 об общем бюджете исходящего HTTP-вызова,
+повторах и наблюдаемости добавлен. Структура/parity JSON PASS, полный
+pre-check старого файла FAIL на прежних Q4/Q6/Q7/Q11/Q12/Q13; новый Q14
+без hard-сигналов. Независимая MCQ-приёмка ожидается.
 Digital Wallet Q1–Q4 уже создан и закоммичен (`3a300d20`), его MCQ
 structure/parity/pre-check PASS, независимый blind review ожидается.
 Database Transactions Q43 о write skew добавлен в существующую тему:
