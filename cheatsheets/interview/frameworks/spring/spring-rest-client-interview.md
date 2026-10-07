@@ -241,11 +241,13 @@ Map<String, Object> data = client.get().uri("/info")
     .body(new ParameterizedTypeReference<Map<String, Object>>() {});
 ```
 
+См. [Spring Framework 6.2: `retrieve().body(ParameterizedTypeReference)`](https://docs.spring.io/spring-framework/reference/6.2/integration/rest-clients.html).
+
 ---
 
 ## Q7. (!) Когда использовать WebClient вместо RestClient?
 
-Выбор определяется моделью выполнения вашего приложения, а не «новизной» клиента. Если стек блокирующий (Spring MVC, thread-per-request) — берите `RestClient`; если реактивный (WebFlux) — `WebClient`. Брать реактивный клиент в блокирующее приложение «на будущее» смысла нет: вы заплатите сложностью, не получив выигрыша.
+Выбор определяется **контрактом вызова**. Для обычного синхронного HTTP-запроса подходит `RestClient`. Если нужно неблокирующе скомпоновать несколько запросов, использовать `Mono`/`Flux` или потоковый ответ, подходит `WebClient`. В WebFlux-цепочке блокирующий вызов `RestClient` задержал бы поток; в Spring MVC `WebClient` тоже допустим, когда его асинхронные возможности действительно нужны. Название серверного стека само по себе не заменяет анализ вызова.
 
 **RestClient** (синхронный) — когда:
 - Традиционное Spring MVC приложение (модель thread-per-request).
@@ -253,7 +255,7 @@ Map<String, Object> data = client.get().uri("/info")
 - Хочется максимальной простоты кода.
 
 **WebClient** (реактивный) — когда:
-- Приложение на Spring WebFlux.
+- Нужен неблокирующий исходящий вызов в реактивной цепочке, например в Spring WebFlux.
 - Нужны `Mono<T>`/`Flux<T>` как возвращаемые типы (чтобы не блокировать поток).
 - Высокая конкурентность при малом числе потоков — реактивная модель здесь экономит ресурсы.
 - Нужен стриминг ответа (`Flux<ServerSentEvent>`), а не один цельный результат.
@@ -271,7 +273,7 @@ Flux<User> allUsers = webClient.get()
     .bodyToFlux(User.class);
 ```
 
-**Подводный камень:** да, `WebClient` можно превратить в синхронный через `.block()` и использовать в обычном коде — но в блокирующем приложении это лишняя реактивная обёртка ради того же результата. Правильный синхронный клиент — `RestClient`.
+**Подводный камень:** `WebClient.block()` делает **вызывающий поток ожидающим**, хотя транспорт клиента остаётся неблокирующим. Это допустимый способ получить синхронный результат, но не превращает блокирующий код в асинхронный. Для простого синхронного сценария `RestClient` обычно проще; если несколько ответов нужно скомпоновать, лучше собрать реактивную цепочку и ждать результат лишь на допустимой границе. См. [Spring Framework 6.2: REST Clients](https://docs.spring.io/spring-framework/reference/6.2/integration/rest-clients.html) и [синхронное использование WebClient](https://docs.spring.io/spring-framework/reference/6.2/web/webflux-webclient/client-synchronous.html).
 
 ---
 
@@ -473,13 +475,15 @@ RestClient client = RestClient.builder()
 
 В приложении со Spring Boot для штатных HTTP-метрик и передачи trace context внедряйте автоконфигурированный `RestClient.Builder`. Прямой вызов `RestClient.builder()` в примере выше не получает эти настройки автоматически; собственный интерсептор логирования их не заменяет. Подробности об общем бюджете вызова — в Q14.
 
+См. [Spring Framework 6.2: `SimpleClientHttpRequestFactory`](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/http/client/SimpleClientHttpRequestFactory.html) и [Apache HttpClient 5.6: connection manager](https://hc.apache.org/httpcomponents-client-5.6.x/connection-management.html).
+
 ---
 
 ## Q13. Как мигрировать с RestTemplate на RestClient?
 
 Миграция дешёвая, потому что у клиентов общая инфраструктура. Есть два пути, и обычно их сочетают.
 
-**Шаг 1 — переиспользовать настройки.** `RestClient.create(oldTemplate)` создаёт клиент, который наследует от старого `RestTemplate` всё ценное: конвертеры сообщений, фабрику запросов (а значит, таймауты) и интерсепторы. Перенастраивать заново ничего не нужно.
+**Шаг 1 — переиспользовать настройки.** `RestClient.create(oldTemplate)` создаёт клиент на основе конфигурации `RestTemplate`: конвертеров сообщений, фабрики запросов (включая её таймауты), интерсепторов, URI builder и обработчика ошибок. При переходе на новую ручную сборку через `RestClient.builder()` эти настройки нужно перенести явно.
 
 ```java
 RestTemplate oldTemplate = ...; // уже настроенный с interceptors, converters
@@ -507,6 +511,8 @@ ResponseEntity<List<User>> resp = restTemplate.exchange(
 ResponseEntity<List<User>> resp = restClient.get().uri(url)
     .retrieve().toEntity(new ParameterizedTypeReference<>() {});
 ```
+
+См. [Spring Framework 6.2: миграция с RestTemplate](https://docs.spring.io/spring-framework/reference/6.2/integration/rest-clients.html) и [`RestClient.create(RestTemplate)`](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/web/client/RestClient.html).
 
 ---
 
