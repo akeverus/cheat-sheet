@@ -493,13 +493,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 ## Q9. Как использовать `@Query` с `SpEL`?
 
-`SpEL` (`Spring Expression Language`) внутри `@Query` позволяет параметризовать сам текст запроса — чаще всего, чтобы написать один обобщённый запрос для целого семейства сущностей в базовом репозитории.
+В `@Query` доступны ограниченные шаблонные выражения Spring Data с `SpEL`. Они позволяют использовать метаданные репозитория и аргументы метода в объявленном запросе; это не произвольная подстановка SQL из пользовательской строки.
 
-Главный приём — `#{#entityName}`: вместо жёстко зашитого имени сущности подставляется имя из дженерика репозитория. Так один метод в `BaseRepository<T>` работает и для `User`, и для `Product`, без дублирования.
+Главный приём — `#{#entityName}`: Spring Data подставляет JPA-имя сущности конкретного репозитория. Оно берётся из `@Entity(name = ...)` либо из простого имени класса, а не из имени таблицы. Так один метод в базовом интерфейсе можно переиспользовать для нескольких сущностей с общим полем.
 
 ```java
-// #{#entityName} — подставляется имя сущности из дженерика репозитория
-public interface BaseRepository<T> extends JpaRepository<T, Long> {
+@MappedSuperclass
+abstract class ActiveEntity {
+    @Id Long id;
+    boolean active;
+}
+
+@NoRepositoryBean
+public interface BaseRepository<T extends ActiveEntity> extends JpaRepository<T, Long> {
 
     // Один запрос для любой сущности с полем "active"
     @Query("SELECT e FROM #{#entityName} e WHERE e.active = true")
@@ -510,18 +516,24 @@ public interface BaseRepository<T> extends JpaRepository<T, Long> {
     long countActive();
 }
 
-// UserRepository наследует — #{#entityName} = "User"
+@Entity
+class User extends ActiveEntity { }
+
+@Entity
+class Product extends ActiveEntity { }
+
+// #{#entityName} для этого репозитория = "User"
 public interface UserRepository extends BaseRepository<User> {
     // findAllActive() → SELECT e FROM User e WHERE e.active = true
 }
 
-// ProductRepository наследует — #{#entityName} = "Product"
+// #{#entityName} для этого репозитория = "Product"
 public interface ProductRepository extends BaseRepository<Product> {
     // findAllActive() → SELECT e FROM Product e WHERE e.active = true
 }
 ```
 
-`SpEL` вычисляется при создании запроса (один раз при старте), а не при каждом вызове. Помимо `#{#entityName}` можно использовать `#{#root.args[0]}` для доступа к аргументам, но на практике именованные параметры (`@Param`) удобнее и безопаснее.
+`#{#entityName}` привязан к типу конкретного репозитория. Выражения для значений аргументов, например `?#{[0]}` или `:#{#name}`, оцениваются при выполнении запроса; для простой привязки обычно достаточно `@Param`. В обобщённом интерфейсе нужна `@NoRepositoryBean`, чтобы Spring не пытался создать репозиторий для абстрактного `T`. [Spring Data JPA templated queries](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html); [repository interfaces](https://docs.spring.io/spring-data/jpa/reference/repositories/definition.html).
 
 ## Q10. (!) Что такое `@Transactional` и как она работает через прокси?
 
