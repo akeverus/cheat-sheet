@@ -110,7 +110,7 @@ updated: "2026-10-07"
 - [Q37. Как управлять транзакциями и `isolation level` в chunk-обработке?](#q37-как-управлять-транзакциями-и-isolation-level-в-chunk-обработке)
 
 **Spring Batch 5 и продвинутые темы**
-- [Q38. (!) Что нового в Spring Batch 5 — JobRepository, DataSourceTransactionManager?](#q38--что-нового-в-spring-batch-5--jobrepository-datasourcetransactionmanager)
+- [Q38. (!) Что изменилось в Spring Batch 5 — JobRepository и менеджер транзакций?](#q38--что-изменилось-в-spring-batch-5--jobrepository-и-менеджер-транзакций)
 - [Q39. (!) Как работает Partitioning через PartitionHandler и GridSize?](#q39--как-работает-partitioning-через-partitionhandler-и-gridsize)
 - [Q40. (!) Что такое Remote Chunking и как реализовать Master-Worker через Kafka?](#q40--что-такое-remote-chunking-и-как-реализовать-master-worker-через-kafka)
 - [Q41. Как работают JobParameters и инкрементальные задания?](#q41-как-работают-jobparameters-и-инкрементальные-задания)
@@ -322,14 +322,14 @@ public FlatFileItemReader<Transaction> reader(
 - **Предотвращение дублей** — не позволяет запустить уже успешный `JobInstance`
 - **Аудит** — полная история запусков
 
-**Выбор хранилища и граница версий:** в Spring Batch 5 / Boot 3 типичный персистентный репозиторий использует JDBC. Spring Batch 6 предоставляет JDBC- и MongoDB-реализации; один `@EnableBatchProcessing` без выбора хранилища даёт `ResourcelessJobRepository`, который не сохраняет метаданные между запусками и не подходит для restartable/concurrent job. Для ручной настройки используют `@EnableJdbcJobRepository` или `@EnableMongoJobRepository`. Spring Boot 4.1 умеет автоконфигурировать in-memory, JDBC или MongoDB store; явный `@EnableBatchProcessing` либо наследование `DefaultBatchConfiguration` отключает эту автоконфигурацию.
+**Выбор хранилища и граница версий:** в Spring Batch 5.0–5.1 ручная конфигурация `@EnableBatchProcessing` использовала JDBC-репозиторий. В Batch 5.2 появились MongoDB-репозиторий и `ResourcelessJobRepository`; последний уже тогда не сохранял метаданные. В Batch 6 изменилось **поведение по умолчанию**: `@EnableBatchProcessing` или `DefaultBatchConfiguration` без отдельного выбора хранилища даёт resourceless-репозиторий, который не подходит для перезапуска и конкурентного исполнения. Для ручной настройки персистентного хранилища в Batch 6 используют `@EnableJdbcJobRepository` или `@EnableMongoJobRepository`. Spring Boot 4.1 умеет автоконфигурировать in-memory, JDBC или MongoDB store; явный `@EnableBatchProcessing` либо наследование `DefaultBatchConfiguration` отключает эту автоконфигурацию.
 
-MongoDB-репозиторий хранит **метаданные задания**, а не входные или выходные записи: например, читать CSV и писать в PostgreSQL можно при `JobRepository` в MongoDB. Для его транзакций нужны `MongoTransactionManager` и серверная конфигурация с поддержкой многодокументных транзакций (например, replica set); коллекции и индексы должны существовать до выполнения задания (в Boot 4.1 их создание можно включить свойством `spring.batch.data.mongodb.schema.initialize=true`). Транзакция метаданных MongoDB сама по себе не делает запись в отдельный PostgreSQL атомарной вместе с ней: после сбоя повторная обработка требует идемпотентной записи или другого явно спроектированного механизма согласования. Сверяй [Spring Batch 6 JobRepository](https://docs.spring.io/spring-batch/reference/job/configuring-repository.html), [Spring Boot 4.1 Batch](https://docs.spring.io/spring-boot/reference/io/spring-batch.html) и [MongoDB transactions](https://docs.spring.io/spring-data/mongodb/reference/mongodb/client-session-transactions.html).
+MongoDB-репозиторий хранит **метаданные задания**, а не входные или выходные записи: например, читать CSV и писать в PostgreSQL можно при `JobRepository` в MongoDB. Для его транзакций нужны `MongoTransactionManager` и серверная конфигурация с поддержкой многодокументных транзакций (например, replica set); коллекции и индексы должны существовать до выполнения задания (в Boot 4.1 их создание можно включить свойством `spring.batch.data.mongodb.schema.initialize=true`). Транзакция метаданных MongoDB сама по себе не делает запись в отдельный PostgreSQL атомарной вместе с ней: после сбоя повторная обработка требует идемпотентной записи или другого явно спроектированного механизма согласования. Сверяй [Spring Batch 5.2: новые реализации](https://docs.spring.io/spring-batch/reference/5.2/whatsnew.html), [Spring Batch 6 JobRepository](https://docs.spring.io/spring-batch/reference/job/configuring-repository.html), [Spring Boot 4.1 Batch](https://docs.spring.io/spring-boot/reference/io/spring-batch.html) и [MongoDB transactions](https://docs.spring.io/spring-data/mongodb/reference/mongodb/client-session-transactions.html).
 
 ```java
 @Configuration
 @EnableBatchProcessing
-@EnableMongoJobRepository // Spring Batch 6; нужны MongoTemplate и MongoTransactionManager
+@EnableMongoJobRepository // Batch 6; нужны MongoTemplate и MongoTransactionManager
 public class BatchMetadataConfig { }
 ```
 
@@ -1347,7 +1347,7 @@ public class WeekdayDecider implements JobExecutionDecider {
 
 ## Q28. (!) Как интегрировать Spring Batch со Spring Boot?
 
-`Spring Boot` снимает почти всю инфраструктурную возню: достаточно стартера, и автоконфигурация сама поднимет `JobRepository`, `JobLauncher`, `JobExplorer` и при необходимости создаст таблицы `BATCH_*`. Разработчику остаётся описать только бизнес-часть — `Job` и `Step`. Подробнее об автоконфигурации — в [Spring Boot](spring-boot-interview.md).
+`Spring Boot` снимает почти всю инфраструктурную возню: стартер и автоконфигурация поднимут инфраструктурные бины, включая `JobRepository` и `JobLauncher`. Для JDBC-репозитория при соответствующей настройке Boot инициализирует таблицы `BATCH_*`; для MongoDB используются коллекции и индексы. Разработчику остаётся описать бизнес-часть — `Job` и `Step`. Подробнее об автоконфигурации — в [Spring Boot](spring-boot-interview.md).
 
 Пример ниже относится к **Spring Boot 3 / Spring Batch 5 с JDBC**. В Boot 4.1 тип хранилища метаданных выбирается между in-memory, JDBC и MongoDB; MongoDB использует коллекции/индексы вместо таблиц. Явный `@EnableBatchProcessing` отключает Boot-автоконфигурацию, включая инициализацию схемы, поэтому для ручной конфигурации инфраструктуру надо задать отдельно (см. Q6).
 
@@ -2234,69 +2234,19 @@ return new StepBuilder("importStep", jobRepository)
 
 ---
 
-## Q38. (!) Что нового в Spring Batch 5 — JobRepository, DataSourceTransactionManager?
+## Q38. (!) Что изменилось в Spring Batch 5 — JobRepository и менеджер транзакций?
 
-**Spring Batch 5** вышел вместе с Spring Boot 3 — это мажорный релиз с breaking changes. На собеседовании важно различать: явный `@EnableBatchProcessing` больше не нужен для Boot-автоконфигурации (сама аннотация осталась для ручной настройки), минимальная версия Java стала 17, `JdbcTransactionManager` применяется в JDBC-конфигурации, а `JobParameter` стал generic-типом. Для выбора хранилища в Spring Batch 6 / Boot 4.1 см. Q6.
+**Spring Batch 5.0** поднял минимальную версию Java до 17, удалил map-based `JobRepository`, добавил `DefaultBatchConfiguration` как альтернативу ручной конфигурации через `@EnableBatchProcessing` и изменил формат параметров задания. Для ручной JDBC-конфигурации нужны `DataSource` и `PlatformTransactionManager`. Это изменения самого Batch; **Spring Boot 3** отдельно умеет автоматически настраивать Batch при наличии нужных зависимостей и бинов. Явный `@EnableBatchProcessing` либо наследование `DefaultBatchConfiguration` отключает Boot-автоконфигурацию, включая инициализацию схемы.
 
-**Ключевые изменения:**
+**Три практических изменения при миграции:**
 
-**1. Новый JobRepository API:**
-```java
-// Spring Batch 4 — @EnableBatchProcessing автоматически настраивал JobRepository
-@Configuration
-@EnableBatchProcessing  // в SB4 достаточно
-public class BatchConfig { }
+1. **Репозиторий и схема.** Map-based repository из Batch 4 удалён; для долговечных метаданных в Batch 5.0 используют JDBC, в том числе со встроенной БД. При миграции обновляют DDL таблиц `BATCH_*` — в частности, схему `BATCH_JOB_EXECUTION_PARAMS`. MongoDB-репозиторий и resourceless-вариант добавлены позднее, в **5.2**, а в Batch 6 resourceless стал значением по умолчанию при ручной конфигурации без выбора хранилища (Q6).
+2. **Менеджер транзакций.** `@EnableBatchProcessing` больше не публикует bean менеджера транзакций для приложения. В ручной конфигурации JDBC-репозитория нужны `DataSource` и `PlatformTransactionManager` как бины; для транзакционного tasklet/chunk-шага менеджер передают в builder явно. Им может быть подходящий JDBC-менеджер, но Batch 5.0 не требует поголовно заменять пользовательский `DataSourceTransactionManager` на `JdbcTransactionManager`.
+3. **Параметры задания.** `JobParameter<T>` стал generic и поддерживает произвольные типы через конвертеры; тип и значение сохраняются в новой схеме параметров. Проверь конвертацию пользовательских типов и миграцию таблицы до первого запуска обновлённого задания.
 
-// Spring Batch 5 — @EnableBatchProcessing больше не нужна с Spring Boot 3
-// автоконфигурация через BatchAutoConfiguration
-// Кастомизация через DefaultBatchConfiguration:
-@Configuration
-public class BatchConfig extends DefaultBatchConfiguration {
+**Два способа ручной конфигурации в Batch 5** — `@EnableBatchProcessing` с атрибутами `dataSourceRef`, `transactionManagerRef`, `tablePrefix` либо наследование `DefaultBatchConfiguration` с переопределением нужных методов. Их не комбинируют в одном приложении. В Boot 3 при подходящей автоконфигурации оба способа обычно не нужны; если выбрать один из них, настройка инфраструктуры и схемы переходит к приложению.
 
-    @Autowired
-    private DataSource dataSource;
-
-    @Override
-    protected DataSource getDataSource() {
-        return dataSource;
-    }
-
-    @Override
-    protected PlatformTransactionManager getTransactionManager() {
-        return new JdbcTransactionManager(dataSource);
-    }
-}
-```
-
-**2. `JdbcTransactionManager` вместо `DataSourceTransactionManager`:**
-```java
-// Spring Batch 5 рекомендует JdbcTransactionManager (поддерживает SQLWarning)
-@Bean
-public PlatformTransactionManager transactionManager(DataSource dataSource) {
-    return new JdbcTransactionManager(dataSource);  // не DataSourceTransactionManager
-}
-```
-
-**3. Java 17 как минимальная версия**, поддержка Records в качестве domain objects.
-
-**4. Изменения в метаданных:**
-- `BATCH_JOB_EXECUTION_PARAMS` — новая схема для JobParameters
-- `JobParameter` теперь generic-тип: `JobParameter<T>`
-
-**5. Новые `@EnableBatchProcessing` атрибуты:**
-```java
-// Явная конфигурация без наследования DefaultBatchConfiguration
-@EnableBatchProcessing(
-    dataSourceRef = "batchDataSource",
-    transactionManagerRef = "batchTransactionManager",
-    tablePrefix = "BATCH_",
-    maxVarCharLength = 2500
-)
-```
-
-**6. `JobExplorer` и `JobOperator` теперь автоконфигурируются** Spring Boot.
-
-**7. Миграция схемы БД** — для PostgreSQL/MySQL обновлены DDL-скрипты.
+Источники: [Spring Batch 5.0: изменения инфраструктуры и параметров](https://docs.spring.io/spring-batch/docs/5.0.1/reference/html/whatsnew.html), [Spring Batch 5.2: Java Configuration](https://docs.spring.io/spring-batch/reference/5.2/job/java-config.html), [Spring Batch 5.2: MongoDB и resourceless](https://docs.spring.io/spring-batch/reference/5.2/whatsnew.html), [Spring Boot 3.5: Batch Applications](https://docs.spring.io/spring-boot/3.5/how-to/batch.html), [Spring Batch 6: изменения инфраструктуры](https://docs.spring.io/spring-batch/reference/whatsnew.html).
 
 ## Q39. (!) Как работает Partitioning через PartitionHandler и GridSize?
 
