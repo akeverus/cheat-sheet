@@ -168,9 +168,10 @@ Proximity Service/Nearby Friends уже разобраны без новых ф�
 OWASP сверены; пары JSON Q6/Q7/Q27 синхронизированы, structure/parity/
 pre-check PASS, независимый blind review ожидается. Spring Framework
 Q10 углублён по `@Bean(bootstrap=BACKGROUND)` с 6.2; 07.10 схема и MCQ
-B0 A уточнены по конструкторной DI, B1 добавлен:
-structure/parity PASS, полный pre-check старого файла FAIL на прежних
-Q1/Q9, Q10 без hard-сигналов; blind review ожидается.
+B0 A уточнены по конструкторной DI, B1 добавлен. Q1/Q2 разграничивают
+модули Framework и проекты Boot/Security/Data, Q9 MCQ выровнен по форме.
+Structure/parity PASS, полный pre-check hard=0 с 23 предупреждениями;
+blind review Q1/Q2/Q9/Q10 B0/B1 ожидается.
 Spring Testing Q9/Q10 уже углублены по `@MockitoBean`/`@MockitoSpyBean`,
 парный JSON обновлён; структура/parity PASS, полный pre-check старого
 файла FAIL на прежнем Q16, blind review ожидается. Отдельный Q не нужен.
