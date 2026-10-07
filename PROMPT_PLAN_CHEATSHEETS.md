@@ -377,13 +377,24 @@ no-arg конструктора, обычный embeddable-класс требу
 Q26 локально без hard/warnings, JPA full parity по прежним блокам FAIL;
 независимой blind-приёмки и полного аудита нет.
 
-Следующий авторский пакет: Spring Data JPA Q27 B0 про наследование.
-Сравнить Hibernate Q14 и парные MCQ до правки; по Jakarta Persistence
-3.2/Hibernate 7.4 проверить категоричные «JOIN в каждом запросе» для
-JOINED, «обязательный UNION ALL/медленно» для TABLE_PER_CLASS и ограничения
-колонок подтипов SINGLE_TABLE. Правильный MCQ Q27 сейчас значительно
-длиннее других. После него переходить к JPA Q28 batch-обработке.
-Не считать весь файл проверенным после точечной правки.
+07.10 Spring Data JPA Q27 B0 и Hibernate Q14 B0: по Jakarta Persistence
+3.2/Hibernate 7.4 и `@CheckConstraint` разграничены обязательные
+SINGLE_TABLE/JOINED и необязательная TABLE_PER_CLASS, условный JOIN,
+UNION/отдельные запросы, nullable-поля подтипов и условный CHECK.
+Категоричные заявления о скорости сняты. Теория, парные MCQ и
+freshness-sidecar синхронизированы. Structure PASS, локальные блоки
+без hard/warnings, Hibernate full parity PASS, Spring Data JPA full
+parity FAIL из-за старых блоков. Полного аудита и blind-приёмки нет.
+Коммит `5a480396b`.
+
+Следующий авторский пакет: Spring Data JPA Q28 B0 о batch-обработке.
+Сравнить Hibernate Q36 и Spring Data JPA Q21 по заголовкам, ответам и
+MCQ. По официальным Hibernate 7.4 и Spring Data JPA 4.1 проверить,
+достаточность `hibernate.jdbc.batch_size`, роль `flush()`/`clear()` для
+памяти, `IDENTITY`/`SEQUENCE`, `order_inserts`/`order_updates`, `saveAll`
+и транзакционную границу. Затем синхронизировать Q28, MCQ и sidecar,
+запустить локальные и файловые проверки. Не считать весь JPA-файл
+проверенным после точечной правки.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,
