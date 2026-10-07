@@ -962,8 +962,10 @@ public class ProductSpecs {
     }
 
     public static Specification<Product> nameContains(String keyword) {
+        String escaped = EscapeCharacter.DEFAULT.escape(keyword.toLowerCase(Locale.ROOT));
         return (root, query, cb) ->
-            cb.like(cb.lower(root.get("name")), "%" + keyword.toLowerCase() + "%");
+            cb.like(cb.lower(root.get("name")), "%" + escaped + "%",
+                EscapeCharacter.DEFAULT.getEscapeCharacter());
     }
 
     public static Specification<Product> isActive() {
@@ -984,7 +986,7 @@ public class ProductSearchService {
     private final ProductRepository productRepository;
 
     public Page<Product> search(ProductFilter filter, Pageable pageable) {
-        Specification<Product> spec = Specification.where(ProductSpecs.isActive());
+        Specification<Product> spec = ProductSpecs.isActive();
 
         // Условия добавляются только если фильтр задан
         if (filter.category() != null) {
@@ -993,7 +995,7 @@ public class ProductSearchService {
         if (filter.minPrice() != null && filter.maxPrice() != null) {
             spec = spec.and(ProductSpecs.priceBetween(filter.minPrice(), filter.maxPrice()));
         }
-        if (filter.keyword() != null) {
+        if (filter.keyword() != null && !filter.keyword().isBlank()) {
             spec = spec.and(ProductSpecs.nameContains(filter.keyword()));
         }
         if (filter.minRating() != null) {
@@ -1010,7 +1012,7 @@ graph LR
     F["ProductFilter<br/>category, price, keyword"] --> S1["Specification 1<br/>hasCategory"]
     F --> S2["Specification 2<br/>priceBetween"]
     F --> S3["Specification 3<br/>nameContains"]
-    S1 --> AND["Specification.where().and().and()"]
+    S1 --> AND["isActive().and(...).and(...)"]
     S2 --> AND
     S3 --> AND
     AND --> Q["Criteria Query<br/>SELECT ... WHERE ... AND ..."]
@@ -1020,6 +1022,8 @@ graph LR
 ```
 
 **Преимущество перед множеством `@Query`-методов:** не нужно создавать `findByCategoryAndPriceBetween`, `findByCategory`, `findByPriceBetween` и т.д. — один метод `findAll(spec, pageable)` покрывает все комбинации.
+
+В Spring Data JPA 4.1.1 `Specification.where(nonNullSpec)` существует, но для известного базового условия достаточно начать с самой спецификации. Если условия может не быть вообще, используйте `Specification.unrestricted()`: начиная с 4.0 `where(null)` не принимается. Для пользовательского `LIKE` экранируйте `%`/`_` вместе с указанием escape-символа; `EscapeCharacter` уже есть в Spring Data JPA. [Specifications](https://docs.spring.io/spring-data/jpa/reference/jpa/specifications.html); [`Specification` API](https://docs.spring.io/spring-data/jpa/reference/api/java/org/springframework/data/jpa/domain/Specification.html); [`EscapeCharacter` API](https://docs.spring.io/spring-data/jpa/reference/api/java/org/springframework/data/jpa/repository/query/EscapeCharacter.html).
 
 ## Q18. (!) Как работает `Auditing` в `Spring Data JPA`?
 

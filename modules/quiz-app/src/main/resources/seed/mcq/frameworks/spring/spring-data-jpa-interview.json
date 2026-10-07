@@ -1021,55 +1021,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `Specifications` и как их использовать?",
+          "question_text": "Как `Specification<T>` собирает фильтры в Spring Data JPA?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`Specifications` генерируют запрос из строкового JPQL-шаблона, а не через `Criteria API`.",
+              "text": "`Specification<T>` формирует строковый JPQL-запрос; `JpaSpecificationExecutor` исполняет его, а предикаты объединяются вызовами `and`/`or`.",
               "correct": false,
               "sections": {
-                "what_actually": "`Specification` строится программно через `Criteria API` (`root`, `query`, `cb`), без строкового JPQL.",
-                "source_of_confusion": "`@Query` использует строки, и это переносят на спецификации.",
-                "if_it_were_true": "Тогда в `Specification` писали бы текст `SELECT ... WHERE`, но там предикаты строятся объектами `CriteriaBuilder`.",
-                "how_it_should_be": "Спецификации — типобезопасный `Criteria API`, а не строки."
+                "what_actually": "`Specification<T>` описывает предикат через JPA Criteria API, а не собирает строку JPQL.",
+                "source_of_confusion": "Динамические запросы часто пишут через конкатенацию JPQL, но Specification задаёт типизированную структуру Criteria.",
+                "if_it_were_true": "Лямбда `(root, query, cb) -> cb.equal(...)` должна была бы вернуть текст запроса, однако она возвращает `Predicate`.",
+                "how_it_should_be": "Составляйте Criteria-предикаты и выполняйте их через `JpaSpecificationExecutor`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Спецификации нельзя комбинировать: для каждой комбинации фильтров придётся писать отдельную `Specification`.",
+              "text": "`Specification<T>` строит Criteria-предикат; для каждой комбинации фильтров нужен свой метод репозитория, поскольку `and`/`or` не поддерживаются.",
               "correct": false,
               "sections": {
-                "what_actually": "Спецификации свободно комбинируются через `.and()`/`.or()`/`Specification.where(...)`, поэтому одна выборка покрывает любые сочетания фильтров.",
-                "source_of_confusion": "Каждый предикат выглядит как самостоятельный объект, и композиция неочевидна.",
-                "if_it_were_true": "Тогда преимущество над множеством `findBy...`-методов исчезало бы, но именно композиция его и даёт.",
-                "how_it_should_be": "Спецификации компонуются логическими операторами в один запрос."
+                "what_actually": "Спецификации комбинируются `and`/`or`; один `findAll(spec, pageable)` обслуживает разные наборы фильтров.",
+                "source_of_confusion": "Обычные derived query methods требуют отдельные имена для разных комбинаций и это переносят на Specification.",
+                "if_it_were_true": "Опциональные фильтры снова вызывали бы комбинаторный рост методов, ради устранения которого применяют композицию.",
+                "how_it_should_be": "Добавляйте только заданные предикаты к базовой спецификации и передавайте результат в `findAll`."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Specifications` — способ динамически собирать условия запроса через JPA `Criteria API`. Репозиторий расширяет `JpaSpecificationExecutor<T>`, а условия описываются лямбдами `(root, query, cb) -> ...` и комбинируются через `Specification.where(...).and(...).or(...)`. Идеальны для фильтров с опциональными параметрами.",
+              "text": "`Specification<T>` строит Criteria-предикат; `JpaSpecificationExecutor` принимает его с `Pageable`, а условия можно объединять через `and`/`or`.",
               "correct": true,
               "sections": {
-                "explanation": "Каждый предикат — переиспользуемая `Specification`. Условия добавляются только если соответствующий фильтр задан, поэтому один метод `findAll(spec, pageable)` покрывает все комбинации фильтров без множества `findBy...`-методов.",
-                "example": "`Specification<Product> spec = Specification.where(isActive()); if (filter.category()!=null) spec = spec.and(hasCategory(filter.category())); return repo.findAll(spec, pageable);`",
-                "when_to_apply": "Берут для поисковых форм и API с набором опциональных фильтров (категория, цена, ключевое слово), когда комбинаций слишком много для query methods.",
-                "edge_cases": "При JOIN коллекций возможны дубликаты строк — тогда ставят `query.distinct(true)` или используют отдельную count-стратегию.",
-                "related": "[[spring-data-jpa-interview#Q5]] query methods; [[spring-data-jpa-interview#Q37]] Specification API; [[spring-data-jpa-interview#Q15]] пагинация."
+                "explanation": "Спецификация получает `root`, `query` и `CriteriaBuilder` и возвращает предикат. `JpaSpecificationExecutor.findAll(spec, pageable)` выполняет составленный фильтр с пагинацией.",
+                "example": "`ProductSpecs.isActive().and(ProductSpecs.hasCategory(category))` выбирает активные товары категории; остальные условия добавляют только при наличии параметров.",
+                "when_to_apply": "Подходит для поиска с несколькими опциональными фильтрами, когда набор условий меняется между запросами.",
+                "edge_cases": "В Spring Data JPA 4.1.1 `where(nonNullSpec)` работает, но `where(null)` не принимает null с 4.0; для отсутствующего базового условия есть `unrestricted()`. `%` и `_` в пользовательском `LIKE` нужно экранировать.",
+                "related": "[[spring-data-jpa-interview#Q15]] Pageable; [[spring-data-jpa-interview#Q6]] @Query."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Чтобы использовать `Specifications`, репозиторий должен расширять `PagingAndSortingRepository`, а `JpaSpecificationExecutor` не нужен.",
+              "text": "`Specification<T>` строит Criteria-предикат; для его выполнения с `Pageable` достаточно `PagingAndSortingRepository`, а `JpaSpecificationExecutor` не нужен.",
               "correct": false,
               "sections": {
-                "what_actually": "Для работы со спецификациями репозиторий обязан расширять `JpaSpecificationExecutor<T>` — именно он добавляет `findAll(Specification, ...)`.",
-                "source_of_confusion": "Спецификации часто идут вместе с пагинацией, и интерфейсы путают.",
-                "if_it_were_true": "Тогда `repo.findAll(spec, pageable)` был бы доступен без `JpaSpecificationExecutor`, но метод приходит именно из него.",
-                "how_it_should_be": "Нужно `extends JpaRepository<T,ID>, JpaSpecificationExecutor<T>`."
+                "what_actually": "Методы `findAll(Specification<T>, Pageable)` предоставляет `JpaSpecificationExecutor`, который добавляют к интерфейсу репозитория.",
+                "source_of_confusion": "`PagingAndSortingRepository` ассоциируется с `Pageable`, но сам не добавляет выполнение Specification.",
+                "if_it_were_true": "Репозиторий без `JpaSpecificationExecutor` имел бы перегрузку `findAll(spec, pageable)`, однако она объявлена в другом интерфейсе.",
+                "how_it_should_be": "Расширьте `JpaSpecificationExecutor<T>` и вызывайте его `findAll` с составленным фильтром."
               }
             }
           ]
