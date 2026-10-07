@@ -745,16 +745,16 @@ public class Customer {
 
 ## Q19. (!) Что такое `Lazy Loading` и `Eager Loading`?
 
-Это две стратегии того, **когда** загружать связанные сущности. **LAZY** откладывает загрузку до первого обращения, **EAGER** грузит всё сразу вместе с родителем. Выбор напрямую влияет на число SQL-запросов и на риск получить либо проблему N+1, либо лишние данные.
+Это политики загрузки связи, а не готовые SQL-планы. В Jakarta Persistence `EAGER` требует загрузить связь до выдачи результата; `LAZY` лишь подсказывает отложить её и может быть переопределён провайдером или fetch-планом запроса. Поэтому `EAGER` не гарантирует JOIN, а `LAZY` — отдельный SELECT при каждом обращении.
 
 | Стратегия | Описание | По умолчанию для |
 |-----------|----------|-----------------|
-| **`LAZY`** | Данные загружаются при первом обращении | `@OneToMany`, `@ManyToMany` |
-| **`EAGER`** | Данные загружаются сразу вместе с родительской сущностью | `@ManyToOne`, `@OneToOne` |
+| **`LAZY`** | Загрузка может быть отложена до обращения | `@OneToMany`, `@ManyToMany` |
+| **`EAGER`** | Связь должна быть загружена до выдачи результата | `@ManyToOne`, `@OneToOne` |
 
-**`LAZY`** — `Hibernate` возвращает прокси-объект или обёртку коллекции. Реальный `SELECT` выполняется при первом вызове метода (кроме `getId()`).
+В Hibernate to-one `LAZY` часто реализован через proxy, коллекции — через persistent wrapper; уже загруженная связь не требует нового SELECT. При выборке списка JPQL/HQL без `JOIN FETCH` даже `EAGER` to-one может загружаться вторичными SELECT и дать N+1.
 
-**Best practice**: всегда устанавливайте `FetchType.LAZY` на все ассоциации и управляйте загрузкой через `JOIN FETCH`, `@EntityGraph` или `@BatchSize` — это предотвращает неожиданную загрузку ненужных данных.
+Обычно полезно задавать `LAZY` и явно выбирать нужные связи для конкретного сценария через `JOIN FETCH`, `@EntityGraph` или пакетную загрузку. Для некоторых отображений to-one реализация LAZY требует учёта proxy/bytecode enhancement; фактическое число запросов проверяйте по SQL. [Jakarta Persistence 3.2 `FetchType`](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/fetchtype); [Hibernate ORM 7.4, fetching](https://docs.hibernate.org/orm/7.4/userguide/html_single/).
 
 ```java
 @Entity

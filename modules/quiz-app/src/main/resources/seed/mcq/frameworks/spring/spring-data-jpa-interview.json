@@ -1326,22 +1326,22 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`FetchType` определяет, когда грузятся связанные сущности: `EAGER` — сразу с родителем, `LAZY` — при первом обращении. Best practice — везде ставить `EAGER`, потому что немедленная загрузка избавляет от проблемы N+1 при выборке списков.",
+              "text": "Для JPA `EAGER` гарантирует JOIN в исходном SQL; вторичных SELECT не бывает даже при JPQL выборке списка.",
               "correct": false,
               "sections": {
-                "what_actually": "Best practice — `LAZY`: `EAGER` как раз провоцирует N+1 и загрузку лишних данных при выборках списков.",
-                "source_of_confusion": "EAGER «всё сразу» кажется безопаснее ленивой загрузки.",
-                "if_it_were_true": "Тогда `EAGER` решал бы N+1, но он его, наоборот, усугубляет при выборке многих сущностей.",
-                "how_it_should_be": "Рекомендуется `LAZY` + явная подгрузка через `JOIN FETCH`/`@EntityGraph`."
+                "what_actually": "`EAGER` гарантирует загруженность связи до выдачи результата, но не JOIN. Hibernate JPQL без fetch join может загрузить EAGER-связь вторичными SELECT и получить N+1.",
+                "source_of_confusion": "Слово eager описывает момент готовности связи, и его ошибочно принимают за форму одного SQL.",
+                "if_it_were_true": "JPQL-запрос списка не мог бы породить вторичные SELECT для EAGER-связей, но Hibernate допускает такой план.",
+                "how_it_should_be": "Выбирайте fetch-план под запрос и проверяйте SQL, а не выводите JOIN из слова EAGER."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`FetchType` определяет, когда грузятся связанные сущности. По умолчанию `@OneToMany`/`@ManyToMany` — `EAGER` и тянут коллекцию сразу с родителем, а `@ManyToOne`/`@OneToOne` — `LAZY` и грузят связь при первом обращении. Явно менять стратегию можно через `JOIN FETCH`/`@EntityGraph`.",
+              "text": "Для JPA to-one связи по умолчанию LAZY, а to-many EAGER; явный fetch-план нужен только при исключениях.",
               "correct": false,
               "sections": {
-                "what_actually": "Дефолты обратные: `@ManyToOne`/`@OneToOne` — `EAGER`, а `@OneToMany`/`@ManyToMany` — `LAZY`.",
+                "what_actually": "Дефолты обратные: `@ManyToOne`/`@OneToOne` — EAGER, `@OneToMany`/`@ManyToMany` — LAZY. Явный fetch-план нужен по сценарию независимо от дефолта.",
                 "source_of_confusion": "Дефолтные значения fetch для разных связей легко перепутать местами.",
                 "if_it_were_true": "Тогда коллекции грузились бы всегда сразу, а одиночные связи лениво — но это не так.",
                 "how_it_should_be": "`*ToOne` → EAGER по умолчанию, `*ToMany` → LAZY по умолчанию."
@@ -1350,25 +1350,25 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`FetchType` определяет, когда грузятся связанные сущности: `EAGER` — сразу с родителем, `LAZY` — при первом обращении. Обращение к `LAZY`-связи после закрытия сессии безопасно: `Hibernate` откроет новое соединение и догрузит данные по запросу.",
+              "text": "Для Spring Boot web-приложения OSIV по умолчанию выключен; после сервисной транзакции LAZY-связь в контроллере всегда недоступна.",
               "correct": false,
               "sections": {
-                "what_actually": "Доступ к LAZY-полю вне открытого контекста бросает `LazyInitializationException` — новое соединение автоматически не открывается.",
-                "source_of_confusion": "OSIV держит сессию открытой до конца запроса, и в dev-режиме ошибка не проявляется.",
-                "if_it_were_true": "Тогда LAZY работал бы где угодно, но именно закрытие контекста и вызывает исключение.",
-                "how_it_should_be": "LAZY-данные грузят, пока контекст открыт (в сервисном слое)."
+                "what_actually": "Spring Boot web-приложение по умолчанию включает Open EntityManager in View; контекст может оставаться открытым после сервисной транзакции. `LazyInitializationException` возникает при доступе к незагруженной связи после закрытия Session.",
+                "source_of_confusion": "Завершение сервисной транзакции автоматически отождествляют с закрытием EntityManager, хотя OSIV может продлить его жизнь.",
+                "if_it_were_true": "После выхода из сервиса lazy-доступ всегда давал бы исключение, но при включённом OSIV связь может догрузиться в контроллере.",
+                "how_it_should_be": "Определяйте границу контекста явно; при отключённом OSIV готовьте нужные данные в сервисе."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`FetchType` определяет, когда грузятся связанные сущности. `EAGER` (по умолчанию для `@ManyToOne`/`@OneToOne`) грузит связь сразу вместе с родителем. `LAZY` (по умолчанию для `@OneToMany`/`@ManyToMany`) грузит при первом обращении к коллекции/полю. Best practice — ставить `LAZY` на всё и подгружать явно через `JOIN FETCH`/`@EntityGraph`.",
+              "text": "Для JPA `EAGER` требует загрузку до результата, но не JOIN; `LAZY` лишь подсказка, to-one по умолчанию EAGER, to-many LAZY.",
               "correct": true,
               "sections": {
-                "explanation": "`EAGER` — частая ловушка: тащит лишние данные и провоцирует N+1 при выборках. `LAZY` экономит, но требует открытого persistence context на момент обращения (иначе `LazyInitializationException`).",
-                "example": "`@ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name=\"department_id\") private Department department;` — явный LAZY вместо дефолтного EAGER на `@ManyToOne`.",
-                "when_to_apply": "`LAZY` ставят по умолчанию на все связи; данные грузят явно там, где они реально нужны, через fetch-стратегии.",
-                "edge_cases": "Обращение к LAZY-связи после закрытия сессии даёт `LazyInitializationException`; OSIV (`spring.jpa.open-in-view=true`, включён по умолчанию) маскирует проблему, но его рекомендуют отключать.",
+                "explanation": "JPA `EAGER` требует загруженной связи до выдачи результата, а `LAZY` лишь подсказывает отложить её. Дефолт to-one — EAGER, to-many — LAZY. Hibernate может выполнить JOIN либо вторичный SELECT для EAGER; при JPQL списке это способно дать N+1.",
+                "example": "`@ManyToOne(fetch = FetchType.LAZY)` меняет дефолт to-one, но фактический план загрузки проверьте по SQL конкретного запроса.",
+                "when_to_apply": "Задавайте LAZY там, где уместно, и выбирайте fetch-план под конкретный ответ API, проверяя число запросов.",
+                "edge_cases": "После закрытия Session доступ к незагруженной связи даёт LazyInitializationException; уже загруженная связь доступна. В Spring Boot web OSIV по умолчанию держит EntityManager открытым после сервиса и может скрыть дополнительные SQL.",
                 "related": "[[spring-data-jpa-interview#Q23]] N+1 проблема; [[spring-data-jpa-interview#Q24]] @EntityGraph; [[spring-data-jpa-interview#Q25]] CascadeType."
               }
             }

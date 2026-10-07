@@ -1272,12 +1272,12 @@ public void batchInsertWithFlushControl(List<CreateUserRequest> requests) {
 
 ## Q22. (!) Что такое `FetchType LAZY` vs `EAGER`?
 
-`FetchType` определяет, **когда** загружаются связанные сущности: сразу вместе с родителем (`EAGER`) или отложенно, при первом обращении к связи (`LAZY`).
+`FetchType` задаёт политику загрузки связи. По Jakarta Persistence 3.2 `EAGER` — **обязательство** загрузить её до выдачи результата, `LAZY` — **подсказка** отложить загрузку: провайдер вправе загрузить её раньше. Ни одна из стратегий сама по себе не задаёт форму SQL.
 
-- `EAGER` — связь подтягивается тем же запросом (JOIN). Удобно, но опасно: грузится всегда, даже если связь не нужна, и легко раздувает выборку.
-- `LAZY` — вместо реальных данных подставляется прокси; запрос за связью уходит только когда вы её действительно трогаете (`user.getOrders()`).
-
-Важно помнить умолчания: `@ManyToOne` и `@OneToOne` по умолчанию `EAGER`, а `@OneToMany` и `@ManyToMany` — `LAZY`.
+| Связь | FetchType по умолчанию | Важная граница |
+|---|---|---|
+| `@ManyToOne`, `@OneToOne` | `EAGER` | Может быть JOIN или отдельный SELECT; Hibernate JPQL без `JOIN FETCH` способен дать N+1 вторичных запросов. |
+| `@OneToMany`, `@ManyToMany` | `LAZY` | Коллекция обычно загружается при обращении, но явный fetch в запросе или решение провайдера может загрузить её раньше. |
 
 ```java
 @Entity
@@ -1286,48 +1286,35 @@ public class User {
     @Id
     private Long id;
 
-    // EAGER (default для @ManyToOne) — загружается СРАЗУ с User
-    @ManyToOne(fetch = FetchType.EAGER)
-    private Department department;
-
-    // LAZY (default для @OneToMany) — загружается при ПЕРВОМ обращении
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private List<Order> orders;
-
-    // Best practice: явно ставить LAZY на @ManyToOne
+    // Явно откладываем to-one связь вместо JPA-умолчания EAGER
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")
-    private Department departmentLazy;
+    private Department department;
+
+    // LAZY — умолчание для @OneToMany
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<Order> orders;
 }
 ```
 
 ```mermaid
-graph TD
-    subgraph EAGER
-        Q1["SELECT u FROM User u"] --> R1["User + Department<br/>JOIN в одном запросе"]
-    end
-
-    subgraph LAZY
-        Q2["SELECT u FROM User u"] --> R2["Только User"]
-        R2 -->|"user.getOrders()"| Q3["SELECT o FROM Order o<br/>WHERE o.user_id = ?"]
-        Q3 --> R3["List&lt;Order&gt;"]
-    end
-
-    style EAGER fill:#ffcdd2,stroke:#c62828
-    style LAZY fill:#c8e6c9,stroke:#2e7d32
+flowchart TD
+    A[Запрос User] --> B{Политика и план запроса}
+    B -->|EAGER| C[Связь загружена до выдачи результата]
+    C --> D[JOIN или отдельный SELECT]
+    B -->|LAZY| E[Загрузка может быть отложена]
+    E -->|обращение при открытом контексте| F[Инициализация связи]
 ```
 
-**Рекомендация:** ставьте `LAZY` на **все** связи (включая `@ManyToOne`, переопределяя умолчание) и загружайте нужное явно — через `@EntityGraph` или `JOIN FETCH` под конкретный сценарий. `EAGER` — мина замедленного действия: он молча грузит лишнее и провоцирует N+1, причём проблема всплывает только под нагрузкой.
+Для контроля выборки обычно задают `LAZY` связям и явно выбирают нужный fetch-план для конкретного запроса (`JOIN FETCH`, `@EntityGraph`, batch/subselect). Это особенно полезно для to-one связей с умолчанием `EAGER`: при JPQL без fetch join Hibernate может выполнить вторичные SELECT для каждой строки. `LAZY` не означает обязательный proxy или один SELECT при каждом обращении; фактический план проверяйте по SQL и профилю нагрузки.
 
-**`LazyInitializationException`** — обратная сторона `LAZY`. Если обратиться к незагруженной lazy-связи, когда `Hibernate Session` уже закрыта, прокси не сможет дозагрузить данные и бросит `LazyInitializationException: could not initialize proxy — no Session`. Типичный сценарий: сервисный `@Transactional`-метод вернул сущность, транзакция закоммичена и сессия закрыта, а контроллер или Jackson-сериализатор дёргает `user.getOrders()`. Лечится тремя способами:
+**`LazyInitializationException`** возникает при доступе к ещё не загруженной связи после закрытия Hibernate `Session`. Сам commit сервисной транзакции не обязательно закрывает session: в web-приложении может действовать OSIV. Чтобы не зависеть от него:
 
-- загрузить связь заранее, тем же запросом — `JOIN FETCH` или `@EntityGraph` под конкретный сценарий;
-- работать со связью внутри `@Transactional`-метода, пока сессия жива;
-- отдавать наружу DTO-проекцию вместо сущности — тогда сериализатору нечего «дотрагивать» и прокси не нужен.
+- загрузите требуемую связь внутри сервисной транзакции через подходящий fetch-план;
+- обращайтесь к ней, пока persistence context открыт;
+- отдавайте наружу DTO с уже подготовленными полями вместо неинициализированной сущности.
 
-Четвёртый «способ» — оставить включённым OSIV — формально работает, но считается анти-паттерном, и вот почему.
-
-**OSIV (`Open Session In View`)** — паттерн, при котором `Hibernate Session` держится открытой до конца HTTP-ответа, чтобы lazy-связи можно было дёргать прямо во view/контроллере. В `Spring Boot` он включён по умолчанию (`spring.jpa.open-in-view=true`), и это палка о двух концах: удобно, но скрытые запросы уходят вне сервисного слоя, где их не видно и не проконтролировать. Рекомендация — отключать OSIV и грузить все нужные данные явно в сервисе, под транзакцией.
+**OSIV (`Open EntityManager in View`)** в web-приложении Spring Boot включён по умолчанию и держит `EntityManager` открытым на время обработки запроса, позволяя lazy-загрузку после сервисного метода. Это может скрывать дополнительные SQL в контроллере или сериализаторе; решение об OSIV принимайте явно. Для строгой границы доступа к данным установите `spring.jpa.open-in-view=false` и подготовьте результат в сервисе. [Jakarta Persistence 3.2 `FetchType`](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/fetchtype); [Hibernate ORM 7.4, fetching](https://docs.hibernate.org/orm/7.4/userguide/html_single/); [Hibernate `LazyInitializationException`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/LazyInitializationException.html); [Spring Boot, Open EntityManager in View](https://docs.spring.io/spring-boot/reference/data/sql.html).
 
 ## Q23. (!) Что такое N+1 проблема и как её решить?
 
