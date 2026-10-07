@@ -13,7 +13,7 @@ aliases:
   - "Metrics and tracing interview"
 prerequisites: []
 next: []
-updated: "2026-04-25"
+updated: "2026-10-07"
 ---
 # Вопросы на собеседовании: Метрики и трейсинг
 
@@ -2265,25 +2265,28 @@ OpenTelemetrySdk otel = OpenTelemetrySdk.builder()
     .build();
 ```
 
-**Baggage — передача произвольных данных через контекст.** Если trace context отвечает на «кто я в дереве», то baggage переносит вместе с ним прикладные пары ключ-значение (например, `userId`, `region`), доступные всем сервисам вниз по цепочке без явной передачи в параметрах. Полезно для сквозного контекста, но злоупотреблять не стоит: baggage едет в каждом заголовке и раздувает запросы.
+**Baggage — передача прикладных пар ключ-значение рядом с trace context.** Значение доступно нижележащим сервисам, если установлен и используется `W3CBaggagePropagator`. Инструментация может отправить его и во внешний API: поэтому передавайте только нужные несекретные короткие значения, ограничивайте набор ключей и очищайте baggage на границе доверия. `userId`, токены и персональные данные нельзя без оценки раскрытия класть туда «для удобства». Входящий baggage не имеет встроенной проверки целостности, поэтому он не является основанием для авторизации. Он также не становится атрибутом спана, метрики или лога сам по себе — для этого требуется явное копирование либо специальный processor. [OpenTelemetry Baggage](https://opentelemetry.io/docs/concepts/signals/baggage/).
 
 ```java
-// Установить baggage в начале запроса
+// Небольшое несекретное значение, нужное далее по цепочке
 Baggage baggage = Baggage.builder()
-    .put("userId", "user-123")
-    .put("region", "ru")
+    .put("traffic.class", "standard")
     .build();
-Context contextWithBaggage = baggage.storeInContext(Context.current());
-
-// Получить baggage в другом сервисе (автоматически передаётся через заголовки)
-String userId = Baggage.fromContext(Context.current()).getEntryValue("userId");
+try (Scope scope = baggage.makeCurrent()) {
+    // Внутри scope Baggage.current() видит значение; исходящий вызов
+    // передаст его лишь при настроенном propagator и инструментации.
+    String trafficClass = Baggage.current().getEntryValue("traffic.class");
+    callDownstream();
+}
 ```
 
 **HTTP заголовок Baggage:**
 
 ```http
-baggage: userId=user-123,region=ru
+baggage: traffic.class=standard
 ```
+
+W3C Baggage требует сохранять весь заголовок в пределах **64 элементов и 8192 байт**; сверх этих границ реализация может отбросить элементы. Это нижний порог совместимости спецификации, а не полезный размер для каждого запроса. Держите своё содержимое намного меньше и не рассчитывайте, что каждый ключ дойдёт до получателя. [W3C Baggage, limits](https://www.w3.org/TR/baggage/#limits).
 
 **Подводные камни.** Чаще всего трейс «обрывается» там, где контекст не передаётся автоматически — при уходе в свой пул потоков или нестандартный транспорт:
 

@@ -2357,7 +2357,7 @@
                 "explanation": "Стандартизация заголовков позволяет сшивать трейс через разные системы; composite propagator поддерживает одновременно `W3C` и B3 для смешанных (legacy + новых) сред.",
                 "example": "В `Spring Boot`: `management.tracing.propagation.type: w3c` (или `b3`); вручную — `ContextPropagators.create(TextMapPropagator.composite(W3CTraceContextPropagator..., B3Propagator.injectingSingleHeader()))`.",
                 "when_to_apply": "Propagation настраивают всегда при межсервисных вызовах; B3 добавляют, когда в системе есть legacy-`Zipkin`/`Brave`-сервисы, ожидающие `X-B3-*`.",
-                "edge_cases": "Частые обрывы: async executor не копирует контекст (`ContextPropagatingExecutorService`), `Kafka` producer не добавляет заголовки (OTel `Kafka` instrumentation); `baggage` передаёт произвольные пары (`userId=user-123`) через `baggage`-заголовок.",
+                "edge_cases": "Частые обрывы: async executor не копирует контекст (`ContextPropagatingExecutorService`), `Kafka` producer не добавляет заголовки (OTel `Kafka` instrumentation). Baggage передаётся при настроенном propagator: значение нужно активировать через `makeCurrent()`, ограничивать размер и не отправлять секреты или персональные данные во внешние сервисы. Входящему baggage нельзя доверять как основанию авторизации.",
                 "related": "[[metrics-tracing-interview#Q8]] передача контекста между сервисами; [[metrics-tracing-interview#Q31]] W3C TraceContext как стандарт; [[metrics-tracing-interview#Q23]] traceId и spanId внутри заголовков."
               }
             },
