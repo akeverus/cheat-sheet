@@ -453,36 +453,57 @@ public class Account {
 }
 ```
 
-При каждом `UPDATE` `JPA` автоматически добавляет проверку версии:
+При записи изменённой версионированной сущности провайдер сравнивает её версию с версией в БД. Например, Hibernate может выполнить такой `UPDATE`:
 
 ```sql
 UPDATE account SET balance = ?, version = version + 1 
 WHERE id = ? AND version = ?
 ```
 
-Если `WHERE version = ?` не находит строку (значит, версию уже поднял кто-то другой), `UPDATE` затронет 0 строк, и Hibernate выбросит `OptimisticLockException`. Конфликт обнаружен -- но данные не испорчены, и операцию можно безопасно повторить.
+Если версии расходятся, провайдер сообщает о конфликте через `OptimisticLockException`. Проверка может произойти при `merge`, `flush` или коммите; форма SQL и момент исключения зависят от провайдера. Текущая транзакция после такого исключения помечается для отката. Повторять можно **всю операцию в новой транзакции**, заново читая данные и проверяя бизнес-условия; внешний побочный эффект нельзя бездумно выполнять повторно.
 
-Поэтому оптимистическую блокировку почти всегда сочетают с retry:
+Если конфликт ожидаемо редок, ограниченный повтор можно вынести за границу транзакции. В примере `TransferRetryService` вызывает транзакционный метод другого Spring-бина через прокси; каждая попытка получает новую транзакцию:
 
 ```java
 @Service
+public class TransferRetryService {
+    private final AccountService accountService;
+
+    public TransferRetryService(AccountService accountService) {
+        this.accountService = accountService;
+    }
+
+    @Retryable(retryFor = ObjectOptimisticLockingFailureException.class, maxAttempts = 3)
+    public void transfer(Long fromId, Long toId, BigDecimal amount) {
+        accountService.transfer(fromId, toId, amount);
+    }
+}
+
+@Service
 public class AccountService {
-    
-    @Retryable(value = OptimisticLockException.class, maxAttempts = 3)
+    private final AccountRepository accountRepository;
+
+    public AccountService(AccountRepository accountRepository) {
+        this.accountRepository = accountRepository;
+    }
+
     @Transactional
     public void transfer(Long fromId, Long toId, BigDecimal amount) {
         Account from = accountRepository.findById(fromId).orElseThrow();
         Account to = accountRepository.findById(toId).orElseThrow();
         from.setBalance(from.getBalance().subtract(amount));
         to.setBalance(to.getBalance().add(amount));
-        // При конфликте версий -- автоматический retry
     }
 }
 ```
 
+Здесь `@Retryable` показан для Spring Retry 2.x и переведённого Spring-исключения. Если наружу выходит `OptimisticLockException` JPA, его тоже нужно явно включить в политику повтора. Повтор не гарантирует успеха и требует идемпотентности действий вне БД.
+
+Версионные детали: [Jakarta Persistence 3.2, optimistic locking](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2), [`OptimisticLockException`](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/optimisticlockexception) и [Spring Retry 2.x `@Retryable`](https://docs.spring.io/spring-retry/docs/current/apidocs/spring.retry/org/springframework/retry/annotation/Retryable.html).
+
 Типы `LockModeType` для оптимистической блокировки:
-- `OPTIMISTIC` (= `READ`) -- проверка версии при коммите
-- `OPTIMISTIC_FORCE_INCREMENT` (= `WRITE`) -- инкремент версии даже при чтении
+- `OPTIMISTIC` (= `READ`) -- проверка версии без обязательного её увеличения
+- `OPTIMISTIC_FORCE_INCREMENT` (= `WRITE`) -- принудительное увеличение версии даже без изменения полей
 
 ## Q16. Как реализовать пессимистическую блокировку в JPA?
 
@@ -722,7 +743,7 @@ public BigDecimal calculateTotalBalance(Long userId) {
 
 ## Q22. (!) Как работает rollbackFor и noRollbackFor?
 
-По умолчанию `Spring @Transactional` откатывает транзакцию **только при unchecked exceptions** (`RuntimeException` и `Error`). Checked-исключения (наследники `Exception`, но не `RuntimeException`) откат **не вызывают** -- транзакция при них коммитится. Это историческое поведение из EJB, и оно часто удивляет. Управляют им два атрибута: `rollbackFor` добавляет типы, при которых откатывать (расширяет правило), а `noRollbackFor` -- типы, при которых не откатывать (сужает).
+В стандартной конфигурации `Spring @Transactional` откатывает транзакцию при `RuntimeException` и `Error`. Checked-исключения (наследники `Exception`, но не `RuntimeException`) сами по себе откат не вызывают: при выходе такого исключения транзакция коммитится. `rollbackFor` задаёт типы для отката, `noRollbackFor` — типы без отката. Если правила пересекаются, выигрывает наиболее конкретное совпадение, а не порядок атрибутов.
 
 ```java
 // Откат при любом Exception (включая checked)
@@ -755,35 +776,42 @@ public void processFile() throws IOException {
 }
 ```
 
-**Рекомендация:** в проектах, где бросаются checked-исключения, по умолчанию ставьте `rollbackFor = Exception.class` -- так поведение становится интуитивным: «любая ошибка -- откат». Затем точечно добавляйте `noRollbackFor` для тех бизнес-исключений, которые означают штатный, а не аварийный исход и не должны рушить транзакцию.
+В Spring Framework 6.2+ можно выбрать общий режим `@EnableTransactionManagement(rollbackOn = ALL_EXCEPTIONS)`; локальные правила конкретной транзакции сохраняют приоритет. В более ранних версиях или при локальном исключении из общего правила используйте `rollbackFor = Exception.class` и точечный `noRollbackFor`. При выборе проверьте, какие checked-исключения в проекте означают штатный бизнес-исход.
+
+См. [Spring Framework: rollback rules](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html) и [`@Transactional` settings](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html).
 
 ## Q23. Почему @Transactional не работает на private методах?
 
 Потому что транзакцию навешивает **прокси**, а прокси физически не может перехватить `private` метод -- его нельзя ни выставить в интерфейсе, ни переопределить в подклассе:
 
 - **JDK Dynamic Proxy** реализует интерфейс бина и видит только его `public` методы.
-- **CGLIB Proxy** создаёт подкласс и переопределяет методы, но `private` (а также `final` и `static`) переопределить нельзя -- транзакционная обёртка для них просто не создаётся.
+- **Прокси на основе класса (CGLIB)** создаёт подкласс, поэтому не может переопределить `private`, `final` и `static` методы; аннотация на `private` методе через такой прокси не сработает.
 
 ```java
 @Service
 public class PaymentService {
     
-    @Transactional  // Работает: вызывается через прокси
+    @Transactional  // Внешний вызов проходит через прокси
     public void processPayment(Payment payment) {
         // ...
-        updateBalance(payment);  // НЕ работает: self-invocation
+        updateBalance(payment);  // Самовызов: REQUIRES_NEW не применяется
     }
     
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     private void updateBalance(Payment payment) {  // ОШИБКА: private + @Transactional
-        // Транзакция НЕ будет создана
+        // Новая транзакция НЕ создаётся; выполняется внутри текущей processPayment
     }
 }
 ```
 
 Правила:
-- `@Transactional` работает только на `public` методах (или `protected` для CGLIB)
+- Для интерфейсного прокси нужен `public` метод интерфейса. Начиная со Spring Framework 6.0, прокси на основе класса по умолчанию поддерживает также `protected` и package-private методы при внешнем вызове; `private` не поддерживается.
+- `final` метод нельзя переопределить в прокси на основе класса; `static` метод не является вызовом экземпляра бина. Эти ограничения нельзя автоматически переносить на интерфейсный прокси.
 - Метод должен вызываться **извне бина** (через DI), а не через `this`
+
+Правила относятся к стандартному proxy mode. В режиме AspectJ перехват основан на weaving, а не на прокси.
+
+См. [Spring Framework: видимость методов и proxy mode](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html).
 
 ## Q24. Что такое self-invocation problem в Spring транзакциях?
 
