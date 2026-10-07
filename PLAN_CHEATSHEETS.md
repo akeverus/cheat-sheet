@@ -467,7 +467,7 @@ Dropbox/Google Drive), 18 (карты) и 26 (платёжная система)
 | P3 | `ADD_Q` выполнено · О | `databases/database-transactions-interview.md` Q43; Q6–Q12 уже объясняли изоляцию/MVCC, `postgresql-interview.md` упоминал `SQLSTATE 40001` без полного сценария | Write skew на двух дежурных и повтор всей транзакции с повторной проверкой инварианта по [PostgreSQL 18 Transaction Isolation](https://www.postgresql.org/docs/18/transaction-iso.html) и [Serialization Failure Handling](https://www.postgresql.org/docs/18/mvcc-serialization-failure-handling.html). | Markdown/JSON синхронизированы; structure/parity PASS, полный pre-check файла FAIL из-за прежних Q15/Q22/Q23, новый Q43 без hard-сигналов. Blind review Q43 ожидается. |
 | P3 | `ADD_Q` + исправление выполнены · О | `devops/kubernetes-interview.md` Q39/Q46; рядом Q14 о rollout и Q42 о завершении Pod | Q39 неверно называл PDB гарантией минимального числа доступных Pod; в MCQ rolling update ошибочно отнесён к его защите. Q46 показывает `drain` через Eviction API, ожидание бюджета и границы PDB по [Kubernetes Disruptions](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/) и [Safely Drain a Node](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/). | Теория и JSON Q39/Q46 синхронизированы, structure PASS; полный parity/pre-check старого файла FAIL на многочисленных прежних блоках, freshness sidecar для всего файла TODO. Новые Q требуют независимого blind review. |
 | P3 | `ADD_Q` + исправление выполнены · О | `devops/kubernetes-interview.md` Q22/Q47; Q22 об Ingress только кратко упоминал Gateway API | Q22 неверно описывал Gateway API как встроенные core-ресурсы с обязательной TCP/UDP-поддержкой. Q47 объясняет выбор API, роли `GatewayClass → Gateway → HTTPRoute`, CRD/контроллер и проверку conformance/поддержки функций по [Kubernetes Gateway API](https://kubernetes.io/docs/concepts/services-networking/gateway/) и [Implementer's Guide](https://gateway-api.sigs.k8s.io/guides/implementers-guide/). | Теория/JSON Q22/Q47 синхронизированы; structure PASS, локально без hard-сигналов, полный parity/pre-check старого файла FAIL. Blind review Q22/Q47 ожидается. |
-| P3 | `ADD_Q` + уточнение выполнены · О | `frameworks/spring/spring-rest-client-interview.md` Q14; рядом Q5/Q12 и `resilience4j-interview.md` Q9/Q14 | Q12 объяснял только фазовые таймауты. Q14 добавляет единый бюджет на ожидание пула, соединение, ответ и повторы; ограничение retry по семантике операции; метрики и trace context через внедрённый Boot builder. Q12 уточнён по наблюдаемости. Сверены [Apache HttpClient 5.6 RequestConfig](https://hc.apache.org/httpcomponents-client-5.6.x/current/httpclient5/apidocs/org/apache/hc/client5/http/config/RequestConfig.Builder.html), [Spring Boot Metrics](https://docs.spring.io/spring-boot/reference/actuator/metrics.html), [Tracing](https://docs.spring.io/spring-boot/reference/actuator/tracing.html), [Resilience4j Retry](https://resilience4j.readme.io/docs/retry), [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2). | Теория/JSON Q12/Q14 синхронизированы; структура/parity PASS, полный pre-check старого файла FAIL на прежних Q4/Q6/Q7/Q11/Q12/Q13; Q14 без hard-сигналов. Авторская точечная проверка выполнена, blind review ожидается. |
+| P3 | `ADD_Q` + уточнение выполнены · О | `frameworks/spring/spring-rest-client-interview.md` Q14; рядом Q5/Q12 и `resilience4j-interview.md` Q9/Q14 | Q12 объяснял только фазовые таймауты. Q14 добавляет единый бюджет на ожидание пула, соединение, ответ и повторы; ограничение retry по семантике операции; метрики и trace context через внедрённый Boot builder. Q12 уточнён по наблюдаемости. Сверены [Apache HttpClient 5.6 RequestConfig](https://hc.apache.org/httpcomponents-client-5.6.x/current/httpclient5/apidocs/org/apache/hc/client5/http/config/RequestConfig.Builder.html), [Spring Boot Metrics](https://docs.spring.io/spring-boot/reference/actuator/metrics.html), [Tracing](https://docs.spring.io/spring-boot/reference/actuator/tracing.html), [Resilience4j Retry](https://resilience4j.readme.io/docs/retry), [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2). | Теория/JSON Q12/Q14 синхронизированы; структура/parity PASS, полный pre-check после второго пакета 07.10 PASS (hard=0); Q14 без hard-сигналов. Авторская точечная проверка выполнена, blind review ожидается. |
 | P3 | `ADD_Q` + исправления выполнены · О | `security/authentication-authorization-patterns-interview.md` Q24/Q46; сосед `frameworks/spring/spring-security-interview.md` Q44 | Q24 смешивал отсутствие пароля со стойкостью к фишингу; Q44 ошибочно утверждал, что ключ никогда не покидает устройство, и не называл обязательный модуль. Q46 добавляет регистрацию/вход, challenge, origin/RP ID, подпись и восстановление. Сверены [W3C WebAuthn Level 3](https://www.w3.org/TR/webauthn-3/), [FIDO Alliance Recovery](https://fidoalliance.org/white-paper-displace-password-otp-authentication-with-passkeys/), [Spring Security Passkeys](https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html), [CVE-2026-47841](https://spring.io/security/cve-2026-47841/). | Q24/Q46 и Spring Q44 JSON синхронизированы; структура/parity обоих PASS. Полный pre-check общей темы PASS, Spring Security FAIL из-за прежнего Q30 drift и старых блоков, Q44 без hard-сигнала. Авторская точечная проверка выполнена, blind review ожидается; freshness общей темы сброшен в TODO. |
 | P2 | `NEW_TOPIC` выполнено · О | `databases/jdbc-connection-pool-interview.md` Q1–Q6; рядом `sql-interview.md` Q45 и `database-transactions-interview.md` Q33–Q34 | **JDBC и пулы**: `DataSource`, `PreparedStatement`, `ResultSet`, auto-commit, batch/streaming, жизненный цикл и диагностика. Граница с MySQL и Spring Data JDBC записана в пакете 05.10. | Шпаргалка и парный JSON уже созданы; 6 Q, структура/parity PASS, независимая MCQ-приёмка ожидается. |
 | P4 | `DEEPEN` выполнено · О | `monitoring/metrics-tracing-interview.md` Q40 уже содержит Baggage; `opentelemetry-interview.md` Q14 объясняет только trace context. Указанный прежде Q37 — tail sampling, сосед был записан ошибочно. | Q40 пример читал `Context.current()` после записи в отдельный контекст без `Scope` и передавал `userId` в заголовке. Исправлены `makeCurrent()`, несекретный пример, граница доверия, отсутствие встроенной целостности/автоматических span attributes и лимиты [W3C Baggage](https://www.w3.org/TR/baggage/#limits); сверены [OpenTelemetry Baggage](https://opentelemetry.io/docs/concepts/signals/baggage/) и [Java API](https://opentelemetry.io/docs/languages/java/api/). | JSON Q40 edge cases синхронизирован, структура PASS. Полный parity/pre-check старого файла FAIL (в том числе прежний скелет Q40); авторская точечная проверка Q40 выполнена, blind review и полная свежесть файла ожидаются. Отдельный Q не нужен. |
@@ -617,8 +617,8 @@ Q47 о выборе и ролях добавлен (коммит `d95a6029`).
 Spring Rest Client Q12 уточнён по наблюдаемости, Q14 добавлен для
 общего бюджета исходящего вызова, повторов и Boot-инструментации.
 Инвентарь теперь показывает 9 923 Q. Структура/parity JSON PASS;
-полный pre-check старого файла FAIL на прежних Q4/Q6/Q7/Q11/Q12/Q13,
-новый Q14 без hard-сигналов. Независимая приёмка Q12/Q14 ожидается.
+полный pre-check всего файла PASS (hard=0) после двух пакетов 07.10;
+новый Q14 без hard-сигналов. Независимая приёмка Q4/Q6/Q7/Q11/Q12/Q13/Q14 ожидается.
 WebAuthn Q46 добавлен в общую тему; Q24 и Spring Security Q44 уточнены,
 включая модуль, synced passkeys и границы CVE-2026-47841. JSON двух тем
 синхронизированы и структурно проверены; parity PASS. Полный pre-check
@@ -656,8 +656,8 @@ hard=0, 17 предупреждений. Авторская точечная п�
 Для этих пакетов проведена авторская точечная проверка
 по официальной документации, **полная содержательная проверка старых
 файлов не проводилась**. Автоматические структура/parity Q43 PASS,
-общий pre-check транзакционного JSON теперь PASS после отдельной правки
-Q15/Q22/Q23; у CompletableFuture — на прежних Q2/Q3/Q4/Q6/Q8/Q10.
+общий pre-check транзакционного JSON PASS после отдельной правки
+Q15/Q22/Q23; у CompletableFuture он тоже PASS после правки Q2/Q3/Q4/Q6/Q8/Q10.
 Полный parity/pre-check Kubernetes тоже FAIL на прежних блоках; его
 fact-freshness sidecar остаётся TODO. Это не оценка новых Q43/Q14/Q46/Q47.
 Независимая содержательная
@@ -678,10 +678,105 @@ structure/parity/pre-check всего JSON: PASS (43 Q/43 блока, hard=0,
 два предупреждения). Это авторская точечная проверка, не полная проверка
 старого файла и не независимый blind review. MCQ Q15/Q22/Q23 B0 и Q43 B0
 ждут независимой приёмки. Состав шпаргалок и число Q не менялись,
-`inventory.tsv` не обновлялся. Следующий **авторский** пакет после этой
-группы: `programming-languages/java/java-completable-future-interview.md`
-Q2/Q3/Q4/Q6/Q8/Q10 с парным JSON — разобрать старые hard-сигналы вместе
-с фактами, затем зафиксировать оставшиеся ограничения отдельно от blind review.
+`inventory.tsv` не обновлялся.
+
+**Контрольная точка 07.10.2026 — Java CompletableFuture Q2/Q3/Q4/Q6/Q8/Q10 · О.**
+По [Java SE 25 `CompletableFuture`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html),
+[`CompletionStage`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html)
+и [`ForkJoinPool`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinPool.html)
+исправлены негарантированный поток для не-Async этапа, настраиваемый размер
+общего пула, роль `thenCombine` без обещания параллельности, цепочки после
+`thenAccept`/`thenRun`, момент завершения `allOf` при ошибке,
+тип `exceptionally` и граница таймаута `join`/`get`. MCQ Q2 B0,
+Q3 B0/B1, Q4 B0, Q6 B0, Q8 B1, Q10 B0 синхронизированы,
+включая прежде истинный дистрактор Q6 C. Структура/parity/pre-check
+всего JSON PASS (14 Q/16 блоков, hard=0, три предупреждения).
+Авторская проверка A/B/C/D и sections выполнена для этих блоков;
+полный обзор прежних Q и независимый blind review остаются открытыми.
+Q8 B0 связан с изменённой теорией и также требует независимой проверки.
+Состав файлов и число Q не менялись, инвентарь прежний.
+
+**Контрольная точка 07.10.2026 — Spring Rest Client Q4/Q11 · О.**
+По [Spring Framework 6.2 REST Clients](https://docs.spring.io/spring-framework/reference/6.2/integration/rest-clients.html),
+[`ConvertibleClientHttpResponse`](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/web/client/RestClient.RequestHeadersSpec.ConvertibleClientHttpResponse.html)
+и [Spring Boot 4 HTTP Service groups](https://docs.spring.io/spring-boot/4.0/reference/io/rest-client.html)
+уточнены `retrieve()/exchange()`, тип ответа в лямбде `exchange()`,
+`bodyTo()` и `Optional.ofNullable()`, а также граница между синхронной
+сигнатурой интерфейса и реактивным `Mono/Flux`. Убрано ложное обобщение,
+что в Boot нельзя задать base URL через свойства: для групп Boot 4.x есть
+`spring.http.serviceclient.<group-name>.base-url`, а ручная сборка
+использует builder клиента. MCQ Q4/Q11 B0 синхронизированы, A/B/C/D и
+sections авторски вычитаны. Structure/parity JSON PASS (14 Q/14 блоков),
+полный pre-check этой промежуточной версии FAIL: Q6/Q7/Q12/Q13, hard=4.
+Независимая приёмка Q4/Q11 и Q12/Q14 ожидается; полный обзор старого
+файла не выполнен. В fact-freshness sidecar добавлены точечные источники;
+предыдущая дата общей проверки 02.09 сохранена, новый полный проход не заявлен.
+
+**Контрольная точка 07.10.2026 — Spring Rest Client Q6/Q7/Q12/Q13 · О.**
+По [Spring Framework 6.2 REST Clients](https://docs.spring.io/spring-framework/reference/6.2/integration/rest-clients.html),
+[синхронному WebClient](https://docs.spring.io/spring-framework/reference/6.2/web/webflux-webclient/client-synchronous.html),
+[SimpleClientHttpRequestFactory](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/http/client/SimpleClientHttpRequestFactory.html)
+и [Apache HttpClient 5.6](https://hc.apache.org/httpcomponents-client-5.6.x/connection-management.html)
+уточнён Q7: модель исходящего вызова важнее названия серверного стека,
+а `.block()` занимает вызывающий поток. Q6/Q12/Q13 точечно сверены:
+`ParameterizedTypeReference`, таймауты на реализации request factory,
+перенос конфигурации через `RestClient.create(RestTemplate)`.
+MCQ Q6/Q7/Q12/Q13 B0 переработаны с проверкой A/B/C/D и sections;
+структура/parity/pre-check всего JSON PASS (14 Q/14 блоков, hard=0,
+четыре предупреждения). Это авторская точечная проверка, не полный обзор
+старых Q и не независимая приёмка. Sidecar дополнен проверенными источниками,
+дата прежнего полного прохода 02.09 сохранена. Состав шпаргалок и число Q
+не менялись; инвентарь прежний.
+
+**Контрольная точка 07.10.2026 — Spring Data JPA Q3 B0 и Q4 B1 · О.**
+По [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),
+[Hibernate HQL 7.0](https://docs.hibernate.org/orm/7.0/querylanguage/html_single/)
+и [Spring Data JPA AOT 4.1.1](https://docs.spring.io/spring-data/jpa/reference/jpa/aot.html)
+исправлен Q3: CTE и оконные функции отсутствуют в стандартном JPQL, но
+доступны в Hibernate HQL как расширения с ограниченной переносимостью.
+У Q4 уточнён стандартный in-memory путь сбора метаданных и возможность
+включить `EntityManagerFactory`. Парные MCQ Q3 B0 и Q4 B1 сверены по
+ответу, всем A/B/C/D и sections; версия/источники записаны в sidecar.
+Структура JSON PASS (43 Q/44 блока), локальный pre-check обоих блоков
+PASS без предупреждений; во всём старом файле остаётся 35 hard-сигналов,
+parity всего файла FAIL. Это авторская точечная проверка, независимая
+приёмка и полный содержательный обзор остаются открытыми. Состав и число
+Q не менялись, инвентарь прежний.
+
+**Контрольная точка 07.10.2026 — Spring Data JPA Q5/Q6/Q7 B0 · О.**
+По [Spring Data JPA query methods](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html),
+[return types](https://docs.spring.io/spring-data/jpa/reference/repositories/query-return-types-reference.html)
+и [транзакциям](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html)
+уточнены derived methods: `deleteBy` выбирает сущности и удаляет их
+по одной с callbacks, а возвращённый `Stream<T>` надо читать и закрывать
+в транзакции вызывающего сервиса. Убраны фиктивные JPQL-эквиваленты
+`LIMIT`/bulk `DELETE`. Q6/Q7 теперь согласованы с Q3: Hibernate HQL
+поддерживает CTE/оконные функции сверх стандарта JPQL; нативный SQL
+можно задать через `@NativeQuery` или `@Query(nativeQuery=true)`,
+а `countQuery` не обязателен для каждого простого `Page`.
+Парные MCQ Q5/Q6/Q7 B0 переписаны и точечно проверены по A/B/C/D и
+sections; структура PASS (43 Q/44 блока), локальный pre-check PASS
+без жёстких сигналов, весь старый JSON остаётся с 32 hard-сигналами
+и общим parity FAIL. Независимая приёмка и полный обзор остальных Q
+открыты; инвентарь без изменений.
+
+**Контрольная точка 07.10.2026 — Spring Data JPA Q8 B0 · О.**
+По [Spring Data JPA modifying queries](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html)
+и [transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html)
+уточнены область `@Modifying`, транзакция для объявленных query methods,
+порядок `flushAutomatically`/`clearAutomatically` и риск потери
+несохранённых изменений при очистке контекста. В Q7 устранено оставшееся
+абсолютное требование `countQuery` для всякой нативной пагинации.
+MCQ Q8 B0 синхронизирован; A/B/C/D и sections авторски проверены.
+Структура PASS (43 Q/44 блока), локальный pre-check Q8 PASS без
+предупреждений; в старом файле остаётся 31 hard-сигнал и общий parity
+FAIL. Независимая приёмка и обзор других Q ожидаются; инвентарь прежний.
+
+Следующий **авторский** пакет: `frameworks/spring/spring-data-jpa-interview.md`
+Q9 B0 с парным JSON — проверить `#{#entityName}` и границы SpEL
+в `@Query` по официальной Spring Data JPA документации; отдельно
+разобрать старые hard-сигналы формы. Независимую MCQ-приёмку начинать с Batch
+Q6 B0/B1, Q28 B0, Q38 B0 по пункту ниже; этот авторский пакет её не заменяет.
 
 1. **Точная точка продолжения:** независимая содержательная MCQ-приёмка
    последней группы, начиная с `frameworks/spring/spring-batch-interview.md`
@@ -698,8 +793,9 @@ Q2/Q3/Q4/Q6/Q8/Q10 с парным JSON — разобрать старые hard
 2. Ad Click Event Aggregation и Distributed Email Service Q1–Q4 написаны; их MCQ вместе с
    Metrics Platform Q1–Q4, Leaderboard Q1–Q5, Object Storage Q1–Q4, Reservation System Q1–Q4,
    Notification System Q1–Q4, Digital Wallet Q1–Q4, Database Transactions Q43,
-   Java CompletableFuture Q11/Q14, Kubernetes Q22/Q39/Q46/Q47,
-   Spring Rest Client Q12/Q14, WebAuthn Q24/Q46, Spring Security Q44,
+   Java CompletableFuture Q2 B0/Q3 B0/B1/Q4 B0/Q6 B0/Q8 B0/B1/Q10 B0/Q11/Q14,
+   Kubernetes Q22/Q39/Q46/Q47,
+   Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13/Q14, WebAuthn Q24/Q46, Spring Security Q44,
    Metrics & Tracing Q40, Spring Testing Q9/Q10, Uber Q6/Q7,
    Google Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1,
    Spring Batch Q6 B0/B1/Q28/Q38, Database Transactions Q15/Q22/Q23 B0
@@ -709,7 +805,8 @@ Q2/Q3/Q4/Q6/Q8/Q10 с парным JSON — разобрать старые hard
    Остальные P2/P3 без решения остаются кандидатами. Статусы Python 3.15 и
    PostgreSQL 19 перепроверять после финальных релизов.
 3. Отдельной задачей пройти независимую blind-приёмку новых MCQ и старый
-   parity/pre-check backlog Hibernate, Spring Data JPA, Java IO/NIO, Jackson,
+   parity/pre-check backlog Hibernate, Spring Data JPA (после Q3/Q4 ещё
+   31 hard-сигнал), Java IO/NIO, Jackson,
    URL Shortener, RabbitMQ, Kafka, сравнения брокеров и event-driven;
    положительный валидатор не означает `FINAL`.
 4. Продолжать выборку официальных публикаций за скользящие шесть месяцев;

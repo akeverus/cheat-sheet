@@ -189,8 +189,18 @@ device-bound passkeys, отдельный модуль и CVE-2026-47841.
 темы сброшен в TODO.
 Spring Rest Client Q12 уточнён, Q14 об общем бюджете исходящего HTTP-вызова,
 повторах и наблюдаемости добавлен. Структура/parity JSON PASS, полный
-pre-check старого файла FAIL на прежних Q4/Q6/Q7/Q11/Q12/Q13; новый Q14
-без hard-сигналов. Независимая MCQ-приёмка ожидается.
+pre-check после двух пакетов 07.10 тоже PASS (14 Q/14 блоков, hard=0,
+четыре предупреждения); новый Q14 без hard-сигналов. Q4 уточнён по
+`ConvertibleClientHttpResponse`: `bodyTo()` доступен в лямбде `exchange()`,
+пустое тело требует `Optional.ofNullable()`. Q11 разграничивает смену
+адаптера и реактивной сигнатуры, учитывает HTTP Service groups Boot 4.x
+с `spring.http.serviceclient.<group-name>.base-url`. Парный JSON Q4/Q11
+синхронизирован. Q7 уточнён по неблокирующей композиции и `.block()`;
+Q6/Q12/Q13 точечно сверены по Spring Framework 6.2 и Apache HttpClient 5.6,
+их варианты и sections выровнены. Авторская точечная проверка A/B/C/D
+выполнена для этой группы; независимая MCQ-приёмка ожидается.
+Fact-freshness sidecar дополнен источниками, прежняя дата общего прохода
+02.09 сохранена; новый полный обзор старых Q не проводился.
 Digital Wallet Q1–Q4 уже создан и закоммичен (`3a300d20`), его MCQ
 structure/parity/pre-check PASS, независимый blind review ожидается.
 Database Transactions Q43 о write skew добавлен в существующую тему:
@@ -201,8 +211,14 @@ rollback-правила, видимость методов и AspectJ. Парн�
 полный structure/parity/pre-check PASS (43 Q/43 блока, hard=0), но это
 авторская точечная проверка. Независимая приёмка Q15/Q22/Q23/Q43 ожидается.
 Java CompletableFuture Q11 исправлен (Java 8 timeout), Q14 об отмене
-добавлен. Структура/parity PASS, полный pre-check старого JSON FAIL на
-прежних Q2/Q3/Q4/Q6/Q8/Q10; Q11/Q14 без hard-сигналов, blind review ожидается.
+добавлен. 07.10 Q2/Q3/Q4/Q6/Q8/Q10 исправлены по Java SE 25
+`CompletableFuture`, `CompletionStage` и `ForkJoinPool`: поток исполнения,
+`thenCombine`, `thenAccept`/`thenRun`, `allOf` при ошибке, возвращаемый тип
+`exceptionally`, `join`/`get`. Q6 C раньше был истинным дистрактором.
+Парный JSON синхронизирован, структура/parity/pre-check всего файла PASS
+(14 Q/16 блоков, hard=0); авторская проверка A/B/C/D и sections сделана
+по изменённым блокам. Полная и независимая приёмка ожидается, включая Q8 B0,
+который связан с изменённой теорией.
 Kubernetes Q39 о PDB исправлен, Q46 о `drain` добавлен. Структура PASS,
 полный parity/pre-check старого файла FAIL на прежних блоках; sidecar
 fact-freshness TODO. Q39/Q46 ждут независимой приёмки.
@@ -217,17 +233,36 @@ Java IO/NIO, Jackson, URL Shortener, RabbitMQ, Kafka, сравнение бро�
 event-driven открыт. Ad Click Event Aggregation и Distributed Email Service Q1–Q4, Metrics Platform Q1–Q4, Leaderboard Q1–Q5, Object Storage Q1–Q4,
 Reservation System Q1–Q4, Notification System Q1–Q4, Digital Wallet Q1–Q4,
 Database Transactions Q43, Java CompletableFuture Q11/Q14,
-Database Transactions Q15/Q22/Q23,
+Database Transactions Q15/Q22/Q23, Java CompletableFuture Q2/Q3/Q4/Q6/Q8/Q10,
+Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13,
+Spring Data JPA Q3 B0/Q4 B1/Q5 B0/Q6 B0/Q7 B0/Q8 B0,
 Kubernetes Q22/Q39/Q46/Q47, RabbitMQ Streams Q40–Q42
 и Spring Data JDBC Q17 тоже ждут
 содержательной приёмки.
 
-Следующий авторский пакет: Java CompletableFuture Q2/Q3/Q4/Q6/Q8/Q10
-и парный JSON. Сверить факты по официальной Java-документации и разобрать
-старые hard-сигналы. Независимую MCQ-приёмку вести отдельно: ближайший
+07.10 Spring Data JPA Q3 B0/Q4 B1/Q5 B0/Q6 B0/Q7 B0/Q8 B0 исправлены по
+Jakarta Persistence 3.2, Hibernate HQL 7.0 и Spring Data JPA 4.1.1:
+стандарт JPQL отделён
+от расширений HQL, описан in-memory путь AOT и опциональное применение
+EntityManagerFactory. Derived `deleteBy` отделён от bulk DELETE,
+`Stream<T>` требует транзакции и закрытия; для нативного `Page` не всегда
+нужен явный `countQuery`. Для `@Modifying` уточнены транзакция,
+bulk-семантика и `flushAutomatically`/`clearAutomatically`.
+Парные MCQ и fact-freshness sidecar обновлены.
+Structure PASS (43 Q/44 блока), локальный pre-check этих шести блоков PASS;
+полный parity FAIL, в старом JSON остаётся 31 hard-сигнал pre-check.
+Независимой приёмки и полного содержательного обзора темы не было.
+
+Следующий авторский пакет: Spring Data JPA Q9 B0 и парный JSON.
+Сверить `#{#entityName}` и SpEL в `@Query` по официальной Spring Data JPA
+документации и разобрать старые hard-сигналы этого блока. Независимую MCQ-приёмку
+вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,
 затем Uber Q6/Q7, Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1 и
-Database Transactions Q15/Q22/Q23/Q43 B0. Не записывать авторскую
+Database Transactions Q15/Q22/Q23/Q43 B0,
+Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13 B0
+и Java CompletableFuture
+Q2 B0/Q3 B0/B1/Q4 B0/Q6 B0/Q8 B0/B1/Q10 B0. Не записывать авторскую
 самопроверку как независимую фазу A/B.
 
 ## Как работать с каждой группой
