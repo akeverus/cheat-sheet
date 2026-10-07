@@ -770,7 +770,7 @@ public class Order {
 
 ## Q20. (!) Что такое проблема N+1?
 
-Проблема **N+1** — ситуация, когда `Hibernate` выполняет **1 запрос** для получения списка из N сущностей, а затем **N дополнительных запросов** для загрузки связанных данных каждой сущности.
+Проблема **N+1** — ситуация, когда `Hibernate` выполняет **1 запрос** для получения списка из N сущностей, а затем отдельные запросы для загрузки связей каждой сущности. В простом случае получается ещё N SELECT; фактическое число зависит от кэша, общих связанных объектов и fetch-плана. Это возможно при обращении к `LAZY`-связи в цикле **и при `EAGER` to-one в JPQL/HQL без `JOIN FETCH`**: Hibernate может загрузить такую связь вторичными SELECT до возврата списка.
 
 ```java
 // 1 запрос: SELECT * FROM authors
@@ -782,7 +782,7 @@ for (Author author : authors) {
 }
 ```
 
-Итого: **1 + N запросов** вместо одного. При N = 1000 авторов — 1001 запрос к БД.
+В этом примере без пакетной загрузки и попаданий в кэш получается **1 + N запросов** вместо одного. При N = 1000 авторов — 1001 запрос к БД.
 
 ```
 -- 1-й запрос
@@ -795,22 +795,22 @@ SELECT * FROM books WHERE author_id = 2;
 -- ... и так N раз
 ```
 
-Эта проблема — одна из главных причин performance-проблем в `Hibernate`-приложениях. Подробнее о запросах в [вопросах по SQL](sql-interview.md).
+Проверяйте количество SQL на выборке списка, а не выводите его из одной аннотации `FetchType`. [Hibernate ORM 7.4, fetching](https://docs.hibernate.org/orm/7.4/userguide/html_single/). Подробнее о запросах — в [вопросах по SQL](sql-interview.md).
 
 ## Q21. (!) Как решить проблему N+1?
 
-Существует несколько способов, от самого рекомендуемого к менее предпочтительному:
+Способ зависит от требуемых связей и объёма выборки:
 
-**1. `JOIN FETCH` в JPQL** (рекомендуется):
+**1. `JOIN FETCH` в JPQL**, когда связь нужна именно этому запросу:
 
 ```java
-// 1 запрос с JOIN: SELECT a.*, b.* FROM authors a JOIN books b ON a.id = b.author_id
+// Один SQL с JOIN; INNER JOIN исключит авторов без книг
 List<Author> authors = entityManager
     .createQuery("SELECT a FROM Author a JOIN FETCH a.books", Author.class)
     .getResultList();
 ```
 
-**2. `@EntityGraph`** (декларативный подход):
+**2. `EntityGraph`** задаёт граф требуемых атрибутов без фиксации формы SQL:
 
 ```java
 @Entity
@@ -826,7 +826,7 @@ List<Author> authors = entityManager
     .getResultList();
 ```
 
-**3. `@BatchSize`** (уменьшает N+1 до N/batch+1):
+**3. `@BatchSize`** объединяет часть дополнительных SELECT:
 
 ```java
 @Entity
@@ -835,7 +835,7 @@ public class Author {
     @BatchSize(size = 25) // загружает книги пачками по 25 авторов
     private List<Book> books;
 }
-// Вместо 1+N запросов будет 1 + ceil(N/25)
+// Вместо N отдельных дозагрузок обычно около ceil(N/25) пакетных SELECT
 ```
 
 **4. `@Fetch(FetchMode.SUBSELECT)`**:
@@ -844,10 +844,10 @@ public class Author {
 @OneToMany(mappedBy = "author")
 @Fetch(FetchMode.SUBSELECT)
 private List<Book> books;
-// 2 запроса: 1 для авторов + 1 subselect для всех книг
+// При обращении к коллекции Hibernate может загрузить коллекции владельцев одним subselect
 ```
 
-**Не рекомендуется**: менять `FetchType.LAZY` на `FetchType.EAGER` — это решит N+1, но создаст проблему избыточной загрузки данных во всех запросах.
+**Не считайте `EAGER` лечением N+1:** он требует ранней загрузки, но не JOIN; JPQL/HQL без fetch join способен дать вторичные SELECT по каждой to-one связи. Несколько параллельных fetch joins коллекций могут дать декартово произведение, а несколько bag — `MultipleBagFetchException`. Проверяйте SQL и количество строк; для нескольких коллекций часто удобнее отдельные/пакетные запросы. [Hibernate ORM 7.4, fetch joins/batch/subselect](https://docs.hibernate.org/orm/7.4/userguide/html_single/); [Hibernate `MultipleBagFetchException`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/loader/MultipleBagFetchException.html).
 
 ## Q22. Что такое `LazyInitializationException` и как его избежать?
 
@@ -891,8 +891,10 @@ Order order = entityManager.find(Order.class, orderId, hints);
 ```
 
 Два типа hint:
-- **`fetchgraph`** — загружает ТОЛЬКО указанные атрибуты (остальные LAZY)
-- **`loadgraph`** — загружает указанные + атрибуты с дефолтным EAGER
+- **`fetchgraph`** — указанные атрибуты считаются `EAGER`, остальные — `LAZY`-подсказкой;
+- **`loadgraph`** — указанные атрибуты считаются `EAGER`, остальные сохраняют настройки маппинга.
+
+Граф не задаёт число JOIN/SELECT; спецификация разрешает провайдеру загрузить дополнительные данные сверх графа. [Jakarta Persistence 3.2, entity graphs](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
 
 В [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) Entity Graph используется через аннотацию `@EntityGraph` на методе репозитория.
 

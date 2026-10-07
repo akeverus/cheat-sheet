@@ -1318,9 +1318,9 @@ flowchart TD
 
 ## Q23. (!) Что такое N+1 проблема и как её решить?
 
-**N+1** — это 1 запрос за список из N сущностей плюс ещё N запросов за их связанными данными, по одному на каждую сущность. Возникает, когда вы обходите коллекцию и в цикле дёргаете lazy-связь. Одна из самых частых и коварных проблем производительности: на десяти записях незаметна, на десяти тысячах кладёт сервис.
+**N+1** — это 1 запрос за список из N сущностей плюс до N отдельных запросов за их связями. Классический случай — обращение к lazy-связи в цикле. Но и `EAGER` to-one связь в Hibernate может дать N+1: JPQL без `JOIN FETCH` иногда загружает её вторичными SELECT ещё до возврата списка. Точное число зависит от кэша, повторяющихся связей и fetch-плана.
 
-Суть в том, что lazy-загрузка срабатывает на каждом обращении отдельно — Hibernate не догадывается, что вы обойдёте весь список, и шлёт по запросу на элемент. Все решения сводятся к одному: загрузить связи **заранее**, одним или несколькими пакетными запросами.
+Способ решения выбирают по нужным данным: `JOIN FETCH` загружает связь с корнем, `@EntityGraph` задаёт требуемый граф загрузки, batch/subselect объединяют дополнительные запросы, а DTO-проекция позволяет вообще не материализовать связи. `@EntityGraph` не гарантирует конкретный JOIN или ровно один SQL — проверяйте реальные запросы.
 
 ```java
 // ПРОБЛЕМА: N+1
@@ -1342,16 +1342,16 @@ public List<UserDto> getAllUsersWithOrders() {
 
 **1. `JOIN FETCH` в JPQL:**
 ```java
-@Query("SELECT u FROM User u JOIN FETCH u.orders WHERE u.status = :status")
+@Query("SELECT u FROM User u LEFT JOIN FETCH u.orders WHERE u.status = :status")
 List<User> findByStatusWithOrders(@Param("status") UserStatus status);
-// 1 запрос с JOIN — все данные загружены
+// Один SQL с JOIN для этой связи; LEFT сохраняет пользователей без заказов
 ```
 
 **2. `@EntityGraph`:**
 ```java
 @EntityGraph(attributePaths = {"orders", "orders.items"})
 List<User> findByStatus(UserStatus status);
-// Spring добавляет LEFT JOIN для указанных путей
+// Граф требует загрузить указанные пути; форму SQL выбирает Hibernate
 ```
 
 **3. `@BatchSize` (Hibernate):**
@@ -1362,7 +1362,7 @@ public class User {
     @BatchSize(size = 25) // загружает orders для 25 users за один запрос
     private List<Order> orders;
 }
-// Вместо N запросов — ceil(N/25) запросов с WHERE user_id IN (?, ?, ...)
+// Вместо N отдельных дозагрузок — обычно около ceil(N/25) пакетных SELECT
 ```
 
 **4. Глобальный `batch_size` в конфиге:**
@@ -1376,19 +1376,19 @@ spring:
 
 **5. DTO-проекция (вообще без связей):**
 ```java
-@Query("SELECT new com.example.UserOrderCount(u.name, COUNT(o)) " +
-       "FROM User u LEFT JOIN u.orders o GROUP BY u.name")
+@Query("SELECT new com.example.UserOrderCount(u.id, u.name, COUNT(o)) " +
+       "FROM User u LEFT JOIN u.orders o GROUP BY u.id, u.name")
 List<UserOrderCount> getUserOrderCounts();
 // 1 запрос, без загрузки сущностей
 ```
 
-**Как обнаружить N+1:** включить логирование SQL (`spring.jpa.show-sql=true` или `logging.level.org.hibernate.SQL=DEBUG`) и смотреть количество запросов. В тестах — использовать [datasource-proxy](https://github.com/ttddyy/datasource-proxy) для подсчёта.
+Не объединяйте несколько независимых коллекций одним fetch join без проверки: возможны декартово произведение и, для нескольких bag-коллекций Hibernate, `MultipleBagFetchException`. При пагинации по коллекции отдельно проверяйте версию Hibernate и итоговый SQL/план. **Как обнаружить N+1:** включить логирование SQL (`spring.jpa.show-sql=true` или `logging.level.org.hibernate.SQL=DEBUG`) и смотреть количество запросов; в тестах можно считать запросы через [datasource-proxy](https://github.com/ttddyy/datasource-proxy). [Hibernate ORM 7.4, fetching](https://docs.hibernate.org/orm/7.4/userguide/html_single/); [Jakarta Persistence 3.2, entity graphs](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2); [Spring Data JPA, query methods](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html).
 
 ## Q24. Что такое `@EntityGraph` и как он работает?
 
-`@EntityGraph` — декларативный способ сказать «загрузи эти связи вместе с сущностью», не переписывая запрос на `JPQL` с `JOIN FETCH`. Вешается прямо на метод репозитория: указываете пути к связям через `attributePaths`, а Hibernate добавляет `LEFT JOIN` под капотом.
+`@EntityGraph` — декларативный способ задать граф атрибутов для конкретного метода репозитория, не переписывая JPQL с `JOIN FETCH`. `attributePaths` или именованный граф указывают, что требуется загрузить; Jakarta Persistence не предписывает `LEFT JOIN` или один SQL. Hibernate может использовать JOIN либо дополнительные запросы, поэтому число SQL проверяйте для конкретного запроса.
 
-Главное преимущество перед `JOIN FETCH` — переиспользование и читаемость: один и тот же метод (`findById`, `findByStatus`) обслуживает разные сценарии загрузки, а сам запрос остаётся декларацией намерения, а не простынёй JPQL.
+Граф удобен, когда требуется описать загрузку связей без изменения маппинга сущности; именованный граф можно переиспользовать на нескольких методах.
 
 ```java
 @Entity
@@ -1429,10 +1429,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 ```
 
 **`LOAD` vs `FETCH`:**
-- `EntityGraphType.LOAD` — указанные связи `EAGER`, остальные по аннотации (`@ManyToOne` = `EAGER`)
-- `EntityGraphType.FETCH` — указанные связи `EAGER`, **все остальные `LAZY`**
+- `EntityGraphType.LOAD` — указанные атрибуты считаются `EAGER`, остальные сохраняют свои настройки маппинга;
+- `EntityGraphType.FETCH` — указанные атрибуты считаются `EAGER`, остальные трактуются как `LAZY`-подсказка. Провайдеру разрешено загрузить и дополнительные данные.
 
-**Подводный камень:** `LEFT JOIN` по коллекции размножает строки — у родителя с 3 дочерними записями результат вернётся в трёх копиях. Лечится `DISTINCT` в запросе или объявлением связи как `Set` вместо `List` (множество само схлопывает дубликаты).
+**Подводный камень:** JOIN по коллекции размножает строки **на уровне SQL**. Hibernate 6+ удаляет дубликаты корневых сущностей из результата fetch join в памяти; `DISTINCT` не нужен только ради этого. `Set` вместо `List` не устраняет декартово произведение и не является средством исправления SQL. Для нескольких коллекций и пагинации оценивайте план, объём строк и версию Hibernate. [Jakarta Persistence 3.2, entity graphs](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2); [Spring Data JPA, `@EntityGraph`](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html); [Hibernate ORM 7.4, fetch joins и DISTINCT](https://docs.hibernate.org/orm/7.4/userguide/html_single/).
 
 ## Q25. Что такое `CascadeType` и когда применять каскады?
 

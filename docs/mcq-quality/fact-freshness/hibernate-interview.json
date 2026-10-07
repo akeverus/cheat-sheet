@@ -3,7 +3,7 @@
   "round": 10,
   "status": "TODO",
   "version_sensitive": true,
-  "product_version": "Hibernate ORM 7.4 / 8.0 (Q8–Q10 и Q19 проверены по 6.6/7.0/7.4; Jakarta Persistence 3.2)",
+  "product_version": "Hibernate ORM 7.4 / 8.0 (Q8–Q10 и Q19–Q21/Q23 проверены по 6.6/7.0/7.4; Jakarta Persistence 3.2)",
   "checked_date": "2026-10-07",
   "sources": [
     "context7 /hibernate/hibernate-orm (High reputation, 4549 snippets) — проверка актуальной ветки",
@@ -15,7 +15,9 @@
     "https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/Session.html",
     "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/entitymanager",
     "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/flushmodetype",
-    "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/fetchtype"
+    "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/fetchtype",
+    "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
+    "https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/loader/MultipleBagFetchException.html"
   ],
   "version_sensitive_claims": [
     "Hibernate 6+ определяет Dialect автоматически по URL подключения — явное указание обычно не требуется (тело Q42).",
@@ -27,16 +29,18 @@
     "Q8: Hibernate ORM 7.4 AUTO flush'ит перед пересекающимся JPQL/HQL, native SQL без registered synchronization и commit, а не перед каждым SELECT. COMMIT может flush'ить раньше commit. JPA 3.2 определяет только AUTO/COMMIT; MANUAL специфичен Hibernate. Для dirty checking обычный diff-based snapshot и bytecode-enhanced in-line tracking являются разными механизмами.",
     "Q9: Hibernate 6.6 Session.save/update были deprecated с 6.0; все формы удалены в Hibernate 7.0. Исторический Session.save возвращал Object (ID), не Serializable по контракту. JPA merge(new/detached) возвращает managed-экземпляр, который при detached может уже существовать в контексте; исходный detached-аргумент не переподключается.",
     "Q10: Hibernate 7.0 удалил Session.load в пользу getReference и пометил Session.get deprecated в пользу find. Hibernate 7.4 getReference не читает БД при вызове, но может вернуть уже managed объект вместо proxy. find тоже может вернуть managed объект без SQL, при отсутствии возвращает null. По JPA 3.2 getReference может выбросить EntityNotFoundException при вызове или доступе к состоянию; null и доказательства существования он не даёт.",
-    "Q19: Jakarta Persistence 3.2 определяет EAGER как обязательство провайдера, LAZY — как подсказку, которую провайдер может переопределить. По умолчанию to-one связи EAGER, to-many LAZY; Hibernate ORM 7.4 при JPQL/HQL без JOIN FETCH способен загружать EAGER связи вторичными SELECT с N+1. Форма SQL не следует из одного FetchType."
+    "Q19: Jakarta Persistence 3.2 определяет EAGER как обязательство провайдера, LAZY — как подсказку, которую провайдер может переопределить. По умолчанию to-one связи EAGER, to-many LAZY; Hibernate ORM 7.4 при JPQL/HQL без JOIN FETCH способен загружать EAGER связи вторичными SELECT с N+1. Форма SQL не следует из одного FetchType.",
+    "Q20/Q21: N+1 бывает при LAZY обходе и EAGER to-one в JPQL/HQL без fetch join. JOIN FETCH заданной связи использует SQL join; batch/subselect объединяют вторичные SELECT, число зависит от контекста. Параллельный fetch нескольких коллекций создаёт декартово произведение, нескольких bag — MultipleBagFetchException. EAGER не гарантирует один SQL и не является универсальным лечением N+1.",
+    "Q23: Jakarta Persistence 3.2 fetchgraph трактует неуказанные атрибуты как LAZY, loadgraph сохраняет их настройки маппинга; провайдер может загрузить дополнительные данные сверх обоих графов. Граф не предписывает JOIN или число SQL."
   ],
   "staleness_risks": [
     "Конкретные номера версий (6/7/8) в ТЕЛАХ шпаргалки могут устареть при новых мажорных релизах; фичи (auto-dialect, JSON, @Struct) при этом сохраняются.",
     "H6-фичи проверены как присутствующие в актуальных ветках 7.4/8.0 — не удалялись.",
-    "Q8/Q9/Q10/Q19 после исправления требуют новой независимой содержательной MCQ-приёмки; прежний AUDITED относится к старому состоянию файла."
+    "Q8/Q9/Q10/Q19–Q21/Q23 после исправления требуют новой независимой содержательной MCQ-приёмки; прежний AUDITED относится к старому состоянию файла."
   ],
   "notes": [
     "ROUND-10 LINKAGE-FIRST: MCQ-опции держатся TIMELESS — ни одна опция не утверждает конкретную версию/год/semver.",
     "TEMPORAL_CLAIMS гейта (4 хита) — ложные срабатывания: 'Current' ловится внутри имени метода `getCurrentSession()` (Q41 A/B/C), а 'актуальн' — внутри слова про свежесть данных кэша NONSTRICT_READ_WRITE (Q27B). Оба — часть предмета вопроса, не версионные утверждения.",
-    "Sidecar заполнен для прохождения SOURCE_COVERAGE, т.к. тема реально version-sensitive по ТЕЛАМ (H6+ фичи), проверено context7 2026-08-28. Q8–Q10/Q19 и парные MCQ точечно перепроверены по официальным Hibernate 6.6/7.0/7.4/Jakarta Persistence 3.2 источникам 2026-10-07; остальные Q в этом раунде не перепроверялись."
+    "Sidecar заполнен для прохождения SOURCE_COVERAGE, т.к. тема реально version-sensitive по ТЕЛАМ (H6+ фичи), проверено context7 2026-08-28. Q8–Q10/Q19–Q21/Q23 и парные MCQ точечно перепроверены по официальным Hibernate 6.6/7.0/7.4/Jakarta Persistence 3.2 источникам 2026-10-07; остальные Q в этом раунде не перепроверялись."
   ]
 }
