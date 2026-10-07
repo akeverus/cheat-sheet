@@ -95,7 +95,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Spring Batch` даёт готовые читатели, писатели и инфраструктуру заданий — транзакции, перезапуск, обработку ошибок, параллелизм",
+              "text": "`Spring Batch` даёт готовые читатели, писатели и инфраструктуру заданий для транзакций, перезапуска, обработки ошибок и параллелизма",
               "correct": true,
               "sections": {
                 "explanation": "Определение в теле состоит ровно из двух частей: готовые компоненты для чтения, обработки и записи данных плюс инфраструктура для управления заданиями — транзакции, перезапуск, обработка ошибок, параллелизм.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Перезапуск с точки сбоя и многопоточные шаги остаются задачей самого разработчика",
+              "text": "`Spring Batch` оставляет разработчику реализацию перезапуска с точки сбоя и поддержку многопоточных шагов вручную",
               "correct": false,
               "sections": {
                 "what_actually": "В списке возможностей прямо стоят restart — перезапуск с точки сбоя благодаря `JobRepository` — и параллелизм: многопоточные шаги, партиционирование, параллельные flow.",
@@ -1590,7 +1590,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Ветки внутри `split` могут делить общий ресурс, поскольку выполняются последовательно внутри одного потока",
+              "text": "`split` допускает общий ресурс у веток, поскольку выполняет их последовательно внутри одного потока",
               "correct": false,
               "sections": {
                 "what_actually": "Тело требует, чтобы все flow внутри `split` были независимы: они работают в разных потоках и не должны конкурировать за общие ресурсы.",
@@ -1663,7 +1663,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`JobExecutionDecider` только логирует переходы, а программно выбрать ветку выполнения он не может",
+              "text": "Механизм `JobExecutionDecider` только логирует переходы и не позволяет выбрать ветку программно",
               "correct": false,
               "sections": {
                 "what_actually": "Тело называет `JobExecutionDecider` механизмом программного выбора ветки: его метод возвращает статус выполнения, по которому и уходит переход.",
@@ -2346,20 +2346,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Partitioner` решает, что делить, а PartitionHandler — как исполнять разделы; gridSize задаёт их число.",
+              "text": "`Partitioner` решает, что делить, PartitionHandler определяет исполнение; gridSize задаёт запрашиваемое число разделов.",
               "correct": true,
               "sections": {
-                "explanation": "Тело разводит два компонента дословно: Partitioner отвечает за «что делить» и складывает границы каждого раздела в отдельный ExecutionContext, PartitionHandler — за «как исполнять», запуская worker-шаги, а gridSize назван запрашиваемым количеством разделов и степенью параллелизма.",
+                "explanation": "Partitioner формирует ExecutionContext каждого раздела, PartitionHandler определяет способ запуска worker-шагов, а gridSize передаёт запрашиваемое число разделов. Реальное число одновременно работающих шагов ограничено исполнителем.",
                 "example": "rangePartitioner кладёт в ExecutionContext каждой партиции minId и maxId, а TaskExecutorPartitionHandler получает setStep(workerStep), setGridSize(10) и SimpleAsyncTaskExecutor и разгоняет worker-шаги по этим партициям.",
                 "when_to_apply": "Когда данные делятся на независимые диапазоны и нужно объяснить или собрать конфигурацию: отдельно логика нарезки, отдельно способ запуска worker-ов.",
-                "edge_cases": "Исполнение не привязано к одной JVM: тело называет и локальный TaskExecutorPartitionHandler, и MessageChannelPartitionHandler для запуска worker-ов на других JVM.",
+                "edge_cases": "gridSize не равен гарантированному числу потоков: executor может иметь меньший пул. Исполнение не привязано к одной JVM: доступны локальный TaskExecutorPartitionHandler и удалённый MessageChannelPartitionHandler.",
                 "related": "Тот же Q поясняет, что worker-шаг вытаскивает свои границы из stepExecutionContext через @Value(\"#{stepExecutionContext['minId']}\"), а оптимальный gridSize зависит от числа CPU, объёма данных и I/O."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Partitioner` решает, как исполнять разделы, а PartitionHandler нарезает данные; gridSize задаёт их число.",
+              "text": "`Partitioner` решает, как исполнять разделы, PartitionHandler нарезает данные; gridSize задаёт запрашиваемое число разделов.",
               "correct": false,
               "sections": {
                 "what_actually": "По телу роли обратные: нарезкой данных занят Partitioner, а запуском worker-шагов — PartitionHandler, и Q прямо предупреждает, что их легко перепутать.",
@@ -2371,19 +2371,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Partitioner` решает, что делить, а PartitionHandler — как исполнять разделы; gridSize задаёт размер обрабатываемой порции.",
+              "text": "`Partitioner` решает, что делить, PartitionHandler определяет исполнение; gridSize задаёт размер обрабатываемой порции.",
               "correct": false,
               "sections": {
-                "what_actually": "Тело определяет gridSize как запрашиваемое количество разделов и worker-ов, то есть степень параллелизма, а не объём данных внутри одного раздела.",
+                "what_actually": "gridSize задаёт запрашиваемое число отдельных StepExecution, а не объём данных внутри одной порции или размер chunk; фактический параллелизм ограничен исполнителем.",
                 "source_of_confusion": "Рядом в конфигурациях шагов постоянно фигурируют размеры порции, и числовой параметр handler-а принимают за них же.",
                 "if_it_were_true": "Тогда setGridSize(10) не мог бы участвовать в формуле partitionSize = (total + gridSize - 1) / gridSize, вычисляющей длину диапазона.",
-                "how_it_should_be": "gridSize — сколько разделов запросить, а размер каждого раздела вычисляется делением общего объёма данных на это число."
+                "how_it_should_be": "gridSize передают Partitioner как запрашиваемое число разделов; размер раздела вычисляют из объёма данных, а число одновременно работающих шагов зависит от executor."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Partitioner` решает, что делить, а PartitionHandler исполняет разделы лишь внутри одной JVM.",
+              "text": "`Partitioner` делит данные, PartitionHandler исполняет разделы только в одной JVM; gridSize задаёт их число.",
               "correct": false,
               "sections": {
                 "what_actually": "Тело перечисляет два варианта исполнения: локально в потоках через TaskExecutorPartitionHandler или на других JVM через MessageChannelPartitionHandler.",
@@ -2526,7 +2526,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@SpringBatchTest` даёт утилиты запуска только целого Job; отдельный Step из теста запускать нельзя.",
+              "text": "`@SpringBatchTest` даёт утилиты запуска только целого Job, поэтому отдельный Step проверить нельзя",
               "correct": false,
               "sections": {
                 "what_actually": "Тело прямо описывает JobLauncherTestUtils как средство запуска всего Job или отдельного Step, и в примере есть launchStep(\"importStep\") с проверкой счётчиков одного шага.",
@@ -2544,8 +2544,8 @@
                 "explanation": "Тело называет аннотацию базовым инструментом и перечисляет, что она регистрирует: JobLauncherTestUtils (запуск всего Job или отдельного Step из теста), JobRepositoryTestUtils (очистка метаданных между тестами) и StepScopeTestExecutionListener.",
                 "example": "В тесте jobLauncherTestUtils.launchJob(...) прогоняет весь Job с параметрами, jobLauncherTestUtils.launchStep(\"importStep\") запускает шаг изолированно, а jobRepositoryTestUtils.removeJobExecutions() вызывается в @BeforeEach.",
                 "when_to_apply": "Когда пишут интеграционный тест на задание: проверить сквозной сценарий целиком либо отладить один проблемный шаг, не гоняя весь Job.",
-                "edge_cases": "Очистка метаданных не косметика: без неё повторный запуск упрётся в уже завершённую JobInstance. Третий регистрируемый компонент, StepScopeTestExecutionListener, нужен, чтобы @StepScope-бины оживали вне реального шага.",
-                "related": "Тот же Q требует проверять не «упало или нет», а конкретику: BatchStatus и ExitStatus, а также счётчики readCount, writeCount и skipCount через assertThat."
+                "edge_cases": "В Batch 5.x JobLauncherTestUtils запускает Job/Step, а JobRepositoryTestUtils позволяет явно очистить метаданные перед повторным запуском. В Batch 6 JobLauncherTestUtils устарел в пользу JobOperatorTestUtils с startJob/startStep.",
+                "related": "Кроме статусов и счётчиков readCount/writeCount/skipCount через AssertJ, @SpringBatchTest подключает StepScopeTestExecutionListener для тестирования step-scoped компонентов."
               }
             },
             {

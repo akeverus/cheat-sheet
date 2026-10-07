@@ -2250,7 +2250,7 @@ return new StepBuilder("importStep", jobRepository)
 
 ## Q39. (!) Как работает Partitioning через PartitionHandler и GridSize?
 
-В партиционировании работают два разных компонента, и их легко перепутать. **`Partitioner`** отвечает за *что делить*: он нарезает данные на N разделов, складывая границы каждого (например, `minId`/`maxId`) в отдельный `ExecutionContext`. **`PartitionHandler`** отвечает за *как исполнять*: он берёт эти разделы и запускает worker-шаги — локально в потоках (`TaskExecutorPartitionHandler`) или на других JVM (`MessageChannelPartitionHandler`). **`gridSize`** — это запрашиваемое количество разделов/worker-ов, то есть степень параллелизма.
+В партиционировании работают два разных компонента, и их легко перепутать. **`Partitioner`** отвечает за *что делить*: он нарезает данные на разделы, складывая границы каждого (например, `minId`/`maxId`) в отдельный `ExecutionContext`. **`PartitionHandler`** отвечает за *как исполнять*: он берёт эти разделы и запускает worker-шаги — локально в потоках (`TaskExecutorPartitionHandler`) или на других JVM (`MessageChannelPartitionHandler`). **`gridSize`** задаёт запрашиваемое число разделов/`StepExecution`, а не размер chunk или гарантированное число одновременно работающих потоков: фактический параллелизм ограничен `TaskExecutor` и доступными worker-ами. См. [Spring Batch: Partitioning](https://docs.spring.io/spring-batch/reference/scalability.html).
 
 ```
 Manager Step
@@ -2461,6 +2461,8 @@ new JobParametersBuilder()
 ## Q42. (!) Как тестировать Spring Batch задания с JobLauncherTestUtils и AssertJ?
 
 Базовый инструмент — аннотация `@SpringBatchTest`: она регистрирует `JobLauncherTestUtils` (запуск всего `Job` или отдельного `Step` из теста), `JobRepositoryTestUtils` (очистка метаданных между тестами, иначе повторный запуск упрётся в уже завершённый `JobInstance`) и `StepScopeTestExecutionListener` (активирует `@StepScope`-бины вне реального шага). Проверяют не «упало/не упало», а конкретику: статус, счётчики `readCount`/`writeCount`/`skipCount` — для этого удобен AssertJ.
+
+**Граница версий:** пример ниже — для Spring Batch 5.x. В Batch 6 `JobLauncherTestUtils` помечен устаревшим; его заменяет `JobOperatorTestUtils` с `startJob(...)` и `startStep(...)`. Возможность запускать отдельный шаг и проверять его результат сохраняется. См. [Batch 5.2: тестирование](https://docs.spring.io/spring-batch/reference/5.2/testing.html) и [Batch 6: JobOperatorTestUtils](https://docs.spring.io/spring-batch/reference/api/org/springframework/batch/test/JobOperatorTestUtils.html).
 
 ```xml
 <!-- pom.xml -->
