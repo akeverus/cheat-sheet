@@ -1027,13 +1027,31 @@ Department–Employee больше не удаляет сотрудника пр
 parity Hibernate PASS, Spring Data JPA FAIL из-за прежних блоков;
 полный skel Hibernate 16 hard/25 блоков с warnings, JPA 16/20.
 
-**Точная точка авторского продолжения:** Spring Data JPA Q26 B0 и парный
-JSON про `@Embeddable`/`record`/`@AttributeOverrides`. Сначала сопоставить
-Hibernate Q18 и существующие Q26/Q18 MCQ; проверить по Jakarta Persistence
-3.2 версионную границу record-embeddable (Java 16 и JPA 3.2), ограничения
-на конструктор/компоненты и повторные встраивания. Сейчас теория Q26
-называет record «естественным выбором» без явной границы спецификации,
-а правильный MCQ заметно длиннее остальных.
+**Контрольная точка 07.10.2026 — Spring Data JPA Q26 B0 · О.**
+Сверено соседство с Hibernate Q18 (`З` и точечное чтение: основа
+`@Embeddable` уже покрыта, новый файл не нужен). По
+[Jakarta Persistence 3.2 `@Embeddable`](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/embeddable),
+[`@AttributeOverride`](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/attributeoverride)
+и [релизу 3.2](https://jakarta.ee/specifications/persistence/3.2/)
+добавлена граница: Java record с Java 16, стандартный record-embeddable
+с Jakarta Persistence 3.2; no-arg конструктор record не нужен, обычному
+embeddable-классу нужен. `@Entity` не может быть record. Уточнены
+identity и хранение в таблицах владельца, `@ElementCollection` отдельно,
+`@AttributeOverrides` переопределяет SQL-колонки, а не Java-компоненты.
+MCQ Q26 B0/sections и sidecar синхронизированы; A/B/C/D авторски
+сверены (`О`), полной проверки файла (`П`) и независимой blind-приёмки
+нет. Structure JPA 43 Q/44 блока PASS, Markdown без inline MCQ;
+Q26 локально без hard/warnings. Полный skel старого JPA файла
+15 hard/19 блоков с warnings, parity FAIL из-за прежних блоков.
+
+**Точная точка авторского продолжения:** Spring Data JPA Q27 B0 и парный
+JSON про три стратегии наследования. Сравнить Hibernate Q14 и MCQ
+обоих файлов до правки; проверить по Jakarta Persistence 3.2/Hibernate
+7.4, где `JOINED` действительно требует JOIN, `TABLE_PER_CLASS` — UNION,
+и как выражать ограничения полей подтипов в `SINGLE_TABLE`. Сейчас Q27
+говорит «каждый запрос делает JOIN», «колонки обязаны быть nullable»,
+«UNION ALL» и «медленно» без условий, а правильный MCQ значительно
+длиннее остальных. Следом перейти к Spring Data JPA Q28 batch-обработке.
 Не объявлять весь файл прошедшим проверку.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
@@ -1058,7 +1076,7 @@ Hibernate Q18 и существующие Q26/Q18 MCQ; проверить по J
    Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13/Q14, WebAuthn Q24/Q46, Spring Security Q44,
    Metrics & Tracing Q40, Spring Testing Q9/Q10, Uber Q6/Q7,
    Google Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1,
-   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q25 B0/Q39 B0,
+   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q26 B0/Q39 B0,
    Hibernate Q8–Q10 B0/Q15–Q16 B0/Q19–Q21 B0/Q23 B0,
    Database Transactions Q15/Q22/Q23 B0
    и RabbitMQ Streams Q40–Q42 ждут
@@ -1068,7 +1086,7 @@ Hibernate Q18 и существующие Q26/Q18 MCQ; проверить по J
    PostgreSQL 19 перепроверять после финальных релизов.
 3. Отдельной задачей пройти независимую blind-приёмку новых MCQ и старый
    parity/pre-check backlog Hibernate, Spring Data JPA (после Q3/Q4,
-   Q5–Q25 и Q39 ещё 16 hard-сигналов; Hibernate после Q8–Q10/Q15–Q16/Q19–Q21/Q23 — 16),
+   Q5–Q26 и Q39 ещё 15 hard-сигналов; Hibernate после Q8–Q10/Q15–Q16/Q19–Q21/Q23 — 16),
    Java IO/NIO, Jackson,
    URL Shortener, RabbitMQ, Kafka, сравнения брокеров и event-driven;
    положительный валидатор не означает `FINAL`.

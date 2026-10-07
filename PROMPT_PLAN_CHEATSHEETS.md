@@ -367,12 +367,22 @@ Department–Employee больше не использует orphanRemoval дл�
 Hibernate full parity PASS, Spring Data JPA full parity FAIL на прежних
 блоках; независимой blind-приёмки и полного аудита нет.
 
-Следующий авторский пакет: Spring Data JPA Q26 B0 и парный JSON про
-`@Embeddable`/record/`@AttributeOverrides`. Сравнить Hibernate Q18
-и MCQ обеих тем; по Jakarta Persistence 3.2 проверить версионную границу
-record-embeddable, правила конструктора/компонентов и повторное
-встраивание. В JPA Q26 теория не уточняет версию спецификации для record,
-а правильный вариант MCQ существенно длиннее дистракторов.
+07.10 Spring Data JPA Q26 B0: сопоставлен Hibernate Q18, отдельный
+файл не нужен. По Jakarta Persistence 3.2 `@Embeddable`,
+`@AttributeOverride` и release notes уточнены: Java record доступен с
+Java 16, стандартный record-embeddable — с JPA 3.2; record не требует
+no-arg конструктора, обычный embeddable-класс требует. Разделены
+одиночный Embedded, ElementCollection, Java-компоненты и SQL-колонки.
+Теория, MCQ Q26 B0/sections и sidecar синхронизированы; structure PASS,
+Q26 локально без hard/warnings, JPA full parity по прежним блокам FAIL;
+независимой blind-приёмки и полного аудита нет.
+
+Следующий авторский пакет: Spring Data JPA Q27 B0 про наследование.
+Сравнить Hibernate Q14 и парные MCQ до правки; по Jakarta Persistence
+3.2/Hibernate 7.4 проверить категоричные «JOIN в каждом запросе» для
+JOINED, «обязательный UNION ALL/медленно» для TABLE_PER_CLASS и ограничения
+колонок подтипов SINGLE_TABLE. Правильный MCQ Q27 сейчас значительно
+длиннее других. После него переходить к JPA Q28 batch-обработке.
 Не считать весь файл проверенным после точечной правки.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
