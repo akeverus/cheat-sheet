@@ -235,7 +235,7 @@ Reservation System Q1–Q4, Notification System Q1–Q4, Digital Wallet Q1–Q4,
 Database Transactions Q43, Java CompletableFuture Q11/Q14,
 Database Transactions Q15/Q22/Q23, Java CompletableFuture Q2/Q3/Q4/Q6/Q8/Q10,
 Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13,
-Spring Data JPA Q3 B0/Q4 B1/Q5–Q21 B0/Q39 B0, Hibernate Q8/Q9 B0,
+Spring Data JPA Q3 B0/Q4 B1/Q5–Q21 B0/Q39 B0, Hibernate Q8–Q10 B0,
 Kubernetes Q22/Q39/Q46/Q47, RabbitMQ Streams Q40–Q42
 и Spring Data JDBC Q17 тоже ждут
 содержательной приёмки.
@@ -324,11 +324,20 @@ Hibernate PASS.
 синхронизированы, Q9 локально без hard/warnings. У старого Hibernate
 JSON 18 hard/28 предупреждений; независимой приёмки Q9 нет.
 
-Следующий авторский пакет: Hibernate Q10 B0 и парный JSON.
-Проверить удаление `Session.load` в 7.0, статус `Session.get`,
-семантику JPA `find/getReference`, SQL и исключение при отсутствии
-строки. Затем Spring Data JPA Q22 B0: `LAZY`/`EAGER`, форма SQL, N+1,
-дефолты связей, OSIV; проверить Hibernate Q12/Q14 и Spring Data JPA Q23.
+07.10 Hibernate Q10 B0: по Hibernate 7.0 Migration Guide, 7.4 Session
+API и Jakarta Persistence 3.2 исправлено `Session.load` (удалён),
+`Session.get` (deprecated) и ложная обязательность SELECT для `find`.
+`getReference` в Hibernate не читает БД при вызове и может вернуть
+уже managed объект; JPA допускает `EntityNotFoundException` сразу или
+при доступе к состоянию. Ссылка не подтверждает наличие строки.
+Парный MCQ/sections и sidecar обновлены, Q10 локально без hard/warnings;
+независимой приёмки нет. Старый Hibernate JSON остаётся с
+18 hard/28 предупреждений, parity PASS.
+
+Следующий авторский пакет: Spring Data JPA Q22 B0 и парный JSON.
+Сверить `LAZY`/`EAGER`, форму SQL и N+1, дефолты связей,
+`LazyInitializationException` и OSIV. Сравнить Hibernate Q12/Q14 и
+Spring Data JPA Q23 до правки; затем Q23 B0.
 Не считать весь файл проверенным после точечной правки.
 Независимую MCQ-приёмку
 вести отдельно: ближайший

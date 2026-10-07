@@ -948,13 +948,25 @@ managed-экземпляр, который может уже быть в кон�
 но прежний файл остаётся с 18 hard-сигналами и 28 блоками с warnings,
 независимой содержательной приёмки новой Q9 нет.
 
-**Точная точка авторского продолжения:** `databases/hibernate-interview.md`
-Q10 B0 с парным JSON: [Hibernate 7.0 Migration Guide](https://docs.hibernate.org/orm/7.0/migration-guide/)
-указывает удаление `Session.load`; проверить также `Session.get`,
-`EntityManager.find/getReference`, момент SELECT и исключение при
-отсутствии строки. После этого вернуться к Spring Data JPA Q22 B0:
-`LAZY`/`EAGER`, форма SQL, N+1, дефолты связей, OSIV, соседние
-Hibernate Q12/Q14 и Spring Data JPA Q23.
+**Контрольная точка 07.10.2026 — Hibernate Q10 B0 · О.**
+По [Hibernate 7.0 Migration Guide](https://docs.hibernate.org/orm/7.0/migration-guide/),
+[Hibernate 7.4 `Session` API](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/Session.html)
+и [Jakarta Persistence 3.2 `EntityManager` API](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/entitymanager)
+исправлено: `Session.load` удалён, `Session.get` deprecated;
+актуальные методы — `find` и `getReference`. `find` может вернуть
+managed объект без SELECT и даёт `null` при отсутствии; Hibernate
+`getReference` не читает БД при вызове, но ссылка не доказывает
+существование строки и не обязана быть новым proxy. JPA допускает
+`EntityNotFoundException` как при вызове, так и при доступе к состоянию.
+MCQ Q10 B0/sections и freshness-sidecar синхронизированы;
+локальный pre-check без hard/warnings, структура PASS, полный parity
+Hibernate PASS. Старый файл по-прежнему имеет 18 hard-сигналов и
+28 блоков с warnings, независимой содержательной приёмки Q10 нет.
+
+**Точная точка авторского продолжения:** Spring Data JPA Q22 B0 с
+парным JSON — `LAZY`/`EAGER`, форма SQL, N+1, дефолты связей,
+`LazyInitializationException`, OSIV. Сравнить соседние Hibernate
+Q12/Q14 и Spring Data JPA Q23; затем Q23 B0.
 Не объявлять весь файл прошедшим проверку.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
@@ -980,7 +992,7 @@ Hibernate Q12/Q14 и Spring Data JPA Q23.
    Metrics & Tracing Q40, Spring Testing Q9/Q10, Uber Q6/Q7,
    Google Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1,
    Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q21 B0/Q39 B0,
-   Hibernate Q8/Q9 B0,
+   Hibernate Q8–Q10 B0,
    Database Transactions Q15/Q22/Q23 B0
    и RabbitMQ Streams Q40–Q42 ждут
    независимой MCQ-приёмки.
@@ -989,7 +1001,7 @@ Hibernate Q12/Q14 и Spring Data JPA Q23.
    PostgreSQL 19 перепроверять после финальных релизов.
 3. Отдельной задачей пройти независимую blind-приёмку новых MCQ и старый
    parity/pre-check backlog Hibernate, Spring Data JPA (после Q3/Q4,
-   Q5–Q21 и Q39 ещё 20 hard-сигналов; Hibernate после Q8/Q9 — 18),
+   Q5–Q21 и Q39 ещё 20 hard-сигналов; Hibernate после Q8–Q10 — 18),
    Java IO/NIO, Jackson,
    URL Shortener, RabbitMQ, Kafka, сравнения брокеров и event-driven;
    положительный валидатор не означает `FINAL`.
