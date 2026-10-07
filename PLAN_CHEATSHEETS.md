@@ -1,15 +1,15 @@
 # План покрытия interview-шпаргалок
 
-Состояние репозитория сверено **2026-10-05**. Этот документ ведёт очередь тем и
+Состояние репозитория сверено **2026-10-07**. Этот документ ведёт очередь тем и
 фактический прогресс авторинга. При написании вопросов синхронизировать
 шпаргалки и парные MCQ. [План MCQ](PLAN_INTERVIEW.md) ведёт отдельную независимую
 приёмку; автоматический PASS не даёт статус `FINAL`.
 
 ## Основание и предел проверки
 
-- Текущий корпус: **336** тематических Markdown-файлов, **9 913** заголовков
+- Текущий корпус: **337** тематических Markdown-файлов, **9 921** заголовков
   Q в **25** разделах. [Инвентарь](docs/interview-coverage/inventory.tsv)
-  обновлён после семнадцати новых шпаргалок и добавленных Q. **335** файлов имеют парный production
+  обновлён после восемнадцати новых шпаргалок и добавленных Q. **336** файлов имеют парный production
   JSON; отдельная тема подготовки остаётся без пары.
 - `З` — пути и заголовки; `О` — точечная проверка ответа; `П` — полная
   содержательная проверка всех ответов существующего файла. **П в этом
@@ -196,15 +196,15 @@ Go — **7 / 209**, Scala — **2 / 56**. Тогда в interview-разделе
 | API | 8 | 270 | Architecture | 24 | 858 |
 | Behavioral | 6 | 148 | CI/CD | 2 | 77 |
 | Cloud | 6 | 177 | Code quality | 7 | 227 |
-| Data engineering | 8 | 236 | Databases | 23 | 736 |
-| Design patterns | 1 | 48 | DevOps | 13 | 448 |
+| Data engineering | 8 | 236 | Databases | 23 | 737 |
+| Design patterns | 1 | 48 | DevOps | 13 | 450 |
 | Frameworks | 37 | 885 | JVM | 3 | 71 |
 | Leadership | 7 | 187 | Logging | 1 | 42 |
 | Messaging | 9 | 238 | Monitoring | 9 | 285 |
 | Performance | 8 | 253 | Preparation | 1 | 42 |
-| Programming languages | 57 | 1 651 | Reactive | 6 | 206 |
-| Security | 10 | 350 | System design | 30 | 677 |
-| Testing | 16 | 489 | **Итого** | **336** | **9 913** |
+| Programming languages | 57 | 1 652 | Reactive | 6 | 206 |
+| Security | 10 | 350 | System design | 31 | 681 |
+| Testing | 16 | 489 | **Итого** | **337** | **9 921** |
 
 ## Срез публикаций за последние полгода
 
@@ -441,7 +441,7 @@ Dropbox/Google Drive), 18 (карты) и 26 (платёжная система)
 | P3 · `NEW_TOPIC`, выполнено · О | 20. Metrics Monitoring and Alerting System → `system-design/design-metrics-platform-interview.md` Q1–Q4 | `system-design-interview.md` Q23 и `monitoring/prometheus-grafana-interview.md` Q3/Q16/Q19–Q24/Q35–Q37 покрывают инструменты, cardinality и alerting одного стека; отсутствовала общая платформа для нескольких tenant. | Q1: доверенный tenant ID и лимиты ingest; Q2: raw/long-term/downsampling; Q3: изоляция тяжёлых запросов; Q4: правила и отказ ruler. Prometheus/Mimir/Thanos сверены, MCQ structure/parity/pre-check PASS, blind review ожидается. |
 | P3 · `NEW_TOPIC`, выполнено · О | 21. Ad Click Event Aggregation → `system-design/design-event-aggregation-interview.md` Q1–Q4 | `data-engineering/stream-processing-interview.md` Q5–Q10/Q14–Q16 покрывает механику окон и повторов; `design-url-shortener-interview.md` Q14 — счётчик переходов; `message-brokers-comparison-interview.md` Q25 — выбор брокера. Рекламная идентичность, атрибуция и расчёт не раскрыты. | Q1: event ID и повторная доставка против недействительного трафика; Q2: provisional окна и коррекции; Q3: поздняя конверсия/окно атрибуции; Q4: settled начисления и сверка. Сверены [Flink 2.0](https://nightlies.apache.org/flink/flink-docs-release-2.0/docs/learn-flink/streaming_analytics/), [Google Ads API](https://developers.google.com/google-ads/api/docs/conversions/legacy_oci_guide) и [invalid traffic](https://support.google.com/google-ads/answer/11182074?hl=en); MCQ structure/parity/pre-check PASS, авторская точечная проверка выполнена, независимый blind review ожидается. |
 | P3 · `NEW_TOPIC`, выполнено · О | 23. Distributed Email Service → `system-design/design-email-service-interview.md` Q1–Q4 | `system-design-interview.md` Q10 уже задаёт общую очередь email; `design-notification-system-interview.md` Q1–Q4 покрывает статусы, дубли и общую классификацию ошибок. Не было почтовых квот, suppression, доменной аутентификации и репутации нескольких отправителей. | Q1: квоты и приоритеты; Q2: bounce/complaint и suppression; Q3: SPF/DKIM/DMARC и доставляемость; Q4: tenant/IP-репутация. Сверены [SES quotas](https://docs.aws.amazon.com/ses/latest/dg/manage-sending-quotas.html), [suppression](https://docs.aws.amazon.com/ses/latest/dg/sending-email-suppression-list.html), [tenants](https://docs.aws.amazon.com/ses/latest/dg/tenants.html) и [Gmail guidelines](https://support.google.com/mail/answer/81126?hl=en); MCQ structure/parity/pre-check PASS, авторская точечная проверка выполнена, независимый blind review ожидается. |
-| P3 · КАНДИДАТ `NEW_TOPIC` · З/частично О | 27. Digital Wallet → `system-design/design-digital-wallet-interview.md` | `design-payment-system-interview.md` Q5/Q8/Q22 прочитаны точечно: ledger, межорганизационная saga и мультивалютный кошелёк есть; внутренний перевод между двумя балансами не разобран. Соседние транзакционные Q ещё требуют сверки. Новый файл допустим лишь для внутренних переводов и инвариантов, без повторения PSP/карточного платежа. | Гипотезы: атомарный перевод и retry, резерв/доступный баланс, исправление проводки и сверка. Для следующей проверки открыты [TigerBeetle transfers](https://docs.tigerbeetle.com/reference/transfer/), [two-phase transfers](https://docs.tigerbeetle.com/coding/two-phase-transfers/), [reliable submission](https://docs.tigerbeetle.com/coding/reliable-transaction-submission/) и [PostgreSQL 18 serialization failures](https://www.postgresql.org/docs/18/mvcc-serialization-failure-handling.html). Решение `NEW_TOPIC`/`DEEPEN` ещё не принято. |
+| P3 · `NEW_TOPIC`, выполнено · О | 27. Digital Wallet → `system-design/design-digital-wallet-interview.md` Q1–Q4 | `design-payment-system-interview.md` Q5/Q8/Q22, `database-transactions-interview.md` Q10/Q14 и `cqrs-event-sourcing-interview.md` Q24/Q30–Q31 сверены точечно. Они не объясняли внутренний перевод в одной валюте как отдельный контракт. | Q1: атомарный перевод; Q2: повтор после потерянного ответа; Q3: pending и доступный баланс; Q4: исправление и сверка. Сверены [TigerBeetle Transfer](https://docs.tigerbeetle.com/reference/transfer/), [reliable submission](https://docs.tigerbeetle.com/coding/reliable-transaction-submission/), [two-phase transfers](https://docs.tigerbeetle.com/coding/two-phase-transfers/), [correcting transfers](https://docs.tigerbeetle.com/coding/recipes/correcting-transfers/) и [PostgreSQL 18](https://www.postgresql.org/docs/18/transaction-iso.html). JSON structure/parity/pre-check PASS; авторская проверка Q1–Q4 выполнена, независимый blind review ожидается. Коммит `3a300d20`. |
 | P3 · КАНДИДАТ `NEW_TOPIC` | 28. Stock Exchange → `system-design/design-exchange-interview.md` | Финансовый домен уже есть в платёжной системе, но order book и matching engine — отдельная задача. Подтвердить интерес к узкой предметной области до написания. | Как упорядочивать команды и обеспечивать детерминированное сопоставление заявок? Как разделить matching, рыночные данные и отчётность? |
 | P3 · КАНДИДАТ `DEEPEN`/`PROMOTE` | 16–17. Proximity Service / Nearby Friends | `design-uber-interview.md` Q7–Q14 и `design-google-maps-interview.md` Q19/Q27 уже покрывают geo index, POI и sharing location. Сначала проверить глубину соседних ответов; два новых файла сейчас не обоснованы. | Как индексировать обновляющиеся координаты и фильтровать радиус? Как сделать видимость «друзья рядом» с ограничением доступа к местоположению и высокой степенью вершины графа друзей? |
 
@@ -462,10 +462,10 @@ Dropbox/Google Drive), 18 (карты) и 26 (платёжная система)
 
 | Приоритет | Статус | Целевой файл и имеющееся покрытие | Проверить и сформулировать | Возможный исход |
 |---|---|---|---|---|
-| P3 | КАНДИДАТ | `programming-languages/java/java-completable-future-interview.md`, Q11 о timeout и Q13 об ограничениях | Что именно отменяет `cancel(true)` и как останавливать **исходную работу**, когда результат `CompletableFuture` больше не нужен? Таймаут в Q11 лишь завершает future, не прерывая задачу. | `ADD_Q` или `DEEPEN` Q11 |
-| P3 | КАНДИДАТ | `databases/database-transactions-interview.md`, Q6–Q12 об изоляции/MVCC; `postgresql-interview.md` объясняет `SQLSTATE 40001` внутри ответа | Показать **write skew** на двух транзакциях и объяснить, когда нужен retry **всей** транзакции при serialization failure. | `ADD_Q`, с перекрёстной ссылкой на PostgreSQL |
-| P3 | КАНДИДАТ | `devops/kubernetes-interview.md`, Q14/Q39/Q42 об обновлении, HA и graceful shutdown; PDB упомянут в Q39 | Как `PodDisruptionBudget` и eviction влияют на добровольное вытеснение Pod при `drain`, и чего PDB не гарантирует? | `PROMOTE` или `DEEPEN` Q39 |
-| P3 | КАНДИДАТ | `devops/kubernetes-interview.md`, Q22 об Ingress; Gateway API упомянут в ответе | В каких случаях выбрать Gateway API вместо Ingress, как распределены роли `GatewayClass`, `Gateway`, `HTTPRoute`, какие ограничения у контроллера? | `PROMOTE`, если хватает ценности отдельного Q |
+| P3 | `ADD_Q` + исправление выполнены · О | `programming-languages/java/java-completable-future-interview.md` Q11/Q14, рядом Q13 об ограничениях | Q11: ошибочный Java 8 `applyToEither` не срабатывал на исключительном таймере; заменён отдельным result-future и проверен компиляцией/запуском под `--release 8`. Q14: `cancel(true)` у `CompletableFuture` не прерывает исходную задачу, для неё нужен отдельный handle/клиентская отмена. [Java 25 CompletableFuture](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html), [Future](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html), [Java 8 API](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html). | Q11 JSON исправлен, Q14 добавлен; структура/parity PASS, полный pre-check старого файла FAIL на прежних Q2/Q3/Q4/Q6/Q8/Q10; новые Q11/Q14 без hard-сигналов, blind review ожидается. |
+| P3 | `ADD_Q` выполнено · О | `databases/database-transactions-interview.md` Q43; Q6–Q12 уже объясняли изоляцию/MVCC, `postgresql-interview.md` упоминал `SQLSTATE 40001` без полного сценария | Write skew на двух дежурных и повтор всей транзакции с повторной проверкой инварианта по [PostgreSQL 18 Transaction Isolation](https://www.postgresql.org/docs/18/transaction-iso.html) и [Serialization Failure Handling](https://www.postgresql.org/docs/18/mvcc-serialization-failure-handling.html). | Markdown/JSON синхронизированы; structure/parity PASS, полный pre-check файла FAIL из-за прежних Q15/Q22/Q23, новый Q43 без hard-сигналов. Blind review Q43 ожидается. |
+| P3 | `ADD_Q` + исправление выполнены · О | `devops/kubernetes-interview.md` Q39/Q46; рядом Q14 о rollout и Q42 о завершении Pod | Q39 неверно называл PDB гарантией минимального числа доступных Pod; в MCQ rolling update ошибочно отнесён к его защите. Q46 показывает `drain` через Eviction API, ожидание бюджета и границы PDB по [Kubernetes Disruptions](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/) и [Safely Drain a Node](https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/). | Теория и JSON Q39/Q46 синхронизированы, structure PASS; полный parity/pre-check старого файла FAIL на многочисленных прежних блоках, freshness sidecar для всего файла TODO. Новые Q требуют независимого blind review. |
+| P3 | `ADD_Q` + исправление выполнены · О | `devops/kubernetes-interview.md` Q22/Q47; Q22 об Ingress только кратко упоминал Gateway API | Q22 неверно описывал Gateway API как встроенные core-ресурсы с обязательной TCP/UDP-поддержкой. Q47 объясняет выбор API, роли `GatewayClass → Gateway → HTTPRoute`, CRD/контроллер и проверку conformance/поддержки функций по [Kubernetes Gateway API](https://kubernetes.io/docs/concepts/services-networking/gateway/) и [Implementer's Guide](https://gateway-api.sigs.k8s.io/guides/implementers-guide/). | Теория/JSON Q22/Q47 синхронизированы; structure PASS, локально без hard-сигналов, полный parity/pre-check старого файла FAIL. Blind review Q22/Q47 ожидается. |
 | P3 | КАНДИДАТ | `frameworks/spring/spring-rest-client-interview.md`, Q5/Q12 об ошибках и таймаутах; общая устойчивость есть в `resilience4j-interview.md` | Как спроектировать исходящий HTTP-вызов: общий deadline, повтор только безопасной операции, connection pool, метрики и trace context? Указать границы ответственности клиента и Resilience4j, не копировать весь материал. | `ADD_Q` с точными ссылками или `DEEPEN` Q12 |
 | P3 | КАНДИДАТ | `security/authentication-authorization-patterns-interview.md`, Q24 о passwordless; `spring-security-interview.md` Q44 о настройке passkeys | Как работают registration/authentication ceremonies WebAuthn, проверка origin/RP ID и восстановление доступа? Spring-вопрос не заменяет протокольный. | `ADD_Q` в общей теме, ссылка на Spring Q44 |
 | P2 | ПРОВЕРЕНО · З | `databases/sql-interview.md` Q45 сравнивает JDBC и JPA; `database-transactions-interview.md` Q33–Q34 касаются пула; отдельного interview-файла нет | **JDBC и пулы**: `DataSource`, `PreparedStatement`, `ResultSet`, auto-commit, batch/streaming, жизненный цикл и диагностика. Граница с MySQL и Spring Data JDBC записана в пакете 05.10. | `NEW_TOPIC`: `databases/jdbc-connection-pool-interview.md` |
@@ -605,16 +605,38 @@ correct самые длинные). Новый Q32 B1 и обновлённый 
 3 файла / 59 блоков с действующей полной приёмкой; `agentic-patterns` Q12
 остаётся открытым finding, остальные новые MCQ из этого плана ждут blind review.
 
-1. **Точная точка продолжения:** проверить P3 Digital Wallet из блока
-   `system-design-notes` против `design-payment-system-interview.md` Q5/Q8/Q22,
-   `databases/database-transactions-interview.md` и Q по ledger/event sourcing.
-   По первичным источникам уточнить инварианты перевода между двумя кошельками,
-   идемпотентность, резерв/доступный баланс и сверку; решить `NEW_TOPIC`
-   против `DEEPEN`. Узкий Stock Exchange пока оставить кандидатом до
-   подтверждения ценности для профиля пользователя.
+**Checkpoint 07.10.2026:** Digital Wallet Q1–Q4 добавлен отдельной темой и
+закоммичен (`3a300d20`); граница с платежной системой, транзакциями и
+event sourcing сверена по ответам. В существующую тему транзакций добавлен
+Q43 о write skew и полном повторе после `40001` (коммит `1a892642`).
+Java CompletableFuture Q11 исправлен, Q14 об отмене добавлен; парные MCQ и инвентарь
+синхронизированы (коммит `3321e788`). Kubernetes Q39 исправлен, Q46 о
+PDB/`drain` добавлен (коммит `c45d2be4`); Q22 уточнён по Gateway API,
+Q47 о выборе и ролях добавлен (коммит `d95a6029`).
+Для этих пакетов проведена авторская точечная проверка
+по официальной документации, **полная содержательная проверка старых
+файлов не проводилась**. Автоматические структура/parity Q43 PASS,
+общий pre-check транзакционного JSON FAIL на ранее существовавших
+Q15/Q22/Q23; у CompletableFuture — на прежних Q2/Q3/Q4/Q6/Q8/Q10.
+Полный parity/pre-check Kubernetes тоже FAIL на прежних блоках; его
+fact-freshness sidecar остаётся TODO. Это не оценка новых Q43/Q14/Q46/Q47.
+Независимая содержательная
+приёмка новых MCQ ещё не проведена. Посторонние AI/ML и audit-файлы
+в рабочем дереве оставлены за параллельной работой.
+
+1. **Точная точка продолжения:** проверить P3 исходящий HTTP-вызов против
+   `frameworks/spring/spring-rest-client-interview.md` Q5/Q12 и
+   `resilience4j-interview.md`: общий deadline, повтор безопасной операции,
+   настройки connection pool, метрики и trace context. Сверить Spring
+   Framework/Boot и Resilience4j по официальным документам, решить
+   `DEEPEN` Q12 или `ADD_Q` без повторения общих паттернов. Синхронизировать
+   JSON и gates. Узкий Stock Exchange оставить кандидатом до подтверждения
+   ценности.
 2. Ad Click Event Aggregation и Distributed Email Service Q1–Q4 написаны; их MCQ вместе с
    Metrics Platform Q1–Q4, Leaderboard Q1–Q5, Object Storage Q1–Q4, Reservation System Q1–Q4,
-   Notification System Q1–Q4 и RabbitMQ Streams Q40–Q42 ждут
+   Notification System Q1–Q4, Digital Wallet Q1–Q4, Database Transactions Q43,
+   Java CompletableFuture Q11/Q14, Kubernetes Q22/Q39/Q46/Q47
+   и RabbitMQ Streams Q40–Q42 ждут
    независимой MCQ-приёмки.
    Java 26–27, HTTP/3, Jackson 3 и Python typing/packaging уже написаны.
    Остальные P2/P3 без решения остаются кандидатами. Статусы Python 3.15 и

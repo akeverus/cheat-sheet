@@ -5,8 +5,10 @@
 решений, но актуальные факты проверяй по файлам. Пользователь разрешил
 изменять и создавать шпаргалки и парные production MCQ JSON. Не останавливайся
 на обновлении плана. Последнее поручение: после завершения работы закоммитить
-все изменения репозитория отдельными тематическими коммитами, включая ранее
-существовавшие, предварительно разобрав их состав и проверки. Push не запрошен.
+все завершённые изменения репозитория отдельными тематическими коммитами,
+предварительно разобрав их состав и проверки. Не включай в эти коммиты
+параллельные незавершённые AI/ML и MCQ-audit файлы другого исполнителя.
+Push не запрошен.
 
 ## Что прочитать перед началом
 
@@ -21,15 +23,15 @@
 При недоступности локальной папки попроси пользователя подключить её или
 приложить план, инвентарь, правила и нужные шпаргалки.
 
-## Текущий проверенный срез на 05.10.2026
+## Текущий проверенный срез на 07.10.2026
 
-В каталоге 336 тематических Markdown-файлов и 9 913 заголовков Q в 25
-разделах; 335 файлов имеют парный production MCQ JSON. Семнадцать новых тем
+В каталоге 337 тематических Markdown-файлов и 9 921 заголовков Q в 25
+разделах; 336 файлов имеют парный production MCQ JSON. Восемнадцать новых тем
 в текущем этапе: Python core, Python concurrency, Python testing, FastAPI,
 MySQL, JDBC/пулы, Java 26–27, Python typing, Python packaging и
 System Design Unique ID Generator, Notification System, Hotel Reservation System,
 Object Storage, Gaming Leaderboard, Metrics Platform, Ad Click Event Aggregation
-и Distributed Email Service.
+и Distributed Email Service, Digital Wallet.
 Навигация и инвентарь обновлены. Go database/sql углублён в
 go-stdlib-interview.md Q22–Q25: отдельный Go DB файл отвергнут из-за
 пересечения. Исправлены Go generics Q10/Q15/Q18–Q20, Spring Security Q30,
@@ -139,18 +141,35 @@ JSON PASS; parity RabbitMQ/Kafka/сравнения PASS, event-driven FAIL на
 
 ## Точная точка продолжения
 
-Начни с P3-кандидата Digital Wallet из раздела `system-design-notes` в плане.
-`design-payment-system-interview.md` Q5/Q8/Q22 уже прочитаны точечно; сравни
-транзакции БД и Q по ledger/event sourcing. По документации TigerBeetle
-и PostgreSQL, указанной в плане, проверь несколько самостоятельных
-сценариев перевода между кошельками и реши `NEW_TOPIC` против `DEEPEN`.
+Начни с P3-кандидата про исходящий HTTP-вызов: прочитай
+`frameworks/spring/spring-rest-client-interview.md` Q5/Q12 и
+`resilience4j-interview.md`. По официальным Spring Framework/Boot и
+Resilience4j источникам проверь deadline, retry безопасной операции,
+connection pool, метрики и trace context. Реши `DEEPEN` Q12 или `ADD_Q`
+без дублирования общих паттернов; синхронизируй JSON и локальные gates.
+Digital Wallet Q1–Q4 уже создан и закоммичен (`3a300d20`), его MCQ
+structure/parity/pre-check PASS, независимый blind review ожидается.
+Database Transactions Q43 о write skew добавлен в существующую тему:
+structure/parity PASS; полный pre-check старого JSON FAIL на Q15/Q22/Q23,
+новый Q43 без hard-сигналов. Независимая приёмка Q43 ожидается.
+Java CompletableFuture Q11 исправлен (Java 8 timeout), Q14 об отмене
+добавлен. Структура/parity PASS, полный pre-check старого JSON FAIL на
+прежних Q2/Q3/Q4/Q6/Q8/Q10; Q11/Q14 без hard-сигналов, blind review ожидается.
+Kubernetes Q39 о PDB исправлен, Q46 о `drain` добавлен. Структура PASS,
+полный parity/pre-check старого файла FAIL на прежних блоках; sidecar
+fact-freshness TODO. Q39/Q46 ждут независимой приёмки.
+Kubernetes Q22 о Gateway API уточнён, Q47 о ролях добавлен. Структура
+PASS, локально без hard-сигналов, общий parity/pre-check старого файла
+по-прежнему FAIL; Q22/Q47 ждут независимой приёмки.
 Ad Click Event Aggregation и Distributed Email Service Q1–Q4 написаны,
 их MCQ требуют независимой приёмки.
 RabbitMQ/Kafka/Hibernate, новые Java и Python Q требуют независимого blind
 review MCQ; старый parity/pre-check backlog Hibernate, Spring Data JPA,
 Java IO/NIO, Jackson, URL Shortener, RabbitMQ, Kafka, сравнение брокеров и
 event-driven открыт. Ad Click Event Aggregation и Distributed Email Service Q1–Q4, Metrics Platform Q1–Q4, Leaderboard Q1–Q5, Object Storage Q1–Q4,
-Reservation System Q1–Q4, Notification System Q1–Q4, RabbitMQ Streams Q40–Q42
+Reservation System Q1–Q4, Notification System Q1–Q4, Digital Wallet Q1–Q4,
+Database Transactions Q43, Java CompletableFuture Q11/Q14,
+Kubernetes Q22/Q39/Q46/Q47, RabbitMQ Streams Q40–Q42
 и Spring Data JDBC Q17 тоже ждут
 содержательной приёмки.
 
