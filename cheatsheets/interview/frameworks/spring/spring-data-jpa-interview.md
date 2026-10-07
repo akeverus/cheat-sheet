@@ -537,9 +537,9 @@ public interface ProductRepository extends BaseRepository<Product> {
 
 ## Q10. (!) Что такое `@Transactional` и как она работает через прокси?
 
-`@Transactional` объявляет метод (или все методы класса) транзакционным, но саму транзакцию открывает не ваш код, а **прокси**, в который `Spring` оборачивает бин (через `CGLIB` для классов или `JDK Proxy` для интерфейсов).
+`@Transactional` задаёт правила транзакции для метода или класса. В стандартном proxy-режиме Spring применяет их при вызове **через прокси** бина: JDK-прокси работает через интерфейс, class-based прокси создаётся через CGLIB. Одна аннотация без включённого управления транзакциями и вызова через соответствующий прокси не даёт эффекта.
 
-Механика: при вызове извне обращение идёт сначала в прокси. Тот открывает транзакцию через `TransactionManager`, вызывает реальный метод и по результату делает `commit` (успех) или `rollback` (если вылетел `RuntimeException`). Сам бизнес-код о транзакции ничего не знает — он просто работает с `EntityManager`.
+При вызове извне прокси обращается к `TransactionManager`: с распространением `REQUIRED` он начинает транзакцию, если её нет, или участвует в существующей. После вызова метода применяется правило завершения; физический `COMMIT`/`ROLLBACK` происходит на границе владельца транзакции. По умолчанию откат вызывают `RuntimeException` и `Error`, но не checked-исключения. Для последних укажите `rollbackFor` или, начиная со Spring Framework 6.2, настройте глобальный `rollbackOn = ALL_EXCEPTIONS`.
 
 ```mermaid
 sequenceDiagram
@@ -550,19 +550,18 @@ sequenceDiagram
     participant DB as Database
 
     C->>P: вызов метода
-    P->>TM: beginTransaction()
-    TM->>DB: BEGIN
+    P->>TM: getTransaction(REQUIRED)
+    TM-->>P: новая или существующая транзакция
     P->>S: вызов реального метода
     S->>DB: SQL запросы
     S-->>P: return / exception
-    alt Успех
-        P->>TM: commit()
-        TM->>DB: COMMIT
-    else RuntimeException
-        P->>TM: rollback()
-        TM->>DB: ROLLBACK
+    alt Успех или исключение без правила отката
+        P->>TM: commit(status)
+    else Исключение с правилом отката
+        P->>TM: rollback(status)
     end
-    P-->>C: результат
+    Note over TM,DB: Физическое завершение — на внешней границе транзакции
+    P-->>C: результат или исключение
 ```
 
 ```java
@@ -572,6 +571,11 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final PaymentService paymentService;
+
+    public OrderService(OrderRepository orderRepository, PaymentService paymentService) {
+        this.orderRepository = orderRepository;
+        this.paymentService = paymentService;
+    }
 
     // read-only наследуется от класса
     public Order findById(Long id) {
@@ -592,8 +596,8 @@ public class OrderService {
         timeout = 10,
         rollbackFor = PaymentException.class // откат и для checked exception
     )
-    public Order processPayment(Long orderId) {
-        Order order = findById(orderId);
+    public Order processPayment(Long orderId) throws PaymentException {
+        Order order = findById(orderId); // self-вызов: действует внешняя транзакция
         paymentService.charge(order); // если выбросит PaymentException — rollback
         order.setStatus(OrderStatus.PAID);
         return orderRepository.save(order);
@@ -601,35 +605,35 @@ public class OrderService {
 }
 ```
 
-**Критический подводный камень — self-invocation:** транзакцию создаёт прокси, а внутренний вызов `this.method()` идёт напрямую в объект, минуя прокси. Поэтому вызов `@Transactional`-метода из того же класса транзакцию **не открывает** — аннотация молча игнорируется:
+**Критический подводный камень — self-invocation:** внутренний вызов `this.method()` минует прокси. Настройки `@Transactional` вызываемого метода не применяются: если внешней транзакции нет, новая не появится; если она есть, выполнение остаётся внутри неё.
 
 ```java
 @Service
 public class UserService {
 
     @Transactional
-    public void updateUser(Long id) { /* транзакция работает */ }
+    public void updateUser(Long id) { /* транзакция при внешнем вызове через прокси */ }
 
     public void doSomething() {
-        // ОШИБКА: вызов через this, а не через прокси — транзакции НЕТ!
+        // doSomething не транзакционный: этот self-вызов новую транзакцию не создаст
         this.updateUser(1L);
     }
 }
 ```
 
-Решения: вынести метод в другой бин, инжектировать `self` через `ApplicationContext`, или использовать `@Transactional` на внешнем вызывающем методе.
+Обычно границу транзакции задают на внешнем методе или выносят отдельную операцию в другой бин. Если перехват именно внутренних вызовов необходим, Spring поддерживает AspectJ mode с weaving вместо прокси. `private`-метод прокси не перехватит; с Spring Framework 6.0 class-based прокси могут перехватывать также `protected` и package-visible методы, но для интерфейсного прокси нужны `public` методы интерфейса. `final`-метод нельзя переопределить class-based прокси. [Spring `@Transactional`](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/annotations.html); [propagation](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/tx-propagation.html); [proxying](https://docs.spring.io/spring-framework/reference/6.2/core/aop/proxying.html).
 
 ## Q11. (!) Как работает `propagation` транзакций?
 
 `Propagation` (распространение) определяет, что делать, когда `@Transactional`-метод вызван внутри уже идущей транзакции: присоединиться к ней, открыть новую, приостановить текущую или вообще запретить такой вызов.
 
-По умолчанию — `REQUIRED`: метод работает в текущей транзакции, если она есть, иначе создаёт свою. В 90% случаев этого достаточно; остальные режимы нужны для специфических задач (независимый аудит, вложенные savepoint'ы, запрет транзакции).
+По умолчанию — `REQUIRED`: метод участвует в существующей физической транзакции либо создаёт её при отсутствии. `REQUIRES_NEW` приостанавливает внешнюю транзакцию и создаёт независимую; `NESTED` при поддержке менеджера использует savepoint внутри одной физической транзакции.
 
 | Propagation | Есть транзакция | Нет транзакции |
 |-------------|-----------------|----------------|
 | `REQUIRED` (default) | Присоединяется | Создаёт новую |
 | `REQUIRES_NEW` | Приостанавливает, создаёт новую | Создаёт новую |
-| `NESTED` | Создаёт savepoint | Создаёт новую |
+| `NESTED` | JDBC savepoint, если поддержан менеджером и драйвером | Создаёт новую |
 | `MANDATORY` | Присоединяется | Бросает исключение |
 | `SUPPORTS` | Присоединяется | Без транзакции |
 | `NOT_SUPPORTED` | Приостанавливает | Без транзакции |
@@ -645,26 +649,29 @@ public class OrderService {
 
     @Transactional
     public void placeOrder(OrderRequest request) {
-        Order order = orderRepository.save(new Order(request));
-
-        // Аудит-лог должен сохраниться даже при откате основной транзакции
-        auditService.logAction("ORDER_PLACED", order.getId());
+        // Фиксируем попытку независимо от результата основной операции
+        auditService.recordAttempt("ORDER_ATTEMPTED");
+        orderRepository.save(new Order(request));
     }
 }
 
 @Service
+@RequiredArgsConstructor
 public class AuditService {
 
+    private final AuditRepository auditRepository;
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logAction(String action, Long entityId) {
-        // Выполняется в ОТДЕЛЬНОЙ транзакции
-        // Если основная транзакция откатится — лог сохранится
-        auditRepository.save(new AuditLog(action, entityId));
+    public void recordAttempt(String action) {
+        // Отдельная транзакция: запись о попытке сохранится при откате заказа
+        auditRepository.save(new AuditLog(action));
     }
 }
 ```
 
-**Любимый вопрос на собеседовании:** при `REQUIRED` внутренний и внешний методы делят **одну** транзакцию. Если внутренний метод бросил исключение, транзакция помечается как `rollback-only`. Даже если внешний метод поймает это исключение и продолжит работу — на коммите всё равно прилетит `UnexpectedRollbackException`, и весь блок откатится. Чтобы внутренний сбой не «отравлял» внешнюю транзакцию, выносите внутренний метод в `REQUIRES_NEW` (отдельная транзакция).
+**Подводный камень:** если внутренний метод с `REQUIRED` вызван через прокси и из него наружу выходит исключение, подходящее под rollback-правило, его логическая область может пометить общую физическую транзакцию как `rollback-only`. Перехват исключения внешним методом после этого не снимает метку: при попытке коммита будет `UnexpectedRollbackException`. Если исключение обработано внутри внутреннего метода или вызов миновал прокси, такого вывода автоматически делать нельзя. `REQUIRES_NEW` изолирует внутренний результат, но требует отдельного соединения при удержании внешнего и достаточного пула.
+
+`NESTED` — сценарий прежде всего для JDBC. `JpaTransactionManager` допускает JDBC savepoint, но он не откатывает состояние JPA `EntityManager`; в Spring Framework 6.2.19 флаг `nestedTransactionAllowed` по умолчанию `true`, а с 7.0 — `false`. Не рассчитывайте на вложенную JPA-транзакцию только из-за этой настройки. Для сообщения о **состоявшемся** заказе отдельный `REQUIRES_NEW` аудит до коммита не подходит: используйте событие после коммита или transactional outbox. [Spring propagation](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/tx-propagation.html); [`JpaTransactionManager` 6.2.19](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/orm/jpa/JpaTransactionManager.html).
 
 ## Q12. (!) Что такое `@Lock` и стратегии блокировок?
 

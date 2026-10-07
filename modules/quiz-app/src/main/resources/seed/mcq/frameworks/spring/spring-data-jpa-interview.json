@@ -606,50 +606,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Transactional` работает на уровне байткода метода, поэтому self-invocation (`this.method()`) тоже открывает транзакцию.",
+              "text": "`@Transactional` в proxy-режиме меняет байткод метода; поэтому внутренний вызов через `this` снова проходит прокси и применяет собственные настройки.",
               "correct": false,
               "sections": {
-                "what_actually": "`@Transactional` реализована через прокси; вызов `this.method()` идёт напрямую к реальному объекту, минуя прокси, и транзакция не создаётся.",
+                "what_actually": "В proxy-режиме self-вызов не проходит advice; новая транзакция не открывается, но существующая внешняя транзакция продолжает действовать. Weaving используется в отдельном AspectJ mode.",
                 "source_of_confusion": "Кажется, что аннотация «встроена» в метод и работает при любом вызове.",
-                "if_it_were_true": "Тогда внутренний вызов `this.updateUser()` всегда был бы транзакционным, но это классическая ловушка self-invocation.",
-                "how_it_should_be": "Транзакция применяется только при вызове через прокси (извне бина)."
+                "if_it_were_true": "Настройки `updateUser()` применялись бы и при прямом вызове через `this`, но прокси этот вызов не видит.",
+                "how_it_should_be": "В proxy-режиме вызывайте транзакционный метод через прокси либо задайте транзакцию на внешнем методе."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`@Transactional` объявляет метод/класс транзакционным: Spring оборачивает бин в прокси (`CGLIB` или `JDK Proxy`), который перед вызовом открывает транзакцию, после успешного возврата делает commit, а при `RuntimeException` — rollback. Ключевой нюанс — self-invocation: вызов аннотированного метода через `this` не проходит через прокси, и транзакция не создаётся.",
+              "text": "`@Transactional` в proxy-режиме действует при вызове через прокси; `REQUIRED` начинает или присоединяет транзакцию, а self-вызов не применяет настройки вызываемого метода.",
               "correct": true,
               "sections": {
-                "explanation": "Прокси-обёртка управляет жизненным циклом транзакции через `TransactionManager`. По умолчанию откат происходит на `RuntimeException`/`Error`; для checked-исключений нужно указать `rollbackFor`.",
-                "example": "Внутри `doSomething()` вызов `this.updateUser(1L)` (метод с `@Transactional`) идёт мимо прокси — транзакции НЕТ; нужно вынести метод в другой бин или вызывать через self-прокси.",
-                "when_to_apply": "Ставят на сервисные методы, меняющие данные; `readOnly=true` — для чтения, чтобы отключить dirty checking.",
-                "edge_cases": "Self-invocation и `private`/`final`-методы не перехватываются прокси; также по умолчанию checked exceptions не вызывают rollback без `rollbackFor`.",
+                "explanation": "Прокси обращается к `TransactionManager`; `REQUIRED` создаёт транзакцию либо участвует в существующей. Self-вызов минует advice, но не отменяет уже открытую внешнюю транзакцию.",
+                "example": "В нетранзакционном `doSomething()` вызов `this.updateUser(1L)` не откроет транзакцию; вызов `findById()` из уже транзакционного `processPayment()` останется в его транзакции.",
+                "when_to_apply": "Обычно задавайте границу транзакции на внешнем сервисном методе, охватывающем одну бизнес-операцию; `readOnly=true` служит подсказкой для чтения.",
+                "edge_cases": "По умолчанию откат на `RuntimeException`/`Error`, для checked нужен `rollbackFor` либо глобальный `ALL_EXCEPTIONS` с 6.2. `private` не перехватывается; class-based прокси с 6.0 допускает `protected`/package-visible.",
                 "related": "[[spring-data-jpa-interview#Q11]] propagation; [[spring-data-jpa-interview#Q12]] @Lock; [[spring-data-jpa-interview#Q19]] состояния сущности."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`@Transactional`, поставленная на `private`-метод, корректно перехватывается прокси и открывает транзакцию.",
+              "text": "`@Transactional` в proxy-режиме действует и на private методы бина; class-based прокси перехватывает их через внешний публичный вызов.",
               "correct": false,
               "sections": {
-                "what_actually": "Прокси не перехватывает `private`-методы (и `final`); транзакция на них не работает — аннотацию ставят на `public`-методы.",
+                "what_actually": "`private`-метод не перехватывается прокси. С Spring Framework 6.0 class-based прокси может перехватывать `protected`/package-visible при внешнем вызове; `final`-метод такой прокси не переопределит.",
                 "source_of_confusion": "Аннотация компилируется без ошибок на любом методе, что создаёт ложное ощущение работоспособности.",
                 "if_it_were_true": "Тогда `@Transactional` на `private`-методе создавала бы транзакцию, но прокси его не видит.",
-                "how_it_should_be": "Транзакционными делают `public`-методы, доступные через прокси."
+                "how_it_should_be": "Для предсказуемого контракта ставьте `@Transactional` на внешний сервисный метод; проверяйте тип прокси и видимость."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "По умолчанию `@Transactional` откатывает транзакцию на любых исключениях, включая проверяемые (checked).",
+              "text": "`@Transactional` в proxy-режиме по умолчанию откатывает checked-исключения; они обрабатываются так же, как `RuntimeException` и `Error`, без дополнительных правил.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию rollback происходит только на `RuntimeException` и `Error`; для checked-исключений нужно явно указать `rollbackFor`.",
+                "what_actually": "По умолчанию rollback происходит на `RuntimeException` и `Error`; для checked укажите `rollbackFor` либо глобальный `rollbackOn=ALL_EXCEPTIONS` (Spring Framework 6.2+).",
                 "source_of_confusion": "Интуитивно «исключение = откат», и разница checked/unchecked теряется.",
                 "if_it_were_true": "Тогда `rollbackFor` был бы не нужен, но его добавляют именно для checked-исключений.",
-                "how_it_should_be": "Откат по умолчанию — на unchecked; checked требует `rollbackFor`."
+                "how_it_should_be": "Различайте правила отката по умолчанию и явно настроенные правила для checked-исключений."
               }
             }
           ]
@@ -666,50 +666,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Propagation` определяет поведение `@Transactional`-метода относительно существующей транзакции. По умолчанию `REQUIRES_NEW`: каждый метод выполняется в собственной транзакции. `REQUIRED` присоединяется к текущей или создаёт новую; `NESTED` создаёт savepoint; `MANDATORY` требует существующую (иначе исключение); `SUPPORTS`/`NOT_SUPPORTED`/`NEVER` — варианты без обязательной транзакции.",
+              "text": "`REQUIRED` создаёт отдельную физическую транзакцию при каждом вызове; `REQUIRES_NEW` присоединяется к внешней, а `NESTED` использует savepoint при поддержке менеджера.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию `REQUIRED`: вложенный метод присоединяется к уже открытой транзакции, а не создаёт новую.",
+                "what_actually": "`REQUIRED` по умолчанию участвует в существующей физической транзакции; `REQUIRES_NEW` создаёт независимую.",
                 "source_of_confusion": "Кажется логичным, что каждый метод изолирован своей транзакцией.",
-                "if_it_were_true": "Тогда вложенные вызовы всегда коммитились бы независимо, но при `REQUIRED` они делят одну транзакцию.",
-                "how_it_should_be": "Дефолт — `REQUIRED`; отдельная транзакция только при `REQUIRES_NEW`."
+                "if_it_were_true": "Вложенные `REQUIRED`-вызовы коммитились бы независимо, но они делят одну физическую транзакцию.",
+                "how_it_should_be": "Дефолт — `REQUIRED`; независимая физическая транзакция создаётся при `REQUIRES_NEW`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Propagation` определяет отношение `@Transactional`-метода к текущей транзакции: `REQUIRED` разделяет одну транзакцию с внешним методом, `REQUIRES_NEW` открывает отдельную, `NESTED` использует savepoint. При `REQUIRED`, если внешний метод поймает исключение из внутреннего в try/catch, общая транзакция всё равно успешно закоммитится.",
+              "text": "`REQUIRED` участвует в текущей транзакции; `REQUIRES_NEW` создаёт savepoint в ней, а `NESTED` всегда получает отдельную физическую транзакцию.",
               "correct": false,
               "sections": {
-                "what_actually": "После исключения во вложенном методе транзакция помечается rollback-only; commit невозможен, даже если исключение поймано — будет `UnexpectedRollbackException`.",
-                "source_of_confusion": "Поимка исключения обычно «гасит» проблему, и кажется, что транзакция спасена.",
-                "if_it_were_true": "Тогда try/catch вокруг внутреннего вызова позволял бы закоммитить, но транзакция уже rollback-only.",
-                "how_it_should_be": "Для независимого вложенного метода нужен `REQUIRES_NEW`, иначе откат общий."
+                "what_actually": "`REQUIRES_NEW` приостанавливает внешнюю транзакцию и создаёт независимую; `NESTED` использует savepoint в той же физической транзакции, если это поддержано.",
+                "source_of_confusion": "Слова new и nested принимают за одинаковые варианты вложенной транзакции.",
+                "if_it_were_true": "Откат `REQUIRES_NEW` возвращал бы общую транзакцию к savepoint, но у него отдельная физическая граница.",
+                "how_it_should_be": "Различайте независимую транзакцию и savepoint одной транзакции."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Propagation` определяет поведение `@Transactional`-метода относительно уже существующей транзакции. По умолчанию `REQUIRED`: присоединяется к текущей или создаёт новую. `REQUIRES_NEW` приостанавливает текущую и открывает отдельную; `NESTED` создаёт savepoint; `MANDATORY` требует существующую (иначе исключение); `SUPPORTS`/`NOT_SUPPORTED`/`NEVER` — варианты без обязательной транзакции.",
+              "text": "`REQUIRED` участвует в текущей транзакции; `REQUIRES_NEW` создаёт независимую, а `NESTED` при вложенном вызове использует поддерживаемый JDBC savepoint.",
               "correct": true,
               "sections": {
-                "explanation": "`REQUIRES_NEW` полезен для аудит-логов, которые должны сохраниться даже при откате основной операции. `NESTED` откатывает только до savepoint, не трогая внешнюю транзакцию.",
-                "example": "`AuditService.logAction` с `@Transactional(propagation=REQUIRES_NEW)` сохранит лог в отдельной транзакции, даже если внешний `placeOrder` откатится.",
-                "when_to_apply": "`REQUIRES_NEW` — для независимых побочных операций (аудит, нотификации); `MANDATORY` — когда метод обязан выполняться внутри чужой транзакции.",
-                "edge_cases": "При `REQUIRED` если внутренний метод бросил исключение, вся транзакция помечается rollback-only — даже если внешний метод поймал исключение, commit уже невозможен.",
+                "explanation": "`REQUIRED` создаёт логическую область в общей физической транзакции. `REQUIRES_NEW` приостанавливает внешнюю и открывает независимую. `NESTED` требует поддержки JDBC savepoint и не создаёт независимого JPA EntityManager.",
+                "example": "`AuditService.recordAttempt` с `REQUIRES_NEW` фиксирует попытку заказа отдельно от `placeOrder`; это не запись об успешном коммите заказа.",
+                "when_to_apply": "`REQUIRES_NEW` подходит для намеренно независимой записи о попытке; `NESTED` — для JDBC-операции с частичным откатом на savepoint при поддержке менеджера.",
+                "edge_cases": "Внутренний `REQUIRED` может пометить общую транзакцию rollback-only, если исключение вышло через его прокси; тогда внешний catch не спасёт commit. `REQUIRES_NEW` требует дополнительного соединения. JPA EntityManager не откатывается к JDBC savepoint.",
                 "related": "[[spring-data-jpa-interview#Q10]] @Transactional и прокси; [[spring-data-jpa-interview#Q12]] @Lock; [[spring-data-jpa-interview#Q19]] состояния сущности."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Propagation` задаёт поведение `@Transactional`-метода относительно текущей транзакции. По умолчанию `REQUIRED`: присоединяется к текущей или создаёт новую. `REQUIRES_NEW` присоединяется к уже открытой транзакции; `NESTED` создаёт savepoint; `MANDATORY` требует существующую (иначе исключение); `SUPPORTS`/`NOT_SUPPORTED`/`NEVER` — варианты без обязательной транзакции.",
+              "text": "`REQUIRED` участвует в текущей транзакции; `REQUIRES_NEW` создаёт независимую, а `NESTED` гарантирует откат JPA EntityManager вместе с JDBC savepoint.",
               "correct": false,
               "sections": {
-                "what_actually": "`REQUIRES_NEW` приостанавливает текущую транзакцию и открывает новую независимую; присоединяется к существующей именно `REQUIRED`.",
-                "source_of_confusion": "Названия `REQUIRED` и `REQUIRES_NEW` похожи, и их поведение путают.",
-                "if_it_were_true": "Тогда аудит-лог откатывался бы вместе с основной транзакцией, но `REQUIRES_NEW` его сохраняет.",
-                "how_it_should_be": "`REQUIRES_NEW` всегда заводит отдельную транзакцию, приостановив текущую."
+                "what_actually": "`NESTED` использует JDBC savepoint, но JPA EntityManager и его управляемые объекты не возвращаются к состоянию savepoint.",
+                "source_of_confusion": "JDBC-откат до savepoint ошибочно приравнивают к откату состояния JPA persistence context.",
+                "if_it_were_true": "После JDBC-отката JPA-сущности автоматически возвращали бы прежние поля, но такой гарантии нет.",
+                "how_it_should_be": "Проверяйте менеджер транзакций и ресурс; не рассчитывайте на вложенную JPA-транзакцию из-за `NESTED`."
               }
             }
           ]
