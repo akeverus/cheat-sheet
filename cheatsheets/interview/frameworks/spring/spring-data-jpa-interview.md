@@ -1510,7 +1510,7 @@ public Order createOrderWithItems(CreateOrderRequest request) {
 
 ## Q26. Что такое `@Embedded` и `@Embeddable`?
 
-`@Embeddable` помечает Value Object — объект **без собственного `@Id`**, который не живёт отдельно, а встраивается в сущность-владельца. `@Embedded` ставится на поле сущности, куда такой объект вкладывается. Отдельной таблицы у него нет: его поля становятся колонками таблицы владельца.
+`@Embeddable` помечает тип без собственной persistent identity и `@Id`; его состояние принадлежит сущности-владельцу. `@Embedded` задаёт одиночное встраиваемое поле: у самого embeddable нет отдельной таблицы, его состояние хранится в таблице или таблицах владельца. Для коллекции embeddable через `@ElementCollection` нужна уже таблица коллекции.
 
 Зачем: группировать логически связанные поля (`amount` + `currency` → `Money`; `street` + `city` + `zip` → `Address`) в осмысленный тип с поведением, не плодя для них отдельную таблицу и связь. Это про чистоту модели, а не про маппинг ради маппинга.
 
@@ -1569,9 +1569,9 @@ public class Order {
 }
 ```
 
-**Зачем `@AttributeOverrides`:** два `@Embedded`-поля одного типа (`shippingAddress` и `billingAddress`) по умолчанию мапятся на одни и те же колонки (`street`, `city`, ...) и конфликтуют. Override переименовывает колонки для каждого вхождения (`shipping_street`, `billing_street`).
+**Зачем `@AttributeOverrides`:** при повторном встраивании `Address` имена колонок могут совпасть. Явные override задают разные колонки для `shippingAddress` и `billingAddress`; они меняют SQL-маппинг, а не имена Java-полей. Для ассоциаций внутри embeddable используют `@AssociationOverride`.
 
-`record` с `@Embeddable` (Java 16+) — естественный выбор: Value Object по определению неизменяем, а `record` даёт неизменяемость, `equals`/`hashCode` по значению и компактный синтаксис из коробки.
+**Граница версий:** Java `record` доступен с Java 16, а поддержка record как `@Embeddable` стандартизована в **Jakarta Persistence 3.2**. Record не нужен конструктор без параметров; обычному embeddable-классу он нужен (`public` или `protected`). `@Entity` record быть не может. Record полезен для неизменяемого значения и даёт value-based `equals`/`hashCode`, но обычный embeddable не обязан быть неизменяемым. В более ранних версиях JPA record-embeddable зависит от расширений провайдера. [Jakarta Persistence 3.2 `@Embeddable`](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/embeddable); [`@AttributeOverride`](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/attributeoverride); [релиз 3.2](https://jakarta.ee/specifications/persistence/3.2/).
 
 ## Q27. Как работает наследование сущностей (`JPA Inheritance`)?
 

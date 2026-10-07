@@ -1566,50 +1566,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Java `record` нельзя использовать с `@Embeddable` — подходят только обычные классы с сеттерами.",
+              "text": "В Jakarta Persistence 3.2 `record` с `@Embeddable` обязан иметь публичный конструктор без параметров, как обычный класс.",
               "correct": false,
               "sections": {
-                "what_actually": "`record` отлично работает с `@Embeddable` (Java 16+) и идеален для immutable Value Objects.",
-                "source_of_confusion": "JPA исторически требовала пустой конструктор/сеттеры, и это переносят на embeddable.",
-                "if_it_were_true": "Тогда `record Money(...)` как embeddable не компилировался бы, но это рекомендуемый паттерн.",
-                "how_it_should_be": "`record` — удобный носитель `@Embeddable` для неизменяемых VO."
+                "what_actually": "Jakarta Persistence 3.2 разрешает record как Embeddable без конструктора без параметров; обычному embeddable-классу нужен public/protected no-arg конструктор.",
+                "source_of_confusion": "Требование к обычному классу ошибочно переносят на record, для которого спецификация сделала исключение.",
+                "if_it_were_true": "Record с одними компонентами и каноническим конструктором не мог бы быть переносимым Embeddable, но JPA 3.2 его разрешает.",
+                "how_it_should_be": "Указывайте границу стандарта: Java record с Java 16, portable record-embeddable с Jakarta Persistence 3.2."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`@Embeddable`-объект имеет собственный `@Id` и хранится в отдельной таблице, связанной с сущностью по внешнему ключу.",
+              "text": "В Jakarta Persistence 3.2 `@Embeddable` обязан иметь собственный `@Id` и отдельную таблицу, связанную с владельцем.",
               "correct": false,
               "sections": {
-                "what_actually": "Embeddable не имеет своего `@Id` и своей таблицы: его поля становятся колонками таблицы сущности-владельца.",
-                "source_of_confusion": "Embeddable выглядит как полноценный класс, и кажется, что у него должна быть своя таблица.",
-                "if_it_were_true": "Тогда `Money` хранился бы отдельно с JOIN, но `amount`/`currency` лежат в таблице владельца.",
-                "how_it_should_be": "Embeddable — это группа колонок в таблице сущности, без своей идентичности."
+                "what_actually": "Embeddable не имеет своего Id или таблицы и разделяет persistent identity владельца; одиночный Embedded хранится в таблице или таблицах владельца.",
+                "source_of_confusion": "Самостоятельный Java-тип ошибочно принимают за самостоятельную JPA-сущность.",
+                "if_it_were_true": "Для Money понадобились бы отдельный ключ и JOIN, но одиночное встраивание не создаёт сущность.",
+                "how_it_should_be": "Различайте Embeddable и Entity; коллекция embeddable через ElementCollection отдельно использует таблицу коллекции."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`@Embeddable` помечает Value Object без собственной идентичности (например, `Money`, `Address`), чьи колонки маппятся в таблицу владельца. `@Embedded` встраивает такой объект в сущность. Когда в одной сущности несколько `@Embedded` одного типа, нужен `@AttributeOverrides`, чтобы развести колонки.",
+              "text": "В Jakarta Persistence 3.2 `record` может быть `@Embeddable` без no-arg конструктора, а `@AttributeOverrides` разводит колонки повторных встраиваний.",
               "correct": true,
               "sections": {
-                "explanation": "Embeddable не имеет своего `@Id` и своей таблицы — его поля становятся колонками сущности-владельца. Это удобно для группировки логически связанных полей и переиспользования (`record` с `@Embeddable` идеален для immutable VO).",
-                "example": "Два `@Embedded Address` (shipping и billing) в `Order` требуют `@AttributeOverride(name=\"city\", column=@Column(name=\"shipping_city\"))` и т.п., иначе колонки `city` конфликтуют.",
-                "when_to_apply": "Берут для Value Objects (деньги, адрес, период), которые не имеют самостоятельной жизни и всегда принадлежат сущности.",
-                "edge_cases": "Без `@AttributeOverrides` при двух embeddable одного типа маппинг падает из-за дублирования имён колонок в одной таблице.",
+                "explanation": "Embeddable разделяет identity владельца и не имеет своего Id/таблицы. Jakarta Persistence 3.2 стандартизует record как Embeddable без no-arg конструктора; обычному embeddable-классу он нужен. AttributeOverrides меняет колонки для повторных встраиваний, а не Java-компоненты.",
+                "example": "Два поля `@Embedded Address` у Order можно развести через `@AttributeOverride(name=\"city\", column=@Column(name=\"shipping_city\"))` и аналогичный override для billingAddress.",
+                "when_to_apply": "Для значения без самостоятельной persistent identity, например адреса или суммы; проверяйте JPA-версию и названия колонок при повторном встраивании.",
+                "edge_cases": "Record требует Java 16 и стандартно поддержан с Jakarta Persistence 3.2; в прежних версиях переносимость зависит от провайдера. ElementCollection embeddable использует таблицу коллекции, в отличие от одиночного Embedded.",
                 "related": "[[spring-data-jpa-interview#Q25]] CascadeType; [[spring-data-jpa-interview#Q27]] наследование сущностей; [[spring-data-jpa-interview#Q19]] состояния сущности."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`@AttributeOverrides` нужен только для переименования полей и никак не связан с конфликтом колонок при нескольких `@Embedded`.",
+              "text": "В Jakarta Persistence 3.2 `@AttributeOverrides` меняет Java-компоненты record, а повторный `@Embedded` создаёт отдельные таблицы.",
               "correct": false,
               "sections": {
-                "what_actually": "`@AttributeOverrides` как раз и решает конфликт колонок, когда в сущности несколько `@Embedded` одного типа (shipping/billing адреса).",
-                "source_of_confusion": "Переименование кажется чисто косметической задачей.",
-                "if_it_were_true": "Тогда два `@Embedded Address` работали бы без override, но они дали бы дубликаты колонок.",
-                "how_it_should_be": "Override разводит одинаковые поля двух embeddable по разным колонкам."
+                "what_actually": "AttributeOverrides переопределяет SQL-колонки basic-атрибутов embeddable; Java-имена остаются прежними. Одиночный Embedded не создаёт отдельную таблицу.",
+                "source_of_confusion": "Название override принимают за изменение структуры Java-типа, а не его маппинга в конкретном владельце.",
+                "if_it_were_true": "Для двух Address появлялись бы отдельные таблицы и новые имена компонентов, но override указывает только колонки.",
+                "how_it_should_be": "Применяйте AttributeOverrides к конкретному Embedded-полю для разных колонок shipping и billing."
               }
             }
           ]
