@@ -486,7 +486,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Флаг `clearAutomatically=true` сбрасывает изменения сущностей в БД перед выполнением запроса.",
+              "text": "`@Modifying` запускает bulk-запрос, а `clearAutomatically=true` сбрасывает изменения в БД до выполнения; `flushAutomatically=true` очищает контекст после запроса.",
               "correct": false,
               "sections": {
                 "what_actually": "`clearAutomatically=true` очищает persistence context после выполнения; сброс pending changes перед запросом делает `flushAutomatically=true`.",
@@ -498,10 +498,10 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Bulk-update через `@Modifying` проходит через persistence context и автоматически обновляет уже загруженные сущности в памяти.",
+              "text": "`@Modifying` запускает bulk-запрос через persistence context и обновляет поля загруженных сущностей; `clearAutomatically=true` сохраняет их в памяти с новыми значениями.",
               "correct": false,
               "sections": {
-                "what_actually": "Bulk-запрос идёт в БД напрямую, минуя L1-кэш; загруженные сущности в контексте остаются устаревшими, пока их не очистить.",
+                "what_actually": "Bulk-запрос идёт в БД напрямую, минуя загруженные сущности; `clearAutomatically=true` отсоединяет их, а не обновляет поля в памяти.",
                 "source_of_confusion": "Кажется логичным, что ORM держит память и БД синхронными.",
                 "if_it_were_true": "Тогда `clearAutomatically` был бы не нужен, но именно его добавляют, чтобы убрать рассинхрон.",
                 "how_it_should_be": "Bulk DML минует кэш; синхронизацию обеспечивают `clear`/`flush`."
@@ -510,25 +510,25 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@Modifying` не нужна: `@Query` с текстом `UPDATE`/`DELETE` Spring выполнит как изменяющий запрос автоматически.",
+              "text": "`@Modifying` нужна для derived `deleteBy`, но не для `@Query` с UPDATE; Spring распознаёт DML по тексту и добавляет транзакцию.",
               "correct": false,
               "sections": {
-                "what_actually": "Без `@Modifying` Spring выполняет `@Query` как `SELECT` через `getResultList`, и для UPDATE/DELETE это приводит к ошибке.",
+                "what_actually": "Derived `deleteBy` не требует `@Modifying`, но изменяющий `@Query` требует её и отдельной транзакционной границы.",
                 "source_of_confusion": "Текст запроса очевидно изменяющий, и кажется, что Spring это поймёт сам.",
                 "if_it_were_true": "Тогда `@Query(\"DELETE FROM User u WHERE ...\")` без `@Modifying` работал бы, но он выбросит исключение.",
-                "how_it_should_be": "Любой DML через `@Query` помечают `@Modifying`."
+                "how_it_should_be": "Для DML через `@Query` задайте `@Modifying` и транзакцию; derived `deleteBy` работает по имени."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`@Modifying` помечает метод репозитория как изменяющий данные (`UPDATE`/`DELETE`/`INSERT`); без неё `Spring Data` трактует `@Query` как `SELECT` и падает. Дополнительно `clearAutomatically=true` очищает persistence context после запроса, а `flushAutomatically=true` сбрасывает pending changes перед ним.",
+              "text": "`@Modifying` помечает DML в `@Query`; bulk-запрос обходит загруженные сущности, а `flushAutomatically`/`clearAutomatically` управляют контекстом до и после выполнения.",
               "correct": true,
               "sections": {
                 "explanation": "Bulk-`UPDATE`/`DELETE` через `@Modifying` — один SQL-запрос вместо загрузки N сущностей и их по-штучного изменения. Эти запросы идут в БД напрямую, минуя кэш первого уровня.",
-                "example": "`@Modifying(clearAutomatically=true) @Query(\"UPDATE User u SET u.status=:s WHERE u.lastLoginAt<:before\") int deactivate(@Param(\"s\") UserStatus s, @Param(\"before\") LocalDateTime before);`",
-                "when_to_apply": "Берут для массовых изменений/удалений, когда не нужны каскады и lifecycle-callbacks, и важна производительность одного запроса.",
-                "edge_cases": "Без `clearAutomatically` после bulk-update сущности в persistence context хранят старые данные, и повторный `findById` вернёт устаревшую кэшированную версию.",
+                "example": "`@Transactional @Modifying(flushAutomatically=true, clearAutomatically=true) @Query(\"UPDATE User u SET u.status=:s WHERE u.lastLoginAt<:before\") int deactivate(@Param(\"s\") UserStatus s, @Param(\"before\") LocalDateTime before);`",
+                "when_to_apply": "Берут для массовых изменений/удалений, когда не нужны callbacks и каскады уровня сущностей и подходит bulk-семантика.",
+                "edge_cases": "Без очистки загруженные сущности могут остаться устаревшими; очистка без предварительного flush может отбросить несохранённые изменения. Объявленный метод требует транзакции.",
                 "related": "[[spring-data-jpa-interview#Q6]] аннотация @Query; [[spring-data-jpa-interview#Q33]] derived delete; [[spring-data-jpa-interview#Q42]] @Modifying для bulk."
               }
             }

@@ -452,11 +452,11 @@ interface ProductSummary {
 }
 ```
 
-**Подводный камень:** при нативной пагинации всегда указывайте `countQuery`. Для `JPQL` `Spring` умеет вывести count-запрос автоматически, но для нативного SQL он лишь оборачивает ваш запрос, и для сложных конструкций (с `GROUP BY`, оконными функциями) такая обёртка ломается или считает неверно.
+**Подводный камень:** автоматическое построение `count` работает для простого нативного SQL, но не покрывает произвольный диалект и сложный запрос. Для сложной пагинации используйте JSqlParser либо задайте явный `countQuery` и проверьте результат на целевой БД.
 
 ## Q8. Что такое `@Modifying` и когда его использовать?
 
-`@Modifying` помечает метод как изменяющий данные (`UPDATE`, `DELETE`, `INSERT`). По умолчанию `Spring Data` считает любой `@Query` запросом на чтение и вызывает `getResultList()` — без `@Modifying` DML-запрос упадёт с ошибкой.
+`@Modifying` помечает метод с `@Query` как изменяющий данные (`UPDATE`, `DELETE`, нативный `INSERT` или DDL), чтобы Spring Data выполнил его как modifying query. Для derived `deleteBy…` эта аннотация не нужна: такой метод сам определяет операцию по имени. Объявленные query methods не получают транзакцию автоматически; вызывайте bulk-операцию внутри транзакции сервиса либо задайте `@Transactional` на методе репозитория.
 
 Главная ценность — bulk-операции: один `UPDATE`/`DELETE` напрямую в БД вместо загрузки N сущностей в память, их изменения по одной и сброса dirty checking'ом. На больших объёмах это разница в порядки.
 
@@ -464,17 +464,20 @@ interface ProductSummary {
 public interface UserRepository extends JpaRepository<User, Long> {
 
     // Bulk UPDATE — один запрос вместо загрузки N сущностей
+    @Transactional
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE User u SET u.status = :newStatus WHERE u.lastLoginAt < :before")
     int deactivateInactiveUsers(@Param("newStatus") UserStatus newStatus,
                                  @Param("before") LocalDateTime before);
 
     // Bulk DELETE
+    @Transactional
     @Modifying
     @Query("DELETE FROM User u WHERE u.status = 'DELETED' AND u.deletedAt < :before")
     int purgeDeletedUsers(@Param("before") LocalDateTime before);
 
     // Нативный INSERT (например, для таблицы связей)
+    @Transactional
     @Modifying
     @Query(value = "INSERT INTO user_roles (user_id, role_id) VALUES (:userId, :roleId)",
            nativeQuery = true)
@@ -486,7 +489,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 - `clearAutomatically = true` — очищает persistence context **после** запроса: ранее загруженные сущности устарели, их нужно «забыть»
 - `flushAutomatically = true` — сбрасывает накопленные изменения в БД **перед** запросом, чтобы bulk-операция увидела актуальные данные
 
-**Подводный камень:** bulk-запрос идёт напрямую в БД, минуя кэш первого уровня. Без `clearAutomatically` сущности в persistence context остаются со старыми значениями, и повторный `findById` в той же транзакции вернёт кэшированную (устаревшую) версию, а не то, что реально лежит в БД.
+**Подводный камень:** bulk-запрос идёт напрямую в БД, минуя загруженные сущности и их lifecycle callbacks. Без `clearAutomatically` сущности в persistence context могут остаться со старыми значениями. Очистка удаляет из контекста и несохранённые изменения, поэтому перед ней при необходимости выполните `flush`; показанная комбинация `flushAutomatically` и `clearAutomatically` делает порядок явным. [Spring Data JPA modifying queries](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html); [transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html).
 
 ## Q9. Как использовать `@Query` с `SpEL`?
 
