@@ -841,55 +841,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как использовать динамические проекции?",
+          "question_text": "Как `Class<T>` работает в динамической проекции Spring Data JPA?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "В динамическую проекцию нельзя передать `User.class` — параметр `Class<T>` принимает только интерфейсы-проекции.",
+              "text": "`Class<T>` в динамическом методе ограничен интерфейсными проекциями; `User.class` не подходит, даже если репозиторий обслуживает сущность `User`.",
               "correct": false,
               "sections": {
-                "what_actually": "Передача `User.class` валидна и вернёт полную сущность; параметр `Class<T>` работает и с сущностью, и с проекциями/DTO.",
-                "source_of_confusion": "Динамические проекции показывают на интерфейсах, и кажется, что только они и допустимы.",
-                "if_it_were_true": "Тогда `findByStatus(ACTIVE, User.class)` не компилировался бы, но это рабочий вызов.",
-                "how_it_should_be": "Тип может быть сущностью, интерфейсной проекцией или DTO."
+                "what_actually": "Документация допускает выбор полной сущности через `User.class` наряду с интерфейсной или DTO-проекцией.",
+                "source_of_confusion": "Слово «проекция» кажется обязательным подмножеством полей, но динамический метод может вернуть агрегат целиком.",
+                "if_it_were_true": "Пример `findByLastname(..., Person.class)` из документации не работал бы.",
+                "how_it_should_be": "Выбирайте нужный тип результата при вызове, включая саму сущность, если она действительно нужна."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Динамическая проекция — метод репозитория с дженерик-параметром `Class<T> type`, например `<T> List<T> findByStatus(UserStatus status, Class<T> type)`. Один метод возвращает разные представления в зависимости от переданного типа: `findByStatus(ACTIVE, UserSummary.class)`, `findByStatus(ACTIVE, UserAdmin.class)` или `findByStatus(ACTIVE, User.class)`.",
+              "text": "`Class<T>` выбирает результат каждого вызова; допустимы проекция и `User.class`, но селектор проекции недоступен как аргумент запроса.",
               "correct": true,
               "sections": {
-                "explanation": "Тип проекции передаётся как аргумент, и Spring строит выборку под него. Это убирает дублирование: не нужно объявлять `findSummaryByStatus`, `findAdminByStatus` и т.п. отдельными методами.",
-                "example": "`getPublicList()` вызывает `repo.findByStatus(ACTIVE, UserSummary.class)` для минимума полей, а `getAdminList()` — `repo.findByStatus(ACTIVE, UserAdmin.class)` для расширенного набора.",
-                "when_to_apply": "Берут, когда одна и та же выборка нужна в разных контекстах (публичный API vs админка) с разным набором полей.",
-                "edge_cases": "Передача `User.class` тоже работает и возвращает полную сущность — удобно, но теряется выигрыш проекции, если делать это по привычке.",
-                "related": "[[spring-data-jpa-interview#Q13]] виды проекций; [[spring-data-jpa-interview#Q38]] projection-интерфейсы; [[spring-data-jpa-interview#Q5]] query methods."
+                "explanation": "Spring Data связывает `Class<T>` с возвращаемым `T` и выбирает форму результата при каждом вызове. Такой параметр считается селектором проекции и не доступен как обычный аргумент JPQL или SpEL.",
+                "example": "`<T> List<T> findByStatus(UserStatus status, Class<T> type)` принимает `UserSummary.class`, `UserAdmin.class` либо `User.class`.",
+                "when_to_apply": "Используйте динамическую проекцию, когда один и тот же предикат поиска нужен для нескольких представлений результата.",
+                "edge_cases": "Правила вложенных и открытых проекций остаются прежними. Если сам класс должен участвовать в запросе как значение, используйте иной generic-тип параметра, например `Class<?>`.",
+                "related": "[[spring-data-jpa-interview#Q13]] виды проекций; [[spring-data-jpa-interview#Q15]] пагинация."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Динамическая проекция требует отдельного метода репозитория под каждый тип результата (`findSummaryBy...`, `findAdminBy...`).",
+              "text": "`Class<T>` в динамическом методе всегда участвует в JPQL; его можно использовать как параметр type одновременно с выбором результата `T`.",
               "correct": false,
               "sections": {
-                "what_actually": "Суть динамической проекции — один метод с параметром `Class<T> type`, покрывающий все типы; отдельные методы не нужны.",
-                "source_of_confusion": "Без динамической проекции действительно приходится плодить методы, и это считают нормой.",
-                "if_it_were_true": "Тогда не было бы выигрыша от `Class<T>`-параметра, но именно он устраняет дублирование.",
-                "how_it_should_be": "Один метод `findByStatus(status, type)` возвращает любую проекцию."
+                "what_actually": "Когда `Class<T>` совпадает с generic-типом возвращаемого результата, Spring Data использует его для выбора проекции и не предоставляет запросу или SpEL.",
+                "source_of_confusion": "Параметр есть в сигнатуре Java, поэтому его ошибочно принимают за обычный bind-параметр.",
+                "if_it_were_true": "Один `Class<T>` мог бы одновременно выбирать форму результата и подставляться в `:type`, но документация исключает это.",
+                "how_it_should_be": "Для значения класса в запросе используйте отдельный параметр, например `Class<?>`, и не путайте его с селектором проекции."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Тип проекции в динамическом методе задаётся аннотацией на самом методе и не может меняться в рантайме.",
+              "text": "`Class<T>` выбирает тип результата при запуске приложения; после первого вызова метод сохраняет эту проекцию для следующих запросов.",
               "correct": false,
               "sections": {
-                "what_actually": "Тип передаётся аргументом `Class<T>` в момент вызова, поэтому одно и то же место кода может вернуть разные проекции в зависимости от переданного класса.",
-                "source_of_confusion": "Привычка задавать возвращаемый тип статически в сигнатуре метода.",
-                "if_it_were_true": "Тогда метод возвращал бы фиксированный тип, но динамическая проекция как раз выбирает его в рантайме.",
-                "how_it_should_be": "Тип результата определяется аргументом `Class<T>` при каждом вызове."
+                "what_actually": "Динамическая проекция выбирается при каждом вызове метода по переданному классу; один метод можно вызвать с разными типами.",
+                "source_of_confusion": "Репозитории создаются при запуске, поэтому кажется, что и результат фиксируется тогда же.",
+                "if_it_were_true": "После первого вызова с `UserSummary.class` запрос с `User.class` ошибочно возвращал бы summary, чего нет.",
+                "how_it_should_be": "Сигнатура метода общая, конкретный тип результата определяется аргументом каждого вызова."
               }
             }
           ]
@@ -901,55 +901,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как работает пагинация в `Spring Data JPA`?",
+          "question_text": "Как использовать `Pageable` и что проверить при пагинации с `JOIN FETCH` коллекции?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Номера страниц в `PageRequest.of(page, size)` начинаются с 1, поэтому первая страница — это `page=1`.",
+              "text": "`Pageable` считает страницы с единицы и задаёт сортировку; `Page` не требует count, а collection `JOIN FETCH` всегда ограничивается в SQL.",
               "correct": false,
               "sections": {
-                "what_actually": "Нумерация страниц нулевая: первая страница — `page=0`; передача `1` вернёт вторую страницу.",
-                "source_of_confusion": "Люди привыкли считать страницы с единицы в UI.",
-                "if_it_were_true": "Тогда `PageRequest.of(0, 20)` пропускал бы первую страницу, но он возвращает именно её.",
-                "how_it_should_be": "Индексация страниц с нуля: первая — `page=0`."
+                "what_actually": "`PageRequest` нумерует страницы с нуля; для `Page` может понадобиться count. Пагинация с collection fetch join зависит от версии Hibernate и возможностей БД.",
+                "source_of_confusion": "Нумерацию UI переносят в API, а наличие `Pageable` принимают за гарантию дешёвого SQL.",
+                "if_it_were_true": "`PageRequest.of(0, ...)` не показывал бы первую страницу, а старые версии Hibernate не имели бы варианта лимита в JVM.",
+                "how_it_should_be": "Начинайте с `page=0`, проверяйте count и SQL для collection fetch join."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Пагинация работает через объект `Pageable` (обычно `PageRequest.of(page, size, Sort)`): метод репозитория принимает `Pageable` и возвращает `Page<T>`/`Slice<T>`. В `Spring MVC` можно принять `Pageable` прямо как параметр контроллера — Spring соберёт его из query-параметров `page`, `size`, `sort`.",
+              "text": "`Pageable` задаёт нулевую страницу, размер и сортировку; `Page` может потребовать count, а collection `JOIN FETCH` зависит от версии Hibernate и диалекта.",
               "correct": true,
               "sections": {
-                "explanation": "`PageRequest` инкапсулирует номер страницы, размер и сортировку. Для `Page` Spring дополнительно выполняет `COUNT`-запрос, чтобы вернуть общее число элементов и страниц.",
-                "example": "`Pageable p = PageRequest.of(0, 20, Sort.by(Sort.Order.desc(\"createdAt\"), Sort.Order.asc(\"id\")));` — стабильная сортировка с tie-breaker по `id`.",
-                "when_to_apply": "Берут для списков с постраничной навигацией; в контроллере принимают `Pageable` напрямую для авто-биндинга из запроса.",
-                "edge_cases": "Сортировка без уникального tie-breaker (например, только по `createdAt`) может давать нестабильный порядок между страницами при равных значениях — добавляют сортировку по `id`.",
-                "related": "[[spring-data-jpa-interview#Q16]] Page vs Slice vs List; [[spring-data-jpa-interview#Q6]] @Query с Pageable; [[spring-data-jpa-interview#Q41]] EntityGraph и пагинация."
+                "explanation": "Spring Data JPA применяет offset/limit и sort через провайдер. `Page` содержит total и может потребовать отдельный count; collection fetch join до Hibernate 7.4 мог ограничиваться в памяти. В 7.4 поддерживаемая БД может выполнить корректную пагинацию в SQL.",
+                "example": "`PageRequest.of(0, 20, Sort.by(desc(\"createdAt\"), asc(\"id\")))` задаёт первую страницу и уникальный tie-breaker; `Page<Order> findByStatus(..., Pageable)` возвращает total.",
+                "when_to_apply": "Используйте `Page`, когда нужен total. Для большого смещения или выдачи без total оцените `Slice`/keyset; для коллекций проверяйте запрос и версию ORM.",
+                "edge_cases": "Без уникального tie-breaker равные значения сортировки дают нестабильный порядок; вставки и удаления могут сдвигать offset-страницы. Hibernate 7.4 требует поддержки subquery limit/offset в БД для SQL-пагинации collection fetch join.",
+                "related": "[[spring-data-jpa-interview#Q16]] Page/Slice/List; [[spring-data-jpa-interview#Q41]] EntityGraph и пагинация."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Чтобы получить страницу, нужно вручную вычислять `OFFSET`/`LIMIT` и подставлять их в `@Query` — `Pageable` лишь хранит числа.",
+              "text": "`Pageable` хранит лишь размер страницы и не задаёт offset; `Page` всегда делает count, а collection `JOIN FETCH` одинаков во всех версиях.",
               "correct": false,
               "sections": {
-                "what_actually": "Достаточно передать `Pageable` в метод: Spring сам добавит `LIMIT`/`OFFSET` (или эквивалент) и применит сортировку — ручной расчёт не нужен.",
-                "source_of_confusion": "Под капотом действительно используется offset, и кажется, что его надо считать самому.",
-                "if_it_were_true": "Тогда `findByStatus(status, pageable)` не работал бы без ручного SQL, но он работает из коробки.",
-                "how_it_should_be": "`Pageable` декларативен; пагинацию формирует Spring/провайдер."
+                "what_actually": "`Pageable` содержит номер/offset, размер и сортировку. Для `Page` count может быть не нужен в некоторых случаях; Hibernate 7.4 изменил обработку collection fetch join с пагинацией.",
+                "source_of_confusion": "Упрощённая схема «страница = размер + count» скрывает оптимизации и зависимость поведения от ORM.",
+                "if_it_were_true": "`PageRequest.of(2, 20)` не мог бы выбрать третью страницу и переход на Hibernate 7.4 ничего бы не менял.",
+                "how_it_should_be": "Разделяйте данные страницы, total и реализацию fetch join в конкретной версии."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "В контроллере `Spring MVC` `Pageable` обычно строят руками из `@RequestParam`, а не принимают в метод напрямую.",
+              "text": "`Pageable` задаёт номер и сортировку, но не размер; collection `JOIN FETCH` всегда ограничивает SQL-строки до числа родителей на странице.",
               "correct": false,
               "sections": {
-                "what_actually": "`Spring MVC` умеет резолвить `Pageable` прямо из параметров запроса (`page`, `size`, `sort`) через `PageableHandlerMethodArgumentResolver`.",
-                "source_of_confusion": "Часто показывают ручное создание `PageRequest`, и авто-биндинг остаётся незамеченным.",
-                "if_it_were_true": "Тогда `getUsers(Pageable pageable)` не компилировался бы как эндпоинт, но это рабочая сигнатура.",
-                "how_it_should_be": "`Pageable` можно объявить параметром метода контроллера."
+                "what_actually": "`PageRequest` содержит размер. Старые Hibernate применяли лимит для collection fetch join в JVM; с 7.4 SQL-ограничение зависит от возможностей БД.",
+                "source_of_confusion": "У обычного запроса лимит обычно применяется в БД, и эту модель автоматически переносят на join с коллекцией.",
+                "if_it_were_true": "`PageRequest.of(page, size)` не имел бы смысла, а прежние предупреждения Hibernate о пагинации в памяти были бы невозможны.",
+                "how_it_should_be": "Проверяйте SQL и количество строк, а при необходимости используйте двухшаговую выборку ID родителей и коллекций."
               }
             }
           ]
@@ -961,55 +961,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "В чём разница между `Page`, `Slice` и `List`?",
+          "question_text": "Чем отличаются `Page<T>`, `Slice<T>` и `List<T>` с `Pageable`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`Slice<T>` предоставляет `getTotalElements()` и `getTotalPages()`, как и `Page<T>`.",
+              "text": "`Page<T>` даёт total без count при любом запросе; `Slice<T>` узнаёт hasNext через size+1, а `List<T>` не имеет метаданных.",
               "correct": false,
               "sections": {
-                "what_actually": "`Slice` не знает общего количества: у него есть только `hasNext()`/`hasPrevious()`, а `getTotalElements()`/`getTotalPages()` — это методы `Page`.",
-                "source_of_confusion": "`Slice` — родитель `Page` по иерархии, и их API смешивают.",
-                "if_it_were_true": "Тогда `Slice` нечем бы отличался от `Page`, но именно отсутствие total и отделяет его.",
-                "how_it_should_be": "Total-метаданные есть только у `Page`."
+                "what_actually": "Для `Page` total нередко требует отдельного count-запроса; пропуск count возможен лишь когда total выводится из результата и `Pageable`.",
+                "source_of_confusion": "Оптимизацию пропуска count на короткой странице распространяют на любой запрос.",
+                "if_it_were_true": "`Page` всегда давал бы total из одной выборки, но в общем случае размер страницы не раскрывает число остальных записей.",
+                "how_it_should_be": "Ожидайте возможный count для `Page` и проверяйте фактические запросы."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`List<T>` при передаче `Pageable` всё равно возвращает полную информацию о страницах и общем числе элементов.",
+              "text": "`Page<T>` иногда выполняет count для total; `Slice<T>` тоже считает total, а `List<T>` показывает лишь размер страницы.",
               "correct": false,
               "sections": {
-                "what_actually": "`List<T>` отдаёт только сами записи без каких-либо метаданных пагинации; информации о страницах и total в нём нет.",
-                "source_of_confusion": "Раз `Pageable` передан, кажется, что метаданные «прилагаются».",
-                "if_it_were_true": "Тогда не нужны были бы `Page`/`Slice`, но `List` намеренно не несёт метаданных.",
-                "how_it_should_be": "`List` — только данные; для метаданных берут `Page`/`Slice`."
+                "what_actually": "`Slice` не знает total: он запрашивает дополнительную строку сверх размера страницы, чтобы определить `hasNext()`. `List` даёт элементы без метаданных страниц.",
+                "source_of_confusion": "Оба типа возвращают ограниченный набор элементов, поэтому кажется, что у них одинаковые метаданные.",
+                "if_it_were_true": "`Slice` предоставлял бы `getTotalElements()`, но такой метод есть у `Page`.",
+                "how_it_should_be": "Если нужен total, выбирайте `Page`; если лишь следующая часть — `Slice`."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Page<T>` делает дополнительный `COUNT`-запрос и знает общее число элементов и страниц — для классической пагинации с номерами. `Slice<T>` не считает total (запрашивает `size+1` записей, чтобы узнать `hasNext()`) — для бесконечного скролла. `List<T>` возвращает данные без метаданных и без COUNT.",
+              "text": "`Page<T>` даёт total и иногда выполняет count; `Slice<T>` получает hasNext через size+1, а `List<T>` не содержит метаданных страниц.",
               "correct": true,
               "sections": {
-                "explanation": "Главное различие — наличие `COUNT`-запроса и метаданных. `Page` дороже из-за второго запроса, `Slice` дешевле (один запрос с `size+1`), `List` — самый лёгкий, но без информации о следующей странице.",
-                "example": "`Page<User> findByStatus(...)` → SELECT + SELECT COUNT(*); `Slice<User> findByCity(...)` → один SELECT с `size+1`; `List<User> findByLastName(..., Pageable)` → один SELECT.",
-                "when_to_apply": "`Page` — когда нужны номера страниц и total; `Slice` — для «Load more»/бесконечного скролла; `List` — когда метаданные не нужны.",
-                "edge_cases": "Для таблиц в миллионы строк `Page` может тормозить из-за `COUNT(*)`; тогда берут `Slice` или `List` плюс кэшированный счётчик.",
-                "related": "[[spring-data-jpa-interview#Q15]] пагинация; [[spring-data-jpa-interview#Q35]] best practices; [[spring-data-jpa-interview#Q41]] EntityGraph и пагинация."
+                "explanation": "`Page` содержит total и число страниц, для чего count может потребоваться. `Slice` ограничивает результат размером страницы плюс один для `hasNext()`, а `List` с `Pageable` возвращает только элементы текущего диапазона.",
+                "example": "Для списка заказов с номерами страниц используйте `Page<Order>`; для кнопки «ещё» — `Slice<Order>`; для внутренней пачки без навигации — `List<Order>`.",
+                "when_to_apply": "Выбирайте минимальные метаданные, необходимые клиенту, особенно если count на больших таблицах дорог.",
+                "edge_cases": "Count для `Page` может быть пропущен, когда total выводится из размера результата. `Slice` получает лишнюю строку, но не сообщает общее число страниц.",
+                "related": "[[spring-data-jpa-interview#Q15]] Pageable и offset; [[spring-data-jpa-interview#Q4]] возвращаемые типы методов."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "И `Page`, и `Slice` выполняют дополнительный `COUNT`-запрос, поэтому по числу запросов они одинаковы.",
+              "text": "`Page<T>` даёт total и иногда выполняет count; `Slice<T>` получает hasNext через count, а `List<T>` автоматически показывает total.",
               "correct": false,
               "sections": {
-                "what_actually": "`COUNT`-запрос делает только `Page`; `Slice` его не выполняет — он запрашивает `size+1` записей, чтобы определить наличие следующей страницы.",
-                "source_of_confusion": "Оба типа похожи на пагинацию, и разницу в COUNT упускают.",
-                "if_it_were_true": "Тогда не было бы смысла выбирать `Slice` ради производительности, но именно отсутствие COUNT — его плюс.",
-                "how_it_should_be": "`Page` → +COUNT; `Slice` → один запрос с `size+1`."
+                "what_actually": "`Slice` определяет наличие следующей части по дополнительной записи, без total-count. Обычный `List` не содержит total или признака `hasNext()`.",
+                "source_of_confusion": "Раз возвращаются элементы страницы, кажется, что общее число доступно во всех wrapper-типах.",
+                "if_it_were_true": "`Slice` терял бы своё преимущество без count, а `List` должен был бы нести объект метаданных.",
+                "how_it_should_be": "Различайте `Page` с total, `Slice` с hasNext и `List` с одними элементами."
               }
             }
           ]

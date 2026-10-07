@@ -806,7 +806,7 @@ public interface OrderWithUser {
 
 Динамическая проекция — это один метод репозитория, который возвращает разные представления данных в зависимости от переданного `Class<T>`. Тип проекции выбирается уже в рантайме, на стороне вызывающего кода.
 
-Зачем это нужно: иначе пришлось бы плодить почти одинаковые методы — `findSummaryByStatus`, `findAdminByStatus`, `findFullByStatus`. Дженерик-метод `<T> List<T> findByStatus(status, Class<T>)` заменяет их все одним.
+Зачем это нужно: для одного и того же условия поиска не приходится заводить отдельные методы `findSummaryByStatus`, `findAdminByStatus`, `findFullByStatus`. Дженерик-метод `<T> List<T> findByStatus(status, Class<T>)` выбирает форму результата при вызове.
 
 ```java
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -831,7 +831,10 @@ interface UserAdmin {
 }
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
+
+    private final UserRepository userRepository;
 
     public List<UserSummary> getPublicList() {
         // Для публичного API — минимум данных
@@ -850,13 +853,13 @@ public class UserService {
 }
 ```
 
-Итог: один метод репозитория обслуживает и публичный API (минимум полей), и админку (больше полей), и работу с полной сущностью — без дублирования сигнатур.
+Параметр `Class<T>`, связанный с типом результата `T`, Spring Data распознаёт как селектор проекции: он **недоступен** как аргумент запроса или SpEL. Если сам класс нужен как обычный параметр запроса, для него используют другой generic-тип, например `Class<?>`. Правила закрытых, открытых и DTO-проекций из Q13 сохраняются; выбор `User.class` возвращает полную сущность. [Spring Data JPA Projections](https://docs.spring.io/spring-data/jpa/reference/repositories/projections.html#dynamic-projections).
 
 ## Q15. (!) Как работает пагинация в `Spring Data JPA`?
 
-Пагинация — это выдача результата частями (страницами) вместо одной гигантской выборки. `Spring Data JPA` делает её из коробки: передаёте в метод репозитория объект `Pageable` (`PageRequest.of(page, size, sort)`), а `Spring` сам добавляет `LIMIT`/`OFFSET` и сортировку в запрос.
+Пагинация — выдача результата частями. Метод репозитория принимает `Pageable` (`PageRequest.of(page, size, sort)`), а Spring Data JPA применяет offset, лимит и сортировку через JPA-провайдер и SQL-диалект. Номер первой страницы — `0`; конкретный SQL может отличаться от `LIMIT/OFFSET`.
 
-Зачем: грузить миллион строк в память ради показа 20 на странице — путь к `OutOfMemoryError` и тормозам. Пагинация ограничивает выборку на уровне БД.
+`Page<T>` даёт общее число элементов и страниц; для этого **может** потребоваться отдельный count-запрос. `Slice<T>` сообщает лишь, есть ли следующая часть, и не требует общего count (подробнее в Q16). Для устойчивого порядка добавьте уникальный tie-breaker, например `id`: сортировки только по `createdAt` недостаточно при одинаковом времени. Даже так offset-страницы могут смещаться между запросами при конкурентных вставках и удалениях; для большого смещения рассмотрите keyset scrolling.
 
 ```java
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -864,9 +867,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
     Slice<Order> findByUserId(Long userId, Pageable pageable);
-
-    @Query("SELECT o FROM Order o JOIN FETCH o.items WHERE o.status = :status")
-    Page<Order> findByStatusWithItems(@Param("status") OrderStatus status, Pageable pageable);
 }
 ```
 
@@ -881,8 +881,7 @@ public class OrderController {
     @GetMapping
     public Page<OrderDto> getOrders(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "createdAt,desc") String[] sort) {
+            @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(
             Sort.Order.desc("createdAt"),
@@ -895,7 +894,9 @@ public class OrderController {
 }
 ```
 
-**В `Spring MVC`** можно принять `Pageable` напрямую как параметр контроллера — `Spring` автоматически создаст его из query-параметров `page`, `size`, `sort`:
+**`JOIN FETCH` коллекции + `Pageable` проверяйте отдельно.** В Hibernate 6 и версиях 7 до 7.4 такой запрос мог загрузить все подходящие строки и применить лимит в JVM. С Hibernate 7.4 пагинация с collection fetch join выполняется корректно в БД, если СУБД поддерживает лимит/offset во вложенном запросе; для неподдерживаемого диалекта остаётся дорогой вариант в памяти. Независимо от этого для `Page` проверьте count-запрос и фактический SQL. Если важна переносимая предсказуемость, сначала выберите страницу ID родителей, затем отдельным запросом загрузите их коллекции и восстановите порядок страницы. [Spring Data Paging](https://docs.spring.io/spring-data/jpa/reference/repositories/query-methods-details.html), [Hibernate 7.4 What's New](https://docs.hibernate.org/orm/7.4/whats-new/).
+
+**В `Spring MVC` при включённой Spring Data web support** можно принять `Pageable` напрямую как параметр контроллера: resolver создаст его из query-параметров `page`, `size`, `sort`. Spring Boot включает web support автоконфигурацией при нужных зависимостях:
 
 ```java
 @GetMapping("/users")
@@ -905,24 +906,26 @@ public Page<UserDto> getUsers(Pageable pageable) {
 }
 ```
 
+Для публичного HTTP-контракта лучше явно задать DTO страницы или `PagedModel`: сериализация `PageImpl` напрямую не обещает стабильную JSON-структуру. [Spring Data web support](https://docs.spring.io/spring-data/jpa/reference/repositories/core-extensions.html).
+
 ## Q16. В чём разница между `Page`, `Slice` и `List`?
 
-Все три — варианты возврата постраничной выборки, и различаются они **ценой в запросах**. Главный водораздел — нужно ли знать общее число элементов:
+Все три могут возвращать выборку с `Pageable`, но отличаются **метаданными и возможной ценой запросов**. Главный вопрос — нужны ли total и признак следующей части:
 
-- `Page<T>` делает **дополнительный** `SELECT COUNT(*)`, чтобы посчитать всего элементов и страниц. Это плата за нумерацию страниц («1 2 3 ... 50»).
+- `Page<T>` сообщает число элементов и страниц. Для total обычно нужен дополнительный count-запрос, но Spring Data может его пропустить, когда число элементов выводится из содержимого страницы и `Pageable`.
 - `Slice<T>` count не делает: чтобы понять, есть ли следующая страница, он запрашивает `size + 1` запись. Если пришла лишняя — `hasNext() == true`.
 - `List<T>` — просто страница данных без всяких метаданных.
 
 | Тип | `COUNT` запрос | Метаданные | Когда использовать |
 |-----|---------------|------------|-------------------|
-| `Page<T>` | Да (доп. запрос) | Общее кол-во элементов и страниц | Классическая пагинация с номерами страниц |
+| `Page<T>` | Может потребоваться | Общее число элементов и страниц | Пагинация с номерами страниц |
 | `Slice<T>` | Нет | Только `hasNext()` | Бесконечный скролл, "Load more" |
 | `List<T>` | Нет | Нет | Когда метаданные не нужны |
 
 ```java
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // Page — два запроса: SELECT + SELECT COUNT(*)
+    // Page — данные + total; count выполняется, когда он нужен
     Page<User> findByStatus(UserStatus status, Pageable pageable);
 
     // Slice — один запрос (запрашивает size+1 записей, чтобы определить hasNext)
@@ -933,7 +936,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 }
 ```
 
-**Рекомендация:** на больших таблицах (миллионы строк) `COUNT(*)` сам по себе превращается в тяжёлый запрос, и `Page` становится узким местом. Если фронту не нужен точный номер последней страницы — берите `Slice` (или `List` + отдельно кэшированный приблизительный счётчик).
+**Рекомендация:** на больших таблицах `COUNT(*)` может быть дорогим. Если клиенту нужен только переход к следующей части — берите `Slice`; если даже `hasNext()` не нужен — `List` с `Pageable`. `List` не даёт total автоматически. [Spring Data Paging](https://docs.spring.io/spring-data/jpa/reference/repositories/query-methods-details.html); [`PageableExecutionUtils`](https://docs.spring.io/spring-data/commons/reference/api/java/org/springframework/data/support/PageableExecutionUtils.html).
 
 ## Q17. (!) Что такое `Specifications` и как их использовать?
 
