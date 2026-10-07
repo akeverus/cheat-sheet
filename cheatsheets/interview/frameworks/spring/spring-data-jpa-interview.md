@@ -1708,13 +1708,13 @@ private Long id;
 
 ## Q29. Как настроить второуровневый кэш (`L2 cache`)?
 
-Второуровневый кэш (`L2`) хранит сущности на уровне `SessionFactory` — то есть **между транзакциями и общий для всех сессий**. Это и отличает его от L1 (persistence context), который живёт только внутри одной транзакции и после её завершения исчезает.
+Второуровневый кэш (`L2`) привязан к `EntityManagerFactory`/`SessionFactory` и может переиспользоваться разными `EntityManager`/`Session`. Кэш первого уровня (`L1`, persistence context) принадлежит **одному** `EntityManager`/`Session` и живёт до его закрытия или `clear()`; завершение транзакции само по себе не задаёт время жизни контекста, если он остаётся открытым.
 
-Идея: справочные данные (категории, страны, тарифы) читаются постоянно и почти не меняются — гонять за ними в БД при каждом запросе расточительно. L2 держит их в памяти приложения, и повторные чтения по id идут без обращения к БД.
+Часто читаемые, редко изменяемые справочники — кандидаты для L2. Повторный поиск по ID **может** обойти БД при попадании в настроенную область кэша; результат зависит от маппинга, инвалидирования и провайдера. L2 хранит состояние сущностей, а не общие для сессий managed-объекты. Кэш коллекции настраивается отдельно.
 
 ```mermaid
 graph LR
-    APP["Приложение"] --> L1["L1 Cache<br/>Persistence Context<br/>(per transaction)"]
+    APP["Приложение"] --> L1["L1 Cache<br/>Persistence Context<br/>(per EntityManager)"]
     L1 --> L2["L2 Cache<br/>EhCache / Hazelcast<br/>(per SessionFactory)"]
     L2 --> DB["Database"]
 
@@ -1729,12 +1729,14 @@ spring:
     properties:
       hibernate:
         cache:
-          use_second_level_cache: true
+          use_second_level_cache: true  # можно указать явно; с провайдером default true
           region.factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
-      javax:
-        cache:
-          provider: org.ehcache.jsr107.EhcacheCachingProvider
+        javax:
+          cache:
+            provider: org.ehcache.jsr107.EhcacheCachingProvider
 ```
+
+Для этого примера нужны `hibernate-jcache` и реализация JCache (например, Ehcache) совместимых версий. `hibernate.javax.cache.provider` задаёт реализацию JCache, а `hibernate.cache.region.factory_class` — интеграцию Hibernate. При выбранном `RegionFactory` L2 по умолчанию включается; без провайдера он не работает. По умолчанию сущности кэшируются выборочно (`ENABLE_SELECTIVE`): `@Cacheable` отмечает сущность, а Hibernate `@Cache` задаёт стратегию/область. Для production задайте размер, eviction и TTL регионов у провайдера; области, созданные с его настройками по умолчанию, могут оказаться неподходящими.
 
 ```java
 @Entity
@@ -1749,17 +1751,19 @@ public class Category {
     private String name;
 
     @OneToMany(mappedBy = "category")
-    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE) // кэш коллекции
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE) // отдельная область: ID элементов коллекции
     private List<Product> products;
 }
 ```
 
 | Стратегия | Описание | Когда |
 |-----------|----------|-------|
-| `READ_ONLY` | Неизменяемые данные | Справочники, enum-таблицы |
-| `READ_WRITE` | Читаются чаще, чем пишутся | Большинство сценариев |
-| `NONSTRICT_READ_WRITE` | Eventual consistency | Данные, где допустимо кратковременное расхождение |
-| `TRANSACTIONAL` | Полная транзакционная согласованность | JTA-транзакции |
+| `READ_ONLY` | Для данных, которые приложение не обновляет | Неизменяемые справочники |
+| `READ_WRITE` | Согласованный доступ к одной сущности, без обещания serializable изоляции | Редкие изменения |
+| `NONSTRICT_READ_WRITE` | Допускает временно устаревшие чтения | Редкие записи, допустима слабая согласованность |
+| `TRANSACTIONAL` | Транзакционная стратегия при поддержке JTA и провайдера | Когда она действительно нужна и поддерживается |
+
+Кэш коллекции `@OneToMany` хранит **идентификаторы** элементов, а не автоматически их состояние; для дочерних сущностей нужен собственный кэш, если требуются попадания без БД. Изменения коллекции инвалидируют её запись в кэше. [Hibernate ORM 7.4, caching](https://docs.hibernate.org/orm/7.4/userguide/html_single/); [Hibernate ORM 7.4, JCache](https://docs.hibernate.org/orm/7.4/userguide/html_single/#caching-provider-jcache).
 
 ## Q30. Что такое `Soft Delete` и как реализовать?
 

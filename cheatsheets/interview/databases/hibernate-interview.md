@@ -903,7 +903,7 @@ Order order = entityManager.find(Order.class, orderId, hints);
 
 ## Q24. (!) В чём разница между `First Level Cache` и `Second Level Cache`?
 
-Ключевое различие — **область видимости и время жизни**. L1 привязан к одной `Session` и живёт, пока та открыта; L2 общий для всего `SessionFactory` и переживает отдельные сессии. L1 включён всегда и не отключается; L2 по умолчанию выключен и требует отдельного провайдера.
+Ключевое различие — **область видимости и время жизни**. L1 привязан к одной stateful `Session`/`EntityManager` и живёт до закрытия или `clear()`, не обязательно до границы транзакции. L2 привязан к `SessionFactory` и переживает отдельные сессии. Без cache-провайдера L2 выключен; если настроен `RegionFactory`, `hibernate.cache.use_second_level_cache` по умолчанию `true`. L1 не требует отдельной настройки; `StatelessSession` не имеет persistence context.
 
 ```mermaid
 graph TB
@@ -949,8 +949,8 @@ graph TB
 | Аспект | L1 (First Level) | L2 (Second Level) |
 |--------|------------------|-------------------|
 | Область | Одна `Session` | `SessionFactory` (все сессии) |
-| По умолчанию | Включён, нельзя отключить | Выключен |
-| Жизненный цикл | Пока `Session` открыта | Пока приложение работает |
+| По умолчанию | Есть у stateful `Session` | Выключен без провайдера; с ним обычно включён |
+| Жизненный цикл | До `clear()`/закрытия `Session` | Связан с `SessionFactory` и провайдером |
 | Настройка | Не нужна | Требует провайдера (Ehcache, Infinispan) |
 | Потокобезопасность | Нет (одна сессия = один поток) | Да |
 
@@ -962,8 +962,10 @@ Session session = sf.openSession();
 User u1 = session.get(User.class, 1L); // SELECT из БД, сохраняется в L1
 User u2 = session.get(User.class, 1L); // Берётся из L1, SQL не выполняется
 assert u1 == u2; // true — один и тот же объект
-session.close(); // L1 очищается
+session.close(); // контекст этой Session закрыт
 ```
+
+Проверка L1 всегда предшествует обращению к L2. Попадание L2 не означает общий Java-объект между сессиями: каждая сессия создаёт своё managed-представление. [Hibernate ORM 7.4, caching](https://docs.hibernate.org/orm/7.4/userguide/html_single/).
 
 ## Q25. Как настроить кэш второго уровня?
 
@@ -971,8 +973,8 @@ session.close(); // L1 очищается
 
 **1. Зависимость** (Gradle):
 ```groovy
-implementation 'org.hibernate.orm:hibernate-jcache'
-implementation 'org.ehcache:ehcache:3.10.8'
+implementation 'org.hibernate.orm:hibernate-jcache' // версия согласована с hibernate-core
+implementation 'org.ehcache:ehcache'                 // совместимая версия через BOM/catalog
 ```
 
 **2. Конфигурация** (`application.yml`):
@@ -1003,6 +1005,8 @@ public class Country {
 
 L2 cache наиболее эффективен для сущностей, которые **часто читаются и редко изменяются** (справочники, конфигурации).
 
+`hibernate-jcache` и реализация JCache нужны для приведённого примера. При настроенном `RegionFactory` Hibernate 7.4 включает L2 по умолчанию; явный `use_second_level_cache=true` здесь служит для наглядности. По умолчанию кэшируются только выбранные сущности (`ENABLE_SELECTIVE`). Области и политику размера/eviction задают у провайдера; если не заданы, автоматически созданный кэш может не подходить для production. [Hibernate ORM 7.4, JCache](https://docs.hibernate.org/orm/7.4/userguide/html_single/).
+
 ## Q26. Что такое `Query Cache`?
 
 **Query Cache** кэширует **результаты запросов** (список ID сущностей), а не сами сущности. Работает в паре с L2 cache — по ID из query cache достаются сущности из L2 cache.
@@ -1031,8 +1035,8 @@ List<Country> countries = entityManager
 |-----------|----------|--------------------|
 | **`READ_ONLY`** | Только чтение, сущность никогда не обновляется | Справочники, enum-таблицы |
 | **`NONSTRICT_READ_WRITE`** | Кэш обновляется после commit, возможно чтение устаревших данных | Данные, которые редко меняются и eventual consistency допустима |
-| **`READ_WRITE`** | Soft-lock: при обновлении ставится блокировка в кэше | Данные, которые иногда меняются, нужна consistency |
-| **`TRANSACTIONAL`** | Полная поддержка XA-транзакций (JTA) | Распределённые транзакции, кластерный кэш |
+| **`READ_WRITE`** | Soft-lock при обновлении; согласованный доступ к одной сущности, без гарантии serializable | Данные, которые иногда меняются |
+| **`TRANSACTIONAL`** | Транзакционная стратегия с JTA при поддержке cache-провайдера | Сценарий, где требуется и доступна такая интеграция |
 
 ```java
 @Entity
@@ -1043,6 +1047,8 @@ public class Currency { ... }
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Product { ... }
 ```
+
+`TRANSACTIONAL` не следует понимать как автоматическое включение XA или кластерного кэша одним значением enum. Поддержку и границы транзакций проверяют у конкретного провайдера. [Hibernate ORM 7.4, cache concurrency strategies](https://docs.hibernate.org/orm/7.4/userguide/html_single/).
 
 ## Q28. Что такое `HQL` и `JPQL`?
 

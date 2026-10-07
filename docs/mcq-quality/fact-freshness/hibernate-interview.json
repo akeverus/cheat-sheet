@@ -3,7 +3,7 @@
   "round": 10,
   "status": "TODO",
   "version_sensitive": true,
-  "product_version": "Hibernate ORM 7.4 / 8.0 (Q8–Q10/Q14–Q16/Q19–Q21/Q23/Q36 точечно проверены по 6.6/7.0/7.4; Jakarta Persistence 3.2)",
+  "product_version": "Hibernate ORM 7.4 / 8.0 (Q8–Q10/Q14–Q16/Q19–Q21/Q23–Q25/Q27/Q36 точечно проверены по 6.6/7.0/7.4; Jakarta Persistence 3.2)",
   "checked_date": "2026-10-07",
   "sources": [
     "context7 /hibernate/hibernate-orm (High reputation, 4549 snippets) — проверка актуальной ветки",
@@ -35,16 +35,17 @@
     "Q20/Q21: N+1 бывает при LAZY обходе и EAGER to-one в JPQL/HQL без fetch join. JOIN FETCH заданной связи использует SQL join; batch/subselect объединяют вторичные SELECT, число зависит от контекста. Параллельный fetch нескольких коллекций создаёт декартово произведение, нескольких bag — MultipleBagFetchException. EAGER не гарантирует один SQL и не является универсальным лечением N+1.",
     "Q23: Jakarta Persistence 3.2 fetchgraph трактует неуказанные атрибуты как LAZY, loadgraph сохраняет их настройки маппинга; провайдер может загрузить дополнительные данные сверх обоих графов. Граф не предписывает JOIN или число SQL.",
     "Q15/Q16: Jakarta Persistence 3.2 задаёт ManyToOne EAGER по умолчанию; явный LAZY не предотвращает N+1 при последующем обходе. orphanRemoval у OneToMany предназначен для приватно принадлежащих детей, а не переводимых между родителями Employee. Cascade REMOVE вне OneToOne/OneToMany непереносим; на ManyToMany при удалении владельца он затрагивает целевые сущности, тогда как обычное удаление элемента коллекции меняет связь. Hibernate ORM 7.4 показывает ManyToMany и с List, и с Set; стоимость обновления join-таблицы зависит от маппинга, а не только от типа Java-коллекции.",
-    "Q14: Jakarta Persistence 3.2 требует SINGLE_TABLE и JOINED, но не TABLE_PER_CLASS. По умолчанию SINGLE_TABLE, поля подтипов допускают NULL для других типов; условный CHECK по дискриминатору может обеспечить их обязательность для своего подтипа. JOINED соединяет таблицы при материализации подтипа и полиморфном чтении. Hibernate 7.4 показывает UNION ALL для полиморфного TABLE_PER_CLASS. Скорость и форма SQL зависят от запроса, провайдера и БД."
+    "Q14: Jakarta Persistence 3.2 требует SINGLE_TABLE и JOINED, но не TABLE_PER_CLASS. По умолчанию SINGLE_TABLE, поля подтипов допускают NULL для других типов; условный CHECK по дискриминатору может обеспечить их обязательность для своего подтипа. JOINED соединяет таблицы при материализации подтипа и полиморфном чтении. Hibernate 7.4 показывает UNION ALL для полиморфного TABLE_PER_CLASS. Скорость и форма SQL зависят от запроса, провайдера и БД.",
+    "Q24/Q25/Q27: L1 связан с одним stateful Session/EntityManager до clear или закрытия; StatelessSession не имеет persistence context. L2 связан с фабрикой и провайдером. Hibernate 7.4: без RegionFactory L2 выключен, с провайдером use_second_level_cache по умолчанию true; для JCache нужны hibernate-jcache, реализация провайдера и корректная hibernate.javax.cache.provider. ENABLE_SELECTIVE кэширует отмеченные @Cacheable сущности. READ_WRITE даёт согласованный доступ к одной сущности, но не serializable isolation; NONSTRICT допускает stale reads; TRANSACTIONAL требует JTA и поддержки провайдера, одно имя стратегии не включает XA/кластер."
   ],
   "staleness_risks": [
     "Конкретные номера версий (6/7/8) в ТЕЛАХ шпаргалки могут устареть при новых мажорных релизах; фичи (auto-dialect, JSON, @Struct) при этом сохраняются.",
     "H6-фичи проверены как присутствующие в актуальных ветках 7.4/8.0 — не удалялись.",
-    "Q8/Q9/Q10/Q14–Q16/Q19–Q21/Q23/Q36 после исправления требуют новой независимой содержательной MCQ-приёмки; прежний AUDITED относится к старому состоянию файла."
+    "Q8/Q9/Q10/Q14–Q16/Q19–Q21/Q23–Q25/Q27/Q36 после исправления требуют новой независимой содержательной MCQ-приёмки; прежний AUDITED относится к старому состоянию файла."
   ],
   "notes": [
     "ROUND-10 LINKAGE-FIRST: MCQ-опции держатся TIMELESS — ни одна опция не утверждает конкретную версию/год/semver.",
     "TEMPORAL_CLAIMS гейта (4 хита) — ложные срабатывания: 'Current' ловится внутри имени метода `getCurrentSession()` (Q41 A/B/C), а 'актуальн' — внутри слова про свежесть данных кэша NONSTRICT_READ_WRITE (Q27B). Оба — часть предмета вопроса, не версионные утверждения.",
-    "Sidecar заполнен для прохождения SOURCE_COVERAGE, т.к. тема реально version-sensitive по ТЕЛАМ (H6+ фичи), проверено context7 2026-08-28. Q8–Q10/Q14–Q16/Q19–Q21/Q23/Q36 и парные MCQ точечно перепроверены по официальным Hibernate 6.6/7.0/7.4/Jakarta Persistence 3.2 источникам 2026-10-07; остальные Q в этом раунде не перепроверялись."
+    "Sidecar заполнен для прохождения SOURCE_COVERAGE, т.к. тема реально version-sensitive по ТЕЛАМ (H6+ фичи), проверено context7 2026-08-28. Q8–Q10/Q14–Q16/Q19–Q21/Q23–Q25/Q27/Q36 и парные MCQ точечно перепроверены по официальным Hibernate 6.6/7.0/7.4/Jakarta Persistence 3.2 источникам 2026-10-07; остальные Q в этом раунде не перепроверялись."
   ]
 }

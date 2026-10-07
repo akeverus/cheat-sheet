@@ -1746,50 +1746,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "L2-кэш работает в рамках одной транзакции, а L1 — общий для всех сессий приложения.",
+              "text": "`L2` хранит состояние лишь одного EntityManager, а `L1` разделяется всеми сессиями одной фабрики между транзакциями.",
               "correct": false,
               "sections": {
-                "what_actually": "Всё наоборот: L1 (persistence context) живёт в пределах транзакции, а L2 — на уровне `SessionFactory`, общий для сессий.",
+                "what_actually": "`L1` принадлежит одному EntityManager/Session до его закрытия или clear, а `L2` привязан к фабрике и доступен разным сессиям.",
                 "source_of_confusion": "Уровни кэша легко перепутать по области видимости.",
-                "if_it_were_true": "Тогда L2 не давал бы выигрыша между запросами, но именно межсессионность — его суть.",
-                "how_it_should_be": "L1 — per-transaction; L2 — per-SessionFactory (между сессиями)."
+                "if_it_were_true": "Две сессии разделяли бы managed-объект первого уровня, а кэш второго уровня не переживал бы закрытие одной сессии.",
+                "how_it_should_be": "`L1` связан с EntityManager/Session, `L2` — с их фабрикой и выбранными регионами кэша."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Стратегия `READ_ONLY` подходит для часто изменяемых данных, так как обеспечивает быстрый апдейт кэша.",
+              "text": "`@Cacheable` выбирает стратегию READ_ONLY, а Hibernate `@Cache` только включает L2 и не влияет на согласованность.",
               "correct": false,
               "sections": {
-                "what_actually": "`READ_ONLY` предназначена для неизменяемых данных (справочники, enum-таблицы); изменять такие сущности нельзя.",
-                "source_of_confusion": "«Read only» воспринимают как «быстрое чтение при любых данных».",
-                "if_it_were_true": "Тогда `READ_ONLY` годился бы для меняющихся записей, но попытка их изменить вызовет ошибку.",
-                "how_it_should_be": "Для часто меняющихся данных берут `READ_WRITE`/`NONSTRICT_READ_WRITE`, не `READ_ONLY`."
+                "what_actually": "JPA `@Cacheable` включает сущность в selective L2 mapping; Hibernate `@Cache(usage=...)` задаёт стратегию конкурентного доступа и регион.",
+                "source_of_confusion": "Две похожие аннотации на одной сущности принимают за взаимозаменяемые настройки.",
+                "if_it_were_true": "Стандарт JPA определял бы `CacheConcurrencyStrategy`, но это расширение Hibernate и провайдера кэша.",
+                "how_it_should_be": "Используйте `@Cacheable` для участия сущности и Hibernate `@Cache` для выбранной стратегии/региона."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "L2-кэш работает на уровне `SessionFactory` (общий для всех сессий), в отличие от L1 (persistence context — в рамках одной транзакции). Включается `use_second_level_cache=true` + провайдер (EhCache/Hazelcast), сущность помечается `@Cacheable` и `@Cache(usage=...)` с выбором стратегии: `READ_ONLY`, `READ_WRITE`, `NONSTRICT_READ_WRITE`, `TRANSACTIONAL`.",
+              "text": "`L1` привязан к EntityManager, а `L2` к фабрике, причём для JCache нужны интеграция, провайдер и выбранные кэшируемые сущности.",
               "correct": true,
               "sections": {
-                "explanation": "L1 живёт в пределах транзакции, L2 переживает её и разделяется между сессиями — повторные `findById` тех же справочных данных не идут в БД. Стратегию выбирают по соотношению чтений/записей.",
-                "example": "`@Cacheable @Cache(usage=CacheConcurrencyStrategy.READ_WRITE)` на сущности `Category` кэширует справочник между сессиями.",
-                "when_to_apply": "Берут для редко меняющихся, часто читаемых данных: справочники, категории, конфигурации.",
-                "edge_cases": "L2 ускоряет чтение, но усложняет инвалидацию: для часто меняющихся данных он даёт устаревшие значения, а `READ_ONLY` вовсе запрещает изменения.",
+                "explanation": "Persistence context (`L1`) принадлежит EntityManager/Session, а `L2` привязан к их фабрике. Для примера на JCache нужны `hibernate-jcache`, реализация провайдера и `RegionFactory`. При настроенном провайдере L2 по умолчанию включён; сущности выбираются через `@Cacheable`, стратегию задаёт Hibernate `@Cache`.",
+                "example": "`hibernate.cache.region.factory_class=org.hibernate.cache.jcache.JCacheRegionFactory` и `hibernate.javax.cache.provider=org.ehcache.jsr107.EhcacheCachingProvider`, затем `@Cacheable` и `@Cache(usage=READ_WRITE)` у сущности.",
+                "when_to_apply": "Кэшируйте часто читаемые, редко изменяемые данные после измерения попаданий, промахов и стоимости инвалидации.",
+                "edge_cases": "`L1` может жить дольше транзакции при открытом EntityManager. L2-hit не обещает отсутствия всех SQL; кэш `@OneToMany` хранит ID элементов, не их состояние. `TRANSACTIONAL` требует подходящей JTA-интеграции; не каждый JCache-провайдер поддерживает его.",
                 "related": "[[spring-data-jpa-interview#Q19]] состояния сущности; [[spring-data-jpa-interview#Q21]] FlushMode; [[spring-data-jpa-interview#Q35]] best practices."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "L2-кэш включается автоматически в Spring Boot, без `use_second_level_cache` и провайдера кэша.",
+              "text": "`L2` автоматически работает в любом Spring Boot приложении и кэширует все сущности без JCache-провайдера и аннотаций.",
               "correct": false,
               "sections": {
-                "what_actually": "L2 по умолчанию выключен: нужно явно включить `use_second_level_cache=true`, подключить провайдер и пометить сущности `@Cacheable`.",
+                "what_actually": "Без cache-провайдера L2 выключен. После настройки `RegionFactory` флаг `use_second_level_cache` по умолчанию true, но кэшируемые сущности при `ENABLE_SELECTIVE` выбирают явно.",
                 "source_of_confusion": "L1 работает «из коробки», и это ожидание переносят на L2.",
-                "if_it_were_true": "Тогда любые сущности кэшировались бы между сессиями без настройки, но без конфигурации L2 неактивен.",
-                "how_it_should_be": "L2 требует явного включения, провайдера и `@Cacheable`."
+                "if_it_were_true": "Любая сущность любого Boot-приложения попадала бы в общий кэш без настройки интеграции и областей, но такого поведения нет.",
+                "how_it_should_be": "Подключите интеграцию и cache-провайдер, затем выберите кэшируемые сущности и стратегию."
               }
             }
           ]
