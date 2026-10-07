@@ -261,7 +261,7 @@ Q (`З`) от проверки ответа по официальному ист
 | P2 / `DEEPEN`, выполнено · О | 15.06 [Spring AI 2.0: tool calling](https://spring.io/blog/2026/06/15/spring-ai-composable-tool-calling/); [Spring AI 2.0.1 reference](https://docs.spring.io/spring-ai/reference/api/tools.html) | `frameworks/spring/spring-ai-interview.md` Q7/Q15: пример создавал Spring-бин через `new` без зависимости, текст советовал старый `.toolNames(...)`, агент использовал необъявленное поле. | Q7/Q15 исправлены: `ToolCallingAdvisor`/`ToolCallingManager`, явный `ToolCallback` для Function, внедрение бинов, memory order и контроль side effects. MCQ Q7 B0/B1 и Q15 B0 синхронизированы; structure/parity PASS, blind review ожидается. |
 | P3 / `DEEPEN`, выполнено · О | 27.06 [Bean Background Initialization](https://www.baeldung.com/spring-bean-background-init); [Spring Framework 6.2 reference](https://docs.spring.io/spring-framework/reference/6.2/core/beans/java/composing-configuration-classes.html) и [Bean API](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/context/annotation/Bean.html) | `frameworks/spring/spring-framework-interview.md` Q10 о жизненном цикле; Q38 относится к `@Async`, это другой механизм. | Q10 углублён: `@Bean(bootstrap=BACKGROUND)` с 6.2 требует `bootstrapExecutor`, non-lazy завершится до конца `refresh()`, ранняя инъекция может блокировать старт. JSON Q10 B0 уточнён, B1 добавлен; 41 Q/42 блока, structure/parity PASS. Полный pre-check старого файла FAIL на Q1/Q9, Q10 без hard-сигналов; авторская точечная проверка выполнена, blind review ожидается. |
 | P3 / `DEEPEN`, выполнено | 27.06 [Kafka CommitFailedException](https://www.baeldung.com/java-kafka-commitfailedexception); [KafkaConsumer 4.3.1](https://kafka.apache.org/43/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html) | `messaging/kafka-interview.md` Q15/Q16/Q45 | Q16 дополнен: `CommitFailedException` после потери партиции нельзя слепо повторять; auto-commit может дать at-least-once при полной обработке batch до следующего `poll()`. `О` по Q15/Q16/Q45; Q16/MCQ B1 написаны, structure/parity PASS, blind review ожидается. |
-| P3 / `DEEPEN`, выполнено · О | 21.06 [Spring Boot 4.1 и MongoDB JobRepository](https://spring.io/blog/2026/06/21/spring-boot-41-and-spring-batch/); [Spring Batch 6 repository](https://docs.spring.io/spring-batch/reference/job/configuring-repository.html), [Boot 4.1 Batch](https://docs.spring.io/spring-boot/reference/io/spring-batch.html), [MongoDB transactions](https://docs.spring.io/spring-data/mongodb/reference/mongodb/client-session-transactions.html) | `frameworks/spring/spring-batch-interview.md` Q6/Q28/Q38: Q6 описывал только JDBC, вступление называло 5.2.x актуальной версией, Q28/Q38 не отделяли Boot 3 от 4.1. | Q6 углублён по resourceless/JDBC/MongoDB, транзакциям и отдельному хранилищу metadata; старый JDBC-пример заменён примером Batch 6. Q28/Q38 получили границы Boot 3/4.1. JSON Q6 B0/Q28/Q38 синхронизированы, Q6 B1 добавлен; 43 Q/44 блока, structure/parity PASS. Полный pre-check старого файла FAIL на прежних Q2/Q26/Q27/Q39/Q42, Q6 без hard-сигналов. Авторская точечная проверка выполнена, blind review ожидается. |
+| P3 / `DEEPEN`, выполнено · О | 21.06 [Spring Boot 4.1 и MongoDB JobRepository](https://spring.io/blog/2026/06/21/spring-boot-41-and-spring-batch/); [Batch 5.0 final](https://docs.spring.io/spring-batch/docs/5.0.1/reference/html/whatsnew.html), [Batch 5.2](https://docs.spring.io/spring-batch/reference/5.2/whatsnew.html), [Batch 6](https://docs.spring.io/spring-batch/reference/whatsnew.html), [Boot 3.5](https://docs.spring.io/spring-boot/3.5/how-to/batch.html), [Boot 4.1](https://docs.spring.io/spring-boot/reference/io/spring-batch.html), [partitioning](https://docs.spring.io/spring-batch/reference/scalability.html), [test API](https://docs.spring.io/spring-batch/reference/api/org/springframework/batch/test/JobOperatorTestUtils.html) | `frameworks/spring/spring-batch-interview.md` Q6/Q28/Q38: Q6 описывал только JDBC, вступление называло 5.2.x актуальной версией, Q28/Q38 смешивали роли Batch и Boot. Смежные Q39/Q42 были неточны по параллелизму и границе тестового API. | Q6 уточнён: MongoDB и resourceless появились в 5.2, в 6 изменился default ручной конфигурации. Q28 различает JDBC-таблицы и MongoDB-коллекции. Q38 переписан по **финальному** Batch 5.0: удаление map-based repository и прекращение публикации bean менеджера транзакций; ошибочное утверждение из предварительной документации о замене `DataSourceTransactionManager` удалено. Q39 различает `gridSize` и фактический параллелизм; Q42 отмечает `JobOperatorTestUtils` в Batch 6. Production JSON Q2/Q6 B0/B1/Q26/Q27/Q28/Q38/Q39/Q42 синхронизирован: 43 Q/44 блока, structure/parity PASS, полный pre-check hard=0 (17 предупреждений вне этой группы). Точечная авторская проверка A/B/C/D проведена, полный содержательный обзор файла и независимая blind-приёмка ожидаются. |
 | P3 / КАНДИДАТ | 02.10 [Python 3.15.0rc3](https://www.python.org/downloads/release/python-3150rc3/), [черновик What's New](https://docs.python.org/3.15/whatsnew/3.15.html) | Будущий `programming-languages/python/python-interview.md` | После базовой Python-темы рассмотреть **один версионный блок**, если изменения полезны backend-разработчику. На 03.10 это RC; финальный релиз перенесён на 09.10.2026. Перед написанием снова проверить GA и окончательную документацию. |
 | P3 / КАНДИДАТ, **БЕТА** | 24.09 [PostgreSQL 19 beta 4](https://www.postgresql.org/about/news/postgresql-19-beta-4-released-3386/), [черновик release notes](https://www.postgresql.org/docs/19/release-19.html) | `databases/postgresql-interview.md` Q32/Q44–Q46 | После GA проверить `DEEPEN` Q32 о встроенном `REPACK` против `VACUUM FULL`/`pg_repack` и возможный Q о `WAIT` для read-your-writes на standby. Beta 4 уже отменила несколько функций: до релиза не описывать предложения как гарантированную функциональность PostgreSQL 19. |
 
@@ -642,11 +642,14 @@ Spring Framework Q10 углублён по фоновому созданию б�
 старого файла FAIL на прежних Q1/Q9; Q10 B0/B1 без hard-сигналов.
 Независимая приёмка Q10 B1 ожидается. Инвентарь не менялся: состав
 файлов и число Q остались 337/9 923.
-Spring Batch Q6/Q28/Q38 сверены с Batch 6 / Boot 4.1 и углублены:
-resourceless/JDBC/MongoDB, транзакции и отдельный metadata store.
-JSON Q6 B0/Q28/Q38 обновлён, Q6 B1 добавлен; 43 Q/44 блока,
-structure/parity PASS, общий pre-check FAIL на прежних Q2/Q26/Q27/
-Q39/Q42, новые блоки Q6 без hard-сигналов. Blind review ожидается.
+Spring Batch Q6/Q28/Q38 повторно сверены с финальной документацией
+Batch 5.0, 5.2, 6 и Boot 3.5/4.1. Исправлены граница появления
+MongoDB/resourceless (5.2), смешение Boot/Batch и Q38 о менеджере
+транзакций. В отдельном пакете Q39 уточнён по `gridSize`, Q42 — по
+тестовому API Batch 6; старые MCQ Q2/Q26/Q27/Q39/Q42 отредактированы.
+JSON содержит 43 Q/44 блока: structure/parity PASS, полный pre-check
+hard=0, 17 предупреждений. Авторская точечная проверка выполнена,
+независимая blind-приёмка и полный обзор старого файла ожидаются.
 Для этих пакетов проведена авторская точечная проверка
 по официальной документации, **полная содержательная проверка старых
 файлов не проводилась**. Автоматические структура/parity Q43 PASS,
@@ -661,13 +664,13 @@ fact-freshness sidecar остаётся TODO. Это не оценка новы�
 1. **Точная точка продолжения:** независимая содержательная MCQ-приёмка
    последней группы, начиная с `frameworks/spring/spring-batch-interview.md`
    Q6 B0/B1, Q28 B0, Q38 B0 и соответствующего production JSON. Проверить
-   правильность каждого A/B/C/D по теории и официальным Spring Batch 6 /
-   Boot 4.1 источникам, затем отдельно SFPL/ANSC и русский текст через
+   правильность каждого A/B/C/D по теории и официальным Batch 5.0/5.2/6,
+   Boot 3.5/4.1 источникам, затем отдельно SFPL/ANSC и русский текст через
    фазы A/B workflow; авторские structure/parity/pre-check PASS не считать
    независимым `FINAL`. После этого пройти Uber Q6/Q7, Maps Q27 и Spring
    Framework Q10 B1. Старые hard-сигналы Q2/Q26/Q27/Q39/Q42 Batch
-   исправлять отдельным пакетом после нового контента. Python 3.15 и
-   PostgreSQL 19 проверять только после GA; Stock Exchange остаётся
+   уже устранены, их независимая содержательная проверка также ожидается.
+   Python 3.15 и PostgreSQL 19 проверять только после GA; Stock Exchange остаётся
    кандидатом до подтверждения профильной ценности.
 2. Ad Click Event Aggregation и Distributed Email Service Q1–Q4 написаны; их MCQ вместе с
    Metrics Platform Q1–Q4, Leaderboard Q1–Q5, Object Storage Q1–Q4, Reservation System Q1–Q4,

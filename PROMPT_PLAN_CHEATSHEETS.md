@@ -144,18 +144,21 @@ JSON PASS; parity RabbitMQ/Kafka/сравнения PASS, event-driven FAIL на
 Начни с **независимой содержательной MCQ-приёмки** последней группы:
 `frameworks/spring/spring-batch-interview.md` Q6 B0/B1, Q28 B0,
 Q38 B0 и парный production JSON. Сверь каждый A/B/C/D с теорией и
-официальными Spring Batch 6 / Boot 4.1 docs, затем отдельно проверь
-SFPL/ANSC и русский текст по фазам A/B `docs/mcq-quality/workflow.md`.
+официальными Batch 5.0/5.2/6 и Boot 3.5/4.1 docs, затем отдельно
+проверь SFPL/ANSC и русский текст по фазам A/B `docs/mcq-quality/workflow.md`.
 Авторские structure/parity/pre-check PASS не заменяют blind review.
 После Batch проверить Uber Q6/Q7, Google Maps Q27 и Spring Framework
-Q10 B1. Старые hard-сигналы Spring Batch Q2/Q26/Q27/Q39/Q42
-разбирать отдельным пакетом. Python 3.15 и PostgreSQL 19 перепроверять
-после GA; Stock Exchange остаётся кандидатом до подтверждения ценности.
+Q10 B1. Старые hard-сигналы Spring Batch Q2/Q26/Q27/Q39/Q42 уже
+исправлены отдельным пакетом; они также ждут независимой проверки.
+Python 3.15 и PostgreSQL 19 перепроверять после GA; Stock Exchange остаётся кандидатом до подтверждения ценности.
 MongoDB `JobRepository` уже разобран в Batch Q6/Q28/Q38 без нового Q:
 различены resourceless/JDBC/MongoDB, транзакции metadata и данные шага.
-JSON Q6 B0/Q28/Q38 синхронизированы, Q6 B1 добавлен; 43 Q/44 блока,
-structure/parity PASS, общий pre-check FAIL только на старых блоках,
-blind review ожидается.
+JSON Q2/Q6 B0/B1/Q26/Q27/Q28/Q38/Q39/Q42 синхронизирован;
+43 Q/44 блока, structure/parity PASS, полный pre-check hard=0 с 17
+предупреждениями. Q6/Q38 повторно сверены с финальными Batch 5.0/5.2/6
+источниками; Q39 различает число разделов и фактический параллелизм,
+Q42 отмечает новый тестовый API Batch 6. Это авторская точечная проверка,
+полный содержательный обзор файла и blind review ожидаются.
 Proximity Service/Nearby Friends уже разобраны без новых файлов:
 `design-uber-interview.md` Q6/Q7 исправлены по PostGIS и Redis,
 `design-google-maps-interview.md` Q27 углублён по GEOSEARCH, проверке
