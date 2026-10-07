@@ -147,8 +147,10 @@ Q38 B0 и парный production JSON. Сверь каждый A/B/C/D с те�
 официальными Batch 5.0/5.2/6 и Boot 3.5/4.1 docs, затем отдельно
 проверь SFPL/ANSC и русский текст по фазам A/B `docs/mcq-quality/workflow.md`.
 Авторские structure/parity/pre-check PASS не заменяют blind review.
-После Batch проверить Uber Q6/Q7, Google Maps Q27 и Spring Framework
-Q10 B1. Старые hard-сигналы Spring Batch Q2/Q26/Q27/Q39/Q42 уже
+После Batch провести независимую приёмку Uber Q6/Q7, Google Maps Q27
+и Spring Framework Q10 B0/B1: авторская точечная проверка уже проведена,
+Q10 B0 исправлен по конструкторной DI. Старые hard-сигналы Spring
+Batch Q2/Q26/Q27/Q39/Q42 уже
 исправлены отдельным пакетом; они также ждут независимой проверки.
 Python 3.15 и PostgreSQL 19 перепроверять после GA; Stock Exchange остаётся кандидатом до подтверждения ценности.
 MongoDB `JobRepository` уже разобран в Batch Q6/Q28/Q38 без нового Q:
@@ -165,7 +167,8 @@ Proximity Service/Nearby Friends уже разобраны без новых ф�
 прав доступа при каждом чтении и отзыву. Официальные PostGIS, Redis и
 OWASP сверены; пары JSON Q6/Q7/Q27 синхронизированы, structure/parity/
 pre-check PASS, независимый blind review ожидается. Spring Framework
-Q10 углублён по `@Bean(bootstrap=BACKGROUND)` с 6.2 и добавлен MCQ B1:
+Q10 углублён по `@Bean(bootstrap=BACKGROUND)` с 6.2; 07.10 схема и MCQ
+B0 A уточнены по конструкторной DI, B1 добавлен:
 structure/parity PASS, полный pre-check старого файла FAIL на прежних
 Q1/Q9, Q10 без hard-сигналов; blind review ожидается.
 Spring Testing Q9/Q10 уже углублены по `@MockitoBean`/`@MockitoSpyBean`,
