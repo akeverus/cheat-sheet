@@ -106,38 +106,36 @@ updated: "2026-10-07"
 
 `Spring Framework` — это комплексный фреймворк для разработки enterprise-приложений на `Java`, построенный вокруг принципов **IoC** (Inversion of Control) и **AOP** (Aspect-Oriented Programming).
 
-Основные модули:
+Основные группы модулей **самого Spring Framework**:
 
 | Модуль | Назначение |
 |--------|-----------|
-| `Spring Core` | IoC-контейнер, DI, ресурсы |
-| `Spring MVC` | Веб-фреймворк (подробнее в [Spring MVC](spring-mvc-interview.md)) |
-| `Spring Security` | Аутентификация и авторизация (подробнее в [Spring Security](spring-security-interview.md)) |
-| `Spring Data` | Унифицированный доступ к данным (подробнее в [Spring Data JPA](spring-data-jpa-interview.md)) |
-| `Spring AOP` | Аспектно-ориентированное программирование |
-| `Spring TX` | Управление транзакциями |
+| `spring-core`, `spring-beans`, `spring-context` | IoC-контейнер, DI, события и ресурсы |
+| `spring-aop` | Аспектно-ориентированное программирование |
+| `spring-tx`, `spring-jdbc`, `spring-orm` | Транзакции и интеграция с JDBC/ORM |
+| `spring-webmvc`, `spring-webflux` | Веб-стек (подробнее в [Spring MVC](spring-mvc-interview.md)) |
+| `spring-test` | Поддержка тестирования Spring-приложений |
 
 ```mermaid
 graph TB
     subgraph "Spring Framework — модули"
-        Core["Spring Core<br/>IoC / DI"]
+        Core["Core / Beans / Context<br/>IoC / DI"]
         AOP["Spring AOP"]
         MVC["Spring MVC"]
-        Data["Spring Data"]
-        Security["Spring Security"]
+        WebFlux["Spring WebFlux"]
+        JDBC["Spring JDBC / ORM"]
         TX["Spring TX"]
-        Boot["Spring Boot"]
+        Test["Spring Test"]
     end
-    Boot --> Core
-    Boot --> MVC
-    Boot --> Data
-    Boot --> Security
-    MVC --> Core
-    Data --> Core
-    Security --> Core
-    AOP --> Core
-    TX --> AOP
+    Core --> AOP
+    Core --> MVC
+    Core --> WebFlux
+    Core --> JDBC
+    Core --> TX
+    Core --> Test
 ```
+
+`Spring Boot`, `Spring Security` и `Spring Data` — **отдельные проекты экосистемы Spring**, а не модули Spring Framework. Их назначение разобрано в [Boot](spring-boot-interview.md), [Security](spring-security-interview.md) и [Data JPA](spring-data-jpa-interview.md). См. [официальный обзор Framework](https://spring.io/projects/spring-framework/) и [каталог проектов Spring](https://spring.io/projects/).
 
 Конфигурация возможна через `@Configuration` + `@Bean`, компонентное сканирование (`@Component`, `@Service`, `@Repository`) или XML. Зависимости внедряются через конструктор (рекомендуется), сеттер или поле.
 
@@ -148,9 +146,11 @@ graph TB
 1. **IoC/DI** — объект не создаёт свои зависимости сам, их подаёт контейнер. Это снижает связанность (coupling) и делает класс тестируемым: в тесте подменяешь зависимость моком, не трогая бизнес-код
 2. **AOP** — сквозная логика (логирование, транзакции, безопасность) выносится в аспекты, поэтому бизнес-метод остаётся чистым и не обрастает техническими деталями
 3. **Модульность** — подключаешь только нужные модули; не нужно тянуть весь фреймворк ради `IoC`-контейнера
-4. **Интеграция** — готовые абстракции для `Hibernate`, `JPA`, `MyBatis`, `Kafka`, `RabbitMQ`, `Redis`: типовой код по подключению уже написан за тебя
-5. **Тестируемость** — `@MockitoBean`, `@SpringBootTest`, `TestRestTemplate` позволяют поднять кусок контекста в тесте, а не весь мир (прежний `@MockBean` из `spring-boot-test` убран, замена живёт в `spring-test`)
+4. **Интеграция** — сам Framework даёт транзакции, JDBC/ORM, веб-клиенты, задачи по расписанию и JMS; интеграции с Kafka, RabbitMQ и Redis предоставляют отдельные проекты Spring
+5. **Тестируемость** — `spring-test` даёт TestContext, MockMvc и `@MockitoBean`. В Spring Boot `@SpringBootTest` обычно создаёт контекст приложения, а `@WebMvcTest` и другие тестовые срезы ограничивают его нужной частью; эти аннотации и `TestRestTemplate` относятся к Boot
 6. **Экосистема** — [Spring Boot](spring-boot-interview.md) для быстрого старта, [Spring Cloud](spring-cloud-interview.md) для микросервисов, `Spring Batch` для пакетной обработки
+
+Границу между Framework и соседними проектами сверяй по [обзору Framework](https://spring.io/projects/spring-framework/), [каталогу проектов](https://spring.io/projects/) и [руководству Boot по тестированию](https://docs.spring.io/spring-boot/reference/testing/spring-boot-applications.html).
 
 **Что ожидают на собеседовании:** не перечисление плюсов, а понимание компромиссов. Удобство `Spring` оплачивается временем старта: classpath scanning и создание прокси выполняются при запуске контекста, что заметно для serverless (холодный старт) и короткоживущих процессов. Ответ на это — встроенная в фреймворк AOT-обработка плюс сборка native image через `GraalVM`: работа переносится со старта на этап сборки. Отдельного проекта `Spring Native` больше нет, его роль забрал сам фреймворк.
 
