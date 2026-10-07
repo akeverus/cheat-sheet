@@ -20,6 +20,8 @@
     "https://docs.spring.io/spring-security/reference/servlet/authentication/anonymous.html",
     "https://docs.spring.io/spring-security/reference/api/java/org/springframework/security/authentication/AuthenticationTrustResolver.html",
     "https://docs.spring.io/spring-security/reference/api/java/org/springframework/security/authentication/AuthenticationTrustResolverImpl.html",
+    "https://docs.spring.io/spring-framework/reference/data-access/transaction/event.html",
+    "https://docs.spring.io/spring-modulith/reference/events.html",
     "https://docs.spring.io/spring-data/jpa/reference/api/java/org/springframework/data/jpa/domain/Specification.html",
     "https://docs.spring.io/spring-data/jpa/reference/api/java/org/springframework/data/jpa/repository/query/EscapeCharacter.html",
     "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/criteria/criteriabuilder",
@@ -55,10 +57,11 @@
     "Q17: Spring Data JPA 4.1.1 поддерживает Specification.where(nonNullSpec), но с 4.0 where(null) не принимается; для отсутствующего условия есть unrestricted(). JpaSpecificationExecutor исполняет Specification с Pageable. EscapeCharacter и CriteriaBuilder.like(..., escapeChar) помогают экранировать LIKE-символы % и _.",
     "Q18: Spring Data JPA 4.1.1 требует включить инфраструктуру и подключить AuditingEntityListener к сущности либо через orm.xml. Даты не требуют AuditorAware, поля автора требуют соответствующий AuditorAware<T>. У @EnableJpaAuditing по умолчанию modifyOnCreate=true и setDates=true. AuthenticationTrustResolver в Spring Security 7.1.1 исключает анонимный токен из isAuthenticated.",
     "Q19: Jakarta Persistence 3.2 различает new, managed, detached и removed. merge(detached) возвращает managed-экземпляр, который может уже быть в контексте, и не переводит исходный аргумент в managed. Spring Data JPA 4.1.1 выбирает persist/merge через isNew: ссылочный @Version, затем @Id, либо собственный Persistable; назначенный вручную ID без версии может ошибочно направить новый объект в merge. Обязательного SELECT перед каждым merge спецификация не обещает.",
+    "Q20: Jakarta Persistence 3.2 допускает callback в сущности или listener через @EntityListeners. @PrePersist вызывается при persist; IDENTITY ID недоступен до INSERT. @PostPersist и @PostRemove следуют за SQL, но не являются подтверждением commit. Для переносимого кода спецификация не рекомендует EntityManager/query/другие сущности и изменение отношений из callback. Spring @TransactionalEventListener по умолчанию AFTER_COMMIT; сам по себе не даёт надёжной доставки, для которой нужны outbox или publication registry.",
     "Q39: фоновый системный автор — политика приложения, а не значение по умолчанию AuditorAware. JPQL bulk update/delete не вызывает lifecycle callbacks управляемых сущностей и не применяет автоматическую проверку @Version; persistence context после bulk может быть несогласован с БД."
   ],
   "staleness_risks": [
-    "07.10.2026 точечно перепроверены Q3 B0, Q4 B1, Q5–Q19 B0 и Q39 B0; остальные Q файла не проходили полный содержательный аудит."
+    "07.10.2026 точечно перепроверены Q3 B0, Q4 B1, Q5–Q20 B0 и Q39 B0; остальные Q файла не проходили полный содержательный аудит."
   ],
   "notes": [
     "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."

@@ -1206,50 +1206,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JPA` позволяет перехватывать события жизненного цикла сущности callback-методами: `@PrePersist`/`@PostPersist` (до/после INSERT), `@PreUpdate`/`@PostUpdate`, `@PreRemove`/`@PostRemove`, `@PostLoad` (после загрузки). Их пишут прямо в сущности или выносят в отдельный listener-класс, подключаемый через `@EntityListeners(MyListener.class)`.",
+              "text": "Callback можно объявить в сущности или через `@EntityListeners`; `@PostPersist` выполняется после INSERT, но ещё до возможного commit.",
               "correct": true,
               "sections": {
-                "explanation": "Callback-методы удобны для проставления времени, инициализации значений по умолчанию и валидации перед удалением. Вынос в отдельный listener-класс делает код чище для сложной логики.",
-                "example": "`@PrePersist void onCreate(){ this.createdAt = LocalDateTime.now(); if (status==null) status=CREATED; }` — заполнение перед INSERT.",
-                "when_to_apply": "Берут для простой подготовки сущности к сохранению/удалению, проставления служебных полей и инвариантов уровня сущности.",
-                "edge_cases": "В callback нельзя вызывать `EntityManager` (новые запросы/изменения других сущностей) — это даёт непредсказуемое поведение; для сложной логики используют `@TransactionalEventListener`/Spring Events.",
-                "related": "[[spring-data-jpa-interview#Q18]] Auditing; [[spring-data-jpa-interview#Q19]] состояния сущности; [[spring-data-jpa-interview#Q39]] @CreatedDate."
+                "explanation": "JPA callback объявляют в сущности или в отдельном listener-классе через `@EntityListeners`. `@PostPersist` следует за SQL INSERT, который может произойти до завершения транзакции; он не означает успешный commit.",
+                "example": "`@PrePersist` может выставить значение поля самой сущности; `@PostLoad` — пересчитать её `@Transient` поле после загрузки или refresh.",
+                "when_to_apply": "Применяйте для локальной подготовки и проверки состояния сущности; метаданные автора и даты можно поручить Spring Data JPA Auditing.",
+                "edge_cases": "Спецификация не рекомендует вызовы `EntityManager`/запросов и изменение отношений из callback в переносимом коде. `@PrePersist` ещё не видит `IDENTITY` ID. Для действий после commit публикуйте событие из сервиса и используйте `@TransactionalEventListener`; для гарантированной доставки нужен outbox.",
+                "related": "[[spring-data-jpa-interview#Q18]] Auditing; [[spring-data-jpa-interview#Q19]] состояния сущности; [[spring-data-jpa-interview#Q39]] bulk-операции без callbacks."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Callback-методы можно объявлять только в самой сущности; вынести их в отдельный listener-класс нельзя.",
+              "text": "Callback можно объявить в сущности или через `@EntityListeners`; `@PostPersist` гарантирует commit до вызова метода и подтверждает успешную транзакцию.",
               "correct": false,
               "sections": {
-                "what_actually": "Логику можно вынести в отдельный класс и подключить через `@EntityListeners(OrderAuditListener.class)` — это рекомендуется для сложных случаев.",
-                "source_of_confusion": "Чаще показывают callback прямо в сущности, и внешний listener остаётся незамеченным.",
-                "if_it_were_true": "Тогда `@EntityListeners` была бы бесполезна, но именно она подключает внешний listener.",
-                "how_it_should_be": "Callback-логику размещают и в сущности, и во внешнем listener-классе."
+                "what_actually": "`@PostPersist` выполняется после INSERT, но транзакция ещё может завершиться rollback; callback не служит подтверждением commit.",
+                "source_of_confusion": "Префикс `Post` означает после операции вставки, и его ошибочно читают как после всей транзакции.",
+                "if_it_were_true": "Отправленное из callback внешнее сообщение означало бы успешно сохранённую запись, но последующий rollback разрушает эту связь.",
+                "how_it_should_be": "Для действия после commit публикуйте событие из сервиса и обрабатывайте его в фазе `AFTER_COMMIT`; для надёжной доставки применяйте outbox."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`@PostLoad` срабатывает перед загрузкой сущности из БД, позволяя подменить запрос.",
+              "text": "Callback можно объявить в сущности или через `@EntityListeners`; `@PrePersist` всегда видит сгенерированный `IDENTITY` ID до вставки записи.",
               "correct": false,
               "sections": {
-                "what_actually": "`@PostLoad` вызывается ПОСЛЕ загрузки сущности из БД; подменить или перехватить сам SQL-запрос он не может.",
-                "source_of_confusion": "Префикс `Post` в спешке читают как «до загрузки».",
-                "if_it_were_true": "Тогда можно было бы влиять на сам SELECT, но callback выполняется уже над загруженным объектом.",
-                "how_it_should_be": "`@PostLoad` — это пост-обработка уже загруженной сущности."
+                "what_actually": "По Jakarta Persistence 3.2 идентификатор стратегии `IDENTITY` ещё недоступен в `@PrePersist`; в `@PostPersist` сгенерированный ID уже доступен.",
+                "source_of_confusion": "Для стратегий `SEQUENCE`, `TABLE` и `UUID` ID может быть известен в `@PrePersist`, и это обобщают на `IDENTITY`.",
+                "if_it_were_true": "Код `@PrePersist` мог бы использовать DB-generated IDENTITY ID до выполнения INSERT, что противоречит порядку генерации.",
+                "how_it_should_be": "Если нужен сгенерированный `IDENTITY` ID, используйте точку после INSERT и учитывайте, что commit ещё не подтверждён."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "В callback-методах вроде `@PrePersist` можно безопасно вызывать `EntityManager` для загрузки и сохранения других сущностей.",
+              "text": "Callback можно объявить в сущности или через `@EntityListeners`; внутри него переносимо выполнять запросы `EntityManager` и менять связи других сущностей.",
               "correct": false,
               "sections": {
-                "what_actually": "Вызов `EntityManager` внутри lifecycle-callback запрещён и ведёт к непредсказуемому поведению; для этого используют `@TransactionalEventListener`.",
-                "source_of_confusion": "Метод выполняется в контексте транзакции, и кажется, что `EntityManager` доступен как обычно.",
-                "if_it_were_true": "Тогда из `@PrePersist` можно было бы инициировать новые запросы, но это явно не рекомендовано спецификацией.",
-                "how_it_should_be": "В callback меняют только саму сущность; внешние операции — через Spring Events."
+                "what_actually": "Для переносимого кода спецификация не рекомендует запросы `EntityManager`, доступ к другим сущностям и изменение отношений в том же persistence context из callback.",
+                "source_of_confusion": "Callback может выполняться в контексте транзакции, поэтому кажется обычным сервисным методом.",
+                "if_it_were_true": "Из listener можно было бы строить переносимую цепочку новых JPA-операций при flush, но порядок и последствия спецификация не обещает.",
+                "how_it_should_be": "Держите callback локальным к собственным полям сущности; внешние операции организуйте в сервисном слое с явной транзакционной политикой."
               }
             }
           ]

@@ -1159,11 +1159,11 @@ public void entityLifecycleDemo() {
 
 ## Q20. Что такое `@EntityListeners` и callback-методы жизненного цикла?
 
-`JPA` даёт хуки на события жизненного цикла сущности — момент перед/после `INSERT`, `UPDATE`, `DELETE` и загрузки из БД. Это места, куда можно вшить логику, которая должна срабатывать автоматически при изменении сущности.
+JPA вызывает callback-методы при операциях с сущностью: `persist`, `remove`, фактическом SQL `UPDATE`, загрузке или `refresh`. Эти callbacks привязаны к жизненному циклу управляемой сущности, а не ко всем SQL-запросам (см. Q39).
 
 Два способа объявить callback'и:
-- **Прямо в сущности** — методы с `@PrePersist`, `@PreUpdate` и т.д. Удобно для простой логики над собственными полями (проставить дату, дефолтный статус).
-- **В отдельном listener-классе** через `@EntityListeners` — чище для сложной логики (логирование, отправка событий), не засоряет сущность.
+- **Прямо в сущности** — методы без аргументов с `@PrePersist`, `@PreUpdate` и т.д.; подходят для простой подготовки собственных полей.
+- **В отдельном listener-классе** через `@EntityListeners` — метод получает экземпляр сущности аргументом. Это удобно для общей локальной логики нескольких сущностей; внешние действия требуют отдельного решения по транзакции.
 
 ```java
 // Callback-аннотации прямо на сущности
@@ -1203,44 +1203,39 @@ public class Order {
 ```
 
 ```java
-// Вынос логики в отдельный listener-класс (чище для сложной логики)
-public class OrderAuditListener {
+// Альтернатива: callback в отдельном listener-классе
+public class OrderDisplayListener {
 
-    @PostPersist
-    public void afterCreate(Order order) {
-        // Логирование, отправка события
-        log.info("Order created: {}", order.getId());
-    }
-
-    @PostUpdate
-    public void afterUpdate(Order order) {
-        log.info("Order updated: {} -> status {}", order.getId(), order.getStatus());
-    }
-
-    @PostRemove
-    public void afterRemove(Order order) {
-        log.info("Order removed: {}", order.getId());
+    @PostLoad
+    public void afterLoad(Order order) {
+        order.setDisplayLabel("Order #" + order.getId());
     }
 }
 
 @Entity
-@EntityListeners(OrderAuditListener.class)
+@EntityListeners(OrderDisplayListener.class)
 public class Order {
-    // ...
+    @Id
+    private Long id;
+
+    @Transient
+    private String displayLabel;
+
+    public Long getId() { return id; }
+    public void setDisplayLabel(String label) { this.displayLabel = label; }
 }
 ```
 
 | Callback | Когда срабатывает |
 |----------|-------------------|
-| `@PrePersist` | Перед `INSERT` |
-| `@PostPersist` | После `INSERT` |
-| `@PreUpdate` | Перед `UPDATE` |
-| `@PostUpdate` | После `UPDATE` |
-| `@PreRemove` | Перед `DELETE` |
-| `@PostRemove` | После `DELETE` |
-| `@PostLoad` | После загрузки из БД |
+| `@PrePersist` | При `persist` до вставки; ID стратегии `IDENTITY` здесь ещё недоступен |
+| `@PostPersist` | После SQL `INSERT`, но не обязательно после commit |
+| `@PreUpdate` / `@PostUpdate` | До / после фактического SQL `UPDATE`; один `save()` без изменений его не обещает |
+| `@PreRemove` | При вызове `remove`, до SQL `DELETE` |
+| `@PostRemove` | После SQL `DELETE`, но не обязательно после commit |
+| `@PostLoad` | После загрузки или `refresh` сущности |
 
-**Подводный камень:** внутри callback-методов нельзя обращаться к `EntityManager` (загружать другие сущности, выполнять запросы) — вы вмешиваетесь в идущий flush, и поведение становится непредсказуемым (вплоть до исключений и зацикливания). Если нужна тяжёлая бизнес-логика, привязанная к изменению сущности, выносите её в `Spring Events` с `@TransactionalEventListener` — он сработает уже после коммита, вне опасной зоны flush.
+**Границы:** спецификация допускает изменение собственных нереляционных полей и исключение из callback (runtime exception пометит присоединённую транзакцию на rollback). Для переносимого кода она **не рекомендует** из callback вызывать `EntityManager`/запросы, трогать другие сущности или менять отношения в том же контексте. `@PostPersist`/`@PostRemove` не подтверждают commit: отправка внешнего сообщения в них может пережить последующий rollback. Событие можно публиковать из сервисного слоя и обрабатывать через `@TransactionalEventListener` (по умолчанию `AFTER_COMMIT`); для надёжной доставки нужен журнал публикаций, например transactional outbox или Spring Modulith Event Publication Registry. [Jakarta Persistence 3.2, callbacks](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2); [Spring Framework, transaction-bound events](https://docs.spring.io/spring-framework/reference/data-access/transaction/event.html); [Spring Modulith, event publication registry](https://docs.spring.io/spring-modulith/reference/events.html).
 
 ## Q21. Что такое `FlushMode` и когда его менять?
 
