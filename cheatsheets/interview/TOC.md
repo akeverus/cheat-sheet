@@ -434,6 +434,7 @@ updated: "2026-10-05"
 - [Вопросы на собеседовании: Платформа метрик и алертов](system-design/design-metrics-platform-interview.md) — `4` вопроса
 - [Вопросы на собеседовании: Агрегация рекламных событий](system-design/design-event-aggregation-interview.md) — `4` вопроса
 - [Вопросы на собеседовании: Распределённый почтовый сервис](system-design/design-email-service-interview.md) — `4` вопроса
+- [Вопросы на собеседовании: Цифровой кошелёк](system-design/design-digital-wallet-interview.md) — `4` вопроса
 - [Вопросы на собеседовании: `Design URL Shortener`](system-design/design-url-shortener-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Design Pastebin`](system-design/design-pastebin-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Design Rate Limiter`](system-design/design-rate-limiter-interview.md) — `30` вопросов

@@ -1,0 +1,31 @@
+{
+  "topic_slug": "design-digital-wallet-interview",
+  "round": 9,
+  "status": "TODO",
+  "version_sensitive": true,
+  "product_version": "TigerBeetle current documentation and PostgreSQL 18, checked 2026-10-07",
+  "checked_date": "2026-10-07",
+  "sources": [
+    "https://docs.tigerbeetle.com/reference/transfer/",
+    "https://docs.tigerbeetle.com/coding/reliable-transaction-submission/",
+    "https://docs.tigerbeetle.com/coding/two-phase-transfers/",
+    "https://docs.tigerbeetle.com/coding/recipes/correcting-transfers/",
+    "https://www.postgresql.org/docs/18/tutorial-transactions.html",
+    "https://www.postgresql.org/docs/18/explicit-locking.html",
+    "https://www.postgresql.org/docs/18/mvcc-serialization-failure-handling.html"
+  ],
+  "version_sensitive_claims": [
+    "Q1: TigerBeetle Transfer atomically debits one account and credits one account on the same ledger; PostgreSQL FOR UPDATE locks rows until transaction end and serializable failure requires retrying the complete transaction.",
+    "Q2: TigerBeetle Transfer ID is an idempotency key; a retry of a created transfer returns exists and a new transfer returns created.",
+    "Q3: TigerBeetle pending transfer reserves pending debit/credit amounts, can be posted, voided or expire, and resolves at most once; partial post releases the remaining reservation.",
+    "Q4: TigerBeetle transfers are immutable; correction is a new transfer rather than update/delete."
+  ],
+  "staleness_risks": [
+    "Wallet overdraft, availability, retry outcomes and reconciliation policies are product choices; do not treat them as universal TigerBeetle defaults.",
+    "The TigerBeetle two-phase transfer term is unrelated to a 2PC protocol with an external PSP.",
+    "Author semantic MCQ review and automatic gates only; independent blind review remains TODO."
+  ],
+  "notes": [
+    "Standalone case covers internal same-currency transfers and reserve lifecycle absent from Payment System Q5/Q8/Q22."
+  ]
+}
