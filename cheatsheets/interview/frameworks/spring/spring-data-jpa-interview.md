@@ -312,26 +312,26 @@ public Optional<User> findByEmail(String email) {
 
 ## Q5. (!) Что такое `Query Methods` и какие ключевые слова поддерживаются?
 
-`Query Methods` — методы репозитория, у которых **само имя метода и есть запрос**: `Spring Data` разбирает имя по словарю ключевых слов и генерирует `JPQL`. Это основной механизм для простых и средних по сложности выборок — писать SQL руками не нужно.
+Здесь речь о **derived query methods**: `Spring Data JPA` разбирает имя метода и строит запрос по свойствам сущности. Query method можно также задать явно через `@Query` или named query; у него имя уже не обязано описывать условия. Вывод запроса из имени удобен для коротких выборок, проверок существования и подсчёта.
 
 Работает так: парсер `PartTree` делит имя на префикс (`findBy`, `countBy`, `existsBy`, `deleteBy`) и набор условий, соединённых `And`/`Or`. Каждое условие — это поле сущности плюс опциональный оператор (`Between`, `GreaterThan`, `Like` и т.д.).
 
 **Поддерживаемые ключевые слова:**
 
-| Ключевое слово | Пример | JPQL эквивалент |
+| Ключевое слово | Пример | Смысл |
 |----------------|--------|-----------------|
-| `findBy` | `findByEmail(String)` | `WHERE email = ?1` |
-| `countBy` | `countByStatus(Status)` | `SELECT COUNT(*) WHERE status = ?1` |
-| `existsBy` | `existsByEmail(String)` | `SELECT CASE WHEN COUNT > 0` |
-| `deleteBy` | `deleteByStatus(Status)` | `DELETE WHERE status = ?1` |
+| `findBy` | `findByEmail(String)` | Поиск по свойству сущности |
+| `countBy` | `countByStatus(Status)` | Подсчёт совпадений |
+| `existsBy` | `existsByEmail(String)` | Проверка существования |
+| `deleteBy` | `deleteByStatus(Status)` | Поиск и удаление найденных сущностей по одной, с lifecycle callbacks; не bulk `DELETE` |
 | `And` / `Or` | `findByFirstNameAndLastName` | `WHERE ... AND ...` |
 | `Between` | `findByAgeBetween(int, int)` | `WHERE age BETWEEN ?1 AND ?2` |
 | `LessThan` / `GreaterThan` | `findByAgeGreaterThan(int)` | `WHERE age > ?1` |
 | `Like` / `Containing` | `findByNameContaining(String)` | `WHERE name LIKE %?1%` |
 | `In` | `findByStatusIn(Collection)` | `WHERE status IN (?1)` |
-| `IsNull` / `IsNotNull` | `findByDeletedAtIsNull()` | `WHERE deleted_at IS NULL` |
+| `IsNull` / `IsNotNull` | `findByDeletedAtIsNull()` | Проверка Java-свойства `deletedAt` на `NULL` |
 | `OrderBy` | `findByStatusOrderByCreatedAtDesc` | `ORDER BY created_at DESC` |
-| `Top` / `First` | `findTop5ByStatus(Status)` | `LIMIT 5` |
+| `Top` / `First` | `findTop5ByStatus(Status)` | Ограничение числа результатов; конкретный SQL зависит от диалекта |
 | `Distinct` | `findDistinctByLastName(String)` | `SELECT DISTINCT ...` |
 
 ```java
@@ -356,17 +356,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Поиск по вложенному полю (через _ или camelCase)
     List<User> findByAddress_City(String city);
 
-    // Возврат Stream (обязательно в @Transactional)
-    @Transactional(readOnly = true)
+    // Поток нужно потребить и закрыть в рамках внешней транзакции
     Stream<User> findByStatus(UserStatus status);
 }
 ```
+
+`Stream<T>` может удерживать ресурсы JDBC: потребляйте и закрывайте его через `try`-with-resources **внутри транзакции вызывающего сервиса**. Транзакция только на методе репозитория может завершиться до чтения возвращённого потока. Сам `Stream` не гарантирует, что провайдер и драйвер читают строки порциями. [Spring Data JPA query methods](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html); [return types](https://docs.spring.io/spring-data/jpa/reference/repositories/query-return-types-reference.html); [transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html).
 
 **Подводный камень:** имя метода — это контракт, и при росте числа условий оно становится нечитаемым (`findByStatusAndCityAndAgeGreaterThanAndCreatedAtAfter`). Как только имя перестаёт читаться с первого взгляда — переходите на `@Query` (явный JPQL) или `Specifications` (динамическая сборка условий).
 
 ## Q6. (!) Как работает аннотация `@Query`?
 
-`@Query` задаёт `JPQL` или нативный `SQL` прямо на методе репозитория — когда выразительности `Query Methods` уже не хватает (JOIN'ы, агрегации, конструкторские проекции, оконные функции).
+`@Query` задаёт JPQL (в Hibernate также поддерживаются его HQL-расширения) или нативный `SQL` при `nativeQuery = true` прямо на методе репозитория — когда запрос удобнее выразить явно, чем выводить из имени. Для нативного SQL есть также `@NativeQuery`.
 
 Запрос привязывается к методу аннотацией, параметры подставляются по `@Param` (именованные) или по позиции (`?1`, `?2`). Именованные предпочтительнее: при рефакторинге сигнатуры позиционные легко перепутать местами.
 
@@ -410,9 +411,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
 ## Q7. Как выполнять нативные `SQL`-запросы?
 
-Нативный `SQL` (`@Query(..., nativeQuery = true)`) нужен там, где `JPQL` бессилен — когда требуются специфичные возможности конкретной БД: оконные функции, `CTE`, полнотекстовый поиск, `JSON`-операторы.
+Нативный `SQL` задают через `@Query(..., nativeQuery = true)` или `@NativeQuery`. Он полезен, когда нужны таблицы, колонки, операторы и функции конкретной БД. CTE и оконные функции отсутствуют в стандартном JPQL, но доступны в Hibernate HQL как расширения; выбор между HQL и нативным SQL зависит от провайдера, диалекта и требований к запросу.
 
-Цена — потеря переносимости: такой запрос привязан к диалекту вашей БД. Поэтому правило простое — нативный SQL только когда `JPQL` действительно не справляется, а не «по привычке».
+Цена — зависимость от схемы и диалекта БД. При нативной пагинации Spring Data может вывести `count` для простого SQL; сложный запрос требует подходящего парсера, например JSqlParser, либо явного `countQuery`. Проверяйте полученный count и сортировку на целевой БД. [Spring Data JPA query methods](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html).
 
 ```java
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -423,13 +424,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findCheapProducts(@Param("cat") String category,
                                      @Param("maxPrice") BigDecimal maxPrice);
 
-    // Нативный с пагинацией — Spring подставит LIMIT/OFFSET
+    // Нативный с пагинацией и явным count-запросом
     @Query(value = "SELECT * FROM products WHERE active = true ORDER BY rating DESC",
            countQuery = "SELECT COUNT(*) FROM products WHERE active = true",
            nativeQuery = true)
     Page<Product> findTopRated(Pageable pageable);
 
-    // Оконная функция — невозможно в JPQL
+    // Оконная функция вне стандартного JPQL; у Hibernate есть аналог в HQL
     @Query(value = """
             SELECT p.*, RANK() OVER (PARTITION BY p.category ORDER BY p.rating DESC) as rnk
             FROM products p
