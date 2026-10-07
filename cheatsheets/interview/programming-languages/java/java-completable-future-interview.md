@@ -13,19 +13,20 @@ aliases:
   - "CompletableFuture вопросы"
 prerequisites: []
 next: []
-updated: "2026-04-25"
+updated: "2026-10-07"
 ---
 # Вопросы на собеседовании: CompletableFuture в Java
 
 `CompletableFuture<T>` — реализация `Future` с поддержкой неблокирующих цепочек, комбинирования нескольких асинхронных операций и обработки ошибок. Введён в Java 8. На собеседованиях проверяют разницу между `thenApply`/`thenCompose`/`thenCombine`, обработку исключений и работу с пулом потоков.
 
-Дата последнего обновления: 2026-04-20
+Дата последнего обновления: 2026-10-07
 
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [CompletableFuture JavaDoc](https://docs.oracle.com/en/java/docs/api/java.base/java/util/concurrent/CompletableFuture.html) — полный API
+- [CompletableFuture JavaDoc (Java 25)](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html) — полный API
+- [Future JavaDoc (Java 25)](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html) — контракт отмены задачи
 - [Baeldung: CompletableFuture Guide](https://www.baeldung.com/java-completablefuture) — подробный туториал
 
 ## Содержание
@@ -57,6 +58,7 @@ updated: "2026-04-25"
 **Продвинутые темы**
 - [Q12. Что такое complete() и completeExceptionally()?](#q12-что-такое-complete-и-completeexceptionally)
 - [Q13. Когда НЕ стоит использовать CompletableFuture?](#q13-когда-не-стоит-использовать-completablefuture)
+- [Q14. Что отменяет CompletableFuture.cancel(true) и как остановить исходную работу?](#q14-что-отменяет-completablefuturecanceltrue-и-как-остановить-исходную-работу)
 
 ---
 
@@ -366,16 +368,16 @@ try {
 
 ## Q11. Как задать timeout для CompletableFuture?
 
-Начиная с Java 9 есть два штатных метода: `orTimeout` (упасть с `TimeoutException`, если не успели) и `completeOnTimeout` (подставить дефолтное значение по таймауту). В Java 8 их нет — таймаут эмулируют через отдельный `ScheduledExecutorService` и `applyToEither`: кто из двух Future (рабочий или «будильник») сработает первым, тот и определит исход.
+Начиная с Java 9 есть два штатных метода: `orTimeout` (завершить future с `TimeoutException`, если не успели) и `completeOnTimeout` (подставить значение по таймауту). Оба возвращают **тот же** `CompletableFuture`: если его используют и другие потребители, они тоже увидят завершение по таймауту. В Java 8 этих методов нет; исход можно собрать в отдельном `CompletableFuture` и завершить его из рабочего future либо по таймеру.
 
-Важно понимать, что таймаут здесь — это про **результат**, а не про отмену самой задачи: исходная работа в пуле продолжит выполняться, просто её итог уже никого не интересует.
+Таймаут меняет **результат future**, но сам по себе не прерывает вычисление в пуле; оно может продолжиться, а поздний результат уже не изменит завершённый future. См. Q14 об отдельной отмене работы.
 
 **Java 9+:**
 ```java
 // orTimeout — завершается TimeoutException если не готово вовремя
 CompletableFuture<String> withTimeout = fetchUser(id)
     .orTimeout(3, TimeUnit.SECONDS);
-// Исключение: CompletionException(TimeoutException)
+// join() после таймаута бросит CompletionException с причиной TimeoutException
 
 // completeOnTimeout — возвращает дефолт при таймауте
 CompletableFuture<String> withDefault = fetchUser(id)
@@ -384,17 +386,22 @@ CompletableFuture<String> withDefault = fetchUser(id)
 
 **Java 8 (workaround):**
 ```java
-ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-
 public static <T> CompletableFuture<T> withTimeout(
-        CompletableFuture<T> future, long timeout, TimeUnit unit) {
-    CompletableFuture<T> timeoutFuture = new CompletableFuture<>();
-    scheduler.schedule(
-        () -> timeoutFuture.completeExceptionally(new TimeoutException()),
-        timeout, unit);
-    return future.applyToEither(timeoutFuture, t -> t);
+        CompletableFuture<T> source, ScheduledExecutorService scheduler,
+        long timeout, TimeUnit unit) {
+    CompletableFuture<T> result = new CompletableFuture<>();
+    ScheduledFuture<?> alarm = scheduler.schedule(
+        () -> result.completeExceptionally(new TimeoutException()), timeout, unit);
+    source.whenComplete((value, error) -> {
+        if (error == null) result.complete(value);
+        else result.completeExceptionally(error);
+        alarm.cancel(false);
+    });
+    return result;
 }
 ```
+
+Планировщиком владеет вызывающий код: его нужно завершать при остановке приложения. `applyToEither` здесь не подходит: его действие запускается при **нормальном** завершении одного из этапов, а таймер завершается исключением. См. [Java 8 CompletableFuture](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html).
 
 ---
 
@@ -447,6 +454,30 @@ public CompletableFuture<String> fetchAsync() {
 **Подводный камень:** по умолчанию работа идёт в `ForkJoinPool.commonPool()` — разделяемом на всю JVM пуле с малым числом потоков. При блокирующих IO-задачах заведите отдельный executor: иначе несколько блокировок исчерпают пул, и остальные `CompletableFuture` (и параллельные стримы) встанут в очередь.
 
 ---
+
+## Q14. Что отменяет CompletableFuture.cancel(true) и как остановить исходную работу?
+
+`CompletableFuture.cancel(true)` завершает **сам future** с `CancellationException` и передаёт отмену незавершённым зависимым этапам как ошибочное завершение. Параметр `mayInterruptIfRunning` здесь **не действует**: JavaDoc прямо говорит, что прерывания не используются для управления вычислением. То же различие важно для `orTimeout` из Q11 — завершение future не означает остановку его источника.
+
+Если нужно остановить работу, надо владеть **механизмом запуска**: например, сохранить `Future<?> task` от `ExecutorService.submit` и вызвать `task.cancel(true)`. В таком `Future` флаг разрешает попытку прервать исполняющий поток, но задача должна корректно реагировать на прерывание. Для HTTP/БД нужны timeout и поддерживаемый клиентом механизм отмены; прерывание потока само по себе не гарантирует остановку внешнего вызова. Если операция уже выполнила внешний эффект, отмена локального future его не откатит.
+
+```java
+CompletableFuture<Result> result = new CompletableFuture<>();
+Future<?> task = executor.submit(() -> {
+    try {
+        result.complete(doInterruptibleWork());
+    } catch (Exception error) {
+        result.completeExceptionally(error);
+    }
+});
+
+// При отмене запроса применяем оба действия явно.
+if (result.cancel(false)) {
+    task.cancel(true); // просим executor прервать исходную задачу
+}
+```
+
+Этот пример предполагает, что `doInterruptibleWork()` поддерживает прерывание; для произвольного `supplyAsync` отдельный `Future` задачи обычно недоступен. См. [CompletableFuture.cancel](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html#cancel(boolean)) и [Future.cancel](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html#cancel(boolean)) (Java 25).
 
 ## See also
 
