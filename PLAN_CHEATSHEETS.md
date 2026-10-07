@@ -900,10 +900,25 @@ ID ещё не managed; обязательный `SELECT` перед кажды�
 Независимой blind-приёмки этих блоков и полного содержательного аудита
 файла не было; инвентарь не менялся.
 
+**Контрольная точка 07.10.2026 — Spring Data JPA Q20 B0 · О.**
+По [Jakarta Persistence 3.2, callbacks](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
+уточнены `@PrePersist`/`@PreRemove` при вызове операции,
+`@PostPersist`/`@PostRemove` после SQL без гарантии commit,
+`@PostLoad` после загрузки/refresh и недоступность `IDENTITY` ID
+в `@PrePersist`. Категоричный запрет на `EntityManager` заменён точной
+рекомендацией спецификации для переносимого кода. Пример listener
+больше не публикует внешнее событие до commit. Для действий после
+транзакции разграничены [`@TransactionalEventListener`](https://docs.spring.io/spring-framework/reference/data-access/transaction/event.html)
+и [журнал публикаций Spring Modulith](https://docs.spring.io/spring-modulith/reference/events.html).
+MCQ Q20 B0 и sidecar обновлены, A/B/C/D с sections авторски сверены;
+локальный pre-check без hard/warnings, structure 43 Q/44 блока PASS.
+У прежнего файла остаются 21 hard-сигнал и 25 блоков с warnings,
+общий parity FAIL; независимой blind-приёмки нет.
+
 **Точная точка авторского продолжения:** `frameworks/spring/spring-data-jpa-interview.md`
-Q20 B0 с парным JSON — сверить JPA lifecycle callbacks,
-`@EntityListeners`, ограничения callback-кода и пересечение с Q18/Q39;
-затем Q21 B0. Перед правкой сравнить заголовки и соседние ответы.
+Q21 B0 с парным JSON — сверить flush modes, фактическое время SQL,
+автоматический flush перед query и `COMMIT`/`AUTO`; затем Q22 B0.
+Сначала сравнить Q21 с соседними Q19/Q20 и Hibernate-шпаргалкой.
 Не объявлять весь файл прошедшим проверку.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
@@ -928,7 +943,7 @@ Q20 B0 с парным JSON — сверить JPA lifecycle callbacks,
    Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13/Q14, WebAuthn Q24/Q46, Spring Security Q44,
    Metrics & Tracing Q40, Spring Testing Q9/Q10, Uber Q6/Q7,
    Google Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1,
-   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q19 B0/Q39 B0,
+   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q20 B0/Q39 B0,
    Database Transactions Q15/Q22/Q23 B0
    и RabbitMQ Streams Q40–Q42 ждут
    независимой MCQ-приёмки.
@@ -937,7 +952,7 @@ Q20 B0 с парным JSON — сверить JPA lifecycle callbacks,
    PostgreSQL 19 перепроверять после финальных релизов.
 3. Отдельной задачей пройти независимую blind-приёмку новых MCQ и старый
    parity/pre-check backlog Hibernate, Spring Data JPA (после Q3/Q4,
-   Q5–Q19 и Q39 ещё 22 hard-сигнала), Java IO/NIO, Jackson,
+   Q5–Q20 и Q39 ещё 21 hard-сигнал), Java IO/NIO, Jackson,
    URL Shortener, RabbitMQ, Kafka, сравнения брокеров и event-driven;
    положительный валидатор не означает `FINAL`.
 4. Продолжать выборку официальных публикаций за скользящие шесть месяцев;

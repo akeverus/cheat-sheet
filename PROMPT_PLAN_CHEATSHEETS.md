@@ -235,7 +235,7 @@ Reservation System Q1–Q4, Notification System Q1–Q4, Digital Wallet Q1–Q4,
 Database Transactions Q43, Java CompletableFuture Q11/Q14,
 Database Transactions Q15/Q22/Q23, Java CompletableFuture Q2/Q3/Q4/Q6/Q8/Q10,
 Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13,
-Spring Data JPA Q3 B0/Q4 B1/Q5–Q19 B0/Q39 B0,
+Spring Data JPA Q3 B0/Q4 B1/Q5–Q20 B0/Q39 B0,
 Kubernetes Q22/Q39/Q46/Q47, RabbitMQ Streams Q40–Q42
 и Spring Data JDBC Q17 тоже ждут
 содержательной приёмки.
@@ -275,9 +275,9 @@ Q17 уточняет `Specification`/Criteria и фильтры: в Spring Data 
 пример начат с базового `isActive()`, а `%`/`_` в пользовательском
 `LIKE` экранируются через `EscapeCharacter`.
 Парные MCQ и fact-freshness sidecar обновлены.
-Structure PASS (43 Q/44 блока), локальный pre-check Q3 B0/Q4 B1/Q5–Q19 B0/Q39 B0 PASS;
-полный parity FAIL, в старом JSON остаётся 22 hard-сигнала pre-check
-и 26 блоков с предупреждениями.
+Structure PASS (43 Q/44 блока), локальный pre-check Q3 B0/Q4 B1/Q5–Q20 B0/Q39 B0 PASS;
+полный parity FAIL, в старом JSON остаётся 21 hard-сигнал pre-check
+и 25 блоков с предупреждениями.
 Независимой приёмки и полного содержательного обзора темы не было.
 
 07.10 Spring Data JPA Q18/Q19/Q39 B0: Q18 и Q39 разделены на настройку
@@ -292,9 +292,19 @@ update. Q19 исправляет ложные выводы об ID, `merge(detac
 fact-freshness sidecar обновлены. У трёх блоков нет локальных hard/warnings,
 но независимой blind-приёмки нет.
 
-Следующий авторский пакет: Spring Data JPA Q20 B0 и парный JSON.
-Сверить JPA lifecycle callbacks, `@EntityListeners`, ограничения кода
-в callback и пересечение с Q18/Q39; затем Q21 B0.
+07.10 Spring Data JPA Q20 B0: по Jakarta Persistence 3.2 исправлены
+время callbacks, недоступность `IDENTITY` ID в `@PrePersist` и
+категоричный «запрет» `EntityManager`: спецификация не рекомендует
+такие вызовы для переносимого кода. `@PostPersist` не подтверждает
+commit. Пример listener больше не посылает внешнее событие до commit;
+`@TransactionalEventListener` и надёжный журнал публикаций разведены
+по Spring Framework и Spring Modulith. MCQ и sidecar синхронизированы,
+Q20 локально без hard/warnings; независимой blind-приёмки нет.
+
+Следующий авторский пакет: Spring Data JPA Q21 B0 и парный JSON.
+Сверить flush modes, фактическое время SQL, автоматический flush перед
+query и `COMMIT`/`AUTO`; затем Q22 B0. Проверить соседние Q19/Q20 и
+Hibernate-шпаргалку до правки.
 Не считать весь файл проверенным после точечной правки.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
