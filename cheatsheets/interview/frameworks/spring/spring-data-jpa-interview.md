@@ -1767,55 +1767,37 @@ public class Category {
 
 ## Q30. Что такое `Soft Delete` и как реализовать?
 
-**Soft Delete** (мягкое удаление) — запись не удаляется из таблицы физически, а помечается флагом (`deleted_at`, `is_deleted`) и просто перестаёт попадать в обычные выборки. Данные остаются в БД для аудита, восстановления и аналитики.
+**Soft delete** (мягкое удаление) оставляет строку в таблице и помечает её удалённой. Обычные чтения не показывают такую строку; данные можно сохранить для восстановления или аудита. Нужно решить две разные задачи: заменить физический `DELETE` на изменение индикатора и исключить помеченные строки из чтения.
 
-Реализация в Hibernate 6.4+: аннотация `@SQLRestriction("deleted_at IS NULL")` на сущности автоматически дописывает `WHERE deleted_at IS NULL` ко всем запросам — `findAll()` и derived-методы «не видят» удалённые записи без единой правки в коде репозитория. Само «удаление» — это `UPDATE`, проставляющий `deleted_at`.
+В Hibernate 6.4+ для сущности есть `@SoftDelete`: при удалении через `EntityManager.remove()` (и обычные методы `JpaRepository.delete…`) Hibernate обновляет индикатор и скрывает строку от обычной загрузки. Это расширение Hibernate, а не стандарт Jakarta Persistence. В Hibernate 7.4 стратегия `TIMESTAMP` записывает время удаления; у неё `NULL` означает активную строку. Для Hibernate 6.4 без проверки нужной версии и схемы можно использовать булеву стратегию `DELETED` (по умолчанию).
 
 ```java
 @Entity
 @Table(name = "users")
-@SQLRestriction("deleted_at IS NULL") // Hibernate 6.4+ (заменяет @Where)
+@SoftDelete(strategy = SoftDeleteType.TIMESTAMP, columnName = "deleted_at")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String email;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    public void softDelete() {
-        this.deletedAt = LocalDateTime.now();
-    }
-
-    public boolean isDeleted() {
-        return deletedAt != null;
-    }
 }
 
-public interface UserRepository extends JpaRepository<User, Long> {
-
-    // @SQLRestriction автоматически добавляет WHERE deleted_at IS NULL
-    // findAll() → SELECT * FROM users WHERE deleted_at IS NULL
-
-    // Если нужно найти удалённых — нативный запрос без фильтра
-    @Query(value = "SELECT * FROM users WHERE deleted_at IS NOT NULL", nativeQuery = true)
-    List<User> findDeleted();
-
-    // Soft delete через @Modifying
-    @Modifying
-    @Query("UPDATE User u SET u.deletedAt = CURRENT_TIMESTAMP WHERE u.id = :id")
-    void softDelete(@Param("id") Long id);
-}
+public interface UserRepository extends JpaRepository<User, Long> {}
 ```
 
-**Подводный камень с уникальными индексами:** запись остаётся в таблице, поэтому обычный `UNIQUE(email)` не даст завести нового пользователя с тем же email, что у «удалённого». Решение — частичный (условный) уникальный индекс, который действует только на живые записи:
+При вызове `userRepository.deleteById(id)` используется транзакционный CRUD-метод; `findAll()` возвращает активные строки. Индикатор `deleted_at` в примере принадлежит маппингу `@SoftDelete`: отдельно объявлять его как обычное поле сущности не требуется. Для чтения удалённых строк в административном сценарии используйте отдельный явно контролируемый SQL-запрос с DTO/скалярами: нативный SQL не получает автоматический предикат Hibernate, а возврат той же ORM-сущности может столкнуться с её ограничением мягкого удаления. [Hibernate ORM 7.4, soft delete](https://docs.hibernate.org/orm/7.4/userguide/html_single/#soft-delete); [Spring Data JPA, transactions](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html).
+
+`@SQLRestriction("deleted_at IS NULL")` (Hibernate 6.3+) — **статическое ограничение для SQL, генерируемого Hibernate**, а не реализация операции удаления. Оно не переводит `remove()` в `UPDATE`; для ручной схемы нужен отдельный механизм записи индикатора. Ограничение нельзя выключить или параметризовать. JPQL bulk `UPDATE` через `@Modifying @Query` выполняется отдельно от состояния уже загруженных сущностей; объявленному методу нужна транзакция в сервисе или `@Transactional` на методе. После bulk-операции учитывайте устаревшие объекты в persistence context: `clearAutomatically` помогает, но может отбросить несброшенные изменения. Прямой SQL и bulk DML проверяйте отдельно на соблюдение правил мягкого удаления; они не заменяют обычный `remove()` с его жизненным циклом. См. [Q8](#q8-что-такое-modifying-и-когда-его-использовать), [Q33](#q33-что-такое-derived-delete-и-deleteby) и [Q39](#q39--где-spring-data-jpa-auditing-не-срабатывает-и-как-учитывать-фоновые-операции). [Hibernate `@SQLRestriction`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/annotations/SQLRestriction.html); [Spring Data JPA, modifying queries](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html).
+
+**Уникальность активных записей:** обычный `UNIQUE(email)` учитывает и помеченные строки. В PostgreSQL частичный уникальный индекс может ограничить уникальность только активными строками:
 
 ```sql
 -- PostgreSQL: уникальность только для неудалённых записей
 CREATE UNIQUE INDEX idx_users_email_active ON users(email) WHERE deleted_at IS NULL;
 ```
+
+Такой индекс зависит от возможностей СУБД и не делает данные физически удалёнными. [PostgreSQL, partial indexes](https://www.postgresql.org/docs/current/indexes-partial.html).
 
 ## Q31. Что такое `Hibernate Filters`?
 
