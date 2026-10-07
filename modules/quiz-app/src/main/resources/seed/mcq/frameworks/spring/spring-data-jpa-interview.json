@@ -1081,55 +1081,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как работает `Auditing` в `Spring Data JPA`?",
+          "question_text": "Как включить JPA Auditing и когда нужен `AuditorAware`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`Auditing` фиксирует, кто и когда создал или изменил запись. Поля `@CreatedDate` и `@LastModifiedDate` нужно заполнять вручную в сервисе перед каждым `save()`, тогда как `@CreatedBy`/`@LastModifiedBy` `AuditingEntityListener` подставляет автоматически из `AuditorAware`.",
+              "text": "`@EnableJpaAuditing` активирует JPA listener; для заполнения только дат обязателен `AuditorAware`, даже если поля автора отсутствуют.",
               "correct": false,
               "sections": {
-                "what_actually": "Их заполняет `AuditingEntityListener` автоматически на событиях `@PrePersist`/`@PreUpdate`; ручное проставление не требуется.",
-                "source_of_confusion": "Раньше время изменения часто ставили руками, и привычка сохраняется.",
-                "if_it_were_true": "Тогда смысл аудита терялся бы, но он именно убирает ручное проставление.",
-                "how_it_should_be": "Listener сам ставит время/автора при `save()`/`update()`."
+                "what_actually": "`AuditorAware` нужен для `@CreatedBy`/`@LastModifiedBy`; одни даты Spring Data JPA заполняет без него.",
+                "source_of_confusion": "В полном примере даты и автор настраиваются вместе, поэтому бин кажется обязательным для всех полей.",
+                "if_it_were_true": "Проект с одними `@CreatedDate`/`@LastModifiedDate` не мог бы включить auditing без источника пользователя.",
+                "how_it_should_be": "Включите JPA auditing и listener; `AuditorAware` добавьте только при аудите автора."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Auditing` заполняет поля «кто и когда создал/изменил запись», и для этого достаточно разметить `@CreatedDate`, `@LastModifiedDate`, `@CreatedBy`, `@LastModifiedBy` в `@MappedSuperclass` с `@EntityListeners(AuditingEntityListener.class)`; аннотация `@EnableJpaAuditing` при этом необязательна и нужна только для кастомного `AuditorAware`.",
+              "text": "`AuditingEntityListener` обрабатывает JPA callbacks; имя для `@CreatedBy` автоматически берётся из Spring Security без участия `AuditorAware`.",
               "correct": false,
               "sections": {
-                "what_actually": "Без `@EnableJpaAuditing` инфраструктура аудита не активируется и аннотации полей не срабатывают.",
-                "source_of_confusion": "Аннотации на полях выглядят самодостаточными.",
-                "if_it_were_true": "Тогда поля заполнялись бы без явного включения, но без `@EnableJpaAuditing` они останутся `null`.",
-                "how_it_should_be": "Нужно включить `@EnableJpaAuditing` и подключить `AuditingEntityListener`."
+                "what_actually": "Listener спрашивает `AuditorAware<T>` о текущем авторе; Spring Security используется лишь если реализация `AuditorAware` обращается к нему.",
+                "source_of_confusion": "Примеры часто используют `SecurityContextHolder`, и это принимают за встроенный источник автора.",
+                "if_it_were_true": "`@CreatedBy` работал бы без бина `AuditorAware` и автоматически выбирал бы Spring Security, чего контракт не обещает.",
+                "how_it_should_be": "Реализуйте `AuditorAware<T>` с типом поля автора и явной политикой для отсутствующего principal."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Auditing` автоматически заполняет поля «кто и когда создал/изменил запись». Включается через `@EnableJpaAuditing(auditorAwareRef=\"auditorProvider\")`; базовый `@MappedSuperclass` с `@EntityListeners(AuditingEntityListener.class)` содержит `@CreatedDate`, `@LastModifiedDate`, `@CreatedBy`, `@LastModifiedBy`. При `save()` Spring сам проставляет время и имя пользователя из `AuditorAware`.",
+              "text": "`@EnableJpaAuditing` включает аудит; listener подключают к сущности, даты не требуют `AuditorAware`, а поля автора требуют.",
               "correct": true,
               "sections": {
-                "explanation": "`AuditorAware` отдаёт текущего пользователя (например, из `SecurityContextHolder`). При создании заполняются все четыре поля; при обновлении меняются только `@LastModifiedDate` и `@LastModifiedBy`.",
-                "example": "`@Bean AuditorAware<String> auditorProvider() { return () -> Optional.ofNullable(SecurityContextHolder.getContext()).map(c->c.getAuthentication()).map(Authentication::getName); }`",
-                "when_to_apply": "Берут, когда нужно прозрачно фиксировать метаданные изменений во всех сущностях без ручного проставления в коде.",
-                "edge_cases": "Поля `@CreatedDate`/`@CreatedBy` обычно делают `updatable=false`, иначе они перезапишутся при апдейте; `@CreatedBy` пуст, если в контексте нет аутентификации (фоновые задачи).",
-                "related": "[[spring-data-jpa-interview#Q20]] @EntityListeners; [[spring-data-jpa-interview#Q39]] @CreatedDate и @EnableJpaAuditing; [[spring-data-jpa-interview#Q19]] состояния сущности."
+                "explanation": "`@EnableJpaAuditing` регистрирует инфраструктуру, `AuditingEntityListener` получает JPA события сущности. Даты не требуют текущего пользователя; `@CreatedBy`/`@LastModifiedBy` используют `AuditorAware<T>` соответствующего типа.",
+                "example": "`@CreatedDate Instant createdAt` работает без `AuditorAware`; для `@CreatedBy String createdBy` объявляют `AuditorAware<String>` и выбирают его через `auditorAwareRef`, если нужно.",
+                "when_to_apply": "Используйте для метаданных текущей строки о создании и изменении сущности без ручного заполнения в каждом сервисе.",
+                "edge_cases": "По умолчанию `modifyOnCreate=true`, поэтому last-modified поля ставятся и при создании; анонимный Authentication нельзя считать реальным пользователем по одному `isAuthenticated()`.",
+                "related": "[[spring-data-jpa-interview#Q39]] границы аудита; [[spring-data-jpa-interview#Q20]] JPA listeners."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Auditing` через `@EnableJpaAuditing` и `AuditingEntityListener` заполняет `@CreatedDate`, `@LastModifiedDate`, `@CreatedBy`, `@LastModifiedBy` из `AuditorAware`; при `save()` на обновление все четыре поля, включая `@CreatedDate` и `@CreatedBy`, перезаписываются текущими значениями.",
+              "text": "`@EnableJpaAuditing` включает аудит; при создании `@CreatedDate` заполнится, но `@LastModifiedDate` останется пустым при настройке по умолчанию.",
               "correct": false,
               "sections": {
-                "what_actually": "При обновлении меняются только `@LastModifiedDate`/`@LastModifiedBy`; поля создания обычно помечают `updatable=false` и не трогают.",
-                "source_of_confusion": "Кажется, что все аудит-поля обновляются синхронно.",
-                "if_it_were_true": "Тогда терялась бы дата первоначального создания, но её специально сохраняют неизменной.",
-                "how_it_should_be": "Поля создания фиксируются один раз; апдейт меняет только last-modified."
+                "what_actually": "`modifyOnCreate` в `@EnableJpaAuditing` по умолчанию `true`: last-modified поля также заполняются при создании.",
+                "source_of_confusion": "Название LastModified кажется применимым только после первого отдельного обновления.",
+                "if_it_were_true": "На новой записи `updatedAt` оставался бы null при стандартной настройке, но `modifyOnCreate=true` меняет и его.",
+                "how_it_should_be": "Различайте настройку по умолчанию и явное `modifyOnCreate=false`."
               }
             }
           ]
@@ -1146,50 +1146,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "У сущности четыре состояния: `New`, `Managed`, `Detached`, `Removed`. Переходы: `persist`→Managed, `detach`/`clear`/`close`→Detached, `remove`→Removed. Вызов `merge(detached)` переводит в `Managed` сам переданный экземпляр, и дальше работают с тем же объектом.",
+              "text": "Новая сущность становится managed после `persist`. Переданный в `merge` detached-объект тоже становится managed, поэтому возвращённое значение можно игнорировать.",
               "correct": false,
               "sections": {
-                "what_actually": "`merge` возвращает новый managed-экземпляр, а исходный остаётся detached; продолжать работу нужно с возвращённым объектом.",
+                "what_actually": "`merge(detached)` возвращает managed-экземпляр; переданный объект остаётся detached. Результат может уже существовать в контексте.",
                 "source_of_confusion": "Кажется, что `merge` «оживляет» именно переданный объект.",
-                "if_it_were_true": "Тогда `User merged = em.merge(user)` и `user` были бы одним объектом, но это разные экземпляры.",
+                "if_it_were_true": "Изменения исходного detached-объекта после `merge` отслеживались бы JPA; на деле отслеживается возвращённый экземпляр.",
                 "how_it_should_be": "Работают с результатом `merge`, а не с переданным аргументом."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Четыре состояния: `New`/Transient (создан через `new`, не связан с контекстом), `Managed`/Persistent (привязан к `EntityManager`, отслеживается dirty checking), `Detached` (был managed, но контекст закрыт/очищен — изменения не отслеживаются) и `Removed` (помечен на удаление, будет `DELETE` при flush). Переходы: `persist`→Managed, `detach`/`clear`/`close`→Detached, `merge`→снова Managed, `remove`→Removed.",
+              "text": "У JPA-сущности есть состояния new, managed, detached и removed. Для detached-аргумента `merge` возвращает managed-экземпляр, оставляя аргумент detached.",
               "correct": true,
               "sections": {
-                "explanation": "Только Managed-сущности отслеживаются: их изменения автоматически попадают в БД при flush/commit (dirty checking). Detached-объект менять бесполезно — изменения не сохранятся, пока не сделать `merge`.",
-                "example": "`User u = new User(); em.persist(u); // Managed` → `u.setEmail(...) // dirty checking сработает` → `em.detach(u); u.setEmail(...) // НЕ попадёт в БД`.",
+                "explanation": "JPA различает new, managed, detached и removed. Изменения managed-объекта синхронизируются при flush; изменения detached-аргумента после `merge` не отслеживаются. При `merge` используйте возвращённый managed-результат.",
+                "example": "`em.persist(u)` делает новый `u` managed; после `em.detach(u)` выполняйте `User managed = em.merge(u)` и меняйте `managed`.",
                 "when_to_apply": "Понимание состояний нужно при работе с долгоживущими объектами, передаче сущностей между слоями и отладке «почему изменения не сохранились».",
-                "edge_cases": "`merge(detached)` возвращает НОВЫЙ managed-объект, а переданный остаётся detached — работать дальше нужно именно с возвращённым объектом.",
+                "edge_cases": "Результат `merge(detached)` может быть уже существующей managed-сущностью. `merge(managed)` возвращает сам аргумент; `save()` Spring Data JPA выбирает persist или merge по стратегии isNew.",
                 "related": "[[spring-data-jpa-interview#Q20]] @EntityListeners; [[spring-data-jpa-interview#Q21]] FlushMode; [[spring-data-jpa-interview#Q10]] @Transactional."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "У сущности четыре состояния: `New`/Transient, `Managed`, `Detached`, `Removed`. Сущность в состоянии `New` уже отслеживается контекстом сразу после `new`, а `persist` лишь фиксирует её в БД при ближайшем flush.",
+              "text": "Новая сущность с заданным вручную ID уже managed до `persist`. Изменения в ней JPA сохранит при flush без других операций.",
               "correct": false,
               "sections": {
-                "what_actually": "`New`/Transient-объект не связан с контекстом и не отслеживается до вызова `persist`/`save`.",
-                "source_of_confusion": "Объект уже создан, и кажется, что он «в системе».",
-                "if_it_were_true": "Тогда `persist` был бы не нужен для сохранения, но без него объект в БД не попадёт.",
-                "how_it_should_be": "Слежение начинается с `persist`/`save`, переводящего объект в Managed."
+                "what_actually": "Присвоенный ID не связывает новый объект с persistence context; managed он станет после `persist` или соответствующего каскада.",
+                "source_of_confusion": "Поле `@Id` заполнено, поэтому новый объект ошибочно считают уже загруженным из БД.",
+                "if_it_were_true": "Достаточно было бы задать ID и изменить поле, чтобы JPA сохранил строку без вызова persist/merge.",
+                "how_it_should_be": "Свяжите новый объект с контекстом через `persist` либо используйте `save()` с верной стратегией isNew."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "У сущности JPA четыре состояния: `New`/Transient (создан через `new`), `Managed` (привязан к `EntityManager`), `Detached` и `Removed`. При этом `Detached`-объект по-прежнему отслеживается контекстом, поэтому изменения в нём автоматически попадут в БД при commit без вызова `merge`.",
+              "text": "Новая сущность становится managed после `persist`. После `detach` она остаётся managed до конца транзакции, сохраняя изменения без `merge`.",
               "correct": false,
               "sections": {
-                "what_actually": "Detached-объект НЕ отслеживается: изменения в нём не сохранятся, пока его не вернуть в контекст через `merge`.",
+                "what_actually": "`detach` удаляет объект из persistence context; последующие изменения аргумента автоматически не синхронизируются.",
                 "source_of_confusion": "Объект «выглядит» тем же, что был managed, и кажется, что слежение продолжается.",
-                "if_it_were_true": "Тогда `merge` был бы не нужен, но именно он возвращает detached-объект под управление.",
-                "how_it_should_be": "Detached не отслеживается; для сохранения изменений делают `merge`."
+                "if_it_were_true": "После detach изменения объекта продолжали бы автоматически сохраняться при flush, вопреки контракту JPA.",
+                "how_it_should_be": "Используйте результат `merge(detached)` для дальнейших изменений; прежний аргумент остаётся detached."
               }
             }
           ]
@@ -2341,55 +2341,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как работает аудит через `@CreatedDate`, `@LastModifiedDate` и `@EnableJpaAuditing`?",
+          "question_text": "Где JPA Auditing не срабатывает и как учитывать фоновые операции?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Аудит включается `@EnableJpaAuditing(auditorAwareRef=\"auditorProvider\")`, а `AuditingEntityListener` на `@PrePersist`/`@PreUpdate` заполняет время и автора. `@CreatedBy` при этом получает имя пользователя из `AuditorAware` даже для записей, которые создаёт фоновая задача без аутентификации в `SecurityContext`.",
+              "text": "Для фоновой задачи `AuditorAware` автоматически назначает SYSTEM без SecurityContext; JPQL bulk update обходит listener и не проверяет `@Version`.",
               "correct": false,
               "sections": {
-                "what_actually": "`@CreatedBy` берёт значение из `AuditorAware`; если в `SecurityContext` нет аутентификации (фоновый поток), значение будет `null` или дефолтным.",
-                "source_of_confusion": "Кажется, что автор определяется всегда автоматически.",
-                "if_it_were_true": "Тогда у фоновых вставок всегда был бы автор, но без контекста безопасности его нет.",
-                "how_it_should_be": "Без аутентификации `@CreatedBy` пуст; для фоновых задач задают системного пользователя."
+                "what_actually": "`AuditorAware` возвращает того, кого определила реализация; системный автор не появляется сам при пустом `SecurityContext`.",
+                "source_of_confusion": "Системного пользователя часто настраивают для фоновых задач, и эту прикладную политику принимают за поведение фреймворка.",
+                "if_it_were_true": "Любая фоновая запись имела бы автора SYSTEM без кода приложения, но стандартный контракт `AuditorAware` такого значения не задаёт.",
+                "how_it_should_be": "Для фоновой работы явно выбирайте системную идентичность или обрабатывайте отсутствие автора."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Аудит включается `@EnableJpaAuditing`, а `AuditingEntityListener` заполняет `@CreatedDate`/`@LastModifiedDate` и `@CreatedBy`/`@LastModifiedBy` на `@PrePersist`/`@PreUpdate`. Поле `@Version` при этом хранит время последнего изменения и заменяет `@LastModifiedDate`.",
+              "text": "Для фоновой задачи автор задаётся приложением; JPQL bulk update вызывает listener и обновляет аудит-поля, но не проверяет `@Version`.",
               "correct": false,
               "sections": {
-                "what_actually": "`@Version` отвечает за оптимистичную блокировку (счётчик ревизий), а не за аудит времени; время изменения хранит `@LastModifiedDate`.",
-                "source_of_confusion": "Оба поля меняются при обновлении, и их роли смешивают.",
-                "if_it_were_true": "Тогда `@Version` хранил бы timestamp, но он хранит числовую версию для контроля конкурентности.",
-                "how_it_should_be": "`@Version` — оптимистичная блокировка; `@LastModifiedDate` — время изменения."
+                "what_actually": "JPQL bulk update работает напрямую с БД и обходит lifecycle callbacks сущностей; аудит-поля он автоматически не меняет.",
+                "source_of_confusion": "Тот же тип сущности участвует в запросе, поэтому кажется, что JPA listener увидит обновление.",
+                "if_it_were_true": "`@LastModifiedDate` менялся бы после bulk update без явного SET, но callback на каждую сущность не вызывается.",
+                "how_it_should_be": "В bulk-запросе задайте аудит-поля явно либо обновляйте управляемые сущности с обычным lifecycle."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Аудит собирают из `@CreatedDate`/`@LastModifiedDate` (время) и `@CreatedBy`/`@LastModifiedBy` (автор), размеченных в `@MappedSuperclass` с `@EntityListeners(AuditingEntityListener.class)`; слушатель заполняет их на `@PrePersist`/`@PreUpdate`. Аннотация `@EnableJpaAuditing` при этом необязательна — поля срабатывают и без неё.",
+              "text": "Для фоновой задачи автор задаётся приложением; JPQL bulk update обходит listener, но автоматически проверяет `@Version`.",
               "correct": false,
               "sections": {
-                "what_actually": "Без `@EnableJpaAuditing` инфраструктура аудита не активируется, и аннотации полей остаются незаполненными.",
-                "source_of_confusion": "Аннотации на полях выглядят самодостаточными.",
-                "if_it_were_true": "Тогда поля заполнялись бы и без явного включения, но без `@EnableJpaAuditing` они будут `null`.",
-                "how_it_should_be": "Нужно явно включить аудит через `@EnableJpaAuditing`."
+                "what_actually": "Jakarta Persistence 3.2 говорит, что bulk update обходит стандартную optimistic version check; версию и условие конкурентного обновления нужно продумывать отдельно.",
+                "source_of_confusion": "Обычное обновление versioned-сущности проверяет версию, и это правило ошибочно переносят на bulk SQL.",
+                "if_it_were_true": "Конкурирующие bulk-запросы автоматически отсеивались бы по версии каждой сущности, но спецификация такой проверки не делает.",
+                "how_it_should_be": "Если нужна проверка конфликта, добавьте явное условие версии и обновление версии либо используйте managed-операции."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Аудит включается `@EnableJpaAuditing(auditorAwareRef=\"auditorProvider\")`; базовый `@MappedSuperclass` с `@EntityListeners(AuditingEntityListener.class)` содержит `@CreatedDate`/`@LastModifiedDate` (время) и `@CreatedBy`/`@LastModifiedBy` (автор из `AuditorAware`). Слушатель заполняет поля на `@PrePersist`/`@PreUpdate`. Отдельно `@Version` обеспечивает оптимистичную блокировку.",
+              "text": "Для фоновой задачи автор задаётся приложением; JPQL bulk update обходит listener и не проверяет `@Version`.",
               "correct": true,
               "sections": {
-                "explanation": "`AuditorAware<String>` отдаёт текущего пользователя (из `SecurityContextHolder`). При создании заполняются все поля; при обновлении — только last-modified. `@Version` инкрементируется при каждом UPDATE.",
-                "example": "`@EnableJpaAuditing(auditorAwareRef=\"auditorProvider\")` + `@CreatedDate @Column(updatable=false) Instant createdAt;` в `AuditableEntity`, от которого наследуются сущности.",
-                "when_to_apply": "Берут для прозрачной фиксации метаданных изменений и автора во всех сущностях без ручного кода в сервисах.",
-                "edge_cases": "Без `@EnableJpaAuditing` аннотации полей не срабатывают; `@CreatedBy` будет `null`, если в `SecurityContext` нет аутентификации (фоновые задачи).",
-                "related": "[[spring-data-jpa-interview#Q18]] Auditing основы; [[spring-data-jpa-interview#Q20]] @EntityListeners; [[spring-data-jpa-interview#Q12]] @Lock."
+                "explanation": "`AuditorAware` не придумывает автора фоновой задачи; приложение задаёт его политику. JPQL bulk update не запускает JPA lifecycle callback на каждую сущность и обходит автоматическую optimistic version check.",
+                "example": "При пакетном изменении цены через `@Modifying @Query` задайте `updatedAt`/`updatedBy` явно и отдельно решите, нужен ли контроль `@Version`.",
+                "when_to_apply": "Проверяйте эти границы, когда аудит нужен для batch/job, массовых запросов или записей без HTTP-пользователя.",
+                "edge_cases": "Анонимный Authentication может присутствовать в SecurityContext; одного `isAuthenticated()` недостаточно. `@Column(nullable=false)` для автора требует явной политики при отсутствии пользователя. Bulk update оставляет persistence context рассинхронизированным.",
+                "related": "[[spring-data-jpa-interview#Q18]] настройка auditing; [[spring-data-jpa-interview#Q8]] @Modifying; [[spring-data-jpa-interview#Q12]] блокировки."
               }
             }
           ]

@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[spring-data-jpa]]"
 next: []
-updated: "2026-10-05"
+updated: "2026-10-07"
 ---
 # Вопросы на собеседовании: `Spring Data JPA`
 
@@ -117,7 +117,7 @@ updated: "2026-10-05"
 - [Q36. (!) Как работают derived query methods и каков их синтаксис?](#q36--как-работают-derived-query-methods-и-каков-их-синтаксис)
 - [Q37. (!) Как использовать `Specification` API для построения динамических запросов?](#q37--как-использовать-specification-api-для-построения-динамических-запросов)
 - [Q38. (!) Как работают `Projection`-интерфейсы в Spring Data JPA?](#q38--как-работают-projection-интерфейсы-в-spring-data-jpa)
-- [Q39. (!) Как работает аудит через `@CreatedDate`, `@LastModifiedDate` и `@EnableJpaAuditing`?](#q39--как-работает-аудит-через-createddate-lastmodifieddate-и-enablejpaauditing)
+- [Q39. (!) Где Spring Data JPA Auditing не срабатывает и как учитывать фоновые операции?](#q39--где-spring-data-jpa-auditing-не-срабатывает-и-как-учитывать-фоновые-операции)
 - [Q40. (!) Как интегрировать `Flyway` со Spring Data JPA?](#q40--как-интегрировать-flyway-со-spring-data-jpa)
 - [Q41. (!) Как работает `@EntityGraph` и когда он предпочтительнее `JOIN FETCH`?](#q41--как-работает-entitygraph-и-когда-он-предпочтительнее-join-fetch)
 - [Q42. Как корректно использовать `@Modifying` с `@Query` для bulk-операций?](#q42-как-корректно-использовать-modifying-с-query-для-bulk-операций)
@@ -1027,21 +1027,21 @@ graph LR
 
 ## Q18. (!) Как работает `Auditing` в `Spring Data JPA`?
 
-`Auditing` — автоматическое заполнение служебных полей «кто и когда создал/изменил запись», без ручного проставления дат в каждом сервисе.
+Spring Data JPA Auditing заполняет метаданные создания и изменения сущности. `@EnableJpaAuditing` включает инфраструктуру, `AuditingEntityListener` подключается к сущности через `@EntityListeners` (или в `orm.xml`), а поля помечаются `@CreatedDate`, `@LastModifiedDate`, `@CreatedBy`, `@LastModifiedBy`.
 
-Работает на трёх китах: `@EnableJpaAuditing` включает механизм, `AuditingEntityListener` (через `@EntityListeners`) перехватывает события persist/update, а аннотации на полях (`@CreatedDate`, `@LastModifiedDate`, `@CreatedBy`, `@LastModifiedBy`) говорят, что куда писать. Имя текущего пользователя для `@CreatedBy`/`@LastModifiedBy` берётся из бина `AuditorAware`.
+Для **одних дат** `AuditorAware` не нужен. Для полей «кто» он возвращает `Optional<T>` текущего пользователя или системного субъекта; тип `T` должен соответствовать типу полей `@CreatedBy`/`@LastModifiedBy`. Источник автора выбирает приложение: Spring Security — лишь один вариант. При единственном бине `AuditorAware` его можно обнаружить автоматически; `auditorAwareRef` явно выбирает нужный бин. Альтернатива аннотациям на полях — реализовать `Auditable`; это сильнее связывает доменную модель со Spring Data.
 
 ```java
-// 1. Включить аудит
+// 1. Включить аудит и определить источник автора
 @Configuration
 @EnableJpaAuditing(auditorAwareRef = "auditorProvider")
 public class JpaConfig {
 
     @Bean
     public AuditorAware<String> auditorProvider() {
-        return () -> Optional.ofNullable(SecurityContextHolder.getContext())
-            .map(SecurityContext::getAuthentication)
-            .filter(Authentication::isAuthenticated)
+        AuthenticationTrustResolver trustResolver = new AuthenticationTrustResolverImpl();
+        return () -> Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
+            .filter(trustResolver::isAuthenticated)
             .map(Authentication::getName);
     }
 }
@@ -1054,11 +1054,11 @@ public abstract class AuditableEntity {
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     @CreatedBy
     @Column(name = "created_by", updatable = false)
@@ -1069,7 +1069,7 @@ public abstract class AuditableEntity {
     private String updatedBy;
 }
 
-// 3. Сущность наследует — поля заполняются автоматически
+// 3. Сущность наследует аудит-поля
 @Entity
 @Table(name = "products")
 public class Product extends AuditableEntity {
@@ -1083,13 +1083,9 @@ public class Product extends AuditableEntity {
 }
 ```
 
-При `save()` нового `Product`:
-- `createdAt` / `updatedAt` заполняются текущим временем
-- `createdBy` / `updatedBy` заполняются из `AuditorAware` (имя пользователя из `SecurityContext`)
+При JPA `@PrePersist` заполняются поля создания; по умолчанию `@EnableJpaAuditing(modifyOnCreate = true)` также ставит last-modified поля **при создании**. При фактическом обновлении `@PreUpdate` меняет last-modified поля; один вызов `save()` без изменения сущности не обещает `UPDATE` и нового времени. `createdAt`/`createdBy` не должны переписываться при обновлении. `setDates = true` — настройка по умолчанию; для иного источника времени есть `dateTimeProviderRef`.
 
-При обновлении — меняются только `updatedAt` и `updatedBy`.
-
-Подробнее о [Spring Security](spring-security-interview.md) — аудит тесно связан с аутентификацией.
+Для этого механизма нужны включённая инфраструктура и JPA listener; документация Spring Data JPA 4.1.1 также указывает `spring-aspects.jar` в classpath. Следите, чтобы `AuditorAware` не считал анонимный `Authentication` реальным пользователем: `Authentication::isAuthenticated` само по себе недостаточно, поэтому в примере используется `AuthenticationTrustResolver`. Для фоновых задач и bulk-операций см. Q39. [Spring Data JPA Auditing](https://docs.spring.io/spring-data/jpa/reference/auditing.html); [`@EnableJpaAuditing` API](https://docs.spring.io/spring-data/jpa/reference/api/java/org/springframework/data/jpa/repository/config/EnableJpaAuditing.html); [Spring Security `AuthenticationTrustResolver`](https://docs.spring.io/spring-security/reference/api/java/org/springframework/security/authentication/AuthenticationTrustResolver.html).
 
 ## Q19. (!) Какие состояния имеет сущность в `JPA`?
 
@@ -1107,10 +1103,10 @@ stateDiagram-v2
     New --> Managed: persist() / save()
     Managed --> Detached: detach() / clear() / close()
     Managed --> Removed: remove() / delete()
-    Detached --> Managed: merge()
+    Detached --> Managed: merge() → managed-результат
     Removed --> [*]: commit → DELETE
     Managed --> Managed: flush() → SQL
-    Managed --> [*]: commit → INSERT/UPDATE
+    Managed --> Detached: commit при transaction-scoped PC
 
     note right of Managed
         Отслеживается EntityManager.
@@ -1120,15 +1116,16 @@ stateDiagram-v2
     note right of Detached
         Не отслеживается.
         Изменения не попадут в БД.
+        merge не меняет исходный экземпляр.
     end note
 ```
 
 | Состояние | Описание | Отслеживается EM | В БД |
 |-----------|----------|:----------------:|:----:|
-| **New** (Transient) | Создан через `new`, нет `@Id` | Нет | Нет |
-| **Managed** (Persistent) | Связан с `EntityManager` | Да | Да (или будет при flush) |
-| **Detached** | Был managed, сессия закрыта | Нет | Да |
-| **Removed** | Помечен на удаление | Да | Будет удалён при flush |
+| **New** (Transient) | Создан, ещё не передан под управление JPA; ID может быть назначен приложением | Нет | Назначенный ID сам не вставляет строку |
+| **Managed** (Persistent) | Связан с `EntityManager` | Да | Новая запись может ожидать flush |
+| **Detached** | Был managed, но больше не связан с текущим контекстом | Нет | Состояние БД не обязано совпадать с объектом |
+| **Removed** | Помечен на удаление | Да, до завершения операции | Удаление синхронизируется при flush/commit |
 
 ```java
 @Transactional
@@ -1138,27 +1135,27 @@ public void entityLifecycleDemo() {
     entityManager.persist(user);        // MANAGED — теперь в persistence context
     user.setEmail("john@example.com");  // dirty checking — изменение обнаружится
 
-    entityManager.flush();              // SQL: INSERT + UPDATE (или один INSERT)
+    entityManager.flush();              // синхронизация с БД: возможен один INSERT
 
     entityManager.detach(user);         // DETACHED — изменения не отслеживаются
     user.setEmail("new@example.com");   // НЕ попадёт в БД!
 
-    User merged = entityManager.merge(user); // MANAGED — merged — новый managed-объект
-    // ВНИМАНИЕ: user всё ещё detached! Работать нужно с merged
+    User merged = entityManager.merge(user); // MANAGED — результат merge
+    // ВНИМАНИЕ: user всё ещё detached; дальнейшие изменения вносите в merged
 
     entityManager.remove(merged);       // REMOVED — будет DELETE при commit
 }
 ```
 
-**Семантика `save()` поверх этих состояний.** `save()` в Spring Data — не отдельная магия, а ветвление внутри `SimpleJpaRepository`: для **новой** сущности вызывается `em.persist()` (сам объект становится managed), для всех остальных — `em.merge()` (состояние копируется в managed-копию, а исходный объект остаётся detached — ровно как в примере выше: работать дальше нужно с возвращённым значением).
+**Семантика `save()` поверх этих состояний.** Spring Data JPA выбирает `EntityManager.persist()` для сущности, которую считает новой, и `EntityManager.merge()` для остальных. После `persist()` сам аргумент становится managed. При `merge(detached)` состояние копируется в **возвращённый** managed-экземпляр (он может уже существовать в контексте), а аргумент остаётся detached. При `merge(managed)` возвращается тот же экземпляр. Поэтому при неизвестном состоянии объекта используйте результат `save()`.
 
 «Новая или нет» Spring Data определяет по стратегиям, в порядке приоритета:
 
 - сущность реализует `Persistable` → решает её собственный метод `isNew()`;
 - есть поле `@Version` ссылочного (не примитивного) типа → новая, пока version == `null`;
-- иначе по `@Id` → новая, пока id == `null` (для примитивных типов — `0`).
+- иначе по `@Id` → новая, пока id == `null`; примитивный `@Version` для такой проверки не подходит.
 
-Подводный камень: `save()` detached-сущности с заполненным id уходит в `merge()`, а `merge()` сначала делает лишний **SELECT** — ему нужно загрузить текущее состояние сущности в persistence context, чтобы скопировать в него поля, и только потом уйдёт `UPDATE`. Тот же SELECT прилетает и для действительно новой сущности с вручную присвоенным id (например, UUID, заданный в коде): по стратегии «id != null» Spring Data считает её «не новой» и зовёт `merge()` вместо `persist()`. Лечение — реализовать `Persistable.isNew()` или завести поле `@Version`.
+Подводный камень: новая сущность с присвоенным приложением ID и без ссылочного `@Version` по стандартной стратегии считается «не новой»: `save()` вызовет `merge()`. Провайдеру может понадобиться дополнительное чтение БД, если нужной сущности нет в persistence context; обязательный `SELECT` перед каждым `merge()` контракт JPA не обещает. Для назначаемых ID явно задайте `Persistable.isNew()` с корректным переходом флага после сохранения/загрузки либо используйте ссылочный `@Version`. [Jakarta Persistence 3.2, lifecycle и merge](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2); [Spring Data JPA 4.1.1, Persisting Entities](https://docs.spring.io/spring-data/jpa/reference/jpa/entity-persistence.html).
 
 ## Q20. Что такое `@EntityListeners` и callback-методы жизненного цикла?
 
@@ -2333,89 +2330,18 @@ public interface OrderSummary {
 
 **Рекомендация:** для производительности — interface-based (закрытая) или DTO-проекция: `SELECT` идёт ровно по нужным колонкам. Помните про ловушку открытой проекции: как только в интерфейсе появляется геттер с `@Value`/SpEL, Spring уже не может заранее определить набор колонок и грузит сущность целиком, вычисляя выражение в памяти. Удобно, но экономии на уровне БД нет.
 
-## Q39. (!) Как работает аудит через `@CreatedDate`, `@LastModifiedDate` и `@EnableJpaAuditing`?
+## Q39. (!) Где Spring Data JPA Auditing не срабатывает и как учитывать фоновые операции?
 
-Spring Data JPA Auditing автоматически проставляет «когда» и «кто» при сохранении и изменении сущности — даты в `@CreatedDate`/`@LastModifiedDate` и пользователя в `@CreatedBy`/`@LastModifiedBy`. Вам не нужно вручную писать `setUpdatedAt(now())` в каждом сервисе.
+Обычную настройку `@EnableJpaAuditing`, `AuditingEntityListener` и полей см. в Q18. Аудит через listener следует **жизненному циклу JPA-сущности**; он не является универсальным перехватчиком SQL и хранит в самой строке лишь последние метаданные, а не историю изменений.
 
-Связка работает так: `@EnableJpaAuditing` поднимает инфраструктуру, `AuditingEntityListener` (через `@EntityListeners`) ловит persist/update-события и проставляет поля, а источник имени пользователя — бин `AuditorAware`, который чаще всего тянет логин из `SecurityContext`.
+| Сценарий | Что проверить |
+|---|---|
+| Фоновая задача без пользователя в `SecurityContext` | `AuditorAware` может вернуть `Optional.empty()`: дата заполнится, но автор для новой строки может остаться `null`. Если столбец `NOT NULL`, вставка может завершиться ошибкой. Для такой задачи явно задайте согласованного системного автора; не приписывайте анонимный HTTP-запрос системному пользователю молча. |
+| Анонимный HTTP-запрос | В контексте Spring Security может быть `AnonymousAuthenticationToken`; проверка одного `Authentication.isAuthenticated()` не доказывает, что это реальный пользователь. Используйте `AuthenticationTrustResolver` или явную политику для анонимных записей. |
+| JPQL `@Modifying` bulk update/delete или прямой SQL | Эти операции обходят изменения управляемых сущностей и их listener-callbacks: аудит-поля автоматически не обновятся. В bulk update задайте их явно или меняйте загруженные сущности; после bulk-запроса учитывайте рассинхронизацию persistence context. |
+| Полная история изменений | `createdAt`/`updatedAt` на текущей строке не хранят предыдущие состояния. Нужен отдельный журнал/история, если требуется ответить, что именно менялось. |
 
-**Включение аудита:**
-
-```java
-@Configuration
-@EnableJpaAuditing(auditorAwareRef = "auditorProvider")
-public class JpaConfig {
-
-    @Bean
-    public AuditorAware<String> auditorProvider() {
-        // Получаем текущего пользователя из Spring Security
-        return () -> Optional.ofNullable(SecurityContextHolder.getContext())
-            .map(SecurityContext::getAuthentication)
-            .filter(Authentication::isAuthenticated)
-            .map(Authentication::getName);
-    }
-}
-```
-
-**Базовый аудируемый класс:**
-
-```java
-@MappedSuperclass
-@EntityListeners(AuditingEntityListener.class)
-public abstract class AuditableEntity {
-
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @LastModifiedDate
-    @Column(nullable = false)
-    private Instant updatedAt;
-
-    @CreatedBy
-    @Column(nullable = false, updatable = false, length = 100)
-    private String createdBy;
-
-    @LastModifiedBy
-    @Column(nullable = false, length = 100)
-    private String updatedBy;
-}
-```
-
-**Использование в сущностях:**
-
-```java
-@Entity
-@Table(name = "products")
-public class Product extends AuditableEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    private String name;
-    private BigDecimal price;
-    // createdAt, updatedAt, createdBy, updatedBy — наследуются
-}
-```
-
-**Альтернатива — интерфейс `Auditable`:**
-
-```java
-@Entity
-@EntityListeners(AuditingEntityListener.class)
-public class Order implements Auditable<String, Long, Instant> {
-    // Реализует все методы интерфейса Auditable
-}
-```
-
-**Версионирование через `@Version`** (оптимистичная блокировка):
-
-```java
-@Version
-@Column(nullable = false)
-private Long version;  // автоматически инкрементируется при каждом UPDATE
-```
+`@Version` решает другую задачу — контроль конкурирующих изменений. По Jakarta Persistence 3.2 bulk update также обходит обычную optimistic version check; при ручном bulk-запросе отдельно продумайте версию и условие обновления. [Spring Data JPA Auditing](https://docs.spring.io/spring-data/jpa/reference/auditing.html); [Spring Data JPA Modifying Queries](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html); [Jakarta Persistence 3.2, Bulk Update](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2); [Spring Security Anonymous Authentication](https://docs.spring.io/spring-security/reference/servlet/authentication/anonymous.html).
 
 ## Q40. (!) Как интегрировать `Flyway` со Spring Data JPA?
 
