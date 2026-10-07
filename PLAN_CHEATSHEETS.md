@@ -783,13 +783,106 @@ FAIL. Независимая приёмка и обзор других Q ожи�
 во всём старом JSON всё ещё 31 hard-сигнал и parity FAIL. Независимая
 приёмка и полный обзор темы открыты, инвентарь прежний.
 
-Следующий **авторский** пакет: `frameworks/spring/spring-data-jpa-interview.md`
-Q10 B0 с парным JSON — проверить прокси Spring `@Transactional`, rollback,
-self-invocation и границы версий по официальной документации; отдельно
-разобрать старые hard-сигналы формы. Независимую MCQ-приёмку начинать с Batch
-Q6 B0/B1, Q28 B0, Q38 B0 по пункту ниже; этот авторский пакет её не заменяет.
+**Контрольная точка 07.10.2026 — Spring Data JPA Q10 B0 · О.**
+По [Spring Framework 6.2 `@Transactional`](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/annotations.html),
+[propagation](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/tx-propagation.html)
+и [AOP proxying](https://docs.spring.io/spring-framework/reference/6.2/core/aop/proxying.html)
+исправлены proxy-mode и self-invocation: внутренний вызов не применяет
+настройки вызываемого метода, но не отменяет уже открытую внешнюю
+транзакцию. `REQUIRED` начинает либо присоединяет её; diagram больше
+не обещает отдельный физический `BEGIN`/`COMMIT` на каждом вызове.
+Уточнены rollback для `RuntimeException`/`Error`, checked-исключения,
+глобальный `ALL_EXCEPTIONS` с 6.2 и видимость методов; пример с checked
+`PaymentException` приведён к компилируемой сигнатуре. MCQ Q10 B0
+синхронизирован, A/B/C/D и sections авторски проверены. Структура PASS
+(43 Q/44 блока), локальный pre-check Q10 PASS без предупреждений;
+во всём старом JSON остаётся 30 hard-сигналов и parity FAIL.
+Независимая приёмка и полный обзор других Q остаются открыты.
 
-1. **Точная точка продолжения:** независимая содержательная MCQ-приёмка
+**Контрольная точка 07.10.2026 — Spring Data JPA Q11 B0 · О.**
+По [Spring propagation](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/tx-propagation.html)
+и [`JpaTransactionManager` 6.2.19](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/orm/jpa/JpaTransactionManager.html)
+разграничены одна физическая транзакция `REQUIRED`, независимая
+`REQUIRES_NEW` и JDBC savepoint у `NESTED`. Для JPA `EntityManager`
+savepoint не означает откат его состояния. Отмечена граница версий:
+`nestedTransactionAllowed` в 6.2.19 по умолчанию `true`, а в 7.0 —
+`false`. `UnexpectedRollbackException` привязан к rollback-only после
+выхода исключения через внутренний прокси, а не к любому пойманному
+исключению. Пример независимого аудита теперь фиксирует попытку заказа,
+а не утверждает успешный коммит. MCQ Q11 B0 синхронизирован; A/B/C/D
+и sections авторски проверены. Структура PASS (43 Q/44 блока),
+локальный pre-check Q11 PASS без предупреждений; в старом файле
+остаётся 29 hard-сигналов и общий parity FAIL. Независимая приёмка
+и полный обзор иных Q открыты, инвентарь прежний.
+
+**Контрольная точка 07.10.2026 — Spring Data JPA Q12–Q13 B0 · О.**
+Q12 сверён по [Spring Data JPA Locking](https://docs.spring.io/spring-data/jpa/reference/jpa/locking.html)
+и [Jakarta Persistence 3.2 §3.5](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#locking-and-concurrency):
+`@Lock` задаёт режим запроса, `PESSIMISTIC_READ` может усиливаться до
+`WRITE`, а конкретный SQL не является переносимым контрактом. Пример
+оптимистического обновления больше не вызывает метод с
+`PESSIMISTIC_WRITE`; проверка `@Version` может произойти при
+`flush`/`commit`. Q13 сверён по [Spring Data JPA Projections](https://docs.spring.io/spring-data/jpa/reference/repositories/projections.html):
+оптимизация закрытой проекции относится к top-level полям, вложенный join
+может материализоваться целиком, DTO нужен конструктор, а открытая SpEL
+проекция не получает такую же оптимизацию. Парные MCQ Q12–Q13 B0,
+включая все A/B/C/D и sections, авторски сверены; структура PASS
+(43 Q/44 блока), локальный pre-check обоих блоков PASS без warnings.
+Полный pre-check прежнего файла всё ещё FAIL: 27 hard-сигналов,
+32 блока с warnings; полный parity FAIL. Независимая blind-приёмка и
+полная содержательная проверка других Q открыты; инвентарь прежний.
+
+**Контрольная точка 07.10.2026 — Spring Data JPA Q14 B0 · О.**
+По [Spring Data JPA Projections](https://docs.spring.io/spring-data/jpa/reference/repositories/projections.html#dynamic-projections)
+подтверждено, что `Class<T>` выбирает интерфейс, DTO или сущность при
+каждом вызове; при совпадении с возвращаемым `T` этот аргумент не доступен
+JPQL/SpEL. Уточнён пример: сервис получил объявленную зависимость
+репозитория. MCQ Q14 B0, A/B/C/D и sections авторски сверены;
+структура 43 Q/44 блока PASS, локальный pre-check Q14 PASS без warnings.
+В целом старый JSON остаётся FAIL: 26 hard-сигналов, 31 блок с warnings,
+parity FAIL. Независимая приёмка Q14 и полный обзор иных Q открыты.
+
+**Контрольная точка 07.10.2026 — Spring Data JPA Q15–Q16 B0 · О.**
+По [Spring Data JPA Paging](https://docs.spring.io/spring-data/jpa/reference/repositories/query-methods-details.html),
+[`PageRequest`](https://docs.spring.io/spring-data/data-commons/docs/current/api/org/springframework/data/domain/PageRequest.html)
+и [`PageableExecutionUtils`](https://docs.spring.io/spring-data/commons/reference/api/java/org/springframework/data/support/PageableExecutionUtils.html)
+уточнены zero-based страницы, возможный count для `Page`, size+1 для
+`Slice`, отсутствие метаданных у `List`, стабильный tie-breaker и
+смещение offset при конкурирующих изменениях. Пример Q15 больше не
+выдаёт `JOIN FETCH` коллекции с `Page` за безопасную оптимизацию:
+[Hibernate 7.4 release notes](https://docs.hibernate.org/orm/7.4/whats-new/)
+разграничивают прежнюю пагинацию в памяти и новый SQL-путь при поддержке
+СУБД. Прямой MVC `Pageable` привязан к Spring Data web support, а для
+публичного JSON отмечен стабильный DTO/`PagedModel` вместо прямого
+`PageImpl`. Q15/Q16 MCQ B0 и все A/B/C/D с sections авторски сверены;
+структура 43 Q/44 блока PASS, локальный pre-check обоих блоков PASS
+без warnings. В целом старый JSON всё ещё FAIL: 25 hard-сигналов,
+29 блоков с warnings, parity FAIL. Независимая приёмка и полный
+содержательный обзор остальных Q открыты; инвентарь прежний.
+
+**Контрольная точка 07.10.2026 — Spring Data JPA Q17 B0 · О.**
+По [Spring Data JPA Specifications](https://docs.spring.io/spring-data/jpa/reference/jpa/specifications.html)
+и [API 4.1.1](https://docs.spring.io/spring-data/jpa/reference/api/java/org/springframework/data/jpa/domain/Specification.html)
+проверены Criteria-предикаты, композиция и `JpaSpecificationExecutor`.
+`Specification.where(nonNullSpec)` в 4.1.1 **существует**;
+`where(null)` с 4.0 не принимается, для пустой базы есть
+`unrestricted()`. Пример начат напрямую с `isActive()`, diagram
+исправлена; пользовательский `LIKE` экранирует `%`/`_` средствами
+[`EscapeCharacter`](https://docs.spring.io/spring-data/jpa/reference/api/java/org/springframework/data/jpa/repository/query/EscapeCharacter.html)
+и `CriteriaBuilder.like(..., escapeChar)`. MCQ Q17 B0, A/B/C/D и
+sections авторски сверены; структура 43 Q/44 блока PASS,
+локальный pre-check Q17 PASS без warnings. В старом файле остаются
+24 hard-сигнала, 28 блоков с warnings, общий parity FAIL;
+независимая приёмка открыта.
+
+**Точная точка авторского продолжения:** `frameworks/spring/spring-data-jpa-interview.md`
+Q18 B0 с парным JSON — сверить JPA auditing, `AuditorAware`,
+`@EnableJpaAuditing`, lifecycle и границы Spring Security; затем Q19 B0.
+Не объявлять весь файл прошедшим проверку.
+Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
+по пункту ниже; авторская самопроверка её не заменяет.
+
+1. **Точная точка независимой приёмки:** содержательная MCQ-приёмка
    последней группы, начиная с `frameworks/spring/spring-batch-interview.md`
    Q6 B0/B1, Q28 B0, Q38 B0 и соответствующего production JSON. Проверить
    правильность каждого A/B/C/D по теории и официальным Batch 5.0/5.2/6,
@@ -809,15 +902,16 @@ Q6 B0/B1, Q28 B0, Q38 B0 по пункту ниже; этот авторский
    Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13/Q14, WebAuthn Q24/Q46, Spring Security Q44,
    Metrics & Tracing Q40, Spring Testing Q9/Q10, Uber Q6/Q7,
    Google Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1,
-   Spring Batch Q6 B0/B1/Q28/Q38, Database Transactions Q15/Q22/Q23 B0
+   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q17 B0,
+   Database Transactions Q15/Q22/Q23 B0
    и RabbitMQ Streams Q40–Q42 ждут
    независимой MCQ-приёмки.
    Java 26–27, HTTP/3, Jackson 3 и Python typing/packaging уже написаны.
    Остальные P2/P3 без решения остаются кандидатами. Статусы Python 3.15 и
    PostgreSQL 19 перепроверять после финальных релизов.
 3. Отдельной задачей пройти независимую blind-приёмку новых MCQ и старый
-   parity/pre-check backlog Hibernate, Spring Data JPA (после Q3/Q4 ещё
-   31 hard-сигнал), Java IO/NIO, Jackson,
+   parity/pre-check backlog Hibernate, Spring Data JPA (после Q3/Q4 и Q5–Q17 ещё
+   24 hard-сигнала), Java IO/NIO, Jackson,
    URL Shortener, RabbitMQ, Kafka, сравнения брокеров и event-driven;
    положительный валидатор не означает `FINAL`.
 4. Продолжать выборку официальных публикаций за скользящие шесть месяцев;

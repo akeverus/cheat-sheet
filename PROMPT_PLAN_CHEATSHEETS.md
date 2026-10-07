@@ -235,13 +235,14 @@ Reservation System Q1–Q4, Notification System Q1–Q4, Digital Wallet Q1–Q4,
 Database Transactions Q43, Java CompletableFuture Q11/Q14,
 Database Transactions Q15/Q22/Q23, Java CompletableFuture Q2/Q3/Q4/Q6/Q8/Q10,
 Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13,
-Spring Data JPA Q3 B0/Q4 B1/Q5 B0/Q6 B0/Q7 B0/Q8 B0/Q9 B0,
+Spring Data JPA Q3 B0/Q4 B1/Q5–Q17 B0,
 Kubernetes Q22/Q39/Q46/Q47, RabbitMQ Streams Q40–Q42
 и Spring Data JDBC Q17 тоже ждут
 содержательной приёмки.
 
-07.10 Spring Data JPA Q3 B0/Q4 B1/Q5 B0/Q6 B0/Q7 B0/Q8 B0/Q9 B0 исправлены по
-Jakarta Persistence 3.2, Hibernate HQL 7.0 и Spring Data JPA 4.1.1:
+07.10 Spring Data JPA Q3 B0/Q4 B1/Q5–Q17 B0
+исправлены по Jakarta Persistence 3.2, Hibernate HQL 7.0,
+Spring Data JPA 4.1.1 и Spring Framework 6.2:
 стандарт JPQL отделён
 от расширений HQL, описан in-memory путь AOT и опциональное применение
 EntityManagerFactory. Derived `deleteBy` отделён от bulk DELETE,
@@ -250,14 +251,39 @@ EntityManagerFactory. Derived `deleteBy` отделён от bulk DELETE,
 bulk-семантика и `flushAutomatically`/`clearAutomatically`.
 Для Q9 исправлены `#{#entityName}`, `@NoRepositoryBean` и оценка
 выражений с аргументами при выполнении запроса.
+Для Q10 разграничены self-invocation и существующая внешняя транзакция,
+`REQUIRED`, rollback-правила и видимость методов для разных прокси.
+Q11 уточняет независимость `REQUIRES_NEW`, JDBC-only границу savepoint
+у `NESTED`, версии `JpaTransactionManager` 6.2.19/7.0 и условия
+`UnexpectedRollbackException`.
+Q12 по Jakarta Persistence 3.2 разграничивает немедленный
+`PESSIMISTIC_READ/WRITE`, `@Version`/`OPTIMISTIC`, переносимую гарантию и
+SQL конкретной БД; прежний «оптимистический» пример с
+`PESSIMISTIC_WRITE` исправлен. Q13 по Spring Data JPA 4.1.1 уточняет
+top-level оптимизацию закрытых проекций, полную материализацию вложенного
+join, конструктор DTO и стоимость открытой SpEL-проекции.
+Q14 разграничивает выбор результата аргументом `Class<T>` на каждом
+вызове и использование класса как bind-параметра запроса; пример сервиса
+получил объявленную зависимость репозитория.
+Q15/Q16 разграничивают zero-based `Pageable`, возможный count у `Page`,
+size+1 у `Slice` и отсутствие метаданных у `List`; в Q15 убран опасный
+пример `Page` с collection `JOIN FETCH` без версии. Hibernate 7.4
+умеет ограничивать такой запрос в БД при поддержке диалекта; ранние
+версии применяли лимит в памяти.
+Q17 уточняет `Specification`/Criteria и фильтры: в Spring Data JPA
+4.1.1 `where(nonNullSpec)` существует, `where(null)` не принимается с 4.0;
+пример начат с базового `isActive()`, а `%`/`_` в пользовательском
+`LIKE` экранируются через `EscapeCharacter`.
 Парные MCQ и fact-freshness sidecar обновлены.
-Structure PASS (43 Q/44 блока), локальный pre-check этих семи блоков PASS;
-полный parity FAIL, в старом JSON остаётся 31 hard-сигнал pre-check.
+Structure PASS (43 Q/44 блока), локальный pre-check Q3 B0/Q4 B1/Q5–Q17 B0 PASS;
+полный parity FAIL, в старом JSON остаётся 24 hard-сигнала pre-check
+и 28 блоков с предупреждениями.
 Независимой приёмки и полного содержательного обзора темы не было.
 
-Следующий авторский пакет: Spring Data JPA Q10 B0 и парный JSON.
-Сверить proxy-mode `@Transactional`, rollback и self-invocation по официальной
-документации Spring Framework и разобрать старые hard-сигналы этого блока.
+Следующий авторский пакет: Spring Data JPA Q18 B0 и парный JSON.
+Сверить JPA auditing, `AuditorAware`, `@EnableJpaAuditing`, lifecycle
+и границы Spring Security; затем Q19 B0.
+Не считать весь файл проверенным после точечной правки.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,
