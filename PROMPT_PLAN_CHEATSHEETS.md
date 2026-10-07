@@ -235,12 +235,12 @@ Reservation System Q1–Q4, Notification System Q1–Q4, Digital Wallet Q1–Q4,
 Database Transactions Q43, Java CompletableFuture Q11/Q14,
 Database Transactions Q15/Q22/Q23, Java CompletableFuture Q2/Q3/Q4/Q6/Q8/Q10,
 Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13,
-Spring Data JPA Q3 B0/Q4 B1/Q5 B0/Q6 B0/Q7 B0/Q8 B0,
+Spring Data JPA Q3 B0/Q4 B1/Q5 B0/Q6 B0/Q7 B0/Q8 B0/Q9 B0,
 Kubernetes Q22/Q39/Q46/Q47, RabbitMQ Streams Q40–Q42
 и Spring Data JDBC Q17 тоже ждут
 содержательной приёмки.
 
-07.10 Spring Data JPA Q3 B0/Q4 B1/Q5 B0/Q6 B0/Q7 B0/Q8 B0 исправлены по
+07.10 Spring Data JPA Q3 B0/Q4 B1/Q5 B0/Q6 B0/Q7 B0/Q8 B0/Q9 B0 исправлены по
 Jakarta Persistence 3.2, Hibernate HQL 7.0 и Spring Data JPA 4.1.1:
 стандарт JPQL отделён
 от расширений HQL, описан in-memory путь AOT и опциональное применение
@@ -248,14 +248,17 @@ EntityManagerFactory. Derived `deleteBy` отделён от bulk DELETE,
 `Stream<T>` требует транзакции и закрытия; для нативного `Page` не всегда
 нужен явный `countQuery`. Для `@Modifying` уточнены транзакция,
 bulk-семантика и `flushAutomatically`/`clearAutomatically`.
+Для Q9 исправлены `#{#entityName}`, `@NoRepositoryBean` и оценка
+выражений с аргументами при выполнении запроса.
 Парные MCQ и fact-freshness sidecar обновлены.
-Structure PASS (43 Q/44 блока), локальный pre-check этих шести блоков PASS;
+Structure PASS (43 Q/44 блока), локальный pre-check этих семи блоков PASS;
 полный parity FAIL, в старом JSON остаётся 31 hard-сигнал pre-check.
 Независимой приёмки и полного содержательного обзора темы не было.
 
-Следующий авторский пакет: Spring Data JPA Q9 B0 и парный JSON.
-Сверить `#{#entityName}` и SpEL в `@Query` по официальной Spring Data JPA
-документации и разобрать старые hard-сигналы этого блока. Независимую MCQ-приёмку
+Следующий авторский пакет: Spring Data JPA Q10 B0 и парный JSON.
+Сверить proxy-mode `@Transactional`, rollback и self-invocation по официальной
+документации Spring Framework и разобрать старые hard-сигналы этого блока.
+Независимую MCQ-приёмку
 вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,
 затем Uber Q6/Q7, Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1 и

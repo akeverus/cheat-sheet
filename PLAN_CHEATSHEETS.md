@@ -772,9 +772,20 @@ MCQ Q8 B0 синхронизирован; A/B/C/D и sections авторски �
 предупреждений; в старом файле остаётся 31 hard-сигнал и общий parity
 FAIL. Независимая приёмка и обзор других Q ожидаются; инвентарь прежний.
 
+**Контрольная точка 07.10.2026 — Spring Data JPA Q9 B0 · О.**
+По [Spring Data JPA templated queries](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html)
+и [repository interfaces](https://docs.spring.io/spring-data/jpa/reference/repositories/definition.html)
+исправлены границы SpEL: `#{#entityName}` даёт JPA-имя из `@Entity(name)`
+или класса, а выражения с аргументами вычисляются при выполнении запроса.
+Обобщённый пример получил `@NoRepositoryBean` и общий mapped superclass
+с полем `active`. MCQ Q9 B0 синхронизирован; A/B/C/D и sections точечно
+проверены. Структура PASS (43 Q/44 блока), локальный pre-check Q9 PASS;
+во всём старом JSON всё ещё 31 hard-сигнал и parity FAIL. Независимая
+приёмка и полный обзор темы открыты, инвентарь прежний.
+
 Следующий **авторский** пакет: `frameworks/spring/spring-data-jpa-interview.md`
-Q9 B0 с парным JSON — проверить `#{#entityName}` и границы SpEL
-в `@Query` по официальной Spring Data JPA документации; отдельно
+Q10 B0 с парным JSON — проверить прокси Spring `@Transactional`, rollback,
+self-invocation и границы версий по официальной документации; отдельно
 разобрать старые hard-сигналы формы. Независимую MCQ-приёмку начинать с Batch
 Q6 B0/B1, Q28 B0, Q38 B0 по пункту ниже; этот авторский пакет её не заменяет.
 
