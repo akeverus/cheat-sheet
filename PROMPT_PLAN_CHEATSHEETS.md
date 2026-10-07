@@ -194,8 +194,12 @@ pre-check старого файла FAIL на прежних Q4/Q6/Q7/Q11/Q12/Q1
 Digital Wallet Q1–Q4 уже создан и закоммичен (`3a300d20`), его MCQ
 structure/parity/pre-check PASS, независимый blind review ожидается.
 Database Transactions Q43 о write skew добавлен в существующую тему:
-structure/parity PASS; полный pre-check старого JSON FAIL на Q15/Q22/Q23,
-новый Q43 без hard-сигналов. Независимая приёмка Q43 ожидается.
+structure/parity PASS; новый Q43 без hard-сигналов. 07.10 Q15/Q22/Q23
+исправлены по официальным Jakarta Persistence 3.2 и Spring Framework
+6.0/6.2: момент проверки версии, новая транзакция для retry,
+rollback-правила, видимость методов и AspectJ. Парный JSON синхронизирован;
+полный structure/parity/pre-check PASS (43 Q/43 блока, hard=0), но это
+авторская точечная проверка. Независимая приёмка Q15/Q22/Q23/Q43 ожидается.
 Java CompletableFuture Q11 исправлен (Java 8 timeout), Q14 об отмене
 добавлен. Структура/parity PASS, полный pre-check старого JSON FAIL на
 прежних Q2/Q3/Q4/Q6/Q8/Q10; Q11/Q14 без hard-сигналов, blind review ожидается.
@@ -213,9 +217,18 @@ Java IO/NIO, Jackson, URL Shortener, RabbitMQ, Kafka, сравнение бро�
 event-driven открыт. Ad Click Event Aggregation и Distributed Email Service Q1–Q4, Metrics Platform Q1–Q4, Leaderboard Q1–Q5, Object Storage Q1–Q4,
 Reservation System Q1–Q4, Notification System Q1–Q4, Digital Wallet Q1–Q4,
 Database Transactions Q43, Java CompletableFuture Q11/Q14,
+Database Transactions Q15/Q22/Q23,
 Kubernetes Q22/Q39/Q46/Q47, RabbitMQ Streams Q40–Q42
 и Spring Data JDBC Q17 тоже ждут
 содержательной приёмки.
+
+Следующий авторский пакет: Java CompletableFuture Q2/Q3/Q4/Q6/Q8/Q10
+и парный JSON. Сверить факты по официальной Java-документации и разобрать
+старые hard-сигналы. Независимую MCQ-приёмку вести отдельно: ближайший
+пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,
+затем Uber Q6/Q7, Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1 и
+Database Transactions Q15/Q22/Q23/Q43 B0. Не записывать авторскую
+самопроверку как независимую фазу A/B.
 
 ## Как работать с каждой группой
 

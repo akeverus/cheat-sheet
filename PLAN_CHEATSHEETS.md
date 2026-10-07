@@ -656,13 +656,32 @@ hard=0, 17 предупреждений. Авторская точечная п�
 Для этих пакетов проведена авторская точечная проверка
 по официальной документации, **полная содержательная проверка старых
 файлов не проводилась**. Автоматические структура/parity Q43 PASS,
-общий pre-check транзакционного JSON FAIL на ранее существовавших
+общий pre-check транзакционного JSON теперь PASS после отдельной правки
 Q15/Q22/Q23; у CompletableFuture — на прежних Q2/Q3/Q4/Q6/Q8/Q10.
 Полный parity/pre-check Kubernetes тоже FAIL на прежних блоках; его
 fact-freshness sidecar остаётся TODO. Это не оценка новых Q43/Q14/Q46/Q47.
 Независимая содержательная
 приёмка новых MCQ ещё не проведена. Посторонние AI/ML и audit-файлы
 в рабочем дереве оставлены за параллельной работой.
+
+**Контрольная точка 07.10.2026 — Database Transactions Q15/Q22/Q23 · О.**
+По [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),
+[`OptimisticLockException`](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/optimisticlockexception),
+[Spring Retry 2.x](https://docs.spring.io/spring-retry/docs/current/apidocs/spring.retry/org/springframework/retry/annotation/Retryable.html),
+[Spring rollback rules](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html)
+и [`@Transactional`](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html)
+исправлены момент проверки версии и повтор всей операции в новой транзакции,
+приоритет rollback-правил и общий режим Spring Framework 6.2+,
+видимость методов class-based proxy с версии 6.0 и граница AspectJ.
+Парные Q15/Q22/Q23 B0 переписаны с разбором A/B/C/D и sections;
+structure/parity/pre-check всего JSON: PASS (43 Q/43 блока, hard=0,
+два предупреждения). Это авторская точечная проверка, не полная проверка
+старого файла и не независимый blind review. MCQ Q15/Q22/Q23 B0 и Q43 B0
+ждут независимой приёмки. Состав шпаргалок и число Q не менялись,
+`inventory.tsv` не обновлялся. Следующий **авторский** пакет после этой
+группы: `programming-languages/java/java-completable-future-interview.md`
+Q2/Q3/Q4/Q6/Q8/Q10 с парным JSON — разобрать старые hard-сигналы вместе
+с фактами, затем зафиксировать оставшиеся ограничения отдельно от blind review.
 
 1. **Точная точка продолжения:** независимая содержательная MCQ-приёмка
    последней группы, начиная с `frameworks/spring/spring-batch-interview.md`
@@ -683,7 +702,7 @@ fact-freshness sidecar остаётся TODO. Это не оценка новы�
    Spring Rest Client Q12/Q14, WebAuthn Q24/Q46, Spring Security Q44,
    Metrics & Tracing Q40, Spring Testing Q9/Q10, Uber Q6/Q7,
    Google Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1,
-   Spring Batch Q6 B0/B1/Q28/Q38
+   Spring Batch Q6 B0/B1/Q28/Q38, Database Transactions Q15/Q22/Q23 B0
    и RabbitMQ Streams Q40–Q42 ждут
    независимой MCQ-приёмки.
    Java 26–27, HTTP/3, Jackson 3 и Python typing/packaging уже написаны.
