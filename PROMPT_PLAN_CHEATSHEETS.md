@@ -235,7 +235,7 @@ Reservation System Q1–Q4, Notification System Q1–Q4, Digital Wallet Q1–Q4,
 Database Transactions Q43, Java CompletableFuture Q11/Q14,
 Database Transactions Q15/Q22/Q23, Java CompletableFuture Q2/Q3/Q4/Q6/Q8/Q10,
 Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13,
-Spring Data JPA Q3 B0/Q4 B1/Q5–Q17 B0,
+Spring Data JPA Q3 B0/Q4 B1/Q5–Q19 B0/Q39 B0,
 Kubernetes Q22/Q39/Q46/Q47, RabbitMQ Streams Q40–Q42
 и Spring Data JDBC Q17 тоже ждут
 содержательной приёмки.
@@ -275,14 +275,26 @@ Q17 уточняет `Specification`/Criteria и фильтры: в Spring Data 
 пример начат с базового `isActive()`, а `%`/`_` в пользовательском
 `LIKE` экранируются через `EscapeCharacter`.
 Парные MCQ и fact-freshness sidecar обновлены.
-Structure PASS (43 Q/44 блока), локальный pre-check Q3 B0/Q4 B1/Q5–Q17 B0 PASS;
-полный parity FAIL, в старом JSON остаётся 24 hard-сигнала pre-check
-и 28 блоков с предупреждениями.
+Structure PASS (43 Q/44 блока), локальный pre-check Q3 B0/Q4 B1/Q5–Q19 B0/Q39 B0 PASS;
+полный parity FAIL, в старом JSON остаётся 22 hard-сигнала pre-check
+и 26 блоков с предупреждениями.
 Независимой приёмки и полного содержательного обзора темы не было.
 
-Следующий авторский пакет: Spring Data JPA Q18 B0 и парный JSON.
-Сверить JPA auditing, `AuditorAware`, `@EnableJpaAuditing`, lifecycle
-и границы Spring Security; затем Q19 B0.
+07.10 Spring Data JPA Q18/Q19/Q39 B0: Q18 и Q39 разделены на настройку
+JPA auditing и его пределы. Даты не требуют `AuditorAware`, поля автора
+требуют; `modifyOnCreate=true`, `setDates=true` по умолчанию. Пример
+Spring Security исключает анонимный `Authentication` через
+`AuthenticationTrustResolver`. Q39 уточняет фоновую идентичность,
+отсутствие callbacks и автоматической проверки `@Version` при JPQL bulk
+update. Q19 исправляет ложные выводы об ID, `merge(detached)` и
+обязательном `SELECT`. Факты сверены по официальным Spring Data JPA
+4.1.1, Spring Security 7.1.1 и Jakarta Persistence 3.2; парные JSON и
+fact-freshness sidecar обновлены. У трёх блоков нет локальных hard/warnings,
+но независимой blind-приёмки нет.
+
+Следующий авторский пакет: Spring Data JPA Q20 B0 и парный JSON.
+Сверить JPA lifecycle callbacks, `@EntityListeners`, ограничения кода
+в callback и пересечение с Q18/Q39; затем Q21 B0.
 Не считать весь файл проверенным после точечной правки.
 Независимую MCQ-приёмку
 вести отдельно: ближайший

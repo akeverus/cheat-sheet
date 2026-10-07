@@ -875,9 +875,35 @@ sections авторски сверены; структура 43 Q/44 блока 
 24 hard-сигнала, 28 блоков с warnings, общий parity FAIL;
 независимая приёмка открыта.
 
+**Контрольная точка 07.10.2026 — Spring Data JPA Q18/Q19/Q39 B0 · О.**
+Q18 и повторяющий его Q39 разделены: Q18 описывает включение
+`@EnableJpaAuditing`, подключение `AuditingEntityListener`,
+даты без `AuditorAware`, автора с `AuditorAware<T>` и значения
+`modifyOnCreate`/`setDates` по умолчанию. Для Spring Security пример
+проверяет анонимный `Authentication` через `AuthenticationTrustResolver`,
+а не только `isAuthenticated()`. Q39 теперь посвящён фоновому автору,
+JPQL bulk update/delete, обходу listener и автоматической проверки
+`@Version`, а также пределу истории в полях строки. Проверены
+[Spring Data JPA Auditing 4.1.1](https://docs.spring.io/spring-data/jpa/reference/auditing.html),
+[`@EnableJpaAuditing` API](https://docs.spring.io/spring-data/jpa/reference/api/java/org/springframework/data/jpa/repository/config/EnableJpaAuditing.html),
+[Spring Security 7.1.1 trust resolver](https://docs.spring.io/spring-security/reference/api/java/org/springframework/security/authentication/AuthenticationTrustResolver.html)
+и [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
+Q19 по [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
+и [Spring Data JPA Persisting Entities 4.1.1](https://docs.spring.io/spring-data/jpa/reference/jpa/entity-persistence.html)
+исправляет `merge(detached)`: управляемым становится возвращённый
+экземпляр, который может уже быть в контексте. Новый объект с назначенным
+ID ещё не managed; обязательный `SELECT` перед каждым `merge()` удалён.
+Парные MCQ Q18/Q19/Q39 B0 и fact-freshness sidecar синхронизированы.
+Авторски просмотрены A/B/C/D и sections. Структура 43 Q/44 блока PASS,
+локальный pre-check всех трёх блоков без hard/warnings; весь прежний файл
+имеет 22 hard-сигнала и 26 блоков с warnings, общий parity FAIL.
+Независимой blind-приёмки этих блоков и полного содержательного аудита
+файла не было; инвентарь не менялся.
+
 **Точная точка авторского продолжения:** `frameworks/spring/spring-data-jpa-interview.md`
-Q18 B0 с парным JSON — сверить JPA auditing, `AuditorAware`,
-`@EnableJpaAuditing`, lifecycle и границы Spring Security; затем Q19 B0.
+Q20 B0 с парным JSON — сверить JPA lifecycle callbacks,
+`@EntityListeners`, ограничения callback-кода и пересечение с Q18/Q39;
+затем Q21 B0. Перед правкой сравнить заголовки и соседние ответы.
 Не объявлять весь файл прошедшим проверку.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
@@ -902,7 +928,7 @@ Q18 B0 с парным JSON — сверить JPA auditing, `AuditorAware`,
    Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13/Q14, WebAuthn Q24/Q46, Spring Security Q44,
    Metrics & Tracing Q40, Spring Testing Q9/Q10, Uber Q6/Q7,
    Google Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1,
-   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q17 B0,
+   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q19 B0/Q39 B0,
    Database Transactions Q15/Q22/Q23 B0
    и RabbitMQ Streams Q40–Q42 ждут
    независимой MCQ-приёмки.
@@ -910,8 +936,8 @@ Q18 B0 с парным JSON — сверить JPA auditing, `AuditorAware`,
    Остальные P2/P3 без решения остаются кандидатами. Статусы Python 3.15 и
    PostgreSQL 19 перепроверять после финальных релизов.
 3. Отдельной задачей пройти независимую blind-приёмку новых MCQ и старый
-   parity/pre-check backlog Hibernate, Spring Data JPA (после Q3/Q4 и Q5–Q17 ещё
-   24 hard-сигнала), Java IO/NIO, Jackson,
+   parity/pre-check backlog Hibernate, Spring Data JPA (после Q3/Q4,
+   Q5–Q19 и Q39 ещё 22 hard-сигнала), Java IO/NIO, Jackson,
    URL Shortener, RabbitMQ, Kafka, сравнения брокеров и event-driven;
    положительный валидатор не означает `FINAL`.
 4. Продолжать выборку официальных публикаций за скользящие шесть месяцев;
