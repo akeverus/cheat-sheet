@@ -1,6 +1,6 @@
 ---
 title: "Вопросы на собеседовании: Тестирование в Spring Boot"
-description: "Spring Boot тестирование: @SpringBootTest, @WebMvcTest, @DataJpaTest, MockMvc, @MockBean, test slices, ApplicationContext caching, @TestConfiguration"
+description: "Spring Boot тестирование: @SpringBootTest, @WebMvcTest, @DataJpaTest, MockMvc, @MockBean/@MockitoBean, test slices, кеш ApplicationContext"
 tags:
   - interview
   - spring
@@ -15,13 +15,13 @@ aliases:
 prerequisites:
   - "[[spring-testing]]"
 next: []
-updated: "2026-05-15"
+updated: "2026-10-07"
 ---
 # Вопросы на собеседовании: Тестирование в Spring Boot
 
 Spring Boot предоставляет мощную тестовую инфраструктуру: от лёгких unit-тестов до полных интеграционных тестов с реальным HTTP-сервером. Ключевая тема — **test slices**: загрузка только нужной части контекста для скорости.
 
-Дата последнего обновления: 2026-04-20.
+Дата последнего обновления: 2026-10-07. Примеры с `@MockBean` и `@SpyBean` в старых Q показывают синтаксис Spring Boot до 3.4; для Boot 3.4+ используйте `@MockitoBean` и `@MockitoSpyBean` из Spring Framework 6.2+, а в Boot 4 старые аннотации удалены (см. Q9/Q10).
 
 ## Полезные ссылки
 
@@ -392,12 +392,12 @@ class OrderControllerTest {
 
 ## Q9. (!) Чем `@MockBean` отличается от `@Mock` из Mockito?
 
-Оба создают mock, но живут на разных уровнях. `@Mock` — чистый Mockito, к Spring отношения не имеет: объект-заглушка, который вы вручную вставляете через `@InjectMocks`. `@MockBean` — аннотация Spring Boot Test: она **подменяет настоящий бин в `ApplicationContext`** mock-объектом, и Spring сам внедряет его во все зависимости через DI.
+Оба создают mock, но живут на разных уровнях. `@Mock` — чистый Mockito, к Spring отношения не имеет: его передают в тестируемый объект через конструктор либо `@InjectMocks` (Mockito сам пытается внедрить помеченные моки). `@MockBean` — прежняя аннотация Spring Boot Test: она **регистрирует mock в `ApplicationContext`**, заменяя подходящий бин, а Spring внедряет его через DI.
 
 | Параметр | `@Mock` (Mockito) | `@MockBean` (Spring Boot Test) |
 |---|---|---|
 | Spring-контекст | Не участвует | Добавляет mock в ApplicationContext |
-| DI | Ручной (через `@InjectMocks`) | Автоматический (Spring DI) |
+| DI | Конструктор или `@InjectMocks` через Mockito | Spring DI |
 | Сброс стейта | После метода (с `@ExtendWith`) | После каждого теста |
 | Кеш контекста | Не влияет | Загрязняет кеш → пересоздание контекста |
 | Использование | Unit тесты | Slice тесты / `@SpringBootTest` |
@@ -409,16 +409,16 @@ class OrderServiceTest {
     @InjectMocks OrderService service;
 }
 
-// @MockBean — slice test со Spring:
+// @MockitoBean — slice test со Spring Boot 3.4+:
 @WebMvcTest(OrderController.class)
 class OrderControllerTest {
-    @MockBean OrderService service;  // Spring подставит mock в контроллер
+    @MockitoBean OrderService service;  // Spring подставит mock в контроллер
 }
 ```
 
 **Подводный камень.** `@MockBean` входит в ключ кеширования контекста: каждый уникальный набор `@MockBean` заставляет Spring собирать **новый** `ApplicationContext` вместо переиспользования кешированного (подробнее в Q13). Поэтому в slice-тестах его минимизируют, а одинаковые наборы моков выносят в общий базовый класс. `@Mock` на кеш не влияет вовсе — он вне Spring.
 
-**Актуальный статус.** С Spring Boot 3.4 `@MockBean` помечена **deprecated**, а в Boot 4.0 удалена. Замена — `@MockitoBean` из Spring Framework 6.2 (пакет `org.springframework.test.context.bean.override.mockito`): семантика та же — подмена бина в контексте mock-объектом, — но механизм теперь живёт в самом Framework, а не в Boot. В новом коде используйте `@MockitoBean`.
+**Актуальный статус.** С Spring Boot 3.4 `@MockBean` помечена **deprecated**, а в Boot 4.0 удалена. Замена — `@MockitoBean` из Spring Framework 6.2 (пакет `org.springframework.test.context.bean.override.mockito`). По умолчанию она **заменяет или создаёт** бин (`REPLACE_OR_CREATE`); `enforceOverride = true` требует существующий бин и выявляет ошибочный тестовый контекст. При нескольких кандидатах нужен qualifier или имя. Имя поля тоже может служить fallback qualifier и влиять на ключ кеша контекста, поэтому в соседних тестах его сохраняют одинаковым. Подменённый mock не проходит обычное создание AOP-прокси оригинального бина. [Spring Framework: bean overrides](https://docs.spring.io/spring-framework/reference/testing/annotations/integration-spring/annotation-mockitobean.html).
 
 ## Q10. Что такое `@SpyBean` и когда нужен?
 
@@ -430,7 +430,7 @@ class OrderControllerTest {
 @SpringBootTest
 class OrderEventTest {
 
-    @SpyBean
+    @MockitoSpyBean
     private OrderEventPublisher eventPublisher;
 
     @Autowired
@@ -463,7 +463,7 @@ class OrderEventTest {
 
 Как и `@MockBean`, `@SpyBean` участвует в ключе кеша контекста — злоупотреблять им не стоит.
 
-**Актуальный статус.** Судьба у `@SpyBean` та же, что и у `@MockBean`: с Spring Boot 3.4 аннотация **deprecated**, в Boot 4.0 удалена. Замена — `@MockitoSpyBean` из Spring Framework 6.2; поведение прежнее (spy поверх реального бина в контексте), в новом коде используйте её.
+**Актуальный статус.** `@SpyBean` deprecated с Spring Boot 3.4 и удалена в Boot 4.0; замена — `@MockitoSpyBean` из Spring Framework 6.2. Её стратегия `WRAP` требует **ровно один существующий** подходящий бин; в отличие от `@MockitoBean`, отсутствующий бин она не создаёт. Для spy используйте `doReturn(...)`/`doThrow(...)` при заглушении: `when(spy.method())` может вызвать настоящий метод уже во время настройки теста. При AOP-прокси spy оборачивается прокси; учитывайте это при проверке вызовов. [Spring Framework: Mockito spy override](https://docs.spring.io/spring-framework/reference/testing/annotations/integration-spring/annotation-mockitobean.html).
 
 ## Q11. Что такое `@TestConfiguration` и зачем нужна?
 

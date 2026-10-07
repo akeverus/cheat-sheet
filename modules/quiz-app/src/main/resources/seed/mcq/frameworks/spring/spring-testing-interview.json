@@ -491,7 +491,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Аннотация `@MockBean` тоже не участвует в Spring-контексте — это просто обёртка над `@Mock`.",
+            "text": "`@Mock` живёт вне Spring; `@MockBean` тоже остаётся локальной заглушкой и не меняет `ApplicationContext`, хотя используется в slice-тестах.",
               "correct": false,
               "sections": {
                 "what_actually": "`@MockBean` добавляет mock в `ApplicationContext` и внедряет его через Spring DI.",
@@ -503,7 +503,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Аннотация `@Mock` тоже входит в общий ключ кеша контекста и заставляет пересобирать `ApplicationContext` заново.",
+            "text": "`@Mock` живёт вне Spring; `@MockBean` подменяет бин, однако оба влияют на ключ кеша `ApplicationContext` и требуют нового контекста для следующего теста.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Mock` вне Spring и на кеш контекста не влияет; ключ загрязняет `@MockBean`.",
@@ -515,7 +515,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Аннотация `@MockBean` требует ручного внедрения через `@InjectMocks`, ровно так же как и `@Mock`.",
+            "text": "`@Mock` живёт вне Spring; `@MockBean` подменяет бин, но зависимости контроллера всё равно придётся внедрять вручную через `@InjectMocks`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@MockBean` внедряется автоматически через Spring DI, ручной `@InjectMocks` не нужен.",
@@ -527,14 +527,14 @@
             {
               "label": "D",
               "order": 3,
-              "text": "`@Mock` — чистый Mockito с ручным `@InjectMocks`, а `@MockBean` подменяет бин в контексте через Spring DI.",
+            "text": "`@Mock` живёт вне Spring; `@MockBean` подменяет бин в контексте, и Spring внедряет его в зависимости через DI.",
               "correct": true,
               "sections": {
-                "explanation": "Оба создают mock, но `@Mock` живёт вне Spring, а `@MockBean` — внутри `ApplicationContext`.",
-                "example": "`@Mock` + `@InjectMocks` — unit-тест; `@MockBean OrderService` — Spring подставит mock в контроллер.",
-                "when_to_apply": "`@Mock` — для unit-тестов, `@MockBean` — для slice- и `@SpringBootTest`.",
-                "edge_cases": "`@MockBean` входит в ключ кеша и плодит новые контексты; `@Mock` на кеш не влияет.",
-                "related": "С Spring Boot 3.4 `@MockBean` deprecated, замена — `@MockitoBean` из Framework 6.2."
+                "explanation": "`@Mock` работает вне ApplicationContext: зависимости передают конструктором или через `@InjectMocks`, которое Mockito выполняет при инициализации теста. Legacy `@MockBean` регистрирует mock в Spring-контексте. В Spring Boot 3.4+ его заменяет `@MockitoBean` из Spring Framework 6.2.",
+                "example": "В unit-тесте `@Mock OrderRepository` передают конструктору сервиса или используют `@InjectMocks`. В `@WebMvcTest` поле `@MockitoBean OrderService` подставляет mock в контроллер через Spring DI.",
+                "when_to_apply": "`@Mock` подходит для unit-теста без Spring; `@MockitoBean` — для slice-теста или `@SpringBootTest`, где зависимость является bean.",
+                "edge_cases": "`@MockitoBean` по умолчанию заменяет или создаёт bean. `enforceOverride = true` требует существующий bean; qualifier и имя поля помогают выбрать кандидата и могут влиять на ключ кеша контекста. Подменённый mock не сохраняет AOP-прокси оригинального bean.",
+                "related": "`@MockBean` deprecated с Spring Boot 3.4 и удалён в Boot 4; новый API — `@MockitoBean` из Spring Framework 6.2."
               }
             }
           ]
@@ -551,20 +551,20 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Частичный mock: реальный бин, где переопределяют методы (`doReturn`/`doThrow`) или проверяют факт вызова, остальное настоящее.",
+            "text": "`@SpyBean` оборачивает реальный бин: остальные методы работают, а нужный можно заглушить либо проверить через `verify`.",
               "correct": true,
               "sections": {
-                "explanation": "Всё, что вы не переопределили, у spy продолжает работать как у настоящего бина.",
-                "example": "`verify(eventPublisher).publish(...)` проверяет вызов реального бина, не подменяя логику.",
+                "explanation": "Spy оставляет реальную логику существующего bean, позволяя точечно заглушить метод или проверить его вызов. Для Spring Boot 3.4+ используют `@MockitoSpyBean` из Spring Framework 6.2.",
+                "example": "`@MockitoSpyBean OrderEventPublisher publisher` позволяет проверить `verify(publisher).publish(...)`, оставив остальную логику bean рабочей.",
                 "when_to_apply": "Когда нужно проверить вызов или точечно сломать один метод, оставив остальное настоящим.",
-                "edge_cases": "`@MockBean` — заглушка целиком; `@SpyBean` — реальный бин с точечной подменой.",
-                "related": "С Spring Boot 3.4 `@SpyBean` deprecated, замена — `@MockitoSpyBean` из Framework 6.2."
+                "edge_cases": "`@MockitoSpyBean` применяет WRAP и требует ровно один существующий подходящий bean; отсутствующий bean не создаётся. Для безопасного stubbing spy используют `doReturn`/`doThrow`: `when(spy.method())` может вызвать реальный метод. AOP-прокси при этом остаётся поверх spy.",
+                "related": "Legacy `@SpyBean` deprecated с Boot 3.4 и удалён в Boot 4; `@MockitoBean`, напротив, по умолчанию может создать отсутствующий bean."
               }
             },
             {
               "label": "B",
               "order": 1,
-              "text": "Это полная заглушка: по умолчанию все методы возвращают `null`, реальной логики в бине нет.",
+            "text": "`@SpyBean` заменяет бин целиком: все методы по умолчанию возвращают значения Mockito, а настоящая логика больше не вызывается.",
               "correct": false,
               "sections": {
                 "what_actually": "Полная заглушка с `null`-методами — это `@MockBean`; `@SpyBean` держит реальную логику.",
@@ -576,7 +576,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "В отличие от `@MockBean`, аннотация `@SpyBean` вовсе не входит в ключ кеша контекста.",
+            "text": "`@SpyBean` сохраняет реальный бин: его методы можно заглушить и проверить, но объявление spy не меняет ключ кеша контекста.",
               "correct": false,
               "sections": {
                 "what_actually": "Как и `@MockBean`, `@SpyBean` участвует в ключе кеша — злоупотреблять им не стоит.",
@@ -588,7 +588,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Через `@SpyBean` проверить факт вызова метода нельзя — доступно лишь переопределение поведения.",
+            "text": "`@SpyBean` сохраняет реальный бин: метод можно заглушить, но проверить его фактический вызов через `verify` уже нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "`verify` как раз и проверяет факт вызова метода реального бина.",
