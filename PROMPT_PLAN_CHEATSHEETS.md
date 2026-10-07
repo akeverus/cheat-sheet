@@ -334,10 +334,23 @@ API и Jakarta Persistence 3.2 исправлено `Session.load` (удалён
 независимой приёмки нет. Старый Hibernate JSON остаётся с
 18 hard/28 предупреждений, parity PASS.
 
-Следующий авторский пакет: Spring Data JPA Q22 B0 и парный JSON.
-Сверить `LAZY`/`EAGER`, форму SQL и N+1, дефолты связей,
-`LazyInitializationException` и OSIV. Сравнить Hibernate Q12/Q14 и
-Spring Data JPA Q23 до правки; затем Q23 B0.
+07.10 Spring Data JPA Q22 B0 и Hibernate Q19 B0: по Jakarta Persistence
+3.2, Hibernate ORM 7.4 и Spring Boot SQL docs исправлены ложные
+`EAGER = JOIN`, `LAZY = отдельный SELECT` и неизбежность
+LazyInitializationException после сервисной транзакции. `EAGER` —
+требование, `LAZY` — hint; to-one по умолчанию EAGER, to-many LAZY;
+Hibernate JPQL может дать вторичные SELECT и N+1 даже для EAGER.
+Парные MCQ/sections и freshness-sidecars синхронизированы. Обе пары
+structure PASS, Q22/Q19 локально без hard/warnings; Hibernate full
+parity PASS, Spring Data JPA full parity FAIL из-за прежних блоков;
+независимой blind-приёмки нет. Полный аудит файлов не проводился.
+
+Следующий авторский пакет: Spring Data JPA Q23 B0 и парный JSON.
+Сопоставить Hibernate Q20/Q21 и Spring Data JPA Q24: Q23 ошибочно
+сводит N+1 только к LAZY; Hibernate Q21 утверждает, что EAGER решит
+N+1; JPA Q23/Q24 обещают LEFT JOIN от `@EntityGraph` как обязательную
+форму SQL. Сверить по официальным Jakarta Persistence/Hibernate/Spring
+Data источникам, исправить теорию и парные MCQ, обновить sidecar.
 Не считать весь файл проверенным после точечной правки.
 Независимую MCQ-приёмку
 вести отдельно: ближайший

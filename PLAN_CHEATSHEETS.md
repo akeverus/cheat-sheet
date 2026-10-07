@@ -963,10 +963,35 @@ MCQ Q10 B0/sections и freshness-sidecar синхронизированы;
 Hibernate PASS. Старый файл по-прежнему имеет 18 hard-сигналов и
 28 блоков с warnings, независимой содержательной приёмки Q10 нет.
 
-**Точная точка авторского продолжения:** Spring Data JPA Q22 B0 с
-парным JSON — `LAZY`/`EAGER`, форма SQL, N+1, дефолты связей,
-`LazyInitializationException`, OSIV. Сравнить соседние Hibernate
-Q12/Q14 и Spring Data JPA Q23; затем Q23 B0.
+**Контрольная точка 07.10.2026 — Spring Data JPA Q22 B0 + Hibernate Q19 B0 · О.**
+После просмотра заголовков (`З`) точечно сопоставлены оба ответа и
+четыре варианта/sections каждого MCQ (`О`); полного аудита файлов (`П`)
+не было. По [Jakarta Persistence 3.2 `FetchType`](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/fetchtype),
+[Hibernate ORM 7.4 fetching](https://docs.hibernate.org/orm/7.4/userguide/html_single/),
+[Hibernate `LazyInitializationException`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/LazyInitializationException.html)
+и [Spring Boot OSIV](https://docs.spring.io/spring-boot/reference/data/sql.html)
+исправлены ложные гарантии `EAGER = JOIN` и `LAZY = отдельный SELECT`;
+`EAGER` — требование ранней загрузки, `LAZY` — подсказка, to-one по
+умолчанию EAGER, to-many LAZY. Hibernate JPQL без fetch join может
+загрузить EAGER связь вторичными SELECT и дать N+1. Spring Boot web
+по умолчанию включает OSIV, поэтому окончание сервисной транзакции
+не обязательно закрывает `EntityManager`; исключение связано с доступом
+к незагруженной связи после закрытия `Session`. Парные MCQ и
+fact-freshness sidecar синхронизированы. Structure 93 Q/94 блока PASS,
+оба Markdown без inline MCQ; локальный pre-check Q22/Q19 без hard/warnings.
+Полный parity Hibernate PASS после выравнивания Q19, Spring Data JPA FAIL
+на прежних блоках (25 нарушений длины, 8 повторяющихся 10-грамм и другие
+сигналы); полный skel старых файлов: JPA 19 hard/23 блока с warnings,
+Hibernate 18/28. Это не независимая содержательная приёмка: Q22/Q19
+ожидают blind review.
+
+**Точная точка авторского продолжения:** Spring Data JPA Q23 B0 и парный
+JSON про N+1. До правки сопоставить Hibernate Q20/Q21 и соседний JPA Q24:
+Q23 сейчас сводит N+1 только к LAZY, Q21 Hibernate ошибочно обещает,
+что переход на EAGER решает N+1, а JPA Q23/Q24 обещают LEFT JOIN от
+`@EntityGraph` как обязательную форму SQL. Исправить по официальным
+Jakarta Persistence/Hibernate/Spring Data источникам, затем обновить
+оба MCQ и sidecar.
 Не объявлять весь файл прошедшим проверку.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
@@ -991,8 +1016,8 @@ Q12/Q14 и Spring Data JPA Q23; затем Q23 B0.
    Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13/Q14, WebAuthn Q24/Q46, Spring Security Q44,
    Metrics & Tracing Q40, Spring Testing Q9/Q10, Uber Q6/Q7,
    Google Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1,
-   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q21 B0/Q39 B0,
-   Hibernate Q8–Q10 B0,
+   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q22 B0/Q39 B0,
+   Hibernate Q8–Q10 B0/Q19 B0,
    Database Transactions Q15/Q22/Q23 B0
    и RabbitMQ Streams Q40–Q42 ждут
    независимой MCQ-приёмки.
@@ -1001,7 +1026,7 @@ Q12/Q14 и Spring Data JPA Q23; затем Q23 B0.
    PostgreSQL 19 перепроверять после финальных релизов.
 3. Отдельной задачей пройти независимую blind-приёмку новых MCQ и старый
    parity/pre-check backlog Hibernate, Spring Data JPA (после Q3/Q4,
-   Q5–Q21 и Q39 ещё 20 hard-сигналов; Hibernate после Q8–Q10 — 18),
+   Q5–Q22 и Q39 ещё 19 hard-сигналов; Hibernate после Q8–Q10/Q19 — 18),
    Java IO/NIO, Jackson,
    URL Shortener, RabbitMQ, Kafka, сравнения брокеров и event-driven;
    положительный валидатор не означает `FINAL`.
