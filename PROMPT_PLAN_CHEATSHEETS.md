@@ -235,7 +235,7 @@ Reservation System Q1–Q4, Notification System Q1–Q4, Digital Wallet Q1–Q4,
 Database Transactions Q43, Java CompletableFuture Q11/Q14,
 Database Transactions Q15/Q22/Q23, Java CompletableFuture Q2/Q3/Q4/Q6/Q8/Q10,
 Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13,
-Spring Data JPA Q3 B0/Q4 B1/Q5–Q20 B0/Q39 B0,
+Spring Data JPA Q3 B0/Q4 B1/Q5–Q21 B0/Q39 B0, Hibernate Q8/Q9 B0,
 Kubernetes Q22/Q39/Q46/Q47, RabbitMQ Streams Q40–Q42
 и Spring Data JDBC Q17 тоже ждут
 содержательной приёмки.
@@ -275,9 +275,9 @@ Q17 уточняет `Specification`/Criteria и фильтры: в Spring Data 
 пример начат с базового `isActive()`, а `%`/`_` в пользовательском
 `LIKE` экранируются через `EscapeCharacter`.
 Парные MCQ и fact-freshness sidecar обновлены.
-Structure PASS (43 Q/44 блока), локальный pre-check Q3 B0/Q4 B1/Q5–Q20 B0/Q39 B0 PASS;
-полный parity FAIL, в старом JSON остаётся 21 hard-сигнал pre-check
-и 25 блоков с предупреждениями.
+Structure PASS (43 Q/44 блока), локальный pre-check Q3 B0/Q4 B1/Q5–Q21 B0/Q39 B0 PASS;
+полный parity FAIL, в старом JSON остаётся 20 hard-сигналов pre-check
+и 24 блока с предупреждениями.
 Независимой приёмки и полного содержательного обзора темы не было.
 
 07.10 Spring Data JPA Q18/Q19/Q39 B0: Q18 и Q39 разделены на настройку
@@ -301,10 +301,34 @@ commit. Пример listener больше не посылает внешнее 
 по Spring Framework и Spring Modulith. MCQ и sidecar синхронизированы,
 Q20 локально без hard/warnings; независимой blind-приёмки нет.
 
-Следующий авторский пакет: Spring Data JPA Q21 B0 и парный JSON.
-Сверить flush modes, фактическое время SQL, автоматический flush перед
-query и `COMMIT`/`AUTO`; затем Q22 B0. Проверить соседние Q19/Q20 и
-Hibernate-шпаргалку до правки.
+07.10 Spring Data JPA Q21 B0 и Hibernate Q8 B0: по Jakarta Persistence
+3.2 и Hibernate ORM 7.4 исправлено «AUTO flush перед каждым SELECT».
+JPA требует видимости влияющих изменений, Hibernate проверяет
+пересечение JPQL/HQL и ожидающих операций; `COMMIT` не гарантирует
+видимость до commit и может flush'ить раньше, `MANUAL` не JPA.
+Batch-пример Q21 не меняет режим без промежуточных запросов;
+`flush`/`clear` отделены от JDBC batching и `IDENTITY`. Парные MCQ
+и freshness-sidecars синхронизированы; Hibernate Q8 также различает
+diff-based snapshot и bytecode-enhanced in-line tracking. Q21/Q8
+локально без hard/warnings.
+В старом Hibernate JSON после Q8 остаются 18 hard и 29 блоков с warnings;
+его прежний freshness-status `AUDITED` снят после изменения Q8.
+Независимой приёмки новых редакций нет; parity Spring Data JPA FAIL,
+Hibernate PASS.
+
+07.10 Hibernate Q9 B0: обнаружено пересечение со Spring Data JPA Q19.
+По Hibernate 6.6 Session API и 7.0 Migration Guide исправлено:
+`Session.save/update` deprecated с 6.0 и удалены в 7.0;
+`save` исторически возвращал `Object`, а `merge(detached)` может
+вернуть уже существующий managed-экземпляр. MCQ и sidecar
+синхронизированы, Q9 локально без hard/warnings. У старого Hibernate
+JSON 18 hard/28 предупреждений; независимой приёмки Q9 нет.
+
+Следующий авторский пакет: Hibernate Q10 B0 и парный JSON.
+Проверить удаление `Session.load` в 7.0, статус `Session.get`,
+семантику JPA `find/getReference`, SQL и исключение при отсутствии
+строки. Затем Spring Data JPA Q22 B0: `LAZY`/`EAGER`, форма SQL, N+1,
+дефолты связей, OSIV; проверить Hibernate Q12/Q14 и Spring Data JPA Q23.
 Не считать весь файл проверенным после точечной правки.
 Независимую MCQ-приёмку
 вести отдельно: ближайший

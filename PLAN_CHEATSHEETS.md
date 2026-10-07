@@ -915,10 +915,46 @@ MCQ Q20 B0 и sidecar обновлены, A/B/C/D с sections авторски �
 У прежнего файла остаются 21 hard-сигнал и 25 блоков с warnings,
 общий parity FAIL; независимой blind-приёмки нет.
 
-**Точная точка авторского продолжения:** `frameworks/spring/spring-data-jpa-interview.md`
-Q21 B0 с парным JSON — сверить flush modes, фактическое время SQL,
-автоматический flush перед query и `COMMIT`/`AUTO`; затем Q22 B0.
-Сначала сравнить Q21 с соседними Q19/Q20 и Hibernate-шпаргалкой.
+**Контрольная точка 07.10.2026 — Spring Data JPA Q21 B0 + Hibernate Q8 B0 · О.**
+По [Jakarta Persistence 3.2 `FlushModeType`](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/flushmodetype)
+и [Hibernate ORM 7.4 Flushing/Batching](https://docs.hibernate.org/orm/7.4/userguide/html_single/)
+исправлено ложное «`AUTO` flush перед каждым SELECT»: JPA гарантирует
+видимость влияющих изменений, Hibernate проверяет пересечение JPQL/HQL
+с ожидающими операциями. `COMMIT` не гарантирует видимость изменений
+промежуточному запросу и может flush'ить раньше commit; `MANUAL` —
+режим Hibernate, не JPA. Batch-пример Q21 больше не меняет режим без
+промежуточных запросов; исправлен первый flush после 50-й записи,
+описаны `flush()`/`clear()` отдельно от JDBC batching и `IDENTITY`.
+Соседний Hibernate Q8 и его MCQ синхронизированы; дополнительно
+разделены обычное diff-based dirty checking и in-line tracking
+при bytecode enhancement. Новая версия Q8
+требует повторной независимой приёмки, freshness-status переведён в
+`TODO`. Авторски сверены A/B/C/D и sections обоих блоков; локальный
+pre-check без hard/warnings. Структура MCQ двух файлов PASS; у старого
+Spring Data JPA ещё 20 hard-сигналов/24 блока с warnings, у Hibernate
+18/29; parity Spring Data JPA FAIL, Hibernate PASS. Полной
+содержательной проверки файлов не было.
+
+**Контрольная точка 07.10.2026 — Hibernate Q9 B0 · О.**
+При сопоставлении Spring Data JPA Q19 найден устаревший ответ Hibernate
+Q9: он называл `Session.save/update` действующими методами и обещал
+всегда «новую копию» после `merge`. По [Hibernate 7.0 Migration Guide](https://docs.hibernate.org/orm/7.0/migration-guide/)
+все формы `Session.save/update` удалены с 7.0, в
+[6.6 API](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/Session.html)
+они deprecated; `save` возвращал `Object`. `merge(detached)` возвращает
+managed-экземпляр, который может уже быть в контексте; исходный объект
+остаётся detached. Q9 и MCQ B0 исправлены, A/B/C/D и sections авторски
+сверены, локальный pre-check без hard/warnings. Hibernate full parity PASS,
+но прежний файл остаётся с 18 hard-сигналами и 28 блоками с warnings,
+независимой содержательной приёмки новой Q9 нет.
+
+**Точная точка авторского продолжения:** `databases/hibernate-interview.md`
+Q10 B0 с парным JSON: [Hibernate 7.0 Migration Guide](https://docs.hibernate.org/orm/7.0/migration-guide/)
+указывает удаление `Session.load`; проверить также `Session.get`,
+`EntityManager.find/getReference`, момент SELECT и исключение при
+отсутствии строки. После этого вернуться к Spring Data JPA Q22 B0:
+`LAZY`/`EAGER`, форма SQL, N+1, дефолты связей, OSIV, соседние
+Hibernate Q12/Q14 и Spring Data JPA Q23.
 Не объявлять весь файл прошедшим проверку.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
@@ -943,7 +979,8 @@ Q21 B0 с парным JSON — сверить flush modes, фактическо
    Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13/Q14, WebAuthn Q24/Q46, Spring Security Q44,
    Metrics & Tracing Q40, Spring Testing Q9/Q10, Uber Q6/Q7,
    Google Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1,
-   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q20 B0/Q39 B0,
+   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q21 B0/Q39 B0,
+   Hibernate Q8/Q9 B0,
    Database Transactions Q15/Q22/Q23 B0
    и RabbitMQ Streams Q40–Q42 ждут
    независимой MCQ-приёмки.
@@ -952,7 +989,8 @@ Q21 B0 с парным JSON — сверить flush modes, фактическо
    PostgreSQL 19 перепроверять после финальных релизов.
 3. Отдельной задачей пройти независимую blind-приёмку новых MCQ и старый
    parity/pre-check backlog Hibernate, Spring Data JPA (после Q3/Q4,
-   Q5–Q20 и Q39 ещё 21 hard-сигнал), Java IO/NIO, Jackson,
+   Q5–Q21 и Q39 ещё 20 hard-сигналов; Hibernate после Q8/Q9 — 18),
+   Java IO/NIO, Jackson,
    URL Shortener, RabbitMQ, Kafka, сравнения брокеров и event-driven;
    положительный валидатор не означает `FINAL`.
 4. Продолжать выборку официальных публикаций за скользящие шесть месяцев;
