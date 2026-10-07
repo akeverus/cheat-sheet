@@ -2591,50 +2591,50 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Passkey уязвим к фишингу так же, как и обычный пароль.",
+            "text": "Официальный модуль spring-security-webauthn даёт DSL http.webAuthn() и настройку origin; rpId можно задать произвольным названием приложения, а credentials сохранять постоянно.",
               "correct": false,
               "sections": {
-                "what_actually": "Passkey устойчив к фишингу — подпись привязана к `rpId`.",
-                "source_of_confusion": "«Ещё один фактор» кажется столь же фишингуемым.",
-                "if_it_were_true": "Тогда исчезало бы главное преимущество passkeys.",
-                "how_it_should_be": "Подпись домен-связана, фишинговый сайт её не применит."
+                "what_actually": "RP ID — допустимый домен relying party, связанный с origin страницы, а не свободное отображаемое имя. Для человекочитаемого названия есть отдельный rpName.",
+                "source_of_confusion": "В DSL стоят рядом rpName и rpId; оба выглядят как строковые атрибуты приложения, поэтому их легко принять за два варианта названия.",
+                "if_it_were_true": "Сайт мог бы выбрать любой rpId и получать подписи для чужого домена, разрушив привязку credential к relying party.",
+                "how_it_should_be": "Задать rpId допустимым доменом, allowedOrigins ожидаемыми origin, а отображаемое название — через rpName."
               }
             },
             {
               "label": "B",
               "order": 1,
-              "text": "`Spring Security 6.4` добавил нативную поддержку WebAuthn/passkeys через новый встроенный DSL http.webAuthn().",
+            "text": "Подключить spring-security-webauthn, через http.webAuthn() задать доменный rpId и разрешённые origin; сведения о пользователях и credentials сохранять в постоянных репозиториях.",
               "correct": true,
               "sections": {
-                "explanation": "Passkey — аутентификация по паре ключей (`FIDO2`/`WebAuthn`): приватный ключ не покидает устройство.",
-                "example": "`http.webAuthn(w -> w.rpName(\"My App\").rpId(\"example.com\").allowedOrigins(\"https://example.com\"))`.",
-                "when_to_apply": "Берут для беспарольного входа, устойчивого к фишингу.",
-                "edge_cases": "Нужны `PublicKeyCredentialUserEntityRepository` и `UserCredentialRepository`.",
-                "related": "Подпись привязана к домену (`rpId`) — фишинговый сайт её не переиспользует."
+                "explanation": "Поддержка появилась в Spring Security 6.4 и поставляется отдельным официальным модулем spring-security-webauthn. DSL задаёт RP ID и разрешённые origin; сервер проверяет их при церемониях WebAuthn. Для рабочих учётных записей нужны постоянные реализации репозиториев пользователя и credential.",
+                "example": "Конфигурация задаёт http.webAuthn(w -> w.rpName(\"My App\").rpId(\"example.com\").allowedOrigins(\"https://example.com\")); для хранения можно предоставить JdbcPublicKeyCredentialUserEntityRepository и JdbcUserCredentialRepository.",
+                "when_to_apply": "Для входа по passkeys в Servlet-приложении на Spring Security 6.4+ после выбора домена RP, допустимых origin и стратегии хранения credentials.",
+                "edge_cases": "Приватный ключ не передаётся серверу, но синхронизируемый passkey может переноситься между устройствами провайдером. При userVerification=REQUIRED вместе с распределённой HTTP-сессией проверить применимость CVE-2026-47841 и использовать исправленную версию.",
+                "related": "Протокольные проверки challenge, origin, rpIdHash и подписи, а также восстановление доступа раскрыты в authentication-authorization-patterns Q46."
               }
             },
             {
               "label": "C",
               "order": 2,
-              "text": "Поддержку passkeys в `Spring Security` подключают только сторонней внешней FIDO2-библиотекой отдельно.",
+            "text": "С модулем spring-security-webauthn DSL http.webAuthn() получает доменный rpId и список origin; credentials можно хранить в памяти, ведь браузер восстановит их после перезапуска.",
               "correct": false,
               "sections": {
-                "what_actually": "В `6.4` поддержка `WebAuthn` нативная — сторонняя библиотека не нужна.",
-                "source_of_confusion": "Раньше passkeys и правда требовали внешних библиотек.",
-                "if_it_were_true": "Тогда не было бы смысла в новом DSL `http.webAuthn()`.",
-                "how_it_should_be": "Включают декларативно через `http.webAuthn()`."
+                "what_actually": "Браузер хранит ссылку на credential и обращается к аутентификатору, но не восстанавливает серверную запись с публичным ключом и привязкой к учётной записи. Встроенное хранилище в памяти годится для демонстрации; рабочему сервису нужна постоянная реализация.",
+                "source_of_confusion": "Passkey у пользователя сохраняется между входами, поэтому кажется, что сервер может безболезненно потерять свою часть учётных данных.",
+                "if_it_were_true": "После перезапуска приложения отсутствующая серверная запись восстановилась бы из браузера автоматически, и проверке подписи не требовался бы сохранённый публичный ключ.",
+                "how_it_should_be": "Хранить записи пользователей и credentials в устойчивых PublicKeyCredentialUserEntityRepository и UserCredentialRepository, например JDBC."
               }
             },
             {
               "label": "D",
               "order": 3,
-              "text": "При passkey приватный ключ уходит на сервер, устройству остаётся подпись.",
+            "text": "DSL http.webAuthn() из spring-security-webauthn задаёт доменный rpId и работает с постоянным хранилищем; allowedOrigins можно опустить, поскольку браузер проверит origin за сервер.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: приватный ключ НЕ покидает устройство, серверу уходит только подпись.",
-                "source_of_confusion": "Кажется, что ключ где-то хранит сервер.",
-                "if_it_were_true": "Тогда кража БД раскрывала бы приватные ключи.",
-                "how_it_should_be": "Приватный ключ остаётся на устройстве (Touch ID/ключ)."
+                "what_actually": "Сервер обязан проверить origin в clientDataJSON против ожидаемых origin, вместе с challenge и rpIdHash. Проверка браузером области RP ID не заменяет серверную проверку пришедшего assertion.",
+                "source_of_confusion": "Браузер действительно ограничивает создание и использование credentials по RP ID; это легко принять за полную серверную валидацию.",
+                "if_it_were_true": "Сервер доверял бы любому утверждению о происхождении запроса без сравнения с собственным списком допустимых origin.",
+                "how_it_should_be": "Задать allowedOrigins для ожидаемых origin и сохранять серверную проверку WebAuthn-ответа."
               }
             }
           ]

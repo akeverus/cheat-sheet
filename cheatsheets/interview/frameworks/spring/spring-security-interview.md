@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[spring-security]]"
 next: []
-updated: "2026-10-05"
+updated: "2026-10-07"
 ---
 # Вопросы на собеседовании: `Spring Security`
 
@@ -2297,9 +2297,9 @@ public class MethodSecurityConfig {}
 
 ## Q44. (!) Как настроить вход по passkeys (WebAuthn) в Spring Security?
 
-`Spring Security 6.4` добавил нативную поддержку `WebAuthn`/passkeys через DSL `http.webAuthn()`. Passkey — это аутентификация по паре ключей (`FIDO2`/`WebAuthn`): приватный ключ не покидает устройство (Touch ID, Windows Hello, аппаратный ключ), серверу уходит только подпись. Паролей нет вообще.
+`Spring Security 6.4` добавил поддержку `WebAuthn`/passkeys через DSL `http.webAuthn()` и отдельный модуль `spring-security-webauthn`. Приватный ключ **не передаётся серверу**: тот хранит публичный ключ и проверяет подпись. Ключ может оставаться на одном устройстве либо синхронизироваться провайдером passkeys между устройствами; поэтому фраза «никогда не покидает устройство» неверна для синхронизируемых passkeys.
 
-Главное преимущество — **устойчивость к фишингу**: подпись привязана к домену (`rpId`), поэтому фишинговый сайт не сможет её переиспользовать, а красть «пароль» нечего.
+Главное преимущество — **устойчивость к фишингу**: сервер проверяет origin, RP ID и подпись, поэтому фишинговый origin не сможет выдать себя за настоящий сайт. Протокольные проверки и восстановление доступа разобраны в [WebAuthn Q46](../../security/authentication-authorization-patterns-interview.md#q46-как-работают-регистрация-вход-и-восстановление-доступа-с-webauthn).
 
 ```java
 http.webAuthn(webAuthn -> webAuthn
@@ -2308,12 +2308,12 @@ http.webAuthn(webAuthn -> webAuthn
     .allowedOrigins("https://example.com"));
 ```
 
-Для хранения учётных данных нужны два репозитория:
+Зависимость `org.springframework.security:spring-security-webauthn` добавляют отдельно от основного модуля. Для хранения учётных данных нужны два репозитория:
 
 - `PublicKeyCredentialUserEntityRepository` — пользователи (WebAuthn user entity).
-- `UserCredentialRepository` — сами публичные ключи (credentials), привязанные к пользователю.
+- `UserCredentialRepository` — записи credentials с публичными ключами, привязанные к пользователю. Встроенное хранение в памяти подходит для примера; в рабочем приложении нужна постоянная реализация, например JDBC.
 
-**Итог:** passkeys убирают пароль как фактор — фишинг, брутфорс и утечки паролей теряют смысл. На `Spring Security 6.4+` это включается декларативно через `http.webAuthn()`, без сторонних библиотек.
+**Граница версий:** при `userVerification = REQUIRED` и распределённом HTTP-хранилище сессий Spring Security 6.4.0–6.4.18, 6.5.0–6.5.11, 7.0.0–7.0.6 и 7.1.0 подвержены [CVE-2026-47841](https://spring.io/security/cve-2026-47841/): после сериализации сессии проверка пользователя могла быть пропущена. Для этого сочетания условий нужны исправленные версии, например 7.0.7/7.1.1; для 6.4/6.5 в advisory указаны enterprise-патчи 6.4.19/6.5.12. Актуальную настройку модуля и репозиториев см. в [Spring Security Passkeys](https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html).
 
 ---
 
