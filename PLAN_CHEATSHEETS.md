@@ -985,13 +985,55 @@ fact-freshness sidecar синхронизированы. Structure 93 Q/94 бл�
 Hibernate 18/28. Это не независимая содержательная приёмка: Q22/Q19
 ожидают blind review.
 
-**Точная точка авторского продолжения:** Spring Data JPA Q23 B0 и парный
-JSON про N+1. До правки сопоставить Hibernate Q20/Q21 и соседний JPA Q24:
-Q23 сейчас сводит N+1 только к LAZY, Q21 Hibernate ошибочно обещает,
-что переход на EAGER решает N+1, а JPA Q23/Q24 обещают LEFT JOIN от
-`@EntityGraph` как обязательную форму SQL. Исправить по официальным
-Jakarta Persistence/Hibernate/Spring Data источникам, затем обновить
-оба MCQ и sidecar.
+**Контрольная точка 07.10.2026 — Spring Data JPA Q23/Q24 B0 + Hibernate Q20/Q21/Q23 B0 · О.**
+По [Jakarta Persistence 3.2, графы](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),
+[Spring Data JPA 4.1.1, query methods](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html),
+[Hibernate ORM 7.4, fetching](https://docs.hibernate.org/orm/7.4/userguide/html_single/)
+и [`MultipleBagFetchException`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/loader/MultipleBagFetchException.html)
+исправлены: N+1 бывает и при LAZY-обходе, и при EAGER to-one в JPQL/HQL;
+EAGER не гарантирует JOIN, `EntityGraph` не обещает LEFT JOIN/один SQL;
+`FETCH` для остальных атрибутов — LAZY-подсказка, `LOAD` сохраняет
+маппинг, провайдер может загрузить больше. Для параллельных fetch joins
+коллекций отмечены декартово произведение и запрет нескольких bag.
+Пояснено, что Hibernate 6+ удаляет дубли корней из результата fetch join
+в памяти: `DISTINCT` и смена `List` на `Set` не нужны ради этой цели и
+не уменьшают SQL-результат. Исправлены примеры `LEFT JOIN FETCH`,
+`GROUP BY` по идентификатору и условность числа запросов при batch/subselect.
+После сверки заголовков (`З`) прочитаны конкретные ответы и все A/B/C/D
+с sections (`О`); полного аудита файлов (`П`) и независимой blind-приёмки
+нет. Structure 93 Q/94 блока PASS, оба Markdown без inline MCQ; все пять
+изменённых блоков локально без hard/warnings. Полный parity Hibernate
+PASS, Spring Data JPA FAIL на прежних блоках; полный skel остаётся
+Hibernate 16 hard/26 блоков с warnings, JPA 17/21. Sidecar обновлены,
+MCQ ожидают независимой приёмки.
+
+**Контрольная точка 07.10.2026 — Spring Data JPA Q25 B0 + Hibernate Q15/Q16 B0 · О.**
+По [Jakarta Persistence 3.2 `CascadeType`](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/cascadetype),
+[orphan removal и ограничению `cascade=REMOVE`](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),
+[Spring Data JPA `save`](https://docs.spring.io/spring-data/jpa/reference/jpa/entity-persistence.html)
+и [Hibernate ORM 7.4 `@ManyToMany`](https://docs.hibernate.org/orm/7.4/userguide/html_single/)
+разделены `PERSIST`/`MERGE`/dirty checking; `ALL` перечисляет пять
+операций. `orphanRemoval` для приватно принадлежащих детей срабатывает
+при flush, не применяется к new/detached/removed сиротам и каскадирует
+удаление при удалении родителя. `REMOVE` на `@ManyToMany` непереносим,
+распространяется на целевые сущности при удалении владельца, тогда как
+изъятие элемента меняет join-таблицу. В Hibernate Q15 пример
+Department–Employee больше не удаляет сотрудника при переводе, а Q16
+не требует `Set` вместо `List` без учёта доменной семантики и SQL.
+Парные MCQ/sections и freshness-sidecar обновлены. После просмотра
+заголовков (`З`) выполнена точечная сверка ответов и A/B/C/D (`О`), но
+полного аудита (`П`) и независимой blind-приёмки нет. Structure 93 Q/94
+блока PASS; изменённые Q25/Q15/Q16 без локальных hard/warnings; полный
+parity Hibernate PASS, Spring Data JPA FAIL из-за прежних блоков;
+полный skel Hibernate 16 hard/25 блоков с warnings, JPA 16/20.
+
+**Точная точка авторского продолжения:** Spring Data JPA Q26 B0 и парный
+JSON про `@Embeddable`/`record`/`@AttributeOverrides`. Сначала сопоставить
+Hibernate Q18 и существующие Q26/Q18 MCQ; проверить по Jakarta Persistence
+3.2 версионную границу record-embeddable (Java 16 и JPA 3.2), ограничения
+на конструктор/компоненты и повторные встраивания. Сейчас теория Q26
+называет record «естественным выбором» без явной границы спецификации,
+а правильный MCQ заметно длиннее остальных.
 Не объявлять весь файл прошедшим проверку.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
@@ -1016,8 +1058,8 @@ Jakarta Persistence/Hibernate/Spring Data источникам, затем об�
    Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13/Q14, WebAuthn Q24/Q46, Spring Security Q44,
    Metrics & Tracing Q40, Spring Testing Q9/Q10, Uber Q6/Q7,
    Google Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1,
-   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q22 B0/Q39 B0,
-   Hibernate Q8–Q10 B0/Q19 B0,
+   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q25 B0/Q39 B0,
+   Hibernate Q8–Q10 B0/Q15–Q16 B0/Q19–Q21 B0/Q23 B0,
    Database Transactions Q15/Q22/Q23 B0
    и RabbitMQ Streams Q40–Q42 ждут
    независимой MCQ-приёмки.
@@ -1026,7 +1068,7 @@ Jakarta Persistence/Hibernate/Spring Data источникам, затем об�
    PostgreSQL 19 перепроверять после финальных релизов.
 3. Отдельной задачей пройти независимую blind-приёмку новых MCQ и старый
    parity/pre-check backlog Hibernate, Spring Data JPA (после Q3/Q4,
-   Q5–Q22 и Q39 ещё 19 hard-сигналов; Hibernate после Q8–Q10/Q19 — 18),
+   Q5–Q25 и Q39 ещё 16 hard-сигналов; Hibernate после Q8–Q10/Q15–Q16/Q19–Q21/Q23 — 16),
    Java IO/NIO, Jackson,
    URL Shortener, RabbitMQ, Kafka, сравнения брокеров и event-driven;
    положительный валидатор не означает `FINAL`.

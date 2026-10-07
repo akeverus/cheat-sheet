@@ -345,12 +345,34 @@ structure PASS, Q22/Q19 локально без hard/warnings; Hibernate full
 parity PASS, Spring Data JPA full parity FAIL из-за прежних блоков;
 независимой blind-приёмки нет. Полный аудит файлов не проводился.
 
-Следующий авторский пакет: Spring Data JPA Q23 B0 и парный JSON.
-Сопоставить Hibernate Q20/Q21 и Spring Data JPA Q24: Q23 ошибочно
-сводит N+1 только к LAZY; Hibernate Q21 утверждает, что EAGER решит
-N+1; JPA Q23/Q24 обещают LEFT JOIN от `@EntityGraph` как обязательную
-форму SQL. Сверить по официальным Jakarta Persistence/Hibernate/Spring
-Data источникам, исправить теорию и парные MCQ, обновить sidecar.
+07.10 Spring Data JPA Q23/Q24 B0 и Hibernate Q20/Q21/Q23 B0: по
+Jakarta Persistence 3.2, Spring Data JPA 4.1.1 и Hibernate ORM 7.4
+исправлены N+1 при EAGER to-one, ложная гарантия JOIN от EAGER/EntityGraph,
+различие FETCH/LOAD и ограничения нескольких коллекционных fetch joins.
+Hibernate 6+ удаляет дубли корневых сущностей после fetch join в памяти;
+старый совет DISTINCT/Set только ради удаления этих дублей убран.
+Теория, пять блоков MCQ и оба freshness-sidecar синхронизированы.
+Structure PASS, все изменённые блоки локально без hard/warnings;
+Hibernate full parity PASS, Spring Data JPA full parity FAIL из-за прежних
+блоков. Независимой blind-приёмки и полного аудита файлов нет.
+
+07.10 Spring Data JPA Q25 B0 и Hibernate Q15/Q16 B0: по Jakarta
+Persistence 3.2, Spring Data JPA `save` и Hibernate ORM 7.4 исправлены
+состав CascadeType.ALL, границы orphanRemoval, каскад REMOVE на ManyToMany
+и различие удаления элемента связи от удаления целевой сущности.
+Department–Employee больше не использует orphanRemoval для переводимого
+сотрудника; рекомендация «Set всегда лучше List» заменена проверкой
+доменной семантики и SQL. Теория, три MCQ B0/sections и sidecar
+синхронизированы. Structure PASS, локальные блоки без hard/warnings,
+Hibernate full parity PASS, Spring Data JPA full parity FAIL на прежних
+блоках; независимой blind-приёмки и полного аудита нет.
+
+Следующий авторский пакет: Spring Data JPA Q26 B0 и парный JSON про
+`@Embeddable`/record/`@AttributeOverrides`. Сравнить Hibernate Q18
+и MCQ обеих тем; по Jakarta Persistence 3.2 проверить версионную границу
+record-embeddable, правила конструктора/компонентов и повторное
+встраивание. В JPA Q26 теория не уточняет версию спецификации для record,
+а правильный вариант MCQ существенно длиннее дистракторов.
 Не считать весь файл проверенным после точечной правки.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
