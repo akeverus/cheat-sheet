@@ -1506,50 +1506,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`orphanRemoval=true` — это синоним `CascadeType.REMOVE`, они делают абсолютно одно и то же.",
+              "text": "`orphanRemoval=true` срабатывает только при удалении родителя, полностью повторяя эффект `CascadeType.REMOVE` для всех связей.",
               "correct": false,
               "sections": {
-                "what_actually": "Это разные механизмы: `REMOVE` каскадирует `delete(parent)` на детей, а `orphanRemoval` удаляет ребёнка при изъятии его из коллекции родителя.",
-                "source_of_confusion": "Оба связаны с удалением дочерних записей.",
-                "if_it_were_true": "Тогда `items.remove(item)` без `orphanRemoval` тоже удалял бы строку, но он лишь разрывает связь.",
-                "how_it_should_be": "`REMOVE` — при удалении родителя; `orphanRemoval` — при выходе ребёнка из коллекции."
+                "what_actually": "REMOVE каскадирует удаление родителя к целевой сущности. OrphanRemoval на OneToMany/OneToOne также удаляет управляемого ребёнка, исключённого из связи, при flush; при удалении родителя он тоже каскадирует remove.",
+                "source_of_confusion": "Оба механизма могут удалить ребёнка при удалении родителя, но различаются при разрыве связи.",
+                "if_it_were_true": "Исключение управляемого ребёнка из коллекции не могло бы само вызвать удаление, однако orphanRemoval делает именно это.",
+                "how_it_should_be": "Различайте удаление родителя и исключение приватно принадлежащего ребёнка из связи."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`CascadeType.ALL` на `@ManyToMany` — безопасный выбор по умолчанию для любых связей.",
+              "text": "`CascadeType.ALL` на `@ManyToMany` удаляет лишь строку join-таблицы при удалении владельца, поэтому общие роли сохраняются.",
               "correct": false,
               "sections": {
-                "what_actually": "`CascadeType.ALL` на `@ManyToMany` — антипаттерн: удаление одной стороны удалит общие записи (роли), используемые другими.",
-                "source_of_confusion": "`ALL` выглядит как «всё включено и удобно».",
-                "if_it_were_true": "Тогда удаление пользователя безопасно чистило бы только его данные, но оно затронет общие роли.",
-                "how_it_should_be": "Каскады применяют точечно для строго зависимых связей, не `ALL` на ManyToMany."
+                "what_actually": "ALL включает REMOVE: при удалении владельца операция распространяется на связанные сущности, включая общие Role. Спецификация считает REMOVE на ManyToMany непереносимым.",
+                "source_of_confusion": "Удаление элемента коллекции обычно меняет join-таблицу; это ошибочно переносят на каскад при удалении владельца.",
+                "if_it_were_true": "Удаление User не могло бы затронуть общие Role, но каскад REMOVE может попытаться удалить именно их.",
+                "how_it_should_be": "Для разделяемых сущностей не задавайте REMOVE/ALL на ManyToMany; различайте удаление связи и целевой сущности."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`CascadeType` распространяет операции с родительской сущностью на дочерние: `PERSIST` (сохранение), `MERGE` (обновление), `REMOVE` (удаление), `ALL` (всё). Отдельно `orphanRemoval=true` удаляет дочернюю запись из БД при изъятии её из коллекции. Каскады применяют для строго зависимых сущностей (`Order` → `OrderItem`).",
+              "text": "`CascadeType.PERSIST` распространяет persist по связи, а `orphanRemoval` удаляет управляемого ребёнка при исключении из OneToMany/OneToOne во время flush.",
               "correct": true,
               "sections": {
-                "explanation": "С `cascade={PERSIST, MERGE}` сохранение `Order` автоматически сохранит его `OrderItem`. `orphanRemoval` — это не `CascadeType`, а отдельный флаг: удаление item из списка влечёт `DELETE`.",
-                "example": "`@OneToMany(mappedBy=\"order\", cascade={PERSIST, MERGE}, orphanRemoval=true)` — один `save(order)` делает INSERT order + INSERT каждого item.",
-                "when_to_apply": "Берут для parent-child связей, где дочерние сущности не имеют смысла без родителя (агрегат в терминах DDD).",
-                "edge_cases": "`CascadeType.ALL` на `@ManyToMany` (`User` → `Role`) опасен: удаление пользователя удалит роли, используемые другими — антипаттерн.",
+                "explanation": "Каскады распространяют конкретные операции по связи: ALL включает PERSIST, MERGE, REMOVE, REFRESH и DETACH. OrphanRemoval — отдельная настройка OneToMany/OneToOne для приватно принадлежащего ребёнка, исключённого из связи; remove выполняется при flush.",
+                "example": "`@OneToMany(mappedBy=\"order\", cascade=PERSIST, orphanRemoval=true)` позволяет persist нового Order с новыми OrderItem и удалить уже управляемый item при исключении из коллекции.",
+                "when_to_apply": "Используйте каскады для операций, которые действительно разделяют жизненный цикл владельца и детей, например Order и OrderItem.",
+                "edge_cases": "Для new, detached или removed сироты семантика orphanRemoval не применяется; при удалении родителя orphanRemoval каскадирует remove без отдельного CascadeType.REMOVE. REMOVE/ALL на ManyToMany непереносимы и опасны для общих сущностей.",
                 "related": "[[spring-data-jpa-interview#Q22]] LAZY vs EAGER; [[spring-data-jpa-interview#Q26]] @Embedded; [[spring-data-jpa-interview#Q27]] наследование сущностей."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Без каскадов сохранение родителя автоматически сохраняет и новые дочерние сущности.",
+              "text": "`CascadeType.MERGE` срабатывает при каждом изменении управляемого родителя и сразу обновляет детей даже без вызова merge.",
               "correct": false,
               "sections": {
-                "what_actually": "Без `CascadeType.PERSIST` новые дочерние сущности не сохранятся при `save(parent)` — будет ошибка transient-объекта или они просто не попадут в БД.",
-                "source_of_confusion": "Кажется, что ORM «сам разберётся» со связанными объектами.",
-                "if_it_were_true": "Тогда каскады были бы не нужны, но без `PERSIST` детей надо сохранять отдельно.",
-                "how_it_should_be": "Для авто-сохранения детей нужен `CascadeType.PERSIST`."
+                "what_actually": "MERGE распространяет именно операцию merge по связи. Изменения уже managed-сущностей отслеживаются dirty checking и синхронизируются при flush, без нового вызова merge.",
+                "source_of_confusion": "Название MERGE принимают за общий механизм автоматического обновления всего графа.",
+                "if_it_were_true": "При каждом изменении managed родителя запускался бы merge детей, но JPA не задаёт такого поведения.",
+                "how_it_should_be": "Отличайте каскад вызова merge от dirty checking уже управляемых сущностей."
               }
             }
           ]

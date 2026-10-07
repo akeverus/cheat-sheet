@@ -875,13 +875,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Аннотация `@ManyToOne` по умолчанию грузит EAGER, поэтому ставьте LAZY явно",
+              "text": "Сторона `@ManyToOne` владеет связью, по умолчанию EAGER, а LAZY можно задать явно",
               "correct": true,
               "sections": {
-                "explanation": "В связи @OneToMany/@ManyToOne владелец — сторона @ManyToOne с @JoinColumn. Её fetch по умолчанию EAGER, то есть родитель тянет ассоциацию сразу. Чтобы не ловить лишние запросы и N+1, на @ManyToOne явно ставят FetchType.LAZY.",
-                "example": "@ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = \"department_id\") private Department department; — явный LAZY у Employee.",
-                "when_to_apply": "Ставить LAZY на каждый @ManyToOne при маппинге связей, особенно когда родителей выбирают списком — иначе каждый потянет своего родителя.",
-                "edge_cases": "Владелец связи — сторона с @JoinColumn; сторона @OneToMany(mappedBy) обратная, и helper-методы addEmployee/removeEmployee держат обе стороны консистентными.",
+                "explanation": "В двусторонней OneToMany/ManyToOne FK обычно расположен на стороне ManyToOne с @JoinColumn, а OneToMany(mappedBy) — обратная сторона. ManyToOne по умолчанию EAGER; LAZY часто уместен, если нужную связь выбирают под конкретный запрос. Сам LAZY не устраняет N+1 при последующем обходе.",
+                "example": "@ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = \"department_id\") private Department department; — явная политика у Employee.",
+                "when_to_apply": "При проектировании двусторонней связи проверяйте владельца FK, жизненный цикл детей и SQL плана загрузки.",
+                "edge_cases": "Если сотрудника можно перевести в другой отдел, orphanRemoval у Department.employees удалил бы его как сироту; эту настройку оставляют для приватно принадлежащих детей.",
                 "related": "[[hibernate-interview#Q17]], [[hibernate-interview#Q19]]"
               }
             },
@@ -924,13 +924,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для `@ManyToMany` берут List вместо Set — он эффективнее при удалении.",
+              "text": "Связь `@ManyToMany` удаляет целевую сущность при исключении элемента без каскада REMOVE.",
               "correct": false,
               "sections": {
-                "what_actually": "Рекомендуют Set — Hibernate генерирует для него более эффективный SQL при удалении, чем для List.",
-                "source_of_confusion": "List привычнее и упорядочен, поэтому кажется предпочтительным по умолчанию.",
-                "if_it_were_true": "Тогда удаление элемента из связи было бы дешевле на List, чем на Set.",
-                "how_it_should_be": "Для @ManyToMany берут Set — он даёт эффективнее SQL при удалении."
+                "what_actually": "Без каскада REMOVE удаление элемента из ManyToMany меняет записи join-таблицы, сохраняя целевую сущность. Hibernate может удалить и пересоздать несколько строк связи в зависимости от маппинга.",
+                "source_of_confusion": "Удаление связи в Java-коллекции путают с операцией EntityManager.remove над целевой сущностью.",
+                "if_it_were_true": "Простое удаление курса из списка студента уничтожало бы общий Course для остальных студентов.",
+                "how_it_should_be": "Отличайте удаление связи в join-таблице от удаления самой связанной сущности."
               }
             },
             {
@@ -951,10 +951,10 @@
               "text": "На `@ManyToMany` рекомендуют CascadeType.REMOVE, чтобы удалять связанные сущности вместе.",
               "correct": false,
               "sections": {
-                "what_actually": "CascadeType.ALL/REMOVE на @ManyToMany избегают — удаление из коллекции может снести связанные сущности.",
-                "source_of_confusion": "Каскад кажется удобным способом «прибраться», и REMOVE выглядит логичным.",
-                "if_it_were_true": "Тогда удаление студента затирало бы общие курсы и у других студентов.",
-                "how_it_should_be": "REMOVE/ALL на @ManyToMany не ставят — иначе теряются разделяемые сущности."
+                "what_actually": "Cascade REMOVE/ALL при remove владельца может распространить удаление на сами связанные сущности, а не только на строки join-таблицы; спецификация считает REMOVE на ManyToMany непереносимым.",
+                "source_of_confusion": "Удаление элемента коллекции меняет таблицу связи, и это путают с каскадом при удалении владельца.",
+                "if_it_were_true": "Удаление Student могло бы удалить общие Course, которые ещё связаны с другими студентами.",
+                "how_it_should_be": "Для разделяемых сущностей избегайте REMOVE/ALL на ManyToMany; удаление связи и целевой сущности — разные операции."
               }
             }
           ]

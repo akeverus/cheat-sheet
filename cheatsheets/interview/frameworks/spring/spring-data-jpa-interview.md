@@ -1436,9 +1436,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 ## Q25. Что такое `CascadeType` и когда применять каскады?
 
-`CascadeType` определяет, какие операции с родительской сущностью автоматически «протекают» на дочерние. Сохранили `Order` через `save()` — с каскадом `PERSIST` сохранятся и его `OrderItem`, без отдельного вызова на каждый.
+`CascadeType` задаёт, какие операции над сущностью распространяются по конкретной связи. Например, при `persist(order)` каскад `PERSIST` распространяет сохранение на новые `OrderItem`; Spring Data `save()` выберет `persist` для нового `Order` или `merge` для существующего по своей стратегии определения нового объекта.
 
-Зачем: для тесно связанных сущностей (родитель не существует без детей) это убирает ручное сохранение/удаление каждого ребёнка. Отдельно стоит `orphanRemoval = true` — он удаляет ребёнка из БД, как только тот выпал из коллекции родителя (это не то же самое, что `CascadeType.REMOVE`, который реагирует только на удаление самого родителя).
+Каскады выбирают по жизненному циклу связи; `ALL` включает `PERSIST`, `MERGE`, `REMOVE`, `REFRESH` и `DETACH`. Отдельный параметр `orphanRemoval = true` доступен для `@OneToMany`/`@OneToOne` с приватно принадлежащими дочерними сущностями: удаление **управляемого** ребёнка из связи приводит к `remove` при flush. Для `new`, `detached` или уже `removed` объекта эта семантика не применяется. В отличие от этого, `CascadeType.REMOVE` срабатывает при удалении самого родителя; при `orphanRemoval=true` его удаление тоже каскадируется к детям без отдельного `REMOVE`.
 
 ```java
 @Entity
@@ -1447,8 +1447,7 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // PERSIST + MERGE: при сохранении/обновлении Order — сохраняются и OrderItem
-    // orphanRemoval: удаление item из коллекции → DELETE из БД
+    // PERSIST/MERGE распространяются по связи; orphanRemoval удаляет управляемого сироту при flush
     @OneToMany(mappedBy = "order",
                cascade = {CascadeType.PERSIST, CascadeType.MERGE},
                orphanRemoval = true)
@@ -1461,7 +1460,7 @@ public class Order {
 
     public void removeItem(OrderItem item) {
         items.remove(item);
-        item.setOrder(null); // orphanRemoval удалит из БД
+        item.setOrder(null); // поддерживаем обе стороны связи; удаление сироты — при flush
     }
 }
 
@@ -1501,12 +1500,13 @@ public Order createOrderWithItems(CreateOrderRequest request) {
 
 | CascadeType | Что каскадируется | Когда использовать |
 |-------------|--------------------|--------------------|
-| `PERSIST` | `save()` | Parent-child (`Order` → `OrderItem`) |
-| `MERGE` | `merge()` / обновление | Вместе с `PERSIST` |
-| `REMOVE` | `delete()` | Осторожно! Удаление parent = удаление children |
-| `ALL` | Всё | Только для строго зависимых сущностей |
+| `PERSIST` | `persist()` | Новые зависимые дети (`Order` → `OrderItem`) |
+| `MERGE` | `merge()` | Копирование состояния в managed-граф |
+| `REMOVE` | `remove()` | Удаление приватно принадлежащих детей вместе с родителем |
+| `REFRESH`, `DETACH` | `refresh()`, `detach()` | Только если эти операции нужны всему графу |
+| `ALL` | Все пять операций выше | Лишь когда их семантика нужна всей связи |
 
-**Антипаттерн:** `CascadeType.ALL` (а значит и `REMOVE`) на `@ManyToMany` — например `User` → `Role`. Роли разделяются между пользователями, и удаление одного пользователя снесёт роли, которыми пользуются остальные. Каскадное удаление допустимо только для строго владеемых, незаразделяемых детей (`Order` → `OrderItem`).
+**Осторожно с `@ManyToMany`:** `REMOVE`/`ALL` распространяет удаление **сущности-партнёра** при `remove` владельца, а не при обычном удалении элемента из коллекции. Для разделяемых `User` → `Role` это может затронуть роли других пользователей; спецификация считает `cascade=REMOVE` вне `@OneToOne`/`@OneToMany` непереносимым. При удалении элемента коллекции обычно меняется запись таблицы связи. [Jakarta Persistence 3.2, `CascadeType`](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/cascadetype); [orphan removal и каскады](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2); [Spring Data JPA, `save`](https://docs.spring.io/spring-data/jpa/reference/jpa/entity-persistence.html).
 
 ## Q26. Что такое `@Embedded` и `@Embeddable`?
 

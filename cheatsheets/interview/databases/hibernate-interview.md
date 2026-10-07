@@ -629,7 +629,8 @@ public class Department {
     private Long id;
     private String name;
 
-    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, orphanRemoval = true)
+    // Сотрудника можно перевести в другой отдел: удаление сироты здесь не подходит
+    @OneToMany(mappedBy = "department", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Employee> employees = new ArrayList<>();
 
     // Вспомогательные методы для поддержания консистентности обеих сторон
@@ -655,7 +656,7 @@ public class Employee {
 }
 ```
 
-**Важно**: `@ManyToOne` по умолчанию `EAGER` — всегда устанавливайте `fetch = FetchType.LAZY` явно, чтобы избежать проблемы N+1.
+**Важно:** `@ManyToOne` по умолчанию `EAGER`; обычно полезно задать `LAZY` явно и выбирать нужный fetch-план для запроса. Сам `LAZY` не гарантирует отсутствие N+1 при последующем обходе связей (см. Q19–Q21). `orphanRemoval` подходит для приватно принадлежащих детей, например `OrderItem` у `Order`, но не для сотрудника, которого можно переводить между отделами. [Jakarta Persistence 3.2, orphan removal](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
 
 ## Q16. Как маппить связь `Many-To-Many`?
 
@@ -673,7 +674,7 @@ public class Student {
         joinColumns = @JoinColumn(name = "student_id"),
         inverseJoinColumns = @JoinColumn(name = "course_id")
     )
-    private Set<Course> courses = new HashSet<>(); // Set, не List!
+    private Set<Course> courses = new HashSet<>(); // Set отражает уникальность курсов
 }
 
 @Entity
@@ -687,9 +688,11 @@ public class Course {
 ```
 
 **Best practices**:
-- Используйте `Set`, а не `List` — `Hibernate` генерирует более эффективный SQL для `Set` при удалении элементов
-- Не используйте `CascadeType.ALL` / `REMOVE` на `@ManyToMany` — это может удалить связанные сущности при удалении из коллекции
+- Выбирайте `Set` для уникальных значений, `List` — если важен порядок/повторы и настроена соответствующая семантика. Не выводите стоимость обновления join-таблицы только из Java-типа: проверьте SQL конкретного маппинга.
+- Не задавайте `CascadeType.ALL` / `REMOVE` для разделяемых сущностей в `@ManyToMany`: каскад при `remove` владельца затронет сами связанные сущности, а удаление элемента коллекции меняет таблицу связи; `cascade=REMOVE` вне `@OneToOne`/`@OneToMany` непереносим по Jakarta Persistence.
 - Для join-таблиц с дополнительными полями (дата записи, оценка и т.д.) — создавайте отдельную `@Entity`
+
+[Hibernate ORM 7.4, `@ManyToMany`](https://docs.hibernate.org/orm/7.4/userguide/html_single/); [Jakarta Persistence 3.2, каскад удаления](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
 
 ## Q17. В чём разница между `@JoinColumn` и `mappedBy`?
 

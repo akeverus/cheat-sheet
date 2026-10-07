@@ -22,6 +22,7 @@
     "https://docs.spring.io/spring-boot/reference/data/sql.html",
     "https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html",
     "https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/loader/MultipleBagFetchException.html",
+    "https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/cascadetype",
     "https://docs.hibernate.org/orm/7.4/userguide/html_single/",
     "https://docs.spring.io/spring-data/jpa/reference/api/java/org/springframework/data/jpa/repository/config/EnableJpaAuditing.html",
     "https://docs.spring.io/spring-security/reference/servlet/authentication/anonymous.html",
@@ -69,10 +70,11 @@
     "Q22: JPA 3.2 EAGER — обязательство загрузить связь до выдачи результата, LAZY — hint; ни одна стратегия не фиксирует форму SQL. To-one связи по умолчанию EAGER, to-many LAZY. Hibernate 7.4 при JPQL без fetch join может подгружать EAGER связи вторичными SELECT с N+1. LazyInitializationException касается доступа к незагруженному состоянию вне открытого Session. Spring Boot web по умолчанию включает Open EntityManager in View; завершение сервисной транзакции не обязательно закрывает EntityManager.",
     "Q23: Hibernate ORM 7.4 описывает N+1 как при LAZY обходе, так и при EAGER to-one в JPQL/HQL без fetch join. JPQL JOIN FETCH задаёт SQL join для нужной связи, EntityGraph задаёт граф без гарантии одного SQL, batch/subselect объединяют вторичные SELECT. Параллельный fetch нескольких коллекций создаёт декартово произведение; несколько bag могут вызвать MultipleBagFetchException. Фактическое число SQL зависит от кэша/контекста/повторяющихся связей.",
     "Q24: Jakarta Persistence 3.2 fetchgraph трактует неуказанные атрибуты как LAZY, loadgraph оставляет их настройки маппинга, но провайдер вправе загрузить больше; Graph не фиксирует форму SQL. Spring Data JPA 4.1.1 attributePaths создаёт ad-hoc EntityGraph. Hibernate 6+ удаляет дубли корневых сущностей от fetch join в памяти; DISTINCT только ради них не требуется, Set не исправляет размножение SQL-строк.",
+    "Q25: Jakarta Persistence 3.2 CascadeType.ALL включает PERSIST, MERGE, REMOVE, REFRESH, DETACH; MERGE — каскад операции merge, не каждое изменение managed-сущности. orphanRemoval применим к OneToOne/OneToMany для приватно принадлежащих детей: исключение управляемого ребёнка из связи вызывает remove при flush, а удаление родителя также каскадируется; new/detached/removed исключены. Cascade REMOVE на ManyToMany непереносим и может удалить общие целевые сущности при удалении владельца. Spring Data JPA save выбирает persist/merge по isNew.",
     "Q39: фоновый системный автор — политика приложения, а не значение по умолчанию AuditorAware. JPQL bulk update/delete не вызывает lifecycle callbacks управляемых сущностей и не применяет автоматическую проверку @Version; persistence context после bulk может быть несогласован с БД."
   ],
   "staleness_risks": [
-    "07.10.2026 точечно перепроверены Q3 B0, Q4 B1, Q5–Q24 B0 и Q39 B0; остальные Q файла не проходили полный содержательный аудит."
+    "07.10.2026 точечно перепроверены Q3 B0, Q4 B1, Q5–Q25 B0 и Q39 B0; остальные Q файла не проходили полный содержательный аудит."
   ],
   "notes": [
     "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
