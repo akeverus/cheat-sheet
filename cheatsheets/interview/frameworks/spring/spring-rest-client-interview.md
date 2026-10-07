@@ -167,18 +167,20 @@ User user = client.get()
 Optional<User> user = client.get()
     .uri("/users/{id}", id)
     .exchange((request, response) -> {
-        if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
+        if (HttpStatus.NOT_FOUND.isSameCodeAs(response.getStatusCode())) {
             return Optional.empty();
         } else if (response.getStatusCode().is2xxSuccessful()) {
-            return Optional.of(response.bodyTo(User.class));
+            return Optional.ofNullable(response.bodyTo(User.class));
         }
         throw new ServiceException("Unexpected: " + response.getStatusCode());
     });
 ```
 
+В лямбде `exchange()` ответ имеет тип `ConvertibleClientHttpResponse`: он даёт как сырой `getBody()`, так и `bodyTo(User.class)` через настроенные конвертеры. `bodyTo()` возвращает `null` при пустом теле, поэтому здесь нужен `Optional.ofNullable()`. Это расширение `ClientHttpResponse`, а не метод базового интерфейса. См. [Javadoc Spring Framework 6.2](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/web/client/RestClient.RequestHeadersSpec.ConvertibleClientHttpResponse.html).
+
 Помимо обработки статусов, `exchange()` даёт доступ к сырому ответу: чтению тела как `InputStream` и прочим низкоуровневым деталям. Заголовки при этом доступны и через `retrieve()` — их отдаёт `toEntity(...)` вместе с телом и статусом; разница не в самом доступе к заголовкам, а в том, что `exchange()` пускает к ответу до и помимо разбора тела.
 
-**Эмпирическое правило:** начинайте с `retrieve()` — он покрывает 90% случаев. Переходите на `exchange()` только когда нужна нестандартная логика по статусу или доступ к сырому ответу.
+Для обычного преобразования тела начинайте с `retrieve()`. Выбирайте `exchange()`, когда требуется контролировать сырой ответ или преобразовать статус в иной результат, например 404 в `Optional.empty()`. См. [Spring Framework 6.2: RestClient](https://docs.spring.io/spring-framework/reference/6.2/integration/rest-clients.html).
 
 ---
 
@@ -388,7 +390,15 @@ public interface SearchClient {
 
 ## Q11. Как подключить @HttpExchange к RestClient vs WebClient?
 
-Механизм один и тот же: вы оборачиваете нужный клиент в адаптер, отдаёте его `HttpServiceProxyFactory`, и фабрика создаёт прокси по интерфейсу. Меняется только тип клиента и его адаптера — `RestClientAdapter` для синхронного, `WebClientAdapter` для реактивного.
+Для ручной сборки вы оборачиваете клиент в соответствующий адаптер, отдаёте его `HttpServiceProxyFactory`, и фабрика создаёт прокси по интерфейсу. `RestClientAdapter` поддерживает синхронные сигнатуры, `WebClientAdapter` — также реактивные. Вид возвращаемого значения интерфейса остаётся частью контракта.
+
+```java
+@HttpExchange("/users")
+interface UserClient {
+    @GetExchange("/{id}")
+    User getById(@PathVariable Long id);
+}
+```
 
 **С RestClient (синхронный, Spring 6.1+):**
 ```java
@@ -406,9 +416,9 @@ HttpServiceProxyFactory factory = HttpServiceProxyFactory.builderFor(adapter).bu
 UserClient client = factory.createClient(UserClient.class);
 ```
 
-Интерфейс `UserClient` одинаков для обоих — отличается только конфигурация. Это и есть смысл декларативного подхода: смену синхронного клиента на реактивный (или наоборот) делают в одном бине, не трогая код вызывающих сервисов.
+С такой синхронной сигнатурой оба адаптера могут построить прокси, но `WebClientAdapter` при возврате `User` ждёт результат и не делает вызывающий код неблокирующим. Чтобы возвращать `Mono<User>` или поток `Flux<User>`, нужен реактивный адаптер и изменение сигнатуры интерфейса **вместе с его потребителями**. Прокси изолирует настройку транспорта, но не меняет модель выполнения сам.
 
-**Базовый URL** задаётся на самом клиенте перед оборачиванием в адаптер — `RestClient.builder().baseUrl("https://users.service")` (или `WebClient.builder().baseUrl(...)`). Отдельного property-шортката вроде `spring.http.interface.default-base-url` в Spring Boot нет. Свойства `spring.http.client.*` (таймауты, редиректы, выбор фабрики) настраивают транспорт для всех блокирующих клиентов, но базовый адрес ими не задаётся — его по-прежнему ставят на builder'е клиента.
+При **ручной сборке** базовый URL задают на клиенте до создания адаптера: `RestClient.builder().baseUrl("https://users.service")` или `WebClient.builder().baseUrl(...)`. Для автоконфигурируемых HTTP Service групп в **Spring Boot 4.x** доступно свойство `spring.http.serviceclient.<group-name>.base-url` вместе с настройками таймаутов и заголовков. Это другой путь конфигурации, поэтому проверяйте версию Boot и способ регистрации клиента. См. [Spring Framework 6.2: HTTP Interface](https://docs.spring.io/spring-framework/reference/6.2/integration/rest-clients.html) и [Spring Boot 4: Calling REST Services](https://docs.spring.io/spring-boot/4.0/reference/io/rest-client.html).
 
 ---
 
