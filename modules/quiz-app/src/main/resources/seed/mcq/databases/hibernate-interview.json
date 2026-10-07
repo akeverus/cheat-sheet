@@ -2111,7 +2111,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`SEQUENCE` несовместим с batch insert, поэтому для пакетной вставки берут IDENTITY.",
+              "text": "`SEQUENCE` несовместим с JDBC batch insert в Hibernate, поэтому для пакетной вставки любых сущностей берут IDENTITY.",
               "correct": false,
               "sections": {
                 "what_actually": "С batch insert несовместим IDENTITY; SEQUENCE как раз рекомендован для batch-операций.",
@@ -2123,38 +2123,38 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Без `clear()` L1 cache очищается сам, поэтому OutOfMemoryError при вставке исключён.",
+              "text": "`clear` не нужен, поскольку persistence context автоматически удаляет ранее сохранённые сущности в ходе длинной транзакции.",
               "correct": false,
               "sections": {
-                "what_actually": "Тело: без flush() + clear() все сущности останутся в L1 cache и получим OutOfMemoryError.",
+                "what_actually": "Stateful session удерживает управляемые сущности в persistence context; при большом импорте он может занять много памяти. `flush()`/`clear()` позволяют ограничить его размер.",
                 "source_of_confusion": "Кажется, что кэш сам вытесняет старые объекты по ходу транзакции.",
-                "if_it_were_true": "Не было бы смысла вызывать clear() в цикле пакетной вставки.",
-                "how_it_should_be": "L1 cache сам не чистится в транзакции — нужен clear(), иначе OutOfMemoryError."
+                "if_it_were_true": "Долгий импорт оставался бы ограниченным по памяти без явного управления persistence context, но stateful session не вытесняет эти объекты автоматически.",
+                "how_it_should_be": "При больших циклах выполняйте `flush()`/`clear()` порциями; это контроль памяти, а не включение JDBC batching."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`GenerationType.IDENTITY` ломает batch insert, поэтому для пакетной вставки берут SEQUENCE.",
+              "text": "`GenerationType.IDENTITY` отключает JDBC insert batching в Hibernate, а `SEQUENCE` позволяет получать ID до вставки.",
               "correct": true,
               "sections": {
-                "explanation": "Batch Processing шлёт несколько SQL одним пакетом вместо round-trip на каждую операцию — выигрыш в сетевых задержках. Но IDENTITY требует выполнить каждый INSERT отдельно, чтобы получить сгенерированный БД id, и это ломает пакетную вставку. SEQUENCE позволяет знать id заранее и группировать INSERT в batch.",
-                "example": "hibernate.jdbc.batch_size: 50; в цикле persist + каждые 50 итераций flush() и clear(); стратегия id — SEQUENCE, а не IDENTITY.",
-                "when_to_apply": "При массовых INSERT/UPDATE/DELETE (загрузка, миграции), где важно сократить число обращений к БД.",
-                "edge_cases": "Без flush() + clear() при вставке большого объёма все сущности копятся в L1 cache → OutOfMemoryError. order_inserts/order_updates группируют операции по типу сущности.",
+                "explanation": "Положительный `hibernate.jdbc.batch_size` разрешает группировать совместимые SQL-операции одного PreparedStatement. Для `IDENTITY` Hibernate отключает insert batching, поскольку ID выдаётся после INSERT. `SEQUENCE` позволяет получить ID заранее; фактическое объединение зависит от SQL и драйвера.",
+                "example": "При `hibernate.jdbc.batch_size=50` можно вызывать `persist()` в цикле и после каждых 50 сущностей делать `flush()`/`clear()` для контроля памяти. `SEQUENCE` совместим с отложенной пакетной вставкой.",
+                "when_to_apply": "При массовых вставках или обновлениях, где измерения показывают пользу от сокращения JDBC-вызовов; большой объём также требует контроля памяти и границ транзакции.",
+                "edge_cases": "`flush()`/`clear()` не включают JDBC batching и `flush()` не делает commit. `order_inserts`/`order_updates` опционально сортируют операции по типу и ключу, их стоимость нужно измерять.",
                 "related": "[[hibernate-interview#Q37]], [[hibernate-interview#Q40]]"
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Batch Processing шлёт каждую операцию отдельным `round-trip`, лишь группируя их.",
+              "text": "`JDBC batch` шлёт каждую операцию отдельным round-trip, только группируя их в памяти перед отправкой.",
               "correct": false,
               "sections": {
-                "what_actually": "Тело: batch — отправка нескольких SQL одним пакетом вместо отдельного round-trip на каждую операцию.",
+                "what_actually": "JDBC-драйвер обычно отправляет совместимые SQL-операции пакетом с меньшим числом сетевых вызовов, хотя число вызовов зависит от драйвера.",
                 "source_of_confusion": "order_inserts группирует операции по типу, и это принимают за всю суть batch.",
-                "if_it_were_true": "Число сетевых обращений не уменьшилось бы, и ускорения массовых операций не было бы.",
-                "how_it_should_be": "Batch отправляет несколько операций одним пакетом, сокращая round-trip и сетевые задержки."
+                "if_it_were_true": "Пакетирование не могло бы уменьшить число сетевых обращений при поддержке драйвера, и настройка размера пакета не давала бы такого эффекта.",
+                "how_it_should_be": "Batch передаёт несколько совместимых операций драйверу вместе; проверяйте фактические вызовы и время на своей БД."
               }
             }
           ]

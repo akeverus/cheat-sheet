@@ -1686,50 +1686,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`order_inserts=true` сортирует строки по значениям полей перед вставкой, чтобы данные легли в нужном порядке.",
+              "text": "`order_inserts=true` сортирует значения полей перед INSERT и гарантирует порядок строк в таблице после массовой загрузки.",
               "correct": false,
               "sections": {
-                "what_actually": "`order_inserts` группирует `INSERT` по ТИПУ сущности (для эффективного батчинга одинаковых запросов), а не сортирует данные по значениям.",
+                "what_actually": "`order_inserts` упорядочивает операции по типу сущности и первичному ключу для более полных JDBC-пакетов; порядок строк в таблице он не гарантирует.",
                 "source_of_confusion": "Слово «order» воспринимают как сортировку данных.",
-                "if_it_were_true": "Тогда флаг влиял бы на порядок строк в таблице, но он влияет на группировку statement'ов.",
-                "how_it_should_be": "`order_inserts` группирует одинаковые INSERT для батча."
+                "if_it_were_true": "Приложение могло бы полагаться на физический порядок хранения строк после импорта, но реляционная таблица не задаёт порядок чтения без ORDER BY.",
+                "how_it_should_be": "Используйте `order_inserts` только после измерения эффекта для batching; порядок результата задавайте ORDER BY."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Batch объединяет много `INSERT`/`UPDATE` в один round-trip к БД. Включается через `hibernate.jdbc.batch_size=50`, `order_inserts=true`, `order_updates=true`. В цикле периодически делают `em.flush()` + `em.clear()` (каждые N записей), чтобы отправить батч и освободить память persistence context.",
+              "text": "`hibernate.jdbc.batch_size=50` включает JDBC batching, `flush` и `clear` ограничивают память при массовой загрузке, а `saveAll` пакеты не гарантирует.",
               "correct": true,
               "sections": {
-                "explanation": "Без batch каждый `INSERT` — отдельный запрос к БД. С `batch_size` Hibernate группирует операции. Ключевой нюанс: с `GenerationType.IDENTITY` batch INSERT невозможен, нужен `SEQUENCE` с `allocationSize`.",
-                "example": "`@SequenceGenerator(name=\"product_seq\", sequenceName=\"product_seq\", allocationSize=50)` позволяет зарезервировать 50 id одним запросом и батчить 50 INSERT.",
-                "when_to_apply": "Берут для массовых импортов/обновлений (CSV, миграции данных), где важно минимизировать число обращений к БД.",
-                "edge_cases": "`GenerationType.IDENTITY` отключает batching INSERT: id выдаётся БД только в момент `INSERT`, поэтому сгруппировать вставки невозможно.",
+                "explanation": "Hibernate 7.4 включает JDBC batching при положительном `hibernate.jdbc.batch_size`; он задаёт максимум совместимых операций одного PreparedStatement в пакете. Периодические `flush()`/`clear()` выполняют SQL и освобождают persistence context при большом импорте, но не включают batching. `saveAll()` сохраняет набор сущностей в транзакции, не обещая пакетной отправки драйверу.",
+                "example": "При `batch_size: 50` цикл `persist()` может делать `flush()`/`clear()` после каждых 50 сущностей. Это ограничивает память, но не делает `commit`; фактические JDBC-пакеты зависят от SQL, драйвера и генератора ID.",
+                "when_to_apply": "Для массового импорта или обновления настройте batching, затем измерьте SQL и расход памяти. Очень большой импорт может требовать отдельных транзакций и порционной подачи входа.",
+                "edge_cases": "`IDENTITY` отключает insert batching в Hibernate, поскольку ID узнаётся после INSERT; `SEQUENCE` позволяет заранее получить ID. `order_inserts`/`order_updates` опциональны и могут добавлять стоимость сортировки; `flush()` не равен `commit`.",
                 "related": "[[spring-data-jpa-interview#Q21]] FlushMode; [[spring-data-jpa-interview#Q19]] состояния сущности; [[spring-data-jpa-interview#Q35]] best practices."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Достаточно выставить `batch_size`, и `em.flush()`/`em.clear()` в цикле уже не нужны — Hibernate всё сделает сам.",
+              "text": "`flush` и `clear` включают JDBC batching даже при `batch_size=0`, потому что flush автоматически объединяет соседние INSERT.",
               "correct": false,
               "sections": {
-                "what_actually": "Без периодических `flush()`+`clear()` persistence context раздувается и держит все сущности в памяти, рискуя `OutOfMemoryError`; их вызывают вручную.",
-                "source_of_confusion": "`batch_size` звучит как «всё настроено», и про управление памятью забывают.",
-                "if_it_were_true": "Тогда импорт миллионов строк не требовал бы очистки контекста, но память переполнится.",
-                "how_it_should_be": "`batch_size` + периодические `flush()`/`clear()` каждые N записей."
+                "what_actually": "Нулевой `batch_size` отключает JDBC batching. `flush()` отправляет накопленный SQL, а `clear()` освобождает управляемые сущности; сами по себе они не включают пакеты.",
+                "source_of_confusion": "Слово «пакет» относят к порции объектов в памяти и к JDBC batch как к одному механизму.",
+                "if_it_were_true": "При `batch_size=0` каждый flush объединял бы INSERT у драйвера, хотя настройка явно выключает JDBC batching.",
+                "how_it_should_be": "Для JDBC batching нужен положительный `batch_size`; `flush()`/`clear()` добавляйте для контроля размера контекста."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`GenerationType.IDENTITY` отлично поддерживает batch INSERT, ведь id выделяется заранее.",
+              "text": "`IDENTITY` совместим с JDBC insert batching в Hibernate, поскольку ID уже известен до выполнения INSERT.",
               "correct": false,
               "sections": {
-                "what_actually": "`IDENTITY` блокирует batch INSERT: id генерируется БД в момент самого `INSERT`, поэтому заранее зарезервировать и сгруппировать вставки нельзя.",
+                "what_actually": "Hibernate отключает JDBC insert batching для `IDENTITY`: ID выдаётся БД при INSERT. Это ограничение относится к таким вставкам, не ко всем возможным UPDATE.",
                 "source_of_confusion": "`IDENTITY` — частый дефолт, и кажется, что он совместим со всем.",
-                "if_it_were_true": "Тогда batch работал бы с любым генератором, но именно `IDENTITY` его и ломает.",
-                "how_it_should_be": "Для batch INSERT берут `SEQUENCE` с `allocationSize`, не `IDENTITY`."
+                "if_it_were_true": "Hibernate мог бы отложить INSERT до заполнения пакета, но ему нужен сгенерированный БД ID после `persist()`.",
+                "how_it_should_be": "Для insert batching используйте генератор, способный выдать ID до INSERT, например `SEQUENCE` при поддержке БД."
               }
             }
           ]

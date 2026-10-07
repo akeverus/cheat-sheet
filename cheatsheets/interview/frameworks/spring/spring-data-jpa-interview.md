@@ -1642,9 +1642,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
 ## Q28. (!) Как работает batch-обработка?
 
-Batch-обработка группирует несколько `INSERT`/`UPDATE` в один сетевой round-trip к БД. Без неё Hibernate шлёт по отдельному запросу на каждую сущность — на массовых операциях сетевая задержка умножается на N и становится главным тормозом.
+JDBC batching передаёт несколько совместимых SQL-операций одного `PreparedStatement` драйверу пакетом; драйвер обычно отправляет пакет меньшим числом сетевых вызовов. Это уменьшает накладные расходы массовых `INSERT`/`UPDATE`, но не превращает их в один SQL и не гарантирует ровно один round-trip на `batch_size` строк.
 
-Включается двумя слагаемыми: настройка Hibernate (`jdbc.batch_size`, `order_inserts`, `order_updates`) плюс правильный код — периодический `flush()` + `clear()`, чтобы отправлять данные пачками и не копить весь объём в памяти. Одного без другого недостаточно.
+В Hibernate 7.4 положительный `hibernate.jdbc.batch_size` **включает** JDBC batching для stateful session; значение задаёт верхний размер пакета. `order_inserts`/`order_updates` — необязательная сортировка операций по типу сущности и ключу ради более полных пакетов; её стоимость нужно измерять. Для большого импорта периодические `flush()`/`clear()` ограничивают размер persistence context и отправляют накопленные операции, но сами по себе batching **не включают**. `flush()` выполняет SQL внутри текущей транзакции, а не делает `commit`. `saveAll()` сохраняет переданные сущности, но не гарантирует JDBC batch без подходящих настроек и генератора ID.
 
 ```yaml
 # application.yml
@@ -1653,10 +1653,9 @@ spring:
     properties:
       hibernate:
         jdbc:
-          batch_size: 50          # количество операций в одном батче
-          batch_versioned_data: true
-        order_inserts: true        # группировать INSERT по типу сущности
-        order_updates: true        # группировать UPDATE по типу сущности
+          batch_size: 50          # максимум операций в одном JDBC batch
+        order_inserts: true        # опционально: группировать по типу и ключу
+        order_updates: true        # опционально: измерить выигрыш и стоимость
 ```
 
 ```java
@@ -1676,14 +1675,16 @@ public class ProductImportService {
             entityManager.persist(product);
             count++;
 
-            if (i > 0 && i % batchSize == 0) {
-                entityManager.flush();  // отправить batch INSERT в БД
-                entityManager.clear();  // очистить persistence context (экономия RAM)
+            if (count % batchSize == 0) {
+                entityManager.flush();  // выполнить накопленные SQL, не commit
+                entityManager.clear();  // ограничить размер persistence context
             }
         }
 
-        entityManager.flush();
-        entityManager.clear();
+        if (count % batchSize != 0) {
+            entityManager.flush();
+            entityManager.clear();
+        }
         return count;
     }
 }
@@ -1691,19 +1692,19 @@ public class ProductImportService {
 
 **Критический момент с `GenerationType.IDENTITY`:**
 ```java
-// НЕ батчится! IDENTITY требует INSERT для получения id
+// Hibernate 7.4 отключает JDBC insert batching для IDENTITY
 @Id
 @GeneratedValue(strategy = GenerationType.IDENTITY)
 private Long id;
 
-// Батчится — SEQUENCE позволяет выделить id заранее
+// SEQUENCE позволяет получить id до INSERT и применять JDBC batching
 @Id
 @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "product_seq")
 @SequenceGenerator(name = "product_seq", sequenceName = "product_seq", allocationSize = 50)
 private Long id;
 ```
 
-Почему `IDENTITY` ломает батчинг: при этой стратегии БД присваивает id только в момент самого `INSERT`, а Hibernate обязан знать id сразу после `persist()`. Значит, отложить и сгруппировать вставки нельзя — каждая идёт отдельным запросом. `SEQUENCE` с `allocationSize = 50` решает это: Hibernate одним обращением к sequence резервирует сразу 50 id вперёд, раздаёт их в памяти и спокойно батчит 50 `INSERT` в один round-trip. Это частая ловушка — настроили `batch_size`, а батчинга нет именно из-за `IDENTITY`.
+`IDENTITY` требует INSERT для получения ключа, поэтому Hibernate отключает **insert** batching для такой сущности; это не выключает batching других подходящих операций. `SEQUENCE` даёт ключ до INSERT; при подходящем pooled-генераторе `allocationSize` уменьшает число обращений за ключами. Схема sequence и настройки генератора должны совпадать, а фактическое число JDBC-вызовов зависит от драйвера и набора SQL. Одна длинная `@Transactional`-операция удерживает транзакцию и соединение до завершения; для очень больших импортов отдельно продумывают границы транзакций и чтение входа порциями. [Hibernate ORM 7.4, batching](https://docs.hibernate.org/orm/7.4/userguide/html_single/#batch); [Spring Data JPA, transactions](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html); [Spring Data JPA, `saveAll`](https://docs.spring.io/spring-data/jpa/docs/current/api/org/springframework/data/jpa/repository/support/SimpleJpaRepository.html).
 
 ## Q29. Как настроить второуровневый кэш (`L2 cache`)?
 

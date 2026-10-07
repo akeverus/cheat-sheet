@@ -1302,7 +1302,7 @@ public class UserService {
 
 ## Q36. (!) Что такое `Batch Processing` в `Hibernate`?
 
-**Batch Processing** — отправка нескольких SQL-операций в БД одним пакетом вместо отдельного round-trip на каждую. Выигрыш именно в сетевых задержках: один пакет из 50 `INSERT` вместо 50 отдельных запросов резко сокращает число обращений к БД и ускоряет массовые `INSERT`/`UPDATE`/`DELETE` в разы.
+JDBC batching передаёт несколько совместимых SQL-операций одного `PreparedStatement` драйверу пакетом. Это может сократить сетевые вызовы при массовых `INSERT`/`UPDATE`; конкретный выигрыш зависит от драйвера, SQL и БД. `hibernate.jdbc.batch_size` задаёт максимальное число операций в пакете для stateful session; положительное значение включает batching.
 
 **Конфигурация:**
 ```yaml
@@ -1311,29 +1311,31 @@ spring:
     properties:
       hibernate:
         jdbc:
-          batch_size: 50          # количество операций в одном batch
-          batch_versioned_data: true  # batch для @Version сущностей
-        order_inserts: true       # группировка INSERT по типу сущности
-        order_updates: true       # группировка UPDATE по типу сущности
+          batch_size: 50          # максимум операций в JDBC batch
+        order_inserts: true       # необязательно: по типу и ключу
+        order_updates: true       # необязательно: проверить измерением
 ```
 
-**Важно**: `GenerationType.IDENTITY` **несовместим** с batch insert — `Hibernate` должен выполнить каждый `INSERT` отдельно, чтобы получить сгенерированный ID. Используйте `SEQUENCE` для batch-операций.
+**Важно:** Hibernate 7.4 отключает JDBC **insert** batching при `GenerationType.IDENTITY`: ID получается после INSERT. `SEQUENCE` позволяет получить ID заранее и применять batching, если он настроен и поддерживается БД. Это не означает, что любая операция с `IDENTITY` отключает batching всех `UPDATE`.
 
 ```java
 @Transactional
 public void batchInsert(List<UserDto> dtos) {
-    for (int i = 0; i < dtos.size(); i++) {
-        entityManager.persist(toEntity(dtos.get(i)));
+    int count = 0;
+    for (UserDto dto : dtos) {
+        entityManager.persist(toEntity(dto));
+        count++;
 
-        if (i % 50 == 0) { // batch_size = 50
-            entityManager.flush();  // отправить batch в БД
-            entityManager.clear();  // очистить L1 cache, чтобы не съесть память
+        if (count % 50 == 0) {
+            entityManager.flush();  // выполнить SQL внутри транзакции
+            entityManager.clear();  // освободить persistence context
         }
     }
+    // Оставшиеся изменения выполнит flush перед commit.
 }
 ```
 
-Без `flush()` + `clear()` при вставке 100K записей все сущности останутся в L1 cache — `OutOfMemoryError`.
+Периодические `flush()`/`clear()` ограничивают размер persistence context в большом цикле, но не включают JDBC batching: для него нужен положительный `batch_size`. `flush()` не делает `commit`; длинная транзакция продолжает удерживать соединение и ресурсы до завершения. `order_inserts`/`order_updates` сортируют операции для повышения заполнения пакетов и могут добавить свою стоимость, поэтому их проверяют измерением. [Hibernate ORM 7.4, JDBC и session batching](https://docs.hibernate.org/orm/7.4/userguide/html_single/#batch).
 
 ## Q37. В чём разница между `setMaxResults()` и `setFetchSize()`?
 
