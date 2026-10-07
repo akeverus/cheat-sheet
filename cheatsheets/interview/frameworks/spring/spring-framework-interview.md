@@ -396,7 +396,7 @@ public class AppConfig {
 
 ```mermaid
 graph TB
-    A["1. Instantiation<br/>Создание экземпляра"] --> B["2. Populate Properties<br/>Внедрение зависимостей (DI)"]
+    A["1. Instantiation<br/>Аргументы конструктора и создание экземпляра"] --> B["2. Populate Properties<br/>Поля и сеттеры"]
     B --> C["3. BeanNameAware<br/>.setBeanName()"]
     C --> D["4. BeanFactoryAware<br/>.setBeanFactory()"]
     D --> E["5. ApplicationContextAware<br/>.setApplicationContext()"]
@@ -414,6 +414,8 @@ graph TB
     style K fill:#c8e6c9
     style N fill:#ffcdd2
 ```
+
+Конструкторная инъекция происходит **при создании экземпляра**: контейнер сначала разрешает зависимости и передаёт их аргументами конструктора. Поля и сеттеры заполняются уже после создания объекта, на этапе `Populate Properties`. Поэтому схему выше нельзя читать как «любая DI происходит после конструктора». См. [Spring Framework: Dependency Injection](https://docs.spring.io/spring-framework/reference/core/beans/dependencies/factory-collaborators.html).
 
 **Ключевые callback-и в коде:**
 
