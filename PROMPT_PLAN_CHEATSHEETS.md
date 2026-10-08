@@ -479,10 +479,19 @@ Kafka 2.0.5, Spring TestContext и JUnit 5 Extension исправлены кла
 skel/parity FAIL на старых блоках. Полной проверки, запуска контейнера
 и независимой blind-приёмки нет. Коммит `8b0d71b4e`.
 
-Следующий авторский пакет: Testcontainers Q11 B0 и парный JSON.
-Сверить MongoDBContainer с официальным модулем 2.0.5, зависимость,
-пакет класса, connection string и границы replica set; проверить
-пересечения Q6/Q15/Q16. Затем Spring Data JPA Q35 B0.
+08.10 Testcontainers MongoDB Q11 B0: по модулю/коду 2.0.5 исправлены
+координата, пакет класса, явный `withReplicaSet()` и смысл
+`getReplicaSetUrl()`. Теория, MCQ и sidecar синхронизированы;
+structure 40 Q/40 блоков PASS, Q11 без локальных hard/warnings,
+полный skel/parity FAIL на старых блоках. Полной проверки,
+runtime-прогона и независимой blind-приёмки нет. Коммит `7a3aa1b19`.
+
+Следующий авторский пакет: Spring Data JPA Q35 B0 и парный JSON.
+Сверить производительность и пример сервиса по Spring Data JPA 4.1.1
+и Hibernate: текущий `findAll(spec, pageable).map(ProductSummary::from)`
+не является проекцией запроса, а `bulkUpdatePrices(Map<...>)` не
+демонстрирует один SQL. Сопоставить Q27/Q28 и Hibernate Q24/Q25/Q27,
+исправить подтверждённое и добавить факты в freshness-sidecar.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,

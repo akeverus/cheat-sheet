@@ -1248,12 +1248,28 @@ gate PASS, локальные четыре B0 без hard/warnings. Полный
 файла FAIL на прежних блоках; полного аудита (`П`), запуска Kafka
 контейнера и независимой blind-приёмки MCQ нет. Коммит `8b0d71b4e`.
 
-**Точная точка авторского продолжения:** Testcontainers Q11 B0,
-`testcontainers-interview.md` и парный JSON. Сверить пример MongoDB
-с [официальным модулем 2.0.5](https://java.testcontainers.org/modules/databases/mongodb/):
-координату `testcontainers-mongodb`, пакет `MongoDBContainer`,
-подключение и сценарий реплика-сета, затем проверить пересечения
-Q6/Q15/Q16. После него — Spring Data JPA Q35 B0. Никакого `П`
+**Контрольная точка 08.10.2026 — Testcontainers MongoDB Q11 B0 · О.**
+По [модулю MongoDB 2.0.5](https://java.testcontainers.org/modules/databases/mongodb/),
+[исходному коду контейнера](https://raw.githubusercontent.com/testcontainers/testcontainers-java/2.0.5/modules/mongodb/src/main/java/org/testcontainers/mongodb/MongoDBContainer.java)
+и [документации транзакций MongoDB](https://www.mongodb.com/docs/v8.0/data-modeling/enforce-consistency/transactions/)
+исправлены координата/пакет и ошибочное обещание replica set по
+умолчанию: нужен явный `withReplicaSet()`. Уточнено, что
+`getReplicaSetUrl()` возвращает адрес с именем БД, но не включает режим
+и не добавляет параметр `replicaSet`. Теория, MCQ Q11 B0 и freshness-
+sidecar синхронизированы; Q6/Q15/Q16 просмотрены на пересечение.
+Structure 40 Q/40 блоков PASS, Markdown gate PASS, Q11 без локальных
+hard/warnings. Полный skel/parity файла FAIL на старых блоках; полного
+аудита (`П`), запуска MongoDB-контейнера и независимой blind-приёмки
+MCQ нет. Коммит `7a3aa1b19`; инвентарь не менялся.
+
+**Точная точка авторского продолжения:** Spring Data JPA Q35 B0,
+`spring-data-jpa-interview.md` и парный JSON. Уже при точечном чтении
+обнаружено, что `findAll(spec, pageable).map(ProductSummary::from)`
+загружает сущности до преобразования и потому не является проекцией
+запроса; `bulkUpdatePrices(Map<...>)` показан без реализуемого
+контракта «один запрос». Проверить весь Q35 против официальных
+Spring Data JPA 4.1.1/Hibernate источников, сопоставить Q27/Q28 и
+Hibernate Q24/Q25/Q27, затем исправить подтверждённое. Никакого `П`
 до полного аудита.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
