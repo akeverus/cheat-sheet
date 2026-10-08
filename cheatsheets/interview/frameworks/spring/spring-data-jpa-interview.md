@@ -1801,14 +1801,16 @@ CREATE UNIQUE INDEX idx_users_email_active ON users(email) WHERE deleted_at IS N
 
 ## Q31. Что такое `Hibernate Filters`?
 
-`Hibernate Filters` — фильтр, который добавляет `WHERE`-условие ко всем запросам к сущности, но, в отличие от `@SQLRestriction`, его можно **включать и выключать в рантайме** и параметризовать. Объявляется через `@FilterDef` + `@Filter`, активируется на сессии вызовом `session.enableFilter(...)`.
+`Hibernate Filters` добавляют к SQL условие, которое можно параметризовать и включать для конкретной `Session`. Объявление `@FilterDef` + `@Filter` само по себе фильтр не включает: обычно вызывают `session.enableFilter(...).setParameter(...)`; в Hibernate 7.4 есть также `autoEnabled` с поставщиком параметра. В отличие от статического `@SQLRestriction`, фильтр можно выключить для нужного сценария. Условие `@Filter` пишется на языке колонок SQL, а не полей JPQL. [Hibernate ORM 7.4, filtering entities](https://docs.hibernate.org/orm/7.4/userguide/html_single/#pc-filter).
 
-Главный сценарий — multi-tenancy: один фильтр `tenant_id = :tenantId` незаметно ограничивает все запросы данными текущего арендатора. Параметр (`tenantId`) задаётся при включении фильтра — обычно в AOP-аспекте на входе в запрос. Именно динамичность и параметризация отличают фильтры от статического `@SQLRestriction`.
+Для контекстного чтения, например по `tenant_id`, параметр берут из доверенного контекста запроса и включают фильтр до выполнения запросов. В Hibernate 7.4 фильтр по умолчанию применяется к запросам сущностей, **но не к прямой загрузке по ключу** (`find`/`findById`); для неё требуется `applyToLoadByKey = true` в `@FilterDef`. Уже находящиеся в persistence context объекты не становятся невидимыми задним числом.
 
 ```java
 @Entity
 @Table(name = "documents")
-@FilterDef(name = "tenantFilter", parameters = @ParamDef(name = "tenantId", type = String.class))
+@FilterDef(name = "tenantFilter",
+    parameters = @ParamDef(name = "tenantId", type = String.class),
+    applyToLoadByKey = true)
 @Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 public class Document {
     @Id
@@ -1821,21 +1823,21 @@ public class Document {
     private String content;
 }
 
-@Component
+public interface DocumentRepository extends JpaRepository<Document, Long> {}
+
+@Service
 @RequiredArgsConstructor
-public class TenantFilterAspect {
-
+public class DocumentReader {
     private final EntityManager entityManager;
+    private final DocumentRepository documents;
 
-    @Around("@annotation(TenantAware)")
-    public Object applyTenantFilter(ProceedingJoinPoint joinPoint) throws Throwable {
+    @Transactional(readOnly = true)
+    public List<Document> findForTenant(String tenantId) {
         Session session = entityManager.unwrap(Session.class);
-        String tenantId = TenantContext.getCurrentTenant();
-
         session.enableFilter("tenantFilter")
                .setParameter("tenantId", tenantId);
         try {
-            return joinPoint.proceed();
+            return documents.findAll();
         } finally {
             session.disableFilter("tenantFilter");
         }
@@ -1843,7 +1845,7 @@ public class TenantFilterAspect {
 }
 ```
 
-**Важная оговорка:** фильтр действует только на запросы, идущие через `Session` (HQL, criteria, загрузка по id). Прямую загрузку по `find()` он, в зависимости от версии и настроек, может не покрывать — для строгой изоляции арендаторов это нужно учитывать.
+**Граница безопасности:** фильтр можно не включить, выключить слишком рано или обойти прямым SQL; ленивая загрузка после `disableFilter` также требует отдельной проверки. Для строгой изоляции арендаторов проверяйте все пути чтения/записи и права в БД; в PostgreSQL дополнительно доступна [Row-Level Security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html). `applyToLoadByKey` тоже проверяйте с ассоциациями: отфильтрованный обязательный target может нарушить ожидания к связи; сочетание с `@NotFound(IGNORE)` Hibernate отдельно отмечает как риск потери данных. [Hibernate ORM 7.4, `@Filter`](https://docs.hibernate.org/orm/7.4/userguide/html_single/#pc-filter).
 
 ## Q32. Как создать custom repository implementation?
 

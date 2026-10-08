@@ -1866,50 +1866,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Hibernate Filters` работают как `@SQLRestriction` — статически, без включения и отключения в рантайме.",
+          "text": "В Hibernate 7.4 `@Filter` задаёт неизменяемое условие для всех сессий, как `@SQLRestriction`. Загрузку по ID он всегда ограничивает без дополнительных настроек.",
               "correct": false,
               "sections": {
-                "what_actually": "Ключевое отличие фильтров — динамичность: их включают/выключают через `enableFilter`/`disableFilter`; статичен именно `@SQLRestriction`.",
-                "source_of_confusion": "И фильтры, и `@SQLRestriction` дописывают `WHERE`, и их поведение смешивают.",
-                "if_it_were_true": "Тогда фильтры ничем бы не отличались от `@SQLRestriction`, но их плюс — управляемость.",
-                "how_it_should_be": "Фильтры включаются/выключаются динамически в сессии."
+            "what_actually": "`@Filter` можно параметризовать и включить для конкретной `Session`; `@SQLRestriction` статичен. Прямая загрузка по ключу требует `applyToLoadByKey = true`.",
+            "source_of_confusion": "Оба механизма добавляют SQL-условие, поэтому их ошибочно считают одинаково статичными и одинаково применимыми к загрузке по ключу.",
+            "if_it_were_true": "Для разных арендаторов нельзя было бы задавать параметры фильтра на уровне сессии, а `findById` всегда учитывал бы его без настройки.",
+            "how_it_should_be": "Фильтр активируют в нужной сессии; применение к загрузке по ID задают отдельно в `@FilterDef`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Фильтр применяется автоматически ко всем сессиям сразу после объявления `@FilterDef`, без явного включения.",
+          "text": "В Hibernate 7.4 объявление `@FilterDef` само включает фильтр во всех сессиях. Значение `tenantId` фиксируется в аннотации, а загрузка по ID сразу подчиняется условию.",
               "correct": false,
               "sections": {
-                "what_actually": "Объявление `@FilterDef`/`@Filter` лишь регистрирует фильтр; чтобы он действовал, его нужно явно включить в сессии через `enableFilter`.",
-                "source_of_confusion": "Аннотация выглядит достаточной для активации.",
-                "if_it_were_true": "Тогда условие фильтра действовало бы без `enableFilter`, но без него запросы не фильтруются.",
-                "how_it_should_be": "После объявления фильтр включают в нужной сессии вручную."
+            "what_actually": "Без `enableFilter` фильтр по умолчанию выключен; `autoEnabled` — отдельная настройка. Параметр можно задать во время работы, а для загрузки по ID нужен `applyToLoadByKey`.",
+            "source_of_confusion": "Объявление фильтра смешивают с его активацией и с областью применения к прямой загрузке.",
+            "if_it_were_true": "Одного `@FilterDef` хватило бы для изоляции каждого запроса, но без активации и параметра обычные запросы не фильтруются.",
+            "how_it_should_be": "Включать фильтр на сессии с параметром или явно настроить `autoEnabled` и поставщик значения."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Параметры фильтра задаются на этапе конфигурации, а не в рантайме — значение `:tenantId` фиксируется заранее.",
+          "text": "В Hibernate 7.4 `@Filter` включают в `Session` с параметром арендатора. Однако `findById` всегда обходит этот фильтр, даже при `applyToLoadByKey = true` в `@FilterDef`.",
               "correct": false,
               "sections": {
-                "what_actually": "Параметры передаются в рантайме через `setParameter(\"tenantId\", value)` при включении фильтра — это и делает фильтры контекстными.",
-                "source_of_confusion": "Параметр в аннотации выглядит как статическая константа.",
-                "if_it_were_true": "Тогда нельзя было бы фильтровать по текущему арендатору, но `setParameter` именно это и даёт.",
-                "how_it_should_be": "Значение параметра задают динамически при `enableFilter`."
+            "what_actually": "В Hibernate 7.4 `applyToLoadByKey = true` применяет активный фильтр и к прямой загрузке по ID. Без этой настройки прямой `find` может вернуть строку вне условия.",
+            "source_of_confusion": "Верное правило по умолчанию для прямой загрузки принимают за безусловное ограничение API.",
+            "if_it_were_true": "Настройка `applyToLoadByKey` не меняла бы результат `find`, но Hibernate 7.4 показывает обратный пример.",
+            "how_it_should_be": "Для фильтрации загрузки по ID включить `applyToLoadByKey` и проверять поведение с ассоциациями."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Hibernate Filters` — динамическая фильтрация на уровне сессии: фильтр объявляется `@FilterDef`/`@Filter` с параметром, а включается/выключается в рантайме через `session.enableFilter(\"tenantFilter\").setParameter(...)`. В отличие от статического `@SQLRestriction`, фильтр можно активировать только когда нужно — типичный сценарий multi-tenancy.",
+          "text": "В Hibernate 7.4 `@Filter` включают в `Session` с параметром арендатора. Для прямой загрузки по ID фильтр применяют через `applyToLoadByKey = true` в `@FilterDef`.",
               "correct": true,
               "sections": {
-                "explanation": "Пока фильтр активен, его `WHERE`-условие дописывается ко всем запросам сущности. Его включают, например, в AOP-аспекте по началу запроса и выключают по завершении.",
-                "example": "`@Filter(name=\"tenantFilter\", condition=\"tenant_id = :tenantId\")` + `session.enableFilter(\"tenantFilter\").setParameter(\"tenantId\", currentTenant)` ограничивает выборки текущим арендатором.",
-                "when_to_apply": "Берут для multi-tenancy и контекстной фильтрации, где условие зависит от рантайм-контекста (текущий пользователь, арендатор).",
-                "edge_cases": "Фильтр действует только пока включён в текущей сессии — забыли включить (или вызвали вне аспекта), и данные других арендаторов утекут.",
-                "related": "[[spring-data-jpa-interview#Q30]] Soft Delete; [[spring-data-jpa-interview#Q8]] @Modifying; [[spring-data-jpa-interview#Q22]] LAZY vs EAGER."
+            "explanation": "Фильтр добавляет параметризованное SQL-условие к запросам сущности в активной сессии. По умолчанию прямая загрузка по ключу — исключение; `applyToLoadByKey` меняет это поведение в Hibernate 7.4.",
+            "example": "`@Filter(name = \"tenantFilter\", condition = \"tenant_id = :tenantId\")` и `session.enableFilter(\"tenantFilter\").setParameter(\"tenantId\", tenantId)` ограничивают запросы; `@FilterDef(..., applyToLoadByKey = true)` охватывает прямую загрузку.",
+            "when_to_apply": "Для контекстного чтения, когда значение условия зависит от проверенного контекста арендатора или другого параметра запроса.",
+            "edge_cases": "Если фильтр не включён, выключен до ленивой загрузки или обходится нативным SQL, он не защищает данные. Для строгой изоляции проверяют все пути и права в БД.",
+            "related": "[[spring-data-jpa-interview#Q30]] Soft Delete; [[spring-data-jpa-interview#Q22]] LAZY vs EAGER; [[spring-data-jpa-interview#Q29]] persistence context."
               }
             }
           ]
