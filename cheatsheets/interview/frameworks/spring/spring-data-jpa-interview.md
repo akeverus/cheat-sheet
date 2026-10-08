@@ -1849,18 +1849,19 @@ public class DocumentReader {
 
 ## Q32. Как создать custom repository implementation?
 
-Когда не хватает ни derived-методов, ни `@Query` (нужна сложная динамическая логика или прямой доступ к `EntityManager`/Criteria API), реализацию можно дописать руками — `Spring Data` встроит её в тот же репозиторий по конвенции имён.
+Когда derived-методов, `@Query` и `Specification` недостаточно для собственной логики доступа к данным, добавляют **фрагмент репозитория**: интерфейс с нужными методами, его реализацию и основной репозиторий, наследующий этот интерфейс вместе с `JpaRepository`. Spring Data собирает их в один репозиторий; фрагмент можно переиспользовать в нескольких репозиториях. Для простого динамического фильтра сначала достаточно `Specification` из [Q17](#q17--что-такое-specifications-и-как-их-использовать).
 
-Схема из трёх шагов: интерфейс с кастомными методами → класс-реализация с суффиксом `Impl` → основной репозиторий, наследующий и `JpaRepository`, и кастомный интерфейс. По имени `<ИнтерфейсCustom>Impl` Spring находит реализацию и «склеивает» её с автогенерированными методами — для клиента это один цельный репозиторий.
+В Spring Data JPA 4.1.1 при автоматическом обнаружении класс реализации называют **по интерфейсу фрагмента**: `UserRepositoryCustomImpl implements UserRepositoryCustom`. Суффикс `Impl` — значение по умолчанию, его можно настроить. Исторический паттерн `UserRepositoryImpl` по имени **основного** репозитория поддерживается, но считается устаревшим и не рекомендуется. [Spring Data JPA, Custom Repository Implementations](https://docs.spring.io/spring-data/jpa/reference/repositories/custom-implementations.html).
 
 ```java
-// 1. Интерфейс с кастомными методами
+public record UserSearchCriteria(String email, Set<UserStatus> statuses) {}
+
+// Интерфейс фрагмента
 public interface UserRepositoryCustom {
     List<User> findUsersWithComplexCriteria(UserSearchCriteria criteria);
-    void bulkUpdateStatus(List<Long> ids, UserStatus status);
 }
 
-// 2. Реализация с суффиксом Impl
+// Имя реализации строится от интерфейса фрагмента
 @RequiredArgsConstructor
 public class UserRepositoryCustomImpl implements UserRepositoryCustom {
 
@@ -1874,42 +1875,25 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
 
         List<Predicate> predicates = new ArrayList<>();
 
-        if (criteria.name() != null) {
-            predicates.add(cb.like(cb.lower(root.get("name")),
-                "%" + criteria.name().toLowerCase() + "%"));
-        }
-        if (criteria.minAge() != null) {
-            predicates.add(cb.greaterThanOrEqualTo(root.get("age"), criteria.minAge()));
+        if (criteria.email() != null) {
+            predicates.add(cb.equal(root.get("email"), criteria.email()));
         }
         if (criteria.statuses() != null && !criteria.statuses().isEmpty()) {
             predicates.add(root.get("status").in(criteria.statuses()));
         }
 
         query.where(predicates.toArray(new Predicate[0]));
-        query.orderBy(cb.desc(root.get("createdAt")));
-
         return entityManager.createQuery(query).getResultList();
-    }
-
-    @Override
-    @Transactional
-    public void bulkUpdateStatus(List<Long> ids, UserStatus status) {
-        entityManager.createQuery(
-            "UPDATE User u SET u.status = :status WHERE u.id IN :ids")
-            .setParameter("status", status)
-            .setParameter("ids", ids)
-            .executeUpdate();
     }
 }
 
-// 3. Основной репозиторий расширяет оба интерфейса
+// Основной репозиторий собирает базовый и пользовательский фрагменты
 public interface UserRepository extends JpaRepository<User, Long>, UserRepositoryCustom {
-    // Query Methods + @Query + Custom — всё в одном репозитории
     Optional<User> findByEmail(String email);
 }
 ```
 
-Суффикс `Impl` — конвенция по умолчанию. Можно изменить через `@EnableJpaRepositories(repositoryImplementationPostfix = "CustomImpl")`.
+Показанный запрос сам по себе можно выразить через `Specification`: здесь он иллюстрирует подключение фрагмента и доступ к `EntityManager`. Реальный повод выделить фрагмент — дополнительный алгоритм, повторное использование или работа с API, которую декларативный запрос выражает хуже. Реализация может быть обычным Spring bean с внедрёнными зависимостями. При специальной конфигурации её можно зарегистрировать вручную с ожидаемым именем bean; фрагмент вне сканируемого пакета — через `META-INF/spring.factories`. Суффикс меняют через `@EnableJpaRepositories(repositoryImplementationPostfix = "CustomImpl")`. [Spring Data JPA, Configuration and Manual Wiring](https://docs.spring.io/spring-data/jpa/reference/repositories/custom-implementations.html).
 
 ## Q33. Что такое derived delete и `deleteBy`?
 

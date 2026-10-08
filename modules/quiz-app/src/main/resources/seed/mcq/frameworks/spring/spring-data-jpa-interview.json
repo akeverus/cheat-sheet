@@ -1926,50 +1926,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В custom-реализации нельзя использовать `EntityManager` — доступ к нему есть только у автогенерируемой части.",
+          "text": "В Spring Data JPA 4.1.1 пользовательский фрагмент обязан наследовать `SimpleJpaRepository`, чтобы получить `EntityManager`. Иначе его методы нельзя объединить с обычным репозиторием.",
               "correct": false,
               "sections": {
-                "what_actually": "`EntityManager` инжектируется прямо в `Impl`-класс и активно используется для Criteria/нативных запросов — это и есть смысл custom-реализации.",
-                "source_of_confusion": "Кажется, что `EntityManager` скрыт инфраструктурой Spring Data.",
-                "if_it_were_true": "Тогда сложные Criteria-запросы нельзя было бы писать вручную, но именно для этого `Impl` и нужен.",
-                "how_it_should_be": "В `Impl` инжектят `EntityManager` и работают с ним напрямую."
+            "what_actually": "Реализация фрагмента — обычный класс, который может получить `EntityManager` через внедрение зависимости. `SimpleJpaRepository` наследуют при другой задаче: изменении базового поведения всех репозиториев.",
+            "source_of_confusion": "Механизм пользовательского фрагмента смешивают с кастомизацией базового класса репозитория.",
+            "if_it_were_true": "Каждый фрагмент пришлось бы строить на JPA-базовом классе, но документация показывает обычную реализацию интерфейса.",
+            "how_it_should_be": "Создать интерфейс фрагмента и реализующий его класс; нужные зависимости внедрить обычным способом."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Класс с кастомной реализацией может называться как угодно — Spring находит его по типу, а не по имени.",
+          "text": "В Spring Data JPA 4.1.1 класс `UserRepositoryImpl` по имени основного репозитория остаётся рекомендуемой конвенцией. `UserRepositoryCustomImpl` для интерфейса фрагмента требует ручной регистрации.",
               "correct": false,
               "sections": {
-                "what_actually": "Spring находит реализацию по конвенции имени: класс должен иметь суффикс `Impl` (или настроенный postfix), иначе он не подхватится.",
-                "source_of_confusion": "Обычная DI ищет бины по типу, и это правило переносят на custom repository.",
-                "if_it_were_true": "Тогда `UserRepoExtra` подхватился бы автоматически, но без суффикса `Impl` Spring его проигнорирует.",
-                "how_it_should_be": "Имя реализации = имя интерфейса + `Impl`."
+            "what_actually": "Конвенция по имени основного репозитория считается устаревшей. Рекомендуется фрагмент: реализация `UserRepositoryCustomImpl` находится по имени интерфейса фрагмента в сканируемом пакете.",
+            "source_of_confusion": "Исторический паттерн `UserRepositoryImpl` продолжает поддерживаться, поэтому его принимают за текущую рекомендацию.",
+            "if_it_were_true": "Фрагмент нельзя было бы подключить простой композицией интерфейсов, но документация использует именно её.",
+            "how_it_should_be": "Наследовать интерфейс фрагмента в репозитории; реализацию назвать `<ИмяФрагмента>Impl` при автоматическом обнаружении."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Когда стандартных методов и `@Query` мало (сложная динамическая логика, прямая работа с `EntityManager`/`Criteria`), создают интерфейс `XxxRepositoryCustom` с нужными методами, реализуют его в классе с суффиксом `Impl` (`XxxRepositoryCustomImpl`), а основной репозиторий расширяет и `JpaRepository`, и кастомный интерфейс — Spring сам подмешивает реализацию.",
+          "text": "В Spring Data JPA 4.1.1 создают интерфейс фрагмента и класс `<ИмяФрагмента>Impl`. Основной репозиторий наследует `JpaRepository` и этот интерфейс, а реализация может внедрять `EntityManager`.",
               "correct": true,
               "sections": {
-                "explanation": "Spring находит реализацию по конвенции имени (`Impl`-суффикс) и объединяет её с автогенерируемым репозиторием. Так в одном репозитории сосуществуют query methods, `@Query` и рукописная логика.",
-                "example": "`UserRepositoryCustomImpl implements UserRepositoryCustom` с `EntityManager` и `CriteriaBuilder`; `UserRepository extends JpaRepository<User,Long>, UserRepositoryCustom`.",
-                "when_to_apply": "Берут для динамических Criteria-запросов, нативной оптимизации, batch-логики через `EntityManager`, которую не выразить декларативно.",
-                "edge_cases": "Суффикс `Impl` — конвенция по умолчанию; её можно изменить через `@EnableJpaRepositories(repositoryImplementationPostfix=\"CustomImpl\")`, иначе реализация не подхватится.",
-                "related": "[[spring-data-jpa-interview#Q4]] генерация реализации; [[spring-data-jpa-interview#Q6]] @Query; [[spring-data-jpa-interview#Q17]] Specifications."
+            "explanation": "Репозиторий составляется из базовой реализации и пользовательских фрагментов. При автоматическом обнаружении Spring Data ищет реализацию по имени интерфейса фрагмента с суффиксом `Impl` в сканируемом пакете.",
+            "example": "`UserRepositoryCustomImpl implements UserRepositoryCustom` внедряет `EntityManager`; `UserRepository extends JpaRepository<User, Long>, UserRepositoryCustom` открывает оба набора методов клиенту.",
+            "when_to_apply": "Для собственной логики доступа к данным или повторно используемого поведения, когда derived-метода, `@Query` и `Specification` недостаточно.",
+            "edge_cases": "Старый `UserRepositoryImpl` по имени основного репозитория поддерживается, но считается устаревшим. Суффикс настраивается; специальный bean регистрируют вручную, внешний фрагмент — через `spring.factories`.",
+            "related": "[[spring-data-jpa-interview#Q4]] генерация реализации; [[spring-data-jpa-interview#Q6]] @Query; [[spring-data-jpa-interview#Q17]] Specifications."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Кастомный метод нельзя смешивать в одном репозитории с derived-методами и `@Query` — нужен отдельный репозиторий.",
+          "text": "В Spring Data JPA 4.1.1 реализация фрагмента может лежать вне сканируемого пакета без записи в `spring.factories`. Spring находит класс по типу интерфейса, даже без суффикса `Impl`.",
               "correct": false,
               "sections": {
-                "what_actually": "Основной репозиторий расширяет и `JpaRepository`, и кастомный интерфейс, поэтому query methods, `@Query` и custom-логика сосуществуют в одном.",
-                "source_of_confusion": "Custom-логика кажется чем-то отдельным от автогенерируемого репозитория.",
-                "if_it_were_true": "Тогда пришлось бы инжектить два репозитория, но один интерфейс объединяет всё.",
-                "how_it_should_be": "Один репозиторий наследует базовый + custom-интерфейс."
+            "what_actually": "Автоматическое обнаружение ищет класс с настроенным суффиксом под базовым пакетом репозитория. Внешний фрагмент требует явной регистрации, например через `META-INF/spring.factories`.",
+            "source_of_confusion": "Обычное внедрение Spring bean по типу ошибочно переносят на обнаружение реализаций фрагментов.",
+            "if_it_were_true": "Внешняя библиотека подключалась бы без записи в `spring.factories`, но справочник описывает регистрацию как отдельный шаг.",
+            "how_it_should_be": "Соблюдать правила обнаружения фрагмента или зарегистрировать его явно; при ручном bean wiring учитывать ожидаемое имя."
               }
             }
           ]
