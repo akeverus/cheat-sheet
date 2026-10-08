@@ -1197,13 +1197,34 @@ Boot, наличие `spring-boot-testcontainers` для `@ServiceConnection`.
 runtime-прогона примеров и независимой blind-приёмки MCQ нет. Коммит
 `50f305e46`. Инвентарь не менялся: состав файлов прежний.
 
-**Точная точка авторского продолжения:** Testcontainers Q6 B0,
-`testcontainers-interview.md` и парный JSON. По
-[официальной документации PostgreSQL-модуля](https://java.testcontainers.org/modules/databases/postgres/)
-для Testcontainers Java 2.0.5 проверить старые координаты
-`org.testcontainers:postgresql` в Q6, версионную границу 1.x/2.x,
-соседние вопросы о модулях и отсутствие дублирующей темы. Исправить
-только подтверждённое, синхронизировать MCQ/sidecar и сохранить `З`/`О`/`П`.
+**Контрольная точка 08.10.2026 — Testcontainers Q2/Q6 B0,
+зависимости и контейнерный рантайм · О.** Просмотр заголовков (`З`)
+показал пересечение Q2 с требованиями среды и Q6 с каталогом модулей;
+отдельный вопрос не нужен. Точечно (`О`) сверены
+[Testcontainers 2.0 release](https://github.com/testcontainers/testcontainers-java/releases/tag/2.0.0),
+[JUnit 5 quickstart](https://java.testcontainers.org/quickstart/junit_5_quickstart/),
+[runtime requirements](https://java.testcontainers.org/supported_docker_environment/),
+[сборка 2.0.5 с `--release 8`](https://raw.githubusercontent.com/testcontainers/testcontainers-java/2.0.5/build.gradle)
+и [страницы модулей БД](https://java.testcontainers.org/modules/databases/).
+В 2.x координаты получили префикс `testcontainers-`, а классы переехали
+в пакеты модулей. Q2 теперь показывает согласованные зависимости 2.0.5
+и Docker API-совместимые варианты рантайма; Q6 приводит координаты
+10 модулей 2.0.5 и отмечает границу с 1.x и отдельный JDBC-драйвер.
+Теория, Q2/Q6 MCQ B0 и freshness-sidecar синхронизированы. Structure
+40 Q/40 блоков PASS, Markdown gate PASS, локальные Q2/Q6 без
+hard/warnings; полный parity файла FAIL на прежних блоках. Полной
+проверки (`П`), runtime-прогона альтернативных сред и независимой
+blind-приёмки MCQ нет. Коммит `a2f01ccc2`; инвентарь не менялся.
+
+**Точная точка авторского продолжения:** Testcontainers Q28 B0,
+`testcontainers-interview.md` и парный JSON. В Q28 осталась координата
+`org.testcontainers:elasticsearch`; [официальная документация модуля
+2.0.5](https://java.testcontainers.org/modules/elasticsearch/)
+указывает `org.testcontainers:testcontainers-elasticsearch`. Сначала
+сравнить заголовки Q9/Q11/Q28 и проверить соседние утверждения/импорты
+на версионное смешение 1.x/2.x. Затем исправить подтверждённое в теории,
+MCQ и sidecar, выполнить локальные gates. После этого вернуться к
+Spring Data JPA Q35 B0, производительность. Никакого `П` до полного аудита.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
 
@@ -1228,7 +1249,7 @@ runtime-прогона примеров и независимой blind-приё
    Metrics & Tracing Q40, Spring Testing Q9/Q10, Uber Q6/Q7,
    Google Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1,
    Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q34 B0/Q39 B0,
-   Integration Testing Q4/Q36 B0, Testcontainers Q5 B0,
+   Integration Testing Q4/Q36 B0, Testcontainers Q2/Q5/Q6 B0,
    Hibernate Q8–Q10 B0/Q14–Q16 B0/Q19–Q21 B0/Q23–Q25/Q27/Q36 B0,
    Database Transactions Q15/Q22/Q23 B0
    и RabbitMQ Streams Q40–Q42 ждут
