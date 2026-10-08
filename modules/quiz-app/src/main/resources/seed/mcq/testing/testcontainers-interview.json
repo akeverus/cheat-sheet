@@ -1631,50 +1631,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ElasticsearchContainer` по умолчанию запускается с включённым security, и менять `xpack.security.enabled` для тестов не нужно — он сам отключит auth.",
+              "text": "В Testcontainers 2.0.5 `ElasticsearchContainer` сам отключает security образа Elasticsearch 8 и отдаёт открытый HTTP URI. Настраивать аутентификацию или TLS для такого теста не требуется.",
               "correct": false,
               "sections": {
-                "what_actually": "В современных образах security включён, и для упрощения тестов его явно отключают через `withEnv(\"xpack.security.enabled\",\"false\")`.",
-                "source_of_confusion": "Ждут, что «тестовый» контейнер сам ослабит security без настройки.",
-                "if_it_were_true": "Тогда в примере не было бы `withEnv(\"xpack.security.enabled\",\"false\")`, но он там есть.",
-                "how_it_should_be": "Security отключают явно переменной окружения, иначе контейнер требует аутентификацию."
+                "what_actually": "Elasticsearch 8+ включает security и HTTPS по умолчанию. Для открытого HTTP-теста их отключают явно либо настраивают клиент с учётными данными и CA.",
+                "source_of_confusion": "Тестовый контейнер принимают за отдельный образ с автоматически отключённой защитой.",
+                "if_it_were_true": "Незащищённый HTTP URI работал бы без env-настройки, но образ Elasticsearch 8 по умолчанию защищён.",
+                "how_it_should_be": "Выбрать защищённый тест либо явно отключить security и HTTP TLS для упрощённого сценария."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Поднимают `new ElasticsearchContainer(\"docker.elastic.co/elasticsearch/elasticsearch:8.11.0\")`, для тестов отключают security (`withEnv(\"xpack.security.enabled\",\"false\")`) и ставят `discovery.type=single-node`. URI регистрируют в `spring.elasticsearch.uris` через `@DynamicPropertySource` (или `@ServiceConnection` в Boot 3.1+).",
+              "text": "В Testcontainers 2.0.5 модуль `testcontainers-elasticsearch` запускает узел. При отключённой security URI берут методом `getHttpHostAddress`, а перед немедленным поиском учитывают refresh индекса.",
               "correct": true,
               "sections": {
-                "explanation": "Контейнер поднимает реальный `Elasticsearch`; перед тестами создают индекс, после — чистят, а так как индексация асинхронна, в тесте делают `refresh()` перед поиском.",
-                "example": "`registry.add(\"spring.elasticsearch.uris\", () -> \"http://localhost:\" + elasticsearch.getMappedPort(9200))`; в тесте после `save` вызывают `indexOps(...).refresh()` перед поиском.",
-                "when_to_apply": "Применять для интеграционных тестов поиска/индексации, где важно реальное поведение `Elasticsearch` (маппинги, анализаторы, релевантность).",
-                "edge_cases": "Без `xpack.security.enabled=false` контейнер потребует аутентификацию; забытый `refresh()` после `save` приведёт к флапающему тесту (документ ещё не виден поиску).",
+                "explanation": "Класс из пакета `org.testcontainers.elasticsearch` уже задаёт `discovery.type=single-node` и предоставляет фактический host:port через `getHttpHostAddress()`. В Elasticsearch 8+ security/HTTPS включены по умолчанию.",
+                "example": "Для HTTP-теста отключают security и HTTP TLS, затем задают `registry.add(\"spring.elasticsearch.uris\", () -> \"http://\" + elasticsearch.getHttpHostAddress())`. После записи используют `indexOps(...).refresh()` перед немедленным поиском.",
+                "when_to_apply": "Для интеграционных тестов поиска и индексации, где важны маппинги, анализаторы и поведение конкретной версии Elasticsearch.",
+                "edge_cases": "Для проверки защищённого подключения клиенту нужны пароль и CA контейнера. Вместо явного refresh можно выбрать ожидание `refresh=wait_for`; обычный `save` не гарантирует мгновенную видимость поиска.",
                 "related": "[[testcontainers-interview#Q22]] forLogMessage как WaitStrategy; [[testcontainers-interview#Q16]] @ServiceConnection для Elasticsearch; [[testcontainers-interview#Q4]] GenericContainer."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "URI `Elasticsearch` фиксирован (`http://localhost:9200`), поэтому динамическая регистрация порта через `getMappedPort(9200)` не требуется.",
+              "text": "В Testcontainers 2.0.5 URI Elasticsearch всегда указывает на localhost и порт 9200, поскольку порт закреплён за хостом. В `@DynamicPropertySource` можно передать эту константу без обращения к контейнеру.",
               "correct": false,
               "sections": {
-                "what_actually": "Порт `9200` маппируется случайно; правильный URI собирают через `getMappedPort(9200)` и регистрируют динамически.",
+                "what_actually": "Порт на хосте назначается динамически; контейнер отдаёт host:port через `getHttpHostAddress()`, который регистрируют в Spring.",
                 "source_of_confusion": "`9200` — стандартный порт ES, и его считают доступным на хосте напрямую.",
                 "if_it_were_true": "Тогда параллельные ES-тесты дрались бы за `9200`, но рандомный маппинг это предотвращает.",
-                "how_it_should_be": "URI строят из маппированного порта `getMappedPort(9200)` и регистрируют через `@DynamicPropertySource`/`@ServiceConnection`."
+                "how_it_should_be": "URI строят из `getHttpHostAddress()` и регистрируют через `@DynamicPropertySource` либо используют `@ServiceConnection`."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "После `save` документ сразу доступен поиску, поэтому `refresh()` индекса вызывать не нужно — `Elasticsearch` индексирует синхронно.",
+              "text": "В Testcontainers 2.0.5 индекс Elasticsearch становится доступен поиску синхронно сразу после `save`. Можно делать запрос немедленно без refresh или ожидания обновления индекса.",
               "correct": false,
               "sections": {
-                "what_actually": "Индексация асинхронна; чтобы документ стал виден поиску сразу, в тесте вызывают `indexOps(...).refresh()`.",
+                "what_actually": "Поиск near real time: `save` не гарантирует видимость документа до обновления индекса. Для немедленной проверки вызывают refresh либо ждут `refresh=wait_for`.",
                 "source_of_confusion": "В реляционных БД `save` виден сразу в той же транзакции, и это переносят на ES.",
-                "if_it_were_true": "Тогда тесты были бы стабильны без `refresh()`, но без него они флапают.",
-                "how_it_should_be": "После `save` делают `refresh()` индекса перед поисковым запросом в тесте."
+                "if_it_were_true": "Тогда тесты были бы детерминированны без обновления индекса, но поиск может вернуть прежнюю версию данных.",
+                "how_it_should_be": "При проверке поиска сразу после записи явно обновить индекс или дождаться refresh."
               }
             }
           ]

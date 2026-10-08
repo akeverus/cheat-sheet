@@ -3,7 +3,7 @@
   "round": 9,
   "status": "TODO",
   "version_sensitive": true,
-  "product_version": "Spring Boot 3.5.16/4.1.1; Testcontainers Java 2.0.5 (1.x migration boundary)",
+  "product_version": "Spring Boot 3.5.16/4.1.1; Testcontainers Java 2.0.5 (1.x migration boundary); Elasticsearch 8+",
   "checked_date": "2026-10-08",
   "sources": [
     "https://docs.spring.io/spring-boot/reference/testing/testcontainers.html",
@@ -24,15 +24,20 @@
     "https://java.testcontainers.org/modules/databases/cassandra/",
     "https://java.testcontainers.org/modules/databases/clickhouse/",
     "https://java.testcontainers.org/modules/databases/cockroachdb/",
-    "https://java.testcontainers.org/modules/databases/neo4j/"
+    "https://java.testcontainers.org/modules/databases/neo4j/",
+    "https://java.testcontainers.org/modules/elasticsearch/",
+    "https://raw.githubusercontent.com/testcontainers/testcontainers-java/2.0.5/modules/elasticsearch/src/main/java/org/testcontainers/elasticsearch/ElasticsearchContainer.java",
+    "https://www.elastic.co/docs/manage-data/data-store/near-real-time-search",
+    "https://www.elastic.co/docs/reference/elasticsearch/rest-apis/refresh-parameter"
   ],
   "version_sensitive_claims": [
     "Q2: Testcontainers Java 2.0.5 требует Docker API-совместимый контейнерный рантайм: локальный Docker, совместимую альтернативу или Testcontainers Cloud. В build.gradle проекта 2.0.5 указан компилятор JDK 17 и options.release=8; необходимость JDK 21 и виртуальных потоков отвергнута. Для 2.x примеры зависимостей — org.testcontainers:testcontainers, testcontainers-junit-jupiter и testcontainers-postgresql одной версии.",
     "Q5: PostgreSQLContainer предоставляет JDBC URL и реквизиты, @DynamicPropertySource передаёт их Spring Boot, а @ServiceConnection в Boot 3.1+ является альтернативой для поддерживаемого контейнера и требует spring-boot-testcontainers. Начиная с Boot 3.4 AutoConfigureTestDatabase.replace по умолчанию NON_TEST и сохраняет распознанное автонастроенное Testcontainers-подключение (включая @DynamicPropertySource/@ServiceConnection/jdbc:tc:); Replace.NONE не обязателен в этом случае. withInitScript выполняется при старте контейнера, не после каждого теста.",
-    "Q6: В Testcontainers Java 2.0.0 модули получили префикс testcontainers-, классы переехали в пакеты org.testcontainers.<module>. Официальные страницы модулей 2.0.5 подтверждают координаты PostgreSQL, MySQL, MariaDB, Oracle XE, MS SQL Server, MongoDB, Cassandra, ClickHouse, CockroachDB и Neo4j. Старые координаты org.testcontainers:postgresql относятся к 1.x; JDBC-драйвер устанавливают отдельной зависимостью."
+    "Q6: В Testcontainers Java 2.0.0 модули получили префикс testcontainers-, классы переехали в пакеты org.testcontainers.<module>. Официальные страницы модулей 2.0.5 подтверждают координаты PostgreSQL, MySQL, MariaDB, Oracle XE, MS SQL Server, MongoDB, Cassandra, ClickHouse, CockroachDB и Neo4j. Старые координаты org.testcontainers:postgresql относятся к 1.x; JDBC-драйвер устанавливают отдельной зависимостью.",
+    "Q28: В Testcontainers Java 2.0.5 модуль Elasticsearch называется org.testcontainers:testcontainers-elasticsearch, класс переехал в org.testcontainers.elasticsearch. Конструктор сам задаёт discovery.type=single-node и метод getHttpHostAddress возвращает фактические host:port. Elasticsearch 8+ включает security/HTTPS по умолчанию; для HTTP-теста их отключают явно либо настраивают клиент с паролем/CA. Запись не гарантирует немедленную видимость в поиске: refresh() или refresh=wait_for дают детерминированную проверку."
   ],
   "staleness_risks": [
-    "08.10.2026 точечно проверены Q2/Q5/Q6 B0; остальные Q файла не проходили полный содержательный аудит. Требования Java остальных зависимостей и поведение альтернативных рантаймов зависят от конкретной сборки и среды."
+    "08.10.2026 точечно проверены Q2/Q5/Q6/Q28 B0; остальные Q файла не проходили полный содержательный аудит. Требования Java остальных зависимостей и поведение альтернативных рантаймов зависят от конкретной сборки и среды."
   ],
   "notes": [
     "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."

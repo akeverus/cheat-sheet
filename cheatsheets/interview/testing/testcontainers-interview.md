@@ -1144,11 +1144,11 @@ new PostgreSQLContainer<>("postgres:16-alpine")
 
 ## Q28. Как использовать `ElasticsearchContainer` в тестах?
 
-`ElasticsearchContainer` (модуль `org.testcontainers:elasticsearch`) поднимает настоящий Elasticsearch-узел, и тест поиска работает против реального движка — с теми же анализаторами, маппингами и релевантностью, которые не эмулирует ни один мок. Объявляешь контейнер как `static @Container`, а адрес узла отдаёшь Spring через `@DynamicPropertySource` (`spring.elasticsearch.uris`).
+`ElasticsearchContainer` (модуль `org.testcontainers:testcontainers-elasticsearch` в Testcontainers Java 2.0.5, класс `org.testcontainers.elasticsearch.ElasticsearchContainer`) поднимает настоящий Elasticsearch-узел. Это позволяет проверять анализаторы, маппинги и запросы на нужной версии движка. Статический `@Container` подключают к Spring через `@DynamicPropertySource` (`spring.elasticsearch.uris`) либо `@ServiceConnection`. В 1.x модуль назывался `org.testcontainers:elasticsearch`. [Testcontainers, Elasticsearch module](https://java.testcontainers.org/modules/elasticsearch/); [переход на 2.0](https://github.com/testcontainers/testcontainers-java/releases/tag/2.0.0).
 
-Для тестов контейнер настраивают двумя env-переменными. `xpack.security.enabled=false` отключает security: без этого Elasticsearch 8.x требует TLS и пароль, а в одноразовом тестовом узле они ничего не защищают и только усложняют подключение. `discovery.type=single-node` запускает узел без поиска кластера — иначе он ждал бы других участников и не вышел в статус ready.
+В Elasticsearch 8+ security и HTTPS включены по умолчанию. Если конкретный HTTP-тест сознательно не проверяет безопасность, их можно отключить в тестовом контейнере; для проверки защищённого подключения настройте клиент с учётными данными и CA контейнера. `ElasticsearchContainer` сам задаёт `discovery.type=single-node`, повторять это в тесте не требуется. Адрес формируйте через `getHttpHostAddress()`, который учитывает фактический хост и проброшенный порт. [Документация модуля](https://java.testcontainers.org/modules/elasticsearch/); [исходный код 2.0.5](https://raw.githubusercontent.com/testcontainers/testcontainers-java/2.0.5/modules/elasticsearch/src/main/java/org/testcontainers/elasticsearch/ElasticsearchContainer.java).
 
-Третий обязательный нюанс — `refresh()` после записи. Elasticsearch индексирует асинхронно (near-realtime): документ становится видимым для поиска не сразу после `save()`, а после обновления индекса. Без явного `refresh()` поиск сразу после записи вернёт пустой результат, и тест станет флаки.
+Elasticsearch индексирует в режиме near real time: результат `save()` не обязательно сразу виден поиску. Для детерминированной проверки непосредственно после записи используйте `refresh()` индекса или `refresh=wait_for`; без этого тест может быть нестабилен. [Elasticsearch, near real-time search](https://www.elastic.co/docs/manage-data/data-store/near-real-time-search); [refresh parameter](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/refresh-parameter).
 
 ```java
 @SpringBootTest
@@ -1159,14 +1159,14 @@ class ProductSearchRepositoryTest {
     static ElasticsearchContainer elasticsearch =
         new ElasticsearchContainer(
             DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.11.0"))
-        // Отключаем security для тестов
         .withEnv("xpack.security.enabled", "false")
-        .withEnv("discovery.type", "single-node");
+        .withEnv("xpack.security.transport.ssl.enabled", "false")
+        .withEnv("xpack.security.http.ssl.enabled", "false");
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.elasticsearch.uris",
-            () -> "http://localhost:" + elasticsearch.getMappedPort(9200));
+            () -> "http://" + elasticsearch.getHttpHostAddress());
     }
 
     @Autowired
@@ -1231,8 +1231,10 @@ class ProductSearchRepositoryTest {
 @ServiceConnection
 static ElasticsearchContainer elasticsearch =
     new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:8.11.0")
-    .withEnv("xpack.security.enabled", "false");
-// Автоматически настраивает spring.elasticsearch.uris
+    .withEnv("xpack.security.enabled", "false")
+    .withEnv("xpack.security.transport.ssl.enabled", "false")
+    .withEnv("xpack.security.http.ssl.enabled", "false");
+// Spring Boot создаёт ElasticsearchConnectionDetails для клиента
 ```
 
 ## Q29. Как тестировать отказоустойчивость с `Toxiproxy`?
