@@ -1897,23 +1897,19 @@ public interface UserRepository extends JpaRepository<User, Long>, UserRepositor
 
 ## Q33. Что такое derived delete и `deleteBy`?
 
-`Derived delete` — методы вида `deleteBy...`/`removeBy...`, которые `Spring Data` реализует по имени, как и обычные `findBy`. Удобно для точечного удаления по условию.
+`Derived delete` — методы вида `deleteBy...`/`removeBy...`, которые Spring Data выводит из имени. В Spring Data JPA 4.1.1 такой метод сначала выбирает подходящие **сущности**, затем вызывает удаление каждой из них. Поэтому провайдер может выполнить `@PreRemove` и каскады, в отличие от bulk JPQL `DELETE`. [Spring Data JPA, Derived Delete Queries](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html#jpa.modifying-queries).
 
-Но за удобством прячется важный нюанс производительности: derived delete сначала делает `SELECT` всех подходящих сущностей, а потом удаляет их по одной. Это сделано намеренно — чтобы сработали каскады и lifecycle-callback'и (`@PreRemove`). Расплата — N+1 на удалении: для массовых чисток это дорого.
+Цена — загрузка всех найденных объектов в память и отдельная обработка каждого; число SQL зависит от маппинга, каскадов и пакетирования. Объявленные методы не получают транзакцию автоматически: поставьте `@Transactional` на метод или вызовите его из транзакционного сервиса. Возвращаемый `long` — число удалённых сущностей, `List<Session>` — загруженные перед удалением объекты. [Spring Data JPA, transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html).
 
 ```java
 public interface SessionRepository extends JpaRepository<Session, Long> {
 
-    // Derived delete — возвращает количество удалённых
     @Transactional
     long deleteByExpiredAtBefore(LocalDateTime before);
 
-    // Derived delete — возвращает удалённые сущности
     @Transactional
     List<Session> removeByUserId(Long userId);
 
-    // ВНИМАНИЕ: derived delete делает SELECT + DELETE для каждой сущности!
-    // Для bulk delete лучше @Modifying:
     @Modifying
     @Transactional
     @Query("DELETE FROM Session s WHERE s.expiredAt < :before")
@@ -1921,7 +1917,7 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
 }
 ```
 
-**Когда что:** нужны каскады и callback'и при удалении (например, `orphanRemoval` для детей) — derived delete. Нужно просто стереть тысячи строк по условию и каскады не важны — `@Modifying @Query("DELETE ...")`: один `DELETE`-запрос вместо `SELECT` + N удалений.
+**Выбор:** когда нужны JPA-каскады и callback'и, используйте удаление сущностей. Для массовой операции без этих эффектов подходит `@Modifying @Query("DELETE ...")`: один JPQL-вызов, но Hibernate может породить несколько SQL-операторов для сложного маппинга. Bulk-удаление не синхронизирует уже загруженные сущности в persistence context; каскады внешних ключей самой БД при этом остаются отдельным правилом. С `@SoftDelete` из [Q30](#q30-что-такое-soft-delete-и-как-реализовать) обычное удаление сущности меняет индикатор, но поведение bulk-запроса нельзя автоматически приравнивать к `remove()` — проверяйте выбранный способ и версию Hibernate. [Hibernate ORM 7.4, bulk DML](https://docs.hibernate.org/orm/7.4/userguide/html_single/#batch-bulk-hql); [Hibernate ORM 7.4, soft delete](https://docs.hibernate.org/orm/7.4/userguide/html_single/#soft-delete).
 
 ## Q34. (!) Как тестировать `Spring Data JPA` репозитории?
 

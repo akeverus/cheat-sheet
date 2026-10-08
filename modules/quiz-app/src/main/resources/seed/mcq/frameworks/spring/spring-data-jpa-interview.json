@@ -1986,50 +1986,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Bulk `@Modifying @Query(\"DELETE ...\")` тоже выполняет каскадное удаление дочерних сущностей.",
+          "text": "В Spring Data JPA 4.1.1 derived `deleteBy` сначала выбирает ID, затем выполняет один bulk JPQL `DELETE`. При этом `@PreRemove` вызывается для каждой найденной сущности.",
               "correct": false,
               "sections": {
-                "what_actually": "Bulk-DELETE идёт напрямую в БД и НЕ запускает JPA-каскады/callbacks; дочерние записи нужно удалять отдельно или через FK с `ON DELETE CASCADE`.",
-                "source_of_confusion": "Каскады ассоциируются с любым удалением через репозиторий.",
-                "if_it_were_true": "Тогда bulk-DELETE родителя удалял бы детей, но он их не трогает на уровне JPA.",
-                "how_it_should_be": "Bulk-DELETE минует каскады; зависимости чистят явно."
+            "what_actually": "Derived delete выбирает сущности, затем удаляет их по одной. Один bulk JPQL `DELETE` не вызывает их JPA lifecycle callbacks, включая `@PreRemove`.",
+            "source_of_confusion": "Поиск кандидатов и последующее удаление принимают за выбор ID с одним общим DML-оператором.",
+            "if_it_were_true": "Одновременно выполнялись бы bulk-операция и callback каждой сущности, но Spring Data разделяет эти сценарии именно по lifecycle-семантике.",
+            "how_it_should_be": "Для callback'ов использовать поштучное удаление выбранных сущностей; bulk-операцию выбирать при других требованиях."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Derived delete` — методы вида `deleteBy...`/`removeBy...`, которые `Spring Data` реализует по имени. Важный нюанс: они выполняют `SELECT` найденных сущностей + по-штучный `DELETE`, чтобы сработали каскады и lifecycle-callbacks. Для массового удаления без каскадов эффективнее `@Modifying @Query(\"DELETE ...\")` — один SQL-запрос.",
+          "text": "В Spring Data JPA 4.1.1 derived `deleteBy` сначала загружает подходящие сущности и удаляет их по одной. Так работают JPA callback'и и каскады, но объекты удерживаются в памяти.",
               "correct": true,
               "sections": {
-                "explanation": "`deleteByExpiredAtBefore` сначала загрузит сущности, потом удалит их по одной (с каскадами). Возвращаемый тип `long` даёт число удалённых, `List<Entity>` — сами удалённые объекты.",
-                "example": "`@Modifying @Query(\"DELETE FROM Session s WHERE s.expiredAt < :before\") int bulkDeleteExpired(@Param(\"before\") LocalDateTime before)` — один DELETE вместо SELECT+N DELETE.",
-                "when_to_apply": "`deleteBy...` берут, когда нужны каскады/callbacks; bulk `@Modifying` — для массового удаления без зависимостей, где важна скорость.",
-                "edge_cases": "На больших объёмах `deleteBy...` дорог из-за SELECT+N DELETE; путают его производительность с одним bulk-DELETE и получают неожиданную нагрузку.",
-                "related": "[[spring-data-jpa-interview#Q8]] @Modifying; [[spring-data-jpa-interview#Q30]] Soft Delete; [[spring-data-jpa-interview#Q42]] @Modifying для bulk."
+            "explanation": "Это сокращение для поиска сущностей и последующих вызовов удаления каждой. Объявленному методу нужна транзакция; bulk JPQL `DELETE` отличается отсутствием callback'ов управляемых сущностей.",
+            "example": "`@Transactional long deleteByExpiredAtBefore(LocalDateTime before)` выбирает подходящие `Session`, удаляет их по одной и возвращает число удалённых сущностей.",
+            "when_to_apply": "Когда нужны JPA lifecycle callbacks или каскады удаления и количество найденных сущностей позволяет загрузить их в память.",
+            "edge_cases": "Количество SQL зависит от маппинга и пакетирования. При `@SoftDelete` удаление сущности обновляет индикатор; поведение отдельного bulk-запроса проверяют по версии Hibernate и запросу.",
+            "related": "[[spring-data-jpa-interview#Q8]] @Modifying; [[spring-data-jpa-interview#Q30]] Soft Delete; [[spring-data-jpa-interview#Q42]] bulk-операции."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`deleteByExpiredAtBefore` выполняет один `DELETE`-запрос, не загружая сущности в память.",
+          "text": "В Spring Data JPA 4.1.1 derived `deleteBy` выполняет один JPQL `DELETE` без загрузки сущностей. Поэтому JPA callback'и не вызываются, а память почти не расходуется.",
               "correct": false,
               "sections": {
-                "what_actually": "Derived delete делает `SELECT` найденных сущностей и затем по-штучный `DELETE` (ради каскадов/callbacks), а не один bulk-DELETE.",
-                "source_of_confusion": "Имя `deleteBy...` выглядит как прямой DELETE по условию.",
-                "if_it_were_true": "Тогда `deleteBy...` и bulk `@Modifying DELETE` были бы равны по нагрузке, но первый порождает SELECT + N DELETE.",
-                "how_it_should_be": "Для одного DELETE-запроса используют `@Modifying @Query`."
+            "what_actually": "Derived delete загружает сущности и удаляет их отдельно, поэтому callback'и могут выполняться, а память расходуется пропорционально найденному набору.",
+            "source_of_confusion": "Имя `deleteBy` выглядит как один оператор удаления по условию.",
+            "if_it_were_true": "На большом наборе derived delete не удерживал бы объекты в persistence context, но Spring Data прямо предупреждает о памяти.",
+            "how_it_should_be": "Для массовой операции без callbacks используют явный bulk JPQL запрос с `@Modifying` и транзакцией."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Derived delete не запускает каскады и lifecycle-callbacks, поэтому по сайд-эффектам безопасен.",
+          "text": "В Spring Data JPA 4.1.1 derived `deleteBy` загружает сущности и удаляет их по одной. Однако JPA callback'и и каскады выполняются только у bulk JPQL `DELETE`.",
               "correct": false,
               "sections": {
-                "what_actually": "Именно derived delete и срабатывает каскады/callbacks (для этого он и грузит сущности); каскады не выполняет как раз bulk `@Modifying DELETE`.",
-                "source_of_confusion": "Кажется, что любой delete минует ORM-логику и идёт напрямую в БД.",
-                "if_it_were_true": "Тогда `removeByUserId` не вызывал бы `@PreRemove`, но он его вызывает.",
-                "how_it_should_be": "Каскады/callbacks работают у derived delete; bulk-DELETE их пропускает."
+            "what_actually": "Поштучное удаление сущностей позволяет JPA вызвать callbacks и каскады. Bulk JPQL DML обходит lifecycle callbacks уже загруженных сущностей.",
+            "source_of_confusion": "Смешивают чтение кандидатов для удаления с тем, какой из двух способов проходит через жизненный цикл сущности.",
+            "if_it_were_true": "Загрузка сущностей в derived delete не давала бы lifecycle-эффектов, хотя именно для них выбран этот путь.",
+            "how_it_should_be": "Derived delete используют для удаления через жизненный цикл сущности; bulk DML — когда эти эффекты не требуются."
               }
             }
           ]
