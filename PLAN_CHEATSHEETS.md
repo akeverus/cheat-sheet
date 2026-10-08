@@ -1278,13 +1278,26 @@ Q35 без локальных hard/warnings. Полный skel/parity файла
 старых блоках; полного аудита (`П`), компиляции иллюстративного
 примера и независимой blind-приёмки MCQ нет. Коммит `52aed25b9`.
 
-**Точная точка авторского продолжения:** Spring Data JPA Q36 B0,
-`spring-data-jpa-interview.md` и парный JSON. В примере
-`deleteByDeletedAtIsNotNull()` ошибочно подписан как прямой SQL
-`DELETE`, хотя Q33 уже описывает derived delete через выборку и
-пообъектное удаление. Сверить Q36/Q33 и официальные Spring Data JPA
-4.1.1 query methods, исправить теорию и MCQ при необходимости.
-Затем перейти к Q37; не ставить `П` до полного аудита.
+**Контрольная точка 08.10.2026 — Spring Data JPA Q36 B0 · О.**
+По [query methods](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html)
+и [keyword reference](https://docs.spring.io/spring-data/jpa/reference/repositories/query-keywords-reference.html)
+исправлен комментарий к `deleteByDeletedAtIsNotNull()`: derived
+delete выбирает сущности и удаляет их по одной с callbacks, а не
+выполняет один bulk `DELETE`. Уточнены `Top`/`First`, `OrderBy` и
+граница с Q33. Теория, Q36 MCQ B0 и freshness-sidecar синхронизированы.
+Structure 43 Q/44 блока PASS, Markdown gate PASS, Q36 без локальных
+hard/warnings; полный parity файла FAIL на старых блоках. Полной
+проверки (`П`), runtime/compile-прогона примеров и независимой
+blind-приёмки MCQ нет. Коммит `46510e35f`.
+
+**Точная точка авторского продолжения:** Spring Data JPA Q37 B0,
+`spring-data-jpa-interview.md` и парный JSON. В Q37 пример
+`hasCategory(String)` сравнивает `root.get("category")` со строкой,
+хотя соседний Q35 использует `category` как связь сущности; также
+`nameContains` подставляет пользовательские `%`/`_` без экранирования,
+а Q17 уже описывает это ограничение. Сверить тип модели, официальный
+Specification API 4.1.1 и пересечения Q17/Q35, исправить
+подтверждённое. Затем Q38. Не ставить `П` до полного аудита.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
 

@@ -494,11 +494,18 @@ runtime-прогона и независимой blind-приёмки нет. К
 Полной проверки, компиляции примера и независимой blind-приёмки нет.
 Коммит `52aed25b9`.
 
-Следующий авторский пакет: Spring Data JPA Q36 B0 и парный JSON.
-В примере `deleteByDeletedAtIsNotNull()` ошибочно подписан как
-прямой SQL DELETE; Q33 уже объясняет derived delete через выборку
-и пообъектное удаление. Сверить Q36/Q33 с официальными query methods,
-исправить подтверждённое, затем пройти Q37.
+08.10 Spring Data JPA Q36 B0: по официальным query methods и
+keyword reference исправлена подпись к `deleteBy`: выборка и
+пообъектное удаление с callbacks, а не один bulk DELETE. Теория,
+MCQ и sidecar синхронизированы; structure 43 Q/44 блока PASS,
+Q36 без локальных hard/warnings, полный parity FAIL на старых блоках.
+Полной проверки, runtime-прогона и независимой blind-приёмки нет.
+Коммит `46510e35f`.
+
+Следующий авторский пакет: Spring Data JPA Q37 B0 и парный JSON.
+Проверить `hasCategory(String)` против типа связи `category` в Q35,
+экранирование `%`/`_` в `nameContains` и пересечение с Q17;
+сверить официальный Specification API 4.1.1. Затем Q38.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,
