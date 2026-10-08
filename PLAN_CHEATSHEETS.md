@@ -1216,15 +1216,32 @@ hard/warnings; полный parity файла FAIL на прежних блок�
 проверки (`П`), runtime-прогона альтернативных сред и независимой
 blind-приёмки MCQ нет. Коммит `a2f01ccc2`; инвентарь не менялся.
 
-**Точная точка авторского продолжения:** Testcontainers Q28 B0,
-`testcontainers-interview.md` и парный JSON. В Q28 осталась координата
-`org.testcontainers:elasticsearch`; [официальная документация модуля
-2.0.5](https://java.testcontainers.org/modules/elasticsearch/)
-указывает `org.testcontainers:testcontainers-elasticsearch`. Сначала
-сравнить заголовки Q9/Q11/Q28 и проверить соседние утверждения/импорты
-на версионное смешение 1.x/2.x. Затем исправить подтверждённое в теории,
-MCQ и sidecar, выполнить локальные gates. После этого вернуться к
-Spring Data JPA Q35 B0, производительность. Никакого `П` до полного аудита.
+**Контрольная точка 08.10.2026 — Testcontainers Q28 B0,
+Elasticsearch · О.** Заголовки Q9/Q11/Q28 просмотрены (`З`): новый
+вопрос не нужен. По [модулю Elasticsearch 2.0.5](https://java.testcontainers.org/modules/elasticsearch/),
+[его исходному коду](https://raw.githubusercontent.com/testcontainers/testcontainers-java/2.0.5/modules/elasticsearch/src/main/java/org/testcontainers/elasticsearch/ElasticsearchContainer.java),
+[Spring Boot Testcontainers](https://docs.spring.io/spring-boot/reference/testing/testcontainers.html)
+и [Elastic near real-time search](https://www.elastic.co/docs/manage-data/data-store/near-real-time-search)
+точечно (`О`) исправлены координата `testcontainers-elasticsearch`,
+пакет класса и пример URI через `getHttpHostAddress()`. Исходный код
+подтвердил, что `discovery.type=single-node` уже задаёт контейнер;
+для Elasticsearch 8+ уточнены security/HTTPS и refresh перед
+немедленной проверкой поиска. Теория, Q28 MCQ B0 и freshness-sidecar
+синхронизированы; structure 40 Q/40 блоков PASS, Markdown gate PASS,
+Q28 без локальных hard/warnings. Полный parity файла FAIL на прежних
+блоках; полного аудита (`П`), запуска ES-контейнера и независимой
+blind-приёмки MCQ нет. Коммит `81270a2f6`.
+
+**Точная точка авторского продолжения:** Testcontainers Q9 B0,
+`testcontainers-interview.md` и парный JSON. В Q9 образ
+`confluentinc/cp-kafka` сочетается с `KafkaContainer`; [официальный
+модуль Kafka 2.0.5](https://java.testcontainers.org/modules/kafka/)
+разделяет `ConfluentKafkaContainer` для Confluent-образа и
+`KafkaContainer` для `apache/kafka`, а прежний класс deprecated.
+Точечно проверить Q9, затем пересечения Q15/Q16/Q17/Q32 и MCQ,
+исправить подтверждённое и зафиксировать версионную границу.
+После Kafka пройти Testcontainers Q11 B0 и Spring Data JPA Q35 B0.
+Никакого `П` до полного аудита.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
 
@@ -1249,7 +1266,7 @@ Spring Data JPA Q35 B0, производительность. Никакого `
    Metrics & Tracing Q40, Spring Testing Q9/Q10, Uber Q6/Q7,
    Google Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1,
    Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q34 B0/Q39 B0,
-   Integration Testing Q4/Q36 B0, Testcontainers Q2/Q5/Q6 B0,
+   Integration Testing Q4/Q36 B0, Testcontainers Q2/Q5/Q6/Q28 B0,
    Hibernate Q8–Q10 B0/Q14–Q16 B0/Q19–Q21 B0/Q23–Q25/Q27/Q36 B0,
    Database Transactions Q15/Q22/Q23 B0
    и RabbitMQ Streams Q40–Q42 ждут

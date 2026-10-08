@@ -463,11 +463,18 @@ MCQ и sidecar синхронизированы; structure 40 Q/40 блоков 
 локальные Q2/Q6 без hard/warnings, полный parity FAIL на старых блоках.
 Полной проверки и независимой blind-приёмки нет. Коммит `a2f01ccc2`.
 
-Следующий авторский пакет: Testcontainers Q28 B0, `testcontainers-interview.md`
-и парный JSON. Проверить старую координату `org.testcontainers:elasticsearch`
-против официальной документации модуля 2.0.5, сравнить заголовки и
-соседние ответы Q9/Q11/Q28 на версионное смешение. Исправить только
-подтверждённое и затем перейти к Spring Data JPA Q35 B0.
+08.10 Testcontainers Q28 B0: по модулю Elasticsearch 2.0.5 и Elastic
+обновлены координата, пакет класса, URI через `getHttpHostAddress()`,
+готовый `single-node` и условия security/refresh. Теория, MCQ и sidecar
+синхронизированы; structure 40 Q/40 блоков PASS, локальный Q28 без
+hard/warnings, полный parity FAIL на старых блоках. Полной проверки,
+runtime-прогона и blind-приёмки нет. Коммит `81270a2f6`.
+
+Следующий авторский пакет: Testcontainers Q9 B0 и парный JSON.
+Официальный модуль Kafka 2.0.5 разделяет `ConfluentKafkaContainer`
+для Confluent-образа и `KafkaContainer` для Apache-образа; сверить Q9
+с Q15/Q16/Q17/Q32 и исправить подтверждённое. После этого Q11 B0,
+затем Spring Data JPA Q35 B0.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,
