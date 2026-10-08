@@ -470,11 +470,19 @@ MCQ и sidecar синхронизированы; structure 40 Q/40 блоков 
 hard/warnings, полный parity FAIL на старых блоках. Полной проверки,
 runtime-прогона и blind-приёмки нет. Коммит `81270a2f6`.
 
-Следующий авторский пакет: Testcontainers Q9 B0 и парный JSON.
-Официальный модуль Kafka 2.0.5 разделяет `ConfluentKafkaContainer`
-для Confluent-образа и `KafkaContainer` для Apache-образа; сверить Q9
-с Q15/Q16/Q17/Q32 и исправить подтверждённое. После этого Q11 B0,
-затем Spring Data JPA Q35 B0.
+08.10 Testcontainers Kafka Q9/Q15/Q16/Q17/Q32: по официальному модулю
+Kafka 2.0.5, Spring TestContext и JUnit 5 Extension исправлены класс
+для Confluent-образа, `@DynamicPropertySource` и жизненный цикл
+унаследованного `static @Container`. Теория, MCQ Q9/Q15/Q17/Q32 B0
+и sidecar синхронизированы; Q16 изменён только в теории. Structure
+40 Q/40 блоков PASS, локальные четыре B0 без hard/warnings, полный
+skel/parity FAIL на старых блоках. Полной проверки, запуска контейнера
+и независимой blind-приёмки нет. Коммит `8b0d71b4e`.
+
+Следующий авторский пакет: Testcontainers Q11 B0 и парный JSON.
+Сверить MongoDBContainer с официальным модулем 2.0.5, зависимость,
+пакет класса, connection string и границы replica set; проверить
+пересечения Q6/Q15/Q16. Затем Spring Data JPA Q35 B0.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,

@@ -1232,16 +1232,29 @@ Q28 без локальных hard/warnings. Полный parity файла FAIL
 блоках; полного аудита (`П`), запуска ES-контейнера и независимой
 blind-приёмки MCQ нет. Коммит `81270a2f6`.
 
-**Точная точка авторского продолжения:** Testcontainers Q9 B0,
-`testcontainers-interview.md` и парный JSON. В Q9 образ
-`confluentinc/cp-kafka` сочетается с `KafkaContainer`; [официальный
-модуль Kafka 2.0.5](https://java.testcontainers.org/modules/kafka/)
-разделяет `ConfluentKafkaContainer` для Confluent-образа и
-`KafkaContainer` для `apache/kafka`, а прежний класс deprecated.
-Точечно проверить Q9, затем пересечения Q15/Q16/Q17/Q32 и MCQ,
-исправить подтверждённое и зафиксировать версионную границу.
-После Kafka пройти Testcontainers Q11 B0 и Spring Data JPA Q35 B0.
-Никакого `П` до полного аудита.
+**Контрольная точка 08.10.2026 — Testcontainers Kafka Q9/Q15/Q16/Q17/Q32
+B0 · О.** Заголовки смежных Q просмотрены (`З`), затем ответы и MCQ
+проверены точечно (`О`). По [модулю Kafka 2.0.5](https://java.testcontainers.org/modules/kafka/)
+и [исходному коду ConfluentKafkaContainer](https://raw.githubusercontent.com/testcontainers/testcontainers-java/2.0.5/modules/kafka/src/main/java/org/testcontainers/kafka/ConfluentKafkaContainer.java)
+исправлена пара `confluentinc/cp-kafka` → `ConfluentKafkaContainer`,
+отделён новый `KafkaContainer` для образов Apache и deprecated класс
+старого пакета. По [Spring TestContext](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/ctx-management/dynamic-property-sources.html)
+уточнены владелец `@DynamicPropertySource`, ленивое чтение `Supplier`
+и риск кеширования контекста между подклассами; по [JUnit 5 Extension](https://java.testcontainers.org/test_framework_integration/junit_5/)
+исправлено ложное обещание singleton для унаследованного `static @Container`.
+Теория, MCQ Q9/Q15/Q17/Q32 B0 и freshness-sidecar синхронизированы;
+Q16 изменён только в теории. Structure 40 Q/40 блоков PASS, Markdown
+gate PASS, локальные четыре B0 без hard/warnings. Полный skel/parity
+файла FAIL на прежних блоках; полного аудита (`П`), запуска Kafka
+контейнера и независимой blind-приёмки MCQ нет. Коммит `8b0d71b4e`.
+
+**Точная точка авторского продолжения:** Testcontainers Q11 B0,
+`testcontainers-interview.md` и парный JSON. Сверить пример MongoDB
+с [официальным модулем 2.0.5](https://java.testcontainers.org/modules/databases/mongodb/):
+координату `testcontainers-mongodb`, пакет `MongoDBContainer`,
+подключение и сценарий реплика-сета, затем проверить пересечения
+Q6/Q15/Q16. После него — Spring Data JPA Q35 B0. Никакого `П`
+до полного аудита.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
 
