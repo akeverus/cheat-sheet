@@ -611,35 +611,35 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`MongoDBContainer` запускает standalone-инстанс без replica set, поэтому транзакции `MongoDB` в таких тестах протестировать нельзя.",
+              "text": "Для теста транзакций `MongoDBContainer` всегда включает replica set автоматически. Достаточно получить `getReplicaSetUrl()`, вызов `withReplicaSet()` не требуется.",
               "correct": false,
               "sections": {
-                "what_actually": "Контейнер как раз стартует в режиме replica set (single-node), что и включает поддержку транзакций.",
-                "source_of_confusion": "Для одного инстанса в проде replica set не настраивают, и это ожидание переносят на тест.",
-                "if_it_were_true": "Тогда метод назывался бы `getConnectionString()`, а не `getReplicaSetUrl()`, но основной метод — именно replica-set.",
-                "how_it_should_be": "Replica set включён по умолчанию, поэтому транзакции тестируются; есть и `getConnectionString()` для базового случая."
+                "what_actually": "В Testcontainers Java 2.0.5 одновузловой replica set включают явным `withReplicaSet()`; метод получения URI не меняет режим контейнера.",
+                "source_of_confusion": "Название `getReplicaSetUrl()` похоже на команду настройки replica set, но метод только возвращает адрес.",
+                "if_it_were_true": "Настройка `withReplicaSet()` была бы избыточной, но именно она устанавливает режим `--replSet` и запускает инициализацию.",
+                "how_it_should_be": "Для транзакций создать `MongoDBContainer(...).withReplicaSet()`, а затем получить адрес запущенного контейнера."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Берут модуль `mongodb` и класс `MongoDBContainer`: `new MongoDBContainer(\"mongo:7.0\")`. Connection string с replica set отдаёт `getReplicaSetUrl()`, который регистрируют в `spring.data.mongodb.uri` через `@DynamicPropertySource`.",
+              "text": "Для теста транзакций берут модуль `testcontainers-mongodb` и класс `org.testcontainers.mongodb.MongoDBContainer`, вызывают `withReplicaSet()` и регистрируют поставщик `getReplicaSetUrl()` для `spring.data.mongodb.uri`.",
               "correct": true,
               "sections": {
-                "explanation": "`MongoDBContainer` запускает `MongoDB` в режиме replica set — это нужно для поддержки транзакций; `getReplicaSetUrl()` возвращает готовую строку подключения с настроенным replica set.",
-                "example": "`registry.add(\"spring.data.mongodb.uri\", mongo::getReplicaSetUrl)`, затем `productRepository.save(new Product(\"Widget\", 9.99))` и `findByName(\"Widget\")`.",
+                "explanation": "В 2.0.5 метод `withReplicaSet()` включает и инициализирует одновузловой replica set. `getReplicaSetUrl()` возвращает URI с именем БД для запущенного контейнера; сам метод не включает replica set и не добавляет параметр `replicaSet`.",
+                "example": "`new MongoDBContainer(\"mongo:7.0\").withReplicaSet()`, затем `registry.add(\"spring.data.mongodb.uri\", mongo::getReplicaSetUrl)`.",
                 "when_to_apply": "Применять для интеграционных тестов репозиториев `MongoDB`, особенно когда тестируются транзакции или специфика документной модели.",
-                "edge_cases": "`getConnectionString()` даёт базовый connection string без replica set; поддерживается инициализация через JavaScript-скрипты при старте.",
+                "edge_cases": "`getConnectionString()` даёт URI без имени БД; `getReplicaSetUrl()` добавляет `/test` по умолчанию. Одновузловой replica set подходит для проверки транзакций, но не отказоустойчивости; MongoDB-драйвер нужен отдельно.",
                 "related": "[[testcontainers-interview#Q6]] поддерживаемые БД; [[testcontainers-interview#Q16]] @ServiceConnection; [[testcontainers-interview#Q15]] @DynamicPropertySource."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Чтобы получить connection string, нужно вручную собрать его из `getHost()` и `getMappedPort(27017)` — готового метода у `MongoDBContainer` нет.",
+              "text": "Для теста транзакций MongoDB URI нужно вручную собрать из `getHost()` и `getMappedPort(27017)`. `MongoDBContainer` не даёт готового метода с именем БД.",
               "correct": false,
               "sections": {
-                "what_actually": "Готовые методы есть: `getReplicaSetUrl()` и `getConnectionString()`; вручную собирать URI не требуется.",
+                "what_actually": "Готовые методы есть: `getReplicaSetUrl()` добавляет имя БД, `getConnectionString()` даёт базовый адрес; вручную собирать URI не требуется.",
                 "source_of_confusion": "С `GenericContainer` строку собирают руками, и это переносят на специализированный класс.",
                 "if_it_were_true": "Тогда `@DynamicPropertySource` не использовал бы `mongo::getReplicaSetUrl`, но именно его и регистрируют.",
                 "how_it_should_be": "Берут `getReplicaSetUrl()` напрямую — это и есть смысл специализированного контейнера."
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`MongoDBContainer` наследует `JdbcDatabaseContainer` и подключается по JDBC, поэтому свойство задают через `spring.datasource.url` с `getJdbcUrl()`.",
+              "text": "Для теста транзакций `MongoDBContainer` наследует `JdbcDatabaseContainer`. Вызывают `withReplicaSet()`, а Spring подключают через `spring.datasource.url` и `getJdbcUrl()`.",
               "correct": false,
               "sections": {
                 "what_actually": "`MongoDB` не работает по JDBC; `MongoDBContainer` идёт от `GenericContainer` и даёт `getReplicaSetUrl()`, а свойство — `spring.data.mongodb.uri`.",

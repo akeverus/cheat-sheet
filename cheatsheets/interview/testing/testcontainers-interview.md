@@ -413,7 +413,7 @@ class CacheServiceTest {
 
 ## Q11. Как использовать `MongoDB`-контейнер?
 
-`Testcontainers` предоставляет модуль `mongodb` со специализированным контейнером:
+В Testcontainers Java 2.0.5 модуль `org.testcontainers:testcontainers-mongodb` содержит `org.testcontainers.mongodb.MongoDBContainer`. Для теста транзакций включают одновузловой replica set через `withReplicaSet()`; без этого вызова контейнер сам его не создаёт. [Testcontainers, MongoDB module](https://java.testcontainers.org/modules/databases/mongodb/).
 
 ```java
 @Testcontainers
@@ -421,7 +421,8 @@ class CacheServiceTest {
 class ProductRepositoryTest {
 
     @Container
-    static MongoDBContainer mongo = new MongoDBContainer("mongo:7.0");
+    static MongoDBContainer mongo = new MongoDBContainer("mongo:7.0")
+            .withReplicaSet();
 
     @DynamicPropertySource
     static void mongoProperties(DynamicPropertyRegistry registry) {
@@ -443,10 +444,9 @@ class ProductRepositoryTest {
 ```
 
 **Ключевые особенности `MongoDBContainer`:**
-- **Запускает `MongoDB` как replica set из одного узла** — даже если кластера нет. Это важно: транзакции и change streams в Mongo работают только в режиме replica set, и контейнер настраивает его сам, чтобы такие тесты не падали.
-- **`getReplicaSetUrl()`** — connection string с указанием replica set; именно его отдают Spring через `spring.data.mongodb.uri`.
-- **`getConnectionString()`** — базовый connection string без replica set (для простых случаев).
-- **Инициализация через JavaScript-скрипты** — насыпать данные или создать индексы при старте.
+- **`withReplicaSet()`** — включает и инициализирует replica set из одного узла. MongoDB не поддерживает многодокументные транзакции на standalone-инстансе; change streams тоже требуют replica set или шардированный кластер. Одного узла достаточно для проверки API, но не для проверки отказоустойчивости. [MongoDB, transactions](https://www.mongodb.com/docs/v8.0/data-modeling/enforce-consistency/transactions/); [MongoDB, change streams](https://www.mongodb.com/docs/manual/changestreams/).
+- **`getReplicaSetUrl()`** — после запуска возвращает URI вида `mongodb://host:port/test` с именем БД; вопреки названию, не добавляет параметр `replicaSet` и не включает replica set сам. Его можно передать в `spring.data.mongodb.uri`.
+- **`getConnectionString()`** — возвращает базовый URI `mongodb://host:port` без имени БД. Инициализацию тестовых данных/индексов задают отдельно; сам контейнер не загружает произвольные JavaScript-скрипты автоматически. [Исходный код MongoDBContainer 2.0.5](https://raw.githubusercontent.com/testcontainers/testcontainers-java/2.0.5/modules/mongodb/src/main/java/org/testcontainers/mongodb/MongoDBContainer.java).
 
 ## Q12. (!) Как работают аннотации `@Testcontainers` и `@Container`?
 
