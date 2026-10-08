@@ -420,13 +420,21 @@ freshness-sidecar синхронизированы. Structure PASS (43 Q/44 бл
 блоках. Полного содержательного аудита файла и независимого blind
 review Q30 нет. Коммит `24942dd8e`.
 
-Следующий авторский пакет: Spring Data JPA Q31 B0 о Hibernate Filters.
-Сравнить заголовки и точечные ответы Hibernate-шпаргалки о `@Filter`,
-`@SQLRestriction` и multi-tenancy. По официальному Hibernate ORM 7.4
-проверить включение в Session, параметры, загрузку по ID и границу
-безопасности арендаторов. Подтверждённые правки синхронизировать в Q31,
-парном MCQ и sidecar; затем локальные и файловые проверки. Полный аудит
-старого JPA-файла и независимую приёмку вести отдельно.
+08.10 Spring Data JPA Q31 B0 о Hibernate Filters: по Hibernate ORM 7.4
+`@Filter`/`@FilterDef` и PostgreSQL RLS исправлены область действия
+фильтра, прямая загрузка по ID (`applyToLoadByKey`), включение в
+`Session`, граница безопасности арендаторов и пример с явной
+транзакцией. Теория, MCQ и freshness-sidecar синхронизированы.
+Structure PASS (43 Q/44 блока), локальный Q31 без hard/warnings;
+полный JPA parity FAIL на прежних блоках. Полного содержательного
+аудита файла и независимого blind review Q31 нет. Коммит `73c177d6d`.
+
+Следующий авторский пакет: Spring Data JPA Q32 B0 о custom repository
+implementation. Сверить Q1/Q2/Q4/Q32, соседние заголовки и MCQ.
+По Spring Data JPA 4.1 проверить repository fragments, `Impl`-имена,
+ручную регистрацию и статус прежней single-implementation naming
+convention. Подтверждённые правки синхронизировать в Q32/MCQ/sidecar,
+выполнить локальные проверки; полный аудит и blind-приёмку отдельно.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,
