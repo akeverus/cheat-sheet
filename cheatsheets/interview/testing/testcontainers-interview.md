@@ -340,7 +340,7 @@ WHERE metadata @> '{"role": "admin"}'::jsonb;
 
 ## Q9. Как поднять `Kafka`-контейнер для тестов?
 
-`Testcontainers` предоставляет модуль для `Apache Kafka` на базе образа `confluentinc/cp-kafka`:
+В Testcontainers Java 2.0.5 модуль `org.testcontainers:testcontainers-kafka` предоставляет `org.testcontainers.kafka.ConfluentKafkaContainer` для образа `confluentinc/cp-kafka` (7.4.0+) и `org.testcontainers.kafka.KafkaContainer` для `apache/kafka`/`apache/kafka-native`. Старый `org.testcontainers.containers.KafkaContainer` deprecated; класс выбирают по образу. [Testcontainers, Kafka module](https://java.testcontainers.org/modules/kafka/).
 
 ```java
 @Testcontainers
@@ -348,7 +348,7 @@ WHERE metadata @> '{"role": "admin"}'::jsonb;
 class OrderEventProducerTest {
 
     @Container
-    static KafkaContainer kafka = new KafkaContainer(
+    static ConfluentKafkaContainer kafka = new ConfluentKafkaContainer(
             DockerImageName.parse("confluentinc/cp-kafka:7.6.0")
     );
 
@@ -371,11 +371,11 @@ class OrderEventProducerTest {
 }
 ```
 
-**Особенности `KafkaContainer`:**
-- **Поднимает Kafka вместе с координацией** — встроенный `ZooKeeper` или, в новых версиях, `KRaft`. Один контейнер = готовый брокер, отдельно ставить ZooKeeper не нужно.
+**Особенности специализированного контейнера:**
+- **Поднимает один готовый брокер** с нужными listener и KRaft-настройками для показанного Confluent-образа; отдельный ZooKeeper не нужен.
 - **`getBootstrapServers()`** — возвращает `host:port` с уже маппированным портом, который и нужно отдать продюсеру/консьюмеру.
-- **`withKraft()`** — режим `KRaft` без ZooKeeper (Kafka 3.3+): меньше движущихся частей и быстрее старт.
-- **Несколько брокеров** настраиваются через `KafkaContainer` + общий `Network`, если тесту нужен кластер.
+- **`withKraft()`** относится к deprecated `org.testcontainers.containers.KafkaContainer`; переносить этот вызов в показанный 2.x `ConfluentKafkaContainer` не нужно.
+- **Несколько брокеров** требуют отдельной топологии и настройки listeners; пример выше проверяет один брокер.
 
 **Подводный камень:** консьюмер подключается асинхронно и может пропустить уже отправленное сообщение. Поэтому проверять получение надо не сразу, а с ожиданием — через `Awaitility` или подписку до отправки, а не голым `assertEquals` сразу после `send()`.
 
@@ -554,7 +554,7 @@ class ManualLifecycleTest {
 
 ## Q15. (!) Как подключить `Testcontainers` через `@DynamicPropertySource`?
 
-`@DynamicPropertySource` — аннотация Spring Boot, которая регистрирует свойства приложения динамически, уже после старта контейнера. Она существует ровно для ситуации с `Testcontainers`: значения становятся известны только в рантайме, а нужны Spring ещё до того, как он соберёт `ApplicationContext`.
+`@DynamicPropertySource` — аннотация Spring Framework TestContext для регистрации динамических свойств до создания зависимых бинов в `ApplicationContext`. Статический метод получает `DynamicPropertyRegistry` и добавляет пары «ключ → `Supplier`»; поставщик вызывается при разрешении свойства. Механизм создавался для Testcontainers, но подходит и для других внешних ресурсов. [Spring Framework, dynamic property sources](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/ctx-management/dynamic-property-sources.html).
 
 ```java
 @Testcontainers
@@ -565,7 +565,7 @@ class OrderServiceTest {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
     @Container
-    static KafkaContainer kafka = new KafkaContainer(
+    static ConfluentKafkaContainer kafka = new ConfluentKafkaContainer(
             DockerImageName.parse("confluentinc/cp-kafka:7.6.0"));
 
     @DynamicPropertySource
@@ -581,9 +581,9 @@ class OrderServiceTest {
 ```
 
 **Почему именно динамические свойства, а не `@TestPropertySource`?**
-Контейнер стартует на случайном порту, поэтому JDBC URL известен только в рантайме. Прописать его статически — в `application.yml` или `@TestPropertySource` — нельзя: на момент компиляции порт ещё не существует. Обратите внимание, что в реестр кладут не готовые строки, а ссылки на методы (`postgres::getJdbcUrl`) — `Supplier`, который Spring вызовет уже после старта контейнера.
+Контейнер стартует на случайном порту, поэтому JDBC URL известен только в рантайме. Прописать его статически — в `application.yml` или `@TestPropertySource` — нельзя: на момент компиляции порт ещё не существует. Обратите внимание, что в реестр кладут не готовые строки, а ссылки на методы (`postgres::getJdbcUrl`) — `Supplier`, который Spring вызовет при разрешении свойства; к этому моменту контейнер должен работать.
 
-**Порядок выполнения, который и делает всё рабочим:** метод с `@DynamicPropertySource` вызывается *после* старта контейнера, но *до* инициализации `ApplicationContext`. Поэтому к моменту, когда Spring настраивает `DataSource`, в реестре уже лежат верные значения.
+**Порядок выполнения:** метод регистрирует поставщиков свойств при подготовке тестового контекста; сами значения читаются при разрешении properties. Контейнер должен быть запущен к моменту вызова поставщика — в показанном варианте его жизненным циклом управляет JUnit Extension. Метод не следует описывать как безусловно вызываемый «после старта контейнера».
 
 ## Q16. (!) Что такое `@ServiceConnection` в Spring Boot 3.1+ и чем лучше `@DynamicPropertySource`?
 
@@ -623,7 +623,7 @@ static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-
 | `PostgreSQLContainer` | `JdbcConnectionDetails` |
 | `MySQLContainer` | `JdbcConnectionDetails` |
 | `MongoDBContainer` | `MongoConnectionDetails` |
-| `KafkaContainer` | `KafkaConnectionDetails` |
+| `KafkaContainer` / `ConfluentKafkaContainer` | `KafkaConnectionDetails` |
 | `RedisContainer` / `GenericContainer` (Redis) | `RedisConnectionDetails` |
 | `RabbitMQContainer` | `RabbitConnectionDetails` |
 | `ElasticsearchContainer` | `ElasticsearchConnectionDetails` |
@@ -652,8 +652,8 @@ class TestcontainersConfig {
 
     @Bean
     @ServiceConnection
-    KafkaContainer kafkaContainer() {
-        return new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.0"));
+    ConfluentKafkaContainer kafkaContainer() {
+        return new ConfluentKafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.0"));
     }
 }
 ```
@@ -1465,8 +1465,8 @@ public abstract class BaseIntegrationTest {
             .withPassword("test");
 
     @Container
-    protected static KafkaContainer kafka =
-        new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.4.0"));
+    protected static ConfluentKafkaContainer kafka =
+        new ConfluentKafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.4.0"));
 
     @Container
     protected static GenericContainer<?> redis =
@@ -1535,7 +1535,7 @@ class ProductControllerTest extends BaseIntegrationTest {
 }
 ```
 
-Такой вариант с `@Container` — это НЕ полноценный Singleton Containers: контейнеры живут в пределах одного тест-класса и пересоздаются для каждого подкласса. Если стартов становится слишком много, переводи базовый класс на singleton-паттерн: убери `@Testcontainers`/`@Container` и стартуй контейнеры вручную в `static`-блоке — тогда они переживут все классы до конца JVM. Подробный разбор — см. Q19.
+Такой вариант с `@Container` — это НЕ полноценный Singleton Containers: контейнеры живут в пределах одного тест-класса и пересоздаются для каждого подкласса. При этом Spring может переиспользовать `ApplicationContext` между подклассами со старым адресом контейнера. Если динамические свойства меняются между подклассами, [Spring рекомендует `@DirtiesContext` на базовом классе](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/ctx-management/dynamic-property-sources.html), чтобы каждый подкласс получил новый контекст; это увеличит время тестов. Если нужен один контейнер на весь прогон, убери `@Testcontainers`/`@Container` и стартуй его вручную в `static`-блоке — тогда он переживёт все классы до конца JVM. Подробный разбор — см. Q19.
 
 **На собеседовании** стоит показать, что вы понимаете trade-off: `Testcontainers` даёт уверенность в интеграции ценой скорости и инфраструктурных требований. Хороший инженер знает, где провести границу между unit и интеграционными тестами (подробнее в [Стратегии тестирования](test-strategies-interview.md)).
 

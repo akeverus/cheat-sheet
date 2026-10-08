@@ -491,19 +491,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`KafkaContainer` поднимает только брокер, а `ZooKeeper` нужно запускать отдельным `GenericContainer` и связывать вручную через `Network`.",
+              "text": "В Testcontainers Java 2.0.5 для `confluentinc/cp-kafka` берут новый `org.testcontainers.kafka.KafkaContainer`. Он подходит этому образу и сам отдаёт адрес через `getBootstrapServers()`.",
               "correct": false,
               "sections": {
-                "what_actually": "`KafkaContainer` включает встроенный `ZooKeeper` (или работает в `KRaft`), отдельный контейнер для простого случая не нужен.",
-                "source_of_confusion": "В «голом» Docker `Kafka` действительно поднимают вместе с `ZooKeeper`, и это переносят на контейнер.",
-                "if_it_were_true": "Тогда минимальный пример требовал бы двух контейнеров, но в примере он один.",
-                "how_it_should_be": "Один `KafkaContainer` достаточен; `ZooKeeper`/`KRaft` внутри, многоброкерные топологии — отдельно через сеть."
+                "what_actually": "В 2.x новый `KafkaContainer` рассчитан на `apache/kafka`; для `confluentinc/cp-kafka` предназначен `ConfluentKafkaContainer`.",
+                "source_of_confusion": "Название `KafkaContainer` из старого пакета переносят на новый класс без учёта образа.",
+                "if_it_were_true": "Один и тот же новый класс принимал бы оба семейства образов, но документация разделяет их.",
+                "how_it_should_be": "Сопоставить класс и образ: `ConfluentKafkaContainer` с cp-kafka, новый `KafkaContainer` с apache/kafka."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Адрес брокера известен заранее и фиксирован (`localhost:9092`), поэтому `@DynamicPropertySource` для `Kafka` не нужен.",
+              "text": "Адрес брокера известен заранее и фиксирован на localhost и порту 9092, поэтому `getBootstrapServers()` и `@DynamicPropertySource` для Kafka не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Порт брокера маппируется случайно; правильный адрес возвращает `getBootstrapServers()` в runtime, и его регистрируют динамически.",
@@ -515,26 +515,26 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Берут модуль `Kafka` на базе образа `confluentinc/cp-kafka` и класс `KafkaContainer`: `new KafkaContainer(DockerImageName.parse(\"confluentinc/cp-kafka:7.6.0\"))`. Адрес для подключения отдаёт `getBootstrapServers()`, который регистрируют в `spring.kafka.bootstrap-servers` через `@DynamicPropertySource`.",
+              "text": "В Testcontainers Java 2.0.5 для образа `confluentinc/cp-kafka` берут `ConfluentKafkaContainer`. Его `getBootstrapServers()` возвращает адрес брокера для `spring.kafka.bootstrap-servers` через `@DynamicPropertySource`.",
               "correct": true,
               "sections": {
-                "explanation": "`KafkaContainer` включает встроенный `ZooKeeper` (или `KRaft` в новых версиях) и сам ждёт готовности брокера, поэтому в тесте достаточно `KafkaTemplate` и слушателя — инфраструктура поднимается автоматически.",
+                "explanation": "Модуль `testcontainers-kafka` в 2.x разделяет классы по семействам образов: `ConfluentKafkaContainer` для cp-kafka 7.4.0+ и `KafkaContainer` для apache/kafka. Первый сам настраивает брокер и listeners.",
                 "example": "`registry.add(\"spring.kafka.bootstrap-servers\", kafka::getBootstrapServers)`, затем `kafkaTemplate.send(\"orders\", \"order-123\", \"{...}\")` и проверка через consumer или `awaitility`.",
                 "when_to_apply": "Использовать для интеграционных тестов продюсеров/консьюмеров, где важно реальное поведение брокера: партиционирование, оффсеты, ребалансировки.",
-                "edge_cases": "`withKraft()` включает режим `KRaft` без `ZooKeeper` (Kafka 3.3+); несколько брокеров поднимают через `KafkaContainer` + общую `Network`.",
+                "edge_cases": "`withKraft()` указан для deprecated `org.testcontainers.containers.KafkaContainer`; в показанном `ConfluentKafkaContainer` KRaft-настройки встроены. Для нескольких брокеров нужна отдельная топология.",
                 "related": "[[testcontainers-interview#Q15]] @DynamicPropertySource для Kafka; [[testcontainers-interview#Q16]] @ServiceConnection; [[testcontainers-interview#Q23]] сеть между контейнерами."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Чтобы протестировать `Kafka`, достаточно `GenericContainer<>(\"confluentinc/cp-kafka\")` без специализированного класса — он сам настроит listeners.",
+              "text": "Чтобы протестировать Kafka, достаточно `GenericContainer<>(\"confluentinc/cp-kafka\")` без специализированного класса, поскольку он сам настроит listeners.",
               "correct": false,
               "sections": {
-                "what_actually": "`GenericContainer` не настроит advertised listeners и `bootstrap-servers` корректно; `KafkaContainer` инкапсулирует эту нетривиальную конфигурацию.",
+                "what_actually": "`GenericContainer` не настроит advertised listeners автоматически; для показанного Confluent-образа это делает `ConfluentKafkaContainer`.",
                 "source_of_confusion": "Раз `GenericContainer` запускает любой образ, кажется, что и `Kafka` поднимется без специального класса.",
-                "if_it_were_true": "Тогда не было бы отдельного `KafkaContainer` с `getBootstrapServers()`, но он существует именно из-за сложности listeners.",
-                "how_it_should_be": "Для `Kafka` берут `KafkaContainer` — он решает проблему advertised listeners за вас."
+                "if_it_were_true": "Тогда специализированный контейнер с `getBootstrapServers()` не давал бы преимуществ, но он настраивает listeners.",
+                "how_it_should_be": "Для Confluent Kafka взять `ConfluentKafkaContainer`, а `GenericContainer` настраивать вручную лишь при отдельной необходимости."
               }
             }
           ]
@@ -863,38 +863,38 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@DynamicPropertySource` — аннотация Spring, регистрирующая свойства приложения динамически, после старта контейнера. В статическом методе с `DynamicPropertyRegistry` добавляют ссылки на методы контейнера: `registry.add(\"spring.datasource.url\", postgres::getJdbcUrl)` и т.д.",
+              "text": "Аннотация `@DynamicPropertySource` из Spring TestContext регистрирует `Supplier` свойств при подготовке контекста. Статический метод с `DynamicPropertyRegistry` добавляет поставщики, которые вызываются при разрешении ключа.",
               "correct": true,
               "sections": {
-                "explanation": "Контейнер стартует с рандомным портом, поэтому JDBC URL известен только в runtime — обычный `@TestPropertySource` с фиксированным значением не подойдёт; метод вызывается до инициализации `ApplicationContext`.",
+                "explanation": "Контейнер получает динамический адрес. Spring TestContext регистрирует поставщики свойств для контекста, а `Supplier` вызывается только при разрешении соответствующего ключа.",
                 "example": "Для нескольких контейнеров в одном методе: `registry.add(\"spring.datasource.url\", postgres::getJdbcUrl)`, `registry.add(\"spring.kafka.bootstrap-servers\", kafka::getBootstrapServers)`.",
                 "when_to_apply": "Использовать до Spring Boot 3.1 или когда нужно тонко контролировать набор properties; в 3.1+ часто заменяется на `@ServiceConnection`.",
-                "edge_cases": "Передают именно method reference (`postgres::getJdbcUrl`), а не значение — иначе оно вычислится до старта контейнера; метод должен быть `static`.",
+                "edge_cases": "`DynamicPropertyRegistry.add` принимает `Supplier`, а не готовую строку; метод с аннотацией должен быть `static`. Контейнеру нужно стартовать до фактического чтения свойства.",
                 "related": "[[testcontainers-interview#Q16]] @ServiceConnection как замена; [[testcontainers-interview#Q5]] PostgreSQLContainer; [[testcontainers-interview#Q9]] Kafka properties."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "В `registry.add` нужно передавать уже вычисленное значение, например `registry.add(\"spring.datasource.url\", postgres.getJdbcUrl())`, а не method reference.",
+              "text": "В метод `registry.add` передают готовую строку URL, полученную вызовом `getJdbcUrl`, вместо поставщика значения. Такой вызов фиксирует адрес до создания контекста.",
               "correct": false,
               "sections": {
-                "what_actually": "Передают `Supplier`/method reference (`postgres::getJdbcUrl`); вызов `getJdbcUrl()` сразу даст значение до старта контейнера или NPE.",
+                "what_actually": "`registry.add` принимает `Supplier`/method reference (`postgres::getJdbcUrl`), а не возвращаемую `getJdbcUrl()` строку; такой пример не соответствует сигнатуре метода.",
                 "source_of_confusion": "Разница между вызовом метода и ссылкой на метод тонкая, и её легко перепутать.",
-                "if_it_were_true": "Тогда значение бралось бы до готовности контейнера, и URL был бы неверным.",
-                "how_it_should_be": "Регистрируют lazy-`Supplier` (`postgres::getJdbcUrl`), который вызовется в нужный момент."
+                "if_it_were_true": "Тогда API принимал бы готовую строку вместо поставщика и терял бы ленивое получение динамического значения.",
+                "how_it_should_be": "Регистрировать `Supplier` (`postgres::getJdbcUrl`), который вызывается при разрешении свойства."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`@DynamicPropertySource` позволяет задать фиксированные значения свойств в аннотации, как `@TestPropertySource`, просто с другим синтаксисом.",
+              "text": "Аннотация `@DynamicPropertySource` задаёт фиксированные значения свойств прямо на тестовом классе, как `@TestPropertySource`. Поставщик значения и статический метод не нужны.",
               "correct": false,
               "sections": {
-                "what_actually": "Смысл `@DynamicPropertySource` именно в динамике: значения вычисляются после старта контейнера, потому что порт/URL неизвестны заранее.",
+                "what_actually": "Смысл `@DynamicPropertySource` в поставщиках значений: они вызываются при разрешении свойства, когда динамический адрес ресурса уже доступен.",
                 "source_of_confusion": "Обе аннотации задают properties для теста, отсюда смешение статики и динамики.",
                 "if_it_were_true": "Тогда хватило бы `@TestPropertySource`, но рандомный порт делает его непригодным.",
-                "how_it_should_be": "Значения регистрируют через `DynamicPropertyRegistry.add(key, supplier)` после старта контейнера."
+                "how_it_should_be": "Регистрировать `Supplier` через `DynamicPropertyRegistry.add(key, supplier)` при подготовке тестового контекста."
               }
             }
           ]
@@ -983,7 +983,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@TestConfiguration` с контейнерами нельзя переиспользовать между тестами — её нужно копировать в каждый тестовый класс заново.",
+              "text": "Конфигурацию `@TestConfiguration` с контейнерами нельзя переиспользовать между тестами, поэтому её нужно копировать в каждый тестовый класс заново.",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл `@TestConfiguration` как раз в переиспользовании: её подключают через `@Import` в любой нужный тест.",
@@ -995,7 +995,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@TestConfiguration` с контейнерами работает только в тестах и принципиально не может использоваться для локального запуска приложения.",
+              "text": "Контейнерную `@TestConfiguration` можно использовать только в тестах. Для локального запуска приложения требуется другая конфигурация без этих контейнеров.",
               "correct": false,
               "sections": {
                 "what_actually": "Тот же класс применяют для локального dev-режима через `SpringApplication.from(Application::main).with(...)`.",
@@ -1007,7 +1007,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Контейнеры выносят в отдельный `@TestConfiguration(proxyBeanMethods = false)`-класс, где каждый контейнер — `@Bean @ServiceConnection`, и переиспользуют его в тестах через `@Import(TestcontainersConfig.class)`. Тот же класс годится для запуска приложения локально через `SpringApplication.from(...).with(...)`.",
+              "text": "Контейнеры выносят в `@TestConfiguration`, объявляют как `@Bean @ServiceConnection` и подключают через `@Import`. Это позволяет переиспользовать их в тестах и локальном запуске приложения.",
               "correct": true,
               "sections": {
                 "explanation": "Конфигурация контейнеров становится переиспользуемой: бины `@ServiceConnection` сами подключают `PostgreSQL`/`Kafka` к контексту, а `@Import` подтягивает их в любой тест без дублирования.",
@@ -1871,44 +1871,44 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Создают абстрактный `@SpringBootTest @Testcontainers`-класс с `static @Container`-полями (`PostgreSQLContainer`, `KafkaContainer`, `GenericContainer` для Redis), одним `@DynamicPropertySource` для всех свойств и общими хелперами (`MockMvc`, `ObjectMapper`, методы аутентифицированных запросов). Конкретные тесты наследуют его.",
+              "text": "В базовом тестовом классе объявляют статические контейнеры для PostgreSQL и Confluent Kafka, а подключения настраивают одним `@DynamicPropertySource`. Наследники получают настройки, но JUnit Extension останавливает `@Container` после каждого тестового класса.",
               "correct": true,
               "sections": {
-                "explanation": "Благодаря `static`-полям с `@Container` контейнеры стартуют один раз и переиспользуются всеми подклассами — это эквивалент Singleton Container паттерна, организованный через наследование, плюс устранение дублирования настройки.",
+                "explanation": "`static @Container` делится между методами тестового класса, а Extension останавливает контейнер после класса. Наследование полей и `@DynamicPropertySource` убирает дублирование, но не делает контейнер singleton на весь прогон.",
                 "example": "`abstract class BaseIntegrationTest { @Container static PostgreSQLContainer<?> postgres = ...; @DynamicPropertySource static void cfg(...){...} }`, затем `class OrderControllerTest extends BaseIntegrationTest`.",
                 "when_to_apply": "Применять, когда у проекта много интеграционных тестов с одним набором зависимостей — базовый класс убирает копипаст и стандартизирует окружение.",
-                "edge_cases": "Здесь `@Container` уместен именно потому, что поля `static` и контейнеры разделяются подклассами; trade-off — уверенность в интеграции ценой скорости и Docker-требований.",
+                "edge_cases": "Один Java-объект поля может быть унаследован подклассами, но Extension управляет жизненным циклом для каждого класса. Если Spring кеширует контекст со старым адресом перезапущенного контейнера, нужен новый контекст (`@DirtiesContext`) либо singleton на весь прогон с ручным `start()` без `@Container`.",
                 "related": "[[testcontainers-interview#Q19]] Singleton Containers паттерн; [[testcontainers-interview#Q13]] static-поля; [[testcontainers-interview#Q15]] @DynamicPropertySource."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "В базовом классе контейнеры объявляют как instance-поля (без `static`), чтобы каждый подкласс получил свежий контейнер для изоляции.",
+              "text": "В базовом классе контейнеры объявляют instance-полями с `@Container`. Extension запускает их один раз для каждого подкласса и переиспользует между всеми методами.",
               "correct": false,
               "sections": {
-                "what_actually": "Поля делают `static` — тогда контейнеры стартуют один раз и разделяются всеми подклассами; instance-поля пересоздавали бы контейнер на каждый тест.",
+                "what_actually": "Instance-поля с `@Container` запускаются и останавливаются для каждого тестового метода; static-поле делится между методами одного класса.",
                 "source_of_confusion": "Изоляцию ценят, и instance-поля кажутся «более чистыми».",
-                "if_it_were_true": "Тогда базовый класс не давал бы экономии singleton, ради которой его и строят.",
-                "how_it_should_be": "`static @Container`-поля переиспользуются подклассами — это и есть смысл базового класса."
+                "if_it_were_true": "Instance-поля могли бы разделять контейнер между методами, но Extension управляет ими пометодно.",
+                "how_it_should_be": "Для разделения контейнера между методами взять `static @Container`; между классами нужен отдельный lifecycle-паттерн."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Базовый класс с `static @Container` нельзя использовать — это та самая запрещённая комбинация `@Container` + singleton, ломающая тесты.",
+              "text": "Базовый класс со `static @Container` запрещён, потому что это singleton на весь прогон. Поэтому контейнеры всегда нужно запускать вручную через метод `start` без Extension.",
               "correct": false,
               "sections": {
-                "what_actually": "Запрещено смешивать `@Container` с РУЧНЫМ `start()` singleton; а `static @Container` в общем базовом классе как раз корректный и рекомендуемый способ.",
+                "what_actually": "`static @Container` допустим: Extension запускает поле перед тестами класса и останавливает после. Ручной singleton на весь прогон — другой паттерн без `@Container`.",
                 "source_of_confusion": "Правило «не смешивайте @Container и singleton» переносят и на легальный случай наследования.",
-                "if_it_were_true": "Тогда паттерн базового класса не рекомендовали бы, но он стандартен и приведён как пример.",
-                "how_it_should_be": "`static @Container` в базовом классе валиден; запрет касается ручного `start()` вместе с `@Container`."
+                "if_it_were_true": "JUnit Extension не поддерживал бы общий базовый класс, но static-поля там допустимы и имеют lifecycle тестового класса.",
+                "how_it_should_be": "Не смешивать ручной singleton и `@Container`; базовый класс может использовать lifecycle Extension."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Свойства подключения регистрируют в каждом подклассе отдельным `@DynamicPropertySource`, иначе наследники не увидят настройки контейнеров.",
+              "text": "Свойства подключения регистрируют в каждом подклассе отдельным `@DynamicPropertySource`. Иначе наследники не увидят настройки контейнеров из базового класса.",
               "correct": false,
               "sections": {
                 "what_actually": "`@DynamicPropertySource` в базовом классе наследуется подклассами; дублировать его в каждом наследнике не нужно.",
