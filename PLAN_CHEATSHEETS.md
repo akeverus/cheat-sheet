@@ -1158,12 +1158,29 @@ single-implementation naming устаревшим. Исправлены теор
 FAIL по прежним блокам. Полного аудита файла (`П`) и независимой blind-
 приёмки Q32 нет. Коммит `3875da44e`.
 
-**Точная точка авторского продолжения:** Spring Data JPA Q33 B0,
-derived delete. Сопоставить Q33 с Q8/Q30/Q39/Q42 и Hibernate Q9,
-проверить по Spring Data JPA 4.1.1/официальной документации Hibernate
-порядок SELECT→remove, callbacks, транзакции, объём памяти и
-взаимодействие с `@SoftDelete`. Исправить только найденный пробел в
-теории/MCQ/sidecar; отдельно оценить, оправдан ли новый вопрос.
+**Контрольная точка 08.10.2026 — Spring Data JPA Q33 B0, derived delete · О.**
+Просмотр заголовков (`З`) показал пересечение с JPA Q8/Q30/Q39/Q42,
+но Q33 уже отвечает за `deleteBy`; новый Q не нужен. По
+[Spring Data JPA 4.1.1, Derived Delete Queries](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html),
+[transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html)
+и [Hibernate ORM 7.4, bulk DML/soft delete](https://docs.hibernate.org/orm/7.4/userguide/html_single/)
+точечно проверены (`О`) выборка сущностей перед поштучным удалением,
+callback'и и каскады, явная транзакция для объявленного метода и
+затраты памяти. Убраны неточные «N+1 на удалении» и обещание ровно
+одного SQL для bulk JPQL: один JPQL-вызов может породить несколько SQL.
+Теория, MCQ B0 и freshness-sidecar синхронизированы; структура 43 Q/
+44 блока PASS, локальный Q33 без hard/warnings, полный JPA parity FAIL
+из-за прежних блоков. Полного аудита файла (`П`) и независимой blind-
+приёмки Q33 нет. Коммит `02337debc`.
+Взаимодействие конкретного bulk DELETE с `@SoftDelete`
+остаётся гипотезой до runtime-проверки версии и запроса.
+
+**Точная точка авторского продолжения:** Spring Data JPA Q34 B0,
+`@DataJpaTest`. Сравнить заголовки Spring Testing и Testcontainers,
+затем точечно проверить Q34/MCQ по Spring Boot 4.1/3.5 и Testcontainers:
+состав test slice, транзакцию/rollback, замещение DataSource,
+`@ServiceConnection` и Flyway. Исправить только подтверждённое,
+не объявляя полный файл проверенным.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
 

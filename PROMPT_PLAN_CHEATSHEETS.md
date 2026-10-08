@@ -439,11 +439,20 @@ fragments, конвенция `<ИнтерфейсФрагмента>Impl`, ус
 блоков. Полного аудита и независимой blind-приёмки Q32 нет.
 Коммит `3875da44e`.
 
-Следующий авторский пакет: Spring Data JPA Q33 B0, derived delete.
-Сопоставить Q8/Q30/Q33/Q39/Q42 и Hibernate Q9; по Spring Data JPA 4.1.1
-и Hibernate проверить SELECT→remove, callbacks, транзакцию, память и
-взаимодействие с `@SoftDelete`. При наличии подтверждённого пробела
-синхронизировать Q33/MCQ/sidecar и выполнить локальные проверки.
+08.10 Spring Data JPA Q33 B0: по Spring Data JPA 4.1.1 и Hibernate 7.4
+уточнены SELECT→поштучное удаление, callbacks, транзакция объявленного
+метода, память и различие между одним JPQL-вызовом и числом SQL.
+Теория, MCQ и freshness-sidecar синхронизированы; structure PASS,
+локальный Q33 без hard/warnings, полный JPA parity FAIL на прежних
+блоках. Полного аудита и независимой blind-приёмки Q33 нет.
+Bulk DELETE с `@SoftDelete` требует отдельной runtime-проверки.
+Коммит `02337debc`.
+
+Следующий авторский пакет: Spring Data JPA Q34 B0, `@DataJpaTest`.
+Сравнить Spring Testing и Testcontainers, затем по Spring Boot 4.1/3.5
+и Testcontainers проверить состав test slice, транзакцию и rollback,
+замещение DataSource, `@ServiceConnection`, Flyway. Подтверждённое
+синхронизировать в Q34/MCQ/sidecar и выполнить локальные проверки.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,
