@@ -429,12 +429,21 @@ Structure PASS (43 Q/44 блока), локальный Q31 без hard/warnings
 полный JPA parity FAIL на прежних блоках. Полного содержательного
 аудита файла и независимого blind review Q31 нет. Коммит `73c177d6d`.
 
-Следующий авторский пакет: Spring Data JPA Q32 B0 о custom repository
-implementation. Сверить Q1/Q2/Q4/Q32, соседние заголовки и MCQ.
-По Spring Data JPA 4.1 проверить repository fragments, `Impl`-имена,
-ручную регистрацию и статус прежней single-implementation naming
-convention. Подтверждённые правки синхронизировать в Q32/MCQ/sidecar,
-выполнить локальные проверки; полный аудит и blind-приёмку отдельно.
+08.10 Spring Data JPA Q32 B0: по reference 4.1.1 уточнены repository
+fragments, конвенция `<ИнтерфейсФрагмента>Impl`, устаревшее имя по
+основному репозиторию, ручной bean wiring и `spring.factories` для
+внешнего фрагмента. Пример согласован с полями `User` из Q1 и
+ограничен пояснением, что простому фильтру хватает `Specification`.
+Теория, MCQ и freshness-sidecar синхронизированы; structure PASS,
+локальный Q32 без hard/warnings, полный JPA parity FAIL из-за старых
+блоков. Полного аудита и независимой blind-приёмки Q32 нет.
+Коммит `3875da44e`.
+
+Следующий авторский пакет: Spring Data JPA Q33 B0, derived delete.
+Сопоставить Q8/Q30/Q33/Q39/Q42 и Hibernate Q9; по Spring Data JPA 4.1.1
+и Hibernate проверить SELECT→remove, callbacks, транзакцию, память и
+взаимодействие с `@SoftDelete`. При наличии подтверждённого пробела
+синхронизировать Q33/MCQ/sidecar и выполнить локальные проверки.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,

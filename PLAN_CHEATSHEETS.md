@@ -1144,12 +1144,26 @@ Structure 43 Q/44 блока PASS, локальный Q31 без hard/warnings;
 объектов и ленивых связей названо ограничением, но отдельный runtime-тест
 не выполнен.
 
-**Точная точка авторского продолжения:** Spring Data JPA Q32 B0,
-custom repository implementation. Сверить заголовки и ответы Q1/Q2/Q4,
-Q32 и соседних тем, а также парные MCQ; по официальному Spring Data JPA
-4.1 проверить fragments, `Impl`-имена, ручную регистрацию и устаревшую
-конвенцию единственной реализации репозитория. Затем изменить только
-подтверждённое в Q32/MCQ/sidecar и выполнить локальные проверки.
+**Контрольная точка 08.10.2026 — Spring Data JPA Q32 B0, repository fragments · О.**
+Просмотр заголовков (`З`) нашёл ближайший JPA Q32 и пересечения с Q4
+(создание реализации) и Q17 (`Specification`); отдельный файл не нужен.
+Точечная сверка (`О`) с [Spring Data JPA 4.1.1, Custom Repository Implementations](https://docs.spring.io/spring-data/jpa/reference/repositories/custom-implementations.html)
+подтвердила фрагментную композицию, `<ИнтерфейсФрагмента>Impl` как
+конвенцию autodetection, возможность ручного bean wiring и регистрации
+внешнего фрагмента через `META-INF/spring.factories`. Историческое
+`<ОсновнойРепозиторий>Impl` поддерживается, но документация считает
+single-implementation naming устаревшим. Исправлены теория и пример
+на полях существующего `User`, MCQ B0 и freshness-sidecar. Structure
+43 Q/44 блока PASS, локальный Q32 без hard/warnings; полный JPA parity
+FAIL по прежним блокам. Полного аудита файла (`П`) и независимой blind-
+приёмки Q32 нет. Коммит `3875da44e`.
+
+**Точная точка авторского продолжения:** Spring Data JPA Q33 B0,
+derived delete. Сопоставить Q33 с Q8/Q30/Q39/Q42 и Hibernate Q9,
+проверить по Spring Data JPA 4.1.1/официальной документации Hibernate
+порядок SELECT→remove, callbacks, транзакции, объём памяти и
+взаимодействие с `@SoftDelete`. Исправить только найденный пробел в
+теории/MCQ/sidecar; отдельно оценить, оправдан ли новый вопрос.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
 
