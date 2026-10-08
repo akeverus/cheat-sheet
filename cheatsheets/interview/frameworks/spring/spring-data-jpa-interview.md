@@ -2017,52 +2017,57 @@ class UserRepositoryTest {
 
 ## Q35. Какие best practices для производительности `JPA`?
 
-Большинство проблем производительности `JPA` сводятся к одному принципу: **грузить ровно то, что нужно, и не больше — пакетами, а не по одной записи.** Ниже — практики, реализующие этот принцип на разных уровнях.
+Начинать стоит с измерения SQL и плана выполнения: число запросов, объём строк и время БД подскажут, нужна ли настройка загрузки, индекса или записи. Затем загружайте данные под конкретный сценарий и устраняйте подтверждённые лишние запросы.
 
 | Практика | Проблема | Решение |
 |----------|----------|---------|
-| LAZY по умолчанию | EAGER загружает лишнее | `@ManyToOne(fetch = LAZY)` на всех связях |
-| Явная загрузка связей | N+1 при обходе коллекций | `@EntityGraph`, `JOIN FETCH` |
-| Проекции | Загрузка всех полей сущности | `interface`/`DTO`-проекции |
-| Batch size | Медленная массовая вставка | `batch_size=50`, `SEQUENCE` генератор |
-| Индексы | Медленные запросы | `@Index` на `@Table`, `EXPLAIN ANALYZE` |
-| readOnly | Лишний dirty checking | `@Transactional(readOnly = true)` |
-| OSIV отключение | Lazy в view, неконтролируемые запросы | `spring.jpa.open-in-view=false` |
-| L2 кэш | Частые одинаковые SELECT | `@Cacheable` для справочников |
-| Мониторинг | Невидимые проблемы | `Hibernate Statistics`, `datasource-proxy` |
+| Загрузка связей | EAGER и обход LAZY-связей могут дать лишние SELECT | Для нужных связей `LAZY` в маппинге, `@EntityGraph`/`JOIN FETCH` в конкретном запросе; проверять SQL, особенно пагинацию с коллекциями |
+| Проекции | Сущность целиком нужна не каждому экрану | Закрытая interface/DTO-проекция на уровне запроса; `.map(Dto::from)` после `findAll()` не уменьшает выборку |
+| JDBC batching | Много похожих `INSERT`/`UPDATE` | Настроить `hibernate.jdbc.batch_size` и проверить фактические batch-вызовы; `IDENTITY` мешает batching вставок, `SEQUENCE` может подойти лучше |
+| Индексы | Медленный фильтр/сортировка | Сверять `EXPLAIN ANALYZE` и реальные параметры; индекс создавать миграцией по измеренному запросу |
+| `readOnly` | Ненужный flush/dirty checking при чтении | `@Transactional(readOnly = true)` — подсказка, не запрет записи; с Hibernate Spring устанавливает flush mode `MANUAL` |
+| OSIV | Lazy-запросы после сервисной транзакции | Если отключить `spring.jpa.open-in-view`, подготовить нужные данные внутри сервиса |
+| L2 кэш | Повторные чтения по ID редко меняющихся сущностей | Включить совместимый cache provider и выбрать сущности/стратегию; одного `@Cacheable` недостаточно |
+| Мониторинг | Невидимые N+1 и дорогие запросы | SQL-логи, Hibernate Statistics и план БД в тесте/профилировании |
 
 ```java
-// Пример: оптимальный сервис с учётом best practices
+// Spring Data JPA 4.1.1: закрытая interface-проекция
+interface ProductSummary {
+    Long getId();
+    String getName();
+    BigDecimal getPrice();
+}
+
+interface ProductRepository extends JpaRepository<Product, Long>,
+        JpaSpecificationExecutor<Product> {
+
+    @EntityGraph(attributePaths = {"category", "reviews"})
+    @Query("select p from Product p where p.id = :id")
+    Optional<Product> findWithDetailsById(@Param("id") Long id);
+}
+
 @Service
-@Transactional(readOnly = true) // read-only по умолчанию — нет dirty checking
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ProductService {
 
     private final ProductRepository productRepository;
 
-    // Проекция — только нужные поля
     public Page<ProductSummary> search(ProductFilter filter, Pageable pageable) {
         Specification<Product> spec = buildSpec(filter);
-        return productRepository.findAll(spec, pageable)
-            .map(ProductSummary::from);
+        return productRepository.findBy(spec,
+            query -> query.as(ProductSummary.class).page(pageable));
     }
 
-    // EntityGraph для конкретного use case
     public ProductDetails getDetails(Long id) {
-        return productRepository.findByIdWithCategoryAndReviews(id)
+        return productRepository.findWithDetailsById(id)
             .map(ProductDetails::from)
             .orElseThrow(() -> new ProductNotFoundException(id));
-    }
-
-    @Transactional // переопределяем — этот метод пишет
-    public void updatePrices(Map<Long, BigDecimal> priceUpdates) {
-        // Bulk update — один запрос, не N
-        productRepository.bulkUpdatePrices(priceUpdates);
     }
 }
 ```
 
-Подробнее о настройке [Spring Boot](spring-boot-interview.md) приложений и профилировании запросов через [SQL](../../databases/sql-interview.md).
+`findWithDetailsById` задаёт план загрузки для одного продукта. `findBy(spec, query -> query.as(...).page(...))` проецирует **в запросе**; после `findAll()` преобразование через `Page.map(...)` происходит уже в памяти. Проекции вложенных связей и пагинация с `JOIN FETCH` коллекции требуют отдельной проверки генерируемого SQL. [Spring Data JPA 4.1.1, Specifications](https://docs.spring.io/spring-data/jpa/reference/jpa/specifications.html); [Projections](https://docs.spring.io/spring-data/jpa/reference/repositories/projections.html); [Transactions](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html). Подробнее — [batch-обработка, Q28](#q28--как-работает-batch-обработка), [L2-кэш, Q29](#q29-как-настроить-второуровневый-кэш-l2-cache), [SQL](../../databases/sql-interview.md).
 
 ## Q36. (!) Как работают derived query methods и каков их синтаксис?
 
