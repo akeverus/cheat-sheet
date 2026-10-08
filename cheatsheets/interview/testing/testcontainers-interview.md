@@ -137,25 +137,25 @@ graph TB
 
 Нужны три вещи:
 
-1. **Docker** — запущенный Docker-демон, доступный по API. Подойдёт Docker Desktop, Docker Engine, `Colima`, `Rancher Desktop` или `Podman` в режиме совместимости. Сам по себе образ `Testcontainers` не нужен — библиотека лишь дёргает Docker от вашего имени.
-2. **JDK 8+** — библиотека работает на Java 8 и новее.
-3. **Зависимости Gradle/Maven** — основной модуль, интеграция с JUnit и модуль под конкретную технологию.
+1. **Совместимый контейнерный рантайм** — Docker Engine/Desktop, Testcontainers Cloud либо Docker API-совместимая альтернатива. Для `Colima`, `Podman` и `Rancher Desktop` могут понадобиться дополнительные настройки; доступность отдельных возможностей следует проверять в выбранной среде.
+2. **JDK 8+ для библиотек Testcontainers Java 2.0.5** — опубликованный код компилируется с `--release 8`; для сборки самой библиотеки используется JDK 17. Требования конкретного проекта и тестового фреймворка проверяют отдельно.
+3. **Зависимости Gradle/Maven** — ядро, интеграция с JUnit Jupiter и модуль под конкретную технологию. В линейке 2.x артефакты модулей получили префикс `testcontainers-`.
 
 ```groovy
 // build.gradle
 dependencies {
     // Основная библиотека
-    testImplementation 'org.testcontainers:testcontainers:1.20.4'
+    testImplementation 'org.testcontainers:testcontainers:2.0.5'
     // JUnit 5 интеграция
-    testImplementation 'org.testcontainers:junit-jupiter:1.20.4'
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter:2.0.5'
     // Модуль для конкретной технологии
-    testImplementation 'org.testcontainers:postgresql:1.20.4'
+    testImplementation 'org.testcontainers:testcontainers-postgresql:2.0.5'
 }
 ```
 
-**Как библиотека находит Docker.** `Testcontainers` общается с демоном через Docker API — обычно по Unix-сокету `/var/run/docker.sock`, но адрес можно переопределить переменной `DOCKER_HOST`. При старте библиотека дополнительно поднимает служебный контейнер `ryuk` (Reaper), который гарантирует очистку всех созданных контейнеров даже при аварийном завершении тестов.
+**Как библиотека находит рантайм.** При локальном Docker `Testcontainers` общается с ним через Docker API — часто по Unix-сокету `/var/run/docker.sock`; адрес можно задавать через `DOCKER_HOST`. Для уборки ресурсов обычно используется служебный контейнер Ryuk, но его запуск зависит от конфигурации среды (подробнее в [Q33](#q33-что-такое-ryuk-и-как-он-управляет-cleanup-контейнеров)).
 
-**Если Docker недоступен**, тесты падают сразу с понятным сообщением, а не зависают. Практический вывод для CI/CD: runner обязан иметь доступ к Docker — либо через Docker-in-Docker, либо через проброс хостового сокета (socket mount).
+**Если совместимый рантайм недоступен**, контейнерные тесты не запустятся. В CI можно предоставить Docker API либо использовать поддерживаемую удалённую среду; настройку и ограничения выбранного варианта проверяют до запуска тестов. [Testcontainers, runtime requirements](https://java.testcontainers.org/supported_docker_environment/); [Testcontainers 2.0 release](https://github.com/testcontainers/testcontainers-java/releases/tag/2.0.0); [JUnit 5 quickstart](https://java.testcontainers.org/quickstart/junit_5_quickstart/).
 
 ## Q3. (!) Как устроена архитектура `Testcontainers`?
 
@@ -267,22 +267,22 @@ class UserRepositoryTest {
 
 ## Q6. Какие контейнеры баз данных поддерживает `Testcontainers`?
 
-`Testcontainers` предоставляет специализированные модули для большинства популярных баз данных:
+`Testcontainers` предоставляет специализированные модули для реляционных, документных и графовых БД. Ниже координаты **Testcontainers Java 2.0.5**; в 1.x использовались короткие имена артефактов, например `org.testcontainers:postgresql`. При обновлении на 2.x также меняются пакеты классов: `PostgreSQLContainer` находится в `org.testcontainers.postgresql`. [Изменения 2.0](https://github.com/testcontainers/testcontainers-java/releases/tag/2.0.0); [каталог модулей](https://java.testcontainers.org/modules/databases/).
 
 | Модуль | Класс контейнера | Артефакт Gradle |
 |--------|------------------|-----------------|
-| `PostgreSQL` | `PostgreSQLContainer` | `org.testcontainers:postgresql` |
-| `MySQL` | `MySQLContainer` | `org.testcontainers:mysql` |
-| `MariaDB` | `MariaDBContainer` | `org.testcontainers:mariadb` |
-| `Oracle XE` | `OracleContainer` | `org.testcontainers:oracle-xe` |
-| `MS SQL Server` | `MSSQLServerContainer` | `org.testcontainers:mssqlserver` |
-| `MongoDB` | `MongoDBContainer` | `org.testcontainers:mongodb` |
-| `Cassandra` | `CassandraContainer` | `org.testcontainers:cassandra` |
-| `ClickHouse` | `ClickHouseContainer` | `org.testcontainers:clickhouse` |
-| `CockroachDB` | `CockroachContainer` | `org.testcontainers:cockroachdb` |
-| `Neo4j` | `Neo4jContainer` | `org.testcontainers:neo4j` |
+| `PostgreSQL` | `PostgreSQLContainer` | `org.testcontainers:testcontainers-postgresql` |
+| `MySQL` | `MySQLContainer` | `org.testcontainers:testcontainers-mysql` |
+| `MariaDB` | `MariaDBContainer` | `org.testcontainers:testcontainers-mariadb` |
+| `Oracle XE` | `OracleContainer` | `org.testcontainers:testcontainers-oracle-xe` |
+| `MS SQL Server` | `MSSQLServerContainer` | `org.testcontainers:testcontainers-mssqlserver` |
+| `MongoDB` | `MongoDBContainer` | `org.testcontainers:testcontainers-mongodb` |
+| `Cassandra` | `CassandraContainer` | `org.testcontainers:testcontainers-cassandra` |
+| `ClickHouse` | `ClickHouseContainer` | `org.testcontainers:testcontainers-clickhouse` |
+| `CockroachDB` | `CockroachContainer` | `org.testcontainers:testcontainers-cockroachdb` |
+| `Neo4j` | `Neo4jContainer` | `org.testcontainers:testcontainers-neo4j` |
 
-Реляционные БД наследуют `JdbcDatabaseContainer` — у них есть общие методы `getJdbcUrl()`, `withDatabaseName()`, `withInitScript()`. Документные и графовые (`MongoDB`, `Neo4j`, `Cassandra`) наследуют `GenericContainer` и дают свои методы под протокол сервиса. Общий принцип один: вместо ручной возни с портами и URL ты получаешь типобезопасные методы конфигурации под конкретный движок.
+Реляционные контейнеры наследуют `JdbcDatabaseContainer` — у них есть общие методы `getJdbcUrl()`, `withDatabaseName()`, `withInitScript()`. Контейнеры других типов предоставляют способы подключения для своего протокола, например MongoDB replica set URL или Neo4j Bolt URL. Модуль не добавляет JDBC-драйвер БД автоматически: его зависимость нужна отдельно, если тест обращается к БД по JDBC. [PostgreSQL module](https://java.testcontainers.org/modules/databases/postgres/); [Neo4j module](https://java.testcontainers.org/modules/databases/neo4j/).
 
 ## Q7. Как работает JDBC-поддержка `Testcontainers`?
 

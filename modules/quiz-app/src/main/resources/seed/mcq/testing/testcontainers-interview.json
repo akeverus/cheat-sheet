@@ -71,50 +71,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Нужны: запущенный Docker-демон (`Docker Desktop`, `Docker Engine`, `Colima`, `Rancher Desktop` или `Podman` с совместимостью), `JDK 8+` и подключённые Gradle/Maven-зависимости (`testcontainers`, `junit-jupiter`, модуль конкретной технологии).",
+              "text": "Для Testcontainers Java 2.0.5 нужны Docker API-совместимый рантайм, JDK и зависимости ядра, JUnit Jupiter и модуля БД. Локальный Docker и Testcontainers Cloud дают два варианта запуска.",
               "correct": true,
               "sections": {
-                "explanation": "`Testcontainers` общается с Docker через Docker API (обычно сокет `/var/run/docker.sock`), поэтому без работающего демона тесты падают с понятным сообщением; нужный модуль (`postgresql`, `kafka`) подключается отдельной зависимостью.",
-                "example": "В `build.gradle` добавляют `testImplementation 'org.testcontainers:postgresql:1.20.4'` и `org.testcontainers:junit-jupiter:1.20.4`, после чего в тесте доступны `@Testcontainers` и `PostgreSQLContainer`.",
-                "when_to_apply": "Эти требования проверяют при настройке проекта и CI: runner обязан иметь доступ к Docker (Docker-in-Docker или mount сокета), иначе интеграционные тесты не стартуют.",
-                "edge_cases": "На старте библиотека поднимает служебный контейнер `ryuk` (Reaper) для очистки ресурсов даже при аварийном падении тестов; в некоторых средах его приходится отключать.",
+                "explanation": "Локальный Docker, совместимый альтернативный рантайм или Testcontainers Cloud предоставляет Docker API. Для 2.0.5 PostgreSQL и JUnit Jupiter подключаются отдельными артефактами с префиксом `testcontainers-`.",
+                "example": "В Gradle для 2.0.5 указывают `org.testcontainers:testcontainers`, `org.testcontainers:testcontainers-junit-jupiter` и `org.testcontainers:testcontainers-postgresql` одной версии.",
+                "when_to_apply": "При настройке проекта и CI проверяют доступность выбранного рантайма, совместимость JDK и наличие специализированного модуля для тестируемой БД.",
+                "edge_cases": "Для альтернативных рантаймов могут потребоваться настройки и не все возможности равны. Ryuk обычно помогает очищать ресурсы; его поведение зависит от среды.",
                 "related": "[[testcontainers-interview#Q1]] что это за библиотека; [[testcontainers-interview#Q25]] Docker в CI/CD; [[testcontainers-interview#Q33]] контейнер Ryuk."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Достаточно одной зависимости `org.testcontainers:testcontainers`; отдельные модули вроде `postgresql` или `kafka` не нужны — все контейнеры включены в ядро.",
+              "text": "Для Testcontainers Java 2.0.5 нужен совместимый рантайм и JDK, но достаточно одной зависимости ядра `testcontainers`. Специализированные классы БД входят в основной артефакт.",
               "correct": false,
               "sections": {
                 "what_actually": "Ядро даёт `GenericContainer`, а специализированные классы (`PostgreSQLContainer`, `KafkaContainer`) живут в отдельных модулях, которые подключают по необходимости.",
                 "source_of_confusion": "Кажется логичным, что «батарейки включены», поэтому ждут все контейнеры в одном артефакте.",
-                "if_it_were_true": "Тогда в таблице зависимостей не было бы строк вроде `org.testcontainers:postgresql`, но они там обязательны.",
-                "how_it_should_be": "Помимо ядра подключают модуль конкретной технологии и интеграцию `junit-jupiter` для аннотаций."
+                "if_it_were_true": "Тогда `PostgreSQLContainer` был бы доступен из одного core-артефакта, но официальный пример добавляет `testcontainers-postgresql`.",
+                "how_it_should_be": "Подключить модуль конкретной технологии и `testcontainers-junit-jupiter` для аннотаций JUnit 5."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Testcontainers` работает только на `JDK 21+` и старые версии Java (8, 11, 17) не поддерживаются из-за использования виртуальных потоков.",
+              "text": "Для Testcontainers Java 2.0.5 нужны совместимый рантайм и зависимости модулей, но минимальная JDK составляет 21. Библиотека использует виртуальные потоки и на Java 8/11 не работает.",
               "correct": false,
               "sections": {
-                "what_actually": "Библиотека поддерживает `Java 8 и выше`; никакой привязки к виртуальным потокам и `JDK 21` для базовой работы нет.",
+                "what_actually": "Исходники 2.0.5 компилируются с `--release 8`; базовая работа библиотеки не зависит от виртуальных потоков JDK 21. Требования тестового проекта проверяются отдельно.",
                 "source_of_confusion": "Новые гайды пишут под свежие LTS, и это принимают за минимальное требование.",
-                "if_it_were_true": "Тогда легаси-проекты на Java 8/11 не могли бы её использовать, но они активно её применяют.",
-                "how_it_should_be": "Минимальная версия — `JDK 8`, а конкретный LTS выбирают по требованиям самого проекта."
+                "if_it_were_true": "Тогда сборка 2.0.5 не могла бы выпускать библиотеку с целевой версией Java 8, но в проекте указан `--release 8`.",
+                "how_it_should_be": "Сверять поддержку Java библиотеки и остальных зависимостей; JDK 21 не является обязательной только из-за Testcontainers."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Testcontainers` не требует Docker вовсе: библиотека эмулирует контейнеры внутри JVM через специальную песочницу и работает на машине без установленного Docker.",
+              "text": "Для Testcontainers Java 2.0.5 нужны JDK и зависимости модулей, но контейнерный рантайм не нужен. Библиотека эмулирует образы внутри JVM без Docker API.",
               "correct": false,
               "sections": {
-                "what_actually": "Docker-демон обязателен — библиотека шлёт ему команды через Docker API; без него тесты падают с явной ошибкой о недоступности Docker.",
+                "what_actually": "Нужен доступ к Docker API-совместимому рантайму: локальному Docker, совместимой альтернативе или поддерживаемой удалённой среде Testcontainers Cloud.",
                 "source_of_confusion": "Хочется, чтобы тесты не зависели от внешней инфраструктуры, и это выдают за фичу библиотеки.",
-                "if_it_were_true": "Тогда CI-runner не нуждался бы в Docker socket mount или dind, но именно их и настраивают для `Testcontainers`.",
-                "how_it_should_be": "Реальные контейнеры запускаются в Docker, поэтому демон — жёсткое предварительное требование."
+                "if_it_were_true": "Тогда Docker API и удалённая среда не требовались бы, но библиотека запускает реальные контейнеры вне JVM.",
+                "how_it_should_be": "Предоставить тестам совместимый контейнерный рантайм и проверить доступность API в CI."
               }
             }
           ]
@@ -311,47 +311,47 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Testcontainers` поддерживает только `PostgreSQL` и `MySQL`; для `Oracle`, `MS SQL`, `MongoDB`, `Cassandra` специализированных контейнеров нет.",
+              "text": "В Java 2.0.5 модули есть только для PostgreSQL и MySQL. MongoDB, Cassandra и Neo4j запускают через `GenericContainer`, поскольку отдельные артефакты для них не выпускаются.",
               "correct": false,
               "sections": {
-                "what_actually": "Есть модули и для `OracleContainer`, `MSSQLServerContainer`, `MongoDBContainer`, `CassandraContainer`, `ClickHouseContainer`, `CockroachContainer`, `Neo4jContainer`.",
+                "what_actually": "Есть отдельные модули `testcontainers-mongodb`, `testcontainers-cassandra`, `testcontainers-neo4j` и многие другие, помимо PostgreSQL и MySQL.",
                 "source_of_confusion": "`PostgreSQL` и `MySQL` чаще всего в примерах, отсюда вывод об ограниченном списке.",
-                "if_it_were_true": "Тогда в каталоге модулей не было бы `org.testcontainers:oracle-xe` и `:mssqlserver`, но они есть.",
-                "how_it_should_be": "Поддержан широкий набор СУБД — реляционных и NoSQL — каждый своим модулем."
+                "if_it_were_true": "Официальный каталог 2.0.5 не содержал бы модулей MongoDB, Cassandra и Neo4j, но они перечислены там отдельно.",
+                "how_it_should_be": "Выбрать специализированный модуль для СУБД, если он есть; `GenericContainer` нужен для иных сервисов."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Чтобы использовать любую из поддерживаемых БД, достаточно зависимости `org.testcontainers:testcontainers` — отдельные модули вроде `:mysql` подключать не нужно.",
+              "text": "В Java 2.0.5 все поддерживаемые БД входят в основной артефакт `testcontainers`. Для `PostgreSQLContainer` и `MongoDBContainer` не нужны отдельные зависимости, достаточно выбрать Docker-образ.",
               "correct": false,
               "sections": {
-                "what_actually": "Под каждую СУБД подключают свой артефакт (`:postgresql`, `:mysql`, `:mongodb`); ядро такие классы не содержит.",
+                "what_actually": "Специализированные классы живут в модулях `testcontainers-postgresql`, `testcontainers-mongodb` и других; одного core-артефакта недостаточно.",
                 "source_of_confusion": "Хочется один артефакт «на всё», и это выдают за реальность.",
-                "if_it_were_true": "Тогда в таблице не было бы колонки «Артефакт Gradle» с разными модулями, но она там есть.",
+                "if_it_were_true": "Тогда официальный Gradle-пример не добавлял бы модуль PostgreSQL отдельно, но в нём указана зависимость `testcontainers-postgresql`.",
                 "how_it_should_be": "Ядро + модуль конкретной БД; класс контейнера живёт именно в модуле технологии."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Специализированные модули есть для большинства популярных БД: `PostgreSQLContainer`, `MySQLContainer`, `MariaDBContainer`, `OracleContainer`, `MSSQLServerContainer`, `MongoDBContainer`, `CassandraContainer`, `ClickHouseContainer`, `CockroachContainer`, `Neo4jContainer`.",
+              "text": "В Java 2.0.5 есть отдельные модули реляционных и NoSQL БД, включая `testcontainers-postgresql`, `testcontainers-mysql` и `testcontainers-mongodb`. Классы контейнеров находятся в пакетах соответствующих модулей.",
               "correct": true,
               "sections": {
-                "explanation": "Реляционные контейнеры наследуют `JdbcDatabaseContainer` (даёт `getJdbcUrl`/`getUsername`/`getPassword`), нереляционные — `GenericContainer`; каждый — отдельный Gradle-артефакт вроде `org.testcontainers:mysql`.",
-                "example": "Для `MySQL` берут `org.testcontainers:mysql` и `new MySQLContainer<>(\"mysql:8.0\")`, для `Neo4j` — `org.testcontainers:neo4j` и `Neo4jContainer`.",
+                "explanation": "В Testcontainers 2.x все модули получили префикс `testcontainers-`, а специализированные классы перемещены в пакеты `org.testcontainers.<module>`. Реляционные контейнеры дают JDBC API, другие — API своего протокола.",
+                "example": "Для PostgreSQL 2.0.5 берут `org.testcontainers:testcontainers-postgresql` и импортируют `org.testcontainers.postgresql.PostgreSQLContainer`; в 1.x координаты были `org.testcontainers:postgresql`.",
                 "when_to_apply": "Подбирают модуль под используемую в production СУБД, чтобы тест шёл против того же движка и диалекта, а не против эмуляции.",
-                "edge_cases": "Если нужной БД нет среди специализированных классов, её всё равно можно поднять через `GenericContainer` с ручной конфигурацией и `WaitStrategy`.",
+                "edge_cases": "Версии 1.x и 2.x нельзя смешивать по старым координатам/пакетам. JDBC-драйвер нужной БД добавляют отдельно, если тест подключается через JDBC.",
                 "related": "[[testcontainers-interview#Q5]] PostgreSQLContainer; [[testcontainers-interview#Q7]] JDBC-поддержка; [[testcontainers-interview#Q11]] MongoDBContainer."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Все контейнеры баз данных, включая `MongoDB` и `Neo4j`, наследуют `JdbcDatabaseContainer` и предоставляют метод `getJdbcUrl()`.",
+              "text": "В Java 2.0.5 все контейнеры БД наследуют `JdbcDatabaseContainer` и дают метод `getJdbcUrl`. MongoDB и Neo4j используют этот же JDBC API без отдельных способов подключения.",
               "correct": false,
               "sections": {
-                "what_actually": "`JdbcDatabaseContainer` наследуют только реляционные; `MongoDBContainer`/`Neo4jContainer` идут от `GenericContainer` и дают свои методы (`getReplicaSetUrl`, `getBoltUrl`).",
+                "what_actually": "`JdbcDatabaseContainer` относится к реляционным БД; MongoDB и Neo4j предоставляют свои адреса подключения через API соответствующих контейнеров.",
                 "source_of_confusion": "Раз все «базы данных», кажется, что у всех общий JDBC-родитель.",
                 "if_it_were_true": "Тогда у `MongoDBContainer` был бы `getJdbcUrl()`, но `MongoDB` не работает по JDBC.",
                 "how_it_should_be": "JDBC-родитель — только у реляционных; у нереляционных свои connection-методы поверх `GenericContainer`."
