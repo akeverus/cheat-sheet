@@ -1262,15 +1262,29 @@ hard/warnings. Полный skel/parity файла FAIL на старых бло
 аудита (`П`), запуска MongoDB-контейнера и независимой blind-приёмки
 MCQ нет. Коммит `7a3aa1b19`; инвентарь не менялся.
 
-**Точная точка авторского продолжения:** Spring Data JPA Q35 B0,
-`spring-data-jpa-interview.md` и парный JSON. Уже при точечном чтении
-обнаружено, что `findAll(spec, pageable).map(ProductSummary::from)`
-загружает сущности до преобразования и потому не является проекцией
-запроса; `bulkUpdatePrices(Map<...>)` показан без реализуемого
-контракта «один запрос». Проверить весь Q35 против официальных
-Spring Data JPA 4.1.1/Hibernate источников, сопоставить Q27/Q28 и
-Hibernate Q24/Q25/Q27, затем исправить подтверждённое. Никакого `П`
-до полного аудита.
+**Контрольная точка 08.10.2026 — Spring Data JPA Q35 B0 · О.**
+По [Spring Data JPA 4.1.1 Specifications](https://docs.spring.io/spring-data/jpa/reference/jpa/specifications.html),
+[projections](https://docs.spring.io/spring-data/jpa/reference/repositories/projections.html),
+[transactions](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html)
+и [Hibernate ORM 7.4](https://docs.hibernate.org/orm/7.4/userguide/html_single/)
+заменён ложный пример «проекции» после `findAll(...).map(...)` на
+проекцию через fluent `findBy(..., q -> q.as(...).page(...))`.
+Неподтверждённый `bulkUpdatePrices(Map)` как «один SQL» удалён;
+показан реализуемый метод `@Query` с планом загрузки для одной
+сущности. Уточнены границы LAZY/EAGER, JDBC batching, readOnly,
+OSIV, L2 и измерения SQL. Теория, Q35 MCQ B0 и freshness-sidecar
+синхронизированы. Structure 43 Q/44 блока PASS, Markdown gate PASS,
+Q35 без локальных hard/warnings. Полный skel/parity файла FAIL на
+старых блоках; полного аудита (`П`), компиляции иллюстративного
+примера и независимой blind-приёмки MCQ нет. Коммит `52aed25b9`.
+
+**Точная точка авторского продолжения:** Spring Data JPA Q36 B0,
+`spring-data-jpa-interview.md` и парный JSON. В примере
+`deleteByDeletedAtIsNotNull()` ошибочно подписан как прямой SQL
+`DELETE`, хотя Q33 уже описывает derived delete через выборку и
+пообъектное удаление. Сверить Q36/Q33 и официальные Spring Data JPA
+4.1.1 query methods, исправить теорию и MCQ при необходимости.
+Затем перейти к Q37; не ставить `П` до полного аудита.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
 

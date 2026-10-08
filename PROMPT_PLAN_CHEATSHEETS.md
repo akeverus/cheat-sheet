@@ -486,12 +486,19 @@ structure 40 Q/40 блоков PASS, Q11 без локальных hard/warnings
 полный skel/parity FAIL на старых блоках. Полной проверки,
 runtime-прогона и независимой blind-приёмки нет. Коммит `7a3aa1b19`.
 
-Следующий авторский пакет: Spring Data JPA Q35 B0 и парный JSON.
-Сверить производительность и пример сервиса по Spring Data JPA 4.1.1
-и Hibernate: текущий `findAll(spec, pageable).map(ProductSummary::from)`
-не является проекцией запроса, а `bulkUpdatePrices(Map<...>)` не
-демонстрирует один SQL. Сопоставить Q27/Q28 и Hibernate Q24/Q25/Q27,
-исправить подтверждённое и добавить факты в freshness-sidecar.
+08.10 Spring Data JPA Q35 B0: по Spring Data JPA 4.1.1/Hibernate 7.4
+исправлены пример проекции, неосуществлённый bulk-update и границы
+рекомендаций по fetch, batching, readOnly, OSIV и L2. Теория, MCQ
+и sidecar синхронизированы; structure 43 Q/44 блока PASS, Q35 без
+локальных hard/warnings, полный skel/parity FAIL на старых блоках.
+Полной проверки, компиляции примера и независимой blind-приёмки нет.
+Коммит `52aed25b9`.
+
+Следующий авторский пакет: Spring Data JPA Q36 B0 и парный JSON.
+В примере `deleteByDeletedAtIsNotNull()` ошибочно подписан как
+прямой SQL DELETE; Q33 уже объясняет derived delete через выборку
+и пообъектное удаление. Сверить Q36/Q33 с официальными query methods,
+исправить подтверждённое, затем пройти Q37.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,
