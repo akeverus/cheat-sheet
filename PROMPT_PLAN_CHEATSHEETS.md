@@ -448,11 +448,20 @@ fragments, конвенция `<ИнтерфейсФрагмента>Impl`, ус
 Bulk DELETE с `@SoftDelete` требует отдельной runtime-проверки.
 Коммит `02337debc`.
 
-Следующий авторский пакет: Spring Data JPA Q34 B0, `@DataJpaTest`.
-Сравнить Spring Testing и Testcontainers, затем по Spring Boot 4.1/3.5
-и Testcontainers проверить состав test slice, транзакцию и rollback,
-замещение DataSource, `@ServiceConnection`, Flyway. Подтверждённое
-синхронизировать в Q34/MCQ/sidecar и выполнить локальные проверки.
+08.10 Spring Data JPA Q34 B0, Integration Testing Q4/Q36 B0 и
+Testcontainers Q5 B0: по Spring Boot 3.5.16/4.1.1 и Testcontainers
+исправлено устаревшее правило об обязательном `replace = NONE` при
+распознанном Testcontainers `DataSource`. Теория, четыре MCQ и sidecar
+синхронизированы; структура 123 Q/124 блока PASS, локальные блоки без
+hard/warnings, полный parity трёх файлов FAIL на старых блоках. Полной
+проверки и независимой blind-приёмки нет. Коммит `50f305e46`.
+
+Следующий авторский пакет: Testcontainers Q6 B0, `testcontainers-interview.md`
+и парный JSON. Сравнить заголовки соседних вопросов и координаты модуля
+PostgreSQL с официальной документацией Testcontainers Java 2.0.5;
+проверить границу 1.x/2.x, затем синхронизировать только подтверждённое
+в теории, MCQ и freshness-sidecar. Источник и уровень `З`/`О`/`П`
+сохранить в плане.
 Независимую MCQ-приёмку
 вести отдельно: ближайший
 пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,

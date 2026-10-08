@@ -1175,12 +1175,35 @@ callback'и и каскады, явная транзакция для объяв
 Взаимодействие конкретного bulk DELETE с `@SoftDelete`
 остаётся гипотезой до runtime-проверки версии и запроса.
 
-**Точная точка авторского продолжения:** Spring Data JPA Q34 B0,
-`@DataJpaTest`. Сравнить заголовки Spring Testing и Testcontainers,
-затем точечно проверить Q34/MCQ по Spring Boot 4.1/3.5 и Testcontainers:
-состав test slice, транзакцию/rollback, замещение DataSource,
-`@ServiceConnection` и Flyway. Исправить только подтверждённое,
-не объявляя полный файл проверенным.
+**Контрольная точка 08.10.2026 — Spring Data JPA Q34 B0,
+Integration Testing Q4/Q36 B0, Testcontainers Q5 B0 · О.**
+Просмотр заголовков (`З`) показал, что `@DataJpaTest` и контейнерная БД уже
+описаны в этих трёх файлах; отдельная тема не нужна. Точечная проверка (`О`)
+по [Spring Boot 3.5.16, `AutoConfigureTestDatabase`](https://docs.spring.io/spring-boot/3.5/api/java/org/springframework/boot/test/autoconfigure/jdbc/AutoConfigureTestDatabase.html),
+[Spring Boot 4.1.1, `Replace.NON_TEST`](https://docs.spring.io/spring-boot/api/java/org/springframework/boot/jdbc/test/autoconfigure/AutoConfigureTestDatabase.Replace.html),
+[`@DataJpaTest`](https://docs.spring.io/spring-boot/api/java/org/springframework/boot/data/jpa/test/autoconfigure/DataJpaTest.html),
+[test slices](https://docs.spring.io/spring-boot/appendix/test-auto-configuration/slices.html)
+и [Testcontainers в Spring Boot](https://docs.spring.io/spring-boot/reference/testing/testcontainers.html)
+подтвердила устаревшее требование всегда ставить `replace = NONE`.
+Начиная с Boot 3.4, default `NON_TEST` сохраняет автонастроенное
+тестовое подключение через `@DynamicPropertySource`, `@ServiceConnection`
+или `jdbc:tc:`. Указаны границы: обычный/собственный `DataSource`, версия
+Boot, наличие `spring-boot-testcontainers` для `@ServiceConnection`.
+Уточнены rollback, условность миграционной автоконфигурации и отсутствие
+обоснования для обещанного времени запуска slice-теста. Теория, четыре MCQ B0
+и три freshness-sidecar синхронизированы. Structure PASS: 123 Q/124 блока
+по трём JSON; `verify-md-no-mcq` PASS; локально четыре блока без hard/warnings.
+Полный parity всех трёх файлов FAIL на прежних блоках. Полной проверки (`П`),
+runtime-прогона примеров и независимой blind-приёмки MCQ нет. Коммит
+`50f305e46`. Инвентарь не менялся: состав файлов прежний.
+
+**Точная точка авторского продолжения:** Testcontainers Q6 B0,
+`testcontainers-interview.md` и парный JSON. По
+[официальной документации PostgreSQL-модуля](https://java.testcontainers.org/modules/databases/postgres/)
+для Testcontainers Java 2.0.5 проверить старые координаты
+`org.testcontainers:postgresql` в Q6, версионную границу 1.x/2.x,
+соседние вопросы о модулях и отсутствие дублирующей темы. Исправить
+только подтверждённое, синхронизировать MCQ/sidecar и сохранить `З`/`О`/`П`.
 Независимую MCQ-приёмку начинать с Batch Q6 B0/B1, Q28 B0, Q38 B0
 по пункту ниже; авторская самопроверка её не заменяет.
 
@@ -1204,7 +1227,8 @@ callback'и и каскады, явная транзакция для объяв
    Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13/Q14, WebAuthn Q24/Q46, Spring Security Q44,
    Metrics & Tracing Q40, Spring Testing Q9/Q10, Uber Q6/Q7,
    Google Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1,
-   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q29 B0/Q39 B0,
+   Spring Batch Q6 B0/B1/Q28/Q38, Spring Data JPA Q3 B0/Q4 B1/Q5–Q34 B0/Q39 B0,
+   Integration Testing Q4/Q36 B0, Testcontainers Q5 B0,
    Hibernate Q8–Q10 B0/Q14–Q16 B0/Q19–Q21 B0/Q23–Q25/Q27/Q36 B0,
    Database Transactions Q15/Q22/Q23 B0
    и RabbitMQ Streams Q40–Q42 ждут
