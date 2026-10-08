@@ -1923,13 +1923,10 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
 
 Репозитории тестируют через `@DataJpaTest` — это «срезовый» (slice) тест: Spring поднимает только JPA-слой (`EntityManager`, репозитории, маппинг), без веба, сервисов и остального контекста. Тесты получаются быстрыми и сфокусированными именно на доступе к данным.
 
-Два важных решения по умолчанию:
-- `@DataJpaTest` каждый тест выполняет в транзакции и откатывает её в конце — БД остаётся чистой между тестами без ручного удаления.
-- По умолчанию он подменяет datasource на embedded-БД (H2). На реальном проекте это вредно: H2 не повторяет поведение PostgreSQL (типы, нативный SQL, частичные индексы). Поэтому подмену отключают (`@AutoConfigureTestDatabase(replace = NONE)`) и поднимают настоящую БД через `Testcontainers`.
+По умолчанию `@DataJpaTest` выполняет каждый тест в откатываемой транзакции и подменяет **не тестовый** `DataSource` на доступную embedded-БД. Это не обязательно H2: выбор зависит от classpath. Для PostgreSQL-специфичных запросов нужен тест на PostgreSQL, например через Testcontainers. В Spring Boot 3.4+ (в том числе 3.5 и 4.1) `@AutoConfigureTestDatabase` по умолчанию использует `replace = NON_TEST`: автонастроенное подключение к Testcontainers через `@DynamicPropertySource`, `@ServiceConnection` или JDBC URL `jdbc:tc:` распознаётся как тестовое и не заменяется. `replace = NONE` можно указать явно для другой конфигурации или более старой версии; он не обязателен в показанном случае. [Spring Boot 4.1.1, `@DataJpaTest`](https://docs.spring.io/spring-boot/api/java/org/springframework/boot/data/jpa/test/autoconfigure/DataJpaTest.html); [Spring Boot 3.5, `Replace.NON_TEST`](https://docs.spring.io/spring-boot/3.5/api/java/org/springframework/boot/test/autoconfigure/jdbc/AutoConfigureTestDatabase.Replace.html).
 
 ```java
 @DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
 class UserRepositoryTest {
 
@@ -2014,7 +2011,7 @@ class UserRepositoryTest {
 ```
 
 **Ключевые практики:**
-- `Testcontainers` вместо H2 — тестируем на той же СУБД, что в проде; H2 не поддерживает многие фичи PostgreSQL и даёт ложно-зелёные тесты
+- `Testcontainers` для PostgreSQL-специфичного поведения — тестируем на нужном диалекте; embedded-БД полезна лишь для сценариев, не зависящих от особенностей СУБД
 - `TestEntityManager` для подготовки данных — пишем фикстуры в обход тестируемого репозитория, иначе тест проверяет сам себя
 - `entityManager.clear()` после `@Modifying` — сбрасываем L1-кэш, иначе проверка прочитает устаревшую сущность из persistence context, а не реальные данные из БД
 

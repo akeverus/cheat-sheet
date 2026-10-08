@@ -297,7 +297,7 @@ class FullIntegrationTest {
 
 ## Q4. (!) Что такое `Test Slices` и какие бывают?
 
-**Test Slices** — аннотации Spring Boot, которые поднимают **только нужный срез** контекста, а не всё приложение. Например, `@WebMvcTest` загружает контроллеры и web-инфраструктуру, но не трогает сервисы и БД. За счёт того, что бинов на порядок меньше, такой тест стартует доли секунды против секунд у `@SpringBootTest` — и при этом остаётся честным интеграционным тестом своего слоя.
+**Test Slices** — аннотации Spring Boot, которые поднимают **только нужный срез** контекста, а не всё приложение. Например, `@WebMvcTest` загружает контроллеры и web-инфраструктуру, но не поднимает обычные сервисы и репозитории. Меньший контекст обычно ускоряет тест, но конкретное время зависит от конфигурации и окружения.
 
 ### Основные test slices
 
@@ -314,9 +314,8 @@ class FullIntegrationTest {
 | `@WebFluxTest` | `WebFlux` контроллеры, `WebTestClient` | Reactive endpoints |
 
 ```java
-// @DataJpaTest — только JPA-слой, embedded H2 по умолчанию
+// Spring Boot 3.5/4.1: Testcontainers DataSource распознаётся как тестовый
 @DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Testcontainers
 class UserRepositoryTest {
 
@@ -350,7 +349,7 @@ class UserRepositoryTest {
 }
 ```
 
-**Подводный камень.** `@DataJpaTest` по умолчанию подменяет `DataSource` на встроенную `H2` — даже если в проекте PostgreSQL. Поэтому диалект-специфичный SQL может «работать» в тесте и падать в production. Чтобы тест шёл против реальной БД через `Testcontainers`, отключите подмену: `@AutoConfigureTestDatabase(replace = NONE)`.
+**База для среза.** `@DataJpaTest` может подменить обычный `DataSource` на доступную embedded-БД, которая не повторяет особенности PostgreSQL. В Spring Boot 3.4+ значение по умолчанию `replace = NON_TEST` сохраняет автонастроенное тестовое подключение, в том числе URL из `@DynamicPropertySource` и `@ServiceConnection` от Testcontainers. Поэтому `replace = NONE` в примере не нужен; для иных конфигураций и старых версий проверьте фактический `DataSource`. [Spring Boot 3.5, `AutoConfigureTestDatabase`](https://docs.spring.io/spring-boot/3.5/api/java/org/springframework/boot/test/autoconfigure/jdbc/AutoConfigureTestDatabase.html); [Spring Boot 4.1.1, `Replace.NON_TEST`](https://docs.spring.io/spring-boot/api/java/org/springframework/boot/jdbc/test/autoconfigure/AutoConfigureTestDatabase.Replace.html).
 
 ## Q5. (!) Как тестировать REST-контроллеры через `MockMvc`?
 
@@ -2053,11 +2052,10 @@ void shouldRejectOrderForBlockedUser() {
 
 ## Q36. (!) Как использовать `@DataJpaTest` для тестирования репозиториев?
 
-`@DataJpaTest` — test slice для слоя персистентности: он поднимает `EntityManager`, репозитории Spring Data и прогоняет миграции Flyway/Liquibase, но НЕ загружает контроллеры и сервисы. Это даёт быстрый и сфокусированный тест репозитория. Бонусом каждый тест по умолчанию оборачивается в транзакцию с автоматическим rollback — данные между тестами не текут (но помните про оговорку из Q17).
+`@DataJpaTest` — test slice для слоя персистентности: он поднимает `EntityManager`, репозитории Spring Data и применимую автоконфигурацию миграций Flyway/Liquibase, если она есть в проекте; обычные контроллеры и сервисы не загружаются. Каждый тест по умолчанию выполняется в транзакции с rollback (см. оговорку из Q17). [Spring Boot 4.1.1, `@DataJpaTest`](https://docs.spring.io/spring-boot/api/java/org/springframework/boot/data/jpa/test/autoconfigure/DataJpaTest.html); [test slices](https://docs.spring.io/spring-boot/appendix/test-auto-configuration/slices.html).
 
 ```java
 @DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) // отключаем H2, используем реальную БД
 @Testcontainers
 class UserRepositoryTest {
 
@@ -2127,7 +2125,7 @@ class UserRepositoryTest {
 | `@JsonTest` | Jackson ObjectMapper, `@JsonComponent` | Контроллеры, сервисы, репозитории |
 | `@SpringBootTest` | Весь контекст | — |
 
-**Не забыть про H2.** Как и в Q4, по умолчанию `@DataJpaTest` подменяет реальный `DataSource` встроенной H2. Чтобы тест шёл против настоящей БД через Testcontainers — обязателен `@AutoConfigureTestDatabase(replace = NONE)`. Заметьте также `entityManager.clear()` в тесте: он сбрасывает first-level cache Hibernate, иначе `findByEmail` мог бы вернуть объект прямо из кеша сессии, минуя SQL, и тест не проверил бы реальный запрос.
+**Проверьте, какой `DataSource` запущен.** В Spring Boot 3.5/4.1 `replace = NON_TEST` задан по умолчанию: автонастроенный Testcontainers `DataSource` с URL из `@DynamicPropertySource` не подменяется embedded-БД. Для явного запрета замены в другой конфигурации можно поставить `replace = NONE`. `entityManager.clear()` в примере убирает управляемые сущности из first-level cache перед повторным чтением; это помогает проверять фактический запрос, но не заменяет проверку SQL и состояния БД. [Spring Boot 3.5, `Replace.NON_TEST`](https://docs.spring.io/spring-boot/3.5/api/java/org/springframework/boot/test/autoconfigure/jdbc/AutoConfigureTestDatabase.Replace.html).
 
 ## Q37. Как тестировать JSON-сериализацию с `@JsonTest`?
 

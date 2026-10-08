@@ -191,49 +191,49 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Полноценный slice — это `@WebMvcTest`; репозитории и JSON-сериализацию тестируют на `@SpringBootTest` с сужением автоконфигурации, а не отдельными аннотациями.",
+              "text": "В Spring Boot срезом считается только `@WebMvcTest` для контроллеров. Репозитории и JSON проверяют через полный `@SpringBootTest` с ручным отключением лишних бинов.",
               "correct": false,
               "sections": {
-                "what_actually": "Slices много: `@WebMvcTest`, `@DataJpaTest`, `@DataJdbcTest`, `@JdbcTest`, `@DataMongoTest`, `@DataRedisTest`, `@JsonTest`, `@RestClientTest`, `@WebFluxTest`.",
-                "source_of_confusion": "`@WebMvcTest` — самый известный slice, поэтому остальные иногда не замечают.",
-                "if_it_were_true": "Если бы был только `@WebMvcTest`, не существовало бы способа изолированно протестировать слой репозитория или JSON-сериализацию.",
-                "how_it_should_be": "Каждый slice заточен под свой слой; для репозиториев — `@DataJpaTest`, для JSON — `@JsonTest`, для REST-клиентов — `@RestClientTest`."
+                "what_actually": "Spring Boot предоставляет отдельные срезы, включая `@DataJpaTest` для JPA и `@JsonTest` для сериализации, помимо `@WebMvcTest`.",
+                "source_of_confusion": "Web-срез чаще встречается в примерах, поэтому остальные ошибочно считают частными настройками полного теста.",
+                "if_it_were_true": "Для JPA и JSON пришлось бы запускать полный контекст, но Boot предоставляет профильные аннотации с меньшим набором компонентов.",
+                "how_it_should_be": "Выбирать срез по проверяемому слою; `@SpringBootTest` нужен для взаимодействия нескольких слоёв."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Test Slices` поднимают полный `ApplicationContext`, но ограничивают видимость: тесту доступны только бины его слоя, остальные создаются, но скрыты.",
+              "text": "В Spring Boot тестовый срез создаёт весь `ApplicationContext`, но скрывает чужие бины от теста. Поэтому `@DataJpaTest` запускает web и сервисы без возможности их внедрить.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: slices физически НЕ создают лишние бины — `@DataJpaTest` не поднимает контроллеры и сервисы, поэтому контекст легче и стартует быстрее.",
-                "source_of_confusion": "Внешне slice-тест и `@SpringBootTest` похожи, из-за чего кажется, что разница лишь в видимости бинов.",
-                "if_it_were_true": "Если бы slices грузили весь контекст, они не давали бы выигрыша в скорости 50–70% относительно `@SpringBootTest`.",
-                "how_it_should_be": "Slice поднимает только релевантный срез (web, JPA, JSON, REST-клиент), не создавая остальные бины вовсе."
+                "what_actually": "Срез ограничивает автоконфигурацию и сканирование компонентов. `@DataJpaTest` не создаёт обычные web и service bean только для их скрытия.",
+                "source_of_confusion": "Полный и срезовый тест оба используют Spring-контекст, поэтому разницу принимают за ограничение видимости.",
+                "if_it_were_true": "Расходы на создание ненужных бинов оставались бы как у полного теста; цель среза — не поднимать их.",
+                "how_it_should_be": "Срез загружает необходимые компоненты и их инфраструктуру; состав зависит от конкретной аннотации."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Test Slices` — это способ разбить один большой тестовый метод на несколько мелких через `@Nested`-классы.",
+              "text": "В Spring Boot тестовый срез делит тестовые методы на группы через `@Nested`. Контекст остаётся полным, а ускорение даёт повторное использование тех же бинов.",
               "correct": false,
               "sections": {
-                "what_actually": "`Test Slices` — это аннотации (`@WebMvcTest`, `@DataJpaTest` и др.), поднимающие только нужный срез контекста; `@Nested` — про структуру тестового класса, а не про срез контекста.",
-                "source_of_confusion": "Слово «slice» ассоциируется с делением на части, поэтому его путают с разбиением тестов на вложенные группы.",
-                "if_it_were_true": "Если бы slices были про `@Nested`, они не ускоряли бы старт контекста — а главная их польза именно в том, что грузится меньше бинов.",
-                "how_it_should_be": "`Test Slices` поднимают подмножество `ApplicationContext` (только JPA, только web и т.д.); деление методов на `@Nested` к контексту отношения не имеет."
+                "what_actually": "`@Nested` группирует тесты JUnit; Spring Boot срезы задают состав `ApplicationContext` через аннотации вроде `@DataJpaTest`.",
+                "source_of_confusion": "Слово «срез» принимают за деление методов внутри класса, хотя речь о составе контекста.",
+                "if_it_were_true": "Одна только структура тестового класса меняла бы автоконфигурацию Spring, но `@Nested` этого не делает.",
+                "how_it_should_be": "Использовать slice-аннотацию для узкого контекста, `@Nested` — для организации сценариев JUnit."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Test Slices` — аннотации Spring Boot, поднимающие только нужный срез `ApplicationContext` вместо всего приложения, что ускоряет тесты. Основные: `@WebMvcTest` (контроллеры, `MockMvc`), `@DataJpaTest` (`JPA`, `EntityManager`, репозитории), `@DataJdbcTest`/`@JdbcTest` (JDBC), `@DataMongoTest`, `@DataRedisTest`, `@JsonTest` (`ObjectMapper`), `@RestClientTest` (REST-клиенты), `@WebFluxTest` (reactive).",
+              "text": "В Spring Boot тестовый срез ограничивает автоконфигурацию и бины нужным слоем. Например, `@WebMvcTest` проверяет web-слой, `@DataJpaTest` проверяет JPA, а `@JsonTest` проверяет сериализацию.",
               "correct": true,
               "sections": {
-                "explanation": "Slice загружает только бины своего слоя и его автоконфигурацию, поэтому контекст меньше и стартует быстрее, чем полный `@SpringBootTest`.",
-                "example": "`@DataJpaTest` поднимает только JPA-слой и по умолчанию подменяет `DataSource` на `H2`; чтобы использовать `Testcontainers`-`PostgreSQL`, добавляют `@AutoConfigureTestDatabase(replace = NONE)`.",
+                "explanation": "Срез создаёт профильные компоненты и их инфраструктуру вместо всего приложения; фактическое ускорение зависит от окружения и набора зависимостей.",
+                "example": "`@DataJpaTest` поднимает JPA-слой. В Spring Boot 3.5/4.1 режим `replace = NON_TEST` по умолчанию сохраняет распознанный Testcontainers `DataSource`; `replace = NONE` не обязателен для такого подключения.",
                 "when_to_apply": "Slice выбирают, когда нужно протестировать один слой в изоляции: контроллер — `@WebMvcTest`, репозиторий — `@DataJpaTest`; полный контекст берут только для сквозных сценариев.",
-                "edge_cases": "Важный нюанс: `@DataJpaTest` по умолчанию заменяет реальную БД на `H2`, что может скрыть БД-специфичные баги, поэтому для интеграции отключают замену через `replace = NONE`.",
+                "edge_cases": "`@DataJpaTest` может заменить обычный источник на доступную embedded-БД. Для PostgreSQL-специфичного поведения нужно проверить, что тест действительно использует контейнер.",
                 "related": "[[integration-testing-interview#Q3]] `@SpringBootTest` как полный контекст; [[integration-testing-interview#Q36]] `@DataJpaTest` подробно; [[integration-testing-interview#Q37]] `@JsonTest` для сериализации."
               }
             }
@@ -2111,50 +2111,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`TestEntityManager` — это стандартный JPA `EntityManager` под тестовым именем; методы `persist` и `flush` у него те же, а `persistAndFlush` — просто их последовательный вызов, отдельного тестового API он не добавляет.",
+              "text": "В Spring Boot 4.1 `TestEntityManager` заменяет тестовый срез и поднимает весь контекст. Репозитории проверяют через него без `@DataJpaTest`, поскольку отдельная аннотация лишь включает rollback.",
               "correct": false,
               "sections": {
-                "what_actually": "`TestEntityManager` — обёртка над `EntityManager` для тестов с удобными методами (`persistAndFlush`, `clear`), помогающими готовить данные и контролировать first-level cache.",
-                "source_of_confusion": "Оба относятся к JPA-уровню, отсюда впечатление, что это одно и то же.",
-                "if_it_were_true": "Если бы это был просто алиас, не было бы смысла инжектить именно `TestEntityManager` в `@DataJpaTest`.",
-                "how_it_should_be": "`TestEntityManager` даёт тест-ориентированный API (`persistAndFlush`/`clear`) поверх `EntityManager` для подготовки и очистки данных."
+                "what_actually": "`TestEntityManager` — вспомогательная обёртка над JPA `EntityManager`; состав контекста задаёт `@DataJpaTest`.",
+                "source_of_confusion": "Название тестовой обёртки принимают за аннотацию конфигурации тестового контекста.",
+                "if_it_were_true": "Одного объекта для подготовки данных хватало бы для JPA-автоконфигурации и репозиториев, но их включает срез.",
+                "how_it_should_be": "Запускать `@DataJpaTest` и при необходимости внедрять `TestEntityManager` для фикстур."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`@DataJpaTest` поднимает весь `ApplicationContext` — контроллеры, сервисы и репозитории, как `@SpringBootTest`, но дополнительно оборачивает каждый тест в откатываемую транзакцию.",
+              "text": "В Spring Boot 4.1 `@DataJpaTest` загружает контроллеры и сервисы вместе с JPA. Отличие от `@SpringBootTest` сводится к автоматическому rollback после теста.",
               "correct": false,
               "sections": {
-                "what_actually": "`@DataJpaTest` — это test slice, поднимающий ТОЛЬКО слой JPA (`EntityManager`, репозитории, миграции); контроллеры и `@Service`-бины он не загружает.",
+                "what_actually": "`@DataJpaTest` — JPA-срез: репозитории, сущности и их инфраструктура. Обычные контроллеры и сервисы автоматически не загружаются.",
                 "source_of_confusion": "Оба тестируют что-то с БД, отсюда смешение объёма поднимаемого контекста.",
-                "if_it_were_true": "Если бы `@DataJpaTest` грузил весь контекст, он не был бы быстрее и не отличался бы от `@SpringBootTest`.",
+                "if_it_were_true": "Срез создавал бы ненужные web и service bean, но его назначение — ограничить состав контекста.",
                 "how_it_should_be": "`@DataJpaTest` грузит лишь JPA-срез; полный контекст с контроллерами и сервисами даёт `@SpringBootTest`."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`@DataJpaTest` — test slice, поднимающий только JPA-слой: `EntityManager`, репозитории и Flyway/Liquibase-миграции; контроллеры и сервисы не загружаются. По умолчанию использует `H2`, поэтому для реальной БД добавляют `@AutoConfigureTestDatabase(replace = NONE)` + `@Testcontainers`. В тестах инжектят `TestEntityManager` (обёртка с `persistAndFlush`/`clear`) и сам репозиторий, после чего проверяют запросы вроде `findByEmail` через `assertThat(found).isPresent()`.",
+              "text": "В Spring Boot 4.1 `@DataJpaTest` поднимает JPA-срез и откатывает тестовую транзакцию. При `NON_TEST` по умолчанию распознанный Testcontainers `DataSource` сохраняется без обязательного `replace = NONE`.",
               "correct": true,
               "sections": {
-                "explanation": "Slice грузит минимум бинов JPA-слоя, поэтому стартует быстрее `@SpringBootTest`, а `TestEntityManager` упрощает подготовку и сброс данных.",
-                "example": "`entityManager.persistAndFlush(new User(\"alice@example.com\", \"Alice\"))` + `entityManager.clear()`, затем `userRepository.findByEmail(...)` и `assertThat(found).get().extracting(User::getName).isEqualTo(\"Alice\")` проверяют реальный SQL.",
+                "explanation": "Срез включает JPA-инфраструктуру, репозитории и применимую миграционную автоконфигурацию. В Boot 3.5/4.1 `NON_TEST` сохраняет автонастроенное тестовое подключение; обычное может заменить embedded-БД.",
+                "example": "`@DataJpaTest @Testcontainers` с `PostgreSQLContainer` и `@DynamicPropertySource` для `spring.datasource.url`. `TestEntityManager.persistAndFlush` готовит данные, а `userRepository.findByEmail` проверяет запрос.",
                 "when_to_apply": "Берут для изолированного теста слоя репозитория: derived-queries, native-запросы, маппинг сущностей — без поднятия всего приложения.",
-                "edge_cases": "По умолчанию `@DataJpaTest` подменяет БД на `H2`, что может скрыть БД-специфичные баги; для production-точности обязательно `replace = NONE` и `Testcontainers`.",
+                "edge_cases": "Embedded-БД может скрыть различия SQL и типов. Убедитесь, что тест использует контейнер; при нестандартном `DataSource` или старой версии настройку замены проверяют отдельно.",
                 "related": "[[integration-testing-interview#Q4]] что такое test slices; [[integration-testing-interview#Q14]] `@DataJpaTest` + `Testcontainers`; [[integration-testing-interview#Q37]] `@JsonTest` как другой slice."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`@DataJpaTest` по умолчанию подключается к реальной БД из `application.yml`, поэтому для изоляции тестов её вручную заменяют на `H2` через `@AutoConfigureTestDatabase(replace = ANY)`.",
+              "text": "В Spring Boot 4.1 `@DataJpaTest` всегда заменяет контейнерную БД на embedded-источник. Даже при `@DynamicPropertySource` нужно явно ставить `replace = NONE`.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию `@DataJpaTest` ЗАМЕНЯЕТ `DataSource` на встроенную `H2`; для реальной БД нужен `@AutoConfigureTestDatabase(replace = NONE)` + `Testcontainers`.",
-                "source_of_confusion": "Кажется логичным, что slice берёт ту же БД, что и приложение, отсюда заблуждение.",
-                "if_it_were_true": "Если бы он по умолчанию шёл в реальную БД, аннотация `replace = NONE` была бы излишней.",
-                "how_it_should_be": "`@DataJpaTest` по умолчанию идёт на `H2`; реальную БД включают явным `replace = NONE`."
+                "what_actually": "`NON_TEST` задан по умолчанию и распознаёт Testcontainers URL из `@DynamicPropertySource`; такой автонастроенный источник не заменяется.",
+                "source_of_confusion": "Старое правило о безусловной замене источника данных перенесено на Boot 4.1.",
+                "if_it_were_true": "Любой контейнер без `replace = NONE` уходил бы на H2, но `NON_TEST` сохраняет поддерживаемое тестовое подключение.",
+                "how_it_should_be": "Смотреть версию Boot и способ настройки `DataSource`; для иного случая можно явно задать `replace = NONE`."
               }
             }
           ]

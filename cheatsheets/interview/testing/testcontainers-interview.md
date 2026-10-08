@@ -256,14 +256,14 @@ class UserRepositoryTest {
 }
 ```
 
-Здесь `@DynamicPropertySource` нужен потому, что JDBC URL контейнера известен только в рантайме (порт-то случайный) — статически прописать его в `application.yml` нельзя. Подробнее об этом механизме — в [Q15](#q15--как-подключить-testcontainers-через-dynamicpropertysource).
+Здесь `@DynamicPropertySource` передаёт URL и реквизиты контейнера, известные только после запуска. В Spring Boot 3.1+ для поддерживаемого контейнера можно вместо него использовать `@ServiceConnection` при наличии тестовой зависимости `spring-boot-testcontainers` (см. [Q16](#q16--что-такое-serviceconnection-в-spring-boot-31-и-чем-лучше-dynamicpropertysource)); эти два способа подключения альтернативны. [Spring Boot, Testcontainers](https://docs.spring.io/spring-boot/reference/testing/testcontainers.html).
 
 **Что даёт специализированный контейнер по сравнению с `GenericContainer`:**
 - **Ждёт реальной готовности БД**, а не просто открытия порта — `WaitStrategy` подобрана правильно из коробки. Это снимает флаки-тесты, где соединение приходит раньше, чем PostgreSQL успел принять запросы.
 - **Методы `getJdbcUrl()`, `getUsername()`, `getPassword()`** — URL не нужно собирать руками и легко ошибиться.
 - **`withInitScript()`** — выполнить SQL (создать схему, насыпать справочные данные) сразу при старте.
 
-**Ловушка слайс-тестов: `@DataJpaTest` подменяет `DataSource`.** Слайс-тест репозиториев по умолчанию заменяет источник данных на embedded-базу — даже если контейнер поднят и свойства зарегистрированы, тест молча уйдёт в in-memory H2. Чтобы `@DataJpaTest` работал с `Testcontainers`, обязательно добавь `@AutoConfigureTestDatabase(replace = Replace.NONE)` — она запрещает Spring подменять настроенный `DataSource` (механика регистрации свойств — в Q15).
+**Слайс-тесты и версии Boot.** `@DataJpaTest` может заменить обычный `DataSource` на доступную embedded-БД. Начиная со Spring Boot 3.4, значение по умолчанию `replace = NON_TEST` сохраняет автонастроенное тестовое подключение через `@DynamicPropertySource`, `@ServiceConnection` или `jdbc:tc:`. Для такого контейнера `replace = NONE` не обязателен; его можно задать явно для иной конфигурации или прежней версии Boot. Проверьте фактическое подключение теста, особенно при собственном `DataSource` bean. [Spring Boot 3.5, `Replace.NON_TEST`](https://docs.spring.io/spring-boot/3.5/api/java/org/springframework/boot/test/autoconfigure/jdbc/AutoConfigureTestDatabase.Replace.html); [Spring Boot 4.1.1, `@DataJpaTest`](https://docs.spring.io/spring-boot/api/java/org/springframework/boot/data/jpa/test/autoconfigure/DataJpaTest.html).
 
 ## Q6. Какие контейнеры баз данных поддерживает `Testcontainers`?
 

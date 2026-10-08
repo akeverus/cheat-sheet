@@ -251,50 +251,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`PostgreSQLContainer` — специализированный контейнер, знающий о `PostgreSQL` всё: порт, healthcheck, создание БД и пользователя. Его настраивают через `withDatabaseName`/`withUsername`/`withPassword`/`withInitScript`, а Spring подключают через `@DynamicPropertySource` (`getJdbcUrl`, `getUsername`, `getPassword`).",
+              "text": "`PostgreSQLContainer` предоставляет `getJdbcUrl()` и реквизиты БД. В Boot 4.1 `@DynamicPropertySource` или `@ServiceConnection` подключают контейнер без обязательного `replace = NONE`.",
               "correct": true,
               "sections": {
-                "explanation": "Специализированный класс сам ждёт готовности БД (правильная `WaitStrategy`) и отдаёт готовый JDBC URL, поэтому не нужно вручную собирать строку подключения и угадывать порт.",
-                "example": "`new PostgreSQLContainer<>(\"postgres:16-alpine\").withDatabaseName(\"testdb\").withUsername(\"test\").withPassword(\"test\")`, далее `registry.add(\"spring.datasource.url\", postgres::getJdbcUrl)`.",
+                "explanation": "Контейнер предоставляет `getJdbcUrl()`, `getUsername()` и `getPassword()`. В Boot 3.5/4.1 `NON_TEST` по умолчанию распознаёт контейнерную тестовую БД при поддерживаемом способе подключения.",
+                "example": "`new PostgreSQLContainer<>(\"postgres:16-alpine\")`, затем `registry.add(\"spring.datasource.url\", postgres::getJdbcUrl)` через `@DynamicPropertySource`; вместо регистрации свойств можно применить `@ServiceConnection`.",
                 "when_to_apply": "Брать для интеграционных тестов репозиториев/JPA, где важны реальный диалект и типы `PostgreSQL` (`JSONB`, `ARRAY`, расширения).",
-                "edge_cases": "`withInitScript(\"init.sql\")` выполняет SQL при старте — удобно для DDL/seed; без `@DynamicPropertySource` Spring не узнает рандомный порт контейнера.",
+                "edge_cases": "`withInitScript(\"init.sql\")` исполняется при старте контейнера, не после каждого теста. Для `@ServiceConnection` нужна тестовая зависимость `spring-boot-testcontainers`; `replace = NONE` не всегда нужен.",
                 "related": "[[testcontainers-interview#Q6]] какие БД поддерживаются; [[testcontainers-interview#Q15]] @DynamicPropertySource; [[testcontainers-interview#Q16]] @ServiceConnection."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`withInitScript(\"init.sql\")` запускает SQL после каждого теста для очистки данных, работая как `@AfterEach`.",
+              "text": "`withInitScript(\"init.sql\")` запускает SQL после каждого теста и очищает данные. Поэтому `PostgreSQLContainer` не требует транзакционного rollback или отдельной подготовки фикстур.",
               "correct": false,
               "sections": {
-                "what_actually": "`withInitScript` выполняется ОДИН раз при старте контейнера (инициализация схемы/seed), а не после каждого теста.",
+                "what_actually": "`withInitScript` исполняется при старте контейнера, а не после каждого тестового метода. Изоляцию данных обеспечивают отдельно, например откатом тестовой транзакции.",
                 "source_of_confusion": "Слово «init» путают с очисткой, и привязывают к завершению теста.",
-                "if_it_were_true": "Тогда между тестами схема бы пересоздавалась, но скрипт отрабатывает только на старте.",
+                "if_it_were_true": "Фикстуры и очистка повторялись бы автоматически перед каждым тестом, но стартовый скрипт не управляет их жизненным циклом.",
                 "how_it_should_be": "Для очистки между тестами используют `@Transactional` rollback или `TRUNCATE` в `@BeforeEach`, а `withInitScript` — для начальной инициализации."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`PostgreSQLContainer` требует вручную собрать JDBC URL из `getHost()` и `getMappedPort(5432)` — готового `getJdbcUrl()` у него нет.",
+              "text": "`PostgreSQLContainer` не предоставляет готовый JDBC URL, поэтому его собирают из `getHost()` и порта. В Spring Boot 4.1 контейнер всё равно обязательно требует `replace = NONE`.",
               "correct": false,
               "sections": {
-                "what_actually": "Метод `getJdbcUrl()` есть и возвращает готовый URL с правильной БД и портом; ручная сборка не нужна.",
+                "what_actually": "`getJdbcUrl()` возвращает готовый адрес. В Boot 4.1 `NON_TEST` по умолчанию сохраняет поддерживаемое тестовое подключение без обязательного `replace = NONE`.",
                 "source_of_confusion": "С `GenericContainer` URL действительно собирают руками, и это переносят на специализированный класс.",
-                "if_it_were_true": "Тогда `@DynamicPropertySource` не использовал бы `postgres::getJdbcUrl`, но именно его и регистрируют.",
+                "if_it_were_true": "Пришлось бы вручную собирать адрес и запрещать замену источника, но оба шага избыточны в показанном варианте.",
                 "how_it_should_be": "Берут `getJdbcUrl()`/`getUsername()`/`getPassword()` напрямую — в этом смысл специализированного контейнера."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Чтобы `PostgreSQLContainer` принимал подключения, нужно вручную добавить `Wait.forListeningPort()`, иначе тест стартует до готовности БД.",
+              "text": "`PostgreSQLContainer` требует ручного `Wait.forListeningPort()` перед запросами. `@ServiceConnection` не умеет подключать его к Spring Boot, поэтому нужен только `@DynamicPropertySource`.",
               "correct": false,
               "sections": {
-                "what_actually": "Специализированный контейнер уже использует корректную `WaitStrategy` (ждёт готовности принимать запросы), поэтому ручной `forListeningPort` не нужен и даже хуже.",
+                "what_actually": "Специализированный контейнер сам ожидает готовность БД. Spring Boot поддерживает `@ServiceConnection` для PostgreSQL-контейнера как альтернативу ручной регистрации свойств.",
                 "source_of_confusion": "Для `GenericContainer` стратегию задают явно, и это привычно переносят на типизированный класс.",
-                "if_it_were_true": "Тогда без явного `waitingFor` тесты были бы нестабильны, но `PostgreSQLContainer` стабилен из коробки.",
-                "how_it_should_be": "Готовность определяется встроенной стратегией контейнера; ручной `forListeningPort` для БД как раз ненадёжен."
+                "if_it_were_true": "Без двух ручных настроек контейнер не работал бы в тесте, но у обоих механизмов есть встроенная поддержка.",
+                "how_it_should_be": "Использовать стандартную готовность `PostgreSQLContainer` и подходящий способ регистрации подключения в Boot."
               }
             }
           ]

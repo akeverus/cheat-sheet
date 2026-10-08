@@ -2046,50 +2046,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "По умолчанию `@DataJpaTest` использует ту же реальную БД, что и приложение, без `@AutoConfigureTestDatabase`.",
+              "text": "В Spring Boot 4.1 `@DataJpaTest` всегда использует прикладной `DataSource` без замены. Если приложение настроено на PostgreSQL, тест подключится к нему и без Testcontainers.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию `@DataJpaTest` подменяет datasource на embedded (H2); чтобы тестировать на реальной БД, ставят `@AutoConfigureTestDatabase(replace=NONE)` + Testcontainers.",
-                "source_of_confusion": "Кажется, что тест берёт конфигурацию приложения как есть.",
-                "if_it_were_true": "Тогда тесты шли бы по PostgreSQL без настройки, но без `replace=NONE` подставится H2.",
-                "how_it_should_be": "Для реальной БД отключают замену и поднимают Testcontainers."
+                "what_actually": "Значение `replace = NON_TEST` по умолчанию допускает замену обычного `DataSource` на доступную embedded-БД. Тестовое подключение Testcontainers при поддерживаемой автонастройке сохраняется.",
+                "source_of_confusion": "Конфигурацию приложения ошибочно принимают за неизменный источник данных для тестового среза.",
+                "if_it_were_true": "Срез мог бы случайно писать в прикладную БД без явного выбора тестового источника, но Spring Boot имеет механизм её замены.",
+                "how_it_should_be": "Подключить тестовую БД и проверить фактический `DataSource`; для иной конфигурации явно задать режим замены."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`@DataJpaTest` — slice-тест, поднимающий только JPA-слой (без web и сервисов). Чтобы тестировать на реальной БД, отключают замену на embedded (`@AutoConfigureTestDatabase(replace=NONE)`) и поднимают `Testcontainers` PostgreSQL. Для подготовки данных используют `TestEntityManager`, а после `@Modifying` делают `entityManager.clear()` для сброса L1-кэша.",
+              "text": "В Spring Boot 4.1 `@DataJpaTest` поднимает JPA-срез и откатывает тестовую транзакцию. Режим `NON_TEST` сохраняет автонастроенный Testcontainers `DataSource`, поэтому `replace = NONE` здесь необязателен.",
               "correct": true,
               "sections": {
-                "explanation": "`@DataJpaTest` по умолчанию подменяет БД на embedded и оборачивает каждый тест в откатываемую транзакцию. `Testcontainers` даёт реальный PostgreSQL, где работают специфичные фичи, недоступные в H2.",
-                "example": "`@DataJpaTest @AutoConfigureTestDatabase(replace=NONE) @Testcontainers` + `@Container static PostgreSQLContainer<?> pg = new PostgreSQLContainer<>(\"postgres:16-alpine\");`",
-                "when_to_apply": "Берут для проверки query methods, `@Query`, маппинга и `@Modifying` на реальной БД, изолированно от остального контекста.",
-                "edge_cases": "После `@Modifying`-запроса L1-кэш хранит старые сущности; без `entityManager.clear()` повторный `findById` вернёт устаревшую версию и тест даст ложный результат.",
+                "explanation": "`@DataJpaTest` включает JPA-компоненты и откатываемую транзакцию. `NON_TEST` по умолчанию заменяет обычный источник на embedded, но распознаёт автонастроенный контейнер через `@DynamicPropertySource` или `@ServiceConnection`.",
+                "example": "`@DataJpaTest @Testcontainers` с `PostgreSQLContainer` и `@DynamicPropertySource`, задающим `spring.datasource.url` от `postgres::getJdbcUrl`, работает без обязательного `replace = NONE` в Boot 4.1.",
+                "when_to_apply": "Для проверок JPA-репозитория на нужном диалекте; `TestEntityManager` помогает подготовить данные отдельно от тестируемого репозитория.",
+                "edge_cases": "Для собственного `DataSource` bean или более старого Boot режим замены проверяют отдельно. После bulk `@Modifying` загруженная сущность может устареть; перед повторной загрузкой применяют `clear()` осознанно.",
                 "related": "[[spring-data-jpa-interview#Q8]] @Modifying; [[spring-data-jpa-interview#Q19]] состояния сущности; [[spring-data-jpa-interview#Q40]] интеграция Flyway."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`@DataJpaTest` поднимает полный контекст приложения, включая web-слой и все сервисы.",
+              "text": "В Spring Boot 4.1 `@DataJpaTest` загружает всё приложение, включая web и сервисы. Откат транзакции делает этот тест эквивалентным `@SpringBootTest` для репозитория.",
               "correct": false,
               "sections": {
-                "what_actually": "`@DataJpaTest` — это slice-тест: поднимается только JPA-слой (репозитории, `EntityManager`), без контроллеров и сервисов.",
-                "source_of_confusion": "Его путают с `@SpringBootTest`, который грузит весь контекст.",
-                "if_it_were_true": "Тогда в `@DataJpaTest` можно было бы инжектить контроллеры, но они не поднимаются.",
-                "how_it_should_be": "`@DataJpaTest` — узкий срез только персистентного слоя."
+                "what_actually": "`@DataJpaTest` ограничивает автоконфигурацию и сканирование JPA-компонентами. Обычные контроллеры и сервисы не поднимаются автоматически.",
+                "source_of_confusion": "Наличие транзакции в обоих видах тестов принимают за одинаковый состав контекста.",
+                "if_it_were_true": "Любой сервис был бы доступен в JPA-срезе, но для полного приложения нужен другой тестовый контекст.",
+                "how_it_should_be": "Использовать срез для репозитория, полный `@SpringBootTest` — когда нужны межслойные сценарии."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "После `@Modifying`-запроса `entityManager.clear()` вызывать не нужно — кэш L1 синхронизируется сам.",
+              "text": "В Spring Boot 4.1 `@DataJpaTest` заменяет даже Testcontainers `DataSource` на embedded-БД. Чтобы оставить контейнер, `replace = NONE` обязателен при любом способе подключения.",
               "correct": false,
               "sections": {
-                "what_actually": "Bulk-update минует L1, поэтому после `@Modifying` контекст хранит устаревшие сущности; перед проверкой делают `entityManager.clear()`.",
-                "source_of_confusion": "Ожидание, что ORM держит память и БД согласованными.",
-                "if_it_were_true": "Тогда повторный `findById` после апдейта возвращал бы свежие данные, но вернёт кэшированные старые.",
-                "how_it_should_be": "После `@Modifying` сбрасывают L1 через `clear()` перед чтением."
+                "what_actually": "Режим `NON_TEST` задан по умолчанию и сохраняет распознанные Testcontainers-подключения. `replace = NONE` остаётся явным вариантом для иной конфигурации.",
+                "source_of_confusion": "Старое правило о безусловной замене источника данных переносят на Boot 4.1.",
+                "if_it_were_true": "Без `replace = NONE` контейнер всегда заменялся бы H2, но `NON_TEST` исключает поддерживаемые тестовые подключения.",
+                "how_it_should_be": "Учитывать версию Boot и способ регистрации контейнера; проверить, что тест использует нужный диалект."
               }
             }
           ]
