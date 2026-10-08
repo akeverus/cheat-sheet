@@ -2166,50 +2166,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Derived query methods — механизм, при котором `Spring Data JPA` парсит имя метода и генерирует JPQL. Структура: префикс (`find`/`read`/`get`/`query`/`stream`/`count`/`exists`/`delete`) + `By` + условия (`And`, `Or`, `Like`, `Containing`, `In`, `Between`, `LessThan`/`GreaterThan`, `IsNull`, `True`/`False`) + опциональный `OrderBy`. Ограничение результата — `Top`/`First`.",
+          "text": "Метод `findTop5ByStatusOrderByCreatedAtDesc` задаёт фильтр, сортировку и лимит; `deleteBy...` сначала выбирает сущности, затем удаляет их по одной с callbacks.",
               "correct": true,
               "sections": {
-                "explanation": "Имя метода декларативно описывает запрос: `findByAgeBetweenOrderByLastNameAsc` → `WHERE age BETWEEN ?1 AND ?2 ORDER BY last_name ASC`. Это основная «магия» Spring Data для типовых выборок.",
-                "example": "`List<User> findTop5ByStatusOrderByCreatedAtDesc(UserStatus status)` → `WHERE status=?1 ORDER BY created_at DESC LIMIT 5`.",
-                "when_to_apply": "Берут для простых и средних выборок, где имя метода остаётся читаемым (1-3 условия).",
-                "edge_cases": "При сложных условиях (несколько JOIN, подзапросы, агрегации) имя метода становится нечитаемым — переходят на `@Query` или `Specification`.",
-                "related": "[[spring-data-jpa-interview#Q5]] query methods; [[spring-data-jpa-interview#Q6]] @Query; [[spring-data-jpa-interview#Q37]] Specification API."
+            "explanation": "Spring Data JPA разбирает имя метода: `Top5` ограничивает результат, `OrderBy...Desc` задаёт сортировку. Derived delete выбирает подходящие сущности и удаляет их по одной, сохраняя JPA lifecycle callbacks.",
+            "example": "`findTop5ByStatusOrderByCreatedAtDesc(status)` возвращает до пяти строк после сортировки; `deleteByDeletedAtIsNotNull()` удаляет найденные сущности через JPA.",
+            "when_to_apply": "Для простых читаемых условий и удаления, когда важны callbacks и каскады; массовый bulk DELETE решает другую задачу.",
+            "edge_cases": "Объявленному `deleteBy` нужна транзакционная граница, а удаление большого набора загружает сущности в память. Реальный SQL для лимита зависит от диалекта.",
+            "related": "[[spring-data-jpa-interview#Q33]] derived delete; [[spring-data-jpa-interview#Q5]] query methods; [[spring-data-jpa-interview#Q37]] Specification."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Префикс derived-метода — это `find`; `count`, `exists`, `delete` через имя метода не поддерживаются и требуют `@Query`.",
+          "text": "Метод `findTop5ByStatusOrderByCreatedAtDesc` требует отдельного `@Query` для лимита; `deleteBy...` выполняет один bulk DELETE без callbacks.",
               "correct": false,
               "sections": {
-                "what_actually": "Поддерживаются префиксы `count`, `exists`, `delete`/`remove`, а также синонимы `read`/`get`/`query`/`stream`, не только `find`.",
-                "source_of_confusion": "`find` встречается чаще всего, и про другие префиксы забывают.",
-                "if_it_were_true": "Тогда `countByStatus`/`existsByEmail` не работали бы, но это валидные derived-методы.",
-                "how_it_should_be": "Доступны `find/read/get/query/stream/count/exists/delete`."
+            "what_actually": "`Top5` поддерживается в имени метода, а derived `deleteBy` выбирает сущности и удаляет их по одной, вызывая callbacks.",
+            "source_of_confusion": "Видимый результат удаления похож на bulk DML, а SQL LIMIT ассоциируется с явным запросом.",
+            "if_it_were_true": "`findTop5By...` не был бы валиден без `@Query`, а `@PreRemove` при derived delete не вызывался бы.",
+            "how_it_should_be": "Лимит задать `Top`/`First`; bulk DELETE объявлять отдельно через `@Modifying @Query`, если нужны его семантика и производительность."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Ограничение результата (`Top`/`First`) в имени метода не задаётся — для лимита используют `@Query`.",
+          "text": "Метод `findTop5ByStatusOrderByCreatedAtDesc` сортирует результаты в памяти; `deleteBy...` применяет bulk DELETE и затем вызывает callbacks.",
               "correct": false,
               "sections": {
-                "what_actually": "`Top`/`First` (`findTop5By...`, `findFirstBy...`) задают лимит прямо в имени метода без `@Query`.",
-                "source_of_confusion": "Лимит ассоциируется с явным SQL `LIMIT`.",
-                "if_it_were_true": "Тогда `findTop5ByStatusOrderByCreatedAtDesc` не компилировался бы, но это рабочий метод.",
-                "how_it_should_be": "Лимит выражается через `Top`/`First` в имени метода."
+            "what_actually": "`OrderBy...Desc` задаёт порядок запроса до выбора top-N. Derived delete удаляет объекты по одному; bulk DELETE не вызывает entity callbacks.",
+            "source_of_confusion": "Сортировку Java-коллекции путают с сортировкой результата БД, а callbacks считают реакцией на любой DELETE.",
+            "if_it_were_true": "Top-N мог бы выбрать другие строки, а bulk DML должен был бы материализовать сущности, чего он не делает.",
+            "how_it_should_be": "Сортировка и лимит входят в запрос, а callbacks сохраняет пообъектный путь derived delete."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Сортировку задают через `Sort`/`Pageable` — суффикс `OrderBy` в имени метода `Spring Data` не разбирает.",
+          "text": "Метод `findTop5ByStatusOrderByCreatedAtDesc` задаёт только фильтр; сортировку и лимит всегда передают через `Pageable`, а `deleteBy...` не поддерживается.",
               "correct": false,
               "sections": {
-                "what_actually": "`OrderBy...` (например, `findByStatusOrderByCreatedAtDesc`) задаёт сортировку прямо в имени метода; `Sort`/`Pageable` — дополнительная опция.",
-                "source_of_confusion": "Сортировку часто прокидывают через `Pageable`, и про `OrderBy` в имени забывают.",
-                "if_it_were_true": "Тогда статичную сортировку нельзя было бы зашить в метод, но `OrderBy` это позволяет.",
-                "how_it_should_be": "`OrderBy` в имени и `Sort`/`Pageable` — два рабочих способа."
+            "what_actually": "`Top5` и `OrderBy...Desc` поддерживаются в имени, а `deleteBy` — допустимый префикс derived-метода.",
+            "source_of_confusion": "Часто сортировку и лимит передают внешним объектом `Pageable`, поэтому возможности имени метода упускают.",
+            "if_it_were_true": "Статический top-N запрос и derived delete требовали бы явного `@Query`, но оба доступны через имя.",
+            "how_it_should_be": "Для коротких запросов использовать keywords `Top`/`First`, `OrderBy` и `deleteBy`; сложные запросы описывать явно."
               }
             }
           ]

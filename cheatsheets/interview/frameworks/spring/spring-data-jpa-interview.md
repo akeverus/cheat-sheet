@@ -2071,7 +2071,7 @@ public class ProductService {
 
 ## Q36. (!) Как работают derived query methods и каков их синтаксис?
 
-**Derived query methods** (запросы по имени метода) — механизм, где **имя метода и есть спецификация запроса**: Spring Data парсит его и генерирует JPQL автоматически. Никакой магии — есть жёсткие правила построения имени, и зная их, вы предсказуемо получаете нужный запрос.
+**Derived query methods** (запросы по имени метода) — механизм, где имя метода задаёт тип операции, предикат и, при необходимости, сортировку или лимит. Spring Data JPA разбирает имя и строит соответствующий JPA-запрос; конкретный SQL зависит от провайдера и диалекта. [Spring Data JPA 4.1.1, query methods](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html); [keywords](https://docs.spring.io/spring-data/jpa/reference/repositories/query-keywords-reference.html).
 
 **Структура имени метода:**
 
@@ -2116,7 +2116,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // SELECT COUNT(u) FROM User u WHERE u.status = ?1
     long countByStatus(UserStatus status);
 
-    // DELETE FROM User u WHERE u.deletedAt IS NOT NULL
+    // Сначала выбирает сущности, затем удаляет каждую через JPA
     void deleteByDeletedAtIsNotNull();
 
     // Проверка существования
@@ -2128,7 +2128,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 }
 ```
 
-**Граница применимости:** derived-методы хороши, пока имя читается с первого взгляда. Несколько JOIN'ов, подзапросы, агрегации в имя не уложить (или уложить так, что его невозможно прочесть) — здесь переходят на `@Query` или `Specification`.
+`deleteBy...` не является одним bulk `DELETE`: он сначала выбирает подходящие сущности и удаляет их по одной, чтобы сработали JPA callbacks. Для большого числа строк это требует памяти; объявленному методу нужна транзакционная граница. Подробности и альтернатива через `@Modifying @Query` — в [Q33](#q33-что-такое-derived-delete-и-deleteby).
+
+**Граница применимости:** derived-методы хороши, пока имя читается с первого взгляда. Несколько JOIN'ов, подзапросы и агрегации обычно требуют `@Query` или `Specification`.
 
 ## Q37. (!) Как использовать `Specification` API для построения динамических запросов?
 

@@ -11,6 +11,7 @@
     "https://docs.hibernate.org/orm/7.0/querylanguage/html_single/",
     "https://docs.hibernate.org/orm/7.4/whats-new/",
     "https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html",
+    "https://docs.spring.io/spring-data/jpa/reference/repositories/query-keywords-reference.html",
     "https://docs.spring.io/spring-data/jpa/reference/repositories/query-methods-details.html",
     "https://docs.spring.io/spring-data/jpa/reference/repositories/core-extensions.html",
     "https://docs.spring.io/spring-data/jpa/reference/jpa/specifications.html",
@@ -97,10 +98,11 @@
     "Q33: Spring Data JPA 4.1.1 derived delete сначала выбирает все подходящие сущности, затем удаляет каждую через обычный путь, позволяя @PreRemove и JPA-каскады; объявленным методам нужна явная транзакция. Для большого набора это требует памяти. @Modifying @Query с bulk JPQL DELETE выполняет один JPQL-вызов без entity lifecycle callbacks, но Hibernate ORM 7.4 может сгенерировать несколько SQL-операторов, а persistence context остаётся потенциально устаревшим. При Hibernate @SoftDelete обычное удаление сущности обновляет индикатор; эквивалентность bulk-запроса не заявляется без проверки версии и запроса.",
     "Q34: Spring Boot 3.5.16/4.1.1 @DataJpaTest ограничивает контекст JPA-компонентами и по умолчанию откатывает тестовую транзакцию. AutoConfigureTestDatabase.replace по умолчанию NON_TEST (добавлен в Boot 3.4): обычный DataSource может заменяться доступной embedded-БД, а автонастроенное Testcontainers-подключение через @DynamicPropertySource, @ServiceConnection или jdbc:tc: распознаётся как тестовое. Replace.NONE в таком сценарии не обязателен; собственный DataSource bean и старые версии проверяются отдельно.",
     "Q35: Spring Data JPA 4.1.1 JpaSpecificationExecutor.findBy(spec, q -> q.as(Projection.class).page(pageable)) проецирует результат в запросе; findAll(spec, pageable).map(Dto::from) преобразует уже загруженные сущности. Закрытые проекции оптимизируют top-level поля, вложенные связи требуют проверки SQL. readOnly — подсказка, с Hibernate Spring ставит flush mode MANUAL, но не запрещает запись. Hibernate JDBC batching зависит от hibernate.jdbc.batch_size и генерации ID; IDENTITY препятствует batch INSERT. L2-кэшу нужен совместимый провайдер, @Cacheable на сущности одного недостаточно. Для коллекционного fetch join с пагинацией требуется проверка SQL и версии Hibernate.",
+    "Q36: Spring Data JPA 4.1.1 разбирает derived query method на subject и predicate; Top/First задают лимит, OrderBy — статическую сортировку, count/exists/delete поддерживаются как префиксы. Derived deleteBy сначала выбирает подходящие сущности и удаляет их по одной через JPA с lifecycle callbacks; это не эквивалент одного bulk DELETE через @Modifying @Query. Объявленный метод нуждается в транзакционной границе; большой набор загружается в память.",
     "Q39: фоновый системный автор — политика приложения, а не значение по умолчанию AuditorAware. JPQL bulk update/delete не вызывает lifecycle callbacks управляемых сущностей и не применяет автоматическую проверку @Version; persistence context после bulk может быть несогласован с БД."
   ],
   "staleness_risks": [
-    "07–08.10.2026 точечно перепроверены Q3 B0, Q4 B1, Q5–Q35 B0 и Q39 B0; остальные Q файла не проходили полный содержательный аудит."
+    "07–08.10.2026 точечно перепроверены Q3 B0, Q4 B1, Q5–Q36 B0 и Q39 B0; остальные Q файла не проходили полный содержательный аудит."
   ],
   "notes": [
     "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
