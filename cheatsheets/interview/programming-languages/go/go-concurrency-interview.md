@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[go-concurrency]]"
 next: []
-updated: "2026-10-05"
+updated: "2026-11-05"
 ---
 # Вопросы на собеседовании: Конкурентность в Go
 
@@ -139,10 +139,11 @@ G — Goroutine
 M — Machine (OS thread)
 P — Processor (logical, хранит queue goroutines)
 
-Default: GOMAXPROCS = NumCPU. Создаётся столько P.
+Число P в данный момент = текущий GOMAXPROCS.
+Default зависит от версии и настроек runtime (см. Q5).
 ```
 
-`P` — это право на исполнение Go-кода: чтобы M запускал goroutine, ему нужен свободный P. Число P фиксировано (`GOMAXPROCS`) и ограничивает реальный параллелизм; M может быть больше (например, когда поток заблокирован в syscall).
+`P` — это право на исполнение Go-кода: чтобы M запускал goroutine, ему нужен свободный P. Текущее число P задаёт `GOMAXPROCS` и ограничивает параллельное исполнение Go-кода; значение может меняться. M может быть больше (например, когда поток заблокирован в syscall).
 
 ```mermaid
 graph LR
@@ -158,70 +159,58 @@ graph LR
 
 Чтобы M-thread'ы не простаивали, а одна «зависшая» goroutine не блокировала остальных, планировщик применяет три ключевых механизма:
 
-- **Work stealing** — если у P закончились свои goroutines, он не простаивает, а ворует половину из очереди соседнего P. Так нагрузка балансируется между ядрами без центрального диспетчера.
-- **Preemptive scheduling** (с Go 1.14+) — раньше goroutine отдавала процессор только в «точках уступки» (вызовы функций, channel-операции), и цикл без них мог застрять навсегда. Теперь scheduler асинхронно прерывает goroutine, которая работает дольше ~10 мс.
+- **Work stealing** — если у P закончились свои goroutines, он может забрать часть готовых goroutines из очереди другого P. Это один из механизмов балансировки работы.
+- **Preemptive scheduling** (с Go 1.14+) — раньше goroutine отдавала процессор только в «точках уступки» (вызовы функций, channel-операции), и цикл без них мог застрять навсегда. Асинхронное вытеснение позволяет прерывать многие такие вычисления. Порядок 10 мс — деталь реализации планировщика, а не гарантия максимальной задержки; возможность и момент вытеснения зависят от состояния runtime. [Go 1.14 runtime](https://go.dev/doc/go1.14#runtime), [runtime/proc.go](https://go.dev/src/runtime/proc.go).
 - **Network poller** — когда goroutine блокируется на сетевом I/O, она снимается с M, а M отдаётся другой goroutine. Готовность сокета отслеживает отдельный poller (epoll/kqueue), и заблокированная goroutine не держит реальный поток.
 
 В сумме это даёт **высокую concurrency** без накладных расходов «один OS thread на goroutine».
 
 ## Q4. (!) Как запустить и остановить goroutine?
 
-**Запуск** — слово `go` перед любым вызовом, чаще всего перед анонимной функцией:
+**Запуск** — `go f()`; функция исполняется в новой goroutine. Остановка кооперативная: код получает сигнал и сам возвращается. Отправитель сигнала отдельно ожидает завершение, если оно нужно перед продолжением работы.
+
+Через закрытие done-channel можно уведомить всех, кто его ожидает:
 
 ```go
+done := make(chan struct{})
+finished := make(chan struct{})
 go func() {
-    fmt.Println("hello")
+    defer close(finished)
+    <-done // здесь мог бы быть select с рабочим каналом
 }()
+close(done) // сигнал отмены, закрывает один владелец
+<-finished // ожидание фактического завершения
 ```
 
-**Остановка — главная идея:** в Go нет принудительного `kill` для goroutine. Завершить её можно только кооперативно — отправить сигнал, который goroutine сама проверяет и по которому возвращается из функции. Два канонических способа:
+Для передачи отмены между функциями используют контекст:
 
-1. **Через done channel** — отдельный канал, по закрытию/записи в который goroutine выходит:
-```go
-done := make(chan bool)
-go func() {
-    for {
-        select {
-        case <-done:
-            return
-        default:
-            // работаем
-        }
-    }
-}()
-done <- true // сигнал остановки
-```
-
-2. **Через context** — тот же приём, но сигнал отмены распространяется по дереву вызовов автоматически (см. Q23-Q25):
 ```go
 ctx, cancel := context.WithCancel(context.Background())
-go func(ctx context.Context) {
-    for {
-        select {
-        case <-ctx.Done():
-            return
-        default:
-            // работаем
-        }
-    }
-}(ctx)
-cancel() // остановит
+finished := make(chan struct{})
+go func() {
+    defer close(finished)
+    <-ctx.Done()
+}()
+cancel() // сигнал, а не ожидание завершения
+<-finished
 ```
 
-**Рекомендация:** для долгоживущих goroutines используй `context`, а не голый done-channel — он переносит и отмену, и таймаут, и связь с родителем. Всегда передавай `context.Context` первым параметром.
+В рабочем цикле проверку `Done()` совмещают с ожиданием задания через `select`; пустой `default` в таком цикле создаёт busy-loop. Если обработчик выполняет долгую операцию, он тоже должен принимать контекст или проверять отмену. Сам `cancel()` не прерывает произвольный вызов и не ждёт выхода goroutine. Передавайте `ctx context.Context` первым параметром функций, которым нужны его отмена, срок или данные запроса. [context](https://pkg.go.dev/context), [Go pipelines: cancellation](https://go.dev/blog/pipelines).
 
 ## Q5. GOMAXPROCS — что это?
 
-`GOMAXPROCS` — максимальное число goroutines, выполняющих Go-код **одновременно**, то есть число логических процессоров `P` в планировщике. По умолчанию равно `runtime.NumCPU()`. Это потолок реального параллелизма (concurrency может быть выше — goroutines просто чередуются на этих P).
+`GOMAXPROCS` ограничивает число OS threads, одновременно исполняющих пользовательский Go-код; ему соответствует текущее число логических процессоров `P`. Это не предел общего числа goroutines или потоков процесса и не привязка к конкретным физическим ядрам.
 
 ```go
-import "runtime"
-
-runtime.GOMAXPROCS(4) // ограничить 4 cores
-n := runtime.GOMAXPROCS(0) // получить текущее
+fmt.Println("logical CPUs:", runtime.NumCPU())
+fmt.Println("current GOMAXPROCS:", runtime.GOMAXPROCS(0))
 ```
 
-**Подводный камень в контейнерах.** В Docker/Kubernetes с CPU limit `NumCPU()` видит все ядра host-машины, а не выделенную квоту. В итоге `GOMAXPROCS` оказывается завышен: лишние P порождают паразитные переключения и борьбу за CPU, который cgroups всё равно троттлит. Решение — задать значение по квоте: библиотека `automaxprocs` от Uber читает cgroups и выставляет корректный `GOMAXPROCS`; Go 1.25+ умеет это из коробки.
+**Default зависит от версии и настроек.** С Go 1.25 runtime учитывает число логических CPU, affinity процесса и, на Linux, cgroup CPU quota. Квота throughput отличается от числа доступных CPU: дробную квоту округляют вверх; при обычном расчёте default не опускают ниже 2, если CPU/affinity позволяют. Поэтому безусловное `GOMAXPROCS = NumCPU()` для современного контейнера неверно.
+
+Значение по умолчанию может обновляться при изменении лимитов. Явные `GOMAXPROCS` в окружении или `runtime.GOMAXPROCS(n)` с положительным `n` отключают автообновление; `runtime.SetDefaultGOMAXPROCS()` (1.25+) возвращает политику runtime. Для языковой версии главного модуля до 1.25 новые defaults и автообновление по умолчанию отключены совместимыми настройками `GODEBUG`; проверяйте `go.mod`, `containermaxprocs` и `updatemaxprocs`.
+
+В старых конфигурациях `NumCPU()` отражает CPU, доступные процессу на старте, но не обязательно ограничение throughput контейнера. Перед ручной настройкой сопоставьте runtime-значение, cgroup limit, профиль CPU и throttling; дополнительный P не создаёт дополнительную CPU-квоту. [runtime.GOMAXPROCS](https://pkg.go.dev/runtime#GOMAXPROCS), [Go 1.25 runtime](https://go.dev/doc/go1.25#runtime), [container-aware GOMAXPROCS](https://go.dev/blog/container-aware-gomaxprocs).
 
 ## Q6. (!) Что такое channel?
 
@@ -419,7 +408,7 @@ default:
 
 ## Q14. Timeout через select + time.After?
 
-Таймаут — это просто ещё одна ветка `select`, которая «выстрелит», если основной канал не ответил вовремя. `time.After(d)` возвращает канал, в который через `d` придёт значение; что наступит раньше — данные или таймер, — то и выберет `select`:
+Таймаут — это ещё одна ветка `select`, которая станет готовой, если основной канал не ответил вовремя. `time.After(d)` сразу возвращает канал; через `d` он получит значение. Если одновременно готовы несколько веток, `select` выбирает одну из них. Для передачи дедлайна вложенным вызовам используйте `context.WithTimeout` (см. Q24):
 
 ```go
 select {
@@ -430,7 +419,7 @@ case <-time.After(5 * time.Second):
 }
 ```
 
-**Подводный камень:** каждый вызов `time.After` создаёт новый timer, и пока он не сработает, его нельзя освободить (а в `select`-цикле они накапливаются). На горячем пути это утечка таймеров — используй `time.NewTimer` и явно вызывай `Stop`:
+Каждый вызов `time.After` создаёт таймер. Начиная с Go 1.23 недостижимые таймеры может собрать GC ещё до срабатывания, поэтому сам по себе `time.After` в цикле больше не означает утечку. В часто выполняемом цикле создание новых таймеров всё же может быть лишней работой; если нужен явный контроль срока или измерения показали затраты, используйте `NewTimer` и `Reset` (подробнее — [Go stdlib Q16](go-stdlib-interview.md#q16-таймеры-timenewtimer-timetick-timeafter--в-чём-разница)). Для однократного ожидания с отменой достаточно:
 
 ```go
 timer := time.NewTimer(5 * time.Second)
@@ -438,11 +427,13 @@ defer timer.Stop()
 
 select {
 case v := <-ch:
-    if !timer.Stop() { <-timer.C } // drain
+    fmt.Println("got:", v)
 case <-timer.C:
     fmt.Println("timeout")
 }
 ```
+
+После `Stop`/`Reset` в новой семантике нельзя получить старое значение из `timer.C`, поэтому дренировать канал не требуется; безусловное чтение после `Stop` может зависнуть. Это поведение зависит от строки `go` главного модуля (не ниже 1.23) и настройки `GODEBUG=asynctimerchan=1`. При старой семантике перед `Reset` таймер надо остановить и при необходимости дренировать канал. [time.After](https://pkg.go.dev/time#After), [Timer.Stop](https://pkg.go.dev/time#Timer.Stop), [Go 1.23 release notes](https://go.dev/doc/go1.23#timer).
 
 ## Q15. (!) Как работает `sync.Mutex` (Lock, Unlock, defer)?
 
@@ -660,12 +651,18 @@ atomic.AddInt64(&counter, 1)
 
 `context.Context` — стандартный способ протащить через всю цепочку вызовов сигнал «пора останавливаться» и сопутствующие метаданные. Он решает проблему: как отменить работу, разбросанную по множеству goroutines и слоёв, не передавая в каждую функцию отдельный done-channel. Context несёт три вещи:
 
-- **Cancellation signal** — отмену операции (по `cancel()` или ошибке).
+- **Cancellation signal** — отмену операции через `CancelFunc` или отмену родителя.
 - **Deadline / timeout** — автоматическую отмену по времени.
 - **Request-scoped values** — данные на время запроса: request ID, информация о пользователе, trace.
 
 ```go
-import "context"
+package main
+
+import (
+    "context"
+    "fmt"
+    "time"
+)
 
 func main() {
     ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -673,7 +670,8 @@ func main() {
 
     result, err := slowOp(ctx)
     if err != nil {
-        log.Fatal(err)
+        fmt.Println(err)
+        return
     }
     fmt.Println(result)
 }
@@ -688,58 +686,45 @@ func slowOp(ctx context.Context) (string, error) {
 }
 ```
 
-Канал `ctx.Done()` закрывается при отмене или истечении дедлайна — функция слушает его в `select` и возвращается досрочно. `ctx.Err()` уточняет причину: `context.Canceled` (вызвали `cancel`) или `context.DeadlineExceeded` (вышло время).
+Канал `ctx.Done()` закрывается при отмене или истечении дедлайна — функция слушает его в `select` и возвращается досрочно. `ctx.Err()` уточняет причину: `context.Canceled` (вызвали `cancel`) или `context.DeadlineExceeded` (вышло время). Сам по себе контекст горутину не останавливает: код должен слушать его или передавать API, поддерживающему отмену. Если одновременно готовы результат и `ctx.Done()`, `select` не даёт ветке отмены приоритет: может быть выбран любой готовый case. Контракт принятия результата после дедлайна нужно задавать явно. [Go spec: select](https://go.dev/ref/spec#Select_statements).
 
 **Рекомендация:** делай `ctx context.Context` **первым** параметром функции — это устоявшаяся идиома. Context не кладут в поля структур и не передают `nil`; если контекста ещё нет, используй `context.TODO()`.
 
 ## Q24. (!) Чем различаются `WithCancel`, `WithTimeout`, `WithDeadline`?
 
-Три конструктора порождают отменяемый context из родительского — различаются лишь тем, **что** триггерит отмену: ручной вызов, относительный таймаут или абсолютный момент времени.
+Три конструктора создают дочерний отменяемый контекст и возвращают `CancelFunc`. `WithCancel` добавляет ручную отмену. `WithTimeout` задаёт срок относительно текущего момента, а `WithDeadline` принимает абсолютный `time.Time`. Все три дочерних контекста также отменяются при отмене родителя; более ранний родительский дедлайн ограничивает дочерний.
 
 ```go
-// Manual cancellation
-ctx, cancel := context.WithCancel(context.Background())
-defer cancel() // важно!
-
-// Cancel когда нужно
-go func() {
-    time.Sleep(2 * time.Second)
-    cancel()
-}()
-
-// Timeout (relative)
-ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-
-// Deadline (absolute)
-deadline := time.Now().Add(5 * time.Second)
-ctx, cancel := context.WithDeadline(context.Background(), deadline)
-
-// Values (для request-scoped data)
-ctx := context.WithValue(parent, "userID", 42)
-userID := ctx.Value("userID").(int)
+func runBefore(parent context.Context, deadline time.Time) error {
+    ctx, cancel := context.WithDeadline(parent, deadline)
+    defer cancel()
+    _, err := slowOp(ctx)
+    return err
+}
 ```
 
-- **WithCancel** — отмена только вручную, по вызову `cancel()`.
-- **WithTimeout** — отмена через заданный интервал (`5s` от текущего момента); по сути `WithDeadline(now + d)`.
-- **WithDeadline** — отмена в конкретный момент времени.
-- **WithValue** — кладёт пару ключ-значение; для cancellation не используется, только для метаданных.
+Если вызывающей стороне нужен относительный срок, она использует `context.WithTimeout(parent, 5*time.Second)`; если момент уже пришёл извне, передаёт его в `WithDeadline`. Для ручной отмены без собственного срока достаточно `context.WithCancel(parent)`. `WithValue` не управляет отменой: он переносит значения запроса (см. [Go stdlib Q17](go-stdlib-interview.md#q17--contextcontext--основные-методы)).
 
-**Рекомендация:** **всегда** ставь `defer cancel()` сразу после `WithCancel/WithTimeout/WithDeadline` — даже если context отменится по таймауту. `cancel` освобождает связанные с context ресурсы (таймер, дочерние goroutines); без него — goroutine/timer leak. `go vet` предупреждает о потерянном `cancel`.
+Код, создавший дочерний контекст, вызывает `cancel()` после завершения операции на каждом пути исполнения, обычно через `defer`. Это отсоединяет потомка от родителя и останавливает связанный таймер. Без вызова дочерний контекст и его потомки могут оставаться достижимыми до отмены родителя; это не означает автоматическую утечку горутины. `CancelFunc` не ждёт завершения работы, а `go vet` проверяет потерянные функции отмены. [context](https://pkg.go.dev/context), [WithDeadline](https://pkg.go.dev/context#WithDeadline), [go vet](https://pkg.go.dev/cmd/vet).
 
 ## Q25. Распространение context через goroutines?
 
 Context **иммутабелен**: каждый `WithCancel/WithTimeout/...` не меняет родителя, а создаёт нового потомка, ссылающегося на него. Так выстраивается дерево, и отмена распространяется по нему **только вниз**: отмена родителя отменяет всех потомков; отмена потомка на родителя не влияет.
 
 ```go
-parent, cancelParent := context.WithCancel(context.Background())
-child, cancelChild := context.WithTimeout(parent, 5*time.Second)
-defer cancelChild()
+func canceledChild() error {
+    parent, cancelParent := context.WithCancel(context.Background())
+    defer cancelParent()
+    child, cancelChild := context.WithTimeout(parent, 5*time.Second)
+    defer cancelChild()
 
-// Отмена parent → отменяет child (5 секунд может не наступить)
-cancelParent()
+    cancelParent()
+    <-child.Done()
+    return child.Err() // context.Canceled
+}
 ```
 
-Здесь `child` отменится раньше своих 5 секунд — потому что отменили `parent`. Это и есть смысл дерева: отменив корень запроса (например, при разрыве HTTP-соединения), ты разом гасишь все порождённые им операции.
+Здесь `child` отменится раньше своих 5 секунд, потому что отменили `parent`. Сигнал дойдёт до потомков, но не завершит работающие горутины сам: им нужно проверять `Done()` или вызывать API, которое принимает контекст. Каждый создатель дочернего контекста вызывает свою функцию отмены, когда работа завершена.
 
 **Иерархия:**
 ```
@@ -757,37 +742,50 @@ Background (root)
 **Worker pool** — фиксированное число goroutines-воркеров, которые разбирают задачи из общего канала `jobs` и складывают результаты в `results`. Так ограничивается параллелизм: вместо «по goroutine на задачу» (что при тысячах задач съест память) работает ровно N воркеров.
 
 ```go
+package main
+
+import (
+    "fmt"
+    "sync"
+)
+
 func worker(id int, jobs <-chan int, results chan<- int) {
-    for j := range jobs {
-        fmt.Printf("worker %d processing %d\n", id, j)
-        time.Sleep(time.Second)
-        results <- j * 2
+    for job := range jobs {
+        fmt.Printf("worker %d processing %d\n", id, job)
+        results <- job * 2
     }
 }
 
 func main() {
-    jobs := make(chan int, 100)
-    results := make(chan int, 100)
-
-    // 3 workers
-    for w := 1; w <= 3; w++ {
-        go worker(w, jobs, results)
+    jobs := make(chan int)
+    results := make(chan int)
+    var workers sync.WaitGroup
+    for id := 1; id <= 3; id++ {
+        workers.Add(1)
+        go func(id int) {
+            defer workers.Done()
+            worker(id, jobs, results)
+        }(id)
     }
-
-    // Send 5 jobs
-    for j := 1; j <= 5; j++ {
-        jobs <- j
-    }
-    close(jobs)
-
-    // Receive results
-    for a := 1; a <= 5; a++ {
-        <-results
+    go func() {
+        for job := 1; job <= 5; job++ {
+            jobs <- job
+        }
+        close(jobs)
+    }()
+    go func() {
+        workers.Wait()
+        close(results)
+    }()
+    for result := range results {
+        fmt.Println(result)
     }
 }
 ```
 
 **Как это работает.** Все воркеры читают из одного `jobs` — Go-runtime раздаёт задачи свободным воркерам сам. `close(jobs)` после отправки задач завершает `for range` во всех воркерах, и они выходят. `<-chan` (read-only) и `chan<-` (write-only) в сигнатуре — это направленные каналы: компилятор не даст воркеру случайно записать в `jobs` или прочитать из `results`.
+
+`jobs` закрывает производитель, а `results` — отдельная goroutine после `Wait()`. Поэтому конец `range results` означает, что workers завершились и все отправленные результаты прочитаны. Порядок результатов не фиксирован. Если потребитель может уйти раньше, добавьте общий сигнал отмены и обработайте его и при отправке, и при получении, чтобы worker не остался ждать непрочитанный результат. [Go pipelines](https://go.dev/blog/pipelines), [sync.WaitGroup](https://pkg.go.dev/sync#WaitGroup).
 
 **Сценарий применения:** ограничение нагрузки на внешний ресурс (БД, API), где нельзя запускать неограниченное число параллельных запросов. Размер пула подбирают под пропускную способность ресурса.
 
