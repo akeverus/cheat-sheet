@@ -131,50 +131,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Scheduler использует триаду G/M/P: G — goroutine, M — OS thread (machine), P — logical processor с локальной очередью runnable-goroutines. Число P = `GOMAXPROCS`; при простое P применяется work stealing — забирает goroutines из чужой очереди.",
+              "text": "G — goroutine, M — поток ОС, P — право исполнения Go-кода. Goroutines мультиплексируются на потоках, а число P задаёт текущий GOMAXPROCS.",
               "correct": true,
               "sections": {
-                "explanation": "Network poller снимает goroutine, заблокированную на сетевом I/O, с M, освобождая поток для другой G, а preemptive scheduling прерывает долго работающие goroutines.",
-                "example": "При `GOMAXPROCS=4` создаётся 4 P; если P0 опустошил свою очередь, он украдёт goroutine из очереди P1 (work stealing) и продолжит работу без простоя ядра.",
-                "when_to_apply": "Понимание триады нужно при тюнинге `GOMAXPROCS` для CPU-bound нагрузок и при объяснении, почему I/O-bound goroutines не занимают потоки.",
-                "edge_cases": "Если все P заняты блокирующими syscalls, runtime может создать дополнительный M, поэтому реальное число потоков иногда превышает `GOMAXPROCS`.",
-                "related": "[[go-concurrency-interview#Q2]] goroutine против OS thread; [[go-concurrency-interview#Q5]] что задаёт GOMAXPROCS; [[go-concurrency-interview#Q1]] базовое понятие goroutine."
+                "explanation": "M нужен P для исполнения пользовательского Go-кода. Готовые G распределяются между потоками; work stealing помогает брать готовую работу у другого P, а асинхронное вытеснение уменьшает зависимость от добровольной уступки.",
+                "example": "При текущем GOMAXPROCS=4 имеется четыре P. Если локальная очередь опустела, планировщик может найти работу в другой очереди; это не обещание отсутствия простоя каждого ядра.",
+                "when_to_apply": "При разборе CPU-параллелизма, сетевого ожидания и поведения планировщика.",
+                "edge_cases": "Число P может меняться вместе с GOMAXPROCS. M может блокироваться в syscall, а P — передаваться другому M; общее число потоков не обязано совпадать с P или NumCPU. Около 10 мс — деталь реализации, не гарантия срока вытеснения.",
+                "related": "[[go-concurrency-interview#Q5]] изменяемый GOMAXPROCS; [[go-concurrency-interview#Q2]] goroutine и поток ОС."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "M:N означает M goroutines на N процессах ОС: каждый процесс представляет одну goroutine и изолирован, как после `fork()`.",
+              "text": "G — goroutine, M — отдельный процесс ОС, P — право исполнения. Goroutines изолированы по процессам и передают данные через IPC.",
               "correct": false,
               "sections": {
-                "what_actually": "N в M:N — это OS threads (потоки одного процесса), а не отдельные процессы; goroutines делят общую память.",
-                "source_of_confusion": "Букву N трактуют как processes, путая потоки и процессы операционной системы.",
-                "if_it_were_true": "Тогда goroutines не могли бы делить память напрямую и общались бы только через IPC, но они спокойно используют общие переменные и channels.",
-                "how_it_should_be": "M:N — это M goroutines поверх N OS threads внутри одного процесса, с общим адресным пространством."
+                "what_actually": "Goroutines обычно разделяют адресное пространство одного процесса и мультиплексируются на OS threads; M не обозначает отдельный процесс.",
+                "source_of_confusion": "Множество потоков исполнения принимают за множество изолированных процессов.",
+                "if_it_were_true": "Для передачи обычного общего состояния между goroutines потребовался бы межпроцессный протокол.",
+                "how_it_should_be": "Различать G как задачу, M как поток и P как ресурс исполнения Go-кода."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "В Go каждая goroutine получает собственный OS thread, а scheduler лишь следит за их приоритетами и не занимается мультиплексированием.",
+              "text": "G — goroutine, M — поток ОС, P — право исполнения Go-кода. Каждая G получает отдельный M, поэтому мультиплексирование не требуется.",
               "correct": false,
               "sections": {
-                "what_actually": "Это 1:1-модель (как Java threads до Loom); Go мультиплексирует множество goroutines на немного потоков по M:N.",
-                "source_of_confusion": "Знакомая 1:1-модель из других рантаймов кажется применимой и к Go.",
-                "if_it_were_true": "Тогда 100K goroutines означали бы 100K OS threads, но Go держит их на ~`NumCPU` потоках.",
-                "how_it_should_be": "Go scheduler мультиплексирует goroutines на ограниченное число потоков, а не выделяет поток на каждую."
+                "what_actually": "Один M может исполнять разные G в разное время; отдельный поток на каждую goroutine не выделяется.",
+                "source_of_confusion": "Модель 1:1 переносят на лёгкие задачи runtime.",
+                "if_it_were_true": "Сто тысяч созданных goroutines требовали бы столько же выделенных OS threads.",
+                "how_it_should_be": "Учитывать мультиплексирование и отдельно различать число G, общее число M и текущий лимит P."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Go scheduler кооперативный: goroutine обязана сама вызвать `runtime.Gosched()`, чтобы уступить процессор, иначе CPU-bound цикл навсегда блокирует поток.",
+              "text": "G — goroutine, M — поток ОС, P — право исполнения Go-кода. Переключение G возможно только после её Gosched, без асинхронного вытеснения.",
               "correct": false,
               "sections": {
-                "what_actually": "С Go 1.14 планировщик preemptive (через сигналы): он прерывает долго работающую goroutine без явного `Gosched()`.",
-                "source_of_confusion": "Старые туториалы (до Go 1.14) описывали именно кооперативную модель, и это знание устарело.",
-                "if_it_were_true": "Тогда один бесконечный CPU-bound цикл вешал бы весь scheduler, но preemption прерывает его по таймеру в ~10ms.",
-                "how_it_should_be": "Современный Go scheduler вытесняющий: ручной `Gosched()` для отдачи процессора не требуется."
+                "what_actually": "Асинхронное вытеснение появилось в Go 1.14 и позволяет прерывать многие CPU-циклы без явного Gosched. Возможность и момент зависят от состояния runtime.",
+                "source_of_confusion": "Историческое описание кооперативного планировщика принимают за полный современный контракт.",
+                "if_it_were_true": "CPU-цикл без точек уступки нельзя было бы вытеснить асинхронно.",
+                "how_it_should_be": "Не требовать ручного Gosched для обычного планирования, но и не обещать жёсткую задержку вытеснения."
               }
             }
           ]
@@ -191,50 +191,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Goroutine запускается через `go`, а остановить её можно вызовом `runtime.KillGoroutine(id)` по идентификатору goroutine.",
+              "text": "Запускают `go f()` и вызывают `cancel()`; после возврата cancel считают goroutine завершённой без отдельного ожидания.",
               "correct": false,
               "sections": {
-                "what_actually": "В runtime нет функции `KillGoroutine` и нет стабильного публичного goroutine ID: Go намеренно не даёт принудительного kill.",
-                "source_of_confusion": "Из управления потоками в ОС переносят идею «убить по id», предполагая такой же API в Go.",
-                "if_it_were_true": "Тогда зависшую goroutine можно было бы прибить по id, но Go требует кооперативной отмены через `context`/channel.",
-                "how_it_should_be": "Остановка возможна только кооперативно (через сигнал отмены), функции kill-по-id в Go нет."
+                "what_actually": "CancelFunc не ждёт, пока работа остановится. Goroutine может ещё обрабатывать операцию или освобождать ресурс после возврата cancel.",
+                "source_of_confusion": "Передачу сигнала принимают за подтверждённое завершение.",
+                "if_it_were_true": "После возврата cancel можно было бы использовать освобождаемый ресурс, не ожидая worker.",
+                "how_it_should_be": "После сигнала отдельно ждать finished или другой предусмотренный механизм завершения."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Goroutine запускается через `go f()`, а останавливается кооперативно: либо `context.WithCancel` и вызов `cancel()`, либо done-channel, который проверяется в `select`. Принудительного `kill` в Go нет — goroutine должна сама увидеть сигнал и вернуться.",
+              "text": "Запускают `go f()` и сигнализируют `cancel()` или закрытием done; затем отдельно ждут подтверждения выхода goroutine.",
               "correct": true,
               "sections": {
-                "explanation": "Идиома — передавать `context.Context` в долгоживущие goroutines и в цикле читать `ctx.Done()` через `select`, выходя по сигналу отмены.",
-                "example": "Идиома: `ctx, cancel := context.WithCancel(...)`, в goroutine — `for { select { case <-ctx.Done(): return; default: /* работа */ } }`, а снаружи `cancel()` останавливает её.",
-                "when_to_apply": "Применяется в любом сервисе с фоновыми задачами: при остановке или таймауте запроса `cancel()` каскадно сигналит всем дочерним goroutines завершиться.",
-                "edge_cases": "Если goroutine между итерациями надолго блокируется на работе и не доходит до `select`, сигнал отмены она увидит только после возврата управления — отмена не мгновенная.",
-                "related": "[[go-concurrency-interview#Q24]] WithCancel/WithTimeout/WithDeadline; [[go-concurrency-interview#Q32]] goroutine leak без exit-пути; [[go-concurrency-interview#Q1]] что такое goroutine."
+                "explanation": "Сигнал отмены сообщает, что работу нужно прекратить. Goroutine должна увидеть сигнал и выйти; подтверждение завершения — отдельный шаг.",
+                "example": "Worker делает defer close(finished) и ждёт ctx.Done(). Вызывающий код выполняет cancel(), затем <-finished. В рабочем цикле Done совмещают с ожиданием работы в select без пустого default.",
+                "when_to_apply": "При завершении фоновой работы или запроса, когда перед продолжением нужно дождаться освобождения ресурсов.",
+                "edge_cases": "Cancel не прерывает произвольный блокирующий вызов и не ждёт окончания. Долгий обработчик тоже должен поддерживать отмену; канал подтверждения закрывает завершающийся worker.",
+                "related": "[[go-concurrency-interview#Q24]] контекст и отмена; [[go-concurrency-interview#Q32]] отсутствие пути завершения."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Goroutine запускается синтаксисом `goroutine func(){}`, а останавливается вызовом метода `goroutine.Stop()` у возвращённого объекта.",
+              "text": "Запускают `go f()` и вызывают `cancel()`; вызывающая сторона сама закрывает finished, считая это подтверждением выхода goroutine.",
               "correct": false,
               "sections": {
-                "what_actually": "В Go нет ни `goroutine` как ключевого слова, ни объекта с `Stop()`: запуск идёт через `go`, и убить goroutine извне нельзя.",
-                "source_of_confusion": "По аналогии с Thread-объектами в других языках ожидают, что у goroutine есть управляемый объект с методом остановки.",
-                "if_it_were_true": "Тогда любую goroutine можно было бы прервать одной строкой, но такого API нет — компилятор просто не знает `goroutine.Stop()`.",
-                "how_it_should_be": "Запуск — `go f()`, а остановка — кооперативная через `context` или channel; объекта с `Stop()` не существует."
+                "what_actually": "Самостоятельное закрытие finished вызывающей стороной не доказывает, что worker вышел. В примере подтверждение отправляет сам завершающийся worker.",
+                "source_of_confusion": "Возможность послать сигнал смешивают с правом подтверждать чужое завершение.",
+                "if_it_were_true": "Вызывающий код мог бы подтвердить выход worker, пока тот ещё выполняет работу.",
+                "how_it_should_be": "Оставить закрытие finished worker через defer и ожидать это подтверждение после cancel."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Goroutine запускается через `go func(){}()`, а остановить её нельзя — единственный способ дождаться завершения через `sync.WaitGroup`.",
+              "text": "Запускают `go f()` и ждут чтением finished; такое ожидание само передаёт отмену и заставляет goroutine завершиться.",
               "correct": false,
               "sections": {
-                "what_actually": "Помимо ожидания через `WaitGroup`, goroutine можно попросить завершиться раньше через done-channel или отмену `context`.",
-                "source_of_confusion": "`WaitGroup` действительно ждёт завершения, и отсюда вывод, что других механизмов нет.",
-                "if_it_were_true": "Тогда долгоживущую goroutine невозможно было бы прервать досрочно, и при потере интереса к результату она бы текла (goroutine leak).",
-                "how_it_should_be": "Кроме ожидания через `WaitGroup`, есть кооперативная отмена через `context`/done-channel для досрочного выхода."
+                "what_actually": "Чтение finished ожидает подтверждения, но не посылает сигнал отмены. Если worker ждёт отмену, одно такое чтение не заставит его выйти.",
+                "source_of_confusion": "Ожидание завершения принимают за команду завершить работу.",
+                "if_it_were_true": "Блокирующее чтение канала подтверждения само уведомляло бы worker об отмене.",
+                "how_it_should_be": "Сначала передать отмену через context/done, затем отдельно дождаться фактического завершения."
               }
             }
           ]
@@ -1511,50 +1511,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Worker Pool означает запуск отдельной goroutine на каждый job без какого-либо общего channel.",
+              "text": "Для каждой задачи запускают новую goroutine, читающую `jobs`; producer закрывает `jobs`, а `results` закрывают после завершения всех обработчиков.",
               "correct": false,
               "sections": {
-                "what_actually": "Это не worker pool: goroutine-на-каждый-job даёт неограниченный параллелизм; пул же фиксирует число воркеров, читающих из общего `jobs` channel.",
-                "source_of_confusion": "Идею «параллельно — значит goroutine на задачу» путают с ограниченным пулом.",
-                "if_it_were_true": "Тогда на 1M jobs запустилось бы 1M goroutines и перегрузило downstream, но пул ограничивает concurrency несколькими воркерами.",
-                "how_it_should_be": "Worker pool — это N фиксированных воркеров на общем channel, а не goroutine на каждый job."
+                "what_actually": "В описанном пуле число workers фиксировано. Запуск нового обработчика на каждую задачу не задаёт такого ограничения, даже при корректном закрытии каналов.",
+                "source_of_confusion": "Параллельную обработку принимают за ограниченный пул.",
+                "if_it_were_true": "Число активных обработчиков росло бы вместе с числом задач вместо установленного размера пула.",
+                "how_it_should_be": "Создавать фиксированное число workers, передавать им задачи и отдельно организовать завершение результатов."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Worker Pool: N воркеров читают задачи из общего `jobs` channel через `for j := range jobs`, producer кладёт задачи и затем закрывает `jobs`, а результаты собирают в `results` channel. Directional channels (`<-chan`, `chan<-`) дают compile-time safety.",
+              "text": "Фиксированные workers читают `jobs`; producer закрывает `jobs`, а `results` закрывают после ожидания всех workers и читают до конца.",
               "correct": true,
               "sections": {
-                "explanation": "Закрытие `jobs` после последнего задания корректно завершает `range` во всех воркерах, а `<-chan jobs` в сигнатуре воркера не даёт ему случайно закрыть входной channel.",
-                "example": "`for w := 1; w <= 3; w++ { go worker(w, jobs, results) }`, затем producer шлёт `jobs <- j` и `close(jobs)`; сигнатура `jobs <-chan int` не даёт воркеру закрыть вход.",
-                "when_to_apply": "Применяется для ограничения concurrency: CPU-bound обработка батча или rate-limited вызовы downstream, где нельзя плодить goroutine на каждый элемент.",
-                "edge_cases": "Размер пула подбирают под нагрузку: ~`GOMAXPROCS` для CPU-bound и больше для I/O-bound; закрывать `jobs` должен producer, а не воркер.",
-                "related": "[[go-concurrency-interview#Q27]] fan-out/fan-in поверх пула; [[go-concurrency-interview#Q17]] WaitGroup для ожидания воркеров; [[go-concurrency-interview#Q11]] range над jobs до close."
+                "explanation": "Фиксированное число workers ограничивает одновременную обработку. Producer завершает отправку и закрывает jobs; results можно закрыть лишь после завершения всех отправляющих workers.",
+                "example": "До запуска каждого worker вызывают workers.Add(1), worker делает defer workers.Done(). Отдельная goroutine выполняет workers.Wait(), затем close(results); получатель читает range results.",
+                "when_to_apply": "При ограничении нагрузки на внешний ресурс и числа одновременно исполняемых обработчиков.",
+                "edge_cases": "Закрытие jobs не означает, что workers уже отправили последние результаты. Ранний уход получателя требует отмены и при отправке, и при получении. Направления <-chan/chan<- ограничивают операции компилятором, но сами не обеспечивают правильный порядок закрытия.",
+                "related": "[[go-concurrency-interview#Q17]] WaitGroup; [[go-concurrency-interview#Q27]] fan-out/fan-in; [[go-concurrency-interview#Q11]] range канала."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`close(jobs)` нужно вызывать внутри воркера после обработки его последнего job.",
+              "text": "Фиксированные workers читают `jobs`; каждый worker закрывает `jobs` после своей последней задачи, а `results` закрывают после ожидания workers.",
               "correct": false,
               "sections": {
-                "what_actually": "Закрывает channel producer (тот, кто отправляет), а не consumer/воркер; воркер не знает, сколько задач ещё придёт.",
-                "source_of_confusion": "Раз воркер «заканчивает» обработку, кажется логичным, что он же и закрывает channel.",
-                "if_it_were_true": "Тогда несколько воркеров закрыли бы `jobs` по очереди, но повторный `close` даёт panic «close of closed channel».",
-                "how_it_should_be": "`jobs` закрывает только producer после последнего задания; воркеры лишь читают через range."
+                "what_actually": "Worker не знает, закончил ли producer отправлять задачи. Закрытие jobs со стороны одного worker может сломать остальных отправителей или привести к повторному close.",
+                "source_of_confusion": "Конец собственной обработки принимают за конец общего входного потока.",
+                "if_it_were_true": "Один завершивший свою задачу worker мог бы объявить общий вход завершённым независимо от producer.",
+                "how_it_should_be": "Закрывать jobs владельцем отправки после последней задачи, затем дождаться всех workers перед закрытием results."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Обозначения `<-chan` и `chan<-` не влияют на функциональность и нужны только для стиля.",
+              "text": "Фиксированные workers читают `jobs`; producer закрывает `jobs` и сразу `results`, не дожидаясь отправки результатов остальными workers.",
               "correct": false,
               "sections": {
-                "what_actually": "Directional channels дают compile-time safety: передать `chan<-` туда, где ждут `<-chan`, не получится, что мешает воркеру закрыть входной channel.",
-                "source_of_confusion": "Раз оба варианта компилируются для bidirectional channel, направление считают косметикой.",
-                "if_it_were_true": "Тогда воркер мог бы случайно `close(jobs)`, но `jobs <-chan int` в сигнатуре запрещает это на этапе компиляции.",
-                "how_it_should_be": "Направленные channels — это compile-time гарантия корректного использования, а не стилистика."
+                "what_actually": "После close(jobs) workers ещё могут обрабатывать полученные задачи и отправлять результаты. Отправка в уже закрытый results вызывает panic.",
+                "source_of_confusion": "Завершение выдачи задач принимают за завершение их обработки.",
+                "if_it_were_true": "Последний результат был бы отправлен уже к моменту закрытия входа без ожидания обработчиков.",
+                "how_it_should_be": "Дождаться workers.Wait() и только затем закрывать results; получатель должен продолжать чтение либо передать отмену."
               }
             }
           ]
