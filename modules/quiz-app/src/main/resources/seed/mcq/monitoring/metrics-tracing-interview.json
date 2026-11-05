@@ -1691,50 +1691,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для связи метрик с бизнесом нужно добавлять тег `user_id` к каждой метрике.",
+              "text": "Добавлять user_id к каждой метрике, поскольку персональный разрез сокращает число рядов и связывает технические данные с бизнесом.",
               "correct": false,
               "sections": {
-                "what_actually": "Бизнес-разрезы строят по тегам малой cardinality (`region`, `payment_method`), а `user_id` запрещён — он взрывает число рядов.",
-                "source_of_confusion": "Желание анализировать «по пользователю» подталкивает к user-level тегу.",
-                "if_it_were_true": "Тогда `Prometheus` хранил бы ряд на каждого пользователя и упал бы по памяти, чего и избегают.",
-                "how_it_should_be": "Бизнес-теги — это enum-подобные значения (`region`, `reason`); per-user аналитику ведут в логах/событиях."
+                "what_actually": "Уникальные пользователи увеличивают число комбинаций тегов. Для связи показателей подходят согласованные разрезы вроде региона или способа оплаты.",
+                "source_of_confusion": "Детальную аналитику отдельных пользователей смешивают с агрегированными эксплуатационными метриками.",
+                "if_it_were_true": "Добавление множества новых user_id должно было бы экономить ряды; фактически оно увеличивает расходы на хранение и обработку.",
+                "how_it_should_be": "Оцените cardinality всех сочетаний тегов. Индивидуальные события храните в подходящей аналитической системе, не добавляя ID ко всем метрикам."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Бизнес-метрики стоит держать в отдельной системе и не выводить вместе с техническими на один дашборд.",
+              "text": "Хранить технические и бизнес-метрики в одном Prometheus, поскольку раздельные источники исключают сопоставление конверсии с задержками.",
               "correct": false,
               "sections": {
-                "what_actually": "Главная ценность связи — именно совмещение бизнес- и технических метрик на одном дашборде через общие теги и время.",
-                "source_of_confusion": "Организационное разделение команд создаёт идею раздельных систем и дашбордов.",
-                "if_it_were_true": "Тогда нельзя было бы сопоставить падение конверсии с ростом ошибок, но именно это сопоставление и нужно.",
-                "how_it_should_be": "Бизнес- и технические метрики кладут в общий `Prometheus` и совмещают на дашборде по общим тегам."
+                "what_actually": "Для сопоставления важны определения показателей, время и общие разрезы. Источники могут храниться раздельно и сводиться на дашборде.",
+                "source_of_confusion": "Удобство общего хранилища принимают за техническое требование корреляции.",
+                "if_it_were_true": "Данные из SQL и технические ряды нельзя было бы сопоставить по региону и времени, хотя отдельное хранение этому не препятствует.",
+                "how_it_should_be": "Выберите источники по назначению и согласуйте окна, часовые пояса и измерения; общий Prometheus является одним из вариантов."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Бизнес-метрики можно собирать только из БД через `SQL`-выгрузку; через `Micrometer` их регистрировать нельзя.",
+              "text": "Считать бизнес-метрики только SQL-запросами, поскольку Micrometer регистрирует технические JVM/HTTP-показатели и не поддерживает счётчики заказов.",
               "correct": false,
               "sections": {
-                "what_actually": "Бизнес-метрики удобно регистрировать прямо в коде через `Micrometer` (`counter`, `summary`, `Timer`), а не только выгрузкой из БД.",
-                "source_of_confusion": "Привычка считать бизнес-показатели аналитическими `SQL`-запросами заслоняет инструментирование в реальном времени.",
-                "if_it_were_true": "Тогда `business.checkout.completed` нельзя было бы инкрементить в сервисе, но это типовой код на `Micrometer`.",
-                "how_it_should_be": "Бизнес-события инструментируют через `Micrometer` в реальном времени; `SQL`-выгрузка — отдельный, более медленный путь."
+                "what_actually": "Micrometer позволяет зарегистрировать прикладные Counter, Timer и DistributionSummary, в том числе счётчики заказов. SQL остаётся другим возможным источником.",
+                "source_of_confusion": "Встроенные JVM/HTTP-метрики принимают за полный перечень поддерживаемых измерений.",
+                "if_it_were_true": "Вызов registry.counter(\"business.checkout.completed\", ...) не позволял бы посчитать бизнес-событие, хотя API не ограничен техническими именами.",
+                "how_it_should_be": "Выбирайте способ сбора по требованиям. Метрики в коде дают оперативный сигнал, а SQL/события могут давать другой уровень полноты; скорость зависит от реализации."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Технические метрики приложения (`RPS`, latency, ошибки) дополняют бизнес-метрики (конверсия, заказы, отказы).",
+              "text": "Сопоставлять технические метрики RPS, latency и ошибок с конверсией и заказами по общим тегам и времени.",
               "correct": true,
               "sections": {
-                "explanation": "Это даёт единую картину: падение конверсии можно сразу сопоставить с ростом латентности или ошибок того же сервиса на одном дашборде.",
-                "example": "В коде: `registry.counter(\"business.checkout.completed\", \"region\", region, \"payment_method\", pm).increment()`, а `business.order.amount` пишут в `summary`; при `PaymentException` инкрементят `business.checkout.failed` с `reason`.",
-                "when_to_apply": "Бизнес-метрики добавляют, когда нужно алертить по продуктовым показателям (падение конверсии, рост отказов) и связывать их с техническим здоровьем сервиса.",
-                "edge_cases": "Теги должны быть малой cardinality (`region`, `payment_method`, `reason`), а не `user_id`/`order_id`; иначе бизнес-метрики взорвут `Prometheus`.",
-                "related": "[[metrics-tracing-interview#Q13]] custom metrics и их добавление; [[metrics-tracing-interview#Q32]] кастомные теги для бизнес-метрик в Micrometer; [[metrics-tracing-interview#Q17]] cardinality бизнес-тегов."
+                "explanation": "Совместное наблюдение помогает обнаружить связь продуктовой деградации с состоянием сервиса. Совпадение графиков само по себе не доказывает причину.",
+                "example": "После выбранного бизнес-события вызовите `registry.counter(\"business.checkout.completed\", \"region\", region, \"payment_method\", method).increment()`. Значения тегов нормализуют; единицу completed определяют отдельно от HTTP-попытки.",
+                "when_to_apply": "Для продуктовых дашбордов и расследования падения заказов или конверсии вместе с ростом задержек и ошибок.",
+                "edge_cases": "Отношение событий за окно не обязательно является когортной конверсией. Учитывайте задержку завершения, retries и пропуски; оперативные счётчики не заменяют финансовый реестр.",
+                "related": "[[metrics-tracing-interview#Q13]] custom metrics; [[metrics-tracing-interview#Q32]] теги бизнес-метрик; [[metrics-tracing-interview#Q17]] cardinality."
               }
             }
           ]
@@ -1751,50 +1751,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Alert routing по severity невозможен, поэтому все уведомления всегда отправляются одному получателю.",
+              "text": "Условие `for: 3m` подтверждает алерт по двум превышениям порога из трёх последних оценок, даже при разрывах.",
               "correct": false,
               "sections": {
-                "what_actually": "`Alertmanager` маршрутизирует по `severity`: critical → `PagerDuty`, warning → `Slack`, info → email; разделение каналов — штатная возможность.",
-                "source_of_confusion": "Простой единый webhook создаёт впечатление, что маршрутизации нет.",
-                "if_it_were_true": "Тогда `route`/`routes` с `match: {severity:...}` были бы бессмысленны, но они и реализуют разделение.",
-                "how_it_should_be": "Маршрутизация по `severity` и лейблам — базовая функция `Alertmanager`; каналы разделяют через `routes`."
+                "what_actually": "`for: 3m` требует, чтобы условие для того же набора labels оставалось активным при каждой оценке в течение трёх минут.",
+                "source_of_confusion": "Длительность pending-состояния смешивают с правилом «k из n точек».",
+                "if_it_were_true": "Чередование true/false с двумя превышениями из трёх переводило бы алерт в firing; при for ложная оценка прерывает ожидание.",
+                "how_it_should_be": "Задавайте for как длительность устойчивого условия. Если нужна доля превышений, отдельно сформулируйте выражение по временному окну."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Чем больше независимых пороговых alerts, тем надёжнее система и ниже alert fatigue.",
+              "text": "Маршрутизация выбирает получателя по trace ID первого запроса, а метка `severity` отвечает только за цвет дашборда.",
               "correct": false,
               "sections": {
-                "what_actually": "Избыток алертов рождает шум и усталость дежурных (alert fatigue); хорошая практика — мало точных порогов с агрегацией и подтверждением.",
-                "source_of_confusion": "Интуиция «больше контроля — лучше» подталкивает к алерту на всё.",
-                "if_it_were_true": "Тогда дежурный тонул бы в уведомлениях и пропускал важное, чего и избегают сокращением числа алертов.",
-                "how_it_should_be": "Алертов должно быть немного и они должны быть значимыми; шум душат группировкой, выдержкой `for` и inhibition."
+                "what_actually": "Alertmanager выбирает маршрут по labels алерта, например severity и service. Конкретный receiver задаёт конфигурация команды.",
+                "source_of_confusion": "Ссылку на trace в диагностике смешивают с полями для маршрутизации уведомлений.",
+                "if_it_were_true": "Алерт без exemplar или сохранённого trace не мог бы попасть дежурному, хотя маршрутизация использует labels независимо от trace.",
+                "how_it_should_be": "Настройте routes/matchers для ответственности и срочности. Ссылка на trace является дополнительным контекстом, а не обязательным ключом доставки."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Основные alerts строят по отдельным traces, а агрегированные metrics для них не нужны.",
+              "text": "Доля ошибок в traces после отбора `tail sampling` равна доле ошибок запросов сервиса независимо от политики отбора.",
               "correct": false,
               "sections": {
-                "what_actually": "Алерты в основном строят по метрикам (пороги по latency, error rate, доступности); по трейсам алертят редко (например, рост доли медленных трейсов).",
-                "source_of_confusion": "Детальность трейсов создаёт впечатление, что и алерты логичнее вешать на них.",
-                "if_it_were_true": "Тогда `alert_rules.yml` оперировал бы трейсами, но `PromQL`-правила работают именно по метрикам.",
-                "how_it_should_be": "Основа алертинга — метрики (`PromQL`-пороги); алерты по трейсам — редкое дополнение."
+                "what_actually": "Политика, сохраняющая ошибки чаще успешных запросов, меняет состав выборки. Доля ошибок сохранённых traces может отличаться от доли запросов.",
+                "source_of_confusion": "Насыщенную деталями выборку принимают за репрезентативный поток всех операций.",
+                "if_it_were_true": "Изменение sampling policy меняло бы измеряемую надёжность даже при прежнем поведении сервиса.",
+                "how_it_should_be": "Для SLO используйте определённый поток событий или метрики с известной полнотой. Производные от traces показатели проверяйте на sampling bias."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Alerts строят по SLO и metrics, маршрутизируют по severity, а traces используют для диагностики.",
+              "text": "Строить алерты по агрегированным метрикам, маршрутизировать по `severity` и использовать traces для диагностики влияния на сервис.",
               "correct": true,
               "sections": {
-                "explanation": "Цель — заметить аномалию и быстро дать дежурному контекст: в алерт кладут ссылку на дашборд, runbook и пример трейса (exemplar), чтобы разбор начался сразу.",
-                "example": "В `Alertmanager` `group_by: [alertname, application]`, маршруты: `severity: critical` → `PagerDuty` (звонок), `warning` → `Slack #alerts`, `info` → email-сводка; в описании — runbook и ссылка на `Grafana`.",
-                "when_to_apply": "Алертинг настраивают для всех ключевых сервисов; пороги выбирают по `RED`/`USE` и SLO, чтобы алерт означал реальную деградацию, а не шум.",
-                "edge_cases": "Против шума: мало порогов, агрегация, подтверждение (например, 2 из 3 точек), группировка в `Alertmanager`, inhibition и silence для плановых работ.",
-                "related": "[[metrics-tracing-interview#Q22]] правила алертов и Alertmanager; [[metrics-tracing-interview#Q18]] метрики и трейсы при инцидентах; [[metrics-tracing-interview#Q36]] алерты на burn rate по SLO."
+                "explanation": "Уведомление должно требовать понятного действия и попадать ответственному. Дашборд, runbook и доступный trace помогают расследованию, но не гарантируют диагноз.",
+                "example": "Например, `group_by: [alertname, service]` и дочерний маршрут с `matchers: ['severity=\"critical\"']` направляют группу нужному receiver. Это фрагменты конфигурации, не полный готовый файл.",
+                "when_to_apply": "Для важных пользовательских симптомов, SLO burn rate и отдельных срочных рисков; набор алертов выбирают по покрытию и полезности, а не по минимальному числу.",
+                "edge_cases": "Каналы и severity задаёт команда. Inhibition и silences подавляют уведомления по правилам; они не устраняют сбой. Exemplar/trace может отсутствовать из-за sampling или retention.",
+                "related": "[[metrics-tracing-interview#Q22]] правила и Alertmanager; [[metrics-tracing-interview#Q36]] SLO; [[metrics-tracing-interview#Q38]] exemplars."
               }
             }
           ]
@@ -1811,50 +1811,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`W3C TraceContext` — это формат хранения трейсов в `Jaeger`, описывающий, как сериализовать spans на диск.",
+              "text": "Стандарт описывает OTLP-сообщения с записанными spans, а поля HTTP-заголовков используются для доставки этого полного набора.",
               "correct": false,
               "sections": {
-                "what_actually": "`W3C TraceContext` — стандарт `HTTP`-заголовков для передачи контекста между сервисами, а не формат хранения spans в бэкенде.",
-                "source_of_confusion": "Слово «context» в трассировке многозначно, и его привязывают к хранению, а не к передаче.",
-                "if_it_were_true": "Тогда стандарт описывал бы схему БД `Jaeger`, но он определяет заголовки `traceparent`/`tracestate`.",
-                "how_it_should_be": "Это стандарт пропагации контекста по `HTTP`-заголовкам; формат хранения — внутреннее дело бэкенда."
+                "what_actually": "Trace Context определяет HTTP-представление контекста, а OTLP переносит телеметрию. Заголовок не содержит полный trace.",
+                "source_of_confusion": "Передачу родительской связи между запросами смешивают с экспортом записанных spans.",
+                "if_it_were_true": "Получателю traceparent должны были бы доставаться все spans вызывающей системы, хотя заголовок несёт лишь небольшой контекст.",
+                "how_it_should_be": "Разделяйте propagation через traceparent/tracestate и независимый экспорт spans в backend."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "W3C Trace Context стандартизует `traceparent` и `tracestate` для совместимой передачи trace context.",
+              "text": "Стандарт описывает передачу trace context в HTTP-заголовке traceparent и необязательном tracestate с данными провайдера.",
               "correct": true,
               "sections": {
-                "explanation": "Единый формат обеспечивает сквозную трассировку при смешивании вендоров (AWS → Kubernetes → on-prem) без потери контекста на границах систем.",
-                "example": "`traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01`: `00` — версия, далее 128-битный trace-id, 64-битный parent span-id и флаги (`01` = sampled); `tracestate` несёт vendor-specific данные.",
-                "when_to_apply": "Стандарт важен в гетерогенной инфраструктуре с разными вендорами трассировки; `OpenTelemetry` поддерживает `W3C` по умолчанию с `Java SDK 1.x`.",
-                "edge_cases": "В `Spring Boot` тип задают `management.tracing.propagation.type: w3c` (или `b3`/`b3_multi` для совместимости с legacy `Zipkin`-системами).",
-                "related": "[[metrics-tracing-interview#Q8]] передача контекста по traceparent; [[metrics-tracing-interview#Q23]] traceId и parentSpanId внутри заголовка; [[metrics-tracing-interview#Q40]] W3C и B3 пропагация подробнее."
+                "explanation": "Участники могут продолжить родительскую связь в общем формате. Для этого обеим сторонам нужны подходящие inject/extract и инструментация; стандарт не гарантирует полноту trace.",
+                "example": "В `traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01` version=00, trace-id имеет 32 hex-символа, parent-id — 16, установлен sampled bit. Нулевые IDs недопустимы.",
+                "when_to_apply": "Для совместимых межсервисных HTTP-вызовов, в том числе между разными средами и поставщиками трассировки.",
+                "edge_cases": "tracestate может отсутствовать; sampled не гарантирует запись всех spans. В Java SDK 1.37.0 ручной SDK builder имеет no-op propagators; default tracecontext,baggage относится к SDK autoconfigure.",
+                "related": "[[metrics-tracing-interview#Q8]] передача parent; [[metrics-tracing-interview#Q23]] IDs; [[metrics-tracing-interview#Q40]] настройка propagation."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`W3C TraceContext` нужен только внутри `Kubernetes` и не работает, если запрос выходит за пределы кластера.",
+              "text": "Стандарт описывает передачу context внутри кластера Kubernetes, а вызовы за его границу начинают новый trace.",
               "correct": false,
               "sections": {
-                "what_actually": "Стандарт работает поверх любого `HTTP`-транспорта и как раз ценен для сквозной трассировки между разными средами (облако, on-prem), а не только внутри кластера.",
-                "source_of_confusion": "Ассоциация трассировки с `Kubernetes` создаёт впечатление привязки к нему.",
-                "if_it_were_true": "Тогда трейс рвался бы на выходе из кластера, но `traceparent` передаётся в любых `HTTP`-вызовах.",
-                "how_it_should_be": "`W3C TraceContext` — транспортно-нейтральный стандарт заголовков, работает в любой `HTTP`-среде."
+                "what_actually": "Формат не привязан к Kubernetes. Контекст можно передавать между кластерами, облаком и локальными сервисами.",
+                "source_of_confusion": "Способ развёртывания приложения принимают за границу применимости протокола.",
+                "if_it_were_true": "Переезд сервиса из pod в обычную VM должен был бы менять допустимость traceparent, хотя формат HTTP-заголовка не меняется.",
+                "how_it_should_be": "Проверяйте инструментацию и прохождение заголовков на реальных границах; сеть или proxy могут прервать связь, но это не запрет стандарта."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`W3C TraceContext` определяет один заголовок `X-B3-TraceId`, унаследованный от `Zipkin`.",
+              "text": "Стандарт описывает передачу контекста трассировки между сервисами в заголовках X-B3-TraceId и X-B3-SpanId, образующих W3C-формат.",
               "correct": false,
               "sections": {
-                "what_actually": "`X-B3-TraceId` — это формат B3 (`Zipkin`), а `W3C TraceContext` вводит свои заголовки `traceparent` и `tracestate` именно взамен разнобоя вендорских.",
-                "source_of_confusion": "B3 исторически популярен, поэтому его заголовки приписывают и стандарту `W3C`.",
-                "if_it_were_true": "Тогда стандарт не решал бы проблему несовместимости вендоров, но он создан как раз для единого формата.",
-                "how_it_should_be": "`W3C` использует `traceparent`/`tracestate`; `X-B3-*` — это отдельный B3-формат `Zipkin`/`Brave`."
+                "what_actually": "Имена переставлены: traceparent/tracestate относятся к W3C, а X-B3-* — к B3. Это разные форматы propagation.",
+                "source_of_confusion": "Оба формата передают похожие IDs, поэтому их поля ошибочно считают взаимозаменяемыми.",
+                "if_it_were_true": "W3C propagator должен был бы извлекать X-B3-* как свои стандартные поля; поддержка B3 требует соответствующего propagator.",
+                "how_it_should_be": "Для миграции согласуйте принимаемые и исходящие форматы. Совместное присутствие W3C и B3 не делает их одним стандартом."
               }
             }
           ]
@@ -1871,50 +1871,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Чтобы построить error rate заказов, нужно тегировать каждый заказ его `order_id` — без этого `PromQL` не посчитает долю.",
+              "text": "Добавлять `order_id` к счётчикам заказов: уникальная метка нужна PromQL для вычисления агрегированной доли ошибок.",
               "correct": false,
               "sections": {
-                "what_actually": "Error rate считают по агрегатным счётчикам `orders_failed_total`/`orders_placed_total` с тегами малой cardinality (`region`, `reason`); `order_id` не нужен и вреден.",
-                "source_of_confusion": "Желание трассировать каждый заказ подталкивает к уникальному тегу.",
-                "if_it_were_true": "Тогда `rate(orders_failed_total[5m]) / rate(orders_placed_total[5m])` не работал бы без `order_id`, но он считается именно по агрегатам.",
-                "how_it_should_be": "Error rate — отношение агрегатных счётчиков; уникальные `order_id` в тегах запрещены из-за cardinality."
+                "what_actually": "Для отношения счётчиков уникальные ID не требуются. Числитель и знаменатель должны описывать совместимые события, окно и наборы labels.",
+                "source_of_confusion": "Детальную идентификацию заказа принимают за условие агрегатного расчёта.",
+                "if_it_were_true": "Обычное отношение failed/total без ID было бы невозможно, хотя именно агрегаты позволяют считать эксплуатационную долю ошибок.",
+                "how_it_should_be": "Например, для одного счётчика attempts с outcome и region агрегируйте оба операнда по region; при нулевом трафике долю нужно обрабатывать отдельно."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Micrometer` даёт API для бизнес-метрик с тегами: `Counter.builder(\"orders.placed\").tag(\"region\", \"ru\").register(registry)`.",
+              "text": "Добавлять теги через API `Micrometer` при регистрации метрики: имя и пары ключ-значение определяют её идентичность в registry.",
               "correct": true,
               "sections": {
-                "explanation": "Теги позволяют резать бизнес-метрики по измерениям (`region`, `reason`, `payment_method`), сохраняя при этом малую cardinality и агрегируемость в `Prometheus`.",
-                "example": "`orderPlaced = Counter.builder(\"orders.placed\").tag(\"region\",\"ru\")...`; `checkoutTimer = Timer.builder(\"checkout.duration\").publishPercentiles(0.5,0.95,0.99).sla(Duration.ofMillis(200))...`; `Gauge.builder(\"orders.queue.size\", q, Queue::size).tag(\"priority\",\"high\")`.",
-                "when_to_apply": "Кастомные теги настраивают, когда для SLO и продуктовых дашбордов нужны бизнес-разрезы, которых нет в стандартных `JVM`/`HTTP`-метриках.",
-                "edge_cases": "Ключевой принцип: не использовать высококардинальные теги (`userId`, `orderId`) — они взорвут TSDB; только статические или enum-подобные значения (`region`, `status`, `product_category`).",
-                "related": "[[metrics-tracing-interview#Q13]] когда добавлять custom metrics; [[metrics-tracing-interview#Q29]] связь app- и бизнес-метрик; [[metrics-tracing-interview#Q34]] инструменты Micrometer для бизнес-метрик."
+                "explanation": "Counter, Timer, DistributionSummary и Gauge поддерживают теги. Продумывайте ограниченный набор значений и одинаковый смысл ключей; сами теги не гарантируют малую cardinality.",
+                "example": "`Counter.builder(\"orders.placed\").tag(\"region\", \"ru\").register(registry).increment();` Для очереди: `Gauge.builder(\"orders.queue.size\", orderQueue, Queue::size).tag(\"priority\", \"high\").register(registry);` На orderQueue сохраняют сильную ссылку.",
+                "when_to_apply": "Когда нужны бизнес-разрезы по региону, исходу или способу оплаты, которых нет в стандартных JVM/HTTP-метриках.",
+                "edge_cases": "Значение тега не обязано быть константой, но его множество ограничивают. В Micrometer 1.13.2 Timer.serviceLevelObjectives задаёт buckets; клиентские percentiles не складываются в общий p99.",
+                "related": "[[metrics-tracing-interview#Q29]] связь бизнес-метрик; [[metrics-tracing-interview#Q34]] типы инструментов; [[metrics-tracing-interview#Q17]] cardinality."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Кастомные теги задаются один раз в `prometheus.yml` на стороне сервера, а в коде приложения их указать нельзя.",
+              "text": "Задавать теги через `prometheus.yml`: регистрация метрик через API `Micrometer` не позволяет указывать бизнес-разрезы.",
               "correct": false,
               "sections": {
-                "what_actually": "Теги задают в коде через `Micrometer` (`Counter.builder(...).tag(\"region\", \"ru\")`); `prometheus.yml` добавляет лишь общие scrape-лейблы, а не бизнес-теги метрики.",
-                "source_of_confusion": "Серверные `labels` в `static_configs` создают впечатление, что все теги настраиваются на сервере.",
-                "if_it_were_true": "Тогда `Counter.builder().tag(...)` был бы лишним, но именно он навешивает бизнес-теги в коде.",
-                "how_it_should_be": "Бизнес-теги навешивают в приложении через `Micrometer`; серверные лейблы `prometheus.yml` — это другое."
+                "what_actually": "Micrometer builders принимают tag/tags. Prometheus может добавлять или преобразовывать labels, но это не отменяет прикладной инструментации.",
+                "source_of_confusion": "Серверные scrape labels и relabeling принимают за единственный механизм задания измерений.",
+                "if_it_were_true": "Вызов Counter.builder(...).tag(...) не влиял бы на идентичность метрики, хотя разные значения тегов создают разные meters.",
+                "how_it_should_be": "Создавайте прикладные измерения у источника, а серверные преобразования используйте осознанно. Prometheus не узнает скрытый бизнес-исход без входных данных."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Gauge` нельзя использовать с кастомными тегами и lambda — теги поддерживают только `Counter` и `Timer`.",
+              "text": "Добавлять теги к `Gauge` после каждого изменения очереди: регистрация нового объекта обновляет прежний meter с теми же tags.",
               "correct": false,
               "sections": {
-                "what_actually": "`Gauge.builder(\"orders.queue.size\", orderQueue, Queue::size).tag(\"priority\", \"high\")` отлично работает с тегами и lambda-функцией значения.",
-                "source_of_confusion": "`Gauge` через lambda кажется «особым», и на него ошибочно не распространяют поддержку тегов.",
-                "if_it_were_true": "Тогда нельзя было бы тегировать размер очереди по приоритету, но это штатный код `Micrometer`.",
-                "how_it_should_be": "Все инструменты `Micrometer` (включая `Gauge`) поддерживают теги; `Gauge` дополнительно умеет lambda-источник значения."
+                "what_actually": "Gauge наблюдает состояние уже зарегистрированного объекта. Повторная регистрация того же имени и tags не заменяет его новым объектом.",
+                "source_of_confusion": "Обновление наблюдаемого состояния смешивают с повторным созданием meter.",
+                "if_it_were_true": "Новый объект автоматически заменял бы источник Gauge; фактически registry сохраняет прежнюю идентичность и может проигнорировать повторную регистрацию.",
+                "how_it_should_be": "Зарегистрируйте Gauge с tags один раз, удерживайте наблюдаемый объект и изменяйте его состояние. При сборке объекта GC значение может исчезнуть или стать NaN."
               }
             }
           ]
@@ -1931,50 +1931,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В Spring Boot подключают Micrometer Tracing/Brave reporter или OTel exporter и задают Zipkin endpoint.",
+              "text": "Подключить Actuator, tracing bridge и Zipkin reporter/exporter, задать endpoint и инструментировать входящие и исходящие операции приложения.",
               "correct": true,
               "sections": {
-                "explanation": "Spring Boot 3 uses Micrometer Tracing. A Brave bridge with Zipkin reporter or an OpenTelemetry Zipkin exporter serializes spans and sends them to the configured Zipkin HTTP endpoint.",
-                "example": "Configure `management.zipkin.tracing.endpoint=http://zipkin:9411/api/v2/spans` and an appropriate tracing bridge/exporter; set sampling probability separately for the environment.",
-                "when_to_apply": "Use this integration when Zipkin is the chosen tracing backend and the application already uses Spring Boot observability or OpenTelemetry instrumentation.",
-                "edge_cases": "Dependencies and property names depend on the Spring Boot line. Production sampling should rarely remain at 100%, and network/export failures require queue and retry monitoring.",
-                "related": "[[metrics-tracing-interview#Q15]] Jaeger and Zipkin; [[metrics-tracing-interview#Q16]] tracing in Spring Boot; [[metrics-tracing-interview#Q6]] OpenTelemetry signals."
+                "explanation": "Для Boot 3.3.2 Actuator связывает Micrometer Observation с выбранным tracer. Экспортёр передаёт записанные spans в Zipkin; настройка endpoint сама spans не создаёт.",
+                "example": "Boot 3.3.2: starter-actuator + micrometer-tracing-bridge-brave + zipkin-reporter-brave; `management.zipkin.tracing.endpoint=http://zipkin:9411/api/v2/spans`. Альтернатива — bridge-otel + opentelemetry-exporter-zipkin, а не второй параллельный tracer.",
+                "when_to_apply": "Когда выбран Zipkin и нужен поддерживаемый для конкретной версии Boot путь экспорта traces из приложения.",
+                "edge_cases": "Исходящие HTTP-клиенты создавайте через автонастроенные builders. Sampling 0.1 — пример policy, не обязательная production-норма; успешный ответ exporter не доказывает полноту trace.",
+                "related": "[[metrics-tracing-interview#Q15]] backends; [[metrics-tracing-interview#Q16]] tracing Boot; [[metrics-tracing-interview#Q6]] OTel."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Zipkin интегрируется только через JDBC, которым приложение напрямую пишет spans в backend database.",
+              "text": "Подключить Prometheus registry и адрес Zipkin в scrape_configs, чтобы сбор метрик передавал backend записанные spans приложения.",
               "correct": false,
               "sections": {
-                "what_actually": "Приложение шлёт spans по `HTTP` на `POST /api/v2/spans` (через reporter), а не пишет их в БД `Zipkin` напрямую `SQL`-ом.",
-                "source_of_confusion": "Наличие у `Zipkin` хранилища создаёт впечатление прямой записи в БД из приложения.",
-                "if_it_were_true": "Тогда не нужен был бы `zipkin-reporter-brave`, но именно он отправляет spans по сети.",
-                "how_it_should_be": "Spans репортятся по `HTTP` на endpoint `/api/v2/spans`; хранилище `Zipkin` приложение напрямую не трогает."
+                "what_actually": "Scraping метрик не экспортирует spans. Zipkin tracing требует подходящего reporter/exporter и собственного канала передачи.",
+                "source_of_confusion": "Системы наблюдаемости смешивают из-за похожей настройки endpoint.",
+                "if_it_were_true": "Zipkin должен был бы восстановить trace из числовых рядов Prometheus, хотя в них нет полного набора spans и родительских связей.",
+                "how_it_should_be": "Настраивайте метрики и tracing как разные сигналы; для Zipkin используйте поддерживаемую tracing-интеграцию."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Zipkin несовместим со Spring Boot 3 и работает только через устаревший Spring Cloud Sleuth.",
+              "text": "Указать Zipkin endpoint и sampling probability в YAML, чтобы создать tracer и exporter без tracing-зависимостей приложения.",
               "correct": false,
               "sections": {
-                "what_actually": "`Spring Boot 3` штатно интегрируется с `Zipkin` через `Micrometer Tracing` (мост `brave` + `zipkin-reporter-brave`); `Sleuth` был путём в `Boot 2`, но не единственным сегодня.",
-                "source_of_confusion": "Миграция со `Sleuth` на `Micrometer Tracing` в `Boot 3` создаёт миф о несовместимости с `Zipkin`.",
-                "if_it_were_true": "Тогда `micrometer-tracing-bridge-brave` не существовал бы, но он и обеспечивает связку с `Zipkin` в `Boot 3`.",
-                "how_it_should_be": "`Spring Boot 3` поддерживает `Zipkin` через `Micrometer Tracing`; `Sleuth` — устаревший путь из `Boot 2`."
+                "what_actually": "Свойства настраивают присутствующую интеграцию. В Boot 3.3.2 нужны Actuator, tracing bridge и совместимый Zipkin reporter/exporter.",
+                "source_of_confusion": "Автоконфигурацию принимают за загрузку отсутствующих библиотек по одному имени свойства.",
+                "if_it_were_true": "Удаление bridge/exporter не повлияло бы на tracing; фактически без нужных компонентов свойства не создают отсутствующую реализацию.",
+                "how_it_should_be": "Проверьте набор зависимостей и условия auto-configuration, затем endpoint, sampling и появление тестового span в backend."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "OpenTelemetry не может экспортировать spans в Zipkin, поэтому эти технологии взаимоисключающи.",
+              "text": "Создать ZipkinSpanExporter в локальной переменной, чтобы его builder зарегистрировал exporter в tracer и начал передавать spans.",
               "correct": false,
               "sections": {
-                "what_actually": "`OpenTelemetry` умеет экспортировать в `Zipkin` через `opentelemetry-exporter-zipkin`; они отлично совмещаются.",
-                "source_of_confusion": "Раздельные экосистемы создают впечатление несовместимости инструментирования и бэкенда.",
-                "if_it_were_true": "Тогда `ZipkinSpanExporter` в OTel SDK был бы бессмысленным, но он именно отправляет spans в `Zipkin`.",
-                "how_it_should_be": "OTel инструментирует код и экспортирует в `Zipkin` через соответствующий exporter; конфликта нет."
+                "what_actually": "Созданный exporter должен быть включён в используемый tracing pipeline. В ручном SDK его подключают к span processor/tracer provider.",
+                "source_of_confusion": "Конструирование объекта принимают за регистрацию в SDK и подключение к существующей инструментации.",
+                "if_it_were_true": "Неиспользуемая локальная переменная получала бы spans действующего tracer без связи с ним.",
+                "how_it_should_be": "Выберите Boot auto-configuration либо целостную ручную настройку SDK, включая processor, provider, используемую инструментацию и завершение экспорта."
               }
             }
           ]
@@ -1991,50 +1991,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Micrometer` поддерживает только `Counter` и `Gauge`; для измерения времени и распределений нужны сторонние библиотеки.",
+              "text": "`Counter` наблюдает размер очереди, `Gauge` накапливает события, `Timer` измеряет время, `DistributionSummary` — размер payload.",
               "correct": false,
               "sections": {
-                "what_actually": "`Micrometer` штатно даёт `Timer`, `DistributionSummary` и `LongTaskTimer` помимо `Counter`/`Gauge` — сторонние библиотеки не нужны.",
-                "source_of_confusion": "Простота `Counter`/`Gauge` создаёт впечатление, что остальное — внешнее.",
-                "if_it_were_true": "Тогда `Timer.builder(...)` не существовал бы в `Micrometer`, но он часть его core API.",
-                "how_it_should_be": "`Micrometer` покрывает `Counter`, `Gauge`, `Timer`, `DistributionSummary`, `LongTaskTimer` из коробки."
+                "what_actually": "Counter и Gauge переставлены. Counter накапливает положительные приращения, а Gauge наблюдает текущее состояние, которое может уменьшаться.",
+                "source_of_confusion": "Оба инструмента возвращают число, но различаются семантикой обновления и наблюдения.",
+                "if_it_were_true": "Уменьшение очереди требовало бы уменьшить Counter, а Gauge событий терял бы изменения между опросами.",
+                "how_it_should_be": "Для размера очереди используйте Gauge; для числа произошедших событий — Counter либо count подходящего Timer/DistributionSummary."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Counter` считает events, `Gauge` наблюдает state, `Timer` пишет duration/count, `DistributionSummary` — нетемпоральные distributions, например payload size.",
+              "text": "`Counter` накапливает события, `Gauge` наблюдает состояние, `Timer` измеряет длительности, `DistributionSummary` — размер payload.",
               "correct": true,
               "sections": {
-                "explanation": "Фасад абстрагирует от бэкенда (`Prometheus`, `Datadog`, `InfluxDB`): один и тот же код метрик экспортируется в любой из них через биндинг registry.",
-                "example": "`Counter.builder(\"orders.placed.total\").tag(\"region\",\"ru\")...increment()`; `Timer.builder(\"checkout.duration\").publishPercentiles(0.5,0.95,0.99).publishPercentileHistogram()`; `DistributionSummary.builder(\"orders.amount\").baseUnit(\"rubles\")`.",
-                "when_to_apply": "Инструмент выбирают по природе величины: накопление → `Counter`, состояние → `Gauge`, время → `Timer`, размеры/суммы → `DistributionSummary`, длительные батчи → `LongTaskTimer`.",
-                "edge_cases": "`Timer` измеряет время, а `DistributionSummary` — нечисловое-по-времени (суммы, размеры); `Summary`-квантили на стороне приложения неагрегируемы, поэтому в `Prometheus` берут гистограммы.",
-                "related": "[[metrics-tracing-interview#Q4]] типы метрик counter/gauge/histogram/summary; [[metrics-tracing-interview#Q3]] Micrometer как фасад; [[metrics-tracing-interview#Q32]] эти инструменты для бизнес-метрик с тегами."
+                "explanation": "Timer дополнительно считает записанные события и суммарное время. DistributionSummary считает записи и сумму не-временных значений; конкретные дополнительные статистики зависят от registry и настройки.",
+                "example": "`registry.counter(\"orders.placed\").increment(); registry.timer(\"checkout.duration\").record(Duration.ofMillis(150)); registry.summary(\"request.size\", \"unit\", \"bytes\").record(512);` Для Gauge регистрируют функцию наблюдаемого состояния.",
+                "when_to_apply": "Выбирайте инструмент по смыслу величины. Для наблюдения ещё выполняющихся задач есть LongTaskTimer; обычный Timer записывает завершённые измерения.",
+                "edge_cases": "Counter может сброситься при перезапуске, поэтому анализируют rate с учётом resets. DistributionSummary не равен Prometheus summary: он может экспортировать histogram; клиентские квантили не агрегируются.",
+                "related": "[[metrics-tracing-interview#Q4]] типы backend-метрик; [[metrics-tracing-interview#Q3]] фасад Micrometer; [[metrics-tracing-interview#Q32]] теги."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Counter` может как увеличиваться, так и уменьшаться, а `Gauge` — это строго монотонно растущий счётчик событий.",
+              "text": "`Counter` накапливает события, `Gauge` наблюдает состояние, `Timer` измеряет размер payload, `DistributionSummary` — длительности.",
               "correct": false,
               "sections": {
-                "what_actually": "Свойства перепутаны: `Counter` монотонно возрастает (`increment()`), а `Gauge` — текущее значение, которое может и убывать (размер очереди, активные сессии).",
-                "source_of_confusion": "Оба простые числовые инструменты, и их «направление» легко спутать без практики.",
-                "if_it_were_true": "Тогда `rate(counter_total)` не имел бы смысла, но `rate()` работает именно с монотонным `Counter`.",
-                "how_it_should_be": "`Counter` — только вверх; `Gauge` — мгновенное значение, способное убывать."
+                "what_actually": "Timer и DistributionSummary переставлены. Timer учитывает единицы времени, а DistributionSummary предназначен для размеров и других не-временных значений.",
+                "source_of_confusion": "Оба инструмента могут экспортировать распределения, но это не делает их единицы измерения одинаковыми.",
+                "if_it_were_true": "Запись размера в Timer означала бы трактовку байтов как длительности, что исказило бы смысл и единицы экспортируемых рядов.",
+                "how_it_should_be": "Длительность записывайте через Timer с единицами времени; payload — через DistributionSummary с согласованными единицами размера."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Timer` и `DistributionSummary` — это одно и то же: оба измеряют время выполнения операций.",
+              "text": "`Counter` накапливает события, `Gauge` наблюдает состояние, `Timer` измеряет длительности, `DistributionSummary` — текущий остаток.",
               "correct": false,
               "sections": {
-                "what_actually": "`Timer` измеряет именно время (длительность), а `DistributionSummary` — распределение произвольных числовых значений (суммы заказов, размеры файлов), не время.",
-                "source_of_confusion": "Оба строят гистограммы и публикуют перцентили, поэтому их назначения сливают.",
-                "if_it_were_true": "Тогда `baseUnit(\"rubles\")` у `DistributionSummary` не имел бы смысла, но он как раз про не-временные величины.",
-                "how_it_should_be": "`Timer` — для времени; `DistributionSummary` — для любых числовых распределений, не связанных со временем."
+                "what_actually": "DistributionSummary записывает выборку значений, а не наблюдает текущее состояние. Для остатка на складе или размера очереди подходит Gauge.",
+                "source_of_confusion": "Сумму записанных значений принимают за последнее значение состояния.",
+                "if_it_were_true": "Записи остатков 10 и 8 должны были бы дать текущее 8; summary накапливает две записи и их сумму, что имеет иной смысл.",
+                "how_it_should_be": "Определите, измеряете ли отдельные события/размеры или состояние в момент наблюдения. Эти задачи требуют разных инструментов."
               }
             }
           ]
@@ -2051,50 +2051,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Collector обязателен: без него приложение на `OpenTelemetry` не сможет отправить телеметрию ни в один бэкенд.",
+              "text": "Collector принимает телеметрию через receivers; объявление exporter в верхней секции подключает его ко всем потокам сигналов.",
               "correct": false,
               "sections": {
-                "what_actually": "Collector необязателен — приложение может слать `OTLP` напрямую в бэкенд; Collector добавляют ради батчинга, sampling и развязки от бэкендов.",
-                "source_of_confusion": "Распространённость Collector в продакшене создаёт впечатление его обязательности.",
-                "if_it_were_true": "Тогда прямой `OTEL_EXPORTER_OTLP_ENDPOINT` на `Jaeger` был бы невозможен, но он работает и без Collector.",
-                "how_it_should_be": "Collector — полезный, но опциональный посредник; для простых случаев экспортируют в бэкенд напрямую."
+                "what_actually": "Компонент нужно включить в service.pipelines совместимого сигнала. Одного объявления exporter недостаточно для его использования.",
+                "source_of_confusion": "Описание доступного компонента принимают за его включение в маршрут обработки.",
+                "if_it_were_true": "Неиспользуемый exporter получал бы все данные без связи с pipeline, и разделение traces/metrics/logs теряло бы смысл.",
+                "how_it_should_be": "Опишите нужные компоненты и явно свяжите receivers, processors и exporters в соответствующем service.pipelines."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`OpenTelemetry Collector` — это библиотека внутри приложения, которая заменяет `Micrometer` и регистрирует метрики в коде.",
+              "text": "Collector исполняется внутри SDK приложения; его processors заменяют инструментацию методов и сами создают исходные spans.",
               "correct": false,
               "sections": {
-                "what_actually": "Collector — это отдельный процесс-посредник между приложениями и бэкендами, а не in-process библиотека инструментирования вроде `Micrometer`.",
-                "source_of_confusion": "Слово «OpenTelemetry» связывают с SDK в коде, и Collector путают с библиотекой.",
-                "if_it_were_true": "Тогда Collector не имел бы своего `config.yaml` с receivers/exporters, но именно он и описывает его как самостоятельный сервис.",
-                "how_it_should_be": "Collector — независимый процесс приёма/обработки/экспорта телеметрии; инструментирование кода — задача SDK."
+                "what_actually": "Collector обычно работает отдельным процессом и обрабатывает полученную телеметрию. Создание spans приложения требует инструментации.",
+                "source_of_confusion": "OTel SDK и OTel Collector считают одним встроенным компонентом.",
+                "if_it_were_true": "Установка отдельного Collector позволяла бы увидеть неинструментированные методы приложения без источника данных.",
+                "how_it_should_be": "Настройте источник телеметрии и экспорт в Collector; его pipeline используйте для последующей обработки и маршрутизации."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Collector умеет работать только с трейсами; метрики и логи он пропускать и обрабатывать не способен.",
+              "text": "Collector сохраняет принятые данные через `memory_limiter`; этот processor обеспечивает доставку без потерь при перезапуске.",
               "correct": false,
               "sections": {
-                "what_actually": "Collector обрабатывает все три сигнала — трейсы, метрики и логи — через соответствующие pipelines в `service`.",
-                "source_of_confusion": "Происхождение OTel из трассировки создаёт впечатление, что Collector только про трейсы.",
-                "if_it_were_true": "Тогда не было бы pipeline `metrics` и `logs` в конфиге, но они там есть наряду с `traces`.",
-                "how_it_should_be": "Collector маршрутизирует трейсы, метрики и логи; для каждого настраивают отдельный pipeline."
+                "what_actually": "memory_limiter ограничивает потребление памяти и может отказывать в приёме. Это не дисковая очередь и не гарантия доставки.",
+                "source_of_confusion": "Управление памятью смешивают с устойчивым хранением и подтверждением доставки.",
+                "if_it_were_true": "Ограничение RAM должно было бы сохранять буфер после остановки процесса, хотя оно не создаёт постоянное хранилище.",
+                "how_it_should_be": "Рассмотрите очередь, retries и при необходимости persistent storage; проверьте поддержку и пределы. Потери всё равно возможны."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "OpenTelemetry Collector принимает данные receivers, обрабатывает processors, соединяет pipelines connectors и отправляет exporters; разворачивается как agent.",
+              "text": "Collector принимает телеметрию через receivers, обрабатывает processors и отправляет exporters; компоненты связывают в pipelines.",
               "correct": true,
               "sections": {
-                "explanation": "Один endpoint для всех сигналов развязывает приложения от бэкендов: можно сменить хранилище без перекомпиляции, а батчинг, сжатие, retry и tail-based sampling вынести из приложения в Collector.",
-                "example": "Конфиг: receivers `otlp` (`grpc:4317`, `http:4318`), processors `batch`/`memory_limiter`/`resource`, exporters `jaeger`/`prometheusremotewrite`/`loki`; pipelines связывают их по сигналам в секции `service`.",
-                "when_to_apply": "Collector используют, когда сервисов много и нужен единый шлюз телеметрии с обработкой (PII scrubbing, sampling) до экспорта в бэкенды.",
-                "edge_cases": "`memory_limiter` защищает от `OOM`, `batch` повышает эффективность отправки; tail-based sampling реализуется именно на уровне Collector, а не в SDK приложения.",
-                "related": "[[metrics-tracing-interview#Q6]] OpenTelemetry и его экспорт через OTLP; [[metrics-tracing-interview#Q24]] tail-based sampling в Collector; [[metrics-tracing-interview#Q15]] Collector перед экспортом в Jaeger."
+                "explanation": "Это настраиваемый процесс для traces, metrics и logs; его можно развернуть рядом с приложением или как gateway. Connectors при необходимости связывают pipelines и могут преобразовывать сигналы.",
+                "example": "Для traces объявите OTLP receiver, batch processor и подходящий exporter, затем перечислите их в service.pipelines.traces. Набор компонентов проверяйте по distribution/version: в contrib 0.111.0 есть otlp exporter, но нет jaeger exporter.",
+                "when_to_apply": "Для общей точки приёма, фильтрации и маршрутизации телеметрии. Collector опционален, если SDK может экспортировать прямо в совместимый backend.",
+                "edge_cases": "Протокол и endpoint согласуют с backend. Порядок processors важен; batching не гарантирует доставку. Параметры Boot management.otlp.* не настраивают standalone Java Agent.",
+                "related": "[[metrics-tracing-interview#Q6]] сигналы OTel; [[metrics-tracing-interview#Q24]] sampling; [[metrics-tracing-interview#Q15]] экспорт в backend."
               }
             }
           ]
@@ -2351,50 +2351,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Context propagation передаёт trace state между сервисами: W3C использует `traceparent`/`tracestate`, B3 — single или multi-header формат.",
+              "text": "Согласовать формат W3C или B3 и передавать context через inject/extract, используя его как родителя следующей операции.",
               "correct": true,
               "sections": {
-                "explanation": "Стандартизация заголовков позволяет сшивать трейс через разные системы; composite propagator поддерживает одновременно `W3C` и B3 для смешанных (legacy + новых) сред.",
-                "example": "В `Spring Boot`: `management.tracing.propagation.type: w3c` (или `b3`); вручную — `ContextPropagators.create(TextMapPropagator.composite(W3CTraceContextPropagator..., B3Propagator.injectingSingleHeader()))`.",
-                "when_to_apply": "Propagation настраивают всегда при межсервисных вызовах; B3 добавляют, когда в системе есть legacy-`Zipkin`/`Brave`-сервисы, ожидающие `X-B3-*`.",
-                "edge_cases": "Частые обрывы: async executor не копирует контекст (`ContextPropagatingExecutorService`), `Kafka` producer не добавляет заголовки (OTel `Kafka` instrumentation). Baggage передаётся при настроенном propagator: значение нужно активировать через `makeCurrent()`, ограничивать размер и не отправлять секреты или персональные данные во внешние сервисы. Входящему baggage нельзя доверять как основанию авторизации.",
-                "related": "[[metrics-tracing-interview#Q8]] передача контекста между сервисами; [[metrics-tracing-interview#Q31]] W3C TraceContext как стандарт; [[metrics-tracing-interview#Q23]] traceId и spanId внутри заголовков."
+                "explanation": "Propagation передаёт контекст, а не сами spans. W3C использует traceparent/tracestate; B3 имеет single- и multi-header форматы. Извлечённый context нужно применить при создании и выполнении операции.",
+                "example": "Boot 3.3.2 с Micrometer Tracing: `management.tracing.propagation.consume: [w3c, b3, b3_multi]`, `produce: [w3c]`. Для standalone Java Agent настройка другая: `OTEL_PROPAGATORS=tracecontext,baggage`.",
+                "when_to_apply": "На межсервисных границах, где нужна родительская связь; дополнительные форматы принимают для совместимости с конкретными участниками.",
+                "edge_cases": "Composite вызывает propagators по порядку и не согласует конфликтующие IDs автоматически. Проверяйте async/Kafka-интеграции; в ручном OTel Java 1.37.0 есть Context.taskWrapping(ExecutorService). Baggage ограничивают и не считают доверенной авторизацией.",
+                "related": "[[metrics-tracing-interview#Q31]] W3C; [[metrics-tracing-interview#Q8]] создание parent-связи; [[metrics-tracing-interview#Q23]] IDs."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Context propagation работает только для `W3C TraceContext`; формат B3 (`Zipkin`) с `OpenTelemetry` использовать нельзя.",
+              "text": "Подключить W3C и B3 через composite propagator, чтобы при конфликтующих IDs автоматически объединить входящие деревья в общий trace.",
               "correct": false,
               "sections": {
-                "what_actually": "OTel поддерживает оба: `W3CTraceContextPropagator` и `B3Propagator`; их можно даже комбинировать через composite propagator для legacy-систем.",
-                "source_of_confusion": "Рекомендация `W3C` по умолчанию создаёт впечатление, что B3 несовместим.",
-                "if_it_were_true": "Тогда `B3Propagator.injectingSingleHeader()` был бы недоступен, но он есть в OTel SDK.",
-                "how_it_should_be": "Propagation поддерживает и `W3C`, и B3; composite propagator совмещает их для смешанных сред."
+                "what_actually": "Composite вызывает компоненты в заданном порядке. Это не алгоритм слияния разных traces; итог зависит от обработки форматов и приоритета.",
+                "source_of_confusion": "Совместную поддержку нескольких форматов принимают за разрешение противоречивых родительских связей.",
+                "if_it_were_true": "Два разных trace ID становились бы одним корректным родителем без явно выбранной политики, чего интерфейс composite не обещает.",
+                "how_it_should_be": "Определите принимаемые/исходящие форматы и приоритет; отдельно проверьте запросы с противоречащими заголовками."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Трейс не обрывается на async-вызовах и `Kafka`: контекст пропагируется туда авто-инструментацией так же бесшовно.",
+              "text": "Прочитать заголовки HTTP до передачи задачи executor, чтобы извлечённый context автоматически стал текущим в произвольном worker без активации.",
               "correct": false,
               "sections": {
-                "what_actually": "Async executor по умолчанию не копирует контекст, а producer `Kafka` — не добавляет заголовки; для непрерывности нужны `ContextPropagatingExecutorService` и OTel `Kafka` instrumentation.",
-                "source_of_confusion": "Бесшовность авто-инструментации `HTTP` создаёт ложное ощущение, что и async/`Kafka` «просто работают».",
-                "if_it_were_true": "Тогда в таблице проблем не значились бы обрывы на executor и `Kafka`, но это типовые точки разрыва.",
-                "how_it_should_be": "Async и `Kafka` рвут трейс без явной передачи контекста; решают это специальным executor и instrumentation."
+                "what_actually": "Чтение заголовков само не активирует context в другом потоке. Нужна подходящая auto-instrumentation либо явная передача и scope.",
+                "source_of_confusion": "Извлечение значения из carrier смешивают с его применением в месте выполнения задачи.",
+                "if_it_were_true": "Любой произвольный worker видел бы context вызывающего потока только из-за чтения заголовка, хотя current scope связан с выполнением.",
+                "how_it_should_be": "Проверьте доступный context в worker. Используйте поддерживаемую интеграцию executor или Context.taskWrapping/wrap; не дублируйте уже работающую инструментацию."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Context propagation передаёт только `traceId`, а `spanId` и решение о sampling каждый сервис вычисляет заново.",
+              "text": "Скопировать входящий W3C parent-id в ID нового server span, чтобы совпадение идентификаторов двух операций выражало их родительскую связь.",
               "correct": false,
               "sections": {
-                "what_actually": "Пропагация передаёт `traceId`, `spanId` (parent) и флаг sampling вместе; иначе дерево и единое решение о записи не построить.",
-                "source_of_confusion": "Кажется, что достаточно общего `traceId` для группировки, а остальное локально.",
-                "if_it_were_true": "Тогда `parentSpanId` и `flags` в `traceparent` были бы лишними, но они там именно для передачи иерархии и sampling.",
-                "how_it_should_be": "Передаются `traceId`, parent `spanId` и sampling-флаг; их не вычисляют заново на каждом сервисе."
+                "what_actually": "Входящий parent-id указывает на span вызывающей стороны. Новый server span получает собственный ID и ссылается на извлечённого родителя.",
+                "source_of_confusion": "ID родителя принимают за идентификатор создаваемого дочернего span.",
+                "if_it_were_true": "Клиентская и серверная операции потеряли бы различимость, а простое совпадение IDs не выражало бы отдельное parent-child ребро.",
+                "how_it_should_be": "Извлеките parent context, создайте child span и при исходящем вызове inject контекст нужной текущей операции. Sampling-флаг не гарантирует сохранение trace."
               }
             }
           ]
