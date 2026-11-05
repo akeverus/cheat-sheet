@@ -11,7 +11,6 @@ import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
 import com.cheatsheet.quiz.persistence.FullTextSearchRepository;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.QuestionRevisionRepository;
-import com.cheatsheet.quiz.persistence.ReviewStateRepository;
 import com.cheatsheet.quiz.service.cache.OptionCache;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +35,7 @@ import java.util.Set;
  * <ul>
  *   <li>Парсит вопросы через {@link MarkdownQuestionParser};</li>
  *   <li>Вставляет новые вопросы ({@code INSERT});</li>
- *   <li>Обновляет изменённые вопросы ({@code UPDATE} + сброс прогресса);</li>
+ *   <li>Обновляет изменённые вопросы, сохраняя прогресс обучения ({@code UPDATE});</li>
  *   <li>Переразбирает вопросы с прежним текстом, если парсер стал выводить из него
  *       другие производные поля ({@code REDERIVED}, прогресс не трогает).</li>
  * </ul>
@@ -55,7 +54,6 @@ public class QuestionImportService {
     private final InterviewPathResolver interviewPathResolver;
     private final QuestionRepository questionRepository;
     private final AnswerOptionRepository answerOptionRepository;
-    private final ReviewStateRepository reviewStateRepository;
     private final QuestionRevisionRepository questionRevisionRepository;
     private final FullTextSearchRepository fullTextSearchRepository;
     private final OptionCache optionCache;
@@ -260,10 +258,11 @@ public class QuestionImportService {
                 .diagramMermaid(parsed.diagramMermaid())
                 .takeaway(current.takeaway())
                 .build();
+            // Новая ревизия обновляет материал, но не отменяет ответы ученика и память
+            // планировщика. Импорт не должен менять сроки и накопленный прогресс.
             questionRepository.update(updatedQuestion);
             answerOptionRepository.deleteByQuestionId(current.id());
             optionCache.invalidate(current.id());
-            reviewStateRepository.reset(current.id(), clock.instant().getEpochSecond());
             questionRevisionRepository.append(current.id(), sourceHash, clock.instant().getEpochSecond());
             fullTextSearchRepository.upsert(current.id(), updatedQuestion.questionText(), updatedQuestion.answerMarkdown());
             return UpsertOutcome.UPDATE;

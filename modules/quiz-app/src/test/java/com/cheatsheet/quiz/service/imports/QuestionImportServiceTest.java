@@ -14,7 +14,6 @@ import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
 import com.cheatsheet.quiz.persistence.FullTextSearchRepository;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.QuestionRevisionRepository;
-import com.cheatsheet.quiz.persistence.ReviewStateRepository;
 import com.cheatsheet.quiz.service.cache.OptionCache;
 import com.cheatsheet.quiz.common.util.InterviewPathResolver;
 import com.cheatsheet.quiz.common.util.TopicDisplayNames;
@@ -44,8 +43,6 @@ class QuestionImportServiceTest {
     @Mock
     AnswerOptionRepository answerOptionRepository;
     @Mock
-    ReviewStateRepository reviewStateRepository;
-    @Mock
     QuestionRevisionRepository questionRevisionRepository;
     @Mock
     FullTextSearchRepository fullTextSearchRepository;
@@ -71,7 +68,6 @@ class QuestionImportServiceTest {
                 interviewPathResolver,
                 questionRepository,
                 answerOptionRepository,
-                reviewStateRepository,
                 questionRevisionRepository,
                 fullTextSearchRepository,
                 optionCache,
@@ -223,7 +219,6 @@ class QuestionImportServiceTest {
         // без этой половины теста прошёл бы и вариант, который зовёт update()
         // и заодно сбрасывает SM-2 всему банку на первом же старте.
         verify(questionRepository, never()).update(any());
-        verify(reviewStateRepository, never()).reset(anyLong(), anyLong());
         verify(answerOptionRepository, never()).deleteByQuestionId(anyLong());
         verify(questionRevisionRepository, never()).append(anyLong(), any(), anyLong());
     }
