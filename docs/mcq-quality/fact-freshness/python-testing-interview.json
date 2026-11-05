@@ -1,0 +1,43 @@
+{
+  "topic_slug": "python-testing-interview",
+  "round": 1,
+  "status": "TODO",
+  "version_sensitive": true,
+  "product_version": "pytest stable documentation / pytest-asyncio 1.4.1 / Python 3.15 / SQLAlchemy 2.0, Q1–Q7 author-reviewed 2026-11-02; Q6 AsyncMock/cancellation checked 2026-11-05 against Python 3.15 docs, examples run on 3.14.4",
+  "checked_date": "2026-11-05",
+  "sources": [
+    "https://docs.pytest.org/en/stable/how-to/unittest.html",
+    "https://docs.pytest.org/en/stable/how-to/fixtures.html",
+    "https://docs.pytest.org/en/stable/how-to/parametrize.html",
+    "https://docs.pytest.org/en/stable/example/parametrize.html",
+    "https://docs.pytest.org/en/stable/how-to/monkeypatch.html",
+    "https://docs.python.org/3/library/unittest.html",
+    "https://docs.python.org/3/library/unittest.mock.html#where-to-patch",
+    "https://docs.python.org/3/library/unittest.mock.html#autospeccing",
+    "https://docs.python.org/3.15/library/unittest.html#unittest.IsolatedAsyncioTestCase",
+    "https://docs.python.org/3.15/library/asyncio-task.html#task-cancellation",
+    "https://pytest-asyncio.readthedocs.io/en/v1.4.1/concepts.html",
+    "https://docs.sqlalchemy.org/en/20/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites",
+    "https://www.postgresql.org/docs/current/sql-commit.html",
+    "https://docs.python.org/3.15/library/unittest.mock.html#unittest.mock.AsyncMock"
+  ],
+  "version_sensitive_claims": [
+    "Q1: pytest запускает многие unittest.TestCase, но их методы не принимают fixtures как аргументы и не поддерживают обычную pytest-параметризацию; autouse/usefixtures доступны.",
+    "Q2: teardown yield-fixture выполняется в конце её scope; при ошибке до yield этот teardown не запускается, но уже успешно созданные fixtures завершаются; request.addfinalizer можно зарегистрировать после создания ресурса.",
+    "Q3: pytest.mark.parametrize создаёт отдельные тестовые случаи; pytest.param id влияет на имя случая, marks могут задавать skip/xfail отдельному случаю.",
+    "Q4: patch заменяет имя в месте поиска кодом под тестом; from-import и module-import требуют разных target; autospec не исправляет неверный target.",
+    "Q5: monkeypatch отменяет изменения после запросившего теста/fixture; context ограничивает срок подмены, а autospec проверяет видимый API/signature и не знает динамических instance-атрибутов из __init__.",
+    "Q6: IsolatedAsyncioTestCase даёт loop каждому тесту и отменяет остаточные задачи; pytest-asyncio strict/auto отличаются правилом marker; Task.cancel запрашивает кооперативную отмену, cleanup нужно проверить после ожидания задачи.",
+    "Q7: mock SQL/HTTP не доказывает реальный внешний контракт; внешняя тестовая транзакция SQLAlchemy может обойти настоящий COMMIT, поэтому его эффекты проверяют отдельно.",
+    "Q6 (2026-11-05): AsyncMock tracks calls and awaits separately; assert_called_once_with can pass before awaiting, while assert_awaited_once_with checks the await and arguments, without proving a successful result. Cancellation test waits for entry into try/finally before cancel and checks cleanup after awaiting the task."
+  ],
+  "staleness_risks": [
+    "Синтаксис и совместимость pytest с unittest.TestCase зависят от версии pytest; конкретная версия проекта не закреплена.",
+    "Q1–Q7 прошли авторскую проверку, но независимая blind-приёмка всего MCQ-файла не проведена.",
+    "Q7 описывает общую стратегию; конкретный драйвер, ORM, СУБД и HTTP-клиент проекта не заданы и требуют отдельной проверки."
+  ],
+  "notes": [
+    "Для Q1–Q7 проведена авторская полная проверка; status TODO оставлен до независимой приёмки.",
+    "2026-11-05: Q6 deepened with runnable standard-library examples and MCQ B1. Q1–Q7 prior author changes preserved; independent semantic/SFPL/ANSC/RU/blind review remains NOT_RUN. Whole-file freshness status remains TODO."
+  ]
+}
