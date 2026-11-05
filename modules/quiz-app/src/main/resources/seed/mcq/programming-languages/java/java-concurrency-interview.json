@@ -1686,55 +1686,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие фабричные методы Executors есть в стандартной библиотеке и какие у них характеристики?",
+          "question_text": "Какие реализации `ExecutorService` есть в стандартной библиотеке?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Готовые типы пулов под разные нагрузки: fixed, cached, single, scheduled, work-stealing, virtual-per-task.",
+              "text": "ThreadPoolExecutor — пул обычных задач, ScheduledThreadPoolExecutor — планирование, ForkJoinPool — work-stealing; для последнего есть Executors.newWorkStealingPool(p).",
               "correct": true,
               "sections": {
-                "explanation": "newFixedThreadPool(n) — фиксированные n потоков с unbounded LinkedBlockingQueue (риск OOM при backlog); newCachedThreadPool — 0..Integer.MAX_VALUE потоков с SynchronousQueue (риск создания миллионов потоков); newSingleThreadExecutor — 1 поток, sequential; newScheduledThreadPool — периодические задачи; newWorkStealingPool — поверх ForkJoinPool; newVirtualThreadPerTaskExecutor (Java 21) — по virtual thread на задачу. В продакшене Executors.newCachedThreadPool и newFixedThreadPool опасны из-за unbounded поведения. Лучше создавать ThreadPoolExecutor вручную с ограниченной очередью и RejectedExecutionHandler.",
-                "example": "newFixedThreadPool(2) + 1M задач → OOM (очередь съест heap). newCachedThreadPool + 100K параллельных I/O → 100K OS threads → crash. Решение: new ThreadPoolExecutor(8, 16, 60, SEC, new ArrayBlockingQueue<>(1000), new CallerRunsPolicy()).",
-                "when_to_apply": "Fixed — предсказуемая нагрузка. Cached — короткие задачи. Single — последовательность. Scheduled — cron. WorkStealing — рекурсивные. VirtualPerTask — I/O-bound на Java 21.",
-                "edge_cases": "newSingleThreadExecutor с unbounded queue → OOM при backlog. ScheduledExecutorService при exception в task — последующие выполнения отменяются (для fixedRate/fixedDelay).",
+                "explanation": "Основные публичные реализации — ThreadPoolExecutor, ScheduledThreadPoolExecutor и ForkJoinPool. Фабрики Executors возвращают настроенные исполнители, иногда через обёртку. Fixed ограничивает число одновременно работающих задач, cached переиспользует свободные потоки, single выполняет задачи последовательно, scheduled поддерживает задержки и периоды. Фабрика newWorkStealingPool использует work-stealing; virtual-per-task в Java 21 создаёт отдельный virtual thread на задачу, а не переиспользует такой поток.",
+                "example": "Executors.newFixedThreadPool(2) допускает до двух одновременно работающих задач и неограниченную очередь ожидающих. Перегрузка может исчерпать память, но число задач само по себе не гарантирует OOM. Для ограниченной очереди можно настроить ThreadPoolExecutor; отдельно выбирают политику отказа.",
+                "when_to_apply": "Реализацию и фабрику выбирают по нагрузке: обычный пул, последовательная обработка, отложенное выполнение или work-stealing. Для ограничения очереди и активности нужна соответствующая конфигурация. Scheduled API использует задержки и периоды, а не cron-выражения.",
+                "edge_cases": "ScheduledThreadPoolExecutor использует corePoolSize с неограниченной очередью; увеличение maximumPoolSize практически не управляет его параллелизмом. Исключение периодической задачи подавляет следующие выполнения именно этой задачи. Параметры очередей OpenJDK нужно отличать от общих API-гарантий.",
                 "related": "[[java-concurrency-interview#Q28]] Executor; [[java-concurrency-interview#Q30]] shutdown; [[java-concurrency-interview#Q32]] ForkJoinPool; [[java-concurrency-interview#Q46]] virtual threads."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Готовые типы пулов под разные нагрузки: fixed, cached, single, scheduled, fork-join, virtual-per-task.",
+              "text": "Обычные задачи обслуживает ThreadPoolExecutor, отложенные — ScheduledThreadPoolExecutor, work-stealing — ForkJoinPool; последний создаёт Executors.newForkJoinPool(p).",
               "correct": false,
               "sections": {
-                "what_actually": "Work-stealing-пул создаёт `Executors.newWorkStealingPool`; отдельной фабрики `newForkJoinPool` в `Executors` нет — сам `ForkJoinPool` создаётся конструктором или берётся как `commonPool()`.",
-                "source_of_confusion": "`newWorkStealingPool` под капотом возвращает `ForkJoinPool`, поэтому фабрику ошибочно называют `newForkJoinPool`.",
-                "if_it_were_true": "Существовал бы дублирующий метод; реально API даёт единственную фабрику `newWorkStealingPool` для work-stealing-пула.",
-                "how_it_should_be": "Для work-stealing — `Executors.newWorkStealingPool(parallelism)`; для прямого доступа — `ForkJoinPool.commonPool()` или `new ForkJoinPool(...)`."
+                "what_actually": "Перечисленные классы существуют, но метода Executors.newForkJoinPool(p) в Java 21 нет. Work-stealing-исполнитель создаётся через Executors.newWorkStealingPool(p); в OpenJDK 21 это ForkJoinPool.",
+                "source_of_confusion": "Реальный ForkJoinPool за work-stealing-фабрикой подталкивает составить несуществующее имя метода по имени класса. Само название fork-join не ошибка; ошибка здесь — явно указанная фабрика.",
+                "if_it_were_true": "Вызов Executors.newForkJoinPool(p) компилировался бы в Java 21. Фактически компилятор не найдёт такой метод; это не означает, что нельзя создать ForkJoinPool конструктором.",
+                "how_it_should_be": "Обычный пул представляет ThreadPoolExecutor, планирование — ScheduledThreadPoolExecutor, work-stealing — ForkJoinPool. Для последнего используйте существующую фабрику Executors.newWorkStealingPool(p) либо подходящий конструктор ForkJoinPool."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Готовые типы пулов под разные нагрузки: fixed, cached, single, scheduled, work-stealing, direct-executor.",
+              "text": "Для пула есть ThreadPoolExecutor, для задержек — ScheduledThreadPoolExecutor, для work-stealing — ForkJoinPool; синхронный исполнитель есть как Executors.newDirectExecutor().",
               "correct": false,
               "sections": {
-                "what_actually": "`Executors` не содержит `newDirectExecutor`: синхронное исполнение в вызывающем потоке даёт Guava (`MoreExecutors.directExecutor`) или просто `Runnable.run()`.",
-                "source_of_confusion": "Guava-фабрику `directExecutor` переносят в стандартный `java.util.concurrent.Executors`, где её нет.",
-                "if_it_were_true": "JDK предлагал бы готовый inline-executor; реально его собирают вручную (`cmd -> cmd.run()`).",
-                "how_it_should_be": "Для синхронного исполнения — `Runnable::run` как `Executor` или Guava `directExecutor`; штатной JDK-фабрики нет."
+                "what_actually": "Классы ThreadPoolExecutor, ScheduledThreadPoolExecutor и ForkJoinPool перечислены верно. Однако Executors.newDirectExecutor() отсутствует в Java 21. Inline-исполнение можно описать как Executor командой Runnable::run; это не штатная фабрика ExecutorService.",
+                "source_of_confusion": "Сторонние библиотеки и пользовательские Executor могут исполнять задачу в вызывающем потоке. Наличие такого поведения не означает наличие метода с этим именем в Executors.",
+                "if_it_were_true": "Указанный вызов newDirectExecutor() был бы частью Executors и компилировался бы. В действительном API такого метода нет; возможность самостоятельно задать inline Executor сохраняется.",
+                "how_it_should_be": "Реализации ExecutorService выбирают из ThreadPoolExecutor, ScheduledThreadPoolExecutor, ForkJoinPool и исполнителей, возвращаемых существующими фабриками. Для inline Executor можно использовать Runnable::run; не выдавать его за Executors.newDirectExecutor()."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Готовые типы пулов под разные нагрузки: fixed, cached, single, scheduled, work-stealing, cached-scheduled.",
+              "text": "Пулы представлены ThreadPoolExecutor, планирование — ScheduledThreadPoolExecutor, work-stealing — ForkJoinPool; cached-планирование создаёт Executors.newCachedScheduledThreadPool(n).",
               "correct": false,
               "sections": {
-                "what_actually": "Фабрики `newCachedScheduledThreadPool` не существует: периодику покрывает `newScheduledThreadPool`, а рост под нагрузкой — отдельный `newCachedThreadPool`.",
-                "source_of_confusion": "Хотят «и периодику, и рост потоков» одной фабрикой и достраивают несуществующее имя из двух реальных.",
-                "if_it_were_true": "Один пул совмещал бы cached-рост и scheduled-периодику; реально это разные фабрики с разными очередями.",
-                "how_it_should_be": "Периодические задачи — `newScheduledThreadPool`; всплески коротких задач — `newCachedThreadPool`; совмещение — вручную."
+                "what_actually": "Три названных класса существуют, но Executors.newCachedScheduledThreadPool(n) в Java 21 отсутствует. Планирование поддерживает newScheduledThreadPool(n); cached-пул создаёт другая фабрика newCachedThreadPool().",
+                "source_of_confusion": "Названия двух существующих фабрик объединены в новое имя. Нужда совместить задержки и изменяемую нагрузку сама по себе не добавляет такой метод в стандартную библиотеку.",
+                "if_it_were_true": "Вызов с именем newCachedScheduledThreadPool(n) находился бы компилятором в Executors. Сейчас такого метода нет; собственная архитектура планирования и обработки задач не запрещена.",
+                "how_it_should_be": "Для задержек и периодов используйте ScheduledThreadPoolExecutor или newScheduledThreadPool(n), для cached-пула — newCachedThreadPool(). Границы очередей, потоки и отказ при перегрузке настраивают по требованиям."
               }
             }
           ]
@@ -1986,55 +1986,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое CompletableFuture и какие основные категории методов он предоставляет?",
+          "question_text": "Что такое `CompletableFuture`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "CompletableFuture — async-API из Java 8 с цепочками, комбинированием и обработкой ошибок поверх Future и CompletionStage.",
+              "text": "CompletableFuture реализует Future и CompletionStage: представляет исход вычисления, допускает явное завершение, композицию продолжений и обработку ошибок.",
               "correct": true,
               "sections": {
-                "explanation": "Категории методов: создание (supplyAsync/runAsync/completedFuture), трансформация (thenApply/thenCompose/thenCombine), потребление (thenAccept/thenRun), ошибки (exceptionally/handle/whenComplete), комбинирование (allOf/anyOf), async-варианты с executor. CompletableFuture реализует Future + CompletionStage. По умолчанию использует ForkJoinPool.commonPool(); для I/O рекомендуется передавать свой executor вторым аргументом async-методов. allOf возвращает CF<Void>, anyOf — CF<Object>.",
-                "example": "supplyAsync(() -> fetchUser(id), httpExecutor).thenApply(this::enrich).thenAccept(this::send).exceptionally(ex -> { log.error(ex); return null; });",
-                "when_to_apply": "Любой async pipeline: fan-out + aggregation, timeouts (orTimeout), parallel HTTP-calls, обработка ошибок без вложенных try-catch.",
-                "edge_cases": "thenApply без Async выполняется в потоке, завершившем CF — может быть main или ForkJoin worker. orTimeout/completeOnTimeout — Java 9+. Default commonPool — bad для блокирующих задач.",
-                "related": "[[java-concurrency-interview#Q35]] thenApply vs Compose vs Combine; [[java-concurrency-interview#Q36]] exceptions; [[java-concurrency-interview#Q37]] allOf/anyOf; [[java-concurrency-interview#Q52]] сложные цепочки."
+                "explanation": "CompletableFuture<T> реализует Future<T> и CompletionStage<T>. Он поддерживает явное завершение, ожидание результата и композицию стадий. Основные группы методов: создание/завершение, преобразование/композиция, потребление результата, объединение стадий и обработка ошибок. Это не наследник FutureTask и не Callable или CompletionService.",
+                "example": "CompletableFuture<String> message = CompletableFuture.supplyAsync(() -> \"user-7\").thenApply(String::toUpperCase).exceptionally(error -> \"UNAVAILABLE\"); // message.join() возвращает USER-7 при успешном вычислении",
+                "when_to_apply": "Когда нужно представить будущий исход и связать зависящие от него действия: преобразовать значение, объединить независимые результаты или определить обработку ошибок. Само наличие стадий не делает их функции неблокирующими.",
+                "edge_cases": "Non-Async продолжение может исполниться в завершающем потоке либо сразу при регистрации для уже готового исхода. Статические Async-методы без executor используют commonPool, а при его параллелизме меньше двух — поток на задачу. Выделенный executor выбирают по нагрузке и требованиям к изоляции.",
+                "related": "[[java-concurrency-interview#Q35]] thenApply/thenCompose/thenCombine; [[java-concurrency-interview#Q36]] ошибки; [[java-concurrency-interview#Q37]] allOf/anyOf; [[java-concurrency-interview#Q52]] сложные цепочки."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "CompletableFuture — async-API из Java 8 с цепочками, комбинированием и обработкой ошибок поверх Future и CompletionService.",
+              "text": "Класс CompletableFuture реализует Future и CompletionService: хранит исход вычисления и поддерживает явное завершение, связывание продолжений, обработчики ошибок.",
               "correct": false,
               "sections": {
-                "what_actually": "CompletableFuture реализует `Future` и `CompletionStage`; `CompletionService` — иной механизм (`ExecutorCompletionService`, очередь готовых задач), к CF отношения не имеющий.",
-                "source_of_confusion": "Похожие имена `CompletionStage` и `CompletionService` путают — оба из `java.util.concurrent`.",
-                "if_it_were_true": "CF отдавал бы результаты через `take()`/`poll()` очереди, а не через `thenApply`-цепочки — реально это API `CompletionService`.",
-                "how_it_should_be": "CF = `Future` + `CompletionStage`; `CompletionService` используют отдельно для сбора результатов пачки задач."
+                "what_actually": "CompletableFuture реализует Future и CompletionStage, не CompletionService. CompletionService — отдельный интерфейс отправки задач и получения готовых Future через take/poll, например в ExecutorCompletionService.",
+                "source_of_confusion": "Похожие имена CompletionStage и CompletionService относятся к обработке завершений, но обозначают разные контракты. Вариант ошибается именно в реализуемом интерфейсе.",
+                "if_it_were_true": "Класс должен был бы предоставлять контракт CompletionService, в том числе отправку задач и получение готовых Future. Само по себе это не запрещало бы дополнительные методы цепочек; фактически CompletableFuture этот интерфейс не реализует.",
+                "how_it_should_be": "CompletableFuture реализует Future и CompletionStage. CompletionService можно использовать отдельно для сбора завершённых задач; не подменять им интерфейс композиции стадий."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "CompletableFuture — async-API из Java 8 с цепочками, комбинированием и обработкой ошибок поверх Future и Callable.",
+              "text": "Интерфейсы CompletableFuture — Future и Callable: класс предоставляет исход вычисления, его явное завершение, цепочки зависимых действий и обработку ошибок.",
               "correct": false,
               "sections": {
-                "what_actually": "Второй интерфейс CF — `CompletionStage`, а не `Callable`: `Callable` описывает вычисление-задачу, а не асинхронную стадию с комбинаторами.",
-                "source_of_confusion": "`Callable` привычен как «то, что возвращает результат», и его подставляют вместо `CompletionStage`.",
-                "if_it_were_true": "У CF был бы единственный метод `call()`, а не `thenApply`/`thenCompose`/`exceptionally` — реально этих методов десятки.",
-                "how_it_should_be": "CF реализует `Future` + `CompletionStage`; `Callable` лишь передают в `supplyAsync` как источник значения."
+                "what_actually": "CompletableFuture реализует Future и CompletionStage. Callable представляет задачу с методом call(), а не контракт стадии; CompletableFuture не является Callable.",
+                "source_of_confusion": "Callable и Future оба связаны с результатом вычисления: первый описывает вычисление, второй — доступ к исходу. Ни один из этих смыслов не заменяет CompletionStage.",
+                "if_it_were_true": "У класса был бы контракт Callable с методом call(). Это не удаляло бы остальные методы и интерфейсы; в реальном CompletableFuture такого контракта нет.",
+                "how_it_should_be": "Метод supplyAsync принимает Supplier<T>, а не переменную Callable<T>. Если исходная работа — Callable, нужен Supplier-адаптер с обработкой checked exceptions; CompletableFuture при этом остаётся Future + CompletionStage."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "CompletableFuture — async-API из Java 8 с цепочками, комбинированием и обработкой ошибок поверх FutureTask и CompletionStage.",
+              "text": "CompletableFuture наследует FutureTask и реализует CompletionStage: результат можно завершить явно, связать с продолжениями и обработчиками ошибок.",
               "correct": false,
               "sections": {
-                "what_actually": "CF реализует интерфейс `Future`, а не наследует `FutureTask`: `FutureTask` — конкретная `Runnable`+`Future` обёртка для однократного запуска.",
-                "source_of_confusion": "`FutureTask` — самая известная реализация `Future`, поэтому его называют базой и для CompletableFuture.",
-                "if_it_were_true": "CF был бы `Runnable` с методом `run()`, запускался бы через `Thread`/executor вручную — реально он завершается `complete()`/цепочкой.",
-                "how_it_should_be": "CF строится на интерфейсе `Future` + `CompletionStage`; `FutureTask` — независимая реализация `Future`."
+                "what_actually": "CompletableFuture наследует Object и реализует Future и CompletionStage. FutureTask — отдельная реализация RunnableFuture; наследования CompletableFuture от FutureTask нет.",
+                "source_of_confusion": "Известную реализацию FutureTask принимают за обязательную базу любого Future. Реализация общего интерфейса не означает наследование одного конкретного класса от другого.",
+                "if_it_were_true": "При наследовании от FutureTask класс получил бы его RunnableFuture-контракт, включая run(). Из этого не следовал бы запрет complete() или обязательный ручной запуск. Фактически такого наследования нет.",
+                "how_it_should_be": "Определение CompletableFuture опирается на реализуемые Future и CompletionStage, явное завершение и композицию. FutureTask рассматривают отдельно как исполняемую обёртку вычисления."
               }
             }
           ]
@@ -3066,55 +3066,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как построить сложную цепочку CompletableFuture с обработкой ошибок?",
+          "question_text": "Как построить сложную цепочку `CompletableFuture` с обработкой ошибок?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Строить всё на supplyAsync и thenApply без exceptionally и handle, полагаясь, что исключение промежуточной стадии само всплывёт в вызывающий код.",
+              "text": "Запустить независимые supplyAsync, объединить thenCombine и окружить построение try/catch: исключения функций стадий синхронно попадут в этот catch, где выбирают резервное значение.",
               "correct": false,
               "sections": {
-                "what_actually": "Исключение в стадии CompletableFuture не теряется: оно запоминается в completed-exceptionally future и всплывает как CompletionException при join()/get(), а зависимые thenApply пропускаются, не выполняя тело.",
-                "source_of_confusion": "Отсутствие try/catch в лямбде создаёт иллюзию, что ошибка «проглатывается»; на деле CF переносит её по цепочке до терминальной операции.",
-                "if_it_were_true": "Ошибки молча превращались бы в null и портили данные без следа — реально при get() прилетит CompletionException с исходной причиной.",
-                "how_it_should_be": "Для обработки в самой цепочке — exceptionally/handle; get() лишь выбрасывает накопленное исключение, а не гасит его."
+                "what_actually": "Ошибка функции стадии сохраняется в завершённом с ошибкой Future. Catch вокруг построения цепочки не перехватывает её как синхронный выброс из supplyAsync/thenCombine. При ожидании join сообщает ошибку через CompletionException, get — через ExecutionException; отмена имеет отдельную семантику.",
+                "source_of_confusion": "Синхронный try/catch переносится на код, который лишь регистрирует вычисления и зависимости. Ошибку самого вызова API, например отказ executor, нужно отличать от последующей ошибки функции стадии.",
+                "if_it_were_true": "Внешний catch смог бы выбрать резервный результат прямо при построении цепочки из-за ошибки, возникшей в её функции позднее. Реальная модель сохраняет исход в стадии и предоставляет отдельные средства его обработки.",
+                "how_it_should_be": "Для обработки исхода в цепочке используйте exceptionally/handle либо наблюдение whenComplete. При синхронном ожидании можно отдельно обработать исключения get/join; это другой момент наблюдения ошибки."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Запускать независимые supplyAsync с orTimeout, оборачивать в exceptionally для частичного fallback, агрегировать через thenCombine/allOf и финальный handle.",
+              "text": "Запустить независимые supplyAsync, задать резервное значение через exceptionally, объединить thenCombine и обработать итог через handle: ошибку сохраняют или заменяют значением по политике приложения.",
               "correct": true,
               "sections": {
-                "explanation": "Критично использовать свой Executor вместо commonPool для I/O. Композиция: orTimeout на каждый запрос, exceptionally → partial fallback (например, пустой список вместо ошибки), thenCombine для merge, handle → конвертация technical exception в business. CompletionException нужно unwrap (getCause()).",
-                "example": "var u = supplyAsync(()->repo.user(id), exec).orTimeout(2,SEC); var o = supplyAsync(()->repo.orders(id), exec).exceptionally(ex->List.of()); u.thenCombine(o, Profile::new).handle((p,ex)-> ex!=null ? errorProfile(ex) : p);",
-                "when_to_apply": "Fan-out с partial degradation (некритичные сервисы); strict aggregation (всё или ничего) с явной классификацией ошибок.",
-                "edge_cases": "exceptionally возвращает CompletionStage<T>, не CompletionStage<T|Throwable> — fallback должен совпадать по типу. Async-варианты выполняются в commonPool без явного executor.",
-                "related": "[[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q35]] thenApply/Compose; [[java-concurrency-interview#Q36]] ошибки; [[java-concurrency-interview#Q56]] StructuredTaskScope."
+                "explanation": "Это один допустимый рецепт: запуск независимых стадий, локальные резервные значения для допустимых сбоев, композиция результатов и обработка итогового исхода. Политику обязательных и необязательных веток определяет приложение. Обработчик, вернувший обычное значение, превращает ошибку в успешный результат; критическую ошибку можно сохранить.",
+                "example": "var user = CompletableFuture.supplyAsync(() -> \"user-7\"); var orders = CompletableFuture.<java.util.List<String>>supplyAsync(() -> { throw new IllegalStateException(\"orders unavailable\"); }).exceptionally(error -> java.util.List.of()); var profile = user.thenCombine(orders, (u, o) -> u + \":\" + o.size()).handle((value, error) -> { if (error != null) throw new java.util.concurrent.CompletionException(error); return value; }); // profile.join(): user-7:0",
+                "when_to_apply": "Для объединения независимых вычислений с выбранной политикой ошибок. Если нужен предел ожидания всей сборки, ограничьте итоговую стадию; timeout одной ветки не гарантирует такой предел для остальных веток.",
+                "edge_cases": "Методы orTimeout и completeOnTimeout возвращают тот же Future и не прерывают supplier. CommonPool допустим для подходящей нагрузки; отдельный executor выбирают по требованиям к изоляции и блокирующей работе. Exceptionally/handle не обязаны проглатывать критические ошибки.",
+                "related": "[[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q35]] композиция; [[java-concurrency-interview#Q36]] ошибки; [[java-concurrency-interview#Q37]] объединение стадий."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Собирать результаты блокирующим get() в try-catch после каждого supplyAsync, ловя исключения синхронно и агрегируя список вручную.",
+              "text": "Запустить независимые supplyAsync с резервными значениями через exceptionally, объединить allOf и передать в handle: allOf возвращает список результатов, из которого собирают итог.",
               "correct": false,
               "sections": {
-                "what_actually": "Блокирующий get() убивает async-преимущество; try-catch теряет компонуемость.",
-                "source_of_confusion": "Привычка синхронного кода: тянет блокировать get() с try-catch вместо неблокирующей композиции.",
-                "if_it_were_true": "Не было бы смысла в CompletableFuture — реально для non-blocking compose.",
-                "how_it_should_be": "Цепочка через thenCompose/exceptionally/handle без блокирующего get."
+                "what_actually": "AllOf возвращает CompletableFuture<Void>, а не список значений. Это барьер завершения: значения входных стадий он сам не собирает. Резервные значения в ветках не меняют тип результата allOf.",
+                "source_of_confusion": "Ожидание группы задач принимают за агрегацию её значений. Сходство со средствами сбора списков в других API не меняет контракт CompletableFuture.allOf.",
+                "if_it_were_true": "Функция в handle получила бы список результатов allOf. В действительном API нормальный результат этой стадии — null типа Void, поэтому автоматически извлечь из него значения веток нельзя.",
+                "how_it_should_be": "Для двух значений можно использовать thenCombine. AllOf допустим как барьер, но после него значения берут из исходных стадий и собирают отдельно. Политику ошибок определяют явно в ветках или итоговом обработчике."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Гонять supplyAsync, thenCombine и handle через общий commonPool, не заводя отдельного executor ни под CPU-bound, ни под блокирующий I/O.",
+              "text": "Запустить независимые supplyAsync, объединить thenCombine и заменить ошибку в whenComplete: возвращённое наблюдателем резервное значение станет успешным результатом цепочки.",
               "correct": false,
               "sections": {
-                "what_actually": "commonPool для CPU-bound и небольших задач; блокирующий I/O засоряет worker'ов FJP, деградирует parallelStream.",
-                "source_of_confusion": "Удобство дефолта: commonPool подключается «бесплатно», поэтому его берут под любые задачи.",
-                "if_it_were_true": "Не было бы supplyAsync(fn, executor) перегрузки — реально есть.",
-                "how_it_should_be": "Для I/O — отдельный Executor; для CPU-bound — commonPool норм."
+                "what_actually": "Метод whenComplete принимает наблюдатель BiConsumer, возвращающий void. Его возвращаемого резервного значения нет; при нормальном завершении наблюдателя прежний исход сохраняется. Чтобы преобразовать исход в значение, нужен handle либо exceptionally.",
+                "source_of_confusion": "WhenComplete и handle получают результат и ошибку, но отличаются назначением: первый наблюдает, второй вычисляет новый исход. Наличие двух аргументов не означает одинаковый контракт возврата.",
+                "if_it_were_true": "Наблюдатель whenComplete мог бы вернуть новое значение и заменить ошибку успешным результатом. Такой контракт есть у преобразующих обработчиков, а не у BiConsumer в whenComplete.",
+                "how_it_should_be": "Резервное значение задают через exceptionally или handle. Метод whenComplete применяют для наблюдения; исключение самого наблюдателя тоже может изменить итоговый исход, поэтому побочные действия не объявляют безусловно безопасными."
               }
             }
           ]
