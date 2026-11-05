@@ -1420,7 +1420,7 @@
                 "what_actually": "reset очищает и stubbing, и историю. clearInvocations очищает историю без удаления стабов; ни один из этих методов не пересоздаёт Java-объект.",
                 "source_of_confusion": "Слово «reset» иногда понимают как «сбросить счётчики», но не настройки.",
                 "if_it_were_true": "Тогда после `reset()` стабы продолжали бы работать, но мок возвращается к дефолтному поведению.",
-                "how_it_should_be": "`reset()` убирает и стабы, и записи вызовов — полная очистка состояния мока."
+                "how_it_should_be": "reset удаляет stubbing и историю, сохраняя объект и creation settings. Для очистки только истории есть clearInvocations; настоящие поля Spy этими методами не восстанавливаются."
               },
               "label": "C",
               "order": 2
@@ -1634,7 +1634,7 @@
               "sections": {
                 "explanation": "STRICT_STUBS проверяет unused stubs и потенциальный argument mismatch, а совпавшие stub-вызовы может автоматически помечать verified.",
                 "example": "Неиспользованный stub может дать UnnecessaryStubbingException при завершении сессии. Потенциальное расхождение аргументов может дать PotentialStubbingProblem во время вызова.",
-                "when_to_apply": "Применяют по умолчанию во всех новых тестах на JUnit 5 — он бесплатно ловит устаревшие заглушки и ошибки в аргументах при рефакторинге.",
+                "when_to_apply": "Для тестов с MockitoExtension 5.11.0 действует default STRICT_STUBS, если его не переопределили. Сам JUnit 5 не включает этот режим для произвольного mock(); выбирай интеграцию и effective strictness осознанно.",
                 "edge_cases": "Это не компиляторная проверка и не запрет всех незастабленных методов. WARN отличается от STRICT_STUBS; детали обнаружения зависят от версии и условий вызова.",
                 "related": "[[mockito-interview#Q33]] UnnecessaryStubbingException [[mockito-interview#Q29]] lenient() точечно [[mockito-interview#Q45]] @MockitoSettings и strictness"
               },
@@ -1754,7 +1754,7 @@
               "sections": {
                 "what_actually": "Для последовательности используют chained Answers или varargs в одной настройке. Повторные stubbing одного вызова не являются автоматической очередью ответов.",
                 "source_of_confusion": "Несколько `when()` на один вызов кажутся способом задать последовательность, хотя последний просто перекрывает предыдущие.",
-                "if_it_were_true": "Тогда `thenReturn(1, 2, 3)` не компилировался бы, но это валидная и распространённая форма.",
+                "if_it_were_true": "Два отдельных when(counter.next()).thenReturn(1) и when(counter.next()).thenReturn(2) должны были бы дать 1, затем 2. В действительности новый stubbing перекрывает предыдущий; очередь задают одной цепочкой Answers.",
                 "how_it_should_be": "Задай последовательность явно; при перенастройке учитывай, что when может выполнить уже существующий Answer."
               },
               "label": "A",
