@@ -730,17 +730,20 @@ graph LR
 
 ## Q24. В чем разница между `Deadlock`, `Livelock` и `Starvation`?
 
-Все три — формы «застревания» потоков, но различаются тем, **что именно** мешает прогрессу.
+Все три проблемы мешают прогрессу, но по разным причинам.
 
-| Проблема | Описание | Потоки активны? |
+| Проблема | Что происходит с участниками | Могут ли другие потоки работать? |
 |---|---|---|
-| **Deadlock** | Циклическое ожидание ресурсов | Нет, все заблокированы |
-| **Livelock** | Потоки реагируют друг на друга, но не продвигаются | Да, но бесполезно |
-| **Starvation** | Поток не получает ресурсы из-за приоритетов | Частично |
+| **Deadlock** | Участники циклически ждут ресурсы, удерживаемые друг другом | Да, если не зависят от этого цикла |
+| **Livelock** | Участники выполняют действия и реагируют друг на друга, но полезная работа не продвигается | Да |
+| **Starvation** | Отдельный поток систематически не получает нужный ресурс, хотя другие продвигаются | Да |
 
-- **Deadlock** — потоки заблокированы и не выполняют ни инструкции; со стороны CPU простаивает.
-- **Livelock** — потоки активно работают и реагируют друг на друга, но из-за этого никто не двигается вперёд. Аналогия: два человека в коридоре одновременно уступают в одну сторону, потом в другую — и так бесконечно. Часто это побочный эффект наивной обработки конфликтов (например, оба откатываются и тут же повторяют синхронно).
-- **Starvation** — поток в принципе мог бы работать, но систематически не получает ресурс: низкоприоритетные потоки не дождутся CPU, пока высокоприоритетные его занимают, или «жадные» потоки вечно перехватывают блокировку. Решение — справедливая политика (fairness, `new ReentrantLock(true)`), которая выдаёт ресурс в порядке очереди.
+- **Deadlock (взаимная блокировка).** Например, один поток удерживает lock A и ждёт B, а второй удерживает B и ждёт A. Отсутствие прогресса у этих потоков не означает простоя CPU или всей JVM.
+- **Livelock.** Например, два участника одновременно освобождают захваченный ресурс после неудачного `tryLock()`, затем синхронно повторяют попытку и снова мешают друг другу. Аналогия — два человека в коридоре, которые всё время уступают друг другу в одну сторону.
+- **Starvation (голодание).** Например, поток долго не получает блокировку, потому что другие постоянно его обходят. Причиной может быть политика выдачи ресурса или планирования; голодание не сводится к низкому приоритету потока. Определения приведены в [Oracle Concurrency Tutorial](https://docs.oracle.com/javase/tutorial/essential/concurrency/starvelive.html).
+
+**Границы fairness.** `new ReentrantLock(true)` при конкуренции отдаёт предпочтение дольше ожидающему эту блокировку потоку. Это не обещание справедливого планирования CPU и не универсальное устранение голодания. Кроме того, `tryLock()` **без тайм-аута** не соблюдает fairness и может захватить свободный lock перед уже ожидающими. Проверяйте, какой ресурс недоступен, и выбирайте решение для него; порядок захвата locks помогает против циклов ожидания, но не обеспечивает справедливого планирования. См. [Java 21: ReentrantLock](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/locks/ReentrantLock.html).
+
 
 ## Q25. (!) Что такое `Race Condition`?
 
@@ -871,86 +874,145 @@ if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
 
 ## Q31. Разница между `submit()` и `execute()`
 
-Главное различие — в результате и в том, **куда уходит исключение**. `execute()` ничего не возвращает, а `submit()` отдаёт `Future`, через который можно получить результат и узнать об ошибке.
+Различие на уровне API — тип задачи и возвращаемое значение. `execute()` объявлен в `Executor`, а перегрузки `submit()` — в `ExecutorService`.
 
-| Метод | Принимает | Возвращает | Обработка исключений |
-|---|---|---|---|
-| `execute(Runnable)` | `Runnable` | `void` | `UncaughtExceptionHandler` |
-| `submit(Callable/Runnable)` | `Callable` или `Runnable` | `Future` | Исключение в `Future.get()` |
+| Метод | Принимает | Возвращает |
+|---|---|---|
+| `execute(Runnable)` | `Runnable` | `void` |
+| `submit(Callable<T>)` | Задачу, возвращающую `T` | `Future<T>` |
+| `submit(Runnable)` | Задачу без возвращаемого значения | `Future<?>`; `get()` при успехе возвращает `null` |
+| `submit(Runnable, T)` | Задачу и заранее заданный результат | `Future<T>`; `get()` при успехе возвращает заданное значение |
 
-**Важный нюанс и частая ловушка.** У `submit()` исключение из задачи не выбрасывается в потоке пула — оно «упаковывается» в `Future` и всплывёт лишь при вызове `future.get()` (как `ExecutionException`). Если результат `submit()` проигнорировать, ошибка молча потеряется. У `execute()` непойманное исключение уходит в `UncaughtExceptionHandler` потока и обычно попадает в лог.
+`Future` позволяет наблюдать завершение, получить результат и запросить отмену. **Путь исключения зависит также от исполнителя и обёртки задачи.** В обычном `ThreadPoolExecutor` непойманное исключение простого `Runnable`, переданного через `execute()`, может дойти до `UncaughtExceptionHandler` рабочего потока. При `submit()` задача обычно обёрнута в `FutureTask`: ошибка сохраняется в `Future`, а `get()` сообщает о ней через `ExecutionException` с исходной причиной. Но `FutureTask` можно передать и через `execute()` — тогда ошибка тоже сохранится в этой обёртке. См. [ThreadPoolExecutor.afterExecute](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html#afterExecute(java.lang.Runnable,java.lang.Throwable)).
 
 ```java
-// execute — исключение выбрасывается в потоке пула
-executor.execute(() -> { throw new RuntimeException("oops"); });
+import java.util.concurrent.*;
 
-// submit — исключение "проглатывается" до вызова future.get()
-Future<?> f = executor.submit(() -> { throw new RuntimeException("oops"); });
-try {
-    f.get(); // здесь получим ExecutionException
-} catch (ExecutionException e) {
-    System.out.println(e.getCause()); // oops
+public class SubmissionExample {
+    public static void main(String[] args) throws InterruptedException {
+        Executor direct = Runnable::run; // допустимо выполнение в вызывающем потоке
+        direct.execute(() -> System.out.println("direct"));
+
+        try (ExecutorService pool = Executors.newSingleThreadExecutor()) {
+            Future<?> submitted = pool.submit(() -> {
+                throw new IllegalStateException("submitted");
+            });
+            try {
+                submitted.get();
+            } catch (ExecutionException e) {
+                System.out.println(e.getCause().getMessage());
+            }
+
+            FutureTask<Void> wrapped = new FutureTask<>(() -> {
+                throw new IllegalStateException("wrapped");
+            });
+            pool.execute(wrapped); // execute ничего не возвращает; Future у нас уже есть
+            try {
+                wrapped.get();
+            } catch (ExecutionException e) {
+                System.out.println(wrapped.exceptionNow().getMessage());
+            }
+        }
+    }
 }
 ```
+
+`get()` — не единственный способ обнаружить ошибку: начиная с Java 19, `exceptionNow()` возвращает исключение **уже завершившейся с ошибкой** задачи; при другом состоянии он бросает `IllegalStateException`. Возможны также обработка внутри задачи и явно настроенное наблюдение пула. Без наблюдения ошибка может остаться незамеченной, но не исчезает из `Future`. См. [Future.exceptionNow](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Future.html#exceptionNow()).
+
+Ни `execute()`, ни `submit()` сами по себе не обещают отдельного потока. Допустим и непосредственный запуск в вызывающем потоке; тогда исключение простого `Runnable` может вернуться вызывающему коду. Выбирайте `submit()`, когда нужен `Future`, а наблюдение ошибок задавайте отдельно. Сигнатуры и политика исполнения: [Executor](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Executor.html), [ExecutorService](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html).
+
 
 ## Q32. Что такое `ForkJoinPool` и work-stealing?
 
-`ForkJoinPool` — пул потоков, заточенный под рекурсивные задачи типа «разделяй и властвуй»: задача дробится на подзадачи (`fork`), они считаются параллельно, результаты собираются (`join`). В отличие от обычного пула с одной общей очередью, здесь у **каждого** потока своя локальная двусторонняя очередь (deque).
+`ForkJoinPool` — реализация `ExecutorService` с **work-stealing**, удобная для вычислительных задач «разделяй и властвуй» (divide-and-conquer): задача делится на подзадачи (`fork`), затем получает их результаты (`join`). Пул принимает `ForkJoinTask` и `Runnable` через `execute()`, а через `submit()` — также `Callable`.
 
-**Work-stealing (воровство работы).** Простаивающий поток не сидит без дела: он «ворует» задачу с хвоста очереди другого, занятого потока. Это автоматически балансирует нагрузку — никто не простаивает, пока у соседа есть работа, и при этом потоки почти не конкурируют за общую структуру.
+В OpenJDK у рабочих потоков есть локальные двусторонние очереди (deque). Поток без локальной работы ищет ещё не выполненные задачи в других очередях. В обычном режиме владелец обрабатывает локальные задачи в порядке **LIFO**, а другой поток забирает более старую задачу с противоположного конца. При `asyncMode=true` локальная политика — **FIFO** для задач, которые не ожидают через `join()`. Это балансировка доступной работы, а не гарантия одновременного выполнения всех подзадач. См. [ForkJoinPool Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ForkJoinPool.html) и [реализацию OpenJDK 21+35](https://github.com/openjdk/jdk/blob/jdk-21%2B35/src/java.base/share/classes/java/util/concurrent/ForkJoinPool.java).
 
 ```java
-class SumTask extends RecursiveTask<Long> {
-    private final int[] arr;
-    private final int from, to;
-    private static final int THRESHOLD = 1000;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveTask;
+import java.util.stream.IntStream;
 
-    @Override
-    protected Long compute() {
-        if (to - from <= THRESHOLD) {
-            long sum = 0;
-            for (int i = from; i < to; i++) sum += arr[i];
-            return sum;
+public class ForkJoinSumExample {
+    static class SumTask extends RecursiveTask<Long> {
+        private final int[] arr;
+        private final int from, to;
+        private static final int THRESHOLD = 1000;
+
+        SumTask(int[] arr, int from, int to) {
+            this.arr = arr;
+            this.from = from;
+            this.to = to;
         }
-        int mid = (from + to) / 2;
-        SumTask left = new SumTask(arr, from, mid);
-        SumTask right = new SumTask(arr, mid, to);
-        left.fork();          // отправить в очередь
-        long rightResult = right.compute(); // выполнить в текущем потоке
-        long leftResult = left.join();      // дождаться результата
-        return leftResult + rightResult;
+
+        @Override
+        protected Long compute() {
+            if (to - from <= THRESHOLD) {
+                long sum = 0;
+                for (int i = from; i < to; i++) sum += arr[i];
+                return sum;
+            }
+            int mid = from + (to - from) / 2;
+            SumTask left = new SumTask(arr, from, mid);
+            SumTask right = new SumTask(arr, mid, to);
+            left.fork();
+            long rightResult = right.compute();
+            return left.join() + rightResult;
+        }
+    }
+
+    public static void main(String[] args) {
+        int[] array = IntStream.range(0, 10_000).toArray();
+        try (ForkJoinPool pool = new ForkJoinPool()) {
+            System.out.println(pool.invoke(new SumTask(array, 0, array.length)));
+        } // 49995000
     }
 }
-
-ForkJoinPool pool = new ForkJoinPool();
-long total = pool.invoke(new SumTask(array, 0, array.length));
 ```
 
-`ForkJoinPool.commonPool()` — общий пул на всю JVM, который по умолчанию используют `parallelStream()` и `CompletableFuture`. Его размер = `Runtime.getRuntime().availableProcessors() - 1`.
+`ForkJoinPool.commonPool()` — общий пул JVM. Его **целевой параллелизм** настраивается свойством `java.util.concurrent.ForkJoinPool.common.parallelism`; фактическое число рабочих потоков может отличаться от этого значения. В OpenJDK **21+35** без этого свойства начальное значение — `max(1, availableProcessors() - 1)`; у `new ForkJoinPool()` без аргументов другой default — число доступных процессоров. Это не универсальная формула для любой версии и конфигурации.
 
-**Подводный камень commonPool.** Поскольку пул общий и небольшой, нельзя запускать в нём **блокирующие** операции (I/O, сетевые вызовы): они займут потоки надолго и затормозят все параллельные стримы приложения. `commonPool` рассчитан на короткие CPU-bound задачи; для блокирующей работы передавайте свой `Executor`.
+Асинхронные методы `CompletableFuture` без явно заданного исполнителя обычно используют commonPool; если его параллелизм меньше двух, стандартная реализация создаёт отдельный поток на задачу. См. [политику CompletableFuture Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html).
+
+Блокирующий ввод-вывод и неуправляемая синхронизация могут надолго занять workers; пул не гарантирует компенсацию таких блокировок. `ManagedBlocker` позволяет сообщить о блокировке, но требует корректного использования. Для I/O отдельно выбирайте исполнитель, например virtual-thread executor в Java 21, и ограничивайте доступ к внешнему ресурсу при необходимости.
+
 
 ## Q33. (!) Что такое `Future` и `FutureTask`?
 
-**`Future<V>`** — «обещание» результата, который появится позже. Когда вы отдаёте `Callable` в `submit()`, сразу получаете `Future`: задача выполняется в фоне, а вы можете в любой момент спросить результат, проверить готовность или отменить задачу:
+**`Future<V>`** — интерфейс доступа к результату вычисления: проверить состояние, дождаться завершения или запросить отмену. Сам объект `Future` не запускает вычисление. `submit()` возвращает его после передачи задачи исполнителю; выполнение может начаться до или после возврата метода.
+
+| Метод | Поведение |
+|---|---|
+| `get()` / `get(timeout, unit)` | Ждёт при необходимости; для уже готового результата ожидание не нужно. Ошибка задачи — `ExecutionException`, отмена — `CancellationException` |
+| `isDone()` | `true` после успеха, ошибки **или отмены**; не означает успешного результата |
+| `state()` (Java 19+) | `RUNNING`, `SUCCESS`, `FAILED` или `CANCELLED` |
+| `resultNow()` (Java 19+) | Возвращает результат уже успешной задачи без ожидания; иначе `IllegalStateException` |
+| `exceptionNow()` (Java 19+) | Возвращает исключение уже неуспешной задачи без ожидания; иначе `IllegalStateException` |
+
+Интерфейс `Future` сам не объявляет методов композиции и регистрации продолжений. Неблокирующее чтение готового результата не заменяет колбэк на будущее завершение; методы цепочек есть у `CompletionStage`/`CompletableFuture` (Q34). См. [Future Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Future.html).
+
+**`FutureTask<V>`** реализует `RunnableFuture<V>` (`Runnable` + `Future`), оборачивает `Callable` или `Runnable` и хранит завершённый исход. Его можно передать `Executor.execute()` или запустить через `Thread`. Повторные `get()` не запускают задачу заново. Обычный `run()` завершённого `FutureTask` также не повторяет вычисление; защищённый `runAndReset()` предназначен для специальных реализаций.
 
 ```java
-Future<String> future = executor.submit(() -> "result");
-String result = future.get();            // блокирующее ожидание
-String result = future.get(5, SECONDS);  // с таймаутом
-boolean done = future.isDone();
-future.cancel(true);                     // прерывание задачи
+import java.util.concurrent.*;
+
+public class FutureOutcomeExample {
+    public static void main(String[] args) throws Exception {
+        try (ExecutorService pool = Executors.newSingleThreadExecutor()) {
+            Future<String> future = pool.submit(() -> "result");
+            System.out.println(future.get(5, TimeUnit.SECONDS)); // result
+            System.out.println(future.resultNow());             // result: успех уже известен
+        }
+
+        FutureTask<Integer> task = new FutureTask<>(() -> 42);
+        new Thread(task).start();
+        System.out.println(task.get()); // 42
+    }
+}
 ```
 
-**`FutureTask<V>`** — конкретная реализация `Future` + `Runnable`, можно запускать и через `Thread`, и через `ExecutorService`:
+**Отмена — запрос, а не принудительная остановка.** Для `FutureTask` успешный `cancel(false)` до старта предотвращает запуск тела; если тело уже работает, отмена не прерывает его. `cancel(true)` допускает попытку прерывания выполняющего потока, но задача должна реагировать на interrupt. Состояние Future может стать отменённым раньше фактического окончания тела задачи. Проверять завершение реальной работы только по `isDone()` в таком случае недостаточно. См. [FutureTask](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/FutureTask.html). Конкретные реализации различаются: например, параметр `mayInterruptIfRunning` у `CompletableFuture.cancel()` не управляет исполняющим потоком.
 
-```java
-FutureTask<Integer> task = new FutureTask<>(() -> 42);
-new Thread(task).start();
-Integer result = task.get(); // 42
-```
-
-**Главное ограничение `Future`.** Единственный способ забрать результат — `get()`, а он **блокирует** вызывающий поток до готовности. Нельзя навесить колбэк «сделай X, когда результат придёт», нельзя соединить несколько `Future` в цепочку без блокировок. Именно эти ограничения снимает `CompletableFuture` (Q34).
 
 ## Q34. (!) Что такое `CompletableFuture`?
 
@@ -981,33 +1043,45 @@ CompletableFuture.supplyAsync(() -> fetchUserFromDB(userId))    // async
 
 ## Q35. (!) Разница между `thenApply()`, `thenCompose()` и `thenCombine()`
 
-Все три продолжают цепочку, но различаются формой функции и числом источников. Проще всего понять через аналогию со `Stream API` (см. [Java Stream](java-stream-interview.md)):
+Все три метода создают продолжение, но принимают разные функции. Для `CompletableFuture<T>`:
 
-| Метод | Аналог Stream | Что делает |
-|---|---|---|
-| `thenApply(f)` | `map()` | T → U, обёрнуто в CF |
-| `thenCompose(f)` | `flatMap()` | T → CF<U>, разворачивает |
-| `thenCombine(cf, f)` | — | Комбинирует два CF |
+| Метод | Функция | Результат | Смысл |
+|---|---|---|---|
+| `thenApply(f)` | `T → U` | `CompletableFuture<U>` | Преобразовать значение, аналог `map` |
+| `thenCompose(f)` | `T → CompletionStage<U>` | `CompletableFuture<U>` | Связать результат с возвращённой стадией, аналог `flatMap` |
+| `thenCombine(other, f)` | `(T, U) → V` плюс вторая стадия | `CompletableFuture<V>` | Объединить два результата |
 
-- **`thenApply`** — функция возвращает обычное значение; CF сам обернёт его. Если бы здесь функция вернула `CF`, получилось бы `CF<CF<U>>` — вложенность, которую неудобно разворачивать.
-- **`thenCompose`** — функция возвращает `CF<U>`, и метод «склеивает» цепочку в плоский `CF<U>`. Это `flatMap` для асинхронных вызовов: когда следующий шаг сам асинхронный.
-- **`thenCombine`** — ждёт **два независимых** CF и объединяет их результаты одной функцией; полезно, когда два запроса можно пустить параллельно и затем слить.
+- **`thenApply`** вызывает функцию после нормального завершения исходной стадии. Если сама функция вернёт `CompletableFuture<U>`, получится вложенный `CompletableFuture<CompletableFuture<U>>`.
+- **`thenCompose`** тоже ждёт нормального завершения исходной стадии, но функция возвращает следующую стадию. Её результат определяет результат цепочки без дополнительной вложенности. Возвращённая стадия может уже существовать или быть завершённой; метод не требует запуска новой задачи.
+- **`thenCombine`** вызывает объединяющую функцию, когда **обе** входные стадии завершились нормально. Он не запускает исходные вычисления и не требует их независимости или параллельного завершения. Аналогия `map`/`flatMap` разобрана также в [Java Stream](java-stream-interview.md). Контракт методов: [CompletionStage Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletionStage.html).
 
 ```java
-// thenApply — синхронная трансформация
-CompletableFuture<String> name = getUserId()
-    .thenApply(id -> "User-" + id); // CF<String>
+import java.util.concurrent.CompletableFuture;
 
-// thenCompose — асинхронная цепочка (flatMap)
-CompletableFuture<Profile> profile = getUserId()
-    .thenCompose(id -> fetchProfile(id)); // CF<Profile>, не CF<CF<Profile>>
+public class StageCompositionExample {
+    public static void main(String[] args) {
+        CompletableFuture<Integer> id = CompletableFuture.completedFuture(7);
+        CompletableFuture<String> name = id.thenApply(n -> "User-" + n);
+        CompletableFuture<String> profile = id.thenCompose(n ->
+            CompletableFuture.completedFuture("Profile-" + n));
 
-// thenCombine — объединение двух независимых CF
-CompletableFuture<String> combined = fetchName()
-    .thenCombine(fetchAge(), (name, age) -> name + " (" + age + ")");
+        CompletableFuture<Integer> left = new CompletableFuture<>();
+        CompletableFuture<Integer> right = new CompletableFuture<>();
+        CompletableFuture<Integer> total = left.thenCombine(right, Integer::sum);
+        left.complete(4);
+        right.complete(5); // допустимо последовательное завершение входов
+
+        System.out.println(name.join());    // User-7
+        System.out.println(profile.join()); // Profile-7
+        System.out.println(total.join());   // 9
+    }
+}
 ```
 
-**Эмпирическое правило.** Функция возвращает `CompletableFuture` → `thenCompose()` (иначе получите вложенный `CF<CF<...>>`). Функция возвращает обычное значение → `thenApply()`.
+**Композиция и выбор потока — разные решения.** У `CompletableFuture` методы без `Async` могут выполнить продолжение в потоке, завершающем стадию; при уже готовом результате — непосредственно при регистрации продолжения. Для асинхронного исполнения есть `thenApplyAsync`, `thenComposeAsync`, `thenCombineAsync` и перегрузки с `Executor`; конкретный executor при этом может исполнять работу в вызывающем потоке. См. [политику исполнения CompletableFuture](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html).
+
+При ошибке входной стадии результат зависимого продолжения тоже может завершиться с ошибкой; `thenCombine()` не отменяет вторую исходную стадию автоматически. Для нескольких входов можно строить цепочку `thenCombine()`; `allOf()` лишь отслеживает завершение и возвращает `CompletableFuture<Void>`, а значения нужно собирать отдельно.
+
 
 ## Q36. Как обрабатывать исключения в `CompletableFuture`?
 
@@ -1041,27 +1115,39 @@ cf.whenComplete((result, ex) -> {
 
 ## Q37. Как выполнить несколько `CompletableFuture` параллельно?
 
-Несколько `supplyAsync` уже стартуют параллельно (каждый в своём потоке пула). Задача — дождаться их и собрать результаты. Для этого есть два комбинатора: `allOf` (нужны все) и `anyOf` (достаточно первого).
+Сначала отправьте независимые вычисления на исполнение, например через `supplyAsync(supplier, executor)`. Затем выберите, какие завершения нужны. `allOf()` и `anyOf()` **не запускают входные задачи**. Возможность одновременной работы зависит от исполнителя, доступных потоков и самих вычислений; вызовы `supplyAsync()` не гарантируют перекрытия во времени.
+
+В примере [fixed thread pool](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Executors.html#newFixedThreadPool(int)) допускает работу трёх задач; вместо сетевых вызовов использованы простые значения. При одном рабочем потоке такие же независимые задачи выполнялись бы последовательно.
 
 ```java
-CompletableFuture<String> cf1 = supplyAsync(() -> fetchFromServiceA());
-CompletableFuture<String> cf2 = supplyAsync(() -> fetchFromServiceB());
-CompletableFuture<Integer> cf3 = supplyAsync(() -> fetchFromServiceC());
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.*;
 
-// allOf — ждёт завершения ВСЕХ
-CompletableFuture<Void> all = CompletableFuture.allOf(cf1, cf2, cf3);
-all.thenRun(() -> {
-    String a = cf1.join(); // гарантированно завершён
-    String b = cf2.join();
-    int c = cf3.join();
-});
+public class MultiStageExample {
+    public static void main(String[] args) {
+        try (ExecutorService pool = Executors.newFixedThreadPool(3)) {
+            CompletableFuture<String> a = CompletableFuture.supplyAsync(() -> "A", pool);
+            CompletableFuture<String> b = CompletableFuture.supplyAsync(() -> "B", pool);
+            CompletableFuture<String> c = CompletableFuture.supplyAsync(() -> "C", pool);
 
-// anyOf — возвращает первый завершившийся
-CompletableFuture<Object> any = CompletableFuture.anyOf(cf1, cf2);
-any.thenAccept(result -> System.out.println("Первый результат: " + result));
+            CompletableFuture<List<String>> results = CompletableFuture.allOf(a, b, c)
+                .thenApply(ignored -> List.of(a.join(), b.join(), c.join()));
+            System.out.println(results.join()); // [A, B, C]: порядок задаёт сборщик
+
+            CompletableFuture<Object> first = CompletableFuture.anyOf(a, b, c);
+            System.out.println(Set.of("A", "B", "C").contains(first.join())); // true
+        }
+    }
+}
 ```
 
-**Неочевидный момент `allOf()`.** Он возвращает `CompletableFuture<Void>` — то есть сам результат не агрегирует. После его завершения значения приходится доставать из исходных CF через `join()` (они гарантированно готовы, поэтому `join()` не блокирует). Чтобы не писать это руками, в продакшене берут библиотеки (`Guava Futures`, `Mutiny`) или заводят утилитный метод-сборщик. Аналогично у `anyOf()` тип результата — `Object`, так как заранее неизвестно, какой из CF завершится первым.
+- **`allOf`** возвращает `CompletableFuture<Void>` после завершения всех входов; значения нужно собрать отдельно. При ошибке входа общий результат тоже завершается с ошибкой. Это не fail-fast отмена остальных: незавершённые входы продолжают работу, а при нескольких ошибках API не обещает выбрать хронологически первую. Продолжение `thenApply` выше вызывается только после нормального завершения барьера; поэтому его `join()` читает уже успешные результаты.
+- **`anyOf`** возвращает `CompletableFuture<Object>` с результатом **или ошибкой** одного из завершившихся входов. Это не «первый успешный ответ» и не автоматическая отмена проигравших. Если входы уже завершены при вызове, не используйте результат для восстановления их хронологического порядка.
+- Без входов `allOf()` уже успешно завершён значением `null`, а `anyOf()` остаётся незавершённым. См. [CompletableFuture Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html#allOf(java.util.concurrent.CompletableFuture...)).
+
+Если нужно остановить проигравшие операции, проектируйте их отмену отдельно: `CompletableFuture.cancel(true)` сам по себе не прерывает supplier. Нормальное/исключительное продолжение определяет [контракт CompletionStage](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletionStage.html); поведение нескольких ошибок можно проверить в [OpenJDK 21+35](https://github.com/openjdk/jdk/blob/jdk-21%2B35/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java).
+
 
 ## Q38. (!) Что такое `CountDownLatch` и `CyclicBarrier`?
 
@@ -1425,59 +1511,64 @@ void processRequest() {
 
 ## Q51. (!) Как работает `ForkJoinPool` и алгоритм work-stealing подробно?
 
-`ForkJoinPool` — специализированный пул для рекурсивных, делимых задач (`ForkJoinTask`: `RecursiveTask` с результатом, `RecursiveAction` без). Модель работы — fork/join: задача рекурсивно дробится на подзадачи до порога `THRESHOLD`, ниже которого считается напрямую; подзадачи выполняются параллельно, результаты собираются обратно. Ключевая особенность — **work-stealing**: у каждого рабочего потока своя двусторонняя очередь (`deque`), и когда она пустеет, поток «крадёт» задачу из очереди другого, не давая себе простаивать.
+`ForkJoinPool` — реализация `ExecutorService` с work-stealing. Рекурсивная задача делится до порога `THRESHOLD`; малые части вычисляются напрямую. `fork()` планирует подзадачу, `compute()` описывает её вычисление, `join()` получает исход, ожидая при необходимости. Worker, ожидающий fork/join-задачу, может помогать её выполнению; это не обещание отсутствия ожидания. Независимые подзадачи **могут** выполняться параллельно, но число задач не равно числу одновременно занятых CPU. См. [ForkJoinTask Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ForkJoinTask.html).
+
+В **обычном режиме `asyncMode=false` OpenJDK** worker помещает локально созданные задачи в deque и обрабатывает наиболее свежие в порядке LIFO. Поток, ищущий работу, забирает более старую задачу с противоположного конца (FIFO). При `asyncMode=true` локальная обработка задач, которые не ожидают через `join()`, использует FIFO. Имена HEAD/TAIL в схемах условны: в исходнике OpenJDK используются индексы `top` и `base`, поэтому надёжнее говорить «сторона владельца» и «сторона кражи». Возраст задачи не гарантирует её размер. См. [ForkJoinPool](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ForkJoinPool.html) и [OpenJDK 21+35](https://github.com/openjdk/jdk/blob/jdk-21%2B35/src/java.base/share/classes/java/util/concurrent/ForkJoinPool.java).
 
 ```java
-class SumTask extends RecursiveTask<Long> {
-    private final long[] array;
-    private final int from, to;
-    private static final int THRESHOLD = 10_000;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RecursiveTask;
+import java.util.stream.LongStream;
 
-    SumTask(long[] array, int from, int to) {
-        this.array = array;
-        this.from = from;
-        this.to = to;
+public class ForkJoinDetailExample {
+    static class SumTask extends RecursiveTask<Long> {
+        private final long[] array;
+        private final int from, to;
+        private static final int THRESHOLD = 10_000;
+
+        SumTask(long[] array, int from, int to) {
+            this.array = array;
+            this.from = from;
+            this.to = to;
+        }
+
+        @Override
+        protected Long compute() {
+            if (to - from <= THRESHOLD) {
+                long sum = 0;
+                for (int i = from; i < to; i++) sum += array[i];
+                return sum;
+            }
+            int mid = from + (to - from) / 2;
+            SumTask left = new SumTask(array, from, mid);
+            SumTask right = new SumTask(array, mid, to);
+            left.fork();
+            long rightResult = right.compute();
+            return left.join() + rightResult;
+        }
     }
 
-    @Override
-    protected Long compute() {
-        if (to - from <= THRESHOLD) {
-            // Базовый случай: считаем напрямую
-            long sum = 0;
-            for (int i = from; i < to; i++) sum += array[i];
-            return sum;
-        }
-        int mid = (from + to) / 2;
-        SumTask left = new SumTask(array, from, mid);
-        SumTask right = new SumTask(array, mid, to);
-        left.fork();                    // отправить left в очередь асинхронно
-        long rightResult = right.compute(); // вычислить right в текущем потоке
-        long leftResult = left.join();   // дождаться left
-        return leftResult + rightResult;
+    public static void main(String[] args) {
+        long[] data = LongStream.rangeClosed(1, 1_000_000).toArray();
+        try (ForkJoinPool pool = new ForkJoinPool()) {
+            System.out.println(pool.invoke(new SumTask(data, 0, data.length)));
+        } // 500000500000
     }
 }
-
-// Использование
-ForkJoinPool pool = ForkJoinPool.commonPool();
-long[] data = LongStream.rangeClosed(1, 1_000_000).toArray();
-long sum = pool.invoke(new SumTask(data, 0, data.length));
 ```
 
-**Почему work-stealing берёт с разных концов очереди:**
-- Владелец deque работает с головы (LIFO) — это самые свежие, ещё «горячие» в кэше подзадачи; так лучше локальность данных
-- «Вор» берёт с хвоста (FIFO) — там лежат самые старые и обычно самые крупные задачи; украсть одну большую выгоднее, чем много мелких
-- Работа с разными концами минимизирует конкуренцию между владельцем и вором за одну и ту же структуру
+`left.fork(); right.compute(); left.join()` оставляет одну часть текущему потоку и предоставляет другую пулу. Это распространённая схема разделения работы, а не гарантия, что `left` начнёт другой поток. Слишком мелкие задачи увеличивают накладные расходы; порог выбирают по измерениям.
 
-Также важен порядок в `compute()`: сначала `left.fork()` (отдать в очередь), затем `right.compute()` (считать самому) и в конце `left.join()`. Это держит текущий поток занятым, пока left ждёт обработки, и избегает лишних блокировок.
+Сравнивать следует конкретные реализации: оба пула реализуют `ExecutorService`.
 
-| Характеристика | `ExecutorService` | `ForkJoinPool` |
+| Характеристика | `ThreadPoolExecutor` | `ForkJoinPool` |
 |---|---|---|
-| Задачи | Независимые | Рекурсивно делимые |
-| Очередь | Одна общая | Отдельная на каждый поток |
-| Work-stealing | Нет | Да |
-| Применение | IO-bound задачи | CPU-bound рекурсивные задачи |
+| Очереди | Общая `BlockingQueue<Runnable>` | Локальные deque и очереди внешних отправок |
+| Получение работы | Рабочие потоки берут задачи из общей очереди | Work-stealing между очередями |
+| Выбор задач | Политики пула настраиваются под нагрузку | Удобен для мелких делимых вычислений; принимает также Runnable/Callable |
 
-`ForkJoinPool.commonPool()` используется по умолчанию в `parallel streams` и `CompletableFuture.supplyAsync()` без явного Executor.
+Целевой параллелизм commonPool настраивается и не означает фиксированного числа workers. В OpenJDK 21+35 без свойства `java.util.concurrent.ForkJoinPool.common.parallelism` начальное значение — `max(1, availableProcessors() - 1)`; при малом числе CPU оно может быть **1**, но это не контракт single-thread executor. Дополнительные потоки возможны, например, для компенсации управляемой блокировки. Подробности commonPool, fallback у `CompletableFuture` и ограничения I/O см. в Q32; `ManagedBlocker` не превращает любую блокировку в безопасную для пула.
+
 
 ## Q52. (!) Как построить сложную цепочку `CompletableFuture` с обработкой ошибок?
 
