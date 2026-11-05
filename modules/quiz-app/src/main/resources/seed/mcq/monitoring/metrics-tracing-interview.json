@@ -1211,50 +1211,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Exemplar связывает конкретное наблюдение метрики с trace/span identifiers для перехода к трассе.",
+              "text": "Exemplar сохраняет пример наблюдения с дополнительным контекстом; при наличии trace ID он помогает перейти к трейсу.",
               "correct": true,
               "sections": {
-                "explanation": "Это мост от агрегата к примеру: гистограмма говорит «p99 = 5s», а exemplar даёт конкретный медленный запрос, объясняющий этот хвост.",
-                "example": "В формате `Prometheus` exemplar прикрепляется к бакету: `http_server_requests_seconds_bucket{...,le=\"0.5\"} 120 # {trace_id=\"abc123def456\"} 0.48 1712345678.000`.",
-                "when_to_apply": "Exemplars включают, когда нужен быстрый переход от метрики к трейсу прямо с дашборда — это ускоряет разбор инцидентов.",
-                "edge_cases": "Поддержка: `Prometheus` 2.26+, `OpenTelemetry`, `Grafana`; нужны гистограмма (`percentiles-histogram: true`), активная трассировка и `OpenMetrics`-формат scrape.",
-                "related": "[[metrics-tracing-interview#Q14]] связь метрик и трейсов через exemplars; [[metrics-tracing-interview#Q38]] exemplars подробнее с конфигурацией; [[metrics-tracing-interview#Q18]] роль exemplars при инцидентах."
+                "explanation": "Exemplar дополняет агрегированную метрику данными об одном выбранном наблюдении. В OTel это значение, время и дополнительный контекст; trace/span IDs необязательны. Он не заменяет распределение и не вычисляет квантиль.",
+                "example": "Фрагмент строки OpenMetrics: request_duration_seconds_bucket{le=\"0.5\"} 120 # {trace_id=\"4bf92f3577b34da6a3ce929d0e0e4736\"} 0.48 1712345678.000. Здесь 120 — накопленный count бакета, 0.48 — значение отдельного наблюдения, а не ещё один count.",
+                "when_to_apply": "Когда нужно дополнить агрегаты примерами запросов. Для перехода в Grafana согласуют имя label exemplar с источником трейсов и проверяют, что trace доступен.",
+                "edge_cases": "Поддержка зависит от SDK, registry, экспорта и хранилища; универсальной зависимости только от настройки percentiles-histogram нет. OpenMetrics допускает exemplars у counters и histogram buckets. Выбранный пример не обязан определять p99, а его trace может быть не сохранён.",
+                "related": "[[metrics-tracing-interview#Q14]] связь сигналов; [[metrics-tracing-interview#Q38]] настройка exemplars; [[metrics-tracing-interview#Q18]] расследование."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Exemplars заменяют histogram buckets одним образцом, по которому вычисляются все quantiles.",
+              "text": "Exemplar заменяет распределение одним наблюдением; по этому образцу вычисляют квантили вместо использования histogram buckets.",
               "correct": false,
               "sections": {
-                "what_actually": "Exemplars не заменяют гистограмму, а дополняют её: бакеты остаются, а exemplar лишь прикрепляет `traceId` к наблюдению.",
-                "source_of_confusion": "Раз exemplar — «образец», кажется, что он вытесняет полное распределение.",
-                "if_it_were_true": "Тогда `histogram_quantile` перестал бы работать, но он по-прежнему считает по бакетам, а exemplar лишь ссылается на трейс.",
-                "how_it_should_be": "Гистограмма и её бакеты сохраняются; exemplar — это дополнительная ссылка на трейс у наблюдения."
+                "what_actually": "Данные гистограммы и exemplar выполняют разные роли. Квантили оценивают по распределению, а exemplar даёт дополнительный контекст выбранного наблюдения.",
+                "source_of_confusion": "Слово «образец» принимают за замену всей совокупности измерений.",
+                "if_it_were_true": "Один exemplar позволял бы восстановить произвольные квантили независимо от оставшихся измерений, чего его данные не обеспечивают.",
+                "how_it_should_be": "Сохранять агрегаты для расчёта распределения; exemplar использовать для исследования конкретного примера."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Exemplars поддерживаются только counters и не применяются к latency histograms.",
+              "text": "Exemplar повторно добавляет выбранное наблюдение в агрегат; поэтому его публикация увеличивает count и sum гистограммы.",
               "correct": false,
               "sections": {
-                "what_actually": "Exemplars как раз прикрепляются к бакетам гистограмм (латентность) — это их основной сценарий, а не `Counter`.",
-                "source_of_confusion": "Простота `Counter` создаёт впечатление, что и exemplars относятся к нему.",
-                "if_it_were_true": "Тогда нельзя было бы перейти от пика p99 к трейсу, но именно это exemplars и делают на гистограмме.",
-                "how_it_should_be": "Exemplars в первую очередь дополняют гистограммы латентности, связывая бакет с `traceId`."
+                "what_actually": "Значение exemplar уже участвует в агрегатах соответствующего histogram point. Экспорт ссылки на пример не означает повторную запись измерения.",
+                "source_of_confusion": "Отдельное поле exemplar воспринимают как дополнительное событие поверх исходного наблюдения.",
+                "if_it_were_true": "Включение exemplars само по себе меняло бы count и sum при неизменном наборе измерений и искажало статистику.",
+                "how_it_should_be": "Отделять запись измерения от сохранения контекста примера: не прибавлять exemplar к count, sum или buckets повторно."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Exemplars — это примеры Prometheus-конфигурации, не содержащие связей с runtime traces.",
+              "text": "Exemplar добавляет trace ID в labels метрики; каждый выбранный запрос поэтому создаёт отдельный временной ряд.",
               "correct": false,
               "sections": {
-                "what_actually": "`Exemplars` — это образцы наблюдений с `traceId` внутри метрики, а не примеры конфигурации или запросов.",
-                "source_of_confusion": "Слово «пример» (exemplar) уводит мысль к примерам конфигов, а не к данным.",
-                "if_it_were_true": "Тогда они не хранили бы `trace_id` рядом с бакетом, но именно это их и определяет.",
-                "how_it_should_be": "`Exemplars` — конкретные наблюдения с ссылкой на трейс; примеры запросов — это документация, не exemplars."
+                "what_actually": "Labels exemplar отделены от labels, определяющих временной ряд. Ссылка на запрос не требует создавать отдельную серию по его trace ID.",
+                "source_of_confusion": "Дополнительный контекст наблюдения смешивают с измерениями, по которым разбивается агрегат.",
+                "if_it_were_true": "Каждый новый exemplar увеличивал бы число временных рядов по trace ID, даже когда набор labels самой метрики не меняется.",
+                "how_it_should_be": "Передавать контекст в exemplar, сохраняя ограниченные измерения метрики. Отдельно контролировать стоимость хранения самих exemplars."
               }
             }
           ]
@@ -1271,50 +1271,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Prometheus alert срабатывает при первом transient sample выше threshold; параметр `for`, missing data и state transitions не влияют.",
+              "text": "Prometheus накапливает время for по отдельным всплескам, а Alertmanager отправляет уведомление после их суммарной длительности.",
               "correct": false,
               "sections": {
-                "what_actually": "Параметр `for` задаёт выдержку: алерт firing'ится, только если условие держится заданное время (например, `for: 5m`), что отсекает кратковременные всплески.",
-                "source_of_confusion": "Желание реагировать «сразу» заслоняет наличие `for`.",
-                "if_it_were_true": "Тогда любой одиночный спайк будил бы дежурного, но `for` именно для борьбы с таким шумом.",
-                "how_it_should_be": "У правила есть `for` — выдержка перед переходом в firing; мгновенный алерт — частный случай `for: 0`."
+                "what_actually": "Для одного набора labels pending должен оставаться активным при последовательных оценках в течение for. Разрозненные всплески не складываются в общий таймер Alertmanager.",
+                "source_of_confusion": "Выдержку непрерывного условия принимают за накопитель всех превышений порога.",
+                "if_it_were_true": "Несколько коротких всплесков с промежутками без активного элемента могли бы набрать for и вызвать firing без устойчивого условия.",
+                "how_it_should_be": "Проверять состояние правила в Prometheus по evaluation times. Исчезновение элемента до firing обычно прерывает pending; отдельно учитывать ошибки вычисления и настройки."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Alertmanager вычисляет PromQL expressions из dashboards, а Prometheus только forwards raw samples и не хранит alert rule state.",
+              "text": "Alertmanager вычисляет выражения PromQL и состояния pending, а Prometheus группирует и маршрутизирует готовые уведомления.",
               "correct": false,
               "sections": {
-                "what_actually": "Вычисляет выражения и определяет firing именно `Prometheus`; `Alertmanager` лишь принимает уже сработавшие алерты и маршрутизирует их.",
-                "source_of_confusion": "`Alertmanager` стоит в конце цепочки, и его роль ошибочно расширяют до вычисления условий.",
-                "if_it_were_true": "Тогда правила лежали бы в конфиге `Alertmanager`, но `alert_rules.yml` принадлежит `Prometheus`.",
-                "how_it_should_be": "`Prometheus` оценивает правила и шлёт firing-алерты; `Alertmanager` группирует, дедуплицирует и доставляет их."
+                "what_actually": "В классической схеме роли обратные: Prometheus вычисляет правила и хранит их состояния, Alertmanager обрабатывает поступившие alerts и уведомления.",
+                "source_of_confusion": "Название Alertmanager воспринимают как место исполнения всей логики условий.",
+                "if_it_were_true": "Перенос выражения только в маршрутизацию Alertmanager был бы достаточен для оценки PromQL, чего эта конфигурация не делает.",
+                "how_it_should_be": "Настроить правила и связь с Alertmanager в Prometheus; маршрутизацию, группировку, silences и inhibition — в Alertmanager."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Prometheus вычисляет PromQL alert rules и отправляет firing/resolved alerts в Alertmanager, который groups, deduplicates, silences и routes notifications.",
+              "text": "Prometheus вычисляет правила и состояния алертов, а Alertmanager группирует, подавляет и маршрутизирует уведомления получателям.",
               "correct": true,
               "sections": {
-                "explanation": "Разделение ролей: `Prometheus` решает «сработало ли условие», `Alertmanager` — «кому, как и с какой частотой об этом сообщить», избегая шквала уведомлений.",
-                "example": "Пример: `HighErrorRate` с `expr` долей 5xx `> 0.01`, `for: 5m`, `severity: critical`; в `Alertmanager` `route` шлёт critical в `pagerduty`, warning — в `#alerts` `Slack`.",
-                "when_to_apply": "Алерты настраивают на ключевые сигналы: error rate, p99 латентности, heap-утилизацию; в аннотациях дают ссылки на runbook и дашборд.",
-                "edge_cases": "Чтобы избежать шума: `for` отсеивает кратковременные всплески, `group_by` объединяет похожие, а silence/inhibition глушат алерты во время плановых работ.",
-                "related": "[[metrics-tracing-interview#Q19]] RED/USE метрики как основа порогов; [[metrics-tracing-interview#Q30]] организация алертинга по метрикам и трейсам; [[metrics-tracing-interview#Q12]] алерты по jvm_memory и jvm_gc."
+                "explanation": "Prometheus периодически оценивает alert expressions. Элемент результирующего вектора делает alert активным для набора labels; for задаёт ожидание перед firing. Alertmanager управляет обработкой alerts и доставкой уведомлений.",
+                "example": "Правило с for: 5m ожидает устойчивого активного элемента при оценках. В Alertmanager group_wait задерживает начальное уведомление группы; это другой таймер и не заменяет for.",
+                "when_to_apply": "Задать проверяемое условие, labels, annotations и runbook, затем проверить состояния правила и маршрут уведомления на тестовом сигнале.",
+                "edge_cases": "Silence или inhibition подавляют уведомления, но не переписывают выражение и состояние правила в Prometheus. Пустой результат не равен нулевой ошибке: потерю данных проверяют отдельно. keep_firing_for и настройки получателя влияют на завершение и уведомление о восстановлении.",
+                "related": "[[metrics-tracing-interview#Q19]] выбор сигналов; [[metrics-tracing-interview#Q30]] алертинг; [[metrics-tracing-interview#Q12]] ограничения JVM-метрик."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Alerts существуют только внутри Grafana panels; standalone Prometheus rules и Alertmanager routing не поддерживают production notification workflow.",
+              "text": "Prometheus снимает alert при значении ноль в векторе, а Alertmanager трактует любой непустой вектор как команду уведомить.",
               "correct": false,
               "sections": {
-                "what_actually": "Классическая схема: правила алертов (`PromQL`) задают в `Prometheus`, а маршрутизацию и доставку делает `Alertmanager`; `Grafana`-алерты — отдельный механизм.",
-                "source_of_confusion": "Возможность алертов в `Grafana` создаёт впечатление, что `Prometheus`/`Alertmanager` не нужны.",
-                "if_it_were_true": "Тогда `alert_rules.yml` и `Alertmanager` были бы лишними, но именно они образуют ядро алертинга в `Prometheus`-стеке.",
-                "how_it_should_be": "Правила вычисляет `Prometheus`, доставку — `Alertmanager`; `Grafana`-алертинг — альтернативный путь, не замена."
+                "what_actually": "В Prometheus alert активен по наличию элемента результирующего вектора, а не по его ненулевому значению. Alertmanager получает alerts, а не произвольные PromQL-векторы.",
+                "source_of_confusion": "Булевы значения 0/1 в запросе смешивают с фильтрацией элементов выражением сравнения.",
+                "if_it_were_true": "Выражение с > bool сохраняло бы нулевые элементы, но они считались бы неактивными; правила alerting работают иначе.",
+                "how_it_should_be": "Для порога использовать подходящее фильтрующее выражение, проверить возвращаемые label sets и отдельно настроить обработку alerts в Alertmanager."
               }
             }
           ]
@@ -1331,50 +1331,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Каждый span хранит полный список `spanId` всех остальных spans трейса, чтобы знать структуру дерева.",
+              "text": "traceId объединяет spans одного trace, а spanId хранит список идентификаторов всех операций для восстановления связей.",
               "correct": false,
               "sections": {
-                "what_actually": "Span хранит лишь свой `spanId` и `parentSpanId` (ссылку на родителя), а полное дерево восстанавливает бэкенд по этим связям.",
-                "source_of_confusion": "Желание «видеть всё дерево из любого узла» подсказывает идею полного списка.",
-                "if_it_were_true": "Тогда размер каждого span рос бы с числом spans, но связь строится одной ссылкой на родителя.",
-                "how_it_should_be": "Span знает себя и родителя (`parentSpanId`); дерево собирает `Jaeger`/`Zipkin` из этих ссылок."
+                "what_actually": "spanId идентифицирует сам span, а не список остальных. Parent context и дополнительные links описывают связи; backend строит представление из полученных данных.",
+                "source_of_confusion": "Возможность открыть структуру trace в UI принимают за хранение всей структуры в одном идентификаторе.",
+                "if_it_were_true": "Для добавления каждой операции пришлось бы менять список внутри идентификаторов уже созданных spans.",
+                "how_it_should_be": "Использовать traceId для группировки, собственный spanId для операции, parent и links — для связей."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`traceId` и `spanId` — это имена метрик в `Prometheus`, по которым считают число запросов.",
+              "text": "traceId идентифицирует отдельный span, а spanId объединяет операции trace для поиска всего выполнения в backend.",
               "correct": false,
               "sections": {
-                "what_actually": "Это идентификаторы трассировки (ключи span и trace), а не имена метрик; в `Prometheus` они не фигурируют как метрики.",
-                "source_of_confusion": "Привычка к именам метрик переносится на идентификаторы трейсинга.",
-                "if_it_were_true": "Тогда их можно было бы агрегировать через `rate()`, но это уникальные ключи запросов, а не счётчики.",
-                "how_it_should_be": "`traceId`/`spanId` — идентификаторы трейсов и spans; имена метрик — отдельная сущность в `Prometheus`."
+                "what_actually": "Здесь идентификаторы переставлены: spans одного trace разделяют traceId, а собственный spanId различает операции в нём.",
+                "source_of_confusion": "Оба значения выглядят как непрозрачные hex-строки, поэтому их назначения легко поменять местами.",
+                "if_it_were_true": "Группировка по traceId разделяла бы операции одного trace вместо их объединения.",
+                "how_it_should_be": "Общий traceId использовать для поиска trace; пару traceId/spanId — для указания конкретного span."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`traceId` общий для trace; каждая operation имеет свой `spanId`, а child span ссылается на parent и образует causal tree.",
+              "text": "traceId объединяет spans одного trace, а spanId идентифицирует операцию, чья связь с родителем задаётся отдельно.",
               "correct": true,
               "sections": {
-                "explanation": "Эта пара позволяет и сгруппировать все операции запроса (по общему `traceId`), и восстановить иерархию (по `parentSpanId`).",
-                "example": "В логах их кладут в `MDC`: `[traceId=4bf92f3577b34da6, spanId=00f067aa0ba902b7]`; по одному `traceId` фильтруют все строки одного запроса в `ELK`/`Loki`.",
-                "when_to_apply": "Эти идентификаторы используют при связке логов и трейсов: по `traceId` из лога открывают трейс, по `traceId` из трейса фильтруют логи.",
-                "edge_cases": "Внутри `traceparent` `traceId` — 128 бит, `spanId` (parent) — 64 бита; разные spans одного запроса делят `traceId`, но имеют разные `spanId`.",
-                "related": "[[metrics-tracing-interview#Q7]] span и trace как операция и дерево; [[metrics-tracing-interview#Q8]] передача traceId/spanId между сервисами; [[metrics-tracing-interview#Q31]] traceId и parentSpanId внутри traceparent."
+                "explanation": "Общий traceId связывает spans trace, собственный spanId различает операции. Parent context задаёт родителя при его наличии; у root его нет. Дополнительные links могут связывать и разные traces.",
+                "example": "Пример W3C IDs для лога: traceId=4bf92f3577b34da6a3ce929d0e0e4736, spanId=00f067aa0ba902b7. Для другого span этого trace traceId сохраняется, а собственный spanId отличается.",
+                "when_to_apply": "По идентификаторам сопоставлять spans и логи, если инструментация действительно добавляет контекст в MDC и логирование. Один шаблон вывода не заполняет MDC автоматически.",
+                "edge_cases": "В W3C version 00 trace-id занимает 32 lowercase hex, parent-id — 16; нулевые IDs недопустимы. parent-id в переданном traceparent обозначает span вызывающей стороны, а не собственный ID нового дочернего span. Контекст и наличие логов не гарантируют сохранение полного trace.",
+                "related": "[[metrics-tracing-interview#Q7]] spans и links; [[metrics-tracing-interview#Q8]] propagation; [[metrics-tracing-interview#Q31]] формат traceparent."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`traceId` уникален для каждой отдельной операции, а `spanId` общий для всего запроса через систему.",
+              "text": "traceId объединяет spans одного trace, а spanId корневой операции одновременно указывает на неё как на родителя.",
               "correct": false,
               "sections": {
-                "what_actually": "Роли перепутаны: `traceId` общий для всего trace (всех spans запроса), а `spanId` уникален для каждой операции (span).",
-                "source_of_confusion": "Оба — идентификаторы в трассировке, и без практики их назначения меняют местами.",
-                "if_it_were_true": "Тогда нельзя было бы собрать все spans запроса под одним ключом, но именно общий `traceId` это и делает.",
-                "how_it_should_be": "`traceId` один на весь запрос; `spanId` свой у каждой операции."
+                "what_actually": "У корневого span нет родителя. Его собственный spanId не становится автоматически parentSpanId этого же span.",
+                "source_of_confusion": "Требование ID у любого span переносят на необязательное наличие родителя.",
+                "if_it_were_true": "В отношениях операций появлялась бы самоссылка root вместо отсутствующего родительского контекста.",
+                "how_it_should_be": "У root сохранять собственные traceId/spanId без родителя; у дочерней операции — отдельный spanId и ссылку на её parent."
               }
             }
           ]
@@ -1511,50 +1511,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`RED` и `USE` взаимоисключающи: в проекте выбирают что-то одно, использовать обе методологии одновременно нельзя.",
+              "text": "RED показывает симптомы сервиса, USE исследует ресурсы; совместное применение гарантирует нахождение корневой причины.",
               "correct": false,
               "sections": {
-                "what_actually": "Они дополняют друг друга и применяются вместе: `RED` по сервисам и `USE` по ресурсам дают полную картину golden signals.",
-                "source_of_confusion": "Кажется, что две «конкурирующие» методологии нужно выбирать.",
-                "if_it_were_true": "Тогда нельзя было бы видеть и латентность сервиса, и загрузку `CPU` под ним, но именно их совмещают на дашборде.",
-                "how_it_should_be": "`RED` и `USE` совместимы и дополняют друг друга: сервисный и ресурсный взгляд одновременно."
+                "what_actually": "Методологии дополняют друг друга и помогают выбирать проверки, но набор сигналов не гарантирует однозначную причину. Нужны покрытие, контекст и проверка гипотез.",
+                "source_of_confusion": "Полезный диагностический порядок принимают за доказательство причинности для любого инцидента.",
+                "if_it_were_true": "Любой сбой с дашбордом RED/USE автоматически имел бы установленную причину без дополнительных данных.",
+                "how_it_should_be": "Сопоставлять сервисные симптомы с ресурсными ограничениями и проверять причинную гипотезу отдельными свидетельствами."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`RED` применяют к ресурсам (`CPU`, диск), а `USE` — к `HTTP`-сервисам и их запросам.",
+              "text": "RED описывает занятость и очереди ресурсов; USE измеряет частоту, ошибки и длительность запросов сервиса.",
               "correct": false,
               "sections": {
-                "what_actually": "Области перепутаны: `RED` — для сервисов и запросов, `USE` — для ресурсов; именно так разделяет эти методологии практика SRE.",
-                "source_of_confusion": "Обе методологии про метрики, и их назначения легко поменять местами.",
-                "if_it_were_true": "Тогда `Saturation` (очереди ресурса) считали бы для эндпоинта, но это характеристика именно ресурса.",
-                "how_it_should_be": "`RED` — для сервисов; `USE` — для ресурсов (CPU/диск/сеть)."
+                "what_actually": "Это переставленные области: RED — Rate, Errors, Duration запросов; USE — Utilization, Saturation, Errors ресурсов.",
+                "source_of_confusion": "Оба подхода используют метрики, поэтому объект наблюдения теряется за общими графиками.",
+                "if_it_were_true": "Duration исключалась бы из RED, а ресурсные очереди пришлось бы называть request Rate.",
+                "how_it_should_be": "Сначала выбрать объект: запросы сервиса для RED, конкретный ресурс и его ограничения для USE."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`RED` — Rate, Errors, Duration для service requests; `USE` — Utilization, Saturation, Errors для resources и capacity bottlenecks.",
+              "text": "RED измеряет частоту, ошибки и длительность запросов; USE измеряет занятость, насыщение и ошибки ресурса.",
               "correct": true,
               "sections": {
-                "explanation": "Это два набора golden signals под разные объекты: `RED` смотрит на сервис глазами клиента, `USE` — на ресурс под капотом.",
-                "example": "`Rate` — `rate(http_requests_total[5m])`, `Errors` — `rate(errors)/rate(total)`, `Duration` — `histogram_quantile(0.99,...)`; `Utilization` — `process_cpu_usage`, `Saturation` — `thread_pool_queue_size`.",
-                "when_to_apply": "RED применяют для `HTTP` API и микросервисов, USE — для `CPU`/памяти/диска/сети; вместе они закрывают и сервисный, и ресурсный взгляд.",
-                "edge_cases": "В `Micrometer`: Rate и Errors — через `Timer` и счётчики с лейблом outcome, Duration — гистограмма; для USE по инфраструктуре нужны `node_exporter`, `cAdvisor`.",
-                "related": "[[metrics-tracing-interview#Q19]] RED и USE методологии впервые; [[metrics-tracing-interview#Q36]] SLI/SLO поверх этих сигналов; [[metrics-tracing-interview#Q41]] какие SLI брать для разных сервисов."
+                "explanation": "RED даёт сервисный взгляд на Rate, Errors, Duration, USE — ресурсный на Utilization, Saturation, Errors. Это совместимые методологии выбора сигналов, а не обязательный исчерпывающий набор для каждой системы.",
+                "example": "Для API наблюдать RPS, долю ошибок и распределение задержек. Для пула: долю занятых потоков, ожидающие задания и отказы. Согласовать окно и область, прежде чем связывать рост latency с очередью.",
+                "when_to_apply": "Использовать при проектировании наблюдаемости и расследовании, дополняя сигналами домена, логами, traces и проверкой изменений.",
+                "edge_cases": "RED не тождественен всему набору SRE golden signals: там отдельно есть saturation. Duration не обязана измеряться только гистограммой. USE не требует конкретного exporter; наличие JVM binders само по себе не даёт все очереди и ошибки ресурсов.",
+                "related": "[[metrics-tracing-interview#Q19]] определения RED/USE; [[metrics-tracing-interview#Q36]] SLI/SLO; [[metrics-tracing-interview#Q41]] сигналы разных сервисов."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`RED` — это `Rate`, `Errors`, `Disk` для дисковой подсистемы, а `USE` — `Uptime`, `Speed`, `Errors` для сервисов.",
+              "text": "RED и USE описывают одинаковые сигналы сервиса; различаются форматом экспорта и названием инструмента сбора.",
               "correct": false,
               "sections": {
-                "what_actually": "Расшифровки неверны: `RED` = `Rate`, `Errors`, `Duration` (для сервисов), `USE` = `Utilization`, `Saturation`, `Errors` (для ресурсов).",
-                "source_of_confusion": "Аббревиатуры легко домыслить неверными словами, если не помнить точные расшифровки.",
-                "if_it_were_true": "Тогда `Duration` (p99) и `Saturation` (очереди) выпали бы из методологий, но они — ключевые сигналы.",
-                "how_it_should_be": "`RED` = Rate/Errors/Duration; `USE` = Utilization/Saturation/Errors."
+                "what_actually": "Различаются объекты и смысл сигналов: запросы сервиса и состояние ресурса. Выбор Prometheus, OTLP или другой системы не превращает RED в USE.",
+                "source_of_confusion": "Методологию выбора измерений смешивают с транспортом и библиотекой публикации.",
+                "if_it_were_true": "Смена exporter меняла бы очередь ресурса в длительность запроса без изменения самого измерения.",
+                "how_it_should_be": "Отдельно определить сигнал и его объект, затем выбирать подходящую библиотеку, экспорт и запросы для анализа."
               }
             }
           ]
