@@ -209,60 +209,106 @@ void test() {
 
 ## Q7. Что такое `@Captor` и для чего используется?
 
-`@Captor` декларативно создаёт `ArgumentCaptor` с правильным дженерик-типом. Захватчик ловит аргумент, который тестируемый код передал в мок, — чтобы потом сделать assertions по содержимому этого аргумента, а не только по факту вызова.
+`@Captor` обозначает поле ArgumentCaptor и избавляет от части ручных generic-casts. Поле нужно инициализировать обработкой аннотаций — например, MockitoExtension или openMocks; сама Java-аннотация объект не создаёт.
 
-Главная польза аннотации перед ручным созданием — она обходит стирание дженериков: `@Captor ArgumentCaptor<List<User>>` сохраняет тип, тогда как `ArgumentCaptor.forClass(List.class)` не даст уточнить параметр.
+Пример с generic-декларацией и настоящим вызовом зависимости:
 
 ```java
-@Captor
-ArgumentCaptor<UserEvent> eventCaptor;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.List;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@Test
-void shouldPublishCorrectEvent() {
-    service.createUser("Alice");
+@ExtendWith(MockitoExtension.class)
+class GenericCaptorExampleTest {
+    record Event(String name) {}
+    interface Bus { void publish(List<Event> events); }
+    static class Registration {
+        private final Bus bus;
+        Registration(Bus bus) { this.bus = bus; }
+        void register(String name) { bus.publish(List.of(new Event(name))); }
+    }
+    @Mock Bus bus;
+    @Captor ArgumentCaptor<List<Event>> events;
 
-    verify(eventBus).publish(eventCaptor.capture());
-    UserEvent event = eventCaptor.getValue();
-    assertThat(event.getName()).isEqualTo("Alice");
+    @Test
+    void inspectsPublishedBatch() {
+        new Registration(bus).register("Alice");
+        verify(bus).publish(events.capture());
+        assertEquals("Alice", events.getValue().get(0).name());
+    }
+
+    @Test
+    void createsTypedCaptorManually() {
+        ArgumentCaptor<List<Event>> manual = ArgumentCaptor.captor();
+        bus.publish(List.of(new Event("Bob")));
+        verify(bus).publish(manual.capture());
+        assertEquals("Bob", manual.getValue().get(0).name());
+    }
 }
 ```
 
-Без `@Captor` можно создать вручную:
-```java
-ArgumentCaptor<UserEvent> captor = ArgumentCaptor.forClass(UserEvent.class);
-```
+В **Mockito 5.11.0** доступны явный forClass и type-inferred captor(). Удобная декларация `ArgumentCaptor<List<Event>>` не отменяет стирание типов: обработчик вложенного generic получает raw List и не проверяет глубоко тип каждого элемента. Runtime-проверку контейнера и assertions над содержимым не следует смешивать.
+
+Captor не является mock захваченного объекта, не задаёт default Answer и сам не доказывает нужный вызов. Обычно его используют при verify, затем отдельно проверяют getValue/getAllValues. Он сохраняет ссылки, а не глубокие снимки (Q17/Q39). В параметрах Jupiter Captor также поддерживается исследованной версией при зарегистрированной интеграции — см. Q43.
 
 ---
+
 
 ## Q8. (!) Чем отличается `MockitoExtension` от `MockitoAnnotations.openMocks()`?
 
-**`@ExtendWith(MockitoExtension.class)`** — JUnit 5 Extension, декларативный подход:
-- аннотации `@Mock`, `@Spy`, `@Captor`, `@InjectMocks` обрабатываются автоматически
-- включён strict stubbing по умолчанию
-- ресурсы освобождаются автоматически после теста
+MockitoExtension интегрирует Mockito с **JUnit Jupiter**: обрабатывает полевые аннотации, разрешает поддерживаемые параметры, начинает/завершает MockitoSession. В исследованной **5.11.0** default strictness — STRICT_STUBS, если настройки не переопределены.
+
+MockitoAnnotations.openMocks(this) программно обрабатывает поля и возвращает **AutoCloseable**. Его можно использовать и в Jupiter, не только в JUnit 4. Но момент инициализации и закрытие ресурса выбирает ваш код; сам вызов не планирует teardown и не создаёт эквивалент строгой сессии расширения.
+
+Полный пример ручного lifecycle без MockitoExtension:
 
 ```java
-@ExtendWith(MockitoExtension.class)
-class MyTest { ... }
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class ManualAnnotationsTest {
+    interface Mailer { boolean send(String recipient); }
+    @Mock Mailer mailer;
+    @Captor ArgumentCaptor<String> recipient;
+    private AutoCloseable resources;
+
+    @BeforeEach
+    void initialize() {
+        resources = MockitoAnnotations.openMocks(this);
+    }
+    @AfterEach
+    void release() throws Exception {
+        if (resources != null) resources.close();
+    }
+    @Test
+    void sendsToExpectedRecipient() {
+        when(mailer.send("alice@example.com")).thenReturn(true);
+        assertTrue(mailer.send("alice@example.com"));
+        verify(mailer).send(recipient.capture());
+        assertEquals("alice@example.com", recipient.getValue());
+    }
+}
 ```
 
-**`MockitoAnnotations.openMocks(this)`** — программный подход, используется в JUnit 4 или когда нельзя использовать расширение:
+Расширение обычно сокращает ручной lifecycle-код. OpenMocks полезен, когда нужен собственный момент обработки полей; наличие чужого базового класса само по себе не запрещает Jupiter extensions. Не выполняйте оба способа инициализации одних полей без цели: можно получить новые объекты вместо уже переданных в SUT.
 
-```java
-@BeforeEach
-void setUp() {
-    closeable = MockitoAnnotations.openMocks(this);
-}
-
-@AfterEach
-void tearDown() throws Exception {
-    closeable.close();  // важно закрывать, чтобы освободить ресурсы
-}
-```
-
-**Когда что:** в JUnit 5 по умолчанию берите `MockitoExtension` — он короче и из коробки включает strict stubbing. `openMocks()` нужен там, где расширение недоступно: JUnit 4, кастомный раннер, наследование от чужого базового класса, или когда моки нужно создать в нестандартный момент жизненного цикла. Если используете `openMocks()`, обязательно закрывайте `Closeable` в `@AfterEach` — иначе моки утекут между тестами.
+Close ресурса, strictness, очистка истории и повторное создание SUT — разные действия. Закрытие не обещает reset всех сохранённых Java-объектов или отсутствие разделяемого состояния. Для параметров метода нужен ParameterResolver расширения, а не openMocks над this (Q23/Q43).
 
 ---
+
 
 ## Q9. Как работает `when().thenReturn()`?
 
@@ -1588,53 +1634,64 @@ class RealMethodStateTest {
 
 ## Q43. Как инжектировать `@Mock` и `@Captor` в параметры метода JUnit 5?
 
-`MockitoExtension` реализует JUnit-интерфейс `ParameterResolver`, поэтому моки и захватчики можно объявлять **прямо в параметрах** тестового метода — не заводя поля класса. Mockito создаст их перед запуском метода и подставит по аннотации:
+В **MockitoExtension 5.11.0** отдельные resolvers поддерживают параметры **Mock и Captor**. Зарегистрируйте интеграцию: одна аннотация параметра без подходящего Jupiter ParameterResolver недостаточна. Пример показывает Mock в конструкторе/BeforeEach/тесте и Captor в тестовом методе:
 
 ```java
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
-class OrderServiceTest {
+class ParameterInjectionExampleTest {
+    interface Clock { long now(); }
+    interface Gateway { boolean charge(long amount); }
+    interface Repository { void save(Order order); }
+    record Order(String status) {}
+    static class Service {
+        private final Gateway gateway;
+        private final Repository repository;
+        Service(Gateway gateway, Repository repository) {
+            this.gateway = gateway; this.repository = repository;
+        }
+        void place(long amount) {
+            if (gateway.charge(amount)) repository.save(new Order("PAID"));
+        }
+    }
+    private final Clock constructorClock;
+    private Clock setupClock;
 
+    ParameterInjectionExampleTest(@Mock Clock clock) {
+        constructorClock = clock;
+    }
+    @BeforeEach
+    void prepare(@Mock Clock clock) {
+        setupClock = clock;
+    }
     @Test
-    void shouldProcessOrder(
-            @Mock PaymentGateway gateway,
-            @Mock OrderRepository repo,
-            @Captor ArgumentCaptor<Order> orderCaptor
-    ) {
-        // given
-        when(gateway.charge(any())).thenReturn(PaymentResult.SUCCESS);
-        OrderService service = new OrderService(gateway, repo);
-
-        // when
-        service.place(orderRequest);
-
-        // then
-        verify(repo).save(orderCaptor.capture());
-        assertThat(orderCaptor.getValue().getStatus()).isEqualTo(PAID);
+    void processesOrder(@Mock Clock clock, @Mock Gateway gateway,
+                        @Mock Repository repository, @Captor ArgumentCaptor<Order> captor) {
+        assertNotSame(constructorClock, clock);
+        assertNotSame(setupClock, clock);
+        when(gateway.charge(10L)).thenReturn(true);
+        new Service(gateway, repository).place(10L);
+        verify(repository).save(captor.capture());
+        assertEquals("PAID", captor.getValue().status());
     }
 }
 ```
 
-Чем хорош подход с параметрами:
-- **Изоляция** — каждый тест видит только те моки, что объявил сам.
-- Нет разделяемого между тестами состояния (моки не «протекают» из теста в тест).
-- Меньше полей в классе, тест читается компактнее.
-- Зависимости теста описаны явно, прямо в сигнатуре.
+Одинаковый тип или имя параметра не означает один общий mock: передавайте в SUT именно тот экземпляр, которым управляет данный тест. Параметры уменьшают число полей, но сами по себе не изолируют всё состояние приложения или теста, особенно при другом lifecycle.
 
-Когда всё же оставлять поля класса:
-- Один и тот же мок нужен в нескольких тестах — выносим в `@Mock`-поле + общую настройку в `@BeforeEach`.
-- Используется `@InjectMocks` — он умеет внедрять только в поля, не в параметры.
-
-Также поддерживается конструктор тестового класса:
-```java
-class Test {
-    private final UserService service;
-    Test(@Mock UserRepository repo) {
-        this.service = new UserService(repo);
-    }
-}
-```
+InjectMocks на поле использует поддерживаемые полевые кандидаты и не подключает автоматически любой mock параметра метода к уже созданному SUT. При параметрическом подходе явное создание SUT часто понятнее. Конструктор теста тоже требует зарегистрированного расширения. Support Captor подтверждён именно для 5.11.0; переносить ограничения других версий без проверки нельзя.
 
 ---
+
 
 ## Q44. (!) Какие особенности у Mockito в Kotlin и зачем `mockito-kotlin`?
 
@@ -1697,48 +1754,64 @@ testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
 
 ## Q45. Что такое `@MockitoSettings` и как управлять strictness на уровне класса?
 
-`@MockitoSettings` — аннотация уровня класса, которая задаёт настройки `MockitoExtension` сразу для всех тестов в нём. Чаще всего ею управляют strictness — например, разом переводят весь класс в `LENIENT`, не помечая каждую заглушку через `lenient()`:
+`@MockitoSettings` задаёт настройки MockitoExtension, включая **session default strictness**. В **5.11.0** аннотация сама мета-регистрирует расширение через ExtendWith; дополнительный ExtendWith той же интеграции не обязателен. Настройка может находиться на классе; поиск в test context также учитывает более близкую аннотацию метода.
+
+Пример намеренно показывает разные области настройки, а не рекомендует оставлять лишние stubs:
 
 ```java
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class LegacyServiceTest {
+class StrictnessSettingsExampleTest {
+    interface Api { String read(); }
+    @Mock Api api;
 
-    @Mock UserRepository repo;
+    @Test
+    void classDefaultAllowsUnusedStub() {
+        when(api.read()).thenReturn("unused");
+        assertNotNull(api); // MockitoSettings уже зарегистрировала extension
+    }
 
-    @BeforeEach
-    void setUp() {
-        // не упадёт UnnecessaryStubbingException, даже если не используется
-        when(repo.findAll()).thenReturn(List.of());
+    @Test
+    @MockitoSettings(strictness = Strictness.STRICT_STUBS)
+    void methodOverridesClassDefault() {
+        when(api.read()).thenReturn("used");
+        assertEquals("used", api.read());
+        verifyNoMoreInteractions(api); // strict stub invocation уже verified
+    }
+
+    @Test
+    void lenientDoesNotDisableExplicitVerification() {
+        assertThrows(AssertionError.class, () -> verify(api).read());
+    }
+
+    @Test
+    void localMockStrictnessStillMattersForLookup() {
+        Api local = mock(Api.class, withSettings().strictness(Strictness.STRICT_STUBS));
+        when(local.read()).thenReturn("local");
+        assertEquals("local", local.read());
+        verifyNoMoreInteractions(local);
     }
 }
 ```
 
-Варианты `Strictness`:
+| Режим | Дополнительная strict-stubbing политика |
+|-------|-----------------------------------------|
+| STRICT_STUBS | Диагностика unused/potential mismatch с учётом условий и lifecycle; использованный strict stub может быть auto-verified |
+| LENIENT | Мягкий session default; verify и валидация API остаются |
+| WARN | Диагностика через logger вместо такого же строгого отказа; другие ошибки теста не исчезают |
 
-| Значение | Поведение |
-|----------|-----------|
-| `STRICT_STUBS` | Дефолт в `MockitoExtension`. Ловит `UnnecessaryStubbingException`, `PotentialStubbingProblem`, argument mismatch |
-| `LENIENT` | Отключает все проверки strict stubbing |
-| `WARN` | Предупреждение в логах, но тест проходит (legacy-совместимость с Mockito 1.x) |
+Более локальные настройки mock/stub имеют значение; это не общий выключатель всех проверок класса. Завершение сессии и lookup-диагностика имеют свои условия (Q28/Q29). Предпочитайте удалить неуместный общий stub или ослабить обоснованный конкретный stub через lenient, а не автоматически переводить любой класс в LENIENT.
 
-**Практика:** предпочтительнее точечный `lenient()` на конкретную заглушку, чем отключение strictness на весь класс:
-
-```java
-// Хорошо — только эта заглушка lenient, остальные проверяются strict
-lenient().when(repo.findAll()).thenReturn(List.of());
-
-// Плохо — выключаем проверки глобально, маскируем ошибки тестов
-@MockitoSettings(strictness = Strictness.LENIENT)
-class MyTest { ... }
-```
-
-`@MockitoSettings` оправдан для legacy-модулей при миграции с Mockito 1 — чтобы сначала стабилизировать тесты, потом постепенно включать strict на уровне отдельных классов.
+Стандартный MockitoExtension 5.11.0 не читает выдуманный platform parameter mockito.strictness. Произвольное имя в junit-platform.properties/Launcher не становится настройкой Mockito без кода, который его обрабатывает. Настройки Jupiter и Mockito различаются.
 
 ---
+
 
 ## See also
 
