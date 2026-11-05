@@ -1,0 +1,377 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/programming-languages/java/java-concurrency-interview.json",
+    "theory": "cheatsheets/interview/programming-languages/java/java-concurrency-interview.md"
+  },
+  "sha256": {
+    "mcq": "d46777c37f9a707e7690c38974a349ddd3e1318ddb271775c79f11fbf1e6a0c3",
+    "theory": "19bdce86d951b1d63bfcd5194e8f57a7e56e64383ec3876bcb5d966c34a2716a"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hashes": {
+    "Q1:B0": {
+      "mcq": "c64a63586775c45e49e6e738f8ed62c8844d0fae8a1a8ace7ae73e9fac3f5bcc",
+      "theory": "fbed45c92e94c069312529f8c0f3ac648d9c4b0b856cd019acd21c27a397c1f4"
+    },
+    "Q25:B0": {
+      "mcq": "cdf965ff25c4c2bfb53ff496249213268a8904695d38bdfd82d32a9b2480b645",
+      "theory": "4e21e017f703840d2fc8f296942cf29f1112fd4fa4c2d49fd075f9bf4099a9b2"
+    },
+    "Q46:B0": {
+      "mcq": "21c7ec6b4fba25c4cd7f34350e0f4df4e2e3128c59aca0cac269207496eead25",
+      "theory": "44d45880d13376b8c7638f5752c3cca7ad53a218cfba38a011f3a7a8a9fe9c54"
+    }
+  },
+  "preamble": "---\ntitle: \"Вопросы на собеседовании: Многопоточность в Java\"\ndescription: \"Комплексное руководство по вопросам собеседования на тему Java Concurrency: потоки, синхронизация, locks, atomic, ExecutorService, CompletableFuture, virtual threads, structured concurrency.\"\ntags:\n  - interview\n  - programming-languages\n  - java-concurrency-interview\ntype: \"interview\"\ndifficulty: \"intermediate\"\naliases:\n  - \"Вопросы на собеседовании\"\n  - \"Java Concurrency\"\n  - \"Java Concurrency interview\"\n  - \"Java потоки интервью\"\nprerequisites:\n  - \"[[java-concurrency-basics]]\"\nnext: []\nupdated: \"2026-04-25\"\n---\n# Вопросы на собеседовании: Многопоточность в Java\n\nКомплексное руководство по вопросам собеседования на тему `Java Concurrency` для `Senior Java Developer`. Включает потоки, синхронизацию, `java.util.concurrent`, `CompletableFuture`, `Virtual Threads` и `Structured Concurrency`.\n\n## Полезные ссылки\n\n### Официальная документация\n\n- [Java Concurrency Tutorial](https://docs.oracle.com/javase/tutorial/essential/concurrency/) — базовое руководство Oracle\n- [java.util.concurrent Package](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/package-summary.html) — Javadoc пакета\n- [Java Memory Model (JLS 17)](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html) — спецификация JMM\n- [JEP 444: Virtual Threads](https://openjdk.org/jeps/444) — спецификация виртуальных потоков\n- [JEP 453: Structured Concurrency](https://openjdk.org/jeps/453) — спецификация структурированной конкурентности\n\n### Baeldung\n\n- [Java Concurrency Interview Questions — Baeldung](https://www.baeldung.com/java-concurrency-interview-questions) — вопросы с ответами по многопоточности\n- [Java Concurrency Series — Baeldung](https://www.baeldung.com/java-concurrency) — серия статей по всем аспектам конкурентности\n- [What Is Thread-Safety and How to Achieve It? — Baeldung](https://www.baeldung.com/java-thread-safety) — потокобезопасность и способы её достижения\n- [Life Cycle of a Thread in Java — Baeldung](https://www.baeldung.com/java-thread-lifecycle) — жизненный цикл потока с диаграммами\n\n## Содержание\n\n- [Полезные ссылки](#полезные-ссылки)\n- [See also](#see-also)\n\n**Потоки: создание, жизненный цикл, приоритеты**\n- [Q1. (!) В чем разница между `Process` и `Thread`?](#q1--в-чем-разница-между-process-и-thread)\n- [Q2. Как создать поток и запустить его?](#q2-как-создать-поток-и-запустить-его)\n- [Q3. (!) Какие состояния есть у `Thread`?](#q3--какие-состояния-есть-у-thread)\n- [Q4. Что такое `Thread Priority`?](#q4-что-такое-thread-priority)\n- [Q5. (!) В чем разница между `Runnable` и `Callable`?](#q5--в-чем-разница-между-runnable-и-callable)\n- [Q6. Что такое `Daemon Thread`?](#q6-что-такое-daemon-thread)\n- [Q7. (!) Что такое `interrupt()`, `isInterrupted()`, `InterruptedException`?](#q7--что-такое-interrupt-isinterrupted-interruptedexception)\n- [Q8. В чем разница между `yield()`, `join()` и `sleep()`?](#q8-в-чем-разница-между-yield-join-и-sleep)\n\n**`Java Memory Model`, `volatile`, `final`**\n- [Q9. (!) Что такое `Java Memory Model` (`JMM`)?](#q9--что-такое-java-memory-model-jmm)\n- [Q10. (!) Что такое `volatile`? Что гарантирует `JMM` для `volatile` полей?](#q10--что-такое-volatile-что-гарантирует-jmm-для-volatile-полей)\n- [Q11. Какие гарантии дает `JMM` для `final` полей?](#q11-какие-гарантии-дает-jmm-для-final-полей)\n- [Q12. (!) Что такое `happens-before`?](#q12--что-такое-happens-before)\n\n**Синхронизация: `synchronized`, `wait/notify`, потокобезопасность**\n- [Q13. (!) Что такое `synchronized` блок и метод?](#q13--что-такое-synchronized-блок-и-метод)\n- [Q14. В чем преимущество `synchronized` блока перед методом?](#q14-в-чем-преимущество-synchronized-блока-перед-методом)\n- [Q15. (!) Разница между блокировкой на уровне класса и объекта](#q15--разница-между-блокировкой-на-уровне-класса-и-объекта)\n- [Q16. Какова цель `wait()`, `notify()` и `notifyAll()`?](#q16-какова-цель-wait-notify-и-notifyall)\n- [Q17. Что такое потокобезопасный класс?](#q17-что-такое-потокобезопасный-класс)\n\n**Атомарные операции и классы**\n- [Q18. (!) Что такое `Atomic` классы и `CAS`?](#q18--что-такое-atomic-классы-и-cas)\n- [Q19. Чем `AtomicInteger` лучше `synchronized int`?](#q19-чем-atomicinteger-лучше-synchronized-int)\n\n**Locks: `ReentrantLock`, `ReadWriteLock`, `StampedLock`**\n- [Q20. (!) Что такое `ReentrantLock` и чем он лучше `synchronized`?](#q20--что-такое-reentrantlock-и-чем-он-лучше-synchronized)\n- [Q21. (!) Что такое `ReadWriteLock` и `StampedLock`?](#q21--что-такое-readwritelock-и-stampedlock)\n- [Q22. Что такое `Condition` в `java.util.concurrent.locks`?](#q22-что-такое-condition-в-javautilconcurrentlocks)\n\n**Deadlock, Livelock, Starvation, Race Condition**\n- [Q23. (!) Что такое `Deadlock`? Как предотвратить?](#q23--что-такое-deadlock-как-предотвратить)\n- [Q24. В чем разница между `Deadlock`, `Livelock` и `Starvation`?](#q24-в-чем-разница-между-deadlock-livelock-и-starvation)\n- [Q25. (!) Что такое `Race Condition`?](#q25--что-такое-race-condition)\n\n**`ThreadLocal`**\n- [Q26. Что такое `ThreadLocal`?](#q26-что-такое-threadlocal)\n- [Q27. В чем разница между `ThreadLocal` и `InheritableThreadLocal`?](#q27-в-чем-разница-между-threadlocal-и-inheritablethreadlocal)\n\n**`Executor`, пулы потоков**\n- [Q28. (!) Что такое `Executor` и `ExecutorService`?](#q28--что-такое-executor-и-executorservice)\n- [Q29. (!) Какие реализации `ExecutorService` есть в стандартной библиотеке?](#q29--какие-реализации-executorservice-есть-в-стандартной-библиотеке)\n- [Q30. Разница между `shutdown()`, `shutdownNow()` и `awaitTermination()`](#q30-разница-между-shutdown-shutdownnow-и-awaittermination)\n- [Q31. Разница между `submit()` и `execute()`](#q31-разница-между-submit-и-execute)\n- [Q32. Что такое `ForkJoinPool` и work-stealing?](#q32-что-такое-forkjoinpool-и-work-stealing)\n\n**`Future`, `CompletableFuture`**\n- [Q33. (!) Что такое `Future` и `FutureTask`?](#q33--что-такое-future-и-futuretask)\n- [Q34. (!) Что такое `CompletableFuture`?](#q34--что-такое-completablefuture)\n- [Q35. (!) Разница между `thenApply()`, `thenCompose()` и `thenCombine()`](#q35--разница-между-thenapply-thencompose-и-thencombine)\n- [Q36. Как обрабатывать исключения в `CompletableFuture`?](#q36-как-обрабатывать-исключения-в-completablefuture)\n- [Q37. Как выполнить несколько `CompletableFuture` параллельно?](#q37-как-выполнить-несколько-completablefuture-параллельно)\n\n**Синхронизаторы: `CountDownLatch`, `CyclicBarrier`, `Semaphore`, `Phaser`**\n- [Q38. (!) Что такое `CountDownLatch` и `CyclicBarrier`?](#q38--что-такое-countdownlatch-и-cyclicbarrier)\n- [Q39. Что такое `Semaphore`?](#q39-что-такое-semaphore)\n- [Q40. Что такое `Phaser` и `Exchanger`?](#q40-что-такое-phaser-и-exchanger)\n\n**Concurrent Collections**\n- [Q41. (!) Что такое `Concurrent Collection Classes`?](#q41--что-такое-concurrent-collection-classes)\n- [Q42. Как работает `ConcurrentHashMap`?](#q42-как-работает-concurrenthashmap)\n- [Q43. Что такое `BlockingQueue`?](#q43-что-такое-blockingqueue)\n\n**Практические задачи**\n- [Q44. Как решить `Producer-Consumer` проблему?](#q44-как-решить-producer-consumer-проблему)\n- [Q45. Что такое `Java Thread Dump` и как его получить?](#q45-что-такое-java-thread-dump-и-как-его-получить)\n\n**Virtual Threads и Structured Concurrency (Java 21+)**\n- [Q46. (!) Что такое `Virtual Threads` и чем они отличаются от platform threads?](#q46--что-такое-virtual-threads-и-чем-они-отличаются-от-platform-threads)\n- [Q47. Когда использовать и когда НЕ использовать `Virtual Threads`?](#q47-когда-использовать-и-когда-не-использовать-virtual-threads)\n- [Q48. (!) Что такое thread pinning в контексте `Virtual Threads`?](#q48--что-такое-thread-pinning-в-контексте-virtual-threads)\n- [Q49. Что такое `Structured Concurrency`?](#q49-что-такое-structured-concurrency)\n- [Q50. Что такое `Scoped Values` и чем они лучше `ThreadLocal`?](#q50-что-такое-scoped-values-и-чем-они-лучше-threadlocal)\n\n**`ForkJoin`, `CompletableFuture` цепочки, синхронизаторы**\n- [Q51. (!) Как работает `ForkJoinPool` и алгоритм work-stealing подробно?](#q51--как-работает-forkjoinpool-и-алгоритм-work-stealing-подробно)\n- [Q52. (!) Как построить сложную цепочку `CompletableFuture` с обработкой ошибок?](#q52--как-построить-сложную-цепочку-completablefuture-с-обработкой-ошибок)\n- [Q53. Что такое `StampedLock` и когда его использовать вместо `ReadWriteLock`?](#q53-что-такое-stampedlock-и-когда-его-использовать-вместо-readwritelock)\n- [Q54. Что такое `Phaser` и чем он отличается от `CountDownLatch` и `CyclicBarrier`?](#q54-что-такое-phaser-и-чем-он-отличается-от-countdownlatch-и-cyclicbarrier)\n- [Q55. Что такое `Exchanger` и в каких сценариях применяется?](#q55-что-такое-exchanger-и-в-каких-сценариях-применяется)\n- [Q56. Как использовать `StructuredTaskScope` для параллельных запросов с отменой?](#q56-как-использовать-structuredtaskscope-для-параллельных-запросов-с-отменой)\n\n---\n",
+  "theory": [
+    {
+      "q_number": 1,
+      "title": "В чем разница между Process и Thread?",
+      "line": 132,
+      "body": "\n**Процесс** — выполняющаяся программа с собственным адресным пространством и ресурсами ОС. **Поток** — последовательность исполнения внутри процесса. В Java объект `Process` управляет запущенным нативным процессом, например полученным через `ProcessBuilder.start()`; `Thread` представляет поток текущей JVM. Это разные API и разные уровни изоляции. См. [Process Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Process.html).\n\n| Характеристика | Процесс | Поток JVM |\n|---|---|---|\n| Память | Свое адресное пространство; Java-куча другой JVM автоматически не разделяется | Общая куча текущей JVM; у каждого потока собственные стек и логический `pc` |\n| Общие данные | Обмен через IPC: каналы, сокеты, явно организованную shared memory | Ссылки на общие объекты и поля `static` одной загруженной версии класса |\n| Создание в Java | Например, `ProcessBuilder.start()` | Например, `Thread.start()` или `Thread.Builder` |\n| Завершение | Меняет доступность самого процесса и может затронуть зависящие от него компоненты | Необработанное исключение обычно завершает этот поток, не обязательно всю JVM |\n\nОбщая память не означает автоматической потокобезопасности: локальная переменная может содержать ссылку на общий изменяемый объект. `static` не создаёт отдельную копию на каждый поток; при этом классы, загруженные разными class loaders, могут иметь разные статические поля. Разделение стека/кучи описывает [JVMS 21, §2.5](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-2.html#jvms-2.5).\n\n```java\npublic class ThreadFailureExample {\n    public static void main(String[] args) throws InterruptedException {\n        Thread worker = Thread.ofPlatform().start(() -> {\n            throw new IllegalStateException(\"worker failure\");\n        });\n        worker.join();\n        System.out.println(\"main continues\");\n    }\n}\n```\n\nВ примере стандартный обработчик печатает ошибку в stderr, но main продолжает работу после join. JVM может завершиться, когда закончились все non-daemon threads, по `System.exit()` или из-за других причин; отсутствие пользовательского `UncaughtExceptionHandler` само по себе не делает обычное исключение аварией процесса. См. [Thread Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html).\n\nИз этого сравнения нельзя вывести универсальные микросекунды создания, обязательный сброс TLB при каждом переключении или фиксированное преимущество любого потока над любым процессом. Стоимость зависит от ОС, архитектуры, JVM и типа потока; в Java 21 `Thread` может быть platform или virtual. Базовая модель процессов/потоков — в [Oracle Concurrency Tutorial](https://docs.oracle.com/javase/tutorial/essential/concurrency/procthread.html).\n\n\n"
+    },
+    {
+      "q_number": 25,
+      "title": "Что такое Race Condition?",
+      "line": 761,
+      "body": "\n**Race condition** — нарушение корректности, зависящее от порядка конкурирующих действий. Типичные составные последовательности — **check-then-act** («проверить, затем действовать») и **read-modify-write** («прочитать, изменить, записать»). Даже если отдельные методы потокобезопасны, вся последовательность не становится атомарной.\n\nНапример, после `map.containsKey(key)` другой поток может удалить ключ до `map.get(key)`. У `ConcurrentHashMap` второй вызов вернёт `null`; сам `get()` не бросает NPE из-за отсутствия ключа. NPE возможен при последующей распаковке `Integer` в `int` или разыменовании null. Если нужен текущий результат, прочитайте `get()` один раз и обработайте отсутствие. `computeIfAbsent()` имеет **другой контракт** — вычислить и установить отсутствующее значение; это не универсальная замена «прочитать, если существует». Для подходящих составных обновлений есть `putIfAbsent`, `compute`, `merge`. См. [ConcurrentHashMap Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html).\n\nПример намеренно задаёт чередование двух потоков. Атомарность отдельных get/set не спасает составной инкремент:\n\n```java\nimport java.util.concurrent.CountDownLatch;\nimport java.util.concurrent.TimeUnit;\nimport java.util.concurrent.atomic.AtomicInteger;\n\npublic class RaceConditionExample {\n    static void runTwo(Runnable task) throws InterruptedException {\n        Thread first = new Thread(task);\n        Thread second = new Thread(task);\n        first.start();\n        second.start();\n        first.join();\n        second.join();\n    }\n\n    public static void main(String[] args) throws InterruptedException {\n        AtomicInteger counter = new AtomicInteger();\n        CountDownLatch bothRead = new CountDownLatch(2);\n        runTwo(() -> {\n            int previous = counter.get();\n            bothRead.countDown();\n            try {\n                if (!bothRead.await(5, TimeUnit.SECONDS)) throw new IllegalStateException(\"timeout\");\n            } catch (InterruptedException e) {\n                Thread.currentThread().interrupt();\n                return;\n            }\n            counter.set(previous + 1); // два потока записывают 1\n        });\n        System.out.println(counter.get()); // 1: потерянное обновление\n\n        counter.set(0);\n        runTwo(counter::incrementAndGet);   // одна атомарная read-modify-write операция\n        System.out.println(counter.get()); // 2\n    }\n}\n```\n\nИсправление выбирают по **инварианту**: одна атомарная операция, общий lock на всю последовательность или устранение общего изменяемого состояния. `volatile` задаёт видимость/порядок, но не превращает `i++` в единую операцию. Атомарная запись ссылки также не равна безопасной публикации объекта и не делает несколько действий транзакцией: ссылка записывается атомарно и без volatile. См. [JLS 17.4–17.7](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html) и [AtomicInteger](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicInteger.html).\n\nТермин **data race** в JMM имеет точное определение через конфликтующие доступы без happens-before; он не заменяет проверку бизнес-инвариантов составной операции. Для воспроизведения полезны управляемые interleavings и [OpenJDK jcstress](https://github.com/openjdk/jcstress), но успешный прогон не доказывает отсутствие всех гонок. JFR и статический анализ могут дать диагностические данные; не следует обещать, что они автоматически находят любую гонку.\n\n\n"
+    },
+    {
+      "q_number": 46,
+      "title": "Что такое Virtual Threads и чем они отличаются от platform threads?",
+      "line": 1418,
+      "body": "\n**Virtual thread** — экземпляр `Thread`, планируемый JVM поверх carrier-потоков; **platform thread** в обычной реализации связан с потоком ОС на всё время жизни. Virtual thread не получает отдельную Java-кучу и не является переиспользуемым OS-потоком из прикладного пула. В Java 21 это стандартный API. См. [Thread Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html).\n\nПри исполнении virtual thread монтируется на carrier. Многие поддержанные JDK блокирующие операции позволяют его приостановить и освободить carrier, но это **не гарантия для любого I/O**. В Java 21 pinning внутри `synchronized` или native/foreign вызова может препятствовать unmount. Отдельные блокировки также могут удерживать поток ОС; не смешивайте все такие случаи с одним механизмом pinning. См. [руководство Virtual Threads Java 21](https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html).\n\n| Характеристика | Platform thread | Virtual thread |\n|---|---|---|\n| Планирование | Поток ОС планирует ОС | JVM выбирает carrier, который затем планирует ОС |\n| Стек/ресурсы | Ресурсы связаны с OS thread и настройками JVM/ОС | Стек может храниться и расти в куче; общего фиксированного размера на поток нет |\n| При блокировке | Занимает свой OS thread | Часто освобождает carrier; есть ограничения и pinning |\n| CPU-bound работа | Может исполнять её | Не добавляет физических вычислительных ресурсов и не гарантирует ускорения |\n| Повторное использование | Пул возможен, но не обязателен по API | Обычно создаётся отдельный virtual thread на задачу |\n| Время жизни JVM | Может быть non-daemon | Всегда daemon; для результата нужно явно дождаться задачи |\n\n```java\nimport java.util.concurrent.Executors;\n\npublic class VirtualThreadExample {\n    public static void main(String[] args) throws Exception {\n        Thread thread = Thread.ofVirtual().name(\"vt-example\").unstarted(() -> {});\n        thread.start();\n        thread.join();\n        System.out.println(thread.isVirtual() + \":\" + thread.isDaemon()); // true:true\n\n        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {\n            System.out.println(executor.submit(() -> Thread.currentThread().isVirtual()).get()); // true\n        }\n    }\n}\n```\n\nВ OpenJDK 21 carrier-планировщик использует отдельный ForkJoinPool; это не `ForkJoinPool.commonPool()` прикладных CompletableFuture. Польза virtual threads — масштабирование множества ожидающих задач, а не обещание меньшей latency каждого запроса. Доступная память, сокеты, соединения с БД и ограничения удалённого сервиса всё равно ограничены: «100K запросов без OOM» и «миллионы потоков на любой машине» не являются API-гарантиями.\n\n**Граница версий.** В JDK 24 изменение JEP 491 позволяет virtual threads освобождать carrier при блокировке в `synchronized`; ограничение Java 21 нельзя переносить на все новые JDK. Native/foreign случаи остаются отдельной темой. См. [изменения JDK 24](https://docs.oracle.com/en/java/javase/25/migrate/significant-changes-jdk-24.html) и [руководство Java 24](https://docs.oracle.com/en/java/javase/24/core/virtual-threads.html). Это уточнение версии, а не результат локального запуска JDK 24.\n\n```mermaid\ngraph TD\n    VT[Virtual thread] -->|mounted| C[Carrier / platform thread]\n    C --> OS[OS thread]\n    VT -.->|supported blocking operation: unmount| WAIT[Waiting virtual thread]\n    WAIT -.->|resume: carrier may differ| C\n```\n\n\n"
+    }
+  ],
+  "blocks": [
+    {
+      "q_number": 1,
+      "block_idx": 0,
+      "visible_question": "В чем разница между Process и Thread?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "В чем разница между `Process` и `Thread`?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "`Process` делит Java-кучу с другими процессами; `Thread` имеет собственное адресное пространство и изолированные `static`-поля.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Адресное пространство относится к нативному процессу. Потоки одной JVM работают с общей кучей; у потока есть собственный стек, но локальная ссылка может указывать на общий объект. Static-поле не создаёт отдельную копию на каждый поток.",
+              "source_of_confusion": "Изоляцию стека и локальных переменных принимают за изоляцию всех объектов и статических данных. Одновременно общую память потоков ошибочно переносят на разные процессы.",
+              "if_it_were_true": "Обычные потоки JVM не могли бы совместно работать с объектом в её куче так, как описывает модель памяти. Это другая модель изоляции; из неё не следует отсутствие потребности в любой синхронизации между участниками системы.",
+              "how_it_should_be": "Различать собственное адресное пространство процесса и общую Java-кучу потоков текущей JVM. Обмен между процессами организуют отдельно; безопасность общей памяти потоков тоже требует подходящего протокола."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "`Process` и `Thread` дают одинаковую изоляцию памяти; отличаются только названием и способом создания через Java API.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Process управляет запущенным нативным процессом, например созданным через ProcessBuilder; Thread представляет поток текущей JVM. Их контракты и модель памяти не сводятся к двум именам одной сущности.",
+              "source_of_confusion": "В обоих случаях наблюдается параллельное выполнение, поэтому API управления нативной программой смешивается с потоком внутри JVM.",
+              "if_it_were_true": "Оба понятия описывали бы одну модель изоляции. При этом два разных имени API всё равно могли бы существовать; наличие двух классов само по себе не опровергает гипотезу. Реальное различие видно в их контрактах и общей памяти.",
+              "how_it_should_be": "Сравнить нативный процесс с собственным адресным пространством и поток исполнения текущей JVM с доступом к её общей куче. Объект Process является Java-объектом управления процессом, а не отдельной кучей внутри JVM."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "`Process` изолирован в своём адресном пространстве; потоки одной JVM разделяют кучу и `static`-поля загруженных классов.",
+            "correct": true,
+            "sections": {
+              "explanation": "Нативный процесс имеет собственное адресное пространство и ресурсы. Объект Process позволяет управлять таким процессом; Thread представляет поток исполнения текущей JVM. Потоки разделяют кучу, имея собственные стеки и логические счётчики команд. Статика относится к конкретной загруженной версии класса: разные class loaders могут дать разные поля.",
+              "example": "Worker выбрасывает обычное необработанное исключение; после worker.join() main продолжает выполнение. Само отсутствие пользовательского UncaughtExceptionHandler не превращает завершение worker в обязательную гибель всей JVM.",
+              "when_to_apply": "Для выбора границ изоляции и способа обмена данными: между нативными процессами нужен явно организованный канал, а потоки JVM могут обращаться к общим объектам. Цену создания и переключения нужно измерять в конкретной среде.",
+              "edge_cases": "JVM может завершиться после окончания всех non-daemon потоков, по System.exit или по другим причинам. Необработанное исключение отдельного worker — другой факт. API не задаёт универсальных микросекунд создания, обязательного сброса TLB или постоянной разницы стоимости переключений.",
+              "related": "[[java-concurrency-interview#Q2]] создание потока; [[java-concurrency-interview#Q3]] состояния; [[java-concurrency-interview#Q9]] JMM."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "`Process` имеет своё адресное пространство; `Thread` создаётся через `fork` и получает отдельную копию Java-кучи родительского процесса.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Thread представляет поток текущей JVM и не получает отдельную копию её Java-кучи. Fork как модель создания нативного процесса нельзя переносить на контракт Thread.start.",
+              "source_of_confusion": "Создание нативного процесса с его моделью адресного пространства смешивается с запуском потока внутри существующей JVM.",
+              "if_it_were_true": "Новый поток работал бы с собственной копией объектов вместо общей кучи текущей JVM. Это не соответствовало бы контракту совместного доступа потоков к тем же объектам.",
+              "how_it_should_be": "Собственное адресное пространство — свойство процесса; Thread запускает последовательность исполнения в текущей JVM. Не выводить детали системных вызовов конкретной ОС только из имени Java-метода."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 25,
+      "block_idx": 0,
+      "visible_question": "Что такое Race Condition?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Что такое `Race Condition`?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Корректность нарушается из-за чередования действий, например check-then-act; универсальная защита — перехватить ConcurrentModificationException, после чего состояние считается согласованным.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Race condition может нарушать данные или решение без ConcurrentModificationException. Это исключение не является универсальным детектором гонки, а его перехват не восстанавливает автоматически инвариант.",
+              "source_of_confusion": "Fail-fast поведение некоторых коллекций принимают за общий механизм обнаружения и исправления конкурентных ошибок. Гонка составного действия не обязана затрагивать итератор.",
+              "if_it_were_true": "Потерянный инкремент или неверный check-then-act всегда сообщали бы это исключение и исправлялись бы его перехватом. Реальные составные операции могут завершиться без исключения и с неправильным результатом.",
+              "how_it_should_be": "Определить нарушаемый инвариант и защитить всю нужную последовательность подходящим атомарным API или общим lock, либо убрать общее изменяемое состояние. Диагностика исключения не заменяет протокол корректности."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "При check-then-act порядок действий потоков может нарушить инвариант; достаточно объявить общее поле volatile, чтобы вся составная операция стала атомарной.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Volatile задаёт видимость и порядок доступов, но не превращает составной check-then-act или i++ в одну атомарную операцию. Отдельные атомарные чтение и запись не дают атомарность всей последовательности.",
+              "source_of_confusion": "Гарантии отдельного доступа и happens-before переносят на несколько действий, между которыми может вмешаться другой поток.",
+              "if_it_were_true": "Одного volatile-поля было бы достаточно для атомарного i++ несколькими потоками. На деле между чтением и записью возможны конкурирующие действия и потеря обновления.",
+              "how_it_should_be": "Выбирать защиту по инварианту: например, AtomicInteger.incrementAndGet или один общий lock вокруг последовательности. Volatile полезен и за пределами флагов, но сам по себе не сериализует произвольный алгоритм."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Нарушение корректности зависит от чередования действий, например check-then-act; инвариант защищают атомарной операцией, общим lock или устранением общего изменяемого состояния.",
+            "correct": true,
+            "sections": {
+              "explanation": "Race condition — нарушение корректности, зависящее от порядка конкурирующих действий. Типичные случаи — check-then-act и read-modify-write. Потокобезопасность отдельных методов ещё не делает их комбинацию атомарной; конкретный инвариант определяет нужный протокол.",
+              "example": "Два потока могут прочитать AtomicInteger со значением 0 и оба записать 1 через get-then-set. Метод incrementAndGet выполняет нужный инкремент атомарно. У ConcurrentHashMap get после удаления ненулевого ключа возвращает null; NPE возникает при последующей распаковке или разыменовании, а не из-за отсутствия записи в самом get.",
+              "when_to_apply": "При анализе общего изменяемого состояния и инвариантов нескольких действий. Управляемое чередование, стресс-тесты и jcstress помогают находить контрпримеры; успешный прогон не доказывает отсутствие всех возможных гонок.",
+              "edge_cases": "Метод computeIfAbsent создаёт и устанавливает отсутствующее значение, поэтому не является универсальной заменой чтению существующей записи. Атомарная запись ссылки, безопасная публикация и атомарность get-then-set — разные свойства. Термин data race в JMM имеет отдельное точное определение.",
+              "related": "[[java-concurrency-interview#Q17]] потокобезопасный класс; [[java-concurrency-interview#Q18]] Atomic/CAS; [[java-concurrency-interview#Q42]] ConcurrentHashMap."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "При check-then-act порядок действий может нарушить инвариант; замена значений на immutable делает общую последовательность get-then-set атомарной без дополнительного протокола.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Immutable-значения не меняются внутри объекта, но общая ссылка или контейнер всё ещё могут обновляться. Два get-then-set могут потерять изменение даже при AtomicReference и immutable значениях.",
+              "source_of_confusion": "Отсутствие мутации самого значения принимают за атомарность протокола выбора и замены значения. Видимость и публикация тоже не равны транзакции нескольких действий.",
+              "if_it_were_true": "Одна лишь неизменяемость значения делала бы конкурирующие get-then-set единой атомарной операцией. Тогда показанное потерянное обновление было бы невозможно; реальный протокол этого не обеспечивает.",
+              "how_it_should_be": "Для общего инварианта нужен подходящий протокол, например updateAndGet/CAS или общий lock. Чтения и записи ссылок атомарны и без volatile; нужные гарантии публикации и упорядочения выбирают отдельно, не ограничивая их одним способом."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 46,
+      "block_idx": 0,
+      "visible_question": "Что такое Virtual Threads и чем они отличаются от platform threads?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Что такое `Virtual Threads` и чем они отличаются от platform threads?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "В Java 21 virtual threads — пул переиспользуемых platform threads; отдельный Thread на задачу не создаётся, а worker при ожидании остаётся занят текущей задачей.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Virtual thread — отдельный Thread, планируемый JVM, а не имя пула переиспользуемых platform workers. Например, newVirtualThreadPerTaskExecutor создаёт новый virtual thread для каждой отправленной задачи. Поддержанное ожидание может освободить carrier, с ограничениями Java 21.",
+              "source_of_confusion": "Механизм virtual threads смешивают с пулом задач и рабочих потоков. ExecutorService — интерфейс управления задачами, который может реализовывать и virtual-thread-per-task исполнитель.",
+              "if_it_were_true": "Задачи просто выдавались бы тем же долгоживущим platform workers, а не отдельным virtual threads. Это иная модель, чем жизненный цикл virtual thread на задачу; из неё нельзя вывести отсутствие любых преимуществ интерфейса ExecutorService.",
+              "how_it_should_be": "Разделять виртуальный Thread, carrier и прикладной executor. В Java 21 virtual threads монтируются на carrier и могут освобождать его на поддержанных ожиданиях; pinning и некоторые блокировки ограничивают это поведение."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "В Java 21 virtual threads планирует JVM; в отличие от platform threads они дают физический CPU-параллелизм сверх числа ядер и поэтому ускоряют долгие вычисления.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Virtual threads не добавляют процессорные ядра и не гарантируют ускорения CPU-bound кода. Такой код может на них исполняться, но выигрыш от освобождения carrier во время ожидания не равен ускорению длительного вычисления.",
+              "source_of_confusion": "Лёгкость создания и масштабирование числа ожидающих задач принимают за возможность получить дополнительные физические вычислительные ресурсы.",
+              "if_it_were_true": "Физический CPU-параллелизм увеличивался бы от одной смены вида Thread. Реальные вычисления всё равно выполняются на доступных процессорах; больше конкурентных задач не означает больше ядер.",
+              "how_it_should_be": "Выбирать virtual threads прежде всего для большого числа задач с ожиданием, измеряя эффект. CPU-bound работа не запрещена; нельзя обещать универсальное превосходство или ухудшение только по виду потока."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "В Java 21 virtual threads планирует JVM на carrier-потоках без постоянной привязки к OS thread; поддержанные ожидания могут освобождать carrier, но pinning этому мешает.",
+            "correct": true,
+            "sections": {
+              "explanation": "Virtual thread — экземпляр Thread, который планирует JVM на carrier-потоках. Platform thread в обычной реализации связан с OS thread на всё время жизни. В Java 21 поддержанные блокирующие операции могут освобождать carrier, но synchronized и native/foreign случаи могут приводить к pinning. Это не обещание unmount при любом I/O.",
+              "example": "Thread.ofVirtual().start(task) создаёт virtual thread; join позволяет дождаться его результата. В примере с newVirtualThreadPerTaskExecutor задача видит isVirtual() == true, а закрытие executor ожидает завершения задач. Это не нагрузочная гарантия на 100K запросов.",
+              "when_to_apply": "Для масштабирования множества задач, значительную часть времени ожидающих доступную внешнюю зависимость. Память, соединения и лимиты сервисов остаются ограничениями; фиксированного порога количества задач для применения нет.",
+              "edge_cases": "Virtual threads всегда daemon; для нужного результата организуют ожидание. В OpenJDK 21 scheduler использует отдельный ForkJoinPool, не commonPool. Ограничение synchronized относится к Java 21: изменение JDK 24 обсуждается отдельно и не проверялось этим JDK21-прогоном.",
+              "related": "[[java-concurrency-interview#Q47]] выбор virtual threads; [[java-concurrency-interview#Q48]] pinning; [[java-concurrency-interview#Q49]] structured concurrency; [[java-concurrency-interview#Q50]] ScopedValue."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "В Java 21 virtual thread занимает отдельный OS thread на всё время жизни, как platform thread; отличие состоит только в меньшем фиксированном размере стека.",
+            "correct": false,
+            "sections": {
+              "what_actually": "У virtual thread нет постоянного отдельного OS thread на весь срок жизни. JVM может монтировать его на carrier и размонтировать при поддержанном ожидании. При этом конкретный размер стека не является единым фиксированным API-значением.",
+              "source_of_confusion": "Virtual thread представляют как тот же platform thread с уменьшенными настройками стека, упуская разницу планирования и привязки к OS thread.",
+              "if_it_were_true": "Каждый virtual thread удерживал бы собственный OS thread весь срок жизни, как заявлено в варианте. Это убрало бы описанное мультиплексирование, хотя точные пределы ресурсов всё равно зависели бы от среды.",
+              "how_it_should_be": "Сравнивать планирование и жизненный цикл: platform thread связан с OS thread, virtual thread планирует JVM на carrier. Учитывать ограничения unmount конкретной версии, не обещая фиксированный размер и неограниченное число потоков."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "open_issues": [],
+  "runtime_findings": [],
+  "checks": {
+    "content_review": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q25:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q46:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "factual_correctness": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q25:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q46:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "source_linkage": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q25:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q46:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sections_consistency": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q25:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q46:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sfpl": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q25:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q46:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "ansc": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q25:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q46:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "russian_readability": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q25:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q46:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "independent_review": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q25:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q46:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "blind_review": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q25:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q46:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "final_acceptance": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q25:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q46:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    }
+  },
+  "instructions": "Все A/B/C/D и sections. SFPL, ANSC, RU — отдельные вердикты. Дополнительные смысловые зависимости прочитать и указать в evidence. Сигналы не являются редакторской приёмкой."
+}

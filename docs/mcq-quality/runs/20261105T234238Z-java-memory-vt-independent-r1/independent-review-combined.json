@@ -1,0 +1,406 @@
+{
+  "reviewer_result_r2": {
+    "reviewer": "java_memory_vt_independent",
+    "model": "gpt-6-luna",
+    "completed_at": "2026-11-05T23:49:39Z",
+    "phase": "B-r2",
+    "final": false,
+    "measurement": {
+      "method": "Python len(text), len(text.split()) on visible option text in disclosure/review-input.json",
+      "results": {
+        "Q1": {
+          "A": [
+            127,
+            14
+          ],
+          "B": [
+            117,
+            16
+          ],
+          "C": [
+            120,
+            15
+          ],
+          "D": [
+            136,
+            16
+          ]
+        },
+        "Q25": {
+          "A": [
+            190,
+            17
+          ],
+          "B": [
+            156,
+            19
+          ],
+          "C": [
+            177,
+            19
+          ],
+          "D": [
+            176,
+            19
+          ]
+        },
+        "Q46": {
+          "A": [
+            161,
+            24
+          ],
+          "B": [
+            161,
+            24
+          ],
+          "C": [
+            169,
+            24
+          ],
+          "D": [
+            156,
+            24
+          ]
+        }
+      },
+      "corrected_claims": "Q25 C is not longest; A is longest by characters, while B/C/D have 19 words. Q46 B is not uniquely shortest; D is shortest and A=B. Phase A remains sealed and unchanged."
+    },
+    "sources": [
+      {
+        "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Process.html",
+        "checked_claim": "ProcessBuilder.start/Runtime.exec create native process and return Process controller object",
+        "product_version": "Java SE 21",
+        "checked_at": "2026-11-05T23:48Z"
+      },
+      {
+        "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.4",
+        "checked_claim": "volatile write synchronizes-with subsequent reads of same volatile variable; this is not a compound-operation atomicity guarantee",
+        "product_version": "JLS 21",
+        "checked_at": "2026-11-05T23:48Z"
+      },
+      {
+        "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html#get(java.lang.Object)",
+        "checked_claim": "get returns null when map contains no mapping for key; missing key itself is not documented to throw NPE",
+        "product_version": "Java SE 21",
+        "checked_at": "2026-11-05T23:48Z"
+      },
+      {
+        "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html#computeIfAbsent(K,java.util.function.Function)",
+        "checked_claim": "computeIfAbsent computes and installs absent value atomically; not an equivalent to read-existing-only contract",
+        "product_version": "Java SE 21",
+        "checked_at": "2026-11-05T23:48Z"
+      },
+      {
+        "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html",
+        "checked_claim": "Thread API covers handlers for abrupt uncaught-exception termination; Thread builder supports daemon configuration",
+        "product_version": "Java SE 21",
+        "checked_at": "2026-11-05T23:48Z"
+      },
+      {
+        "url": "https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html",
+        "checked_claim": "VT map to fewer OS threads; blocking I/O can unmount/release carrier; synchronized/native/foreign blocking can pin; VT intended for waiting tasks, not CPU speedup",
+        "product_version": "Java SE 21",
+        "checked_at": "2026-11-05T23:48Z"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/openjdk/jdk/jdk-21%2B35/src/java.base/share/classes/java/lang/VirtualThread.java",
+        "checked_claim": "VirtualThread declares DEFAULT_SCHEDULER=createDefaultScheduler(); factory returns ForkJoinPool with CarrierThread workers, distinct from commonPool",
+        "product_version": "OpenJDK 21+35 source",
+        "checked_at": "2026-11-05T23:48Z"
+      }
+    ],
+    "blocks": [
+      {
+        "q_number": 1,
+        "block_idx": 0,
+        "choice": "C",
+        "checks": {
+          "CONTENT": {
+            "status": "PASS",
+            "reason": "Question asks process/thread distinction; C states isolation/shared heap including static fields."
+          },
+          "FACTS": {
+            "status": "PASS",
+            "reason": "Process API and JLS heap model support the core claims."
+          },
+          "LINKAGE": {
+            "status": "PASS",
+            "reason": "Theory directly supports the compared memory model."
+          },
+          "SECTIONS": {
+            "status": "PASS",
+            "reason": "All labels and explanation/example/application/caveats/related content align."
+          },
+          "SFPL": {
+            "status": "PASS",
+            "reason": "Lengths A/B/C/D=127/117/120/136; key is not longest. All options are concise two-clause comparisons."
+          },
+          "ANSC": {
+            "status": "PASS",
+            "reason": "Each distractor attempts both sides of comparison and encodes a coherent but wrong isolation model."
+          },
+          "RU": {
+            "status": "PASS",
+            "reason": "All four are grammatical Russian technical comparisons."
+          }
+        },
+        "options": {
+          "A": {
+            "covered_parts": [
+              "process memory",
+              "thread memory"
+            ],
+            "completeness": "both parts stated",
+            "truth": "false",
+            "defense_attempt": "asserts cross-process shared Java heap and per-thread address space/static isolation",
+            "problem": "reverses process/thread memory boundaries"
+          },
+          "B": {
+            "covered_parts": [
+              "isolation",
+              "API difference"
+            ],
+            "completeness": "both aspects addressed",
+            "truth": "false",
+            "defense_attempt": "reduces the difference to names and creation API",
+            "problem": "claims equivalent isolation"
+          },
+          "C": {
+            "covered_parts": [
+              "process isolation",
+              "JVM thread shared heap/static"
+            ],
+            "completeness": "direct full comparison",
+            "truth": "true with class-loader nuance in theory",
+            "defense_attempt": "n/a, keyed option",
+            "problem": "none identified"
+          },
+          "D": {
+            "covered_parts": [
+              "process isolation",
+              "thread creation/memory"
+            ],
+            "completeness": "both aspects addressed",
+            "truth": "false",
+            "defense_attempt": "uses concrete fork/copy model",
+            "problem": "confuses native process creation with Thread"
+          }
+        },
+        "form": "Earlier numeric impression that C was slightly more precise as lone standout is not a length signal: D is longest; word counts are similar."
+      },
+      {
+        "q_number": 25,
+        "block_idx": 0,
+        "choice": "C",
+        "checks": {
+          "CONTENT": {
+            "status": "PASS",
+            "reason": "Defines race condition and asks no explicit mitigation, while answer adds relevant protection."
+          },
+          "FACTS": {
+            "status": "PASS",
+            "reason": "JLS volatile relation and CHM method contracts checked; anti-patterns are correctly rejected."
+          },
+          "LINKAGE": {
+            "status": "PASS",
+            "reason": "Theory elaborates interleaving, invariants and appropriate atomic/lock APIs."
+          },
+          "SECTIONS": {
+            "status": "PASS",
+            "reason": "All sections distinguish visibility, atomicity, immutability and map contracts correctly."
+          },
+          "SFPL": {
+            "status": "PASS",
+            "reason": "C is not longest: character counts 190/156/177/176; word counts 17/19/19/19. All four present condition plus remedy after semicolon. C lists three remedies, but these are parallel valid examples of the same answer role, not an extra requested subpart or a form-only giveaway; wrong options each provide a concrete replacement protocol. No strong cue established."
+          },
+          "ANSC": {
+            "status": "PASS",
+            "reason": "All options make a complete attempt: race description plus alleged protection. Each wrong advances a recognizable technical misconception."
+          },
+          "RU": {
+            "status": "PASS",
+            "reason": "Concise, coherent Russian; English labels are conventional technical terms."
+          }
+        },
+        "options": {
+          "A": {
+            "covered_parts": [
+              "race mechanism",
+              "protection"
+            ],
+            "completeness": "both parts",
+            "truth": "false",
+            "defense_attempt": "claims universal detection/recovery through catching ConcurrentModificationException",
+            "problem": "exception is not universal detector or repair"
+          },
+          "B": {
+            "covered_parts": [
+              "check-then-act",
+              "protection"
+            ],
+            "completeness": "both parts",
+            "truth": "false",
+            "defense_attempt": "uses volatile field as protocol for compound atomicity",
+            "problem": "volatile does not serialize compound operation"
+          },
+          "C": {
+            "covered_parts": [
+              "interleaving-dependent incorrectness",
+              "protection choices"
+            ],
+            "completeness": "full, with three representative strategies",
+            "truth": "true",
+            "defense_attempt": "n/a, keyed option",
+            "problem": "none identified"
+          },
+          "D": {
+            "covered_parts": [
+              "check-then-act",
+              "protection"
+            ],
+            "completeness": "both parts",
+            "truth": "false",
+            "defense_attempt": "uses immutable values as substitute for coordinating shared reference updates",
+            "problem": "immutability does not make get-then-set atomic"
+          }
+        },
+        "form": "R1 claim that C noticeably longer was erroneous and is withdrawn; quantitative comparison above shows C is not longest. Three remedies are directly relevant examples, not an unrequested uniquely complete explanation."
+      },
+      {
+        "q_number": 46,
+        "block_idx": 0,
+        "choice": "C",
+        "checks": {
+          "CONTENT": {
+            "status": "PASS",
+            "reason": "Covers what virtual threads are and how their scheduling differs from platform threads."
+          },
+          "FACTS": {
+            "status": "PASS",
+            "reason": "Oracle Java 21 docs support scheduler/carrier/unmount/pinning; source supports scheduler implementation claim."
+          },
+          "LINKAGE": {
+            "status": "PASS",
+            "reason": "Theory explains all terms and caveats in the answer."
+          },
+          "SECTIONS": {
+            "status": "PASS",
+            "reason": "Examples/application/edge cases align; scheduler source claim checked against OpenJDK source."
+          },
+          "SFPL": {
+            "status": "PASS",
+            "reason": "Lengths 161/161/169/156 and words 24 each; B is not unique shortest. C is longest by 8 chars, but all four have equal word count and detailed technical clauses. Carrier/unmount/pinning are the central mechanism and relevant caveat to the asked difference; no strong form-only giveaway established."
+          },
+          "ANSC": {
+            "status": "PASS",
+            "reason": "All choices attempt definition/comparison and performance/lifecycle claim; each wrong contains a concrete misconception."
+          },
+          "RU": {
+            "status": "PASS",
+            "reason": "All options are grammatical and comparable in technical register."
+          }
+        },
+        "options": {
+          "A": {
+            "covered_parts": [
+              "identity/model",
+              "waiting behavior"
+            ],
+            "completeness": "full two-part attempt",
+            "truth": "false",
+            "defense_attempt": "maps virtual threads to reusable platform worker pool and says worker remains occupied",
+            "problem": "confuses per-task virtual thread and carrier release"
+          },
+          "B": {
+            "covered_parts": [
+              "scheduler",
+              "CPU performance comparison"
+            ],
+            "completeness": "full two-part attempt",
+            "truth": "false",
+            "defense_attempt": "infers additional physical parallelism from JVM scheduling",
+            "problem": "no extra cores; no CPU-bound speed promise"
+          },
+          "C": {
+            "covered_parts": [
+              "JVM scheduling/carrier",
+              "platform binding distinction",
+              "supported waits/pinning"
+            ],
+            "completeness": "full comparison with relevant limitation",
+            "truth": "true for Java 21 with stated supported-wait scope",
+            "defense_attempt": "n/a, keyed option",
+            "problem": "none identified"
+          },
+          "D": {
+            "covered_parts": [
+              "OS-thread lifecycle",
+              "difference from platform thread"
+            ],
+            "completeness": "full attempt",
+            "truth": "false",
+            "defense_attempt": "attributes difference to fixed smaller stack",
+            "problem": "virtual thread is not permanently bound to its own OS thread; fixed-size claim unsupported"
+          }
+        },
+        "form": "R1 claim that B alone is shortest was erroneous: A and B tie, D is shortest. C is only 8 chars longer while word counts and clause counts are comparable. Its pinning qualification is relevant to the carrier-release claim; not treated as a stylistic defect."
+      }
+    ],
+    "scope_note": "Partial independent B review of 3 Q with seven criterion verdicts per Q (21 block-level checks); it is not full topic acceptance or FINAL. R1 preserved as history; phase A sealed and unchanged.",
+    "runtime_claims": "No authored runtime logs were represented as my own executions. The referenced implementation source was read only as source evidence, not run."
+  },
+  "factual_addendum": {
+    "reviewer": "java_memory_vt_independent",
+    "model": "gpt-6-luna",
+    "context": "Independent phase B addendum; no new blind run; does not modify r1/r2.",
+    "checked_at": "2026-11-05T23:50:12Z",
+    "items": [
+      {
+        "claim": "JLS 17.7 says reads/writes of references are always atomic regardless of 32/64-bit implementation; the section primarily describes non-atomic treatment of non-volatile long/double and guarantees volatile long/double atomicity.",
+        "status": "VERIFIED",
+        "source": {
+          "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.7",
+          "checked_claim": "§17.7 lines 668-674: non-volatile long/double may be split; volatile long/double and reference reads/writes are atomic",
+          "product_version": "JLS 21",
+          "checked_at": "2026-11-05T23:50Z"
+        },
+        "scope": "Supports theory statement that reference reads/writes are individually atomic; does not support compound get-then-set atomicity."
+      },
+      {
+        "claim": "AtomicReference get/set are individual volatile-effect accessors; getAndUpdate/updateAndGet atomically update with a function; contention can cause function reapplication.",
+        "status": "VERIFIED",
+        "source": {
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html",
+          "checked_claim": "get has VarHandle.getVolatile effects; set has VarHandle.setVolatile effects; updateAndGet is atomic and may reapply side-effect-free function under contention",
+          "product_version": "Java SE 21",
+          "checked_at": "2026-11-05T23:50Z"
+        },
+        "scope": "Supports distinction in Q25 theory between individual reference accesses and atomic update protocol."
+      },
+      {
+        "claim": "AtomicInteger.incrementAndGet atomically increments and returns updated value.",
+        "status": "VERIFIED",
+        "source": {
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicInteger.html#incrementAndGet()",
+          "checked_claim": "incrementAndGet atomically increments and returns updated value; equivalent to addAndGet(1)",
+          "product_version": "Java SE 21",
+          "checked_at": "2026-11-05T23:50Z"
+        },
+        "scope": "Supports Q25 theory example contrasting atomic increment with get-then-set."
+      },
+      {
+        "claim": "Virtual threads are daemon threads and do not prevent the Java shutdown sequence from beginning.",
+        "status": "VERIFIED",
+        "source": {
+          "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html",
+          "checked_claim": "Virtual threads section explicitly states virtual threads are daemon threads and do not prevent shutdown sequence from beginning",
+          "product_version": "Java SE 21",
+          "checked_at": "2026-11-05T23:50Z"
+        },
+        "scope": "Supports Q46 edge_cases claim; prior R2 evidence only checked builder daemon configuration, which was insufficient for this claim."
+      }
+    ]
+  },
+  "history_note": "Initial phase A and B r1 retained unchanged; r2 corrects false quantitative impressions after real measurement. No content was changed between A and B.",
+  "author_prechecks_note": "Author prechecks are separate from independent judgments; file parity/anti-tell remain nonzero outside selected scope. No FINAL requested."
+}
