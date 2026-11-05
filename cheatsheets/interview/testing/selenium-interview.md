@@ -15,13 +15,13 @@ aliases:
 prerequisites:
   - "[[selenium]]"
 next: []
-updated: "2026-05-15"
+updated: "2026-11-05"
 ---
 # Вопросы на собеседовании: `Selenium WebDriver`
 
 `Selenium WebDriver` — стандартный инструмент для E2E тестирования веб-интерфейсов. Предоставляет API для управления браузером (Chrome, Firefox, Safari). Важная тема для Java-разработчиков, занимающихся автоматизацией UI или поддерживающих legacy тесты.
 
-Дата последнего обновления: 2026-05-15
+Дата последнего обновления: 2026-11-05
 
 ## Полезные ссылки
 
@@ -32,577 +32,561 @@ updated: "2026-05-15"
 
 ## Содержание
 
-- [Полезные ссылки](#полезные-ссылки)
+- [Q1. Что такое Selenium WebDriver и как устроена его архитектура?](#q1)
+- [Q2. Какие локаторы есть в Selenium и когда какой использовать?](#q2)
+- [Q3. В чём разница между implicit, explicit и fluent wait?](#q3)
+- [Q4. Почему `Thread.sleep()` — плохая практика в UI-тестах?](#q4)
+- [Q5. Что такое Page Object Pattern?](#q5)
+- [Q6. Что такое Page Factory и как работают @FindBy?](#q6)
+- [Q7. Как работать с alerts, frames и окнами (windows)?](#q7)
+- [Q8. Что такое Selenium Grid и когда его использовать?](#q8)
+- [Q9. Как запускать UI-тесты параллельно?](#q9)
+- [Q10. Как бороться с нестабильными (flaky) тестами?](#q10)
+- [Q11. Какие альтернативы Selenium существуют и чем они отличаются?](#q11)
+- [Q12. Как организовать Selenium-тесты в CI/CD?](#q12)
+- [Q13. Что такое BDD-тесты с Cucumber?](#q13)
+- [Q14. Какие анти-паттерны Selenium стоит избегать?](#q14)
+- [Q15. Когда использовать UI-тесты, а когда — нет?](#q15)
 - [See also](#see-also)
 
+<a id="q1"></a>
 ## Q1. Что такое Selenium WebDriver и как устроена его архитектура?
 
-**Selenium WebDriver** — библиотека, которая управляет реальным браузером так, как это делал бы человек: открывает страницы, кликает, вводит текст, читает содержимое. Общение с браузером идёт по протоколу WebDriver (с 2018 года — W3C-стандарт), поэтому один и тот же код работает с Chrome, Firefox, Safari и Edge.
+Selenium WebDriver предоставляет программный API управления браузером: навигация, поиск элементов, ввод, действия и чтение состояния. Сам Selenium-клиент не является HTML-движком и не сводится к JavaScript внутри страницы или записи движений мыши.
 
-**Как устроена архитектура.** Ключевая идея — между тестом и браузером стоит отдельный процесс-драйвер. Тест не дёргает браузер напрямую: он отправляет HTTP-команды драйверу (`chromedriver`, `geckodriver`), а тот переводит их в нативные вызовы конкретного браузера. Благодаря этой прослойке Selenium и остаётся кросс-браузерным — меняется только драйвер, не код теста.
+Для **WebDriver Classic** локальную схему можно представить так:
 
 ```text
-Test Code → Selenium WebDriver API → JSON Wire Protocol → Browser Driver → Browser
-         (Java/Python/JS)            (HTTP)               (chromedriver)  (Chrome)
+Код теста → Selenium API → HTTP-команды WebDriver → browser driver → браузер
 ```
 
-Цепочка читается слева направо: тест на Java/Python/JS вызывает API → команда сериализуется в HTTP-запрос → драйвер браузера принимает его → браузер выполняет действие и возвращает результат тем же путём обратно.
+При удалённом запуске RemoteWebDriver обращается к endpoint Grid/провайдера, который направляет команды нужной сессии. Selenium также поддерживает **WebDriver BiDi** с WebSocket и событиями от браузера: схема HTTP request/response не описывает все каналы Selenium.
+
+Фрагмент для окружения с совместимыми Chrome и driver:
 
 ```java
-// Базовый пример
 WebDriver driver = new ChromeDriver();
-driver.get("https://example.com");
-WebElement button = driver.findElement(By.id("submit"));
-button.click();
-driver.quit();
+try {
+    driver.get("https://example.com");
+    System.out.println(driver.getTitle());
+} finally {
+    driver.quit();
+}
 ```
 
-**Компоненты экосистемы**:
-- **WebDriver** — API, которым пишут тесты (`findElement`, `click`, `get` и т.д.).
-- **Browser Driver** (`chromedriver`, `geckodriver` и др.) — мост между WebDriver и браузером; для каждого браузера свой и версия драйвера должна совпадать с версией браузера.
-- **Selenium Grid** — распределённый запуск: один хаб раздаёт тесты на множество машин и браузеров.
-- **Selenium IDE** — браузерное расширение с записью-воспроизведением действий; годится для быстрого прототипа, но не для поддерживаемых тестов.
+Browser driver служит мостом к конкретному браузеру; требуются **совместимые версии**, а не универсальное буквальное совпадение всех номеров версий. Selenium Manager помогает с управлением driver (Q12). Grid предоставляет инфраструктуру удалённых сессий (Q8), Selenium IDE — отдельный инструмент record/playback. Alert API обрабатывает JavaScript-диалоги, а не произвольные нативные окна ОС.
 
+<a id="q2"></a>
 ## Q2. Какие локаторы есть в Selenium и когда какой использовать?
 
-Локатор — это способ указать WebDriver, какой элемент на странице найти. Selenium предлагает восемь стратегий через класс `By`; выбор локатора напрямую влияет на скорость и стабильность теста.
+Локатор описывает, какой элемент нужен тесту. Основной критерий — устойчивый и однозначный контракт с приложением, а не безусловная лестница скорости.
+
+Фрагменты для уже созданного driver:
 
 ```java
-driver.findElement(By.id("username"));           // ID — самый быстрый
-driver.findElement(By.name("email"));             // name атрибут
-driver.findElement(By.className("btn-primary")); // class
-driver.findElement(By.tagName("button"));        // tag
-driver.findElement(By.linkText("Click me"));     // полный текст ссылки
-driver.findElement(By.partialLinkText("Click"));  // частичный текст
-driver.findElement(By.cssSelector("button.primary[type='submit']"));
-driver.findElement(By.xpath("//button[@type='submit' and contains(text(), 'Submit')]"));
+driver.findElement(By.id("username"));
+driver.findElement(By.name("email"));
+driver.findElement(By.className("primary-button"));
+driver.findElement(By.tagName("button"));
+driver.findElement(By.linkText("Sign in"));
+driver.findElement(By.partialLinkText("Sign"));
+driver.findElement(By.cssSelector("[data-testid='submit-button']"));
+driver.findElement(By.xpath("//button[normalize-space()='Submit']"));
 ```
 
-**Приоритет при выборе локатора** (от лучшего к худшему):
-1. **`id`** — самый быстрый и однозначный: браузер ищет по `id` нативно. Используйте, когда у элемента есть стабильный `id`.
-2. **`name`** — удобен для полей форм.
-3. **`cssSelector`** — основная рабочая лошадка. Предпочтительнее XPath: короче, читаемее и быстрее, потому что движок CSS у браузера нативный.
-4. **`xpath`** — только там, где CSS бессилен: поиск по тексту элемента, переход вверх по иерархии (к родителю), сложная навигация по дереву.
+Стабильный уникальный id обычно удобен; если его нет, используйте компактный CSS или XPath с нужной выразительностью. XPath допустим не только тогда, когда CSS «запрещён»: важны читаемость, область поиска и поддерживаемые признаки. Рекомендации документации предпочитать ID/CSS не являются замером любого селектора на любой странице.
 
-**Подводный камень.** Локаторы по видимому тексту (`linkText`, XPath с `text()`) ломаются при локализации: смена языка интерфейса — и тест перестаёт находить кнопку. Для устойчивости опирайтесь на технические атрибуты, в идеале — на специально добавленный `data-testid`, который не меняется при правках вёрстки или текста.
+LinkText ищет полный видимый текст ссылки, partialLinkText — его часть; это не поиск по произвольному атрибуту любого DOM-узла. ClassName ожидает один класс, а комбинацию классов можно выразить CSS.
 
-## Q3. В чём разница между implicit и explicit wait?
+Переводимый текст меняется при локализации, позиционный XPath зависит от структуры. Data-testid полезен, только если команда поддерживает его как стабильный контракт. Если цель теста — проверить локализованный текст, такая проверка текста, напротив, может быть намеренной.
 
-Ожидания нужны, потому что современная страница подгружает элементы асинхронно (AJAX, анимации), и к моменту поиска элемент может ещё не появиться. Главное отличие в области действия: **implicit wait — глобальный таймаут на любой поиск элемента**, а **explicit wait — ожидание конкретного условия для конкретного элемента**.
+<a id="q3"></a>
+## Q3. В чём разница между implicit, explicit и fluent wait?
 
-- **Implicit wait** включается один раз и действует на все последующие `findElement`: если элемент не найден сразу, WebDriver будет повторять попытки до истечения таймаута. Просто, но негибко — нельзя дождаться, например, «кнопка стала кликабельной».
-- **Explicit wait** (`WebDriverWait` + `ExpectedConditions`) ждёт именно нужное состояние: появление, видимость, кликабельность, наличие текста. Это самый гибкий и рекомендуемый подход.
-- **Fluent wait** — explicit wait с тонкой настройкой: задаёте интервал опроса (polling) и список исключений, которые нужно игнорировать во время ожидания.
+Implicit wait — таймаут **поиска элементов в сессии**, а explicit wait — цикл ожидания выбранного условия. Implicit влияет на findElement/findElements и может быть перенастроен; это не одноразовая настройка только одного элемента.
+
+Explicit-условие может проверять видимость, текст, URL, число окон или другое нужное состояние. В Java **WebDriverWait уже наследует FluentWait<WebDriver>**, поэтому polling и игнорируемые исключения настраиваются у него, а не требуют перехода к иному виду implicit wait.
+
+Фрагмент с явным ожиданием и отключённым implicit:
 
 ```java
-// Implicit wait — глобальный таймаут для findElement
-driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
-
-// Explicit wait — для конкретного элемента/условия
+driver.manage().timeouts().implicitlyWait(Duration.ZERO);
 WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-WebElement element = wait.until(ExpectedConditions.elementToBeClickable(By.id("submit")));
-element.click();
-
-// Fluent wait — с тонкой настройкой polling
-Wait<WebDriver> fluentWait = new FluentWait<>(driver)
-    .withTimeout(Duration.ofSeconds(30))
-    .pollingEvery(Duration.ofMillis(500))
-    .ignoring(NoSuchElementException.class);
-
-WebElement element = fluentWait.until(d -> d.findElement(By.id("result")));
+wait.pollingEvery(Duration.ofMillis(200));
+WebElement result = wait.until(
+    ExpectedConditions.visibilityOfElementLocated(By.id("result")));
 ```
 
-| Тип wait | Область действия | Особенность |
-|----------|------------------|-------------|
-| Implicit | Все вызовы `findElement` | Удобно, но глобально — трудно контролировать в отдельной точке |
-| Explicit | Конкретный элемент и условие | Самый гибкий, рекомендуемый по умолчанию |
-| Fluent | Полный контроль polling и игнорируемых исключений | Для кастомных условий ожидания |
+Более общий FluentWait позволяет задать свою политику:
 
-**Подводный камень: не смешивайте implicit и explicit wait.** Их таймауты складываются непредсказуемо (например, explicit-ожидание `30s` поверх implicit `10s` может фактически ждать дольше из-за вложенного ретрая), и итоговое поведение становится трудно объяснимым. Практика: выключите implicit wait и используйте только explicit.
+```java
+Wait<WebDriver> fluent = new FluentWait<>(driver)
+    .withTimeout(Duration.ofSeconds(10))
+    .pollingEvery(Duration.ofMillis(200))
+    .ignoring(org.openqa.selenium.NoSuchElementException.class);
+Boolean ready = fluent.until(d ->
+    "Ready".equals(d.findElement(By.id("result-status")).getText()));
+```
 
+Не смешивайте implicit и explicit без понимания вложенных вызовов: поиск внутри условия сам может ждать implicit timeout. Итоговое время не вычисляется универсально как max или сумма двух значений; длительность команд также влияет на фактическое ожидание.
+
+В Selenium Java **4.25.0** elementToBeClickable проверяет visible и enabled. Это не гарантия отсутствия overlay, завершения backend-операции или неизменности DOM после проверки. Выбирайте условие по следующему действию и контракту приложения.
+
+<a id="q4"></a>
 ## Q4. Почему `Thread.sleep()` — плохая практика в UI-тестах?
 
-Коротко: `Thread.sleep()` ждёт фиксированное время, а не нужное событие. Он не знает, готов элемент или нет, — просто слепо стоит указанное число секунд. Это даёт худшее из двух миров: тест и медленный, и нестабильный одновременно.
+Thread.sleep ждёт время, а не готовность страницы. Фиксированная пауза может оказаться лишней при быстром ответе и недостаточной при медленном. Она не проверяет ни появление данных, ни завершение операции.
+
+Для учебного приложения, где `result-status` показывает `Ready` после загрузки:
 
 ```java
-// ПЛОХО
 driver.findElement(By.id("load")).click();
-Thread.sleep(5000);   // ждём фиксированное время
-driver.findElement(By.id("result")).getText();
-```
-
-**Подводные камни**:
-1. **Медленно** — ждём все 5 секунд, даже если элемент готов уже через одну. На сотнях тестов это десятки лишних минут прогона.
-2. **Flaky** — при медленной сети или нагрузке 5 секунд может не хватить, и тест упадёт на ровном месте. Подобрать «достаточное» число невозможно: либо медленно, либо ненадёжно.
-3. **Не реагирует на состояние страницы** — ждёт время, а не условие. Решение — `WebDriverWait`, который опрашивает страницу и продолжает сразу, как только нужный элемент появился (но не дольше таймаута).
-
-```java
-// ХОРОШО
-driver.findElement(By.id("load")).click();
-
 WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-WebElement result = wait.until(ExpectedConditions.presenceOfElementLocated(By.id("result")));
-String text = result.getText();
+wait.until(ExpectedConditions.textToBe(By.id("result-status"), "Ready"));
 ```
 
-`ExpectedConditions` — набор готовых условий ожидания на любой случай: `visibilityOf` (элемент виден), `invisibilityOf` (исчез — например, спиннер загрузки), `elementToBeClickable` (виден и кликабелен), `textToBePresentInElement` (появился нужный текст), `alertIsPresent` (всплыл alert), `frameToBeAvailableAndSwitchToIt` (фрейм готов, и мы в него переключились) и др.
+Wait вычисляет условие и повторяет его с polling-интервалом, заканчивая при успехе. Polling interval не равен полному timeout. Простой presence проверяет наличие DOM-узла, visibility — видимость; ни одно из этих условий автоматически не означает готовность бизнес-результата. Между успешной проверкой и действием остаётся возможность изменения страницы.
 
-**Рекомендация.** Подбирайте условие под реальную цель: для клика — `elementToBeClickable` (просто `presenceOf` не гарантирует, что по элементу можно кликнуть), для чтения текста — `visibilityOf`.
+Sleep может завершиться InterruptedException; spurious wakeup из контракта Object.wait не следует переносить на него. Точность планировщика не абсолютна. Универсального правила «sleep около 60 секунд удаляет WebDriver session» нет: Grid/провайдер могут иметь отдельную idle-политику.
 
+Намеренно моделируемая задержка допустима по цели теста, но не заменяет синхронизацию с состоянием UI. Таймаут ожидания ограничивает политику polling; он не отменяет длительность вложенной браузерной команды.
+
+<a id="q5"></a>
 ## Q5. Что такое Page Object Pattern?
 
-**Page Object (POM)** — паттерн, в котором каждая страница (или крупный экран) приложения представлена отдельным классом. Внутри него спрятаны две вещи: локаторы элементов и действия пользователя на странице (`login()`, `addToCart()`). Тест работает не с локаторами напрямую, а с понятными методами объекта-страницы.
+Page Object инкапсулирует локаторы и операции страницы или её части. Повторяемые блоки можно выделять в **Page Component**; обязательного соответствия «одна целая страница — ровно один класс» нет. Тест выражает сценарий через операции, а детали DOM остаются локальными для объекта.
 
-Главная идея — **отделить «что делает тест» от «как технически устроена страница»**. Сам сценарий остаётся стабильным, а хрупкие детали (CSS-селекторы, ID) живут в одном месте.
+Пример классов для учебной формы с username/password, submit и welcome. Driver создаёт и закрывает вызывающий тест; показаны сами объекты страниц:
 
 ```java
-// PageObject
-public class LoginPage {
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import java.time.Duration;
+
+class LoginPage {
     private final WebDriver driver;
-
-    @FindBy(id = "username")       // PageFactory аннотация
-    private WebElement usernameField;
-
-    @FindBy(id = "password")
-    private WebElement passwordField;
-
-    @FindBy(css = "button[type='submit']")
-    private WebElement submitButton;
-
-    public LoginPage(WebDriver driver) {
+    LoginPage(WebDriver driver) {
         this.driver = driver;
-        PageFactory.initElements(driver, this);
+        new WebDriverWait(driver, Duration.ofSeconds(10)).until(
+            ExpectedConditions.visibilityOfElementLocated(By.id("username")));
     }
-
-    public DashboardPage login(String username, String password) {
-        usernameField.sendKeys(username);
-        passwordField.sendKeys(password);
-        submitButton.click();
-        return new DashboardPage(driver);   // возврат следующей страницы
+    DashboardPage login(String username, String password) {
+        driver.findElement(By.id("username")).sendKeys(username);
+        driver.findElement(By.id("password")).sendKeys(password);
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+        return new DashboardPage(driver);
     }
 }
 
-// Тест
-@Test
-void shouldLogin() {
-    driver.get("https://example.com/login");
-
-    LoginPage loginPage = new LoginPage(driver);
-    DashboardPage dashboard = loginPage.login("alice", "password");
-
-    assertThat(dashboard.getWelcomeMessage()).contains("Welcome, Alice");
+class DashboardPage {
+    private final WebDriver driver;
+    DashboardPage(WebDriver driver) {
+        this.driver = driver;
+        new WebDriverWait(driver, Duration.ofSeconds(10)).until(
+            ExpectedConditions.visibilityOfElementLocated(By.id("welcome")));
+    }
+    String getWelcomeMessage() {
+        return driver.findElement(By.id("welcome")).getText();
+    }
 }
 ```
 
-Обратите внимание на приём: метод `login()` возвращает `DashboardPage` — следующую страницу, на которую попадает пользователь после входа. Так цепочка переходов читается естественно, а IDE подсказывает доступные на новой странице действия.
+В тесте результат проверяют отдельно: вызвать login, затем сравнить dashboard.getWelcomeMessage с ожидаемым сообщением. Бизнес-assertions обычно принадлежат тесту; проверка загрузки/готовности нужной страницы при создании Page Object допустима. Возвращаемый объект следующей страницы помогает выразить переход, но не отменяет проверку результата сценария.
 
-**Плюсы**:
-- **Переиспользование** — `login()` написан один раз и доступен из любого теста.
-- **Поддерживаемость** — при изменении вёрстки правишь локатор в одном месте, а не в десятках тестов.
-- **Читаемость** — тест выглядит как описание сценария на бизнес-языке (`loginPage.login(...)`), а не как набор `findElement`.
+Паттерн уменьшает дублирование знаний о DOM и локализует изменения. Он не гарантирует, что любой рефакторинг интерфейса оставит сценарий неизменным, и не требует PageFactory — обычные By/поиск тоже подходят.
 
+<a id="q6"></a>
 ## Q6. Что такое Page Factory и как работают @FindBy?
 
-**Page Factory** — встроенный в Selenium механизм инициализации Page Object, который заменяет ручные `driver.findElement(...)` на декларативные аннотации над полями. Локатор пишется прямо над `WebElement` через `@FindBy`, а вызов `PageFactory.initElements(driver, this)` связывает поля с элементами страницы.
-
-Аннотации:
-- **`@FindBy`** — один локатор на одно поле.
-- **`@FindBys`** — цепочка локаторов по логике **И** (вложенность): искать `<a>` внутри `.list-item`.
-- **`@FindAll`** — несколько локаторов по логике **ИЛИ**: подойдёт любой совпавший.
+PageFactory в стандартной реализации Selenium инициализирует поля Page Object ленивыми proxies. Одна аннотация `@FindBy` сама Java-поле не заполняет: нужна обработка, например PageFactory.initElements. При вызове метода proxy выполняется поиск элемента; без `@CacheLookup` сохранённая ссылка не используется как постоянный cache.
 
 ```java
-public class UserPage {
-    @FindBy(id = "user-name")
-    private WebElement userName;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.FindBys;
+import org.openqa.selenium.support.FindAll;
+import org.openqa.selenium.support.PageFactory;
+import java.util.List;
 
-    @FindBy(css = ".user-avatar img")
-    private WebElement avatar;
+class UserPage {
+    @FindBy(id = "user-name") WebElement userName;
+    @FindBys({@FindBy(className = "list-item"), @FindBy(tagName = "a")})
+    List<WebElement> listLinks;
+    @FindAll({@FindBy(id = "primary-button"), @FindBy(id = "secondary-button")})
+    WebElement anyButton;
 
-    @FindBys({
-        @FindBy(className = "list-item"),
-        @FindBy(tagName = "a")
-    })
-    private List<WebElement> listLinks;
-
-    @FindAll({
-        @FindBy(id = "primary-button"),
-        @FindBy(id = "secondary-button")
-    })
-    private WebElement anyButton;
-
-    public UserPage(WebDriver driver) {
-        PageFactory.initElements(driver, this);  // инициализирует поля с @FindBy
+    UserPage(WebDriver driver) {
+        PageFactory.initElements(driver, this);
     }
 }
 ```
 
-**Ключевая особенность.** Поля `WebElement` — это не сами элементы, а ленивые прокси. Реальный `findElement` выполняется не при инициализации, а в момент каждого обращения к полю. Поэтому если страница перерисовалась и старая ссылка устарела, прокси найдёт элемент заново — это частично спасает от `StaleElementReferenceException`.
+В **Selenium Java 4.25.0**:
 
-**Подводный камень.** Прокси находит элемент при каждом обращении, но не перепроверяет его автоматически между двумя строками вашего кода: если элемент исчез после получения ссылки внутри одной операции, `StaleElementReferenceException` всё равно возможен. Поэтому современная практика всё чаще предпочитает явные `driver.findElement` с `WebDriverWait` вместо PageFactory.
+- `@FindBys` / `ByChained` последовательно ищет следующий уровень внутри результатов предыдущего: в примере ссылки внутри list-item. Это не пересечение признаков одного узла.
+- `@FindAll` / `ByAll` задаёт альтернативные локаторы. Метод `findElement` берёт первый доступный результат по порядку локаторов; `findElements` собирает результаты всех локаторов, без гарантии DOM-порядка или удаления повторов.
+- `@CacheLookup` меняет cache-поведение. Повторный поиск без него не делает lookup/action атомарными: элемент может устареть между ними, поэтому stale всё ещё возможен.
 
+PageFactory — способ организации полей, а не механизм ожидания любого нужного состояния. Для динамического UI могут быть понятнее явные By и WebDriverWait. Пользовательские decorators/locators способны менять стандартное поведение, поэтому эти свойства не следует приписывать произвольной интеграции по одному имени аннотации.
+
+<a id="q7"></a>
 ## Q7. Как работать с alerts, frames и окнами (windows)?
 
-Эти три сущности объединяет одно: они живут вне обычного DOM текущей страницы, поэтому WebDriver не видит их по умолчанию — нужно явно **переключить контекст** методами `switchTo()`.
+Различайте JavaScript-диалоги, вложенные документы и окна. HTML modal остаётся обычной частью DOM. JS alert/confirm/prompt обслуживает Alert API, а не CSS-поиск его кнопок; это не управление произвольным диалогом ОС.
 
-- **Alert** — нативное браузерное окно (`alert`/`confirm`/`prompt`). Его нельзя найти через `findElement`; только `switchTo().alert()`, после чего доступны `accept()`, `dismiss()`, `getText()`, `sendKeys()`.
-- **Frame/iframe** — отдельный вложенный документ. Пока вы не переключитесь в него, элементы внутри фрейма «невидимы». После работы обязательно вернитесь в основной документ через `defaultContent()`.
-- **Window/Tab** — каждое окно и вкладка имеют свой идентификатор (`window handle`). Чтобы работать в новой вкладке, нужно переключиться на её handle.
+Фрагмент для сценария с JS prompt:
 
 ```java
-// Alerts
-driver.findElement(By.id("trigger-alert")).click();
-Alert alert = driver.switchTo().alert();
-System.out.println(alert.getText());
-alert.sendKeys("Text for prompt");  // только для prompt
-alert.accept();                      // или dismiss()
-
-// Frames
-driver.switchTo().frame("frameName");          // по name/id
-driver.switchTo().frame(0);                     // по индексу
-driver.switchTo().frame(driver.findElement(By.css("iframe")));  // по элементу
-// ...работа внутри фрейма
-driver.switchTo().defaultContent();             // возврат в top-level
-
-// Windows / Tabs
-String mainWindow = driver.getWindowHandle();
-
-driver.findElement(By.id("open-new")).click();
-
-Set<String> windows = driver.getWindowHandles();
-for (String handle : windows) {
-    if (!handle.equals(mainWindow)) {
-        driver.switchTo().window(handle);
-        break;
-    }
-}
-// ...работа в новом окне
-driver.close();                        // закрыть текущее
-driver.switchTo().window(mainWindow);  // вернуться
+driver.findElement(By.id("trigger-prompt")).click();
+Alert prompt = new WebDriverWait(driver, Duration.ofSeconds(10))
+    .until(ExpectedConditions.alertIsPresent());
+prompt.sendKeys("answer");
+prompt.accept(); // либо dismiss по сценарию
 ```
 
-**Подводный камень.** `driver.close()` закрывает только текущее окно, а `driver.quit()` завершает всю сессию и все окна. После закрытия окна WebDriver не переключается на оставшееся автоматически — нужно явно вызвать `switchTo().window(...)`, иначе следующая команда упадёт с `NoSuchWindowException`.
+Сам элемент iframe находится в DOM родителя, но его документ — другой browsing context. Вход возможен по zero-based index, name/id или WebElement. FindElement сам обратно не переключается: parentFrame поднимает на один уровень, defaultContent возвращает к top-level.
 
+```java
+driver.switchTo().frame(driver.findElement(By.cssSelector("iframe.payment")));
+// команды внутри документа frame
+driver.switchTo().defaultContent();
+```
+
+Окна/вкладки имеют opaque handle. Java window(nameOrHandle) принимает handle или window name, а не title как контракт идентификации. Порядок Set handles не задаёт порядок открытия. Пример для сценария, ожидающего **ровно одно новое окно**:
+
+```java
+String original = driver.getWindowHandle();
+Set<String> before = driver.getWindowHandles();
+driver.findElement(By.id("open-new")).click();
+String opened = new WebDriverWait(driver, Duration.ofSeconds(10)).until(d -> {
+    Set<String> added = new HashSet<>(d.getWindowHandles());
+    added.removeAll(before);
+    return added.size() == 1 ? added.iterator().next() : null;
+});
+try {
+    driver.switchTo().window(opened);
+    // действия и assertions в новом окне
+    driver.close();
+} finally {
+    driver.switchTo().window(original);
+}
+```
+
+Если ожидается несколько окон, выберите нужное по явному критерию вместо произвольного первого handle. Close закрывает текущее окно; quit завершает сессию. После close нужно явно выбрать оставшееся окно, а исходное окно должно оставаться доступным по контракту сценария.
+
+<a id="q8"></a>
 ## Q8. Что такое Selenium Grid и когда его использовать?
 
-**Selenium Grid** — инфраструктура для распределённого запуска тестов: вместо одной машины тесты выполняются параллельно на пуле машин и в разных браузерах. Схема «хаб + ноды»: тест шлёт команды на хаб (через `RemoteWebDriver`), а хаб распределяет их по подходящим нодам — машинам с установленными браузерами.
+Selenium Grid обслуживает удалённые браузерные сессии на доступных Node. Тест использует RemoteWebDriver; параллельное исполнение Java-методов задаёт runner. Несколько потоков теста без свободных совместимых browser slots не дают автоматического линейного ускорения.
 
-```text
-                     Hub (Grid 4: Router + Distributor)
-                     /      |           \
-              Node 1      Node 2        Node 3
-           (Chrome)    (Firefox)      (Safari mac)
-```
+В Grid 4 новую сессию Router передаёт в New Session Queue; Distributor подбирает подходящий слот Node и сохраняет соответствие session/Node в Session Map. Для команд **существующей** сессии Router получает её Node из Session Map и направляет команду туда. Distributor не выбирает новый Node для каждого click.
 
 ```java
-// Запуск на Grid
-ChromeOptions options = new ChromeOptions();
 WebDriver driver = new RemoteWebDriver(
-    new URL("http://selenium-hub:4444/wd/hub"),
-    options
-);
+    new URL("http://localhost:4444"), new ChromeOptions());
+try {
+    driver.get("https://example.com");
+} finally {
+    driver.quit();
+}
 ```
+
+Grid 4 допускает Standalone, Hub/Node и полностью distributed размещение компонентов. Standalone объединяет компоненты в одном процессе; Hub/Node — не единственная обязательная топология. Для уже имеющегося server JAR пример standalone-команды:
 
 ```bash
-# Запуск Hub
-java -jar selenium-server-4.x.x.jar hub
-
-# Запуск Node
-java -jar selenium-server-4.x.x.jar node --hub http://hub:4444
+java -jar selenium-server.jar standalone
 ```
 
-**Когда применять**:
-- **Cross-browser testing** — прогнать одни и те же тесты в Chrome, Firefox, Safari, Edge сразу, чтобы поймать браузер-специфичные баги.
-- **Параллелизация ради скорости** — 100 тестов на 10 нодах выполняются примерно в 10 раз быстрее, чем последовательно на одной машине.
-- **Проверка под разные ОС** — нода под Safari только на macOS, нода под Edge на Windows и т.д.
+Grid полезен для нескольких браузеров/окружений и независимых конкурентных сессий. Доступность браузера определяется Node и capabilities: например, Safari требует подходящего macOS-узла. Пропускная способность зависит от слотов, очереди, длительности тестов, сети и ресурсов приложения.
 
-**Альтернативы.** Поднимать и обслуживать собственный Grid дорого, поэтому на практике чаще берут готовые решения: **Docker Selenium** и **Selenoid** (Grid в контейнерах, на своей инфраструктуре) или облачные фермы **BrowserStack** и **Sauce Labs** (десятки реальных браузеров и устройств без своего железа).
+Выбор между своим Grid, контейнерной инфраструктурой и облачным провайдером зависит от контроля окружения, затрат и требуемой матрицы. Наличие Grid не заменяет отдельные сессии/данные, ожидания состояния страницы и cleanup в тестах.
 
+<a id="q9"></a>
 ## Q9. Как запускать UI-тесты параллельно?
 
-Параллельный запуск ускоряет прогон, но упирается в одно фундаментальное ограничение: **экземпляр `WebDriver` не потокобезопасен**. Если несколько потоков работают с одним драйвером, команды перемешиваются и тесты падают непредсказуемо. Поэтому базовое правило — **свой `WebDriver` на каждый поток (или тест)**.
+Параллельные тесты должны владеть отдельными браузерными сессиями. Один WebDriver не следует одновременно использовать из нескольких потоков. Кроме driver, изолируйте пользователей, данные, файлы и другие общие ресурсы; Grid распределяет сессии, а параллельность тестовых методов задаёт runner.
 
-Технически это решается двумя способами:
-- **Новый драйвер на каждый тест** — простой `@BeforeEach`/`@AfterEach` (см. ниже). Подходит, пока driver не нужно шарить между Page Object.
-- **`ThreadLocal<WebDriver>`** — драйвер привязан к потоку: разные потоки видят разные экземпляры через один и тот же `getDriver()`. Это позволяет обращаться к драйверу из любого места кода, не передавая его параметром.
+В Jupiter параллельное исполнение включают configuration parameters. Например:
 
-TestNG исторически проще для параллельных UI-тестов: уровень параллелизма (`methods`/`classes`/`tests`) и число потоков задаются прямо в `suite.xml`.
-
-```java
-// JUnit 5 — параллельные тесты через junit-platform.properties
+```properties
+# src/test/resources/junit-platform.properties — один из способов передачи настроек
 junit.jupiter.execution.parallel.enabled=true
 junit.jupiter.execution.parallel.mode.default=concurrent
+junit.jupiter.execution.parallel.config.strategy=fixed
 junit.jupiter.execution.parallel.config.fixed.parallelism=4
-
-// Но WebDriver обычно НЕ thread-safe → каждый тест свой driver
-@BeforeEach
-void setUp() {
-    driver = new ChromeDriver();  // новый driver на каждый тест
-}
-
-@AfterEach
-void tearDown() {
-    if (driver != null) driver.quit();
-}
 ```
 
-```xml
-<!-- TestNG — проще для параллельных UI тестов -->
-<suite name="UI Tests" parallel="methods" thread-count="4">
-    <test name="Tests">
-        <classes>
-            <class name="com.example.LoginTest"/>
-            <class name="com.example.CheckoutTest"/>
-        </classes>
-    </test>
-</suite>
-```
+Параметры можно передать и через build/JVM/Launcher. При обычном PER_METHOD новый экземпляр тестового класса позволяет хранить driver в поле: создать в BeforeEach, гарантировать cleanup в AfterEach. При PER_CLASS и concurrent-методах одно поле остаётся общей изменяемой ссылкой; одного BeforeEach недостаточно для изоляции.
+
+Если нужен ThreadLocal, очищайте его **в том же потоке**, даже когда quit бросает:
 
 ```java
-// ThreadLocal WebDriver для параллельного выполнения
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+
 public class DriverFactory {
     private static final ThreadLocal<WebDriver> driver = new ThreadLocal<>();
 
     public static WebDriver getDriver() {
-        if (driver.get() == null) driver.set(new ChromeDriver());
-        return driver.get();
+        WebDriver current = driver.get();
+        if (current == null) {
+            current = new ChromeDriver();
+            driver.set(current);
+        }
+        return current;
     }
 
     public static void quitDriver() {
-        if (driver.get() != null) {
-            driver.get().quit();
+        WebDriver current = driver.get();
+        try {
+            if (current != null) current.quit();
+        } finally {
             driver.remove();
         }
     }
 }
 ```
 
-## Q10. Как бороться с нестабильными (flaky) тестами?
+Вызывайте quitDriver в AfterEach/finally, включая путь с ошибкой теста. Если создание driver бросило до driver.set, ThreadLocal не получает незавершённое значение. Remove удаляет локальную ссылку, но **не доказывает**, что удалённая сессия или процесс успешно освобождены после ошибки quit; такой сбой нужно диагностировать отдельно.
 
-Flaky-тест — это тест, который то проходит, то падает без изменений в коде. Главная причина в UI — гонка между тестом и асинхронной отрисовкой страницы. Поэтому борьба идёт по двум направлениям: **устранить причину нестабильности** (правильные ожидания и локаторы) и **снизить ущерб от оставшейся** (ретраи, диагностика, изоляция).
+TestNG также поддерживает параллелизм, например через suite XML:
 
-Практические приёмы:
-1. **Ретраи** (`@RetryingTest`) — пластырь, а не лечение: маскируют нестабильность, поэтому применяйте осознанно и не вместо нормальных ожиданий.
-2. **Явные ожидания вместо `sleep`** — убирают саму гонку (см. Q4).
-3. **Стабильные локаторы** — `data-testid` не ломается при рефакторинге CSS и текста (см. Q2).
-4. **Скриншоты при падении** — без них отлаживать «иногда падает в CI» почти невозможно.
-5. **Изоляция явно flaky-тестов** — пометить тегом и временно отключить с тикетом, чтобы они не «зашумляли» зелёный билд, пока их чинят.
-
-```java
-// 1. Retry аннотация
-@Test
-@RetryingTest(3)   // JUnit Pioneer
-void flaky() { ... }
-
-// 2. Явные ожидания вместо sleep
-wait.until(ExpectedConditions.elementToBeClickable(element));
-
-// 3. Стабильные локаторы (id, data-testid вместо CSS классов)
-@FindBy(css = "[data-testid='submit-button']")   // не ломается при CSS рефакторинге
-WebElement submitButton;
-
-// 4. Скриншоты при падении для диагностики
-@AfterEach
-void captureScreenshotOnFailure(TestInfo info) {
-    if (testFailed) {
-        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-        FileUtils.copyFile(screenshot,
-            new File("screenshots/" + info.getDisplayName() + ".png"));
-    }
-}
-
-// 5. Фильтрация flaky из CI
-@Tag("flaky")
-@Disabled("Flaky — tracked in JIRA-123")
-void stillFlakyTest() { ... }
+```xml
+<suite name="UI Tests" parallel="methods" thread-count="4">
+    <test name="Tests">
+        <classes><class name="com.example.LoginTest"/></classes>
+    </test>
+</suite>
 ```
 
-## Q11. Какие альтернативы Selenium существуют и чем они отличаются?
+<a id="q10"></a>
+## Q10. Как бороться с нестабильными (flaky) тестами?
 
-Все альтернативы выросли из главных болей Selenium: он медленный, склонен к flaky-тестам и требует ручных ожиданий. Новые инструменты в первую очередь добавляют **auto-wait** (автоматическое ожидание готовности элемента перед действием), что снимает большую часть нестабильности.
+Flaky-тест меняет исход без ожидаемого изменения проверяемого поведения. Сначала выясните причину: гонка отрисовки, неверный локатор, конфликт данных, недоступность сервиса или ресурсная проблема требуют разных исправлений. Большой implicit timeout и фиксированный sleep не решают весь этот набор причин.
 
-| Инструмент | Плюсы | Минусы |
-|------------|-------|--------|
-| **Selenium** | Зрелый, кросс-браузерный, любые языки | Медленный, склонен к flaky |
-| **Playwright** | Быстрый, auto-wait, кросс-браузерный | Моложе (с 2020) |
-| **Cypress** | Простой, живой debug в браузере | В основном Chromium-семейство |
-| **Puppeteer** | Глубокий контроль над Chrome | Только Chrome, без кросс-браузерности |
-| **WebDriverIO** | Node.js, mocha-стиль | Слабее поддержка Java |
-| **TestCafe** | Не требует WebDriver, auto-wait | Моложе, меньше плагинов |
+- Ожидайте наблюдаемое состояние приложения через WebDriverWait. ElementToBeClickable проверяет visibility/enabled, но само по себе не гарантирует завершения бизнес-операции или отсутствия перекрывающего элемента.
+- Выбирайте устойчивый уникальный локатор. Data-testid полезен, если команда поддерживает его как контракт; сам атрибут не гарантирует стабильности.
+- Сохраняйте достаточную диагностику исходного сбоя: screenshot, сообщения driver/браузера, данные и время событий. Изолируйте тестовые данные и сессии.
+- Ограниченный retry может временно уменьшить ущерб, но должен сохранять видимость первого сбоя. Это отдельная библиотека/интеграция, а не встроенное действие Jupiter @Tag.
 
-**Главный тренд — Playwright.** Он совмещает кросс-браузерность Selenium со встроенным auto-wait: в примере ниже `click()` сам дождётся, пока кнопка появится и станет кликабельной, без явного `WebDriverWait`.
+Пример для учебного приложения: после открытия `/results` элемент `result-status` должен показать `Ready`. DriverFactory взят из Q9; UI и его локаторы должны существовать в вашем стенде.
 
 ```java
-// Playwright Java
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import java.time.Duration;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class ResultUiTest {
+    @Test
+    @Tag("flaky")
+    void showsReadyResult() {
+        WebDriver driver = DriverFactory.getDriver();
+        driver.get(System.getProperty("ui.baseUrl", "http://localhost:8080") + "/results");
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        assertTrue(wait.until(ExpectedConditions.textToBe(By.id("result-status"), "Ready")));
+    }
+
+    @AfterEach
+    void tearDown() {
+        DriverFactory.quitDriver();
+    }
+}
+```
+
+Здесь @Test регистрирует Jupiter-тест, @Tag только помечает его. Включение/исключение тега настраивают при запуске; один тег не отключает тест и не добавляет повторы. Disabled отключает тест и требует осмысленной причины. Timeout и условие выбирают по контракту операции, сохраняя bounded ожидание.
+
+<a id="q11"></a>
+## Q11. Какие альтернативы Selenium существуют и чем они отличаются?
+
+Сравнивайте браузерную матрицу, язык, модель ожиданий и инфраструктуру. Универсальный вывод «новый инструмент всегда быстрее и устраняет flaky» без условий и замера неверен.
+
+| Инструмент | Существенные отличия |
+|------------|---------------------|
+| Selenium | WebDriver Classic/BiDi, разные языки и браузеры; удалённые сессии через RemoteWebDriver/Grid |
+| Playwright | Chromium, Firefox и WebKit; locator-действия включают actionability checks и auto-wait |
+| Cypress | Chrome-семейство и Firefox; поддержка WebKit отмечена экспериментальной |
+| Puppeteer | Поддержка Chrome и Firefox; из неё не следует поддержка Safari |
+
+Матрица зависит от версии и окружения; сверяйте её с официальной документацией. Playwright WebKit не является запуском приложения Apple Safari: для Safari-specific риска это различие существенно.
+
+У Playwright click без force обычно проверяет visibility, stable, receives-events и enabled, а не только наличие узла. Эти проверки не заменяют ожидание бизнес-результата после действия. Небольшой Java-фрагмент без внешнего учебного сайта:
+
+```java
 try (Playwright playwright = Playwright.create()) {
     Browser browser = playwright.chromium().launch();
     Page page = browser.newPage();
-    page.navigate("https://example.com");
-    page.locator("button[type=submit]").click();  // auto-wait
-    page.waitForURL("**/dashboard");
+    page.setContent("<button>Submit</button>");
+    page.locator("button").click();
+    browser.close();
 }
 ```
 
+Выбор инструмента для проекта требует проверить нужные браузеры, ограничения окружения и поддержку команды. Устойчивые локаторы, изоляция и осмысленные assertions остаются нужны при любом auto-wait. Здесь не проводится performance-сравнение или рекомендация мигрировать существующий набор.
+
+<a id="q12"></a>
 ## Q12. Как организовать Selenium-тесты в CI/CD?
 
-В CI нет экрана и графической оболочки, поэтому браузер запускают в **headless-режиме** — без окна, только движок рендеринга. Три ключевых момента надёжного UI-прогона в пайплайне:
-- **Headless + правильные флаги** — `--no-sandbox` и `--disable-dev-shm-usage` обязательны в Docker/CI, иначе Chrome падает на старте из-за ограничений песочницы и нехватки `/dev/shm`.
-- **Сохранение артефактов при падении** — скриншоты (и при желании видео/логи) грузятся как artifact только `if: failure()`. Без них «упало в CI, локально не воспроизводится» не отладить.
-- **Управление драйверами** — версия `chromedriver` должна совпадать с версией браузера; **WebDriverManager** скачивает и подбирает нужную версию автоматически, избавляя от ручного обновления путей.
+Для CI нужны воспроизводимое окружение, совместимые browser/driver, изолированные тестовые сессии и диагностика. Headless удобен без видимого дисплея; это возможность браузера, а не запрет запускать CI с графическим окружением.
+
+**Selenium Manager** встроен начиная с 4.6 и может подобрать driver без отдельной библиотеки WebDriverManager. Это fallback, а не обещание исправить любой явно закреплённый путь. В Java 4.25.0 заданные service executable/system property могут обойти Manager. Учитывайте доступность браузера, cache/сеть, proxy и права процесса; требуется совместимость версий, а не универсальное полное совпадение их строк.
+
+Фрагмент создания Chrome для подходящего CI-образа:
+
+```java
+ChromeOptions options = new ChromeOptions();
+options.addArguments("--headless=new", "--window-size=1920,1080");
+WebDriver driver = new ChromeDriver(options);
+try {
+    // действия и assertions
+} finally {
+    driver.quit();
+}
+```
+
+Не добавляйте no-sandbox и другие flags автоматически: настройки зависят от образа, модели прав и ресурсов. Проверьте запуск в целевом окружении. Grid также требует доступных browser slots и совместимых capabilities.
+
+Пример GitHub Actions **для Maven-проекта с wrapper**, а не workflow этого репозитория. Браузер должен быть доступен в образе. Версии actions здесь конкретный пример, не заявление о последних релизах:
 
 ```yaml
-# GitHub Actions
 name: UI Tests
 on: [push, pull_request]
 jobs:
   selenium-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
-        with: { java-version: '17' }
-
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
       - name: Run UI tests
         run: ./mvnw test -Dtest="*UITest"
-
       - name: Upload screenshots
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: screenshots
           path: screenshots/
 ```
 
-```java
-// Headless browser для CI
-ChromeOptions options = new ChromeOptions();
-options.addArguments(
-    "--headless=new",
-    "--no-sandbox",
-    "--disable-dev-shm-usage",
-    "--window-size=1920,1080"
-);
-WebDriver driver = new ChromeDriver(options);
-```
+Upload не создаёт screenshots: их должен сохранить обработчик падения, например через TakesScreenshot, до cleanup driver. У upload-artifact v4 отсутствие файлов по умолчанию даёт warning, а не доказательство наличия диагностики. Сохраняйте также логи, проверяйте тестовые фильтры и фактически обнаруженные тесты; общий зелёный job не подтверждает, что нужный UI-набор был исполнен.
 
-**WebDriverManager** — автоматическое управление драйверами:
-
-```java
-// Раньше: вручную скачивать chromedriver, указывать путь
-// С WebDriverManager:
-WebDriverManager.chromedriver().setup();  // скачивает нужную версию
-WebDriver driver = new ChromeDriver();
-```
-
+<a id="q13"></a>
 ## Q13. Что такое BDD-тесты с Cucumber?
 
-**BDD (Behavior-Driven Development)** — подход, где тест описывает поведение системы на естественном языке, понятном не только разработчику. **Cucumber** реализует его так: сценарий пишется в `.feature`-файле на синтаксисе **Gherkin** (`Given`/`When`/`Then`), а каждая его строка связывается с Java-методом — *step definition*. Связка **Cucumber + Selenium** означает, что эти шаги под капотом дёргают WebDriver.
+BDD — совместная проработка поведения системы на примерах. Cucumber исполняет сценарии Gherkin через step definitions; в UI-сценарии glue может использовать WebDriver. Page Object полезен, но необязателен; Cucumber применим и к API без браузера.
 
-Как это работает: `Given/When/Then` из сценария сопоставляется по шаблону (`@Given("I am on the login page")`) с методом; `{string}` извлекает параметр прямо из текста шага и передаёт его в метод.
+Given/When/Then задают роль и структуру шагов. При поиске step definition сопоставляется **текст после keyword**, поэтому смена Given на Then не создаёт отдельное пространство имён для одинакового текста. `{string}` извлекает строковый параметр выражения.
 
 ```gherkin
-# login.feature
 Feature: User Login
 
   Scenario: Successful login with valid credentials
     Given I am on the login page
-    When I enter username "alice"
-    And I enter password "secret123"
-    And I click the login button
-    Then I should see the dashboard
-    And I should see welcome message "Welcome, Alice"
+    When I log in as "alice" with password "secret123"
+    Then I should see welcome message "Welcome, Alice"
 ```
 
+Полный glue-класс с явным lifecycle driver. Пример предполагает учебное приложение с полями username/password, submit-кнопкой и элементом welcome. Использованы **Cucumber** Before/After, не одноимённые lifecycle-аннотации другого runner:
+
 ```java
-// Step definitions
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
+import io.cucumber.java.en.Then;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import java.time.Duration;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 public class LoginSteps {
     private WebDriver driver;
-    private LoginPage loginPage;
-    private DashboardPage dashboardPage;
+
+    @Before
+    public void startBrowser() {
+        driver = new ChromeDriver();
+    }
 
     @Given("I am on the login page")
     public void onLoginPage() {
-        driver.get("https://example.com/login");
-        loginPage = new LoginPage(driver);
+        driver.get(System.getProperty("ui.baseUrl", "http://localhost:8080") + "/login");
     }
 
-    @When("I enter username {string}")
-    public void enterUsername(String username) {
-        loginPage.setUsername(username);
+    @When("I log in as {string} with password {string}")
+    public void logIn(String username, String password) {
+        driver.findElement(By.id("username")).sendKeys(username);
+        driver.findElement(By.id("password")).sendKeys(password);
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
     }
 
     @Then("I should see welcome message {string}")
     public void shouldSeeMessage(String message) {
-        assertThat(dashboardPage.getWelcomeMessage()).isEqualTo(message);
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        assertTrue(wait.until(ExpectedConditions.textToBe(By.id("welcome"), message)));
+    }
+
+    @After
+    public void stopBrowser() {
+        WebDriver current = driver;
+        driver = null;
+        if (current != null) current.quit();
     }
 }
 ```
 
-**Когда применять.** BDD оправдан, когда сценарии пишут или читают не-разработчики (QA, бизнес-аналитики, заказчик) и важна общая «живая документация». Если же тесты пишут и читают только инженеры, прослойка Gherkin добавляет лишний слой поддержки без выгоды — проще обычные тесты с Page Object.
+В обычном JVM glue lifecycle Cucumber создаёт новый экземпляр glue-класса для каждого scenario. При собственном DI-контейнере обеспечьте соответствующий scenario scope; не храните driver в общем static-поле. After должен попытаться закрыть сессию и при сбое сценария; null-проверка учитывает неуспешное создание driver. Если quit не удался, очистка Java-поля не доказывает освобождения удалённой сессии.
 
+Gherkin полезен, когда примеры служат общей проверяемой документацией. Сам по себе текст сценария не создаёт driver, не реализует шаги и не гарантирует ценности BDD-процесса.
+
+<a id="q14"></a>
 ## Q14. Какие анти-паттерны Selenium стоит избегать?
 
-Все типичные анти-паттерны бьют по двум вещам — **стабильности** и **стоимости поддержки**. Ниже самые частые.
+Анти-паттерн определяется тем, что мешает проверяемому риску или делает обратную связь ненадёжной, а не самим наличием UI-сценария.
 
-1. **`Thread.sleep()` вместо `WebDriverWait`** — фиксированная задержка делает тест и медленным, и нестабильным (см. Q4).
+1. **Фиксированный sleep вместо состояния.** Пауза не проверяет готовность. Намеренная задержка по цели теста — отдельный случай; для синхронизации выбирайте нужное условие и ограниченное ожидание.
+2. **Хрупкий локатор.** Позиционный XPath может выбрать другой элемент после перестановки узлов. Это не означает, что любой новый div ломает любой XPath. Поддерживаемый уникальный атрибут обычно даёт более ясный контракт.
+3. **Скрытая зависимость между тестами.** Один сценарий не должен незаметно готовить изменяемые данные для следующего. Неизменяемые общие fixtures допустимы, если тесты друг другу не мешают.
+4. **Общая конкурентная browser session.** Изолируйте driver, пользователей и данные; ThreadLocal сам по себе не задаёт lifecycle теста.
+5. **Забытый cleanup.** Закрывайте сессию при успешном и неуспешном тесте, учитывая ошибку создания и исключение quit. Завершение клиентской JVM не гарантирует освобождения удалённого Grid slot.
+6. **Лишнее дублирование подробных правил через UI.** Комбинации расчёта скидок обычно дешевле проверять unit/API-тестами. Но сквозное оформление заказа может требовать UI, поскольку проверяет интеграцию интерфейса с сервисами.
 
-2. **Хрупкие локаторы — XPath по позиции в дереве.** Такой путь ломается от любого нового `<div>` в вёрстке; опирайтесь на стабильный атрибут:
+Не заменяйте выбор уровня универсальным запретом «бизнес-логику никогда не проверяют через UI». Оставьте репрезентативные пользовательские пути там, где важен браузер, а подробные варианты правил проверяйте ниже. Без замера нельзя обещать конкретное число секунд выигрыша от такой замены.
 
-```java
-// ПЛОХО
-By.xpath("/html/body/div[2]/div[3]/table/tr[2]/td[5]")
-
-// ХОРОШО
-By.cssSelector("[data-testid='user-email']")
-```
-
-3. **Общее состояние (shared state) между тестами** — когда один тест меняет данные, на которые опирается следующий. Тесты становятся зависимыми от порядка запуска и ломаются при параллелизации. Каждый тест должен сам готовить и убирать свои данные.
-
-4. **UI-тесты как замена unit-тестам** — покрывать ими то, что дешевле проверить на нижних уровнях пирамиды. UI-тесты медленные, flaky и дорогие в поддержке.
-
-5. **Проверка бизнес-логики через UI.** Гонять весь UI-флоу ради проверки числа на экране — медленно и хрупко. Ту же логику быстрее и надёжнее проверить прямым запросом к API:
-
-```java
-// ПЛОХО (20 секунд)
-loginPage.login("alice", "pass");
-dashboardPage.navigateToOrders();
-ordersPage.filterByStatus("PENDING");
-assertThat(ordersPage.getOrderCount()).isEqualTo(5);
-
-// ХОРОШО — API тест
-Response response = given().auth().basic("alice", "pass")
-    .when().get("/api/orders?status=PENDING")
-    .then().extract().response();
-assertThat(response.jsonPath().getList("items")).hasSize(5);
-```
-
-6. **Отсутствие cleanup** — забытый `driver.quit()` оставляет процессы браузера и драйвера висеть. На CI это быстро съедает память и роняет агента. Вызывайте `quit()` в `@AfterEach`/`@After`, даже если тест упал.
-
+<a id="q15"></a>
 ## Q15. Когда использовать UI-тесты, а когда — нет?
 
-Главный критерий: UI-тесты дорогие и медленные, поэтому ими покрывают только то, что **нельзя проверить дешевле на нижних уровнях** пирамиды. Берите их, когда важна именно сборка целого пути пользователя через настоящий браузер.
+Выбирайте уровень теста по риску и необходимой уверенности. UI-тест полезен, когда нужен настоящий браузерный путь и связь интерфейса с системой; множество независимых комбинаций правил обычно даёт более быструю диагностику на unit/API/integration уровне.
 
-**Использовать UI-тесты для**:
-- **Критичных пользовательских сценариев** — вход, оформление заказа, регистрация. Сломаются они — теряется бизнес.
-- **Интеграции UI и backend** — что данные от API действительно корректно дошли до экрана.
-- **Визуальных и responsive-проверок** — элементы на месте, вёрстка не разъезжается.
-- **Smoke-тестов** — приложение стартует и основные фичи в принципе работают.
+| Проверяемый риск | Разумный выбор |
+|-----------------|----------------|
+| Критичный login/checkout через реальный интерфейс | Несколько репрезентативных UI-сценариев |
+| Комбинации расчёта скидки, валидации и edge cases | Unit/API/integration по границе правила |
+| Отображение ответа backend и связность UI-пути | UI плюс более узкие проверки контракта/API |
+| Визуальная регрессия и responsive поведение | Явные критерии, размеры viewport, baseline и инструмент сравнения/проверок |
 
-**НЕ использовать UI-тесты для**:
-- **Бизнес-логики** — её дешевле и надёжнее покрыть unit/integration-тестами на backend.
-- **Множества граничных случаев** — каждый такой кейс через UI перегружает время прогона; их место в unit-тестах.
-- **Проверки API** — прямые API-тесты быстрее, стабильнее и не зависят от вёрстки.
+Один screenshot ещё не является visual assertion: нужен проверяемый критерий отличий. Selenium управляет браузером, но сам факт запуска не доказывает качество вёрстки. Аналогично API-проверка не подтверждает работоспособность пользовательского пути через экран.
 
-**Test pyramid**:
 ```text
-        /\     UI tests (10-15%)
-       /  \    Integration tests (20-30%)
-      /    \   Unit tests (60-70%)
+        /\     UI: важные браузерные пути
+       /  \    Интеграционные проверки границ
+      /    \   Быстрые проверки правил и компонентов
      /______\
 ```
 
-Форма пирамиды отражает правило: основание — много быстрых дешёвых unit-тестов, узкая вершина — мало UI-тестов. Перевёрнутая пирамида (много UI, мало unit) — классический анти-паттерн: прогон долгий, билд нестабильный.
-
-**Эмпирическое правило.** UI-тесты дорогие (медленные, склонны к flaky), поэтому их набор должен быть **минимально достаточным** — только то, что реально защищает ключевые сценарии.
+Пирамида — ориентир стоимости обратной связи, а не фиксированные проценты или обязательная форма для любого продукта. Состав набора зависит от архитектуры, рисков, длительности прогона и стоимости поддержки. Подробные правила обычно проверяют ниже, сохраняя нужное покрытие интеграции и критичных бизнес-путей через UI.
 
 ## See also
 
