@@ -1,0 +1,277 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/algorithms/data-structures/heaps-interview.json",
+    "theory": "cheatsheets/interview/algorithms/data-structures/heaps-interview.md"
+  },
+  "sha256": {
+    "mcq": "759ebfb79ada569e884ec8c6c13ec9224c376621abab3b588919bdfdc8ce060b",
+    "theory": "a00ac4e5927326d80fcdbf6c11d3418d00fcd51f3bcce7e134d6ef59bec06be4"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hashes": {
+    "Q4:B0": {
+      "mcq": "4615673b2bd39ab5d92818812c7f99a1066c2f4fee810c628eecf96e3c992fba",
+      "theory": "4eef9585faff479e060dd67ed8714467276ae85f8f84b8f5236ca890df63c2ed"
+    },
+    "Q19:B0": {
+      "mcq": "371628f83313a28fb99f543a0addafc5da903fa2a6ebf0618c0e5b8ceaf78140",
+      "theory": "5b83d4381fdeb5ba978e0177b0d90e5627cb59a1bc742596b15cf951e520e678"
+    }
+  },
+  "preamble": "---\ntitle: \"Вопросы на собеседовании: Кучи (Heaps)\"\ndescription: \"Min-heap, max-heap, реализация на массиве, heapify, build-heap, PriorityQueue в Java, классические задачи (k largest, median in stream, top k frequent), Fibonacci heap\"\ntags:\n  - interview\n  - algorithms\n  - heaps-interview\ntype: \"interview\"\ndifficulty: \"intermediate\"\naliases:\n  - \"Вопросы на собеседовании\"\n  - \"Кучи\"\n  - \"Heaps\"\n  - \"Heaps interview\"\nprerequisites: []\nnext: []\nupdated: \"2026-11-05\"\n---\n# Вопросы на собеседовании: `Кучи (Heaps)`\n\nКуча — основа `PriorityQueue` в Java и классических задач: top-K, median in stream, Dijkstra, scheduler. На интервью важно знать heap-property, как работает `heapify`, `siftUp`/`siftDown`, и почему `build-heap` — `O(n)`, а не `O(n log n)`.\n\n## Полезные ссылки\n\n### Материалы для изучения\n\n- [Java PriorityQueue — Baeldung](https://www.baeldung.com/java-priorityqueue)\n- [Heap Sort in Java — Baeldung](https://www.baeldung.com/java-heap-sort)\n- [Min Heap Implementation — Baeldung](https://www.baeldung.com/cs/binary-heap-vs-binary-search-tree)\n- [PriorityQueue (Java) — Oracle Docs](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/PriorityQueue.html)\n- [Pairing Heaps — Fredman, Sedgewick, Sleator, Tarjan](https://www.cs.cmu.edu/~sleator/papers/Pairing-Heaps.htm)\n\n## Содержание\n\n- [Полезные ссылки](#полезные-ссылки)\n- [See also](#see-also)\n\n**Базовые понятия**\n- [Q1. Что такое heap (куча)?](#q1)\n- [Q2. Чем min-heap отличается от max-heap?](#q2)\n- [Q3. Чем heap отличается от BST?](#q3)\n- [Q4. Чем binary heap и Fibonacci heap отличаются по вставке и слиянию?](#q4)\n\n**Реализация**\n- [Q5. Как хранить heap в массиве?](#q5)\n- [Q6. Что такое siftUp и siftDown?](#q6)\n- [Q7. Как построить heap из массива снизу вверх за O(n)?](#q7)\n- [Q8. Почему buildHeap — это O(n), а не O(n log n)?](#q8)\n\n**Операции**\n- [Q9. Сложности операций heap?](#q9)\n- [Q10. Как удалить произвольный элемент из heap?](#q10)\n- [Q11. Decrease-key и increase-key — что это?](#q11)\n- [Q12. Как слить две binary heap за O(n + m)?](#q12)\n\n**PriorityQueue в Java**\n- [Q13. Как создать min-heap и max-heap в Java?](#q13)\n- [Q14. Что внутри Java PriorityQueue?](#q14)\n- [Q15. Какие сложности у методов PriorityQueue?](#q15)\n- [Q16. Является ли итерация по PriorityQueue упорядоченной?](#q16)\n- [Q17. PriorityQueue thread-safe? Какие альтернативы?](#q17)\n\n**Heap Sort**\n- [Q18. Как выполнить Heap Sort по возрастанию на месте?](#q18)\n- [Q19. Почему верхняя оценка Heap Sort — O(n log n) на любом входе?](#q19)\n\n**Классические задачи**\n- [Q20. Как найти K-й наибольший элемент, используя кучу размера K?](#q20)\n- [Q21. Как найти K самых частых элементов с кучей размера K?](#q21)\n- [Q22. Median from Data Stream — два heap'а?](#q22)\n- [Q23. Как слить K отсортированных списков с кучей размера K?](#q23)\n- [Q24. Как найти K ближайших к началу координат точек с кучей размера K?](#q24)\n- [Q25. Task Scheduler — минимальное время с cooldown?](#q25)\n- [Q26. Reorganize String — без двух одинаковых подряд?](#q26)\n\n**Продвинутые темы**\n- [Q27. Что такое Fibonacci heap?](#q27)\n- [Q28. Что такое pairing heap?](#q28)\n- [Q29. Когда heap проигрывает другим структурам?](#q29)\n\n<a id=\"q1\"></a>\n",
+  "theory": [
+    {
+      "q_number": 4,
+      "title": "Чем binary heap и Fibonacci heap отличаются по вставке и слиянию?",
+      "line": 160,
+      "body": "\nВ сравнении ниже у binary heap есть свободное место в массиве. Если нужна реаллокация, её стоимость учитывают отдельно; она не относится к восстановлению порядка в куче.\n\nВ обычной binary heap вставленный элемент может подняться от листа до корня: в худшем случае это логарифмическая работа. Две кучи на массивах можно слить, скопировав `n + m` элементов и построив кучу снизу вверх, то есть за линейное время. Fibonacci heap добавляет новый корень или объединяет списки корней без немедленной перестройки: вставка и слияние имеют константную амортизированную стоимость. Амортизированная оценка относится к последовательности операций, а не к фиксированной задержке каждого вызова.\n\nСм. [Fibonacci heaps, Princeton](https://www.cs.princeton.edu/~wayne/teaching/fibonacci-heap.pdf) и [линейное построение binary heap](https://algs4.cs.princeton.edu/24pq/).\n\nВ таблице `n` — число элементов текущей кучи, `m` — размер второй при слиянии. Остальные виды показывают, как меняются компромиссы между операциями.\n\n| Тип | Структура | Insert | DeleteMin | DecreaseKey | Merge |\n|-----|-----------|--------|-----------|-------------|-------|\n| **Binary heap** | Массив | `O(log n)` | `O(log n)` | `O(log n)` | `O(n + m)` |\n| **d-ary heap** | Массив (d детей) | `O(log_d n)` | `O(d · log_d n)` | — | — |\n| **Binomial heap** | Лес деревьев | `O(log n)` | `O(log n)` | `O(log n)` | `O(log n)` |\n| **Fibonacci heap** | Лес деревьев | `O(1)` амортиз. | `O(log n)` амортиз. | `O(1)` амортиз. | `O(1)` |\n| **Pairing heap** | Многонаправленное | Быстрая вставка через merge | `O(log n)` амортиз. | Оценка зависит от варианта и анализа | Быстрое слияние корней |\n| **Leftist heap** | Связное | `O(log n)` | `O(log n)` | — | `O(log n)` |\n| **Skew heap** | Связное | `O(log n)` амортиз. | — | — | `O(log n)` амортиз. |\n\n**Как читать таблицу:** binary heap прост и хорошо укладывается в массив, но слияние двух куч через склейку массивов и `buildHeap` стоит `O(n + m)`. Лесные и самонастраивающиеся кучи дают другие компромиссы по `merge` и изменению ключа. Конкретный выбор проверяют по нужным операциям и реализации.\n\nВ **Java** `PriorityQueue` — это стандартный **binary heap** на массиве.\n\n\n<a id=\"q5\"></a>\n\n"
+    },
+    {
+      "q_number": 19,
+      "title": "Почему верхняя оценка Heap Sort — O(n log n) на любом входе?",
+      "line": 547,
+      "body": "\nПотому что верхняя оценка **не зависит от порядка** входных данных — в отличие от Quick Sort, у которого неудачный выбор pivot даёт `O(n²)`:\n- buildHeap — `O(n)` при любом входе;\n- после построения выполняется не больше `n` снятий вершины; каждое просеивание идёт по одному пути дерева высоты `O(log n)`, поэтому суммарная верхняя оценка — `O(n log n)`.\n\nКуча не является отсортированным массивом, `siftDown` не выполняет двоичный поиск и не выбирает случайный опорный элемент. Число сравнений и обменов зависит от входа, но полный бинарный вид дерева ограничивает длину пути. Локальность кеша влияет на скорость реализации, а не доказывает эту асимптотику. Предполагается, что сравнение ключей и обмен элементов занимают константное время.\n\n**Компромисс:** гарантированная верхняя оценка полезна, когда неприемлем квадратичный худший случай. На практике сравнивают реализации и нагрузку: просеивание может хуже использовать кеш, чем разделение массива в Quick Sort. Heap Sort можно использовать самостоятельно или как запасной алгоритм в **introsort**, который переключается на него при слишком глубокой рекурсии Quick Sort.\n\nОценка и реализация: [Princeton Algorithms — Heap](https://algs4.cs.princeton.edu/code/javadoc/edu/princeton/cs/algs4/Heap.html).\n\n\n<a id=\"q20\"></a>\n\n"
+    }
+  ],
+  "blocks": [
+    {
+      "q_number": 4,
+      "block_idx": 0,
+      "visible_question": "Чем binary heap и Fibonacci heap отличаются по вставке и слиянию?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Чем binary heap и Fibonacci heap отличаются по вставке и слиянию?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Вставка в binary heap в худшем случае логарифмична; её слияние тоже логарифмично, тогда как у Fibonacci heap обе операции константны амортизированно.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Две binary heap на массивах можно объединить копированием n + m элементов и линейным построением кучи. Логарифмической работы недостаточно для такой операции.",
+              "source_of_confusion": "Стоимость слияния принимают за стоимость одного подъёма или спуска по дереву.",
+              "if_it_were_true": "Можно было бы сформировать общий массив и восстановить кучу, не выполняя работу, пропорциональную числу переносимых элементов.",
+              "how_it_should_be": "У binary heap вставка в худшем случае логарифмическая, а слияние копированием и buildHeap линейно по сумме размеров. У Fibonacci heap эти две операции константны амортизированно."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Binary heap вставляет за константное время в худшем случае, сливается за линейное; Fibonacci heap даёт амортизированную константу и на вставке, и на слиянии.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Амортизированная константа на добавление в динамический массив не включает восстановление heap-property. Новый элемент может подняться на всю логарифмическую высоту binary heap.",
+              "source_of_confusion": "Добавление в конец ArrayList смешивают с полной вставкой в кучу, которая дополнительно выполняет siftUp.",
+              "if_it_were_true": "На последовательности вставок, требующих подъёма до корня, siftUp не добавлял бы логарифмической работы.",
+              "how_it_should_be": "Учитывайте добавление элемента и восстановление порядка вместе; худший случай вставки в binary heap логарифмический."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "У binary heap вставка в худшем случае логарифмическая, слияние линейное; у Fibonacci heap вставка логарифмическая амортизированно, а слияние константное.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Fibonacci heap при вставке добавляет новый корень, откладывая консолидацию до удаления минимума. Амортизированная стоимость вставки константна.",
+              "source_of_confusion": "Предполагают, что деревья Fibonacci heap нужно немедленно перестраивать после каждой вставки.",
+              "if_it_were_true": "Ленивая вставка без консолидации не давала бы константной амортизированной оценки.",
+              "how_it_should_be": "Для Fibonacci heap различайте дешёвые вставку и слияние и более дорогое deleteMin, где происходит отложенная перестройка."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Для binary heap вставка в худшем случае логарифмическая, а слияние линейное; Fibonacci heap выполняет вставку и слияние за константу амортизированно.",
+            "correct": true,
+            "sections": {
+              "explanation": "Binary heap хранится в массиве: вставка восстанавливает порядок по пути до корня, а слияние через общий массив и buildHeap линейно. Fibonacci heap при вставке и слиянии меняет списки корней без немедленной консолидации.",
+              "example": "Две binary heap размерами n и m копируют в массив из n + m элементов и запускают buildHeap. Fibonacci heap объединяет списки корней и обновляет указатель на минимум.",
+              "when_to_apply": "Сравнивайте эти операции, когда нагрузка содержит частые вставки и слияния, а не только извлечение минимума.",
+              "edge_cases": "Константная амортизированная стоимость Fibonacci heap не является обещанием фиксированной задержки на реальном оборудовании; другие операции имеют другие оценки.",
+              "related": "В этом же Q приведены другие виды куч. Для слияния массивных binary heap см. Q12, для Fibonacci heap — Q27."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 19,
+      "block_idx": 0,
+      "visible_question": "Почему верхняя оценка Heap Sort — O(n log n) на любом входе?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Почему верхняя оценка Heap Sort — O(n log n) на любом входе?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "После линейного `buildHeap` каждое извлечение выполняет `siftDown` как двоичный поиск в отсортированном массиве; для `n` извлечений получается `O(n log n)`.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Массив кучи не отсортирован целиком, а siftDown выбирает нужного ребёнка и идёт по одному пути дерева. Двоичного поиска в этой операции нет.",
+              "source_of_confusion": "Логарифмическую высоту бинарного дерева смешивают с логарифмическим поиском в отсортированном массиве.",
+              "if_it_were_true": "Для извлечения требовался бы поддерживаемый глобальный порядок массива, которого heap-property не обеспечивает.",
+              "how_it_should_be": "После линейного построения n извлечений ограничены высотой полного бинарного дерева, а не двоичным поиском."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "За линейным `buildHeap` следует `n` извлечений; случайный опорный элемент ограничивает каждый `siftDown` величиной `O(log n)`.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Heap Sort снимает корень кучи и восстанавливает порядок через siftDown. Случайного опорного элемента нет; верхнюю оценку даёт высота дерева.",
+              "source_of_confusion": "Механизм выбора pivot из Quick Sort переносят на Heap Sort, хотя эти алгоритмы по-разному организуют данные.",
+              "if_it_were_true": "Оценка зависела бы от стратегии выбора pivot; сам случайный выбор не гарантировал бы ограничение каждой операции на любом запуске.",
+              "how_it_should_be": "Линейное построение плюс не более n проходов по логарифмической высоте дают гарантированную верхнюю оценку."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "После `buildHeap` за `O(n)` остаётся до `n` извлечений; каждый `siftDown` восстанавливает порядок по пути дерева высоты `O(log n)`.",
+            "correct": true,
+            "sections": {
+              "explanation": "Полное бинарное дерево из не более n элементов имеет высоту O(log n). При снятии корня siftDown идёт по одному нисходящему пути, а не обходит всю кучу.",
+              "example": "Для n элементов сначала выполняется buildHeap за O(n), затем не больше n снятий корня с просеиванием не дольше O(log n) каждое.",
+              "when_to_apply": "Используйте эту оценку, когда нужен гарантированный верхний предел времени при произвольном порядке входных данных.",
+              "edge_cases": "Предполагаются сравнение и обмен за O(1). Конкретное число шагов зависит от входа, поэтому верхняя оценка не означает одинаковую работу на всех массивах.",
+              "related": "Линейное построение разобрано в Q8, сам алгоритм Heap Sort — в Q18. Локальность кеша влияет на константы, а не доказывает логарифмическую высоту."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Линейный `buildHeap` дополняют `n` извлечений с последовательным чтением соседних ячеек; за счёт кеша стоимость `siftDown` ограничена `O(log n)`.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Дети узла находятся по индексам 2i + 1 и 2i + 2, поэтому siftDown не читает все элементы подряд. Число шагов ограничивает высота дерева, а не кеш.",
+              "source_of_confusion": "Удачную локальность данных принимают за доказательство асимптотической сложности.",
+              "if_it_were_true": "Изменение размещения тех же данных в кеше могло бы само задавать логарифмический предел числа шагов без ограничения высоты дерева.",
+              "how_it_should_be": "Разделяйте алгоритмический предел числа шагов и фактическую скорость доступа к памяти."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "open_issues": [],
+  "runtime_findings": [],
+  "checks": {
+    "content_review": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q19:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "factual_correctness": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q19:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "source_linkage": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q19:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sections_consistency": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q19:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sfpl": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q19:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "ansc": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q19:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "russian_readability": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q19:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "independent_review": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q19:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "blind_review": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q19:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "final_acceptance": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q19:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    }
+  },
+  "instructions": "Все A/B/C/D и sections. SFPL, ANSC, RU — отдельные вердикты. Дополнительные смысловые зависимости прочитать и указать в evidence. Сигналы не являются редакторской приёмкой."
+}
