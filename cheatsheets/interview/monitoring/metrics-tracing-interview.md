@@ -358,71 +358,57 @@ public class NotificationService {
 
 ## Q7. Что такое span и trace в трассировке?
 
-`Span` — это одна операция: HTTP-вызов, запрос к БД, отправка в Kafka. У span есть имя, время начала и длительность, атрибуты и ссылка на родителя. `Trace` — это всё дерево spans одного запроса, объединённых общим `traceId`. Один запрос от клиента до ответа может породить десятки spans в разных сервисах.
+`Span` описывает одну операцию: HTTP-вызов, запрос к БД или обработку сообщения. У него есть имя, время начала и окончания, `spanId`, атрибуты и контекст с `traceId`; родитель необязателен у корневого span. `Trace` объединяет связанные spans по общему `traceId`. Корень может описывать HTTP-запрос, запуск задачи или другую операцию. [OpenTelemetry, Traces](https://opentelemetry.io/docs/concepts/signals/traces/).
 
-Связь между ними иерархическая: span может иметь дочерние spans (вложенные вызовы), и по этому дереву виден полный путь запроса и время на каждом уровне — от корневого входящего HTTP до самого глубокого обращения к БД.
+Связи parent/child обычно изображают деревом. Дополнительные **span links** позволяют связать операции, в том числе из разных traces, например при асинхронной обработке. На схеме ниже показаны связи операций, а не их последовательность во времени:
 
 ```mermaid
 graph TD
-    ROOT["Span: API Gateway<br/>traceId: abc123<br/>spanId: span-1<br/>duration: 350ms"]
-    ROOT --> S2["Span: Order Service<br/>spanId: span-2<br/>parentSpanId: span-1<br/>duration: 300ms"]
-    S2 --> S3["Span: DB INSERT orders<br/>spanId: span-3<br/>parentSpanId: span-2<br/>duration: 80ms"]
-    S2 --> S4["Span: Payment Service<br/>spanId: span-4<br/>parentSpanId: span-2<br/>duration: 150ms"]
-    S4 --> S5["Span: Bank API call<br/>spanId: span-5<br/>parentSpanId: span-4<br/>duration: 70ms"]
-    S2 --> S6["Span: Kafka produce<br/>spanId: span-6<br/>parentSpanId: span-2<br/>duration: 5ms"]
+    ROOT["API Gateway: 350 ms"] --> ORDER["Order Service: 300 ms"]
+    ORDER --> DB["DB INSERT: 80 ms"]
+    ORDER --> PAYMENT["Payment Service: 150 ms"]
+    PAYMENT --> BANK["Bank API: 70 ms"]
+    ORDER --> KAFKA["Kafka produce: 5 ms"]
 ```
 
-**Сценарий применения:** в `Jaeger / Zipkin` по `traceId` открывают дерево spans — корневой span обычно входящий `HTTP`, дочерние — вызовы к БД и другим сервисам. Длительность каждого span сразу показывает узкое место, а атрибуты (`http.method`, `db.statement`) позволяют фильтровать и искать нужные трейсы.
+**Сценарий:** по `traceId` в Jaeger/Zipkin изучают длительности, отношения операций, ошибки и атрибуты. Долгий span помогает выбрать направление расследования, но сам по себе не доказывает причину задержки. Вложенные и параллельные интервалы перекрываются, поэтому их длительности нельзя просто сложить. Неполная инструментация, sampling и потери при доставке могут оставить пробелы в видимом trace — полного пути каждого запроса такая схема не гарантирует.
+
 
 ## Q8. Как передать контекст трассировки между микросервисами?
 
-Чтобы spans из разных сервисов склеились в один trace, между сервисами нужно передавать trace context — `traceId`, `spanId` родителя и флаги sampling. Передаётся он в `HTTP`-заголовках по стандарту `W3C Trace Context`: заголовки `traceparent` (обязательный, с самим контекстом) и `tracestate` (опциональный, для вендор-специфичных данных).
+В HTTP для W3C Trace Context вызывающая сторона **inject**-ит контекст текущего span в заголовки, принимающая — **extract**-ит его и использует как удалённого родителя нового span. Так сохраняется `traceId`, а новый span получает собственный `spanId`. `traceparent` несёт основной контекст; `tracestate` необязателен и предназначен для дополнительного вендорского состояния. Вызывающий span не обязан быть корневым. [W3C Trace Context](https://www.w3.org/TR/trace-context/).
 
-Механика проста и работает по принципу inject/extract: вызывающая сторона (клиент или шлюз) создаёт корневой span и инжектирует контекст в исходящие заголовки; принимающий сервис извлекает контекст из заголовков и создаёт дочерний span, продолжающий тот же trace.
+**Валидный пример version `00`:**
+
+```text
+traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+```
+
+Поля значения: версия `00`, `trace-id` из 32 lowercase hex-символов, `parent-id` из 16 и flags из двух. Оба ID не могут состоять только из нулей. Здесь `parent-id` — ID вызывающего span, а не ID создаваемого span получателя. Младший бит flags (`01` в примере) — sampled: он передаёт решение о записи, но не гарантирует, что данные сохранятся в backend.
 
 ```mermaid
 sequenceDiagram
-    participant Client
-    participant ServiceA as Service A
-    participant ServiceB as Service B
-    participant DB as Database
-
-    Client->>ServiceA: POST /api/orders
-    Note over ServiceA: Создаёт root span<br/>traceId: abc123<br/>spanId: span-1
-
-    ServiceA->>ServiceB: GET /api/inventory<br/>traceparent: 00-abc123-span1-01<br/>tracestate: vendor=value
-    Note over ServiceB: Извлекает контекст<br/>Создаёт child span<br/>spanId: span-2, parent: span-1
-
-    ServiceB->>DB: SELECT * FROM stock
-    Note over DB: spanId: span-3<br/>parent: span-2
-
-    DB-->>ServiceB: result
-    ServiceB-->>ServiceA: 200 OK
-    ServiceA-->>Client: 201 Created
+    participant A as Service A
+    participant B as Service B
+    Note over A: Текущий вызывающий span
+    A->>B: HTTP + traceparent из примера
+    Note over B: Extract remote parent<br/>Создать span с новым spanId<br/>и тем же traceId
+    B-->>A: HTTP response
 ```
 
-**Пример W3C `traceparent` заголовка:**
-
-```
-traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
-             ^^-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-^^^^^^^^^^^^^^^^-^^
-             |  trace-id (32 hex)                 parent-id (16)  flags
-             version                                              (01 = sampled)
-```
-
-**Конфигурация пропагации в Spring Boot:**
+**Пример настроек Spring Boot 3.3** при подключённых Micrometer Tracing, поддерживаемом bridge/exporter и нужной инструментации:
 
 ```yaml
-# application.yml
 management:
   tracing:
     propagation:
-      type: w3c  # или b3 для совместимости с Zipkin
+      type: w3c
     sampling:
-      probability: 1.0  # 100% в dev, 0.1 в prod
+      probability: 0.1  # пример политики приложения, не универсальная норма
 ```
 
-На практике руками это писать почти не нужно: `OpenTelemetry` автоматически инжектирует и извлекает контекст для `RestTemplate`, `WebClient`, `Feign`, `gRPC` и `Kafka`. Контекст приходится прокидывать вручную только там, где запрос уходит в свой пул потоков или через нестандартный транспорт.
+Для автоматической HTTP-пропагации Boot рекомендует создавать клиенты через автоконфигурированные `RestTemplateBuilder`, `RestClient.Builder` или `WebClient.Builder`. Произвольно созданный клиент, собственный executor и другие транспорты требуют соответствующей инструментации и переноса контекста; наличие OpenTelemetry само по себе не подключает любой клиент. Локальный `ThreadLocal` не переносит контекст в другой процесс. [Spring Boot 3.3, Propagating Traces](https://docs.spring.io/spring-boot/3.3/reference/actuator/tracing.html#actuator.micrometer-tracing.propagating-traces).
+
 
 ## Q9. Что такое sampling в трассировке и когда его применять?
 
@@ -462,189 +448,104 @@ public class TracingConfig {
 
 ## Q10. Как интегрировать Micrometer с Spring Boot?
 
-Интеграция почти бесплатная: `Micrometer` уже идёт в `spring-boot-starter-actuator`, поэтому нужно лишь добавить зависимость-биндинг `micrometer-registry-prometheus` и открыть эндпоинт в конфиге. После этого метрики `JVM`, `HTTP`, пулов соединений и т.д. начинают собираться сами, без единой строки кода.
+Для **Spring Boot 3.3** добавьте `spring-boot-starter-actuator` и `io.micrometer:micrometer-registry-prometheus`, используя версии из dependency management Boot. Автоконфигурация подключает подходящие binders и registry; доступность JVM/HTTP/пуловых метрик зависит также от используемых компонентов и настроек. Затем опубликуйте endpoint и обеспечьте доступ сборщика согласно настройкам сети и безопасности приложения. [Spring Boot 3.3, Metrics](https://docs.spring.io/spring-boot/3.3/reference/actuator/metrics.html).
 
-**Полная конфигурация:**
+**Пример `application.yml`:**
 
 ```yaml
-# application.yml
 spring:
   application:
     name: order-service
-
 management:
   endpoints:
     web:
       exposure:
-        include: prometheus, health, info, metrics
-  endpoint:
-    health:
-      show-details: when-authorized
+        include: health,prometheus
   metrics:
     tags:
       application: ${spring.application.name}
-      env: ${ENVIRONMENT:dev}
     distribution:
       percentiles-histogram:
         http.server.requests: true
-      percentiles:
-        http.server.requests: 0.5, 0.95, 0.99
-      sla:
-        http.server.requests: 100ms, 500ms, 1s
-    enable:
-      jvm: true
-      process: true
-      system: true
+      slo:
+        http.server.requests: 100ms,500ms,1s
 ```
 
-**Пример кастомной метрики с `@Timed`:**
+В этой версии свойство называется `management.metrics.distribution.slo`. Настройки распределения применяются к зарегистрированным meters; они не создают события измерения сами. Для Prometheus настраивают scrape `/actuator/prometheus`. Диагностический `/actuator/metrics`, если его отдельно открыть, возвращает сведения о meters и не заменяет scrape endpoint.
+
+**`@Timed` требует работающего перехвата.** Например, для Spring AOP подключают AOP-инфраструктуру (`spring-boot-starter-aop`) и регистрируют аспект:
 
 ```java
-@RestController
-@RequestMapping("/api/orders")
-public class OrderController {
+import io.micrometer.core.aop.TimedAspect;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-    @Timed(value = "orders.create",
-           description = "Время создания заказа",
-           percentiles = {0.5, 0.95, 0.99})
-    @PostMapping
-    public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderRequest request) {
-        // Timer автоматически замеряет время выполнения метода
-        return ResponseEntity.ok(orderService.create(request));
-    }
-}
-
-// Для работы @Timed нужен бин TimedAspect:
 @Configuration
-public class MetricsConfig {
+class MetricsConfig {
     @Bean
-    public TimedAspect timedAspect(MeterRegistry registry) {
+    TimedAspect timedAspect(MeterRegistry registry) {
         return new TimedAspect(registry);
     }
 }
 ```
 
-В результате эндпоинт `/actuator/prometheus` отдаёт все метрики в текстовом формате, который `Prometheus` scrape'ит при опросе.
+Метод с `@Timed("orders.create")` должен вызываться через соответствующий proxy. При обычном Spring proxy-варианте self-invocation через `this` обходит аспект. Одна аннотация или только объявление bean не гарантирует измерение каждого вызова; допустимы и другие механизмы инструментации, а `Timer` можно записывать программно, как в Q4. [Micrometer, Timers / TimedAspect](https://docs.micrometer.io/micrometer/reference/concepts/timers.html).
+
 
 ## Q11. Что такое экспоненциальные гистограммы в метриках?
 
-Экспоненциальная гистограмма — это гистограмма, у которой границы бакетов растут по экспоненте (1, 2, 4, 8, ...), а не задаются вручную фиксированным списком. Смысл такой раскладки в том, что латентность обычно имеет огромный разброс — от единиц миллисекунд до секунд. Линейная сетка бакетов либо потеряет точность на малых значениях, либо потребует сотни бакетов. Экспоненциальная сетка покрывает весь диапазон малым числом бакетов, сохраняя относительную точность на каждом масштабе. Поэтому в `Prometheus` и `OpenTelemetry` их используют для эффективного хранения и агрегации.
+У такой гистограммы границы бакетов идут по геометрической шкале: близкие по отношению значения попадают в сопоставимые по относительной ширине интервалы. Это удобно для длительностей с большим диапазоном. Экспоненциальной является **шкала значений**, а не рост числа событий во времени.
 
-```java
-// Настройка экспоненциальной гистограммы в Micrometer
-@Configuration
-public class HistogramConfig {
+Например, в **OpenTelemetry ExponentialHistogram** разрешение задаёт `scale`:
 
-    @Bean
-    MeterRegistryCustomizer<PrometheusMeterRegistry> histogramCustomizer() {
-        return registry -> registry.config().meterFilter(
-            new MeterFilter() {
-                @Override
-                public DistributionStatisticConfig configure(
-                        Meter.Id id, DistributionStatisticConfig config) {
-                    if (id.getName().startsWith("http.server.requests")) {
-                        return DistributionStatisticConfig.builder()
-                                .percentilesHistogram(true)
-                                // Экспоненциальные бакеты для широкого диапазона
-                                .minimumExpectedValue(Duration.ofMillis(1).toNanos())
-                                .maximumExpectedValue(Duration.ofSeconds(30).toNanos())
-                                .build()
-                                .merge(config);
-                    }
-                    return config;
-                }
-            }
-        );
-    }
-}
+```text
+base = 2 ** (2 ** (-scale))
+положительный бакет i: (base ** i, base ** (i + 1)]
 ```
 
-**Компромисс:** альтернатива — фиксированные бакеты, заданные вручную под известный диапазон; они проще, но негибки. Экспоненциальные выигрывают, когда диапазон широкий, а число бакетов хочется держать малым. В большинстве случаев ручная настройка не нужна: `Micrometer Timer` по умолчанию подбирает разумное распределение бакетов сам.
+| scale | base | Пример положительных бакетов |
+|---|---|---|
+| 0 | 2 | (1, 2], (2, 4], (4, 8] |
+| 1 | √2 ≈ 1.4142 | (1, √2], (√2, 2], (2, 2√2] |
+
+Чем больше `scale`, тем мельче интервалы. Формат отдельно описывает положительную, отрицательную и нулевую области; таблица иллюстрирует только положительные значения. Выбор разрешения и ограничения числа бакетов определяют компромисс памяти и ошибки. [OTel Metrics Data Model, ExponentialHistogram](https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponentialhistogram).
+
+**Не смешивайте алгоритм и API конфигурации.** Micrometer `publishPercentileHistogram()` публикует бакеты для вычисления квантилей в поддерживающем backend; `minimumExpectedValue`/`maximumExpectedValue` ограничивают диапазон используемых бакетов. Эти вызовы сами по себе не означают выбор OTel ExponentialHistogram или Prometheus native histogram. Обычный `Timer` также не обещает такую экспозицию по умолчанию. Проверяйте конкретные версии SDK/registry, формат экспорта и поддержку backend. Явно заданные SLO-границы могут быть полезнее для конкретного порога; универсального выигрыша любого формата в памяти и точности нет. [Micrometer, Histograms and Percentiles](https://docs.micrometer.io/micrometer/reference/concepts/histogram-quantiles.html).
+
 
 ## Q12. Как настроить метрики JVM (память, потоки, GC)?
 
-Специально настраивать почти нечего: в `Spring Boot` с `Micrometer` метрики `JVM` включаются автоматически — память, потоки, загрузка классов, GC. За это отвечают binder'ы, которые регистрируются при старте. Эндпоинт `/actuator/prometheus` сразу отдаёт `jvm_memory_used_bytes`, `jvm_threads_live_threads`, `jvm_gc_*` и др. Работа сводится не к сбору, а к построению дашбордов и алертов поверх готовых метрик.
+В **Spring Boot 3.3** автоконфигурация JVM binders Micrometer предоставляет метрики памяти, потоков, классов и GC. Для HTTP-экспозиции всё равно нужны подходящий registry, открытый и доступный endpoint из Q10; сам binder не публикует HTTP endpoint. Имена и наличие рядов проверяют в экспозиции выбранной версии и JVM. [Spring Boot 3.3, JVM Metrics](https://docs.spring.io/spring-boot/3.3/reference/actuator/metrics.html#actuator.metrics.supported.jvm).
 
-**Пример Grafana dashboard JSON (панель JVM Memory):**
+| Что наблюдать | Примеры в Prometheus-экспозиции | Как интерпретировать |
+|---|---|---|
+| Память | `jvm_memory_used_bytes`, `jvm_memory_max_bytes` | Различать `area`, pool `id` и instance; max может быть не определён. |
+| Потоки | `jvm_threads_live_threads`, `jvm_threads_states_threads` | Текущие количества и состояния потоков, а не доказательство дедлока. |
+| GC | `jvm_gc_pause_seconds_sum`, `jvm_gc_pause_seconds_count` | По приростам получать среднее за окно; для хвоста распределения нужны подходящие дополнительные данные. |
 
-```json
-{
-  "panels": [
-    {
-      "title": "JVM Heap Memory",
-      "type": "timeseries",
-      "datasource": "Prometheus",
-      "targets": [
-        {
-          "expr": "jvm_memory_used_bytes{area=\"heap\", application=\"$app\"}",
-          "legendFormat": "{{id}} used"
-        },
-        {
-          "expr": "jvm_memory_max_bytes{area=\"heap\", application=\"$app\"}",
-          "legendFormat": "{{id}} max"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "thresholds": {
-            "steps": [
-              { "value": 0, "color": "green" },
-              { "value": 0.8, "color": "yellow" },
-              { "value": 0.9, "color": "red" }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "title": "GC Pause Duration",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "rate(jvm_gc_pause_seconds_sum{application=\"$app\"}[5m]) / rate(jvm_gc_pause_seconds_count{application=\"$app\"}[5m])",
-          "legendFormat": "{{action}} {{cause}} avg"
-        }
-      ],
-      "fieldConfig": { "defaults": { "unit": "s" } }
-    },
-    {
-      "title": "Live Threads",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "jvm_threads_live_threads{application=\"$app\"}",
-          "legendFormat": "Live threads"
-        }
-      ]
-    }
-  ],
-  "templating": {
-    "list": [
-      {
-        "name": "app",
-        "type": "query",
-        "query": "label_values(jvm_memory_used_bytes, application)"
-      }
-    ]
-  }
-}
-```
+В `JvmGcMetrics` **1.13.2** Timer `jvm.gc.pause` создаётся при обработке уведомления GC: до первого подходящего события ряда может ещё не быть. Это не то же самое, что нулевая длительность паузы. [JvmGcMetrics v1.13.2](https://raw.githubusercontent.com/micrometer-metrics/micrometer/v1.13.2/micrometer-core/src/main/java/io/micrometer/core/instrument/binder/jvm/JvmGcMetrics.java).
 
-**PromQL для ключевых алертов по JVM:**
+**Примеры PromQL** предполагают наличие соответствующих рядов и одинаковый набор labels у числителя и знаменателя:
 
 ```promql
-# Heap utilization > 85%
-jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.85
+# Заполнение конкретного heap pool > 85%, только при определённом max > 0
+jvm_memory_used_bytes{area="heap"}
+  / (jvm_memory_max_bytes{area="heap"} > 0) > 0.85
 
-# GC паузы > 500ms
-rate(jvm_gc_pause_seconds_sum[5m]) / rate(jvm_gc_pause_seconds_count[5m]) > 0.5
-
-# Thread deadlock
-jvm_threads_deadlocked_threads > 0
+# Средняя длительность GC-паузы за 5 минут > 500 ms, при наличии событий
+rate(jvm_gc_pause_seconds_sum[5m])
+  / (rate(jvm_gc_pause_seconds_count[5m]) > 0) > 0.5
 ```
 
-Подробнее о профилировании JVM — в [вопросах по JVM Performance Tuning](../performance/jvm-performance-tuning-interview.md).
+Первое выражение сохраняет разбивку по pool и instance: это не доля заполнения всей heap. Не складывайте used одних pools с max других и не усредняйте отношения разных JVM. Второе выражение показывает **среднюю**, а не максимальную/каждую паузу; отсутствие событий либо данных нельзя объявлять доказательством здоровья. Для алерта отдельно задают окно, длительность срабатывания и проверку отсутствующих данных.
+
+В Grafana панель used/max в байтах должна иметь единицу bytes и осмысленную легенду по instance/pool. Пороги 0.8/0.9 относятся к отношению в диапазоне 0–1, а не к байтам; для такой панели нужны отдельное выражение отношения и согласованная единица.
+
+**Дедлоки:** в исходнике `JvmThreadMetrics` версии **1.13.2** регистрируются peak/daemon/live/started/states, но нет `jvm.threads.deadlocked`. Поэтому алерт `jvm_threads_deadlocked_threads > 0` нельзя считать работающим по умолчанию для этой конфигурации. Отдельную диагностику или пользовательскую метрику нужно реализовать и проверить; это ограниченный вывод по указанной версии. [JvmThreadMetrics v1.13.2](https://raw.githubusercontent.com/micrometer-metrics/micrometer/v1.13.2/micrometer-core/src/main/java/io/micrometer/core/instrument/binder/jvm/JvmThreadMetrics.java).
+
+Подробнее о профилировании — в [JVM Performance Tuning](../performance/jvm-performance-tuning-interview.md).
+
 
 ## Q13. Что такое custom metrics и когда их добавлять?
 
@@ -680,8 +581,8 @@ public class BusinessMetrics {
                 .register(registry);
     }
 
-    // Timer с SLA-бакетами
-    public Timer createSlaTimer(String operation) {
+    // Timer с SLO-бакетами
+    public Timer createSloTimer(String operation) {
         return Timer.builder("business." + operation + ".duration")
                 .publishPercentiles(0.5, 0.95, 0.99)
                 .serviceLevelObjectives(
@@ -694,7 +595,9 @@ public class BusinessMetrics {
 }
 ```
 
-**Подводные камни:** главная ошибка — высокая cardinality. Не вешать на метрику лейблы с уникальными значениями (по пользователю или запросу). Хорошие лейблы имеют малое и конечное множество значений: `status`, `endpoint`, `error_type`, `region`.
+**Регистрация и срок жизни:** создавайте meter один раз для каждого задуманного сочетания имени и tags и сохраняйте источник измерений достижимым. Gauge обычно держит слабую ссылку на наблюдаемый объект; приложение должно владеть очередью дольше регистрации. Он видит состояние в момент наблюдения и может пропустить промежуточный пик. Для `FunctionCounter` источник обязан монотонно расти в течение своего жизненного цикла; произвольное уменьшение `AtomicLong` нарушит это предположение. [Micrometer Gauges](https://docs.micrometer.io/micrometer/reference/concepts/gauges.html), [Function-tracking counters](https://docs.micrometer.io/micrometer/reference/concepts/counters.html).
+
+**Cardinality:** ограничивайте и tags, и переменную часть имени (`operation` в примере). Пользовательские/запросные ID обычно непригодны для меток метрик. Даже конечные `status`, `region`, `payment_method` требуют бюджета всех реально возникающих сочетаний и числа рядов по репликам. Проверяйте размер очереди и исход счётчика, а также экспозицию конкретного registry; регистрация объекта не гарантирует публикацию любого формата.
 
 ## Q14. (!) Как связать метрики и трейсы (например, в Grafana)?
 
