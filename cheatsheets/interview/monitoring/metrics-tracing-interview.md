@@ -1080,454 +1080,342 @@ graph LR
 
 ## Q29. Как связать метрики приложения с бизнес-метриками?
 
-Технические метрики (`RPS`, latency, ошибки) показывают здоровье системы, бизнес-метрики (конверсия, заказы, отказы платежей) — здоровье продукта. Связывать их полезно, потому что технический сбой почти всегда бьёт по бизнесу, и видеть это на одном экране быстрее, чем сопоставлять два дашборда вручную. Связь делают через:
+Сопоставляйте технические сигналы (`RPS`, latency, ошибки) и **определённые бизнес-результаты** по согласованным времени и разрезам: региону, способу оплаты, продуктовой категории. На дашборде можно свести разные источники; перенос всех данных в Prometheus не является условием сопоставления. Совпадение падения заказов и роста latency помогает строить гипотезу, но само не доказывает причину.
 
-- **общие теги** (`region`, `payment_method`) — чтобы фильтровать обе группы метрик одинаково;
-- **совмещённые дашборды** «технические + бизнес» — рост latency и падение конверсии видны рядом;
-- **алерты по бизнес-метрикам** — иногда падение заказов замечаешь раньше, чем рост 5xx.
+Сначала определите единицу учёта: HTTP-попытка, логический заказ и подтверждённый платёж — разные события. `2xx` может означать только принятие запроса, а retries — относиться к прежнему заказу. Учитывайте задержку бизнес-результата, окно, часовой пояс и пропуски наблюдений.
+
+**Фрагмент для выбранного события «заказ завершён»:** здесь сумма задана в рублях, теги — пример разрешённых значений. Вызывающая бизнес-логика отвечает за момент учёта и повторы; Micrometer сам не обеспечивает транзакционность или deduplication.
 
 ```java
-@Service
-@RequiredArgsConstructor
-public class CheckoutService {
-
-    private final MeterRegistry registry;
-
-    public CheckoutResult checkout(Cart cart) {
-        Timer.Sample sample = Timer.start(registry);
-        try {
-            CheckoutResult result = processCheckout(cart);
-
-            // Бизнес-метрики
-            registry.counter("business.checkout.completed",
-                    "region", cart.getRegion(),
-                    "payment_method", cart.getPaymentMethod()
-            ).increment();
-
-            registry.summary("business.order.amount",
-                    "region", cart.getRegion()
-            ).record(result.getTotalAmount());
-
-            return result;
-        } catch (PaymentException e) {
-            // Бизнес-метрика: отказ платежа
-            registry.counter("business.checkout.failed",
-                    "region", cart.getRegion(),
-                    "reason", e.getReason()
-            ).increment();
-            throw e;
-        } finally {
-            sample.stop(Timer.builder("business.checkout.duration")
-                    .tag("region", cart.getRegion())
-                    .register(registry));
-        }
-    }
-}
+registry.counter("business.checkout.completed",
+        "region", "ru", "payment_method", "card").increment();
+registry.summary("business.order.amount.rub", "region", "ru").record(1500.0);
 ```
 
-**PromQL для бизнес-дашборда:**
+В реальном обработчике значения тегов нормализуют в ограниченные множества; не передают сырой exception reason, user ID или order ID. Это оперативные агрегаты, не финансовый реестр. [Micrometer counters](https://docs.micrometer.io/micrometer/reference/concepts/counters.html), [DistributionSummary](https://docs.micrometer.io/micrometer/reference/concepts/distribution-summaries.html).
+
+**PromQL для двух разных задач:**
 
 ```promql
-# Конверсия за последний час
+# Отношение потоков завершений и новых корзин за час — не когортная конверсия
 sum(rate(business_checkout_completed_total[1h]))
 /
 sum(rate(business_cart_created_total[1h]))
 
-# Revenue rate (рублей в минуту)
-sum(rate(business_order_amount_sum[5m])) by (region)
+# Скорость суммы завершённых заказов, RUB/мин, по регионам
+60 * sum by (region) (rate(business_order_amount_rub_sum[5m]))
 ```
+
+`business_cart_created_total` должен отдельно учитывать своё определённое событие; первый фрагмент его не создаёт. Числитель может включать заказы из корзин прошлого окна, а знаменатель — новые ещё не завершённые корзины: отношение потоков может превысить 1. Для когортной конверсии нужен согласованный набор исходных объектов и их последующие исходы. При нулевом знаменателе доля не определена.
+
+`rate` возвращает изменение в секунду, поэтому для RUB/мин нужен множитель 60. Денежную единицу и состав суммы задают явно; разные валюты нельзя просто складывать в одну сумму. [Prometheus rate](https://prometheus.io/docs/prometheus/latest/querying/functions/#rate). Подробности API и cardinality — Q32/Q17/Q39.
 
 ## Q30. Как организовать алертинг по метрикам и трейсам?
 
-Алертят почти всегда по метрикам — это пороги по latency, error rate и доступности. Трейсы для алертов используют редко (например, рост доли медленных трейсов), потому что они дороги и точечны: их роль — не поднять тревогу, а объяснить уже поднятую. Поэтому стандартная схема — алерт по метрике, а в теле алерта ссылка на пример трейса. Каналы доставки: `Alertmanager` -> `PagerDuty`, `Slack`, email.
+Выберите пользовательский симптом, расход SLO/error budget или срочный риск, **понятное действие и ответственного**. Условия формулируют по данным с известным покрытием; трейсы помогают расследованию, а производные от них показатели требуют проверки sampling bias. Доля ошибок после tail sampling может измениться от политики отбора при неизменном поведении сервиса.
 
-```mermaid
-graph TD
-    subgraph "Prometheus"
-        RULES["Alert Rules<br/>PromQL условия"]
-    end
+| Этап | Что проверяют |
+|---|---|
+| Prometheus rule | Выражение, labels alert instance, pending/firing и устойчивость условия. |
+| Alertmanager | Группу, маршрут, receiver, таймеры отправки и подавление уведомлений. |
+| Расследование | Дашборд с областью/окном, runbook, доступные логи и traces. |
 
-    RULES --> |"firing"| AM["Alertmanager"]
+`for: 3m` требует активности того же label set на последовательных оценках в течение трёх минут. Это **не «2 из 3 точек»**; исчезновение элемента прерывает pending. Правило доли превышений формулируют отдельно. `group_wait` задерживает первое уведомление группы и не выполняет PromQL вместо Prometheus. Детали состояний — Q22. [Alerting rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/).
 
-    AM --> |"group_by: alertname"| ROUTE["Routing"]
+**Иллюстративный фрагмент route Alertmanager:** receiver definitions и остальные настройки здесь не показаны.
 
-    ROUTE --> |"severity: critical"| PD["PagerDuty<br/>Звонок дежурному"]
-    ROUTE --> |"severity: warning"| SLACK["Slack #alerts<br/>Уведомление"]
-    ROUTE --> |"severity: info"| EMAIL["Email<br/>Сводка"]
-
-    subgraph "В алерте"
-        LINK1["Ссылка на Grafana дашборд"]
-        LINK2["Ссылка на Runbook"]
-        LINK3["Exemplar → traceId"]
-    end
-
-    AM --> LINK1 & LINK2 & LINK3
+```yaml
+route:
+  group_by: [alertname, service]
+  receiver: ops
+  routes:
+    - matchers: ['severity="critical"']
+      receiver: oncall
 ```
 
-**Рекомендации:** в алерт класть ссылку на дашборд и пример трейса (exemplar), а в описание — `Runbook`, чтобы дежурный начал чинить, а не разбираться. Главный враг — шум: его глушат малым числом порогов, агрегацией и условием подтверждения (`for`, например 2 из 3 точек), иначе на алерты перестают реагировать. На стороне `Alertmanager` помогают группировка по `alertname` и лейблам, inhibition (не слать вторичные при сработавшем корневом) и silence на время плановых работ.
+Labels `service` и `severity` должны соответствовать реальным правилам. Receiver names, каналы и срочность выбирает команда; названия severity сами не означают Slack, email или звонок. Inhibition и silences подавляют уведомления по заданным условиям, а не устраняют сбой. Доставку и поведение маршрутов проверяют отдельно. [Alertmanager configuration](https://prometheus.io/docs/alerting/latest/configuration/#route).
+
+Добавьте ссылки на дашборд и runbook в annotations/шаблон уведомления. Ссылка на конкретный trace полезна лишь при реально доступном контексте: Alertmanager не получает её автоматически из каждого exemplar, а sampling и retention могут сделать trace недоступным. Переход к trace и его ограничения — Q14/Q38. [Alert annotations](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/#templating).
+
+Оценивайте покрытие, шум и полезность действий по срабатываниям. Ни минимальное число порогов, ни один `for` не гарантируют хороший алертинг; низкий трафик и multiwindow burn rate требуют отдельного выбора условий (Q36).
 
 ## Q31. (!) Что такое W3C TraceContext и зачем это стандарт?
 
-**W3C TraceContext** — это стандарт HTTP-заголовков для передачи контекста трассировки между сервисами. Проблема, которую он решает: до него каждая система носила контекст в своих заголовках — `X-B3-TraceId` (Zipkin), `X-Amzn-Trace-Id` (AWS), `uber-trace-id` (Jaeger). Как только запрос пересекал границу между системами с разными форматами, контекст терялся, и трейс обрывался. Единый стандарт даёт общий язык, на котором любой сервис понимает контекст любого другого.
+**W3C Trace Context** задаёт совместимый формат HTTP-заголовков для передачи контекста трассировки: `traceparent` и необязательный `tracestate` с данными провайдеров. Это позволяет инструментированным участникам продолжать trace через границы систем. Стандарт не задаёт формат хранения spans и сам не обеспечивает инструментацию, доставку заголовков или доступность trace в backend.
 
-Стандарт определяет два заголовка:
+**Пример формата version 00:**
 
-```
-# traceparent: version-traceId-parentSpanId-flags
+```http
 traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
-
-# tracestate: vendor-specific data (опционально)
 tracestate: vendor1=opaqueValue1,vendor2=opaqueValue2
 ```
 
-Разбивка `traceparent`:
-- `00` — версия (всегда 00)
-- `4bf92f3577b34da6a3ce929d0e0e4736` — 128-bit trace ID
-- `00f067aa0ba902b7` — parent span ID
-- `01` — флаги (`01` = sampled, `00` = не sampled)
+| Поле | Значение в примере |
+|---|---|
+| version | `00`; спецификация описывает обработку будущих версий, поэтому «всегда 00» неверно. `ff` недопустима. |
+| trace-id | 32 lowercase hex-символа, ненулевой ID всего trace. |
+| parent-id | 16 lowercase hex-символов, ненулевой ID span вызывающей стороны. |
+| trace-flags | В этом примере `01` означает установленный sampled bit. Это сигнал о sampling, а не гарантия записи всех spans. |
 
-**Как OpenTelemetry работает с W3C TraceContext в Java:**
+Получатель не копирует parent-id как ID собственного нового span; связь разобрана в Q8/Q23. Невалидный контекст нельзя принимать как пригодную родительскую связь, а IDs не являются удостоверением пользователя. [W3C Trace Context Recommendation](https://www.w3.org/TR/trace-context/).
 
-```java
-// OpenTelemetry автоматически инжектирует и извлекает traceparent
-// при использовании HTTP-инструментирования
+**Поддержка формата и настройка по умолчанию — разные вещи.** В ручном `OpenTelemetrySdk.builder()` Java **1.37.0** propagators изначально no-op. SDK autoconfigure задаёт `otel.propagators` с default `tracecontext,baggage`; Spring Boot Micrometer и standalone Java Agent настраиваются своими средствами (Q40). Поэтому утверждение «любой Java SDK 1.x автоматически передаёт W3C» неверно. [Java 1.37.0 SDK builder](https://github.com/open-telemetry/opentelemetry-java/blob/v1.37.0/sdk/all/src/main/java/io/opentelemetry/sdk/OpenTelemetrySdkBuilder.java), [SDK autoconfigure](https://opentelemetry.io/docs/languages/java/configuration/#properties-general).
 
-// Вручную: inject context в исходящий запрос
-TextMapPropagator propagator = openTelemetry.getPropagators().getTextMapPropagator();
-propagator.inject(Context.current(), headers, (h, key, value) -> h.add(key, value));
-
-// Вручную: extract context из входящего запроса
-Context extractedContext = propagator.extract(Context.current(), request, 
-    (req, key) -> req.getHeader(key));
-```
-
-**Конфигурация Spring Boot с OpenTelemetry agent:**
-```yaml
-# application.yml
-management:
-  tracing:
-    propagation:
-      type: w3c   # или b3, b3_multi
-```
-
-**Почему это важно:** при смешивании вендоров (AWS -> Kubernetes -> on-prem) именно `W3C TraceContext` обеспечивает сквозную трассировку без обрывов на стыках. `OpenTelemetry` использует `W3C` по умолчанию начиная с Java SDK 1.x, поэтому в современном стеке стандарт работает «из коробки».
+Проверяйте обе стороны вызова: извлечение входящего контекста, создание/активацию нужного span и добавление контекста в исходящий запрос. HTTP-клиент, proxy или нестандартный transport без подходящей интеграции могут прервать связь и при правильном формате.
 
 ## Q32. Как настроить Micrometer с кастомными тегами для бизнес-метрик?
 
-Стандартных метрик `JVM` и `HTTP` хватает для здоровья процесса, но SLO часто формулируются в бизнес-терминах (доля успешных заказов, время оформления), а такие метрики приложение заводит само. `Micrometer` даёт для этого простой API — `Counter`, `Timer`, `DistributionSummary` с произвольными тегами:
+Укажите `tag`/`tags` при регистрации meter. Его имя и значения тегов определяют идентичность измерения; значения могут выбираться при работе приложения, но их множество нужно ограничить. Prometheus relabeling не узнает скрытый бизнес-исход вместо инструментации. Типы инструментов разобраны в Q34, связь бизнес-событий — в Q29.
+
+**Пример Micrometer 1.13.2:** один counter name с двумя исходами попытки и region. Объект сервиса удерживает очередь; каждый законченный attempt учитывается вызывающей логикой один раз. HTTP retry может быть новой попыткой, но не новым логическим заказом.
 
 ```java
-@Component
-@RequiredArgsConstructor
-public class OrderMetrics {
-    private final MeterRegistry registry;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import java.util.EnumMap;
+import java.util.Locale;
+import java.util.Queue;
 
-    // Counter — монотонно растущий счётчик
-    private Counter orderPlaced;
-    private Counter orderFailed;
+public final class OrderMetrics {
+    public enum Region { RU, OTHER }
+    public enum Outcome { SUCCESS, FAILURE }
 
-    // DistributionSummary — распределение значений (например, сумма заказа)
-    private DistributionSummary orderAmount;
+    private final EnumMap<Outcome, Counter> attempts = new EnumMap<>(Outcome.class);
+    private final Queue<?> orderQueue;
 
-    // Timer — время выполнения с гистограммой
-    private Timer checkoutTimer;
-
-    @PostConstruct
-    public void init() {
-        orderPlaced = Counter.builder("orders.placed")
-            .tag("region", "ru")
-            .description("Количество размещённых заказов")
-            .register(registry);
-
-        orderFailed = Counter.builder("orders.failed")
-            .tag("region", "ru")
-            .tag("reason", "payment_declined")
-            .register(registry);
-
-        orderAmount = DistributionSummary.builder("orders.amount.rub")
-            .publishPercentiles(0.5, 0.95, 0.99)
-            .publishPercentileHistogram()
-            .register(registry);
-
-        checkoutTimer = Timer.builder("checkout.duration")
-            .publishPercentiles(0.5, 0.95, 0.99)
-            .publishPercentileHistogram()
-            .sla(Duration.ofMillis(200), Duration.ofMillis(500))
-            .register(registry);
+    public OrderMetrics(MeterRegistry registry, Region region, Queue<?> orderQueue) {
+        this.orderQueue = orderQueue;
+        String regionTag = region.name().toLowerCase(Locale.ROOT);
+        for (Outcome outcome : Outcome.values()) {
+            attempts.put(outcome, Counter.builder("orders.attempts")
+                    .tag("region", regionTag)
+                    .tag("outcome", outcome.name().toLowerCase(Locale.ROOT))
+                    .register(registry));
+        }
+        Gauge.builder("orders.queue.size", this.orderQueue, Queue::size)
+                .tag("region", regionTag)
+                .tag("priority", "high")
+                .register(registry);
     }
 
-    public void recordOrder(double amount) {
-        orderPlaced.increment();
-        orderAmount.record(amount);
-    }
-
-    public <T> T timeCheckout(Supplier<T> supplier) {
-        return checkoutTimer.record(supplier);
+    public void finished(Outcome outcome) {
+        attempts.get(outcome).increment();
     }
 }
 ```
 
-**Динамические теги (Gauge с lambda):**
-```java
-// Gauge — текущее значение (очередь, активные сессии)
-Gauge.builder("orders.queue.size", orderQueue, Queue::size)
-    .tag("priority", "high")
-    .register(registry);
-```
+Здесь оба исхода зарегистрированы заранее, включая нулевой failure. Удерживайте сам `OrderMetrics` и выбирайте очередь с нужной потокобезопасностью. Gauge наблюдает этот объект очереди при измерении; повторная регистрация того же имени/tags с другой очередью не заменяет источник. Обычный builder использует weak reference, поэтому без сильной ссылки наблюдаемый объект может быть собран GC. [Micrometer gauges](https://docs.micrometer.io/micrometer/reference/concepts/gauges.html).
 
-**PromQL для бизнес-метрик:**
+**Доля неуспешных попыток по region:** числитель — failure, знаменатель — все исходы той же единицы и окна.
+
 ```promql
-# Error rate заказов за последние 5 минут
-rate(orders_failed_total[5m]) / rate(orders_placed_total[5m])
-
-# p99 времени оформления заказа
-histogram_quantile(0.99, rate(checkout_duration_seconds_bucket[5m]))
-
-# Средняя сумма заказа
-rate(orders_amount_rub_sum[5m]) / rate(orders_amount_rub_count[5m])
+sum by (region) (rate(orders_attempts_total{outcome="failure"}[5m]))
+/
+sum by (region) (rate(orders_attempts_total[5m]))
 ```
 
-**Ключевой принцип:** не использовать высококардинальные теги (`userId`, `orderId`) — они взорвут TSDB (см. Q17, Q39). В теги идут только статические или enum-подобные значения: `region`, `status`, `product_category`. Если нужна аналитика по конкретному пользователю — это уровень логов или событий, а не метрик.
+`failed / placed`, если placed считает только успехи, даёт отношение ошибок к успехам, не долю ошибок. Кроме того, лишний `reason` только у failed без согласования labels может дать пустой результат при обычном vector matching. Агрегируйте обе стороны до одинаковых разрезов; не превращайте отсутствие данных или нулевой трафик в доказанный успех. [PromQL vector matching](https://prometheus.io/docs/prometheus/latest/querying/operators/#vector-matching).
 
-## Q33. Как интегрировать Zipkin в Spring Boot приложение?
-
-**Zipkin** — один из первых open-source бэкендов для распределённой трассировки (Twitter, 2012). Сегодня его редко подключают «напрямую»: чаще приложение инструментируют через `OpenTelemetry`, а в `Zipkin` отправляют через `Zipkin exporter`. Ниже — оба пути для `Spring Boot 3`.
-
-**Spring Boot 3 + Micrometer Tracing + Zipkin:**
-```xml
-<!-- pom.xml -->
-<dependency>
-    <groupId>io.micrometer</groupId>
-    <artifactId>micrometer-tracing-bridge-brave</artifactId>
-</dependency>
-<dependency>
-    <groupId>io.zipkin.reporter2</groupId>
-    <artifactId>zipkin-reporter-brave</artifactId>
-</dependency>
-```
-
-```yaml
-# application.yml
-management:
-  tracing:
-    sampling:
-      probability: 1.0   # 100% в dev, 0.1 в prod
-  zipkin:
-    tracing:
-      endpoint: http://zipkin:9411/api/v2/spans
-```
-
-**OpenTelemetry → Zipkin exporter (альтернатива):**
-```xml
-<dependency>
-    <groupId>io.opentelemetry</groupId>
-    <artifactId>opentelemetry-exporter-zipkin</artifactId>
-</dependency>
-```
-
-```java
-ZipkinSpanExporter zipkinExporter = ZipkinSpanExporter.builder()
-    .setEndpoint("http://zipkin:9411/api/v2/spans")
-    .build();
-
-SdkTracerProvider tracerProvider = SdkTracerProvider.builder()
-    .addSpanProcessor(BatchSpanProcessor.builder(zipkinExporter).build())
-    .setSampler(Sampler.traceIdRatioBased(0.1))  // 10% sampling
-    .build();
-```
-
-**Что проверять в Zipkin UI:**
-- Service dependency graph — кто кого вызывает
-- Waterfall view — где время теряется (DB? HTTP? serialization?)
-- Error traces — `tags["error"] = true`
-- Медленные трейсы: сортировка по duration
-
-**Zipkin vs Jaeger:** `Zipkin` проще в настройке и легче, `Jaeger` богаче по UI и поддерживает adaptive sampling. Если стек строится вокруг `OpenTelemetry`, предпочтительнее `Jaeger` или `Grafana Tempo` — они лучше интегрированы с OTel-экосистемой.
-
-## Q34. (!) Какие типы инструментов предоставляет Micrometer — Counter, Gauge, Timer, DistributionSummary?
-
-**Micrometer** — фасад метрик для JVM-приложений (аналог `SLF4J` для логов), абстрагирующий код от конкретного бэкенда (`Prometheus`, `Datadog`, `InfluxDB`). Выбор инструмента определяется природой величины: монотонно она растёт или может падать, нужно ли одно число или распределение, и измеряем мы время или произвольное значение.
-
-**Counter — монотонно возрастающий счётчик:**
-
-```java
-// Счётчик запросов, ошибок, обработанных сообщений
-Counter ordersPlaced = Counter.builder("orders.placed.total")
-    .tag("region", "ru")
-    .tag("channel", "web")
-    .description("Total number of placed orders")
-    .register(registry);
-
-ordersPlaced.increment();          // +1
-ordersPlaced.increment(5.0);       // +5
-
-// PromQL: rate(orders_placed_total[5m]) — скорость создания заказов
-```
-
-**Gauge — текущее значение (может убывать):**
-
-```java
-// Размер очереди, число активных соединений, объём памяти
-Gauge.builder("orders.queue.size", orderQueue, Queue::size)
-    .tag("priority", "high")
-    .register(registry);
-
-// Для volatile значений — AtomicInteger
-AtomicInteger activeUsers = registry.gauge(
-    "users.active",
-    new AtomicInteger(0)
-);
-activeUsers.incrementAndGet();  // при входе
-activeUsers.decrementAndGet();  // при выходе
-```
-
-**Timer — измерение времени и количества вызовов:**
+**Отдельный фрагмент Timer с histogram** для длительности выбранных checkout-вызовов; это другая единица наблюдения, чем логический заказ:
 
 ```java
 Timer checkoutTimer = Timer.builder("checkout.duration")
-    .tag("payment_method", "card")
-    .description("Time to complete checkout")
-    .publishPercentiles(0.5, 0.95, 0.99)       // перцентили в памяти
-    .publishPercentileHistogram()                // для Prometheus histogram
-    .sla(Duration.ofMillis(200), Duration.ofSeconds(1))  // SLO buckets
-    .register(registry);
-
-// Использование
-checkoutTimer.record(() -> processCheckout());              // sync
-checkoutTimer.record(Duration.ofMillis(150));               // manual
-
-// Или через аннотацию
-@Timed(value = "checkout.duration", percentiles = {0.95, 0.99})
-public void checkout() { ... }
-
-// PromQL: histogram_quantile(0.99, rate(checkout_duration_seconds_bucket[5m]))
+        .tag("region", "ru")
+        .publishPercentileHistogram()
+        .serviceLevelObjectives(Duration.ofMillis(200), Duration.ofMillis(500))
+        .register(registry);
+checkoutTimer.record(Duration.ofMillis(250));
 ```
 
-**DistributionSummary — распределение числовых значений (не время):**
+Нужны imports `io.micrometer.core.instrument.Timer` и `java.time.Duration`. В **1.13.2** `serviceLevelObjectives` задаёт bucket boundaries. Client-side `publishPercentiles` не складываются в общий p99; не обещайте одновременную выгрузку quantiles и histogram одним именем. В новом Prometheus registry **1.13.2** при наличии buckets выбирается histogram-ветка экспорта. [Micrometer histograms](https://docs.micrometer.io/micrometer/reference/1.13/concepts/histogram-quantiles.html), [registry source 1.13.2](https://github.com/micrometer-metrics/micrometer/blob/v1.13.2/implementations/micrometer-registry-prometheus/src/main/java/io/micrometer/prometheusmetrics/PrometheusMeterRegistry.java).
 
-```java
-// Размер запросов/ответов, суммы заказов, размеры файлов
-DistributionSummary orderAmount = DistributionSummary
-    .builder("orders.amount")
-    .tag("currency", "RUB")
-    .baseUnit("rubles")
-    .publishPercentiles(0.5, 0.95)
-    .register(registry);
+Для p99 **по всем выбранным экземплярам внутри region**, сохранив `le` classic histogram:
 
-orderAmount.record(1500.0);   // сумма конкретного заказа
-orderAmount.record(350.0);
-
-// PromQL:
-// rate(orders_amount_rubles_sum[5m]) / rate(orders_amount_rubles_count[5m])
-// → средняя сумма заказа за 5 минут
+```promql
+histogram_quantile(0.99,
+  sum by (le, region) (rate(checkout_duration_seconds_bucket[5m])))
 ```
 
-**LongTaskTimer — для длительных задач (batch jobs):**
+Общий p99 не равен среднему p99 экземпляров. Имена метрик сверяют с реальной экспозицией registry; `userId`/`orderId` в labels не нужны для этих расчётов. Ограничивайте все комбинации тегов, а не только один список значений (Q17/Q39).
+
+## Q33. Как интегрировать Zipkin в Spring Boot приложение?
+
+Для **Spring Boot 3.3.2** выберите один поддерживаемый tracing bridge и совместимый Zipkin reporter/exporter. `spring-boot-starter-actuator` нужен обоим вариантам; версии зависимостей должны управляться согласованным Boot BOM. Endpoint настраивает отправку уже записанных spans, но не создаёт инструментацию сам.
+
+| Путь | Дополнительно к Actuator |
+|---|---|
+| Micrometer → Brave → Zipkin | `micrometer-tracing-bridge-brave` + `zipkin-reporter-brave` |
+| Micrometer → OpenTelemetry → Zipkin | `micrometer-tracing-bridge-otel` + `opentelemetry-exporter-zipkin` |
+
+**Фрагмент dependencies для Brave-варианта в существующем Boot web-приложении:**
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-tracing-bridge-brave</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>io.zipkin.reporter2</groupId>
+        <artifactId>zipkin-reporter-brave</artifactId>
+    </dependency>
+</dependencies>
+```
+
+```yaml
+management:
+  tracing:
+    sampling:
+      probability: 0.1
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+```
+
+Это пример доли sampling, не обязательная production-норма и не гарантия ровно каждого десятого запроса. Здесь предполагается доступный локальный Zipkin; адрес и policy выбирают для своего окружения. Не подключайте оба альтернативных bridge ради одной и той же трассировки. [Boot tracing, source v3.3.2](https://github.com/spring-projects/spring-boot/blob/v3.3.2/spring-boot-project/spring-boot-docs/src/docs/antora/modules/reference/pages/actuator/tracing.adoc).
+
+**Проверка пути:** создайте тестовую операцию, убедитесь в её instrumented observation/span, отправке и появлении trace в Zipkin за нужное окно. Для исходящих HTTP-вызовов Boot-путь использует автонастроенные `RestTemplateBuilder`, `RestClient.Builder` или `WebClient.Builder`; самостоятельно созданный клиент может не получить эту интеграцию. Sampling, ошибки экспорта и retention ограничивают доступные traces; успешный ответ одного exporter не доказывает полноту.
+
+**Ручной SDK — отдельный путь.** Создание `ZipkinSpanExporter` в локальной переменной не подключает его к действующему tracer. Нужны span processor, используемый tracer provider/SDK, соответствующая инструментация и lifecycle завершения экспорта; отдельный `SdkTracerProvider` не становится автоматически Boot/global provider. Целостная настройка обсуждается в Q16. [OpenTelemetry Java SDK](https://opentelemetry.io/docs/languages/java/sdk/).
+
+Zipkin выбирают по требованиям хранения, поиска, эксплуатации и поддерживаемым протоколам. Субъективная шкала «проще/богаче» не заменяет проверки конкретных версий backend; сравнение и OTLP-альтернативы — Q15.
+
+## Q34. (!) Какие типы инструментов предоставляет Micrometer — Counter, Gauge, Timer, DistributionSummary?
+
+Выбирайте инструмент по **смыслу наблюдения**, а не только по тому, что результат является числом:
+
+| Инструмент | Что измеряет | Что не следует из его наличия |
+|---|---|---|
+| Counter | Накопленные положительные приращения событий | Это не текущий размер очереди; после restart значение может сброситься. |
+| Gauge | Состояние наблюдаемого объекта в момент измерения | Он не сохраняет все промежуточные изменения между опросами. |
+| Timer | Записанные длительности, их count и суммарное время | Незавершённая операция ещё не попала в обычное завершённое измерение; histogram/quantiles зависят от настройки и registry. |
+| DistributionSummary | Записи не-временных величин, их count и сумму | Сумма размеров payload не является последним размером или текущим остатком. |
+
+Micrometer `DistributionSummary` — API инструмента, а **Prometheus summary** — тип экспортируемых данных. Между ними нет тождества: DistributionSummary при соответствующей настройке может экспортировать histogram. Клиентские квантили разных экземпляров не складываются в общий p99 (Q4/Q32). [Micrometer counters](https://docs.micrometer.io/micrometer/reference/concepts/counters.html), [timers](https://docs.micrometer.io/micrometer/reference/concepts/timers.html), [distribution summaries](https://docs.micrometer.io/micrometer/reference/concepts/distribution-summaries.html).
+
+**Фрагмент Micrometer 1.13.2**, где `registry` уже создан, а приложение сохраняет сильную ссылку на `orderQueue`:
 
 ```java
-// Для задач, которые могут длиться минуты/часы
-LongTaskTimer batchTimer = LongTaskTimer.builder("batch.import.active")
-    .register(registry);
+Counter events = registry.counter("demo.events", "region", "ru");
+events.increment();
+events.increment(5);
 
-LongTaskTimer.Sample sample = batchTimer.start();
+Gauge.builder("demo.queue.size", orderQueue, Queue::size)
+        .tag("region", "ru")
+        .register(registry);
+
+Timer work = registry.timer("demo.work", "region", "ru");
+work.record(Duration.ofMillis(150));
+
+DistributionSummary payload = DistributionSummary.builder("demo.payload")
+        .baseUnit("bytes")
+        .tag("region", "ru")
+        .register(registry);
+payload.record(512);
+payload.record(256);
+```
+
+Нужны imports Micrometer `Counter`, `Gauge`, `Timer`, `DistributionSummary`, `java.time.Duration` и `java.util.Queue`. Получились count Counter = 6, Timer count = 1 и время 150 ms, Summary count = 2 и сумма 768 bytes. Размер очереди Gauge прочитает при наблюдении. Timer/DistributionSummary уже имеют count: отдельный Counter для ровно тех же событий часто избыточен. Срок жизни Gauge и tags рассмотрены в Q32.
+
+**LongTaskTimer** наблюдает ещё выполняющиеся задачи: active count, суммарную длительность активных задач и их max. Это не история завершённых длительностей обычного Timer.
+
+```java
+LongTaskTimer batchTimer = LongTaskTimer.builder("batch.import").register(registry);
+LongTaskTimer.Sample active = batchTimer.start();
 try {
-    runBatchImport();
+    // Пока выполняется задача, sample остаётся активным.
 } finally {
-    sample.stop();
+    active.stop();
 }
-// Gauge: batch_import_active_tasks_current — сколько batch задач активно
 ```
+
+Нужен import `io.micrometer.core.instrument.LongTaskTimer`. После stop задача больше не входит в active count; точные Prometheus-имена сверяют с экспозицией выбранного registry. [LongTaskTimer, Micrometer 1.13](https://docs.micrometer.io/micrometer/reference/1.13/concepts/long-task-timers.html).
+
+Для histogram и SLO boundaries используйте настройки конкретной версии (пример 1.13.2 — Q32); одновременные publishPercentiles/publishPercentileHistogram не означают, что backend получит оба вида статистики одним именем. `@Timed` требует поддержки фреймворка или настроенного `TimedAspect`; одна аннотация не инструментирует произвольный метод автоматически.
 
 ## Q35. Что такое OpenTelemetry Collector и как его использовать?
 
-**OpenTelemetry Collector** — это отдельный процесс-посредник между приложениями и бэкендами мониторинга, работающий по схеме receivers -> processors -> exporters: принимает телеметрию (трейсы, метрики, логи), обрабатывает её и экспортирует в нужные системы. Смысл этой прослойки в том, чтобы приложения не знали о конкретных бэкендах: они шлют всё в один Collector, а маршрутизацию, батчинг, sampling и фильтрацию он берёт на себя — и менять их можно без передеплоя приложений.
+**OpenTelemetry Collector** — настраиваемый процесс, который принимает телеметрию через **receivers**, обрабатывает её **processors** и отправляет **exporters**. Компоненты связывают в `service.pipelines` отдельно для совместимых signals. Объявить компонент в верхней секции недостаточно — его нужно включить в pipeline. Connectors при необходимости связывают pipelines и могут преобразовывать сигналы.
 
-**Архитектура:**
+Collector можно разместить рядом с приложением или как gateway. Он не заменяет инструментацию приложения и не является обязательным: SDK может экспортировать прямо в совместимый backend. Collector позволяет менять последующую обработку/маршрут без изменения приложения, если его входящий контракт остаётся совместимым. [Collector configuration](https://opentelemetry.io/docs/collector/configuration/).
 
-```mermaid
-graph LR
-    A[Java App + OTel SDK] -->|OTLP gRPC/HTTP| C[OTel Collector]
-    B[Python App] -->|OTLP| C
-    C -->|Prometheus scrape| P[Prometheus]
-    C -->|Jaeger export| J[Jaeger]
-    C -->|OTLP| G[Grafana Tempo]
-    C -->|Loki| L[Grafana Loki]
-```
-
-**Конфигурация Collector (otel-collector-config.yaml):**
+**Пример для `otelcol-contrib 0.111.0`:** локальный приём OTLP и диагностический вывод через debug, без backend хранения. Все компоненты ниже есть в manifest этой сборки. Это пример конфигурации, а не отчёт об успешном запуске Collector.
 
 ```yaml
 receivers:
   otlp:
     protocols:
       grpc:
-        endpoint: 0.0.0.0:4317
+        endpoint: 127.0.0.1:4317
       http:
-        endpoint: 0.0.0.0:4318
-  prometheus:              # также может скрейпить Prometheus метрики
-    config:
-      scrape_configs:
-        - job_name: 'my-app'
-          static_configs:
-            - targets: ['app:8080']
+        endpoint: 127.0.0.1:4318
 
 processors:
-  batch:                   # буферизует для эффективной отправки
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 128
+    spike_limit_mib: 32
+  batch:
     timeout: 5s
     send_batch_size: 512
-  memory_limiter:          # защита от OOM
-    limit_mib: 512
-  resource:                # добавляем атрибуты ко всем сигналам
-    attributes:
-      - action: insert
-        key: deployment.environment
-        value: production
 
 exporters:
-  jaeger:
-    endpoint: jaeger:14250
-    tls:
-      insecure: true
-  prometheusremotewrite:
-    endpoint: http://prometheus:9090/api/v1/write
-  loki:
-    endpoint: http://loki:3100/loki/api/v1/push
+  debug:
+    verbosity: basic
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [memory_limiter, batch, resource]
-      exporters: [jaeger]
+      processors: [memory_limiter, batch]
+      exporters: [debug]
     metrics:
-      receivers: [otlp, prometheus]
-      processors: [batch]
-      exporters: [prometheusremotewrite]
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [debug]
     logs:
       receivers: [otlp]
-      processors: [batch]
-      exporters: [loki]
+      processors: [memory_limiter, batch]
+      exporters: [debug]
 ```
 
-**Spring Boot → OTel Collector:**
+Loopback подходит для клиента в том же сетевом пространстве; для отдельных контейнеров выберите фактически достижимый listener. `debug` выводит диагностические данные в консоль, не сохраняет их как tracing backend. Для backend выберите поддерживаемый exporter и включите его в нужный pipeline, согласовав signal, протокол и endpoint.
+
+**Фрагмент замены вывода traces на OTLP/gRPC** при уже доступном `trace-backend:4317`: добавьте этот exporter и замените список exporters у traces в примере выше; receiver/processors сохраняются. Это не самостоятельный полный файл. Здесь показан plaintext для локального примера; транспорт должен соответствовать реальному backend.
 
 ```yaml
-# application.yml — Java Agent автоматически отправляет в Collector
-management:
-  otlp:
-    tracing:
-      endpoint: http://otel-collector:4318/v1/traces
-    metrics:
-      export:
-        url: http://otel-collector:4318/v1/metrics
+exporters:
+  otlp/trace_backend:
+    endpoint: trace-backend:4317
+    tls:
+      insecure: true
+service:
+  pipelines:
+    traces:
+      exporters: [otlp/trace_backend]
 ```
 
-**Преимущества Collector vs прямая отправка:**
-- Один endpoint для всех сигналов (трейсы + метрики + логи)
-- Можно менять бэкенды без перекомпиляции приложения
-- Батчинг, сжатие, retry встроены
-- Tail-based sampling реализуется на Collector уровне
-- Фильтрация чувствительных данных (PII scrubbing)
+Имя `trace-backend` должно разрешаться из окружения Collector; его endpoint не должен указывать обратно на свой receiver. [OTLP exporter 0.111.0](https://github.com/open-telemetry/opentelemetry-collector/blob/v0.111.0/exporter/otlpexporter/README.md).
+
+**Версия и distribution обязательны для проверки примера.** В contrib **0.111.0** есть `otlp`, `debug` и `loki` exporters, но нет `jaeger` exporter. Поддержка OTLP у выбранного Jaeger backend не требует наличия компонента с именем jaeger в Collector. Этот вывод нельзя переносить на все старые/будущие сборки или на отсутствие loki. [Manifest 0.111.0](https://github.com/open-telemetry/opentelemetry-collector-releases/blob/v0.111.0/distributions/otelcol-contrib/manifest.yaml), [debug exporter 0.111.0](https://github.com/open-telemetry/opentelemetry-collector/blob/v0.111.0/exporter/debugexporter/README.md).
+
+В приведённой версии `memory_limiter` требует положительный `check_interval`, расположен первым и может отказывать в приёме, создавая backpressure. Числа памяти иллюстративны; это не гарантия отсутствия OOM и не persistent queue. `batch` группирует данные; `send_batch_size` — порог отправки, а не максимальный размер. Порядок processors имеет значение. [Memory limiter 0.111.0](https://github.com/open-telemetry/opentelemetry-collector/blob/v0.111.0/processor/memorylimiterprocessor/README.md), [batch config 0.111.0](https://github.com/open-telemetry/opentelemetry-collector/blob/v0.111.0/processor/batchprocessor/config.go).
+
+Очереди, retries и при необходимости persistent storage настраиваются отдельно с учётом поддержки exporter. Ни память, ни batching, ни retry не гарантируют доставку без потерь при переполнении, исчерпании retry или сбое хранения. [Collector resiliency](https://opentelemetry.io/docs/collector/resiliency/).
+
+**Настройка клиента — другой уровень:**
+
+| Путь tracing | Пример для локального HTTP receiver |
+|---|---|
+| Boot 3.3.2 + Actuator + bridge-otel + OTLP exporter | `management.otlp.tracing.endpoint=http://127.0.0.1:4318/v1/traces` |
+| Standalone OTel Java Agent 2.x | `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf` и `OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318` |
+
+Boot `management.otlp.*` не настраивает standalone Agent. Для метрик/логов тоже нужен реальный источник и соответствующая интеграция: наличие трёх pipelines само не включает все сигналы в приложении. Сверяйте входящий протокол и путь; конфигурация SDK/Agent разобрана в Q16/Q40. [Boot tracing v3.3.2](https://github.com/spring-projects/spring-boot/blob/v3.3.2/spring-boot-project/spring-boot-docs/src/docs/antora/modules/reference/pages/actuator/tracing.adoc), [Java Agent configuration](https://opentelemetry.io/docs/zero-code/java/agent/configuration/).
 
 ## Q36. (!) Что такое SLI, SLO и SLA — определения, расчёт, error budget?
 
@@ -1686,60 +1574,51 @@ registry.config().meterFilter(
 
 ## Q40. Как реализовать context propagation в distributed tracing — W3C TraceContext и B3?
 
-**Context propagation** — это механизм, который переносит trace context (`traceId`, `spanId` родителя, решение о sampling) между сервисами через HTTP-заголовки или заголовки сообщений. Без него каждый сервис начинал бы новый, не связанный трейс, и склеить путь запроса было бы невозможно. Существуют два основных формата заголовков — современный `W3C TraceContext` и старый `B3` (Zipkin); ниже — оба, а также Baggage и типичные ошибки.
+Передача контекста требует **согласованного формата и работающего пути inject → transport → extract**. В HTTP W3C использует `traceparent`/`tracestate`, B3 (Zipkin) — `b3` или `X-B3-*`. Propagator переносит IDs и sampling context, но не отправляет сами spans. После extract контекст нужно использовать как родительский при создании операции и активировать на время её выполнения; одно чтение заголовка этого не делает. Формат W3C разобран в Q31, жизненный цикл span — в Q7/Q8.
 
-**W3C TraceContext (рекомендуемый стандарт, W3C Recommendation):**
-
-```http
-# HTTP заголовки W3C TraceContext
-traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
-             ^^                                                        
-             version (00)                                              
-                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                       
-                traceId (128-bit hex)                                  
-                                        ^^^^^^^^^^^^^^^^               
-                                        parentSpanId (64-bit hex)      
-                                                                 ^^    
-                                                                 flags (01 = sampled)
-
-tracestate: vendor1=value1,vendor2=value2   # vendor-specific данные
-```
-
-**B3 Propagation (Zipkin формат):**
+**Два представления одного синтетического контекста B3** — показываются как альтернативы, не как требование отправлять оба набора:
 
 ```http
-# Multi-header B3 (старый формат, Zipkin, Brave)
 X-B3-TraceId: 4bf92f3577b34da6a3ce929d0e0e4736
 X-B3-SpanId: 00f067aa0ba902b7
-X-B3-ParentSpanId: 00f067aa0ba902b7
 X-B3-Sampled: 1
+```
 
-# Single-header B3 (компактный)
+```http
 b3: 4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-1
 ```
 
-**Настройка propagation в Spring Boot + OTel:**
+B3 допускает trace ID длиной 16 или 32 hex-символа; span ID — 16. В B3 есть исторические особенности shared RPC spans. Для **OTel B3 propagator** нельзя копировать входящий X-B3-SpanId в собственный новый server span или добавлять X-B3-ParentSpanId при inject. Этот optional B3 header не равен автоматически W3C parent-id; старый пример с parent ID, равным собственному span ID, не задавал корректное дерево. [B3 specification](https://github.com/openzipkin/b3-propagation), [OTel B3 requirements](https://opentelemetry.io/docs/specs/otel/context/api-propagators/#b3-requirements).
+
+**Spring Boot Micrometer Tracing — пример для Boot 3.3.2:** принимать W3C и оба B3, отправлять W3C при подключённой tracing-интеграции:
 
 ```yaml
-# application.yml
 management:
   tracing:
     propagation:
-      type: w3c    # или b3, b3_multi, aws_xray
+      consume: [w3c, b3, b3_multi]
+      produce: [w3c]
 ```
 
+В **3.3.2** свойство `type` задаёт оба направления и перекрывает `consume`/`produce`; `b3` означает single-header, `b3_multi` — multi-header. `aws_xray` не входит в enum этого Boot-свойства; не переносите сюда имена из другой системы конфигурации. Это проверено по metadata/классам и binding именно 3.3.2, а не для всех версий Boot. [TracingProperties 3.3.2](https://github.com/spring-projects/spring-boot/blob/v3.3.2/spring-boot-project/spring-boot-actuator-autoconfigure/src/main/java/org/springframework/boot/actuate/autoconfigure/tracing/TracingProperties.java).
+
+**Standalone OTel Java Agent** использует, например, `OTEL_PROPAGATORS=tracecontext,baggage` или system property `otel.propagators`; `management.tracing.*` из Boot не является настройкой этого agent. Agent configuration file имеет Java properties format. Не смешивайте этот путь с Micrometer auto-configuration или OTel Spring Boot starter. [Agent configuration](https://opentelemetry.io/docs/zero-code/java/agent/configuration/), [propagator names/defaults](https://opentelemetry.io/docs/languages/java/configuration/#properties-general).
+
+**Ручной SDK:** propagators задают явно; B3 API доступен через `opentelemetry-extension-trace-propagators`, а не одним присутствием пустого SDK builder. `TextMapPropagator.composite(...)` вызывает компоненты в заданном порядке. Это не автоматическое согласование конфликтующих W3C/B3 IDs: при поддержке нескольких форматов определите приоритет и проверьте неоднозначные входящие заголовки. [Propagators API](https://opentelemetry.io/docs/specs/otel/context/api-propagators/).
+
+**Передача в другой поток — отдельная граница.** Поддерживаемая auto-instrumentation может уже переносить context; собственный executor, ручной SDK или нестандартная библиотека требуют проверки. Для OTel Java **1.37.0** есть `Context.taskWrapping(ExecutorService)`, захватывающий текущий context при отправке задания. Фрагмент тела метода с `throws Exception`, выполняемого внутри нужного активного context:
+
 ```java
-// Ручная настройка через Java SDK
-OpenTelemetrySdk otel = OpenTelemetrySdk.builder()
-    .setPropagators(ContextPropagators.create(
-        TextMapPropagator.composite(
-            W3CTraceContextPropagator.getInstance(),     // W3C (основной)
-            W3CBaggagePropagator.getInstance(),          // W3C Baggage
-            B3Propagator.injectingSingleHeader()          // B3 для legacy систем
-        )
-    ))
-    .build();
+ExecutorService executor = Context.taskWrapping(Executors.newFixedThreadPool(1));
+try {
+    Context insideWorker = executor.submit(Context::current).get();
+    // insideWorker получен внутри задания; его содержимое проверяют по нужным данным.
+} finally {
+    executor.shutdown();
+}
 ```
+
+Нужны imports `io.opentelemetry.context.Context`, `java.util.concurrent.ExecutorService` и `Executors`. Обёртка передаёт context, но сама не создаёт spans и не инструментирует HTTP/Kafka. В Spring используйте совместимую интеграцию своего executor и lifecycle; показанный фрагмент не является Spring bean или production pool. [Context API 1.37.0](https://github.com/open-telemetry/opentelemetry-java/blob/v1.37.0/context/src/main/java/io/opentelemetry/context/Context.java). Покрытие auto-instrumentation и её ограничения проверяйте для своей библиотеки и версии: [Agent supported libraries](https://opentelemetry.io/docs/zero-code/java/agent/supported-libraries/).
 
 **Baggage — передача прикладных пар ключ-значение рядом с trace context.** Значение доступно нижележащим сервисам, если установлен и используется `W3CBaggagePropagator`. Инструментация может отправить его и во внешний API: поэтому передавайте только нужные несекретные короткие значения, ограничивайте набор ключей и очищайте baggage на границе доверия. `userId`, токены и персональные данные нельзя без оценки раскрытия класть туда «для удобства». Входящий baggage не имеет встроенной проверки целостности, поэтому он не является основанием для авторизации. Он также не становится атрибутом спана, метрики или лога сам по себе — для этого требуется явное копирование либо специальный processor. [OpenTelemetry Baggage](https://opentelemetry.io/docs/concepts/signals/baggage/).
 
@@ -1763,24 +1642,6 @@ baggage: traffic.class=standard
 ```
 
 W3C Baggage требует сохранять весь заголовок в пределах **64 элементов и 8192 байт**; сверх этих границ реализация может отбросить элементы. Это нижний порог совместимости спецификации, а не полезный размер для каждого запроса. Держите своё содержимое намного меньше и не рассчитывайте, что каждый ключ дойдёт до получателя. [W3C Baggage, limits](https://www.w3.org/TR/baggage/#limits).
-
-**Подводные камни.** Чаще всего трейс «обрывается» там, где контекст не передаётся автоматически — при уходе в свой пул потоков или нестандартный транспорт:
-
-| Проблема | Причина | Решение |
-|---------|---------|---------|
-| Трейс обрывается | Async executor не копирует контекст | `ContextPropagatingExecutorService` |
-| Трейс обрывается на Kafka | Producer не добавляет заголовки | OTel Kafka instrumentation |
-| Смешанные форматы | Legacy B3, новые W3C | Composite propagator |
-
-```java
-// Проброс контекста через Executor (Spring ThreadPool)
-@Bean
-public Executor tracingExecutor(Tracer tracer) {
-    return new ContextPropagatingExecutorService(
-        Executors.newFixedThreadPool(10)
-    );
-}
-```
 
 ## Q41. Какие SLI использовать для разных типов сервисов?
 
