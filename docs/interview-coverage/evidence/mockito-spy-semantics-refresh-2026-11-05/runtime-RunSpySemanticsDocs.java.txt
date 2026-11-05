@@ -1,0 +1,15 @@
+import java.io.PrintWriter;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+class RunSpySemanticsDocs {
+ public static void main(String[] args) {
+  var request=LauncherDiscoveryRequestBuilder.request()
+   .selectors(DiscoverySelectors.selectClass(MockAndSpyExampleTest.class),DiscoverySelectors.selectClass(SpyCreationExampleTest.class),DiscoverySelectors.selectClass(SpySemanticsSupport.class),DiscoverySelectors.selectClass(DoubleRolesSupport.class))
+   .configurationParameter("junit.jupiter.execution.parallel.enabled","false").build();
+  var listener=new SummaryGeneratingListener();LauncherFactory.create().execute(request,listener);
+  var result=listener.getSummary();result.printTo(new PrintWriter(System.out,true));result.printFailuresTo(new PrintWriter(System.out,true));
+  if(result.getTestsFoundCount()!=17 || result.getTestsSucceededCount()!=17 || result.getTotalFailureCount()!=0)System.exit(1);
+ }
+}

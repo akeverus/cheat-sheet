@@ -1,0 +1,151 @@
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
+import org.mockito.exceptions.base.MockitoException;
+
+class SpySemanticsSupport {
+    static class State {
+        int number = 1;
+        List<String> events = new ArrayList<>();
+        int add(int delta) { number += delta; events.add("+" + delta); return number; }
+    }
+    static class Reader {
+        int calls;
+        String read() { calls++; return "real"; }
+    }
+    interface View {
+        default String name() { return "view"; }
+        int count();
+    }
+    static abstract class AbstractCounter {
+        int number = 7;
+        int value() { return number; }
+        abstract String load();
+    }
+    static class NeedsArgument {
+        final int number;
+        NeedsArgument(int number) { this.number = number; }
+        int value() { return number; }
+    }
+    static class InitializedFields {
+        final State original = new State();
+        @Spy State value = original;
+    }
+    static class GenericFields { @Spy ArrayList<String> values; }
+    static class InterfaceFields { @Spy View value; }
+    static class InterfaceListFields { @Spy List<String> values; }
+    static class AbstractFields { @Spy AbstractCounter value; }
+    static class MissingConstructorFields { @Spy NeedsArgument value; }
+    static class SuppliedConstructorFields { @Spy NeedsArgument value = new NeedsArgument(7); }
+
+    @Test void factorySpyCopiesScalarsAndSharesReferenceFields() {
+        State original = new State();
+        State spied = spy(original);
+        assertNotSame(original, spied);
+        assertSame(original.events, spied.events);
+        assertEquals(3, spied.add(2));
+        assertEquals(1, original.number);
+        assertEquals(List.of("+2"), original.events);
+        original.add(10);
+        assertEquals(11, original.number);
+        assertEquals(3, spied.number);
+        assertEquals(List.of("+2", "+10"), spied.events);
+        verify(spied).add(2);
+        verify(spied, never()).add(10);
+    }
+    @Test void initializedFieldAlsoUsesCopy() throws Exception {
+        InitializedFields fields = new InitializedFields();
+        try (AutoCloseable ignored = MockitoAnnotations.openMocks(fields)) {
+            assertNotSame(fields.original, fields.value);
+            assertTrue(mockingDetails(fields.value).isSpy());
+            fields.value.add(2);
+            assertEquals(1, fields.original.number);
+            assertSame(fields.original.events, fields.value.events);
+        }
+    }
+    @Test void genericConcreteFieldNeedsNoInitializer() throws Exception {
+        GenericFields fields = new GenericFields();
+        assertNull(fields.values);
+        try (AutoCloseable ignored = MockitoAnnotations.openMocks(fields)) {
+            assertTrue(mockingDetails(fields.values).isSpy());
+            assertTrue(fields.values.add("value"));
+            assertEquals(1, fields.values.size());
+        }
+    }
+    @Test void interfaceFieldCanRunDefaultMethodWithoutExistingInstance() throws Exception {
+        InterfaceFields fields = new InterfaceFields();
+        assertNull(fields.value);
+        try (AutoCloseable ignored = MockitoAnnotations.openMocks(fields)) {
+            assertTrue(mockingDetails(fields.value).isSpy());
+            assertEquals("view", fields.value.name());
+            assertEquals(0, fields.value.count());
+            doReturn(4).when(fields.value).count();
+            assertEquals(4, fields.value.count());
+        }
+    }
+    @Test void interfaceListHasNoArrayListStorage() throws Exception {
+        InterfaceListFields fields = new InterfaceListFields();
+        try (AutoCloseable ignored = MockitoAnnotations.openMocks(fields)) {
+            assertTrue(mockingDetails(fields.values).isSpy());
+            assertFalse(fields.values.add("not stored"));
+            assertEquals(0, fields.values.size());
+        }
+    }
+    @Test void classFactoryCreatesAbstractTypeAndCallsAvailableCode() {
+        AbstractCounter spied = spy(AbstractCounter.class);
+        assertTrue(mockingDetails(spied).isSpy());
+        assertEquals(7, spied.value());
+        assertNull(spied.load());
+    }
+    @Test void abstractAnnotatedFieldCanBeCreated() throws Exception {
+        AbstractFields fields = new AbstractFields();
+        try (AutoCloseable ignored = MockitoAnnotations.openMocks(fields)) {
+            assertEquals(7, fields.value.value());
+            assertNull(fields.value.load());
+            assertTrue(mockingDetails(fields.value).isSpy());
+        }
+    }
+    @Test void missingNoArgConstructorFailsButSuppliedValueWorks() throws Exception {
+        MockitoException error = assertThrows(MockitoException.class,
+            () -> MockitoAnnotations.openMocks(new MissingConstructorFields()));
+        assertTrue(error.getMessage().contains("no-arg constructor"), error.getMessage());
+        SuppliedConstructorFields fields = new SuppliedConstructorFields();
+        try (AutoCloseable ignored = MockitoAnnotations.openMocks(fields)) {
+            assertEquals(7, fields.value.value());
+            assertTrue(mockingDetails(fields.value).isSpy());
+        }
+    }
+    @Test void whenRunsRealCodeButDoReturnDoesNot() {
+        Reader withWhen = spy(new Reader());
+        when(withWhen.read()).thenReturn("stub");
+        assertEquals(1, withWhen.calls);
+        assertEquals("stub", withWhen.read());
+        assertEquals(1, withWhen.calls);
+        Reader withDo = spy(new Reader());
+        doReturn("stub").when(withDo).read();
+        assertEquals(0, withDo.calls);
+        assertEquals("stub", withDo.read());
+        assertEquals(0, withDo.calls);
+    }
+    @Test void ordinaryMockMayBeConfiguredForRealMethod() {
+        Reader ordinary = mock(Reader.class);
+        assertNull(ordinary.read());
+        assertEquals(0, ordinary.calls);
+        when(ordinary.read()).thenCallRealMethod();
+        assertEquals("real", ordinary.read());
+        assertEquals(1, ordinary.calls);
+    }
+    @Test void annotationNeedsProcessing() throws Exception {
+        InitializedFields fields = new InitializedFields();
+        assertFalse(mockingDetails(fields.value).isSpy());
+        assertSame(fields.original, fields.value);
+        try (AutoCloseable ignored = MockitoAnnotations.openMocks(fields)) {
+            assertTrue(mockingDetails(fields.value).isSpy());
+            assertNotSame(fields.original, fields.value);
+        }
+    }
+}

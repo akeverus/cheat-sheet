@@ -1,0 +1,51 @@
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class SpyCreationExampleTest {
+    static class Initialized {
+        int number = 7;
+        int value() { return number; }
+    }
+    interface View {
+        default String name() { return "view"; }
+        int count();
+    }
+
+    @Spy ArrayList<String> created;
+    @Spy List<String> supplied = new ArrayList<>();
+    @Spy View view;
+
+    @Test
+    void concreteGenericFieldCanBeCreated() {
+        created.add("created");
+        supplied.add("supplied");
+        assertEquals(List.of("created"), created);
+        assertEquals(List.of("supplied"), supplied);
+    }
+
+    @Test
+    void factoryCanTakeInstanceOrType() {
+        Initialized original = new Initialized();
+        Initialized fromInstance = spy(original);
+        Initialized fromType = spy(Initialized.class);
+        assertNotSame(original, fromInstance);
+        assertEquals(7, fromInstance.value());
+        assertEquals(7, fromType.value());
+    }
+
+    @Test
+    void interfaceFieldUsesAvailableDefaultMethod() {
+        assertTrue(mockingDetails(view).isSpy());
+        assertEquals("view", view.name());
+        assertEquals(0, view.count());  // У абстрактного метода нет тела.
+        doReturn(4).when(view).count();
+        assertEquals(4, view.count());
+    }
+}

@@ -1,0 +1,12 @@
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.Test;
+class DoubleRolesSupport {
+ interface Repo { String find(int id); }
+ @Test void sameObjectCanProvideStubbedAnswerAndVerifyInteraction() {
+  Repo dependency=mock(Repo.class);
+  when(dependency.find(7)).thenReturn("entity");
+  assertEquals("entity",dependency.find(7));
+  verify(dependency).find(7);
+ }
+}

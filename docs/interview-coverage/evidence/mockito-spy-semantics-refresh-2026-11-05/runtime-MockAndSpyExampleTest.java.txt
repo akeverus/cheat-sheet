@@ -1,0 +1,40 @@
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class MockAndSpyExampleTest {
+    static class Counter {
+        int value = 1;
+        int next() { return ++value; }
+    }
+
+    @Mock Counter mocked;
+    @Spy Counter spied = new Counter();
+
+    @Test
+    void defaultAnswersAndSelectedStub() {
+        assertEquals(0, mocked.next());
+        assertEquals(2, spied.next());
+        verify(spied).next();
+
+        doReturn(99).when(spied).next();
+        assertEquals(99, spied.next());
+        assertEquals(2, spied.value);  // Stub не выполнил ++value.
+    }
+
+    @Test
+    void factorySpyHasIndependentPrimitiveField() {
+        Counter original = new Counter();
+        Counter copy = spy(original);
+        assertNotSame(original, copy);
+        assertEquals(2, copy.next());
+        assertEquals(1, original.value);
+        original.value = 10;
+        assertEquals(2, copy.value);
+    }
+}
