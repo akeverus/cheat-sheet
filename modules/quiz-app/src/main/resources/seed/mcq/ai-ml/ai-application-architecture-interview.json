@@ -1871,50 +1871,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Cursor работает только через облачную тяжёлую модель на каждый символ автодополнения, без edge-моделей и code-specific FT.",
+              "text": "Notion AI Enterprise Search — поиск по workspace; Cursor Agent — обязательный embedding-поиск; Perplexity Pro Search — веб-поиск с источниками; Devin — действия в рабочей среде.",
               "correct": false,
               "sections": {
-                "what_actually": "Cursor — гибрид: long context (full file) + embedding search (codebase) + tool use + speculative decoding и code-specific FT; автодополнение опирается и на лёгкие быстрые механизмы.",
-                "source_of_confusion": "Раз Cursor «умный», кажется, что за каждым нажатием стоит топовая облачная модель.",
-                "if_it_were_true": "Если бы каждый символ шёл в тяжёлую облачную модель, latency автодополнения была бы неприемлемой для IDE.",
-                "how_it_should_be": "Cursor сочетает long context, embedding search, tool use и code-specific FT, а не один облачный вызов на символ."
+                "what_actually": "В актуальной документации Search для Cursor Agent описан локальный Instant Grep без хранения embeddings кодовой базы для этого поиска. Следовательно, embedding-поиск не является обязательным условием retrieval.",
+                "source_of_confusion": "Исторические описания векторной индексации и общий паттерн RAG переносят на все версии и режимы Cursor.",
+                "if_it_were_true": "Текущий поиск Agent не мог бы работать без embedding-индекса, что противоречит описанному Instant Grep.",
+                "how_it_should_be": "Разделять поиск контекста и его реализацию. Уточнять продукт, режим и дату; из свойств поиска не выводить обязательность fine-tuning или speculative decoding."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Perplexity — это чистый fine-tune без retrieval: модель дообучена на вебе и потому отвечает свежими фактами без поиска.",
+              "text": "Notion AI Enterprise Search — поиск по workspace; Cursor Agent — поиск и инструменты кода; Perplexity Pro Search — ответы только из весов; Devin — действия в рабочей среде.",
               "correct": false,
               "sections": {
-                "what_actually": "Perplexity — RAG + agent: web-search tool + citation generation, online retrieval на каждый запрос и source-attribution в UI; свежесть даёт поиск, а не FT.",
-                "source_of_confusion": "«Отвечает свежим» наводит на мысль, что знания зашиты в дообученные веса.",
-                "if_it_were_true": "Если бы Perplexity был чистым FT, он не показывал бы inline citations на актуальные источники по каждому запросу.",
-                "how_it_should_be": "Perplexity строится на online RAG + agent-tools с цитированием; fine-tune не источник его свежих фактов."
+                "what_actually": "Pro Search описывает поиск источников и синтез ответа с цитированием. Это не ответ только из весов модели; утверждение ограничено указанным режимом, а не всеми запросами Perplexity.",
+                "source_of_confusion": "Сохранённые в модели знания смешивают с данными, которые поиск добавляет в контекст при выполнении запроса.",
+                "if_it_were_true": "Документированный этап поиска Pro Search не участвовал бы в получении материалов для ответа.",
+                "how_it_should_be": "Для Pro Search учитывать поиск и синтез по источникам. Наличие цитат само по себе не доказывает retrieval; Agent API допускает запросы без web search, если он не включён."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Все эти продукты построены на одном чистом паттерне — pure prompt engineering без RAG, tools и fine-tune.",
+              "text": "Notion AI Enterprise Search — поиск по workspace; Cursor Agent — поиск и инструменты кода; Perplexity Pro Search — веб-поиск с источниками; Devin — советы без исполнения.",
               "correct": false,
               "sections": {
-                "what_actually": "Общий паттерн 2025-2026 — *гибрид* (RAG + tools + немного FT + careful prompt), а не чистый prompt: Notion AI — RAG по workspace, Perplexity — RAG+agent с web-search.",
-                "source_of_confusion": "«Это же просто чат с моделью» создаёт впечатление, что под капотом один prompt.",
-                "if_it_were_true": "Если бы это был чистый prompt, Perplexity не давал бы свежие web-результаты с citations, а Devin не запускал бы код в sandbox.",
-                "how_it_should_be": "Серьёзные продукты — гибриды нескольких паттернов; чистый prompt для них недостаточен."
+                "what_actually": "Рабочая сессия Devin поддерживает действия через Shell, IDE и Browser. Пользователь может наблюдать и вмешиваться; возможности не ограничены текстовыми советами.",
+                "source_of_confusion": "Разговорный интерфейс агента принимают за отсутствие инструментов изменения файлов и исполнения команд.",
+                "if_it_were_true": "В рабочей сессии не было бы выполняемых команд и правок кода, которые описывает Session Tools.",
+                "how_it_should_be": "Рассматривать рабочую сессию как coding-агента с инструментами. Не переносить это на каждый режим: например, Side Chat имеет отдельные ограничения только на чтение."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Каждый — гибрид под свою задачу: Notion AI — RAG поверх workspace (per-workspace index, structured output); Cursor — long context + embedding search + tool use + code-specific FT + speculative decoding; Perplexity — RAG + agent с web-search и inline citations; Devin — autonomous coding agent (multi-step planning, sandboxed VM, self-reflection, human-checkpoint); GitHub Copilot — edge autocomplete + cloud chat (cascading).",
+              "text": "Notion AI Enterprise Search — поиск по workspace; Cursor Agent — поиск и инструменты кода; Perplexity Pro Search — веб-поиск с источниками; Devin — действия в рабочей среде.",
               "correct": true,
               "sections": {
-                "explanation": "Смысл разбора — показать, что у зрелых продуктов нет «чистого» паттерна: каждый собирает свой гибрид (RAG, tools, немного FT, аккуратный prompt) под конкретную задачу, и это сегодня общая норма.",
-                "example": "Например, Perplexity на каждый запрос делает online retrieval через web-search tool и рендерит source-attribution в UI, а Devin планирует multi-step, исполняет код в sandboxed VM и останавливается на human-checkpoint — разные паттерны под разные задачи.",
-                "when_to_apply": "Этот разбор используют как референс при дизайне своего продукта: смотришь, какой гибрид собрал похожий по задаче продукт, и заимствуешь подходящие паттерны.",
-                "edge_cases": "Общий вывод на 2025-2026: все серьёзные продукты — гибрид (RAG + tools + немного FT + careful prompt engineering), а не «чистый» один паттерн.",
-                "related": "[[ai-application-architecture-interview#Q5]] Agents+RAG как у Perplexity; [[ai-application-architecture-interview#Q4]] RAG+Fine-tune гибрид; [[ai-application-architecture-interview#Q29]] edge+cloud как у Copilot."
+                "explanation": "Эта карта сопоставляет публичные возможности конкретных режимов: retrieval по рабочим данным, инструменты поиска и работы с кодом, поиск с синтезом ответа и действия coding-агента. Она не раскрывает полную внутреннюю архитектуру продуктов.",
+                "example": "Notion Enterprise Search может отвечать по workspace и подключённым приложениям; область поиска настраивается. Cursor Agent использует инструменты, Pro Search ищет источники, а рабочая сессия Devin позволяет наблюдать команды, правки и работу браузера.",
+                "when_to_apply": "Использовать примеры при выборе нужных возможностей своего продукта. Сначала определить поиск, исполнение и участие пользователя, затем отдельно оценивать реализацию и проверять источники.",
+                "edge_cases": "Возможности зависят от режима, конфигурации и версии. Из них не следует обязательность FT, speculative decoding, per-workspace embedding index или human-checkpoint после каждого действия. Проверка документации: 2026-11-05.",
+                "related": "[[ai-application-architecture-interview#Q5]] агенты и retrieval; [[ai-application-architecture-interview#Q4]] отдельный выбор fine-tuning; [[ai-application-architecture-interview#Q32]] границы продуктовых примеров."
               }
             }
           ]
