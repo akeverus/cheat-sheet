@@ -459,82 +459,189 @@ verifyNoMoreInteractions(repo);  // убедиться, что delete/update н�
 
 ## Q17. (!) Как захватить аргумент с помощью `ArgumentCaptor`?
 
-`ArgumentCaptor` перехватывает объект, который тестируемый код передал в мок, и сохраняет его — чтобы вы могли проверить не сам факт вызова, а **состояние** аргумента: поля, статус, размер коллекции. Это удобно, когда аргумент собирается внутри тестируемого кода и его не с чем сравнить заранее.
+`ArgumentCaptor` сохраняет аргументы совпавших вызовов, чтобы тест выполнил assertions над ними. Сам captor не сравнивает бизнес-поля с ожидаемыми значениями и не делает глубокий снимок объекта.
 
-Порядок работы — три шага: вызвать тестируемый код → передать `captor.capture()` внутрь `verify()` → достать пойманное значение через `getValue()`.
+В обычной verification-последовательности сначала вызывают SUT, затем `verify(...).method(captor.capture())`, после чего читают `getValue()` или `getAllValues()`. Capture регистрирует специальный matcher; значение появляется после состоявшегося захвата. GetValue без захватов сообщает об отсутствии аргумента.
 
 ```java
-@Captor
-ArgumentCaptor<Order> orderCaptor;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
+import org.mockito.junit.jupiter.MockitoExtension;
+import java.math.BigDecimal;
+import java.util.List;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@Test
-void shouldSaveOrderWithCorrectStatus() {
-    service.placeOrder(orderRequest);
+@ExtendWith(MockitoExtension.class)
+class CaptorExampleTest {
+    record Order(String status, BigDecimal total) {}
+    interface Repository { void save(Order order); }
+    static class Service {
+        private final Repository repository;
+        Service(Repository repository) { this.repository = repository; }
+        void placeOrder() { repository.save(new Order("PENDING", BigDecimal.TEN)); }
+    }
 
-    verify(orderRepository).save(orderCaptor.capture());
-    Order savedOrder = orderCaptor.getValue();
+    @Mock Repository repository;
+    @Captor ArgumentCaptor<Order> captor;
 
-    assertThat(savedOrder.getStatus()).isEqualTo(OrderStatus.PENDING);
-    assertThat(savedOrder.getTotal()).isEqualByComparingTo(BigDecimal.TEN);
+    @Test
+    void inspectsArgumentCreatedByService() {
+        new Service(repository).placeOrder();
+        verify(repository).save(captor.capture());
+        Order saved = captor.getValue();
+        assertEquals("PENDING", saved.status());
+        assertEquals(BigDecimal.TEN, saved.total());
+    }
+
+    @Test
+    void readsHistoryAndLastCapturedValue() {
+        Order first = new Order("PENDING", BigDecimal.ONE);
+        Order second = new Order("PAID", BigDecimal.TEN);
+        repository.save(first);
+        repository.save(second);
+        verify(repository, times(2)).save(captor.capture());
+        assertEquals(List.of(first, second), captor.getAllValues());
+        assertSame(second, captor.getValue());
+    }
 }
 ```
 
-Для нескольких вызовов:
-```java
-verify(repo, times(3)).save(captor.capture());
-List<Order> allOrders = captor.getAllValues();
-assertThat(allOrders).hasSize(3);
-```
+Здесь поля Mock/Captor инициализирует **MockitoExtension 5.11.0**. Альтернативы — явный `ArgumentCaptor.forClass(...)` или `MockitoAnnotations.openMocks(this)` с корректным закрытием возвращённого ресурса. Одна аннотация Captor без обработки не инициализирует Java-поле.
+
+GetValue возвращает последнюю захваченную ссылку, GetAllValues — список захваченных значений. Если один изменяемый объект передали несколько раз и затем изменили, captor не восстановит прежние поля: нужны неизменяемые аргументы или явно сохранённые снимки. Captor технически работает и в stubbing, но документация рекомендует его для verification по читаемости и локализации ошибок; это отличие разобрано в Q39.
 
 ---
+
 
 ## Q18. Какие матчеры аргументов предоставляет `ArgumentMatchers`?
 
-Матчеры из `org.mockito.ArgumentMatchers` описывают, какие аргументы должна принять заглушка или верификация, не привязываясь к конкретному значению. Самые ходовые:
+`ArgumentMatchers` задаёт условия для аргументов в stubbing и verification. Если хотя бы один аргумент вызова задан matcher, **все аргументы этого вызова** должны быть заданы matchers: например, `find(anyLong(), eq("ACTIVE"))`. Смешение `anyLong()` и обычной строки может скомпилироваться, но даст runtime InvalidUseOfMatchersException.
 
-| Матчер | Описание |
-|--------|----------|
-| `any()` | Любое значение включая `null` |
-| `any(Class.class)` | Любое ненулевое значение данного типа |
-| `anyString()`, `anyInt()`, `anyLong()` | Специализированные матчеры |
-| `eq(value)` | Точное совпадение через `equals()` |
-| `isNull()`, `isNotNull()` | Проверка на `null` |
-| `contains(str)`, `startsWith(str)` | Строковые матчеры |
-| `argThat(predicate)` | Пользовательское условие |
-| `same(obj)` | Проверка по ссылке (`==`) |
+| Matcher | Сопоставление в Mockito 5.11.0 |
+|---------|------------------------------|
+| `any()` | Любое одиночное значение, включая null; не обозначает весь varargs-массив |
+| `any(Type.class)` | Ненулевое значение подходящего типа |
+| `anyString()` | Ненулевой String |
+| `anyInt()`, `anyLong()` | Соответствующий primitive или ненулевой wrapper |
+| `eq(value)` | Равенство значений; для массивов учитываются элементы |
+| `same(object)` | Идентичность ссылки |
+| `isNull()`, `isNotNull()` | Условие на null |
+| `contains(text)`, `startsWith(text)` | Условие на строку |
+| `argThat(matcher)` | Пользовательское условие; см. Q19 |
 
 ```java
-when(service.find(anyLong(), eq("ACTIVE"))).thenReturn(list);
-verify(repo).save(argThat(u -> u.getAge() > 18));
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class MatcherExampleTest {
+    interface Service { String find(long id, String status); }
+    interface Labels { String read(String key); }
+    interface Events { boolean publish(String... values); }
+
+    @Test
+    void usesMatchersForBothArguments() {
+        Service service = mock(Service.class);
+        when(service.find(anyLong(), eq("ACTIVE"))).thenReturn("found");
+        assertEquals("found", service.find(7L, "ACTIVE"));
+        verify(service).find(eq(7L), eq("ACTIVE"));
+        assertNull(service.find(7L, "DISABLED"));
+    }
+
+    @Test
+    void distinguishesUntypedAnyFromTypedAny() {
+        Labels untyped = mock(Labels.class);
+        when(untyped.read(any())).thenReturn("any");
+        assertEquals("any", untyped.read(null));
+
+        Labels typed = mock(Labels.class);
+        when(typed.read(any(String.class))).thenReturn("typed");
+        assertNull(typed.read(null));
+        assertEquals("typed", typed.read("key"));
+        when(typed.read(isNull())).thenReturn("null-key");
+        assertEquals("null-key", typed.read(null));
+    }
+
+    @Test
+    void distinguishesVarargElementFromWholeArray() {
+        Events one = mock(Events.class);
+        when(one.publish(any())).thenReturn(true);
+        assertFalse(one.publish());
+        assertTrue(one.publish("a"));
+        assertFalse(one.publish("a", "b"));
+
+        Events array = mock(Events.class);
+        when(array.publish(any(String[].class))).thenReturn(true);
+        assertTrue(array.publish());
+        assertTrue(array.publish("a"));
+        assertTrue(array.publish("a", "b"));
+        assertFalse(array.publish((String[]) null));
+    }
+}
 ```
 
-**Тонкость с `any()`:** `any()` пропускает и `null`, а `any(Foo.class)` и `anyString()` — нет, поэтому именно типизированные матчеры стоит брать, когда `null` в этом месте быть не должно.
+Методы any/eq регистрируют matcher во внутреннем состоянии Mockito и возвращают **placeholder**, например null, 0 или пустую строку. Это не объект matcher и не полезное значение для обычного production-вызова; не сохраняйте такой результат для последующего использования вне stubbing/verification.
+
+Для varargs в исследованной версии важно различать matcher одного элемента и matcher массива целиком: `any(String[].class)` принимает ненулевой массив, включая пустой; null-массив требует другого условия. Поведение других перегрузок и версий не следует выводить только из названия any. Для пользовательских условий проверяйте null и избегайте primitive null-unboxing (Q19).
 
 ---
+
 
 ## Q19. Что такое `argThat()` и когда он нужен?
 
-`argThat(ArgumentMatcher<T>)` задаёт произвольное условие для аргумента в виде предиката — когда готовых матчеров (`eq`, `contains`, `anyString`) не хватает и нужна своя логика проверки.
+`argThat(ArgumentMatcher<T>)` регистрирует пользовательское условие сопоставления. Он работает в stubbing и verification, когда готовых eq/any* недостаточно. При несовпадении matcher должен вернуть **false**, а не бросить assertion: verification может перебирать несколько фактических вызовов, и первый из них не обязан подходить.
 
 ```java
-verify(emailService).send(argThat(email ->
-    email.getTo().contains("@example.com") &&
-    email.getSubject().startsWith("Welcome")
-));
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import java.util.List;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class ArgThatExampleTest {
+    record Order(String status, List<String> items) {}
+    interface Repository { boolean save(Order order); }
+
+    @Test
+    void skipsNonMatchingArgumentsAndHandlesNull() {
+        Repository repository = mock(Repository.class);
+        when(repository.save(argThat(order -> order != null
+            && "CONFIRMED".equals(order.status())
+            && order.items() != null && order.items().size() == 2))).thenReturn(true);
+
+        assertFalse(repository.save(null));
+        assertFalse(repository.save(new Order("PENDING", List.of("a"))));
+        assertTrue(repository.save(new Order("CONFIRMED", List.of("a", "b"))));
+        verify(repository).save(argThat(order -> order != null
+            && "CONFIRMED".equals(order.status())
+            && order.items() != null && order.items().size() == 2));
+    }
+
+    @Test
+    void performsDetailedAssertionsAfterCapture() {
+        Repository repository = mock(Repository.class);
+        repository.save(new Order("PENDING", List.of("a")));
+        repository.save(new Order("CONFIRMED", List.of("a", "b")));
+
+        ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
+        verify(repository, times(2)).save(captor.capture());
+        Order confirmed = captor.getAllValues().get(1);
+        assertEquals("CONFIRMED", confirmed.status());
+        assertEquals(List.of("a", "b"), confirmed.items());
+    }
+}
 ```
 
-С лямбдой и `assertj` для читаемости:
-```java
-verify(orderRepo).save(argThat(order -> {
-    assertThat(order.getStatus()).isEqualTo(CONFIRMED);
-    assertThat(order.getItems()).hasSize(2);
-    return true;  // возврат true означает "матчер сработал"
-}));
-```
+Исключение из тела matcher не превращается в false: null-unsafe условие может пробросить NPE, а assertions — прервать поиск до подходящего вызова. Делайте matcher чистым и явно обрабатывайте допустимый null. Не рассчитывайте на единственный вызов предиката; он может выполняться при поиске стаба и verification.
 
-**Отличие от `ArgumentCaptor`:** `argThat` встраивает проверку прямо в `verify()` или `when()` и хорош для коротких условий; `ArgumentCaptor` отдаёт пойманный объект наружу и удобнее для длинных, детальных assertions (подробный разбор выбора — в Q39).
+Для primitive-параметров выбирайте соответствующий matcher, например intThat, чтобы не получить null-unboxing от placeholder ссылочного argThat. Matcher не предоставляет getValue или историю захвата; для анализа аргументов и подробных assertions используйте captor после verification (Q17/Q39). Диагностику именованного matcher можно пояснить через toString.
 
 ---
+
 
 ## Q20. (!) Как проверить порядок вызовов с помощью `InOrder`?
 
@@ -1194,40 +1301,60 @@ sb.append("a").append("b").append("c");  // каждый append() вернёт s
 
 ## Q39. (!) Когда выбирать `ArgumentCaptor`, а когда `argThat()`?
 
-Оба про аргумент, переданный в мок, но решают разные задачи. Короткое правило: **`argThat()` — для условия в момент вызова** (особенно в стаббинге), **`ArgumentCaptor` — для assertions после вызова** (особенно сложных).
+`argThat` задаёт условие сопоставления аргумента. `ArgumentCaptor` собирает переданные аргументы для последующих assertions. Для обычного равенства часто достаточно самого значения или `eq`; matcher и captor нужны, когда это упрощает проверку.
 
-| Аспект | `ArgumentCaptor` | `argThat()` |
-|--------|------------------|-------------|
-| Где применять | Преимущественно в `verify()` | И в стаббинге (`when()`) и в `verify()` |
-| Сложные assertion'ы | Да — полный доступ к захваченному объекту | Ограниченно — через предикат |
-| Сообщение об ошибке | Детальное: AssertJ выдаст diff | Неочевидное: "Argument(s) are different" |
-| Переиспользование | Локально в тесте | Легко выделить именованный matcher |
-| Множественные вызовы | `getAllValues()` для списка | Требует счётчика вручную |
-
-**Правило от авторов Mockito**: для стаббинга — `argThat()`/`eq()`/`any()`; для верификации с глубокими проверками — `ArgumentCaptor`.
+| Задача | Подход |
+|--------|--------|
+| Выбрать ответ по условию аргумента | Matcher в stubbing, например `argThat` |
+| Проверить вызовы, подходящие под условие | `verify(..., times(n))` с matcher; ручной счётчик не обязателен |
+| Проверить несколько полей или историю аргументов | Captor в verification, затем assertions над `getValue()` / `getAllValues()` |
 
 ```java
-// ArgumentCaptor — детальные assertion'ы после verify
-@Captor ArgumentCaptor<Order> orderCaptor;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import java.util.List;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-verify(repo).save(orderCaptor.capture());
-Order saved = orderCaptor.getValue();
-assertThat(saved)
-    .extracting(Order::getStatus, Order::getTotal)
-    .containsExactly(PENDING, BigDecimal.TEN);
+class ArgumentChoiceTest {
+    record Order(long id, String status) {}
+    interface Repository { boolean save(Order order); }
 
-// argThat — когда проверка простая и самодокументируемая
-verify(emailService).send(argThat(email ->
-    email.getTo().endsWith("@example.com")));
+    @Test
+    void capturesArgumentsForLaterAssertions() {
+        Repository repository = mock(Repository.class);
+        Order first = new Order(1L, "PENDING");
+        Order second = new Order(2L, "PAID");
+        repository.save(first);
+        repository.save(second);
 
-// argThat в стаббинге — ArgumentCaptor тут не работает
-when(repo.findByFilter(argThat(f -> f.isActive())))
-    .thenReturn(List.of(user));
+        ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
+        verify(repository, times(2)).save(captor.capture());
+        assertEquals(List.of(first, second), captor.getAllValues());
+        assertEquals(second, captor.getValue()); // последнее захваченное значение
+    }
+
+    @Test
+    void matchesSeveralCallsWithoutManualCounter() {
+        Repository repository = mock(Repository.class);
+        when(repository.save(argThat(order ->
+            order != null && order.status().equals("PENDING")))).thenReturn(true);
+
+        assertTrue(repository.save(new Order(1L, "PENDING")));
+        assertTrue(repository.save(new Order(2L, "PENDING")));
+        assertFalse(repository.save(new Order(3L, "CANCELLED")));
+        verify(repository, times(2)).save(argThat(order ->
+            order != null && order.status().equals("PENDING")));
+    }
+}
 ```
 
-Антипаттерн: использовать `ArgumentCaptor` внутри `when()` — захватчик не вызывается до фактического вызова мока.
+В **Mockito 5.11.0** captor технически может работать и внутри stubbing: аргумент захватывается при подходящем последующем вызове. Авторы рекомендуют его для verification, поскольку stubbing с captor может ухудшить читаемость и локализацию ошибки: если вызова не было, захватывать нечего. Это рекомендация, а не запрет API.
+
+`getValue()` возвращает последнее захваченное значение, `getAllValues()` — список захваченных значений. Для изменяемых объектов captor сохраняет ссылки, а не глубокие снимки: последующая мутация видна при assertion. Matcher также не является снимком состояния на момент вызова; он может выполняться при stubbing lookup и при verification. Подробный diff зависит от выбранных assertions и диагностики matcher, а не гарантируется именем API.
 
 ---
+
 
 ## Q40. Как тестировать код с callback-функциями через `doAnswer()`?
 
