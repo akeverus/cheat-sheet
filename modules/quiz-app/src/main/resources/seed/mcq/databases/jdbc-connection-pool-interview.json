@@ -69,7 +69,7 @@
           "question_text": "Как закрывать Connection, Statement и ResultSet?",
           "options": [
             {
-              "text": "В собственном JDBC `ResultSet` и `Statement` своевременно закрывает GC; `Connection.close()` возвращает соединение пулу.",
+              "text": "В собственном JDBC с пулом `ResultSet` и `Statement` своевременно закрывает GC; `Connection.close()` возвращает соединение пулу.",
               "correct": false,
               "sections": {
                 "what_actually": "JDBC-ресурсы нужно освобождать в известной точке, не ожидая GC.",
@@ -81,10 +81,10 @@
               "label": "A"
             },
             {
-              "text": "В собственном JDBC try-with-resources закрывает `ResultSet`, `Statement`, затем соединение; `Connection.close()` возвращает его пулу.",
+              "text": "В собственном JDBC с пулом try-with-resources закрывает `ResultSet`, `Statement`, затем соединение; `Connection.close()` возвращает его пулу.",
               "correct": true,
               "sections": {
-                "explanation": "Ресурсы закрываются в обратном порядке; у Statement есть контракт автоматического закрытия порождённого ResultSet, но явное закрытие задаёт ясную границу.",
+                "explanation": "Ресурсы закрываются в обратном порядке; у Statement есть контракт закрытия порождённого ResultSet. В вариантах рассматривается свой Connection из пула: close передаёт его под управление пула; у непулового подключения это закрытие физического ресурса.",
                 "example": "Вложенный try закрывает rows до statement и Connection.",
                 "when_to_apply": "Когда JDBC-ресурсы получает и использует сам код операции, без внешнего управления транзакцией.",
                 "edge_cases": "В Spring-managed транзакции используйте JdbcTemplate или пару DataSourceUtils.getConnection/releaseConnection.",
@@ -94,7 +94,7 @@
               "label": "B"
             },
             {
-              "text": "В собственном JDBC закрывают `Statement` до чтения его `ResultSet`; после чтения `Connection.close()` возвращает соединение пулу.",
+              "text": "В собственном JDBC с пулом закрывают `Statement` до чтения его `ResultSet`; после чтения `Connection.close()` возвращает соединение пулу.",
               "correct": false,
               "sections": {
                 "what_actually": "Закрытие Statement автоматически закрывает порождённый им ResultSet.",
@@ -106,7 +106,7 @@
               "label": "C"
             },
             {
-              "text": "В собственном JDBC закрывают `ResultSet` и `Statement`; `Connection.close()` не требуется, пул сам определяет конец использования.",
+              "text": "В собственном JDBC с пулом закрывают `ResultSet` и `Statement`; `Connection.close()` не требуется, пул сам определяет конец использования.",
               "correct": false,
               "sections": {
                 "what_actually": "Пул не получает автоматического сигнала о конце произвольной JDBC-операции. Самостоятельно полученный Connection нужно явно освободить.",
