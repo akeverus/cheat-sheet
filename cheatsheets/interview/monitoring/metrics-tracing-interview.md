@@ -951,11 +951,12 @@ groups:
 3. **Фильтрация перед хранилищем** — удалить ненужные атрибуты или исключить малоценные span'ы. Фильтрация в Collector не уменьшает трафик между приложением и Collector; удаление отдельного span'а может сделать трейс неполным.
 4. **Выборочная инструментация** — не создавать span'ы для малоценных операций, сохраняя данные, нужные для диагностики.
 
-**Фрагмент processors для OTel Collector contrib:** это не полный запускаемый config; receivers, exporters и включение processors в `service.pipelines.traces` задаются отдельно.
+**Фрагмент processors для `otelcol-contrib 0.151.0`:** это не полный запускаемый config; receivers, exporters и включение processors в `service.pipelines.traces` задаются отдельно. Момент оценки здесь задаёт `trace-complete`, разобранный в Q37.
 
 ```yaml
 processors:
   tail_sampling:
+    sampling_strategy: trace-complete
     decision_wait: 10s
     num_traces: 100000
     expected_new_traces_per_sec: 1000
@@ -985,24 +986,27 @@ processors:
         action: delete
 ```
 
-В показанном наборе обычных политик trace может быть выбран по ERROR, latency **или** вероятностной политике; 5% не задают общую долю сохранения и не ограничивают первые две политики. `expected_new_traces_per_sec` помогает выделению внутренних структур, а не задаёт лимит экспорта. Для приведённой latency-политики без `upper_threshold_ms` граница `threshold_ms` включительная в проверенной реализации. [Tail Sampling Processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md), [latency evaluator](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/internal/sampling/latency.go).
+В показанном наборе обычных политик trace может быть выбран по ERROR, latency **или** вероятностной политике; 5% не задают общую долю сохранения и не ограничивают первые две политики. `expected_new_traces_per_sec` помогает выделению внутренних структур, а не задаёт лимит экспорта. Для приведённой latency-политики без `upper_threshold_ms` граница `threshold_ms` включительная в проверенной реализации. [Tail Sampling Processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.151.0/processor/tailsamplingprocessor/README.md), [latency evaluator](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.151.0/processor/tailsamplingprocessor/internal/sampling/latency.go).
 
-Лимиты числа атрибутов и событий span'а задают в SDK. Показанный `attributes` processor удаляет атрибут уже после получения данных Collector. Например, Java SDK поддерживает `otel.span.attribute.count.limit` и `otel.span.event.count.limit`. Числа `decision_wait`, `num_traces` и 5% в примере иллюстративны: их подбирают по нагрузке и проверяют по потерям и полноте трейсов. Tail sampler не восстановит ранее отброшенные span'ы и не гарантирует сохранение каждой ошибки. Срок хранения — отдельное решение в [Q27](#q27-как-уменьшить-объём-и-стоимость-хранения-трейсов-в-production). [OpenTelemetry Sampling](https://opentelemetry.io/docs/concepts/sampling/), [Java SDK configuration](https://opentelemetry.io/docs/languages/java/configuration/), [Tail Sampling Processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md).
+Лимиты числа атрибутов и событий span'а задают в SDK. Показанный `attributes` processor удаляет атрибут уже после получения данных Collector. Например, Java SDK поддерживает `otel.span.attribute.count.limit` и `otel.span.event.count.limit`. Числа `decision_wait`, `num_traces` и 5% в примере иллюстративны: их подбирают по нагрузке и проверяют по потерям и полноте трейсов. Tail sampler не восстановит ранее отброшенные span'ы и не гарантирует сохранение каждой ошибки. Срок хранения — отдельное решение в [Q27](#q27-как-уменьшить-объём-и-стоимость-хранения-трейсов-в-production). [OpenTelemetry Sampling](https://opentelemetry.io/docs/concepts/sampling/), [Java SDK configuration](https://opentelemetry.io/docs/languages/java/configuration/), [Tail Sampling Processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.151.0/processor/tailsamplingprocessor/README.md).
 
 ## Q25. Как выбрать между метриками и трейсами для отладки?
 
-Правило простое: метрики отвечают на агрегированные вопросы «что и насколько» (какой сервис деградировал, какой тренд), трейсы — на точечные «почему именно этот запрос» (где в цепочке вызовов задержка или ошибка). Метрики — точка входа в расследование, трейсы — углубление в конкретный случай.
+Выбирайте данные по диагностическому вопросу и их охвату. **Метрики** дают агрегаты за период: частоту ошибок, распределение длительностей, нагрузку и тренды. **Трейс** показывает наблюдаемые операции выбранного запроса и связи между ними. Подробность одного trace не делает его статистикой всего сервиса и не доказывает причину задержки. [OpenTelemetry Metrics](https://opentelemetry.io/docs/concepts/signals/metrics/), [Traces](https://opentelemetry.io/docs/concepts/signals/traces/).
 
-| Вопрос | Инструмент |
-|--------|-----------|
-| Какой сервис деградировал? | Метрики (дашборд, алерт) |
-| Какой эндпоинт медленный? | Метрики (p99 по endpoint) |
-| Почему конкретный запрос медленный? | Трейс (дерево spans) |
-| Где в цепочке вызовов ошибка? | Трейс (span с ошибкой) |
-| Каков тренд за неделю? | Метрики (PromQL range query) |
-| Что произошло с запросом пользователя X? | Трейс + логи (по traceId) |
+| Вопрос | С чего начать и что проверить |
+|---|---|
+| Какая доля запросов ошибочна, как меняется нагрузка? | Метрики с согласованными числителем, знаменателем, разрезами и временным окном. |
+| У какого endpoint вырос p99? | Гистограмма длительности по ограниченному набору шаблонов маршрутов; расчёт квантиля — Q4/Q32. |
+| Где потрачено время в известном запросе? | Трейс по trace ID: длительности, вложенность и наблюдаемые вызовы. Дочерние spans могут выполняться параллельно; складывать все длительности нельзя. |
+| Что произошло в конкретном вызове? | Трейс и связанные логи, если идентификаторы корреляции действительно записаны и данные сохранены. |
+| Есть только сообщение об ошибке с trace ID? | Начать можно с этого trace, затем сопоставить случай с метриками трафика. |
 
-**Типичный поток:** метрики показывают рост латентности на сервисе A -> открываем трейсы за период -> в медленных трейсах видим, что задержка в вызове к БД или к сервису B. `Exemplars` сокращают этот путь — позволяют перейти к конкретному трейсу прямо с точки на графике.
+**Пример расследования:** рост p99 помогает выбрать сервис, маршрут и период. Затем доступный trace показывает, какая наблюдаемая операция заняла время; это основание для проверки гипотезы по БД, downstream или локальной работе. Универсального порядка «сначала метрики, затем трейсы» нет. Неполная инструментация или потеря span'а не позволяют заключить, что вызова не было.
+
+**Exemplar** может связать наблюдение метрики с trace context. Его наличие, поддержка экспорта/интерфейса и доступность самого trace проверяются отдельно: trace мог не сохраниться или выйти за retention. Exemplar рядом с графиком p99 не обязан быть запросом, соответствующим вычисленному p99. Определение и настройка — Q21/Q14. [OTel data model: exemplars](https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exemplars).
+
+Из трасс тоже строят агрегаты, например через span metrics в Q27. Их область наблюдения зависит от инструментации, sampling, потерь и срока хранения; доля ошибок в специально отобранных ошибочных trace не является долей ошибок всего сервиса. Разбор sampling — Q9/Q28, связь сигналов при инциденте — Q18. [OpenTelemetry Sampling](https://opentelemetry.io/docs/concepts/sampling/).
 
 ## Q26. Что такое RED-метрики и USE-метрики?
 
@@ -1024,18 +1028,19 @@ RED пересекается с тремя SRE golden signals — traffic, error
 
 ## Q27. Как уменьшить объём и стоимость хранения трейсов в production?
 
-Стоимость хранилища зависит от объёма, срока хранения и числа индексируемых атрибутов. После сокращения входящего потока из [Q24](#q24-как-уменьшить-поток-данных-трассировки-до-хранилища) управляйте тем, что и как долго сохраняется:
+Стоимость зависит от объёма, срока хранения и устройства индексации конкретного backend. После сокращения входящего потока из [Q24](#q24-как-уменьшить-поток-данных-трассировки-до-хранилища) управляйте тем, что и как долго сохраняется:
 
 1. **Sampling и фильтрация** — снизить число и размер сохраняемых трейсов, не обещая сохранить все ошибки.
 2. **Retention** — назначить срок хранения по задачам расследования, требованиям и бюджету; единого срока вроде 7–14 дней нет.
 3. **Span metrics** — агрегировать поступающие span'ы в счётчики и гистограммы для трендов. Это не обратимое сжатие старых трейсов: дерево вызовов из метрик не восстановить.
 
-**Фрагмент маршрутизации в OTel Collector:** один приёмник передаёт поступившие span'ы в две ветки. `span_metrics` получает их до tail sampling, а в хранилище идёт отобранный поток. Компоненты `otlp`, `tail_sampling` и exporters нужно определить отдельно.
+**Фрагмент маршрутизации для `otelcol-contrib 0.151.0`:** один приёмник передаёт поступившие span'ы в две ветки. `span_metrics` получает их до tail sampling, а в хранилище идёт отобранный поток. Receiver `otlp`, processor `tail_sampling` из Q37 и оба OTLP exporters нужно определить отдельно: это не самостоятельный полный config.
 
 ```yaml
 connectors:
   span_metrics:
     histogram:
+      unit: s
       explicit:
         buckets: [10ms, 50ms, 100ms, 500ms, 1s, 5s]
 service:
@@ -1052,31 +1057,37 @@ service:
       exporters: [otlp/metrics]
 ```
 
-Если SDK уже выполнил head sampling, ветка `span_metrics` увидит только оставшиеся span'ы; её показатели нельзя без проверки считать полными метриками трафика. Tail sampling по ошибкам и задержке после генерации метрик сохраняет больше нужных для отладки трейсов, но расходует память Collector и тоже не гарантирует каждую аномалию. Точность метрик, кардинальность измерений и стоимость хранения проверяют отдельно. [Collector architecture](https://opentelemetry.io/docs/collector/architecture/), [Span Metrics Connector](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/connector/spanmetricsconnector/README.md), [OpenTelemetry Sampling](https://opentelemetry.io/docs/concepts/sampling/).
+В **0.151.0** тип connector — `span_metrics`, старое имя `spanmetrics` поддерживается как устаревший псевдоним. В старой **0.111.0** из Q35 был тип `spanmetrics`: эти примеры нельзя механически объединять. `histogram.unit: s` задан явно, чтобы не зависеть от смены единицы по умолчанию. [Metadata 0.151.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.151.0/connector/spanmetricsconnector/internal/metadata/generated_status.go), [metadata 0.111.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.111.0/connector/spanmetricsconnector/internal/metadata/generated_status.go), [Span Metrics Connector 0.151.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.151.0/connector/spanmetricsconnector/README.md).
+
+Счётчик `calls` отражает число наблюдаемых **span'ов** для набора измерений, а не автоматически число внешних пользовательских запросов. Один запрос создаёт несколько операций; определите сервис и вид span, по которым считаете входящие запросы, и ограничьте кардинальность имён span и измерений. Сам connector не знает вашу бизнес-единицу.
+
+Если SDK уже выполнил head sampling, ветка `span_metrics` увидит только оставшиеся span'ы; её показатели нельзя без проверки считать полными метриками трафика. Tail sampling по ошибкам и задержке после генерации метрик сохраняет больше нужных для отладки трейсов, но расходует память Collector и тоже не гарантирует каждую аномалию. Точность метрик, кардинальность измерений и стоимость хранения проверяют отдельно. [Collector architecture](https://opentelemetry.io/docs/collector/architecture/), [Span Metrics Connector](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.151.0/connector/spanmetricsconnector/README.md), [OpenTelemetry Sampling](https://opentelemetry.io/docs/concepts/sampling/).
 
 ## Q28. Как выбрать head-based и tail-based sampling для production?
 
 Для production сначала определите, что важнее: ограничить поток span'ов до экспорта или отбирать трейсы по результату запроса. `Head-based` принимает решение рано и снижает объём передаваемых данных, но может отбросить ошибочный запрос. `Tail-based` оценивает поступившие span'ы по статусу, задержке и другим признакам, зато требует памяти, времени ожидания и маршрутизации всех span'ов одного trace к одному экземпляру sampler.
 
+**Упрощённая схема:** для head показана доля 10%, а для tail — только правила ERROR/latency без базовой вероятностной выборки. Три изображённых запроса не задают фактическую долю в коротком окне.
+
 ```mermaid
 graph LR
     subgraph "Head-based Sampling"
-        REQ1["Запрос 1"] --> |"sampled=true (10%)"| SAVE1["Сохранить"]
+        REQ1["Запрос 1"] --> |"sampled=true"| SAVE1["Сохранить"]
         REQ2["Запрос 2"] --> |"sampled=false"| DROP1["Отбросить"]
         REQ3["Запрос 3"] --> |"sampled=false"| DROP2["Отбросить"]
     end
 
     subgraph "Tail-based Sampling"
         REQ4["Запрос 4<br/>200 OK, 50ms"] --> COLL["OTel Collector<br/>буфер 10s"]
-        REQ5["Запрос 5<br/>500 Error"] --> COLL
+        REQ5["Запрос 5<br/>span status ERROR"] --> COLL
         REQ6["Запрос 6<br/>200 OK, 3000ms"] --> COLL
         COLL --> |"error"| SAVE2["Сохранить"]
-        COLL --> |"latency > 1s"| SAVE3["Сохранить"]
+        COLL --> |"latency >= 1s"| SAVE3["Сохранить"]
         COLL --> |"нормальный"| DROP3["Отбросить"]
     end
 ```
 
-**Выбор:** начните с head-based, если достаточно вероятностной выборки и нужно уменьшить экспортный трафик уже в приложении. Выберите tail-based, если важнее отбор по ошибкам или задержке и есть ресурс на stateful Collector. Tail-sampler видит только пришедшие span'ы: ранее отброшенный head sampler'ом trace он восстановить не сможет. При потере span'ов, вытеснении из буфера или неверной маршрутизации нельзя обещать сохранение каждой ошибки. Долю и правила проверяйте по стоимости, полноте данных и нагрузке Collector. Q37 показывает настройки и границы. [OpenTelemetry Sampling](https://opentelemetry.io/docs/concepts/sampling/), [Tail Sampling Processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md).
+**Выбор:** начните с head-based, если достаточно вероятностной выборки и нужно уменьшить экспортный трафик уже в приложении. Выберите tail-based, если важнее отбор по ошибкам или задержке и есть ресурс на stateful Collector. Tail-sampler видит только пришедшие span'ы: ранее отброшенный head sampler'ом trace он восстановить не сможет. При потере span'ов, вытеснении из буфера или неверной маршрутизации нельзя обещать сохранение каждой ошибки. Долю и правила проверяйте по стоимости, полноте данных и нагрузке Collector. Q37 показывает настройки `otelcol-contrib 0.151.0`, включая разницу `trace-complete` и `span-ingest`; время решения и набор поддерживаемых политик зависят от стратегии. Head/tail описывают этап отбора, а не гарантируют определённую долю ошибок в сохранённых данных. [OpenTelemetry Sampling](https://opentelemetry.io/docs/concepts/sampling/), [Tail Sampling Processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.151.0/processor/tailsamplingprocessor/README.md).
 
 ## Q29. Как связать метрики приложения с бизнес-метриками?
 
@@ -1460,14 +1471,23 @@ sum(increase(app_sli_events_total{service="api"}[30d]))
 
 ## Q37. Как работает tail-based sampling в трассировке?
 
-`Tail-based sampling` в OpenTelemetry Collector группирует поступившие span'ы по `trace_id` и применяет политики к накопленной части трейса. В стандартной стратегии `trace-complete` решение обычно принимается после `decision_wait`; ненулевой `decision_wait_after_root_received` может ускорить его после получения root span. Эти интервалы ожидания не гарантируют, что пришли все span'ы или завершился весь trace. Другие стратегии процессора могут принимать некоторые решения раньше. Для корректной оценки все span'ы одного trace должны попасть на один экземпляр Collector. [Tail Sampling Processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md).
+Tail sampler группирует поступившие span'ы по `trace_id` и применяет политики к доступным данным. Все span'ы одного trace нужно направить к одному экземпляру sampler; обычная балансировка отдельных batch этого не обеспечивает. Полноту trace проверяют отдельно.
 
-**Реализация через OTel Collector:**
+**В `otelcol-contrib 0.151.0` есть две стратегии:**
+
+| `sampling_strategy` | Что оценивается и когда |
+|---|---|
+| `trace-complete` — по умолчанию | Накопленные данные на пути обработки таймера после `decision_wait`; `decision_wait_after_root_received > 0` может ускорить решение после root span. |
+| `span-ingest` | Каждый входящий batch при получении; окончательные решения `sampled`/`dropped` применяются сразу. Остальные ожидают очистки и завершаются как `not sampled` без повторной оценки политик. Стратегия отклоняет политики с состоянием (`stateful`). |
+
+В `span-ingest` интервалы ожидания управляют очисткой ожидающих трейсов, а не обещают повторную оценку всей накопленной истории. Название `trace-complete` и получение root span также не доказывают, что все дочерние операции получены. В **0.111.0** из Q35 свойств `sampling_strategy` и `decision_wait_after_root_received` нет; проверяйте версию своей сборки. [Config 0.151.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.151.0/processor/tailsamplingprocessor/config.go), [processor 0.151.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.151.0/processor/tailsamplingprocessor/processor.go), [config 0.111.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.111.0/processor/tailsamplingprocessor/config.go).
+
+**Фрагмент processors для 0.151.0:** receivers, exporters и включение `tail_sampling` в `service.pipelines.traces` задаются отдельно. Ниже явно выбран `trace-complete`.
 
 ```yaml
-# Tail Sampling Processor в OTel Collector
 processors:
   tail_sampling:
+    sampling_strategy: trace-complete
     decision_wait: 10s        # ждём до решения; полнота трейса не гарантирована
     num_traces: 100000        # буфер трейсов в памяти
     expected_new_traces_per_sec: 1000
@@ -1477,7 +1497,7 @@ processors:
         type: status_code
         status_code: {status_codes: [ERROR]}
 
-      # Политика 2: отбираем полученные медленные трейсы > 500ms
+      # Политика 2: отбираем полученные трейсы с длительностью не меньше 500ms
       - name: slow-traces-policy
         type: latency
         latency: {threshold_ms: 500}
@@ -1488,6 +1508,12 @@ processors:
         probabilistic: {sampling_percentage: 5}
 ```
 
+В этом наборе обычных политик срабатывание ERROR, latency **или** baseline может сохранить trace. 5% не ограничивают общую долю и не означают «5% только из оставшихся». При добавлении `drop` или других составных политик нужно заново проверить правила приоритета. [Tail sampler 0.151.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.151.0/processor/tailsamplingprocessor/README.md).
+
+В показанной latency-политике без `upper_threshold_ms` сравнение включительно: **500ms проходит**. Оценивается промежуток от самого раннего начала до самого позднего окончания среди полученных spans, а не сумма их длительностей. `num_traces` ограничивает число удерживаемых traces, не объём памяти в байтах; `expected_new_traces_per_sec` помогает выделению структур, не задаёт квоту экспорта. Числа примера подбирают по нагрузке. [Latency evaluator 0.151.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.151.0/processor/tailsamplingprocessor/internal/sampling/latency.go), [config 0.151.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.151.0/processor/tailsamplingprocessor/config.go).
+
+**Поздние spans:** пока решение известно, они могут унаследовать его, не меняя отбор. После удаления состояния возможна новая оценка части trace; кеши решений (`decision_cache`) помогают дольше помнить выбор сохранить/отбросить. Это не гарантия сохранить позднюю ошибку, не восстановление ранее потерянных данных и не долговечное хранилище spans. При перезапуске или переполнении возможны потери. [Late-arriving spans 0.151.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.151.0/processor/tailsamplingprocessor/README.md#late-arriving-spans).
+
 **Сравнение head vs tail sampling:**
 
 | Аспект | Head-based | Tail-based |
@@ -1496,7 +1522,7 @@ processors:
 | Ошибки | Могут быть отброшены | Можно отбирать среди поступивших трейсов |
 | Медленные запросы | Могут быть отброшены | Можно отбирать при достаточной полноте span'ов |
 | Память | Не нужен буфер полного трейса для решения | Нужен буфер; размер зависит от нагрузки и времени ожидания |
-| Задержка решения | Ранняя | Зависит от стратегии и интервалов ожидания, включая ускорение после root span |
+| Задержка решения | Ранняя | В trace-complete — таймер; в span-ingest окончательный отбор может быть немедленным |
 | Размещение | SDK или ранний этап конвейера | Stateful Collector или другой tail-sampler |
 
 **Когда использовать tail-based sampling:**
