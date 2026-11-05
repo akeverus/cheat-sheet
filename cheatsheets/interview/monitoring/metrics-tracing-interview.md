@@ -412,39 +412,32 @@ management:
 
 ## Q9. Что такое sampling в трассировке и когда его применять?
 
-`Sampling` — выбор трейсов для записи или экспорта. Он помогает ограничить поток и стоимость телеметрии. Вероятностная выборка может представлять общий трафик, а выборка по ошибкам и задержке намеренно смещена к редким случаям; результаты анализа нужно интерпретировать с учётом политики отбора.
+`Sampling` — отбор данных трассировки для записи или дальнейшего экспорта. Он уменьшает объём телеметрии, но ограничивает то, какие запросы доступны для анализа. Отбор по ошибкам намеренно смещён: доля ошибок в таком наборе не отражает обычный трафик. При вероятностной выборке учитывают её политику и статистическую неопределённость.
 
-Три основных стратегии различаются тем, в какой момент и по какому критерию принимается решение:
+**Момент решения и политика отбора — разные вещи:**
 
-| Тип | Когда решение | Плюсы | Минусы |
-|-----|---------------|-------|--------|
-| **Head-based** | В начале трейса | Простой, предсказуемый overhead | Можно пропустить ошибочные трейсы |
-| **Tail-based** | После получения достаточной части трейса | Может отбирать ошибки и выбросы | Нужен компонент с состоянием, буферизация и маршрутизация span'ов одного trace |
-| **Rate-limiting** | По квоте (N/сек) | Контролируемая нагрузка | Может пропустить важное; конкретная реализация зависит от SDK или Collector |
+| Подход | Доступная информация | Цена и ограничение |
+|---|---|---|
+| Head-based | Контекст при начале span, без знания всего результата запроса | Можно сократить запись/экспорт рано, но будущая ошибка ещё неизвестна. |
+| Tail-based | Полученная часть trace: статусы, длительности, атрибуты | Нужны состояние, буфер и согласованная маршрутизация; потерянные ранее данные не вернуть. |
+
+Доля по trace ID, отбор по статусу или лимит скорости — политики конкретной реализации, а не три взаимоисключающих момента решения. Квота тоже не гарантирует сохранение редкого важного запроса. [OpenTelemetry Sampling](https://opentelemetry.io/docs/concepts/sampling/).
+
+**Фрагмент API OpenTelemetry Java SDK 1.37.0:**
 
 ```java
-// Конфигурация sampling в OpenTelemetry Java SDK
-@Configuration
-public class TracingConfig {
+import io.opentelemetry.sdk.trace.samplers.Sampler;
 
-    @Bean
-    public SdkTracerProvider tracerProvider() {
-        return SdkTracerProvider.builder()
-                // Head-based: 10% трейсов в production
-                .setSampler(Sampler.traceIdRatioBased(0.1))
-                // Или ParentBased — уважает решение родителя
-                // .setSampler(Sampler.parentBased(Sampler.traceIdRatioBased(0.1)))
-                .addSpanProcessor(BatchSpanProcessor.builder(
-                        OtlpGrpcSpanExporter.builder()
-                                .setEndpoint("http://otel-collector:4317")
-                                .build()
-                ).build())
-                .build();
-    }
-}
+// Без родителя — пример вероятностной доли 10%; с родителем — его sampled flag.
+Sampler sampler = Sampler.parentBased(Sampler.traceIdRatioBased(0.1));
+// Этот sampler передают builder.setSampler(sampler) при создании SdkTracerProvider.
 ```
 
-Долю выбирают по нагрузке, бюджету и целям диагностики; универсальных 1–10% или обязательных 100% для dev нет. Повышение доли во время инцидента помогает увидеть больше будущих трейсов, но не возвращает уже отброшенные. Выбор head/tail для production — Q28, работа tail-sampler — Q37. [OpenTelemetry Sampling](https://opentelemetry.io/docs/concepts/sampling/).
+`0.1` не означает ровно каждый десятый запрос или ровно 10% в коротком окне. Сам `traceIdRatioBased` не обязан следовать sampled flag родителя; здесь это делает обёртка `parentBased`. Создание sampler само не подключает SDK к приложению и не настраивает exporter — интеграция разобрана в Q16. [Java 1.37.0 Sampler API](https://github.com/open-telemetry/opentelemetry-java/blob/v1.37.0/sdk/trace/src/main/java/io/opentelemetry/sdk/trace/samplers/Sampler.java).
+
+Версию нужно учитывать: спецификация OTel 1.62.0 помечает `TraceIdRatioBased` deprecated и описывает замену через `ProbabilitySampler`; это не повод считать новый API доступным в любом старом SDK. Проверьте поддержку и рекомендации своей версии. [Tracing SDK specification](https://opentelemetry.io/docs/specs/otel/trace/sdk/#traceidratiobased).
+
+Sampling применяют, когда диагностическая польза оправдывает затраты и допустимы пропуски. Универсальной доли для production нет; увеличение доли помогает будущим запросам, но не восстанавливает историю. Полноту выбранного trace проверяют отдельно. Меры сокращения потока — Q24, выбор head/tail — Q28, устройство tail sampler — Q37.
 
 ## Q10. Как интегрировать Micrometer с Spring Boot?
 
@@ -958,7 +951,7 @@ groups:
 3. **Фильтрация перед хранилищем** — удалить ненужные атрибуты или исключить малоценные span'ы. Фильтрация в Collector не уменьшает трафик между приложением и Collector; удаление отдельного span'а может сделать трейс неполным.
 4. **Выборочная инструментация** — не создавать span'ы для малоценных операций, сохраняя данные, нужные для диагностики.
 
-**Конфигурация tail-based sampling в OTel Collector:**
+**Фрагмент processors для OTel Collector contrib:** это не полный запускаемый config; receivers, exporters и включение processors в `service.pipelines.traces` задаются отдельно.
 
 ```yaml
 processors:
@@ -973,13 +966,13 @@ processors:
         status_code:
           status_codes: [ERROR]
 
-      # Отбирать поступившие медленные трейсы (> 1s)
+      # Отбирать полученные трейсы с длительностью не меньше 1s
       - name: latency-policy
         type: latency
         latency:
           threshold_ms: 1000
 
-      # Пример базовой выборки 5% для остальных
+      # Независимая базовая вероятностная выборка 5%
       - name: probabilistic-policy
         type: probabilistic
         probabilistic:
@@ -991,6 +984,8 @@ processors:
       - key: http.request.body
         action: delete
 ```
+
+В показанном наборе обычных политик trace может быть выбран по ERROR, latency **или** вероятностной политике; 5% не задают общую долю сохранения и не ограничивают первые две политики. `expected_new_traces_per_sec` помогает выделению внутренних структур, а не задаёт лимит экспорта. Для приведённой latency-политики без `upper_threshold_ms` граница `threshold_ms` включительная в проверенной реализации. [Tail Sampling Processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md), [latency evaluator](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/internal/sampling/latency.go).
 
 Лимиты числа атрибутов и событий span'а задают в SDK. Показанный `attributes` processor удаляет атрибут уже после получения данных Collector. Например, Java SDK поддерживает `otel.span.attribute.count.limit` и `otel.span.event.count.limit`. Числа `decision_wait`, `num_traces` и 5% в примере иллюстративны: их подбирают по нагрузке и проверяют по потерям и полноте трейсов. Tail sampler не восстановит ранее отброшенные span'ы и не гарантирует сохранение каждой ошибки. Срок хранения — отдельное решение в [Q27](#q27-как-уменьшить-объём-и-стоимость-хранения-трейсов-в-production). [OpenTelemetry Sampling](https://opentelemetry.io/docs/concepts/sampling/), [Java SDK configuration](https://opentelemetry.io/docs/languages/java/configuration/), [Tail Sampling Processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md).
 
@@ -1536,93 +1531,44 @@ management:
 
 ## Q36. (!) Что такое SLI, SLO и SLA — определения, расчёт, error budget?
 
-Это три уровня одной и той же идеи «насколько надёжен сервис», от измерения к цели и к обязательству:
+**SLI** — определённый количественный показатель качества сервиса; **SLO** — цель для него с областью и окном оценки; **SLA** — соглашение с пользователями, включающее последствия выполнения или нарушения обязательств. Например: доля успешных допустимых запросов — SLI, «не менее 99.9% за последние 30 дней» — SLO. Цель без окна и правил измерения неполна. [Google SRE: Service Level Objectives](https://sre.google/sre-book/service-level-objectives/).
 
-- **SLI (Service Level Indicator)** — измеримый показатель качества: конкретная метрика, например доля успешных запросов. Это **факт**, что сервис показывает сейчас.
-- **SLO (Service Level Objective)** — целевое значение SLI, внутреннее обязательство команды («availability >= 99.9%»). Это **цель**.
-- **SLA (Service Level Agreement)** — юридическое соглашение с клиентом, обычно слабее SLO с запасом. Это **обещание наружу** с последствиями за нарушение.
+Внутреннюю цель часто делают строже договорной, чтобы оставить запас. Но `SLA ≤ SLO ≤ 100%` не универсальная формула: у целей бывают разные показатели, окна и исключения, а для latency меньшая граница строже. Сравнивать нужно конкретные условия.
 
-SLO ставят строже SLA намеренно: команда должна узнать о деградации и среагировать раньше, чем нарушит договор с клиентом.
+Для SLI вида **good / total** и цели `s` в долях единицы:
 
-**Типичная связь:** SLA ≤ SLO ≤ 100%
-
-```
-SLI: availability = успешные_запросы / все_запросы = 99.95%
-SLO: availability >= 99.9%  (внутренняя цель)
-SLA: availability >= 99.5%  (договор с клиентом)
+```text
+SLI = good / total
+допустимая доля bad = 1 - s
+бюджет bad-событий = total * (1 - s)
+остаток бюджета = допустимые bad - фактические bad
 ```
 
-**Расчёт availability SLI в PromQL:**
+При `s = 0.999` и миллионе допустимых запросов бюджет — **1000 плохих запросов**; 1200 плохих превышают его на 200. Это не 0.1% времени. Только для отдельно определённого временного SLI за ровно 30 суток `43200 * 0.001 = 43.2` минуты; из request-based SLO такого времени простоя не вывести.
+
+**Иллюстративный PromQL для request-based SLI:** собственный counter `app_sli_events_total` учитывает каждый допустимый запрос один раз с `outcome="good"` или `"bad"`. Критерии допустимости и успеха задают заранее; обе серии должны существовать, в том числе при нулевом числе bad.
 
 ```promql
-# SLI: доля успешных HTTP запросов (не 5xx) за 30 дней
-(
-  sum(rate(http_requests_total{status!~"5.."}[30d]))
-  /
-  sum(rate(http_requests_total[30d]))
-) * 100
-
-# Текущий SLO burn rate (скорость сжигания error budget)
-sum(rate(http_requests_total{status=~"5.."}[1h]))
+sum(increase(app_sli_events_total{service="api",outcome="good"}[30d]))
 /
-sum(rate(http_requests_total[1h]))
+sum(increase(app_sli_events_total{service="api"}[30d]))
 ```
 
-**Error Budget — бюджет ошибок.** Это «допустимое количество ненадёжности»: разница между 100% и SLO. Если SLO = 99.9%, то 0.1% времени сервис имеет право быть недоступным — и это нормально, а не повод для героизма. Пока бюджет не исчерпан, команда спокойно катит фичи; как только исчерпан — приоритет смещается на надёжность. Бюджет превращает спор «деплоить или не деплоить» в объективное число.
+Область числителя и знаменателя одна. `increase` учитывает counter resets и экстраполирует по scrape-данным; это оценка, а не журнал точных событий. При нулевом трафике или отсутствующих рядах доля не доказывает здоровье сервиса. [Prometheus increase](https://prometheus.io/docs/prometheus/latest/querying/functions/#increase).
 
-```
-SLO = 99.9%  →  Error Budget = 0.1% от времени в месяц
+**Burn rate — нормированная скорость расходования бюджета:** `bad_fraction / (1 - s)`. При SLO 99.9% доля ошибок 1% даёт `0.01 / 0.001 = 10`, а не burn rate 0.01. Пример за последний час:
 
-Минут в месяце: 30 * 24 * 60 = 43 200 минут
-Error Budget (минуты): 43 200 * 0.001 = 43.2 минуты
-
-Если сервис упал на 50 минут → бюджет превышен →
-нельзя выпускать новые фичи до следующего месяца
-```
-
-**Error Budget Policy:**
-
-| Статус бюджета | Действие |
-|---------------|----------|
-| > 50% осталось | Нормальный режим разработки |
-| 10-50% осталось | Тормозим рискованные деплои |
-| < 10% осталось | Только hotfix, reliability работа |
-| 0% (исчерпан) | Freeze деплоев до конца периода |
-
-**Многоуровневые SLO:**
-
-```yaml
-# Разные SLO для разных сценариев
-slos:
-  - name: checkout_availability
-    sli: rate(http_requests_total{endpoint="/checkout",status!~"5.."}[28d])
-        / rate(http_requests_total{endpoint="/checkout"}[28d])
-    objective: 99.9    # 99.9% availability
-
-  - name: checkout_latency
-    sli: histogram_quantile(0.99,
-           rate(http_request_duration_seconds_bucket{endpoint="/checkout"}[28d]))
-    objective: 2.0     # p99 < 2 секунды (в секундах)
-
-  - name: catalog_freshness
-    sli: time() - catalog_last_updated_timestamp_seconds
-    objective: 300     # данные не старше 5 минут
+```promql
+(
+  sum(rate(app_sli_events_total{service="api",outcome="bad"}[1h]))
+  /
+  sum(rate(app_sli_events_total{service="api"}[1h]))
+) / (1 - 0.999)
 ```
 
-**Alerting на burn rate (Google SRE подход):**
+Порог `14.4` с окнами 1h и 5m — пример из SRE Workbook для быстрого расходования 30-дневного бюджета, не универсальная настройка. Production alert учитывает длинное/короткое окна и особенности низкого трафика; `for` не заменяет эту логику. [Alerting on SLOs](https://sre.google/workbook/alerting-on-slos/).
 
-```yaml
-# Алерт: сжигаем бюджет в 14x быстрее нормы (1 час окно)
-alert: HighErrorBudgetBurnRate
-expr: |
-  (
-    sum(rate(http_requests_total{status=~"5.."}[1h]))
-    / sum(rate(http_requests_total[1h]))
-  ) > 14 * (1 - 0.999)
-for: 2m
-labels:
-  severity: critical
-```
+**Error budget policy** заранее определяет, как команда реагирует на расход бюджета. Ограничение релизов — возможное согласованное действие, не автоматический запрет «до следующего месяца»: окно может быть скользящим, а политика — содержать исключения для исправлений и безопасности. Важны владельцы решения и условия восстановления. [Пример политики Google SRE](https://sre.google/workbook/error-budget-policy/). Выбор показателей для разных сервисов — Q41.
 
 ## Q37. Как работает tail-based sampling в трассировке?
 
@@ -1838,83 +1784,32 @@ public Executor tracingExecutor(Tracer tracer) {
 
 ## Q41. Какие SLI использовать для разных типов сервисов?
 
-Универсального набора SLI нет: показатель должен отражать то, что важно пользователю именно этого сервиса. Для синхронного API это доступность и латентность, а для конвейера данных эти метрики бессмысленны — там важна свежесть данных. Поэтому Google SRE выделяет несколько категорий сервисов, и для каждой — свой набор SLI.
+Сначала опишите значимый для пользователя результат, область измерения, окно и критерий успеха. Класс сервиса помогает выбрать кандидатов, но не запрещает другие SLI: у pipeline тоже бывают availability и end-to-end latency, а у API — correctness. Ниже — направления выбора, без универсальных числовых SLO.
 
-**1. Request-driven (REST/gRPC сервисы):**
+| Сервис | Возможный SLI | Что уточнить |
+|---|---|---|
+| Request-driven API | Доля успешных запросов; доля запросов быстрее порога; качество результата | Какие запросы допустимы, что считать ошибкой, где измерена задержка. |
+| Data pipeline / streaming | Freshness, correctness, coverage | Время данных на выходе, корректность преобразования, доля входа, обработанная в срок. |
+| Storage | Durability, availability, read/write latency | Сохраняются ли нужные записи и удаётся ли их прочитать; успешный ответ на запись сам не доказывает durability. |
+| Background jobs | Доля нужных заданий, завершённых к deadline | Один логический job, правила retry и одна согласованная группа заданий с наступившим сроком. |
 
-```promql
-# Availability SLI
-sum(rate(http_requests_total{status!~"5.."}[5m]))
-/ sum(rate(http_requests_total[5m]))
-
-# Latency SLI (p99 < 500ms)
-histogram_quantile(0.99,
-  rate(http_request_duration_seconds_bucket[5m])) < 0.5
-
-# Error rate SLI
-rate(http_requests_total{status=~"5.."}[5m])
-/ rate(http_requests_total[5m]) < 0.001  # < 0.1% ошибок
-```
-
-**2. Data pipeline (Kafka consumers, batch jobs):**
+**Пример latency SLI:** доля завершённых запросов не дольше 500 ms. Для выбранного classic histogram у всех включённых экземпляров должен существовать bucket `le="0.5"`; latency и успех можно измерять отдельно либо совместно по явно заданному контракту.
 
 ```promql
-# Freshness SLI — свежесть данных
-time() - kafka_consumer_last_poll_timestamp_seconds < 30  # < 30 сек отставание
-
-# Throughput SLI — успешная обработка сообщений
-rate(messages_processed_total{status="success"}[5m])
-/ rate(messages_received_total[5m]) > 0.999
-
-# Correctness SLI — процент верно обработанных записей
-1 - (rate(records_failed_validation_total[1h])
-     / rate(records_processed_total[1h]))
+sum(rate(http_request_duration_seconds_bucket{job="api",le="0.5"}[5m]))
+/
+sum(rate(http_request_duration_seconds_count{job="api"}[5m]))
 ```
 
-**3. Storage (БД, кэш):**
+Это доля за 5 минут, ещё не сравнение с SLO. `histogram_quantile(0.99, ...) < 0.5` — другое представление с оценкой квантиля; bucket ratio прямо считает долю относительно выбранной границы. Потерянные запросы и незавершённые операции не появятся в histogram завершений сами. [Prometheus histograms](https://prometheus.io/docs/practices/histograms/).
 
-```promql
-# Durability SLI — процент успешных записей
-rate(db_write_operations_total{status="success"}[5m])
-/ rate(db_write_operations_total[5m])
+**Для pipeline / Kafka consumer** время последнего `poll()` не измеряет возраст полезных данных: consumer может опрашивать пустой источник или отставать в обработке. Freshness измеряют по watermark результата либо доле обращений к данным с допустимым возрастом. Offset lag в записях тоже не равен секундам задержки без дополнительной модели. Throughput в записях/сек и доля успешно обработанного входа — разные величины. [Kafka 3.7.2 Consumer API](https://kafka.apache.org/37/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html), [SRE: pipeline SLOs](https://sre.google/workbook/data-processing/).
 
-# Read latency SLI
-histogram_quantile(0.99,
-  rate(db_query_duration_seconds_bucket[5m])) < 0.1  # < 100ms
+**Для storage и jobs** нужен согласованный знаменатель. Доля успешных write-ответов измеряет успешность операций, а не сохранность записей позднее. У jobs деление двух несвязанных потоков «завершено сейчас / получено сейчас» смешивает разные поколения: сопоставляйте результаты с заданиями той же группы и deadline, не удваивая retry. Cache hit ratio полезен для диагностики, но сам по себе не доказывает доступность или корректность ответа пользователю.
 
-# Cache hit rate SLI
-rate(cache_hits_total[5m])
-/ (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m])) > 0.9
-```
+SLI можно реализовать по логам, серверной/клиентской инструментации или blackbox-пробам; выбор источника определяет покрытие и слепые зоны. Пробы могут быть самой реализацией SLI, а не только дополнением. Небольшой набор ключевых типов помогает управлять целями; рекомендация «пять или меньше» — ориентир, не технический предел 3–5 для каждого сервиса. [SRE Workbook: Implementing SLOs](https://sre.google/workbook/implementing-slos/).
 
-**4. Background workers (отчёты, нотификации):**
-
-```promql
-# Completion SLI — завершаем задачи в срок
-sum(batch_jobs_completed_on_time_total)
-/ sum(batch_jobs_total) > 0.95  # 95% задач выполнены вовремя
-
-# Email delivery SLI
-rate(notifications_delivered_total[1h])
-/ rate(notifications_sent_total[1h]) > 0.98
-```
-
-**Матрица SLI по типам сервисов:**
-
-| Тип сервиса | Основные SLI | Типичные SLO |
-|-------------|-------------|--------------|
-| REST API | Availability, Latency p99 | 99.9%, < 500ms |
-| GraphQL | Availability, Latency p95, Error rate | 99.5%, < 1s |
-| Kafka Consumer | Freshness, Throughput | lag < 30s, > 99.9% |
-| Batch Job | Completion rate, Duration | > 95%, < 2h |
-| Кэш (Redis) | Hit rate, Latency | > 90%, < 10ms |
-| БД | Durability, Read latency | 99.999%, < 100ms |
-
-**Ключевые принципы выбора SLI:**
-1. SLI должен отражать пользовательский опыт, а не внутренние метрики
-2. Не более 3-5 SLI на сервис — иначе сложно приоритизировать
-3. SLI должен быть измерим прямо сейчас (не "когда-нибудь настроим")
-4. Синтетические мониторы (blackbox probes) дополняют SLI, но не заменяют их
+Для первой версии используйте доступные измерения, явно описав ограничения; важный, но пока неизмеримый пользовательский результат превращается в задачу инструментации. Числовые цели и error budget выбирают отдельно по Q36, а не копируют из таблицы чужого сервиса.
 
 ## See also
 
