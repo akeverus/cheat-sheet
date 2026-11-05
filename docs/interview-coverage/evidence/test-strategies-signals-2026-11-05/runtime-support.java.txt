@@ -1,0 +1,20 @@
+import io.github.resilience4j.circuitbreaker.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+class CircuitBreakerSupportTest {
+ @Test void defaultMinimumDoesNotOpenAfterFiveFailures(){
+  var breaker=CircuitBreaker.ofDefaults("default");
+  for(int i=0;i<5;i++) assertThrows(IllegalStateException.class,()->breaker.executeRunnable(()->{throw new IllegalStateException("failure");}));
+  assertEquals(100,breaker.getCircuitBreakerConfig().getMinimumNumberOfCalls());
+  assertEquals(CircuitBreaker.State.CLOSED,breaker.getState());
+ }
+ @Test void configuredMinimumAndRateBothMatter(){
+  var config=CircuitBreakerConfig.custom().slidingWindowSize(5).minimumNumberOfCalls(5).failureRateThreshold(50).build();
+  var breaker=CircuitBreaker.of("mixed",config);
+  breaker.executeRunnable(()->{});breaker.executeRunnable(()->{});
+  for(int i=0;i<2;i++) assertThrows(IllegalStateException.class,()->breaker.executeRunnable(()->{throw new IllegalStateException("failure");}));
+  assertEquals(CircuitBreaker.State.CLOSED,breaker.getState());
+  assertThrows(IllegalStateException.class,()->breaker.executeRunnable(()->{throw new IllegalStateException("failure");}));
+  assertEquals(CircuitBreaker.State.OPEN,breaker.getState());
+ }
+}

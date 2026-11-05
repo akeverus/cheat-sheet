@@ -1,0 +1,44 @@
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import org.junit.jupiter.api.Test;
+import java.time.Duration;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
+import static org.junit.jupiter.api.Assertions.*;
+
+class CircuitBreakerFailureTest {
+    @Test
+    void opensAfterConfiguredFailuresAndRejectsWithoutCallingDependency() {
+        var config = CircuitBreakerConfig.custom()
+            .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+            .slidingWindowSize(5)
+            .minimumNumberOfCalls(5)
+            .failureRateThreshold(50)
+            .waitDurationInOpenState(Duration.ofHours(1))
+            .build();
+        var breaker = CircuitBreaker.of("dependency", config);
+        var calls = new AtomicInteger();
+        Supplier<String> request = CircuitBreaker.decorateSupplier(breaker, () -> {
+            calls.incrementAndGet();
+            throw new IllegalStateException("dependency unavailable");
+        });
+
+        for (int i = 0; i < 5; i++) {
+            assertThrows(IllegalStateException.class, request::get);
+        }
+        assertEquals(CircuitBreaker.State.OPEN, breaker.getState());
+        assertThrows(CallNotPermittedException.class, request::get);
+        assertEquals(5, calls.get());
+
+        Supplier<String> withFallback = () -> {
+            try {
+                return request.get();
+            } catch (CallNotPermittedException rejected) {
+                return "cached";
+            }
+        };
+        assertEquals("cached", withFallback.get());
+        assertEquals(5, calls.get());
+    }
+}

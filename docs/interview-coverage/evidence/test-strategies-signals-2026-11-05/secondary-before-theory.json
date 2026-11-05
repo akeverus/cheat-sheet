@@ -1,0 +1,317 @@
+{
+  "status": "NOT_FINISHED",
+  "review_kind": "disclosed secondary examiner review; keys, sections and theory were visible; not blind, independent acceptance, or FINAL",
+  "reviewer": "Codex secondary examiner review",
+  "review_date": "2026-11-05 UTC",
+  "input_path": "/tmp/theory-followup-test-strategies-mockito-20261105/test-strategies-input.json",
+  "input_sha256": "e4fe672d10ad6e38d0b42bfb77f685a3b1847ce1a430ad4a562b0a205ba15ac1",
+  "source_snapshot": {
+    "md": "cheatsheets/interview/testing/test-strategies-interview.md",
+    "md_sha256": "e9964d07fe7c7270f0d3b173fe9cfa08f76904b5db779c68f526376e037c8718",
+    "seed": "modules/quiz-app/src/main/resources/seed/mcq/testing/test-strategies-interview.json",
+    "seed_sha256": "a8c09e3485cf0b2fdca0dfd614d63dd0d891e6bb4f4916469fc7bcbdcf911ce6",
+    "head": "0480d5020f66b88b374e3386044053806941be98"
+  },
+  "review_surfaces_sha256": {
+    "input": "e4fe672d10ad6e38d0b42bfb77f685a3b1847ce1a430ad4a562b0a205ba15ac1",
+    "md": "e9964d07fe7c7270f0d3b173fe9cfa08f76904b5db779c68f526376e037c8718",
+    "seed": "a8c09e3485cf0b2fdca0dfd614d63dd0d891e6bb4f4916469fc7bcbdcf911ce6",
+    "standard": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "sfpl_ansc": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "ru": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264",
+    "rubric": "e08f70bbc257adee8c3bdccca7599fc0828efd0716e8051bfbf43fbf211693d5",
+    "related_test_doubles": "636026a560e05fb2bcd3f108a682c0ab8461bcc3b0c11174d1bffa6c722c348a",
+    "related_cicd": "3ba160dd3c441faedf9aa778a42ebef7cc20edaa93a09f8c66d820f66c645872"
+  },
+  "questions": {
+    "23": {
+      "status": "REVIEWED_WITH_FINDINGS",
+      "visible_parts": [
+        "definition of Chaos Engineering as a practice",
+        "what is deliberately done / experiment",
+        "purpose / what is learned from system behavior under failure; question does not explicitly request a list of principles"
+      ],
+      "options": {
+        "A": {
+          "covers": [
+            "defines an experiment",
+            "hypothesis about resilience",
+            "small blast radius",
+            "observation",
+            "automation"
+          ],
+          "completeness": "FULL (more principles than the question strictly requires)",
+          "truth": "CONDITIONALLY TRUE as a concise description of important principles; “automation of successful experiments” is narrower than the source principle to automate/run experiments continuously.",
+          "defensible_wrong": "Not applicable; keyed correct.",
+          "finding": "The lone multi-principle answer has the most packed and polished definition; the breadth is a form cue."
+        },
+        "B": {
+          "covers": [
+            "claims ordinary tests already verify resilience",
+            "claims controlled failure experiments are redundant"
+          ],
+          "completeness": "PARTIAL / WEAK DIRECTNESS: presents a reason to omit the practice, but does not define what Chaos Engineering is or an alternative model of it.",
+          "truth": "FALSE as a categorical claim; ordinary tests do not make controlled resilience experiments inherently redundant.",
+          "defensible_wrong": "The misconception that resilience tests / circuit-breaker unit tests suffice is plausible, but this particular wording argues redundancy rather than answering “what is it?”.",
+          "finding": "ANSC/directness defect. The section if_it_were_true is internally inconsistent: if ordinary tests had already verified resilience, it does not follow that broken retries would only be discovered in an incident."
+        },
+        "C": {
+          "covers": [
+            "offers a definition-like process claim: injecting failures randomly",
+            "asserts absence of hypothesis"
+          ],
+          "completeness": "FULL AS AN INCORRECT MODEL: coherent claim about the method and its defining process; it directly contradicts the experiment/hypothesis concept.",
+          "truth": "FALSE; a chaos experiment is hypothesis-led, not random breakage without a question.",
+          "defensible_wrong": "Yes. “Chaos means break things at random” is a recognizable, plausible misconception.",
+          "finding": "No semantic defect. Scanner lowcoverage is a false positive as an ANSC finding; C is complete as an erroneous model."
+        },
+        "D": {
+          "covers": [
+            "gives a purported operational rule for blast radius",
+            "claims maximum scope should be the starting point"
+          ],
+          "completeness": "PARTIAL / WEAK DIRECTNESS: a deployment recommendation, not a definition or explicit account of what Chaos Engineering is.",
+          "truth": "FALSE and unsafe as a general starting principle; blast radius should be contained.",
+          "defensible_wrong": "Plausible misconception that only full scale is a real resilience test.",
+          "finding": "ANSC/directness defect against this “what is” stem. Section correctly rebuts it."
+        }
+      },
+      "content": "FAIL for whole block: B and D do not directly define the practice; they state why it is supposedly unnecessary / how one should start. Q has a clear single key, but the options are not all answers on the same axis.",
+      "facts": "FAIL (theory/sections): the WireMock circuit-breaker example simulates sequential HTTP errors in a test; by itself this is a fault-injection/resilience test, not a Chaos Engineering experiment on a representative running system. The official Principles source defines experiments around measurable steady state, a control/experiment comparison, real-world variables, and minimizing blast radius. The example does not demonstrate those elements. “Testcontainers stop” can stop a dependency container in a controlled test setup, but naming that alone does not make a chaos experiment.",
+      "linkage": "FAIL: B.if_it_were_true contains a causal contradiction. Q23 theory/example also overstates that hypothesis + simulated failure alone constitute a production/system-level chaos experiment. Q23 theory says automate “удачные эксперименты”; primary Principles say automate experiments and run them continuously, not only successful ones.",
+      "sfpl": "FAIL: lengths are A 115 chars / 13 whitespace words; B 99/11; C 68/10; D 93/13. All one sentence, but A alone has a compact list of four technical principles and is clearly the most complete/polished. C is 41% shorter than A. This is an observed cue independent of token-count thresholds.",
+      "ansc": "FAIL: B and D are weak/indirect answers to the visible “what is” question; A/C answer in definition-like terms. C is not incomplete merely because its false model is wrong.",
+      "scanner_findings": [
+        "lowcoverage Q23C: not upheld; C is a complete wrong model.",
+        "The scanner warning should not be “fixed” by token insertion. Improve B and D so each offers a full alternative definition/model, then compare all four."
+      ],
+      "theory_findings": [
+        "Add steady-state baseline/control-versus-experiment and measurable outcome to the definition/example; note that production is often preferred but experiments require guardrails and are not synonymous with any test that mocks an outage.",
+        "Change “automate successful experiments” to “automate experiments and analysis to run continuously” (with safe scope/stop conditions).",
+        "Relabel WireMock snippet as a circuit-breaker/fault-injection test, or replace it with a genuine controlled chaos experiment against a deployed service.",
+        "Clarify Testcontainers stop as an available way to terminate a containerized dependency, not a sufficient description of Chaos Engineering.",
+        "Rewrite B.if_it_were_true to consistently explain the false “ordinary testing is enough” assumption."
+      ],
+      "visible_option_lengths": {
+        "A": {
+          "chars": 115,
+          "whitespace_words": 13
+        },
+        "B": {
+          "chars": 99,
+          "whitespace_words": 11
+        },
+        "C": {
+          "chars": 68,
+          "whitespace_words": 10
+        },
+        "D": {
+          "chars": 93,
+          "whitespace_words": 13
+        }
+      }
+    },
+    "30": {
+      "status": "REVIEWED_WITH_FINDINGS",
+      "visible_parts": [
+        "define Test Doubles Strategy",
+        "explain choosing a type according to the test goal / role of the double"
+      ],
+      "options": {
+        "A": {
+          "covers": [
+            "selection by purpose",
+            "stub supplies data",
+            "mock verifies interaction",
+            "fake for repository"
+          ],
+          "completeness": "FULL",
+          "truth": "GENERALLY TRUE; this is a common, useful heuristic, but repository fake is not mandatory for every repository test.",
+          "defensible_wrong": "Not applicable; keyed correct.",
+          "finding": "Good compact answer; “репозиториям — fake” reads as broad prescription and could be softened to “для сценариев репозитория часто подходит fake”."
+        },
+        "B": {
+          "covers": [
+            "asserts repository doubles should only be chained stubs",
+            "asserts an InMemory fake per use is wasteful"
+          ],
+          "completeness": "PARTIAL: addresses only one subtype of dependency and one cost argument; omits strategy across double types / goals.",
+          "truth": "FALSE as a universal rule; a fake can make stateful repository behavior clearer, though mocks/stubs may be appropriate for narrow tests.",
+          "defensible_wrong": "Yes. For a tiny one-off case, a short stub may be cheaper than implementing a fake; the categorical “лишь” and “всякий раз” make the model overgeneralized.",
+          "finding": "ANSC coverage is narrower than A/C/D, but this is a coherent complete claim about a specific repository strategy. Do not call it incomplete solely because it is false. “InMemory” warning is an actual semantic review target, not a reason to change the key."
+        },
+        "C": {
+          "covers": [
+            "claims a high mock-to-production-code ratio indicates good isolation"
+          ],
+          "completeness": "FULL AS AN INCORRECT QUALITY RULE: explicit criterion and asserted interpretation.",
+          "truth": "FALSE as a general criterion; excessive mocking often signals too many dependencies or overcoupling.",
+          "defensible_wrong": "Yes. Confuses isolation with quality and can arise from over-mocking practice.",
+          "finding": "The question is broad enough to include this strategic criterion, although it does not describe choosing a double type as directly as A."
+        },
+        "D": {
+          "covers": [
+            "recommends mocking everything",
+            "claims more mocks mean more isolation"
+          ],
+          "completeness": "FULL AS AN INCORRECT STRATEGY: a clear universal selection rule and rationale.",
+          "truth": "FALSE; type/use depends on test intent and blanket mocks can weaken tests.",
+          "defensible_wrong": "Yes; same recognizable over-isolation misconception as C, but D is the blanket prescription while C is a diagnostic-sign claim.",
+          "finding": "Some semantic overlap with C, but not a duplicate statement."
+        }
+      },
+      "content": "PASS with qualification: one clear key; A addresses selection by test purpose. B is repository-specific and C/D address over-mocking, all plausibly within “strategy,” though distractors test adjacent principles more than taxonomy.",
+      "facts": "PASS with qualification: mock/stub distinction and fake as an in-memory simplified implementation are conventional. The official Testcontainers docs support the tradeoff: a real DB container offers compatibility versus H2 and known state, but is slower; this means in-memory fake can be a useful fast substitute, not universally superior or equivalent to real DB behavior.",
+      "linkage": "FAIL in sections: B.if_it_were_true says choosing mocks/stubs would force every test to carry a large stub chain; that does not follow. Section B.what_actually asserts broad preference / lower breakage without qualification. A.related is a useful analogy but does not further explain choosing types. A.edge_cases prescribes fresh doubles per test; good isolation advice but not a necessary property of every custom test double.",
+      "sfpl": "PASS: 86/121/79/90 chars; 15/11/12/13 whitespace words. No meaningful lone-longest or special correct-only format; B is actually longest in chars. A has more words due compact technical tokens, not a visible breadth cue.",
+      "ansc": "UNVERIFIED/PARTIAL: all options make intelligible claims, but B is repository-only. Because the stem is general, it has less coverage than the other distractors; falsehood itself is not incompleteness. Consider making B a complete, explicitly scoped strategy claim rather than only a narrow repository rule.",
+      "scanner_findings": [
+        "novelInMemory Q30 wrong: upheld as a semantic assertion worth review. B is defensible as a scoped cost tradeoff, but its universal wording is false and current B.what_actually overstates fake preference. Do not “fix” by inserting InMemory tokens or changing the key."
+      ],
+      "theory_findings": [
+        "Qualify “for repositories prefer fake” / “reads better and breaks less often”: this is a heuristic, not a general law. State it is especially useful for stateful CRUD behavior and when its simplified semantics are sufficient; use Testcontainers/real DB when database-specific behavior matters.",
+        "In the section for B, replace the implausible counterfactual “every test would carry a long chain” with a consequence matching the claim (teams might duplicate setup/stubbing for stateful scenarios, or accept simpler targeted stubs where appropriate)."
+      ],
+      "visible_option_lengths": {
+        "A": {
+          "chars": 86,
+          "whitespace_words": 15
+        },
+        "B": {
+          "chars": 121,
+          "whitespace_words": 11
+        },
+        "C": {
+          "chars": 79,
+          "whitespace_words": 12
+        },
+        "D": {
+          "chars": 90,
+          "whitespace_words": 13
+        }
+      }
+    },
+    "39": {
+      "status": "REVIEWED_WITH_FINDINGS",
+      "visible_parts": [
+        "organize testing under Continuous Deployment",
+        "tests/checks before automatic release and handling of outcome after deployment"
+      ],
+      "options": {
+        "A": {
+          "covers": [
+            "says deploy despite failed required checks",
+            "uses small changes as a supposed guarantee",
+            "observes post-release metrics for recovery"
+          ],
+          "completeness": "FULL AS AN INCORRECT DEPLOYMENT STRATEGY: before/during/after sequence and rationale.",
+          "truth": "FALSE: small changes reduce risk / simplify diagnosis but do not guarantee no regression; a failed required check should be handled according to policy, not silently ignored.",
+          "defensible_wrong": "Yes; overgeneralizes small-batch deployment and observability into permission to skip failed gates.",
+          "finding": "No incompleteness. Section refutes the exact inference."
+        },
+        "B": {
+          "covers": [
+            "deploys after pipeline checks",
+            "limits metrics to reporting",
+            "ignores adverse metrics for future rollout"
+          ],
+          "completeness": "FULL AS AN INCORRECT STRATEGY: pipeline plus post-deploy feedback decision.",
+          "truth": "FALSE as a blanket approach; rollout metrics can inform pause/stop/rollback/forward fix, with service-specific signals.",
+          "defensible_wrong": "Yes; plausible anti-pattern that separates observability from deployment decisions.",
+          "finding": "No incompleteness. Section correctly notes thresholds/reaction should be specified."
+        },
+        "C": {
+          "covers": [
+            "automatically deploys after required checks pass",
+            "observes outcomes",
+            "uses criteria to halt promotion or restore safely"
+          ],
+          "completeness": "FULL",
+          "truth": "TRUE with explicit contextual qualification; rollback is not always safe, other recovery actions exist.",
+          "defensible_wrong": "Not applicable; keyed correct.",
+          "finding": "Directly answers both pre-deploy checks and post-deploy feedback/recovery."
+        },
+        "D": {
+          "covers": [
+            "pipeline tests",
+            "mandatory human approval for every production release",
+            "observes metrics and recovery"
+          ],
+          "completeness": "FULL AS AN INCORRECT STRATEGY: clear gated release path with aftercare.",
+          "truth": "FALSE under the stipulated Continuous Deployment meaning; this describes a manual release gate / Continuous Delivery-style promotion.",
+          "defensible_wrong": "Yes; common CD terminology confusion, while emergency intervention is distinct from required routine approval.",
+          "finding": "No incompleteness."
+        }
+      },
+      "content": "PASS: all four options address pre-release verification and/or release progression plus post-release handling; one unambiguous key C. The exact stem asks “how organize testing,” and each option is an actionable strategy.",
+      "facts": "PASS for MCQ, FAIL for dependent theory: Continuous Deployment is automated production deployment after checks; Continuous Delivery may retain a release decision. Checks, monitoring, and a response policy are sound practices, but a universal 100% pass, >80% coverage, 1–5% canary, <1% errors, or mandatory automated rollback are not definitions or universal prescriptions.",
+      "linkage": "PASS across option sections: each if_it_were_true follows its option and sections explain that same model. Theory conflicts with keyed option C: C correctly says no universal thresholds and rollback is not always safe, while theory mandates blanket gates, fixed numbers and automatic rollback as the only/stated protection.",
+      "sfpl": "PASS: 164/166/185/175 chars; 19/21/19/21 whitespace words. Similar sentence form, length, and coverage; key is not singled out by length. The stem requests two parts and each option gives a full deployment/testing approach.",
+      "ansc": "PASS: A/B/D are fully articulated erroneous strategies, not fragments; C is a complete correct approach.",
+      "scanner_findings": [
+        "lowcoverage Q39C: not upheld. C covers the required pre-release checks, post-deploy observation and response to negative signals; sections extend contextual detail without repairing a truncated option."
+      ],
+      "theory_findings": [
+        "Major contradiction with correct option C: replace “единственная защита” with layered risk controls (checks, staged rollout where appropriate, observability, response/stop capability); tests cannot prove absence of all defects.",
+        "Remove blanket “every gate blocks” and hard-coded 100%/80%/1–5%/1% thresholds unless explicitly labeled as an example policy tied to a service’s risk and signal quality. These numbers are not universal criteria.",
+        "Remove claim automated rollback is a mandatory defining part of CD / standard reaction; select rollback, pause, disable feature, or forward fix based on reversibility and data compatibility.",
+        "Add explicit failure branches to the pipeline diagram; the happy-path diagram currently implies only the full deploy/monitor route."
+      ],
+      "visible_option_lengths": {
+        "A": {
+          "chars": 164,
+          "whitespace_words": 19
+        },
+        "B": {
+          "chars": 166,
+          "whitespace_words": 21
+        },
+        "C": {
+          "chars": 185,
+          "whitespace_words": 19
+        },
+        "D": {
+          "chars": 175,
+          "whitespace_words": 21
+        }
+      }
+    }
+  },
+  "primary_sources_checked": [
+    {
+      "title": "Principles of Chaos Engineering",
+      "url": "https://principlesofchaos.org/",
+      "kind": "primary principles source",
+      "checked": "2026-11-05",
+      "supports": "Measurable steady state; control and experiment; real-world failure variables; minimizing blast radius; production experimentation preferred; automate experiments continuously."
+    },
+    {
+      "title": "Testcontainers for Java: Database containers",
+      "url": "https://java.testcontainers.org/modules/databases/",
+      "kind": "official product documentation",
+      "checked": "2026-11-05",
+      "supports": "Real database container compatibility/known state versus faster H2; recommends keeping DB tests relatively few. Supports scoped tradeoff; does not establish in-memory fake superiority."
+    },
+    {
+      "title": "Google Cloud Deploy terminology",
+      "url": "https://docs.cloud.google.com/deploy/docs/terminology",
+      "kind": "official product documentation",
+      "checked": "2026-11-05",
+      "supports": "Continuous delivery allows manual approval; continuous deployment is automatic without manual approval."
+    },
+    {
+      "title": "Google web.dev, “Pyramid or Crab? Find a testing strategy that fits”",
+      "url": "https://web.dev/articles/ta-strategies",
+      "kind": "Google-authored explanatory source, not primary research",
+      "checked": "2026-11-05",
+      "supports": "Describes Test Diamond as an adaptation emphasizing integration tests, with fewer unit and critical E2E checks. No claim in the scoped theory depended on a universal diamond prescription; no primary empirical source located/needed for this scoped material."
+    }
+  ],
+  "overall_findings": [
+    "Q23: content/ANSC and SFPL FAIL; lowcoverage C warning is false positive; Q23 B/D directness weak; theory misclassifies WireMock simulated errors and has a contradiction in B section.",
+    "Q30: semantic falsehood of wrong B upheld but scoped tradeoff is plausible; no answer-key error; sections/theory overgeneralize InMemory preference and B counterfactual is weak.",
+    "Q39: option content, SFPL and ANSC PASS; lowcoverage C warning is false positive; dependent theory contradicts option C and overstates universal thresholds / automated rollback."
+  ],
+  "repo_or_index_changed": false,
+  "remaining": "This is a disclosed secondary review of the specified three questions only. No blind pass, independent acceptance, whole-file 45/45 claim, evidence import, repository edit, or FINAL was performed."
+}

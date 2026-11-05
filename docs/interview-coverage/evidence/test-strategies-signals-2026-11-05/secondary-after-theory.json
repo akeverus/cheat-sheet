@@ -1,0 +1,67 @@
+{
+  "status": "POST_THEORY_REVIEW_COMPLETE",
+  "review_kind": "disclosed post-theory review; original option JSON/keys/sections visible; not blind or independent acceptance",
+  "date": "2026-11-05 UTC",
+  "scope": [
+    "Q23 body only",
+    "Q30 body only",
+    "Q39 body only",
+    "comparison to prior raw option snapshot; raw input left untouched"
+  ],
+  "current_md_sha256": "e9964d07fe7c7270f0d3b173fe9cfa08f76904b5db779c68f526376e037c8718",
+  "old_input_sha256": "e4fe672d10ad6e38d0b42bfb77f685a3b1847ce1a430ad4a562b0a205ba15ac1",
+  "questions": {
+    "23": {
+      "status": "PASS_WITH_QUALIFICATION",
+      "findings": [
+        "Revised definition and experiment plan now cover measurable steady state, hypothesis, control, scoped perturbation, observation, stopping/recovery, and iterative learning. This fixes the earlier mismatch where simulated WireMock errors were presented as Chaos Engineering itself.",
+        "Java fence is self-contained for the stated Resilience4j 2.3.0 / JUnit 5 / Java 17+ scope: config, supplier, five failure calls, OPEN assertion, rejected call count invariant, and separate fallback are internally coherent. It demonstrates a local component-level breaker mechanism only; accompanying prose explicitly says it does not test real network, routing, distributed behavior, or full chaos experiment.",
+        "“Успех одного опыта не доказывает...” is sound. Automation is phrased as helpful regular feedback, no longer limited to successful experiments.",
+        "Hypothesis/control phrasing now tracks the primary Chaos Engineering principles. Minor accuracy nuance: “контроль” is described as determined by experiment conditions; an actual control group is optional depending on experiment design, so avoid implying every experiment needs a literal parallel traffic group.",
+        "Related breaker wire-up is pedagogically distinct from system-level chaos; prose makes distinction explicit."
+      ],
+      "theory_errors": "None blocking. Optional precision: use “сравнить наблюдения с исходным/контрольным состоянием” instead of implying mandatory control group.",
+      "sources": [
+        "Principles of Chaos Engineering https://principlesofchaos.org/ (primary principles; hypothesis/steady state, real-world variables, blast-radius minimization, continuous automation)",
+        "Resilience4j CircuitBreaker docs https://resilience4j.readme.io/docs/circuitbreaker (API/config claims; cited by body)"
+      ],
+      "external_execution": "Execution record /tmp/.../circuit-runtime/execution.json was not run or independently verified by this reviewer; claimed 3/3 JDK 21 passes are not attributed to this review."
+    },
+    "30": {
+      "status": "PASS_WITH_QUALIFICATION",
+      "findings": [
+        "Body now makes strategy a goal/contract/feedback/cost decision and differentiates roles from API names. It explicitly separates Fowler-style Test Spy from Mockito spy and notes Mockito.mock can serve as a stub.",
+        "InMemory fake is now scoped: useful for related operations but not SQL/transaction/constraint equivalence; selecting one for every repository is rejected. State/history isolation is not prescribed as a fresh instance in every case.",
+        "Tradeoffs preserve practical value: choose stub for controlled answers; interaction verification when it belongs to SUT contract; fake can support outcome assertions; real dependency tests for DB-specific properties.",
+        "The question remains defensible at A: “репозиториям — fake” is a heuristic/selection default, not a universal law. The revised body explicitly disclaims automatic selection for every repository, so it narrows and qualifies the shorthand. MCQ edit not required on this basis alone; stronger precision would change A to “для stateful CRUD часто подходит fake”.",
+        "B/C/D each make complete, direct strategy claims under the broad stem, not merely isolated facts: B gives a repository replacement rule and cost rationale; C offers a quality heuristic about mock/code ratio; D offers a blanket selection policy and rationale. They occupy narrower subprinciples, but all are actionable answers to “what is the strategy?” No incompleteness finding solely because they are wrong or less comprehensive than A.",
+        "No independent SFPL FAIL: this pass was told to assess meaning, and the old option texts remain unchanged. Any form verdict requires a blind structural review; no such claim made."
+      ],
+      "theory_errors": "No material factual/strategy error found. One taxonomy nuance: the Fowler/Meszaros link should be checked for exact naming of Test Spy versus mock; current body distinguishes roles clearly enough for study purposes.",
+      "sources": [
+        "Martin Fowler, Mocks Aren’t Stubs https://martinfowler.com/articles/mocksArentStubs.html (test doubles terminology and roles)",
+        "Official Testcontainers DB docs https://java.testcontainers.org/modules/databases/ (real DB compatibility vs faster H2; tradeoff)",
+        "Google Testing Blog, Don’t Overuse Mocks https://testing.googleblog.com/2013/05/testing-on-toilet-dont-overuse-mocks.html (mock design guidance)"
+      ]
+    },
+    "39": {
+      "status": "PASS",
+      "findings": [
+        "Body distinguishes Continuous Deployment from Continuous Delivery, ties checks and promotion to risk, and says green pipeline reduces but does not eliminate defects.",
+        "The table covers predeploy, deploy, rollout, and postrelease observation; decision branches include continue, halt on problem/insufficient signal, and prepared recovery.",
+        "Canary is correctly framed as optional; numbers and duration are explicitly service-specific rather than universal. Recovery options account for data/protocol incompatibility; automatic rollback is not presented as universal safety guarantee.",
+        "No remaining contradiction with JSON option C: C describes this same contextual, criteria-based deployment/recovery approach."
+      ],
+      "theory_errors": "None found. Google Cloud terminology / Fowler definition supports the CD/CDelivery distinction.",
+      "sources": [
+        "Google Cloud Deploy terminology https://docs.cloud.google.com/deploy/docs/terminology",
+        "Martin Fowler, Continuous Delivery https://martinfowler.com/bliki/ContinuousDelivery.html",
+        "Google SRE Workbook, Canarying Releases https://sre.google/workbook/canarying-releases/",
+        "AWS Builders’ Library, Ensuring rollback safety during deployments https://aws.amazon.com/builders-library/ensuring-rollback-safety-during-deployments/"
+      ]
+    }
+  },
+  "raw_json_alignment": "The original raw JSON option texts, keys, and sections were only read for comparison and were not modified. Q23 correct A remains substantively aligned though its body now clarifies system-level experiment requirements; Q30 A’s repository-fake shorthand is qualified rather than contradicted by the body; Q39 C matches the revised body. Earlier option-level ANSC/SFPL findings remain separate and are not silently revised.",
+  "repo_or_index_changed": false,
+  "execution_claims": "No source builds/tests were run as part of this post-theory read. User-provided JDK 21 execution record was not represented as reviewer-run."
+}
