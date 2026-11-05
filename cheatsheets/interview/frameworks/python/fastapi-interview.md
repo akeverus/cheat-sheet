@@ -13,11 +13,11 @@ aliases:
 prerequisites:
   - "[[python-interview]]"
 next: []
-updated: "2026-10-05"
+updated: "2026-11-05"
 ---
 # Вопросы на собеседовании: FastAPI
 
-Вопросы привязаны к текущему официальному руководству FastAPI на 2026-10-05. Общую механику `asyncio` и SQL не дублируем; здесь важны решения самого фреймворка.
+Вопросы сверены с официальным руководством FastAPI 2026-11-05. Версионные границы для `yield`-dependencies указаны в Q3. Общую механику `asyncio` и SQL не дублируем; здесь важны решения самого фреймворка.
 
 ## Полезные ссылки
 
@@ -79,7 +79,7 @@ def get_workdir() -> Iterator[str]:
 WorkdirDep = Annotated[str, Depends(get_workdir)]
 ```
 
-Момент cleanup относительно отправки ответа **менялся между версиями FastAPI** и зависит от scope зависимости; особенно тщательно проверяйте streaming response и текущую документацию перед тем, как полагаться на открытый ресурс при передаче тела. Транзакцию завершайте явно по бизнес-исходу; закрытие сессии не означает commit. [Dependencies with yield](https://fastapi.tiangolo.com/tutorial/dependencies/dependencies-with-yield/).
+С FastAPI **0.121.0** `Depends(scope="function")` завершает `yield`-dependency после handler, но **до** отправки ответа. Scope `"request"` по умолчанию завершает её **после** отправки ответа. Для `StreamingResponse`, который читает ресурс во время передачи тела, нужен ресурс, живущий до конца передачи; ранний `function` cleanup закроет его слишком рано. В FastAPI **0.106.0–0.117.x** обычный cleanup выполнялся перед отправкой ответа, поэтому поведение старого приложения проверяйте по установленной версии. Если зависимость перехватывает исключение из handler, его обычно нужно повторно поднять. Транзакцию завершайте явно по бизнес-исходу; закрытие сессии не означает commit. [Dependencies with yield](https://fastapi.tiangolo.com/tutorial/dependencies/dependencies-with-yield/), [история `yield` и scope](https://fastapi.tiangolo.com/advanced/advanced-dependencies/#dependencies-with-yield-and-scope).
 
 ## Q4. Что проверяют request и response models?
 
@@ -97,11 +97,11 @@ def user(user_id: int):
     return {"id": user_id, "name": "Ada", "password_hash": "internal"}
 ```
 
-Входную и выходную модели разделяйте по контракту. Возврат `Response` напрямую может обойти часть автоматической обработки `response_model`; проверяйте именно HTTP-ответ тестом. [Request body](https://fastapi.tiangolo.com/tutorial/body/), [response model](https://fastapi.tiangolo.com/tutorial/response-model/).
+Входную и выходную модели разделяйте по контракту. Если результат не соответствует `response_model`, FastAPI считает это ошибкой приложения и возвращает серверную ошибку. При прямом возврате `Response` фреймворк передаёт его без Pydantic-преобразования и фильтрации тела по `response_model`; ответственность за публичные поля остаётся у кода handler. Проверяйте фактический HTTP-ответ тестом. [Request body](https://fastapi.tiangolo.com/tutorial/body/), [response model](https://fastapi.tiangolo.com/tutorial/response-model/), [direct `Response`](https://fastapi.tiangolo.com/advanced/response-directly/).
 
 ## Q5. Как разделить HTTPException и ошибку валидации?
 
-Неверные данные запроса FastAPI обрабатывает как ошибку валидации с HTTP **422** и описанием полей. `HTTPException` используют для ожидаемого прикладного исхода (например, 404 при отсутствии ресурса) и задают статус/детали явно. Не превращайте любую ошибку БД в `HTTPException(400)`: внутренний сбой требует логирования и безопасного 5xx ответа.
+Неверные данные запроса FastAPI оформляет как `RequestValidationError`; стандартный обработчик возвращает HTTP **422** и описание ошибок по полям. Этот обработчик можно заменить, поэтому статус 422 — поведение по умолчанию, а не неизменяемый контракт. `HTTPException` используют для ожидаемого прикладного исхода (например, 404 при отсутствии ресурса) и задают статус/детали явно. Не превращайте любую ошибку БД в `HTTPException(400)`: внутренний сбой требует логирования и безопасного 5xx ответа.
 
 ```python
 from fastapi import HTTPException
@@ -110,7 +110,7 @@ if record is None:
     raise HTTPException(status_code=404, detail="Order not found")
 ```
 
-Для собственной формы ошибок регистрируют exception handler. Детали внутреннего исключения не отправляют клиенту без контроля. [Handling errors](https://fastapi.tiangolo.com/tutorial/handling-errors/).
+Для собственной формы ошибок регистрируют exception handler. Не отправляйте клиенту строковое представление `RequestValidationError` или внутреннего исключения без контроля: в нём могут быть детали реализации. Ошибка валидации **ответа** из Q4 означает сбой кода сервиса, её не следует выдавать за ошибочный запрос клиента. [Handling errors](https://fastapi.tiangolo.com/tutorial/handling-errors/), [response model](https://fastapi.tiangolo.com/tutorial/response-model/).
 
 ## Q6. Для чего нужен lifespan?
 
@@ -134,21 +134,25 @@ app = FastAPI(lifespan=lifespan)
 
 ## Q7. Как тестировать FastAPI с подменой зависимости?
 
-`TestClient` позволяет тестировать HTTP-контракт без отдельного сетевого сервера. `app.dependency_overrides` заменяет конкретную dependency в графе, например сервис или DB session. После теста обязательно очистите override, иначе следующий тест унаследует подмену.
+`TestClient` позволяет тестировать HTTP-контракт без отдельного сетевого сервера. `app.dependency_overrides` — словарь, который заменяет конкретную dependency в графе, например сервис или DB session. После теста восстановите исходные overrides, иначе следующий тест унаследует подмену или потеряет свою настройку. Пример ниже использует `app` и `current_tenant` из Q2.
 
 ```python
 from fastapi.testclient import TestClient
 
-app.dependency_overrides[current_tenant] = lambda: "test"
+saved_overrides = app.dependency_overrides.copy()
 try:
+    app.dependency_overrides[current_tenant] = lambda: "test"
     with TestClient(app) as client:
         response = client.get("/orders")
         assert response.status_code == 200
 finally:
     app.dependency_overrides.clear()
+    app.dependency_overrides.update(saved_overrides)
 ```
 
-Контекстный менеджер `TestClient` запускает lifespan; отдельно проверьте ошибки и response model. Для реальной БД понадобится интеграционный тест, поскольку dependency override с fake не доказывает SQL и транзакции. [Testing](https://fastapi.tiangolo.com/tutorial/testing/), [dependency overrides](https://fastapi.tiangolo.com/advanced/testing-dependencies/), [testing lifespan](https://fastapi.tiangolo.com/advanced/testing-events/).
+Контекстный менеджер `TestClient` запускает lifespan. Разделяемый объект `app` с изменяемым словарём overrides не используйте одновременно в параллельных тестах без изоляции. Отдельно проверьте ошибки и response model. Для реальной БД понадобится интеграционный тест, поскольку dependency override с fake не доказывает SQL и транзакции. Для самого async-теста используйте async-клиент с ASGI transport, а не синхронный `TestClient` внутри coroutine. HTTPX `ASGITransport` сам не запускает lifespan: если тесту нужны startup/shutdown-ресурсы, управляйте их циклом отдельно, например через `LifespanManager` из `asgi-lifespan`. [Testing](https://fastapi.tiangolo.com/tutorial/testing/), [dependency overrides](https://fastapi.tiangolo.com/advanced/testing-dependencies/), [testing lifespan](https://fastapi.tiangolo.com/advanced/testing-events/), [async tests](https://fastapi.tiangolo.com/advanced/async-tests/).
+
+Чтобы проверить тело сгенерированного ответа 500, создайте `TestClient(app, raise_server_exceptions=False)`. По умолчанию клиент пробрасывает исключение приложения в тест, что удобно для поиска причины, но отличается от чтения HTTP-ответа. [TestClient API](https://fastapi.tiangolo.com/reference/testclient/), [HTTPX: ASGI startup/shutdown](https://www.python-httpx.org/advanced/transports/#asgi-startup-and-shutdown).
 
 ---
 
