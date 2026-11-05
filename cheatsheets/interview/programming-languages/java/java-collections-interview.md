@@ -14,7 +14,7 @@ aliases:
   - "Java Collections собеседование"
 prerequisites: []
 next: []
-updated: "2026-05-20"
+updated: "2026-11-05"
 ---
 # Вопросы на собеседовании: Коллекции Java
 
@@ -99,10 +99,10 @@ updated: "2026-05-20"
 
 **Продвинутые коллекции**
 - [Q42. (!) Как устроен `ConcurrentHashMap` изнутри и почему он быстрее `Hashtable`?](#q42--как-устроен-concurrenthashmap-изнутри-и-почему-он-быстрее-hashtable)
-- [Q43. (!) Как реализовать LRU-кэш на `LinkedHashMap`?](#q43--как-реализовать-lru-кэш-на-linkedhashmap)
+- [Q43. (!) Какие ограничения у LRU-кэша на `LinkedHashMap` при конкурентном доступе?](#q43--какие-ограничения-у-lru-кэша-на-linkedhashmap-при-конкурентном-доступе)
 - [Q44. Что такое `NavigableMap` и как использовать методы навигации `TreeMap`?](#q44-что-такое-navigablemap-и-как-использовать-методы-навигации-treemap)
 - [Q45. Что такое `PriorityQueue` и как реализовать кастомный порядок?](#q45-что-такое-priorityqueue-и-как-реализовать-кастомный-порядок)
-- [Q46. Что такое `WeakHashMap` и когда его использовать?](#q46-что-такое-weakhashmap-и-когда-его-использовать)
+- [Q46. Когда `WeakHashMap` не удалит запись и почему это не обычный кэш?](#q46-когда-weakhashmap-не-удалит-запись-и-почему-это-не-обычный-кэш)
 
 ---
 
@@ -628,14 +628,17 @@ linkedMap.put("B", 2);
 
 ## Q19. Как реализовать `LRU`-кэш на `LinkedHashMap`?
 
-`LinkedHashMap` с `accessOrder = true` переупорядочивает элементы при каждом доступе (`get`, `put`). В сочетании с переопределением `removeEldestEntry()` получается готовый `LRU`-кэш:
+`LinkedHashMap` с `accessOrder = true` ставит недавно прочитанную или обновлённую запись в конец порядка обхода. Переопределённый `removeEldestEntry()` позволяет удалить старейшую запись после добавления новой:
 
 ```java
 public class LRUCache<K, V> extends LinkedHashMap<K, V> {
     private final int maxSize;
 
     public LRUCache(int maxSize) {
-        super(maxSize * 4 / 3 + 1, 0.75f, true); // accessOrder = true
+        super(16, 0.75f, true); // access-order; initialCapacity не ограничивает размер
+        if (maxSize < 1) {
+            throw new IllegalArgumentException("maxSize must be positive");
+        }
         this.maxSize = maxSize;
     }
 
@@ -652,11 +655,11 @@ cache.get("user:1"); // Перемещает в конец (самый свеж�
 // При добавлении 101-го элемента самый давно использованный удалится
 ```
 
-> Это классический вопрос на собеседовании уровня Senior. Альтернатива — `Caffeine` или `Guava Cache` для production-кода с TTL, статистикой и weak-ссылками.
+`initialCapacity` влияет на стартовую ёмкость таблицы, а не задаёт предел числа записей. Лимит обеспечивает только `removeEldestEntry()`; его вызывает вставка новой записи, а не чтение. Для конкурирующих потоков, итерации и истечения по времени нужны дополнительные решения — см. [Q43](#q43--какие-ограничения-у-lru-кэша-на-linkedhashmap-при-конкурентном-доступе). [LinkedHashMap API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/LinkedHashMap.html).
 
 ## Q20. Что такое `WeakHashMap`?
 
-`WeakHashMap` использует **weak-ссылки** для ключей. Когда на ключ больше нет сильных ссылок, запись автоматически удаляется сборщиком мусора.
+`WeakHashMap` хранит обычные ключи через слабые ссылки. Если ключ больше не достижим через сильные ссылки, сборщик мусора может очистить его слабую ссылку, после чего запись исчезает из карты. Значения при этом удерживаются сильно; ключ `null` тоже поддерживается и не зависит от слабой ссылки.
 
 ```java
 WeakHashMap<Object, String> metadata = new WeakHashMap<>();
@@ -665,11 +668,11 @@ metadata.put(key, "some metadata");
 System.out.println(metadata.size()); // 1
 
 key = null; // Убираем единственную сильную ссылку
-System.gc(); // Подсказка GC (не гарантирует сборку)
-// После GC: metadata может стать пустой
+System.gc(); // Подсказка GC, а не команда удалить запись
+// При последующем обращении metadata может оказаться пустой
 ```
 
-**Применение:** кэширование метаданных, привязанных к жизненному циклу объектов-ключей. Не потокобезопасна. Подробнее о типах ссылок — в [вопросах по управлению памятью](../../performance/memory-management-interview.md).
+**Применение:** метаданные, жизненный цикл которых должен следовать за объектом-ключом. Момент очистки зависит от GC, поэтому на `System.gc()` и немедленное уменьшение `size()` рассчитывать нельзя. Карта не потокобезопасна. Ловушки сильных значений и отличие от обычного кэша — в [Q46](#q46-когда-weakhashmap-не-удалит-запись-и-почему-это-не-обычный-кэш). Подробнее о типах ссылок — в [вопросах по управлению памятью](../../performance/memory-management-interview.md). [WeakHashMap API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/WeakHashMap.html).
 
 ## Q21. Что такое `IdentityHashMap`?
 
@@ -1312,47 +1315,23 @@ long sum = map.reduceValues(4, Integer::sum);
 
 **Почему нет `null`:** при `get()` невозможно различить "ключ отсутствует" и "значение равно `null`" в конкурентном контексте без дополнительной синхронизации.
 
-## Q43. (!) Как реализовать LRU-кэш на `LinkedHashMap`?
+## Q43. (!) Какие ограничения у LRU-кэша на `LinkedHashMap` при конкурентном доступе?
 
-`LinkedHashMap` поддерживает режим **access-order** — при обращении к элементу он перемещается в конец. Переопределив `removeEldestEntry()`, получаем готовый LRU-кэш.
+Рецепт создания кэша — в [Q19](#q19-как-реализовать-lru-кэш-на-linkedhashmap). Его важно ограничить условиями использования: `LinkedHashMap` не синхронизирована, а в режиме access-order даже `get()` может изменить порядок записей. Поэтому одновременные чтения такого кэша нельзя считать безопасными только потому, что они не меняют значения.
+
+`Collections.synchronizedMap` синхронизирует отдельные вызовы через возвращённую обёртку. При обходе её представлений (`keySet()`, `entrySet()`, `values()`) нужно удерживать монитор этой обёртки на протяжении **всего** цикла. Иначе другой поток может вызвать `get()`, изменить порядок и нарушить итерацию. Fail-fast `ConcurrentModificationException` — диагностический сигнал, а не гарантия обнаружения гонки.
 
 ```java
-public class LruCache<K, V> extends LinkedHashMap<K, V> {
-    private final int maxSize;
+Map<String, String> cache = Collections.synchronizedMap(new LRUCache<>(100));
 
-    public LruCache(int maxSize) {
-        // true = access-order (false = insertion-order по умолчанию)
-        super(maxSize, 0.75f, true);
-        this.maxSize = maxSize;
-    }
-
-    @Override
-    protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
-        return size() > maxSize; // удаляем самый давно используемый
+synchronized (cache) {
+    for (Map.Entry<String, String> entry : cache.entrySet()) {
+        process(entry);
     }
 }
-
-// Использование
-LruCache<String, String> cache = new LruCache<>(3);
-cache.put("a", "1");
-cache.put("b", "2");
-cache.put("c", "3");
-cache.get("a"); // "a" перемещается в конец, "b" теперь самый старый
-cache.put("d", "4"); // "b" вытесняется
-System.out.println(cache.keySet()); // [c, a, d]
 ```
 
-**Потокобезопасный вариант:**
-```java
-// Для многопоточного доступа — использовать Collections.synchronizedMap
-Map<K, V> syncCache = Collections.synchronizedMap(new LruCache<>(100));
-
-// Или Caffeine/Guava Cache для production
-Cache<String, String> cache = Caffeine.newBuilder()
-    .maximumSize(100)
-    .expireAfterAccess(10, TimeUnit.MINUTES)
-    .build();
-```
+Все обращения должны идти через обёртку; ссылка на исходный `LRUCache` в другом потоке обошла бы её блокировку. Кроме того, `removeEldestEntry()` вызывается после вставки новой записи, поэтому сам по себе не даёт TTL или вытеснения по времени без записи. Для кэша с конкурентным доступом, истечением по времени и статистикой можно выбрать [Caffeine](https://github.com/ben-manes/caffeine/wiki/Eviction) с подходящими политиками. [LinkedHashMap API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/LinkedHashMap.html), [Collections.synchronizedMap API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collections.html#synchronizedMap(java.util.Map)).
 
 ## Q44. Что такое `NavigableMap` и как использовать методы навигации `TreeMap`?
 
@@ -1435,46 +1414,20 @@ static List<Integer> kSmallest(int[] nums, int k) {
 
 `PriorityQueue` **не потокобезопасна**. Для конкурентного использования — `PriorityBlockingQueue`.
 
-## Q46. Что такое `WeakHashMap` и когда его использовать?
+## Q46. Когда `WeakHashMap` не удалит запись и почему это не обычный кэш?
 
-`WeakHashMap<K,V>` — `Map`, хранящая ключи через **слабые ссылки** (`WeakReference`). Когда ключ становится недостижимым (нет других сильных ссылок), GC может удалить запись из карты.
-
-```java
-WeakHashMap<Object, String> cache = new WeakHashMap<>();
-
-Object key1 = new Object();
-Object key2 = new Object();
-cache.put(key1, "value1");
-cache.put(key2, "value2");
-
-System.out.println(cache.size()); // 2
-
-key1 = null; // удаляем сильную ссылку на ключ
-System.gc();  // подсказываем GC (не гарантируется)
-
-// После GC запись с key1 может быть удалена
-System.out.println(cache.size()); // вероятно 1
-```
-
-**Практические применения:**
+Базовый механизм слабых ключей — в [Q20](#q20-что-такое-weakhashmap). `WeakHashMap` не освобождает ключ, пока к нему ведёт сильная ссылка. Частая ловушка: значение хранится в карте **сильно** и само ссылается на свой ключ. Получается путь `карта → значение → ключ`; слабая ссылка на ключ уже ничего не меняет.
 
 ```java
-// 1. Кэш метаданных объектов — данные живут столько же, сколько объект
-WeakHashMap<Object, Map<String, Object>> metadataCache = new WeakHashMap<>();
-
-// 2. Listener registry — автоматическая очистка "мёртвых" слушателей
-WeakHashMap<EventListener, Boolean> listeners = new WeakHashMap<>();
-listeners.put(myListener, Boolean.TRUE);
-// После GC мёртвых слушателей — они сами исчезают из listeners
-
-// 3. Мемоизация без утечки памяти
-WeakHashMap<ExpensiveKey, Result> memoTable = new WeakHashMap<>();
+Map<Object, Object> metadata = new WeakHashMap<>();
+Object key = new Object();
+metadata.put(key, key); // значение сильно удерживает тот же объект
+key = null;             // путь metadata -> value -> key остаётся
 ```
 
-**Предостережения:**
-- Не подходит для кэша значений (ключ `String` из пула не собирается — будет жить вечно)
-- `size()` может изменяться между вызовами из-за GC
-- Не потокобезопасен — для конкурентного кэша использовать `java.lang.ref.WeakReference` с `ConcurrentHashMap` или Caffeine с `weakKeys()`
+Ссылка из значения может быть и косвенной. Перед использованием такой карты проверьте весь граф объектов. Отдельная ловушка — ключ, который можно заново создать с тем же содержимым. `WeakHashMap` ищет его по `equals`, но прежняя запись могла исчезнуть вместе с исходным экземпляром; новый равный ключ не гарантирует попадания в карту.
+
+Удаление зависит от GC, а не от размера, TTL или времени простоя. Поэтому `WeakHashMap` подходит для метаданных, привязанных к жизни объекта, но не заменяет кэш с предсказуемой вместимостью и политикой истечения. Для слушателей слабый ключ уместен только если владелец сохраняет сильную ссылку на слушателя столько, сколько нужна подписка. При конкурентном доступе потребуется синхронизация либо другая реализация; у [Caffeine `weakKeys()`](https://github.com/ben-manes/caffeine/wiki/Eviction#reference-based) поиск по идентичности (`==`), поэтому это не прямая замена карте с `equals`-ключами. [WeakHashMap API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/WeakHashMap.html).
 
 Более подробно о новых возможностях Java 21 — в [вопросах по Java 17-21](java-17-21-interview.md), а о Stream API — в [вопросах по Stream API](java-stream-interview.md).
 
