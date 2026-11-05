@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[rabbitmq]]"
 next: []
-updated: "2026-10-05"
+updated: "2026-11-05"
 ---
 # Вопросы на собеседовании: `RabbitMQ`
 
@@ -1055,27 +1055,29 @@ rabbitmqadmin export config.json
 
 ## Q39. Какие метрики RabbitMQ наиболее важны?
 
-Метрики удобно сгруппировать по тому, о чём они сигналят: пропускная способность, ресурсы узла и здоровье consumer-ов.
+Смотрите совместно состояние очередей, скорости обработки и ресурсные alarms. Ниже — смысловые группы показателей; точные имена полей Management API или метрик Prometheus сверяйте с используемым интерфейсом.
 
-| Метрика | Что показывает | Тревожный признак |
+| Показатель | Что показывает | Что проверить при отклонении |
 |---------|----------|-----------------|
-| `queue_messages_ready` | Сообщения, готовые к доставке (ждут consumer-а) | Устойчиво растёт > N — consumer-ы не успевают |
-| `queue_messages_unacknowledged` | Сообщения `unacked` (взяты, но не подтверждены) | Долго держится высоким — consumer завис на обработке |
-| `queue_consumers` | Активные consumer-ы очереди | `= 0` — очередь некому читать |
-| `connection_count` | Активные соединения | Близко к лимиту — утечка connection-ов |
-| `channel_count` | Открытые каналы | Аномально высокое — каналы не закрываются |
-| `disk_free` | Свободное место на диске | `< disk_free_limit` — брокер заблокирует publish |
-| `mem_used` | Использование памяти | `> vm_memory_high_watermark` — включится flow control |
-| `publish_rate` | Скорость публикации (msg/s) | — (базовая для сравнения) |
-| `deliver_ack_rate` | Скорость подтверждённой доставки | Стабильно ниже `publish_rate` — очередь будет расти |
+| Messages ready | Сообщения, ожидающие доставки | Динамику backlog, входящий поток и доступность consumer-ов. |
+| Messages unacknowledged | Доставленные, но ещё не подтверждённые сообщения | Время обработки, prefetch и число consumer-ов; высокий уровень сам по себе не доказывает зависание. |
+| Consumers | Потребители очереди | Есть ли подписчик, когда очередь должна обрабатываться. |
+| Connections / channels | Открытые соединения и каналы | Ожидаемый параллелизм, скорость открытия/закрытия и приближение к лимитам. |
+| Disk free | Свободное место относительно disk alarm threshold | Активный disk alarm и блокировку publishing connections. |
+| Memory used | Память узла относительно настроенного порога | Активный memory alarm, фактический порог и обнаруженный runtime объём памяти. |
+| Publish / deliver / ack rates | Публикации, доставки и подтверждения | Один и тот же scope измерения, режим ack и фактическую динамику ready/unacked. |
 
-**Главное правило диагностики:** если `publish_rate` устойчиво превышает `deliver_ack_rate`, очередь неизбежно растёт — нужно добавлять consumer-ов или ускорять обработку. А при достижении `vm_memory_high_watermark` (по умолчанию 40% RAM) брокер включает **flow control**: притормаживает или блокирует publishers, чтобы не упасть по памяти.
+Для обычной очереди длительный избыток входящего потока над завершённой обработкой — повод исследовать backlog, но один `publish_rate > deliver_ack_rate` не доказывает его неизбежный рост. При auto-ack ручных подтверждений нет; TTL, overflow, reject/dead-letter и другие пути удаления тоже меняют размер очереди. Для Streams ack вообще не удаляет запись из лога (Q42).
+
+В RabbitMQ **4.3** относительный default `vm_memory_high_watermark.relative = 0.6` означает 60% обнаруженной доступной RAM, а не 40% и не жёсткий предел потребления. В контейнерах документация рекомендует задавать абсолютный порог с учётом реального лимита. При memory/disk alarm блокируются publishing connections; в кластере alarm одного узла влияет на публикацию через все узлы. Соединения, используемые только для потребления, продолжают работу. **Transient flow control** — отдельное ограничение, когда внутренние процессы брокера не успевают за публикацией; оно возможно и без memory alarm.
+
+Источники: [RabbitMQ 4.3 memory](https://www.rabbitmq.com/docs/4.3/memory), [alarms](https://www.rabbitmq.com/docs/4.3/alarms), [flow control](https://www.rabbitmq.com/docs/4.3/flow-control), [queue length/overflow](https://www.rabbitmq.com/docs/4.3/maxlength), [acknowledgements](https://www.rabbitmq.com/docs/4.3/confirms).
 
 ---
 
 ## Q40. (!) Чем Kafka отличается от очередей и Streams в RabbitMQ?
 
-Сравнивайте **модель хранения и потребления**, а не только названия продуктов. Обычные очереди RabbitMQ (`classic`/`quorum`) удаляют сообщение после подтверждения обработки; Kafka хранит записи в партиционированном логе по политике retention. Но RabbitMQ **Streams** тоже представляют собой реплицированный append-only лог с повторным чтением по offset. Поэтому утверждение «RabbitMQ не поддерживает replay» неверно для Streams. [Документация RabbitMQ 4.3](https://www.rabbitmq.com/docs/streams), [сравнение с Kafka](https://www.rabbitmq.com/docs/compare/kafka).
+Сравнивайте **модель хранения и потребления**, а не только названия продуктов. Обычные очереди RabbitMQ (`classic`/`quorum`) удаляют сообщение после подтверждения обработки; Kafka хранит записи в партиционированном логе по политике retention. Но RabbitMQ **Streams** тоже представляют собой реплицированный append-only лог с повторным чтением по offset. Поэтому утверждение «RabbitMQ не поддерживает replay» неверно для Streams. [Документация RabbitMQ Streams](https://www.rabbitmq.com/docs/4.3/streams), [сравнение с Kafka](https://www.rabbitmq.com/docs/4.3/compare/kafka).
 
 | Свойство | RabbitMQ classic/quorum queue | RabbitMQ Stream | Kafka topic |
 |---|---|---|---|
@@ -1084,7 +1086,7 @@ rabbitmqadmin export config.json
 | Масштабирование | Несколько очередей и consumer-ов, при необходимости quorum-репликация. | Один stream или partitioned super stream для роста нагрузки. | Партиции распределяют нагрузку и задают область порядка. |
 | Сильная сторона | Маршрутизация через exchanges, очереди задач, ack/requeue. | Большой fan-out, replay и длительный backlog внутри RabbitMQ. | Распределённый event log и экосистема потоковой обработки. |
 
-Не закладывайте фиксированные числа «RabbitMQ 100K/s, Kafka 1M/s» или универсальное сравнение latency: результат зависит от типа очереди, размера сообщений, числа реплик, батчинга, дисков и сценария чтения. Для решения проверяйте нужные гарантии и измеряйте собственный профиль нагрузки. [RabbitMQ Streams](https://www.rabbitmq.com/docs/streams), [Kafka topic/retention](https://kafka.apache.org/43/configuration/topic-configs/).
+Не закладывайте фиксированные числа «RabbitMQ 100K/s, Kafka 1M/s» или универсальное сравнение latency: результат зависит от типа очереди, размера сообщений, числа реплик, батчинга, дисков и сценария чтения. Для решения проверяйте нужные гарантии и измеряйте собственный профиль нагрузки. [RabbitMQ Streams](https://www.rabbitmq.com/docs/4.3/streams), [Kafka topic/retention](https://kafka.apache.org/43/configuration/topic-configs/).
 
 ---
 
@@ -1100,16 +1102,18 @@ rabbitmqadmin export config.json
 
 ## Q42. Чем RabbitMQ Streams отличаются от обычной очереди и когда они нужны?
 
-`RabbitMQ Stream` — **постоянный реплицированный append-only лог**. Consumer читает по позиции; подтверждение обработки не удаляет запись для остальных. `Classic` и `quorum` очереди устроены иначе: после ack сообщение считается обработанным и исчезает из очереди. Streams подходят, когда нужны replay, несколько независимых читателей, большой fan-out или длительный backlog. В RabbitMQ 4.3 stream объявляют с `x-queue-type=stream`; для полного набора возможностей и высокой пропускной способности документация рекомендует отдельный Stream protocol client. [RabbitMQ Streams 4.3](https://www.rabbitmq.com/docs/streams), [Stream plugin](https://www.rabbitmq.com/docs/stream).
+`RabbitMQ Stream` — **постоянный реплицированный append-only лог**. Consumer читает по позиции; подтверждение обработки не удаляет запись для остальных. `Classic` и `quorum` очереди устроены иначе: после ack сообщение считается обработанным и исчезает из очереди. Streams подходят, когда нужны replay, несколько независимых читателей, большой fan-out или длительный backlog. Stream объявляют с `x-queue-type=stream`; для полного набора возможностей и высокой пропускной способности документация рекомендует отдельный Stream protocol client. [RabbitMQ Streams](https://www.rabbitmq.com/docs/4.3/streams), [Stream plugin](https://www.rabbitmq.com/docs/4.3/stream).
 
 | Вопрос дизайна | Решение для Stream |
 |---|---|
-| Откуда читать после перезапуска? | Сохранять позицию consumer-а; в AMQP можно задать `x-stream-offset`, в Stream protocol есть отслеживание offset. |
-| Когда данные исчезают? | Retention по возрасту и/или размеру, а не после ack; старый offset может выйти за доступный диапазон. |
+| Откуда читать после перезапуска? | Явно восстановить позицию: в AMQP 0-9-1 задать `x-stream-offset`, в Stream protocol можно использовать broker-side offset tracking. |
+| Когда данные исчезают? | Retention по возрасту и/или размеру, а не после ack; запрос старого offset за пределами истории привязывается к первой доступной записи. |
 | Как масштабировать один поток? | `Super stream` делит его на партиции; порядок сохраняется внутри партиции, а не глобально. |
 | Что при отказе узла? | У stream есть leader и реплики; для работы нужен quorum доступных реплик. |
 
-При работе через AMQP 0-9-1 `ack` у stream участвует в продвижении потребления/кредитов, но **не удаляет запись из лога**. Для обычной очереди задач с точечным ack/requeue и DLQ выбирайте classic/quorum queue; для истории событий и replay — Stream, если подходят его ограничения и клиентская модель. Streams не означают бесконечного хранения: при проектировании задайте retention и сценарий, когда consumer отстал за его пределы. [RabbitMQ Streams: consumption, retention, super streams](https://www.rabbitmq.com/docs/streams), [quorum queues](https://www.rabbitmq.com/docs/quorum-queues).
+При работе через AMQP 0-9-1 `ack` у stream участвует в продвижении потребления/кредитов, но **не удаляет запись из лога**. Для обычной очереди задач с точечным ack/requeue и DLQ выбирайте classic/quorum queue; для истории событий и replay — Stream, если подходят его ограничения и клиентская модель. Streams не означают бесконечного хранения: при проектировании задайте retention и сценарий, когда consumer отстал за его пределы. [RabbitMQ Streams: consumption, retention, super streams](https://www.rabbitmq.com/docs/4.3/streams), [quorum queues](https://www.rabbitmq.com/docs/4.3/quorum-queues).
+
+**После перезапуска** позицию чтения нужно задавать осознанно. У AMQP 0-9-1 consumer-а без `x-stream-offset` чтение начнётся со следующей записи после подписки, поэтому история, пришедшая до старта, не будет обработана. Stream protocol поддерживает сохранение offset у брокера через Stream plugin; это отдельный механизм, не результат обычного AMQP `ack`. Если сохранённый offset уже удалён retention, RabbitMQ привяжет запрос к началу доступного лога. Сравните ожидаемую позицию с первой доступной: Java Stream Client 1.12 предоставляет `Environment.queryStreamStats(stream).firstOffset()`. У пустого stream `firstOffset()` может выбросить `NoOffsetException`; этот исход нужно обработать отдельно. Если есть разрыв, восстановите состояние из снимка или пропущенные события из внешнего архива; одно лишь повторное подключение не вернёт удалённые записи. [RabbitMQ Streams: consuming и offset tracking](https://www.rabbitmq.com/docs/4.3/streams), [Java Stream Client API](https://github.com/rabbitmq/rabbitmq-stream-java-client/blob/v1.12.0/src/main/java/com/rabbitmq/stream/StreamStats.java).
 
 ---
 
