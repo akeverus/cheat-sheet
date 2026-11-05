@@ -1,0 +1,577 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/programming-languages/python/python-packaging-interview.json",
+    "theory": "cheatsheets/interview/programming-languages/python/python-packaging-interview.md"
+  },
+  "sha256": {
+    "mcq": "40f412c8417461b24bd345d6f22fcc7a9715950234bd427ccdab94dd8e88451c",
+    "theory": "98504a41ab86bf8b287d99c34a9d23efd86b1b33c81fde44e2359167cb218bc9"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hashes": {
+    "Q1:B0": {
+      "mcq": "378c9c982c2634a72447b45600dc3006ea0d3e3563151d71c97b140dc9308a3d",
+      "theory": "c122c93bf2d39e2ecce68b56644f7dec0e09ca94df492dcf97417c010ff23d64"
+    },
+    "Q2:B0": {
+      "mcq": "f39d15c1cf0b53b5f419bbce8da28da205948b66ec8437c6461a06d9db9dcc2b",
+      "theory": "b3df31ca7d3bfc145d977aa942fbbdb03c0eed52101e7104c8bd9407e035cbf0"
+    },
+    "Q3:B0": {
+      "mcq": "38bf819b63ce8fa3ba77b030456fce58d90924e50dc3c50abacd6ef265910322",
+      "theory": "7f9afd6524870a20a05d19c71ee5e511c2effd4aaa0cb333dec473348ab22d0e"
+    },
+    "Q4:B0": {
+      "mcq": "c2dcc0956b15fd75cb3cabff44692d09dabbb49369bd20f97b64facd6fbe9977",
+      "theory": "5538a0197470ce650ef09472bdc4878f72936b0dde86bad8e939e0f51a9931ce"
+    },
+    "Q5:B0": {
+      "mcq": "9ceac41feb1b21cf1d3b2539eec4728effdc00ecaa08a2e881d2f6dd167dff4a",
+      "theory": "3d79073269b0fdbab643b57560ea35ad37276995f9f4bf42d0a2613dab682d5e"
+    }
+  },
+  "preamble": "---\ntitle: \"Вопросы на собеседовании: Упаковка Python-приложений\"\ndescription: \"pyproject.toml, wheel и sdist, зависимости, повторяемая установка и код при запуске Python\"\ntags:\n  - interview\n  - programming-languages\n  - python-packaging-interview\ntype: \"interview\"\ndifficulty: \"intermediate\"\naliases:\n  - \"Python packaging interview\"\n  - \"Упаковка Python на собеседовании\"\nprerequisites:\n  - \"[[python-interview]]\"\nnext: []\nupdated: \"2026-11-02\"\n---\n# Вопросы на собеседовании: Упаковка Python-приложений\n\nОриентир — спецификации PyPA, документация pip и Python 3.15, проверенные 2026-11-02. Возможности установки групп и lock-файлов зависят от выбранного инструмента и его версии; сам формат проекта не фиксирует среду развёртывания.\n\n## Полезные ссылки\n\n- [Спецификация `pyproject.toml`](https://packaging.python.org/en/latest/specifications/pyproject-toml/) — сборка и metadata.\n- [Package formats](https://packaging.python.org/en/latest/discussions/package-formats/) — wheel и sdist.\n- [Dependency Groups](https://packaging.python.org/en/latest/specifications/dependency-groups/) — зависимости разработки.\n- [Repeatable Installs](https://pip.pypa.io/en/stable/topics/repeatable-installs/) — pinning, hashes и wheelhouse.\n- [Модуль `site`](https://docs.python.org/3.15/library/site.html) — код пакетов до запуска приложения.\n\n## Содержание\n\n- [Q1. Что разделяют build-system, project и tool в pyproject.toml?](#q1-что-разделяют-build-system-project-и-tool-в-pyprojecttoml)\n- [Q2. Чем wheel отличается от sdist при установке сервиса?](#q2-чем-wheel-отличается-от-sdist-при-установке-сервиса)\n- [Q3. Чем зависимости проекта, extras и dependency groups отличаются друг от друга?](#q3-чем-зависимости-проекта-extras-и-dependency-groups-отличаются-друг-от-друга)\n- [Q4. Как сделать установку зависимостей повторяемой в CI и deployment?](#q4-как-сделать-установку-зависимостей-повторяемой-в-ci-и-deployment)\n- [Q5. Что делают .pth и .start при запуске Python 3.15?](#q5-что-делают-pth-и-start-при-запуске-python-315)\n- [See also](#see-also)\n",
+  "theory": [
+    {
+      "q_number": 1,
+      "title": "Что разделяют build-system, project и tool в pyproject.toml?",
+      "line": 39,
+      "body": "\n`[build-system]` объявляет зависимости и backend **сборки** (`requires`, `build-backend`). `[project]` описывает metadata выпускаемого проекта: имя, версию или `dynamic`, поддерживаемый Python, runtime-зависимости, scripts. `[tool.<имя>]` хранит настройки конкретного инструмента, например тестового runner или formatter. Это разные контракты: build-зависимость не становится автоматически runtime-зависимостью сервиса.\n\n```toml\n[build-system]\nrequires = [\"setuptools>=77\"]\nbuild-backend = \"setuptools.build_meta\"\n\n[project]\nname = \"orders-api\"\nversion = \"1.0.0\"\nrequires-python = \">=3.11\"\ndependencies = [\"httpx>=0.27\"]\n```\n\nВерсия здесь иллюстративна, а поддержка конкретного backend и его параметров проверяется по его документации. `pyproject.toml` не является lock-файлом: диапазон `httpx>=0.27` допускает выбор разных релизов при разрешении зависимостей. Для старых проектов `setup.py` или `setup.cfg` могут оставаться действующими; формат не нужно менять только ради моды. [Спецификация `pyproject.toml`](https://packaging.python.org/en/latest/specifications/pyproject-toml/), [руководство PyPA](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/).\n\n"
+    },
+    {
+      "q_number": 2,
+      "title": "Чем wheel отличается от sdist при установке сервиса?",
+      "line": 57,
+      "body": "\n**Wheel** — собранный дистрибутив для установки; при нативных расширениях он может содержать скомпилированные файлы и иметь ограничения по Python ABI, ОС и архитектуре. **Sdist** — исходный архив с metadata; если подходящего wheel нет, pip может собрать wheel из sdist и затем установить его. Для этого нужны совместимый build backend и иногда системные компиляторы/библиотеки.\n\nПри развертывании сервиса проверяйте, есть ли wheel под целевой образ и версию Python. Переход с одного базового Linux-образа или архитектуры на другой может изменить набор подходящих wheels и привести к сборке из исходников. Сборка в CI и установка проверенного wheel уменьшают неожиданности на production-хосте; сам wheel всё равно требует проверки зависимостей и совместимости платформы. Универсальный pure-Python wheel может подходить многим платформам, но не всякий wheel универсален. [Package formats](https://packaging.python.org/en/latest/discussions/package-formats/), [platform compatibility tags](https://packaging.python.org/en/latest/specifications/platform-compatibility-tags/).\n\n"
+    },
+    {
+      "q_number": 3,
+      "title": "Чем зависимости проекта, extras и dependency groups отличаются друг от друга?",
+      "line": 63,
+      "body": "\n`[project].dependencies` попадают в metadata пакета как обычные runtime-зависимости. `[project.optional-dependencies]` задаёт **extras** для потребителя пакета, например `orders-api[postgres]`: они также входят в metadata и выбираются при установке. `[dependency-groups]` предназначены для локальных задач вроде тестов или линтера; данные групп **не входят в metadata собранного дистрибутива**.\n\n```toml\n[project]\nname = \"orders-api\"\nversion = \"1.0.0\"\ndependencies = [\"httpx>=0.27\"]\n\n[project.optional-dependencies]\npostgres = [\"psycopg>=3\"]\n\n[dependency-groups]\ntest = [\"pytest>=8\"]\n```\n\nНе переносите тестовые инструменты в runtime-зависимости только чтобы установить их в CI. Спецификация групп не задаёт единой команды установки: проверьте поддержку и синтаксис выбранного installer. Extras подходят, когда дополнительную функциональность пакета выбирает его пользователь; группа — когда зависимости нужны процессу разработки проекта. [Спецификация `pyproject.toml`](https://packaging.python.org/en/latest/specifications/pyproject-toml/#optional-dependencies), [Dependency Groups](https://packaging.python.org/en/latest/specifications/dependency-groups/).\n\n"
+    },
+    {
+      "q_number": 4,
+      "title": "Как сделать установку зависимостей повторяемой в CI и deployment?",
+      "line": 82,
+      "body": "\nДиапазоны версий в `pyproject.toml` описывают совместимость, но не фиксируют выбранное **полное дерево** зависимостей. Для повторяемой установки фиксируют прямые и транзитивные версии в файле, поддерживаемом installer, и воспроизводят его в чистой среде с оговорёнными версией Python и платформой. Для pip requirements можно добавить hashes архивов; это проверяет содержимое загружаемых файлов, а не только номера релизов. В режиме pip `--require-hashes` **каждая** прямая и транзитивная зависимость должна быть явно закреплена и иметь hash подходящего архива: частично заполненный файл не пройдёт установку. [pip Secure Installs](https://pip.pypa.io/en/stable/topics/secure-installs/#hash-checking-mode).\n\nЕсли сборка из sdist недопустима на сервере, заранее собирайте или сохраняйте подходящие wheels и устанавливайте из контролируемого wheelhouse. Он привязан к совместимым ОС, архитектуре и ABI. `pylock.toml` стандартизует формат lock-файла (PEP 751), но наличие стандарта не означает поддержку каждым installer: проверяйте инструмент и CI-команду. Ни pinning, ни hashes сами по себе не делают сборку всего приложения побитово воспроизводимой — важны входные артефакты, build backend и окружение.\n\n**Итог:** храните исходные ограничения отдельно от проверенного набора артефактов развёртывания и тестируйте установку в целевом образе. [pip Repeatable Installs](https://pip.pypa.io/en/stable/topics/repeatable-installs/), [`pylock.toml` specification](https://packaging.python.org/en/latest/specifications/pylock-toml/).\n\n"
+    },
+    {
+      "q_number": 5,
+      "title": "Что делают .pth и .start при запуске Python 3.15?",
+      "line": 90,
+      "body": "\nПри обычном запуске модуль `site` обрабатывает файлы в `site-packages` **до первой строки приложения**. Строки с путями в `name.pth` расширяют `sys.path`. Строки, начинающиеся с `import`, исторически исполняют код; в Python 3.15 они устарели, но пока выполняются, если рядом нет `name.start` с тем же именем. При наличии парного `.start` такие `import`-строки игнорируются, а строки с путями в `.pth` продолжают работать.\n\nНовый `name.start` (Python 3.15+) перечисляет точки входа вида `pkg.mod:callable`. `site` сначала применяет расширения путей из `.pth`, затем вызывает каждую функцию без аргументов. Вызов происходит при старте интерпретатора, даже если приложение не импортирует пакет. Например, строка `telemetry.bootstrap:initialize` в `telemetry.start` вызовет `initialize()` до входа в код сервиса. Одинаковые точки входа не удаляются как дубли и вызываются повторно; ошибка одного вызова печатается в `stderr`, после чего обрабатываются остальные. Поэтому startup hook должен учитывать повторный вызов и не рассчитывать, что его ошибка остановит запуск. [Документация `site`](https://docs.python.org/3.15/library/site.html#startup-entry-points-start-files).\n\nПри разборе неожиданного кода или задержки старта проверяйте установленные `.pth` и `.start` в целевом окружении вместе с зависимостями из Q4. `.start` делает точку запуска явной, но не изолирует исполняемый код. Опция `-S` отключает автоматический импорт `site` и эту обработку, одновременно меняя обычную настройку путей поиска модулей; это диагностическая граница, а не безусловное исправление. [Документация `site`](https://docs.python.org/3.15/library/site.html), [PEP 829](https://peps.python.org/pep-0829/).\n\n---\n\n## See also\n\n- [Основы Python](python-interview.md) — модель языка и зависимости во время выполнения.\n- [Тестирование в Python](python-testing-interview.md) — изоляция инструментов CI.\n- [Стратегии развёртывания](../../cicd/deployment-strategies-interview.md) — доставка проверенного артефакта.\n"
+    }
+  ],
+  "blocks": [
+    {
+      "q_number": 1,
+      "block_idx": 0,
+      "visible_question": "Что разделяют build-system, project и tool в pyproject.toml?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Что разделяют build-system, project и tool в pyproject.toml?",
+        "options": [
+          {
+            "text": "`build-system` задаёт метаданные и runtime-зависимости, `project` — backend и зависимости сборки, а `tool` — настройки инструментов.",
+            "correct": false,
+            "sections": {
+              "what_actually": "В `build-system` объявляют сборщик и его требования; зависимости установленного пакета относятся к `project.dependencies`.",
+              "source_of_confusion": "Зависимости сборки и зависимости работающего приложения воспринимают как один набор.",
+              "if_it_were_true": "Потребитель пакета получал бы build backend как runtime-зависимость, а сборщику пришлось бы искать настройки в `project`.",
+              "how_it_should_be": "Разнести требования сборки в `build-system`, а опубликованный контракт пакета — в `project`."
+            },
+            "order": 0,
+            "label": "A"
+          },
+          {
+            "text": "`build-system` задаёт backend и зависимости сборки, `project` — метаданные и runtime-зависимости, а `tool` — настройки инструментов.",
+            "correct": true,
+            "sections": {
+              "explanation": "Требования сборщика и зависимости установленного пакета имеют разные роли. Настройки линтера не становятся метаданными дистрибутива.",
+              "example": "setuptools в build-system не добавляется автоматически в runtime-зависимости orders-api.",
+              "when_to_apply": "Используйте при сборке и публикации Python-сервиса.",
+              "edge_cases": "pyproject.toml с диапазонами версий не фиксирует разрешённое дерево зависимостей.",
+              "related": "[[python-packaging-interview#Q1]] роли таблиц; [[python-packaging-interview#Q4]] фиксация окружения."
+            },
+            "order": 1,
+            "label": "B"
+          },
+          {
+            "text": "`build-system` задаёт backend и зависимости сборки, `project` — настройки инструментов, а `tool` — метаданные и runtime-зависимости.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Стандартная таблица `project` содержит метаданные пакета; настройки отдельных инструментов размещают под `tool.<имя>`.",
+              "source_of_confusion": "Конфигурацию проекта в целом смешивают с метаданными публикуемого дистрибутива.",
+              "if_it_were_true": "Установщику требовалось бы знать формат конкретного линтера, чтобы прочитать имя и зависимости пакета.",
+              "how_it_should_be": "Метаданные описывать в `project`, а конфигурацию линтера или форматтера — в его таблице `tool`."
+            },
+            "order": 2,
+            "label": "C"
+          },
+          {
+            "text": "`build-system` задаёт настройки инструментов, `project` — метаданные и runtime-зависимости, а `tool` — backend и зависимости сборки.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Backend сборки и его требования задаёт стандартная таблица `build-system`; `tool` не заменяет этот контракт.",
+              "source_of_confusion": "Сборщик тоже является инструментом, поэтому его обязательную конфигурацию ошибочно переносят в общий раздел инструментов.",
+              "if_it_were_true": "Стандартный build frontend не находил бы backend без знания произвольной таблицы `tool`.",
+              "how_it_should_be": "Использовать `build-system.requires` и `build-system.build-backend`; дополнительные настройки backend читать по его документации."
+            },
+            "order": 3,
+            "label": "D"
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 2,
+      "block_idx": 0,
+      "visible_question": "Чем wheel отличается от sdist при установке сервиса?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Чем wheel отличается от sdist при установке сервиса?",
+        "options": [
+          {
+            "text": "Wheel содержит исходники для сборки на целевой машине, а sdist — собранные файлы для установки без build backend.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Роли форматов обратные: wheel является собранным дистрибутивом, sdist — исходным архивом для сборки.",
+              "source_of_confusion": "Оба файла являются архивами пакета, поэтому этапы их подготовки и установки меняют местами.",
+              "if_it_were_true": "Перед установкой wheel требовалась бы сборка, а sdist уже содержал бы нужный платформенный результат.",
+              "how_it_should_be": "Выбирать совместимый wheel либо заранее обеспечить сборку из sdist и проверить полученный артефакт."
+            },
+            "order": 0,
+            "label": "A"
+          },
+          {
+            "text": "Wheel содержит собранные файлы для установки, а исходники из sdist установщик копирует без обращения к build backend.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Sdist не является готовым wheel: при обычной установке из исходного архива pip обращается к backend сборки.",
+              "source_of_confusion": "Распаковку исходников считают эквивалентной установке подготовленного дистрибутива.",
+              "if_it_were_true": "Наличие build backend, его зависимостей и системного компилятора не влияло бы на установку из sdist.",
+              "how_it_should_be": "Проверять build requirements и возможность сборки; для контролируемого deployment готовить wheel заранее."
+            },
+            "order": 1,
+            "label": "B"
+          },
+          {
+            "text": "Нативные расширения wheel компилируются при установке, а исходники из sdist проходят сборку выбранным build backend.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Нативные расширения уже собраны в подходящем wheel; компиляция относится к подготовке артефакта из исходников.",
+              "source_of_confusion": "Требования сборки нативного пакета переносят на установку готового wheel.",
+              "if_it_were_true": "Даже подходящий wheel с готовым расширением требовал бы компилятора на сервере.",
+              "how_it_should_be": "Проверять теги совместимости wheel; для sdist отдельно учитывать backend и возможную системную сборку."
+            },
+            "order": 2,
+            "label": "C"
+          },
+          {
+            "text": "Wheel содержит собранные файлы для совместимой платформы, а исходники из sdist позволяют build backend собрать такой артефакт.",
+            "correct": true,
+            "sections": {
+              "explanation": "Wheel переносит результат сборки, а sdist — исходники и сведения для его получения. Установщик может построить wheel из sdist.",
+              "example": "Нативный пакет на новом базовом образе может потребовать компилятора.",
+              "when_to_apply": "Проверяйте артефакты под Python, ОС и архитектуру deployment.",
+              "edge_cases": "Pure-Python wheel может быть универсальным, а wheel с нативным кодом — зависеть от ABI, ОС и архитектуры. Исходный архив можно выбрать явно, даже если wheel опубликован.",
+              "related": "См. Q2 и PyPA Package Formats."
+            },
+            "order": 3,
+            "label": "D"
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 3,
+      "block_idx": 0,
+      "visible_question": "Чем зависимости проекта, extras и dependency groups отличаются друг от друга?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Чем зависимости проекта, extras и dependency groups отличаются друг от друга?",
+        "options": [
+          {
+            "text": "Dependencies публикуют обычные зависимости, extras — выбираемые потребителем дополнения, а groups хранят локальные наборы вне metadata дистрибутива.",
+            "correct": true,
+            "sections": {
+              "explanation": "Группы не становятся частью metadata собранного пакета.",
+              "example": "postgres extra выбирается потребителем, test group помогает CI.",
+              "when_to_apply": "Используйте extras для вариантов пакета, groups для локальных задач.",
+              "edge_cases": "Команда установки groups определяется инструментом, а не самой спецификацией.",
+              "related": "См. Q3 и PyPA Dependency Groups."
+            },
+            "order": 0,
+            "label": "A"
+          },
+          {
+            "text": "Dependencies задают требования backend сборки, extras — выбираемые потребителем дополнения, а groups хранят локальные наборы вне metadata дистрибутива.",
+            "correct": false,
+            "sections": {
+              "what_actually": "`project.dependencies` описывает зависимости установленного пакета; требования backend сборки относятся к `build-system.requires`.",
+              "source_of_confusion": "Слово dependencies не связывают с таблицей, в которой оно объявлено.",
+              "if_it_were_true": "Библиотеки для работы приложения исчезли бы из опубликованного контракта и считались бы только требованиями сборщика.",
+              "how_it_should_be": "Разделять runtime-зависимости проекта и требования его сборки."
+            },
+            "order": 1,
+            "label": "B"
+          },
+          {
+            "text": "Dependencies публикуют обычные зависимости, extras хранят локальные наборы, а groups публикуют выбираемые потребителем дополнения.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Роли extras и groups перепутаны: extras входят в опубликованные метаданные, dependency groups в них не включаются.",
+              "source_of_confusion": "Оба механизма объединяют именованный набор требований, поэтому их считают взаимозаменяемыми.",
+              "if_it_were_true": "Потребитель wheel не мог бы запросить extra, зато получил бы интерфейс к локальной группе разработчика.",
+              "how_it_should_be": "Варианты функциональности для потребителя задавать через optional-dependencies, задачи разработки — через dependency-groups."
+            },
+            "order": 2,
+            "label": "C"
+          },
+          {
+            "text": "Dependencies публикуют обычные зависимости, extras — выбираемые потребителем дополнения, а groups добавляют локальные наборы в metadata дистрибутива.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Dependency groups не включаются в metadata собранного дистрибутива. Их выбирают локальные инструменты и процессы разработки.",
+              "source_of_confusion": "Расположение всех трёх механизмов в pyproject.toml принимают за одинаковые правила публикации.",
+              "if_it_were_true": "Тестовая группа становилась бы частью опубликованного интерфейса зависимостей пакета.",
+              "how_it_should_be": "Устанавливать группы средствами выбранного инструмента отдельно от runtime-контракта пакета."
+            },
+            "order": 3,
+            "label": "D"
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 4,
+      "block_idx": 0,
+      "visible_question": "Как сделать установку зависимостей повторяемой в CI и deployment?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Как сделать установку зависимостей повторяемой в CI и deployment?",
+        "options": [
+          {
+            "text": "Зафиксировать прямые зависимости в pyproject.toml, а транзитивные версии выбрать заново при каждом deployment.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Повторяемость требует фиксировать и транзитивные версии.",
+              "source_of_confusion": "Декларацию совместимости принимают за результат resolver.",
+              "if_it_were_true": "Один и тот же список прямых зависимостей однозначно задавал бы весь устанавливаемый набор, даже без фиксации транзитивных версий.",
+              "how_it_should_be": "Сохраняйте полное разрешённое дерево для CI и deployment."
+            },
+            "order": 0,
+            "label": "A"
+          },
+          {
+            "text": "Оставить диапазоны версий в pyproject.toml, поскольку build backend сохраняет одинаковые архивы при каждой сборке.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Диапазоны допускают новые релизы, а backend не фиксирует внешний index.",
+              "source_of_confusion": "Сборку собственного пакета путают с разрешением зависимостей.",
+              "if_it_were_true": "Тогда новый релиз зависимости не влиял бы на установку.",
+              "how_it_should_be": "Фиксируйте версии и нужные артефакты отдельно от диапазонов."
+            },
+            "order": 1,
+            "label": "B"
+          },
+          {
+            "text": "Фиксировать полное дерево версий и hashes артефактов, затем проверять установку на целевых Python и платформе.",
+            "correct": true,
+            "sections": {
+              "explanation": "Hashes проверяют загруженные файлы; wheelhouse может убрать сборку на сервере.",
+              "example": "В CI устанавливают весь закреплённый набор с подходящими hashes в чистый целевой образ и запускают тесты.",
+              "when_to_apply": "Применяйте для деплоя с контролируемыми зависимостями.",
+              "edge_cases": "Для pip `--require-hashes` нужно закрепить и захешировать каждую прямую и транзитивную зависимость, включая подходящие файлы для целевой платформы. Lock-формат и поддержка installer зависят от инструмента; wheelhouse может быть платформенным.",
+              "related": "[[python-packaging-interview#Q4]] pinning, hashes и wheelhouse; [[python-packaging-interview#Q2]] совместимость wheel."
+            },
+            "order": 2,
+            "label": "C"
+          },
+          {
+            "text": "Добавить hashes прямых зависимостей, поскольку они фиксируют транзитивные версии и делают wheelhouse переносимым.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Hashes относятся к конкретным файлам и не закрепляют сами по себе полное дерево.",
+              "source_of_confusion": "Контроль целостности архива путают с разрешением зависимостей.",
+              "if_it_were_true": "Тогда один hash прямого пакета закреплял бы все его зависимости.",
+              "how_it_should_be": "Фиксируйте транзитивные версии и проверяйте совместимость wheels."
+            },
+            "order": 3,
+            "label": "D"
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 5,
+      "block_idx": 0,
+      "visible_question": "Что делают .pth и .start при запуске Python 3.15?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Что делают `.pth` и `.start` при запуске Python 3.15?",
+        "options": [
+          {
+            "text": "Пути из `.pth` дополняют `sys.path`; `.start` вызывается при первом импорте пакета и подавляет `import`-строки парного `.pth`.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Точки входа `.start` вызываются при запуске интерпретатора, независимо от того, импортирует ли приложение этот пакет.",
+              "source_of_confusion": "Стартовую точку входа принимают за ленивую инициализацию при импорте.",
+              "if_it_were_true": "Неиспользуемый приложением пакет не мог бы добавить исполняемый код в фазу запуска интерпретатора.",
+              "how_it_should_be": "Проверять установленные `.start` при анализе старта, даже если соответствующего импорта нет в коде сервиса."
+            },
+            "order": 0,
+            "label": "A"
+          },
+          {
+            "text": "Пути из `.pth` дополняют `sys.path` без парного `.start`; при его наличии весь `.pth` пропускается и запускаются функции `.start`.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Совпадающий `.start` подавляет только исполняемые `import`-строки `.pth`; строки расширения путей продолжают применяться.",
+              "source_of_confusion": "Приоритет нового способа запуска переносят на всё содержимое старого файла.",
+              "if_it_were_true": "Добавление `.start` удаляло бы из поиска модулей каталоги, которые прежде подключал одноимённый `.pth`.",
+              "how_it_should_be": "Раздельно учитывать расширение путей из `.pth` и выполнение функций из `.start`."
+            },
+            "order": 1,
+            "label": "B"
+          },
+          {
+            "text": "Пути из `.pth` дополняют `sys.path`; `.start` вызывает функции при старте и подавляет `import`-строки одноимённого `.pth`.",
+            "correct": true,
+            "sections": {
+              "explanation": "С Python 3.15 новый файл содержит явные точки входа, а старые строки путей остаются действующими.",
+              "example": "`telemetry.start` со строкой `telemetry.bootstrap:initialize` вызывает функцию при старте; `telemetry.pth` по-прежнему может добавлять каталог.",
+              "when_to_apply": "Проверяйте эти файлы при аудите установленного образа и задержек запуска сервиса.",
+              "edge_cases": "Без парного `.start` старые `import`-строки `.pth` пока выполняются; `-S` отключает автоматический импорт `site` вместе с его настройкой путей. Дубли записей `.start` вызываются повторно, а ошибка одного hook печатается в stderr и не прекращает обработку остальных.",
+              "related": "См. Python Packaging Q5 и Q4 о проверке зависимостей в целевом окружении."
+            },
+            "order": 2,
+            "label": "C"
+          },
+          {
+            "text": "Пути из `.pth` дополняют `sys.path`; `.start` вызывает функции при старте вместе с `import`-строками одноимённого `.pth`.",
+            "correct": false,
+            "sections": {
+              "what_actually": "При одинаковом базовом имени `import`-строки `.pth` игнорируются в пользу точек входа `.start`; пути из `.pth` остаются.",
+              "source_of_confusion": "Два способа старта воспринимают как независимые обработчики, которые исполняются вместе.",
+              "if_it_were_true": "Перенесённый в `.start` код мог бы дополнительно выполниться из оставленной `import`-строки парного `.pth`.",
+              "how_it_should_be": "Проверять совпадение имён файлов и переносить стартовый код явно, сохраняя необходимые строки путей."
+            },
+            "order": 3,
+            "label": "D"
+          }
+        ]
+      }
+    }
+  ],
+  "open_issues": [],
+  "runtime_findings": [],
+  "checks": {
+    "content_review": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "factual_correctness": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "source_linkage": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sections_consistency": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sfpl": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "ansc": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "russian_readability": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "independent_review": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "blind_review": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "final_acceptance": {
+      "blocks": {
+        "Q1:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    }
+  },
+  "instructions": "Все A/B/C/D и sections. SFPL, ANSC, RU — отдельные вердикты. Дополнительные смысловые зависимости прочитать и указать в evidence. Сигналы не являются редакторской приёмкой."
+}
