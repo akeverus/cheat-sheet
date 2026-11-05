@@ -1200,104 +1200,205 @@ Scope определяется временем жизни control и поток
 
 ## Q36. (!) В чём разница между `mockito-core` и `mockito-inline`?
 
-Разница между этими артефактами — в `MockMaker`, движке создания моков. Исторически Mockito поставлялся в двух вариантах:
+Различайте **артефакт зависимости**, default MockMaker версии и фактически выбранный provider. В **Mockito 5.0** default основного mockito-core сменился с subclass на inline. Исторический mockito-inline помогал выбрать inline provider; имя артефакта само по себе не описывает все допустимые конфигурации core.
 
-| Артефакт | Возможности | Как работает |
-|----------|-------------|--------------|
-| `mockito-core` (до 5.0) | Только обычные классы и интерфейсы | Subclass mock maker (CGLib/ByteBuddy) |
-| `mockito-inline` | + `final`-классы, `static`-методы, конструкторы, `enum` | Inline mock maker через Java Agent и bytecode instrumentation |
-
-**Ключевое изменение в Mockito 5.0:** inline mock maker стал дефолтным в `mockito-core`. Начиная с 5.3.0 артефакт `mockito-inline` больше не публикуется — достаточно `mockito-core`:
+В исследованном **Mockito 5.11.0** для обычного inline-сценария достаточно core. Это воспроизведённая версия примера, не указание на последний релиз:
 
 ```xml
-<!-- Mockito 5+ — inline mock maker уже включён -->
 <dependency>
     <groupId>org.mockito</groupId>
     <artifactId>mockito-core</artifactId>
-    <version>5.14.0</version>
+    <version>5.11.0</version>
 </dependency>
 ```
 
-Для Mockito 3–4, если нужны `mockStatic`, `mockConstruction` или `final`-классы:
-```xml
-<dependency>
-    <groupId>org.mockito</groupId>
-    <artifactId>mockito-inline</artifactId>
-    <version>4.11.0</version>
-</dependency>
+Inline использует instrumentation и может сочетать её с subclassing; subclass maker создаёт наследника и не снимает ограничения final-переопределения. Default можно переопределить настройкой provider или конкретного мока. Пример локального выбора без изменения глобальных plugin-файлов:
+
+```java
+import org.junit.jupiter.api.Test;
+import org.mockito.MockMakers;
+import org.mockito.exceptions.base.MockitoException;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class MakerSelectionTest {
+    static final class Token { String value() { return "real"; } }
+
+    @Test
+    void defaultInlineCanMockOwnFinalType() {
+        Token token = mock(Token.class);
+        when(token.value()).thenReturn("stub");
+        assertEquals("stub", token.value());
+    }
+
+    @Test
+    void explicitSubclassHasDifferentLimits() {
+        assertThrows(MockitoException.class, () ->
+            mock(Token.class, withSettings().mockMaker(MockMakers.SUBCLASS)));
+    }
+}
 ```
 
-**За что платим** (компромиссы inline mock maker):
-- Медленнее subclass-версии — инструментирует классы через Java Agent в рантайме.
-- Может конфликтовать с Jacoco, JRebel и другими байткод-инструментами.
-- Примитивы и `private`-методы по-прежнему недоступны.
-- Нужна JVM с поддержкой Instrumentation API.
-
-**Итог для собеседования:** на Mockito 5+ отдельный `mockito-inline` не нужен — всё уже в `mockito-core`. Знать про `mockito-inline` стоит для проектов на Mockito 3–4.
+Этот тест предполагает default inline в указанной конфигурации. Возможности зависят от maker, типов, сочетания settings и JVM. Inline требует подходящей instrumentation-среды; отдельный старый артефакт не отменяет ограничений. Совместимость с другими agents и performance нужно проверять в своём окружении: универсальное «inline медленнее» здесь не измерялось. Для старых версий сверяйте поддерживаемый способ выбора provider с их документацией, а не переносите default Mockito 5 назад.
 
 ---
+
 
 ## Q37. Что такое `MockSettings` и какие опции он предоставляет?
 
-`MockSettings` — интерфейс для тонкой настройки мока в момент его создания, через `Mockito.mock(Class, MockSettings)` или билдер `withSettings()`. Нужен в нечастых, но конкретных ситуациях: задать стратегию ответов по умолчанию, сделать мок `Serializable`, навесить дополнительные интерфейсы или включить отладочный лог вызовов.
+`MockSettings` задаёт параметры **создания** через mock(Type.class, withSettings()...). Это не string-based API настройки метода по имени. Обычные ответы задают stubbing; defaultAnswer — обработчик незастабленного invocation, а не объект, автоматически возвращаемый вызывающему коду.
 
 ```java
+import org.junit.jupiter.api.Test;
+import org.mockito.exceptions.base.MockitoException;
+import java.io.Serializable;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-List<String> customMock = mock(List.class, withSettings()
-    .name("cartItems")                       // имя в сообщениях об ошибках
-    .defaultAnswer(RETURNS_SMART_NULLS)      // ответ по умолчанию
-    .serializable()                          // mock реализует Serializable
-    .extraInterfaces(Comparable.class)       // дополнительные интерфейсы
-    .verboseLogging()                        // лог всех вызовов в stdout
-    .stubOnly()                              // mock не хранит историю вызовов
-);
+class ConfiguredMockTest {
+    interface Service { String lookup(String key); }
+    interface Marker {}
+
+    @Test
+    void configuresNameAndExtraInterfaces() {
+        Service service = mock(Service.class, withSettings()
+            .name("catalog").defaultAnswer(RETURNS_DEFAULTS)
+            .extraInterfaces(Marker.class).serializable());
+        assertTrue(service instanceof Marker);
+        assertTrue(service instanceof Serializable);
+        assertEquals("catalog", mockingDetails(service).getMockCreationSettings()
+            .getMockName().toString());
+        when(service.lookup("known")).thenReturn("value");
+        assertEquals("value", service.lookup("known"));
+        verify(service).lookup("known");
+    }
+
+    @Test
+    void stubOnlyKeepsStubbingButNotVerificationHistory() {
+        Service service = mock(Service.class, withSettings().stubOnly());
+        when(service.lookup("known")).thenReturn("value");
+        assertEquals("value", service.lookup("known"));
+        assertTrue(mockingDetails(service).getInvocations().isEmpty());
+        assertThrows(MockitoException.class, () -> verify(service).lookup("known"));
+    }
+
+    @Test
+    void executesCustomDefaultAnswerUnlessStubMatches() {
+        Service service = mock(Service.class, withSettings().defaultAnswer(invocation -> {
+            if (invocation.getMethod().getName().equals("lookup")) {
+                return "missing:" + invocation.getArgument(0);
+            }
+            return RETURNS_DEFAULTS.answer(invocation);
+        }));
+        assertEquals("missing:other", service.lookup("other"));
+        when(service.lookup("known")).thenReturn("value");
+        assertEquals("value", service.lookup("known"));
+    }
+}
 ```
 
-Основные опции:
+| Опция | Что задаёт |
+|-------|------------|
+| name | Имя для диагностики |
+| defaultAnswer | Общую политику незастабленных вызовов |
+| extraInterfaces / serializable | Дополнительные интерфейсы / поддержку сериализуемого мока в допустимой конфигурации |
+| verboseLogging | Логирование invocations для отладки |
+| stubOnly | Отказ от записи истории; обычный verify недоступен |
+| spiedInstance / useConstructor | Исходный экземпляр для spy / попытку использовать конструктор; см. Q42 |
+| strictness / mockMaker | Локальный выбор строгости / maker; см. Q28/Q36 |
 
-| Метод | Назначение |
-|-------|-----------|
-| `name(String)` | Имя мока в ошибках верификации |
-| `defaultAnswer(Answer)` | Стратегия ответов на невзятые в заглушки вызовы |
-| `serializable()` | Для тестов, требующих `Serializable`-зависимости (например, Spark, `HttpSession`) |
-| `extraInterfaces(Class...)` | Мок реализует несколько интерфейсов |
-| `verboseLogging()` | Для отладки: выводит в консоль все вызовы мока |
-| `stubOnly()` | Оптимизация — mock не запоминает вызовы, `verify()` не работает |
-| `spiedInstance(obj)` | Явное указание объекта, вокруг которого создаётся spy |
-| `strictness(Strictness)` | Локальное управление strict stubbing |
-
-На практике `withSettings()` нужен редко: в 99% тестов хватает обычного `mock()`. Держите его в уме для отладки (`verboseLogging()`, `RETURNS_SMART_NULLS`) и для legacy-кода, требующего `Serializable`-зависимостей.
+Не собирайте все опции в один мок без цели. Serializability marker не доказывает, что произвольный граф stubs, Answers и аргументов успешно сериализуется. Возможность extraInterfaces и других сочетаний зависит от типа и maker. SpiedInstance не означает автоматическую делегацию тому же Java-объекту; состояние и default Answer нужно учитывать отдельно (Q42). Доля тестов, которым нужны settings, здесь не измеряется.
 
 ---
+
 
 ## Q38. Какие встроенные `Answer` доступны в Mockito?
 
-`Answer` определяет, что мок возвращает на **незастабленные** вызовы. Mockito предоставляет готовый набор стратегий в enum `org.mockito.Answers` — их передают вторым аргументом в `mock()`:
+`Answer` — обработчик invocation: он может использоваться как defaultAnswer или в thenAnswer. Встроенный enum Answers даёт готовые стратегии. Для default поведения незастабленных вызовов в **Mockito 5.11.0** важны следующие границы:
 
-| Значение | Поведение |
-|----------|-----------|
-| `RETURNS_DEFAULTS` | Дефолт: `null`, `0`, `false`, пустые коллекции и `Optional.empty()` |
-| `RETURNS_SMART_NULLS` | Вместо `null` возвращает `SmartNull` — бросает `SmartNullPointerException` с точкой настройки |
-| `RETURNS_MOCKS` | Возвращает пустые значения; если вернуть нельзя — возвращает mock того же типа |
-| `RETURNS_DEEP_STUBS` | Рекурсивно возвращает моки — для цепочек `a.getB().getC()` |
-| `CALLS_REAL_METHODS` | Вызывает реальные методы (аналог spy для интерфейсов с `default`-методами) |
-| `RETURNS_SELF` | Для fluent builder-ов: mock возвращает себя для цепочек |
+| Стратегия | Поведение |
+|-----------|-----------|
+| RETURNS_DEFAULTS | Подходящие defaults: 0/false, пустые коллекции/Optional, null для ряда ссылочных результатов |
+| RETURNS_SMART_NULLS | Сначала обычные empty-ответы, затем SmartNull для подходящего ссылочного типа; не каждый результат становится SmartNull |
+| RETURNS_MOCKS | Сначала empty-ответы, иначе при возможности mock возвращаемого типа; переиспользование всей цепочки не гарантируется |
+| RETURNS_DEEP_STUBS | Создаёт/переиспользует подходящие промежуточные моки; ограничения типов сохраняются (Q27) |
+| CALLS_REAL_METHODS | Для доступного конкретного тела вызывает реальный метод; abstract-метод получает стандартный ответ |
+| RETURNS_SELF | Возвращает mock для подходящего совместимого типа, но в 5.11.0 отдельно исключён Object; иначе default |
 
 ```java
-// SMART_NULLS — лучшее сообщение об ошибке при обращении к не-застабленному методу
-UserService mock = mock(UserService.class, RETURNS_SMART_NULLS);
-User u = mock.findById(1L);  // вернёт SmartNull
-u.getName();  // SmartNullPointerException: "You have a NullPointerException at UserServiceTest.java:42"
+import org.junit.jupiter.api.Test;
+import org.mockito.exceptions.verification.SmartNullPointerException;
+import java.util.List;
+import java.util.Optional;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-// RETURNS_SELF — для билдеров
-StringBuilder sb = mock(StringBuilder.class, RETURNS_SELF);
-sb.append("a").append("b").append("c");  // каждый append() вернёт sb
+class AnswersExampleTest {
+    interface Child { String name(); }
+    interface Data {
+        int count(); String text(); List<String> items();
+        Optional<String> maybe(); Child child();
+    }
+    interface Builder { Builder name(String value); String build(); Object objectResult(); }
+    interface Greeter {
+        default String greeting() { return "real"; }
+        String abstractValue();
+    }
+
+    @Test
+    void returnsStandardDefaults() {
+        Data data = mock(Data.class, RETURNS_DEFAULTS);
+        assertEquals(0, data.count());
+        assertNull(data.text());
+        assertTrue(data.items().isEmpty());
+        assertEquals(Optional.empty(), data.maybe());
+        assertNull(data.child());
+    }
+
+    @Test
+    void smartNullIsDifferentFromOrdinaryEmptyValue() {
+        Data data = mock(Data.class, RETURNS_SMART_NULLS);
+        assertTrue(data.items().isEmpty());
+        assertEquals("", data.text());
+        Child child = data.child();
+        assertTrue(mockingDetails(child).isMock());
+        assertTrue(child.toString().contains("SmartNull"));
+        assertThrows(SmartNullPointerException.class, child::name);
+    }
+
+    @Test
+    void distinguishesMocksFromDeepStubReuse() {
+        Data ordinary = mock(Data.class, RETURNS_MOCKS);
+        Child first = ordinary.child();
+        assertTrue(mockingDetails(first).isMock());
+        assertNotSame(first, ordinary.child());
+        Data deep = mock(Data.class, RETURNS_DEEP_STUBS);
+        assertSame(deep.child(), deep.child());
+    }
+
+    @Test
+    void selfAppliesOnlyToSelectedReturnTypes() {
+        Builder builder = mock(Builder.class, RETURNS_SELF);
+        assertSame(builder, builder.name("a").name("b"));
+        assertNull(builder.build());
+        assertNull(builder.objectResult()); // Object отдельно исключён в 5.11.0
+    }
+
+    @Test
+    void realMethodNeedsAnAvailableBody() {
+        Greeter greeter = mock(Greeter.class, CALLS_REAL_METHODS);
+        assertEquals("real", greeter.greeting());
+        assertNull(greeter.abstractValue());
+    }
+}
 ```
 
-На практике чаще всего используется `RETURNS_DEEP_STUBS` и `RETURNS_SMART_NULLS`. Остальные — для специальных случаев.
+SmartNull помогает диагностировать обращение к незастабленной зависимости, но не является обычным заполненным объектом; его диагностический toString отличается от вызова бизнес-метода. Для неподдерживаемого возвращаемого типа по-прежнему возможен null.
+
+CALLS_REAL_METHODS не инициализирует поля автоматически и сам по себе не запускает конструктор мока: реальный код может упасть на незаполненном состоянии (Q42). Выбирайте стратегию по контракту теста; использование deep stubs или SmartNull не объявляется самым частым либо универсально лучшим.
 
 ---
+
 
 ## Q39. (!) Когда выбирать `ArgumentCaptor`, а когда `argThat()`?
 
