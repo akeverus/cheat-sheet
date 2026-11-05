@@ -471,7 +471,7 @@ class ArchitectureTest { /* ... */ }
 class IsolatedArchTest { /* ... */ }
 ```
 
-Пользовательская `ImportOption` должен стабильно отвечать для одной `Location`: состояние экземпляра фильтра или внешнего файла не является отдельной частью общего ключа. Иначе один и тот же тип фильтра может дать несовместимые результаты при переиспользовании. [ImportOption contract 1.3.0](https://github.com/TNG/ArchUnit/blob/v1.3.0/archunit/src/main/java/com/tngtech/archunit/core/importer/ImportOption.java).
+Пользовательская `ImportOption` должна стабильно отвечать для одной `Location`: состояние экземпляра фильтра или внешнего файла не является отдельной частью общего ключа. Иначе один и тот же тип фильтра может дать несовместимые результаты при переиспользовании. [ImportOption contract 1.3.0](https://github.com/TNG/ArchUnit/blob/v1.3.0/archunit/src/main/java/com/tngtech/archunit/core/importer/ImportOption.java).
 
 Кэш не хранит готовый результат каждого `ArchRule`: одинаковый импорт не отменяет повторное выполнение условия или поиска циклов. Данные также не являются общим кэшем между отдельными процессами CI.
 
