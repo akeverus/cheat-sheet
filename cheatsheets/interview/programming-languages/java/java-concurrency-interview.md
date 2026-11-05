@@ -833,18 +833,26 @@ classDiagram
 
 ## Q29. (!) Какие реализации `ExecutorService` есть в стандартной библиотеке?
 
-Готовые пулы создаются фабричными методами `Executors` — каждый под свой профиль нагрузки:
+Основные публичные реализации — `ThreadPoolExecutor`, `ScheduledThreadPoolExecutor` и `ForkJoinPool`. Фабрики `Executors` возвращают `ExecutorService`/`ScheduledExecutorService`; конкретный объект может быть обёрткой, а не доступным для перенастройки пулом.
 
-| Метод | Пул | Очередь | Когда использовать |
-|---|---|---|---|
-| `newFixedThreadPool(n)` | Фиксированный n потоков | `LinkedBlockingQueue` (unbounded) | Предсказуемая нагрузка |
-| `newCachedThreadPool()` | 0 → ∞ потоков (60s idle) | `SynchronousQueue` | Много коротких задач |
-| `newSingleThreadExecutor()` | 1 поток | `LinkedBlockingQueue` | Последовательное выполнение |
-| `newScheduledThreadPool(n)` | Фиксированный n | `DelayedWorkQueue` | Периодические задачи |
-| `newWorkStealingPool()` | `ForkJoinPool` | Deque per thread | Рекурсивные задачи |
-| `newVirtualThreadPerTaskExecutor()` | Virtual threads | Нет пула | I/O-bound задачи (Java 21) |
+| Фабрика Java 21 | Контракт и ограничения |
+|---|---|
+| `newFixedThreadPool(n)` | Не более `n` одновременно работающих задач; ожидающие задачи попадают в неограниченную очередь. Потоки создаются по мере необходимости |
+| `newCachedThreadPool()` | Переиспользует свободные потоки и создаёт новые при необходимости; заданного небольшого предела параллелизма нет |
+| `newSingleThreadExecutor()` | Последовательное выполнение, не более одной активной задачи; исполнитель нельзя перенастроить на несколько потоков |
+| `newScheduledThreadPool(n)` | Отложенное и периодическое выполнение; `n` — `corePoolSize`, а очередь не ограничена |
+| `newWorkStealingPool(p)` | Work-stealing с целевым параллелизмом `p`; порядок выполнения отправленных задач не гарантирован |
+| `newVirtualThreadPerTaskExecutor()` | Отдельный virtual thread на задачу, Java 21; это не пул переиспользуемых virtual threads |
+| `newThreadPerTaskExecutor(factory)` | Отдельный поток указанной фабрики на задачу; число создаваемых потоков не ограничено самим исполнителем |
 
-**Подводный камень фабричных методов.** `newFixedThreadPool()` использует неограниченную очередь: при перегрузке задачи копятся бесконечно → `OutOfMemoryError`. `newCachedThreadPool()` плодит потоки без верхнего предела → исчерпание ресурсов ОС. Поэтому в продакшене обычно создают `ThreadPoolExecutor` напрямую: с ограниченной очередью (back-pressure) и явным `RejectedExecutionHandler`, чтобы перегрузка приводила к контролируемому отказу, а не к падению JVM.
+Сигнатуры и гарантии — в [Executors Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Executors.html). `newSingleThreadScheduledExecutor()` предоставляет однопоточное планирование. Планировщик использует относительные задержки и интервалы; это не API календарных cron-выражений.
+
+**Детали OpenJDK 21+35.** Fixed/single используют `LinkedBlockingQueue`; cached — `SynchronousQueue`, максимум `Integer.MAX_VALUE` и keep-alive 60 секунд. `newWorkStealingPool()` без аргумента берёт число доступных процессоров как целевой параллелизм и создаёт `ForkJoinPool` с `asyncMode=true`; это отличается от `new ForkJoinPool()` с обычным режимом. См. [исходник Executors](https://github.com/openjdk/jdk/blob/jdk-21%2B35/src/java.base/share/classes/java/util/concurrent/Executors.java). Фабрики `newForkJoinPool`, `newDirectExecutor` и `newCachedScheduledThreadPool` в этом API отсутствуют.
+
+Неограниченная очередь может накапливать backlog, а cached/per-task исполнители — создавать слишком много потоков для доступных ресурсов. Это **риски при перегрузке**, а не гарантия OOM при определённом числе задач. Если требуется ограничить очередь и активность, настройте `ThreadPoolExecutor` и политику отказа; ограниченная очередь сама по себе не заставляет отправителя ждать. См. [политики ThreadPoolExecutor](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html).
+
+У `ScheduledThreadPoolExecutor` изменение `maximumPoolSize` практически не управляет параллелизмом: используется `corePoolSize` с неограниченной очередью. Ошибка одного периодического задания подавляет его следующие выполнения, а не останавливает весь планировщик. См. [ScheduledThreadPoolExecutor](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ScheduledThreadPoolExecutor.html).
+
 
 ## Q30. Разница между `shutdown()`, `shutdownNow()` и `awaitTermination()`
 
@@ -1016,30 +1024,39 @@ public class FutureOutcomeExample {
 
 ## Q34. (!) Что такое `CompletableFuture`?
 
-`CompletableFuture` (Java 8+) — это `Future`, к которому можно прикреплять колбэки. Он решает все три проблемы обычного `Future`: позволяет описать обработку результата **без блокировки** (через `then*`-методы), строить цепочки и комбинировать несколько асинхронных операций, а также декларативно обрабатывать ошибки. По сути это построитель асинхронного пайплайна — аналог `Stream API`, но во времени:
+`CompletableFuture<T>` реализует **`Future<T>` и `CompletionStage<T>`**. Помимо чтения/ожидания результата, он позволяет явно завершить вычисление (`complete`, `completeExceptionally`) и связать продолжения. Это не наследник `FutureTask` и не реализация `Callable` или `CompletionService`.
+
+| Категория | Примеры |
+|---|---|
+| Создание и завершение | `supplyAsync(Supplier)`, `runAsync(Runnable)`, `completedFuture`, `complete` |
+| Преобразование и композиция | `thenApply`, `thenCompose`, `thenCombine` |
+| Потребление | `thenAccept`, `thenRun` |
+| Ошибки и наблюдение | `exceptionally`, `handle`, `whenComplete` |
+| Ожидание группы | `allOf`, `anyOf` |
+| Timeout, Java 9+ | `orTimeout`, `completeOnTimeout` |
+
+`supplyAsync` принимает **`Supplier`**, а не переменную типа `Callable`; при необходимости адаптируйте вызов и обработку checked exceptions. Контракт стадий: [CompletionStage Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletionStage.html).
 
 ```java
-CompletableFuture.supplyAsync(() -> fetchUserFromDB(userId))    // async
-    .thenApply(user -> enrichWithProfile(user))                  // transform
-    .thenAccept(user -> sendNotification(user))                  // consume
-    .exceptionally(ex -> {                                        // error handling
-        log.error("Failed", ex);
-        return null;
-    });
+import java.util.concurrent.*;
+
+public class CompletableStageExample {
+    public static void main(String[] args) {
+        try (ExecutorService pool = Executors.newSingleThreadExecutor()) {
+            CompletableFuture<String> message = CompletableFuture
+                .supplyAsync(() -> "user-7", pool)
+                .thenApply(String::toUpperCase)
+                .exceptionally(error -> "UNAVAILABLE");
+            System.out.println(message.join()); // USER-7
+        }
+    }
+}
 ```
 
-Ключевые методы:
+Продолжения позволяют описать обработку без ожидания через `get/join` на каждом шаге. Это не гарантия, что их функции неблокирующие. Методы без `Async` **могут** выполняться в завершающем потоке или сразу в вызывающем коде для готового исхода. Async-варианты без явного executor обычно используют commonPool; при его параллелизме меньше двух стандартная реализация создаёт поток на задачу. Явный executor сам определяет способ исполнения. См. [политику CompletableFuture Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html).
 
-| Категория | Методы |
-|---|---|
-| Создание | `supplyAsync()`, `runAsync()`, `completedFuture()` |
-| Трансформация | `thenApply()`, `thenCompose()`, `thenCombine()` |
-| Потребление | `thenAccept()`, `thenRun()` |
-| Ошибки | `exceptionally()`, `handle()`, `whenComplete()` |
-| Комбинирование | `allOf()`, `anyOf()` |
-| Async-варианты | `thenApplyAsync()`, `thenAcceptAsync()` |
+Исключение стадии сохраняется в цепочке: `join()` сообщает о нём через `CompletionException`, `get()` — через `ExecutionException`; отмена имеет отдельную семантику. Возврат обычного значения из `exceptionally/handle` превращает ошибку в успешный fallback. Планирование, обработку ошибок и остановку исходной работы нужно выбирать отдельно; подробнее в Q35–Q37 и Q52. Дополнительные примеры — в [вопросах по Java 8](java-8-interview.md).
 
-**Где выполняется код.** По умолчанию `*Async`-методы используют `ForkJoinPool.commonPool()`; обычные `then*` (без `Async`) выполняются в том потоке, который завершил предыдущий этап. Поскольку `commonPool` мал и общий, для блокирующих операций передавайте свой `Executor` вторым аргументом — иначе рискуете застопорить весь пул. Подробнее об асинхронных API в [вопросах по Java 8](java-8-interview.md).
 
 ## Q35. (!) Разница между `thenApply()`, `thenCompose()` и `thenCombine()`
 
@@ -1572,47 +1589,78 @@ public class ForkJoinDetailExample {
 
 ## Q52. (!) Как построить сложную цепочку `CompletableFuture` с обработкой ошибок?
 
-Типовой продакшен-паттерн — пустить несколько независимых запросов параллельно, собрать результат и при этом по-разному реагировать на ошибки: один источник критичен (его падение валит всё), другие — нет (их можно подменить пустым значением). Это решается комбинацией `supplyAsync` + `thenCombine` + точечных `exceptionally`/`orTimeout`/`handle`:
+Один из вариантов — явно разделить запуск запросов, политику отдельных веток и сборку результата. В примере пользователь обязателен; ошибки или timeout заказов/отзывов заменяются пустыми списками. Это выбранная политика приложения, а не универсальное требование `CompletableFuture`.
 
 ```java
-CompletableFuture<UserProfile> loadProfile(long userId) {
-    // Параллельные запросы
-    CompletableFuture<User> userFuture = CompletableFuture
-        .supplyAsync(() -> userRepo.findById(userId))
-        .orTimeout(2, TimeUnit.SECONDS);
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.function.Supplier;
 
-    CompletableFuture<List<Order>> ordersFuture = CompletableFuture
-        .supplyAsync(() -> orderRepo.findByUser(userId))
-        .exceptionally(ex -> List.of()); // частичный fallback
+public class ProfilePipelineExample {
+    record User(long id) {}
+    record PartialProfile(User user, List<String> orders) {}
+    record UserProfile(User user, List<String> orders, List<String> reviews) {}
+    static class ProfileLoadException extends RuntimeException {
+        ProfileLoadException(Throwable cause) { super("profile load failed", cause); }
+    }
 
-    CompletableFuture<List<Review>> reviewsFuture = CompletableFuture
-        .supplyAsync(() -> reviewRepo.findByUser(userId))
-        .exceptionally(ex -> List.of()); // не критично
+    static Throwable unwrap(Throwable error) {
+        while (error instanceof CompletionException && error.getCause() != null) {
+            error = error.getCause();
+        }
+        return error;
+    }
 
-    // Дожидаемся всех и собираем профиль
-    return userFuture
-        .thenCombine(ordersFuture, (user, orders) -> new PartialProfile(user, orders))
-        .thenCombine(reviewsFuture, (partial, reviews) ->
-            new UserProfile(partial.user(), partial.orders(), reviews))
-        .handle((profile, ex) -> {
-            if (ex != null) throw new ProfileLoadException("userId=" + userId, ex);
-            return profile;
-        });
+    static CompletableFuture<UserProfile> loadProfile(
+            Executor executor, Supplier<User> loadUser,
+            Supplier<List<String>> loadOrders, Supplier<List<String>> loadReviews) {
+        CompletableFuture<User> user = CompletableFuture.supplyAsync(loadUser, executor)
+            .orTimeout(2, TimeUnit.SECONDS);
+        CompletableFuture<List<String>> orders = CompletableFuture.supplyAsync(loadOrders, executor)
+            .completeOnTimeout(List.of(), 1, TimeUnit.SECONDS)
+            .exceptionally(error -> List.of());
+        CompletableFuture<List<String>> reviews = CompletableFuture.supplyAsync(loadReviews, executor)
+            .completeOnTimeout(List.of(), 1, TimeUnit.SECONDS)
+            .exceptionally(error -> List.of());
+
+        return user.thenCombine(orders, PartialProfile::new)
+            .thenCombine(reviews, (part, items) ->
+                new UserProfile(part.user(), part.orders(), items))
+            .orTimeout(3, TimeUnit.SECONDS) // граница ожидания всей сборки
+            .handle((profile, error) -> {
+                if (error != null) throw new ProfileLoadException(unwrap(error));
+                return profile;
+            });
+    }
+
+    public static void main(String[] args) {
+        try (ExecutorService pool = Executors.newFixedThreadPool(3)) {
+            UserProfile profile = loadProfile(pool, () -> new User(7),
+                () -> { throw new IllegalStateException("orders unavailable"); },
+                () -> List.of("ok")).join();
+            System.out.println(profile.user().id() + ":" + profile.orders().size()
+                + ":" + profile.reviews().size()); // 7:0:1
+        }
+    }
 }
 ```
 
-**Ключевые методы цепочки:**
+`thenCombine` не обязан завершаться сразу после ошибки одного входа: другая ветка может ещё ожидаться. Поэтому timeout только `user` не ограничивал бы всю сборку при бесконечном ожидании остальных входов. В примере ограничены отдельные ветки и итоговая стадия. `orTimeout` завершает **тот же Future** с ошибкой, а `completeOnTimeout` — заданным значением; они не прерывают supplier и не ограничивают ожидание закрытия executor. Настройки времени здесь иллюстративны. См. [контракт timeout-методов](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html#orTimeout(long,java.util.concurrent.TimeUnit)) и [реализацию OpenJDK 21+35](https://github.com/openjdk/jdk/blob/jdk-21%2B35/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java).
 
-| Метод | Принимает | Возвращает | Запускает в |
-|---|---|---|---|
-| `thenApply(fn)` | `T` | `U` | том же потоке |
-| `thenApplyAsync(fn)` | `T` | `U` | `ForkJoinPool` |
-| `thenCompose(fn)` | `T` | `CompletableFuture<U>` | flatMap для CF |
-| `thenCombine(cf, fn)` | `T`, `U` | `V` | оба завершились |
-| `exceptionally(fn)` | `Throwable` | `T` | только при ошибке |
-| `handle(fn)` | `T`, `Throwable` | `U` | всегда |
-| `whenComplete(fn)` | `T`, `Throwable` | `T` | всегда, не меняет результат |
-| `orTimeout(n, unit)` | — | `CF<T>` | таймаут → `TimeoutException` |
+В таблице `CF<X>` означает `CompletableFuture<X>`; не путайте возвращаемое **функцией значение** с возвращаемой **методом стадией**.
+
+| Метод | Функция/назначение | Результат метода |
+|---|---|---|
+| `thenApply` / `thenApplyAsync` | `T → U`; преобразование значения | Новый `CF<U>` |
+| `thenCompose` | `T → CompletionStage<U>`; связывание стадий | Новый `CF<U>` |
+| `thenCombine(other, fn)` | `(T, U) → V`; два нормальных исхода | Новый `CF<V>` |
+| `exceptionally` | `Throwable → T`; fallback при ошибке | Новый `CF<T>` |
+| `handle` | `(T, Throwable) → U`; успех или ошибка | Новый `CF<U>` |
+| `whenComplete` | Наблюдение исхода без подмены значения | Новый `CF<T>`; ошибка наблюдателя тоже может повлиять на исход |
+| `orTimeout` / `completeOnTimeout` | Ошибка/значение после timeout | Тот же `CF<T>` |
+
+Поток продолжения определяется политикой исполнения (Q34/Q35), а не его типом результата. Использование commonPool само по себе не ошибка: отдельный исполнитель выбирают по требованиям к изоляции и характеру нагрузки (Q29). `allOf` может заменить барьер для группы, но возвращает `CF<Void>` и сам не собирает профиль. Сначала задайте требования к fallback и ошибкам, затем выберите композицию; [CompletionStage](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletionStage.html) не требует одного единственного архитектурного рецепта.
+
 
 ## Q53. Что такое `StampedLock` и когда его использовать вместо `ReadWriteLock`?
 
