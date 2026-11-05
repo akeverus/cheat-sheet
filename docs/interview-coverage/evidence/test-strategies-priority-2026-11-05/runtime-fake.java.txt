@@ -1,0 +1,22 @@
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+interface OrderRepository {
+    void save(long id, String description);
+    Optional<String> findById(long id);
+}
+
+class InMemoryOrderRepository implements OrderRepository {
+    private final Map<Long, String> store = new HashMap<>();
+
+    @Override
+    public void save(long id, String description) {
+        store.put(id, description);
+    }
+
+    @Override
+    public Optional<String> findById(long id) {
+        return Optional.ofNullable(store.get(id));
+    }
+}

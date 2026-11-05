@@ -1,0 +1,53 @@
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+@ExtendWith(MockitoExtension.class)
+class RolesExamplesTest {
+ static final class User { final String name; User(String n){name=n;} String getName(){return name;} }
+ record UserProfile(String name) {}
+ interface UserRepository { Optional<User> findById(long id); }
+ interface EmailService { void sendConfirmation(String email); }
+ record Order(String customerEmail){String getCustomerEmail(){return customerEmail;}}
+ static final class ProfileService { final UserRepository repo; ProfileService(UserRepository r){repo=r;} UserProfile load(long id){return new UserProfile(repo.findById(id).orElseThrow().getName());} }
+ static final class OrderService { final EmailService email; OrderService(EmailService e){email=e;} void placeOrder(Order o){email.sendConfirmation(o.getCustomerEmail());} }
+ static class UserService { final UserRepository repo; int cacheCalls; UserService(UserRepository r){repo=r;} User loadFromCache(long id){cacheCalls++;throw new IllegalStateException("real cache unavailable");} String realName(){return "real";} }
+ @Mock UserRepository userRepository;
+ @Mock EmailService emailService;
+ final UserRepository realRepo=id->Optional.empty();
+ final User cachedUser=new User("Cached");
+ final User testUser=new User("Ada");
+ final Order order=new Order("test@example.com");
+ ProfileService profileService; OrderService orderService;
+@Spy
+UserService userService = new UserService(realRepo);
+
+
+ @BeforeEach void setup(){profileService=new ProfileService(userRepository);orderService=new OrderService(emailService);}
+ @Test void exactStubAndMockFragment(){
+// Stub: управляем входом, затем проверяем результат работы SUT.
+when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+UserProfile profile = profileService.load(1L);
+assertEquals(testUser.getName(), profile.name());
+
+// Mock: проверяем значимый внешний эффект работы SUT.
+orderService.placeOrder(order);
+verify(emailService).sendConfirmation(order.getCustomerEmail());
+ }
+ @Test void exactSpyFragmentAvoidsRealCallDuringStubbing(){
+ // doReturn задаёт результат без вызова настоящего loadFromCache при настройке.
+doReturn(cachedUser).when(userService).loadFromCache(1L);
+ assertEquals(0,userService.cacheCalls);
+ assertSame(cachedUser,userService.loadFromCache(1L));
+ assertEquals(0,userService.cacheCalls);
+ assertEquals("real",userService.realName());
+ }
+ @Test void fakeMissingValue(){assertTrue(new InMemoryOrderRepository().findById(99L).isEmpty());}
+ @Test void fakeStoresIndependentIds(){var repo=new InMemoryOrderRepository();repo.save(1L,"first");repo.save(2L,"second");assertEquals(Optional.of("first"),repo.findById(1L));assertEquals(Optional.of("second"),repo.findById(2L));}
+ @Test void fakeUpdatesExistingId(){var repo=new InMemoryOrderRepository();repo.save(1L,"old");repo.save(1L,"new");assertEquals(Optional.of("new"),repo.findById(1L));}
+}
