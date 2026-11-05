@@ -786,56 +786,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как реализовать timeout через select и time.After?",
+          "question_text": "Как задать локальный timeout через `select` и `time.After`?",
           "options": [
             {
-              "order": 0,
-              "label": "A",
-              "text": "В `select` добавляют case `<-time.After(d)`: `time.After` возвращает channel, который получит значение через d. Если основной channel не отдал данные за это время, срабатывает timeout-ветка. В горячем коде вместо `time.After` берут `time.NewTimer` с явным `Stop`, чтобы не текли таймеры.",
+              "text": "`time.After(d)` сразу возвращает одноразовый канал; `select` может выбрать его после срока наравне с другими готовыми ветками.",
               "correct": true,
               "sections": {
-                "explanation": "Каждый вызов `time.After` создаёт новый таймер, который не собирается GC до срабатывания, поэтому в цикле его заменяют на переиспользуемый `NewTimer` + `Stop`/`Reset`.",
-                "example": "`select { case v := <-ch: ...; case <-time.After(5*time.Second): fmt.Println(\"timeout\") }` ждёт значение не дольше пяти секунд, иначе срабатывает timeout-ветка.",
-                "when_to_apply": "Применяется для одноразового локального таймаута на ожидание ответа: `select { case v := <-ch: ...; case <-time.After(5*time.Second): timeout }`.",
-                "edge_cases": "При использовании `NewTimer` после получения значения по основному case таймер нужно `Stop()` и при необходимости дренировать `timer.C`, иначе можно поймать «лишний» сигнал.",
-                "related": "[[go-concurrency-interview#Q12]] устройство select; [[go-concurrency-interview#Q24]] альтернатива через context.WithTimeout; [[go-concurrency-interview#Q4]] таймеры и остановка goroutine."
-              }
+                "explanation": "After создаёт одноразовый таймер и возвращает канал без ожидания. Истечение срока делает его готовым для select, но не прерывает произвольную работу и не даёт ветке приоритет.",
+                "example": "Select ждёт рабочий ch или time.After(5*time.Second). Если обе ветки готовы, может быть выбрана любая; это не гарантия выполнения timeout-обработчика ровно через пять секунд.",
+                "when_to_apply": "Однократный локальный timeout. Для распространения отмены по цепочке вызовов используйте `context.WithTimeout`.",
+                "edge_cases": "Новая семантика таймеров Go 1.23 включается при go >= 1.23 в главном модуле и может быть отключена asynctimerchan=1. В ней недостижимый таймер может собрать GC до срабатывания; создание таймеров в горячем цикле всё равно имеет стоимость.",
+                "related": "[[go-concurrency-interview#Q12]] select; [[go-concurrency-interview#Q24]] context; [[go-stdlib-interview#Q16]] Stop/Reset и версии."
+              },
+              "label": "A",
+              "order": 0
             },
             {
-              "order": 1,
+              "text": "`time.After(d)` возвращает канал после ожидания `d`; до окончания вызова `select` не может проверить рабочий канал.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`time.After` возвращает канал сразу; ожидание происходит в ветке `select`.",
+                "source_of_confusion": "Поведение `time.After` путают с `time.Sleep`.",
+                "if_it_were_true": "Тогда вызов нельзя было бы использовать как независимую ветку ожидания в `select`.",
+                "how_it_should_be": "Поместите `<-time.After(d)` в `case` оператора `select`."
+              },
               "label": "B",
-              "text": "`time.After(d)` блокирует текущую goroutine на длительность d, после чего возвращает управление.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Блокирует `time.Sleep`; `time.After` сразу возвращает channel, который получит значение через d, и сам по себе ничего не блокирует.",
-                "source_of_confusion": "`Sleep` и `After` оба связаны со временем, поэтому их поведение путают.",
-                "if_it_were_true": "Тогда `time.After(5*time.Second)` останавливал бы выполнение на 5 секунд, но он немедленно отдаёт channel для использования в `select`.",
-                "how_it_should_be": "`time.After` возвращает channel-таймер и не блокирует; блокирует именно `time.Sleep`."
-              }
+              "order": 1
             },
             {
-              "order": 2,
+              "text": "`time.After(d)` сразу возвращает периодический канал; в `select` его используют для повторных таймаутов без нового таймера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Канал одноразового таймера даёт одно значение. Для нового timeout нужен новый таймер или `NewTimer` с `Reset`.",
+                "source_of_confusion": "Одинаковый интервал `d` ошибочно принимают за периодический таймер.",
+                "if_it_were_true": "Тогда канал `After` работал бы как тикер и посылал сигнал после каждого интервала.",
+                "how_it_should_be": "Для периодических событий используйте `NewTicker`; для каждого отдельного timeout — `After` или управляемый таймер."
+              },
               "label": "C",
-              "text": "Timeout в `select` можно делать только через `context.WithTimeout`; `time.After` для этого не рекомендован и считается ошибкой.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оба подхода валидны: `context.WithTimeout` лучше для propagating cancellation вглубь, а `time.After` + `select` — для локального одноразового таймаута.",
-                "source_of_confusion": "Совет «используй context для отмены» абсолютизируют до запрета `time.After`.",
-                "if_it_were_true": "Тогда локальный `case <-time.After(d):` был бы антипаттерном, но для простого локального таймаута это идиоматичный приём.",
-                "how_it_should_be": "`time.After` в `select` — нормальный способ локального таймаута; `context` нужен, когда отмену надо пробросить дальше."
-              }
+              "order": 2
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`time.After` с одним и тем же duration можно безопасно переиспользовать в цикле, повторно читая из одного channel.",
+              "text": "`time.After(d)` сразу возвращает канал; без `context.WithTimeout` его ветка в `select` не может стать готовой.",
               "correct": false,
               "sections": {
-                "what_actually": "Каждый вызов `time.After` создаёт новый таймер; «переиспользовать» один channel не выйдет, а старые таймеры копятся до срабатывания.",
-                "source_of_confusion": "Стабильный duration наводит на мысль, что можно создать таймер один раз и читать его в каждой итерации.",
-                "if_it_were_true": "Тогда в tight-loop не было бы утечки, но именно повторные `time.After` в цикле дают накопление таймеров и рост памяти.",
-                "how_it_should_be": "В цикле нужен `time.NewTimer` с `Reset`/`Stop`; `time.After` каждый раз порождает новый таймер."
-              }
+                "what_actually": "`time.After` сам по себе предоставляет канал для локального timeout; контекст не обязателен.",
+                "source_of_confusion": "Совет передавать `context` для отмены вызовов превращают в требование для любого timeout.",
+                "if_it_were_true": "Тогда простой `select` с каналом таймера не мог бы ждать локальный срок.",
+                "how_it_should_be": "Используйте `time.After` для локального ожидания; `context.WithTimeout` — когда дедлайн нужно передать дальше."
+              },
+              "label": "D",
+              "order": 3
             }
           ]
         }
@@ -1326,56 +1326,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое context.Context и зачем он нужен?",
+          "question_text": "Что такое `context.Context` и зачем его явно передавать в вызовы?",
           "options": [
             {
-              "order": 0,
-              "label": "A",
-              "text": "`context.Context` передаёт через цепочку вызовов три вещи: сигнал отмены (cancellation), дедлайн/таймаут и request-scoped значения (request ID, user info). По идиоме это первый параметр каждой функции (`ctx context.Context`).",
+              "text": "`context.Context` передают явно между вызовами для отмены, дедлайна и значений запроса.",
               "correct": true,
               "sections": {
-                "explanation": "Цепочка `HTTP handler → service → repository → DB` прокидывает один и тот же `ctx`, а проверка `ctx.Done()` в долгих операциях позволяет рано прерваться при отмене.",
-                "example": "`ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second); defer cancel()`, а внутри операции `select { case <-time.After(10*time.Second): ...; case <-ctx.Done(): return ctx.Err() }`.",
-                "when_to_apply": "Применяется во всех слоях серверного кода: при дисконнекте клиента или истечении дедлайна отмена каскадно доходит до запроса в БД.",
-                "edge_cases": "`context.Background()` — корневой context без таймаута и отмены; все ограничения добавляются явно через `WithTimeout`/`WithDeadline`/`WithCancel`.",
-                "related": "[[go-concurrency-interview#Q24]] WithCancel/WithTimeout/WithDeadline; [[go-concurrency-interview#Q25]] распространение context через goroutines; [[go-concurrency-interview#Q4]] остановка goroutine через ctx."
-              }
+                "explanation": "Контекст проходит через границы API как параметр. Отмена закрывает `Done()` у потомков; код сам проверяет канал или передаёт контекст API, поддерживающему отмену.",
+                "example": "Обработчик передаёт `ctx` в service и SQL-вызов; после отмены вызываемые операции могут закончиться досрочно.",
+                "when_to_apply": "Длительные операции запроса, где надо передать отмену или дедлайн вниз по цепочке.",
+                "edge_cases": "`Background()` не имеет дедлайна и отмены; у `CancelFunc` нет гарантии дождаться завершения горутин.",
+                "related": "[[go-concurrency-interview#Q24]] конструкторы; [[go-concurrency-interview#Q25]] иерархия; [[go-stdlib-interview#Q17]] методы."
+              },
+              "label": "A",
+              "order": 0
             },
             {
-              "order": 1,
+              "text": "`context.Context` назначается горутине автоматически, чтобы отмена дошла до её дочерних вызовов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контекст передают явно через параметры; новая горутина не получает его автоматически.",
+                "source_of_confusion": "Контекст путают с локальным состоянием потока.",
+                "if_it_were_true": "Функции могли бы получить контекст без аргумента, но такого механизма у Go нет.",
+                "how_it_should_be": "Передайте `ctx` запускаемой функции или горутине явно."
+              },
               "label": "B",
-              "text": "`context.Background()` создаёт context с дефолтным таймаутом 30 секунд, после которого операция автоматически отменяется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`context.Background()` — корневой context без таймаута и без отмены; никакого дефолтного дедлайна у него нет.",
-                "source_of_confusion": "Ожидание «разумного значения по умолчанию» приписывает Background несуществующий таймаут.",
-                "if_it_were_true": "Тогда любая операция на Background обрывалась бы через 30 секунд, но она будет выполняться сколько угодно без явного `WithTimeout`.",
-                "how_it_should_be": "Background не имеет таймаута; ограничения добавляют явно через WithTimeout/WithDeadline."
-              }
+              "order": 1
             },
             {
-              "order": 2,
+              "text": "`context.Context` хранит только значения запроса, поэтому дедлайн передают отдельным параметром.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метод `Deadline()` и производные `WithDeadline`/`WithTimeout` передают срок через контекст.",
+                "source_of_confusion": "Наличие `Value()` заслоняет механизм отмены и дедлайна.",
+                "if_it_were_true": "Пришлось бы передавать срок рядом с контекстом во все функции, но он уже входит в контракт `Context`.",
+                "how_it_should_be": "Используйте контекст для дедлайна и отмены; значения оставьте для данных запроса между API."
+              },
               "label": "C",
-              "text": "`context.Context` нужен только для хранения request-scoped значений, как `ThreadLocal` в Java.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Главная функция context — распространение cancellation и deadline по цепочке вызовов; хранение значений вторично и не должно подменять отмену.",
-                "source_of_confusion": "Из Java переносят роль `ThreadLocal`, сводя context к key-value хранилищу.",
-                "if_it_were_true": "Тогда при отмене запроса операции не прерывались бы, но именно `ctx.Done()` позволяет остановить работу раньше времени.",
-                "how_it_should_be": "context — это прежде всего cancellation и deadline propagation, а значения — лишь одна из его возможностей."
-              }
+              "order": 2
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`context.Context` — это goroutine-local storage: каждая goroutine автоматически получает собственный context.",
+              "text": "`context.Context` создаёт дедлайн по умолчанию, даже если взять корневой контекст.",
               "correct": false,
               "sections": {
-                "what_actually": "context создаётся явно и передаётся вручную через параметры; никакого автоматического per-goroutine context нет.",
-                "source_of_confusion": "Аналогия с thread-local окружением заставляет ждать «магического» наследования context.",
-                "if_it_were_true": "Тогда дочерняя goroutine сама знала бы родительский context, но без явной передачи она не получит cancellation propagation.",
-                "how_it_should_be": "context передают вручную первым параметром; автоматического per-goroutine context не существует."
-              }
+                "what_actually": "`Background()` не имеет дедлайна и не отменяется сам; срок задают производным контекстом.",
+                "source_of_confusion": "Ожидание защитного таймаута по умолчанию от корневого контекста.",
+                "if_it_were_true": "Операция с одним лишь `Background()` сама завершалась бы по сроку, но это не так.",
+                "how_it_should_be": "При необходимости вызовите `WithTimeout` или `WithDeadline` и передайте потомка операции."
+              },
+              "label": "D",
+              "order": 3
             }
           ]
         }
@@ -1386,56 +1386,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем различаются WithCancel, WithTimeout и WithDeadline?",
+          "question_text": "Чем различаются `WithCancel`, `WithTimeout` и `WithDeadline` при отмене дочернего контекста?",
           "options": [
             {
-              "order": 0,
+              "text": "`WithCancel` ждёт только ручной отмены, `WithTimeout` принимает длительность, `WithDeadline` принимает момент.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дочерний контекст `WithCancel` отменяется и при отмене родителя, без ручного вызова его `cancel()`.",
+                "source_of_confusion": "Название `WithCancel` связывают только с явной функцией отмены.",
+                "if_it_were_true": "Отмена родителя не закрывала бы `Done()` потомка `WithCancel`, но она закрывает.",
+                "how_it_should_be": "`WithCancel` добавляет ручную отмену к наследуемой отмене родителя."
+              },
               "label": "A",
-              "text": "`defer cancel()` не нужен, если context отменяется по таймауту: ресурсы освобождаются автоматически по истечении дедлайна.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Без `cancel()` связанные ресурсы (таймер, дочерние goroutines) держатся до истечения дедлайна; на высокой нагрузке это копит timers и течёт.",
-                "source_of_confusion": "Кажется, что таймаут «сам всё уберёт», и `cancel()` становится излишним.",
-                "if_it_were_true": "Тогда при 1000 rps без `cancel` накапливалось бы до 1000×5s одновременных timers, но `defer cancel()` освобождает их сразу при возврате.",
-                "how_it_should_be": "`defer cancel()` нужен всегда — он немедленно освобождает ресурсы, не дожидаясь дедлайна."
-              }
+              "order": 0
             },
             {
-              "order": 1,
+              "text": "`WithCancel` учитывает родителя, `WithTimeout` принимает момент, `WithDeadline` принимает длительность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`WithTimeout` принимает относительную `time.Duration`, а `WithDeadline` — абсолютный `time.Time`.",
+                "source_of_confusion": "Оба создают дедлайн, поэтому типы аргументов меняют местами.",
+                "if_it_were_true": "В `WithTimeout` передавали бы готовый `time.Time`, но его параметр — `time.Duration`.",
+                "how_it_should_be": "Для интервала нужен `WithTimeout`; для уже известного момента — `WithDeadline`."
+              },
               "label": "B",
-              "text": "`context.WithValue` — основной способ отменять операции: чтобы остановить goroutine, кладут в context флаг отмены.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`WithValue` только хранит значения и не управляет отменой; отмена идёт через `cancel()` из `WithCancel`/`WithTimeout`/`WithDeadline`.",
-                "source_of_confusion": "Раз context умеет и значения, и отмену, их функции смешивают в одну.",
-                "if_it_were_true": "Тогда положенный во `WithValue` флаг останавливал бы goroutines, но они реагируют на `ctx.Done()`, а не на произвольное значение.",
-                "how_it_should_be": "Отмену задают через cancel-функцию деривативов; `WithValue` лишь переносит данные."
-              }
+              "order": 1
             },
             {
-              "order": 2,
+              "text": "`WithCancel` учитывает родителя, `WithTimeout` принимает длительность, `WithDeadline` игнорирует срок родителя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ранний дедлайн родителя ограничивает дочерний контекст; более поздний `WithDeadline` не продлевает его.",
+                "source_of_confusion": "Собственный дедлайн потомка принимают за независимый от родителя.",
+                "if_it_were_true": "Потомок мог бы пережить уже истёкший родительский срок, но отмена распространяется вниз.",
+                "how_it_should_be": "Срок дочерней операции не может выйти за более ранний срок родителя."
+              },
               "label": "C",
-              "text": "`WithTimeout` и `WithDeadline` полностью идентичны, поэтому достаточно всегда использовать любой один из них.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`WithTimeout` принимает относительную длительность (`5*time.Second`), а `WithDeadline` — абсолютный момент `time.Time`; в части сценариев нужен именно absolute deadline.",
-                "source_of_confusion": "Оба ограничивают время, и разницу между относительным и абсолютным заданием упускают.",
-                "if_it_were_true": "Тогда дедлайн из upstream-запроса нельзя было бы передать как абсолютную точку, но `WithDeadline` существует ровно для этого.",
-                "how_it_should_be": "`WithTimeout` задаёт относительный срок, `WithDeadline` — абсолютный момент; они не взаимозаменяемы во всех случаях."
-              }
+              "order": 2
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`WithCancel` даёт ручную отмену через вызов `cancel()`; `WithTimeout` отменяет по относительной длительности; `WithDeadline` — по абсолютному моменту времени. Во всех трёх случаях обязателен `defer cancel()`, иначе течёт goroutine/timer.",
+              "text": "`WithCancel` учитывает родителя, `WithTimeout` принимает длительность, `WithDeadline` принимает абсолютный момент.",
               "correct": true,
               "sections": {
-                "explanation": "`cancel()` вызывают сразу после создания через `defer`, а полученный `ctx` пробрасывают в дочерние вызовы, чтобы отмена каскадно дошла до них.",
-                "example": "`ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second)); defer cancel()` задаёт абсолютный дедлайн, а `WithTimeout` принял бы относительные `5*time.Second`.",
-                "when_to_apply": "Применяется для ограничения времени операции и принудительной остановки: запрос к внешнему сервису, фоновая задача, обработка с дедлайном из upstream.",
-                "edge_cases": "Дочерний context отменяется вместе с родителем; пропуск `defer cancel()` при 1000 rps копит таймеры/goroutines и приводит к leak.",
-                "related": "[[go-concurrency-interview#Q23]] что такое context; [[go-concurrency-interview#Q25]] иерархия и распространение отмены; [[go-concurrency-interview#Q14]] timeout через time.After против WithTimeout."
-              }
+                "explanation": "Все три конструктора создают дочерний контекст с `CancelFunc`; отмена родителя действует на потомка. `WithTimeout` задаёт интервал, `WithDeadline` — конкретный момент.",
+                "example": "`ctx, cancel := context.WithDeadline(parent, deadline); defer cancel()` ограничивает операцию уже известным сроком.",
+                "when_to_apply": "`WithCancel` — ручная отмена; `WithTimeout` — относительный срок; `WithDeadline` — абсолютный срок из вызывающего кода.",
+                "edge_cases": "Создатель вызывает cancel на каждом пути завершения: это освобождает связь с родителем и останавливает связанный таймер, если он есть. CancelFunc не ждёт окончания goroutines; более ранний дедлайн родителя ограничивает потомка.",
+                "related": "[[go-concurrency-interview#Q23]] назначение контекста; [[go-concurrency-interview#Q25]] дерево отмены; [[go-stdlib-interview#Q17]] методы."
+              },
+              "label": "D",
+              "order": 3
             }
           ]
         }
@@ -1446,56 +1446,56 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как context распространяется через goroutines (иерархия отмены)?",
+          "question_text": "Как `context.Context` распространяет отмену между родителем, потомком и горутинами?",
           "options": [
             {
-              "order": 0,
+              "text": "`cancelChild()` отменяет потомка и родителя, поэтому соседние ветки тоже получают сигнал.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отмена потомка локальна для его ветки; родитель и соседние потомки продолжают работу.",
+                "source_of_confusion": "Связь родителя и потомка считают симметричной.",
+                "if_it_were_true": "Отмена одной подзадачи закрывала бы весь запрос, но она не поднимается к родителю.",
+                "how_it_should_be": "Для всего дерева вызывают `cancelParent()`."
+              },
               "label": "A",
-              "text": "Goroutines автоматически получают родительский context, поэтому передавать его вручную не нужно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "context передают явно через параметры функций; автоматического наследования между goroutines нет.",
-                "source_of_confusion": "Аналогия с thread-local окружением рождает ожидание неявной передачи.",
-                "if_it_were_true": "Тогда новая goroutine сама знала бы `ctx` родителя, но без явной передачи она не отреагирует на отмену.",
-                "how_it_should_be": "context всегда передают явно первым параметром; неявного наследования goroutines не существует."
-              }
+              "order": 0
             },
             {
-              "order": 1,
+              "text": "`cancelParent()` отменяет родителя, но потомки ждут своего `cancelChild()` или дедлайна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отмена родителя распространяется на дочерние контексты; отдельный cancelChild для передачи сигнала не нужен. Это не означает синхронного завершения всей работы при возврате cancelParent.",
+                "source_of_confusion": "Каждый дочерний `CancelFunc` воспринимают как единственный путь его отмены.",
+                "if_it_were_true": "Потомок не реагировал бы на закрытие `Done()` родителя, но он реагирует.",
+                "how_it_should_be": "Отмена распространяется сверху вниз; затем владелец всё равно вызывает свой `cancelChild()` для освобождения ресурсов."
+              },
               "label": "B",
-              "text": "В горячем пути ради производительности можно передавать `context.Background()` вместо производного context.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Background()` не имеет deadline и cancel, поэтому операцию нельзя будет отменить — при дисконнекте клиента запрос к БД продолжит выполняться.",
-                "source_of_confusion": "Кажется, что Background «легче» и потому предпочтительнее в hot-path.",
-                "if_it_were_true": "Тогда отмена при disconnect просто терялась бы, но именно из-за этого ресурсы тратятся впустую на ненужную работу.",
-                "how_it_should_be": "В цепочку пробрасывают производный context с отменой/дедлайном; Background обрывает propagation отмены."
-              }
+              "order": 1
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Context иерархичен и иммутабелен: отмена родителя отменяет всех его children, а отмена child НЕ влияет на parent и siblings. Передаётся context явно через параметры функций — автоматического наследования нет.",
+              "text": "`cancelParent()` отменяет потомков, а `cancelChild()` не влияет на родителя и соседей.",
               "correct": true,
               "sections": {
-                "explanation": "Дерево вида `Background → parent (cancel) → child1 (timeout), child2 (deadline)` отменяется сверху вниз: `cancelParent()` каскадно сигналит всем потомкам.",
-                "example": "`parent, cancelParent := context.WithCancel(...); child, _ := context.WithTimeout(parent, 5*time.Second)` — вызов `cancelParent()` отменит и `child`, не дожидаясь его таймаута.",
-                "when_to_apply": "Применяется в HTTP-обработчике: handler создаёт `ctx`, передаёт его в service и repository, и при дисконнекте клиента все дочерние `ctx` получают отмену.",
-                "edge_cases": "Отмена строго нисходящая: завершить родительский запрос, отменив дочерний sub-context, нельзя — это локальная отмена только для ветки потомка.",
-                "related": "[[go-concurrency-interview#Q24]] WithCancel/WithTimeout/WithDeadline; [[go-concurrency-interview#Q23]] что такое context; [[go-concurrency-interview#Q4]] остановка goroutine по ctx.Done()."
-              }
+                "explanation": "Производные контексты образуют дерево: отмена родителя идёт вниз, а отмена одного потомка остаётся в его ветке.",
+                "example": "`parent, cancelParent := context.WithCancel(context.Background()); defer cancelParent(); child, cancelChild := context.WithTimeout(parent, time.Second); defer cancelChild()` — `cancelParent()` отменит и `child`.",
+                "when_to_apply": "Передавайте `ctx` явно в вызываемые функции и горутины, чтобы они могли реагировать на отмену запроса.",
+                "edge_cases": "Отмена контекста закрывает `Done()`, но работа должна его проверять; `CancelFunc` не ждёт завершения горутин.",
+                "related": "[[go-concurrency-interview#Q23]] назначение контекста; [[go-concurrency-interview#Q24]] конструкторы и сроки."
+              },
+              "label": "C",
+              "order": 2
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Отмена дочернего context отменяет и родительский context, распространяясь вверх по дереву.",
+              "text": "`cancelParent()` отменяет потомков и принудительно завершает горутины, игнорирующие `Done()`.",
               "correct": false,
               "sections": {
-                "what_actually": "Cancellation идёт только сверху вниз (parent→child); отмена child не влияет на parent или siblings.",
-                "source_of_confusion": "Симметрию связи родитель-потомок ошибочно делают двусторонней.",
-                "if_it_were_true": "Тогда `cancelChild()` останавливал бы весь запрос, но parent и соседние ветви продолжат работу как ни в чём не бывало.",
-                "how_it_should_be": "Отмена распространяется только нисходяще; чтобы остановить весь запрос, отменяют именно родителя."
-              }
+                "what_actually": "Контекст подаёт сигнал, но не прерывает горутину принудительно; код должен проверять `Done()` или вызывать API с контекстом.",
+                "source_of_confusion": "Отмену путают с принудительным завершением выполнения.",
+                "if_it_were_true": "Не понадобилось бы слушать `Done()` в долгой работе, но без этого она может продолжаться.",
+                "how_it_should_be": "Передавайте контекст явно и реализуйте кооперативное завершение работы."
+              },
+              "label": "D",
+              "order": 3
             }
           ]
         }
