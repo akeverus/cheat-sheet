@@ -251,50 +251,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "GOMAXPROCS — максимальное число OS threads, которые scheduler использует для параллельного исполнения goroutines. По умолчанию равен `runtime.NumCPU()`. В контейнере с CPU-limit `NumCPU()` может вернуть число всех ядер хоста, поэтому ставят больше P, чем реально доступно.",
+              "text": "GOMAXPROCS ограничивает потоки, одновременно исполняющие Go-код. При активной новой политике Go 1.25+ default учитывает CPU, affinity и Linux cgroup quota.",
               "correct": true,
               "sections": {
-                "explanation": "Лишние P создают overhead на планирование и context switch, поэтому в Kubernetes-поде с CPU-лимитом значение приводят к лимиту через `uber-go/automaxprocs` или авто-детект из cgroups (Go 1.25+).",
-                "example": "В Kubernetes-поде с лимитом 2 CPU на 64-ядерном узле `NumCPU()` вернёт 64, поэтому подключают `uber-go/automaxprocs`, чтобы GOMAXPROCS стал равен 2.",
-                "when_to_apply": "Применяется при деплое Go-сервиса в Docker/Kubernetes с CPU-квотой: добавляют `automaxprocs`, чтобы GOMAXPROCS совпал с лимитом, а не с числом ядер хоста.",
-                "edge_cases": "GOMAXPROCS ограничивает только OS threads для исполнения, но не число goroutines: их по-прежнему могут быть сотни тысяч поверх немногих потоков.",
-                "related": "[[go-concurrency-interview#Q3]] роль P в M:N scheduler; [[go-concurrency-interview#Q2]] goroutine против OS thread; [[go-concurrency-interview#Q22]] параллелизм и производительность."
+                "explanation": "Лимит относится к одновременному исполнению пользовательского Go-кода и текущему числу P, а не к общему числу потоков процесса. Default зависит от версии и конфигурации; безусловное равенство NumCPU неверно.",
+                "example": "При активной container-aware политике на Linux, восьми доступных CPU по affinity и квоте 1.5 CPU default равен 2: дробная квота округляется вверх.",
+                "when_to_apply": "При проверке CPU-параллелизма и throttling контейнера: сопоставляют фактический GOMAXPROCS, affinity и cgroup throughput, а не только NumCPU.",
+                "edge_cases": "Новая политика появилась в Go 1.25. Для language version до 1.25 defaults GODEBUG containermaxprocs/updatemaxprocs сохраняют старое поведение. Явная настройка окружением или GOMAXPROCS(n>0) отключает обновления; SetDefaultGOMAXPROCS возвращает runtime policy. Расчёт по cgroup не опускает default ниже 2, если CPU/affinity это позволяют.",
+                "related": "[[go-concurrency-interview#Q3]] текущие P; [[go-concurrency-interview#Q5]] runtime default и overrides; [[go-concurrency-interview#Q22]] параллелизм и производительность."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "GOMAXPROCS по умолчанию равен 1, поэтому для параллелизма всегда нужно явно вызвать `runtime.GOMAXPROCS(runtime.NumCPU())`.",
+              "text": "GOMAXPROCS ограничивает потоки, одновременно исполняющие Go-код. При активной новой политике Go 1.25+ default всегда равен 1 до ручной установки NumCPU().",
               "correct": false,
               "sections": {
-                "what_actually": "С Go 1.5 значение по умолчанию равно `NumCPU()`; явная установка не нужна, наоборот, установка в 1 деградирует до однопоточности.",
-                "source_of_confusion": "Поведение очень старых версий Go (до 1.5) с default=1 запомнилось как актуальное.",
-                "if_it_were_true": "Тогда без ручной настройки все программы работали бы в один поток, но современный Go параллелит по числу ядер из коробки.",
-                "how_it_should_be": "По умолчанию GOMAXPROCS = NumCPU; ручная установка в 1 наоборот отключает параллелизм."
+                "what_actually": "При новой политике runtime выбирает default по доступным CPU, affinity и Linux cgroup quota. Постоянный default 1 не является этим контрактом.",
+                "source_of_confusion": "Исторический default старых версий принимают за поведение современной политики.",
+                "if_it_were_true": "Любой современный контейнер начинал бы с одного P независимо от доступных CPU и квоты.",
+                "how_it_should_be": "Сначала проверять версию, language version, GODEBUG и текущее значение; ручную установку не считать обязательной."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "GOMAXPROCS — максимальное число goroutines, которые могут существовать или работать одновременно в программе.",
+              "text": "GOMAXPROCS ограничивает число существующих goroutines. При активной новой политике Go 1.25+ default учитывает CPU, affinity и Linux cgroup quota.",
               "correct": false,
               "sections": {
-                "what_actually": "GOMAXPROCS ограничивает OS threads для параллельного исполнения, а goroutines не ограничены — их могут быть сотни тысяч.",
-                "source_of_confusion": "Слово «procs» ассоциируется с числом запускаемых единиц работы, то есть с goroutines.",
-                "if_it_were_true": "Тогда нельзя было бы создать 100K goroutines при GOMAXPROCS=8, но это абсолютно штатная ситуация.",
-                "how_it_should_be": "GOMAXPROCS задаёт число параллельно работающих потоков, а количество goroutines им не лимитируется."
+                "what_actually": "GOMAXPROCS не задаёт предел числа существующих goroutines. Лимит касается потоков, одновременно исполняющих Go-код.",
+                "source_of_confusion": "Число единиц исполнения принимают за лимит всех созданных задач.",
+                "if_it_were_true": "Создание очередной goroutine сверх GOMAXPROCS само нарушало бы лимит runtime.",
+                "how_it_should_be": "Ограничивать backlog и число задач отдельно от настройки параллельного исполнения."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "GOMAXPROCS влияет только на I/O-операции; CPU-bound goroutines полностью игнорируют это значение.",
+              "text": "GOMAXPROCS ограничивает одновременный I/O, а CPU-код его игнорирует. При активной новой политике Go 1.25+ default учитывает CPU, affinity и Linux cgroup quota.",
               "correct": false,
               "sections": {
-                "what_actually": "Именно CPU-bound goroutines зависят от GOMAXPROCS для истинного параллелизма; I/O-bound используют network poller вне этого лимита.",
-                "source_of_confusion": "Раз I/O-bound goroutines часто паркуются на poller, кажется, что GOMAXPROCS относится только к ним.",
-                "if_it_were_true": "Тогда установка GOMAXPROCS=1 не замедлила бы CPU-bound вычисления, но на деле они выполнялись бы строго последовательно.",
-                "how_it_should_be": "GOMAXPROCS определяет параллелизм именно CPU-bound goroutines; I/O-bound управляются отдельно через poller."
+                "what_actually": "Лимит влияет на одновременное исполнение Go-кода, включая CPU-нагрузку. Он не задаёт число ожидающих I/O операций.",
+                "source_of_confusion": "Парковку ожидающих I/O goroutines смешивают с назначением лимита исполнения.",
+                "if_it_were_true": "Изменение числа P не влияло бы на возможность одновременно исполнять пользовательский CPU-код.",
+                "how_it_should_be": "Различать параллелизм исполнения, ожидание I/O и общее число потоков процесса."
               }
             }
           ]
