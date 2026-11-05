@@ -97,10 +97,10 @@
               "correct": true,
               "sections": {
                 "explanation": "Локальная дедупликация решает повторы обработки, но внешний вызов не атомарен с её записью.",
-                "example": "SES может принять письмо, даже если вызов вернул ошибку.",
+                "example": "В проектной схеме до каждого управляемого вызова сохраняют отдельный attempt_id. Для SES event publishing передают notification_id и attempt_id как message tags; полученное позднее событие с tags и mail.messageId сопоставляют с заданием, записанной попыткой и сообщением SES даже при потерянном ответе. Один notification_id сам по себе несколько попыток не различает.",
                 "when_to_apply": "Применяйте при at-least-once обработке и отправке через внешнее API.",
-                "edge_cases": "Не объявляйте exactly-once; проверяйте поддержку идемпотентности конкретного провайдера.",
-                "related": "См. Q2, AWS transactional outbox и SES send process."
+                "edge_cases": "Для показанного пути event publishing нужны применённый configuration set и event destination. Identity-level SNS notifications — отдельный путь, поэтому это не требование ко всем событиям SES. Tags обеспечивают корреляцию, а не идемпотентность: повторный вызов может отправить второе письмо. Несколько принятых сообщений одной попытки различают по mail.messageId; отсутствие события не доказывает недоставку.",
+                "related": "См. Q2, AWS transactional outbox и SES event publishing/message tags."
               },
               "order": 2,
               "label": "C"
