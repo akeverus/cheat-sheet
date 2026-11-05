@@ -12,7 +12,7 @@ aliases:
   - "Проектирование игрового рейтинга"
 prerequisites: []
 next: []
-updated: "2026-10-05"
+updated: "2026-11-05"
 ---
 # Вопросы на собеседовании: Игровой лидерборд
 
@@ -23,7 +23,7 @@ updated: "2026-10-05"
 - [Redis: Sorted Sets](https://redis.io/docs/latest/develop/data-types/sorted-sets/) — упорядочение по score и лексикографическое разрешение равенства.
 - [Redis: ZADD](https://redis.io/docs/latest/commands/zadd/), [ZRANGE](https://redis.io/docs/latest/commands/zrange/), [ZREVRANK](https://redis.io/docs/latest/commands/zrevrank/) и [ZCOUNT](https://redis.io/docs/latest/commands/zcount/) — обновление, top-N и ранг.
 - [Redis Cluster specification](https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/) — распределение ключей по слотам и окно потери подтверждённых записей при асинхронной репликации.
-- [Apache Flink: event time и watermarks](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/datastream/event-time/generating_watermarks/) — граница обработки опоздавших событий.
+- [Apache Flink: event time и watermarks](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/datastream/event-time/generating_watermarks/) и [fault tolerance](https://nightlies.apache.org/flink/flink-docs-stable/docs/learn-flink/fault_tolerance/) — граница опоздавших событий и требования к внешнему sink.
 
 ## Содержание
 
@@ -36,9 +36,13 @@ updated: "2026-10-05"
 
 ## Q1. Как быстро получить top-N и место отдельного игрока?
 
-Для рейтинга, который помещается на один Redis-узел, храните один Sorted Set `leaderboard:<season_id>:<scope>`: `member = player_id`, `score = очки`. `ZADD` меняет score существующего игрока; в Redis 6.2+ `ZRANGE key 0 9 REV WITHSCORES` возвращает десятку лучших, `ZREVRANK key player_id` — позицию с нуля при сортировке по убыванию. Получить публичное место с единицы можно прибавлением 1. Для одного участника `ZADD` и `ZREVRANK` стоят порядка `O(log N)`, индексный `ZRANGE` — `O(log N + M)` для `M` возвращённых игроков. Эти свойства уже частично изложены в [Redis Q11](../databases/redis-interview.md#q11-очки-в-лидерборде-обновляются-верно-но-размер-структуры-застыл-на-числе-игроков-и-не-растёт-с-каждой-новой-отправкой-очков-почему). [Redis Sorted Sets](https://redis.io/docs/latest/develop/data-types/sorted-sets/), [ZRANGE](https://redis.io/docs/latest/commands/zrange/), [ZREVRANK](https://redis.io/docs/latest/commands/zrevrank/).
+Для рейтинга, который помещается на один Redis-узел, храните один Sorted Set `leaderboard:<season_id>:<scope>`: `member = player_id`, `score = очки`. `ZADD` меняет score существующего игрока; в Redis 6.2+ `ZRANGE key 0 9 REV WITHSCORES` возвращает десятку лучших, `ZREVRANK key player_id` — позицию с нуля при сортировке по убыванию. Получить порядковое место с единицы можно прибавлением 1 к найденному индексу. Если ключ или игрок отсутствует, команда возвращает nil/null; отсутствующее место нельзя превращать в первое. Общее место при равных очках — отдельное бизнес-правило из [Q2](#q2-что-означает-место-при-равных-очках). Для одного участника `ZADD` и `ZREVRANK` стоят порядка `O(log N)`, индексный `ZRANGE` — `O(log N + M)` для `M` возвращённых игроков. Эти свойства уже частично изложены в [Redis Q11](../databases/redis-interview.md#q11--очки-в-лидерборде-обновляются-верно-но-размер-структуры-застыл-на-числе-игроков-и-не-растёт-с-каждой-новой-отправкой-очков--почему). [Redis Sorted Sets](https://redis.io/docs/latest/develop/data-types/sorted-sets/), [ZRANGE](https://redis.io/docs/latest/commands/zrange/), [ZREVRANK](https://redis.io/docs/latest/commands/zrevrank/).
 
-Уточните требования: глобальный или региональный рейтинг, частота обновлений, допустимая задержка отображения, срок хранения и правило для забаненных игроков. Score в Redis может быть **проекцией**, а авторитетный результат матча и история начисления — в устойчивом хранилище. Redis Cluster использует асинхронную репликацию, поэтому нельзя обещать отсутствие потери подтверждённого изменения при любом failover только за счёт него. Для страницы «вокруг меня» возьмите текущий rank и небольшой индексный диапазон; при частых изменениях между запросами страницы возможны сдвиги, поэтому снимок/версию сезона оговорите отдельно. [Redis Cluster specification](https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/).
+Уточните требования: глобальный или региональный рейтинг, частота обновлений, допустимая задержка отображения, срок хранения и правило для забаненных игроков. Score в Redis может быть **проекцией**, а авторитетный результат матча и история начисления — в устойчивом хранилище. Redis Cluster использует асинхронную репликацию, поэтому нельзя обещать отсутствие потери подтверждённого изменения при любом failover только за счёт него. [Redis Cluster specification](https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/).
+
+Score Sorted Set — 64-битный `double`: целые очки точно представимы лишь в диапазоне от `-2^53` до `2^53` включительно. Если суммарный счёт или упакованный tie-break может выйти за этот диапазон, не используйте его как точный integer-ключ порядка; оставьте точное значение в источнике истины и выберите другое представление рейтинга, например индекс по целочисленному счёту в БД. [Redis ZADD](https://redis.io/docs/latest/commands/zadd/).
+
+Для страницы «вокруг меня» возьмите текущий rank и небольшой индексный диапазон; при частых изменениях между запросами страницы возможны сдвиги, поэтому снимок/версию сезона оговорите отдельно.
 
 ## Q2. Что означает место при равных очках?
 
@@ -48,9 +52,13 @@ updated: "2026-10-05"
 
 ## Q3. Как принимать повторы и запоздавшие результаты матчей?
 
-Сначала решите, событие несёт **абсолютный итог** или **дельту**. Повтор `ZINCRBY` для одной и той же дельты прибавит очки дважды; `ZADD` с абсолютным score идемпотентен по значению, но старое событие может затереть более новый итог. Сохраняйте `match_id`/`event_id`, версию расчёта и авторитетный результат в долговечном журнале; проекцию рейтинга обновляйте только после проверки уникальности события и порядка версий для `(season, player)`. Повтор должен возвращать уже учтённый итог. Для корректировок после отмены матча публикуйте новое корректирующее событие или пересчитывайте абсолютный результат из авторитетных данных.
+Сначала решите, событие несёт **абсолютный итог** или **дельту**. Повтор `ZINCRBY` для одной и той же дельты прибавит очки дважды; `ZADD` с абсолютным score идемпотентен по значению, но старое событие может затереть более новый итог. Сохраняйте `match_id`/`event_id`, версию расчёта и авторитетный результат в долговечном журнале; проекцию рейтинга обновляйте только после проверки уникальности события и порядка версий для `(season, player)`. Повтор должен возвращать уже учтённый итог.
 
-Если рейтинг строится из потока, определите время события, допустимое опоздание и момент окончательной фиксации наград. Watermark помогает оценить, до какого event time поток обычно обработан, но не гарантирует, что позже не придёт событие. Для живого рейтинга можно применить позднюю коррекцию и обозначить статус `provisional`; для закрытой призовой таблицы нужен явный deadline, политика ручной корректировки и аудит. Подробная теория watermarks и allowed lateness есть в [stream processing Q5–Q10](../data-engineering/stream-processing-interview.md). [Flink watermarks](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/datastream/event-time/generating_watermarks/), [Redis ZADD](https://redis.io/docs/latest/commands/zadd/).
+Зафиксируйте результат и намерение обновить Redis в одном надёжном коммите, например через outbox, а из него повторяемо стройте проекцию. Тогда сбой после коммита, но до `ZADD`, не потеряет очки; повтор после `ZADD` не должен начислить их дважды. Для абсолютного score проверку версии и обновление проекции выполняйте атомарно для игрока либо обеспечьте строгий порядок его событий: раздельная проверка и `ZADD` оставляют гонку, в которой старое событие затирает новое. Повреждённую или потерянную проекцию пересобирайте из авторитетных результатов. Если атомарная проверка версии в Redis Cluster затрагивает ключ рейтинга и отдельный ключ версий, они должны находиться в одном hash slot. Например, `leaderboard:{s42:global}:scores` и `leaderboard:{s42:global}:versions` используют общий hash tag; само наличие tag не заменяет атомарную операцию и обработку её ошибок. [Redis Cluster multi-key operations](https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/#multi-keys-operations). [Transactional outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html).
+
+Для корректировок после отмены матча публикуйте новое корректирующее событие или пересчитывайте абсолютный результат из авторитетных данных.
+
+Если рейтинг строится из потока, определите время события, допустимое опоздание и момент окончательной фиксации наград. Watermark сигнализирует прогресс event time; событие с более ранним timestamp всё ещё может прийти как late. Принимать, отбрасывать или отправлять его на отдельную обработку решает политика оператора, а бизнес-дедлайн наград задаётся отдельно. Для живого рейтинга можно применить позднюю коррекцию и обозначить статус `provisional`; для закрытой призовой таблицы нужен явный deadline, политика ручной корректировки и аудит. Подробная теория watermarks и allowed lateness есть в [stream processing Q5–Q10](../data-engineering/stream-processing-interview.md). [Flink 2.3 watermarks](https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/dev/datastream/event-time/generating_watermarks/), [allowed lateness](https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/dev/datastream/operators/windows/#allowed-lateness), [Redis ZADD](https://redis.io/docs/latest/commands/zadd/).
 
 ## Q4. Как закрыть сезон без потери старых результатов?
 
