@@ -1386,36 +1386,36 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "В чём разница между Deadlock, Livelock и Starvation?",
+          "question_text": "В чем разница между `Deadlock`, `Livelock` и `Starvation`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Deadlock — потоки зависли; Livelock и Starvation — те же зависания под другими именами, без прогресса.",
+              "text": "Deadlock — циклическое ожидание; Livelock — его синоним; Starvation — ещё одно название того же циклического ожидания.",
               "correct": false,
               "sections": {
-                "what_actually": "Это три разных явления: deadlock — потоки BLOCKED/WAITING в цикле; livelock — RUNNABLE, но без прогресса; starvation — поток систематически не получает ресурс из-за scheduling.",
+                "what_actually": "При deadlock участники циклически ждут друг друга; при livelock совершают действия без полезного прогресса; при starvation отдельный участник систематически не получает нужный ресурс.",
                 "source_of_confusion": "Общее ощущение «поток завис» стирает различия, хотя состояние потоков (BLOCKED vs RUNNABLE vs готов-но-обойдён) у них разное.",
                 "if_it_were_true": "Хватало бы одного термина и одного способа диагностики — реально нужны разные (jstack / метрики throughput / latency tail).",
-                "how_it_should_be": "Deadlock: заблокированы в цикле; Livelock: активны без прогресса; Starvation: обойдён планировщиком."
+                "how_it_should_be": "Deadlock — циклическое ожидание ресурсов; livelock — действия без полезного прогресса; starvation — систематическое неполучение нужного ресурса."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Deadlock — потоки заблокированы; Livelock — активны без прогресса; Starvation — это deadlock одного потока.",
+              "text": "Deadlock — циклическое ожидание; Livelock — действия без прогресса; Starvation — взаимная блокировка одного потока.",
               "correct": false,
               "sections": {
                 "what_actually": "Starvation — поток не получает ресурс из-за scheduling/fairness, но другие работают нормально; deadlock — циклическое ожидание.",
                 "source_of_confusion": "Поверхностное «поток не работает» уравнивает Starvation и Deadlock. На деле при starvation поток не получает ресурс из-за scheduling/fairness, а другие работают нормально; deadlock — это циклическое ожидание между потоками.",
-                "if_it_were_true": "Starvation решался бы lock ordering — реально fairness policy.",
-                "how_it_should_be": "Starvation: unfair scheduling; Deadlock: circular wait."
+                "if_it_were_true": "Порядок захвата блокировок устраняет некоторые циклы ожидания, но сам по себе не обеспечивает потокам доступ к CPU или справедливую выдачу ресурса.",
+                "how_it_should_be": "Голодание — систематическое неполучение ресурса; взаимная блокировка — циклическое ожидание ресурсов."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Deadlock — потоки заблокированы; Livelock — активны без прогресса; Starvation — нет CPU/lock; и всё это только в Java.",
+              "text": "Deadlock — цикл ожидания; Livelock — действия без прогресса; Starvation — нехватка ресурса; все три возникают лишь в Java.",
               "correct": false,
               "sections": {
                 "what_actually": "Это общие concurrency-проблемы любого языка с shared-memory (C++, Go, Rust, уровень ОС), не специфичные для Java.",
@@ -1427,13 +1427,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Deadlock — потоки заблокированы; Livelock — активны, но без прогресса; Starvation — поток не получает CPU/lock.",
+              "text": "Deadlock — циклическое ожидание; Livelock — действия без прогресса; Starvation — систематическое неполучение ресурса.",
               "correct": true,
               "sections": {
-                "explanation": "Deadlock виден в thread dump (потоки BLOCKED/WAITING, CPU простаивает). Livelock — потоки RUNNABLE и реагируют друг на друга, но без прогресса (вежливо уступают; метрики бизнес-операций падают; классический пример — два tryLock+retry в одинаковых условиях). Starvation — отдельный поток мог бы работать, но систематически обходится из-за приоритетов или unfair scheduling, остальные ОК; решается fairness (new ReentrantLock(true)). Диагностика: deadlock → jstack/findDeadlocked; livelock → метрики throughput; starvation → latency tail.",
+                "explanation": "Deadlock, livelock и starvation различаются причиной отсутствия прогресса. При взаимной блокировке участники ждут друг друга; при livelock продолжают реагировать, но не выполняют полезную работу; при starvation один участник систематически не получает ресурс, хотя другие продвигаются. Дамп потоков, метрики прогресса и время ожидания помогают различить эти случаи. Справедливый ReentrantLock упорядочивает получение этой блокировки, но не гарантирует справедливого планирования CPU.",
                 "example": "Deadlock — два transfer в обратном порядке. Livelock — два tryLock+retry в одинаковых условиях. Starvation — low-priority поток никогда не получает CPU.",
-                "when_to_apply": "Диагностика: deadlock → jstack/findDeadlocked; livelock → метрики throughput; starvation → fairness, мониторинг latency tail.",
-                "edge_cases": "Live-lock между retry-логикой клиента и backoff. Reader-starvation в ReadWriteLock без fairness когда писатели часты.",
+                "when_to_apply": "Проверяйте циклы ожидания, повторяющиеся действия без прогресса и распределение времени ожидания между потоками. Для голодания выясняйте, какой именно ресурс недоступен, прежде чем выбирать политику справедливости.",
+                "edge_cases": "Взаимная блокировка нескольких потоков не означает простоя всей JVM. Справедливость ReentrantLock не распространяется на планирование CPU, а tryLock() без тайм-аута не соблюдает настройку fairness.",
                 "related": "[[java-concurrency-interview#Q23]] deadlock; [[java-concurrency-interview#Q4]] priority; [[java-concurrency-interview#Q20]] fairness."
               }
             }
@@ -1806,30 +1806,30 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "В чём разница между submit() и execute()?",
+          "question_text": "Разница между `submit()` и `execute()`",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "execute возвращает Future с результатом, исключение доступно через get(); submit тоже возвращает Future, исключение только через get().",
+              "text": "execute принимает Runnable и возвращает Future; submit принимает Runnable/Callable и возвращает Future с результатом или ошибкой задачи.",
               "correct": false,
               "sections": {
                 "what_actually": "execute возвращает void; submit возвращает Future.",
                 "source_of_confusion": "Поверхностное знание: видят похожие методы и считают их полностью взаимозаменяемыми.",
-                "if_it_were_true": "Executor и ExecutorService совпадали бы — реально различны.",
+                "if_it_were_true": "Тогда присваивание Future<?> f = executor.execute(task) было бы допустимо. В действительном API execute возвращает void; даже одинаковый тип результата не сделал бы Executor и ExecutorService одинаковыми интерфейсами.",
                 "how_it_should_be": "execute возвращает void (без Future); submit возвращает Future с результатом или исключением."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "execute возвращает void, исключение летит в UncaughtExceptionHandler; submit возвращает Future, и исключение доступно только через get.",
+              "text": "execute принимает Runnable и возвращает void; submit принимает Runnable или Callable и возвращает Future с результатом или ошибкой задачи.",
               "correct": true,
               "sections": {
-                "explanation": "execute(Runnable) — из Executor; submit(Runnable|Callable) — из ExecutorService. Это критичное различие для диагностики: execute видит exception в логах сразу (handler), submit — только когда вызовешь get(), а если get не вызван — exception потерян. submit с Runnable тоже возвращает Future<?> (для tracking), result = null.",
-                "example": "executor.execute(() -> { throw new RuntimeException(); }) → лог в stderr; executor.submit(...) → тишина, пока не вызвали future.get().",
-                "when_to_apply": "execute — fire-and-forget где исключение должно «громко» падать; submit — когда нужен результат, отмена или явная обработка ошибок.",
-                "edge_cases": "Без get() submit «глотает» exception → молчаливая потеря задач. ScheduledExecutorService при exception в scheduled task — последующие не выполняются.",
+                "explanation": "Возвращаемый результат различается на уровне API: execute возвращает void, submit — Future. В обычном ThreadPoolExecutor непойманная ошибка простого Runnable может дойти до обработчика потока, а FutureTask сохраняет ошибку внутри Future. Её можно получить через get(), а начиная с Java 19 — через exceptionNow() после завершения с ошибкой; также возможны обработка внутри задачи и инструменты наблюдения пула.",
+                "example": "Runnable::run — допустимая реализация Executor, выполняющая задачу в вызывающем потоке. В пул можно передать FutureTask через execute: ошибка задачи останется в этом FutureTask, хотя сам execute ничего не вернёт.",
+                "when_to_apply": "Используйте submit, когда нужен Future для результата, отмены или контроля завершения. При любом способе отправки задачи заранее выбирайте, кто наблюдает её ошибку; автоматическая запись в лог не является общей гарантией Executor.",
+                "edge_cases": "Отсутствие вызова get() не уничтожает сохранённое исключение. Но без наблюдения Future или отдельного мониторинга ошибка может остаться незамеченной. execute также не обещает отдельного потока: способ исполнения определяет конкретный Executor.",
                 "related": "[[java-concurrency-interview#Q28]] Executor; [[java-concurrency-interview#Q33]] Future; [[java-concurrency-interview#Q7]] interrupt."
               }
             },
@@ -1841,19 +1841,19 @@
               "sections": {
                 "what_actually": "Наоборот: execute(Runnable) только; submit(Callable|Runnable) поддерживает оба.",
                 "source_of_confusion": "Перепутаны методы: помнят, что один из методов работает с `Callable`, но приписывают эту возможность `execute()` вместо `submit()`.",
-                "if_it_were_true": "Future<Integer> нельзя было бы получить — реально через submit(Callable).",
-                "how_it_should_be": "execute = Runnable only; submit = Runnable|Callable."
+                "if_it_were_true": "Если бы submit принимал только Runnable и не возвращал значение, его API не позволял бы передать Callable и получить результат этой задачи через Future. Фактически submit(Callable<T>) возвращает Future<T>.",
+                "how_it_should_be": "execute принимает Runnable; submit поддерживает Runnable и Callable."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "execute удалён из интерфейса Executor в Java 21 как устаревший; submit остаётся единственным способом отправить задачу в пул.",
+              "text": "В Java 21 execute удалён из Executor и не принимает Runnable; submit принимает Runnable/Callable и возвращает Future с результатом задачи.",
               "correct": false,
               "sections": {
                 "what_actually": "execute() остаётся базовым методом Executor; не deprecated.",
                 "source_of_confusion": "Слухи о deprecation: путают с реально устаревшими API и приписывают это execute().",
-                "if_it_were_true": "Executor.execute было бы @Deprecated — реально нет.",
+                "if_it_were_true": "При удалении метода вызов execute(task) не был бы доступен через переменную типа Executor. В Java 21 эта сигнатура есть и возвращает void; наличие или отсутствие аннотации Deprecated не доказывает удаления.",
                 "how_it_should_be": "execute() актуален; используется в Spring TaskExecutor и др."
               }
             }
@@ -1866,7 +1866,7 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое ForkJoinPool и алгоритм work-stealing на базовом уровне?",
+          "question_text": "Что такое `ForkJoinPool` и work-stealing?",
           "options": [
             {
               "order": 0,
@@ -1889,7 +1889,7 @@
                 "what_actually": "Наоборот: освободившийся ворует у занятого (у которого ещё есть работа в очереди).",
                 "source_of_confusion": "Инверсия логики «стащить»: кажется, что ворует занятый, хотя крадёт именно простаивающий.",
                 "if_it_were_true": "Free workers сидели бы голодными — реально подбирают работу.",
-                "how_it_should_be": "Idle thief steals from busy worker's deque tail."
+                "how_it_should_be": "Освободившийся рабочий поток забирает задачу из очереди занятого потока, у которого ещё осталась работа."
               }
             },
             {
@@ -1898,9 +1898,9 @@
               "text": "Пул для рекурсивных divide-and-conquer задач: принимает только Runnable и не работает с Callable/ForkJoinTask — это work-stealing.",
               "correct": false,
               "sections": {
-                "what_actually": "ForkJoinPool работает с ForkJoinTask (RecursiveTask/RecursiveAction), а также может принимать Runnable/Callable через execute/submit.",
-                "source_of_confusion": "Узкое знание API: запомнили только пример с `RecursiveTask`/`RecursiveAction` и решили, что `ForkJoinPool` не принимает `Runnable`/`Callable` через `submit`.",
-                "if_it_were_true": "ForkJoinPool не подошёл бы для CompletableFuture — реально дефолтный executor.",
+                "what_actually": "ForkJoinPool принимает ForkJoinTask и Runnable через execute; submit дополнительно поддерживает Callable. Для рекурсивных вычислений используют RecursiveTask или RecursiveAction.",
+                "source_of_confusion": "Опыт с Runnable в обычном пуле переносят на ForkJoinPool и ошибочно исключают ForkJoinTask и Callable из поддерживаемых форм задач.",
+                "if_it_were_true": "Такое ограничение лишило бы пул методов для ForkJoinTask. Оно само по себе не запрещало бы выполнение задач CompletableFuture, чьи асинхронные задачи также могут реализовывать Runnable.",
                 "how_it_should_be": "ForkJoinPool принимает ForkJoinTask, Runnable, Callable."
               }
             },
@@ -1910,10 +1910,10 @@
               "text": "Пул для рекурсивных divide-and-conquer задач: у каждого worker своя deque, освободившийся крадёт задачи с хвоста чужой — это work-stealing.",
               "correct": true,
               "sections": {
-                "explanation": "Work-stealing минимизирует contention. Worker добавляет/берёт задачи LIFO с головы своей deque (горячие); вор — FIFO с хвоста (крупные старые). Общий ForkJoinPool.commonPool() с параллелизмом availableProcessors()-1 используется parallelStream и CompletableFuture без явного executor.",
-                "example": "new ForkJoinPool(8).invoke(new SumTask(arr, 0, arr.length)) — recursive merge sum. parallelStream под капотом — commonPool.",
-                "when_to_apply": "CPU-bound recursive задачи: merge sort, parallel reduce, matrix multiplication, web crawler с children URLs.",
-                "edge_cases": "Блокирующий I/O в ForkJoinPool блокирует worker → деградация parallelStream. Решение: ManagedBlocker или отдельный pool.",
+                "explanation": "Локальные двусторонние очереди и work-stealing позволяют распределять подзадачи между рабочими потоками. Освободившийся поток ищет работу у других; в обычном режиме владелец обрабатывает локальные задачи в порядке LIFO, а чужие задачи забираются с противоположного конца. Настройка asyncMode меняет локальную политику на FIFO для задач, которые не ожидают через join. Параллелизм commonPool настраивается и не равен безусловно availableProcessors() - 1.",
+                "example": "new ForkJoinPool(8).invoke(new SumTask(arr, 0, arr.length)) — пример рекурсивного вычисления суммы с целевым параллелизмом 8. Это целевой параллелизм пула, а не гарантия одновременной работы восьми CPU.",
+                "when_to_apply": "ForkJoinPool подходит для вычислительных задач с разбиением на подзадачи: например, сортировки слиянием или параллельного свёртывания. Для блокирующего ввода-вывода отдельно оценивайте исполнитель и возможное влияние на общий пул.",
+                "edge_cases": "Блокирующий ввод-вывод и другая неуправляемая синхронизация могут занять рабочие потоки. ManagedBlocker позволяет сообщить пулу о блокировке, но не снимает все ограничения. Параметр common.parallelism и настройки JVM влияют на параллелизм общего пула.",
                 "related": "[[java-concurrency-interview#Q51]] ForkJoinPool детально; [[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q28]] Executor."
               }
             }
@@ -1926,55 +1926,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое Future, FutureTask и каковы их основные ограничения?",
+          "question_text": "Что такое `Future` и `FutureTask`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Future<V> — асинхронный результат с get()/cancel()/isDone(); FutureTask — реализация Future+Runnable; ключевое ограничение Future — get() отдаёт Optional без блокировки.",
+              "text": "Future даёт доступ к результату через немедленный Optional из get(); FutureTask — исполняемый Runnable, сохраняющий этот результат.",
               "correct": false,
               "sections": {
-                "what_actually": "Future.get() блокирует до готовности или таймаута; Optional не возвращает.",
-                "source_of_confusion": "Желание non-blocking API: ждут, что get() сразу вернёт Optional, не блокируя поток.",
-                "if_it_were_true": "CompletableFuture не был бы нужен — реально создан для этого.",
-                "how_it_should_be": "get() блокирует; non-blocking — CompletableFuture.thenApply."
+                "what_actually": "get() возвращает значение результата, а не Optional. Он ждёт при необходимости; для уже готового результата ожидание не нужно. Ошибка и отмена сообщаются исключениями.",
+                "source_of_confusion": "Ожидание путают с проверкой готовности. В Java 19+ есть resultNow() для уже успешного результата, но этот метод не превращает get() в чтение Optional.",
+                "if_it_were_true": "При таком контракте get() немедленно сообщал бы об отсутствии результата. Реальный get() может ждать; даже неблокирующее чтение не добавило бы Future методов композиции.",
+                "how_it_should_be": "Для ожидания используйте get() с подходящим тайм-аутом; для чтения готового успеха в Java 19+ есть resultNow() с собственными предусловиями."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Future<V> — асинхронный результат с get()/cancel()/isDone(); FutureTask — реализация Future+Runnable; ключевое ограничение Future — повторный get() перезапускает задачу.",
+              "text": "Future повторяет вычисление при каждом get() и выдаёт новый исход; FutureTask реализует для этого интерфейсы Runnable и Future.",
               "correct": false,
               "sections": {
-                "what_actually": "Задача выполняется один раз; `get()` возвращает уже вычисленный (закэшированный) результат при каждом вызове.",
-                "source_of_confusion": "Путают с реактивным `Mono`, где новая подписка перезапускает цепочку.",
-                "if_it_were_true": "Один `Future` давал бы разные результаты при каждом `get()` — недетерминизм.",
-                "how_it_should_be": "`Future` вычисляется однократно; результат кэшируется и переиспользуется."
+                "what_actually": "get() наблюдает исход уже представленного вычисления и не запускает его заново. Обычный run() завершённого FutureTask также не повторяет тело задачи.",
+                "source_of_confusion": "Наблюдение результата путают с новым запуском вычисления или новой подпиской на холодный источник. Даже у Mono поведение зависит от создания и кэширования источника.",
+                "if_it_were_true": "Повторное чтение вызывало бы новое исполнение тела, хотя результат повторного исполнения мог бы оказаться тем же. Реальный get() не выполняет такую повторную работу.",
+                "how_it_should_be": "Для нового вычисления создают или отправляют новую задачу; повторные get() одного FutureTask читают его сохранённый исход."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Future<V> — асинхронный результат с get()/cancel()/isDone(); FutureTask — реализация Future+Runnable; ключевое ограничение Future — get() блокирует поток.",
+              "text": "Future даёт доступ к исходу вычисления и допускает ожидание через get(); FutureTask — исполняемая реализация RunnableFuture.",
               "correct": true,
               "sections": {
-                "explanation": "У Future нет цепочек обработки и combining — для этого нужен CompletableFuture. Future даёт get()/get(timeout)/cancel(true)/isDone()/isCancelled(). FutureTask запускается и через Thread, и через ExecutorService. Future появился в Java 5. FutureTask реализует RunnableFuture (Runnable + Future). cancel(true) делает interrupt на worker-потоке; cancel(false) только маркирует. ExecutionException оборачивает исключение задачи.",
-                "example": "Future<String> f = exec.submit(callable); String r = f.get(5, SECONDS);. FutureTask<Integer> t = new FutureTask<>(callable); new Thread(t).start(); t.get();",
-                "when_to_apply": "Простые fire-and-collect случаи; legacy-код; когда не нужны цепочки. Иначе — CompletableFuture.",
-                "edge_cases": "Future.get() без таймаута может висеть навечно. cancel(true) на не запущенной задаче — успешен; на выполняющейся — interrupt, но задача может не реагировать.",
-                "related": "[[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q31]] submit vs execute; [[java-concurrency-interview#Q7]] interrupt."
+                "explanation": "Future представляет исход вычисления, но сам не запускает его и не объявляет цепочек продолжений. get() может ждать и сообщает об ошибке через ExecutionException. FutureTask реализует RunnableFuture, оборачивает Callable или Runnable и хранит исход. Его передают исполнителю или запускают через Thread. В Java 19+ есть state(), resultNow() и exceptionNow() для наблюдения состояния с указанными в API условиями.",
+                "example": "FutureTask<Integer> task = new FutureTask<>(() -> 42); new Thread(task).start(); Integer value = task.get(); — после успешного завершения повторный get() читает тот же исход, а не повторяет тело.",
+                "when_to_apply": "Future подходит, когда нужно наблюдать результат, дождаться его или запросить отмену. Для зависимых стадий и объединения результатов отдельно выбирают CompletionStage или CompletableFuture.",
+                "edge_cases": "Успешный cancel(false) до запуска FutureTask предотвращает выполнение тела; после начала не прерывает его. cancel(true) допускает попытку прерывания, но не принудительную остановку. Отменённый Future может стать done раньше фактического окончания тела.",
+                "related": "[[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q31]] submit и execute; [[java-concurrency-interview#Q7]] прерывание."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Future<V> — асинхронный результат с get()/cancel()/isDone(); FutureTask — реализация Future+Runnable; ключевое ограничение Future — cancel(true) рвёт код на любой инструкции.",
+              "text": "Future принудительно останавливает вычисление вызовом cancel(true); FutureTask — запускаемая Runnable-обёртка для Callable или Runnable с хранением результата.",
               "correct": false,
               "sections": {
-                "what_actually": "cancel(true) лишь выставляет флаг прерывания выполняющему потоку (кооперативная модель); если код задачи не проверяет Thread.interrupted() и не реагирует на InterruptedException, он спокойно доработает до конца — принудительной остановки нет.",
-                "source_of_confusion": "Имя cancel и параметр mayInterruptIfRunning=true читают как «убить задачу», путая с давно небезопасным Thread.stop(); на деле это лишь запрос на прерывание.",
-                "if_it_were_true": "Любой блокирующий цикл без проверки флага можно было бы оборвать извне — реально задача игнорирует cancel и висит до штатного завершения.",
-                "how_it_should_be": "cancel(true) прерывает только кооперативно: задача сама обязана проверять флаг прерывания, чтобы остановиться."
+                "what_actually": "cancel(true) не обрывает код на произвольной инструкции. Для выполняющегося FutureTask возможна попытка interrupt; фактическое завершение зависит от реакции задачи и используемых операций.",
+                "source_of_confusion": "Отмену Future воспринимают как принудительное прекращение потока. Состояние результата и фактическое исполнение тела — разные вещи.",
+                "if_it_were_true": "Принудительная остановка позволяла бы оборвать и цикл, который не реагирует на прерывание. Реальная отмена FutureTask такой гарантии не даёт.",
+                "how_it_should_be": "Планируйте кооперативную отмену: проверку interrupt там, где она нужна, и корректную обработку InterruptedException от прерываемых операций."
               }
             }
           ]
@@ -2046,36 +2046,36 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "В чём разница между thenApply(), thenCompose() и thenCombine()?",
+          "question_text": "Разница между `thenApply()`, `thenCompose()` и `thenCombine()`",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "thenApply — синхронная трансформация как map; thenCompose — то же самое, что thenApply; thenCombine — объединение двух независимых CF.",
+              "text": "thenApply преобразует значение; thenCompose делает то же самое, что thenApply; thenCombine объединяет результаты двух стадий.",
               "correct": false,
               "sections": {
-                "what_actually": "thenApply возвращает CF<U> для fn: T->U; thenCompose разворачивает fn: T->CF<U> в CF<U>. Семантически разные.",
+                "what_actually": "Функция thenApply возвращает обычное значение. Функция thenCompose возвращает следующую стадию, завершение которой определяет результат общей цепочки; это разные способы композиции.",
                 "source_of_confusion": "Похожие имена `thenApply` и `thenCompose` и одинаковый результат-тип `CF<U>` создают иллюзию, что разница чисто стилистическая, а не map-vs-flatMap.",
-                "if_it_were_true": "Один из методов был бы deprecated — реально оба нужны.",
+                "if_it_were_true": "При одинаковой семантике thenCompose тоже оставлял бы вложенный Future. Его контракт связывает цепочку с результатом возвращённой стадии без этой дополнительной вложенности.",
                 "how_it_should_be": "thenApply = map (значение в значение); thenCompose = flatMap (значение в новый CF)."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "thenApply — синхронная трансформация как map; thenCompose — параллельное allOf двух CF; thenCombine — объединение двух независимых CF.",
+              "text": "thenApply преобразует значение; thenCompose объединяет две стадии как allOf; thenCombine объединяет результаты двух стадий.",
               "correct": false,
               "sections": {
-                "what_actually": "thenCompose — sequential chaining (после первого CF запускается второй); параллельное — thenCombine/allOf.",
+                "what_actually": "thenCompose вызывает функцию после нормального завершения исходной стадии и связывает результат со стадией, которую вернула функция. thenCombine объединяет результаты двух уже переданных стадий и сам не запускает две задачи параллельно.",
                 "source_of_confusion": "Слово «compose» воспринимается как «комбинация».",
-                "if_it_were_true": "thenCombine был бы не нужен — реально для параллели.",
-                "how_it_should_be": "thenCompose = chain (sequential); thenCombine/allOf = parallel."
+                "if_it_were_true": "Если бы thenCompose был аналогом allOf для нескольких готовых стадий, он принимал бы эти стадии напрямую. Фактически ему передают функцию, создающую или возвращающую следующую стадию.",
+                "how_it_should_be": "thenCompose связывает зависимые стадии; thenCombine объединяет два результата, а allOf отслеживает завершение нескольких стадий."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "thenApply — синхронная трансформация как map; thenCompose — chaining как flatMap; thenCombine — объединение трёх CF одним вызовом.",
+              "text": "thenApply преобразует значение; thenCompose связывает зависимые стадии; thenCombine объединяет три стадии одним вызовом.",
               "correct": false,
               "sections": {
                 "what_actually": "thenCombine принимает один второй CF; для трёх+ — thenCombine цепочкой или allOf.",
@@ -2087,13 +2087,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "thenApply — синхронная трансформация как map; thenCompose — chaining как flatMap; thenCombine — объединение двух независимых CF.",
+              "text": "thenApply преобразует значение; thenCompose связывает зависимые стадии; thenCombine объединяет результаты двух стадий.",
               "correct": true,
               "sections": {
-                "explanation": "thenApply(fn: T->U) как Stream.map; thenCompose(fn: T->CF<U>) как Stream.flatMap, разворачивает CF<CF<U>> в CF<U>; thenCombine(cf2, fn: (T,U)->V) — после завершения обоих. Правило: если функция возвращает CompletableFuture — нужен thenCompose, иначе получишь CF<CF<...>>. thenCombine — для параллельной агрегации двух независимых задач.",
-                "example": "getUserId().thenApply(id -> \"User-\"+id) — sync. getUserId().thenCompose(this::fetchProfile) — async chain. fetchName().thenCombine(fetchAge(), (n, a) -> n+\"/\"+a) — parallel.",
-                "when_to_apply": "thenApply — pure-функция трансформации. thenCompose — для async-вызовов в цепочке. thenCombine — параллельные независимые запросы с агрегацией.",
-                "edge_cases": "thenApply возвращающий CF создаёт CF<CF<T>> — нужен thenCompose. thenCombine ждёт ОБОИХ; если один упал — второй продолжит и результат летит в exception.",
+                "explanation": "thenApply преобразует результат функцией, возвращающей значение. thenCompose связывает цепочку со стадией, возвращённой функцией, без лишней вложенности. thenCombine получает результаты двух нормально завершившихся стадий и передаёт их объединяющей функции. Эти методы без суффикса Async сами по себе не требуют нового потока; thenCombine также не запускает исходные вычисления.",
+                "example": "getUserId().thenApply(id -> \"User-\"+id) — преобразовать id в строку. getUserId().thenCompose(this::fetchProfile) — связать результат со стадией загрузки профиля. fetchName().thenCombine(fetchAge(), (n, a) -> n+\"/\"+a) — объединить два результата; запуск и параллельность зависят от реализации вызванных функций.",
+                "when_to_apply": "Выбирайте thenApply, когда функция возвращает значение, thenCompose — когда она возвращает следующую стадию, thenCombine — когда нужны два результата. Если требуется асинхронное исполнение продолжения, отдельно выбирайте вариант Async и исполнитель.",
+                "edge_cases": "Если функция thenApply возвращает CompletableFuture, результат будет вложенным. thenCombine не отменяет автоматически вторую стадию при ошибке первой. Не путайте связывание стадий с запуском задач и выбором потока исполнения.",
                 "related": "[[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q37]] allOf; [[java-concurrency-interview#Q52]] сложные цепочки."
               }
             }
@@ -2166,55 +2166,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как выполнить несколько CompletableFuture параллельно: allOf и anyOf?",
+          "question_text": "Как выполнить несколько `CompletableFuture` параллельно?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "allOf ждёт все и возвращает CF<Void>, результаты берутся join'ом; anyOf возвращает первый завершившийся как CF<Object>.",
+              "text": "Вычисления отправляют через supplyAsync исполнителю с подходящим параллелизмом; allOf возвращает CF<Void> для ожидания всех, anyOf — CF<Object> с исходом одного завершившегося входа.",
               "correct": true,
               "sections": {
-                "explanation": "allOf(cf1, cf2, ...) собирает результаты через join() на каждом исходном CF и пропагирует первую ошибку, остальные продолжают выполняться. allOf удобен для fan-out + barrier; anyOf — для гонки (winner takes it). Стандартный паттерн: var all = allOf(cf1, cf2, cf3); all.thenApply(v -> aggregateResults(cf1.join(), cf2.join(), cf3.join())).",
-                "example": "Parallel HTTP-calls: List<CF<String>> futures = urls.stream().map(this::fetchAsync).toList(); allOf(futures.toArray(CF[]::new)).thenApply(v -> futures.stream().map(CF::join).toList()).",
-                "when_to_apply": "allOf — fan-out все ответы нужны (профиль = user+orders+reviews). anyOf — fallback datacenters, fastest response wins.",
-                "edge_cases": "allOf не cancel'ит остальные при ошибке одной — расходуют ресурсы. anyOf может вернуть exception если первый завершился ошибкой. Тип CF<Object> неудобен — обычно с allOf+join.",
-                "related": "[[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q35]] thenApply; [[java-concurrency-interview#Q56]] StructuredTaskScope."
+                "explanation": "Отправка вычислений и объединение завершений — разные действия. supplyAsync передаёт вычисление исполнителю; реальное перекрытие зависит от него и задач. allOf создаёт барьер без значений результатов: их собирают отдельно после успешного завершения. anyOf может завершиться значением или ошибкой одного входа и не отменяет остальные. При нескольких ошибках allOf не обещает хронологически первую.",
+                "example": "При наличии Executor pool: var a = CompletableFuture.supplyAsync(() -> \"A\", pool); var b = CompletableFuture.supplyAsync(() -> \"B\", pool); var values = CompletableFuture.allOf(a, b).thenApply(v -> List.of(a.join(), b.join())); — порядок значений задаёт этот сборщик.",
+                "when_to_apply": "Используйте allOf как барьер, если нужны исходы всех входов, а anyOf — когда допустим исход одного из них. Для первого успешного ответа нужна отдельная политика, потому что anyOf может завершиться ошибкой.",
+                "edge_cases": "allOf не отменяет оставшиеся задачи и не является fail-fast отменой. Без входов allOf уже завершён значением null, а anyOf остаётся незавершённым. Для уже готовых входов результат anyOf не восстанавливает историю времени их завершения.",
+                "related": "[[java-concurrency-interview#Q34]] CompletableFuture; [[java-concurrency-interview#Q35]] композиция стадий; [[java-concurrency-interview#Q56]] структурированная конкурентность."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "allOf ждёт все и сразу отдаёт List<T> в порядке аргументов без join; anyOf возвращает первый завершившийся как CF<Object>.",
+              "text": "Вычисления отправляют через supplyAsync исполнителю с подходящим параллелизмом; allOf возвращает CF<List<T>> с результатами всех, anyOf — CF<Object> с исходом одного завершившегося входа.",
               "correct": false,
               "sections": {
-                "what_actually": "allOf возвращает CF<Void>; результаты надо извлекать join'ом из каждого исходного CF.",
-                "source_of_confusion": "Желаемое поведение: удобнее было бы получать `List<T>` напрямую из `allOf`, и это ожидание выдают за реальность вместо ручного `join()` каждого CF.",
-                "if_it_were_true": "Был бы готовый CF<List<T>> — реально приходится строить вручную.",
-                "how_it_should_be": "allOf → CF<Void>; join() на каждом для результата."
+                "what_actually": "allOf возвращает CompletableFuture<Void>, а значения остаются в исходных futures. После успешного барьера можно собрать их отдельно, например через join() каждого входа.",
+                "source_of_confusion": "Ожидание группы смешивают с построением типизированного списка её значений. Это два разных действия.",
+                "if_it_were_true": "Возвращаемую стадию можно было бы непосредственно считать Future<List<T>>. Фактическая сигнатура allOf даёт CompletableFuture<Void>.",
+                "how_it_should_be": "Запустите вычисления, затем создайте allOf и отдельное продолжение для сбора значений после его нормального завершения."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "allOf сразу бросает исключение, если хотя бы один CF ещё не завершён; anyOf возвращает первый завершившийся как CF<Object>.",
+              "text": "Вычисления отправляют через supplyAsync исполнителю с подходящим параллелизмом; allOf сразу бросает исключение при незавершённом входе, anyOf возвращает исход одного завершившегося входа.",
               "correct": false,
               "sections": {
-                "what_actually": "`allOf` возвращает `CompletableFuture<Void>`, который завершается когда готовы ВСЕ; он не бросает из-за незавершённости.",
-                "source_of_confusion": "Путают с `get(timeout)`, бросающим `TimeoutException`.",
-                "if_it_were_true": "`allOf` был бы бесполезен как инструмент ожидания группы задач.",
-                "how_it_should_be": "`allOf(...).join()` блокируется до завершения всех; затем собрать результаты `join()` на каждом CF."
+                "what_actually": "Незавершённый корректный вход не является ошибкой вызова allOf. Метод возвращает новую стадию, ожидающую завершения всех входов, а не бросает исключение из-за их неготовности.",
+                "source_of_confusion": "Создание барьера смешивают с ожиданием результата через get(timeout), которое действительно может закончиться TimeoutException.",
+                "if_it_were_true": "Нельзя было бы заранее построить барьер для ещё работающих вычислений. Реальный allOf допускает незавершённые входы и возвращается без ожидания их результатов.",
+                "how_it_should_be": "allOf создаёт стадию завершения группы; ожидание через join/get либо продолжение задают отдельно. Значения входов собирают после успешного барьера."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "allOf ждёт все и возвращает CF<Void>, результаты берутся join'ом; anyOf после первого завершения автоматически отменяет остальных.",
+              "text": "Вычисления отправляют через supplyAsync исполнителю с подходящим параллелизмом; allOf ждёт все без сбора значений, anyOf после первого завершения автоматически отменяет остальные входы.",
               "correct": false,
               "sections": {
-                "what_actually": "anyOf НЕ отменяет проигравших — они продолжают выполнение и тратят ресурсы.",
-                "source_of_confusion": "Желаемое поведение: логично ожидать, что после первого ответа `anyOf` отменит проигравших, но реально оставшиеся futures продолжают выполняться в фоне.",
-                "if_it_were_true": "Не было бы преимуществ StructuredTaskScope.ShutdownOnSuccess — реально есть.",
-                "how_it_should_be": "anyOf — только winner; cancel остальных — вручную или через StructuredTaskScope."
+                "what_actually": "anyOf переносит исход одного входа в свой результат, но не отменяет остальные futures и их операции. Отмену и фактическую остановку работы проектируют отдельно.",
+                "source_of_confusion": "Выбор одного результата принимают за управление жизненным циклом всех проигравших вычислений.",
+                "if_it_were_true": "Остальные входы автоматически получали бы запрос отмены. Этого не происходит. Даже такая гипотетическая отмена не сделала бы anyOf политикой первого успеха: победить может ошибка.",
+                "how_it_should_be": "Отдельно определите нужный исход, отмену оставшихся стадий и кооперативное завершение операций. anyOf сам эти действия не выполняет."
               }
             }
           ]
@@ -3006,55 +3006,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как работает ForkJoinPool и алгоритм work-stealing на детальном уровне?",
+          "question_text": "Как работает `ForkJoinPool` и алгоритм work-stealing подробно?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "У каждого worker своя deque: владелец берёт с HEAD (LIFO), вор — тоже с HEAD чужой (LIFO); fork() кладёт задачу, compute() считает, join() ждёт результат.",
+              "text": "При asyncMode=false владелец берёт LIFO, вор — с того же конца deque; при true локальный порядок FIFO для задач без join. fork/compute/join планируют, вычисляют и ожидают подзадачи.",
               "correct": false,
               "sections": {
-                "what_actually": "Владелец берёт с HEAD (LIFO), вор — с TAIL (FIFO).",
-                "source_of_confusion": "Незнание двунаправленности deque: считают, что вор берёт с той же стороны, что владелец.",
-                "if_it_were_true": "Не было бы преимуществ deque над обычной очередью — реально направления оптимизированы.",
-                "how_it_should_be": "Владелец работает с HEAD (LIFO), вор крадёт с TAIL (FIFO) — разные концы deque."
+                "what_actually": "В обычном режиме OpenJDK владелец обрабатывает свежие локальные задачи LIFO, а другой поток берёт более старую задачу с противоположного конца. asyncMode=true меняет локальную политику для задач без join на FIFO.",
+                "source_of_confusion": "Сторону владельца и сторону кражи смешивают. Имена head/tail условны: реализация использует top/base, поэтому важно определить, о каком конце и режиме идёт речь.",
+                "if_it_were_true": "В обычном режиме кража забирала бы задачу со стороны наиболее свежей локальной работы. Фактически используется противоположная сторона; наличие преимуществ deque нельзя вывести из одной этой гипотезы.",
+                "how_it_should_be": "Указывайте режим: при asyncMode=false локальная работа LIFO, кража более старой задачи — с противоположного конца; при true локальная политика для задач без join — FIFO."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "У каждого worker своя deque: владелец берёт с HEAD (LIFO), вор — с TAIL чужой (FIFO); fork()/compute()/join() заточены под блокирующий I/O, а не под CPU-bound divide-and-conquer.",
+              "text": "При asyncMode=false владелец берёт LIFO, вор — старую задачу; при true локальный порядок FIFO для задач без join. fork/compute/join планируют, вычисляют и ожидают подзадачи прежде всего для блокирующего I/O.",
               "correct": false,
               "sections": {
-                "what_actually": "FJP спроектирован для CPU-bound recursive tasks; блокирующий I/O в FJP — антипаттерн.",
-                "source_of_confusion": "Инверсия use-case: `ForkJoinPool` ассоциируют с «асинхронностью» вообще и приписывают I/O-bound задачи, хотя он оптимизирован под CPU-bound рекурсию.",
-                "if_it_were_true": "Не было бы рекомендаций «не блокируй commonPool» — реально стандарт.",
-                "how_it_should_be": "FJP для CPU-bound; I/O — отдельный pool или VT."
+                "what_actually": "Fork/join удобен для делимых вычислительных задач. Блокирующий ввод-вывод возможен, но неуправляемые блокировки могут занять workers; пул не гарантирует их компенсацию.",
+                "source_of_confusion": "Возможность отправить произвольную задачу принимают за специализацию пула на блокирующем I/O. Назначение модели и техническая допустимость вызова — разные вопросы.",
+                "if_it_were_true": "Блокирующий I/O был бы основной целевой нагрузкой модели, но из этого всё равно не следовало бы отсутствие ограничений или рекомендаций. Документация описывает work-stealing для делимых вычислений и отдельно оговаривает блокировки.",
+                "how_it_should_be": "Для I/O выбирайте исполнитель и ограничения ресурсов отдельно. ManagedBlocker сообщает о поддерживаемой блокировке, но не превращает произвольный вызов I/O в безопасный для пула."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "У каждого worker своя deque: владелец берёт с HEAD (LIFO), вор — с TAIL чужой (FIFO); commonPool() часто размера 1 и ведёт себя как single-thread executor.",
+              "text": "При asyncMode=false владелец берёт LIFO, вор — старую задачу; при true локальный порядок FIFO для задач без join. fork/compute/join планируют, вычисляют и ожидают подзадачи; parallelism=1 гарантирует одного worker.",
               "correct": false,
               "sections": {
-                "what_actually": "commonPool = availableProcessors() - 1 (минимум 1); обычно 7-15+ потоков.",
-                "source_of_confusion": "Незнание дефолта: размер `commonPool()` равен `availableProcessors() - 1`, а его путают с `1`, как у `newSingleThreadExecutor()`.",
-                "if_it_were_true": "parallelStream был бы не параллельным — реально использует ядра.",
-                "how_it_should_be": "commonPool по умолчанию ≈ availableProcessors() - 1, а не 1."
+                "what_actually": "Целевой параллелизм commonPool настраивается. Значение 1 допустимо, но не равно гарантии единственного worker: для компенсации управляемой блокировки возможны дополнительные потоки.",
+                "source_of_confusion": "Параметр parallelism смешивают с фиксированным числом существующих workers и контрактом однопоточного исполнителя.",
+                "if_it_were_true": "При parallelism=1 пул гарантировал бы единственного рабочего даже при компенсируемой блокировке. Такая гарантия не установлена; отсутствие реального перекрытия отдельных задач также не доказывает, что пул однопоточный.",
+                "how_it_should_be": "Различайте целевой параллелизм, фактическое число workers и число одновременно выполняющихся задач. Формулу default привязывайте к реализации и конфигурации."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "У каждого worker своя deque: владелец берёт с HEAD (LIFO), вор — с TAIL чужой (FIFO); fork() кладёт задачу, compute() считает, join() ждёт результат.",
+              "text": "При asyncMode=false владелец берёт LIFO, вор — старую задачу с другого конца; при true локальный порядок FIFO для задач без join. fork/compute/join планируют, вычисляют и ожидают подзадачи.",
               "correct": true,
               "sections": {
-                "explanation": "Во время join() поток помогает выполнять другие задачи. Владелец берёт горячие свежие задачи (HEAD/LIFO), вор — крупные старые (TAIL/FIFO). commonPool используется parallelStream и CompletableFuture без явного executor. LIFO для владельца даёт лучшую локальность кэша. FIFO для воровства — крупные старые задачи стоит украсть, чтобы не тратить cycle. Размер commonPool = availableProcessors() - 1.",
-                "example": "RecursiveTask<Long> SumTask: if(small) compute(); else { left.fork(); rightR = right.compute(); leftR = left.join(); return leftR + rightR; }. ForkJoinPool.commonPool().invoke(new SumTask(...)).",
-                "when_to_apply": "Divide-and-conquer: merge sort, parallel matrix, tree traversal. parallelStream автоматически использует ForkJoinPool.",
-                "edge_cases": "Блокирующий I/O в FJP → деградация parallelStream (используйте ManagedBlocker или свой pool). Recursive task с слишком мелким THRESHOLD = overhead больше пользы.",
-                "related": "[[java-concurrency-interview#Q32]] ForkJoinPool basic; [[java-concurrency-interview#Q28]] ExecutorService; [[java-concurrency-interview#Q34]] CompletableFuture."
+                "explanation": "В OpenJDK локальная политика зависит от asyncMode: обычный режим использует LIFO у владельца, а поток, ищущий работу, берёт старую задачу с другой стороны. FIFO локально предусмотрен для задач без join при asyncMode=true. fork планирует задачу, compute описывает вычисление, join получает исход с возможным ожиданием; ожидающий worker может помогать, но это не исключает ожидания. Возраст задачи не определяет её размер.",
+                "example": "Схема left.fork(); long rightValue = right.compute(); long leftValue = left.join(); оставляет одну часть текущему потоку и предлагает другую пулу. Она не гарантирует, что left непременно начнёт другой поток.",
+                "when_to_apply": "Применяйте fork/join для подходящих делимых вычислений и измеряйте порог разбиения. ThreadPoolExecutor и ForkJoinPool — разные реализации ExecutorService; сам интерфейс не задаёт устройство очередей.",
+                "edge_cases": "Параллелизм commonPool настраивается. В OpenJDK 21+35 без свойства начальное значение — max(1, availableProcessors()-1), а фактическое число workers может отличаться. Неконтролируемые блокировки и слишком мелкие подзадачи способны ухудшить работу.",
+                "related": "[[java-concurrency-interview#Q32]] базовый ForkJoinPool; [[java-concurrency-interview#Q28]] ExecutorService; [[java-concurrency-interview#Q34]] CompletableFuture."
               }
             }
           ]
