@@ -1284,7 +1284,7 @@
               "text": "Audit trail реконструирует «как и почему» модель приняла решение и включает уровни: `decision logs` (per request — input, output, model version, guardrail flags, user ID; retention 6+ месяцев по AI Act Art. 12), `model lineage` (training data version, code commit, hyperparameters, who/when), `data lineage`, `access logs`, `change logs`. Свойства: append-only, cryptographically signed/immutable, timestamped (NTP), structured (JSON/Parquet), searchable, privacy-aware.",
               "correct": true,
               "sections": {
-                "explanation": "Tools: `MLflow Model Registry` (lineage), `DVC` + Git (data/code versioning), OpenTelemetry + Langfuse/Helicone/Arize (request traces), Apache Atlas/DataHub (enterprise data lineage).",
+                "explanation": "Инструменты: `MLflow Model Registry` — происхождение и история модели; `DVC` и Git — версионирование данных и кода; OpenTelemetry с Langfuse/Helicone/Arize — трассы запросов; Apache Atlas/DataHub — отслеживание происхождения данных в организации.",
                 "example": "Например, на incident «чат-бот дал неверный совет» audit trail показывает request_id, версию модели, сработавшие guardrail flags и кто пушнул эти веса — через `MLflow` lineage и `Langfuse` traces.",
                 "when_to_apply": "Audit trail проектируют под high-risk: EU AI Act Art. 12 требует automatic logging с traceable events и ID persons, минимум 6 месяцев.",
                 "edge_cases": "PII redaction в логах нужна, но допускается retain unsalted hash для linking (если legal allows); model/data lineage обычно хранят permanent для traceability.",
@@ -1404,10 +1404,10 @@
               "text": "Reporting AI incidents. `Serious incident` (Art. 3(49)): death/serious health damage, disruption critical infrastructure, infringement fundamental rights, serious damage property/environment. Timeline (Art. 73): immediately после establishing causal link; 15 days standard, 2 days widespread/infrastructure, 10 days death. Кому: market surveillance authority MS, где произошёл incident. В отчёте: описание, AI system (provider, model, version), causal link, corrective actions.",
               "correct": true,
               "sections": {
-                "explanation": "Internal incident management: detection (anomaly monitoring, user reports) → triage (severity, scope) → containment (rollback, guardrails) → investigation (root cause) → remediation → blameless post-mortem.",
+                "explanation": "Внутреннее управление инцидентами включает обнаружение по аномалиям и сообщениям пользователей, первичную оценку серьёзности и масштаба, ограничение последствий с помощью отката и защитных мер, расследование первопричины, устранение проблемы и разбор без поиска виноватых.",
                 "example": "Например, при serious incident с health damage провайдер обязан в 15 дней уведомить market surveillance authority той страны EU, где это произошло, с causal link analysis.",
                 "when_to_apply": "Этот процесс выстраивают заранее как runbook: при serious incident счёт идёт на дни, импровизация недопустима.",
-                "edge_cases": "Public databases: `AI Incident Database` (incidentdatabase.ai, 700+ incidents), OECD AI Incidents Monitor, `AVID`; famous cases — COMPAS bias, Amazon hiring AI, Air Canada chatbot.",
+                "edge_cases": "Открытые базы: `AI Incident Database` (incidentdatabase.ai, более 700 инцидентов), OECD AI Incidents Monitor и `AVID`. Известные случаи — предвзятость COMPAS, система найма Amazon и чат-бот Air Canada.",
                 "related": "[[ai-compliance-governance-interview#Q3]] serious incidents Art. 73; [[ai-compliance-governance-interview#Q22]] audit trail для расследования; [[ai-compliance-governance-interview#Q27]] post-market monitoring."
               },
               "label": "B",
@@ -1536,10 +1536,10 @@
               "text": "Red teaming AI — adversarial testing модели/системы для нахождения failures (harmful outputs, jailbreaks, hallucinations, bias, security). Отличие от классического security red team — behavioral attacks на модель. Типы: capability evaluation (CBRN uplift, deception), misuse red teaming (jailbreaks, role-play, multi-turn), bias/fairness probing, robustness testing (prompt injection), security red teaming (model extraction). Best practices: diverse teams, structured + unstructured, document attacks, severity scoring, re-test after mitigation, continuous.",
               "correct": true,
               "sections": {
-                "explanation": "Frontier labs: OpenAI Frontier Red Team (Preparedness Framework), Anthropic Frontier Threats Red Team (Responsible Scaling Policy), DeepMind Frontier Safety Framework, external — METR, AISI.",
+                "explanation": "Среди лабораторий передовых моделей: OpenAI Frontier Red Team (Preparedness Framework), Anthropic Frontier Threats Red Team (Responsible Scaling Policy) и DeepMind Frontier Safety Framework. Внешние организации — METR и AISI.",
                 "example": "Например, misuse red teaming пытается обойти guardrails через multi-turn role-play, а capability evaluation проверяет CBRN uplift; обе атаки документируют с severity scoring через `PyRIT`.",
                 "when_to_apply": "Red teaming запускают continuous, а не one-shot pre-launch: модель обновляется и attack landscape меняется; для systemic-risk GPAI оно обязательно.",
-                "edge_cases": "Open tools: `PyRIT` (Microsoft), `Garak` (vulnerability scanner), `HarmBench`, `AILuminate` (MLCommons); EU AI Act требует adversarial testing для systemic-risk GPAI (Art. 55(1)(b)).",
+                "edge_cases": "Открытые инструменты: `PyRIT` (Microsoft), `Garak` — сканер уязвимостей, `HarmBench` и `AILuminate` (MLCommons). EU AI Act требует тестирования с атакующими воздействиями для GPAI с системным риском (Art. 55(1)(b)).",
                 "related": "[[ai-compliance-governance-interview#Q4]] GPAI systemic risk и red teaming; [[ai-compliance-governance-interview#Q8]] GenAI Profile actions; [[ai-compliance-governance-interview#Q27]] post-market monitoring."
               },
               "label": "C",
@@ -1767,7 +1767,7 @@
                 "explanation": "Например, cosmetic human oversight: UI с «approve» без реальной возможности override (decision fatigue, no time) нарушает AI Act Art. 14, требующий meaningful oversight.",
                 "example": "Например, команда ставит UI с кнопкой «approve» под решением модели, но у оператора нет ни времени, ни возможности override — это cosmetic human oversight, нарушающий Art. 14.",
                 "when_to_apply": "Этот список используют при self-audit готовности к AI Act: проверяют, не присутствует ли каждый из anti-patterns в текущих процессах.",
-                "edge_cases": "Mitigation: written AI policy, inventory + classification (quarterly), cross-functional committee, continuous monitoring infra, periodic red teaming, incident runbook, training all staff (AI literacy, Art. 4).",
+                "edge_cases": "Меры снижения риска: письменная политика использования ИИ, ежеквартальная инвентаризация и классификация, межфункциональный комитет, инфраструктура постоянного мониторинга, периодическое тестирование атакующими командами, инструкции по реагированию на инциденты и обучение всех сотрудников грамотному использованию ИИ (Art. 4).",
                 "related": "[[ai-compliance-governance-interview#Q25]] compliance roadmap против silo; [[ai-compliance-governance-interview#Q12]] cosmetic oversight и Article 22; [[ai-compliance-governance-interview#Q11]] one-time DPIA."
               },
               "label": "B",
@@ -1836,10 +1836,10 @@
               "text": "`FRIA` (Fundamental Rights Impact Assessment, EU AI Act Art. 27) — оценка влияния high-risk AI на fundamental rights. Обязаны deployers high-risk AI: public bodies и private actors (credit scoring Annex III(5)(b), life/health insurance Annex III(5)(c)). Содержание (Art. 27(1)): description процессов, period/frequency use, categories affected persons, specific risks к правам, human oversight measures, measures при materialise. Deployer уведомляет market surveillance authority о результатах FRIA.",
               "correct": true,
               "sections": {
-                "explanation": "FRIA vs DPIA: DPIA (GDPR Art. 35) покрывает data protection (privacy), FRIA — все fundamental rights Charter EU (dignity, non-discrimination, equality, expression).",
+                "explanation": "DPIA (GDPR Art. 35) оценивает защиту данных и приватность. FRIA охватывает все основные права из Хартии ЕС, включая достоинство, недискриминацию, равенство и свободу выражения мнения.",
                 "example": "Например, банк-deployer перед запуском `credit scoring` (Annex III(5)(b)) проводит FRIA и уведомляет market surveillance authority о результатах, помимо собственной DPIA по GDPR.",
                 "when_to_apply": "FRIA проводят deployers high-risk при развёртывании; EDPB рекомендует integrated assessment, объединяющий DPIA и FRIA в одну процедуру.",
-                "edge_cases": "Other impact assessments: `AIA` (Canadian Directive), `EIA` (UNESCO), `HRIA` (UNGPs corporate due diligence).",
+                "edge_cases": "Другие оценки воздействия: `AIA` по канадской директиве, `EIA` (UNESCO) и `HRIA` — оценка воздействия на права человека в рамках корпоративной должной осмотрительности по UNGPs.",
                 "related": "[[ai-compliance-governance-interview#Q11]] DPIA и когда обязательна; [[ai-compliance-governance-interview#Q3]] deployer obligations и Art. 27; [[ai-compliance-governance-interview#Q6]] Annex III consequential use cases."
               },
               "label": "C",

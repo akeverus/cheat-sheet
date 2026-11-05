@@ -292,7 +292,7 @@
                 "what_actually": "Всё наоборот: RED — для сервисов, обрабатывающих запросы, а USE — для инфраструктурных ресурсов; это разные методики.",
                 "source_of_confusion": "Оба метода — трёхбуквенные аббревиатуры с «Errors» внутри, что провоцирует их перепутать.",
                 "if_it_were_true": "Тогда для CPU считали бы Rate и Duration запросов, что для ресурса бессмысленно.",
-                "how_it_should_be": "RED — application-level (rate/errors/duration), USE — infrastructure-level (utilization/saturation/errors)."
+                "how_it_should_be": "RED — уровень приложения: частота запросов, ошибки и длительность; USE — уровень инфраструктуры: использование ресурсов, насыщение и ошибки."
               },
               "label": "D",
               "order": 3
@@ -1509,14 +1509,14 @@
           "question_text": "Какие стратегии sampling существуют для трейсов?",
           "options": [
             {
-              "text": "Head sampling принимает решение в начале; tail sampling оценивает собранную трассу; policies можно комбинировать.",
+              "text": "Head sampling принимает решение в начале; tail sampling оценивает собранную трассу; правила отбора можно комбинировать.",
               "correct": true,
               "sections": {
-                "explanation": "Head sampling decides using information available at trace start; tail sampling buffers spans and evaluates status, latency or attributes later. Rate-limiting, probabilistic and rule-based policies can be combined at appropriate stages.",
-                "example": "Use parent-based probabilistic head sampling for baseline traffic, then a correctly routed Collector tail policy to retain received ERROR or high-latency traces plus a sample of the remainder.",
-                "when_to_apply": "Choose policies from diagnostic goals, telemetry budget and acceptable collector complexity instead of assuming one fixed percentage fits every service.",
-                "edge_cases": "Head sampling cannot know a future error unless upstream logic already marks the decision. Tail sampling can lose incomplete/late traces or evict buffers, so it is not an absolute guarantee.",
-                "related": "[[observability-interview#Q13]] traces and spans; [[observability-interview#Q20]] Collector pipelines; [[observability-interview#Q39]] telemetry cost."
+                "explanation": "При head sampling решение принимается по информации, доступной в начале трассы; при tail sampling спаны буферизуются, а статус, задержка и атрибуты оцениваются позже. На подходящих этапах можно сочетать вероятностный отбор, ограничение частоты и отбор по правилам.",
+                "example": "Для основного потока используйте вероятностный head sampling с учётом решения родительского спана. Затем при корректной маршрутизации трасс применяйте в Collector правила tail sampling, сохраняющие полученные трассы со статусом ERROR или большой задержкой и выборку остальных трасс.",
+                "when_to_apply": "Выбирайте правила по задачам диагностики, бюджету на телеметрию и допустимой сложности Collector. Одинаковый фиксированный процент отбора не обязательно подходит каждому сервису.",
+                "edge_cases": "Head sampling не знает о будущей ошибке, если логика выше по цепочке ещё не отметила соответствующее решение. При tail sampling неполные или поздно поступившие трассы могут потеряться, а данные — вытесняться из буфера, поэтому абсолютной гарантии сохранения нет.",
+                "related": "[[observability-interview#Q13]] трассы и спаны; [[observability-interview#Q20]] конвейеры Collector; [[observability-interview#Q39]] стоимость телеметрии."
               },
               "label": "A",
               "order": 0
@@ -1546,7 +1546,7 @@
               "order": 2
             },
             {
-              "text": "Tail sampling не буферизует spans и мгновенно решает судьбу trace по первому span.",
+              "text": "Tail sampling не буферизует спаны и мгновенно решает, сохранять ли трассу, по первому спану.",
               "correct": false,
               "sections": {
                 "what_actually": "Tail-based как раз требует буферизации всех span'ов трейса до decision_wait, чтобы оценить итог (ошибка/latency).",
@@ -1605,14 +1605,14 @@
               "order": 2
             },
             {
-              "text": "Tiered retention (hot/warm/cold хранение), фильтрация на уровне агента (drop health-check и DEBUG в prod), sampling-стратегии.",
+              "text": "Уровни хранения hot/warm/cold, фильтрация на агенте с отбрасыванием health-check и DEBUG в production, а также стратегии sampling.",
               "correct": true,
               "sections": {
-                "explanation": "Control cost by classifying telemetry value, filtering noise before export, setting retention by use case, sampling traces, limiting high-cardinality fields and using suitable storage tiers.",
-                "example": "Drop routine health-check logs at the collector, keep audit events under a separate retention policy, sample normal traces and preserve error traces according to tested policies.",
-                "when_to_apply": "Apply cost governance continuously with per-service usage and unit-cost dashboards; trigger changes from budget and diagnostic value, not a universal percentage of application infrastructure.",
-                "edge_cases": "Aggressive filtering can destroy forensic evidence or compliance records. Measure query patterns, restore/cold-read behavior, legal holds and signal loss before reducing retention.",
-                "related": "[[observability-interview#Q26]] sampling; [[observability-interview#Q28]] production balance; [[observability-interview#Q39]] FinOps."
+                "explanation": "Для контроля стоимости определяют ценность телеметрии, отфильтровывают шум до экспорта, задают сроки хранения под конкретные задачи, применяют sampling трасс, ограничивают поля с высокой кардинальностью и выбирают подходящие уровни хранения.",
+                "example": "Отбрасывайте в Collector рутинные логи проверок работоспособности, храните события аудита по отдельной политике, отбирайте обычные трассы и сохраняйте трассы с ошибками согласно проверенным правилам.",
+                "when_to_apply": "Контролируйте расходы постоянно с помощью панелей потребления и удельной стоимости по сервисам. Решение об изменениях принимают по бюджету и диагностической ценности, а не по универсальному проценту от стоимости инфраструктуры приложения.",
+                "edge_cases": "Агрессивная фильтрация может уничтожить данные для расследования или обязательные записи. Перед сокращением сроков хранения оцените характер запросов, восстановление и чтение из холодного хранилища, требования о сохранении данных и потерю диагностических сигналов.",
+                "related": "[[observability-interview#Q26]] sampling; [[observability-interview#Q28]] баланс затрат и диагностики в production; [[observability-interview#Q39]] FinOps."
               },
               "label": "D",
               "order": 3
@@ -2049,7 +2049,7 @@
           "question_text": "Что такое continuous profiling и как связаны Pyroscope, Grafana Phlare и eBPF?",
           "options": [
             {
-              "text": "Continuous profiling запускают только вручную во время incident, поэтому историческое сравнение releases и production trends невозможно.",
+              "text": "Непрерывное профилирование запускают только вручную во время инцидента, поэтому сравнение прошлых релизов и тенденций в production невозможно.",
               "correct": false,
               "sections": {
                 "what_actually": "Суть continuous profiling именно в постоянном сборе профилей в production, что и отличает его от разового профилирования.",
@@ -2061,20 +2061,20 @@
               "order": 0
             },
             {
-              "text": "Continuous profiling постоянно собирает profiles; Grafana Phlare объединился с Pyroscope, а eBPF/Alloy и language agents являются способами сбора.",
+              "text": "Непрерывное профилирование постоянно собирает профили; Grafana Phlare объединился с Pyroscope, а eBPF/Alloy и агенты для конкретного языка служат способами сбора.",
               "correct": true,
               "sections": {
-                "explanation": "Continuous profiling adds time and metadata to CPU, allocation, lock or wall profiles. Grafana combined Phlare and the acquired Pyroscope project into Grafana Pyroscope; profiles can arrive from language agents, Alloy eBPF components or OTel-compatible pipelines.",
-                "example": "A Java service runs the Pyroscope javaagent with JFR/async-profiler settings, while Alloy can collect host CPU profiles through eBPF and send both to a Pyroscope backend for release comparison.",
-                "when_to_apply": "Use it when metrics identify resource regression but engineers need function-level attribution over time and comparison by release, service or environment.",
-                "edge_cases": "eBPF collection is Linux-specific, requires host privileges and may not support all profile types; language agents have platform and overhead constraints. OTel profiles compatibility is still evolving.",
-                "related": "[[observability-interview#Q3]] profiles beyond three signals; [[observability-interview#Q21]] Grafana stack; [[observability-interview#Q34]] telemetry correlation."
+                "explanation": "Непрерывное профилирование добавляет временную привязку и метаданные к профилям CPU, выделения памяти, блокировок или прошедшего времени. Grafana объединила Phlare и приобретённый проект Pyroscope в Grafana Pyroscope; профили могут поступать от агентов для конкретного языка, компонентов Alloy на основе eBPF или конвейеров, совместимых с OTel.",
+                "example": "Java-сервис запускает javaagent Pyroscope с настройками JFR/async-profiler. Alloy может собирать профили CPU хоста через eBPF; оба потока отправляются в Pyroscope для сравнения релизов.",
+                "when_to_apply": "Применяйте непрерывное профилирование, когда метрики показывают ухудшение использования ресурсов, а инженерам нужно определить вклад отдельных функций во времени и сравнить релизы, сервисы или окружения.",
+                "edge_cases": "Сбор через eBPF привязан к Linux, требует прав на хосте и может поддерживать не все типы профилей. Агенты для конкретного языка также имеют ограничения по платформам и накладным расходам. Совместимость профилей OTel продолжает развиваться.",
+                "related": "[[observability-interview#Q3]] профили за пределами трёх сигналов; [[observability-interview#Q21]] стек Grafana; [[observability-interview#Q34]] корреляция телеметрии."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "Continuous profiling полностью эквивалентен distributed tracing: он показывает только межсервисные spans и не содержит function-level CPU stacks.",
+              "text": "Непрерывное профилирование полностью эквивалентно распределённой трассировке: оно показывает только межсервисные спаны и не содержит стеков вызовов CPU на уровне функций.",
               "correct": false,
               "sections": {
                 "what_actually": "Profiling показывает, где тратятся CPU/память на уровне функций внутри процесса, а tracing — путь запроса между сервисами; это разные сигналы.",
@@ -2086,7 +2086,7 @@
               "order": 2
             },
             {
-              "text": "eBPF profiling всегда требует изменения source code и SDK в каждом process; host-level collection без instrumentation не поддерживается.",
+              "text": "Профилирование через eBPF всегда требует изменения исходного кода и внедрения SDK в каждый процесс; сбор на уровне хоста без инструментирования не поддерживается.",
               "correct": false,
               "sections": {
                 "what_actually": "eBPF работает на уровне ядра Linux и профилирует любой процесс без агента в приложении и без изменения кода.",
@@ -2109,7 +2109,7 @@
           "question_text": "Как связаны chaos engineering и observability?",
           "options": [
             {
-              "text": "Chaos engineering безопаснее всего начинать сразу в production на полном трафике без ограничения blast radius.",
+              "text": "Эксперименты с внесением сбоев безопаснее всего начинать сразу в production на полном трафике без ограничения области воздействия.",
               "correct": false,
               "sections": {
                 "what_actually": "Начинают в staging/dev с ограниченным blast radius и остановкой при выходе метрик за границы; сразу в prod на полном трафике — опасно.",
@@ -2148,11 +2148,11 @@
               "text": "Chaos engineering — намеренное внесение сбоев для проверки устойчивости; без observability это «стрельба вслепую».",
               "correct": true,
               "sections": {
-                "explanation": "Chaos experiments need measurable steady-state hypotheses, guardrails and telemetry. Metrics show impact, traces expose affected paths, and logs/events explain fallback or control-plane behavior.",
-                "example": "Inject bounded database latency in staging or a small production scope, stop automatically when SLO guardrails breach, and compare expected circuit-breaker behavior with observed telemetry.",
-                "when_to_apply": "Start after basic monitoring, ownership and rollback controls exist; increase blast radius gradually based on risk rather than an arbitrary maturity level.",
-                "edge_cases": "Telemetry itself may fail during experiments, which is a useful finding. Experiments require approvals, safety limits, abort conditions and a recovery path; observability does not make uncontrolled chaos safe.",
-                "related": "[[observability-interview#Q33]] maturity evidence; [[observability-interview#Q30]] incidents; [[observability-interview#Q38]] runbooks."
+                "explanation": "Для экспериментов с внесением сбоев нужны измеримые гипотезы о стабильном состоянии системы, защитные ограничения и телеметрия. Метрики показывают влияние сбоя, трассы — затронутые пути запросов, а логи и события объясняют работу резервных сценариев и управляющего контура.",
+                "example": "Внесите ограниченную задержку обращений к БД в staging или в небольшой части production, предусмотрите автоматическую остановку при нарушении защитных границ SLO и сравните ожидаемое поведение circuit breaker с телеметрией.",
+                "when_to_apply": "Начинайте после появления базового мониторинга, ответственных и средств отката. Расширяйте область воздействия постепенно, исходя из риска, а не из произвольно выбранного уровня зрелости.",
+                "edge_cases": "Во время эксперимента может отказать сама телеметрия — это тоже полезная находка. Эксперимент требует согласований, ограничений безопасности, условий остановки и пути восстановления; наблюдаемость не делает неконтролируемое внесение сбоев безопасным.",
+                "related": "[[observability-interview#Q33]] подтверждение зрелости; [[observability-interview#Q30]] инциденты; [[observability-interview#Q38]] инструкции по реагированию."
               },
               "label": "D",
               "order": 3
