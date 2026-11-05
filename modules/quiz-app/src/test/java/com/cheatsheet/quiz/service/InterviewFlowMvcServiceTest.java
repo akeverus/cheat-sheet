@@ -365,6 +365,7 @@ class InterviewFlowMvcServiceTest {
     @Test
     void skipInsideSessionRendersTheBreakdown() {
         InterviewSession interviewSession = mock(InterviewSession.class);
+        when(interviewSession.mcqBlockIdxForQuestion(42L)).thenReturn(null);
         com.cheatsheet.quiz.domain.AnswerResult unknownResult = mock(com.cheatsheet.quiz.domain.AnswerResult.class);
         InterviewFilter filter = new InterviewFilter(null, null, null, null, null, null);
         AnswerPageService.AnswerPageState state = mock(AnswerPageService.AnswerPageState.class);
@@ -380,10 +381,31 @@ class InterviewFlowMvcServiceTest {
         verify(modelAttributeMapper).applyAnswerPageState(model, state);
     }
 
+    @Test
+    void skipBreakdownUsesTheBlockRememberedForTheSkippedQuestion() {
+        InterviewSession interviewSession = mock(InterviewSession.class);
+        com.cheatsheet.quiz.domain.AnswerResult unknownResult = mock(com.cheatsheet.quiz.domain.AnswerResult.class);
+        InterviewFilter filter = new InterviewFilter(null, null, null, null, null, null);
+        AnswerPageService.AnswerPageState state = mock(AnswerPageService.AnswerPageState.class);
+        when(sessionSupport.processSkip(42L, session)).thenReturn(interviewSession);
+        when(interviewSession.mcqBlockIdxForQuestion(42L)).thenReturn(1);
+        when(interviewService.evaluateUnknown(42L, 1)).thenReturn(java.util.Optional.of(unknownResult));
+        when(sessionSupport.sessionFilter(interviewSession)).thenReturn(filter);
+        when(answerPageService.build(unknownResult, filter, interviewSession)).thenReturn(state);
+        when(navigationService.resultView()).thenReturn("result");
+
+        String view = service.skip(42L, session, model);
+
+        assertThat(view).isEqualTo("result");
+        verify(modelAttributeMapper).applyAnswerPageState(model, state);
+    }
+
+
     /** Optionless-ветка (флешкарта, ответ уже на экране): разбора нет — redirect. */
     @Test
     void skipOfOptionlessQuestionKeepsTheRedirect() {
         InterviewSession interviewSession = mock(InterviewSession.class);
+        when(interviewSession.mcqBlockIdxForQuestion(42L)).thenReturn(null);
         when(sessionSupport.processSkip(42L, session)).thenReturn(interviewSession);
         when(interviewService.evaluateUnknown(42L)).thenReturn(java.util.Optional.empty());
         when(navigationService.focusRedirect()).thenReturn("redirect:/");

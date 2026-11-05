@@ -217,8 +217,10 @@ public class InterviewFlowMvcService {
         if (interviewSession == null) {
             return navigationService.focusRedirect();
         }
-        return interviewService.evaluateUnknown(questionId)
-                .map(result -> {
+        Integer blockIdx = interviewSession.mcqBlockIdxForQuestion(questionId);
+        var breakdown = blockIdx == null ? interviewService.evaluateUnknown(questionId)
+                : interviewService.evaluateUnknown(questionId, blockIdx);
+        return breakdown.map(result -> {
                     AnswerPageService.AnswerPageState state = answerPageService.build(
                             result,
                             sessionSupport.sessionFilter(interviewSession),

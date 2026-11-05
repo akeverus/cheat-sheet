@@ -97,6 +97,39 @@ public class InterviewSession implements Serializable {
     /** Верхняя граница разумного времени ответа: 30 минут. Больше — вкладку забыли открытой. */
     private static final long MAX_RESPONSE_TIME_MS = 30L * 60L * 1000L;
 
+    // Выбор привязан к показу, а не к обновляемой статистике: reload и разбор
+    // после «не знаю» должны сохранять блок, в том числе после pause/resume.
+    // У старых сериализованных сессий новое поле равно null.
+    @Getter(AccessLevel.NONE)
+    List<McqBlockSelection> mcqBlockSelections = new ArrayList<>();
+
+    private record McqBlockSelection(int questionIndex, int blockIdx) implements Serializable {}
+
+    public synchronized Integer currentMcqBlockIdx() {
+        if (mcqBlockSelections == null) return null;
+        return mcqBlockSelections.stream()
+                .filter(selection -> selection.questionIndex() == index)
+                .map(McqBlockSelection::blockIdx)
+                .findFirst().orElse(null);
+    }
+
+    public synchronized void rememberMcqBlock(long questionId, int blockIdx) {
+        if (blockIdx < 0) throw new IllegalArgumentException("blockIdx must be non-negative");
+        if (!Long.valueOf(questionId).equals(currentQuestionId())) return;
+        if (mcqBlockSelections == null) mcqBlockSelections = new ArrayList<>();
+        mcqBlockSelections.removeIf(selection -> selection.questionIndex() == index);
+        mcqBlockSelections.add(new McqBlockSelection(index, blockIdx));
+    }
+
+    public synchronized Integer mcqBlockIdxForQuestion(long questionId) {
+        if (mcqBlockSelections == null) return null;
+        for (int i = mcqBlockSelections.size() - 1; i >= 0; i--) {
+            McqBlockSelection selection = mcqBlockSelections.get(i);
+            if (questionIds.get(selection.questionIndex()) == questionId) return selection.blockIdx();
+        }
+        return null;
+    }
+
     /** История ответов в сессии (для итогов). */
     final List<AnswerRecord> answerHistory = new ArrayList<>();
 

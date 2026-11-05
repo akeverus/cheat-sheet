@@ -172,7 +172,14 @@ public class InterviewService {
             return Optional.empty();
         }
         return questionRepository.findById(id)
-                .flatMap(question -> buildInterviewQuestion(question, clock.instant().getEpochSecond()));
+                .flatMap(question -> buildInterviewQuestion(question, clock.instant().getEpochSecond(),
+                        session.currentMcqBlockIdx()))
+                .map(shown -> {
+                    if (!shown.options().isEmpty()) {
+                        session.rememberMcqBlock(id, shown.options().get(0).mcqBlockIdx());
+                    }
+                    return shown;
+                });
     }
 
     /**
@@ -279,9 +286,14 @@ public class InterviewService {
      * к этому моменту уже применены {@link #submitUnknown}.
      */
     public java.util.Optional<AnswerResult> evaluateUnknown(long questionId) {
+        return evaluateUnknown(questionId, null);
+    }
+
+    public Optional<AnswerResult> evaluateUnknown(long questionId, Integer blockIdx) {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException("Вопрос не найден: id=" + questionId));
-        List<AnswerOption> options = answerOptionRepository.findByQuestionId(questionId);
+        List<AnswerOption> options = selectMcqBlock(
+                answerOptionRepository.findByQuestionId(questionId), null, blockIdx);
         return options.stream()
                 .filter(AnswerOption::correct)
                 .findFirst()
@@ -338,11 +350,13 @@ public class InterviewService {
     private ResolvedQuestion resolveQuestionAndOptions(long questionId, long optionId) {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException("Вопрос не найден: id=" + questionId));
-        List<AnswerOption> options = answerOptionRepository.findByQuestionId(questionId);
-        AnswerOption selected = options.stream()
+        List<AnswerOption> allOptions = answerOptionRepository.findByQuestionId(questionId);
+        AnswerOption selected = allOptions.stream()
                 .filter(option -> option.id() == optionId)
                 .findFirst()
                 .orElseThrow(() -> new OptionNotFoundException("Вариант не найден: id=" + optionId));
+        // ID выбранного варианта сохраняет блок и для replay после обновления SM-2.
+        List<AnswerOption> options = optionsInMcqBlock(allOptions, selected.mcqBlockIdx());
         AnswerOption correct = options.stream()
                 .filter(AnswerOption::correct)
                 .findFirst()
@@ -405,6 +419,11 @@ public class InterviewService {
     }
 
     private Optional<InterviewQuestion> buildInterviewQuestion(Question question, long nowEpoch) {
+        return buildInterviewQuestion(question, nowEpoch, null);
+    }
+
+    private Optional<InterviewQuestion> buildInterviewQuestion(Question question, long nowEpoch,
+                                                               Integer preferredBlockIdx) {
         // Показ вопроса — не событие обучения и в БД ничего не пишет. Раньше здесь стоял
         // insertIfAbsent, и просмотр заводил строку прогресса со сроком «сейчас»: вопрос,
         // на который ни разу не отвечали, немедленно числился просроченным повторением, а
@@ -412,8 +431,25 @@ public class InterviewService {
         // строки — законное состояние «новый вопрос», см. InterviewFilterSql.
         ReviewState reviewState = reviewStateRepository.findByQuestionId(question.id())
                 .orElseGet(() -> ReviewDefaults.initialState(question.id(), nowEpoch));
-        List<AnswerOption> options = optionLookupService.getOrCreateOptions(question);
+        List<AnswerOption> options = selectMcqBlock(
+                optionLookupService.getOrCreateOptions(question), reviewState, preferredBlockIdx);
         return Optional.of(new InterviewQuestion(question, options, reviewState));
+    }
+
+    private List<AnswerOption> selectMcqBlock(List<AnswerOption> options, ReviewState reviewState,
+                                             Integer preferredBlockIdx) {
+        if (options.isEmpty()) return options;
+        List<Integer> blocks = options.stream().map(AnswerOption::mcqBlockIdx).distinct().sorted().toList();
+        // Сохранённые счётчики чередуют блоки между попытками, не меняя выбор при reload.
+        long attempts = reviewState == null ? 0L
+                : (long) reviewState.correctCount() + reviewState.wrongCount();
+        int blockIdx = preferredBlockIdx != null && blocks.contains(preferredBlockIdx)
+                ? preferredBlockIdx : blocks.get((int) (attempts % blocks.size()));
+        return optionsInMcqBlock(options, blockIdx);
+    }
+
+    private List<AnswerOption> optionsInMcqBlock(List<AnswerOption> options, int blockIdx) {
+        return options.stream().filter(option -> option.mcqBlockIdx() == blockIdx).toList();
     }
 
     /**

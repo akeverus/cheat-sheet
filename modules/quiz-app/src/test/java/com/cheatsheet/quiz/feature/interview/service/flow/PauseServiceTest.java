@@ -113,6 +113,41 @@ class PauseServiceTest {
     }
 
     @Test
+    void pauseAndResumePreservePresentedMcqBlock() {
+        InterviewSession original = sessionWithOneAnswered();
+        original.rememberMcqBlock(2L, 1);
+        service.pause(original);
+        ArgumentCaptor<byte[]> blob = ArgumentCaptor.forClass(byte[].class);
+        verify(repository).save(blob.capture(), any(), any(), anyInt(), anyInt(), any());
+        when(repository.findBlob()).thenReturn(Optional.of(blob.getValue()));
+
+        InterviewSession resumed = service.resume().orElseThrow();
+
+        assertThat(resumed.currentMcqBlockIdx()).isEqualTo(1);
+        resumed.registerUnknown(2L, "java");
+        assertThat(resumed.currentMcqBlockIdx()).isNull();
+        assertThat(resumed.mcqBlockIdxForQuestion(2L)).isEqualTo(1);
+    }
+
+    @Test
+    void resumeAcceptsSessionSerializedBeforeMcqSelectionWasAdded() throws Exception {
+        byte[] encoded;
+        try (var input = getClass().getResourceAsStream("/legacy-interview-session.base64")) {
+            encoded = input.readAllBytes();
+        }
+        when(repository.findBlob()).thenReturn(Optional.of(
+                java.util.Base64.getMimeDecoder().decode(encoded)));
+
+        InterviewSession resumed = service.resume().orElseThrow();
+
+        assertThat(resumed.currentQuestionId()).isEqualTo(2L);
+        assertThat(resumed.getCorrect()).isEqualTo(1);
+        assertThat(resumed.currentMcqBlockIdx()).isNull();
+        resumed.rememberMcqBlock(2L, 1);
+        assertThat(resumed.currentMcqBlockIdx()).isEqualTo(1);
+    }
+
+    @Test
     void resumeReturnsEmptyAndDoesNotClearWhenNoPause() {
         when(repository.findBlob()).thenReturn(Optional.empty());
 

@@ -316,6 +316,108 @@ class InterviewServiceTest {
         verify(reviewService, never()).applyUnknown(org.mockito.ArgumentMatchers.any());
     }
 
+    @Test
+    void questionByIdReturnsOnlyOneMcqBlock() {
+        Question question = sampleQuestion(1L);
+        when(questionRepository.findById(1L)).thenReturn(Optional.of(question));
+        when(reviewStateRepository.findByQuestionId(1L)).thenReturn(Optional.empty());
+        when(optionLookupService.getOrCreateOptions(question)).thenReturn(twoMcqBlocks());
+
+        InterviewQuestion shown = interviewService.questionById(1L).orElseThrow();
+
+        assertThat(shown.options()).hasSize(4).allMatch(option -> option.mcqBlockIdx() == 0);
+        assertThat(shown.options().stream().filter(AnswerOption::correct)).hasSize(1);
+    }
+
+    @Test
+    void nextPresentationRotatesMcqBlockAfterAnAnswer() {
+        Question question = sampleQuestion(1L);
+        when(questionRepository.findById(1L)).thenReturn(Optional.of(question));
+        when(reviewStateRepository.findByQuestionId(1L)).thenReturn(Optional.of(
+                new ReviewState(1L, 1, 1, 2.5, 0L, ReviewResult.CORRECT, 1, 0)));
+        when(optionLookupService.getOrCreateOptions(question)).thenReturn(twoMcqBlocks());
+
+        InterviewQuestion shown = interviewService.questionById(1L).orElseThrow();
+
+        assertThat(shown.options()).hasSize(4).allMatch(option -> option.mcqBlockIdx() == 1);
+    }
+
+    @Test
+    void submitAnswerResolvesCorrectOptionFromTheSelectedMcqBlock() {
+        Question question = sampleQuestion(1L);
+        when(questionRepository.findById(1L)).thenReturn(Optional.of(question));
+        when(answerOptionRepository.findByQuestionId(1L)).thenReturn(twoMcqBlocks());
+        when(reviewService.applyAnswer(question, true, null)).thenReturn(
+                new ReviewState(1L, 1, 1, 2.5, 0L, ReviewResult.CORRECT, 1, 0));
+
+        AnswerResult result = interviewService.submitAnswer(1L, 202L, null);
+
+        assertThat(result.options()).hasSize(4).allMatch(option -> option.mcqBlockIdx() == 1);
+        assertThat(result.correct().id()).isEqualTo(202L);
+        assertThat(result.correctAnswer()).isTrue();
+    }
+
+    @Test
+    void replayOfWrongAnswerKeepsTheSelectedMcqBlock() {
+        when(questionRepository.findById(1L)).thenReturn(Optional.of(sampleQuestion(1L)));
+        when(answerOptionRepository.findByQuestionId(1L)).thenReturn(twoMcqBlocks());
+        when(reviewService.currentState(1L)).thenReturn(
+                new ReviewState(1L, 0, 1, 2.3, 0L, ReviewResult.WRONG, 0, 1));
+
+        AnswerResult result = interviewService.evaluateAnswer(1L, 201L);
+
+        assertThat(result.options()).hasSize(4).allMatch(option -> option.mcqBlockIdx() == 1);
+        assertThat(result.correct().id()).isEqualTo(202L);
+        assertThat(result.selected().id()).isEqualTo(201L);
+        assertThat(result.correctAnswer()).isFalse();
+    }
+
+    @Test
+    void reloadKeepsTheSessionBlockWhenReviewCountersChangeElsewhere() {
+        Question question = sampleQuestion(1L);
+        InterviewSession session = new InterviewSession(InterviewMode.EXAM,
+                List.of(1L, 2L), "topic", null, null, false);
+        when(questionRepository.findById(1L)).thenReturn(Optional.of(question));
+        when(optionLookupService.getOrCreateOptions(question)).thenReturn(twoMcqBlocks());
+        when(reviewStateRepository.findByQuestionId(1L)).thenReturn(
+                Optional.of(new ReviewState(1L, 1, 1, 2.5, 0L, ReviewResult.CORRECT, 1, 0)),
+                Optional.of(new ReviewState(1L, 2, 1, 2.5, 0L, ReviewResult.CORRECT, 2, 0)));
+
+        InterviewQuestion first = interviewService.questionForSession(session).orElseThrow();
+        InterviewQuestion reloaded = interviewService.questionForSession(session).orElseThrow();
+
+        assertThat(first.options()).allMatch(option -> option.mcqBlockIdx() == 1);
+        assertThat(reloaded.options()).isEqualTo(first.options());
+        assertThat(session.currentMcqBlockIdx()).isEqualTo(1);
+    }
+
+    @Test
+    void unknownBreakdownUsesPresentedBlockAfterProgressAdvances() {
+        when(questionRepository.findById(1L)).thenReturn(Optional.of(sampleQuestion(1L)));
+        when(answerOptionRepository.findByQuestionId(1L)).thenReturn(twoMcqBlocks());
+        when(reviewService.currentState(1L)).thenReturn(
+                new ReviewState(1L, 0, 1, 2.3, 0L, ReviewResult.UNKNOWN, 0, 2));
+
+        AnswerResult result = interviewService.evaluateUnknown(1L, 1).orElseThrow();
+
+        assertThat(result.options()).hasSize(4).allMatch(option -> option.mcqBlockIdx() == 1);
+        assertThat(result.correct().id()).isEqualTo(202L);
+        assertThat(result.unknown()).isTrue();
+        assertThat(result.updatedState().wrongCount()).isEqualTo(2);
+    }
+
+    private List<AnswerOption> twoMcqBlocks() {
+        return java.util.stream.IntStream.range(0, 8)
+                .mapToObj(index -> {
+                    int block = index / 4;
+                    int order = index % 4;
+                    boolean correct = block == 0 ? order == 0 : order == 2;
+                    return new AnswerOption(100L + block * 100L + order, 1L,
+                            "Block " + block + " option " + order, correct, order,
+                            "MARKDOWN", "Explanation for block " + block, 1, 1, block);
+                }).toList();
+    }
+
     private Question sampleQuestion(long id) {
         return Question.builder()
                 .id(id)
