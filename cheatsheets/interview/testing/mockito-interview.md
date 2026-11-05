@@ -663,18 +663,36 @@ class PaymentServiceLifecycleTest {
 
 ## Q24. Что делает `Mockito.reset()`?
 
-`reset(mock)` полностью обнуляет mock: стирает все заглушки и историю вызовов, возвращая объект в состояние «как только что созданный».
+`reset(mock)` удаляет stubbing и историю взаимодействий указанного мока. Сам Java-объект и параметры его создания сохраняются: это не новый экземпляр, не повтор конструктора и не очистка настоящих полей spy. После reset действует сохранённый default Answer, который не обязан возвращать null.
+
+`clearInvocations(mock)` очищает только историю, сохраняя stubs. Это полезное различие, но оба механизма стоит применять по цели теста: в обычном unit-тесте новый mock и заново созданный SUT часто проще общего изменяемого состояния.
 
 ```java
-@AfterEach
-void tearDown() {
-    reset(userRepository, emailService);
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class ResetExampleTest {
+    interface Repository { String name(); }
+
+    @Test
+    void distinguishesHistoryFromStubbing() {
+        Repository repository = mock(Repository.class);
+        when(repository.name()).thenReturn("Alice");
+        assertEquals("Alice", repository.name());
+
+        clearInvocations(repository);
+        verifyNoInteractions(repository);
+        assertEquals("Alice", repository.name()); // stub сохранился
+
+        reset(repository);
+        verifyNoInteractions(repository);
+        assertNull(repository.name()); // стандартный Answer для String
+    }
 }
 ```
 
-**Но в обычных тестах `reset()` — антипаттерн.** Потребность сбросить мок посреди теста почти всегда означает, что тест делает слишком много или переиспользует общее состояние. Правильный путь — независимые тесты: новый mock создаётся заново в `@BeforeEach`, а не очищается старый.
-
-**Когда оправдан:** Spring-тесты с `@MockBean`, где бин-мок живёт в кешируемом контексте и пересоздавать контекст ради чистого мока слишком дорого. Тогда `reset()` в `@BeforeEach` — меньшее зло.
+Для container-managed mock reset иногда оправдан, но не добавляйте ручной сброс только потому, что это Spring-тест. В **Spring Boot 3.3.2** у `@MockBean` default — `MockReset.AFTER`: стандартная интеграция уже сбрасывает mock после тестового метода. Учитывайте выбранный reset mode и listener configuration. Сброс mock не очищает БД, другие бины или произвольный граф ссылок.
 
 ---
 
@@ -755,108 +773,168 @@ class FinalMockTest {
 
 ## Q27. Что такое `RETURNS_DEEP_STUBS` и когда его применять?
 
-`RETURNS_DEEP_STUBS` — стратегия ответов по умолчанию (`Answer`), при которой каждый промежуточный вызов в цепочке автоматически возвращает новый мок. Это позволяет настроить цепочку `a.getB().getC()` одной строкой, не создавая и не стабя вручную каждый уровень:
+`RETURNS_DEEP_STUBS` — default Answer, создающий подходящие промежуточные моки и **переиспользующий их для совместимых вызовов**. Это не новый объект при каждом обращении и не выполнение настоящих методов цепочки.
 
 ```java
-// Без RETURNS_DEEP_STUBS пришлось бы настраивать каждый уровень
-Order order = mock(Order.class, RETURNS_DEEP_STUBS);
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-when(order.getCustomer().getAddress().getCity()).thenReturn("Moscow");
-
-// Теперь работает без NPE
-String city = order.getCustomer().getAddress().getCity();
-assertThat(city).isEqualTo("Moscow");
-```
-
-Когда уместно:
-- Работа с чужим API, возвращающим fluent builder, который не переделать.
-- Настройка громоздких конфигурационных объектов в тестах.
-
-**Подводный камень:** если deep stubs понадобились для **вашего** доменного кода, это обычно симптом нарушения Закона Деметры (цепочки `a.getB().getC()`). Лечится не моком, а пересмотром дизайна — например, передачей нужного объекта напрямую вместо длинной навигации.
-
----
-
-## Q28. (!) Что такое strict stubbing и зачем он нужен?
-
-**Strict stubbing** — режим, который не даёт заглушкам «протухать» и ловит несоответствия между тем, как мок настроили, и как его реально вызвали. Введён в Mockito 2, в `MockitoExtension` включён по умолчанию. Конкретно он добавляет две проверки:
-
-1. **`UnnecessaryStubbingException`** — тест падает, если настроили заглушку, но так её и не вызвали (мёртвая настройка).
-2. **`StubbingArgumentMismatchException`** — сигнал, если stub настроен на одни аргументы, а вызов пришёл с другими: чаще всего это и есть причина «почему мок вернул null».
-
-```java
-@ExtendWith(MockitoExtension.class)
-class StrictTest {
-
-    @Mock UserRepository repo;
+class DeepStubExampleTest {
+    interface Order { Customer getCustomer(); }
+    interface Customer { Address getAddress(); String name(); }
+    interface Address { String getCity(); }
 
     @Test
-    void test() {
-        // Если findById не вызывается в тесте — UnnecessaryStubbingException
-        when(repo.findById(1L)).thenReturn(Optional.of(new User()));
+    void reusesIntermediateMocks() {
+        Order order = mock(Order.class, RETURNS_DEEP_STUBS);
+        when(order.getCustomer().getAddress().getCity()).thenReturn("Moscow");
 
-        // тест без вызова findById...
+        Customer customer = order.getCustomer();
+        Address address = customer.getAddress();
+        assertSame(customer, order.getCustomer());
+        assertSame(address, order.getCustomer().getAddress());
+        assertEquals("Moscow", order.getCustomer().getAddress().getCity());
+        verify(address).getCity(); // проверяем конечный вызов
+        assertNull(customer.name()); // String не превращается в промежуточный mock
     }
 }
 ```
 
-**Зачем это нужно:** strict stubbing держит тесты в чистоте — мёртвые заглушки не накапливаются, опечатки в аргументах всплывают сразу, а при рефакторинге сразу видно, какие настройки больше не используются. По сути это статический контроль качества самих тестов.
+Deep stubs не обещают ненулевой результат любого типа. В **Mockito 5.11.0** учитываются возвращаемый тип, доступная generic-информация и MockMaker; возможны стандартные empty/default значения. В частности, String исключён из inline-моков, поэтому `customer.name().trim()` без явного строкового стаба может дать NPE. Разные аргументы могут вести к разным промежуточным мокам; это не один объект на весь граф.
+
+Приём бывает полезен для чужого цепочного API, когда тесту важен конечный результат. Для своего кода длинная навигация — повод проверить связанность и границу зависимости, а не доказательство ошибки дизайна. Настройка цепочки сама вызывает промежуточные методы; при verification учитывайте, какое звено и какие взаимодействия вы проверяете.
+
+---
+
+
+## Q28. (!) Что такое strict stubbing и зачем он нужен?
+
+Strict stubbing — проверки, выполняемые **во время тестового прогона**, а не Java-компилятором. В `MockitoExtension` **5.11.0** default — `STRICT_STUBS`; обычный вызов `mock()` сам по себе не означает такую же сессию расширения.
+
+| Режим | Дополнительное поведение |
+|-------|-------------------------|
+| `LENIENT` | Не добавляет unused/mismatch диагностику strict stubbing; обычная валидация API и verify сохраняются |
+| `WARN` | Выводит предупреждения через Mockito logger; для этого режима важно читать сообщения |
+| `STRICT_STUBS` | Может завершить тест с UnnecessaryStubbingException из-за лишнего стаба либо PotentialStubbingProblem при потенциальном mismatch |
+
+Диагностика mismatch не означает, что **любой** незастабленный вызов падает: важны действующая строгость, stubbing, версия и условия обнаружения, включая source-file heuristic 5.11.0 (см. Q9). Strictness и default Answer — разные настройки. Совпавший использованный stub в STRICT_STUBS помечается verified автоматически:
+
+```java
+import org.junit.jupiter.api.Test;
+import org.mockito.MockitoSession;
+import org.mockito.quality.Strictness;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
+class StrictSessionExampleTest {
+    interface Repository { String find(long id); }
+
+    @Test
+    void usesStrictSession() {
+        MockitoSession session = mockitoSession()
+            .strictness(Strictness.STRICT_STUBS).startMocking();
+        try {
+            Repository repository = mock(Repository.class);
+            when(repository.find(1L)).thenReturn("Alice");
+            assertEquals("Alice", repository.find(1L));
+            verifyNoMoreInteractions(repository); // использованный stub уже verified
+        } finally {
+            session.finishMocking();
+        }
+    }
+}
+```
+
+Неиспользованный обычный stub может дать UnnecessaryStubbingException при завершении сессии. Если сам тест уже завершился ошибкой, вторичная диагностика может отличаться. Более локальная строгость стаба/мока имеет значение; для настройки расширения используют `@MockitoSettings`, а не выдуманное имя исключения или обещание компиляторной проверки.
 
 ---
 
 ## Q29. Как сделать отдельный stub ненастойчивым с помощью `lenient()`?
 
-`lenient()` точечно снимает strict-проверки с одной конкретной заглушки — она перестаёт быть «обязательной к использованию» и не вызовет `UnnecessaryStubbingException`. Типичный случай: общая настройка в `@BeforeEach`, которая нужна большинству тестов класса, но не всем.
+`lenient().when(...)` исключает **выбранный stub** из unused-stubbing и argument-mismatch проверок strict stubbing. Оно не отключает `verify`, проверку совместимости возвращаемого типа и остальные правила API. Другие stubs сохраняют свою effective strictness.
+
+Пример общей подготовки: один тест читает feature flag, другой проходит по ветке без обращения к нему.
 
 ```java
-@ExtendWith(MockitoExtension.class)
-class ServiceTest {
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
-    @Mock
-    FeatureToggle featureToggle;
+@ExtendWith(MockitoExtension.class)
+class LenientFeatureTest {
+    interface Flags { boolean enabled(String name); }
+    static class View {
+        private final Flags flags;
+        View(Flags flags) { this.flags = flags; }
+        String label(boolean newView) {
+            return newView && flags.enabled("NEW_UI") ? "new" : "classic";
+        }
+    }
+    @Mock Flags flags;
 
     @BeforeEach
     void setUp() {
-        // Эта заглушка может не использоваться в каждом тесте
-        lenient().when(featureToggle.isEnabled("NEW_UI")).thenReturn(true);
+        lenient().when(flags.enabled("NEW_UI")).thenReturn(true);
     }
-
     @Test
-    void testWithoutUsingFeatureToggle() {
-        // featureToggle не вызывается — но тест не упадёт
+    void classicViewDoesNotReadFlag() {
+        assertEquals("classic", new View(flags).label(false));
+        verifyNoInteractions(flags);
+    }
+    @Test
+    void newViewReadsFlag() {
+        assertEquals("new", new View(flags).label(true));
+        verify(flags).enabled("NEW_UI");
     }
 }
 ```
 
-**Почему точечный `lenient()` лучше, чем `@MockitoSettings(strictness = Strictness.LENIENT)`:** аннотация отключает strict-режим на весь класс, и тогда мёртвые заглушки в остальных тестах перестают ловиться. `lenient()` ослабляет только одну выбранную настройку, оставляя строгий контроль для всех прочих.
+Сначала проверьте, нельзя ли перенести лишнюю общую настройку в нужный тест. Если общий stub обоснован, per-stub lenient сохраняет контроль остальных настроек. `@MockitoSettings(strictness = Strictness.LENIENT)` задаёт default сессии расширения, а не делает любой более локальный mock/stub безусловно lenient: effective strictness учитывает настройки стаба, мока и сессии.
 
 ---
 
 ## Q30. Можно ли вернуть разные значения при последовательных вызовах?
 
-Да — это нужно, например, чтобы смоделировать счётчик, retry или восстановление после сбоя. Есть несколько способов:
+Да: цепочка Answers или varargs thenReturn задают последовательность на одном моке. Когда остаётся последний **Answer**, Mockito продолжает применять его. Постоянный thenReturn повторяет значение; динамический thenAnswer вычисляет новый результат при каждом вызове; последний бросающий Answer продолжает бросать.
 
 ```java
-// Способ 1: цепочка thenReturn
-when(counter.next())
-    .thenReturn(1)
-    .thenReturn(2)
-    .thenReturn(3);  // 3 и далее
+import org.junit.jupiter.api.Test;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
-// Способ 2: varargs (краткая форма)
-when(counter.next()).thenReturn(1, 2, 3);
+class AnswerSequenceTest {
+    interface Counter { int next(); }
 
-// Способ 3: чередование return и throw
-when(service.call())
-    .thenReturn("ok")
-    .thenThrow(new RuntimeException("2nd call fails"))
-    .thenReturn("recovered");
-
-// Способ 4: через thenAnswer с счётчиком
-AtomicInteger count = new AtomicInteger();
-when(service.fetch()).thenAnswer(inv -> count.getAndIncrement());
+    @Test
+    void repeatsLastConstant() {
+        Counter counter = mock(Counter.class);
+        when(counter.next()).thenReturn(1, 2, 3);
+        assertEquals(List.of(1, 2, 3, 3),
+            List.of(counter.next(), counter.next(), counter.next(), counter.next()));
+        verify(counter, times(4)).next();
+    }
+    @Test
+    void evaluatesLastDynamicAnswerAgain() {
+        Counter counter = mock(Counter.class);
+        AtomicInteger count = new AtomicInteger(10);
+        when(counter.next()).thenReturn(1).thenAnswer(inv -> count.getAndIncrement());
+        assertEquals(List.of(1, 10, 11, 12),
+            List.of(counter.next(), counter.next(), counter.next(), counter.next()));
+        verify(counter, times(4)).next();
+    }
+}
 ```
 
-**Запомнить:** цепочка не зацикливается — последний `.thenReturn()` «залипает» и возвращается на всех вызовах после исчерпания цепочки.
+Цепочка `thenReturn(first).thenReturn(second)` и varargs `thenReturn(first, second)` задают одинаковую последовательность постоянных ответов. Отдельные повторные `when(...)` на тот же вызов не образуют очередь автоматически: новый stubbing перекрывает предыдущий. При перенастройке when может вызвать уже существующий Answer, поэтому для бросающего стаба пригодится doReturn (Q10).
+
+Последовательность не ограничивает число обращений по контракту — это проверяют отдельно через `verify`. При совместном использовании мока несколькими потоками порядок потребления ответов зависит от порядка фактических вызовов; сам пример не задаёт порядок исполнения рабочих потоков.
 
 ---
 
@@ -965,31 +1043,53 @@ Mockito хорош для изоляции зависимостей с пове�
 
 ## Q35. Как мокировать конструкторы с помощью `mockConstruction()`?
 
-`mockConstruction()` перехватывает оператор `new`: пока открыт `try-with-resources`, каждый `new TargetClass()` внутри тестируемого кода возвращает не реальный объект, а мок. Это спасает, когда класс создаёт зависимость сам и её нельзя внедрить через конструктор. Доступно с Mockito 3.5+.
+`mockConstruction(Target.class, initializer)` создаёт control для construction mocking. В **Mockito 5.11.0** с поддерживающим inline maker подходящие создания конкретного типа перехватываются в **потоке регистрации**, пока control активен. Initializer настраивает полученные моки, `constructed()` предоставляет их список, а context — аргументы и сведения о вызванном конструкторе.
 
 ```java
-@Test
-void shouldMockObjectCreation() {
-    try (MockedConstruction<HttpClient> mocked =
-             mockConstruction(HttpClient.class, (mock, context) -> {
-                 when(mock.send(any(), any())).thenReturn(mockResponse);
-             })) {
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedConstruction;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
-        // Каждый new HttpClient() в этом блоке вернёт mock
-        ApiClient apiClient = new ApiClient();  // внутри создаёт new HttpClient()
-        String result = apiClient.fetchData("/api/users");
+class ConstructionScopeTest {
+    static class Gateway {
+        static int constructorCalls;
+        private final String endpoint;
+        Gateway(String endpoint) {
+            constructorCalls++;
+            this.endpoint = endpoint;
+        }
+        String fetch() { return "real:" + endpoint; }
+    }
+    static class Service {
+        String load() { return new Gateway("orders").fetch(); }
+    }
 
-        assertThat(result).isNotNull();
-        assertThat(mocked.constructed()).hasSize(1);
+    @Test
+    void interceptsHelperAndRestoresConstructor() {
+        Gateway.constructorCalls = 0;
+        try (MockedConstruction<Gateway> control = mockConstruction(
+                Gateway.class, (mock, context) ->
+                    when(mock.fetch()).thenReturn("stub:" + context.arguments().get(0)))) {
+            assertEquals("stub:orders", new Service().load());
+            assertEquals(1, control.constructed().size());
+            verify(control.constructed().get(0)).fetch();
+            assertEquals(0, Gateway.constructorCalls);
+        }
+        assertEquals("real:orders", new Service().load());
+        assertEquals(1, Gateway.constructorCalls);
     }
 }
 ```
 
-Как и `mockStatic()`, работает только в `try-with-resources` — за пределами блока `new` снова создаёт настоящие объекты.
+`new Gateway` расположен в helper-коде Service, но выполняется в том же потоке при активной регистрации и потому перехватывается. В примере тело конструктора Gateway не выполняется; после close снова работает настоящее создание. Существовавшие ранее объекты не заменяются.
 
-**Когда видите этот приём — насторожитесь:** потребность мокировать конструктор почти всегда означает, что класс создаёт зависимости напрямую вместо внедрения через DI. Чище — передать зависимость в конструктор и замокировать её обычным `@Mock`. `mockConstruction()` оправдан в основном для legacy-кода, который нельзя переписать.
+Scope определяется временем жизни control и потоком, а не текстовыми границами `try`. Try-with-resources удобно гарантирует close; гарантированное закрытие в teardown тоже допустимо. Регистрация не переносится автоматически в worker thread. Нужны поддерживающий maker и допустимый тип: например, inline maker 5.11.0 отклоняет construction mocking abstract-типа, primitive и Object.
+
+Приём полезен для legacy-зависимости, которую код создаёт сам. Если границу можно изменить, внедрение зависимости часто упрощает тест; это проектное решение, а не запрет Mockito.
 
 ---
+
 
 ## Q36. (!) В чём разница между `mockito-core` и `mockito-inline`?
 
