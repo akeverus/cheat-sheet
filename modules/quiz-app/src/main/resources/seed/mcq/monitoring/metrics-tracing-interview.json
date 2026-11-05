@@ -371,50 +371,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Span` описывает одну операцию, а `trace` объединяет причинно связанные spans одного запроса.",
+              "text": "Span описывает одну операцию, а trace объединяет связанные span’ы по общему trace ID.",
               "correct": true,
               "sections": {
-                "explanation": "По дереву spans виден полный путь запроса и время на каждом уровне: корневой span — входящий `HTTP`, дочерние — вызовы к БД и другим сервисам.",
-                "example": "В `Jaeger`/`Zipkin` по `traceId` открывают дерево: `span-1` (API Gateway, 350ms) → `span-2` (Order Service) → `span-3` (DB INSERT, 80ms) и `span-4` (Payment Service), где время каждого узла показывает узкое место.",
-                "when_to_apply": "Эту модель применяют при анализе трейса: ищут span с наибольшим self-time или ошибкой, чтобы локализовать проблему в конкретном сервисе.",
-                "edge_cases": "Атрибуты span (`http.method`, `db.statement`) помогают фильтровать; при sampling часть spans не записывается, и дерево может оказаться неполным.",
-                "related": "[[metrics-tracing-interview#Q5]] трассировка как цепочка spans; [[metrics-tracing-interview#Q23]] traceId и spanId как идентификаторы; [[metrics-tracing-interview#Q8]] передача контекста между сервисами по spans."
+                "explanation": "Span хранит временные границы и контекст операции. Принадлежность к trace задаётся trace ID; parent span ID описывает родительскую связь, а links могут связывать дополнительные операции, в том числе из других traces.",
+                "example": "У входящего запроса может быть server span, у обращения к другому сервису — client span, у запроса к БД — отдельный span. Открытие trace показывает только записанные и доставленные операции.",
+                "when_to_apply": "При сопоставлении операций запроса, их длительностей, ошибок и межсервисных связей.",
+                "edge_cases": "Корневой span не обязан быть HTTP-входом. Вложенные и параллельные интервалы могут перекрываться; их сумма не равна задержке запроса. Неполный trace и ошибка часов усложняют вывод о критическом пути.",
+                "related": "[[metrics-tracing-interview#Q5]] наблюдаемая цепочка; [[metrics-tracing-interview#Q23]] идентификаторы; [[metrics-tracing-interview#Q8]] propagation."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Span` содержит всё дерево запроса, а `trace` представляет одну отдельную операцию.",
+              "text": "Span описывает весь запрос, а trace обозначает одну отдельную операцию внутри этого запроса.",
               "correct": false,
               "sections": {
-                "what_actually": "Определения перепутаны: `Span` — одна операция, а `Trace` — дерево spans, объединённых общим `traceId`.",
-                "source_of_confusion": "Оба термина про трассировку и легко меняются местами, если не работал с деревом вызовов.",
-                "if_it_were_true": "Тогда у одного `Trace` был бы один `traceId` на операцию, но `traceId` общий для всех spans запроса.",
-                "how_it_should_be": "`Span` — единичная операция; `Trace` — всё дерево spans одного запроса с общим `traceId`."
+                "what_actually": "Роли переставлены: одна операция представлена span, а несколько относящихся к trace span’ов используют общий trace ID.",
+                "source_of_confusion": "Два названия одного инструмента путают с уровнями детализации его модели.",
+                "if_it_were_true": "Все отдельные операции пришлось бы хранить внутри одного span, а trace перестал бы обозначать их общую принадлежность.",
+                "how_it_should_be": "Различайте span ID операции и trace ID связанного выполнения."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Trace` хранит только суммарную длительность и не содержит отдельных операций или связей.",
+              "text": "Span описывает одну операцию, а trace хранит только общую длительность без самих операций.",
               "correct": false,
               "sections": {
-                "what_actually": "`Trace` — это именно разбивка по spans с временем каждой операции, а не одно суммарное число длительности.",
-                "source_of_confusion": "Суммарная длительность запроса есть и у метрики, поэтому трейс ошибочно сводят к ней же.",
-                "if_it_were_true": "Тогда трейс не отличался бы от `http.server.requests`, но его ценность — детализация по узлам дерева.",
-                "how_it_should_be": "`Trace` — дерево spans с длительностью на каждом уровне; суммарная цифра — лишь длительность корневого span."
+                "what_actually": "Trace включает наблюдаемые span’ы с контекстом и связями, а не одно итоговое число времени.",
+                "source_of_confusion": "Общую длительность в интерфейсе принимают за всё содержимое trace.",
+                "if_it_were_true": "Нельзя было бы сопоставить внутри trace отдельное обращение к БД и вызов соседнего сервиса.",
+                "how_it_should_be": "Открывайте span’ы и их интервалы; агрегированная задержка и детализация выполнения отвечают на разные вопросы."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Все spans одного trace плоские, независимые и не имеют parent-child или link отношений.",
+              "text": "Span описывает одну операцию, а trace объединяет независимые span’ы без родительских связей или links.",
               "correct": false,
               "sections": {
-                "what_actually": "Spans образуют дерево: дочерний span ссылается на `parentSpanId`, а корневой span родителя не имеет.",
-                "source_of_confusion": "В простом примере с одним вызовом иерархия незаметна, отсюда вывод о плоской структуре.",
-                "if_it_were_true": "Тогда нельзя было бы увидеть, что вызов `Bank API` вложен в `Payment Service`, но трейс показывает именно вложенность.",
-                "how_it_should_be": "Spans связаны иерархией через `parentSpanId`, образуя дерево от корневого входящего `HTTP` к листьям."
+                "what_actually": "У span может быть parent, а links описывают дополнительные причинные связи. Наличие общего trace ID не отменяет этих отношений.",
+                "source_of_confusion": "Плоский список операций в интерфейсе принимают за отсутствие связей в модели.",
+                "if_it_were_true": "Нельзя было бы отличить вложенную операцию от связанной асинхронной работы.",
+                "how_it_should_be": "Проверяйте parent context и links, не сводя любой случай к плоскому списку или обязательному полному дереву."
               }
             }
           ]
@@ -431,50 +431,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Контекст трассировки передаётся через общую базу данных: каждый сервис записывает `traceId` в таблицу.",
+              "text": "В HTTP передавать только trace ID, а остальные поля W3C Trace Context восстанавливать на приёме из времени запроса.",
               "correct": false,
               "sections": {
-                "what_actually": "Контекст передаётся в `HTTP`-заголовках (`traceparent`, `tracestate`) по стандарту `W3C Trace Context`, а не через общую таблицу в БД.",
-                "source_of_confusion": "Идея «общего состояния» наводит на мысль о разделяемой БД как канале передачи.",
-                "if_it_were_true": "Тогда трассировка не работала бы без общей БД, но она работает по заголовкам поверх любого транспорта.",
-                "how_it_should_be": "Контекст инжектируется в `HTTP`-заголовки/`gRPC` metadata и извлекается на следующем сервисе; БД тут ни при чём."
+                "what_actually": "Одного trace ID недостаточно для восстановления переданного span context. Идентификатор родителя и флаги не выводятся однозначно из timestamp.",
+                "source_of_confusion": "Корреляционный ID принимают за полный формат propagation.",
+                "if_it_were_true": "По одному времени можно было бы определить конкретного родителя среди параллельных вызовов.",
+                "how_it_should_be": "Используйте согласованный propagator, который инжектирует и извлекает нужные поля контекста."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Контекст не нужно передавать вообще: каждый сервис создаёт свой независимый `traceId`.",
+              "text": "В HTTP создавать новый trace ID для каждого сервиса, связывая W3C Trace Context по времени без передачи родителя.",
               "correct": false,
               "sections": {
-                "what_actually": "Без передачи общего `traceId` трейсы не склеятся в одно дерево — корреляция по времени ненадёжна и не даёт parent-child связей.",
-                "source_of_confusion": "Кажется, что бэкенд (`Jaeger`) сам сопоставит близкие по времени запросы в один трейс.",
-                "if_it_were_true": "Тогда нельзя было бы построить дерево с `parentSpanId`, но именно сквозной `traceId` его и формирует.",
-                "how_it_should_be": "Общий `traceId` и `parentSpanId` передаются явно через заголовки; без этого единого дерева не получится."
+                "what_actually": "Независимые trace ID не продолжают один trace автоматически. Для продолжения используют извлечённый контекст; links — отдельный механизм явной связи.",
+                "source_of_confusion": "Поиск близких по времени событий принимают за надёжную передачу родительской связи.",
+                "if_it_were_true": "Два параллельных одинаковых запроса всегда можно было бы однозначно объединить без контекста.",
+                "how_it_should_be": "Передавайте контекст по границе вызова; создавайте новый trace только когда это соответствует выбранной модели и политике."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Контекст передаётся только внутри одного `JVM` через `ThreadLocal`, поэтому между сервисами трассировка невозможна.",
+              "text": "В HTTP хранить W3C Trace Context в ThreadLocal отправителя, чтобы другой процесс получил его без carrier.",
               "correct": false,
               "sections": {
-                "what_actually": "`ThreadLocal` хранит контекст внутри процесса, но между сервисами его инжектируют в `HTTP`-заголовки — межсервисная трассировка как раз возможна.",
-                "source_of_confusion": "`ThreadLocal`-механика контекста внутри процесса создаёт впечатление, что за границу `JVM` он не выходит.",
-                "if_it_were_true": "Тогда `W3C TraceContext` был бы бесполезен, но он создан именно для передачи между сервисами.",
-                "how_it_should_be": "Внутри процесса — контекст в `Context`/`ThreadLocal`, между сервисами — инжекция в заголовки `traceparent`/`tracestate`."
+                "what_actually": "ThreadLocal относится к потоку своего процесса. Получатель извлекает контекст из carrier, а не читает память отправителя.",
+                "source_of_confusion": "Локальный способ хранения текущего context переносят на межпроцессную границу.",
+                "if_it_were_true": "Приложение на другом узле смогло бы получить текущее значение ThreadLocal без сетевой передачи.",
+                "how_it_should_be": "Отдельно настройте перенос внутри async-кода и inject/extract на границе транспорта."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Контекст (`traceId`, `spanId`, флаги sampling) передаётся в `HTTP`-заголовках по стандарту `W3C Trace Context`.",
+              "text": "В HTTP инжектировать W3C Trace Context в заголовки и извлекать на приёме, продолжая trace по полученному контексту.",
               "correct": true,
               "sections": {
-                "explanation": "Так формируется единое дерево: `Service A` создаёт `span-1`, шлёт `traceparent: 00-abc123-span1-01`, `Service B` извлекает контекст и создаёт `span-2` с `parent: span-1`.",
-                "example": "Заголовок `traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01` несёт версию, 128-битный trace-id, parent-id и флаги (`01` = sampled); в `Spring Boot` тип задают `management.tracing.propagation.type: w3c`.",
-                "when_to_apply": "Пропагацию настраивают всегда, когда запрос идёт через несколько сервисов; в `Kafka` контекст кладут в headers сообщения, чтобы трейс не обрывался.",
-                "edge_cases": "`OpenTelemetry` автоматически инжектирует и извлекает контекст для `RestTemplate`, `WebClient`, `Feign`, `gRPC` и `Kafka`; для legacy-систем используют `b3` вместо `w3c`.",
-                "related": "[[metrics-tracing-interview#Q23]] traceId и spanId внутри traceparent; [[metrics-tracing-interview#Q31]] W3C TraceContext как стандарт заголовков; [[metrics-tracing-interview#Q40]] context propagation W3C и B3 подробнее."
+                "explanation": "Для HTTP W3C определяет traceparent и необязательный tracestate. Полученный context может стать remote parent нового span; новый span имеет собственный span ID, сохраняя trace ID при продолжении trace.",
+                "example": "Валидный пример version 00: traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01. Поля содержат версию, trace-id, parent-id и trace-flags; это не шаблон с произвольными словами вместо hex ID.",
+                "when_to_apply": "При переходе между процессами через HTTP, RPC или сообщения, выбрав подходящий carrier и согласованные propagators.",
+                "edge_cases": "Для version 00 IDs имеют 32/16 hex-символов и не могут быть полностью нулевыми. Sampled flag не гарантирует сохранение trace. Автоматическая propagation зависит от подключённой инструментации, поддерживаемого клиента и конфигурации; B3 — отдельный совместимый формат, а не универсальное требование legacy.",
+                "related": "[[metrics-tracing-interview#Q23]] идентификаторы; [[metrics-tracing-interview#Q31]] W3C; [[metrics-tracing-interview#Q40]] propagators."
               }
             }
           ]
@@ -551,50 +551,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Интеграция требует развернуть отдельный sidecar-агент рядом с приложением, который читает heap `JVM` и публикует метрики вместо приложения.",
+              "text": "Открыть /actuator/metrics, считая его диагностический JSON форматом scrape для Prometheus без специального registry.",
               "correct": false,
               "sections": {
-                "what_actually": "`Micrometer` работает внутри `JVM` приложения как библиотека, без sidecar-агента; метрики публикует сам сервис на `/actuator/prometheus`.",
-                "source_of_confusion": "Паттерн sidecar для телеметрии (как в service mesh) переносят и на метрики `Micrometer`.",
-                "if_it_were_true": "Тогда не нужна была бы зависимость `micrometer-registry-prometheus` в `build.gradle`, но именно она включает экспорт.",
-                "how_it_should_be": "Метрики собираются in-process через `Micrometer`; sidecar нужен в других сценариях (mesh), но не здесь."
+                "what_actually": "Actuator metrics endpoint служит диагностике meters и не заменяет Prometheus scrape endpoint. Нужны подходящий registry и экспозиция prometheus.",
+                "source_of_confusion": "Два endpoint с метриками считают одним и тем же контрактом экспорта.",
+                "if_it_were_true": "Любой JSON диагностического endpoint можно было бы без адаптации использовать как Prometheus exposition.",
+                "how_it_should_be": "Различайте /actuator/metrics и /actuator/prometheus и проверяйте выбранный формат экспорта."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Micrometer` несовместим со `Spring Boot` и работает только в чистых `Java SE`-приложениях без контейнера.",
+              "text": "Использовать @Timed на произвольном методе, не подключая механизм, который интерпретирует эту аннотацию.",
               "correct": false,
               "sections": {
-                "what_actually": "`Micrometer` — штатный фасад метрик именно в `Spring Boot`: `Actuator` интегрирует его из коробки.",
-                "source_of_confusion": "Незнание, что `Actuator` тянет `Micrometer`, рождает миф о несовместимости.",
-                "if_it_were_true": "Тогда не существовало бы стартера `spring-boot-starter-actuator` с авто-метриками, но он есть и широко используется.",
-                "how_it_should_be": "`Micrometer` глубоко интегрирован со `Spring Boot` через `Actuator` и авто-конфигурацию."
+                "what_actually": "Аннотация сама не исполняет измерение. Произвольный метод должен обрабатываться TimedAspect/AOP или другой поддерживающей интеграцией.",
+                "source_of_confusion": "Метаданные метода принимают за исполняемый механизм инструментации.",
+                "if_it_were_true": "Одна аннотация создавала бы Timer даже при отсутствии кода, который перехватывает вызов.",
+                "how_it_should_be": "Подключите поддерживающий механизм и проверьте фактический путь вызова через него; программный Timer — другой допустимый путь."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "В `Spring Boot` `Micrometer` включён через `spring-boot-starter-actuator`; нужно добавить зависимость `micrometer-registry-prometheus` и открыть эндпоинт (`management.endpoints.web.exposure.include: prometheus`).",
+              "text": "Подключить Actuator и Prometheus registry, экспонировать prometheus endpoint и проверить регистрацию нужных meters.",
               "correct": true,
               "sections": {
-                "explanation": "`Actuator` берёт на себя экспорт: формат текстовый, `Prometheus` его scrape'ит; кастомные таймеры удобно вешать аннотацией `@Timed` при наличии бина `TimedAspect`.",
-                "example": "В `application.yml` задают теги (`application: ${spring.application.name}`), `percentiles-histogram` и `sla` для `http.server.requests`; `@Timed(\"orders.create\", percentiles={0.5,0.95,0.99})` замеряет метод.",
-                "when_to_apply": "Эту интеграцию делают в каждом `Spring Boot`-сервисе, который нужно мониторить через `Prometheus` — это базовая настройка observability.",
-                "edge_cases": "Для `@Timed` обязателен бин `TimedAspect(MeterRegistry)`, иначе аннотация не сработает; высокую cardinality (лейблы по `user_id`) добавлять нельзя.",
-                "related": "[[metrics-tracing-interview#Q3]] Micrometer как фасад и его связь с Prometheus; [[metrics-tracing-interview#Q20]] что отдаёт /actuator/prometheus; [[metrics-tracing-interview#Q13]] добавление custom metrics."
+                "explanation": "Boot авто-конфигурирует Micrometer и подходящие registries при выполнении их условий. Публикация endpoint и наличие прикладных измерений проверяются отдельно от одной зависимости.",
+                "example": "В Boot 3.x web exposure включает health,prometheus. Для SLO bucket boundaries используют management.metrics.distribution.slo, а не старое sla. @Timed на произвольном bean-методе требует настроенной инструментирующей интеграции.",
+                "when_to_apply": "Когда Spring Boot приложение должно предоставлять Prometheus доступ к нужным метрикам.",
+                "edge_cases": "Доступность зависит от binders, отключённых meters, endpoint/config и фактического URL. В варианте Spring AOP одного TimedAspect bean без работающего proxy-механизма недостаточно; self-invocation может обходить proxy. Локальные percentile-оценки и histogram экспортируют по-разному.",
+                "related": "[[metrics-tracing-interview#Q3]] registry и endpoint; [[metrics-tracing-interview#Q20]] scrape; [[metrics-tracing-interview#Q13]] прикладные meters."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Нужно вручную реализовать `HTTP`-эндпоинт `/metrics`, самому сериализовать каждую метрику в текст и поднять отдельный поток для scrape.",
+              "text": "Подключить Actuator и Prometheus registry, оставив web exposure только для health ради публикации prometheus endpoint.",
               "correct": false,
               "sections": {
-                "what_actually": "В `Spring Boot` `Micrometer` уже включён через `spring-boot-starter-actuator`; добавляют `micrometer-registry-prometheus` и эндпоинт `/actuator/prometheus` появляется сам — вручную ничего сериализовать не надо.",
-                "source_of_confusion": "Опыт ручного экспорта метрик в старых проектах создаёт ожидание самостоятельной реализации эндпоинта.",
-                "if_it_were_true": "Тогда `Actuator` был бы бесполезен, но он именно автоматизирует экспорт метрик `JVM`, `HTTP` и пулов.",
-                "how_it_should_be": "Достаточно зависимости и `management.endpoints.web.exposure.include: prometheus` — эндпоинт и формат генерируются автоматически."
+                "what_actually": "Экспозиция только health не публикует prometheus endpoint. Наличие registry не заменяет настройку web exposure.",
+                "source_of_confusion": "Авто-конфигурацию registry принимают за автоматическое открытие всех Actuator endpoints.",
+                "if_it_were_true": "Список exposure не влиял бы на доступность prometheus endpoint.",
+                "how_it_should_be": "Включите нужный endpoint в exposure и проверьте его доступность выбранному scrape-клиенту."
               }
             }
           ]
@@ -611,50 +611,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Exponential Histogram сохраняет каждое наблюдение отдельно и не группирует значения в buckets.",
+              "text": "Каждое наблюдение хранится отдельно, а число бакетов растёт пропорционально числу записанных событий.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: они дают хорошую точность при малом числе бакетов для широкого диапазона, не храня каждое наблюдение.",
-                "source_of_confusion": "Высокую точность ассоциируют с хранением сырых данных, отсюда вывод о большой памяти.",
-                "if_it_were_true": "Тогда они были бы дороже фиксированных бакетов, но их преимущество — компактность при широком диапазоне.",
-                "how_it_should_be": "Они агрегируют наблюдения в геометрически растущие бакеты, экономя память при широком разбросе значений."
+                "what_actually": "ExponentialHistogram агрегирует counts по бакетам, а не предоставляет список всех исходных наблюдений.",
+                "source_of_confusion": "Высокую относительную точность принимают за хранение каждого значения без агрегации.",
+                "if_it_were_true": "Можно было бы восстановить точное значение и порядок каждого измерения, а не только распределение.",
+                "how_it_should_be": "Рассматривайте границы, counts и разрешение гистограммы отдельно от сырых событий."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Exponential Histogram является обычным Summary с заранее вычисленными клиентскими quantiles.",
+              "text": "Заранее рассчитанные локальные квантили заменяют бакеты, поэтому экспоненциальная гистограмма является формой Summary.",
               "correct": false,
               "sections": {
-                "what_actually": "Это разновидность `Histogram` с геометрической шкалой бакетов, а не `Summary`; квантили по-прежнему считаются через `histogram_quantile` в `PromQL`.",
-                "source_of_confusion": "И то, и другое связано с распределениями, поэтому экспоненциальные бакеты путают с локальными квантилями `Summary`.",
-                "if_it_were_true": "Тогда такие данные были бы неагрегируемы между инстансами, но экспоненциальные гистограммы агрегируются как обычные.",
-                "how_it_should_be": "Это `Histogram` с экспоненциальными границами бакетов; `Summary` — другой тип с неагрегируемыми локальными квантилями."
+                "what_actually": "ExponentialHistogram сохраняет агрегированное распределение. Локальные percentile-оценки Summary не заменяют эти данные.",
+                "source_of_confusion": "Два способа оценивать перцентили принимают за один формат с разным названием.",
+                "if_it_were_true": "Получатель имел бы только готовые квантили и не мог бы работать с распределением по бакетам.",
+                "how_it_should_be": "Различайте распределение, которое можно совместимо агрегировать, и готовые локальные percentile-оценки."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Число событий в каждом bucket автоматически растёт экспоненциально со временем наблюдения.",
+              "text": "Границы бакетов остаются линейными, а число наблюдений в них растёт экспоненциально с течением времени.",
               "correct": false,
               "sections": {
-                "what_actually": "Экспоненциальность относится к расположению границ бакетов (1, 2, 4, 8,...), а не к росту числа наблюдений во времени.",
-                "source_of_confusion": "Слово «экспоненциальный» ошибочно привязывают к динамике счётчиков, а не к шкале бакетов.",
-                "if_it_were_true": "Тогда любая растущая гистограмма была бы экспоненциальной, но речь именно о геометрической шкале границ.",
-                "how_it_should_be": "Экспоненциальные — это бакеты с границами по степеням (геометрическая шкала), а не экспоненциальный рост значений."
+                "what_actually": "Экспоненциальность характеризует шкалу границ. Counts меняются при поступлении наблюдений и не обязаны расти по экспоненте во времени.",
+                "source_of_confusion": "Свойство шкалы значений переносят на временную динамику счётчиков.",
+                "if_it_were_true": "Counts увеличивались бы по заданному закону даже без новых измерений.",
+                "how_it_should_be": "Проверяйте геометрическую шкалу и выбранный scale, а рост counts связывайте с фактическими измерениями."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Exponential Histogram использует экспоненциальные границы buckets и масштаб, покрывая широкий диапазон значений.",
+              "text": "Границы бакетов следуют геометрической шкале, а масштаб задаёт разрешение представления распределения.",
               "correct": true,
               "sections": {
-                "explanation": "Геометрическая шкала границ покрывает широкий диапазон (от 1ms до 30s) малым числом бакетов с приемлемой относительной точностью на каждом масштабе.",
-                "example": "В `Micrometer` через `MeterFilter` задают `minimumExpectedValue(Duration.ofMillis(1))` и `maximumExpectedValue(Duration.ofSeconds(30))` для `http.server.requests`, и распределение бакетов подбирается под диапазон.",
-                "when_to_apply": "Их применяют, когда латентность варьируется на порядки и фиксированные бакеты либо грубы, либо требуют слишком многих корзин.",
-                "edge_cases": "Альтернатива — фиксированные бакеты; они проще, но для широкого диапазона нужно больше корзин. `Micrometer Timer` по умолчанию выбирает подходящее распределение.",
-                "related": "[[metrics-tracing-interview#Q4]] histogram как тип метрики; [[metrics-tracing-interview#Q12]] метрики JVM и их распределения; [[metrics-tracing-interview#Q17]] cardinality при настройке бакетов и лейблов."
+                "explanation": "В OTel ExponentialHistogram scale задаёт base = 2**(2**(-scale)); границы идут по степеням base. Более высокий scale повышает разрешение и может потребовать больше бакетов.",
+                "example": "При scale=0 base равен 2, при scale=1 — корню из 2. Это пример шкалы OTel, а не обещание включить этот тип экспорта настройкой minimumExpectedValue в любом Micrometer registry.",
+                "when_to_apply": "Когда требуется агрегированное распределение широкого диапазона с управляемым компромиссом разрешения и расходов.",
+                "edge_cases": "Нужно проверить поддержку SDK, exporter и backend. Micrometer publishPercentileHistogram с min/max expected values сам по себе не доказывает экспорт OTel ExponentialHistogram или Prometheus native histogram. Нули, отрицательная часть и совместимое объединение имеют правила выбранного формата.",
+                "related": "[[metrics-tracing-interview#Q4]] типы распределений; [[metrics-tracing-interview#Q17]] число рядов; [[metrics-tracing-interview#Q39]] classic/native."
               }
             }
           ]
@@ -671,50 +671,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Метрики `JVM` нужно собирать вручную через `JMX`-клиент и отдельный экспортёр.",
+              "text": "Для памяти, потоков и GC обязателен внешний JMX-exporter, потому что JVM binders Micrometer не дают этих измерений.",
               "correct": false,
               "sections": {
-                "what_actually": "В `Spring Boot` с `Micrometer` метрики `JVM` включаются автоматически — память, потоки, классы, `GC` появляются на `/actuator/prometheus` без ручного `JMX`.",
-                "source_of_confusion": "Старый подход через `jmx_exporter` создаёт впечатление, что `JVM`-метрики всегда настраивают руками.",
-                "if_it_were_true": "Тогда `jvm_memory_used_bytes` и `jvm_gc_pause_seconds` пришлось бы регистрировать самому, но `Micrometer` даёт их из коробки.",
-                "how_it_should_be": "Достаточно `Actuator` + `micrometer-registry-prometheus`; `JVM`-биндинги регистрируются автоматически."
+                "what_actually": "Micrometer имеет JVM binders для памяти, потоков и GC. Внешний exporter — возможный отдельный путь, но не обязательное условие такого сбора.",
+                "source_of_confusion": "Знакомую архитектуру с JMX-exporter принимают за единственный способ получить JVM-метрики.",
+                "if_it_were_true": "Стандартные JVM binders не могли бы зарегистрировать эти измерения в MeterRegistry.",
+                "how_it_should_be": "Проверьте авто-конфигурацию JVM binders и выбранный экспорт; не добавляйте внешний компонент как обязательную часть Micrometer."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Чтобы получить метрики потоков, нужно включить отдельный профилировщик `JFR` — `Micrometer` потоки не видит.",
+              "text": "Для памяти и GC подходят Micrometer binders, но число живых потоков требует отдельной записи JFR.",
               "correct": false,
               "sections": {
-                "what_actually": "`Micrometer` сам экспортирует `jvm_threads_live_threads` и `jvm_threads_deadlocked_threads` без `JFR`.",
-                "source_of_confusion": "`JFR` ассоциируется с глубоким анализом потоков, отсюда мысль, что без него метрик нет.",
-                "if_it_were_true": "Тогда не было бы `PromQL`-алерта `jvm_threads_deadlocked_threads > 0`, но он стандартен для `Micrometer`.",
-                "how_it_should_be": "Базовые метрики потоков (live, deadlocked) даёт `Micrometer`; `JFR` нужен для более глубокого профилирования."
+                "what_actually": "В Micrometer 1.13.2 JvmThreadMetrics получает live/daemon/peak/state counts через ThreadMXBean без обязательной записи JFR.",
+                "source_of_confusion": "Диагностический профайлер принимают за условие обычного периодического измерения состояния потоков.",
+                "if_it_were_true": "Остановка JFR убирала бы live-thread gauge, хотя его источник — ThreadMXBean.",
+                "how_it_should_be": "Различайте базовые gauges потоков и отдельную подробную диагностику JFR или thread dumps."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "В `Spring Boot` с `Micrometer` метрики `JVM` включаются автоматически: память, потоки, загрузка классов.",
+              "text": "Для памяти, потоков и GC проверяют JVM binders Micrometer, подключённый Prometheus registry и экспозицию endpoint.",
               "correct": true,
               "sections": {
-                "explanation": "Эти метрики покрывают здоровье `JVM`: heap-утилизацию, паузы `GC`, число живых и deadlocked потоков — основу алертинга по ресурсам процесса.",
-                "example": "Алерт на heap: `jvm_memory_used_bytes{area=\"heap\"} / jvm_memory_max_bytes{area=\"heap\"} > 0.85`; на паузы `GC`: `rate(jvm_gc_pause_seconds_sum[5m]) / rate(jvm_gc_pause_seconds_count[5m]) > 0.5`.",
-                "when_to_apply": "Их настраивают в `Grafana`-дашборде с панелями heap, `GC pause`, live threads, чтобы видеть давление на `JVM` и упреждать `OOM`.",
-                "edge_cases": "`jvm_threads_deadlocked_threads > 0` сигналит о дедлоке; для глубокого анализа аллокаций и пауз дополнительно используют профилирование (`JFR`, `async-profiler`).",
-                "related": "[[metrics-tracing-interview#Q11]] распределения и бакеты для метрик; [[metrics-tracing-interview#Q10]] Micrometer в Spring Boot включает JVM-метрики; [[metrics-tracing-interview#Q22]] алерты по jvm_memory и jvm_gc."
+                "explanation": "Boot при выполнении условий авто-конфигурации регистрирует JVM binders. Наличие конкретного meter зависит от runtime, версии и настроек; доступный scrape endpoint не следует из одного факта наличия Micrometer.",
+                "example": "Проверьте реально экспонированные jvm_memory_* и jvm_threads_* series. Heap used/max сравнивайте для согласованных pools и scope только при определённом положительном max. Отношение rate(GC sum)/rate(GC count) даёт среднюю длительность наблюдавшихся событий, а не каждый пик.",
+                "when_to_apply": "Для наблюдения давления памяти, потоков и GC с проверенными правилами алертов и явным временным окном.",
+                "edge_cases": "В прочитанном JvmThreadMetrics 1.13.2 нет регистрации jvm.threads.deadlocked; такой alert нельзя выдавать за гарантированный default Boot 3.3.1. Отсутствие series не означает нулевое значение. При нулевой частоте GC средняя может быть неопределённой; OOM не гарантируется заранее обнаружить по этим графикам.",
+                "related": "[[metrics-tracing-interview#Q10]] интеграция; [[metrics-tracing-interview#Q22]] правила алертов; [[jvm-performance-tuning-interview#Q1]] диагностика JVM."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Метрики `GC` в `Micrometer` показывают только число сборок мусора.",
+              "text": "Для памяти и потоков подходят Micrometer binders, но GC даёт только число сборок без длительности.",
               "correct": false,
               "sections": {
-                "what_actually": "`Micrometer` экспортирует и длительность пауз через `jvm_gc_pause_seconds_sum`/`_count`, по которым считают среднюю паузу.",
-                "source_of_confusion": "Кажется, что `GC`-метрики ограничены счётчиком событий, как в простых JMX-бинах.",
-                "if_it_were_true": "Тогда нельзя было бы алертить по паузам > 500ms, но это стандартный `PromQL`-алерт на `jvm_gc_pause_seconds`.",
-                "how_it_should_be": "Доступна и частота, и длительность пауз `GC`; средняя пауза — `rate(..._sum)/rate(..._count)`."
+                "what_actually": "JvmGcMetrics поддерживает статистики времени GC; конкретные meters и представление зависят от JVM и registry, а не ограничены одним числом событий.",
+                "source_of_confusion": "Счётчик сборок принимают за весь набор наблюдений GC.",
+                "if_it_were_true": "Нельзя было бы получить count и суммарное время GC-событий для оценки средней длительности.",
+                "how_it_should_be": "Проверьте доступные GC meters и отдельно интерпретируйте количество, суммарное время, среднее и распределение."
               }
             }
           ]
@@ -731,50 +731,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Custom metrics описывают прикладные события и состояния, например заказы, очередь или бизнес-ошибки.",
+              "text": "Прикладные метрики добавляют для конкретного события или состояния, если стандартные meters не отвечают диагностическому вопросу.",
               "correct": true,
               "sections": {
-                "explanation": "Стандартные метрики покрывают инфраструктуру, но не отвечают на бизнес-вопросы вроде «сколько заказов по региону» — для этого регистрируют собственные `Counter`/`Gauge`/`Timer`.",
-                "example": "`registry.counter(\"business.orders.created\", \"region\", region, \"payment_method\", pm).increment()` считает заказы; `Gauge.builder(\"queue.size\", queue, BlockingQueue::size)` следит за очередью.",
-                "when_to_apply": "Custom-метрики вводят, когда нужно алертить по бизнес-событию или строить продуктовый дашборд, а не только следить за `CPU` и памятью.",
-                "edge_cases": "Важно не создавать высокую cardinality: лейблы должны иметь малое множество значений (`status`, `endpoint`, `region`), а не `user_id` или `order_id`.",
-                "related": "[[metrics-tracing-interview#Q17]] cardinality и почему лейблы по user_id опасны; [[metrics-tracing-interview#Q29]] связь app-метрик с бизнес-метриками; [[metrics-tracing-interview#Q32]] кастомные теги для бизнес-метрик в Micrometer."
+                "explanation": "Приложение регистрирует измерения предметной области через MeterRegistry. Тип и labels выбирают под определённый вопрос, а не под максимальную детализацию любой ценой.",
+                "example": "registry.counter(\"business.orders.created\", \"region\", region).increment() считает событие. Gauge.builder(\"queue.size\", queue, BlockingQueue::size).register(registry) регистрирует состояние очереди; queue должна оставаться достижимой в приложении.",
+                "when_to_apply": "Когда нужны частота прикладных событий, длительность операции или состояние очереди, которых нет в стандартном наборе.",
+                "edge_cases": "Ограниченный набор значений отдельного label не гарантирует малое число сочетаний. Контролируйте бюджет рядов и регистрацию meters; gauge может пропустить промежуточный пик между наблюдениями, а FunctionCounter предполагает монотонность источника.",
+                "related": "[[metrics-tracing-interview#Q17]] комбинации labels; [[metrics-tracing-interview#Q29]] прикладные сигналы; [[metrics-tracing-interview#Q32]] бизнес-теги."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Custom metrics следует снабжать `user_id` и `request_id`, чтобы получить максимально детальные разрезы.",
+              "text": "Прикладные метрики добавляют с user_id и request_id, потому что подробные разрезы не увеличивают число рядов.",
               "correct": false,
               "sections": {
-                "what_actually": "Чрезмерные уникальные лейблы (`user_id`, `request_id`) взрывают cardinality и ломают `Prometheus`; добавлять метрики нужно осознанно.",
-                "source_of_confusion": "Интуиция «больше данных — лучше» подталкивает к максимальной детализации лейблов.",
-                "if_it_were_true": "Тогда число временных рядов росло бы неограниченно и привело бы к `OOM`, чего как раз избегают.",
-                "how_it_should_be": "Метрики добавляют по необходимости, с лейблами малой cardinality; детализацию по пользователю шлют в логи, а не в метрики."
+                "what_actually": "Новый набор значений labels создаёт отдельный ряд. Неограниченные ID могут увеличить затраты и риск перегрузки; OOM не является обязательным исходом каждого такого label.",
+                "source_of_confusion": "Полезность подробного разреза считают доказательством его бесплатности для TSDB.",
+                "if_it_were_true": "Миллионы различных request_id не меняли бы число наблюдаемых наборов labels.",
+                "how_it_should_be": "Для операционных метрик выбирайте ограниченные категории и бюджет сочетаний, а подробные события храните подходящим сигналом с собственными ограничениями."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Custom metrics требуют отдельной TSDB и не могут экспортироваться в тот же Prometheus.",
+              "text": "Прикладные метрики добавляют в отдельную TSDB, потому что стандартный registry не может экспортировать новые meters.",
               "correct": false,
               "sections": {
-                "what_actually": "Кастомные метрики регистрируются через тот же `MeterRegistry` и экспортируются в тот же `Prometheus`, что и стандартные.",
-                "source_of_confusion": "Слово «кастомные» создаёт ощущение, что им нужна отдельная инфраструктура.",
-                "if_it_were_true": "Тогда понадобился бы второй `Prometheus`, но кастомные метрики просто появляются на том же `/actuator/prometheus`.",
-                "how_it_should_be": "Custom-метрики идут через общий registry и общий бэкенд; отдельное хранилище не требуется."
+                "what_actually": "Прикладные meters могут использовать тот же MeterRegistry и экспорт, что и стандартные. Само прикладное назначение не требует отдельной TSDB.",
+                "source_of_confusion": "Слово custom принимают за несовместимый формат, а не за источник измерения.",
+                "if_it_were_true": "Один registry не смог бы одновременно экспортировать JVM gauges и счётчик заказов.",
+                "how_it_should_be": "Регистрируйте нужные meters в настроенном registry; отдельный backend выбирают по архитектурным требованиям, а не из-за названия custom."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Custom metrics — только переименованные JVM metrics; приложение не может измерять новые величины.",
+              "text": "Прикладные метрики добавляют переименованием JVM meters, потому что MeterRegistry не поддерживает новые прикладные величины.",
               "correct": false,
               "sections": {
-                "what_actually": "`Custom`-метрики измеряют именно новые, прикладные величины (заказы, очереди, бизнес-события), а не переименовывают `JVM`-метрики.",
-                "source_of_confusion": "Слово «custom» иногда понимают как косметическую настройку имён существующих метрик.",
-                "if_it_were_true": "Тогда нельзя было бы посчитать `business.orders.created`, но это типичная кастомная метрика приложения.",
-                "how_it_should_be": "Custom-метрики регистрируют новые меры через `MeterRegistry`; переименование `JVM`-метрик — это другое (теги/фильтры)."
+                "what_actually": "MeterRegistry позволяет регистрировать новые counters, gauges, timers и другие meters приложения. Переименование существующего meter — отдельная операция.",
+                "source_of_confusion": "Настройку имени метрики путают с созданием нового измерения.",
+                "if_it_were_true": "Приложение не могло бы посчитать событие оформления заказа, отсутствующее в JVM binders.",
+                "how_it_should_be": "Выберите модель величины и зарегистрируйте meter; фильтры имён и тегов не заменяют само измерение."
               }
             }
           ]
