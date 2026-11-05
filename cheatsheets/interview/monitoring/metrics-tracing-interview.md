@@ -857,160 +857,97 @@ spec:
 
 ## Q21. Что такое exemplars и зачем они нужны?
 
-`Exemplar` — это «образец» одного наблюдения, прикреплённый к метрике и хранящий ссылку на trace (`traceId` и `spanId`). Метрика агрегирована и сама по себе не говорит, какой конкретно запрос дал всплеск. Exemplar закрывает эту дыру: увидев скачок на графике, по нему сразу переходишь к конкретному трейсу, который этот скачок вызвал, и видишь причину. Это и есть мост от агрегированных метрик к детальным трейсам.
+`Exemplar` сохраняет **пример отдельного наблюдения с контекстом** рядом с агрегированными данными метрики. В модели OpenTelemetry он содержит значение, время и дополнительные filtered attributes; связанные `trace_id`/`span_id` **необязательны**. Для histogram/sum значение exemplar уже участвует в агрегате: его не прибавляют повторно к count, sum или buckets. [OTel Metrics Data Model, Exemplars](https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exemplars).
 
-**Включение exemplars в Spring Boot:**
+Если exemplar содержит trace ID и цепочка сбора/хранения/визуализации настроена, по нему можно открыть trace для расследования. Контекст exemplar отделён от labels, определяющих временной ряд. Exemplar не заменяет распределение и не доказывает причину скачка или принадлежность запроса вычисленному p99; это пример для проверки гипотезы, как в Q14.
 
-```java
-@Configuration
-public class ExemplarConfig {
+**Синтетический фрагмент OpenMetrics 1.0** — один bucket с exemplar, не полная экспозиция:
 
-    // Exemplars включаются автоматически при наличии:
-    // 1. micrometer-registry-prometheus
-    // 2. micrometer-tracing-bridge-otel (или brave)
-    // 3. Активной трассировки
-
-    // Для PrometheusMeterRegistry нужен SpanContextSupplier:
-    @Bean
-    public PrometheusMeterRegistry prometheusMeterRegistry(
-            PrometheusConfig config, Clock clock) {
-        return new PrometheusMeterRegistry(config, new CollectorRegistry(), clock,
-                new DefaultExemplarSampler(spanContextSupplier()));
-    }
-}
+```text
+http_server_requests_seconds_bucket{method="POST",uri="/api/orders",le="0.5"} 120 # {trace_id="4bf92f3577b34da6a3ce929d0e0e4736",span_id="00f067aa0ba902b7"} 0.48 1712345678.000
 ```
 
-**Пример exemplar в формате Prometheus:**
+`120` — cumulative bucket count, `0.48` — значение выбранного наблюдения в секундах, далее его timestamp. Дополнительные labels после `#` не создают ряд по trace ID. OpenMetrics определяет exemplars также для counter total; правило «exemplar бывает только у latency histogram» неверно. Формат этой строки не следует выдавать за Prometheus text 0.0.4. [OpenMetrics 1.0](https://prometheus.io/docs/specs/om/open_metrics_spec/).
 
-```
-# Exemplar прикреплён к бакету гистограммы:
-http_server_requests_seconds_bucket{method="POST",uri="/api/orders",le="0.5"} 120 # {trace_id="abc123def456"} 0.48 1712345678.000
-```
+**Подключение зависит от версий.** Для Boot 3.3 документация различает `SpanContext` нового Prometheus client и `SpanContextSupplier` legacy simpleclient; при подходящей Micrometer Tracing интеграции соответствующая связка автоконфигурируется. Нельзя смешивать конструкторы этих registry или считать один список зависимостей доказательством работы. Проверяйте фактическую экспозицию с exemplar, выбранный формат, сбор/хранение Prometheus и datasource-связь Grafana. [Boot 3.3 Prometheus exemplars](https://docs.spring.io/spring-boot/3.3/reference/actuator/metrics.html).
 
-**Что нужно для работы:** поддержка появилась в `Prometheus` 2.26+, есть в `OpenTelemetry` и `Grafana`. Чтобы exemplars стали кликабельными, на панели `Grafana` с гистограммой включают опцию «Exemplars» и указывают источник трейсов (`Tempo`/`Jaeger`).
+Сам ID ещё не гарантирует доступный trace: возможны sampling, потери и различный retention. При отсутствии trace-контекста exemplar может оставаться допустимым примером наблюдения, но прямой переход к trace недоступен.
+
 
 ## Q22. Как настроить алерты по метрикам (Prometheus, Alertmanager)?
 
-Алертинг разделён на два компонента с чёткими ролями. `Prometheus` отвечает за **оценку условий**: правила на `PromQL` периодически вычисляются, и когда условие держится дольше `for`, алерт переходит в состояние firing. `Alertmanager` отвечает за **доставку**: группирует похожие алерты, дедуплицирует их, применяет маршрутизацию по severity и шлёт в каналы (Slack, PagerDuty, email). Такое разделение нужно, чтобы один и тот же сбой не превратился в сотню одинаковых уведомлений.
+**Prometheus** вычисляет PromQL-правила и состояние каждого alert instance по его набору labels. **Alertmanager** получает alerts и управляет группировкой, дедупликацией, маршрутизацией и подавлением уведомлений. [Alerting overview](https://prometheus.io/docs/alerting/latest/overview/).
 
-**Пример правил алертов (`alert_rules.yml`):**
+| Состояние правила | Что произошло |
+|---|---|
+| inactive | Для этого набора labels нет активного элемента результата. |
+| pending | Элемент есть, но заданный `for` ещё не выдержан. |
+| firing | Условие оставалось активным на последовательных оценках в течение `for`; без `for` нет этой выдержки. |
+
+`for` не суммирует разрозненные всплески: исчезновение элемента до firing прерывает pending, а новый набор labels — другая alert instance. Опциональный `keep_firing_for` может удерживать уже firing alert после исчезновения условия. Ошибки evaluation и потерю данных рассматривают отдельно. [Prometheus alerting rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/).
+
+**Важно: активность определяется наличием элемента вектора, даже со значением 0.** Например, `up == 0` фильтрует здоровые targets и оставляет неуспешные scrape со значением 0. `up == bool 0` сохраняет также нулевые элементы для здоровых targets, поэтому не подходит как замена этого фильтра в alert expression. [PromQL comparisons](https://prometheus.io/docs/prometheus/latest/querying/operators/#comparison-binary-operators).
+
+**Иллюстративный файл правил:**
 
 ```yaml
 groups:
   - name: application-alerts
     rules:
-      # Высокая доля ошибок
-      - alert: HighErrorRate
-        expr: |
-          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) by (application)
-          /
-          sum(rate(http_server_requests_seconds_count[5m])) by (application)
-          > 0.01
+      - alert: TargetScrapeFailing
+        expr: up{job="order-service"} == 0
         for: 5m
         labels:
           severity: critical
         annotations:
-          summary: "Высокая доля ошибок в {{ $labels.application }}"
-          description: "Доля 5xx ошибок: {{ $value | humanizePercentage }}"
-          runbook: "https://wiki.internal/runbooks/high-error-rate"
-          dashboard: "https://grafana.internal/d/app-overview?var-app={{ $labels.application }}"
-
-      # Высокая латентность
-      - alert: HighLatency
-        expr: |
-          histogram_quantile(0.99,
-            sum(rate(http_server_requests_seconds_bucket[5m])) by (le, application)
-          ) > 2
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "p99 латентность > 2s в {{ $labels.application }}"
-
-      # Heap Memory > 85%
-      - alert: HighHeapUsage
+          summary: "Неуспешный scrape {{ $labels.instance }}"
+      - alert: HighHeapPoolUsage
         expr: |
           jvm_memory_used_bytes{area="heap"}
-          / jvm_memory_max_bytes{area="heap"}
+          / (jvm_memory_max_bytes{area="heap"} > 0)
           > 0.85
         for: 10m
         labels:
           severity: warning
+        annotations:
+          summary: "Высокое заполнение pool {{ $labels.id }} на {{ $labels.instance }}"
 ```
 
-**Конфигурация Alertmanager:**
+Первое правило не доказывает падение процесса и не замечает исчезнувший из discovery target. Второе проверяет конкретный pool только при определённом положительном max, не заполнение всей heap (Q12). Правила и пороги подбирают под измерения приложения; отсутствие ряда не равно нулевой ошибке и требует отдельной проверки missing data.
 
-```yaml
-# alertmanager.yml
-global:
-  resolve_timeout: 5m
-  slack_api_url: 'https://hooks.slack.com/services/xxx'
+В Alertmanager `group_wait` задерживает первое уведомление группы, `group_interval` и `repeat_interval` управляют последующими отправками. Эти таймеры не заменяют `for`. Silence и inhibition подавляют уведомления, но не меняют PromQL и состояние правила в Prometheus. Маршрут/receiver, доставка и resolved-уведомления проверяются отдельно; firing не означает, что сообщение уже получил дежурный. [Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/).
 
-route:
-  group_by: ['alertname', 'application']
-  group_wait: 30s
-  group_interval: 5m
-  repeat_interval: 4h
-  receiver: 'slack-notifications'
-  routes:
-    - match:
-        severity: critical
-      receiver: 'pagerduty'
-    - match:
-        severity: warning
-      receiver: 'slack-notifications'
-
-receivers:
-  - name: 'slack-notifications'
-    slack_configs:
-      - channel: '#alerts'
-        title: '{{ .GroupLabels.alertname }}'
-        text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
-
-  - name: 'pagerduty'
-    pagerduty_configs:
-      - service_key: '<PAGERDUTY_KEY>'
-```
 
 ## Q23. Что такое traceId и spanId и как они связаны?
 
-Это два идентификатора разного масштаба. `traceId` — идентификатор всего trace, то есть одного запроса через всю систему; он один и тот же для всех spans этого запроса и служит «ключом», по которому трейс собирается из кусочков. `spanId` — идентификатор одной операции (span), у каждого span свой.
+`traceId` объединяет spans одного trace, `spanId` идентифицирует отдельную операцию; для указания конкретного span используют пару `traceId`/`spanId`. Отношение к родителю хранится отдельно: у root родителя нет, а root не обязан быть входящим HTTP-запросом. Дополнительные links могут связывать spans, в том числе из разных traces. Это контекст операций, а не список всех операций внутри одного ID. [OpenTelemetry traces](https://opentelemetry.io/docs/concepts/signals/traces/).
 
-Дерево строится через ссылку на родителя: каждый span хранит `parentSpanId` — `spanId` того span, внутри которого он вызван. Корневой span (входящий запрос) родителя не имеет. Так из плоского набора spans с общим `traceId` восстанавливается иерархия вызовов.
+Для **W3C Trace Context version 00** `trace-id` содержит 32 lowercase hex-символа, `parent-id` — 16; полностью нулевые IDs недопустимы. В переданном `traceparent` поле parent-id обозначает span вызывающей стороны, а получатель создаёт span со своим ID (Q8). Это правило wire-формата; внешний correlation ID приложения может иметь другой формат. [W3C Trace Context](https://www.w3.org/TR/trace-context/).
 
-**Добавление traceId в логи (Logback + MDC):**
+**Пример текстового Logback config**, если трассировочная интеграция действительно заполняет MDC:
 
 ```xml
-<!-- logback-spring.xml -->
 <configuration>
-    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <includeMdcKeyName>traceId</includeMdcKeyName>
-            <includeMdcKeyName>spanId</includeMdcKeyName>
-        </encoder>
-    </appender>
-
-    <!-- Или текстовый формат с traceId -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [traceId=%X{traceId}, spanId=%X{spanId}] - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} [traceId=%X{traceId}, spanId=%X{spanId}] - %msg%n</pattern>
         </encoder>
     </appender>
-
     <root level="INFO">
-        <appender-ref ref="JSON"/>
+        <appender-ref ref="CONSOLE"/>
     </root>
 </configuration>
 ```
 
-**Пример лога с traceId:**
+**Синтетические строки двух операций одного trace:**
 
-```
-14:23:45.123 [http-nio-8080-exec-1] INFO  c.e.OrderController [traceId=4bf92f3577b34da6, spanId=00f067aa0ba902b7] - Creating order for user 42
-14:23:45.234 [http-nio-8080-exec-1] INFO  c.e.PaymentService  [traceId=4bf92f3577b34da6, spanId=a3ce929d0e0e4736] - Processing payment
+```text
+14:23:45.123 INFO  c.e.OrderController [traceId=4bf92f3577b34da6a3ce929d0e0e4736, spanId=00f067aa0ba902b7] - Creating order
+14:23:45.234 INFO  c.e.PaymentService [traceId=4bf92f3577b34da6a3ce929d0e0e4736, spanId=a3ce929d0e0e4736] - Processing payment
 ```
 
-По `traceId` можно отфильтровать все логи одного запроса в `ELK / Loki` — подробнее в [вопросах по логированию](logging-strategies-interview.md).
+Общий trace ID одинаков, собственные span IDs различаются; родительскую связь эти строки сами не показывают. Один Logback-шаблон не заполняет MDC: нужен активный контекст и соответствующая интеграция. Boot 3.3 с Micrometer Tracing использует MDC для correlation IDs; перенос в собственные executor/async-пути тоже нужно проверить. Поиск по ID связывает доступные логи, но не гарантирует полного trace или всех логов запроса. [Boot 3.3 logging correlation](https://docs.spring.io/spring-boot/3.3/reference/actuator/tracing.html), [логирование](logging-strategies-interview.md).
+
 
 ## Q24. Как уменьшить поток данных трассировки до хранилища?
 
@@ -1074,27 +1011,21 @@ processors:
 
 ## Q26. Что такое RED-метрики и USE-метрики?
 
-Это два набора «обязательного минимума» метрик, разделённых по объекту наблюдения. `RED` смотрит на **сервис глазами клиента**: `Rate` (запросов в секунду), `Errors` (доля ошибок), `Duration` (задержка, p50/p99). `USE` смотрит на **ресурс** (`CPU`, диск, сеть): `Utilization` (утилизация), `Saturation` (насыщенность — очереди и ожидание), `Errors` (ошибки ресурса). RED говорит, страдает ли пользователь; USE — упёрся ли какой-то ресурс. Вместе они закрывают и симптом, и причину.
+Это совместимые методологии выбора сигналов с разными **объектами наблюдения**:
 
-```mermaid
-graph TB
-    subgraph "RED — для сервисов"
-        R["Rate<br/>Запросы/сек<br/>rate(http_requests_total[5m])"]
-        E1["Errors<br/>Доля ошибок<br/>rate(errors)/rate(total)"]
-        D["Duration<br/>p50, p95, p99<br/>histogram_quantile(0.99, ...)"]
-    end
+| Метод | Объект | Какие сигналы выбрать |
+|---|---|---|
+| RED | Запросы сервиса | Rate — частота запросов, Errors — их ошибки, Duration — длительность/распределение задержки. |
+| USE | Конкретный ресурс | Utilization — занятость/использование ёмкости, Saturation — работа в ожидании обслуживания, Errors — ошибки ресурса. |
 
-    subgraph "USE — для ресурсов"
-        U["Utilization<br/>Загрузка CPU/Memory<br/>process_cpu_usage"]
-        S["Saturation<br/>Очереди, ожидание<br/>thread_pool_queue_size"]
-        E2["Errors<br/>Ошибки ресурсов<br/>disk_errors_total"]
-    end
+Общие определения и примеры запросов приведены в [Q19](#q19-что-такое-red-и-use-методологии-для-метрик). Это не обязательный исчерпывающий минимум и не гарантия нахождения корневой причины. Различие определяется смыслом измерений; одна система экспорта может передавать оба набора. [RED, Tom Wilkie](https://grafana.com/blog/the-red-method-how-to-instrument-your-services/), [USE, Brendan Gregg](https://www.brendangregg.com/usemethod.html).
 
-    SVC["HTTP API /<br/>Микросервисы"] --> R & E1 & D
-    INFRA["CPU / Memory /<br/>Disk / Network"] --> U & S & E2
-```
+**Пример применения:** у API выросла latency. RED помогает проверить частоту, долю ошибок и распределение задержки в согласованной области запросов. USE пула потоков добавляет занятость, ожидающие задания и отказы приёма. Рост занятости сам по себе ещё не устанавливает причину: сопоставьте окна, нагрузку и ожидание зависимостей, затем проверьте гипотезу логами, traces или профилем. Доменный сбой может потребовать дополнительных сигналов.
 
-**Как снимать на практике:** оба набора согласуются с golden signals из SRE-практики. В `Micrometer` `Rate` и `Errors` берут из `Timer` и счётчиков с лейблом outcome, `Duration` — из гистограммы латентности. `USE` по `JVM` дают binder'ы памяти, потоков и `GC`; по инфраструктуре — `node_exporter` и `cAdvisor`.
+**Выбор инструмента — отдельный шаг.** Rate/Errors можно получать из подходящих counters/Timer с определённым критерием ошибки; Duration не ограничена одним видом инструмента. Для p99 нужны достаточные данные о распределении, а средняя длительность его не заменяет. Наличие JVM binders не даёт автоматически очередь/ошибки каждого ресурса; GC-событие не становится USE Errors, а busy/max — очередью. Проверяйте конкретные meters и область измерений.
+
+RED пересекается с тремя SRE golden signals — traffic, errors, latency; четвёртый, saturation, рассматривается отдельно. USE помогает исследовать ресурсы, но не делает эти два подхода тождественными всем golden signals. [Google SRE, Monitoring Distributed Systems](https://sre.google/sre-book/monitoring-distributed-systems/).
+
 
 ## Q27. Как уменьшить объём и стоимость хранения трейсов в production?
 
@@ -1741,79 +1672,24 @@ processors:
 
 ## Q38. Что такое Exemplars и как они связывают метрики с трейсами?
 
-**Exemplar** — это конкретный образец одного наблюдения внутри метрики, к которому прикреплена ссылка на трейс (`traceId`). Метрика агрегирована и обезличена: она знает, что p99 вырос до 5 секунд, но не знает, какой именно запрос это был. Exemplar решает эту фундаментальную проблему — он сохраняет «улику» от одного из наблюдений, попавших в этот всплеск, и позволяет перейти от точки на графике к трейсу, который её объясняет.
+Определение exemplar и его отличие от распределения — в [Q21](#q21-что-такое-exemplars-и-зачем-они-нужны). Для перехода **метрика → конкретный trace** exemplar должен содержать пригодный trace reference; общий exemplar не обязан иметь trace ID. Даже доступный trace остаётся примером запроса, а не доказательством причины вычисленного p99.
 
-**Пример сценария:** на графике p99 latency = 5 секунд -> клик по точке -> exemplar содержит `traceId` -> открываем трейс -> видим конкретный медленный запрос и где в нём ушло время.
+Практически проверяют всю цепочку, а не только наличие кнопки в Grafana:
 
-**Как это работает в Prometheus:**
+| Этап | Что проверить |
+|---|---|
+| Создание наблюдения | Инструмент и exemplar sampler действительно сохраняют контекст нужного наблюдения. Имя метрики само не порождает trace ID. |
+| Экспозиция приложения | В выбранном OpenMetrics scrape-пути ответ содержит exemplar labels/value, отделённые от labels ряда. Нужны поддержка registry/client и согласованный формат ответа. |
+| Сбор и хранение | Версия Prometheus поддерживает выбранный scrape protocol, принимает exemplars и имеет нужную конфигурацию их хранения. Список scrape protocols сам по себе не доказывает работу storage. |
+| Grafana | Имя label exemplar совпадает с данными, а datasource UID ведёт к реальному trace backend; пример настройки — Q14. |
+| Trace backend | Указанный trace действительно записан и ещё доступен по retention; переданный ID этого не гарантирует. |
 
-```
-# Обычный Histogram bucket в Prometheus format
-http_request_duration_seconds_bucket{le="0.5"} 1234
+Для **Boot 3.3** проверяйте связку выбранного Prometheus client и Micrometer Tracing: новый client использует `SpanContext`, legacy simpleclient — другой API. `publishPercentileHistogram()` настраивает histogram buckets, но не создаёт tracing context и не является универсальным условием exemplar: counters также поддерживаются. Не переносите `management.prometheus.metrics.export.exemplars-sampling: true` в конфигурацию без подтверждения выбранной версии: в проверенной metadata **Boot 3.3.2** такого свойства нет. [Boot 3.3 Prometheus integration](https://docs.spring.io/spring-boot/3.3/reference/actuator/metrics.html), [OpenMetrics 1.0](https://prometheus.io/docs/specs/om/open_metrics_spec/).
 
-# С Exemplar — добавляется traceId к конкретному наблюдению
-http_request_duration_seconds_bucket{le="0.5"} 1234 # {traceId="abc123",spanId="def456"} 0.48 1686000000
-```
+**Диагностика:** сначала найдите exemplar в фактической экспозиции приложения, затем — в данных Prometheus, и только после этого проверяйте ссылку Grafana. У Prometheus документирован experimental API `/api/v1/query_exemplars` для запроса exemplars по выражению и интервалу времени; интерфейс и поддержку проверяют для своей версии. Описанный здесь путь относится к OpenMetrics scrape, а не ко всем возможным транспортам телеметрии. [Prometheus HTTP API](https://prometheus.io/docs/prometheus/latest/querying/api/#querying-exemplars), [Grafana exemplars](https://grafana.com/docs/grafana/latest/fundamentals/exemplars/).
 
-**Включение Exemplars в Spring Boot + Micrometer:**
+Если цепочка не даёт нужного trace, используйте доступный поиск по времени/атрибутам и проверьте sampling, доставку и сроки хранения. Отсутствие ссылки не доказывает отсутствие запроса; один открытый exemplar не характеризует всю нагрузку.
 
-```yaml
-# application.yml
-management:
-  metrics:
-    distribution:
-      percentiles-histogram:
-        http.server.requests: true   # включаем histogram (нужен для exemplars)
-  prometheus:
-    metrics:
-      export:
-        exemplars-sampling: true    # включаем exemplars
-```
-
-```java
-// Ручное добавление exemplar с текущим traceId
-Timer.builder("checkout.duration")
-    .publishPercentileHistogram()
-    .register(registry)
-    .record(() -> {
-        // Micrometer автоматически берёт traceId из OpenTelemetry context
-        processCheckout();
-    });
-```
-
-**Конфигурация Prometheus для хранения Exemplars:**
-
-```yaml
-# prometheus.yml
-global:
-  scrape_interval: 15s
-
-# Включаем OpenMetrics формат (нужен для exemplars)
-scrape_configs:
-  - job_name: 'spring-app'
-    static_configs:
-      - targets: ['app:8080']
-    # OpenMetrics content type для exemplars
-    scrape_protocols: [OpenMetricsText1.0.0, PrometheusText0.0.4]
-```
-
-**Использование в Grafana:**
-
-В Grafana панели с histogram метрикой → кнопка "Exemplars" → точки на графике становятся кликабельными → открывается Tempo/Jaeger с конкретным трейсом.
-
-**Связка Prometheus + Grafana Tempo через Exemplars:**
-
-```yaml
-# Grafana datasource: Prometheus → Tempo correlation
-datasources:
-  - name: Prometheus
-    type: prometheus
-    url: http://prometheus:9090
-    jsonData:
-      exemplarTraceIdDestinations:
-        - name: traceId
-          datasourceUid: tempo-uid   # UID Tempo datasource
-```
 
 ## Q39. (!) Что такое проблема высокой кардинальности в метриках и как её избежать?
 
