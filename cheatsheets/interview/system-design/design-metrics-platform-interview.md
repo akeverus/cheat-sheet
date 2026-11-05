@@ -12,7 +12,7 @@ aliases:
   - "Проектирование платформы метрик и алертов"
 prerequisites: []
 next: []
-updated: "2026-10-05"
+updated: "2026-11-05"
 ---
 # Вопросы на собеседовании: Платформа метрик и алертов
 
@@ -22,8 +22,9 @@ updated: "2026-10-05"
 
 - [Prometheus: remote write tuning](https://prometheus.io/docs/practices/remote_write/) — WAL, очередь, отставание и риск потери при длительном сбое получателя.
 - [Grafana Mimir: distributor](https://grafana.com/docs/mimir/latest/references/architecture/components/distributor/) и [runtime overrides](https://grafana.com/docs/mimir/latest/configure/about-runtime-configuration/) — tenant limits на ingest и активные ряды.
+- [Grafana Mimir: authentication and authorization](https://grafana.com/docs/mimir/latest/manage/secure/authentication-and-authorization/) — доверенная установка tenant ID перед Mimir.
 - [Grafana Mimir: query frontend](https://grafana.com/docs/mimir/latest/references/architecture/components/query-frontend/), [scheduler](https://grafana.com/docs/mimir/latest/references/architecture/components/query-scheduler/) и [ruler](https://grafana.com/docs/mimir/latest/references/architecture/components/ruler/) — разделение чтения и вычисления правил.
-- [Thanos Compactor: retention и downsampling](https://thanos.io/tip/components/compact.md/) — долгие интервалы и разрешение исторических данных.
+- [Thanos Compactor: retention и downsampling](https://thanos.io/v41.0/components/compact.md/) — долгие интервалы, разрешение истории и отказ компактора.
 
 ## Содержание
 
@@ -35,17 +36,19 @@ updated: "2026-10-05"
 
 ## Q1. Как принять метрики многих команд без взаимного влияния?
 
-На входе отделите **аутентифицированный tenant** от присланных клиентом labels. Tenant ID должен назначать доверенный gateway из проверенной учётной записи; нельзя позволять отправителю выбрать чужой tenant простым заголовком. В Mimir запросы используют `X-Scope-OrgID`, поэтому проверку и установку этого заголовка нужно организовать перед входом в платформу. Разделение в хранилище и проверки прав обязательны также на чтении. [Mimir HTTP API](https://grafana.com/docs/mimir/latest/references/http-api/).
+На входе отделите **аутентифицированный tenant** от присланных клиентом labels. В Mimir `X-Scope-OrgID` определяет tenant, но сам заголовок не подтверждает личность отправителя. Доверенный reverse proxy должен аутентифицировать запрос, убрать клиентское значение заголовка и установить tenant ID из проверенной учётной записи. Применяйте эту границу доверия и к записи, и к чтению; иначе отправитель сможет выбрать чужой tenant. [Mimir authentication and authorization](https://grafana.com/docs/mimir/latest/manage/secure/authentication-and-authorization/).
 
-Путь записи: Prometheus/агент → remote write → gateway/distributor → приём и валидация samples → долговечный ingest/TSDB. Ограничивайте по tenant скорость samples, burst, число активных series и число новых series за интервал; отдельно защищайте физический ingester от суммарной нагрузки. Высокая cardinality часто вызвана `user_id`, `request_id` или иным безграничным label. Отказ по лимиту должен быть наблюдаемым для отправителя и оператора: метрики rejected samples, lag, age очереди, активные series и доля ошибок по tenant. Mimir документирует per-tenant overrides и instance limits; это конкретный пример механизма, а не требование писать свои лимитеры поверх продукта. [Mimir distributor](https://grafana.com/docs/mimir/latest/references/architecture/components/distributor/), [runtime configuration](https://grafana.com/docs/mimir/latest/configure/about-runtime-configuration/).
+Путь записи: Prometheus/агент → remote write → gateway/distributor → приём и валидация samples → долговечный ingest/TSDB. Ограничивайте по tenant скорость samples, burst и число рядов в памяти (`in-memory series`); отдельно наблюдайте активные ряды и скорость появления новых рядов (`churn`). Это разные показатели: в Mimir проверьте выбранный режим подсчёта in-memory/owned series и архитектуру, а не подставляйте число active series в любой лимит. Защищайте физический ingester и от суммарной нагрузки. Высокая cardinality часто вызвана `user_id`, `request_id` или иным безграничным label. Отказ по лимиту должен быть наблюдаемым для отправителя и оператора: метрики rejected samples, lag, age очереди, активные series и доля ошибок по tenant. Mimir документирует per-tenant overrides и instance limits; это конкретный пример механизма, а не требование писать свои лимитеры поверх продукта. [Mimir distributor](https://grafana.com/docs/mimir/latest/references/architecture/components/distributor/), [runtime configuration](https://grafana.com/docs/mimir/latest/configure/about-runtime-configuration/), [series limits](https://grafana.com/docs/mimir/latest/configure/configuration-parameters/), [owned series tracking](https://grafana.com/docs/mimir/latest/configure/configure-owned-series/).
 
 Remote write отправителя читает WAL и буферизует данные в очередях. Если получатель долго недоступен, очередь и WAL не дают бесконечной гарантии сохранения: Prometheus описывает риск потери после длительного отставания. Поэтому определите SLO на задержку ingest, предел недоступности, сигнал приближения к нему и политику отбрасывания/восстановления. [Prometheus remote write](https://prometheus.io/docs/practices/remote_write/).
 
 ## Q2. Как совместить короткие алерты и длинную историю метрик?
 
-Разделите **горячие свежие samples** для правил и недавних дашбордов от долговременных блоков истории. Точный короткий запрос должен видеть достаточно свежие данные для алерта; месячный график допускает чтение блоков из object storage и более грубое разрешение. На входе хранят raw samples и индексы series; затем compaction уменьшает количество мелких блоков, а downsampling делает длинные диапазоны дешевле читать. Это архитектурный выбор: raw, агрегированные ряды и время хранения назначаются по потребностям разных tenant. [Thanos Compactor](https://thanos.io/tip/components/compact.md/).
+Разделите **горячие свежие samples** для правил и недавних дашбордов от долговременных блоков истории. Точный короткий запрос должен видеть достаточно свежие данные для алерта; месячный график допускает чтение блоков из object storage и более грубое разрешение. На входе хранят raw samples и индексы series; затем compaction уменьшает количество мелких блоков, а downsampling делает длинные диапазоны дешевле читать. Это архитектурный выбор: raw, агрегированные ряды и время хранения назначаются по потребностям разных tenant. [Thanos Compactor](https://thanos.io/v41.0/components/compact.md/).
 
-Не путайте **downsampling с автоматической экономией места**. Thanos хранит дополнительные представления разрешения и прямо предупреждает, что они могут увеличить объём хранилища, если raw тоже сохранены. Если raw удалён раньше, чем создаётся нужное укрупнённое представление, история может исчезнуть. Если raw удалён после downsampling, пользователь теряет возможность «приблизить» старый график до исходных samples. Поэтому фиксируйте договор на разрешение исторических данных и проверяйте compactor, задержку загрузки блоков и фактическое соблюдение retention. [Thanos retention/downsampling](https://thanos.io/tip/components/compact.md/).
+Не путайте **downsampling с автоматической экономией места**. Thanos хранит дополнительные представления разрешения и прямо предупреждает, что они могут увеличить объём хранилища, если raw тоже сохранены. Если raw удалён раньше, чем создаётся нужное укрупнённое представление, история может исчезнуть. Если raw удалён после downsampling, пользователь теряет возможность «приблизить» старый график до исходных samples. Поэтому фиксируйте договор на разрешение исторических данных и проверяйте задержку загрузки блоков и фактическое соблюдение retention. [Thanos retention/downsampling](https://thanos.io/v41.0/components/compact.md/).
+
+В Thanos не запускайте два активных Compactor на одном потоке блоков в одном object storage: конкурентная компакция может создать перекрывающиеся блоки и остановить обработку. Для восстановления одного потока нужен один активный экземпляр; масштабировать компакторы можно разделением непересекающихся потоков. Следите за backlog и `thanos_compact_halted`: при ошибке Compactor может оставаться запущенным с этим значением `1`, а downsampling и retention перестанут выполняться. [Thanos Compactor: streams, halting и retention](https://thanos.io/v41.0/components/compact.md/).
 
 ## Q3. Как защитить запросы одного tenant от тяжёлых запросов другого?
 
