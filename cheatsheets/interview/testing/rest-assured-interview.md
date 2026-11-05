@@ -15,11 +15,11 @@ aliases:
 prerequisites:
   - "[[rest-assured]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-11-05"
 ---
 # Вопросы на собеседовании: `REST Assured`
 
-`REST Assured` — Java DSL для тестирования REST API с BDD-синтаксисом `given().when().then()`. Интегрируется с JUnit и Spring Boot Test, поддерживает валидацию JSON Schema, аутентификацию всех типов. Стандарт де-факто для integration-тестирования REST в Java.
+`REST Assured` — Java DSL для тестирования HTTP API с цепочкой `given().when().then()`. Он работает с JUnit, поддерживает проверки JSON и XML, а через отдельный модуль может запускать запросы к Spring MVC без сервера.
 
 ## Полезные ссылки
 
@@ -32,7 +32,24 @@ updated: "2026-04-25"
 ## Содержание
 
 - [Полезные ссылки](#полезные-ссылки)
+- [Q1. Что такое REST Assured и для чего он используется?](#q1)
+- [Q2. Какой BDD-синтаксис используется?](#q2)
+- [Q3. Как отправить POST-запрос с JSON-телом?](#q3)
+- [Q4. Как извлекать значения из ответа?](#q4)
+- [Q5. Что такое JsonPath и как он используется в REST Assured?](#q5)
+- [Q6. Как реализовать аутентификацию?](#q6)
+- [Q7. Что такое RequestSpecification и когда его использовать?](#q7)
+- [Q8. Как использовать ResponseSpecification?](#q8)
+- [Q9. Как обрабатывать query parameters и path variables?](#q9)
+- [Q10. Как интегрировать REST Assured со Spring Boot Test?](#q10)
+- [Q11. Как валидировать XML-ответы?](#q11)
+- [Q12. Как протестировать WebSocket или SSE?](#q12)
+- [Q13. Как организовать тестовые данные?](#q13)
+- [Q14. Какие проблемы могут возникнуть при использовании REST Assured?](#q14)
+- [Q15. Чем REST Assured отличается от WebTestClient и TestRestTemplate?](#q15)
 - [See also](#see-also)
+
+<a id="q1"></a>
 
 ## Q1. Что такое REST Assured и для чего он используется?
 
@@ -44,10 +61,12 @@ updated: "2026-04-25"
 <dependency>
     <groupId>io.rest-assured</groupId>
     <artifactId>rest-assured</artifactId>
-    <version>6.0.1</version>
+    <version>${rest-assured.version}</version>
     <scope>test</scope>
 </dependency>
 ```
+
+В `pom.xml` задают свойство `rest-assured.version` с версией, совместимой с остальными тестовыми зависимостями проекта.
 
 ```java
 import static io.restassured.RestAssured.*;
@@ -74,12 +93,14 @@ void getUserById() {
 - contract testing — частично, как проверка, что ответ совпадает с ожидаемым контрактом;
 - smoke-тесты в CI/CD — быстрая проверка, что развёрнутый сервис отвечает.
 
+<a id="q2"></a>
+
 ## Q2. Какой BDD-синтаксис используется?
 
-REST Assured делит тест на три блока — **Given-When-Then**, — каждый со своей ответственностью:
+Обычный стиль REST Assured — **Given-When-Then**:
 
 - `given()` — **Arrange**: всё, что настраивает запрос (базовый URL, заголовки, авторизация, тело).
-- `when()` — **Act**: само действие, то есть HTTP-метод и путь.
+- `when()` — переход к **Act**: после него обычно указывают HTTP-метод и путь. Запрос отправляет вызов `get`, `post` и т. п., а не само `when()`.
 - `then()` — **Assert**: проверки ответа (статус, поля тела, заголовки, время).
 
 ```java
@@ -88,7 +109,7 @@ given()                           // Arrange — настройка запрос
     .header("Authorization", "Bearer " + token)
     .contentType(ContentType.JSON)
     .body(new User("Alice", "alice@example.com"))
-.when()                            // Act — выполнение запроса
+.when()                            // далее — HTTP-вызов
     .post("/users")
 .then()                            // Assert — проверки
     .statusCode(201)
@@ -97,15 +118,17 @@ given()                           // Arrange — настройка запрос
     .time(lessThan(2000L));        // проверка времени ответа
 ```
 
-Разделение делает тест самодокументирующимся: блоки читаются как спецификация поведения API, а при падении сразу видно, на каком этапе оно произошло.
+Это соглашение о читаемости, а не запрет API: `when()` возвращает `RequestSpecification`, поэтому до `get()` можно добавить, например, `header(...)`. Есть и стиль `given().expect().statusCode(200).when().get("/users/1")`: ожидания описываются заранее, но проверяются на полученном ответе. Длительность в `time(...)` относится к клиентскому запросу, а не только к работе серверного обработчика.
+
+<a id="q3"></a>
 
 ## Q3. Как отправить POST-запрос с JSON-телом?
 
 Тело запроса в `.body(...)` можно задать тремя способами — выбор зависит от того, что под рукой и насколько важна типобезопасность:
 
 - **строкой** — когда нужно полностью контролировать JSON (например, проверить заведомо «битое» тело);
-- **Java-объектом** — основной способ: REST Assured сам сериализует объект через Jackson/Gson по `contentType`;
-- **`Map`** — компромисс, когда отдельный класс заводить лень, а строку хочется избежать.
+- **Java-объектом** — REST Assured сериализует его по `contentType`, если на classpath есть подходящий маппер, например Jackson или Gson;
+- **`Map`** — для небольшого тела без отдельного DTO. Как и для POJO, для JSON-сериализации нужен доступный или явно заданный object mapper. Готовая JSON-строка сериализации уже не требует.
 
 ```java
 // Вариант 1 — JSON как строка
@@ -159,6 +182,8 @@ void createUserFromMap() {
         .statusCode(201);
 }
 ```
+
+<a id="q4"></a>
 
 ## Q4. Как извлекать значения из ответа?
 
@@ -221,6 +246,8 @@ void extractAsObject() {
 }
 ```
 
+<a id="q5"></a>
+
 ## Q5. Что такое JsonPath и как он используется в REST Assured?
 
 **JsonPath** — язык навигации по структуре JSON, аналог XPath для XML. В REST Assured это первый аргумент в `.body("...", matcher)`: вы указываете путь к полю, а матчер проверяет его значение.
@@ -271,7 +298,9 @@ void jsonPathExamples() {
 - **`collect { ... }`** — преобразовать каждый элемент (например, собрать одно поле из всех).
 - **`hasItems` / `everyItem` / `hasSize`** — Hamcrest-матчеры для проверки коллекций целиком.
 
-**Рекомендация:** доступ по индексу (`users[0]`) хрупок — порядок в массиве может меняться; для надёжных проверок используйте `find` по уникальному полю (см. Q14).
+**Выбор адресации:** если контракт не фиксирует порядок, конкретную сущность ищут через `find` по уникальному полю. Для проверки сортировки или фиксированной позиции нужен индекс (`users[0]`); поиск по ID такую проверку не заменяет (см. Q14).
+
+<a id="q6"></a>
 
 ## Q6. Как реализовать аутентификацию?
 
@@ -353,6 +382,8 @@ void loginAndUseToken() {
 }
 ```
 
+<a id="q7"></a>
+
 ## Q7. Что такое RequestSpecification и когда его использовать?
 
 **RequestSpecification** — собранная заранее конфигурация запроса (базовый URL, путь, заголовки, авторизация, логирование), которую можно переиспользовать во всех тестах через `.spec(specification)`.
@@ -391,35 +422,55 @@ class UserApiTest extends ApiTestBase {
 }
 ```
 
+<a id="q8"></a>
+
 ## Q8. Как использовать ResponseSpecification?
 
-**ResponseSpecification** — то же самое, что `RequestSpecification`, но для проверок ответа. Это вынесенный набор ожиданий (статус, content-type, заголовки, время ответа), который подключается через `.then().spec(responseSpec)`.
+**ResponseSpecification** хранит повторяемые ожидания ответа: статус, content type, заголовки, тело и время. Её можно подключить через `.then().spec(responseSpec)` и добавить проверки конкретного ответа.
 
-Идея та же: проверки, общие для многих эндпоинтов (например, «статус 200, тело — JSON, ответ быстрее 2 секунд»), описываются один раз. В конкретном тесте после `.spec(responseSpec)` остаётся дописать только проверки, уникальные для этого ответа, — общие применятся автоматически.
+В примере спецификация — поле класса: локальная переменная из `setUp()` недоступна в `fetchUser()`. Предполагается, что тестовый сервер на `localhost:8080` для этого запроса возвращает JSON, статус 200 и указанный заголовок.
 
 ```java
-@BeforeEach
-void setUp() {
-    ResponseSpecification responseSpec = new ResponseSpecBuilder()
-        .expectStatusCode(200)
-        .expectContentType(ContentType.JSON)
-        .expectHeader("X-Rate-Limit-Remaining", notNullValue())
-        .expectResponseTime(lessThan(2000L))
-        .build();
-}
+import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.http.ContentType;
+import io.restassured.specification.ResponseSpecification;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.*;
 
-@Test
-void fetchUser() {
-    given().spec(requestSpec)
-    .when().get("/users/1")
-    .then().spec(responseSpec)           // проверки из спецификации
-        .body("name", equalTo("Alice")); // + специфичная проверка
+class UserApiResponseTest {
+    private ResponseSpecification responseSpec;
+
+    @BeforeEach
+    void setUp() {
+        responseSpec = new ResponseSpecBuilder()
+            .expectStatusCode(200)
+            .expectContentType(ContentType.JSON)
+            .expectHeader("X-Rate-Limit-Remaining", notNullValue())
+            .expectResponseTime(lessThan(2000L))
+            .build();
+    }
+
+    @Test
+    void fetchUser() {
+        given().baseUri("http://localhost:8080")
+        .when().get("/users/1")
+        .then().spec(responseSpec)
+            .body("name", equalTo("Alice"));
+    }
 }
 ```
 
+`build()` создаёт описание ожиданий; для проверки нужен реальный ответ: запрос с подключённой спецификацией либо `responseSpec.validate(response)`. Ожидания разрешено задать и до HTTP-вызова через `expect().spec(responseSpec).when().get(...)`.
+
+При слиянии спецификаций нельзя рассчитывать на логическое AND любых конфликтующих настроек: в REST Assured 6.3.0 переданная спецификация может перезаписать status code, status line, content type и root path; ожидания тела, заголовков и cookies объединяются. Учитывайте порядок подключения. [Контракт `ResponseSpecification.spec()`](https://github.com/rest-assured/rest-assured/blob/rest-assured-6.3.0/rest-assured/src/main/java/io/restassured/specification/ResponseSpecification.java).
+
+<a id="q9"></a>
+
 ## Q9. Как обрабатывать query parameters и path variables?
 
-REST Assured разводит разные виды параметров по отдельным методам — это безопаснее ручной конкатенации строк, потому что библиотека сама делает URL-кодирование:
+REST Assured разделяет виды параметров по отдельным методам. Автоматическое URL-кодирование включено по умолчанию; `urlEncodingEnabled(false)` его отключает. Обычно передают исходные значения: предварительное percent-encoding без учёта настройки может привести к повторному кодированию.
 
 - **`queryParam(name, value)`** — параметры строки запроса: `?page=0&size=20`.
 - **`pathParam(name, value)`** — подстановка в шаблон пути `{userId}`; путь остаётся читаемым, а значения подставляются по имени.
@@ -478,12 +529,14 @@ void fileUpload() {
 }
 ```
 
+<a id="q10"></a>
+
 ## Q10. Как интегрировать REST Assured со Spring Boot Test?
 
 Есть два режима интеграции, и выбор между ними — это компромисс «реалистичность против скорости»:
 
-- **Полный старт сервера** — `@SpringBootTest(webEnvironment = RANDOM_PORT)`: Spring поднимает встроенный сервер на случайном порту, его номер берётся через `@LocalServerPort` и кладётся в `RestAssured.port`. Запросы идут по реальному HTTP через весь стек (фильтры, сериализация, сеть) — максимально близко к продакшену, но медленнее.
-- **Без сервера** — `RestAssuredMockMvc` поверх `MockMvc`: запросы проходят через Spring MVC напрямую, без сети и без поднятия сервера. Заметно быстрее, удобно для `@WebMvcTest` отдельного контроллера, но фильтры/сеть не задействованы.
+- **Полный старт сервера** — `@SpringBootTest(webEnvironment = RANDOM_PORT)`: Spring поднимает встроенный сервер на случайном порту, его номер берётся через `@LocalServerPort` и задаётся локально через `given().port(port)`. Запросы идут по реальному HTTP через весь стек (фильтры, сериализация, сеть) — максимально близко к продакшену, но медленнее.
+- **Без сервера** — `RestAssuredMockMvc` поверх `MockMvc`: запросы проходят через Spring MVC без сети и без поднятия сервера. Зарегистрированные в `MockMvc` servlet-фильтры при этом могут выполняться; поведение самого servlet-контейнера этим режимом не проверяется.
 
 **Эмпирическое правило:** end-to-end и проверки полного пути запроса — через `@SpringBootTest`; быстрые тесты одного контроллера — через `RestAssuredMockMvc`.
 
@@ -494,14 +547,10 @@ class UserApiIntegrationTest {
     @LocalServerPort
     private int port;
 
-    @BeforeEach
-    void setUp() {
-        RestAssured.port = port;             // используем тестовый порт
-    }
-
     @Test
     void shouldCreateUser() {
         given()
+            .port(port)
             .contentType(ContentType.JSON)
             .body(new CreateUserRequest("Alice", "alice@example.com"))
         .when()
@@ -522,14 +571,10 @@ class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @BeforeEach
-    void setUp() {
-        RestAssuredMockMvc.mockMvc(mockMvc);
-    }
-
     @Test
     void shouldReturnUser() {
         RestAssuredMockMvc.given()
+            .mockMvc(mockMvc)
             .contentType(ContentType.JSON)
         .when()
             .get("/api/users/1")
@@ -538,6 +583,8 @@ class UserControllerTest {
     }
 }
 ```
+
+<a id="q11"></a>
 
 ## Q11. Как валидировать XML-ответы?
 
@@ -566,7 +613,7 @@ void validateXml() {
     .then()
         .statusCode(200)
         .contentType(ContentType.XML)
-        // XPath запросы
+        // GPath: элементы и атрибуты
         .body("users.user[0].name", equalTo("Alice"))
         .body("users.user.@id", hasItem("1"));  // @id — атрибут
 }
@@ -582,13 +629,15 @@ void validateAgainstSchema() {
 }
 ```
 
-Аналогичная структурная проверка есть и для JSON — через отдельный модуль `io.rest-assured:json-schema-validator`. Он даёт статический матчер `matchesJsonSchemaInClasspath("user-schema.json")`, который подставляется в `body(...)` точно так же, как `matchesXsdInClasspath`. Файл схемы лежит в classpath (обычно `src/test/resources`), а валидируется весь ответ целиком: структура документа и типы полей, а не отдельные значения. Это удобно для контрактных smoke-проверок — один матчер ловит и пропавшее поле, и сменившийся тип.
+Аналогичная структурная проверка есть и для JSON — через отдельный модуль `io.rest-assured:json-schema-validator`. Он даёт статический матчер `matchesJsonSchemaInClasspath("user-schema.json")`, который подставляется в `body(...)` точно так же, как `matchesXsdInClasspath`. Файл схемы лежит в classpath (обычно `src/test/resources`). Матчер проверяет выраженные в схеме ограничения: отсутствие JSON-поля обнаружится, если оно обязательно, например через `required`; неподходящий тип — при заданном `type`. Одного `properties` недостаточно, чтобы требовать присутствия поля. Схема может ограничивать и значения, например через `enum`, но не подтверждает автоматически все бизнес-правила или совместимость API. [JSON Schema: обязательные свойства](https://json-schema.org/understanding-json-schema/reference/object#requiredproperties).
+
+<a id="q12"></a>
 
 ## Q12. Как протестировать WebSocket или SSE?
 
-Коротко: полноценно — никак. REST Assured создан под модель «запрос-ответ» HTTP, а WebSocket и SSE — это потоковые, долгоживущие соединения.
+REST Assured рассчитан на HTTP-запрос и ответ. Для непрерывного SSE и обмена WebSocket нужен клиент, который умеет читать поток или сообщения по мере поступления.
 
-- **SSE (Server-Sent Events)** — частично работает в обход: эндпоинт `text/event-stream` можно вызвать обычным GET и забрать накопленный поток как строку через `extract().asString()`, затем проверить содержимое. Это годится для коротких/конечных стримов, но не для непрерывного потока событий.
+- **SSE (Server-Sent Events)** — короткий поток, который сервер завершает, можно получить обычным GET и проверить как строку через `extract().asString()`. Если ответ не заканчивается, такой тест будет ждать завершения вместо последовательной обработки событий.
 - **WebSocket** — не поддерживается вообще: нужен отдельный клиент (Spring `StandardWebSocketClient`, Tyrus — реализация JSR-356, или `okhttp3.WebSocket`).
 
 ```java
@@ -598,7 +647,7 @@ void testSSE() {
     String events = given()
         .accept("text/event-stream")
     .when()
-        .get("/api/events/stream")
+        .get("/api/events/finite") // тестовый endpoint завершает поток
     .then()
         .statusCode(200)
     .extract()
@@ -612,6 +661,8 @@ void testSSE() {
 // - Tyrus Client (реализация JSR-356)
 // - okhttp3.WebSocket
 ```
+
+<a id="q13"></a>
 
 ## Q13. Как организовать тестовые данные?
 
@@ -650,12 +701,17 @@ public class TestDataBuilder {
 @CsvSource({
     "invalid-email, 400",
     "alice@example.com, 201",
-    ", 400"
+    ", 400",       // null
+    "'', 400"      // пустая строка
 })
 void validateUserCreation(String email, int expectedStatus) {
+    Map<String, Object> payload = new HashMap<>();
+    payload.put("name", "Test");
+    payload.put("email", email); // HashMap допускает null
+
     given()
         .contentType(ContentType.JSON)
-        .body(Map.of("name", "Test", "email", email))
+        .body(payload)
     .when()
         .post("/users")
     .then()
@@ -663,11 +719,17 @@ void validateUserCreation(String email, int expectedStatus) {
 }
 ```
 
+Это пример контракта API: создание с валидным email даёт 201, с невалидным, `null` или пустой строкой — 400. Реальный сервис может иметь другие правила. Импорты для параметризации — `org.junit.jupiter.params.ParameterizedTest` и `org.junit.jupiter.params.provider.CsvSource`, коллекции — `java.util.Map` и `java.util.HashMap`.
+
+В JUnit 5.10.3 незаполненная CSV-ячейка даёт `null`, а `''` — пустую строку. `Map.of` не допускает `null` и оборвал бы третий случай до HTTP-вызова. Для JSON `null` здесь используется допускающая его `HashMap`; настройка mapper должна сохранять null-значения (например, стандартный `ObjectMapper` Jackson 2). Отсутствующее поле — отдельный вход: ключ `email` вообще не добавляют. Для точного JSON можно передать готовую строку, исключив влияние настроек сериализации. [Семантика `CsvSource`](https://docs.junit.org/5.10.3/api/org.junit.jupiter.params/org/junit/jupiter/params/provider/CsvSource.html).
+
+<a id="q14"></a>
+
 ## Q14. Какие проблемы могут возникнуть при использовании REST Assured?
 
 **Подводные камни** и как их обходить:
 
-1. **Groovy внутри строк-путей.** Замыкания в `.body(...)` — это Groovy, а не Java: IDE их не подсветит и не проверит, ошибку поймаете только в рантайме.
+1. **Groovy внутри строк-путей.** Java-компилятор не проверяет корректность GPath внутри строкового литерала. Подсветка и inspections IDE зависят от её поддержки и настроек; путь нужно проверять исполняемым тестом.
 
 ```java
 .body("users.find { it.id == 2 }.name", equalTo("Bob"))  // это Groovy, не Java
@@ -675,7 +737,7 @@ void validateUserCreation(String email, int expectedStatus) {
 
 2. **Медленные тесты из-за реального HTTP.** Каждый запрос идёт по сети через весь стек. Для проверки логики одного контроллера дешевле MockMvc (см. Q10).
 
-3. **Flaky-тесты из-за порядка в массивах.** Обращение по индексу ломается, как только сервер вернёт элементы в другом порядке. Фильтруйте по уникальному полю:
+3. **Flaky-тесты из-за порядка в массивах.** Если контракт не фиксирует порядок, проверка по индексу может сломаться при перестановке элементов. Для поиска сущности используйте уникальное поле; если проверяется сама сортировка, индексы уместны:
 
 ```java
 // ПЛОХО — порядок может измениться
@@ -687,28 +749,29 @@ void validateUserCreation(String email, int expectedStatus) {
 
 4. **Зависимость от внешнего сервиса.** Тест, ходящий в живой сторонний API, нестабилен и непредсказуем — изолируйтесь через WireMock или MockServer.
 
-5. **Раздувание логов.** `LogDetail.ALL` печатает целиком крупные тела запросов/ответов. Логируйте условно — `filter(RequestLoggingFilter)` или `.log().ifValidationFails()`.
+5. **Раздувание логов.** `LogDetail.ALL` включает полное тело у соответствующего request/response logger. Обычный `RequestLoggingFilter` печатает запрос при каждом проходе; сам по себе он не задаёт условие. Для вывода при провале валидации используйте `.log().ifValidationFails()` на нужной стороне; собственный фильтр требует явной политики.
 
-6. **Отсутствие thread-safety.** Глобальный статический стейт `RestAssured` не потокобезопасен — при параллельном запуске тесты затирают конфигурацию друг друга. В параллельных тестах используйте локальные `RequestSpecification`, а не глобальные настройки.
+6. **Отсутствие thread-safety.** Параллельная запись глобальных статических настроек `RestAssured` создаёт гонки: тесты могут перебивать конфигурацию друг друга. Создавайте отдельную спецификацию для теста или запроса. Локальное имя переменной не делает общий изменяемый `RequestSpecification` безопасным для конкурентной модификации.
+
+<a id="q15"></a>
 
 ## Q15. Чем REST Assured отличается от WebTestClient и TestRestTemplate?
 
-Все три — инструменты для тестирования HTTP API, но различаются стилем и привязкой к Spring. Кратко: REST Assured — про BDD-читаемость и независимость от фреймворка, WebTestClient — про реактивный стек, TestRestTemplate — про простые синхронные тесты Spring MVC.
+Все три инструмента могут проверять HTTP API. REST Assured даёт цепочку `given/when/then` и не требует Spring. `WebTestClient` поддерживает Spring MVC и WebFlux как с работающим сервером, так и в mock-режиме. `TestRestTemplate` — синхронный клиент Spring Boot Test для запросов к запущенному серверу.
 
 | Критерий | REST Assured | WebTestClient | TestRestTemplate |
 |----------|--------------|---------------|------------------|
 | Стиль | BDD (given-when-then) | Fluent reactive | Синхронный |
-| Платформа | Любой Java проект | Spring WebFlux | Spring Boot Test |
-| Mock без сервера | RestAssuredMockMvc | bindToController() / bindToApplicationContext() | нет |
-| JSON/XML валидация | JsonPath/XPath | StepVerifier + assertions | ResponseEntity + assertJ |
-| Изучение | Средняя сложность | Средне-высокая | Проще всех |
-| Применение | End-to-end API tests | WebFlux controllers | Quick integration tests |
+| Платформа | Java, Spring не обязателен | Spring MVC или WebFlux | Spring Boot Test |
+| Без сервера | отдельный модуль `spring-mock-mvc` для MVC | mock-привязка к MVC или WebFlux | нет |
+| С сервером | обычный HTTP-клиент | `bindToServer()` | обычный HTTP-клиент |
+| Типичный выбор | DSL и проверки ответа | единый клиент для mock и live проверок Spring | синхронные проверки запущенного Boot-приложения |
 
 **Когда что выбирать:**
 
 - **REST Assured** — нужен BDD-стиль и универсальность: проект не на Spring или хочется единый инструмент для разных сервисов.
-- **WebTestClient** — приложение на Spring WebFlux (реактивный стек); умеет работать и без сервера — через `bindToController()` или `bindToApplicationContext()` запросы идут в mock-окружение без HTTP. А вот `bindToServer()` — наоборот, режим подключения к живому серверу по реальному HTTP.
-- **TestRestTemplate** — самый низкий порог входа: быстрые синхронные интеграционные тесты Spring MVC, когда BDD-обвязка не нужна.
+- **WebTestClient** — нужен клиент Spring с одинаковым стилем проверок для mock-режима и живого сервера. Для WebFlux есть `bindToController()` и `bindToApplicationContext()`; для MVC используют `MockMvcWebTestClient`. `bindToServer()` подключается к работающему серверу по HTTP.
+- **TestRestTemplate** — нужны синхронные запросы к запущенному Spring Boot-приложению без DSL REST Assured.
 
 ## See also
 
