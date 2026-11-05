@@ -9,50 +9,50 @@
           "question_text": "Как FastAPI исполняет def и async def handlers?",
           "options": [
             {
-              "text": "Обычный `def` handler запускается прямо в event loop приложения, а `async def` автоматически исполняется во внешнем thread pool.",
+              "text": "FastAPI вызывает обычный `def` и `async def` в event loop; прямой sync-вызов остаётся в этом потоке.",
               "correct": false,
               "sections": {
-                "what_actually": "FastAPI выносит def handler в thread pool; async def исполняется в loop.",
-                "source_of_confusion": "Формы handler перепутаны местами.",
-                "if_it_were_true": "Тогда sync I/O в def блокировал бы сам loop.",
-                "how_it_should_be": "FastAPI выносит def handler в thread pool; async def исполняется в loop."
+                "what_actually": "Обычные `def` handlers и зависимости FastAPI вызывает в пуле потоков; `async def` работает в event loop.",
+                "source_of_confusion": "Факт работы ASGI-приложения в event loop переносят на способ вызова всех обработчиков без учёта их формы.",
+                "if_it_were_true": "Блокирующий I/O обычного def-handler выполнялся бы прямо в потоке event loop, а не в выделенном пуле.",
+                "how_it_should_be": "Выбирать форму handler по API клиента и помнить, какие функции вызывает сам фреймворк."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "`async def` handler исполняется в loop, обычный `def` — в thread pool; прямой sync-вызов внутри async handler блокирует loop.",
+              "text": "FastAPI вызывает обычный `def` в пуле, а `async def` в event loop; прямой sync-вызов из async-handler остаётся в потоке loop.",
               "correct": true,
               "sections": {
                 "explanation": "Фреймворк переносит лишь вызываемые им sync handlers/dependencies.",
                 "example": "`async def` с синхронным клиентом не становится неблокирующим автоматически.",
-                "when_to_apply": "Применяйте при проектировании и тестировании FastAPI backend-сервиса.",
+                "when_to_apply": "Выбирайте `async def` для async I/O, а `def` — для синхронного клиента, который вызывает сам FastAPI.",
                 "edge_cases": "Для CPU-bound работы нужна отдельная стратегия, не просто async синтаксис.",
-                "related": "См. полный ответ соответствующего Q и официальное руководство FastAPI."
+                "related": "См. FastAPI Q1 и официальное руководство по async path operations."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "Sync-функция, вызванная из `async def`, переносится FastAPI в thread pool без `await` или специальной обёртки.",
+              "text": "FastAPI вызывает обычный `def` в пуле, а `async def` в event loop; прямой sync-вызов из async-handler тоже переносится в пул.",
               "correct": false,
               "sections": {
-                "what_actually": "Обычный прямой вызов исполняется в текущем потоке loop.",
-                "source_of_confusion": "Поведение handler переносят на произвольные utility-функции.",
-                "if_it_were_true": "Тогда time.sleep внутри async handler не задерживал бы другие запросы.",
-                "how_it_should_be": "Обычный прямой вызов исполняется в текущем потоке loop."
+                "what_actually": "Автоматический перенос относится к sync-функциям, которые вызывает FastAPI. Прямой sync-вызов из async-handler остаётся в его потоке.",
+                "source_of_confusion": "Правила вызова handler или dependency распространяют на любую вспомогательную функцию.",
+                "if_it_were_true": "Обычный вызов `time.sleep()` внутри async-handler автоматически освобождал бы event loop.",
+                "how_it_should_be": "Использовать async-клиент или явно организовать перенос блокирующей работы из event loop."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "И `def`, и `async def` handlers запускаются как отдельные процессы ASGI-сервера, поэтому обе формы дают CPU-параллелизм.",
+              "text": "FastAPI вызывает `def` и `async def` в разных ASGI workers; прямой sync-вызов остаётся в worker своего handler.",
               "correct": false,
               "sections": {
-                "what_actually": "Различие — loop и thread pool; число процессов задаётся отдельно сервером.",
-                "source_of_confusion": "Workers ASGI путают с способом исполнения отдельного handler.",
-                "if_it_were_true": "Тогда каждый запрос порождал бы процесс независимо от конфигурации сервера.",
-                "how_it_should_be": "Различие — loop и thread pool; число процессов задаётся отдельно сервером."
+                "what_actually": "ASGI workers — отдельная конфигурация сервера. Способ вызова `def` и `async def` handlers не создаёт отдельные процессы по их синтаксису.",
+                "source_of_confusion": "Пул потоков для handler смешивают с набором серверных процессов.",
+                "if_it_were_true": "Фреймворк распределял бы `def` и `async def` по разным процессам только из-за объявления функции.",
+                "how_it_should_be": "Разделять конфигурацию workers и выбор между event loop и пулом потоков для обработчика."
               },
               "order": 3,
               "label": "D"
@@ -66,53 +66,53 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что делает Depends и как кешируются sub-dependencies?",
+          "question_text": "Что делает Depends и как устроен граф зависимостей?",
           "options": [
             {
-              "text": "`Depends` строит граф зависимостей из сигнатур; результат общего узла обычно кешируется в рамках запроса, `use_cache=False` меняет это.",
+              "text": "`Depends` строит вложенный граф и кеширует общий узел на запрос; `use_cache=False` отключает кеш.",
               "correct": true,
               "sections": {
                 "explanation": "DI разрешает sub-dependencies и переиспользует их внутри одного запроса.",
                 "example": "Два параметра с одной dependency могут получить один request-scoped результат.",
-                "when_to_apply": "Применяйте при проектировании и тестировании FastAPI backend-сервиса.",
+                "when_to_apply": "Используйте `Depends` для общих проверок и request-scoped ресурсов с вложенными зависимостями.",
                 "edge_cases": "Кеш запроса не означает глобальный singleton приложения.",
-                "related": "См. полный ответ соответствующего Q и официальное руководство FastAPI."
+                "related": "См. FastAPI Q2 и официальную документацию sub-dependencies."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "`Depends` создаёт глобальный `singleton` dependency при первом запросе и сохраняет его состояние для всех дальнейших запросов сервиса.",
+              "text": "`Depends` объединяет вложенные зависимости; общий узел сохраняет результат между запросами, а `use_cache=False` выключает кеш.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию результат кешируется в рамках запроса, не навсегда.",
-                "source_of_confusion": "Повторное использование внутри запроса принимают за application scope.",
-                "if_it_were_true": "Тогда state одного пользователя мог бы перейти к другому.",
-                "how_it_should_be": "По умолчанию результат кешируется в рамках запроса, не навсегда."
+                "what_actually": "Кеш `Depends` относится к одному HTTP-запросу; между запросами результат автоматически не переносится.",
+                "source_of_confusion": "Общее поддерево зависимостей в одном запросе воспринимают как общий объект приложения.",
+                "if_it_were_true": "Результат проверки первого пользователя мог бы повторно использоваться в следующем запросе другого.",
+                "how_it_should_be": "Для request-scoped данных использовать обычный `Depends`, а общий ресурс приложения создавать отдельно в lifespan."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "`Depends` разрешает один уровень функции и не поддерживает `sub-dependencies` или общие security-проверки нескольких маршрутов.",
+              "text": "`Depends` не допускает вложенных зависимостей; результат узла кешируется на запрос, если кеш не отключён.",
               "correct": false,
               "sections": {
-                "what_actually": "Зависимости могут требовать другие зависимости и применяться для security.",
-                "source_of_confusion": "Простой пример с одним параметром принимают за предел механизма.",
-                "if_it_were_true": "Тогда вложенный граф зависимостей не работал бы.",
-                "how_it_should_be": "Зависимости могут требовать другие зависимости и применяться для security."
+                "what_actually": "Зависимость сама может объявлять параметры с `Depends`: FastAPI рекурсивно разрешает такое поддерево.",
+                "source_of_confusion": "Простой пример с единственной зависимостью принимают за ограничение механизма.",
+                "if_it_were_true": "Нельзя было бы выразить проверку прав, которая сама зависит от получения пользователя.",
+                "how_it_should_be": "Объявить нужные sub-dependencies в сигнатуре зависимости и дать фреймворку разрешить граф."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`use_cache=False` делает dependency process-wide singleton; включённый кеш создаёт новый экземпляр при каждом обращении в запросе.",
+              "text": "`Depends` строит вложенный граф и кеширует узел на запрос; `use_cache=False` делает значение глобальным singleton.",
               "correct": false,
               "sections": {
                 "what_actually": "use_cache=False отключает переиспользование внутри запроса.",
                 "source_of_confusion": "Логика флага инвертирована.",
-                "if_it_were_true": "Тогда повторное разрешение зависимости происходило бы при включённом cache.",
-                "how_it_should_be": "use_cache=False отключает переиспользование внутри запроса."
+                "if_it_were_true": "Тогда отключение кеша сохраняло бы объект между запросами вместо нового вызова dependency.",
+                "how_it_should_be": "`use_cache=False` заставляет повторно вызвать dependency в том же запросе."
               },
               "order": 3,
               "label": "D"
@@ -126,53 +126,53 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как закрыть ресурс в FastAPI dependency с yield?",
+          "question_text": "Как закрыть ресурс в зависимости с yield?",
           "options": [
             {
-              "text": "Код после `yield` в dependency выполняется перед handler, поэтому ресурс закрыт ещё до обработки HTTP-запроса.",
+              "text": "При `scope=\"function\"` код после `yield` закрывает ресурс до завершения handler, до отправки ответа.",
               "correct": false,
               "sections": {
-                "what_actually": "Код после yield — cleanup после использования dependency.",
-                "source_of_confusion": "Генераторный протокол воспринимают как последовательное тело до handler.",
-                "if_it_were_true": "Тогда handler получал бы уже закрытый ресурс.",
-                "how_it_should_be": "Код после yield — cleanup после использования dependency."
+                "what_actually": "При `scope=\"function\"` cleanup следует за завершением handler. До этого ресурс остаётся доступен обработчику.",
+                "source_of_confusion": "Завершение функции зависимости при `yield` принимают за завершение всего срока жизни ресурса.",
+                "if_it_were_true": "Обработчик получал бы ресурс, который зависимость уже закрыла до окончания его работы.",
+                "how_it_should_be": "Освобождать ресурс в коде после `yield`, выбирая scope по требуемому сроку жизни."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "`yield` dependency автоматически коммитит транзакцию при возврате успешного ответа, независимо от логики БД и выбранного драйвера.",
+              "text": "При `scope=\"request\"` код после `yield` закрывает ресурс после handler, но до отправки ответа.",
               "correct": false,
               "sections": {
-                "what_actually": "Cleanup ресурса не равен commit бизнес-транзакции.",
-                "source_of_confusion": "Освобождение сессии путают с подтверждением изменений.",
-                "if_it_were_true": "Тогда простое закрытие любой сессии фиксировало бы данные.",
-                "how_it_should_be": "Cleanup ресурса не равен commit бизнес-транзакции."
+                "what_actually": "В современном FastAPI `scope=\"request\"` выполняет cleanup после отправки ответа; ранний cleanup выбирают через `scope=\"function\"`.",
+                "source_of_confusion": "Старое поведение yield-зависимостей или function-scope переносят на современный request-scope.",
+                "if_it_were_true": "Даже request-scoped ресурс закрывался бы до того, как streaming response закончит читать его.",
+                "how_it_should_be": "Сверять установленную версию и выбирать request-scope, если ответ продолжает пользоваться ресурсом."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "Dependency с `yield` отдаёт ресурс handler, затем выполняет cleanup; для streaming response проверяйте lifecycle версии и scope.",
+              "text": "При `scope=\"function\"` код после `yield` закрывает ресурс после handler, до отправки ответа.",
               "correct": true,
               "sections": {
-                "explanation": "FastAPI оформляет yield dependency как контекстный менеджер.",
-                "example": "Временный каталог создаётся до yield и удаляется после завершения области dependency.",
-                "when_to_apply": "Применяйте при проектировании и тестировании FastAPI backend-сервиса.",
-                "edge_cases": "Закрытие ресурса не означает commit; обработка исключения не должна случайно его скрывать.",
-                "related": "См. полный ответ соответствующего Q и официальное руководство FastAPI."
+                "explanation": "С FastAPI 0.121.0 `scope=\"function\"` завершает dependency после handler и до отправки ответа.",
+                "example": "Временный каталог создаётся до `yield` и удаляется после handler при `scope=\"function\"`.",
+                "when_to_apply": "Выбирайте ранний cleanup, когда тело ответа больше не читает ресурс dependency.",
+                "edge_cases": "По умолчанию `scope=\"request\"` держит ресурс до отправки ответа, включая streaming. В 0.106.0–0.117.x обычный cleanup был до ответа. Закрытие сессии не означает commit; пойманную ошибку обычно нужно повторно поднять.",
+                "related": "См. FastAPI Q3 и раздел документации о `yield` и scope."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Время cleanup относительно streaming response одинаково во всех версиях FastAPI и не зависит от scope dependency.",
+              "text": "При `scope=\"function\"` код после `yield` закрывает ресурс после отправки всего ответа, включая streaming.",
               "correct": false,
               "sections": {
-                "what_actually": "Поведение менялось с версиями и зависит от scope; нужно проверять документацию.",
-                "source_of_confusion": "Отсутствие версионной оговорки в простом примере принимают за вечный контракт.",
-                "if_it_were_true": "Тогда длинный streaming response никогда не обнаруживал бы разницу lifecycle.",
-                "how_it_should_be": "Поведение менялось с версиями и зависит от scope; нужно проверять документацию."
+                "what_actually": "Function-scope завершается после handler и до отправки ответа. Для чтения ресурса во время streaming нужен более длинный срок жизни.",
+                "source_of_confusion": "Срок жизни handler отождествляют со сроком отправки всего тела ответа.",
+                "if_it_were_true": "Function-scoped ресурс оставался бы открытым до конца передачи потока, как request-scoped ресурс.",
+                "how_it_should_be": "Оставить ресурс до завершения response через request-scope либо отделить данные ответа от закрываемого ресурса."
               },
               "order": 3,
               "label": "D"
@@ -186,53 +186,53 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что проверяют request и response models FastAPI?",
+          "question_text": "Что проверяют request и response models?",
           "options": [
             {
-              "text": "`response_model` влияет лишь на OpenAPI-схему и не ограничивает поля, возвращённые из handler в реальном HTTP-ответе.",
+              "text": "Входная модель проверяет запрос, но `response_model` служит только OpenAPI и не фильтрует данные.",
               "correct": false,
               "sections": {
-                "what_actually": "Response model применяет сериализацию/валидацию и фильтрацию выходных полей.",
-                "source_of_confusion": "Документацию ошибочно считают единственным применением аннотации.",
-                "if_it_were_true": "Тогда внутренний password_hash попадал бы клиенту при UserOut без этого поля.",
-                "how_it_should_be": "Response model применяет сериализацию/валидацию и фильтрацию выходных полей."
+                "what_actually": "`response_model` участвует в проверке и сериализации обычного результата и фильтрует поля по выходному контракту.",
+                "source_of_confusion": "Видимую схему OpenAPI принимают за единственный результат объявления модели.",
+                "if_it_were_true": "Лишнее внутреннее поле возвращённого словаря проходило бы в ответ вопреки выходной модели.",
+                "how_it_should_be": "Объявлять публичную выходную модель и проверять набор полей фактического ответа."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "Аннотация request-модели не проверяет вход; FastAPI пропускает тело целиком и проверяет path параметры вручную.",
+              "text": "Входная модель описывает OpenAPI без проверки тела, зато `response_model` валидирует и фильтрует обычный ответ.",
               "correct": false,
               "sections": {
-                "what_actually": "FastAPI с Pydantic разбирает и валидирует входные данные.",
-                "source_of_confusion": "Опыт с голыми Python annotations переносят на framework обработку.",
-                "if_it_were_true": "Тогда невалидное тело попадало бы в handler без ошибки.",
-                "how_it_should_be": "FastAPI с Pydantic разбирает и валидирует входные данные."
+                "what_actually": "Параметр с Pydantic-моделью позволяет FastAPI разобрать и проверить вход, а не только сгенерировать документацию.",
+                "source_of_confusion": "Отсутствие проверки обычных Python-аннотаций переносят на интеграцию Pydantic во фреймворке.",
+                "if_it_were_true": "Несовместимое тело запроса доходило бы до handler без стандартной ошибки входной валидации.",
+                "how_it_should_be": "Объявлять модель входа и отдельно проверять обработку неверных полей в HTTP-тесте."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "Одна Pydantic-модель обязана служить входом и выходом; отдельный `UserOut` приведёт к ошибке генерации OpenAPI.",
+              "text": "Входная модель валидирует тело, а `response_model` применяет фильтр даже к прямо возвращённому `Response`.",
               "correct": false,
               "sections": {
-                "what_actually": "Раздельные модели допустимы и полезны для защиты контракта.",
-                "source_of_confusion": "Экономию классов принимают за требование фреймворка.",
-                "if_it_were_true": "Тогда невозможно было бы скрыть серверное поле в публичном ответе.",
-                "how_it_should_be": "Раздельные модели допустимы и полезны для защиты контракта."
+                "what_actually": "Прямо возвращённый `Response` FastAPI передаёт без Pydantic-валидации и фильтрации тела.",
+                "source_of_confusion": "Наличие `response_model` в декораторе принимают за гарантию для любого способа возврата.",
+                "if_it_were_true": "Тогда ручной `Response` не мог бы обойти фильтр публичных полей.",
+                "how_it_should_be": "Для прямого `Response` проверьте сериализацию и поля ответа сами."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Request-модель разбирает и валидирует вход; `response_model` описывает, проверяет и фильтрует публичный выход по объявленной схеме.",
+              "text": "Входная модель валидирует запрос, а `response_model` валидирует и фильтрует обычный ответ.",
               "correct": true,
               "sections": {
                 "explanation": "Контракты входа и выхода лучше разделять, чтобы не выдать внутренние поля.",
                 "example": "UserOut без password_hash исключит поле из сериализованного ответа.",
-                "when_to_apply": "Применяйте при проектировании и тестировании FastAPI backend-сервиса.",
-                "edge_cases": "Прямой возврат Response может обходить часть автоматической response_model обработки.",
-                "related": "См. полный ответ соответствующего Q и официальное руководство FastAPI."
+                "when_to_apply": "Разделяйте входной и публичный выходной контракт, особенно при возврате объектов с внутренними полями.",
+                "edge_cases": "Невалидный обычный выход даёт серверную ошибку; прямой `Response` обходит Pydantic-преобразование и фильтрацию тела.",
+                "related": "См. FastAPI Q4, response model и direct Response в официальной документации."
               },
               "order": 3,
               "label": "D"
@@ -246,53 +246,53 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем HTTPException отличается от ошибки валидации?",
+          "question_text": "Как разделить HTTPException и ошибку валидации?",
           "options": [
             {
-              "text": "Неверное поле запроса FastAPI по умолчанию превращает в `HTTPException(404)`, поэтому отсутствие ресурса возвращает 422.",
+              "text": "Неверный тип поля по умолчанию даёт 404, а отсутствие заказа явно оформляют через `HTTPException(404)`.",
               "correct": false,
               "sections": {
-                "what_actually": "Входная валидация обычно даёт 422; отсутствие ресурса явно оформляют 404.",
-                "source_of_confusion": "Коды двух сценариев меняют местами.",
-                "if_it_were_true": "Тогда пользователь получил бы Not Found из-за ошибочного типа поля.",
-                "how_it_should_be": "Входная валидация обычно даёт 422; отсутствие ресурса явно оформляют 404."
+                "what_actually": "Стандартная ошибка входной валидации возвращает 422. Статус 404 относится к отсутствующему ресурсу.",
+                "source_of_confusion": "Отсутствие допустимого значения поля смешивают с отсутствием ресурса по URL.",
+                "if_it_were_true": "Клиент получал бы Not Found за неверный тип поля существующего endpoint.",
+                "how_it_should_be": "Отделять ошибку структуры запроса от прикладного поиска ресурса."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "Неверный вход обычно даёт 422; ожидаемый исход вроде отсутствия заказа оформляют `HTTPException(status_code=404)`, внутренний сбой — безопасным 5xx.",
+              "text": "Неверный тип поля по умолчанию даёт 422, а отсутствие заказа явно оформляют через `HTTPException(404)`.",
               "correct": true,
               "sections": {
-                "explanation": "Разделение источника ошибки помогает клиенту и мониторингу.",
-                "example": "Некорректный user_id и ненайденный order требуют разных статусов.",
-                "when_to_apply": "Применяйте при проектировании и тестировании FastAPI backend-сервиса.",
-                "edge_cases": "Не отправляйте детали внутреннего исключения БД клиенту.",
-                "related": "См. полный ответ соответствующего Q и официальное руководство FastAPI."
+                "explanation": "FastAPI создаёт RequestValidationError для неверного входа; стандартный handler отвечает 422. Ожидаемый прикладной исход задают через HTTPException.",
+                "example": "Неверный тип поля и отсутствующий заказ требуют разных ответов.",
+                "when_to_apply": "Когда HTTP-тест должен различить неверное тело запроса и корректный запрос к отсутствующему заказу.",
+                "edge_cases": "Собственный exception handler может изменить статус валидации; внутренние ошибки не раскрывают клиенту.",
+                "related": "[[fastapi-interview#Q4]] проверка выходного контракта; [[fastapi-interview#Q5]] входная валидация и HTTPException."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "Исключение драйвера БД превращайте в `HTTPException(400)` с полным техническим текстом в публичном ответе, чтобы клиент мог повторить запрос.",
+              "text": "Неверный тип поля по умолчанию даёт 422, а отсутствие заказа FastAPI автоматически распознаёт и превращает в 404.",
               "correct": false,
               "sections": {
-                "what_actually": "Внутренний сбой не равен неверному запросу и не должен раскрывать секреты.",
-                "source_of_confusion": "Удобство отладки путают с публичным контрактом ошибок.",
-                "if_it_were_true": "Тогда текст SQL/credentials мог бы попасть клиенту.",
-                "how_it_should_be": "Внутренний сбой не равен неверному запросу и не должен раскрывать секреты."
+                "what_actually": "FastAPI валидирует вход, но не знает, нашёл ли прикладной код заказ в БД. Отсутствие заказа нужно обработать явно.",
+                "source_of_confusion": "Автоматическую обработку параметров запроса переносят на результат бизнес-операции.",
+                "if_it_were_true": "Любой пустой результат поиска автоматически становился бы 404 без решения handler.",
+                "how_it_should_be": "Проверить результат поиска и явно поднять `HTTPException(404)` для выбранного прикладного исхода."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`HTTPException` предназначен для ошибок валидации Pydantic; ручная ошибка 404 из кода handler игнорируется FastAPI без ответа клиенту.",
+              "text": "Неверный тип поля по умолчанию даёт 400, а отсутствие заказа явно оформляют через `HTTPException(404)`.",
               "correct": false,
               "sections": {
-                "what_actually": "HTTPException можно выбрасывать для ожидаемых HTTP-исходов.",
-                "source_of_confusion": "Framework exception путают с классом validation error.",
-                "if_it_were_true": "Тогда проверка отсутствующего заказа не могла бы задать 404.",
-                "how_it_should_be": "HTTPException можно выбрасывать для ожидаемых HTTP-исходов."
+                "what_actually": "По умолчанию FastAPI отвечает на RequestValidationError статусом 422; статус 400 потребовал бы иной обработки.",
+                "source_of_confusion": "Распространённый код Bad Request считают неизменным ответом любого веб-фреймворка на ошибку валидации.",
+                "if_it_were_true": "Стандартный обработчик FastAPI возвращал бы 400 без переопределения exception handler.",
+                "how_it_should_be": "Проверять контракт по умолчанию и явно фиксировать собственный статус, если обработчик заменён."
               },
               "order": 3,
               "label": "D"
@@ -306,53 +306,53 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Для чего нужен lifespan FastAPI?",
+          "question_text": "Для чего нужен lifespan?",
           "options": [
             {
-              "text": "`lifespan` выполняет код до `yield` при старте и после него при остановке; старые startup/shutdown handlers не вызываются.",
+              "text": "`lifespan` готовит общий ресурс перед запросами и закрывает при остановке; старые `on_event` handlers не вызываются.",
               "correct": true,
               "sections": {
-                "explanation": "Ресурсы приложения создают и закрывают на ASGI lifecycle.",
-                "example": "Один AsyncClient можно открыть в lifespan и закрыть через async with при shutdown.",
-                "when_to_apply": "Применяйте при проектировании и тестировании FastAPI backend-сервиса.",
-                "edge_cases": "Не храните request-scoped DB session как общий ресурс всех запросов.",
-                "related": "См. полный ответ соответствующего Q и официальное руководство FastAPI."
+                "explanation": "Код до yield работает при старте, после yield — при остановке ASGI-приложения.",
+                "example": "Общий AsyncClient создают в async context manager и закрывают при выходе.",
+                "when_to_apply": "Для общего HTTP-клиента или пула приложения, который должен быть готов до запросов и закрыт при остановке.",
+                "edge_cases": "Сессия БД отдельного запроса не должна жить как общий ресурс приложения.",
+                "related": "[[fastapi-interview#Q2]] зависимости запроса; [[fastapi-interview#Q3]] cleanup ресурса; [[fastapi-interview#Q7]] тестирование lifespan."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "`lifespan` выполняется перед каждым запросом, поэтому в нём удобно создавать отдельную сессию БД для конкретного пользователя.",
+              "text": "`lifespan` создаёт ресурс перед каждым запросом и закрывает после ответа; старые `on_event` handlers не вызываются.",
               "correct": false,
               "sections": {
-                "what_actually": "Lifespan относится к запуску/остановке приложения, не к каждому запросу.",
-                "source_of_confusion": "Слово lifecycle воспринимают как request scope.",
-                "if_it_were_true": "Тогда инициализация происходила бы для каждого HTTP-вызова.",
-                "how_it_should_be": "Lifespan относится к запуску/остановке приложения, не к каждому запросу."
+                "what_actually": "Lifespan относится к старту и остановке приложения.",
+                "source_of_confusion": "Жизненный цикл приложения путают с жизненным циклом запроса.",
+                "if_it_were_true": "Инициализация выполнялась бы на каждый HTTP-вызов.",
+                "how_it_should_be": "Для ресурса запроса примените подходящую dependency."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "Код после `yield` в lifespan запускается вскоре после первого обработанного запроса, а не при остановке ASGI-приложения.",
+              "text": "`lifespan` готовит ресурс при старте и закрывает при остановке; старые `on_event` handlers тоже выполняются.",
               "correct": false,
               "sections": {
-                "what_actually": "При заданном lifespan старые event handlers не вызываются.",
+                "what_actually": "При заданном lifespan старые startup/shutdown handlers не вызываются.",
                 "source_of_confusion": "Ожидают композицию старого и нового API.",
-                "if_it_were_true": "Тогда один ресурс мог бы инициализироваться дважды.",
-                "how_it_should_be": "При заданном lifespan старые event handlers не вызываются."
+                "if_it_were_true": "Один ресурс мог бы создаваться и закрываться дважды.",
+                "how_it_should_be": "Используйте один механизм lifecycle."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Код после `yield` в lifespan запускается сразу после первого обработанного запроса, а не при остановке приложения.",
+              "text": "`lifespan` создаёт общий ресурс при первом запросе и закрывает при остановке; старые `on_event` handlers не вызываются.",
               "correct": false,
               "sections": {
-                "what_actually": "Он выполняется при shutdown после периода обслуживания.",
-                "source_of_confusion": "Lifespan путают с per-request dependency with yield.",
-                "if_it_were_true": "Тогда общий клиент закрылся бы во время работы сервиса.",
-                "how_it_should_be": "Он выполняется при shutdown после периода обслуживания."
+                "what_actually": "Код до `yield` в lifespan исполняется во время старта приложения, до обслуживания запросов, а не лениво на первом запросе.",
+                "source_of_confusion": "Инициализацию приложения путают с ленивым созданием зависимости по требованию.",
+                "if_it_were_true": "Проблема подготовки обязательного клиента проявлялась бы только на первом запросе, а не в фазе startup.",
+                "how_it_should_be": "Создавать необходимый общий ресурс до `yield`, завершать его работу после `yield` и проверять обе фазы."
               },
               "order": 3,
               "label": "D"
@@ -366,53 +366,53 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как тестировать FastAPI с dependency override?",
+          "question_text": "Как тестировать FastAPI с подменой зависимости?",
           "options": [
             {
-              "text": "`dependency_overrides` меняет исходный код dependency в приложении; после теста его нельзя очистить без пересоздания `app`.",
+              "text": "`TestClient` обращается к отдельному TCP-серверу; override заменяет исходную dependency, а словарь подмен восстанавливают после теста.",
               "correct": false,
               "sections": {
-                "what_actually": "Override хранится в mapping приложения и может быть очищен.",
-                "source_of_confusion": "Временную подмену путают с переписыванием функции.",
-                "if_it_were_true": "Тогда отдельные тесты не могли бы использовать разные fake зависимости.",
-                "how_it_should_be": "Override хранится в mapping приложения и может быть очищен."
+                "what_actually": "TestClient вызывает ASGI-приложение без запуска отдельного TCP-сервера; его HTTP-интерфейс не означает внешний сетевой транспорт.",
+                "source_of_confusion": "Похожий интерфейс тестового и сетевого клиентов принимают за одинаковый способ доставки запроса.",
+                "if_it_were_true": "Каждому такому тесту потребовались бы внешний сервер и свободный порт.",
+                "how_it_should_be": "Передать объект приложения в TestClient, задать overrides и восстановить исходный mapping после сценария."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "`TestClient` поднимает отдельный `TCP`-сервер для каждого теста; без реального доступного порта проверка HTTP-контракта не выполняется.",
+              "text": "`TestClient` вызывает ASGI без отдельного сервера; override заменяет исходную dependency, а контекст клиента сам восстанавливает словарь подмен.",
               "correct": false,
               "sections": {
-                "what_actually": "TestClient вызывает ASGI-приложение без отдельного сетевого сервера.",
-                "source_of_confusion": "HTTP-клиент воспринимают как обычный сетевой клиент.",
-                "if_it_were_true": "Тогда тест требовал бы свободного внешнего порта.",
-                "how_it_should_be": "TestClient вызывает ASGI-приложение без отдельного сетевого сервера."
+                "what_actually": "Контекст TestClient управляет lifespan, но сам по себе не восстанавливает `app.dependency_overrides`.",
+                "source_of_confusion": "Завершение жизненного цикла клиента принимают за автоматический откат произвольного состояния приложения.",
+                "if_it_were_true": "Подмена исчезала бы после выхода из with-блока без явного восстановления mapping.",
+                "how_it_should_be": "Сохранить исходный словарь и восстановить его в finally или teardown фикстуры."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "Контекстный менеджер `TestClient` обходит `lifespan` приложения; для startup/shutdown тестов его нужно исключить из сценария.",
+              "text": "`TestClient` вызывает ASGI без отдельного сервера; override исполняется после исходной dependency, а словарь подмен восстанавливают после теста.",
               "correct": false,
               "sections": {
-                "what_actually": "Контекстный менеджер запускает lifespan в тесте.",
-                "source_of_confusion": "Обычное создание клиента путают с его контекстным lifecycle.",
-                "if_it_were_true": "Тогда startup ресурс не появлялся бы в with-блоке.",
-                "how_it_should_be": "Контекстный менеджер запускает lifespan в тесте."
+                "what_actually": "FastAPI использует callable-замену вместо исходной dependency; override не является автоматически вызываемым продолжением оригинала.",
+                "source_of_confusion": "Подмену в графе воспринимают как дополнительный обработчик поверх исходного сервиса.",
+                "if_it_were_true": "Тест с fake мог бы сначала обратиться к реальной БД через исходную dependency.",
+                "how_it_should_be": "Подменить конкретный callable через mapping и отдельно проверять интеграцию, которую fake исключает."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`TestClient` проверяет HTTP-контракт без сервера; `dependency_overrides` подменяет узел графа, затем override очищают, а with запускает lifespan.",
+              "text": "`TestClient` вызывает ASGI без отдельного сервера; override заменяет исходную dependency, а словарь подмен восстанавливают после теста.",
               "correct": true,
               "sections": {
-                "explanation": "Тест должен вернуть приложение в исходное состояние для следующего сценария.",
-                "example": "Подмените current_tenant, выполните client.get, затем вызовите app.dependency_overrides.clear().",
-                "when_to_apply": "Применяйте при проектировании и тестировании FastAPI backend-сервиса.",
-                "edge_cases": "Fake dependency не доказывает SQL/транзакции реальной БД.",
-                "related": "См. полный ответ соответствующего Q и официальное руководство FastAPI."
+                "explanation": "app.dependency_overrides сопоставляет исходную dependency и её замену. Состояние приложения нужно восстановить после сценария.",
+                "example": "Сохраните mapping, подмените current_tenant, выполните запрос в with TestClient(app), затем восстановите mapping.",
+                "when_to_apply": "Для проверки HTTP-поведения с управляемым fake сервиса, сохраняя изоляцию состояния приложения между тестами.",
+                "edge_cases": "Разделяемый app с mutable overrides требует изоляции параллельных тестов; fake не проверяет SQL и транзакции.",
+                "related": "[[fastapi-interview#Q6]] lifespan; [[fastapi-interview#Q7]] подмена зависимостей и восстановление состояния."
               },
               "order": 3,
               "label": "D"
