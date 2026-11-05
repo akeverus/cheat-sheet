@@ -130,255 +130,156 @@ graph TD
 
 ## Q2. (!) Что такое Prometheus и как он собирает метрики?
 
-**Prometheus** — система мониторинга с **pull-моделью**: не приложения шлют метрики, а сам `Prometheus` периодически опрашивает (scrape) их `HTTP`-эндпоинты (обычно `/actuator/prometheus` в `Spring Boot`). Метрики приходят в простом текстовом формате, складываются в локальную БД временных рядов (TSDB), а читаются запросами на языке `PromQL`.
+**Prometheus** собирает и хранит временные ряды и выполняет запросы `PromQL`. Обычная схема сбора — **pull**: сервер периодически опрашивает HTTP-endpoints приложения или exporter. Scrape получает снимок экспонируемых измерений, а не отдельное сетевое сообщение на каждое изменение счётчика. Формат согласуется при опросе: поддерживаются текстовые варианты и protobuf, а не единственный текстовый протокол.
 
-Почему именно pull, а не push: `Prometheus` сам знает, какие цели должен опрашивать, поэтому пропавшая цель сразу видна (scrape не удался = инстанс «лёг»), нет проблемы с забытыми источниками, а нагрузку на сбор контролирует сам сервер.
-
-- **Плюсы:** простой формат экспозиции; мощный `PromQL`; нативная интеграция с `Grafana` и `Alertmanager`.
-- **Минусы:** pull неудобен для short-lived задач и динамических сред — в `Kubernetes` это решает Service Discovery (автообнаружение целей).
+Неудачный scrape даёт `up=0` для цели, но не доказывает остановку процесса: причиной могут быть сеть, timeout, путь endpoint, TLS или авторизация. Проверяйте ошибку опроса и состояние цели отдельно. [Jobs and instances](https://prometheus.io/docs/concepts/jobs_instances/).
 
 ```mermaid
 graph LR
-    subgraph "Prometheus Pull Model"
-        P["Prometheus Server"]
-    end
-
-    subgraph "Targets"
-        A1["Service A<br/>/actuator/prometheus"]
-        A2["Service B<br/>/actuator/prometheus"]
-        A3["Service C<br/>/metrics"]
-        NE["Node Exporter<br/>/metrics"]
-    end
-
-    P -- "scrape каждые 15s" --> A1
-    P -- "scrape каждые 15s" --> A2
-    P -- "scrape каждые 15s" --> A3
-    P -- "scrape каждые 15s" --> NE
-
-    P --> AM["Alertmanager"]
-    P --> G["Grafana"]
-    AM --> S["Slack / PagerDuty"]
+    P["Prometheus"] -- "HTTP scrape" --> A["Приложение / exporter"]
+    G["Grafana"] -- "PromQL-запросы" --> P
+    P -- "Сработавшие правила" --> AM["Alertmanager"]
+    AM -- "Уведомления" --> N["Получатель"]
 ```
 
-**Пример конфигурации `prometheus.yml`:**
+**Минимальный пример scrape-конфигурации**; 15 секунд — выбранный интервал примера, endpoint приложения настраивается отдельно:
 
 ```yaml
 global:
   scrape_interval: 15s
-  evaluation_interval: 15s
-
-rule_files:
-  - "alert_rules.yml"
-
-alerting:
-  alertmanagers:
-    - static_configs:
-        - targets: ['alertmanager:9093']
 
 scrape_configs:
   - job_name: 'spring-boot-apps'
     metrics_path: '/actuator/prometheus'
-    scrape_interval: 15s
-    # Статическая конфигурация
     static_configs:
       - targets: ['order-service:8080', 'payment-service:8080']
         labels:
           env: 'production'
-
-  # Kubernetes Service Discovery
-  - job_name: 'kubernetes-pods'
-    kubernetes_sd_configs:
-      - role: pod
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-        action: keep
-        regex: true
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-        action: replace
-        target_label: __metrics_path__
-        regex: (.+)
 ```
 
-В [Kubernetes](../devops/kubernetes-interview.md) используют `ServiceMonitor` (`Prometheus Operator`) или аннотации на `Pods` / `Service` для автообнаружения целей.
+Service discovery помогает находить динамические targets. `ServiceMonitor`/`PodMonitor` обрабатывает **Prometheus Operator**; сами аннотации Kubernetes не меняют конфигурацию обычного сервера без соответствующей интеграции или relabeling. Короткая задача может завершиться между scrape даже при корректном обнаружении. Для подходящих service-level batch jobs рассматривают Pushgateway. В Prometheus также есть отдельно включаемые remote-write/OTLP receivers; совместимость и ограничения приёма проверяют для выбранной версии.
+
+[Prometheus overview](https://prometheus.io/docs/introduction/overview/), [receiver API](https://prometheus.io/docs/prometheus/latest/querying/api/#remote-write-receiver), [content negotiation](https://prometheus.io/docs/instrumenting/content_negotiation/), [Prometheus Operator](https://prometheus-operator.dev/docs/developer/getting-started/), [Pushgateway use cases](https://prometheus.io/docs/practices/pushing/).
 
 ## Q3. (!) Что такое Micrometer и как он связан с Prometheus?
 
-`Micrometer` — это фасад для метрик в `Java`, такой же, как `SLF4J` для логов. Код регистрирует счётчики, gauge и таймеры через единый API `Micrometer`, не зная, куда они уедут; конкретный бэкенд подключается отдельной зависимостью-биндингом. Это значит, что сменить `Prometheus` на `Datadog` или `InfluxDB` можно без правок бизнес-кода — меняется только зависимость.
+`Micrometer` — API измерений JVM-приложения: код регистрирует counters, gauges, timers через `MeterRegistry`, а registry адаптирует их к backend экспорта. Registry хранит состояние измерений в процессе; долговременная TSDB и интерфейс дашбордов — другие компоненты. Смена backend часто сохраняет код инструментации, но требует проверить конфигурацию экспорта, единицы и поддерживаемые статистики.
 
-Связь с `Prometheus`: биндинг `micrometer-registry-prometheus` берёт зарегистрированные метрики и отдаёт их в текстовом формате `Prometheus`, который тот scrape'ит. В [Spring Boot](../frameworks/spring/spring-boot-interview.md) `Micrometer` включён по умолчанию: достаточно добавить эту зависимость, и эндпоинт `/actuator/prometheus` даёт готовый экспорт.
-
-**Зависимости в `build.gradle`:**
+`micrometer-registry-prometheus` подготавливает scrape-экспозицию. **Сам registry не открывает HTTP endpoint.** В Spring Boot с Actuator нужны соответствующие зависимости, включённый endpoint, web exposure и доступ scrape-клиента. При стандартном base path это `/actuator/prometheus`. Ниже пример для Boot 3.3.x; версии зависимостей задаёт BOM Boot:
 
 ```groovy
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'io.micrometer:micrometer-registry-prometheus'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 }
 ```
 
-**Конфигурация в `application.yml`:**
-
 ```yaml
+spring:
+  application:
+    name: order-service
 management:
   endpoints:
     web:
       exposure:
-        include: prometheus, health, info, metrics
+        include: health, prometheus
   metrics:
     tags:
       application: ${spring.application.name}
     distribution:
       percentiles-histogram:
         http.server.requests: true
-      sla:
+      slo:
         http.server.requests: 100ms, 500ms, 1s, 5s
 ```
 
-**Пример регистрации кастомных метрик:**
+Здесь `slo` задаёт границы дополнительных buckets для целей задержки. В Boot 3.3.x по умолчанию экспонирован только health; наличие registry ещё не означает доступный scrape URL. Настройки security, management port и base path тоже влияют на доступ.
+
+**Кастомный счётчик** с переданным приложению `MeterRegistry registry`:
 
 ```java
-@Service
-@RequiredArgsConstructor
-public class PaymentService {
-
-    private final MeterRegistry registry;
-
-    private Counter paymentSuccessCounter;
-    private Counter paymentFailureCounter;
-    private Timer paymentProcessingTimer;
-    private AtomicInteger activePayments = new AtomicInteger(0);
-
-    @PostConstruct
-    void initMetrics() {
-        paymentSuccessCounter = Counter.builder("payments.completed")
-                .tag("status", "success")
-                .description("Число успешных платежей")
-                .register(registry);
-
-        paymentFailureCounter = Counter.builder("payments.completed")
-                .tag("status", "failure")
-                .description("Число неуспешных платежей")
-                .register(registry);
-
-        paymentProcessingTimer = Timer.builder("payments.processing.duration")
-                .description("Время обработки платежа")
-                .publishPercentiles(0.5, 0.95, 0.99)
-                .register(registry);
-
-        Gauge.builder("payments.active", activePayments, AtomicInteger::get)
-                .description("Число платежей в обработке")
-                .register(registry);
-    }
-
-    public PaymentResult processPayment(PaymentRequest request) {
-        activePayments.incrementAndGet();
-        try {
-            return paymentProcessingTimer.record(() -> {
-                PaymentResult result = doProcess(request);
-                if (result.isSuccess()) {
-                    paymentSuccessCounter.increment();
-                } else {
-                    paymentFailureCounter.increment();
-                }
-                return result;
-            });
-        } finally {
-            activePayments.decrementAndGet();
-        }
-    }
-}
+Counter completed = registry.counter("orders.completed", "result", "success");
+completed.increment();
 ```
 
-Метрики `JVM`, `HTTP` и пулов появятся автоматически — их не надо регистрировать руками. Главное правило при регистрации своих метрик: не давать лейблам высокую cardinality (уникальные значения по `user_id` и т.п.) — это раздувает число временных рядов в `Prometheus` (подробнее — Q17).
+Наличие автоматических JVM/HTTP/pool meters зависит от binders, библиотек, бинов и конфигурации, а не гарантируется для любого приложения. Бюджет labels и нормализация значений разобраны в [Q17](#q17--что-такое-cardinality-метрик-и-почему-она-важна).
+
+[Spring Boot 3.3 metrics](https://docs.spring.io/spring-boot/3.3/reference/actuator/metrics.html), [endpoint exposure](https://docs.spring.io/spring-boot/3.3/reference/actuator/endpoints.html#actuator.endpoints.exposing), [Micrometer Prometheus](https://docs.micrometer.io/micrometer/reference/implementations/prometheus.html).
 
 ## Q4. (!) Какие типы метрик бывают (counter, gauge, histogram, summary)?
 
-Четыре базовых типа, и выбор между ними определяется характером величины: монотонно растёт она или может падать, и нужно ли видеть распределение значений, а не одно число.
+Тип выбирают по смыслу измерения и запросам к данным. Название API Micrometer и тип экспорта Prometheus не всегда соответствуют друг другу один к одному.
 
-| Тип | Описание | Пример | Micrometer API |
-|-----|----------|--------|----------------|
-| **Counter** | Монотонно растущее значение | Число запросов, ошибок | `Counter` |
-| **Gauge** | Текущее значение (может расти и падать) | Размер очереди, память | `Gauge` |
-| **Histogram** | Распределение значений по бакетам | Латентность запросов | `Timer`, `DistributionSummary` |
-| **Summary** | Квантили на стороне приложения | Латентность (не агрегируемо) | Не рекомендуется в Prometheus |
+| Тип Prometheus | Что представляет | Пример / API Micrometer |
+|----------------|------------------|-------------------------|
+| **Counter** | Накопление событий; обычное уменьшение не моделирует, но возможен reset | Завершённые запросы — `Counter` |
+| **Gauge** | Текущее состояние, способное расти и падать | Размер очереди — `Gauge` |
+| **Histogram** | Агрегированное распределение и связанные count/sum | Длительности — `Timer`, размеры — `DistributionSummary`, с histogram-настройками |
+| **Summary** | Count/sum и, если настроены, локальные квантили | `Timer`/`DistributionSummary` с client-side percentiles |
+
+Пример с заранее переданным `MeterRegistry registry` (imports опущены):
 
 ```java
-@Component
-@RequiredArgsConstructor
-public class MetricsExamples {
+Counter requests = registry.counter("http.requests", "endpoint", "/orders");
+requests.increment();
 
-    private final MeterRegistry registry;
+AtomicInteger queueSize = new AtomicInteger(3);
+Gauge.builder("queue.size", queueSize, AtomicInteger::get).register(registry);
 
-    // Counter — монотонно растёт
-    public void countRequest(String endpoint) {
-        registry.counter("http.requests.total",
-                "endpoint", endpoint,
-                "method", "GET"
-        ).increment();
-    }
+// Histogram для серверной оценки распределения
+Timer duration = Timer.builder("request.duration")
+    .publishPercentileHistogram()
+    .register(registry);
+duration.record(12, TimeUnit.MILLISECONDS);
 
-    // Gauge — текущее значение
-    public void registerQueueGauge(BlockingQueue<?> queue) {
-        Gauge.builder("queue.size", queue, BlockingQueue::size)
-                .tag("queue", "orders")
-                .register(registry);
-    }
+DistributionSummary payload = DistributionSummary.builder("response.size")
+    .baseUnit("bytes")
+    .publishPercentileHistogram()
+    .register(registry);
+payload.record(512);
 
-    // Timer (Histogram) — распределение времени
-    public <T> T measureDuration(String name, Supplier<T> action) {
-        return Timer.builder(name)
-                .publishPercentiles(0.5, 0.95, 0.99)
-                .publishPercentileHistogram()
-                .register(registry)
-                .record(action);
-    }
-
-    // DistributionSummary — распределение размеров (не время)
-    public void recordPayloadSize(int bytes) {
-        DistributionSummary.builder("http.response.size")
-                .baseUnit("bytes")
-                .publishPercentiles(0.5, 0.95)
-                .register(registry)
-                .record(bytes);
-    }
-}
+// Отдельный meter с локальными percentile-оценками
+Timer localDuration = Timer.builder("request.local.duration")
+    .publishPercentiles(0.5, 0.95)
+    .register(registry);
+localDuration.record(12, TimeUnit.MILLISECONDS);
 ```
 
-Главное различие между `Histogram` и `Summary` — где считаются квантили. `Histogram` хранит счётчики по корзинам (buckets) и общую сумму, а сами квантили вычисляются уже на сервере через `PromQL` (`histogram_quantile`). `Summary` считает квантили прямо в приложении и отдаёт готовое число.
+Источник gauge вроде `queueSize` должен оставаться сильно достижимым в приложении; meter обычно удерживает его слабо. Gauge показывает состояние при наблюдении и может не сохранить промежуточный пик. Counter после рестарта может начать отсчёт заново — это отличается от обычного уменьшения gauge.
 
-Почему в `Prometheus` предпочитают `Histogram`: квантили `Summary` неагрегируемы. Нельзя усреднить p99 двух инстансов и получить общий p99 сервиса — это математически неверно. Бакеты `Histogram` складываются между инстансами без потерь, поэтому общий квантиль по всему сервису считается корректно.
+**Агрегируемость:** локальные p99 двух инстансов в общем случае нельзя усреднить и получить p99 сервиса. При этом `sum` и `count` Summary можно складывать при совместимых единицах и scope. Название `DistributionSummary` в Micrometer не означает, что экспорт всегда будет Prometheus Summary: результат зависит от статистик и registry.
+
+Histogram не хранит доступный список исходных наблюдений. У classic histogram экспонируются bucket-ряды; native histogram представляет составной sample. Совместимые histogram-данные можно агрегировать, но `histogram_quantile` обычно даёт **оценку**, точность которой зависит от представления и разрешения. При объединении проверяют единицы, bucket-схему и корректный учёт resets; это не восстановление исходных значений «без потерь».
+
+[Prometheus histograms and summaries](https://prometheus.io/docs/practices/histograms/), [Micrometer histograms/percentiles](https://docs.micrometer.io/micrometer/reference/concepts/histogram-quantiles.html), [gauges](https://docs.micrometer.io/micrometer/reference/concepts/gauges.html).
 
 ## Q5. (!) Что такое распределённая трассировка и зачем она нужна?
 
-Распределённая трассировка — это запись полной цепочки операций (spans) одного запроса, пока он проходит через несколько сервисов. Каждый шаг (HTTP-вызов, запрос к БД, отправка в очередь) фиксируется со своим временем, и в итоге виден весь путь запроса как дерево.
-
-Зачем она нужна: в [микросервисах](../architecture/microservices-interview.md) без трассировки видна только латентность на входе («запрос занял 2 секунды»), а вся цепочка внутренних вызовов — «чёрный ящик». Трассировка вскрывает этот ящик и показывает, какой именно сервис или какая БД съели время, то есть позволяет точечно найти узкое место вместо угадывания.
+Распределённая трассировка связывает **наблюдаемые операции** запроса между сервисами. Span описывает операцию, её временные границы и атрибуты; trace ID и связи parent/child помогают восстановить путь. Это позволяет локализовать участок задержки в конкретном запросе, но не гарантирует полное покрытие каждого вызова или единственную корневую причину.
 
 ```mermaid
-gantt
-    title Trace: POST /api/orders (traceId: abc123)
-    dateFormat X
-    axisFormat %s ms
-
-    section API Gateway
-    Входящий HTTP запрос        :a1, 0, 350
-
-    section Order Service
-    Валидация заказа            :a2, 10, 50
-    Сохранение в БД             :a3, 50, 150
-    Вызов Payment Service       :a4, 150, 300
-
-    section Payment Service
-    Обработка платежа           :a5, 160, 280
-    Вызов Bank API              :a6, 180, 260
-
-    section Bank API
-    Авторизация карты           :a7, 190, 250
+sequenceDiagram
+    participant G as Gateway
+    participant O as Order Service
+    participant P as Payment Service
+    participant B as Bank API
+    G->>O: Запрос и trace context
+    O->>P: Вызов и trace context
+    P->>B: Вызов и trace context
+    B-->>P: Результат
+    P-->>O: Результат
+    O-->>G: Результат
 ```
 
-**Инструменты:** бэкенды для хранения и просмотра трейсов — `Jaeger`, `Zipkin`, `Tempo`; стандарт инструментирования кода — `OpenTelemetry`.
+Это иллюстрация синхронной цепочки. Асинхронные операции могут связываться через **span links**, в том числе между разными traces; реальное представление не обязано быть одним простым деревом. Длительности вложенных/параллельных spans могут перекрываться, поэтому их механическая сумма не равна задержке запроса.
 
-**Сценарий применения:** при инциденте по высокой латентности открываешь трейсы за период -> отбираешь медленные запросы -> по дереву spans сразу видишь, какой сервис или БД даёт задержку.
+**При расследовании:** выберите доступный trace известного запроса либо найдите медленные traces за период; сопоставьте наблюдаемые внутренние spans с общей задержкой. Для объяснения причины могут понадобиться логи, метрики или профиль. Фильтр по trace ID выбирает конкретный trace, а фильтр по длительности — медленные запросы.
+
+**Граница:** неполная инструментация, разрыв propagation, sampling и потери доставки делают trace неполным. Отсутствие span не доказывает отсутствие вызова. Полноту и охват проверяют отдельно от красивого дерева в UI.
+
+Примеры backends хранения и просмотра — Jaeger, Zipkin, Tempo; OpenTelemetry предоставляет API/SDK и механизмы сбора, а не обязательное собственное хранилище.
+
+[OpenTelemetry traces](https://opentelemetry.io/docs/concepts/signals/traces/), [context propagation](https://opentelemetry.io/docs/concepts/context-propagation/), [sampling](https://opentelemetry.io/docs/concepts/sampling/).
 
 ## Q6. (!) Что такое OpenTelemetry и как он связан с трассировкой?
 
