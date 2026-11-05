@@ -1,0 +1,136 @@
+{
+  "scope": "Q46:B0 only; all four visible texts, every section, full question and supplied theory excerpt reviewed. Java 21 scope. No code/runtime tests.",
+  "input_sha256": "e49b28f004cc20b1bcdf93eebd0fa28f4697ead8315573a574726960923f2706",
+  "source_artifact_sha256": {
+    "mcq": "2d941990f381579ea5d2f3ee5e9eabfe85235c0f2135ef64ad34e3e7f8d598ee",
+    "theory": "19bdce86d951b1d63bfcd5194e8f57a7e56e64383ec3876bcb5d966c34a2716a",
+    "block_mcq": "44aa61115f4244c7a50da503dc02e3dcf645c74aac08a747eb5b38f09b531911",
+    "block_theory": "44d45880d13376b8c7638f5752c3cca7ad53a218cfba38a011f3a7a8a9fe9c54"
+  },
+  "phase_a": "NO_VALID_OPTION confirmed: C's absolute 'только на время CPU-работы' is false/overstated. Java 21 descriptions say VT execute on carriers and may unmount on blocking; they do not state mounted exclusively during CPU work. No alternative fully correct option.",
+  "options": [
+    {
+      "label": "A",
+      "complete": true,
+      "wrong_model": "Confuses VT with pooled OS threads and ThreadLocal; plausible misconception.",
+      "facts": "Text's claims are wrong, as intended for distractor. Sections correctly state JVM scheduling/carriers but overstate 'no benefit over ExecutorService' and promise 'million vs thousands' as a practical comparison without conditions.",
+      "status": "FAIL"
+    },
+    {
+      "label": "B",
+      "complete": true,
+      "wrong_model": "Claims VT create CPU parallelism beyond hardware cores; plausible speed/scale confusion.",
+      "facts": "Wrong claim is a valid distractor. Sections overgeneralize 'там работают platform threads' and 'реально хуже для CPU'; API guidance is typically VT for blocking workloads and not long-running CPU-intensive tasks, but does not categorically prohibit VT for CPU work.",
+      "status": "FAIL"
+    },
+    {
+      "label": "C",
+      "complete": true,
+      "wrong_model": null,
+      "facts": "JVM scheduling/carrier and typical unmount under blocking are broadly right; 'только' falsely limits mounting to CPU time. Sections: scheduler is ForkJoinPool in OpenJDK 21, but blocking/unmount is limited to supported operations; pinning in synchronized/native paths matters. Fixed ~KB/~MB sizes, 100K requests without OOM, 10K+ and Spring Boot auto-use are not guaranteed by Java API; qualify by implementation/resources/configuration. Files/HttpClient blanket claim needs operation-specific qualification.",
+      "status": "FAIL"
+    },
+    {
+      "label": "D",
+      "complete": true,
+      "wrong_model": "Recasts VT as 1:1 OS threads and denies unmount; plausible platform-thread mental model.",
+      "facts": "False text is suitable as wrong model. Sections accurately describe multiplexing/M:N; 'миллионы' is a scale illustration, not guaranteed for every system.",
+      "status": "PASS"
+    }
+  ],
+  "criteria": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "Each text fully addresses the virtual/platform comparison; however, no valid correct option is established (see phase_a NO_VALID_OPTION). Completeness does not establish factual correctness."
+    },
+    "FACTS": {
+      "status": "FAIL",
+      "reason": "No fully correct text: C's 'only CPU work' is too absolute. Multiple sections also overstate scale, executor comparison, CPU thread choice, and no-OOM/performance claims."
+    },
+    "LINKAGE": {
+      "status": "FAIL",
+      "reason": "C explanation adds non-guaranteed sizing and unbounded throughput claims; A/B sections draw unsupported categorical conclusions from intended wrong models."
+    },
+    "SECTIONS": {
+      "status": "FAIL",
+      "reason": "A if_it_were_true's ExecutorService inference is invalid; A million-vs-thousands lacks constraints. B correction says CPU work 'uses platform' too categorically. C example/when_to_apply make unqualified capacity/framework claims; edge_cases compresses Java 21 pinning details."
+    },
+    "SFPL": {
+      "status": "UNVERIFIED",
+      "reason": "The prior cue claim is withdrawn: C is 16 words, A 15, B 14, D 18; A also mentions unmount on blocking I/O. Technical accuracy alone is not a formal cue absent subject knowledge. This pass did not establish a structural, punctuation, length, or other objective cue."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "All four texts state an identifiable, complete misconception/correct model about virtual vs platform threads; none is an omission or fragment."
+    },
+    "RU": {
+      "status": "FAIL",
+      "reason": "Understandable, but 'как пул системных потоков', 'монтируются через ThreadLocal между задачами', 'только на время CPU-работы' are awkward/overcompressed; English technical compounds are inconsistently integrated."
+    }
+  },
+  "findings": [
+    {
+      "q": "Q46",
+      "label": "C",
+      "field": "text",
+      "issue": "Absolute 'only during CPU work' is not a Java 21 guarantee and rules out other mounted execution."
+    },
+    {
+      "q": "Q46",
+      "label": "A",
+      "field": "if_it_were_true",
+      "issue": "ExecutorService comparison does not follow; executors include different implementations and VT per-task executor is itself an ExecutorService."
+    },
+    {
+      "q": "Q46",
+      "label": "A",
+      "field": "if_it_were_true",
+      "issue": "'million VT vs thousands platform' is an unqualified scale promise."
+    },
+    {
+      "q": "Q46",
+      "label": "B",
+      "field": "how_it_should_be",
+      "issue": "VT are not categorically excluded from CPU tasks; they are not intended for long-running CPU-intensive work and do not add compute resources."
+    },
+    {
+      "q": "Q46",
+      "label": "C",
+      "field": "explanation/example/when_to_apply/edge_cases",
+      "issue": "Memory sizes, 100K HTTP requests without OOM, 10K+ threshold and framework default are not universal Java 21 guarantees; characterize environmental/configuration limits. Blocking unmount and pinning require supported-operation/JDK-version qualification."
+    },
+    {
+      "q": "Q46",
+      "label": "D",
+      "field": "if_it_were_true",
+      "issue": "Scale claim is illustrative only; avoid implying all environments hit an identical OS-thread limit."
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html",
+      "verified": "Java 21 Thread API: VT are user-mode scheduled by runtime, typically use small carrier set, serve blocked workloads, not intended for long-running CPU-intensive work; daemon threads."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html",
+      "verified": "VT are not faster; scale vs latency; blocking I/O can suspend VT and free OS thread; ThreadLocal memory caution; executor creates a VT per task."
+    },
+    {
+      "url": "https://openjdk.org/jeps/444",
+      "verified": "Direct open returned HTTP 403; not independently verified in this pass; Oracle Java 21 docs used for claims above."
+    }
+  ],
+  "limits": "Only Q46 reviewed. Java 21 primary Oracle API/guide checked; OpenJDK JEP 444 direct fetch returned 403, so marked unverified. No JDK 24 behavior checked here, no code/runtime/performance tests, no root runtime or other agent results claimed. No global status/evidence/index updated.",
+  "history": [
+    {
+      "change": "Reassessed SFPL and clarified CONTENT after checking actual word counts and repeated I/O clause.",
+      "previous_sfpl": "FAIL",
+      "current_sfpl": "UNVERIFIED",
+      "previous_content": "PASS",
+      "clarification": "All four options are complete responses to the comparison. NO_VALID_OPTION means no fully defensible correct answer, not that the options are incomplete."
+    },
+    {
+      "change": "Recorded actual split-word counts A15/B14/C16/D18; removed false unique-C-longest/unique-I/O cue inference."
+    }
+  ]
+}

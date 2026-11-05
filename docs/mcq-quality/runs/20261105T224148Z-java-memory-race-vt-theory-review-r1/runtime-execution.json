@@ -1,0 +1,74 @@
+{
+  "jdk_version": "openjdk version \"21.0.10\" 2026-01-20 LTS\nOpenJDK Runtime Environment Microsoft-13106411 (build 21.0.10+7-LTS)\nOpenJDK 64-Bit Server VM Microsoft-13106411 (build 21.0.10+7-LTS, mixed mode, sharing)",
+  "theory_sha256": "19bdce86d951b1d63bfcd5194e8f57a7e56e64383ec3876bcb5d966c34a2716a",
+  "examples": [
+    {
+      "q": 1,
+      "source": "/tmp/java-concurrency-theory-memory-races-virtual-20261105/runtime/ThreadFailureExample.java",
+      "source_sha256": "0c4904b5d55f29b6ed7fa18a283e21587bf457ee1c7c0cd99909c548c96d1531",
+      "compile_exit": 0,
+      "compile_stderr": "",
+      "run_exit": 0,
+      "stdout": "main continues\n",
+      "stderr": "Exception in thread \"Thread-0\" java.lang.IllegalStateException: worker failure\n\tat ThreadFailureExample.lambda$main$0(ThreadFailureExample.java:4)\n\tat java.base/java.lang.Thread.run(Thread.java:1583)\n",
+      "expected_uncaught_worker_error": true,
+      "pass": true
+    },
+    {
+      "q": 25,
+      "source": "/tmp/java-concurrency-theory-memory-races-virtual-20261105/runtime/RaceConditionExample.java",
+      "source_sha256": "d67c2636bb486faaaa11103765a42437cd9640a458b0c68031e1e28eeae51ec6",
+      "compile_exit": 0,
+      "compile_stderr": "",
+      "run_exit": 0,
+      "stdout": "1\n2\n",
+      "stderr": "",
+      "expected_uncaught_worker_error": false,
+      "pass": true
+    },
+    {
+      "q": 46,
+      "source": "/tmp/java-concurrency-theory-memory-races-virtual-20261105/runtime/VirtualThreadExample.java",
+      "source_sha256": "5ab4fc570b0a3645ebaf82fe4fdb2c3fa528bc5318551dd0c761c09bfcaaf476",
+      "compile_exit": 0,
+      "compile_stderr": "",
+      "run_exit": 0,
+      "stdout": "true:true\ntrue\n",
+      "stderr": "",
+      "expected_uncaught_worker_error": false,
+      "pass": true
+    }
+  ],
+  "probe_sha256": "20287da5fb81021196117903a3636d314041ba8a267a906e33b0ad667dc14268",
+  "probe_runs": [
+    {
+      "command": [
+        "/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/java",
+        "-cp",
+        "/tmp/java-concurrency-theory-memory-races-virtual-20261105/runtime",
+        "MemoryRaceVirtualProbe"
+      ],
+      "exit": 0,
+      "stdout": "PASS concurrent_hash_map_get_after_remove_returns_null_without_throwing\nPASS null_unboxing_causes_npe_separately_from_map_get\nPASS computeIfAbsent_changes_read_only_absence_into_value_creation\nPASS threads_share_static_state_but_may_have_distinct_thread_local_values\nPASS immutable_values_and_atomic_references_do_not_make_get_then_set_atomic\nTOTAL_PASS 5\n",
+      "stderr": "",
+      "pass_count": 5
+    },
+    {
+      "command": [
+        "/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/java",
+        "-Djdk.virtualThreadScheduler.parallelism=1",
+        "-Djdk.virtualThreadScheduler.maxPoolSize=1",
+        "-cp",
+        "/tmp/java-concurrency-theory-memory-races-virtual-20261105/runtime",
+        "MemoryRaceVirtualProbe",
+        "/tmp/java-concurrency-theory-memory-races-virtual-20261105/runtime/pinning.jfr"
+      ],
+      "exit": 0,
+      "stdout": "PASS jdk21_test_uses_one_configured_carrier\nPASS unpinned_latch_wait_allows_other_virtual_thread_to_progress\nPASS jdk21_monitor_pinning_prevents_second_virtual_thread_progress_on_single_carrier\nPASS jdk21_jfr_recorded_actual_virtual_thread_pinning_event\nPINNED_EVENTS 1\nTOTAL_PASS 4\n",
+      "stderr": "",
+      "pass_count": 4
+    }
+  ],
+  "all_pass": true,
+  "jfr_sha256": "3bfd9eba056c7d87baffb2a0ea4abd067f2be1812f55a275672df74d722eb219"
+}

@@ -1,0 +1,116 @@
+{
+  "scope": "Q1:B0 only; four texts, all sections, complete visible and JSON questions, and supplied theory excerpt reviewed. No code run.",
+  "input_sha256": "c49dc44936a2a0711471bff2c6724d09d3be94e01a978db2b52fb18d72bae0f4",
+  "source_artifact_sha256": {
+    "mcq": "2d941990f381579ea5d2f3ee5e9eabfe85235c0f2135ef64ad34e3e7f8d598ee",
+    "theory": "19bdce86d951b1d63bfcd5194e8f57a7e56e64383ec3876bcb5d966c34a2716a",
+    "block_mcq": "c12a80a9835018038e2d3e227368d69db8321c623392d7c4a0b93ecd4df79158",
+    "block_theory": "fbed45c92e94c069312529f8c0f3ac648d9c4b0b856cd019acd21c27a397c1f4"
+  },
+  "options": [
+    {
+      "label": "A",
+      "complete": true,
+      "wrong_model": "Deliberate inversion of isolation/sharing; plausible novice misconception.",
+      "sections": "Generally refute the inversion; claim synchronized unnecessary if isolated is an appropriate reductio. No issue requiring hidden assumptions.",
+      "status": "PASS"
+    },
+    {
+      "label": "B",
+      "complete": true,
+      "wrong_model": "Equates Java Process and Thread APIs; ProcessBuilder wrapper wording is an inaccurate but plausible confusion.",
+      "sections": "Consistently separates native Process from JVM Thread; examples are somewhat informal but support misconception.",
+      "status": "PASS"
+    },
+    {
+      "label": "C",
+      "complete": true,
+      "wrong_model": null,
+      "sections": "Core memory distinction correct. Explanation's claim switching is cheaper because no page-table change/TLB flush and example fixed microseconds vs milliseconds are unsupported absolutes; costs depend on runtime/platform. Edge claim about an uncaught worker exception killing the JVM is misleading: ordinary uncaught exception terminates that thread; JVM shutdown depends on remaining non-daemon threads etc.",
+      "status": "FAIL"
+    },
+    {
+      "label": "D",
+      "complete": true,
+      "wrong_model": "Confuses Unix process fork/copy model with Java thread creation; coherent wrong answer.",
+      "sections": "Refutes the error accurately; fork is an OS process-creation concept, not Java Thread.start mechanism.",
+      "status": "PASS"
+    }
+  ],
+  "criteria": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "Each option addresses the requested process/thread distinction through isolation/shared memory or explicit equivalence claim."
+    },
+    "FACTS": {
+      "status": "FAIL",
+      "reason": "C sections contain unsupported cost/TLB absolutes and misleading claim that an uncaught exception may kill the JVM; option core itself is correct."
+    },
+    "LINKAGE": {
+      "status": "FAIL",
+      "reason": "C explanation/example/edge_cases add claims beyond the supported central distinction; API citations support ProcessBuilder and Thread roles, not performance numbers."
+    },
+    "SECTIONS": {
+      "status": "FAIL",
+      "reason": "C edge_cases conflates worker-thread termination with JVM termination; example's fixed timings are not general facts."
+    },
+    "SFPL": {
+      "status": "PASS",
+      "reason": "All four are single-sentence prose comparisons of similar length and punctuation; no clear length/format cue. C's sections do not affect visible option-form verdict."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "All four make a complete, self-contained claim about the distinction; wrong answers present plausible errors rather than an omission."
+    },
+    "RU": {
+      "status": "PASS",
+      "reason": "Russian is clear; technical terms/API names are conventional, with minor English jargon consistent across options."
+    }
+  },
+  "findings": [
+    {
+      "q": "Q1",
+      "label": "C",
+      "field": "explanation",
+      "issue": "Universal cheaper-switching/page-table/TLB assertion not established; implementation and platform dependent."
+    },
+    {
+      "q": "Q1",
+      "label": "C",
+      "field": "example",
+      "issue": "Fixed Thread/fork creation times are unsupported as general values."
+    },
+    {
+      "q": "Q1",
+      "label": "C",
+      "field": "edge_cases",
+      "issue": "Uncaught exception normally ends its thread; without an uncaught handler does not by itself kill JVM."
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Process.html",
+      "verified": "Process controls native processes created by ProcessBuilder.start/Runtime.exec."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html",
+      "verified": "Thread is execution in a program; uncaught completion terminates the thread; platform threads typically map 1:1 to kernel threads."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-2.html#jvms-2.5",
+      "verified": "JVM abstract run-time data areas: heap shared among threads; stacks and pc registers per-thread."
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.3.1.1",
+      "verified": "Static fields belong to class declarations; no per-thread copies implied."
+    }
+  ],
+  "limits": "Primary Java 21 API/JVMS/JLS pages checked. No code or performance benchmark run. Performance and TLB statements are not treated as established universal facts. Does not review other questions or constitute FINAL/whole-file acceptance.",
+  "history": [
+    {
+      "change": "Corrected input fragment SHA; prior value preserved.",
+      "previous_input_sha256": "39c8b1ad733103e22a24f4e3deedfcb751fd0b1a362e28a7d57bc1897e75eff7",
+      "current_input_sha256": "c49dc44936a2a0711471bff2c6724d09d3be94e01a978db2b52fb18d72bae0f4"
+    }
+  ]
+}

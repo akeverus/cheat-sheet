@@ -1,0 +1,79 @@
+{
+  "kind": "coordinator composition of actual independent A/B review, not registered acceptance",
+  "author_context": "/root",
+  "reviewer_context": "/root/java_memory_race_vt_blind_r1",
+  "model": "gpt-6-luna",
+  "reasoning_effort": "medium",
+  "run_id": "20261105T224148Z-java-memory-race-vt-theory-review-r1",
+  "phase_a_choices": [
+    {
+      "q_number": 1,
+      "block_idx": 0,
+      "choice": "C",
+      "reason": "Процесс изолирован в адресном пространстве; потоки одного процесса разделяют кучу и static-поля.",
+      "form_signals": []
+    },
+    {
+      "q_number": 25,
+      "block_idx": 0,
+      "choice": "C",
+      "reason": "Race condition зависит от порядка выполнения; check-then-act и read-modify-write — типичные формы гонки.",
+      "form_signals": []
+    },
+    {
+      "q_number": 46,
+      "block_idx": 0,
+      "choice": "NO_VALID_OPTION",
+      "reason": "C близок, но без оговорок утверждает, что virtual thread смонтирован только во время CPU-работы; условие шире и не ограничено этим случаем.",
+      "form_signals": [
+        "C содержит абсолютное «только», дающее более узкое утверждение, чем типичное описание планирования"
+      ]
+    }
+  ],
+  "phase_a_receipt_sha256": "5bfcba54f9fde5c38866401d2e86834c1c3207019447bb9e6c186a1dc283e410",
+  "phase_b_parts": [
+    {
+      "q_number": 1,
+      "review_path": "docs/mcq-quality/runs/20261105T224148Z-java-memory-race-vt-theory-review-r1/phase-b-q1.json",
+      "sha256": "f25af813ed02f1268dc1af9ee6e9246ff4c592fc174490fbe737c9f2c60bfec7",
+      "options": 4,
+      "source_binding": "matches frozen manifest"
+    },
+    {
+      "q_number": 25,
+      "review_path": "docs/mcq-quality/runs/20261105T224148Z-java-memory-race-vt-theory-review-r1/phase-b-q25.json",
+      "sha256": "24739ce66a6f0bc87460c4841c04a98aaa287f5317daa5b66d2df6dcb0f20a95",
+      "options": 4,
+      "source_binding": "matches frozen manifest"
+    },
+    {
+      "q_number": 46,
+      "review_path": "docs/mcq-quality/runs/20261105T224148Z-java-memory-race-vt-theory-review-r1/phase-b-q46.json",
+      "sha256": "84ff86e5cf4c1631da20d3f3ecfa42d991b98f159c8ca04f3fcd3ff0694368f1",
+      "options": 4,
+      "source_binding": "matches frozen manifest"
+    }
+  ],
+  "all_12_options_and_sections_reviewed": true,
+  "source_binding_check": "PASS; Q1 input_sha corrected by reviewer with history; all MCQ/theory/block hashes match manifest",
+  "coordinator_adjudication": {
+    "Q1": "Correct core C defensible. Cost/TLB/timing claims need implementation conditions. Lack of custom exception handler is not itself process termination; last non-daemon termination is a separate condition.",
+    "Q25": "No full correct answer to JSON stem including mitigation: C omits it; A also gives symptoms rather than a remedy. ANSC FAIL supersedes raw first-pass mistaken PASS. Intentional false A.text is not itself a defect. C get-null/computeIfAbsent and D reference/publication corrections are real sections defects.",
+    "Q46": "NO_VALID_OPTION confirmed in phase A and B. C unconditional mounting/unmounting is false under Java21 restrictions. ANSC may be PASS for completeness, but semantic CONTENT/FACTS cannot be accepted without a valid correct. Unsupported SFPL length/unique-clause finding retracted to UNVERIFIED; A15/B14/C16/D18 words. Pinning statement judged within Java21, not wrongly rejected because Java24 differs."
+  },
+  "accepted_or_final": false,
+  "registry_record_performed": false,
+  "evidence_draft_notice": "disclosure/evidence-draft.json remains a generated empty-checks template, not accepted evidence; no PASS is inferred from it",
+  "runtime_owner": "/root; separate JDK21.0.10 child JVM, no external app attached",
+  "runtime_proof": {
+    "source_path": "docs/mcq-quality/runs/20261105T224148Z-java-memory-race-vt-theory-review-r1/runtime-probe.java.txt",
+    "source_sha256": "20287da5fb81021196117903a3636d314041ba8a267a906e33b0ad667dc14268",
+    "execution_sha256": "00de784167e90b0c692650ab7b6995f4c70fe636ce1639282acb5c5e2752f45a",
+    "jfr_original_sha256": "3bfd9eba056c7d87baffb2a0ea4abd067f2be1812f55a275672df74d722eb219",
+    "events_export_sha256": "d2b44cf4f319ffc0ec16a0056d32cd4af031d09f6c439feffb7accff3a012fc7",
+    "limits": "original JFR binary kept in /tmp and excluded from Git; JSON event export and exact source/log retained; no JDK24/runtime/load benchmark",
+    "jfr_print_original_stdout_sha256": "14561c9ea9e5d035b72708131601ce3693abb07b8fa839eadd20c285a5bf2988",
+    "events_export_format": "JDK jfr print JSON parsed and indentation/trailing whitespace normalized; parsed event values unchanged"
+  },
+  "later_work": "MCQ owner corrections, repeat dependent reviews on new hashes; no global sync/checkpoint from theory worker"
+}

@@ -1,0 +1,84 @@
+import java.nio.file.*;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import jdk.jfr.*;
+import jdk.jfr.consumer.*;
+
+public class MemoryRaceVirtualProbe {
+    static int passed;
+    static final AtomicInteger shared = new AtomicInteger();
+    static final ThreadLocal<String> local = new ThreadLocal<>();
+    record State(int value) {}
+    static void check(boolean ok,String name) {
+        if(!ok)throw new AssertionError(name);
+        passed++;System.out.println("PASS "+name);
+    }
+    static void await(CountDownLatch latch) {
+        try { if(!latch.await(5,TimeUnit.SECONDS))throw new AssertionError("latch timeout"); }
+        catch(InterruptedException e){Thread.currentThread().interrupt();throw new AssertionError(e);}
+    }
+    static void join(Thread t) throws InterruptedException {
+        t.join(5000);if(t.isAlive()){t.interrupt();throw new AssertionError("thread timeout");}
+    }
+    static void runTwo(Runnable work) throws Exception {
+        AtomicReference<Throwable> failure=new AtomicReference<>();
+        Runnable guarded=()->{try{work.run();}catch(Throwable e){failure.compareAndSet(null,e);}};
+        Thread a=new Thread(guarded,"A"),b=new Thread(guarded,"B");a.start();b.start();join(a);join(b);
+        if(failure.get()!=null)throw new AssertionError(failure.get());
+    }
+    static void pinning(Path dump) throws Exception {
+        check(System.getProperty("jdk.virtualThreadScheduler.parallelism").equals("1")
+            && System.getProperty("jdk.virtualThreadScheduler.maxPoolSize").equals("1"),"jdk21_test_uses_one_configured_carrier");
+        CountDownLatch started=new CountDownLatch(1),release=new CountDownLatch(1),secondRan=new CountDownLatch(1);
+        Thread waiting=Thread.ofVirtual().name("unpinned-vt").start(()->{started.countDown();await(release);});
+        Thread second=null;
+        try {
+            await(started);second=Thread.ofVirtual().start(secondRan::countDown);
+            check(secondRan.await(5,TimeUnit.SECONDS),"unpinned_latch_wait_allows_other_virtual_thread_to_progress");
+        } finally {release.countDown();join(waiting);if(second!=null)join(second);}
+
+        Object monitor=new Object();CountDownLatch pinnedStarted=new CountDownLatch(1),unpin=new CountDownLatch(1),queuedRan=new CountDownLatch(1);
+        List<RecordedEvent> events;
+        try(Recording recording=new Recording()) {
+            recording.enable("jdk.VirtualThreadPinned").withThreshold(Duration.ZERO).withStackTrace();recording.start();
+            Thread pinned=Thread.ofVirtual().name("pinned-vt").start(()->{
+                synchronized(monitor){pinnedStarted.countDown();await(unpin);}
+            });
+            Thread queued=null;
+            try {
+                await(pinnedStarted);queued=Thread.ofVirtual().start(queuedRan::countDown);
+                check(!queuedRan.await(200,TimeUnit.MILLISECONDS),"jdk21_monitor_pinning_prevents_second_virtual_thread_progress_on_single_carrier");
+            } finally {unpin.countDown();join(pinned);if(queued!=null)join(queued);}
+            recording.stop();recording.dump(dump);events=RecordingFile.readAllEvents(dump);
+        }
+        long matching=events.stream().filter(e->e.getEventType().getName().equals("jdk.VirtualThreadPinned")
+            && e.getThread()!=null && e.getThread().getJavaName().equals("pinned-vt")).count();
+        check(matching>0,"jdk21_jfr_recorded_actual_virtual_thread_pinning_event");
+        System.out.println("PINNED_EVENTS "+matching);
+    }
+    public static void main(String[] args) throws Exception {
+        if(args.length>0){pinning(Path.of(args[0]));System.out.println("TOTAL_PASS "+passed);return;}
+        ConcurrentHashMap<String,Integer> map=new ConcurrentHashMap<>();map.put("k",7);
+        CountDownLatch checked=new CountDownLatch(1),removed=new CountDownLatch(1);
+        Thread remover=new Thread(()->{await(checked);map.remove("k");removed.countDown();});remover.start();
+        boolean existed=map.containsKey("k");checked.countDown();await(removed);Integer value=map.get("k");join(remover);
+        check(existed && value==null,"concurrent_hash_map_get_after_remove_returns_null_without_throwing");
+        boolean unboxingFailed=false;try{int ignored=value;}catch(NullPointerException e){unboxingFailed=true;}
+        check(unboxingFailed,"null_unboxing_causes_npe_separately_from_map_get");
+        AtomicInteger factoryCalls=new AtomicInteger();Integer missing=map.get("absent");
+        Integer created=map.computeIfAbsent("absent",k->{factoryCalls.incrementAndGet();return 42;});
+        check(missing==null && created==42 && factoryCalls.get()==1 && map.containsKey("absent"),
+            "computeIfAbsent_changes_read_only_absence_into_value_creation");
+        Set<String> localValues=ConcurrentHashMap.newKeySet();runTwo(()->{
+            local.set(Thread.currentThread().getName());shared.incrementAndGet();localValues.add(local.get());
+        });
+        check(shared.get()==2 && localValues.equals(Set.of("A","B")),"threads_share_static_state_but_may_have_distinct_thread_local_values");
+        AtomicReference<State> state=new AtomicReference<>(new State(0));CountDownLatch bothRead=new CountDownLatch(2);
+        runTwo(()->{State before=state.get();bothRead.countDown();await(bothRead);state.set(new State(before.value()+1));});
+        boolean lost=state.get().value()==1;state.set(new State(0));runTwo(()->state.updateAndGet(before->new State(before.value()+1)));
+        check(lost && state.get().value()==2,"immutable_values_and_atomic_references_do_not_make_get_then_set_atomic");
+        System.out.println("TOTAL_PASS "+passed);
+    }
+}

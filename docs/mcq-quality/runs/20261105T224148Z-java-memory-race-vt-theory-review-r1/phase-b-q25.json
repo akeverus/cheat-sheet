@@ -1,0 +1,119 @@
+{
+  "scope": "Q25:B0 only; compared full question_text and visible_question, all four option texts/sections, and disclosed theory excerpt. No code executed.",
+  "input_sha256": "e49b28f004cc20b1bcdf93eebd0fa28f4697ead8315573a574726960923f2706",
+  "source_artifact_sha256": {
+    "mcq": "2d941990f381579ea5d2f3ee5e9eabfe85235c0f2135ef64ad34e3e7f8d598ee",
+    "theory": "19bdce86d951b1d63bfcd5194e8f57a7e56e64383ec3876bcb5d966c34a2716a",
+    "block_mcq": "8f0e2ad1ef08059fd2c4e3e8d185fe4111cd73fd9d7109382bc79795f1f16320",
+    "block_theory": "4e21e017f703840d2fc8f296942cf29f1112fd4fa4c2d49fd075f9bf4099a9b2"
+  },
+  "options": [
+    {
+      "label": "A",
+      "status": "FAIL",
+      "complete": true,
+      "facts": "Wrong plausible model, but CME is not a typical race symptom and easy diagnosis is unsupported.",
+      "sections": "Mostly consistent; claims 'race usually silent' too broadly, and 'CME is separate' requires qualification since CME itself can arise under unsynchronized interference.",
+      "finding": "text: misleading symptom/frequency and guaranteed ease of diagnosis; sections: categorical distinction."
+    },
+    {
+      "label": "B",
+      "status": "PASS",
+      "complete": true,
+      "facts": "False claim that volatile serializes access is a plausible visibility/atomicity confusion. Sections accurately refute it.",
+      "sections": "Consistent; Atomic*/synchronization are suitable approaches depending on invariant.",
+      "finding": null
+    },
+    {
+      "label": "C",
+      "status": "FAIL",
+      "complete": false,
+      "facts": "Definition and patterns are sound. Sections contain a false example: ConcurrentHashMap.get absent key returns null, not NPE; NPE requires later unboxing/dereference. computeIfAbsent is not a universal replacement. Theory corrects this example but does not repair option text.",
+      "sections": "explanation is inconsistent with theory correction and says NPE 'на get'; remaining claims broadly sound.",
+      "finding": "text omits how to fight race despite full question asking 'и как с ним бороться'; explanation gives a false NPE path."
+    },
+    {
+      "label": "D",
+      "status": "FAIL",
+      "complete": true,
+      "facts": "Plausible overclaim about immutability; wrong because shared mutable reference/container remains racy.",
+      "sections": "what_actually/how_it_should_be mostly correct; source_of_confusion falsely says publication necessarily requires volatile/Atomic (safe publication has other means); if_it_were_true confuses atomic reference assignment with safe publication and invariant protection.",
+      "finding": "sections: publication and atomic-reference claims overstate requirements; shared ref claim needs scoped explanation."
+    }
+  ],
+  "criteria": {
+    "CONTENT": {
+      "status": "FAIL",
+      "reason": "Question asks definition and mitigation; every text is complete as a distractor except C gives no mitigation."
+    },
+    "FACTS": {
+      "status": "FAIL",
+      "reason": "A's symptom claim; C's explanatory NPE claim; D section's safe-publication overclaim."
+    },
+    "LINKAGE": {
+      "status": "FAIL",
+      "reason": "C explanation contains a broken ConcurrentHashMap example; D sections conflate atomic reference assignment and safe publication."
+    },
+    "SECTIONS": {
+      "status": "FAIL",
+      "reason": "C explanation contradicts disclosed theory; A and D include categorical/overstated statements."
+    },
+    "SFPL": {
+      "status": "FAIL",
+      "reason": "Visible MCQ uses abbreviated question 'Что такое Race Condition?', while JSON asks additionally how to combat it; options do not match that full scope."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "A-D share the same definition lead-in and parallel parenthetical claim structure; C's extra pattern list remains comparable."
+    },
+    "RU": {
+      "status": "FAIL",
+      "reason": "Mixed English/Russian technical prose is understandable, but D's 'снимают гонку' is awkward; several sections use categorical colloquial wording."
+    }
+  },
+  "findings": [
+    {
+      "q": "Q25",
+      "label": "A",
+      "field": "text/what_actually/source_of_confusion",
+      "issue": "CME is not generally a race-condition symptom; 'легко диагностируется' unsupported; CME is not wholly separate from concurrent interference."
+    },
+    {
+      "q": "Q25",
+      "label": "C",
+      "field": "text",
+      "issue": "Does not answer mitigation part of full question_text."
+    },
+    {
+      "q": "Q25",
+      "label": "C",
+      "field": "explanation",
+      "issue": "ConcurrentHashMap.get returns null for absent key; NPE is only downstream on unboxing/dereference."
+    },
+    {
+      "q": "Q25",
+      "label": "D",
+      "field": "source_of_confusion/if_it_were_true/how_it_should_be",
+      "issue": "Safe publication is not limited to volatile/Atomic; atomic reference write alone does not establish safe publication."
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html",
+      "checked": "JLS 17.4.5 happens-before; 17.7 non-atomic compound operations; volatile semantics."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html",
+      "checked": "get may overlap updates; absent mapping yields null; CME not thrown by CHM iterators; computeIfAbsent contract."
+    },
+    {
+      "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicInteger.html",
+      "checked": "int may be updated atomically; atomic increment API."
+    }
+  ],
+  "limits": "Primary Java 21 sources checked; no compile/runtime test, no review of other questions, no evidence workflow/record performed. These findings do not constitute FINAL or acceptance of the full file.",
+  "clarification": {
+    "A.text": "Его ложность намеренна для wrong и не является сама по себе дефектом. Проверка относится к полноте/правдоподобию и отсутствию способа борьбы в ответе при полном question_text.",
+    "criteria_correction": "SFPL оценивает структуру, формат, пунктуацию, длину и cues. ANSC оценивает полноту каждого A/B/C/D по всем частям вопроса. Следовательно ANSC=FAIL из-за неполного C; критерии не подменяют друг друга."
+  }
+}
