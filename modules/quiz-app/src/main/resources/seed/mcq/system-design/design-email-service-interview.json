@@ -178,6 +178,61 @@
               "label": "D"
             }
           ]
+        },
+        {
+          "block_idx": 1,
+          "question_text": "Как отключить open/click tracking в SES v2 для получателей без разрешения на отслеживание?",
+          "options": [
+            {
+              "text": "Оставить общую настройку и считать отписку от маркетинга единственным способом выключить отслеживание.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подписка на письма и open/click tracking — разные настройки; SES продолжит вставлять пиксель и переписывать ссылки.",
+                "source_of_confusion": "Согласие на письмо смешивают с разрешением измерять взаимодействия.",
+                "if_it_were_true": "Отписка автоматически управляла бы tracking в уже разрешённой транзакционной отправке.",
+                "how_it_should_be": "Для разрешённой отправки переопределите Tracking на DISABLED для запроса."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Указать OpenTrackingEnabled и ClickTrackingEnabled как DISABLED в ConfigurationOverrides.Tracking; bulk-запросы группировать по настройке.",
+              "correct": true,
+              "sections": {
+                "explanation": "SES v2 позволяет переопределить tracking для всего SendEmail или SendBulkEmail запроса.",
+                "example": "Адресатов без разрешения отправляют отдельным bulk-запросом с обоими значениями DISABLED.",
+                "when_to_apply": "Когда письмо отправлять можно, а open/click tracking для получателя запрещён.",
+                "edge_cases": "В одном SendBulkEmail override действует на все записи; Delivery, Bounce и Complaint reporting им не отключается. Нужны поддержка параметра SDK, разрешение отправки и ses:ApplyTrackingConfigurationOverrides. Без последнего SES вернёт AccessDeniedException и не отправит письмо. Не удаляйте override при повторе, если отправка без него нарушит выбранную tracking-политику.",
+                "related": "См. Q3 и SES configuration overrides."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Выключить event publishing целиком для такого письма, чтобы SES не создал события открытий и кликов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отключение event publishing меняет публикацию событий по этому пути, но не является точным управлением tracking pixel и ссылками. Другие механизмы reporting или tracking могут оставаться включёнными.",
+                "source_of_confusion": "Открытия/клики смешивают с Delivery, Bounce и Complaint.",
+                "if_it_were_true": "Все события SES имели бы одну обязательную настройку tracking.",
+                "how_it_should_be": "Отключите только OpenTrackingEnabled и ClickTrackingEnabled."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Указать DISABLED только в одной записи SendBulkEmail и оставить остальные записи того же запроса с прежней настройкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ConfigurationOverrides действует на весь bulk-запрос, а не на одну запись.",
+                "source_of_confusion": "Параметр уровня запроса принимают за параметр отдельного адресата.",
+                "if_it_were_true": "SES мог бы применять разные Tracking overrides внутри одного bulk-запроса.",
+                "how_it_should_be": "Группируйте адресатов и отправляйте запросы с соответствующей настройкой."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
         }
       ]
     },
@@ -233,6 +288,61 @@
                 "when_to_apply": "Когда платформа отправляет письма от нескольких команд или компаний.",
                 "edge_cases": "Общая квота аккаунта остаётся общей; отдельный IP не обязателен каждому tenant.",
                 "related": "См. Q4 и SES tenants."
+              },
+              "order": 3,
+              "label": "D"
+            }
+          ]
+        },
+        {
+          "block_idx": 1,
+          "question_text": "Что нужно для отдельной tenant attribution и tenant-level suppression в SES?",
+          "options": [
+            {
+              "text": "Хранить tenant_id только в своей БД: SES автоматически получит его из sender identity и создаст отдельный suppression list.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутренний идентификатор не передаётся SES автоматически, а suppression scope по умолчанию ACCOUNT.",
+                "source_of_confusion": "Локальное разделение данных принимают за настройку провайдера.",
+                "if_it_were_true": "SES читал бы вашу БД и сам менял область suppression.",
+                "how_it_should_be": "Передавайте TenantName или X-SES-TENANT и задайте TENANT suppression scope."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Передать авторизованный TenantName в SES API или X-SES-TENANT в SMTP и явно задать SuppressionScope=TENANT с нужными причинами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tenant attribution требует явной привязки отправки, а tenant-level suppression — явной области и причин.",
+                "example": "До отправки задают tenant SuppressionScope=TENANT вместе с причинами BOUNCE/COMPLAINT. Если configuration set не переопределяет эти настройки, SendEmail с авторизованным TenantName использует tenant list; само указание TenantName не включает отдельную suppression-политику.",
+                "when_to_apply": "Когда одна платформа отправляет письма нескольких клиентов через SES.",
+                "edge_cases": "Проверяйте эффективные настройки: configuration set имеет приоритет над tenant, tenant — над account. При эффективном TENANT SES проверяет tenant list, а не объединение с account list; общие запреты приложения учитывают отдельно. TenantName сверяют с tenant задания; общие квоты аккаунта сохраняются.",
+                "related": "См. Q4, SES tenants и tenant-level suppression."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Передать TenantName, но оставить SuppressionScope=ACCOUNT: список SES станет отдельным для каждого tenant после первого bounce.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ACCOUNT остаётся общей областью suppression; TENANT нужно настроить явно.",
+                "source_of_confusion": "Атрибуцию событий путают с областью suppression.",
+                "if_it_were_true": "Создание tenant автоматически меняло бы default scope.",
+                "how_it_should_be": "Укажите TENANT и нужные SuppressedReasons."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Раздать каждому tenant свой From и IP pool: это заменит TenantName и настройку suppression scope в SES.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Адрес отправителя и IP pool не заменяют атрибуцию tenant и политику suppression.",
+                "source_of_confusion": "Репутационную и административную изоляцию считают одной настройкой.",
+                "if_it_were_true": "SES выводил бы все tenant policies только из IP и From.",
+                "how_it_should_be": "Передавайте tenant явно и отдельно настройте suppression."
               },
               "order": 3,
               "label": "D"
