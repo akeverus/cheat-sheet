@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[mockito]]"
 next: []
-updated: "2026-05-08"
+updated: "2026-11-05"
 ---
 
 # Вопросы на собеседовании: Mockito
@@ -109,26 +109,26 @@ updated: "2026-05-08"
 
 ## Q3. (!) Как создать mock-объект в Mockito?
 
-Три способа — выбор зависит от того, нужны ли вам аннотации:
+Mock создают фабричным методом либо через аннотацию, которую обрабатывает расширение/инициализатор. Записи `Mockito.mock(Type.class)` и `mock(Type.class)` вызывают один и тот же фабричный метод: короткое имя требует, например, `import static org.mockito.Mockito.mock`.
 
 ```java
-// 1. Статический фабричный метод
-UserRepository repo = Mockito.mock(UserRepository.class);
+import org.mockito.Mockito;
+import static org.mockito.Mockito.mock;
 
-// 2. Аннотация (требует MockitoExtension или openMocks)
-@Mock
-UserRepository repo;
-
-// 3. Начиная с Mockito 4.10+ — mock() без статического импорта (Java 21+)
-var repo = mock(UserRepository.class);
+// UserRepository — интерфейс зависимости проекта
+UserRepository explicit = Mockito.mock(UserRepository.class);
+UserRepository imported = mock(UserRepository.class);
+UserRepository inferred = Mockito.mock(); // тип выводится из присваивания
 ```
 
-Первый способ удобен для одноразового мока внутри теста; второй — основной для классов с несколькими зависимостями (меньше бойлерплейта, плюс работает `@InjectMocks`).
+Последний вариант доступен с Mockito 4.10.0; он не отменяет правила импорта Java. Для него нужен ожидаемый тип: `var repo = Mockito.mock()` не задаёт тип UserRepository. В этом материале API проверен на Mockito 5.11.0 / Java 21, но сама форма не требует именно Java 21.
 
-Свежесозданный mock ничего не делает и возвращает «пустые» значения по умолчанию:
-- `null` — для ссылочных типов;
-- `0` / `false` / пустые коллекции для примитивов и `Optional`;
-- реальная логика класса не выполняется, пока вы не настроите метод через `when()`.
+```java
+@Mock
+UserRepository repository; // поле теста; нужен MockitoExtension или openMocks(this)
+```
+
+При стандартном `RETURNS_DEFAULTS` незастабленный mock не исполняет обычное тело метода. Результат зависит от возвращаемого типа: нули/false, поддерживаемые пустые контейнеры (`List`, `Optional` и др.) либо null для многих остальных ссылок. Это не гарантия null для любого reference type; custom/default Answer может задавать другое поведение.
 
 ---
 
@@ -157,24 +157,24 @@ class OrderServiceTest {
 
 ## Q5. Что делает аннотация `@InjectMocks`?
 
-`@InjectMocks` создаёт **реальный** экземпляр тестируемого класса (system under test) и подставляет в него объявленные в тесте `@Mock` / `@Spy`. Подстановка идёт по приоритету: сначала пробуется конструктор, затем сеттеры, в последнюю очередь — прямая запись в поля.
+`@InjectMocks` просит Mockito подставить объявленные `@Mock`/`@Spy` в объект под тестом. Сам по себе этот маркер не превращает SUT в mock и не заменяет полноценный DI-контейнер.
+
+Для Mockito 5.11.0 важны границы стратегий:
+
+1. При создании объекта выбирается самый большой конструктор. Ссылочный аргумент без подходящего двойника может получить null: это не поиск самого большого **полностью удовлетворимого** конструктора.
+2. Если создание через конструктор успешно, Mockito не обязан затем внедрять остальные моки через сеттеры и поля.
+3. Если constructor injection не применился, возможны setter/field injection. Невнедрённую зависимость иногда придётся задать самому, но исключение, брошенное самим конструктором, не игнорируется: инициализация теста завершится ошибкой.
 
 ```java
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
-
-    @Mock
-    OrderRepository orderRepository;
-
-    @Mock
-    PaymentGateway paymentGateway;
-
-    @InjectMocks
-    OrderService orderService;  // получит оба мока в конструктор или поля
+    @Mock OrderRepository orderRepository;
+    @Mock PaymentGateway paymentGateway;
+    @InjectMocks OrderService orderService;
 }
 ```
 
-**Подводный камень:** Mockito выбирает самый большой конструктор, который может закрыть имеющимися моками. Если подходящий мок не найден, он не падает с ошибкой, а молча оставляет зависимость незаполненной (`null`). Поэтому при `@InjectMocks` легко получить неожиданный `NullPointerException` уже внутри тестируемого кода — а не понятное сообщение о том, что зависимость не внедрилась.
+Здесь предполагается совместимый конструктор `OrderService(OrderRepository, PaymentGateway)`. Аннотация не обещает внедрения **всех** объявленных моков, не строит рекурсивно произвольный граф реальных объектов и не проверяет за вас инварианты конструктора. Если создание SUT требует точного контроля, обычный `new OrderService(repo, gateway)` делает зависимости явными. [Контракт InjectMocks 5.11.0](https://github.com/mockito/mockito/blob/v5.11.0/src/main/java/org/mockito/InjectMocks.java).
 
 ---
 
@@ -266,7 +266,7 @@ void tearDown() throws Exception {
 
 ## Q9. Как работает `when().thenReturn()`?
 
-`when(mock.method(args)).thenReturn(value)` задаёт заглушку (stubbing): «когда вызовут `method` с такими аргументами — верни `value`». Это самый частый способ настроить ответ мока.
+`when(mock.method(args)).thenReturn(value)` задаёт stubbing: подходящий вызов получает указанное значение. Аргументы по умолчанию сопоставляются через `equals`; для более общего условия применяют matchers (Q18).
 
 ```java
 when(userRepository.findById(1L)).thenReturn(Optional.of(new User(1L, "Alice")));
@@ -275,33 +275,37 @@ Optional<User> result = userRepository.findById(1L);
 assertThat(result).isPresent();
 ```
 
-Что важно помнить:
-- Заглушка срабатывает только при **точном совпадении аргументов**. Вызвали с другим аргументом — вернётся дефолт (`null`, `0` и т.д.), а не настроенное значение. Это частый источник «почему мой mock вернул null».
-- Можно цеплять ответы: `when(...).thenReturn(first).thenReturn(second)` — первый вызов вернёт `first`, второй и все следующие — `second`.
-- Последний `thenReturn` в цепочке «залипает» и используется для всех вызовов после него.
+Если подходящего стаба нет, mock обычно использует свой default Answer. Однако это не безусловное правило «другой аргумент всегда вернёт null»: в режиме `STRICT_STUBS` потенциальное несовпадение со stubbing может вызвать `PotentialStubbingProblem`. В Mockito 5.11.0 диагностика учитывает дополнительные условия, в том числе расположение вызова и stubbing в исходных файлах; не каждый новый аргумент обязательно приводит к этой ошибке. `WARN` и `STRICT_STUBS` — разные режимы (Q28), а `ArgumentMismatchException` не является названием этой диагностики Mockito.
+
+`thenReturn(first).thenReturn(second)` возвращает first один раз, затем повторяет second. Это описание постоянного последнего значения; если последним настроен динамический Answer, при последующих вызовах выполняется его логика (Q30).
 
 ---
 
 ## Q10. (!) Чем отличается `when().thenReturn()` от `doReturn().when()`?
 
-Главное различие — **момент вызова метода**. В `when(mock.foo())` метод `foo()` фактически вызывается, чтобы Mockito понял, что вы стабите. На обычном моке это безопасно (метод заглушён), но на spy это запустит реальную реализацию со всеми побочными эффектами. В `doReturn().when(mock).foo()` метод не вызывается — настройка идёт «снаружи».
+Java вычисляет аргумент `mock.foo()` **до** входа в `when(...)`. Поэтому на обычном mock со стандартным Answer получается обычный default, на spy может выполниться реальный метод, а уже настроенный throwing/custom Answer тоже может повлиять на настройку. `doReturn(value).when(mock).foo()` задаёт ответ без такого вызова реального тела выбранного метода при stubbing.
+
+`thenReturn` типизирован результатом выбранного вызова, поэтому обычную несовместимость возвращаемого типа обнаруживает компилятор. `doReturn` принимает Object и проверяет совместимость во время настройки: например, строка для метода с результатом int компилируется, но даёт `WrongTypeOfReturnValue`. Это не отменяет ограничений type erasure для содержимого generic-контейнеров.
 
 | Аспект | `when().thenReturn()` | `doReturn().when()` |
 |--------|----------------------|---------------------|
-| Работает с `@Mock` | Да | Да |
-| Работает с `@Spy` | Частично (реальный метод вызывается при настройке!) | Да (реальный метод НЕ вызывается) |
-| Работает с `void`-методами | Нет | Да |
-| Читаемость | Выше | Ниже |
+| Non-void метод обычного mock | Обычно предпочтительнее | Поддерживается |
+| Non-void метод spy | При настройке может выполниться реальное тело | Позволяет избежать его исполнения |
+| Void-метод | `when(voidCall())` не компилируется | Выражение компилируется, но Mockito отклоняет возвращаемое значение |
 
 ```java
-// Опасно для spy! Реальный метод size() будет вызван при настройке
-when(spyList.size()).thenReturn(100);  // может выбросить NPE или иметь побочный эффект
+List<String> spyList = spy(new ArrayList<String>());
 
-// Безопасно для spy
-doReturn(100).when(spyList).size();
+// get(0) выполнится до when и бросит IndexOutOfBoundsException:
+// when(spyList.get(0)).thenReturn("Alice");
+
+doReturn("Alice").when(spyList).get(0);
+assertEquals("Alice", spyList.get(0));
 ```
 
-**Правило**: для `@Mock` — используй `when().thenReturn()`. Для `@Spy` и `void`-методов — используй `doReturn/doThrow/doNothing/doAnswer`.
+Для void используют `doNothing()`, `doThrow()` или `doAnswer()`, а не `doReturn(value)`. На обычном mock void-вызов по умолчанию и так ничего не делает. `doReturn(value).when(mock).voidMethod()` компилируется, но при настройке даёт `CannotStubVoidMethodWithReturnValue`; это ошибка Mockito при исполнении, а не ошибка Java-компилятора.
+
+Для spy важна цель: если требуется заглушить non-void метод без выполнения его тела при настройке, подходит doReturn; если реальный вызов намерен, when тоже допустим. Ни одна форма не отменяет обычного вычисления Java-аргументов, передаваемых в метод.
 
 ---
 
@@ -623,26 +627,37 @@ class UserServiceIntegrationTest {
 
 ## Q23. Как работает Mockito с `@ExtendWith(MockitoExtension.class)` в JUnit 5?
 
-`MockitoExtension` подключает Mockito к жизненному циклу JUnit 5: вы добавляете `@ExtendWith(MockitoExtension.class)` — и расширение само инициализирует моки до теста и убирает их после. Под капотом оно реализует несколько lifecycle-интерфейсов JUnit:
-
-1. `BeforeEachCallback` — перед каждым тестом обрабатывает аннотации `@Mock`, `@Spy`, `@Captor`, `@InjectMocks`
-2. `AfterEachCallback` — после теста сбрасывает состояние и проверяет нарушения strict stubbing
-3. `ParameterResolver` — позволяет объявлять моки прямо в параметрах метода теста
+`MockitoExtension` интегрирует Mockito с Jupiter. В версии 5.11.0 его `BeforeEachCallback` начинает сессию и обрабатывает аннотированные поля; `AfterEachCallback` завершает сессию, закрывает управляемые scoped mocks и проверяет strict stubbing. Это не обещание вызвать `reset()` на каждом объекте, ссылку на который сохранил ваш код. `ParameterResolver` поддерживает параметры `@Mock` и `@Captor`.
 
 ```java
-@ExtendWith(MockitoExtension.class)
-class PaymentServiceTest {
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
-    // Мок через параметр метода (альтернатива полю)
+@ExtendWith(MockitoExtension.class)
+class PaymentServiceLifecycleTest {
+    interface Gateway { boolean charge(int amount); }
+    static class Service {
+        private final Gateway gateway;
+        Service(Gateway gateway) { this.gateway = gateway; }
+        boolean pay(int amount) { return gateway.charge(amount); }
+    }
+
     @Test
-    void test(@Mock PaymentGateway gateway) {
-        when(gateway.charge(any())).thenReturn(true);
-        // ...
+    void pays(@Mock Gateway gateway) {
+        when(gateway.charge(100)).thenReturn(true);
+        Service service = new Service(gateway);
+        assertTrue(service.pay(100)); // stub действительно используется
     }
 }
 ```
 
-По умолчанию включён `STRICT_STUBS` — если настроили заглушку, но не использовали, тест упадёт с `UnnecessaryStubbingException`.
+По умолчанию действует `STRICT_STUBS`: неиспользованный обычный stub может привести к `UnnecessaryStubbingException` при завершении теста; lenient-настройки и уже произошедшая ошибка теста влияют на диагностику.
+
+**Сохранённый граф объектов:** при `PER_CLASS` поле `@Mock` может получить новый mock перед следующим тестом, но уже созданный `@InjectMocks` SUT с final constructor dependency способен сохранить **старый** mock и его stub. Новое значение поля теста не переписывает все ссылки в графе. Для обычных независимых тестов пересоздавайте SUT с текущими зависимостями в `@BeforeEach` или используйте подходящий lifecycle; не полагайтесь на глобальный сброс со стороны расширения.
 
 ---
 
@@ -665,62 +680,76 @@ void tearDown() {
 
 ## Q25. (!) Как мокировать статические методы с помощью `mockStatic()`?
 
-`mockStatic()` временно подменяет статические методы класса — то, что раньше требовало PowerMock. Возвращает объект `MockedStatic`, который **обязательно** используют в `try-with-resources`: пока блок открыт, статика замокана; на выходе из блока восстанавливается реальная реализация.
+`mockStatic(Class)` возвращает `MockedStatic`, управляющий статическими методами выбранного класса в потоке создания. Control нужно закрыть; `try-with-resources` — удобный способ гарантировать это, также возможен явный lifecycle через `close()`/расширение. Закрытие scope восстанавливает обычное поведение в этом потоке.
 
-Доступно с Mockito 3.4+ (требует `mockito-inline` или `mockito-core` 5+):
+Для static mocking нужен поддерживающий его inline maker: API появился в Mockito 3.4.0; в обычной конфигурации Mockito 5.11.0 inline выбран по умолчанию. Переопределённый maker и возможности JVM нужно учитывать отдельно. Пример использует собственный тип:
 
 ```java
-@Test
-void shouldMockStaticMethod() {
-    try (MockedStatic<UUID> mockedUUID = mockStatic(UUID.class)) {
-        UUID fixedId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
-        mockedUUID.when(UUID::randomUUID).thenReturn(fixedId);
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
-        String id = orderService.generateId();
-
-        assertThat(id).isEqualTo("123e4567-e89b-12d3-a456-426614174000");
+class StaticIdTest {
+    static class IdSource {
+        static String next() { return "real-id"; }
     }
-    // За пределами try-with-resources — UUID.randomUUID() работает нормально
+    static class OrderService {
+        String generateId() { return IdSource.next(); }
+    }
+
+    @Test
+    void usesControlledId() {
+        OrderService service = new OrderService();
+        try (MockedStatic<IdSource> ids = mockStatic(IdSource.class)) {
+            ids.when(IdSource::next).thenReturn("fixed-id");
+            assertEquals("fixed-id", service.generateId());
+            ids.verify(IdSource::next, times(1));
+        }
+        assertEquals("real-id", service.generateId());
+    }
 }
 ```
 
-Почему `try-with-resources` критичен: подмена статики действует **на весь текущий поток**, а не только на ваш объект. Забыв закрыть `MockedStatic`, вы оставите мок активным и сломаете другие тесты в этом потоке. Область видимости ограничена потоком создания — об этом нюансе подробно в Q41.
-
-Верификация вызовов статического метода:
-```java
-mockedUUID.verify(UUID::randomUUID, times(1));
-```
+При стандартном Answer незастабленные статические методы этого класса получают defaults. Поэтому в прежнем примере `UUID.fromString(...)` **внутри** активного `MockedStatic<UUID>` возвращал null: значение следовало создать до открытия scope. Подмена JDK-классов требует особого внимания к ограничениям maker; собственный тип делает пример проще. Область потока и повторная регистрация разобраны в Q41. Control следует использовать и закрывать в его потоке, не передавая его для работы другому потоку.
 
 ---
 
 ## Q26. Как мокировать `final`-классы и методы?
 
-Стандартный mock maker создаёт моки через наследование (subclass), а от `final`-класса наследоваться нельзя — поэтому «из коробки» в старых версиях такие классы не мокаются. Решение — **inline mock maker**, который инструментирует байт-код напрямую, без подкласса.
+Subclass maker опирается на наследование и не переопределяет final-методы. Inline maker поддерживает final-классы и методы через instrumentation. В обычной конфигурации Mockito 5.11.0 inline — default; это не гарантия для любой платформы или проекта с переопределённым `MockMaker`.
 
-Чтобы включить его в Mockito 3–4, добавляют файл-конфигурацию:
+Для старых линий Mockito 3–4 inline можно выбрать провайдером:
 
-```
+```text
 # src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker
 mock-maker-inline
 ```
 
-В Mockito 5+ ничего настраивать не нужно — inline mock maker стал дефолтным.
+Пример собственного final-типа при активном inline maker:
 
-После настройки `final`-классы и методы мокаются как обычные:
 ```java
-// String — final класс
-String mockString = mock(String.class);
-when(mockString.length()).thenReturn(42);
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
-// final метод
-FinalClass mock = mock(FinalClass.class);
-when(mock.finalMethod()).thenReturn("mocked");
+class FinalMockTest {
+    static final class PriceCalculator {
+        final int total(int quantity) { return quantity * 100; }
+    }
+
+    @Test
+    void mocksFinalTypeAndMethod() {
+        PriceCalculator calculator = mock(PriceCalculator.class);
+        when(calculator.total(2)).thenReturn(7);
+        assertEquals(7, calculator.total(2));
+    }
+}
 ```
 
-**Подводные камни `mock-maker-inline`:**
-- Медленнее стандартного mock maker — он инструментирует байт-код во время выполнения.
-- Может конфликтовать с другими байткод-инструментами (например, Jacoco при сборе покрытия).
-- Даже с ним нельзя замокировать примитивы, `enum` и `private`-методы.
+**Ограничения Mockito 5.11.0:** даже inline не разрешает `mock(String.class)`, Class и wrapper types. Обычный enum при inline может мокироваться; дополнительные interfaces/serialization и особенности типа могут изменить доступность. Примитив не является объектом для mock; обычный публичный stubbing API не открывает доступ к private-методу. Inline не инструментирует native-методы, у которых нет подходящего Java-байткода.
+
+Универсальное утверждение «inline всегда медленнее» не следует из его устройства: стоимость зависит от сценария, JVM и прогрева. Совместимость с coverage/agent-инструментами нужно проверять для конкретного набора версий; здесь производительность и все комбинации агентов не измерялись.
 
 ---
 
@@ -1139,66 +1168,93 @@ assertThat(handler.getState()).isEqualTo(State.READY);
 
 ## Q41. (!) В чём ограничение области видимости `MockedStatic` по потокам?
 
-`MockedStatic` имеет **thread-local scope**: подмена статики действует только в том потоке, где `mockStatic()` был вызван. Это сделано намеренно — чтобы мок не утекал в другие тесты, — но порождает три неочевидные ловушки:
+`MockedStatic` действует в потоке, где создан control. Это не наследуемый контекст: отправка задачи в другой поток или pool сама по себе не переносит туда подмену.
 
-1. **Асинхронный код внутри теста** — если код под тестом создаёт `new Thread(...)` или использует `CompletableFuture.supplyAsync(...)`, в этих потоках статический метод вернётся к реальной реализации:
+Два разных потока могут одновременно держать отдельные static scopes одного класса. Ошибка `static mocking is already registered` возникает при второй активной регистрации **того же класса в том же потоке**. В другом потоке без своего scope будет обычный метод; со своим scope — его собственная настройка.
 
 ```java
-try (MockedStatic<Clock> mocked = mockStatic(Clock.class)) {
-    mocked.when(Clock::systemUTC).thenReturn(fixedClock);
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.exceptions.base.MockitoException;
+import java.util.List;
+import java.util.concurrent.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-    // В этом потоке — mock работает
-    assertThat(Clock.systemUTC()).isEqualTo(fixedClock);
+class StaticThreadScopeTest {
+    static class Signal {
+        static String value() { return "real"; }
+    }
 
-    // В другом потоке — mock НЕ работает!
-    CompletableFuture.supplyAsync(() -> Clock.systemUTC()).join();
-    // вернёт реальные системные часы, а не fixedClock
+    @Test
+    void separatesThreadScopes() throws Exception {
+        ExecutorService pool = Executors.newSingleThreadExecutor();
+        try (MockedStatic<Signal> main = mockStatic(Signal.class)) {
+            main.when(Signal::value).thenReturn("main");
+            Future<List<String>> worker = pool.submit(() -> {
+                String before = Signal.value();
+                String during;
+                try (MockedStatic<Signal> local = mockStatic(Signal.class)) {
+                    local.when(Signal::value).thenReturn("worker");
+                    during = Signal.value();
+                }
+                return List.of(before, during, Signal.value());
+            });
+            assertEquals(List.of("real", "worker", "real"),
+                worker.get(5, TimeUnit.SECONDS));
+            assertEquals("main", Signal.value());
+            assertThrows(MockitoException.class, () -> mockStatic(Signal.class));
+        } finally {
+            pool.shutdownNow();
+        }
+        assertEquals("real", Signal.value());
+    }
 }
 ```
 
-2. **Параллельное выполнение тестов** (`@Execution(CONCURRENT)` в JUnit 5) — если два теста пытаются замокировать один и тот же класс в разных потоках, получим `MockitoException: For XXX static mocking is already registered`. Решение: последовательный запуск тестов с `MockedStatic` или уникальные моки на класс.
-
-3. **Thread pool в коде под тестом** — пулы потоков живут вне теста; mock статики на них не распространяется.
-
-**Вывод:** thread-local scope — это фича, а не баг (он же и защищает тесты от утечек мока). Если статику нужно «видеть» из других потоков, правильное решение — не бороться с Mockito, а убрать статику из дизайна: инжектировать `Clock`/`Supplier` через конструктор. Тогда подменить его в тесте тривиально, и проблема потоков исчезает. Альтернатива (`PowerMock`) умеет межпоточную подмену, но не рекомендуется.
+Не используйте один control из другого потока: его API не потокобезопасен. Thread-local scope не заменяет закрытие control и не изолирует произвольные общие данные теста. Если код должен иметь управляемые часы или генератор в нескольких потоках, передача `Clock`/`Supplier` через зависимости часто проще, чем настройка static scope на каждом исполнителе. Этот пример проверяет семантику scopes, а не всё поведение асинхронного приложения.
 
 ---
 
 ## Q42. Что делает `thenCallRealMethod()` и чем отличается от `@Spy`?
 
-`thenCallRealMethod()` заставляет **обычный mock** выполнить реальную реализацию конкретного метода вместо заглушки. Похоже на spy, но с принципиальной разницей: spy оборачивает **созданный** объект с настоящими полями, а mock + `thenCallRealMethod()` запускает реальный метод на «пустой оболочке» без проинициализированного состояния.
+`thenCallRealMethod()` настраивает вызов реальной реализации выбранного метода **на mock-объекте**. Mock уже является Java-объектом; stubbing не создаёт его заново и не вызывает конструктор. При обычном создании mock конструктор часто обходится, поэтому его instance fields могут иметь defaults. Но `withSettings().useConstructor(...)` позволяет создать mock с выполнением конструктора:
 
 ```java
-@Mock
-UserService userService;  // чистый mock
+import org.junit.jupiter.api.Test;
+import java.util.Locale;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
-@Test
-void test() {
-    // Один метод — вызывает реальный, остальные остаются моками
-    when(userService.formatName(anyString())).thenCallRealMethod();
-    when(userService.findById(1L)).thenReturn(new User("Alice"));
+class RealMethodStateTest {
+    static class Greeter {
+        private final String prefix;
+        Greeter(String prefix) { this.prefix = prefix; }
+        String greet(String name) { return prefix.toUpperCase(Locale.ROOT) + name; }
+    }
 
-    String formatted = userService.formatName("bob");
-    assertThat(formatted).isEqualTo("Bob");  // реальный formatName вызван
+    @Test
+    void usesConstructorStateForRealMethod() {
+        Greeter greeter = mock(Greeter.class,
+            withSettings().useConstructor("hi ").defaultAnswer(RETURNS_DEFAULTS));
+        when(greeter.greet("Alice")).thenCallRealMethod();
+        assertEquals("HI Alice", greeter.greet("Alice"));
+    }
 }
 ```
 
-Отличия от `@Spy`:
+| Аспект | Mock + thenCallRealMethod | Spy существующего объекта |
+|--------|---------------------------|---------------------------|
+| Объект | Есть; выбранный метод исполняет реальный код | Есть; обычный spy копирует состояние исходного объекта |
+| Конструктор | Зависит от способа создания mock; stubbing его не запускает | Исходный объект создаёт пользователь; spy не исправляет его инварианты |
+| Остальные методы | Текущий default Answer или отдельные stubs | Обычно реальные, если не переопределены stubbing |
+| Состояние и зависимости | Могут быть defaults либо заданы при создании | Могут включать null и общие изменяемые ссылки |
 
-| Аспект | `@Mock` + `thenCallRealMethod()` | `@Spy` |
-|--------|----------------------------------|--------|
-| Экземпляр класса | НЕ создаётся (bare-bones shell) | Создаётся полноценный объект |
-| Состояние полей | Поля = `null` / дефолты | Поля инициализированы конструктором |
-| NPE риск | Высокий: если метод обращается к `this.field`, получим NPE | Низкий: поля реальные |
-| Использование зависимостей | Не работает (поля не инициализированы) | Работает |
-| Default для вызовов | Возврат дефолта (mock) | Вызов реального метода |
+`@Spy` на поле может использовать явно заданный экземпляр; при незаданном значении Mockito пытается создать его сам, обычно через конструктор без аргументов. Это не проверяет корректность бизнес-инвариантов.
 
-Когда `thenCallRealMethod()` уместен — там, где метод **не зависит от состояния объекта**:
-- Тест `default`-метода **интерфейса** — у интерфейса полей нет в принципе.
-- **Абстрактный класс**: проверяем реализованные методы, не опирающиеся на поля.
-- Частичное мокирование отдельных методов в stateless-классе.
+У `spy(existing)` нет гарантии делегирования всех вызовов исходному экземпляру; обычный spy копирует его состояние, при этом ссылки на вложенные объекты могут оставаться общими. Поэтому ни spy, ни real-method stub сами по себе не гарантируют отсутствие NPE или корректность зависимостей.
 
-**Правило:** для полноценного partial mock с состоянием почти всегда выбирайте `@Spy` — он создаёт настоящий объект и не оставляет поля `null`, поэтому безопаснее.
+Для default-метода интерфейса (без instance fields), stateless-метода или явно сконструированного объекта real-method stubbing может быть уместен. Для stateful partial mock выбирайте способ создания и зависимости по реальному поведению класса, а не по обещанию общей «безопасности» spy.
 
 ---
 
