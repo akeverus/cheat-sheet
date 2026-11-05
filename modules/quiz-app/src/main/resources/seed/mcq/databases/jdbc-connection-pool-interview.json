@@ -9,50 +9,50 @@
           "question_text": "Зачем DataSource вместо DriverManager и что добавляет пул?",
           "options": [
             {
-              "text": "DataSource отделяет получение Connection от кода запросов; пул возможен, но сам интерфейс его не гарантирует.",
+              "text": "`DataSource` отделяет выдачу `Connection` от SQL-кода; если реализация содержит пул, тот переиспользует физические соединения.",
               "correct": true,
               "sections": {
-                "explanation": "Это фабрика, у которой бывают простая и pooled реализации.",
-                "example": "Сервис использует DataSource без знания о способе создания connection.",
-                "when_to_apply": "Выбирайте как точку конфигурации доступа к БД.",
-                "edge_cases": "Полученный connection надо закрывать и при наличии пула.",
-                "related": "Oracle DataSource API."
+                "explanation": "DataSource является настраиваемой фабрикой Connection. Пул — свойство реализации, которое позволяет повторно выдавать логические подключения поверх физических соединений.",
+                "example": "Один и тот же код запроса получает Connection из сконфигурированной фабрики.",
+                "when_to_apply": "При проектировании доступа к БД в сервисе.",
+                "edge_cases": "Полученный из пула Connection нужно своевременно закрыть, чтобы вернуть под управление пула.",
+                "related": "[[jdbc-connection-pool-interview#Q1]] фабрика и пул; [[jdbc-connection-pool-interview#Q3]] границы транзакции."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "DataSource по контракту создаёт пул и освобождает приложение от вызова close на каждом выданном Connection.",
+              "text": "`DataSource` отделяет выдачу `Connection` от SQL-кода; интерфейс гарантирует пул и повторное использование физических соединений.",
               "correct": false,
               "sections": {
-                "what_actually": "DataSource может не содержать пул, а connection нужно закрывать.",
-                "source_of_confusion": "Возможности конкретной реализации приписаны интерфейсу.",
-                "if_it_were_true": "Без close пул исчерпывался бы даже с правильной фабрикой.",
-                "how_it_should_be": "Используйте try-with-resources для выданного connection."
+                "what_actually": "Интерфейс DataSource допускает простую реализацию без пула.",
+                "source_of_confusion": "Распространённую pooled реализацию принимают за контракт интерфейса.",
+                "if_it_were_true": "Любой DataSource возвращал бы физически переиспользуемые соединения.",
+                "how_it_should_be": "Проверяйте конкретную реализацию фабрики и её настройки."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "DriverManager создаёт соединение из пула, а DataSource каждый раз открывает новый физический socket независимо от реализации.",
+              "text": "`DataSource` отделяет выдачу `Connection` от SQL-кода; пул при каждой выдаче создаёт новое физическое соединение вместо повторного использования.",
               "correct": false,
               "sections": {
-                "what_actually": "DataSource может работать с пулом, DriverManager сам его не обещает.",
-                "source_of_confusion": "Роли фабрики и пула перепутаны.",
-                "if_it_were_true": "Тогда выбор DataSource повышал бы цену каждого запроса.",
-                "how_it_should_be": "Проверяйте реализацию фабрики и конфигурацию пула."
+                "what_actually": "Пул предназначен для повторного использования физических соединений. Новые соединения могут создаваться по необходимости, но не являются целью каждой выдачи.",
+                "source_of_confusion": "Создание логического Connection при выдаче принимают за обязательное открытие нового сетевого соединения.",
+                "if_it_were_true": "Каждая выдача требовала бы нового физического подключения, а повторное использование не давало бы выигрыша.",
+                "how_it_should_be": "Различать выдаваемый логический Connection и управляемое пулом физическое соединение."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Пул превращает несколько SQL-транзакций на разных Connection в одну атомарную транзакцию без transaction manager.",
+              "text": "`DataSource` отделяет выдачу `Connection` от SQL-кода; пул объединяет операции разных соединений в одну атомарную транзакцию.",
               "correct": false,
               "sections": {
-                "what_actually": "Переиспользование соединений не объединяет транзакции.",
-                "source_of_confusion": "Физический reuse путают с общей границей commit.",
-                "if_it_were_true": "Иначе раздельные запросы разных клиентов разделяли бы rollback.",
-                "how_it_should_be": "Границу транзакции задавайте явно или через manager."
+                "what_actually": "Пул управляет физическими соединениями, но не объединяет разные SQL-транзакции в одну атомарную операцию.",
+                "source_of_confusion": "Общий источник соединений принимают за общую границу транзакции.",
+                "if_it_were_true": "Операции на разных выданных соединениях становились бы одной транзакцией без отдельного управления ею.",
+                "how_it_should_be": "Управлять транзакционной границей кодом или transaction manager, а пул использовать для соединений."
               },
               "order": 3,
               "label": "D"
@@ -69,50 +69,50 @@
           "question_text": "Как закрывать Connection, Statement и ResultSet?",
           "options": [
             {
-              "text": "ResultSet и Statement достаточно передать сборщику мусора; закрытие Connection вернёт память драйвера при следующем GC.",
+              "text": "В собственном JDBC `ResultSet` и `Statement` своевременно закрывает GC; `Connection.close()` возвращает соединение пулу.",
               "correct": false,
               "sections": {
-                "what_actually": "JDBC-ресурсы закрывают явно через close/try-with-resources.",
-                "source_of_confusion": "Память Java путают с серверными курсорами и соединениями.",
-                "if_it_were_true": "Тогда ресурсы могли бы висеть до непредсказуемого GC.",
-                "how_it_should_be": "Закрывайте ResultSet, Statement и Connection в нужном scope."
+                "what_actually": "JDBC-ресурсы нужно освобождать в известной точке, не ожидая GC.",
+                "source_of_confusion": "Память Java путают с курсорами и соединениями БД.",
+                "if_it_were_true": "Завершение запроса гарантировало бы своевременный сбор всех ресурсов.",
+                "how_it_should_be": "Используйте try-with-resources для собственного JDBC-кода."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "Try-with-resources закрывает ResultSet, Statement и Connection в обратном порядке; connection из пула после операции возвращают пулу.",
+              "text": "В собственном JDBC try-with-resources закрывает `ResultSet`, `Statement`, затем соединение; `Connection.close()` возвращает его пулу.",
               "correct": true,
               "sections": {
-                "explanation": "Лексический scope ограничивает время удержания ресурсов.",
-                "example": "Вложенный try закрывает rows до statement и connection.",
-                "when_to_apply": "Применяйте для собственного JDBC-кода.",
-                "edge_cases": "Spring-managed connection закрывает transaction manager.",
-                "related": "Oracle Connection, Statement и ResultSet APIs."
+                "explanation": "Ресурсы закрываются в обратном порядке; у Statement есть контракт автоматического закрытия порождённого ResultSet, но явное закрытие задаёт ясную границу.",
+                "example": "Вложенный try закрывает rows до statement и Connection.",
+                "when_to_apply": "Когда JDBC-ресурсы получает и использует сам код операции, без внешнего управления транзакцией.",
+                "edge_cases": "В Spring-managed транзакции используйте JdbcTemplate или пару DataSourceUtils.getConnection/releaseConnection.",
+                "related": "[[jdbc-connection-pool-interview#Q2]] владение ресурсами; [[jdbc-connection-pool-interview#Q3]] завершение транзакции перед close."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "Statement можно закрыть до обхода ResultSet: строки уже полностью перенесены в память и больше не зависят от него.",
+              "text": "В собственном JDBC закрывают `Statement` до чтения его `ResultSet`; после чтения `Connection.close()` возвращает соединение пулу.",
               "correct": false,
               "sections": {
-                "what_actually": "Действительность ResultSet связана с открытым Statement.",
-                "source_of_confusion": "Способность драйвера буферизовать данные принимают за JDBC-гарантию.",
-                "if_it_were_true": "Тогда cursor не нуждался бы в statement lifecycle.",
-                "how_it_should_be": "Обходите результат до закрытия statement."
+                "what_actually": "Закрытие Statement автоматически закрывает порождённый им ResultSet.",
+                "source_of_confusion": "Буферизацию драйвера принимают за JDBC-гарантию независимого курсора.",
+                "if_it_were_true": "После закрытия Statement можно было бы продолжать rows.next().",
+                "how_it_should_be": "Обойдите ResultSet до закрытия Statement."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Connection при наличии пула оставляют открытым как поле singleton-сервиса; пул сам угадает конец бизнес-операции.",
+              "text": "В собственном JDBC закрывают `ResultSet` и `Statement`; `Connection.close()` не требуется, пул сам определяет конец использования.",
               "correct": false,
               "sections": {
-                "what_actually": "Занятое соединение нужно вернуть через close в конце операции.",
-                "source_of_confusion": "Долгоживущий DataSource путают с жизненным циклом connection.",
-                "if_it_were_true": "Тогда ограниченный пул быстро исчерпывался бы.",
-                "how_it_should_be": "Храните DataSource, а connection берите на ограниченное время."
+                "what_actually": "Пул не получает автоматического сигнала о конце произвольной JDBC-операции. Самостоятельно полученный Connection нужно явно освободить.",
+                "source_of_confusion": "Долгоживущий пул принимают за механизм, который сам определяет срок использования выданного ресурса.",
+                "if_it_were_true": "Пул мог бы повторно выдать логический Connection, не дожидаясь сообщения владельца об окончании работы.",
+                "how_it_should_be": "Закрывать собственный Connection в ограниченном scope; в Spring-managed коде применять предусмотренный им способ release."
               },
               "order": 3,
               "label": "D"
@@ -129,50 +129,50 @@
           "question_text": "Как управлять autocommit и откатом без потери соединения?",
           "options": [
             {
-              "text": "В управляемой Spring транзакции полезно вручную вызвать commit на том же Connection, чтобы ускорить освобождение пула.",
+              "text": "В самостоятельном JDBC отключают auto-commit; при успехе делают commit, а при сбое close гарантированно откатывает транзакцию и освобождает соединение.",
               "correct": false,
               "sections": {
-                "what_actually": "В Spring-managed транзакции границу контролирует transaction manager.",
-                "source_of_confusion": "Ручной JDBC-код переносят внутрь управляемого scope.",
-                "if_it_were_true": "Такой commit мог бы нарушить атомарность сервисной операции.",
-                "how_it_should_be": "Не вмешивайтесь в управляемую транзакцию вручную."
+                "what_actually": "JDBC не гарантирует rollback при close активной транзакции: результат зависит от реализации. Транзакцию рекомендуют завершать явно до закрытия.",
+                "source_of_confusion": "Поведение конкретного пула по очистке состояния принимают за переносимый контракт JDBC.",
+                "if_it_were_true": "Закрытие любого JDBC Connection было бы универсальной заменой явного rollback при ошибке.",
+                "how_it_should_be": "При неудаче попытаться выполнить rollback, сохранить исходное исключение и освободить соединение."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "Auto-commit по умолчанию выключен; вызов close автоматически фиксирует незавершённую группу запросов в JDBC.",
+              "text": "В самостоятельном JDBC оставляют auto-commit включённым; при сбое общий rollback отменит уже завершённые statements, затем соединение закрывают.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию auto-commit включён; commit вызывают явно после отключения.",
-                "source_of_confusion": "Ожидания от пула подменяют контракт Connection.",
-                "if_it_were_true": "Тогда вызов close был бы надёжной границей commit.",
-                "how_it_should_be": "Завершайте транзакцию до возврата connection."
+                "what_actually": "При auto-commit завершённые statements уже фиксируются отдельно. Последующий rollback не превращает их в одну откатываемую группу.",
+                "source_of_confusion": "Наличие нескольких команд на одном Connection принимают за общую транзакцию независимо от auto-commit.",
+                "if_it_were_true": "Можно было бы отменять уже автоматически зафиксированные statements одним поздним rollback.",
+                "how_it_should_be": "Для своей атомарной группы отключать auto-commit до выполнения команд и завершать её явно."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "После SQLException можно вернуть connection в пул с открытой транзакцией: следующий запрос автоматически откатит её.",
+              "text": "В самостоятельном JDBC отключают auto-commit; при сбое возвращают соединение пулу, чтобы следующая операция автоматически отменила прежние изменения.",
               "correct": false,
               "sections": {
-                "what_actually": "Откат выполняют явно, прежде чем завершать работу с connection.",
-                "source_of_confusion": "Поведение конкретного пула принимают за безопасный контракт.",
-                "if_it_were_true": "Следующий запрос мог бы получить неверное состояние.",
-                "how_it_should_be": "Обрабатывайте rollback и закрытие в исключительном пути."
+                "what_actually": "Код, владеющий транзакцией, должен попытаться выполнить rollback до освобождения Connection.",
+                "source_of_confusion": "Ожидают автоматический откат от следующего пользователя пула.",
+                "if_it_were_true": "Начало следующей операции служило бы автоматическим откатом предыдущей.",
+                "how_it_should_be": "Обработайте rollback, сохраните исходную ошибку и закройте Connection."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Auto-commit по умолчанию включён; для группы операций его отключают, явно commit либо rollback и затем закрывают connection.",
+              "text": "В самостоятельном JDBC отключают auto-commit; завершают свою группу через commit либо rollback и затем освобождают Connection.",
               "correct": true,
               "sections": {
-                "explanation": "JDBC Connection задаёт autocommit по умолчанию и явные границы.",
-                "example": "Две записи баланса выполняют в одной транзакции.",
-                "when_to_apply": "Применяйте в собственном JDBC-коде без внешнего manager.",
-                "edge_cases": "При ошибке rollback сам может завершиться исключением; сохраните исходное.",
-                "related": "Oracle Connection API."
+                "explanation": "Отключение auto-commit задаёт общую транзакцию для своих statements. Её завершают явно до освобождения Connection; ошибку rollback сохраняют вместе с исходной.",
+                "example": "Выполните debit и credit на одном Connection, затем commit; при сбое попытайтесь rollback.",
+                "when_to_apply": "Для собственной группы SQL-операций без внешнего transaction manager.",
+                "edge_cases": "Если транзакцией управляет Spring/JTA, её границы не меняют вручную. Сбой во время commit может оставить исход неизвестным; попытка rollback не доказывает, что запись не зафиксирована.",
+                "related": "[[jdbc-connection-pool-interview#Q2]] освобождение Connection; [[jdbc-connection-pool-interview#Q3]] autocommit и ошибки commit."
               },
               "order": 3,
               "label": "D"
@@ -189,50 +189,50 @@
           "question_text": "Что даёт PreparedStatement batch и что делать при частичном сбое?",
           "options": [
             {
-              "text": "Batch превращает несколько addBatch в единую атомарную SQL-команду, поэтому BatchUpdateException означает откат всех строк.",
+              "text": "Batch может сократить round trips; при BatchUpdateException считают группу полностью отменённой и повторяют её без разбора update counts.",
               "correct": false,
               "sections": {
-                "what_actually": "Batch сокращает отправки, атомарность требует транзакционного контроля.",
-                "source_of_confusion": "Снижение round trips путают с all-or-nothing.",
-                "if_it_were_true": "Тогда update counts и auto-commit не влияли бы на исход.",
-                "how_it_should_be": "Проверяйте counts и явно управляйте транзакцией."
+                "what_actually": "BatchUpdateException не доказывает откат всей группы. Часть команд могла выполниться; update counts описывают результаты обработки.",
+                "source_of_confusion": "Исключение воспринимают как подтверждение отсутствия любых изменений.",
+                "if_it_were_true": "Полный повтор был бы безопасен без выяснения, какие команды успели изменить данные.",
+                "how_it_should_be": "Разобрать update counts, завершить свою транзакцию и выбирать повтор по установленному исходу."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "BatchUpdateException содержит update counts; драйвер может остановиться или продолжить работу, а атомарность задаётся транзакцией.",
+              "text": "Batch может сократить round trips; для атомарности используют явную транзакцию, а при ошибке проверяют update counts и выполняют rollback.",
               "correct": true,
               "sections": {
-                "explanation": "JDBC допускает разные стратегии драйвера после ошибки batch.",
-                "example": "Часть набора могла выполниться до исключения.",
-                "when_to_apply": "Применяйте при пакетной записи с контролем повторов.",
-                "edge_cases": "Специальные значения counts не равны точному числу строк.",
-                "related": "Oracle BatchUpdateException и Statement APIs."
+                "explanation": "Набор параметров может уменьшить накладные расходы отправки. Драйвер может остановиться на сбое или продолжить; атомарную границу задают до batch, а не выводят из исключения.",
+                "example": "Проверьте SUCCESS_NO_INFO и EXECUTE_FAILED перед решением о повторе.",
+                "when_to_apply": "При пакетной записи, когда нужно различать выигрыш передачи, результаты отдельных команд и требования к атомарности.",
+                "edge_cases": "Для executeLargeBatch считайте getLargeUpdateCounts; auto-commit и состояние транзакции влияют на итог.",
+                "related": "[[jdbc-connection-pool-interview#Q3]] явная транзакция; [[jdbc-connection-pool-interview#Q4]] update counts и повтор batch."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "PreparedStatement batch подходит для SELECT-запросов и возвращает один ResultSet для всех переданных наборов параметров.",
+              "text": "Batch по JDBC гарантирует одну атомарную SQL-команду; BatchUpdateException служит диагностикой и не требует управления транзакцией.",
               "correct": false,
               "sections": {
-                "what_actually": "Batch применяют к обновлениям; executeBatch возвращает counts.",
-                "source_of_confusion": "Обход нескольких параметров смешан с result set.",
-                "if_it_were_true": "Тогда batch не сокращал бы запись множества строк.",
-                "how_it_should_be": "Для запросов выполняйте выборку отдельно."
+                "what_actually": "JDBC batch передаёт набор команд, но не обещает одну SQL-команду или атомарность.",
+                "source_of_confusion": "Группировку вызовов API принимают за единый оператор БД.",
+                "if_it_were_true": "Частичный успех внутри batch был бы невозможен.",
+                "how_it_should_be": "Для атомарности используйте транзакцию и проверяйте counts при ошибке."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "При ошибке batch нужно без анализа повторить весь набор в той же транзакции: повтор никогда не создаёт дублей.",
+              "text": "Batch может сократить round trips; после BatchUpdateException повторяют весь набор, поскольку новая транзакция сама устраняет дубли.",
               "correct": false,
               "sections": {
-                "what_actually": "Повтор требует знания исхода, rollback или идемпотентной операции.",
-                "source_of_confusion": "Исключение приравнивают к отсутствию выполненных команд.",
-                "if_it_were_true": "Иначе частичный успех порождал бы дубликаты.",
-                "how_it_should_be": "Проверяйте counts и стратегию повторения."
+                "what_actually": "Новая транзакция не удаляет эффекты ранее выполненных команд и не обнаруживает повтор бизнес-операции. Перед повтором нужно установить исход первой попытки.",
+                "source_of_confusion": "Новый транзакционный контекст принимают за механизм устранения дублей.",
+                "if_it_were_true": "Повторный INSERT в новой транзакции распознавался бы как уже выполненный без бизнес-ключа или проверки исхода.",
+                "how_it_should_be": "Разобрать результаты batch и состояние транзакции, затем выбирать повтор с учётом идемпотентности и бизнес-ключей."
               },
               "order": 3,
               "label": "D"
@@ -249,50 +249,50 @@
           "question_text": "Как читать большой ResultSet без предположения о настоящем streaming?",
           "options": [
             {
-              "text": "Итерация rows.next сама доказывает, что драйвер держит в памяти одну строку; fetchSize здесь не влияет.",
+              "text": "Считайте цикл `rows.next()` доказательством построчной загрузки; проверять буферизацию `ResultSet` у драйвера не требуется.",
               "correct": false,
               "sections": {
-                "what_actually": "Драйвер может буферизовать результат до обхода rows.next.",
-                "source_of_confusion": "Итератор приложения путают с сетевой передачей.",
-                "if_it_were_true": "Тогда любой драйвер имел бы одинаковый memory profile.",
-                "how_it_should_be": "Проверяйте режим курсора и измеряйте память."
+                "what_actually": "Итерация в Java не определяет объём буфера драйвера.",
+                "source_of_confusion": "Курсор приложения путают с сетевым режимом выборки.",
+                "if_it_were_true": "Все JDBC-драйверы потребляли бы одинаково мало памяти.",
+                "how_it_should_be": "Проверьте режим драйвера и измерьте память при большой выборке."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "setFetchSize гарантирует одинаковый серверный курсор у всех JDBC-драйверов, независимо от транзакции, типа запроса и соединения.",
+              "text": "Задайте `setFetchSize(n)` и считайте streaming включённым; настройки драйвера и `auto-commit` на этот режим не влияют.",
               "correct": false,
               "sections": {
-                "what_actually": "JDBC трактует fetchSize как подсказку, детали зависят от драйвера.",
-                "source_of_confusion": "Имя метода читают как обязательную настройку транспорта.",
-                "if_it_were_true": "Тогда документация драйвера не имела бы значения.",
-                "how_it_should_be": "Проверяйте требования конкретного драйвера."
+                "what_actually": "JDBC задаёт fetch size как подсказку; pgJDBC требует выключенный auto-commit для курсорного чтения.",
+                "source_of_confusion": "Имя метода принимают за обязательное поведение транспорта.",
+                "if_it_were_true": "Настройки драйвера и транзакции не влияли бы на сетевой fetch.",
+                "how_it_should_be": "Читайте документацию драйвера и проверяйте фактический режим выборки."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "rows.next обрабатывает строки по одной в Java, но драйвер может буферизовать всё; fetchSize и режим курсора проверяйте отдельно.",
+              "text": "Читайте результат через `rows.next()`; режим загрузки и эффект `setFetchSize(n)` проверьте по документации драйвера и фактическим измерениям.",
               "correct": true,
               "sections": {
-                "explanation": "JDBC API не обещает неизменный режим сетевой выборки.",
-                "example": "Экспорт измеряют по памяти и длительности удержания connection.",
-                "when_to_apply": "Применяйте для больших выборок и экспорта.",
-                "edge_cases": "Медленный downstream удерживает ResultSet и connection.",
-                "related": "Oracle Statement.setFetchSize и ResultSet APIs."
+                "explanation": "JDBC не гарантирует потоковую передачу лишь из-за цикла по ResultSet; fetch size — подсказка.",
+                "example": "Для курсорного режима pgJDBC проверяют положительный fetch size, выключенный auto-commit и forward-only ResultSet; один цикл rows.next этих условий не создаёт.",
+                "when_to_apply": "При больших выборках и экспорте.",
+                "edge_cases": "ResultSet и Statement держат Connection занятым до конца чтения; медленный downstream удлиняет это время.",
+                "related": "[[jdbc-connection-pool-interview#Q2]] время жизни Statement/ResultSet; [[jdbc-connection-pool-interview#Q5]] режим драйвера и большой экспорт."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Закрытие Statement до конца итерации полезно для streaming, поскольку освобождает connection, сохраняя открытый ResultSet.",
+              "text": "Закройте `Statement` после получения буферизированного `ResultSet`; продолжайте `rows.next()`, считая курсор независимым от statement.",
               "correct": false,
               "sections": {
-                "what_actually": "ResultSet зависит от жизненного цикла Statement.",
-                "source_of_confusion": "Желание быстрее вернуть connection нарушает cursor lifecycle.",
-                "if_it_were_true": "Тогда чтение после close всегда было бы возможно.",
-                "how_it_should_be": "Держите ресурсы открытыми до конца обхода."
+                "what_actually": "Закрытие Statement закрывает его ResultSet, поэтому читать дальше нельзя.",
+                "source_of_confusion": "Буферизацию результата путают с независимым жизненным циклом.",
+                "if_it_were_true": "Курсор оставался бы доступен после закрытия создавшего его Statement.",
+                "how_it_should_be": "Держите Statement и ResultSet открытыми до конца обхода."
               },
               "order": 3,
               "label": "D"
@@ -309,50 +309,50 @@
           "question_text": "Как отличить исчерпание пула HikariCP от потерянного соединения?",
           "options": [
             {
-              "text": "При занятых maximumPoolSize getConnection ждёт до connectionTimeout; сравните active/idle/pending и длительность транзакций.",
+              "text": "Таймаут `getConnection()` относится к выдаче из пула; занятость и сбой создания уточняют по метрикам и ошибкам подключения.",
               "correct": true,
               "sections": {
-                "explanation": "Это ожидание ресурса пула, а не автоматически сетевой отказ.",
-                "example": "Высокий pending при active на максимуме укажет на насыщение.",
-                "when_to_apply": "Применяйте при таймаутах выдачи connection.",
-                "edge_cases": "Рост пула без проверки БД может усугубить перегрузку.",
-                "related": "HikariCP configuration README."
+                "explanation": "connectionTimeout ограничивает ожидание выдачи. Таймаут возможен при занятом пуле или при невозможности создать подключение, поэтому к метрикам нужны ошибки создания и контекст сбоя.",
+                "example": "При total=maximumPoolSize и active на максимуме исследуйте удержание, а при total ниже лимита — ошибки создания.",
+                "when_to_apply": "При таймауте получения JDBC Connection из HikariCP.",
+                "edge_cases": "Сбой связи во время SQL отличается от таймаута выдачи; leakDetectionThreshold только сообщает о возможной утечке.",
+                "related": "[[jdbc-connection-pool-interview#Q6]] диагностика HikariCP; [[jdbc-connection-pool-interview#Q2]] возврат выданного Connection."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "connectionTimeout ограничивает длительность каждого SQL-запроса, поэтому его увеличение лечит потерю socket во время запроса.",
+              "text": "После `getConnection()` длительность SQL ограничивает `connectionTimeout`; его увеличение устраняет сетевой обрыв чтения.",
               "correct": false,
               "sections": {
-                "what_actually": "connectionTimeout ограничивает ожидание connection из пула.",
-                "source_of_confusion": "Таймаут получения ресурса путают с query/network timeout.",
-                "if_it_were_true": "Тогда долгий SQL ограничивался бы настройкой пула.",
-                "how_it_should_be": "Разделяйте acquisition, SQL и network errors."
+                "what_actually": "connectionTimeout ограничивает ожидание выдачи Connection из пула, а не длительность SQL на уже выданном соединении. Его увеличение не восстанавливает оборванный канал.",
+                "source_of_confusion": "Получение ресурса путают с исполнением SQL.",
+                "if_it_were_true": "Изменение настройки пула меняло бы таймаут уже выполняемого запроса.",
+                "how_it_should_be": "Разделяйте acquisition, query и network ошибки."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "maxLifetime должен быть дольше server/network limit, чтобы сократить пересоздание, а keepalive проверяет занятые запросами соединения.",
+              "text": "Таймаут `getConnection()` доказывает полную занятость пула; значение `total` ниже лимита не меняет этот вывод.",
               "correct": false,
               "sections": {
-                "what_actually": "Hikari рекомендует maxLifetime короче внешних лимитов; keepalive для idle.",
-                "source_of_confusion": "Настройки срока и проверки применены в неверной фазе.",
-                "if_it_were_true": "Тогда пул выдавал бы уже закрытый сервером connection.",
-                "how_it_should_be": "Согласуйте лимиты и проверьте idle connection."
+                "what_actually": "Таймаут возможен и при проблеме создания соединений, когда total ниже максимума.",
+                "source_of_confusion": "Любой таймаут выдачи приравнивают к занятости active.",
+                "if_it_were_true": "Таймаут выдачи однозначно означал бы занятость всех мест, а проблемы создания соединений исключались бы без проверки логов.",
+                "how_it_should_be": "Сопоставьте active, total и pending с ошибками создания соединений."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "leakDetectionThreshold доказывает настоящую утечку и может сам закрыть зависшее соединение после превышения порога.",
+              "text": "Таймаут `getConnection()` и сообщение `leakDetectionThreshold` доказывают сетевой разрыв; долгое удержание можно исключить.",
               "correct": false,
               "sections": {
-                "what_actually": "Порог лишь логирует долгое удержание, включая легитимный запрос.",
-                "source_of_confusion": "Предупреждение интерпретировано как исправление и доказательство.",
-                "if_it_were_true": "Тогда длительная транзакция автоматически обрывалась бы.",
-                "how_it_should_be": "Ищите стек удержания и метрики пула."
+                "what_actually": "Leak detection сообщает о возможной утечке при долгом удержании Connection. Это не доказательство сетевого разрыва или даже реальной утечки.",
+                "source_of_confusion": "Термин утечка соединения понимают как потерю сетевого канала, а не удержание ресурса кодом приложения.",
+                "if_it_were_true": "Сообщение о долгом удержании само подтверждало бы потерю связи с БД без анализа ошибок и этапа сбоя.",
+                "how_it_should_be": "Разделять acquisition timeout и ошибку SQL, сопоставлять метрики с логами создания и проверять стек удержания."
               },
               "order": 3,
               "label": "D"
