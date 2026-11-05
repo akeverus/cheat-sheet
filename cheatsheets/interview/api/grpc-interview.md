@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[grpc]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-11-05"
 ---
 # Вопросы на собеседовании: `gRPC`
 
@@ -43,76 +43,78 @@ updated: "2026-04-25"
 - [See also](#see-also)
 
 **Основы gRPC**
-- [Q1. (!) Что такое gRPC и какие проблемы он решает?](#q1--что-такое-grpc-и-какие-проблемы-он-решает)
-- [Q2. (!) Что такое Protocol Buffers и зачем они нужны?](#q2--что-такое-protocol-buffers-и-зачем-они-нужны)
-- [Q3. Как определить сервис в `.proto` файле?](#q3-как-определить-сервис-в-proto-файле)
-- [Q4. Как происходит генерация кода из `.proto` файлов в Java?](#q4-как-происходит-генерация-кода-из-proto-файлов-в-java)
-- [Q5. Что такое `Channel` и `Stub` в gRPC?](#q5-что-такое-channel-и-stub-в-grpc)
+- [Q1. Что такое gRPC и какие проблемы он решает?](#q1)
+- [Q2. Что такое Protocol Buffers и зачем они нужны?](#q2)
+- [Q3. Как определить сервис в `.proto` файле?](#q3)
+- [Q4. Как происходит генерация кода из `.proto` файлов в Java?](#q4)
+- [Q5. Что такое `Channel` и `Stub` в gRPC?](#q5)
 
 **Типы RPC вызовов**
-- [Q6. (!) Какие типы RPC поддерживает gRPC?](#q6--какие-типы-rpc-поддерживает-grpc)
-- [Q7. Как реализовать Server Streaming RPC?](#q7-как-реализовать-server-streaming-rpc)
-- [Q8. Как реализовать Client Streaming RPC?](#q8-как-реализовать-client-streaming-rpc)
-- [Q9. Как работает Bidirectional Streaming?](#q9-как-работает-bidirectional-streaming)
+- [Q6. Какие типы RPC поддерживает gRPC?](#q6)
+- [Q7. Как реализовать Server Streaming RPC?](#q7)
+- [Q8. Как реализовать Client Streaming RPC?](#q8)
+- [Q9. Как работает Bidirectional Streaming?](#q9)
 
 **Архитектура и транспорт**
-- [Q10. (!) Почему gRPC использует HTTP/2 и какие преимущества это даёт?](#q10--почему-grpc-использует-http2-и-какие-преимущества-это-даёт)
-- [Q11. Как работает мультиплексирование в HTTP/2 и как gRPC его использует?](#q11-как-работает-мультиплексирование-в-http2-и-как-grpc-его-использует)
-- [Q12. Какова архитектура gRPC приложения?](#q12-какова-архитектура-grpc-приложения)
+- [Q10. Почему gRPC использует HTTP/2 и какие преимущества это даёт?](#q10)
+- [Q11. Как работает мультиплексирование в HTTP/2 и как gRPC его использует?](#q11)
+- [Q12. Какова архитектура gRPC приложения?](#q12)
 
 **Interceptors и Metadata**
-- [Q13. (!) Что такое Interceptors в gRPC и зачем они нужны?](#q13--что-такое-interceptors-в-grpc-и-зачем-они-нужны)
-- [Q14. Что такое Metadata в gRPC?](#q14-что-такое-metadata-в-grpc)
+- [Q13. Что такое Interceptors в gRPC и зачем они нужны?](#q13)
+- [Q14. Что такое Metadata в gRPC?](#q14)
 
 **Обработка ошибок**
-- [Q15. (!) Как устроена обработка ошибок в gRPC?](#q15--как-устроена-обработка-ошибок-в-grpc)
-- [Q16. Какие стандартные Status Codes существуют в gRPC?](#q16-какие-стандартные-status-codes-существуют-в-grpc)
+- [Q15. Как устроена обработка ошибок в gRPC?](#q15)
+- [Q16. Какие стандартные Status Codes существуют в gRPC?](#q16)
 
 **Deadlines, Timeouts и надёжность**
-- [Q17. (!) Как работают Deadlines и Timeouts в gRPC?](#q17--как-работают-deadlines-и-timeouts-в-grpc)
-- [Q18. Как настроить Retry Policy в gRPC?](#q18-как-настроить-retry-policy-в-grpc)
+- [Q17. Как работают Deadlines и Timeouts в gRPC?](#q17)
+- [Q18. Как настроить Retry Policy в gRPC?](#q18)
 
 **Балансировка нагрузки и Service Discovery**
-- [Q19. Какие модели балансировки нагрузки поддерживает gRPC?](#q19-какие-модели-балансировки-нагрузки-поддерживает-grpc)
-- [Q20. Что такое Name Resolver в gRPC?](#q20-что-такое-name-resolver-в-grpc)
+- [Q19. Какие модели балансировки нагрузки поддерживает gRPC?](#q19)
+- [Q20. Что такое Name Resolver в gRPC?](#q20)
 
 **Безопасность**
-- [Q21. (!) Как обеспечить безопасность gRPC-соединений?](#q21--как-обеспечить-безопасность-grpc-соединений)
-- [Q22. Как реализовать аутентификацию в gRPC?](#q22-как-реализовать-аутентификацию-в-grpc)
+- [Q21. Как обеспечить безопасность gRPC-соединений?](#q21)
+- [Q22. Как реализовать аутентификацию в gRPC?](#q22)
 
 **gRPC и Spring Boot**
-- [Q23. (!) Как интегрировать gRPC со Spring Boot?](#q23--как-интегрировать-grpc-со-spring-boot)
-- [Q24. Как тестировать gRPC-сервисы?](#q24-как-тестировать-grpc-сервисы)
+- [Q23. Как интегрировать gRPC со Spring Boot?](#q23)
+- [Q24. Как тестировать gRPC-сервисы?](#q24)
 
 **Health Checking и Reflection**
-- [Q25. Что такое gRPC Health Checking Protocol?](#q25-что-такое-grpc-health-checking-protocol)
-- [Q26. Что такое Server Reflection и зачем она нужна?](#q26-что-такое-server-reflection-и-зачем-она-нужна)
+- [Q25. Что такое gRPC Health Checking Protocol?](#q25)
+- [Q26. Что такое Server Reflection и зачем она нужна?](#q26)
 
 **gRPC-Web и совместимость**
-- [Q27. Что такое gRPC-Web и зачем он нужен?](#q27-что-такое-grpc-web-и-зачем-он-нужен)
+- [Q27. Что такое gRPC-Web и зачем он нужен?](#q27)
 
 **Сравнение и выбор**
-- [Q28. (!) Чем gRPC отличается от REST?](#q28--чем-grpc-отличается-от-rest)
-- [Q29. Как обеспечить обратную совместимость в Protocol Buffers?](#q29-как-обеспечить-обратную-совместимость-в-protocol-buffers)
-- [Q30. Когда стоит использовать gRPC, а когда REST?](#q30-когда-стоит-использовать-grpc-а-когда-rest)
+- [Q28. Чем gRPC отличается от REST?](#q28)
+- [Q29. Как обеспечить обратную совместимость в Protocol Buffers?](#q29)
+- [Q30. Когда стоит использовать gRPC, а когда REST?](#q30)
 
 **Продвинутые темы**
-- [Q31. (!) Как правильно управлять Channel и Stub в долгоживущих приложениях?](#q31--как-правильно-управлять-channel-и-stub-в-долгоживущих-приложениях)
-- [Q32. Какие лучшие практики дизайна proto3 схем нужно знать?](#q32-какие-лучшие-практики-дизайна-proto3-схем-нужно-знать)
-- [Q33. (!) Как организовать observability для gRPC-сервисов?](#q33--как-организовать-observability-для-grpc-сервисов)
+- [Q31. Как правильно управлять Channel и Stub в долгоживущих приложениях?](#q31)
+- [Q32. Какие лучшие практики дизайна proto3 схем нужно знать?](#q32)
+- [Q33. Как организовать observability для gRPC-сервисов?](#q33)
 
 **Экосистема и интеграции**
-- [Q34. Что такое gRPC-Web и как он работает в браузерах?](#q34-что-такое-grpc-web-и-как-он-работает-в-браузерах)
-- [Q35. (!) gRPC vs REST vs GraphQL: сравнение и выбор протокола?](#q35--grpc-vs-rest-vs-graphql-сравнение-и-выбор-протокола)
-- [Q36. Правила backwards compatibility в Protocol Buffers: как эволюционировать схему?](#q36-правила-backwards-compatibility-в-protocol-buffers-как-эволюционировать-схему)
-- [Q37. Как настроить gRPC load balancing в Kubernetes?](#q37-как-настроить-grpc-load-balancing-в-kubernetes)
-- [Q38. Как реализовать retry policy в gRPC через ServiceConfig?](#q38-как-реализовать-retry-policy-в-grpc-через-serviceconfig)
-- [Q39. (!) Как интегрировать gRPC с Spring Boot через grpc-spring-boot-starter?](#q39--как-интегрировать-grpc-с-spring-boot-через-grpc-spring-boot-starter)
-- [Q40. Что такое transcoding gRPC ↔ REST через google.api.http аннотации?](#q40-что-такое-transcoding-grpc--rest-через-googleapihttp-аннотации)
+- [Q34. Что такое gRPC-Web и как он работает в браузерах?](#q34)
+- [Q35. gRPC vs REST vs GraphQL: сравнение и выбор протокола?](#q35)
+- [Q36. Правила backwards compatibility в Protocol Buffers: как эволюционировать схему?](#q36)
+- [Q37. Как настроить gRPC load balancing в Kubernetes?](#q37)
+- [Q38. Как реализовать retry policy в gRPC через ServiceConfig?](#q38)
+- [Q39. Как интегрировать gRPC с Spring Boot через grpc-spring-boot-starter?](#q39)
+- [Q40. Что такое transcoding gRPC ↔ REST через google.api.http аннотации?](#q40)
 
 ---
 
-## Q1. (!) Что такое gRPC и какие проблемы он решает?
+<a id="q1"></a>
+
+## Q1. Что такое gRPC и какие проблемы он решает?
 
 `gRPC` (gRPC Remote Procedure Call) — высокопроизводительный open-source фреймворк удалённых вызовов процедур от Google, переданный в `CNCF`. Идея проста: вы описываете сервис в `.proto`-файле, а вызов удалённого метода выглядит для кода как обычный локальный вызов функции — сериализацию, транспорт и десериализацию gRPC берёт на себя.
 
@@ -139,7 +141,9 @@ updated: "2026-04-25"
 
 **На собеседовании важно подчеркнуть:** gRPC создан под межсервисное взаимодействие внутри микросервисной архитектуры — там, где важны производительность и строгий контракт между командами. А вот для публичных API чаще берут REST: он нативно работает в браузере, а gRPC требует прокси (gRPC-Web) и хуже поддаётся отладке «руками».
 
-## Q2. (!) Что такое Protocol Buffers и зачем они нужны?
+<a id="q2"></a>
+
+## Q2. Что такое Protocol Buffers и зачем они нужны?
 
 `Protocol Buffers` (protobuf) — механизм сериализации структурированных данных от Google, не привязанный к языку или платформе. В gRPC он играет сразу две роли: служит языком описания контракта (IDL — Interface Definition Language) и форматом, в котором данные летят по сети.
 
@@ -199,6 +203,8 @@ message GetUserResponse {
 | `repeated` | `List<T>` | Список элементов |
 | `map<K,V>` | `Map<K,V>` | Словарь |
 
+<a id="q3"></a>
+
 ## Q3. Как определить сервис в `.proto` файле?
 
 Сервис описывается блоком `service` и содержит набор RPC-методов, которые сможет вызывать клиент. Каждый метод задаёт тип запроса и тип ответа, а ключевое слово `stream` превращает любую из сторон в поток. Этот блок — и есть контракт: из него generator создаёт и серверную «заготовку», и клиентские стабы.
@@ -238,6 +244,8 @@ service UserService {
 - `UserServiceGrpc.UserServiceBlockingStub` — синхронный клиентский стаб
 - `UserServiceGrpc.UserServiceStub` — асинхронный клиентский стаб
 - `UserServiceGrpc.UserServiceFutureStub` — стаб на основе `ListenableFuture`
+
+<a id="q4"></a>
 
 ## Q4. Как происходит генерация кода из `.proto` файлов в Java?
 
@@ -290,6 +298,8 @@ User user = User.newBuilder()
     .build();
 ```
 
+<a id="q5"></a>
+
 ## Q5. Что такое `Channel` и `Stub` в gRPC?
 
 Это два слоя клиента, разделённые по ответственности: `Channel` отвечает за «как доставить байты», `Stub` — за «какой метод вызвать».
@@ -336,7 +346,9 @@ channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
 
 **Важно:** `Channel` потокобезопасен и должен переиспользоваться. Создание нового канала на каждый запрос — антипаттерн.
 
-## Q6. (!) Какие типы RPC поддерживает gRPC?
+<a id="q6"></a>
+
+## Q6. Какие типы RPC поддерживает gRPC?
 
 gRPC поддерживает четыре типа вызовов — они отличаются тем, сколько сообщений (одно или поток) передаёт каждая из сторон:
 
@@ -387,6 +399,8 @@ rpc Chat (stream ChatMessage) returns (stream ChatMessage);
 Используется для: чатов, real-time обновлений, двусторонней синхронизации.
 
 **На собеседовании:** часто просят назвать все 4 типа и привести по примеру на каждый. Подчеркните, что любой streaming возможен именно благодаря `HTTP/2`: один stream держит долгий двунаправленный поток фреймов, тогда как в `HTTP/1.1` это потребовало бы хаков вроде long-polling или WebSocket.
+
+<a id="q7"></a>
 
 ## Q7. Как реализовать Server Streaming RPC?
 
@@ -457,6 +471,8 @@ while (prices.hasNext()) {
     System.out.printf("%s: $%.2f%n", price.getSymbol(), price.getPrice());
 }
 ```
+
+<a id="q8"></a>
 
 ## Q8. Как реализовать Client Streaming RPC?
 
@@ -536,6 +552,8 @@ for (int i = 0; i < fileData.length; i += chunkSize) {
 requestObserver.onCompleted();
 ```
 
+<a id="q9"></a>
+
 ## Q9. Как работает Bidirectional Streaming?
 
 В bidirectional streaming обе стороны обмениваются потоками сообщений **независимо** друг от друга, по одному `HTTP/2`-stream. Ключевое слово «независимо»: это не пинг-понг «запрос-ответ-запрос», а два параллельных потока. Сервер не обязан отвечать ровно одним сообщением на каждое клиентское — он может прислать пять ответов на один запрос или вовсе слать данные по своему таймеру. Порядок чтения и записи произвольный.
@@ -577,7 +595,9 @@ public StreamObserver<ChatMessage> chat(
 - Идеально для real-time взаимодействия: чаты, совместное редактирование, игровые сессии
 - Работает поверх одного `HTTP/2` stream
 
-## Q10. (!) Почему gRPC использует HTTP/2 и какие преимущества это даёт?
+<a id="q10"></a>
+
+## Q10. Почему gRPC использует HTTP/2 и какие преимущества это даёт?
 
 `HTTP/2` — фундамент производительности gRPC: именно его возможности дают и параллелизм, и streaming, и экономию на заголовках. Разберём по пунктам, что конкретно он приносит.
 
@@ -616,6 +636,8 @@ graph LR
 - Latency: до 7-10x ниже в high-throughput сценариях
 - Пропускная способность: значительно выше при множественных параллельных вызовах
 
+<a id="q11"></a>
+
 ## Q11. Как работает мультиплексирование в HTTP/2 и как gRPC его использует?
 
 Мультиплексирование — это разделение одного TCP-соединения на множество независимых логических потоков (**stream**). Каждый stream — это самостоятельный двунаправленный канал фреймов со своим идентификатором, и фреймы разных stream-ов свободно перемежаются в одном соединении. gRPC ложится на эту модель буквально один-в-один: один RPC = один stream.
@@ -639,6 +661,8 @@ ManagedChannel channel = ManagedChannelBuilder
 ```
 
 **Важно:** хотя head-of-line blocking отсутствует на уровне HTTP/2, он остаётся на уровне TCP. При потере пакета все stream-ы в одном соединении ждут ретрансмиссии. Это одна из мотиваций для `HTTP/3` (QUIC).
+
+<a id="q12"></a>
 
 ## Q12. Какова архитектура gRPC приложения?
 
@@ -675,7 +699,9 @@ graph TB
 6. **`StreamObserver`** — callback-интерфейс для обработки потоковых сообщений
 7. **Сериализатор** — protobuf marshalling/unmarshalling
 
-## Q13. (!) Что такое Interceptors в gRPC и зачем они нужны?
+<a id="q13"></a>
+
+## Q13. Что такое Interceptors в gRPC и зачем они нужны?
 
 `Interceptors` — это middleware, которое вклинивается в RPC-вызов до и после бизнес-логики, чтобы добавить сквозную функциональность (логирование, метрики, аутентификацию) в одном месте, а не дублировать её в каждом методе. Прямой аналог — `Servlet Filter` или перехватчики `Spring MVC`. Логика та же: цепочка обёрток вокруг вызова, каждая может что-то сделать с запросом/ответом и передать управление дальше через `next`.
 
@@ -752,6 +778,8 @@ ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9090)
 
 **Типичные применения:** логирование, метрики, аутентификация, трассировка, валидация, rate limiting.
 
+<a id="q14"></a>
+
 ## Q14. Что такое Metadata в gRPC?
 
 `Metadata` — это пары ключ-значение, которые едут рядом с RPC-вызовом, но не входят в само тело сообщения. Прямой аналог — HTTP-заголовки. Смысл разделения тот же: бизнес-данные кладут в message, а служебную информацию (токен авторизации, trace-id, версию клиента) — в metadata, чтобы её можно было читать в интерсепторах, не разбирая payload.
@@ -785,7 +813,9 @@ String traceId = headers.get(TRACE_ID_KEY);
 
 Metadata активно используется для передачи trace-id (distributed tracing), токенов аутентификации, информации о пользователе и других cross-cutting данных. Доступ к metadata осуществляется через `Interceptors`, подробнее в [вопросах по HTTP и REST](http-rest-interview.md).
 
-## Q15. (!) Как устроена обработка ошибок в gRPC?
+<a id="q15"></a>
+
+## Q15. Как устроена обработка ошибок в gRPC?
 
 В gRPC ошибка — это не исключение в привычном смысле, а объект `Status`: числовой **код** из фиксированного набора плюс опциональное текстовое **описание**. Сервер не «бросает» ошибку клиенту произвольно, а завершает вызов конкретным статусом через `responseObserver.onError(...)`. На клиенте этот статус прилетает как `StatusRuntimeException`.
 
@@ -857,6 +887,8 @@ try {
 }
 ```
 
+<a id="q16"></a>
+
 ## Q16. Какие стандартные Status Codes существуют в gRPC?
 
 gRPC определяет 17 стандартных кодов в `io.grpc.Status.Code` — единый словарь ошибок для всех языков. Знать их полезно не для зубрёжки, а чтобы корректно реагировать на клиенте: одни коды стоит ретраить, другие — нет (см. Q18). Ниже — полный список с HTTP-аналогами для интуиции:
@@ -883,7 +915,9 @@ gRPC определяет 17 стандартных кодов в `io.grpc.Statu
 
 **Частая ошибка на собеседовании:** путают `UNAUTHENTICATED` (нет токена / невалидный токен) и `PERMISSION_DENIED` (токен валиден, но прав недостаточно).
 
-## Q17. (!) Как работают Deadlines и Timeouts в gRPC?
+<a id="q17"></a>
+
+## Q17. Как работают Deadlines и Timeouts в gRPC?
 
 `Deadline` — это абсолютная точка во времени («не позже 12:00:05»), после которой RPC считается провалившимся со статусом `DEADLINE_EXCEEDED`. Главное отличие от обычного timeout — в природе значения. Timeout относителен («ждать 5 секунд») и каждый сервис в цепочке отсчитывает его заново. Deadline абсолютен, поэтому **пропагируется** по всей цепочке вызовов: если сервис A с дедлайном 5 с уже потратил 0.2 с и зовёт сервис B, тот получает не свежие 5 с, а оставшиеся 4.8 с. Это защищает от ситуации, когда суммарное время по цепочке неконтролируемо растёт.
 
@@ -946,44 +980,22 @@ sequenceDiagram
 - Deadline пропагируется автоматически, но полагаться на это можно лишь внутри gRPC: на границе с не-gRPC-вызовами (БД, HTTP) дедлайн нужно конвертировать в их собственные таймауты вручную.
 - На сервере перед дорогими операциями проверяйте `Context.current().isCancelled()` — нет смысла начинать работу, если клиент уже не ждёт ответа.
 
+<a id="q18"></a>
+
 ## Q18. Как настроить Retry Policy в gRPC?
 
-gRPC умеет повторять неудавшиеся вызовы сам, без кода в бизнес-логике — это настраивается декларативно через ServiceConfig на уровне канала. Вы описываете политику (сколько попыток, какой backoff, на какие коды реагировать), и gRPC применяет её прозрачно. Главное — не забыть `enableRetry()` при сборке канала, иначе конфиг проигнорируется.
+gRPC поддерживает прозрачный retry для ограниченных случаев, когда серверное приложение ещё не обработало вызов. Подсистема повторов включена по умолчанию, но **retry policy по умолчанию нет**. Политику для более широких повторов задают через ServiceConfig: число попыток, задержки и коды статуса.
 
-```java
-// Программная настройка retry policy
-Map<String, Object> retryPolicy = new HashMap<>();
-retryPolicy.put("maxAttempts", 3D);
-retryPolicy.put("initialBackoff", "0.5s");
-retryPolicy.put("maxBackoff", "5s");
-retryPolicy.put("backoffMultiplier", 2D);
-retryPolicy.put("retryableStatusCodes",
-    List.of("UNAVAILABLE", "DEADLINE_EXCEEDED"));
-
-Map<String, Object> methodConfig = Map.of(
-    "name", List.of(Map.of(
-        "service", "com.example.grpc.UserService"
-    )),
-    "retryPolicy", retryPolicy
-);
-
-Map<String, Object> serviceConfig = Map.of(
-    "methodConfig", List.of(methodConfig)
-);
-
-ManagedChannel channel = ManagedChannelBuilder
-    .forAddress("localhost", 9090)
-    .defaultServiceConfig(serviceConfig)
-    .enableRetry()
-    .build();
+```json
+{"methodConfig":[{"name":[{"service":"example.UserService","method":"GetUser"}],"retryPolicy":{"maxAttempts":3,"initialBackoff":"0.1s","maxBackoff":"1s","backoffMultiplier":2,"retryableStatusCodes":["UNAVAILABLE"]}}]}
 ```
 
-**Какие вызовы ретраить безопасно.** Главный критерий — идемпотентность: повтор не должен навредить, если первая попытка на самом деле дошла до сервера.
-- `UNAVAILABLE` — сервер временно недоступен, повтор почти всегда безопасен.
-- `DEADLINE_EXCEEDED` — ретраить только если операция идемпотентна: запрос мог успеть выполниться на сервере, а ответ не дойти.
-- **Не ретраить:** `INVALID_ARGUMENT`, `NOT_FOUND`, `ALREADY_EXISTS` — повтор тех же данных даст тот же результат, это лишняя нагрузка.
+Перед включением повтора проверьте идемпотентность операции и риск повторного эффекта. В grpc-java `enableRetry()` существует, но включать подсистему отдельным вызовом обычно не требуется; `disableRetry()` её отключает. Для ServiceConfig и default конфигурации см. Q38.
 
-**Hedging** — альтернатива retry: вместо «ждём ошибку, потом повторяем» отправляем несколько копий запроса параллельно (или с малой задержкой) и берём первый успешный ответ. Так срезается «хвост» латентности от единичного медленного сервера. Цена — лишняя нагрузка, поэтому подходит только для идемпотентных read-запросов с жёсткими требованиями к latency.
+---
+
+
+<a id="q19"></a>
 
 ## Q19. Какие модели балансировки нагрузки поддерживает gRPC?
 
@@ -1020,6 +1032,8 @@ graph LR
 ```
 
 **Нюанс с gRPC и L4 балансировщиками:** обычные TCP-балансировщики (L4) распределяют только *соединения*, а не отдельные RPC. Поскольку gRPC мультиплексирует вызовы в одном соединении, все вызовы попадут на один backend. Нужен L7-балансировщик (Envoy, Istio) или client-side балансировка.
+
+<a id="q20"></a>
 
 ## Q20. Что такое Name Resolver в gRPC?
 
@@ -1058,41 +1072,18 @@ public class ConsulNameResolverProvider extends NameResolverProvider {
 
 В [вопросах по микросервисам](../architecture/microservices-interview.md) рассматривается service discovery более детально.
 
-## Q21. (!) Как обеспечить безопасность gRPC-соединений?
+<a id="q21"></a>
 
-Безопасность gRPC раскладывается на два уровня: шифрование канала (TLS — кто кого слышит) и аутентификация вызова (кто звонит, см. Q22). На транспортном уровне gRPC поддерживает TLS из коробки и в Java-клиенте включает его по умолчанию — отключить шифрование нужно явным `usePlaintext()`.
+## Q21. Как обеспечить безопасность gRPC-соединений?
 
-**TLS-шифрование:**
+Безопасность gRPC состоит из защиты канала и проверки полномочий вызова. TLS подтверждает сервер и шифрует трафик; mTLS дополнительно проверяет клиентский сертификат. Токен и права на конкретный RPC проверяют отдельно, обычно через call credentials и серверный interceptor.
 
-```java
-// Сервер с TLS
-Server server = ServerBuilder.forPort(443)
-    .useTransportSecurity(
-        new File("server.crt"),
-        new File("server.key"))
-    .addService(new UserServiceImpl())
-    .build();
+В grpc-java стандартный channel builder ориентирован на TLS, а `usePlaintext()` явно задаёт незашифрованное соединение. Это не означает, что любой gRPC сервер уже настроен безопасно: клиент и сервер должны согласовать сертификаты и транспорт. В тестах и локальных сценариях настройки могут отличаться.
 
-// Клиент с TLS
-ManagedChannel channel = ManagedChannelBuilder
-    .forAddress("service.example.com", 443)
-    // TLS включён по умолчанию, usePlaintext() выключает
-    .build();
+---
 
-// Клиент с кастомным CA (mTLS)
-ManagedChannel channel = NettyChannelBuilder
-    .forAddress("service.example.com", 443)
-    .sslContext(GrpcSslContexts.forClient()
-        .trustManager(new File("ca.crt"))
-        .keyManager(new File("client.crt"), new File("client.key"))
-        .build())
-    .build();
-```
 
-**Mutual TLS (mTLS):**
-Обе стороны предъявляют сертификаты. Стандарт в service mesh (Istio автоматически настраивает mTLS между сервисами).
-
-**Важно:** `usePlaintext()` допустим только для локальной разработки. В production всегда используйте TLS. Подробнее о безопасности в [вопросах по безопасности приложений](../security/application-security-interview.md).
+<a id="q22"></a>
 
 ## Q22. Как реализовать аутентификацию в gRPC?
 
@@ -1162,7 +1153,9 @@ public class JwtServerInterceptor implements ServerInterceptor {
 
 Подробнее про паттерны аутентификации — в [вопросах по аутентификации и авторизации](../security/authentication-authorization-patterns-interview.md) и [OAuth2](../security/oauth2-interview.md).
 
-## Q23. (!) Как интегрировать gRPC со Spring Boot?
+<a id="q23"></a>
+
+## Q23. Как интегрировать gRPC со Spring Boot?
 
 Голый gRPC ничего не знает о Spring: сервер и каналы пришлось бы поднимать руками и связывать с бинами самому. Стартеры снимают эту рутину — поднимают gRPC-сервер как часть жизненного цикла приложения, регистрируют сервисы и стабы через DI по аннотациям. Есть два основных подхода:
 
@@ -1242,99 +1235,18 @@ dependencies {
 
 Подробнее об экосистеме Spring — в [вопросах по Spring Boot](../frameworks/spring/spring-boot-interview.md).
 
+<a id="q24"></a>
+
 ## Q24. Как тестировать gRPC-сервисы?
 
-Главный приём — не поднимать реальный сетевой сервер. gRPC даёт in-process транспорт (`InProcessServerBuilder` / `InProcessChannelBuilder`): сервер и клиент общаются внутри одной JVM без сокетов, портов и TLS. Тесты получаются быстрыми и детерминированными, но при этом проходят весь настоящий gRPC-стек — сериализацию, интерсепторы, маппинг статусов, — а не зовут метод напрямую. Зависимости (репозитории и т.п.) при этом мокаются как обычно.
+Для быстрого теста RPC в Java можно создать `InProcessServerBuilder` и `InProcessChannelBuilder` с одним именем. Клиент вызывает настоящий stub, сервер проходит через gRPC обработчик, а сокет и порт не нужны. Такой тест полезен для контрактов, статусов и интерсепторов.
 
-**1. In-process тестирование (без сети):**
+In-process транспорт не заменяет сетевой интеграционный тест: он не доказывает работу TLS, маршрутизацию, HTTP/2 фрейминг и ограничения реального соединения. Эти свойства проверяют отдельным тестом с сетевым сервером.
 
-```java
-@ExtendWith(MockitoExtension.class)
-class UserGrpcServiceTest {
+---
 
-    @Mock
-    private UserRepository userRepository;
 
-    private InProcessServer inProcessServer;
-    private ManagedChannel channel;
-    private UserServiceGrpc.UserServiceBlockingStub stub;
-
-    @BeforeEach
-    void setUp() throws Exception {
-        String serverName = InProcessServerBuilder.generateName();
-
-        inProcessServer = InProcessServerBuilder
-            .forName(serverName)
-            .directExecutor()
-            .addService(new UserGrpcService(userRepository))
-            .build()
-            .start();
-
-        channel = InProcessChannelBuilder
-            .forName(serverName)
-            .directExecutor()
-            .build();
-
-        stub = UserServiceGrpc.newBlockingStub(channel);
-    }
-
-    @AfterEach
-    void tearDown() {
-        channel.shutdown();
-        inProcessServer.shutdown();
-    }
-
-    @Test
-    void shouldReturnUser() {
-        when(userRepository.findById(1L))
-            .thenReturn(Optional.of(new User(1L, "Test")));
-
-        GetUserResponse response = stub.getUser(
-            GetUserRequest.newBuilder().setId(1L).build());
-
-        assertThat(response.getUser().getName()).isEqualTo("Test");
-    }
-
-    @Test
-    void shouldReturnNotFoundForMissingUser() {
-        when(userRepository.findById(99L))
-            .thenReturn(Optional.empty());
-
-        StatusRuntimeException ex = assertThrows(
-            StatusRuntimeException.class,
-            () -> stub.getUser(
-                GetUserRequest.newBuilder().setId(99L).build()));
-
-        assertThat(ex.getStatus().getCode())
-            .isEqualTo(Status.Code.NOT_FOUND);
-    }
-}
-```
-
-**2. `GrpcCleanupRule` (JUnit 4) / расширение для управления ресурсами:**
-
-```java
-@RegisterExtension
-static final GrpcCleanupExtension grpcCleanup = new GrpcCleanupExtension();
-```
-
-**3. Интеграционные тесты с Spring Boot Test:**
-
-```java
-@SpringBootTest(properties = "grpc.server.port=0")
-class UserGrpcServiceIntegrationTest {
-
-    @GrpcClient("inProcess")
-    private UserServiceGrpc.UserServiceBlockingStub stub;
-
-    @Test
-    void shouldCreateAndGetUser() {
-        // полный интеграционный тест с реальной БД
-    }
-}
-```
-
-Подробнее о стратегиях тестирования — в [вопросах по интеграционному тестированию](../testing/integration-testing-interview.md) и [модульному тестированию](../testing/unit-testing-interview.md).
+<a id="q25"></a>
 
 ## Q25. Что такое gRPC Health Checking Protocol?
 
@@ -1399,6 +1311,8 @@ readinessProbe:
 
 Подробнее о health checking и мониторинге — в [вопросах по observability](../monitoring/observability-interview.md) и [Kubernetes](../devops/kubernetes-interview.md).
 
+<a id="q26"></a>
+
 ## Q26. Что такое Server Reflection и зачем она нужна?
 
 `Server Reflection` — это сервис, через который сам сервер отдаёт описание своих сервисов, методов и сообщений в рантайме. Зачем он нужен: обычно клиенту для вызова gRPC требуется сгенерированный из `.proto` код, но инструменты вроде `grpcurl` или API gateway этого кода не имеют. Reflection решает проблему — клиент спрашивает у сервера «что ты умеешь» и формирует запрос на лету. По роли это аналог Swagger/OpenAPI для REST: машиночитаемое самоописание API.
@@ -1436,226 +1350,70 @@ grpcurl -plaintext -d '{"id": 1}' \
 
 **В production:** reflection обычно включают только на dev/staging или ограничивают доступ. На production он может раскрыть внутреннюю структуру API.
 
+<a id="q27"></a>
+
 ## Q27. Что такое gRPC-Web и зачем он нужен?
 
-`gRPC-Web` — протокол-адаптер, чтобы gRPC-сервисы можно было звать прямо из браузера. Причина, по которой нужен адаптер, конкретна: gRPC опирается на тонкое управление `HTTP/2`-фреймами и trailing metadata, а браузерные API (`fetch`/`XHR`) такого доступа не дают. Поэтому браузер говорит на упрощённом `gRPC-Web` поверх HTTP/1.1, а прокси (обычно Envoy) переводит это в полноценный gRPC к backend.
+gRPC-Web даёт браузерному коду доступ к gRPC сервису через адаптированный формат. Обычно браузер обращается к прокси, например Envoy, который переводит запрос в обычный gRPC; некоторые серверы могут понимать gRPC-Web напрямую.
 
-**Архитектура:**
+Классический gRPC-Web поддерживает unary и server streaming. Client streaming и bidirectional streaming через него недоступны. Контракт `.proto` остаётся общим, но клиентский код и транспорт отличаются от обычного gRPC Java.
 
-```mermaid
-graph LR
-    Browser[Браузер / JS] -->|gRPC-Web / HTTP/1.1| Proxy[Envoy Proxy]
-    Proxy -->|gRPC / HTTP/2| Server[gRPC Server]
-```
+---
 
-**Ограничения gRPC-Web:**
-- Поддерживает только Unary и Server Streaming RPC
-- Client Streaming и Bidirectional Streaming **не поддерживаются**
-- Требует прокси (Envoy, grpc-web-proxy) для трансляции протокола
-- Альтернатива: использовать REST gateway (`grpc-gateway`) для публичных API
 
-**Когда использовать gRPC-Web:**
-- Единый `.proto` контракт для backend и frontend
-- Типобезопасный клиент в TypeScript/JavaScript
-- Когда нужна производительность protobuf для frontend
+<a id="q28"></a>
 
-**Когда лучше REST:** публичные API, интеграция с третьими сторонами, простые CRUD-операции — здесь REST проще и имеет лучшую поддержку. Подробнее в [вопросах по HTTP и REST](http-rest-interview.md).
+## Q28. Чем gRPC отличается от REST?
 
-## Q28. (!) Чем gRPC отличается от REST?
+gRPC обычно описывает методы и сообщения в `.proto`, генерирует клиентский код и передаёт бинарные сообщения по HTTP/2. REST организует HTTP API вокруг ресурсов и методов HTTP. REST не требует JSON: представление и схема выбираются контрактом сервиса.
 
-Коротко: gRPC — это бинарный RPC поверх `HTTP/2` со строгим контрактом и кодогенерацией, а REST — текстовый ресурс-ориентированный стиль поверх обычного HTTP. Отсюда и весь набор различий — производительность, типобезопасность, streaming против человекочитаемости, браузерной поддержки и простоты отладки. Детали по критериям:
+Сравнивайте конкретные требования: браузерных клиентов, потоковую передачу, кэширование, нагрузку и опыт команды. gRPC удобен для типизированных RPC и потоков; ресурсный HTTP API часто проще для внешних интеграций. Протоколы могут сосуществовать в одной системе.
 
-| Критерий | gRPC | REST |
-|----------|------|------|
-| **Протокол** | `HTTP/2` | `HTTP/1.1` (реже HTTP/2) |
-| **Формат данных** | `Protocol Buffers` (бинарный) | JSON / XML (текстовый) |
-| **Контракт** | `.proto` файл (строгий) | OpenAPI / Swagger (опциональный) |
-| **Генерация кода** | Автоматическая (стабы) | Вручную или через codegen |
-| **Streaming** | 4 типа (включая bidirectional) | Ограниченный (SSE, WebSocket) |
-| **Браузерная поддержка** | Требует gRPC-Web + прокси | Нативная |
-| **Человекочитаемость** | Нет (бинарный формат) | Да (JSON) |
-| **Tooling** | `grpcurl`, Postman (ограниченно) | curl, Postman, браузер |
-| **Производительность** | Высокая (до 10x быстрее) | Средняя |
-| **Deadline propagation** | Встроена | Ручная реализация |
-| **Балансировка** | L7 (Envoy) или client-side | L4/L7 (любой) |
+---
 
-**Когда gRPC лучше:**
-- Межсервисное взаимодействие в микросервисах
-- Высокие требования к latency и throughput
-- Polyglot-среда (много языков)
-- Streaming сценарии
-- Строгий контракт обязателен
 
-**Когда REST лучше:**
-- Публичные API для внешних потребителей
-- Браузерные клиенты
-- Простые CRUD-операции
-- Отладка и интроспекция важнее производительности
-- Команда не готова к protobuf
-
-**Комбинированный подход (часто на практике):**
-gRPC для внутренних микросервисов + REST gateway (через `grpc-gateway` или API Gateway) для внешних клиентов.
+<a id="q29"></a>
 
 ## Q29. Как обеспечить обратную совместимость в Protocol Buffers?
 
-Вся совместимость protobuf держится на одном факте: в бинарный поток пишется **номер** поля, а не его имя. Поэтому имя можно менять свободно, а номер — никогда. Из этого выводятся все правила ниже.
+В бинарном protobuf номер поля входит в wire format, поэтому опубликованный номер не меняют и не используют повторно. Новые поля добавляют под новыми номерами. После удаления поля резервируют и номер, и имя.
 
-**Безопасные изменения (backward compatible):**
-- Добавление нового поля (с новым номером)
-- Удаление поля (номер не переиспользуется!)
-- Переименование поля (номер не меняется — именно он используется при сериализации)
-- Добавление нового RPC-метода в сервис
-- Добавление нового значения в `enum`
-
-**Ломающие изменения (НЕЛЬЗЯ делать):**
-- Изменение номера существующего поля
-- Изменение типа поля (например, `int32` → `string`)
-- Переиспользование удалённого номера поля
-- Удаление или переименование сервиса/метода (ломает клиентов)
-
-**Защита от переиспользования номеров:**
-
-```protobuf
+```proto
 message User {
-  int64 id = 1;
-  string name = 2;
-  // string old_field = 3;  // удалено
-  reserved 3;               // запрещаем переиспользование
-  reserved "old_field";     // запрещаем переиспользование имени
-
-  string email = 4;
+  reserved 4;
+  reserved "old_name";
+  string name = 1;
 }
 ```
 
-**Рекомендации:**
-- После удаления поля сразу резервируйте его номер и имя через `reserved` — это страховка от того, что коллега через год переиспользует номер и тихо испортит данные.
-- Никогда не меняйте номера полей.
-- Новые «обязательные» данные добавляйте как `optional` с осмысленным дефолтом: старые клиенты их не пришлют, и сервер должен корректно работать с дефолтным значением.
-- Несовместимые изменения делайте через версию пакета (`com.example.v1` → `com.example.v2`), а не правкой существующей схемы.
+Переименование поля при прежнем номере не меняет бинарный tag, но меняет сгенерированный API и может сломать ProtoJSON или TextProto. Тип поля, oneof, repeated и новые значения enum тоже оценивают по реальным старым клиентам. Несовместимые изменения выносят в новый контракт.
+
+---
+
+
+<a id="q30"></a>
 
 ## Q30. Когда стоит использовать gRPC, а когда REST?
 
-Простое правило: gRPC — для внутреннего трафика, где вы контролируете обе стороны и важна эффективность; REST — для внешних границ, где важны доступность из браузера, простота и интеграция с кем угодно. Граница проходит примерно по линии «внутри кластера / наружу».
+gRPC часто выбирают для типизированных межсервисных вызовов, потоков и клиентов с согласованным `.proto` контрактом. REST удобен для ресурсных HTTP API и интеграций, где важны обычные адреса, методы и HTTP-кэширование.
 
-**Используйте gRPC когда:**
-- Микросервисная архитектура с интенсивным межсервисным общением
-- Критически важна производительность (финтех, игры, real-time системы)
-- Нужен streaming (уведомления, потоковые данные, чат)
-- Polyglot-среда: команды пишут на разных языках и нужен единый контракт
-- Внутренние API с контролируемыми клиентами
+Граница «внутри кластера — gRPC, снаружи — REST» полезна как частый сценарий, но не правило. Публичный gRPC API возможен, а внутренний REST API бывает проще. Решение зависит от клиентов, сетевой среды и стоимости поддержки.
 
-**Используйте REST когда:**
-- Публичный API для внешних потребителей
-- Веб-приложения с браузерными клиентами
-- Простые CRUD-операции без streaming
-- Необходимость быстрой отладки через curl/Postman
-- Команда не имеет опыта с protobuf/gRPC
+---
 
-**Гибридный подход (рекомендация):**
 
-```mermaid
-graph TB
-    EXT[Внешние клиенты / Браузер] -->|REST / JSON| GW[API Gateway]
-    GW -->|gRPC| SVC1[User Service]
-    GW -->|gRPC| SVC2[Order Service]
-    SVC1 -->|gRPC| SVC3[Notification Service]
-    SVC2 -->|gRPC| SVC3
-    SVC2 -->|gRPC| SVC4[Payment Service]
-```
+<a id="q31"></a>
 
-На практике часто используют `grpc-gateway` — reverse-proxy, автоматически генерирующий REST API из `.proto` файлов:
+## Q31. Как правильно управлять Channel и Stub в долгоживущих приложениях?
 
-```protobuf
-import "google/api/annotations.proto";
+`ManagedChannel` обычно создают как долгоживущий объект для конкретного target, используют повторно и закрывают при остановке приложения. Создавать его на каждый RPC дорого. Несколько лёгких stub можно построить поверх одного канала и настроить для них разные deadlines и credentials.
 
-service UserService {
-  rpc GetUser (GetUserRequest) returns (GetUserResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/users/{id}"
-    };
-  }
-}
-```
+Не обязательно держать ровно один канал на всё приложение: разные сервисы, политики балансировки и нагрузка могут требовать нескольких. Deadline задают на stub или отдельный вызов. Keepalive без активных вызовов доступен настройкой канала, но его используют с учётом политики сервера.
 
-Это позволяет предоставлять один и тот же сервис и через gRPC (для внутренних потребителей), и через REST (для внешних).
+---
 
-## Q31. (!) Как правильно управлять Channel и Stub в долгоживущих приложениях?
 
-**`ManagedChannel`** — долгоживущий объект, представляющий пул соединений к gRPC-серверу. Создавать `Channel` на каждый запрос — антипаттерн: это дорого (TLS handshake, HTTP/2 connection setup).
-
-**Правила управления Channel:**
-
-```java
-// ПРАВИЛЬНО: Channel как singleton bean
-@Configuration
-public class GrpcClientConfig {
-
-    @Bean(destroyMethod = "shutdown")
-    public ManagedChannel userServiceChannel() {
-        return ManagedChannelBuilder
-            .forAddress("user-service", 9090)
-            .keepAliveTime(30, TimeUnit.SECONDS)        // keepalive для долгих соединений
-            .keepAliveTimeout(5, TimeUnit.SECONDS)
-            .keepAliveWithoutCalls(true)                // keepalive даже без активных RPC
-            .maxInboundMessageSize(10 * 1024 * 1024)    // 10MB
-            .usePlaintext()  // или useTransportSecurity() для TLS
-            .build();
-    }
-
-    @Bean
-    public UserServiceGrpc.UserServiceBlockingStub userServiceStub(
-            ManagedChannel userServiceChannel) {
-        // Blocking stub — для синхронных вызовов
-        return UserServiceGrpc.newBlockingStub(userServiceChannel)
-            .withDeadlineAfter(5, TimeUnit.SECONDS);  // default deadline
-    }
-
-    @Bean
-    public UserServiceGrpc.UserServiceFutureStub userServiceFutureStub(
-            ManagedChannel userServiceChannel) {
-        // Future stub — для async вызовов (ListenableFuture)
-        return UserServiceGrpc.newFutureStub(userServiceChannel);
-    }
-}
-```
-
-**НЕПРАВИЛЬНО — создание Channel на каждый запрос:**
-
-```java
-// НЕ ДЕЛАЙТЕ ТАК — каждый вызов создаёт новое TCP + TLS соединение
-public UserResponse getUser(long userId) {
-    ManagedChannel channel = ManagedChannelBuilder    // АНТИПАТТЕРН
-        .forAddress("user-service", 9090).build();
-    try {
-        return UserServiceGrpc.newBlockingStub(channel).getUser(...);
-    } finally {
-        channel.shutdown();  // и тут же убиваем
-    }
-}
-```
-
-**Типы Stub:**
-
-| Stub | Применение | Потокобезопасность |
-|------|-----------|-------------------|
-| `BlockingStub` | Синхронные вызовы | Да (stateless) |
-| `FutureStub` | Async через `ListenableFuture` | Да |
-| `AsyncStub` | Streaming, обратные вызовы | Да |
-
-**Переопределение deadline per-call (от default):**
-
-```java
-@Service
-public class UserServiceClient {
-    private final UserServiceGrpc.UserServiceBlockingStub stub;
-
-    public UserResponse getUser(long userId) {
-        return stub
-            .withDeadlineAfter(2, TimeUnit.SECONDS)  // переопределяем для конкретного вызова
-            .getUser(GetUserRequest.newBuilder().setId(userId).build());
-    }
-}
-```
+<a id="q32"></a>
 
 ## Q32. Какие лучшие практики дизайна proto3 схем нужно знать?
 
@@ -1715,7 +1473,7 @@ message Order {
     BankTransfer transfer = 7;
   }
 
-  reserved 8, 9;  // зарезервированы для будущих полей оплаты
+  reserved 8, 9;  // номера удалённых полей: повторно использовать нельзя
 }
 
 enum OrderStatus {
@@ -1739,456 +1497,95 @@ protos/
     address.proto
 ```
 
-**Версионирование API через пакет:** `/v1/`, `/v2/` — гарантирует что клиенты разных версий не конфликтуют.
+**Версионирование API через пакет:** `com.example.orders.v1` и `com.example.orders.v2` дают отдельные имена сервисов и сообщений; совместимость и маршрутизацию всё равно проверяют.
 
-## Q33. (!) Как организовать observability для gRPC-сервисов?
+<a id="q33"></a>
 
-Главная проблема observability в gRPC: трафик бинарный и идёт по `HTTP/2`, поэтому обычные HTTP-инструменты (логи nginx, метрики по URL-путям) его толком не видят. Решение — снимать сигналы изнутри самого gRPC через интерсепторы. Три классических столпа настраиваются так: метрики (RPS, доля ошибок, latency по методам) — обычно через готовую интеграцию со стартером и Micrometer; распределённый трейсинг — через OpenTelemetry-интерсептор, который пробрасывает контекст в metadata; логирование — через серверный интерсептор, фиксирующий метод, статус и длительность каждого вызова.
+## Q33. Как организовать observability для gRPC-сервисов?
 
-**Метрики через Micrometer + gRPC-Spring-Boot-Starter:**
+Для наблюдаемости gRPC нужны RPC-aware сигналы: метод, статус, длительность, размер сообщений и число попыток. Обычные метрики прокси по HTTP-пути не дают этой картины при бинарном трафике и общем соединении HTTP/2.
 
-```xml
-<dependency>
-    <groupId>net.devh</groupId>
-    <artifactId>grpc-server-spring-boot-starter</artifactId>
-</dependency>
-<!-- Автоматически экспортирует gRPC метрики в Micrometer -->
-```
+gRPC поддерживает OpenTelemetry-метрики, включая `grpc.client.call.duration` и `grpc.server.call.duration`. Интеграция со Spring или Micrometer зависит от выбранного стартера и версии. Interceptors полезны для прикладных логов и дополнительного контекста, но не являются единственным способом получить метрики и трассировку.
 
-**Ключевые метрики gRPC (Prometheus):**
+Передавайте trace context через metadata. В логах фиксируйте метод, gRPC status, длительность и идентификатор трассы без токенов и тела чувствительных сообщений. Пороговые значения SLO выбирают по измеренной нагрузке сервиса, а не по универсальным числам.
 
-```promql
-# RPS по методам
-sum(rate(grpc_server_handled_total[1m])) by (grpc_method, grpc_code)
 
-# Процент ошибок
-sum(rate(grpc_server_handled_total{grpc_code!="OK"}[5m]))
-/ sum(rate(grpc_server_handled_total[5m])) * 100
-
-# p99 latency
-histogram_quantile(0.99,
-  sum(rate(grpc_server_handling_seconds_bucket[5m])) by (le, grpc_method)
-)
-
-# Активные streaming-вызовы
-grpc_server_started_total - grpc_server_handled_total
-```
-
-**Distributed tracing через OpenTelemetry Interceptor:**
-
-```java
-@Configuration
-public class GrpcTracingConfig {
-
-    @Bean
-    public GlobalServerInterceptorConfigurer tracingInterceptor(Tracer tracer) {
-        return registry -> registry.addLastClientInterceptors(
-            new OpenTelemetryClientInterceptor(tracer)
-        );
-    }
-}
-```
-
-**Логирование gRPC-вызовов через Interceptor:**
-
-```java
-@GrpcGlobalInterceptor
-public class LoggingServerInterceptor implements ServerInterceptor {
-
-    @Override
-    public <Req, Resp> ServerCall.Listener<Req> interceptCall(
-            ServerCall<Req, Resp> call,
-            Metadata headers,
-            ServerCallHandler<Req, Resp> next) {
-
-        String method = call.getMethodDescriptor().getFullMethodName();
-        String traceId = headers.get(
-            Metadata.Key.of("traceparent", Metadata.ASCII_STRING_MARSHALLER));
-        long startNanos = System.nanoTime();
-
-        return new ForwardingServerCallListener.SimpleForwardingServerCallListener<>(
-                next.startCall(new ForwardingServerCall.SimpleForwardingServerCall<>(call) {
-                    @Override
-                    public void close(Status status, Metadata trailers) {
-                        long durationMs = (System.nanoTime() - startNanos) / 1_000_000;
-                        log.info("gRPC method={} status={} duration={}ms traceId={}",
-                            method, status.getCode(), durationMs, traceId);
-                        super.close(status, trailers);
-                    }
-                }, headers)) {};
-    }
-}
-```
-
-**SLO для gRPC-сервисов:**
-- **Availability**: 99.9% успешных вызовов (`grpc_code=OK`)
-- **Latency p50**: < 5мс для unary вызовов внутри кластера
-- **Latency p99**: < 50мс
-- **Error budget**: мониторьте `UNAVAILABLE`, `DEADLINE_EXCEEDED`, `RESOURCE_EXHAUSTED`
+<a id="q34"></a>
 
 ## Q34. Что такое gRPC-Web и как он работает в браузерах?
 
-**Проблема:** браузеры не поддерживают HTTP/2 напрямую для gRPC — fetch/XHR не позволяют управлять HTTP/2 trailers, которые gRPC использует для передачи статуса.
+Браузерный JavaScript не даёт полного управления HTTP/2 trailers, которые использует обычный gRPC. gRPC-Web применяет совместимый формат и обычно проходит через прокси к gRPC backend; совместимая реализация сервера может обработать его без отдельного Envoy.
 
-**gRPC-Web** — протокол-обёртка, адаптирующий gRPC для браузеров. Он работает поверх HTTP/1.1 или HTTP/2 и проксирует запросы к настоящему gRPC-серверу.
+Классический gRPC-Web поддерживает unary и server streaming, но не client и bidi streaming. Перекодирование может добавлять накладные расходы. Существуют и другие браузерные RPC-протоколы, поэтому утверждать, что любой браузерный клиент обязан использовать gRPC-Web через отдельный прокси, нельзя.
 
-**Архитектура с Envoy Proxy:**
+---
 
-```
-Browser → HTTP/1.1 gRPC-Web → Envoy Proxy → HTTP/2 gRPC → Backend
-```
 
-**Конфигурация Envoy:**
+<a id="q35"></a>
 
-```yaml
-# envoy.yaml
-filters:
-  - name: envoy.filters.http.grpc_web
-    typed_config:
-      "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb
-  - name: envoy.filters.http.cors
-    typed_config:
-      "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.CorsPolicy
-      allow_origin_string_match:
-        - prefix: "*"
-      allow_headers: "content-type,x-grpc-web,x-user-agent"
-```
+## Q35. gRPC vs REST vs GraphQL: сравнение и выбор протокола?
 
-**Клиент на TypeScript:**
+REST, GraphQL и gRPC сравнивают по потребителям и форме работы:
 
-```typescript
-import { GreeterClient } from './generated/HelloServiceClientPb';
-import { HelloRequest } from './generated/hello_pb';
+- **REST-подход:** ресурсные HTTP API, браузерные и внешние интеграции, обычная семантика методов и кэша.
+- **GraphQL:** разные клиентские выборки связанных данных; схема задаёт доступные поля, а клиент выбирает нужные.
+- **gRPC:** типизированные RPC, кодогенерация и потоковые вызовы, часто между сервисами.
 
-const client = new GreeterClient('http://localhost:8080');
-const request = new HelloRequest();
-request.setName('World');
+Выбор зависит от клиентов, сетевой среды, кэширования, потоков, нагрузки и поддержки инструментов. Производительность не должна быть единственным критерием. Подходы могут сосуществовать: внешний HTTP API и внутренние RPC — один из возможных вариантов, а не обязательная архитектура.
 
-client.sayHello(request, {}, (err, response) => {
-  console.log(response.getMessage());
-});
-```
 
-**Ограничения gRPC-Web:**
-- Нет поддержки client-streaming и bidirectional streaming (только server-streaming и unary)
-- Требует proxy (Envoy, nginx с модулем, Traefik)
-- Менее эффективен, чем нативный gRPC (overhead на перекодирование)
-
-**Альтернатива — Connect Protocol** (от Buf.build): совместим с gRPC, но работает в браузере без proxy, поддерживает JSON, активно развивается как замена gRPC-Web.
-
-## Q35. (!) gRPC vs REST vs GraphQL: сравнение и выбор протокола?
-
-Эти три подхода решают разные задачи, и сравнивать их «кто лучше» в вакууме бессмысленно. Грубо: REST — про ресурсы и совместимость со всем, GraphQL — про гибкость запроса под конкретного клиента, gRPC — про скорость и строгий контракт между сервисами. Выбор диктуется не модой, а тем, кто потребитель API и что для него критично.
-
-**Сравнительная таблица:**
-
-| Критерий | REST | GraphQL | gRPC |
-|----------|------|---------|------|
-| Транспорт | HTTP/1.1, HTTP/2 | HTTP/1.1, HTTP/2 | HTTP/2 |
-| Формат | JSON/XML | JSON | Protobuf (бинарный) |
-| Контракт | OpenAPI (опционально) | SDL Schema | `.proto` (обязательный) |
-| Типизация | Слабая | Строгая | Строгая |
-| Streaming | SSE, WebSocket (отдельно) | WebSocket (Subscriptions) | Нативный (4 типа) |
-| Кэширование | HTTP-кэш, CDN | APQ + CDN | Нет нативного |
-| Браузер | Нативно | Нативно | Только gRPC-Web + proxy |
-| Генерация кода | Swagger Codegen | Apollo Codegen | `protoc` (10+ языков) |
-| Производительность | Средняя | Средняя | Высокая |
-| Гибкость запроса | Фиксированный ответ | Клиент выбирает поля | Фиксированный ответ |
-
-**Когда выбирать REST:**
-- Публичный API для внешних разработчиков
-- Простые CRUD-операции, нет сложных связей
-- Необходимо HTTP-кэширование из коробки
-- Команда не готова к learning curve
-
-**Когда выбирать GraphQL:**
-- Разнородные клиенты (мобильный vs веб) с разными потребностями
-- Сложный граф данных с множеством связей
-- BFF (Backend for Frontend) — один API для нескольких типов клиентов
-- Нужна гибкость: клиент определяет форму ответа
-
-**Когда выбирать gRPC:**
-- Высоконагруженное межсервисное взаимодействие внутри кластера (latency critical)
-- Streaming данных (IoT, телеметрия, чат)
-- Строгий polyglot-контракт между командами
-- CPU/bandwidth-чувствительные операции (protobuf на 5-10x компактнее JSON)
-
-**Рекомендуемый гибридный подход:**
-
-```
-Mobile/Web ──GraphQL──→ API Gateway ──gRPC──→ Microservices
-3rd Party  ──REST─────→ API Gateway ──gRPC──→ Microservices
-```
+<a id="q36"></a>
 
 ## Q36. Правила backwards compatibility в Protocol Buffers: как эволюционировать схему?
 
-Protocol Buffers обеспечивают совместимость через **field numbers**: на проводе живёт номер поля и его wire-type, а не имя. Понимание этого факта сразу даёт ответ на любой вопрос «можно ли так менять схему» — достаточно спросить, не поедут ли номер и wire-type у уже сериализованных данных.
+При эволюции protobuf сохраняют номера опубликованных полей и проверяют wire type, кардинальность и смысл данных. После удаления резервируют номер и имя. Не добавляют обязательные поля для старых клиентов.
 
-**Правила безопасных изменений (SAFE):**
+Переименование при сохранении номера совместимо с бинарным форматом, но может нарушить ProtoJSON, TextProto и сгенерированный код. Некоторые числовые изменения имеют одинаковый wire type, но старый клиент может потерять значение; поэтому их не объявляют безопасными без проверки. Новые значения enum проверяют на поведении старых клиентов при неизвестном значении.
 
-| Изменение | Безопасно? | Почему |
-|-----------|-----------|--------|
-| Добавить новое поле | Да | Старые клиенты игнорируют неизвестные поля |
-| Удалить поле (номер и имя — в `reserved`) | Да | В proto3 нет `required`; читатель получит дефолтное значение (см. Q29) |
-| Переименовать поле | Да | Field number не меняется |
-| Изменить тип на совместимый (int32→int64) | Да | Wire-type совместим |
-| Добавить новое enum-значение | Да | proto3 сохраняет неизвестное значение как число; в Java getter вернёт `UNRECOGNIZED`, сырой номер доступен через `getXxxValue()` |
+---
 
-**Опасные изменения (BREAKING):**
 
-| Изменение | Проблема |
-|-----------|---------|
-| Переиспользовать номер удалённого поля | Новые данные «прочитаются» как старое поле — тихая порча данных |
-| Изменить field number | Старые клиенты читают другое поле |
-| Изменить тип на несовместимый (string→int32) | Wire-type не совпадёт — corrupt data |
-| Изменить значение enum | Сломает десериализацию |
-
-**Практика безопасного удаления — `reserved`:**
-
-```protobuf
-message UserProfile {
-  // Удалили поля 2 и 4, имя "old_address" — резервируем
-  reserved 2, 4;
-  reserved "old_address", "deprecated_phone";
-
-  int64 id = 1;
-  string name = 3;
-  string email = 5;  // новое поле
-}
-```
-
-**Стратегия эволюции:**
-1. Никогда не менять и не переиспользовать field numbers
-2. При deprecation — помечать `[deprecated = true]`, потом `reserved`
-3. Изменения типа — только между wire-type-совместимыми (`int32`/`int64`/`uint32`/`uint64`/`bool` — один wire type)
-4. Версионирование через package: `com.example.v1.UserService` → `com.example.v2.UserService`
-
-```protobuf
-// Версионирование пакета
-syntax = "proto3";
-package com.example.v2;
-option java_package = "com.example.grpc.v2";
-
-service UserService {
-  rpc GetUser (GetUserRequest) returns (User);
-}
-```
+<a id="q37"></a>
 
 ## Q37. Как настроить gRPC load balancing в Kubernetes?
 
-**Проблема:** стандартный Kubernetes Service (`ClusterIP`) балансирует на уровне TCP-соединений, а gRPC (HTTP/2) держит одно долгое соединение — все запросы идут на один pod.
+Kubernetes Service с ClusterIP обычно балансирует на уровне соединения. Долгоживущий HTTP/2 канал может закрепиться за одним подом, поэтому равномерность отдельных RPC не гарантирована.
 
-**Решения:**
+Один вариант — headless Service, который возвращает адреса подов, и политика клиента `round_robin`. Одних адресов недостаточно: gRPC по умолчанию использует `pick_first`. Другой вариант — L7-прокси или сервисная сетка, которая балансирует RPC. Выбор зависит от discovery, политики соединений и инфраструктуры.
 
-**1. Client-side load balancing с Headless Service:**
+---
 
-```yaml
-# Headless Service — DNS возвращает IP всех pods
-apiVersion: v1
-kind: Service
-metadata:
-  name: order-service-grpc
-spec:
-  clusterIP: None   # headless!
-  selector:
-    app: order-service
-  ports:
-    - port: 9090
-      name: grpc
-```
 
-```java
-// Client использует round-robin по всем IP из DNS
-ManagedChannel channel = ManagedChannelBuilder
-    .forTarget("dns:///order-service-grpc:9090")
-    .defaultLoadBalancingPolicy("round_robin")
-    .usePlaintext()
-    .build();
-```
-
-**2. Proxy-side load balancing через Envoy/Istio:**
-
-```yaml
-# Istio VirtualService с load balancing
-apiVersion: networking.istio.io/v1alpha3
-kind: DestinationRule
-metadata:
-  name: order-service-lb
-spec:
-  host: order-service-grpc
-  trafficPolicy:
-    loadBalancer:
-      simple: ROUND_ROBIN
-    connectionPool:
-      http:
-        h2UpgradePolicy: UPGRADE
-```
-
-**3. gRPC xDS load balancing (продвинутый):**
-
-xDS — протокол управления, используемый Envoy/Istio. gRPC поддерживает xDS natively — можно управлять балансировкой без proxy:
-
-```java
-// xDS-based channel (требует xDS control plane — Istio/Envoy)
-ManagedChannel channel = ManagedChannelBuilder
-    .forTarget("xds:///order-service:9090")
-    .build();
-```
-
-**Рекомендация:** для Kubernetes — Istio service mesh с Envoy proxy (наиболее прозрачно) или headless service + `round_robin` на клиенте (проще, без service mesh).
+<a id="q38"></a>
 
 ## Q38. Как реализовать retry policy в gRPC через ServiceConfig?
 
-**gRPC Retry Policy** описывается как JSON ServiceConfig и применяется к каналу целиком — декларативно, без единой строки в бизнес-коде. Преимущество такого подхода в том, что политику ретраев можно менять централизованно (или даже раздавать сервером через service config resolution), не трогая вызывающий код. Обязательное условие — `enableRetry()` при сборке канала: без него весь блок `retryPolicy` молча игнорируется.
+ServiceConfig описывает поведение клиента: балансировку, timeout и retry policy для сервисов или методов. Клиент получает конфигурацию через name resolver, например xDS, либо задаёт default конфигурацию программно. Обычный gRPC сервер не отправляет её автоматически в RPC-ответе.
 
-**Пример ServiceConfig с retry:**
+Политика повторов задаёт `maxAttempts`, интервалы backoff и `retryableStatusCodes`. Без неё остаются только ограниченные прозрачные повторы. Подсистема повторов обычно включена по умолчанию; `disableRetry()` отключает её. Для неидемпотентных методов политику выбирают особенно осторожно.
 
-```java
-String serviceConfig = """
-{
-  "methodConfig": [{
-    "name": [{"service": "com.example.OrderService"}],
-    "retryPolicy": {
-      "maxAttempts": 4,
-      "initialBackoff": "0.1s",
-      "maxBackoff": "1s",
-      "backoffMultiplier": 2,
-      "retryableStatusCodes": ["UNAVAILABLE", "DEADLINE_EXCEEDED"]
-    },
-    "timeout": "10s"
-  }]
-}
-""";
+---
 
-ManagedChannel channel = ManagedChannelBuilder
-    .forAddress("order-service", 9090)
-    .defaultServiceConfig(parseServiceConfig(serviceConfig))
-    .enableRetry()          // обязательно!
-    .usePlaintext()
-    .build();
-```
 
-**Параметры retry policy:**
+<a id="q39"></a>
 
-| Параметр | Описание |
-|----------|---------|
-| `maxAttempts` | Максимум попыток (включая первую), не более 5 |
-| `initialBackoff` | Начальная задержка перед первым retry |
-| `maxBackoff` | Максимальная задержка (exponential backoff cap) |
-| `backoffMultiplier` | Множитель для exponential backoff |
-| `retryableStatusCodes` | Только эти коды вызывают retry |
+## Q39. Как интегрировать gRPC с Spring Boot через grpc-spring-boot-starter?
 
-**Retry-safe коды:** `UNAVAILABLE` (сервис недоступен), `DEADLINE_EXCEEDED` (только если retry безопасен). `NOT_FOUND`, `INVALID_ARGUMENT` — не ретраить.
-
-**Hedge (параллельные запросы)** — альтернатива retry для latency-sensitive операций:
-
-```json
-"hedgingPolicy": {
-  "maxAttempts": 3,
-  "hedgingDelay": "50ms",
-  "nonFatalStatusCodes": ["UNAVAILABLE"]
-}
-```
-
-Hedge отправляет повторный запрос через `hedgingDelay`, не дожидаясь ответа на предыдущий. Быстрее retry, но увеличивает нагрузку на сервер. Использовать только для idempotent операций.
-
-## Q39. (!) Как интегрировать gRPC с Spring Boot через grpc-spring-boot-starter?
-
-Идея стартера в трёх аннотациях: `@GrpcService` помечает реализацию как gRPC-сервис и регистрирует её в авто-поднятом сервере, `@GrpcClient` инжектит готовый стаб по имени из конфига, а `@GrpcGlobalServerInterceptor` вешает сквозной интерсептор на все сервисы. Всё остальное (старт сервера, каналы, keep-alive, TLS) задаётся в `application.yml`.
-
-**Библиотека:** `net.devh:grpc-spring-boot-starter` (наиболее популярная) или `io.github.lognet:grpc-spring-boot-starter`.
-
-**Зависимости (Gradle):**
-
-```kotlin
-dependencies {
-    implementation("net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE")
-    implementation("net.devh:grpc-client-spring-boot-starter:3.1.0.RELEASE")
-}
-```
-
-**Серверная сторона — реализация сервиса:**
+`net.devh:grpc-spring-boot-starter` — сторонняя интеграция gRPC и Spring Boot. Реализацию сгенерированной базы помечают `@GrpcService`, а клиентский stub внедряют через `@GrpcClient`. Каналы, адреса и сервер настраивают в конфигурации приложения. Стартер также поддерживает глобальные interceptors.
 
 ```java
-@GrpcService  // регистрирует как gRPC-сервис, Spring-бин
-public class OrderGrpcService extends OrderServiceGrpc.OrderServiceImplBase {
-
-    private final OrderRepository orderRepository;
-
-    public OrderGrpcService(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
-    }
-
-    @Override
-    public void getOrder(GetOrderRequest request,
-                         StreamObserver<OrderResponse> responseObserver) {
-        Order order = orderRepository.findById(request.getOrderId())
-            .orElseThrow(() -> Status.NOT_FOUND
-                .withDescription("Order not found: " + request.getOrderId())
-                .asRuntimeException());
-
-        OrderResponse response = OrderResponse.newBuilder()
-            .setId(order.getId())
-            .setStatus(order.getStatus())
-            .setTotal(order.getTotal().doubleValue())
-            .build();
-
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
-    }
+@GrpcService
+class UserGrpcService extends UserServiceGrpc.UserServiceImplBase {
+    // Реализация методов из .proto
 }
 ```
 
-**Глобальный Interceptor для всего сервера:**
+Не сводите библиотеку к обязательному набору ровно трёх аннотаций. Проверяйте конкретную версию стартера и не смешивайте его API с официальным Spring gRPC, где регистрация клиентов устроена иначе.
 
-```java
-@GrpcGlobalServerInterceptor   // применяется ко всем сервисам
-public class AuthServerInterceptor implements ServerInterceptor {
-    @Override
-    public <Req, Resp> ServerCall.Listener<Req> interceptCall(
-            ServerCall<Req, Resp> call, Metadata headers,
-            ServerCallHandler<Req, Resp> next) {
-        String token = headers.get(
-            Metadata.Key.of("authorization", Metadata.ASCII_STRING_MARSHALLER));
-        if (!isValid(token)) {
-            call.close(Status.UNAUTHENTICATED.withDescription("Invalid token"), new Metadata());
-            return new ServerCall.Listener<>() {};
-        }
-        return next.startCall(call, headers);
-    }
-}
-```
+---
 
-**Клиентская сторона:**
 
-```java
-@Service
-public class OrderClient {
-
-    @GrpcClient("order-service")  // имя из application.yml
-    private OrderServiceGrpc.OrderServiceBlockingStub orderStub;
-
-    public OrderResponse getOrder(String orderId) {
-        return orderStub.getOrder(
-            GetOrderRequest.newBuilder().setOrderId(orderId).build());
-    }
-}
-```
-
-**application.yml для клиента:**
-
-```yaml
-grpc:
-  server:
-    port: 9090
-  client:
-    order-service:
-      address: "static://order-service:9090"
-      negotiation-type: plaintext   # или tls
-      enable-keep-alive: true
-      keep-alive-time: 30s
-      keep-alive-timeout: 5s
-```
+<a id="q40"></a>
 
 ## Q40. Что такое transcoding gRPC ↔ REST через google.api.http аннотации?
 
