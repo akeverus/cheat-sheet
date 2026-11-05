@@ -236,6 +236,12 @@ python3 scripts/mcq-answer-parity-gate.py <json>
 Use the targeted gates in `docs/mcq-quality/workflow.md` and preserve evidence
 for dependent checks; a structural gate does not grant semantic acceptance.
 
+При приёмке пары после смысловой правки теории проверь все зависимые A/B/C/D и их
+sections по `docs/mcq-quality/examiner-review.md`. Совпадение ключа не подтверждает
+полноту вариантов и правильность всех объяснений. Если JSON изменяет другой автор,
+передай точные Q/B и расхождения, сохрани границы владения и не объявляй синхронизацию
+завершённой до проверки обеих поверхностей.
+
 ## Validation contract
 
 Discover repository validators first. At minimum validate:

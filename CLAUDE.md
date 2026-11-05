@@ -69,6 +69,10 @@ API-ключи не нужны ни для чего.
   `docs/mcq-quality-standard.md`, команды и evidence в `docs/mcq-quality/workflow.md`.
   Полный проход ведётся по `PLAN_INTERVIEW.md` и `PROMPT_PLAN_INTERVIEW.md`;
   `scripts/mcq-workflow.py next` показывает актуальный следующий пакет.
+- При проверке MCQ действуй как экзаменатор по
+  `docs/mcq-quality/examiner-review.md`: все A/B/C/D должны полно отвечать на видимый
+  вопрос, включая wrong. Нужен содержательный LLM-проход каждого Q/B; готовые файлы
+  тоже включены в запрошенный повторный аудит. Schema/runtime PASS не заменяет его.
 - `OptionLookupService` ходит только в БД/кэш. Нет сидера → пустой список → MVC форсит
   `flashcardMode=true`, вопрос показывается флешкартой. Это штатное поведение, не деградация.
 
