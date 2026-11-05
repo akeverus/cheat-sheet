@@ -2401,50 +2401,50 @@
             {
               "label": "A",
               "order": 0,
-              "text": "При достижении порога `vm_memory_high_watermark` брокер, наоборот, заметно ускоряет входящий приём от publishers.",
+              "text": "Сопоставляют ready/unacked, rates и число consumers; memory/disk alarms блокируют consume-only соединения, оставляя публикацию без блокировки.",
               "correct": false,
               "sections": {
-                "what_actually": "При `vm_memory_high_watermark` брокер включает flow control и тормозит publishers.",
-                "source_of_confusion": "«Порог памяти» кажется поводом ускориться.",
-                "if_it_were_true": "Тогда брокер рисковал бы упасть по памяти.",
-                "how_it_should_be": "Flow control притормаживает или блокирует publishers."
+                "what_actually": "При ресурсных alarms блокируются publishing connections. Соединения, используемые только для потребления, продолжают работать.",
+                "source_of_confusion": "Защиту памяти воспринимают как остановку потребителей вместо ограничения новых публикаций.",
+                "if_it_were_true": "Брокер продолжал бы принимать новые публикации, одновременно мешая consume-only соединениям освобождать очередь.",
+                "how_it_should_be": "Проверять тип соединения и активные resource alarms; отличать их от transient flow control."
               }
             },
             {
               "label": "B",
               "order": 1,
-              "text": "Рост `queue_messages_ready` говорит, что consumer легко успевают за поступающей нагрузкой.",
+              "text": "Сопоставляют ready/unacked, consumers и alarms; устойчивое publish > ack доказывает рост backlog независимо от режима подтверждений и удалений.",
               "correct": false,
               "sections": {
-                "what_actually": "Рост `queue_messages_ready` значит, что consumer не успевают за нагрузкой.",
-                "source_of_confusion": "«Готовы к доставке» звучит позитивно.",
-                "if_it_were_true": "Тогда рост очереди не был бы проблемой.",
-                "how_it_should_be": "Устойчивый рост — сигнал отставания consumer."
+                "what_actually": "В auto-ack нет ручного подтверждения каждого сообщения; возможны и другие пути удаления. Поэтому publish > ack само по себе не задаёт изменение backlog.",
+                "source_of_confusion": "Разность двух скоростей принимают за полный баланс очереди без проверки семантики счётчиков.",
+                "if_it_were_true": "Двух rates было бы достаточно для вывода о росте при любом ack-режиме и любых путях удаления.",
+                "how_it_should_be": "Сопоставлять scope, режим подтверждений и удаления с наблюдаемыми ready/unacked."
               }
             },
             {
               "label": "C",
               "order": 2,
-              "text": "Если `publish_rate` устойчиво выше deliver_ack_rate, очередь неизбежно и монотонно растёт.",
+              "text": "Сопоставляют ready/unacked, rates, consumers и alarms; учитывают scope, режим ack и удаления, проверяя фактическую динамику backlog.",
               "correct": true,
               "sections": {
-                "explanation": "Если `publish_rate` устойчиво выше `deliver_ack_rate`, очередь неизбежно растёт.",
-                "example": "Тогда добавляют consumer-ов или ускоряют обработку.",
-                "when_to_apply": "Когда диагностируешь рост очереди и здоровье consumer-ов.",
-                "edge_cases": "При `vm_memory_high_watermark` брокер включает flow control.",
-                "related": "`queue_consumers=0` — очередь некому читать."
+                "explanation": "Rates и состояния нужно измерять в сопоставимом scope. Ручные ack не описывают все пути завершения доставки или удаления, поэтому одна разница publish/ack не доказывает рост очереди.",
+                "example": "В режиме auto-ack доставка может идти без ручных ack. Сначала проверяют режим и фактические ready/unacked, а не автоматически добавляют consumers из-за одной разницы rates.",
+                "when_to_apply": "При диагностике backlog, обработки consumers и блокировки публикации ресурсными alarms.",
+                "edge_cases": "Resource memory/disk alarms блокируют publishing connections; consume-only соединения продолжают работу. Transient flow control — отдельный механизм. Для Streams подтверждение не означает удаление записи из лога.",
+                "related": "[[rabbitmq-interview#Q39]] scope показателей; [[rabbitmq-interview#Q42]] удержание данных Streams."
               }
             },
             {
               "label": "D",
               "order": 3,
-              "text": "Метрика `queue_consumers` равная нулю означает явный избыток читателей у очереди.",
+              "text": "Сопоставляют ready/unacked, rates и alarms; consumers = 0 означает, что подписчики существуют, но сейчас не заняты обработкой сообщений.",
               "correct": false,
               "sections": {
-                "what_actually": "`queue_consumers=0` означает, что очередь некому читать, а не избыток.",
-                "source_of_confusion": "Ноль путают со «много».",
-                "if_it_were_true": "Тогда алерт на отсутствие consumer не срабатывал бы.",
-                "how_it_should_be": "Ноль consumer — тревожный признак."
+                "what_actually": "Consumers показывает число потребителей/подписок, а не число занятых обработчиков. Ноль не подтверждает наличие свободных подписчиков.",
+                "source_of_confusion": "Счётчик подключённых потребителей принимают за показатель их загрузки.",
+                "if_it_were_true": "Очередь могла бы иметь подписчиков при нулевом счётчике только потому, что они временно не обрабатывают сообщения.",
+                "how_it_should_be": "Проверять наличие ожидаемых подписчиков отдельно от скорости обработки и числа unacked."
               }
             }
           ]
