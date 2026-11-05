@@ -601,183 +601,82 @@ public class BusinessMetrics {
 
 ## Q14. (!) Как связать метрики и трейсы (например, в Grafana)?
 
-Связать их можно на двух уровнях. Слабая связь — по времени и лейблам: в `Grafana` на одном дашборде рядом стоят запросы к `Prometheus` (метрики) и к `Jaeger / Tempo` (трейсы), и инженер вручную сопоставляет всплеск на графике с трейсами за тот же момент. Сильная связь — через `Exemplars`: это прямые ссылки от конкретной точки метрики к конкретному trace. По клику на пик на графике `Grafana` сразу открывает именно тот трейс, который дал этот выброс, без ручного поиска.
+Первый способ — сопоставлять **время, сервис и другие атрибуты**: агрегат Prometheus показывает область ухудшения, а поиск в Jaeger/Tempo помогает выбрать отдельные запросы за тот же интервал. Общая TSDB для метрик и traces не обязательна.
+
+Второй способ — **exemplar**, связанный с отдельным наблюдением и содержащий, например, trace ID. При настроенной цепочке instrumentation → export → Prometheus → Grafana он позволяет открыть соответствующий trace. Exemplar — пример наблюдения, а p99 — оценка квантиля по распределению за окно: соседняя точка не доказывает, что именно этот запрос определил p99 или причину всплеска. [Grafana exemplars](https://grafana.com/docs/grafana/latest/fundamentals/exemplars/).
 
 ```mermaid
 graph LR
-    subgraph "Grafana Dashboard"
-        PANEL["Панель: p99 latency<br/>PromQL запрос"]
-        EXEMPLAR["Exemplar точка<br/>traceId: abc123"]
-        TRACE["Trace View<br/>Jaeger / Tempo"]
-        LOGS["Log Panel<br/>Loki: {traceId=abc123}"]
-    end
-
-    PANEL -- "клик по точке" --> EXEMPLAR
-    EXEMPLAR -- "ссылка на traceId" --> TRACE
-    TRACE -- "traceId → логи" --> LOGS
+    PANEL["Агрегат latency за окно"] --> E["Доступный exemplar наблюдения"]
+    E --> T["Поиск trace по ID"]
+    T --> L["Логи по контексту, если настроены"]
 ```
 
-**Конфигурация Grafana datasources для корреляции:**
+**Пример provisioning связи Prometheus → Tempo:**
 
 ```yaml
-# grafana/provisioning/datasources/datasources.yml
 apiVersion: 1
 datasources:
   - name: Prometheus
+    uid: prometheus
     type: prometheus
     url: http://prometheus:9090
     jsonData:
       exemplarTraceIdDestinations:
-        - name: traceID
+        - name: trace_id
           datasourceUid: tempo
-
   - name: Tempo
-    type: tempo
     uid: tempo
+    type: tempo
     url: http://tempo:3200
-    jsonData:
-      tracesToLogs:
-        datasourceUid: loki
-        tags: ['service.name']
-        mappedTags: [{ key: 'service.name', value: 'app' }]
-        filterByTraceID: true
-
-  - name: Loki
-    type: loki
-    url: http://loki:3100
-    jsonData:
-      derivedFields:
-        - datasourceUid: tempo
-          matcherRegex: "traceId=(\\w+)"
-          name: TraceID
-          url: "$${__value.raw}"
 ```
 
-**Сценарий применения:** при расследовании инцидента — открыть дашборд -> клик по пику на графике p99 -> переход к трейсу по exemplar -> по `traceId` отфильтровать логи в `Loki / ELK`. Так за пару кликов проходишь путь метрика -> трейс -> лог, не теряя контекст.
+Здесь `trace_id` — **пример имени label у exemplar**: замените его на фактическое имя из полученных данных (`traceID`, `trace_id` и другие варианты не взаимозаменяемы по написанию). `datasourceUid` должен совпасть с UID настроенного trace datasource. Это не инструкция добавлять уникальный trace ID в обычные labels временного ряда. Экспозиция, сбор exemplars и хранение traces включаются отдельно. [Grafana Prometheus configuration](https://grafana.com/docs/grafana/latest/datasources/prometheus/configure/).
+
+Для связи с логами отдельно настройте datasource, UID и извлечение ID под реальный формат логов. Ссылка не гарантирует наличие trace: он мог не сохраниться из-за sampling/сбоя или истечь по retention. При отсутствии exemplar используйте поиск по времени и атрибутам; причинную гипотезу проверяйте дополнительными данными.
+
 
 ## Q15. Что такое Jaeger и Zipkin и чем они отличаются?
 
-`Jaeger` и `Zipkin` — это бэкенды для хранения и отображения трейсов: приложение шлёт им spans, а они дают UI для просмотра дерева запроса. Разница в зрелости и функциях: `Zipkin` проще и легче, появился раньше (Twitter, 2012), но беднее по возможностям; `Jaeger` полнофункциональнее — более развитый UI, adaptive sampling, тесная интеграция с `Kubernetes`. Принципиально важно, что оба принимают данные через `OpenTelemetry`, поэтому выбор бэкенда не привязывает к инструментации.
+Это системы для приёма, хранения, поиска и просмотра **traces**. Сравнивайте конкретные версии, поддерживаемые протоколы, storage, запросы/UI, sampling и эксплуатационные требования; универсальный рейтинг «легче/богаче» мало помогает выбрать конфигурацию.
 
-**Jaeger в Docker Compose (production-ready):**
+Например, **Jaeger v2** построен на OpenTelemetry Collector framework и дополняет его компонентами хранения и query/UI. В документации **2.22** описан приём traces по OTLP gRPC/HTTP; это не означает хранение всех типов OTel telemetry. Для Zipkin-приёмника можно использовать соответствующий exporter Collector, который отправляет spans в Zipkin API, например `/api/v2/spans`. [Jaeger 2.22 architecture](https://www.jaegertracing.io/docs/2.22/architecture/), [APIs](https://www.jaegertracing.io/docs/2.22/architecture/apis/), [Zipkin exporter](https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/main/exporter/zipkinexporter/README.md).
 
-```yaml
-# docker-compose.yml
-version: "3.8"
-services:
-  jaeger:
-    image: jaegertracing/all-in-one:1.54
-    ports:
-      - "16686:16686"   # Jaeger UI
-      - "4317:4317"     # OTLP gRPC
-      - "4318:4318"     # OTLP HTTP
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
-      - SPAN_STORAGE_TYPE=elasticsearch
-      - ES_SERVER_URLS=http://elasticsearch:9200
-      - ES_INDEX_PREFIX=jaeger
-      - ES_TAGS_AS_FIELDS_ALL=true
-
-  # Для production лучше использовать отдельные компоненты:
-  # jaeger-collector, jaeger-query, jaeger-agent
-
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.96.0
-    ports:
-      - "4317:4317"
-    volumes:
-      - ./otel-collector-config.yml:/etc/otelcol-contrib/config.yaml
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-    ports:
-      - "9200:9200"
+```mermaid
+graph LR
+    APP["Приложение: OTLP"] --> COL["Collector: receiver + pipeline"]
+    COL -->|"согласованный OTLP export"| J["Jaeger"]
+    COL -->|"Zipkin exporter"| Z["Zipkin API"]
 ```
 
-**Конфигурация OTel Collector:**
+**Пример сетевой топологии:** Collector и Jaeger в разных контейнерах общей bridge-сети могут оба слушать внутренний TCP 4317. Collector экспортирует на `jaeger:4317`; для отправки с host публикуют, например, host 4317 только у Collector, а UI Jaeger — на 16686. Два одинаковых `4317:4317` на одном host IP/TCP одновременно конфликтуют: внутренний listener и публикация host-порта — разные уровни. [Docker port publishing](https://docs.docker.com/engine/network/port-publishing/).
 
-```yaml
-# otel-collector-config.yml
-receivers:
-  otlp:
-    protocols:
-      grpc:
-        endpoint: 0.0.0.0:4317
-      http:
-        endpoint: 0.0.0.0:4318
+OTel помогает отделить инструментацию от backend, но при смене назначения нужно согласовать exporter, receiver, protocol, endpoint/path, TLS/auth и нужные преобразования данных. Одной замены URL достаточно лишь при совместимых контрактах. Для реального развёртывания отдельно выбирают и проверяют версию образов, конфигурацию, storage и отказоустойчивость; схема выше описывает поток данных.
 
-processors:
-  batch:
-    timeout: 5s
-    send_batch_size: 1024
-  tail_sampling:
-    decision_wait: 10s
-    policies:
-      - name: errors
-        type: status_code
-        status_code: { status_codes: [ERROR] }
-      - name: slow-traces
-        type: latency
-        latency: { threshold_ms: 1000 }
-      - name: probabilistic
-        type: probabilistic
-        probabilistic: { sampling_percentage: 10 }
-
-exporters:
-  otlp/jaeger:
-    endpoint: jaeger:4317
-    tls:
-      insecure: true
-  prometheus:
-    endpoint: 0.0.0.0:8889
-
-service:
-  pipelines:
-    traces:
-      receivers: [otlp]
-      processors: [batch, tail_sampling]
-      exporters: [otlp/jaeger]
-    metrics:
-      receivers: [otlp]
-      processors: [batch]
-      exporters: [prometheus]
-```
-
-**Как выбирать:** обычно по экосистеме (`Kubernetes` — чаще `Jaeger`; нужен легковесный вариант — `Zipkin`) или по облаку (`Tempo`, `Datadog`, `AWS X-Ray`). Ключевой момент: приложение экспортирует в одном формате (`OTLP`), поэтому бэкенд меняется без переписывания инструментации — достаточно перенаправить экспортёр.
 
 ## Q16. Как настроить трассировку в Spring Boot (OpenTelemetry)?
 
-Есть два подхода, и выбор между ними — это компромисс между «не трогать код» и «контролировать всё из приложения»:
+Есть два распространённых пути: **OpenTelemetry Java Agent** инструментирует поддерживаемые библиотеки при запуске JVM, а **Micrometer Tracing с OTel bridge** использует интеграции приложения/Boot. Выбор зависит от требуемого контроля и поддерживаемых библиотек. Отдельно согласуйте пропагацию, sampling и экспорт; две параллельные инструментирующие системы могут потребовать настройки, чтобы не создавать повторные spans.
 
-1. **`OpenTelemetry Java Agent`** — zero-code: агент подключается через `-javaagent` и инструментирует библиотеки автоматически, код вообще не меняется.
-2. **`Spring Boot` starter с `Micrometer Tracing`** — трассировка живёт внутри приложения как зависимость; больше контроля, но инструментация частично на тебе.
+**Пример Java Agent 2.x, экспорт только traces по OTLP/HTTP:** файл агента заранее установлен в указанном пути, Collector имеет HTTP receiver на 4318.
 
-**Подход 1: OTel Java Agent (рекомендуемый):**
-
-```dockerfile
-FROM eclipse-temurin:21-jre
-COPY target/app.jar /app.jar
-# Скачать OTel Agent
-ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.2.0/opentelemetry-javaagent.jar /otel-agent.jar
-
-ENV JAVA_TOOL_OPTIONS="-javaagent:/otel-agent.jar"
-ENV OTEL_SERVICE_NAME=order-service
-ENV OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
-ENV OTEL_TRACES_SAMPLER=parentbased_traceidratio
-ENV OTEL_TRACES_SAMPLER_ARG=0.1
-ENV OTEL_METRICS_EXPORTER=prometheus
-ENV OTEL_LOGS_EXPORTER=none
-
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+```sh
+export OTEL_SERVICE_NAME=order-service
+export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+export OTEL_TRACES_EXPORTER=otlp
+export OTEL_METRICS_EXPORTER=none
+export OTEL_LOGS_EXPORTER=none
+export OTEL_TRACES_SAMPLER=parentbased_traceidratio
+export OTEL_TRACES_SAMPLER_ARG=0.1
+java -javaagent:/opt/otel/opentelemetry-javaagent.jar -jar /app/app.jar
 ```
 
-**Подход 2: Spring Boot Starter (Micrometer Tracing + OTel):**
+Agent **2.0+** использует `http/protobuf` по умолчанию; здесь протокол указан явно. Для gRPC надо согласовать `grpc` и gRPC receiver, обычно на 4317: номер порта сам не выбирает протокол. Общий HTTP endpoint — базовый URL; у signal-specific `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` указывают полный путь, обычно `/v1/traces`. Sampling 0.1 — пример политики, не универсальная доля production. [Agent configuration](https://opentelemetry.io/docs/zero-code/java/agent/configuration/), [OTLP exporter configuration](https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/).
+
+**Пример приложения Spring Boot 3.3**, версии зависимостей — из его dependency management:
 
 ```groovy
-// build.gradle
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-tracing-bridge-otel'
@@ -786,11 +685,10 @@ dependencies {
 ```
 
 ```yaml
-# application.yml
 management:
   tracing:
     sampling:
-      probability: 1.0  # dev: 100%, prod: 0.1
+      probability: 0.1
     propagation:
       type: w3c
   otlp:
@@ -798,28 +696,30 @@ management:
       endpoint: http://otel-collector:4318/v1/traces
 ```
 
-**Кастомный span в бизнес-логике:**
+`management.*` управляет указанной интеграцией Boot и не является автоматически конфигурацией отдельного Java Agent. В Boot при работающем tracing handler можно создать свой span через Observation:
 
 ```java
-@Service
-@RequiredArgsConstructor
-public class OrderService {
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 
-    private final ObservationRegistry observationRegistry;
+final class OrderObservations {
+    private final ObservationRegistry registry;
 
-    public Order createOrder(OrderRequest request) {
-        return Observation.createNotStarted("order.create", observationRegistry)
-                .lowCardinalityKeyValue("order.type", request.getType())
-                .highCardinalityKeyValue("order.id", request.getId())
-                .observe(() -> {
-                    // Бизнес-логика внутри span
-                    Order order = buildOrder(request);
-                    validateOrder(order);
-                    return saveOrder(order);
-                });
+    OrderObservations(ObservationRegistry registry) {
+        this.registry = registry;
+    }
+
+    void create(String orderType, String orderId, Runnable action) {
+        Observation.createNotStarted("order.create", registry)
+                .lowCardinalityKeyValue("order.type", orderType)
+                .highCardinalityKeyValue("order.id", orderId)
+                .observe(action);
     }
 }
 ```
+
+Сам вызов Observation не гарантирует экспорт span без соответствующих handlers/exporter. Ограничивайте набор `order.type`; уникальный order ID не добавляйте в обычные labels метрик. Автоматическую propagation HTTP-клиентов подключают с условиями Q8. [Spring Boot 3.3 tracing и custom spans](https://docs.spring.io/spring-boot/3.3/reference/actuator/tracing.html).
+
 
 ## Q17. (!) Что такое cardinality метрик и почему она важна?
 
@@ -860,63 +760,61 @@ MeterRegistryCustomizer<MeterRegistry> uriNormalizer() {
 
 ## Q18. Как метрики и трейсы помогают при инцидентах?
 
-У них разные роли, и работают они в связке. Метрики отвечают на «что и где» в масштабе: алерт срабатывает на аномалию (рост ошибок, латентности), а дашборд показывает, какой сервис или эндпоинт деградировал. Но метрики агрегированы и не объясняют причину конкретного сбоя. Тут подключаются трейсы: они показывают путь конкретного запроса и точное место, где возникла задержка или ошибка. Метрики локализуют проблему до сервиса, трейсы — до строки в цепочке вызовов.
+Метрики помогают оценить **масштаб и динамику**: долю отказов, распределение задержки, затронутые сервисы и ресурсы. Trace показывает наблюдаемые операции отдельного выполнения: интервалы, ошибки и отношения spans. Долгий span сужает область поиска, но не доказывает причину и не указывает автоматически строку кода; нужны логи, профили, состояние ресурсов или другие свидетельства.
 
 ```mermaid
 graph TD
-    subgraph "Процесс расследования инцидента"
-        A["1. Алерт: error_rate > 1%<br/>Prometheus Alertmanager"] --> B["2. Дашборд Grafana<br/>Какой сервис? Какой эндпоинт?"]
-        B --> C["3. Exemplar → traceId<br/>Переход к конкретному трейсу"]
-        C --> D["4. Дерево spans в Jaeger<br/>Где задержка / ошибка?"]
-        D --> E["5. Логи по traceId<br/>Loki / ELK: детали ошибки"]
-        E --> F["6. Исправление + проверка<br/>Метрики вернулись в норму"]
-    end
+    A["Сигнал: алерт или жалоба на запрос"] --> B["Оценить масштаб по метрикам"]
+    B --> C["Выбрать trace: поиск или доступный exemplar"]
+    C --> D["Сопоставить операции и интервалы"]
+    D --> E["Проверить гипотезу: логи, ресурсы, профиль"]
+    E --> F["Изменение и проверка результата на нагрузке"]
 ```
 
-**Что связывает их в один поток:** `Exemplars` в `Grafana` — они позволяют от точки на графике метрики перейти прямо к трейсу, который её породил, без ручного поиска по времени. Подробнее о процессе расследования инцидентов — в [вопросах по Observability](observability-interview.md).
+Exemplar из Q14 связывает пример измерения с trace ID при настроенной цепочке и наличии данных. Он не является вычисленным p99 и не доказывает причину агрегатного всплеска. Trace может быть неполным из-за инструментации, sampling и доставки; один удачный запрос после исправления не доказывает восстановление всей нагрузки. Расследование может начинаться и с известного trace/лога, после чего метрики покажут распространённость проблемы. [Grafana exemplars](https://grafana.com/docs/grafana/latest/fundamentals/exemplars/), [OpenTelemetry traces](https://opentelemetry.io/docs/concepts/signals/traces/).
+
+Подробнее о процессе расследования — в [Observability](observability-interview.md).
+
 
 ## Q19. Что такое RED и USE методологии для метрик?
 
-Это две методологии, которые отвечают на вопрос «какие метрики снимать в первую очередь», но смотрят с разных сторон. **RED** смотрит со стороны запроса (сервиса), **USE** — со стороны ресурса. На практике их используют вместе: RED показывает, что пользователю плохо, USE — почему (какой ресурс упёрся).
+Это способы выбрать диагностические измерения. **RED** смотрит на запросы сервиса: `Rate` — частота, `Errors` — неуспешные запросы (число/частота либо согласованная доля), `Duration` — распределение длительности. **USE** рассматривает каждый ресурс: `Utilization` — занятость/использование ёмкости, `Saturation` — работа, которую ресурс пока не может обслужить, `Errors` — ошибки ресурса. Их используют вместе, но набор метрик сам по себе ещё не устанавливает причину инцидента. [RED, Tom Wilkie](https://grafana.com/blog/the-red-method-how-to-instrument-your-services/), [USE, Brendan Gregg](https://www.brendangregg.com/usemethod.html).
 
-- **RED** (для сервисов): `Rate` (запросы/сек), `Errors` (доля ошибок), `Duration` (латентность).
-- **USE** (для ресурсов): `Utilization` (загрузка), `Saturation` (насыщенность/очереди), `Errors` (ошибки на уровне ресурса).
-
-**PromQL для RED-метрик:**
+**Пример RED для `order-service`**, окно 5 минут:
 
 ```promql
-# Rate — запросы в секунду
-rate(http_server_requests_seconds_count{application="order-service"}[5m])
+# Rate — общая частота запросов выбранного сервиса
+sum(rate(http_server_requests_seconds_count{application="order-service"}[5m]))
 
-# Errors — доля 5xx ошибок
-sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+# Errors — доля 5xx в той же области, если за окно были запросы
+sum(rate(http_server_requests_seconds_count{application="order-service",status=~"5.."}[5m]))
 /
-sum(rate(http_server_requests_seconds_count[5m]))
+(sum(rate(http_server_requests_seconds_count{application="order-service"}[5m])) > 0)
 
-# Duration — p99 латентность
+# Duration — оценка p99 по совместимым classic histogram buckets
 histogram_quantile(0.99,
-  sum(rate(http_server_requests_seconds_bucket{application="order-service"}[5m])) by (le)
+  sum by (le) (rate(http_server_requests_seconds_bucket{application="order-service"}[5m]))
 )
 ```
 
-**PromQL для USE-метрик:**
+Это примеры при наличии указанных рядов: Timer без включённой экспозиции buckets не обеспечит последний запрос. Для бизнес-операции критерий ошибки может быть шире HTTP 5xx; задавайте его явно. Отсутствие событий/рядов не подменяйте доказанным нулём ошибок. При разрезе по endpoint сохраняйте те же группировки у числителя и знаменателя.
 
-```promql
-# Utilization — загрузка CPU
-process_cpu_usage{application="order-service"}
+**Примеры USE:**
 
-# Saturation — длина очереди пула потоков
-tomcat_threads_busy_threads / tomcat_threads_config_max_threads
+| Ресурс | Utilization | Saturation | Errors |
+|---|---|---|---|
+| CPU | Доля времени busy в выбранной области | Run queue или scheduler latency | Доступные счётчики аппаратных/ресурсных ошибок |
+| Дисковый I/O | Доля busy time устройства | Очередь и ожидание I/O | Ошибки устройства/операций |
+| Пул потоков | Занятые threads относительно доступной ёмкости | Число ожидающих задач или время ожидания | Отказы выделения/приёма работы по определённой политике |
 
-# Errors — ошибки GC
-rate(jvm_gc_pause_seconds_count{action="end of major GC"}[5m])
-```
+`busy/max` пула описывает занятость, **не длину очереди**. Обычный major GC — событие сборки, **не ошибка ресурса**; его частоту нельзя подписывать как USE Errors. Измерения и ограничения зависят от конкретного ресурса, JVM/OS и экспортера; недоступную метрику помечают как неизвестную, а не заменяют похожим по имени счётчиком.
+
 
 ## Q20. Как экспортировать метрики в Prometheus из Java?
 
-Поскольку `Prometheus` работает по pull-модели, экспорт сводится к одному: приложение открывает `HTTP`-эндпоинт, который отдаёт метрики в текстовом формате `Prometheus`, а сервер сам их забирает. В `Spring Boot` для этого достаточно зависимости `micrometer-registry-prometheus` — она поднимает эндпоинт `/actuator/prometheus`.
+Для scrape приложение публикует зарегистрированные meters через **доступный HTTP endpoint**, а Prometheus опрашивает его по своей конфигурации. В Java можно использовать registry/экспозицию клиентской библиотеки; сериализация и HTTP-публикация — разные обязанности. В Spring Boot 3.3 нужны Actuator, подходящий Prometheus registry, exposure и доступ сборщика (см. Q3/Q10). Один registry не создаёт универсальный HTTP endpoint. Стороны согласуют поддерживаемый формат scrape: возможны текстовые форматы и Protobuf, поэтому правило «scrape всегда только текст» неверно. [Prometheus content negotiation](https://prometheus.io/docs/instrumenting/content_negotiation/).
 
-**Пример вывода `/actuator/prometheus`:**
+**Синтетический пример classic text exposition** (имена/labels зависят от конфигурации):
 
 ```
 # HELP http_server_requests_seconds Duration of HTTP server request handling
@@ -953,7 +851,9 @@ spec:
       interval: 15s
 ```
 
-**Граничный случай:** для short-lived задач (cron, batch), которые завершаются раньше, чем их успеют scrape'ить, pull не подходит — для них есть `Pushgateway`: задача push'ит метрики сама, а `Prometheus` забирает их уже с него. В [Kubernetes](../devops/kubernetes-interview.md) цели обнаруживаются автоматически через `ServiceMonitor` или аннотации на `Pods`.
+Для этого ServiceMonitor должны быть установлены Prometheus Operator/CRD; Prometheus выбирает сам ServiceMonitor по labels/namespace, а его selector — нужный **Service**, не непосредственно Pods. `endpoints.port: http` ссылается на имя порта Service; также проверяют namespace, доступ и RBAC. Аннотации Pods работают только при соответствующем scrape/relabel config, а не автоматически у любого Prometheus. [Operator ServiceMonitors](https://prometheus-operator.dev/docs/developer/getting-started/).
+
+**Короткие задачи:** Pushgateway полезен для некоторых service-level batch jobs, результат которых трудно успеть собрать обычным scrape. Это не универсальная замена pull для любого cron/процесса: pushed series живут отдельно от процесса и не удаляются автоматически, поэтому нужен управляемый жизненный цикл данных. Prometheus опрашивает gateway, а не исходную задачу; успешный scrape gateway не доказывает здоровье этой задачи. [When to use Pushgateway](https://prometheus.io/docs/practices/pushing/).
 
 ## Q21. Что такое exemplars и зачем они нужны?
 
