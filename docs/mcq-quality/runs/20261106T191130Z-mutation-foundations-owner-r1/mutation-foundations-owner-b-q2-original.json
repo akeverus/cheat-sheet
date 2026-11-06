@@ -1,0 +1,219 @@
+{
+  "reviewer": "mutation_foundations_owner_independent",
+  "model": "gpt-6-luna",
+  "hashes": {
+    "mcq": "354bc523b9d7e3bbbcd0c83620cd5d722c8b7e6c5c102eb8a2619939ac16b8bb",
+    "theory": "6789266651ed700ca888202b7fd887347c4d30e137876035a40b73f7aafe9e31"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "scope": [
+    "Q2:B0"
+  ],
+  "options": [
+    {
+      "label": "A",
+      "completeness": "Полный, верный: coverage сообщает исполнение, mutation проверяет обнаружение выбранных изменений.",
+      "validity": "CORRECT",
+      "wrong_defense": "Не применимо: верный вариант."
+    },
+    {
+      "label": "B",
+      "completeness": "Полный, неверный: mutation score ошибочно заменяет карту исполненных строк.",
+      "validity": "WRONG",
+      "wrong_defense": "Защитить можно лишь приняв mutation score за подробную карту строк, но доля обнаруженных мутаций не показывает, какие строки выполнили тесты; это разные метрики."
+    },
+    {
+      "label": "C",
+      "completeness": "Полный, неверный: исполнение строки приравнено к силе assertions.",
+      "validity": "WRONG",
+      "wrong_defense": "Исполнение может сопутствовать проверке результата, но само по себе не доказывает наличие или достаточную силу assertion."
+    },
+    {
+      "label": "D",
+      "completeness": "Полный, неверный: любой non-null якобы гарантирует обнаружение всех арифметических мутантов.",
+      "validity": "WRONG",
+      "wrong_defense": "assertNotNull полезен для ссылки, но boxed Integer для0/5/999 не null и не проверяет числовое ожидание. Конкретный мутант может вызвать исключение и быть обнаружен, но это не даёт гарантии для всех;999 — иллюстрация, не обещанный оператор PIT."
+    }
+  ],
+  "sections": [
+    {
+      "label": "A",
+      "field": "explanation",
+      "status": "PASS",
+      "reason": "Верно различает исполнение конструкций и обнаружение изменения."
+    },
+    {
+      "label": "A",
+      "field": "example",
+      "status": "PASS",
+      "reason": "Non-null проверяет boxed-ссылку Integer, Equals сравнивает числовой результат;0 тоже проходит non-null."
+    },
+    {
+      "label": "A",
+      "field": "when_to_apply",
+      "status": "PASS",
+      "reason": "Разбор surviving в исполненном коде с потенциально слабыми assertions соответствует смыслу анализа."
+    },
+    {
+      "label": "A",
+      "field": "edge_cases",
+      "status": "PASS",
+      "reason": "Не каждая мутация меняет поведение; тест может упасть до assertion, в том числе при целочисленном делении на ноль."
+    },
+    {
+      "label": "A",
+      "field": "related",
+      "status": "PASS",
+      "reason": "Ссылки ведут к принципу и разбору surviving."
+    },
+    {
+      "label": "B",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Score не является картой исполненных строк и не отменяет покрытие."
+    },
+    {
+      "label": "B",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Правдоподобная ошибка: более требовательная метрика как замена остальных."
+    },
+    {
+      "label": "B",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Один процент не восстанавливает перечень покрытых строк."
+    },
+    {
+      "label": "B",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Разные метрики отвечают на разные вопросы."
+    },
+    {
+      "label": "C",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Исполнение не сообщает, какой оракул проверил последствия."
+    },
+    {
+      "label": "C",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Точно описано смешение исполнения и проверки результата."
+    },
+    {
+      "label": "C",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "NotNull опровергает приравнивание исполнения к проверке числового результата."
+    },
+    {
+      "label": "C",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Нужно различать исполнение и обнаружение неверного поведения."
+    },
+    {
+      "label": "D",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Слабая проверка пропускает неверное значение; исключение иногда убивает мутанта, но не гарантирует это."
+    },
+    {
+      "label": "D",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Ошибочная модель: любой assertion достаточен."
+    },
+    {
+      "label": "D",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Boxed5/999 обе ссылки не null, non-null их не различает."
+    },
+    {
+      "label": "D",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Проверять значимые значения и различающие входы — корректная рекомендация."
+    }
+  ],
+  "checks": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "Вопрос спрашивает, зачем mutation testing при coverage; A сравнивает измеряемое обоими подходами."
+    },
+    "FACTS": {
+      "status": "PASS",
+      "reason": "JaCoCo описывает исполненные/пропущенные элементы; JLS задаёт int→Integer; JUnitNotNull проверяет объект, Equals сравнивает значения."
+    },
+    "LINKAGE": {
+      "status": "PASS",
+      "reason": "Теория Q2 непосредственно раскрывает отличие покрытия и реакции на изменение, с тем же примером boxedint."
+    },
+    "SECTIONS": {
+      "status": "PASS",
+      "reason": "Все17полей прочитаны; существенных фактических ошибок не найдено."
+    },
+    "SFPL": {
+      "status": "PASS",
+      "reason": "Четыре видимых варианта сопоставимы по однофразовому каркасу и близкой длине; correct не выделен примером/списком/исключением. Категоричность B–D соответствует содержанию."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "Все четыре законченно отвечают «зачем»; B/D предлагают неправдоподобные гарантии, но являются законченными ошибочными моделями; C завершённо отождествляет исполнение и assertions."
+    },
+    "RU": {
+      "status": "PASS",
+      "reason": "Варианты и sections понятны, термины coverage/assertions/non-null последовательны."
+    }
+  },
+  "sources": [
+    {
+      "url": "https://www.jacoco.org/jacoco/trunk/doc/counters.html",
+      "checked_claim": "Инструкции,ветви,строки показывают исполнение/пропуск.",
+      "version": "JaCoCoофициальныеcounters",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.7",
+      "checked_claim": "BoxingintвIntegerссылку.",
+      "version": "JLS21§5.1.7",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://docs.junit.org/5.13.3/api/org.junit.jupiter.api/org/junit/jupiter/api/Assertions.html",
+      "checked_claim": "assertNotNull(Object)проверяетнеnull,assertEqualsсравниваетзначения.",
+      "version": "JUnitJupiter5.13.3",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.17.2",
+      "checked_claim": "ЦелочисленноеделениенанольдаётArithmeticException.",
+      "version": "JLS21§15.17.2",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://pitest.org/quickstart/basic_concepts/",
+      "checked_claim": "Выбранныемутациипроверяютсятестами;нетобещаниязаменына999.",
+      "version": "официальнаядокументацияPIT",
+      "checked_at": "2026-11-06"
+    }
+  ],
+  "findings": [],
+  "limitations": [
+    "Нормализация фактических inline-оценок с явного разрешения reviewer; независимая проверка переноса перед FINAL обязательна.",
+    "Сканеры reviewer не повторял;999 — иллюстрация, не предсказание PIT.",
+    "Модель задана конфигурацией spawn gpt-6-luna, не собственной телеметрией reviewer."
+  ],
+  "provenance": {
+    "task": "/root/mutation_foundations_owner_independent",
+    "authorization": "Перенос этих оценок в JSON разрешаю.",
+    "kind": "mechanical normalization of actual inline judgements"
+  }
+}
