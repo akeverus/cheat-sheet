@@ -1,0 +1,157 @@
+{
+  "q_number": 13,
+  "immutable_original": "phase-b-q13.json",
+  "adjudication_type": "semantic addendum; original preserved",
+  "visible_option_adjudication": [
+    {
+      "label": "A",
+      "exact_text": "mutmut изменяет исходный Python-код, выбирает подходящие тесты и сохраняет результаты для последующих запусков, а длительность зависит от проекта.",
+      "covered_parts": "Source mutation, отбор тестов, сохранение прогресса, проектная длительность — практический обзор использования.",
+      "truth": "true",
+      "false_premise": null,
+      "completeness": "adequate short answer"
+    },
+    {
+      "label": "B",
+      "exact_text": "mutmut не может использовать компиляцию, поскольку CPython не создаёт байт-код, поэтому исходники Python исполняются без промежуточного представления.",
+      "covered_parts": "Предполагаемый механизм компиляции Python и способ исполнения; ложная посылка — CPython не производит bytecode.",
+      "truth": "false",
+      "false_premise": "CPython не компилирует и не создаёт bytecode.",
+      "completeness": "complete erroneous claim, but poor constructive guidance to “Как использовать”"
+    },
+    {
+      "label": "C",
+      "exact_text": "mutmut оценивает всех мутантов единственным неизменённым запуском pytest, поэтому дополнительные исполнения тестов для разных изменений программы не нужны.",
+      "covered_parts": "Число запусков и оценка мутантов; ложная посылка — один неизменённый pytest-run проверяет все мутации.",
+      "truth": "false",
+      "false_premise": "Единственный запуск неизменённого pytest достаточен для всех mutant variants.",
+      "completeness": "complete erroneous claim, but poor constructive guidance to “Как использовать”"
+    },
+    {
+      "label": "D",
+      "exact_text": "mutmut повторяет все прежние проверки независимо от истории, поскольку сохранение результатов и выбор релевантных тестов инструментом не поддерживаются.",
+      "covered_parts": "Повторное использование состояния и test selection; ложная посылка — mutmut всегда заново повторяет всё и не поддерживает эти функции.",
+      "truth": "false",
+      "false_premise": "mutmut не сохраняет прогресс и не выбирает подходящие тесты.",
+      "completeness": "complete erroneous claim, but poor constructive guidance to “Как использовать”"
+    }
+  ],
+  "field_adjudication": [
+    {
+      "label": "A",
+      "fieldID": "explanation",
+      "status": "OK",
+      "reason": "Кратко описывает mutation source-code и test selection — две главные составляющие работы."
+    },
+    {
+      "label": "A",
+      "fieldID": "example",
+      "status": "OK",
+      "reason": "Покрывает команды и разбор результатов; wildcard ограничение конкретизирует scope."
+    },
+    {
+      "label": "A",
+      "fieldID": "when_to_apply",
+      "status": "OK",
+      "reason": "Даёт практический критерий выбора анализа и расписания; не утверждает универсальный ночной режим."
+    },
+    {
+      "label": "A",
+      "fieldID": "edge_cases",
+      "status": "OK",
+      "reason": "Точно различает поколения, fork и параллелизм; совет проверять legacy CLI уместен."
+    },
+    {
+      "label": "A",
+      "fieldID": "related",
+      "status": "OPEN",
+      "reason": "Связи к цене и test selection тематически уместны, не обязательный ответ."
+    },
+    {
+      "label": "B",
+      "fieldID": "what_actually",
+      "status": "OK",
+      "reason": "CPython компилирует в bytecode; тезис о невозможности компиляции неверен."
+    },
+    {
+      "label": "B",
+      "fieldID": "source_of_confusion",
+      "status": "OK",
+      "reason": "Путаница «интерпретатор значит не компилирует» — реальный источник неверной модели."
+    },
+    {
+      "label": "B",
+      "fieldID": "if_it_were_true",
+      "status": "OK",
+      "reason": "Проверяемое следствие premise неверно: функции имеют code objects и disassembling доступен."
+    },
+    {
+      "label": "B",
+      "fieldID": "how_it_should_be",
+      "status": "OK",
+      "reason": "Совет разделять реализацию Python и инструментальную стратегию mutmut технически точен."
+    },
+    {
+      "label": "C",
+      "fieldID": "what_actually",
+      "status": "OK",
+      "reason": "Отвергает идею одного запуска pytest для всех мутантов; внутри анализа нужны проверки мутированных состояний."
+    },
+    {
+      "label": "C",
+      "fieldID": "source_of_confusion",
+      "status": "OK",
+      "reason": "Различает внешнюю команду пользователя и внутренние исполнения, что объясняет ошибку."
+    },
+    {
+      "label": "C",
+      "fieldID": "if_it_were_true",
+      "status": "OK",
+      "reason": "Контрфактуал справедлив: исходный прогон не сообщает реакцию тестов на отличающиеся mutant programs."
+    },
+    {
+      "label": "C",
+      "fieldID": "how_it_should_be",
+      "status": "OK",
+      "reason": "Совет читать поведение версии и отбора тестов практически применим."
+    },
+    {
+      "label": "D",
+      "fieldID": "what_actually",
+      "status": "OK",
+      "reason": "Сообщает три подтверждённые возможности: state persistence, релевантный selection, resume."
+    },
+    {
+      "label": "D",
+      "fieldID": "source_of_confusion",
+      "status": "OK",
+      "reason": "Объясняет перенос старого опыта как источник ошибочного обобщения."
+    },
+    {
+      "label": "D",
+      "fieldID": "if_it_were_true",
+      "status": "OK",
+      "reason": "Документы подтверждают продолжение остановленного прогона, значит невозможность resume опровергается."
+    },
+    {
+      "label": "D",
+      "fieldID": "how_it_should_be",
+      "status": "OK",
+      "reason": "Совет учитывать версию, историю и scope практичен и относится к вопросу."
+    }
+  ],
+  "scope_verdicts": {
+    "CONTENT": "OPEN: A describes major operation properties but omits install/run workflow; adequate conceptual answer, not procedural recipe.",
+    "FACTS": "Primary docs support correct option; each wrong option rests on the explicit false premise listed.",
+    "LINKAGE": "Each option addresses an aspect of tool use; correct option gives actionable use path at appropriate summary level.",
+    "SECTIONS": "All 17 fields reviewed individually; see field_adjudication. No mechanical PASS inferred from field count.",
+    "SFPL": "FAIL: visible A is longer and lists four positive capabilities plus a duration caveat; B/C/D are single-sentence categorical misconceptions. Correct is structurally and semantically more informative; no revealed sections/theory used as tell.",
+    "ANSC": "FAIL: wrongs are grammatical complete misconceptions, yet A is uniquely useful answer covering workflow properties and practical constraints; correctness is readily signaled by constructive completeness.",
+    "RU": "OPEN: Russian is readable. Exact spellings «mutmut3+» and «mutmut2 отличается от3+» omit spaces around version numbers; normalize to «mutmut 3+» and «mutmut 2 отличается от 3+». This is a minor typography/readability defect, not evidence of factual error."
+  },
+  "theory_and_preamble": {
+    "theory": "OPEN: Q11 version-specific adapter 1.2.3 requires PIT >=1.19.4; withHistory reuse and dependency caveats accurately scoped; Q13 explicitly says mutmut 3+, distinguishes mutmut 2, fork prerequisite, browse/resume, CPython bytecode/dis version caveat. These are supported by named primary docs.",
+    "preamble": "OPEN: concise definition and caveat on survived/equivalent mutations are coherent; audit not extended to all linked/general claims.",
+    "visible_tell_note": "Theoretical length/detail is not visible in the MCQ and creates no visible answer tell."
+  }
+}
