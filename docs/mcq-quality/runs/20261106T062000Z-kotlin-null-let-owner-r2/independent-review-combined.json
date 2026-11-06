@@ -1,0 +1,770 @@
+{
+  "reviewer": "kotlin_null_let_repair_independent",
+  "model": "gpt-6-luna",
+  "raw_reviews": {
+    "4": {
+      "q_number": 4,
+      "reviewer": "kotlin_null_let_repair_independent",
+      "model": "gpt-6-luna",
+      "surfaces_read": [
+        "Q4 видимый вопрос и теория из q4-theory.json; A,B,C,D со всеми sections из q4-A/B/C/D.json; официальный Kotlin null-safety и generics#upper-bounds. Общий пролог/правила доступны из предыдущего чтения, но полный точный инвентарь 34 section fields к Q4 в данной фазе не предоставлен отдельным перечнем."
+      ],
+      "options": [
+        {
+          "label": "A",
+          "completeness": "complete",
+          "truth": "false",
+          "model": "Смешивает runtime-оператор !! с типовой системой; утверждает runtime-only nullability и безусловную доступность членов.",
+          "attempt_to_defend": "!! действительно проверяется во время выполнения; однако String? статически nullable и value.length без обработки отвергается."
+        },
+        {
+          "label": "B",
+          "completeness": "complete",
+          "truth": "false",
+          "model": "Подменяет явный safe call автоматическим пропуском обычного доступа.",
+          "attempt_to_defend": "?. действительно пропускает вызов при null, но это специальный синтаксис; value.length на nullable receiver требует доказательства/обработки."
+        },
+        {
+          "label": "C",
+          "completeness": "complete",
+          "truth": "false",
+          "model": "Верная область типов и ordinary members соединена с ошибочным абсолютным отрицанием NPE от !! вне Java.",
+          "attempt_to_defend": "Первые части подтверждаются Kotlin docs; официальная документация прямо перечисляет !! как причину NPE."
+        },
+        {
+          "label": "D",
+          "completeness": "complete",
+          "truth": "true",
+          "model": "Статическое различие String/String?, ordinary-member restriction, явная обработка, и runtime NPE через !!.",
+          "attempt_to_defend": "Null-safety docs подтверждает различие и запрет прямого доступа; !! вызывает NPE без требования Java."
+        }
+      ],
+      "sections": [
+        {
+          "label": "A",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "String vs String? и compiler rejection для nullable.length соответствуют официальной null-safety."
+        },
+        {
+          "label": "A",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Разводит runtime-проверку !! и статическое различие типов."
+        },
+        {
+          "label": "A",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Следствие — прямой доступ к String? и обнаружение лишь во время исполнения; это контрфактическая модель ошибочного варианта."
+        },
+        {
+          "label": "A",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Называет smart cast/safe call/обработку как корректные способы."
+        },
+        {
+          "label": "B",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "value.length против value?.length различены предметно и конкретно."
+        },
+        {
+          "label": "B",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Локализует смешение явного ?. с обычным доступом."
+        },
+        {
+          "label": "B",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Следствие ложной модели: value.length молча пропускал бы null."
+        },
+        {
+          "label": "B",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Есть оговорка стабильности smart cast и nullable extensions."
+        },
+        {
+          "label": "C",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Прямо опровергает тезис C: !! бросает NPE в чистом Kotlin; platform types дополнительны."
+        },
+        {
+          "label": "C",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Причина ошибки соотнесена с неполным перечнем NPE."
+        },
+        {
+          "label": "C",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Ясное проверяемое контрфактическое следствие про !! без Java."
+        },
+        {
+          "label": "C",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Указаны !!, throw, initialization и platform types как разные источники/границы."
+        },
+        {
+          "label": "D",
+          "field": "explanation",
+          "status": "PASS",
+          "reason": "Охватывает ordinary members, nullable extension, generics bounds; проверено по заданной теории."
+        },
+        {
+          "label": "D",
+          "field": "example",
+          "status": "UNVERIFIED",
+          "reason": "Код прочитан; исполнение среды не выполнял, runtime отчет говорит о hash-verified примерах, но соответствующие доказательства/логи не включены в пакет."
+        },
+        {
+          "label": "D",
+          "field": "when_to_apply",
+          "status": "PASS",
+          "reason": "Практическое следствие о nullable API и generic bounds соответствует T без ограничения/ T:Any."
+        },
+        {
+          "label": "D",
+          "field": "edge_cases",
+          "status": "PASS",
+          "reason": "Различает Java platform types, аннотации и невозможность smart cast mutable/custom getter."
+        },
+        {
+          "label": "D",
+          "field": "related",
+          "status": "PASS",
+          "reason": "Связывает safe call, Elvis, ?.let и обычный let с null; утверждения согласуются с официальной моделью."
+        }
+      ],
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "Явная область ordinary members присутствует в B.what_actually, B.if_it_were_true, C/D option wording и D.explanation; прежнее замечание по scope устранено."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "Null-safety и upper bounds сверены по официальным Kotlin docs; !! действительно может бросить NPE без Java."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "Теория Q4 и видимый вопрос согласованы с блоком; D.sections обосновывают ключевую механику."
+        },
+        "SECTIONS": {
+          "status": "UNVERIFIED",
+          "reason": "17 section fields этого блока рассмотрены по предоставленным JSON; полный инвентарь 34 полей и критерии в полном файле стандарта здесь отдельно не проверены."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "A-D все завершённые двухчастные ответы, сравнивают статическую nullability, член-доступ и !!; D не имеет уникального по полноте каркаса. Различия sections post-answer не раскрывают ключ до выбора."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "У всех четырех законченные модели; A-C полноценны как ложные модели, не признаются неполными из-за ложности."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Вопрос и все четыре опции естественны и ясны; в sections технические термины устойчивы. Пример D остаётся кодом, не русской прозой."
+        }
+      },
+      "findings": [
+        {
+          "severity": "resolved",
+          "issue": "Два прежних OPEN Q4 замечания missing ordinary-member scope CONTENT/FACTS",
+          "evidence": "Теперь область обычных членов явно в вариантах B,C,D и sections; проверенное следствие `value.length` требует доказательства, `?.` — явная форма."
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://kotlinlang.org/docs/null-safety.html",
+          "checked_claim": "Статическое различие nullable/non-null, прямой доступ к nullable member запрещён, !! — причина NPE.",
+          "version": "Kotlin Documentation, текущая страница",
+          "checked_at": "2026-11-06T00:00:00Z"
+        },
+        {
+          "url": "https://kotlinlang.org/docs/generics.html#upper-bounds",
+          "checked_claim": "Generic upper-bound semantics referenced in supplied Q4 theory; snippet surfaced page but upper-bound subsection not retrieved in available excerpt.",
+          "version": "Kotlin Documentation, текущая страница",
+          "checked_at": "2026-11-06T00:00:00Z"
+        }
+      ],
+      "limitations": [
+        "Не исполнял runtime-примеры; runtime evidence упомянут, но файлы/логи с hash verification не переданы.",
+        "Полный 34-field section inventory и исходные полные правила не проверялись заново в этом ходе; отмечено UNVERIFIED.",
+        "Generics URL открыт, но верхняя граница не была видна в выведенном фрагменте."
+      ]
+    },
+    "6": {
+      "q_number": 6,
+      "reviewer": "kotlin_null_let_repair_independent",
+      "model": "gpt-6-luna",
+      "surfaces_read": [
+        "q6-theory.json (visible question and complete Q6 body)",
+        "q6-A.json, q6-B.json, q6-C.json, q6-D.json (all option texts and 17 section fields)",
+        "Official Kotlin null-safety#elvis-operator (lines 93-104), let API 2.4, scope-functions selection table (let/apply/also)",
+        "KotlinNullLetOwnerQ6.kt and q_number6 execution receipt; recomputed current source SHA-256"
+      ],
+      "options": [
+        {
+          "label": "A",
+          "completeness": "complete",
+          "truth": "false",
+          "model": "Elvis correct; let block invocation for nullable receiver correct; falsely assigns let receiver-return semantics.",
+          "attempt_to_defend": "apply/also return receiver, but let returns lambda result. Example \"abc\".let { it.length } has Int result."
+        },
+        {
+          "label": "B",
+          "completeness": "complete",
+          "truth": "false",
+          "model": "Claims Elvis right operand is limited to throw; let behaviors are otherwise correct.",
+          "attempt_to_defend": "throw is permitted, but not exclusive; fallback values and return expressions are also allowed."
+        },
+        {
+          "label": "C",
+          "completeness": "complete",
+          "truth": "true",
+          "model": "Correctly describes Elvis, regular let(null) and ?.let null short circuit.",
+          "attempt_to_defend": "Official API says let calls block with receiver and returns block result; safe call supplies skip on null."
+        },
+        {
+          "label": "D",
+          "completeness": "complete",
+          "truth": "false",
+          "model": "Full inverse Elvis branch model; let clauses are otherwise accurate.",
+          "attempt_to_defend": "Its if_it_were_true consequence correctly follows its full reversed model: fallback omitted when left null and right evaluated when left non-null."
+        }
+      ],
+      "sections": [
+        {
+          "label": "A",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Distinguishes let block result from receiver; contrast apply/also returns receiver."
+        },
+        {
+          "label": "A",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Identifies conflation among scope functions' result semantics."
+        },
+        {
+          "label": "A",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Concrete `\"abc\".let { it.length }` yields 3, not receiver string."
+        },
+        {
+          "label": "A",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Correctly describes transform result, safe-call gating, and Elvis on whole left expression."
+        },
+        {
+          "label": "B",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Elvis RHS is evaluated only for null LHS and can be fallback, throw, or return."
+        },
+        {
+          "label": "B",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Separates common throw idiom from operator restriction."
+        },
+        {
+          "label": "B",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Counterfactual consequence for name ?: \"Unknown\" accurately expresses false restriction."
+        },
+        {
+          "label": "B",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Advice maps fallback/throw/return to contract and distinguishes let vs ?.let."
+        },
+        {
+          "label": "C",
+          "field": "explanation",
+          "status": "PASS",
+          "reason": "Precisely separates Elvis branch choice, ordinary let argument/result, and ?. guard."
+        },
+        {
+          "label": "C",
+          "field": "example",
+          "status": "PASS",
+          "reason": "Shows let receives null, ?.let skips, and transformed null causes Elvis fallback."
+        },
+        {
+          "label": "C",
+          "field": "when_to_apply",
+          "status": "PASS",
+          "reason": "Use cases follow branch semantics and receiver nullability."
+        },
+        {
+          "label": "C",
+          "field": "edge_cases",
+          "status": "PASS",
+          "reason": "Fallback applies to null receiver or null transform result; exceptions propagate; RHS can throw/return."
+        },
+        {
+          "label": "C",
+          "field": "related",
+          "status": "PASS",
+          "reason": "let returns lambda result while apply/also return receiver; ordinary vs safe-call invocation distinction accurate."
+        },
+        {
+          "label": "D",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "States correct Elvis branch behavior and acknowledges let clauses in distractor are otherwise right."
+        },
+        {
+          "label": "D",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Names reversal of branch condition and result."
+        },
+        {
+          "label": "D",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Consistent consequence of complete inversion; not a partial/ambiguous model."
+        },
+        {
+          "label": "D",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Restores correct Elvis rule and correctly states let-result and safe-call roles."
+        }
+      ],
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "The visible question asks semantics of Elvis and let/null; all options address both components."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "Official docs specify Elvis left-if-nonnull, RHS-if-null and allow throw/return; let API returns block result; scope table shows apply/also return context object."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "Theory explicitly covers Elvis fallback, let/null, ?.let, transformed-null fallback, and exception propagation; C aligns directly."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "All 17 fields across A-D read and individually evaluated."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "All choices are complete paired semantic assertions, roughly parallel in coverage; post-answer explanation fields provide role-specific instruction and do not disclose key pre-choice."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "A/B/D are complete false mechanism models, not incomplete due to being false; D is a coherent fully reversed Elvis rule."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Question and all option/section prose are clear technical Russian; API terms and code are appropriately retained."
+        }
+      },
+      "findings": [],
+      "sources": [
+        {
+          "url": "https://kotlinlang.org/docs/null-safety.html#elvis-operator",
+          "checked_claim": "LHS returned when non-null; RHS evaluated only when LHS null; throw and return are expressions usable on RHS.",
+          "version": "Kotlin documentation current page",
+          "checked_at": "2026-11-06T06:27:45Z"
+        },
+        {
+          "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/let.html",
+          "checked_claim": "Kotlin 2.4 let passes receiver as block argument and returns block result.",
+          "version": "Kotlin API 2.4",
+          "checked_at": "2026-11-06T06:27:45Z"
+        },
+        {
+          "url": "https://kotlinlang.org/docs/scope-functions.html#let",
+          "checked_claim": "Selection table: let returns lambda result; apply and also return context object.",
+          "version": "Kotlin documentation current page",
+          "checked_at": "2026-11-06T06:27:45Z"
+        }
+      ],
+      "limitations": [
+        "Example execution was performed by author; reviewer matched current source hash to receipt, did not rerun."
+      ]
+    }
+  },
+  "q4_completion": {
+    "q_number": 4,
+    "reviewer": "kotlin_null_let_repair_independent",
+    "model": "gpt-6-luna",
+    "surfaces_read": [
+      "q4-theory.json; q4-A/B/C/D.json, including all 17 section fields",
+      "docs/mcq-quality-standard.md lines 1-179",
+      "docs/mcq-quality/examiner-review.md lines 1-111",
+      "surface-parity-rules.md and russian-readability-rules.md (read in prior B pass)",
+      "official Kotlin null-safety, generics upper bounds lines 138-150, Java interop platform types/annotations lines 40-99, Kotlin 2.4 let API lines 27-46",
+      "KotlinNullLetOwnerQ4.kt, execution receipt, runtime-reference-verification receipt; SHA-256 recomputed"
+    ],
+    "field_corrections": [
+      {
+        "field": "D.example",
+        "status": "PASS",
+        "reason": "The example source hash recomputed as ccc85518ec9fce95abd3a70fd1b4990f1b55ddca9750061b90908bba5a272e74, matching the execution receipt; receipt records Kotlin 2.4.10/JRE26 compile and run exit 0. Reviewer verified receipt/hash, did not rerun."
+      }
+    ],
+    "effective_checks": {
+      "CONTENT": {
+        "status": "PASS",
+        "reason": "Both earlier OPEN ordinary-member scope findings resolved: current B.what_actually states nullable `value.length` needs proof and contrasts explicit `value?.length`; C/D option texts and D.explanation also explicitly scope ordinary members."
+      },
+      "FACTS": {
+        "status": "PASS",
+        "reason": "Official null-safety says String? direct member access is compile error and lists !! as NPE source; official generics says default upper bound Any? (line 148), so unconstrained T may be nullable; Java platform/annotations and let semantics verified."
+      },
+      "LINKAGE": {
+        "status": "PASS",
+        "reason": "Visible Q asks implementation of null-safety; type distinction, access restrictions, !!, generics and Java boundary derive from Q4 theory."
+      },
+      "SECTIONS": {
+        "status": "PASS",
+        "reason": "All 17 section fields read and individually checked in raw B report; section count is 4+4+4+5."
+      },
+      "SFPL": {
+        "status": "PASS",
+        "reason": "All four pre-answer options are complete and similarly structured assertions; post-answer sections differ by teaching role and do not leak key before selection."
+      },
+      "ANSC": {
+        "status": "PASS",
+        "reason": "A-C are complete false models, each answers with a coherent wrong nullability mechanism; falsehood does not make them incomplete. D is complete/correct."
+      },
+      "RU": {
+        "status": "PASS",
+        "reason": "Question, option wording and all section prose are comprehensible, with technical names/code retained; no language defect observed."
+      }
+    },
+    "sources": [
+      {
+        "url": "https://kotlinlang.org/docs/null-safety.html",
+        "checked_claim": "Nullable and non-null types are distinct; direct nullable member access is rejected; !! is an NPE cause.",
+        "version": "Kotlin documentation current page",
+        "checked_at": "2026-11-06T06:26:10Z"
+      },
+      {
+        "url": "https://kotlinlang.org/docs/generics.html#upper-bounds",
+        "checked_claim": "Default upper bound absent explicit bound is Any?.",
+        "version": "Kotlin documentation current page",
+        "checked_at": "2026-11-06T06:26:10Z"
+      },
+      {
+        "url": "https://kotlinlang.org/docs/java-interop.html#null-safety-and-platform-types",
+        "checked_claim": "Java platform types have relaxed checks and can fail at runtime; recognized nullability annotations map to nullable/non-null Kotlin types.",
+        "version": "Kotlin documentation current page",
+        "checked_at": "2026-11-06T06:26:10Z"
+      },
+      {
+        "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/let.html",
+        "checked_claim": "Kotlin 2.4 let is generic T.receiver and returns block result R.",
+        "version": "Kotlin API 2.4",
+        "checked_at": "2026-11-06T06:26:10Z"
+      }
+    ],
+    "remaining_findings": [],
+    "limitations": [
+      "Runtime evidence is author-executed; reviewer verified receipt and source hash, did not execute program.",
+      "No wider Java/platform/version matrix was run by this reviewer."
+    ]
+  },
+  "effective_checks": {
+    "4": {
+      "CONTENT": {
+        "status": "PASS",
+        "reason": "Both earlier OPEN ordinary-member scope findings resolved: current B.what_actually states nullable `value.length` needs proof and contrasts explicit `value?.length`; C/D option texts and D.explanation also explicitly scope ordinary members."
+      },
+      "FACTS": {
+        "status": "PASS",
+        "reason": "Official null-safety says String? direct member access is compile error and lists !! as NPE source; official generics says default upper bound Any? (line 148), so unconstrained T may be nullable; Java platform/annotations and let semantics verified."
+      },
+      "LINKAGE": {
+        "status": "PASS",
+        "reason": "Visible Q asks implementation of null-safety; type distinction, access restrictions, !!, generics and Java boundary derive from Q4 theory."
+      },
+      "SECTIONS": {
+        "status": "PASS",
+        "reason": "All 17 section fields read and individually checked in raw B report; section count is 4+4+4+5."
+      },
+      "SFPL": {
+        "status": "PASS",
+        "reason": "All four pre-answer options are complete and similarly structured assertions; post-answer sections differ by teaching role and do not leak key before selection."
+      },
+      "ANSC": {
+        "status": "PASS",
+        "reason": "A-C are complete false models, each answers with a coherent wrong nullability mechanism; falsehood does not make them incomplete. D is complete/correct."
+      },
+      "RU": {
+        "status": "PASS",
+        "reason": "Question, option wording and all section prose are comprehensible, with technical names/code retained; no language defect observed."
+      }
+    },
+    "6": {
+      "CONTENT": {
+        "status": "PASS",
+        "reason": "The visible question asks semantics of Elvis and let/null; all options address both components."
+      },
+      "FACTS": {
+        "status": "PASS",
+        "reason": "Official docs specify Elvis left-if-nonnull, RHS-if-null and allow throw/return; let API returns block result; scope table shows apply/also return context object."
+      },
+      "LINKAGE": {
+        "status": "PASS",
+        "reason": "Theory explicitly covers Elvis fallback, let/null, ?.let, transformed-null fallback, and exception propagation; C aligns directly."
+      },
+      "SECTIONS": {
+        "status": "PASS",
+        "reason": "All 17 fields across A-D read and individually evaluated."
+      },
+      "SFPL": {
+        "status": "PASS",
+        "reason": "All choices are complete paired semantic assertions, roughly parallel in coverage; post-answer explanation fields provide role-specific instruction and do not disclose key pre-choice."
+      },
+      "ANSC": {
+        "status": "PASS",
+        "reason": "A/B/D are complete false mechanism models, not incomplete due to being false; D is a coherent fully reversed Elvis rule."
+      },
+      "RU": {
+        "status": "PASS",
+        "reason": "Question and all option/section prose are clear technical Russian; API terms and code are appropriately retained."
+      }
+    }
+  },
+  "effective_section_judgments": {
+    "4": [
+      {
+        "label": "A",
+        "field": "what_actually",
+        "status": "PASS",
+        "reason": "String vs String? и compiler rejection для nullable.length соответствуют официальной null-safety."
+      },
+      {
+        "label": "A",
+        "field": "source_of_confusion",
+        "status": "PASS",
+        "reason": "Разводит runtime-проверку !! и статическое различие типов."
+      },
+      {
+        "label": "A",
+        "field": "if_it_were_true",
+        "status": "PASS",
+        "reason": "Следствие — прямой доступ к String? и обнаружение лишь во время исполнения; это контрфактическая модель ошибочного варианта."
+      },
+      {
+        "label": "A",
+        "field": "how_it_should_be",
+        "status": "PASS",
+        "reason": "Называет smart cast/safe call/обработку как корректные способы."
+      },
+      {
+        "label": "B",
+        "field": "what_actually",
+        "status": "PASS",
+        "reason": "value.length против value?.length различены предметно и конкретно."
+      },
+      {
+        "label": "B",
+        "field": "source_of_confusion",
+        "status": "PASS",
+        "reason": "Локализует смешение явного ?. с обычным доступом."
+      },
+      {
+        "label": "B",
+        "field": "if_it_were_true",
+        "status": "PASS",
+        "reason": "Следствие ложной модели: value.length молча пропускал бы null."
+      },
+      {
+        "label": "B",
+        "field": "how_it_should_be",
+        "status": "PASS",
+        "reason": "Есть оговорка стабильности smart cast и nullable extensions."
+      },
+      {
+        "label": "C",
+        "field": "what_actually",
+        "status": "PASS",
+        "reason": "Прямо опровергает тезис C: !! бросает NPE в чистом Kotlin; platform types дополнительны."
+      },
+      {
+        "label": "C",
+        "field": "source_of_confusion",
+        "status": "PASS",
+        "reason": "Причина ошибки соотнесена с неполным перечнем NPE."
+      },
+      {
+        "label": "C",
+        "field": "if_it_were_true",
+        "status": "PASS",
+        "reason": "Ясное проверяемое контрфактическое следствие про !! без Java."
+      },
+      {
+        "label": "C",
+        "field": "how_it_should_be",
+        "status": "PASS",
+        "reason": "Указаны !!, throw, initialization и platform types как разные источники/границы."
+      },
+      {
+        "label": "D",
+        "field": "explanation",
+        "status": "PASS",
+        "reason": "Охватывает ordinary members, nullable extension, generics bounds; проверено по заданной теории."
+      },
+      {
+        "label": "D",
+        "field": "example",
+        "status": "PASS",
+        "reason": "The example source hash recomputed as ccc85518ec9fce95abd3a70fd1b4990f1b55ddca9750061b90908bba5a272e74, matching the execution receipt; receipt records Kotlin 2.4.10/JRE26 compile and run exit 0. Reviewer verified receipt/hash, did not rerun."
+      },
+      {
+        "label": "D",
+        "field": "when_to_apply",
+        "status": "PASS",
+        "reason": "Практическое следствие о nullable API и generic bounds соответствует T без ограничения/ T:Any."
+      },
+      {
+        "label": "D",
+        "field": "edge_cases",
+        "status": "PASS",
+        "reason": "Различает Java platform types, аннотации и невозможность smart cast mutable/custom getter."
+      },
+      {
+        "label": "D",
+        "field": "related",
+        "status": "PASS",
+        "reason": "Связывает safe call, Elvis, ?.let и обычный let с null; утверждения согласуются с официальной моделью."
+      }
+    ],
+    "6": [
+      {
+        "label": "A",
+        "field": "what_actually",
+        "status": "PASS",
+        "reason": "Distinguishes let block result from receiver; contrast apply/also returns receiver."
+      },
+      {
+        "label": "A",
+        "field": "source_of_confusion",
+        "status": "PASS",
+        "reason": "Identifies conflation among scope functions' result semantics."
+      },
+      {
+        "label": "A",
+        "field": "if_it_were_true",
+        "status": "PASS",
+        "reason": "Concrete `\"abc\".let { it.length }` yields 3, not receiver string."
+      },
+      {
+        "label": "A",
+        "field": "how_it_should_be",
+        "status": "PASS",
+        "reason": "Correctly describes transform result, safe-call gating, and Elvis on whole left expression."
+      },
+      {
+        "label": "B",
+        "field": "what_actually",
+        "status": "PASS",
+        "reason": "Elvis RHS is evaluated only for null LHS and can be fallback, throw, or return."
+      },
+      {
+        "label": "B",
+        "field": "source_of_confusion",
+        "status": "PASS",
+        "reason": "Separates common throw idiom from operator restriction."
+      },
+      {
+        "label": "B",
+        "field": "if_it_were_true",
+        "status": "PASS",
+        "reason": "Counterfactual consequence for name ?: \"Unknown\" accurately expresses false restriction."
+      },
+      {
+        "label": "B",
+        "field": "how_it_should_be",
+        "status": "PASS",
+        "reason": "Advice maps fallback/throw/return to contract and distinguishes let vs ?.let."
+      },
+      {
+        "label": "C",
+        "field": "explanation",
+        "status": "PASS",
+        "reason": "Precisely separates Elvis branch choice, ordinary let argument/result, and ?. guard."
+      },
+      {
+        "label": "C",
+        "field": "example",
+        "status": "PASS",
+        "reason": "Shows let receives null, ?.let skips, and transformed null causes Elvis fallback."
+      },
+      {
+        "label": "C",
+        "field": "when_to_apply",
+        "status": "PASS",
+        "reason": "Use cases follow branch semantics and receiver nullability."
+      },
+      {
+        "label": "C",
+        "field": "edge_cases",
+        "status": "PASS",
+        "reason": "Fallback applies to null receiver or null transform result; exceptions propagate; RHS can throw/return."
+      },
+      {
+        "label": "C",
+        "field": "related",
+        "status": "PASS",
+        "reason": "let returns lambda result while apply/also return receiver; ordinary vs safe-call invocation distinction accurate."
+      },
+      {
+        "label": "D",
+        "field": "what_actually",
+        "status": "PASS",
+        "reason": "States correct Elvis branch behavior and acknowledges let clauses in distractor are otherwise right."
+      },
+      {
+        "label": "D",
+        "field": "source_of_confusion",
+        "status": "PASS",
+        "reason": "Names reversal of branch condition and result."
+      },
+      {
+        "label": "D",
+        "field": "if_it_were_true",
+        "status": "PASS",
+        "reason": "Consistent consequence of complete inversion; not a partial/ambiguous model."
+      },
+      {
+        "label": "D",
+        "field": "how_it_should_be",
+        "status": "PASS",
+        "reason": "Restores correct Elvis rule and correctly states let-result and safe-call roles."
+      }
+    ]
+  },
+  "notes": [
+    "Scope Q4:B0/Q6:B0 only:8options,34sections,2full theory bodies,shared preamble and visible headings. No whole-topic acceptance.",
+    "Original candidate007115a9 passed numeric scans but failed real independent Q4 scope review. CONTENT/FACTS OPEN findings were registered before repair. Q4 C/D and D explanation now explicitly scope ordinary member access and preserve nullable extensions.",
+    "Raw r1 section FAIL labels contradicted their own correct reasons; reviewer supplied separate r1 adjudication. Its hidden-section SFPL rationale was withdrawn and left UNVERIFIED. Those raw errors were not imported as confirmed defects or silently converted to PASS.",
+    "Fresh r2 reviewer gpt-6-luna/fork_turns=none saw only corrected blind input before sealed A. D/C selections and full form observations preserved exactly. Initial r2 B was partial; narrowing to one Q and small option chunks allowed completion. No partial phase became FINAL.",
+    "Q4 completion actually read generic upper-bound subsection, platform annotations and let API; corrected missing source excerpt, imaginary need for34fields in a single-Q pass and unreviewed runtime receipt. Raw midnight timestamps and UNVERIFIED fields retained; only actual completion sources/time and effective decisions imported.",
+    "All17fields per Q have specific independent judgments. Q4 example status completed by recomputed source SHA and actual author compile/run receipt, not by pretending reviewer executed code.",
+    "Q4 uses concrete String/String? rather than claiming any T non-null. Explanation gives Any? default and T:Any bound. Old correct platform-type statement was not treated as false; current C is a full broad model with a deliberate Java-only NPE misconception.",
+    "Q6 old A was true but incomplete; it was not mechanically promoted. Current full A uses a coherent false receiver-return model, B only-throw and D reversed Elvis. Key C now correctly distinguishes ordinary let(null), result R and safe-call gate. D counterfactual follows both explicit branches, not invented always-fallback.",
+    "Two new examples actually compiled/executed with Kotlin2.4.10/JRE26.0.2, targetJVM17, MicrosoftJDK21.0.10. Sources unchanged after prose repair. Five prior positive programs,5expected compiler errors and Java fixture only hash/receipt-verified by author; current3theory fences matched executed source texts. No new Java/annotation/app/JS/Native/version-matrix runs.",
+    "Scope qualifier repair produced raw DUPLICATE_NGRAMS4 FAIL; first C clause naturally rephrased without removing API or conditions. Both initial scan-green failure and duplicate FAIL/history retained, thresholds unchanged. Final selected schema PASS, no selected HARD/WARN;18HARD outside scope remain.",
+    "Q34 dependency independently renewed in20261106T060900Z-kotlin-q34-null-dependency-refresh against current Markdown4e494e1c7e7993bd9a682bf34d07d41d4300458ed223078f21f466a6630fff8a. Historical sealed A retained honestly, no new blind claimed for Q34.",
+    "Exactly42fields in Q4/Q6 changed from HEAD:8texts+34sections. D/C keys,headings,question_text,labels,order,other43questions,Markdown and unrelated work preserved. Global PLAN/checkpoint/sync/audit-state remain coordinator-owned."
+  ]
+}

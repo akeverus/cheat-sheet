@@ -1,0 +1,128 @@
+{
+  "reviewer": "kotlin_null_let_owner_independent",
+  "model": "gpt-6-luna",
+  "source_reports": [
+    "kotlin-null-let-owner-b-q4.json",
+    "kotlin-null-let-owner-b-q6.json"
+  ],
+  "corrections": [
+    {
+      "q_number": 4,
+      "label": "C",
+      "field": "what_actually",
+      "previous_status": "FAIL",
+      "effective_status": "PASS",
+      "reason": "Поле корректно описывает NPE от !! без Java и отличает platform types как дополнительный риск; моё прежнее FAIL противоречило собственной причине."
+    },
+    {
+      "q_number": 4,
+      "label": "D",
+      "field": "related",
+      "previous_status": "FAIL",
+      "effective_status": "PASS",
+      "reason": "Поле правильно говорит, что ordinary let не фильтрует null, а ?.let пропускает блок за счёт safe call; это точная граница API."
+    },
+    {
+      "q_number": 4,
+      "label": "D",
+      "field": "explanation",
+      "previous_status": "FAIL",
+      "effective_status": "PASS",
+      "reason": "Explanation отдельно уточняет «обращение к ненулевому receiver» и сам по себе технически корректен. Дефект находится в видимом варианте, где scope шире и исключение nullable extensions не оговорено."
+    },
+    {
+      "q_number": 4,
+      "label": "D",
+      "field": "related",
+      "previous_status": "FAIL",
+      "effective_status": "PASS",
+      "reason": "Пометка FAIL была лишь наследована от совпадения finding-текста; содержательного дефекта поля нет."
+    }
+  ],
+  "effective_checks": {
+    "Q4": {
+      "CONTENT": {
+        "status": "FAIL",
+        "reason": "Видимый D без ограничения на обычные non-null members обобщает, что nullable receiver требует proof/handling. Nullable extensions можно вызывать на nullable receiver без такого proof; поэтому единственный защитимый correct не установлен."
+      },
+      "FACTS": {
+        "status": "FAIL",
+        "reason": "Visible D содержит чрезмерно широкое утверждение; локальная теория и источники подтверждают контрпример nullable extensions. C's claim that !! cannot cause NPE absent Java is false."
+      },
+      "LINKAGE": {
+        "status": "FAIL",
+        "reason": "Видимый вариант D не вполне согласуется с теорией, которая сама называет nullable extensions доступными без ?. и тем самым задаёт исключение."
+      },
+      "SECTIONS": {
+        "status": "PASS",
+        "reason": "Упомянутые C.what_actually, D.explanation и D.related по содержанию корректны. Generic caveat в D.explanation не сужает автоматически отдельный visible option."
+      },
+      "SFPL": {
+        "status": "UNVERIFIED",
+        "reason": "Предвыборные варианты имеют параллельный двухчастный каркас: статическая nullability/доступ, затем !!/NPE. По сырому просмотру нет надёжного основания объявить структурное выделение correct; generic caveat находится в post-answer sections и не учитывается. Нужно фиксировать сравнение видимой формы по всем вариантам; длина D 156 против A137/B146/C150 сама по себе не доказывает ни PASS, ни FAIL."
+      },
+      "ANSC": {
+        "status": "PASS",
+        "reason": "Все четыре текста дают завершённую модель с утверждениями о типах/доступе и !!/NPE; полнота wrong не равна их истинности. Ключевое блокирование — factual ambiguity of D."
+      },
+      "RU": {
+        "status": "PASS",
+        "reason": "Язык видимых формулировок и прочитанных sections понятен; отдельный дефект scope — точность, не грамматика."
+      }
+    },
+    "Q6": {
+      "CONTENT": {
+        "status": "PASS",
+        "reason": "C единственный защитимый ответ."
+      },
+      "FACTS": {
+        "status": "PASS",
+        "reason": "Elvis, let, ?.let и fallback при null return-value описаны корректно."
+      },
+      "LINKAGE": {
+        "status": "PASS",
+        "reason": "Локальная теория прямо поддерживает выбор и опровержения."
+      },
+      "SECTIONS": {
+        "status": "PASS",
+        "reason": "17 полей корректно выполняют ролевые функции."
+      },
+      "SFPL": {
+        "status": "PASS",
+        "reason": "Все варианты имеют параллельный каркас и полно отвечают на части вопроса."
+      },
+      "ANSC": {
+        "status": "PASS",
+        "reason": "Все четыре варианта полны, хотя A/B/D ошибочны."
+      },
+      "RU": {
+        "status": "PASS",
+        "reason": "Русский текст связный и понятный."
+      }
+    }
+  },
+  "remaining_confirmed_findings": [
+    {
+      "q_number": 4,
+      "label": "D",
+      "surface": "visible option text",
+      "status": "CONFIRMED",
+      "reason": "Уточнить scope до обычного доступа к non-null member, потому что nullable extensions могут вызываться с nullable receiver напрямую. Это отдельная проблема текста варианта; правильный generics caveat в explanation её не исправляет."
+    }
+  ],
+  "retracted_arguments": [
+    {
+      "topic": "SFPL",
+      "reason": "Наличие generic caveat в correct sections не может считаться предвыборным формальным сигналом: sections раскрываются после ответа и поля имеют разные роли по контракту."
+    },
+    {
+      "topic": "length",
+      "reason": "Разница длины D156/A137/B146/C150 без анализа предвыборного каркаса не устанавливает ни приёмку, ни дефект."
+    }
+  ],
+  "limitations": [
+    "Это точечное adjudication противоречивых статусов и оснований, не повторный независимый прогон всех surfaces.",
+    "Q4 SFPL оставлен UNVERIFIED: потребуется отдельная оценка именно видимой предвыборной формы."
+  ],
+  "checked_at": "2026-11-06T06:13:45Z"
+}

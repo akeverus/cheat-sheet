@@ -1,0 +1,198 @@
+{
+  "q_number": 4,
+  "reviewer": "kotlin_null_let_repair_independent",
+  "model": "gpt-6-luna",
+  "surfaces_read": [
+    "Q4 видимый вопрос и теория из q4-theory.json; A,B,C,D со всеми sections из q4-A/B/C/D.json; официальный Kotlin null-safety и generics#upper-bounds. Общий пролог/правила доступны из предыдущего чтения, но полный точный инвентарь 34 section fields к Q4 в данной фазе не предоставлен отдельным перечнем."
+  ],
+  "options": [
+    {
+      "label": "A",
+      "completeness": "complete",
+      "truth": "false",
+      "model": "Смешивает runtime-оператор !! с типовой системой; утверждает runtime-only nullability и безусловную доступность членов.",
+      "attempt_to_defend": "!! действительно проверяется во время выполнения; однако String? статически nullable и value.length без обработки отвергается."
+    },
+    {
+      "label": "B",
+      "completeness": "complete",
+      "truth": "false",
+      "model": "Подменяет явный safe call автоматическим пропуском обычного доступа.",
+      "attempt_to_defend": "?. действительно пропускает вызов при null, но это специальный синтаксис; value.length на nullable receiver требует доказательства/обработки."
+    },
+    {
+      "label": "C",
+      "completeness": "complete",
+      "truth": "false",
+      "model": "Верная область типов и ordinary members соединена с ошибочным абсолютным отрицанием NPE от !! вне Java.",
+      "attempt_to_defend": "Первые части подтверждаются Kotlin docs; официальная документация прямо перечисляет !! как причину NPE."
+    },
+    {
+      "label": "D",
+      "completeness": "complete",
+      "truth": "true",
+      "model": "Статическое различие String/String?, ordinary-member restriction, явная обработка, и runtime NPE через !!.",
+      "attempt_to_defend": "Null-safety docs подтверждает различие и запрет прямого доступа; !! вызывает NPE без требования Java."
+    }
+  ],
+  "sections": [
+    {
+      "label": "A",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "String vs String? и compiler rejection для nullable.length соответствуют официальной null-safety."
+    },
+    {
+      "label": "A",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Разводит runtime-проверку !! и статическое различие типов."
+    },
+    {
+      "label": "A",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Следствие — прямой доступ к String? и обнаружение лишь во время исполнения; это контрфактическая модель ошибочного варианта."
+    },
+    {
+      "label": "A",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Называет smart cast/safe call/обработку как корректные способы."
+    },
+    {
+      "label": "B",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "value.length против value?.length различены предметно и конкретно."
+    },
+    {
+      "label": "B",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Локализует смешение явного ?. с обычным доступом."
+    },
+    {
+      "label": "B",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Следствие ложной модели: value.length молча пропускал бы null."
+    },
+    {
+      "label": "B",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Есть оговорка стабильности smart cast и nullable extensions."
+    },
+    {
+      "label": "C",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Прямо опровергает тезис C: !! бросает NPE в чистом Kotlin; platform types дополнительны."
+    },
+    {
+      "label": "C",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Причина ошибки соотнесена с неполным перечнем NPE."
+    },
+    {
+      "label": "C",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Ясное проверяемое контрфактическое следствие про !! без Java."
+    },
+    {
+      "label": "C",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Указаны !!, throw, initialization и platform types как разные источники/границы."
+    },
+    {
+      "label": "D",
+      "field": "explanation",
+      "status": "PASS",
+      "reason": "Охватывает ordinary members, nullable extension, generics bounds; проверено по заданной теории."
+    },
+    {
+      "label": "D",
+      "field": "example",
+      "status": "UNVERIFIED",
+      "reason": "Код прочитан; исполнение среды не выполнял, runtime отчет говорит о hash-verified примерах, но соответствующие доказательства/логи не включены в пакет."
+    },
+    {
+      "label": "D",
+      "field": "when_to_apply",
+      "status": "PASS",
+      "reason": "Практическое следствие о nullable API и generic bounds соответствует T без ограничения/ T:Any."
+    },
+    {
+      "label": "D",
+      "field": "edge_cases",
+      "status": "PASS",
+      "reason": "Различает Java platform types, аннотации и невозможность smart cast mutable/custom getter."
+    },
+    {
+      "label": "D",
+      "field": "related",
+      "status": "PASS",
+      "reason": "Связывает safe call, Elvis, ?.let и обычный let с null; утверждения согласуются с официальной моделью."
+    }
+  ],
+  "checks": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "Явная область ordinary members присутствует в B.what_actually, B.if_it_were_true, C/D option wording и D.explanation; прежнее замечание по scope устранено."
+    },
+    "FACTS": {
+      "status": "PASS",
+      "reason": "Null-safety и upper bounds сверены по официальным Kotlin docs; !! действительно может бросить NPE без Java."
+    },
+    "LINKAGE": {
+      "status": "PASS",
+      "reason": "Теория Q4 и видимый вопрос согласованы с блоком; D.sections обосновывают ключевую механику."
+    },
+    "SECTIONS": {
+      "status": "UNVERIFIED",
+      "reason": "17 section fields этого блока рассмотрены по предоставленным JSON; полный инвентарь 34 полей и критерии в полном файле стандарта здесь отдельно не проверены."
+    },
+    "SFPL": {
+      "status": "PASS",
+      "reason": "A-D все завершённые двухчастные ответы, сравнивают статическую nullability, член-доступ и !!; D не имеет уникального по полноте каркаса. Различия sections post-answer не раскрывают ключ до выбора."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "У всех четырех законченные модели; A-C полноценны как ложные модели, не признаются неполными из-за ложности."
+    },
+    "RU": {
+      "status": "PASS",
+      "reason": "Вопрос и все четыре опции естественны и ясны; в sections технические термины устойчивы. Пример D остаётся кодом, не русской прозой."
+    }
+  },
+  "findings": [
+    {
+      "severity": "resolved",
+      "issue": "Два прежних OPEN Q4 замечания missing ordinary-member scope CONTENT/FACTS",
+      "evidence": "Теперь область обычных членов явно в вариантах B,C,D и sections; проверенное следствие `value.length` требует доказательства, `?.` — явная форма."
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://kotlinlang.org/docs/null-safety.html",
+      "checked_claim": "Статическое различие nullable/non-null, прямой доступ к nullable member запрещён, !! — причина NPE.",
+      "version": "Kotlin Documentation, текущая страница",
+      "checked_at": "2026-11-06T00:00:00Z"
+    },
+    {
+      "url": "https://kotlinlang.org/docs/generics.html#upper-bounds",
+      "checked_claim": "Generic upper-bound semantics referenced in supplied Q4 theory; snippet surfaced page but upper-bound subsection not retrieved in available excerpt.",
+      "version": "Kotlin Documentation, текущая страница",
+      "checked_at": "2026-11-06T00:00:00Z"
+    }
+  ],
+  "limitations": [
+    "Не исполнял runtime-примеры; runtime evidence упомянут, но файлы/логи с hash verification не переданы.",
+    "Полный 34-field section inventory и исходные полные правила не проверялись заново в этом ходе; отмечено UNVERIFIED.",
+    "Generics URL открыт, но верхняя граница не была видна в выведенном фрагменте."
+  ]
+}

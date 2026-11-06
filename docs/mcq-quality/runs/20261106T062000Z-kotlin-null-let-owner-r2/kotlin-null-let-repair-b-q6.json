@@ -1,0 +1,199 @@
+{
+  "q_number": 6,
+  "reviewer": "kotlin_null_let_repair_independent",
+  "model": "gpt-6-luna",
+  "surfaces_read": [
+    "q6-theory.json (visible question and complete Q6 body)",
+    "q6-A.json, q6-B.json, q6-C.json, q6-D.json (all option texts and 17 section fields)",
+    "Official Kotlin null-safety#elvis-operator (lines 93-104), let API 2.4, scope-functions selection table (let/apply/also)",
+    "KotlinNullLetOwnerQ6.kt and q_number6 execution receipt; recomputed current source SHA-256"
+  ],
+  "options": [
+    {
+      "label": "A",
+      "completeness": "complete",
+      "truth": "false",
+      "model": "Elvis correct; let block invocation for nullable receiver correct; falsely assigns let receiver-return semantics.",
+      "attempt_to_defend": "apply/also return receiver, but let returns lambda result. Example \"abc\".let { it.length } has Int result."
+    },
+    {
+      "label": "B",
+      "completeness": "complete",
+      "truth": "false",
+      "model": "Claims Elvis right operand is limited to throw; let behaviors are otherwise correct.",
+      "attempt_to_defend": "throw is permitted, but not exclusive; fallback values and return expressions are also allowed."
+    },
+    {
+      "label": "C",
+      "completeness": "complete",
+      "truth": "true",
+      "model": "Correctly describes Elvis, regular let(null) and ?.let null short circuit.",
+      "attempt_to_defend": "Official API says let calls block with receiver and returns block result; safe call supplies skip on null."
+    },
+    {
+      "label": "D",
+      "completeness": "complete",
+      "truth": "false",
+      "model": "Full inverse Elvis branch model; let clauses are otherwise accurate.",
+      "attempt_to_defend": "Its if_it_were_true consequence correctly follows its full reversed model: fallback omitted when left null and right evaluated when left non-null."
+    }
+  ],
+  "sections": [
+    {
+      "label": "A",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Distinguishes let block result from receiver; contrast apply/also returns receiver."
+    },
+    {
+      "label": "A",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Identifies conflation among scope functions' result semantics."
+    },
+    {
+      "label": "A",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Concrete `\"abc\".let { it.length }` yields 3, not receiver string."
+    },
+    {
+      "label": "A",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Correctly describes transform result, safe-call gating, and Elvis on whole left expression."
+    },
+    {
+      "label": "B",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Elvis RHS is evaluated only for null LHS and can be fallback, throw, or return."
+    },
+    {
+      "label": "B",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Separates common throw idiom from operator restriction."
+    },
+    {
+      "label": "B",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Counterfactual consequence for name ?: \"Unknown\" accurately expresses false restriction."
+    },
+    {
+      "label": "B",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Advice maps fallback/throw/return to contract and distinguishes let vs ?.let."
+    },
+    {
+      "label": "C",
+      "field": "explanation",
+      "status": "PASS",
+      "reason": "Precisely separates Elvis branch choice, ordinary let argument/result, and ?. guard."
+    },
+    {
+      "label": "C",
+      "field": "example",
+      "status": "PASS",
+      "reason": "Shows let receives null, ?.let skips, and transformed null causes Elvis fallback."
+    },
+    {
+      "label": "C",
+      "field": "when_to_apply",
+      "status": "PASS",
+      "reason": "Use cases follow branch semantics and receiver nullability."
+    },
+    {
+      "label": "C",
+      "field": "edge_cases",
+      "status": "PASS",
+      "reason": "Fallback applies to null receiver or null transform result; exceptions propagate; RHS can throw/return."
+    },
+    {
+      "label": "C",
+      "field": "related",
+      "status": "PASS",
+      "reason": "let returns lambda result while apply/also return receiver; ordinary vs safe-call invocation distinction accurate."
+    },
+    {
+      "label": "D",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "States correct Elvis branch behavior and acknowledges let clauses in distractor are otherwise right."
+    },
+    {
+      "label": "D",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Names reversal of branch condition and result."
+    },
+    {
+      "label": "D",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Consistent consequence of complete inversion; not a partial/ambiguous model."
+    },
+    {
+      "label": "D",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Restores correct Elvis rule and correctly states let-result and safe-call roles."
+    }
+  ],
+  "checks": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "The visible question asks semantics of Elvis and let/null; all options address both components."
+    },
+    "FACTS": {
+      "status": "PASS",
+      "reason": "Official docs specify Elvis left-if-nonnull, RHS-if-null and allow throw/return; let API returns block result; scope table shows apply/also return context object."
+    },
+    "LINKAGE": {
+      "status": "PASS",
+      "reason": "Theory explicitly covers Elvis fallback, let/null, ?.let, transformed-null fallback, and exception propagation; C aligns directly."
+    },
+    "SECTIONS": {
+      "status": "PASS",
+      "reason": "All 17 fields across A-D read and individually evaluated."
+    },
+    "SFPL": {
+      "status": "PASS",
+      "reason": "All choices are complete paired semantic assertions, roughly parallel in coverage; post-answer explanation fields provide role-specific instruction and do not disclose key pre-choice."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "A/B/D are complete false mechanism models, not incomplete due to being false; D is a coherent fully reversed Elvis rule."
+    },
+    "RU": {
+      "status": "PASS",
+      "reason": "Question and all option/section prose are clear technical Russian; API terms and code are appropriately retained."
+    }
+  },
+  "findings": [],
+  "sources": [
+    {
+      "url": "https://kotlinlang.org/docs/null-safety.html#elvis-operator",
+      "checked_claim": "LHS returned when non-null; RHS evaluated only when LHS null; throw and return are expressions usable on RHS.",
+      "version": "Kotlin documentation current page",
+      "checked_at": "2026-11-06T06:27:45Z"
+    },
+    {
+      "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/let.html",
+      "checked_claim": "Kotlin 2.4 let passes receiver as block argument and returns block result.",
+      "version": "Kotlin API 2.4",
+      "checked_at": "2026-11-06T06:27:45Z"
+    },
+    {
+      "url": "https://kotlinlang.org/docs/scope-functions.html#let",
+      "checked_claim": "Selection table: let returns lambda result; apply and also return context object.",
+      "version": "Kotlin documentation current page",
+      "checked_at": "2026-11-06T06:27:45Z"
+    }
+  ],
+  "limitations": [
+    "Example execution was performed by author; reviewer matched current source hash to receipt, did not rerun."
+  ]
+}

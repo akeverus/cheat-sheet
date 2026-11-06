@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "review_id": "20261106T061300Z-kotlin-null-let-owner-r1-scope-findings",
+  "reviewer": "kotlin_null_let_owner_independent",
+  "author": "root_mcq_author",
+  "model": "gpt-6-luna",
+  "date": "2026-11-06T06:18:19.344849+00:00",
+  "kind": "independent_two_phase",
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-interview.json",
+    "theory": "cheatsheets/interview/programming-languages/kotlin/kotlin-interview.md"
+  },
+  "sha256": {
+    "mcq": "007115a9f20adf3faa23c76e72b84e6f44e53d0138506e44d4350dc865303cbd",
+    "theory": "4e494e1c7e7993bd9a682bf34d07d41d4300458ed223078f21f466a6630fff8a"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "phase_a": {
+    "path": "docs/mcq-quality/runs/20261106T061300Z-kotlin-null-let-owner-r1/phase-a.json",
+    "sha256": "108571e94c41ee07b44b57ed00ecf6d37d4bbfcc867b464b1579fd4c643074ef"
+  },
+  "revealed_at": "2026-11-06T06:13:07.377262+00:00",
+  "coverage": [
+    {
+      "q_number": 4,
+      "block_idx": 0,
+      "sha256": {
+        "mcq": "9fd6591f3dd9b9a4ab96c58f67b8d61059738cb8074fb094fe8bb62c24514c77",
+        "theory": "9d48caac4259ce4fd19eb18bd1ba49539c59c2d7e6f298086c721b173e2d8b99"
+      },
+      "checks": {
+        "content_review": {
+          "status": "FAIL",
+          "reason": "Определение вопроса широкое («как реализована null-safety»). A/B/C содержат однозначные ложные модели; у D спорен всеобщий scope: nullable extensions допустимы без non-null proof. Из-за этого формулировки вопроса и варианта не гарантируют единственный защитимый ответ."
+        },
+        "factual_correctness": {
+          "status": "FAIL",
+          "reason": "A/B/C ложны по описанным моделям; D правильно сообщает статическое различие и NPE от !!, но обобщение о nullable receiver пропускает nullable extensions. Generic caveat внутри explanation точен и не исправляет option text."
+        }
+      }
+    }
+  ],
+  "findings": [
+    {
+      "id": "kotlin-null-let-q4-visible-member-scope-content",
+      "check": "content_review",
+      "blocks": [
+        "Q4:B0"
+      ],
+      "status": "OPEN",
+      "reason": "Видимый D без условия доступа к обычным non-null членам обобщает требование non-null proof на nullable receiver. Nullable extensions допускают null receiver; однозначность ключа требует явной области."
+    },
+    {
+      "id": "kotlin-null-let-q4-visible-member-scope-facts",
+      "check": "factual_correctness",
+      "blocks": [
+        "Q4:B0"
+      ],
+      "status": "OPEN",
+      "reason": "Буквальная область D слишком широка для корректного общего утверждения. Условие обычного non-null member access должно быть в видимом варианте, без запрета nullable extensions."
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://kotlinlang.org/docs/null-safety.html",
+      "used_for": "Статическая nullability String/String?, обычный nullable-member access, safe call, !! и NPE вне Java; nullable extensions.",
+      "version": "Kotlin docs accessed 2026-11-06",
+      "checked_at": "2026-11-06T06:13:39Z"
+    },
+    {
+      "url": "https://kotlinlang.org/docs/generics.html#upper-bounds",
+      "used_for": "Unbounded T upper bound Any?; T:Any disallows nullable type arguments.",
+      "version": "Kotlin docs accessed 2026-11-06",
+      "checked_at": "2026-11-06T06:13:39Z"
+    },
+    {
+      "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/let.html",
+      "used_for": "let invokes block with this as argument and returns result.",
+      "version": "Kotlin stdlib API 2.4",
+      "checked_at": "2026-11-06T06:13:39Z"
+    },
+    {
+      "url": "https://kotlinlang.org/docs/scope-functions.html#let",
+      "used_for": "let argument/it, lambda result; safe call is what gates nullable invocation.",
+      "version": "Kotlin docs accessed 2026-11-06",
+      "checked_at": "2026-11-06T06:13:39Z"
+    },
+    {
+      "url": "https://kotlinlang.org/docs/java-interop.html#null-safety-and-platform-types",
+      "used_for": "Java platform types relax checks and may fail runtime; no blanket claim all Java references are platform types.",
+      "version": "Kotlin docs accessed 2026-11-06",
+      "checked_at": "2026-11-06T06:13:39Z"
+    }
+  ],
+  "limitations": [
+    "Failed original candidate; only confirmed visible Q4 CONTENT/FACTS failures imported. No partial input is presented as FINAL.",
+    "Original A/B and all raw reports retained. Contradictory raw section statuses and hidden-section SFPL rationale require separate correction; no override or PASS applied."
+  ],
+  "workflow_run": {
+    "path": "docs/mcq-quality/runs/20261106T061300Z-kotlin-null-let-owner-r1/manifest.json",
+    "sha256": "ff11fcd1e431e1798fd20d79d2bef524e5a18b62157a9889f0ad6260b750ec80"
+  },
+  "review_artifact": {
+    "path": "docs/mcq-quality/runs/20261106T061300Z-kotlin-null-let-owner-r1/owner-confirmed-findings.json",
+    "sha256": "91e4d9ddb5e62dfd261b1258edd629a4e256734b287f40f3f66559de21cfb9f5"
+  }
+}

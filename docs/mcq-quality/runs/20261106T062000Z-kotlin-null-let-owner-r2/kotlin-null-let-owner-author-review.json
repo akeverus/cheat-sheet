@@ -1,0 +1,290 @@
+{
+  "author": "root_mcq_author",
+  "checked_at": "2026-11-06T06:21:34.354963+00:00",
+  "scope": [
+    "Q4:B0",
+    "Q6:B0"
+  ],
+  "questions": [
+    {
+      "q_number": 4,
+      "options": [
+        {
+          "label": "A",
+          "text": "`String` и `String?` различаются лишь во время выполнения; компилятор разрешает одинаковый доступ к членам, а `!!` при null вызывает NPE.",
+          "completeness": "полный",
+          "truth": "неверен",
+          "model": "Runtime-only distinction",
+          "attempt_to_defend_or_validate": "Компилятор различает concrete String/String? до выполнения.",
+          "sections": [
+            {
+              "field": "what_actually",
+              "text": "Nullability проверяется статически: `String` не допускает null, а `String?` допускает. Например, чтение `length` у nullable-значения без доказательства ненулевости или специальной обработки отвергается компилятором.",
+              "author_assessment": "Конкретные String/String? различаются статически; ordinary length требует доказательства или обработки."
+            },
+            {
+              "field": "source_of_confusion",
+              "text": "Runtime-проверку `!!` принимают за весь механизм null-safety. Она дополняет статическую систему типов, а не заменяет различие nullable и non-null типов.",
+              "author_assessment": "Runtime assertion !! отделён от compile-time nullability."
+            },
+            {
+              "field": "if_it_were_true",
+              "text": "Код с явным `String?` мог бы напрямую читать его обычные члены без safe call и доказательства ненулевости; ошибку приходилось бы обнаруживать только при выполнении.",
+              "author_assessment": "Гипотетический свободный доступ без safe call соответствует неверной runtime-only модели."
+            },
+            {
+              "field": "how_it_should_be",
+              "text": "Различайте статическую nullability и runtime-утверждение `!!`. Для обращения к ненулевому receiver используйте доказательство ненулевости для smart cast, безопасный вызов или явную проверяемую обработку.",
+              "author_assessment": "Реальные доказательство/smart cast, safe call и runtime assertion разведены."
+            }
+          ]
+        },
+        {
+          "label": "B",
+          "text": "`String` и `String?` различаются статически; обычный доступ к nullable receiver автоматически пропускается при null, а `!!` при null вызывает NPE.",
+          "completeness": "полный",
+          "truth": "неверен",
+          "model": "Implicit safe-call on ordinary access",
+          "attempt_to_defend_or_validate": "Прямой nullable member access автоматически не пропускается.",
+          "sections": [
+            {
+              "field": "what_actually",
+              "text": "Обычное обращение к члену nullable receiver не становится безопасным вызовом автоматически. Для `value: String?` выражение `value.length` требует доказательства ненулевости; `value?.length` явно пропускает обращение при null.",
+              "author_assessment": "Обычный доступ не получает автоматически семантику safe call."
+            },
+            {
+              "field": "source_of_confusion",
+              "text": "Явный safe call `?.` ошибочно считают неявным поведением любого обращения к nullable-значению. Статический nullable тип сам по себе такого преобразования не задаёт.",
+              "author_assessment": "Гипотетическое неявное ?. названо конкретной путаницей B."
+            },
+            {
+              "field": "if_it_were_true",
+              "text": "Запись `value.length` при nullable-значении автоматически пропускала бы чтение при null, и отдельный синтаксис safe call для этого обращения не требовался бы.",
+              "author_assessment": "Условное исчезновение необходимости явного safe call логично следует из wrong B."
+            },
+            {
+              "field": "how_it_should_be",
+              "text": "Учитывайте доступные компилятору доказательства: стабильное значение может получить smart cast. Без такого доказательства обычный nullable receiver требует обработки; nullable extensions, специально принимающие null, — отдельный случай.",
+              "author_assessment": "Учтены стабильность для smart cast и допустимые nullable extensions; blanket ban отсутствует."
+            }
+          ]
+        },
+        {
+          "label": "C",
+          "text": "`String` и `String?` имеют разную статическую nullability; доступ к обычным членам nullable-значения требует проверки или безопасного вызова, а `!!` не может вызвать NPE без Java-интеропа.",
+          "completeness": "полный",
+          "truth": "неверен",
+          "model": "NPE от !! только через Java",
+          "attempt_to_defend_or_validate": "Чистый Kotlin !! на null — контрпример.",
+          "sections": [
+            {
+              "field": "what_actually",
+              "text": "NPE возможен и в чистом Kotlin: `!!` при null выбрасывает его без Java-интеропа. Platform types из Java — дополнительная граница с ослабленными статическими проверками, а не единственный источник NPE.",
+              "author_assessment": "Kotlin-only NPE от !! опровергает единственный ложный тезис C; граница platform types сохранена корректно."
+            },
+            {
+              "field": "source_of_confusion",
+              "text": "Известные риски Java-интеропа принимают за полный список причин NPE. Явное утверждение `!!` тоже может нарушить ненулевой инвариант.",
+              "author_assessment": "Источники NPE не ограничиваются Java; модель C объяснена без прежнего чрезмерного обобщения."
+            },
+            {
+              "field": "if_it_were_true",
+              "text": "В программе без Java-вызовов применение `!!` к null не могло бы дать NPE; это противоречило бы назначению runtime-утверждения ненулевости.",
+              "author_assessment": "Контрфактическая невозможность NPE от !! в pure Kotlin конкретно соответствует C."
+            },
+            {
+              "field": "how_it_should_be",
+              "text": "Статическая nullability снижает риск, но не устраняет NPE при `!!`, явном throw или некоторых ошибках инициализации. При platform types отдельно учитывайте возможность null из внешнего API.",
+              "author_assessment": "Явные throw, !!, initialization и platform boundary разделены; blanket Java-origin утверждения нет."
+            }
+          ]
+        },
+        {
+          "label": "D",
+          "text": "`String` и `String?` различаются статически; доступ к обычным членам nullable-значения требует проверки или явной обработки, а `!!` при null вызывает NPE и без Java-интеропа.",
+          "completeness": "полный",
+          "truth": "верен",
+          "model": "Static nullable types + explicit ordinary-member handling + runtime assertion",
+          "attempt_to_defend_or_validate": "Ordinary members явно ограничены в тексте, nullable extensions разрешены; generic bound пояснён отдельно.",
+          "sections": [
+            {
+              "field": "explanation",
+              "text": "`String` и `String?` имеют разную статическую nullability. Для доступа к обычным членам через nullable-значение нужны доказательство ненулевости или явная обработка. Расширение с nullable receiver может принимать null без такого доказательства. `!!` утверждает ненулевость уже при выполнении. Для generic `T` без ограничения верхняя граница — `Any?`, поэтому сам символ T не обещает ненулевость; `<T : Any>` исключает nullable type arguments.",
+              "author_assessment": "Уточнены ordinary members и nullable extensions; default generic bound Any? и T:Any не смешаны с concrete String."
+            },
+            {
+              "field": "example",
+              "text": "```kotlin\nfun <T> echo(value: T): T = value\nfun <T : Any> nonNull(value: T): T = value\n\nfun main() {\n    val required: String = nonNull(\"Kotlin\")\n    val optional: String? = echo<String?>(null)\n    check(required.length == 6)\n    check(optional?.length == null)\n}\n```",
+              "author_assessment": "Новая исполнявшаяся программа показывает nullable T и non-null bound; код не изменялся при текстовой правке D."
+            },
+            {
+              "field": "when_to_apply",
+              "text": "Выражайте допустимость отсутствия значения в типах параметров, свойств и результатов. Проверяйте границы generics явно; не переносите свойства конкретного `String` на произвольный `T`.",
+              "author_assessment": "Рекомендация относится к выражению контракта в типах, без гарантии ненулевости любого T."
+            },
+            {
+              "field": "edge_cases",
+              "text": "Java API без распознанной nullability-информации может давать platform types с ослабленными проверками. Распознанные аннотации уточняют тип; не всякая Java-ссылка остаётся platform type. Для mutable property или custom getter smart cast может быть недоступен.",
+              "author_assessment": "Не все Java references platform types; распознанные аннотации и нестабильный smart cast оговорены."
+            },
+            {
+              "field": "related",
+              "text": "`?.` пропускает обращение при null, `?:` выбирает запасной путь, а `?.let` пропускает блок благодаря safe call. Обычный `let` сам null не фильтрует. `!!` используйте для обоснованного инварианта, учитывая возможное исключение.",
+              "author_assessment": "Safe call/Elvis/let/!! разграничены; обычному let не приписан null-guard."
+            }
+          ]
+        }
+      ],
+      "author_checks": {
+        "CONTENT": "PASS after repair",
+        "FACTS": "PASS after repair",
+        "LINKAGE": "L3/L4 from current Q",
+        "SECTIONS": "PASS",
+        "ANSC": "PASS",
+        "RU": "PASS",
+        "SFPL": "AUTHOR_REVIEWED; new independent decision pending"
+      }
+    },
+    {
+      "q_number": 6,
+      "options": [
+        {
+          "label": "A",
+          "text": "`?:` сохраняет не-null слева, иначе вычисляет правую часть; `let` вызывает блок даже для null и возвращает исходный объект, а `?.let` при null пропускает блок.",
+          "completeness": "полный",
+          "truth": "неверен",
+          "model": "Let returns receiver",
+          "attempt_to_defend_or_validate": "Ошибочная подмена возвращаемого значения apply/also, а не спор о вызове let(null).",
+          "sections": [
+            {
+              "field": "what_actually",
+              "text": "Обычный `let` получает receiver, включая null, и возвращает результат блока, а не исходный объект. Возврат receiver после блока — свойство других scope-функций, например `also` и `apply`.",
+              "author_assessment": "Let возвращает R блока, а не receiver; противопоставлен фактически иной контракт also/apply."
+            },
+            {
+              "field": "source_of_confusion",
+              "text": "Общий способ выполнить блок с объектом принимают за одинаковое возвращаемое значение всех scope-функций. У `let` результат задаёт последняя вычисленная часть лямбды.",
+              "author_assessment": "Общий способ выполнения блока не означает одинаковые возвращаемые значения."
+            },
+            {
+              "field": "if_it_were_true",
+              "text": "Выражение `\"abc\".let { it.length }` возвращало бы строку \"abc\", а не число 3. Это меняло бы тип и смысл дальнейшей цепочки.",
+              "author_assessment": "На abc→length гипотетическая модель давала бы String вместо Int3, без ложных выводов про null gate."
+            },
+            {
+              "field": "how_it_should_be",
+              "text": "Используйте обычный `let` для результата преобразования receiver. Для пропуска блока при null добавляйте `?.`; Elvis затем проверяет результат всей левой части.",
+              "author_assessment": "Обычный let и safe call разделены; Elvis проверяет результат левой цепочки."
+            }
+          ]
+        },
+        {
+          "label": "B",
+          "text": "`?:` отдаёт не-null слева, а при null допускает лишь `throw`; обычный `let` вызывает блок и для null, возвращая результат блока, а `?.let` пропускает его при null.",
+          "completeness": "полный",
+          "truth": "неверен",
+          "model": "Elvis only throws",
+          "attempt_to_defend_or_validate": "Правая ветвь может быть обычным значением или return.",
+          "sections": [
+            {
+              "field": "what_actually",
+              "text": "Правая часть Elvis может быть запасным значением, `throw` или ранним `return`. Она вычисляется только при null слева; ненулевое левое значение возвращается без её вычисления.",
+              "author_assessment": "Elvis допускает значение, throw и return, а ненулевую левую часть не заменяет."
+            },
+            {
+              "field": "source_of_confusion",
+              "text": "Частый пример `value ?: throw ...` принимают за ограничение самого оператора. Возможность throw следует из того, что это выражение, а не из отдельного режима Elvis.",
+              "author_assessment": "Частный распространённый throw-case не выдаётся за ограничение оператора."
+            },
+            {
+              "field": "if_it_were_true",
+              "text": "Запись `name ?: \"Unknown\"` не могла бы дать обычное запасное значение; обработка отсутствия через Elvis всегда требовала бы исключения.",
+              "author_assessment": "Гипотетический запрет запасного значения следует из полного ограничения B."
+            },
+            {
+              "field": "how_it_should_be",
+              "text": "Выбирайте правое выражение по контракту: запасное значение при допустимом отсутствии, throw при ошибке или return для раннего выхода. Обычный `let` не добавляет null-guard, а `?.let` добавляет его через safe call.",
+              "author_assessment": "Выбор RHS соответствует контракту отсутствия; let сам не guard, ?.let guard через safe call."
+            }
+          ]
+        },
+        {
+          "label": "C",
+          "text": "`?:` возвращает не-null слева, иначе вычисляет правую часть; обычный `let` выполняет блок и для null, возвращая его результат, а `?.let` пропускает блок при null.",
+          "completeness": "полный",
+          "truth": "верен",
+          "model": "Elvis branching, ordinary let result and ?.let gate",
+          "attempt_to_defend_or_validate": "Все три части полны; receiver может быть null, guard обеспечивает safe call.",
+          "sections": [
+            {
+              "field": "explanation",
+              "text": "Elvis возвращает ненулевую левую часть, иначе вычисляет правую. Обычный `let` передаёт receiver аргументом блока и возвращает результат блока, даже когда receiver равен null. В `?.let` проверку и пропуск блока обеспечивает `?.`, а не функция `let`.",
+              "author_assessment": "Все три механизма разделены: Elvis branching, result-returning let и safe-call gating."
+            },
+            {
+              "field": "example",
+              "text": "```kotlin\nfun main() {\n    val missing: String? = null\n    check(missing.let { it ?: \"seen\" } == \"seen\")\n    check(missing?.let { it.length } == null)\n\n    val supplied: String? = \"   \"\n    val label = supplied?.let { if (it.isBlank()) null else it.trim() } ?: \"Unknown\"\n    check(label == \"Unknown\")\n}\n```",
+              "author_assessment": "Новый выполненный пример покрывает обычный let(null), пропуск ?.let и fallback после null transform при non-null исходнике."
+            },
+            {
+              "field": "when_to_apply",
+              "text": "Используйте Elvis для выбора запасного значения или выхода при null слева. `?.let` удобен для преобразования или действия с ненулевым значением, а обычный `let` — когда блоку нужен receiver независимо от его nullability.",
+              "author_assessment": "Выбор обычного/безопасного let привязан к требуемому при null поведению, не к универсальному шаблону if."
+            },
+            {
+              "field": "edge_cases",
+              "text": "В `value?.let { transform(it) } ?: fallback` fallback выполняется и при null receiver, и при null-результате вызванного блока. Исключение из блока не становится null и не перехватывается Elvis; правая часть может содержать `throw` или `return`.",
+              "author_assessment": "Fallback по null результата и исключение из блока различаются; Elvis не exception handler."
+            },
+            {
+              "field": "related",
+              "text": "`let` возвращает результат блока; `apply` и `also` возвращают receiver. Для nullable receiver различайте `value.let { ... }`, где блок вызывается с null, и `value?.let { ... }`, где такой вызов пропущен.",
+              "author_assessment": "Различаются lambda result и receiver result; отсутствует ложная модель ordinary let non-null only."
+            }
+          ]
+        },
+        {
+          "label": "D",
+          "text": "`?:` возвращает левую часть при null, иначе вычисляет правую; `let` вызывает блок даже с null и возвращает результат блока, а `?.let` пропускает вызов при null.",
+          "completeness": "полный",
+          "truth": "неверен",
+          "model": "Reversed Elvis condition",
+          "attempt_to_defend_or_validate": "Полная обратная модель ветвей, не одностороннее неполное утверждение.",
+          "sections": [
+            {
+              "field": "what_actually",
+              "text": "У Elvis условие обратное: ненулевое левое значение возвращается, а при null вычисляется правая часть. Обычный и безопасный `let` в варианте описаны по своей основной роли верно.",
+              "author_assessment": "Явно указана обратность выбора обеих ветвей D, прочие две роли let оценены отдельно."
+            },
+            {
+              "field": "source_of_confusion",
+              "text": "Условие выбора ветви перепутано: оператор для обработки отсутствия значения ошибочно заменяет именно присутствующее значение.",
+              "author_assessment": "Названо именно перепутанное условие присутствия/отсутствия."
+            },
+            {
+              "field": "if_it_were_true",
+              "text": "При null слева запасное выражение не вычислялось бы, а при ненулевом значении вычислялось бы вместо возврата этого значения. Это следует именно из полной обратной модели варианта.",
+              "author_assessment": "Контрфактическое следствие использует обе явно заданные ветви D, не обещает RHS всегда."
+            },
+            {
+              "field": "how_it_should_be",
+              "text": "Сохраняйте левую часть, когда она не null; в противном случае вычисляйте правую. `let` возвращает результат блока, а safe call в `?.let` отдельно управляет пропуском блока.",
+              "author_assessment": "Ненулевый LHS сохраняется; nullable result блока отдельно от safe-call gate."
+            }
+          ]
+        }
+      ],
+      "author_checks": {
+        "CONTENT": "PASS after repair",
+        "FACTS": "PASS after repair",
+        "LINKAGE": "L3/L4 from current Q",
+        "SECTIONS": "PASS",
+        "ANSC": "PASS",
+        "RU": "PASS",
+        "SFPL": "AUTHOR_REVIEWED; new independent decision pending"
+      }
+    }
+  ],
+  "history": "R1 found Q4 visible scope too broad. Real CONTENT/FACTS OPEN findings registered. R1 raw contradictory section FAILs and hidden-section SFPL rationale corrected separately; no implicit PASS. R2 qualifies C/D and D.explanation.",
+  "key_decision": "D/C preserved after substantive rewrite. Old Q6 A was true but incomplete; not mechanically promoted. New full A is a plausible wrong receiver-return model. Old Q4 C.what_actually platform-type statement was factually sound; current C rewritten for a complete broad model, not because of erroneous old reviewer criticism."
+}
