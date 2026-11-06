@@ -1,0 +1,128 @@
+{
+  "source_md_sha256": "4e494e1c7e7993bd9a682bf34d07d41d4300458ed223078f21f466a6630fff8a",
+  "source_seed_sha256": "17feea22245b71cc2e76d2634707f2012ed41938dd7fdca57012675803ac8914",
+  "questions": [
+    {
+      "q_number": 22,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое ключевое слово `open` и почему классы по умолчанию `final`?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Классы и методы в Kotlin по умолчанию `final` и наследуются лишь с явным open.",
+              "correct": true,
+              "sections": {
+                "explanation": "Классы и методы по умолчанию final — наследование только с явным open.",
+                "example": "open class Animal; open fun speak(); breathe() — final.",
+                "when_to_apply": "Когда объясняешь дизайн наследования Kotlin.",
+                "edge_cases": "Принцип «Design for inheritance or prohibit it».",
+                "related": "allopen делает классы open для Spring AOP."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Классы в Kotlin по умолчанию `open`, и наследовать их разрешено без всякого дополнительного модификатора.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию классы FINAL, а не open.",
+                "source_of_confusion": "Java-привычка к открытым классам.",
+                "if_it_were_true": "Тогда случайное наследование было бы возможно.",
+                "how_it_should_be": "open требуется явно."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Метод, помеченный `open`, наоборот, полностью запрещает своё переопределение в любом классе-наследнике.",
+              "correct": false,
+              "sections": {
+                "what_actually": "open РАЗРЕШАЕТ переопределение, а не запрещает.",
+                "source_of_confusion": "Значение open переворачивают.",
+                "if_it_were_true": "Тогда override был бы невозможен.",
+                "how_it_should_be": "open открывает для наследования."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Плагин `allopen` делает классы final, чтобы надёжно защитить их от случайного наследования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "allopen делает классы OPEN (не final) для Spring.",
+                "source_of_confusion": "Назначение плагина переворачивают.",
+                "if_it_were_true": "Тогда AOP-прокси не работали бы.",
+                "how_it_should_be": "allopen снимает final."
+              }
+            }
+          ]
+        }
+      ],
+      "theory": "## Q22. Что такое ключевое слово `open` и почему классы по умолчанию `final`?\n\nВ `Kotlin` все классы и методы **`final`** по умолчанию — их нельзя наследовать/переопределять без явного `open`.\n\n```kotlin\nopen class Animal {\n    open fun speak() = \"...\"      // можно переопределить\n    fun breathe() = \"breathing\"   // нельзя переопределить\n}\n\nclass Dog : Animal() {\n    override fun speak() = \"Woof!\"\n    // override fun breathe() — ошибка компиляции!\n}\n```\n\n**Почему по умолчанию `final`**: принцип \"Design for inheritance or prohibit it\" (Effective Java, Item 19). Случайное наследование — частый источник багов. Если класс не спроектирован для расширения, он должен быть `final`.\n\nПлагин `kotlin-allopen` делает классы с определённой аннотацией `open` автоматически — необходимо для `Spring` (AOP-прокси требуют не-final классов).\n\n"
+    },
+    {
+      "q_number": 23,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают пользовательские геттеры и сеттеры?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Вычисляемое свойство без обращения к `field` всё равно создаёт backing field в памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вычисляемое свойство без field НЕ создаёт backing field.",
+                "source_of_confusion": "Кажется, поле есть всегда.",
+                "if_it_were_true": "Тогда экономии памяти не было бы.",
+                "how_it_should_be": "Нет field → нет хранилища."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "В Kotlin объявляют именно поле, а `get` и set к нему прикрутить уже нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Kotlin объявляют свойство с get/set, а не голое поле.",
+                "source_of_confusion": "Java-привычка к полям.",
+                "if_it_were_true": "Тогда аксессоры были бы невозможны.",
+                "how_it_should_be": "Property поверх backing field."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "К скрытому хранилищу свойства внутри аксессора обращаются через ключевое слово `field`.",
+              "correct": true,
+              "sections": {
+                "explanation": "К скрытому хранилищу внутри аксессора обращаются через ключевое слово field.",
+                "example": "set(value){ field = value }; computed property без field.",
+                "when_to_apply": "Когда добавляешь валидацию или вычисление в свойство.",
+                "edge_cases": "Без обращения к field хранилище не создаётся.",
+                "related": "private set — извне только чтение."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Внутри геттера и сеттера к хранилищу свойства обращаются напрямую по его `имени`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "К хранилищу обращаются через field, а не по имени свойства.",
+                "source_of_confusion": "Кажется, доступ по имени.",
+                "if_it_were_true": "Тогда была бы бесконечная рекурсия геттера.",
+                "how_it_should_be": "field — специальный идентификатор."
+              }
+            }
+          ]
+        }
+      ],
+      "theory": "## Q23. Как работают пользовательские геттеры и сеттеры?\n\nВ Kotlin вы объявляете не поле, а свойство (property), и под свойством по умолчанию стоят автоматические `get`/`set`. Их можно переопределить, чтобы добавить валидацию, ленивое вычисление или ограничить доступ. Внутри аксессора к скрытому хранилищу обращаются через ключевое слово `field` (backing field). Если `field` не используется (свойство вычисляется на лету), хранилище вообще не создаётся.\n\n```kotlin\nclass Temperature {\n    var celsius: Double = 0.0\n        set(value) {\n            require(value >= -273.15) { \"Below absolute zero\" }\n            field = value  // field — backing field\n        }\n\n    // Computed property — нет backing field\n    val fahrenheit: Double\n        get() = celsius * 9 / 5 + 32\n\n    // Private setter — извне только чтение\n    var updateCount: Int = 0\n        private set\n\n    fun update(value: Double) {\n        celsius = value\n        updateCount++\n    }\n}\n```\n\n`field` — специальный идентификатор для обращения к backing field внутри get/set. Если свойство не использует `field` (computed property), backing field не создаётся.\n\n"
+    }
+  ]
+}

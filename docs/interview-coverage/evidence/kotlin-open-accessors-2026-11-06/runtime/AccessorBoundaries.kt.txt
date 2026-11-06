@@ -1,0 +1,34 @@
+class StorageProbe {
+ var writes=0
+  private set
+ var stored=7
+  set(value) { writes++ } // no field reference; default getter still reads a backing field
+ val computed:Int get()=stored*2
+}
+class InitProbe(initial:Int) {
+ var calls=0
+  private set
+ var value=initial
+  set(value) { require(value>=0);field=value;calls++ }
+}
+class ReentrantGetter {
+ var reads=0
+  private set
+ val value:Int get() { reads++;return if(reads==1) value else 42 }
+}
+class ReentrantSetter {
+ var writes=0
+  private set
+ var value=0
+  set(value) { writes++;if(writes==1) this.value=value else field=value }
+}
+fun main() {
+ val p=StorageProbe();p.stored=99;check(p.stored==7 && p.writes==1 && p.computed==14)
+ val fields=StorageProbe::class.java.declaredFields.map{it.name}.toSet()
+ check(fields.containsAll(listOf("stored","writes")) && "computed" !in fields)
+ val init=InitProbe(-1);check(init.value == -1 && init.calls==0)
+ init.value=2;check(init.value==2 && init.calls==1)
+ val getter=ReentrantGetter();check(getter.value==42 && getter.reads==2)
+ val setter=ReentrantSetter();setter.value=8;check(setter.value==8 && setter.writes==2)
+ println("accessor boundaries: PASS")
+}

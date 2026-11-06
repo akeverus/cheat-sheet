@@ -1,0 +1,96 @@
+{
+  "visible_question": "Что такое ключевое слово open и почему классы по умолчанию final?",
+  "options": [
+    {
+      "label": "A",
+      "text": "Классы и методы в Kotlin по умолчанию `final` и наследуются лишь с явным open.",
+      "correct": true
+    },
+    {
+      "label": "B",
+      "text": "Классы в Kotlin по умолчанию `open`, и наследовать их разрешено без всякого дополнительного модификатора.",
+      "correct": false
+    },
+    {
+      "label": "C",
+      "text": "Метод, помеченный `open`, наоборот, полностью запрещает своё переопределение в любом классе-наследнике.",
+      "correct": false
+    },
+    {
+      "label": "D",
+      "text": "Плагин `allopen` делает классы final, чтобы надёжно защитить их от случайного наследования.",
+      "correct": false
+    }
+  ],
+  "fields": [
+    {
+      "field": "A.explanation",
+      "text": "Классы и методы по умолчанию final — наследование только с явным open."
+    },
+    {
+      "field": "A.example",
+      "text": "open class Animal; open fun speak(); breathe() — final."
+    },
+    {
+      "field": "A.when_to_apply",
+      "text": "Когда объясняешь дизайн наследования Kotlin."
+    },
+    {
+      "field": "A.edge_cases",
+      "text": "Принцип «Design for inheritance or prohibit it»."
+    },
+    {
+      "field": "A.related",
+      "text": "allopen делает классы open для Spring AOP."
+    },
+    {
+      "field": "B.what_actually",
+      "text": "По умолчанию классы FINAL, а не open."
+    },
+    {
+      "field": "B.source_of_confusion",
+      "text": "Java-привычка к открытым классам."
+    },
+    {
+      "field": "B.if_it_were_true",
+      "text": "Тогда случайное наследование было бы возможно."
+    },
+    {
+      "field": "B.how_it_should_be",
+      "text": "open требуется явно."
+    },
+    {
+      "field": "C.what_actually",
+      "text": "open РАЗРЕШАЕТ переопределение, а не запрещает."
+    },
+    {
+      "field": "C.source_of_confusion",
+      "text": "Значение open переворачивают."
+    },
+    {
+      "field": "C.if_it_were_true",
+      "text": "Тогда override был бы невозможен."
+    },
+    {
+      "field": "C.how_it_should_be",
+      "text": "open открывает для наследования."
+    },
+    {
+      "field": "D.what_actually",
+      "text": "allopen делает классы OPEN (не final) для Spring."
+    },
+    {
+      "field": "D.source_of_confusion",
+      "text": "Назначение плагина переворачивают."
+    },
+    {
+      "field": "D.if_it_were_true",
+      "text": "Тогда AOP-прокси не работали бы."
+    },
+    {
+      "field": "D.how_it_should_be",
+      "text": "allopen снимает final."
+    }
+  ],
+  "current_theory": "## Q22. Что такое ключевое слово `open` и почему классы по умолчанию `final`?\n\nОбычный класс, объявленный через `class`, по умолчанию `final`: от него нельзя унаследоваться. `open class` разрешает наследование, но **не открывает автоматически все члены**. Для нового переопределяемого метода или свойства нужен `open`; в наследнике реализацию отмечают `override`.\n\nПрактический смысл закрытости по умолчанию — сделать точки расширения явными. Наследование и переопределение могут менять поведение базового API, поэтому автор типа отдельно разрешает поддерживаемые сценарии расширения. Это не обещание безопасности от любого изменения и не гарантия ускорения исполнения.\n\n```kotlin\nopen class Animal {\n    open fun speak() = \"...\"\n    fun breathe() = \"breathing\" // остаётся final\n}\n\nopen class Dog : Animal() {\n    override fun speak() = \"Woof!\" // override сам open по умолчанию\n}\n\nclass Puppy : Dog() {\n    override fun speak() = \"Yip!\"  // дополнительный open у Dog.speak не нужен\n}\n\nfun main() {\n    println(Puppy().speak())   // Yip!\n    println(Puppy().breathe()) // breathing\n}\n```\n\nФраза «наследование возможно только с явным open» слишком сильна: `abstract` классы и абстрактные члены уже допускают наследование/реализацию. Переопределённый член остаётся открытым, если его не закрыть `final override`; при этом сам класс-наследник тоже должен допускать дальнейшее наследование.\n\n`all-open` открывает подходящие классы и члены на этапе компиляции по настроенным аннотациям; `kotlin-spring` — готовый preset для Spring-аннотаций. Это полезно для прокси через подкласс: final class нельзя унаследовать, final method нельзя перехватить переопределением. Но плагин не является обязательным для любого Spring AOP: JDK-прокси работают через интерфейсы, и целевой класс может оставаться final. Выбор механизма проксирования и конкретного API важен. [Inheritance](https://kotlinlang.org/docs/inheritance.html), [abstract classes](https://kotlinlang.org/docs/classes.html#abstract-classes), [All-open](https://kotlinlang.org/docs/all-open-plugin.html), [Spring proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html).\n\n"
+}

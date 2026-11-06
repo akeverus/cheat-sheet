@@ -1,0 +1,96 @@
+{
+  "visible_question": "Как работают пользовательские геттеры и сеттеры?",
+  "options": [
+    {
+      "label": "A",
+      "text": "Вычисляемое свойство без обращения к `field` всё равно создаёт backing field в памяти.",
+      "correct": false
+    },
+    {
+      "label": "B",
+      "text": "В Kotlin объявляют именно поле, а `get` и set к нему прикрутить уже нельзя.",
+      "correct": false
+    },
+    {
+      "label": "C",
+      "text": "К скрытому хранилищу свойства внутри аксессора обращаются через ключевое слово `field`.",
+      "correct": true
+    },
+    {
+      "label": "D",
+      "text": "Внутри геттера и сеттера к хранилищу свойства обращаются напрямую по его `имени`.",
+      "correct": false
+    }
+  ],
+  "fields": [
+    {
+      "field": "A.what_actually",
+      "text": "Вычисляемое свойство без field НЕ создаёт backing field."
+    },
+    {
+      "field": "A.source_of_confusion",
+      "text": "Кажется, поле есть всегда."
+    },
+    {
+      "field": "A.if_it_were_true",
+      "text": "Тогда экономии памяти не было бы."
+    },
+    {
+      "field": "A.how_it_should_be",
+      "text": "Нет field → нет хранилища."
+    },
+    {
+      "field": "B.what_actually",
+      "text": "В Kotlin объявляют свойство с get/set, а не голое поле."
+    },
+    {
+      "field": "B.source_of_confusion",
+      "text": "Java-привычка к полям."
+    },
+    {
+      "field": "B.if_it_were_true",
+      "text": "Тогда аксессоры были бы невозможны."
+    },
+    {
+      "field": "B.how_it_should_be",
+      "text": "Property поверх backing field."
+    },
+    {
+      "field": "C.explanation",
+      "text": "К скрытому хранилищу внутри аксессора обращаются через ключевое слово field."
+    },
+    {
+      "field": "C.example",
+      "text": "set(value){ field = value }; computed property без field."
+    },
+    {
+      "field": "C.when_to_apply",
+      "text": "Когда добавляешь валидацию или вычисление в свойство."
+    },
+    {
+      "field": "C.edge_cases",
+      "text": "Без обращения к field хранилище не создаётся."
+    },
+    {
+      "field": "C.related",
+      "text": "private set — извне только чтение."
+    },
+    {
+      "field": "D.what_actually",
+      "text": "К хранилищу обращаются через field, а не по имени свойства."
+    },
+    {
+      "field": "D.source_of_confusion",
+      "text": "Кажется, доступ по имени."
+    },
+    {
+      "field": "D.if_it_were_true",
+      "text": "Тогда была бы бесконечная рекурсия геттера."
+    },
+    {
+      "field": "D.how_it_should_be",
+      "text": "field — специальный идентификатор."
+    }
+  ],
+  "current_theory": "## Q23. Как работают пользовательские геттеры и сеттеры?\n\nСвойство — API чтения и, для `var`, записи, а не просто поле. Пользовательский `get()` вычисляет результат при чтении; `set(value)` выполняется при присваивании и может проверять значение или менять другие свойства. Инициализатор свойства **не вызывает setter**, поэтому проверка в setter сама по себе не валидирует начальное значение.\n\nДля обычного backing field внутри аксессора используется специальный идентификатор `field`. Он обращается к хранилищу напрямую, без повторного вызова аксессора. Getter, читающий то же свойство по имени, вызывает getter снова; setter, записывающий то же свойство по имени, повторно вызывает setter.\n\n```kotlin\nclass Temperature {\n    var celsius: Double = 0.0\n        set(value) {\n            require(value >= -273.15) { \"Below absolute zero\" }\n            field = value\n        }\n\n    val fahrenheit: Double\n        get() = celsius * 9 / 5 + 32 // вычисляется, своего поля нет\n\n    var updateCount: Int = 0\n        private set // default-accessors с ограниченной видимостью записи\n\n    fun update(value: Double) {\n        celsius = value\n        updateCount++\n    }\n}\n\nfun main() {\n    val temperature = Temperature()\n    temperature.update(100.0)\n    println(temperature.fahrenheit) // 212.0\n    println(temperature.updateCount) // 1\n}\n```\n\n**Когда есть хранилище:** default-accessor может требовать неявного backing field, даже если в тексте свойства нет слова `field`. Например, у `updateCount` оно есть. Custom-accessor, использующий `field`, тоже требует хранилище. У `fahrenheit` только вычисляемый getter, и собственного поля для результата нет. Поэтому формула «нет явного field — нет хранилища» неверна.\n\n`private set` ограничивает внешнюю запись, сохраняя доступный getter; это не отдельное неизменяемое значение. Для `val` setter отсутствует. В актуальной документации отдельно описаны explicit backing fields и их ограничения; их следует отличать от показанных обычных accessor-объявлений и backing properties. [Properties: custom accessors](https://kotlinlang.org/docs/properties.html#custom-getters-and-setters), [backing fields](https://kotlinlang.org/docs/properties.html#backing-fields), [explicit backing fields](https://kotlinlang.org/docs/properties.html#explicit-backing-fields).\n\n"
+}

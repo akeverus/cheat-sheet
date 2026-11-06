@@ -794,52 +794,71 @@ fun main() {
 
 ## Q22. Что такое ключевое слово `open` и почему классы по умолчанию `final`?
 
-В `Kotlin` все классы и методы **`final`** по умолчанию — их нельзя наследовать/переопределять без явного `open`.
+Обычный класс, объявленный через `class`, по умолчанию `final`: от него нельзя унаследоваться. `open class` разрешает наследование, но **не открывает автоматически все члены**. Для нового переопределяемого метода или свойства нужен `open`; в наследнике реализацию отмечают `override`.
+
+Практический смысл закрытости по умолчанию — сделать точки расширения явными. Наследование и переопределение могут менять поведение базового API, поэтому автор типа отдельно разрешает поддерживаемые сценарии расширения. Это не обещание безопасности от любого изменения и не гарантия ускорения исполнения.
 
 ```kotlin
 open class Animal {
-    open fun speak() = "..."      // можно переопределить
-    fun breathe() = "breathing"   // нельзя переопределить
+    open fun speak() = "..."
+    fun breathe() = "breathing" // остаётся final
 }
 
-class Dog : Animal() {
-    override fun speak() = "Woof!"
-    // override fun breathe() — ошибка компиляции!
+open class Dog : Animal() {
+    override fun speak() = "Woof!" // override сам open по умолчанию
+}
+
+class Puppy : Dog() {
+    override fun speak() = "Yip!"  // дополнительный open у Dog.speak не нужен
+}
+
+fun main() {
+    println(Puppy().speak())   // Yip!
+    println(Puppy().breathe()) // breathing
 }
 ```
 
-**Почему по умолчанию `final`**: принцип "Design for inheritance or prohibit it" (Effective Java, Item 19). Случайное наследование — частый источник багов. Если класс не спроектирован для расширения, он должен быть `final`.
+Фраза «наследование возможно только с явным open» слишком сильна: `abstract` классы и абстрактные члены уже допускают наследование/реализацию. Переопределённый член остаётся открытым, если его не закрыть `final override`; при этом сам класс-наследник тоже должен допускать дальнейшее наследование.
 
-Плагин `kotlin-allopen` делает классы с определённой аннотацией `open` автоматически — необходимо для `Spring` (AOP-прокси требуют не-final классов).
+`all-open` открывает подходящие классы и члены на этапе компиляции по настроенным аннотациям; `kotlin-spring` — готовый preset для Spring-аннотаций. Это полезно для прокси через подкласс: final class нельзя унаследовать, final method нельзя перехватить переопределением. Но плагин не является обязательным для любого Spring AOP: JDK-прокси работают через интерфейсы, и целевой класс может оставаться final. Выбор механизма проксирования и конкретного API важен. [Inheritance](https://kotlinlang.org/docs/inheritance.html), [abstract classes](https://kotlinlang.org/docs/classes.html#abstract-classes), [All-open](https://kotlinlang.org/docs/all-open-plugin.html), [Spring proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html).
 
 ## Q23. Как работают пользовательские геттеры и сеттеры?
 
-В Kotlin вы объявляете не поле, а свойство (property), и под свойством по умолчанию стоят автоматические `get`/`set`. Их можно переопределить, чтобы добавить валидацию, ленивое вычисление или ограничить доступ. Внутри аксессора к скрытому хранилищу обращаются через ключевое слово `field` (backing field). Если `field` не используется (свойство вычисляется на лету), хранилище вообще не создаётся.
+Свойство — API чтения и, для `var`, записи, а не просто поле. Пользовательский `get()` вычисляет результат при чтении; `set(value)` выполняется при присваивании и может проверять значение или менять другие свойства. Инициализатор свойства **не вызывает setter**, поэтому проверка в setter сама по себе не валидирует начальное значение.
+
+Для обычного backing field внутри аксессора используется специальный идентификатор `field`. Он обращается к хранилищу напрямую, без повторного вызова аксессора. Getter, читающий то же свойство по имени, вызывает getter снова; setter, записывающий то же свойство по имени, повторно вызывает setter.
 
 ```kotlin
 class Temperature {
     var celsius: Double = 0.0
         set(value) {
             require(value >= -273.15) { "Below absolute zero" }
-            field = value  // field — backing field
+            field = value
         }
 
-    // Computed property — нет backing field
     val fahrenheit: Double
-        get() = celsius * 9 / 5 + 32
+        get() = celsius * 9 / 5 + 32 // вычисляется, своего поля нет
 
-    // Private setter — извне только чтение
     var updateCount: Int = 0
-        private set
+        private set // default-accessors с ограниченной видимостью записи
 
     fun update(value: Double) {
         celsius = value
         updateCount++
     }
 }
+
+fun main() {
+    val temperature = Temperature()
+    temperature.update(100.0)
+    println(temperature.fahrenheit) // 212.0
+    println(temperature.updateCount) // 1
+}
 ```
 
-`field` — специальный идентификатор для обращения к backing field внутри get/set. Если свойство не использует `field` (computed property), backing field не создаётся.
+**Когда есть хранилище:** default-accessor может требовать неявного backing field, даже если в тексте свойства нет слова `field`. Например, у `updateCount` оно есть. Custom-accessor, использующий `field`, тоже требует хранилище. У `fahrenheit` только вычисляемый getter, и собственного поля для результата нет. Поэтому формула «нет явного field — нет хранилища» неверна.
+
+`private set` ограничивает внешнюю запись, сохраняя доступный getter; это не отдельное неизменяемое значение. Для `val` setter отсутствует. В актуальной документации отдельно описаны explicit backing fields и их ограничения; их следует отличать от показанных обычных accessor-объявлений и backing properties. [Properties: custom accessors](https://kotlinlang.org/docs/properties.html#custom-getters-and-setters), [backing fields](https://kotlinlang.org/docs/properties.html#backing-fields), [explicit backing fields](https://kotlinlang.org/docs/properties.html#explicit-backing-fields).
 
 ## Q24. (!) Что такое `Generics` и как работает вариантность (`in`, `out`)?
 

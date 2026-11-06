@@ -1,0 +1,74 @@
+from pathlib import Path
+import json,re,hashlib,subprocess
+W=Path('/tmp/kotlin-theory-open-accessors-20261106');O=W/'runtime';O.mkdir(exist_ok=True);M=Path('cheatsheets/interview/programming-languages/kotlin/kotlin-interview.md');m=M.read_text();J='/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/';K='/usr/local/bin/kotlinc';plugin=Path('/usr/local/Cellar/kotlin/2.4.10/libexec/lib/allopen-compiler-plugin.jar');assert plugin.is_file()
+def fence(q):return re.findall(r'```kotlin\n(.*?)\n```',re.search(rf'^## Q{q}\..*?(?=^## Q\d+\.|\Z)',m,re.M|re.S)[0],re.S)[0]+'\n'
+def run(c):
+ p=subprocess.run(c,capture_output=True,text=True);return {'command':c,'exit':p.returncode,'stdout':p.stdout,'stderr':p.stderr}
+inheritance='''abstract class Task { abstract fun run():String }
+class Done:Task() { override fun run()="done" }
+interface Contract { fun run():String }
+class Implemented:Contract { override fun run()="implemented" }
+open class Base { open fun work()="base";fun fixed()="fixed" }
+open class Middle:Base() { override fun work()="middle" }
+class Leaf:Middle() { override fun work()="leaf" }
+fun main() {
+ check(Done().run()=="done");check(Implemented().run()=="implemented")
+ check(Leaf().work()=="leaf" && Leaf().fixed()=="fixed")
+ check(!java.lang.reflect.Modifier.isFinal(Task::class.java.modifiers))
+ check(java.lang.reflect.Modifier.isFinal(Base::class.java.getDeclaredMethod("fixed").modifiers))
+ println("inheritance boundaries: PASS")
+}
+'''
+accessors='''class StorageProbe {
+ var writes=0
+  private set
+ var stored=7
+  set(value) { writes++ } // no field reference; default getter still reads a backing field
+ val computed:Int get()=stored*2
+}
+class InitProbe(initial:Int) {
+ var calls=0
+  private set
+ var value=initial
+  set(value) { require(value>=0);field=value;calls++ }
+}
+class ReentrantGetter {
+ var reads=0
+  private set
+ val value:Int get() { reads++;return if(reads==1) value else 42 }
+}
+class ReentrantSetter {
+ var writes=0
+  private set
+ var value=0
+  set(value) { writes++;if(writes==1) this.value=value else field=value }
+}
+fun main() {
+ val p=StorageProbe();p.stored=99;check(p.stored==7 && p.writes==1 && p.computed==14)
+ val fields=StorageProbe::class.java.declaredFields.map{it.name}.toSet()
+ check(fields.containsAll(listOf("stored","writes")) && "computed" !in fields)
+ val init=InitProbe(-1);check(init.value == -1 && init.calls==0)
+ init.value=2;check(init.value==2 && init.calls==1)
+ val getter=ReentrantGetter();check(getter.value==42 && getter.reads==2)
+ val setter=ReentrantSetter();setter.value=8;check(setter.value==8 && setter.writes==2)
+ println("accessor boundaries: PASS")
+}
+'''
+plugin_src='''package fixture
+@Target(AnnotationTarget.CLASS) annotation class FrameworkOpen
+@FrameworkOpen class Service { fun work()="base" }
+class Derived:Service() { override fun work()="derived" }
+fun main() {
+ check(Derived().work()=="derived")
+ check(!java.lang.reflect.Modifier.isFinal(Service::class.java.modifiers))
+ check(!java.lang.reflect.Modifier.isFinal(Service::class.java.getDeclaredMethod("work").modifiers))
+ println("all-open fixture: PASS")
+}
+'''
+positives=[];negatives=[]
+cases=[('ExactQ22',fence(22),'Yip!\nbreathing\n',[],'exact standalone fence'),('ExactQ23',fence(23),'212.0\n1\n',[],'exact standalone fence'),('InheritanceBoundaries',inheritance,'inheritance boundaries: PASS\n',[],'abstract/interface without open; override remains open; ordinary method final'),('AccessorBoundaries',accessors,'accessor boundaries: PASS\n',[],'default getter backing field, skipped initializer setter, bounded accessor recursion'),('AllOpenFixture',plugin_src,'all-open fixture: PASS\n',['-Xplugin='+str(plugin),'-P','plugin:org.jetbrains.kotlin.allopen:annotation=fixture.FrameworkOpen'],'local2.4.10 custom annotation all-open fixture; no Spring context')]
+for name,source,expected,flags,scope in cases:
+ p=O/(name+'.kt');p.write_text(source);jar=O/(name+'.jar');c=run([K,str(p),*flags,'-jvm-target','17','-include-runtime','-d',str(jar)]);assert c['exit']==0,c;r=run([J+'java','-jar',str(jar)]);assert r['exit']==0 and r['stdout']==expected,r;positives.append({'label':name,'scope':scope,'source_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'compile':c,'run':r});print(name+': PASS',flush=True)
+for name,source,diag in [('InheritFinal','class Base\nclass Derived:Base()\n','final'),('OverrideFinalMethod','open class Base { fun work()=1 }\nclass Derived:Base(){ override fun work()=2 }\n','final'),('MissingOverride','open class Base { open fun work()=1 }\nclass Derived:Base(){ fun work()=2 }\n','override'),('OverrideFinalOverride','open class Base { open fun work()=1 }\nopen class Middle:Base(){ final override fun work()=2 }\nclass Derived:Middle(){ override fun work()=3 }\n','final'),('PrivateSetter','class Sample { var count=0; private set }\nfun main(){ Sample().count=1 }\n','private'),('FieldOutside','fun bad():Int=field\n','unresolved reference'),('WithoutPlugin',plugin_src,'final')]:
+ p=O/(name+'.kt');p.write_text(source);c=run([K,str(p),'-jvm-target','17','-d',str(O/(name+'.jar'))]);assert c['exit']!=0 and diag.lower() in c['stderr'].lower(),c;negatives.append({'label':name,'source_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'expected_diagnostic':diag,'compile':c});print(name+': expected compiler failure',flush=True)
+(W/'runtime-results.json').write_text(json.dumps({'md_sha256':hashlib.sha256(M.read_bytes()).hexdigest(),'compiler':run([K,'-version']),'java':run([J+'java','-version']),'plugin':{'path':str(plugin),'sha256':hashlib.sha256(plugin.read_bytes()).hexdigest(),'version':'bundled with local Kotlin2.4.10'},'positive':positives,'expected_compile_failures':negatives,'limits':['Spring framework proxy distinction source-checked only; no Spring app/proxy runtime test.','Explicit backing-field new syntax source-checked only; tests use traditional accessors.','Recursion guards bound getter/setter to2calls; no StackOverflow attempt.','JVM only; no app/platform/version matrix.']},ensure_ascii=False,indent=2)+'\n')

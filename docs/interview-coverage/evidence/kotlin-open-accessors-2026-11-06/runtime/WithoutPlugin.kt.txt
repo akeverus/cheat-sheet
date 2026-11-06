@@ -1,0 +1,10 @@
+package fixture
+@Target(AnnotationTarget.CLASS) annotation class FrameworkOpen
+@FrameworkOpen class Service { fun work()="base" }
+class Derived:Service() { override fun work()="derived" }
+fun main() {
+ check(Derived().work()=="derived")
+ check(!java.lang.reflect.Modifier.isFinal(Service::class.java.modifiers))
+ check(!java.lang.reflect.Modifier.isFinal(Service::class.java.getDeclaredMethod("work").modifiers))
+ println("all-open fixture: PASS")
+}

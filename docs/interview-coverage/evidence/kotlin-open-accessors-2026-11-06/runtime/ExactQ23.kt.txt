@@ -1,0 +1,25 @@
+class Temperature {
+    var celsius: Double = 0.0
+        set(value) {
+            require(value >= -273.15) { "Below absolute zero" }
+            field = value
+        }
+
+    val fahrenheit: Double
+        get() = celsius * 9 / 5 + 32 // вычисляется, своего поля нет
+
+    var updateCount: Int = 0
+        private set // default-accessors с ограниченной видимостью записи
+
+    fun update(value: Double) {
+        celsius = value
+        updateCount++
+    }
+}
+
+fun main() {
+    val temperature = Temperature()
+    temperature.update(100.0)
+    println(temperature.fahrenheit) // 212.0
+    println(temperature.updateCount) // 1
+}

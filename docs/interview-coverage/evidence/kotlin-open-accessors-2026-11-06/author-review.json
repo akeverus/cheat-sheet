@@ -1,0 +1,306 @@
+{
+  "role": "author_self_review",
+  "created_at": "2026-11-06T06:46:55.060799+00:00",
+  "input_sha256": "d33f70d1397298dc37114652122dd0d15463a1938591ce8603ede85390a1815c",
+  "questions": [
+    {
+      "q_number": 22,
+      "options": [
+        {
+          "label": "A",
+          "truth": "FALSE_ONLY_OPEN",
+          "ansc": "FAIL_MISSING_WHY",
+          "assessment": "Даёт правило default final/open без причины. «Лишь явный open» опровергают abstract и наследуемый override; классы и методы требуют раздельной трактовки."
+        },
+        {
+          "label": "B",
+          "truth": "FALSE_DEFAULT",
+          "ansc": "FAIL_MISSING_OPEN_WHY",
+          "assessment": "Ложная модель open-by-default для класса; нет значения ключевого слова open и причины default final."
+        },
+        {
+          "label": "C",
+          "truth": "FALSE_OPEN_MEANING",
+          "ansc": "FAIL_MISSING_WHY",
+          "assessment": "Инвертирует смысл open для метода; нет причины default final классов."
+        },
+        {
+          "label": "D",
+          "truth": "FALSE_PLUGIN",
+          "ansc": "FAIL_MISSING_OPEN_DEFAULT",
+          "assessment": "Мотив защиты дан для предполагаемого действия all-open, описанного наоборот. Это не полный ответ о ключевом слове open и default final."
+        }
+      ],
+      "sections": [
+        {
+          "field": "A.explanation",
+          "status": "FAIL_ONLY_OPEN",
+          "assessment": "Повторяет ошибочное «только с явным open», без исключений и без причины defaultfinal."
+        },
+        {
+          "field": "A.example",
+          "status": "PASS_ILLUSTRATION",
+          "assessment": "Обычный Animal/open speak/final breathe — корректная схема; не обязана перечислять все exceptions, не заявлена standalone compilation."
+        },
+        {
+          "field": "A.when_to_apply",
+          "status": "WEAK_CIRCULAR",
+          "assessment": "«Когда объясняешь дизайн» повторяет тему вместо конкретного API-решения о точках расширения."
+        },
+        {
+          "field": "A.edge_cases",
+          "status": "PASS_MOTIVE",
+          "assessment": "Design-принцип — релевантный мотив, а не edge case; его наличие в section не добавляет why в visible A."
+        },
+        {
+          "field": "A.related",
+          "status": "PASS_SCOPED",
+          "assessment": "Allopen может открывать классы для Spring subclass proxies; короткая фраза не утверждает необходимость для любого AOP. Нужны настройки annotation/preset."
+        },
+        {
+          "field": "B.what_actually",
+          "status": "PASS_SCOPED",
+          "assessment": "Для обычных class defaultfinal верен; abstract исключение следует отличать."
+        },
+        {
+          "field": "B.source_of_confusion",
+          "status": "PASS",
+          "assessment": "Java-классы обычно допускают наследование без open, что объясняет перенос ожиданий."
+        },
+        {
+          "field": "B.if_it_were_true",
+          "status": "PASS_SCOPED",
+          "assessment": "Без opt-in закрытости у обычных классов незапланированное наследование стало бы доступно."
+        },
+        {
+          "field": "B.how_it_should_be",
+          "status": "FAIL_SCOPE",
+          "assessment": "«Open требуется явно» без ordinary-class scope игнорирует abstract и plugin-generated openness."
+        },
+        {
+          "field": "C.what_actually",
+          "status": "PASS",
+          "assessment": "Open разрешает override, а не запрещает."
+        },
+        {
+          "field": "C.source_of_confusion",
+          "status": "PASS_WEAK",
+          "assessment": "Называет конкретную инверсию смысла, но очень кратко."
+        },
+        {
+          "field": "C.if_it_were_true",
+          "status": "PASS_SCOPED",
+          "assessment": "Для такого помеченного метода override был бы запрещён; не значит, что никакой override нигде невозможен."
+        },
+        {
+          "field": "C.how_it_should_be",
+          "status": "PASS_SCOPED",
+          "assessment": "Класс открывается для наследования, член — для override; эти два значения полезно различить."
+        },
+        {
+          "field": "D.what_actually",
+          "status": "PASS_SCOPED",
+          "assessment": "Направление allopen correct; базовый plugin не привязан только к Spring, работает с настроенными аннотациями."
+        },
+        {
+          "field": "D.source_of_confusion",
+          "status": "PASS_WEAK",
+          "assessment": "Инверсия назначения объясняет именно ложный D, но почти повторяет его."
+        },
+        {
+          "field": "D.if_it_were_true",
+          "status": "FAIL_OVERBROAD",
+          "assessment": "Не любой AOP перестал бы работать: JDK interface proxy не требует subclass финальногоtarget."
+        },
+        {
+          "field": "D.how_it_should_be",
+          "status": "PASS_SCOPED",
+          "assessment": "Правильно снимает final для подходящих типов/членов, а не абсолютно всех классов проекта."
+        }
+      ],
+      "axes": {
+        "SEMANTICS": {
+          "status": "FAIL_KEY",
+          "assessment": "A с «только open» неверен; B/C/D тоже не дают правильной модели. Полного правильного ответа нет."
+        },
+        "ANSC": {
+          "status": "FAIL_ALL",
+          "assessment": "Ни один вариант не покрывает и значение open, и причину default final. Мотив в D относится к плагину."
+        },
+        "SFPL": {
+          "status": "OPEN_WITH_AUTHOR_NOTES",
+          "assessment": "A говорит о классах и методах, B — о default класса, C — о методе, D — о плагине. Области различаются; это требует сравнительной оценки, но само не доказывает подсказку ключа."
+        },
+        "RU": {
+          "status": "PASS_WITH_NOTES",
+          "assessment": "Текст читаем; «наоборот», «полностью в любом» и «надёжно защитить» усиливают тон, но не означают автоматический FAIL."
+        },
+        "FACTS": {
+          "status": "FAIL_ONLY_OPEN_AOP",
+          "assessment": "Abstract/override/all-open и область подклассных/интерфейсных прокси сверены с источниками; локальный plugin fixture выполнен."
+        },
+        "SECTIONS": {
+          "status": "FAIL_A_B_D_SCOPE",
+          "assessment": "Все 17 полей проверены. Верные A.example/A.edge_cases не объявлены ложными из-за дефекта ключа; ошибки only-open и AOP scope остаются."
+        },
+        "LINKAGE": {
+          "status": "OPEN_MCQ_SYNC",
+          "assessment": "Теория даёт причину закрытости и исключения; видимые ответы нужно синхронизировать с полным вопросом."
+        }
+      },
+      "theory": "PASS_FIXED: ordinary defaultfinal, explicit extensibility rationale, class/member distinction, inherited override, abstract/final override, allopen/subclass-vs-JDK proxy scope."
+    },
+    {
+      "q_number": 23,
+      "options": [
+        {
+          "label": "A",
+          "truth": "FALSE_COMPUTED_STORAGE",
+          "ansc": "FAIL_PARTIAL",
+          "assessment": "У полностью вычисляемого свойства собственное поле не требуется. Вариант говорит о storage, а не о работе обоих аксессоров."
+        },
+        {
+          "label": "B",
+          "truth": "FALSE_PROPERTY_MODEL",
+          "ansc": "PASS_FALSE_MODEL",
+          "assessment": "Полная ложная модель bare field без возможности custom get/set; ошибочна, но явно охватывает обе операции."
+        },
+        {
+          "label": "C",
+          "truth": "TRUE_FIELD_FACT",
+          "ansc": "OPEN_NARROW_KEY",
+          "assessment": "Факт field внутри аксессора верен, но объясняет только доступ к хранилищу. Не описаны чтение через getter, запись через setter и вычисление без собственного поля."
+        },
+        {
+          "label": "D",
+          "truth": "FALSE_DIRECT_STORAGE",
+          "ansc": "OPEN_NARROW",
+          "assessment": "Оба аксессора описаны через неверный прямой доступ по имени; property access перепутан с доступом к storage. Полнота общего механизма остаётся спорной."
+        }
+      ],
+      "sections": [
+        {
+          "field": "A.what_actually",
+          "status": "PASS_SCOPED",
+          "assessment": "Для полностью вычисляемого свойства без собственного хранилища поле не нужно; это нельзя переносить на свойства с default-accessor."
+        },
+        {
+          "field": "A.source_of_confusion",
+          "status": "PASS",
+          "assessment": "Модель «поле есть всегда» правдоподобна при переносе привычек Java."
+        },
+        {
+          "field": "A.if_it_were_true",
+          "status": "FAIL_OVERPROMISE",
+          "assessment": "Из одного лишнего backing field не следует отсутствие любой экономии памяти; нужно назвать конкретное лишнее хранилище."
+        },
+        {
+          "field": "A.how_it_should_be",
+          "status": "FAIL_FACT",
+          "assessment": "Общая формула «нет field — нет хранилища» неверна: default getter использует поле без явного идентификатора в тексте свойства."
+        },
+        {
+          "field": "B.what_actually",
+          "status": "PASS",
+          "assessment": "Property может иметь get/set и не обязана иметь собственное поле."
+        },
+        {
+          "field": "B.source_of_confusion",
+          "status": "PASS",
+          "assessment": "Привычка Java-полей объясняет ошибочную модель property."
+        },
+        {
+          "field": "B.if_it_were_true",
+          "status": "PASS_SCOPED",
+          "assessment": "Если бы язык поддерживал только bare fields без аксессоров, custom get/set действительно были бы недоступны."
+        },
+        {
+          "field": "B.how_it_should_be",
+          "status": "FAIL_UNIVERSAL_STORAGE",
+          "assessment": "Не всякое свойство находится «поверх backing field»: вычисляемое свойство может не иметь собственного поля."
+        },
+        {
+          "field": "C.explanation",
+          "status": "PASS",
+          "assessment": "Field корректно обозначает backing storage внутри обычного аксессора; это узкий факт, а не весь механизм get/set."
+        },
+        {
+          "field": "C.example",
+          "status": "PASS_ILLUSTRATION",
+          "assessment": "Setter с присваиванием field и computed property без собственного поля — правильные схемы, не самостоятельные программы."
+        },
+        {
+          "field": "C.when_to_apply",
+          "status": "PASS",
+          "assessment": "Валидация в setter и вычисление в getter — уместные сценарии."
+        },
+        {
+          "field": "C.edge_cases",
+          "status": "FAIL_FACT",
+          "assessment": "Default-accessor может создавать backing field без явного field. Источник и reflection подтверждают stored/writes, но не computed."
+        },
+        {
+          "field": "C.related",
+          "status": "PASS_SCOPED",
+          "assessment": "Private setter ограничивает внешнюю запись при доступном getter; внутреннее изменение сохраняется."
+        },
+        {
+          "field": "D.what_actually",
+          "status": "PASS_SCOPED",
+          "assessment": "Field обращается к своему хранилищу; чтение/запись property по имени вызывает соответствующий accessor и может рекурсивно вернуться в него."
+        },
+        {
+          "field": "D.source_of_confusion",
+          "status": "PASS_WEAK",
+          "assessment": "Ошибочная модель прямого доступа по имени названа; нужно явно отличить property API от поля."
+        },
+        {
+          "field": "D.if_it_were_true",
+          "status": "FAIL_COUNTERFACTUAL",
+          "assessment": "Если бы имя давало прямой доступ к полю, повторного вызова getter не было бы. Реальная рекурсия — следствие property access, а не истинности гипотезы D."
+        },
+        {
+          "field": "D.how_it_should_be",
+          "status": "PASS",
+          "assessment": "Field — специальный идентификатор внутри аксессора, а не обычное имя property."
+        }
+      ],
+      "axes": {
+        "SEMANTICS": {
+          "status": "PASS_CORE_OPEN_SCOPE",
+          "assessment": "C передаёт верный узкий факт о field; вопрос шире и требует работы обоих custom-accessors."
+        },
+        "ANSC": {
+          "status": "OPEN_KEY_BREADTH",
+          "assessment": "A говорит о storage, C — об идентификаторе, D — о доступе по имени. B даёт целостную ложную модель отсутствия аксессоров; полноту остальных нужно согласовать."
+        },
+        "SFPL": {
+          "status": "OPEN_SCOPE_VARIATION",
+          "assessment": "Варианты проверяют разные аспекты: computed storage, property definition, field identifier и доступ по имени. «Прикрутить» и «всё равно» делают тон неравномерным."
+        },
+        "RU": {
+          "status": "FAIL_B_COLLOQUIAL",
+          "assessment": "«Прикрутить get/set» разговорно; кодовое выделение обычного «имени» также неуместно."
+        },
+        "FACTS": {
+          "status": "FAIL_STORAGE_RULES",
+          "assessment": "Отсутствие явного field не исключает storage, property не обязана иметь поле, initializer не вызывает setter. Проверено источником и выполнением."
+        },
+        "SECTIONS": {
+          "status": "FAIL_A_HOW_C_EDGE_B_HOW_D_IF",
+          "assessment": "Проверены все 17 полей. Неверны универсальные storage-формулы и контрфактический переход от прямого доступа к рекурсии."
+        },
+        "LINKAGE": {
+          "status": "OPEN_MCQ_SCOPE",
+          "assessment": "Теория объясняет работу get/set и условия хранения; ключ пока отвечает только одному узкому аспекту."
+        }
+      },
+      "theory": "PASS_FIXED: custom read/write behavior, initialization bypass, ordinary/implicit field vs computed, private setter and bounded recursive API-access. Explicit-field syntax source-linked only."
+    }
+  ],
+  "limits": [
+    "No fulltopicFINAL.",
+    "Spring proxy mode source-only; local allopen2.4.10 fixture actually tested.",
+    "JVMtraditionalaccessors only; no full explicit-field syntax exercise."
+  ]
+}

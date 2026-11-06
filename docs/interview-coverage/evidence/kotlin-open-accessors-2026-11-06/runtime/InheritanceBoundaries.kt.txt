@@ -1,0 +1,14 @@
+abstract class Task { abstract fun run():String }
+class Done:Task() { override fun run()="done" }
+interface Contract { fun run():String }
+class Implemented:Contract { override fun run()="implemented" }
+open class Base { open fun work()="base";fun fixed()="fixed" }
+open class Middle:Base() { override fun work()="middle" }
+class Leaf:Middle() { override fun work()="leaf" }
+fun main() {
+ check(Done().run()=="done");check(Implemented().run()=="implemented")
+ check(Leaf().work()=="leaf" && Leaf().fixed()=="fixed")
+ check(!java.lang.reflect.Modifier.isFinal(Task::class.java.modifiers))
+ check(java.lang.reflect.Modifier.isFinal(Base::class.java.getDeclaredMethod("fixed").modifiers))
+ println("inheritance boundaries: PASS")
+}
