@@ -1,0 +1,194 @@
+{
+  "original_candidate_sha256": "69b1c26c23dc801052f99ab478e54b7a9dc97b11c95594c8c4692f3dc5164498",
+  "original_questions": [
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое перегрузка операторов?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Для `a + b` можно выбрать функцию любого имени с `operator`; так задают поведение поддерживаемых операторов без соглашения об имени и сигнатуре.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Модификатор `operator` не разрешает произвольные имена и сигнатуры: для `a + b` предусмотрена функция `plus` с подходящим параметром. Функция с неподдерживаемым именем не становится новым соглашением языка.",
+                "source_of_confusion": "Разрешение реализовать оператор для своего типа принимают за возможность самостоятельно определить правило поиска функции. Соглашение о вызове задаёт язык, а автор типа задаёт реализацию.",
+                "if_it_were_true": "Компилятору потребовалось бы правило, связывающее произвольное имя с конкретным символом; стандартного соглашения `+` → `plus` было бы недостаточно для выбора такой функции.",
+                "how_it_should_be": "Реализуйте member-функцию или расширение с предусмотренным именем и сигнатурой. При новом объявлении укажите `operator`; при override уже операторной функции модификатор можно не повторять."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Для `a + b` используется `minus`, а для `a - b` — `plus`; перегрузка задаёт поведение поддерживаемых операторов через эти соглашения о функциях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для `a + b` соглашение задаёт `a.plus(b)`, а для `a - b` — `a.minus(b)`. Перегрузка меняет реализацию этих функций для типа, но не переставляет установленные языком имена.",
+                "source_of_confusion": "Названия функций сложения и вычитания поменяли местами. Реализация может вычислять произвольный результат, но операторная запись выбирает функцию по фиксированному соглашению.",
+                "if_it_were_true": "В классе с разными реализациями `plus` и `minus` выражение с `+` выбирало бы `minus`, а выражение с `-` — `plus`, вопреки текущим соглашениям Kotlin.",
+                "how_it_should_be": "Для сложения реализуют операторную `plus`, для вычитания — `minus`. Один конкретный пример соглашения иллюстрирует общий механизм вызова предусмотренных функций."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Для `a + b` объявляют символ `+` внутри класса, а не функцию; перегрузка задаёт поведение поддерживаемых операторов через такие отдельные объявления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Kotlin используются обычные функции с операторным контрактом: member-функции или расширения. Отдельного объявления символа `+` вместо функции язык не предоставляет.",
+                "source_of_confusion": "В Kotlin переносят синтаксис языков, где функция перегрузки объявляется с самим символом оператора. Здесь нужны предусмотренные имена, например `plus`.",
+                "if_it_were_true": "Для пользовательского сложения пришлось бы объявлять сам символ внутри класса, а операторное расширение `Point.plus` не могло бы обеспечить запись `left + right`.",
+                "how_it_should_be": "Используйте, например, `operator fun Point.plus(other: Point): Point`. Можно реализовывать поддерживаемые операторные соглашения, но нельзя вводить новые символы или менять их приоритет."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Для `a + b` используется операторная функция `plus`; перегрузка задаёт поведение поддерживаемых операторов через предусмотренные имена и сигнатуры.",
+              "correct": true,
+              "sections": {
+                "explanation": "Перегрузка даёт реализацию предусмотренного операторного соглашения для своего типа. Компилятор ищет подходящую member-функцию или расширение с установленным именем и сигнатурой, например `plus` для `+`. Произвольные новые символы операторов и изменение приоритетов этим механизмом не вводятся.",
+                "example": "```kotlin\ndata class Point(val x: Int)\noperator fun Point.plus(other: Point) = Point(x + other.x)\n\nfun main() {\n    check(Point(2) + Point(3) == Point(5))\n}\n```",
+                "when_to_apply": "Выбирайте операторную запись, когда её смысл естественен для модели, например для сложения векторов. Если поведение трудно понять по символу, явный метод может быть яснее.",
+                "edge_cases": "У `a in b` получатель правый: вызывается `b.contains(a)` с результатом `Boolean`. Для сравнений используется знак результата `compareTo` типа `Int`. Имя функции определяет соглашение о вызове, но не доказывает математические свойства реализации.",
+                "related": "При новом объявлении операторной функции указывают `operator`. Override уже операторной функции наследует операторный контракт, поэтому повторять модификатор не обязательно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает деструктуризация (`destructuring declarations`)?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "В позиционной форме `componentN()` выбирают по именам переменных; экспериментальный режим `complete` в круглых скобках использует порядок компонентов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В позиционной форме первая переменная получает `component1()`, вторая — `component2()` независимо от их имён. В экспериментальном `complete` краткая форма с круглыми скобками, наоборот, сопоставляет имена свойств.",
+                "source_of_confusion": "Два режима сопоставления поменяли местами. Совпадение имён переменных с именами свойств в обычном примере может скрыть позиционный механизм.",
+                "if_it_were_true": "В обычной позиционной записи переименование переменной меняло бы выбираемый компонент, а в `complete` перестановка имён при сохранении позиций не меняла бы получаемые компоненты.",
+                "how_it_should_be": "Различайте позиционные вызовы `componentN()` и экспериментальное сопоставление свойств по именам. Режим `complete` включает краткую name-based форму в круглых скобках, а для позиционной формы использует квадратные."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "В позиционной форме вызывают `componentN()` по порядку только у `data class`; экспериментальный режим `complete` в круглых скобках сопоставляет имена свойств.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Позиционная деструктуризация не ограничена `data class`: подходят и обычные классы с доступными операторными `componentN()`, включая расширения. Автогенерация в data class лишь избавляет от ручного объявления этих функций.",
+                "source_of_confusion": "Типичный пример с data class принимают за ограничение механизма. На самом деле компилятор использует соглашения о компонентах, а не только модификатор класса.",
+                "if_it_were_true": "Обычный класс с подходящими `operator fun component1()` и `component2()` нельзя было бы разобрать позиционно, хотя сами эти функции можно было бы вызвать явно.",
+                "how_it_should_be": "Для позиционной формы обеспечьте нужные доступные операторные функции компонентов; data class генерирует их автоматически. Экспериментальный `complete` отдельно задаёт сопоставление по именам для круглых скобок."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "В позиционной форме `componentN()` идут по порядку, а перестановка свойств `data class` всегда даёт ошибку; экспериментальный режим `complete` сопоставляет имена свойств в круглых скобках.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Позиционные вызовы следуют порядку `componentN()`, но перестановка свойств не обязана давать ошибку. При одинаковых типах можно молча получить чужие значения; несовместимость с явным типом переменной или её использованием может привести к ошибке компиляции.",
+                "source_of_confusion": "Проверку типов принимают за проверку смысла имён. Компилятор может заметить несовместимый тип, но не обязан распознать перестановку двух разных по смыслу значений одного типа.",
+                "if_it_were_true": "Даже перестановка двух String-свойств в первичном конструкторе data class всегда отклоняла бы старую позиционную деструктуризацию, несмотря на совместимость типов.",
+                "how_it_should_be": "При изменении порядка проверяйте потребителей позиционных `componentN()`: возможны и тихая смена смысла, и ошибка типов. Краткая форма в экспериментальном `complete` сопоставляет имена свойств, поэтому её нельзя безусловно описывать как позиционную."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "В позиционной форме доступные `componentN()` вызывают по порядку, в том числе у обычных классов; экспериментальный режим `complete` в круглых скобках сопоставляет имена свойств.",
+              "correct": true,
+              "sections": {
+                "explanation": "Позиционная деструктуризация объявляет переменные из результатов последовательных операторных `componentN()`. Функции могут быть членами класса или расширениями; data class не обязателен. Краткая форма `val (a, b) = value` позиционна в обычном режиме, но при экспериментальном `complete` использует имена свойств.",
+                "example": "```kotlin\nclass Coordinates(val x: Int, val y: Int) {\n    operator fun component1() = x\n    operator fun component2() = y\n}\n\nfun main() {\n    // Обычный позиционный режим, без name-based complete.\n    val (y, x) = Coordinates(10, 20)\n    check(y == 10 && x == 20)\n}\n```",
+                "when_to_apply": "Используйте деструктуризацию, когда нескольким частям одного значения нужны отдельные локальные имена, например при обходе элементов карты. Перед переносом синтаксиса между проектами проверьте compiler options.",
+                "edge_cases": "В позиционной форме `_` пропускает вызов соответствующего компонента. В lambda `{ (a, b) -> ... }` разбирается один параметр; `{ a, b -> ... }` задаёт два параметра. Флаг `-Xname-based-destructuring=only-syntax` добавляет явную name-based форму без изменения старой краткой записи; `complete` меняет её смысл.",
+                "related": "Data class генерирует `componentN()` для свойств первичного конструктора по порядку, без свойств тела класса. Перестановка совместимых по типу компонентов может остаться незамеченной компилятором; несовместимость с явными типами или использованием может быть обнаружена."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "original_gates": [
+    {
+      "command": [
+        "bash",
+        "scripts/verify-mcq-json.sh",
+        "modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-interview.json"
+      ],
+      "exit_code": 0,
+      "raw_output": "PASS: files=1 questions=45 blocks=45; semantic review NOT_RUN\n"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-answer-parity-gate.py",
+        "modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-interview.json"
+      ],
+      "exit_code": 1,
+      "raw_output": "\n❌ FAIL  kotlin-interview  (45 блоков)\n   [  ok ] CORRECT_LONGEST_RATE         =     0.2  — 9/45 блоков correct-самый-длинный (порог ≤0.4)\n   [ FAIL] OPTION_LENGTH_RATIO          =     1.4  — худший блок Q31=1.40; 1 блоков > 1.35\n   [  ok ] CORRECT_WRONG_AVG_RATIO      =   1.015  — correct̄=13сл / wronḡ=13сл (диапазон 0.9–1.1)\n   [  ok ] SENTENCE_PARITY              =       0  — худший разрыв QNone=0 предл.; 0 блоков > 1\n   [  ok ] DETAIL_PARITY                =     0.0  — 0/45 блоков correct доминирует по деталям (порог ≤0.4)\n   [  ok ] ABSOLUTE_MARKER_GAP          =   0.111  — wrong=0.20 vs correct=0.09 (разрыв ≤0.25)\n   [  ok ] CORRECT_POSITION_DISTRIBUTION =    1.09  — A/B/C/D=[12, 11, 11, 11] max/min=1.09 (порог ≤2.0)\n   [  ok ] CORRECT_POSITION_SEQUENCE    =       5  — самый длинный арифметический прогон позиций = 5 (порог ≤5); строгий A→B→C→D цикл угадывается\n   [  ok ] DUPLICATE_NGRAMS             =       1  — 1 повторяющихся 10-грамм между разными опциями (порог ≤3); напр. «…первичный конструктор объявляют в заголовке втор…»\n   [  ok ] TEMPORAL_CLAIMS              =       0  — 0 опций с временными/версионными утверждениями\n   [  ok ] SOURCE_COVERAGE              =     n/a  — не version-sensitive\n   [  ok ] STYLE_GUESSABILITY           =   0.322  — угадывание по длине=0.32, по code-spans=0.24 (шанс=0.25, порог ≤0.4)\n\n────────────────────────────────────────────────────────────────────────\nИтог: 0/1 файлов PASS.\n"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-anti-tell-scan.py",
+        "modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-interview.json"
+      ],
+      "exit_code": 0,
+      "raw_output": "\n=== modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-interview.json\n  распределение correct: {'B': 11, 'A': 12, 'D': 11, 'C': 11}\n\n--- ИТОГ: блоков=45 с подсказкой=0\n"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-linkage-scan.py",
+        "modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-interview.json"
+      ],
+      "exit_code": 0,
+      "raw_output": "\n=== modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-interview.json\n  OK — детерминированных сигналов нет\n\n--- ИТОГ: файлов=1 блоков=45 errors=0 warnings=0 manual_review=0\n"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-skel-gate.py",
+        "-v",
+        "modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-interview.json"
+      ],
+      "exit_code": 1,
+      "raw_output": "[FAIL] modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-interview.json  blocks=45  hard_fails=19  warn_blocks=27\n  ! PRE-CHECK ONLY: exit color does not authorize SKEL=✅; LLM surface-skeleton review remains mandatory.\n  HARD Q1/b0:\n    - opening_class mismatch: {'A': 'btick', 'B': 'btick', 'C': 'btick', 'D': 'prose'}\n    sigs={'A': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  HARD Q2/b0:\n    - opening_class mismatch: {'A': 'prose', 'B': 'prose', 'C': 'prose', 'D': 'btick'}\n    sigs={'A': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  WARN Q3/b0:\n    - dash_presence mismatch: {'A': 1, 'B': 0, 'C': 0, 'D': 1}\n  HARD Q6/b0:\n    - opening_class mismatch: {'A': 'prose', 'B': 'prose', 'C': 'btick', 'D': 'prose'}\n    sigs={'A': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 1, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 1, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 1, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  WARN Q6/b0:\n    - colon_presence mismatch: {'A': 0, 'B': 1, 'C': 1, 'D': 1}\n  WARN Q7/b0:\n    - dash_presence mismatch: {'A': 1, 'B': 0, 'C': 0, 'D': 1}\n  WARN Q8/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 1, 'C': 0, 'D': 0}\n  WARN Q9/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 1, 'C': 1, 'D': 0}\n  HARD Q10/b0:\n    - opening_class mismatch: {'A': 'prose', 'B': 'prose', 'C': 'btick', 'D': 'btick'}\n    sigs={'A': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  HARD Q11/b0:\n    - opening_class mismatch: {'A': 'btick', 'B': 'btick', 'C': 'prose', 'D': 'prose'}\n    sigs={'A': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  HARD Q13/b0:\n    - opening_class mismatch: {'A': 'prose', 'B': 'prose', 'C': 'btick', 'D': 'prose'}\n    sigs={'A': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  WARN Q13/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 0, 'C': 1, 'D': 0}\n  HARD Q14/b0:\n    - opening_class mismatch: {'A': 'prose', 'B': 'prose', 'C': 'prose', 'D': 'btick'}\n    sigs={'A': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  HARD Q15/b0:\n    - opening_class mismatch: {'A': 'btick', 'B': 'prose', 'C': 'btick', 'D': 'btick'}\n    sigs={'A': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  WARN Q15/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 1, 'C': 1, 'D': 1}\n  WARN Q17/b0:\n    - dash_presence mismatch: {'A': 1, 'B': 0, 'C': 0, 'D': 0}\n  HARD Q18/b0:\n    - opening_class mismatch: {'A': 'btick', 'B': 'btick', 'C': 'btick', 'D': 'prose'}\n    sigs={'A': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  WARN Q18/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 1, 'C': 0, 'D': 0}\n  HARD Q19/b0:\n    - opening_class mismatch: {'A': 'btick', 'B': 'prose', 'C': 'btick', 'D': 'btick'}\n    sigs={'A': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  WARN Q19/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 0, 'C': 1, 'D': 1}\n  WARN Q21/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 1, 'C': 0, 'D': 0}\n  HARD Q25/b0:\n    - opening_class mismatch: {'A': 'prose', 'B': 'prose', 'C': 'btick', 'D': 'btick'}\n    sigs={'A': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 1, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  WARN Q25/b0:\n    - colon_presence mismatch: {'A': 0, 'B': 1, 'C': 0, 'D': 0}\n  WARN Q26/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 1, 'C': 0, 'D': 0}\n  WARN Q27/b0:\n    - dash_presence mismatch: {'A': 1, 'B': 0, 'C': 0, 'D': 1}\n  HARD Q28/b0:\n    - opening_class mismatch: {'A': 'btick', 'B': 'prose', 'C': 'prose', 'D': 'btick'}\n    sigs={'A': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  WARN Q28/b0:\n    - dash_presence mismatch: {'A': 1, 'B': 0, 'C': 0, 'D': 1}\n  WARN Q29/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 1, 'C': 0, 'D': 0}\n  WARN Q30/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 0, 'C': 1, 'D': 0}\n    - paren_presence mismatch: {'A': 1, 'B': 1, 'C': 0, 'D': 1}\n  WARN Q32/b0:\n    - dash_presence mismatch: {'A': 1, 'B': 0, 'C': 1, 'D': 0}\n  WARN Q34/b0:\n    - paren_presence mismatch: {'A': 0, 'B': 0, 'C': 1, 'D': 0}\n  HARD Q36/b0:\n    - opening_class mismatch: {'A': 'prose', 'B': 'btick', 'C': 'prose', 'D': 'prose'}\n    sigs={'A': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  WARN Q36/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 1, 'C': 0, 'D': 0}\n  HARD Q37/b0:\n    - opening_class mismatch: {'A': 'prose', 'B': 'btick', 'C': 'btick', 'D': 'prose'}\n    sigs={'A': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  WARN Q37/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 1, 'C': 1, 'D': 0}\n  HARD Q39/b0:\n    - opening_class mismatch: {'A': 'prose', 'B': 'prose', 'C': 'btick', 'D': 'prose'}\n    sigs={'A': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  WARN Q39/b0:\n    - dash_presence mismatch: {'A': 1, 'B': 1, 'C': 0, 'D': 0}\n  HARD Q40/b0:\n    - opening_class mismatch: {'A': 'btick', 'B': 'prose', 'C': 'prose', 'D': 'btick'}\n    sigs={'A': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  WARN Q40/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 0, 'C': 0, 'D': 1}\n  HARD Q42/b0:\n    - opening_class mismatch: {'A': 'btick', 'B': 'prose', 'C': 'prose', 'D': 'prose'}\n    sigs={'A': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  WARN Q42/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 0, 'C': 0, 'D': 1}\n  WARN Q43/b0:\n    - dash_presence mismatch: {'A': 1, 'B': 0, 'C': 0, 'D': 0}\n  HARD Q44/b0:\n    - opening_class mismatch: {'A': 'btick', 'B': 'btick', 'C': 'prose', 'D': 'prose'}\n    sigs={'A': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  WARN Q44/b0:\n    - dash_presence mismatch: {'A': 1, 'B': 0, 'C': 0, 'D': 0}\n  HARD Q45/b0:\n    - opening_class mismatch: {'A': 'btick', 'B': 'prose', 'C': 'btick', 'D': 'btick'}\n    sigs={'A': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'B': {'open': 'prose', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'C': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 0, 'paren': 0, 'code_bucket': 1, 'code': 1}, 'D': {'open': 'btick', 'sent': 1, 'semi': 0, 'colon': 0, 'dash': 1, 'paren': 0, 'code_bucket': 1, 'code': 1}}\n  WARN Q45/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 0, 'C': 0, 'D': 1}\n\nSKEL acceptance = LLM only. This script is a pre-check helper.\n"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-struct-scan.py",
+        "modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-interview.json"
+      ],
+      "exit_code": 0,
+      "raw_output": "блоков: 45   (случайный уровень = 0.250, диагностический порог = 0.28)\nclauses:max              0.417   уникально выделяет correct:   14 (31.1%)\ncontrast:max             0.385   уникально выделяет correct:   10 (22.2%)\nstarts_latin:max         0.385   уникально выделяет correct:    5 (11.1%)\nchars:max                0.367   уникально выделяет correct:   15 (33.3%)\ndash:max                 0.359   уникально выделяет correct:    8 (17.8%)\nnegation:min             0.330   уникально выделяет correct:    4 (8.9%)\ncommas:max               0.324   уникально выделяет correct:    7 (15.6%)\nДиагностика нескольких осей на том же наборе: нужны независимая выборка и LLM-ревью.\n"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-surface-parity.py",
+        "--file",
+        "modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-interview.json"
+      ],
+      "exit_code": 0,
+      "raw_output": "modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-interview.json   worst-block-score=3.23\n Q6 b0 cv=0.114 ratio=1.28 corr_longest=True lens=[74, 92, 95, 75] corr=#2 tells=['+openbt', 'lone_long1.28', 'open_mixed']  <== TELL\n Q28 b0 cv=0.085 ratio=1.26 corr_longest=True lens=[90, 78, 84, 98] corr=#3 tells=['lone_long1.26', 'open_mixed']  <== TELL\n Q14 b0 cv=0.051 ratio=1.14 corr_longest=True lens=[82, 85, 81, 92] corr=#3 tells=['+openbt', 'open_mixed']  <== TELL\n Q36 b0 cv=0.045 ratio=1.12 corr_longest=False lens=[94, 91, 84, 86] corr=#1 tells=['+openbt', 'open_mixed']  <== TELL\n Q42 b0 cv=0.042 ratio=1.10 corr_longest=True lens=[96, 87, 89, 95] corr=#0 tells=['+openbt', 'open_mixed']  <== TELL\n Q39 b0 cv=0.024 ratio=1.06 corr_longest=False lens=[96, 93, 94, 99] corr=#2 tells=['+openbt', 'open_mixed']  <== TELL\n Q21 b0 cv=0.109 ratio=1.35 corr_longest=True lens=[88, 105, 78, 87] corr=#1 tells=['lone_long1.35']  <== TELL\n Q38 b0 cv=0.096 ratio=1.31 corr_longest=True lens=[94, 72, 89, 87] corr=#0 tells=['lone_long1.31']  <== TELL\n Q31 b0 cv=0.089 ratio=1.25 corr_longest=False lens=[150, 158, 188, 177] corr=#3 tells=['btbucket1-2']  <== TELL\n Q2 b0 cv=0.083 ratio=1.25 corr_longest=False lens=[94, 88, 75, 82] corr=#1 tells=['open_mixed']  <== TELL\n Q45 b0 cv=0.070 ratio=1.22 corr_longest=True lens=[91, 83, 90, 101] corr=#3 tells=['open_mixed']  <== TELL\n Q11 b0 cv=0.067 ratio=1.19 corr_longest=False lens=[80, 94, 95, 93] corr=#0 tells=['open_mixed']  <== TELL\n Q19 b0 cv=0.067 ratio=1.18 corr_longest=True lens=[82, 97, 97, 91] corr=#2 tells=['open_mixed']  <== TELL\n Q1 b0 cv=0.062 ratio=1.19 corr_longest=True lens=[86, 102, 94, 91] corr=#1 tells=['open_mixed']  <== TELL\n Q40 b0 cv=0.061 ratio=1.19 corr_longest=False lens=[80, 95, 88, 88] corr=#3 tells=['open_mixed']  <== TELL\n Q15 b0 cv=0.060 ratio=1.18 corr_longest=True lens=[83, 79, 93, 85] corr=#2 tells=['open_mixed']  <== TELL\n Q34 b0 cv=0.060 ratio=1.16 corr_longest=False lens=[139, 136, 158, 141] corr=#0 tells=['btbucket1-2']  <== TELL\n Q44 b0 cv=0.050 ratio=1.13 corr_longest=True lens=[93, 90, 82, 93] corr=#0 tells=['open_mixed']  <== TELL\n Q25 b0 cv=0.047 ratio=1.14 corr_longest=False lens=[79, 90, 86, 84] corr=#2 tells=['open_mixed']  <== TELL\n Q10 b0 cv=0.032 ratio=1.09 corr_longest=False lens=[98, 90, 93, 96] corr=#2 tells=['open_mixed']  <== TELL\n Q37 b0 cv=0.031 ratio=1.08 corr_longest=False lens=[92, 86, 85, 87] corr=#1 tells=['open_mixed']  <== TELL\n Q18 b0 cv=0.026 ratio=1.06 corr_longest=True lens=[94, 100, 94, 96] corr=#1 tells=['open_mixed']  <== TELL\n Q29 b0 cv=0.015 ratio=1.03 corr_longest=False lens=[144, 144, 149, 147] corr=#3 tells=['btbucket1-2']  <== TELL\n Q13 b0 cv=0.013 ratio=1.03 corr_longest=False lens=[88, 90, 87, 89] corr=#3 tells=['open_mixed']  <== TELL\n Q4 b0 cv=0.159 ratio=1.57 corr_longest=False lens=[69, 102, 108, 98] corr=#3 tells=[]  <== TELL\n Q22 b0 cv=0.115 ratio=1.35 corr_longest=False lens=[78, 105, 103, 91] corr=#0 tells=[]  <== TELL\n Q7 b0 cv=0.060 ratio=1.17 corr_longest=True lens=[91, 78, 85, 90] corr=#0 tells=[]\n Q23 b0 cv=0.058 ratio=1.16 corr_longest=True lens=[86, 75, 87, 81] corr=#2 tells=[]\n Q3 b0 cv=0.054 ratio=1.14 corr_longest=True lens=[90, 86, 79, 80] corr=#0 tells=[]\n Q9 b0 cv=0.052 ratio=1.14 corr_longest=True lens=[84, 96, 86, 87] corr=#1 tells=[]\n Q33 b0 cv=0.049 ratio=1.12 corr_longest=False lens=[156, 175, 167, 156] corr=#3 tells=[]\n Q20 b0 cv=0.046 ratio=1.12 corr_longest=False lens=[117, 131, 118, 125] corr=#3 tells=[]\n Q32 b0 cv=0.042 ratio=1.12 corr_longest=False lens=[158, 152, 141, 155] corr=#1 tells=[]\n Q5 b0 cv=0.042 ratio=1.11 corr_longest=True lens=[61, 61, 55, 58] corr=#0 tells=[]\n Q26 b0 cv=0.039 ratio=1.10 corr_longest=True lens=[82, 82, 90, 86] corr=#2 tells=[]\n Q35 b0 cv=0.037 ratio=1.10 corr_longest=False lens=[87, 86, 85, 79] corr=#2 tells=[]\n Q24 b0 cv=0.037 ratio=1.10 corr_longest=False lens=[208, 213, 203, 224] corr=#1 tells=[]\n Q43 b0 cv=0.032 ratio=1.09 corr_longest=False lens=[93, 100, 95, 92] corr=#3 tells=[]\n Q27 b0 cv=0.028 ratio=1.08 corr_longest=False lens=[89, 91, 96, 92] corr=#0 tells=[]\n Q41 b0 cv=0.027 ratio=1.07 corr_longest=False lens=[95, 92, 89, 89] corr=#1 tells=[]\n Q12 b0 cv=0.026 ratio=1.06 corr_longest=False lens=[212, 203, 204, 216] corr=#2 tells=[]\n Q8 b0 cv=0.024 ratio=1.07 corr_longest=False lens=[92, 92, 88, 94] corr=#0 tells=[]\n Q17 b0 cv=0.017 ratio=1.04 corr_longest=False lens=[95, 99, 97, 99] corr=#2 tells=[]\n Q30 b0 cv=0.010 ratio=1.03 corr_longest=False lens=[191, 191, 190, 195] corr=#1 tells=[]\n Q16 b0 cv=0.009 ratio=1.02 corr_longest=False lens=[208, 210, 205, 206] corr=#0 tells=[]\n"
+    }
+  ],
+  "final_candidate_sha256": "96b2c37a7dc146b9242a489e8f8f9d7056426fd1ae4f50e2d89948697196fd71",
+  "revision": "Q31 C/D упрощены: действие сразу связано с позиционной формой; длинное «перестановка ... всегда даёт ошибку» заменено активным «компилятор всегда отклоняет». Обе модели и указание экспериментального complete/круглых скобок сохранены. Исходный ratio FAIL1.40 сохраняется, пороги не меняются."
+}
