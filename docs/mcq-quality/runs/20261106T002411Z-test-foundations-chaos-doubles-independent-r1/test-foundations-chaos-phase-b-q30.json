@@ -1,0 +1,85 @@
+{
+  "q_number": 30,
+  "block_idx": 0,
+  "reviewer": "test_foundations_chaos_blind",
+  "model": "gpt-6-luna",
+  "reviewed_at_utc": "2026-11-06T00:33:54Z",
+  "choice": "A",
+  "checks": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "The stem asks for a strategy for choosing test doubles. A answers by selecting a real dependency or double based on the contract, model fidelity, feedback, and maintenance cost. B claims a stub verifies real SQL/database constraints; C treats the count of doubles and verifications as proof of quality; D treats call order as equivalent to the computed result. Each wrong answer is a complete, defensible misconception without invented conditions."
+    },
+    "FACTS": {
+      "status": "PASS",
+      "reason": "Fowler’s article distinguishes stubs and mocks by verification style: state verification versus behavior verification. A stub supplies canned answers; a mock verifies expected calls. This supports A’s role-based selection and refutes B and D as equivalences. The theory’s counterexample for B is valid: a stubbed repository can return a value without executing SQL, so it cannot establish SQL or real database constraints. Runtime API behavior was not executed."
+    },
+    "LINKAGE": {
+      "status": "PASS",
+      "reason": "The supplied theory directly answers the visible stem by selecting substitutes under a tested contract, then weighing fidelity, feedback, and maintenance. All options concern that same selection axis."
+    },
+    "SECTIONS": {
+      "status": "PASS",
+      "reason": "All four option records include explanations, confusion source, counterfactual, and correction tied to their claim. The real-database and computation-result examples directly test the wrong options’ implied equivalences."
+    },
+    "SFPL": {
+      "status": "PASS",
+      "reason": "Each option is a complete selection principle with a stated rationale or consequence. Framework, tone, and specificity are comparable. A’s extra nuanced qualifiers match the breadth of a strategy definition and are not a gratuitous length or tone cue."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "The four options test one coherent axis: what evidence and tradeoffs guide double selection. The wrong models can be defended narrowly: simplicity can matter, many replacements may aid isolation in a particular test, and interaction order may itself be a contract. Those possibilities do not rescue their absolute claims that SQL is checked, quantity proves design quality, or interactions equal all computed results."
+    },
+    "RU": {
+      "status": "PASS",
+      "reason": "Russian prose is coherent and professional. English terms are conventional in this technical context and the option clauses are readable."
+    }
+  },
+  "options": {
+    "A": {
+      "covered_parts": [
+        "выбор test doubles и основание выбора"
+      ],
+      "completeness": "complete",
+      "truth": "true",
+      "defense_attempt": "The supplied theory supports selecting a real dependency or appropriate double according to the contract and needed feedback, while considering fidelity and maintenance cost.",
+      "problem": ""
+    },
+    "B": {
+      "covered_parts": [
+        "выбор test doubles и основание выбора"
+      ],
+      "completeness": "complete",
+      "truth": "false",
+      "defense_attempt": "A stub can make a repository test concise and provide a controlled value for application logic. That is useful for that contract, but it says nothing about SQL execution, transactions, or actual database constraints. A repository stub that always returns a configured object is a direct counterexample.",
+      "problem": "Confuses response simulation with verification of the real database implementation."
+    },
+    "C": {
+      "covered_parts": [
+        "выбор test doubles и основание выбора"
+      ],
+      "completeness": "complete",
+      "truth": "false",
+      "defense_attempt": "A test with several doubles may isolate the SUT, and verify calls may be appropriate where interaction is part of the contract. But raw count cannot show whether those interactions are important or whether the test is coupled to incidental implementation. Two tests with the same number can verify different contracts.",
+      "problem": "Uses quantity as a proxy for isolation and design quality."
+    },
+    "D": {
+      "covered_parts": [
+        "выбор test doubles и основание выбора"
+      ],
+      "completeness": "complete",
+      "truth": "false",
+      "defense_attempt": "Expected call order can be a meaningful behavior contract for a collaborator. Yet a SUT can make those calls in the expected order and still compute or return an incorrect value; the checks are distinct and may be combined where useful.",
+      "problem": "Treats behavior verification as an equivalent substitute for checking all relevant state/results."
+    }
+  },
+  "sources": [
+    {
+      "url": "https://martinfowler.com/articles/mocksArentStubs.html",
+      "checked_claim": "Mock objects are one form of test double; Fowler distinguishes state verification from behavior verification, and stubs from mocks. This supports separating configured responses from interaction expectations. The local-review counterexample is that a stubbed repository can return canned data without executing SQL; proper real-database verification therefore requires an appropriate real dependency.",
+      "version": "Article dated 02 January 2007; no separate revision version stated",
+      "actual_checked_at": "2026-11-06T00:33:54Z"
+    }
+  ],
+  "scope_note": "Reviewed Q30 stem, all four option records and sections, and all supplied Q30 theory chunks. Opened Fowler’s primary article and checked its definition and verification distinction. No runtime API was executed."
+}

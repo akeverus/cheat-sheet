@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "review_id": "20261106T002411Z-mockito-roles-spy-followup-independent-r1-scoped-final",
+  "reviewer": "mockito_roles_spy_blind",
+  "author": "root_mcq_author",
+  "model": "gpt-6-luna",
+  "date": "2026-11-06T00:41:45.730985+00:00",
+  "kind": "independent_two_phase",
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/testing/mockito-interview.json",
+    "theory": "cheatsheets/interview/testing/mockito-interview.md"
+  },
+  "sha256": {
+    "mcq": "dabd38b000c04a03cdfe866fee9f67e16437efbaeadbeaef1a88c695e0601318",
+    "theory": "5730d6964c2eb5f8140b94466e66bfd5e0825cd79bfdf8fb882b86203e12bd0f"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "phase_a": {
+    "path": "docs/mcq-quality/runs/20261106T002411Z-mockito-roles-spy-followup-independent-r1/phase-a.json",
+    "sha256": "5ee2fd21437eeb1d2aeabf21c91cf8e064b1b14f58b0aeca2a6a173f5c56ef4c"
+  },
+  "revealed_at": "2026-11-06T00:25:54.801640+00:00",
+  "coverage": [
+    {
+      "q_number": 2,
+      "block_idx": 0,
+      "sha256": {
+        "mcq": "7e7f93fe48f305d5b02be0d2f0aa564945444481bc32ea5bb9cf0db246dfa05a",
+        "theory": "a30329ebd75136960093dd8879052117919f802c1b8732c36f1a396fc1137342"
+      },
+      "checks": {
+        "final_acceptance": {
+          "status": "PASS",
+          "reason": "Вопрос требует различить четыре роли. B корректно сопоставляет mock-проверку взаимодействий, stub-ответы, частичное реальное поведение Mockito spy и упрощённую реализацию fake. Все четыре варианта явно описывают все четыре роли; A/C/D — законченные ошибочные модели, а не неполные ответы. Теория поддерживает выбор, а сравнение формы не выявило уникального полного каркаса или длины у correct. Отмеченные errata касались лишь атрибуции отдельных фраз и статусы не меняют."
+        }
+      }
+    },
+    {
+      "q_number": 6,
+      "block_idx": 0,
+      "sha256": {
+        "mcq": "febb7ba957770432971e54a489928efaf44e226c3270dac7f9fda5be3e9ff85b",
+        "theory": "9cbab6637c1406223ab7ce11c5a0e57ce414fbfc8db927a4215b4ebfaebfb88d"
+      },
+      "checks": {
+        "final_acceptance": {
+          "status": "PASS",
+          "reason": "D верно сравнивает default answers: обычный mock использует стандартные ответы, spy вызывает доступные реальные методы, если поведение не заглушено. A и C инвертируют/смешивают это различие; B содержит конкретную причинную ошибку: doReturn позволяет настроить spy без реального вызова при настройке. Теория и Mockito 5.11 подтверждают оговорки об абстрактных/уже заглушённых методах; они не делают сравнение неоднозначным. Все варианты сравнивают обе стороны, а форма близкая."
+        }
+      }
+    },
+    {
+      "q_number": 31,
+      "block_idx": 0,
+      "sha256": {
+        "mcq": "a125b3019ece01be58bb33f535620289addfc877411cb8c1b977077be5527d85",
+        "theory": "af8470dbbbba87e9ff75ceb922cb554fe82cb0b121e5e569e6ee75a1fa622ed2"
+      },
+      "checks": {
+        "final_acceptance": {
+          "status": "PASS",
+          "reason": "D корректно говорит, что оба способа создают spy, а аннотация требует обработки и может использовать готовый или создаваемый подходящий экземпляр. Mockito 5.11 подтверждает фабричные формы spy(Object)/spy(Class) и обработку @Spy поля; требование initializer для всех вариантов было бы неверным. A/B — законченные инверсии поведения, C — законченное, но чрезмерно категоричное отрицание constructor creation. Все варианты сопоставляют factory и annotation; correct не выделен уникальной длиной или полнотой."
+        }
+      }
+    }
+  ],
+  "findings": [],
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/mockito/mockito/v5.11.0/src/main/java/org/mockito/Mockito.java",
+      "used_for": "Javadoc Mockito описывает библиотеку как средство создания mock, проверки взаимодействий и stubbing; разделы spying/partial mocks показывают частичное использование реального поведения; один mock может быть и настроен, и проверен.",
+      "version": "Mockito v5.11.0 tag",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mockito/mockito/v5.11.0/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java",
+      "used_for": "Spy annotation engine говорит, что @Spy поле превращается в spy как Mockito.spy; неинициализированное поле пытается создать через no-arg constructor, заданный объект spy-ится; default answer CALLS_REAL_METHODS.",
+      "version": "Mockito v5.11.0 tag",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://martinfowler.com/articles/mocksArentStubs.html",
+      "used_for": "Раздел Difference Between Mocks and Stubs различает stubs, предоставляющие ответы, и mocks, ориентированные на проверку поведения/взаимодействий; Fowler отмечает, что термин mock object иногда используется широко и может включать stub-поведение.",
+      "version": "Статья, опубликована 2007-01-02 (страница проверена сейчас)",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mockito/mockito/v5.11.0/src/main/java/org/mockito/Mockito.java",
+      "used_for": "Javadoc: spy calls real methods unless stubbed; when(spy.get(0)) evaluates a real method and can fail; doReturn(...).when(spy)... configures without that call; ordinary mock vs spy behavior and default answer distinction; abstract spy creation/API.",
+      "version": "Mockito v5.11.0 tag",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mockito/mockito/v5.11.0/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java",
+      "used_for": "@Spy processing converts initialized field into spy; uninitialized fields attempt no-arg initialization; spy uses CALLS_REAL_METHODS default answer.",
+      "version": "Mockito v5.11.0 tag",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mockito/mockito/v5.11.0/src/main/java/org/mockito/Mockito.java",
+      "used_for": "spy(Object) spies supplied instance; spy(Class) creates spy from type using constructor; spies call real methods unless stubbed; creation from object copies rather than delegates to original.",
+      "version": "Mockito v5.11.0 tag",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/mockito/mockito/v5.11.0/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java",
+      "used_for": "@Spy engine processes fields; initialized value is spied, null field attempts spyNewInstance; initialized spy default answer is CALLS_REAL_METHODS; no-arg constructor path for regular class.",
+      "version": "Mockito v5.11.0 tag",
+      "checked_at": "2026-11-06"
+    }
+  ],
+  "limitations": [
+    "Решение относится только к указанным трём блокам.",
+    "Разбор детализирующих правил покрывал прочитанные фрагменты по строку 60 включительно; это не сертификация иных требований вне этих фрагментов.",
+    "Scoped block acceptance only; remaining questions/topics/corpus are not accepted.",
+    "Prerequisite nine checks are established by the preceding independent A/B record; this record adds the reviewer’s explicit final gate only.",
+    "ACCEPT in raw Mockito reviewer output is mechanically mapped to schema PASS without changing its meaning."
+  ],
+  "workflow_run": {
+    "path": "docs/mcq-quality/runs/20261106T002411Z-mockito-roles-spy-followup-independent-r1/manifest.json",
+    "sha256": "47f7290401814286073f21f9f81f0968d0601be73e1cb4d12099a71dee5ef4d9"
+  },
+  "review_artifact": {
+    "path": "docs/mcq-quality/runs/20261106T002411Z-mockito-roles-spy-followup-independent-r1/scoped-final-review.json",
+    "sha256": "f18b177dd0a4473c31e9dc26b32672ff70627e79b2e54ad49935078bde4194df"
+  }
+}

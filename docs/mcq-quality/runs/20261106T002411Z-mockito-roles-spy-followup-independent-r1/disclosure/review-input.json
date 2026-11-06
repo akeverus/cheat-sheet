@@ -1,0 +1,377 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/testing/mockito-interview.json",
+    "theory": "cheatsheets/interview/testing/mockito-interview.md"
+  },
+  "sha256": {
+    "mcq": "dabd38b000c04a03cdfe866fee9f67e16437efbaeadbeaef1a88c695e0601318",
+    "theory": "5730d6964c2eb5f8140b94466e66bfd5e0825cd79bfdf8fb882b86203e12bd0f"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hashes": {
+    "Q2:B0": {
+      "mcq": "7e7f93fe48f305d5b02be0d2f0aa564945444481bc32ea5bb9cf0db246dfa05a",
+      "theory": "a30329ebd75136960093dd8879052117919f802c1b8732c36f1a396fc1137342"
+    },
+    "Q6:B0": {
+      "mcq": "febb7ba957770432971e54a489928efaf44e226c3270dac7f9fda5be3e9ff85b",
+      "theory": "9cbab6637c1406223ab7ce11c5a0e57ce414fbfc8db927a4215b4ebfaebfb88d"
+    },
+    "Q31:B0": {
+      "mcq": "a125b3019ece01be58bb33f535620289addfc877411cb8c1b977077be5527d85",
+      "theory": "af8470dbbbba87e9ff75ceb922cb554fe82cb0b121e5e569e6ee75a1fa622ed2"
+    }
+  },
+  "preamble": "---\ntitle: \"Вопросы на собеседовании: Mockito\"\ndescription: \"45 вопросов по Mockito для подготовки к техническому собеседованию: mock/stub/spy, аннотации, verify, ArgumentCaptor, BDDMockito, MockedStatic/Construction, MockSettings, Answer, Spring Boot интеграция, Kotlin и антипаттерны.\"\ntags:\n  - interview\n  - testing\n  - mockito-interview\ntype: \"interview\"\ndifficulty: \"intermediate\"\naliases:\n  - \"Вопросы на собеседовании\"\n  - \"Mockito\"\n  - \"Mockito interview\"\n  - \"Mockito собеседование\"\nprerequisites:\n  - \"[[mockito]]\"\nnext: []\nupdated: \"2026-11-05\"\n---\n\n# Вопросы на собеседовании: Mockito\n\n## Содержание\n\n- [Q1. Что такое Mockito и зачем он нужен?](#q1-что-такое-mockito-и-зачем-он-нужен)\n- [Q2. Чем отличаются mock, stub, spy и fake?](#q2-чем-отличаются-mock-stub-spy-и-fake)\n- [Q3. (!) Как создать mock-объект в Mockito?](#q3--как-создать-mock-объект-в-mockito)\n- [Q4. Что делает аннотация `@Mock`?](#q4-что-делает-аннотация-mock)\n- [Q5. Что делает аннотация `@InjectMocks`?](#q5-что-делает-аннотация-injectmocks)\n- [Q6. (!) Чем отличается `@Spy` от `@Mock`?](#q6--чем-отличается-spy-от-mock)\n- [Q7. Что такое `@Captor` и для чего используется?](#q7-что-такое-captor-и-для-чего-используется)\n- [Q8. (!) Чем отличается `MockitoExtension` от `MockitoAnnotations.openMocks()`?](#q8--чем-отличается-mockitoextension-от-mockitoannotationsopenmocks)\n- [Q9. Как работает `when().thenReturn()`?](#q9-как-работает-whenthenreturn)\n- [Q10. (!) Чем отличается `when().thenReturn()` от `doReturn().when()`?](#q10--чем-отличается-whenthenreturn-от-doreturnwhen)\n- [Q11. Как заставить mock выбросить исключение?](#q11-как-заставить-mock-выбросить-исключение)\n- [Q12. Что такое `thenAnswer()` и когда его применять?](#q12-что-такое-thenanswer-и-когда-его-применять)\n- [Q13. Как заглушить `void`-метод с помощью `doNothing()`?](#q13-как-заглушить-void-метод-с-помощью-donothing)\n- [Q14. (!) Как проверить вызов метода с помощью `verify()`?](#q14--как-проверить-вызов-метода-с-помощью-verify)\n- [Q15. Какие режимы верификации поддерживает Mockito?](#q15-какие-режимы-верификации-поддерживает-mockito)\n- [Q16. Что делают `verifyNoInteractions()` и `verifyNoMoreInteractions()`?](#q16-что-делают-verifynointeractions-и-verifynomoreinteractions)\n- [Q17. (!) Как захватить аргумент с помощью `ArgumentCaptor`?](#q17--как-захватить-аргумент-с-помощью-argumentcaptor)\n- [Q18. Какие матчеры аргументов предоставляет `ArgumentMatchers`?](#q18-какие-матчеры-аргументов-предоставляет-argumentmatchers)\n- [Q19. Что такое `argThat()` и когда он нужен?](#q19-что-такое-argthat-и-когда-он-нужен)\n- [Q20. (!) Как проверить порядок вызовов с помощью `InOrder`?](#q20--как-проверить-порядок-вызовов-с-помощью-inorder)\n- [Q21. Что такое BDDMockito и как использовать стиль `given/when/then`?](#q21-что-такое-bddmockito-и-как-использовать-стиль-givenwhenthen)\n- [Q22. (!) Что такое `@MockBean` и `@SpyBean` в Spring Boot?](#q22--что-такое-mockbean-и-spybean-в-spring-boot)\n- [Q23. Как работает Mockito с `@ExtendWith(MockitoExtension.class)` в JUnit 5?](#q23-как-работает-mockito-с-extendwithmockitoextensionclass-в-junit-5)\n- [Q24. Что делает `Mockito.reset()`?](#q24-что-делает-mockitoreset)\n- [Q25. (!) Как мокировать статические методы с помощью `mockStatic()`?](#q25--как-мокировать-статические-методы-с-помощью-mockstatic)\n- [Q26. Как мокировать `final`-классы и методы?](#q26-как-мокировать-final-классы-и-методы)\n- [Q27. Что такое `RETURNS_DEEP_STUBS` и когда его применять?](#q27-что-такое-returns_deep_stubs-и-когда-его-применять)\n- [Q28. (!) Что такое strict stubbing и зачем он нужен?](#q28--что-такое-strict-stubbing-и-зачем-он-нужен)\n- [Q29. Как сделать отдельный stub ненастойчивым с помощью `lenient()`?](#q29-как-сделать-отдельный-stub-ненастойчивым-с-помощью-lenient)\n- [Q30. Можно ли вернуть разные значения при последовательных вызовах?](#q30-можно-ли-вернуть-разные-значения-при-последовательных-вызовах)\n- [Q31. Чем отличается `Mockito.spy()` от `@Spy`?](#q31-чем-отличается-mockitospy-от-spy)\n- [Q32. (!) Каковы типичные ошибки при использовании Mockito?](#q32--каковы-типичные-ошибки-при-использовании-mockito)\n- [Q33. Что такое `UnnecessaryStubbingException` и как её избежать?](#q33-что-такое-unnecessarystubbingexception-и-как-её-избежать)\n- [Q34. Когда не стоит использовать Mockito?](#q34-когда-не-стоит-использовать-mockito)\n- [Q35. Как мокировать конструкторы с помощью `mockConstruction()`?](#q35-как-мокировать-конструкторы-с-помощью-mockconstruction)\n- [Q36. (!) В чём разница между `mockito-core` и `mockito-inline`?](#q36--в-чём-разница-между-mockito-core-и-mockito-inline)\n- [Q37. Что такое `MockSettings` и какие опции он предоставляет?](#q37-что-такое-mocksettings-и-какие-опции-он-предоставляет)\n- [Q38. Какие встроенные `Answer` доступны в Mockito?](#q38-какие-встроенные-answer-доступны-в-mockito)\n- [Q39. (!) Когда выбирать `ArgumentCaptor`, а когда `argThat()`?](#q39--когда-выбирать-argumentcaptor-а-когда-argthat)\n- [Q40. Как тестировать код с callback-функциями через `doAnswer()`?](#q40-как-тестировать-код-с-callback-функциями-через-doanswer)\n- [Q41. (!) В чём ограничение области видимости `MockedStatic` по потокам?](#q41--в-чём-ограничение-области-видимости-mockedstatic-по-потокам)\n- [Q42. Что делает `thenCallRealMethod()` и чем отличается от `@Spy`?](#q42-что-делает-thencallrealmethod-и-чем-отличается-от-spy)\n- [Q43. Как инжектировать `@Mock` и `@Captor` в параметры метода JUnit 5?](#q43-как-инжектировать-mock-и-captor-в-параметры-метода-junit-5)\n- [Q44. (!) Какие особенности у Mockito в Kotlin и зачем `mockito-kotlin`?](#q44--какие-особенности-у-mockito-в-kotlin-и-зачем-mockito-kotlin)\n- [Q45. Что такое `@MockitoSettings` и как управлять strictness на уровне класса?](#q45-что-такое-mockitosettings-и-как-управлять-strictness-на-уровне-класса)\n- [See also](#see-also)\n\n---\n",
+  "theory": [
+    {
+      "q_number": 2,
+      "title": "Чем отличаются mock, stub, spy и fake?",
+      "line": 95,
+      "body": "\nЭто **роли тестовых двойников**, а не четыре несовместимых Java-типа. В этой шпаргалке spy означает частичную подмену через API Mockito; в общей терминологии Test Spy может также означать двойник, который лишь записывает сведения о вызовах.\n\n| Роль | Зачем используется | Пример |\n|---|---|---|\n| **Mock** | Проверить требуемые взаимодействия: аргументы, число или порядок вызовов | `verify(repo).save(entity)` |\n| **Stub** | Предоставить управляемый ответ для сценария | `when(repo.find(1)).thenReturn(entity)` |\n| **Spy в Mockito** | Сохранить нужную реальную логику и подменить выбранное поведение | `Mockito.spy(new MyService())` |\n| **Fake** | Дать упрощённую рабочую реализацию нужного контракта | Репозиторий на Map для тестового сценария |\n\nStub отвечает за данные, которые получает SUT; mock-роль — за проверку его взаимодействий. Проверку результата или состояния SUT и проверку вызовов можно сочетать. В обычном Mockito один объект, созданный `mock(...)`, позволяет и настроить ответы через `when(...)`, и проверить историю через `verify(...)`: отдельный класс «stub» для этого не требуется. Название фабричного метода не определяет, какую роль использует конкретный тест.\n\nSpy существующего объекта в стандартной конфигурации копирует состояние вместо обязательного делегирования оригиналу. Поля-ссылки могут остаться общими, а отдельные значения полей — разойтись (Q6/Q31). Поэтому «обёртка над живым объектом» — ненадёжная модель его состояния.\n\nFake действительно выполняет упрощённую логику, но его возможности должны соответствовать проверяемому сценарию: Map-репозиторий не обещает транзакции, SQL-ограничения и изоляцию production-БД. Хранение в памяти — распространённый пример, а не обязательное определение fake. Выбор техники создания сам по себе не устанавливает роль двойника.\n\n---\n\n"
+    },
+    {
+      "q_number": 6,
+      "title": "Чем отличается @Spy от @Mock?",
+      "line": 185,
+      "body": "\n`@Mock` и `@Spy` задают разные **ответы по умолчанию**. В обычной конфигурации mock возвращает стандартные значения, а spy вызывает доступную реальную реализацию незаглушённого метода. Это не деление на «пустышку без Java-объекта» и «исходный объект без изменений».\n\n| Аспект | Обычный `@Mock` | `@Spy` |\n|---|---|---|\n| Незаглушённый метод | Стандартный ответ: например, 0, null или пустое значение | Доступная реальная реализация; для абстрактного метода её нет |\n| Подмена ответа | Например, `when(...).thenReturn(...)` | Семейство `doReturn`/`doThrow` позволяет избежать реального вызова при настройке |\n| Область применения | Изоляция поведения зависимости | Частичная подмена с сохранением нужной реальной логики |\n\nПолный пример для Mockito 5.11 и JUnit Jupiter с обработкой аннотаций:\n\n```java\nimport static org.junit.jupiter.api.Assertions.*;\nimport static org.mockito.Mockito.*;\nimport org.junit.jupiter.api.Test;\nimport org.junit.jupiter.api.extension.ExtendWith;\nimport org.mockito.Mock;\nimport org.mockito.Spy;\nimport org.mockito.junit.jupiter.MockitoExtension;\n\n@ExtendWith(MockitoExtension.class)\nclass MockAndSpyExampleTest {\n    static class Counter {\n        int value = 1;\n        int next() { return ++value; }\n    }\n\n    @Mock Counter mocked;\n    @Spy Counter spied = new Counter();\n\n    @Test\n    void defaultAnswersAndSelectedStub() {\n        assertEquals(0, mocked.next());\n        assertEquals(2, spied.next());\n        verify(spied).next();\n\n        doReturn(99).when(spied).next();\n        assertEquals(99, spied.next());\n        assertEquals(2, spied.value);  // Stub не выполнил ++value.\n    }\n\n    @Test\n    void factorySpyHasIndependentPrimitiveField() {\n        Counter original = new Counter();\n        Counter copy = spy(original);\n        assertNotSame(original, copy);\n        assertEquals(2, copy.next());\n        assertEquals(1, original.value);\n        original.value = 10;\n        assertEquals(2, copy.value);\n    }\n}\n```\n\nДля существующего экземпляра стандартный spy копирует состояние вместо обязательного делегирования каждому вызову на `original`. Копирование поверхностное: отдельные поля, например `int`, независимы, но ссылочные поля могут указывать на один изменяемый объект. Поэтому нельзя считать spy и исходный объект ни одной ссылкой, ни полностью независимыми глубокими копиями.\n\nПри `when(spy.method()).thenReturn(...)` Java сначала вычисляет аргумент `when`: незаглушённый конкретный метод spy может реально выполниться и выбросить исключение или изменить состояние. `doReturn(...).when(spy).method()` этого вызова при настройке не требует. Это рекомендация для контроля побочных эффектов, а не запрет любого `when` на spy (Q10).\n\nГраница зависит от настройки: обычному mock можно явно назначить вызов реального метода через `thenCallRealMethod`/`doCallRealMethod` или другой ответ по умолчанию (Q42). Для spy абстрактный метод не получает вымышленную реализацию — возможен стандартный ответ. Создание через готовый объект, тип или обработанное поле описано в Q31; требование «spy всегда оборачивает ранее созданный экземпляр» неверно.\n\n---\n\n"
+    },
+    {
+      "q_number": 31,
+      "title": "Чем отличается Mockito.spy() от @Spy?",
+      "line": 1132,
+      "body": "\nОба способа дают spy с реальными ответами по умолчанию, но различаются **моментом создания, источником состояния и обработкой аннотаций**:\n\n- `Mockito.spy(instance)` вызывается явно и использует состояние переданного объекта. В стандартной конфигурации это копирование, а не обязательная оболочка с делегированием оригиналу.\n- `Mockito.spy(Type.class)` создаёт spy по типу с конструкторной инициализацией. Готовый экземпляр передавать не обязательно; поддерживаемость типа и конструктора нужно проверять.\n- Поле `@Spy` должно быть обработано, например `MockitoExtension` или `MockitoAnnotations.openMocks`. При готовом значении обработчик использует его состояние; при null пытается создать подходящий spy. Само наличие аннотации ничего не инициализирует.\n\n**Параметр обобщённого типа не требует инициализатора.** `@Spy ArrayList<String> values;` может быть создан через конструктор без аргументов. А `@Spy List<String> values = new ArrayList<>();` явно выбирает реализацию. Различие здесь в типе/состоянии, а не в наличии `<String>`.\n\n```java\nimport static org.junit.jupiter.api.Assertions.*;\nimport static org.mockito.Mockito.*;\nimport java.util.ArrayList;\nimport java.util.List;\nimport org.junit.jupiter.api.Test;\nimport org.junit.jupiter.api.extension.ExtendWith;\nimport org.mockito.Spy;\nimport org.mockito.junit.jupiter.MockitoExtension;\n\n@ExtendWith(MockitoExtension.class)\nclass SpyCreationExampleTest {\n    static class Initialized {\n        int number = 7;\n        int value() { return number; }\n    }\n    interface View {\n        default String name() { return \"view\"; }\n        int count();\n    }\n\n    @Spy ArrayList<String> created;\n    @Spy List<String> supplied = new ArrayList<>();\n    @Spy View view;\n\n    @Test\n    void concreteGenericFieldCanBeCreated() {\n        created.add(\"created\");\n        supplied.add(\"supplied\");\n        assertEquals(List.of(\"created\"), created);\n        assertEquals(List.of(\"supplied\"), supplied);\n    }\n\n    @Test\n    void factoryCanTakeInstanceOrType() {\n        Initialized original = new Initialized();\n        Initialized fromInstance = spy(original);\n        Initialized fromType = spy(Initialized.class);\n        assertNotSame(original, fromInstance);\n        assertEquals(7, fromInstance.value());\n        assertEquals(7, fromType.value());\n    }\n\n    @Test\n    void interfaceFieldUsesAvailableDefaultMethod() {\n        assertTrue(mockingDetails(view).isSpy());\n        assertEquals(\"view\", view.name());\n        assertEquals(0, view.count());  // У абстрактного метода нет тела.\n        doReturn(4).when(view).count();\n        assertEquals(4, view.count());\n    }\n}\n```\n\nВ Mockito 5.11 обработчик поддерживает и `@Spy` поля-интерфейсы без готового объекта: default-метод может выполняться, абстрактный — получать стандартный ответ. Это **не создаёт скрытую бизнес-реализацию**: `@Spy List<String> values;` не превращается в ArrayList с хранилищем. Чтобы `add` реально сохранял элементы, задай реализацию явно. Также доступны создаваемые абстрактные классы: их конкретные методы могут выполняться, абстрактные требуют отдельного поведения.\n\nДля обычного поля класса без инициализатора нужен подходящий способ конструкторного создания; например, класс только с аргументным конструктором не создаётся обычным `@Spy` автоматически. Готовое значение можно задать самостоятельно. Сочетание `@Spy @InjectMocks` обрабатывается отдельным механизмом внедрения зависимостей и не сводится к этому правилу (Q5).\n\nРеальные методы и stubbing одного вида spy работают по общей модели, но «разница чисто синтаксическая» скрывает важную настройку теста: до обработки поле с инициализатором остаётся обычным объектом, поле без инициализатора — null. Обработку и завершение её ресурсов выбирают явно (Q8). Поверхностно разделяемое состояние и `doReturn` при настройке рассматриваются в Q6/Q10.\n\n---\n\n"
+    }
+  ],
+  "blocks": [
+    {
+      "q_number": 2,
+      "block_idx": 0,
+      "visible_question": "Чем отличаются mock, stub, spy и fake?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Чем отличаются mock, stub, spy и fake?",
+        "options": [
+          {
+            "text": "Mock служит проверке вызовов, stub возвращает заданные данные, Mockito spy сохраняет часть реальной логики, fake подменяет операции исключением UnsupportedOperationException.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Fake предоставляет упрощённую рабочую реализацию требуемого сценария. UnsupportedOperationException может обозначать неподдерживаемую операцию конкретного двойника, но не определяет роль fake.",
+              "source_of_confusion": "Слово «fake» звучит как «не работает», поэтому кажется, что он бросает ошибки.",
+              "if_it_were_true": "Роль fake определялась бы отказом выполнить операцию, а не упрощённой рабочей реализацией. При этом отдельная неподдерживаемая операция может быть и у полезного fake; само исключение не устанавливает его роль.",
+              "how_it_should_be": "Выбирай роль по назначению: fake исполняет нужный упрощённый контракт, stub поставляет ответы, mock-роль проверяет взаимодействия. Способ создания объекта сам по себе роли не определяет."
+            },
+            "label": "A",
+            "order": 0
+          },
+          {
+            "text": "Mock проверяет взаимодействия, stub поставляет ответы, Mockito spy частично подменяет реальный код, fake реализует упрощённую зависимость.",
+            "correct": true,
+            "sections": {
+              "explanation": "Роли различаются целью: stub поставляет ответы, mock проверяет взаимодействия, fake даёт упрощённую рабочую реализацию. Здесь Mockito spy означает частичную подмену реального поведения; общий Test Spy может лишь записывать сведения о вызовах.",
+              "example": "`when(repo.find(1)).thenReturn(entity)` — это stub; `Mockito.spy(new MyService())` — spy; in-memory `HashMap`, имитирующий репозиторий, — fake.",
+              "when_to_apply": "mock берут, когда важна проверка вызовов; stub — когда нужно лишь подсунуть данные; fake — когда нужна работающая лёгкая замена для интеграции.",
+              "edge_cases": "Mockito mock может одновременно задавать ответы и записывать взаимодействия. Обычный spy существующего объекта копирует его состояние; это не обязательное делегирование исходному экземпляру.",
+              "related": "[[mockito-interview#Q1]] что такое Mockito [[mockito-interview#Q6]] spy vs mock [[mockito-interview#Q34]] fake как альтернатива моку"
+            },
+            "label": "B",
+            "order": 1
+          },
+          {
+            "text": "Mock поставляет данные без проверки вызовов, stub проверяет взаимодействия, Mockito spy частично подменяет реальное поведение, fake исполняет упрощённый контракт.",
+            "correct": false,
+            "sections": {
+              "what_actually": "В варианте перепутаны роли mock и stub: поставка ответов относится к stub, проверка взаимодействий — к mock-роли. Описание Mockito spy и fake этого смешения не исправляет; один объект Mockito может поддерживать настройку ответов и verify.",
+              "source_of_confusion": "Термины mock и stub часто используют как взаимозаменяемые, отсюда путаница ролей.",
+              "if_it_were_true": "Объект, созданный Mockito.mock и использованный для when(...), не мог бы затем участвовать в verify(...). На деле этот же объект позволяет и настроить ответы, и проверить взаимодействия.",
+              "how_it_should_be": "Различай поставку данных и проверку вызовов как роли теста. Один Mockito mock может выполнять обе; роли не требуют отдельных Java-классов двойников."
+            },
+            "label": "C",
+            "order": 2
+          },
+          {
+            "text": "Mock, stub, Mockito spy и fake обозначают один вид двойника, различающийся названием при объявлении в тестовом классе.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Роли различаются целью: ответы, взаимодействия, частичная реальная логика или упрощённая реализация. Это не четыре обязательных несовместимых Java-типа и не просто разные имена переменных.",
+              "source_of_confusion": "Все они называются «тестовыми двойниками», поэтому их считают взаимозаменяемыми.",
+              "if_it_were_true": "Четыре названия не позволяли бы различить поставку ответов, проверку взаимодействий, частичную реальную логику и упрощённую реализацию. Переименование переменной само не меняло бы объект; терялись бы именно различия назначения.",
+              "how_it_should_be": "Описывай, что делает двойник в сценарии. В контексте Mockito spy сохраняет доступную реальную логику; более общий термин Test Spy может означать запись сведений о вызовах."
+            },
+            "label": "D",
+            "order": 3
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 6,
+      "block_idx": 0,
+      "visible_question": "Чем отличается @Spy от @Mock?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Чем отличается `@Spy` от `@Mock`?",
+        "options": [
+          {
+            "text": "Обычный Mock вызывает настоящие методы зависимости, а Spy возвращает стандартные значения без выполнения реального кода.",
+            "correct": false,
+            "sections": {
+              "what_actually": "В обычной конфигурации mock возвращает стандартные ответы, а spy вызывает доступные реальные реализации незаглушённых методов. У абстрактного метода spy реального тела нет, поэтому возможен стандартный ответ.",
+              "source_of_confusion": "Названия легко перепутать местами, особенно при беглом чтении API.",
+              "if_it_were_true": "У обработанного @Spy интерфейса с default-методом этот метод не исполнялся бы. Но в Mockito 5.11 он может вернуть реальное значение без заранее предоставленного экземпляра; отсутствие initializer не превращает все ответы в обычные mock-defaults.",
+              "how_it_should_be": "Обычный Mock использует стандартные ответы, Spy по умолчанию выполняет настоящие методы; конкретный Answer и stubbing могут менять поведение."
+            },
+            "label": "A",
+            "order": 0
+          },
+          {
+            "text": "Mock возвращает стандартные ответы, а Spy вызывает доступные реальные методы, в том числе при настройке doReturn.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Обычный mock использует стандартные ответы, spy — доступную реальную реализацию незаглушённого метода. В when(spy.method()) сначала вычисляется аргумент: такая реализация может выполниться. doReturn(...).when(spy).method() позволяет настроить ответ без этого реального вызова.",
+              "source_of_confusion": "Знакомый синтаксис when/thenReturn переносят на spy без учёта вычисления аргумента и режима настройки doReturn.",
+              "if_it_were_true": "Такой doReturn не предотвращал бы выполнение тела при настройке, поэтому мог бы сохранить нежелательный побочный вызов. Это не доказывало бы безопасность when; фактически doReturn позволяет избежать указанного реального вызова.",
+              "how_it_should_be": "Сопоставить default answers mock и spy и отдельно выбрать stubbing. При риске реального побочного вызова использовать doReturn/doThrow; when на уже заглушённом или абстрактном методе не означает обязательного выполнения реального тела."
+            },
+            "label": "B",
+            "order": 1
+          },
+          {
+            "text": "Обычный Mock и Spy возвращают одинаковые стандартные значения, пока настоящий метод не включён отдельной настройкой.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Spy по умолчанию использует доступную реальную реализацию, а обычный mock — стандартный Answer. Абстрактный метод spy может вернуть стандартное значение, что не делает весь spy эквивалентным обычному mock.",
+              "source_of_confusion": "Обе аннотации создают «двойник», поэтому кажется, что разница лишь косметическая.",
+              "if_it_were_true": "Незаглушённый конкретный Counter.next у spy не менял бы поле без отдельного включения реального вызова. Реальная реализация как раз исполняется по умолчанию; поэтому stubbing такого вызова требует контроля побочных эффектов.",
+              "how_it_should_be": "Различай Answer по умолчанию и наличие тела метода. Для доступного реального метода spy сохраняет реальную логику до подмены; абстрактному методу реализация автоматически не придумывается."
+            },
+            "label": "C",
+            "order": 2
+          },
+          {
+            "text": "Обычный Mock возвращает стандартные ответы, а Spy вызывает доступные реальные методы, пока выбранное поведение не подменено.",
+            "correct": true,
+            "sections": {
+              "explanation": "Обычный mock и spy различаются ответами по умолчанию. Spy вызывает доступные реальные методы; для абстрактных методов возможны стандартные ответы. doReturn позволяет настроить ответ без выполнения реального метода при настройке.",
+              "example": "`@Spy List<String> list = new ArrayList<>();` — `list.add(\"hello\")` реально добавит элемент, а `doReturn(100).when(list).size()` заглушит только `size()`.",
+              "when_to_apply": "`@Spy` берут для частичного мокирования: оставить реальную логику части методов и подменить лишь некоторые; `@Mock` — для полной изоляции зависимости.",
+              "edge_cases": "Для существующего объекта стандартный spy обычно копирует поля: отдельные значения независимы, ссылочные поля могут остаться общими. Готовый объект не обязателен для всех способов создания: есть spy(Class) и обработанные @Spy поля, включая поддерживаемые интерфейсы и абстрактные типы.",
+              "related": "[[mockito-interview#Q2]] mock/stub/spy/fake [[mockito-interview#Q10]] when vs doReturn [[mockito-interview#Q31]] Mockito.spy() vs @Spy"
+            },
+            "label": "D",
+            "order": 3
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 31,
+      "block_idx": 0,
+      "visible_question": "Чем отличается Mockito.spy() от @Spy?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Чем отличается `Mockito.spy()` от `@Spy`?",
+        "options": [
+          {
+            "text": "Аннотация Spy создаёт обычный мок со стандартными ответами, тогда как фабрика Mockito.spy выполняет реальные методы зависимости.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Оба способа настраивают частичного двойника с вызовом доступных реальных методов по умолчанию. spy(instance), spy(Class) и обработанное @Spy поле различаются источником состояния и моментом создания; обязательной оболочки над ранее созданным объектом нет.",
+              "source_of_confusion": "Похожее имя @Mock и отсутствие initializer у @Spy принимают за одинаковую конфигурацию ответов. Но обработчик @Spy может создать объект по типу; его доступные реальные методы не становятся обычными mock-defaults.",
+              "if_it_were_true": "У @Spy View без initializer default-метод name не вернул бы своё значение. В Mockito 5.11 такой метод исполняется, хотя абстрактный count без stubbing возвращает 0: тип метода имеет значение.",
+              "how_it_should_be": "Явно выбери готовый экземпляр, фабрику по Class либо поле с обработкой аннотации. Учитывай доступные реализации методов, конструкторное создание и копирование состояния вместо предположения об обязательном делегировании original."
+            },
+            "label": "A",
+            "order": 0
+          },
+          {
+            "text": "Фабрика Mockito.spy создаёт обычный мок со стандартными ответами, тогда как аннотация Spy выполняет реальные методы зависимости.",
+            "correct": false,
+            "sections": {
+              "what_actually": "И фабрика, и обработанная аннотация могут создать spy с реальными ответами по умолчанию. Различаются способ создания и подготовка состояния; аннотация требует обработки и сама по себе до неё поле не преобразует.",
+              "source_of_confusion": "Программный вызов `spy()` визуально похож на `mock()`, отсюда ощущение, что он создаёт чистый мок.",
+              "if_it_were_true": "Тогда `Mockito.spy(realList).add(...)` не выполнял бы реальный `add`, но он его выполняет.",
+              "how_it_should_be": "Сопоставляй общий режим реальных ответов и конкретную инициализацию теста. До обработки @Spy поле с initializer остаётся обычным объектом, а поле без initializer может быть null."
+            },
+            "label": "B",
+            "order": 1
+          },
+          {
+            "text": "Фабрика создаёт spy из переданного объекта или типа, а @Spy использует готовое поле и не создаёт его по конструктору.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Фабрика поддерживает spy(instance) и spy(Type.class). Обработанное поле @Spy может использовать заданное значение или создать подходящий spy по типу; для обычного класса важен доступный способ конструкторной инициализации.",
+              "source_of_confusion": "Частый пример @Spy с готовым ArrayList принимают за обязательное предварительное создание любого поля.",
+              "if_it_were_true": "Обработанное поле подходящего конкретного класса с no-arg конструктором не могло бы получить spy без initializer. Mockito 5.11 поддерживает этот путь создания; сама аннотация до обработки поле не инициализирует.",
+              "how_it_should_be": "Для фабрики выбрать экземпляр или тип, для поля включить обработку аннотации и проверить поддерживаемость создания. Если нужна реальная коллекция с хранением элементов, задать реализацию: @Spy List без initializer не означает скрытый ArrayList."
+            },
+            "label": "C",
+            "order": 2
+          },
+          {
+            "text": "Оба подхода создают Spy, но аннотация требует обработки поля и может использовать готовый объект либо создать подходящий экземпляр.",
+            "correct": true,
+            "sections": {
+              "explanation": "Mockito.spy(instance) создаётся явно из переданного состояния; есть и spy(Class). Поле @Spy требует MockitoExtension либо openMocks и может использовать initializer или создание по типу. Режим ответов общий, но настройка и состояние теста не сводятся к синтаксису.",
+              "example": "Обработанное @Spy List<String> list = new ArrayList<>() сохраняет доступную реальную логику контейнера. В Mockito 5.11 у @Spy View без initializer может выполняться default-метод интерфейса, а абстрактный count без stubbing возвращает 0.",
+              "when_to_apply": "`Mockito.spy()` удобен для разового spy внутри метода с уже готовым объектом; `@Spy` — когда spy нужен как поле в нескольких тестах класса.",
+              "edge_cases": "Стандартный spy существующего объекта копирует состояние, а не обязательно делегирует original. Для обычного класса без initializer проверяют подходящий конструктор; интерфейс spy не получает вымышленную бизнес-реализацию. Обработка @Spy @InjectMocks — отдельный путь.",
+              "related": "[[mockito-interview#Q6]] spy vs mock [[mockito-interview#Q10]] when vs doReturn [[mockito-interview#Q42]] thenCallRealMethod vs @Spy"
+            },
+            "label": "D",
+            "order": 3
+          }
+        ]
+      }
+    }
+  ],
+  "open_issues": [],
+  "runtime_findings": [],
+  "checks": {
+    "content_review": {
+      "blocks": {
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q6:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q31:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "factual_correctness": {
+      "blocks": {
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q6:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q31:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "source_linkage": {
+      "blocks": {
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q6:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q31:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sections_consistency": {
+      "blocks": {
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q6:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q31:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sfpl": {
+      "blocks": {
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q6:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q31:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "ansc": {
+      "blocks": {
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q6:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q31:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "russian_readability": {
+      "blocks": {
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q6:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q31:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "independent_review": {
+      "blocks": {
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q6:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q31:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "blind_review": {
+      "blocks": {
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q6:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q31:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "final_acceptance": {
+      "blocks": {
+        "Q2:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q6:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q31:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    }
+  },
+  "instructions": "Все A/B/C/D и sections. SFPL, ANSC, RU — отдельные вердикты. Дополнительные смысловые зависимости прочитать и указать в evidence. Сигналы не являются редакторской приёмкой."
+}
