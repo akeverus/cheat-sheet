@@ -1,0 +1,280 @@
+{
+  "reviewer_raw": {
+    "reviewer": "independent reviewer",
+    "reviewed_at_utc": "2026-11-06T01:13:38Z",
+    "block_id": "Q16:B0",
+    "phase": "B",
+    "key_disclosed": true,
+    "verdicts": {
+      "content_review": {
+        "verdict": "PASS",
+        "reason": "Видимый вопрос просит назвать виды конструкторов; все четыре опции дают модель primary/secondary, а A отвечает корректно и достаточно."
+      },
+      "factual_correctness": {
+        "verdict": "FAIL",
+        "reason": "A фактически верно и совпадает с ключом. Но объяснение теории категорически говорит, что secondary обязаны делегировать primary, опуская допустимый класс без primary и делегирование super; это противоречит спецификации Kotlin."
+      },
+      "source_linkage": {
+        "verdict": "PASS",
+        "reason": "Заявления о двух типах, размещении и правилах делегирования подтверждаются официальной спецификацией Kotlin, раздел Constructor declaration; порядок инициализации проверен в Classifier initialization."
+      },
+      "sections_consistency": {
+        "verdict": "FAIL",
+        "reason": "Раздел theory Q16 противоречит корректной опции A и её sections: теория без оговорки требует делегирования к primary, тогда как A и спецификация допускают отсутствие primary и делегирование superclass. Остальные sections объясняют соответствующие ложные модели B/C/D."
+      },
+      "sfpl": {
+        "verdict": "PASS",
+        "reason": "A/B/C/D имеют одно предложение и сопоставимый механизмный каркас: расположение двух видов и правило делегирования. A не выделяется длиной или оформлением настолько, чтобы форму можно было надёжно использовать как подсказку."
+      },
+      "ansc": {
+        "verdict": "PASS",
+        "reason": "Каждый вариант является законченным ответом-моделью для обеих разновидностей, а не обрывком: A — корректные условные правила; B — переставленные места; C — ошибочное автоматическое создание primary; D — обратное направление делегирования."
+      },
+      "russian_readability": {
+        "verdict": "PASS",
+        "reason": "Видимый вопрос, теория Q16, варианты и все доступные sections написаны понятно и грамматически корректно. Термины primary/secondary последовательно переданы как первичный/вторичный."
+      },
+      "independent_review": {
+        "verdict": "PASS",
+        "reason": "Сопоставил каждую опцию и все её sections, теорию, ключ и правила; оценка не ограничена совпадением выбора с ключом."
+      },
+      "blind_review": {
+        "verdict": "PASS",
+        "reason": "До раскрытия ключа сохранён выбор A в kotlin-constructors-phase-a-current.json; после раскрытия ключ подтвердил A. Слепой выбор выполнен в отдельном предварительном проходе, хотя тот же рецензент позднее видел раскрытие."
+      }
+    },
+    "options_review": [
+      {
+        "label": "A",
+        "coverage": "Оба вида, их расположение и условия делегирования при наличии/отсутствии primary",
+        "completeness": "Полный",
+        "truth": "Верно",
+        "finding": "Нет; содержит наиболее полный набор условий, необходимый для выбора."
+      },
+      {
+        "label": "B",
+        "coverage": "Оба вида, расположение и делегирование",
+        "completeness": "Полный ложный ответ",
+        "truth": "Неверно: местоположения переставлены",
+        "finding": "Sections корректно называют перестановку; section if_it_were_true наглядно формулирует альтернативную ложную модель."
+      },
+      {
+        "label": "C",
+        "coverage": "Оба вида, расположение и предполагаемое поведение без primary",
+        "completeness": "Полный ложный ответ",
+        "truth": "Неверно: наличие secondary не порождает скрытый primary без параметров",
+        "finding": "Sections отделяют правило неявного default primary для класса без каких-либо конструкторов от класса с объявленными secondary."
+      },
+      {
+        "label": "D",
+        "coverage": "Оба вида, расположение и делегирование/инициализация",
+        "completeness": "Полный ложный ответ",
+        "truth": "Неверно: направление делегирования обращено",
+        "finding": "Sections объясняют реальный порядок: secondary достигает primary; инициализация проходит до тела secondary."
+      }
+    ],
+    "findings": [
+      {
+        "id": "Q16-THEORY-PRIMARY-ONLY",
+        "severity": "blocker",
+        "affected_checks": [
+          "factual_correctness",
+          "sections_consistency"
+        ],
+        "affected_fields": [
+          "theory.body"
+        ],
+        "quote": "вторичные конструкторы объявляются в теле и обязаны в итоге делегировать первичному",
+        "detail": "Это правило неверно без условия о наличии primary. Спецификация разрешает вторичному без primary делегировать через super(...) либо через this(...), а при единственном Any делегирование необязательно.",
+        "suggested_fix": "Уточнить: если primary объявлен, каждый secondary должен делегировать ему напрямую или через другой secondary; без primary делегирование идёт к superclass или другому secondary, кроме случая единственного Any, где оно необязательно."
+      },
+      {
+        "id": "Q16-THEORY-INIT-ORDER-SCOPE",
+        "severity": "note",
+        "affected_checks": [
+          "factual_correctness",
+          "source_linkage",
+          "sections_consistency"
+        ],
+        "affected_fields": [
+          "theory.body",
+          "option.A.sections.related",
+          "option.A.sections.example"
+        ],
+        "detail": "Уточнение для полноты: раздел Classifier initialization спецификации описывает порядок свойств/init относительно супер-конструктора и тела secondary; данные в A.sections.related о запуске инициализаторов до тела secondary согласуются со спецификацией. Утверждение «Any() не требуется писать явно» соответствует special case единственного superclass kotlin.Any."
+      }
+    ],
+    "sources_read": [
+      {
+        "path": "/Users/sergeyvoronin/IdeaProjects/cheat-sheet/docs/mcq-quality/runs/20261106T011400Z-kotlin-constructors-independent-r1/disclosure/review-input.json",
+        "scope": "preamble, Q16 theory, A-D options and supplied sections; MCQ/theory hashes as recorded in disclosure"
+      },
+      {
+        "path": "/Users/sergeyvoronin/IdeaProjects/cheat-sheet/docs/mcq-quality/examiner-review.md",
+        "scope": "examiner procedure and per-option obligations"
+      },
+      {
+        "path": "/Users/sergeyvoronin/IdeaProjects/cheat-sheet/docs/mcq-quality/surface-parity-rules.md",
+        "scope": "SFPL and ANSC criteria"
+      },
+      {
+        "path": "/Users/sergeyvoronin/IdeaProjects/cheat-sheet/docs/mcq-quality/russian-readability-rules.md",
+        "scope": "Russian readability criteria"
+      },
+      {
+        "url": "https://kotlinlang.org/spec/declarations.html#constructor-declaration",
+        "scope": "official Kotlin Language Specification 1.9-rfc+0.1, lines 477-539; constructor kinds and delegation"
+      },
+      {
+        "url": "https://kotlinlang.org/spec/declarations.html#classifier-initialization",
+        "scope": "official Kotlin Language Specification 1.9-rfc+0.1, lines 1033-1049; initialization order"
+      }
+    ],
+    "limitations": [
+      "Ревью охватывает только Q16:B0, не весь файл или production scope.",
+      "Не запускались schema/JSON и автоматические MCQ gates; окончательная приёмка по ним не выполнена.",
+      "Blind phase A сохранена до раскрытия ключа, но это не был отдельный reviewer-контекст; независимость от более раннего знакомства с вопросом не заявляется.",
+      "Спецификация проверена по опубликованной версии 1.9-rfc+0.1; версия компилятора/платформы отдельно не задавалась."
+    ],
+    "final_acceptance": {
+      "verdict": "NOT_RUN",
+      "reason": "Только один блок рассмотрен; файл-wide prerequisites и автоматические gates не выполнены. Обнаружено блокирующее противоречие theory Q16."
+    }
+  },
+  "reviewer_addendum": {
+    "addendum_to": "kotlin-constructors-phase-b.json",
+    "block_id": "Q16:B0",
+    "reviewed_at_utc": "2026-11-06T01:15:23Z",
+    "corrections": [
+      {
+        "topic": "option punctuation and SFPL",
+        "measurement_source": "/Users/sergeyvoronin/Documents/Codex/2026-10-30/task-2/kotlin-constructors-blind.json",
+        "measurement_method": "Python len(text), len(text.split()), and counts of ., ;, and sentence-ending punctuation .!?",
+        "measurements": {
+          "A": {
+            "characters": 208,
+            "words": 26,
+            "periods": 2,
+            "semicolons": 1,
+            "sentence_ending_marks": 2
+          },
+          "B": {
+            "characters": 210,
+            "words": 28,
+            "periods": 2,
+            "semicolons": 1,
+            "sentence_ending_marks": 2
+          },
+          "C": {
+            "characters": 205,
+            "words": 26,
+            "periods": 2,
+            "semicolons": 1,
+            "sentence_ending_marks": 2
+          },
+          "D": {
+            "characters": 206,
+            "words": 28,
+            "periods": 2,
+            "semicolons": 1,
+            "sentence_ending_marks": 2
+          }
+        },
+        "corrected_assessment": "В предыдущем отчёте ошибочно указано по одному предложению. Во всех четырёх вариантах по два предложения: первое сообщает места объявления; второе описывает делегирование. Длина тесно сопоставима (205–210 знаков, 26–28 слов), у всех по одной точке с запятой. SFPL остаётся PASS, основание теперь — сопоставимые длина, пунктуация и смысловой каркас при отдельной оценке ложных моделей; не на утверждении про одно предложение или отсутствии уникального условия в A. Семантический нюанс A необходим, чтобы передать реальные две ветви правила, но не сопровождается внешним сигналом формы."
+      },
+      {
+        "topic": "source_linkage meaning and verdict",
+        "sources_read": [
+          "/Users/sergeyvoronin/IdeaProjects/cheat-sheet/docs/mcq-quality-standard.md",
+          "/Users/sergeyvoronin/IdeaProjects/cheat-sheet/docs/mcq-quality/workflow.md"
+        ],
+        "definition": "LINKAGE checks whether the visible question, current theory, and MCQ options/sections agree with one another. It is distinct from FACTS and is not merely external-source verification.",
+        "verdict": "FAIL",
+        "reason": "Theory Q16 says all secondary constructors must ultimately delegate to primary, while option A and its sections correctly explain that secondary-only classes are possible and can delegate to the superclass (or, where the only superclass is Any, omit explicit delegation). Thus the question-to-theory-to-options/sections chain is inconsistent. The official spec supports the MCQ statement, but that external support does not cure the internal linkage break.",
+        "affected_fields": [
+          "theory.body",
+          "option.A.text",
+          "option.A.sections.explanation",
+          "option.A.sections.example",
+          "option.A.sections.edge_cases",
+          "option.A.sections.related"
+        ]
+      },
+      {
+        "topic": "blind and independent review status",
+        "verdicts": {
+          "independent_review": {
+            "verdict": "PASS",
+            "reason": "This reviewer was a new fork with no inherited conversation context; before phase A, only the blind Q16 texts were available. Independence is from the author, as the standard requires."
+          },
+          "blind_review": {
+            "verdict": "PASS",
+            "reason": "Phase A selected A and was saved before key reveal. The punctuation-only semicolon change was inspected in the blind export before reveal. Phase B followed the disclosure. The same reviewer is expected to perform A then B; no prior key access is claimed."
+          }
+        },
+        "limitations": [
+          "A and B were sequential phases by one reviewer, as workflow prescribes; this does not constitute two separate reviewers.",
+          "The phase-A text choice was captured before disclosure, and the export’s semicolon revision did not change its meaning."
+        ]
+      },
+      {
+        "topic": "scope of FACTS and SECTIONS failures",
+        "historical_verdicts_preserved": {
+          "factual_correctness": "FAIL",
+          "sections_consistency": "FAIL"
+        },
+        "clarification": "Оба FAIL вызваны единственным обнаруженным противоречием существующей теории Q16. В проверенных A/B/C/D и их sections дополнительных фактических ошибок не обнаружено; sections каждой опции объясняют соответствующую модель. В исходном JSON отчёта есть неточность в описании числа предложений и неверное первоначальное толкование linkage, исправленные этим addendum; это ошибки отчёта, а не seed/sections."
+      }
+    ],
+    "final_acceptance": {
+      "verdict": "NOT_RUN",
+      "reason": "Исторический статус сохранён: просмотрен только Q16:B0, а не весь требуемый файл; file-wide prerequisites и автоматические gates не выполнены. Кроме того, остаётся открытое противоречие теории Q16."
+    }
+  },
+  "effective_verdicts": {
+    "content_review": {
+      "verdict": "PASS",
+      "reason": "Видимый вопрос просит назвать виды конструкторов; все четыре опции дают модель primary/secondary, а A отвечает корректно и достаточно."
+    },
+    "factual_correctness": {
+      "verdict": "FAIL",
+      "reason": "A фактически верно и совпадает с ключом. Но объяснение теории категорически говорит, что secondary обязаны делегировать primary, опуская допустимый класс без primary и делегирование super; это противоречит спецификации Kotlin."
+    },
+    "source_linkage": {
+      "verdict": "FAIL",
+      "reason": "Theory Q16 says all secondary constructors must ultimately delegate to primary, while option A and its sections correctly explain that secondary-only classes are possible and can delegate to the superclass (or, where the only superclass is Any, omit explicit delegation). Thus the question-to-theory-to-options/sections chain is inconsistent. The official spec supports the MCQ statement, but that external support does not cure the internal linkage break."
+    },
+    "sections_consistency": {
+      "verdict": "FAIL",
+      "reason": "Раздел theory Q16 противоречит корректной опции A и её sections: теория без оговорки требует делегирования к primary, тогда как A и спецификация допускают отсутствие primary и делегирование superclass. Остальные sections объясняют соответствующие ложные модели B/C/D."
+    },
+    "sfpl": {
+      "verdict": "PASS",
+      "reason": "В предыдущем отчёте ошибочно указано по одному предложению. Во всех четырёх вариантах по два предложения: первое сообщает места объявления; второе описывает делегирование. Длина тесно сопоставима (205–210 знаков, 26–28 слов), у всех по одной точке с запятой. SFPL остаётся PASS, основание теперь — сопоставимые длина, пунктуация и смысловой каркас при отдельной оценке ложных моделей; не на утверждении про одно предложение или отсутствии уникального условия в A. Семантический нюанс A необходим, чтобы передать реальные две ветви правила, но не сопровождается внешним сигналом формы."
+    },
+    "ansc": {
+      "verdict": "PASS",
+      "reason": "Каждый вариант является законченным ответом-моделью для обеих разновидностей, а не обрывком: A — корректные условные правила; B — переставленные места; C — ошибочное автоматическое создание primary; D — обратное направление делегирования."
+    },
+    "russian_readability": {
+      "verdict": "PASS",
+      "reason": "Видимый вопрос, теория Q16, варианты и все доступные sections написаны понятно и грамматически корректно. Термины primary/secondary последовательно переданы как первичный/вторичный."
+    },
+    "independent_review": {
+      "verdict": "PASS",
+      "reason": "Сопоставил каждую опцию и все её sections, теорию, ключ и правила; оценка не ограничена совпадением выбора с ключом."
+    },
+    "blind_review": {
+      "verdict": "PASS",
+      "reason": "До раскрытия ключа сохранён выбор A в kotlin-constructors-phase-a-current.json; после раскрытия ключ подтвердил A. Слепой выбор выполнен в отдельном предварительном проходе, хотя тот же рецензент позднее видел раскрытие."
+    }
+  },
+  "coordinator_notes": [
+    "Only Q16:B0 reviewed; no FINAL, file-wide or corpus acceptance.",
+    "The reviewer corrected an incorrect sentence count and initial interpretation of source_linkage in a retained addendum. Coordinator independently verified all numeric measurements.",
+    "All three FAIL are caused by the existing theory Q16 contradiction; the independent reviewer found no further factual error in revised JSON/sections.",
+    "The raw report mentions file-wide prerequisites for FINAL. Scoped FINAL does not intrinsically require other questions, but cannot run here because Q16 itself has three FAIL.",
+    "Full working-file hash includes pre-existing Q5/Q30 changes excluded from this commit. The committed Q16 block is byte-equivalent as parsed JSON; other scope is not accepted.",
+    "Global checkpoint, PLAN and sync remain coordinator-owned. No runtime or service update performed."
+  ]
+}

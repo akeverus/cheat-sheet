@@ -1,0 +1,52 @@
+{
+  "reviewer": "independent reviewer",
+  "reviewed_at_utc": "2026-11-06T01:13:38Z",
+  "block_id": "Q16:B0",
+  "phase": "B",
+  "key_disclosed": true,
+  "verdicts": {
+    "content_review": {"verdict": "PASS", "reason": "Видимый вопрос просит назвать виды конструкторов; все четыре опции дают модель primary/secondary, а A отвечает корректно и достаточно."},
+    "factual_correctness": {"verdict": "FAIL", "reason": "A фактически верно и совпадает с ключом. Но объяснение теории категорически говорит, что secondary обязаны делегировать primary, опуская допустимый класс без primary и делегирование super; это противоречит спецификации Kotlin."},
+    "source_linkage": {"verdict": "PASS", "reason": "Заявления о двух типах, размещении и правилах делегирования подтверждаются официальной спецификацией Kotlin, раздел Constructor declaration; порядок инициализации проверен в Classifier initialization."},
+    "sections_consistency": {"verdict": "FAIL", "reason": "Раздел theory Q16 противоречит корректной опции A и её sections: теория без оговорки требует делегирования к primary, тогда как A и спецификация допускают отсутствие primary и делегирование superclass. Остальные sections объясняют соответствующие ложные модели B/C/D."},
+    "sfpl": {"verdict": "PASS", "reason": "A/B/C/D имеют одно предложение и сопоставимый механизмный каркас: расположение двух видов и правило делегирования. A не выделяется длиной или оформлением настолько, чтобы форму можно было надёжно использовать как подсказку."},
+    "ansc": {"verdict": "PASS", "reason": "Каждый вариант является законченным ответом-моделью для обеих разновидностей, а не обрывком: A — корректные условные правила; B — переставленные места; C — ошибочное автоматическое создание primary; D — обратное направление делегирования."},
+    "russian_readability": {"verdict": "PASS", "reason": "Видимый вопрос, теория Q16, варианты и все доступные sections написаны понятно и грамматически корректно. Термины primary/secondary последовательно переданы как первичный/вторичный."},
+    "independent_review": {"verdict": "PASS", "reason": "Сопоставил каждую опцию и все её sections, теорию, ключ и правила; оценка не ограничена совпадением выбора с ключом."},
+    "blind_review": {"verdict": "PASS", "reason": "До раскрытия ключа сохранён выбор A в kotlin-constructors-phase-a-current.json; после раскрытия ключ подтвердил A. Слепой выбор выполнен в отдельном предварительном проходе, хотя тот же рецензент позднее видел раскрытие."}
+  },
+  "options_review": [
+    {"label":"A","coverage":"Оба вида, их расположение и условия делегирования при наличии/отсутствии primary","completeness":"Полный","truth":"Верно","finding":"Нет; содержит наиболее полный набор условий, необходимый для выбора."},
+    {"label":"B","coverage":"Оба вида, расположение и делегирование","completeness":"Полный ложный ответ","truth":"Неверно: местоположения переставлены","finding":"Sections корректно называют перестановку; section if_it_were_true наглядно формулирует альтернативную ложную модель."},
+    {"label":"C","coverage":"Оба вида, расположение и предполагаемое поведение без primary","completeness":"Полный ложный ответ","truth":"Неверно: наличие secondary не порождает скрытый primary без параметров","finding":"Sections отделяют правило неявного default primary для класса без каких-либо конструкторов от класса с объявленными secondary."},
+    {"label":"D","coverage":"Оба вида, расположение и делегирование/инициализация","completeness":"Полный ложный ответ","truth":"Неверно: направление делегирования обращено","finding":"Sections объясняют реальный порядок: secondary достигает primary; инициализация проходит до тела secondary."}
+  ],
+  "findings": [
+    {
+      "id":"Q16-THEORY-PRIMARY-ONLY",
+      "severity":"blocker",
+      "affected_checks":["factual_correctness","sections_consistency"],
+      "affected_fields":["theory.body"],
+      "quote":"вторичные конструкторы объявляются в теле и обязаны в итоге делегировать первичному",
+      "detail":"Это правило неверно без условия о наличии primary. Спецификация разрешает вторичному без primary делегировать через super(...) либо через this(...), а при единственном Any делегирование необязательно.",
+      "suggested_fix":"Уточнить: если primary объявлен, каждый secondary должен делегировать ему напрямую или через другой secondary; без primary делегирование идёт к superclass или другому secondary, кроме случая единственного Any, где оно необязательно."
+    },
+    {
+      "id":"Q16-THEORY-INIT-ORDER-SCOPE",
+      "severity":"note",
+      "affected_checks":["factual_correctness","source_linkage","sections_consistency"],
+      "affected_fields":["theory.body", "option.A.sections.related", "option.A.sections.example"],
+      "detail":"Уточнение для полноты: раздел Classifier initialization спецификации описывает порядок свойств/init относительно супер-конструктора и тела secondary; данные в A.sections.related о запуске инициализаторов до тела secondary согласуются со спецификацией. Утверждение «Any() не требуется писать явно» соответствует special case единственного superclass kotlin.Any."
+    }
+  ],
+  "sources_read": [
+    {"path":"/Users/sergeyvoronin/IdeaProjects/cheat-sheet/docs/mcq-quality/runs/20261106T011400Z-kotlin-constructors-independent-r1/disclosure/review-input.json","scope":"preamble, Q16 theory, A-D options and supplied sections; MCQ/theory hashes as recorded in disclosure"},
+    {"path":"/Users/sergeyvoronin/IdeaProjects/cheat-sheet/docs/mcq-quality/examiner-review.md","scope":"examiner procedure and per-option obligations"},
+    {"path":"/Users/sergeyvoronin/IdeaProjects/cheat-sheet/docs/mcq-quality/surface-parity-rules.md","scope":"SFPL and ANSC criteria"},
+    {"path":"/Users/sergeyvoronin/IdeaProjects/cheat-sheet/docs/mcq-quality/russian-readability-rules.md","scope":"Russian readability criteria"},
+    {"url":"https://kotlinlang.org/spec/declarations.html#constructor-declaration","scope":"official Kotlin Language Specification 1.9-rfc+0.1, lines 477-539; constructor kinds and delegation"},
+    {"url":"https://kotlinlang.org/spec/declarations.html#classifier-initialization","scope":"official Kotlin Language Specification 1.9-rfc+0.1, lines 1033-1049; initialization order"}
+  ],
+  "limitations": ["Ревью охватывает только Q16:B0, не весь файл или production scope.", "Не запускались schema/JSON и автоматические MCQ gates; окончательная приёмка по ним не выполнена.", "Blind phase A сохранена до раскрытия ключа, но это не был отдельный reviewer-контекст; независимость от более раннего знакомства с вопросом не заявляется.", "Спецификация проверена по опубликованной версии 1.9-rfc+0.1; версия компилятора/платформы отдельно не задавалась."],
+  "final_acceptance": {"verdict":"NOT_RUN","reason":"Только один блок рассмотрен; файл-wide prerequisites и автоматические gates не выполнены. Обнаружено блокирующее противоречие theory Q16."}
+}
