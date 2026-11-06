@@ -1,0 +1,44 @@
+{
+  "state": "Q12_PREREQUISITES_PASS_Q20_THEORY_OPEN",
+  "source_sha256": {
+    "mcq": "f6d0869861a6825f431a510f19095353798eadd138ee4d6b14eeb2637b03c795",
+    "theory": "40b5c7d2ff3abb9a7021544379a29179115a2efab1b410b60ab680b7d69081dc"
+  },
+  "q20_theory_hash": "79451aa620b0c1b0a37e131c61822cb224ac94ce936a0f479c47e5e25cb9f0f3",
+  "owner": "theory author; no Markdown modified by MCQ author",
+  "findings": [
+    {
+      "field": "q20-theory-0.text, абзац 1",
+      "quote": "если значение придёт снаружи — `lateinit`",
+      "affected_checks": [
+        "FACTS",
+        "LINKAGE"
+      ],
+      "reason": "lateinit требует явного присваивания после объявления и до чтения, но не внешнего источника; его может выполнить метод того же экземпляра, как показано в D example.",
+      "suggestion": "Заменить на «если значение нужно присвоить позже явным кодом — lateinit»; DI и setup назвать примерами, а не условием."
+    },
+    {
+      "field": "q20-theory-0.text, строка таблицы «Проверка инициализации»",
+      "quote": "Всегда инициализирован при доступе",
+      "affected_checks": [
+        "FACTS",
+        "LINKAGE"
+      ],
+      "reason": "Абсолютная формулировка не учитывает исключение initializer. API Lazy предписывает новую попытку инициализации при следующем доступе после исключения; isInitialized также возвращает false до успешной инициализации.",
+      "suggestion": "Уточнить: lazy вычисляет значение при чтении и сохраняет успешный результат; после исключения следующая попытка запускает initializer повторно."
+    }
+  ],
+  "canonical_open_finding_ids": [
+    "20261106T023938Z-kotlin-scope-lazy-r1:q20-external-source-factual_correctness",
+    "20261106T023938Z-kotlin-scope-lazy-r1:q20-external-source-source_linkage",
+    "20261106T023938Z-kotlin-scope-lazy-r1:q20-lazy-access-guarantee-factual_correctness",
+    "20261106T023938Z-kotlin-scope-lazy-r1:q20-lazy-access-guarantee-source_linkage"
+  ],
+  "requested_corrections": [
+    "Replace external-source requirement with explicit later assignment before read; internal setup and external DI are both possible.",
+    "Correct the table row promising initialized lazy on every access; explain successful caching, failure/retry and a valid state-check method or remove that row.",
+    "Preserve visible stem and correct key; after theory changes, recheck all four options and 17 sections with current hashes; close exactly the four canonical finding IDs with matching fresh FACTS/LINKAGE PASS."
+  ],
+  "q12": "No inherited dependency on Q20; can proceed to scoped final gate after nine current PASS.",
+  "runtime_proof": "runtime/execution.json: successful cached value, retry after initializer failure, internal lateinit assignment, uninitialized access, four compiler negative controls."
+}

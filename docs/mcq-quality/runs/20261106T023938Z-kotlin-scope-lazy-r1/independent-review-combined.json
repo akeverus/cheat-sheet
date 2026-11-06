@@ -1,0 +1,457 @@
+{
+  "reviewer": "kotlin_scope_lazy_independent",
+  "model": "gpt-6-luna",
+  "raw_b": {
+    "12": {
+      "q_number": 12,
+      "block_idx": 0,
+      "comparative_assessment": {
+        "A": {
+          "model": "correct access modes; returns reversed",
+          "verdict": "wrong",
+          "defense": "Plausible inversion: treats the functions returning the lambda value as the object-returning pair; the concrete apply example contradicts this."
+        },
+        "B": {
+          "model": "correct returns; access modes reversed",
+          "verdict": "wrong",
+          "defense": "Plausible receiver/argument mix-up. The phrase 'дают объект получателем' for let/also and 'аргументом' for the other three makes a definite false claim."
+        },
+        "C": {
+          "model": "correct receiver/argument distinction and return groups",
+          "verdict": "correct",
+          "defense": "Matches the documented behavior for object-taking forms; does not falsely imply all run calls have a receiver because it says 'при вызове с объектом'."
+        },
+        "D": {
+          "model": "correct access modes; all return receiver",
+          "verdict": "wrong",
+          "defense": "Plausible overgeneralization from apply/also chaining; let example falsifies universal return claim."
+        }
+      },
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "All four are complete two-axis models answering the visible 'what are scope functions' question. Each wrong is a coherent, recognizable misconception."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "Official Kotlin documentation confirms argument vs receiver forms and return groups. C is the sole defensible key."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "Visible Q12 asks precisely about these five functions; theory explicitly defines the two axes and table per function. Direct support (L4)."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "Reviewed all 17 section values across A-D: 12 wrong-option fields and 5 correct-option fields. Each describes/contrasts its own model; examples are internally consistent. C edge_cases correctly notes explicit argument naming, non-extension run, and object-taking variants."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "Parallel two-sentence construction and same order: context/access then return. No unique example, condition, or explanation in C option text. Word counts A-D 24/24/24/26; inline-code spans 7/7/7/5; all two sentences. Small length differences do not distinguish key."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "Each option states both access and return behavior for all five functions. Wrong answers are not incomplete; each carries one primary axis error or a return overgeneralization."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Question, theory, four option texts and all 17 sections read. Russian is clear and technically natural overall; minor stylistic phrase 'дают контекст' is understandable and does not favor C."
+        }
+      },
+      "findings": [],
+      "sources": [
+        {
+          "url": "https://kotlinlang.org/docs/scope-functions.html",
+          "checked_claim": "Five functions; lambda argument vs receiver; result groups; explicit argument names possible; non-extension run has no context receiver; with accepts object argument while lambda uses it as receiver.",
+          "version": "Kotlin documentation page dated 29 September 2026",
+          "checked_at": "2026-11-06"
+        }
+      ],
+      "actual_utc_time": "2026-11-06T00:00:00Z",
+      "surfaces_read": [
+        "q12-stem.json",
+        "q12-theory-0.json",
+        "q12-option-A/B/C/D.json (all 17 sections)",
+        "preamble-0/1/2.json",
+        "docs/mcq-quality-standard.md",
+        "docs/mcq-quality/examiner-review.md",
+        "docs/mcq-quality/surface-parity-rules.md",
+        "docs/mcq-quality/russian-readability-rules.md",
+        "official Kotlin scope-functions page"
+      ],
+      "limitations": [
+        "No production source files or persistence/hash metadata inspected; this is a scoped Q12 B-review only.",
+        "Actual clock time unavailable from system tool in this environment; timestamp is recorded at UTC date granularity.",
+        "FINAL: NOT_RUN; separate scoped gate awaits prerequisite registration."
+      ]
+    },
+    "20": {
+      "q_number": 20,
+      "block_idx": 0,
+      "actual_utc_time": "2026-11-06T02:44:44Z",
+      "comparative_assessment": {
+        "A": "Полный ответ, но значения val/var переставлены между механизмами. Это правдоподобное смешение ленивого вычисления с поздним присваиванием; секции верно опровергают его для стандартного lazy delegate без setValue и для lateinit.",
+        "B": "Полный ответ: первая часть про lazy верна, но lateinit не допускает nullable- и primitive-типы. Защищаемая ошибка — перенести гибкость типа результата lazy на модификатор lateinit.",
+        "C": "Полный ответ: присваивание lateinit описано верно, но lazy успешно вычисленное значение кэширует, а не пересчитывает при каждом чтении. Повторное выполнение после исключения не спасает слово «каждом».",
+        "D": "Полный и единственный защитимый ответ. Корректно различает ленивое вычисление/сохранение результата val и явное присваивание lateinit var до чтения; текст не требует, чтобы источник присваивания находился вне самого объекта."
+      },
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "Все четыре варианта отвечают на разницу механизмов, и каждый описывает обе стороны сравнения. Ошибки A/B/C — фактические, а не пропуск части ответа."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "Официальные документы подтверждают lazy val с сохранением результата, lateinit var с non-null непримитивным типом и исключение при чтении неинициализированного свойства. Стандартный Lazy delegate предоставляет getValue, но не setValue для var. D точен; A/B/C опровергаются."
+        },
+        "LINKAGE": {
+          "status": "FAIL",
+          "reason": "Тело теории в целом напрямую объясняет вопрос, но содержит два чрезмерных утверждения: «извне»/«значение придёт снаружи» как будто это требование lateinit, и «Всегда инициализирован при доступе» как безусловную характеристику lazy. Правильный вариант D и пример демонстрируют внутреннее присваивание, а документация lazy допускает повтор инициализации после исключения. Требуется исправить теорию и повторно проверить связь."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "Проверены все 17 секций A-D. Их контрпримеры и объяснения соответствуют заявленным моделям; особое замечание A корректно отделяет переменную, хранящую Lazy<T>, от свойства var by lazy без стандартного setValue. Секция C корректно оговаривает повтор после исключения, D — режим PUBLICATION."
+        },
+        "SFPL": {
+          "status": "FAIL",
+          "reason": "Формы A/B/C по две части, но D единственный включает обе верные характеристики в связную точную пару и имеет развёрнутые формулировки «откладывает вычисление … до чтения и сохраняет результат» и «явное присваивание до чтения». По длине/ритму D может выглядеть наиболее завершённым; формальный метрик-паритет здесь не доказывает нейтральность формы."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "Все варианты завершённые: каждый утверждает различие для lazy и lateinit. Wrong A/B/C не являются неполными: каждый содержит конкретную ошибочную модель, которую можно защитить как типичное заблуждение и опровергнуть без скрытых условий."
+        },
+        "RU": {
+          "status": "FAIL",
+          "reason": "Варианты понятны и грамматически приемлемы, однако тело теории использует неточные абсолюты «извне» и «Всегда инициализирован при доступе». Это может сформировать неверную модель и создает противоречие с собственным примером D, где присваивание выполняет метод экземпляра."
+        }
+      },
+      "findings": [
+        {
+          "field": "theory-0.text; table row Nullable / Проверка инициализации",
+          "quote": "если значение придёт снаружи — lateinit",
+          "affected_checks": [
+            "FACTS",
+            "LINKAGE",
+            "RU"
+          ],
+          "reason": "lateinit требует более позднего явного присваивания, но не требует внешнего источника. Свойство может получить значение методом того же объекта; такой пример уже приведён в D.",
+          "suggestion": "Заменить на: «если значение присваивается позже явным кодом — lateinit»; примеры DI и setup обозначить как частые случаи, не обязательное условие."
+        },
+        {
+          "field": "theory-0.text; таблица, строка «Проверка инициализации»",
+          "quote": "Всегда инициализирован при доступе",
+          "affected_checks": [
+            "FACTS",
+            "LINKAGE",
+            "RU"
+          ],
+          "reason": "Сформулировано без условия: если initializer lazy бросает исключение, значение не сохранено и следующий доступ снова запускает initializer. При первом чтении lazy также ещё не было вычислено до запуска initializer.",
+          "suggestion": "Указать: «при успешной инициализации кэширует результат; после исключения следующая попытка выполняет initializer заново». Не представлять это как проверку наподобие lateinit::isInitialized."
+        },
+        {
+          "field": "options A-D; сравнительная форма",
+          "quote": "D: `lazy` откладывает вычисление `val` до чтения и сохраняет результат...",
+          "affected_checks": [
+            "SFPL"
+          ],
+          "reason": "D — единственная грамотно и явно формулирующая обе корректные модели; wrong сохраняют двухчастную структуру, но подменяют ключевое свойство. Формальная полнота языково нейтральна, однако правильный вариант выглядит наиболее точным и законченным."
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://kotlinlang.org/docs/properties.html#late-initialized-properties-and-variables",
+          "checked_claim": "lateinit применим к var; тип non-null и не primitive; присваивание может происходить в setup/DI; чтение до инициализации бросает исключение.",
+          "version": "Официальная страница Kotlin Properties, прочитана 2026-11-06",
+          "checked_at": "2026-11-06"
+        },
+        {
+          "url": "https://kotlinlang.org/docs/delegated-properties.html#lazy-properties",
+          "checked_claim": "lazy возвращает Lazy<T>, первый get выполняет lambda и запоминает результат; далее get возвращает его; по умолчанию SYNCHRONIZED, PUBLICATION и NONE меняют гарантии.",
+          "version": "Официальная страница Kotlin Delegated properties, прочитана 2026-11-06",
+          "checked_at": "2026-11-06"
+        },
+        {
+          "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/lazy.html",
+          "checked_claim": "при исключении initializer значение повторно инициализируется при следующем доступе; стандартный delegate для var требует setValue, которого Lazy не предоставляет.",
+          "version": "Kotlin stdlib API, выбранная версия страницы 2.4; прочитана 2026-11-06",
+          "checked_at": "2026-11-06"
+        }
+      ],
+      "surfaces_read": [
+        "q20-stem.json",
+        "q20-theory-0.json",
+        "q20-option-A/B/C/D.json (все 17 sections)",
+        "официальные Kotlin Properties, Delegated properties и Lazy API pages"
+      ],
+      "limitations": [
+        "Кotlin-пробы автора не запускались и не используются как независимая проверка.",
+        "Не осматривались исходники проекта или другие поверхности вне заданных chunks и первоисточников.",
+        "FINAL: NOT_RUN; отдельный scoped gate ожидает регистрации prerequisites."
+      ]
+    }
+  },
+  "addenda": {
+    "12": {
+      "q_number": 12,
+      "block_idx": 0,
+      "actual_utc_time": "2026-11-06T02:43:46Z",
+      "sources": [
+        {
+          "url": "https://kotlinlang.org/docs/scope-functions.html",
+          "checked_claim": "Документация подтверждает способы доступа к объекту (аргумент или receiver), результаты пяти функций, именование аргумента вместо it, а также обычный run без объекта-контекста.",
+          "version": "Официальная страница Kotlin Scope functions, прочитана 2026-11-06; дата 29 September 2026 из первоначального отчёта снята как неподтверждённая для этой страницы."
+        }
+      ],
+      "comparative_assessment": {
+        "A": "Полный ответ по двум осям: верно описывает передачу объекта, но переставляет группы возвращаемых значений. Защищаемая ошибка — принять результат лямбды за результат apply/also и наоборот.",
+        "B": "Полный ответ по двум осям: верно описывает возвраты, но меняет местами аргумент и receiver. Защищаемая ошибка — спутать lambda с аргументом и lambda с receiver.",
+        "C": "Полный ответ по обеим осям: let/also получают объект аргументом, run/with/apply используют receiver; первые две из группы возврата apply/also возвращают объект, остальные — результат лямбды. Единственный защитимый ответ.",
+        "D": "Полный ответ: доступ описан верно, но утверждение об одинаковом возврате всех функций ложно. Защищаемая ошибка — обобщить поведение apply/also на всю пятёрку."
+      },
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "Каждый вариант — законченная модель ответа на видимый вопрос и описывает обе проверяемые оси. Неверность отдельных утверждений не делает A, B или D неполными."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "Официальная документация подтверждает: let/also используют аргумент, run/with/apply — receiver; apply/also возвращают объект, let/run/with — результат блока. У C обе части верны; A, B и D содержат конкретные опровержимые ошибки."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "Видимый Q12 спрашивает именно о пяти scope-функциях; тело теории вводит те же две оси и перечисляет поведение каждой функции. Ответ C прямо следует из таблицы и объяснения теории."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "Просмотрены все 17 секций вариантов: по четыре у A, B и D и пять у C. Объяснения и примеры относятся к модели соответствующего варианта; пример C демонстрирует обе формы доступа и возвраты пяти функций. Особые замечания C уточняют именование аргумента, обычный run и вызовы с объектом."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "У всех вариантов одинаковый смысловой каркас и порядок: контекст/доступ, затем возврат. Во всех по два предложения; длина 24/24/24/26 слов, число inline-code фрагментов 7/7/7/5. Небольшие различия не выделяют C полнотой, оговоркой или дополнительным примером."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "Все четыре варианта явно сообщают способ доступа и возврат для полного набора функций. A, B и D сохраняют законченную форму ответа, хотя одна из осей в каждом случае ошибочна; каждый wrong допускает конкретную попытку защиты как типичное заблуждение."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Прочитаны видимый вопрос, теория, тексты A/B/C/D и все секции объяснений. Формулировки понятны и грамматически приемлемы; термины аргумент и receiver применены последовательно. Фраза «дают контекст» в B/D менее точна стилистически, но не создает языковой подсказки в пользу C."
+        }
+      },
+      "findings": [],
+      "corrections_to_original": [
+        "Исправлена заглушка времени на фактическое время из clock tool.",
+        "Удалено утверждение о дате публикации 29 September 2026: достоверно установлено только то, что официальная страница прочитана 2026-11-06.",
+        "Этот addendum содержит русское обоснование сравнительной оценки и всех семи PASS; первоначальный файл сохранён как историческая запись."
+      ],
+      "limitations": [
+        "Scoped B-review только для Q12/B0; FINAL остаётся NOT_RUN до отдельного gate после регистрации prerequisites.",
+        "Тексты источника и chunks повторно не открывались; выводы сохранены из уже выполненного чтения."
+      ]
+    },
+    "20": {
+      "q_number": 20,
+      "block_idx": 0,
+      "actual_utc_time": "2026-11-06T02:46:26Z",
+      "measurements": {
+        "word_counts_A_B_C_D": [
+          15,
+          17,
+          16,
+          18
+        ],
+        "inline_code_spans_A_B_C_D": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "sentence_counts_A_B_C_D": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "digit_counts_A_B_C_D": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "length_chars_A_B_C_D": [
+          117,
+          131,
+          118,
+          125
+        ]
+      },
+      "effective_checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "A-D являются законченными ответами на обе стороны сравнения; A/B/C не опускают признак, а утверждают неверную модель."
+        },
+        "FACTS": {
+          "status": "FAIL",
+          "reason": "D верен, A/B/C неверны по конкретным и защитимым заблуждениям. Однако прочитанная теория тоже входит в проверяемую пару: фраза «значение придёт снаружи» задаёт внешний источник как условие lateinit, а «Всегда инициализирован при доступе» без оговорки неверно, поскольку после исключения initializer lazy будет запущен при следующем доступе. Поэтому прежний FACTS PASS был несовместим с его findings и исправлен на FAIL."
+        },
+        "LINKAGE": {
+          "status": "FAIL",
+          "reason": "Теория непосредственно объясняет отличие, но содержит оба указанных чрезмерных обобщения и требует ремонта: lateinit требует явного позднего присваивания, но источник может быть внутри того же объекта; lazy кэширует успешное значение, однако исключение оставляет возможность повторной инициализации."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "Проверены все 17 sections. Контрфактические примеры и пояснения A-C согласуются с ошибочными моделями; D-example явно показывает метод того же объекта как источник присваивания. A корректно различает var-хранилище Lazy<T> и var by lazy: standard Lazy имеет getValue для val, но не setValue для var. Пояснения о retry и PUBLICATION согласованы с API."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "Все варианты — одно предложение, используют четыре одинаковых inline-code объекта, строятся как парное сравнение lazy/lateinit. Длины 15/17/16/18 слов и 117/131/118/125 символов дают небольшой разброс, но D не является единственным длинным или единственным двучастным вариантом. Конкретного сигнала формы, который сам по себе выдает ключ, не выявлено; прежнее SFPL FAIL ошибочно выводило форму из истинности D и полноты wrong. Точная формулировка D — содержательная точность, а не отдельный поверхностный признак."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "Каждый wrong полный и имеет защитимую ошибочную модель: A переставляет val/var, B переносит ограничения lateinit на тип lazy, C смешивает lazy с вычисляемым getter. Ложность не трактуется как неполнота."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Все опции и sections читаются грамматически и связно; самостоятельной ошибки понятности или русского языка не найдено. Неточные категоричные утверждения в теории — фактические/связностные дефекты FACTS и LINKAGE, но сами по себе не доказывают дефект RU. Формулировка «извне» понятна, просто ограничивает механизм ложным условием."
+        }
+      },
+      "findings": [
+        {
+          "field": "q20-theory-0.text, абзац 1",
+          "quote": "если значение придёт снаружи — `lateinit`",
+          "affected_checks": [
+            "FACTS",
+            "LINKAGE"
+          ],
+          "reason": "lateinit требует явного присваивания после объявления и до чтения, но не внешнего источника; его может выполнить метод того же экземпляра, как показано в D example.",
+          "suggestion": "Заменить на «если значение нужно присвоить позже явным кодом — lateinit»; DI и setup назвать примерами, а не условием."
+        },
+        {
+          "field": "q20-theory-0.text, строка таблицы «Проверка инициализации»",
+          "quote": "Всегда инициализирован при доступе",
+          "affected_checks": [
+            "FACTS",
+            "LINKAGE"
+          ],
+          "reason": "Абсолютная формулировка не учитывает исключение initializer. API Lazy предписывает новую попытку инициализации при следующем доступе после исключения; isInitialized также возвращает false до успешной инициализации.",
+          "suggestion": "Уточнить: lazy вычисляет значение при чтении и сохраняет успешный результат; после исключения следующая попытка запускает initializer повторно."
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://kotlinlang.org/docs/properties.html#late-initialized-properties-and-variables",
+          "checked_claim": "lateinit — var; тип non-null и non-primitive; неинициализированное чтение бросает исключение; примеры DI/setup иллюстрируют, но не ограничивают источник присваивания.",
+          "version": "Официальная Kotlin Properties page, просмотр 2026-11-06",
+          "checked_at": "2026-11-06"
+        },
+        {
+          "url": "https://kotlinlang.org/docs/delegated-properties.html#lazy-properties",
+          "checked_claim": "lazy() создаёт Lazy<T>; getValue выполняет initializer и запоминает успешный результат; getValue/setValue — требования делегатов для val/var.",
+          "version": "Официальная Kotlin Delegated properties page, просмотр 2026-11-06",
+          "checked_at": "2026-11-06"
+        },
+        {
+          "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/lazy.html",
+          "checked_claim": "initializer вызывается при доступе, успешное значение сохраняется; после исключения следующая попытка переинициализирует; стандартная lazy() использует SYNCHRONIZED по умолчанию, есть режимы.",
+          "version": "Kotlin stdlib API 2.4, просмотр 2026-11-06",
+          "checked_at": "2026-11-06"
+        },
+        {
+          "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-lazy/",
+          "checked_claim": "Lazy имеет read-only value и extension getValue для делегирования read-only свойства; API страницы не заявляет setValue для Lazy.",
+          "version": "Kotlin stdlib API 2.4, просмотр 2026-11-06",
+          "checked_at": "2026-11-06"
+        },
+        {
+          "url": "https://kotlinlang.org/docs/delegated-properties.html#property-delegate-requirements",
+          "checked_claim": "delegate для val предоставляет getValue; для var дополнительно требуется setValue. Поэтому стандартный Lazy delegate поддерживает val by lazy, не var by lazy без пользовательского setValue.",
+          "version": "Официальная Kotlin Delegated properties page, просмотр 2026-11-06",
+          "checked_at": "2026-11-06"
+        }
+      ],
+      "surfaces_read": [
+        "Видимый q20-stem, theory-0, options A-D и все 17 sections из ранее прочитанных chunks; exact option texts повторно сопоставлены с метриками.",
+        "Kotlin Properties page.",
+        "Kotlin Delegated properties page, в том числе Lazy properties и Property delegate requirements.",
+        "Kotlin Lazy API page и lazy() API page."
+      ],
+      "limitations": [
+        "Повторно не запускались Kotlin-пробы и не использованы пробы автора.",
+        "Исходник проекта не изменялся.",
+        "Это addendum корректирует спорные вердикты предыдущего отчёта; исходный B-review сохранён как история.",
+        "FINAL: NOT_RUN до отдельного запроса на scoped gate."
+      ]
+    }
+  },
+  "effective_checks": {
+    "12": {
+      "CONTENT": {
+        "status": "PASS",
+        "reason": "Каждый вариант — законченная модель ответа на видимый вопрос и описывает обе проверяемые оси. Неверность отдельных утверждений не делает A, B или D неполными."
+      },
+      "FACTS": {
+        "status": "PASS",
+        "reason": "Официальная документация подтверждает: let/also используют аргумент, run/with/apply — receiver; apply/also возвращают объект, let/run/with — результат блока. У C обе части верны; A, B и D содержат конкретные опровержимые ошибки."
+      },
+      "LINKAGE": {
+        "status": "PASS",
+        "reason": "Видимый Q12 спрашивает именно о пяти scope-функциях; тело теории вводит те же две оси и перечисляет поведение каждой функции. Ответ C прямо следует из таблицы и объяснения теории."
+      },
+      "SECTIONS": {
+        "status": "PASS",
+        "reason": "Просмотрены все 17 секций вариантов: по четыре у A, B и D и пять у C. Объяснения и примеры относятся к модели соответствующего варианта; пример C демонстрирует обе формы доступа и возвраты пяти функций. Особые замечания C уточняют именование аргумента, обычный run и вызовы с объектом."
+      },
+      "SFPL": {
+        "status": "PASS",
+        "reason": "У всех вариантов одинаковый смысловой каркас и порядок: контекст/доступ, затем возврат. Во всех по два предложения; длина 24/24/24/26 слов, число inline-code фрагментов 7/7/7/5. Небольшие различия не выделяют C полнотой, оговоркой или дополнительным примером."
+      },
+      "ANSC": {
+        "status": "PASS",
+        "reason": "Все четыре варианта явно сообщают способ доступа и возврат для полного набора функций. A, B и D сохраняют законченную форму ответа, хотя одна из осей в каждом случае ошибочна; каждый wrong допускает конкретную попытку защиты как типичное заблуждение."
+      },
+      "RU": {
+        "status": "PASS",
+        "reason": "Прочитаны видимый вопрос, теория, тексты A/B/C/D и все секции объяснений. Формулировки понятны и грамматически приемлемы; термины аргумент и receiver применены последовательно. Фраза «дают контекст» в B/D менее точна стилистически, но не создает языковой подсказки в пользу C."
+      }
+    },
+    "20": {
+      "CONTENT": {
+        "status": "PASS",
+        "reason": "A-D являются законченными ответами на обе стороны сравнения; A/B/C не опускают признак, а утверждают неверную модель."
+      },
+      "FACTS": {
+        "status": "FAIL",
+        "reason": "D верен, A/B/C неверны по конкретным и защитимым заблуждениям. Однако прочитанная теория тоже входит в проверяемую пару: фраза «значение придёт снаружи» задаёт внешний источник как условие lateinit, а «Всегда инициализирован при доступе» без оговорки неверно, поскольку после исключения initializer lazy будет запущен при следующем доступе. Поэтому прежний FACTS PASS был несовместим с его findings и исправлен на FAIL."
+      },
+      "LINKAGE": {
+        "status": "FAIL",
+        "reason": "Теория непосредственно объясняет отличие, но содержит оба указанных чрезмерных обобщения и требует ремонта: lateinit требует явного позднего присваивания, но источник может быть внутри того же объекта; lazy кэширует успешное значение, однако исключение оставляет возможность повторной инициализации."
+      },
+      "SECTIONS": {
+        "status": "PASS",
+        "reason": "Проверены все 17 sections. Контрфактические примеры и пояснения A-C согласуются с ошибочными моделями; D-example явно показывает метод того же объекта как источник присваивания. A корректно различает var-хранилище Lazy<T> и var by lazy: standard Lazy имеет getValue для val, но не setValue для var. Пояснения о retry и PUBLICATION согласованы с API."
+      },
+      "SFPL": {
+        "status": "PASS",
+        "reason": "Все варианты — одно предложение, используют четыре одинаковых inline-code объекта, строятся как парное сравнение lazy/lateinit. Длины 15/17/16/18 слов и 117/131/118/125 символов дают небольшой разброс, но D не является единственным длинным или единственным двучастным вариантом. Конкретного сигнала формы, который сам по себе выдает ключ, не выявлено; прежнее SFPL FAIL ошибочно выводило форму из истинности D и полноты wrong. Точная формулировка D — содержательная точность, а не отдельный поверхностный признак."
+      },
+      "ANSC": {
+        "status": "PASS",
+        "reason": "Каждый wrong полный и имеет защитимую ошибочную модель: A переставляет val/var, B переносит ограничения lateinit на тип lazy, C смешивает lazy с вычисляемым getter. Ложность не трактуется как неполнота."
+      },
+      "RU": {
+        "status": "PASS",
+        "reason": "Все опции и sections читаются грамматически и связно; самостоятельной ошибки понятности или русского языка не найдено. Неточные категоричные утверждения в теории — фактические/связностные дефекты FACTS и LINKAGE, но сами по себе не доказывают дефект RU. Формулировка «извне» понятна, просто ограничивает механизм ложным условием."
+      }
+    }
+  },
+  "coordinator_notes": [
+    "Scope is exactly Q12:B0 and Q20:B0, all eight option texts, 34 sections, both theories and common preamble. No whole-topic acceptance.",
+    "Fresh author-independent gpt-6-luna context completed sealed A before disclosed B. Original B reports and subsequent addenda are all retained.",
+    "Q12 original B contained English reasons, an unsupported page-publication date and a midnight placeholder. Its Russian addendum supplies the effective reasons and actual clock; CLI receipts establish chronology. The placeholder is not treated as the actual completion time.",
+    "Q20 initial SFPL/RU FAIL and inconsistent FACTS PASS were reconsidered against exact texts and definitions before registration. Truth and completeness do not by themselves determine SFPL or RU. Effective FACTS/LINKAGE FAIL remain.",
+    "Minor attribution errata retained transparently: Q12 addendum phrase about B/D giving context concerns D literally; Q20 ANSC B should read removal of lateinit type restrictions by analogy with lazy, as correctly described in the raw comparative assessment. Neither note changes a verdict or product text.",
+    "Runtime probes were executed by the author on existing installed Kotlin/JVM 2.4.10, JVM17 bytecode, Microsoft JDK21.0.10; the independent reviewer did not run them. No application/container/service execution or downloads.",
+    "Full working-file hash includes preserved Q5/Q30 edits excluded from the commit; selected Q12/Q20 equal the scoped staged candidate.",
+    "Global PLAN/checkpoint/sync remain coordinator-owned."
+  ]
+}

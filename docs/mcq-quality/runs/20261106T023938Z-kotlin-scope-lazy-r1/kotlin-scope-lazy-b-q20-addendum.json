@@ -1,0 +1,34 @@
+{
+  "q_number": 20,
+  "block_idx": 0,
+  "actual_utc_time": "2026-11-06T02:46:26Z",
+  "measurements": {
+    "word_counts_A_B_C_D": [15,17,16,18],
+    "inline_code_spans_A_B_C_D": [4,4,4,4],
+    "sentence_counts_A_B_C_D": [1,1,1,1],
+    "digit_counts_A_B_C_D": [0,0,0,0],
+    "length_chars_A_B_C_D": [117,131,118,125]
+  },
+  "effective_checks": {
+    "CONTENT": {"status":"PASS","reason":"A-D являются законченными ответами на обе стороны сравнения; A/B/C не опускают признак, а утверждают неверную модель."},
+    "FACTS": {"status":"FAIL","reason":"D верен, A/B/C неверны по конкретным и защитимым заблуждениям. Однако прочитанная теория тоже входит в проверяемую пару: фраза «значение придёт снаружи» задаёт внешний источник как условие lateinit, а «Всегда инициализирован при доступе» без оговорки неверно, поскольку после исключения initializer lazy будет запущен при следующем доступе. Поэтому прежний FACTS PASS был несовместим с его findings и исправлен на FAIL."},
+    "LINKAGE": {"status":"FAIL","reason":"Теория непосредственно объясняет отличие, но содержит оба указанных чрезмерных обобщения и требует ремонта: lateinit требует явного позднего присваивания, но источник может быть внутри того же объекта; lazy кэширует успешное значение, однако исключение оставляет возможность повторной инициализации."},
+    "SECTIONS": {"status":"PASS","reason":"Проверены все 17 sections. Контрфактические примеры и пояснения A-C согласуются с ошибочными моделями; D-example явно показывает метод того же объекта как источник присваивания. A корректно различает var-хранилище Lazy<T> и var by lazy: standard Lazy имеет getValue для val, но не setValue для var. Пояснения о retry и PUBLICATION согласованы с API."},
+    "SFPL": {"status":"PASS","reason":"Все варианты — одно предложение, используют четыре одинаковых inline-code объекта, строятся как парное сравнение lazy/lateinit. Длины 15/17/16/18 слов и 117/131/118/125 символов дают небольшой разброс, но D не является единственным длинным или единственным двучастным вариантом. Конкретного сигнала формы, который сам по себе выдает ключ, не выявлено; прежнее SFPL FAIL ошибочно выводило форму из истинности D и полноты wrong. Точная формулировка D — содержательная точность, а не отдельный поверхностный признак."},
+    "ANSC": {"status":"PASS","reason":"Каждый wrong полный и имеет защитимую ошибочную модель: A переставляет val/var, B переносит ограничения lateinit на тип lazy, C смешивает lazy с вычисляемым getter. Ложность не трактуется как неполнота."},
+    "RU": {"status":"PASS","reason":"Все опции и sections читаются грамматически и связно; самостоятельной ошибки понятности или русского языка не найдено. Неточные категоричные утверждения в теории — фактические/связностные дефекты FACTS и LINKAGE, но сами по себе не доказывают дефект RU. Формулировка «извне» понятна, просто ограничивает механизм ложным условием."}
+  },
+  "findings": [
+    {"field":"q20-theory-0.text, абзац 1","quote":"если значение придёт снаружи — `lateinit`","affected_checks":["FACTS","LINKAGE"],"reason":"lateinit требует явного присваивания после объявления и до чтения, но не внешнего источника; его может выполнить метод того же экземпляра, как показано в D example.","suggestion":"Заменить на «если значение нужно присвоить позже явным кодом — lateinit»; DI и setup назвать примерами, а не условием."},
+    {"field":"q20-theory-0.text, строка таблицы «Проверка инициализации»","quote":"Всегда инициализирован при доступе","affected_checks":["FACTS","LINKAGE"],"reason":"Абсолютная формулировка не учитывает исключение initializer. API Lazy предписывает новую попытку инициализации при следующем доступе после исключения; isInitialized также возвращает false до успешной инициализации.","suggestion":"Уточнить: lazy вычисляет значение при чтении и сохраняет успешный результат; после исключения следующая попытка запускает initializer повторно."}
+  ],
+  "sources": [
+    {"url":"https://kotlinlang.org/docs/properties.html#late-initialized-properties-and-variables","checked_claim":"lateinit — var; тип non-null и non-primitive; неинициализированное чтение бросает исключение; примеры DI/setup иллюстрируют, но не ограничивают источник присваивания.","version":"Официальная Kotlin Properties page, просмотр 2026-11-06","checked_at":"2026-11-06"},
+    {"url":"https://kotlinlang.org/docs/delegated-properties.html#lazy-properties","checked_claim":"lazy() создаёт Lazy<T>; getValue выполняет initializer и запоминает успешный результат; getValue/setValue — требования делегатов для val/var.","version":"Официальная Kotlin Delegated properties page, просмотр 2026-11-06","checked_at":"2026-11-06"},
+    {"url":"https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/lazy.html","checked_claim":"initializer вызывается при доступе, успешное значение сохраняется; после исключения следующая попытка переинициализирует; стандартная lazy() использует SYNCHRONIZED по умолчанию, есть режимы.","version":"Kotlin stdlib API 2.4, просмотр 2026-11-06","checked_at":"2026-11-06"},
+    {"url":"https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-lazy/","checked_claim":"Lazy имеет read-only value и extension getValue для делегирования read-only свойства; API страницы не заявляет setValue для Lazy.","version":"Kotlin stdlib API 2.4, просмотр 2026-11-06","checked_at":"2026-11-06"},
+    {"url":"https://kotlinlang.org/docs/delegated-properties.html#property-delegate-requirements","checked_claim":"delegate для val предоставляет getValue; для var дополнительно требуется setValue. Поэтому стандартный Lazy delegate поддерживает val by lazy, не var by lazy без пользовательского setValue.","version":"Официальная Kotlin Delegated properties page, просмотр 2026-11-06","checked_at":"2026-11-06"}
+  ],
+  "surfaces_read": ["Видимый q20-stem, theory-0, options A-D и все 17 sections из ранее прочитанных chunks; exact option texts повторно сопоставлены с метриками.","Kotlin Properties page.","Kotlin Delegated properties page, в том числе Lazy properties и Property delegate requirements.","Kotlin Lazy API page и lazy() API page."],
+  "limitations": ["Повторно не запускались Kotlin-пробы и не использованы пробы автора.","Исходник проекта не изменялся.","Это addendum корректирует спорные вердикты предыдущего отчёта; исходный B-review сохранён как история.","FINAL: NOT_RUN до отдельного запроса на scoped gate."]
+}

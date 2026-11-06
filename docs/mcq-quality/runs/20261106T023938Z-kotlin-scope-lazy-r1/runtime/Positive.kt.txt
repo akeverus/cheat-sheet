@@ -1,0 +1,42 @@
+fun scopeExample() {
+val text = "кот"
+check(text.let { word -> word.length } == 3)
+check(text.run { length } == 3)
+check(with(text) { length } == 3)
+check(text.apply { length } === text)
+check(text.also { word -> word.length } === text)
+}
+fun lateExample() {
+class Example {
+    val message by lazy { "готово" }
+    lateinit var name: String
+    fun setup() { name = "Сергей" }
+}
+val example = Example()
+check(example.message == "готово")
+example.setup()
+check(example.name == "Сергей")
+}
+fun main() {
+    scopeExample()
+    lateExample()
+    check(run { 1 + 2 } == 3)
+    var calls = 0
+    val cached by lazy { calls++; "готово" }
+    check(cached == "готово" && cached == "готово" && calls == 1)
+    var attempts = 0
+    val retry by lazy {
+        attempts++
+        if (attempts == 1) error("первая попытка")
+        "успех"
+    }
+    check(runCatching { retry }.isFailure)
+    check(retry == "успех" && retry == "успех" && attempts == 2)
+    class Unassigned { lateinit var value: String }
+    check(runCatching { Unassigned().value }.exceptionOrNull() is UninitializedPropertyAccessException)
+    var holder = lazy { 7 }
+    check(holder.value == 7)
+    holder = lazy { 8 }
+    check(holder.value == 8)
+    println("scope/lazy/lateinit: PASS")
+}

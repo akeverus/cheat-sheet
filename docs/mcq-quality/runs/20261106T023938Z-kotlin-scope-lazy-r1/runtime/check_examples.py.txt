@@ -1,0 +1,46 @@
+from pathlib import Path
+from datetime import datetime,timezone
+import json,subprocess,hashlib
+W=Path(__file__).parent;out=W/'kotlin-scope-lazy-runtime';out.mkdir(exist_ok=True)
+d=json.loads((W/'kotlin-scope-lazy-candidate.json').read_text())
+def example(n,label):return next(o for o in next(q for q in d['questions'] if q['q_number']==n)['blocks'][0]['options'] if o['label']==label)['sections']['example']
+scope=example(12,'C').split('Здесь явно')[0].rstrip();late=example(20,'D').split('Значение lateinit')[0].rstrip()
+source='fun scopeExample() {\n'+scope+'\n}\nfun lateExample() {\n'+late+'\n}\n'+'''fun main() {
+    scopeExample()
+    lateExample()
+    check(run { 1 + 2 } == 3)
+    var calls = 0
+    val cached by lazy { calls++; "готово" }
+    check(cached == "готово" && cached == "готово" && calls == 1)
+    var attempts = 0
+    val retry by lazy {
+        attempts++
+        if (attempts == 1) error("первая попытка")
+        "успех"
+    }
+    check(runCatching { retry }.isFailure)
+    check(retry == "успех" && retry == "успех" && attempts == 2)
+    class Unassigned { lateinit var value: String }
+    check(runCatching { Unassigned().value }.exceptionOrNull() is UninitializedPropertyAccessException)
+    var holder = lazy { 7 }
+    check(holder.value == 7)
+    holder = lazy { 8 }
+    check(holder.value == 8)
+    println("scope/lazy/lateinit: PASS")
+}
+'''
+p=out/'Positive.kt';p.write_text(source)
+java='/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/java'
+def execute(cmd):
+ p=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,timeout=60)
+ return {'command':cmd,'exit_code':p.returncode,'stdout':p.stdout,'stderr':p.stderr}
+result={'captured_at':datetime.now(timezone.utc).isoformat(),'compiler':execute(['/usr/local/bin/kotlinc','-version']),'runtime':execute([java,'-version']),'scope_example_sha256':hashlib.sha256(scope.encode()).hexdigest(),'late_example_sha256':hashlib.sha256(late.encode()).hexdigest(),'source_sha256':hashlib.sha256(source.encode()).hexdigest(),'limits':'Offline exact example fragments wrapped in functions plus listed semantic probes. No application/project build or service/container execution; no downloads.'}
+result['compile']=execute(['/usr/local/bin/kotlinc',str(p),'-jvm-target','17','-include-runtime','-d',str(out/'positive.jar')]);assert result['compile']['exit_code']==0,result['compile'];print('positive compiled',flush=True)
+result['run']=execute([java,'-jar',str(out/'positive.jar')]);assert result['run']['exit_code']==0 and 'PASS' in result['run']['stdout'],result['run'];print('positive runtime PASS',flush=True)
+cases=[('VarByLazy','fun main() { var value by lazy { 1 }; value = 2 }','setValue'),('LateVal','class Invalid { lateinit val value: String }','mutable'),('LatePrimitive','class Invalid { lateinit var value: Int }','primitive'),('LateNullable','class Invalid { lateinit var value: String? }','nullable')]
+result['negative_compilations']=[]
+for name,code,expected in cases:
+ f=out/(name+'.kt');f.write_text(code+'\n');check=execute(['/usr/local/bin/kotlinc',str(f),'-jvm-target','17','-d',str(out/(name+'.jar'))]);check.update(name=name,expected_diagnostic_substring=expected,source_sha256=hashlib.sha256(f.read_bytes()).hexdigest());result['negative_compilations'].append(check)
+ assert check['exit_code']!=0 and expected.lower() in check['stderr'].lower(),check
+ print(name+' expected compiler rejection',flush=True)
+result['status']='PASS';result['completed_at']=datetime.now(timezone.utc).isoformat();(out/'execution.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n');print('All example/probe checks completed',flush=True)
