@@ -1,0 +1,208 @@
+{
+  "reviewer": "mutation_performance_owner_independent",
+  "model": "gpt-6-luna",
+  "hashes": {
+    "mcq": "77659420e9b1e57ab71556cff0172c4dbb1377bb64d618733c8575c96f8d4226",
+    "theory": "1cdc9c138462c5e6ea8ffe3c20e18d80c08f73579a4b804083098bff3af24373"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "scope": [
+    "Q15:B0"
+  ],
+  "options": [
+    {
+      "label": "A",
+      "completeness": "Полная, неверная модель: один baseline определяет поведение тестов на всех новых мутантах.",
+      "validity": "WRONG",
+      "wrong_defense": "Можно защитить при наличии уже валидированных пригодных результатов, но текст утверждает достаточность одного исходного прогона для новых мутантов."
+    },
+    {
+      "label": "B",
+      "completeness": "Законченная причинная модель, неверная: все мутанты перекомпилируются, длительность тестов не влияет.",
+      "validity": "WRONG",
+      "wrong_defense": "Некоторые build-процессы действительно перекомпилируют варианты, но не все движки это требуют; тесты всё равно остаются затратой. PIT меняет байт-код."
+    },
+    {
+      "label": "C",
+      "completeness": "Полная, неверная модель: время всегда равно обычному прогону и не зависит от числа мутантов.",
+      "validity": "WRONG",
+      "wrong_defense": "С одним мутантом, быстрым отбором или пригодным reuse работа может быть близка к обычному прогону; вариант делает это общим правилом."
+    },
+    {
+      "label": "D",
+      "completeness": "Полный, верный обобщённый ответ: число мутантов, длительность выбранных тестов и overhead.",
+      "validity": "CORRECT",
+      "wrong_defense": "Не wrong. Это не универсальная точная формула; selection, ранняя остановка, параллелизм меняют стоимость."
+    }
+  ],
+  "sections": [
+    {
+      "label": "A",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Точно указывает на необходимость собственных наблюдений или обоснованного reuse."
+    },
+    {
+      "label": "A",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Называет смешение baseline с исходами мутаций."
+    },
+    {
+      "label": "A",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Зелёный baseline не предсказывает ещё не выполненный мутант; контрфакт согласован."
+    },
+    {
+      "label": "A",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Общее, но уместное исправление, не противоречит text."
+    },
+    {
+      "label": "B",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "PIT меняет байт-код, опровергая универсальную перекомпиляцию; тестовые исполнения остаются затратой."
+    },
+    {
+      "label": "B",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Конкретно объясняет происхождение ошибочной модели: заметная фаза сборки не обязательна для всех движков."
+    },
+    {
+      "label": "B",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Если длительность теста не влияла бы, смена миллисекунд на минуты не меняла бы время; точный контрфакт к B."
+    },
+    {
+      "label": "B",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Раздельные измерения подготовки и исполнения уместны; нет обещания обязательной перекомпиляции."
+    },
+    {
+      "label": "C",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Количество мутантов/тестов обычно влияет на работу; selection/cache могут уменьшить реальные запуски."
+    },
+    {
+      "label": "C",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Обобщение короткой демонстрации на любой объём правдоподобно, хотя пример не дан в visibletext."
+    },
+    {
+      "label": "C",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Контрфакт про тысячи реально проверяемых мутантов логически согласован с ошибочной независимостью от их количества."
+    },
+    {
+      "label": "C",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Число проверок и overhead соответствуют теории; запрет обещания постоянного времени адресует «всегда»."
+    },
+    {
+      "label": "D",
+      "field": "explanation",
+      "status": "PASS",
+      "reason": "Подготовка, выбранные проверки и среда составляют затраты; история/bail/parallel меняют стоимость; пояснение подробнее опции допустимо."
+    },
+    {
+      "label": "D",
+      "field": "example",
+      "status": "PASS",
+      "reason": "1000×30с=30000с=8ч20мин верно. Полный одинаковый последовательный набор на каждом мутанте, без истории/bail/parallel и допрасходов; не benchmark."
+    },
+    {
+      "label": "D",
+      "field": "when_to_apply",
+      "status": "PASS",
+      "reason": "Измерения числа мутантов, тестов и стоимости до выбора CI-бюджета уместны, нет универсальной оценки."
+    },
+    {
+      "label": "D",
+      "field": "edge_cases",
+      "status": "PASS",
+      "reason": "N*T не универсальная точная формула; NoCoverage может определяться без отдельного тестового запуска при некоторых оптимизациях, не всех движках."
+    },
+    {
+      "label": "D",
+      "field": "related",
+      "status": "PASS",
+      "reason": "Q16/Q20 связаны с оптимизацией и CI; повреждённой или нерелевантной ссылки не найдено."
+    }
+  ],
+  "checks": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "Вопрос спрашивает причины медлительности, все модели отвечают по этой оси."
+    },
+    "FACTS": {
+      "status": "PASS",
+      "reason": "PIT запускает тесты на мутантах с отбором по покрытию/времени; Strykercoverage может отбирать покрывающие проверки или классифицировать непокрытые без них. Универсальные моделиA–C неверны."
+    },
+    "LINKAGE": {
+      "status": "PASS",
+      "reason": "Локальная теория прямо объясняет число мутантов, выбранные тесты, длительность и overhead."
+    },
+    "SECTIONS": {
+      "status": "PASS",
+      "reason": "Фактически прочитанные17полей согласованы с вариантами; скрытая разница5/4полей не является cue до выбора."
+    },
+    "SFPL": {
+      "status": "PASS",
+      "reason": "Видимые ответы однофразовые и причинные, близки по объёму, D не самый длинный и без уникального числа/примера/оговорки. КатегоричностьA–C — часть их ложных моделей, не самостоятельный признак ключа."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "Все четыре — законченные модели. Wrong могут отрицать предпосылку вопроса; ложность не означает неполноту."
+    },
+    "RU": {
+      "status": "PASS",
+      "reason": "Заголовок, теория, варианты и все поля ясны при последовательном чтении; baseline/overhead понятны по контексту."
+    }
+  },
+  "sources": [
+    {
+      "url": "https://pitest.org/quickstart/basic_concepts/",
+      "checked_claim": "Мутации байт-кода, реальные проверки мутантов, coverage/timing selection.",
+      "version": "PIT official documentation",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-js/configuration/#coverageanalysis-string",
+      "checked_claim": "off/all/perTest, NoCoverage и ограничения runner; непокрытые могут классифицироваться без теста.",
+      "version": "StrykerJS official configuration",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-js/configuration/#disablebail-boolean",
+      "checked_claim": "Ранняя остановка после первого падения при поддержке runner, влияние на стоимость.",
+      "version": "StrykerJS official configuration",
+      "checked_at": "2026-11-06"
+    }
+  ],
+  "findings": [],
+  "limitations": [
+    "Механический перенос фактических inline-суждений с явного разрешения reviewer; проверка переноса перед FINAL обязательна.",
+    "Первичный список17наблюдений смешивал form иfields, поэтому не считался17полевым покрытием. Затем отдельно получены недостающие12точных полевых оценок; итог17полей собран из фактических суждений, не авторских PASS.",
+    "Strykerdocs проверены как документированная модель, не как обещание соответствия установленной версии проекта.",
+    "Никаких runtime/build/CI/UI запусков, это источник/арифметическая модель, не benchmark."
+  ],
+  "provenance": {
+    "task": "/root/mutation_performance_owner_independent",
+    "authorization": "Разрешаю механический перенос моих Q15 фактических оценок; итоговый JSON сверю перед scopedFINAL.",
+    "kind": "actual independent inline verdicts; coordinator formatting only"
+  }
+}

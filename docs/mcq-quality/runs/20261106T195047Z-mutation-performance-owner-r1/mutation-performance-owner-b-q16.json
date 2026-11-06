@@ -1,0 +1,221 @@
+{
+  "reviewer": "mutation_performance_owner_independent",
+  "model": "gpt-6-luna",
+  "hashes": {
+    "mcq": "77659420e9b1e57ab71556cff0172c4dbb1377bb64d618733c8575c96f8d4226",
+    "theory": "1cdc9c138462c5e6ea8ffe3c20e18d80c08f73579a4b804083098bff3af24373"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "scope": [
+    "Q16:B0"
+  ],
+  "options": [
+    {
+      "label": "A",
+      "completeness": "Полный, верный общий ответ: сокращение работы, пригодный reuse и изоляция при меньших перезапусках.",
+      "validity": "CORRECT",
+      "wrong_defense": "Не wrong."
+    },
+    {
+      "label": "B",
+      "completeness": "Полная неверная универсальная модель: полный набор без истории, перезапуск каждого мутанта, только ядра.",
+      "validity": "WRONG",
+      "wrong_defense": "Простой baseline или проект с одной доступной parallel-настройкой возможен, но не обосновывает единственность такого способа; есть selection/incremental/worker reuse."
+    },
+    {
+      "label": "C",
+      "completeness": "Полная смешанная модель: полезный reuse с неверным приоритетом непокрытых мутантов.",
+      "validity": "WRONG",
+      "wrong_defense": "Непокрытый код можно приоритизировать для улучшения покрытия, но запуск не достигающих мутанта тестов не проверяет его поведение; NoCoverage не основание такого исполнения."
+    },
+    {
+      "label": "D",
+      "completeness": "Полная частично верная модель: отбор/история плюс ложная всеобщая невозможность worker reuse.",
+      "validity": "WRONG",
+      "wrong_defense": "Перезапуск полезен при утечках состояния или ограничениях runner, но не означает всеобщую невозможность reuse; поддерживаемый lifecycle существует."
+    }
+  ],
+  "sections": [
+    {
+      "label": "A",
+      "field": "explanation",
+      "status": "PASS",
+      "reason": "Различает selection, incremental, worker reuse и дополнительный parallelism; подробнее text, но без скрытого нужного для выбора условия."
+    },
+    {
+      "label": "A",
+      "field": "example",
+      "status": "PASS",
+      "reason": "Изменение покрывающего теста может инвалидировать результат при неизменном production-классе."
+    },
+    {
+      "label": "A",
+      "field": "when_to_apply",
+      "status": "PASS",
+      "reason": "Выбор по измеренному bottleneck и сохранение изоляции практичны и согласованы с text."
+    },
+    {
+      "label": "A",
+      "field": "edge_cases",
+      "status": "PASS",
+      "reason": "NoCoverage входит в Undetected, Valid=Detected+Undetected, поэтому может остаться в знаменателе; история требует инвалидации, минуты не гарантируются."
+    },
+    {
+      "label": "A",
+      "field": "related",
+      "status": "PASS",
+      "reason": "Q8 о знаменателе и Q15 о стоимости подходят; явной проблемы ссылки не найдено."
+    },
+    {
+      "label": "B",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Три альтернативы parallelism и условие изоляции прямо опровергают исключительность B."
+    },
+    {
+      "label": "B",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Восприятие parallel как единственной оптимизации кратко и правдоподобно объясняет заблуждение."
+    },
+    {
+      "label": "B",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Отбор1релевантного теста вместо100 проверяет ошибочную исключительность ядер."
+    },
+    {
+      "label": "B",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Выбор по измеренному узкому месту и разные задачи механизмов исправляют тезис «только ядра»."
+    },
+    {
+      "label": "C",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Не достигающие строки тесты не дают сигналов assertions о ней; адресно к ложной части C."
+    },
+    {
+      "label": "C",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Риск отсутствия покрытия ошибочно смешивается с пользой дополнительных исполнений."
+    },
+    {
+      "label": "C",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Повторный прогон не достигающих строки тестов не создаёт нового наблюдения о проверках строки."
+    },
+    {
+      "label": "C",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "NoCoverage надо показывать, но классификация не автоматически исключает мутант из метрики; соответствует источнику."
+    },
+    {
+      "label": "D",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Reuse доступен при управляемой изоляции/состоянии; полный перезапуск не универсален."
+    },
+    {
+      "label": "D",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Изоляция ошибочно отождествляется с полной перезагрузкой."
+    },
+    {
+      "label": "D",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Универсальная невозможность reuse исключала бы корректный анализ поддерживающих его движков; это следствие ложного тезиса, не ложный факт."
+    },
+    {
+      "label": "D",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Поддерживаемый lifecycle и необходимые в конкретных случаях перезапуски не противоречат text-опровержению."
+    }
+  ],
+  "checks": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "Вопрос о способах ускорения и incremental/in-process ограничениях; все4модели относятся к этим механизмам."
+    },
+    "FACTS": {
+      "status": "PASS",
+      "reason": "PIThistory учитывает класс/тесты с ограничениями зависимостей и риском ошибок; Strykercoverage иworker lifecycle документированы. NoCoverage→Undetected, Valid=Detected+Undetected; пропуск исполнения не автоматически исключение из score."
+    },
+    "LINKAGE": {
+      "status": "PASS",
+      "reason": "Локальная теория покрывает отбор, пригодную историю, in-process/worker reuse и изоляцию."
+    },
+    "SECTIONS": {
+      "status": "PASS",
+      "reason": "Все17точныхsections оценены индивидуально: A5,B4,C4,D4; Cразличает NoCoverage и запуск, Dоговаривает lifecycle."
+    },
+    "SFPL": {
+      "status": "PASS",
+      "reason": "Общий каркас механизм+условие/ограничение. A156/17,B154/19,C151/17,D158/17. ПравильныйA не самый длинный, Dне единственный полный/осторожный; стратегии сопоставимо покрывают оси."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "Все4полны: Bложная исключительностьparallel, Cневерный критерий при полезномreuse, Dодна общая ошибка о невозможностиreuse; неверность не означает неполноту."
+    },
+    "RU": {
+      "status": "PASS",
+      "reason": "При последовательном чтении существенных ошибок языка нет; incremental/worker/NoCoverage объясняются контекстом."
+    }
+  },
+  "sources": [
+    {
+      "url": "https://pitest.org/quickstart/incremental_analysis/",
+      "checked_claim": "Пригодность history учитывает класс/тесты; потенциальная ошибка и неполный учёт зависимостей.",
+      "version": "PITofficialdocs",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-js/configuration/#coverageanalysis-string",
+      "checked_claim": "all классифицирует NoCoverage безтеста; perTest выбирает покрывающие проверки и требует независимых тестов.",
+      "version": "StrykerJSofficialconfiguration",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-js/configuration/#maxtestrunnerreuse-number",
+      "checked_claim": "Worker restart afterN,0означает бесконечноеreuse.",
+      "version": "StrykerJSofficialconfiguration",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-js/parallel-workers/",
+      "checked_claim": "Workerprocesses параллельны, общие ресурсы могут конфликтовать.",
+      "version": "StrykerJSofficialdocs",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/",
+      "checked_claim": "NoCoverage входит вUndetected, Valid=Detected+Undetected, score=Detected/Valid.",
+      "version": "Strykerofficialmetrics",
+      "checked_at": "2026-11-06"
+    }
+  ],
+  "findings": [],
+  "limitations": [
+    "Механический перенос фактических inline-оценок с явного разрешения, проверка тем же reviewer перед FINAL обязательна.",
+    "Первичный numberedсписок включалtext-пункты, а не17sections; отсутствовавшие A.related/B.how дополнительно оценены, дваDполя получены отдельно. Итог17реальныхполей, не17произвольныхпунктов.",
+    "Источники — официальная документированная модель, соответствие конкретной установленной версии проекта не проверялось.",
+    "Неудачная попытка открыть другой URL /mutants/#states не считается источником. Затем действительно прочитан верный mutant-states-and-metrics URL.",
+    "Нет runtime/build/CI/UI запусков."
+  ],
+  "provenance": {
+    "task": "/root/mutation_performance_owner_independent",
+    "authorization": "Подтверждаю перенос фактических Q16 оценок и последующую сверку перед моим scoped FINAL.",
+    "kind": "actual independent inline verdicts, coordinator formatting only"
+  }
+}
