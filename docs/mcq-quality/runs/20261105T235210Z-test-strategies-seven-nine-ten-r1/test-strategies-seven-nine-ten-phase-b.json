@@ -1,0 +1,238 @@
+{
+  "phase": "B partial review, Q7/Q9/Q10",
+  "model": "gpt-6-luna (as specified by task; runtime identity not independently verified)",
+  "items": [
+    {
+      "q_number": 7,
+      "block_idx": 0,
+      "choice": "B",
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "Видимый вопрос содержит две задачи — определить BDD и объяснить реализацию с Cucumber; B отвечает на обе."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "Официальная документация Cucumber подтверждает BDD через collaborative examples/shared understanding и сопоставление Gherkin-шагов с выражениями step definitions, которые связывают их с исполняемым методом. Источники: https://cucumber.io/docs/bdd/ (checked_claim: BDD collaborative examples/shared understanding; current page, дата публикации не указана); https://cucumber.io/docs/cucumber/step-definitions/ (checked_claim: matching step definition expression links Gherkin step to method; current docs, дата не указана); https://cucumber.io/docs/gherkin/reference/ (checked_claim: step text matched to code block/step definition; current reference, дата не указана). Ограничение: проверены только текущие страницы документации; runtime не запускался."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "Теория описывает BDD как совместное обсуждение сценариев и содержит практический пример Gherkin и step definitions; B прямо следует этому материалу."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "A/C/D sections объясняют конкретные неверные модели и корректное поведение; B sections согласованы с Cucumber/BDD и дополняют примером, применимостью, ограничениями и связями."
+        },
+        "SFPL": {
+          "status": "FAIL",
+          "reason": "Все варианты двусоставны, но B один формулирует полный позитивный механизм реализации и явно называет ожидаемый результат; wrong построены через ложные механизмы/детали. Есть риск подсказки формой и полнотой."
+        },
+        "ANSC": {
+          "status": "FAIL",
+          "reason": "B — полный ответ на обе части. A сохраняет часть определения BDD, но отрицает step definitions; C отвечает на обе части с ошибочной моделью сопоставления; D отвечает через неверное утверждение о Scenario Outline, не раскрывая реализацию BDD с Cucumber."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Вопрос и тексты опций понятны по-русски, термины API уместны. Небольшая тяжеловесность «связывают со step definitions» не мешает смыслу."
+        }
+      },
+      "options": [
+        {
+          "label": "A",
+          "covered_parts": "BDD на примерах; реализация Cucumber",
+          "completeness": "две части, но механизм реализации сведён к ложной модели без связывания",
+          "truth": "ложно: инструменту нужны matching step definitions",
+          "defense_attempt": "первую часть можно защитить; вторую — нет, если Cucumber подразумевается как исполняющий сценарии",
+          "problem": "отрицает необходимое связывание текста шага с кодом"
+        },
+        {
+          "label": "B",
+          "covered_parts": "определение BDD и его реализация Cucumber",
+          "completeness": "полный и конкретный ответ на обе части",
+          "truth": "защитимо и подтверждено официальной документацией",
+          "defense_attempt": "не требуется: это ключевой ответ",
+          "problem": "полнота и формулировка механизма могут выделять ответ"
+        },
+        {
+          "label": "C",
+          "covered_parts": "BDD на примерах; механизм сопоставления шагов",
+          "completeness": "две части формально закрыты",
+          "truth": "ложно: сопоставляют выражение с текстом шага, а не выбирают реализацию только по Given/When/Then",
+          "defense_attempt": "можно принять за роль аннотаций, но утверждение о подписи выражения неверно",
+          "problem": "искажает критерий выбора step definition"
+        },
+        {
+          "label": "D",
+          "covered_parts": "BDD на примерах; отдельная деталь Gherkin",
+          "completeness": "не раскрывает реализацию шагов Cucumber; подменяет её деталями Outline",
+          "truth": "ложно: строки Examples разворачиваются в отдельные подстановки",
+          "defense_attempt": "часть про примеры BDD верна, но остальной текст не отвечает на реализацию",
+          "problem": "неполный ответ и отвлекающая ошибка о Scenario Outline"
+        }
+      ],
+      "theory_findings": [
+        "Теория говорит, что один текст служит требованием и тестом, что звучит слишком категорично без указания на корректно автоматизированные examples; это не меняет ключ Q7.",
+        "Утверждение, что BDD — развитие TDD, не требуется для ответа и в проверенных первоисточниках не подтверждалось."
+      ]
+    },
+    {
+      "q_number": 9,
+      "block_idx": 0,
+      "choice": "A",
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "Вопрос спрашивает практическую реализацию Test-First; A даёт последовательность действий, включая проверку красного результата, реализацию и рефакторинг."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "Martin Fowler, “Test Driven Development”, 2023-12-11 (страница указывает исходную публикацию 2005-03-05 и ревизию 2023-12-11), https://martinfowler.com/bliki/TestDrivenDevelopment.html. Проверено: повторяемые шаги — написать тест следующей функции, писать код пока тест не проходит, затем рефакторить; также сначала можно составить список случаев и выбирать следующий. Ограничение: это авторское объяснение TDD, не нормативный стандарт и не проверка runtime. Нижеуказанный CI gate не является определением подхода."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "Теория конкретно связывает test-first с тестом до реализации, последовательным выбором случая и рефакторингом после зелёного; A следует этому описанию."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "Опровержения B/C/D адресуют смешение рефакторинга с новой функцией, обратный порядок и недоказательность одного зелёного результата. A edge_cases уместно отделяет CI/gates от определения."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "Все четыре варианта используют параллельный практический каркас и перечисляют последовательность. A не выделяется дополнительным принципиальным шагом: B/C/D меняют порядок/состав цикла; формальная подсказка умеренная и не подтверждает дефект сама по себе."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "Каждый вариант явно отвечает на практическое «как», но A единственный корректен. B и C описывают искажённые последовательности, D объясняет ошибочное подтверждение через зелёный запуск. Это не означает автоматически SFPL-дефект."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Русский язык естественный и достаточно ясный; слова «зелёный результат» и «рефакторинг» используются последовательно. Английское Test-First является термином темы."
+        }
+      },
+      "options": [
+        {
+          "label": "A",
+          "covered_parts": "порядок теста, реализация, проверка падения, рефакторинг",
+          "completeness": "полный пошаговый ответ",
+          "truth": "верно по Fowler: test → code until pass → refactor",
+          "defense_attempt": "ключевой вариант; красная проверка корректно уточняет, что тест обнаруживает отсутствие требуемого поведения",
+          "problem": "заметная детализация, но остальные тоже дают последовательность шагов"
+        },
+        {
+          "label": "B",
+          "covered_parts": "порядок теста, реализация, дальнейшее изменение",
+          "completeness": "полный по форме, но подменяет рефакторинг новой возможностью",
+          "truth": "неверно: новая функция меняет поведение и требует нового тестового цикла",
+          "defense_attempt": "можно защитить как планирование следующего функционального шага в целом, но не как рефакторинг без теста",
+          "problem": "смешивает изменение поведения с рефакторингом"
+        },
+        {
+          "label": "C",
+          "covered_parts": "порядок реализации, тестирования и рефакторинга",
+          "completeness": "полный по форме, но тест появляется после реализации",
+          "truth": "не соответствует Test-First для нового случая",
+          "defense_attempt": "последующее добавление теста бывает полезно для существующего кода, но не делает исходную реализацию test-first",
+          "problem": "обращает порядок работы"
+        },
+        {
+          "label": "D",
+          "covered_parts": "порядок написания теста и кода; интерпретация результата",
+          "completeness": "полный по форме, утверждает ошибочный критерий проверки",
+          "truth": "зелёный результат после кода не показывает, что тест падал бы до изменения",
+          "defense_attempt": "может описать быстрый финальный прогон, но он не подтверждает наблюдение красной стадии",
+          "problem": "приписывает зелёному запуску доказательную силу, которой он не имеет"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://martinfowler.com/bliki/TestDrivenDevelopment.html",
+          "checked_claim": "TDD sequence and preplanned test-case list; CI gates are not definition",
+          "version_date": "2023-12-11 revision; originally 2005-03-05",
+          "limitations": "explanatory article, not normative specification; no runtime run"
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "block_idx": 0,
+      "choice": "B",
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "Видимый вопрос просит определить PBT; B сообщает о свойствах и данных для их проверки, а также о контрпримерах/shrinking."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "jqwik User Guide 1.10.2 https://jqwik.net/docs/1.10.2/user-guide.html (version 1.10.2, official guide): checked claims — properties receive generated values; jqwik documents generation modes, result shrinking, stateful testing and data-driven properties. Shrinking is an algorithm with modes/constraints, not a global-minimum guarantee. General logical limitation: success on a finite sample alone does not establish unvisited domain values; guide also distinguishes exhaustive generation. Limits: source is jqwik implementation documentation rather than a general formal definition; no runtime execution."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "Теория охватывает свойства, генерацию, shrinking, примеры сортировки и jqwik; B согласуется с темой. Но теория чрезмерно обобщает: формулировка про любые входы/бесконечное покрытие не равна эмпирическому доказательству всех входов."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "B sections оговаривают область допустимых входов, слабость свойства, ограниченность shrinking и возможность разных режимов генерации; A/C/D sections объясняют конкретные заблуждения. Утверждение о любом свойстве не ограничено алгоритмами без состояния."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "Каждый вариант использует двухчастный каркас: описание метода и дополнительное утверждение/следствие. B более корректно квалифицирует shrinking словом «может», но это смысловая точность, не достаточная сама по себе формальная подсказка."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "Все варианты формально отвечают определением PBT и добавляют отличительное утверждение. Только B правильно описывает проверку свойства; A исключает критерий поведения, C выводит доказательство всего домена из выборки, D обещает глобальный минимум при shrinking. Неправильность distractor сама не считается SFPL-дефектом."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Язык опций ясен, термины уместны. В теории «верные для любых входных данных», «сотни случайных входов», «минимальный» и «покрывают бесконечно много входов» чрезмерно категоричны и могут создать неверное впечатление о доказательстве и границах PBT."
+        }
+      },
+      "options": [
+        {
+          "label": "A",
+          "covered_parts": "определение PBT через генерацию входов",
+          "completeness": "краткое определение плюс объяснение роли генератора",
+          "truth": "неверно: генерация не заменяет проверяемое свойство/оракул",
+          "defense_attempt": "может быть защитимо, если проверяемое свойство — отсутствие исключения/падения, но это уже критерий поведения, который текст исключает",
+          "problem": "отождествляет качество входов с корректностью результата"
+        },
+        {
+          "label": "B",
+          "covered_parts": "свойство, допустимые входы, проверка, shrinking контрпримера",
+          "completeness": "полный общий ответ",
+          "truth": "верно с оговоркой: shrinking может уменьшать контрпример, глобальный минимум не гарантирован",
+          "defense_attempt": "основной ответ; не ограничен простыми алгоритмами и допускает свойства для состояния/отношений",
+          "problem": "чуть выше конкретность, но A/C/D также содержат объясняющую вторую часть"
+        },
+        {
+          "label": "C",
+          "covered_parts": "свойство на входах и интерпретация успеха выборки",
+          "completeness": "полный, две части",
+          "truth": "ложно: конечная выборка сама не доказывает непосещённые значения",
+          "defense_attempt": "исчерпывающий конечный перебор может обосновать весь конечный домен, но утверждение о конечном прогоне не устанавливает такой перебор и упоминает весь домен в общем виде",
+          "problem": "подменяет тестирование доказательством"
+        },
+        {
+          "label": "D",
+          "covered_parts": "свойство и генерация; гарантия shrinking",
+          "completeness": "полный, две части",
+          "truth": "ложно: jqwik shrinking ограничен стратегией/режимом, не гарантирует абсолютный минимум",
+          "defense_attempt": "уменьшение может найти удобный простой пример, но текст обещает наименьший из всех и игнорирует ограничения",
+          "problem": "чрезмерная глобальная гарантия"
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://jqwik.net/docs/1.10.2/user-guide.html",
+          "checked_claim": "generation modes, shrinking modes/constraints, stateful testing, data-driven properties, exhaustive generation; a successful sampled run alone does not establish unvisited inputs",
+          "version_date": "jqwik 1.10.2 user guide",
+          "limitations": "product guide, not a formal theory text; no runtime run"
+        }
+      ]
+    }
+  ],
+  "consolidation_notes": [
+    "Q7 SFPL clarification: wrong answers being false while the key is positive is not by itself an SFPL defect; otherwise every MCQ would fail. Assess actual comparability of structure and completeness.",
+    "Q7 D has a separate ANSC/content issue: it does not explain the required step-to-code implementation mechanism. This finding is distinct from SFPL and can be addressed after preserving r1 evidence.",
+    "No production or index changes; no runtime tests were run."
+  ]
+}
