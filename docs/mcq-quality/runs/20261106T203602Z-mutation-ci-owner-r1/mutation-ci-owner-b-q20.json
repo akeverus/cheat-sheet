@@ -1,0 +1,223 @@
+{
+  "reviewer": "mutation_ci_owner_independent",
+  "model": "gpt-6-luna",
+  "checked_at": "2026-11-06T20:41:42.569865+00:00",
+  "scope": [
+    "Q20:B0"
+  ],
+  "hashes": {
+    "mcq": "575e854bd6b59bdd6d5d0e0c187b901fdab5b09e532419b85779e4245ffbc7b4",
+    "theory": "12884bcb3efcd6ac18e93eec5f719e8e172754c5dc986dd6f7de84960fe54076"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "surfaces_read": [
+    "Visible Markdown question",
+    "Own Q body",
+    "Shared preamble",
+    "All four visible options",
+    "All 17 named sections",
+    "Applicable standard, examiner, SFPL/ANSC and RU rules",
+    "Primary documentation actually opened by reviewer"
+  ],
+  "options": [
+    {
+      "label": "A",
+      "model": "Ограниченный PR и более широкий периодический анализ, история/отчёт, source-only пригодность.",
+      "completeness": "FULL",
+      "truth": "Неверен: тесты влияют на пригодность истории.",
+      "defense_attempt": "Можно вообразить грубую политику source-only, но явное исключение тестов противоречит пригодности reuse."
+    },
+    {
+      "label": "B",
+      "model": "PR/периодический анализ, история/отчёт, только ручной gate из-за якобы отсутствия автоматизации.",
+      "completeness": "FULL",
+      "truth": "Неверен: автоматический score-gate поддерживается.",
+      "defense_attempt": "Ручное approval допустимо как политика, но причина «автоматический gate не поддерживается» ложна."
+    },
+    {
+      "label": "C",
+      "model": "PR/более широкий анализ, пригодная история/отчёты, риск и бюджет для критерия.",
+      "completeness": "FULL",
+      "truth": "Верен: достаточный краткий CI-план.",
+      "defense_attempt": "Not applicable: correct."
+    },
+    {
+      "label": "D",
+      "model": "PR/периодический анализ, отчёты, восстановление прошлых статусов из diff.",
+      "completeness": "FULL",
+      "truth": "Неверен: diff не хранит прежние исходы.",
+      "defense_attempt": "Diff содержит правки файлов, а не старые killed/survived; защитить утверждение без подмены смысла нельзя."
+    }
+  ],
+  "sections": [
+    {
+      "label": "A",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Tests can invalidate reused results."
+    },
+    {
+      "label": "A",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Source-only diff is mistaken for complete dependency tracking."
+    },
+    {
+      "label": "A",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Removing a killing assertion would require revisiting the previous Killed assumption."
+    },
+    {
+      "label": "A",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Check code, tests and limitations."
+    },
+    {
+      "label": "B",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Threshold can yield a nonzero exit code."
+    },
+    {
+      "label": "B",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Reporting and enforcement are conflated."
+    },
+    {
+      "label": "B",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Counterfactual conflicts with the role of Stryker break."
+    },
+    {
+      "label": "B",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Configure the gate and inspect exit status."
+    },
+    {
+      "label": "C",
+      "field": "explanation",
+      "status": "PASS",
+      "reason": "Appropriate PR/wide pattern and history constraints."
+    },
+    {
+      "label": "C",
+      "field": "example",
+      "status": "PASS",
+      "reason": "Stryker and PIT persisted history distinction is correct."
+    },
+    {
+      "label": "C",
+      "field": "when_to_apply",
+      "status": "PASS",
+      "reason": "Risk, size and measured time guide application."
+    },
+    {
+      "label": "C",
+      "field": "edge_cases",
+      "status": "PASS",
+      "reason": "Scope and reuse are distinct; cold history does not remove other optimizations; full PR is permissible."
+    },
+    {
+      "label": "C",
+      "field": "related",
+      "status": "PASS",
+      "reason": "Relevant Q12/Q16 links."
+    },
+    {
+      "label": "D",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Reuse needs a suitable saved result."
+    },
+    {
+      "label": "D",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Scope selection is confused with cached status."
+    },
+    {
+      "label": "D",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Counterfactual directly concerns recovering previous statuses and is accurately refuted."
+    },
+    {
+      "label": "D",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Persist data and distinguish cold run from diff-only scope."
+    }
+  ],
+  "checks": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "C покрывает основные CI-решения, A/B/D содержат конкретные ложные CI-модели."
+    },
+    "FACTS": {
+      "status": "PASS",
+      "reason": "История, изменения тестов, gate и ограничения проверены по официальным страницам StrykerJS и PIT."
+    },
+    "LINKAGE": {
+      "status": "PASS",
+      "reason": "L4: собственный Q20 прямо задаёт PR/широкий анализ, историю и отчёт, риск/бюджет. A опровергается влиянием тестов, B встроенным break/exit code, D необходимостью истории и отсутствием исходов в diff. Related-ссылки дополняют связь."
+    },
+    "SECTIONS": {
+      "status": "PASS",
+      "reason": "Все 17 полей связаны с текущими вариантами, полная схема correct5/wrong4 согласована."
+    },
+    "SFPL": {
+      "status": "PASS",
+      "reason": "Все варианты параллельны: PR/периодический анализ, сохранение/использование результата; C не единственно длинный или сложный. Тире A не выдаёт C."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "Все четыре — самостоятельные законченные CI-подходы, wrong не уклоняются от вопроса."
+    },
+    "RU": {
+      "status": "PASS",
+      "reason": "Читаемый русский текст с общепринятыми техническими терминами."
+    }
+  },
+  "sources": [
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-js/incremental/",
+      "checked_claim": "Сохранённый JSON, diff-подобное сопоставление кода/тестов, dry run и ограничения раннера/окружения.",
+      "version": "Official documentation read on 2026-11-06; engines NOT_RUN",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-js/configuration/",
+      "checked_claim": "break — встроенный score-gate с ненулевым exit.",
+      "version": "Official documentation read on 2026-11-06; engines NOT_RUN",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://pitest.org/quickstart/incremental_analysis/",
+      "checked_claim": "История input/output/withHistory и ограничения зависимостей.",
+      "version": "Official documentation read on 2026-11-06; engines NOT_RUN",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://pitest.org/quickstart/maven/",
+      "checked_claim": "targetClasses/tests, отчёты и временное хранение withHistory.",
+      "version": "Official documentation read on 2026-11-06; engines NOT_RUN",
+      "checked_at": "2026-11-06"
+    }
+  ],
+  "findings": [],
+  "limitations": [
+    "Механически нормализовано root из фактических inline-оценок независимого рецензента с его разрешения; точность переноса ещё проверяет тот же рецензент перед FINAL.",
+    "Ранний раскрытый ход был частичным и не считался приёмкой. Исходная фаза A сохранена, включая смешение ложности с неполнотой, уточнённое в B.",
+    "Документация не является выполнением Stryker/PIT или CI. Интерфейс и сервис не использовались."
+  ],
+  "normalization_provenance": "Actual reviewer messages in this task, bounded Q12/Q20 phases. Author did not independently invent review PASS."
+}

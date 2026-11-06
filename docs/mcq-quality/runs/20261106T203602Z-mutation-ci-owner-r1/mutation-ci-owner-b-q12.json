@@ -1,0 +1,211 @@
+{
+  "reviewer": "mutation_ci_owner_independent",
+  "model": "gpt-6-luna",
+  "checked_at": "2026-11-06T20:41:42.569865+00:00",
+  "scope": [
+    "Q12:B0"
+  ],
+  "hashes": {
+    "mcq": "575e854bd6b59bdd6d5d0e0c187b901fdab5b09e532419b85779e4245ffbc7b4",
+    "theory": "12884bcb3efcd6ac18e93eec5f719e8e172754c5dc986dd6f7de84960fe54076"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "surfaces_read": [
+    "Visible Markdown question",
+    "Own Q body",
+    "Shared preamble",
+    "All four visible options",
+    "All 17 named sections",
+    "Applicable standard, examiner, SFPL/ANSC and RU rules",
+    "Primary documentation actually opened by reviewer"
+  ],
+  "options": [
+    {
+      "label": "A",
+      "model": "Настройка, запуск, отчёт и ошибочная перестановка high/low и break.",
+      "completeness": "FULL",
+      "truth": "Неверен: цветовые пороги не выполняют роль break.",
+      "defense_attempt": "Нельзя защитить стандартной конфигурацией: high/low остаются цветами, break — score-gate. Кастомная обёртка с иной семантикой была бы неуказанной другой системой."
+    },
+    {
+      "label": "B",
+      "model": "Настройка, запуск, отчёт и правильные роли порогов.",
+      "completeness": "FULL",
+      "truth": "Верен: использование и строгое score<break соответствуют документации.",
+      "defense_attempt": "Not applicable: correct."
+    },
+    {
+      "label": "C",
+      "model": "Настройка, запуск, отчёт и ошибочный перенос локального порога в Dashboard.",
+      "completeness": "FULL",
+      "truth": "Неверен: break локально блокирует по score, а не только публикует.",
+      "defense_attempt": "Внешний Dashboard-gate возможен, но не делает истинным тезис, что break лишь публикует score и не задаёт локальный порог."
+    },
+    {
+      "label": "D",
+      "model": "Настройка, запуск, отчёт и ошибочное направление порога.",
+      "completeness": "FULL",
+      "truth": "Неверен: отказ строго ниже break, не выше.",
+      "defense_attempt": "Обычная конфигурация не обращает сравнение break; bespoke wrapper не меняет семантику параметра StrykerJS."
+    }
+  ],
+  "sections": [
+    {
+      "label": "A",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Roles correctly contrasted."
+    },
+    {
+      "label": "A",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Plausible confusion about field ordering."
+    },
+    {
+      "label": "A",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Counterfactual accurately demonstrates the reversal of roles without inventing a change to break caused by changing high."
+    },
+    {
+      "label": "A",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Actionable distinction between explicit break and informative high/low."
+    },
+    {
+      "label": "B",
+      "field": "explanation",
+      "status": "PASS",
+      "reason": "Workflow and threshold roles are correct."
+    },
+    {
+      "label": "B",
+      "field": "example",
+      "status": "PASS",
+      "reason": "49/50/51 correctly applies strict < against 50."
+    },
+    {
+      "label": "B",
+      "field": "when_to_apply",
+      "status": "PASS",
+      "reason": "Correctly limits init command to initial setup and recommends compatible runner/dependencies."
+    },
+    {
+      "label": "B",
+      "field": "edge_cases",
+      "status": "PASS",
+      "reason": "null only disables the score gate; override all three thresholds; other Stryker family configurations are distinct."
+    },
+    {
+      "label": "B",
+      "field": "related",
+      "status": "PASS",
+      "reason": "Relevant Q8/Q20 links."
+    },
+    {
+      "label": "C",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "break locally gates score without Dashboard."
+    },
+    {
+      "label": "C",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "History publication vs local gate confusion is plausible."
+    },
+    {
+      "label": "C",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Counterfactual exposes the false publication-only role for break."
+    },
+    {
+      "label": "C",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Exit status and Dashboard have distinct roles."
+    },
+    {
+      "label": "D",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Strictly below, not above; equality alone does not violate the rule."
+    },
+    {
+      "label": "D",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Plausible confusion with adverse latency thresholds."
+    },
+    {
+      "label": "D",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Counterfactual follows the wrong direction accurately."
+    },
+    {
+      "label": "D",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Direction and equality check are useful."
+    }
+  ],
+  "checks": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "B полностью отвечает на основной запрос применения; A/C/D — законченные ошибочные модели."
+    },
+    "FACTS": {
+      "status": "PASS",
+      "reason": "Getting-started и configuration проверены непосредственно; workflow и роли порогов соответствуют им."
+    },
+    "LINKAGE": {
+      "status": "PASS",
+      "reason": "B и объяснения опираются на собственный body Q12; related ссылки дополняют, а не заменяют обучающую связь."
+    },
+    "SECTIONS": {
+      "status": "PASS",
+      "reason": "Все 17 полей проверены отдельно: корректные факты, примеры и прямые контрфактуалы. Штатные 5/4 поля после выбора не являются подсказкой до ответа."
+    },
+    "SFPL": {
+      "status": "PASS",
+      "reason": "Все четыре варианта имеют сопоставимый порядок настройки, команды, отчёта и роли порога. B не выделяется полнотой или единственным длинным текстом; тире только в A не указывает ключ."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "Все четыре отвечают на видимый вопрос в достаточном объёме; фактическая ложность не означает неполноту."
+    },
+    "RU": {
+      "status": "PASS",
+      "reason": "Вопрос, теория, варианты и пояснения читаются как русский технический текст, привычные API и термины допустимы."
+    }
+  },
+  "sources": [
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-js/getting-started/",
+      "checked_claim": "Начальное подключение npm init, проверка конфигурации и npx stryker run.",
+      "version": "Official documentation read on 2026-11-06; engines NOT_RUN",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-js/configuration/",
+      "checked_claim": "mutate/testRunner и high/low как цвета, строгое score<break с exit1, null и все три порога.",
+      "version": "Official documentation read on 2026-11-06; engines NOT_RUN",
+      "checked_at": "2026-11-06"
+    }
+  ],
+  "findings": [],
+  "limitations": [
+    "Механически нормализовано root из фактических inline-оценок независимого рецензента с его разрешения; точность переноса ещё проверяет тот же рецензент перед FINAL.",
+    "Ранний раскрытый ход был частичным и не считался приёмкой. Исходная фаза A сохранена, включая смешение ложности с неполнотой, уточнённое в B.",
+    "Документация не является выполнением Stryker/PIT или CI. Интерфейс и сервис не использовались."
+  ],
+  "normalization_provenance": "Actual reviewer messages in this task, bounded Q12/Q20 phases. Author did not independently invent review PASS."
+}
