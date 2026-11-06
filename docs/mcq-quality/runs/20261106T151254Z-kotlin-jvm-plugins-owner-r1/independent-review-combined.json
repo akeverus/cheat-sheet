@@ -1,0 +1,464 @@
+{
+  "reviewer": "kotlin_jvm_plugins_owner_independent",
+  "model": "gpt-6-luna",
+  "normalized_actual_reports": {
+    "38": {
+      "reviewer": "kotlin_jvm_plugins_owner_independent",
+      "model": "gpt-6-luna",
+      "normalized_at": "2026-11-06T15:24:32.910785+00:00",
+      "hashes": {
+        "mcq": "5bfe5dd3d6e9e3adbc5cb65d735203fd97dc687b3b694b4ba723b258a7f0ade3",
+        "theory": "2b8e8a718c7192933217678c599a563ac89de37407ef1690d673ca8fbd670730"
+      },
+      "rules_sha256": {
+        "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+        "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+        "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+      },
+      "scope": [
+        "Q38:B0"
+      ],
+      "options": [
+        {
+          "label": "A",
+          "completeness": "Полный ответ",
+          "validity": "Верный полный ответ на три роли, L4.",
+          "wrong_defense": "Нет необходимости защищать correct."
+        },
+        {
+          "label": "B",
+          "completeness": "Полный ответ",
+          "validity": "Полон; две роли верны, JvmField accessor-only неверен.",
+          "wrong_defense": "Третья часть могла бы описывать обычное свойство без аннотации, но текст прямо говорит о JvmField; поэтому защитить нельзя."
+        },
+        {
+          "label": "C",
+          "completeness": "Полный ответ",
+          "validity": "Полон; ошибочны все сочетания defaults.",
+          "wrong_defense": "Поверхностное понимание overloads может вести ко всем сочетаниям, но буквальное обещание не подтверждается API/примером."
+        },
+        {
+          "label": "D",
+          "completeness": "Полный ответ",
+          "validity": "Полон; ошибочно удаление companion-метода.",
+          "wrong_defense": "Короткий static-вызов может выглядеть как перенос, но текст утверждает удаление, прямо опровергаемое сохранённым companion-путём."
+        }
+      ],
+      "sections": [
+        {
+          "label": "A",
+          "field": "explanation",
+          "status": "PASS",
+          "reason": "Точно различает static-метод внешнего класса, сохранённый метод companion, перегрузки с defaults и поле без getter/setter; соответствует варианту."
+        },
+        {
+          "label": "A",
+          "field": "example",
+          "status": "PASS",
+          "reason": "Вызовы и поля соответствуют Config из теории; замечание о Java keyword default верно, но второстепенно, неблокирующее."
+        },
+        {
+          "label": "A",
+          "field": "when_to_apply",
+          "status": "PASS",
+          "reason": "Ясно ограничивает выбор аннотаций требуемым Java API."
+        },
+        {
+          "label": "A",
+          "field": "edge_cases",
+          "status": "PASS",
+          "reason": "Корректно отличает перегрузки методов от конструктора со всеми default-параметрами."
+        },
+        {
+          "label": "A",
+          "field": "related",
+          "status": "PASS",
+          "reason": "Верно указывает ограничения JvmField и различие companion-поля и поля экземпляра."
+        },
+        {
+          "label": "B",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Верно и прямо исправляет accessor-only утверждение о JvmField."
+        },
+        {
+          "label": "B",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Правдоподобно противопоставляет обычное Java-представление Kotlin property эффекту JvmField."
+        },
+        {
+          "label": "B",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Контрфакт согласован с VERSION: при верности wrong потребовался бы getter."
+        },
+        {
+          "label": "B",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Покрывает все три аннотации. Static-метод или аксессор для JvmStatic шире companion-функции, но не ошибочно."
+        },
+        {
+          "label": "C",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "После повторного чтения точного поля и API: последовательное удаление default-параметров с сохранением обязательных соответствует API и mixed probe. Ранний FAIL был ошибкой чтения reviewer; изменение не требуется."
+        },
+        {
+          "label": "C",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Правдоподобно различает Kotlin named/default arguments и доступные Java сигнатуры."
+        },
+        {
+          "label": "C",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Верно показывает, что отдельный port следовал бы из всех сочетаний, но не из обычной генерации."
+        },
+        {
+          "label": "C",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Набор вызовов теории согласован; обязательные сохраняются, правило не ограничивается непрерывным хвостом defaults. Первоначальный вопрос алгоритма разрешён отдельно."
+        },
+        {
+          "label": "D",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Корректно указывает дополнительный static-метод и сохранение companion-метода."
+        },
+        {
+          "label": "D",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Логично объясняет смешение короткого Java-вызова и замены прежнего пути."
+        },
+        {
+          "label": "D",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Если бы метод удалялся, companion-вызов исчез бы; в действительности доступны оба пути."
+        },
+        {
+          "label": "D",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Корректно отделяет дополнительный static-метод и независимые задачи двух других аннотаций."
+        }
+      ],
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "Q38 asks for the benefit of all three annotations; A–D each address all three."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "A is correct. B’s @JvmField claim is false; C’s all combinations claim is false; D’s removal claim for @JvmStatic is false. The respective explanations accurately rebut those claims."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "The answers and explanations are supported by Q38’s theory and example."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "The 17 reviewed fields align with their option text and theory. The C algorithm wording is accurate and its sections rebut the distractor; finding R1 is resolved."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "Метрики — A/B/C/D: 18/18/15/17 слов; 180/176/168/179 символов; по три code-span, два ;, одно предложение у каждого. Длина различается умеренно. Все четыре сохраняют одинаковый трёхчастный порядок и параллельный каркас. Техническая категоричность распределена по всем wrong. Равенство чисел само по себе не основание: решающим является сохранённый смысловой каркас."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "All four options cover all three annotations. Each wrong option preserves two correct roles and states one specific mistaken role, so each is a complete attempted answer with one principal misconception."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "The visible question, theory, options, and sections read clearly as Russian technical prose. English API names and familiar terms are appropriate here; no material readability defect found."
+        }
+      },
+      "sources": [
+        {
+          "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-overloads/",
+          "version": "Kotlin API 2.4; annotation since Kotlin 1.0",
+          "checked_at": "2026-11-06T15:21:22Z",
+          "checked_claim": "Do not describe @JvmOverloads as deleting every parameter to the right of a default-valued parameter. It generates overloads by omitting default-valued parameters successively; required parameters remain in the generated signatures. The official API wording is 'all but the last one that takes a default value'; the interop guide illustrates removing each defaulted parameter and parameters to its right, interpreted with remaining required parameters preserved. MixedDefaults probe (Kotlin 2.4.10/JVM 17) preserves required host and yields connect(String,String), connect(String). When all constructor parameters have default values, Kotlin/JVM provides a public zero-argument constructor even without @JvmOverloads; this exception does not generally apply to ordinary methods."
+        },
+        {
+          "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-static/",
+          "version": "Kotlin API 2.4; annotation since Kotlin 1.0",
+          "checked_at": "2026-11-06T15:19:25Z",
+          "checked_claim": "Adds a static method for a function; properties receive additional static getter/setter methods."
+        },
+        {
+          "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-field/",
+          "version": "Kotlin API 2.4; annotation since Kotlin 1.0",
+          "checked_at": "2026-11-06T15:19:25Z",
+          "checked_claim": "Exposes property as a field without generated getters/setters."
+        },
+        {
+          "url": "https://kotlinlang.org/docs/java-to-kotlin-interop.html",
+          "version": "Kotlin documentation checked 2026-11-06",
+          "checked_at": "2026-11-06T15:21:22Z",
+          "checked_claim": "Do not describe @JvmOverloads as deleting every parameter to the right of a default-valued parameter. It generates overloads by omitting default-valued parameters successively; required parameters remain in the generated signatures. The official API wording is 'all but the last one that takes a default value'; the interop guide illustrates removing each defaulted parameter and parameters to its right, interpreted with remaining required parameters preserved. MixedDefaults probe (Kotlin 2.4.10/JVM 17) preserves required host and yields connect(String,String), connect(String). When all constructor parameters have default values, Kotlin/JVM provides a public zero-argument constructor even without @JvmOverloads; this exception does not generally apply to ordinary methods."
+        }
+      ],
+      "findings": [],
+      "limitations": [
+        "Reviewer delivered actual field assessments and seven independent decisions in bounded B steps; this JSON is coordinator formatting only.",
+        "Raw Q38 FAIL/UNVERIFIED, adjudication, inaccurate initial metric and source-claim corrections preserved separately.",
+        "No new compiler/Gradle/Spring/JPA/ORM execution; preserved evidence only."
+      ],
+      "provenance": {
+        "actual_reviewer_task": "/root/kotlin_jvm_plugins_owner_independent",
+        "source_ledger_sha256": "27a92f51a5ac7ea0f04157128e8c2b04b14ed29794caa78e793bcd774e3bdcd8",
+        "normalization": "Explicitly authorized by same independent reviewer; reviewer must verify this faithful representation before FINAL."
+      }
+    },
+    "39": {
+      "reviewer": "kotlin_jvm_plugins_owner_independent",
+      "model": "gpt-6-luna",
+      "normalized_at": "2026-11-06T15:24:32.911858+00:00",
+      "hashes": {
+        "mcq": "5bfe5dd3d6e9e3adbc5cb65d735203fd97dc687b3b694b4ba723b258a7f0ade3",
+        "theory": "2b8e8a718c7192933217678c599a563ac89de37407ef1690d673ca8fbd670730"
+      },
+      "rules_sha256": {
+        "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+        "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+        "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+      },
+      "scope": [
+        "Q39:B0"
+      ],
+      "options": [
+        {
+          "label": "A",
+          "completeness": "Полный ответ",
+          "validity": "Оба плагина определены, но роли переставлены.",
+          "wrong_defense": {
+            "attempted_defense": "Оба названия относятся к compiler plugins, которые часто подключают вместе для framework-ов; неподготовленный читатель может перепутать, какой плагин меняет конструкцию класса, а какой его наследуемость.",
+            "result": "Защитить как верное утверждение нельзя: оно явно меняет местами две независимые функции. Полный по объёму, но фактически неверный ответ."
+          }
+        },
+        {
+          "label": "B",
+          "completeness": "Полный ответ",
+          "validity": "Оба плагина определены, но always initializer неверен.",
+          "wrong_defense": {
+            "attempted_defense": "Можно предположить, что любой конструктор выполняет обычную инициализацию класса. Это правдоподобная интуиция для primary constructor.",
+            "result": "Защитить буквально нельзя: утверждение «всегда» исключает настройку invokeInitializers=false, являющуюся значением по умолчанию. Оба плагина описаны; wrong полон, но содержит чрезмерное обещание."
+          }
+        },
+        {
+          "label": "C",
+          "completeness": "Полный ответ",
+          "validity": "Полно отвечает на две роли, верный краткий пересказ теории без существенного пропуска.",
+          "wrong_defense": "Нет необходимости защищать correct."
+        },
+        {
+          "label": "D",
+          "completeness": "Полный ответ",
+          "validity": "Оба плагина определены, но роль all-open перевёрнута.",
+          "wrong_defense": {
+            "attempted_defense": "Если воспринимать allOpen как настройку видимости для framework, можно спутать её с закрытием API или усилением инкапсуляции; вторая половина при этом верна.",
+            "result": "Защитить нельзя: слово final прямо противоположно назначению allOpen. Оба плагина охвачены, одна роль ошибочна."
+          }
+        }
+      ],
+      "sections": [
+        {
+          "label": "A",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Correctly assigns all-open and no-arg and distinguishes their effects."
+        },
+        {
+          "label": "A",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Both plugins support framework integration and presets can combine them; transformations remain independent."
+        },
+        {
+          "label": "A",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Correctly traces the role swap. Generated no-arg constructor could still permit reflection, so role swap alone does not imply reflection failure."
+        },
+        {
+          "label": "A",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Correctly states both roles and their independence."
+        },
+        {
+          "label": "B",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "InvokeInitializers controls initialization and defaults to disabled."
+        },
+        {
+          "label": "B",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Plausible distinction between generated constructor and ordinary primary-constructor call."
+        },
+        {
+          "label": "B",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Consequence for Model is correct; preserved Kotlin2.4.10 probe reports marker0/calls0 when disabled."
+        },
+        {
+          "label": "B",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Explains option and avoids promising always-empty constructor body."
+        },
+        {
+          "label": "C",
+          "field": "explanation",
+          "status": "PASS",
+          "reason": "Верно различает преобразования; ctor и открытость не подразумевают друг друга, reflection уместен."
+        },
+        {
+          "label": "C",
+          "field": "example",
+          "status": "PASS",
+          "reason": "Согласован с теорией и сообщает результаты0/0 либо7/1 при false/true; не выдаёт их за реальную ORM-проверку."
+        },
+        {
+          "label": "C",
+          "field": "when_to_apply",
+          "status": "PASS",
+          "reason": "Ограничивает применение реальной потребностью framework, существующим ctor и JDK interface proxy."
+        },
+        {
+          "label": "C",
+          "field": "edge_cases",
+          "status": "PASS",
+          "reason": "Видимость ctor ограничена проверенной Kotlin2.4.10; прямой Kotlin-вызов скрыт, Java/reflection сохранены. Настройка и начальное состояние раскрыты верно."
+        },
+        {
+          "label": "C",
+          "field": "related",
+          "status": "PASS",
+          "reason": "Spring all-open и JPA no-arg+all-open различены, версии согласуют с Kotlin; ограничение subclass proxy указано правильно."
+        },
+        {
+          "label": "D",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Correctly fixes inverted openness and recognizes the valid no-arg half."
+        },
+        {
+          "label": "D",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Plausibly identifies confusion between permitting and preventing inheritance."
+        },
+        {
+          "label": "D",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Correctly limits consequence to subclass proxies; JDK interface proxies do not subclass target."
+        },
+        {
+          "label": "D",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Correctly separates plugin roles and ties openness to actual framework proxy mechanism."
+        }
+      ],
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "Видимый вопрос спрашивает, что такое оба плагина. Все варианты называют действие allOpen и noArg."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "C верен по теории. A переставляет роли, B ошибочно обещает безусловный запуск инициализаторов, D ошибочно приписывает allOpen модификатор final."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "Формулировки и объяснения относятся к Q39 и подтверждены теорией и официальной документацией Kotlin/Spring."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "Все 17 полей прочитаны. Sections C согласованы с correct; sections A/B/D опровергают именно соответствующие wrong и согласуются с теорией."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "Все четыре ответа — одно предложение из двух частей, разделённых точкой с запятой, в одном и том же порядке плагинов. У всех два code-span. Длины: A/B/C/D — 19/15/15/17 слов и 148/130/133/132 символа. C не выделяется длиной или каркасом. C конкретизирует «подходящие аннотированные» классы и «настроенные аннотации»; A/D используют отмеченные классы, B просто отмеченные классы. Это полезная область применимости, но не дополнительный третий ответный пункт или обособленная оговорка. Различие не делает C формально выделенным."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "Все ответы охватывают оба плагина и дают конкретное преобразование каждому. C немного точнее указывает настроенные аннотации, однако A/B/D не являются неполными фрагментами: каждый представляет полный ответ с одной ключевой ложной моделью."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Вопрос, варианты и sections ясны как русская техническая проза. Термины allOpen, noArg, final и override уместны."
+        }
+      },
+      "sources": [
+        {
+          "url": "https://kotlinlang.org/docs/no-arg-plugin.html",
+          "checked_claim": "no-arg generates zero-argument constructors for configured annotation classes; invokeInitializers is disabled by default; generated constructor is callable from Java and reflection, hidden from Kotlin source.",
+          "version": "Kotlin docs checked 2026-11-06; page shows 2.4.21 examples",
+          "checked_at": "2026-11-06T15:21:22Z"
+        },
+        {
+          "url": "https://kotlinlang.org/docs/all-open-plugin.html",
+          "checked_claim": "all-open makes configured annotated classes and members open; supports meta-annotations; kotlin-spring and kotlin-jpa presets documented.",
+          "version": "Kotlin docs checked 2026-11-06; page shows 2.4.21 examples",
+          "checked_at": "2026-11-06T15:21:22Z"
+        },
+        {
+          "url": "https://kotlinlang.org/docs/kotlin-jpa-plugin.html",
+          "checked_claim": "kotlin-jpa applies no-arg and all-open for supported JPA annotations; both zero-argument constructor and non-final class requirements described.",
+          "version": "Kotlin docs checked 2026-11-06; page states Kotlin 2.3.20 Maven integration change",
+          "checked_at": "2026-11-06T15:21:22Z"
+        },
+        {
+          "url": "https://kotlinlang.org/docs/kotlin-spring-plugin.html",
+          "checked_claim": "kotlin-spring is a preconfigured all-open wrapper for Spring annotated classes/members.",
+          "version": "Kotlin docs checked 2026-11-06; page shows 2.3.21 examples",
+          "checked_at": "2026-11-06T15:21:22Z"
+        },
+        {
+          "url": "https://docs.spring.io/spring-framework/reference/core/aop/proxying.html",
+          "checked_claim": "Spring AOP can use JDK interface proxies or CGLIB subclass proxies; final class blocks CGLIB subclass proxy, not the JDK interface proxy route.",
+          "version": "Spring Framework 7.0.10 page checked 2026-11-06",
+          "checked_at": "2026-11-06T15:21:22Z"
+        }
+      ],
+      "findings": [],
+      "limitations": [
+        "Reviewer delivered actual field assessments and seven independent decisions in bounded B steps; this JSON is coordinator formatting only.",
+        "Raw Q38 FAIL/UNVERIFIED, adjudication, inaccurate initial metric and source-claim corrections preserved separately.",
+        "No new compiler/Gradle/Spring/JPA/ORM execution; preserved evidence only."
+      ],
+      "provenance": {
+        "actual_reviewer_task": "/root/kotlin_jvm_plugins_owner_independent",
+        "source_ledger_sha256": "8eaa7098e0a7c1c76c47564ca0b128bf9720fe3d53d0284209809263a37048ee",
+        "normalization": "Explicitly authorized by same independent reviewer; reviewer must verify this faithful representation before FINAL."
+      }
+    }
+  },
+  "notes": [
+    "Scope Q38:B0 and Q39:B0 only:8options and34sections, visible headings, full respective theory and shared preamble. No whole-topic/corpus acceptance.",
+    "Fresh separate gpt-6-luna/fork_turns=none context saw only blind export. Actual choices A/C sealed before reveal. A form_signals initially describe subject-matter errors; explicit later comparative SFPL evaluation is separate, not an inference from matching keys.",
+    "Long first B read was truncated and wrong examiner path attempted; neither was counted complete. Same reviewer resumed bounded full A/theory and B/C/D reads for each question, sources/rules, explicit7axes, and wrong-defense attempts.",
+    "Coordinator normalized actual field judgments and explicit7-axis decisions with reviewer authorization. Source ledgers and decisions retained; same reviewer will independently verify faithful normalization before separate FINAL.",
+    "Q38 initial suspected C overload algorithm FAIL and incomplete SFPL UNVERIFIED preserved. Reviewer reread exact text/API and mixed-required/default probe, resolved its own overreading without production change. Source ledger originally repeated wrong right-deletion claim; separate reviewer addendum corrects it, original kept. Initial wrong word counts also preserved and explicitly corrected18/18/15/17.",
+    "Q38 all four answers cover three separate annotation roles. Static bridge retains companion method; overloads are not arbitrary subsets and preserve required parameters; JvmField exposes a backing field without accessors. All-default constructor exception is separated from ordinary methods. Invalid Java default() example replaced by matching existing createDefault() theory API.",
+    "Q39 all four answers define both plugins. No-arg means no arguments, not always empty body, always initializers or all-Spring/JPA necessity. Subclass proxies and JDK interface proxies separated, existing suitable constructor allowed. Current jpa includes both transformations, spring wraps all-open; no assertion for every old version.",
+    "Preserved runtime receipts and source hashes verified for10successful scenario runs and7expected compiler failures, installed2.4.10 plugin hashes and4exact current theory fences. These were not newly executed. Gradle fragment source-only; no Gradle/preset/Spring/JPA/ORM/app/JS/Native/version-matrix run. No heavy duplicate build.",
+    "Current Kotlin docs examples2.4.21 and spring2.3.21 distinct from preserved installed2.4.10 CLI execution; Spring7.0.10 docs source-only. Source dates and versions preserved.",
+    "Selected structure/schema/parity/linkage/antitell/surface checks pass with no selected SKEL flag. Exact current SKEL log has17HARD outside scope; previous summary18 was inaccurate. No thresholds or rules changed; diagnostics not semantic acceptance.",
+    "Exactly42text fields changed:8texts+34sections; keys A/C, question_text, headings, labels/order, other43questions and Markdown preserved. Only MCQ JSON and its freshness sidecar modified. No application source code edited, no new executable snippets/fixtures; IntelliJ formatting NOT_RUN and UI untouched.",
+    "Q34 dependency independently revalidated and separate FINAL renewed in20261106T150932Z-kotlin-q34-jvm-dependency-refresh against current Markdown2b8e8a718c7192933217678c599a563ac89de37407ef1690d673ca8fbd670730. Earlier FINAL snapshot preserved and reviewer explicit addendum binds new unrelated seed edits; historical sealedA not a fresh blind.",
+    "Global PLAN/checkpoint/sync/audit-state left coordinator-owned. Shared branchmaster and index checked; no branch switch, reset, push or deployment."
+  ]
+}

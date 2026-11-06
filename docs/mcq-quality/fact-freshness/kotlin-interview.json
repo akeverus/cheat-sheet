@@ -3,7 +3,7 @@
   "round": 9,
   "status": "TODO",
   "version_sensitive": true,
-  "product_version": "Kotlin/JVM: Q5 null checks с изменением исключений в 1.4; Q30 IEEE и equals проверены по официальной документации 2026-11-06, примеры теории — Kotlin 2.4.10/JVM17/JDK21.0.10. Q32–Q34: контракты stdlib, проверены 2026-11-06. Q29/Q31: operator conventions и экспериментальные name-based modes сверены с Kotlin2.4.10 и текущей документацией 2026-11-06. Q4/Q6: nullable generics, Elvis и let сверены с официальной документацией 2026-11-06 и примерами Kotlin 2.4.10. Q22/Q23: наследование, all-open и ordinary accessors проверены по документации 2026-11-06; примеры Kotlin2.4.10, Spring proxy contracts7.0.10 source-only.",
+  "product_version": "Kotlin/JVM: Q5 null checks с изменением исключений в 1.4; Q30 IEEE и equals проверены по официальной документации 2026-11-06, примеры теории — Kotlin 2.4.10/JVM17/JDK21.0.10. Q32–Q34: контракты stdlib, проверены 2026-11-06. Q29/Q31: operator conventions и экспериментальные name-based modes сверены с Kotlin2.4.10 и текущей документацией 2026-11-06. Q4/Q6: nullable generics, Elvis и let сверены с официальной документацией 2026-11-06 и примерами Kotlin 2.4.10. Q22/Q23: наследование, all-open и ordinary accessors проверены по документации 2026-11-06; примеры Kotlin2.4.10, Spring proxy contracts7.0.10 source-only. Q38/Q39: JVM-аннотации и compiler plugins сверены с документацией 2026-11-06, сохранёнными CLI-проверками Kotlin 2.4.10 и Spring Framework 7.0.10 proxy contracts.",
   "checked_date": "2026-11-06",
   "sources": [
     "https://kotlinlang.org/docs/null-safety.html — safe call and not-null assertion, Q5, checked 2026-11-03",
@@ -26,7 +26,13 @@
     "https://kotlinlang.org/docs/inheritance.html — Q22: ordinary final, open class/member, inherited override, проверено 2026-11-06",
     "https://kotlinlang.org/docs/properties.html — Q23: getter/setter, initializer, default field и ordinary field access, проверено 2026-11-06",
     "https://kotlinlang.org/docs/all-open-plugin.html — Q22: compile-time annotation-based transformation, проверено 2026-11-06",
-    "https://docs.spring.io/spring-framework/reference/core/aop/proxying.html — Q22: JDK interface vs subclass proxies, проверено 2026-11-06"
+    "https://docs.spring.io/spring-framework/reference/core/aop/proxying.html — Q22: JDK interface vs subclass proxies, проверено 2026-11-06",
+    "https://kotlinlang.org/docs/java-to-kotlin-interop.html — Q38: поля, static-методы и overloads, проверено 2026-11-06",
+    "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-static/ — Q38: дополнительный static-метод, проверено 2026-11-06",
+    "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-overloads/ — Q38: последовательная генерация перегрузок, проверено 2026-11-06",
+    "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-field/ — Q38: поле без сгенерированных аксессоров, проверено 2026-11-06",
+    "https://kotlinlang.org/docs/no-arg-plugin.html — Q39: HIDDEN-конструктор и invokeInitializers, проверено 2026-11-06",
+    "https://kotlinlang.org/docs/kotlin-jpa-plugin.html — Q39: текущий preset объединяет no-arg и all-open, проверено 2026-11-06"
   ],
   "version_sensitive_claims": [
     "Kotlin/JVM 1.4 changed runtime null-check exception types; current null-safety docs show NullPointerException for !!.",
@@ -34,7 +40,8 @@
     "Q32–Q34: ограничения интерфейса не замораживают объект; toList — поверхностный снимок; стандартные Iterable.filter/map жадные, Sequence.filter/map ленивые; flatMap раскрывает один уровень без удаления дублей.",
     "Q29: operator-контракт наследуется при override. Q31: compiler option -Xname-based-destructuring=complete меняет краткую круглоскобочную форму на name-based; only-syntax сохраняет прежнюю краткую позиционную форму.",
     "Q4: неограниченный T имеет upper bound Any?, T : Any исключает nullable type arguments. Q6: обычный let допускает null receiver, guard обеспечивает safe call; Elvis проверяет результат всей левой части.",
-    "Q22: abstract/inherited override/compiler transformations отличаются от explicit open; all-open не нужен для любого Spring AOP. Q23: default-accessors могут иметь field без явного field; initializer не вызывает setter, property self-reference вызывает accessor снова."
+    "Q22: abstract/inherited override/compiler transformations отличаются от explicit open; all-open не нужен для любого Spring AOP. Q23: default-accessors могут иметь field без явного field; initializer не вызывает setter, property self-reference вызывает accessor снова.",
+    "Q38: @JvmStatic сохраняет companion-метод; overloads не перечисляют все подмножества defaults, все-default constructor отличается от обычных методов. Q39: invokeInitializers=false по умолчанию, Kotlin 2.4.10 HIDDEN-конструктор доступен Java; текущий kotlin-jpa включает оба преобразования, без обещания этого для всех старых версий."
   ],
   "staleness_risks": [
     "The exact exception class is platform and version sensitive; the interview answer emphasizes behavior on null."
@@ -46,6 +53,7 @@
     "Q32–Q34: частичная авторская проверка всех 12 вариантов и 51 sections после handoff теории; независимая приёмка хранится отдельно. Статус TODO всего файла сохранён.",
     "Q29/Q31: авторская вычитка восьми вариантов и34sections, актуальный режим деструктуризации виден во всех вариантах. Фактическая независимая приёмка хранится в отдельном run; весь файл остаётся TODO.",
     "Q4/Q6: переработаны все восемь вариантов и 34 sections; ключи D/C сохранены после содержательной проверки, а не механической замены. Прежний истинный, но неполный A Q6 заменён полноценной ошибочной моделью возврата receiver.",
-    "Q22/Q23: полный rewrite восьми ответов и34sections, ключи A/C сохранены после содержательной проверки. Q39 blanket all-open issue оставлен отдельным следующим приоритетом; тема не принята целиком."
+    "Q22/Q23: полный rewrite восьми ответов и34sections, ключи A/C сохранены после содержательной проверки. Q39 blanket all-open issue оставлен отдельным следующим приоритетом; тема не принята целиком.",
+    "Q38/Q39: восемь полных ответов и34пояснения переписаны; ключи A/C сохранены после содержательной проверки. Сохранённые10 JVM-сценариев и7 ожидаемых отказов — историческая выполненная проверка теории, не новый запуск. Gradle/presets/Spring/JPA runtime не запускались. Общий статус темы не повышен до полной приёмки."
   ]
 }

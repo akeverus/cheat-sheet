@@ -1,0 +1,229 @@
+{
+  "reviewer": "kotlin_jvm_plugins_owner_independent",
+  "model": "gpt-6-luna",
+  "normalized_at": "2026-11-06T15:24:32.911858+00:00",
+  "hashes": {
+    "mcq": "5bfe5dd3d6e9e3adbc5cb65d735203fd97dc687b3b694b4ba723b258a7f0ade3",
+    "theory": "2b8e8a718c7192933217678c599a563ac89de37407ef1690d673ca8fbd670730"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "scope": [
+    "Q39:B0"
+  ],
+  "options": [
+    {
+      "label": "A",
+      "completeness": "Полный ответ",
+      "validity": "Оба плагина определены, но роли переставлены.",
+      "wrong_defense": {
+        "attempted_defense": "Оба названия относятся к compiler plugins, которые часто подключают вместе для framework-ов; неподготовленный читатель может перепутать, какой плагин меняет конструкцию класса, а какой его наследуемость.",
+        "result": "Защитить как верное утверждение нельзя: оно явно меняет местами две независимые функции. Полный по объёму, но фактически неверный ответ."
+      }
+    },
+    {
+      "label": "B",
+      "completeness": "Полный ответ",
+      "validity": "Оба плагина определены, но always initializer неверен.",
+      "wrong_defense": {
+        "attempted_defense": "Можно предположить, что любой конструктор выполняет обычную инициализацию класса. Это правдоподобная интуиция для primary constructor.",
+        "result": "Защитить буквально нельзя: утверждение «всегда» исключает настройку invokeInitializers=false, являющуюся значением по умолчанию. Оба плагина описаны; wrong полон, но содержит чрезмерное обещание."
+      }
+    },
+    {
+      "label": "C",
+      "completeness": "Полный ответ",
+      "validity": "Полно отвечает на две роли, верный краткий пересказ теории без существенного пропуска.",
+      "wrong_defense": "Нет необходимости защищать correct."
+    },
+    {
+      "label": "D",
+      "completeness": "Полный ответ",
+      "validity": "Оба плагина определены, но роль all-open перевёрнута.",
+      "wrong_defense": {
+        "attempted_defense": "Если воспринимать allOpen как настройку видимости для framework, можно спутать её с закрытием API или усилением инкапсуляции; вторая половина при этом верна.",
+        "result": "Защитить нельзя: слово final прямо противоположно назначению allOpen. Оба плагина охвачены, одна роль ошибочна."
+      }
+    }
+  ],
+  "sections": [
+    {
+      "label": "A",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Correctly assigns all-open and no-arg and distinguishes their effects."
+    },
+    {
+      "label": "A",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Both plugins support framework integration and presets can combine them; transformations remain independent."
+    },
+    {
+      "label": "A",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Correctly traces the role swap. Generated no-arg constructor could still permit reflection, so role swap alone does not imply reflection failure."
+    },
+    {
+      "label": "A",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Correctly states both roles and their independence."
+    },
+    {
+      "label": "B",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "InvokeInitializers controls initialization and defaults to disabled."
+    },
+    {
+      "label": "B",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Plausible distinction between generated constructor and ordinary primary-constructor call."
+    },
+    {
+      "label": "B",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Consequence for Model is correct; preserved Kotlin2.4.10 probe reports marker0/calls0 when disabled."
+    },
+    {
+      "label": "B",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Explains option and avoids promising always-empty constructor body."
+    },
+    {
+      "label": "C",
+      "field": "explanation",
+      "status": "PASS",
+      "reason": "Верно различает преобразования; ctor и открытость не подразумевают друг друга, reflection уместен."
+    },
+    {
+      "label": "C",
+      "field": "example",
+      "status": "PASS",
+      "reason": "Согласован с теорией и сообщает результаты0/0 либо7/1 при false/true; не выдаёт их за реальную ORM-проверку."
+    },
+    {
+      "label": "C",
+      "field": "when_to_apply",
+      "status": "PASS",
+      "reason": "Ограничивает применение реальной потребностью framework, существующим ctor и JDK interface proxy."
+    },
+    {
+      "label": "C",
+      "field": "edge_cases",
+      "status": "PASS",
+      "reason": "Видимость ctor ограничена проверенной Kotlin2.4.10; прямой Kotlin-вызов скрыт, Java/reflection сохранены. Настройка и начальное состояние раскрыты верно."
+    },
+    {
+      "label": "C",
+      "field": "related",
+      "status": "PASS",
+      "reason": "Spring all-open и JPA no-arg+all-open различены, версии согласуют с Kotlin; ограничение subclass proxy указано правильно."
+    },
+    {
+      "label": "D",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Correctly fixes inverted openness and recognizes the valid no-arg half."
+    },
+    {
+      "label": "D",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Plausibly identifies confusion between permitting and preventing inheritance."
+    },
+    {
+      "label": "D",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Correctly limits consequence to subclass proxies; JDK interface proxies do not subclass target."
+    },
+    {
+      "label": "D",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Correctly separates plugin roles and ties openness to actual framework proxy mechanism."
+    }
+  ],
+  "checks": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "Видимый вопрос спрашивает, что такое оба плагина. Все варианты называют действие allOpen и noArg."
+    },
+    "FACTS": {
+      "status": "PASS",
+      "reason": "C верен по теории. A переставляет роли, B ошибочно обещает безусловный запуск инициализаторов, D ошибочно приписывает allOpen модификатор final."
+    },
+    "LINKAGE": {
+      "status": "PASS",
+      "reason": "Формулировки и объяснения относятся к Q39 и подтверждены теорией и официальной документацией Kotlin/Spring."
+    },
+    "SECTIONS": {
+      "status": "PASS",
+      "reason": "Все 17 полей прочитаны. Sections C согласованы с correct; sections A/B/D опровергают именно соответствующие wrong и согласуются с теорией."
+    },
+    "SFPL": {
+      "status": "PASS",
+      "reason": "Все четыре ответа — одно предложение из двух частей, разделённых точкой с запятой, в одном и том же порядке плагинов. У всех два code-span. Длины: A/B/C/D — 19/15/15/17 слов и 148/130/133/132 символа. C не выделяется длиной или каркасом. C конкретизирует «подходящие аннотированные» классы и «настроенные аннотации»; A/D используют отмеченные классы, B просто отмеченные классы. Это полезная область применимости, но не дополнительный третий ответный пункт или обособленная оговорка. Различие не делает C формально выделенным."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "Все ответы охватывают оба плагина и дают конкретное преобразование каждому. C немного точнее указывает настроенные аннотации, однако A/B/D не являются неполными фрагментами: каждый представляет полный ответ с одной ключевой ложной моделью."
+    },
+    "RU": {
+      "status": "PASS",
+      "reason": "Вопрос, варианты и sections ясны как русская техническая проза. Термины allOpen, noArg, final и override уместны."
+    }
+  },
+  "sources": [
+    {
+      "url": "https://kotlinlang.org/docs/no-arg-plugin.html",
+      "checked_claim": "no-arg generates zero-argument constructors for configured annotation classes; invokeInitializers is disabled by default; generated constructor is callable from Java and reflection, hidden from Kotlin source.",
+      "version": "Kotlin docs checked 2026-11-06; page shows 2.4.21 examples",
+      "checked_at": "2026-11-06T15:21:22Z"
+    },
+    {
+      "url": "https://kotlinlang.org/docs/all-open-plugin.html",
+      "checked_claim": "all-open makes configured annotated classes and members open; supports meta-annotations; kotlin-spring and kotlin-jpa presets documented.",
+      "version": "Kotlin docs checked 2026-11-06; page shows 2.4.21 examples",
+      "checked_at": "2026-11-06T15:21:22Z"
+    },
+    {
+      "url": "https://kotlinlang.org/docs/kotlin-jpa-plugin.html",
+      "checked_claim": "kotlin-jpa applies no-arg and all-open for supported JPA annotations; both zero-argument constructor and non-final class requirements described.",
+      "version": "Kotlin docs checked 2026-11-06; page states Kotlin 2.3.20 Maven integration change",
+      "checked_at": "2026-11-06T15:21:22Z"
+    },
+    {
+      "url": "https://kotlinlang.org/docs/kotlin-spring-plugin.html",
+      "checked_claim": "kotlin-spring is a preconfigured all-open wrapper for Spring annotated classes/members.",
+      "version": "Kotlin docs checked 2026-11-06; page shows 2.3.21 examples",
+      "checked_at": "2026-11-06T15:21:22Z"
+    },
+    {
+      "url": "https://docs.spring.io/spring-framework/reference/core/aop/proxying.html",
+      "checked_claim": "Spring AOP can use JDK interface proxies or CGLIB subclass proxies; final class blocks CGLIB subclass proxy, not the JDK interface proxy route.",
+      "version": "Spring Framework 7.0.10 page checked 2026-11-06",
+      "checked_at": "2026-11-06T15:21:22Z"
+    }
+  ],
+  "findings": [],
+  "limitations": [
+    "Reviewer delivered actual field assessments and seven independent decisions in bounded B steps; this JSON is coordinator formatting only.",
+    "Raw Q38 FAIL/UNVERIFIED, adjudication, inaccurate initial metric and source-claim corrections preserved separately.",
+    "No new compiler/Gradle/Spring/JPA/ORM execution; preserved evidence only."
+  ],
+  "provenance": {
+    "actual_reviewer_task": "/root/kotlin_jvm_plugins_owner_independent",
+    "source_ledger_sha256": "8eaa7098e0a7c1c76c47564ca0b128bf9720fe3d53d0284209809263a37048ee",
+    "normalization": "Explicitly authorized by same independent reviewer; reviewer must verify this faithful representation before FINAL."
+  }
+}
