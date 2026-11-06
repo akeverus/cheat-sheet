@@ -1,0 +1,277 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json",
+    "theory": "cheatsheets/interview/testing/mutation-testing-interview.md"
+  },
+  "sha256": {
+    "mcq": "25a38c9f139088b0695d7acb5186eba917774ca98f13a28605436283000fef01",
+    "theory": "283bc0eab0406f7f5c873bee4f17d6be1ef0904f5c6af2e4e54d09d59ec6085b"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hashes": {
+    "Q3:B0": {
+      "mcq": "779ebc7ef1265c7bc818e522daa37b4030fd1c7a92a4b8c165ea58650ec7e777",
+      "theory": "8d8f5e726a0d91cbaeb3a103096946b9a1cb677776b88176d5fe12a9952b86ae"
+    },
+    "Q18:B0": {
+      "mcq": "7aa3bd24c2e06370810666cd966599c994544e25420f5b6d1141703cbafb728d",
+      "theory": "033462dc79e939bf28bf3dc2dbcf14c7ff8cffc2b23dc66c0eb96bf3ef6300d7"
+    }
+  },
+  "preamble": "---\ntitle: \"Вопросы на собеседовании: Мутационное тестирование\"\ndescription: \"Mutation testing: проверка качества тестов через mutations кода, mutation operators, kill rate, surviving mutants, PIT, Stryker, тулинг для Java/JS/Python, vs code coverage\"\ntags:\n  - interview\n  - testing\n  - mutation-testing-interview\ntype: \"interview\"\ndifficulty: \"intermediate\"\naliases:\n  - \"Вопросы на собеседовании\"\n  - \"Mutation Testing\"\n  - \"Mutation testing interview\"\n  - \"PIT mutation testing interview\"\nprerequisites: []\nnext: []\nupdated: \"2026-04-25\"\n---\n# Вопросы на собеседовании: Мутационное тестирование\n\n`Mutation testing` — техника оценки **качества тестов** (а не качества кода). Идея: модифицировать (\"**mutate**\") код, прогнать тесты и проверить, **сколько мутаций поймано** (killed). Выжившие мутанты (surviving mutants) = слабые тесты. Главные инструменты: **PIT** (Java), **Stryker** (JS/TS/.NET/Scala), **mutmut** (Python). Дополняет (но не заменяет) coverage.\n\n## Полезные ссылки\n\n### Официальная документация и авторитетные источники\n\n- [PIT Mutation Testing — Pitest.org](https://pitest.org/)\n- [Stryker Mutator](https://stryker-mutator.io/)\n- [Mutation Testing — Wikipedia](https://en.wikipedia.org/wiki/Mutation_testing)\n- [PITclipse (PIT IntelliJ plugin)](https://github.com/hcoles/pitest)\n- [Mutation Testing — Baeldung](https://www.baeldung.com/java-mutation-testing-with-pitest)\n\n## Содержание\n\n- [Полезные ссылки](#полезные-ссылки)\n- [See also](#see-also)\n\n**Базовые понятия**\n- [Q1. (!) Что такое mutation testing?](#q1--что-такое-mutation-testing)\n- [Q2. (!) Зачем mutation testing, если уже есть code coverage?](#q2--зачем-mutation-testing-если-уже-есть-code-coverage)\n- [Q3. Что значат термины mutant, killed, survived, equivalent?](#q3-что-значат-термины-mutant-killed-survived-equivalent)\n\n**Mutation operators**\n- [Q4. (!) Какие мутации типичны?](#q4--какие-мутации-типичны)\n- [Q5. Как работает Conditional Boundary Mutator?](#q5-как-работает-conditional-boundary-mutator)\n- [Q6. Как работает Math Mutator?](#q6-как-работает-math-mutator)\n- [Q7. Какие ещё бывают операторы мутаций?](#q7-какие-ещё-бывают-операторы-мутаций)\n\n**Метрики**\n- [Q8. (!) Что такое mutation score (kill rate) и как его считают?](#q8--что-такое-mutation-score-kill-rate-и-как-его-считают)\n- [Q9. Как анализировать выживших мутантов (surviving mutants)?](#q9-как-анализировать-выживших-мутантов-surviving-mutants)\n- [Q10. Что такое эквивалентные мутанты (equivalent mutants)?](#q10-что-такое-эквивалентные-мутанты-equivalent-mutants)\n\n**Tools**\n- [Q11. (!) Как использовать PIT для Java?](#q11--как-использовать-pit-для-java)\n- [Q12. (!) Как использовать Stryker для JavaScript/TypeScript?](#q12--как-использовать-stryker-для-javascripttypescript)\n- [Q13. Как использовать mutmut для Python?](#q13-как-использовать-mutmut-для-python)\n- [Q14. Какие ещё есть инструменты mutation testing?](#q14-какие-ещё-есть-инструменты-mutation-testing)\n\n**Performance**\n- [Q15. (!) Почему mutation testing медленный?](#q15--почему-mutation-testing-медленный)\n- [Q16. Как ускоряют mutation testing (incremental, in-process)?](#q16-как-ускоряют-mutation-testing-incremental-in-process)\n\n**Production**\n- [Q17. (!) Когда mutation testing оправдан?](#q17--когда-mutation-testing-оправдан)\n- [Q18. Какой mutation score ставить целевым?](#q18-какой-mutation-score-ставить-целевым)\n- [Q19. (!) В чём ограничения и за что критикуют mutation testing?](#q19--в-чём-ограничения-и-за-что-критикуют-mutation-testing)\n- [Q20. Как встроить mutation testing в CI/CD?](#q20-как-встроить-mutation-testing-в-cicd)\n",
+  "theory": [
+    {
+      "q_number": 3,
+      "title": "Что значат термины mutant, killed, survived, equivalent?",
+      "line": 115,
+      "body": "\nЭти слова описывают разные вещи: изменённый вариант программы, результат его проверки и семантическое свойство. Их нельзя считать четырьмя взаимоисключающими статусами одного отчёта.\n\n| Термин | Значение | Чего из него не следует |\n|---|---|---|\n| **Mutant** | Вариант программы с внесённым изменением; в обычном first-order анализе проверяют одну активную мутацию | Инструмент не обязан создавать отдельную копию исходников для каждого варианта |\n| **Killed** | Активная мутация вызвала падение хотя бы одного теста | Не требуется падение всех тестов; причиной может быть и неожиданное исключение, а не только явное сравнение результата |\n| **Survived** | Выполненные проверки не обнаружили активную мутацию | Это не доказательство эквивалентности и не автоматический приговор всем тестам |\n| **Equivalent** | Изменение сохраняет наблюдаемое поведение на всей объявленной области входов и условий | Это семантическая характеристика, а не автоматически известный движку статус; различающего теста в этой области нет |\n\nНапример, `age >= 18` → `age > 18` создаёт мутант. Если тест проверяет требуемый допуск при `age = 18`, изменение может быть обнаружено. Если выбранные проверки его пропустили, это ещё не делает пару эквивалентной: различающий вход существует. Подробности — в Q5/Q9/Q10. [PIT: basic concepts](https://pitest.org/quickstart/basic_concepts/).\n\nОтдельно читайте категории конкретного отчёта. `No coverage` означает отсутствие покрытия изменённого места, а не выполненные проверки, успешно подтвердившие его поведение. В Stryker возможность отличить эту категорию от `Survived` зависит и от режима анализа покрытия. `Timeout` означает превышение допустимого времени; в документированной модели Stryker он входит в `detected`, но остаётся отдельным от `Killed` статусом. Он не доказывает эквивалентность. [Stryker: states and metrics](https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/), [coverage analysis](https://stryker-mutator.io/docs/stryker-js/configuration/#coverageanalysis-string).\n\nОшибку самого прогона или раннера нужно отличать от падения обычного теста. Например, отдельный `Runtime error` в модели Stryker не включается в score; это не правило «любое прикладное исключение означает invalid». Неожиданное исключение из мутированной программы может уронить тест и тем самым обнаружить изменение. Статусы и формулу метрики проверяют по выбранному инструменту, как в Q8.\n\n"
+    },
+    {
+      "q_number": 18,
+      "title": "Какой mutation score ставить целевым?",
+      "line": 401,
+      "body": "\nУниверсального обязательного процента нет. Цель согласуют для конкретной области кода по цене пропущенной ошибки, стоимости анализа и разбора surviving. Само название «бизнес-логика», «glue» или «data-класс» не задаёт ни нужный процент, ни запрет мутационного анализа: важно, какое поведение и риск за ним стоят.\n\nСначала зафиксируйте смысл числа: инструмент и версию, набор операторов, область кода и тестов, исключения, статусы числителя и знаменателя. Затем разберите важные выжившие мутанты и выберите достижимый порог с понятной реакцией на нарушение. Порог CI и тренд решают разные задачи: первый задаёт согласованное ограничение, второй помогает заметить изменение при сопоставимых условиях.\n\n**Рост score сам по себе не доказывает улучшение тестов.** Условный пример по формуле Stryker:\n\n| Состав отчёта | Detected | Valid | Score |\n|---|---|---|---|\n| Исходный набор | 63 | 90 | 70% |\n| Исключили 20 необнаруженных мутантов; тесты не менялись | 63 | 70 | 90% |\n\nЭто арифметическая иллюстрация смены знаменателя, а не результат запуска движка. Процент вырос без нового теста. Поэтому при сравнении запусков проверяют состав анализа и конкретные surviving; смена версии, операторов или исключений может изменить смысл тренда. [Stryker: формулы](https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/).\n\nНе превращайте настройки отображения в универсальную норму качества. В StrykerJS `high`/`low` задают цветовые зоны, а `break` — отдельное условие отказа при score ниже настроенного порога. Эти параметры позволяют реализовать политику команды, но сами не обосновывают обязательные «90% для платежей». Даже 100% относятся к выбранным мутациям и тестам и не доказывают правильность требований. [StrykerJS: thresholds](https://stryker-mutator.io/docs/stryker-js/configuration/#thresholds-object).\n\n"
+    }
+  ],
+  "blocks": [
+    {
+      "q_number": 3,
+      "block_idx": 0,
+      "visible_question": "Что значат термины mutant, killed, survived, equivalent?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Что значат термины mutant, killed, survived, equivalent?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Killed означает, что упали все тесты набора, а единственный упавший тест оставляет мутанта в категории survived.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Для killed достаточно одного обнаружившего изменение теста; падение всего набора не требуется.",
+              "source_of_confusion": "Слово killed воспринимают как тотальное падение.",
+              "if_it_were_true": "Точный единственный граничный тест не мог бы обнаружить мутант без остальных падений.",
+              "how_it_should_be": "Один различающий тест может быть достаточным сигналом."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Timeout доказывает эквивалентность мутанта исходной программе, поэтому зависание считается подтверждением того, что наблюдаемое поведение вообще не изменилось.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Timeout показывает превышение времени исполнения, а не семантическую эквивалентность.",
+              "source_of_confusion": "Отсутствие завершившегося assertion принимают за одинаковое поведение.",
+              "if_it_were_true": "Бесконечный цикл считался бы доказательством равенства программе, которая нормально завершается.",
+              "how_it_should_be": "Отделяй таймаут, ошибки среды и доказательство эквивалентности."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Killed означает обнаружение мутанта упавшим тестом, survived означает успешное выполнение проверявших его тестов без обнаружения внесённого изменения.",
+            "correct": true,
+            "sections": {
+              "explanation": "Killed обычно означает, что активный мутант вызвал падение теста. Survived означает отсутствие обнаружения при выполненных проверках; точная таксономия зависит от отчёта.",
+              "example": "В модели Stryker timeout имеет отдельный статус и входит в detected; это не то же имя статуса, что killed.",
+              "when_to_apply": "При чтении отчёта отделяй отсутствие покрытия, успешные тесты, ошибки инфраструктуры и обнаруженные изменения.",
+              "edge_cases": "Equivalent — семантическая характеристика, которую инструмент не обязан автоматически распознавать. No coverage не означает выполненные зелёные проверки.",
+              "related": "[[mutation-testing-interview#Q8]] формула конкретного отчёта; [[mutation-testing-interview#Q10]] equivalent."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Equivalent означает пробел в assertions, поэтому такой мутант по определению убивается более точной проверкой результата существующего теста.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Эквивалентный мутант не имеет различающего наблюдаемого поведения в объявленной области.",
+              "source_of_confusion": "Каждого surviving автоматически считают пробелом.",
+              "if_it_were_true": "Существовал бы отличающий тест, что противоречит самому условию эквивалентности.",
+              "how_it_should_be": "Проверь предпосылки эквивалентности, а не требуй невозможный assertion."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 18,
+      "block_idx": 0,
+      "visible_question": "Какой mutation score ставить целевым?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Какой mutation score ставить целевым?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Целевой процент универсален для всех проектов, поэтому одинаковый высокий порог автоматически делает результаты разных наборов мутаций сопоставимыми.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Одинаковый процент не делает разные операторы, scope и статусы знаменателя одинаковыми.",
+              "source_of_confusion": "Удобный общий gate принимают за универсальную норму.",
+              "if_it_were_true": "Удаление части трудных операторов не влияло бы на сопоставимость одинакового процента.",
+              "how_it_should_be": "Сначала согласуй смысл метрики и область, затем целевой порог."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Любой рост процента означает улучшение тестов, поэтому изменение операторов и области анализа не нужно учитывать при сравнении динамики.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Рост может быть вызван сменой состава мутантов или исключений, а не тестами.",
+              "source_of_confusion": "Движение одной цифры читают без контекста.",
+              "if_it_were_true": "Исключение непокрытого кода доказывало бы улучшение assertions, хотя тесты не менялись.",
+              "how_it_should_be": "Сравнивай сопоставимые запуски и разбирай изменившиеся surviving."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Чем выше критичность кода, тем меньше внимания требуют выжившие мутанты, поэтому повышать требования следует прежде всего для тривиальных участков.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Высокий риск требует содержательного внимания к важным surviving, а не автоматической скидки по категории кода.",
+              "source_of_confusion": "Сложность анализа принимают за снижение важности ошибки.",
+              "if_it_were_true": "Самый опасный непротестированный сценарий получал бы меньше внимания только из-за высокой критичности.",
+              "how_it_should_be": "Приоритизируй риск; не назначай одинаковые или обратные требования без обоснования."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Цель согласуют по риску и стоимости разбора, а динамику сравнивают при сопоставимых операторах, области анализа и правилах расчёта score.",
+            "correct": true,
+            "sections": {
+              "explanation": "Универсального обязательного процента нет. Порог и scope согласуют с рисками, а сравнение требует понимать набор операторов, исключения и статусы отчёта.",
+              "example": "Рост с70 до90 после удаления трудных операторов или исключения непокрытого кода не доказывает улучшение тестов.",
+              "when_to_apply": "Следи за сопоставимыми изменениями и конкретными surviving, дополняя договорённый gate содержательным разбором.",
+              "edge_cases": "Тренд и фиксированный порог полезны для разных целей; один не всегда важнее другого. Изменение версии инструмента может изменить набор и знаменатель.",
+              "related": "[[mutation-testing-interview#Q8]] определение score; [[mutation-testing-interview#Q20]] CI-policy."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "open_issues": [],
+  "runtime_findings": [],
+  "checks": {
+    "content_review": {
+      "blocks": {
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q18:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "factual_correctness": {
+      "blocks": {
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q18:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "source_linkage": {
+      "blocks": {
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q18:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sections_consistency": {
+      "blocks": {
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q18:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sfpl": {
+      "blocks": {
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q18:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "ansc": {
+      "blocks": {
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q18:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "russian_readability": {
+      "blocks": {
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q18:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "independent_review": {
+      "blocks": {
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q18:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "blind_review": {
+      "blocks": {
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q18:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "final_acceptance": {
+      "blocks": {
+        "Q3:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q18:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    }
+  },
+  "instructions": "Все A/B/C/D и sections. SFPL, ANSC, RU — отдельные вердикты. Дополнительные смысловые зависимости прочитать и указать в evidence. Сигналы не являются редакторской приёмкой."
+}

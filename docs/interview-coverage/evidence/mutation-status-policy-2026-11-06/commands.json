@@ -1,0 +1,100 @@
+{
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "scripts/mcq_validation.py",
+        "--json",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-linkage-scan.py",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json",
+        "--json",
+        "/tmp/mutation-theory-status-policy-20261106/linkage.json",
+        "--quiet"
+      ],
+      "exit": 1,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-anti-tell-scan.py",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/verify-md-no-mcq.sh",
+        "cheatsheets/interview/testing/mutation-testing-interview.md"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "--",
+        "cheatsheets/interview/testing/mutation-testing-interview.md"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "ruby",
+        "-r",
+        "yaml",
+        "-r",
+        "date",
+        "-e",
+        "s=File.read(ARGV[0]);d=YAML.safe_load(s.split(\"---\",3)[1],permitted_classes:[Date],aliases:true);puts \"YAML #{d.length} fields PASS\"",
+        "cheatsheets/interview/testing/mutation-testing-interview.md"
+      ],
+      "exit": 0,
+      "stderr": ""
+    }
+  ],
+  "current_run": "PASS",
+  "block_hashes": {
+    "Q3:B0": {
+      "mcq": "779ebc7ef1265c7bc818e522daa37b4030fd1c7a92a4b8c165ea58650ec7e777",
+      "theory": "8d8f5e726a0d91cbaeb3a103096946b9a1cb677776b88176d5fe12a9952b86ae"
+    },
+    "Q18:B0": {
+      "mcq": "7aa3bd24c2e06370810666cd966599c994544e25420f5b6d1141703cbafb728d",
+      "theory": "033462dc79e939bf28bf3dc2dbcf14c7ff8cffc2b23dc66c0eb96bf3ef6300d7"
+    }
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "previous_runs": [
+    {
+      "run": "20261106T155603Z-mutation-boundary-owner-r1",
+      "status": "PASS"
+    },
+    {
+      "run": "20261106T163105Z-mutation-math-owner-r1",
+      "status": "STALE_OR_FAILED",
+      "reason": "STALE packet: changed blocks/rules/input; prepare a new run"
+    },
+    {
+      "run": "20261106T165245Z-mutation-q9-form-repair-r3",
+      "status": "PASS"
+    }
+  ]
+}

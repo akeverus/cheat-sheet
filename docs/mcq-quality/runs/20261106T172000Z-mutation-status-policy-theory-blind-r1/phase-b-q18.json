@@ -1,0 +1,191 @@
+{
+  "q_number": 18,
+  "options": [
+    {
+      "label": "A",
+      "exact_text": "Целевой процент универсален для всех проектов, поэтому одинаковый высокий порог автоматически делает результаты разных наборов мутаций сопоставимыми.",
+      "truth": "FALSE",
+      "completeness": "COMPLETE_WRONG_MODEL",
+      "reason": "Даёт законченное универсальную-цель и межнаборную сопоставимость утверждение, но оба тезиса ложны: проценты зависят от операторов, области и правил знаменателя."
+    },
+    {
+      "label": "B",
+      "exact_text": "Любой рост процента означает улучшение тестов, поэтому изменение операторов и области анализа не нужно учитывать при сравнении динамики.",
+      "truth": "FALSE",
+      "completeness": "COMPLETE_WRONG_MODEL",
+      "reason": "Это законченная модель оценки цели через любой рост score; однако рост не гарантирует улучшения тестов, если изменились операторы или область. Отвечает по динамике, хотя почти не задаёт сам порог."
+    },
+    {
+      "label": "C",
+      "exact_text": "Чем выше критичность кода, тем меньше внимания требуют выжившие мутанты, поэтому повышать требования следует прежде всего для тривиальных участков.",
+      "truth": "FALSE",
+      "completeness": "COMPLETE_WRONG_MODEL",
+      "reason": "Законченное ошибочное правило связывает критичность, внимание к surviving и строгость требований; оно предлагает приоритет тривиальных участков. Ложность не делает его неполным ответом о политике цели."
+    },
+    {
+      "label": "D",
+      "exact_text": "Цель согласуют по риску и стоимости разбора, а динамику сравнивают при сопоставимых операторах, области анализа и правилах расчёта score.",
+      "truth": "TRUE",
+      "completeness": "COMPLETE",
+      "reason": "Прямо отвечает, как выбирать цель (риск и стоимость разбора), и задаёт условия осмысленного сравнения динамики (операторы, область и расчёт score)."
+    }
+  ],
+  "field_judgments": [
+    {
+      "field": "A.what_actually",
+      "exact_text": "Одинаковый процент не делает разные операторы, scope и статусы знаменателя одинаковыми.",
+      "verdict": "PASS",
+      "reason": "Разные операторы, области и статусы знаменателя меняют смысл одинакового процента; это прямо объясняет несопоставимость."
+    },
+    {
+      "field": "A.source_of_confusion",
+      "exact_text": "Удобный общий gate принимают за универсальную норму.",
+      "verdict": "PASS",
+      "reason": "Указывает на соблазн использовать удобный общий gate как будто он универсально обоснован."
+    },
+    {
+      "field": "A.if_it_were_true",
+      "exact_text": "Удаление части трудных операторов не влияло бы на сопоставимость одинакового процента.",
+      "verdict": "PASS",
+      "reason": "Условное следствие заявления A: смена состава трудных операторов не меняла бы сопоставимости; проверяет именно эту гипотезу."
+    },
+    {
+      "field": "A.how_it_should_be",
+      "exact_text": "Сначала согласуй смысл метрики и область, затем целевой порог.",
+      "verdict": "PASS",
+      "reason": "Совет согласовать смысл метрики и область перед порогом отвечает конкретно заявленной проблеме универсальности."
+    },
+    {
+      "field": "B.what_actually",
+      "exact_text": "Рост может быть вызван сменой состава мутантов или исключений, а не тестами.",
+      "verdict": "PASS",
+      "reason": "Называет альтернативные причины роста score — состав мутантов и исключения; они могут изменить знаменатель без изменения тестов."
+    },
+    {
+      "field": "B.source_of_confusion",
+      "exact_text": "Движение одной цифры читают без контекста.",
+      "verdict": "PASS",
+      "reason": "Конкретно описывает ошибку интерпретации одиночной цифры без контекста."
+    },
+    {
+      "field": "B.if_it_were_true",
+      "exact_text": "Исключение непокрытого кода доказывало бы улучшение assertions, хотя тесты не менялись.",
+      "verdict": "PASS",
+      "reason": "Исключение непокрытого кода может повысить долю без изменения assertions; это условное следствие ложной гипотезы B."
+    },
+    {
+      "field": "B.how_it_should_be",
+      "exact_text": "Сравнивай сопоставимые запуски и разбирай изменившиеся surviving.",
+      "verdict": "PASS",
+      "reason": "Предлагает сравнивать запуски при сопоставимых условиях и исследовать surviving, соответствуя тезису о динамике."
+    },
+    {
+      "field": "C.what_actually",
+      "exact_text": "Высокий риск требует содержательного внимания к важным surviving, а не автоматической скидки по категории кода.",
+      "verdict": "PASS",
+      "reason": "Связывает высокую критичность с вниманием к surviving и отвергает автоматическую скидку только по категории."
+    },
+    {
+      "field": "C.source_of_confusion",
+      "exact_text": "Сложность анализа принимают за снижение важности ошибки.",
+      "verdict": "PASS",
+      "reason": "Называет конкретную подмену: трудность разбора трактуют как меньшую важность риска."
+    },
+    {
+      "field": "C.if_it_were_true",
+      "exact_text": "Самый опасный непротестированный сценарий получал бы меньше внимания только из-за высокой критичности.",
+      "verdict": "PASS",
+      "reason": "Следствие гипотезы C точно показывает её риск: опасный непроверенный сценарий получает меньше внимания из-за критичности."
+    },
+    {
+      "field": "C.how_it_should_be",
+      "exact_text": "Приоритизируй риск; не назначай одинаковые или обратные требования без обоснования.",
+      "verdict": "PASS",
+      "reason": "Рекомендует приоритизировать по риску и обосновывать требования; применимо к ошибке C."
+    },
+    {
+      "field": "D.explanation",
+      "exact_text": "Универсального обязательного процента нет. Порог и scope согласуют с рисками, а сравнение требует понимать набор операторов, исключения и статусы отчёта.",
+      "verdict": "PASS",
+      "reason": "Объясняет отсутствие универсального процента и перечисляет контекст порога и сравнения — риск, операторы, исключения, статусы."
+    },
+    {
+      "field": "D.example",
+      "exact_text": "Рост с70 до90 после удаления трудных операторов или исключения непокрытого кода не доказывает улучшение тестов.",
+      "verdict": "PASS_WITH_NOTE",
+      "reason": "Показывает, что изменение состава может поднять процент без улучшения тестов; числовой пример формулируется как рост с70 до90."
+    },
+    {
+      "field": "D.when_to_apply",
+      "exact_text": "Следи за сопоставимыми изменениями и конкретными surviving, дополняя договорённый gate содержательным разбором.",
+      "verdict": "PASS",
+      "reason": "Даёт практическое применение: сравнимые изменения, конкретные surviving и согласованный gate."
+    },
+    {
+      "field": "D.edge_cases",
+      "exact_text": "Тренд и фиксированный порог полезны для разных целей; один не всегда важнее другого. Изменение версии инструмента может изменить набор и знаменатель.",
+      "verdict": "PASS",
+      "reason": "Разводит назначение тренда и порога и отмечает влияние версии инструмента на состав/знаменатель."
+    },
+    {
+      "field": "D.related",
+      "exact_text": "[[mutation-testing-interview#Q8]] определение score; [[mutation-testing-interview#Q20]] CI-policy.",
+      "verdict": "PASS",
+      "reason": "Обе ссылки тематически соотносятся с формулой score и политикой CI; сами по себе не служат доказательством их содержания."
+    }
+  ],
+  "axes": {
+    "SEMANTICS": {
+      "verdict": "PASS",
+      "reason": "D охватывает выбор цели и сопоставимость; A/C предлагают ошибочные законченные политики, B — законченную ошибочную интерпретацию роста."
+    },
+    "FACTS": {
+      "verdict": "PASS_WITH_FINDINGS",
+      "reason": "Stryker определяет score как detected/valid; изменение знаменателя может арифметически изменить процент. Thresholds задают пороги/поведение инструмента, не универсальную норму."
+    },
+    "LINKAGE": {
+      "verdict": "PASS",
+      "reason": "A и C прямо задают политику порога, B относится к оценке динамики, а D соединяет целевое решение с корректностью сравнения."
+    },
+    "SECTIONS": {
+      "verdict": "PASS_WITH_FINDING",
+      "reason": "Поля A/B/C соответствуют функциям пояснения, источника заблуждения, условной гипотезы и коррекции. В D.example выражение «с70 до90» слитно и затрудняет чтение; смысл арифметического примера понятен."
+    },
+    "ANSC": {
+      "verdict": "PASS",
+      "reason": "Все варианты выражают законченную позицию по выбору/оценке цели; A–C полноценные, но ложные модели, D — обоснованная политика."
+    },
+    "SFPL": {
+      "verdict": "PASS_WITH_MINOR_FINDING",
+      "reason": "Формат и синтаксический каркас всех четырёх — одно законченное причинно-следственное предложение. A/C явно задают политику, B смещён к тренду, но это не само по себе cue ключа; длины и истинность не считаются доказательством выделения."
+    },
+    "RU": {
+      "verdict": "FAIL",
+      "reason": "В D.example «с70 до90» написано без пробелов и знаков процента; это выглядит как опечатка и мешает чтению. Например: «Рост с 70% до 90% ...»."
+    }
+  },
+  "current_theory": "The four-term table defines mutant as a program variant with a mutation; killed as detection by at least one failing test; survived as no detection by executed checks, not proof of equivalence; equivalent as semantic sameness over the stated domain. It distinguishes statuses, coverage modes (Stryker can distinguish Survived from NoCoverage depending on coverageAnalysis), and runner/runtime errors from a failing test caused by mutated behavior. For score targets, it recommends risk/cost-based policy and comparable runs; 63/90=70%, then 63/70=90% after excluding 20 undetected mutants is arithmetic illustration, not engine output.",
+  "sources": [
+    {
+      "title": "Stryker mutant states and metrics",
+      "url": "https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/",
+      "used_for": "Status definitions and detected/valid formula for score."
+    },
+    {
+      "title": "StrykerJS configuration: thresholds",
+      "url": "https://stryker-mutator.io/docs/stryker-js/configuration/#thresholds-object",
+      "used_for": "Meaning of configured threshold levels and break threshold; does not prescribe a universal policy."
+    },
+    {
+      "title": "StrykerJS configuration: coverageAnalysis",
+      "url": "https://stryker-mutator.io/docs/stryker-js/configuration/#coverageanalysis-string",
+      "used_for": "Coverage mode can distinguish Survived and NoCoverage."
+    },
+    {
+      "title": "PIT basic concepts",
+      "url": "https://pitest.org/quickstart/basic_concepts/",
+      "used_for": "Mutant and equivalent mutation concepts; distinctions among killed, survived, no coverage, timeout, and run error."
+    }
+  ],
+  "limits": "Reviewed only the supplied Q18 exact input and cited primary documentation; the 63/90 to 63/70 calculation is a constructed arithmetic example, not a Stryker execution. No overall FINAL assigned."
+}

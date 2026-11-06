@@ -1,0 +1,186 @@
+{
+  "q_number": 3,
+  "options": [
+    {
+      "label": "A",
+      "exact_text": "Killed означает, что упали все тесты набора, а единственный упавший тест оставляет мутанта в категории survived.",
+      "truth": "FALSE",
+      "completeness": "PARTIAL",
+      "reason": "Затрагивает только killed/survived, неверно требует падения всего набора; не определяет mutant и equivalent."
+    },
+    {
+      "label": "B",
+      "exact_text": "Timeout доказывает эквивалентность мутанта исходной программе, поэтому зависание считается подтверждением того, что наблюдаемое поведение вообще не изменилось.",
+      "truth": "FALSE",
+      "completeness": "PARTIAL",
+      "reason": "Утверждает ложную связь timeout с equivalence, но раскрывает лишь timeout и не определяет остальные термины."
+    },
+    {
+      "label": "C",
+      "exact_text": "Killed означает обнаружение мутанта упавшим тестом, survived означает успешное выполнение проверявших его тестов без обнаружения внесённого изменения.",
+      "truth": "TRUE_WITH_SCOPE",
+      "completeness": "PARTIAL",
+      "reason": "Определения killed и survived в целом соответствуют PIT и Stryker при оговорке о статусах отчёта; mutant и equivalent не определены, поэтому для вопроса вариант неполон."
+    },
+    {
+      "label": "D",
+      "exact_text": "Equivalent означает пробел в assertions, поэтому такой мутант по определению убивается более точной проверкой результата существующего теста.",
+      "truth": "FALSE",
+      "completeness": "PARTIAL",
+      "reason": "Ложно сводит equivalent к пробелу в assertions и обещает убиваемость; mutant/killed/survived не определены."
+    }
+  ],
+  "field_judgments": [
+    {
+      "field": "A.what_actually",
+      "exact_text": "Для killed достаточно одного обнаружившего изменение теста; падение всего набора не требуется.",
+      "verdict": "PASS",
+      "reason": "PASS: цитата верно говорит, что одного обнаружившего теста достаточно; совпадает с условием Stryker «at least one test failed». "
+    },
+    {
+      "field": "A.source_of_confusion",
+      "exact_text": "Слово killed воспринимают как тотальное падение.",
+      "verdict": "PASS",
+      "reason": "PASS: называет конкретную языковую ассоциацию killed с тотальным падением, объясняя ошибочную модель A."
+    },
+    {
+      "field": "A.if_it_were_true",
+      "exact_text": "Точный единственный граничный тест не мог бы обнаружить мутант без остальных падений.",
+      "verdict": "PASS",
+      "reason": "PASS: выводит проверяемое следствие буквального правила A: граничный тест не мог бы убить без падений остальных."
+    },
+    {
+      "field": "A.how_it_should_be",
+      "exact_text": "Один различающий тест может быть достаточным сигналом.",
+      "verdict": "PASS",
+      "reason": "PASS: кратко формулирует исправление именно ошибочного требования всех падений."
+    },
+    {
+      "field": "B.what_actually",
+      "exact_text": "Timeout показывает превышение времени исполнения, а не семантическую эквивалентность.",
+      "verdict": "PASS",
+      "reason": "PASS: отделяет timeout от семантического доказательства эквивалентности; подтверждается отдельными состояниями Stryker/PIT."
+    },
+    {
+      "field": "B.source_of_confusion",
+      "exact_text": "Отсутствие завершившегося assertion принимают за одинаковое поведение.",
+      "verdict": "PASS",
+      "reason": "PASS: указывает возможную ошибку вывода из отсутствия завершённого assertion; это объяснение, а не утверждение факта."
+    },
+    {
+      "field": "B.if_it_were_true",
+      "exact_text": "Бесконечный цикл считался бы доказательством равенства программе, которая нормально завершается.",
+      "verdict": "PASS",
+      "reason": "PASS: контрфактическое следствие демонстрирует абсурдность считать зависание равенством нормально завершающейся программе."
+    },
+    {
+      "field": "B.how_it_should_be",
+      "exact_text": "Отделяй таймаут, ошибки среды и доказательство эквивалентности.",
+      "verdict": "PASS",
+      "reason": "PASS: предлагает разделять таймаут, ошибки среды и эквивалентность, прямо отвечая на заблуждение B."
+    },
+    {
+      "field": "C.explanation",
+      "exact_text": "Killed обычно означает, что активный мутант вызвал падение теста. Survived означает отсутствие обнаружения при выполненных проверках; точная таксономия зависит от отчёта.",
+      "verdict": "PASS",
+      "reason": "PASS: корректно описывает killed/survived с явной оговоркой о различиях таксономий; источники определяют killed как провал теста, survived как отсутствие обнаружения."
+    },
+    {
+      "field": "C.example",
+      "exact_text": "В модели Stryker timeout имеет отдельный статус и входит в detected; это не то же имя статуса, что killed.",
+      "verdict": "PASS",
+      "reason": "PASS: конкретно передаёт Stryker: timeout отдельно от killed, но входит в detected."
+    },
+    {
+      "field": "C.when_to_apply",
+      "exact_text": "При чтении отчёта отделяй отсутствие покрытия, успешные тесты, ошибки инфраструктуры и обнаруженные изменения.",
+      "verdict": "PASS",
+      "reason": "PASS: практическая инструкция различать состояния отчёта и инфраструктурные сбои соответствует задаче чтения отчёта."
+    },
+    {
+      "field": "C.edge_cases",
+      "exact_text": "Equivalent — семантическая характеристика, которую инструмент не обязан автоматически распознавать. No coverage не означает выполненные зелёные проверки.",
+      "verdict": "PASS",
+      "reason": "PASS: equivalent — семантическое свойство, не обязательный автоматический статус; no coverage отделён от выполненных зелёных тестов."
+    },
+    {
+      "field": "C.related",
+      "exact_text": "[[mutation-testing-interview#Q8]] формула конкретного отчёта; [[mutation-testing-interview#Q10]] equivalent.",
+      "verdict": "PASS",
+      "reason": "PASS: ссылки на Q8/Q10 тематически ведут к формуле отчёта и equivalent; сами ссылки не добавляют видимому варианту недостающие определения."
+    },
+    {
+      "field": "D.what_actually",
+      "exact_text": "Эквивалентный мутант не имеет различающего наблюдаемого поведения в объявленной области.",
+      "verdict": "PASS",
+      "reason": "PASS: задаёт семантический критерий эквивалентности через отсутствие различающего наблюдаемого поведения в заданной области."
+    },
+    {
+      "field": "D.source_of_confusion",
+      "exact_text": "Каждого surviving автоматически считают пробелом.",
+      "verdict": "PASS",
+      "reason": "PASS: обозначает конкретное смешение surviving с дефектом тестов."
+    },
+    {
+      "field": "D.if_it_were_true",
+      "exact_text": "Существовал бы отличающий тест, что противоречит самому условию эквивалентности.",
+      "verdict": "PASS",
+      "reason": "PASS: условное следствие противоречит предпосылке equivalence: различающий тест означал бы различимое поведение."
+    },
+    {
+      "field": "D.how_it_should_be",
+      "exact_text": "Проверь предпосылки эквивалентности, а не требуй невозможный assertion.",
+      "verdict": "PASS",
+      "reason": "PASS: рекомендует проверить предпосылки эквивалентности, а не требовать логически невозможную проверку."
+    }
+  ],
+  "axes": {
+    "SEMANTICS": {
+      "verdict": "FAIL",
+      "reason": "Вопрос просит значения четырёх терминов; ни один видимый вариант не раскрывает все четыре."
+    },
+    "FACTS": {
+      "verdict": "PASS_WITH_FINDINGS",
+      "reason": "A/B/D ложны как дистракторы; C верно описывает killed/survived, но не является полным ответом. Основания: PIT basic concepts; Stryker mutant states."
+    },
+    "LINKAGE": {
+      "verdict": "PASS",
+      "reason": "Все четыре текста явно обсуждают mutation testing и связанные статусы/понятия, но полнота различается."
+    },
+    "SECTIONS": {
+      "verdict": "PASS",
+      "reason": "По предоставленным цитатам sections корректно поясняют свои поля; они не дополняют видимый вариант C и не исправляют его неполноту."
+    },
+    "ANSC": {
+      "verdict": "FAIL",
+      "reason": "A/B/D — законченные ошибочные модели, C — корректен только по двум из четырёх запрошенных терминов; все четыре варианта не образуют полноценный ответный набор."
+    },
+    "SFPL": {
+      "verdict": "PASS",
+      "reason": "Видимые варианты сопоставимы как законченные предложения/объяснения; разница длины и истинности сама по себе не выдаёт ключ. Явного формального сигнала нет."
+    },
+    "RU": {
+      "verdict": "PASS",
+      "reason": "Вопрос и варианты читаемы по-русски; английские термины предмета уместны, связи и пунктуация понятны."
+    }
+  },
+  "current_theory": "Q3 visible options omit definitions of mutant and equivalent in every option; C accurately covers killed/survived only. Sections/theory clarify concepts but cannot repair visible-option completeness.",
+  "sources": [
+    {
+      "title": "Stryker mutant states and metrics",
+      "url": "https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/",
+      "used_for": "Killed needs at least one failing test; survived all tests passed; timeout distinct; detected includes timeout."
+    },
+    {
+      "title": "PIT basic concepts",
+      "url": "https://pitest.org/quickstart/basic_concepts/",
+      "used_for": "Mutants are altered classes; equivalent mutations behave the same or differ outside test scope; killed/survived definitions."
+    },
+    {
+      "title": "Stryker coverageAnalysis configuration",
+      "url": "https://stryker-mutator.io/docs/stryker-js/configuration/#coverageanalysis-string",
+      "used_for": "Coverage analysis distinguishes Survived from NoCoverage."
+    }
+  ],
+  "limits": "Проверены только Q3 input, перечисленные правила и три названных источника. Текущие веб-документы без зафиксированной версии; не присваиваю общий FINAL и не делаю выводов по Q18."
+}
