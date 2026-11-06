@@ -1,0 +1,186 @@
+{
+  "captured_at": "2026-11-06T04:26:09.670612+00:00",
+  "base_head": "8565ddda66e5c3998d05e60a0a31fa4640ff626b",
+  "scope": [
+    "Q5:B0",
+    "Q30:B0"
+  ],
+  "source_sha256": {
+    "mcq": "4bac9f3325edc9531941fe3f63c5b17edf4331e0f73a738307ca2f9a4ec3d562",
+    "theory": "5cbe5c4aa6937dc9562c8abefe813e084f32492e7488d11278077094f2cf8b3c"
+  },
+  "checks": {
+    "content_review": {
+      "Q5:B0": {
+        "status": "PASS",
+        "reason": "Все четыре варианта охватывают поведение обоих операторов при null; A истинный, B/C/D — содержательно неверные модели.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      },
+      "Q30:B0": {
+        "status": "PASS",
+        "reason": "Все четыре варианта охватывают роли ==/=== и отдельную Float/Double-ветвь; лишь B формулирует обе ветви верно.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      }
+    },
+    "factual_correctness": {
+      "Q5:B0": {
+        "status": "PASS",
+        "reason": "Официальная документация подтверждает safe-call → null и !! → NPE.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      },
+      "Q30:B0": {
+        "status": "PASS",
+        "reason": "Equality docs: == переводится в a?.equals(b) ?: (b === null), === проверяет один объект; Float/Double, nullable включительно, сравниваются IEEE 754. NaN != itself и -0.0 == 0.0 в статической float-ветви; при иных статических типах структурное равенство меняет эти результаты. Документация также подтверждает data/value class generated equals, обычный класс без override и contentEquals для массивов.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      }
+    },
+    "source_linkage": {
+      "Q5:B0": {
+        "status": "PASS",
+        "reason": "Видимый вопрос напрямую спрашивает о ?. и !!; theory-0 описывает обе реакции; четыре варианта дают парные модели этих реакций.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      },
+      "Q30:B0": {
+        "status": "PASS",
+        "reason": "Видимый вопрос спрашивает разницу операторов; теория раскрывает объектную null-safe семантику, исключение Float/Double и identity. В options все присутствуют операторы и ветви; условия, добавленные в sections, не требуются для единственности B.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      }
+    },
+    "sections_consistency": {
+      "Q5:B0": {
+        "status": "PASS",
+        "reason": "Просмотрены все sections A-D: explanation/example/when_to_apply/edge_cases/related у A и what_actually/source_of_confusion/if_it_were_true/how_it_should_be у wrong. Они согласуются с ключом и исправляют соответствующие заблуждения. Теория предупреждает о переходе типа исключения в Kotlin 1.4.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      },
+      "Q30:B0": {
+        "status": "PASS",
+        "reason": "Проверены все 17 полей sections: A 4; B 5; C 4; D 4. Объяснения и примеры согласуются с официальными правилами; охвачены nullable-типы, NaN/знак нуля, Any?, data class/обычный класс, массивы и identity. Не найдено противоречий.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      }
+    },
+    "sfpl": {
+      "Q5:B0": {
+        "status": "PASS",
+        "reason": "Варианты сопоставимы по каркасу: каждый одним предложением сообщает поведение обоих операторов при null; A не выделен уникальным условием или форматом. Число предложений считалось без знаков внутри ?. и !!.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      },
+      "Q30:B0": {
+        "status": "PASS",
+        "reason": "Raw WARN — диагностический сигнал, не самостоятельное основание FAIL. C выделяется тире и отсутствием скобок вокруг nullable, но эта особенность не подсказывает правильность: C неверен, а B — правильный. У всех вариантов два предложения; длины близки (190–195 знаков; 23–24 слова), и B не имеет уникального каркаса или lone-longest признака. Нарушения сопоставимости, влияющего на угадывание ключа, не установлено.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      }
+    },
+    "ansc": {
+      "Q5:B0": {
+        "status": "PASS",
+        "reason": "Все wrong — полноценные парные модели с конкретным заблуждением (инверсия, одинаковое безопасное поведение, одинаковое исключение); не требуется вводить новые условия для их опровержения.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      },
+      "Q30:B0": {
+        "status": "PASS",
+        "reason": "Все wrong завершённые и правдоподобные: A небезопасная модель == при null, C перенос Java-смысла == ссылок, D чрезмерное обобщение generated data-class equals. Каждый опровергается видимым/изученным правилом без дополнительных условий.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      }
+    },
+    "russian_readability": {
+      "Q5:B0": {
+        "status": "PASS",
+        "reason": "Краткие формулировки ясны и грамматически естественны; объяснения читаемы, термины устойчивы. `?.` и `!!` — имена операторов.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      },
+      "Q30:B0": {
+        "status": "PASS",
+        "reason": "Варианты грамматически понятны и профессиональны. Термины и скобочные уточнения читаются естественно. Sections B длиннее как учебное объяснение, но развернутость sections не служит вариантом ответа.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      }
+    },
+    "independent_review": {
+      "Q5:B0": {
+        "status": "PASS",
+        "reason": "Новый независимый контекст прочитал все четыре модели, 17 sections, теорию и нужный пролог/правила, проверил первоисточники и сохранил отдельные семь вердиктов; автор и рецензент различаются.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      },
+      "Q30:B0": {
+        "status": "PASS",
+        "reason": "Новый независимый контекст прочитал все четыре модели, 17 sections, теорию и нужный пролог/правила, проверил первоисточники и сохранил отдельные семь вердиктов; автор и рецензент различаются.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      }
+    },
+    "blind_review": {
+      "Q5:B0": {
+        "status": "PASS",
+        "reason": "Реальные ответы A/B и form_signals сохранены и запечатаны до раскрытия. Текущий экспорт не менялся; совпадение выбора с ключами не подменяет содержательную или формальную проверку.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      },
+      "Q30:B0": {
+        "status": "PASS",
+        "reason": "Реальные ответы A/B и form_signals сохранены и запечатаны до раскрытия. Текущий экспорт не менялся; совпадение выбора с ключами не подменяет содержательную или формальную проверку.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1.json"
+        ]
+      }
+    },
+    "final_acceptance": {
+      "Q5:B0": {
+        "status": "PASS",
+        "reason": "Все девять live prerequisites PASS; схема PASS; SHA-256 seed и theory совпадают с ожидаемыми; open/runtime blockers отсутствуют. Scoped content, facts, linkage, sections, SFPL, ANSC, RU, независимое и слепое ревью приняты.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1-scoped-final.json"
+        ]
+      },
+      "Q30:B0": {
+        "status": "PASS",
+        "reason": "Все девять live prerequisites PASS; схема PASS; SHA-256 seed и theory совпадают с ожидаемыми; open/runtime blockers отсутствуют. Raw WARN для C сохранён, но отдельная SFPL adjudication PASS обосновывает, что он не указывает на ключ B и не нарушает сопоставимость.",
+        "evidence": [
+          "docs/mcq-quality/reviews/checks/20261106T041319Z-kotlin-null-equality-owner-r1-scoped-final.json"
+        ]
+      }
+    }
+  },
+  "topic_accepted_blocks": 6,
+  "topic_total_blocks": 45,
+  "whole_topic_accepted": false,
+  "new_changed_fields": 14,
+  "combined_head_changed_fields": 42,
+  "combined_questions": [
+    5,
+    30
+  ],
+  "previous_work": "All42 existing dirty text fields of Q5/Q30 were reviewed in their complete current form; no other MCQ question differs from HEAD. Source can now be staged as one scoped file.",
+  "runtime": "Existing five program hashes and successful compile/run results verified; no new runtime execution.",
+  "remaining": "39 other questions not accepted by this package; 22 HARD other blocks retained. Global checkpoint/sync/PLAN left to coordinator."
+}

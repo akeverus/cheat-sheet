@@ -1,0 +1,28 @@
+{
+  "q_number": 5,
+  "block_idx": 0,
+  "comparative_assessment": {
+    "A": {"completeness": "Полно отвечает на вопрос о реакции обоих операторов при null.", "truth": "Верно: ?. возвращает null, !! вызывает NPE.", "defense": "Краткое сравнение полностью соответствует формулировке вопроса; исторический тип исключения не нужен для различения."},
+    "B": {"completeness": "Полно отвечает, но описывает обратную семантику.", "truth": "Неверно.", "defense": "Защитить как правильный ответ нельзя; wrong при этом формально полноценен и представляет инверсию двух реакций."},
+    "C": {"completeness": "Полно отвечает о двух операторах.", "truth": "Неверно.", "defense": "Неправильно распространяет поведение safe-call на !!; полноценная альтернативная модель, но явно опровергается теорией."},
+    "D": {"completeness": "Полно отвечает о двух операторах.", "truth": "Неверно.", "defense": "Ошибочно приписывает исключение обоим операторам; полная модель, но ?. при null возвращает null."}
+  },
+  "checks": {
+    "CONTENT": {"status": "PASS", "reason": "Все четыре варианта охватывают поведение обоих операторов при null; A истинный, B/C/D — содержательно неверные модели."},
+    "FACTS": {"status": "PASS", "reason": "Официальная документация подтверждает safe-call → null и !! → NPE."},
+    "LINKAGE": {"status": "PASS", "reason": "Видимый вопрос напрямую спрашивает о ?. и !!; theory-0 описывает обе реакции; четыре варианта дают парные модели этих реакций."},
+    "SECTIONS": {"status": "PASS", "reason": "Просмотрены все sections A-D: explanation/example/when_to_apply/edge_cases/related у A и what_actually/source_of_confusion/if_it_were_true/how_it_should_be у wrong. Они согласуются с ключом и исправляют соответствующие заблуждения. Теория предупреждает о переходе типа исключения в Kotlin 1.4."},
+    "SFPL": {"status": "PASS", "reason": "Варианты сопоставимы по каркасу: каждый одним предложением сообщает поведение обоих операторов при null; A не выделен уникальным условием или форматом. Число предложений считалось без знаков внутри ?. и !!."},
+    "ANSC": {"status": "PASS", "reason": "Все wrong — полноценные парные модели с конкретным заблуждением (инверсия, одинаковое безопасное поведение, одинаковое исключение); не требуется вводить новые условия для их опровержения."},
+    "RU": {"status": "PASS", "reason": "Краткие формулировки ясны и грамматически естественны; объяснения читаемы, термины устойчивы. `?.` и `!!` — имена операторов."}
+  },
+  "findings": [],
+  "sources": [
+    {"url": "https://kotlinlang.org/docs/null-safety.html", "checked_claim": "Safe-call ?. возвращает null при null receiver; !! при null вызывает NPE.", "version": "Официальная документация Kotlin; страница проверена 2026-11-06, номер версии страницы не указан.", "checked_at": "2026-11-06T04:16:47Z"},
+    {"url": "https://kotlinlang.org/docs/whatsnew14.html#unified-exception-type-for-null-checks", "checked_claim": "С Kotlin 1.4.0 runtime null checks, включая !!, выбрасывают java.lang.NullPointerException.", "version": "Kotlin 1.4.0; опубликовано 17 августа 2020.", "checked_at": "2026-11-06T04:16:47Z"}
+  ],
+  "actual_utc_time": "2026-11-06T04:16:47Z",
+  "surfaces_read": ["q5-stem.json", "q5-option-A.json", "q5-option-B.json", "q5-option-C.json", "q5-option-D.json", "q5-theory-0.json", "preamble-0.json", "preamble-1.json", "preamble-2.json", "docs/mcq-quality-standard.md", "docs/mcq-quality/examiner-review.md", "docs/mcq-quality/surface-parity-rules.md", "docs/mcq-quality/russian-readability-rules.md", "https://kotlinlang.org/docs/null-safety.html", "https://kotlinlang.org/docs/whatsnew14.html#unified-exception-type-for-null-checks"],
+  "limitations": ["Точный полный видимый заголовок Q5 сверялся по предоставленному q5-stem фрагменту.", "Численные метрики сравнения формы не запускались: на этом этапе оценены каркас и полнота качественно."],
+  "final": "NOT_RUN"
+}
