@@ -1,0 +1,128 @@
+{
+  "q_number": 4,
+  "block_idx": 0,
+  "option_assessments": [
+    {
+      "label": "A",
+      "truth": "FALSE for usual Kotlin reading of T as a generic type parameter: nullability is statically distinguished, and T? is not merely a runtime distinction.",
+      "refutation": "Unbounded T has upper bound Any? and can be nullable; the compiler enforces nullability distinctions.",
+      "ansc": "Addresses how T and T? differ, so it covers the visible null-safety question despite being false.",
+      "sfpl": "Abstract generic phrasing; similar compact declarative form to D, with no uniquely complete multi-part treatment.",
+      "ru": "Clear, though “лишь в рантайме” is technical colloquialism."
+    },
+    {
+      "label": "B",
+      "truth": "FALSE: nullable receivers generally require safe call, explicit check/smart cast, or !!; direct unrestricted member access is not allowed.",
+      "refutation": "Compiler rejects direct member access on nullable receiver in ordinary member calls.",
+      "ansc": "Directly addresses null-safety mechanism and is complete as a broad claim, although false.",
+      "sfpl": "One concise declarative assertion, comparable surface form to other choices.",
+      "ru": "Understandable; “свободно обращаться” and quoted “без” are slightly awkward but clear."
+    },
+    {
+      "label": "C",
+      "truth": "FALSE: platform types have relaxed checks, not guaranteed compiler nullability validation; null can cause runtime failure.",
+      "refutation": "Java declarations without recognized nullability info may be platform types; recognized annotations instead yield nullable/non-null types.",
+      "ansc": "Covers Java interop as one aspect of null-safety, though narrower than full language mechanism.",
+      "sfpl": "Specific technical claim with one sentence like peers; truth is separate from form.",
+      "ru": "Readable; “приходят с ... проверкой” is a little unnatural."
+    },
+    {
+      "label": "D",
+      "truth": "FALSE as a universal generic claim. True for concrete non-null T such as String, but unbounded generic T can be nullable because upper bound is Any?.",
+      "refutation": "The theory itself says not every T is non-null; <T : Any> is needed to exclude nullable arguments. The visible item states no such bound.",
+      "ansc": "Addresses null/non-null distinction directly and is complete for the visible broad question, despite false universal wording.",
+      "sfpl": "Only option that explains nullability using paired types and compiler guarantee; potentially more complete/definitional than others, a form/completeness imbalance.",
+      "ru": "Clear and concise; “тип-вопрос” is awkward/unclear technical wording."
+    }
+  ],
+  "section_assessments": [
+    {
+      "fieldID": "A.what_actually",
+      "assessment": "Correct distinguishes T and T? at compile time, but generic T is not inherently non-null; with unconstrained upper bound Any? it may be nullable."
+    },
+    {
+      "fieldID": "A.source_of_confusion",
+      "assessment": "Plausible confusion about runtime representation; does not fully capture compile-time nullability."
+    },
+    {
+      "fieldID": "A.if_it_were_true",
+      "assessment": "Valid consequence of the false runtime-only claim, though narrow and does not explain type distinctions."
+    },
+    {
+      "fieldID": "A.how_it_should_be",
+      "assessment": "Correct broad principle: nullability belongs to type system."
+    },
+    {
+      "fieldID": "B.what_actually",
+      "assessment": "Correct: nullable values cannot generally be accessed without null handling; nullable-receiver extensions are an exception omitted by this simplification."
+    },
+    {
+      "fieldID": "B.source_of_confusion",
+      "assessment": "Plausible misconception."
+    },
+    {
+      "fieldID": "B.if_it_were_true",
+      "assessment": "Reasonable consequence, though broad."
+    },
+    {
+      "fieldID": "B.how_it_should_be",
+      "assessment": "Correct examples of safe call or explicit check; not exhaustive (smart cast, !! also exist)."
+    },
+    {
+      "fieldID": "C.what_actually",
+      "assessment": "Partly wrong: platform types are not guaranteed statically checked for nullability; Java annotations can produce actual nullable/non-null types."
+    },
+    {
+      "fieldID": "C.source_of_confusion",
+      "assessment": "Plausible confusion but overgeneralizes all Java types as safe."
+    },
+    {
+      "fieldID": "C.if_it_were_true",
+      "assessment": "Plausible consequence of guaranteed checks, though NPE can occur from other causes; its “through interop” scope makes it a reasonable local inference."
+    },
+    {
+      "fieldID": "C.how_it_should_be",
+      "assessment": "False/overbroad: NPE through interop can occur, but also via !!, explicit throw, initialization issues; platform types are not the only route."
+    },
+    {
+      "fieldID": "D.explanation",
+      "assessment": "Correct for concrete T=String, but literally universal T is false: unbounded T has upper bound Any? and may accept nullable types; requires unstated non-null bound/concrete type."
+    },
+    {
+      "fieldID": "D.example",
+      "assessment": "Good concrete String/String? example that demonstrates Kotlin type distinction; it does not prove all generic T excludes null."
+    },
+    {
+      "fieldID": "D.when_to_apply",
+      "assessment": "Relevant but generic and circular; does not add application guidance."
+    },
+    {
+      "fieldID": "D.edge_cases",
+      "assessment": "Accurate but incomplete description: not all Java types become platform types; recognized annotations map to nullable/non-null types."
+    },
+    {
+      "fieldID": "D.related",
+      "assessment": "Mixed: operators are idiomatic; calling !! a code smell is a style judgment, not a universal language fact."
+    }
+  ],
+  "axes": {
+    "SEMANTICS": "FAIL: D is false for generic T without a visible non-null bound. A also misstates compile-time distinction as runtime-only; B and C are false as phrased.",
+    "ANSC": "All four address a relevant part of the broad visible question; D is the most direct paired-type account, but factual falsity is scored separately.",
+    "SFPL": "FAIL: D alone gives a paired type distinction plus compiler behavior, making it comparatively complete; truth does not itself count as form.",
+    "RU": "MIXED: generally understandable, with awkward “тип-вопрос” (D) and somewhat unnatural phrasing in C/B.",
+    "FACTS": "Official Kotlin docs: nullable distinction is type-system enforced; unbounded generic upper bound is Any?; Java platform types have relaxed checks and recognized nullability annotations map to Kotlin nullable/non-null types; NPE may also arise from !!, explicit throw, initialization.",
+    "SECTIONS": "Mixed: A.what_actually ignores generic T bounds; C.how_it_should_be overgeneralizes NPE origin; D.explanation universalizes generic T; D.example supports concrete String distinction only; D.edge_cases misses annotated Java types.",
+    "LINKAGE": "D aligns to basic String/String? theory, but universal T wording conflicts with the provided generic caveat. A explicitly references T yet has unsupported runtime-only claim."
+  },
+  "current_theory": "Provided Q4 theory states nullability is a static type-system feature; concrete String vs String? differ, but unbounded T is not necessarily non-null (upper bound Any?); <T : Any> excludes nullable arguments. Java references without recognized nullability info may become platform types with relaxed checks; annotated Java types map to nullable/non-null Kotlin types. NPE can also result from !!, explicit throw, initialization errors.",
+  "openedURLs": [
+    "https://kotlinlang.org/docs/null-safety.html",
+    "https://kotlinlang.org/docs/generics.html#upper-bounds",
+    "https://kotlinlang.org/docs/java-interop.html#null-safety-and-platform-types"
+  ],
+  "limits": [
+    "D is evaluated literally as an unbounded generic T because no bound is stated visibly; if T was intended to mean a concrete non-null type, that condition is unstated.",
+    "Theories and sections are assessed from supplied exact payload; no corpus edits or registry inspection.",
+    "No change made to the blind A record; its earlier D choice differs from this source-based review because the generic upper-bound caveat makes D non-universal."
+  ]
+}

@@ -1,0 +1,305 @@
+{
+  "role": "author_self_review",
+  "created_at": "2026-11-06T05:56:39.287491+00:00",
+  "input_sha256": "cbb7c5ec8c25b4f778afc8147ce1ab35553ed174b99d4e671cb4fe2fcb41f3ec",
+  "questions": [
+    {
+      "q_number": 4,
+      "options": [
+        {
+          "label": "A",
+          "truth": "FALSE",
+          "ansc": "PASS",
+          "assessment": "Переносит различие nullable в один runtime; для concrete String nullable-доступ проверяет компилятор."
+        },
+        {
+          "label": "B",
+          "truth": "FALSE",
+          "ansc": "PASS",
+          "assessment": "Полная ошибочная модель свободного unchecked доступа к nullable receiver."
+        },
+        {
+          "label": "C",
+          "truth": "FALSE_GENERALIZATION",
+          "ansc": "OPEN_NARROW",
+          "assessment": "Описывает лишь Java-границу, с ошибочной гарантией platform-nullability; не весь механизм языка."
+        },
+        {
+          "label": "D",
+          "truth": "FAIL_UNBOUNDED_T",
+          "ansc": "PASS",
+          "assessment": "Дает модель типов, но T без bound может быть String?; concrete String/String? не обосновывает универсальную ненулевость generic T."
+        }
+      ],
+      "sections": [
+        {
+          "field": "A.what_actually",
+          "status": "SCOPE_NEEDED",
+          "assessment": "Static nullability верна, но T/T? не следует объявлять всегда двумя разными типами для любого nullable type argument; лучше конкретный String/String?."
+        },
+        {
+          "field": "A.source_of_confusion",
+          "status": "PASS_WEAK",
+          "assessment": "Описывает runtime-only заблуждение, не является утверждением его истинности."
+        },
+        {
+          "field": "A.if_it_were_true",
+          "status": "PASS_SCOPED",
+          "assessment": "Без static nullability компилятор не предупреждал бы этот класс nullable-access ошибок; это не обещание исключить все runtime NPE."
+        },
+        {
+          "field": "A.how_it_should_be",
+          "status": "PASS",
+          "assessment": "Nullable-принадлежность системе типов — корректное ядро."
+        },
+        {
+          "field": "B.what_actually",
+          "status": "PASS_SCOPED",
+          "assessment": "Нужно ограничить обычными non-null member receivers; nullable extensions допускают вызов без safe call."
+        },
+        {
+          "field": "B.source_of_confusion",
+          "status": "WEAK",
+          "assessment": "Повторяет ошибочную модель свободного доступа без объяснения её источника."
+        },
+        {
+          "field": "B.if_it_were_true",
+          "status": "WEAK",
+          "assessment": "Общий лозунг о неработающей null-safety уступает конкретному nullable-length примеру."
+        },
+        {
+          "field": "B.how_it_should_be",
+          "status": "PASS_SCOPED",
+          "assessment": "Safe call и проверка — верные способы; compiler proof/smartcast и явный !! также следует различать."
+        },
+        {
+          "field": "C.what_actually",
+          "status": "PASS",
+          "assessment": "Platform-type nullability действительно не гарантирована; annotated Java declarations с конкретной nullability — иной случай, не опровержение этого поля."
+        },
+        {
+          "field": "C.source_of_confusion",
+          "status": "PASS_WEAK",
+          "assessment": "Называет заблуждение о Java-типах, а не утверждает их гарантированную безопасность."
+        },
+        {
+          "field": "C.if_it_were_true",
+          "status": "OPEN_CAUSAL_SCOPE",
+          "assessment": "Даже наличие runtime assertions может само дать NPE; последствие надо связать со статической гарантией конкретного доступа, не всем Java-кодом."
+        },
+        {
+          "field": "C.how_it_should_be",
+          "status": "OPEN_OVERBROAD",
+          "assessment": "Interop — один источник; не следует внушать, что Kotlin-only !!/explicit throw/init не могут дать NPE."
+        },
+        {
+          "field": "D.explanation",
+          "status": "FAIL_UNBOUNDED_T",
+          "assessment": "T без non-null bound может принимать nullable аргумент; заменить на concrete non-null тип или явно ограничить область."
+        },
+        {
+          "field": "D.example",
+          "status": "PASS_ILLUSTRATION",
+          "assessment": "String/String? — правильное конкретное сравнение; фрагмент не выдан за самостоятельную runnable программу."
+        },
+        {
+          "field": "D.when_to_apply",
+          "status": "WEAK_CIRCULAR",
+          "assessment": "«Когда объясняешь механизм» почти повторяет вопрос вместо применения nullable API-контракта."
+        },
+        {
+          "field": "D.edge_cases",
+          "status": "SCOPE_NEEDED",
+          "assessment": "Не все Java references остаются platform types: распознанные annotations уточняют Kotlin nullability."
+        },
+        {
+          "field": "D.related",
+          "status": "STYLE_SCOPE",
+          "assessment": "Let без ?. не null-check; !! требует обоснованного инварианта, code-smell оценка не универсальный запрет языка."
+        }
+      ],
+      "axes": {
+        "SEMANTICS": {
+          "status": "FAIL_GENERIC_SCOPE",
+          "assessment": "D literal universal generic claim неверен; условное обозначение non-null T не определено видимо."
+        },
+        "ANSC": {
+          "status": "OPEN_C_NARROW",
+          "assessment": "A/B/D дают механизмы/модели, C лишьinterop часть; factual falsehood отдельно от полноты."
+        },
+        "SFPL": {
+          "status": "PASS_WITH_NOTES",
+          "assessment": "Все по одному утвердительному тезису; A тоже сравнивает T/вопросительный тип, B явно говорит о compiler, D не имеет выдуманной уникальной compiler-подсказки. Выделение обычного «без» кодом у B неестественно, но не доказывает key cue."
+        },
+        "RU": {
+          "status": "FAIL_D_TERM",
+          "assessment": "«Тип-вопрос» — неестественный неустановленный термин; отдельные фразы о Java/«без» тоже требуют точности."
+        },
+        "FACTS": {
+          "status": "FAIL_D",
+          "assessment": "Unbounded T Any?, concrete nullability и ослабленная platform boundary проверены source+compiler; Kotlin-only NPE выполнен."
+        },
+        "SECTIONS": {
+          "status": "FAIL_SCOPE",
+          "assessment": "Все17 прочитаны; основная ошибка D.explanation, дополнительные scope/causality/weak fields сохранены без выдуманных универсальных требований."
+        },
+        "LINKAGE": {
+          "status": "OPEN_MCQ_SYNC",
+          "assessment": "Новая теория ограничивает concrete types/generics/platform types; JSON пока обобщает старую формулу."
+        }
+      },
+      "theory": "PASS_FIXED: concrete String types, self-contained User/show, stable smartcast, generic bound, justified !! and multiple NPE sources, annotated/platform distinction."
+    },
+    {
+      "q_number": 6,
+      "options": [
+        {
+          "label": "A",
+          "truth": "TRUE_PLAIN_LET",
+          "ansc": "FAIL_MISSING_ELVIS",
+          "assessment": "При нормальном обычном вызове let передаёт receiver даже null; A фактически верен, но отвечает лишь о let."
+        },
+        {
+          "label": "B",
+          "truth": "FALSE",
+          "ansc": "FAIL_MISSING_LET",
+          "assessment": "Elvis допускает fallback и throw/return, не только throw; про let ничего нет."
+        },
+        {
+          "label": "C",
+          "truth": "FALSE_LET_CLAUSE",
+          "ansc": "PASS",
+          "assessment": "Явно описывает оба понятия, но null-guard приписан let без ?. Полнота не исправляет ложную вторую часть."
+        },
+        {
+          "label": "D",
+          "truth": "FALSE",
+          "ansc": "FAIL_MISSING_LET",
+          "assessment": "Путает ветку Elvis для non-null LHS и вообще не описывает let."
+        }
+      ],
+      "sections": [
+        {
+          "field": "A.what_actually",
+          "status": "FAIL_FACT",
+          "assessment": "Обычный let не фильтрует null; это именно ложное исправление фактически верного A."
+        },
+        {
+          "field": "A.source_of_confusion",
+          "status": "FAIL_MODEL",
+          "assessment": "Обычный let действительно безусловен относительно null receiver; нельзя считать это заблуждением без указания ?.let."
+        },
+        {
+          "field": "A.if_it_were_true",
+          "status": "FAIL_PREMISE",
+          "assessment": "Сам let не защищает от null; гипотеза описывает настоящее поведение, а guard обеспечивает ?. Не лечить верный факт ложной моделью."
+        },
+        {
+          "field": "A.how_it_should_be",
+          "status": "PASS",
+          "assessment": "?.let действительно выполняет блок лишь на non-null receiver; guard приписан правильному синтаксису."
+        },
+        {
+          "field": "B.what_actually",
+          "status": "PASS",
+          "assessment": "Правильно перечисляет fallback и ранний выход/исключение как RHS Elvis."
+        },
+        {
+          "field": "B.source_of_confusion",
+          "status": "PASS_WEAK",
+          "assessment": "Называет ошибочную модель только-throw; можно объяснить происхождение примером validation."
+        },
+        {
+          "field": "B.if_it_were_true",
+          "status": "PASS_SCOPED",
+          "assessment": "Если RHS допустим только throw, обычные значения по умолчанию выражать им было бы нельзя."
+        },
+        {
+          "field": "B.how_it_should_be",
+          "status": "PASS",
+          "assessment": "Короткий fallback пример корректен; отдельному полю не требуется повторять let, чтобы корректировать свой wrong."
+        },
+        {
+          "field": "C.explanation",
+          "status": "FAIL_FACT",
+          "assessment": "Elvis-часть верна, let-часть без safe-call условие ошибочна; скрытый ?. добавлять нельзя."
+        },
+        {
+          "field": "C.example",
+          "status": "PASS",
+          "assessment": "name fallback и email?.let явно показывают безопасную форму; правильный пример не спасает ложный visible C."
+        },
+        {
+          "field": "C.when_to_apply",
+          "status": "SCOPE_NEEDED",
+          "assessment": "Для условного non-null блока нужен ?.let; простой let не заменяет проверку null."
+        },
+        {
+          "field": "C.edge_cases",
+          "status": "PASS",
+          "assessment": "Throw/return как RHS документированы; harness выполняет оба сценария."
+        },
+        {
+          "field": "C.related",
+          "status": "WEAK_NEEDS_RESULT_SCOPE",
+          "assessment": "Цепочка должна объяснять, что Elvis проверяет результат transform, а не только исходный receiver."
+        },
+        {
+          "field": "D.what_actually",
+          "status": "PASS",
+          "assessment": "Правильная ветка выбора LHS/RHS при non-null/null."
+        },
+        {
+          "field": "D.source_of_confusion",
+          "status": "PASS_WEAK",
+          "assessment": "Перестановка веток — правдоподобная модель, но объяснение кратко."
+        },
+        {
+          "field": "D.if_it_were_true",
+          "status": "FAIL_ENTAILMENT",
+          "assessment": "Из RHS при non-null LHS не следует RHS всегда: поведение null-ветки вообще не задано этим wrong."
+        },
+        {
+          "field": "D.how_it_should_be",
+          "status": "PASS",
+          "assessment": "Краткая корректная ветка выбора значения."
+        }
+      ],
+      "axes": {
+        "SEMANTICS": {
+          "status": "FAIL_KEY_AND_TRUE_WRONG",
+          "assessment": "C ложен без ?.let; A фактически верен для обычного let, но неполон по вопросу. Полностью корректного полного варианта нет."
+        },
+        "ANSC": {
+          "status": "FAIL_ABD_PASS_C",
+          "assessment": "A/B/D описывают одно из двух понятий; C оба, несмотря на ложность let-clause."
+        },
+        "SFPL": {
+          "status": "FAIL_STRUCTURAL",
+          "assessment": "C единственный двухчастный сравнительный ответ; остальные single-concept, ключ угадываем по структуре независимо от его истинности."
+        },
+        "RU": {
+          "status": "PASS_WITH_NOTES",
+          "assessment": "Русский в целом понятен; «как раз», «дефолт»/uppercase corrections менее профессиональны, но не источник фактической ошибки."
+        },
+        "FACTS": {
+          "status": "FAIL_LET",
+          "assessment": "API let<T,R> принимает любой T и возвращает R; null gating safe call. Plain/safe calls and null-result fallback executed."
+        },
+        "SECTIONS": {
+          "status": "FAIL_A_C_D",
+          "assessment": "Все17полей сопоставлены: A.what_actually и C.explanation ложны, D.counterfactual не следует, локальные корректные поля не объявлены неполными из-за отсутствия второй концепции."
+        },
+        "LINKAGE": {
+          "status": "OPEN_MCQ_SYNC",
+          "assessment": "Новая теория согласована с реальными let/?.let и Elvis; MCQ повторяет старую подмену."
+        }
+      },
+      "theory": "PASS_FIXED: exact Elvis/let fences, ordinary nullable let, safe-call gating, lazy RHS, early return/throw, null block result and exception propagation."
+    }
+  ],
+  "limits": [
+    "No full-topic FINAL.",
+    "JVM compiler/runtime only; annotations source-checked but fixture unannotated."
+  ]
+}

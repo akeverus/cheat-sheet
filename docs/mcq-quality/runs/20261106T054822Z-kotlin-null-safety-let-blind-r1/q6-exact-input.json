@@ -1,0 +1,96 @@
+{
+  "visible_question": "Что такое оператор Элвис ?: и let для работы с null?",
+  "options": [
+    {
+      "label": "A",
+      "text": "Блок `let` выполняется всегда, независимо от того, null объект или же нет.",
+      "correct": false
+    },
+    {
+      "label": "B",
+      "text": "Оператор Элвиса `?:` умеет только бросать исключение и не подставляет значение по умолчанию.",
+      "correct": false
+    },
+    {
+      "label": "C",
+      "text": "`?:` подставляет значение по умолчанию при null слева, а let выполняет блок только для не-null.",
+      "correct": true
+    },
+    {
+      "label": "D",
+      "text": "Оператор `?:` возвращает правый операнд, когда левый как раз не равен null.",
+      "correct": false
+    }
+  ],
+  "fields": [
+    {
+      "field": "A.what_actually",
+      "text": "let выполняется ТОЛЬКО для не-null объекта, не всегда."
+    },
+    {
+      "field": "A.source_of_confusion",
+      "text": "let кажется безусловным."
+    },
+    {
+      "field": "A.if_it_were_true",
+      "text": "Тогда он не защищал бы от null."
+    },
+    {
+      "field": "A.how_it_should_be",
+      "text": "?.let вызывает блок лишь при не-null."
+    },
+    {
+      "field": "B.what_actually",
+      "text": "?: умеет и подставить дефолт, и прервать (throw/return)."
+    },
+    {
+      "field": "B.source_of_confusion",
+      "text": "Кажется, ?: только бросает."
+    },
+    {
+      "field": "B.if_it_were_true",
+      "text": "Тогда дефолтных значений не было бы."
+    },
+    {
+      "field": "B.how_it_should_be",
+      "text": "name ?: \"Unknown\" — подстановка."
+    },
+    {
+      "field": "C.explanation",
+      "text": "?: подставляет значение по умолчанию при null слева; let выполняет блок только для не-null."
+    },
+    {
+      "field": "C.example",
+      "text": "name ?: \"Unknown\"; email?.let { send(it) }."
+    },
+    {
+      "field": "C.when_to_apply",
+      "text": "Когда заменяешь громоздкий if (x != null)."
+    },
+    {
+      "field": "C.edge_cases",
+      "text": "?: умеет и прервать выполнение (return/throw)."
+    },
+    {
+      "field": "C.related",
+      "text": "Цепочка let + Elvis для трансформаций."
+    },
+    {
+      "field": "D.what_actually",
+      "text": "?: возвращает ЛЕВЫЙ операнд, если он не null, иначе правый."
+    },
+    {
+      "field": "D.source_of_confusion",
+      "text": "Порядок операндов путают."
+    },
+    {
+      "field": "D.if_it_were_true",
+      "text": "Тогда дефолт подставлялся бы всегда."
+    },
+    {
+      "field": "D.how_it_should_be",
+      "text": "Левый не-null → он, иначе правый."
+    }
+  ],
+  "current_theory": "## Q6. Что такое оператор Элвис `?:` и `let` для работы с null?\n\n`?:` выбирает левое значение, если оно не null, иначе вычисляет правое выражение. Правая часть вычисляется **только при null слева**; это может быть запасное значение, `throw` или ранний `return`.\n\n```kotlin\nfun greeting(name: String?): String {\n    val present = name ?: return \"No name\"\n    return \"Hello, $present\"\n}\n\nfun main() {\n    val missing: String? = null\n    println(missing ?: \"Unknown\") // Unknown\n    println(greeting(null))       // No name\n    println(greeting(\"Kotlin\"))   // Hello, Kotlin\n}\n```\n\n`let` передаёт receiver аргументом `it` и возвращает результат лямбды. Сам по себе он **не проверяет null**: при обычном вызове `value.let { ... }` блок получает и nullable-значение, включая null. В конструкции `value?.let { ... }` пропуск блока обеспечивает именно `?.`; внутри вызванного блока `it` ненулевой.\n\n```kotlin\nfun main() {\n    val missing: String? = null\n    println(missing.let { it ?: \"let saw null\" }) // let saw null\n    println(missing?.let { it.uppercase() })     // null — блок пропущен\n\n    val supplied: String? = \"   \"\n    val label = supplied?.let { text ->\n        if (text.isBlank()) null else text.trim()\n    } ?: \"Unknown\"\n    println(label) // Unknown, хотя исходная строка не null\n}\n```\n\nВ цепочке `value?.let { transform(it) } ?: fallback` Elvis проверяет **результат всей левой части**. Fallback нужен не только при null receiver, но и когда вызванный блок вернул null. Исключение из блока не превращается в null и не перехватывается Elvis. Для утверждения об ошибке можно явно написать `value ?: throw IllegalArgumentException(\"value required\")`; выбирайте это, если отсутствие значения нарушает контракт, а не должно давать запасной результат. [Elvis operator](https://kotlinlang.org/docs/null-safety.html#elvis-operator), [let API](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/let.html), [scope-functions let](https://kotlinlang.org/docs/scope-functions.html#let).\n\n"
+}

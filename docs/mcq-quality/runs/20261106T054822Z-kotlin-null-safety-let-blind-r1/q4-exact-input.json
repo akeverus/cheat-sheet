@@ -1,0 +1,96 @@
+{
+  "visible_question": "Как реализована null-safety в Kotlin?",
+  "options": [
+    {
+      "label": "A",
+      "text": "В Kotlin тип `T` и тип со знаком вопроса различаются лишь в рантайме.",
+      "correct": false
+    },
+    {
+      "label": "B",
+      "text": "Компилятор Kotlin разрешает свободно обращаться к члену nullable-значения `без` всякой явной проверки.",
+      "correct": false
+    },
+    {
+      "label": "C",
+      "text": "Через Java-интероп `platform types` приходят с уже гарантированной самим компилятором проверкой nullability.",
+      "correct": false
+    },
+    {
+      "label": "D",
+      "text": "Тип `T` гарантированно исключает null, а способность содержать null выражает отдельный тип-вопрос.",
+      "correct": true
+    }
+  ],
+  "fields": [
+    {
+      "field": "A.what_actually",
+      "text": "T и T? — разные типы, различие проверяет компилятор, не рантайм."
+    },
+    {
+      "field": "A.source_of_confusion",
+      "text": "Кажется, это один тип с рантайм-проверкой."
+    },
+    {
+      "field": "A.if_it_were_true",
+      "text": "Тогда NPE не ловился бы на компиляции."
+    },
+    {
+      "field": "A.how_it_should_be",
+      "text": "Nullable — часть системы типов."
+    },
+    {
+      "field": "B.what_actually",
+      "text": "К члену nullable-значения без проверки обратиться нельзя."
+    },
+    {
+      "field": "B.source_of_confusion",
+      "text": "Кажется, доступ свободный."
+    },
+    {
+      "field": "B.if_it_were_true",
+      "text": "Тогда null-safety не работала бы."
+    },
+    {
+      "field": "B.how_it_should_be",
+      "text": "Компилятор требует ?. или проверку."
+    },
+    {
+      "field": "C.what_actually",
+      "text": "Platform types приходят БЕЗ гарантированной nullability — ответственность на разработчике."
+    },
+    {
+      "field": "C.source_of_confusion",
+      "text": "Кажется, Java-типы безопасны."
+    },
+    {
+      "field": "C.if_it_were_true",
+      "text": "Тогда NPE через интероп не просачивался бы."
+    },
+    {
+      "field": "C.how_it_should_be",
+      "text": "Именно через интероп NPE и приходят."
+    },
+    {
+      "field": "D.explanation",
+      "text": "Тип T не содержит null; «может быть null» — отдельный тип T?; проверяет компилятор."
+    },
+    {
+      "field": "D.example",
+      "text": "var name: String vs var nickname: String? = null."
+    },
+    {
+      "field": "D.when_to_apply",
+      "text": "Когда объясняешь механизм null-safety."
+    },
+    {
+      "field": "D.edge_cases",
+      "text": "Через Java-интероп типы приходят как platform types."
+    },
+    {
+      "field": "D.related",
+      "text": "Идиоматичны ?., ?:, let; !! — code smell."
+    }
+  ],
+  "current_theory": "## Q4. (!) Как реализована null-safety в Kotlin?\n\nNullability входит в статическую систему типов: `String` не допускает `null`, а `String?` допускает. Потенциально nullable-значение нельзя напрямую использовать как ненулевой receiver, например читать его `length`. Нужны доказательство ненулевости для smart cast, безопасный вызов `?.` либо явное утверждение `!!`, которое проверяется уже во время выполнения.\n\n```kotlin\ndata class User(val name: String)\n\nfun show(user: User?, value: Any?) {\n    val length: Int? = user?.name?.length\n    val displayName: String = user?.name ?: \"Anonymous\"\n    println(\"$length / $displayName\")\n\n    if (user != null) {\n        println(user.name) // smart cast локального параметра\n    }\n    val text: String? = value as? String\n    println(text ?: \"not a String\")\n    user?.let { println(\"User: ${it.name}\") }\n}\n\nfun main() {\n    show(null, 42)\n    show(User(\"Kotlin\"), \"text\")\n}\n```\n\n- `?.` пропускает обращение при null receiver; `?:` выбирает запасное выражение при null слева.\n- `as?` возвращает null при несовместимом типе; `!!` возвращает ненулевое значение или бросает NPE при null. Это явное утверждение инварианта, а не способ доказать его компилятору заранее.\n- Smart cast возможен, только когда компилятор может считать проверенное значение стабильным. У изменяемого свойства или custom getter такой гарантии может не быть. Расширения с nullable receiver, например `isNullOrEmpty()`, могут вызываться и без `?.`.\n\n**Оговорка о generics:** нельзя считать любой параметр `T` ненулевым. Без ограничения его верхняя граница — `Any?`, поэтому `T` может быть, например, `String?`. Ограничение `<T : Any>` исключает nullable type arguments. Сравнение `String`/`String?` выше не является универсальным утверждением о любом generic `T`.\n\nNull-safety снижает риск NPE, но не исключает его полностью: `!!`, явный throw и ошибки инициализации могут привести к нему и без Java. При Java-интеропе API без распознанной nullability-информации могут давать platform types (`String!` — обозначение IDE, не синтаксис объявления Kotlin). Проверки для них ослаблены; принятие null за `String` может закончиться runtime-проверкой и NPE. Распознанные nullability-аннотации Java уточняют тип, поэтому не все Java-ссылки остаются platform types. [Null safety](https://kotlinlang.org/docs/null-safety.html), [generic upper bounds](https://kotlinlang.org/docs/generics.html#upper-bounds), [Java platform types и аннотации](https://kotlinlang.org/docs/java-interop.html#null-safety-and-platform-types).\n\n"
+}

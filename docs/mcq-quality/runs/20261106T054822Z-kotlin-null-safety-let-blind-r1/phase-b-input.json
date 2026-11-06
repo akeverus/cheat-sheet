@@ -1,0 +1,158 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-interview.json",
+    "theory": "cheatsheets/interview/programming-languages/kotlin/kotlin-interview.md"
+  },
+  "sha256": {
+    "mcq": "96b2c37a7dc146b9242a489e8f8f9d7056426fd1ae4f50e2d89948697196fd71",
+    "theory": "4e494e1c7e7993bd9a682bf34d07d41d4300458ed223078f21f466a6630fff8a"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hashes": {
+    "Q4:B0": {
+      "mcq": "2db932693d68221ee3f744174613f5ebb0649302cd3e671d29fba4bb3e9497fd",
+      "theory": "9d48caac4259ce4fd19eb18bd1ba49539c59c2d7e6f298086c721b173e2d8b99"
+    },
+    "Q6:B0": {
+      "mcq": "69ee7ae9be65f63eb983670acb1a7e534b831112ae176f2c2487e8401466a795",
+      "theory": "7f6c186be26a7ec65ac8b5394cb1c3e6d7fc5fcfdcf73b0280dd4669d5f87613"
+    }
+  },
+  "blocks": [
+    {
+      "q_number": 4,
+      "block_idx": 0,
+      "visible_question": "Как реализована null-safety в Kotlin?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Как реализована null-safety в Kotlin?",
+        "options": [
+          {
+            "label": "A",
+            "order": 0,
+            "text": "В Kotlin тип `T` и тип со знаком вопроса различаются лишь в рантайме.",
+            "correct": false,
+            "sections": {
+              "what_actually": "T и T? — разные типы, различие проверяет компилятор, не рантайм.",
+              "source_of_confusion": "Кажется, это один тип с рантайм-проверкой.",
+              "if_it_were_true": "Тогда NPE не ловился бы на компиляции.",
+              "how_it_should_be": "Nullable — часть системы типов."
+            }
+          },
+          {
+            "label": "B",
+            "order": 1,
+            "text": "Компилятор Kotlin разрешает свободно обращаться к члену nullable-значения `без` всякой явной проверки.",
+            "correct": false,
+            "sections": {
+              "what_actually": "К члену nullable-значения без проверки обратиться нельзя.",
+              "source_of_confusion": "Кажется, доступ свободный.",
+              "if_it_were_true": "Тогда null-safety не работала бы.",
+              "how_it_should_be": "Компилятор требует ?. или проверку."
+            }
+          },
+          {
+            "label": "C",
+            "order": 2,
+            "text": "Через Java-интероп `platform types` приходят с уже гарантированной самим компилятором проверкой nullability.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Platform types приходят БЕЗ гарантированной nullability — ответственность на разработчике.",
+              "source_of_confusion": "Кажется, Java-типы безопасны.",
+              "if_it_were_true": "Тогда NPE через интероп не просачивался бы.",
+              "how_it_should_be": "Именно через интероп NPE и приходят."
+            }
+          },
+          {
+            "label": "D",
+            "order": 3,
+            "text": "Тип `T` гарантированно исключает null, а способность содержать null выражает отдельный тип-вопрос.",
+            "correct": true,
+            "sections": {
+              "explanation": "Тип T не содержит null; «может быть null» — отдельный тип T?; проверяет компилятор.",
+              "example": "var name: String vs var nickname: String? = null.",
+              "when_to_apply": "Когда объясняешь механизм null-safety.",
+              "edge_cases": "Через Java-интероп типы приходят как platform types.",
+              "related": "Идиоматичны ?., ?:, let; !! — code smell."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 6,
+      "block_idx": 0,
+      "visible_question": "Что такое оператор Элвис ?: и let для работы с null?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Что такое оператор Элвис `?:` и `let` для работы с null?",
+        "options": [
+          {
+            "label": "A",
+            "order": 0,
+            "text": "Блок `let` выполняется всегда, независимо от того, null объект или же нет.",
+            "correct": false,
+            "sections": {
+              "what_actually": "let выполняется ТОЛЬКО для не-null объекта, не всегда.",
+              "source_of_confusion": "let кажется безусловным.",
+              "if_it_were_true": "Тогда он не защищал бы от null.",
+              "how_it_should_be": "?.let вызывает блок лишь при не-null."
+            }
+          },
+          {
+            "label": "B",
+            "order": 1,
+            "text": "Оператор Элвиса `?:` умеет только бросать исключение и не подставляет значение по умолчанию.",
+            "correct": false,
+            "sections": {
+              "what_actually": "?: умеет и подставить дефолт, и прервать (throw/return).",
+              "source_of_confusion": "Кажется, ?: только бросает.",
+              "if_it_were_true": "Тогда дефолтных значений не было бы.",
+              "how_it_should_be": "name ?: \"Unknown\" — подстановка."
+            }
+          },
+          {
+            "label": "C",
+            "order": 2,
+            "text": "`?:` подставляет значение по умолчанию при null слева, а let выполняет блок только для не-null.",
+            "correct": true,
+            "sections": {
+              "explanation": "?: подставляет значение по умолчанию при null слева; let выполняет блок только для не-null.",
+              "example": "name ?: \"Unknown\"; email?.let { send(it) }.",
+              "when_to_apply": "Когда заменяешь громоздкий if (x != null).",
+              "edge_cases": "?: умеет и прервать выполнение (return/throw).",
+              "related": "Цепочка let + Elvis для трансформаций."
+            }
+          },
+          {
+            "label": "D",
+            "order": 3,
+            "text": "Оператор `?:` возвращает правый операнд, когда левый как раз не равен null.",
+            "correct": false,
+            "sections": {
+              "what_actually": "?: возвращает ЛЕВЫЙ операнд, если он не null, иначе правый.",
+              "source_of_confusion": "Порядок операндов путают.",
+              "if_it_were_true": "Тогда дефолт подставлялся бы всегда.",
+              "how_it_should_be": "Левый не-null → он, иначе правый."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "selected_theory": {
+    "4": "## Q4. (!) Как реализована null-safety в Kotlin?\n\nNullability входит в статическую систему типов: `String` не допускает `null`, а `String?` допускает. Потенциально nullable-значение нельзя напрямую использовать как ненулевой receiver, например читать его `length`. Нужны доказательство ненулевости для smart cast, безопасный вызов `?.` либо явное утверждение `!!`, которое проверяется уже во время выполнения.\n\n```kotlin\ndata class User(val name: String)\n\nfun show(user: User?, value: Any?) {\n    val length: Int? = user?.name?.length\n    val displayName: String = user?.name ?: \"Anonymous\"\n    println(\"$length / $displayName\")\n\n    if (user != null) {\n        println(user.name) // smart cast локального параметра\n    }\n    val text: String? = value as? String\n    println(text ?: \"not a String\")\n    user?.let { println(\"User: ${it.name}\") }\n}\n\nfun main() {\n    show(null, 42)\n    show(User(\"Kotlin\"), \"text\")\n}\n```\n\n- `?.` пропускает обращение при null receiver; `?:` выбирает запасное выражение при null слева.\n- `as?` возвращает null при несовместимом типе; `!!` возвращает ненулевое значение или бросает NPE при null. Это явное утверждение инварианта, а не способ доказать его компилятору заранее.\n- Smart cast возможен, только когда компилятор может считать проверенное значение стабильным. У изменяемого свойства или custom getter такой гарантии может не быть. Расширения с nullable receiver, например `isNullOrEmpty()`, могут вызываться и без `?.`.\n\n**Оговорка о generics:** нельзя считать любой параметр `T` ненулевым. Без ограничения его верхняя граница — `Any?`, поэтому `T` может быть, например, `String?`. Ограничение `<T : Any>` исключает nullable type arguments. Сравнение `String`/`String?` выше не является универсальным утверждением о любом generic `T`.\n\nNull-safety снижает риск NPE, но не исключает его полностью: `!!`, явный throw и ошибки инициализации могут привести к нему и без Java. При Java-интеропе API без распознанной nullability-информации могут давать platform types (`String!` — обозначение IDE, не синтаксис объявления Kotlin). Проверки для них ослаблены; принятие null за `String` может закончиться runtime-проверкой и NPE. Распознанные nullability-аннотации Java уточняют тип, поэтому не все Java-ссылки остаются platform types. [Null safety](https://kotlinlang.org/docs/null-safety.html), [generic upper bounds](https://kotlinlang.org/docs/generics.html#upper-bounds), [Java platform types и аннотации](https://kotlinlang.org/docs/java-interop.html#null-safety-and-platform-types).\n\n",
+    "6": "## Q6. Что такое оператор Элвис `?:` и `let` для работы с null?\n\n`?:` выбирает левое значение, если оно не null, иначе вычисляет правое выражение. Правая часть вычисляется **только при null слева**; это может быть запасное значение, `throw` или ранний `return`.\n\n```kotlin\nfun greeting(name: String?): String {\n    val present = name ?: return \"No name\"\n    return \"Hello, $present\"\n}\n\nfun main() {\n    val missing: String? = null\n    println(missing ?: \"Unknown\") // Unknown\n    println(greeting(null))       // No name\n    println(greeting(\"Kotlin\"))   // Hello, Kotlin\n}\n```\n\n`let` передаёт receiver аргументом `it` и возвращает результат лямбды. Сам по себе он **не проверяет null**: при обычном вызове `value.let { ... }` блок получает и nullable-значение, включая null. В конструкции `value?.let { ... }` пропуск блока обеспечивает именно `?.`; внутри вызванного блока `it` ненулевой.\n\n```kotlin\nfun main() {\n    val missing: String? = null\n    println(missing.let { it ?: \"let saw null\" }) // let saw null\n    println(missing?.let { it.uppercase() })     // null — блок пропущен\n\n    val supplied: String? = \"   \"\n    val label = supplied?.let { text ->\n        if (text.isBlank()) null else text.trim()\n    } ?: \"Unknown\"\n    println(label) // Unknown, хотя исходная строка не null\n}\n```\n\nВ цепочке `value?.let { transform(it) } ?: fallback` Elvis проверяет **результат всей левой части**. Fallback нужен не только при null receiver, но и когда вызванный блок вернул null. Исключение из блока не превращается в null и не перехватывается Elvis. Для утверждения об ошибке можно явно написать `value ?: throw IllegalArgumentException(\"value required\")`; выбирайте это, если отсутствие значения нарушает контракт, а не должно давать запасной результат. [Elvis operator](https://kotlinlang.org/docs/null-safety.html#elvis-operator), [let API](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/let.html), [scope-functions let](https://kotlinlang.org/docs/scope-functions.html#let).\n\n"
+  },
+  "primary_source_urls": [
+    "https://kotlinlang.org/docs/null-safety.html",
+    "https://kotlinlang.org/docs/scope-functions.html#let",
+    "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/let.html",
+    "https://kotlinlang.org/docs/generics.html#upper-bounds",
+    "https://kotlinlang.org/docs/java-interop.html#null-safety-and-platform-types"
+  ]
+}

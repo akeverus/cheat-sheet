@@ -1,0 +1,32 @@
+fun <T> echo(value:T):T=value
+fun <T:Any> nonNullEcho(value:T):T=value
+fun main() {
+ check(echo<String?>(null)==null)
+ check(nonNullEcho("x")=="x")
+ val absent:String?=null
+ check(absent.isNullOrEmpty())
+ val present:String?="Kotlin"
+ check(present.length==6) // compiler proves stable val non-null, no explicit if
+ var calls=0
+ absent.let { calls++;check(it==null) }
+ absent?.let { calls++ }
+ check(calls==1)
+ var fallbacks=0
+ fun fallback():String { fallbacks++;return "fallback" }
+ fun choose(value:String?):String=value?:fallback()
+ check(choose("")=="");check(choose("x")=="x");check(fallbacks==0)
+ check(choose(null)=="fallback" && fallbacks==1)
+ var thrown=false
+ fun required(value:String?):String=value?:throw IllegalArgumentException("value required")
+ try { required(null) } catch(e:IllegalArgumentException) { thrown=e.message=="value required" }
+ check(thrown && required("ok")=="ok")
+ var npe=false
+ try { absent!! } catch(e:NullPointerException) { npe=true }
+ check(npe) // Kotlin-only NPE, no Java involved
+ var propagated=false
+ try { present?.let { error("from let") }?:"unused" } catch(e:IllegalStateException) { propagated=e.message=="from let" }
+ check(propagated)
+ val transformedNull=present?.let { null }?:"from null result"
+ check(transformedNull=="from null result")
+ println("boundaries: PASS")
+}

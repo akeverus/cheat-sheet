@@ -195,42 +195,37 @@ val result: String = input ?: fail("input is null") // компилируетс�
 
 ## Q4. (!) Как реализована null-safety в Kotlin?
 
-Суть null-safety в том, что `null` становится частью системы типов, а не рантайм-сюрпризом. Тип `T` гарантированно не содержит `null`, а «может быть null» выражается отдельным типом `T?`. Компилятор не даёт обратиться к члену nullable-значения без явной проверки — поэтому большинство `NullPointerException` отлавливается ещё на компиляции.
+Nullability входит в статическую систему типов: `String` не допускает `null`, а `String?` допускает. Потенциально nullable-значение нельзя напрямую использовать как ненулевой receiver, например читать его `length`. Нужны доказательство ненулевости для smart cast, безопасный вызов `?.` либо явное утверждение `!!`, которое проверяется уже во время выполнения.
 
 ```kotlin
-var name: String = "Kotlin"   // не может быть null
-var nickname: String? = null  // может быть null
+data class User(val name: String)
 
-// name = null  // Ошибка компиляции!
-```
+fun show(user: User?, value: Any?) {
+    val length: Int? = user?.name?.length
+    val displayName: String = user?.name ?: "Anonymous"
+    println("$length / $displayName")
 
-Основные механизмы работы с `null`:
-
-```kotlin
-val user: User? = findUser()
-
-// 1. Safe call — ?. (возвращает null если объект null)
-val len: Int? = user?.name?.length
-
-// 2. Elvis operator — ?:  (значение по умолчанию)
-val displayName: String = user?.name ?: "Anonymous"
-
-// 3. Smart cast — после проверки компилятор знает, что не null
-if (user != null) {
-    println(user.name) // user уже User, не User?
+    if (user != null) {
+        println(user.name) // smart cast локального параметра
+    }
+    val text: String? = value as? String
+    println(text ?: "not a String")
+    user?.let { println("User: ${it.name}") }
 }
 
-// 4. Safe cast — as? (null вместо ClassCastException)
-val str: String? = value as? String
-
-// 5. Not-null assertion — !! (выбрасывает NPE если null)
-val forcedName: String = user!!.name // опасно!
-
-// 6. let — идиоматичный способ работы с nullable
-user?.let { println("User: ${it.name}") }
+fun main() {
+    show(null, 42)
+    show(User("Kotlin"), "text")
+}
 ```
 
-**На собеседовании** стоит сделать два акцента. Первый: `!!` — это code smell. Он отключает проверку компилятора, поэтому каждое его появление требует обоснования; идиоматичны `?.`, `?:` и `let`. Второй: при вызове Java-кода типы приходят как **platform types** (`String!`) — компилятор не знает их nullability, проверку на null не навязывает, и ответственность за неё ложится на разработчика. Именно через Java-интероп NPE и просачиваются в Kotlin-код.
+- `?.` пропускает обращение при null receiver; `?:` выбирает запасное выражение при null слева.
+- `as?` возвращает null при несовместимом типе; `!!` возвращает ненулевое значение или бросает NPE при null. Это явное утверждение инварианта, а не способ доказать его компилятору заранее.
+- Smart cast возможен, только когда компилятор может считать проверенное значение стабильным. У изменяемого свойства или custom getter такой гарантии может не быть. Расширения с nullable receiver, например `isNullOrEmpty()`, могут вызываться и без `?.`.
+
+**Оговорка о generics:** нельзя считать любой параметр `T` ненулевым. Без ограничения его верхняя граница — `Any?`, поэтому `T` может быть, например, `String?`. Ограничение `<T : Any>` исключает nullable type arguments. Сравнение `String`/`String?` выше не является универсальным утверждением о любом generic `T`.
+
+Null-safety снижает риск NPE, но не исключает его полностью: `!!`, явный throw и ошибки инициализации могут привести к нему и без Java. При Java-интеропе API без распознанной nullability-информации могут давать platform types (`String!` — обозначение IDE, не синтаксис объявления Kotlin). Проверки для них ослаблены; принятие null за `String` может закончиться runtime-проверкой и NPE. Распознанные nullability-аннотации Java уточняют тип, поэтому не все Java-ссылки остаются platform types. [Null safety](https://kotlinlang.org/docs/null-safety.html), [generic upper bounds](https://kotlinlang.org/docs/generics.html#upper-bounds), [Java platform types и аннотации](https://kotlinlang.org/docs/java-interop.html#null-safety-and-platform-types).
 
 ## Q5. В чём разница между `?.` и `!!`?
 
@@ -255,32 +250,39 @@ println(name!!.length)   // NullPointerException!
 
 ## Q6. Что такое оператор Элвис `?:` и `let` для работы с null?
 
-Это два главных идиоматичных инструмента для nullable-значений: `?:` подставляет значение по умолчанию (или прерывает выполнение), когда слева `null`, а `let` выполняет блок только если значение не null. Вместе они заменяют громоздкие `if (x != null) ... else ...`.
-
-**Оператор Элвис `?:`** — возвращает левый операнд, если он не `null`, иначе правый:
+`?:` выбирает левое значение, если оно не null, иначе вычисляет правое выражение. Правая часть вычисляется **только при null слева**; это может быть запасное значение, `throw` или ранний `return`.
 
 ```kotlin
-val name: String? = null
-val displayName = name ?: "Unknown"      // "Unknown"
-val length = name?.length ?: 0           // 0
-val result = name ?: throw IllegalStateException("name is required")
-val fallback = name ?: return            // ранний выход из функции
-```
-
-**`let`** — scope-функция для безопасной работы с nullable:
-
-```kotlin
-val email: String? = getEmail()
-
-// Блок выполняется только если email не null
-email?.let { nonNullEmail ->
-    sendVerification(nonNullEmail)
-    log("Sent to $nonNullEmail")
+fun greeting(name: String?): String {
+    val present = name ?: return "No name"
+    return "Hello, $present"
 }
 
-// Цепочка с let и Elvis
-val formatted = input?.let { parse(it) }?.let { validate(it) } ?: default
+fun main() {
+    val missing: String? = null
+    println(missing ?: "Unknown") // Unknown
+    println(greeting(null))       // No name
+    println(greeting("Kotlin"))   // Hello, Kotlin
+}
 ```
+
+`let` передаёт receiver аргументом `it` и возвращает результат лямбды. Сам по себе он **не проверяет null**: при обычном вызове `value.let { ... }` блок получает и nullable-значение, включая null. В конструкции `value?.let { ... }` пропуск блока обеспечивает именно `?.`; внутри вызванного блока `it` ненулевой.
+
+```kotlin
+fun main() {
+    val missing: String? = null
+    println(missing.let { it ?: "let saw null" }) // let saw null
+    println(missing?.let { it.uppercase() })     // null — блок пропущен
+
+    val supplied: String? = "   "
+    val label = supplied?.let { text ->
+        if (text.isBlank()) null else text.trim()
+    } ?: "Unknown"
+    println(label) // Unknown, хотя исходная строка не null
+}
+```
+
+В цепочке `value?.let { transform(it) } ?: fallback` Elvis проверяет **результат всей левой части**. Fallback нужен не только при null receiver, но и когда вызванный блок вернул null. Исключение из блока не превращается в null и не перехватывается Elvis. Для утверждения об ошибке можно явно написать `value ?: throw IllegalArgumentException("value required")`; выбирайте это, если отсутствие значения нарушает контракт, а не должно давать запасной результат. [Elvis operator](https://kotlinlang.org/docs/null-safety.html#elvis-operator), [let API](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/let.html), [scope-functions let](https://kotlinlang.org/docs/scope-functions.html#let).
 
 ## Q7. (!) Что такое лямбда-выражения и функциональные типы?
 

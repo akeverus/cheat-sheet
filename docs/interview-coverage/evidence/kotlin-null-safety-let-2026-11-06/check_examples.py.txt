@@ -1,0 +1,58 @@
+from pathlib import Path
+import json,re,hashlib,subprocess
+W=Path('/tmp/kotlin-theory-null-safety-let-20261106');O=W/'runtime';O.mkdir(exist_ok=True);M=Path('cheatsheets/interview/programming-languages/kotlin/kotlin-interview.md');m=M.read_text();J='/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/'
+def fences(q):return re.findall(r'```kotlin\n(.*?)\n```',re.search(rf'^## Q{q}\..*?(?=^## Q\d+\.|\Z)',m,re.M|re.S)[0],re.S)
+def run(c):
+ p=subprocess.run(c,capture_output=True,text=True);return {'command':c,'exit':p.returncode,'stdout':p.stdout,'stderr':p.stderr}
+q4=fences(4);q6=fences(6);cases=[('ExactQ4',q4[0]+'\n','null / Anonymous\nnot a String\n6 / Kotlin\nKotlin\ntext\nUser: Kotlin\n','exact fence'),('ExactQ6Elvis',q6[0]+'\n','Unknown\nNo name\nHello, Kotlin\n','exact fence'),('ExactQ6Let',q6[1]+'\n','let saw null\nnull\nUnknown\n','exact fence'),('BoundaryChecks','''fun <T> echo(value:T):T=value
+fun <T:Any> nonNullEcho(value:T):T=value
+fun main() {
+ check(echo<String?>(null)==null)
+ check(nonNullEcho("x")=="x")
+ val absent:String?=null
+ check(absent.isNullOrEmpty())
+ val present:String?="Kotlin"
+ checkNotNull(present)
+ check(present.length==6) // stable val smart-cast after library null-check contract
+ var calls=0
+ absent.let { calls++;check(it==null) }
+ absent?.let { calls++ }
+ check(calls==1)
+ var fallbacks=0
+ fun fallback():String { fallbacks++;return "fallback" }
+ fun choose(value:String?):String=value?:fallback()
+ check(choose("")=="");check(choose("x")=="x");check(fallbacks==0)
+ check(choose(null)=="fallback" && fallbacks==1)
+ var thrown=false
+ fun required(value:String?):String=value?:throw IllegalArgumentException("value required")
+ try { required(null) } catch(e:IllegalArgumentException) { thrown=e.message=="value required" }
+ check(thrown && required("ok")=="ok")
+ var npe=false
+ try { absent!! } catch(e:NullPointerException) { npe=true }
+ check(npe) // Kotlin-only NPE, no Java involved
+ var propagated=false
+ try { present?.let { error("from let") }?:"unused" } catch(e:IllegalStateException) { propagated=e.message=="from let" }
+ check(propagated)
+ val transformedNull=present?.let { null }?:"from null result"
+ check(transformedNull=="from null result")
+ println("boundaries: PASS")
+}
+''','boundaries: PASS\n','generic nullable T, stable smart cast, nullable extension, plain/safe let, lazy Elvis, throw, exception propagation')]
+positive=[];negative=[]
+for name,src,expected,scope in cases:
+ p=O/(name+'.kt');p.write_text(src);jar=O/(name+'.jar');c=run(['/usr/local/bin/kotlinc',str(p),'-jvm-target','17','-include-runtime','-d',str(jar)]);assert c['exit']==0,c;r=run([J+'java','-jar',str(jar)]);assert r['exit']==0 and r['stdout']==expected,r;positive.append({'label':name,'scope':scope,'source_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'compile':c,'run':r});print(name+': PASS',flush=True)
+legacy=O/'LegacyApi.java';legacy.write_text('public class LegacyApi { public static String getName() { return null; } }\n');classes=O/'java-classes';classes.mkdir(exist_ok=True);jc=run([J+'javac','--release','17','-d',str(classes),str(legacy)]);assert jc['exit']==0,jc
+platform=O/'PlatformBoundary.kt';platform.write_text('''fun unsafeLength():Int = LegacyApi.getName().length
+fun takeAsNonNull():String = LegacyApi.getName()
+fun main() {
+ val nullable:String? = LegacyApi.getName();check(nullable==null)
+ var direct=false;var asserted=false
+ try { unsafeLength() } catch(e:NullPointerException) { direct=true }
+ try { takeAsNonNull() } catch(e:NullPointerException) { asserted=true }
+ check(direct && asserted)
+ println("platform boundary: PASS")
+}
+''');jar=O/'PlatformBoundary.jar';c=run(['/usr/local/bin/kotlinc',str(platform),'-classpath',str(classes),'-jvm-target','17','-include-runtime','-d',str(jar)]);assert c['exit']==0,c;r=run([J+'java','-cp',str(jar)+':'+str(classes),'PlatformBoundaryKt']);assert r['exit']==0 and r['stdout']=='platform boundary: PASS\n',r;positive.append({'label':'PlatformBoundary','scope':'unannotated Java null, inferred dereference and adaptation to non-null Kotlin return; nullable adaptation succeeds','java_source_sha256':hashlib.sha256(legacy.read_bytes()).hexdigest(),'java_compile':jc,'source_sha256':hashlib.sha256(platform.read_bytes()).hexdigest(),'compile':c,'run':r});print('PlatformBoundary: PASS',flush=True)
+for name,src,diagnostic in [('NullAssignment','fun main(){ val name:String=null }\n','null'),('NullableLength','fun length(value:String?):Int=value.length\n','nullable'),('BoundedNullable','fun <T:Any> echo(value:T):T=value\nfun main(){ echo<String?>(null) }\n','bound'),('UnstableSmartCast','class Holder(var name:String?)\nfun show(h:Holder){ if(h.name!=null) println(h.name.length) }\n','smart cast'),('GenericToAny','fun <T> asAny(value:T):Any=value\n','mismatch')]:
+ p=O/(name+'.kt');p.write_text(src);c=run(['/usr/local/bin/kotlinc',str(p),'-jvm-target','17','-d',str(O/(name+'.jar'))]);assert c['exit']!=0 and diagnostic.lower() in c['stderr'].lower(),c;negative.append({'label':name,'source_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'expected_diagnostic':diagnostic,'compile':c});print(name+': expected compiler failure',flush=True)
+(W/'runtime-results.json').write_text(json.dumps({'md_sha256':hashlib.sha256(M.read_bytes()).hexdigest(),'compiler':run(['/usr/local/bin/kotlinc','-version']),'java':run([J+'java','-version']),'positive':positive,'expected_compile_failures':negative,'limits':['Annotations mapping source-checked only; fixture unannotated.','No application/JS/Native/version matrix.']},ensure_ascii=False,indent=2)+'\n')
