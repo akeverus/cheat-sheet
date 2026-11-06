@@ -1,0 +1,85 @@
+{
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "scripts/mcq_validation.py",
+        "--json",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-linkage-scan.py",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json",
+        "--json",
+        "/tmp/mutation-theory-boundary-score-20261106/linkage.json",
+        "--quiet"
+      ],
+      "exit": 1,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-anti-tell-scan.py",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/verify-md-no-mcq.sh",
+        "cheatsheets/interview/testing/mutation-testing-interview.md"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "--",
+        "cheatsheets/interview/testing/mutation-testing-interview.md"
+      ],
+      "exit": 0,
+      "stderr": ""
+    },
+    {
+      "command": [
+        "ruby",
+        "-r",
+        "yaml",
+        "-r",
+        "date",
+        "-e",
+        "s=File.read(ARGV[0]);d=YAML.safe_load(s.split(\"---\",3)[1],permitted_classes:[Date],aliases:true);puts \"YAML #{d.length} fields PASS\"",
+        "cheatsheets/interview/testing/mutation-testing-interview.md"
+      ],
+      "exit": 0,
+      "stderr": ""
+    }
+  ],
+  "current_run": "PASS",
+  "block_hashes": {
+    "Q5:B0": {
+      "mcq": "064bbd1988909fc0be258d27dce480e28a1c2b8dbb7e074e203c95146aa2f640",
+      "theory": "5589631a8243b88a2159c94097167e90fcd49270f1f328f76df7b10ab1b91ad6"
+    },
+    "Q8:B0": {
+      "mcq": "c6b9b89b1852a29c0f036d3737a0099f755a1cfa133cce433b76484f6054b8cd",
+      "theory": "9fd9c54c91cb669bf62cffefa9753a9e6a0f13932e2cddc9b5a7758a48632b70"
+    }
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  }
+}

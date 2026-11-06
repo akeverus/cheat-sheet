@@ -1,0 +1,12 @@
+import org.junit.platform.launcher.core.*;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
+public class MutationProbeRunner {
+ public static void main(String[] args) {
+  var listener=new SummaryGeneratingListener();var launcher=LauncherFactory.create();
+  launcher.registerTestExecutionListeners(listener);
+  launcher.execute(LauncherDiscoveryRequestBuilder.request().selectors(selectClass(args[0])).build());
+  var s=listener.getSummary();s.printTo(new java.io.PrintWriter(System.out));s.printFailuresTo(new java.io.PrintWriter(System.out));
+  if(s.getTestsSucceededCount()!=Long.parseLong(args[1]) || s.getTotalFailureCount()!=0)throw new AssertionError("probe failure");
+ }
+}

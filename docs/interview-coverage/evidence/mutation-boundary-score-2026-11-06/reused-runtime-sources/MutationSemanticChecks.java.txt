@@ -1,0 +1,50 @@
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+class MutationSemanticChecks {
+ static boolean original(int age) { return age>=18; }
+ static boolean boundary(int age) { return age>18; }
+ static boolean equality(int age) { return age==18; }
+ static int product(int a,int b) { return a*b; }
+ static int division(int a,int b) { return a/b; }
+ static int countOriginal() { int i=0;while(i<10){i++;}return i; }
+ static int countDisplayedPair() { int i=0;while(i<=9){i++;}return i; }
+ static int countSingleBoundary() { int i=0;while(i<=10){i++;}return i; }
+
+ @Test void boundaryDiffersAtEqualityNotFarValues() {
+   for(int age=-3;age<=25;age++)
+     assertEquals(age==18,original(age)!=boundary(age));
+ }
+ @Test void seventeenDoesNotKillEqualityButNineteenDoes() {
+   assertEquals(original(17),equality(17));
+   assertNotEquals(original(19),equality(19));
+ }
+ @Test void exactArithmeticAssertionNeedsDiscriminatingInputs() {
+   assertEquals(20,product(5,4));assertEquals(1,division(5,4));
+   assertEquals(product(0,2),division(0,2));
+ }
+ @Test void unexpectedExceptionCanDetectMutationWithoutResultAssertion() {
+   product(5,0); // a test containing only this call has no value assertion
+   assertThrows(ArithmeticException.class,()->division(5,0));
+ }
+ @Test void displayedEquivalentPairChangesTwoThingsNotOneBoundary() {
+   assertEquals(10,countOriginal());assertEquals(10,countDisplayedPair());
+   assertEquals(11,countSingleBoundary());
+ }
+ @Test void addZeroAndSubtractZeroAgreeOnRepresentativeIntValues() {
+   for(int value:new int[]{Integer.MIN_VALUE,-100,-1,0,1,100,Integer.MAX_VALUE})
+      assertEquals(value+0,value-0);
+ }
+ static class Counter { int value;void increment(){value++;} }
+ @Test void voidDeletionObservableThroughStateWithoutMock() {
+   Counter original=new Counter();original.increment();
+   Counter deleted=new Counter();
+   assertEquals(1,original.value);assertEquals(0,deleted.value);
+ }
+ @Test void removeConditionalVariantsNeedOppositeInputClasses() {
+   for(boolean allowed:new boolean[]{false,true}) {
+     int original=allowed?1:0;
+     assertEquals(!allowed,original!=1); // forced true
+     assertEquals(allowed,original!=0);  // forced false
+   }
+ }
+}
