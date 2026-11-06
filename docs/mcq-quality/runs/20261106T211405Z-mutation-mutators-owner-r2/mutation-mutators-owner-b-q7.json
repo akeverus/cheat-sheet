@@ -1,0 +1,232 @@
+{
+  "reviewer": "mutation_mutators_r2_independent",
+  "model": "gpt-6-luna",
+  "checked_at": "2026-11-06T21:21:45.824024+00:00",
+  "scope": [
+    "Q7:B0"
+  ],
+  "hashes": {
+    "mcq": "188a07ce4f40e62ba3f491cccc2323b07903aa53c126b0e6d3bfd726d393df88",
+    "theory": "d23b71f7df0aefd246565bad31984e39fbdbb02e9932c0b64d1c13887c1f3908"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "surfaces_read": [
+    "Visible Markdown question",
+    "Own Q7 theory",
+    "Shared preamble",
+    "All four visible options",
+    "All17 sections",
+    "Applicable standard/examiner/SFPL/RU",
+    "Primary docs and pinned source actually opened"
+  ],
+  "options": [
+    {
+      "label": "A",
+      "model": "Удаление void-вызова и обнаружение через состояние/взаимодействие.",
+      "completeness": "FULL",
+      "truth": "Верен: наблюдаемый эффект может пропасть, хотя числового return нет.",
+      "defense_attempt": "Correct; не нужно исчерпывающе перечислять семейства.",
+      "completeness_reason": "Самостоятельный пример оператора с механизмом/следствием; ошибочная модель не обязана быть фактически верной, чтобы считаться полной."
+    },
+    {
+      "label": "B",
+      "model": "Удаление void объявляется числовой return-подменой и проверкой этого числа.",
+      "completeness": "FULL",
+      "truth": "Неверен.",
+      "defense_attempt": "Защитить нельзя: void не даёт числового результата и VOID_METHOD_CALLS удаляет вызов.",
+      "completeness_reason": "Самостоятельный пример оператора с механизмом/следствием; ошибочная модель не обязана быть фактически верной, чтобы считаться полной."
+    },
+    {
+      "label": "C",
+      "model": "Forcedtrue якобы отличается только там, где тело исходно выполняется.",
+      "completeness": "FULL",
+      "truth": "Неверен.",
+      "defense_attempt": "Чистая модель счётчика даёт различие на исходномfalse и опровергает only-true; модель закончена, но ложна.",
+      "completeness_reason": "Самостоятельный пример оператора с механизмом/следствием; ошибочная модель не обязана быть фактически верной, чтобы считаться полной."
+    },
+    {
+      "label": "D",
+      "model": "Return Values якобы меняет аргументы, сохраняя результат.",
+      "completeness": "FULL",
+      "truth": "Неверен.",
+      "defense_attempt": "Защитить нельзя: возвратные операторы меняют return, замена аргументов — другой механизм.",
+      "completeness_reason": "Самостоятельный пример оператора с механизмом/следствием; ошибочная модель не обязана быть фактически верной, чтобы считаться полной."
+    }
+  ],
+  "sections": [
+    {
+      "label": "A",
+      "field": "explanation",
+      "status": "PASS",
+      "reason": "Наблюдаемый эффект удалённого void-вызова объяснён корректно."
+    },
+    {
+      "label": "A",
+      "field": "example",
+      "status": "PASS",
+      "reason": "Изменение состояния счётчика позволяет проверку без mock."
+    },
+    {
+      "label": "A",
+      "field": "when_to_apply",
+      "status": "PASS",
+      "reason": "Предлагается проверять значимый эффект."
+    },
+    {
+      "label": "A",
+      "field": "edge_cases",
+      "status": "PASS",
+      "reason": "Корректно отмечены оба направления Remove Conditional."
+    },
+    {
+      "label": "A",
+      "field": "related",
+      "status": "PASS",
+      "reason": "Релевантные Q4/Q19 существуют."
+    },
+    {
+      "label": "B",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Удаление void-вызова отличается от подмены return."
+    },
+    {
+      "label": "B",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Объясняется смешение удаления вызова и числового возврата."
+    },
+    {
+      "label": "B",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Числовой результат противоречил бы void-сигнатуре."
+    },
+    {
+      "label": "B",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Нужно проверять наблюдаемый эффект."
+    },
+    {
+      "label": "C",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "В простой модели forcedtrue отличается на исходномfalse."
+    },
+    {
+      "label": "C",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Позитивная ветка не задаёт различающий вход для этой модели forcedtrue."
+    },
+    {
+      "label": "C",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Прямой false-контрпример0/1 в модели счётчика опровергает ограничение wrong; не обещается разница на каждомtrue."
+    },
+    {
+      "label": "C",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Нужно учитывать конкретный true/false вариант."
+    },
+    {
+      "label": "D",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Возврат отличается от аргумента."
+    },
+    {
+      "label": "D",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Объясняется путаница ролей значений."
+    },
+    {
+      "label": "D",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Предполагаемое изменение аргумента должно было бы отражаться в diff входа, а не возврата."
+    },
+    {
+      "label": "D",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Практический совет различать входы, возврат и эффект уместен."
+    }
+  ],
+  "checks": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "A — единственный корректный пример; B/C/D тоже отвечают на видимый широкий вопрос, но предлагают неверные механизмы."
+    },
+    "FACTS": {
+      "status": "PASS",
+      "reason": "Реально открыты PIT mutators и pinned1.30.2 RemoveConditional/VoidMethodCall исходники, подтверждающие механизмы."
+    },
+    "LINKAGE": {
+      "status": "PASS",
+      "reason": "L4: собственный Q7 прямо описывает void, возвратные и условные операторы, обсуждаемые текущими вариантами."
+    },
+    "SECTIONS": {
+      "status": "PASS",
+      "reason": "Все17полей прочитаны: наблюдаемый эффект, void vsreturn, false-вход/счётчик, аргументы vsвозврат и конкретные контрфактуалы согласованы."
+    },
+    "SFPL": {
+      "status": "PASS",
+      "reason": "Пересматриваю прежний FAIL: измеренные объёмы сами по себе не показывают несопоставимость. Все четыре варианта — одно предложение, 18–19 слов; длина A/B/C/D — 142/148/131/160 знаков. Каждый называет оператор и описывает предполагаемый механизм с наблюдением или следствием. A связывает удаление void-вызова с наблюдением состояния/взаимодействия; B даёт развернутую причинно-следственную модель подмены результата и сравнения; C описывает условие различия; D развивает модель изменения аргументов и проверки assertions. B/C/D не являются обрывочными или явно менее подробными: у B и D есть причинные следствия, у C — уточнение по входам. По объёму ключ A находится между коротким C и более длинными B/D, а shortest C и longest D оба wrong; конкретного структурного признака, выделяющего A, не обнаружено. SFPL не требует буквального равенства объёма. Поэтому прежнее обоснование только разницей длины недостаточно, SFPL PASS."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "Все4 завершены и дают пример семейства/механизм/условие или последствие. Wrong полны как ошибочные модели, от них не требуется перечень истинных семейств."
+    },
+    "RU": {
+      "status": "PASS",
+      "reason": "Вопрос, теория, варианты и sections понятны по-русски, общепринятые английские термины применены последовательно."
+    }
+  },
+  "sources": [
+    {
+      "url": "https://pitest.org/quickstart/mutators/",
+      "checked_claim": "Удаление void, отдельные операторы возврата и принудительные варианты условий.",
+      "version": "Current official PIT documentation",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hcoles/pitest/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/RemoveConditionalMutator.java",
+      "checked_claim": "1.30.2 имеет EQUAL/ORDER и replaceWith true/false.",
+      "version": "PIT1.30.2 pinned source",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hcoles/pitest/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/VoidMethodCallMutator.java",
+      "checked_claim": "Удаление подходящих void-вызовов, не числовой возврат.",
+      "version": "PIT1.30.2 pinned source",
+      "checked_at": "2026-11-06"
+    }
+  ],
+  "findings": [],
+  "normalization_provenance": "Actual Q7 independent inline judgments transferred with permission; same reviewer must verify before FINAL.",
+  "limitations": [
+    "Initial Q7 SFPL FAIL preserved, not automatically renamed PASS; explicit adjudication required.",
+    "Нет новых PIT/JVM/CI запусков. Родительское Java manual-model observation не объявляется исполнением рецензента."
+  ],
+  "resolved_findings": [
+    {
+      "id": "MUTATION-Q7-SFPL-R2",
+      "check": "sfpl",
+      "status": "RESOLVED",
+      "verdict": "PASS",
+      "reason": "Пересматриваю прежний FAIL: измеренные объёмы сами по себе не показывают несопоставимость. Все четыре варианта — одно предложение, 18–19 слов; длина A/B/C/D — 142/148/131/160 знаков. Каждый называет оператор и описывает предполагаемый механизм с наблюдением или следствием. A связывает удаление void-вызова с наблюдением состояния/взаимодействия; B даёт развернутую причинно-следственную модель подмены результата и сравнения; C описывает условие различия; D развивает модель изменения аргументов и проверки assertions. B/C/D не являются обрывочными или явно менее подробными: у B и D есть причинные следствия, у C — уточнение по входам. По объёму ключ A находится между коротким C и более длинными B/D, а shortest C и longest D оба wrong; конкретного структурного признака, выделяющего A, не обнаружено. SFPL не требует буквального равенства объёма. Поэтому прежнее обоснование только разницей длины недостаточно, SFPL PASS.",
+      "blocks": [
+        "Q7:B0"
+      ]
+    }
+  ]
+}
