@@ -1,0 +1,190 @@
+{
+  "checked_at": "2026-11-06T18:18:55.756942+00:00",
+  "kind": "author dependency proof, not independent acceptance",
+  "base_head": "103ab7259066f63a001a78dff6aff45888e929b4",
+  "previous_accepted_head": "79d341aff92a69eb5f1dd9313b38bd2056b089e0",
+  "current_sha256": {
+    "mcq": "d5e81e113700a96816867cf211cd568d6beca05b6fe65edb7df176d8d47b43c0",
+    "theory": "98fa9dcc8d7c329670453cc37dd286e748b043e41972c24cf3ba04a3266c138e"
+  },
+  "old_preamble": "---\ntitle: \"Вопросы на собеседовании: Мутационное тестирование\"\ndescription: \"Mutation testing: проверка качества тестов через mutations кода, mutation operators, kill rate, surviving mutants, PIT, Stryker, тулинг для Java/JS/Python, vs code coverage\"\ntags:\n  - interview\n  - testing\n  - mutation-testing-interview\ntype: \"interview\"\ndifficulty: \"intermediate\"\naliases:\n  - \"Вопросы на собеседовании\"\n  - \"Mutation Testing\"\n  - \"Mutation testing interview\"\n  - \"PIT mutation testing interview\"\nprerequisites: []\nnext: []\nupdated: \"2026-04-25\"\n---\n# Вопросы на собеседовании: Мутационное тестирование\n\n`Mutation testing` — техника оценки **качества тестов** (а не качества кода). Идея: модифицировать (\"**mutate**\") код, прогнать тесты и проверить, **сколько мутаций поймано** (killed). Выжившие мутанты (surviving mutants) = слабые тесты. Главные инструменты: **PIT** (Java), **Stryker** (JS/TS/.NET/Scala), **mutmut** (Python). Дополняет (но не заменяет) coverage.\n\n## Полезные ссылки\n\n### Официальная документация и авторитетные источники\n\n- [PIT Mutation Testing — Pitest.org](https://pitest.org/)\n- [Stryker Mutator](https://stryker-mutator.io/)\n- [Mutation Testing — Wikipedia](https://en.wikipedia.org/wiki/Mutation_testing)\n- [PITclipse (PIT IntelliJ plugin)](https://github.com/hcoles/pitest)\n- [Mutation Testing — Baeldung](https://www.baeldung.com/java-mutation-testing-with-pitest)\n\n## Содержание\n\n- [Полезные ссылки](#полезные-ссылки)\n- [See also](#see-also)\n\n**Базовые понятия**\n- [Q1. (!) Что такое mutation testing?](#q1--что-такое-mutation-testing)\n- [Q2. (!) Зачем mutation testing, если уже есть code coverage?](#q2--зачем-mutation-testing-если-уже-есть-code-coverage)\n- [Q3. Что значат термины mutant, killed, survived, equivalent?](#q3-что-значат-термины-mutant-killed-survived-equivalent)\n\n**Mutation operators**\n- [Q4. (!) Какие мутации типичны?](#q4--какие-мутации-типичны)\n- [Q5. Как работает Conditional Boundary Mutator?](#q5-как-работает-conditional-boundary-mutator)\n- [Q6. Как работает Math Mutator?](#q6-как-работает-math-mutator)\n- [Q7. Какие ещё бывают операторы мутаций?](#q7-какие-ещё-бывают-операторы-мутаций)\n\n**Метрики**\n- [Q8. (!) Что такое mutation score (kill rate) и как его считают?](#q8--что-такое-mutation-score-kill-rate-и-как-его-считают)\n- [Q9. Как анализировать выживших мутантов (surviving mutants)?](#q9-как-анализировать-выживших-мутантов-surviving-mutants)\n- [Q10. Что такое эквивалентные мутанты (equivalent mutants)?](#q10-что-такое-эквивалентные-мутанты-equivalent-mutants)\n\n**Tools**\n- [Q11. (!) Как использовать PIT для Java?](#q11--как-использовать-pit-для-java)\n- [Q12. (!) Как использовать Stryker для JavaScript/TypeScript?](#q12--как-использовать-stryker-для-javascripttypescript)\n- [Q13. Как использовать mutmut для Python?](#q13-как-использовать-mutmut-для-python)\n- [Q14. Какие ещё есть инструменты mutation testing?](#q14-какие-ещё-есть-инструменты-mutation-testing)\n\n**Performance**\n- [Q15. (!) Почему mutation testing медленный?](#q15--почему-mutation-testing-медленный)\n- [Q16. Как ускоряют mutation testing (incremental, in-process)?](#q16-как-ускоряют-mutation-testing-incremental-in-process)\n\n**Production**\n- [Q17. (!) Когда mutation testing оправдан?](#q17--когда-mutation-testing-оправдан)\n- [Q18. Какой mutation score ставить целевым?](#q18-какой-mutation-score-ставить-целевым)\n- [Q19. (!) В чём ограничения и за что критикуют mutation testing?](#q19--в-чём-ограничения-и-за-что-критикуют-mutation-testing)\n- [Q20. Как встроить mutation testing в CI/CD?](#q20-как-встроить-mutation-testing-в-cicd)\n",
+  "new_preamble": "---\ntitle: \"Вопросы на собеседовании: Мутационное тестирование\"\ndescription: \"Mutation testing: проверка качества тестов через mutations кода, mutation operators, kill rate, surviving mutants, PIT, Stryker, тулинг для Java/JS/Python, vs code coverage\"\ntags:\n  - interview\n  - testing\n  - mutation-testing-interview\ntype: \"interview\"\ndifficulty: \"intermediate\"\naliases:\n  - \"Вопросы на собеседовании\"\n  - \"Mutation Testing\"\n  - \"Mutation testing interview\"\n  - \"PIT mutation testing interview\"\nprerequisites: []\nnext: []\nupdated: \"2026-04-25\"\n---\n# Вопросы на собеседовании: Мутационное тестирование\n\n`Mutation testing` оценивает, обнаруживают ли выбранные тесты небольшие изменения программы. Инструмент создаёт мутанты и проверяет реакцию тестов; падение теста может обнаружить изменение. Выживший мутант требует разбора: возможны пропущенный сценарий, непроверенный эффект или эквивалентное поведение в рассматриваемой области. Сам по себе `survived` не доказывает слабость всех тестов. Мутационный анализ дополняет покрытие и не доказывает правильность требований. Здесь рассмотрены PIT для Java, Stryker и mutmut для Python; определения и ограничения — в Q3/Q8–Q10.\n\n## Полезные ссылки\n\n### Официальная документация и авторитетные источники\n\n- [PIT Mutation Testing — Pitest.org](https://pitest.org/)\n- [Stryker Mutator](https://stryker-mutator.io/)\n- [Mutation Testing — Wikipedia](https://en.wikipedia.org/wiki/Mutation_testing)\n- [PITclipse (PIT IntelliJ plugin)](https://github.com/hcoles/pitest)\n- [Mutation Testing — Baeldung](https://www.baeldung.com/java-mutation-testing-with-pitest)\n\n## Содержание\n\n- [Полезные ссылки](#полезные-ссылки)\n- [See also](#see-also)\n\n**Базовые понятия**\n- [Q1. (!) Что такое mutation testing?](#q1--что-такое-mutation-testing)\n- [Q2. (!) Зачем mutation testing, если уже есть code coverage?](#q2--зачем-mutation-testing-если-уже-есть-code-coverage)\n- [Q3. Что значат термины mutant, killed, survived, equivalent?](#q3-что-значат-термины-mutant-killed-survived-equivalent)\n\n**Mutation operators**\n- [Q4. (!) Какие мутации типичны?](#q4--какие-мутации-типичны)\n- [Q5. Как работает Conditional Boundary Mutator?](#q5-как-работает-conditional-boundary-mutator)\n- [Q6. Как работает Math Mutator?](#q6-как-работает-math-mutator)\n- [Q7. Какие ещё бывают операторы мутаций?](#q7-какие-ещё-бывают-операторы-мутаций)\n\n**Метрики**\n- [Q8. (!) Что такое mutation score (kill rate) и как его считают?](#q8--что-такое-mutation-score-kill-rate-и-как-его-считают)\n- [Q9. Как анализировать выживших мутантов (surviving mutants)?](#q9-как-анализировать-выживших-мутантов-surviving-mutants)\n- [Q10. Что такое эквивалентные мутанты (equivalent mutants)?](#q10-что-такое-эквивалентные-мутанты-equivalent-mutants)\n\n**Tools**\n- [Q11. (!) Как использовать PIT для Java?](#q11--как-использовать-pit-для-java)\n- [Q12. (!) Как использовать Stryker для JavaScript/TypeScript?](#q12--как-использовать-stryker-для-javascripttypescript)\n- [Q13. Как использовать mutmut для Python?](#q13-как-использовать-mutmut-для-python)\n- [Q14. Какие ещё есть инструменты mutation testing?](#q14-какие-ещё-есть-инструменты-mutation-testing)\n\n**Performance**\n- [Q15. (!) Почему mutation testing медленный?](#q15--почему-mutation-testing-медленный)\n- [Q16. Как ускоряют mutation testing (incremental, in-process)?](#q16-как-ускоряют-mutation-testing-incremental-in-process)\n\n**Production**\n- [Q17. (!) Когда mutation testing оправдан?](#q17--когда-mutation-testing-оправдан)\n- [Q18. Какой mutation score ставить целевым?](#q18-какой-mutation-score-ставить-целевым)\n- [Q19. (!) В чём ограничения и за что критикуют mutation testing?](#q19--в-чём-ограничения-и-за-что-критикуют-mutation-testing)\n- [Q20. Как встроить mutation testing в CI/CD?](#q20-как-встроить-mutation-testing-в-cicd)\n",
+  "diff": "diff --git a/cheatsheets/interview/testing/mutation-testing-interview.md b/cheatsheets/interview/testing/mutation-testing-interview.md\nindex a385133c7..dc7333b90 100644\n--- a/cheatsheets/interview/testing/mutation-testing-interview.md\n+++ b/cheatsheets/interview/testing/mutation-testing-interview.md\n@@ -18,7 +18,7 @@ updated: \"2026-04-25\"\n ---\n # Вопросы на собеседовании: Мутационное тестирование\n \n-`Mutation testing` — техника оценки **качества тестов** (а не качества кода). Идея: модифицировать (\"**mutate**\") код, прогнать тесты и проверить, **сколько мутаций поймано** (killed). Выжившие мутанты (surviving mutants) = слабые тесты. Главные инструменты: **PIT** (Java), **Stryker** (JS/TS/.NET/Scala), **mutmut** (Python). Дополняет (но не заменяет) coverage.\n+`Mutation testing` оценивает, обнаруживают ли выбранные тесты небольшие изменения программы. Инструмент создаёт мутанты и проверяет реакцию тестов; падение теста может обнаружить изменение. Выживший мутант требует разбора: возможны пропущенный сценарий, непроверенный эффект или эквивалентное поведение в рассматриваемой области. Сам по себе `survived` не доказывает слабость всех тестов. Мутационный анализ дополняет покрытие и не доказывает правильность требований. Здесь рассмотрены PIT для Java, Stryker и mutmut для Python; определения и ограничения — в Q3/Q8–Q10.\n \n ## Полезные ссылки\n \n@@ -270,33 +270,21 @@ Mutation score показывает долю обнаруженных мутан\n \n ## Q11. (!) Как использовать PIT для Java?\n \n-PIT (Pitest) — стандарт де-факто для mutation testing в Java. Он мутирует не исходники, а байт-код, что заметно ускоряет работу, и интегрируется с Maven и Gradle.\n+PIT изменяет инструкции скомпилированных JVM-классов и запускает тесты против этих изменений. Для обычного Maven-проекта сначала готовят классы и тесты, затем выполняют цель `mutationCoverage`; переписывать и заново компилировать Java-исходники для каждого мутанта не требуется. [PIT: механизм](https://pitest.org/quickstart/basic_concepts/), [Maven quick start](https://pitest.org/quickstart/maven/).\n \n-**Подключение в Maven** — добавляем плагин:\n-```xml\n-<plugin>\n-    <groupId>org.pitest</groupId>\n-    <artifactId>pitest-maven</artifactId>\n-    <version>1.15.0</version>\n-</plugin>\n-```\n+Практический порядок подключения:\n \n-И запускаем анализ одной командой:\n-```bash\n-mvn org.pitest:pitest-maven:mutationCoverage\n-```\n+1. Добавьте `org.pitest:pitest-maven` в `build/plugins` файла `pom.xml` и зафиксируйте выбранную версию. Проверьте совместимость с JDK и тестовым движком проекта.\n+2. Для тестов JUnit Platform, например Jupiter, подключите `org.pitest:pitest-junit5-plugin` как зависимость **самого Maven-плагина**. Одного наличия Jupiter среди зависимостей проекта недостаточно. Документация адаптера 1.2.3 требует PIT 1.19.4 или выше; это ограничение совместимости, а не обещание работоспособности любой комбинации версий. [JUnit Platform adapter](https://github.com/pitest/pitest-junit5-plugin).\n+3. При необходимости ограничьте мутируемые классы через `targetClasses`, а доступные тесты — через `targetTests`. Это разные области настройки.\n+4. Выполните `mvn test-compile org.pitest:pitest-maven:mutationCoverage`. Предварительно убедитесь, что исходные тесты проходят в обычном режиме.\n+5. Откройте HTML-отчёт в `target/pit-reports` с учётом настроек каталога и временных подкаталогов. Разбирайте конкретные изменения и статусы, а не только итоговый процент. Наличие `survived` ещё не указывает единственный недостающий тест.\n \n-**Что на выходе.** PIT генерирует HTML-отчёт, где по каждому файлу видно:\n-- mutation score;\n-- сколько мутантов убито, а сколько выжило;\n-- тип мутации для каждого выжившего — чтобы сразу понимать, какого теста не хватает.\n+PIT отбирает тесты по покрытию и времени выполнения. Это документированный механизм, а не основание обещать универсальный «fast mode с 1.6» или ускорение на порядки. Непокрытое место может получить отдельный статус `No coverage` и остаётся важной частью отчёта.\n \n-**Чем PIT удобен:**\n-- **инкрементальный анализ** (`withHistory`) — прогоняет мутации только по изменённому коду;\n-- встроенная поддержка JUnit 5;\n-- **coverage-based** отбор — не тратит время на непокрытые строки, где мутант всё равно выживет «по отсутствию покрытия».\n+`withHistory` переиспользует результаты с учётом изменений кода и тестов; это не синоним «проверить только изменённые файлы». История опирается на допущения о зависимостях, поэтому её ограничения нужно учитывать при изменениях окружения и библиотек. Для повторяемого CI отдельно настраивают хранение истории. [Incremental analysis](https://pitest.org/quickstart/incremental_analysis/).\n \n-**Производительность.** Начиная с PIT 1.6+ есть fast mode, который ускоряет анализ на порядки за счёт умного отбора тестов под каждый мутант (Q16) — без него mutation testing на крупной кодовой базе непрактичен.\n+Maven — один из способов запуска. Документация описывает и отдельный command-line запуск; интеграцию выбирают под сборку проекта. [PIT CLI](https://pitest.org/quickstart/commandline/).\n \n ## Q12. (!) Как использовать Stryker для JavaScript/TypeScript?\n \n@@ -328,18 +316,20 @@ npx stryker run\n \n ## Q13. Как использовать mutmut для Python?\n \n-mutmut — популярный инструмент mutation testing для Python: он вносит мутации в исходники и прогоняет ваш тестовый набор (обычно pytest), отмечая, какие мутанты выжили.\n+mutmut вносит изменения в исходный Python-код и проверяет их тестами. Далее описана модель **mutmut 3+** по официальной документации, проверенной 6 ноября 2026 года; у mutmut 2 другая модель исполнения. Команды и параметры сверяйте с установленной версией. [Документация mutmut](https://mutmut.readthedocs.io/en/latest/).\n \n-**Базовый сценарий:**\n-```bash\n-pip install mutmut\n-mutmut run\n-mutmut html  # report\n-```\n+Базовый порядок работы:\n+\n+1. Подготовьте окружение проекта, установите mutmut и убедитесь, что исходные тесты проходят. Для запуска нужен системный `fork`; документация предлагает Windows-пользователям WSL.\n+2. Выполните `mutmut run`. Описанный в документации сценарий использует pytest и ищет тесты в `tests` или `test`; область исходников и выбор тестов при необходимости задают в конфигурации своей версии.\n+3. Изучите результаты через `mutmut browse`: интерфейс показывает мутанты и позволяет повторить проверку после изменения тестов. Анализ можно остановить и продолжить; инструмент сохраняет выполненную работу.\n+4. Для ограниченного разбора используйте поддерживаемые шаблоны, например `mutmut run \"my_module.my_function*\"`. Имя функции здесь условное, его заменяют именем из проекта.\n+\n+Отбор релевантных тестов и параллельное выполнение уменьшают стоимость анализа, но не превращают одну команду в единственный неизменённый запуск pytest для всех мутантов. Настройки отбора влияют и на результат: ограничение глубины стека может исключить тест, который обнаруживал изменение. Время измеряют на своём проекте; обязательного ночного режима для любого проекта нет.\n \n-`mutmut run` запускает анализ, `mutmut html` генерирует отчёт с выжившими мутантами.\n+Причина расходов **не в отсутствии байт-кода Python**. CPython компилирует код в байт-код, который можно исследовать через `dis`; его формат зависит от версии и реализации. Работа mutmut с исходниками — выбор механизма конкретного инструмента. [CPython 3.13: dis](https://docs.python.org/3.13/library/dis.html).\n \n-**Главный подводный камень — скорость.** В Python нет компиляции и байт-кода, который можно было бы дёшево пропатчить (как делает PIT в Java), поэтому каждый мутант фактически требует отдельного прогона тестов через интерпретатор. На сколько-нибудь крупном проекте mutmut работает медленно, и его обычно гоняют ночными прогонами или точечно по изменённым модулям.\n+Старый пример с `mutmut html` не следует переносить между версиями без проверки: описанный выше сценарий использует документированный `browse`. Команду `mutmut apply`, которая записывает выбранную мутацию в исходники, применяют осознанно к сохранённому состоянию кода; просмотр результата не требует такого применения.\n \n ## Q14. Какие ещё есть инструменты mutation testing?\n \n",
+  "blocks": [
+    {
+      "block": "Q3:B0",
+      "old_hashes": {
+        "mcq": "122d9e4996914accfd14dfd54bff27475fe404ba3ae7135dd81a6f1f6b3a768b",
+        "theory": "8d8f5e726a0d91cbaeb3a103096946b9a1cb677776b88176d5fe12a9952b86ae"
+      },
+      "new_hashes": {
+        "mcq": "122d9e4996914accfd14dfd54bff27475fe404ba3ae7135dd81a6f1f6b3a768b",
+        "theory": "42e7d48e6d8e0c2ec1df7656af1be770c2e737db3a94c39eebfe75939d911bf7"
+      },
+      "mcq_and_question_body_unchanged": true,
+      "old_final_record": {
+        "path": "docs/mcq-quality/reviews/checks/20261106T174436Z-mutation-status-owner-r1-scoped-final.json",
+        "sha256": "f33760648e73b9f046fad8900b4b7d7e50bff173dbd436055a862db53dbda823"
+      },
+      "original_blind_receipt_still_current_for_visible_input": true,
+      "original_reviewer": "mutation_status_owner_independent",
+      "original_phase_a": {
+        "path": "docs/mcq-quality/runs/20261106T174436Z-mutation-status-owner-r1/phase-a.json",
+        "sha256": "534f6cef39c512540fb6fb3722d19bfba28ea225dc2d2ae18a57453cb07ddd43"
+      },
+      "actual_author_dependency_assessment": "Исправленный пролог теперь согласован с различением объекта, результата и эквивалентности: survived не доказывает слабость всех тестов. Четыре определения и все пояснения не менялись.",
+      "independent_current_revalidation": "PENDING, fresh A sealed; no PASS based on hash replacement"
+    },
+    {
+      "block": "Q5:B0",
+      "old_hashes": {
+        "mcq": "76ed689fe560a5bd31bd41cc63de72fecd3dea5b1681a4f1a8d4489c15ea82b0",
+        "theory": "5589631a8243b88a2159c94097167e90fcd49270f1f328f76df7b10ab1b91ad6"
+      },
+      "new_hashes": {
+        "mcq": "76ed689fe560a5bd31bd41cc63de72fecd3dea5b1681a4f1a8d4489c15ea82b0",
+        "theory": "28db6022e01fc5415ac401c614106f05ae652aa4626405d73b9e73fd18730e04"
+      },
+      "mcq_and_question_body_unchanged": true,
+      "old_final_record": {
+        "path": "docs/mcq-quality/reviews/checks/20261106T155603Z-mutation-boundary-owner-r1-scoped-final.json",
+        "sha256": "0916c5d8075ba199f2c9cf11a5f5d394ca2fa961c17457156e4b4cc2442d15b4"
+      },
+      "original_blind_receipt_still_current_for_visible_input": true,
+      "original_reviewer": "mutation_boundary_owner_independent",
+      "original_phase_a": {
+        "path": "docs/mcq-quality/runs/20261106T155603Z-mutation-boundary-owner-r1/phase-a.json",
+        "sha256": "cf275cf5884769db98485148a1c31ab59ee8b1ee8fa0842425751c75602ac9eb"
+      },
+      "actual_author_dependency_assessment": "Новая оговорка о выживании не меняет механизм boundary-подмены и необходимость наблюдаемого эффекта на границе. Не добавляет скрытого условия для какого-либо wrong.",
+      "independent_current_revalidation": "PENDING, fresh A sealed; no PASS based on hash replacement"
+    },
+    {
+      "block": "Q6:B0",
+      "old_hashes": {
+        "mcq": "aa8e2019ae34e24f9f5c887c70032b67b630ea05d471f7baa4f5b357e7396190",
+        "theory": "f8a68e1399e43d96505d650c850f13cb354a467afb5b7b66895e64fecc3b1714"
+      },
+      "new_hashes": {
+        "mcq": "aa8e2019ae34e24f9f5c887c70032b67b630ea05d471f7baa4f5b357e7396190",
+        "theory": "4d9f382c675fe8740733925955cae61165f961c2b8f22aad45616fde82998fb0"
+      },
+      "mcq_and_question_body_unchanged": true,
+      "old_final_record": {
+        "path": "docs/mcq-quality/reviews/checks/20261106T163105Z-mutation-math-owner-r1-q6-q10-scoped-final.json",
+        "sha256": "0408d49d8d1140908ce81d8a2cb224c2bb0e96ac2084cfef50ad14e4c33cb83b"
+      },
+      "original_blind_receipt_still_current_for_visible_input": true,
+      "original_reviewer": "mutation_math_owner_independent",
+      "original_phase_a": {
+        "path": "docs/mcq-quality/runs/20261106T163105Z-mutation-math-owner-r1/phase-a.json",
+        "sha256": "1e02ee7b5d03e23f9bd3ed2cd13e1b0f8415d575f8fe9f70b33c20b986aaf0a4"
+      },
+      "actual_author_dependency_assessment": "Пролог не меняет таблицу PIT MATH и различие замены оператора/операнда. Сохранён механизм IMUL→IDIV, а не вывод о нём по одному числу.",
+      "independent_current_revalidation": "PENDING, fresh A sealed; no PASS based on hash replacement"
+    },
+    {
+      "block": "Q8:B0",
+      "old_hashes": {
+        "mcq": "bf95b6eef294d4ef05fb9652a3305e6bff843a10e669354d60f6050d2e8f70f8",
+        "theory": "9fd9c54c91cb669bf62cffefa9753a9e6a0f13932e2cddc9b5a7758a48632b70"
+      },
+      "new_hashes": {
+        "mcq": "bf95b6eef294d4ef05fb9652a3305e6bff843a10e669354d60f6050d2e8f70f8",
+        "theory": "b9b0b4c3969340e40050d2efe0bfad756c862994a5df42a919dfdc90fc222149"
+      },
+      "mcq_and_question_body_unchanged": true,
+      "old_final_record": {
+        "path": "docs/mcq-quality/reviews/checks/20261106T155603Z-mutation-boundary-owner-r1-scoped-final.json",
+        "sha256": "0916c5d8075ba199f2c9cf11a5f5d394ca2fa961c17457156e4b4cc2442d15b4"
+      },
+      "original_blind_receipt_still_current_for_visible_input": true,
+      "original_reviewer": "mutation_boundary_owner_independent",
+      "original_phase_a": {
+        "path": "docs/mcq-quality/runs/20261106T155603Z-mutation-boundary-owner-r1/phase-a.json",
+        "sha256": "cf275cf5884769db98485148a1c31ab59ee8b1ee8fa0842425751c75602ac9eb"
+      },
+      "actual_author_dependency_assessment": "Пролог отделяет обнаружение от доказательства правильности; это согласуется с detected/valid, timeout и ограничением100%. Формула и статусы в телеQ8 не менялись.",
+      "independent_current_revalidation": "PENDING, fresh A sealed; no PASS based on hash replacement"
+    },
+    {
+      "block": "Q9:B0",
+      "old_hashes": {
+        "mcq": "f1cafcc301ce3bf58c88f38e121c3e6485680ef0151743709911b6be8534496b",
+        "theory": "a3ed7df3e9b51cb74690a6491965b38ed8757dca074df4a26f65784c348c5373"
+      },
+      "new_hashes": {
+        "mcq": "f1cafcc301ce3bf58c88f38e121c3e6485680ef0151743709911b6be8534496b",
+        "theory": "2fe81dfe56cad4835fbb3127f72f2916093fe5900f8efae159e09debb4de1789"
+      },
+      "mcq_and_question_body_unchanged": true,
+      "old_final_record": {
+        "path": "docs/mcq-quality/reviews/checks/20261106T165245Z-mutation-q9-form-repair-r3-scoped-final.json",
+        "sha256": "b31e1aaa672dc98103e56caf26923f3003f88388d5349da08619c41548186c91"
+      },
+      "original_blind_receipt_still_current_for_visible_input": true,
+      "original_reviewer": "mutation_q9_form_repair_independent",
+      "original_phase_a": {
+        "path": "docs/mcq-quality/runs/20261106T165245Z-mutation-q9-form-repair-r3/phase-a.json",
+        "sha256": "e84e38f4580f94e011be51892d49d2ef059558fd17c9f6b94ac8f3d8d6db3e67"
+      },
+      "actual_author_dependency_assessment": "Требование разбирать surviving поддерживает методику текущегоQ9. НынешнийD — count-onlyметодика, не прежний внешний факт оschema; новыйпролог не возвращает старыйL2дефект.",
+      "independent_current_revalidation": "PENDING, fresh A sealed; no PASS based on hash replacement"
+    },
+    {
+      "block": "Q10:B0",
+      "old_hashes": {
+        "mcq": "3b627ac7c4ab8c9419913f4e851046382124006b1ba9262f1f39c329d57fa646",
+        "theory": "3ea3d69b02b9c975d74bef0965a0179bc935debdc58d69418761321f5025c889"
+      },
+      "new_hashes": {
+        "mcq": "3b627ac7c4ab8c9419913f4e851046382124006b1ba9262f1f39c329d57fa646",
+        "theory": "d8e1aa5c9ed667a2993df94cf96d6509f3ac190f9a637e7fe9c13c9a9e37d057"
+      },
+      "mcq_and_question_body_unchanged": true,
+      "old_final_record": {
+        "path": "docs/mcq-quality/reviews/checks/20261106T163105Z-mutation-math-owner-r1-q6-q10-scoped-final.json",
+        "sha256": "0408d49d8d1140908ce81d8a2cb224c2bb0e96ac2084cfef50ad14e4c33cb83b"
+      },
+      "original_blind_receipt_still_current_for_visible_input": true,
+      "original_reviewer": "mutation_math_owner_independent",
+      "original_phase_a": {
+        "path": "docs/mcq-quality/runs/20261106T163105Z-mutation-math-owner-r1/phase-a.json",
+        "sha256": "1e02ee7b5d03e23f9bd3ed2cd13e1b0f8415d575f8fe9f70b33c20b986aaf0a4"
+      },
+      "actual_author_dependency_assessment": "Возможное эквивалентное поведение и отсутствие доказательства корректности согласуются с объявленной областью и невозможностью различающего теста. Прежняя дефиниция/scoreоговорки сохранены.",
+      "independent_current_revalidation": "PENDING, fresh A sealed; no PASS based on hash replacement"
+    },
+    {
+      "block": "Q18:B0",
+      "old_hashes": {
+        "mcq": "11f6b8fd70df8ff9eb414be7f8434c209b5adccbe6c313486d8bb770ba1d01cb",
+        "theory": "033462dc79e939bf28bf3dc2dbcf14c7ff8cffc2b23dc66c0eb96bf3ef6300d7"
+      },
+      "new_hashes": {
+        "mcq": "11f6b8fd70df8ff9eb414be7f8434c209b5adccbe6c313486d8bb770ba1d01cb",
+        "theory": "b7f91aab6099fa2041f6ce641058ce1b9fa13b4a383822da048c0019b95a1cd6"
+      },
+      "mcq_and_question_body_unchanged": true,
+      "old_final_record": {
+        "path": "docs/mcq-quality/reviews/checks/20261106T174436Z-mutation-status-owner-r1-scoped-final.json",
+        "sha256": "f33760648e73b9f046fad8900b4b7d7e50bff173dbd436055a862db53dbda823"
+      },
+      "original_blind_receipt_still_current_for_visible_input": true,
+      "original_reviewer": "mutation_status_owner_independent",
+      "original_phase_a": {
+        "path": "docs/mcq-quality/runs/20261106T174436Z-mutation-status-owner-r1/phase-a.json",
+        "sha256": "534f6cef39c512540fb6fb3722d19bfba28ea225dc2d2ae18a57453cb07ddd43"
+      },
+      "actual_author_dependency_assessment": "Пролог не задаёт обязательного процента и не приравнивает высокий score к правильным требованиям. Это согласуется с целью по риску/стоимости и сопоставимостью анализа.",
+      "independent_current_revalidation": "PENDING, fresh A sealed; no PASS based on hash replacement"
+    }
+  ],
+  "all_prior_records_preserved": true,
+  "new_blind_reason": "New current two-phase contexts used for revalidation after shared-source change; old inputs/choices/records stay immutable. No fake continuation under original reviewer identity.",
+  "limitations": [
+    "Whole topic remains incomplete. Current checks must be explicitly recorded only after actual independent review.",
+    "Historical Q8 choice A remains a documented knowledge error, not rewritten into a success.",
+    "No engines, application, builds, network/security changes or UI interactions."
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "topic": "testing/mutation-testing-interview",
+  "sha256": "d5e81e113700a96816867cf211cd568d6beca05b6fe65edb7df176d8d47b43c0",
+  "theory_sha256": "98fa9dcc8d7c329670453cc37dd286e748b043e41972c24cf3ba04a3266c138e",
+  "results": [
+    {
+      "command": [
+        "bash",
+        "scripts/verify-mcq-json.sh",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json"
+      ],
+      "exit_code": 0,
+      "raw_output": "PASS: files=1 questions=20 blocks=20; semantic review NOT_RUN\n"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-answer-parity-gate.py",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json"
+      ],
+      "exit_code": 1,
+      "raw_output": "\n❌ FAIL  mutation-testing-interview  (20 блоков)\n   [  ok ] CORRECT_LONGEST_RATE         =    0.05  — 1/20 блоков correct-самый-длинный (порог ≤0.4)\n   [  ok ] OPTION_LENGTH_RATIO          =    1.31  — худший блок Q5=1.31; 0 блоков > 1.35\n   [  ok ] CORRECT_WRONG_AVG_RATIO      =   0.954  — correct̄=17сл / wronḡ=18сл (диапазон 0.9–1.1)\n   [  ok ] SENTENCE_PARITY              =       0  — худший разрыв QNone=0 предл.; 0 блоков > 1\n   [  ok ] DETAIL_PARITY                =     0.0  — 0/20 блоков correct доминирует по деталям (порог ≤0.4)\n   [  ok ] ABSOLUTE_MARKER_GAP          =   0.167  — wrong=0.17 vs correct=0.00 (разрыв ≤0.25)\n   [  ok ] CORRECT_POSITION_DISTRIBUTION =     1.0  — A/B/C/D=[5, 5, 5, 5] max/min=1.0 (порог ≤2.0)\n   [  ok ] CORRECT_POSITION_SEQUENCE    =       3  — самый длинный арифметический прогон позиций = 3 (порог ≤5); строгий A→B→C→D цикл угадывается\n   [ FAIL] DUPLICATE_NGRAMS             =      18  — 18 повторяющихся 10-грамм между разными опциями (порог ≤3); напр. «…mutant изменённый вариант программы killed хотя …»\n   [  ok ] TEMPORAL_CLAIMS              =       0  — 0 опций с временными/версионными утверждениями\n   [  ok ] SOURCE_COVERAGE              =     n/a  — не version-sensitive\n   [  ok ] STYLE_GUESSABILITY           =    0.25  — угадывание по длине=0.17, по code-spans=0.25 (шанс=0.25, порог ≤0.4)\n\n────────────────────────────────────────────────────────────────────────\nИтог: 0/1 файлов PASS.\n"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-anti-tell-scan.py",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json"
+      ],
+      "exit_code": 0,
+      "raw_output": "\n=== modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json\n  распределение correct: {'D': 5, 'A': 5, 'C': 5, 'B': 5}\n\n--- ИТОГ: блоков=20 с подсказкой=0\n"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-linkage-scan.py",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json"
+      ],
+      "exit_code": 1,
+      "raw_output": "\n=== modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json\n  ERROR  NEIGHBOR-LEAK q1b0: варианты лексически ближе к Q3 (0.561), чем к своему Q1 (0.341)\n  ERROR  NEIGHBOR-LEAK q2b0: варианты лексически ближе к Q3 (0.419), чем к своему Q2 (0.233)\n  ERROR  NOVEL-TERM q12b0: в ПРАВИЛЬНОМ варианте есть идентификаторы, которых нет в материале Q12: StrykerJS\n  ERROR  NEIGHBOR-LEAK q15b0: варианты лексически ближе к Q13 (0.452), чем к своему Q15 (0.262)\n  WARN   LOW-COVERAGE q20b0: варианты A почти не пересекаются с материалом Q20 (min=0.154) — обязателен ручной linkage review\n\n--- ИТОГ: файлов=1 блоков=20 errors=4 warnings=1 manual_review=5\n"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-skel-gate.py",
+        "-v",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json"
+      ],
+      "exit_code": 0,
+      "raw_output": "[PASS] modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json  blocks=20  hard_fails=0  warn_blocks=2\n  ! PRE-CHECK ONLY: exit color does not authorize SKEL=✅; LLM surface-skeleton review remains mandatory.\n  WARN Q6/b0:\n    - paren_presence mismatch: {'A': 0, 'B': 1, 'C': 0, 'D': 0}\n  WARN Q10/b0:\n    - dash_presence mismatch: {'A': 0, 'B': 1, 'C': 0, 'D': 0}\n\nSKEL acceptance = LLM only. This script is a pre-check helper.\n"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-struct-scan.py",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json"
+      ],
+      "exit_code": 0,
+      "raw_output": "блоков: 20   (случайный уровень = 0.250, диагностический порог = 0.28)\nchars:min                0.438   уникально выделяет correct:    8 (40.0%)\nnegation:min             0.346   уникально выделяет correct:    2 (10.0%)\ncontrast:max             0.338   уникально выделяет correct:    3 (15.0%)\nДиагностика нескольких осей на том же наборе: нужны независимая выборка и LLM-ревью.\n"
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/mcq-surface-parity.py",
+        "--file",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json"
+      ],
+      "exit_code": 0,
+      "raw_output": "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json   worst-block-score=0.21\n Q20 b0 cv=0.107 ratio=1.30 corr_longest=False lens=[150, 142, 146, 184] corr=#2 tells=[]  <== TELL\n Q1 b0 cv=0.107 ratio=1.28 corr_longest=False lens=[156, 122, 128, 153] corr=#3 tells=[]  <== TELL\n Q19 b0 cv=0.081 ratio=1.22 corr_longest=False lens=[109, 96, 89, 91] corr=#2 tells=[]\n Q7 b0 cv=0.072 ratio=1.22 corr_longest=False lens=[142, 148, 131, 160] corr=#0 tells=[]\n Q8 b0 cv=0.068 ratio=1.19 corr_longest=False lens=[110, 107, 112, 127] corr=#1 tells=[]\n Q17 b0 cv=0.066 ratio=1.18 corr_longest=False lens=[140, 131, 155, 152] corr=#1 tells=[]\n Q6 b0 cv=0.060 ratio=1.15 corr_longest=False lens=[100, 113, 99, 98] corr=#3 tells=[]\n Q11 b0 cv=0.057 ratio=1.16 corr_longest=False lens=[145, 128, 147, 148] corr=#1 tells=[]\n Q15 b0 cv=0.056 ratio=1.15 corr_longest=False lens=[165, 144, 147, 146] corr=#3 tells=[]\n Q2 b0 cv=0.054 ratio=1.16 corr_longest=False lens=[135, 150, 143, 156] corr=#0 tells=[]\n Q4 b0 cv=0.050 ratio=1.12 corr_longest=True lens=[91, 101, 102, 93] corr=#2 tells=[]\n Q12 b0 cv=0.047 ratio=1.13 corr_longest=False lens=[110, 112, 124, 114] corr=#1 tells=[]\n Q10 b0 cv=0.045 ratio=1.14 corr_longest=False lens=[133, 132, 125, 142] corr=#2 tells=[]\n Q18 b0 cv=0.034 ratio=1.09 corr_longest=False lens=[148, 141, 150, 138] corr=#3 tells=[]\n Q9 b0 cv=0.030 ratio=1.08 corr_longest=False lens=[138, 147, 136, 140] corr=#0 tells=[]\n Q5 b0 cv=0.027 ratio=1.07 corr_longest=False lens=[126, 122, 130, 122] corr=#1 tells=[]\n Q13 b0 cv=0.026 ratio=1.08 corr_longest=False lens=[174, 174, 180, 167] corr=#0 tells=[]\n Q16 b0 cv=0.022 ratio=1.06 corr_longest=False lens=[156, 158, 164, 155] corr=#0 tells=[]\n Q3 b0 cv=0.022 ratio=1.05 corr_longest=False lens=[185, 195, 194, 195] corr=#2 tells=[]\n Q14 b0 cv=0.000 ratio=1.00 corr_longest=True lens=[125, 125, 125, 125] corr=#3 tells=[]\n"
+    }
+  ]
+}

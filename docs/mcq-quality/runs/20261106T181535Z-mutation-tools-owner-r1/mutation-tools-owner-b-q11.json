@@ -1,0 +1,210 @@
+{
+  "reviewer": "mutation_tools_owner_independent",
+  "model": "gpt-6-luna",
+  "hashes": {
+    "mcq": "d5e81e113700a96816867cf211cd568d6beca05b6fe65edb7df176d8d47b43c0",
+    "theory": "98fa9dcc8d7c329670453cc37dd286e748b043e41972c24cf3ba04a3266c138e"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "scope": [
+    "Q11:B0"
+  ],
+  "options": [
+    {
+      "label": "A",
+      "completeness": "Claims PIT rewrites Java source for each mutant, then names Maven/pitest-maven, repeated recompilation and HTML output; execution and report aspects are present, while the mutation-mechanism claim is false.",
+      "validity": "WRONG",
+      "wrong_defense": "Could be defended only if ‘rewrites sources’ referred to a different mutation tool; PIT's documented operators modify compiled bytecode, and project preparation is not per-mutant recompilation."
+    },
+    {
+      "label": "B",
+      "completeness": "Covers mutation mechanism, Maven goal and report; details and caveats are in explanatory sections.",
+      "validity": "CORRECT",
+      "wrong_defense": "N/A"
+    },
+    {
+      "label": "C",
+      "completeness": "Covers mechanism, test preparation, CLI and report; the exclusivity claim is false because PIT also provides pitest-maven.",
+      "validity": "WRONG",
+      "wrong_defense": "CLI is a real supported entry point, but the option says it is the only one; official Maven quick start documents the plugin and mutationCoverage goal."
+    },
+    {
+      "label": "D",
+      "completeness": "Covers mechanism and Maven use; falsely excludes HTML reporting.",
+      "validity": "WRONG",
+      "wrong_defense": "Terminal logs are available, but do not make HTML unavailable; Maven quick start documents an HTML report under target/pit-reports."
+    }
+  ],
+  "sections": [
+    {
+      "label": "A",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Correctly contrasts compiled JVM instructions with source rewriting and per-mutant recompilation."
+    },
+    {
+      "label": "A",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Plausible confusion between source locations in reports and the bytecode mutation mechanism."
+    },
+    {
+      "label": "A",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Counterfactual consequence follows from source rewrite plus recompilation claim."
+    },
+    {
+      "label": "A",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Gives Maven preparation, mutationCoverage and report workflow."
+    },
+    {
+      "label": "B",
+      "field": "explanation",
+      "status": "PASS",
+      "reason": "Consistent with PIT bytecode operators and Maven workflow."
+    },
+    {
+      "label": "B",
+      "field": "example",
+      "status": "PASS",
+      "reason": "Maven goal and report directory are documented; framed as an example, not executed output."
+    },
+    {
+      "label": "B",
+      "field": "when_to_apply",
+      "status": "PASS",
+      "reason": "Separates class/test filters and requires compatible tool setup and passing baseline tests."
+    },
+    {
+      "label": "B",
+      "field": "edge_cases",
+      "status": "PASS",
+      "reason": "JUnit adapter belongs on plugin classpath; version minimum and withHistory caveat align with evidence."
+    },
+    {
+      "label": "B",
+      "field": "related",
+      "status": "PASS",
+      "reason": "CLI availability and cross-links to optimization/CI subjects are relevant."
+    },
+    {
+      "label": "C",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Accurately states CLI and Maven plugin both exist."
+    },
+    {
+      "label": "C",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Explains confusing one command-line entry point with the only integration route."
+    },
+    {
+      "label": "C",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Maven quick start contradicts the alleged absence of the plugin."
+    },
+    {
+      "label": "C",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Advises choosing integration based on project build and CLI classpath configuration."
+    },
+    {
+      "label": "D",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "HTML report availability is documented for Maven goal."
+    },
+    {
+      "label": "D",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Plausible confusion of console summary with only output."
+    },
+    {
+      "label": "D",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Counterfactual correctly describes loss of detailed HTML mutation report."
+    },
+    {
+      "label": "D",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Recommends inspecting mutation details rather than console summary alone."
+    }
+  ],
+  "checks": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "Only B is factually defensible for the visible request."
+    },
+    "FACTS": {
+      "status": "PASS",
+      "reason": "Core mechanism, Maven goal, report, CLI and history claims checked against primary documentation."
+    },
+    "LINKAGE": {
+      "status": "PASS",
+      "reason": "Question and answer directly match Q11 theory; local linkage is direct."
+    },
+    "SECTIONS": {
+      "status": "PASS",
+      "reason": "All 17 fields read and internally consistent with their option texts."
+    },
+    "SFPL": {
+      "status": "PASS",
+      "reason": "A-D share the same compact structure: claim about PIT mechanism, execution route and report. B is not uniquely elaborated; unique false claims are the semantic deltas that distinguish wrongs, not form cues."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "Each option answers how PIT is used with mechanism, execution path and output; wrongs embody distinct plausible misconceptions."
+    },
+    "RU": {
+      "status": "PASS",
+      "reason": "Question, theory, options and sections read naturally in Russian; established API names and English tool terms are appropriate."
+    }
+  },
+  "sources": [
+    {
+      "url": "https://pitest.org/quickstart/basic_concepts/",
+      "checked_claim": "PIT applies mutation operators to compiled bytecode; tests run against mutated class.",
+      "version": "documentation accessed 2026-11-06",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://pitest.org/quickstart/maven/",
+      "checked_claim": "pitest-maven plugin, mutationCoverage goal, Maven command, HTML report and withHistory are documented.",
+      "version": "documentation accessed 2026-11-06",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://pitest.org/quickstart/commandline/",
+      "checked_claim": "CLI is supported, requires PIT/dependencies/test framework on classpath, and writes HTML reports; plugins are recommended.",
+      "version": "documentation accessed 2026-11-06",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://pitest.org/quickstart/incremental_analysis/",
+      "checked_claim": "History stores prior run results and infers some unchanged results with dependency assumptions and potential error.",
+      "version": "documentation accessed 2026-11-06",
+      "checked_at": "2026-11-06"
+    },
+    {
+      "url": "https://github.com/pitest/pitest-junit5-plugin",
+      "checked_claim": "JUnit 5 plugin README states adapter 1.2.3 requires PIT 1.19.4+ and is configured as PIT plugin dependency.",
+      "version": "1.2.3",
+      "checked_at": "2026-11-06"
+    }
+  ],
+  "findings": [],
+  "limitations": []
+}

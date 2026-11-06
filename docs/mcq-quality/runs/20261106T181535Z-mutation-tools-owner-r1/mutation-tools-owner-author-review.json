@@ -1,0 +1,260 @@
+{
+  "checked_at": "2026-11-06T18:20:25.093202+00:00",
+  "kind": "author_only_NOT_independent",
+  "hashes": {
+    "mcq": "d5e81e113700a96816867cf211cd568d6beca05b6fe65edb7df176d8d47b43c0",
+    "theory": "98fa9dcc8d7c329670453cc37dd286e748b043e41972c24cf3ba04a3266c138e"
+  },
+  "scope": [
+    "Q11:B0",
+    "Q13:B0"
+  ],
+  "blocks": {
+    "11": {
+      "required_axis": "Механизм, поддерживаемый способ запуска и разбор результата",
+      "options": [
+        {
+          "label": "A",
+          "text": "PIT переписывает Java-исходники для каждого мутанта; в Maven запускают pitest-maven с повторной компиляцией каждой версии и разбирают HTML-отчёт.",
+          "completeness": "Законченный способ работы с инструментом",
+          "defense": "Механизм исходники/компиляция неверен; wrapper Maven/HTML верен."
+        },
+        {
+          "label": "B",
+          "text": "PIT изменяет JVM-байт-код; в Maven готовят классы и тесты, запускают mutationCoverage через pitest-maven и разбирают HTML-отчёт.",
+          "completeness": "Законченный способ работы с инструментом",
+          "defense": "Единственный верный механизм/способ/результат."
+        },
+        {
+          "label": "C",
+          "text": "PIT изменяет JVM-байт-код; подготовленные классы и тесты проверяют только отдельной CLI-командой с HTML-отчётом, поскольку Maven-плагина у PIT нет.",
+          "completeness": "Законченный способ работы с инструментом",
+          "defense": "CLI реален, но запрет Maven ложен."
+        },
+        {
+          "label": "D",
+          "text": "PIT изменяет JVM-байт-код; в Maven готовят классы и тесты, запускают pitest-maven и разбирают только текстовый лог, поскольку HTML-отчёт недоступен.",
+          "completeness": "Законченный способ работы с инструментом",
+          "defense": "Лог существует, но невозможность HTML ложна."
+        }
+      ],
+      "sections": [
+        {
+          "label": "A",
+          "field": "what_actually",
+          "judgment": "Уровень мутаций правильно отнесён к готовым JVM-классам, подготовка отделена от мутации."
+        },
+        {
+          "label": "A",
+          "field": "source_of_confusion",
+          "judgment": "Изображение изменения рядом с исходной строкой не означает переписывание исходников."
+        },
+        {
+          "label": "A",
+          "field": "if_it_were_true",
+          "judgment": "Ложный цикл перекомпиляции адресует именно модель A."
+        },
+        {
+          "label": "A",
+          "field": "how_it_should_be",
+          "judgment": "Полный Maven-порядок сохраняет правдивый запуск и опровергает ложный механизм."
+        },
+        {
+          "label": "B",
+          "field": "explanation",
+          "judgment": "Механизм, интеграция и HTML-результат определены."
+        },
+        {
+          "label": "B",
+          "field": "example",
+          "judgment": "Команда соответствует Maven quick start; она не объявлена выполненной."
+        },
+        {
+          "label": "B",
+          "field": "when_to_apply",
+          "judgment": "Совместимость и разные фильтры targetClasses/targetTests сохранены."
+        },
+        {
+          "label": "B",
+          "field": "edge_cases",
+          "judgment": "Адаптер должен быть в зависимостях плагина;1.2.3 требует1.19.4+, history учитывает код и тесты."
+        },
+        {
+          "label": "B",
+          "field": "related",
+          "judgment": "CLI существует, relatedQ16/Q20 существуют и не заменяют локальный ответ."
+        },
+        {
+          "label": "C",
+          "field": "what_actually",
+          "judgment": "Отдельный CLI не исключает Maven-интеграцию."
+        },
+        {
+          "label": "C",
+          "field": "source_of_confusion",
+          "judgment": "Терминал как интерфейс не делает Maven отдельной несовместимой категорией."
+        },
+        {
+          "label": "C",
+          "field": "if_it_were_true",
+          "judgment": "Maven-плагин и цель прямо опровергают запрет C."
+        },
+        {
+          "label": "C",
+          "field": "how_it_should_be",
+          "judgment": "Выбирается поддерживаемая интеграция; CLI не объявлен несуществующим."
+        },
+        {
+          "label": "D",
+          "field": "what_actually",
+          "judgment": "HTML поддерживается, каталог зависит от настроек."
+        },
+        {
+          "label": "D",
+          "field": "source_of_confusion",
+          "judgment": "Консольный лог не является единственным результатом."
+        },
+        {
+          "label": "D",
+          "field": "if_it_were_true",
+          "judgment": "Местоположение выживших мутаций выражено ясно."
+        },
+        {
+          "label": "D",
+          "field": "how_it_should_be",
+          "judgment": "Подробный отчёт дополняет консольную сводку."
+        }
+      ],
+      "linkage": "L3/L4: правильный ответ и опровержения всех wrong доступны в соответствующей новой теории.",
+      "form": "Механизм затем способ запуска/результат во всех4вариантах. Повтор команд удерживает одну ось, не заменяет содержательную проверку SFPL.",
+      "language": "Русская техническая проза, имена/API/команды сохранены."
+    },
+    "13": {
+      "required_axis": "Механизм, поддерживаемый способ запуска и разбор результата",
+      "options": [
+        {
+          "label": "A",
+          "text": "mutmut 3+ изменяет исходники и проверяет мутанты отобранными тестами; запускают mutmut run, изучают mutmut browse и используют сохранённые результаты для продолжения анализа.",
+          "completeness": "Законченный способ работы с инструментом",
+          "defense": "Документированная модель3+, единственный верный."
+        },
+        {
+          "label": "B",
+          "text": "mutmut 3+ изменяет исходники, потому что CPython не создаёт байт-код; запускают mutmut run, изучают mutmut browse и используют сохранённые результаты для продолжения анализа.",
+          "completeness": "Законченный способ работы с инструментом",
+          "defense": "Команды реальны; CPython без байт-кода — ложная причина."
+        },
+        {
+          "label": "C",
+          "text": "mutmut 3+ изменяет исходники и оценивает все мутации одним неизменённым запуском pytest; запускают mutmut run, изучают mutmut browse и сохраняют результаты для продолжения анализа.",
+          "completeness": "Законченный способ работы с инструментом",
+          "defense": "Одна команда анализа не один неизменённый pytest."
+        },
+        {
+          "label": "D",
+          "text": "mutmut 3+ изменяет исходники, проверяя весь набор тестов заново без истории; запускают mutmut run, изучают mutmut browse и при повторе начинают анализ с самого начала.",
+          "completeness": "Законченный способ работы с инструментом",
+          "defense": "Полный повтор возможен по условиям, но отрицание истории/отбора неверно."
+        }
+      ],
+      "sections": [
+        {
+          "label": "A",
+          "field": "explanation",
+          "judgment": "Модель3+ отделяет run/browse, исходники, отбор и сохранение результатов."
+        },
+        {
+          "label": "A",
+          "field": "example",
+          "judgment": "Команды просмотра/запуска и условный шаблон подтверждены docs, не запускались."
+        },
+        {
+          "label": "A",
+          "field": "when_to_apply",
+          "judgment": "Подготовка окружения и проходящие исходные тесты обоснованы."
+        },
+        {
+          "label": "A",
+          "field": "edge_cases",
+          "judgment": "fork/WSL, отличие2/3+ и влияние stack depth оговорены."
+        },
+        {
+          "label": "A",
+          "field": "related",
+          "judgment": "CPython байт-код не отрицается;Q15/Q16 существуют."
+        },
+        {
+          "label": "B",
+          "field": "what_actually",
+          "judgment": "Документация dis опровергает отсутствие байт-кода; верные команды не делают B верным."
+        },
+        {
+          "label": "B",
+          "field": "source_of_confusion",
+          "judgment": "Механизм инструмента отделён от устройства CPython."
+        },
+        {
+          "label": "B",
+          "field": "if_it_were_true",
+          "judgment": "Наличие инструкций dis противоречит ложному отсутствию байт-кода."
+        },
+        {
+          "label": "B",
+          "field": "how_it_should_be",
+          "judgment": "Совет сохраняет команды и исправляет конкретную причину."
+        },
+        {
+          "label": "C",
+          "field": "what_actually",
+          "judgment": "Одна команда не означает один неизменённый pytest для всех мутаций."
+        },
+        {
+          "label": "C",
+          "field": "source_of_confusion",
+          "judgment": "Число вызовов пользователем не равно числу внутренних проверок."
+        },
+        {
+          "label": "C",
+          "field": "if_it_were_true",
+          "judgment": "Неизменённый прогон не даёт реакцию на все ещё не проверенные изменения."
+        },
+        {
+          "label": "C",
+          "field": "how_it_should_be",
+          "judgment": "Разделены команда, варианты программы и сохранённые результаты."
+        },
+        {
+          "label": "D",
+          "field": "what_actually",
+          "judgment": "Продолжение и отбор поддерживаются, без обещания любого reuse."
+        },
+        {
+          "label": "D",
+          "field": "source_of_confusion",
+          "judgment": "Опыт полного прогона не определяет возможности всей модели3+."
+        },
+        {
+          "label": "D",
+          "field": "if_it_were_true",
+          "judgment": "Официальная возможность продолжения опровергает обязательный старт сначала."
+        },
+        {
+          "label": "D",
+          "field": "how_it_should_be",
+          "judgment": "Версия и область ограничивают ожидания от истории."
+        }
+      ],
+      "linkage": "L3/L4: правильный ответ и опровержения всех wrong доступны в соответствующей новой теории.",
+      "form": "Механизм затем способ запуска/результат во всех4вариантах. Повтор команд удерживает одну ось, не заменяет содержательную проверку SFPL.",
+      "language": "Русская техническая проза, имена/API/команды сохранены."
+    }
+  },
+  "prechecks": "Schema/anti-tell/SKEL/struct/surface0; parity1 duplicate18, linkage1 4errorsQ1/Q2/Q12/Q15+1warnQ20. No threshold or regex edits.",
+  "limits": [
+    "All8texts/34sections author-reviewed. Independent review not implied.",
+    "No commands from study content executed. No PIT/mutmut/pytest/Gradle/Maven/JVM/CI/app/IDEA/UI execution.",
+    "Only JSON prose/inline command examples changed; source/test code untouched.",
+    "Parent CPython3.14.4 observation reused only as codeobject/bytecode observation; does not prove mutmut behavior.",
+    "Seven former acceptances stale after parent-owned preamble edit; dependency proof and fresh independent review separate."
+  ]
+}

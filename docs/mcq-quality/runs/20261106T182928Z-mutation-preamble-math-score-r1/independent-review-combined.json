@@ -1,0 +1,427 @@
+{
+  "reviewer": "mutation_preamble_math_score_independent",
+  "model": "gpt-6-luna",
+  "raw_reports": {
+    "6": {
+      "reviewer": "mutation_preamble_math_score_independent",
+      "model": "gpt-6-luna",
+      "hashes": {
+        "mcq": "d5e81e113700a96816867cf211cd568d6beca05b6fe65edb7df176d8d47b43c0",
+        "theory": "98fa9dcc8d7c329670453cc37dd286e748b043e41972c24cf3ba04a3266c138e"
+      },
+      "rules_sha256": {
+        "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+        "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+        "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+      },
+      "scope": [
+        "Q6:B0"
+      ],
+      "options": [
+        {
+          "label": "A",
+          "completeness": "полный: объясняет характер подмены оператора * и судьбу обоих операндов.",
+          "validity": "неверен: PIT 1.30.2 для IMUL задаёт IDIV.",
+          "wrong_defense": "Можно защитить как типичное ошибочное обобщение: раз мутатор меняет арифметику, предполагают вычитание; вычитание действительно было бы конкретным изменением с теми же входами, но таблица PIT задаёт деление."
+        },
+        {
+          "label": "B",
+          "completeness": "полный по форме: задаёт конкретный альтернативный механизм и сохраняет знак *; не отвечает верно про PIT MATH.",
+          "validity": "неверен: PIT 1.30.2 для IMUL задаёт IDIV.",
+          "wrong_defense": "Защищаемая путаница между мутацией оператора и мутацией значения операнда: a*(b+1) — осмысленная ошибочная модель, но не правило PIT MATH."
+        },
+        {
+          "label": "C",
+          "completeness": "полный: объясняет характер подмены оператора * и судьбу обоих операндов.",
+          "validity": "неверен: PIT 1.30.2 для IMUL задаёт IDIV.",
+          "wrong_defense": "Защищаемая гипотеза о замене умножения сложением; операция конкретна и проверяема, однако таблица PIT выбирает деление."
+        },
+        {
+          "label": "D",
+          "completeness": "полный: объясняет характер подмены оператора * и судьбу обоих операндов.",
+          "validity": "верен для целочисленного умножения PIT 1.30.2: IMUL → IDIV, операнды остаются.",
+          "wrong_defense": "Не применимо: ключевой вариант."
+        }
+      ],
+      "sections": [
+        {
+          "label": "A",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Точно опровергает вычитание, называет PIT-подмену IMUL→IDIV."
+        },
+        {
+          "label": "A",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Правдоподобно отделяет обобщение про арифметическую мутацию от конкретной таблицы PIT."
+        },
+        {
+          "label": "A",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Пара 5/4 даёт совпадающее 1 для вычитания и целочисленного деления, поэтому правильно замечено, что эти данные не различают гипотезы; 5/2 различает: 3 против 2."
+        },
+        {
+          "label": "A",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Рекомендация сверять таблицу и выбирать различающие входы соответствует теории."
+        },
+        {
+          "label": "B",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Верно: операция меняется, значение операнда не инкрементируется."
+        },
+        {
+          "label": "B",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Обоснованная путающая модель: мутация оператора против мутации данных."
+        },
+        {
+          "label": "B",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Контрфактуал 5*(4+1)=25 корректен; реальная int-подмена 5/4=1 корректна."
+        },
+        {
+          "label": "B",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Совет отличать изменение инструкции от данных пригоден."
+        },
+        {
+          "label": "C",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Верно для PIT 1.30.2: IMUL становится IDIV, а не IADD."
+        },
+        {
+          "label": "C",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Правдоподобная генерализация от других арифметических подмен, не верное описание конкретной пары."
+        },
+        {
+          "label": "C",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Контрфактуал 5+4=9, тогда как 5/4 целочисленно равно 1."
+        },
+        {
+          "label": "C",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Совет сверять пару по выбранной версии точен."
+        },
+        {
+          "label": "D",
+          "field": "explanation",
+          "status": "PASS",
+          "reason": "Верно: конкретно утверждает целочисленную пару IMUL→IDIV и неизменность операндов."
+        },
+        {
+          "label": "D",
+          "field": "example",
+          "status": "PASS",
+          "reason": "5*4=20 и 5/4=1; 0*2 и 0/2 оба дают 0, корректный пример неразличающих данных."
+        },
+        {
+          "label": "D",
+          "field": "when_to_apply",
+          "status": "PASS",
+          "reason": "Корректно требует наблюдения результата/эффекта и различающих входов."
+        },
+        {
+          "label": "D",
+          "field": "edge_cases",
+          "status": "PASS",
+          "reason": "Корректно ограничивает ArithmeticException целочисленным делением на ноль; JLS §15.17.2 подтверждает, что integral division by zero throws ArithmeticException."
+        },
+        {
+          "label": "D",
+          "field": "related",
+          "status": "PASS",
+          "reason": "Корректно разводит механизм и обнаружение; точная проверка не помогает, если результаты совпали."
+        }
+      ],
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "Вопрос о механизме конкретной арифметической подмены. Все тексты — законченные описания альтернативной замены умножения; D верен."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "Прочитанный первичный PIT 1.30.2 подтверждает IMUL→IDIV. Прочитанный JLS 21 §15.17.2 подтверждает усечение целочисленного деления к нулю и ArithmeticException при целочисленном делении на ноль."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "Варианты и sections прямо относятся к Math Mutator и его наблюдаемости; теория соответствует паре IMUL→IDIV."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "Все 17 полей получили конкретные оценки; числовые примеры, контрфактуалы, типы и крайние случаи проверены по предметному контексту."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "По видимому text D не длиннее и не плотнее остальных: длина D 98 символов/16 слов, A 100/16, B 113/20, C 99/16. Все варианты — одно предложение о конкретном механизме и судьбе операндов; только B на 4 слова длиннее из-за скобочной формулы. Поля sections не являются видимой до выбора поверхностью и не подтверждают прежнюю причину FAIL."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "Каждый вариант — законченное описание альтернативного механизма; wrong защищаемы как правдоподобная путаница. Неверность не трактовалась как неполнота."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Тексты понятны на русском; технические обозначения сопровождаются знакомыми примерами и не создают языкового преимущества единственному ответу."
+        }
+      },
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/hcoles/pitest/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/MathMutator.java",
+          "checked_claim": "IMUL→IDIV; opcode mapping",
+          "version": "PIT 1.30.2",
+          "checked_at": "2026-11-06"
+        },
+        {
+          "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.17.2",
+          "checked_claim": "Integral division by zero throws ArithmeticException; integer division semantics",
+          "version": "JLS 21 §15.17.2",
+          "checked_at": "2026-11-06"
+        }
+      ],
+      "findings": [],
+      "limitations": [
+        "Raw q6 file preserved unchanged; this adjudication corrects the mistaken visible-surface rationale. No repository files changed."
+      ],
+      "preamble_dependency_assessment": "Общий пролог создаёт контекст mutation testing, но не меняет конкретную таблицу PIT и не влияет на сравнительный анализ видимых вариантов. Прежнее замечание о поверхности D ошибочно включило скрытые sections; это исправлено отдельным adjudication.",
+      "resolved_findings": [
+        {
+          "id": "MUTATION-Q6-PREAMBLE-SFPL-R1",
+          "check": "sfpl",
+          "blocks": [
+            "Q6:B0"
+          ],
+          "status": "RESOLVED",
+          "reason": "Исходный finding смешал видимую поверхность D.text со скрытыми sections, приписав самому варианту пример и edge case. Видимые тексты имеют длины A 100/16 слов, B 113/20, C 99/16, D 98/16; все однофразовые механистические ответы. Поэтому указанное основание SFPL FAIL снято."
+        }
+      ]
+    },
+    "8": {
+      "reviewer": "mutation_preamble_math_score_independent",
+      "model": "gpt-6-luna",
+      "hashes": {
+        "mcq": "d5e81e113700a96816867cf211cd568d6beca05b6fe65edb7df176d8d47b43c0",
+        "theory": "98fa9dcc8d7c329670453cc37dd286e748b043e41972c24cf3ba04a3266c138e"
+      },
+      "rules_sha256": {
+        "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+        "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+        "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+      },
+      "scope": [
+        "Q8:B0"
+      ],
+      "options": [
+        {
+          "label": "A",
+          "completeness": "полный ответ: формула/состав числителя и знаменателя плюс пояснение на том же уровне.",
+          "validity": "неверен: перепутан состав score/направление доли.",
+          "wrong_defense": "Техническая защита: если в иной системе отчёта под kill rate понимать только тестовый провал, можно было бы считать killed/valid; однако видимый вопрос прямо уточняет Stryker, где timeout имеет статус detected, а метрика задана как detected/valid. Поэтому ответ A не может быть верным в условиях вопроса: он исключает документированную часть числителя и даёт 60% вместо 70% на приведённом наборе."
+        },
+        {
+          "label": "B",
+          "completeness": "полный ответ: формула/состав числителя и знаменателя плюс пояснение на том же уровне.",
+          "validity": "верен",
+          "wrong_defense": "Не wrong; корректная модель Stryker."
+        },
+        {
+          "label": "C",
+          "completeness": "полный контрответ с формулой и интерпретацией направления метрики.",
+          "validity": "неверен: перепутан состав score/направление доли.",
+          "wrong_defense": "Техническая защита: survived/valid допустимо считать как отдельную долю выживших и отслеживать её как complement-показатель, поскольку при фиксированном знаменателе она обычно движется противоположно detection. Но вопрос спрашивает mutation score (kill rate), а в Stryker mutation score — detected/valid; рост survived fraction сам по себе означает больше необнаруженных мутантов, а не усиление тестов. Это иной показатель и обратная трактовка."
+        },
+        {
+          "label": "D",
+          "completeness": "полный ответ: формула/состав числителя и знаменателя плюс пояснение на том же уровне.",
+          "validity": "частично верен: формула верна, вывод о доказательстве корректности ложен.",
+          "wrong_defense": "Техническая защита: 100% действительно означает, что все мутанты, попавшие в valid для конкретной модели отчёта, отмечены detected; это сильный результат относительно выбранного набора. Но из него не следует истинность требований или корректность реализации вне этой мутационной модели. Следовательно формульная часть верна, а утверждение «доказывает правильность программы» делает целый ответ ложным и не образует второго правильного ответа."
+        }
+      ],
+      "sections": [
+        {
+          "label": "A",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Корректно фиксирует detected=killed+timeout и формулу; distinction между убит и обнаружен ясна."
+        },
+        {
+          "label": "A",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Kill rate действительно подталкивает к буквальному killed-only чтению; заблуждение правдоподобно."
+        },
+        {
+          "label": "A",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "6/10=60% при гипотезе wrong; официальный расчёт 7/10=70%. Арифметика и контраст верны."
+        },
+        {
+          "label": "A",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Точная пошаговая рекомендация для Stryker."
+        },
+        {
+          "label": "B",
+          "field": "explanation",
+          "status": "PASS",
+          "reason": "Верно перечисляет статусы и формулу."
+        },
+        {
+          "label": "B",
+          "field": "example",
+          "status": "PASS",
+          "reason": "7/10 =70%; исключения перечислены в соответствии с таблицей Stryker."
+        },
+        {
+          "label": "B",
+          "field": "when_to_apply",
+          "status": "PASS",
+          "reason": "Верная оговорка о сопоставимости состава и области измерения."
+        },
+        {
+          "label": "B",
+          "field": "edge_cases",
+          "status": "PASS",
+          "reason": "Корректно: эквивалентность автоматом не вычитается; 100% не доказывает программу."
+        },
+        {
+          "label": "B",
+          "field": "related",
+          "status": "PASS",
+          "reason": "7/9≈77.8% для covered score, отличается знаменатель."
+        },
+        {
+          "label": "C",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Верно описывает survived как undetected и направление обычного score."
+        },
+        {
+          "label": "C",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Правдоподобно связывает отчет survivors с «обнаруженными» проблемами, но семантика обратна."
+        },
+        {
+          "label": "C",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "При фиксированном valid перевод survived→killed уменьшает survived fraction; обратное направление верно."
+        },
+        {
+          "label": "C",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Верная группировка статусов."
+        },
+        {
+          "label": "D",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Формула истинна, 100% не доказывает корректность; отделяет корректную часть от ложного хвоста."
+        },
+        {
+          "label": "D",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Убедительная ошибка: полноту относительно выбранного набора мутаций принимают за доказательство правильности требований."
+        },
+        {
+          "label": "D",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Пример с ошибочным требованием показывает, как score может быть 100% без корректности; логика защитима."
+        },
+        {
+          "label": "D",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Рекомендация разделять тестовую чувствительность и проверку требований уместна."
+        }
+      ],
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "Вопрос просит определение и метод расчёта; A-D явно дают числитель/знаменатель и смысл метрики."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "Официальная документация Stryker определяет detected=killed+timeout, undetected=survived+no coverage, valid=detected+undetected, score=detected/valid×100 и отдельный covered score. Equivalent mutants не выявляются/игнорируются автоматически."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "Теория и варианты связаны напрямую по Stryker и метрике; блок также различает ordinary score и covered score."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "Все 17 существующих section-полей индивидуально прочитаны и оценены."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "Видимые варианты сопоставимы: все объясняют score формулой и утверждением о статусах/интерпретации; D содержит похожий каркас B с ложным чрезмерным выводом. A немного длиннее, C близок по длине. Нет ясного lone-correct length cue."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "A, C, D каждый полноценны и защищаемы как типичные ошибки: killed-only, инверсия survived, гипервывод из 100%. D частично верен, но ложный вывод делает весь ответ неверным."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Текст понятен специалисту по тестированию; английские статусы согласованы с обратным переводом. Кодовая формула помогает однозначности."
+        }
+      },
+      "sources": [
+        {
+          "url": "https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/",
+          "checked_claim": "Detected, undetected, covered, valid groups; timeout is detected; runtime/compile errors excluded; mutation score and covered score formulas.",
+          "version": "Stryker Mutant states and metrics documentation, checked 2026-11-06",
+          "checked_at": "2026-11-06"
+        },
+        {
+          "url": "https://stryker-mutator.io/docs/mutation-testing-elements/equivalent-mutants/",
+          "checked_claim": "Equivalent mutants are not definitively found/ignored automatically; they can prevent reaching 100%.",
+          "version": "Stryker Equivalent mutants documentation, checked 2026-11-06",
+          "checked_at": "2026-11-06"
+        }
+      ],
+      "findings": [],
+      "limitations": [],
+      "preamble_dependency_assessment": "Общий пролог задаёт mutation testing как оценку обнаружения изменений, но не даёт формулу Stryker и не подсказывает автоматически состав detected/valid. Вопрос и варианты остаются самодостаточными.",
+      "resolved_findings": []
+    }
+  },
+  "notes": [
+    "Текущий scopeQ6/Q8:8вариантов/34поля, полные соответствующие тела и исправленный общий пролог. Другие5прежних приёмок проверяются отдельно.",
+    "MCQ и телаQ6/Q8 неизменны относительно прошлого принятогоHEAD; изменён только общий пролог. Авторский Git/parser proof сохранён отдельно от независимой проверки.",
+    "Новый отдельныйgpt-6-luna/fork_turns=none получил толькоblind-input, выбралD/B, AзапечатанаCLI доreveal; затем действительный B4модели/17полей/7осей наQ и primaryPIT/JLS/Stryker.",
+    "Исходный Q6SFPL FAIL сохранён canonicalOPEN иrawreport: reviewer ошибочно приписал видимомуD скрытыеexample/edgecases и длину. Adjudication сравнил реальные text: D98/16,A100/16,B113/20,C99/16; обнаружена ошибка самого ревью, материал не менялся.",
+    "СтарыйQ6rawFACTSPASS содержал непрочитанныйJLS; такойFACTS не регистрировался. Reviewer затем действительно прочиталJLS и отдельнооценил17полей, новоеFACTS основано на actualreading. ЯвныйRESOLVED MUTATION-Q6-PREAMBLE-SFPL-R1 с темжеcheck/blocks.",
+    "Q8 отдельныйразборattemptdefenseA/C/D сохранён: убитые/обнаруженные, альтернативнаядоля surviving и чрезмерныйвыводиз100%. ФормулаStryker и coveredscoreпроверены, ошибкипрошлогоQ8=A остаютсяисторическими, текущийBневыдаётсязаисправлениестарогоblind.",
+    "Schema/anti-tell/SKEL/struct/surface0;parity1duplicate18(Q3/Q13),linkage1:4errorsQ1/Q2/Q12/Q15+1warnQ20 внеscope. SKELWARNQ6Bскобки иQ10Bтире сохранены, рецензент отдельнооцениваетформу.",
+    "КонтентQ6/Q8 не менялся. Нетновыхдвижков/сборок/JVM/CI/app/IDEA/UI, безpush/deploy. ОбщийPLAN/checkpoint/syncукоординатора."
+  ],
+  "resolutions": [
+    {
+      "id": "MUTATION-Q6-PREAMBLE-SFPL-R1",
+      "check": "sfpl",
+      "blocks": [
+        "Q6:B0"
+      ],
+      "status": "RESOLVED",
+      "reason": "Исходный finding смешал видимую поверхность D.text со скрытыми sections, приписав самому варианту пример и edge case. Видимые тексты имеют длины A 100/16 слов, B 113/20, C 99/16, D 98/16; все однофразовые механистические ответы. Поэтому указанное основание SFPL FAIL снято."
+    }
+  ]
+}
