@@ -1,0 +1,189 @@
+{
+  "q_number": 34,
+  "reviewer": "kotlin_collections_owner_independent",
+  "model": "gpt-6-luna",
+  "surfaces_read": [
+    "видимый заголовок Q34",
+    "вся теория Q34",
+    "A/B/C/D",
+    "все 17 sections"
+  ],
+  "options": [
+    {
+      "label": "A",
+      "completeness": "complete",
+      "truth": "true",
+      "model": "map preserves returned collection as item; flatMap concatenates elements",
+      "attempt_to_defend": "Соответствует стандартному map/flatMap для коллекций."
+    },
+    {
+      "label": "B",
+      "completeness": "complete",
+      "truth": "false",
+      "model": "operations reversed",
+      "attempt_to_defend": "map может возвращать коллекции; однако он сохраняет их вложенность, а flatMap разворачивает."
+    },
+    {
+      "label": "C",
+      "completeness": "complete",
+      "truth": "false",
+      "model": "flatMap also preserves nesting; flatten required",
+      "attempt_to_defend": "Можно отдельно вызвать flatten после map, но утверждение о том, что flatMap тоже сохраняет вложенность, неверно."
+    },
+    {
+      "label": "D",
+      "completeness": "complete",
+      "truth": "false",
+      "model": "map and flatMap both flatten",
+      "attempt_to_defend": "flatMap flattens, but map does not; внешний список от map не означает плоский результат."
+    }
+  ],
+  "sections": [
+    {
+      "label": "A",
+      "field": "explanation",
+      "status": "PASS",
+      "reason": "Точно описывает вложенность."
+    },
+    {
+      "label": "A",
+      "field": "example",
+      "status": "PASS",
+      "reason": "Проверяемый пример, включая пустую коллекцию и дубль."
+    },
+    {
+      "label": "A",
+      "field": "when_to_apply",
+      "status": "PASS",
+      "reason": "Даёт критерий выбора."
+    },
+    {
+      "label": "A",
+      "field": "edge_cases",
+      "status": "PASS",
+      "reason": "Корректные ноль/один/дубли/один уровень."
+    },
+    {
+      "label": "A",
+      "field": "related",
+      "status": "PASS",
+      "reason": "Верно для показанных стандартных коллекций и связывает Q33."
+    },
+    {
+      "label": "B",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Точно опровергает перестановку."
+    },
+    {
+      "label": "B",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Понятное объяснение заблуждения."
+    },
+    {
+      "label": "B",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Логичное следствие ложной модели."
+    },
+    {
+      "label": "B",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Верная композиция map().flatten()."
+    },
+    {
+      "label": "C",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Выделяет правильную часть и ошибку."
+    },
+    {
+      "label": "C",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Соответствует заблуждению."
+    },
+    {
+      "label": "C",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Логичный контрфакт."
+    },
+    {
+      "label": "C",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Исправляет механизм."
+    },
+    {
+      "label": "D",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Точное опровержение."
+    },
+    {
+      "label": "D",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Различает внешний список и плоский результат."
+    },
+    {
+      "label": "D",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Следствие ложного равенства операций сформулировано связно."
+    },
+    {
+      "label": "D",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Верная коррекция."
+    }
+  ],
+  "checks": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "A — единственный защитимый ответ; остальные варианты полны, но содержат ложную модель."
+    },
+    "FACTS": {
+      "status": "PASS",
+      "reason": "Сверено с официальной документацией Kotlin по преобразованиям и flatten."
+    },
+    "LINKAGE": {
+      "status": "PASS",
+      "reason": "Теория прямо даёт 1:1 против 1:N и map + flatten."
+    },
+    "SECTIONS": {
+      "status": "PASS",
+      "reason": "Все 17 sections согласованы с соответствующими вариантами."
+    },
+    "SFPL": {
+      "status": "FAIL",
+      "reason": "Каркасы в целом сопоставимы, но корректный вариант A единственный использует parenthetical aside `(из flatten())`? Raw сигнал относится к скобкам только C, где `flatten()` — заметный API в скобках; этот сигнал не выделяет ключ A и сам по себе не основание PASS. Смысловая полнота сходна."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "Все четыре варианта полностью утверждают судьбу вложенности; каждый wrong — законченная ошибочная модель."
+    },
+    "RU": {
+      "status": "PASS",
+      "reason": "Варианты и пояснения читаются естественно, терминология последовательна."
+    }
+  },
+  "findings": [
+    "Вариант C содержит единственную скобочную API-вставку `flatten()`. Она может стать формальным отличительным маркером варианта C, но C — wrong; это не даёт прямого указания на ключ A. Сигнал всё же требует устранения/редакторской оценки сопоставимости, поэтому SFPL оставлен FAIL."
+  ],
+  "sources": [
+    {
+      "url": "https://kotlinlang.org/docs/collection-transformations.html#flattening",
+      "checked_claim": "flatten/flatMap provide flattening behavior for nested collections; flatMap maps then flattens.",
+      "version": "Kotlin docs, accessed 2026-11-06",
+      "checked_at": "2026-11-06T04:56:26Z"
+    }
+  ],
+  "limitations": [
+    "Примеры автора runtime-исполнения не запускались мной; полученный пакет помечает их hash-verified."
+  ]
+}

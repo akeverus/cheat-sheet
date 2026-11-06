@@ -1,0 +1,22 @@
+fun main() {
+run {
+val source = mutableListOf(1, 2)
+val view: List<Int> = source
+source.add(3)
+check(view == listOf(1, 2, 3))
+// view.add(4) не компилируется: у List нет add.
+}
+run {
+var calls = 0
+val pipeline = (1..10).asSequence().map { calls++; it * 2 }.take(2)
+check(calls == 0)
+check(pipeline.toList() == listOf(2, 4))
+check(calls == 2)
+}
+run {
+val groups = listOf(listOf(1, 2), emptyList(), listOf(2))
+check(groups.map { it } == listOf(listOf(1, 2), emptyList(), listOf(2)))
+check(groups.flatMap { it } == listOf(1, 2, 2))
+}
+println("Q32/Q33/Q34 examples: PASS")
+}
