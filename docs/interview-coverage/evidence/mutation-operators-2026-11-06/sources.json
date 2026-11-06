@@ -1,0 +1,69 @@
+{
+  "kind": "PRIMARY_SOURCE_RESEARCH_NOT_ENGINE_EXECUTION",
+  "checked_date": "2026-11-06",
+  "scope": "PIT operator mechanisms; specific implementation examples pinned to1.30.2. Current official docs separate from pinned implementation.",
+  "sources": [
+    {
+      "url": "https://pitest.org/quickstart/mutators/",
+      "claims": [
+        "Named mutation rules and selectable operator families.",
+        "INCREMENTS targets local variables, field increments compiled differently.",
+        "VOID_METHOD_CALLS removes eligible void calls, not numerical return substitution.",
+        "Modern FALSE_RETURNS/TRUE_RETURNS/PRIMITIVE_RETURNS differ from legacy RETURN_VALS.",
+        "REMOVE_CONDITIONALS offers forced outcomes for different kinds of comparison."
+      ],
+      "checked": "Official mutator descriptions, actual tables/examples; available does not mean enabled in each run."
+    },
+    {
+      "url": "https://pitest.org/quickstart/basic_concepts/",
+      "claims": [
+        "PIT operates on bytecode and can filter unhelpful mutants.",
+        "Known logging calls can be filtered (FLOGCALL); no unconditional log.info mutant guarantee."
+      ],
+      "checked": "Official basic concepts, logging-filter and equivalence sections."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hcoles/pitest/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/RemoveConditionalMutator.java",
+      "claims": [
+        "1.30.2 exposes EQUAL/ORDER factories and both replace-with-true/false choices."
+      ],
+      "checked": "Pinned source read; not inferred from family name or jump-opcode label alone."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hcoles/pitest/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/VoidMethodCallMutator.java",
+      "claims": [
+        "VOID_METHOD_CALLS visitor uses voidMethods predicate to remove eligible calls."
+      ],
+      "checked": "Pinned source read; no promise of a surviving mutant after all filters."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hcoles/pitest/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/IncrementsMutator.java",
+      "claims": [
+        "visitIincInsn changes the sign of the increment for a local variable."
+      ],
+      "checked": "Pinned source read; no blanket claim for fields/all source increment expressions."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hcoles/pitest/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/returns/PrimitiveReturnsMutator.java",
+      "claims": [
+        "Appropriate primitive numeric return instructions discard the result and push zero.",
+        "This changes a return value, not call arguments; return0→1 is not a generic rule of this operator."
+      ],
+      "checked": "Pinned source read; boolean handled separately."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hcoles/pitest/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/returns/BooleanFalseReturnValsMutator.java",
+      "claims": [
+        "FALSE_RETURNS supplies false for supported boolean/boxedBoolean returns."
+      ],
+      "checked": "Pinned source read; not a generic inversion of every return."
+    }
+  ],
+  "reused_dependencies": [
+    "Q5 boundary and Q6 MATH were verified/accepted in earlier stages and their theory bodies are unchanged."
+  ],
+  "limits": [
+    "No tool install, PIT/Stryker execution, engine mutant-generation or benchmark.",
+    "Java observation is a manually written pure-condition/void/local-int model, not bytecode transformation."
+  ]
+}

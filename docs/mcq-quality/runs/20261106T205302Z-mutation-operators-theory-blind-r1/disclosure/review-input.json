@@ -1,0 +1,277 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json",
+    "theory": "cheatsheets/interview/testing/mutation-testing-interview.md"
+  },
+  "sha256": {
+    "mcq": "575e854bd6b59bdd6d5d0e0c187b901fdab5b09e532419b85779e4245ffbc7b4",
+    "theory": "d23b71f7df0aefd246565bad31984e39fbdbb02e9932c0b64d1c13887c1f3908"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hashes": {
+    "Q4:B0": {
+      "mcq": "ce9bcef9152d84858960f33f7ad6b42a9878aa4ac594d35ec0149e2f1adad1d9",
+      "theory": "f2a3426a44bfae8905285ddceaeeaa93cf1099a70e68920fa078751c4384df22"
+    },
+    "Q7:B0": {
+      "mcq": "96dbe51484b8750ff0960d9c9511de6a452f60b8db225b8637ce50c9c0e66a6a",
+      "theory": "2ed95a8720fbddd99675e9267f59518f66f9aec16c3fbf9cb44fb481d9f8297e"
+    }
+  },
+  "preamble": "---\ntitle: \"Вопросы на собеседовании: Мутационное тестирование\"\ndescription: \"Mutation testing: проверка качества тестов через mutations кода, mutation operators, kill rate, surviving mutants, PIT, Stryker, тулинг для Java/JS/Python, vs code coverage\"\ntags:\n  - interview\n  - testing\n  - mutation-testing-interview\ntype: \"interview\"\ndifficulty: \"intermediate\"\naliases:\n  - \"Вопросы на собеседовании\"\n  - \"Mutation Testing\"\n  - \"Mutation testing interview\"\n  - \"PIT mutation testing interview\"\nprerequisites: []\nnext: []\nupdated: \"2026-04-25\"\n---\n# Вопросы на собеседовании: Мутационное тестирование\n\n`Mutation testing` оценивает, обнаруживают ли выбранные тесты небольшие изменения программы. Инструмент создаёт мутанты и проверяет реакцию тестов; падение теста может обнаружить изменение. Выживший мутант требует разбора: возможны пропущенный сценарий, непроверенный эффект или эквивалентное поведение в рассматриваемой области. Сам по себе `survived` не доказывает слабость всех тестов. Мутационный анализ дополняет покрытие и не доказывает правильность требований. Здесь рассмотрены PIT для Java, Stryker и mutmut для Python; определения и ограничения — в Q3/Q8–Q10.\n\n## Полезные ссылки\n\n### Официальная документация и авторитетные источники\n\n- [PIT Mutation Testing — Pitest.org](https://pitest.org/)\n- [Stryker Mutator](https://stryker-mutator.io/)\n- [Mutation Testing — Wikipedia](https://en.wikipedia.org/wiki/Mutation_testing)\n- [PITclipse (PIT IntelliJ plugin)](https://github.com/hcoles/pitest)\n- [Mutation Testing — Baeldung](https://www.baeldung.com/java-mutation-testing-with-pitest)\n\n## Содержание\n\n- [Полезные ссылки](#полезные-ссылки)\n- [See also](#see-also)\n\n**Базовые понятия**\n- [Q1. (!) Что такое mutation testing?](#q1--что-такое-mutation-testing)\n- [Q2. (!) Зачем mutation testing, если уже есть code coverage?](#q2--зачем-mutation-testing-если-уже-есть-code-coverage)\n- [Q3. Что значат термины mutant, killed, survived, equivalent?](#q3-что-значат-термины-mutant-killed-survived-equivalent)\n\n**Mutation operators**\n- [Q4. (!) Какие мутации типичны?](#q4--какие-мутации-типичны)\n- [Q5. Как работает Conditional Boundary Mutator?](#q5-как-работает-conditional-boundary-mutator)\n- [Q6. Как работает Math Mutator?](#q6-как-работает-math-mutator)\n- [Q7. Какие ещё бывают операторы мутаций?](#q7-какие-ещё-бывают-операторы-мутаций)\n\n**Метрики**\n- [Q8. (!) Что такое mutation score (kill rate) и как его считают?](#q8--что-такое-mutation-score-kill-rate-и-как-его-считают)\n- [Q9. Как анализировать выживших мутантов (surviving mutants)?](#q9-как-анализировать-выживших-мутантов-surviving-mutants)\n- [Q10. Что такое эквивалентные мутанты (equivalent mutants)?](#q10-что-такое-эквивалентные-мутанты-equivalent-mutants)\n\n**Tools**\n- [Q11. (!) Как использовать PIT для Java?](#q11--как-использовать-pit-для-java)\n- [Q12. (!) Как использовать Stryker для JavaScript/TypeScript?](#q12--как-использовать-stryker-для-javascripttypescript)\n- [Q13. Как использовать mutmut для Python?](#q13-как-использовать-mutmut-для-python)\n- [Q14. Какие ещё есть инструменты mutation testing?](#q14-какие-ещё-есть-инструменты-mutation-testing)\n\n**Performance**\n- [Q15. (!) Почему mutation testing медленный?](#q15--почему-mutation-testing-медленный)\n- [Q16. Как ускоряют mutation testing (incremental, in-process)?](#q16-как-ускоряют-mutation-testing-incremental-in-process)\n\n**Production**\n- [Q17. (!) Когда mutation testing оправдан?](#q17--когда-mutation-testing-оправдан)\n- [Q18. Какой mutation score ставить целевым?](#q18-какой-mutation-score-ставить-целевым)\n- [Q19. (!) В чём ограничения и за что критикуют mutation testing?](#q19--в-чём-ограничения-и-за-что-критикуют-mutation-testing)\n- [Q20. Как встроить mutation testing в CI/CD?](#q20-как-встроить-mutation-testing-в-cicd)\n",
+  "theory": [
+    {
+      "q_number": 4,
+      "title": "Какие мутации типичны?",
+      "line": 124,
+      "body": "\nТипичны локальные подмены сравнений, арифметики, возвратов и вызовов. **Оператор мутации** задаёт правило изменения подходящей конструкции; он не обязан переписывать целый метод или класс. Конкретные правила зависят от движка, версии и выбранного набора операторов.\n\nПримеры семейств PIT; для деталей ниже рассматривается **PIT 1.30.2**:\n\n| Оператор | Пример изменения поведения | Уточнение |\n|---|---|---|\n| `CONDITIONALS_BOUNDARY` | `>=` → `>` | Меняется включение границы равенства; подробности Q5 |\n| `NEGATE_CONDITIONALS` | `==` → `!=` | Инвертируется подходящее сравнение, а не произвольно сдвигается константа |\n| `MATH` | Целочисленное `*` → `/` | Подмена по таблице инструкций; подробности Q6 |\n| `INCREMENTS` | Локальное `i++` → `i--` | В PIT это инструкция `iinc` локальной переменной; не универсальное правило для любого поля или типа |\n| `FALSE_RETURNS` | Возвращаемый `boolean` → `false` | Это не общая инверсия любого возврата; семейство `TRUE_RETURNS` задаёт другую подмену |\n| `PRIMITIVE_RETURNS` | Возвращаемый `int` → `0` | Числовой результат подменяется, аргументы метода не объявляются изменёнными |\n| `VOID_METHOD_CALLS` | Удаляется подходящий вызов `counter.increment()` с возвращаемым типом `void` | Проверяется наблюдаемый эффект вызова, не его несуществующее возвращаемое число |\n\nЭто примеры правил, а не обещание, что каждый похожий фрагмент исходника обязательно даст мутант. PIT работает с байт-кодом: имеют значение инструкции компилятора, область анализа, включённые операторы и фильтры. Наличие семейства в инструменте не означает, что оно включено в конкретный запуск. [Операторы PIT](https://pitest.org/quickstart/mutators/), [basic concepts](https://pitest.org/quickstart/basic_concepts/).\n\nОдна строка может содержать несколько подходящих инструкций и подпадать под разные правила. Но несколько мутантов от каждой строки или от каждого отдельного оператора не гарантированы. Для подсчёта смотрят реально созданные варианты и настройки, как в Q8/Q15. Случайный отбор среди заданных подмен не равен произвольному повреждению текста без правил.\n\n[INCREMENTS 1.30.2](https://github.com/hcoles/pitest/blob/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/IncrementsMutator.java), [FALSE_RETURNS 1.30.2](https://github.com/hcoles/pitest/blob/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/returns/BooleanFalseReturnValsMutator.java), [PRIMITIVE_RETURNS 1.30.2](https://github.com/hcoles/pitest/blob/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/returns/PrimitiveReturnsMutator.java).\n\n"
+    },
+    {
+      "q_number": 7,
+      "title": "Какие ещё бывают операторы мутаций?",
+      "line": 185,
+      "body": "\nКроме boundary и MATH из Q5–Q6 полезно различать несколько семейств, а не запоминать одну универсальную «поломку». Следующие механизмы привязаны к PIT; для конкретных подмен проверен исходник **1.30.2**.\n\n- **`INCREMENTS`** меняет знак величины локального инкремента в инструкции `iinc`. Для локального `int i = 5` подмена шага `i++` на `i--` даёт 4 вместо 6. Приращение поля компилируется иначе; его нельзя автоматически приписывать тому же оператору.\n- **`NEGATE_CONDITIONALS`** инвертирует подходящее сравнение, например `==` на `!=`. Для простого условия различающий вход и проверка наблюдаемого эффекта могут обнаружить мутацию. Обязательного требования выполнить обе ветки для обнаружения каждой такой пары нет; покрытие обеих веток и обнаружение конкретного мутанта — разные условия.\n- **`REMOVE_CONDITIONALS`** имеет варианты с принудительным выбором ветки if или else, для разных видов сравнений. Это не всегда только true. Нужно читать конкретный вариант, а не выводить направление из общего имени семейства.\n- **Операторы возврата** подменяют возвращаемое значение: например, `FALSE_RETURNS` задаёт false, а `PRIMITIVE_RETURNS` — ноль для подходящих числовых возвратов. Старый общий `RETURN_VALS` и современные отдельные семейства имеют разные правила; пример `return 0` → `return 1` нельзя считать универсальным правилом современного `PRIMITIVE_RETURNS`.\n- **`VOID_METHOD_CALLS`** удаляет подходящий вызов void-метода. Результата для числового сравнения у такого вызова нет, но может исчезнуть значимый эффект. Изменение аргумента, подмена возвращаемого значения и удаление вызова — разные механизмы.\n\nДля простого условия без побочных эффектов пусть счётчик начинается с 0 и увеличивается на 1, только если `allowed` истинно. Возможные наблюдаемые результаты:\n\n| Исходный `allowed` | Оригинал | Принудительно true | Принудительно false | Инверсия условия |\n|---|---|---|---|---|\n| false | 0 | 1 | 0 | 1 |\n| true | 1 | 1 | 0 | 0 |\n\nПринудительное true различается с оригиналом на false-входе, принудительное false — на true-входе. Для инверсии в этом примере достаточно любого одного из входов **при проверке ожидаемого счётчика**. Одного выполнения условия или посещения ветки без наблюдения эффекта недостаточно.\n\nУдаление `counter.increment()` можно заметить без mock: если операция по требованию должна увеличить публично наблюдаемое значение с 0 до 1, после удаления оно останется 0. Можно проверять состояние, взаимодействие с зависимостью или результат внешнего сценария — выбирают значимое требование. Mock является одним из способов наблюдения, а не обязательной частью оператора.\n\nНельзя гарантировать генерацию или обнаружение по одному названию: действуют настройки и фильтры, в том числе фильтр известных вызовов логирования PIT. Поэтому `log.info(...)` не служит безусловным примером мутанта любого запуска. Конкретный diff, различающие данные и проверка эффекта остаются обязательной частью разбора. [Документация операторов](https://pitest.org/quickstart/mutators/), [PIT: фильтрация логирования и эквивалентность](https://pitest.org/quickstart/basic_concepts/).\n\n[RemoveConditionalMutator 1.30.2](https://github.com/hcoles/pitest/blob/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/RemoveConditionalMutator.java), [VoidMethodCallMutator 1.30.2](https://github.com/hcoles/pitest/blob/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/VoidMethodCallMutator.java).\n\n"
+    }
+  ],
+  "blocks": [
+    {
+      "q_number": 4,
+      "block_idx": 0,
+      "visible_question": "Какие мутации типичны?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Какие мутации типичны?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Типовые операторы переписывают целые методы и структуру классов, а не отдельные конструкции",
+            "correct": false,
+            "sections": {
+              "what_actually": "Обычные операторы вносят локальные изменения подходящих инструкций, а не обязаны перестраивать весь класс.",
+              "source_of_confusion": "Слово мутация ассоциируют с крупной переделкой.",
+              "if_it_were_true": "Для сдвига границы понадобилась бы перестройка класса вместо локальной замены сравнения.",
+              "how_it_should_be": "Читай конкретное правило и место применения оператора."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Операторы целятся в редкие экзотические конструкции, обходя привычные сравнения и арифметику стороной",
+            "correct": false,
+            "sections": {
+              "what_actually": "Сравнения, арифметика и возвраты входят в типичные наборы мутаций.",
+              "source_of_confusion": "Ценность анализа связывают только с экзотическими ошибками.",
+              "if_it_were_true": "У обычного a*b не было бы MATH-мутанта, хотя это прямой случай оператора.",
+              "how_it_should_be": "Начинай с реально поддерживаемых операторов и частых конструкций."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Типовые операторы правят границы сравнений, арифметику, возвращаемые значения и удаляют вызовы методов",
+            "correct": true,
+            "sections": {
+              "explanation": "Оператор задаёт правило изменения подходящей конструкции. Типичные семейства меняют сравнения, арифметику, возвраты и вызовы; набор зависит от движка и конфигурации.",
+              "example": "PIT MATH меняет целочисленное умножение делением, а VOID_METHOD_CALLS удаляет подходящий void-вызов.",
+              "when_to_apply": "Читай имя оператора вместе с конкретным diff мутанта, чтобы определить различающий сценарий.",
+              "edge_cases": "Одна строка может содержать несколько инструкций и подходить разным операторам. Это не гарантия нескольких мутаций от каждого одного оператора.",
+              "related": "[[mutation-testing-interview#Q5]] boundary; [[mutation-testing-interview#Q6]] MATH; [[mutation-testing-interview#Q7]] другие операторы."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Инструмент вносит случайные искажения кода, не опираясь на фиксированный набор правил подмены",
+            "correct": false,
+            "sections": {
+              "what_actually": "Мутанты строятся по определённым правилам; выбор scope и seed может влиять на отбор, но не отменяет правил.",
+              "source_of_confusion": "Биологическую метафору принимают за случайное повреждение текста.",
+              "if_it_were_true": "Название оператора не позволяло бы объяснить конкретную замену, хотя оно задаёт её механизм.",
+              "how_it_should_be": "Указывай движок, операторы и настройки при сравнении результатов."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 7,
+      "block_idx": 0,
+      "visible_question": "Какие ещё бывают операторы мутаций?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Какие ещё бывают операторы мутаций?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Void Method Calls удаляет вызов без результата, а тест может обнаружить изменение по наблюдаемому состоянию или взаимодействию с зависимостью.",
+            "correct": true,
+            "sections": {
+              "explanation": "Удаление void-вызова меняет побочный эффект, который может быть виден через состояние, взаимодействия или результат внешнего сценария. Mock является одним из вариантов наблюдения.",
+              "example": "После удаления counter.increment() публично наблюдаемое значение остаётся0 вместо1; для такой проверки mock не требуется.",
+              "when_to_apply": "Проверяй значимый эффект операции, а не обязательно технический вызов логирования.",
+              "edge_cases": "Remove Conditional имеет варианты с принудительным true и false. Для них нужны разные различающие входы; одно название семейства не задаёт направление.",
+              "related": "[[mutation-testing-interview#Q4]] семейства; [[mutation-testing-interview#Q19]] ограничения."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Void Method Calls заменяет возвращаемое значение void-метода нулём, поэтому тест сравнивает числовой результат самого удалённого вызова с ожидаемым.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Void-вызов не имеет возвращаемого значения; его удаление меняет побочный эффект.",
+              "source_of_confusion": "Удаление вызова путают с подменой return.",
+              "if_it_were_true": "У удалённого void-вызова появился бы числовой результат, хотя его сигнатура этого не предусматривает.",
+              "how_it_should_be": "Проверяй наблюдаемый эффект напрямую либо через внешний результат сценария."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Remove Conditional с принудительным true отличается от исходного условия лишь на входах, где тело условия и так должно выполняться.",
+            "correct": false,
+            "sections": {
+              "what_actually": "При принудительном true отличие ищут там, где исходное условие false и тело не должно выполняться.",
+              "source_of_confusion": "Позитивную ветку считают достаточной для любого условного мутанта.",
+              "if_it_were_true": "На исходном true оригинал и принудительное true должны были бы различаться, хотя оба выполняют тело.",
+              "how_it_should_be": "Учитывай конкретный true/false вариант Remove Conditional."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Return Values изменяет аргументы вызываемого метода, сохраняя возвращаемое значение прежним, поэтому оператор проверяет assertions на переданные входные данные.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Return-операторы меняют возвращаемое значение; изменение аргументов относится к другим правилам.",
+              "source_of_confusion": "Все значения вызова смешивают в одну категорию.",
+              "if_it_were_true": "В отчёте вместо подмены результата требовался бы diff входного аргумента.",
+              "how_it_should_be": "Разделяй аргументы, возвращаемое значение и побочный эффект."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "open_issues": [],
+  "runtime_findings": [],
+  "checks": {
+    "content_review": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q7:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "factual_correctness": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q7:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "source_linkage": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q7:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sections_consistency": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q7:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sfpl": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q7:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "ansc": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q7:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "russian_readability": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q7:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "independent_review": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q7:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "blind_review": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q7:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "final_acceptance": {
+      "blocks": {
+        "Q4:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q7:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    }
+  },
+  "instructions": "Все A/B/C/D и sections. SFPL, ANSC, RU — отдельные вердикты. Дополнительные смысловые зависимости прочитать и указать в evidence. Сигналы не являются редакторской приёмкой."
+}

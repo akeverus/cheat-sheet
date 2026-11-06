@@ -1,0 +1,84 @@
+{
+  "checks": [
+    {
+      "name": "schema",
+      "command": [
+        "python3",
+        "scripts/mcq_validation.py",
+        "--json",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json"
+      ],
+      "exit": 0,
+      "stdout_sha256": "fb187999321692f86d370f59e784337054d9aaefadacfdfaf69db7ab94a22fce",
+      "stderr": ""
+    },
+    {
+      "name": "linkage",
+      "command": [
+        "python3",
+        "scripts/mcq-linkage-scan.py",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json",
+        "--json",
+        "/tmp/mutation-theory-operators-20261106/linkage.json",
+        "--quiet"
+      ],
+      "exit": 0,
+      "stdout_sha256": "00c83b0b83298486398fabbf94f35f892a6580fcbc1d232d36df4e259ab6007d",
+      "stderr": ""
+    },
+    {
+      "name": "anti-tell",
+      "command": [
+        "python3",
+        "scripts/mcq-anti-tell-scan.py",
+        "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json"
+      ],
+      "exit": 0,
+      "stdout_sha256": "3322fc26611cd7eeb1e94b44ff09d3e9f541cc2b6bca0cfbd0af4a4ef99f6c2b",
+      "stderr": ""
+    },
+    {
+      "name": "no-inline",
+      "command": [
+        "bash",
+        "scripts/verify-md-no-mcq.sh",
+        "cheatsheets/interview/testing/mutation-testing-interview.md"
+      ],
+      "exit": 0,
+      "stdout_sha256": "96244e37490e046223963fe304cad64cdf6fafcc554922761956522dfd071b28",
+      "stderr": ""
+    },
+    {
+      "name": "diff",
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "--",
+        "cheatsheets/interview/testing/mutation-testing-interview.md"
+      ],
+      "exit": 0,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr": ""
+    },
+    {
+      "name": "yaml",
+      "command": [
+        "ruby",
+        "-r",
+        "yaml",
+        "-r",
+        "date",
+        "-e",
+        "s=File.read(ARGV[0]);d=YAML.safe_load(s.split(\"---\",3)[1],permitted_classes:[Date],aliases:true);puts \"YAML #{d.length} fields PASS\"",
+        "cheatsheets/interview/testing/mutation-testing-interview.md"
+      ],
+      "exit": 0,
+      "stdout_sha256": "3439372451c44bde1b6afa0e7a0c6914cfbe9b712403f1a5804394ec13076e61",
+      "stderr": ""
+    }
+  ],
+  "current_run": "PASS",
+  "accepted_before": 15,
+  "accepted_after": 15
+}

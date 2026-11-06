@@ -1,0 +1,51 @@
+{
+  "kind": "MANUAL_JAVA_SEMANTIC_OBSERVATION_NOT_MUTATION_ENGINE",
+  "source": "public class OperatorsObservation {\n  static int original(boolean allowed) { int count=0; if (allowed) count++; return count; }\n  static int forcedTrue(boolean allowed) { int count=0; if (true) count++; return count; }\n  static int forcedFalse(boolean allowed) { int count=0; if (false) count++; return count; }\n  static int negated(boolean allowed) { int count=0; if (!allowed) count++; return count; }\n  static class Counter { int count; void increment() { count++; } }\n  public static void main(String[] args) {\n    for (boolean allowed: new boolean[]{false,true}) {\n      System.out.printf(\"condition %s %d %d %d %d%n\",allowed,original(allowed),forcedTrue(allowed),forcedFalse(allowed),negated(allowed));\n    }\n    Counter present=new Counter(); present.increment(); Counter omitted=new Counter();\n    System.out.printf(\"void-state %d %d%n\",present.count,omitted.count);\n    int up=5;up++;int down=5;down--;\n    System.out.printf(\"local-increment %d %d%n\",up,down);\n  }\n}\n",
+  "source_sha256": "6456d367ab555f9ddbc2d1ab9f8fe0d140774af5ecbf4caddafca55029fbaa4c",
+  "commands": [
+    {
+      "argv": [
+        "/usr/bin/java",
+        "-version"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "openjdk version \"22.0.2\" 2024-07-16\nOpenJDK Runtime Environment Corretto-22.0.2.9.1 (build 22.0.2+9-FR)\nOpenJDK 64-Bit Server VM Corretto-22.0.2.9.1 (build 22.0.2+9-FR, mixed mode, sharing)\n"
+    },
+    {
+      "argv": [
+        "/usr/bin/javac",
+        "-d",
+        "/tmp/mutation-theory-operators-20261106",
+        "/tmp/mutation-theory-operators-20261106/OperatorsObservation.java"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/usr/bin/java",
+        "-cp",
+        "/tmp/mutation-theory-operators-20261106",
+        "OperatorsObservation"
+      ],
+      "exit": 0,
+      "stdout": "condition false 0 1 0 1\ncondition true 1 1 0 0\nvoid-state 1 0\nlocal-increment 6 4\n",
+      "stderr": ""
+    }
+  ],
+  "expected_stdout": "condition false 0 1 0 1\ncondition true 1 1 0 0\nvoid-state 1 0\nlocal-increment 6 4\n",
+  "matches_expected": true,
+  "interpretation": [
+    "Forced true differs on original false, forced false on original true in this pure-condition model.",
+    "Negation differs on either input in this model if the counter value is checked. One differentiating input suffices here.",
+    "An omitted void increment has an observable state difference without mocks.",
+    "Local int increment/decrement from 5 produce 6/4."
+  ],
+  "limits": [
+    "These methods are manual behavioral models, not generated PIT mutants.",
+    "No PIT/Stryker execution, bytecode filtering, test selection, coverage, score or CI was checked.",
+    "No production code/test changed. No IDEA formatting; scratch source only in /tmp."
+  ]
+}
