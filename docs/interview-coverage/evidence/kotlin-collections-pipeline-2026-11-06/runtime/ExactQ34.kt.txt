@@ -1,0 +1,21 @@
+fun main() {
+val words = listOf("Hello World", "Kotlin is great")
+
+// map: List<T> -> List<R> (1 к 1)
+val lengths = words.map { it.length }   // [11, 15]
+
+// flatMap: List<T> -> List<R> (1 ко многим, результат «раскрывается»)
+val chars = words.flatMap { it.toList() }
+// [H, e, l, l, o, ' ', W, o, r, l, d, K, o, t, l, i, n, ...]
+
+// Пример: получить все теги всех постов
+data class Post(val tags: List<String>)
+val posts = listOf(Post(listOf("kotlin", "jvm")), Post(listOf("spring", "kotlin")))
+val allTags = posts.flatMap { it.tags }  // [kotlin, jvm, spring, kotlin]
+val uniqueTags = allTags.toSet()         // [kotlin, jvm, spring]
+check(lengths == listOf(11,15))
+check(chars == "Hello WorldKotlin is great".toList())
+check(allTags == listOf("kotlin","jvm","spring","kotlin"))
+check(uniqueTags == setOf("kotlin","jvm","spring"))
+println("map/flatMap: PASS")
+}

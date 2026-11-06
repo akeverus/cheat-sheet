@@ -1,0 +1,53 @@
+from pathlib import Path
+import json,re,hashlib,subprocess
+W=Path('/tmp/kotlin-theory-collections-pipeline-20261106');O=W/'runtime';O.mkdir(exist_ok=True);M=Path('cheatsheets/interview/programming-languages/kotlin/kotlin-interview.md');m=M.read_text()
+def fence(q):return re.findall(r'```kotlin\n(.*?)\n```',re.search(rf'^## Q{q}\..*?(?=^## Q\d+\.|\Z)',m,re.M|re.S)[0],re.S)[0]
+def run(cmd):
+ p=subprocess.run(cmd,capture_output=True,text=True);return {'command':cmd,'exit':p.returncode,'stdout':p.stdout,'stderr':p.stderr}
+programs=[('ExactQ32',fence(32)+'\n','3 / 2\nAlicia\n','exact standalone fence'),('ExactQ33',fence(33)+'\n','[20, 40]: 10 / 5\n0 / 0\n[20, 40]: 4 / 2\n','exact standalone fence'),('ExactQ34','fun main() {\n'+fence(34)+'''\ncheck(lengths == listOf(11,15))
+check(chars == "Hello WorldKotlin is great".toList())
+check(allTags == listOf("kotlin","jvm","spring","kotlin"))
+check(uniqueTags == setOf("kotlin","jvm","spring"))
+println("map/flatMap: PASS")
+}\n''','map/flatMap: PASS\n','unchanged fragment wrapped in main; checks added outside original statements'),('BoundaryChecks','''class Entry(var value: Int)
+fun main() {
+ val source=mutableListOf(Entry(1),Entry(2));val view:List<Entry> = source;val copy=source.toList()
+ check(view === source)
+ source.removeAt(1);check(view.size==1 && copy.size==2)
+ source[0]=Entry(9);check(view[0].value==9 && copy[0].value==1)
+ copy[0].value=7;check(copy[0].value==7)
+ var produced=0
+ val lazyIterable=Iterable { object: Iterator<Int> {
+  var n=0
+  override fun hasNext()=n<4
+  override fun next():Int { produced++;return ++n }
+ } }
+ check(produced==0)
+ val iterator=lazyIterable.iterator();check(produced==0)
+ check(iterator.next()==1 && produced==1)
+ var observed=0
+ val sorted=sequenceOf(3,1,2).onEach { observed++ }.sorted().take(1)
+ check(observed==0)
+ check(sorted.toList()==listOf(1));check(observed==3)
+ var steps=0
+ for (v in sequence { steps++;yield(42) }) check(v==42)
+ check(steps==1)
+ val once=iterator.asSequence();check(once.toList()==listOf(2,3,4))
+ var rejected=false
+ try { once.toList() } catch (e:IllegalStateException) { rejected=true }
+ check(rejected)
+ val nested=listOf(listOf(1,2),emptyList(),listOf(2))
+ check(nested.map { it }==nested)
+ check(nested.flatMap { it }==listOf(1,2,2))
+ check(nested.flatMap { it }==nested.map { it }.flatten())
+ println("boundaries: PASS")
+}
+''','boundaries: PASS\n','custom lazy Iterable, sorted buffering, for consumption, one-shot sequence, shallow copy and flatten probes')]
+results=[]
+for label,src,expected,scope in programs:
+ path=O/(label+'.kt');path.write_text(src);jar=O/(label+'.jar')
+ compiled=run(['/usr/local/bin/kotlinc',str(path),'-jvm-target','17','-include-runtime','-d',str(jar)]);assert compiled['exit']==0,compiled
+ executed=run(['/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/java','-jar',str(jar)]);assert executed['exit']==0 and executed['stdout']==expected,executed
+ results.append({'label':label,'scope':scope,'source_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'compile':compiled,'run':executed});print(label+': PASS',flush=True)
+negative=O/'ReadOnlyAdd.kt';negative.write_text('fun main() { val values: List<Int> = mutableListOf(1,2); values.add(3) }\n');r=run(['/usr/local/bin/kotlinc',str(negative),'-jvm-target','17','-d',str(O/'negative.jar')]);assert r['exit']!=0 and 'add' in r['stderr'],r
+out={'md_sha256':hashlib.sha256(M.read_bytes()).hexdigest(),'compiler':run(['/usr/local/bin/kotlinc','-version']),'java':run(['/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/java','-version']),'programs':results,'expected_compile_failure':r};(W/'runtime-results.json').write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n');print('ReadOnlyAdd: expected compilation failure',flush=True)

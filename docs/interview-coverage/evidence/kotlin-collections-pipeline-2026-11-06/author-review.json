@@ -1,0 +1,452 @@
+{
+  "role": "author_self_review",
+  "created_at": "2026-11-06T04:39:22.018799+00:00",
+  "input_sha256": "01dd870ea8c3f26f8cc0b2b4219599aba005fda63a06aec59515dc8c2bd47d4e",
+  "questions": [
+    {
+      "q_number": 32,
+      "options": [
+        {
+          "label": "A",
+          "truth": "FALSE",
+          "ansc": "FAIL",
+          "assessment": "Описывает только возможность backing/alias; отрицает допустимую ссылку List на MutableList, не даёт полного сравнения операций двух интерфейсов."
+        },
+        {
+          "label": "B",
+          "truth": "TRUE_BUT_PARTIAL",
+          "ansc": "FAIL",
+          "assessment": "Верно описывает read-only List, но не говорит, что MutableList добавляет изменение: одного List недостаточно для всего видимого сравнения."
+        },
+        {
+          "label": "C",
+          "truth": "FALSE",
+          "ansc": "FAIL",
+          "assessment": "Полная неизменность List опровергается alias и общими изменяемыми элементами; MutableList как вторая сторона не описан."
+        },
+        {
+          "label": "D",
+          "truth": "FALSE",
+          "ansc": "FAIL",
+          "assessment": "Приписывает List методы изменения, но не даёт сравнительного контракта MutableList. ReadOnlyAdd получил ожидаемую compile error."
+        }
+      ],
+      "sections": [
+        {
+          "field": "A.what_actually",
+          "status": "PASS",
+          "assessment": "MutableList допускается использовать через read-only List без копирования; view===source подтверждено."
+        },
+        {
+          "field": "A.source_of_confusion",
+          "status": "PASS",
+          "assessment": "Смена статического интерфейса ошибочно воспринимается как копия; это объясняет именно A."
+        },
+        {
+          "field": "A.if_it_were_true",
+          "status": "WEAK",
+          "assessment": "Ссылка на «сюрприз» без кода или механизма слаба; полезно прямо описать невозможность наблюдать изменение через общий alias."
+        },
+        {
+          "field": "A.how_it_should_be",
+          "status": "OPEN_SCOPE",
+          "assessment": "«Это view, а не копия» корректно для присваивания alias; List сам по себе не обязан быть view чужого mutable списка. Уточнить область."
+        },
+        {
+          "field": "B.explanation",
+          "status": "PASS_PARTIAL",
+          "assessment": "Свойства List верны, но повторяют отсутствие второй стороны сравнительного ответа."
+        },
+        {
+          "field": "B.example",
+          "status": "PASS",
+          "assessment": "readOnlyView над mutableListOf наблюдает изменения состава; новый пример это выполняет."
+        },
+        {
+          "field": "B.when_to_apply",
+          "status": "PASS_INTENT",
+          "assessment": "Read-only параметр выражает намерение, а не доказательство чистоты функции; aliases всё ещё возможны."
+        },
+        {
+          "field": "B.edge_cases",
+          "status": "PASS_WEAK_STYLE",
+          "assessment": "Mutable backing верен; «сюрприз» разговорен и не даёт нового объяснения."
+        },
+        {
+          "field": "B.related",
+          "status": "FAIL_FACT",
+          "assessment": "toList — поверхностный снимок, а не полная неизменность: имя общего Person изменяется и в snapshot."
+        },
+        {
+          "field": "C.what_actually",
+          "status": "PASS",
+          "assessment": "Отделены read-only API и неизменность данных."
+        },
+        {
+          "field": "C.source_of_confusion",
+          "status": "PASS",
+          "assessment": "Смешение read-only и immutable непосредственно порождает ложный C."
+        },
+        {
+          "field": "C.if_it_were_true",
+          "status": "PASS",
+          "assessment": "Если бы объект был неизменен, изменение через mutable alias не наблюдалось бы."
+        },
+        {
+          "field": "C.how_it_should_be",
+          "status": "PASS_PARTIAL",
+          "assessment": "Mutable backing — корректный контрпример гарантии; это не полный ответ о двух интерфейсах."
+        },
+        {
+          "field": "D.what_actually",
+          "status": "PASS",
+          "assessment": "Мутаторы относятся к MutableList, а не read-only List; compile probe подтверждает."
+        },
+        {
+          "field": "D.source_of_confusion",
+          "status": "WEAK",
+          "assessment": "«Кажется, add есть у List» повторяет заблуждение, но почти не объясняет причину."
+        },
+        {
+          "field": "D.if_it_were_true",
+          "status": "PASS_WEAK",
+          "assessment": "Методы изменения противоречили бы read-only API; лучше конкретный пример вместо общей оценки смысла."
+        },
+        {
+          "field": "D.how_it_should_be",
+          "status": "PASS_PARTIAL",
+          "assessment": "Верно про List, но для сравнительного задания требуется также MutableList."
+        }
+      ],
+      "axes": {
+        "SEMANTICS": {
+          "status": "FAIL_COMPLETE_KEY",
+          "assessment": "B фактически верен, но не даёт полного сравнительного ответа; остальные ложны. Нужна переработка visible options."
+        },
+        "ANSC": {
+          "status": "FAIL",
+          "assessment": "Ни один вариант не описывает read/mutate возможности обоих интерфейсов полностью."
+        },
+        "SFPL": {
+          "status": "FAIL",
+          "assessment": "B выделяется аккуратной оговоркой «но ... не гарантирует», а wrong используют усилители «никогда», «полную и настоящую», «всё же» и растянутые обороты. Числа не заменяют эту оценку тона."
+        },
+        "RU": {
+          "status": "FAIL_STYLE",
+          "assessment": "«С ровно теми же данными», «полную и настоящую», «всё же» и «сюрприз» засоряют профессиональный текст."
+        },
+        "FACTS": {
+          "status": "FAIL",
+          "assessment": "Ключевой read-only факт корректен, B.related содержит проверяемую ошибку про toList."
+        },
+        "SECTIONS": {
+          "status": "FAIL",
+          "assessment": "Все17 рассмотрены; требуется исправить B.related, scoped view и слабые объяснения после правок вариантов."
+        },
+        "LINKAGE": {
+          "status": "OPEN_MCQ_SYNC",
+          "assessment": "Новая теория сравнивает оба интерфейса и shallow snapshot; MCQ пока повторяет старую гарантию immutable."
+        }
+      },
+      "theory": "PASS_FIXED: read/mutate contract, alias, shallow snapshot, val, variance and lack of thread-safety promise; exact fence executed."
+    },
+    {
+      "q_number": 33,
+      "options": [
+        {
+          "label": "A",
+          "truth": "FALSE_UNRESTRICTED",
+          "ansc": "FAIL",
+          "assessment": "Говорит только об Iterable и необоснованно приписывает общую lazy модель; Sequence не описан."
+        },
+        {
+          "label": "B",
+          "truth": "FALSE",
+          "ansc": "FAIL",
+          "assessment": "Говорит только о Sequence; не всякий шаг создаёт коллекцию, map/filter не материализуют списки на каждом шаге."
+        },
+        {
+          "label": "C",
+          "truth": "FALSE",
+          "ansc": "FAIL",
+          "assessment": "Говорит только о Sequence; filter/map pipeline не выполняется при объявлении. Потребление через for не спасает ложную вторую часть."
+        },
+        {
+          "label": "D",
+          "truth": "FALSE_UNRESTRICTED",
+          "ansc": "PASS",
+          "assessment": "Обе стороны описаны, но сам Iterable не гарантирует eager вычисления/промежуточные коллекции. Это свойство указанных stdlib extensions, не интерфейса."
+        }
+      ],
+      "sections": [
+        {
+          "field": "A.what_actually",
+          "status": "FAIL_SCOPE",
+          "assessment": "Безусловный eager Iterable ложен: пользовательский iterator производит значения по next()."
+        },
+        {
+          "field": "A.source_of_confusion",
+          "status": "PASS_SCOPED",
+          "assessment": "В контексте stdlib filter/map модели действительно можно поменять местами; сам интерфейс этим не определяется."
+        },
+        {
+          "field": "A.if_it_were_true",
+          "status": "FAIL_SCOPE",
+          "assessment": "Уже существуют Iterable, которые не хранят промежуточные списки; общая контрфактическая формулировка не работает."
+        },
+        {
+          "field": "A.how_it_should_be",
+          "status": "FAIL_SCOPE",
+          "assessment": "Лозунг Iterable eager не указывает операции и сохраняет дефект D."
+        },
+        {
+          "field": "B.what_actually",
+          "status": "PASS_SCOPED",
+          "assessment": "Не на каждом шаге: map/filter не материализуют, но это не запрет stateful buffering вообще."
+        },
+        {
+          "field": "B.source_of_confusion",
+          "status": "PASS_SCOPED",
+          "assessment": "Перенос eager stdlib-преобразований на Sequence — правдоподобная модель ошибки."
+        },
+        {
+          "field": "B.if_it_were_true",
+          "status": "FAIL_OVERPROMISE",
+          "assessment": "Одинаковая материализация на каждом шаге убрала бы одно преимущество, но не доказывала бы отсутствие любого выигрыша памяти."
+        },
+        {
+          "field": "B.how_it_should_be",
+          "status": "PASS_SCOPED",
+          "assessment": "Поэлементность подходит для filter/map; sorted показывает границу этой краткой рекомендации."
+        },
+        {
+          "field": "C.what_actually",
+          "status": "OPEN_SCOPE",
+          "assessment": "Нужен потребитель, но не обязательный вызов именованной terminal extension: iterator/for также запускают обработку."
+        },
+        {
+          "field": "C.source_of_confusion",
+          "status": "PASS",
+          "assessment": "Смешение построения lazy-конвейера с eager вызовом объясняет ложное немедленное выполнение."
+        },
+        {
+          "field": "C.if_it_were_true",
+          "status": "FAIL_REASON",
+          "assessment": "toList не обязательный способ потребления и служит ещё материализации; отсутствие его необходимости не доказывает немедленное выполнение."
+        },
+        {
+          "field": "C.how_it_should_be",
+          "status": "OPEN_SCOPE",
+          "assessment": "«Без терминала ничего» нужно формулировать как отсутствие потребления, чтобы не исключить for/iterator."
+        },
+        {
+          "field": "D.explanation",
+          "status": "FAIL_SCOPE",
+          "assessment": "Повторяет универсальную eager характеристику Iterable вместо contract его операций."
+        },
+        {
+          "field": "D.example",
+          "status": "ILLUSTRATION_ONLY",
+          "assessment": "filter()/map()/take() без аргументов — псевдоцепочка, не компилируемый пример. Не выдавать за реальный runnable API."
+        },
+        {
+          "field": "D.when_to_apply",
+          "status": "PASS_INCOMPLETE_ADVICE",
+          "assessment": "Большая цепочка — возможный кандидат, но размер сам не гарантирует улучшения; нужен учёт overhead/раннего завершения."
+        },
+        {
+          "field": "D.edge_cases",
+          "status": "WEAK_UNSUPPORTED",
+          "assessment": "«Аналог Stream, но проще» не проверяемое edge case и не объясняет stateful/one-shot границы."
+        },
+        {
+          "field": "D.related",
+          "status": "PASS_SCOPED",
+          "assessment": "Потребление запускает конвейер; terminal operations — обычный способ, не единственный синтаксис."
+        }
+      ],
+      "axes": {
+        "SEMANTICS": {
+          "status": "FAIL",
+          "assessment": "У D полная форма, но неверная общая характеристика Iterable. Не добавлять скрытые условия из теории."
+        },
+        "ANSC": {
+          "status": "FAIL",
+          "assessment": "A только Iterable, B/C только Sequence. D включает обе стороны; его ошибка фактическая, а не неполнота."
+        },
+        "SFPL": {
+          "status": "FAIL",
+          "assessment": "D единственный явный двусторонний контраст с механизмом, wrong — одиночные отрицания. Это наблюдаемая подсказка структуры отдельно от истинности."
+        },
+        "RU": {
+          "status": "FAIL_STYLE",
+          "assessment": "«Наоборот», «кажется», uppercase исправления и «но проще» делают объяснения разговорными и расплывчатыми."
+        },
+        "FACTS": {
+          "status": "FAIL",
+          "assessment": "Custom lazy Iterable, stateful sorted и for consumption проверены; blanket-тезисы MCQ требуют scope."
+        },
+        "SECTIONS": {
+          "status": "FAIL",
+          "assessment": "Все17 прочитаны; несколько повторяют eager-интерфейс и обязательность terminal function, пример — псевдокод."
+        },
+        "LINKAGE": {
+          "status": "OPEN_MCQ_SYNC",
+          "assessment": "Теория отделяет интерфейс от stdlib extensions; JSON всё ещё утверждает blanket eager."
+        }
+      },
+      "theory": "PASS_FIXED: scoped filter/map, iterator, short-circuit counts, sorted buffering, overhead, single-use and no implicit parallelism. Exact fence plus boundary probes executed."
+    },
+    {
+      "q_number": 34,
+      "options": [
+        {
+          "label": "A",
+          "truth": "TRUE",
+          "ansc": "PASS",
+          "assessment": "Описывает и map один-результат-на-элемент, и flatMap преобразование+раскрытие; conventional один-ко-многим включает пустой результат."
+        },
+        {
+          "label": "B",
+          "truth": "FALSE",
+          "ansc": "FAIL",
+          "assessment": "Приписывает map раскрытие, не сообщает собственного поведения flatMap."
+        },
+        {
+          "label": "C",
+          "truth": "FALSE",
+          "ansc": "FAIL",
+          "assessment": "Приписывает flatMap один-к-одному без раскрытия, map как вторая сторона отсутствует."
+        },
+        {
+          "label": "D",
+          "truth": "FALSE",
+          "ansc": "FAIL",
+          "assessment": "Говорит лишь о nested результате flatMap, map не описан; list flatMap возвращает плоский результат."
+        }
+      ],
+      "sections": [
+        {
+          "field": "A.explanation",
+          "status": "PASS",
+          "assessment": "Объясняет оба шага и различие по раскрытию вложенности."
+        },
+        {
+          "field": "A.example",
+          "status": "PASS",
+          "assessment": "length преобразует слово в число, toList в коллекцию символов; пример выполнен с внешними assertions."
+        },
+        {
+          "field": "A.when_to_apply",
+          "status": "PASS",
+          "assessment": "Возвращаемая коллекция с требованием плоского результата — уместная задача flatMap."
+        },
+        {
+          "field": "A.edge_cases",
+          "status": "PASS_SCOPED",
+          "assessment": "Для pure Iterable-преобразований flatMap даёт те же элементы, что map+flatten; не обещана одинаковая последовательность побочных эффектов."
+        },
+        {
+          "field": "A.related",
+          "status": "PASS_WEAK_LINK",
+          "assessment": "Q33 о Sequence/Iterable относится к коллекционным цепочкам, но общая подпись неточна и ссылка не оформлена."
+        },
+        {
+          "field": "B.what_actually",
+          "status": "PASS",
+          "assessment": "Корректно возвращает обоим операторам их модели."
+        },
+        {
+          "field": "B.source_of_confusion",
+          "status": "PASS",
+          "assessment": "Перестановка роли двух функций объясняет B."
+        },
+        {
+          "field": "B.if_it_were_true",
+          "status": "WEAK_TAUTOLOGY",
+          "assessment": "Повторяет ложную предпосылку о map, почти не добавляя проверяемого последствия."
+        },
+        {
+          "field": "B.how_it_should_be",
+          "status": "PASS",
+          "assessment": "Сжатая исправленная модель обоих операторов; раскрытие лучше назвать явно при переписывании."
+        },
+        {
+          "field": "C.what_actually",
+          "status": "PASS",
+          "assessment": "Различает один-в-коллекцию с последующим раскрытием и одиночный mapping."
+        },
+        {
+          "field": "C.source_of_confusion",
+          "status": "PASS",
+          "assessment": "Перенос модели map на flatMap — прямое объяснение C."
+        },
+        {
+          "field": "C.if_it_were_true",
+          "status": "PASS_WEAK",
+          "assessment": "Утверждение об отсутствии flatten следует ложной модели, но без примера с nested lists слишком абстрактно."
+        },
+        {
+          "field": "C.how_it_should_be",
+          "status": "PASS_SCOPED",
+          "assessment": "Композиционная формула уместна для показанных чистых коллекционных операций."
+        },
+        {
+          "field": "D.what_actually",
+          "status": "PASS_SCOPED",
+          "assessment": "В контексте Iterable-входа flatMap возвращает List объединённых результатов; Sequence overload имеет другой тип."
+        },
+        {
+          "field": "D.source_of_confusion",
+          "status": "WEAK",
+          "assessment": "«Кажется, остаётся вложенным» повторяет wrong вместо объяснения различия map/flatMap."
+        },
+        {
+          "field": "D.if_it_were_true",
+          "status": "OPEN_SCOPE",
+          "assessment": "Совпадение map/flatMap требует одного и того же collection-returning transform; без этой оговорки сравнение расплывчато."
+        },
+        {
+          "field": "D.how_it_should_be",
+          "status": "PASS",
+          "assessment": "Восстанавливает flatten-часть flatMap."
+        }
+      ],
+      "axes": {
+        "SEMANTICS": {
+          "status": "PASS",
+          "assessment": "A единственный фактически корректный тезис о различии; это не компенсирует ANSC wrong-вариантов."
+        },
+        "ANSC": {
+          "status": "FAIL",
+          "assessment": "A сравнивает оба оператора, B/C/D описывают лишь один."
+        },
+        "SFPL": {
+          "status": "FAIL",
+          "assessment": "A единственный двусторонний ответ, остальные искусственно удлинены «вообще без всякого», «совсем не»; подсказка структуры и тона."
+        },
+        "RU": {
+          "status": "FAIL_STYLE",
+          "assessment": "Wrong используют «наоборот», «вообще», «всякого», «совсем» и многословие вместо точной полной ошибочной модели."
+        },
+        "FACTS": {
+          "status": "PASS_SCOPED",
+          "assessment": "Для показанных Iterable коллекционных преобразований тезисы и результаты кода верны; пустые/дублированные outputs отдельно проверены."
+        },
+        "SECTIONS": {
+          "status": "OPEN_REWRITE",
+          "assessment": "Все17 прочитаны; фактическое ядро верно, но ряд полей тавтологичен и их надо согласовать с полноценными новыми wrong."
+        },
+        "LINKAGE": {
+          "status": "PASS_THEORY_UNCHANGED",
+          "assessment": "Теория соответствует вопросу; ошибочная полнота wrong — дефект вариантов, не основание переписывать хорошую теорию."
+        }
+      },
+      "theory": "PASS_UNCHANGED: map/flatMap list examples and deduplication via explicit toSet executed; no rewrite required."
+    }
+  ],
+  "limits": [
+    "JVM only; no performance benchmark or app run.",
+    "Falsehood and ANSC distinct; no FINAL from scanner success."
+  ]
+}

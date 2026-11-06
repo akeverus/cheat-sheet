@@ -1131,64 +1131,68 @@ val (_, email) = getUserData()
 
 ## Q32. (!) В чём разница между `List` и `MutableList`?
 
-Kotlin разделяет коллекции на два интерфейса: `List` — только для чтения (нет методов `add`/`remove`), `MutableList` — для чтения и изменения. Это разделение существует на уровне типов и помогает выражать намерение: принимая `List`, функция декларирует, что не будет модифицировать коллекцию. **Важная оговорка**: `List` гарантирует лишь отсутствие методов изменения у *этого* интерфейса, но не неизменность самих данных — за тем же объектом может стоять `MutableList` (см. пример ниже).
+`List<T>` предоставляет операции чтения: доступ по индексу, обход и проверку размера. `MutableList<T>` расширяет `List<T>` операциями изменения: `add`, `remove`, заменой элемента через `set` и другими. Тип параметра `List` ограничивает доступные через него операции; он не доказывает, что объект никогда не изменяется.
 
-```mermaid
-graph TD
-    Iterable --> Collection
-    Collection --> List["List (read-only)"]
-    Collection --> Set["Set (read-only)"]
-    Collection --> MutableCollection
-    MutableCollection --> MutableList
-    MutableCollection --> MutableSet
-    List -.->|"реализует"| MutableList
-```
+| Ссылка | Что разрешает интерфейс | Что не гарантирует |
+|---|---|---|
+| `List<T>` | Читать элементы | Неизменность списка через другие ссылки и неизменность объектов-элементов |
+| `MutableList<T>` | Читать, добавлять, удалять и заменять элементы | Потокобезопасность |
 
 ```kotlin
-val readOnly: List<String> = listOf("a", "b", "c")
-// readOnly.add("d")  // Ошибка компиляции!
+class Person(var name: String)
 
-val mutable: MutableList<String> = mutableListOf("a", "b", "c")
-mutable.add("d")  // OK
+fun main() {
+    val source = mutableListOf(Person("Alice"), Person("Bob"))
+    val view: List<Person> = source
+    val snapshot: List<Person> = source.toList()
 
-// List — не гарантирует иммутабельность! Это просто read-only view
-val underlying = mutableListOf(1, 2, 3)
-val readOnlyView: List<Int> = underlying
-underlying.add(4)
-println(readOnlyView) // [1, 2, 3, 4] — сюрприз!
+    source.add(Person("Charlie"))
+    println("${view.size} / ${snapshot.size}") // 3 / 2
 
-// Для настоящей иммутабельности — копирование:
-val immutable = underlying.toList()
+    source[0].name = "Alicia"
+    println(snapshot[0].name) // Alicia — объект-элемент общий
+}
 ```
 
-Подробнее — [Kotlin коллекции](kotlin-collections-interview.md).
+Присваивание `source` переменной типа `List` не копирует список: обе ссылки ведут к одному объекту. `toList()` создаёт **поверхностный снимок**: последующие добавления и удаления в исходном списке не меняют состав снимка, но ссылки на элементы остаются общими. Это не глубокая копия и не обещание полной неизменности объектного графа.
+
+`val` запрещает переприсвоить переменную, но не мешает изменять `MutableList`, на который она ссылается. `List` ковариантен, `MutableList` инвариантен; причины и ограничения рассмотрены в [Q24](#q24--что-такое-generics-и-как-работает-вариантность-in-out). [Интерфейсы коллекций](https://kotlinlang.org/docs/collections-overview.html#read-only-and-mutable-collections), [копирование коллекций](https://kotlinlang.org/docs/constructing-collections.html#copy), [подробнее о коллекциях](kotlin-collections-interview.md).
 
 ## Q33. В чём разница между `Sequence` и `Iterable`?
 
-`Iterable` вычисляется жадно (eager) и создаёт промежуточную коллекцию на каждом шаге, а `Sequence` обрабатывает элементы лениво (lazy) и поэлементно, без промежуточных списков.
+Оба интерфейса позволяют обходить элементы через `iterator()`. Сам `Iterable` не требует заранее хранить все элементы или вычислять их жадно: реализация итератора может производить их по запросу. Различается поведение стандартных **цепочек операций**: `Iterable.filter` и `map` сразу обходят вход и возвращают списки результатов, а `Sequence.filter` и `map` откладывают обработку до потребления результата.
 
-| | `Iterable` (коллекции) | `Sequence` |
+| | Стандартная цепочка `Iterable.filter().map()` | `Sequence.filter().map()` |
 |---|---|---|
-| Вычисление | Eager (сразу) | Lazy (по требованию) |
-| Промежуточные коллекции | Создаются на каждом шаге | Не создаются |
-| Подходит | Маленькие коллекции | Большие коллекции, цепочки операций |
+| Порядок | Сначала весь `filter`, затем весь `map` | Через оба шага проходит очередной запрошенный элемент |
+| Промежуточные результаты | Списки после `filter` и `map` | Отдельные списки между этими двумя шагами не нужны |
+| Ограничение через `take(n)` | Предыдущие шаги уже обработали вход | Может прекратить чтение источника раньше |
 
 ```kotlin
-// Iterable — каждый шаг создаёт новый List
-val result1 = (1..1_000_000)
-    .filter { it % 2 == 0 }     // создаёт List
-    .map { it * 2 }              // создаёт ещё один List
-    .take(10)                    // создаёт ещё один List
+fun main() {
+    var eagerFilters = 0
+    var eagerMaps = 0
+    val eager = (1..10)
+        .filter { eagerFilters++; it % 2 == 0 }
+        .map { eagerMaps++; it * 10 }
+        .take(2)
+    println("$eager: $eagerFilters / $eagerMaps") // [20, 40]: 10 / 5
 
-// Sequence — поэлементная обработка, без промежуточных списков
-val result2 = (1..1_000_000).asSequence()
-    .filter { it % 2 == 0 }     // lazy
-    .map { it * 2 }              // lazy
-    .take(10)                    // lazy
-    .toList()                    // терминальная операция — запускает конвейер
+    var lazyFilters = 0
+    var lazyMaps = 0
+    val pipeline = (1..10).asSequence()
+        .filter { lazyFilters++; it % 2 == 0 }
+        .map { lazyMaps++; it * 10 }
+        .take(2)
+    println("$lazyFilters / $lazyMaps") // 0 / 0 — пока не потребляли
+    val lazyResult = pipeline.toList()
+    println("$lazyResult: $lazyFilters / $lazyMaps") // [20, 40]: 4 / 2
+}
 ```
 
-**Sequence** в Kotlin аналогичен `Stream` API в Java 8+, но проще в использовании и не требует `parallel()`.
+`toList()`, `sum()`, `first()` и обход `for` потребляют последовательность. Не любая операция сохраняет потоковую обработку: `sorted()` — ленивый промежуточный шаг, который при потреблении буферизует весь конечный вход перед выдачей отсортированных элементов. Итоговый `toList()` тоже материализует результат.
+
+Ленивый конвейер добавляет накладные расходы, поэтому размер входа сам по себе не гарантирует ускорения: важны число шагов, раннее завершение и стоимость преобразований. Некоторые последовательности допускают только один обход. `Sequence` сам по себе не включает параллельную обработку. [Sequences](https://kotlinlang.org/docs/sequences.html), [контракт Iterable](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-iterable/), [stateful sorted](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.sequences/sorted.html).
 
 ## Q34. В чём разница между `map` и `flatMap`?
 

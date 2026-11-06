@@ -1,0 +1,189 @@
+{
+  "source_md_sha256": "5cbe5c4aa6937dc9562c8abefe813e084f32492e7488d11278077094f2cf8b3c",
+  "source_seed_sha256": "4bac9f3325edc9531941fe3f63c5b17edf4331e0f73a738307ca2f9a4ec3d562",
+  "questions": [
+    {
+      "q_number": 32,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `List` и `MutableList`?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "За read-only `List` никогда не может стоять изменяемый MutableList с ровно теми же данными.",
+              "correct": false,
+              "sections": {
+                "what_actually": "За read-only List может стоять MutableList с теми же данными.",
+                "source_of_confusion": "Кажется, это всегда копия.",
+                "if_it_were_true": "Тогда сюрприза с изменением не было бы.",
+                "how_it_should_be": "Это view, а не копия."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "`List` — только для чтения без add и remove, но неизменности данных не гарантирует.",
+              "correct": true,
+              "sections": {
+                "explanation": "List — только для чтения (нет add/remove), но неизменность данных не гарантирует.",
+                "example": "readOnlyView за mutableListOf меняется вместе с источником.",
+                "when_to_apply": "Когда декларируешь, что функция не меняет коллекцию.",
+                "edge_cases": "За List может стоять MutableList — «сюрприз».",
+                "related": "Для настоящей неизменности — toList()."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Интерфейс `List` в Kotlin гарантирует полную и настоящую неизменность лежащих за ним данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "List НЕ гарантирует неизменность данных — только отсутствие методов изменения.",
+                "source_of_confusion": "read-only путают с immutable.",
+                "if_it_were_true": "Тогда readOnlyView не менялся бы.",
+                "how_it_should_be": "За ним может стоять MutableList."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "У интерфейса `List` всё же есть методы add и remove — он допускает изменение коллекции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У List НЕТ add/remove — эти методы у MutableList.",
+                "source_of_confusion": "Кажется, add есть у List.",
+                "if_it_were_true": "Тогда read-only не имел бы смысла.",
+                "how_it_should_be": "List — только чтение."
+              }
+            }
+          ]
+        }
+      ],
+      "theory": "## Q32. (!) В чём разница между `List` и `MutableList`?\n\nKotlin разделяет коллекции на два интерфейса: `List` — только для чтения (нет методов `add`/`remove`), `MutableList` — для чтения и изменения. Это разделение существует на уровне типов и помогает выражать намерение: принимая `List`, функция декларирует, что не будет модифицировать коллекцию. **Важная оговорка**: `List` гарантирует лишь отсутствие методов изменения у *этого* интерфейса, но не неизменность самих данных — за тем же объектом может стоять `MutableList` (см. пример ниже).\n\n```mermaid\ngraph TD\n    Iterable --> Collection\n    Collection --> List[\"List (read-only)\"]\n    Collection --> Set[\"Set (read-only)\"]\n    Collection --> MutableCollection\n    MutableCollection --> MutableList\n    MutableCollection --> MutableSet\n    List -.->|\"реализует\"| MutableList\n```\n\n```kotlin\nval readOnly: List<String> = listOf(\"a\", \"b\", \"c\")\n// readOnly.add(\"d\")  // Ошибка компиляции!\n\nval mutable: MutableList<String> = mutableListOf(\"a\", \"b\", \"c\")\nmutable.add(\"d\")  // OK\n\n// List — не гарантирует иммутабельность! Это просто read-only view\nval underlying = mutableListOf(1, 2, 3)\nval readOnlyView: List<Int> = underlying\nunderlying.add(4)\nprintln(readOnlyView) // [1, 2, 3, 4] — сюрприз!\n\n// Для настоящей иммутабельности — копирование:\nval immutable = underlying.toList()\n```\n\nПодробнее — [Kotlin коллекции](kotlin-collections-interview.md).\n\n"
+    },
+    {
+      "q_number": 33,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `Sequence` и `Iterable`?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "`Iterable`, наоборот, вычисляется лениво и поэлементно, без промежуточных коллекций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Iterable вычисляется ЖАДНО, Sequence — лениво; не наоборот.",
+                "source_of_confusion": "Механизмы путают местами.",
+                "if_it_were_true": "Тогда Iterable не создавал бы промежуточных списков.",
+                "how_it_should_be": "Iterable eager, Sequence lazy."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Цепочка операций над `Sequence` создаёт новую промежуточную коллекцию на каждом шаге.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sequence НЕ создаёт промежуточных коллекций на каждом шаге.",
+                "source_of_confusion": "Sequence путают с Iterable.",
+                "if_it_were_true": "Тогда выигрыша по памяти не было бы.",
+                "how_it_should_be": "Поэлементная ленивая обработка."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Терминальная операция для `Sequence` не нужна — конвейер запускается сразу при объявлении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sequence требует терминальную операцию для запуска конвейера.",
+                "source_of_confusion": "Кажется, конвейер идёт сразу.",
+                "if_it_were_true": "Тогда toList() был бы не нужен.",
+                "how_it_should_be": "Без терминала — ничего не считается."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "`Iterable` вычисляется жадно с промежуточными коллекциями, а Sequence — лениво и поэлементно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Iterable — жадно, с промежуточными коллекциями; Sequence — лениво и поэлементно.",
+                "example": "(1..N).asSequence().filter().map().take().toList().",
+                "when_to_apply": "Когда цепочка операций на большой коллекции.",
+                "edge_cases": "Sequence — аналог Stream, но проще.",
+                "related": "Терминальная операция запускает конвейер."
+              }
+            }
+          ]
+        }
+      ],
+      "theory": "## Q33. В чём разница между `Sequence` и `Iterable`?\n\n`Iterable` вычисляется жадно (eager) и создаёт промежуточную коллекцию на каждом шаге, а `Sequence` обрабатывает элементы лениво (lazy) и поэлементно, без промежуточных списков.\n\n| | `Iterable` (коллекции) | `Sequence` |\n|---|---|---|\n| Вычисление | Eager (сразу) | Lazy (по требованию) |\n| Промежуточные коллекции | Создаются на каждом шаге | Не создаются |\n| Подходит | Маленькие коллекции | Большие коллекции, цепочки операций |\n\n```kotlin\n// Iterable — каждый шаг создаёт новый List\nval result1 = (1..1_000_000)\n    .filter { it % 2 == 0 }     // создаёт List\n    .map { it * 2 }              // создаёт ещё один List\n    .take(10)                    // создаёт ещё один List\n\n// Sequence — поэлементная обработка, без промежуточных списков\nval result2 = (1..1_000_000).asSequence()\n    .filter { it % 2 == 0 }     // lazy\n    .map { it * 2 }              // lazy\n    .take(10)                    // lazy\n    .toList()                    // терминальная операция — запускает конвейер\n```\n\n**Sequence** в Kotlin аналогичен `Stream` API в Java 8+, но проще в использовании и не требует `parallel()`.\n\n"
+    },
+    {
+      "q_number": 34,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между `map` и `flatMap`?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "`map` преобразует элемент один к одному, а flatMap — один ко многим с раскрытием.",
+              "correct": true,
+              "sections": {
+                "explanation": "map преобразует один к одному; flatMap — один ко многим с раскрытием коллекций.",
+                "example": "words.map { it.length } vs words.flatMap { it.toList() }.",
+                "when_to_apply": "Когда из элемента получается коллекция и нужен плоский результат.",
+                "edge_cases": "flatMap = map + flatten.",
+                "related": "Коллекции Kotlin (Q33)."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Оператор `map`, наоборот, раскрывает вложенные коллекции в один общий плоский результирующий список.",
+              "correct": false,
+              "sections": {
+                "what_actually": "map — один к одному, flatMap — один ко многим; не наоборот.",
+                "source_of_confusion": "Операторы путают местами.",
+                "if_it_were_true": "Тогда map раскрывал бы коллекции.",
+                "how_it_should_be": "map: 1→1, flatMap: 1→много."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Оператор `flatMap` преобразует каждый элемент строго один к одному, вообще без всякого раскрытия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "flatMap преобразует один ко многим и раскрывает, а не один к одному.",
+                "source_of_confusion": "flatMap путают с map.",
+                "if_it_were_true": "Тогда flatten не выполнялся бы.",
+                "how_it_should_be": "flatMap = map + flatten."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Результат `flatMap` остаётся вложенным списком списков и в плоский результат совсем не раскрывается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Результат flatMap РАСКРЫВАЕТСЯ в плоский список.",
+                "source_of_confusion": "Кажется, остаётся вложенным.",
+                "if_it_were_true": "Тогда flatMap не отличался бы от map.",
+                "how_it_should_be": "Вложенные коллекции раскрываются."
+              }
+            }
+          ]
+        }
+      ],
+      "theory": "## Q34. В чём разница между `map` и `flatMap`?\n\n`map` преобразует каждый элемент один к одному, а `flatMap` — один ко многим с последующим «раскрытием» вложенных коллекций в один плоский список.\n\n```kotlin\nval words = listOf(\"Hello World\", \"Kotlin is great\")\n\n// map: List<T> -> List<R> (1 к 1)\nval lengths = words.map { it.length }   // [11, 15]\n\n// flatMap: List<T> -> List<R> (1 ко многим, результат «раскрывается»)\nval chars = words.flatMap { it.toList() }\n// [H, e, l, l, o, ' ', W, o, r, l, d, K, o, t, l, i, n, ...]\n\n// Пример: получить все теги всех постов\ndata class Post(val tags: List<String>)\nval posts = listOf(Post(listOf(\"kotlin\", \"jvm\")), Post(listOf(\"spring\", \"kotlin\")))\nval allTags = posts.flatMap { it.tags }  // [kotlin, jvm, spring, kotlin]\nval uniqueTags = allTags.toSet()         // [kotlin, jvm, spring]\n```\n\n`flatMap` = `map` + `flatten`. Используется когда из каждого элемента получается коллекция, и нужен плоский результат.\n\n"
+    }
+  ]
+}

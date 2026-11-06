@@ -1,0 +1,33 @@
+class Entry(var value: Int)
+fun main() {
+ val source=mutableListOf(Entry(1),Entry(2));val view:List<Entry> = source;val copy=source.toList()
+ check(view === source)
+ source.removeAt(1);check(view.size==1 && copy.size==2)
+ source[0]=Entry(9);check(view[0].value==9 && copy[0].value==1)
+ copy[0].value=7;check(copy[0].value==7)
+ var produced=0
+ val lazyIterable=Iterable { object: Iterator<Int> {
+  var n=0
+  override fun hasNext()=n<4
+  override fun next():Int { produced++;return ++n }
+ } }
+ check(produced==0)
+ val iterator=lazyIterable.iterator();check(produced==0)
+ check(iterator.next()==1 && produced==1)
+ var observed=0
+ val sorted=sequenceOf(3,1,2).onEach { observed++ }.sorted().take(1)
+ check(observed==0)
+ check(sorted.toList()==listOf(1));check(observed==3)
+ var steps=0
+ for (v in sequence { steps++;yield(42) }) check(v==42)
+ check(steps==1)
+ val once=iterator.asSequence();check(once.toList()==listOf(2,3,4))
+ var rejected=false
+ try { once.toList() } catch (e:IllegalStateException) { rejected=true }
+ check(rejected)
+ val nested=listOf(listOf(1,2),emptyList(),listOf(2))
+ check(nested.map { it }==nested)
+ check(nested.flatMap { it }==listOf(1,2,2))
+ check(nested.flatMap { it }==nested.map { it }.flatten())
+ println("boundaries: PASS")
+}

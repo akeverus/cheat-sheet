@@ -1,0 +1,19 @@
+fun main() {
+    var eagerFilters = 0
+    var eagerMaps = 0
+    val eager = (1..10)
+        .filter { eagerFilters++; it % 2 == 0 }
+        .map { eagerMaps++; it * 10 }
+        .take(2)
+    println("$eager: $eagerFilters / $eagerMaps") // [20, 40]: 10 / 5
+
+    var lazyFilters = 0
+    var lazyMaps = 0
+    val pipeline = (1..10).asSequence()
+        .filter { lazyFilters++; it % 2 == 0 }
+        .map { lazyMaps++; it * 10 }
+        .take(2)
+    println("$lazyFilters / $lazyMaps") // 0 / 0 — пока не потребляли
+    val lazyResult = pipeline.toList()
+    println("$lazyResult: $lazyFilters / $lazyMaps") // [20, 40]: 4 / 2
+}
