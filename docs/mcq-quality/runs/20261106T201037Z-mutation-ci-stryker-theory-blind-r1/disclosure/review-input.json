@@ -1,0 +1,277 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json",
+    "theory": "cheatsheets/interview/testing/mutation-testing-interview.md"
+  },
+  "sha256": {
+    "mcq": "77659420e9b1e57ab71556cff0172c4dbb1377bb64d618733c8575c96f8d4226",
+    "theory": "12884bcb3efcd6ac18e93eec5f719e8e172754c5dc986dd6f7de84960fe54076"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hashes": {
+    "Q12:B0": {
+      "mcq": "8f85af469df37a3e7d7dad9ea59335a7e81709a2319d503e62424469811dccb4",
+      "theory": "8d70f2611d54def4b6221e4c979f9776ebc1b05a25ab254b5a69795d4fe9dba4"
+    },
+    "Q20:B0": {
+      "mcq": "5ff13a050899bd721b83d35e4d8e4219d9f79eaec37c637cb09c401a7785282f",
+      "theory": "4fe730cf17628cbbeca5d443b16be7942b34f81ca0f284b94fdae500ce8f3b50"
+    }
+  },
+  "preamble": "---\ntitle: \"Вопросы на собеседовании: Мутационное тестирование\"\ndescription: \"Mutation testing: проверка качества тестов через mutations кода, mutation operators, kill rate, surviving mutants, PIT, Stryker, тулинг для Java/JS/Python, vs code coverage\"\ntags:\n  - interview\n  - testing\n  - mutation-testing-interview\ntype: \"interview\"\ndifficulty: \"intermediate\"\naliases:\n  - \"Вопросы на собеседовании\"\n  - \"Mutation Testing\"\n  - \"Mutation testing interview\"\n  - \"PIT mutation testing interview\"\nprerequisites: []\nnext: []\nupdated: \"2026-04-25\"\n---\n# Вопросы на собеседовании: Мутационное тестирование\n\n`Mutation testing` оценивает, обнаруживают ли выбранные тесты небольшие изменения программы. Инструмент создаёт мутанты и проверяет реакцию тестов; падение теста может обнаружить изменение. Выживший мутант требует разбора: возможны пропущенный сценарий, непроверенный эффект или эквивалентное поведение в рассматриваемой области. Сам по себе `survived` не доказывает слабость всех тестов. Мутационный анализ дополняет покрытие и не доказывает правильность требований. Здесь рассмотрены PIT для Java, Stryker и mutmut для Python; определения и ограничения — в Q3/Q8–Q10.\n\n## Полезные ссылки\n\n### Официальная документация и авторитетные источники\n\n- [PIT Mutation Testing — Pitest.org](https://pitest.org/)\n- [Stryker Mutator](https://stryker-mutator.io/)\n- [Mutation Testing — Wikipedia](https://en.wikipedia.org/wiki/Mutation_testing)\n- [PITclipse (PIT IntelliJ plugin)](https://github.com/hcoles/pitest)\n- [Mutation Testing — Baeldung](https://www.baeldung.com/java-mutation-testing-with-pitest)\n\n## Содержание\n\n- [Полезные ссылки](#полезные-ссылки)\n- [See also](#see-also)\n\n**Базовые понятия**\n- [Q1. (!) Что такое mutation testing?](#q1--что-такое-mutation-testing)\n- [Q2. (!) Зачем mutation testing, если уже есть code coverage?](#q2--зачем-mutation-testing-если-уже-есть-code-coverage)\n- [Q3. Что значат термины mutant, killed, survived, equivalent?](#q3-что-значат-термины-mutant-killed-survived-equivalent)\n\n**Mutation operators**\n- [Q4. (!) Какие мутации типичны?](#q4--какие-мутации-типичны)\n- [Q5. Как работает Conditional Boundary Mutator?](#q5-как-работает-conditional-boundary-mutator)\n- [Q6. Как работает Math Mutator?](#q6-как-работает-math-mutator)\n- [Q7. Какие ещё бывают операторы мутаций?](#q7-какие-ещё-бывают-операторы-мутаций)\n\n**Метрики**\n- [Q8. (!) Что такое mutation score (kill rate) и как его считают?](#q8--что-такое-mutation-score-kill-rate-и-как-его-считают)\n- [Q9. Как анализировать выживших мутантов (surviving mutants)?](#q9-как-анализировать-выживших-мутантов-surviving-mutants)\n- [Q10. Что такое эквивалентные мутанты (equivalent mutants)?](#q10-что-такое-эквивалентные-мутанты-equivalent-mutants)\n\n**Tools**\n- [Q11. (!) Как использовать PIT для Java?](#q11--как-использовать-pit-для-java)\n- [Q12. (!) Как использовать Stryker для JavaScript/TypeScript?](#q12--как-использовать-stryker-для-javascripttypescript)\n- [Q13. Как использовать mutmut для Python?](#q13-как-использовать-mutmut-для-python)\n- [Q14. Какие ещё есть инструменты mutation testing?](#q14-какие-ещё-есть-инструменты-mutation-testing)\n\n**Performance**\n- [Q15. (!) Почему mutation testing медленный?](#q15--почему-mutation-testing-медленный)\n- [Q16. Как ускоряют mutation testing (incremental, in-process)?](#q16-как-ускоряют-mutation-testing-incremental-in-process)\n\n**Production**\n- [Q17. (!) Когда mutation testing оправдан?](#q17--когда-mutation-testing-оправдан)\n- [Q18. Какой mutation score ставить целевым?](#q18-какой-mutation-score-ставить-целевым)\n- [Q19. (!) В чём ограничения и за что критикуют mutation testing?](#q19--в-чём-ограничения-и-за-что-критикуют-mutation-testing)\n- [Q20. Как встроить mutation testing в CI/CD?](#q20-как-встроить-mutation-testing-в-cicd)\n",
+  "theory": [
+    {
+      "q_number": 12,
+      "title": "Как использовать Stryker для JavaScript/TypeScript?",
+      "line": 281,
+      "body": "\nДля JavaScript/TypeScript используют **StrykerJS**: он меняет исследуемый код и проверяет мутации через выбранный тестовый раннер. Stryker.NET и Stryker4s — другие инструменты семейства; их настройки не следует переносить в StrykerJS автоматически.\n\nПорядок подключения:\n\n1. Подготовьте Node.js/npm и рабочий набор тестов проекта. Выберите совместимые версии StrykerJS, раннера и его адаптера; для TypeScript сохраните необходимые настройки существующего тестового запуска.\n2. Официальный стартовый сценарий использует `npm init stryker@latest`: он устанавливает инструмент и запускает настройку. После инициализации проверьте созданный `stryker.config.mjs` и зафиксируйте выбранные зависимости для воспроизводимой сборки. Это команда начального подключения, а не способ обновлять версии в каждом CI-запуске.\n3. Укажите подходящий `testRunner` и область исходников в `mutate`. Например, при использовании Jest настройка раннера и пути должны соответствовать проекту; один только набор порогов не настраивает запуск тестов.\n4. Выполните `npx stryker run`, затем изучите отчёт: какие изменения проверены, какие не обнаружены и где нет покрытия. Формулу score читайте по Q8. [Getting started](https://stryker-mutator.io/docs/stryker-js/getting-started/), [configuration](https://stryker-mutator.io/docs/stryker-js/configuration/).\n\nПараметры `thresholds` решают отдельную задачу:\n\n| Параметр | Назначение |\n|---|---|\n| `high` и `low` | Границы цветовых зон отчёта; сами по себе не задают отказ сборки |\n| `break` | При вычисленном score строго ниже этого значения StrykerJS завершает прогон с exit code 1 |\n| `break: null` | Отключает именно отказ из-за score; не гарантирует отсутствие ошибок конфигурации, тестов или раннера |\n\nУсловный пример: при `break: 50` score 49 нарушает это условие, а 50 и 51 — нет. Равенство порогу не является отказом по данному правилу. Эти числа иллюстрируют сравнение, а не рекомендуют всем проектам 50%. При переопределении `thresholds` документация требует задавать все три значения вместе, например `high: 80`, `low: 60`, `break: 50`. Не смешивайте роли цветовых границ и блокирующего порога. [Thresholds](https://stryker-mutator.io/docs/stryker-js/configuration/#thresholds-object).\n\nДля блокировки CI шаг должен учитывать код возврата инструмента. Публикация в Dashboard не требуется для локального отказа по `break`: это отдельная задача отчётности. Цель, порог и тренд выбирают по условиям Q18; тренд не объявляется важнее абсолютного значения для любого проекта.\n\n"
+    },
+    {
+      "q_number": 20,
+      "title": "Как встроить mutation testing в CI/CD?",
+      "line": 423,
+      "body": "\nВ CI нужно определить область анализа, время запуска, хранение результатов и реакцию на них. Один из вариантов — ограниченный анализ для быстрой обратной связи на PR и периодический более широкий прогон. На небольшом проекте допустим полный анализ каждого PR; ночной или еженедельный запуск не является обязательным правилом.\n\nПрактический порядок:\n\n1. Зафиксируйте инструмент, версии, операторы, область исходников и доступные тесты. Проверьте исходный тестовый запуск и настройку мутационного анализа до назначения блокирующего порога.\n2. Выберите режим по измеренному времени и риску. Различайте ограничение области и повторное использование истории — это разные способы уменьшения работы.\n3. Если используете историю, восстановите подходящие данные перед анализом и сохраните новый результат после него. Отсутствие истории не позволяет получить прежние killed/survived из текущего git diff.\n4. Согласуйте порог и правила интерпретации метрики, обработайте exit code и сохраните подробный отчёт для разбора конкретных мутантов. Блокирующий шаг и публикация отчёта — отдельные решения.\n5. При изменении инструментов, зависимостей или окружения проверьте пригодность истории. Периодическую проверку без повторного использования старых результатов назначайте с учётом ограничений выбранного инструмента, а не как гарантию автоматической корректности кэша.\n\n**StrykerJS.** Команда `npx stryker run --incremental` использует предыдущий incremental-отчёт. По умолчанию это `reports/stryker-incremental.json`, путь меняет `incrementalFile`. В изолированных CI-задачах этот файл нужно передавать между запусками, если ожидается повторное использование. Первичный запуск без активного мутанта (`dry run`) остаётся необходимым даже при наличии истории.\n\nStrykerJS сопоставляет мутируемые файлы и тесты с прежним отчётом. Удаление или изменение обнаруживавшего мутацию теста может потребовать новой проверки при неизменном production-коде. Но обнаружение тестовых изменений зависит от возможностей раннера; изменения других файлов, зависимостей и переменных окружения автоматически не отслеживаются. Это ограничения пригодности истории, а не повод считать любой сохранённый результат актуальным. [Incremental mode и limitations](https://stryker-mutator.io/docs/stryker-js/incremental/).\n\nШирокий отчёт не обязательно означает повторное исполнение всех мутаций: он может содержать переиспользованные результаты. В StrykerJS `--force` вместе с incremental-режимом заставляет заново проверить все мутанты **в выбранной области**, независимо от предыдущего отчёта. Это не расширяет область само по себе. [Forcing reruns](https://stryker-mutator.io/docs/stryker-js/incremental/#forcing-reruns).\n\n**PIT.** История также учитывает код и тесты, но имеет ограничения анализа зависимостей. `withHistory=true` использует файл во временном каталоге JVM и не переносит его автоматически между изолированными CI-задачами. Явные `historyInputFile`/`historyOutputFile` позволяют задать пути; при включённом `withHistory` эти параметры игнорируются. Выберите согласованный способ хранения, а не только флаг в команде. [PIT: incremental analysis](https://pitest.org/quickstart/incremental_analysis/).\n\nПример блокирующего критерия — StrykerJS `break`: exit code 1 при score ниже настроенного порога, независимо от Dashboard. Порог не назначают универсальными «60% для CI»; сравнивают сопоставимые области/операторы и разбирают важные surviving. Другие ошибки прогона тоже могут дать ненулевой код. [StrykerJS: thresholds](https://stryker-mutator.io/docs/stryker-js/configuration/#thresholds-object), Q8/Q12/Q18.\n\n---\n\n## See also\n\n- [Unit Testing](unit-testing-interview.md) — base for mutation testing\n- [Test Strategies](test-strategies-interview.md)\n- [Property-based Testing](property-based-testing-interview.md)\n- [Load Testing](load-testing-interview.md)\n- [[code-quality-interview|Code Quality]] — если будем добавлять\n- [Code Review](../code-quality/code-review-interview.md)\n- [Refactoring](../code-quality/refactoring-patterns-interview.md)\n- [Mockito](mockito-interview.md) — Java mocking\n- [Integration Testing](integration-testing-interview.md)\n- [Test Automation](test-automation-interview.md)\n- [Pipeline Design](../cicd/pipeline-design-interview.md) — CI integration\n"
+    }
+  ],
+  "blocks": [
+    {
+      "q_number": 12,
+      "block_idx": 0,
+      "visible_question": "Как использовать Stryker для JavaScript/TypeScript?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Как использовать Stryker для JavaScript/TypeScript?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Пороги high и low останавливают StrykerJS при низком score, а параметр break задаёт лишь цветовую зону отчёта.",
+            "correct": false,
+            "sections": {
+              "what_actually": "У high/low и break разные роли: цветовые зоны против отдельного отказа по нижнему порогу.",
+              "source_of_confusion": "Порядок полей принимают за приоритет CI-gate.",
+              "if_it_were_true": "Изменение только high должно было бы менять нижний blocking-порог, что не следует из конфигурации break.",
+              "how_it_should_be": "Настрой break явно, отделяя его от информационных high/low."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "StrykerJS завершает прогон ненулевым exit code, если score ниже break, а high и low задают цветовые зоны отчёта.",
+            "correct": true,
+            "sections": {
+              "explanation": "В StrykerJS high/low задают зоны отображения score, а значение ниже настроенного break приводит к exit code1. Это отдельные назначения thresholds.",
+              "example": "При break50 score49 нарушает порог, а50 не ниже порога. Dashboard для локального отказа по этому условию не нужен.",
+              "when_to_apply": "Разделяй информационные цвета и явно настроенный блокирующий критерий CI.",
+              "edge_cases": "Отсутствие break не исключает иных ошибок запуска: исходные тесты, конфигурация и runner тоже могут завершиться ошибкой. Не смешивай StrykerJS с другими продуктами семейства.",
+              "related": "[[mutation-testing-interview#Q8]] score; [[mutation-testing-interview#Q20]] gate."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "В StrykerJS блокирующий порог определяется в Dashboard, а break публикует score и управляет цветом отчёта вместе с high/low.",
+            "correct": false,
+            "sections": {
+              "what_actually": "StrykerJS может завершиться exit1 при score ниже break без публикации в Dashboard.",
+              "source_of_confusion": "Публикацию истории принимают за механизм локального gate.",
+              "if_it_were_true": "Без сетевой панели было бы невозможно проверить нижний порог в локальном CI-шаге.",
+              "how_it_should_be": "Используй exit code инструмента; Dashboard решает задачу отчётности."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Порог break завершает StrykerJS ненулевым exit code при score выше него, а high и low задают цветовые зоны отчёта.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Отказ по break происходит ниже порога, а не выше; равенство само это условие не нарушает.",
+              "source_of_confusion": "Логику превышения latency-порога переносят на score.",
+              "if_it_were_true": "При break50 score60 давал бы отказ, а49 проходил бы по этому правилу.",
+              "how_it_should_be": "Проверяй направление сравнения и пограничное равенство."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 20,
+      "block_idx": 0,
+      "visible_question": "Как встроить mutation testing в CI/CD?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Как встроить mutation testing в CI/CD?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "На PR достаточно учитывать только изменения production-кода, поскольку изменение тестов никогда не меняет исход проверки ранее исследованных мутантов.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Изменение тестов может изменить killed/survived прежнего мутанта без изменения production-класса.",
+              "source_of_confusion": "Git diff production-кода принимают за все зависимости результата.",
+              "if_it_were_true": "Удаление убивающего assertion не требовало бы пересмотра прежнего killed.",
+              "how_it_should_be": "Учитывай изменения кода, покрывающих тестов и ограничения инвалидации истории."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Гейт по mutation score не может вернуть ненулевой exit code, поэтому блокировка CI требует ручного решения независимо от настроек инструмента.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Инструменты могут завершаться ненулевым exit code при нарушении настроенного score-threshold.",
+              "source_of_confusion": "Информационный отчёт принимают за отсутствие gate-возможности.",
+              "if_it_were_true": "StrykerJS break не мог бы блокировать локальный CI-шаг, хотя это его назначение.",
+              "how_it_should_be": "Настрой gate явно и проверь его exit code без обязательной ручной оценки."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Практичный вариант CI сочетает ограниченный анализ на PR и периодический полный прогон, сохраняя нужную историю для переиспользования результатов.",
+            "correct": true,
+            "sections": {
+              "explanation": "CI-policy можно разделить на быстрый PR-feedback и периодический более широкий анализ. Для history-based reuse нужно сохранять и корректно инвалидировать результаты прежних запусков.",
+              "example": "StrykerJS --incremental использует прежний incremental report; PIT withHistory хранит историю и учитывает также изменения тестов.",
+              "when_to_apply": "Выбирай расписание и блокирующие критерии по размеру проекта, риску и измеренному времени.",
+              "edge_cases": "Ограничение diff/scope не тождественно переиспользованию истории. При холодном cache полноценная экономия не возникает автоматически; полный PR-прогон может быть приемлем на маленьком проекте.",
+              "related": "[[mutation-testing-interview#Q12]] thresholds; [[mutation-testing-interview#Q16]] incremental."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "History-based incremental всегда переиспользует старые результаты даже без сохранённой истории, поскольку прежние статусы мутантов автоматически восстанавливаются по текущему git diff.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Для reuse прежних результатов нужен сохранённый подходящий результат; текущий diff не содержит старых статусов.",
+              "source_of_confusion": "Выбор изменённого scope путают с кэшем вычисленных исходов.",
+              "if_it_were_true": "Из пустой истории можно было бы восстановить, какой тест убивал прошлый мутант.",
+              "how_it_should_be": "Сохраняй history/cache для reuse; cold run и diff-only scope называй отдельно."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "open_issues": [],
+  "runtime_findings": [],
+  "checks": {
+    "content_review": {
+      "blocks": {
+        "Q12:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q20:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "factual_correctness": {
+      "blocks": {
+        "Q12:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q20:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "source_linkage": {
+      "blocks": {
+        "Q12:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q20:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sections_consistency": {
+      "blocks": {
+        "Q12:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q20:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sfpl": {
+      "blocks": {
+        "Q12:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q20:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "ansc": {
+      "blocks": {
+        "Q12:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q20:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "russian_readability": {
+      "blocks": {
+        "Q12:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q20:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "independent_review": {
+      "blocks": {
+        "Q12:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q20:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "blind_review": {
+      "blocks": {
+        "Q12:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q20:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "final_acceptance": {
+      "blocks": {
+        "Q12:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q20:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    }
+  },
+  "instructions": "Все A/B/C/D и sections. SFPL, ANSC, RU — отдельные вердикты. Дополнительные смысловые зависимости прочитать и указать в evidence. Сигналы не являются редакторской приёмкой."
+}

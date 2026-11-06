@@ -1,0 +1,40 @@
+{
+  "q12_current_theory_correction": {
+    "status": "WITHDRAWN_AND_REASSESSED",
+    "previous_claim_withdrawn": "The theory does not contain setup/run steps.",
+    "reason": "The supplied q12-current-theory.md explicitly contains Node.js/npm preparation, four numbered setup/use steps, npm init stryker@latest, config inspection, testRunner/mutate configuration, npx stryker run, report review, and thresholds. The prior theory assessment confused the narrow option texts with the full theory and was factually wrong.",
+    "current_theory_assessment": "PASS_WITH_SCOPE_NOTE",
+    "assessment_reason": "The theory directly answers how to use StrykerJS for JS/TS: prepare Node/npm and tests, initialize, inspect/configure runner and mutation scope, run, then inspect results. It separately explains threshold semantics, boundary behavior, CI exit handling, and Dashboard independence. The setup/run claims are supported by getting-started docs; threshold claims by configuration docs. It is a coherent, sufficiently complete answer to the visible question."
+  },
+  "q20_d_if_counterfactual": {
+    "status": "CORRECTED",
+    "previous_reason_withdrawn": "It follows from D that an old mutant status could be recovered from empty history.",
+    "reason": "D claims that old mutant statuses are automatically reconstructed from git diff when history is absent. It does not claim reconstruction of which particular test killed a mutant. Therefore the section's stronger counterfactual about identifying the killing test does not necessarily follow from D; FAIL the section as overclaiming the stated model."
+  },
+  "q20_option_parts_and_completeness": {
+    "A": {"explicit_or_reasonably_implied_parts": ["PR policy: consider only production-code changes", "asserted rationale: test changes never alter prior mutant outcomes"], "broad_ci_plan_completeness": "PARTIAL", "reason": "A gives a limited PR scope rule and rationale, but no broader schedule, history handling, or result policy; it is a narrow recommendation rather than a full CI integration plan."},
+    "B": {"explicit_or_reasonably_implied_parts": ["mutation-score gate behavior", "who decides whether CI is blocked"], "broad_ci_plan_completeness": "PARTIAL", "reason": "B addresses only gating/decision ownership. It does not specify analysis scope, cadence, or history; a gate is not itself a CI plan."},
+    "C": {"explicit_or_reasonably_implied_parts": ["limited PR analysis", "periodic full run", "preserve history for reuse"], "broad_ci_plan_completeness": "COMPLETE", "reason": "C states a coherent CI strategy across quick feedback, broader recurring analysis, and history reuse. It need not prescribe a gate because gating is not required in every CI policy."},
+    "D": {"explicit_or_reasonably_implied_parts": ["incremental/history policy", "claim that old outcomes can be rebuilt from current git diff without saved history"], "broad_ci_plan_completeness": "PARTIAL", "reason": "D proposes only an incremental reuse mechanism and its rationale. It says nothing about scheduling, PR scope, or overall CI result handling, so even as a complete false model of history reuse it is not a full CI integration plan."}
+  },
+  "q20_sfpl_correction": {
+    "status": "PARTIAL",
+    "reason": "The options share topic and single-sentence prose, but their causal frames differ: C uses a positive combine-and-preserve construction; A and D use 'поскольку' to give a rationale; B uses 'поэтому' to state a consequence. Thus the four are not identical causal frames. This is a mild structure difference; no unique length/detail advantage alone proves answer leakage."
+  },
+  "q20_theory_quote_correction": {
+    "status": "WITHDRAWN_AND_REASSESSED",
+    "previous_quote_withdrawn": "The theory says to preserve ... periodic check.",
+    "reason": "That wording is absent from current_theory. The actual step says to schedule periodic verification considering tool limitations, while the introduction says the limited-PR plus periodic-broader-run policy is one option and not mandatory.",
+    "assessment": "The theory offers this schedule as an option, not a universal instruction. Its step 5 is a concrete limitation-aware recommendation about history validity; retain no finding that it mandates periodic full checks. The surrounding theory correctly distinguishes scope restriction from history reuse and notes that StrykerJS may reuse results in a broad report."
+  },
+  "navigation_checks": {
+    "status": "PARTIAL_VERIFIED",
+    "checks": [
+      {"reference": "Q12 B.related -> Q8", "status": "PASS", "reason": "Q8 exists in the current mutation-testing JSON and asks how mutation score (kill rate) is calculated; this is relevant to the Q12 threshold explanation."},
+      {"reference": "Q12 B.related -> Q20", "status": "PASS", "reason": "Q20 exists and concerns integrating mutation testing into CI/CD; it is relevant to the Q12 gate/exit-code topic."},
+      {"reference": "Q20 C.related -> Q12", "status": "PASS", "reason": "Q12 exists and concerns StrykerJS thresholds; it is relevant to the Q20 gate discussion."},
+      {"reference": "Q20 C.related -> Q16", "status": "PASS", "reason": "Q16 exists in the current mutation-testing JSON; its topic is incremental mutation testing/history, relevant to C's reuse statement. This checks target presence and topic only, not full body acceptance."}
+    ]
+  },
+  "scope_note": "Narrow corrections only; prior raw Q12/Q20 review files and blind phase-A answer remain untouched."
+}

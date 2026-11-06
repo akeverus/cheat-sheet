@@ -1,0 +1,154 @@
+{
+  "q_number": 12,
+  "question_completeness_reassessment": {
+    "visible_question": "Как использовать Stryker для JavaScript/TypeScript?",
+    "required_scope": [
+      "применение инструмента к JS/TS",
+      "способ запуска и/или настройки для mutation testing"
+    ],
+    "options": {
+      "A": {
+        "completeness": "PARTIAL",
+        "reason": "Обсуждает последствия high/low/break, но не объясняет запуск или настройку Stryker для mutation testing; к тому же ошибочно приписывает high/low остановку."
+      },
+      "B": {
+        "completeness": "PARTIAL",
+        "reason": "Верно описывает семантику thresholds, но не отвечает, как запускать или настраивать Stryker для JS/TS в целом."
+      },
+      "C": {
+        "completeness": "PARTIAL",
+        "reason": "Даёт ошибочную модель назначения Dashboard и break внутри thresholds, но не описывает общий способ применения, запуска или настройки Stryker."
+      },
+      "D": {
+        "completeness": "PARTIAL",
+        "reason": "Описывает ошибочное направление порога break и роли high/low, однако остаётся только утверждением о thresholds, не инструкцией по использованию Stryker в целом."
+      }
+    }
+  },
+  "option_fact_assessment": {
+    "A": "Неверно: high/low задают reporter color bands; только настроенный break даёт build failure при score < break.",
+    "B": "Верно для настроенного break: score < break даёт exit code 1; high/low задают цвета репортёров.",
+    "C": "Неверно: Dashboard не задаёт обязательный локальный порог, break не публикует score и не управляет цветами.",
+    "D": "Неверно: заявленное условие score > break противоположно документированному score < break."
+  },
+  "report_fact_correction": {
+    "status": "CORRECTED",
+    "reason": "В прежнем raw поле FACTS фраза была перевёрнута. Точное условие источника: mutation score < break приводит к exit code 1; равенство и score выше break этим условием не нарушают порог."
+  },
+  "sections": {
+    "A.what_actually": {
+      "status": "PASS",
+      "reason": "Верно различает цветовую роль high/low и пороговый отказ break; это исправляет утверждение A."
+    },
+    "A.source_of_confusion": {
+      "status": "PASS",
+      "reason": "Указывает возможную путаницу назначения полей; конкретно объясняет, как могло возникнуть неверное прочтение A."
+    },
+    "A.if_it_were_true": {
+      "status": "FAIL",
+      "reason": "Из утверждения A не следует, что изменение только high обязательно меняет нижний blocking threshold: A лишь приписывает остановку high/low при низком score и не задаёт зависимость порогов друг от друга."
+    },
+    "A.how_it_should_be": {
+      "status": "PASS",
+      "reason": "Рекомендация явно разделить break и high/low соответствует фактической разнице их ролей."
+    },
+    "B.explanation": {
+      "status": "PASS",
+      "reason": "Корректно передаёт score < break → exit code 1 и отдельное назначение high/low; грамматика закончена, хотя сама опция неполна для широкого вопроса."
+    },
+    "B.example": {
+      "status": "PASS",
+      "reason": "break=50: score 49 меньше порога, score 50 не меньше; вывод о ненужности Dashboard для этого локального условия согласуется с источником."
+    },
+    "B.when_to_apply": {
+      "status": "PASS",
+      "reason": "Совет разделять информационные цветовые зоны и блокирующее условие следует из конфигурации."
+    },
+    "B.edge_cases": {
+      "status": "PASS",
+      "reason": "Оговорка корректно отделяет прочие ошибки запуска от score threshold и предупреждает о различии продуктов Stryker."
+    },
+    "B.related": {
+      "status": "NOT_VERIFIED",
+      "reason": "Ссылки на Q8 и Q20 записаны, но их содержание в этой проверке не сверялось; корректность связи нельзя подтвердить по цитате."
+    },
+    "C.what_actually": {
+      "status": "PASS",
+      "reason": "Верно сообщает, что отказ по break возможен без публикации Dashboard, опровергая тезис C."
+    },
+    "C.source_of_confusion": {
+      "status": "PASS",
+      "reason": "Правдоподобно описывает смешение публикации отчёта с локальным условием gate."
+    },
+    "C.if_it_were_true": {
+      "status": "PASS",
+      "reason": "Это корректное условное следствие заявленной C зависимости от панели; без панели локальную проверку порога действительно нельзя было бы выполнить в этой модели."
+    },
+    "C.how_it_should_be": {
+      "status": "PASS",
+      "reason": "Предлагает exit code для gate и отделяет Dashboard как отчётность, в согласии с источником."
+    },
+    "D.what_actually": {
+      "status": "PASS",
+      "reason": "Исправляет направление порога и верно указывает, что равенство не удовлетворяет условию score < break."
+    },
+    "D.source_of_confusion": {
+      "status": "PASS",
+      "reason": "Называет конкретный тип ошибки: перенос логики верхнего порога на условие score ниже порога."
+    },
+    "D.if_it_were_true": {
+      "status": "PASS",
+      "reason": "Условно и правильно следует из D: при break=50 score 60 был бы выше, а 49 — нет; это не утверждается как действительное поведение."
+    },
+    "D.how_it_should_be": {
+      "status": "PASS",
+      "reason": "Совет проверить знак сравнения и границу непосредственно относится к ошибке D."
+    }
+  },
+  "axes_adjudication": {
+    "CONTENT": {
+      "status": "FAIL",
+      "reason": "Все четыре варианта ограничены thresholds и не дают достаточного ответа на видимый широкий вопрос о применении Stryker к JS/TS."
+    },
+    "FACTS": {
+      "status": "PASS_WITH_CORRECTION",
+      "reason": "По фактам опций B верен, A/C/D неверны согласно конфигурации. В прежнем собственном reason была инверсия; отозвана выше и не должна считаться подтверждённым фактом."
+    },
+    "LINKAGE": {
+      "status": "FAIL",
+      "reason": "Пороговые настройки связаны с применением, но покрывают только узкий аспект и не связывают ответ с запуском или настройкой mutation testing в целом."
+    },
+    "SECTIONS": {
+      "status": "PARTIAL",
+      "reason": "17 полей разобраны индивидуально; A.if_it_were_true содержит неподтверждённый логический вывод (FAIL), B.related оставлен NOT_VERIFIED."
+    },
+    "SFPL": {
+      "status": "PASS",
+      "reason": "Четыре опции однофразовые и построены как утверждения о связке break/high/low; видимый объём близок, уникальной структурной подсказки для B не выявлено."
+    },
+    "ANSC": {
+      "status": "FAIL",
+      "reason": "Все четыре грамматически закончены и дают полную модель порогов, но ни одна не отвечает полно на исходный вопрос об использовании Stryker для JS/TS; дистракторы нельзя признать ANSC-полными для этого вопроса только за полноту внутри темы thresholds."
+    },
+    "RU": {
+      "status": "PARTIAL",
+      "reason": "Смысл в целом понятен технической аудитории, но русские фразы содержат слитные/неоформленные термины: «exit code1», «exit1», «break50 score49», «а50» и «а49» требуют пробелов и ясного форматирования; отдельно это не меняет техническую истинность."
+    }
+  },
+  "theory_review": {
+    "status": "PARTIAL",
+    "reason": "По раскрытому Q12 theory-сегмент корректно описывает high/low как цветовые зоны, break как условие score < break с exit code 1 и независимость локального отказа от Dashboard. Однако в раскрытии исходная теория отвечает только этим пороговым частям и не даёт полного общего объяснения способа применять/запускать Stryker для JS/TS, который запрашивает видимый вопрос. Факт threshold подтверждён документацией StrykerJS configuration; getting started показывает npm init stryker@latest и npx stryker run, но этих шагов в Q12 theory нет."
+  },
+  "sources_checked": [
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-js/getting-started/",
+      "claim": "Документация предлагает npm init stryker@latest для установки/инициализации и npx stryker run для запуска.",
+      "checked": "2026-11-06"
+    },
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-js/configuration/",
+      "claim": "thresholds: score >= high — зелёный; high > score >= low — жёлтый/оранжевый; score < low — красный; score < break — exit code 1; break null по умолчанию не валит build. Проверено через find по ‘thresholds’, lines 513–524.",
+      "checked": "2026-11-06"
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "q_number": 20,
+  "visible_question": "Как встроить mutation testing в CI/CD?",
+  "options": [
+    {
+      "label": "A",
+      "exact_text": "На PR достаточно учитывать только изменения production-кода, поскольку изменение тестов никогда не меняет исход проверки ранее исследованных мутантов.",
+      "correct": false,
+      "char_length": 150
+    },
+    {
+      "label": "B",
+      "exact_text": "Гейт по mutation score не может вернуть ненулевой exit code, поэтому блокировка CI требует ручного решения независимо от настроек инструмента.",
+      "correct": false,
+      "char_length": 142
+    },
+    {
+      "label": "C",
+      "exact_text": "Практичный вариант CI сочетает ограниченный анализ на PR и периодический полный прогон, сохраняя нужную историю для переиспользования результатов.",
+      "correct": true,
+      "char_length": 146
+    },
+    {
+      "label": "D",
+      "exact_text": "History-based incremental всегда переиспользует старые результаты даже без сохранённой истории, поскольку прежние статусы мутантов автоматически восстанавливаются по текущему git diff.",
+      "correct": false,
+      "char_length": 184
+    }
+  ],
+  "sections": [
+    {
+      "field": "A.what_actually",
+      "exact_text": "Изменение тестов может изменить killed/survived прежнего мутанта без изменения production-класса."
+    },
+    {
+      "field": "A.source_of_confusion",
+      "exact_text": "Git diff production-кода принимают за все зависимости результата."
+    },
+    {
+      "field": "A.if_it_were_true",
+      "exact_text": "Удаление убивающего assertion не требовало бы пересмотра прежнего killed."
+    },
+    {
+      "field": "A.how_it_should_be",
+      "exact_text": "Учитывай изменения кода, покрывающих тестов и ограничения инвалидации истории."
+    },
+    {
+      "field": "B.what_actually",
+      "exact_text": "Инструменты могут завершаться ненулевым exit code при нарушении настроенного score-threshold."
+    },
+    {
+      "field": "B.source_of_confusion",
+      "exact_text": "Информационный отчёт принимают за отсутствие gate-возможности."
+    },
+    {
+      "field": "B.if_it_were_true",
+      "exact_text": "StrykerJS break не мог бы блокировать локальный CI-шаг, хотя это его назначение."
+    },
+    {
+      "field": "B.how_it_should_be",
+      "exact_text": "Настрой gate явно и проверь его exit code без обязательной ручной оценки."
+    },
+    {
+      "field": "C.explanation",
+      "exact_text": "CI-policy можно разделить на быстрый PR-feedback и периодический более широкий анализ. Для history-based reuse нужно сохранять и корректно инвалидировать результаты прежних запусков."
+    },
+    {
+      "field": "C.example",
+      "exact_text": "StrykerJS --incremental использует прежний incremental report; PIT withHistory хранит историю и учитывает также изменения тестов."
+    },
+    {
+      "field": "C.when_to_apply",
+      "exact_text": "Выбирай расписание и блокирующие критерии по размеру проекта, риску и измеренному времени."
+    },
+    {
+      "field": "C.edge_cases",
+      "exact_text": "Ограничение diff/scope не тождественно переиспользованию истории. При холодном cache полноценная экономия не возникает автоматически; полный PR-прогон может быть приемлем на маленьком проекте."
+    },
+    {
+      "field": "C.related",
+      "exact_text": "[[mutation-testing-interview#Q12]] thresholds; [[mutation-testing-interview#Q16]] incremental."
+    },
+    {
+      "field": "D.what_actually",
+      "exact_text": "Для reuse прежних результатов нужен сохранённый подходящий результат; текущий diff не содержит старых статусов."
+    },
+    {
+      "field": "D.source_of_confusion",
+      "exact_text": "Выбор изменённого scope путают с кэшем вычисленных исходов."
+    },
+    {
+      "field": "D.if_it_were_true",
+      "exact_text": "Из пустой истории можно было бы восстановить, какой тест убивал прошлый мутант."
+    },
+    {
+      "field": "D.how_it_should_be",
+      "exact_text": "Сохраняй history/cache для reuse; cold run и diff-only scope называй отдельно."
+    }
+  ]
+}

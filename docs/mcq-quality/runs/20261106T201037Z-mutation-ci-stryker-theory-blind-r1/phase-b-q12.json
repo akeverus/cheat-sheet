@@ -1,0 +1,197 @@
+{
+  "q_number": 12,
+  "visible_question": "Как использовать Stryker для JavaScript/TypeScript?",
+  "question_parts": [
+    "Как применять StrykerJS к проектам JavaScript/TypeScript (в данном пакете — пороги score и их эффект)."
+  ],
+  "options": [
+    {
+      "label": "A",
+      "exact_text": "Пороги high и low останавливают StrykerJS при низком score, а параметр break задаёт лишь цветовую зону отчёта.",
+      "covered_parts": [
+        "StrykerJS: смысл порогов mutation score / эффект на прогон"
+      ],
+      "completeness": "Полный",
+      "truth": "Неверен: high/low задают цветовые зоны; break задаёт отказ при score ниже порога.",
+      "reason": "Неверен: high/low задают цветовые зоны; break задаёт отказ при score ниже порога."
+    },
+    {
+      "label": "B",
+      "exact_text": "StrykerJS завершает прогон ненулевым exit code, если score ниже break, а high и low задают цветовые зоны отчёта.",
+      "covered_parts": [
+        "StrykerJS: смысл порогов mutation score / эффект на прогон"
+      ],
+      "completeness": "Полный",
+      "truth": "Верный при настроенном break; документы говорят score < break даёт exit code 1, high/low управляют цветами.",
+      "reason": "Верный при настроенном break; документы говорят score < break даёт exit code 1, high/low управляют цветами."
+    },
+    {
+      "label": "C",
+      "exact_text": "В StrykerJS блокирующий порог определяется в Dashboard, а break публикует score и управляет цветом отчёта вместе с high/low.",
+      "covered_parts": [
+        "StrykerJS: смысл порогов mutation score / эффект на прогон"
+      ],
+      "completeness": "Полный",
+      "truth": "Неверен: Dashboard не определяет локальный blocking threshold; break не публикует score и не задаёт цвет.",
+      "reason": "Неверен: Dashboard не определяет локальный blocking threshold; break не публикует score и не задаёт цвет."
+    },
+    {
+      "label": "D",
+      "exact_text": "Порог break завершает StrykerJS ненулевым exit code при score выше него, а high и low задают цветовые зоны отчёта.",
+      "covered_parts": [
+        "StrykerJS: смысл порогов mutation score / эффект на прогон"
+      ],
+      "completeness": "Полный",
+      "truth": "Неверен: направление сравнения перевёрнуто; break срабатывает ниже порога, не выше.",
+      "reason": "Неверен: направление сравнения перевёрнуто; break срабатывает ниже порога, не выше."
+    }
+  ],
+  "sections": [
+    {
+      "fieldID": "A.what_actually",
+      "exact_text": "У high/low и break разные роли: цветовые зоны против отдельного отказа по нижнему порогу.",
+      "status": "PASS",
+      "reason": "Отдельное объяснение/пример/совет соответствует указанной опции и пороговому правилу."
+    },
+    {
+      "fieldID": "A.source_of_confusion",
+      "exact_text": "Порядок полей принимают за приоритет CI-gate.",
+      "status": "PASS",
+      "reason": "Отдельное объяснение/пример/совет соответствует указанной опции и пороговому правилу."
+    },
+    {
+      "fieldID": "A.if_it_were_true",
+      "exact_text": "Изменение только high должно было бы менять нижний blocking-порог, что не следует из конфигурации break.",
+      "status": "PASS",
+      "reason": "Отдельное объяснение/пример/совет соответствует указанной опции и пороговому правилу."
+    },
+    {
+      "fieldID": "A.how_it_should_be",
+      "exact_text": "Настрой break явно, отделяя его от информационных high/low.",
+      "status": "PASS",
+      "reason": "Отдельное объяснение/пример/совет соответствует указанной опции и пороговому правилу."
+    },
+    {
+      "fieldID": "B.explanation",
+      "exact_text": "В StrykerJS high/low задают зоны отображения score, а значение ниже настроенного break приводит к exit code1. Это отдельные назначения thresholds.",
+      "status": "PASS",
+      "reason": "Отдельное объяснение/пример/совет соответствует указанной опции и пороговому правилу."
+    },
+    {
+      "fieldID": "B.example",
+      "exact_text": "При break50 score49 нарушает порог, а50 не ниже порога. Dashboard для локального отказа по этому условию не нужен.",
+      "status": "PASS",
+      "reason": "Пример корректно показывает < break; равенство не нарушает условие, Dashboard не нужен."
+    },
+    {
+      "fieldID": "B.when_to_apply",
+      "exact_text": "Разделяй информационные цвета и явно настроенный блокирующий критерий CI.",
+      "status": "PASS",
+      "reason": "Отдельное объяснение/пример/совет соответствует указанной опции и пороговому правилу."
+    },
+    {
+      "fieldID": "B.edge_cases",
+      "exact_text": "Отсутствие break не исключает иных ошибок запуска: исходные тесты, конфигурация и runner тоже могут завершиться ошибкой. Не смешивай StrykerJS с другими продуктами семейства.",
+      "status": "PASS",
+      "reason": "Отдельное объяснение/пример/совет соответствует указанной опции и пороговому правилу."
+    },
+    {
+      "fieldID": "B.related",
+      "exact_text": "[[mutation-testing-interview#Q8]] score; [[mutation-testing-interview#Q20]] gate.",
+      "status": "PASS",
+      "reason": "Отдельное объяснение/пример/совет соответствует указанной опции и пороговому правилу."
+    },
+    {
+      "fieldID": "C.what_actually",
+      "exact_text": "StrykerJS может завершиться exit1 при score ниже break без публикации в Dashboard.",
+      "status": "PASS",
+      "reason": "Отдельное объяснение/пример/совет соответствует указанной опции и пороговому правилу."
+    },
+    {
+      "fieldID": "C.source_of_confusion",
+      "exact_text": "Публикацию истории принимают за механизм локального gate.",
+      "status": "PASS",
+      "reason": "Отдельное объяснение/пример/совет соответствует указанной опции и пороговому правилу."
+    },
+    {
+      "fieldID": "C.if_it_were_true",
+      "exact_text": "Без сетевой панели было бы невозможно проверить нижний порог в локальном CI-шаге.",
+      "status": "PASS",
+      "reason": "Отдельное объяснение/пример/совет соответствует указанной опции и пороговому правилу."
+    },
+    {
+      "fieldID": "C.how_it_should_be",
+      "exact_text": "Используй exit code инструмента; Dashboard решает задачу отчётности.",
+      "status": "PASS",
+      "reason": "Отдельное объяснение/пример/совет соответствует указанной опции и пороговому правилу."
+    },
+    {
+      "fieldID": "D.what_actually",
+      "exact_text": "Отказ по break происходит ниже порога, а не выше; равенство само это условие не нарушает.",
+      "status": "PASS",
+      "reason": "Отдельное объяснение/пример/совет соответствует указанной опции и пороговому правилу."
+    },
+    {
+      "fieldID": "D.source_of_confusion",
+      "exact_text": "Логику превышения latency-порога переносят на score.",
+      "status": "PASS",
+      "reason": "Отдельное объяснение/пример/совет соответствует указанной опции и пороговому правилу."
+    },
+    {
+      "fieldID": "D.if_it_were_true",
+      "exact_text": "При break50 score60 давал бы отказ, а49 проходил бы по этому правилу.",
+      "status": "PASS",
+      "reason": "Условный пример верно следует заявленному, хотя ложному, направлению сравнения."
+    },
+    {
+      "fieldID": "D.how_it_should_be",
+      "exact_text": "Проверяй направление сравнения и пограничное равенство.",
+      "status": "PASS",
+      "reason": "Отдельное объяснение/пример/совет соответствует указанной опции и пороговому правилу."
+    }
+  ],
+  "axes": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "Все варианты отвечают на видимый общий вопрос применительно к порогам StrykerJS; B — верный тезис."
+    },
+    "FACTS": {
+      "status": "PASS",
+      "reason": "Порог break ниже score вызывает exit 1; high/low — reporter colors, как указывает документация."
+    },
+    "LINKAGE": {
+      "status": "PASS",
+      "reason": "Все утверждения непосредственно о применении StrykerJS и его порогов."
+    },
+    "SECTIONS": {
+      "status": "PASS",
+      "reason": "Проверены все 17 цитат; нет явного противоречия содержанию вариантов или подтверждённому правилу."
+    },
+    "SFPL": {
+      "status": "PASS",
+      "reason": "Все варианты — одно предложение, объяснительная модель с break и high/low; длины видимо сопоставимы."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "Все четыре дают законченную модель использования порогов; три дистрактора — полные, но ложные объяснения."
+    },
+    "RU": {
+      "status": "PASS",
+      "reason": "Фразы понятны, но смешение русских терминов с score/exit code/Dashboard допустимо в техконтексте."
+    }
+  },
+  "theory_review": {
+    "status": "PASS",
+    "reason": "Теория раскрывает роли high/low, условие score < break, код 1 и разделение Dashboard; это подтверждено текущей документацией. Ограничение: вопрос широк, а все варианты сужены к thresholds."
+  },
+  "sources_checked": [
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-js/getting-started/",
+      "claim": "JS/TS Stryker устанавливают/инициализируют npm init stryker@latest и запускают npx stryker run; источник не раскрывает пороги."
+    },
+    {
+      "url": "https://stryker-mutator.io/docs/stryker-js/configuration/",
+      "claim": "thresholds: high/low задают цвета репортёров; mutation score < break завершает кодом 1; break null по умолчанию отключает этот build failure. Find по «thresholds», lines 513–524; проверено 2026-11-06."
+    }
+  ]
+}
