@@ -1,0 +1,79 @@
+from pathlib import Path
+import re,json,hashlib,subprocess
+r=Path('/tmp/test-strategies-theory-bdd-testfirst-pbt-20261106/runtime');r.mkdir(exist_ok=True);src=r/'sources';src.mkdir(exist_ok=True);md=Path('cheatsheets/interview/testing/test-strategies-interview.md');s=md.read_text();q={}
+for n in (7,9,10):q[n]=re.search(r'^## Q'+str(n)+r'\.[\s\S]*?(?=^## Q'+str(n+1)+r'\.)',s,re.M).group()
+fences={n:re.findall(r'```java\n([\s\S]*?)\n```',body) for n,body in q.items()};assert [len(fences[n]) for n in (7,9,10)]==[3,2,1]
+cart=src/'example/cart';cart.mkdir(parents=True,exist_ok=True)
+for name,code in zip(['ShoppingCart.java','ShoppingCartSteps.java','RunCucumberTest.java'],fences[7]):(cart/name).write_text(code+'\n')
+for name,code in zip(['AddressMarkerRuleTest.java','AddressMarkerRule.java'],fences[9]):(src/name).write_text(code+'\n')
+original_sort=fences[10][0];sort='\n'.join(line for line in original_sort.splitlines() if not line.startswith('import net.jqwik.') and not line.strip().startswith('@Property('));sort=sort.replace('@ForAll @Size(max = 100) ','');assert not any(x in sort for x in ('net.jqwik','@ForAll','@Size','@Property'));(src/'SortPropertyTest.java').write_text(sort+'\n');(r/'original-SortPropertyTest.java.txt').write_text(original_sort+'\n')
+(src/'LogicProofTest.java').write_text('''import example.cart.ShoppingCart;
+import java.math.BigDecimal;
+import java.util.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import static org.junit.jupiter.api.Assertions.*;
+class LogicProofTest {
+ @Test void emptyCart(){var c=new ShoppingCart();assertEquals(0,c.size());assertEquals(0,BigDecimal.ZERO.compareTo(c.total()));}
+ @Test void singleBook(){var c=new ShoppingCart();c.addItem("Книга",500);assertEquals(1,c.size());assertEquals(0,BigDecimal.valueOf(500).compareTo(c.total()));}
+ @ParameterizedTest @CsvSource({"2,100,200","3,100,270","5,100,450","9,100,810","10,100,800"})
+ void cartDiscountBoundaries(int count,int price,int total){var c=new ShoppingCart();for(int i=0;i<count;i++)c.addItem("Товар",price);assertEquals(count,c.size());assertEquals(0,BigDecimal.valueOf(total).compareTo(c.total()));}
+ static List<List<Integer>> fixtures(){List<List<Integer>> all=new ArrayList<>();List<List<Integer>> previous=List.of(List.of());all.addAll(previous);for(int length=1;length<=5;length++){List<List<Integer>> next=new ArrayList<>();for(var p:previous)for(int value=-1;value<=1;value++){List<Integer> row=new ArrayList<>(p);row.add(value);next.add(row);}all.addAll(next);previous=next;}if(all.size()!=364)throw new AssertionError("fixture count");return all;}
+ @Test void sortSizeContract(){var p=new SortPropertyTest();for(var f:fixtures())p.preservesSize(f);}
+ @Test void sortOrderContract(){var p=new SortPropertyTest();for(var f:fixtures())p.isOrdered(f);}
+ @Test void sortMultiplicityContract(){var p=new SortPropertyTest();for(var f:fixtures())p.preservesMultiplicity(f);}
+}
+''')
+(src/'RunProof.java').write_text('''import java.io.PrintWriter;
+import java.util.*;
+import org.junit.platform.engine.DiscoverySelector;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.engine.support.descriptor.MethodSource;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+class RunProof {
+ public static void main(String[] args){List<DiscoverySelector> selectors=new ArrayList<>();String mode=args[0];if(mode.startsWith("rule:")){String[] names={"acceptsMarkedAddress","rejectsNull","rejectsWithoutAt"};for(int i=0;i<Integer.parseInt(mode.substring(5));i++)selectors.add(DiscoverySelectors.selectMethod(AddressMarkerRuleTest.class,names[i]));}else if(mode.equals("ordered")){selectors.add(DiscoverySelectors.selectMethod(LogicProofTest.class,"sortOrderContract"));}else if(mode.equals("multiset")){selectors.add(DiscoverySelectors.selectMethod(LogicProofTest.class,"sortSizeContract"));selectors.add(DiscoverySelectors.selectMethod(LogicProofTest.class,"sortMultiplicityContract"));}else{selectors.add(DiscoverySelectors.selectClass(LogicProofTest.class));selectors.add(DiscoverySelectors.selectClass(AddressMarkerRuleTest.class));}var req=LauncherDiscoveryRequestBuilder.request().selectors(selectors).configurationParameter("junit.jupiter.execution.parallel.enabled","false").build();var listener=new SummaryGeneratingListener();LauncherFactory.create().execute(req,listener);var summary=listener.getSummary();summary.printTo(new PrintWriter(System.out,true));List<String> names=new ArrayList<>(),types=new ArrayList<>();for(var f:summary.getFailures()){names.add(f.getTestIdentifier().getSource().filter(MethodSource.class::isInstance).map(MethodSource.class::cast).map(MethodSource::getMethodName).orElse("unknown"));types.add(f.getException().getClass().getName());}System.out.println("RESULT {\\"found\\":"+summary.getTestsFoundCount()+",\\"passed\\":"+summary.getTestsSucceededCount()+",\\"failed\\":"+summary.getTestsFailedCount()+",\\"failure_methods\\":["+String.join(",",names.stream().map(n->"\\""+n+"\\"").toList())+"],\\"failure_types\\":["+String.join(",",types.stream().map(n->"\\""+n+"\\"").toList())+"]}");if(summary.getTestsFailedCount()>0)System.exit(1);}
+}
+''')
+old=json.loads(Path('/tmp/mockito-theory-annotations-lifecycle-20261105/runtime/execution.json').read_text());jars=[j for j in old['jars'] if '/org.junit.' in j['path'] or '/org.opentest4j/' in j['path'] or '/org.apiguardian/' in j['path']]
+for j in jars:assert hashlib.sha256(Path(j['path']).read_bytes()).hexdigest()==j['sha256']
+cp=':'.join(j['path'] for j in jars);jdk=Path('/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin');data={'md_sha256':hashlib.sha256(md.read_bytes()).hexdigest(),'source_fences':{str(n):[{'index':i,'sha256':hashlib.sha256(c.encode()).hexdigest()} for i,c in enumerate(v)] for n,v in fences.items()},'scope':{'Q7':'Exact ShoppingCart compiled; 7 real Jupiter invocations. Steps/Suite retained but NOT_COMPILED/NOT_RUN without Cucumber jars.','Q9':'Exact3test fence; 3 red/green pairs with deliberate smaller earlier SUTs; finalSUTexactfence','Q10':'jqwik engine NOT_RUN. Only jqwik import/annotation metadata removed; 3unchangedpropertymethodbodies called on364deterministiclists(domain{-1,0,1},length0..5); 1092methodcalls; this is not a jqwik run. Identity/dedupSUTnegativecontrols.','final':'13 Jupiter invocations:7Cart+3Rule+3deterministicpropertychecks; not sum of repeated phases'},'jars':jars,'phases':[]}
+compiled=[cart/'ShoppingCart.java']+[src/name for name in ['AddressMarkerRuleTest.java','AddressMarkerRule.java','SortPropertyTest.java','LogicProofTest.java','RunProof.java']]
+def save():(r/'execution.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+def run_phase(name,rule,sort_code,mode,expected_found,expected_fail):
+ (src/'AddressMarkerRule.java').write_text(rule+'\n');(src/'SortPropertyTest.java').write_text(sort_code+'\n');classes=r/('classes-'+name);classes.mkdir(exist_ok=True);cmd=[str(jdk/'javac'),'--release','17','-cp',cp,'-d',str(classes),*map(str,compiled)];c=subprocess.run(cmd,text=True,capture_output=True);entry={'name':name,'mode':mode,'javac':{'exit':c.returncode,'stdout':c.stdout,'stderr':c.stderr},'rule_sha256':hashlib.sha256(rule.encode()).hexdigest(),'sort_sha256':hashlib.sha256(sort_code.encode()).hexdigest()};data['phases'].append(entry);save();assert c.returncode==0,c.stderr
+ p=subprocess.run([str(jdk/'java'),'-cp',str(classes)+':'+cp,'RunProof',mode],text=True,capture_output=True);entry['java']={'exit':p.returncode,'stdout':p.stdout,'stderr':p.stderr};save();match=re.search(r'^RESULT (.*)$',p.stdout,re.M);assert match,p.stdout;result=json.loads(match[1]);entry['result']=result;assert result['found']==expected_found and result['failed']==expected_fail,result;assert p.returncode==(1 if expected_fail else 0);assert all(t=='org.opentest4j.AssertionFailedError' for t in result['failure_types']),result;save();print(name,result)
+rule=lambda expr:'public class AddressMarkerRule { public boolean isAllowed(String address) { return '+expr+'; } }'
+for name,impl,mode,n,f in [('red1',rule('false'),'rule:1',1,1),('green1',rule('true'),'rule:1',1,0),('red2',rule('true'),'rule:2',2,1),('green2',rule('address != null'),'rule:2',2,0),('red3',rule('address != null'),'rule:3',3,1),('green3',fences[9][1],'rule:3',3,0)]:run_phase(name,impl,sort,mode,n,f)
+identity=sort.replace('        Collections.sort(result);','        // Deliberate mutation: no sort.');assert identity!=sort
+run_phase('negative-unsorted',fences[9][1],identity,'ordered',1,1)
+dedup=sort.replace('        return result;\n    }\n\n    private static Map','        return new ArrayList<>(new java.util.TreeSet<>(result));\n    }\n\n    private static Map');assert dedup!=sort
+run_phase('negative-dedup',fences[9][1],dedup,'multiset',2,2)
+run_phase('final',fences[9][1],sort,'all',13,0)
+data['version']=subprocess.run([str(jdk/'java'),'-version'],text=True,capture_output=True).stderr;data['compiled_source_sha256']={str(p.relative_to(src)):hashlib.sha256(p.read_bytes()).hexdigest() for p in compiled};save()
+# A deliberately limited static check, not the Cucumber engine.
+gherkin=re.findall(r'```gherkin\n([\s\S]*?)\n```',q[7])[0];expressions=re.findall(r'@(Given|When|Then)\("([^"\n]+)"\)',fences[7][1]);patterns=[]
+for kw,expr in expressions:
+ pattern=re.escape(expr).replace(r'\{int\}',r'-?\d+').replace(r'\{string\}',r'"[^"\n]*"').replace(r'\(ов\)',r'(?:ов)?');patterns.append((expr,re.compile('^'+pattern+'$')))
+scenarios=[];steps=[];rows=[];outline=False;headers=None
+for line in gherkin.splitlines()+['  Scenario: END']:
+ text=line.strip()
+ if text.startswith('Scenario:') or text.startswith('Scenario Outline:'):
+  if steps:
+   if outline:
+    for row in rows:scenarios.append([re.sub(r'<([^>]+)>',lambda m:row[m[1]],t) for t in steps])
+   else:scenarios.append(steps)
+  steps=[];rows=[];headers=None;outline=text.startswith('Scenario Outline:')
+ elif re.match(r'^(Given|When|Then|And) ',text):steps.append(text.split(' ',1)[1])
+ elif text.startswith('|'):
+  cells=[v.strip() for v in text.strip('|').split('|')]
+  if headers is None:headers=cells
+  else:rows.append(dict(zip(headers,cells)))
+bindings=[]
+for sc in scenarios:
+ for step in sc:
+  found=[expr for expr,pattern in patterns if pattern.fullmatch(step)];assert len(found)==1,(step,found);bindings.append({'step':step,'matching_expression':found[0]})
+assert len(scenarios)==4 and len(bindings)==13
+(r/'static-step-binding-check.json').write_text(json.dumps({'scope':'Custom static subset-expression check of these examples only; NOT Cucumber execution, discovery, glue setup, or full expression grammar','scenarios':4,'concrete_steps':13,'declared_expressions':len(expressions),'bindings':bindings},ensure_ascii=False,indent=2)+'\n');print('Customstaticbindings',len(scenarios),len(bindings))

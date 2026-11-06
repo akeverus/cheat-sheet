@@ -1,0 +1,27 @@
+package example.cart;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ShoppingCart {
+    private record Item(String name, BigDecimal price) {}
+    private final List<Item> items = new ArrayList<>();
+
+    public void addItem(String name, int price) {
+        if (price < 0) throw new IllegalArgumentException("negative price");
+        items.add(new Item(name, BigDecimal.valueOf(price)));
+    }
+
+    public int size() {
+        return items.size();
+    }
+
+    public BigDecimal total() {
+        BigDecimal subtotal = items.stream().map(Item::price)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal factor = items.size() >= 10 ? new BigDecimal("0.80")
+            : items.size() >= 3 ? new BigDecimal("0.90") : BigDecimal.ONE;
+        return subtotal.multiply(factor);
+    }
+}

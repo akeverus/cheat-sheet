@@ -342,18 +342,16 @@ public class PriceCalculator {
 
 ## Q7. (!) Что такое `BDD` и как его реализовать с `Cucumber`?
 
-`BDD` (`Behavior-Driven Development`) — развитие `TDD` в сторону бизнеса: поведение системы описывается на полуестественном языке (`Gherkin`) в формате исполняемых спецификаций (executable specifications). Один и тот же текст служит и требованием, которое читает аналитик, и тестом, который запускает CI.
+**BDD (Behavior-Driven Development)** — совместное уточнение ожидаемого поведения на конкретных примерах. Команда обсуждает правила и неизвестные случаи (**Discovery**), формулирует примеры (**Formulation**) и связывает их с проверками системы (**Automation**). Практики итеративны; Gherkin и Cucumber — средства поддержки, а не определение BDD. Обсуждение помогает выявлять разногласия раньше, но не гарантирует отсутствие недопонимания или дефектов. См. [Cucumber: BDD](https://cucumber.io/docs/bdd/).
 
-**Зачем это нужно.** BDD закрывает разрыв между «что хотел бизнес» и «что написал разработчик». Сценарий `Given / When / Then` обсуждается всей командой до кода, поэтому недопонимание ловится на словах, а не на проде. Это меняет фокус с «как мы это тестируем» на «как система должна себя вести».
+### От примера к исполняемой проверке
 
-### Пример `Gherkin`-сценария
+В Cucumber сценарии `.feature` связываются со **step definitions**: выражение сопоставляется с текстом шага, после чего вызывается код действий и утверждений. Наличие feature-файла без корректного связывания и проверок не подтверждает поведение. Ключевые слова Given/When/Then помогают читателю, но сами не выбирают реализацию шага. См. [Step definitions](https://cucumber.io/docs/cucumber/step-definitions/).
+
+Договоримся об учебном правиле корзины: от 3 единиц скидка 10%, от 10 — 20% вместо 10%. Сумма считается по добавленным товарам. Пример включает отдельный сценарий и три запуска Outline:
 
 ```gherkin
 Feature: Корзина покупок
-  Как покупатель
-  Я хочу управлять корзиной
-  Чтобы оформить заказ
-
   Scenario: Добавление товара в корзину
     Given пустая корзина
     When я добавляю товар "Книга" по цене 500 руб
@@ -372,49 +370,105 @@ Feature: Корзина покупок
       | 10         | 100  | 800   |
 ```
 
-### Реализация step definitions с `Cucumber` + `Spring Boot`
+Каждая строка данных Examples разворачивается в отдельный сценарий. Для **Cucumber-JVM 7.x / Java 17+** ниже показаны модель и все определения использованных шагов. Файлы классов находятся в пакете `example.cart`; feature — в `src/test/resources/features/cart.feature`.
 
 ```java
-@CucumberContextConfiguration
-@SpringBootTest
-public class ShoppingCartSteps {
+package example.cart;
 
-    @Autowired
-    private ShoppingCartService cartService;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
-    private ShoppingCart cart;
+public class ShoppingCart {
+    private record Item(String name, BigDecimal price) {}
+    private final List<Item> items = new ArrayList<>();
 
-    @Given("пустая корзина")
-    public void emptyCart() {
-        cart = cartService.createCart();
-    }
-
-    @When("я добавляю товар {string} по цене {int} руб")
     public void addItem(String name, int price) {
-        cart = cartService.addItem(cart.getId(), name, BigDecimal.valueOf(price));
+        if (price < 0) throw new IllegalArgumentException("negative price");
+        items.add(new Item(name, BigDecimal.valueOf(price)));
     }
 
-    @Then("в корзине {int} товар(ов)")
-    public void cartContainsItems(int count) {
-        assertEquals(count, cart.getItems().size());
+    public int size() {
+        return items.size();
     }
 
-    @Then("итого {int} руб")
-    public void totalEquals(int expectedTotal) {
-        assertEquals(BigDecimal.valueOf(expectedTotal), cart.getTotal());
+    public BigDecimal total() {
+        BigDecimal subtotal = items.stream().map(Item::price)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal factor = items.size() >= 10 ? new BigDecimal("0.80")
+            : items.size() >= 3 ? new BigDecimal("0.90") : BigDecimal.ONE;
+        return subtotal.multiply(factor);
     }
 }
 ```
 
-### Сравнение `TDD` vs `BDD`
+```java
+package example.cart;
 
-| Аспект | `TDD` | `BDD` |
-|--------|-------|-------|
-| Язык | Код (Java) | `Gherkin` (Given/When/Then) |
-| Аудитория | Разработчики | Вся команда + бизнес |
-| Уровень | `Unit` / `Integration` | `Feature` / `Acceptance` |
-| Инструменты | `JUnit`, `Mockito` | `Cucumber`, `JBehave` |
-| Фокус | Качество кода | Спецификация поведения |
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
+import io.cucumber.java.en.Then;
+import java.math.BigDecimal;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class ShoppingCartSteps {
+    private ShoppingCart cart;
+    private BigDecimal observedTotal;
+
+    @Given("пустая корзина")
+    public void emptyCart() {
+        cart = new ShoppingCart();
+        observedTotal = null;
+    }
+
+    @Given("корзина с {int} товарами по {int} руб")
+    public void filledCart(int count, int price) {
+        emptyCart();
+        for (int i = 0; i < count; i++) cart.addItem("Товар", price);
+    }
+
+    @When("я добавляю товар {string} по цене {int} руб")
+    public void addItem(String name, int price) {
+        cart.addItem(name, price);
+        observedTotal = cart.total();
+    }
+
+    @When("применяется скидка")
+    public void applyDiscount() {
+        observedTotal = cart.total();
+    }
+
+    @Then("в корзине {int} товар(ов)")
+    public void itemCount(int expected) {
+        assertEquals(expected, cart.size());
+    }
+
+    @Then("итого {int} руб")
+    public void totalEquals(int expected) {
+        assertEquals(0, BigDecimal.valueOf(expected).compareTo(observedTotal));
+    }
+}
+```
+
+Для запуска через JUnit Platform нужны согласованные зависимости `cucumber-java`, `cucumber-junit-platform-engine`, Platform Suite и библиотека утверждений Jupiter; build tool должен использовать JUnit Platform. В suite выбирают ресурс feature и glue-пакет, например:
+
+```java
+package example.cart;
+
+import org.junit.platform.suite.api.ConfigurationParameter;
+import org.junit.platform.suite.api.IncludeEngines;
+import org.junit.platform.suite.api.SelectClasspathResource;
+import org.junit.platform.suite.api.Suite;
+
+@Suite
+@IncludeEngines("cucumber")
+@SelectClasspathResource("features")
+@ConfigurationParameter(key = "cucumber.glue", value = "example.cart")
+public class RunCucumberTest {}
+```
+
+BDD и TDD могут сочетаться: общие примеры уточняют поведение, а небольшие тесты направляют реализацию. Границы не задаются жёсткой парой «BDD только acceptance, TDD только unit»; Gherkin без совместного обсуждения сам по себе не создаёт BDD-процесс.
+
 
 ## Q8. Что такое `ATDD` и чем он отличается от `TDD` и `BDD`?
 
@@ -443,96 +497,120 @@ graph LR
 
 ## Q9. Как реализовать `Test-First` подход на практике?
 
-`Test-First` — дисциплина писать тест до реализации. На практике она держится не на силе воли, а на нескольких рабочих привычках.
+**Test-First** означает, что проверка выбранного нового поведения появляется до его реализации. Практический цикл TDD добавляет короткую обратную связь и сохраняющий поведение рефакторинг:
 
-1. **Начинать с критериев приёмки** — сначала чётко сформулировать, что значит «работает», иначе непонятно, какой тест писать.
-2. **Писать один тест за раз** — не проектировать весь набор сразу; следующий тест подскажет следующий шаг реализации.
-3. **Минимальная реализация** — ровно столько кода, чтобы текущий тест прошёл, без работы «на будущее».
-4. **Рефакторить после зелёного** — чистить дизайн под защитой уже работающих тестов.
-5. **Закреплять quality gates** — CI не пропускает код без тестов, иначе дисциплина размывается под давлением сроков.
+1. Уточнить следующий ожидаемый случай. Можно заранее составить и пополнять список случаев, затем выбирать один для текущего шага.
+2. Написать тест и запустить его: проверить, что красный результат вызван отсутствующим поведением, а не ошибкой окружения или настройки.
+3. Добавить реализацию, достаточную для выбранного случая, и получить зелёный результат.
+4. Улучшить структуру под защитой тестов, сохранив поведение. Следующую возможность начинать новым циклом, а не называть её рефакторингом.
 
-Ниже — как это выглядит на валидаторе email: каждый новый тест добавляет один кейс, а реализация дорастает до него инкрементально.
+CI и quality gates могут поддерживать процесс; конкретный CI-инструмент не является условием определения Test-First. См. [Martin Fowler: TDD](https://martinfowler.com/bliki/TestDrivenDevelopment.html), включая предварительный список случаев.
+
+### Небольшой исполняемый пример
+
+Учебное правило для трёх выбранных случаев: строка допускается, если она не `null` и содержит `@`. Это не полная спецификация валидации email. Тесты для **JUnit Jupiter / Java 17+**:
 
 ```java
-// Практический пример: TDD для валидатора email
-// 1. Начинаем с простейшего случая
-@Test
-void shouldRejectNull() {
-    assertFalse(new EmailValidator().isValid(null));
-}
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
-// 2. Добавляем следующий кейс
-@Test
-void shouldAcceptValidEmail() {
-    assertTrue(new EmailValidator().isValid("user@example.com"));
-}
+class AddressMarkerRuleTest {
+    @Test
+    void acceptsMarkedAddress() {
+        assertTrue(new AddressMarkerRule().isAllowed("user@example.com"));
+    }
 
-// 3. Граничные случаи
-@Test
-void shouldRejectEmailWithoutAt() {
-    assertFalse(new EmailValidator().isValid("userexample.com"));
-}
+    @Test
+    void rejectsNull() {
+        assertFalse(new AddressMarkerRule().isAllowed(null));
+    }
 
-// Реализация растёт инкрементально
-public class EmailValidator {
-    private static final Pattern EMAIL = Pattern.compile(
-        "^[\\w.+-]+@[\\w.-]+\\.[a-zA-Z]{2,}$"
-    );
-
-    public boolean isValid(String email) {
-        return email != null && EMAIL.matcher(email).matches();
+    @Test
+    void rejectsWithoutAt() {
+        assertFalse(new AddressMarkerRule().isAllowed("userexample.com"));
     }
 }
 ```
+
+Возможная последовательность: первый тест красный при ответе `false`, затем простейший ответ `true` делает его зелёным. Новый тест на `null` выявляет недостаточность этой реализации; проверка `address != null` закрывает второй случай. Третий тест требует учитывать `@`. Итог для заданного правила:
+
+```java
+public class AddressMarkerRule {
+    public boolean isAllowed(String address) {
+        return address != null && address.contains("@");
+    }
+}
+```
+
+Финальный код сам по себе не доказывает, что разработка шла test-first: важен наблюдавшийся порядок работы. Каждый красный этап проверяет чувствительность нового теста к отсутствующему условию; зелёный набор подтверждает только свои утверждения. Дополнительные требования к адресу потребуют отдельных примеров и реализации.
+
 
 ## Q10. (!) Что такое `Property-Based Testing`?
 
-`Property-Based Testing` — подход, при котором вместо конкретных примеров («на входе [3,1,2] ждём [1,2,3]») описываются **свойства** (invariants), верные для любых входных данных. Фреймворк сам генерирует сотни случайных входов и проверяет, что свойство держится.
+**Property-Based Testing (PBT)** задаёт свойство для допустимого домена входов и проверяет его на выбранных данных. Нужно определить предпосылки и критерий результата; один генератор не знает, что программа должна делать. Проверенный конечный набор не доказывает свойство на непосещённых значениях.
 
-**В чём сила.** Пример-тесты проверяют только те случаи, которые придумал автор, — а баги обычно прячутся именно в незадуманных. PBT перебирает пространство входов за вас и при падении выполняет **shrinking**: ужимает упавший вход до минимального воспроизводящего примера (например, не список из 200 элементов, а `[0, 0]`), что резко упрощает отладку. Для сортировки достаточно трёх свойств: размер не меняется, результат упорядочен, элементы те же — и они покрывают бесконечно много входов.
+В зависимости от инструмента данные могут генерироваться случайно, перебираться для доступного конечного пространства или браться из заданных наборов. При нарушении свойства framework может искать более простой контрпример (**shrinking**), сохраняющий ошибку. Поиск ограничен стратегией и бюджетом; глобально наименьший пример не гарантирован. Источник и версия API: [jqwik User Guide 1.10.2](https://jqwik.net/docs/1.10.2/user-guide.html).
 
-### Пример с `jqwik` (Java)
+### Пример с `jqwik`
+
+Для сортировки проверим длину, порядок и **кратности** элементов. Домен примера — списки `Integer` без `null` длиной до 100. `tries = 100` — настройка этого примера, не определение PBT. Для утверждений используется JUnit Jupiter; запуск properties требует также jqwik engine и совместимого JUnit Platform.
 
 ```java
-import net.jqwik.api.*;
+import net.jqwik.api.ForAll;
+import net.jqwik.api.Property;
+import net.jqwik.api.constraints.Size;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import static org.junit.jupiter.api.Assertions.*;
 
 class SortPropertyTest {
-
-    @Property
-    void sortedListShouldHaveSameSize(@ForAll List<Integer> list) {
-        List<Integer> sorted = new ArrayList<>(list);
-        Collections.sort(sorted);
-        assertThat(sorted).hasSameSizeAs(list);
+    @Property(tries = 100)
+    void preservesSize(@ForAll @Size(max = 100) List<Integer> input) {
+        assertEquals(input.size(), sorted(input).size());
     }
 
-    @Property
-    void sortedListShouldBeOrdered(@ForAll List<Integer> list) {
-        List<Integer> sorted = new ArrayList<>(list);
-        Collections.sort(sorted);
-        for (int i = 0; i < sorted.size() - 1; i++) {
-            assertThat(sorted.get(i)).isLessThanOrEqualTo(sorted.get(i + 1));
+    @Property(tries = 100)
+    void isOrdered(@ForAll @Size(max = 100) List<Integer> input) {
+        List<Integer> result = sorted(input);
+        for (int i = 1; i < result.size(); i++) {
+            assertTrue(result.get(i - 1) <= result.get(i));
         }
     }
 
-    @Property
-    void sortedListShouldContainSameElements(@ForAll List<Integer> list) {
-        List<Integer> sorted = new ArrayList<>(list);
-        Collections.sort(sorted);
-        assertThat(sorted).containsExactlyInAnyOrderElementsOf(list);
+    @Property(tries = 100)
+    void preservesMultiplicity(@ForAll @Size(max = 100) List<Integer> input) {
+        assertEquals(counts(input), counts(sorted(input)));
+    }
+
+    private static List<Integer> sorted(List<Integer> input) {
+        List<Integer> result = new ArrayList<>(input);
+        Collections.sort(result);
+        return result;
+    }
+
+    private static Map<Integer, Integer> counts(List<Integer> values) {
+        Map<Integer, Integer> result = new HashMap<>();
+        for (Integer value : values) result.merge(value, 1, Integer::sum);
+        return result;
     }
 }
 ```
 
-### Когда использовать
+Эти свойства описывают выбранный контракт сортировки; слабое или ошибочное свойство также может давать мало полезной информации. Полезны проверки отношений (`parse(serialize(x)) == x` при заданных условиях), сравнение с эталоном и модели переходов состояния.
 
-| Подходит | Не подходит |
-|----------|-------------|
-| Алгоритмы (сортировка, поиск) | UI тесты |
-| Сериализация/десериализация | Тесты интеграции с внешними системами |
-| Математические вычисления | Бизнес-логика с фиксированными правилами |
-| Парсеры, валидаторы | E2E сценарии |
+### Выбор применения
 
-**Главная сложность** — придумать свойства. Удобный приём: искать инварианты («round-trip»: `parse(serialize(x)) == x`), сравнивать с эталонной (пусть медленной) реализацией или проверять отношения вместо точных значений. `jqwik` интегрируется с `JUnit 5` и запоминает упавшие кейсы в файле `.jqwik-database`, поэтому при следующем запуске сразу прогоняет именно проблемный вход — обратная связь остаётся быстрой.
+| Задача | Что учитывать |
+|--------|---------------|
+| Алгоритмы, сериализация, парсеры | Допустимый домен, оракул и граничные случаи |
+| Бизнес-правила и состояния | Инварианты, предусловия и модель переходов |
+| UI, интеграционные и E2E-сценарии | Управляемость среды, наблюдаемость, стоимость и повторяемость |
+
+Последняя группа не запрещена по названию: пригодность зависит от модели и среды. Повторение seed или входа не восстанавливает автоматически внешнее состояние. jqwik поддерживает сохранение и повторение предыдущих ошибок, но конкретное поведение зависит от версии и режима after-failure; оно не заменяет изоляцию окружения. Подробнее — в [шпаргалке по Property-Based Testing](property-based-testing-interview.md).
+
 
 ## Q11. (!) Что такое `Shift-Left Testing`?
 

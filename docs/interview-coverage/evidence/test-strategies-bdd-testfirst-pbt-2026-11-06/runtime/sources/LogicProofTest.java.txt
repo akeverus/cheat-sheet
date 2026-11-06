@@ -1,0 +1,17 @@
+import example.cart.ShoppingCart;
+import java.math.BigDecimal;
+import java.util.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import static org.junit.jupiter.api.Assertions.*;
+class LogicProofTest {
+ @Test void emptyCart(){var c=new ShoppingCart();assertEquals(0,c.size());assertEquals(0,BigDecimal.ZERO.compareTo(c.total()));}
+ @Test void singleBook(){var c=new ShoppingCart();c.addItem("Книга",500);assertEquals(1,c.size());assertEquals(0,BigDecimal.valueOf(500).compareTo(c.total()));}
+ @ParameterizedTest @CsvSource({"2,100,200","3,100,270","5,100,450","9,100,810","10,100,800"})
+ void cartDiscountBoundaries(int count,int price,int total){var c=new ShoppingCart();for(int i=0;i<count;i++)c.addItem("Товар",price);assertEquals(count,c.size());assertEquals(0,BigDecimal.valueOf(total).compareTo(c.total()));}
+ static List<List<Integer>> fixtures(){List<List<Integer>> all=new ArrayList<>();List<List<Integer>> previous=List.of(List.of());all.addAll(previous);for(int length=1;length<=5;length++){List<List<Integer>> next=new ArrayList<>();for(var p:previous)for(int value=-1;value<=1;value++){List<Integer> row=new ArrayList<>(p);row.add(value);next.add(row);}all.addAll(next);previous=next;}if(all.size()!=364)throw new AssertionError("fixture count");return all;}
+ @Test void sortSizeContract(){var p=new SortPropertyTest();for(var f:fixtures())p.preservesSize(f);}
+ @Test void sortOrderContract(){var p=new SortPropertyTest();for(var f:fixtures())p.isOrdered(f);}
+ @Test void sortMultiplicityContract(){var p=new SortPropertyTest();for(var f:fixtures())p.preservesMultiplicity(f);}
+}

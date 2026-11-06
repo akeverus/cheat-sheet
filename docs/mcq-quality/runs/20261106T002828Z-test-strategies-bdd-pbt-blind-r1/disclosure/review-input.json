@@ -1,0 +1,1062 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/testing/test-strategies-interview.json",
+    "theory": "cheatsheets/interview/testing/test-strategies-interview.md"
+  },
+  "sha256": {
+    "mcq": "333b5acf7cbb2d5571f3e5e728a18a2c8559640e502da4310775050b315e0ae7",
+    "theory": "04461332dfcb8f4e08909c6e447627b18c82016952720edaa0970d6d3dca804f"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hashes": {
+    "Q7:B0": {
+      "mcq": "8c80de16f5c823571b035a00ba56bd6bd91099f09d0f5ee6615e04e7224f9f59",
+      "theory": "afda9a4bbcc23b740ba7b7c9a7411d5610305ab6d56f6bbc572fa0024d56c178"
+    },
+    "Q9:B0": {
+      "mcq": "70cde513d8b2f4ce6452ea4a8bf557c7fefb5a250fbbccf699fd542460f7e0fd",
+      "theory": "20122dc3037e96ed18afb744c5bf5d8b63f6a3b1064d594f0531f8a203f1f439"
+    },
+    "Q10:B0": {
+      "mcq": "29c312643908b4ce483ec3c5d58f5b8230f236a39bef1161427e267d0d67f807",
+      "theory": "ee6e69841cddeb96cf6683a8d0f5a6a9d66c537b1a543e82ba23516c860b3fe8"
+    }
+  },
+  "preamble": "---\ntitle: \"Вопросы на собеседовании: Стратегии тестирования\"\ndescription: \"Полное покрытие стратегий тестирования: test pyramid, TDD/BDD/ATDD, risk-based testing, shift-left/right, mutation testing, property-based testing, метрики качества и организация тестирования в agile.\"\ntags:\n  - interview\n  - testing\n  - test-strategies-interview\ntype: \"interview\"\ndifficulty: \"intermediate\"\naliases:\n  - \"Вопросы на собеседовании\"\n  - \"Стратегии тестирования\"\n  - \"Test strategies interview\"\n  - \"TDD BDD интервью\"\nprerequisites: []\nnext: []\nupdated: \"2026-04-25\"\n---\n# Вопросы на собеседовании: Стратегии тестирования\n\nКраткие ответы по стратегиям тестирования: как выбрать уровни тестов, распределить усилия команды, контролировать качество через метрики и риски, а также применять современные подходы `TDD`, `BDD`, `Property-Based Testing` и `Mutation Testing`.\n\n**Стратегии тестирования** определяют, какие виды тестов использовать, как распределять усилия и какие метрики отслеживать. Этот файл фокусируется на управленческих и архитектурных решениях, а не на деталях конкретных фреймворков.\n\n## Полезные ссылки\n\n### Официальная документация\n\n- [Test Pyramid in Spring Boot Microservice — Baeldung](https://www.baeldung.com/spring-test-pyramid-practical-example) — практический пример тестовой пирамиды\n- [TDD a List Implementation in Java — Baeldung](https://www.baeldung.com/java-test-driven-list) — пошаговый TDD пример\n- [Cucumber Spring Integration — Baeldung](https://www.baeldung.com/cucumber-spring-integration) — BDD с Cucumber и Spring\n- [Property-Based Testing with jqwik — Baeldung](https://www.baeldung.com/java-jqwik-property-based-testing) — property-based тесты в Java\n- [Mutation Testing with PITest — Baeldung](https://www.baeldung.com/java-mutation-testing-with-pitest) — мутационное тестирование\n- [Google Testing Blog](https://testing.googleblog.com/) — блог Google о тестировании\n- Agile Testing (Lisa Crispin, Janet Gregory), Working Effectively with Legacy Code (Michael Feathers)\n\n## Содержание\n\n- [Полезные ссылки](#полезные-ссылки)\n- [See also](#see-also)\n\n**Основы стратегий тестирования**\n- [Q1. (!) Что такое стратегия тестирования и зачем она нужна?](#q1--что-такое-стратегия-тестирования-и-зачем-она-нужна)\n- [Q2. (!) Что такое `Testing Pyramid` и как её применять?](#q2--что-такое-testing-pyramid-и-как-её-применять)\n- [Q3. Какие существуют `Testing Quadrants`?](#q3-какие-существуют-testing-quadrants)\n- [Q4. (!) В чём разница между `Test Pyramid` и `Test Trophy`?](#q4--в-чём-разница-между-test-pyramid-и-test-trophy)\n- [Q5. Что такое `Test Strategy Document` и что в него входит?](#q5-что-такое-test-strategy-document-и-что-в-него-входит)\n\n**TDD, BDD и Test-First подходы**\n- [Q6. (!) Что такое `TDD` и как работает цикл `Red-Green-Refactor`?](#q6--что-такое-tdd-и-как-работает-цикл-red-green-refactor)\n- [Q7. (!) Что такое `BDD` и как его реализовать с `Cucumber`?](#q7--что-такое-bdd-и-как-его-реализовать-с-cucumber)\n- [Q8. Что такое `ATDD` и чем он отличается от `TDD` и `BDD`?](#q8-что-такое-atdd-и-чем-он-отличается-от-tdd-и-bdd)\n- [Q9. Как реализовать `Test-First` подход на практике?](#q9-как-реализовать-test-first-подход-на-практике)\n- [Q10. (!) Что такое `Property-Based Testing`?](#q10--что-такое-property-based-testing)\n\n**Shift-Left, Shift-Right и Risk-Based Testing**\n- [Q11. (!) Что такое `Shift-Left Testing`?](#q11--что-такое-shift-left-testing)\n- [Q12. Что такое `Shift-Right Testing`?](#q12-что-такое-shift-right-testing)\n- [Q13. (!) Как реализовать `Risk-Based Testing`?](#q13--как-реализовать-risk-based-testing)\n- [Q14. Что такое `Testing in Production` и какие есть подходы?](#q14-что-такое-testing-in-production-и-какие-есть-подходы)\n\n**Mutation Testing и качество тестов**\n- [Q15. (!) Что такое `Mutation Testing` и как работает `PITest`?](#q15--что-такое-mutation-testing-и-как-работает-pitest)\n- [Q16. Что такое `Exploratory Testing` и как совмещать с автоматизацией?](#q16-что-такое-exploratory-testing-и-как-совмещать-с-автоматизацией)\n- [Q17. Что такое `Flaky Tests` и как с ними бороться?](#q17-что-такое-flaky-tests-и-как-с-ними-бороться)\n\n**Тестирование специфических систем**\n- [Q18. Какие стратегии тестирования микросервисов?](#q18-какие-стратегии-тестирования-микросервисов)\n- [Q19. (!) Как тестировать legacy код?](#q19--как-тестировать-legacy-код)\n- [Q20. Как тестировать `Distributed Systems`?](#q20-как-тестировать-distributed-systems)\n- [Q21. Как тестировать `Event-Driven Architecture`?](#q21-как-тестировать-event-driven-architecture)\n- [Q22. Что такое `Consumer-Driven Contract Testing`?](#q22-что-такое-consumer-driven-contract-testing)\n- [Q23. Что такое `Chaos Engineering`?](#q23-что-такое-chaos-engineering)\n\n**Метрики, организация и Agile**\n- [Q24. (!) Какие метрики качества тестирования существуют?](#q24--какие-метрики-качества-тестирования-существуют)\n- [Q25. Как организовать тестирование в `Agile`/`Scrum`?](#q25-как-организовать-тестирование-в-agilescrum)\n- [Q26. Что такое `Three Amigos` и `Definition of Done`?](#q26-что-такое-three-amigos-и-definition-of-done)\n- [Q27. Как балансировать скорость и качество тестирования?](#q27-как-балансировать-скорость-и-качество-тестирования)\n- [Q28. Что такое `Test Observability`?](#q28-что-такое-test-observability)\n- [Q29. Как организовать `Test Review`?](#q29-как-организовать-test-review)\n\n**Test Data, окружения и инфраструктура тестирования**\n- [Q30. Что такое `Test Doubles Strategy`?](#q30-что-такое-test-doubles-strategy)\n- [Q31. (!) Что такое `Test Containerization` и `Testcontainers`?](#q31--что-такое-test-containerization-и-testcontainers)\n- [Q32. Как организовать `Test Environments Strategy`?](#q32-как-организовать-test-environments-strategy)\n- [Q33. Как организовать `Test Data Management`?](#q33-как-организовать-test-data-management)\n- [Q34. Как организовать `Test Automation Framework`?](#q34-как-организовать-test-automation-framework)\n\n**Продвинутые стратегии**\n- [Q35. Что такое `Contract Testing` и как его реализовать с `Pact`?](#q35-что-такое-contract-testing-и-как-его-реализовать-с-pact)\n- [Q36. Что такое `Visual Regression Testing`?](#q36-что-такое-visual-regression-testing)\n- [Q37. Что такое `Performance Testing Strategy`?](#q37-что-такое-performance-testing-strategy)\n- [Q38. Что такое `Security Testing Strategy`?](#q38-что-такое-security-testing-strategy)\n- [Q39. Как организовать тестирование при `Continuous Deployment`?](#q39-как-организовать-тестирование-при-continuous-deployment)\n- [Q40. (!) Рекомендации для `Test Strategy`](#q40--рекомендации-для-test-strategy)\n\n**Практические паттерны и углублённые темы**\n- [Q41. (!) Как правильно применять Test Doubles: когда Mock, когда Stub, когда Fake?](#q41--как-правильно-применять-test-doubles-когда-mock-когда-stub-когда-fake)\n- [Q42. Что такое Contract Testing с Pact: Consumer и Provider стороны?](#q42-что-такое-contract-testing-с-pact-consumer-и-provider-стороны)\n- [Q43. Как конкретно выглядит пирамида тестирования: соотношения и числа?](#q43-как-конкретно-выглядит-пирамида-тестирования-соотношения-и-числа)\n- [Q44. (!) Как совместить Mutation Testing с CI/CD и quality gates?](#q44--как-совместить-mutation-testing-с-cicd-и-quality-gates)\n- [Q45. Что такое Component Testing и как он вписывается в стратегию?](#q45-что-такое-component-testing-и-как-он-вписывается-в-стратегию)\n\n---\n",
+  "theory": [
+    {
+      "q_number": 7,
+      "title": "Что такое BDD и как его реализовать с Cucumber?",
+      "line": 343,
+      "body": "\n**BDD (Behavior-Driven Development)** — совместное уточнение ожидаемого поведения на конкретных примерах. Команда обсуждает правила и неизвестные случаи (**Discovery**), формулирует примеры (**Formulation**) и связывает их с проверками системы (**Automation**). Практики итеративны; Gherkin и Cucumber — средства поддержки, а не определение BDD. Обсуждение помогает выявлять разногласия раньше, но не гарантирует отсутствие недопонимания или дефектов. См. [Cucumber: BDD](https://cucumber.io/docs/bdd/).\n\n### От примера к исполняемой проверке\n\nВ Cucumber сценарии `.feature` связываются со **step definitions**: выражение сопоставляется с текстом шага, после чего вызывается код действий и утверждений. Наличие feature-файла без корректного связывания и проверок не подтверждает поведение. Ключевые слова Given/When/Then помогают читателю, но сами не выбирают реализацию шага. См. [Step definitions](https://cucumber.io/docs/cucumber/step-definitions/).\n\nДоговоримся об учебном правиле корзины: от 3 единиц скидка 10%, от 10 — 20% вместо 10%. Сумма считается по добавленным товарам. Пример включает отдельный сценарий и три запуска Outline:\n\n```gherkin\nFeature: Корзина покупок\n  Scenario: Добавление товара в корзину\n    Given пустая корзина\n    When я добавляю товар \"Книга\" по цене 500 руб\n    Then в корзине 1 товар\n    And итого 500 руб\n\n  Scenario Outline: Скидка по количеству\n    Given корзина с <количество> товарами по <цена> руб\n    When применяется скидка\n    Then итого <итого> руб\n\n    Examples:\n      | количество | цена | итого |\n      | 3          | 100  | 270   |\n      | 5          | 100  | 450   |\n      | 10         | 100  | 800   |\n```\n\nКаждая строка данных Examples разворачивается в отдельный сценарий. Для **Cucumber-JVM 7.x / Java 17+** ниже показаны модель и все определения использованных шагов. Файлы классов находятся в пакете `example.cart`; feature — в `src/test/resources/features/cart.feature`.\n\n```java\npackage example.cart;\n\nimport java.math.BigDecimal;\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class ShoppingCart {\n    private record Item(String name, BigDecimal price) {}\n    private final List<Item> items = new ArrayList<>();\n\n    public void addItem(String name, int price) {\n        if (price < 0) throw new IllegalArgumentException(\"negative price\");\n        items.add(new Item(name, BigDecimal.valueOf(price)));\n    }\n\n    public int size() {\n        return items.size();\n    }\n\n    public BigDecimal total() {\n        BigDecimal subtotal = items.stream().map(Item::price)\n            .reduce(BigDecimal.ZERO, BigDecimal::add);\n        BigDecimal factor = items.size() >= 10 ? new BigDecimal(\"0.80\")\n            : items.size() >= 3 ? new BigDecimal(\"0.90\") : BigDecimal.ONE;\n        return subtotal.multiply(factor);\n    }\n}\n```\n\n```java\npackage example.cart;\n\nimport io.cucumber.java.en.Given;\nimport io.cucumber.java.en.When;\nimport io.cucumber.java.en.Then;\nimport java.math.BigDecimal;\nimport static org.junit.jupiter.api.Assertions.*;\n\npublic class ShoppingCartSteps {\n    private ShoppingCart cart;\n    private BigDecimal observedTotal;\n\n    @Given(\"пустая корзина\")\n    public void emptyCart() {\n        cart = new ShoppingCart();\n        observedTotal = null;\n    }\n\n    @Given(\"корзина с {int} товарами по {int} руб\")\n    public void filledCart(int count, int price) {\n        emptyCart();\n        for (int i = 0; i < count; i++) cart.addItem(\"Товар\", price);\n    }\n\n    @When(\"я добавляю товар {string} по цене {int} руб\")\n    public void addItem(String name, int price) {\n        cart.addItem(name, price);\n        observedTotal = cart.total();\n    }\n\n    @When(\"применяется скидка\")\n    public void applyDiscount() {\n        observedTotal = cart.total();\n    }\n\n    @Then(\"в корзине {int} товар(ов)\")\n    public void itemCount(int expected) {\n        assertEquals(expected, cart.size());\n    }\n\n    @Then(\"итого {int} руб\")\n    public void totalEquals(int expected) {\n        assertEquals(0, BigDecimal.valueOf(expected).compareTo(observedTotal));\n    }\n}\n```\n\nДля запуска через JUnit Platform нужны согласованные зависимости `cucumber-java`, `cucumber-junit-platform-engine`, Platform Suite и библиотека утверждений Jupiter; build tool должен использовать JUnit Platform. В suite выбирают ресурс feature и glue-пакет, например:\n\n```java\npackage example.cart;\n\nimport org.junit.platform.suite.api.ConfigurationParameter;\nimport org.junit.platform.suite.api.IncludeEngines;\nimport org.junit.platform.suite.api.SelectClasspathResource;\nimport org.junit.platform.suite.api.Suite;\n\n@Suite\n@IncludeEngines(\"cucumber\")\n@SelectClasspathResource(\"features\")\n@ConfigurationParameter(key = \"cucumber.glue\", value = \"example.cart\")\npublic class RunCucumberTest {}\n```\n\nBDD и TDD могут сочетаться: общие примеры уточняют поведение, а небольшие тесты направляют реализацию. Границы не задаются жёсткой парой «BDD только acceptance, TDD только unit»; Gherkin без совместного обсуждения сам по себе не создаёт BDD-процесс.\n\n\n"
+    },
+    {
+      "q_number": 9,
+      "title": "Как реализовать Test-First подход на практике?",
+      "line": 498,
+      "body": "\n**Test-First** означает, что проверка выбранного нового поведения появляется до его реализации. Практический цикл TDD добавляет короткую обратную связь и сохраняющий поведение рефакторинг:\n\n1. Уточнить следующий ожидаемый случай. Можно заранее составить и пополнять список случаев, затем выбирать один для текущего шага.\n2. Написать тест и запустить его: проверить, что красный результат вызван отсутствующим поведением, а не ошибкой окружения или настройки.\n3. Добавить реализацию, достаточную для выбранного случая, и получить зелёный результат.\n4. Улучшить структуру под защитой тестов, сохранив поведение. Следующую возможность начинать новым циклом, а не называть её рефакторингом.\n\nCI и quality gates могут поддерживать процесс; конкретный CI-инструмент не является условием определения Test-First. См. [Martin Fowler: TDD](https://martinfowler.com/bliki/TestDrivenDevelopment.html), включая предварительный список случаев.\n\n### Небольшой исполняемый пример\n\nУчебное правило для трёх выбранных случаев: строка допускается, если она не `null` и содержит `@`. Это не полная спецификация валидации email. Тесты для **JUnit Jupiter / Java 17+**:\n\n```java\nimport org.junit.jupiter.api.Test;\nimport static org.junit.jupiter.api.Assertions.*;\n\nclass AddressMarkerRuleTest {\n    @Test\n    void acceptsMarkedAddress() {\n        assertTrue(new AddressMarkerRule().isAllowed(\"user@example.com\"));\n    }\n\n    @Test\n    void rejectsNull() {\n        assertFalse(new AddressMarkerRule().isAllowed(null));\n    }\n\n    @Test\n    void rejectsWithoutAt() {\n        assertFalse(new AddressMarkerRule().isAllowed(\"userexample.com\"));\n    }\n}\n```\n\nВозможная последовательность: первый тест красный при ответе `false`, затем простейший ответ `true` делает его зелёным. Новый тест на `null` выявляет недостаточность этой реализации; проверка `address != null` закрывает второй случай. Третий тест требует учитывать `@`. Итог для заданного правила:\n\n```java\npublic class AddressMarkerRule {\n    public boolean isAllowed(String address) {\n        return address != null && address.contains(\"@\");\n    }\n}\n```\n\nФинальный код сам по себе не доказывает, что разработка шла test-first: важен наблюдавшийся порядок работы. Каждый красный этап проверяет чувствительность нового теста к отсутствующему условию; зелёный набор подтверждает только свои утверждения. Дополнительные требования к адресу потребуют отдельных примеров и реализации.\n\n\n"
+    },
+    {
+      "q_number": 10,
+      "title": "Что такое Property-Based Testing?",
+      "line": 548,
+      "body": "\n**Property-Based Testing (PBT)** задаёт свойство для допустимого домена входов и проверяет его на выбранных данных. Нужно определить предпосылки и критерий результата; один генератор не знает, что программа должна делать. Проверенный конечный набор не доказывает свойство на непосещённых значениях.\n\nВ зависимости от инструмента данные могут генерироваться случайно, перебираться для доступного конечного пространства или браться из заданных наборов. При нарушении свойства framework может искать более простой контрпример (**shrinking**), сохраняющий ошибку. Поиск ограничен стратегией и бюджетом; глобально наименьший пример не гарантирован. Источник и версия API: [jqwik User Guide 1.10.2](https://jqwik.net/docs/1.10.2/user-guide.html).\n\n### Пример с `jqwik`\n\nДля сортировки проверим длину, порядок и **кратности** элементов. Домен примера — списки `Integer` без `null` длиной до 100. `tries = 100` — настройка этого примера, не определение PBT. Для утверждений используется JUnit Jupiter; запуск properties требует также jqwik engine и совместимого JUnit Platform.\n\n```java\nimport net.jqwik.api.ForAll;\nimport net.jqwik.api.Property;\nimport net.jqwik.api.constraints.Size;\nimport java.util.ArrayList;\nimport java.util.Collections;\nimport java.util.HashMap;\nimport java.util.List;\nimport java.util.Map;\nimport static org.junit.jupiter.api.Assertions.*;\n\nclass SortPropertyTest {\n    @Property(tries = 100)\n    void preservesSize(@ForAll @Size(max = 100) List<Integer> input) {\n        assertEquals(input.size(), sorted(input).size());\n    }\n\n    @Property(tries = 100)\n    void isOrdered(@ForAll @Size(max = 100) List<Integer> input) {\n        List<Integer> result = sorted(input);\n        for (int i = 1; i < result.size(); i++) {\n            assertTrue(result.get(i - 1) <= result.get(i));\n        }\n    }\n\n    @Property(tries = 100)\n    void preservesMultiplicity(@ForAll @Size(max = 100) List<Integer> input) {\n        assertEquals(counts(input), counts(sorted(input)));\n    }\n\n    private static List<Integer> sorted(List<Integer> input) {\n        List<Integer> result = new ArrayList<>(input);\n        Collections.sort(result);\n        return result;\n    }\n\n    private static Map<Integer, Integer> counts(List<Integer> values) {\n        Map<Integer, Integer> result = new HashMap<>();\n        for (Integer value : values) result.merge(value, 1, Integer::sum);\n        return result;\n    }\n}\n```\n\nЭти свойства описывают выбранный контракт сортировки; слабое или ошибочное свойство также может давать мало полезной информации. Полезны проверки отношений (`parse(serialize(x)) == x` при заданных условиях), сравнение с эталоном и модели переходов состояния.\n\n### Выбор применения\n\n| Задача | Что учитывать |\n|--------|---------------|\n| Алгоритмы, сериализация, парсеры | Допустимый домен, оракул и граничные случаи |\n| Бизнес-правила и состояния | Инварианты, предусловия и модель переходов |\n| UI, интеграционные и E2E-сценарии | Управляемость среды, наблюдаемость, стоимость и повторяемость |\n\nПоследняя группа не запрещена по названию: пригодность зависит от модели и среды. Повторение seed или входа не восстанавливает автоматически внешнее состояние. jqwik поддерживает сохранение и повторение предыдущих ошибок, но конкретное поведение зависит от версии и режима after-failure; оно не заменяет изоляцию окружения. Подробнее — в [шпаргалке по Property-Based Testing](property-based-testing-interview.md).\n\n\n"
+    }
+  ],
+  "blocks": [
+    {
+      "q_number": 7,
+      "block_idx": 0,
+      "visible_question": "Что такое BDD и как его реализовать с Cucumber?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Что такое `BDD` и как его реализовать с `Cucumber`?",
+        "options": [
+          {
+            "label": "A",
+            "order": 0,
+            "text": "BDD использует согласованные примеры поведения; Cucumber превращает сценарии Gherkin в действия приложения по смыслу текста, без методов, связывающих шаги с кодом.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Cucumber ищет step definition, выражение которого соответствует тексту шага, и вызывает связанный код. Он не выводит действия приложения из произвольной прозы без такого связывания.",
+              "source_of_confusion": "Читаемость Gherkin принимают за способность инструмента самостоятельно понимать предметную область и создавать реализацию шагов.",
+              "if_it_were_true": "Текста сценария было бы достаточно для вызова неизвестного приложению действия. Реальному Cucumber нужны подходящие step definitions; отсутствие связывания не заменяется пониманием смысла слов.",
+              "how_it_should_be": "Сначала согласовать примеры поведения, затем сформулировать сценарии и связать их шаги с кодом действий и проверок. Использование Cucumber поддерживает BDD, но само наличие feature-файла ещё не доказывает совместное понимание."
+            }
+          },
+          {
+            "label": "B",
+            "order": 1,
+            "text": "BDD развивает общее понимание поведения на примерах; в Cucumber сценарии Gherkin связывают со step definitions, которые выполняют действия и проверки ожидаемого результата.",
+            "correct": true,
+            "sections": {
+              "explanation": "BDD строит совместное понимание ожидаемого поведения через конкретные примеры. При автоматизации с Cucumber текст шагов Gherkin сопоставляется с выражениями step definitions, а их код обращается к системе и проверяет ожидания.",
+              "example": "Команда согласует пример добавления книги в корзину. Given задаёт исходное состояние, When добавляет книгу через код приложения, Then проверяет количество и сумму; выражения в step definitions связывают эти тексты с методами.",
+              "when_to_apply": "Когда участникам важно обсудить правила и примеры до реализации соответствующего изменения и сохранять проверяемую спецификацию. BDD не сводится к обязательному инструменту или синтаксису Given/When/Then.",
+              "edge_cases": "Сценарий без корректных действий и проверок не доказывает нужное поведение. Неопределённые и неоднозначные шаги требуют исправления связывания. Обсуждение снижает риск недопонимания, но не гарантирует отсутствие дефектов.",
+              "related": "Scenario Outline подставляет данные каждой строки Examples, кроме заголовка. TDD направляет реализацию тестами, ATDD подчёркивает совместные приёмочные примеры; эти практики могут сочетаться с BDD."
+            }
+          },
+          {
+            "label": "C",
+            "order": 2,
+            "text": "В BDD команда уточняет поведение примерами; в Cucumber код шага выбирается по Given/When/Then, а выражение в step definition служит только подписью.",
+            "correct": false,
+            "sections": {
+              "what_actually": "При поиске step definition Cucumber сопоставляет текст шага с выражением, а не выбирает реализацию только по Given, When или Then. Ключевое слово описывает роль шага для читателя.",
+              "source_of_confusion": "Аннотации @Given/@When/@Then принимают за три автоматические команды приложения, а выражения внутри них — за необязательные комментарии.",
+              "if_it_were_true": "Разные шаги с одним ключевым словом нельзя было бы различить по тексту. Реальные выражения связывают разные действия и проверки с их шагами, независимо от такого предполагаемого выбора по одному ключевому слову.",
+              "how_it_should_be": "Описать ожидаемое поведение на согласованных примерах и задать соответствующие выражения и методы шагов. Given/When/Then помогают структурировать сценарий; действия и проверки реализует связанный код."
+            }
+          },
+          {
+            "label": "D",
+            "order": 3,
+            "text": "BDD строит спецификацию на согласованных примерах; Cucumber связывает шаги с кодом через step definitions, а Scenario Outline исполняет один раз без подстановки строк Examples.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Scenario Outline задаёт шаблон. Cucumber подставляет данные и выполняет сценарий для каждой строки Examples, не считая строки заголовков; это не один запуск с буквальными параметрами шаблона.",
+              "source_of_confusion": "Таблицу Examples принимают за свободное пояснение под сценарием, хотя она участвует в развёртывании исполняемых примеров.",
+              "if_it_were_true": "Добавление второй строки данных не добавляло бы отдельный пример исполнения. В реальной модели Outline строки задают отдельные подстановки; свободное описание feature имеет другую роль.",
+              "how_it_should_be": "Согласовать правила и примеры, связать шаги Gherkin с кодом, а для нескольких наборов данных использовать Outline и Examples. Проверить, что ожидаемые значения каждой строки соответствуют обсуждённому правилу."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 9,
+      "block_idx": 0,
+      "visible_question": "Как реализовать Test-First подход на практике?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Как реализовать `Test-First` подход на практике?",
+        "options": [
+          {
+            "label": "A",
+            "order": 0,
+            "text": "Выбрать случай, написать тест и проверить причину его падения; реализовать нужное поведение до зелёного результата, затем улучшить структуру без изменения поведения.",
+            "correct": true,
+            "sections": {
+              "explanation": "Тест появляется до реализации соответствующего поведения. В цикле TDD сначала проверяют ожидаемое падение нового теста, затем реализуют нужный случай и после зелёного результата улучшают структуру с сохранением поведения.",
+              "example": "Для выбранного правила валидатора сначала задают ожидаемый отказ на null и проверяют, что тест падает по нужной причине. Затем реализуют этот случай и переходят к следующему примеру; это не полная спецификация всех допустимых email.",
+              "when_to_apply": "Для разработки небольшими проверяемыми изменениями. Можно заранее составить список будущих тестовых случаев, выбирать из него следующий и дополнять список по мере уточнения поведения.",
+              "edge_cases": "Падение из-за ошибки окружения или случайный уже зелёный тест не показывают, что обнаружено отсутствие нужной функции. CI и quality gates помогают процессу, но не являются определением test-first и не гарантируют дисциплину.",
+              "related": "Test-first задаёт порядок теста и реализации, а TDD дополняет его короткой обратной связью и рефакторингом. Зелёный набор проверяет свои утверждения; он не доказывает отсутствие всех дефектов."
+            }
+          },
+          {
+            "label": "B",
+            "order": 1,
+            "text": "Выбрать случай, написать тест и проверить его падение; реализовать нужное поведение, затем при рефакторинге добавить следующую возможность без нового теста.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Рефакторинг сохраняет наблюдаемое поведение. Следующая возможность меняет требования к поведению, поэтому её нельзя объявить сохраняющим поведение рефакторингом без нового test-first шага.",
+              "source_of_confusion": "Любое изменение после зелёного результата называют рефакторингом, смешивая улучшение структуры и добавление функциональности.",
+              "if_it_were_true": "Новая возможность могла бы появиться как якобы сохраняющее поведение преобразование. Старые зелёные тесты при этом не показывали бы, что новое требование сформулировано и проверено.",
+              "how_it_should_be": "После зелёного улучшать структуру без смены поведения. Для следующей возможности выбрать пример и начать новый цикл теста и реализации; предварительный список таких примеров допустим."
+            }
+          },
+          {
+            "label": "C",
+            "order": 2,
+            "text": "Выбрать случай, сначала реализовать нужное поведение; затем написать к нему тест, добиться зелёного результата и улучшить структуру с сохранением поведения.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Для выбранного нового поведения test-first помещает тест перед соответствующей реализацией. Проверки после написания кода полезны, но не направляли первоначальное написание этого кода тестом.",
+              "source_of_confusion": "Наличие тестов в конечном результате принимают за доказательство того, что они существовали до реализации.",
+              "if_it_were_true": "Последовательность «код, затем тест» сама считалась бы test-first. Поздние тесты могут выявлять дефекты и направлять исправления, но не меняют фактический порядок первоначальной работы.",
+              "how_it_should_be": "Сформулировать следующий ожидаемый случай и тест до его реализации. При работе с существующим кодом можно сначала добавить проверки и затем вести новое изменение test-first; наличие старого кода этому не мешает."
+            }
+          },
+          {
+            "label": "D",
+            "order": 3,
+            "text": "Выбрать случай, написать тест и сразу добавить код без запуска красной проверки; зелёный результат подтвердит, что тест обнаруживал отсутствие нужного поведения.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Один зелёный результат после изменения кода не доказывает, что этот тест обнаруживал отсутствие нужного поведения до изменения. Тест мог проходить и раньше либо не проверять требуемый эффект.",
+              "source_of_confusion": "Успешную итоговую проверку принимают за наблюдение чувствительности теста к отсутствующей реализации, хотя красный этап не наблюдали.",
+              "if_it_were_true": "Даже тест с утверждением, которое всегда истинно, получал бы подтверждение полезности от одного зелёного запуска. Сам успешный результат такого подтверждения не даёт.",
+              "how_it_should_be": "В практическом цикле TDD наблюдать ожидаемое падение нового теста до реализации и проверить его причину. Сбой настройки теста исправлять отдельно; затем получить зелёный результат и выполнить сохраняющий поведение рефакторинг."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 10,
+      "block_idx": 0,
+      "visible_question": "Что такое Property-Based Testing?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Что такое `Property-Based Testing`?",
+        "options": [
+          {
+            "label": "A",
+            "order": 0,
+            "text": "PBT задаёт генератор допустимых входов; качество генератора позволяет считать результаты программы корректными без свойства, оракула или проверки поведения.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Генератор выбирает данные, но для оценки поведения нужен критерий: свойство, модель, оракул или иная проверка ожидаемого результата. Хорошее распределение входов не делает произвольный результат программы правильным.",
+              "source_of_confusion": "Автоматический выбор данных смешивают с автоматическим знанием требований. Поиск сбоев может проверять отсутствие падения как свойство, но это не проверка любой корректности без критерия.",
+              "if_it_were_true": "Любой алгоритм, возвращающий неверный ответ, считался бы корректным только из-за качественных входов. Без проверки ожидаемого поведения такой вывод не следует из генерации.",
+              "how_it_should_be": "Определить допустимые входы и проверяемое утверждение, затем выбрать данные и выполнить проверку. Генератор и критерий результата выполняют разные роли."
+            }
+          },
+          {
+            "label": "B",
+            "order": 1,
+            "text": "PBT задаёт свойство для допустимых входов и проверяет его на выбранных данных; найденный контрпример фреймворк может уменьшать, сохраняя нарушение свойства.",
+            "correct": true,
+            "sections": {
+              "explanation": "Свойство формулируют для входов заданного домена с нужными предпосылками. Тестовый запуск проверяет конкретные значения; нарушение даёт контрпример. Shrinking может искать более простой вход, на котором нарушение сохраняется.",
+              "example": "Для сортировки проверяют упорядоченность, сохранение длины и элементов с их кратностями. Генератор выбирает списки, а свойства оценивают результат; успешная выборка не доказывает утверждение для непроверенных списков.",
+              "when_to_apply": "Когда можно сформулировать полезное общее утверждение, модель или отношение между результатами. Это применимо и к бизнес-правилам и состояниям; UI, интеграционные и E2E-проверки требуют подходящей модели и управляемой среды, а не запрещены по названию.",
+              "edge_cases": "Данные могут выбираться случайно, исчерпывающе для доступного конечного пространства или из заданных наборов. Shrinking ограничен стратегией и бюджетом и не гарантирует глобально наименьший контрпример. Проверяемое свойство само может быть неверным или слабым.",
+              "related": "В jqwik @Property задаёт проверку, @ForAll получает данные через arbitraries. Ручные примеры могут дополнять свойства. Повторение seed или входа не восстанавливает автоматически внешнее состояние и окружение."
+            }
+          },
+          {
+            "label": "C",
+            "order": 2,
+            "text": "PBT проверяет свойство на выбранных входах; если нарушения не найдены, конечный прогон доказывает свойство на всём домене, включая непроверенные значения.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Конечная выборка не проверяет непосещённые значения и сама по себе не доказывает свойство на всём домене. Исчерпывающий перебор конечного пространства — отдельный случай с явно заданными границами.",
+              "source_of_confusion": "Общий вид формулировки свойства и большое число выполненных проверок принимают за математическое доказательство всех возможных входов.",
+              "if_it_were_true": "Ошибка на значении, не попавшем в выборку, исключалась бы только из-за успеха проверенных значений. Такой вывод требует дополнительных оснований, которых один выборочный прогон не даёт.",
+              "how_it_should_be": "Отдельно сообщать область свойства, выбранные значения и результат прогона. Для утверждения обо всём домене нужны соответствующие основания; PBT полезен для поиска контрпримеров и обратной связи, а не автоматического доказательства."
+            }
+          },
+          {
+            "label": "D",
+            "order": 3,
+            "text": "PBT задаёт свойство и получает входы генератором; shrinking гарантирует наименьший из всех нарушающих входов, а ограничения поиска на эту гарантию не влияют.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Shrinking ищет более простой сохраняющий ошибку пример по заданным шагам и ограничениям. Он может остановиться по бюджету или на доступном локальном минимуме, не найдя наименьший из всех нарушающих входов.",
+              "source_of_confusion": "Удобное описание «уменьшить контрпример» читают как гарантию решения глобальной задачи минимизации для любого свойства и генератора.",
+              "if_it_were_true": "Ограниченный поиск всегда находил бы лучший вход среди всех нарушающих, даже вне рассмотренных кандидатов. Реальные ограничения и направление поиска не дают такой общей гарантии.",
+              "how_it_should_be": "Использовать полученный уменьшенный пример для диагностики и учитывать настройки shrinking. Сохранять нарушение свойства при уменьшении; не обещать глобальный минимум или обязательное успешное уменьшение каждого случая."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "open_issues": [],
+  "runtime_findings": [],
+  "checks": {
+    "content_review": {
+      "blocks": {
+        "Q7:B0": {
+          "status": "STALE",
+          "reason": "Вопрос содержит определение BDD и практическую реализацию с Cucumber. B прямо отвечает обеим частям. A/C/D также содержат формально завершённую модель определения и реализации, хотя их технические тезисы ошибочны.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261106-test-strategies-q7-revealed-r2.json"
+          ]
+        },
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "Вопрос спрашивает практическую реализацию Test-First; A даёт последовательность действий, включая проверку красного результата, реализацию и рефакторинг.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        },
+        "Q10:B0": {
+          "status": "STALE",
+          "reason": "Видимый вопрос просит определить PBT; B сообщает о свойствах и данных для их проверки, а также о контрпримерах/shrinking.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        }
+      },
+      "open_findings": [
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q03-content",
+          "check": "content_review",
+          "blocks": [
+            "Q3:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Проблема верного A: видимый вопрос «какие существуют» просит перечислить квадранты, а A не называет Q1-Q4. B-D тематические wrong, но не полноценные альтернативные ответы.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q04-content",
+          "check": "content_review",
+          "blocks": [
+            "Q4:B0"
+          ],
+          "status": "OPEN",
+          "reason": "B недостаточно раскрывает сравнение Pyramid и Trophy, выбор не только архитектурный (риски/цели также важны). sections смягчают, но не исправляют видимую опцию.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q08-content",
+          "check": "content_review",
+          "blocks": [
+            "Q8:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Термины и уровни приняты по теории; первичный методический источник не сверялся (UNVERIFIED). В A нет развернутого трёхстороннего сравнения.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q14-content",
+          "check": "content_review",
+          "blocks": [
+            "Q14:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Проценты и rollback-поведение зависят от платформы/архитектуры; первичные источники не проверены, UNVERIFIED.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q15-content",
+          "check": "content_review",
+          "blocks": [
+            "Q15:B0"
+          ],
+          "status": "OPEN",
+          "reason": "PITest mutation semantics and mutation score thresholds >80/<60 not checked against official docs; UNVERIFIED.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q25-content",
+          "check": "content_review",
+          "blocks": [
+            "Q25:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Проверка официального Scrum Guide 2020: он возлагает на Developers ответственность за instilling quality adherence to DoD, но не предписывает QA-роль или конкретный тестовый цикл. Источник приведён.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q35-content",
+          "check": "content_review",
+          "blocks": [
+            "Q35:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Official Pact documentation used for consumer/provider contract semantics and alternative tooling.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q41-content",
+          "check": "content_review",
+          "blocks": [
+            "Q41:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Видимый A не отвечает явно, когда применять Fake; это ключевая часть вопроса. Sections упоминает Fake, но не дополняет видимый ответ.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        }
+      ]
+    },
+    "factual_correctness": {
+      "blocks": {
+        "Q7:B0": {
+          "status": "STALE",
+          "reason": "Официальная документация Cucumber подтверждает BDD через collaborative examples/shared understanding и сопоставление Gherkin-шагов с выражениями step definitions, которые связывают их с исполняемым методом. Источники: https://cucumber.io/docs/bdd/ (checked_claim: BDD collaborative examples/shared understanding; current page, дата публикации не указана); https://cucumber.io/docs/cucumber/step-definitions/ (checked_claim: matching step definition expression links Gherkin step to method; current docs, дата не указана); https://cucumber.io/docs/gherkin/reference/ (checked_claim: step text matched to code block/step definition; current reference, дата не указана). Ограничение: проверены только текущие страницы документации; runtime не запускался.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        },
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "Martin Fowler, “Test Driven Development”, 2023-12-11 (страница указывает исходную публикацию 2005-03-05 и ревизию 2023-12-11), https://martinfowler.com/bliki/TestDrivenDevelopment.html. Проверено: повторяемые шаги — написать тест следующей функции, писать код пока тест не проходит, затем рефакторить; также сначала можно составить список случаев и выбирать следующий. Ограничение: это авторское объяснение TDD, не нормативный стандарт и не проверка runtime. Нижеуказанный CI gate не является определением подхода.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        },
+        "Q10:B0": {
+          "status": "STALE",
+          "reason": "jqwik User Guide 1.10.2 https://jqwik.net/docs/1.10.2/user-guide.html (version 1.10.2, official guide): checked claims — properties receive generated values; jqwik documents generation modes, result shrinking, stateful testing and data-driven properties. Shrinking is an algorithm with modes/constraints, not a global-minimum guarantee. General logical limitation: success on a finite sample alone does not establish unvisited domain values; guide also distinguishes exhaustive generation. Limits: source is jqwik implementation documentation rather than a general formal definition; no runtime execution.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        }
+      },
+      "open_findings": [
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-q25-sections-r2:q25:facts:1",
+          "check": "factual_correctness",
+          "blocks": [
+            "Q25:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Независимый повторный разбор Q25: обязательные CI на каждый commit и exploratory каждый Sprint не следуют из Scrum Guide и не заданы локальным контекстом.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-q25-sections-r2.json"
+        }
+      ]
+    },
+    "source_linkage": {
+      "blocks": {
+        "Q7:B0": {
+          "status": "STALE",
+          "reason": "См. критерий LINKAGE и его основание в таблице Q7.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+          ]
+        },
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "См. критерий LINKAGE и его основание в таблице Q9.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+          ]
+        },
+        "Q10:B0": {
+          "status": "STALE",
+          "reason": "См. критерий LINKAGE и его основание в таблице Q10.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "sections_consistency": {
+      "blocks": {
+        "Q7:B0": {
+          "status": "STALE",
+          "reason": "Sections по четырём опциям объясняют соответствующую ошибочную модель и корректируют её. Q7D sections актуально опровергают неверное поведение Outline; описывают связывание шагов с кодом. Содержимое секций к другим трём опциям согласуется с их текстом.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261106-test-strategies-q7-revealed-r2.json"
+          ]
+        },
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "Опровержения B/C/D адресуют смешение рефакторинга с новой функцией, обратный порядок и недоказательность одного зелёного результата. A edge_cases уместно отделяет CI/gates от определения.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        },
+        "Q10:B0": {
+          "status": "STALE",
+          "reason": "B sections оговаривают область допустимых входов, слабость свойства, ограниченность shrinking и возможность разных режимов генерации; A/C/D sections объясняют конкретные заблуждения. Утверждение о любом свойстве не ограничено алгоритмами без состояния.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        }
+      },
+      "open_findings": [
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-q25-sections-r2:q25:sections:1",
+          "check": "sections_consistency",
+          "blocks": [
+            "Q25:B0"
+          ],
+          "status": "OPEN",
+          "reason": "C.sections.what_actually и how_it_should_be предписывают обязательную автоматизацию regression в CI и запуск на каждый commit; Scrum Guide 2020 не устанавливает такую технику/каденцию для всех команд.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-q25-sections-r2.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-q25-sections-r2:q25:sections:2",
+          "check": "sections_consistency",
+          "blocks": [
+            "Q25:B0"
+          ],
+          "status": "OPEN",
+          "reason": "B.what_actually и D.edge_cases требуют exploratory sessions каждый Sprint; Scrum Guide не предписывает эту технику. Контекст проекта не задан.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-q25-sections-r2.json"
+        }
+      ]
+    },
+    "sfpl": {
+      "blocks": {
+        "Q7:B0": {
+          "status": "STALE",
+          "reason": "См. критерий SFPL и его основание в таблице Q7.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+          ]
+        },
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "Все четыре варианта используют параллельный практический каркас и перечисляют последовательность. A не выделяется дополнительным принципиальным шагом: B/C/D меняют порядок/состав цикла; формальная подсказка умеренная и не подтверждает дефект сама по себе.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        },
+        "Q10:B0": {
+          "status": "STALE",
+          "reason": "Каждый вариант использует двухчастный каркас: описание метода и дополнительное утверждение/следствие. B более корректно квалифицирует shrinking словом «может», но это смысловая точность, не достаточная сама по себе формальная подсказка.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "ansc": {
+      "blocks": {
+        "Q7:B0": {
+          "status": "FAIL",
+          "reason": "Independent reviewer found Q7D substituted an Outline detail for required step-to-code implementation, so the wrong option was incomplete.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        },
+        "Q9:B0": {
+          "status": "FAIL",
+          "reason": "CI-гейт не универсальное требование Test-First; это локальная рекомендация. Вариант A называет полезные приёмы, но не исчерпывает практику.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+          ]
+        },
+        "Q10:B0": {
+          "status": "FAIL",
+          "reason": "Документация jqwik не сверялась; число «сотни» и область применимости UNVERIFIED. B содержит абсолютное «любых входов».",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+          ]
+        }
+      },
+      "open_findings": [
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q01-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q1:B0"
+          ],
+          "status": "OPEN",
+          "reason": "D раскрывает и сущность и пользу. A-C — wrong-утверждения, каждый релевантен теме, но не является полным ответом.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q02-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q2:B0"
+          ],
+          "status": "OPEN",
+          "reason": "B wording «проценты — принцип» логически неудачен: проценты не принцип, а ориентир; верный ответ сопоставим по теме.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q03-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q3:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Проблема верного A: видимый вопрос «какие существуют» просит перечислить квадранты, а A не называет Q1-Q4. B-D тематические wrong, но не полноценные альтернативные ответы.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q04-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q4:B0"
+          ],
+          "status": "OPEN",
+          "reason": "B недостаточно раскрывает сравнение Pyramid и Trophy, выбор не только архитектурный (риски/цели также важны). sections смягчают, но не исправляют видимую опцию.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q05-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q5:B0"
+          ],
+          "status": "OPEN",
+          "reason": "A покрывает дефиницию и главные элементы. Wrong варианты — правдоподобные заблуждения, но B/D отвечают лишь на часть вопроса; C не раскрывает состав.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q06-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q6:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Падение теста не доказывает, что тест «вообще что-то проверяет» во всех смыслах; подтверждает ожидаемую красноту конкретного теста. Варианты практики первичным источником не сверялись.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q07-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q7:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Официальная документация Cucumber не проверена; детали помечены UNVERIFIED. B упрощает связь текста и исполняемого сценария.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q08-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q8:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Термины и уровни приняты по теории; первичный методический источник не сверялся (UNVERIFIED). В A нет развернутого трёхстороннего сравнения.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q09-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q9:B0"
+          ],
+          "status": "OPEN",
+          "reason": "CI-гейт не универсальное требование Test-First; это локальная рекомендация. Вариант A называет полезные приёмы, но не исчерпывает практику.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q10-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q10:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Документация jqwik не сверялась; число «сотни» и область применимости UNVERIFIED. B содержит абсолютное «любых входов».",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q11-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q11:B0"
+          ],
+          "status": "OPEN",
+          "reason": "10–100-кратная экономия и точная cost curve не проверялись первичным источником; UNVERIFIED.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q12-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q12:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Подходы и гарантия безопасного применения не проверялись первичными источниками; UNVERIFIED.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q13-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q13:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Точные метрики/покрытия Critical=95%+ и др. в sections не являются доказанными универсальными нормами; UNVERIFIED.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q14-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q14:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Проценты и rollback-поведение зависят от платформы/архитектуры; первичные источники не проверены, UNVERIFIED.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q15-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q15:B0"
+          ],
+          "status": "OPEN",
+          "reason": "PITest mutation semantics and mutation score thresholds >80/<60 not checked against official docs; UNVERIFIED.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q16-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q16:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Время 60–90 минут приведено в sections как пример, не универсальный стандарт; первоисточник не проверялся.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q17-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q17:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Цель flaky rate <1% и сроки лечения не подтверждены первоисточником; UNVERIFIED.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q18-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q18:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Pact CDC substitution and definitions not checked in official docs; UNVERIFIED.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q19-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q19:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Определение Feathers «legacy = code without tests» — авторская концепция, первоисточник не сверялся; практики UNVERIFIED.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q20-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q20:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Сценарии зависят от consistency contract конкретной системы; первичные материалы для методов chaos/retries не проверялись.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q21-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q21:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Конкретные брокерные инструменты/ожидания не сверялись с первичными docs.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q22-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q22:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Pact workflow не проверялся официальной документацией; formulation «ровно поля» упрощает matchers/semantics.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q23-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q23:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Принципы chaos engineering не сверены с первоисточником; UNVERIFIED.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q24-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q24:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Числовые thresholds (coverage, flaky rate, MTTR etc.) в theory/sections не подтверждены универсальным стандартом; UNVERIFIED.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q25-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q25:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Проверка официального Scrum Guide 2020: он возлагает на Developers ответственность за instilling quality adherence to DoD, но не предписывает QA-роль или конкретный тестовый цикл. Источник приведён.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q26-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q26:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Official Scrum Guide 2020 supports common DoD across teams working on same product; no mandated Three Amigos ceremony/role set.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q27-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q27:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Testing practice recommendations not independently checked; schedules are context-dependent.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q28-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q28:B0"
+          ],
+          "status": "OPEN",
+          "reason": "No primary source checked; concept is operationally defined in block.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q29-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q29:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Test review checklist is an engineering practice, not externally verified standard.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q30-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q30:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Test double terminology from Gerard Meszaros not externally checked; fake-vs-stub preference context-dependent.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q31-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q31:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Official Testcontainers JUnit 5 lifecycle docs + project homepage. Q31 correct reconsidered: C valid in core, with overclaim about exact production equivalence.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q32-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q32:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Privacy and data handling legal claims not verified against applicable jurisdiction; UNVERIFIED.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q33-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q33:B0"
+          ],
+          "status": "OPEN",
+          "reason": "GDPR/HIPAA assertions not checked with official legal texts; regulatory scope depends jurisdiction/covered entity.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q34-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q34:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Page Object pattern is practice, not universally superior; no primary source checked.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q35-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q35:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Official Pact documentation used for consumer/provider contract semantics and alternative tooling.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q36-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q36:B0"
+          ],
+          "status": "OPEN",
+          "reason": "B соответствует определению из блока. A,C,D содержат правдоподобные, но неполные/ошибочные утверждения; их sections не исправляют видимые варианты.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q37-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q37:B0"
+          ],
+          "status": "OPEN",
+          "reason": "B концептуально отвечает на обе части вопроса; точный набор метрик зависит от SLO, нагрузки и архитектуры.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q38-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q38:B0"
+          ],
+          "status": "OPEN",
+          "reason": "A правильно описывает базовые слои; конкретный набор инструментов и blocking policy зависит от архитектуры и риска.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q39-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q39:B0"
+          ],
+          "status": "OPEN",
+          "reason": "C соответствует распространённому паттерну, но содержит чрезмерно общие формулировки «защита — гейты и автооткат»; варианты canary/rollback зависят от системы и риска. Числа в sections не универсальные.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q40-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q40:B0"
+          ],
+          "status": "OPEN",
+          "reason": "A — краткая рекомендация и не заявляет исчерпывающий список. Численные/универсальные связи покрытия и mutation score требуют контекста; здесь не проверялись.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q41-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q41:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Видимый A не отвечает явно, когда применять Fake; это ключевая часть вопроса. Sections упоминает Fake, но не дополняет видимый ответ.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q42-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q42:B0"
+          ],
+          "status": "OPEN",
+          "reason": "C полностью покрывает общий Pact workflow. Тонкость: контракт может быть загружен/прочитан из broker либо local folder; wording «в брокер» описывает broker workflow, а не единственный путь.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q43-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q43:B0"
+          ],
+          "status": "OPEN",
+          "reason": "B покрывает вопрос числами, но доли — ориентировочные, не доказанный стандарт. Количество тестов и времена в sections не универсальны.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q44-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q44:B0"
+          ],
+          "status": "OPEN",
+          "reason": "A предлагает три релевантных способа, но формулирует их как предписание («только», «ночью») без связи с проектным бюджетом; цифры/thresholds из sections контекстны и не универсальны.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "20261105T213007Z-test-strategies-full-examiner-r1:ind-q45-ansc",
+          "check": "ansc",
+          "blocks": [
+            "Q45:B0"
+          ],
+          "status": "OPEN",
+          "reason": "C описывает одну конкретную границу component test; терминология не полностью стандартизована. Утверждение про 10–100× и превосходство Honeycomb в theory не проверялось, числа не являются общей гарантией.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T213007Z-test-strategies-full-examiner-r1.json"
+        },
+        {
+          "id": "test-strategies-q7d-ansc-20261105-r1",
+          "check": "ansc",
+          "blocks": [
+            "Q7:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Independent reviewer found Q7D substituted an Outline detail for required step-to-code implementation, so the wrong option was incomplete.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+        }
+      ]
+    },
+    "russian_readability": {
+      "blocks": {
+        "Q7:B0": {
+          "status": "STALE",
+          "reason": "Все четыре текста понятны и грамматически приемлемы; технические термины Cucumber/Gherkin/step definitions уместны. D тяжеловат, но его смысл однозначен. Теория ранее содержала чрезмерно категоричное описание исполняемых спецификаций; в этом повторном чтении выявлено, что её хеш не изменился.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261106-test-strategies-q7-revealed-r2.json"
+          ]
+        },
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "Русский язык естественный и достаточно ясный; слова «зелёный результат» и «рефакторинг» используются последовательно. Английское Test-First является термином темы.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        },
+        "Q10:B0": {
+          "status": "STALE",
+          "reason": "Язык опций ясен, термины уместны. В теории «верные для любых входных данных», «сотни случайных входов», «минимальный» и «покрывают бесконечно много входов» чрезмерно категоричны и могут создать неверное впечатление о доказательстве и границах PBT.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "independent_review": {
+      "blocks": {
+        "Q7:B0": {
+          "status": "STALE",
+          "reason": "Distinct same reviewer re-read current Q7 after one-field fix; revealed review only, no fresh blindness claimed.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261106-test-strategies-q7-revealed-r2.json"
+          ]
+        },
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "Distinct fresh context completed sealed A then B for all four options and every section; issues are retained in their own criteria.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        },
+        "Q10:B0": {
+          "status": "STALE",
+          "reason": "Distinct fresh context completed sealed A then B for all four options and every section; issues are retained in their own criteria.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "blind_review": {
+      "blocks": {
+        "Q7:B0": {
+          "status": "STALE",
+          "reason": "Actual choices B/A/B were saved and sealed before reveal; no prior theory or key supplied to the reviewer.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        },
+        "Q9:B0": {
+          "status": "STALE",
+          "reason": "Actual choices B/A/B were saved and sealed before reveal; no prior theory or key supplied to the reviewer.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        },
+        "Q10:B0": {
+          "status": "STALE",
+          "reason": "Actual choices B/A/B were saved and sealed before reveal; no prior theory or key supplied to the reviewer.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261105T235210Z-test-strategies-seven-nine-ten-r1.json"
+          ]
+        }
+      },
+      "open_findings": []
+    },
+    "final_acceptance": {
+      "blocks": {
+        "Q7:B0": {
+          "status": "FAIL",
+          "evidence": []
+        },
+        "Q9:B0": {
+          "status": "FAIL",
+          "evidence": []
+        },
+        "Q10:B0": {
+          "status": "FAIL",
+          "evidence": []
+        }
+      },
+      "open_findings": []
+    }
+  },
+  "instructions": "Все A/B/C/D и sections. SFPL, ANSC, RU — отдельные вердикты. Дополнительные смысловые зависимости прочитать и указать в evidence. Сигналы не являются редакторской приёмкой."
+}

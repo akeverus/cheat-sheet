@@ -1,0 +1,11 @@
+import java.io.PrintWriter;
+import java.util.*;
+import org.junit.platform.engine.DiscoverySelector;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.engine.support.descriptor.MethodSource;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+class RunProof {
+ public static void main(String[] args){List<DiscoverySelector> selectors=new ArrayList<>();String mode=args[0];if(mode.startsWith("rule:")){String[] names={"acceptsMarkedAddress","rejectsNull","rejectsWithoutAt"};for(int i=0;i<Integer.parseInt(mode.substring(5));i++)selectors.add(DiscoverySelectors.selectMethod(AddressMarkerRuleTest.class,names[i]));}else if(mode.equals("ordered")){selectors.add(DiscoverySelectors.selectMethod(LogicProofTest.class,"sortOrderContract"));}else if(mode.equals("multiset")){selectors.add(DiscoverySelectors.selectMethod(LogicProofTest.class,"sortSizeContract"));selectors.add(DiscoverySelectors.selectMethod(LogicProofTest.class,"sortMultiplicityContract"));}else{selectors.add(DiscoverySelectors.selectClass(LogicProofTest.class));selectors.add(DiscoverySelectors.selectClass(AddressMarkerRuleTest.class));}var req=LauncherDiscoveryRequestBuilder.request().selectors(selectors).configurationParameter("junit.jupiter.execution.parallel.enabled","false").build();var listener=new SummaryGeneratingListener();LauncherFactory.create().execute(req,listener);var summary=listener.getSummary();summary.printTo(new PrintWriter(System.out,true));List<String> names=new ArrayList<>(),types=new ArrayList<>();for(var f:summary.getFailures()){names.add(f.getTestIdentifier().getSource().filter(MethodSource.class::isInstance).map(MethodSource.class::cast).map(MethodSource::getMethodName).orElse("unknown"));types.add(f.getException().getClass().getName());}System.out.println("RESULT {\"found\":"+summary.getTestsFoundCount()+",\"passed\":"+summary.getTestsSucceededCount()+",\"failed\":"+summary.getTestsFailedCount()+",\"failure_methods\":["+String.join(",",names.stream().map(n->"\""+n+"\"").toList())+"],\"failure_types\":["+String.join(",",types.stream().map(n->"\""+n+"\"").toList())+"]}");if(summary.getTestsFailedCount()>0)System.exit(1);}
+}

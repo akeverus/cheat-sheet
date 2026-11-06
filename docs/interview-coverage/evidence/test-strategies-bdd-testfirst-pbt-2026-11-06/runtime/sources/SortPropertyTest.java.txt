@@ -1,0 +1,35 @@
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import static org.junit.jupiter.api.Assertions.*;
+
+class SortPropertyTest {
+    void preservesSize(List<Integer> input) {
+        assertEquals(input.size(), sorted(input).size());
+    }
+
+    void isOrdered(List<Integer> input) {
+        List<Integer> result = sorted(input);
+        for (int i = 1; i < result.size(); i++) {
+            assertTrue(result.get(i - 1) <= result.get(i));
+        }
+    }
+
+    void preservesMultiplicity(List<Integer> input) {
+        assertEquals(counts(input), counts(sorted(input)));
+    }
+
+    private static List<Integer> sorted(List<Integer> input) {
+        List<Integer> result = new ArrayList<>(input);
+        Collections.sort(result);
+        return result;
+    }
+
+    private static Map<Integer, Integer> counts(List<Integer> values) {
+        Map<Integer, Integer> result = new HashMap<>();
+        for (Integer value : values) result.merge(value, 1, Integer::sum);
+        return result;
+    }
+}

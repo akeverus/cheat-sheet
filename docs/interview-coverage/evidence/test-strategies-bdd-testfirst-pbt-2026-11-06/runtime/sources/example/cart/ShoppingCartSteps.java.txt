@@ -1,0 +1,45 @@
+package example.cart;
+
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
+import io.cucumber.java.en.Then;
+import java.math.BigDecimal;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class ShoppingCartSteps {
+    private ShoppingCart cart;
+    private BigDecimal observedTotal;
+
+    @Given("пустая корзина")
+    public void emptyCart() {
+        cart = new ShoppingCart();
+        observedTotal = null;
+    }
+
+    @Given("корзина с {int} товарами по {int} руб")
+    public void filledCart(int count, int price) {
+        emptyCart();
+        for (int i = 0; i < count; i++) cart.addItem("Товар", price);
+    }
+
+    @When("я добавляю товар {string} по цене {int} руб")
+    public void addItem(String name, int price) {
+        cart.addItem(name, price);
+        observedTotal = cart.total();
+    }
+
+    @When("применяется скидка")
+    public void applyDiscount() {
+        observedTotal = cart.total();
+    }
+
+    @Then("в корзине {int} товар(ов)")
+    public void itemCount(int expected) {
+        assertEquals(expected, cart.size());
+    }
+
+    @Then("итого {int} руб")
+    public void totalEquals(int expected) {
+        assertEquals(0, BigDecimal.valueOf(expected).compareTo(observedTotal));
+    }
+}

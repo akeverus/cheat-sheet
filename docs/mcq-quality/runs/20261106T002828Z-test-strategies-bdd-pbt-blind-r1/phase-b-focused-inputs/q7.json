@@ -1,0 +1,110 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/testing/test-strategies-interview.json",
+    "theory": "cheatsheets/interview/testing/test-strategies-interview.md"
+  },
+  "sha256": {
+    "mcq": "333b5acf7cbb2d5571f3e5e728a18a2c8559640e502da4310775050b315e0ae7",
+    "theory": "04461332dfcb8f4e08909c6e447627b18c82016952720edaa0970d6d3dca804f"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "instructions": "Все A/B/C/D и sections. SFPL, ANSC, RU — отдельные вердикты. Дополнительные смысловые зависимости прочитать и указать в evidence. Сигналы не являются редакторской приёмкой.",
+  "blocks": [
+    {
+      "q_number": 7,
+      "block_idx": 0,
+      "visible_question": "Что такое BDD и как его реализовать с Cucumber?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Что такое `BDD` и как его реализовать с `Cucumber`?",
+        "options": [
+          {
+            "label": "A",
+            "order": 0,
+            "text": "BDD использует согласованные примеры поведения; Cucumber превращает сценарии Gherkin в действия приложения по смыслу текста, без методов, связывающих шаги с кодом.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Cucumber ищет step definition, выражение которого соответствует тексту шага, и вызывает связанный код. Он не выводит действия приложения из произвольной прозы без такого связывания.",
+              "source_of_confusion": "Читаемость Gherkin принимают за способность инструмента самостоятельно понимать предметную область и создавать реализацию шагов.",
+              "if_it_were_true": "Текста сценария было бы достаточно для вызова неизвестного приложению действия. Реальному Cucumber нужны подходящие step definitions; отсутствие связывания не заменяется пониманием смысла слов.",
+              "how_it_should_be": "Сначала согласовать примеры поведения, затем сформулировать сценарии и связать их шаги с кодом действий и проверок. Использование Cucumber поддерживает BDD, но само наличие feature-файла ещё не доказывает совместное понимание."
+            }
+          },
+          {
+            "label": "B",
+            "order": 1,
+            "text": "BDD развивает общее понимание поведения на примерах; в Cucumber сценарии Gherkin связывают со step definitions, которые выполняют действия и проверки ожидаемого результата.",
+            "correct": true,
+            "sections": {
+              "explanation": "BDD строит совместное понимание ожидаемого поведения через конкретные примеры. При автоматизации с Cucumber текст шагов Gherkin сопоставляется с выражениями step definitions, а их код обращается к системе и проверяет ожидания.",
+              "example": "Команда согласует пример добавления книги в корзину. Given задаёт исходное состояние, When добавляет книгу через код приложения, Then проверяет количество и сумму; выражения в step definitions связывают эти тексты с методами.",
+              "when_to_apply": "Когда участникам важно обсудить правила и примеры до реализации соответствующего изменения и сохранять проверяемую спецификацию. BDD не сводится к обязательному инструменту или синтаксису Given/When/Then.",
+              "edge_cases": "Сценарий без корректных действий и проверок не доказывает нужное поведение. Неопределённые и неоднозначные шаги требуют исправления связывания. Обсуждение снижает риск недопонимания, но не гарантирует отсутствие дефектов.",
+              "related": "Scenario Outline подставляет данные каждой строки Examples, кроме заголовка. TDD направляет реализацию тестами, ATDD подчёркивает совместные приёмочные примеры; эти практики могут сочетаться с BDD."
+            }
+          },
+          {
+            "label": "C",
+            "order": 2,
+            "text": "В BDD команда уточняет поведение примерами; в Cucumber код шага выбирается по Given/When/Then, а выражение в step definition служит только подписью.",
+            "correct": false,
+            "sections": {
+              "what_actually": "При поиске step definition Cucumber сопоставляет текст шага с выражением, а не выбирает реализацию только по Given, When или Then. Ключевое слово описывает роль шага для читателя.",
+              "source_of_confusion": "Аннотации @Given/@When/@Then принимают за три автоматические команды приложения, а выражения внутри них — за необязательные комментарии.",
+              "if_it_were_true": "Разные шаги с одним ключевым словом нельзя было бы различить по тексту. Реальные выражения связывают разные действия и проверки с их шагами, независимо от такого предполагаемого выбора по одному ключевому слову.",
+              "how_it_should_be": "Описать ожидаемое поведение на согласованных примерах и задать соответствующие выражения и методы шагов. Given/When/Then помогают структурировать сценарий; действия и проверки реализует связанный код."
+            }
+          },
+          {
+            "label": "D",
+            "order": 3,
+            "text": "BDD строит спецификацию на согласованных примерах; Cucumber связывает шаги с кодом через step definitions, а Scenario Outline исполняет один раз без подстановки строк Examples.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Scenario Outline задаёт шаблон. Cucumber подставляет данные и выполняет сценарий для каждой строки Examples, не считая строки заголовков; это не один запуск с буквальными параметрами шаблона.",
+              "source_of_confusion": "Таблицу Examples принимают за свободное пояснение под сценарием, хотя она участвует в развёртывании исполняемых примеров.",
+              "if_it_were_true": "Добавление второй строки данных не добавляло бы отдельный пример исполнения. В реальной модели Outline строки задают отдельные подстановки; свободное описание feature имеет другую роль.",
+              "how_it_should_be": "Согласовать правила и примеры, связать шаги Gherkin с кодом, а для нескольких наборов данных использовать Outline и Examples. Проверить, что ожидаемые значения каждой строки соответствуют обсуждённому правилу."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "theory": [
+    {
+      "q_number": 7,
+      "title": "Что такое BDD и как его реализовать с Cucumber?",
+      "line": 343,
+      "body": "\n**BDD (Behavior-Driven Development)** — совместное уточнение ожидаемого поведения на конкретных примерах. Команда обсуждает правила и неизвестные случаи (**Discovery**), формулирует примеры (**Formulation**) и связывает их с проверками системы (**Automation**). Практики итеративны; Gherkin и Cucumber — средства поддержки, а не определение BDD. Обсуждение помогает выявлять разногласия раньше, но не гарантирует отсутствие недопонимания или дефектов. См. [Cucumber: BDD](https://cucumber.io/docs/bdd/).\n\n### От примера к исполняемой проверке\n\nВ Cucumber сценарии `.feature` связываются со **step definitions**: выражение сопоставляется с текстом шага, после чего вызывается код действий и утверждений. Наличие feature-файла без корректного связывания и проверок не подтверждает поведение. Ключевые слова Given/When/Then помогают читателю, но сами не выбирают реализацию шага. См. [Step definitions](https://cucumber.io/docs/cucumber/step-definitions/).\n\nДоговоримся об учебном правиле корзины: от 3 единиц скидка 10%, от 10 — 20% вместо 10%. Сумма считается по добавленным товарам. Пример включает отдельный сценарий и три запуска Outline:\n\n```gherkin\nFeature: Корзина покупок\n  Scenario: Добавление товара в корзину\n    Given пустая корзина\n    When я добавляю товар \"Книга\" по цене 500 руб\n    Then в корзине 1 товар\n    And итого 500 руб\n\n  Scenario Outline: Скидка по количеству\n    Given корзина с <количество> товарами по <цена> руб\n    When применяется скидка\n    Then итого <итого> руб\n\n    Examples:\n      | количество | цена | итого |\n      | 3          | 100  | 270   |\n      | 5          | 100  | 450   |\n      | 10         | 100  | 800   |\n```\n\nКаждая строка данных Examples разворачивается в отдельный сценарий. Для **Cucumber-JVM 7.x / Java 17+** ниже показаны модель и все определения использованных шагов. Файлы классов находятся в пакете `example.cart`; feature — в `src/test/resources/features/cart.feature`.\n\n```java\npackage example.cart;\n\nimport java.math.BigDecimal;\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class ShoppingCart {\n    private record Item(String name, BigDecimal price) {}\n    private final List<Item> items = new ArrayList<>();\n\n    public void addItem(String name, int price) {\n        if (price < 0) throw new IllegalArgumentException(\"negative price\");\n        items.add(new Item(name, BigDecimal.valueOf(price)));\n    }\n\n    public int size() {\n        return items.size();\n    }\n\n    public BigDecimal total() {\n        BigDecimal subtotal = items.stream().map(Item::price)\n            .reduce(BigDecimal.ZERO, BigDecimal::add);\n        BigDecimal factor = items.size() >= 10 ? new BigDecimal(\"0.80\")\n            : items.size() >= 3 ? new BigDecimal(\"0.90\") : BigDecimal.ONE;\n        return subtotal.multiply(factor);\n    }\n}\n```\n\n```java\npackage example.cart;\n\nimport io.cucumber.java.en.Given;\nimport io.cucumber.java.en.When;\nimport io.cucumber.java.en.Then;\nimport java.math.BigDecimal;\nimport static org.junit.jupiter.api.Assertions.*;\n\npublic class ShoppingCartSteps {\n    private ShoppingCart cart;\n    private BigDecimal observedTotal;\n\n    @Given(\"пустая корзина\")\n    public void emptyCart() {\n        cart = new ShoppingCart();\n        observedTotal = null;\n    }\n\n    @Given(\"корзина с {int} товарами по {int} руб\")\n    public void filledCart(int count, int price) {\n        emptyCart();\n        for (int i = 0; i < count; i++) cart.addItem(\"Товар\", price);\n    }\n\n    @When(\"я добавляю товар {string} по цене {int} руб\")\n    public void addItem(String name, int price) {\n        cart.addItem(name, price);\n        observedTotal = cart.total();\n    }\n\n    @When(\"применяется скидка\")\n    public void applyDiscount() {\n        observedTotal = cart.total();\n    }\n\n    @Then(\"в корзине {int} товар(ов)\")\n    public void itemCount(int expected) {\n        assertEquals(expected, cart.size());\n    }\n\n    @Then(\"итого {int} руб\")\n    public void totalEquals(int expected) {\n        assertEquals(0, BigDecimal.valueOf(expected).compareTo(observedTotal));\n    }\n}\n```\n\nДля запуска через JUnit Platform нужны согласованные зависимости `cucumber-java`, `cucumber-junit-platform-engine`, Platform Suite и библиотека утверждений Jupiter; build tool должен использовать JUnit Platform. В suite выбирают ресурс feature и glue-пакет, например:\n\n```java\npackage example.cart;\n\nimport org.junit.platform.suite.api.ConfigurationParameter;\nimport org.junit.platform.suite.api.IncludeEngines;\nimport org.junit.platform.suite.api.SelectClasspathResource;\nimport org.junit.platform.suite.api.Suite;\n\n@Suite\n@IncludeEngines(\"cucumber\")\n@SelectClasspathResource(\"features\")\n@ConfigurationParameter(key = \"cucumber.glue\", value = \"example.cart\")\npublic class RunCucumberTest {}\n```\n\nBDD и TDD могут сочетаться: общие примеры уточняют поведение, а небольшие тесты направляют реализацию. Границы не задаются жёсткой парой «BDD только acceptance, TDD только unit»; Gherkin без совместного обсуждения сам по себе не создаёт BDD-процесс.\n\n\n"
+    }
+  ],
+  "block_hashes": {
+    "Q7:B0": {
+      "mcq": "8c80de16f5c823571b035a00ba56bd6bd91099f09d0f5ee6615e04e7224f9f59",
+      "theory": "afda9a4bbcc23b740ba7b7c9a7411d5610305ab6d56f6bbc572fa0024d56c178"
+    }
+  },
+  "extraction": {
+    "source": "docs/mcq-quality/runs/20261106T002828Z-test-strategies-bdd-pbt-blind-r1/disclosure/review-input.json",
+    "source_sha256": "c853e3cc47308ba8c455794d07bc5169c764484fffc8721e20e4c2fe19919ebc",
+    "fields": "Complete oneQ/B and theory, full preamble, source/rule hashes; repeated long rubric descriptions omitted, names retained",
+    "checks": [
+      "content_review",
+      "factual_correctness",
+      "source_linkage",
+      "sections_consistency",
+      "sfpl",
+      "ansc",
+      "russian_readability",
+      "independent_review",
+      "blind_review",
+      "final_acceptance"
+    ]
+  },
+  "context_note": "Full preamble remains in original narrow packet; only global topic introduction/TOC omitted from this focused view. Complete Q7 body, all4options and17sections preserved."
+}
