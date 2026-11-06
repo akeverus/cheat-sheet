@@ -1,0 +1,215 @@
+{
+  "reviewer": "kotlin_ctors_variance_sync_reviewer",
+  "model": "gpt-6-luna",
+  "blocks": [
+    {
+      "q_number": 16,
+      "block_idx": 0,
+      "comparative_assessment": {
+        "A": {
+          "coverage": "Полный: размещение первичного и вторичных, делегирование при наличии первичного и поведение без него.",
+          "completeness": "Полный законченный ответ.",
+          "correctness": "Верно в условиях вопроса.",
+          "wrong_defense": "Ключевой ответ, wrong-защита неприменима."
+        },
+        "B": {
+          "coverage": "Полный по требуемым положениям и делегированию.",
+          "completeness": "Полный законченный дистрактор.",
+          "correctness": "Неверно: перепутаны места объявления первичного и вторичных.",
+          "wrong_defense": "Похоже на распространённую путаницу между первичным заголовком класса и телом вторичного; никакое условие не исправляет прямое утверждение о местах объявления."
+        },
+        "C": {
+          "coverage": "Полный по видам; добавляет ошибочное правило о цепочке и неявном первичном.",
+          "completeness": "Полный законченный дистрактор.",
+          "correctness": "Неверно: класс с объявленными вторичными может не иметь первичного; неявный первичный без параметров предполагается, когда конструкторы не объявлены.",
+          "wrong_defense": "Вероятный источник — перенос правила неявного конструктора пустого класса. Контрпример Guest с одним вторичным показывает ошибку."
+        },
+        "D": {
+          "coverage": "Полный по видам и инициализации/делегированию.",
+          "completeness": "Полный законченный дистрактор.",
+          "correctness": "Неверно: направление делегирования перевёрнуто; общий порядок инициализации не заставляет первичный вызывать вторичный.",
+          "wrong_defense": "Правдоподобная инверсия: воспринимать вторичный как обязательный этап общей инициализации. В Kotlin общий init проходит до тела вторичного."
+        }
+      },
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "Видимый вопрос просит перечислить виды конструкторов; A отвечает исчерпывающе, альтернативы остаются тематически полными, а не уходят в сторону."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "Проверены места объявлений, обязательное this-делегирование при первичном и исключение класса без первичного; A верен, у B/C/D конкретные фактические ошибки."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "Текущая цепочка Q16 → теория Q16 → варианты/sections прямая (L4): вопрос о типах раскрыт теорией через первичный/вторичные и делегирование, опции проверяют те же понятия; sections объясняют текущую ошибочную модель каждого wrong."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "Для A sections дополняют правильное утверждение. У B/C/D what_actually/source_of_confusion/if_it_were_true/how_it_should_be прямо опровергают предъявленную опцию; у A использованы соответствующие explanation/example/when_to_apply/edge_cases/related. В прочитанном материале внутренних противоречий не обнаружено."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "Измерение Python regex слов/символов/предложений/пунктуационных знаков: A 25/208/2/6, B 27/210/2/6, C 25/205/2/6, D 27/206/2/6. Все имеют один двухчастный каркас: утверждения о местах объявления плюс правило делегирования; отличие C/D содержит короткое ошибочное уточнение, но длина, грамматика и плотность близки и правильный вариант формой не выделен."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "Все варианты до конца отвечают на вопрос о типах конструкторов и содержат соответствующие правила. Неверность B/C/D не является неполнотой: каждый представляет связную модель с определённым заблуждением, раскрытым выше."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Вопрос и все четыре коротких варианта читаются естественно, терминология устойчива, условия и связи понятны. Sections и теория по Q16 также прочитаны; формулировки не маскируют wrong плохим языком."
+        }
+      },
+      "findings": [],
+      "sources": [
+        {
+          "url": "https://kotlinlang.org/spec/declarations.html#constructor-declaration",
+          "checked_claim": "Первичные конструкторы задаются в заголовке; вторичные объявляются в теле; если первичный задан, вторичные делегируют ему, а при отсутствии первичного действует делегирование суперклассу; неявный первичный создаётся при отсутствии объявленных конструкторов.",
+          "version": "Kotlin Language Specification 1.9-rfc+0.1 (версия указана на странице)",
+          "checked_at": "2026-11-06"
+        },
+        {
+          "url": "https://kotlinlang.org/spec/declarations.html#classifier-initialization",
+          "checked_claim": "Порядок инициализации класса и выполнение тел вторичных конструкторов; проверка утверждения D об общей инициализации.",
+          "version": "Kotlin Language Specification 1.9-rfc+0.1 (версия указана на странице)",
+          "checked_at": "2026-11-06"
+        }
+      ],
+      "actual_utc_time": "2026-11-06T01:52:10.783702+00:00",
+      "surfaces_read": [
+        "disclosure/review-input.json (адресно: Q16/B0, theory, preamble и метаданные snapshot)",
+        "q16-stem.txt",
+        "q16-option-A.json",
+        "q16-option-B.json",
+        "q16-option-C.json",
+        "q16-option-D.json",
+        "q16-theory-0.txt",
+        "q16-theory-1.txt",
+        "preamble-0.txt",
+        "preamble-1.txt",
+        "preamble-2.txt",
+        "docs/mcq-quality-standard.md",
+        "docs/mcq-quality/examiner-review.md",
+        "docs/mcq-quality/surface-parity-rules.md",
+        "docs/mcq-quality/russian-readability-rules.md",
+        "официальная Kotlin Language Specification: constructor-declaration и classifier-initialization"
+      ],
+      "limitations": [
+        "Метрики формы измеряют видимый текст четырёх ответов через Python и не заменяют экспертную оценку.",
+        "Официальная спецификация на момент проверки отображает редакцию 1.9-rfc+0.1.",
+        "FINAL: NOT_RUN; scoped final gate не запрашивался и prerequisite PASS не зарегистрированы."
+      ]
+    },
+    {
+      "q_number": 24,
+      "block_idx": 0,
+      "comparative_assessment": {
+        "A": {
+          "coverage": "Покрывает определение generics, направления out/in и место задания ограничений.",
+          "completeness": "Полный законченный ответ по объёму вопроса.",
+          "correctness": "Неверно: перепутаны направления подтипизации; верно упомянуты оба места задания вариантности.",
+          "wrong_defense": "Похоже на терминологическую путаницу «in/out» с направлением преобразования. Направления сформулированы прямо, без условия, способного оправдать их."
+        },
+        "B": {
+          "coverage": "Полный: определение generics, оба направления и оба способа задания variantности.",
+          "completeness": "Полный и достаточно точный ответ.",
+          "correctness": "Верно.",
+          "wrong_defense": "Ключевой ответ, wrong-защита неприменима."
+        },
+        "C": {
+          "coverage": "Полный: generics, направления out/in и требование к проекциям при каждом использовании.",
+          "completeness": "Полный законченный дистрактор; последняя часть — ошибочное ограничение, а не пропуск темы.",
+          "correctness": "Неверно: Kotlin допускает declaration-site variance; при применении List<String> не нужно повторно указывать проекцию, потому что List уже объявляет out E.",
+          "wrong_defense": "Вероятно смешение use-site projections с вариантом объявления параметра. Пример List<String> без проекции опровергает универсальное «при каждом использовании»."
+        },
+        "D": {
+          "coverage": "Полный: generics, оба направления и следствие вариантности для изменяемости объекта.",
+          "completeness": "Полный законченный дистрактор; ошибочное следствие остаётся частью ответа на вопрос.",
+          "correctness": "Неверно: variantность и проекции сами по себе не делают объект неизменяемым.",
+          "wrong_defense": "Правдоподобное смешение запрета некоторых операций через конкретную проецированную ссылку с замораживанием объекта. Например, Array<in Cat> допускает запись Cat; другой alias может также менять массив."
+        }
+      },
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "Видимый вопрос охватывает generics и механизм in/out; все четыре опции посвящены этим аспектам, без постороннего содержания."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "Официальная Kotlin документация подтверждает declaration-site variance и projections, направление out/in, безопасность типов отдельно от неизменяемости и правила star projection. Спецификация подтверждает вложенную вариантность. B верен; wrong-модели A/C/D содержат выявляемые ошибки."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "Текущая цепочка видимый Q24 → теория Q24 → варианты/sections прямая (L4): теория формулирует оба способа, примеры подтипизации, вложенные позиции и star upper bound; каждый вариант/section развивает именно эти понятия."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "Прочитаны все 17 sections. A: what_actually, source_of_confusion, if_it_were_true, how_it_should_be — верно опровергают переставленные направления и верно учитывают вложенные позиции функции. B: explanation, example, when_to_apply, edge_cases, related — содержательно согласованы; List<*> даёт Any? для List, у параметра иного типа граница может быть уже, запись произвольного значения не разрешается. C: what_actually, source_of_confusion, if_it_were_true, how_it_should_be — подтверждают, что проекция при каждом применении не требуется; List<out E> действительно объявляет ковариантный параметр. D: what_actually, source_of_confusion, if_it_were_true, how_it_should_be — правильно различают ограничение операций через ссылку и мутабельность объекта. Внутренних фактических несогласованностей sections не обнаружено."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "Python regex-метрики видимых вариантов: A — 26 слов, 208 символов, 2 предложения, 8 знаков пунктуации/разметки; B — 29/213/2/8; C — 28/203/2/8; D — 28/224/2/8. У всех один каркас из двух предложений: краткое определение + утверждение о вариантности и конкретное следствие/условие. Разброс умеренный; correct не имеет уникального кода, примера, оговорки или заметно иного формата."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "Каждый вариант — законченный прямой ответ и содержит определение generics, оба модификатора и тезис об их применении/следствии. Неверность A/C/D выражает конкретное заблуждение; она не означает неполноты."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Вопрос и четыре опции читаются естественно, термины и связи понятны. Все sections и обе части теории по Q24 прочитаны; неверные опции не выделяются плохим русским языком."
+        }
+      },
+      "findings": [],
+      "sources": [
+        {
+          "url": "https://kotlinlang.org/docs/generics.html",
+          "checked_claim": "Kotlin поддерживает declaration-site variance и type projections; out даёт ковариантность, in — контравариантность; projections ограничивают операции, но не обеспечивают неизменяемость; star projections используют upper/lower bounds и не допускают небезопасную запись.",
+          "version": "Официальная Kotlin Documentation, актуальная страница открыта 2026-11-06",
+          "checked_at": "2026-11-06"
+        },
+        {
+          "url": "https://kotlinlang.org/spec/type-system.html#mixed-site-variance",
+          "checked_claim": "Совместное применение declaration-site/use-site variance и итоговая вариантность вложенных позиций, включая функцию (T) -> Unit.",
+          "version": "Kotlin Language Specification 1.9-rfc+0.1 (версия указана на странице)",
+          "checked_at": "2026-11-06"
+        },
+        {
+          "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/",
+          "checked_claim": "List объявлен как List<out E>; поэтому обычная List<String> уже использует declaration-site ковариантность без явной проекции в каждом месте.",
+          "version": "Kotlin Core API 2.4 (страница показывает 2.4 и expect/actual List<out E>)",
+          "checked_at": "2026-11-06"
+        }
+      ],
+      "actual_utc_time": "2026-11-06T01:53:42.490229+00:00",
+      "surfaces_read": [
+        "disclosure/review-input.json (адресно: Q24/B0 и метаданные snapshot)",
+        "q24-stem.txt",
+        "q24-option-A.json",
+        "q24-option-B.json",
+        "q24-option-C.json",
+        "q24-option-D.json",
+        "q24-theory-0.txt",
+        "q24-theory-1.txt",
+        "указанные ранее docs/mcq-quality-standard.md, examiner-review.md, surface-parity-rules.md, russian-readability-rules.md, preamble-0/1/2.txt",
+        "https://kotlinlang.org/docs/generics.html",
+        "https://kotlinlang.org/spec/type-system.html#mixed-site-variance",
+        "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/"
+      ],
+      "limitations": [
+        "Python метрики описывают только видимую форму; смысловая оценка выполнена отдельно.",
+        "Актуальная страница документации прочитана 2026-11-06; спецификация на странице помечена 1.9-rfc+0.1.",
+        "FINAL: NOT_RUN; scoped final gate не запрашивался и prerequisites не зарегистрированы."
+      ]
+    }
+  ],
+  "coordinator_notes": [
+    "Coverage is exactly Q16:B0 and Q24:B0, all eight visible options, all 34 sections, both theory bodies and shared preamble. No whole-topic acceptance.",
+    "The same new gpt-6-luna reviewer completed sealed blind A and subsequent disclosed B; author is a different context. Matching choices alone does not establish content or form acceptance.",
+    "Q16 JSON is unchanged; its changed theory was freshly reviewed. Q24 has 21 revised text fields; visible questions, keys and order were preserved.",
+    "No new application, compiler or service runtime tests were performed by this MCQ author or the independent reviewer. Existing theory-owner probes are historical evidence only.",
+    "Full working-file hash includes preserved unreviewed Q5/Q30 edits excluded from the commit; selected Q16/Q24 are identical in committed candidate and working tree.",
+    "Numeric form observations are diagnostics and do not replace explicit SFPL/ANSC judgments.",
+    "Global PLAN, checkpoint and sync remain coordinator-owned."
+  ]
+}

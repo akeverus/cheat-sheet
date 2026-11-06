@@ -1,0 +1,62 @@
+Какие типы конструкторов есть в Kotlin?
+
+В Kotlin есть **первичный** конструктор в заголовке класса и **вторичные** конструкторы с ключевым словом `constructor` в его теле. У обычного класса может не быть первичного конструктора.
+
+- Если первичный объявлен, каждый вторичный достигает его через `this(...)` — прямо или через другие вторичные.
+- Без первичного цепочка вторичных может достигать конструктора суперкласса через `super(...)`. Если единственный суперкласс — `Any`, явное делегирование необязательно.
+- Циклы делегирования запрещены. Когда не объявлено ни одного конструктора, подразумевается первичный без параметров; это правило не добавляет скрытый первичный к классу с объявленными вторичными.
+
+У первичного нет собственного тела: для общей инициализации служат инициализаторы свойств и `init`. Вторичный может иметь своё тело с дополнительной логикой. `init` не является третьим видом конструктора и работает также у класса без первичного.
+
+```kotlin
+class NamedUser(val name: String) {
+    var email: String = ""
+
+    init {
+        require(name.isNotBlank())
+    }
+
+    constructor(name: String, email: String) : this(name) {
+        this.email = email
+    }
+}
+
+// Только вторичный; неявный суперкласс Any не требует явного super().
+class Guest {
+    val name: String
+    val events = mutableListOf("property")
+
+    init {
+        events += "init"
+    }
+
+    constructor(name: String) {
+        require(name.isNotBlank())
+        this.name = name
+        events += "secondary"
+    }
+}
+
+open class Parent(val id: Int)
+
+class Child : Parent {
+    constructor(id: Int) : super(id)
+    constructor() : this(0)
+}
+
+class Empty
+
+fun main() {
+    check(NamedUser("Ada", "ada@example.test").email == "ada@example.test")
+    val guest = Guest("Гость")
+    check(guest.name == "Гость")
+    check(guest.events == listOf("property", "init", "secondary"))
+    check(Child().id == 0)
+    Empty()
+    println(guest.events)
+}
+```
+
+Общая инициализация идёт от суперкласса к свойствам первичного конструктора (если он есть), затем к инициализаторам свойств и `init`-блокам в порядке объявления. После этого выполняются тела вызванных вторичных: сначала делегированного, затем вызывающего. В `Guest` общая инициализация предшествует его телу конструктора; чтение ещё не присвоенного `name` из `init` было бы ошибочным подходом.
+
+Источники: [спецификация: конструкторы](https://kotlinlang.org/spec/declarations.html#constructor-declaration) и [порядок инициализации](https://kotlinlang.org/spec/declarat

@@ -1,0 +1,10 @@
+n(listOf("text", 1)) == "text")
+    println("variance: PASS")
+}
+```
+
+`out` у объявления не делает объект неизменяемым: он ограничивает использование параметра типа в API. Для обычного публичного `Source<out T>` нельзя добавить `fun put(value: T)`; для `Sink<in T>` — `fun next(): T`. Особые механизмы вроде `@UnsafeVariance` не заменяют доказательство безопасности такого API.
+
+**Star projection** `List<*>` означает неизвестный аргумент типа; для данного `List` элементы читаются как `Any?`. В общем случае верхняя граница параметра может быть уже. Звёздочка не подменяет неизвестный тип произвольным выбранным типом и не разрешает безопасно записывать значения любого типа.
+
+Источники: [Kotlin: generics и проекции](https://kotlinlang.org/docs/generics.html), [спецификация: mixed-site variance](https://kotlinlang.org/spec/type-system.html#mixed-site-variance). Сравнение с wildcard — в [Generics в Java](../java/java-generics-interview.md).
