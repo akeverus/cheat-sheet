@@ -1,0 +1,35 @@
+import java.util.concurrent.CyclicBarrier
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+
+fun main() {
+    val nullable: String? by lazy { null }
+    check(nullable == null)
+    var store: Lazy<Int> = lazy { 11 }
+    check(store.value == 11)
+    store = lazy { 12 }
+    check(store.value == 12)
+
+    val attempts = AtomicInteger()
+    val barrier = CyclicBarrier(2)
+    val published = lazy(LazyThreadSafetyMode.PUBLICATION) {
+        val attempt = attempts.incrementAndGet()
+        barrier.await(5, TimeUnit.SECONDS)
+        "value-$attempt"
+    }
+    val pool = Executors.newFixedThreadPool(2)
+    try {
+        val first = pool.submit<String> { published.value }
+        val second = pool.submit<String> { published.value }
+        val a = first.get(10, TimeUnit.SECONDS)
+        val b = second.get(10, TimeUnit.SECONDS)
+        check(attempts.get() == 2)
+        check(a == b)
+        check(published.isInitialized())
+        check(published.value == a)
+    } finally {
+        pool.shutdownNow()
+    }
+    println("PUBLICATION/types: PASS")
+}

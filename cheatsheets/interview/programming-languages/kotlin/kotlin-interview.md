@@ -708,39 +708,74 @@ val currentTime: Long
 
 ## Q20. (!) В чём разница между `lazy` и `lateinit`?
 
-Оба механизма откладывают инициализацию свойства, но решают разные задачи. `lazy` — для `val`, который вы хотите вычислить лениво, при первом обращении, и затем закэшировать (вы сами задаёте, *как* его вычислить). `lateinit` — для `var`, который вы инициализируете позже извне (DI-контейнер, `setUp` в тесте), но при объявлении значения ещё нет. Главное практическое правило: если инициализирующая логика известна на месте — `lazy`; если значение придёт снаружи — `lateinit`.
+**`lazy`** — библиотечная функция, создающая `Lazy<T>`: стандартный делегат свойства `val` вычисляет значение при чтении и сохраняет **успешный результат**. Если initializer бросил исключение, значение ещё не получено и следующая попытка чтения повторит вычисление.
 
-| | `lazy` | `lateinit` |
+**`lateinit`** — модификатор `var` без начального значения: код должен явно присвоить значение до чтения. Присваивание может выполнять метод самого объекта, внешний код или DI-контейнер; внешний источник не является условием механизма. После инициализации `var` можно присваивать снова. Раннее чтение вызывает `UninitializedPropertyAccessException`.
+
+| Свойство | Стандартный `lazy` | `lateinit` |
 |---|---|---|
-| Ключевое слово | `val` | `var` |
-| Тип | Любой | Не примитив |
-| Потокобезопасность | По умолчанию да (`LazyThreadSafetyMode.SYNCHRONIZED`) | Нет |
-| Nullable | Может быть nullable | Не может |
-| Проверка инициализации | Всегда инициализирован при доступе | `::prop.isInitialized` |
+| Способ получения | Выполнение заданной lambda при необходимости | Явное присваивание позднее |
+| Объявление | `val value by lazy { ... }` | Подходящий `lateinit var value: Type` |
+| Примеры типов | `Int` и `String?` допустимы | `String` допустим; `Int` и `String?` запрещены |
+| Сбой вычисления / раннее чтение | Исключение initializer; при следующем доступе новая попытка | Исключение до присваивания |
+| Проверка состояния без чтения значения | `isInitialized()` у сохранённого объекта `Lazy<T>` | `::property.isInitialized` в разрешённой области |
+| Синхронизация на Kotlin/JVM | По умолчанию `SYNCHRONIZED`; можно выбрать другой режим | Сам модификатор не добавляет синхронизации |
+
+Для `lateinit` нужен non-null непримитивный тип. У свойства класса не должно быть пользовательских getter/setter, и оно не объявляется таким образом в первичном конструкторе. Проверка `isInitialized` имеет ограничения области доступа; ниже она находится внутри класса, объявляющего свойство.
+
+### Пример с повторной попыткой
 
 ```kotlin
-// lazy — вычисляется при первом доступе
-val heavyObject: ExpensiveService by lazy {
-    println("Initializing...")
-    ExpensiveService()  // вызывается один раз
+class DeferredState {
+    var attempts = 0
+        private set
+
+    private val messageDelegate = lazy {
+        attempts++
+        if (attempts == 1) error("Первая попытка не удалась")
+        "готово"
+    }
+    val message: String by messageDelegate
+
+    lateinit var name: String
+
+    fun hasMessage(): Boolean = messageDelegate.isInitialized()
+    fun hasName(): Boolean = this::name.isInitialized
+    fun setup() { name = "Гость" }
 }
 
-// lateinit — инициализируется позже (DI, setUp в тестах)
-class UserServiceTest {
-    lateinit var service: UserService
+fun main() {
+    val state = DeferredState()
+    check(!state.hasMessage() && state.attempts == 0)
+    check(!state.hasName())
+    check(runCatching { state.name }.exceptionOrNull()
+        is UninitializedPropertyAccessException)
 
-    @BeforeEach
-    fun setUp() {
-        service = UserService(mockRepo)
-    }
+    check(runCatching { state.message }.exceptionOrNull() is IllegalStateException)
+    check(state.attempts == 1 && !state.hasMessage())
+    check(state.message == "готово")
+    check(state.message == "готово")
+    check(state.attempts == 2 && state.hasMessage())
 
-    @Test
-    fun test() {
-        // Если забыли setUp — UninitializedPropertyAccessException
-        if (::service.isInitialized) { /* safe */ }
-    }
+    state.setup() // Присваивание из метода самого объекта.
+    check(state.hasName() && state.name == "Гость")
+    state.name = "Другое имя"
+    check(state.name == "Другое имя")
+    println("lazy/lateinit: PASS")
 }
 ```
+
+Здесь `hasMessage()` не запускает initializer; после первого исключения результат ещё не сохранён. Успешная вторая попытка кэшируется. `hasName()` не присваивает значение: это делает обычный метод `setup()`.
+
+### Что учитывать при выборе
+
+`lazy` подходит, когда вычисление можно задать заранее и отложить до потребности. `lateinit` подходит для явного более позднего присваивания подходящего `var`, например при настройке объекта или в тесте. Это выбор способа инициализации, а не обязательного источника значения.
+
+В Kotlin/JVM `PUBLICATION` может выполнять initializer несколько раз при конкуренции, публикуя один результат; `NONE` не задаёт безопасного контракта для одновременного доступа нескольких потоков. Синхронизация инициализации не делает сам возвращённый изменяемый объект потокобезопасным. Поэтому фраза «блок всегда вызывается ровно один раз» требует условий и не описывает все режимы и сбои.
+
+Объект `Lazy<T>` можно хранить в обычной переменной `var`; это не добавляет стандартному делегату `setValue` и не делает `var value by lazy { ... }` допустимым без дополнительных операторов.
+
+Источники: [lateinit](https://kotlinlang.org/docs/properties.html#late-initialized-properties-and-variables), [делегирование свойств](https://kotlinlang.org/docs/delegated-properties.html), [lazy API 2.4](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/lazy.html), [Lazy.isInitialized](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-lazy/is-initialized.html), [PUBLICATION](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-lazy-thread-safety-mode/-p-u-b-l-i-c-a-t-i-o-n/).
 
 ## Q21. Что такое `Visibility Modifiers` в Kotlin?
 

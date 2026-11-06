@@ -1,0 +1,99 @@
+from pathlib import Path
+import json
+import re
+import subprocess
+import hashlib
+
+WORK = Path('/tmp/kotlin-theory-lateinit-lazy-20261106')
+OUT = WORK / 'runtime'
+OUT.mkdir(exist_ok=True)
+KOTLINC = '/usr/local/bin/kotlinc'
+JAVA = '/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/java'
+
+def run(command):
+    result = subprocess.run(command, capture_output=True, text=True)
+    return {'command': command, 'exit': result.returncode, 'stdout': result.stdout, 'stderr': result.stderr}
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+source = re.search(r'```kotlin\n([\s\S]*?)\n```', (WORK / 'q20.md').read_text())[1]
+exact = OUT / 'ExactQ20.kt'
+exact.write_text(source + '\n')
+support = OUT / 'PublicationAndTypes.kt'
+support.write_text('''import java.util.concurrent.CyclicBarrier
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+
+fun main() {
+    val nullable: String? by lazy { null }
+    check(nullable == null)
+    var store: Lazy<Int> = lazy { 11 }
+    check(store.value == 11)
+    store = lazy { 12 }
+    check(store.value == 12)
+
+    val attempts = AtomicInteger()
+    val barrier = CyclicBarrier(2)
+    val published = lazy(LazyThreadSafetyMode.PUBLICATION) {
+        val attempt = attempts.incrementAndGet()
+        barrier.await(5, TimeUnit.SECONDS)
+        "value-$attempt"
+    }
+    val pool = Executors.newFixedThreadPool(2)
+    try {
+        val first = pool.submit<String> { published.value }
+        val second = pool.submit<String> { published.value }
+        val a = first.get(10, TimeUnit.SECONDS)
+        val b = second.get(10, TimeUnit.SECONDS)
+        check(attempts.get() == 2)
+        check(a == b)
+        check(published.isInitialized())
+        check(published.value == a)
+    } finally {
+        pool.shutdownNow()
+    }
+    println("PUBLICATION/types: PASS")
+}
+''')
+positives = []
+for label, path, expected in [('exact-q20', exact, 'lazy/lateinit: PASS'),
+                               ('publication-and-types', support, 'PUBLICATION/types: PASS')]:
+    jar = OUT / (label + '.jar')
+    compile_result = run([KOTLINC, str(path), '-jvm-target', '17', '-include-runtime', '-d', str(jar)])
+    assert compile_result['exit'] == 0, compile_result
+    runtime = run([JAVA, '-jar', str(jar)])
+    assert runtime['exit'] == 0 and runtime['stdout'].strip() == expected, runtime
+    positives.append({'label': label, 'source_sha256': digest(path), 'compile': compile_result, 'run': runtime})
+    print(label + ': PASS', flush=True)
+
+cases = [
+    ('var-by-lazy', 'class Invalid { var value by lazy { 1 } }'),
+    ('lateinit-val', 'class Invalid { lateinit val value: String }'),
+    ('lateinit-int', 'class Invalid { lateinit var value: Int }'),
+    ('lateinit-nullable', 'class Invalid { lateinit var value: String? }'),
+    ('lateinit-custom-accessor', 'class Invalid {\n lateinit var value: String\n  get() = "x"\n  set(newValue) {}\n}'),
+    ('lateinit-primary-constructor', 'class Invalid(lateinit var value: String)'),
+    ('lateinit-state-outside-owner', 'class Invalid { lateinit var value: String }\nfun denied(x: Invalid) = x::value.isInitialized'),
+    ('lazy-property-state-intrinsic', 'val ordinary by lazy { 1 }\nfun denied() = ::ordinary.isInitialized'),
+]
+negative = []
+for label, invalid in cases:
+    path = OUT / ('negative-' + label + '.kt')
+    path.write_text(invalid + '\n')
+    result = run([KOTLINC, str(path), '-jvm-target', '17', '-Xrender-internal-diagnostic-names',
+                  '-d', str(OUT / ('negative-' + label + '.jar'))])
+    codes = re.findall(r'\[([A-Z_]+)\]', result['stderr'])
+    assert result['exit'] == 1 and codes, result
+    negative.append({'label': label, 'source_sha256': digest(path), 'diagnostics': codes, 'compile': result})
+    print(label + ': EXPECTED_REJECTION ' + ','.join(codes), flush=True)
+
+report = {'status': 'EXACT_EXAMPLE_SUPPORT_PROGRAM_AND8_NEGATIVE_CONTROLS_PASS',
+          'compiler_version': run([KOTLINC, '-version']), 'runtime_version': run([JAVA, '-version']),
+          'bytecode_target': 'JVM17', 'source_fence_sha256': hashlib.sha256(source.encode()).hexdigest(),
+          'positives': positives, 'negative_compile_controls': negative,
+          'scope': 'One exact theory fence; one support program verifies nullable/Int Lazy container and two PUBLICATION initializers with one published result under bounded barriers. Eight prohibited declarations rejected. No NONE concurrency guarantee is tested.',
+          'limits': 'Not a project/application build or exhaustive thread-safety test; no downloads or dependencies installed.'}
+(OUT / 'execution.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
+print('ALL_REQUESTED_CHECKS_COMPLETE', flush=True)

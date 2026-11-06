@@ -1,0 +1,68 @@
+{
+  "scope": "THEORY_SEMANTIC_UPDATE_Q20_ONLY",
+  "snapshot": {
+    "current_md_sha256": "788933944b242cf5894423b35cd9d01671dd94057e006f1257801c57e08ca715",
+    "seed_sha256": "f6d0869861a6825f431a510f19095353798eadd138ee4d6b14eeb2637b03c795"
+  },
+  "question": {
+    "q_number": 20,
+    "blocks": [
+      {
+        "block_idx": 0,
+        "question_text": "В чём разница между `lazy` и `lateinit`?",
+        "options": [
+          {
+            "label": "A",
+            "order": 0,
+            "text": "`lazy` вычисляет и кэширует `var` при первом чтении, а `lateinit` позволяет позднее присваивание неизменяемому `val`.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Для стандартного делегирования val value by lazy { ... } Lazy предоставляет чтение значения, но не setValue для изменяемого свойства. Lateinit, напротив, применяется к var с явным присваиванием позже. В варианте роли val и var переставлены.",
+              "source_of_confusion": "Отложенное вычисление и отложенное присваивание принимают за одну возможность поздно записать любое свойство, не различая делегат и модификатор объявления.",
+              "if_it_were_true": "Стандартного Lazy хватало бы для обычного var value by lazy { ... }, а lateinit val принимался бы как поздно присваиваемое свойство. Без дополнительных пользовательских расширений эти объявления не поддерживаются.",
+              "how_it_should_be": "Использовать стандартный lazy как делегат val, а lateinit — у подходящего var. Сам объект Lazy<T> можно хранить в переменной var; это другой случай, он не добавляет стандартному делегату операцию записи."
+            }
+          },
+          {
+            "label": "B",
+            "order": 1,
+            "text": "`lazy` вычисляет и кэширует `val` при первом чтении, а `lateinit` допускает позднее присваивание `var` nullable-типов и примитивов.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Lazy может вычислять nullable-значение или примитивное значение. У lateinit тип должен быть non-null и не примитивным: например, lateinit var name: String допустим, а String? и Int для такого объявления не подходят.",
+              "source_of_confusion": "Ограничения lazy и lateinit считают одинаковыми, хотя первый является библиотечным делегатом, а второй меняет правила объявления и проверки свойства.",
+              "if_it_were_true": "Объявления lateinit var count: Int и lateinit var name: String? принимались бы компилятором. В Kotlin эти формы запрещены; val count by lazy { 1 } и val name: String? by lazy { null } допустимы.",
+              "how_it_should_be": "Для lateinit выбрать var с non-null непримитивным типом и присвоить значение до чтения. Для lazy задать вычисление значения val; ограничения lateinit не переносятся на тип результата lazy."
+            }
+          },
+          {
+            "label": "C",
+            "order": 2,
+            "text": "`lazy` пересчитывает `val` при каждом чтении, а `lateinit` хранит `var`, которому значение присваивают явно до чтения.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Стандартный lazy запоминает успешно полученное значение: последующие чтения возвращают его, а не заново вычисляют блок. Lateinit не вычисляет значение автоматически; подходящему var его присваивает код до чтения.",
+              "source_of_confusion": "Ленивое свойство смешивают с пользовательским getter, который действительно может вычислять результат при каждом обращении.",
+              "if_it_were_true": "При двух чтениях val value by lazy { calls++; \"готово\" } счётчик calls увеличивался бы при каждом таком чтении. В обычном последовательном примере без исключений он увеличивается один раз; повтор после исключения — другой сценарий.",
+              "how_it_should_be": "Различать кэширование успешного результата lazy и явное присваивание lateinit. Если инициализатор lazy бросил исключение, следующая попытка чтения повторит инициализацию; это не пересчёт при каждом успешном чтении."
+            }
+          },
+          {
+            "label": "D",
+            "order": 3,
+            "text": "`lazy` откладывает вычисление `val` до чтения и сохраняет результат, а `lateinit` даёт `var` с явным присваиванием до чтения.",
+            "correct": true,
+            "sections": {
+              "explanation": "Lazy — функция, возвращающая Lazy<T>; как стандартный делегат она вычисляет значение val при обращении и кэширует успешный результат. Lateinit — модификатор var без начального значения: значение присваивают явно до чтения, например внутри метода настройки или через DI.",
+              "example": "class Example {\n    val message by lazy { \"готово\" }\n    lateinit var name: String\n    fun setup() { name = \"Сергей\" }\n}\nval example = Example()\ncheck(example.message == \"готово\")\nexample.setup()\ncheck(example.name == \"Сергей\")\nЗначение lateinit здесь присваивается методом самого объекта.",
+              "when_to_apply": "Lazy подходит, когда вычисление известно и его стоит отложить до потребности. Lateinit подходит для явного более позднего присваивания подходящего var; источник значения не обязан находиться вне объекта.",
+              "edge_cases": "Чтение lateinit до присваивания вызывает UninitializedPropertyAccessException. Если вычисление lazy завершилось исключением, следующая попытка повторит его. В Kotlin/JVM lazy по умолчанию синхронизирует инициализацию; режим PUBLICATION может выполнить инициализатор несколько раз при конкуренции, сохранив один результат.",
+              "related": "Lateinit требует non-null непримитивный тип; для свойства класса запрещены пользовательские getter/setter и объявление в первичном конструкторе. Проверка ::property.isInitialized доступна в разрешённой области объявления. Сам lateinit не добавляет синхронизации чтения и записи."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "theory": "## Q20. (!) В чём разница между `lazy` и `lateinit`?\n\n**`lazy`** — библиотечная функция, создающая `Lazy<T>`: стандартный делегат свойства `val` вычисляет значение при чтении и сохраняет **успешный результат**. Если initializer бросил исключение, значение ещё не получено и следующая попытка чтения повторит вычисление.\n\n**`lateinit`** — модификатор `var` без начального значения: код должен явно присвоить значение до чтения. Присваивание может выполнять метод самого объекта, внешний код или DI-контейнер; внешний источник не является условием механизма. После инициализации `var` можно присваивать снова. Раннее чтение вызывает `UninitializedPropertyAccessException`.\n\n| Свойство | Стандартный `lazy` | `lateinit` |\n|---|---|---|\n| Способ получения | Выполнение заданной lambda при необходимости | Явное присваивание позднее |\n| Объявление | `val value by lazy { ... }` | Подходящий `lateinit var value: Type` |\n| Примеры типов | `Int` и `String?` допустимы | `String` допустим; `Int` и `String?` запрещены |\n| Сбой вычисления / раннее чтение | Исключение initializer; при следующем доступе новая попытка | Исключение до присваивания |\n| Проверка состояния без чтения значения | `isInitialized()` у сохранённого объекта `Lazy<T>` | `::property.isInitialized` в разрешённой области |\n| Синхронизация на Kotlin/JVM | По умолчанию `SYNCHRONIZED`; можно выбрать другой режим | Сам модификатор не добавляет синхронизации |\n\nДля `lateinit` нужен non-null непримитивный тип. У свойства класса не должно быть пользовательских getter/setter, и оно не объявляется таким образом в первичном конструкторе. Проверка `isInitialized` имеет ограничения области доступа; ниже она находится внутри класса, объявляющего свойство.\n\n### Пример с повторной попыткой\n\n```kotlin\nclass DeferredState {\n    var attempts = 0\n        private set\n\n    private val messageDelegate = lazy {\n        attempts++\n        if (attempts == 1) error(\"Первая попытка не удалась\")\n        \"готово\"\n    }\n    val message: String by messageDelegate\n\n    lateinit var name: String\n\n    fun hasMessage(): Boolean = messageDelegate.isInitialized()\n    fun hasName(): Boolean = this::name.isInitialized\n    fun setup() { name = \"Гость\" }\n}\n\nfun main() {\n    val state = DeferredState()\n    check(!state.hasMessage() && state.attempts == 0)\n    check(!state.hasName())\n    check(runCatching { state.name }.exceptionOrNull()\n        is UninitializedPropertyAccessException)\n\n    check(runCatching { state.message }.exceptionOrNull() is IllegalStateException)\n    check(state.attempts == 1 && !state.hasMessage())\n    check(state.message == \"готово\")\n    check(state.message == \"готово\")\n    check(state.attempts == 2 && state.hasMessage())\n\n    state.setup() // Присваивание из метода самого объекта.\n    check(state.hasName() && state.name == \"Гость\")\n    state.name = \"Другое имя\"\n    check(state.name == \"Другое имя\")\n    println(\"lazy/lateinit: PASS\")\n}\n```\n\nЗдесь `hasMessage()` не запускает initializer; после первого исключения результат ещё не сохранён. Успешная вторая попытка кэшируется. `hasName()` не присваивает значение: это делает обычный метод `setup()`.\n\n### Что учитывать при выборе\n\n`lazy` подходит, когда вычисление можно задать заранее и отложить до потребности. `lateinit` подходит для явного более позднего присваивания подходящего `var`, например при настройке объекта или в тесте. Это выбор способа инициализации, а не обязательного источника значения.\n\nВ Kotlin/JVM `PUBLICATION` может выполнять initializer несколько раз при конкуренции, публикуя один результат; `NONE` не задаёт безопасного контракта для одновременного доступа нескольких потоков. Синхронизация инициализации не делает сам возвращённый изменяемый объект потокобезопасным. Поэтому фраза «блок всегда вызывается ровно один раз» требует условий и не описывает все режимы и сбои.\n\nОбъект `Lazy<T>` можно хранить в обычной переменной `var`; это не добавляет стандартному делегату `setValue` и не делает `var value by lazy { ... }` допустимым без дополнительных операторов.\n\nИсточники: [lateinit](https://kotlinlang.org/docs/properties.html#late-initialized-properties-and-variables), [делегирование свойств](https://kotlinlang.org/docs/delegated-properties.html), [lazy API 2.4](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/lazy.html), [Lazy.isInitialized](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-lazy/is-initialized.html), [PUBLICATION](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-lazy-thread-safety-mode/-p-u-b-l-i-c-a-t-i-o-n/).\n\n"
+}

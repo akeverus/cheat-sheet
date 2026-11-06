@@ -1,0 +1,173 @@
+{
+  "q_number": 20,
+  "block_idx": 0,
+  "choice": "D",
+  "options": {
+    "A": {
+      "completeness": "Полнота достаточна для сравнения обеих конструкций.",
+      "truth": "WRONG: Для стандартного делегирования val value by lazy { ... } Lazy предоставляет чтение значения, но не setValue для изменяемого свойства. Lateinit, напротив, применяется к var с явным присваиванием позже. В варианте роли val и var переставлены.",
+      "wrong_answer_model": {
+        "assessment": "Автономная правдоподобная ошибочная модель: Отложенное вычисление и отложенное присваивание принимают за одну возможность поздно записать любое свойство, не различая делегат и модификатор объявления.",
+        "defense": "Тезис в варианте неверен без необходимости вводить скрытые условия."
+      },
+      "sections": {
+        "what_actually": {
+          "status": "PASS",
+          "assessment": "Для стандартного делегирования val value by lazy { ... } Lazy предоставляет чтение значения, но не setValue для изменяемого свойства. Lateinit, напротив, применяется к var с явным присваиванием позже. В варианте роли val и var переставлены."
+        },
+        "source_of_confusion": {
+          "status": "PASS",
+          "assessment": "Отложенное вычисление и отложенное присваивание принимают за одну возможность поздно записать любое свойство, не различая делегат и модификатор объявления."
+        },
+        "if_it_were_true": {
+          "status": "PASS",
+          "assessment": "Стандартного Lazy хватало бы для обычного var value by lazy { ... }, а lateinit val принимался бы как поздно присваиваемое свойство. Без дополнительных пользовательских расширений эти объявления не поддерживаются."
+        },
+        "how_it_should_be": {
+          "status": "PASS",
+          "assessment": "Использовать стандартный lazy как делегат val, а lateinit — у подходящего var. Сам объект Lazy<T> можно хранить в переменной var; это другой случай, он не добавляет стандартному делегату операцию записи."
+        }
+      }
+    },
+    "B": {
+      "completeness": "Полнота достаточна для сравнения обеих конструкций.",
+      "truth": "WRONG: Lazy может вычислять nullable-значение или примитивное значение. У lateinit тип должен быть non-null и не примитивным: например, lateinit var name: String допустим, а String? и Int для такого объявления не подходят.",
+      "wrong_answer_model": {
+        "assessment": "Автономная правдоподобная ошибочная модель: Ограничения lazy и lateinit считают одинаковыми, хотя первый является библиотечным делегатом, а второй меняет правила объявления и проверки свойства.",
+        "defense": "Тезис в варианте неверен без необходимости вводить скрытые условия."
+      },
+      "sections": {
+        "what_actually": {
+          "status": "PASS",
+          "assessment": "Lazy может вычислять nullable-значение или примитивное значение. У lateinit тип должен быть non-null и не примитивным: например, lateinit var name: String допустим, а String? и Int для такого объявления не подходят."
+        },
+        "source_of_confusion": {
+          "status": "PASS",
+          "assessment": "Ограничения lazy и lateinit считают одинаковыми, хотя первый является библиотечным делегатом, а второй меняет правила объявления и проверки свойства."
+        },
+        "if_it_were_true": {
+          "status": "PASS",
+          "assessment": "Объявления lateinit var count: Int и lateinit var name: String? принимались бы компилятором. В Kotlin эти формы запрещены; val count by lazy { 1 } и val name: String? by lazy { null } допустимы."
+        },
+        "how_it_should_be": {
+          "status": "PASS",
+          "assessment": "Для lateinit выбрать var с non-null непримитивным типом и присвоить значение до чтения. Для lazy задать вычисление значения val; ограничения lateinit не переносятся на тип результата lazy."
+        }
+      }
+    },
+    "C": {
+      "completeness": "Полнота достаточна для сравнения обеих конструкций.",
+      "truth": "WRONG: Стандартный lazy запоминает успешно полученное значение: последующие чтения возвращают его, а не заново вычисляют блок. Lateinit не вычисляет значение автоматически; подходящему var его присваивает код до чтения.",
+      "wrong_answer_model": {
+        "assessment": "Автономная правдоподобная ошибочная модель: Ленивое свойство смешивают с пользовательским getter, который действительно может вычислять результат при каждом обращении.",
+        "defense": "Тезис в варианте неверен без необходимости вводить скрытые условия."
+      },
+      "sections": {
+        "what_actually": {
+          "status": "PASS",
+          "assessment": "Стандартный lazy запоминает успешно полученное значение: последующие чтения возвращают его, а не заново вычисляют блок. Lateinit не вычисляет значение автоматически; подходящему var его присваивает код до чтения."
+        },
+        "source_of_confusion": {
+          "status": "PASS",
+          "assessment": "Ленивое свойство смешивают с пользовательским getter, который действительно может вычислять результат при каждом обращении."
+        },
+        "if_it_were_true": {
+          "status": "PASS",
+          "assessment": "При двух чтениях val value by lazy { calls++; \"готово\" } счётчик calls увеличивался бы при каждом таком чтении. В обычном последовательном примере без исключений он увеличивается один раз; повтор после исключения — другой сценарий."
+        },
+        "how_it_should_be": {
+          "status": "PASS",
+          "assessment": "Различать кэширование успешного результата lazy и явное присваивание lateinit. Если инициализатор lazy бросил исключение, следующая попытка чтения повторит инициализацию; это не пересчёт при каждом успешном чтении."
+        }
+      }
+    },
+    "D": {
+      "completeness": "Полнота достаточна для сравнения обеих конструкций.",
+      "truth": "PASS: Lazy — функция, возвращающая Lazy<T>; как стандартный делегат она вычисляет значение val при обращении и кэширует успешный результат. Lateinit — модификатор var без начального значения: значение присваивают явно до чтения, например внутри метода настройки или через DI.",
+      "wrong_answer_model": {
+        "assessment": "Не дистрактор."
+      },
+      "sections": {
+        "explanation": {
+          "status": "PASS",
+          "assessment": "Lazy — функция, возвращающая Lazy<T>; как стандартный делегат она вычисляет значение val при обращении и кэширует успешный результат. Lateinit — модификатор var без начального значения: значение присваивают явно до чтения, например внутри метода настройки или через DI."
+        },
+        "example": {
+          "status": "PASS",
+          "assessment": "class Example {\n    val message by lazy { \"готово\" }\n    lateinit var name: String\n    fun setup() { name = \"Сергей\" }\n}\nval example = Example()\ncheck(example.message == \"готово\")\nexample.setup()\ncheck(example.name == \"Сергей\")\nЗначение lateinit здесь присваивается методом самого объекта."
+        },
+        "when_to_apply": {
+          "status": "PASS",
+          "assessment": "Lazy подходит, когда вычисление известно и его стоит отложить до потребности. Lateinit подходит для явного более позднего присваивания подходящего var; источник значения не обязан находиться вне объекта."
+        },
+        "edge_cases": {
+          "status": "PASS",
+          "assessment": "Чтение lateinit до присваивания вызывает UninitializedPropertyAccessException. Если вычисление lazy завершилось исключением, следующая попытка повторит его. В Kotlin/JVM lazy по умолчанию синхронизирует инициализацию; режим PUBLICATION может выполнить инициализатор несколько раз при конкуренции, сохранив один результат."
+        },
+        "related": {
+          "status": "PASS",
+          "assessment": "Lateinit требует non-null непримитивный тип; для свойства класса запрещены пользовательские getter/setter и объявление в первичном конструкторе. Проверка ::property.isInitialized доступна в разрешённой области объявления. Сам lateinit не добавляет синхронизации чтения и записи."
+        }
+      }
+    }
+  },
+  "axes": {
+    "CONTENT": "PASS — обе конструкции сравниваются прямо.",
+    "FACTS": "PASS — сверено с открытыми официальными источниками ниже.",
+    "LINKAGE": "PASS — объяснение, пример и границы связаны с ответом.",
+    "SECTIONS": "PASS — 17 секций оценены индивидуально.",
+    "SFPL": "PASS — тон/форма параллельны, длина не служит решающей подсказкой.",
+    "ANSC": "PASS — единственный полный истинный вариант D.",
+    "RU": "PASS — ясный русский, терминология уместна."
+  },
+  "theory": {
+    "status": "PASS",
+    "assessment": "Разведены успешное кэширование и повтор после исключения; lateinit можно присвоить методом того же объекта; объект Lazy в var — не то же, что var by lazy; область lateinit isInitialized ограничена доступом к backing field.",
+    "runtime_evidence": {
+      "status": "EXACT_EXAMPLE_SUPPORT_PROGRAM_AND8_NEGATIVE_CONTROLS_PASS",
+      "assessment": "Предоставленный отчёт: точный пример и отдельная программа PASS; 8 compiler rejection PASS. Код не запускал. NONE-конкурентность не проверялась."
+    }
+  },
+  "phase_a_reconciliation": {
+    "phase_a_choice": "D",
+    "phase_b_choice": "D",
+    "status": "MATCH"
+  },
+  "sources": [
+    {
+      "status": "OPENED",
+      "url": "https://kotlinlang.org/docs/properties.html#late-initialized-properties-and-variables",
+      "assessment": "Официальные ограничения lateinit."
+    },
+    {
+      "status": "OPENED",
+      "url": "https://kotlinlang.org/docs/delegated-properties.html",
+      "assessment": "Делегату var требуются getValue и setValue."
+    },
+    {
+      "status": "OPENED",
+      "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/lazy.html",
+      "assessment": "API 2.4; default SYNCHRONIZED."
+    },
+    {
+      "status": "OPENED",
+      "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-lazy/is-initialized.html",
+      "assessment": "Состояние конкретного Lazy."
+    },
+    {
+      "status": "OPENED",
+      "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-lazy-thread-safety-mode/-p-u-b-l-i-c-a-t-i-o-n/",
+      "assessment": "PUBLICATION допускает многократный initializer и публикует один результат."
+    },
+    {
+      "status": "OPENED",
+      "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-lazy-thread-safety-mode/-n-o-n-e/",
+      "assessment": "NONE не синхронизирует; concurrent behavior unspecified."
+    }
+  ],
+  "limitations": [
+    "NONE конкурентный режим не запускался; опираюсь на открытый официальный API.",
+    "Это проверка exact example/controls, не сборка проекта или полный стресс-тест потоков.",
+    "TOC и длинные общие рубрики не входили в переданный scope."
+  ]
+}

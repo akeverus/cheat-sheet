@@ -1,0 +1,106 @@
+{
+  "review_kind": "secondary_source_review",
+  "question": "Q20",
+  "input_path": "/tmp/kotlin-theory-lateinit-lazy-20261106/input-after.json",
+  "input_sha256": "f6d0869861a6825f431a510f19095353798eadd138ee4d6b14eeb2637b03c795",
+  "snapshot_current_md_sha256": "788933944b242cf5894423b35cd9d01671dd94057e006f1257801c57e08ca715",
+  "CONTENT": {
+    "status": "PASS_WITH_SCOPE_NOTE",
+    "finding": "The question asks for the difference between lazy and lateinit. The new theory covers acquisition/assignment, types, failure/retry, state checks, and concurrency, making it complete for an interview answer. It is fuller than required but stays on-topic."
+  },
+  "FACTS": {
+    "key": "D",
+    "unique_key": true,
+    "finding": "D is the sole fully correct option. A reverses val/var; B gives illegal lateinit types; C falsely says lazy recomputes on every read. Facts and standard API behavior align with opened sources."
+  },
+  "LINKAGE": {
+    "status": "PASS",
+    "finding": "New theory supports D, corrects prior false implication that lateinit requires an external source, and explicitly distinguishes successful lazy caching from retry after initializer failure. It does not silently add assumptions to rescue distractors."
+  },
+  "SECTIONS": {
+    "A": {
+      "what_actually": "PASS: corrects val/var inversion; standard Lazy delegate supplies get, not setValue, while lateinit is a modifiable var.",
+      "source_of_confusion": "PASS: plausibly conflates deferred computation with deferred assignment and delegate operators.",
+      "if_it_were_true": "PASS: correctly identifies that standard Lazy does not support ordinary delegated var assignment and lateinit val is invalid.",
+      "how_it_should_be": "PASS: correct distinction; extra Lazy-in-var storage nuance is accurate."
+    },
+    "B": {
+      "what_actually": "PASS: lateinit rejects nullable and primitive property types; lazy result can be nullable or primitive.",
+      "source_of_confusion": "PASS: reasonable confusion between delegate API and declaration modifier.",
+      "if_it_were_true": "PASS: examples are valid counterfactuals; lateinit var count:Int and lateinit var name:String? are prohibited.",
+      "how_it_should_be": "PASS: accurate type and explicit assignment guidance."
+    },
+    "C": {
+      "what_actually": "PASS: standard lazy caches successful result; lateinit is assigned explicitly.",
+      "source_of_confusion": "PASS: custom getter recalculation is a plausible source of confusion.",
+      "if_it_were_true": "PASS: counterexample is apt under ordinary successful sequential accesses; it explicitly distinguishes retry after exception.",
+      "how_it_should_be": "PASS: accurately states retry on initializer exception and successful caching."
+    },
+    "D": {
+      "explanation": "PASS: accurate distinction; successful-result caching and lateinit explicit assignment are both stated.",
+      "example": "PASS, pending author compile check: code is internally coherent; setup assigns in-object and the type/access patterns are valid by inspection.",
+      "when_to_apply": "PASS: no unsupported claim that lateinit must come from outside/DI.",
+      "edge_cases": "PASS: early-read exception, retry after initializer throw, default JVM synchronization and PUBLICATION duplicate initializer calls are accurate.",
+      "related": "PASS: type/getter/constructor limits and scoped ::property.isInitialized are accurate; lateinit itself adds no synchronization."
+    }
+  },
+  "SFPL": {
+    "status": "PASS",
+    "finding": "A, B, C are distinct, plausible mistakes (val/var, type restrictions, caching); each has a clear factual contradiction. D uniquely states the main distinction. Wrong-option explanations address each full claim."
+  },
+  "ANSC": {
+    "status": "PASS",
+    "finding": "D is uniquely correct under the visible wording. No hidden external-injection premise or unconditional exactly-once lazy premise is needed."
+  },
+  "RU": {
+    "status": "PASS",
+    "finding": "Russian wording is clear. Technical loanwords (делегат, инициализатор, присваивание) are used consistently; no material ambiguity detected."
+  },
+  "THEORY": {
+    "status": "PASS_WITH_COMPILE_PENDING",
+    "finding": "Clear comparison table, coherent DeferredState example by inspection, explicit successful cache/retry behavior, distinct Lazy.isInitialized() and ::name.isInitialized, and suitable JVM caveats. Table accurately scopes lazy synchronization to Kotlin/JVM and does not overclaim object thread safety."
+  },
+  "API_FACTS": {
+    "lateinit": "PASS: var only; non-null non-primitive types; class property cannot have custom accessors or be a primary-constructor property; read-before-assignment throws UninitializedPropertyAccessException. Assignment source may be in-class, external, or DI.",
+    "lazy_and_delegate": "PASS: lazy(initializer) returns Lazy<T>; standard delegated property is val because Lazy exposes getValue but no setValue. A var may hold a Lazy object without making a property delegated by it settable.",
+    "cache_retry": "PASS: successful initializer result retained; throw triggers retry on next access.",
+    "state_checks": "PASS: Lazy.isInitialized() queries the Lazy instance; lateinit ::property.isInitialized is restricted by property-reference access scope. Example checks inside declaring class.",
+    "JVM_modes": "PASS: default SYNCHRONIZED; PUBLICATION permits concurrent initializer calls but publishes a single used value; NONE has no thread-safety guarantees and multiple-thread behavior is unspecified. Synchronization of initialization does not make returned mutable object thread-safe."
+  },
+  "EXAMPLE_REVIEW": {
+    "status": "PASS_BY_INSPECTION_COMPILE_PENDING",
+    "finding": "DeferredState operations are logically consistent: failed first lazy attempt leaves isInitialized false; second succeeds and subsequent access reuses value; lateinit read before setup is caught and later reassignment is permitted. No independent compiler/runtime execution was performed."
+  },
+  "SOURCES_OPENED": [
+    {
+      "url": "https://kotlinlang.org/docs/properties.html#late-initialized-properties-and-variables",
+      "scope": "Opened official properties page; supports lateinit properties/constraints and state check visibility context."
+    },
+    {
+      "url": "https://kotlinlang.org/docs/delegated-properties.html",
+      "scope": "Opened official delegated properties guide; getValue/setValue requirements, lazy delegate behavior, default synchronization and modes."
+    },
+    {
+      "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/lazy.html",
+      "scope": "Opened Kotlin stdlib 2.4 API; lazy overloads, default SYNCHRONIZED, retry after exception, PUBLICATION example."
+    },
+    {
+      "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-lazy/is-initialized.html",
+      "scope": "Opened Kotlin stdlib 2.4 API; isInitialized reports whether this Lazy instance has initialized."
+    },
+    {
+      "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-lazy-thread-safety-mode/-p-u-b-l-i-c-a-t-i-o-n/",
+      "scope": "Opened Kotlin stdlib 2.4 API; initializer may be called several times concurrently, one value used and visible."
+    },
+    {
+      "url": "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-lazy-thread-safety-mode/-n-o-n-e/",
+      "scope": "Opened Kotlin stdlib 2.4 API; no locks; multi-thread access behavior unspecified."
+    }
+  ],
+  "LIMITS": {
+    "runtime_by_reviewer": false,
+    "author_compile_status": "PENDING at time of this review; the author was independently compiling the example.",
+    "verification": "Source/quality review only; no compilation or runtime result claimed.",
+    "scope": "One question Q20 only; this is not final acceptance of the broader Kotlin topic."
+  }
+}

@@ -1,0 +1,37 @@
+class DeferredState {
+    var attempts = 0
+        private set
+
+    private val messageDelegate = lazy {
+        attempts++
+        if (attempts == 1) error("Первая попытка не удалась")
+        "готово"
+    }
+    val message: String by messageDelegate
+
+    lateinit var name: String
+
+    fun hasMessage(): Boolean = messageDelegate.isInitialized()
+    fun hasName(): Boolean = this::name.isInitialized
+    fun setup() { name = "Гость" }
+}
+
+fun main() {
+    val state = DeferredState()
+    check(!state.hasMessage() && state.attempts == 0)
+    check(!state.hasName())
+    check(runCatching { state.name }.exceptionOrNull()
+        is UninitializedPropertyAccessException)
+
+    check(runCatching { state.message }.exceptionOrNull() is IllegalStateException)
+    check(state.attempts == 1 && !state.hasMessage())
+    check(state.message == "готово")
+    check(state.message == "готово")
+    check(state.attempts == 2 && state.hasMessage())
+
+    state.setup() // Присваивание из метода самого объекта.
+    check(state.hasName() && state.name == "Гость")
+    state.name = "Другое имя"
+    check(state.name == "Другое имя")
+    println("lazy/lateinit: PASS")
+}
