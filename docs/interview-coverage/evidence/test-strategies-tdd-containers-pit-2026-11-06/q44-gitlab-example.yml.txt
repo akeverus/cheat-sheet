@@ -1,0 +1,31 @@
+stages: [test, mutation]
+
+unit-test:
+  stage: test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - mvn -B test
+
+mutation-test:
+  stage: mutation
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - src/main/java/**/*
+        - src/test/java/**/*
+        - pom.xml
+        - .gitlab-ci.yml
+  cache:
+    key: "pit-1.15.3-${CI_COMMIT_REF_SLUG}"
+    paths:
+      - target/pit-history.bin
+  script:
+    - mvn -B test-compile org.pitest:pitest-maven:1.15.3:mutationCoverage
+  artifacts:
+    when: always
+    paths:
+      - target/pit-reports/
+  allow_failure: false

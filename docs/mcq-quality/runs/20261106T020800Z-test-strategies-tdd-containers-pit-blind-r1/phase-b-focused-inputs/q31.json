@@ -1,0 +1,84 @@
+{
+  "snapshot": {
+    "paths": {
+      "mcq": "modules/quiz-app/src/main/resources/seed/mcq/testing/test-strategies-interview.json",
+      "theory": "cheatsheets/interview/testing/test-strategies-interview.md"
+    },
+    "sha256": {
+      "mcq": "333b5acf7cbb2d5571f3e5e728a18a2c8559640e502da4310775050b315e0ae7",
+      "theory": "bad0b2587b3f41e5cd3544b928ea3db00d00dffdebb2f4e6b6b3b163f021706b"
+    },
+    "rules_sha256": {
+      "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+      "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+      "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+    },
+    "block_hash": {
+      "mcq": "56807eeec8f99303af056b87fce07e5908b671560070bdf3fd047af2c27e0540",
+      "theory": "2aac852eff0b2cf8c2e15a47cc354d736548ee78f21e559ae3308a165fb57573"
+    },
+    "full_disclosure_sha256": "889657981bc65979db8d0cee5e4440d1bc39a098ff39bc2508876d97af308ef0"
+  },
+  "question": {
+    "q_number": 31,
+    "block_idx": 0,
+    "visible_question": "Что такое Test Containerization и Testcontainers?",
+    "block": {
+      "block_idx": 0,
+      "question_text": "Что такое `Test Containerization` и `Testcontainers`?",
+      "options": [
+        {
+          "label": "A",
+          "order": 0,
+          "text": "Контейнеризация выносит тестовые зависимости в контейнеры; Testcontainers запускает их из тестов и по общему правилу делит один контейнер между всеми классами на весь JVM-прогон.",
+          "correct": false,
+          "sections": {
+            "what_actually": "Единого автоматического правила «один контейнер на всю JVM» нет. В JUnit 5 extension static-поле @Container разделяется тестовыми методами класса, а instance-поле запускается и останавливается для каждого метода. Возможны и другие явно выбранные схемы управления.",
+            "source_of_confusion": "Singleton-паттерн или экспериментальный reuse принимают за обязательное поведение любой интеграции Testcontainers. Важно различать область поля и механизм управления контейнером.",
+            "if_it_were_true": "Любые тестовые классы автоматически получали бы одну и ту же зависимость на весь JVM-прогон. Реальный lifecycle зависит от выбранной интеграции и конфигурации.",
+            "how_it_should_be": "Указать нужную схему: контейнер на метод, общий для методов класса или явно управляемый экземпляр. Отдельно организовать очистку данных: общий контейнер сам не сбрасывает состояние между методами."
+          }
+        },
+        {
+          "label": "B",
+          "order": 1,
+          "text": "При контейнеризации зависимости работают в контейнерах; Testcontainers запускает их из тестов и сам воспроизводит версию и настройки production без явного выбора образа и конфигурации.",
+          "correct": false,
+          "sections": {
+            "what_actually": "Testcontainers запускает выбранный образ с заданными параметрами. Он не извлекает автоматически production-версию, данные, настройки и инфраструктурные особенности и не доказывает полного совпадения окружений.",
+            "source_of_confusion": "Использование той же СУБД принимают за идентичность всех условий. Даже совпадение версии не гарантирует одинаковые расширения, конфигурацию, схему и нагрузку.",
+            "if_it_were_true": "Версия и конфигурация production воспроизводились бы без явного описания. На практике образ и настройки нужно выбрать и поддерживать в тесте или его конфигурации.",
+            "how_it_should_be": "Явно задать подходящий образ и существенные параметры, а границы сходства с production описать. Контейнер помогает проверять реальную зависимость в заданных условиях, но не заменяет проверку остальных различий."
+          }
+        },
+        {
+          "label": "C",
+          "order": 2,
+          "text": "Контейнеризация изолирует тестовые зависимости в контейнерах; Testcontainers помогает запускать их и управлять жизненным циклом из тестов, а образы и настройки выбирают явно.",
+          "correct": true,
+          "sections": {
+            "explanation": "Тестовая зависимость работает отдельным контейнерным процессом, а библиотека помогает создать контейнер, дождаться готовности и получить адрес подключения. Подход полезен для проверки настоящего поведения выбранной зависимости вместо другой встроенной реализации.",
+            "example": "Тест выбирает образ PostgreSQL и получает JDBC URL запущенного контейнера. Static @Container в JUnit 5 может разделяться методами класса; данные между такими методами очищают отдельно, если тестам нужна независимость.",
+            "when_to_apply": "Когда для цели теста важно поведение реальной БД, брокера или другой контейнеризуемой зависимости. Стоимость запуска и доступность runtime учитывают при выборе набора проверок; универсального запрета по названию уровня теста нет.",
+            "edge_cases": "Lifecycle зависит от интеграции: в JUnit 5 static и instance @Container имеют разную область. Экспериментальный reuse включают отдельно; он может сохранять контейнер и состояние. Одинаковый образ не доказывает совпадение с production.",
+            "related": "Контейнер, его образ, данные и конфигурация — разные части окружения. Для воспроизводимости нужно управлять каждой существенной частью, а не обещать отсутствие всех различий."
+          }
+        },
+        {
+          "label": "D",
+          "order": 3,
+          "text": "Контейнеризация упаковывает тестовые зависимости; Testcontainers заменяет выбранную СУБД встроенной эмуляцией в памяти JVM и не запускает реальный процесс базы в контейнере.",
+          "correct": false,
+          "sections": {
+            "what_actually": "Testcontainers запускает контейнеры с выбранными зависимостями через поддерживаемый контейнерный runtime. Это не встроенная эмуляция СУБД в памяти JVM. Встроенную БД можно выбрать для других тестовых целей, но это другой механизм.",
+            "source_of_confusion": "H2 и Testcontainers могут использоваться в тестах репозитория, поэтому разные способы предоставления зависимости принимают за одну библиотечную эмуляцию.",
+            "if_it_were_true": "Поведение зависимости определялось бы встроенной JVM-эмуляцией, а не процессом выбранного образа. Тогда специфические свойства реальной СУБД могли бы остаться непроверенными.",
+            "how_it_should_be": "Различать встроенную БД и контейнер с реальной выбранной СУБД. Решение принимать по проверяемому риску; ни один из подходов сам по себе не гарантирует отсутствие всех production-дефектов."
+          }
+        }
+      ]
+    }
+  },
+  "theory": "## Q31. (!) Что такое `Test Containerization` и `Testcontainers`?\n\n**Контейнеризация тестового окружения** — запуск выбранных зависимостей или самой тестируемой системы в контейнерах с заданными образами и настройками. **Testcontainers** — библиотеки, позволяющие тестовому коду создавать и настраивать контейнерные зависимости, получать адреса/порты и управлять жизненным циклом через API и интеграции с тестовыми framework.\n\nНапример, интеграционная проверка может обращаться к PostgreSQL вместо замены его на H2: различия SQL-диалектов и типов могут быть существенны для проверяемого поведения. Образ и конфигурацию выбирает команда; библиотека не узнаёт версию production автоматически. Совпадение версии БД не гарантирует равенство сетей, прав, данных и всего production-окружения.\n\n### Жизненный цикл и изоляция\n\nВ [интеграции с JUnit Jupiter](https://java.testcontainers.org/test_framework_integration/junit_5/) поведение зависит от объявления:\n\n| Объявление | Жизненный цикл |\n|---|---|\n| `static @Container` | Один запуск до тестовых методов класса, остановка после последнего метода |\n| Поле экземпляра `@Container` | Запуск и остановка для каждого тестового метода |\n| Ручной запуск / singleton pattern | Границы задаёт выбранный код управления; это отдельный подход |\n\nОбщий контейнер класса может содержать данные предыдущего метода. Очистка таблиц, отдельные схемы или другая стратегия изоляции выбираются явно; свежий контейнер не заменяет анализ внешних томов и ресурсов. JUnit-интеграция документирована для последовательных тестов; параллельный запуск требует отдельного решения и не обещан этим примером.\n\n### Минимальный пример с PostgreSQL и JDBC\n\nAPI примера — **Testcontainers Java 1.20.6 / JUnit Jupiter / Java 17+**. Нужны test-зависимости `org.testcontainers:junit-jupiter:1.20.6`, `org.testcontainers:postgresql:1.20.6`, Jupiter и JDBC-драйвер PostgreSQL. Для выполнения требуется доступная поддерживаемая контейнерная среда. Выбранный `postgres:16-alpine` иллюстрирует настройку образа, а не обещает соответствие вашему production; для более строгой воспроизводимости фиксируют подходящую версию или digest.\n\n```java\nimport java.math.BigDecimal;\nimport java.sql.DriverManager;\nimport org.junit.jupiter.api.Test;\nimport org.testcontainers.containers.PostgreSQLContainer;\nimport org.testcontainers.junit.jupiter.Container;\nimport org.testcontainers.junit.jupiter.Testcontainers;\nimport static org.junit.jupiter.api.Assertions.*;\n\n@Testcontainers\nclass PostgresRoundTripTest {\n    @Container\n    static final PostgreSQLContainer<?> postgres =\n        new PostgreSQLContainer<>(\"postgres:16-alpine\")\n            .withDatabaseName(\"testdb\")\n            .withUsername(\"test\")\n            .withPassword(\"test\");\n\n    @Test\n    void readsBackStoredAmount() throws Exception {\n        try (var connection = DriverManager.getConnection(\n                postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());\n             var statement = connection.createStatement()) {\n            statement.execute(\"CREATE TEMP TABLE amounts (id int PRIMARY KEY, total numeric(10,2))\");\n            statement.executeUpdate(\"INSERT INTO amounts VALUES (1, 10.00)\");\n            try (var result = statement.executeQuery(\"SELECT total FROM amounts WHERE id = 1\")) {\n                assertTrue(result.next());\n                assertEquals(0, new BigDecimal(\"10.00\").compareTo(result.getBigDecimal(\"total\")));\n                assertFalse(result.next());\n            }\n        }\n    }\n}\n```\n\nЭто проверка выбранной зависимости и JDBC round trip, не тест приложения с `OrderRepository`. Временная таблица существует в пределах соединения; другие тесты с общими постоянными таблицами потребуют своей очистки. Для Spring Boot адрес и учётные данные можно передавать через поддерживаемую версией Spring интеграцию, например `@DynamicPropertySource`; сущности, схема и repository остаются частью приложения.\n\n### Reuse и стоимость\n\nОбщий `static`-контейнер внутри класса не означает reuse между отдельными JVM. [Reusable Containers](https://java.testcontainers.org/features/reuse/) — отдельная экспериментальная возможность: нужны opt-in окружения, `.withReuse(true)` и ручной запуск; остановка через JUnit/`stop()` мешает сохранению контейнера. Документация не рекомендует эту возможность для CI. Она также не обеспечивает автоматическую чистоту данных.\n\nКонтейнерные зависимости помогают воспроизводить выбранные условия и проверять реальное взаимодействие. Цена — доступность среды, загрузка образов, старт и управление состоянием; длительность измеряют на своей конфигурации. Обычно такие проверки относят к integration/component по границе взаимодействия, а изолированный unit-тест может использовать подходящий test double. Подробнее — в [вопросах по интеграционному тестированию](integration-testing-interview.md).\n\n",
+  "scope_note": "Current theory only; no prior obsolete text. Full question/options/sections preserved; only repeated global TOC and long rubric omitted."
+}

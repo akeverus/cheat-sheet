@@ -1,0 +1,193 @@
+{
+  "q_number": 31,
+  "block_idx": 0,
+  "overall": "PASS; C is the single defensible key.",
+  "options": {
+    "A": {
+      "correctness": "Wrong: no general one-container-per-JVM rule.",
+      "completeness": "Includes containerization and startup but lifecycle claim is false and overgeneralized.",
+      "wrong_model": "Assume universal JVM-shared lifecycle across test classes.",
+      "sections": {
+        "what_actually": "Correct and precise.",
+        "source_of_confusion": "Plausible misconception.",
+        "if_it_were_true": "Reasonable consequence and correction.",
+        "how_it_should_be": "Correct; shared container still needs data isolation."
+      }
+    },
+    "B": {
+      "correctness": "Wrong: Testcontainers does not infer production image/version/configuration automatically.",
+      "completeness": "Covers container dependencies and startup, but false parity claim invalidates answer.",
+      "wrong_model": "Assume library detects and reproduces production environment without explicit settings.",
+      "sections": {
+        "what_actually": "Accurate.",
+        "source_of_confusion": "Accurate distinction of version from environment parity.",
+        "if_it_were_true": "Direct consequence, appropriately corrected.",
+        "how_it_should_be": "Complete and measured."
+      }
+    },
+    "C": {
+      "correctness": "Correct and uniquely defensible.",
+      "completeness": "Answers both terms and lifecycle/configuration responsibility.",
+      "wrong_model": null,
+      "sections": {
+        "explanation": "Accurate real-container, readiness, address description.",
+        "example": "Technically coherent; notes static class scope and data cleanup.",
+        "when_to_apply": "Balanced guidance; cost/runtime availability matter without rigid taxonomy.",
+        "edge_cases": "Accurate static/instance and reuse distinctions; avoids parity claim.",
+        "related": "Useful decomposition of environment components."
+      }
+    },
+    "D": {
+      "correctness": "Wrong: Testcontainers runs selected containerized dependency; it is not an in-memory emulator.",
+      "completeness": "Mentions general containerization but contradicts the tool’s role.",
+      "wrong_model": "Conflate embedded database testing with container-managed real database.",
+      "sections": {
+        "what_actually": "Correct distinction.",
+        "source_of_confusion": "Plausible.",
+        "if_it_were_true": "Valid consequence.",
+        "how_it_should_be": "Sound and appropriately qualified."
+      }
+    }
+  },
+  "section_count": 17,
+  "section_assessments": [
+    {
+      "option": "A",
+      "section": "what_actually",
+      "assessment": "No universal JVM-wide container rule; distinguishes JUnit static class scope from instance per-method scope."
+    },
+    {
+      "option": "A",
+      "section": "source_of_confusion",
+      "assessment": "Plausible conflation of singleton or experimental reuse with default lifecycle."
+    },
+    {
+      "option": "A",
+      "section": "if_it_were_true",
+      "assessment": "Reasonably states consequence, then corrects it with configuration-dependent lifecycle."
+    },
+    {
+      "option": "A",
+      "section": "how_it_should_be",
+      "assessment": "Correct lifecycle choices and useful warning that shared container does not reset data."
+    },
+    {
+      "option": "B",
+      "section": "what_actually",
+      "assessment": "Correct: selected image and parameters are explicit; no automatic production parity."
+    },
+    {
+      "option": "B",
+      "section": "source_of_confusion",
+      "assessment": "Sound distinction between same DB/version and whole-environment identity."
+    },
+    {
+      "option": "B",
+      "section": "if_it_were_true",
+      "assessment": "Directly exposes false implication of implicit selection."
+    },
+    {
+      "option": "B",
+      "section": "how_it_should_be",
+      "assessment": "Complete, properly qualified environment guidance."
+    },
+    {
+      "option": "C",
+      "section": "explanation",
+      "assessment": "Accurate description of starting a real dependency, readiness, and connection address."
+    },
+    {
+      "option": "C",
+      "section": "example",
+      "assessment": "Correctly describes PostgreSQL image/JDBC URL and class-scoped static lifecycle; data cleanup caveat."
+    },
+    {
+      "option": "C",
+      "section": "when_to_apply",
+      "assessment": "Balanced application by dependency behavior and cost; avoids rigid test-level rule."
+    },
+    {
+      "option": "C",
+      "section": "edge_cases",
+      "assessment": "Accurate lifecycle distinctions; reuse is separate/experimental; image equality is not parity."
+    },
+    {
+      "option": "C",
+      "section": "related",
+      "assessment": "Good separation of image, data, configuration, and environment reproducibility."
+    },
+    {
+      "option": "D",
+      "section": "what_actually",
+      "assessment": "Correctly distinguishes container runtime process from in-memory DB."
+    },
+    {
+      "option": "D",
+      "section": "source_of_confusion",
+      "assessment": "Plausible conflation because both H2 and Testcontainers appear in repository tests."
+    },
+    {
+      "option": "D",
+      "section": "if_it_were_true",
+      "assessment": "Correctly identifies missed DB-specific behavior as consequence of emulator."
+    },
+    {
+      "option": "D",
+      "section": "how_it_should_be",
+      "assessment": "Sound distinction and suitably limited claims about production defects."
+    }
+  ],
+  "axes": {
+    "CONTENT": "PASS — asks both general practice and tool; C covers both.",
+    "FACTS": "PASS — intentional false claims in distractors are explained as false; not treated as faults in their corrective sections.",
+    "LINKAGE": "PASS — theory, examples, lifecycle caveats, and keyed answer align.",
+    "SECTIONS": "PASS — all 17 sections individually assessed; wrong answers are not rescued with unstated conditions.",
+    "SFPL": "PASS — similar Russian definition-plus-claim structure and technical tone; correctness assessed independently of surface form and answer-numbering cues.",
+    "ANSC": "PASS — A/B/D express plausible misconceptions; C uniquely states explicit image/configuration and lifecycle management.",
+    "RU": "PASS — clear technical Russian; terminology and qualifiers are understandable."
+  },
+  "theory_review": {
+    "status": "PASS WITH SCOPE LIMITS",
+    "findings": [
+      "Distinguishes containerization from Testcontainers and avoids claiming automatic production parity.",
+      "Lifecycle table is consistent with JUnit Jupiter integration: static field per test class, instance field per method; manual singleton is separate.",
+      "Reuse is explicitly experimental and distinct from static class scope; no JVM-wide reuse implication.",
+      "PostgreSQL example uses documented container/Jupiter concepts and correctly treats image as an explicit choice.",
+      "Temporary table scope and cleanup discussion are appropriately limited.",
+      "No Docker/runtime execution was performed or attempted. No dependency installation was performed."
+    ]
+  },
+  "key_check": {
+    "saved_key": "C",
+    "review_choice": "C",
+    "result": "AGREE",
+    "reason": "A overgeneralizes lifecycle, B invents automatic production parity, D describes an in-memory emulator; C is complete."
+  },
+  "sources": [
+    {
+      "title": "Testcontainers Java 1.20.6 documentation: JUnit 5 integration",
+      "url": "https://java.testcontainers.org/test_framework_integration/junit_5/",
+      "version": "1.20.6 pinned as requested",
+      "supports": "@Container static/instance lifecycles and JUnit integration."
+    },
+    {
+      "title": "Testcontainers Java 1.20.6 documentation: PostgreSQL module",
+      "url": "https://java.testcontainers.org/modules/databases/postgres/",
+      "version": "1.20.6 pinned as requested",
+      "supports": "PostgreSQLContainer API and JDBC connection details."
+    },
+    {
+      "title": "Testcontainers Java 1.20.6 documentation: Reusable Containers",
+      "url": "https://java.testcontainers.org/features/reuse/",
+      "version": "1.20.6 pinned as requested",
+      "supports": "Reuse is opt-in experimental feature, distinct from ordinary lifecycle."
+    }
+  ],
+  "limits": [
+    "Primary source pages were not independently fetched in this review; links and pinned version are recorded for verification.",
+    "Docker was not launched; no runtime result is claimed.",
+    "Author reports local caches 1.19.8 and 1.21.4 but not 1.20.6; no compile-only check was attempted.",
+    "Review limited to supplied question, sections, and current theory; global TOC and long rubric omitted."
+  ],
+  "open": []
+}

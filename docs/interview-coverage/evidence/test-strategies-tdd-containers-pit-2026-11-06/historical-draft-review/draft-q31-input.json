@@ -1,0 +1,120 @@
+{
+  "status": "DRAFT_ONLY_NOT_APPLIED_NOT_ACCEPTED",
+  "source_md_sha256": "04461332dfcb8f4e08909c6e447627b18c82016952720edaa0970d6d3dca804f",
+  "source_seed_sha256": "333b5acf7cbb2d5571f3e5e728a18a2c8559640e502da4310775050b315e0ae7",
+  "question": {
+    "q_number": 31,
+    "blocks": [
+      {
+        "block_idx": 0,
+        "question_text": "Что такое `Test Containerization` и `Testcontainers`?",
+        "options": [
+          {
+            "label": "A",
+            "order": 0,
+            "text": "Контейнеризация выносит тестовые зависимости в контейнеры; Testcontainers запускает их из тестов и по общему правилу делит один контейнер между всеми классами на весь JVM-прогон.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Единого автоматического правила «один контейнер на всю JVM» нет. В JUnit 5 extension static-поле @Container разделяется тестовыми методами класса, а instance-поле запускается и останавливается для каждого метода. Возможны и другие явно выбранные схемы управления.",
+              "source_of_confusion": "Singleton-паттерн или экспериментальный reuse принимают за обязательное поведение любой интеграции Testcontainers. Важно различать область поля и механизм управления контейнером.",
+              "if_it_were_true": "Любые тестовые классы автоматически получали бы одну и ту же зависимость на весь JVM-прогон. Реальный lifecycle зависит от выбранной интеграции и конфигурации.",
+              "how_it_should_be": "Указать нужную схему: контейнер на метод, общий для методов класса или явно управляемый экземпляр. Отдельно организовать очистку данных: общий контейнер сам не сбрасывает состояние между методами."
+            }
+          },
+          {
+            "label": "B",
+            "order": 1,
+            "text": "При контейнеризации зависимости работают в контейнерах; Testcontainers запускает их из тестов и сам воспроизводит версию и настройки production без явного выбора образа и конфигурации.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Testcontainers запускает выбранный образ с заданными параметрами. Он не извлекает автоматически production-версию, данные, настройки и инфраструктурные особенности и не доказывает полного совпадения окружений.",
+              "source_of_confusion": "Использование той же СУБД принимают за идентичность всех условий. Даже совпадение версии не гарантирует одинаковые расширения, конфигурацию, схему и нагрузку.",
+              "if_it_were_true": "Версия и конфигурация production воспроизводились бы без явного описания. На практике образ и настройки нужно выбрать и поддерживать в тесте или его конфигурации.",
+              "how_it_should_be": "Явно задать подходящий образ и существенные параметры, а границы сходства с production описать. Контейнер помогает проверять реальную зависимость в заданных условиях, но не заменяет проверку остальных различий."
+            }
+          },
+          {
+            "label": "C",
+            "order": 2,
+            "text": "Контейнеризация изолирует тестовые зависимости в контейнерах; Testcontainers помогает запускать их и управлять жизненным циклом из тестов, а образы и настройки выбирают явно.",
+            "correct": true,
+            "sections": {
+              "explanation": "Тестовая зависимость работает отдельным контейнерным процессом, а библиотека помогает создать контейнер, дождаться готовности и получить адрес подключения. Подход полезен для проверки настоящего поведения выбранной зависимости вместо другой встроенной реализации.",
+              "example": "Тест выбирает образ PostgreSQL и получает JDBC URL запущенного контейнера. Static @Container в JUnit 5 может разделяться методами класса; данные между такими методами очищают отдельно, если тестам нужна независимость.",
+              "when_to_apply": "Когда для цели теста важно поведение реальной БД, брокера или другой контейнеризуемой зависимости. Стоимость запуска и доступность runtime учитывают при выборе набора проверок; универсального запрета по названию уровня теста нет.",
+              "edge_cases": "Lifecycle зависит от интеграции: в JUnit 5 static и instance @Container имеют разную область. Экспериментальный reuse включают отдельно; он может сохранять контейнер и состояние. Одинаковый образ не доказывает совпадение с production.",
+              "related": "Контейнер, его образ, данные и конфигурация — разные части окружения. Для воспроизводимости нужно управлять каждой существенной частью, а не обещать отсутствие всех различий."
+            }
+          },
+          {
+            "label": "D",
+            "order": 3,
+            "text": "Контейнеризация упаковывает тестовые зависимости; Testcontainers заменяет выбранную СУБД встроенной эмуляцией в памяти JVM и не запускает реальный процесс базы в контейнере.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Testcontainers запускает контейнеры с выбранными зависимостями через поддерживаемый контейнерный runtime. Это не встроенная эмуляция СУБД в памяти JVM. Встроенную БД можно выбрать для других тестовых целей, но это другой механизм.",
+              "source_of_confusion": "H2 и Testcontainers могут использоваться в тестах репозитория, поэтому разные способы предоставления зависимости принимают за одну библиотечную эмуляцию.",
+              "if_it_were_true": "Поведение зависимости определялось бы встроенной JVM-эмуляцией, а не процессом выбранного образа. Тогда специфические свойства реальной СУБД могли бы остаться непроверенными.",
+              "how_it_should_be": "Различать встроенную БД и контейнер с реальной выбранной СУБД. Решение принимать по проверяемому риску; ни один из подходов сам по себе не гарантирует отсутствие всех production-дефектов."
+            }
+          }
+        ]
+      }
+    ],
+    "theory": "## Q31. (!) Что такое `Test Containerization` и `Testcontainers`?\n\n`Testcontainers` — библиотека, которая поднимает реальные зависимости (БД, брокеры, кэши) в Docker-контейнерах прямо из теста и сама гасит их после. Контейнер живёт ровно столько, сколько тестовый класс.\n\n**Зачем это, если есть H2 и embedded-моки.** Заглушки врут: H2 — не PostgreSQL, и тест зелёный на H2 легко падает на проде из-за разницы в SQL-диалекте, типах или индексах. Testcontainers решает проблему «у меня работает» — тест гоняется против той же версии БД, что и в production, одинаково локально и в CI. Это превращает интеграционные тесты из приблизительных в достоверные.\n\n```java\n@SpringBootTest\n@Testcontainers\nclass OrderRepositoryIT {\n\n    @Container\n    static PostgreSQLContainer<?> postgres =\n        new PostgreSQLContainer<>(\"postgres:16-alpine\")\n            .withDatabaseName(\"testdb\")\n            .withUsername(\"test\")\n            .withPassword(\"test\");\n\n    @DynamicPropertySource\n    static void configureProperties(DynamicPropertyRegistry registry) {\n        registry.add(\"spring.datasource.url\", postgres::getJdbcUrl);\n        registry.add(\"spring.datasource.username\", postgres::getUsername);\n        registry.add(\"spring.datasource.password\", postgres::getPassword);\n    }\n\n    @Autowired\n    private OrderRepository orderRepository;\n\n    @Test\n    void shouldSaveAndRetrieveOrder() {\n        Order order = new Order(\"item-1\", BigDecimal.TEN);\n        orderRepository.save(order);\n\n        Optional<Order> found = orderRepository.findById(order.getId());\n        assertThat(found).isPresent();\n        assertThat(found.get().getTotal()).isEqualByComparingTo(BigDecimal.TEN);\n    }\n}\n```\n\n### Преимущества\n\n- **Воспроизводимость**: одинаковое окружение локально и в CI — «работает у меня» перестаёт быть отговоркой.\n- **Изоляция**: для каждого тестового класса — свежий контейнер, без утечки состояния между прогонами.\n- **Реальные зависимости**: PostgreSQL вместо H2, Kafka вместо embedded — ловятся баги, которые заглушки физически не способны воспроизвести.\n\n**Плата за это** — скорость: поднять контейнер дороже, чем дёрнуть мок, поэтому Testcontainers держат на уровне integration/component, а не unit. Подробнее — в [вопросах по интеграционному тестированию](integration-testing-interview.md).\n\n",
+    "draft_theory": "## Q31. (!) Что такое `Test Containerization` и `Testcontainers`?\n\n**Контейнеризация тестового окружения** — запуск выбранных зависимостей или самой тестируемой системы в контейнерах с заданными образами и настройками. **Testcontainers** — библиотеки, позволяющие тестовому коду создавать и настраивать контейнерные зависимости, получать адреса/порты и управлять жизненным циклом через API и интеграции с тестовыми framework.\n\nНапример, интеграционная проверка может обращаться к PostgreSQL вместо замены его на H2: различия SQL-диалектов и типов могут быть существенны для проверяемого поведения. Образ и конфигурацию выбирает команда; библиотека не узнаёт версию production автоматически. Совпадение версии БД не гарантирует равенство сетей, прав, данных и всего production-окружения.\n\n### Жизненный цикл и изоляция\n\nВ [интеграции с JUnit Jupiter](https://java.testcontainers.org/test_framework_integration/junit_5/) поведение зависит от объявления:\n\n| Объявление | Жизненный цикл |\n|---|---|\n| `static @Container` | Один запуск до тестовых методов класса, остановка после последнего метода |\n| Поле экземпляра `@Container` | Запуск и остановка для каждого тестового метода |\n| Ручной запуск / singleton pattern | Границы задаёт выбранный код управления; это отдельный подход |\n\nОбщий контейнер класса может содержать данные предыдущего метода. Очистка таблиц, отдельные схемы или другая стратегия изоляции выбираются явно; свежий контейнер не заменяет анализ внешних томов и ресурсов. JUnit-интеграция документирована для последовательных тестов; параллельный запуск требует отдельного решения и не обещан этим примером.\n\n### Минимальный пример с PostgreSQL и JDBC\n\nAPI примера — **Testcontainers Java 1.20.6 / JUnit Jupiter / Java 17+**. Нужны test-зависимости `org.testcontainers:junit-jupiter:1.20.6`, `org.testcontainers:postgresql:1.20.6`, Jupiter и JDBC-драйвер PostgreSQL. Для выполнения требуется доступная поддерживаемая контейнерная среда. Выбранный `postgres:16-alpine` иллюстрирует настройку образа, а не обещает соответствие вашему production; для более строгой воспроизводимости фиксируют подходящую версию или digest.\n\n```java\nimport java.math.BigDecimal;\nimport java.sql.DriverManager;\nimport org.junit.jupiter.api.Test;\nimport org.testcontainers.containers.PostgreSQLContainer;\nimport org.testcontainers.junit.jupiter.Container;\nimport org.testcontainers.junit.jupiter.Testcontainers;\nimport static org.junit.jupiter.api.Assertions.*;\n\n@Testcontainers\nclass PostgresRoundTripTest {\n    @Container\n    static final PostgreSQLContainer<?> postgres =\n        new PostgreSQLContainer<>(\"postgres:16-alpine\")\n            .withDatabaseName(\"testdb\")\n            .withUsername(\"test\")\n            .withPassword(\"test\");\n\n    @Test\n    void readsBackStoredAmount() throws Exception {\n        try (var connection = DriverManager.getConnection(\n                postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());\n             var statement = connection.createStatement()) {\n            statement.execute(\"CREATE TEMP TABLE amounts (id int PRIMARY KEY, total numeric(10,2))\");\n            statement.executeUpdate(\"INSERT INTO amounts VALUES (1, 10.00)\");\n            try (var result = statement.executeQuery(\"SELECT total FROM amounts WHERE id = 1\")) {\n                assertTrue(result.next());\n                assertEquals(0, new BigDecimal(\"10.00\").compareTo(result.getBigDecimal(\"total\")));\n                assertFalse(result.next());\n            }\n        }\n    }\n}\n```\n\nЭто проверка выбранной зависимости и JDBC round trip, не тест приложения с `OrderRepository`. Временная таблица существует в пределах соединения; другие тесты с общими постоянными таблицами потребуют своей очистки. Для Spring Boot адрес и учётные данные можно передавать через поддерживаемую версией Spring интеграцию, например `@DynamicPropertySource`; сущности, схема и repository остаются частью приложения.\n\n### Reuse и стоимость\n\nОбщий `static`-контейнер внутри класса не означает reuse между отдельными JVM. [Reusable Containers](https://java.testcontainers.org/features/reuse/) — отдельная экспериментальная возможность: нужны opt-in окружения, `.withReuse(true)` и ручной запуск; остановка через JUnit/`stop()` мешает сохранению контейнера. Документация не рекомендует эту возможность для CI. Она также не обеспечивает автоматическую чистоту данных.\n\nКонтейнерные зависимости помогают воспроизводить выбранные условия и проверять реальное взаимодействие. Цена — доступность среды, загрузка образов, старт и управление состоянием; длительность измеряют на своей конфигурации. Обычно такие проверки относят к integration/component по границе взаимодействия, а изолированный unit-тест может использовать подходящий test double. Подробнее — в [вопросах по интеграционному тестированию](integration-testing-interview.md).\n\n",
+    "draft_sha256": "e0246cd9f13bf88f4e00bce54c8495c078966479327f980da637e0d2fbc65b63"
+  },
+  "runtime_and_checks": {
+    "status": "DRAFT_STRUCTURAL_AND_SOURCE_FENCE_GUARDS_PASS",
+    "drafts_applied_to_repository": false,
+    "source_md_sha256": "04461332dfcb8f4e08909c6e447627b18c82016952720edaa0970d6d3dca804f",
+    "draft_q6_sha256": "0e8de09d8501fd3820e46c7a4a84c40949fe1e0921379ee5985c9afa84eb10c8",
+    "executed_q6_draft_sha256": "64007d9f7e274adbb93705d5a8d7e61541fc2594b4e019d12f65e5f0a6a350c2",
+    "q6_prose_only_after_execution": "Changed first sequence paragraph to explicitly hypothetical; all four Java fences byte identical to execution snapshot",
+    "q6_fence_sha256": [
+      "ed5cea05e9a3fe69605da01def8b7a146ec7b09b6a1240866000143c52f8a7c0",
+      "1a414da97643df3b49a5c586e66cae5de17a61a5d7302dc748cb94acffcf6c26",
+      "ba47b6a352b5d01b5ae703938c172549795400352ad725caf922f5bd58d70b8b",
+      "2237a1f06372e7900ba86d61d19c2d6ff1be7ec56acbc4e72c3d44f1fd9b2b60"
+    ],
+    "q6_runtime_stages": [
+      {
+        "name": "red-no-premium",
+        "result": {
+          "found": 3,
+          "passed": 2,
+          "failed": 1
+        }
+      },
+      {
+        "name": "green",
+        "result": {
+          "found": 3,
+          "passed": 3,
+          "failed": 0
+        }
+      },
+      {
+        "name": "refactor",
+        "result": {
+          "found": 3,
+          "passed": 3,
+          "failed": 0
+        }
+      },
+      {
+        "name": "negative-new-vip-behavior",
+        "result": {
+          "found": 3,
+          "passed": 2,
+          "failed": 1
+        }
+      }
+    ],
+    "q44_xml": "ElementTree parse PASS; explicit historyInputFile=historyOutputFile; withHistory absent; threshold70",
+    "q44_yaml": "Ruby YAML.safe_load PASS; GitLab stages/rules/cache/job structure checked locally; no GitLab CI Lint or job execution",
+    "Q31": "NOT_COMPILED_NOT_RUN; Docker refusal not bypassed; no container runtime access attempted",
+    "Q44": "PIT Maven plugin and CI NOT_RUN; no dependencies installed"
+  }
+}

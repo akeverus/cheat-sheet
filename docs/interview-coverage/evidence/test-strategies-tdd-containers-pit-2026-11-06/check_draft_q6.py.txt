@@ -1,0 +1,91 @@
+from pathlib import Path
+import re
+import json
+import subprocess
+import hashlib
+
+WORK = Path('/tmp/test-strategies-theory-tdd-containers-pit-20261106')
+OLD_WORK = Path('/tmp/test-strategies-theory-bdd-testfirst-pbt-20261106')
+JAVA = Path('/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin')
+RUNTIME = WORK / 'runtime'
+SRC = RUNTIME / 'sources'
+SRC.mkdir(parents=True, exist_ok=True)
+fences = re.findall(r'```java\n([\s\S]*?)\n```', (WORK / 'q6.md').read_text())
+assert len(fences) == 4
+old_run = json.loads((OLD_WORK / 'runtime/execution.json').read_text())
+jars = old_run['jars']
+for jar in jars:
+    assert hashlib.sha256(Path(jar['path']).read_bytes()).hexdigest() == jar['sha256']
+classpath = ':'.join(jar['path'] for jar in jars)
+(SRC / 'CustomerType.java').write_text(fences[0] + '\n')
+(SRC / 'PriceCalculatorTest.java').write_text(fences[1] + '\n')
+(RUNTIME / 'green-original.java.txt').write_text(fences[2] + '\n')
+(RUNTIME / 'refactor-original.java.txt').write_text(fences[3] + '\n')
+(SRC / 'RunDraft.java').write_text('''import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
+import java.io.PrintWriter;
+
+public class RunDraft {
+    public static void main(String[] args) {
+        var listener = new SummaryGeneratingListener();
+        var request = LauncherDiscoveryRequestBuilder.request()
+            .selectors(selectClass(PriceCalculatorTest.class)).build();
+        var launcher = LauncherFactory.create();
+        launcher.registerTestExecutionListeners(listener);
+        launcher.execute(request);
+        var summary = listener.getSummary();
+        summary.printTo(new PrintWriter(System.out, true));
+        for (var failure : summary.getFailures()) {
+            System.out.println("FAILURE " + failure.getTestIdentifier().getDisplayName()
+                + " " + failure.getException().getClass().getName());
+        }
+        System.out.println("RESULT " + summary.getTestsFoundCount() + ","
+            + summary.getTestsSucceededCount() + "," + summary.getTestsFailedCount());
+        System.exit(summary.getTestsFailedCount() == 0 ? 0 : 1);
+    }
+}
+''')
+
+def run(command):
+    result = subprocess.run(command, text=True, capture_output=True)
+    return {'command': command, 'exit': result.returncode, 'stdout': result.stdout, 'stderr': result.stderr}
+
+phases = []
+red = fences[2].replace('return price.multiply(factor);', 'return price;')
+negative = fences[3].replace('CustomerType.PREMIUM, new BigDecimal("0.80")',
+    'CustomerType.PREMIUM, new BigDecimal("0.80"),\n        CustomerType.VIP, new BigDecimal("0.70")')
+for name, source, expected in [('red-no-premium', red, (3, 2, 1)),
+                               ('green', fences[2], (3, 3, 0)),
+                               ('refactor', fences[3], (3, 3, 0)),
+                               ('negative-new-vip-behavior', negative, (3, 2, 1))]:
+    (SRC / 'PriceCalculator.java').write_text(source + '\n')
+    classes = RUNTIME / 'classes' / name
+    classes.mkdir(parents=True, exist_ok=True)
+    compile_run = run([str(JAVA / 'javac'), '--release', '17', '-cp', classpath,
+                       '-d', str(classes)] + [str(p) for p in sorted(SRC.glob('*.java'))])
+    assert compile_run['exit'] == 0, compile_run
+    execute = run([str(JAVA / 'java'), '-cp', str(classes) + ':' + classpath, 'RunDraft'])
+    match = re.search(r'RESULT (\d+),(\d+),(\d+)', execute['stdout'])
+    assert match
+    actual = tuple(map(int, match.groups()))
+    assert actual == expected, execute
+    if expected[2]:
+        assert execute['exit'] == 1 and 'org.opentest4j.AssertionFailedError' in execute['stdout']
+        label = 'PREMIUM' if name.startswith('red') else 'VIP'
+        assert label in execute['stdout']
+    else:
+        assert execute['exit'] == 0
+    phases.append({'name': name, 'source_sha256': hashlib.sha256(source.encode()).hexdigest(),
+                   'javac': compile_run, 'java': execute,
+                   'result': {'found': actual[0], 'passed': actual[1], 'failed': actual[2]}})
+(SRC / 'PriceCalculator.java').write_text(fences[3] + '\n')
+result = {'status': 'DRAFT_Q6_EXAMPLES_PASS_WITH_EXPECTED_NEGATIVE_CONTROLS',
+          'draft_q6_sha256': hashlib.sha256((WORK / 'q6.md').read_bytes()).hexdigest(),
+          'source_fence_sha256': [hashlib.sha256(f.encode()).hexdigest() for f in fences],
+          'java_version': run([str(JAVA / 'java'), '-version']),
+          'jars': jars, 'phases': phases,
+          'limits': 'Three parameterized cases repeated across stages; no claim of 12 unique tests. Q31 Docker and Q44 PIT/CI NOT_RUN. Original undefined Money code was not compiled; new exact BigDecimal alternatives were.'}
+(RUNTIME / 'execution.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')
+print(json.dumps({'status': result['status'], 'phases': [{k: p[k] for k in ['name', 'result']} for p in phases]}, ensure_ascii=False))

@@ -1,0 +1,134 @@
+{
+  "kind": "AUTHOR_CONTENT_SPECIFIC_REVIEW_NOT_INDEPENDENT_ACCEPTANCE",
+  "reviewed_at": "2026-11-06T02:17:03.954033+00:00",
+  "source_md_sha256": "bad0b2587b3f41e5cd3544b928ea3db00d00dffdebb2f4e6b6b3b163f021706b",
+  "seed_sha256": "333b5acf7cbb2d5571f3e5e728a18a2c8559640e502da4310775050b315e0ae7",
+  "coverage": [
+    {
+      "q_number": 6,
+      "canonical_q_sha256": "1f6b2c2d8fb2820b184a181ffee89b194b112680ba3419aa5ce857859da8e875",
+      "options": 4,
+      "sections": 17
+    },
+    {
+      "q_number": 31,
+      "canonical_q_sha256": "d414261744a5dda2a3258f8701924e71374cdb57f4b7554e7ee30c7133ad0b41",
+      "options": 4,
+      "sections": 17
+    },
+    {
+      "q_number": 44,
+      "canonical_q_sha256": "9310d90b938e9e20f10a41534c3871cb03536520f1743d091cca8a81b8e97524",
+      "options": 4,
+      "sections": 17
+    }
+  ],
+  "section_findings": {
+    "6": {
+      "A": {
+        "what_actually": "Ожидаемая причина Red отделена от ошибки окружения и уже реализованного случая.",
+        "source_of_confusion": "Описана подмена наблюдения уверенностью в собственном тесте, не объявлена бесполезность тестов вообще.",
+        "if_it_were_true": "Пропущенный Red не дал бы заметить изначально зелёный тест; контрфакт относится именно к пропуску наблюдения.",
+        "how_it_should_be": "Названы все три шага, сохранение поведения и диагностика причины падения."
+      },
+      "B": {
+        "what_actually": "Рефакторинг сохраняет наблюдаемое поведение; green не разрешает новую функцию под старым названием.",
+        "source_of_confusion": "Различены любое изменение кода и структурное преобразование.",
+        "if_it_were_true": "Новое наблюдаемое поведение на Refactor противоречит его определению; не сделан вывод о гарантированном покрытии.",
+        "how_it_should_be": "Три шага изложены корректно; тесты не выданы за доказательство всех случаев."
+      },
+      "C": {
+        "what_actually": "Тест предшествует следующему малому шагу; поздние тесты не объявлены бесполезными.",
+        "source_of_confusion": "Смешение наличия тестов и порядка их создания объясняет именно wrong C.",
+        "if_it_were_true": "Утверждение ограничено уже выбранным шагом реализации, не отрицает пользу тестов для будущих изменений.",
+        "how_it_should_be": "Даны малые циклы и отдельный статус исследовательских экспериментов."
+      },
+      "D": {
+        "explanation": "Определение разработки через тесты и назначение каждого шага согласованы с видимым D.",
+        "example": "Таблица ставок должна сохранить PREMIUM и остальные категории; новая VIP-скидка отделена от рефакторинга.",
+        "when_to_apply": "Проверяемость следующего случая и обратная связь названы условиями; хороший дизайн не гарантируется.",
+        "edge_cases": "Учтены неверная причина Red, неполнота покрытия и допустимый чистый код на Green.",
+        "related": "Новые результаты отделены от преобразования структуры даже при зелёных прежних тестах."
+      }
+    },
+    "31": {
+      "A": {
+        "what_actually": "Различены static-контейнер класса и instance-контейнер метода; общего JVM-правила нет.",
+        "source_of_confusion": "Singleton и reuse не отождествлены с дефолтом любой интеграции.",
+        "if_it_were_true": "Общая для всех классов зависимость действительно следовала бы из заявленного wrong, но не из реального API.",
+        "how_it_should_be": "Выбор lifecycle и очистка данных выделены отдельно; один контейнер не обещает сброс состояния."
+      },
+      "B": {
+        "what_actually": "Выбранные образ и параметры не дают автоматического извлечения production-настроек.",
+        "source_of_confusion": "Совпадение СУБД/версии не приравнено к совпадению схемы, расширений и нагрузки.",
+        "if_it_were_true": "Контрфакт проверяет именно отсутствие явного описания production-параметров.",
+        "how_it_should_be": "Нужные образ/параметры и границы сходства задаются явно, полная parity не обещана."
+      },
+      "C": {
+        "explanation": "Реальный контейнерный процесс, readiness и адрес подключения согласованы с ролью библиотеки.",
+        "example": "JDBC URL и shared static scope согласованы; независимость данных требует отдельной очистки.",
+        "when_to_apply": "Риск реального взаимодействия и цена среды важнее названия уровня; универсального запрета unit не введено.",
+        "edge_cases": "Static/instance scope, отдельный experimental reuse и отсутствие автоматической parity различены.",
+        "related": "Контейнер, образ, данные и конфигурация правильно выделены как разные условия воспроизводимости."
+      },
+      "D": {
+        "what_actually": "Контейнерный runtime не заменён JVM-эмуляцией; встроенная БД допустима для иных целей.",
+        "source_of_confusion": "Объяснена общая роль H2 и Testcontainers в repository-тестах при разных механизмах.",
+        "if_it_were_true": "Для JVM-эмуляции отдельные свойства реальной СУБД могли бы остаться непроверенными; абсолютного запрета имитации нет.",
+        "how_it_should_be": "Выбор зависит от риска; ни один подход не гарантирует отсутствия production-дефектов."
+      }
+    },
+    "44": {
+      "A": {
+        "explanation": "Отбор тестов по покрытию/времени и условная history reuse не сведены к фильтру изменённых классов.",
+        "example": "Суженный PR scope и более широкий периодический прогон описаны как стратегия; численные thresholds не универсальны.",
+        "when_to_apply": "Допускается быстрый полный прогон на каждом изменении; выбор по риску/стоимости.",
+        "edge_cases": "Изменения тестов и ограничения зависимости history учтены, точность и ускорение не гарантированы.",
+        "related": "DTO/Entity/config не исключаются по одному имени; scope и cadence являются решениями проекта."
+      },
+      "B": {
+        "what_actually": "excludedClasses исключает мутации выбранных классов, а не только строки отчёта.",
+        "source_of_confusion": "Перепутаны отбор анализа и визуализация уже полученных результатов.",
+        "if_it_were_true": "Классы продолжали бы мутироваться при чисто отчётном фильтре — это соответствует гипотезе wrong.",
+        "how_it_should_be": "Назначение targetClasses/excludedClasses сохранено; важная логика не определяется суффиксом имени."
+      },
+      "C": {
+        "what_actually": "PIT использует покрытие/время для целевого набора тестов, не обязан гонять весь suite на каждом мутанте.",
+        "source_of_confusion": "Общий смысл mutation testing отделён от конкретного алгоритма полного повторного запуска.",
+        "if_it_were_true": "При запуске всей базы независимо от покрытия оно не определяло бы отбор множества тестов; не утверждается бесполезность иных данных покрытия.",
+        "how_it_should_be": "Длительность измеряется на проекте; выдуманная постоянная длительность не служит запретом полного PR-прогона."
+      },
+      "D": {
+        "what_actually": "History хранит результаты и информацию для сравнения кода/тестов; допускает условный вывод без повторного исполнения.",
+        "source_of_confusion": "История анализа отделена от пассивного архива HTML/XML-отчётов.",
+        "if_it_were_true": "Архив без влияния на анализ соответствовал бы гипотезе, но реальный механизм использует результаты при выполнении условий.",
+        "how_it_should_be": "Сохранение history и ограничения названы, изменение тестов не игнорируется при неизменном production-классе."
+      }
+    }
+  },
+  "answer_fullness": "All12 options answer their complete visible prompts; wrongs express coherent false models. Falsehood was not used as evidence of incompleteness.",
+  "wrong_models": {
+    "Q6": [
+      "A skips expected Red observation",
+      "B treats new behavior as refactor",
+      "C implementation precedes test"
+    ],
+    "Q31": [
+      "A universalJVMsingleton",
+      "B automaticproductionparity",
+      "D in-memoryemulation"
+    ],
+    "Q44": [
+      "B report-onlyexcludedClasses",
+      "C alltestsforeachmutant",
+      "D passivehistoryarchive"
+    ]
+  },
+  "confirmed_material_mcq_defects": [],
+  "theory_findings_fixed": [
+    "Q6 VIP behavior changed during alleged refactor; now preserved. Red/green guarantees limited; undefined Money removed. RobertMartin attribution retained after refuting false LLM finding.",
+    "Q31 lifecycle/reuse/data isolation/production parity limited; complete JDBC example uses actual APIs.",
+    "Q44 all-suite/history/timing/exclusion claims corrected; pinned fields valid; explicit history mode separated; unitjob MR rules fixed."
+  ],
+  "limits": "Does not replace independent LLM A/B, source checks or real execution. Old repeated per-field acknowledgments are not counted as content-specific acceptance."
+}

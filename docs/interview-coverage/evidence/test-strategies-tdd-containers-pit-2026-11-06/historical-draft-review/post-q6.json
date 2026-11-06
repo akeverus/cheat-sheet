@@ -1,0 +1,69 @@
+{
+  "q": 6,
+  "status": "DISCLOSED_POST_DRAFT_REVIEW",
+  "source_input_sha256": "012fd27111d744a113e83036e67f9b6949974e0d137fefb275d6f2b9907eaada",
+  "options": [
+    {
+      "label": "A",
+      "coverage": "Addresses definition and Red/Green/Refactor sequence.",
+      "fullness": "Full answer; assessed independently of truth.",
+      "truth": "false",
+      "finding": "Red may be skipped; misses observing expected failure."
+    },
+    {
+      "label": "B",
+      "coverage": "Addresses definition and Red/Green/Refactor sequence.",
+      "fullness": "Full answer; assessed independently of truth.",
+      "truth": "false",
+      "finding": "Calls adding functionality refactoring; changes behavior."
+    },
+    {
+      "label": "C",
+      "coverage": "Addresses definition and Red/Green/Refactor sequence.",
+      "fullness": "Full answer; assessed independently of truth.",
+      "truth": "false",
+      "finding": "Places full implementation before tests; reverses test-first order."
+    },
+    {
+      "label": "D",
+      "coverage": "Addresses definition and Red/Green/Refactor sequence.",
+      "fullness": "Full answer; assessed independently of truth.",
+      "truth": "correct",
+      "finding": "Complete and accurate sequence."
+    }
+  ],
+  "theory_findings": [
+    {
+      "severity": "material",
+      "quote": "«Он должен упасть — это доказывает, что тест вообще что-то проверяет»",
+      "finding": "Overstates proof; must verify the failure cause is the missing behavior, not setup or unrelated failure.",
+      "correction": "Describe as evidence the test detects this case, not proof of comprehensive behavior."
+    },
+    {
+      "severity": "material",
+      "quote": "«Зелёные тесты — страховка: если рефакторинг что-то сломал, они тут же покраснеют»",
+      "finding": "False guarantee; tests can only detect regressions their assertions/execution cover. Contradicts edge_cases section.",
+      "correction": "Tests provide feedback on covered claims and may expose regressions; they do not guarantee detection."
+    },
+    {
+      "severity": "material",
+      "quote": "«Код выходит тестируемым по построению»",
+      "finding": "Guarantee too strong; TDD can encourage testable design but cannot ensure it."
+    },
+    {
+      "severity": "material",
+      "quote": "Step 2 PRICE.multiply(0.8); Step 3 adds VIP rate 0.70",
+      "finding": "Behavior changes for VIP from unchanged price to 30% discount, mislabeled Refactor.",
+      "correction": "The draft fixes this by specifying VIP=1.00 and omitting VIP discount from map; the test and refactored behavior agree."
+    },
+    {
+      "severity": "minor",
+      "quote": "Green ... «сохранив ранее работавшие проверки»",
+      "finding": "Do not imply implementation must preserve every previously passing test during feature work; tests should stay meaningful, but contract depends on intended behavior."
+    }
+  ],
+  "sections": "All 17 section values present; A/B/C rebut the matching misconception; D sections align with the corrected VIP-preserving example. No section contradicts the draft after the VIP fix.",
+  "source_fact": "Robert C. Martin attribution to Three Rules is correct per https://blog.cleancoder.com/uncle-bob/2014/12/17/TheCyclesOfTDD.html (2014 article explicitly discusses Three Laws; Q6 draft distinguishes from RGR). Fowler TDD: https://martinfowler.com/bliki/TestDrivenDevelopment.html",
+  "runtime_note": "Coordinator record reports 3 parameterized Green and Refactor cases passing, expected Red premium and negative VIP failure. This is coordinator-provided execution, not my run.",
+  "scope": "No Docker/dependency/repository/index changes; not blind or FINAL."
+}

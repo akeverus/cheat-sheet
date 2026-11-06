@@ -275,70 +275,101 @@ graph TB
 
 ## Q6. (!) Что такое `TDD` и как работает цикл `Red-Green-Refactor`?
 
-`TDD` (`Test-Driven Development`) — практика, при которой тест пишется **до** кода и управляет его дизайном. Это не «тестирование», а способ проектирования: тест формулирует, что метод должен делать, ещё до того как появилась реализация. Цикл повторяется маленькими шагами.
+**TDD (Test-Driven Development)** — разработка небольшими шагами, в которой тест выбранного нового поведения предшествует реализации и помогает уточнять API и дизайн. Цикл даёт обратную связь по проверяемым случаям:
 
-- **Red** — пишем падающий тест на ещё не существующее поведение. Он должен упасть — это доказывает, что тест вообще что-то проверяет.
-- **Green** — пишем минимальный код, чтобы тест прошёл. На этом шаге «красиво» не нужно, нужно «зелёно».
-- **Refactor** — улучшаем дизайн, не меняя поведения. Зелёные тесты — страховка: если рефакторинг что-то сломал, они тут же покраснеют.
+- **Red** — написать тест, запустить его и убедиться, что падение связано с отсутствующим поведением. Ошибка настройки или окружения не подтверждает чувствительность нужного утверждения.
+- **Green** — добавить реализацию, достаточную для текущего случая, и пройти прежние проверки, применимые к актуальному контракту.
+- **Refactor** — улучшить структуру, сохранив наблюдаемое поведение. Тесты помогают обнаруживать регрессии в своих проверках; зелёный набор не гарантирует отсутствие изменений вне этих утверждений.
 
 ```mermaid
 graph LR
-    RED["RED<br/>Написать<br/>падающий тест"] --> GREEN["GREEN<br/>Минимальный код<br/>для прохождения"]
-    GREEN --> REFACTOR["REFACTOR<br/>Улучшить код<br/>без изменения поведения"]
+    RED["RED<br/>Тест падает<br/>по ожидаемой причине"] --> GREEN["GREEN<br/>Реализация<br/>до зелёного"]
+    GREEN --> REFACTOR["REFACTOR<br/>Улучшить структуру<br/>сохранив поведение"]
     REFACTOR --> RED
     style RED fill:#ff6b6b,color:#000
     style GREEN fill:#6bcb77,color:#000
     style REFACTOR fill:#4ecdc4,color:#000
 ```
 
-### Пример цикла `TDD` в Java
+### Пример цикла в Java
+
+Учебный контракт: цена `BigDecimal` и тип клиента не `null`; для PREMIUM множитель 0.80, для REGULAR и VIP — 1. Отдельного правила скидки VIP пока нет. Типы ниже находятся в одном пакете, каждый класс — в своём файле. Тест использует **JUnit Jupiter с модулем params / Java 17+**.
 
 ```java
-// === STEP 1: RED — пишем падающий тест ===
-@Test
-void shouldCalculateDiscountForPremiumCustomer() {
-    PriceCalculator calculator = new PriceCalculator();
-    Money price = Money.of(100, "USD");
+enum CustomerType { REGULAR, PREMIUM, VIP }
+```
 
-    Money discounted = calculator.applyDiscount(price, CustomerType.PREMIUM);
+Возможная последовательность: сначала сформулировать случай PREMIUM и проверить его красный результат, затем добавлять следующие случаи по одному. Итоговый набор:
 
-    assertEquals(Money.of(80, "USD"), discounted); // 20% скидка
-}
+```java
+import java.math.BigDecimal;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-// === STEP 2: GREEN — минимальная реализация ===
-public class PriceCalculator {
-    public Money applyDiscount(Money price, CustomerType type) {
-        if (type == CustomerType.PREMIUM) {
-            return price.multiply(0.8);
-        }
-        return price;
-    }
-}
-
-// === STEP 3: REFACTOR — улучшаем дизайн ===
-public class PriceCalculator {
-    private static final Map<CustomerType, BigDecimal> DISCOUNT_RATES = Map.of(
-        CustomerType.PREMIUM, new BigDecimal("0.80"),
-        CustomerType.VIP, new BigDecimal("0.70"),
-        CustomerType.REGULAR, BigDecimal.ONE
-    );
-
-    public Money applyDiscount(Money price, CustomerType type) {
-        BigDecimal rate = DISCOUNT_RATES.getOrDefault(type, BigDecimal.ONE);
-        return price.multiply(rate);
+class PriceCalculatorTest {
+    @ParameterizedTest
+    @CsvSource({
+        "PREMIUM, 100.00, 80.00",
+        "REGULAR, 100.00, 100.00",
+        "VIP, 100.00, 100.00"
+    })
+    void appliesDeclaredRate(CustomerType type, String price, String expected) {
+        BigDecimal actual = new PriceCalculator()
+            .applyDiscount(new BigDecimal(price), type);
+        assertEquals(0, new BigDecimal(expected).compareTo(actual));
     }
 }
 ```
 
-### Три правила `TDD` (Роберт Мартин)
+Реализация Green для этого контракта:
 
-1. Не писать production-код без падающего теста.
-2. Писать ровно столько теста, чтобы он упал (даже не скомпилироваться — уже падение).
-3. Писать ровно столько кода, чтобы текущий тест прошёл.
+```java
+import java.math.BigDecimal;
+import java.util.Objects;
 
-**Что даёт TDD на практике.** Тесты появляются автоматически и покрывают именно поведение, а не «постфактум для метрики». Код выходит тестируемым по построению (мелкие методы, явные зависимости). А необходимость сначала написать тест заставляет продумать API класса со стороны его пользователя.
+public class PriceCalculator {
+    public BigDecimal applyDiscount(BigDecimal price, CustomerType type) {
+        Objects.requireNonNull(price);
+        Objects.requireNonNull(type);
+        BigDecimal factor = type == CustomerType.PREMIUM
+            ? new BigDecimal("0.80") : BigDecimal.ONE;
+        return price.multiply(factor);
+    }
+}
+```
 
-**Подводный камень:** TDD плохо ложится на задачи, где дизайн ещё не ясен (исследовательский код, прототипы). Там сначала «набрасывают» решение, и только закрепив форму, покрывают тестами. Подробнее о написании юнит-тестов — в [вопросах по unit-тестированию](unit-testing-interview.md).
+Возможный Refactor заменяет условие таблицей. Это альтернативная версия того же класса; обе версии одновременно не объявляются:
+
+```java
+import java.math.BigDecimal;
+import java.util.Map;
+import java.util.Objects;
+
+public class PriceCalculator {
+    private static final Map<CustomerType, BigDecimal> RATES = Map.of(
+        CustomerType.PREMIUM, new BigDecimal("0.80")
+    );
+
+    public BigDecimal applyDiscount(BigDecimal price, CustomerType type) {
+        Objects.requireNonNull(price);
+        Objects.requireNonNull(type);
+        return price.multiply(RATES.getOrDefault(type, BigDecimal.ONE));
+    }
+}
+```
+
+VIP по-прежнему получает исходную цену. Добавление VIP-скидки 30% изменило бы поведение и потребовало бы нового тестового цикла. Для двух ветвей таблица необязательна: рефакторинг должен иметь понятную пользу для конкретного дизайна. Сравнение через `compareTo` проверяет численное значение суммы; правила валюты и округления здесь не заданы.
+
+### Три правила в формулировке Роберта Мартина
+
+1. Сначала написать падающий тест, затем необходимый production-код.
+2. Добавлять тест небольшими шагами, достаточными для падения; отсутствие компиляции тоже может быть ожидаемым промежуточным состоянием.
+3. Добавлять production-код, достаточный для прохождения текущего падающего теста.
+
+Это дисциплина мелких шагов. В статье [Robert C. Martin: The Cycles of TDD](https://blog.cleancoder.com/uncle-bob/2014/12/17/TheCyclesOfTDD.html) различаются эти правила и более крупный Red-Green-Refactor цикл. [Martin Fowler: TDD](https://martinfowler.com/bliki/TestDrivenDevelopment.html) также описывает выбор следующего случая из пополняемого списка.
+
+TDD помогает получить тестируемый API и быструю обратную связь, но полезность зависит от выбранных случаев и утверждений. При исследовательской неопределённости команда может сначала провести ограниченный эксперимент, затем уточнить контракт и продолжить тестами до следующего изменения. Универсального запрета TDD для прототипов нет. Подробнее — в [вопросах по unit-тестированию](unit-testing-interview.md).
 
 ## Q7. (!) Что такое `BDD` и как его реализовать с `Cucumber`?
 
@@ -1311,51 +1342,68 @@ void shouldReturnDiscountedPriceForPremiumCustomer() {
 
 ## Q31. (!) Что такое `Test Containerization` и `Testcontainers`?
 
-`Testcontainers` — библиотека, которая поднимает реальные зависимости (БД, брокеры, кэши) в Docker-контейнерах прямо из теста и сама гасит их после. Контейнер живёт ровно столько, сколько тестовый класс.
+**Контейнеризация тестового окружения** — запуск выбранных зависимостей или самой тестируемой системы в контейнерах с заданными образами и настройками. **Testcontainers** — библиотеки, позволяющие тестовому коду создавать и настраивать контейнерные зависимости, получать адреса/порты и управлять жизненным циклом через API и интеграции с тестовыми framework.
 
-**Зачем это, если есть H2 и embedded-моки.** Заглушки врут: H2 — не PostgreSQL, и тест зелёный на H2 легко падает на проде из-за разницы в SQL-диалекте, типах или индексах. Testcontainers решает проблему «у меня работает» — тест гоняется против той же версии БД, что и в production, одинаково локально и в CI. Это превращает интеграционные тесты из приблизительных в достоверные.
+Например, интеграционная проверка может обращаться к PostgreSQL вместо замены его на H2: различия SQL-диалектов и типов могут быть существенны для проверяемого поведения. Образ и конфигурацию выбирает команда; библиотека не узнаёт версию production автоматически. Совпадение версии БД не гарантирует равенство сетей, прав, данных и всего production-окружения.
+
+### Жизненный цикл и изоляция
+
+В [интеграции с JUnit Jupiter](https://java.testcontainers.org/test_framework_integration/junit_5/) поведение зависит от объявления:
+
+| Объявление | Жизненный цикл |
+|---|---|
+| `static @Container` | Один запуск до тестовых методов класса, остановка после последнего метода |
+| Поле экземпляра `@Container` | Запуск и остановка для каждого тестового метода |
+| Ручной запуск / singleton pattern | Границы задаёт выбранный код управления; это отдельный подход |
+
+Общий контейнер класса может содержать данные предыдущего метода. Очистка таблиц, отдельные схемы или другая стратегия изоляции выбираются явно; свежий контейнер не заменяет анализ внешних томов и ресурсов. JUnit-интеграция документирована для последовательных тестов; параллельный запуск требует отдельного решения и не обещан этим примером.
+
+### Минимальный пример с PostgreSQL и JDBC
+
+API примера — **Testcontainers Java 1.20.6 / JUnit Jupiter / Java 17+**. Нужны test-зависимости `org.testcontainers:junit-jupiter:1.20.6`, `org.testcontainers:postgresql:1.20.6`, Jupiter и JDBC-драйвер PostgreSQL. Для выполнения требуется доступная поддерживаемая контейнерная среда. Выбранный `postgres:16-alpine` иллюстрирует настройку образа, а не обещает соответствие вашему production; для более строгой воспроизводимости фиксируют подходящую версию или digest.
 
 ```java
-@SpringBootTest
-@Testcontainers
-class OrderRepositoryIT {
+import java.math.BigDecimal;
+import java.sql.DriverManager;
+import org.junit.jupiter.api.Test;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import static org.junit.jupiter.api.Assertions.*;
 
+@Testcontainers
+class PostgresRoundTripTest {
     @Container
-    static PostgreSQLContainer<?> postgres =
+    static final PostgreSQLContainer<?> postgres =
         new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("testdb")
             .withUsername("test")
             .withPassword("test");
 
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-    }
-
-    @Autowired
-    private OrderRepository orderRepository;
-
     @Test
-    void shouldSaveAndRetrieveOrder() {
-        Order order = new Order("item-1", BigDecimal.TEN);
-        orderRepository.save(order);
-
-        Optional<Order> found = orderRepository.findById(order.getId());
-        assertThat(found).isPresent();
-        assertThat(found.get().getTotal()).isEqualByComparingTo(BigDecimal.TEN);
+    void readsBackStoredAmount() throws Exception {
+        try (var connection = DriverManager.getConnection(
+                postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
+             var statement = connection.createStatement()) {
+            statement.execute("CREATE TEMP TABLE amounts (id int PRIMARY KEY, total numeric(10,2))");
+            statement.executeUpdate("INSERT INTO amounts VALUES (1, 10.00)");
+            try (var result = statement.executeQuery("SELECT total FROM amounts WHERE id = 1")) {
+                assertTrue(result.next());
+                assertEquals(0, new BigDecimal("10.00").compareTo(result.getBigDecimal("total")));
+                assertFalse(result.next());
+            }
+        }
     }
 }
 ```
 
-### Преимущества
+Это проверка выбранной зависимости и JDBC round trip, не тест приложения с `OrderRepository`. Временная таблица существует в пределах соединения; другие тесты с общими постоянными таблицами потребуют своей очистки. Для Spring Boot адрес и учётные данные можно передавать через поддерживаемую версией Spring интеграцию, например `@DynamicPropertySource`; сущности, схема и repository остаются частью приложения.
 
-- **Воспроизводимость**: одинаковое окружение локально и в CI — «работает у меня» перестаёт быть отговоркой.
-- **Изоляция**: для каждого тестового класса — свежий контейнер, без утечки состояния между прогонами.
-- **Реальные зависимости**: PostgreSQL вместо H2, Kafka вместо embedded — ловятся баги, которые заглушки физически не способны воспроизвести.
+### Reuse и стоимость
 
-**Плата за это** — скорость: поднять контейнер дороже, чем дёрнуть мок, поэтому Testcontainers держат на уровне integration/component, а не unit. Подробнее — в [вопросах по интеграционному тестированию](integration-testing-interview.md).
+Общий `static`-контейнер внутри класса не означает reuse между отдельными JVM. [Reusable Containers](https://java.testcontainers.org/features/reuse/) — отдельная экспериментальная возможность: нужны opt-in окружения, `.withReuse(true)` и ручной запуск; остановка через JUnit/`stop()` мешает сохранению контейнера. Документация не рекомендует эту возможность для CI. Она также не обеспечивает автоматическую чистоту данных.
+
+Контейнерные зависимости помогают воспроизводить выбранные условия и проверять реальное взаимодействие. Цена — доступность среды, загрузка образов, старт и управление состоянием; длительность измеряют на своей конфигурации. Обычно такие проверки относят к integration/component по границе взаимодействия, а изолированный unit-тест может использовать подходящий test double. Подробнее — в [вопросах по интеграционному тестированию](integration-testing-interview.md).
 
 ## Q32. Как организовать `Test Environments Strategy`?
 
@@ -1871,10 +1919,22 @@ Ice Cream Cone (антипаттерн):        Honeycomb (для микросе
 
 ## Q44. (!) Как совместить Mutation Testing с CI/CD и quality gates?
 
-Mutation Testing даёт лучшую оценку качества тестов, но платой служит время: PITest прогоняет весь набор тестов на каждую мутацию, поэтому полный анализ модуля идёт 10–30 минут. Гонять это на каждый коммит нельзя — pipeline встанет. Поэтому стратегия интеграции сводится к трём приёмам: **сузить scope** (только бизнес-логика, не DTO/конфиг), **запускать инкрементально** (через историю — только изменённые классы) и **вынести из горячего пути** (ночью или по изменению core-модулей).
+**Mutation Testing** помогает оценить, какие изменения программы обнаруживает набор тестов. Для CI выбирают область анализа, бюджет выполнения, правила работы с surviving mutants и условия блокировки. Длительность зависит от проекта, тестов, машины и настроек; универсальных «10–30 минут» или запрета запуска на каждый PR нет.
+
+В PIT перед мутационным прогоном собирается покрытие: по нему и времени тестов выбираются подходящие проверки для кода, затронутого мутантом. Это **не обязательный запуск всего набора для каждого мутанта**. См. [PIT: Basic concepts](https://pitest.org/quickstart/basic_concepts/).
+
+### Область и повторные прогоны
+
+1. Выбрать поведение с полезным сигналом и доступным бюджетом. `targetClasses` задаёт кандидатов, `excludedClasses` исключает классы из мутационного анализа, а не только прячет строки отчёта. DTO, entity и конфигурационный код могут содержать важную логику; одного имени для исключения недостаточно.
+2. Снять исходный результат, разобраться в surviving/equivalent mutants и согласовать применимые пороги. Mutation score не доказывает полноту требований или отсутствие дефектов.
+3. Для поддерживаемой версии и конфигурации использовать history: результаты можно переиспользовать с учётом изменений кода и тестов. Это не режим «мутировать только изменённые классы». В [описании incremental analysis](https://pitest.org/quickstart/incremental_analysis/) указаны условия и ограничения такого вывода; периодическая проверка без истории помогает получить свежую базу для выбранной области.
+4. По измерениям выбрать PR-прогон, расписание или комбинацию. При сужении scope проверять, какие риски остались вне него; быстрый прогон не заменяет более широкий автоматически.
+
+### Пример Maven-конфигурации
+
+Это фрагмент `<build><plugins>` для учебного проекта с Jupiter: **PIT 1.15.3**, адаптер **pitest-junit5-plugin 1.2.1** (адаптер требует PIT 1.15.2+). Эти версии фиксируют пример, а совместимость с JDK и JUnit Platform проверяют по [матрице адаптера](https://github.com/pitest/pitest-junit5-plugin/blob/1.2.1/README.md). Scope и порог 70 — явный выбор примера.
 
 ```xml
-<!-- pom.xml: конфигурация PITest -->
 <plugin>
     <groupId>org.pitest</groupId>
     <artifactId>pitest-maven</artifactId>
@@ -1887,35 +1947,14 @@ Mutation Testing даёт лучшую оценку качества тесто�
         </dependency>
     </dependencies>
     <configuration>
-        <!-- Тестируем только изменённые классы (incremental analysis) -->
-        <withHistory>true</withHistory>
-        <historyInputFile>target/pit-history/history.bin</historyInputFile>
-        <historyOutputFile>target/pit-history/history.bin</historyOutputFile>
-
-        <!-- Минимальный порог: 70% мутантов должны быть убиты -->
-        <mutationThreshold>70</mutationThreshold>
-        <coverageThreshold>80</coverageThreshold>
-
-        <!-- Тестируем только бизнес-логику, не DTO/конфигурацию -->
         <targetClasses>
             <param>com.example.service.*</param>
             <param>com.example.domain.*</param>
         </targetClasses>
-        <excludedClasses>
-            <param>com.example.config.*</param>
-            <param>*Dto</param>
-            <param>*Entity</param>
-        </excludedClasses>
-
-        <!-- Только сильные мутаторы -->
-        <mutators>
-            <mutator>STRONGER</mutator>
-        </mutators>
-
-        <!-- Параллельный запуск -->
+        <mutationThreshold>70</mutationThreshold>
+        <historyInputFile>${project.build.directory}/pit-history.bin</historyInputFile>
+        <historyOutputFile>${project.build.directory}/pit-history.bin</historyOutputFile>
         <threads>4</threads>
-
-        <!-- Отчёт для CI -->
         <outputFormats>
             <outputFormat>HTML</outputFormat>
             <outputFormat>XML</outputFormat>
@@ -1924,39 +1963,60 @@ Mutation Testing даёт лучшую оценку качества тесто�
 </plugin>
 ```
 
-### Стратегия интеграции в CI/CD
+Явные пути history выбраны для сохранения между CI jobs. Здесь нет `withHistory=true`: этот флаг включает другую ветку настройки. В [коде PIT 1.15.3](https://github.com/hcoles/pitest/blob/1.15.3/pitest-maven/src/main/java/org/pitest/maven/MojoToReportOptionsConverter.java) она не передаёт явно заданные файлы в `ReportOptions`; смешивать два способа не следует. Для локального запуска без явных путей `withHistory` выбирает файл в `java.io.tmpdir`. Параметры сверяют с [Maven quickstart](https://pitest.org/quickstart/maven/) и версией plugin; при обновлении также проверяют наличие требуемой history-реализации.
+
+### Фрагмент GitLab CI
+
+Runner должен предоставлять подходящие JDK и Maven; обычные тесты проекта должны проходить. Это **GitLab CI**, не GitHub Actions. Пример запускает mutation job по расписанию или для MR с изменениями исходников, тестов и конфигурации; правила конкретного проекта могут быть шире.
 
 ```yaml
-# Пример GitHub Actions / GitLab CI
-stages:
-  - unit-test      # каждый коммит, < 1 мин
-  - integration    # каждый PR, < 10 мин
-  - mutation       # ночной прогон или при изменении core-модулей
-  - deploy         # только если все gates пройдены
+stages: [test, mutation]
+
+unit-test:
+  stage: test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - mvn -B test
 
 mutation-test:
   stage: mutation
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'  # ночной
-    - changes:
-        - "src/main/java/com/example/service/**"  # при изменении сервисов
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - src/main/java/**/*
+        - src/test/java/**/*
+        - pom.xml
+        - .gitlab-ci.yml
+  cache:
+    key: "pit-1.15.3-${CI_COMMIT_REF_SLUG}"
+    paths:
+      - target/pit-history.bin
   script:
-    - mvn pitest:mutationCoverage
+    - mvn -B test-compile org.pitest:pitest-maven:1.15.3:mutationCoverage
   artifacts:
+    when: always
     paths:
       - target/pit-reports/
-  allow_failure: false  # блокирует деплой при падении threshold
+  allow_failure: false
 ```
 
-### Quality Gates для Mutation Testing
+Обе задачи явно настроены для MR и запусков по расписанию; у задачи мутационного анализа для MR дополнительно ограничены изменившиеся пути. Это существенно: задача без `rules` по умолчанию исключается из MR pipeline. См. [GitLab: job rules](https://docs.gitlab.com/ci/jobs/job_rules/). Предыдущий этап `test` должен успешно завершиться перед запуском `mutation` в данном фрагменте.
 
-| Уровень | Mutation Score | Действие |
-|---------|---------------|---------|
-| Критичная бизнес-логика | > 80% | Блокировать PR |
-| Обычные сервисы | > 60% | Предупреждение |
-| Инфраструктурный код | Не применяется | Исключить из PITest |
+Cache может отсутствовать: ускорение не гарантировано, и холодный прогон должен укладываться в допустимый бюджет. История должна относиться к совместимой версии и проекту; её доступность сама по себе не подтверждает корректность повторного использования. YAML описывает jobs; полный pipeline, включая `workflow:rules` и сборку многомодульного проекта, проверяют отдельно. См. [GitLab CI YAML reference](https://docs.gitlab.com/ci/yaml/).
 
-**Главный практический приём** — инкрементальный режим (`withHistory`): PITest хранит результаты прошлого прогона и мутирует только изменённые классы. Это сокращает анализ небольшого PR с ~30 минут до 2–3 минут и делает реальным включение mutation-гейта в обычный pipeline, а не только в ночной прогон.
+### Согласование gate и действий
+
+| Условие в выбранном примере | Действие |
+|---|---|
+| PIT mutation score ниже 70 | Maven goal завершается с ошибкой; обязательный job падает |
+| Score не ниже 70 | Этот численный порог пройден; surviving mutants всё ещё анализируются |
+| Изменились scope, версия или mutators | Пересмотреть сопоставимость результата и исходную базу |
+| Анализ не запускался по rules или завершился ошибкой инфраструктуры | Не выдавать это за успешный mutation gate |
+
+Порог для другого проекта может отличаться. Режим предупреждения настраивается явно и не равнозначен блокирующему `allow_failure: false`. Решение о merge/deploy учитывает все предусмотренные проверки; один mutation score его не определяет.
 
 ## Q45. Что такое Component Testing и как он вписывается в стратегию?
 

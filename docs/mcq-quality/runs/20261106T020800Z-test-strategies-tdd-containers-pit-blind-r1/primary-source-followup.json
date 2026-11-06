@@ -1,0 +1,57 @@
+{
+  "purpose": "Narrow primary-source follow-up; no source instructions executed.",
+  "checks": [
+    {
+      "topic": "Testcontainers Java 1.20.6 JUnit lifecycle",
+      "url": "https://raw.githubusercontent.com/testcontainers/testcontainers-java/1.20.6/docs/test_framework_integration/junit_5.md",
+      "status": "VERIFIED",
+      "finding": "Pinned source says static @Container is shared among methods of one class and stops after last; instance field starts/stops each method. It explicitly says parallel execution unsupported. This confirms class scope does not mean all JVM classes."
+    },
+    {
+      "topic": "Testcontainers Java 1.20.6 reuse",
+      "url": "https://raw.githubusercontent.com/testcontainers/testcontainers-java/1.20.6/docs/features/reuse.md",
+      "status": "VERIFIED",
+      "finding": "Experimental; requires opt-in, withReuse(true), manual start, and avoiding stop/JUnit lifecycle; docs say unsuitable for CI. Separate from static class-scoped containers."
+    },
+    {
+      "topic": "PIT 1.15.3 history converter",
+      "url": "https://raw.githubusercontent.com/hcoles/pitest/1.15.3/pitest-maven/src/main/java/org/pitest/maven/MojoToReportOptionsConverter.java",
+      "status": "VERIFIED",
+      "finding": "determineHistory: useHistory true selects temp-dir path only where explicit input/output locations are null; false sets explicitly configured input/output paths. Thus mixed withHistory and explicit paths do not guarantee use of temp file; prior wording that it selects a different branch is correct, refined to preserve null-specific behavior."
+    },
+    {
+      "topic": "PIT JUnit 5 adapter 1.2.1",
+      "url": "https://raw.githubusercontent.com/pitest/pitest-junit5-plugin/1.2.1/README.md",
+      "status": "VERIFIED",
+      "finding": "Adapter 1.2.1 requires PIT 1.15.2 or above; PIT 1.15.3 satisfies that minimum. README notes tested JUnit Platform range through 1.10.0-M1 and potential issues beyond."
+    },
+    {
+      "topic": "GitLab job rules",
+      "url": "https://docs.gitlab.com/ci/jobs/job_rules/",
+      "status": "VERIFIED",
+      "finding": "Jobs without rules default to except: merge_requests. Explicit schedule and merge_request_event rules add jobs to those pipeline types. Supplied example gives both jobs schedule/MR rules; mutation job adds changes to MR rule. Actual project pipeline still depends on workflow and full config."
+    },
+    {
+      "topic": "Fowler TDD",
+      "url": "https://martinfowler.com/bliki/TestDrivenDevelopment.html",
+      "status": "VERIFIED",
+      "finding": "Fowler says TDD was developed by Kent Beck in late 1990s as part of XP; describes test, functional code until pass, refactor, commonly summarized Red-Green-Refactor."
+    },
+    {
+      "topic": "Robert C. Martin The Cycles of TDD",
+      "url": "https://blog.cleancoder.com/uncle-bob/2014/12/17/TheCyclesOfTDD.html",
+      "status": "VERIFIED",
+      "finding": "Martin presents the three laws as a fine-grained/nano-cycle codified a few years after learning from Kent Beck in 1999, then distinguishes minute-scale Red/Green/Refactor. Safe attribution: Martin explains/formulates the three laws; do not attribute invention of TDD to him."
+    }
+  ],
+  "bounded_followups": {
+    "q31": "Author-reported compile-only PASS using cached Testcontainers 1.21.4 is not this agent’s run and does not verify exact 1.20.6 API or Docker runtime. FACTS remains limited to pinned-source lifecycle/reuse claims.",
+    "q44": "PIT history claim is confirmed with null-field nuance; adapter minimum is confirmed. GitLab rules claim confirmed for documented defaults and supplied explicit rules. No XML/YAML parse or Maven/PIT/CI run performed.",
+    "q6": "Fowler and Martin sources support cycle and attribution. Three laws are Martin’s formulation of fine-grained practice learned from Kent Beck; TDD authorship is attributed to Beck by Fowler."
+  },
+  "limitations": [
+    "All seven supplied URLs opened successfully in web source retrieval.",
+    "No repository files, Phase A answers, dependencies, containers, Maven, PIT, or CI were touched or run.",
+    "GitLab docs are current documentation; behavior should still be considered in the project’s actual GitLab version and full workflow configuration."
+  ]
+}

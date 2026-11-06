@@ -1,0 +1,74 @@
+{
+  "q": 31,
+  "status": "DISCLOSED_POST_DRAFT_REVIEW",
+  "input_sha256": "e8e533d9701adfbd23179eb793957b0a74c501da702be832feadbefdbb0c0dd9",
+  "options": [
+    {
+      "label": "A",
+      "coverage": "Addresses both containerization and Testcontainers role.",
+      "fullness": "Full answer",
+      "truth": "false",
+      "finding": "False universal JVM-wide container sharing; plausible confusion with singleton/reuse."
+    },
+    {
+      "label": "B",
+      "coverage": "Addresses both containerization and Testcontainers role.",
+      "fullness": "Full answer",
+      "truth": "false",
+      "finding": "False automatic production version/settings parity; complete claim but unsupported."
+    },
+    {
+      "label": "C",
+      "coverage": "Addresses both containerization and Testcontainers role.",
+      "fullness": "Full answer",
+      "truth": "correct",
+      "finding": "Accurate concise definition and role."
+    },
+    {
+      "label": "D",
+      "coverage": "Addresses both containerization and Testcontainers role.",
+      "fullness": "Full answer",
+      "truth": "false",
+      "finding": "False conflation with in-memory DB; complete alternative mechanism."
+    }
+  ],
+  "theory_findings": [
+    {
+      "severity": "pass",
+      "quote": "«Жизненный цикл ... зависит от объявления»",
+      "finding": "Correctly distinguishes static @Container (class-scoped) from instance @Container (per method), and manual/singleton lifecycle."
+    },
+    {
+      "severity": "pass",
+      "quote": "«Reusable Containers — отдельная экспериментальная возможность»",
+      "finding": "Accurately notes opt-in, withReuse, manual lifecycle, experimental status and CI caution."
+    },
+    {
+      "severity": "pass",
+      "quote": "«образ и конфигурацию выбирает команда»",
+      "finding": "No automatic production parity promise; appropriately limits reproducibility claim."
+    },
+    {
+      "severity": "pass",
+      "quote": "PostgreSQLContainer<?> ... DriverManager ... temporary table",
+      "finding": "API is consistent with Testcontainers Java 1.20.6 PostgreSQLContainer usage; JDBC test checks a round trip and scale-insensitive numeric compare. Source fence was not compiled/run; Docker was not run."
+    },
+    {
+      "severity": "minor",
+      "quote": "«JUnit-интеграция документирована для последовательных тестов; параллельный запуск требует отдельного решения»",
+      "finding": "Accurate: JUnit Jupiter integration docs note sequential execution testing and parallel execution unsupported."
+    },
+    {
+      "severity": "minor",
+      "quote": "«обычно такие проверки относят к integration/component»",
+      "finding": "Reasonable guideline, appropriately qualified; not a hard rule."
+    }
+  ],
+  "sections": "All 17 section values reviewed in the input. Correct C explains role, boundaries, example and lifecycle; wrong A/B/D sections match their false assertions. No material theory/option/section contradiction observed.",
+  "api_sources": [
+    "https://java.testcontainers.org/test_framework_integration/junit_5/",
+    "https://java.testcontainers.org/features/reuse/",
+    "https://raw.githubusercontent.com/testcontainers/testcontainers-java/1.20.6/modules/postgresql/src/main/java/org/testcontainers/containers/PostgreSQLContainer.java"
+  ],
+  "scope": "No Docker run, dependency installation, repository/index or draft modification. Disclosed review, not blind acceptance or FINAL."
+}

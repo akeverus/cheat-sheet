@@ -1,0 +1,84 @@
+{
+  "snapshot": {
+    "paths": {
+      "mcq": "modules/quiz-app/src/main/resources/seed/mcq/testing/test-strategies-interview.json",
+      "theory": "cheatsheets/interview/testing/test-strategies-interview.md"
+    },
+    "sha256": {
+      "mcq": "333b5acf7cbb2d5571f3e5e728a18a2c8559640e502da4310775050b315e0ae7",
+      "theory": "bad0b2587b3f41e5cd3544b928ea3db00d00dffdebb2f4e6b6b3b163f021706b"
+    },
+    "rules_sha256": {
+      "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+      "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+      "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+    },
+    "block_hash": {
+      "mcq": "5308d6064460a77b664a4f1c6cdc062e4e19939bb9bc0fbdcf2d683085b5be44",
+      "theory": "fa5477469cab1c4674cd4cb23993582ed4c2829bd07d871567dd28d4f3690183"
+    },
+    "full_disclosure_sha256": "889657981bc65979db8d0cee5e4440d1bc39a098ff39bc2508876d97af308ef0"
+  },
+  "question": {
+    "q_number": 44,
+    "block_idx": 0,
+    "visible_question": "Как совместить Mutation Testing с CI/CD и quality gates?",
+    "block": {
+      "block_idx": 0,
+      "question_text": "Как совместить Mutation Testing с CI/CD и quality gates?",
+      "options": [
+        {
+          "label": "A",
+          "order": 0,
+          "text": "Выбрать значимую область анализа, бюджет времени и пороги CI; использовать историю PIT для допустимого повторного использования результатов, а расписание и полный анализ выбирать по рискам.",
+          "correct": true,
+          "sections": {
+            "explanation": "PIT создаёт мутации и подбирает тесты с учётом покрытия и времени выполнения. В CI согласуют область анализа, стоимость обратной связи и критерии реакции на результат. История позволяет повторно использовать часть выводов при подходящих условиях; она не сводится к фильтру изменённых классов.",
+            "example": "В PR анализируют выбранную важную область и передают сохранённую историю между прогонами. Периодически выполняют более широкий анализ. Значения mutationThreshold и coverageThreshold задают для согласованного набора проверок, а не принимают универсальные числа.",
+            "when_to_apply": "Когда mutation-анализ даёт полезную обратную связь о проверках поведения. Частоту и глубину выбирают по стоимости, риску и стабильности тестов; короткий полный прогон тоже может быть допустим на каждом изменении.",
+            "edge_cases": "История зависит и от тестов: изменившийся тест может потребовать повторного анализа мутации неизменённого класса. У инкрементального анализа есть ограничения учёта зависимостей; одинаковое время ускорения и точность всех выводов не гарантируются.",
+            "related": "Не исключать DTO, конфигурацию или Entity только по названию: важна проверяемая логика. Порог, область и каденция анализа являются настройкой проекта, не общим стандартом качества."
+          }
+        },
+        {
+          "label": "B",
+          "order": 1,
+          "text": "Задать область анализа и пороги CI, но excludedClasses считать только фильтром отчёта, не отбора мутаций; историю и расписание использовать для ускорения проверок.",
+          "correct": false,
+          "sections": {
+            "what_actually": "Параметр excludedClasses исключает выбранные классы из mutation-анализа, а не только скрывает строки отчёта. Область анализа нужно выбирать по проверяемым рискам и содержательной логике.",
+            "source_of_confusion": "Настройку отбора исходных классов принимают за настройку визуального представления уже выполненного анализа.",
+            "if_it_were_true": "Исключённые классы продолжали бы мутироваться и выполнять тесты, исчезая лишь из отчёта. Это не назначение excludedClasses.",
+            "how_it_should_be": "Использовать targetClasses и excludedClasses по их контрактам отбора. Не обещать, что код с именем DTO или Entity всегда не содержит ценной для проверки логики."
+          }
+        },
+        {
+          "label": "C",
+          "order": 2,
+          "text": "Выбрать область анализа, расписание и пороги CI; рассчитывать, что для каждой мутации PIT обязательно прогоняет всю тестовую базу независимо от её покрытия.",
+          "correct": false,
+          "sections": {
+            "what_actually": "PIT сначала получает данные покрытия и использует их вместе со временем тестов для выбора проверок мутируемого кода. Он не обязан запускать всю тестовую базу для каждой мутации независимо от покрытия.",
+            "source_of_confusion": "Общий принцип «проверить изменённую программу тестами» принимают за конкретный алгоритм полного повторного запуска всех тестов на каждом мутанте.",
+            "if_it_were_true": "Данные покрытия не участвовали бы в выборе тестов для мутации. В реальном PIT они помогают выбрать целевые тесты, хотя стоимость анализа всё равно нужно измерять.",
+            "how_it_should_be": "Оценивать реальную длительность своего анализа и его отбор тестов. Настраивать область анализа, историю и запуск по бюджету; не запрещать каждый полный PR-прогон на основании выдуманного постоянного времени."
+          }
+        },
+        {
+          "label": "D",
+          "order": 3,
+          "text": "Выбрать область анализа, бюджет времени и пороги CI; считать историю PIT лишь архивом отчётов, из-за которого анализ мутаций и тестов каждый раз повторяется полностью.",
+          "correct": false,
+          "sections": {
+            "what_actually": "История PIT содержит результаты анализа и сведения об изменениях кода и тестов. На их основе часть результатов может быть выведена без повторного запуска; это не только архив пользовательских отчётов.",
+            "source_of_confusion": "Слово history понимают как хранение HTML/XML-отчётов, а не вход для повторного использования результатов анализа.",
+            "if_it_were_true": "Сохранённые результаты не влияли бы на повторный анализ. Реальный механизм использует их там, где условия позволяют сделать вывод по истории.",
+            "how_it_should_be": "Настроить чтение и сохранение истории в CI и учитывать ограничения механизма. Нельзя упрощать его до правила «мутируются только изменённые классы»: изменения тестов тоже важны."
+          }
+        }
+      ]
+    }
+  },
+  "theory": "## Q44. (!) Как совместить Mutation Testing с CI/CD и quality gates?\n\n**Mutation Testing** помогает оценить, какие изменения программы обнаруживает набор тестов. Для CI выбирают область анализа, бюджет выполнения, правила работы с surviving mutants и условия блокировки. Длительность зависит от проекта, тестов, машины и настроек; универсальных «10–30 минут» или запрета запуска на каждый PR нет.\n\nВ PIT перед мутационным прогоном собирается покрытие: по нему и времени тестов выбираются подходящие проверки для кода, затронутого мутантом. Это **не обязательный запуск всего набора для каждого мутанта**. См. [PIT: Basic concepts](https://pitest.org/quickstart/basic_concepts/).\n\n### Область и повторные прогоны\n\n1. Выбрать поведение с полезным сигналом и доступным бюджетом. `targetClasses` задаёт кандидатов, `excludedClasses` исключает классы из мутационного анализа, а не только прячет строки отчёта. DTO, entity и конфигурационный код могут содержать важную логику; одного имени для исключения недостаточно.\n2. Снять исходный результат, разобраться в surviving/equivalent mutants и согласовать применимые пороги. Mutation score не доказывает полноту требований или отсутствие дефектов.\n3. Для поддерживаемой версии и конфигурации использовать history: результаты можно переиспользовать с учётом изменений кода и тестов. Это не режим «мутировать только изменённые классы». В [описании incremental analysis](https://pitest.org/quickstart/incremental_analysis/) указаны условия и ограничения такого вывода; периодическая проверка без истории помогает получить свежую базу для выбранной области.\n4. По измерениям выбрать PR-прогон, расписание или комбинацию. При сужении scope проверять, какие риски остались вне него; быстрый прогон не заменяет более широкий автоматически.\n\n### Пример Maven-конфигурации\n\nЭто фрагмент `<build><plugins>` для учебного проекта с Jupiter: **PIT 1.15.3**, адаптер **pitest-junit5-plugin 1.2.1** (адаптер требует PIT 1.15.2+). Эти версии фиксируют пример, а совместимость с JDK и JUnit Platform проверяют по [матрице адаптера](https://github.com/pitest/pitest-junit5-plugin/blob/1.2.1/README.md). Scope и порог 70 — явный выбор примера.\n\n```xml\n<plugin>\n    <groupId>org.pitest</groupId>\n    <artifactId>pitest-maven</artifactId>\n    <version>1.15.3</version>\n    <dependencies>\n        <dependency>\n            <groupId>org.pitest</groupId>\n            <artifactId>pitest-junit5-plugin</artifactId>\n            <version>1.2.1</version>\n        </dependency>\n    </dependencies>\n    <configuration>\n        <targetClasses>\n            <param>com.example.service.*</param>\n            <param>com.example.domain.*</param>\n        </targetClasses>\n        <mutationThreshold>70</mutationThreshold>\n        <historyInputFile>${project.build.directory}/pit-history.bin</historyInputFile>\n        <historyOutputFile>${project.build.directory}/pit-history.bin</historyOutputFile>\n        <threads>4</threads>\n        <outputFormats>\n            <outputFormat>HTML</outputFormat>\n            <outputFormat>XML</outputFormat>\n        </outputFormats>\n    </configuration>\n</plugin>\n```\n\nЯвные пути history выбраны для сохранения между CI jobs. Здесь нет `withHistory=true`: этот флаг включает другую ветку настройки. В [коде PIT 1.15.3](https://github.com/hcoles/pitest/blob/1.15.3/pitest-maven/src/main/java/org/pitest/maven/MojoToReportOptionsConverter.java) она не передаёт явно заданные файлы в `ReportOptions`; смешивать два способа не следует. Для локального запуска без явных путей `withHistory` выбирает файл в `java.io.tmpdir`. Параметры сверяют с [Maven quickstart](https://pitest.org/quickstart/maven/) и версией plugin; при обновлении также проверяют наличие требуемой history-реализации.\n\n### Фрагмент GitLab CI\n\nRunner должен предоставлять подходящие JDK и Maven; обычные тесты проекта должны проходить. Это **GitLab CI**, не GitHub Actions. Пример запускает mutation job по расписанию или для MR с изменениями исходников, тестов и конфигурации; правила конкретного проекта могут быть шире.\n\n```yaml\nstages: [test, mutation]\n\nunit-test:\n  stage: test\n  rules:\n    - if: '$CI_PIPELINE_SOURCE == \"schedule\"'\n    - if: '$CI_PIPELINE_SOURCE == \"merge_request_event\"'\n  script:\n    - mvn -B test\n\nmutation-test:\n  stage: mutation\n  rules:\n    - if: '$CI_PIPELINE_SOURCE == \"schedule\"'\n    - if: '$CI_PIPELINE_SOURCE == \"merge_request_event\"'\n      changes:\n        - src/main/java/**/*\n        - src/test/java/**/*\n        - pom.xml\n        - .gitlab-ci.yml\n  cache:\n    key: \"pit-1.15.3-${CI_COMMIT_REF_SLUG}\"\n    paths:\n      - target/pit-history.bin\n  script:\n    - mvn -B test-compile org.pitest:pitest-maven:1.15.3:mutationCoverage\n  artifacts:\n    when: always\n    paths:\n      - target/pit-reports/\n  allow_failure: false\n```\n\nОбе задачи явно настроены для MR и запусков по расписанию; у задачи мутационного анализа для MR дополнительно ограничены изменившиеся пути. Это существенно: задача без `rules` по умолчанию исключается из MR pipeline. См. [GitLab: job rules](https://docs.gitlab.com/ci/jobs/job_rules/). Предыдущий этап `test` должен успешно завершиться перед запуском `mutation` в данном фрагменте.\n\nCache может отсутствовать: ускорение не гарантировано, и холодный прогон должен укладываться в допустимый бюджет. История должна относиться к совместимой версии и проекту; её доступность сама по себе не подтверждает корректность повторного использования. YAML описывает jobs; полный pipeline, включая `workflow:rules` и сборку многомодульного проекта, проверяют отдельно. См. [GitLab CI YAML reference](https://docs.gitlab.com/ci/yaml/).\n\n### Согласование gate и действий\n\n| Условие в выбранном примере | Действие |\n|---|---|\n| PIT mutation score ниже 70 | Maven goal завершается с ошибкой; обязательный job падает |\n| Score не ниже 70 | Этот численный порог пройден; surviving mutants всё ещё анализируются |\n| Изменились scope, версия или mutators | Пересмотреть сопоставимость результата и исходную базу |\n| Анализ не запускался по rules или завершился ошибкой инфраструктуры | Не выдавать это за успешный mutation gate |\n\nПорог для другого проекта может отличаться. Режим предупреждения настраивается явно и не равнозначен блокирующему `allow_failure: false`. Решение о merge/deploy учитывает все предусмотренные проверки; один mutation score его не определяет.\n\n",
+  "scope_note": "Current theory only; no prior obsolete text. Full question/options/sections preserved; only repeated global TOC and long rubric omitted."
+}

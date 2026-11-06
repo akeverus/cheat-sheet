@@ -1,0 +1,25 @@
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
+import java.io.PrintWriter;
+
+public class RunDraft {
+    public static void main(String[] args) {
+        var listener = new SummaryGeneratingListener();
+        var request = LauncherDiscoveryRequestBuilder.request()
+            .selectors(selectClass(PriceCalculatorTest.class)).build();
+        var launcher = LauncherFactory.create();
+        launcher.registerTestExecutionListeners(listener);
+        launcher.execute(request);
+        var summary = listener.getSummary();
+        summary.printTo(new PrintWriter(System.out, true));
+        for (var failure : summary.getFailures()) {
+            System.out.println("FAILURE " + failure.getTestIdentifier().getDisplayName()
+                + " " + failure.getException().getClass().getName());
+        }
+        System.out.println("RESULT " + summary.getTestsFoundCount() + ","
+            + summary.getTestsSucceededCount() + "," + summary.getTestsFailedCount());
+        System.exit(summary.getTestsFailedCount() == 0 ? 0 : 1);
+    }
+}
