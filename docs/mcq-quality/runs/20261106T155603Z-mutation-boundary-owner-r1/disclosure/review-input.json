@@ -1,0 +1,277 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json",
+    "theory": "cheatsheets/interview/testing/mutation-testing-interview.md"
+  },
+  "sha256": {
+    "mcq": "490acb2310ac03343e426e459af3677893a38ecc1d97ba352a677a652d25901d",
+    "theory": "07b7833eab6f8017cdd4de3d0d3165f99e5b6aaee3a3fa1ccfb9de51bd3ab485"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hashes": {
+    "Q5:B0": {
+      "mcq": "76ed689fe560a5bd31bd41cc63de72fecd3dea5b1681a4f1a8d4489c15ea82b0",
+      "theory": "5589631a8243b88a2159c94097167e90fcd49270f1f328f76df7b10ab1b91ad6"
+    },
+    "Q8:B0": {
+      "mcq": "bf95b6eef294d4ef05fb9652a3305e6bff843a10e669354d60f6050d2e8f70f8",
+      "theory": "9fd9c54c91cb669bf62cffefa9753a9e6a0f13932e2cddc9b5a7758a48632b70"
+    }
+  },
+  "preamble": "---\ntitle: \"Вопросы на собеседовании: Мутационное тестирование\"\ndescription: \"Mutation testing: проверка качества тестов через mutations кода, mutation operators, kill rate, surviving mutants, PIT, Stryker, тулинг для Java/JS/Python, vs code coverage\"\ntags:\n  - interview\n  - testing\n  - mutation-testing-interview\ntype: \"interview\"\ndifficulty: \"intermediate\"\naliases:\n  - \"Вопросы на собеседовании\"\n  - \"Mutation Testing\"\n  - \"Mutation testing interview\"\n  - \"PIT mutation testing interview\"\nprerequisites: []\nnext: []\nupdated: \"2026-04-25\"\n---\n# Вопросы на собеседовании: Мутационное тестирование\n\n`Mutation testing` — техника оценки **качества тестов** (а не качества кода). Идея: модифицировать (\"**mutate**\") код, прогнать тесты и проверить, **сколько мутаций поймано** (killed). Выжившие мутанты (surviving mutants) = слабые тесты. Главные инструменты: **PIT** (Java), **Stryker** (JS/TS/.NET/Scala), **mutmut** (Python). Дополняет (но не заменяет) coverage.\n\n## Полезные ссылки\n\n### Официальная документация и авторитетные источники\n\n- [PIT Mutation Testing — Pitest.org](https://pitest.org/)\n- [Stryker Mutator](https://stryker-mutator.io/)\n- [Mutation Testing — Wikipedia](https://en.wikipedia.org/wiki/Mutation_testing)\n- [PITclipse (PIT IntelliJ plugin)](https://github.com/hcoles/pitest)\n- [Mutation Testing — Baeldung](https://www.baeldung.com/java-mutation-testing-with-pitest)\n\n## Содержание\n\n- [Полезные ссылки](#полезные-ссылки)\n- [See also](#see-also)\n\n**Базовые понятия**\n- [Q1. (!) Что такое mutation testing?](#q1--что-такое-mutation-testing)\n- [Q2. (!) Зачем mutation testing, если уже есть code coverage?](#q2--зачем-mutation-testing-если-уже-есть-code-coverage)\n- [Q3. Что значат термины mutant, killed, survived, equivalent?](#q3-что-значат-термины-mutant-killed-survived-equivalent)\n\n**Mutation operators**\n- [Q4. (!) Какие мутации типичны?](#q4--какие-мутации-типичны)\n- [Q5. Как работает Conditional Boundary Mutator?](#q5-как-работает-conditional-boundary-mutator)\n- [Q6. Как работает Math Mutator?](#q6-как-работает-math-mutator)\n- [Q7. Какие ещё бывают операторы мутаций?](#q7-какие-ещё-бывают-операторы-мутаций)\n\n**Метрики**\n- [Q8. (!) Что такое mutation score (kill rate) и как его считают?](#q8--что-такое-mutation-score-kill-rate-и-как-его-считают)\n- [Q9. Как анализировать выживших мутантов (surviving mutants)?](#q9-как-анализировать-выживших-мутантов-surviving-mutants)\n- [Q10. Что такое эквивалентные мутанты (equivalent mutants)?](#q10-что-такое-эквивалентные-мутанты-equivalent-mutants)\n\n**Tools**\n- [Q11. (!) Как использовать PIT для Java?](#q11--как-использовать-pit-для-java)\n- [Q12. (!) Как использовать Stryker для JavaScript/TypeScript?](#q12--как-использовать-stryker-для-javascripttypescript)\n- [Q13. Как использовать mutmut для Python?](#q13-как-использовать-mutmut-для-python)\n- [Q14. Какие ещё есть инструменты mutation testing?](#q14-какие-ещё-есть-инструменты-mutation-testing)\n\n**Performance**\n- [Q15. (!) Почему mutation testing медленный?](#q15--почему-mutation-testing-медленный)\n- [Q16. Как ускоряют mutation testing (incremental, in-process)?](#q16-как-ускоряют-mutation-testing-incremental-in-process)\n\n**Production**\n- [Q17. (!) Когда mutation testing оправдан?](#q17--когда-mutation-testing-оправдан)\n- [Q18. Какой mutation score ставить целевым?](#q18-какой-mutation-score-ставить-целевым)\n- [Q19. (!) В чём ограничения и за что критикуют mutation testing?](#q19--в-чём-ограничения-и-за-что-критикуют-mutation-testing)\n- [Q20. Как встроить mutation testing в CI/CD?](#q20-как-встроить-mutation-testing-в-cicd)\n",
+  "theory": [
+    {
+      "q_number": 5,
+      "title": "Как работает Conditional Boundary Mutator?",
+      "line": 145,
+      "body": "\nВ **PIT 1.30.2** оператор `CONDITIONALS_BOUNDARY` меняет включение точки равенства, сохраняя операнды сравнения:\n\n| Исходное сравнение | Граничная подмена |\n|---|---|\n| `<` | `<=` |\n| `<=` | `<` |\n| `>` | `>=` |\n| `>=` | `>` |\n\nДля подходящей инструкции байт-кода в этой таблице задана одна подмена. Одна строка исходника может содержать несколько инструкций или подходить другим операторам, но это не превращает `>=` в набор `>`, `==` и `!=` в рамках одного boundary-оператора. Изменение константы `18` на `19` — тоже другой механизм. [Таблица подмен PIT 1.30.2](https://github.com/hcoles/pitest/blob/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/ConditionalsBoundaryMutator.java).\n\nДля исходного условия `age >= 18` и мутанта `age > 18` результаты таковы:\n\n| `age` | Оригинал `>= 18` | Мутант `> 18` | Различает эту пару? |\n|---|---|---|---|\n| 17 | false | false | Нет |\n| 18 | true | false | Да |\n| 19 | true | true | Нет |\n\nНужно не только выполнить условие на `18`, но и проверить наблюдаемый результат: например, что доступ разрешён. Если изменённая ветка не влияет на проверяемое поведение, само посещение границы мутанта не обнаружит. Значения по обе стороны полезны для проверки требования в целом, но не заменяют точку равенства для этой подмены. [PIT: basic concepts](https://pitest.org/quickstart/basic_concepts/).\n\nЕсли отдельно рассматривают ошибочную замену `>= 18` на `== 18`, их различает `19`, а не `17`: на `17` оба условия ложны. Это другая подмена, которую нельзя приписывать `CONDITIONALS_BOUNDARY`.\n\n"
+    },
+    {
+      "q_number": 8,
+      "title": "Что такое mutation score (kill rate) и как его считают?",
+      "line": 216,
+      "body": "\nMutation score показывает долю обнаруженных мутантов **в выбранной модели отчёта**. Перед сравнением процентов нужно проверить состав числителя и знаменателя: формула «убитые / все» скрывает правила учёта статусов.\n\nНапример, в документированной модели **Stryker**:\n\n| Величина | Состав |\n|---|---|\n| Обнаруженные (`detected`) | `killed + timeout` |\n| Необнаруженные (`undetected`) | `survived + no coverage` |\n| Учитываемые в score (`valid`) | `detected + undetected` |\n| Mutation score | `100 × detected / valid` |\n\n`Timeout` учитывается как обнаружение, но остаётся отдельным статусом, а не переименовывается в `killed`. Ошибки компиляции, ошибки выполнения и `ignored` не входят в `valid`; временный статус `pending` также не включают в этот расчёт. [Stryker: states and metrics](https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/).\n\n**Пример:** 6 `killed`, 1 `timeout`, 2 `survived` и 1 `no coverage` дают 7 обнаруженных из 10 учитываемых мутантов, то есть **70%**. Это расчёт по заданным статусам, а не результат запуска движка. Отдельная метрика Stryker по покрытому коду исключает `no coverage` из знаменателя и потому здесь составит `100 × 7 / 9 ≈ 77,8%`; эти два показателя нельзя смешивать.\n\nЭквивалентные мутанты не распознаются и не вычитаются автоматически: они могут остаться среди `survived`. Теоретическую поправку на доказанную эквивалентность нужно отделять от фактического score и явно описывать исключения. **100% возможны** для конкретного набора мутаций и тестов, но не доказывают правильность требований или реализации. [Stryker: equivalent mutants](https://stryker-mutator.io/docs/mutation-testing-elements/equivalent-mutants/).\n\nУниверсальных оценок «80% — отлично» или обязательной цели 70–85% нет. Порог согласуют по риску и стоимости разбора, а динамику сравнивают при сопоставимых операторах, области анализа и правилах расчёта.\n\n"
+    }
+  ],
+  "blocks": [
+    {
+      "q_number": 5,
+      "block_idx": 0,
+      "visible_question": "Как работает Conditional Boundary Mutator?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Как работает Conditional Boundary Mutator?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "PIT CONDITIONALS_BOUNDARY меняет сравнение на противоположное, например >= на <, сохраняя числовые операнды исходного условия.",
+            "correct": false,
+            "sections": {
+              "what_actually": "CONDITIONALS_BOUNDARY меняет включение точки равенства: например, >= становится >. Замена >= на < была бы отрицанием условия, а не граничной подменой этого оператора.",
+              "source_of_confusion": "Граничную подмену смешивают с инверсией всего условия. Оба изменения затрагивают сравнение, но дают разные пары инструкций и разные различающие входы.",
+              "if_it_were_true": "Для age >= 18 возникло бы age < 18. На 17 и 19 эта пара расходится, тогда как реальная пара age >= 18 и age > 18 на этих входах совпадает.",
+              "how_it_should_be": "Сверяйте конкретную пару: boundary переключает строгость сравнения, сохраняя его операнды. Для >= 18 и > 18 нужен вход 18 и проверка наблюдаемого результата."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "PIT CONDITIONALS_BOUNDARY меняет >= на > или < на <=, сохраняя операнды сравнения и изменяя включение граничного значения.",
+            "correct": true,
+            "sections": {
+              "explanation": "В таблице PIT 1.30.2 CONDITIONALS_BOUNDARY заданы пары < → <=, <= → <, > → >= и >= → >. Для подходящей инструкции предусмотрен один граничный counterpart: меняется включение равенства, а не числовой литерал.",
+              "example": "У age >= 18 и age > 18 на входе 17 оба результата false, на 19 оба true. Только на 18 получаются true и false. Чтобы обнаружить мутанта, тест должен проверить зависящий от этого условия результат.",
+              "when_to_apply": "Если выжил граничный мутант сравнения, проверьте точку равенства и наблюдаемый эффект выбранной ветки. Значения по обе стороны полезны для требования в целом, но эту точку не заменяют.",
+              "edge_cases": "Посещение изменённого условия не гарантирует обнаружение: его результат может не влиять на проверяемое поведение. Несколько инструкций в строке или другие включённые mutators не создают дополнительные ==/!= варианты внутри одной boundary-подмены.",
+              "related": "Изменение числового литерала и отрицание всего условия — другие механизмы. Даже если на отдельном типе данных разные подмены совпадают по результату, это не делает их одним оператором PIT."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "PIT CONDITIONALS_BOUNDARY изменяет само сравниваемое число, например 18 на 19, оставляя исходный знак сравнения в условии прежним.",
+            "correct": false,
+            "sections": {
+              "what_actually": "PIT CONDITIONALS_BOUNDARY заменяет подходящую инструкцию сравнения её граничной парой. Число 18 остаётся прежним; при исходном >= 18 получается > 18.",
+              "source_of_confusion": "Ошибку на единицу представляют только как изменение числа. Ту же область граничных ошибок можно исследовать изменением строгости сравнения без подмены литерала.",
+              "if_it_were_true": "Для >= 18 появился бы мутант >= 19 с прежним знаком. Это соответствовало бы изменению константы, но не таблице CONDITIONALS_BOUNDARY, где counterpart — > 18.",
+              "how_it_should_be": "Различайте механизм и наблюдаемое поведение. Для целого age условия >= 19 и > 18 могут совпадать, но это не подтверждает, что boundary-оператор изменяет число."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "PIT CONDITIONALS_BOUNDARY заменяет >= сразу вариантами == и !=, поэтому эти две подмены относятся к его граничным заменам.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Для >= в таблице CONDITIONALS_BOUNDARY задана пара >. Альтернативы == и != не являются двумя подменами этой инструкции в данном операторе.",
+              "source_of_confusion": "Варианты нескольких семейств мутаций объединяют под одним названием. Наличие разных mutators в запуске не меняет таблицу конкретного boundary-оператора.",
+              "if_it_were_true": "Для одной подходящей инструкции >= этот mutator регистрировал бы альтернативы == и !=. В таблице PIT 1.30.2 вместо этого предусмотрен один boundary counterpart.",
+              "how_it_should_be": "Проверяйте выбранный mutator и конкретную инструкцию. Несколько мутаций на строке не доказывают, что один boundary-оператор заменяет >= сразу на == и !=."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "q_number": 8,
+      "block_idx": 0,
+      "visible_question": "Что такое mutation score (kill rate) и как его считают?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Что такое mutation score (kill rate) и как его считают?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Mutation score в Stryker — доля убитых мутантов: `100 × killed / valid`; timeout не учитывают как обнаружение.",
+            "correct": false,
+            "sections": {
+              "what_actually": "В документированной модели Stryker числитель — detected = killed + timeout. Mutation score считают как 100 × detected / valid: timeout учитывается как обнаружение, хотя не переименовывается в killed.",
+              "source_of_confusion": "Разговорное название kill rate воспринимают буквально и считают только статус killed. В Stryker detected шире этого статуса: зависший мутант тоже обнаружен по таймауту.",
+              "if_it_were_true": "При неизменном наборе из 10 valid пример с 6 killed и 1 timeout дал бы 60%, поскольку timeout не увеличивал бы числитель. Документированный расчёт Stryker даёт 70%.",
+              "how_it_should_be": "Перед расчётом проверьте группы статусов выбранного отчёта. Для Stryker сложите killed и timeout, затем разделите на valid и умножьте на 100."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Mutation score в Stryker — доля обнаруженных мутантов: `100 × detected / valid`; timeout входит в detected.",
+            "correct": true,
+            "sections": {
+              "explanation": "Mutation score показывает долю обнаруженных мутантов в выбранной модели. В Stryker detected = killed + timeout, valid = detected + survived + no coverage, а score = 100 × detected / valid. Timeout остаётся отдельным статусом, но входит в detected.",
+              "example": "6 killed, 1 timeout, 2 survived и 1 no coverage дают 7 detected из 10 valid, то есть 70%. Ошибки компиляции и выполнения, ignored и временный pending в этот valid не входят.",
+              "when_to_apply": "Перед сравнением процентов проверьте состав числителя и знаменателя. Сравнение имеет смысл при сопоставимых операторах, области анализа и правилах учёта статусов.",
+              "edge_cases": "Эквивалентные мутанты не исключаются автоматически и могут остаться среди survived. Значение 100% возможно для конкретного набора мутаций и тестов, но не доказывает правильность требований или реализации.",
+              "related": "Отдельный score Stryker по покрытому коду исключает no coverage из знаменателя. Для этого же примера он равен 100 × 7 / 9, примерно 77,8%; это другой показатель, а не исправление обычного score."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Mutation score в Stryker — доля выживших мутантов: `100 × survived / valid`; рост доли означает усиление тестов.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Survived — необнаруженные мутанты, а не числитель mutation score. При том же наборе valid перевод survived в killed увеличивает detected и обычный score.",
+              "source_of_confusion": "Список выживших мутантов принимают за число обнаруженных проблем. В отчёте выживший мутант означает, что тесты пропустили подмену, а не успешно её выявили.",
+              "if_it_were_true": "При фиксированном valid усиление тестов, переводящее survived в killed, уменьшало бы survived / valid. Назвать рост именно этой доли усилением тестов означало бы оценивать изменение в обратном направлении.",
+              "how_it_should_be": "Отделяйте долю обнаруженных мутаций от доли пропущенных. В Stryker в числитель score входят killed и timeout, а survived вместе с no coverage относится к undetected."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Mutation score в Stryker — доля обнаруженных мутантов: `100 × detected / valid`; при 100% он доказывает правильность программы.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Формула detected / valid верна, но даже ровно 100% относятся только к выбранным мутациям и проверкам. Из процента не следует правильность требований или всей реализации.",
+              "source_of_confusion": "Полное обнаружение заданного набора мутаций принимают за доказательство правильности программы. Тесты могут тщательно закреплять ошибочное требование.",
+              "if_it_were_true": "Набор тестов, закрепляющий неверное правило, не мог бы получить ровно 100%. В действительности он может обнаружить все выбранные отклонения от этого правила и получить 100%, не проверив правильность самого правила.",
+              "how_it_should_be": "Проверяйте требования и риски отдельно от чувствительности тестов к выбранным мутациям. Ни 100%, ни произвольный высокий score сами по себе не являются доказательством корректности."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "open_issues": [],
+  "runtime_findings": [],
+  "checks": {
+    "content_review": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q8:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "factual_correctness": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q8:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "source_linkage": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q8:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sections_consistency": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q8:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sfpl": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q8:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "ansc": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q8:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "russian_readability": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q8:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "independent_review": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q8:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "blind_review": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q8:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "final_acceptance": {
+      "blocks": {
+        "Q5:B0": {
+          "status": "NOT_RUN"
+        },
+        "Q8:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    }
+  },
+  "instructions": "Все A/B/C/D и sections. SFPL, ANSC, RU — отдельные вердикты. Дополнительные смысловые зависимости прочитать и указать в evidence. Сигналы не являются редакторской приёмкой."
+}

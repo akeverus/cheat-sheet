@@ -1,0 +1,428 @@
+{
+  "reviewer": "mutation_boundary_owner_independent",
+  "model": "gpt-6-luna",
+  "normalized_actual_reports": {
+    "5": {
+      "reviewer": "mutation_boundary_owner_independent",
+      "model": "gpt-6-luna",
+      "normalized_at": "2026-11-06T16:06:37.807287+00:00",
+      "hashes": {
+        "mcq": "490acb2310ac03343e426e459af3677893a38ecc1d97ba352a677a652d25901d",
+        "theory": "07b7833eab6f8017cdd4de3d0d3165f99e5b6aaee3a3fa1ccfb9de51bd3ab485"
+      },
+      "rules_sha256": {
+        "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+        "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+        "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+      },
+      "scope": [
+        "Q5:B0"
+      ],
+      "options": [
+        {
+          "label": "A",
+          "completeness": "Полный ответ",
+          "validity": "Полный предполагаемый механизм инверсии с сохранением операндов; ложен.",
+          "wrong_defense": "Правдоподобное смешение инверсии и boundary, но >= на < не соответствует таблице PIT. Не второй correct."
+        },
+        {
+          "label": "B",
+          "completeness": "Полный ответ",
+          "validity": "Полный верный механизм: пары знаков и эффект на включение границы.",
+          "wrong_defense": "Correct, защита wrong не применяется."
+        },
+        {
+          "label": "C",
+          "completeness": "Полный ответ",
+          "validity": "Полный предполагаемый механизм изменения литерала; ложен.",
+          "wrong_defense": "Поведенческое совпадение >=19 и >18 для целых не защищает утверждение о механизме изменения числа. Не второй correct."
+        },
+        {
+          "label": "D",
+          "completeness": "Полный ответ",
+          "validity": "Полный предполагаемый механизм двух альтернатив; ложен.",
+          "wrong_defense": "Путаница семейств правдоподобна, но таблица этого mutator не поддерживает >= на ==/!=. Не второй correct."
+        }
+      ],
+      "sections": [
+        {
+          "label": "A",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Точно называет правильное поведение и отделяет пример A об инверсии от boundary-подмены."
+        },
+        {
+          "label": "A",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Правдоподобное смешение строгости и инверсии; разные различающие входы подтверждены парами."
+        },
+        {
+          "label": "A",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Корректно разбирает две пары на 17 и 19, не смешивая альтернативную пару с фактическим мутантом."
+        },
+        {
+          "label": "A",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Для >= 18 и > 18 нужен вход 18 и проверка результата; верно и применимо."
+        },
+        {
+          "label": "B",
+          "field": "explanation",
+          "status": "PASS",
+          "reason": "Точно перечисляет пары и принцип включения равенства, одна подмена на opcode."
+        },
+        {
+          "label": "B",
+          "field": "example",
+          "status": "PASS",
+          "reason": "Именно равенство различает >= и >, нужен наблюдаемый эффект; значения верны."
+        },
+        {
+          "label": "B",
+          "field": "when_to_apply",
+          "status": "PASS",
+          "reason": "Практический совет соответствует примеру. Необязательная редакторская рекомендация: «поведение на граничном значении» естественнее, чем «точка равенства»; не blocker."
+        },
+        {
+          "label": "B",
+          "field": "edge_cases",
+          "status": "PASS",
+          "reason": "Несколько инструкций и другие mutators корректно отделены от дополнительных замен этим оператором."
+        },
+        {
+          "label": "B",
+          "field": "related",
+          "status": "PASS",
+          "reason": "Верно отделяет замену литерала и отрицание всего условия."
+        },
+        {
+          "label": "C",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Правильно отделяет замену инструкции от изменения числа, показывает фактическую пару."
+        },
+        {
+          "label": "C",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Понятная модель «ошибка на единицу = изменение числа»; «та же область граничных ошибок» слегка широко, но различие механизмов уточнено, blocker нет."
+        },
+        {
+          "label": "C",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Верно описывает альтернативный >= 19 и отделяет его от PIT boundary > 18."
+        },
+        {
+          "label": "C",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "На целых >= 19 и > 18 могут совпасть по поведению, но это не подтверждает механизм изменения литерала."
+        },
+        {
+          "label": "D",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Точно устанавливает фактическую пару, отрицает альтернативы именно для этого mutator."
+        },
+        {
+          "label": "D",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Правдоподобно объясняет путаницу между семействами и отдельной таблицей замен."
+        },
+        {
+          "label": "D",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Две альтернативы для одной инструкции противоречили бы таблице одного counterpart."
+        },
+        {
+          "label": "D",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Несколько мутаций по строке не выдаются за несколько замен одного оператора."
+        }
+      ],
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "B фактически верен; A/C/D содержат разные конкретные ошибки механизма."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "PIT 1.30.2 source задаёт по одной граничной подмене для перечисленных инструкций; PIT Basic Concepts подтверждает >= → >."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "B прямо следует из теории Q5; объяснения wrong сопоставляют их точные ошибки с этим механизмом."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "B explanation/example/when_to_apply/edge_cases/related согласованы; A/C/D what_actually/source_of_confusion/if_it_were_true/how_it_should_be согласованы с текстами."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "A даёт инверсию, пример и сохранение операндов; C — замену литерала, пример и сохранение знака; D — несколько альтернативных операторов и их классификацию. B описывает смену строгости, два примера граничных замен и эффект включения граничного значения. Дополнительное пояснение связано с механизмом и не образует уникального примера или отдельного условия. Все варианты — одно предложение без code-span; B и D имеют одинаковое число символов и слов. Критерий «не раскрывают корректный механизм» неприменим к SFPL; оснований для ремонта по форме нет."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "Каждый вариант самодостаточно отвечает на вопрос «как работает»; wrong представляют полноценные, правдоподобные ошибочные модели, опровергнутые sections."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Вопрос, варианты и sections понятны и грамматически корректны; технические термины и символы сравнения употреблены последовательно."
+        }
+      },
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/hcoles/pitest/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/ConditionalsBoundaryMutator.java",
+          "checked_claim": "PIT 1.30.2 CONDITIONALS_BOUNDARY maps each listed integer comparison jump opcode to one substitution: <= to <, >= to >, > to >=, and < to <=. It changes the comparison instruction, retaining compared values; it does not replace >= with <, alter a literal, or provide == and != alternatives.",
+          "version": "PIT 1.30.2",
+          "checked_at": "2026-11-06T16:00:24Z"
+        },
+        {
+          "url": "https://pitest.org/quickstart/basic_concepts/",
+          "checked_claim": "PIT's basic concepts describe CONDITIONALS_BOUNDARY as changing >= to > in bytecode and explain that tests must fail in the presence of a behavior-changing mutant; a test kills a mutation when it catches it.",
+          "version": "PIT Basic Concepts (page checked 2026-11-06)",
+          "checked_at": "2026-11-06T16:00:24Z"
+        }
+      ],
+      "findings": [],
+      "limitations": [
+        "Actual reviewer field assessments, defenses and7axis decisions delivered in bounded B steps. Coordinator formatting only; explicitly authorized, reviewer will verify before FINAL.",
+        "Q5 initial SFPL FAIL and explicit resolution retained. No content change was required for the review overreach.",
+        "Q8 original blindA preserved and acknowledged as knowledge error; not relabeled B or a successful blind solution.",
+        "No new engine/compiler/Gradle/CI/application/UI runs; separate lightweight author arithmetic and preserved source-hash checks only."
+      ],
+      "provenance": {
+        "actual_reviewer_task": "/root/mutation_boundary_owner_independent",
+        "source_ledger_sha256": "45b7bf5f2ccd0c81164f90efbbb6a36ba08193b5fae3b3d67b26123ce779c7e6",
+        "normalization": "Explicit authorization for mechanically preserving actual34field judgments; independent verification before FINAL required."
+      }
+    },
+    "8": {
+      "reviewer": "mutation_boundary_owner_independent",
+      "model": "gpt-6-luna",
+      "normalized_at": "2026-11-06T16:06:37.807723+00:00",
+      "hashes": {
+        "mcq": "490acb2310ac03343e426e459af3677893a38ecc1d97ba352a677a652d25901d",
+        "theory": "07b7833eab6f8017cdd4de3d0d3165f99e5b6aaee3a3fa1ccfb9de51bd3ab485"
+      },
+      "rules_sha256": {
+        "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+        "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+        "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+      },
+      "scope": [
+        "Q8:B0"
+      ],
+      "options": [
+        {
+          "label": "A",
+          "completeness": "Полный ответ",
+          "validity": "Полное определение доли и формула, неверное исключение timeout.",
+          "wrong_defense": "Not defensible as true under the stated Stryker context: its formula excludes timeout from detected, contrary to explicit status grouping. Kill rate wording plausibly motivates the mistake but does not make it a second correct answer."
+        },
+        {
+          "label": "B",
+          "completeness": "Полный ответ",
+          "validity": "Полное определение обнаруженной доли, формула и timeout, самодостаточно для ответа.",
+          "wrong_defense": "Correct, защита wrong не применяется."
+        },
+        {
+          "label": "C",
+          "completeness": "Полный ответ",
+          "validity": "Полная альтернативная интерпретация score и формула; неверная доля и направление качества.",
+          "wrong_defense": "Not defensible as a score definition: survived/valid is an undetected share, and its increase does not mean stronger tests. Plausible confusion: treating surviving mutants as detected findings."
+        },
+        {
+          "label": "D",
+          "completeness": "Полный ответ",
+          "validity": "Полная верная формула плюс неверное следствие100%.",
+          "wrong_defense": "Formula clause is correct, but 100% does not prove program correctness. A suite can detect every selected mutation while enforcing an incorrect requirement; plausible overinterpretation, not second answer."
+        }
+      ],
+      "sections": [
+        {
+          "label": "A",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Correctly distinguishes Stryker's detected group from killed: timeout counts as detected without being renamed killed."
+        },
+        {
+          "label": "A",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Plausible and accurate explanation of how kill rate can be read too literally; timeout counts as detection in Stryker."
+        },
+        {
+          "label": "A",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Arithmetic and counterfactual correct:6/10=60%, while documented accounting gives(6+1)/10=70%."
+        },
+        {
+          "label": "A",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Actionable and accurate: check report status groups, then use killed+timeout over valid."
+        },
+        {
+          "label": "B",
+          "field": "explanation",
+          "status": "PASS",
+          "reason": "Формулы detected, valid и score соответствуют документации Stryker."
+        },
+        {
+          "label": "B",
+          "field": "example",
+          "status": "PASS",
+          "reason": "Расчёт 6+1 из 10 равен 70%; перечисленные исключения подтверждены документацией."
+        },
+        {
+          "label": "B",
+          "field": "when_to_apply",
+          "status": "PASS",
+          "reason": "Сравнение при сопоставимых операторах, области анализа и статусах уместно."
+        },
+        {
+          "label": "B",
+          "field": "edge_cases",
+          "status": "PASS",
+          "reason": "Equivalent не распознаются автоматически;100% не доказывают правильность требований или реализации."
+        },
+        {
+          "label": "B",
+          "field": "related",
+          "status": "PASS",
+          "reason": "Covered=detected+survived=9, отдельный показатель7/9≈77,8%; метрики не смешаны."
+        },
+        {
+          "label": "C",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Correctly identifies survived as undetected and score change when a survivor becomes killed with valid fixed."
+        },
+        {
+          "label": "C",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Accurately distinguishes surviving mutant, a missed mutation, from a detected problem."
+        },
+        {
+          "label": "C",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Correct under fixed-valid condition: survived→killed lowers survived/valid, so growth is not stronger tests."
+        },
+        {
+          "label": "C",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Correctly separates detected from undetected; killed+timeout and survived+no coverage included."
+        },
+        {
+          "label": "D",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Correctly accepts formula and limits100% to selected mutations/checks; not proof of requirements/whole implementation."
+        },
+        {
+          "label": "D",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Complete detection can coexist with tests encoding a wrong requirement; plausible and accurate."
+        },
+        {
+          "label": "D",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Tests can detect all deviations from a wrong rule and score100%; exact100% assertion rebutted without broadening to any high score."
+        },
+        {
+          "label": "D",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Neither100% nor arbitrary high score proves correctness; requirements and risks separately evaluated."
+        }
+      ],
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "B defines Stryker's score and formula accurately; A/C/D each contain a distinct false claim."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "Stryker docs confirm detected=killed+timeout, valid=detected+undetected, score=detected/valid*100, covered=detected+survived, and the separate covered-code score. Equivalent mutants are not definitively auto-detected/ignored."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "B directly matches the Stryker model in the Q8 theory; the wrong explanations address their respective claims."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "Each wrong's four sections consistently correct, explain, counterfactually test, and repair its stated misconception."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "All four define a share, give a formula, and add one explanatory claim. A's timeout exclusion, C's inverse fraction, and D's overclaim are comparable full propositions; B is not uniquely complete in response structure."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "Each option is a complete answer proposition. A and C give alternative score interpretations; D gives the correct formula plus a false inference. Their wrongness is content-based, not an omitted-answer gap."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Question, options, and reviewed sections are clear and grammatical; English metric labels are appropriate technical terms."
+        }
+      },
+      "sources": [
+        {
+          "url": "https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/",
+          "checked_claim": "Stryker defines detected as killed + timeout; undetected as survived + no coverage; valid as detected + undetected; mutation score as detected / valid * 100; covered as detected + survived; covered-code score as detected / covered * 100. Timeout counts as detected but remains its own state. Runtime errors, compile errors, ignored, and pending do not enter valid.",
+          "version": "Stryker Mutant states and metrics documentation (checked 2026-11-06)",
+          "checked_at": "2026-11-06T16:04:16Z"
+        },
+        {
+          "url": "https://stryker-mutator.io/docs/mutation-testing-elements/equivalent-mutants/",
+          "checked_claim": "Stryker documentation says there is no definitive automatic way to find and ignore equivalent mutants; they must be identified manually or accepted as limiting a 100% score.",
+          "version": "Stryker Equivalent mutants documentation (checked 2026-11-06)",
+          "checked_at": "2026-11-06T16:04:16Z"
+        }
+      ],
+      "findings": [],
+      "limitations": [
+        "Actual reviewer field assessments, defenses and7axis decisions delivered in bounded B steps. Coordinator formatting only; explicitly authorized, reviewer will verify before FINAL.",
+        "Q5 initial SFPL FAIL and explicit resolution retained. No content change was required for the review overreach.",
+        "Q8 original blindA preserved and acknowledged as knowledge error; not relabeled B or a successful blind solution.",
+        "No new engine/compiler/Gradle/CI/application/UI runs; separate lightweight author arithmetic and preserved source-hash checks only."
+      ],
+      "provenance": {
+        "actual_reviewer_task": "/root/mutation_boundary_owner_independent",
+        "source_ledger_sha256": "df3ed559e6b00880929fabbd84a8f7c50a9af5436ce6ae42bb09a19abd6bfc7b",
+        "normalization": "Explicit authorization for mechanically preserving actual34field judgments; independent verification before FINAL required."
+      }
+    }
+  },
+  "notes": [
+    "Exact Q5:B0 and Q8:B0 only:8options,34sections, visible headings, shared preamble and full respective theory. No topic/corpus FINAL.",
+    "Fresh separate gpt-6-luna/fork_turns=none reviewer received only blind input. Actual choices Q5=B and Q8=A sealed before reveal. Q8=A is a wrong knowledge-based answer, not relabeledB or claimed a successful blind solution. Reviewer explicitly acknowledged timeout-accounting mistake after source reading, not question ambiguity.",
+    "BLIND check follows PROMPT_PLAN_INTERVIEW.md section6: selection/observations fixed before reveal. Its procedural PASS is not answer accuracy, form acceptance or full content acceptance. Raw wrong answer and actual reason remain in phaseA; no blind rerun in disclosed context.",
+    "Reviewer read each theory/correct5fields and wrong12fields in bounded B steps, primary sources, all4definitions/completeness, attempted wrong defenses and7separate axes each. Coordinator only explicitly authorized normalization; same reviewer must verify faithful representation before separate FINAL.",
+    "Q5 initial SFPL FAIL preserved. Reviewer explicitly resolved MUTATION-Q5-SFPL-R1 as confusing true mechanism with answer completeness; wrongs legitimately propose complete false mechanisms. Comparative actual models and metrics re-evaluated. No production edit or threshold change made to hide review error.",
+    "Q5 A now specifies concrete false negation >=→<; other wrongs use literal replacement or two equality alternatives. CorrectB gives representative pairs and effect, not forced full catalog. Integer>=19/>18 behavior equivalence explicitly separated from PIT instruction mechanism. Observing boundary effect distinguished from mere execution.",
+    "Q8 all4define a share and formula plus one interpretation. CorrectStryker formula includes timeout in detected; statuses/valid, covered-code ratio and automatic-equivalence limitation explained. D counterfactual limited exactly100%, not any high percentage; no universal quality thresholds.",
+    "Current lightweight Python truth tables and fraction arithmetic check boundary at18, negation alternative, integerliteral equivalence,70%, killed-only60%, covered-code700/9≈77.8% and synthetic all-detected100%. These are not PIT/Stryker runs.",
+    "Preserved receipt and3Java source hashes checked, no recompile/rerun. Saved receipt includes8historical JVM probes, only2relevant boundary probes reused here; separate old weak-assertion runs not new tests. PIT1.30.2 is source version, not executed engine. No engine/Maven/Gradle/CI/app/Docker/UI run.",
+    "Schema/parity/anti-tell/SKEL/struct/surface exit0; SKEL0HARD/0WARN. Linkage exit1 with3errors(Q2/Q12/Q18),2warnings(Q18/Q20),outside selectedQ5/Q8. Exact raw outputs retained; no whole-topic linkagePASS or heuristic override.",
+    "Exactly39text fields changed:5optiontexts plus34sections. KeysB/B, headings, question_text, labels/order,18otherquestions preserved. Freshness updated only as scoped source note, no whole-topic acceptance.",
+    "Current working Markdown SHA07b7833eab6f8017cdd4de3d0d3165f99e5b6aaee3a3fa1ccfb9de51bd3ab485 includes foreign uncommitted theoryQ6/Q9/Q10. Q5/Q8 and shared preamble equal HEADae98ec7cd. Evidence honestly binds working snapshot. Markdown not edited/staged/reverted; dirty foreign work preserved.",
+    "No application source/test files or new executable examples edited; JSON prose/inline formulas only. IntelliJ formatting NOT_RUN, UI untouched. Existing historicalJava artifacts remain unchanged.",
+    "Global PLAN/checkpoint/sync/audit-state remain parent-owned. No branch switch/reset/push/deploy/network/security changes."
+  ]
+}

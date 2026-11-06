@@ -1,0 +1,203 @@
+{
+  "reviewer": "mutation_boundary_owner_independent",
+  "model": "gpt-6-luna",
+  "normalized_at": "2026-11-06T16:06:37.807723+00:00",
+  "hashes": {
+    "mcq": "490acb2310ac03343e426e459af3677893a38ecc1d97ba352a677a652d25901d",
+    "theory": "07b7833eab6f8017cdd4de3d0d3165f99e5b6aaee3a3fa1ccfb9de51bd3ab485"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "scope": [
+    "Q8:B0"
+  ],
+  "options": [
+    {
+      "label": "A",
+      "completeness": "Полный ответ",
+      "validity": "Полное определение доли и формула, неверное исключение timeout.",
+      "wrong_defense": "Not defensible as true under the stated Stryker context: its formula excludes timeout from detected, contrary to explicit status grouping. Kill rate wording plausibly motivates the mistake but does not make it a second correct answer."
+    },
+    {
+      "label": "B",
+      "completeness": "Полный ответ",
+      "validity": "Полное определение обнаруженной доли, формула и timeout, самодостаточно для ответа.",
+      "wrong_defense": "Correct, защита wrong не применяется."
+    },
+    {
+      "label": "C",
+      "completeness": "Полный ответ",
+      "validity": "Полная альтернативная интерпретация score и формула; неверная доля и направление качества.",
+      "wrong_defense": "Not defensible as a score definition: survived/valid is an undetected share, and its increase does not mean stronger tests. Plausible confusion: treating surviving mutants as detected findings."
+    },
+    {
+      "label": "D",
+      "completeness": "Полный ответ",
+      "validity": "Полная верная формула плюс неверное следствие100%.",
+      "wrong_defense": "Formula clause is correct, but 100% does not prove program correctness. A suite can detect every selected mutation while enforcing an incorrect requirement; plausible overinterpretation, not second answer."
+    }
+  ],
+  "sections": [
+    {
+      "label": "A",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Correctly distinguishes Stryker's detected group from killed: timeout counts as detected without being renamed killed."
+    },
+    {
+      "label": "A",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Plausible and accurate explanation of how kill rate can be read too literally; timeout counts as detection in Stryker."
+    },
+    {
+      "label": "A",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Arithmetic and counterfactual correct:6/10=60%, while documented accounting gives(6+1)/10=70%."
+    },
+    {
+      "label": "A",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Actionable and accurate: check report status groups, then use killed+timeout over valid."
+    },
+    {
+      "label": "B",
+      "field": "explanation",
+      "status": "PASS",
+      "reason": "Формулы detected, valid и score соответствуют документации Stryker."
+    },
+    {
+      "label": "B",
+      "field": "example",
+      "status": "PASS",
+      "reason": "Расчёт 6+1 из 10 равен 70%; перечисленные исключения подтверждены документацией."
+    },
+    {
+      "label": "B",
+      "field": "when_to_apply",
+      "status": "PASS",
+      "reason": "Сравнение при сопоставимых операторах, области анализа и статусах уместно."
+    },
+    {
+      "label": "B",
+      "field": "edge_cases",
+      "status": "PASS",
+      "reason": "Equivalent не распознаются автоматически;100% не доказывают правильность требований или реализации."
+    },
+    {
+      "label": "B",
+      "field": "related",
+      "status": "PASS",
+      "reason": "Covered=detected+survived=9, отдельный показатель7/9≈77,8%; метрики не смешаны."
+    },
+    {
+      "label": "C",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Correctly identifies survived as undetected and score change when a survivor becomes killed with valid fixed."
+    },
+    {
+      "label": "C",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Accurately distinguishes surviving mutant, a missed mutation, from a detected problem."
+    },
+    {
+      "label": "C",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Correct under fixed-valid condition: survived→killed lowers survived/valid, so growth is not stronger tests."
+    },
+    {
+      "label": "C",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Correctly separates detected from undetected; killed+timeout and survived+no coverage included."
+    },
+    {
+      "label": "D",
+      "field": "what_actually",
+      "status": "PASS",
+      "reason": "Correctly accepts formula and limits100% to selected mutations/checks; not proof of requirements/whole implementation."
+    },
+    {
+      "label": "D",
+      "field": "source_of_confusion",
+      "status": "PASS",
+      "reason": "Complete detection can coexist with tests encoding a wrong requirement; plausible and accurate."
+    },
+    {
+      "label": "D",
+      "field": "if_it_were_true",
+      "status": "PASS",
+      "reason": "Tests can detect all deviations from a wrong rule and score100%; exact100% assertion rebutted without broadening to any high score."
+    },
+    {
+      "label": "D",
+      "field": "how_it_should_be",
+      "status": "PASS",
+      "reason": "Neither100% nor arbitrary high score proves correctness; requirements and risks separately evaluated."
+    }
+  ],
+  "checks": {
+    "CONTENT": {
+      "status": "PASS",
+      "reason": "B defines Stryker's score and formula accurately; A/C/D each contain a distinct false claim."
+    },
+    "FACTS": {
+      "status": "PASS",
+      "reason": "Stryker docs confirm detected=killed+timeout, valid=detected+undetected, score=detected/valid*100, covered=detected+survived, and the separate covered-code score. Equivalent mutants are not definitively auto-detected/ignored."
+    },
+    "LINKAGE": {
+      "status": "PASS",
+      "reason": "B directly matches the Stryker model in the Q8 theory; the wrong explanations address their respective claims."
+    },
+    "SECTIONS": {
+      "status": "PASS",
+      "reason": "Each wrong's four sections consistently correct, explain, counterfactually test, and repair its stated misconception."
+    },
+    "SFPL": {
+      "status": "PASS",
+      "reason": "All four define a share, give a formula, and add one explanatory claim. A's timeout exclusion, C's inverse fraction, and D's overclaim are comparable full propositions; B is not uniquely complete in response structure."
+    },
+    "ANSC": {
+      "status": "PASS",
+      "reason": "Each option is a complete answer proposition. A and C give alternative score interpretations; D gives the correct formula plus a false inference. Their wrongness is content-based, not an omitted-answer gap."
+    },
+    "RU": {
+      "status": "PASS",
+      "reason": "Question, options, and reviewed sections are clear and grammatical; English metric labels are appropriate technical terms."
+    }
+  },
+  "sources": [
+    {
+      "url": "https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/",
+      "checked_claim": "Stryker defines detected as killed + timeout; undetected as survived + no coverage; valid as detected + undetected; mutation score as detected / valid * 100; covered as detected + survived; covered-code score as detected / covered * 100. Timeout counts as detected but remains its own state. Runtime errors, compile errors, ignored, and pending do not enter valid.",
+      "version": "Stryker Mutant states and metrics documentation (checked 2026-11-06)",
+      "checked_at": "2026-11-06T16:04:16Z"
+    },
+    {
+      "url": "https://stryker-mutator.io/docs/mutation-testing-elements/equivalent-mutants/",
+      "checked_claim": "Stryker documentation says there is no definitive automatic way to find and ignore equivalent mutants; they must be identified manually or accepted as limiting a 100% score.",
+      "version": "Stryker Equivalent mutants documentation (checked 2026-11-06)",
+      "checked_at": "2026-11-06T16:04:16Z"
+    }
+  ],
+  "findings": [],
+  "limitations": [
+    "Actual reviewer field assessments, defenses and7axis decisions delivered in bounded B steps. Coordinator formatting only; explicitly authorized, reviewer will verify before FINAL.",
+    "Q5 initial SFPL FAIL and explicit resolution retained. No content change was required for the review overreach.",
+    "Q8 original blindA preserved and acknowledged as knowledge error; not relabeled B or a successful blind solution.",
+    "No new engine/compiler/Gradle/CI/application/UI runs; separate lightweight author arithmetic and preserved source-hash checks only."
+  ],
+  "provenance": {
+    "actual_reviewer_task": "/root/mutation_boundary_owner_independent",
+    "source_ledger_sha256": "df3ed559e6b00880929fabbd84a8f7c50a9af5436ce6ae42bb09a19abd6bfc7b",
+    "normalization": "Explicit authorization for mechanically preserving actual34field judgments; independent verification before FINAL required."
+  }
+}
