@@ -1,0 +1,293 @@
+{
+  "author": "root_mcq_author",
+  "checked_at": "2026-11-06T07:21:34.909839+00:00",
+  "scope": [
+    "Q22:B0",
+    "Q23:B0"
+  ],
+  "questions": [
+    {
+      "q_number": 22,
+      "required_parts": "Both open meaning and default-final motive",
+      "options": [
+        {
+          "label": "A",
+          "text": "`open` разрешает наследование класса и переопределение члена; обычные классы и их новые члены по умолчанию `final`, чтобы автор явно задавал точки расширения.",
+          "completeness": "полный",
+          "truth": "верен",
+          "model": "Open class/member плюс explicit extension points",
+          "attempt_to_defend_or_validate": "Default относится к обычным классам и их новым членам; исключения раскрыты в sections.",
+          "sections": [
+            {
+              "field": "explanation",
+              "text": "У обычного класса `open` разрешает наследование; у нового члена разрешает переопределение. Открытый класс не открывает все его методы автоматически. Закрытость обычных объявлений по умолчанию заставляет автора явно обозначить поддерживаемые точки расширения API. Это практический смысл правила, а не обещание безопасности или ускорения каждого вызова.",
+              "assessment": "Класс и новый член требуют отдельных разрешений; мотив default-final — явный контракт расширения, не историческая цитата и не гарантия скорости."
+            },
+            {
+              "field": "example",
+              "text": "```kotlin\nopen class Base {\n    open fun value() = 1\n    fun stable() = 2\n}\nopen class Child : Base() {\n    override fun value() = 3\n}\nclass Leaf : Child() {\n    override fun value() = 4\n}\nfun main() {\n    check(Leaf().value() == 4)\n    check(Leaf().stable() == 2)\n}\n```",
+              "assessment": "Новая программа показывает Base/Child/Leaf и повторный override без дополнительного open; stable наследуется с default final."
+            },
+            {
+              "field": "when_to_apply",
+              "text": "Объявляйте open те классы и члены, для которых поддерживаете контракт расширения. Для остальных обычных объявлений закрытость по умолчанию ограничивает непредусмотренное изменение поведения через наследование.",
+              "assessment": "Open предлагается для поддерживаемого API, а не автоматически везде."
+            },
+            {
+              "field": "edge_cases",
+              "text": "Абстрактные классы и абстрактные члены допускают наследование или реализацию без дополнительного open. Override остаётся открытым, если не указан `final override`; сам класс тоже должен разрешать дальнейшее наследование.",
+              "assessment": "Abstract и inherited override отделены от new ordinary members; дальнейшее наследование требует открытого класса."
+            },
+            {
+              "field": "related",
+              "text": "All-open открывает подходящие аннотированные классы и члены при компиляции. Это может помочь прокси через подкласс, но не требуется для любого Spring AOP: JDK-прокси работают через интерфейсы и не наследуют target class. Плагин также не заменяет осмысленный выбор точек расширения.",
+              "assessment": "Annotation-based all-open и JDK-interface/subclass proxy различены, универсальной необходимости плагина нет."
+            }
+          ]
+        },
+        {
+          "label": "B",
+          "text": "`open` отмечает класс, уже доступный для наследования, и переопределяемый член; `final` задают отдельно, поскольку расширение API по умолчанию свободно.",
+          "completeness": "полный",
+          "truth": "неверен",
+          "model": "Обычное наследование/override уже свободны по умолчанию",
+          "attempt_to_defend_or_validate": "Обычный class final, open не просто необязательный повтор уже разрешённого.",
+          "sections": [
+            {
+              "field": "what_actually",
+              "text": "Обычные Kotlin-классы и новые члены по умолчанию final, а не открыты. Для наследуемого обычного класса используют open; для переопределяемого нового члена открытость задают отдельно.",
+              "assessment": "Обычные классы и их новые члены default-final; открытость класса не открывает автоматически член."
+            },
+            {
+              "field": "source_of_confusion",
+              "text": "Модель Java, где обычный класс и многие методы открыты без специального разрешения, переносят на Kotlin. Из-за этого open принимают за необязательную пометку уже существующей открытости.",
+              "assessment": "Перенос Java-модели объясняет заблуждение как педагогическая гипотеза, не биография автора."
+            },
+            {
+              "field": "if_it_were_true",
+              "text": "Обычный `class Base` без разрешающего наследование объявления можно было бы использовать как базовый тип, даже если автор не предусмотрел такого расширения.",
+              "assessment": "Контрфакт даёт возможность наследовать обычный Base без разрешения, именно модель B."
+            },
+            {
+              "field": "how_it_should_be",
+              "text": "Проверяйте контракт конкретного объявления: обычный class по умолчанию закрыт, open разрешает наследование. Abstract-объявления, наследуемая открытость override и преобразования compiler plugin не сводятся к требованию повторять явный open везде.",
+              "assessment": "Explicit open не навязан abstract/override/compiler transformation, старое обобщение устранено."
+            }
+          ]
+        },
+        {
+          "label": "C",
+          "text": "`open` запрещает наследование класса и override члена; обычные классы и их новые члены получают `final` по умолчанию для защиты API от изменений наследников.",
+          "completeness": "полный",
+          "truth": "неверен",
+          "model": "Open запрещает наследование и override",
+          "attempt_to_defend_or_validate": "Основная роль modifier перевёрнута, ответ при этом полон по обеим частям.",
+          "sections": [
+            {
+              "field": "what_actually",
+              "text": "Open разрешает наследование класса или override члена, а не запрещает их. Final по умолчанию у обычных объявлений делает открытые точки расширения отдельным решением автора.",
+              "assessment": "Open разрешает, а не запрещает соответствующее расширение."
+            },
+            {
+              "field": "source_of_confusion",
+              "text": "Назначения open и final поменяли местами. Защиту от переопределения ошибочно приписали разрешающему модификатору.",
+              "assessment": "Обращение значений двух modifiers конкретно соответствует wrong C."
+            },
+            {
+              "field": "if_it_were_true",
+              "text": "Наследник не мог бы унаследоваться от явно открытого класса или переопределить открытый член: само добавление open блокировало бы показанные в теории расширения.",
+              "assessment": "Запрет расширения явно открытого объявления — логичное следствие перевёрнутой модели."
+            },
+            {
+              "field": "how_it_should_be",
+              "text": "Используйте open для поддерживаемого расширения и final для запрета дальнейшего наследования или override. Обе роли различаются: открытый класс сам по себе не открывает все его члены.",
+              "assessment": "Открытость класса и членов разделена; final закрывает дальнейший override."
+            }
+          ]
+        },
+        {
+          "label": "D",
+          "text": "`open` позволяет наследовать класс и переопределять член; обычные классы и их новые методы закрыты `final`, чтобы гарантировать ускорение всех вызовов на JVM.",
+          "completeness": "полный",
+          "truth": "неверен",
+          "model": "Default-final гарантирует ускорение всех вызовов",
+          "attempt_to_defend_or_validate": "Полная модель механизма и мотива, но универсальная performance-гарантия ложна.",
+          "sections": [
+            {
+              "field": "what_actually",
+              "text": "Final не гарантирует ускорение любого вызова на JVM. В показанном правиле он запрещает наследование обычного класса или переопределение члена; практический смысл закрытости — явные точки расширения API.",
+              "assessment": "Правило final не даёт универсальной гарантии производительности, смысл ограничения связан с расширением API."
+            },
+            {
+              "field": "source_of_confusion",
+              "text": "Возможность оптимизации отдельных вызовов принимают за обязательный выигрыш для любого метода. Ограничение наследования и фактическая производительность — разные утверждения.",
+              "assessment": "Возможная оптимизация не тождественна обязательному выигрырышу каждого вызова."
+            },
+            {
+              "field": "if_it_were_true",
+              "text": "Об ускорении любого вызова можно было бы судить только по final, без учёта конкретной программы и измерения её выполнения. Такая гарантия из правила наследования не следует.",
+              "assessment": "Гипотеза позволяла бы обещать скорость без данных о выполнении, а не ошибочное утверждение обо всех AOP proxies."
+            },
+            {
+              "field": "how_it_should_be",
+              "text": "Выбирайте open по поддерживаемому контракту расширения. Не обосновывайте default-final универсальным обещанием скорости; реальный выигрыш требует проверки конкретного выполнения.",
+              "assessment": "Open выбирается по контракту; производительность требует проверки конкретной программы."
+            }
+          ]
+        }
+      ],
+      "author_checks": {
+        "CONTENT": "PASS",
+        "FACTS": "PASS",
+        "LINKAGE": "L3/L4 from current Q",
+        "SECTIONS": "PASS",
+        "ANSC": "PASS",
+        "RU": "PASS",
+        "SFPL": "AUTHOR_REVIEWED; independent decision pending"
+      }
+    },
+    {
+      "q_number": 23,
+      "required_parts": "Core getter-at-read/setter-at-assignment behavior with complete models, not storage fragments only.",
+      "options": [
+        {
+          "label": "A",
+          "text": "Пользовательский getter выполняется при чтении, setter при присваивании; обычное хранилище отсутствует у любого свойства без явного `field`.",
+          "completeness": "полный",
+          "truth": "неверен",
+          "model": "Без явного field нет storage у любого свойства",
+          "attempt_to_defend_or_validate": "Default-accessors могут требовать backing field.",
+          "sections": [
+            {
+              "field": "what_actually",
+              "text": "Отсутствие слова field в обычном объявлении не исключает backing field: default-accessor может требовать хранилище. Вычисляемый getter без собственного поля — другой случай, а не универсальное правило для любого свойства.",
+              "assessment": "Default-accessors могут иметь поле без слова field; computed getter — отдельный случай."
+            },
+            {
+              "field": "source_of_confusion",
+              "text": "Правило для вычисляемого getter распространяют на default-accessors. Явное упоминание field — не единственный признак необходимости неявного хранилища.",
+              "assessment": "Узкое правило computed getter не распространяется на любой property/default-accessor."
+            },
+            {
+              "field": "if_it_were_true",
+              "text": "У обычного `var count = 0` с default-accessors не было бы собственного поля для значения лишь потому, что программист не написал field. В действительности такая форма хранит состояние.",
+              "assessment": "Counter с default-accessors — конкретное следствие гипотетического отсутствия storage и реальный контрпример."
+            },
+            {
+              "field": "how_it_should_be",
+              "text": "Разделяйте поведение аксессора и наличие хранилища. Getter читает или вычисляет результат, setter обрабатывает присваивание; default-accessor либо использование field может требовать обычное backing field.",
+              "assessment": "Наличие property не объявлено гарантией поля; поведение и необходимость хранения разделены."
+            }
+          ]
+        },
+        {
+          "label": "B",
+          "text": "Пользовательский getter выполняется при присваивании, setter при чтении; при наличии обычного хранилища внутри аксессора используют `field`.",
+          "completeness": "полный",
+          "truth": "неверен",
+          "model": "Getter/write и setter/read",
+          "attempt_to_defend_or_validate": "Перестановка ролей, обычный field доступ описан в остальном корректно.",
+          "sections": [
+            {
+              "field": "what_actually",
+              "text": "Роли обратные: getter вызывается при чтении, setter при присваивании. Пользовательский код может вычислить результат или проверить новое значение; инициализатор свойства отдельно не вызывает setter.",
+              "assessment": "Read→getter/write→setter восстановлены, initializer отдельно не вызывает setter."
+            },
+            {
+              "field": "source_of_confusion",
+              "text": "Операции получения и установки значения поменяли местами. Наличие обоих аксессоров у var не делает моменты их вызова взаимозаменяемыми.",
+              "assessment": "Два момента вызова не взаимозаменяемы, названа конкретная перестановка ролей."
+            },
+            {
+              "field": "if_it_were_true",
+              "text": "Чтение `obj.value` запускало бы код setter, а присваивание `obj.value = x` — код getter. Это обратная модель двух обращений, а не свойство реальных Kotlin-accessors.",
+              "assessment": "Гипотетические read→setter и assignment→getter сформулированы без обещания обязательной мутации."
+            },
+            {
+              "field": "how_it_should_be",
+              "text": "Используйте get для чтения, set для присваивания. Само наличие property не обещает backing field: вычисляемому getter может быть достаточно других данных.",
+              "assessment": "Computed getter может быть без своего поля, old blanket property-over-field удалён."
+            }
+          ]
+        },
+        {
+          "label": "C",
+          "text": "Getter вычисляет значение при чтении, setter выполняет код при присваивании; когда свойству нужно обычное хранилище, к нему обращаются через `field`.",
+          "completeness": "полный",
+          "truth": "верен",
+          "model": "Custom read/write code и conditional ordinary field",
+          "attempt_to_defend_or_validate": "Обе роли явны, field не объявлен обязательным у любого property.",
+          "sections": [
+            {
+              "field": "explanation",
+              "text": "Пользовательский getter вычисляет результат при чтении, а setter выполняет код при присваивании. Обычное backing field, если оно требуется свойству, доступно внутри аксессора через специальный идентификатор field. Обращение к тому же свойству по имени снова вызывает соответствующий аксессор, а не даёт прямой доступ к полю.",
+              "assessment": "Полный механизм двух custom-accessors и conditional storage описан; same-property name не равен прямому field."
+            },
+            {
+              "field": "example",
+              "text": "```kotlin\nclass Gauge {\n    var writes: Int = 0\n        private set\n    var value: Int = 0\n        set(input) {\n            require(input >= 0)\n            field = input\n            writes++\n        }\n    val doubled: Int\n        get() = value * 2\n}\nfun main() {\n    val gauge = Gauge()\n    check(gauge.writes == 0) // initializer не вызывает setter\n    gauge.value = 4\n    check(gauge.value == 4 && gauge.doubled == 8 && gauge.writes == 1)\n}\n```",
+              "assessment": "Gauge программа фактически выполнена: initializer не трогает writes, setter сохраняет field/увеличивает writes, doubled вычисляется."
+            },
+            {
+              "field": "when_to_apply",
+              "text": "Добавляйте getter для вычисляемого представления, а setter для обработки или проверки нового значения. Если проверка нужна и начальному значению, учитывайте, что инициализатор setter не вызывает.",
+              "assessment": "Проверка начального значения не приписана setter; use cases getter/setter различены."
+            },
+            {
+              "field": "edge_cases",
+              "text": "Default-accessor может требовать поле без явного слова field; вычисляемый val с getter без field может обходиться без собственного поля. Использование field в обычном custom-accessor требует хранилище. Эти правила показанной формы отличают от отдельной explicit-backing-field syntax.",
+              "assessment": "Default field без явного field, computed val, ordinary custom field и separate explicit-field syntax разграничены."
+            },
+            {
+              "field": "related",
+              "text": "Private set ограничивает запись извне, сохраняя доступный getter; у val setter отсутствует. Имя того же свойства внутри собственного аксессора повторно вызывает аксессор; для прямого доступа к обычному полю используют field.",
+              "assessment": "Private set не отменяет getter, val не имеет setter; same-name recursion и direct field различаются."
+            }
+          ]
+        },
+        {
+          "label": "D",
+          "text": "Getter вызывается при чтении, setter при присваивании; прямой доступ к обычному хранилищу даёт имя самого свойства, а не `field`.",
+          "completeness": "полный",
+          "truth": "неверен",
+          "model": "Same property name даёт direct storage",
+          "attempt_to_defend_or_validate": "При custom-accessor снова вызывается тот же accessor, в отличие от field.",
+          "sections": [
+            {
+              "field": "what_actually",
+              "text": "Имя того же свойства внутри getter или setter обращается к свойству и снова вызывает аксессор. Для прямого доступа к обычному backing field внутри аксессора используют field; без условия остановки повторные обращения могут привести к рекурсии.",
+              "assessment": "Имя того же property повторно вызывает accessor; рекурсия условна при отсутствии остановки."
+            },
+            {
+              "field": "source_of_confusion",
+              "text": "Имя API свойства принимают за имя его внутреннего поля. Свойство может вычисляться и не иметь собственного хранилища, поэтому эти обращения не равнозначны.",
+              "assessment": "API property отделён от storage, которое может отсутствовать у computed getter."
+            },
+            {
+              "field": "if_it_were_true",
+              "text": "Если бы имя того же свойства давало прямой доступ к хранилищу, его чтение внутри getter или запись внутри setter не вызывали бы аксессор повторно. Это устраняло бы рекурсивный вызов, а не создавало его.",
+              "assessment": "Если бы имя было direct storage, повторного accessor-call не было бы; old контрфакт исправлен в нужную сторону."
+            },
+            {
+              "field": "how_it_should_be",
+              "text": "Для обычного backing field используйте field в аксессоре. Не заменяйте его обращением к тому же property по имени, если не намерены снова вызвать getter или setter.",
+              "assessment": "Direct ordinary field и осознанный повторный property access разделены."
+            }
+          ]
+        }
+      ],
+      "author_checks": {
+        "CONTENT": "PASS",
+        "FACTS": "PASS",
+        "LINKAGE": "L3/L4 from current Q",
+        "SECTIONS": "PASS",
+        "ANSC": "PASS",
+        "RU": "PASS",
+        "SFPL": "AUTHOR_REVIEWED; independent decision pending"
+      }
+    }
+  ],
+  "coverage": "Two visible headings, full theory Q22/Q23, shared preamble,8options/34sections. Author review, not independent acceptance.",
+  "limits": "New2ordinary examples executed; previous5positive/7expected compile errors and plugin SHA only hash-verified, no new plugin/Spring/explicit-field/app/JS/Native/version-matrix run.",
+  "pending": "Linked Q39 blanket all-open necessity issue remains outside complete audit; see existing parent handoff/proof. No Q39 code/theory edited or accepted."
+}
