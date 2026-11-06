@@ -1,0 +1,248 @@
+{
+  "reviewer": "mutation_q9_form_repair_independent",
+  "model": "gpt-6-luna",
+  "actual_normalized_reports": {
+    "9": {
+      "reviewer": "mutation_q9_form_repair_independent",
+      "model": "gpt-6-luna",
+      "scope": [
+        "Q9:B0"
+      ],
+      "hashes": {
+        "mcq": "25a38c9f139088b0695d7acb5186eba917774ca98f13a28605436283000fef01",
+        "theory": "07b7833eab6f8017cdd4de3d0d3165f99e5b6aaee3a3fa1ccfb9de51bd3ab485"
+      },
+      "rules_sha256": {
+        "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+        "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+        "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+      },
+      "options": {
+        "A": {
+          "model": "Inspect the concrete mutation and relevant tests; find a meaningful observable difference; add a useful requirement check or explicitly justify equivalence/accepted risk.",
+          "assessment": "Correct and complete; matches Q9 theory and primary-source distinctions."
+        },
+        "B": {
+          "model": "Every surviving mutant necessarily means an assertion defect, so modify/add assertions.",
+          "assessment": "Plausible overgeneralization from common test gaps; false because missing inputs/scope and equivalent mutants are possible. Sections directly refute it."
+        },
+        "C": {
+          "model": "Matching outcomes on current inputs establish equivalence, so stop without exploring scenarios.",
+          "assessment": "Plausible finite-sample fallacy; false, e.g. 17 and 19 match for >=18/>18 but 18 distinguishes them. Sections give the counterexample."
+        },
+        "D": {
+          "model": "The total number of survivors identifies causes and inputs, making mutation-level/test inspection unnecessary.",
+          "assessment": "Plausible metric-as-diagnosis error; false because identical counts can arise from different causes. Sections explain the limit."
+        }
+      },
+      "wrong_defenses": {
+        "B": {
+          "attempt": "Could be defended if a particular surviving mutant is known to produce a behavior the requirement distinguishes and the assertion fails to observe it; then an assertion/test defect is a plausible cause, and revising or adding an assertion may help.",
+          "result": "Not defensible as written under the visible question: “любой выживший” asserts a universal diagnosis. Survivors can instead result from missing inputs/test scope or equivalence, so the claim overstates what survival alone establishes."
+        },
+        "C": {
+          "attempt": "Could be defended if the tested inputs were explicitly the complete declared input domain, and outputs matched for every one; equivalence could then follow within that domain.",
+          "result": "Not defensible as written: it says to infer equivalence from the current inputs without establishing that they cover the relevant domain or considering other scenarios. The visible question supplies no such closed-domain condition; the >=18/>18 counterexample shows sampled agreement can miss a difference."
+        },
+        "D": {
+          "attempt": "Aggregate counts can help prioritize investigation or indicate overall scale; in a specially constrained report where all survivors share one known cause, a count might correlate with that cause.",
+          "result": "Not defensible as written: it claims the number itself determines causes and inputs while skipping mutation/test inspection. Counts alone do not identify which mutant or why it survived; no such simplifying condition appears in the question."
+        }
+      },
+      "sections": [
+        {
+          "label": "A",
+          "field": "explanation",
+          "status": "PASS",
+          "reason": "Соответствует теории: выяснить статус, конкретную подмену, тесты, входы и эффект; называет причины пропуска и раздельную фиксацию решения о риске."
+        },
+        {
+          "label": "A",
+          "field": "example",
+          "status": "PASS",
+          "reason": "Граничный ввод18 отличает>= от>; тест привязан к требуемому поведению, не посещению строки."
+        },
+        {
+          "label": "A",
+          "field": "when_to_apply",
+          "status": "PASS",
+          "reason": "Различает реальный пробел и принятый риск/эквивалентность, требует обоснования и прозрачности исключений."
+        },
+        {
+          "label": "A",
+          "field": "edge_cases",
+          "status": "PASS",
+          "reason": "Несколько совпадений не доказывают эквивалентность, риск не killed, ручная метка не пересчитывает знаменатель."
+        },
+        {
+          "label": "A",
+          "field": "related",
+          "status": "PASS",
+          "reason": "Отделяет категории survived/no coverage и изменение состава анализа от улучшения тестов/score."
+        },
+        {
+          "label": "B",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Исправляет абсолютный тезис: возможны недостающий вход, ограниченная область тестов или эквивалентность; нужен разбор."
+        },
+        {
+          "label": "B",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Объясняет ошибочную универсализацию частой причины и отсутствие доказательства различимости по одному зелёному результату."
+        },
+        {
+          "label": "B",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Для эквивалентной пары проверка не обнаружит различия, которого нет в заявленной области; контрфакт последователен."
+        },
+        {
+          "label": "B",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Исследовать mutation/data/effect до теста и документировать эквивалентность/риск, не выдавая их за обнаружение."
+        },
+        {
+          "label": "C",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Ограничивает вывод совпадений проверенными входами и задаёт область эквивалентности."
+        },
+        {
+          "label": "C",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Зелёный конечный набор может не включать различающий сценарий; объяснение точное."
+        },
+        {
+          "label": "C",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "17/19 против18 корректно опровергает эквивалентность по текущим данным."
+        },
+        {
+          "label": "C",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Искать сценарий и проверять требование, обосновывать на всей области; согласовано с теорией."
+        },
+        {
+          "label": "D",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Общий счётчик не устанавливает мутацию, входы, причину и эффект; нужны конкретные данные."
+        },
+        {
+          "label": "D",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Разводит одинаковую метрику для разных причин, показывая недостаточность числа для диагноза."
+        },
+        {
+          "label": "D",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Count=1 не различает пропущенный сценарий и эквивалентность; контрпример корректен."
+        },
+        {
+          "label": "D",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Обзорная роль счётчика и причинный разбор конкретной мутации/данных/проверок разделены."
+        }
+      ],
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "Visible question asks for a method of analyzing survivors. A gives a defensible workflow, and B/C/D each embody a distinct erroneous diagnostic model, then sections rebut the specific claim."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "Theory aligns with primary documentation: PIT distinguishes survived from no coverage and defines equivalent mutations as behaviorally indistinguishable; Stryker describes survived/no coverage as undetected and notes equivalent mutants may require manual identification. Q9's recommendation to inspect mutation, tests and behavior is sound. Scores/statuses are not conflated in A."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "The answer and explanations follow directly from Q9's body, including boundary-input example, limits of finite observed inputs, explicit risk, and denominator caveat. External sources corroborate technical definitions but are not needed for unsupported report-schema claims."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "All 17 fields were read. Each section supports its option and the incorrect-option rebuttals address the currently stated misconception. No cross-field contradiction found."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "All four options now have a parallel sequence: inspect mutation/tests or observations, make an inference, then decide/claim. Each is a self-contained procedural answer at comparable abstraction and specificity. A contains a semantic qualification about accepted risk (there is no parenthetical punctuation); this does not make it a uniquely complete multi-part answer; sections carry the teaching detail. No unexplained giveaway found."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "Each option is a complete, plausible method/model answering how to analyze survivors: A is sound; B presumes every survivor proves an assertion defect; C infers equivalence from sampled inputs; D treats aggregate count as causal diagnosis. Each wrong has a coherent core error and a direct section rebuttal. Wrong options need not state the correct method."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Visible question, theory, four options, and all 17 sections read as natural, comprehensible technical Russian. Terms such as mutant, survived, assertion, killed are conventional and sufficiently contextualized; no grammatical or referential defect found."
+        }
+      },
+      "sources": [
+        {
+          "url": "https://pitest.org/quickstart/basic_concepts/",
+          "checked_claim": "mutant/survived/no coverage definitions; equivalent mutation concept; conditional-boundary example",
+          "version": "PIT Basic Concepts current documentation; source-only",
+          "checked_at": "2026-11-06T16:56:01Z"
+        },
+        {
+          "url": "https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/",
+          "checked_claim": "survived/no coverage states; undetected/score metrics",
+          "version": "Stryker Mutant states and metrics current documentation; source-only",
+          "checked_at": "2026-11-06T16:56:01Z"
+        },
+        {
+          "url": "https://stryker-mutator.io/docs/mutation-testing-elements/equivalent-mutants/",
+          "checked_claim": "equivalence may be established by semantic analysis; manual identification and acceptance of less-than-100% score",
+          "version": "Stryker Equivalent mutants current documentation; source-only",
+          "checked_at": "2026-11-06T16:56:01Z"
+        }
+      ],
+      "resolved_findings": [
+        {
+          "id": "MUTATION-Q9-REPORT-LINKAGE-R1",
+          "decision": "RESOLVED",
+          "reason": "The finding concerned claims about report fields location and mutatorName that were absent from Q9. Current D and its what_actually no longer mention either field or report schema; the current Q9 explanation relies on mutation/test/behavior inspection, supported by the theory. No current unsupported report-schema claim remains."
+        },
+        {
+          "id": "MUTATION-Q9-FORM-R2",
+          "decision": "RESOLVED",
+          "reason": "The prior finding described unequal methodical skeletons in the previous option texts. In the current version, all four options state a sequential method/model with inspection or evidence followed by inference and action/claim. The wrong answers are complete, comparable mistaken models and their sections rebut the actual current text. Earlier OPEN status is historical and does not establish a current failure."
+        }
+      ],
+      "findings": [],
+      "limitations": [
+        "17field judgments mechanically serialized from actual reviewer response;7axes/models/defenses/resolutions copied from reviewer-written ledger.",
+        "Explicit serialization authorization and final independent verification required/preserved.",
+        "Initial L2 and subsequent SFPL failures retained in original runs; no silent reset.",
+        "No fresh tests/engines/UI; only reviewed content and primary sources."
+      ],
+      "provenance": {
+        "reviewer_task": "/root/mutation_q9_form_repair_independent",
+        "source_ledger_sha256": "96465afd3ff4138c151a01e2332c639df5fd49d9de34301f91e69ecebf60846a",
+        "normalization": "Explicitly authorized in reviewer message; verify before FINAL."
+      }
+    }
+  },
+  "notes": [
+    "Current scope Q6:B0/Q9:B0/Q10:B0 only:12options and51section fields. No whole-topic/corpus FINAL.",
+    "Q6/Q10 stayed unchanged through Q9 repairs. Original sealed R1 choices D/C remain actual, not a new blind pass. OriginalR1 includes obsoleteQ9; full current_run for all3 is intentionally stale for changedQ9. Supported block-granular record/blind_current validates only unchanged6/10, and current full snapshot metadata is explicitly renewed.",
+    "Q9 initial L2 linkage failure and second-version SFPL failure registered with OPEN IDs and retained snapshots. Third version has a fresh separate context, sealedA before reveal and explicit current resolutions of both IDs. No failure deleted or silently reset.",
+    "Actual bounded field assessments and7axis decisions from distinct reviewers mechanically serialized with explicit authorization. Reviewer-written source ledgers retained; same respective reviewers verify faithful normalization before separate FINAL.",
+    "R1 configured spawn model gpt-6-luna; source-ledger selflabel says model identity not exposed, preserved as raw metadata. Actual context IDs and configured tool model recorded without pretending self-identification.",
+    "Q6 preliminary SFPL WARN clarified explicitly as PASS: wrongB parentheses are required for a*(b+1), not a reason to delete grouping. Q10 A initially mislabeled partial, then explicitly corrected complete but false. Initial wrong comparative length wording also explicitly corrected: C is shortest125chars/15words; numeric equality does not establish form acceptance.",
+    "Q6 all4give concrete proposed transformations. IMUL→IDIV source verified, subtraction/addition/operandincrement rebutted. A false subtraction and actual division coincide on(5,4), so(5,2) distinguishes3/2; no mechanism inferred from one result.",
+    "Q9 current4texts give comparable sequential procedures. B universal assertion diagnosis, C finite-sample equivalence and D count-as-diagnosis are complete false models; their rebuttals follow Q9 body without external report schema.",
+    "Q10 all4define equivalence or a full mistaken model. Domain/observable behavior, missing tests vs equivalent, nonzero score numerator, two-change loop vs single boundary, partial automation vs report exclusion separated. No automatic deletion inferred from classification.",
+    "Current lightweight arithmetic/truth tables verify positive integer examples, finite-test counterexample,10/10/11 loops and7/10→7/11, including zero numerator exception. Python illustrations are not JVM/PIT/Stryker execution or proof of arbitrary equivalence.",
+    "Historical receipt and3Java source SHA checked without rerun;4relevant probes out of8saved. PIT1.30.2 and JLS21 are source versions, not engine execution. No Maven/Gradle/CI/app/Docker/UI run. No application source/test file edits; IntelliJ formatting NOT_RUN.",
+    "Final schema/parity/anti-tell/SKEL/struct/surface exit0. Linkage exit1 with3errorsQ2/Q12/Q18 and2warningsQ18/Q20 outside scope. SKEL2selectedWARN(Q6Bparentheses,Q10Bdash) explicitly reviewed; no threshold or rule edits, no whole-topic linkagePASS.",
+    "Exactly63text fields changed from HEAD476dbab1:12visible texts and51sections. KeysD/A/C,stems,labels/order,other17questions including acceptedQ5/Q8 and Markdown preserved. Initial60field/R2 61field manifests retained as history, not current counts.",
+    "Global PLAN/checkpoint/sync/audit-state remain parent-owned. Shared branchmaster and index ownership preserved; no reset/branch switch/push/deployment/network/security changes."
+  ]
+}

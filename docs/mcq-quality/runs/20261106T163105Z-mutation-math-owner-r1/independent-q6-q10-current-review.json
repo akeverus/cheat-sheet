@@ -1,0 +1,448 @@
+{
+  "reviewer": "mutation_math_owner_independent",
+  "model": "gpt-6-luna",
+  "actual_normalized_reports": {
+    "6": {
+      "reviewer": "mutation_math_owner_independent",
+      "model": "gpt-6-luna",
+      "scope": [
+        "Q6:B0"
+      ],
+      "hashes_at_initial_read": {
+        "mcq": "a79be08df78db0375fbf23f57af9e5433842721451b10efc36302223edb0cb6b",
+        "theory": "07b7833eab6f8017cdd4de3d0d3165f99e5b6aaee3a3fa1ccfb9de51bd3ab485"
+      },
+      "hashes_current": {
+        "mcq": "25a38c9f139088b0695d7acb5186eba917774ca98f13a28605436283000fef01",
+        "theory": "07b7833eab6f8017cdd4de3d0d3165f99e5b6aaee3a3fa1ccfb9de51bd3ab485"
+      },
+      "rules_sha256": {
+        "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+        "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+        "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+      },
+      "options": [
+        {
+          "label": "A",
+          "completeness": "Полный ответ",
+          "model": "Полная, неверная модель вычитания с сохранением операндов.",
+          "wrong_defense": "PIT меняет арифметику, но IMUL имеет конкретный IDIV. Совпадение1 на(5,4) не защищает механизм; (5,2) различает3/2."
+        },
+        {
+          "label": "B",
+          "completeness": "Полный ответ",
+          "model": "Полная, неверная модель увеличения операнда при сохранении умножения.",
+          "wrong_defense": "Формула осмысленна, но источник заменяет инструкцию, не b. Скобки требуются для точной модели."
+        },
+        {
+          "label": "C",
+          "completeness": "Полный ответ",
+          "model": "Полная, неверная модель сложения вместо умножения.",
+          "wrong_defense": "Конкретная таблица IMUL на IDIV не допускает защищать сложение общим названием MATH."
+        },
+        {
+          "label": "D",
+          "completeness": "Полный ответ",
+          "model": "Полный и верный механизм умножение на деление с сохранением операндов.",
+          "wrong_defense": "Correct; wrong-defense не применяется."
+        }
+      ],
+      "sections": [
+        {
+          "label": "A",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "В PIT 1.30.2 IMUL заменяется на IDIV, не вычитание; сохранение операндов не подменяет основное различие."
+        },
+        {
+          "label": "A",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Правдоподобно и конкретно: общую идею замены принимают за произвольный выбор операции."
+        },
+        {
+          "label": "A",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "На (5,4) вычитание и деление дают1, но (5,2) различает3/2; числа верны для integer division."
+        },
+        {
+          "label": "A",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Верно: свериться с таблицей, затем выбирать входы и проверку для фактической пары."
+        },
+        {
+          "label": "B",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Замена инструкции IMUL на IDIV отделена от изменения операнда."
+        },
+        {
+          "label": "B",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Смешение двух механизмов названо ясно и соответствует B."
+        },
+        {
+          "label": "B",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Гипотеза даёт25, фактическое деление1; вычисления верны."
+        },
+        {
+          "label": "B",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Сначала фактическая пара, затем различающие данные и наблюдаемая проверка; полезно и связано."
+        },
+        {
+          "label": "C",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "IMUL на IDIV, не сложение; другие семейства уместны как необязательный контекст."
+        },
+        {
+          "label": "C",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Ошибочная модель произвольной арифметической замены описана точно."
+        },
+        {
+          "label": "C",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Сложение9, фактическое деление1, исходное умножение20; вычисления верны."
+        },
+        {
+          "label": "C",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Верно направляет к конкретной таблице и версии; необязательный контекст другого набора не blocker."
+        },
+        {
+          "label": "D",
+          "field": "explanation",
+          "status": "PASS",
+          "reason": "Верно и полно: IMUL на IDIV, конкретная подмена; прямая связь с теорией."
+        },
+        {
+          "label": "D",
+          "field": "example",
+          "status": "PASS",
+          "reason": "Java int (5,4) даёт20/1, (0,2) даёт0/0; пример верен и уместен."
+        },
+        {
+          "label": "D",
+          "field": "when_to_apply",
+          "status": "PASS",
+          "reason": "Различающие входы и наблюдаемый результат/эффект соответствуют теории, достаточно для поля."
+        },
+        {
+          "label": "D",
+          "field": "edge_cases",
+          "status": "PASS",
+          "reason": "Integer division на ноль вызывает ArithmeticException; ожидаемое нормальное завершение может обнаружить подмену, ограничение типа верно."
+        },
+        {
+          "label": "D",
+          "field": "related",
+          "status": "PASS",
+          "reason": "Фактически верно; скорее дополнительное пояснение механизма/обнаружения, а не конкретная связанная тема. Это не фактический дефект."
+        }
+      ],
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "Все четыре опции непосредственно описывают действие PIT MATH или предлагают конкретный ложный механизм."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "Проверенные PIT1.30.2 и JLS21 подтверждают IMUL на IDIV, целочисленные примеры и исключение при делении на ноль."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "Версия, оператор и пример прямо заданы теорией; correct выводится без соседних вопросов."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "Все17полей согласованы с вариантами; A различает совпадение на(5,4) и механизм на(5,2)."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "СкобкиB содержательно необходимы для a*(b+1), не являются необъяснённым признаком ключа. D не выделяется форматом/оговоркой; все4опции дают конкретные модели действия MATH. ИсходныйWARN сохранён как диагностика, не дефект приёмки."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "Каждый вариант даёт законченную модель механизма; wrong не обязан раскрывать правильную подмену."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Вопрос, варианты и поля понятны, технические термины и формулы уместны; скобкиB проясняют вычисление."
+        }
+      },
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/hcoles/pitest/1.30.2/pitest/src/main/java/org/pitest/mutationtest/engine/gregor/mutators/MathMutator.java",
+          "version": "PIT 1.30.2",
+          "checked_claim": "MATH maps integer IMUL to IDIV (and other explicit bytecode operation pairs). Lines 61-63 directly confirm multiplication-to-division; the source does not support arbitrary replacement or operand increment.",
+          "checked_at": "2026-11-06T16:34:41Z"
+        },
+        {
+          "url": "https://pitest.org/quickstart/basic_concepts/",
+          "version": "PIT basic concepts page, accessed 2026-11-06",
+          "checked_claim": "PIT applies configurable mutators to compiled bytecode; equivalent mutations may have same behavior or differ outside test scope; tests execute against mutants.",
+          "checked_at": "2026-11-06T16:34:41Z"
+        },
+        {
+          "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.17.2",
+          "version": "Java Language Specification, Java SE 21, §15.17.2",
+          "checked_claim": "Integer division truncates toward zero; divisor zero throws ArithmeticException. Checked §15.17.2 relevant paragraphs only via targeted find (including the zero-divisor sentence), not the full chapter.",
+          "checked_at": "2026-11-06T16:34:41Z"
+        }
+      ],
+      "findings": [],
+      "limitations": [
+        "Coordinator serialized actual delivered field judgments/decisions; explicit corrections retained, reviewer verifies before FINAL.",
+        "Only unchanged Q6/Q10 from initial3block run accepted here. Original sealedA remains actual, not a new blind.",
+        "Current whole seed differs due to repairedQ9; canonical6/10/rules/export unchanged and block-granular blind_current verified.",
+        "Raw source-ledger selflabel says model identity not exposed; canonical model label records configured spawn model gpt-6-luna and actual context task.",
+        "No new tests/engines/UI by reviewer."
+      ],
+      "provenance": {
+        "reviewer_task": "/root/mutation_math_owner_independent",
+        "source_ledger_sha256": "05d80589cd5180551aa56169c413d013b97c3af5f154bc74d50d2aac96f7f591",
+        "normalization": "Explicitly authorized; independent verification required before FINAL."
+      }
+    },
+    "10": {
+      "reviewer": "mutation_math_owner_independent",
+      "model": "gpt-6-luna",
+      "scope": [
+        "Q10:B0"
+      ],
+      "hashes_at_initial_read": {
+        "mcq": "a79be08df78db0375fbf23f57af9e5433842721451b10efc36302223edb0cb6b",
+        "theory": "07b7833eab6f8017cdd4de3d0d3165f99e5b6aaee3a3fa1ccfb9de51bd3ab485"
+      },
+      "hashes_current": {
+        "mcq": "25a38c9f139088b0695d7acb5186eba917774ca98f13a28605436283000fef01",
+        "theory": "07b7833eab6f8017cdd4de3d0d3165f99e5b6aaee3a3fa1ccfb9de51bd3ab485"
+      },
+      "rules_sha256": {
+        "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+        "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+        "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+      },
+      "options": [
+        {
+          "label": "A",
+          "completeness": "Полный ответ",
+          "model": "Полная, но неверная модель обычного survived как equivalent; слово partial исправлено.",
+          "wrong_defense": "Найденное наблюдаемое различие опровергает equivalent в объявленной области, не подтверждает его."
+        },
+        {
+          "label": "B",
+          "completeness": "Полный ответ",
+          "model": "Полное ядро определения плюс неверное влияние на метрику.",
+          "wrong_defense": "Эквивалентность не гарантирует неизменностьscore; при ненулевомdetected добавлениеvalidundetected снижает долю."
+        },
+        {
+          "label": "C",
+          "completeness": "Полный ответ",
+          "model": "Полное и верное определение с областью и отсутствием различающего теста.",
+          "wrong_defense": "Correct; wrong-defense не применяется."
+        },
+        {
+          "label": "D",
+          "completeness": "Полный ответ",
+          "model": "Полное ядро определения плюс неверная универсальная автоматизация.",
+          "wrong_defense": "Некоторые фильтры существуют, но полное доказательство каждого случая источники не подтверждают; удаленияизsurvived не приписано."
+        }
+      ],
+      "sections": [
+        {
+          "label": "A",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Отличает эквивалентность от пропущенного текущими тестами отличия; верно и прямо связано."
+        },
+        {
+          "label": "A",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Смешение survived и семантической эквивалентности правдоподобно и ясно."
+        },
+        {
+          "label": "A",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Различие внутри объявленной области опровергло бы эквивалентность; контрфакт логически корректен."
+        },
+        {
+          "label": "A",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Отличает пробелы тестов от совпадения поведения на всей области; верно и достаточно."
+        },
+        {
+          "label": "B",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Верно с условием учёта в необнаруженных; Stryker-пример не обобщён на все инструменты."
+        },
+        {
+          "label": "B",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Семантическое свойство отделено от арифметики метрики."
+        },
+        {
+          "label": "B",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "При7/10 на7/11 процент падает; ненулевой числитель явно оговорён."
+        },
+        {
+          "label": "B",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Фактический score и исключения документируются отдельно, автоматическое исключение не обещано."
+        },
+        {
+          "label": "C",
+          "field": "explanation",
+          "status": "PASS",
+          "reason": "Полно и прямо связано: вся объявленная область, не только текущие тесты."
+        },
+        {
+          "label": "C",
+          "field": "example",
+          "status": "PASS",
+          "reason": "Java int x+0/x-0 даётx; оговорка предотвращает обобщение на произвольные пары."
+        },
+        {
+          "label": "C",
+          "field": "when_to_apply",
+          "status": "PASS",
+          "reason": "Различает семантическую эквивалентность и пока не найденные данные, требует область и наблюдаемость."
+        },
+        {
+          "label": "C",
+          "field": "edge_cases",
+          "status": "PASS",
+          "reason": "10/10/11 итераций и две подмены против одной разделены ясно; числа верны."
+        },
+        {
+          "label": "C",
+          "field": "related",
+          "status": "PASS",
+          "reason": "Отделяет эквивалентность, survived и исключение из отчёта, не обещает полную автоматическую классификацию."
+        },
+        {
+          "label": "D",
+          "field": "what_actually",
+          "status": "PASS",
+          "reason": "Верно с оговоркой о частичном распознавании известных случаев."
+        },
+        {
+          "label": "D",
+          "field": "source_of_confusion",
+          "status": "PASS",
+          "reason": "Различает генерацию/прогон и доказательство поведения всей области; правдоподобно."
+        },
+        {
+          "label": "D",
+          "field": "if_it_were_true",
+          "status": "PASS",
+          "reason": "Гипотеза автоматического доказательства не означала бы автоматическое удаление из survived; логически согласовано."
+        },
+        {
+          "label": "D",
+          "field": "how_it_should_be",
+          "status": "PASS",
+          "reason": "Обоснование и политика отчёта разделены; верно и связано."
+        }
+      ],
+      "checks": {
+        "CONTENT": {
+          "status": "PASS",
+          "reason": "Все варианты определяют equivalent; A/B/D дают законченные ложные модели. Первоначальное слово «частичная» дляA явно исправлено на «полная, но неверная»."
+        },
+        "FACTS": {
+          "status": "PASS",
+          "reason": "Проверены JLS21 numeric arithmetic и Stryker equivalent/states/metrics; x±0 дляint, отсутствие полной автоматической классификации и detected/valid подтверждены."
+        },
+        "LINKAGE": {
+          "status": "PASS",
+          "reason": "Определение и пример следуют из Q10; внешние источники подтверждают, а не вводят скрытое условие для ответа."
+        },
+        "SECTIONS": {
+          "status": "PASS",
+          "reason": "Все17полей согласованы со своими опциями;7/10 на7/11 с условием ненулевого числителя корректно."
+        },
+        "SFPL": {
+          "status": "PASS",
+          "reason": "Все4варианта имеют каркас «определение + уточнение». ТиреB естественно оформляет именную конструкцию, не выделяяC. Корректные метрики A/B/C/D133/132/125/142символа и17/19/15/17слов: C короче, но краткость сама не доказывает утечку формы. Вердикт основан на сравнении формы, без опоры на истинность вариантов."
+        },
+        "ANSC": {
+          "status": "PASS",
+          "reason": "Все4отвечают законченным определением и следствием; уA обязательный элемент не пропущен, неверно содержание определения."
+        },
+        "RU": {
+          "status": "PASS",
+          "reason": "Формулировки и поля понятны, термины уместны, тиреB грамматически допустимо."
+        }
+      },
+      "sources": [
+        {
+          "url": "https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.18.2",
+          "version": "Java Language Specification Java SE 21 §15.18.2",
+          "checked_claim": "Numeric + performs addition and - performs subtraction; relevant section opened/located directly.",
+          "checked_at": "2026-11-06T16:44:34Z"
+        },
+        {
+          "url": "https://stryker-mutator.io/docs/mutation-testing-elements/equivalent-mutants/",
+          "version": "Stryker Mutation Testing Elements docs, accessed 2026-11-06",
+          "checked_claim": "Describes equivalent mutant example, manual identification, and lack of definitive automatic detection/ignore in documented approach.",
+          "checked_at": "2026-11-06T16:44:34Z"
+        },
+        {
+          "url": "https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/",
+          "version": "Stryker Mutation Testing Elements docs, accessed 2026-11-06",
+          "checked_claim": "Defines survived, valid, detected, mutation score = detected/valid; supports that an included undetected equivalent can affect score denominator.",
+          "checked_at": "2026-11-06T16:44:34Z"
+        }
+      ],
+      "findings": [],
+      "limitations": [
+        "Coordinator serialized actual delivered field judgments/decisions; explicit corrections retained, reviewer verifies before FINAL.",
+        "Only unchanged Q6/Q10 from initial3block run accepted here. Original sealedA remains actual, not a new blind.",
+        "Current whole seed differs due to repairedQ9; canonical6/10/rules/export unchanged and block-granular blind_current verified.",
+        "Raw source-ledger selflabel says model identity not exposed; canonical model label records configured spawn model gpt-6-luna and actual context task.",
+        "No new tests/engines/UI by reviewer."
+      ],
+      "provenance": {
+        "reviewer_task": "/root/mutation_math_owner_independent",
+        "source_ledger_sha256": "389f3834ac8f24f4c823357a193b2fd2feb611ffc9ff2361b94635cf53e73389",
+        "normalization": "Explicitly authorized; independent verification required before FINAL."
+      }
+    }
+  },
+  "notes": [
+    "Current scope Q6:B0/Q9:B0/Q10:B0 only:12options and51section fields. No whole-topic/corpus FINAL.",
+    "Q6/Q10 stayed unchanged through Q9 repairs. Original sealed R1 choices D/C remain actual, not a new blind pass. OriginalR1 includes obsoleteQ9; full current_run for all3 is intentionally stale for changedQ9. Supported block-granular record/blind_current validates only unchanged6/10, and current full snapshot metadata is explicitly renewed.",
+    "Q9 initial L2 linkage failure and second-version SFPL failure registered with OPEN IDs and retained snapshots. Third version has a fresh separate context, sealedA before reveal and explicit current resolutions of both IDs. No failure deleted or silently reset.",
+    "Actual bounded field assessments and7axis decisions from distinct reviewers mechanically serialized with explicit authorization. Reviewer-written source ledgers retained; same respective reviewers verify faithful normalization before separate FINAL.",
+    "R1 configured spawn model gpt-6-luna; source-ledger selflabel says model identity not exposed, preserved as raw metadata. Actual context IDs and configured tool model recorded without pretending self-identification.",
+    "Q6 preliminary SFPL WARN clarified explicitly as PASS: wrongB parentheses are required for a*(b+1), not a reason to delete grouping. Q10 A initially mislabeled partial, then explicitly corrected complete but false. Initial wrong comparative length wording also explicitly corrected: C is shortest125chars/15words; numeric equality does not establish form acceptance.",
+    "Q6 all4give concrete proposed transformations. IMUL→IDIV source verified, subtraction/addition/operandincrement rebutted. A false subtraction and actual division coincide on(5,4), so(5,2) distinguishes3/2; no mechanism inferred from one result.",
+    "Q9 current4texts give comparable sequential procedures. B universal assertion diagnosis, C finite-sample equivalence and D count-as-diagnosis are complete false models; their rebuttals follow Q9 body without external report schema.",
+    "Q10 all4define equivalence or a full mistaken model. Domain/observable behavior, missing tests vs equivalent, nonzero score numerator, two-change loop vs single boundary, partial automation vs report exclusion separated. No automatic deletion inferred from classification.",
+    "Current lightweight arithmetic/truth tables verify positive integer examples, finite-test counterexample,10/10/11 loops and7/10→7/11, including zero numerator exception. Python illustrations are not JVM/PIT/Stryker execution or proof of arbitrary equivalence.",
+    "Historical receipt and3Java source SHA checked without rerun;4relevant probes out of8saved. PIT1.30.2 and JLS21 are source versions, not engine execution. No Maven/Gradle/CI/app/Docker/UI run. No application source/test file edits; IntelliJ formatting NOT_RUN.",
+    "Final schema/parity/anti-tell/SKEL/struct/surface exit0. Linkage exit1 with3errorsQ2/Q12/Q18 and2warningsQ18/Q20 outside scope. SKEL2selectedWARN(Q6Bparentheses,Q10Bdash) explicitly reviewed; no threshold or rule edits, no whole-topic linkagePASS.",
+    "Exactly63text fields changed from HEAD476dbab1:12visible texts and51sections. KeysD/A/C,stems,labels/order,other17questions including acceptedQ5/Q8 and Markdown preserved. Initial60field/R2 61field manifests retained as history, not current counts.",
+    "Global PLAN/checkpoint/sync/audit-state remain parent-owned. Shared branchmaster and index ownership preserved; no reset/branch switch/push/deployment/network/security changes."
+  ]
+}

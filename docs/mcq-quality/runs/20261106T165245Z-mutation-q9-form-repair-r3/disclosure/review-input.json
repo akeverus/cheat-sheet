@@ -1,0 +1,208 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json",
+    "theory": "cheatsheets/interview/testing/mutation-testing-interview.md"
+  },
+  "sha256": {
+    "mcq": "25a38c9f139088b0695d7acb5186eba917774ca98f13a28605436283000fef01",
+    "theory": "07b7833eab6f8017cdd4de3d0d3165f99e5b6aaee3a3fa1ccfb9de51bd3ab485"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hashes": {
+    "Q9:B0": {
+      "mcq": "f1cafcc301ce3bf58c88f38e121c3e6485680ef0151743709911b6be8534496b",
+      "theory": "a3ed7df3e9b51cb74690a6491965b38ed8757dca074df4a26f65784c348c5373"
+    }
+  },
+  "preamble": "---\ntitle: \"Вопросы на собеседовании: Мутационное тестирование\"\ndescription: \"Mutation testing: проверка качества тестов через mutations кода, mutation operators, kill rate, surviving mutants, PIT, Stryker, тулинг для Java/JS/Python, vs code coverage\"\ntags:\n  - interview\n  - testing\n  - mutation-testing-interview\ntype: \"interview\"\ndifficulty: \"intermediate\"\naliases:\n  - \"Вопросы на собеседовании\"\n  - \"Mutation Testing\"\n  - \"Mutation testing interview\"\n  - \"PIT mutation testing interview\"\nprerequisites: []\nnext: []\nupdated: \"2026-04-25\"\n---\n# Вопросы на собеседовании: Мутационное тестирование\n\n`Mutation testing` — техника оценки **качества тестов** (а не качества кода). Идея: модифицировать (\"**mutate**\") код, прогнать тесты и проверить, **сколько мутаций поймано** (killed). Выжившие мутанты (surviving mutants) = слабые тесты. Главные инструменты: **PIT** (Java), **Stryker** (JS/TS/.NET/Scala), **mutmut** (Python). Дополняет (но не заменяет) coverage.\n\n## Полезные ссылки\n\n### Официальная документация и авторитетные источники\n\n- [PIT Mutation Testing — Pitest.org](https://pitest.org/)\n- [Stryker Mutator](https://stryker-mutator.io/)\n- [Mutation Testing — Wikipedia](https://en.wikipedia.org/wiki/Mutation_testing)\n- [PITclipse (PIT IntelliJ plugin)](https://github.com/hcoles/pitest)\n- [Mutation Testing — Baeldung](https://www.baeldung.com/java-mutation-testing-with-pitest)\n\n## Содержание\n\n- [Полезные ссылки](#полезные-ссылки)\n- [See also](#see-also)\n\n**Базовые понятия**\n- [Q1. (!) Что такое mutation testing?](#q1--что-такое-mutation-testing)\n- [Q2. (!) Зачем mutation testing, если уже есть code coverage?](#q2--зачем-mutation-testing-если-уже-есть-code-coverage)\n- [Q3. Что значат термины mutant, killed, survived, equivalent?](#q3-что-значат-термины-mutant-killed-survived-equivalent)\n\n**Mutation operators**\n- [Q4. (!) Какие мутации типичны?](#q4--какие-мутации-типичны)\n- [Q5. Как работает Conditional Boundary Mutator?](#q5-как-работает-conditional-boundary-mutator)\n- [Q6. Как работает Math Mutator?](#q6-как-работает-math-mutator)\n- [Q7. Какие ещё бывают операторы мутаций?](#q7-какие-ещё-бывают-операторы-мутаций)\n\n**Метрики**\n- [Q8. (!) Что такое mutation score (kill rate) и как его считают?](#q8--что-такое-mutation-score-kill-rate-и-как-его-считают)\n- [Q9. Как анализировать выживших мутантов (surviving mutants)?](#q9-как-анализировать-выживших-мутантов-surviving-mutants)\n- [Q10. Что такое эквивалентные мутанты (equivalent mutants)?](#q10-что-такое-эквивалентные-мутанты-equivalent-mutants)\n\n**Tools**\n- [Q11. (!) Как использовать PIT для Java?](#q11--как-использовать-pit-для-java)\n- [Q12. (!) Как использовать Stryker для JavaScript/TypeScript?](#q12--как-использовать-stryker-для-javascripttypescript)\n- [Q13. Как использовать mutmut для Python?](#q13-как-использовать-mutmut-для-python)\n- [Q14. Какие ещё есть инструменты mutation testing?](#q14-какие-ещё-есть-инструменты-mutation-testing)\n\n**Performance**\n- [Q15. (!) Почему mutation testing медленный?](#q15--почему-mutation-testing-медленный)\n- [Q16. Как ускоряют mutation testing (incremental, in-process)?](#q16-как-ускоряют-mutation-testing-incremental-in-process)\n\n**Production**\n- [Q17. (!) Когда mutation testing оправдан?](#q17--когда-mutation-testing-оправдан)\n- [Q18. Какой mutation score ставить целевым?](#q18-какой-mutation-score-ставить-целевым)\n- [Q19. (!) В чём ограничения и за что критикуют mutation testing?](#q19--в-чём-ограничения-и-за-что-критикуют-mutation-testing)\n- [Q20. Как встроить mutation testing в CI/CD?](#q20-как-встроить-mutation-testing-в-cicd)\n",
+  "theory": [
+    {
+      "q_number": 9,
+      "title": "Как анализировать выживших мутантов (surviving mutants)?",
+      "line": 237,
+      "body": "\nВыживший мутант не был обнаружен выбранными тестами; это повод для разбора, а не автоматическое доказательство слабого assertion. Сначала уточняют статус отчёта: `survived` и `no coverage` могут быть отдельными категориями. Затем читают конкретное изменение, покрывающие тесты и проверяемое ими поведение.\n\n1. **Найдите различающий сценарий.** Для подмены `age >= 18` на `age > 18` таким входом будет 18. Если требование разрешает доступ с 18 лет, проверять нужно и допуск, а не только выполнение строки.\n2. **Проверьте причину пропуска.** Нужного входа могло не быть; эффект мог остаться без проверки; выбранный набор тестов мог не охватить нужный сценарий. Добавляйте проверку значимого требования, а не любой тест ради роста процента.\n3. **Обоснуйте эквивалентность, если подозреваете её.** Совпадение на нескольких проверенных входах не доказывает одинаковое поведение на всей рассматриваемой области. У действительно эквивалентной пары различающего теста в этой области нет.\n4. **Зафиксируйте решение.** Реальный пробел устраняют тестом; эквивалентность или принятый риск описывают явно. Принятие риска не превращает мутант в `killed`.\n\nСамо ручное решение «equivalent» не меняет исходный знаменатель отчёта. Если инструмент или команда применяют исключение, нужно указать его способ и отдельно показать, что изменился состав анализа. Иначе рост score может отражать исключённые мутации, а не улучшенные тесты. [PIT: результаты и эквивалентность](https://pitest.org/quickstart/basic_concepts/), [Stryker: статусы и формулы](https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/).\n\n"
+    }
+  ],
+  "blocks": [
+    {
+      "q_number": 9,
+      "block_idx": 0,
+      "visible_question": "Как анализировать выживших мутантов (surviving mutants)?",
+      "block": {
+        "block_idx": 0,
+        "question_text": "Как анализировать выживших мутантов (surviving mutants)?",
+        "options": [
+          {
+            "order": 0,
+            "label": "A",
+            "text": "Изучают подмену и тесты, ищут наблюдаемое различие, затем добавляют полезную проверку либо обосновывают эквивалентность или принятый риск.",
+            "correct": true,
+            "sections": {
+              "explanation": "Сначала уточняют статус и конкретную подмену, затем смотрят выполненные тесты, входы и наблюдаемый эффект. Причиной пропуска могут быть данные, проверки, область выбранных тестов или эквивалентность; решение по риску фиксируют отдельно.",
+              "example": "Для age >= 18 и age > 18 вход 18 различает результаты. Тест должен проверить требуемый допуск, а не только выполнить строку с условием.",
+              "when_to_apply": "Устраняйте реальный пробел полезной проверкой требования. Если подтверждена эквивалентность или принято решение оставить риск, сохраните обоснование и прозрачную политику исключений.",
+              "edge_cases": "Несколько совпавших результатов не доказывают эквивалентность на всей области. Принятие риска не превращает мутант в killed, а ручная метка equivalent сама по себе не пересчитывает исходный знаменатель отчёта.",
+              "related": "Состав групп survived и no coverage зависит от модели отчёта. Изменение области анализа или исключение мутаций нужно отличать от улучшения тестов, даже если процент вырос."
+            }
+          },
+          {
+            "order": 1,
+            "label": "B",
+            "text": "Изучают подмену и тесты, ищут наблюдаемое различие, затем меняют assertion либо добавляют новый, поскольку любой выживший означает ошибку проверок.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Выживший мутант не доказывает единственную причину в assertions. Возможны отсутствие различающего входа, выбранная область тестов или эквивалентность; сначала нужен разбор, затем решение о полезной проверке.",
+              "source_of_confusion": "Частую причину пропуска считают универсальной. Отсутствие падения теста не сообщает само по себе, можно ли вообще различить эту пару в выбранной области.",
+              "if_it_were_true": "Для доказанно эквивалентной пары добавленная или уточнённая проверка должна была бы найти наблюдаемое различие. Но во всей объявленной области поведение совпадает, поэтому такой различающей проверки нет.",
+              "how_it_should_be": "Проверьте подмену, данные и наблюдаемый эффект до добавления теста. Подтверждённую эквивалентность и осознанно принятый риск документируйте, не подменяя ими статус обнаружения."
+            }
+          },
+          {
+            "order": 2,
+            "label": "C",
+            "text": "Изучают подмену и тесты, сравнивают текущие входы, затем по совпавшим результатам признают эквивалентность, не проверяя другие сценарии.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Совпадение на имеющихся входах показывает лишь отсутствие различия на этих входах. Эквивалентность требует одинакового наблюдаемого поведения на всей объявленной области, поэтому нельзя автоматически прекращать разбор любого выжившего.",
+              "source_of_confusion": "Конечный набор зелёных тестов принимают за доказательство семантической эквивалентности. Но именно отсутствие различающего сценария в текущих тестах могло оставить обычный мутант незамеченным.",
+              "if_it_were_true": "Пара age >= 18 и age > 18 после проверок только на 17 и 19 была бы признана эквивалентной. Вход 18 опровергает такой вывод и показывает, почему проверенные совпадения не охватывают всю область.",
+              "how_it_should_be": "Ищите различающий сценарий и проверяйте требование. Решение об эквивалентности основывайте на обосновании для всей выбранной области, а не только на текущем зелёном наборе."
+            }
+          },
+          {
+            "order": 3,
+            "label": "D",
+            "text": "Изучают общее число выживших, по нему определяют причины пропусков и входы, затем выбирают проверки, не разбирая конкретную подмену и тесты.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Один счётчик не сообщает, какая подмена выполнена, какие входы проверялись и почему тесты её пропустили. Для разбора нужны конкретное изменение, тесты и наблюдаемый эффект.",
+              "source_of_confusion": "Числовую сводку принимают за диагностику причины. Но одинаковое число выживших возможно и при пропущенном граничном входе, и при эквивалентной паре.",
+              "if_it_were_true": "При одном выжившем счётчик 1 сам сообщал бы, отсутствует ли нужный вход или пара эквивалентна. В действительности одно и то же число 1 эти разные случаи не различает.",
+              "how_it_should_be": "Используйте счётчик для обзора, а причину устанавливайте по конкретной подмене, данным и проверкам. Решение о новом тесте, эквивалентности или принятом риске требует такого разбора."
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "open_issues": [],
+  "runtime_findings": [],
+  "checks": {
+    "content_review": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "factual_correctness": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "source_linkage": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "FAIL",
+          "reason": "Q9 source linkage: FAIL, L2. Вариант D и его what_actually опровергают утверждение об отчётах через location и mutatorName схемы Mutation Testing Elements. Тело Q9 требует разбора изменения, тестов и поведения, но не описывает структуру отчёта. Нужен внешний факт; это L2, не L3.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261106T163105Z-mutation-math-owner-r1-q9-linkage-fail.json"
+          ]
+        }
+      },
+      "open_findings": [
+        {
+          "id": "MUTATION-Q9-REPORT-LINKAGE-R1",
+          "check": "source_linkage",
+          "blocks": [
+            "Q9:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Q9 source linkage: FAIL, L2. Вариант D и его what_actually опровергают утверждение об отчётах через location и mutatorName схемы Mutation Testing Elements. Тело Q9 требует разбора изменения, тестов и поведения, но не описывает структуру отчёта. Нужен внешний факт; это L2, не L3.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261106T163105Z-mutation-math-owner-r1-q9-linkage-fail.json"
+        }
+      ]
+    },
+    "sections_consistency": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "sfpl": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "FAIL",
+          "reason": "Все варианты предлагают метод анализа, но A заметно полнее: включает покрытие, проверки, эквивалентность и риск; wrong уже в тексте не покрывают сопоставимый каркас.",
+          "evidence": [
+            "docs/mcq-quality/reviews/checks/20261106T164337Z-mutation-q9-linkage-repair-r2-sfpl-fail.json"
+          ]
+        }
+      },
+      "open_findings": [
+        {
+          "id": "MUTATION-Q9-FORM-R2",
+          "check": "sfpl",
+          "blocks": [
+            "Q9:B0"
+          ],
+          "status": "OPEN",
+          "reason": "Все варианты предлагают метод анализа, но A заметно полнее: включает покрытие, проверки, эквивалентность и риск; wrong уже в тексте не покрывают сопоставимый каркас.",
+          "evidence": "docs/mcq-quality/reviews/checks/20261106T164337Z-mutation-q9-linkage-repair-r2-sfpl-fail.json"
+        }
+      ]
+    },
+    "ansc": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "russian_readability": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "independent_review": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "blind_review": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "NOT_RUN"
+        }
+      },
+      "open_findings": []
+    },
+    "final_acceptance": {
+      "blocks": {
+        "Q9:B0": {
+          "status": "FAIL",
+          "evidence": []
+        }
+      },
+      "open_findings": []
+    }
+  },
+  "instructions": "Все A/B/C/D и sections. SFPL, ANSC, RU — отдельные вердикты. Дополнительные смысловые зависимости прочитать и указать в evidence. Сигналы не являются редакторской приёмкой."
+}
