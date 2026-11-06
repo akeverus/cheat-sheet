@@ -1,0 +1,27 @@
+from pathlib import Path
+import subprocess,json,hashlib,re
+W=Path('/tmp/kotlin-theory-operators-destructuring-20261106');O=W/'runtime';M=Path('cheatsheets/interview/programming-languages/kotlin/kotlin-interview.md')
+def run(c):
+ p=subprocess.run(c,capture_output=True,text=True);return {'command':c,'exit':p.returncode,'stdout':p.stdout,'stderr':p.stderr}
+base='''data class User(val username:String,val email:String)
+fun main(){ val user=User("alice","alice@example.test"); val(email,username)=user; println("$email | $username") }
+'''
+explicit='''data class User(val username:String,val email:String)
+fun main() {
+ val user=User("alice","alice@example.test")
+ (val mail=email, val name=username)=user
+ println("$name | $mail")
+ val [pos1,pos2]=user
+ println("$pos1 | $pos2")
+ val(email,username)=user
+ println("$email | $username")
+}
+'''
+rows=[]
+for label,src,flags,expected in [('DefaultMode',base,[],'alice | alice@example.test\n'),('CompleteMode',base,['-Xname-based-destructuring=complete'],'alice@example.test | alice\n'),('OnlySyntaxMode',explicit,['-Xname-based-destructuring=only-syntax'],'alice | alice@example.test\nalice | alice@example.test\nalice | alice@example.test\n')]:
+ p=O/(label+'.kt');p.write_text(src);jar=O/(label+'.jar');c=run(['/usr/local/bin/kotlinc',str(p),*flags,'-jvm-target','17','-include-runtime','-d',str(jar)]);assert c['exit']==0,c
+ r=run(['/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/java','-jar',str(jar)]);assert r['exit']==0 and r['stdout']==expected,r
+ rows.append({'label':label,'source_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'compile':c,'run':r});print(label+': PASS',flush=True)
+old=json.loads((W/'runtime-results.json').read_text());current=M.read_text();fences={str(n):re.findall(r'```kotlin\n(.*?)\n```',re.search(rf'^## Q{n}\..*?(?=^## Q\d+\.|\Z)',current,re.M|re.S)[0],re.S)[0]+'\n' for n in [29,31]}
+for n in [29,31]:assert hashlib.sha256(fences[str(n)].encode()).hexdigest()==old['positive'][[29,31].index(n)]['source_sha256']
+(W/'mode-results.json').write_text(json.dumps({'md_sha256':hashlib.sha256(M.read_bytes()).hexdigest(),'modes':rows,'previous_runtime_result_sha256':hashlib.sha256((W/'runtime-results.json').read_bytes()).hexdigest(),'exact_fence_revalidation':{'Q29':'UNCHANGED','Q31':'UNCHANGED'},'note':'Previous main runtime receipt remains bound to earlier whole-file MD hash; exact executed fence bytes unchanged in current file. New prose mode claims checked here.'},ensure_ascii=False,indent=2)+'\n')

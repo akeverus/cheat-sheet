@@ -1,0 +1,96 @@
+{
+  "visible_question": "Как работает деструктуризация (destructuring declarations)?",
+  "options": [
+    {
+      "label": "A",
+      "text": "Компоненты при деструктуризации сопоставляются по `имени` свойства объекта, а вовсе не по позиции.",
+      "correct": false
+    },
+    {
+      "label": "B",
+      "text": "Деструктуризация работает только с `data class` и решительно ни с каким другим типом.",
+      "correct": false
+    },
+    {
+      "label": "C",
+      "text": "Смена порядка свойств в `data class` вызовет ошибку компиляции в существующих старых деструктуризациях.",
+      "correct": false
+    },
+    {
+      "label": "D",
+      "text": "Запись со скобками `val` компилятор разворачивает в последовательные вызовы функций componentN.",
+      "correct": true
+    }
+  ],
+  "fields": [
+    {
+      "field": "A.what_actually",
+      "text": "Компоненты сопоставляются по ПОЗИЦИИ, не по имени."
+    },
+    {
+      "field": "A.source_of_confusion",
+      "text": "Кажется, по имени свойства."
+    },
+    {
+      "field": "A.if_it_were_true",
+      "text": "Тогда смена порядка была бы безопасна."
+    },
+    {
+      "field": "A.how_it_should_be",
+      "text": "component1, component2 по порядку."
+    },
+    {
+      "field": "B.what_actually",
+      "text": "Деструктуризация работает с любым типом с componentN, не только data class."
+    },
+    {
+      "field": "B.source_of_confusion",
+      "text": "Кажется, только data class."
+    },
+    {
+      "field": "B.if_it_were_true",
+      "text": "Тогда своих componentN не писали бы."
+    },
+    {
+      "field": "B.how_it_should_be",
+      "text": "operator fun componentN() — достаточно."
+    },
+    {
+      "field": "C.what_actually",
+      "text": "Смена порядка свойств НЕ даёт ошибки — молча читает не те значения."
+    },
+    {
+      "field": "C.source_of_confusion",
+      "text": "Кажется, компилятор поймает."
+    },
+    {
+      "field": "C.if_it_were_true",
+      "text": "Тогда багов не возникало бы."
+    },
+    {
+      "field": "C.how_it_should_be",
+      "text": "Позиционное сопоставление — тихий баг."
+    },
+    {
+      "field": "D.explanation",
+      "text": "val (a,b) разворачивается в component1()/component2(); работает с любым типом с componentN."
+    },
+    {
+      "field": "D.example",
+      "text": "val (name,age)=User(...); for ((k,v) in map)."
+    },
+    {
+      "field": "D.when_to_apply",
+      "text": "Когда распаковываешь объект в переменные."
+    },
+    {
+      "field": "D.edge_cases",
+      "text": "Сопоставление по позиции, не по имени."
+    },
+    {
+      "field": "D.related",
+      "text": "data class генерирует componentN автоматически."
+    }
+  ],
+  "current_theory": "## Q31. Как работает деструктуризация (`destructuring declarations`)?\n\nДеструктуризация объявляет несколько переменных из одного значения. В стандартной позиционной форме, без экспериментального name-based режима, запись `val (a, b) = value` использует `operator fun component1()` и `component2()`: имена новых переменных не участвуют в выборе компонентов. Функции могут быть членами типа или расширениями; механизм не ограничен `data class`. Для data class компилятор генерирует `componentN()` по порядку свойств первичного конструктора.\n\n```kotlin\ndata class User(val name: String, val age: Int)\n\nclass Coordinates(val x: Int, val y: Int) {\n    operator fun component1() = x\n    operator fun component2() = y\n}\n\nfun getUserData(): Pair<Long, String> = 42L to \"alice@example.test\"\n\nfun main() {\n    val (name, age) = User(\"Alice\", 30)\n    println(\"$name / $age\") // Alice / 30\n\n    val (x, y) = Coordinates(10, 20)\n    println(\"$x / $y\") // 10 / 20 — обычный класс с componentN\n\n    for ((key, value) in mapOf(\"a\" to 1, \"b\" to 2)) {\n        println(\"$key -> $value\")\n    }\n    listOf(User(\"Alice\", 30), User(\"Bob\", 25))\n        .forEach { (userName, userAge) -> println(\"$userName is $userAge\") }\n\n    val (_, email) = getUserData()\n    println(email) // alice@example.test\n}\n```\n\n`_` пропускает не только создание переменной, но и вызов соответствующего `componentN()`. В lambda `{ (a, b) -> ... }` это один параметр, разбитый на компоненты; `{ a, b -> ... }` объявляет два отдельных параметра.\n\n**Экспериментальный name-based режим:** `-Xname-based-destructuring=only-syntax` включает явную форму сопоставления по именам свойств, не меняя существующий синтаксис. Режим `complete` меняет краткую форму в круглых скобках на сопоставление по именам; для позиционной формы тогда используются квадратные скобки. Поэтому перед переносом кода проверяйте compiler options: приведённое выше описание и пример относятся к обычной позиционной форме, а не ко всем экспериментальным режимам. [Режимы name-based destructuring](https://kotlinlang.org/docs/destructuring-declarations.html#name-based-destructuring).\n\n**Риск изменения порядка:** позиционная связь может сломать код. Если компоненты имеют одинаковые типы, перестановка может остаться незамеченной компилятором: две `String`-переменные получат чужие значения. Если новые типы компонентов несовместимы с явными типами переменных или дальнейшим использованием, возникнет ошибка компиляции. Поэтому неверны обе универсальные гарантии: «перестановка всегда будет поймана» и «все перестановки всегда пройдут молча». [Destructuring declarations](https://kotlinlang.org/docs/destructuring-declarations.html), [data class и порядок componentN](https://kotlinlang.org/docs/data-classes.html).\n\n"
+}

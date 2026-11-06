@@ -1,0 +1,13 @@
+data class Score(val n: Int)
+operator fun Score.plus(other: Score) = Score(n+other.n)
+interface Indexed { operator fun get(index: Int): Int }
+class Inherited: Indexed { override fun get(index: Int) = index*2 }
+class Window { var last:Int?=null;operator fun contains(n:Int):Boolean { last=n;return n in 1..3 } }
+data class Rank(val n:Int):Comparable<Rank> { override fun compareTo(other:Rank):Int=n.compareTo(other.n) }
+fun main() {
+ check(Score(2)+Score(3)==Score(5))
+ val inherited=Inherited();check(inherited[4]==8)
+ val window=Window();check(2 in window);check(window.last==2)
+ check(Rank(1)<Rank(2));check(Rank(3)>=Rank(2))
+ println("operator boundaries: PASS")
+}

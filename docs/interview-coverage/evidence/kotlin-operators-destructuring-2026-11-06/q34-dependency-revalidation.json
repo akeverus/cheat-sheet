@@ -1,0 +1,81 @@
+{
+  "checked_at": "2026-11-06T05:19:29.047072+00:00",
+  "source_record": "docs/mcq-quality/reviews/checks/20261106T045500Z-kotlin-collections-owner-r1-scoped-final.json",
+  "source_record_sha256": "403802ad4c86078adc4b57c0465b2199cc5a366ee4dc6b46b7d3b5f819e4c9e5",
+  "old_explicit_file_dependency": {
+    "cheatsheets/interview/programming-languages/kotlin/kotlin-interview.md": "09bb43b7e657af3c0adca5b32ea102515fad8e92b44c7e0e56988543f18b7746"
+  },
+  "new_theory_sha256": "8ef4ec5d29dc5fb2364432d4a331da5c284cd140dff2f27cc6fc7648eb5812c0",
+  "coarse_dependency_current": false,
+  "unchanged_theory_blocks_sha256": {
+    "32": "4282fa196a28926e192bb05f3c3ed113dcce58b3963e61992f4b687c4ce50f3d",
+    "33": "7702413506445f648f5672e7482dc1b00a4022d517ca4fcbd634957982c35bb6",
+    "34": "0a9346a4716db62735fb2e660c56b56fe84fccf002645bdbf680373fa631cf04"
+  },
+  "current_q34": {
+    "q_number": 34,
+    "blocks": [
+      {
+        "block_idx": 0,
+        "question_text": "В чём разница между `map` и `flatMap`?",
+        "options": [
+          {
+            "label": "A",
+            "order": 0,
+            "text": "`map` сохраняет коллекцию от каждого вызова преобразования отдельным элементом; `flatMap` объединяет её элементы в общий плоский результат.",
+            "correct": true,
+            "sections": {
+              "explanation": "Если преобразование возвращает коллекцию, `map` помещает её в результат как один элемент. `flatMap` объединяет элементы полученных коллекций в один уровень результата. Пустая внутренняя коллекция не добавляет элементов; дубли сохраняются.",
+              "example": "```kotlin\nval groups = listOf(listOf(1, 2), emptyList(), listOf(2))\ncheck(groups.map { it } == listOf(listOf(1, 2), emptyList(), listOf(2)))\ncheck(groups.flatMap { it } == listOf(1, 2, 2))\n```",
+              "when_to_apply": "Используйте `map`, когда нужен один результат преобразования на каждый входной элемент, включая вложенную коллекцию. Выбирайте `flatMap`, когда нужны элементы этих коллекций в общем плоском результате.",
+              "edge_cases": "«Один ко многим» допускает и ноль, и один элемент из конкретного вызова преобразования. `flatMap` снимает один уровень вложенности, не удаляет дубли и не изменяет исходные коллекции.",
+              "related": "Для показанных стандартных операций над коллекциями `flatMap(transform)` соответствует `map(transform).flatten()`. Операции над `Sequence` сохраняют это различие вложенности, но вычисляют результат лениво; стратегия выполнения рассмотрена в Q33."
+            }
+          },
+          {
+            "label": "B",
+            "order": 1,
+            "text": "`map` объединяет элементы полученных коллекций в плоский результат; `flatMap` сохраняет каждую полученную коллекцию отдельным элементом.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Вариант меняет операции местами: `map` сохраняет каждую коллекцию, возвращённую преобразованием, как отдельный элемент; `flatMap` объединяет элементы этих коллекций.",
+              "source_of_confusion": "Смысл раскрытия переносят на `map`, хотя именно часть `flat` указывает на объединение результатов преобразования.",
+              "if_it_were_true": "При преобразовании каждого слова в список символов `map` возвращал бы общий список символов, а `flatMap` — список отдельных списков для слов.",
+              "how_it_should_be": "Для вложенного результата используйте `map`, для объединения полученных коллекций в один уровень — `flatMap`. Эквивалентная композиция для коллекций: `map(transform).flatten()`."
+            }
+          },
+          {
+            "label": "C",
+            "order": 2,
+            "text": "`map` сохраняет полученные коллекции отдельными элементами; `flatMap` тоже сохраняет вложенность, поэтому раскрытие выполняют отдельной операцией `flatten()`.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Сохранение вложенных коллекций верно для `map`, но не для `flatMap`: последний сам раскрывает один уровень результатов преобразования.",
+              "source_of_confusion": "Сходство сигнатур преобразования принимают за одинаковую структуру результата. В `flatMap` объединение уже входит в операцию.",
+              "if_it_were_true": "Когда преобразование возвращает коллекцию, после `flatMap` всё ещё оставался бы список этих коллекций; для получения их элементов пришлось бы вызывать `flatten()` отдельно.",
+              "how_it_should_be": "`map` оставляет коллекцию-результат отдельным элементом. `flatMap` сразу объединяет её элементы с остальными результатами; дополнительный `flatten()` для этого уровня не нужен."
+            }
+          },
+          {
+            "label": "D",
+            "order": 3,
+            "text": "`map` раскрывает полученные коллекции в общий результат; `flatMap` также снимает один уровень вложенности, объединяя элементы в общий список.",
+            "correct": false,
+            "sections": {
+              "what_actually": "Раскрытие верно для `flatMap`, но обычный `map` его не выполняет. Если преобразование возвращает список, результат `map` содержит эти списки как элементы.",
+              "source_of_confusion": "Новый список, который строит `map`, путают с плоским списком. Создание внешней коллекции не удаляет вложенность её элементов.",
+              "if_it_were_true": "Для преобразования в коллекции `map(transform)` и `flatMap(transform)` имели бы одинаковую вложенность результата; отдельный `flatten()` после `map` не менял бы этот уровень.",
+              "how_it_should_be": "`map` сохраняет один результат преобразования на входной элемент, а `flatMap` раскрывает коллекции результатов на один уровень. Для раскрытия после `map` нужен отдельный `flatten()`."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "old_seed_sha256": "f4f34f1d77afb3dbd09dd1a15e71932d121fb61d97ae2d72cb4d6df07c5d946d",
+  "seed_unchanged": true,
+  "selected_owner_run_current": "PASS per-block guards; does not override explicit coarse dependency",
+  "semantic_review": "Q34 related uses Sequence/Q33; current theory Q33 explains stdlib pipelines and unchanged Q34 explains map/flatMap. Edits Q29/Q31 do not change these bodies, stems, options or references. Root read current Q34 options/sections and corresponding unchanged source; no source contradiction introduced.",
+  "owner_action": "Revalidate/register Q34 explicit file dependency with new Markdown SHA; do not silently reuse old scoped FINAL. No registry rewrite by theory worker.",
+  "limits": "Author dependency review, not fresh independent acceptance or global FINAL."
+}

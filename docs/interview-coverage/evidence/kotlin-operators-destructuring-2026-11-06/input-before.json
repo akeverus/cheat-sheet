@@ -1,0 +1,128 @@
+{
+  "source_md_sha256": "09bb43b7e657af3c0adca5b32ea102515fad8e92b44c7e0e56988543f18b7746",
+  "source_seed_sha256": "f4f34f1d77afb3dbd09dd1a15e71932d121fb61d97ae2d72cb4d6df07c5d946d",
+  "questions": [
+    {
+      "q_number": 29,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое перегрузка операторов?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Перегрузить оператор можно `любой` функцией с произвольным именем и модификатором operator.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя функции фиксировано (plus, minus…), не произвольно.",
+                "source_of_confusion": "Кажется, имя любое.",
+                "if_it_were_true": "Тогда a + b не находил бы нужный метод.",
+                "how_it_should_be": "Каждому символу — своё имя."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Компилятор разворачивает сложение `a + b` в вызов метода minus у левого операнда.",
+              "correct": false,
+              "sections": {
+                "what_actually": "a + b разворачивается в plus, а не minus.",
+                "source_of_confusion": "Операторы путают.",
+                "if_it_were_true": "Тогда сложение вызывало бы вычитание.",
+                "how_it_should_be": "+ → plus."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Перегрузка операторов в Kotlin требует не функции, а специального `оператора` внутри класса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужна функция с operator, а не особый «оператор» внутри класса.",
+                "source_of_confusion": "Механизм путают.",
+                "if_it_were_true": "Тогда перегрузка была бы иной.",
+                "how_it_should_be": "operator fun с фиксированным именем."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "За каждым оператором закреплено фиксированное `имя` функции, помеченной модификатором operator.",
+              "correct": true,
+              "sections": {
+                "explanation": "За каждым оператором закреплено фиксированное имя функции с модификатором operator.",
+                "example": "operator fun plus(...); a + b → a.plus(b).",
+                "when_to_apply": "Когда операторная запись естественна (векторы, деньги).",
+                "edge_cases": "Стандартные: plus, minus, times, get/set, compareTo.",
+                "related": "operator обязателен."
+              }
+            }
+          ]
+        }
+      ],
+      "theory": "## Q29. Что такое перегрузка операторов?\n\nПерегрузка операторов позволяет задать поведение стандартных символов (`+`, `-`, `*`, `[]`, `in` и др.) для своих типов. Делается это не произвольно: за каждым оператором закреплено фиксированное имя функции (`plus`, `minus`, `get`…), и достаточно объявить функцию с этим именем и модификатором `operator`. После этого `a + b` компилятор разворачивает в `a.plus(b)`. Цель — выразительный код там, где операторная запись естественна (векторы, деньги, матрицы, диапазоны).\n\n```kotlin\ndata class Vector(val x: Double, val y: Double) {\n    operator fun plus(other: Vector) = Vector(x + other.x, y + other.y)\n    operator fun minus(other: Vector) = Vector(x - other.x, y - other.y)\n    operator fun times(scalar: Double) = Vector(x * scalar, y * scalar)\n    operator fun unaryMinus() = Vector(-x, -y)\n}\n\nval v1 = Vector(1.0, 2.0)\nval v2 = Vector(3.0, 4.0)\nprintln(v1 + v2)       // Vector(4.0, 6.0)\nprintln(v1 * 2.0)      // Vector(2.0, 4.0)\nprintln(-v1)            // Vector(-1.0, -2.0)\n```\n\nСтандартные операторы: `plus` (+), `minus` (-), `times` (*), `div` (/), `rem` (%), `rangeTo` (..), `contains` (in), `get`/`set` ([]), `invoke` (()), `compareTo` (<, >, <=, >=).\n\n"
+    },
+    {
+      "q_number": 31,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает деструктуризация (`destructuring declarations`)?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Компоненты при деструктуризации сопоставляются по `имени` свойства объекта, а вовсе не по позиции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Компоненты сопоставляются по ПОЗИЦИИ, не по имени.",
+                "source_of_confusion": "Кажется, по имени свойства.",
+                "if_it_were_true": "Тогда смена порядка была бы безопасна.",
+                "how_it_should_be": "component1, component2 по порядку."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Деструктуризация работает только с `data class` и решительно ни с каким другим типом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Деструктуризация работает с любым типом с componentN, не только data class.",
+                "source_of_confusion": "Кажется, только data class.",
+                "if_it_were_true": "Тогда своих componentN не писали бы.",
+                "how_it_should_be": "operator fun componentN() — достаточно."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Смена порядка свойств в `data class` вызовет ошибку компиляции в существующих старых деструктуризациях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смена порядка свойств НЕ даёт ошибки — молча читает не те значения.",
+                "source_of_confusion": "Кажется, компилятор поймает.",
+                "if_it_were_true": "Тогда багов не возникало бы.",
+                "how_it_should_be": "Позиционное сопоставление — тихий баг."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Запись со скобками `val` компилятор разворачивает в последовательные вызовы функций componentN.",
+              "correct": true,
+              "sections": {
+                "explanation": "val (a,b) разворачивается в component1()/component2(); работает с любым типом с componentN.",
+                "example": "val (name,age)=User(...); for ((k,v) in map).",
+                "when_to_apply": "Когда распаковываешь объект в переменные.",
+                "edge_cases": "Сопоставление по позиции, не по имени.",
+                "related": "data class генерирует componentN автоматически."
+              }
+            }
+          ]
+        }
+      ],
+      "theory": "## Q31. Как работает деструктуризация (`destructuring declarations`)?\n\nДеструктуризация — это синтаксис, который «распаковывает» объект сразу в несколько переменных за одно объявление. Механика простая: запись `val (a, b) = obj` компилятор разворачивает в `val a = obj.component1(); val b = obj.component2()`. То есть работает она с любым типом, у которого есть `operator fun componentN()` — а `data class` генерирует их автоматически.\n\n```kotlin\n// data class автоматически генерирует componentN()\ndata class User(val name: String, val age: Int)\nval (name, age) = User(\"Alice\", 30)\n\n// В циклах\nfor ((key, value) in mapOf(\"a\" to 1, \"b\" to 2)) {\n    println(\"$key -> $value\")\n}\n\n// В лямбдах\nlistOf(User(\"Alice\", 30), User(\"Bob\", 25))\n    .forEach { (name, age) -> println(\"$name is $age\") }\n\n// Пропуск компонентов\nval (_, email) = getUserData()\n```\n\n**Подводный камень**: компоненты сопоставляются по позиции, а не по имени. Если в `data class` поменять порядок свойств, все существующие деструктуризации молча начнут читать не те значения — компилятор ошибки не увидит.\n\n"
+    }
+  ]
+}

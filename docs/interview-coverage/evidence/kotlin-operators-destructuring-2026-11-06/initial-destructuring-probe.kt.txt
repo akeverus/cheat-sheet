@@ -1,0 +1,15 @@
+class Tracked { var calls=mutableListOf<Int>();operator fun component1():Int { calls.add(1);return 7 };operator fun component2():String { calls.add(2);return "ok" } }
+class OnlySecond { operator fun component2()="only" }
+class ExtensionTarget(val x:Int,val y:Int)
+operator fun ExtensionTarget.component1()=x
+operator fun ExtensionTarget.component2()=y
+// Same String component types: position changes meaning without type mismatch.
+data class Reordered(val phone:String,val email:String)
+fun main() {
+ val tracked=Tracked();val (_,value)=tracked;check(value=="ok" && tracked.calls==listOf(2))
+ val(_,only)=OnlySecond();check(only=="only")
+ val(x,y)=ExtensionTarget(1,2);check(x==1&&y==2)
+ val(email:String,phone:String)=Reordered("+10000000000","alice@example.test")
+ check(email=="+10000000000" && phone=="alice@example.test")
+ println("destructuring boundaries: PASS")
+}

@@ -1,0 +1,96 @@
+{
+  "visible_question": "Что такое перегрузка операторов?",
+  "options": [
+    {
+      "label": "A",
+      "text": "Перегрузить оператор можно `любой` функцией с произвольным именем и модификатором operator.",
+      "correct": false
+    },
+    {
+      "label": "B",
+      "text": "Компилятор разворачивает сложение `a + b` в вызов метода minus у левого операнда.",
+      "correct": false
+    },
+    {
+      "label": "C",
+      "text": "Перегрузка операторов в Kotlin требует не функции, а специального `оператора` внутри класса.",
+      "correct": false
+    },
+    {
+      "label": "D",
+      "text": "За каждым оператором закреплено фиксированное `имя` функции, помеченной модификатором operator.",
+      "correct": true
+    }
+  ],
+  "fields": [
+    {
+      "field": "A.what_actually",
+      "text": "Имя функции фиксировано (plus, minus…), не произвольно."
+    },
+    {
+      "field": "A.source_of_confusion",
+      "text": "Кажется, имя любое."
+    },
+    {
+      "field": "A.if_it_were_true",
+      "text": "Тогда a + b не находил бы нужный метод."
+    },
+    {
+      "field": "A.how_it_should_be",
+      "text": "Каждому символу — своё имя."
+    },
+    {
+      "field": "B.what_actually",
+      "text": "a + b разворачивается в plus, а не minus."
+    },
+    {
+      "field": "B.source_of_confusion",
+      "text": "Операторы путают."
+    },
+    {
+      "field": "B.if_it_were_true",
+      "text": "Тогда сложение вызывало бы вычитание."
+    },
+    {
+      "field": "B.how_it_should_be",
+      "text": "+ → plus."
+    },
+    {
+      "field": "C.what_actually",
+      "text": "Нужна функция с operator, а не особый «оператор» внутри класса."
+    },
+    {
+      "field": "C.source_of_confusion",
+      "text": "Механизм путают."
+    },
+    {
+      "field": "C.if_it_were_true",
+      "text": "Тогда перегрузка была бы иной."
+    },
+    {
+      "field": "C.how_it_should_be",
+      "text": "operator fun с фиксированным именем."
+    },
+    {
+      "field": "D.explanation",
+      "text": "За каждым оператором закреплено фиксированное имя функции с модификатором operator."
+    },
+    {
+      "field": "D.example",
+      "text": "operator fun plus(...); a + b → a.plus(b)."
+    },
+    {
+      "field": "D.when_to_apply",
+      "text": "Когда операторная запись естественна (векторы, деньги)."
+    },
+    {
+      "field": "D.edge_cases",
+      "text": "Стандартные: plus, minus, times, get/set, compareTo."
+    },
+    {
+      "field": "D.related",
+      "text": "operator обязателен."
+    }
+  ],
+  "current_theory": "## Q29. Что такое перегрузка операторов?\n\nПерегрузка операторов задаёт поведение поддерживаемых операторных выражений для своих типов. Используются member-функции или функции расширения с предусмотренными языком именами и сигнатурами: например, `a + b` соответствует вызову `a.plus(b)`. Нельзя ввести произвольный новый оператор или изменить приоритет символов.\n\nПри объявлении такой функции указывают `operator`. Компилятор проверяет соглашение для конкретного имени; одного произвольного имени с этим модификатором недостаточно. При переопределении уже операторной функции модификатор можно не повторять: операторный контракт наследуется.\n\n```kotlin\ndata class Vector(val x: Double, val y: Double) {\n    operator fun plus(other: Vector) = Vector(x + other.x, y + other.y)\n    operator fun minus(other: Vector) = Vector(x - other.x, y - other.y)\n    operator fun times(scalar: Double) = Vector(x * scalar, y * scalar)\n    operator fun unaryMinus() = Vector(-x, -y)\n}\n\nfun main() {\n    val v1 = Vector(1.0, 2.0)\n    val v2 = Vector(3.0, 4.0)\n    println(v1 + v2)  // Vector(x=4.0, y=6.0)\n    println(v1 * 2.0) // Vector(x=2.0, y=4.0)\n    println(-v1)      // Vector(x=-1.0, y=-2.0)\n}\n```\n\nПримеры соглашений: `plus`/`minus`/`times` для `+`/`-`/`*`, `get`/`set` для `[]`, `invoke` для вызова `()`, `contains` для `in`, `compareTo` для сравнений. У `a in b` получатель — **правый** операнд: вызывается `b.contains(a)`, возвращающий `Boolean`. Для `<`, `>`, `<=`, `>=` используется знак результата `compareTo`, который должен иметь тип `Int`.\n\nВыбирайте операторную запись, когда её смысл естественен для типа: например, сложение векторов. Имя `plus` определяет способ вызова, но само по себе не доказывает математические свойства вашей реализации. [Kotlin Operator overloading](https://kotlinlang.org/docs/operator-overloading.html).\n\n"
+}

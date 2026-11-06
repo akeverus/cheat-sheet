@@ -1,0 +1,305 @@
+{
+  "role": "author_self_review",
+  "created_at": "2026-11-06T05:17:43.421125+00:00",
+  "input_sha256": "5fb2f24b58428029e5e95dd074253ede5206bcdda508272ebeaa2ef285615dd0",
+  "questions": [
+    {
+      "q_number": 29,
+      "options": [
+        {
+          "label": "A",
+          "truth": "FALSE",
+          "ansc": "PASS",
+          "assessment": "Предлагает полную ошибочную модель объявления: произвольная функция становится overload от одного modifier; компилятор требует разрешённое имя/сигнатуру."
+        },
+        {
+          "label": "B",
+          "truth": "FALSE",
+          "ansc": "OPEN_PARTIAL",
+          "assessment": "plus/minus перепутаны. Вариант даёт один частный пример lowering, не определение механизма задания своего поведения; reviewer может принять пример как достаточный базовый ответ."
+        },
+        {
+          "label": "C",
+          "truth": "FALSE",
+          "ansc": "PASS",
+          "assessment": "Полная ложная модель специальной конструкции класса вместо member/extension функции."
+        },
+        {
+          "label": "D",
+          "truth": "INTENDED_WITH_SCOPE_NOTE",
+          "ansc": "PASS",
+          "assessment": "Содержит ядро convention-механизма, но «каждый оператор» следует ограничить поддерживаемыми, а modifier не обязан повторяться в override. Не объявляется FINAL."
+        }
+      ],
+      "sections": [
+        {
+          "field": "A.what_actually",
+          "status": "PASS",
+          "assessment": "Имена conventions фиксированы; arbitrary-name compiler probe отвергается."
+        },
+        {
+          "field": "A.source_of_confusion",
+          "status": "WEAK",
+          "assessment": "«Кажется, имя любое» повторяет ошибку без объяснения причины."
+        },
+        {
+          "field": "A.if_it_were_true",
+          "status": "FAIL_REASON",
+          "assessment": "Если бы язык поддерживал привязку произвольного имени, компилятор мог бы находить метод по такому правилу; отсутствие поиска не логическое следствие гипотезы."
+        },
+        {
+          "field": "A.how_it_should_be",
+          "status": "PASS_SCOPED",
+          "assessment": "Краткое имя-на-символ справедливо для поддерживаемых conventions; ограничения сигнатур стоит согласовать с новым вариантом."
+        },
+        {
+          "field": "B.what_actually",
+          "status": "PASS",
+          "assessment": "Официальная таблица задаёт plus, а не minus; exact Vector-пример выполняет +."
+        },
+        {
+          "field": "B.source_of_confusion",
+          "status": "WEAK",
+          "assessment": "«Операторы путают» не раскрывает, почему название функции связано с символом."
+        },
+        {
+          "field": "B.if_it_were_true",
+          "status": "WEAK_TAUTOLOGY",
+          "assessment": "Пересказывает ложное соответствие сложения вычитанию, не иллюстрируя проверяемое поведение типа."
+        },
+        {
+          "field": "B.how_it_should_be",
+          "status": "PASS",
+          "assessment": "Правильная краткая convention для знака +."
+        },
+        {
+          "field": "C.what_actually",
+          "status": "PASS",
+          "assessment": "Уточняет функцию с operator вместо отдельной class-конструкции; нужно учитывать наследуемый контракт."
+        },
+        {
+          "field": "C.source_of_confusion",
+          "status": "WEAK",
+          "assessment": "«Механизм путают» не называет конкретную ошибочную модель."
+        },
+        {
+          "field": "C.if_it_were_true",
+          "status": "WEAK_TAUTOLOGY",
+          "assessment": "«Перегрузка была бы иной» практически ничего не объясняет."
+        },
+        {
+          "field": "C.how_it_should_be",
+          "status": "PASS_SCOPED",
+          "assessment": "Для объявления function convention правильны operator и фиксированное имя; member/extension можно уточнить."
+        },
+        {
+          "field": "D.explanation",
+          "status": "PASS_SCOPED",
+          "assessment": "Краткое ядро naming convention; не следует читать как существование overload для любого символа или обязательное повторение modifier на override."
+        },
+        {
+          "field": "D.example",
+          "status": "PASS_ILLUSTRATION",
+          "assessment": "Псевдосигнатура plus(...) и преобразование a+b корректно иллюстрируют convention; это не заявленный компилируемый fenced program."
+        },
+        {
+          "field": "D.when_to_apply",
+          "status": "PASS",
+          "assessment": "Векторы и деньги — уместные домены при естественной операторной семантике, не гарантия свойств операции."
+        },
+        {
+          "field": "D.edge_cases",
+          "status": "PASS_WEAK",
+          "assessment": "Перечисляет настоящие conventions, но это скорее каталог, чем edge case."
+        },
+        {
+          "field": "D.related",
+          "status": "FAIL_LITERAL",
+          "assessment": "«operator обязателен» без оговорки неверно: override fun get у inherited operator поддерживает [] без повторения modifier, source+runtime подтверждены."
+        }
+      ],
+      "axes": {
+        "SEMANTICS": {
+          "status": "OPEN_SCOPE",
+          "assessment": "D — намеренный базовый ответ, но абсолютную формулировку надо уточнить. B/другие wrong ложны; зависимые sections не FINAL."
+        },
+        "ANSC": {
+          "status": "OPEN_B",
+          "assessment": "A/C/D дают механизм, B только частный перевод сложения. Не требуются каталог или все edge cases; ложность и polish не критерии ANSC."
+        },
+        "SFPL": {
+          "status": "PASS_WITH_NOTES",
+          "assessment": "Все короткие assertive предложения; D не единственное утвердительное и не единственное с operator. У B одна code-expression, A/C/D странно выделяют обычные слова backticks; это неоднородность, не вывод о верном ключе."
+        },
+        "RU": {
+          "status": "OPEN_STYLE",
+          "assessment": "«любой», «специального оператора», «Кажется», «механизм путают» требуют точности; базовая грамматика читаема."
+        },
+        "FACTS": {
+          "status": "FAIL_SECTION",
+          "assessment": "Core mapping подтверждён; D.related игнорирует наследование operator-контракта."
+        },
+        "SECTIONS": {
+          "status": "FAIL",
+          "assessment": "Все17разобраны: hard literal error D.related и ряд тавтологических/необъясняющих полей."
+        },
+        "LINKAGE": {
+          "status": "OPEN_MCQ_SYNC",
+          "assessment": "Теория теперь явно включает supported set/member/extension/override, MCQ требуется согласовать."
+        }
+      },
+      "theory": "PASS_FIXED: supported set, signature conventions, inherited modifier, proper Vector output, contains right receiver and compareTo sign. Exact code and bounded probes run."
+    },
+    {
+      "q_number": 31,
+      "options": [
+        {
+          "label": "A",
+          "truth": "FALSE_IN_POSITIONAL_OPEN_MODE",
+          "ansc": "PASS",
+          "assessment": "Описывает выбор по имени, ложный для обычной позиционной формы; experimental complete меняет круглые скобки на name-based, поэтому видимый вопрос и ключ требуют mode scope."
+        },
+        {
+          "label": "B",
+          "truth": "FALSE",
+          "ansc": "FAIL_PARTIAL",
+          "assessment": "Только ограничение допустимых типов; не объясняет, как несколько переменных получают значения. При этом restriction data class фактически ложен."
+        },
+        {
+          "label": "C",
+          "truth": "FALSE_UNIVERSAL",
+          "ansc": "FAIL_PARTIAL",
+          "assessment": "Только последствие перестановки свойств; не объясняет механизма componentN. Универсальное compile-error утверждение опровергается одинаковыми String типами."
+        },
+        {
+          "label": "D",
+          "truth": "TRUE_POSITIONAL_OPEN_MODE",
+          "ansc": "PASS",
+          "assessment": "Позиционная форма вызывает componentN; утверждение о любых круглых скобках не универсально при experimental complete. Основной механизм изложен полно, но scope следует показать в видимой опции."
+        }
+      ],
+      "sections": [
+        {
+          "field": "A.what_actually",
+          "status": "PASS",
+          "assessment": "Позиция, не имя; same-type reorder probe демонстрирует подмену смысла значений."
+        },
+        {
+          "field": "A.source_of_confusion",
+          "status": "PASS_WEAK",
+          "assessment": "Имя переменной кажется связанным со свойством; можно точнее объяснить происхождение аналогии."
+        },
+        {
+          "field": "A.if_it_were_true",
+          "status": "PASS_SCOPED",
+          "assessment": "При name-based lookup сама смена порядка тех же свойств не меняла бы выбор."
+        },
+        {
+          "field": "A.how_it_should_be",
+          "status": "PASS",
+          "assessment": "Правильно называет последовательные component1/component2."
+        },
+        {
+          "field": "B.what_actually",
+          "status": "PASS_SCOPED",
+          "assessment": "Обычные и extension components допускаются; «componentN» означает доступные operator conventions, не произвольные одноимённые методы."
+        },
+        {
+          "field": "B.source_of_confusion",
+          "status": "PASS_WEAK",
+          "assessment": "Автогенерация data class правдоподобно объясняет ошибочное ограничение; текущий текст слишком краток."
+        },
+        {
+          "field": "B.if_it_were_true",
+          "status": "PASS_SCOPED",
+          "assessment": "Пользовательские componentN не позволяли бы десктруктурировать обычный класс в ложной модели."
+        },
+        {
+          "field": "B.how_it_should_be",
+          "status": "PASS_SCOPED",
+          "assessment": "Нужны вызываемые operator componentN подходящей сигнатуры и типа; существование недоступного метода само по себе не достаточно."
+        },
+        {
+          "field": "C.what_actually",
+          "status": "FAIL_FACT",
+          "assessment": "Универсальное отсутствие compile error неверно: явно типизированные String/Int переменные не принимают переставленные Int/String компоненты."
+        },
+        {
+          "field": "C.source_of_confusion",
+          "status": "OPEN_SCOPE",
+          "assessment": "Компилятор иногда действительно ловит типовую несовместимость; ошибка ожидания — гарантия обнаружения любой перестановки."
+        },
+        {
+          "field": "C.if_it_were_true",
+          "status": "FAIL_OVERPROMISE",
+          "assessment": "«Багов не возникало бы» не следует даже из обнаружения конкретного reorder-класса ошибок."
+        },
+        {
+          "field": "C.how_it_should_be",
+          "status": "FAIL_SCOPE",
+          "assessment": "Позиционность создаёт риск тихого бага при совместимых типах, а не гарантирует его при всех перестановках."
+        },
+        {
+          "field": "D.explanation",
+          "status": "PASS_SCOPED",
+          "assessment": "Correct mechanism; componentN должен быть доступной operator-функцией, не только методом с таким именем."
+        },
+        {
+          "field": "D.example",
+          "status": "PASS_ILLUSTRATION",
+          "assessment": "User(...) и for((k,v)) передают syntax, но это иллюстрация, не standalone program; новая теория содержит полностью runnable определения."
+        },
+        {
+          "field": "D.when_to_apply",
+          "status": "PASS",
+          "assessment": "Уместное применение — разложение компонента значения в локальные переменные; не обещает произвольного field introspection."
+        },
+        {
+          "field": "D.edge_cases",
+          "status": "PASS",
+          "assessment": "Выбор по позиции подтверждён source, кастомными компонентами и одинаковыми типами reorder."
+        },
+        {
+          "field": "D.related",
+          "status": "PASS_SCOPED",
+          "assessment": "Сгенерированные data-class componentN следуют primary-constructor порядку, body-only properties исключаются."
+        }
+      ],
+      "axes": {
+        "SEMANTICS": {
+          "status": "OPEN_COMPILER_MODE",
+          "assessment": "D — верный базовый ответ для обычной позиционной формы, но complete mode меняет круглые скобки. A и D нельзя оценивать без scope; добавить явное условие в видимый ответ, не спасать его новой теорией."
+        },
+        "ANSC": {
+          "status": "FAIL_BC",
+          "assessment": "A/D сообщают модель связывания переменных, B — только типы, C — только reorder consequence."
+        },
+        "SFPL": {
+          "status": "FAIL_PARITY",
+          "assessment": "D единственный прямой механизм; wrong B/C выглядят частными edge cases. «Решительно ни с каким»/«существующих старых» — искусственные усилители; fact falsehood не основание формы."
+        },
+        "RU": {
+          "status": "FAIL_STYLE",
+          "assessment": "Усилители «а вовсе», «решительно», «существующих старых», uppercase и обобщённый «тихий баг» снижают точность."
+        },
+        "FACTS": {
+          "status": "FAIL_C_SECTIONS",
+          "assessment": "C.what_actually/C.how_it_should_be копируют ошибочное обещание теории об отсутствии compile error во всех случаях."
+        },
+        "SECTIONS": {
+          "status": "FAIL",
+          "assessment": "Все17сопоставлены точным полям; исправить C группу и согласовать после полноценных wrong."
+        },
+        "LINKAGE": {
+          "status": "OPEN_MCQ_SYNC",
+          "assessment": "Новая теория даёт оба результата reorder и полные определения; MCQ ещё обещает одно поведение во всех случаях."
+        }
+      },
+      "theory": "PASS_FIXED: positional mode explicitly scoped; experimental only-syntax/complete documented and actually compiled/run. Defined getUserData/custom components, for/lambda/underscore and bounded reorder outcomes; exact fences retained and hash revalidated."
+    }
+  ],
+  "limits": [
+    "No full-topic/corpus FINAL.",
+    "JVM2.4.10 only; no application/platform matrix."
+  ]
+}

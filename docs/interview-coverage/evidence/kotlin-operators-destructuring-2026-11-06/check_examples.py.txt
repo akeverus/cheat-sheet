@@ -1,0 +1,43 @@
+from pathlib import Path
+import json,re,hashlib,subprocess
+W=Path('/tmp/kotlin-theory-operators-destructuring-20261106');O=W/'runtime';O.mkdir(exist_ok=True);M=Path('cheatsheets/interview/programming-languages/kotlin/kotlin-interview.md');m=M.read_text()
+def fence(q):return re.findall(r'```kotlin\n(.*?)\n```',re.search(rf'^## Q{q}\..*?(?=^## Q\d+\.|\Z)',m,re.M|re.S)[0],re.S)[0]
+def run(cmd):
+ p=subprocess.run(cmd,capture_output=True,text=True);return {'command':cmd,'exit':p.returncode,'stdout':p.stdout,'stderr':p.stderr}
+programs=[('ExactQ29',fence(29)+'\n','Vector(x=4.0, y=6.0)\nVector(x=2.0, y=4.0)\nVector(x=-1.0, y=-2.0)\n','exact standalone fence'),('ExactQ31',fence(31)+'\n','Alice / 30\n10 / 20\na -> 1\nb -> 2\nAlice is 30\nBob is 25\nalice@example.test\n','exact standalone fence'),('OperatorBoundaries','''data class Score(val n: Int)
+operator fun Score.plus(other: Score) = Score(n+other.n)
+interface Indexed { operator fun get(index: Int): Int }
+class Inherited: Indexed { override fun get(index: Int) = index*2 }
+class Window { var last:Int?=null;operator fun contains(n:Int):Boolean { last=n;return n in 1..3 } }
+data class Rank(val n:Int):Comparable<Rank> { override fun compareTo(other:Rank):Int=n.compareTo(other.n) }
+fun main() {
+ check(Score(2)+Score(3)==Score(5))
+ val inherited=Inherited();check(inherited[4]==8)
+ val window=Window();check(2 in window);check(window.last==2)
+ check(Rank(1)<Rank(2));check(Rank(3)>=Rank(2))
+ println("operator boundaries: PASS")
+}
+''','operator boundaries: PASS\n','extension operator, inherited modifier omission, contains right receiver, compareTo sign'),('DestructuringBoundaries','''class Tracked { var calls=mutableListOf<Int>();operator fun component1():Int { calls.add(1);return 7 };operator fun component2():String { calls.add(2);return "ok" } }
+class ExtensionTarget(val x:Int,val y:Int)
+operator fun ExtensionTarget.component1()=x
+operator fun ExtensionTarget.component2()=y
+// Same String component types: position changes meaning without type mismatch.
+data class Reordered(val phone:String,val email:String)
+fun main() {
+ val tracked=Tracked();val (_,value)=tracked;check(value=="ok" && tracked.calls==listOf(2))
+ val(x,y)=ExtensionTarget(1,2);check(x==1&&y==2)
+ val(email:String,phone:String)=Reordered("+10000000000","alice@example.test")
+ check(email=="+10000000000" && phone=="alice@example.test")
+ println("destructuring boundaries: PASS")
+}
+''','destructuring boundaries: PASS\n','underscore skips matching component, custom/extension components, silent same-type reorder')]
+positive=[]
+for label,src,expected,scope in programs:
+ path=O/(label+'.kt');path.write_text(src);jar=O/(label+'.jar');c=run(['/usr/local/bin/kotlinc',str(path),'-jvm-target','17','-include-runtime','-d',str(jar)]);assert c['exit']==0,c
+ r=run(['/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/java','-jar',str(jar)]);assert r['exit']==0 and r['stdout']==expected,r
+ positive.append({'label':label,'scope':scope,'source_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'compile':c,'run':r});print(label+': PASS',flush=True)
+negatives=[('UnderscoreMissingFirst','class OnlySecond { operator fun component2()="only" }\nfun main(){ val(_,only)=OnlySecond() }\n','component1'),('MissingOperator','class Plain { fun plus(other:Plain)=this }\nfun main(){ val value=Plain()+Plain() }\n','operator'),('ArbitraryName','class Invalid { operator fun arbitrary(other:Invalid)=this }\n','operator'),('BadContains','class Invalid { operator fun contains(x:Int):Int=x }\n','Boolean'),('BadCompare','class Invalid { operator fun compareTo(other:Invalid):String="bad" }\n','Int'),('TypedReorder','data class Reordered(val age:Int,val name:String)\nfun main(){ val(name:String,age:Int)=Reordered(30,"Alice") }\n','type'),('MissingComponent','class Plain(val name:String,val age:Int)\nfun main(){ val(name,age)=Plain("Alice",30) }\n','component')]
+negative=[]
+for label,src,diagnostic in negatives:
+ path=O/(label+'.kt');path.write_text(src);r=run(['/usr/local/bin/kotlinc',str(path),'-jvm-target','17','-d',str(O/(label+'.jar'))]);assert r['exit']!=0 and diagnostic.lower() in r['stderr'].lower(),r;negative.append({'label':label,'source_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'expected_diagnostic':diagnostic,'compile':r});print(label+': expected compile failure',flush=True)
+(W/'runtime-results.json').write_text(json.dumps({'md_sha256':hashlib.sha256(M.read_bytes()).hexdigest(),'compiler':run(['/usr/local/bin/kotlinc','-version']),'java':run(['/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/java','-version']),'positive':positive,'expected_compile_failures':negative},ensure_ascii=False,indent=2)+'\n')
