@@ -1,0 +1,60 @@
+from pathlib import Path
+import re, json, subprocess, hashlib
+W=Path('/tmp/kotlin-theory-null-equality-20261106'); O=W/'runtime'; O.mkdir(exist_ok=True)
+M=Path('cheatsheets/interview/programming-languages/kotlin/kotlin-interview.md')
+s=M.read_text()
+def section(n):return re.search(rf'^## Q{n}\..*?(?=^## Q\d+\.|\Z)',s,re.M|re.S)[0]
+def fences(n):return re.findall(r'```kotlin\n(.*?)\n```',section(n),re.S)
+def run(cmd):
+ p=subprocess.run(cmd,capture_output=True,text=True);return {'command':cmd,'exit':p.returncode,'stdout':p.stdout,'stderr':p.stderr}
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+q5=fences(5);q30=fences(30)
+programs=[
+ ('Q5Safe','fun main() {\n'+q5[0]+'\n}\n','null\nnull\n','fragment wrapped in main; original statements unchanged'),
+ ('Q5Assertion','fun probe() {\n'+q5[1]+'\n}\nfun main() {\ntry { probe(); error("expected NPE") } catch (e: NullPointerException) { println(e.javaClass.name) }\n}\n','java.lang.NullPointerException\n','fragment wrapped in probe; expected exception caught by harness'),
+ ('Q30Objects','fun main() {\n'+q30[0]+'\n}\n','true\nfalse\nfalse\n','fragment wrapped in main; original statements unchanged'),
+ ('Q30Floating',q30[1]+'\n','false\ntrue\ntrue\nfalse\ntrue\n','exact standalone fenced program'),
+ ('EdgeChecks','''class Body(val value: Int) { fun fail(): Int = error("method failure") }
+data class Record(val id: Int) { var note: String = "" }
+fun floatEquality(a: Float?, b: Float?) = a == b
+fun anyEquality(a: Any?, b: Any?) = a == b
+fun main() {
+ var arguments = 0
+ fun argument(): Int { arguments++; return 1 }
+ fun Body.take(x: Int) = value + x
+ val absent: Body? = null
+ check(absent?.take(argument()) == null)
+ check(arguments == 0)
+ val present: Body? = Body(2)
+ check(present?.take(argument()) == 3)
+ check(arguments == 1)
+ var caught = false
+ try { present?.fail() } catch (e: IllegalStateException) { caught = e.message == "method failure" }
+ check(caught)
+ check(floatEquality(Float.NaN, Float.NaN) == false)
+ check(anyEquality(Float.NaN, Float.NaN))
+ check(floatEquality(-0.0f, 0.0f))
+ check(!anyEquality(-0.0f, 0.0f))
+ check(floatEquality(null, null))
+ check(!floatEquality(null, 0.0f))
+ check(anyEquality(null, null))
+ check(!anyEquality(null, 0.0))
+ check(Double.NaN.equals(Double.NaN))
+ check(!(Double.NaN == Double.NaN))
+ val a=Record(1).also { it.note="a" };val b=Record(1).also { it.note="b" }
+ check(a == b && a !== b)
+ check(intArrayOf(1,2).contentEquals(intArrayOf(1,2)))
+ println("edge checks: PASS")
+}
+''','edge checks: PASS\n','additional behavior probes; not part of theory fence')]
+results=[]
+for label,src,expected,scope in programs:
+ path=O/(label+'.kt');path.write_text(src);jar=O/(label+'.jar')
+ compiled=run(['/usr/local/bin/kotlinc',str(path),'-jvm-target','17','-include-runtime','-d',str(jar)])
+ assert compiled['exit']==0, compiled
+ executed=run(['/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/java','-jar',str(jar)])
+ assert executed['exit']==0 and executed['stdout']==expected, executed
+ results.append({'label':label,'scope':scope,'source_sha256':sha(path),'compile':compiled,'run':executed})
+ print(label+': PASS',flush=True)
+out={'md_sha256':sha(M),'versions':{'compiler':run(['/usr/local/bin/kotlinc','-version']),'java':run(['/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/java','-version'])},'programs':results}
+(W/'runtime-results.json').write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n')

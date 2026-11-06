@@ -1,0 +1,32 @@
+class Body(val value: Int) { fun fail(): Int = error("method failure") }
+data class Record(val id: Int) { var note: String = "" }
+fun floatEquality(a: Float?, b: Float?) = a == b
+fun anyEquality(a: Any?, b: Any?) = a == b
+fun main() {
+ var arguments = 0
+ fun argument(): Int { arguments++; return 1 }
+ fun Body.take(x: Int) = value + x
+ val absent: Body? = null
+ check(absent?.take(argument()) == null)
+ check(arguments == 0)
+ val present: Body? = Body(2)
+ check(present?.take(argument()) == 3)
+ check(arguments == 1)
+ var caught = false
+ try { present?.fail() } catch (e: IllegalStateException) { caught = e.message == "method failure" }
+ check(caught)
+ check(floatEquality(Float.NaN, Float.NaN) == false)
+ check(anyEquality(Float.NaN, Float.NaN))
+ check(floatEquality(-0.0f, 0.0f))
+ check(!anyEquality(-0.0f, 0.0f))
+ check(floatEquality(null, null))
+ check(!floatEquality(null, 0.0f))
+ check(anyEquality(null, null))
+ check(!anyEquality(null, 0.0))
+ check(Double.NaN.equals(Double.NaN))
+ check(!(Double.NaN == Double.NaN))
+ val a=Record(1).also { it.note="a" };val b=Record(1).also { it.note="b" }
+ check(a == b && a !== b)
+ check(intArrayOf(1,2).contentEquals(intArrayOf(1,2)))
+ println("edge checks: PASS")
+}
