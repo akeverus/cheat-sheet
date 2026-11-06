@@ -1,0 +1,57 @@
+{
+  "kind": "SMALL_JAVA_JUPITER_OBSERVATION_NOT_PIT_RUN",
+  "observed_at": "2026-11-06T18:52:25.383083+00:00",
+  "java_version": "openjdk version \"22.0.2\" 2024-07-16\nOpenJDK Runtime Environment Corretto-22.0.2.9.1 (build 22.0.2+9-FR)\nOpenJDK 64-Bit Server VM Corretto-22.0.2.9.1 (build 22.0.2+9-FR, mixed mode, sharing)",
+  "junit_jupiter": "5.13.3",
+  "cached_jars_sha256": {
+    "/Users/sergeyvoronin/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.13.3/junit-jupiter-api-5.13.3.jar": "1a15a52253a972c82c0dbf77759a983f5afed0583585cdc5b2a3beaa1f4ae0ac",
+    "/Users/sergeyvoronin/.m2/repository/org/junit/platform/junit-platform-commons/1.13.3/junit-platform-commons-1.13.3.jar": "02cd66a55df750a123d8f761e6503e455ac108ff1b365d446e874ba3bc56ca89",
+    "/Users/sergeyvoronin/.m2/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar": "48e2df636cab6563ced64dcdff8abb2355627cb236ef0bf37598682ddf742f1b",
+    "/Users/sergeyvoronin/.m2/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar": "b509448ac506d607319f182537f0b35d71007582ec741832a1f111e5b5b70b38"
+  },
+  "source": "import org.junit.jupiter.api.Assertions;\nimport org.opentest4j.AssertionFailedError;\n\npublic class FoundationObservation {\n    private static int divideByZero() {\n        int divisor = 0;\n        return 5 / divisor;\n    }\n\n    public static void main(String[] args) {\n        int expected = 5;\n        int changed = 999;\n        int zero = 0;\n        Assertions.assertNotNull(expected);\n        System.out.println(\"weak_5:PASS\");\n        Assertions.assertNotNull(changed);\n        System.out.println(\"weak_999:PASS\");\n        Assertions.assertNotNull(zero);\n        System.out.println(\"weak_0:PASS\");\n        Assertions.assertEquals(5, expected);\n        System.out.println(\"exact_5:PASS\");\n        try {\n            Assertions.assertEquals(5, changed);\n            throw new IllegalStateException(\"Expected assertion failure\");\n        } catch (AssertionFailedError e) {\n            System.out.println(\"exact_999:EXPECTED_ASSERTION_FAILURE\");\n        }\n        try {\n            Assertions.assertNotNull((Object) null);\n            throw new IllegalStateException(\"Expected null assertion failure\");\n        } catch (AssertionFailedError e) {\n            System.out.println(\"weak_null:EXPECTED_ASSERTION_FAILURE\");\n        }\n        try {\n            Assertions.assertNotNull(divideByZero());\n            throw new IllegalStateException(\"Expected arithmetic exception before assertion\");\n        } catch (ArithmeticException e) {\n            System.out.println(\"divide_zero_before_assertion:EXPECTED_ARITHMETIC_EXCEPTION\");\n        }\n    }\n}\n",
+  "source_sha256": "dbde28b5c6cb3444cd1ef5421414021a0e302832ad04c5c6c7f1480e03684b1b",
+  "receipts": [
+    {
+      "command": [
+        "javac",
+        "-cp",
+        "/Users/sergeyvoronin/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.13.3/junit-jupiter-api-5.13.3.jar:/Users/sergeyvoronin/.m2/repository/org/junit/platform/junit-platform-commons/1.13.3/junit-platform-commons-1.13.3.jar:/Users/sergeyvoronin/.m2/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/Users/sergeyvoronin/.m2/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar",
+        "-d",
+        "/tmp/mutation-theory-foundations-20261106/classes",
+        "/tmp/mutation-theory-foundations-20261106/FoundationObservation.java"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "java",
+        "-cp",
+        "/tmp/mutation-theory-foundations-20261106/classes:/Users/sergeyvoronin/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.13.3/junit-jupiter-api-5.13.3.jar:/Users/sergeyvoronin/.m2/repository/org/junit/platform/junit-platform-commons/1.13.3/junit-platform-commons-1.13.3.jar:/Users/sergeyvoronin/.m2/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/Users/sergeyvoronin/.m2/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar",
+        "FoundationObservation"
+      ],
+      "exit": 0,
+      "stdout": "weak_5:PASS\nweak_999:PASS\nweak_0:PASS\nexact_5:PASS\nexact_999:EXPECTED_ASSERTION_FAILURE\nweak_null:EXPECTED_ASSERTION_FAILURE\ndivide_zero_before_assertion:EXPECTED_ARITHMETIC_EXCEPTION\n",
+      "stderr": ""
+    }
+  ],
+  "scenarios": [
+    "weak_5:PASS",
+    "weak_999:PASS",
+    "weak_0:PASS",
+    "exact_5:PASS",
+    "exact_999:EXPECTED_ASSERTION_FAILURE",
+    "weak_null:EXPECTED_ASSERTION_FAILURE",
+    "divide_zero_before_assertion:EXPECTED_ARITHMETIC_EXCEPTION"
+  ],
+  "count": 7,
+  "limits": [
+    "No mutation engine or JUnit test discovery executed",
+    "999 is an illustrative changed result, not a claimed PIT operator",
+    "No JaCoCo instrumentation/coverage percentage measured",
+    "No project build/CI/install/service run",
+    "Scratch Java was not formatted by IntelliJ; UI not used; no production code/test changes"
+  ]
+}
