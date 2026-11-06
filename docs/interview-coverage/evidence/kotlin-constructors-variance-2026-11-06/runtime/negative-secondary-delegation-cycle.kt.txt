@@ -1,0 +1,47 @@
+class NamedUser(val name: String) {
+    var email: String = ""
+
+    init {
+        require(name.isNotBlank())
+    }
+
+    constructor(name: String, email: String) : this(name) {
+        this.email = email
+    }
+}
+
+// Только вторичный; неявный суперкласс Any не требует явного super().
+class Guest {
+    val name: String
+    val events = mutableListOf("property")
+
+    init {
+        events += "init"
+    }
+
+    constructor(name: String) {
+        require(name.isNotBlank())
+        this.name = name
+        events += "secondary"
+    }
+}
+
+open class Parent(val id: Int)
+
+class Child : Parent {
+    constructor(id: Int) : super(id)
+    constructor() : this(0)
+}
+
+class Empty
+
+fun main() {
+    check(NamedUser("Ada", "ada@example.test").email == "ada@example.test")
+    val guest = Guest("Гость")
+    check(guest.name == "Гость")
+    check(guest.events == listOf("property", "init", "secondary"))
+    check(Child().id == 0)
+    Empty()
+    println(guest.events)
+}
+class Cycle { constructor() : this(1); constructor(id: Int) : this() }

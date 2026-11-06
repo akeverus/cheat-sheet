@@ -1,0 +1,262 @@
+{
+  "status": "TWO_EXACT_EXAMPLES_PASS_EIGHT_EXPECTED_COMPILER_REJECTIONS",
+  "compiler_version": {
+    "command": [
+      "/usr/local/bin/kotlinc",
+      "-version"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "info: kotlinc-jvm 2.4.10 (JRE 26.0.2)\n"
+  },
+  "runtime_version": {
+    "command": [
+      "/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/java",
+      "-version"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "openjdk version \"21.0.10\" 2026-01-20 LTS\nOpenJDK Runtime Environment Microsoft-13106411 (build 21.0.10+7-LTS)\nOpenJDK 64-Bit Server VM Microsoft-13106411 (build 21.0.10+7-LTS, mixed mode, sharing)\n"
+  },
+  "target": "JVM17 bytecode",
+  "positive_examples": [
+    {
+      "q": 16,
+      "source_sha256": "4142e97f4f244973ddc36e039251eb3c3ed8f34e1c482e458a4d447338da4d81",
+      "fence_sha256": "adedf68d2f73eea47c5d1446c716e72a158fbadce75f7f3fb6b52f2386275424",
+      "compile": {
+        "command": [
+          "/usr/local/bin/kotlinc",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/Q16.kt",
+          "-jvm-target",
+          "17",
+          "-include-runtime",
+          "-d",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/q16.jar"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "command": [
+          "/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/java",
+          "-jar",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/q16.jar"
+        ],
+        "exit": 0,
+        "stdout": "[property, init, secondary]\n",
+        "stderr": ""
+      }
+    },
+    {
+      "q": 24,
+      "source_sha256": "2f0ec7df3d98c8b493b8b1eb3ca5a905792a52bbd8643498af193b4371ebb15d",
+      "fence_sha256": "8c37f142bd647eeb271cd0857d89c4ef1dffafe5af0e8a79616c07c8c2a6c5e4",
+      "compile": {
+        "command": [
+          "/usr/local/bin/kotlinc",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/Q24.kt",
+          "-jvm-target",
+          "17",
+          "-include-runtime",
+          "-d",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/q24.jar"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "run": {
+        "command": [
+          "/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/java",
+          "-jar",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/q24.jar"
+        ],
+        "exit": 0,
+        "stdout": "variance: PASS\n",
+        "stderr": ""
+      }
+    }
+  ],
+  "negative_compile_controls": [
+    {
+      "label": "guest-no-hidden-primary",
+      "q": 16,
+      "source_sha256": "15f7e226f2d87b9f26251e9384ae5b0f9717a56170af42d217f30583c364ca2b",
+      "diagnostic_ids": [
+        "NO_VALUE_FOR_PARAMETER"
+      ],
+      "compile": {
+        "command": [
+          "/usr/local/bin/kotlinc",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-guest-no-hidden-primary.kt",
+          "-jvm-target",
+          "17",
+          "-Xrender-internal-diagnostic-names",
+          "-d",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-guest-no-hidden-primary.jar"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-guest-no-hidden-primary.kt:47:23: error: [NO_VALUE_FOR_PARAMETER] No value passed for parameter 'name'.\nfun rejected() = Guest()\n                      ^^\n"
+      }
+    },
+    {
+      "label": "primary-cannot-delegate-to-super-from-secondary",
+      "q": 16,
+      "source_sha256": "8525e87b70b931c08ad34e4031f4955aa720489b61643e3b74e1dfc7b45d4191",
+      "diagnostic_ids": [
+        "PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED"
+      ],
+      "compile": {
+        "command": [
+          "/usr/local/bin/kotlinc",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-primary-cannot-delegate-to-super-from-secondary.kt",
+          "-jvm-target",
+          "17",
+          "-Xrender-internal-diagnostic-names",
+          "-d",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-primary-cannot-delegate-to-super-from-secondary.jar"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-primary-cannot-delegate-to-super-from-secondary.kt:47:53: error: [PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED] Primary constructor call expected.\nclass InvalidPrimary(val id: Int) { constructor() : super() }\n                                                    ^^^^^\n"
+      }
+    },
+    {
+      "label": "secondary-delegation-cycle",
+      "q": 16,
+      "source_sha256": "63ad864ed61ddb76012f740706b657f293b18ac488482fa7b9ba0456420db8a1",
+      "diagnostic_ids": [
+        "CYCLIC_CONSTRUCTOR_DELEGATION_CALL",
+        "CYCLIC_CONSTRUCTOR_DELEGATION_CALL"
+      ],
+      "compile": {
+        "command": [
+          "/usr/local/bin/kotlinc",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-secondary-delegation-cycle.kt",
+          "-jvm-target",
+          "17",
+          "-Xrender-internal-diagnostic-names",
+          "-d",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-secondary-delegation-cycle.jar"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-secondary-delegation-cycle.kt:47:31: error: [CYCLIC_CONSTRUCTOR_DELEGATION_CALL] There's a cycle in the delegation calls chain.\nclass Cycle { constructor() : this(1); constructor(id: Int) : this() }\n                              ^^^^\n/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-secondary-delegation-cycle.kt:47:63: error: [CYCLIC_CONSTRUCTOR_DELEGATION_CALL] There's a cycle in the delegation calls chain.\nclass Cycle { constructor() : this(1); constructor(id: Int) : this() }\n                                                              ^^^^\n"
+      }
+    },
+    {
+      "label": "array-invariance",
+      "q": 24,
+      "source_sha256": "7cd38cbadf073dce51062397e6c6d9606bc7f17367c218d7da82f7ff894884a5",
+      "diagnostic_ids": [
+        "INITIALIZER_TYPE_MISMATCH"
+      ],
+      "compile": {
+        "command": [
+          "/usr/local/bin/kotlinc",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-array-invariance.kt",
+          "-jvm-target",
+          "17",
+          "-Xrender-internal-diagnostic-names",
+          "-d",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-array-invariance.jar"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-array-invariance.kt:45:61: error: [INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'Array<Animal>', actual 'Array<Cat>'.\nfun rejected(cats: Array<Cat>) { val animals: Array<Animal> = cats }\n                                                            ^\n"
+      }
+    },
+    {
+      "label": "out-projection-write",
+      "q": 24,
+      "source_sha256": "5acfe943099a1d3e6fe8faa2ab3f5acc1365a5f2b432f4ef0b44aa9b07c53538",
+      "diagnostic_ids": [
+        "MEMBER_PROJECTED_OUT"
+      ],
+      "compile": {
+        "command": [
+          "/usr/local/bin/kotlinc",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-out-projection-write.kt",
+          "-jvm-target",
+          "17",
+          "-Xrender-internal-diagnostic-names",
+          "-d",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-out-projection-write.jar"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-out-projection-write.kt:45:53: error: [MEMBER_PROJECTED_OUT] Receiver type 'Array<out Animal>' contains out projection which prohibits the use of 'fun set(index: Int, value: T): Unit'.\nfun rejected(items: Array<out Animal>) { items[0] = Cat(\"bad\") }\n                                                    ^^^^^^^^^^\n"
+      }
+    },
+    {
+      "label": "in-projection-read-as-cat",
+      "q": 24,
+      "source_sha256": "4d0554cf1a259011767e4d9555a6b9e8cd68751e5d769a14334b050efe86f9b4",
+      "diagnostic_ids": [
+        "INITIALIZER_TYPE_MISMATCH"
+      ],
+      "compile": {
+        "command": [
+          "/usr/local/bin/kotlinc",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-in-projection-read-as-cat.kt",
+          "-jvm-target",
+          "17",
+          "-Xrender-internal-diagnostic-names",
+          "-d",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-in-projection-read-as-cat.jar"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-in-projection-read-as-cat.kt:45:51: error: [INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'Cat', actual 'CapturedType(in Cat)'.\nfun rejected(items: Array<in Cat>) { val cat: Cat = items[0] }\n                                                  ^\n"
+      }
+    },
+    {
+      "label": "covariant-public-consumer",
+      "q": 24,
+      "source_sha256": "aed082c6842a9c58726cea2c91899f6bdb0aca1854a78739bbf61db8529cba69",
+      "diagnostic_ids": [
+        "TYPE_VARIANCE_CONFLICT_ERROR"
+      ],
+      "compile": {
+        "command": [
+          "/usr/local/bin/kotlinc",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-covariant-public-consumer.kt",
+          "-jvm-target",
+          "17",
+          "-Xrender-internal-diagnostic-names",
+          "-d",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-covariant-public-consumer.jar"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-covariant-public-consumer.kt:45:45: error: [TYPE_VARIANCE_CONFLICT_ERROR] Type parameter 'T' is declared as 'out' but occurs in 'in' position in type 'T (of interface BadSource<out T>)'.\ninterface BadSource<out T> { fun put(value: T) }\n                                            ^\n"
+      }
+    },
+    {
+      "label": "contravariant-public-producer",
+      "q": 24,
+      "source_sha256": "40df662980d28413ea8c9e3a703e02fe01161960a69397506afd1cf8125bbe57",
+      "diagnostic_ids": [
+        "TYPE_VARIANCE_CONFLICT_ERROR"
+      ],
+      "compile": {
+        "command": [
+          "/usr/local/bin/kotlinc",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-contravariant-public-producer.kt",
+          "-jvm-target",
+          "17",
+          "-Xrender-internal-diagnostic-names",
+          "-d",
+          "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-contravariant-public-producer.jar"
+        ],
+        "exit": 1,
+        "stdout": "",
+        "stderr": "/tmp/kotlin-theory-constructors-variance-20261106/runtime/negative-contravariant-public-producer.kt:45:39: error: [TYPE_VARIANCE_CONFLICT_ERROR] Type parameter 'T' is declared as 'in' but occurs in 'out' position in type 'T (of interface BadSink<in T>)'.\ninterface BadSink<in T> { fun next(): T }\n                                      ^\n"
+      }
+    }
+  ],
+  "limits": "Only the two exact example fences and listed negative controls; no full Kotlin topic/project/application build. Bundled installed compiler/std runtime only; no downloads or container runtime."
+}

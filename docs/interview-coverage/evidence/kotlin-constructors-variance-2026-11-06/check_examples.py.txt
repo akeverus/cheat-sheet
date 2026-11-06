@@ -1,0 +1,77 @@
+from pathlib import Path
+import re
+import json
+import subprocess
+import hashlib
+
+WORK = Path('/tmp/kotlin-theory-constructors-variance-20261106')
+RUN = WORK / 'runtime'
+RUN.mkdir(exist_ok=True)
+KOTLINC = '/usr/local/bin/kotlinc'
+JAVA = '/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/java'
+
+def sha(p):
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+def execute(command):
+    result = subprocess.run(command, text=True, capture_output=True)
+    return {'command': command, 'exit': result.returncode, 'stdout': result.stdout, 'stderr': result.stderr}
+
+sources = {}
+positives = []
+for n in (16, 24):
+    fences = re.findall(r'```kotlin\n([\s\S]*?)\n```', (WORK / f'q{n}.md').read_text())
+    assert len(fences) == 1
+    source = RUN / f'Q{n}.kt'
+    source.write_text(fences[0] + '\n')
+    sources[n] = fences[0]
+    jar = RUN / f'q{n}.jar'
+    compiled = execute([KOTLINC, str(source), '-jvm-target', '17', '-include-runtime', '-d', str(jar)])
+    assert compiled['exit'] == 0, compiled
+    ran = execute([JAVA, '-jar', str(jar)])
+    assert ran['exit'] == 0, ran
+    expected = '[property, init, secondary]' if n == 16 else 'variance: PASS'
+    assert ran['stdout'].strip() == expected, ran
+    positives.append({'q': n, 'source_sha256': sha(source),
+                      'fence_sha256': hashlib.sha256(fences[0].encode()).hexdigest(),
+                      'compile': compiled, 'run': ran})
+
+negative_specs = [
+    ('guest-no-hidden-primary', 16, '\nfun rejected() = Guest()\n'),
+    ('primary-cannot-delegate-to-super-from-secondary', 16,
+     '\nclass InvalidPrimary(val id: Int) { constructor() : super() }\n'),
+    ('secondary-delegation-cycle', 16,
+     '\nclass Cycle { constructor() : this(1); constructor(id: Int) : this() }\n'),
+    ('array-invariance', 24,
+     '\nfun rejected(cats: Array<Cat>) { val animals: Array<Animal> = cats }\n'),
+    ('out-projection-write', 24,
+     '\nfun rejected(items: Array<out Animal>) { items[0] = Cat("bad") }\n'),
+    ('in-projection-read-as-cat', 24,
+     '\nfun rejected(items: Array<in Cat>) { val cat: Cat = items[0] }\n'),
+    ('covariant-public-consumer', 24,
+     '\ninterface BadSource<out T> { fun put(value: T) }\n'),
+    ('contravariant-public-producer', 24,
+     '\ninterface BadSink<in T> { fun next(): T }\n'),
+]
+negatives = []
+for label, n, addition in negative_specs:
+    source = RUN / f'negative-{label}.kt'
+    source.write_text(sources[n] + addition)
+    compiled = execute([KOTLINC, str(source), '-jvm-target', '17',
+                        '-Xrender-internal-diagnostic-names', '-d', str(RUN / f'negative-{label}.jar')])
+    assert compiled['exit'] == 1 and 'error:' in compiled['stderr'], compiled
+    assert 'exception' not in compiled['stderr'].lower(), compiled
+    diagnostic_ids = re.findall(r'\[([A-Z_]+)\]', compiled['stderr'])
+    assert diagnostic_ids, compiled
+    negatives.append({'label': label, 'q': n, 'source_sha256': sha(source),
+                      'diagnostic_ids': diagnostic_ids, 'compile': compiled})
+
+report = {'status': 'TWO_EXACT_EXAMPLES_PASS_EIGHT_EXPECTED_COMPILER_REJECTIONS',
+          'compiler_version': execute([KOTLINC, '-version']),
+          'runtime_version': execute([JAVA, '-version']),
+          'target': 'JVM17 bytecode', 'positive_examples': positives,
+          'negative_compile_controls': negatives,
+          'limits': 'Only the two exact example fences and listed negative controls; no full Kotlin topic/project/application build. Bundled installed compiler/std runtime only; no downloads or container runtime.'}
+(RUN / 'execution.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
+print(json.dumps({'status': report['status'], 'positive_examples': 2,
+                  'negative_controls': [{'label': n['label'], 'diagnostic_ids': n['diagnostic_ids']} for n in negatives]}, ensure_ascii=False))

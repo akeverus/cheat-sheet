@@ -1,0 +1,18 @@
+interface NestedProducer<out T> {
+    fun deliver(consumer: (T) -> Unit)
+    fun next(): T
+}
+
+class IntProducer : NestedProducer<Int> {
+    override fun deliver(consumer: (Int) -> Unit) = consumer(7)
+    override fun next(): Int = 7
+}
+
+fun main() {
+    val producer: NestedProducer<Number> = IntProducer()
+    var seen: Number? = null
+    producer.deliver { seen = it }
+    check(seen == 7)
+    check(producer.next() == 7)
+    println("nested-positive: PASS")
+}

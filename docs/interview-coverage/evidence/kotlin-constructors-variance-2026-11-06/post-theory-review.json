@@ -1,0 +1,42 @@
+{
+  "review_kind": "post_theory_review",
+  "drafts": {
+    "q16.md": {
+      "sha256": "579ebd1c7d3d9a3698e505dbe09d4b01b8cce4ab0b6a83edbb0412ed302a08aa",
+      "result": "PASS",
+      "checks": {
+        "conditional_delegation": "PASS: explicit Any delegation may be omitted; Child's explicit superclass call and secondary-to-secondary chain are accurate.",
+        "no_primary": "PASS: implicit parameterless primary applies only when neither constructor kind is declared.",
+        "initialization": "PASS: superclass, primary property parameters, body property initializers and init blocks in declaration order, then secondary bodies; delegated inner body completes before caller body.",
+        "examples": "PASS: assignments occur after initialization; Child reaches Parent constructor; Empty is constructible."
+      },
+      "defects": []
+    },
+    "q24.md": {
+      "sha256": "fc091b7b7cdcae047338573b1c56b1a5b10829acbd0dcd7653c2299cddc8f2bd",
+      "result": "PASS_WITH_MINOR_PRECISION_NOTE",
+      "checks": {
+        "declaration_and_use_site": "PASS: covers both forms and subtype directions for Source and Sink.",
+        "array_projections": "PASS: Array<out Animal> accepts Array<Cat>, reads the projected upper bound Animal, and forbids element writes through that reference. Array<in Cat> accepts Array<Animal>, allows Cat writes, and reads as Any?.",
+        "variance_api_positions": "PASS: Source<out T> producer and Sink<in T> consumer APIs place T validly; mutable Box<T> remains invariant.",
+        "star_projection": "PASS: List<*> reads as Any? for List's out E; text correctly notes that a general upper bound may narrow the readable type and writes are restricted.",
+        "examples": "PASS: examples and checks are coherent; Sink is a valid fun interface."
+      },
+      "defects": [],
+      "precision_note": "The Array<out Animal> table entry could say explicitly that the readable type is the projection's upper bound (Animal here); the function signature makes that bound clear."
+    }
+  },
+  "q24_mcq_status": "UNCHANGED_OPEN",
+  "q24_mcq_note": "The new theory does not establish that the old Q24 options/key/ANSC/FACTS/LINKAGE are adequate. Keep those issues open with the JSON owner; do not treat B as a complete response to the original visible MCQ.",
+  "verification_boundary": {
+    "runtime_run": false,
+    "compile_checks_run": false,
+    "author_status": "Two exact fences and eight negative compile checks are being run by the author; no result was available to this review."
+  },
+  "primary_sources": [
+    {"url": "https://kotlinlang.org/spec/declarations.html#constructor-declaration", "scope": "Delegation rules, optional Any delegation, and implicit default primary condition."},
+    {"url": "https://kotlinlang.org/spec/declarations.html#classifier-initialization", "scope": "Initialization sequence and secondary constructor body order."},
+    {"url": "https://kotlinlang.org/docs/generics.html", "scope": "Official documentation for declaration-site variance and use-site type projections."},
+    {"url": "https://kotlinlang.org/spec/type-system.html#mixed-site-variance", "scope": "Specification for mixed-site variance, use-site projections, and star projection bounds."}
+  ]
+}

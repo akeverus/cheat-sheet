@@ -1,0 +1,44 @@
+open class Animal(val name: String)
+class Cat(name: String) : Animal(name)
+
+interface Source<out T> {
+    fun next(): T
+}
+
+fun interface Sink<in T> {
+    fun put(item: T)
+}
+
+class Box<T>(var value: T)
+
+fun names(from: Array<out Animal>): List<String> = from.map { it.name }
+
+fun putCat(to: Array<in Cat>, cat: Cat) {
+    to[0] = cat
+    val readBack: Any? = to[0]
+    check(readBack === cat)
+}
+
+fun firstUnknown(items: List<*>): Any? = items.firstOrNull()
+
+fun main() {
+    val cats: Array<Cat> = arrayOf(Cat("Мурка"))
+    val animals: Array<Animal> = arrayOf(Animal("Зверь"))
+    check(names(cats) == listOf("Мурка"))
+    putCat(animals, cats[0])
+    check(animals[0] is Cat)
+
+    val catSource: Source<Cat> = object : Source<Cat> {
+        override fun next(): Cat = cats[0]
+    }
+    val animalSource: Source<Animal> = catSource
+    check(animalSource.next().name == "Мурка")
+
+    val accepted = mutableListOf<Animal>()
+    val animalSink: Sink<Animal> = Sink { accepted += it }
+    val catSink: Sink<Cat> = animalSink
+    catSink.put(cats[0])
+    check(accepted.single() === cats[0])
+    check(firstUnknown(listOf("text", 1)) == "text")
+    println("variance: PASS")
+}

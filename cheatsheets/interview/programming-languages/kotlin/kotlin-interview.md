@@ -575,30 +575,66 @@ val user = User.create("Alice")   // вызов через имя класса
 
 ## Q16. Какие типы конструкторов есть в Kotlin?
 
-В Kotlin два вида конструкторов плюс блоки инициализации. **Первичный конструктор** объявляется прямо в заголовке класса и обычно используется как основной. **Вторичные конструкторы** объявляются в теле и обязаны в итоге делегировать первичному. Логику, не помещающуюся в заголовок, выносят в `init`-блоки.
+В Kotlin есть **первичный** конструктор в заголовке класса и **вторичные** конструкторы с ключевым словом `constructor` в его теле. У обычного класса может не быть первичного конструктора.
+
+- Если первичный объявлен, каждый вторичный достигает его через `this(...)` — прямо или через другие вторичные.
+- Без первичного цепочка вторичных может достигать конструктора суперкласса через `super(...)`. Если единственный суперкласс — `Any`, явное делегирование необязательно.
+- Циклы делегирования запрещены. Когда не объявлено ни одного конструктора, подразумевается первичный без параметров; это правило не добавляет скрытый первичный к классу с объявленными вторичными.
+
+У первичного нет собственного тела: для общей инициализации служат инициализаторы свойств и `init`. Вторичный может иметь своё тело с дополнительной логикой. `init` не является третьим видом конструктора и работает также у класса без первичного.
 
 ```kotlin
-// Primary constructor — в заголовке класса
-class User(val name: String, val age: Int = 0)
-
-// Secondary constructor — в теле класса, ДОЛЖЕН делегировать к primary
-class User(val name: String) {
+class NamedUser(val name: String) {
     var email: String = ""
+
+    init {
+        require(name.isNotBlank())
+    }
 
     constructor(name: String, email: String) : this(name) {
         this.email = email
     }
 }
 
-// init-блок — выполняется как часть primary constructor
-class User(val name: String) {
+// Только вторичный; неявный суперкласс Any не требует явного super().
+class Guest {
+    val name: String
+    val events = mutableListOf("property")
+
     init {
-        require(name.isNotBlank()) { "Name must not be blank" }
+        events += "init"
     }
+
+    constructor(name: String) {
+        require(name.isNotBlank())
+        this.name = name
+        events += "secondary"
+    }
+}
+
+open class Parent(val id: Int)
+
+class Child : Parent {
+    constructor(id: Int) : super(id)
+    constructor() : this(0)
+}
+
+class Empty
+
+fun main() {
+    check(NamedUser("Ada", "ada@example.test").email == "ada@example.test")
+    val guest = Guest("Гость")
+    check(guest.name == "Гость")
+    check(guest.events == listOf("property", "init", "secondary"))
+    check(Child().id == 0)
+    Empty()
+    println(guest.events)
 }
 ```
 
-**Порядок инициализации:** primary constructor параметры -> свойства и `init`-блоки (сверху вниз) -> secondary constructor body.
+Общая инициализация идёт от суперкласса к свойствам первичного конструктора (если он есть), затем к инициализаторам свойств и `init`-блокам в порядке объявления. После этого выполняются тела вызванных вторичных: сначала делегированного, затем вызывающего. В `Guest` общая инициализация предшествует его телу конструктора; чтение ещё не присвоенного `name` из `init` было бы ошибочным подходом.
+
+Источники: [спецификация: конструкторы](https://kotlinlang.org/spec/declarations.html#constructor-declaration) и [порядок инициализации](https://kotlinlang.org/spec/declarations.html#classifier-initialization).
 
 ## Q17. Что такое `enum class` и чем он отличается от `sealed class`?
 
@@ -770,37 +806,71 @@ class Temperature {
 
 ## Q24. (!) Что такое `Generics` и как работает вариантность (`in`, `out`)?
 
-Дженерики позволяют писать код, параметризованный типом (`List<T>`), а вариантность отвечает на вопрос: «если `Cat` — подтип `Animal`, то является ли `Box<Cat>` подтипом `Box<Animal>`?». В Kotlin вариантность задаётся **в месте объявления** типа (declaration-site) — модификаторами `out` и `in` прямо у параметра. Это удобнее, чем use-site variance в Java, где `? extends`/`? super` приходится повторять на каждом использовании.
+**Generics** параметризуют типы и функции типами, например `Box<T>`. **Вариантность** описывает отношения между обобщёнными типами: из `Cat : Animal` не следует автоматически `Box<Cat> : Box<Animal>`. Параметр без `in`/`out` по умолчанию инвариантен.
 
-Смысл модификаторов прост:
-- **`out T`** — тип `T` только «производится» (возвращается). Такой класс ковариантен: `Source<Cat>` можно подставить туда, где ждут `Source<Animal>`.
-- **`in T`** — тип `T` только «потребляется» (принимается параметром). Класс контравариантен: `Sink<Animal>` подходит туда, где ждут `Sink<Cat>`.
+Kotlin поддерживает **оба** способа задания вариантности:
+
+| Способ | Значение при `Cat : Animal` |
+|---|---|
+| `Source<out T>` в объявлении | Ковариантный источник: `Source<Cat>` подходит вместо `Source<Animal>` |
+| `Sink<in T>` в объявлении | Контравариантный потребитель: `Sink<Animal>` подходит вместо `Sink<Cat>` |
+| `Array<out Animal>` при использовании | Проекция инвариантного массива: принимает `Array<Cat>`, разрешает читать `Animal`, запрещает запись элемента через эту ссылку |
+| `Array<in Cat>` при использовании | Принимает в том числе `Array<Animal>`: позволяет записать `Cat`, при чтении гарантируется только `Any?` |
+
+Первые два случая — **declaration-site variance**, последние — **use-site variance / проекции типов**. Проекция ограничивает доступные операции через ссылку; исходный объект не преобразуется в другой массив. Мнемоника: `out` — источник, `in` — потребитель. Запрещённые позиции в API проверяет компилятор; во вложенных обобщённых типах и типах функций нужно учитывать их собственную вариантность, а не только положение слова в строке.
 
 ```kotlin
-// out = ковариантность (producer) — аналог ? extends в Java
+open class Animal(val name: String)
+class Cat(name: String) : Animal(name)
+
 interface Source<out T> {
-    fun next(): T          // T только в out-позиции (возвращаемый тип)
+    fun next(): T
 }
 
-// in = контравариантность (consumer) — аналог ? super в Java
-interface Sink<in T> {
-    fun put(item: T)       // T только в in-позиции (параметр)
+fun interface Sink<in T> {
+    fun put(item: T)
 }
 
-// Invariant — и producer, и consumer
-class MutableBox<T>(var value: T)
+class Box<T>(var value: T)
+
+fun names(from: Array<out Animal>): List<String> = from.map { it.name }
+
+fun putCat(to: Array<in Cat>, cat: Cat) {
+    to[0] = cat
+    val readBack: Any? = to[0]
+    check(readBack === cat)
+}
+
+fun firstUnknown(items: List<*>): Any? = items.firstOrNull()
+
+fun main() {
+    val cats: Array<Cat> = arrayOf(Cat("Мурка"))
+    val animals: Array<Animal> = arrayOf(Animal("Зверь"))
+    check(names(cats) == listOf("Мурка"))
+    putCat(animals, cats[0])
+    check(animals[0] is Cat)
+
+    val catSource: Source<Cat> = object : Source<Cat> {
+        override fun next(): Cat = cats[0]
+    }
+    val animalSource: Source<Animal> = catSource
+    check(animalSource.next().name == "Мурка")
+
+    val accepted = mutableListOf<Animal>()
+    val animalSink: Sink<Animal> = Sink { accepted += it }
+    val catSink: Sink<Cat> = animalSink
+    catSink.put(cats[0])
+    check(accepted.single() === cats[0])
+    check(firstUnknown(listOf("text", 1)) == "text")
+    println("variance: PASS")
+}
 ```
 
-Мнемоника **PECS** (Producer Extends, Consumer Super) или в Kotlin — **`out` = produce, `in` = consume**.
+`out` у объявления не делает объект неизменяемым: он ограничивает использование параметра типа в API. Для обычного публичного `Source<out T>` нельзя добавить `fun put(value: T)`; для `Sink<in T>` — `fun next(): T`. Особые механизмы вроде `@UnsafeVariance` не заменяют доказательство безопасности такого API.
 
-```kotlin
-// Star projection — аналог ? в Java
-fun printAll(list: List<*>) {
-    list.forEach { println(it) }  // it: Any?
-}
-```
+**Star projection** `List<*>` означает неизвестный аргумент типа; для данного `List` элементы читаются как `Any?`. В общем случае верхняя граница параметра может быть уже. Звёздочка не подменяет неизвестный тип произвольным выбранным типом и не разрешает безопасно записывать значения любого типа.
 
-Подробнее о generics — [Generics в Java](../java/java-generics-interview.md).
+Источники: [Kotlin: generics и проекции](https://kotlinlang.org/docs/generics.html), [спецификация: mixed-site variance](https://kotlinlang.org/spec/type-system.html#mixed-site-variance). Сравнение с wildcard — в [Generics в Java](../java/java-generics-interview.md).
 
 ## Q25. Что такое `reified` type parameters?
 

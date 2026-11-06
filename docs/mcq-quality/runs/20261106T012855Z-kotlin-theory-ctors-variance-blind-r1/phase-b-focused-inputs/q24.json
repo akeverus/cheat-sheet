@@ -1,0 +1,82 @@
+{
+  "paths": {
+    "mcq": "modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-interview.json",
+    "theory": "cheatsheets/interview/programming-languages/kotlin/kotlin-interview.md"
+  },
+  "sha256": {
+    "mcq": "d239d66442d51b578f4e9781908ed1a1a8991a33d3db535a2614e845469db50d",
+    "theory": "40b5c7d2ff3abb9a7021544379a29179115a2efab1b410b60ab680b7d69081dc"
+  },
+  "rules_sha256": {
+    "docs/mcq-quality-standard.md": "8801a6033b19106d923fe099e8be2c02aa3f15a25f2dc087c6cc9edc6a6cdee3",
+    "docs/mcq-quality/surface-parity-rules.md": "9e2f035835d83113587286fcbf1b1c170f11353ab5311024cd61053d9be48999",
+    "docs/mcq-quality/russian-readability-rules.md": "f725f7777a6a18ac31a8ff6ab8b2093652c59e8788a9fa536ed1c1a1de7cc264"
+  },
+  "block_hash": {
+    "mcq": "a0e70c665931545d1c8a1e88331b2cd548865e7f59ef48e0f9badfa5a6909c9b",
+    "theory": "0c36776e8ca06273e679ac96467458b5472a873e8c864c89dd75a5baa13aec17"
+  },
+  "source_full_disclosure_sha256": "3e1808c1c91810e9027f496df3081df8a0cd7d7170cfc89eb53d84dd82b0d57a",
+  "question": {
+    "q_number": 24,
+    "block_idx": 0,
+    "visible_question": "Что такое Generics и как работает вариантность (in, out)?",
+    "block": {
+      "block_idx": 0,
+      "question_text": "Что такое `Generics` и как работает вариантность (`in`, `out`)?",
+      "options": [
+        {
+          "label": "A",
+          "order": 0,
+          "text": "Параметр со знаком `out` разрешено ставить и во входной, и в возвращаемой позиции.",
+          "correct": false,
+          "sections": {
+            "what_actually": "Параметр out разрешён только в out-позиции (возврат), не входной.",
+            "source_of_confusion": "Кажется, out везде.",
+            "if_it_were_true": "Тогда ковариантность была бы небезопасна.",
+            "how_it_should_be": "out — только возвращаемый тип."
+          }
+        },
+        {
+          "label": "B",
+          "order": 1,
+          "text": "Вариантность в Kotlin задают в месте `объявления` — модификаторами out и in у параметра.",
+          "correct": true,
+          "sections": {
+            "explanation": "Вариантность задаётся в месте объявления — модификаторами out/in у параметра.",
+            "example": "Source<out T>, Sink<in T>; PECS: out=produce, in=consume.",
+            "when_to_apply": "Когда проектируешь обобщённый тип.",
+            "edge_cases": "Star projection List<*> — аналог ? в Java.",
+            "related": "out = ковариантность, in = контравариантность."
+          }
+        },
+        {
+          "label": "C",
+          "order": 2,
+          "text": "Вариантность в Kotlin задают в месте использования, повторяя её при каждом `применении` типа.",
+          "correct": false,
+          "sections": {
+            "what_actually": "Вариантность — declaration-site (у параметра), не use-site.",
+            "source_of_confusion": "Java use-site variance переносят на Kotlin.",
+            "if_it_were_true": "Тогда ? extends повторяли бы на каждом использовании.",
+            "how_it_should_be": "out/in — прямо у параметра типа."
+          }
+        },
+        {
+          "label": "D",
+          "order": 3,
+          "text": "Модификатор `out` делает тип контравариантным потребителем, принимающим его значением своего параметра.",
+          "correct": false,
+          "sections": {
+            "what_actually": "out делает тип КОвариантным продюсером, не контравариантным.",
+            "source_of_confusion": "out и in путают.",
+            "if_it_were_true": "Тогда Source<Cat> не подставлялся бы под Source<Animal>.",
+            "how_it_should_be": "out = producer, in = consumer."
+          }
+        }
+      ]
+    }
+  },
+  "theory": "## Q24. (!) Что такое `Generics` и как работает вариантность (`in`, `out`)?\n\n**Generics** параметризуют типы и функции типами, например `Box<T>`. **Вариантность** описывает отношения между обобщёнными типами: из `Cat : Animal` не следует автоматически `Box<Cat> : Box<Animal>`. Параметр без `in`/`out` по умолчанию инвариантен.\n\nKotlin поддерживает **оба** способа задания вариантности:\n\n| Способ | Значение при `Cat : Animal` |\n|---|---|\n| `Source<out T>` в объявлении | Ковариантный источник: `Source<Cat>` подходит вместо `Source<Animal>` |\n| `Sink<in T>` в объявлении | Контравариантный потребитель: `Sink<Animal>` подходит вместо `Sink<Cat>` |\n| `Array<out Animal>` при использовании | Проекция инвариантного массива: принимает `Array<Cat>`, разрешает читать `Animal`, запрещает запись элемента через эту ссылку |\n| `Array<in Cat>` при использовании | Принимает в том числе `Array<Animal>`: позволяет записать `Cat`, при чтении гарантируется только `Any?` |\n\nПервые два случая — **declaration-site variance**, последние — **use-site variance / проекции типов**. Проекция ограничивает доступные операции через ссылку; исходный объект не преобразуется в другой массив. Мнемоника: `out` — источник, `in` — потребитель. Запрещённые позиции в API проверяет компилятор; во вложенных обобщённых типах и типах функций нужно учитывать их собственную вариантность, а не только положение слова в строке.\n\n```kotlin\nopen class Animal(val name: String)\nclass Cat(name: String) : Animal(name)\n\ninterface Source<out T> {\n    fun next(): T\n}\n\nfun interface Sink<in T> {\n    fun put(item: T)\n}\n\nclass Box<T>(var value: T)\n\nfun names(from: Array<out Animal>): List<String> = from.map { it.name }\n\nfun putCat(to: Array<in Cat>, cat: Cat) {\n    to[0] = cat\n    val readBack: Any? = to[0]\n    check(readBack === cat)\n}\n\nfun firstUnknown(items: List<*>): Any? = items.firstOrNull()\n\nfun main() {\n    val cats: Array<Cat> = arrayOf(Cat(\"Мурка\"))\n    val animals: Array<Animal> = arrayOf(Animal(\"Зверь\"))\n    check(names(cats) == listOf(\"Мурка\"))\n    putCat(animals, cats[0])\n    check(animals[0] is Cat)\n\n    val catSource: Source<Cat> = object : Source<Cat> {\n        override fun next(): Cat = cats[0]\n    }\n    val animalSource: Source<Animal> = catSource\n    check(animalSource.next().name == \"Мурка\")\n\n    val accepted = mutableListOf<Animal>()\n    val animalSink: Sink<Animal> = Sink { accepted += it }\n    val catSink: Sink<Cat> = animalSink\n    catSink.put(cats[0])\n    check(accepted.single() === cats[0])\n    check(firstUnknown(listOf(\"text\", 1)) == \"text\")\n    println(\"variance: PASS\")\n}\n```\n\n`out` у объявления не делает объект неизменяемым: он ограничивает использование параметра типа в API. Для обычного публичного `Source<out T>` нельзя добавить `fun put(value: T)`; для `Sink<in T>` — `fun next(): T`. Особые механизмы вроде `@UnsafeVariance` не заменяют доказательство безопасности такого API.\n\n**Star projection** `List<*>` означает неизвестный аргумент типа; для данного `List` элементы читаются как `Any?`. В общем случае верхняя граница параметра может быть уже. Звёздочка не подменяет неизвестный тип произвольным выбранным типом и не разрешает безопасно записывать значения любого типа.\n\nИсточники: [Kotlin: generics и проекции](https://kotlinlang.org/docs/generics.html), [спецификация: mixed-site variance](https://kotlinlang.org/spec/type-system.html#mixed-site-variance). Сравнение с wildcard — в [Generics в Java](../java/java-generics-interview.md).\n\n",
+  "note": "Only repeated global preamble/TOC/rubric descriptions omitted. Full question, four options and every section retained; full raw disclosure available."
+}

@@ -1,0 +1,130 @@
+{
+  "review_kind": "secondary_source_review",
+  "scope": [
+    "Q16",
+    "Q24"
+  ],
+  "source_input": "/tmp/kotlin-theory-constructors-variance-20261106/input-before.json",
+  "source_input_sha256": "69cb30e644be14d8d9cf9cbb5bfe214b85d22ddf67944c02843de8f992ec7617",
+  "repo_markdown_read_for_context": "cheatsheets/interview/programming-languages/kotlin/kotlin-interview.md",
+  "runtime_executed": false,
+  "authorship_claimed": false,
+  "primary_sources": [
+    {
+      "url": "https://kotlinlang.org/spec/declarations.html#constructor-declaration",
+      "scope": "Kotlin language specification 1.9-RFC, Constructor declaration: primary/secondary definitions, secondary delegation, implicit default constructor conditions."
+    },
+    {
+      "url": "https://kotlinlang.org/spec/declarations.html#classifier-initialization",
+      "scope": "Kotlin language specification 1.9-RFC, Classifier initialization: property parameters, property initializers/init blocks, and secondary body ordering."
+    },
+    {
+      "url": "https://kotlinlang.org/docs/generics.html",
+      "scope": "Official Kotlin documentation, generics, declaration-site variance and type projections/use-site variance."
+    },
+    {
+      "url": "https://kotlinlang.org/spec/type-system.html",
+      "scope": "Kotlin language specification 1.9-RFC, mixed-site variance, declaration-site and use-site variance rules."
+    }
+  ],
+  "Q16": {
+    "CONTENT": {
+      "status": "mostly_complete",
+      "finding": "Question asks what kinds of constructors exist. Key A identifies primary and secondary and states their locations and delegation distinction. It omits the implicit primary constructor in a class declaring neither kind, but that is a boundary detail rather than a blocker for this introductory question. The provided theory, by contrast, incorrectly says every secondary must ultimately delegate to a primary."
+    },
+    "FACTS": {
+      "key": "A",
+      "unique_key": true,
+      "finding": "A is accurate: secondary constructors in a class with a primary must delegate via this to the primary or another secondary; with no primary they must delegate to superclass or another secondary, except delegation is optional when the only superclass is Any. Primary is optional. The source also says an implicit parameterless primary exists only if neither primary nor secondary is declared. Classifier initialization runs before secondary body; this holds whether primary/secondary structure includes the primary step or not."
+    },
+    "LINKAGE": {
+      "finding": "The correct answer covers the central constructor distinction. The supplied theory's statement that secondary constructors must always delegate to primary contradicts A's valid no-primary case and its own later Guest example; init ordering is related, not asked directly."
+    },
+    "SECTIONS": {
+      "A": {
+        "explanation": "Accurately states declaration locations and both delegation regimes; useful concise answer to the asked distinction.",
+        "example": "User demonstrates a secondary delegating to a primary; Guest demonstrates no primary and implicit Any delegation.",
+        "when_to_apply": "Correct practical guidance, though purpose/usefulness is less specific than constructor syntax.",
+        "edge_cases": "Excellent and precise: covers explicit superclass path, optional Any delegation, and delegation cycles.",
+        "related": "Correctly states property initializers/init blocks run before secondary body, including class with no primary."
+      },
+      "B": {
+        "what_actually": "Correctly identifies the swapped locations and says the conditional delegation detail does not repair the swap.",
+        "source_of_confusion": "Plausible misconception, though brief; explanation of a body vs header is reasonable.",
+        "if_it_were_true": "Clear inversion example and contrast with actual Kotlin forms.",
+        "how_it_should_be": "Correctly repairs location and this-delegation direction; complete enough."
+      },
+      "C": {
+        "what_actually": "Correctly rejects mandatory primary for a class that declares secondary but no primary.",
+        "source_of_confusion": "Plausibly distinguishes implicit default constructor rule from classes declaring a secondary constructor.",
+        "if_it_were_true": "Concrete Guest example makes the alleged hidden primary testable.",
+        "how_it_should_be": "Correctly states both branches, including Any exception; substantively complete."
+      },
+      "D": {
+        "what_actually": "Correctly identifies reversed delegation direction and initialization ordering.",
+        "source_of_confusion": "Describes a plausible mistaken wrapper/handler model.",
+        "if_it_were_true": "Explains the counterfactual rule and actual direction, though does not give code.",
+        "how_it_should_be": "Accurate correction; notes secondary body occurs after shared initialization."
+      }
+    },
+    "SFPL": {
+      "finding": "False options B, C, and D each contain one central, definite misconception and are distinguishable. Their wrong claims are plausible interview-level errors. A is the only correct option. Small nuance: wording ‘chain ... must lead to it’ is accurate when primary exists."
+    },
+    "ANSC": {
+      "finding": "A is the unique defensible key. The question is answerable from the visible wording; no implied premise is required."
+    },
+    "RU": {
+      "finding": "Russian is clear and natural. ‘Цепочка вызовов вторичного должна привести к нему’ is idiomatic enough; ‘делегировать’ is standard technical usage."
+    }
+  },
+  "Q24": {
+    "CONTENT": {
+      "status": "incomplete_question_and_key",
+      "finding": "Visible question combines what generics are with how variance works, but options do not define generics or give the full variance model. More critically, it asks about in/out while the keyed statement says declaration-site only; Kotlin also supports use-site projections. Do not infer a narrower ‘where do you declare variance’ question from the parenthetical or old theory."
+    },
+    "FACTS": {
+      "key": "B",
+      "unique_key": false,
+      "finding": "B's limited proposition that Kotlin has declaration-site variance with in/out on type parameters is true, but it is incomplete as a complete response and its explanation says variance is declaration-site without the essential use-site mechanism. C's categorical claim that variance is set at use-site is false, but the rationale ‘declaration-site, not use-site’ also asserts an incorrect exclusivity. Thus no option accurately answers the full visible question; as a narrow declaration-site fact B is true but not a sound complete key."
+    },
+    "LINKAGE": {
+      "finding": "Current theory repeats the false dichotomy (‘rather than use-site variance in Java’) and reinforces the keyed omission. Kotlin docs distinguish Java wildcards from Kotlin projections, but explicitly list declaration-site variance and type projections; the specification calls the model mixed-site and defines use-site variance on type arguments. Theory should not be treated as evidence for the MCQ."
+    },
+    "SECTIONS": {
+      "A": {
+        "what_actually": "False: out restricts the type parameter to covariant/out positions, not both input and return positions (subject to language-specific variance checks).",
+        "source_of_confusion": "A likely overgeneralization that a declared out type can be used anywhere in class members.",
+        "if_it_were_true": "Allowing arbitrary input of T would break the subtype safety that covariance promises.",
+        "how_it_should_be": "out T is covariant and cannot be consumed in an input position absent an allowed variance override."
+      },
+      "B": {
+        "explanation": "True only as a partial fact: declaration-site in/out is supported. As a complete answer it falsely suggests this is the sole mechanism and omits use-site projections.",
+        "example": "Source<out T> and Sink<in T> are valid declaration-site examples, but do not demonstrate the full question or projection syntax.",
+        "when_to_apply": "Correct for designing type parameters on generic declarations; fails to mention per-use projections of invariant parameters.",
+        "edge_cases": "Star projection exists, but equating it to Java wildcard ‘?’ without distinguishing Kotlin projection semantics is oversimplified.",
+        "related": "out/in mappings are correct: covariance/producer and contravariance/consumer."
+      },
+      "C": {
+        "what_actually": "False as stated because Kotlin supports declaration-site variance too; the phrase ‘repeat at every application’ overstates use-site projections, which are optional and apply to selected type arguments.",
+        "source_of_confusion": "Plausible Java wildcard/use-site analogy, but framed as exclusive and mandatory.",
+        "if_it_were_true": "The Java comparison is superficially plausible, though Kotlin's projection syntax and semantics are not simply ‘repeat for every application.’",
+        "how_it_should_be": "Say Kotlin supports both declaration-site in/out and use-site projections for type arguments; use-site projection can adapt an invariant type argument at a particular use."
+      },
+      "D": {
+        "what_actually": "False: out denotes covariance/producer direction; in denotes contravariance/consumer direction.",
+        "source_of_confusion": "A straightforward and plausible inversion of the in/out mnemonic.",
+        "if_it_were_true": "Would reverse the usual subtype relationship, but offered example does not itself carefully demonstrate the mismatch.",
+        "how_it_should_be": "out produces T; in consumes T, subject to position restrictions."
+      }
+    },
+    "SFPL": {
+      "finding": "A and D are plausible misconception distractors. C is also a plausible confusion, but its absolute wording is inaccurate because it denies declaration-site variance; its ‘repeat every application’ claim is additionally too strong. B is factually true as a narrow fragment, but the option is incomplete relative to the visible compound question and the answer set lacks a complete correct option. Therefore key B is not a valid unique complete answer."
+    },
+    "ANSC": {
+      "finding": "No fully correct answer to the complete visible question. B is a true partial answer and likely intended key, but must not be accepted as complete by silently narrowing the prompt. C is not another true key; it is false. This is a defective/incomplete MCQ, rather than a genuine two-key ambiguity."
+    },
+    "RU": {
+      "finding": "Russian is readable. The option uses literal ‘место объявления/место использования’; acceptable technical phrasing. Backticks around ordinary quoted labels are stylistic, not a correctness problem."
+    }
+  }
+}

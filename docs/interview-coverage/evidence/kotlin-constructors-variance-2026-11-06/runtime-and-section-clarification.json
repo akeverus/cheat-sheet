@@ -1,0 +1,26 @@
+{
+  "review_kind": "runtime_and_section_clarification",
+  "input_sha256": "69cb30e644be14d8d9cf9cbb5bfe214b85d22ddf67944c02843de8f992ec7617",
+  "based_on_author_supplied_runtime_reports": [
+    "/tmp/kotlin-theory-constructors-variance-20261106/runtime/execution.json",
+    "/tmp/kotlin-theory-constructors-variance-20261106/runtime/nested-variance-positive.json"
+  ],
+  "reviewer_runtime_execution": false,
+  "findings": {
+    "author_runtime": "The supplied report records both exact examples passing on kotlinc-jvm 2.4.10 targeting JVM 17, run on JDK 21.0.10, and eight expected compiler rejections. This review did not execute or independently verify those commands.",
+    "nested_variance": "The supplied positive counterexample demonstrates that out T can occur inside a function-typed method parameter when composed variance leaves the complete position covariant: function parameter variance reverses the inner position, while the method parameter position reverses it again. The direct public put(value: T) remains a prohibited in-position use for an out parameter.",
+    "Q24_A_option": "The original A text ('out ... in both input and return position') remains an incorrect answer to the visible option: as a blanket statement it permits a direct input consumer, which is disallowed. However, A.what_actually/how_it_should_be's blanket phrase 'only out-position / only returned type' is too coarse. Prefer: 'out T requires every occurrence to be in a covariant position overall; it may be returned directly or occur within nested types whose variance composition is covariant. A direct consumer parameter such as put(value: T) is prohibited.'",
+    "Q24_A_sections": {
+      "what_actually": "Retain the rejection of unrestricted input-and-return use, but replace 'only in out-position (return)' with the composed-position rule above.",
+      "source_of_confusion": "Current note is broadly plausible; could say the distractor mistakes the direct-position rule and ignores variance composition through nested generic/function types.",
+      "if_it_were_true": "The safety concern for a direct consumer remains valid: accepting arbitrary T through Source<out T> can violate covariance. It should not imply every syntactic occurrence nested under a function parameter is unsafe.",
+      "how_it_should_be": "Replace 'out = only returned type' with 'out T may occur only where the complete composed position is covariant; direct public consumption is prohibited.'"
+    },
+    "Q24_mcq": "No change to original Q24 key, ANSC, FACTS, or LINKAGE conclusions. The option A text is still incomplete/incorrect as a broad permission; its old explanation has an overbroad rationale. The new theory does not repair the defective old answer set.",
+    "prior_reports": "Do not modify or replace source-review.json or post-theory-review.json; their prior findings and draft hashes remain as recorded."
+  },
+  "primary_source": {
+    "url": "https://kotlinlang.org/spec/type-system.html#declaration-site-variance",
+    "scope": "Kotlin specification variance checking for declaration-site covariant/contravariant parameters and permitted operations; read with the function-type variance rules at https://kotlinlang.org/spec/type-system.html#function-types. The overall sign of nested positions composes through function input/output variance."
+  }
+}
