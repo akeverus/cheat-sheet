@@ -1,0 +1,22 @@
+// Model.kt
+package example
+
+@Target(AnnotationTarget.CLASS)
+annotation class ModelMarker
+
+object ConstructionTrace {
+    var calls = 0
+}
+
+@ModelMarker
+class Model(var name: String) {
+    val marker = 7
+    init { ConstructionTrace.calls++ }
+}
+
+fun main() {
+    val constructor = Model::class.java.getDeclaredConstructor()
+    val model = constructor.newInstance()
+    println(model.marker)            // 0: initializer не выполнен
+    println(ConstructionTrace.calls) // 0
+}

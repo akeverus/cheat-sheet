@@ -1,0 +1,121 @@
+{
+  "question": "Какая польза от @JvmStatic, @JvmOverloads и @JvmField?",
+  "option_assessments": [
+    {
+      "label": "A",
+      "truth": "PARTLY_TRUE_BUT_INCOMPLETE",
+      "completeness": "INCOMPLETE",
+      "assessment": "Общее утверждение о более удобном Java API верно для @JvmStatic, @JvmOverloads и @JvmField, но не называет ни одну конкретную пользу и чрезмерно обобщает."
+    },
+    {
+      "label": "B",
+      "truth": "FALSE",
+      "completeness": "COMPLETE_AS_CLAIM",
+      "assessment": "Утверждение охватывает все три аннотации, но обращает направление интероперабельности: они настраивают представление Kotlin API для Java-клиентов."
+    },
+    {
+      "label": "C",
+      "truth": "FALSE_FOR_ORDINARY_METHODS",
+      "completeness": "INCOMPLETE",
+      "assessment": "Фраза говорит только о default-параметрах и @JvmOverloads, оставляя @JvmStatic и @JvmField без ответа; для обычных методов Java не получает overloads автоматически."
+    },
+    {
+      "label": "D",
+      "truth": "FALSE",
+      "completeness": "INCOMPLETE",
+      "assessment": "Фраза касается лишь @JvmStatic и неверно приписывает ему создание Companion; не объясняет @JvmOverloads и @JvmField."
+    }
+  ],
+  "section_assessments": [
+    {
+      "field": "A.explanation",
+      "assessment": "Суммарное объяснение пользы в целом допустимо, но повторяет общее обещание без трёх конкретных механизмов."
+    },
+    {
+      "field": "A.example",
+      "assessment": "@JvmStatic → Config.default() демонстрирует static мост, но default — зарезервированное слово Java и пример не компилируется; следует createDefault(). Прямой доступ @JvmField назван без конкретного поля."
+    },
+    {
+      "field": "A.when_to_apply",
+      "assessment": "Уместное условие применения для всех трёх аннотаций, но слишком общее, чтобы показать их раздельные эффекты."
+    },
+    {
+      "field": "A.edge_cases",
+      "assessment": "Упоминание Companion и default-параметров релевантно, но не поясняет правила @JvmOverloads и @JvmField."
+    },
+    {
+      "field": "A.related",
+      "assessment": "Связь с Kotlin/Java интеропом корректна, однако не добавляет конкретики по трём аннотациям."
+    },
+    {
+      "field": "B.what_actually",
+      "assessment": "Корректно исправляет направление: все три аннотации влияют на Java-представление Kotlin-кода; это охватывает вопрос на общем уровне."
+    },
+    {
+      "field": "B.source_of_confusion",
+      "assessment": "Правдоподобно называет путаницу направления, но не разбирает отличия трёх механизмов."
+    },
+    {
+      "field": "B.if_it_were_true",
+      "assessment": "Риторический вывод не следует строго из предыдущей фразы и не проясняет роль ни одной аннотации."
+    },
+    {
+      "field": "B.how_it_should_be",
+      "assessment": "Общая формулировка верна, но не перечисляет static мост, overloads и поле."
+    },
+    {
+      "field": "C.what_actually",
+      "assessment": "Правильно ограничивает тезис обычными методами: default-аргументы сами не дают Java перегрузок; zero-arg constructor со всеми default имеет отдельное правило."
+    },
+    {
+      "field": "C.source_of_confusion",
+      "assessment": "Правдоподобно описывает ошибочное предположение о видимости defaults, но охватывает только @JvmOverloads."
+    },
+    {
+      "field": "C.if_it_were_true",
+      "assessment": "Понятное следствие ошибочного тезиса, но лишь повторяет узкий аспект @JvmOverloads."
+    },
+    {
+      "field": "C.how_it_should_be",
+      "assessment": "Правильно указывает на перегрузки, но не покрывает @JvmStatic и @JvmField."
+    },
+    {
+      "field": "D.what_actually",
+      "assessment": "Различает static метод @JvmStatic и сам companion, компилируемый как Companion; сформулированный технический тезис верен."
+    },
+    {
+      "field": "D.source_of_confusion",
+      "assessment": "Понятно обозначает заблуждение о назначении @JvmStatic, но оставляет две другие аннотации за рамками."
+    },
+    {
+      "field": "D.if_it_were_true",
+      "assessment": "Ссылка на Config.default() сама некорректна для Java, поскольку default — keyword; по смыслу проверка intended вызова дополнительно смешивает создание Companion и static мост."
+    },
+    {
+      "field": "D.how_it_should_be",
+      "assessment": "Верно схватывает устранение .Companion для вызова, но не описывает @JvmOverloads и @JvmField."
+    }
+  ],
+  "axes": {
+    "SEMANTICS": "Ключ A защищаем как общий верный тезис о Java API, хотя детали механизмов в нём не названы; B-D содержат ложные либо узкие утверждения.",
+    "ANSC": "A покрывает все три лишь зонтичной фразой, тогда как B-D явно затрагивают только часть или дают общее опровержение; ни один wrong не является полноценным альтернативным описанием трёх ролей.",
+    "SFPL": "A выделяется множественным предметом и широкой позитивной формулировкой, B инвертирует направление, C изолирует defaults, D изолирует @JvmStatic; каркасы заметно несопоставимы.",
+    "RU": "Русский в целом понятен; «видны» в C разговорно, а Java внутри inline-code в A и неточное «вложенный класс» в D ухудшают терминологическую точность.",
+    "FACTS": "Официальные API описывают static bridge у JvmStatic, перегрузки с подстановкой defaults у JvmOverloads и поле без accessors у JvmField; дефект Config.default() подтверждён правилом Java keyword.",
+    "SECTIONS": "Есть неполные пояснения; A.example содержит некомпилирующий Java-вызов, а D.if_it_were_true наследует тот же дефект.",
+    "LINKAGE": "Зонтичная формулировка A связана с вопросом, но конкретные ответы о трёх разных аннотациях в теории требовали бы деталей, которых вариант не показывает."
+  },
+  "current_theory": "Текущая теория Q38 разграничивает роли: JvmStatic добавляет static метод/аксессоры; JvmOverloads генерирует overloads для default параметров обычных функций/конструкторов; JvmField открывает backing field без getter/setter. В примере Config.createDefault() используется валидное Java имя; zero-argument конструктор для всех-default constructor не доказывает общее правило для методов.",
+  "openedURLs": [
+    "https://kotlinlang.org/docs/java-to-kotlin-interop.html",
+    "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-static/",
+    "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-overloads/",
+    "https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-field/"
+  ],
+  "limits": [
+    "Не выполнялась компиляция Java/Kotlin примера; вывод о default как Java keyword — синтаксический факт языка.",
+    "Подробные ограничения @JvmField на каждую категорию property отдельно не сверялись в этом проходе.",
+    "Оценка языка — редакторская, без отдельной автоматической диагностики."
+  ],
+  "discrepancy": "Q38 theory в текущем снимке уже исправляет центральную путаницу и указывает на разницу методов и конструкторов; MCQ объяснения местами упрощают это правило, а Config.default() в объяснениях невалиден как Java identifier."
+}

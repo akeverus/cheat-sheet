@@ -1,0 +1,11 @@
+import java.lang.reflect.Modifier
+fun main() {
+ check(Modifier.isStatic(Config::class.java.getDeclaredMethod("createDefault").modifiers))
+ check(!Modifier.isStatic(Config.Companion::class.java.getDeclaredMethod("createDefault").modifiers))
+ val field=Config::class.java.getDeclaredField("VERSION")
+ check(Modifier.isPublic(field.modifiers) && Modifier.isStatic(field.modifiers))
+ check(Config.Companion::class.java.declaredMethods.none { it.name=="getVERSION" })
+ check(Config::class.java.declaredMethods.filter{it.name=="connect"}.map{it.parameterCount}.toSet()==setOf(0,1,2,3))
+ check(DefaultCtor::class.java.getConstructor().newInstance().id==1)
+ println("annotation boundaries: PASS")
+}

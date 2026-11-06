@@ -1,0 +1,26 @@
+from pathlib import Path
+import subprocess,json,hashlib
+W=Path('/tmp/kotlin-theory-jvm-plugins-20261106');O=W/'probes';O.mkdir(exist_ok=True);J='/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/';K='/usr/local/bin/kotlinc';P='/usr/local/Cellar/kotlin/2.4.10/libexec/lib/noarg-compiler-plugin.jar'
+def run(c):
+ p=subprocess.run(c,capture_output=True,text=True);return {'command':c,'exit':p.returncode,'stdout':p.stdout,'stderr':p.stderr}
+noarg=O/'NoArgModel.kt';noarg.write_text('''package fixture
+@Target(AnnotationTarget.CLASS) annotation class Hydratable
+object State { var calls=0 }
+@Hydratable class EntityModel(val id:String) {
+ val marker=7
+ init { State.calls++ }
+}
+fun main() {
+ val ctor=EntityModel::class.java.getDeclaredConstructor()
+ val model=ctor.newInstance()
+ println("synthetic=${ctor.isSynthetic};marker=${model.marker};calls=${State.calls}")
+}
+''')
+rows=[]
+for label,extra in [('default',[]),('initializers',['-P','plugin:org.jetbrains.kotlin.noarg:invokeInitializers=true'])]:
+ jar=O/(label+'.jar');c=run([K,str(noarg),'-Xplugin='+P,'-P','plugin:org.jetbrains.kotlin.noarg:annotation=fixture.Hydratable',*extra,'-jvm-target','17','-include-runtime','-d',str(jar)]);assert c['exit']==0,c;r=run([J+'java','-jar',str(jar)]);assert r['exit']==0,r;rows.append({'label':label,'source_sha256':hashlib.sha256(noarg.read_bytes()).hexdigest(),'compile':c,'run':r});print(label,r['stdout'].strip(),flush=True)
+java=O/'DirectJava.java';java.write_text('import fixture.EntityModel; public class DirectJava { public static void main(String[] args) { System.out.println(new EntityModel().getMarker()); } }\n');classes=O/'java-classes';classes.mkdir(exist_ok=True);jc=run([J+'javac','--release','17','-cp',str(O/'default.jar'),'-d',str(classes),str(java)]);print('noarg Java direct compile exit',jc['exit'],flush=True)
+k=O/'DirectKotlin.kt';k.write_text('fun create()=fixture.EntityModel()\n');kc=run([K,str(k),'-classpath',str(O/'default.jar'),'-jvm-target','17','-d',str(O/'direct-kotlin.jar')]);print('noarg Kotlin direct compile exit',kc['exit'],flush=True)
+mixed=O/'MixedDefaults.kt';mixed.write_text('class Mixed { @JvmOverloads fun connect(protocol:String="https", host:String, port:Int=443):String="$protocol:$host:$port" }\n');mc=run([K,str(mixed),'-jvm-target','17','-d',str(O/'mixed.jar')]);assert mc['exit']==0,mc;jp=run([J+'javap','-p','-classpath',str(O/'mixed.jar'),'Mixed']);print(jp['stdout'],flush=True)
+keyword=O/'Keyword.kt';keyword.write_text('class Keyword { companion object { @JvmStatic fun default()=Keyword() } }\n');kk=run([K,str(keyword),'-jvm-target','17','-d',str(O/'keyword.jar')]);assert kk['exit']==0,kk;bad=O/'KeywordJava.java';bad.write_text('class KeywordJava { Object value=Keyword.default(); }\n');kj=run([J+'javac','--release','17','-cp',str(O/'keyword.jar'),'-d',str(classes),str(bad)]);print('Java default keyword compile exit',kj['exit'],flush=True)
+(W/'preflight-probes.json').write_text(json.dumps({'compiler':run([K,'-version']),'noarg':rows,'java_direct_noarg':jc,'kotlin_direct_noarg':kc,'mixed_defaults':{'compile':mc,'javap':jp},'java_keyword':{'kotlin_compile':kk,'java_compile':kj}},ensure_ascii=False,indent=2)+'\n')

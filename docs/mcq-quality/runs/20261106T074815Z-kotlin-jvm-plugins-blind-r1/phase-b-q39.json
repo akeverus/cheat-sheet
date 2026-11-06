@@ -1,0 +1,121 @@
+{
+  "options": [
+    {
+      "label": "A",
+      "truth": "FALSE_ROLE_SWAP",
+      "scope_completeness": "COMPLETE_TWO_PLUGIN_SCOPE",
+      "refutation": "Роли перепутаны: noArg генерирует конструктор без аргументов, а allOpen открывает настроенные классы/члены; дополнительно Spring AOP не всегда требует allOpen."
+    },
+    {
+      "label": "B",
+      "truth": "FALSE",
+      "scope_completeness": "INCOMPLETE_FOR_QUESTION",
+      "refutation": "kotlin-spring действительно является wrapper над allOpen, но вопрос о noArg тоже; kotlin-jpa preset связывает noArg и allOpen, а не отделяет их."
+    },
+    {
+      "label": "C",
+      "truth": "TRUE_WITH_WORDING_IMPRECISION",
+      "scope_completeness": "COMPLETE_BOTH_PLUGINS",
+      "refutation": "Содержательно защищаемо: allOpen открывает аннотированные классы для Spring, noArg создаёт zero-argument constructor; «пустой» не обещает пустое тело."
+    },
+    {
+      "label": "D",
+      "truth": "FALSE",
+      "scope_completeness": "INCOMPLETE_OMITS_NOARG",
+      "refutation": "allOpen открывает классы/члены с настроенными аннотациями, а не делает их final; утверждение также не отвечает о noArg."
+    }
+  ],
+  "sections": [
+    {
+      "field": "A.what_actually",
+      "assessment": "Буквально верно, что noArg относится к JPA/reflection, а allOpen к Spring AOP, однако назначение noArg сформулировано узко и Spring AOP не всегда требует allOpen."
+    },
+    {
+      "field": "A.source_of_confusion",
+      "assessment": "«Плагины путают местами» естественно объясняет ошибку, но не называет точные механизмы."
+    },
+    {
+      "field": "A.if_it_were_true",
+      "assessment": "Контрфактуал перевёрнут: если бы неверное распределение ролей было реальным, именно noArg не создавал бы сущности, а allOpen не помогал бы proxy; нынешнее предложение этого не проговаривает."
+    },
+    {
+      "field": "A.how_it_should_be",
+      "assessment": "«noArg → пустой конструктор» имеет в виду конструктор без параметров, но буквально может означать пустое тело; также не исправляет ошибку allOpen."
+    },
+    {
+      "field": "B.what_actually",
+      "assessment": "Верно: kotlin-spring — преднастроенная обёртка allOpen; цитата не описывает noArg, поскольку её тезис ограничен отношением kotlin-spring к allOpen/noArg."
+    },
+    {
+      "field": "B.source_of_confusion",
+      "assessment": "Понятно называет ошибочное предположение о несвязанности, но не объясняет noArg."
+    },
+    {
+      "field": "B.if_it_were_true",
+      "assessment": "Контрфактуал не следует: независимость механизмов не означала бы, что оба надо настраивать дважды."
+    },
+    {
+      "field": "B.how_it_should_be",
+      "assessment": "Верно: kotlin-spring/allOpen и kotlin-jpa являются preset; jpa включает noArg и allOpen для поддерживаемых JPA-аннотаций."
+    },
+    {
+      "field": "C.explanation",
+      "assessment": "allOpen часть корректна; noArg добавляет zero-argument constructor, а не обязательно constructor с пустым телом; уточнение «для JPA» уместно."
+    },
+    {
+      "field": "C.example",
+      "assessment": "Показывает раздельную настройку по аннотациям; пример не иллюстрирует, что kotlin-jpa preset объединяет noArg и allOpen."
+    },
+    {
+      "field": "C.when_to_apply",
+      "assessment": "Spring/JPA — разумные контексты, но не универсальное условие: allOpen нужно для subclass proxy, а noArg для framework/reflection; Spring может применять JDK proxies."
+    },
+    {
+      "field": "C.edge_cases",
+      "assessment": "Верно: kotlin-spring преднастраивает allOpen, kotlin-jpa — noArg вместе с allOpen."
+    },
+    {
+      "field": "C.related",
+      "assessment": "Тезис слишком широк: Spring AOP может использовать JDK interface proxies, которым не нужно наследование от target; для CGLIB subclass proxy final мешает."
+    },
+    {
+      "field": "D.what_actually",
+      "assessment": "Неверно: allOpen делает настроенные классы/члены open; цитата не описывает noArg."
+    },
+    {
+      "field": "D.source_of_confusion",
+      "assessment": "Обозначает инверсию назначения allOpen, но оставляет роль noArg без внимания."
+    },
+    {
+      "field": "D.if_it_were_true",
+      "assessment": "Контрфактуал преувеличен: final class блокирует CGLIB subclass proxy, но Spring AOP может использовать JDK interface proxy."
+    },
+    {
+      "field": "D.how_it_should_be",
+      "assessment": "Верно говорит о снятии final с аннотированных классов, но не объясняет noArg."
+    }
+  ],
+  "axes": {
+    "SEMANTICS": "C верно описывает обе функции, если читать «пустой» как без аргументов; A меняет роли, B/D ложны либо ограничены.",
+    "ANSC": "A и C называют роли обоих плагинов, хотя A переставляет их; B касается только kotlin-spring/allOpen, D только allOpen, поэтому они неполны по вопросу.",
+    "SFPL": "A и C используют параллельную двухчастную схему «плагин — роль»; B и D короче и покрывают только часть вопроса, так что C выделен полнотой/каркасом.",
+    "RU": "Формулировки в целом понятны; в C точнее «конструктор без аргументов», в D избыточно пояснение наследования после слова final.",
+    "FACTS": "Документация подтверждает HIDDEN generated ctor доступен Java и reflection, invokeInitializers=false по умолчанию; kotlin-jpa применяет оба плагина; Spring различает JDK interface и CGLIB subclass proxies.",
+    "SECTIONS": "Суждения даны отдельно по всем цитатам; объяснения не восполняют пропуск noArg в visible B/D, а контрфактуалы A/B/D имеют отмеченные логические дефекты.",
+    "LINKAGE": "C наиболее прямо отвечает на оба термина вопроса; B и D тематичны, но охватывают только один плагин."
+  },
+  "current_theory": "allOpen делает настроенные аннотированные классы и члены open; noArg добавляет zero-argument constructor, помеченный Deprecated(HIDDEN), доступный Java/reflection, но не Kotlin. invokeInitializers выключен по умолчанию. kotlin-spring — preset allOpen; kotlin-jpa — preset noArg + allOpen для Entity/Embeddable/MappedSuperclass. Spring AOP может использовать JDK interface proxies или CGLIB subclass proxies.",
+  "source_urls": [
+    "https://kotlinlang.org/docs/all-open-plugin.html",
+    "https://kotlinlang.org/docs/no-arg-plugin.html",
+    "https://kotlinlang.org/docs/kotlin-spring-plugin.html",
+    "https://kotlinlang.org/docs/kotlin-jpa-plugin.html",
+    "https://docs.spring.io/spring-framework/reference/core/aop/proxying.html"
+  ],
+  "limits": [
+    "Не запускалась компиляция примеров; оценки основаны на официальных документационных страницах.",
+    "UNCERTAIN: точный эффект фразы «пустой конструктор» зависит от разговорного прочтения; технически надёжный термин — «без аргументов».",
+    "Предыдущая попытка записи прервалась ошибкой распаковки данных до создания JSON; этот файл создан заново и проверен."
+  ],
+  "discrepancy": "Видимый C корректен по основным ролям, но слово «пустой» двусмысленно. A переставляет роли; B/D не описывают оба плагина. Теория точнее раскрывает Java-callable HIDDEN конструктор, invokeInitializers и полный jpa preset."
+}

@@ -1,0 +1,12 @@
+package fixture
+@Target(AnnotationTarget.CLASS) annotation class Hydratable
+object State { var calls=0 }
+@Hydratable class EntityModel(val id:String) {
+ val marker=7
+ init { State.calls++ }
+}
+fun main() {
+ val ctor=EntityModel::class.java.getDeclaredConstructor()
+ val model=ctor.newInstance()
+ println("synthetic=${ctor.isSynthetic};marker=${model.marker};calls=${State.calls}")
+}

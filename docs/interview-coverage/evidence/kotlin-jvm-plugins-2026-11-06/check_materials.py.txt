@@ -1,0 +1,74 @@
+from pathlib import Path
+import json, re, hashlib, subprocess, importlib.util, sys, datetime
+
+W = Path('/tmp/kotlin-theory-jvm-plugins-20261106')
+M = Path('cheatsheets/interview/programming-languages/kotlin/kotlin-interview.md')
+S = Path('modules/quiz-app/src/main/resources/seed/mcq/programming-languages/kotlin/kotlin-interview.json')
+a = (W / 'theory-before.md').read_text()
+b = M.read_text()
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+def sec(s, n):
+    return re.search(rf'^## Q{n}\..*?(?=^## Q\d+\.|\Z)', s, re.M | re.S)[0]
+assert [n for n in range(1, 46) if sec(a,n) != sec(b,n)] == [38,39]
+assert re.findall(r'^## Q\d+\..*$',a,re.M) == re.findall(r'^## Q\d+\..*$',b,re.M)
+assert a[:a.index('## Q1.')] == b[:b.index('## Q1.')]
+assert S.read_bytes() == (W / 'seed-before.json').read_bytes()
+runtime = json.loads((W / 'runtime-results.json').read_text())
+assert runtime['md_sha256'] == sha(M)
+for row in runtime['builds']:
+    for p, h in row['sources'].items():
+        assert sha(Path(p)) == h
+for row in runtime['plugins'].values():
+    assert sha(Path(row['path'])) == row['sha256']
+assert len(runtime['runs']) == 10 and len(runtime['expected_compile_failures']) == 7
+v = {'changed_theory_questions':[38,39], 'all45_headings_preserved':True,
+     'prefix_metadata_toc_preserved':True, 'other43_answers_unchanged':True,
+     'production_seed_byte_unchanged':True, 'before_md_sha256':sha(W/'theory-before.md'),
+     'after_md_sha256':sha(M), 'seed_sha256':sha(S),
+     'runtime_md_sources_plugin_hashes_current':True,
+     'jvm_runs':10, 'expected_compiler_failures':7}
+(W/'validation.json').write_text(json.dumps(v,indent=2)+'\n')
+commands = [
+ ('schema.json',['python3','scripts/mcq_validation.py','--json',str(S)]),
+ ('linkage.txt',['python3','scripts/mcq-linkage-scan.py',str(S),'--json',str(W/'linkage.json'),'--quiet']),
+ ('anti-tell.txt',['python3','scripts/mcq-anti-tell-scan.py',str(S)]),
+ ('md-no-mcq.txt',['bash','scripts/verify-md-no-mcq.sh',str(M)]),
+ ('diff-check.txt',['git','diff','--check','--',str(M)]),
+ ('yaml.txt',['ruby','-r','yaml','-r','date','-e','s=File.read(ARGV[0]);d=YAML.safe_load(s.split("---",3)[1],permitted_classes:[Date],aliases:true);puts "YAML #{d.length} fields PASS"',str(M)])]
+out = []
+for f, cmd in commands:
+    p = subprocess.run(cmd,capture_output=True,text=True)
+    (W/f).write_text(p.stdout)
+    out.append({'command':cmd,'exit':p.returncode,'stderr':p.stderr})
+    print(f,p.returncode)
+assert all(x['exit']==0 for x in out),out
+sys.path.insert(0,str(Path('scripts').resolve()))
+sp = importlib.util.spec_from_file_location('wf',Path('scripts/mcq-workflow.py'))
+wf = importlib.util.module_from_spec(sp)
+sp.loader.exec_module(wf)
+_,man,_,_ = wf.current_run((W/'run-id.txt').read_text().strip())
+(W/'commands.json').write_text(json.dumps({'checks':out,'current_run':'PASS','block_hashes':man['block_hashes'],'rules_sha256':man['rules_sha256']},indent=2)+'\n')
+deps = json.loads((W/'current-file-dependencies-before.json').read_text())
+for row in deps:
+    assert sha(Path(row['record'])) == row['record_sha256']
+    assert row['dependency_sha256'] == v['before_md_sha256']
+assert sec(a,33)==sec(b,33) and sec(a,34)==sec(b,34)
+proof = {'checked_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+ 'current_registered_file_dependencies_before':deps,'new_theory_sha256':sha(M),
+ 'coarse_q34_dependency_current':False,
+ 'unchanged_theory_block_sha256':{str(n):hashlib.sha256(sec(b,n).encode()).hexdigest() for n in [33,34]},
+ 'production_seed_unchanged':True,
+ 'semantic_review':'Q34.related refers to Sequence/Q33. Both bodies and all seed options/sections remain unchanged. Q38/Q39 edits do not change that meaning; explicit whole-file dependency still becomes stale.',
+ 'owner_action':'Original reviewer must refresh the Q34 whole-file dependency against the new Markdown SHA. Per-Q equality is review evidence, not an automatic FINAL renewal.',
+ 'limits':['Author dependency review only; no new independent Q34 acceptance.']}
+(W/'dependency-revalidation.json').write_text(json.dumps(proof,ensure_ascii=False,indent=2)+'\n')
+old = json.loads(Path('docs/interview-coverage/evidence/kotlin-open-accessors-2026-11-06/pending-q39-linked-issue.json').read_text())
+assert old['exact_claim'] in sec(a,39) and old['exact_claim'] not in sec(b,39)
+resolution = {'status':'THEORY_CLAIM_CORRECTED_MCQ_STILL_OPEN','previous_issue':old,
+ 'new_theory_block_sha256':hashlib.sha256(sec(b,39).encode()).hexdigest(),
+ 'resolution':'All-open is scoped to subclass proxies. JDK interface proxies do not subclass the final target. No-arg is separately defined; already existing suitable constructors do not require adding one.',
+ 'source':'https://docs.spring.io/spring-framework/reference/core/aop/proxying.html',
+ 'runtime_limits':'Proxy distinction is source-checked; no Spring proxy application was run. Custom-marker compiler transformations were executed.',
+ 'not_claimed':'No MCQ Q39 or whole-topic FINAL.'}
+(W/'pending-q39-resolution.json').write_text(json.dumps(resolution,ensure_ascii=False,indent=2)+'\n')
+print(json.dumps(v,indent=2))

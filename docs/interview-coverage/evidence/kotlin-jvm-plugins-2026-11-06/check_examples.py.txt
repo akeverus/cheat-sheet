@@ -1,0 +1,60 @@
+from pathlib import Path
+import subprocess,json,re,hashlib
+W=Path('/tmp/kotlin-theory-jvm-plugins-20261106');O=W/'runtime';O.mkdir(exist_ok=True);J='/Users/sergeyvoronin/Library/Java/JavaVirtualMachines/ms-21.0.10/Contents/Home/bin/';K='/usr/local/bin/kotlinc';LIB=Path('/usr/local/Cellar/kotlin/2.4.10/libexec/lib');NO=LIB/'noarg-compiler-plugin.jar';ALL=LIB/'allopen-compiler-plugin.jar';M=Path('cheatsheets/interview/programming-languages/kotlin/kotlin-interview.md');m=M.read_text();builds=[];runs=[];negative=[]
+def run(c):
+ p=subprocess.run(c,capture_output=True,text=True);return {'command':c,'exit':p.returncode,'stdout':p.stdout,'stderr':p.stderr}
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def fences(n,lang):return re.findall(r'```'+lang+r'\n(.*?)\n```',re.search(rf'^## Q{n}\..*?(?=^## Q\d+\.|\Z)',m,re.M|re.S)[0],re.S)
+def put(name,s):
+ p=O/name;p.write_text(s if s.endswith('\n') else s+'\n');return p
+def build(label,files,jar,flags=None,cp=None):
+ c=[K,*map(str,files),*(flags or [])]
+ if cp:c+=['-classpath',cp]
+ c+=['-jvm-target','17','-include-runtime','-d',str(jar)];r=run(c);assert r['exit']==0,r;builds.append({'label':label,'sources':{str(p):sha(p) for p in files},'result':r})
+def java_build(label,file,cp,dest):
+ dest.mkdir(exist_ok=True);r=run([J+'javac','--release','17','-cp',cp,'-d',str(dest),str(file)]);assert r['exit']==0,r;builds.append({'label':label,'sources':{str(file):sha(file)},'result':r})
+def execute(label,cp,main,expected):
+ r=run([J+'java','-cp',cp,main]);assert r['exit']==0 and r['stdout']==expected,r;runs.append({'label':label,'result':r});print(label+': PASS',flush=True)
+config=put('Config.kt',fences(38,'kotlin')[0]);client=put('JavaClient.java',fences(38,'java')[0]);api=O/'api.jar';build('exact-config',[config],api);jc=O/'client-classes';java_build('exact-java-client',client,str(api),jc);execute('ExactQ38Java',str(api)+':'+str(jc),'JavaClient','1.0\nlocalhost:8080:false\napi.example.test:8080:false\napi.example.test:443:false\napi.example.test:443:true\n')
+fixtures=put('ApiFixtures.kt','''class PlainConfig {
+ companion object { fun createDefault()=PlainConfig();val VERSION="plain" }
+ fun connect(host:String="localhost")=host
+}
+class DefaultCtor(val id:Int=1)
+''')
+boundary=put('ApiBoundary.kt','''import java.lang.reflect.Modifier
+fun main() {
+ check(Modifier.isStatic(Config::class.java.getDeclaredMethod("createDefault").modifiers))
+ check(!Modifier.isStatic(Config.Companion::class.java.getDeclaredMethod("createDefault").modifiers))
+ val field=Config::class.java.getDeclaredField("VERSION")
+ check(Modifier.isPublic(field.modifiers) && Modifier.isStatic(field.modifiers))
+ check(Config.Companion::class.java.declaredMethods.none { it.name=="getVERSION" })
+ check(Config::class.java.declaredMethods.filter{it.name=="connect"}.map{it.parameterCount}.toSet()==setOf(0,1,2,3))
+ check(DefaultCtor::class.java.getConstructor().newInstance().id==1)
+ println("annotation boundaries: PASS")
+}
+''');support=O/'support.jar';build('api-boundary',[fixtures,boundary],support,cp=str(api));execute('AnnotationBoundaries',str(api)+':'+str(support),'ApiBoundaryKt','annotation boundaries: PASS\n')
+plain=put('PlainJavaClient.java','''public class PlainJavaClient {
+ public static void main(String[] args) {
+  if (PlainConfig.Companion.createDefault()==null) throw new AssertionError();
+  if (!"plain".equals(PlainConfig.Companion.getVERSION())) throw new AssertionError();
+  if (new DefaultCtor().getId()!=1) throw new AssertionError();
+  System.out.println("plain Java boundaries: PASS");
+ }
+}
+''');pc=O/'plain-classes';java_build('plain-java-client',plain,str(support),pc);execute('PlainJavaBoundaries',str(support)+':'+str(pc),'PlainJavaClient','plain Java boundaries: PASS\n')
+model=put('Model.kt',fences(39,'kotlin')[1]);config_fragment=put('build.gradle.kts.txt',fences(39,'kotlin')[0]);no_flags=['-Xplugin='+str(NO),'-P','plugin:org.jetbrains.kotlin.noarg:annotation=example.ModelMarker'];all_flags=['-Xplugin='+str(ALL),'-P','plugin:org.jetbrains.kotlin.allopen:annotation=example.ModelMarker'];default=O/'model-default.jar';initial=O/'model-initializers.jar';no_only=O/'model-noarg-only.jar';all_only=O/'model-allopen-only.jar'
+build('exact-model-default',[model],default,flags=no_flags+all_flags);execute('ExactQ39Default',str(default),'example.ModelKt','0\n0\n');build('exact-model-initializers',[model],initial,flags=no_flags+all_flags+['-P','plugin:org.jetbrains.kotlin.noarg:invokeInitializers=true']);execute('ExactQ39Initializers',str(initial),'example.ModelKt','7\n1\n')
+direct=put('DirectModelJava.java','''import example.Model;import example.ConstructionTrace;
+public class DirectModelJava { public static void main(String[] args) { Model value=new Model();System.out.println(value.getMarker());System.out.println(ConstructionTrace.INSTANCE.getCalls()); } }
+''');dc=O/'direct-model-classes';java_build('direct-model-java',direct,str(default),dc);execute('DirectJavaNoArgDefault',str(default)+':'+str(dc),'DirectModelJava','0\n0\n');execute('DirectJavaNoArgInitializers',str(initial)+':'+str(dc),'DirectModelJava','7\n1\n')
+mods=put('ModelModifiers.java','''import example.Model;import java.lang.reflect.Modifier;
+public class ModelModifiers { public static void main(String[] args) { boolean zero;try { Model.class.getDeclaredConstructor();zero=true; }catch(NoSuchMethodException e){zero=false;}System.out.println("final="+Modifier.isFinal(Model.class.getModifiers())+";zero="+zero); } }
+''');mdc=O/'modifier-classes';java_build('model-modifiers',mods,str(default),mdc);execute('BothPluginsShape',str(default)+':'+str(mdc),'ModelModifiers','final=false;zero=true\n');build('model-noarg-only',[model],no_only,flags=no_flags);execute('NoArgOnlyShape',str(no_only)+':'+str(mdc),'ModelModifiers','final=true;zero=true\n');build('model-allopen-only',[model],all_only,flags=all_flags);execute('AllOpenOnlyShape',str(all_only)+':'+str(mdc),'ModelModifiers','final=false;zero=false\n')
+for name,source,diag in [('StaticWithoutAnnotation','class StaticWithoutAnnotation { Object value=PlainConfig.createDefault(); }\n','cannot find symbol'),('FieldWithoutAnnotation','class FieldWithoutAnnotation { Object value=PlainConfig.VERSION; }\n','private access'),('GetterWithJvmField','class GetterWithJvmField { Object value=Config.Companion.getVERSION(); }\n','cannot find symbol'),('OverloadWithoutAnnotation','class OverloadWithoutAnnotation { Object value=new PlainConfig().connect(); }\n','cannot be applied'),('ArbitraryDefaultSubset','class ArbitraryDefaultSubset { Object value=new Config().connect(443); }\n','incompatible types')]:
+ p=put(name+'.java',source);dest=O/'negative-java';dest.mkdir(exist_ok=True);r=run([J+'javac','--release','17','-cp',str(api)+':'+str(support),'-d',str(dest),str(p)]);assert r['exit']!=0 and diag.lower() in r['stderr'].lower(),r;negative.append({'label':name,'source_sha256':sha(p),'expected_diagnostic':diag,'result':r});print(name+': expected compiler failure',flush=True)
+for name,source,cp,diag in [('KotlinHiddenNoArg','fun make()=example.Model()\n',str(default),'no value passed'),('JvmFieldComputed','class Invalid { @JvmField val value:Int get()=42 }\n','', 'backing field')]:
+ p=put(name+'.kt',source);cmd=[K,str(p),'-jvm-target','17','-d',str(O/(name+'.jar'))]
+ if cp:cmd+=['-classpath',cp]
+ r=run(cmd);assert r['exit']!=0 and diag.lower() in r['stderr'].lower(),r;negative.append({'label':name,'source_sha256':sha(p),'expected_diagnostic':diag,'result':r});print(name+': expected compiler failure',flush=True)
+(W/'runtime-results.json').write_text(json.dumps({'md_sha256':sha(M),'compiler':run([K,'-version']),'java':run([J+'java','-version']),'plugins':{p.name:{'path':str(p),'sha256':sha(p)} for p in [NO,ALL]},'builds':builds,'runs':runs,'expected_compile_failures':negative,'config_fragment':{'source_sha256':sha(config_fragment),'status':'SOURCE_CHECKED_AND_FLAGS_EQUIVALENT; GRADLE_NOT_RUN'},'limits':['Gradle absent; config fragment not executed. Compiler plugin semantic equivalents tested via local2.4.10 CLI.','No real Spring/JPA application or ORM hydration run. JVM only.','Current jpa/spring preset composition source-checked, custom markers used in executed fixtures.']},ensure_ascii=False,indent=2)+'\n')

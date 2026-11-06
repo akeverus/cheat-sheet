@@ -1,0 +1,96 @@
+{
+  "visible_question": "Что такое плагины allOpen и noArg?",
+  "options": [
+    {
+      "label": "A",
+      "text": "Плагин `noArg` нужен для Spring AOP-прокси, а allOpen — для создания сущностей через reflection.",
+      "correct": false
+    },
+    {
+      "label": "B",
+      "text": "Плагин `kotlin-spring` — это отдельный механизм, вообще никак не связанный с allOpen и noArg.",
+      "correct": false
+    },
+    {
+      "label": "C",
+      "text": "`allOpen` делает аннотированные классы open для Spring, а noArg генерирует пустой конструктор.",
+      "correct": true
+    },
+    {
+      "label": "D",
+      "text": "Плагин `allOpen`, наоборот, делает аннотированные классы final, тем самым запрещая их наследование.",
+      "correct": false
+    }
+  ],
+  "fields": [
+    {
+      "field": "A.what_actually",
+      "text": "noArg — для JPA/reflection, allOpen — для Spring AOP; не наоборот."
+    },
+    {
+      "field": "A.source_of_confusion",
+      "text": "Плагины путают местами."
+    },
+    {
+      "field": "A.if_it_were_true",
+      "text": "Тогда сущности не создавались бы через reflection."
+    },
+    {
+      "field": "A.how_it_should_be",
+      "text": "noArg → пустой конструктор."
+    },
+    {
+      "field": "B.what_actually",
+      "text": "kotlin-spring — обёртка над allOpen, а не отдельный механизм."
+    },
+    {
+      "field": "B.source_of_confusion",
+      "text": "Кажется, они не связаны."
+    },
+    {
+      "field": "B.if_it_were_true",
+      "text": "Тогда настраивать пришлось бы дважды."
+    },
+    {
+      "field": "B.how_it_should_be",
+      "text": "kotlin-spring/jpa — преднастроенные."
+    },
+    {
+      "field": "C.explanation",
+      "text": "allOpen делает аннотированные классы open (для Spring); noArg генерирует пустой конструктор (для JPA)."
+    },
+    {
+      "field": "C.example",
+      "text": "allOpen { annotation(Service) }; noArg { annotation(Entity) }."
+    },
+    {
+      "field": "C.when_to_apply",
+      "text": "Когда Kotlin-классы работают со Spring/JPA."
+    },
+    {
+      "field": "C.edge_cases",
+      "text": "kotlin-spring и kotlin-jpa — обёртки над ними."
+    },
+    {
+      "field": "C.related",
+      "text": "Spring AOP требует не-final классов."
+    },
+    {
+      "field": "D.what_actually",
+      "text": "allOpen делает классы OPEN, а не final."
+    },
+    {
+      "field": "D.source_of_confusion",
+      "text": "Назначение переворачивают."
+    },
+    {
+      "field": "D.if_it_were_true",
+      "text": "Тогда Spring AOP не работал бы."
+    },
+    {
+      "field": "D.how_it_should_be",
+      "text": "Снимает final с аннотированных."
+    }
+  ],
+  "current_theory": "## Q39. Что такое плагины `allOpen` и `noArg`?\n\nЭто compiler plugins с разными преобразованиями для классов с настроенными аннотациями:\n\n- **`all-open`** делает подходящие классы и члены открытыми для наследования/override без ручного `open`. Он полезен, когда framework строит прокси через подкласс. Для JDK interface proxy final target class сам по себе не препятствие, поэтому плагин не обязателен для любого Spring AOP.\n- **`no-arg`** добавляет конструктор **без аргументов**, например для reflective-создания объектов framework-ом. Он не открывает класс сам по себе. Если нужный конструктор уже существует, плагин не требуется ради его добавления.\n\nПример фрагмента `build.gradle.kts` для Kotlin 2.4.10, с собственной marker-аннотацией:\n\n```kotlin\nplugins {\n    kotlin(\"jvm\") version \"2.4.10\"\n    kotlin(\"plugin.allopen\") version \"2.4.10\"\n    kotlin(\"plugin.noarg\") version \"2.4.10\"\n}\n\nallOpen {\n    annotation(\"example.ModelMarker\")\n}\nnoArg {\n    annotation(\"example.ModelMarker\")\n    invokeInitializers = false // значение по умолчанию\n}\n```\n\n```kotlin\n// Model.kt\npackage example\n\n@Target(AnnotationTarget.CLASS)\nannotation class ModelMarker\n\nobject ConstructionTrace {\n    var calls = 0\n}\n\n@ModelMarker\nclass Model(var name: String) {\n    val marker = 7\n    init { ConstructionTrace.calls++ }\n}\n\nfun main() {\n    val constructor = Model::class.java.getDeclaredConstructor()\n    val model = constructor.newInstance()\n    println(model.marker)            // 0: initializer не выполнен\n    println(ConstructionTrace.calls) // 0\n}\n```\n\nПри `invokeInitializers=true` тот же generated constructor выполняет initializers: пример напечатает `7` и `1`. Это не обычный вызов primary constructor с корректными обязательными аргументами: framework ещё должен заполнить состояние объекта. Не следует считать «без аргументов» обещанием пустого тела или обычной инициализации.\n\nВ Kotlin 2.4.10 generated constructor скрыт от прямого Kotlin-вызова `Model()`, но доступен из Java и через reflection; не называйте его безусловно недоступным для Java source. `kotlin-spring` — preset над all-open для Spring-аннотаций. По актуальной документации `kotlin-jpa` настраивает **no-arg и all-open** для JPA-аннотаций; это шире одного no-arg преобразования. Версии compiler plugins должны соответствовать версии Kotlin. [All-open](https://kotlinlang.org/docs/all-open-plugin.html), [No-arg](https://kotlinlang.org/docs/no-arg-plugin.html), [kotlin-spring](https://kotlinlang.org/docs/kotlin-spring-plugin.html), [kotlin-jpa](https://kotlinlang.org/docs/kotlin-jpa-plugin.html), [Spring proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html).\n\n"
+}

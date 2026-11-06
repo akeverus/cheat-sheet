@@ -1,0 +1,89 @@
+from pathlib import Path
+import json, hashlib, datetime
+
+W=Path('/tmp/kotlin-theory-jvm-plugins-20261106')
+inp=json.loads((W/'input-before.json').read_text())
+def write(name,data):
+    (W/name).write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+def rows(values, kind):
+    return [dict(zip(('label','truth','ansc','assessment') if kind=='option' else ('field','status','assessment'),v)) for v in values]
+q38opts=rows([
+ ('A','TRUE_GENERAL_PURPOSE','INCOMPLETE_THREE_ROLES','Общий результат для Java API верен. Польза каждой из трёх перечисленных аннотаций не раскрыта; sections не дополняют видимый вариант.'),
+ ('B','FALSE_DIRECTION','INCOMPLETE_THREE_ROLES','Направление интеропа обращено. Как и A, зонтичная фраза не описывает отдельные роли трёх аннотаций; законченное ложное предложение не получает отдельный PASS полноты.'),
+ ('C','FALSE_AS_GENERAL_DEFAULT_ACCESS','INCOMPLETE_OMITS_TWO','Java вызывает конкретные JVM-сигнатуры, а не Kotlin default/named arguments. Для обычного метода пропуск аргумента требует подходящей перегрузки. All-default constructor может получить zero-arg overload и без аннотации; это не доступ Java к языковой семантике defaults. Нет ролей JvmStatic/JvmField.'),
+ ('D','FALSE_COMPANION_TRANSFORMATION','INCOMPLETE_OMITS_TWO','Companion компилируется отдельно без этой аннотации. JvmStatic добавляет static bridge внешнего класса и сохраняет instance method companion. Нет ролей JvmOverloads/JvmField.')],'option')
+q38sections=rows([
+ ('A.explanation','PASS_GENERAL_WEAK','Общий результат верен, но почти дословно повторяет вариант и не объясняет конкретные изменения Java API.'),
+ ('A.example','FAIL_JAVA_KEYWORD','Config.default() не компилируется как Java source: default — keyword. Прямой доступ для JvmField — корректная идея. Новый createDefault проверен javac и выполнением.'),
+ ('A.when_to_apply','PASS','Вызов Kotlin из Java — верный контекст. Локальное поле применения не обязано повторять все три механизма.'),
+ ('A.edge_cases','NEEDS_SCOPE','Companion обычно становится вложенным Companion; формула про невидимые defaults требует различать Java default arguments и доступные перегрузки. All-default constructor имеет специальное правило zero-arg.'),
+ ('A.related','PASS','Интероп Kotlin/Java — корректная связь; от related не требуется самостоятельный полный ответ.'),
+ ('B.what_actually','PASS','Исправляет направление представления Kotlin API для Java-клиентов; не утверждает запрет вызывать тот же API из Kotlin.'),
+ ('B.source_of_confusion','PASS_WEAK','Правдоподобно называет путаницу направления, хотя очень кратко.'),
+ ('B.if_it_were_true','FAIL_NON_SEQUITUR','Из гипотетического обратного назначения аннотаций не следует, что они были бы не нужны. Нужен конкретный эффект той гипотезы, а не риторическое отрицание.'),
+ ('B.how_it_should_be','PASS_GENERAL_WEAK','Java API становится удобнее — верно, но исправление слабое без механизма. Не нужно автоматически требовать все три роли в каждом section.'),
+ ('C.what_actually','NEEDS_SCOPE','В цитате НЕТ ограничения обычными методами. Следует говорить о вызовах конкретных сигнатур и отличать all-default constructor, доступный без JvmOverloads. Конструктор не означает, что Java понимает Kotlin defaults.'),
+ ('C.source_of_confusion','PASS_WEAK','Ожидание автоматического переноса defaults объясняет заблуждение; предметный разбор лучше указал бы JVM-сигнатуры.'),
+ ('C.if_it_were_true','PASS_SCOPED_COUNTERFACTUAL','Если бы Java сама могла опускать Kotlin default-аргументы у методов, практическая нужда в таких перегрузках отпала бы. Это следствие гипотезы, а не описание текущего языка.'),
+ ('C.how_it_should_be','PASS_ORDINARY_METHOD_SCOPE','Для Java-вызова обычного метода с меньшим числом аргументов нужна доступная перегрузка; не всегда именно JvmOverloads — можно написать её вручную. Не распространять безусловно на all-default constructor.'),
+ ('D.what_actually','PASS','Верно отличает дополнительный static method от самого companion, который компилируется во вложенный класс.'),
+ ('D.source_of_confusion','PASS_WEAK','Называет ошибку назначения, но почти повторяет вариант.'),
+ ('D.if_it_were_true','FAIL_JAVA_KEYWORD_WEAK_COUNTERFACTUAL','Java-вызов Config.default() синтаксически невалиден независимо от гипотезы. Для корректного имени следовало бы показать отсутствие ожидаемого static bridge, не подменяя это keyword-ошибкой.'),
+ ('D.how_it_should_be','PASS_CALLSITE_SCOPE','Убирает .Companion в форме Java-вызова — допустимое сокращение. Не означает удаление companion или старого instance path: оба доступны.')],'section')
+q39opts=rows([
+ ('A','FALSE_ROLE_SWAP','PARTIAL_DEFINITION_DISAGREEMENT','Оба имени названы и роли Spring/reflection переставлены: правдоподобная ошибочная purpose-модель. Но не даны сами преобразования классов/конструктора; автор считает определение частичным. Независимый reviewer считает двух purpose-ролей достаточными — разница сохранена.'),
+ ('B','FALSE_PRESET_RELATION','INCOMPLETE_BOTH_PLUGINS','Kotlin-spring — wrapper all-open. Вариант отрицает связь preset, но не определяет оба запрошенных compiler plugins.'),
+ ('C','TRUE_CORE_IMPRECISE_TERM','COMPLETE_CORE','Даёт оба центральных преобразования. «Пустой» разумно читать как no-argument, а не как обещание пустого тела; заменить на точный термин. Область настроенных аннотаций и конкретный proxy mode уточняются без превращения вводного сокращения в категорически ложный ключ.'),
+ ('D','FALSE_OPEN_DIRECTION','INCOMPLETE_OMITS_NOARG','All-open открывает подходящие классы/члены, а не делает их final. Про no-arg ответа нет.')],'option')
+q39sections=rows([
+ ('A.what_actually','PASS_PURPOSE_SCOPE','Основные сценарии распределены верно. Это не универсальная необходимость для любого Spring/JPA: interface proxy не наследует target, подходящий constructor может уже существовать.'),
+ ('A.source_of_confusion','PASS','Путаница двух плагинов объясняет конкретную перестановку ролей. Не обязана повторять весь правильный ответ.'),
+ ('A.if_it_were_true','FAIL_NON_SEQUITUR','Если бы allOpen по гипотезе обеспечивал reflective-создание, невозможность такого создания не следовала бы. Кроме того, нужный конструктор может уже существовать. Не путать следствие гипотезы с текущими механизмами.'),
+ ('A.how_it_should_be','PASS_TERM_NEEDS_PRECISION','Исправляет no-arg как zero-argument constructor; «пустой» заменить, так как invokeInitializers может выполнять код. Дополнение второй роли улучшит ремонт всего варианта, но локальный тезис не ложен из-за краткости.'),
+ ('B.what_actually','PASS','Верно описывает kotlin-spring как преднастроенный all-open. Это объяснение конкретного ошибочного отношения, не обязано повторять no-arg.'),
+ ('B.source_of_confusion','PASS_WEAK','Правдоподобное ошибочное впечатление независимости, но почти повторяет вариант.'),
+ ('B.if_it_were_true','FAIL_NON_SEQUITUR','Из независимости механизмов не следует двойная настройка. Даже отдельный механизм мог бы настраиваться единожды.'),
+ ('B.how_it_should_be','PASS_NEEDS_EXPLICIT_COMPOSITION','Преднастроенные wrappers — верно. Для актуального поведения указать spring → all-open; jpa → no-arg + all-open. Старое представление jpa только как no-arg больше недостаточно.'),
+ ('C.explanation','PASS_CORE_TERM','Повторяет обе роли; no-arg — без аргументов. Нельзя приписывать обещание пустого тела разговорной формулировке без отдельной оговорки.'),
+ ('C.example','FAIL_AS_RUNNABLE_DSL_UNLABELED_PSEUDOCODE','annotation(...) принимает строку с полным именем аннотации; Service/Entity в такой схеме не определены и не представлены строками. Это узнаваемый псевдокод, но не готовый Kotlin DSL. Не обязан показывать presets; должен быть обозначен как схема или исправлен.'),
+ ('C.when_to_apply','PASS_CONTEXT_SCOPE','Spring/JPA — подходящие контексты, но не доказательство необходимости плагинов для любого класса этих frameworks. Само поле когда применять не утверждает универсальности.'),
+ ('C.edge_cases','PASS_CURRENT_COMPOSITION_NEEDS_DETAIL','Оба являются wrappers. Текущий jpa включает оба преобразования; spring только all-open. Нельзя автоматически читать фразу как взаимооднозначное сопоставление по порядку.'),
+ ('C.related','FAIL_OVERBROAD_AOP','JDK interface proxy не наследует target class. Non-final нужен для соответствующего subclass proxy; всеобщая формулировка про Spring AOP неверна.'),
+ ('D.what_actually','PASS','Цитата явно говорит OPEN, а не final. Верное исправление направления; raw LLM ошибочно написал «Неверно».'),
+ ('D.source_of_confusion','PASS','Правдоподобная инверсия значения all-open. Локальная роль не требует снова объяснять no-arg.'),
+ ('D.if_it_were_true','FAIL_OVERBROAD_AOP','Гипотетический final препятствовал бы subclass proxy подходящего класса, но не всему Spring AOP: остаются interface proxies.'),
+ ('D.how_it_should_be','PASS_CONFIGURED_SCOPE','Снимает final с классов с настроенными аннотациями — корректная краткая коррекция. No-arg не обязан повторяться здесь.')],'section')
+axes38={
+ 'SEMANTICS':('TRUE_KEY_BUT_INCOMPLETE','A верен как общий результат; B-D неверны в своём основном тезисе. Это не делает A полноценным экзаменационным ответом на три роли.'),
+ 'ANSC':('FAIL_ALL','A/B одинаково зонтичные, C/D отвечают об одной аннотации. Нужны четыре полных сопоставимых модели трёх функций.'),
+ 'SFPL':('OPEN_SCOPE_MISMATCH','A и B имеют одно множественное подлежащее; это не уникальный сигнал ключа. C/D заметно уже. Из длины и правильности нельзя заключать, что ключ угадывается.'),
+ 'RU':('NEEDS_EDIT','Java-интерфейс может пониматься как interface type; точнее API для Java. «Неочевидному из Java» и «видны» расплывчаты, выделение обычных слов кодом неоднородно.'),
+ 'FACTS':('FAIL_EXAMPLES_SCOPE','Config.default() невалиден в Java; методы и all-default constructor нужно различать. Локально проверены bridge, field/accessors и четыре overloads.'),
+ 'SECTIONS':('FAIL_A_EXAMPLE_D_IF_B_IF','Проверены все 17 точных полей. Невалидные примеры и необоснованный контрфактуал требуют ремонта; общие допустимые поля не признаны ложными за отсутствие трёх ролей.'),
+ 'LINKAGE':('OPEN_VISIBLE_COVERAGE','Теория раскрывает все три роли; visible A и остальные варианты этой полноты не имеют. Формальная linkage-эвристика ошибок не нашла.')}
+axes39={
+ 'SEMANTICS':('PASS_CORE_KEY_OPEN_PRECISION','C защищаем на вводном уровне, «пустой» уточнить. A меняет роли, B отрицает wrapper, D инвертирует открытость.'),
+ 'ANSC':('FAIL_B_D_OPEN_A_SCOPE','B/D не отвечают про оба плагина; A обсуждает обе ошибочные purpose-роли, но полнота определения спорна. C даёт оба преобразования.'),
+ 'SFPL':('OPEN_SCOPE_VARIATION','A и C оба двухчастны; каркас не уникален для ключа. B/D уже по предмету, что требует выравнивания. Не объявляем C единственным длинным/двухчастным без доказательства.'),
+ 'RU':('NEEDS_NOARG_TERM','«Конструктор без аргументов» точнее «пустого». Имена плагинов следует оформлять последовательно; вопросы в целом читаемы.'),
+ 'FACTS':('FAIL_AOP_FIELDS','C.related/D.if обобщают ограничения subclass proxy на весь Spring AOP. Текущий no-arg Java-callable HIDDEN и jpa composition сверены по источникам; локальная версия явно 2.4.10.'),
+ 'SECTIONS':('FAIL_COUNTERFACTUALS_PSEUDOCODE','Проверены все 17 полей: A/B.if не следуют из гипотез, C.related/D.if overbroad; C.example не runnable DSL в таком виде.'),
+ 'LINKAGE':('OPEN_MCQ_OWNER','Теория исправляет оба механизма, условность необходимости, initializers и presets. JSON оставлен владельцу, общий FINAL не объявляется.')}
+questions=[]
+for n,opts,sections,axes in [(38,q38opts,q38sections,axes38),(39,q39opts,q39sections,axes39)]:
+    source=next(x for x in inp['questions'] if x['q_number']==n)
+    blocks=source['blocks'][0]
+    expected={o['label']+'.'+k:v for o in blocks['options'] for k,v in o['sections'].items()}
+    assert len(sections)==17 and {x['field'] for x in sections}==set(expected)
+    for row in sections: row['exact_text']=expected[row['field']]
+    for row in opts: row['exact_text']=next(o['text'] for o in blocks['options'] if o['label']==row['label'])
+    questions.append({'q_number':n,'visible_question':blocks['question_text'],'options':opts,'sections':sections,
+      'axes':{k:{'status':v[0],'assessment':v[1]} for k,v in axes.items()},
+      'theory':'SOURCE_AND_RUNTIME_CHECKED; only this theory block edited; Gradle/preset/framework integrations remain source-only.'})
+write('author-review.json',{'role':'author_self_review','created_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+ 'input_sha256':hashlib.sha256((W/'input-before.json').read_bytes()).hexdigest(),'questions':questions,
+ 'limits':['Author review is distinct from independent acceptance.','No full Kotlin/corpus FINAL.','No Gradle, Spring application or JPA/ORM hydration execution.']})
+write('surface-profile.json',{'note':'Diagnostic only; lengths do not establish ANSC or SFPL.','options':[
+ {'q_number':q['q_number'],'label':o['label'],'text':o['text'],'characters':len(o['text']),'words':len(o['text'].split())}
+ for q in inp['questions'] for b in q['blocks'] for o in b['options']]})
+print('Author review: 8 exact options / 34 exact sections / 7 axes per Q')

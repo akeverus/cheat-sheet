@@ -1,0 +1,128 @@
+{
+  "source_md_sha256": "2b8e8a718c7192933217678c599a563ac89de37407ef1690d673ca8fbd670730",
+  "source_seed_sha256": "4309b927d0834d677a1b6c780bf838177358ee3b4d67ab308cf82ebde048131c",
+  "questions": [
+    {
+      "q_number": 38,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какая польза от `@JvmStatic`, `@JvmOverloads` и `@JvmField`?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Эти аннотации генерируют привычный `Java` интерфейс к коду, неочевидному из Java по умолчанию.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аннотации генерируют привычный Java-интерфейс к коду, неочевидному из Java.",
+                "example": "@JvmStatic → Config.default(); @JvmField → прямой доступ.",
+                "when_to_apply": "Когда Kotlin-код вызывают из Java.",
+                "edge_cases": "companion → вложенный Companion; default-параметры невидимы Java.",
+                "related": "Интероп Kotlin/Java."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Эти аннотации нужны, чтобы вызывать `Java`-код из Kotlin, а не наоборот.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации нужны для вызова Kotlin ИЗ Java, не наоборот.",
+                "source_of_confusion": "Направление интеропа путают.",
+                "if_it_were_true": "Тогда они были бы не нужны.",
+                "how_it_should_be": "Java видит удобный интерфейс."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "Параметры со значениями по умолчанию `видны` из Java и без всякой аннотации JvmOverloads.",
+              "correct": false,
+              "sections": {
+                "what_actually": "default-параметры Java НЕ видит без @JvmOverloads.",
+                "source_of_confusion": "Кажется, они видны сами.",
+                "if_it_were_true": "Тогда JvmOverloads был бы лишним.",
+                "how_it_should_be": "Нужны сгенерированные перегрузки."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Аннотация `JvmStatic` превращает метод в companion object во вложенный класс Companion.",
+              "correct": false,
+              "sections": {
+                "what_actually": "@JvmStatic генерирует static-метод, а во вложенный Companion компилируется companion сам.",
+                "source_of_confusion": "Назначение JvmStatic путают.",
+                "if_it_were_true": "Тогда Config.default() не работал бы.",
+                "how_it_should_be": "JvmStatic убирает .Companion."
+              }
+            }
+          ]
+        }
+      ],
+      "theory": "## Q38. (!) Какая польза от `@JvmStatic`, `@JvmOverloads` и `@JvmField`?\n\nЭти аннотации управляют Java API, который Kotlin-компилятор выдаёт на JVM. У них разные задачи:\n\n| Аннотация | Польза для Java | Важная граница |\n|---|---|---|\n| `@JvmStatic` на функции companion | Добавляет static-метод внешнего класса | Метод companion остаётся доступным; это не создание companion object |\n| `@JvmOverloads` | Генерирует перегрузки, подставляющие default-значения | Java вызывает конкретные сигнатуры, а не Kotlin named/default arguments |\n| `@JvmField` | Открывает свойство как поле без сгенерированных getter/setter | В companion поле static; в обычном экземпляре оно не становится static только от аннотации |\n\n```kotlin\n// Config.kt\nclass Config {\n    companion object {\n        @JvmStatic\n        fun createDefault() = Config()\n\n        @JvmField\n        val VERSION = \"1.0\"\n    }\n\n    @JvmOverloads\n    fun connect(\n        host: String = \"localhost\",\n        port: Int = 8080,\n        ssl: Boolean = false\n    ): String = \"$host:$port:$ssl\"\n}\n```\n\n```java\n// JavaClient.java\npublic class JavaClient {\n    public static void main(String[] args) {\n        Config config = Config.createDefault();\n        System.out.println(Config.VERSION);\n        System.out.println(config.connect());\n        System.out.println(config.connect(\"api.example.test\"));\n        System.out.println(config.connect(\"api.example.test\", 443));\n        System.out.println(config.connect(\"api.example.test\", 443, true));\n    }\n}\n```\n\nВ этом примере получаются `connect()`, `connect(String)`, `connect(String, int)` и полная сигнатура с тремя параметрами. Аннотация не генерирует все возможные комбинации пропущенных аргументов. Без `@JvmStatic` фабрика была бы доступна как `Config.Companion.createDefault()`. С аннотацией этот путь тоже сохраняется. Без `@JvmField` обычный companion getter имел бы вид `Config.Companion.getVERSION()`.\n\n`@JvmField` требует backing field и не применяется к private, open/override, const или delegated property. Для конструктора, у которого все параметры имеют defaults, Kotlin/JVM может предоставить public zero-argument constructor и без `@JvmOverloads`; правило «из Java только полная сигнатура без аннотации» нужно ограничивать обычными методами. [Calling Kotlin from Java](https://kotlinlang.org/docs/java-to-kotlin-interop.html), [JvmStatic](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-static/), [JvmOverloads](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-overloads/), [JvmField](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-field/).\n\n"
+    },
+    {
+      "q_number": 39,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое плагины `allOpen` и `noArg`?",
+          "options": [
+            {
+              "label": "A",
+              "order": 0,
+              "text": "Плагин `noArg` нужен для Spring AOP-прокси, а allOpen — для создания сущностей через reflection.",
+              "correct": false,
+              "sections": {
+                "what_actually": "noArg — для JPA/reflection, allOpen — для Spring AOP; не наоборот.",
+                "source_of_confusion": "Плагины путают местами.",
+                "if_it_were_true": "Тогда сущности не создавались бы через reflection.",
+                "how_it_should_be": "noArg → пустой конструктор."
+              }
+            },
+            {
+              "label": "B",
+              "order": 1,
+              "text": "Плагин `kotlin-spring` — это отдельный механизм, вообще никак не связанный с allOpen и noArg.",
+              "correct": false,
+              "sections": {
+                "what_actually": "kotlin-spring — обёртка над allOpen, а не отдельный механизм.",
+                "source_of_confusion": "Кажется, они не связаны.",
+                "if_it_were_true": "Тогда настраивать пришлось бы дважды.",
+                "how_it_should_be": "kotlin-spring/jpa — преднастроенные."
+              }
+            },
+            {
+              "label": "C",
+              "order": 2,
+              "text": "`allOpen` делает аннотированные классы open для Spring, а noArg генерирует пустой конструктор.",
+              "correct": true,
+              "sections": {
+                "explanation": "allOpen делает аннотированные классы open (для Spring); noArg генерирует пустой конструктор (для JPA).",
+                "example": "allOpen { annotation(Service) }; noArg { annotation(Entity) }.",
+                "when_to_apply": "Когда Kotlin-классы работают со Spring/JPA.",
+                "edge_cases": "kotlin-spring и kotlin-jpa — обёртки над ними.",
+                "related": "Spring AOP требует не-final классов."
+              }
+            },
+            {
+              "label": "D",
+              "order": 3,
+              "text": "Плагин `allOpen`, наоборот, делает аннотированные классы final, тем самым запрещая их наследование.",
+              "correct": false,
+              "sections": {
+                "what_actually": "allOpen делает классы OPEN, а не final.",
+                "source_of_confusion": "Назначение переворачивают.",
+                "if_it_were_true": "Тогда Spring AOP не работал бы.",
+                "how_it_should_be": "Снимает final с аннотированных."
+              }
+            }
+          ]
+        }
+      ],
+      "theory": "## Q39. Что такое плагины `allOpen` и `noArg`?\n\nЭто compiler plugins с разными преобразованиями для классов с настроенными аннотациями:\n\n- **`all-open`** делает подходящие классы и члены открытыми для наследования/override без ручного `open`. Он полезен, когда framework строит прокси через подкласс. Для JDK interface proxy final target class сам по себе не препятствие, поэтому плагин не обязателен для любого Spring AOP.\n- **`no-arg`** добавляет конструктор **без аргументов**, например для reflective-создания объектов framework-ом. Он не открывает класс сам по себе. Если нужный конструктор уже существует, плагин не требуется ради его добавления.\n\nПример фрагмента `build.gradle.kts` для Kotlin 2.4.10, с собственной marker-аннотацией:\n\n```kotlin\nplugins {\n    kotlin(\"jvm\") version \"2.4.10\"\n    kotlin(\"plugin.allopen\") version \"2.4.10\"\n    kotlin(\"plugin.noarg\") version \"2.4.10\"\n}\n\nallOpen {\n    annotation(\"example.ModelMarker\")\n}\nnoArg {\n    annotation(\"example.ModelMarker\")\n    invokeInitializers = false // значение по умолчанию\n}\n```\n\n```kotlin\n// Model.kt\npackage example\n\n@Target(AnnotationTarget.CLASS)\nannotation class ModelMarker\n\nobject ConstructionTrace {\n    var calls = 0\n}\n\n@ModelMarker\nclass Model(var name: String) {\n    val marker = 7\n    init { ConstructionTrace.calls++ }\n}\n\nfun main() {\n    val constructor = Model::class.java.getDeclaredConstructor()\n    val model = constructor.newInstance()\n    println(model.marker)            // 0: initializer не выполнен\n    println(ConstructionTrace.calls) // 0\n}\n```\n\nПри `invokeInitializers=true` тот же generated constructor выполняет initializers: пример напечатает `7` и `1`. Это не обычный вызов primary constructor с корректными обязательными аргументами: framework ещё должен заполнить состояние объекта. Не следует считать «без аргументов» обещанием пустого тела или обычной инициализации.\n\nВ Kotlin 2.4.10 generated constructor скрыт от прямого Kotlin-вызова `Model()`, но доступен из Java и через reflection; не называйте его безусловно недоступным для Java source. `kotlin-spring` — preset над all-open для Spring-аннотаций. По актуальной документации `kotlin-jpa` настраивает **no-arg и all-open** для JPA-аннотаций; это шире одного no-arg преобразования. Версии compiler plugins должны соответствовать версии Kotlin. [All-open](https://kotlinlang.org/docs/all-open-plugin.html), [No-arg](https://kotlinlang.org/docs/no-arg-plugin.html), [kotlin-spring](https://kotlinlang.org/docs/kotlin-spring-plugin.html), [kotlin-jpa](https://kotlinlang.org/docs/kotlin-jpa-plugin.html), [Spring proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html).\n\n"
+    }
+  ]
+}
