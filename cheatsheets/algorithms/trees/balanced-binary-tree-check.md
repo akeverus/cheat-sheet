@@ -24,9 +24,9 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Check if binary tree is balanced](https://www.geeksforgeeks.org/how-to-determine-if-a-binary-tree-is-balanced/)
 
 ### См. также
-- [`binary-tree.md`](binary-tree.md) — бинарное дерево (`binary tree`)
-- [`avl-tree.md`](avl-tree.md) — самобалансирующееся дерево `AVL`
-- [`binary-search-tree-traversal.md`](binary-search-tree-traversal.md) — обходы бинарного дерева поиска (`traversals`)
+- [Бинарное дерево](binary-tree.md) — бинарное дерево (`binary tree`)
+- [Дерево AVL](avl-tree.md) — самобалансирующееся дерево `AVL`
+- [Обходы бинарного дерева поиска](binary-search-tree-traversal.md) — обходы бинарного дерева поиска (`traversals`)
 
 - [Алгоритм Борувки (Borůvka's Algorithm)](boruvka-algorithm.md)
 - [Алгоритм Прима (Prim's Algorithm)](prim-algorithm.md)

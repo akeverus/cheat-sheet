@@ -29,9 +29,9 @@ updated: "2026-04-20"
 - [Visualgo: AVL Tree](https://visualgo.net/)
 
 ### См. также
-- [`binary-tree.md`](binary-tree.md) — бинарное дерево (`binary tree`)
-- [`balanced-binary-tree-check.md`](balanced-binary-tree-check.md) — проверка сбалансированности (`balanced check`)
-- [`binary-search-tree-traversal.md`](binary-search-tree-traversal.md) — обходы бинарного дерева поиска (`traversals`)
+- [Бинарное дерево](binary-tree.md) — бинарное дерево (`binary tree`)
+- [Проверка сбалансированности дерева](balanced-binary-tree-check.md) — проверка сбалансированности (`balanced check`)
+- [Обходы бинарного дерева поиска](binary-search-tree-traversal.md) — обходы бинарного дерева поиска (`traversals`)
 
 - [Алгоритм Борувки (Borůvka's Algorithm)](boruvka-algorithm.md)
 - [Алгоритм Прима (Prim's Algorithm)](prim-algorithm.md)
