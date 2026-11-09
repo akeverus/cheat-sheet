@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.cheatsheet.quiz.TestInterviewPath;
 import com.cheatsheet.quiz.domain.AnswerOption;
+import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
@@ -283,29 +284,37 @@ class InterviewControllerApiTest {
 
     @Test
     void apiAnswerIncludesSessionCountersWhenSessionExists() throws Exception {
-        Question q = firstQuestionOrSkip();
-        List<AnswerOption> options = answerOptionRepository.findByQuestionId(q.id());
-        assumeTrue(!options.isEmpty(), "Нет вариантов ответа для вопроса " + q.id());
         MockHttpSession session = new MockHttpSession();
 
         mockMvc.perform(post("/start")
                         .with(csrf())
                         .session(session)
-                        .param("mode", "TRAINING")
+                        .param("mode", "EXAM")
+                        .param("topic", "programming/java-strings")
                         .param("count", "20"))
                 .andExpect(status().is3xxRedirection());
+
+        InterviewSession interviewSession = (InterviewSession) session.getAttribute("interviewSession");
+        assertThat(interviewSession).isNotNull();
+        Long questionId = interviewSession.currentQuestionId();
+        assertThat(questionId).isNotNull();
+        AnswerOption selected = answerOptionRepository.findByQuestionId(questionId).stream()
+                .filter(AnswerOption::correct)
+                .findFirst()
+                .orElseThrow();
+        int total = interviewSession.getTotal();
 
         mockMvc.perform(post("/api/answer")
                         .with(csrf())
                         .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(answerJson(q.id(), options.get(0).id())))
+                        .content(answerJson(questionId, selected.id())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.session").exists())
-                .andExpect(jsonPath("$.session.index").isNumber())
-                .andExpect(jsonPath("$.session.total").isNumber())
-                .andExpect(jsonPath("$.session.correct").isNumber())
-                .andExpect(jsonPath("$.session.wrong").isNumber())
-                .andExpect(jsonPath("$.session.finished").isBoolean());
+                .andExpect(jsonPath("$.session.index").value(1))
+                .andExpect(jsonPath("$.session.total").value(total))
+                .andExpect(jsonPath("$.session.correct").value(1))
+                .andExpect(jsonPath("$.session.wrong").value(0))
+                .andExpect(jsonPath("$.session.finished").value(total == 1));
     }
 }
