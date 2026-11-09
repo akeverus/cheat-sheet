@@ -30,8 +30,8 @@ updated: "2026-04-20"
 - [Visualgo: Binary Search](https://visualgo.net/)
 
 ### См. также
-- [`interpolation-search.md`](interpolation-search.md) — интерполяционный поиск (`interpolation search`)
-- [`merge-two-sorted-arrays.md`](merge-two-sorted-arrays.md) — объединение отсортированных массивов (`merge two sorted`)
+- [Интерполяционный поиск](interpolation-search.md) — интерполяционный поиск (`interpolation search`)
+- [Слияние отсортированных массивов](merge-two-sorted-arrays.md) — объединение отсортированных массивов (`merge two sorted`)
 
 - [Максимальный подмассив (Maximum Subarray Problem)](maximum-subarray.md)
 - [k наибольших элементов (K Largest Elements)](k-largest-elements.md)

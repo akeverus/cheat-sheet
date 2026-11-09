@@ -25,8 +25,8 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Interpolation Search](https://www.geeksforgeeks.org/interpolation-search/)
 
 ### См. также
-- [`binary-search.md`](binary-search.md) — бинарный поиск (`binary search`)
-- [`maximum-subarray.md`](maximum-subarray.md) — максимальный подмассив (`Kadane`)
+- [Бинарный поиск](binary-search.md) — бинарный поиск (`binary search`)
+- [Максимальный подмассив](maximum-subarray.md) — максимальный подмассив (`Kadane`)
 
 - [k наибольших элементов (K Largest Elements)](k-largest-elements.md)
 - [Поиск k-го по величине элемента (Find Kth Largest Element)](find-max-element.md)

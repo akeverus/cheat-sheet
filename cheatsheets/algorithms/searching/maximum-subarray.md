@@ -30,8 +30,8 @@ updated: "2026-04-20"
 - [Visualgo: Maximum Subarray](https://visualgo.net/)
 
 ### См. также
-- [`pairs-with-given-sum.md`](pairs-with-given-sum.md) — поиск пар с заданной суммой (`pairs with sum`)
-- [`find-max-element.md`](find-max-element.md) — поиск максимального элемента (`find max`)
+- [Поиск пар с заданной суммой](pairs-with-given-sum.md) — поиск пар с заданной суммой (`pairs with sum`)
+- [Поиск максимального элемента](find-max-element.md) — поиск максимального элемента (`find max`)
 
 - [k наибольших элементов (K Largest Elements)](k-largest-elements.md)
 - [Интерполяционный поиск (Interpolation Search)](interpolation-search.md)
