@@ -1931,50 +1931,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Аннотация `@Version` ловит конфликт в момент UPDATE, а не при чтении",
+              "text": "`@Version` хранит версию сущности: провайдер сверяет её при записи и отклоняет устаревшее изменение",
               "correct": true,
               "sections": {
-                "explanation": "Оптимистичная блокировка исходит из того, что конфликты редки, поэтому строку не блокируют. Поле @Version автоматически растёт при каждом UPDATE, а Hibernate добавляет старое значение version в WHERE. Если версия не совпала — обновилось 0 строк и летит OptimisticLockException.",
-                "example": "UPDATE products SET name='New', version=3 WHERE id=1 AND version=2 — при несовпадении version 0 строк, ловится OptimisticLockException, транзакцию повторяют.",
-                "when_to_apply": "В большинстве web-приложений с редкими конкурентными правками одной сущности, где важен throughput.",
-                "edge_cases": "Тип @Version: Integer, Long, Short, Timestamp, Instant — числовые предпочтительнее из-за точности. При исключении сущность перечитывают из БД и повторяют операцию.",
+                "explanation": "Провайдер управляет полем @Version и проверяет, не изменилась ли сущность после чтения. Проверка возможна при merge, flush или коммите; при конфликте OptimisticLockException помечает текущую транзакцию к откату.",
+                "example": "UPDATE products SET price=99.99, version=3 WHERE id=1 AND version=2: при устаревшей версии строка не обновится. После отката повторяют всю операцию в новой транзакции с повторным чтением и проверкой бизнес-условий.",
+                "when_to_apply": "Когда конкурентные изменения одной сущности возможны, а чтение не должно заранее удерживать блокировку строки; стоимость повторов оценивают по частоте конфликтов.",
+                "edge_cases": "По Jakarta Persistence 3.2 допустимы int/Integer, short/Short, long/Long, LocalDateTime, Instant и Timestamp. Массовый JPQL UPDATE обходит обычную проверку версии; при необходимости её проверяют и обновляют явно.",
                 "related": "[[hibernate-interview#Q34]], [[hibernate-interview#Q35]]"
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`@Version` блокирует строку уже при чтении, поэтому конфликт исключён до UPDATE",
+              "text": "`@Version` блокирует строку при чтении: остальные изменения ждут завершения текущей транзакции",
               "correct": false,
               "sections": {
-                "what_actually": "Оптимистичная блокировка не ставит блокировок при чтении; конфликт обнаруживается в момент UPDATE.",
-                "source_of_confusion": "Слово «блокировка» наводит на мысль о реальном замке на строке ещё при SELECT.",
-                "if_it_were_true": "Это была бы пессимистичная стратегия с SELECT FOR UPDATE, а не оптимистичная по @Version.",
-                "how_it_should_be": "@Version не блокирует чтение — столкновение ловится только при UPDATE через сверку version."
+                "what_actually": "Чтение сущности с @Version само по себе не запрашивает блокировку строки. Провайдер сверяет версию при записи, а SQL UPDATE использует обычные блокировки БД.",
+                "source_of_confusion": "Термин «оптимистичная блокировка» можно принять за ранний захват строки, как при PESSIMISTIC_WRITE.",
+                "if_it_were_true": "Конкурентная запись ждала бы освобождения блокировки сразу после чтения; это описывало бы пессимистичную стратегию.",
+                "how_it_should_be": "@Version обнаруживает устаревшую версию при проверке, которая возможна при merge, flush или коммите."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Поле `version` нужно увеличивать вручную перед каждым UPDATE, иначе проверка не сработает",
+              "text": "`@Version` хранит версию сущности: код вручную увеличивает её перед записью для проверки конфликта",
               "correct": false,
               "sections": {
-                "what_actually": "Комментарий в теле: version «автоматически увеличивается при каждом UPDATE».",
-                "source_of_confusion": "Кажется логичным, что раз это обычное поле, его значение задаёт код.",
-                "if_it_were_true": "Забытый инкремент ломал бы контроль версий на каждом сохранении.",
-                "how_it_should_be": "Hibernate инкрементирует version сам при каждом UPDATE — руками трогать не нужно."
+                "what_actually": "После сохранения сущности значением @Version управляет провайдер; прямое изменение версии кодом имеет неопределённое поведение по Jakarta Persistence.",
+                "source_of_confusion": "Поле выглядит обычным числовым свойством, поэтому возникает желание увеличить его в прикладном коде.",
+                "if_it_were_true": "Каждый вызывающий код отвечал бы за согласованное изменение версии; забытый инкремент мог бы скрыть конфликт.",
+                "how_it_should_be": "Провайдер сверяет прежнюю версию и обновляет её при записи состояния сущности."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Hibernate добавляет `version` в SET, но не в WHERE — конфликт остаётся незамеченным",
+              "text": "`@Version` хранит версию сущности: провайдер меняет её при записи без проверки старого значения",
               "correct": false,
               "sections": {
-                "what_actually": "В SQL из тела version стоит и в SET (новое значение), и в WHERE (старое) — именно WHERE ловит конфликт.",
-                "source_of_confusion": "Присвоение version=3 в SET заметнее, чем условие version=2 в WHERE.",
-                "if_it_were_true": "UPDATE всегда затрагивал бы строку, конфликт не давал бы 0 обновлённых строк и OptimisticLockException не возникал.",
-                "how_it_should_be": "version входит в WHERE (AND version = 2); несовпадение даёт 0 строк и OptimisticLockException."
+                "what_actually": "При обычном обновлении версионированной сущности провайдер проверяет прежнюю версию; одно лишь присваивание нового значения не защищало бы от потерянного обновления.",
+                "source_of_confusion": "В SQL заметно новое значение version в SET, а условие со старой версией в WHERE легко пропустить.",
+                "if_it_were_true": "Две транзакции могли бы последовательно перезаписать данные, не получив сигнал об устаревшей версии.",
+                "how_it_should_be": "Пример SQL содержит старую version в WHERE и новое значение в SET; если прежняя версия не совпала, провайдер сообщает о конфликте."
               }
             }
           ]
@@ -1986,55 +1986,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "В чём разница между оптимистичной и пессимистичной блокировкой?",
+          "question_text": "Как различаются `@Version` и `PESSIMISTIC_WRITE` при конкурентном обновлении сущности?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Оптимистичная блокирует строку в БД, а пессимистичная лишь сверяет `@Version` при commit",
+              "text": "`@Version` заранее блокирует строку при чтении, а `PESSIMISTIC_WRITE` проверяет версию только при коммите.",
               "correct": false,
               "sections": {
-                "what_actually": "Блокировку в БД (SELECT ... FOR UPDATE) даёт пессимистичная; @Version — механизм оптимистичной.",
-                "source_of_confusion": "Обе называются «блокировкой», и легко перепутать, за какой стоит реальный замок.",
-                "if_it_were_true": "Оптимистичная теряла бы свой главный плюс — отсутствие блокировок и высокий throughput.",
-                "how_it_should_be": "Пессимистичная блокирует строку в БД, оптимистичная не блокирует и сверяет @Version при UPDATE."
+                "what_actually": "При @Version чтение не удерживает раннюю блокировку строки; PESSIMISTIC_WRITE запрашивает её до изменения.",
+                "source_of_confusion": "Слово «блокировка» применяют к обеим стратегиям и меняют местами их момент контроля.",
+                "if_it_were_true": "Обычное чтение версионированной сущности задерживало бы конкурирующую запись до завершения транзакции.",
+                "how_it_should_be": "Различать проверку версии при записи и ранний запрос блокировки БД."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Пессимистичная даёт более высокий `throughput`, ведь потоки не ждут блокировки",
+              "text": "`PESSIMISTIC_WRITE` всегда быстрее `@Version`, потому что избавляет приложение от повторов.",
               "correct": false,
               "sections": {
-                "what_actually": "В таблице throughput у оптимистичной высокий (нет ожидания), у пессимистичной ниже (потоки ждут).",
-                "source_of_confusion": "Явная блокировка кажется «надёжнее», и надёжность путают с производительностью.",
-                "if_it_were_true": "Незачем было бы предпочитать оптимистичную для web-приложений ради пропускной способности.",
-                "how_it_should_be": "Высокий throughput у оптимистичной; пессимистичная ниже, потому что потоки ждут блокировку."
+                "what_actually": "Пессимистичная блокировка добавляет ожидание и время удержания строки; оптимистичная может требовать повтор всей операции. Итог зависит от нагрузки.",
+                "source_of_confusion": "Отсутствие повторов после конфликта кажется гарантией большей пропускной способности.",
+                "if_it_were_true": "Время ожидания блокировок и длительность транзакций не влияли бы на производительность.",
+                "how_it_should_be": "Оценивать частоту конфликтов, стоимость повтора и ожидания на конкретной операции."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Deadlock возможен при оптимистичной блокировке, а пессимистичная `SELECT ... FOR UPDATE` его исключает",
+              "text": "С `@Version` SQL не берёт блокировок БД и deadlock невозможен; `PESSIMISTIC_WRITE` является единственным источником взаимного ожидания.",
               "correct": false,
               "sections": {
-                "what_actually": "В таблице deadlock: у оптимистичной — нет, у пессимистичной — возможен.",
-                "source_of_confusion": "Раз оптимистичная делает повторы, кажется, что именно у неё возникают взаимные ожидания.",
-                "if_it_were_true": "SELECT ... FOR UPDATE был бы безопаснее от взаимных блокировок, что противоречит природе замков.",
-                "how_it_should_be": "Deadlock возможен у пессимистичной (реальные блокировки); у оптимистичной его нет."
+                "what_actually": "Hibernate UPDATE/DELETE для версионированной сущности всё равно вызывает обычные блокировки БД. Несколько UPDATE в разном порядке могут образовать deadlock без явного PESSIMISTIC_WRITE.",
+                "source_of_confusion": "Отсутствие заранее удерживаемой блокировки между чтением и записью распространяют на сам SQL UPDATE.",
+                "if_it_were_true": "PostgreSQL не мог бы обнаружить deadlock между двумя транзакциями, выполняющими обычные UPDATE нескольких строк.",
+                "how_it_should_be": "У @Version нет раннего row lock при чтении, но запись использует блокировки БД; порядок обновления строк важен."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Пессимистичная блокирует строку в БД, а оптимистичная полагается на `@Version`",
+              "text": "`@Version` обнаруживает устаревшую версию при записи без раннего lock при чтении; `PESSIMISTIC_WRITE` запрашивает lock до изменения.",
               "correct": true,
               "sections": {
-                "explanation": "Разница — в предположении о вероятности конфликта. Оптимистичная считает конфликты редкими: блокировок нет, столкновение ловится при UPDATE по @Version. Пессимистичная считает конфликт вероятным: строка блокируется в БД через SELECT ... FOR UPDATE сразу при чтении, остальные ждут.",
-                "example": "Пессимистичная: entityManager.find(Product.class, id, LockModeType.PESSIMISTIC_WRITE) → SELECT ... FOR UPDATE. Оптимистичная: поле @Version на сущности.",
-                "when_to_apply": "Оптимистичная — большинство web-приложений (высокий throughput). Пессимистичная — финансовые операции и критичные данные, где нельзя допустить гонку.",
-                "edge_cases": "Оптимистичная даёт высокий throughput ценой повторов операции; пессимистичная — гарантию ценой ожидания и риска deadlock.",
-                "related": "[[hibernate-interview#Q33]], [[hibernate-interview#Q35]]"
+                "explanation": "Проверка версии может произойти при merge/flush/коммите; пессимистичный режим запрашивает блокировку строки при чтении для изменения. Обе стратегии всё равно используют механизмы БД при SQL-записи.",
+                "example": "Hibernate UPDATE с условием по version выявляет устаревшую сущность. Для PostgreSQL EntityManager.find(..., PESSIMISTIC_WRITE) обычно приводит к SELECT FOR UPDATE в активной транзакции.",
+                "when_to_apply": "Выбор зависит от фактических конфликтов за сущность, цены повтора всей операции и времени ожидания/удержания блокировки, а не от ярлыка «web» или «финансы».",
+                "edge_cases": "Оптимистичный UPDATE тоже может ждать или попасть в deadlock при нескольких строках. Пессимистичная блокировка может завершиться timeout/deadlock; обычное MVCC-чтение в PostgreSQL не обязано ждать. Нет универсального рейтинга throughput.",
+                "related": "Q33 описывает @Version; Database Transactions Q14/Q40 сравнивают стратегии и повтор всей транзакции после конфликта."
               }
             }
           ]
@@ -2051,50 +2051,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Hibernate по умолчанию использует `JTA`, а JDBC-транзакции нужны лишь для распределённых",
+              "text": "Hibernate работает только с JTA; Spring `@Transactional` задаёт границу и правила отката",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию используются JDBC-транзакции; JTA — именно для распределённых.",
-                "source_of_confusion": "JTA звучит «серьёзнее» и легко принимается за основной механизм.",
-                "if_it_were_true": "Каждое простое приложение с одной БД тянуло бы распределённый менеджер транзакций.",
-                "how_it_should_be": "Базово — JDBC-транзакции; JTA подключают только для распределённых транзакций."
+                "what_actually": "Hibernate поддерживает локальные JDBC-транзакции и JTA. В Jakarta Persistence Java SE по умолчанию используется RESOURCE_LOCAL, а Jakarta EE — JTA.",
+                "source_of_confusion": "JTA часто упоминают рядом с распределёнными транзакциями, поэтому её можно ошибочно принять за обязательный механизм Hibernate.",
+                "if_it_were_true": "Приложению с одной БД потребовался бы JTA-менеджер даже для обычной локальной транзакции.",
+                "how_it_should_be": "Hibernate может работать с JDBC или JTA; выбор зависит от конфигурации и среды."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Hibernate использует `JDBC`-транзакции, а для распределённых транзакций применяется JTA",
+              "text": "Hibernate работает с JDBC или JTA; Spring `@Transactional` задаёт границу и правила отката",
               "correct": true,
               "sections": {
-                "explanation": "По умолчанию Hibernate опирается на JDBC-транзакции, а JTA подключают для распределённых сценариев. В Spring транзакциями управляют декларативно через @Transactional: фреймворк создаёт Session и сам делает commit при успехе и rollback при RuntimeException.",
-                "example": "Ручной путь: tx = session.beginTransaction(); ... tx.commit() (flush + commit), в catch — tx.rollback(). В Spring — @Transactional над методом сервиса.",
-                "when_to_apply": "JDBC-транзакции — для одной БД; JTA — когда в одной транзакции участвуют несколько ресурсов. В Spring-коде почти всегда @Transactional.",
-                "edge_cases": "tx.commit() выполняет flush и затем commit. По умолчанию Spring откатывает на RuntimeException; уровни изоляции задаются через @Transactional(isolation = ...).",
+                "explanation": "Hibernate поддерживает локальные JDBC-транзакции и JTA, которая может координировать несколько ресурсов. Spring @Transactional через транзакционный менеджер применяет propagation и правила commit/rollback при вызове метода через proxy. По умолчанию REQUIRED присоединяется к существующей транзакции или открывает новую.",
+                "example": "Вручную: открыть Session, вызвать beginTransaction(), записать изменения, затем commit() или rollback(). В Spring: внешний вызов метода сервиса с @Transactional; отдельный flush() для обычного коммита в режиме AUTO не нужен.",
+                "when_to_apply": "Границу выбирают вокруг законченной бизнес-операции. Локальной JDBC-транзакции достаточно для одной БД; JTA нужна, если конфигурация и сценарий требуют координации через JTA.",
+                "edge_cases": "По умолчанию Spring откатывает при RuntimeException и Error, но не при checked Exception; правило можно изменить через rollbackFor. В proxy-режиме self-invocation не перехватывается. flush отправляет SQL, но не делает commit.",
                 "related": "[[hibernate-interview#Q33]], [[hibernate-interview#Q36]]"
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Spring `@Transactional` делает commit даже при RuntimeException — откат нужно писать вручную",
+              "text": "Hibernate работает с JDBC или JTA; Spring `@Transactional` всегда делает commit при исключении",
               "correct": false,
               "sections": {
-                "what_actually": "Комментарий в теле: commit при успешном завершении, rollback при RuntimeException — автоматически.",
-                "source_of_confusion": "В ручном примере rollback пишется в catch явно, и это переносят на Spring.",
-                "if_it_were_true": "Незафиксированная ошибка сохраняла бы частичные изменения, ломая атомарность.",
-                "how_it_should_be": "@Transactional сам делает rollback при RuntimeException — ручной откат не нужен."
+                "what_actually": "По умолчанию Spring откатывает транзакцию при RuntimeException и Error. Checked Exception сама по себе не вызывает откат, если не настроено rollbackFor.",
+                "source_of_confusion": "Checked-исключения по умолчанию не требуют отката, и это правило ошибочно распространяют на все исключения.",
+                "if_it_were_true": "Ошибка выполнения могла бы фиксировать уже сделанные записи вместо отката всей бизнес-операции.",
+                "how_it_should_be": "Исход зависит от типа исключения и правил rollback: RuntimeException и Error обычно ведут к откату."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Вызов `commit` не выполняет flush — изменения нужно сбрасывать в БД отдельно",
+              "text": "Hibernate работает с JDBC или JTA; Spring `@Transactional` требует явного `flush()` перед commit",
               "correct": false,
               "sections": {
-                "what_actually": "Комментарий в теле прямо помечает tx.commit() как «flush + commit».",
-                "source_of_confusion": "flush и commit — разные операции, и кажется, что commit только фиксирует.",
-                "if_it_were_true": "Забытый flush перед commit терял бы часть изменений при коммите.",
-                "how_it_should_be": "commit сначала выполняет flush, затем фиксирует транзакцию — отдельный flush не требуется."
+                "what_actually": "При обычном режиме AUTO Hibernate выполняет необходимый flush перед коммитом; явный flush() не требуется для фиксации изменений.",
+                "source_of_confusion": "flush и commit различаются: первый отправляет SQL, второй фиксирует транзакцию, поэтому их легко принять за обязательные отдельные вызовы.",
+                "if_it_were_true": "Без вызова flush() в каждом методе транзакция теряла бы изменения при коммите.",
+                "how_it_should_be": "При обычном AUTO commit вызывает необходимый flush; вызов flush() вручную может понадобиться для ранней проверки, но не заменяет commit."
               }
             }
           ]
@@ -2171,50 +2171,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`setFetchSize(n)` ограничивает число возвращаемых строк, а setMaxResults управляет доставкой по сети",
+              "text": "`setMaxResults(n)` задаёт размер порции JDBC, а `setFetchSize(n)` ограничивает число результатов",
               "correct": false,
               "sections": {
-                "what_actually": "Число строк ограничивает setMaxResults (LIMIT); setFetchSize управляет способом доставки.",
-                "source_of_confusion": "Оба принимают число n, из-за чего их назначение путается.",
-                "if_it_were_true": "setFetchSize урезал бы выборку, а пагинацию пришлось бы делать через размер порции.",
-                "how_it_should_be": "setMaxResults ограничивает число строк (LIMIT), setFetchSize задаёт лишь порцию доставки."
+                "what_actually": "Назначение методов обратное: setMaxResults ограничивает число результатов; setFetchSize передаёт драйверу подсказку о размере порции.",
+                "source_of_confusion": "Оба метода принимают n, поэтому легко поменять их смысл местами.",
+                "if_it_were_true": "Пагинация через setMaxResults не задавала бы верхнюю границу результата, а setFetchSize урезал бы выборку.",
+                "how_it_should_be": "setMaxResults управляет пределом результата, setFetchSize — чтением строк драйвером, если тот использует подсказку."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`setFetchSize(n)` уменьшает число возвращаемых строк точно так же, как LIMIT",
+              "text": "`setMaxResults(n)` ограничивает число результатов, а `setFetchSize(n)` тоже урезает их до n",
               "correct": false,
               "sections": {
-                "what_actually": "Тело: setFetchSize не меняет результат, у него нет аналога в SQL; влияет лишь на способ доставки.",
-                "source_of_confusion": "Слово «size» намекает на ограничение размера итогового набора.",
-                "if_it_were_true": "Потоковая обработка через scroll возвращала бы только первые n строк, а не весь лог.",
-                "how_it_should_be": "setFetchSize результат не урезает — меняет лишь порции доставки строк по сети."
+                "what_actually": "setFetchSize не ограничивает число результатов: он задаёт JDBC-подсказку, которую драйвер может не применить.",
+                "source_of_confusion": "Слово size звучит как размер итоговой выборки, хотя речь о порции чтения.",
+                "if_it_were_true": "При обходе большого результата fetchSize(100) позволял бы увидеть только первые 100 строк.",
+                "how_it_should_be": "Только setMaxResults ограничивает число результатов; setFetchSize не является вторым LIMIT."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`setMaxResults(n)` ограничивает число строк как LIMIT, setFetchSize — лишь способ доставки",
+              "text": "`setMaxResults(n)` ограничивает число результатов, а `setFetchSize(n)` подсказывает драйверу размер порции",
               "correct": true,
               "sections": {
-                "explanation": "Методы про разное. setMaxResults(n) ограничивает, сколько строк вернётся — это LIMIT в SQL. setFetchSize(n) результат не меняет: это подсказка JDBC-драйверу, какими порциями тянуть строки по сети, чтобы не держать весь результат в памяти разом.",
-                "example": "setMaxResults(10) — первые 10 записей. setFetchSize(100) со scroll(FORWARD_ONLY) — потоковая обработка большого результата порциями по 100 строк через cursor.",
-                "when_to_apply": "setMaxResults — пагинация и топ-N. setFetchSize — обход больших выборок с минимальным пиковым потреблением памяти.",
-                "edge_cases": "У setFetchSize нет SQL-аналога, и поддержка зависит от драйвера: в PostgreSQL работает через cursor, в MySQL — по-разному.",
+                "explanation": "setMaxResults задаёт верхнюю границу результата и вместе с setFirstResult применяется для пагинации. setFetchSize — подсказка JDBC-драйверу о чтении строк порциями; результат она не урезает и может не изменить поведение драйвера.",
+                "example": "В PostgreSQL setMaxResults(10) обычно даёт SQL-предел в 10 результатов. Для pgJDBC fetchSize(100) может включить курсор при отключённом autocommit, прямом ResultSet и одном SQL-запросе.",
+                "when_to_apply": "setMaxResults применяют для top-N и страниц. setFetchSize рассматривают для большого последовательного обхода, проверив условия драйвера и удерживаемые ресурсы.",
+                "edge_cases": "Hibernate 7.4 ScrollableResults.get() не принимает индекс; результат нужно закрыть. Даже при чтении порциями Session накапливает managed-сущности, если их не отсоединять. getResultList() остаётся списком, а fetchSize не гарантирует экономию памяти.",
                 "related": "[[hibernate-interview#Q36]], [[hibernate-interview#Q39]]"
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`setMaxResults(n)` не имеет SQL-аналога и только подсказывает драйверу размер порции",
+              "text": "`setMaxResults(n)` лишь подсказывает размер порции JDBC, а `setFetchSize(n)` тоже не ограничивает результат",
               "correct": false,
               "sections": {
-                "what_actually": "У setMaxResults аналог — LIMIT n; «нет аналога» относится к setFetchSize.",
-                "source_of_confusion": "Строки таблицы про два метода легко перепутать местами.",
-                "if_it_were_true": "setMaxResults не влиял бы на число строк, и пагинация через него не работала бы.",
-                "how_it_should_be": "setMaxResults — это LIMIT n; без SQL-аналога и как hint драйверу работает setFetchSize."
+                "what_actually": "setMaxResults задаёт реальный предел числа результатов; только setFetchSize является подсказкой драйверу и не меняет итоговую выборку.",
+                "source_of_confusion": "Поскольку оба метода влияют на выполнение запроса, их можно ошибочно считать настройками транспорта.",
+                "if_it_were_true": "setMaxResults(10) не гарантировал бы максимум десять результатов и не годился бы для пагинации.",
+                "how_it_should_be": "setMaxResults ограничивает число результатов, а setFetchSize влияет только на чтение драйвером при поддержке его условий."
               }
             }
           ]
@@ -2231,50 +2231,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Immutable` отключает dirty checking, и Hibernate не генерирует UPDATE",
+              "text": "`@Immutable` исключает обычное обновление сущности: Hibernate пропускает её dirty checking при flush",
               "correct": true,
               "sections": {
-                "explanation": "@Immutable помечает сущность как неизменяемую. Для неё Hibernate не выполняет dirty checking и не генерирует UPDATE, что снижает накладные расходы. Аннотация идеально сочетается с READ_ONLY кэш-стратегией второго уровня.",
-                "example": "@Entity @Immutable @Cache(usage = READ_ONLY) class Country { @Id Long id; String name; String isoCode; } — справочник стран.",
-                "when_to_apply": "Справочники, конфигурации, исторические данные — сущности, которые читают, но не меняют.",
-                "edge_cases": "Вызов update() или merge() для @Immutable сущности игнорируется — Hibernate не сгенерирует UPDATE.",
-                "related": "[[hibernate-interview#Q39]], [[hibernate-interview#Q40]]"
+                "explanation": "Аннотация @Immutable на классе помечает сущность как неизменяемую для обычного управления состоянием. Hibernate загружает её в read-only режиме, не хранит снимок для dirty checking и не записывает последующие изменения полей через обычный UPDATE.",
+                "example": "@Entity @Immutable class Country { @Id Long id; String name; } — после загрузки изменение name останется в Java-объекте, но не запишется через flush.",
+                "when_to_apply": "Для справочников и исторических сущностей, которые действительно не обновляются после создания.",
+                "edge_cases": "merge(detached) возвращает managed-экземпляр, а не игнорируется, но обычные изменения существующей @Immutable сущности не сохраняются. Новую сущность можно вставить. READ_ONLY L2 cache уместен при настроенном провайдере; массовый HQL/JPQL UPDATE в Hibernate 7 по умолчанию вызывает исключение.",
+                "related": "[[hibernate-interview#Q9]], [[hibernate-interview#Q24]], [[hibernate-interview#Q25]]"
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`@Immutable` усиливает dirty checking, поэтому Hibernate генерирует UPDATE при каждом изменении",
+              "text": "`@Immutable` требует проверки изменений сущности: Hibernate записывает её новые поля через UPDATE при flush",
               "correct": false,
               "sections": {
-                "what_actually": "Тело: для @Immutable Hibernate не выполняет dirty checking и не генерирует UPDATE.",
-                "source_of_confusion": "«Immutable» ассоциируется с защитой, которую путают с усиленным контролем изменений.",
-                "if_it_were_true": "Терялось бы главное преимущество — снижение накладных расходов за счёт отсутствия dirty checking.",
-                "how_it_should_be": "@Immutable отключает dirty checking, поэтому UPDATE для такой сущности не генерируется."
+                "what_actually": "Hibernate загружает @Immutable сущность в read-only режиме и пропускает dirty checking; обычная правка полей не даёт UPDATE.",
+                "source_of_confusion": "Любая managed-сущность обычно проверяется на изменения при flush, и это правило ошибочно переносят на @Immutable.",
+                "if_it_were_true": "Аннотация не уменьшала бы работу dirty checking и не защищала бы справочник от случайной правки через managed-объект.",
+                "how_it_should_be": "@Immutable отключает обычную синхронизацию изменений существующей сущности, но не запрещает её первоначальный INSERT."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Вызов `merge()` для @Immutable сущности всё же выполнит UPDATE в базе",
+              "text": "`@Immutable` пропускает проверку изменений, но `merge()` всё равно записывает новые поля существующей сущности",
               "correct": false,
               "sections": {
-                "what_actually": "Тело: вызов update() или merge() для @Immutable будет проигнорирован, UPDATE не сгенерируется.",
-                "source_of_confusion": "Обычно merge синхронизирует изменения в БД, и это ожидание переносят на @Immutable.",
-                "if_it_were_true": "Неизменяемость была бы фикцией — данные справочника можно было бы переписать через merge.",
-                "how_it_should_be": "merge() для @Immutable игнорируется, и UPDATE в БД не выполняется."
+                "what_actually": "merge() выполняется по своему API-контракту и возвращает managed-экземпляр; но изменение уже существующей @Immutable сущности не превращается в обычный UPDATE.",
+                "source_of_confusion": "Для изменяемой detached-сущности merge обычно передаёт состояние в managed-экземпляр, который затем обновляется.",
+                "if_it_were_true": "Любую существующую immutable-сущность можно было бы обновить через merge, обходя её read-only режим.",
+                "how_it_should_be": "Не называйте merge проигнорированным вызовом, но не ожидайте сохранения правок существующей @Immutable сущности через обычный dirty checking."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`@Immutable` плохо сочетается с READ_ONLY кэшем, ведь требует постоянного dirty checking",
+              "text": "`@Immutable` пропускает проверку изменений и автоматически подключает для сущности READ_ONLY L2 cache",
               "correct": false,
               "sections": {
-                "what_actually": "Тело: @Immutable идеально сочетается с READ_ONLY кэш-стратегией, а dirty checking не выполняется.",
-                "source_of_confusion": "Кэш и неизменяемость кажутся разными настройками, порой даже конфликтующими.",
-                "if_it_were_true": "Справочники нельзя было бы держать в L2 cache в режиме READ_ONLY.",
-                "how_it_should_be": "@Immutable идеально ложится на READ_ONLY-кэш именно потому, что dirty checking отсутствует."
+                "what_actually": "@Immutable влияет на управление состоянием сущности. Второй уровень кэша требует провайдера и отдельной настройки кэширования; READ_ONLY можно выбрать для действительно неизменяемых данных.",
+                "source_of_confusion": "READ_ONLY хорошо подходит для immutable-сущности, поэтому его ошибочно считают автоматическим следствием аннотации.",
+                "if_it_were_true": "Одной @Immutable хватало бы для включения общего кэша между Session без провайдера и конфигурации.",
+                "how_it_should_be": "@Immutable не включает L2 cache; при необходимости настройте провайдер и подходящую стратегию отдельно."
               }
             }
           ]
@@ -2291,50 +2291,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Hibernate Statistics` собирает метрики всегда и не требует включения флагом generate_statistics",
+              "text": "Включить `Hibernate Statistics` и считать `getQueryExecutionCount()` числом всех SQL statement",
               "correct": false,
               "sections": {
-                "what_actually": "Статистику включают свойством generate_statistics: true или setStatisticsEnabled(true).",
-                "source_of_confusion": "«Встроенный механизм» читается как «включён по умолчанию».",
-                "if_it_were_true": "Флаг generate_statistics в конфиге был бы бессмысленным.",
-                "how_it_should_be": "Сбор метрик требует включения — через generate_statistics или setStatisticsEnabled(true)."
+                "what_actually": "getQueryExecutionCount() считает исполнения запросов, учтённые Hibernate, а не все JDBC statement. Для другого ракурса есть getPrepareStatementCount().",
+                "source_of_confusion": "Название query execution похоже на подсчёт каждого SQL-запроса к БД.",
+                "if_it_were_true": "Одного счётчика хватало бы для точного числа всех SQL statement, включая загрузки сущностей и DML.",
+                "how_it_should_be": "Включите статистику, затем сопоставляйте query executions с prepared statements, entity fetches и SQL-логом конкретной операции."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Большое число запросов в `Hibernate Statistics` означает эффективный кэш, а не N+1",
+              "text": "Включить `Hibernate Statistics` и считать рост `getQueryExecutionCount()` доказательством N+1",
               "correct": false,
               "sections": {
-                "what_actually": "Тело: неожиданно большое число запросов — признак N+1 проблемы.",
-                "source_of_confusion": "Метрик много, и рост числа запросов легко принять за активную работу кэша.",
-                "if_it_were_true": "N+1 не диагностировался бы по счётчику запросов, и статистика теряла бы смысл.",
-                "how_it_should_be": "Резкий рост числа запросов сигналит именно об N+1, а не об эффективном кэше."
+                "what_actually": "Рост глобального счётчика может быть вызван общей нагрузкой или иными запросами. Для N+1 нужно соотнести метрики и SQL с конкретной операцией.",
+                "source_of_confusion": "N+1 действительно часто проявляется большим числом запросов, но один счётчик без контекста не указывает причину.",
+                "if_it_were_true": "Любое увеличение числа исполнений запросов означало бы дефект загрузки связей.",
+                "how_it_should_be": "Используйте Statistics как сигнал, затем проверяйте последовательность SQL и число fetches на одном сценарии."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Hibernate Statistics` включается флагом generate_statistics и собирает метрики запросов и кэша",
+              "text": "Включить `Hibernate Statistics` и сопоставлять счётчики запросов, statement и L2 cache по операции",
               "correct": true,
               "sections": {
-                "explanation": "Hibernate Statistics — встроенный механизм сбора метрик: число запросов, попадания в кэш, время выполнения. Включается свойством hibernate.generate_statistics (или программно setStatisticsEnabled(true)). Помогает обнаруживать N+1 (неожиданно большое число запросов) и проверять эффективность кэша.",
-                "example": "stats.getQueryExecutionCount(); stats.getSecondLevelCacheHitCount()/getSecondLevelCacheMissCount(); stats.getQueryExecutionMaxTime() — и stats.clear() для сброса.",
-                "when_to_apply": "При диагностике N+1, оценке hit ratio L2-кэша и поиске самого медленного запроса на этапе профилирования.",
-                "edge_cases": "В production сбор метрик рекомендуется экспортировать в систему мониторинга через Micrometer и Spring Boot Actuator, а не читать логи вручную.",
-                "related": "[[hibernate-interview#Q37]], [[hibernate-interview#Q40]]"
+                "explanation": "Сбор статистики Hibernate по умолчанию выключен; его включают через hibernate.generate_statistics или Statistics.setStatisticsEnabled(true). Счётчики относятся к SessionFactory, поэтому их интерпретируют на заданном интервале и вместе с SQL конкретной операции.",
+                "example": "Сравните getQueryExecutionCount(), getPrepareStatementCount() и getEntityFetchCount(); для L2 cache считайте hits / (hits + misses) только при ненулевой сумме.",
+                "when_to_apply": "При исследовании N+1 и эффективности L2 cache; в production выбирайте нужные метрики и оценивайте накладные расходы сбора.",
+                "edge_cases": "getQueryExecutionCount() не равен числу всех SQL statement; L2 hit/miss не являются счётчиками query cache. stats.clear() сбрасывает общую статистику SessionFactory. Для автоэкспорта через Spring Boot нужны hibernate-micrometer, включённая статистика и настроенный Actuator/Micrometer.",
+                "related": "[[hibernate-interview#Q24]], [[hibernate-interview#Q26]], [[hibernate-interview#Q37]]"
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "В production `Hibernate Statistics` заменяет Micrometer, поэтому экспортировать метрики отдельно не нужно",
+              "text": "Включить `Hibernate Statistics` и ожидать автоматический экспорт метрик без Micrometer и Actuator",
               "correct": false,
               "sections": {
-                "what_actually": "Тело: в production рекомендуется экспортировать метрики через Micrometer и Spring Boot Actuator.",
-                "source_of_confusion": "Раз Statistics уже даёт метрики, кажется, что внешние инструменты избыточны.",
-                "if_it_were_true": "Метрики оставались бы внутри JVM без выхода в систему мониторинга.",
-                "how_it_should_be": "В production Statistics экспортируют через Micrometer и Actuator, а не заменяют их."
+                "what_actually": "Statistics собирает счётчики внутри Hibernate. Spring Boot регистрирует Hibernate-метрики при наличии hibernate-micrometer и включённой статистики; внешний доступ к ним требует настройки Actuator и экспортёра.",
+                "source_of_confusion": "Наличие встроенного API метрик можно принять за готовую публикацию в систему мониторинга.",
+                "if_it_were_true": "Одного generate_statistics=true хватало бы для появления метрик во внешней системе без других компонентов.",
+                "how_it_should_be": "Включите сбор статистики и отдельно настройте Hibernate Micrometer integration и нужный канал экспорта."
               }
             }
           ]
@@ -2351,50 +2351,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для production рекомендуется `ddl-auto` update, чтобы схема менялась автоматически при старте",
+              "text": "Подключить JPA starter; в production выбрать `ddl-auto=update`, а `open-in-view` настроить под API",
               "correct": false,
               "sections": {
-                "what_actually": "Тело: update — только для разработки; для production рекомендуется validate.",
-                "source_of_confusion": "update удобен в dev и по названию кажется «поддерживающим схему в актуальном виде».",
-                "if_it_were_true": "Hibernate самовольно менял бы боевую схему при каждом старте в обход миграций.",
-                "how_it_should_be": "Для production — validate (только проверка), а изменения — через Flyway/Liquibase."
+                "what_actually": "update пытается менять схему при старте. В production с контролируемыми миграциями обычно выбирают none или validate, а изменения выполняют Flyway/Liquibase.",
+                "source_of_confusion": "update удобно в разработке и выглядит как способ автоматически поддерживать схему в актуальном виде.",
+                "if_it_were_true": "Схема менялась бы при старте приложения вне явно проверенного набора миграций.",
+                "how_it_should_be": "Подключите JPA starter, ведите схему миграциями и выберите none или validate по требованиям проекта."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Для production рекомендуется `ddl-auto` со значением validate, а миграции ведёт Flyway",
+              "text": "Подключить JPA starter; схему вести миграциями с `none`/`validate`, а `open-in-view` выбрать под API",
               "correct": true,
               "sections": {
-                "explanation": "Spring Boot автонастраивает Hibernate через spring-boot-starter-data-jpa. Для production рекомендуют ddl-auto: validate — проверить схему при старте, не меняя её. Реальные изменения схемы ведут миграциями через Flyway или Liquibase, а не Hibernate.",
-                "example": "spring.jpa.hibernate.ddl-auto: validate; open-in-view: false; properties.hibernate.jdbc.batch_size: 50, order_inserts: true.",
-                "when_to_apply": "При настройке приложения под прод: validate + внешние миграции; update/create-drop оставляют для dev и тестов.",
-                "edge_cases": "Значения ddl-auto: none — ничего (прод с миграциями), validate — проверить (прод), update — только dev, create-drop — тесты. open-in-view в production рекомендуют отключать.",
+                "explanation": "Spring Boot настраивает JPA/Hibernate через starter и spring.jpa.*. Для production с миграциями none отключает Hibernate DDL, validate дополнительно проверяет схему. open-in-view решает, будет ли EntityManager доступен во время web view; его выбирают по архитектуре чтения данных.",
+                "example": "spring.jpa.hibernate.ddl-auto: validate; spring.jpa.open-in-view: false. hibernate.default_batch_fetch_size: 25 относится к пакетной загрузке связей, hibernate.jdbc.batch_size: 50 — к JDBC batching при записи.",
+                "when_to_apply": "При настройке JPA-приложения с управляемой схемой и явной границей загрузки данных для API.",
+                "edge_cases": "Boot по умолчанию выбирает create-drop для встроенной БД без Flyway/Liquibase и none в остальных случаях. validate не заменяет миграции. open-in-view по умолчанию включён для web; false часто удобен для API, но не является обязательным production-правилом.",
                 "related": "[[hibernate-interview#Q36]], [[hibernate-interview#Q35]]"
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Значение `create-drop` предназначено для production, ведь пересоздаёт схему при каждом старте",
+              "text": "Подключить JPA starter; в production выбрать `ddl-auto=create-drop`, а `open-in-view` настроить под API",
               "correct": false,
               "sections": {
-                "what_actually": "Тело: create-drop — пересоздать при старте и удалить при остановке, это режим для тестов.",
-                "source_of_confusion": "«Чистая схема при старте» звучит надёжно и переносится на прод.",
-                "if_it_were_true": "Все боевые данные стирались бы при каждом рестарте приложения.",
-                "how_it_should_be": "create-drop — режим тестов; в production берут validate или none с миграциями."
+                "what_actually": "create-drop создаёт схему и удаляет её при закрытии фабрики. Для production с сохранением данных этот режим не подходит.",
+                "source_of_confusion": "Встроенная тестовая БД в Boot без менеджера миграций может по умолчанию использовать create-drop, но это не совет для production.",
+                "if_it_were_true": "При остановке production-приложения Hibernate удалял бы управляемую им схему.",
+                "how_it_should_be": "Для контролируемой схемы используйте миграции и none либо validate; create-drop оставляйте изолированным тестам."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "В production рекомендуется включать `open-in-view`, чтобы сессия жила до конца рендеринга",
+              "text": "Подключить JPA starter; схему вести миграциями с `none`/`validate`, а `open-in-view=true` считать обязательным",
               "correct": false,
               "sections": {
-                "what_actually": "Тело: open-in-view: false — рекомендация отключить в production.",
-                "source_of_confusion": "Открытая сессия во view спасает от LazyInitializationException, и это принимают за плюс для прода.",
-                "if_it_were_true": "Соединение с БД удерживалось бы всё время рендеринга, нагружая пул под нагрузкой.",
-                "how_it_should_be": "В production open-in-view рекомендуют отключать (false)."
+                "what_actually": "Spring Boot включает open-in-view по умолчанию в web-приложении, но позволяет явно отключить его. Для API часто выбирают false и загружают необходимые данные в сервисе.",
+                "source_of_confusion": "Открытый EntityManager позволяет лениво загрузить связь во view, поэтому его можно ошибочно принять за обязательную настройку.",
+                "if_it_were_true": "Нельзя было бы построить API с закрытой после сервиса транзакцией и подготовленным ответом без ленивых обращений из web-слоя.",
+                "how_it_should_be": "Выберите open-in-view под границу загрузки данных; значение true не является обязательным для production."
               }
             }
           ]
@@ -2411,50 +2411,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`getCurrentSession()` возвращает сессию текущего потока, но закрывать её обязан разработчик",
+              "text": "`getCurrentSession()` берёт контекстную Session, которую всегда закрывает вызывающий код; `openSession()` создаёт новую",
               "correct": false,
               "sections": {
-                "what_actually": "getCurrentSession() закрывается сама при commit/rollback; вручную закрывать нужно только openSession().",
-                "source_of_confusion": "Ручное закрытие действительно требуется — но у openSession(), и эти два метода легко перепутать.",
-                "if_it_were_true": "В managed-среде копились бы утечки сессий, когда разработчик забывает вызвать close().",
-                "how_it_should_be": "getCurrentSession() привязана к транзакции и закрывается автоматически при commit/rollback."
+                "what_actually": "Жизненный цикл getCurrentSession() зависит от CurrentSessionContext. В JTA-контексте сессия ограничена транзакцией, а в ManagedSessionContext внешнее приложение управляет привязкой и закрытием.",
+                "source_of_confusion": "openSession() действительно требует явного закрытия, и это правило можно перенести на любой способ получения Session.",
+                "if_it_were_true": "Даже при JTA-контексте код каждого вызова обязан был бы закрывать общую текущую Session самостоятельно.",
+                "how_it_should_be": "getCurrentSession() получает Session из настроенного контекста; openSession() создаёт новую, которую закрывает вызывающий код."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`getCurrentSession()` возвращает сессию текущего потока и закрывает её автоматически",
+              "text": "`getCurrentSession()` берёт Session из настроенного контекста; `openSession()` создаёт новую, управляемую вызывающим кодом",
               "correct": true,
               "sections": {
-                "explanation": "getCurrentSession() отдаёт сессию, привязанную к текущей транзакции/потоку через ThreadLocal, и закрывает её сама при commit/rollback. openSession() всегда открывает новую независимую сессию, которую разработчик обязан закрыть вручную.",
-                "example": "Session s = sf.getCurrentSession(); s.beginTransaction(); s.persist(user); s.getTransaction().commit(); — сессия закрывается автоматически на commit.",
-                "when_to_apply": "В managed-среде (Spring, JEE) почти всегда нужен getCurrentSession(); openSession() — для standalone-кода или отдельной сессии вне текущей транзакции.",
-                "edge_cases": "getCurrentSession() требует настройки current_session_context_class. Есть и openStatelessSession() — сессия без L1-кэша и dirty checking для bulk-операций.",
-                "related": "[[hibernate-interview#Q46]], [[hibernate-interview#Q43]]"
+                "explanation": "CurrentSessionContext определяет область и жизненный цикл «текущей» Session: JTA-транзакция, поток или внешне управляемый контекст. openSession() создаёт новую Session с отдельным persistence context, которую вызывающий код закрывает сам.",
+                "example": "Session current = sf.getCurrentSession() работает при подходящем CurrentSessionContext. try (Session session = sf.openSession()) { ... } явно ограничивает жизнь новой Session.",
+                "when_to_apply": "Контекстную Session используют в настроенной нативной интеграции Hibernate. При явном управлении создают Session через openSession; в обычном Spring Data JPA чаще применяют внедрённый EntityManager или репозиторий с @Transactional.",
+                "edge_cases": "ThreadLocal — лишь один вид контекста. ManagedSessionContext сам не открывает и не закрывает Session. openSession() не начинает отдельную транзакцию автоматически; getCurrentSession() без подходящего контекста может завершиться ошибкой.",
+                "related": "[[hibernate-interview#Q35]], [[hibernate-interview#Q24]]"
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`getCurrentSession()` открывает новую независимую сессию и закрывает её автоматически",
+              "text": "`getCurrentSession()` каждый раз создаёт новую Session; `openSession()` тоже создаёт новую, управляемую вызывающим кодом",
               "correct": false,
               "sections": {
-                "what_actually": "getCurrentSession() отдаёт сессию, привязанную к текущему потоку/транзакции через ThreadLocal, а не новую независимую.",
-                "source_of_confusion": "Оба метода возвращают Session; новую независимую сессию создаёт именно openSession().",
-                "if_it_were_true": "Каждый вызов внутри одной транзакции давал бы разные сессии, разрывая контекст.",
-                "how_it_should_be": "getCurrentSession() возвращает сессию текущего контекста (ThreadLocal), а не независимую."
+                "what_actually": "getCurrentSession() возвращает Session, связанную с текущей областью, которую задаёт CurrentSessionContext; повторный вызов внутри той же области не означает новый отдельный persistence context.",
+                "source_of_confusion": "Оба метода могут привести к созданию Session при первом обращении, поэтому повторное получение ошибочно считают новым открытием.",
+                "if_it_were_true": "Текущий контекст не давал бы общей Session в пределах своей области.",
+                "how_it_should_be": "getCurrentSession() использует контекстную Session; openSession() явно создаёт новую Session."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`openSession()` возвращает сессию текущего потока и закрывает её автоматически",
+              "text": "`getCurrentSession()` берёт Session из контекста; `openSession()` создаёт новую вместе с независимой транзакцией",
               "correct": false,
               "sections": {
-                "what_actually": "openSession() всегда открывает новую независимую сессию, которую надо закрывать вручную в finally.",
-                "source_of_confusion": "Авто-закрытие и привязка к потоку — свойства getCurrentSession(), их ошибочно приписывают openSession().",
-                "if_it_were_true": "openSession() был бы не нужен — полностью совпадал бы по поведению с getCurrentSession().",
-                "how_it_should_be": "Авто-закрытие и привязка к потоку — у getCurrentSession(); openSession() закрывают руками."
+                "what_actually": "openSession() создаёт Session с новым persistence context, но сам по себе не начинает независимую транзакцию. Её границы задают отдельно.",
+                "source_of_confusion": "Новая Session и новая транзакция часто создаются рядом в примерах, и их принимают за одно действие.",
+                "if_it_were_true": "Открытие каждой Session автоматически запускало бы отдельную транзакцию без вызова beginTransaction() или внешнего менеджера.",
+                "how_it_should_be": "Создание Session и управление транзакцией — разные действия; openSession() требует явного закрытия Session."
               }
             }
           ]
@@ -2531,50 +2531,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`OSIV` держит сессию открытой до конца HTTP-запроса, включая рендеринг view.",
+              "text": "OSIV держит `EntityManager` до конца web-запроса; для API его можно выключить и загрузить данные в сервисе",
               "correct": true,
               "sections": {
-                "explanation": "Open Session In View держит Hibernate Session (или JPA EntityManager) открытой на весь HTTP-запрос, включая слой представления. Из-за этого lazy-загрузка происходит в сериализаторе вне транзакционного контекста, а соединение удерживается всё время запроса.",
-                "example": "Контроллер возвращает entity, сериализатор трогает lazy-коллекцию orders — OSIV молча выполняет доп. запросы к БД в слое view.",
-                "when_to_apply": "Вспоминать при диагностике скрытых запросов и удержания соединения; для production OSIV рекомендуют отключать (open-in-view: false).",
-                "edge_cases": "После отключения — LazyInitializationException при доступе к lazy-коллекциям вне транзакции; решение — fetch join или DTO-проекция в сервисе.",
-                "related": "[[hibernate-interview#Q45]], [[hibernate-interview#Q47]]"
+                "explanation": "Open-in-View оставляет EntityManager открытым на время web-запроса, поэтому mapper или view может лениво запросить данные после сервисной транзакции. Для API с явной границей данных его часто отключают и заранее выбирают нужные связи или DTO в сервисе.",
+                "example": "При open-in-view=true mapper в контроллере читает user.orders после вызова репозитория и может вызвать дополнительный SQL. При false сервис возвращает DTO, построенный внутри транзакции из нужных данных.",
+                "when_to_apply": "При диагностике скрытых запросов из web-слоя и проектировании ответа API; решение о выключении зависит от архитектуры приложения.",
+                "edge_cases": "Spring Boot включает Open EntityManager in View по умолчанию для web-приложений. Открытый EntityManager не означает JDBC-соединение на весь запрос. LazyInitializationException возникает при доступе к ещё не загруженным данным вне открытой Session, а не от одного факта завершения транзакции.",
+                "related": "[[hibernate-interview#Q40]], [[hibernate-interview#Q19]], [[hibernate-interview#Q20]]"
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`OSIV` в Spring Boot по умолчанию отключён — его включают вручную",
+              "text": "OSIV держит JDBC-соединение весь web-запрос; для API его можно выключить и загрузить данные в сервисе",
               "correct": false,
               "sections": {
-                "what_actually": "В Spring Boot OSIV включён по умолчанию (open-in-view: true).",
-                "source_of_confusion": "OSIV считают антипаттерном, поэтому кажется, что он выключен из коробки.",
-                "if_it_were_true": "LazyInitializationException возникал бы по умолчанию на любом lazy-доступе в view.",
-                "how_it_should_be": "OSIV включён по умолчанию; для production его рекомендуется отключать."
+                "what_actually": "OSIV держит открытым EntityManager, но режим получения и освобождения JDBC-соединения зависит от транзакций и конфигурации Hibernate.",
+                "source_of_confusion": "Открытый persistence context легко принять за постоянно занятое соединение из пула.",
+                "if_it_were_true": "Даже запрос без работы с БД после сервиса всегда занимал бы одно соединение до окончания HTTP-обработки.",
+                "how_it_should_be": "Оценивайте скрытый SQL и время жизни EntityManager отдельно от фактического времени удержания JDBC-соединения."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`OSIV` закрывает сессию до рендеринга view, ещё в сервисном слое",
+              "text": "OSIV закрывает `EntityManager` после сервиса; для API достаточно оставить lazy-загрузку в mapper контроллера",
               "correct": false,
               "sections": {
-                "what_actually": "Суть OSIV — держать сессию открытой на весь запрос, включая рендеринг view.",
-                "source_of_confusion": "Закрытие в сервисе — как раз то, к чему приходят, когда OSIV отключают.",
-                "if_it_were_true": "Lazy-доступ в сериализаторе всегда падал бы — но с OSIV он работает.",
-                "how_it_should_be": "OSIV не закрывает сессию до view — она живёт весь HTTP-запрос."
+                "what_actually": "Open-in-View сохраняет EntityManager до конца web-обработки. Именно поэтому mapper после сервисной транзакции иногда может лениво читать связи.",
+                "source_of_confusion": "Граница сервисной транзакции и граница EntityManager при OSIV не совпадают, но их легко отождествить.",
+                "if_it_were_true": "Mapper в контроллере не смог бы прочитать незагруженную связь после закрытия сервисной транзакции.",
+                "how_it_should_be": "При отключённом OSIV загружайте нужные данные в сервисе; при включённом помните о возможном скрытом SQL вне сервисной транзакции."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`OSIV` выполняет lazy-загрузку в слое view внутри транзакционного контекста",
+              "text": "OSIV держит `EntityManager` до конца web-запроса; его выключение всегда вызывает `LazyInitializationException`",
               "correct": false,
               "sections": {
-                "what_actually": "При OSIV lazy-загрузка в view идёт вне транзакционного контекста — в этом и проблема.",
-                "source_of_confusion": "Сессия открыта, поэтому кажется, что и транзакция всё ещё активна.",
-                "if_it_were_true": "Скрытые запросы были бы транзакционно безопасны и предсказуемы.",
-                "how_it_should_be": "Lazy-load в view происходит вне транзакции, порождая непредсказуемые доп. запросы."
+                "what_actually": "Исключение возникает только при доступе к ещё не загруженным данным вне открытой Session. Если сервис уже загрузил данные или вернул DTO, отключение OSIV не вызывает его само по себе.",
+                "source_of_confusion": "После выключения OSIV старый код с lazy-доступом в web-слое может упасть, и частный случай принимают за обязательное следствие.",
+                "if_it_were_true": "Даже ответ из готового DTO без lazy-связей завершался бы LazyInitializationException.",
+                "how_it_should_be": "При отключении OSIV подготовьте нужные данные до выхода из сервисной границы и проверяйте фактический доступ к lazy-связям."
               }
             }
           ]
@@ -2591,50 +2591,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Envers` пишет каждое изменение сущности в отдельную audit-таблицу истории",
+              "text": "Подключить Envers и пометить сущность `@Audited`: обычные ORM-изменения попадут в отдельные audit-таблицы",
               "correct": true,
               "sections": {
-                "explanation": "Hibernate Envers автоматически ведёт историю изменений JPA-сущностей: каждое изменение помеченной сущности сохраняется в отдельную audit-таблицу. Сущность помечается @Audited.",
-                "example": "@Audited на Product создаёт products_aud с полями rev (ревизия) и revtype (0=ADD, 1=MOD, 2=DEL), плюс revinfo с метаданными ревизий.",
-                "when_to_apply": "Вспоминать, когда нужен аудит: кто и когда менял сущность; чтение истории — через AuditReader.",
-                "edge_cases": "@NotAudited исключает поле; targetAuditMode=NOT_AUDITED — связь аудируется, но целевая сущность нет; RevisionEntity добавляет метаданные (username, ip).",
-                "related": "[[hibernate-interview#Q45]], [[hibernate-interview#Q43]]"
+                "explanation": "Envers через события Hibernate сохраняет ревизии добавления, изменения и удаления помеченной сущности. История находится в audit-таблице, а номер и время ревизии — в revision-сущности. Это не запись каждого setter и не аудит произвольного SQL.",
+                "example": "@Audited Product даёт таблицу вида products_AUD с REV и REVTYPE; историю читают через AuditReader. Для собственного username создают @RevisionEntity на классе, наследующем RevisionMapping в Hibernate 7.4.",
+                "when_to_apply": "Когда нужна история состояния JPA-сущности по ревизиям; включите hibernate-envers и спланируйте DDL audit-таблиц вместе с миграциями.",
+                "edge_cases": "@NotAudited исключает поле. targetAuditMode=NOT_AUDITED для ссылки на неаудируемую Category ведёт из исторической записи к текущей Category. Массовые CriteriaUpdate/CriteriaDelete и прямой SQL обходят обычные события сущности. DefaultRevisionEntity в Hibernate 7.4 final.",
+                "related": "[[hibernate-interview#Q33]], [[hibernate-interview#Q40]]"
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Envers` пишет каждое изменение сущности прямо в её основную таблицу",
+              "text": "Подключить Envers и пометить сущность `@Audited`: обычные ORM-изменения сохранят версии в основной таблице",
               "correct": false,
               "sections": {
-                "what_actually": "Envers пишет историю в отдельную audit-таблицу (products_aud), а не в основную таблицу сущности.",
-                "source_of_confusion": "В audit-таблице те же поля, что и в основной — кажется, что версии живут рядом с данными.",
-                "if_it_were_true": "Основная таблица разбухала бы копиями строк на каждое изменение.",
-                "how_it_should_be": "Каждое изменение уходит в отдельную audit-таблицу с колонками rev/revtype."
+                "what_actually": "Envers хранит историю в отдельных audit-таблицах, а основная таблица содержит текущее состояние сущности.",
+                "source_of_confusion": "Audit-таблица повторяет часть полей основной таблицы, поэтому её легко принять за дополнительные строки в ней же.",
+                "if_it_were_true": "Основная таблица смешивала бы текущую запись и все её исторические версии.",
+                "how_it_should_be": "Пометьте сущность @Audited; при обычных операциях Envers пишет ревизии в audit-таблицу и связывает их с revision-сущностью."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`@Audited` исключает сущность из аудита, отслеживаются только остальные",
+              "text": "Подключить Envers и пометить сущность `@Audited`: он автоматически учтёт также bulk DML и прямой SQL",
               "correct": false,
               "sections": {
-                "what_actually": "@Audited включает аудит сущности; исключает поле из аудита аннотация @NotAudited.",
-                "source_of_confusion": "Рядом есть @NotAudited — противоположную семантику легко приписать @Audited.",
-                "if_it_were_true": "Для аудита пришлось бы помечать все НЕнужные сущности — абсурдный opt-out.",
-                "how_it_should_be": "@Audited помечает то, что аудируется; @NotAudited задаёт исключения."
+                "what_actually": "Envers опирается на события жизненного цикла сущности. Массовые CriteriaUpdate/CriteriaDelete и прямые SQL-изменения не обеспечивают полной истории через этот механизм.",
+                "source_of_confusion": "Слово «автоматически» можно ошибочно распространить с ORM-операций на любые записи в таблицу.",
+                "if_it_were_true": "Любой SQL-клиент или bulk-запрос создавал бы audit-ревизию без участия событий Hibernate.",
+                "how_it_should_be": "Проверьте пути записи: для изменений вне обычного жизненного цикла сущности требуется отдельное решение аудита."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Envers` требует вручную сохранять историю в audit-таблицу на каждое изменение",
+              "text": "Подключить Envers и пометить сущность `@Audited`: после каждой ORM-правки вручную писать запись в audit-таблицу",
               "correct": false,
               "sections": {
-                "what_actually": "Envers ведёт историю автоматически при каждом изменении аудируемой сущности.",
-                "source_of_confusion": "Ручной аудит через триггеры БД или код — распространённая альтернатива Envers.",
-                "if_it_were_true": "Смысл модуля терялся бы — историю проще было бы писать самому.",
-                "how_it_should_be": "Envers сохраняет ревизии автоматически, разработчику писать это не нужно."
+                "what_actually": "Для обычных операций над @Audited сущностью Envers создаёт audit-ревизию автоматически; ручная вставка в audit-таблицу не нужна.",
+                "source_of_confusion": "Самописный аудит часто записывает историю вручную или через триггеры, но Envers решает эту задачу через ORM-события.",
+                "if_it_were_true": "Забытый вызов ручного аудита терял бы историю, хотя сущность помечена @Audited.",
+                "how_it_should_be": "Настройте Envers и схему таблиц; обычные изменения аудируемой сущности он запишет сам."
               }
             }
           ]
@@ -2651,50 +2651,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Projection` загружает полную Entity, а затем отбрасывает лишние поля",
+              "text": "Загрузить Entity целиком и преобразовать её в DTO после запроса: это сократит число выбранных колонок",
               "correct": false,
               "sections": {
-                "what_actually": "Закрытая проекция генерирует SELECT только нужных колонок, полную entity в память не тянет.",
-                "source_of_confusion": "Открытая проекция действительно читает из entity — её путают с закрытой.",
-                "if_it_were_true": "Экономии на выборке не было бы — БД всё равно читала бы все колонки.",
-                "how_it_should_be": "Projection выбирает нужные поля на уровне SQL, минуя загрузку полной Entity."
+                "what_actually": "Преобразование после запроса не меняет SELECT: колонки Entity уже прочитаны и сущность создана.",
+                "source_of_confusion": "DTO на выходе метода выглядит как проекция результата SQL, хотя преобразование сделано позже.",
+                "if_it_were_true": "При таком преобразовании SQL выбирал бы лишь поля DTO, чего сам по себе Java mapping не обеспечивает.",
+                "how_it_should_be": "Задайте поля в запросе или используйте закрытую проекцию Spring Data JPA и проверьте SQL."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Projection` открытого типа генерирует SELECT только нужных колонок — оптимальнее закрытой",
+              "text": "Добавить `@Value`/SpEL к интерфейсу: открытая проекция позволит выбрать только перечисленные геттеры",
               "correct": false,
               "sections": {
-                "what_actually": "SELECT только нужных колонок генерирует закрытая проекция; открытая читает из entity и не оптимальна.",
-                "source_of_confusion": "Оба вида — интерфейсные проекции, их производительность легко перепутать местами.",
-                "if_it_were_true": "SpEL-вычисляемые поля через @Value были бы бесплатными по объёму выборки.",
-                "how_it_should_be": "Оптимальна закрытая проекция; открытая (@Value/SpEL) грузит всю entity."
+                "what_actually": "SpEL может обратиться к любому свойству `target`; Spring Data не применяет оптимизацию закрытой проекции.",
+                "source_of_confusion": "Интерфейс остаётся проекцией, поэтому ему ошибочно приписывают поведение закрытой формы.",
+                "if_it_were_true": "Spring Data мог бы заранее вывести все нужные поля из произвольного SpEL-выражения.",
+                "how_it_should_be": "Для вычисления из уже выбранных полей используйте default-метод закрытой проекции."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Projection` выбирает только нужные поля вместо загрузки полной Entity",
+              "text": "Выбрать нужные поля в JPQL/Criteria или закрытой проекции и проверить фактический SQL и план запроса",
               "correct": true,
               "sections": {
-                "explanation": "Projection — выборка только нужных полей вместо загрузки полной Entity. Закрытая interface-проекция заставляет Spring генерировать SELECT только нужных колонок, что критично для производительности.",
-                "example": "JPQL с NEW: SELECT new OrderStats(o.category, COUNT(o), SUM(o.amount)) — сразу DTO, только агрегаты; или interface UserSummary с getId/getName.",
-                "when_to_apply": "Вспоминать для простых API-ответов (interface-проекция) и аналитики/агрегатов (class-based DTO), когда все поля entity не нужны.",
-                "edge_cases": "Открытая проекция (@Value/SpEL) тянет всю entity и не оптимальна; полная Entity нужна, только когда требуются все поля и обновление.",
-                "related": "[[hibernate-interview#Q43]], [[hibernate-interview#Q47]]"
+                "explanation": "Проекция сокращает выборку, когда запрос действительно выбирает только необходимые колонки. JPQL-конструктор создаёт DTO, Criteria может вернуть `Tuple`, а закрытая проекция Spring Data позволяет оптимизировать top-level поля.",
+                "example": "Для агрегата `SELECT new ...OrderStats(o.categoryName, COUNT(o), SUM(o.amount))`; для простого чтения — закрытый интерфейс с геттерами полей.",
+                "when_to_apply": "Когда нужны данные для чтения, а не изменение управляемой Entity; эффект оценивают по SQL, плану и нагрузке.",
+                "edge_cases": "`@Value`/SpEL делает интерфейс открытой проекцией; вложенные свойства могут материализовать join целиком. DTO не становится управляемой Entity.",
+                "related": "[[hibernate-interview#Q43]], [[spring-data-jpa-interview#Q13]]"
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Загрузка полной Entity быстрее любой `Projection` — меньше накладных расходов",
+              "text": "Добавить `JOIN FETCH` ко всем связям Entity: проекция тогда уменьшит объём выбранных данных",
               "correct": false,
               "sections": {
-                "what_actually": "Полная загрузка Entity — самый медленный вариант; проекция читает меньше данных и быстрее.",
-                "source_of_confusion": "Entity кажется «прямее», без промежуточных DTO или интерфейсов.",
-                "if_it_were_true": "Проекции были бы бессмысленны как инструмент оптимизации выборок.",
-                "how_it_should_be": "Projection тянет меньше колонок и быстрее; Entity-загрузка помечена как «Плохая» в таблице."
+                "what_actually": "`JOIN FETCH` предназначен для загрузки связей Entity и может увеличить объём результата; он не делает выборку отдельных полей проекцией.",
+                "source_of_confusion": "И fetch join, и проекция могут решить отдельные проблемы запросов, но разными способами.",
+                "if_it_were_true": "Загрузка всех связей уменьшала бы число прочитанных колонок для ответа из нескольких полей.",
+                "how_it_should_be": "Выбирайте нужные поля проекцией; fetch join применяйте, когда действительно нужны связанные Entity."
               }
             }
           ]
@@ -2711,49 +2711,49 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`StatelessSession` использует L1-кэш, поэтому накапливает сущности в persistence context",
+              "text": "Использовать её для импорта, полагаясь на L1-кэш и `flush()` для записи накопленных изменений",
               "correct": false,
               "sections": {
-                "what_actually": "StatelessSession работает без L1-кэша и не накапливает сущности в persistence context.",
-                "source_of_confusion": "Это всё же «Session» — кажется, что кэш первого уровня при ней есть.",
-                "if_it_were_true": "При миллионах строк был бы риск OutOfMemoryError, как у обычной сессии.",
-                "how_it_should_be": "StatelessSession без L1 не копит объекты, поэтому и годится для bulk."
+                "what_actually": "У `StatelessSession` нет persistence context, L1-кэша и операции `flush()`; `insert()` и `update()` вызываются явно.",
+                "source_of_confusion": "Обычная `Session` действительно накапливает управляемые объекты и записывает изменения при flush.",
+                "if_it_were_true": "Stateless-сессия удерживала бы объекты и откладывала запись так же, как обычная сессия.",
+                "how_it_should_be": "Передавайте объекты порциями и вызывайте явную операцию записи, например `insertMultiple()` в Hibernate 7+."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`StatelessSession` медленнее обычной сессии из-за overhead на dirty checking",
+              "text": "Использовать её для импорта, ожидая каскады и автоматическую запись изменений загруженных объектов",
               "correct": false,
               "sections": {
-                "what_actually": "StatelessSession быстрее на объёмах, потому что dirty checking у неё нет вовсе.",
-                "source_of_confusion": "Слово «облегчённая» ошибочно читается как урезанная и потому медленная.",
-                "if_it_were_true": "Не было бы смысла применять её для ETL и массового импорта.",
-                "how_it_should_be": "Отсутствие dirty checking и L1 делает StatelessSession быстрее при больших объёмах."
+                "what_actually": "Операции stateless-сессии не каскадируют; изменение загруженного объекта не вызывает автоматический `update()`.",
+                "source_of_confusion": "Маппинг каскадов и dirty checking знакомы по обычной `Session`.",
+                "if_it_were_true": "Изменение поля или вставка корневого объекта автоматически записывали бы весь связанный граф.",
+                "how_it_should_be": "Явно обрабатывайте связанные объекты и вызывайте `update()` для записи изменений."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`StatelessSession` сама ведёт учёт изменений сущностей, как обычная сессия.",
+              "text": "Использовать её для импорта, считая, что отсутствие L1 исключает любой кэш и переполнение памяти",
               "correct": false,
               "sections": {
-                "what_actually": "В StatelessSession версионирование делается вручную — автоматики нет.",
-                "source_of_confusion": "Обычная Session версионирует сама, и это поведение приписывают stateless-режиму.",
-                "if_it_were_true": "Не пришлось бы вручную вести version-поле при batch-обновлениях.",
-                "how_it_should_be": "Каскады, ленивая загрузка и версионирование в StatelessSession — вручную."
+                "what_actually": "С Hibernate 7 stateless-сессия использует L2-кэш по умолчанию; весь входной `List` также может занять много памяти.",
+                "source_of_confusion": "Отсутствие persistence context принимают за отсутствие всех кэшей и всех затрат памяти.",
+                "if_it_were_true": "Не требовались бы настройка режима кэша и потоковая подача входных данных.",
+                "how_it_should_be": "Подавайте данные постепенно; при необходимости отключите L2 через `CacheMode.IGNORE`."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`StatelessSession` работает без L1-кэша, dirty checking, каскадов и прокси",
+              "text": "Использовать её для импорта с явными операциями и ограниченными порциями, когда не нужны L1 и dirty checking",
               "correct": true,
               "sections": {
-                "explanation": "StatelessSession — облегчённый режим Hibernate без кэша первого уровня, dirty checking, каскадов и прокси. Сущности не накапливаются в persistence context, поэтому при миллионах строк не нужны ручные flush()/clear() и нет риска OutOfMemoryError.",
-                "example": "try (StatelessSession s = sf.openStatelessSession()) { tx = s.beginTransaction(); s.insert(p); tx.commit(); } — INSERT сразу, без накопления в L1.",
-                "when_to_apply": "Вспоминать для массового импорта (тысячи/миллионы строк), ETL и batch-обработки без накопления объектов в памяти.",
-                "edge_cases": "Расплата — теряются каскады, ленивая загрузка и автоматическое версионирование, их приходится делать вручную.",
+                "explanation": "`StatelessSession` работает без persistence context, L1 и dirty checking. Запись вызывают явно; операции не каскадируют.",
+                "example": "В Hibernate 7+ собрать небольшую порцию `Product` из потокового источника и вызвать `session.insertMultiple(batch)` внутри транзакции.",
+                "when_to_apply": "Для массовой обработки с контролируемой памятью, если приложение может явно управлять связями и операциями записи.",
+                "edge_cases": "Нет гарантии универсального выигрыша в скорости. В Hibernate 7+ L2-кэш используется по умолчанию, а `hibernate.jdbc.batch_size` не действует на stateless-сессию. `fetch()` существует, но возможен data aliasing.",
                 "related": "[[hibernate-interview#Q41]], [[hibernate-interview#Q47]]"
               }
             }
@@ -2771,50 +2771,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Проблемы производительности `Hibernate` — это слишком мало запросов и загруженных данных",
+              "text": "Измерить SQL; устранить N+1 через `EAGER` для всех связей; ограничить поля и настроить JDBC batch",
               "correct": false,
               "sections": {
-                "what_actually": "Проблемы возникают, когда Hibernate делает больше запросов и тянет больше данных, чем нужно.",
-                "source_of_confusion": "«Мало запросов» звучит как что-то плохое, хотя цель оптимизации — их сокращать.",
-                "if_it_were_true": "Лечением было бы добавлять запросы и грузить лишнее — обратное реальному.",
-                "how_it_should_be": "Почти все проблемы — это лишние запросы и лишние данные, их и убирают."
+                "what_actually": "`EAGER` требует ранней загрузки, но не гарантирует один SQL; вторичные SELECT могут сохранить N+1.",
+                "source_of_confusion": "Ранняя загрузка кажется эквивалентом `JOIN FETCH`, хотя это разные решения.",
+                "if_it_were_true": "Любое изменение fetch-типa на `EAGER` устраняло бы лишние SQL независимо от запроса.",
+                "how_it_should_be": "Проверяйте SQL и выбирайте план загрузки для конкретного чтения."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Загрузка полной Entity вместо `Projection` ускоряет выборку и снижает нагрузку",
+              "text": "Измерить SQL; ограничить поля; загрузить две коллекции одним `@EntityGraph` без риска лишних строк; настроить batch",
               "correct": false,
               "sections": {
-                "what_actually": "Грузить всю Entity ради пары полей — типичная ошибка из списка; проекция быстрее.",
-                "source_of_confusion": "Одна «простая» findAll() кажется дешевле, чем возня с проекциями.",
-                "if_it_were_true": "Раздел про проекции в перечне ошибок производительности не имел бы смысла.",
-                "how_it_should_be": "Для двух полей берут Projection; полная Entity — это лишние данные."
+                "what_actually": "Одновременная join-загрузка двух to-many связей раздувает SQL-результат; entity graph не гарантирует устранения этого эффекта.",
+                "source_of_confusion": "Entity graph воспринимают как автоматический оптимизатор любой формы результата.",
+                "if_it_were_true": "Количество строк результата не зависело бы от произведения мощностей двух коллекций.",
+                "how_it_should_be": "Разделите загрузку или используйте batch/subselect fetching для одной связи и измерьте строки и время."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Почти всякая проблема производительности `Hibernate` — лишние запросы или данные.",
+              "text": "Измерить SQL и число строк; ограничить поля и загрузку связей; проверить фактическую пакетную запись",
               "correct": true,
               "sections": {
-                "explanation": "Почти все проблемы производительности Hibernate сводятся к одному: фреймворк делает больше запросов или тянет больше данных, чем нужно. N+1 — главная из них.",
-                "example": "findAll() + lazy-доступ в цикле даёт N+1; загрузка всех полей User ради имени — лишние данные; два JOIN FETCH коллекций — декартово произведение.",
-                "when_to_apply": "Вспоминать при диагностике медленных запросов и на code review: включить show-sql, считать число запросов, искать избыточность.",
-                "edge_cases": "EAGER грузит связь всегда; readOnly=true отключает dirty checking; для батча нужны jdbc.batch_size + order_inserts и SEQUENCE вместо IDENTITY.",
-                "related": "[[hibernate-interview#Q45]], [[hibernate-interview#Q46]]"
+                "explanation": "Типичные узкие места — N+1, лишние колонки, декартово произведение при двух коллекциях и неэффективные вставки. Для каждого случая нужен свой механизм и проверка результата.",
+                "example": "Если нужны только имена, выбрать `u.name`; если две коллекции дают произведение строк, разделить их загрузку; для stateful batch проверить размер пачки и генерацию ID.",
+                "when_to_apply": "При диагностике медленного чтения или записи: сначала число запросов, строки, план и время, затем точечное изменение.",
+                "edge_cases": "`@Transactional(readOnly=true)` — подсказка и оптимизация для конкретной связки Spring/Hibernate, а не запрет записи. `IDENTITY` мешает JDBC batch INSERT для соответствующих сущностей.",
+                "related": "[[hibernate-interview#Q20]], [[hibernate-interview#Q21]], [[hibernate-interview#Q45]], [[hibernate-interview#Q46]]"
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`FetchType.EAGER` на связях — рекомендуемый способ избежать лишних запросов",
+              "text": "Измерить SQL; ограничить поля и связи; вызывать `flush()` после каждой вставки для ускорения JDBC batch",
               "correct": false,
               "sections": {
-                "what_actually": "EAGER грузит связь всегда, порождая лишние запросы; рекомендуется LAZY.",
-                "source_of_confusion": "EAGER «сразу всё загрузил» ошибочно кажется защитой от N+1.",
-                "if_it_were_true": "EAGER не попал бы в список ошибок производительности.",
-                "how_it_should_be": "Оставляют LAZY и грузят связь явно только там, где она нужна."
+                "what_actually": "Частый `flush()` может разрушить накопление JDBC-пакета; batching требует подходящей конфигурации и стратегии ID.",
+                "source_of_confusion": "`flush()` кажется способом группировать изменения, хотя он синхронизирует их с БД.",
+                "if_it_were_true": "Отдельная настройка размера пачки и порционная запись не имели бы значения.",
+                "how_it_should_be": "В обычной `Session` настраивайте batching и делайте `flush()`/`clear()` порциями; проверьте фактические SQL."
               }
             }
           ]
@@ -2831,50 +2831,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Маппинг и запросы `Hibernate` тестируют на реальной БД, не на моках",
+              "text": "Тестировать сервис с моками, а маппинг и SQL на совместимой СУБД; отдельно измерять запросы и L2 вне L1",
               "correct": true,
               "sections": {
-                "explanation": "Тестируют на разных уровнях: бизнес-логику — без БД (mock репозитория), а маппинг и запросы — обязательно на реальной БД, потому что многое (диалект, генерация SQL, ленивая загрузка) проявляется только при работе с СУБД.",
-                "example": "@DataJpaTest с TestEntityManager на H2 или @Testcontainers с PostgreSQLContainer для реальной проверки маппинга и запросов.",
-                "when_to_apply": "Вспоминать при тестировании репозиториев и при проверке диалект-специфичного поведения; сервисный слой — на моках через Mockito.",
-                "edge_cases": "H2 отличается от prod-СУБД — для диалект-функций нужен Testcontainers; число запросов ловят через assertSelectCount/datasource-proxy, чтобы поймать N+1 в тестах.",
-                "related": "[[hibernate-interview#Q47]], [[hibernate-interview#Q46]]"
+                "explanation": "Unit-тест с моками проверяет логику сервиса. Запросы, маппинг, транзакции и поведение диалекта требуют интеграционного теста с БД; SQL и кэш измеряют в изолированном сценарии.",
+                "example": "`@DataJpaTest` + Testcontainers PostgreSQL + `@AutoConfigureTestDatabase(replace = NONE)`; после `flush()`/`clear()` проверить результат и число SELECT.",
+                "when_to_apply": "Для репозиториев, миграций, диалектных запросов и регрессий N+1; версию контейнера согласовать с production.",
+                "edge_cases": "Повторное чтение в одном persistence context проверяет L1, а не L2. `getPrepareStatementCount()` считает все подготовленные statements, не только SELECT.",
+                "related": "[[hibernate-interview#Q47]], [[hibernate-interview#Q39]]"
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Маппинг и запросы `Hibernate` достаточно проверить на одних моках репозитория.",
+              "text": "Тестировать сервис с моками, а маппинг и SQL тоже только моками; отдельно измерять запросы и L2 вне L1",
               "correct": false,
               "sections": {
-                "what_actually": "Маппинг и запросы проверяют на реальной БД — многое проявляется только при работе с СУБД.",
-                "source_of_confusion": "Моки быстрые и не требуют Docker — соблазн проверить ими вообще всё.",
-                "if_it_were_true": "Диалект, генерация SQL и ленивая загрузка остались бы непокрытыми тестами.",
-                "how_it_should_be": "Маппинг и запросы — на реальной БД (DataJpaTest, Testcontainers), а не на моках."
+                "what_actually": "Мок репозитория не выполняет JPQL, SQL и маппинг; для них нужен интеграционный тест с БД.",
+                "source_of_confusion": "Изолированный тест сервиса кажется достаточным покрытием всех его зависимостей.",
+                "if_it_were_true": "Ошибки схемы, диалекта и загрузки связей обнаруживались бы без запуска ORM.",
+                "how_it_should_be": "Сервисную логику изолируйте, а поведение Hibernate проверяйте на БД."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Бизнес-логику сервиса можно тестировать лишь на реальной БД через `Testcontainers`.",
+              "text": "Тестировать сервис с моками, а маппинг и SQL на H2 для всех диалектов; отдельно измерять запросы и L2 вне L1",
               "correct": false,
               "sections": {
-                "what_actually": "Бизнес-логику тестируют без БД — на mock репозитория, это быстрее.",
-                "source_of_confusion": "Testcontainers даёт «настоящую» БД — кажется правильным гонять через неё всё.",
-                "if_it_were_true": "Unit-тесты сервиса были бы медленными и зависели бы от Docker.",
-                "how_it_should_be": "Бизнес-логика — на моках; реальная БД нужна маппингу и запросам."
+                "what_actually": "Embedded-БД полезна для быстрых тестов, но не доказывает поведение PostgreSQL или другого production-диалекта.",
+                "source_of_confusion": "H2 выполняет SQL и потому кажется полной заменой целевой СУБД.",
+                "if_it_were_true": "Функции, миграции и планы разных СУБД вели бы себя одинаково.",
+                "how_it_should_be": "Диалектные свойства проверяйте на совместимой версии целевой СУБД, например в Testcontainers."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Число `SQL`-запросов в тестах проверять не нужно — они видны в проде.",
+              "text": "Тестировать сервис с моками, а маппинг и SQL на совместимой СУБД; проверять L2 повторным чтением в одном L1",
               "correct": false,
               "sections": {
-                "what_actually": "Число запросов проверяют именно в тестах, чтобы поймать N+1 до прода.",
-                "source_of_confusion": "Проблема проявляется на нагрузке, поэтому кажется, что тест её не покажет.",
-                "if_it_were_true": "N+1 стабильно доезжал бы до продакшена без раннего сигнала.",
-                "how_it_should_be": "assertSelectCount/datasource-proxy ловят лишние запросы в тестах, а не в проде."
+                "what_actually": "В одном persistence context повторное чтение может удовлетворить L1, так что L2 hit не доказан.",
+                "source_of_confusion": "Повторный вызов метода выглядит как второе обращение к общей кэш-системе.",
+                "if_it_were_true": "Первый уровень не мог бы вернуть уже управляемый объект без доступа к L2.",
+                "how_it_should_be": "Проверяйте L2 между разными persistence context и обнуляйте статистику перед измерением."
               }
             }
           ]
@@ -2891,49 +2891,49 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@JdbcTypeCode(SqlTypes.JSON)` без сторонней библиотеки hibernate-types не умеет сериализовать поле",
+              "text": "Пометить поле `@JdbcTypeCode(SqlTypes.JSON)`; Hibernate сериализует его без JSON mapper в classpath",
               "correct": false,
               "sections": {
-                "what_actually": "Hibernate 6 встроил JSON-маппинг в ядро — зависимость hibernate-types больше не требуется.",
-                "source_of_confusion": "До Hibernate 6 JSON-маппинг делали именно через стороннюю hibernate-types.",
-                "if_it_were_true": "Аннотация из ядра была бы бесполезна без внешней зависимости.",
-                "how_it_should_be": "@JdbcTypeCode(SqlTypes.JSON) сериализует сам, сторонняя библиотека не нужна."
+                "what_actually": "Ядро Hibernate даёт JSON-маппинг, но для сериализации нужен доступный JSON mapper, например Jackson или JSON-B.",
+                "source_of_confusion": "Отсутствие необходимости в отдельном типе hibernate-types принимают за отсутствие любой библиотеки JSON.",
+                "if_it_were_true": "Hibernate мог бы преобразовывать произвольные Java-значения без механизма сериализации.",
+                "how_it_should_be": "Проверьте JSON mapper в classpath и при необходимости задайте hibernate.type.json_format_mapper."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`@JdbcTypeCode(SqlTypes.JSON)` требует вручную сериализовать объект перед сохранением в колонку",
+              "text": "Пометить поле `@JdbcTypeCode(SqlTypes.JSON)`; сериализовать Map вручную перед каждым сохранением",
               "correct": false,
               "sections": {
-                "what_actually": "Hibernate сам сериализует объект/Map/коллекцию в JSON-колонку.",
-                "source_of_confusion": "Раньше JSON часто клали строкой, вызывая ObjectMapper вручную.",
-                "if_it_were_true": "Смысл аннотации терялся бы — сериализовать всё равно пришлось бы руками.",
-                "how_it_should_be": "Пометил поле @JdbcTypeCode(SqlTypes.JSON) — Hibernate сериализует автоматически."
+                "what_actually": "При доступном JSON mapper Hibernate сам преобразует поддерживаемое значение поля при записи и чтении.",
+                "source_of_confusion": "Ручное преобразование в строку было привычным обходным путём до встроенного маппинга.",
+                "if_it_were_true": "Аннотация не участвовала бы в сериализации значения.",
+                "how_it_should_be": "Пометьте поле и проверьте round-trip на целевой БД; ручное преобразование не требуется для этого сценария."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`@JdbcTypeCode(SqlTypes.JSON)` работает только с Map, но не с POJO или коллекциями",
+              "text": "Пометить поле `@JdbcTypeCode(SqlTypes.JSON)`; считать PostgreSQL `jsonb` точной копией исходного JSON",
               "correct": false,
               "sections": {
-                "what_actually": "Маппинг работает не только с Map, но и с embeddable/POJO и коллекциями.",
-                "source_of_confusion": "В примере показан Map<String, Object> — кажется, что им всё и ограничено.",
-                "if_it_were_true": "Сложные вложенные структуры пришлось бы хранить каким-то другим способом.",
-                "how_it_should_be": "Map, POJO и коллекции — всё маппится в один JSON-документ."
+                "what_actually": "`jsonb` не сохраняет пробелы, порядок ключей и повторяющиеся ключи исходного текста.",
+                "source_of_confusion": "Оба типа PostgreSQL хранят JSON-значение, поэтому их представление считают одинаковым.",
+                "if_it_were_true": "Переключение с `json` на `jsonb` сохраняло бы исходные байты и порядок ключей.",
+                "how_it_should_be": "Выбирайте `jsonb` для обычного поиска и индексации, `json` — когда важно исходное представление."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`@JdbcTypeCode(SqlTypes.JSON)` сам сериализует поле в JSON-колонку без сторонней библиотеки",
+              "text": "Пометить поле `@JdbcTypeCode(SqlTypes.JSON)`; использовать доступный JSON mapper и проверить формат колонки",
               "correct": true,
               "sections": {
-                "explanation": "Hibernate 6 встроил поддержку JSON-маппинга в ядро — сторонняя hibernate-types больше не нужна. Поле помечается @JdbcTypeCode(SqlTypes.JSON), и Hibernate сам сериализует объект/Map/коллекцию в JSON-колонку.",
-                "example": "@JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = \"jsonb\") private Map<String, Object> attributes; — Hibernate сериализует Map в jsonb.",
-                "when_to_apply": "Вспоминать, когда нужно хранить полуструктурированные данные (атрибуты, метаданные) в одной JSON-колонке без внешних библиотек.",
-                "edge_cases": "Для PostgreSQL хранят в jsonb (индексируемо, компактнее текстового json); маппинг работает и с embeddable/POJO, и с коллекциями.",
+                "explanation": "С Hibernate 6 ядро поддерживает SQL JSON-маппинг через `@JdbcTypeCode(SqlTypes.JSON)`. Отдельный тип hibernate-types для базового сценария не нужен, но библиотека JSON-сериализации должна быть доступна.",
+                "example": "`@JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = \"jsonb\") Map<String, String> attributes` для PostgreSQL при доступном Jackson или JSON-B.",
+                "when_to_apply": "Когда поле должно храниться как JSON-документ; на целевой БД проверить запись, чтение и запросы.",
+                "edge_cases": "`columnDefinition=\"jsonb\"` привязан к PostgreSQL. Для embeddable аннотацию ставят на поле сущности. `jsonb` не сохраняет исходный порядок ключей и дубликаты.",
                 "related": "[[hibernate-interview#Q42]], [[hibernate-interview#Q50]]"
               }
             }
@@ -2951,50 +2951,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Struct` маппит embeddable на отдельные колонки street, city и zip таблицы",
+              "text": "Указать `@Struct` на embeddable и хранить его поля в отдельных колонках таблицы без SQL-типа",
               "correct": false,
               "sections": {
-                "what_actually": "@Struct кладёт embeddable в одну колонку структурного типа, а не в три отдельные колонки.",
-                "source_of_confusion": "Обычный @Embeddable как раз раскладывается на плоские отдельные колонки.",
-                "if_it_were_true": "Структурный тип БД (address_type) был бы вообще не нужен.",
-                "how_it_should_be": "Поля становятся атрибутами структуры, всё лежит в одной колонке address_type."
+                "what_actually": "`@Struct` задаёт маппинг на именованный SQL object/composite type в одной колонке.",
+                "source_of_confusion": "Обычный `@Embeddable` без `@Struct` обычно раскладывается на колонки таблицы.",
+                "if_it_were_true": "Имя SQL-типа в `@Struct` не влияло бы на схему.",
+                "how_it_should_be": "Для отдельных колонок оставьте обычный embeddable без `@Struct`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`@Struct` маппит embeddable на структурный тип БД, а не отдельные колонки",
+              "text": "Указать `@Struct` на embeddable и хранить его в колонке именованного SQL-типа с согласованным порядком атрибутов",
               "correct": true,
               "sections": {
-                "explanation": "@Struct маппит @Embeddable не на отдельные колонки, а на структурный пользовательский тип БД (composite type в PostgreSQL, object type в Oracle). Поля embeddable становятся атрибутами этой структуры.",
-                "example": "@Embeddable @Struct(name = \"address_type\") record Address(String street, String city, String zip) — address сохраняется в одну колонку типа address_type.",
-                "when_to_apply": "Вспоминать, когда в схеме БД уже используется структурный/composite-тип и на него нужно замапить embeddable.",
-                "edge_cases": "Без такого требования обычный @Embeddable (плоские колонки) проще и портируемее; структурный тип привязывает к конкретной СУБД.",
+                "explanation": "Начиная с Hibernate 6.2, `@Struct` сопоставляет embeddable с именованным SQL object/composite type. Атрибуты и их порядок должны совпадать с типом БД.",
+                "example": "`@Embeddable @Struct(name=\"address_type\") record Address(String street, String city, String zip) {}`; поле `Customer.address` хранится в колонке типа `address_type`.",
+                "when_to_apply": "Когда схема использует поддерживаемый диалектом SQL-структурный тип, например PostgreSQL composite type.",
+                "edge_cases": "Record задаёт порядок атрибутов каноническим конструктором; для класса доступен `@Struct(attributes={...})`. Hibernate 7.4 не заявляет поддержку Struct для MySQL/H2.",
                 "related": "[[hibernate-interview#Q49]], [[hibernate-interview#Q42]]"
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Обычный embeddable без `@Struct` тоже маппится на структурный тип БД",
+              "text": "Указать `@Struct` на embeddable и хранить его в колонке SQL-типа без проверки порядка атрибутов",
               "correct": false,
               "sections": {
-                "what_actually": "Без @Struct обычный @Embeddable даёт плоские отдельные колонки, а не структурный тип.",
-                "source_of_confusion": "И то и другое — embeddable, разница лишь в наличии аннотации @Struct.",
-                "if_it_were_true": "Аннотация @Struct была бы избыточной и не несла бы смысла.",
-                "how_it_should_be": "На структурный тип маппит именно @Struct; иначе — плоские колонки."
+                "what_actually": "Порядок атрибутов SQL-типа должен совпадать с порядком, ожидаемым Hibernate.",
+                "source_of_confusion": "Имена полей совпадают, поэтому позиционный порядок кажется неважным.",
+                "if_it_were_true": "Изменение порядка в DDL не могло бы нарушить сопоставление структуры.",
+                "how_it_should_be": "Для record сверяйте порядок компонентов; для класса при необходимости задайте `attributes` и проверьте миграцию."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`@Struct` портируемее обычного embeddable и проще переносится между СУБД",
+              "text": "Указать `@Struct` на embeddable и хранить его в одной SQL-колонке одинаково на PostgreSQL и H2",
               "correct": false,
               "sections": {
-                "what_actually": "@Struct привязан к структурному типу конкретной СУБД; обычный @Embeddable портируемее.",
-                "source_of_confusion": "«Нативный тип БД» звучит как более совместимый и «правильный» вариант.",
-                "if_it_were_true": "@Struct стоило бы применять по умолчанию во всех проектах.",
-                "how_it_should_be": "Без требования к struct-типу проще и портируемее обычный @Embeddable."
+                "what_actually": "Поддержка SQL-структур различается по диалектам: Hibernate 7.4 указывает PostgreSQL, но не H2.",
+                "source_of_confusion": "Аннотация доступна в Java независимо от того, умеет ли СУБД хранить нужный тип.",
+                "if_it_were_true": "Один и тот же DDL object type работал бы во всех диалектах Hibernate.",
+                "how_it_should_be": "Проверяйте таблицу поддержки диалектов и запускайте интеграционный тест на целевой СУБД."
               }
             }
           ]
