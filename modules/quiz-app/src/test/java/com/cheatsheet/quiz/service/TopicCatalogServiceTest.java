@@ -79,7 +79,7 @@ class TopicCatalogServiceTest {
         assertThat(catalog).extracting(TopicCatalogService.GroupProgress::id)
                 .containsExactly("languages", "spring");
 
-        TopicCatalogService.GroupProgress languages = catalog.getFirst();
+        TopicCatalogService.GroupProgress languages = catalog.get(0);
         assertThat(languages.topicCount()).isEqualTo(2L);
         assertThat(languages.questionCount()).isEqualTo(50L);
         assertThat(languages.learnedCount()).isEqualTo(25L);
