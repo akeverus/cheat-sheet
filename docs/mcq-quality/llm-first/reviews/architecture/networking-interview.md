@@ -5,12 +5,14 @@
 Пара и SHA-256:
 
 - `cheatsheets/interview/architecture/networking-interview.md` — `02c1ab2aab449c95b0a47bd8fe0d4d4cfad5bba4733e9f5e3a8a92375c9d1bf1`.
-- `modules/quiz-app/src/main/resources/seed/mcq/architecture/networking-interview.json` — `3ae4979c9280c11176a51569e5ea408ef87054c6e52dc7dd36b4cac9d27e9cda`.
+- `modules/quiz-app/src/main/resources/seed/mcq/architecture/networking-interview.json` — `2bd3fbe42d09b6f98a7e8864ee08fa2be64f1a16b48666bd3d0d9d52b90849e3`.
 - `docs/mcq-quality/fact-freshness/networking-interview.json` — `5b200c007edfc1bed25d9c5a1d0a24070cb562d3a56c3c5880b44c9a7ebdb026`.
 
 Прочитаны пролог, оглавление, видимые Q1–Q43, парная теория, 172 варианта A–D и пояснения. Идентификаторы B0 и ключи сохранены. Самопроверка не заменяет независимое ревью. Отдельная ревизия визуальной симметрии записана в `networking-visual-parity-2026-11-09.md`.
 
 Исправлены безусловные формулировки о TCP keep-alive и закрытии соединения, HTTP/1.1 persistent connection, HTTP/2 HOL, HTTP/3 push, TLS 1.3 PSK-only и 0-RTT, DNS-кэше Java, CORS preflight, L4/L7 и TLS termination, сетевых политиках Kubernetes, service mesh и certificate pinning. Для UDP и QUIC разделены свойства транспорта и гарантий приложения. Убраны универсальные числа задержки и производительности без условий измерения. Дистракторы приведены к полным проверяемым ошибочным моделям, а пояснения согласованы с их новой редакцией.
+
+После адресной проверки Q1, Q26, Q30 и Q38 сокращены правильные варианты, которые выделялись числом предложений и объёмом. Сведения об уровнях OSI, условиях preflight, режимах Java HttpClient и исполнении NetworkPolicy сохранены; ключи и пояснения не изменились.
 
 Проверенные первичные источники:
 
