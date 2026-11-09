@@ -1,9 +1,10 @@
 # Embeddings — редакция MCQ
 
 - Дата: 2026-11-04. Модель: GPT-6.
-- Статус: `LLM_READY`. Это содержательная редакция одной модели и проверка структуры, без независимого ревью и без прежнего `FINAL PASS`.
+- Статус: `VISUAL_PARITY_REVIEWED`. [Отдельная ревизия всех A–D](embeddings-visual-parity-2026-11-09.md) завершена; независимое ревью и `FINAL PASS` не проводились.
 - Охват: все видимые Q1–Q29, 29 блоков B0, варианты A–D и все поля `sections`.
-- Production JSON: `modules/quiz-app/src/main/resources/seed/mcq/ai-ml/embeddings-interview.json`; SHA-256 `b74b60e7017bf9417662ad8ab72f796e0a7adbc079cf34fe8214935ae4292913`.
+- Production JSON: `modules/quiz-app/src/main/resources/seed/mcq/ai-ml/embeddings-interview.json`; SHA-256 `6394d1057f2dbd2b1756ec31f2328383a10cdbb133d7bd9938ec2c8e3a18db75`.
+- Fact freshness: `docs/mcq-quality/fact-freshness/embeddings-interview.json`; SHA-256 `58d705e1d999649b77358fc7126394a5ea56f05369fd68e1cd050a2d81d48b85`.
 - Парный Markdown: `cheatsheets/interview/ai-ml/embeddings-interview.md`; SHA-256 `6c670d41e7657e06ab771ba09d92a0a4ec66083c6ccfbcd7df242b9690dbfba4`.
 
 ## Основные исправления
@@ -26,6 +27,8 @@
 - [BGE-M3 model card](https://huggingface.co/BAAI/bge-m3): dense, sparse и multi-vector выходы.
 - [CLIP](https://github.com/openai/CLIP), [ImageBind](https://github.com/facebookresearch/ImageBind) и [CLAP](https://github.com/LAION-AI/CLAP): API энкодеров и поддерживаемые модальности.
 - [Morris et al., EMNLP 2023](https://aclanthology.org/2023.emnlp-main.765/): атаки восстановления текста из embeddings.
+
+После отдельной ревизии формы и смысла вариантов устранены подсказки по длине, пунктуации и категоричности; обновлены Q5:D, Q6:D и их sections. После адресной выборки расширены ошибочные подходы в Q10, Q12, Q16, Q22, Q23 и Q29 и согласованы все затронутые sections. Актуальная таблица всех 29 блоков и границы проверки — в отчёте о визуальной ревизии.
 
 ## Открытые вопросы и проверка
 
