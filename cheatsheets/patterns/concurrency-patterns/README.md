@@ -34,7 +34,7 @@ updated: "2026-04-20"
 - [Behavioral](../../basics/README.md)
 - [Java Concurrency (basics)](../../languages/java/java-concurrency-basics.md)
 - [Java Concurrency (advanced)](../../languages/java/java-concurrency-advanced.md)
-- [Architecture: scalability](../../architecture/scalability/README.md)
+- [System Design и масштабирование](../../architecture/system-design/README.md)
 
 ### Внешние ресурсы
 - [Java Concurrency in Practice (Goetz)](https://jcip.net/)
@@ -88,6 +88,6 @@ updated: "2026-04-20"
 ## Куда идти дальше
 
 - Реактивные стеки — [java-concurrency-advanced](../../languages/java/java-concurrency-advanced.md)
-- Архитектура и масштабирование — [../../architecture/scalability/README.md](../../architecture/scalability/README.md)
+- Архитектура и масштабирование — [System Design](../../architecture/system-design/README.md)
 - Очереди и стриминг — [README](../../basics/README.md)
-- Вопросы на собеседовании — [../../interview/frameworks/java/java-concurrency-interview.md](../../interview/frameworks/java/java-concurrency-interview.md)
+- Вопросы на собеседовании — [Java Concurrency](../../interview/programming-languages/java/java-concurrency-interview.md)

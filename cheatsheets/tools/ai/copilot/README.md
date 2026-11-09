@@ -29,7 +29,7 @@ GitHub Copilot — один из самых распространённых AI-
 - [tools/ai/](../../../basics/README.md) — родительский раздел
 - [tools/ai/claude/](../../../basics/README.md) — альтернатива с длинным контекстом
 - [tools/ai/cody/](../../../basics/README.md) — альтернатива с code graph
-- [devops/git/](../../../devops/git/README.md) — общий раздел по Git
+- [Основы Git](../../../basics/git-basics.md) — общий раздел по Git
 
 ### Внешние ресурсы
 - [GitHub Copilot Docs](https://docs.github.com/en/copilot)

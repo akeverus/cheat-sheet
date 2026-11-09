@@ -19,7 +19,7 @@ updated: "2026-04-20"
 
 ## Полезные ссылки
 
-[Java Core](java-core.md)
+[Основы Java](java-basics.md)
 [Java Streams & FP](java-streams-fp.md)
 [Java Collections](java-collections-list.md)
 

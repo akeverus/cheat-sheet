@@ -76,7 +76,7 @@ updated: "2026-04-20"
 
 ## Куда идти дальше
 
-- Паттерны как реализации принципов — [patterns/creational-patterns/](../../patterns/creational-patterns/README.md), [patterns/structural-patterns/](../../patterns/structural-patterns/README.md)
+- Паттерны как реализации принципов — [порождающие](../../patterns/creational/README.md), [структурные](../../patterns/structural/README.md)
 - Архитектурные стили — [architecture/software-architecture/](../../basics/README.md)
 - ADR-шаблон для фиксации принципиальных решений — [architecture/architectural-decision-records/](../../basics/README.md)
 - Рефакторинг и код-ревью — [interview/code-quality/](../../interview/code-quality/)
