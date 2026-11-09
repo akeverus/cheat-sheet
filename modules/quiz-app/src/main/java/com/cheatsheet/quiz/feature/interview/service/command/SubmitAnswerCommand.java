@@ -2,6 +2,8 @@ package com.cheatsheet.quiz.feature.interview.service.command;
 
 import com.cheatsheet.quiz.domain.AnswerResult;
 import com.cheatsheet.quiz.domain.AttemptOutcome;
+import com.cheatsheet.quiz.domain.exception.OptionNotFoundException;
+import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import com.cheatsheet.quiz.feature.interview.controller.InterviewSessionSupport.AnswerSubmission;
 import com.cheatsheet.quiz.feature.interview.service.core.InterviewService;
 import com.cheatsheet.quiz.feature.interview.service.review.AttemptRecorder;
@@ -76,11 +78,21 @@ public class SubmitAnswerCommand {
             throw ex;
         }
 
-        AnswerResult result = interviewService.submitAnswer(
-                submission.questionId(),
-                submission.optionId(),
-                submission.confidence()
-        );
+        AnswerResult result;
+        try {
+            result = interviewService.submitAnswer(
+                    submission.questionId(), submission.optionId(), submission.confidence());
+        } catch (QuestionNotFoundException | OptionNotFoundException missingContent) {
+            // Импорт мог завершиться после проверки latest. Предлагаем обновить
+            // страницу только при подтверждённой смене ревизии, сохраняя обычный 404.
+            try {
+                attemptRecorder.requireValidRevision(submission.questionId(), submission.questionRevisionId());
+            } catch (RevisionMismatchException changedRevision) {
+                revisionMismatchCounter.increment();
+                throw new RevisionMismatchException("Question changed during answer submission", missingContent);
+            }
+            throw missingContent;
+        }
 
         attemptRecorder.record(
                 submission.questionId(),

@@ -132,9 +132,16 @@ export function initInterviewForm() {
   thinkTime.markQuestionShown();
 
   const optionInputs = Array.from(form.querySelectorAll('input[name="optionId"]'));
+  const skipBtn = form.querySelector('.skip-btn');
   let answered = false;
   let clientAttemptId = null;
   let clientAttemptQuestionId = null;
+
+  // BFCache возвращает документ вместе с флагом native POST. Навигация уже
+  // закончилась, поэтому её блокировка больше не должна запрещать отправку.
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) delete form.dataset.skipSubmitted;
+  });
 
   // #result-feedback НЕ live-регион (иначе SR зачитывает весь ~2900-симв. разбор атомарно).
   // Краткий вердикт анонсируется через #result-announce; сюда переносится focus (см. ниже).
@@ -148,6 +155,7 @@ export function initInterviewForm() {
     const disabled = busy || answered;
     optionsContainer.setAttribute('aria-disabled', disabled ? 'true' : 'false');
     optionInputs.forEach((input) => { input.disabled = disabled; });
+    if (skipBtn) skipBtn.disabled = disabled;
   }
 
   function currentClientAttemptId() {
@@ -310,7 +318,7 @@ export function initInterviewForm() {
       + `</div>`;
   }
 
-  function renderFeedbackHtml(data) {
+  function renderFeedbackHtml(data, restoredSelection) {
     const isCorrect = data.correct;
     const leadHtml = sanitizeHtml(data.answerLeadHtml || '');
     const restHtml = sanitizeHtml(data.answerRestHtml || '');
@@ -387,6 +395,7 @@ export function initInterviewForm() {
     feedbackDiv.innerHTML = `
       <div class="feedback-verdict result-banner ${isCorrect ? 'result-correct' : 'result-wrong'}">
         <strong class="result-verdict">${buildVerdictLine(data)}</strong>
+        ${restoredSelection ? '<p class="result-replay-note">Повторная отправка: показан ранее сохранённый ответ.</p>' : ''}
       </div>
       <div class="feedback-meta">
         ${buildXpBadge(data)}
@@ -409,7 +418,10 @@ export function initInterviewForm() {
 
   function applyOptionStyles(data) {
     const labels = optionsContainer.querySelectorAll('label[data-option-id]');
-    optionInputs.forEach((input) => { input.disabled = true; });
+    optionInputs.forEach((input) => {
+      input.checked = Number(input.value) === data.selectedOptionId;
+      input.disabled = true;
+    });
     // «Выбери один вариант» над списком, в котором уже ничего не выбрать, —
     // инструкция к действию, которое кончилось. Снимаем вместе с блокировкой
     // радиокнопок: с этого момента список читается как разбор, а не как форма.
@@ -560,12 +572,14 @@ export function initInterviewForm() {
 
   function showResult(data) {
     const questionId = (form.querySelector('input[name="questionId"]') || {}).value || '';
+    const selected = form.querySelector('input[name="optionId"]:checked');
+    const restoredSelection = selected && Number(selected.value) !== data.selectedOptionId;
     applyOptionStyles(data);
     submitBtn.classList.add('hidden');
     nextLink.textContent = 'Следующий вопрос';
     nextLink.href = buildNextQuestionHref(questionId);
     delete nextLink.dataset.finishSession;
-    renderFeedbackHtml(data);
+    renderFeedbackHtml(data, restoredSelection);
     if (answerFlowHint) answerFlowHint.classList.remove('hidden');
 
     const progressTrackEl = document.querySelector('.session-progress-track');
@@ -652,18 +666,20 @@ export function initInterviewForm() {
   }
 
   async function handleSubmit(event) {
+    // Ответ и «Не знаю» завершают один вопрос: пока один исход отправляется
+    // или уже принят, другой submit не должен запускать конкурирующий POST.
+    if (answered || form.dataset.skipSubmitted === '1') {
+      event.preventDefault();
+      return;
+    }
+
     // Skip uses formaction=/skip — let the browser POST (no option required).
     if (isSkipSubmit(event)) {
-      if (form.dataset.skipSubmitted === '1') {
-        event.preventDefault();
-        return;
-      }
       form.dataset.skipSubmitted = '1';
       return;
     }
 
     event.preventDefault();
-    if (answered) return;
 
     const selected = form.querySelector('input[name="optionId"]:checked');
     if (!selected) {
@@ -688,6 +704,7 @@ export function initInterviewForm() {
       const response = await apiPostJson(API.ANSWER, formDataToAnswerPayload(formData));
 
       if (!response.ok) {
+        const conflict = response.status === 409 ? await parseApiError(response) : null;
         answered = false;
         // Голос отдаём тексту отказа ниже (setInlineAlert), поэтому регион
         // ожидания гасим пустой строкой, а не объявляем «готово».
@@ -695,8 +712,8 @@ export function initInterviewForm() {
         setInteractionBusy(false);
         updateSubmitAvailability();
         thinkTime.markQuestionShown();
-        setInlineAlert(response.status === 409
-          ? 'Этот вопрос обновлён. Загрузи страницу заново, чтобы ответить на актуальную версию.'
+        setInlineAlert(conflict
+          ? conflict.detail || 'Не удалось восстановить попытку. Обнови страницу и повтори действие.'
           : 'Не удалось проверить ответ. Выбранный вариант сохранён — повтори отправку.');
         if (document.activeElement === document.body) submitBtn.focus({ preventScroll: true });
         return;

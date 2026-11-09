@@ -2,14 +2,19 @@ package com.cheatsheet.quiz.feature.interview.controller;
 
 import lombok.AccessLevel;
 import com.cheatsheet.quiz.domain.AnswerResult;
+import com.cheatsheet.quiz.domain.Attempt;
 import com.cheatsheet.quiz.domain.AttemptOutcome;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.Question;
+import com.cheatsheet.quiz.domain.QuestionRevision;
+import com.cheatsheet.quiz.domain.exception.OptionNotFoundException;
+import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import com.cheatsheet.quiz.feature.interview.service.command.SubmitAnswerCommand;
 import com.cheatsheet.quiz.feature.interview.service.core.InterviewService;
 import com.cheatsheet.quiz.feature.interview.service.review.AttemptRecorder;
+import com.cheatsheet.quiz.feature.interview.service.review.RevisionMismatchException;
 import com.cheatsheet.quiz.common.util.FilterUtils;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -20,6 +25,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Clock;
+import java.util.Objects;
 
 /**
  * Общая логика работы с HTTP-сессией интервью, используемая обоими контроллерами
@@ -95,13 +101,10 @@ public class InterviewSessionSupport {
                 submission.shuffle(),
                 submission.ordered()
         );
-        // FLOW-02 — устаревший дубль сессии: evaluate-only без claim/SM-2.
+        // Устаревший дубль сессии: только подтверждённый replay без claim/SM-2.
         if (isStaleDuplicate(interviewSession, submission)) {
             duplicateSubmitCounter.increment();
-            AnswerResult replay = interviewService.evaluateAnswer(
-                    submission.questionId(),
-                    submission.optionId()
-            );
+            AnswerResult replay = replayAnswer(submission, session.getId());
             return new AnswerContext(replay, filter, interviewSession);
         }
         // Think-time до TX: consume server mark; HttpSession progress после commit.
@@ -111,14 +114,40 @@ public class InterviewSessionSupport {
                 submission, session.getId(), responseTimeMs);
         if (result == null) {
             duplicateSubmitCounter.increment();
-            AnswerResult replay = interviewService.evaluateAnswer(
-                    submission.questionId(),
-                    submission.optionId()
-            );
+            AnswerResult replay = replayAnswer(submission, session.getId());
             return new AnswerContext(replay, filter, interviewSession);
         }
         applySessionProgress(interviewSession, result, session);
         return new AnswerContext(result, filter, interviewSession);
+    }
+
+    private AnswerResult replayAnswer(AnswerSubmission submission, String sessionToken) {
+        Attempt attempt = attemptRecorder.findByClientAttemptId(submission.clientAttemptId())
+                .orElseThrow(() -> new IllegalStateException("Recorded MCQ attempt is unavailable for replay"));
+        // Ключ уникален в пределах владельца, но сам по себе не подтверждает
+        // принадлежность HTTP-сессии и вопросу. Fallback на новый выбор создал бы
+        // видимость сохранённого ответа при уже занятом ключе.
+        if (sessionToken == null || !sessionToken.equals(attempt.sessionToken())
+                || attempt.questionId() != submission.questionId()
+                || attempt.selectedOptionId() == null
+                || (attempt.outcome() != AttemptOutcome.CORRECT && attempt.outcome() != AttemptOutcome.WRONG)) {
+            throw new IllegalStateException("Recorded MCQ attempt does not match the session, question or answer");
+        }
+        QuestionRevision revision = attemptRecorder.requireCurrentRevision(
+                attempt.questionId(), attempt.questionRevisionId());
+        AnswerResult replay;
+        try {
+            replay = interviewService.evaluateAnswer(attempt.questionId(), attempt.selectedOptionId());
+        } catch (QuestionNotFoundException | OptionNotFoundException ex) {
+            throw new RevisionMismatchException("Recorded MCQ content is no longer available for replay", ex);
+        }
+        // Исторического снимка вариантов нет: при новой версии или изменившемся
+        // вердикте нельзя выдавать текущую оценку за сохранённую попытку.
+        if (!Objects.equals(revision.checksum(), replay.question().sourceHash())
+                || replay.correctAnswer() != (attempt.outcome() == AttemptOutcome.CORRECT)) {
+            throw new RevisionMismatchException("Recorded MCQ content changed before replay");
+        }
+        return replay;
     }
 
     /**

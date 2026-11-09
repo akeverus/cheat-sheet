@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.util.Optional;
 
 /**
  * Пишет построчный лог попыток ответа ({@code attempt}).
@@ -30,6 +31,19 @@ public class AttemptRecorder {
     AttemptRepository attemptRepository;
     QuestionRevisionRepository questionRevisionRepository;
     Clock clock;
+
+    @Transactional(readOnly = true)
+    public Optional<Attempt> findByClientAttemptId(String clientAttemptId) {
+        String key = normalizeKey(clientAttemptId);
+        return key == null ? Optional.empty() : attemptRepository.findByIdempotencyKey(key);
+    }
+
+    @Transactional(readOnly = true)
+    public QuestionRevision requireCurrentRevision(long questionId, Long expectedRevisionId) {
+        return questionRevisionRepository.findLatest(questionId)
+                .filter(revision -> expectedRevisionId != null && revision.id() == expectedRevisionId)
+                .orElseThrow(() -> new RevisionMismatchException("Question revision is no longer current"));
+    }
 
     @Transactional
     public void record(long questionId,
@@ -107,21 +121,15 @@ public class AttemptRecorder {
     }
 
     /**
-     * Hard-check: если клиент прислал revisionId — он должен существовать и
-     * принадлежать вопросу. Иначе {@link RevisionMismatchException} (409).
+     * Перед оценкой ответа клиентский revisionId должен совпадать с последней
+     * ревизией вопроса. Существующая старая ревизия тоже даёт конфликт (409).
      * {@code null}/неположительный id допускается (no-JS → latest при record).
      */
     public void requireValidRevision(long questionId, Long clientRevisionId) {
         if (clientRevisionId == null || clientRevisionId <= 0) {
             return;
         }
-        boolean ok = questionRevisionRepository.findById(clientRevisionId)
-                .filter(rev -> rev.questionId() == questionId)
-                .isPresent();
-        if (!ok) {
-            throw new RevisionMismatchException(
-                    "Question revision does not match the question shown; refresh and retry");
-        }
+        requireCurrentRevision(questionId, clientRevisionId);
     }
 
     private Long resolveRevisionId(long questionId, Long clientRevisionId) {

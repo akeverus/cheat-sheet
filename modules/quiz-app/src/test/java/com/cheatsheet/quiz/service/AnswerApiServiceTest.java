@@ -96,6 +96,7 @@ class AnswerApiServiceTest {
                 .shuffle(true)
                 .ordered(false)
                 .confidence(4)
+                .questionRevisionId(55L)
                 .build();
 
         when(sessionSupport.processAnswer(any(InterviewSessionSupport.AnswerSubmission.class), eq(session)))
@@ -132,6 +133,7 @@ class AnswerApiServiceTest {
                         .shuffle(true)
                         .ordered(false)
                         .confidence(4)
+                        .questionRevisionId(55L)
                         .build(),
                 session
         );

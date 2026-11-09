@@ -119,7 +119,8 @@ class AttemptRecorderTest {
 
     @Test
     void requireValidRevisionThrowsOnUnknownId() {
-        when(questionRevisionRepository.findById(1L)).thenReturn(Optional.empty());
+        when(questionRevisionRepository.findLatest(7L)).thenReturn(Optional.of(
+                new QuestionRevision(55L, 7L, 3, "hash", "PUBLISHED", 100L)));
         Clock clock = Clock.fixed(Instant.parse("2026-07-15T12:00:00Z"), ZoneOffset.UTC);
 
         org.junit.jupiter.api.Assertions.assertThrows(

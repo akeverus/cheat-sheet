@@ -2,6 +2,7 @@ package com.cheatsheet.quiz.api.exception;
 
 import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
 import com.cheatsheet.quiz.common.exception.GlobalExceptionHandler;
+import com.cheatsheet.quiz.feature.interview.service.review.RevisionMismatchException;
 import com.cheatsheet.quiz.api.dto.request.interview.QuestionIdRequest;
 import com.cheatsheet.quiz.domain.exception.OptionNotFoundException;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
@@ -28,6 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 class GlobalExceptionHandlerTest {
 
@@ -49,6 +51,7 @@ class GlobalExceptionHandlerTest {
                         new ApiOptionNotFoundController(),
                         new ApiConstraintViolationController(),
                         new ApiIllegalStateController(),
+                        new ApiRevisionMismatchController(),
                         new UiIllegalStateController(),
                         new ApiGenericErrorController()
                 )
@@ -147,7 +150,22 @@ class GlobalExceptionHandlerTest {
     void apiIllegalStateReturnsConflict() throws Exception {
         mockMvc.perform(post("/api/test/illegal-state"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.errorCode").value(ApiErrorTypes.QUESTION_STATE_INVALID));
+                .andExpect(content().contentTypeCompatibleWith(org.springframework.http.MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.errorCode").value(ApiErrorTypes.QUESTION_STATE_INVALID))
+                .andExpect(jsonPath("$.detail").value("Действие невозможно в текущем состоянии — обновите страницу и повторите"))
+                .andExpect(jsonPath("$.selectedOptionId").doesNotExist());
+    }
+
+    @Test
+    void apiRevisionMismatchReturnsConflictWithoutAnAnswer() throws Exception {
+        mockMvc.perform(post("/api/test/revision-mismatch"))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(org.springframework.http.MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.errorCode").value(ApiErrorTypes.REVISION_MISMATCH))
+                .andExpect(jsonPath("$.detail").value("Контент вопроса обновился — обновите страницу и ответьте снова"))
+                .andExpect(jsonPath("$.selectedOptionId").doesNotExist())
+                .andExpect(jsonPath("$.correct").doesNotExist());
     }
 
     @Test
@@ -257,6 +275,14 @@ class GlobalExceptionHandlerTest {
         @PostMapping("/api/test/illegal-state")
         String fail() {
             throw new IllegalStateException("Невозможный переход состояния");
+        }
+    }
+
+    @RestController
+    static class ApiRevisionMismatchController {
+        @PostMapping("/api/test/revision-mismatch")
+        String fail() {
+            throw new RevisionMismatchException("Recorded MCQ content changed before replay");
         }
     }
 

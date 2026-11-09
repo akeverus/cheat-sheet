@@ -17,6 +17,23 @@ import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.QuestionRevisionRepository;
 import com.cheatsheet.quiz.persistence.QuestionStatsRepository;
 import com.cheatsheet.quiz.persistence.ReviewStateRepository;
+import com.cheatsheet.quiz.domain.AnswerOption;
+import com.cheatsheet.quiz.domain.QuestionRevision;
+import com.cheatsheet.quiz.api.dto.request.interview.SubmitAnswerRequest;
+import com.cheatsheet.quiz.api.mapper.request.ApiRequestMapper;
+import com.cheatsheet.quiz.api.mapper.request.MvcAnswerRequestMapper;
+import com.cheatsheet.quiz.api.mapper.view.MvcModelAttributeMapper;
+import com.cheatsheet.quiz.common.util.ModeUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jsoup.Jsoup;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.ui.ExtendedModelMap;
+import org.springframework.web.bind.ServletRequestDataBinder;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +42,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Locale;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -142,8 +161,9 @@ class FocusTrainingPageServiceTest {
         assertThat(state.surface().filterWeakTopicsCount()).isEqualTo(2L);
     }
 
-    @Test
-    void keepsCurrentQuestionWhenFacadeReturnsIt() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void revisionMetadataPassesThroughTheActualViewAndRequestBinding(boolean revisionPresent) throws Exception {
         InterviewFilter filter = new InterviewFilter("java", "backend", false, false, false, true);
         when(facade.nextQuestion(any(), anyBoolean(), anyLong())).thenReturn(Optional.of(interviewQuestion));
         when(learningMetricsService.compute()).thenReturn(new com.cheatsheet.quiz.domain.LearningMetrics(
@@ -172,6 +192,13 @@ class FocusTrainingPageServiceTest {
                 .commonMistake("common mistake")
                 .tags(List.of("java"))
                 .build());
+        when(interviewQuestion.options()).thenReturn(List.of(
+                new AnswerOption(10L, 1L, "A", true, 0, "MARKDOWN", null),
+                new AnswerOption(11L, 1L, "B", false, 1, "MARKDOWN", null),
+                new AnswerOption(12L, 1L, "C", false, 2, "MARKDOWN", null),
+                new AnswerOption(13L, 1L, "D", false, 3, "MARKDOWN", null)));
+        when(questionRevisionRepository.findLatest(1L)).thenReturn(revisionPresent
+                ? Optional.of(new QuestionRevision(55L, 1L, 1, "hash", "PUBLISHED", 100L)) : Optional.empty());
 
         FocusTrainingPageService.FocusPageState state = service.buildFocusPageState(
                 null,
@@ -182,6 +209,44 @@ class FocusTrainingPageServiceTest {
         );
 
         assertThat(state.current()).contains(interviewQuestion);
+        assertThat(state.flashcardMode()).isFalse();
+        Long expected = revisionPresent ? 55L : null;
+        assertThat(state.questionRevisionId()).isEqualTo(expected);
+        AppProperties properties = new AppProperties();
+        MvcModelAttributeMapper mapper = new MvcModelAttributeMapper(
+                properties, new ModeUtils(), new TopicCatalogService(properties));
+        ExtendedModelMap model = new ExtendedModelMap();
+        mapper.applyFocusPageState(model, state, false);
+        assertThat(model.getAttribute("questionRevisionId")).isEqualTo(expected);
+
+        // Render the production input and its th:if/th:value, not copied HTML.
+        ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
+        resolver.setPrefix("templates/");
+        resolver.setSuffix(".html");
+        resolver.setCacheable(false);
+        SpringTemplateEngine engine = new SpringTemplateEngine();
+        engine.setTemplateResolver(resolver);
+        String html = engine.process("focus-training", Set.of("input[name='questionRevisionId']"),
+                new Context(Locale.ROOT, model.asMap()));
+        var fields = Jsoup.parse(html).select("input[name=questionRevisionId]");
+        assertThat(fields).hasSize(revisionPresent ? 1 : 0);
+
+        MockHttpServletRequest nativePost = new MockHttpServletRequest();
+        nativePost.addParameter("questionId", "1");
+        nativePost.addParameter("optionId", "10");
+        if (revisionPresent) {
+            assertThat(fields.first().attr("type")).isEqualTo("hidden");
+            assertThat(fields.first().val()).isEqualTo("55");
+            nativePost.addParameter(fields.first().attr("name"), fields.first().val());
+        }
+        SubmitAnswerRequest request = new SubmitAnswerRequest();
+        ServletRequestDataBinder binder = new ServletRequestDataBinder(request);
+        binder.bind(nativePost);
+        assertThat(binder.getBindingResult().hasErrors()).isFalse();
+        assertThat(new MvcAnswerRequestMapper().toSubmission(request).questionRevisionId()).isEqualTo(expected);
+        ObjectMapper json = new ObjectMapper();
+        SubmitAnswerRequest jsonRequest = json.readValue(json.writeValueAsString(request), SubmitAnswerRequest.class);
+        assertThat(new ApiRequestMapper().toAnswerCommand(jsonRequest).questionRevisionId()).isEqualTo(expected);
     }
 
     /**

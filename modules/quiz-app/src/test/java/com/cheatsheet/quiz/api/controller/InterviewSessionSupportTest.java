@@ -3,11 +3,15 @@ package com.cheatsheet.quiz.api.controller;
 import com.cheatsheet.quiz.domain.AnswerDisplayMode;
 import com.cheatsheet.quiz.domain.AnswerOption;
 import com.cheatsheet.quiz.domain.AnswerResult;
+import com.cheatsheet.quiz.domain.Attempt;
 import com.cheatsheet.quiz.domain.AttemptOutcome;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
+import com.cheatsheet.quiz.domain.QuestionRevision;
+import com.cheatsheet.quiz.domain.exception.OptionNotFoundException;
+import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import com.cheatsheet.quiz.domain.ReviewResult;
 import com.cheatsheet.quiz.domain.ReviewState;
 import com.cheatsheet.quiz.feature.interview.controller.HttpSessionStateService;
@@ -15,6 +19,9 @@ import com.cheatsheet.quiz.feature.interview.controller.InterviewSessionSupport;
 import com.cheatsheet.quiz.feature.interview.service.command.SubmitAnswerCommand;
 import com.cheatsheet.quiz.feature.interview.service.core.InterviewService;
 import com.cheatsheet.quiz.feature.interview.service.review.AttemptRecorder;
+import com.cheatsheet.quiz.feature.interview.service.review.RevisionMismatchException;
+import com.cheatsheet.quiz.persistence.AttemptRepository;
+import com.cheatsheet.quiz.persistence.QuestionRevisionRepository;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.servlet.http.HttpSession;
 import java.time.Clock;
@@ -23,12 +30,18 @@ import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -36,7 +49,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -231,6 +246,11 @@ class InterviewSessionSupportTest {
         when(submitAnswerCommand.executeOrNullIfDuplicate(any(), eq("sess-test"), isNull()))
                 .thenReturn(null);
         when(interviewService.evaluateAnswer(10L, 3L)).thenReturn(replay);
+        when(attemptRecorder.findByClientAttemptId("dup-key")).thenReturn(Optional.of(
+                Attempt.builder().questionId(10L).selectedOptionId(3L).outcome(AttemptOutcome.CORRECT)
+                        .sessionToken("sess-test").questionRevisionId(55L).idempotencyKey("dup-key").build()));
+        when(attemptRecorder.requireCurrentRevision(10L, 55L))
+                .thenReturn(new QuestionRevision(55L, 10L, 1, "hash", "PUBLISHED", 100L));
         InterviewSessionSupport.AnswerSubmission submission = InterviewSessionSupport.AnswerSubmission.builder()
                 .questionId(10L)
                 .optionId(3L)
@@ -252,10 +272,16 @@ class InterviewSessionSupportTest {
         when(interviewSession.isFinished()).thenReturn(false);
         when(interviewSession.currentQuestionId()).thenReturn(99L);
         when(interviewService.evaluateAnswer(10L, 3L)).thenReturn(replay);
+        when(attemptRecorder.findByClientAttemptId("stale-key")).thenReturn(Optional.of(
+                Attempt.builder().questionId(10L).selectedOptionId(3L).outcome(AttemptOutcome.CORRECT)
+                        .sessionToken("sess-test").questionRevisionId(55L).idempotencyKey("stale-key").build()));
+        when(attemptRecorder.requireCurrentRevision(10L, 55L))
+                .thenReturn(new QuestionRevision(55L, 10L, 1, "hash", "PUBLISHED", 100L));
         InterviewSessionSupport.AnswerSubmission submission = InterviewSessionSupport.AnswerSubmission.builder()
                 .questionId(10L)
                 .optionId(3L)
                 .confidence(4)
+                .clientAttemptId("stale-key")
                 .build();
 
         InterviewSessionSupport.AnswerContext context = support.processAnswer(submission, session);
@@ -266,6 +292,182 @@ class InterviewSessionSupportTest {
         verify(submitAnswerCommand, never()).executeOrNullIfDuplicate(any(), any(), any());
         verify(interviewSession, never()).registerAnswer(anyBoolean(), anyString());
         verify(interviewService, never()).addExamPenaltyQuestions(any());
+        verify(httpSessionStateService, never()).setInterviewSession(any(), any());
+    }
+
+    @ParameterizedTest(name = "lost response: advanced session={0}, changed selection={1}")
+    @CsvSource({"false, false", "false, true", "true, false", "true, true"})
+    void lostResponseRetryKeepsTheRecordedOptionAndOutcome(boolean sessionAdvanced, boolean changeSelection) {
+        String key = "lost-response";
+        AnswerOption original = new AnswerOption(3L, 1L, "original wrong choice", false, 0, "OPENAI", null);
+        AnswerOption correct = new AnswerOption(4L, 1L, "correct choice", true, 1, "OPENAI", null);
+        AnswerResult wrongResult = sampleAnswerResult(false).toBuilder()
+                .options(List.of(original, correct)).selected(original).correct(correct).build();
+        AnswerResult correctResult = wrongResult.toBuilder().selected(correct).correctAnswer(true).build();
+
+        // Keep the real command and recorder: only persistence and evaluation
+        // are mocked. The captured journal row is the first accepted attempt.
+        AttemptRepository repository = mock(AttemptRepository.class);
+        AtomicReference<Attempt> recorded = new AtomicReference<>();
+        when(repository.tryClaimIdempotencyKey(eq(key), anyLong())).thenReturn(true, false);
+        when(repository.findByIdempotencyKey(key)).thenAnswer(invocation -> Optional.ofNullable(recorded.get()));
+        when(repository.insertIgnoreDuplicate(any())).thenAnswer(invocation -> {
+            recorded.set(invocation.getArgument(0));
+            return Optional.of(501L);
+        });
+        QuestionRevisionRepository revisions = mock(QuestionRevisionRepository.class);
+        when(revisions.findLatest(1L)).thenReturn(Optional.of(
+                new QuestionRevision(55L, 1L, 1, "hash", "PUBLISHED", 100L)));
+        AttemptRecorder recorder = new AttemptRecorder(repository, revisions, CLOCK);
+        SimpleMeterRegistry metrics = new SimpleMeterRegistry();
+        SubmitAnswerCommand command = new SubmitAnswerCommand(interviewService, recorder, metrics);
+        InterviewSessionSupport realSupport = new InterviewSessionSupport(
+                interviewService, httpSessionStateService, recorder, command, CLOCK, metrics);
+        when(interviewService.submitAnswer(1L, 3L, 4)).thenReturn(wrongResult);
+        when(interviewService.evaluateAnswer(eq(1L), anyLong())).thenAnswer(invocation ->
+                invocation.<Long>getArgument(1) == 3L ? wrongResult : correctResult);
+        if (sessionAdvanced) {
+            when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
+            when(interviewSession.currentQuestionId()).thenReturn(1L, 99L);
+            when(interviewSession.getMode()).thenReturn(InterviewMode.MARATHON);
+        }
+        InterviewSessionSupport.AnswerSubmission first = InterviewSessionSupport.AnswerSubmission.builder()
+                .questionId(1L).optionId(3L).confidence(4).clientAttemptId(key).build();
+
+        InterviewSessionSupport.AnswerContext accepted = realSupport.processAnswer(first, session);
+        Attempt committed = recorded.get();
+        assertThat(accepted.result().correctAnswer()).isFalse();
+        assertThat(committed.selectedOptionId()).isEqualTo(3L);
+        assertThat(committed.outcome()).isEqualTo(AttemptOutcome.WRONG);
+        assertThat(committed.idempotencyKey()).isEqualTo(key);
+        assertThat(committed.sessionToken()).isEqualTo("sess-test");
+        assertThat(committed.questionRevisionId()).isEqualTo(55L);
+
+        // The client lost the first HTTP response and may have edited its radio.
+        InterviewSessionSupport.AnswerContext replay = realSupport.processAnswer(
+                first.toBuilder().optionId(changeSelection ? 4L : 3L).build(), session);
+
+        assertThat(recorded.get()).isSameAs(committed);
+        assertThat(replay.result().selected().id()).isEqualTo(committed.selectedOptionId());
+        assertThat(replay.result().correctAnswer()).isFalse();
+        verify(repository).insertIgnoreDuplicate(any());
+        verify(interviewService).submitAnswer(1L, 3L, 4);
+        verify(interviewService, never()).submitAnswer(1L, 4L, 4);
+        verify(interviewService).evaluateAnswer(1L, 3L);
+        verify(interviewService, never()).evaluateAnswer(1L, 4L);
+        verify(interviewSession, times(sessionAdvanced ? 1 : 0)).registerAnswer(false, "java");
+        verify(httpSessionStateService, times(sessionAdvanced ? 1 : 0)).setInterviewSession(session, interviewSession);
+    }
+
+    @ParameterizedTest(name = "replay ownership: advanced session={0}, different HTTP session={1}")
+    @CsvSource({"false, true", "false, false", "true, true", "true, false"})
+    void duplicateKeyFromAnotherSessionOrQuestionIsRejected(boolean sessionAdvanced, boolean differentSession) {
+        Attempt recorded = Attempt.builder()
+                .questionId(differentSession ? 10L : 20L)
+                .sessionToken(differentSession ? "other-http-session" : "sess-test")
+                .selectedOptionId(3L).outcome(AttemptOutcome.WRONG).idempotencyKey("shared-key").build();
+        when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
+        when(interviewSession.currentQuestionId()).thenReturn(sessionAdvanced ? 99L : 10L);
+        when(attemptRecorder.findByClientAttemptId("shared-key")).thenReturn(Optional.of(recorded));
+        // The previous implementation returned a result instead of a conflict.
+        lenient().when(interviewService.evaluateAnswer(anyLong(), anyLong())).thenReturn(sampleAnswerResult(true));
+        InterviewSessionSupport.AnswerSubmission submission = InterviewSessionSupport.AnswerSubmission.builder()
+                .questionId(10L).optionId(4L).clientAttemptId("shared-key").build();
+
+        assertThatThrownBy(() -> support.processAnswer(submission, session))
+                .isInstanceOf(IllegalStateException.class);
+
+        verify(interviewService, never()).evaluateAnswer(anyLong(), anyLong());
+        verify(interviewService, never()).submitAnswer(anyLong(), anyLong(), any());
+        verify(interviewSession, never()).registerAnswer(anyBoolean(), anyString());
+        verify(httpSessionStateService, never()).setInterviewSession(any(), any());
+        verify(submitAnswerCommand, times(sessionAdvanced ? 0 : 1)).executeOrNullIfDuplicate(any(), any(), any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"missing", "no-option", "unknown", "no-session"})
+    void duplicateKeyWithoutARecordedMcqAnswerIsRejected(String missingProof) {
+        Attempt recorded = Attempt.builder().questionId(10L).idempotencyKey("shared-key")
+                .sessionToken(missingProof.equals("no-session") ? null : "sess-test")
+                .selectedOptionId(missingProof.equals("no-option") ? null : 3L)
+                .outcome(missingProof.equals("unknown") ? AttemptOutcome.UNKNOWN : AttemptOutcome.WRONG).build();
+        when(attemptRecorder.findByClientAttemptId("shared-key"))
+                .thenReturn(missingProof.equals("missing") ? Optional.empty() : Optional.of(recorded));
+        lenient().when(interviewService.evaluateAnswer(anyLong(), anyLong())).thenReturn(sampleAnswerResult(true));
+        InterviewSessionSupport.AnswerSubmission submission = InterviewSessionSupport.AnswerSubmission.builder()
+                .questionId(10L).optionId(4L).clientAttemptId("shared-key").build();
+
+        assertThatThrownBy(() -> support.processAnswer(submission, session))
+                .isInstanceOf(IllegalStateException.class);
+
+        verify(interviewService, never()).evaluateAnswer(anyLong(), anyLong());
+        verify(interviewSession, never()).registerAnswer(anyBoolean(), anyString());
+        verify(httpSessionStateService, never()).setInterviewSession(any(), any());
+    }
+
+    @Test
+    void staleAnswerWithoutAClientAttemptIdIsRejected() {
+        when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
+        when(interviewSession.currentQuestionId()).thenReturn(99L);
+        InterviewSessionSupport.AnswerSubmission submission = InterviewSessionSupport.AnswerSubmission.builder()
+                .questionId(10L).optionId(4L).build();
+
+        assertThatThrownBy(() -> support.processAnswer(submission, session))
+                .isInstanceOf(IllegalStateException.class);
+
+        verify(interviewService, never()).evaluateAnswer(anyLong(), anyLong());
+        verify(submitAnswerCommand, never()).executeOrNullIfDuplicate(any(), any(), any());
+        verify(interviewSession, never()).registerAnswer(anyBoolean(), anyString());
+    }
+
+    @ParameterizedTest(name = "content drift={0}, recorded correct={1}")
+    @CsvSource({"changed-option, false", "changed-option, true", "deleted-option, false",
+            "changed-revision, false", "deleted-revision, false", "missing-recorded-revision, false",
+            "changed-question-hash, false", "deleted-question, false"})
+    void replayRejectsContentDriftInsteadOfReevaluatingHistory(String drift, boolean recordedCorrect) {
+        Attempt stored = Attempt.builder().questionId(10L).sessionToken("sess-test")
+                .questionRevisionId(drift.equals("missing-recorded-revision") ? null : 55L)
+                .selectedOptionId(3L).outcome(AttemptOutcome.ofCorrect(recordedCorrect))
+                .idempotencyKey("content-drift").build();
+        AttemptRepository repository = mock(AttemptRepository.class);
+        when(repository.findByIdempotencyKey("content-drift")).thenReturn(Optional.of(stored));
+        QuestionRevisionRepository revisions = mock(QuestionRevisionRepository.class);
+        QuestionRevision current = new QuestionRevision(drift.equals("changed-revision") ? 56L : 55L,
+                10L, 1, "hash", "PUBLISHED", 100L);
+        lenient().when(revisions.findLatest(10L)).thenReturn(
+                drift.equals("deleted-revision") ? Optional.empty() : Optional.of(current));
+        AttemptRecorder recorder = new AttemptRecorder(repository, revisions, CLOCK);
+        InterviewSessionSupport realSupport = new InterviewSessionSupport(
+                interviewService, httpSessionStateService, recorder, submitAnswerCommand,
+                CLOCK, new SimpleMeterRegistry());
+        boolean currentCorrect = drift.equals("changed-option") ? !recordedCorrect : recordedCorrect;
+        AnswerOption selected = new AnswerOption(3L, 10L, "current option", currentCorrect, 0, "OPENAI", null);
+        AnswerOption alternative = new AnswerOption(4L, 10L, "alternative", !currentCorrect, 1, "OPENAI", null);
+        AnswerResult evaluated = sampleAnswerResult(currentCorrect).toBuilder()
+                .question(sampleQuestion("java").toBuilder().id(10L)
+                        .sourceHash(drift.equals("changed-question-hash") ? "new-hash" : "hash").build())
+                .options(List.of(selected, alternative)).selected(selected)
+                .correct(currentCorrect ? selected : alternative).build();
+        if (drift.equals("deleted-option")) {
+            // The journal was read before the option disappeared during replay.
+            lenient().when(interviewService.evaluateAnswer(10L, 3L))
+                    .thenThrow(new OptionNotFoundException("Saved option was deleted"));
+        } else if (drift.equals("deleted-question")) {
+            lenient().when(interviewService.evaluateAnswer(10L, 3L))
+                    .thenThrow(new QuestionNotFoundException("Saved question was deleted"));
+        } else {
+            lenient().when(interviewService.evaluateAnswer(10L, 3L)).thenReturn(evaluated);
+        }
+        InterviewSessionSupport.AnswerSubmission retry = InterviewSessionSupport.AnswerSubmission.builder()
+                .questionId(10L).optionId(4L).clientAttemptId("content-drift").questionRevisionId(55L).build();
+
+        assertThatThrownBy(() -> realSupport.processAnswer(retry, session))
+                .isInstanceOf(RevisionMismatchException.class);
+
+        verify(repository, never()).insert(any());
+        verify(repository, never()).insertIgnoreDuplicate(any());
+        verify(interviewService, never()).submitAnswer(anyLong(), anyLong(), any());
+        verify(interviewSession, never()).registerAnswer(anyBoolean(), anyString());
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
     }
 

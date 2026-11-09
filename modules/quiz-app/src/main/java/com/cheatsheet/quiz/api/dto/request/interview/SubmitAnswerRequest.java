@@ -67,8 +67,9 @@ public class SubmitAnswerRequest {
     private Integer responseTimeMs;
 
     /**
-     * Ревизия вопроса, которую видел пользователь (BE-002). При отсутствии —
-     * сервер пишет latest; при несовпадении questionId — fallback на latest.
+     * Ревизия вопроса, которую видел пользователь. Если передана, должна быть
+     * последней ревизией этого вопроса, иначе сервер возвращает 409.
+     * При отсутствии сервер записывает latest для совместимости с клиентами без ревизии.
      */
     @Positive(message = ValidationMessages.QUESTION_REVISION_ID_POSITIVE)
     private Long questionRevisionId;
