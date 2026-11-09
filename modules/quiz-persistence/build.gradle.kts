@@ -22,6 +22,8 @@ dependencies {
     annotationProcessor(libs.lombok)
 
     testImplementation(platform(libs.spring.boot.bom))
+    // Нативный Boot BOM не читает extra: отдельный тестовый BOM согласует версии всех Testcontainers-модулей.
+    testImplementation(platform(libs.testcontainers.bom))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.springframework.boot:spring-boot-starter-test")

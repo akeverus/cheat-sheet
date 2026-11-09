@@ -5,6 +5,9 @@ plugins {
     alias(libs.plugins.spring.dependency.management)
 }
 
+// Boot BOM задаёт Testcontainers 1.19.8 с устаревшим Docker API; выравниваем его версию для тестов.
+extra["testcontainers.version"] = libs.versions.testcontainers.get()
+
 dependencies {
     implementation(project(":quiz-domain"))
     implementation(project(":quiz-persistence"))
