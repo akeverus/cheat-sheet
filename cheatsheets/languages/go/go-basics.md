@@ -36,10 +36,10 @@ updated: "2026-04-20"
 
 ### См. также
 
-- [`go-modules.md`](go-modules.md) — практики модулей и dependency management
-- [`go-concurrency.md`](go-concurrency.md) — конкурентность в production
-- [`go-testing.md`](go-testing.md) — unit/integration/load тестирование
-- [`go-observability.md`](go-observability.md) — метрики, логи и трассировка
+- [Модули Go](go-modules.md) — практики модулей и dependency management
+- [Конкурентность в Go](go-concurrency.md) — конкурентность в production
+- [Тестирование Go](go-testing.md) — unit/integration/load тестирование
+- [Наблюдаемость Go](go-observability.md) — метрики, логи и трассировка
 
 ### Практика миграции Go 1.19 -> 1.22+
 
