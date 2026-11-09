@@ -27,7 +27,7 @@ updated: "2026-04-20"
 - [Java Collections (Java SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/package-summary.html)
 
 ### См. также
-- [`linked-list-middle.md`](linked-list-middle.md) — поиск среднего элемента связанного списка (`Linked List`)
+- [Поиск середины связанного списка](linked-list-middle.md) — поиск среднего элемента связанного списка (`Linked List`)
 - [README](../../basics/README.md) — задачи и алгоритмы, обзор разделов
 
 - [Временная сложность коллекций Java](collections-complexity.md)

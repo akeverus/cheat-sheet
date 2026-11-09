@@ -31,8 +31,8 @@ updated: "2026-04-20"
 ### См. также
 - [README](../../basics/README.md) — решение задач
 - [README](../../basics/README.md) — алгоритмы
-- [`dynamic-programming.md`](dynamic-programming.md) — динамическое программирование (`DP`)
-- [`divide-and-conquer.md`](divide-and-conquer.md) — разделяй и властвуй (`divide and conquer`)
+- [Динамическое программирование](dynamic-programming.md) — динамическое программирование (`DP`)
+- [Разделяй и властвуй](divide-and-conquer.md) — разделяй и властвуй (`divide and conquer`)
 
 - [Жадные алгоритмы (Greedy Algorithms)](../problems/greedy-algorithms.md)
 - [Методы ветвей и границ (Branch and Bound)](branch-and-bound.md)

@@ -27,8 +27,8 @@ updated: "2026-04-20"
 - [GeeksforGeeks: Program for Fibonacci numbers](https://www.geeksforgeeks.org/program-for-nth-fibonacci-number/)
 
 ### См. также
-- [`factorial-calculation.md`](factorial-calculation.md) — вычисление факториала
-- [`greatest-common-divisor.md`](greatest-common-divisor.md) — наибольший общий делитель (`НОД`)
+- [Факториал](factorial-calculation.md) — вычисление факториала
+- [Наибольший общий делитель](greatest-common-divisor.md) — наибольший общий делитель (`НОД`)
 
 - [Пересечение прямых (Line Intersection)](line-intersection.md)
 - [Вычисление площади круга (Circle Area Calculation)](circle-area-calculation.md)
