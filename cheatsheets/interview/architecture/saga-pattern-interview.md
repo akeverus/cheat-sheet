@@ -19,7 +19,7 @@ updated: "2026-05-08"
 ---
 # Вопросы на собеседовании: Паттерн Saga
 
-**Saga Pattern** -- один из ключевых паттернов управления распределёнными транзакциями в микросервисной архитектуре. Вместо `2PC` (двухфазной фиксации), невозможной или дорогой в распределённых системах, `Saga` разбивает бизнес-операцию на последовательность локальных транзакций, каждая из которых имеет компенсирующее действие. Тема обязательна на Senior-собеседованиях: проверяет понимание `eventual consistency`, компенсаций, семантических блокировок и практической реализации на `Spring Boot` с `Axon Framework`, `Eventuate Tram` или через `Kafka` + `Outbox`.
+**Saga Pattern** -- один из ключевых паттернов управления распределёнными транзакциями в микросервисной архитектуре. Вместо общей долгой транзакции через `2PC` (двухфазную фиксацию), которая требует совместимых участников и удерживает ресурсы, `Saga` разбивает бизнес-операцию на последовательность локальных транзакций, шаги до точки невозврата имеют нужные компенсации. Тема обязательна на Senior-собеседованиях: проверяет понимание `eventual consistency`, компенсаций, семантических блокировок и практической реализации на `Spring Boot` с `Axon Framework 4`, `Eventuate Tram` или через `Kafka` + `Outbox`.
 
 ## Полезные ссылки
 
@@ -30,7 +30,7 @@ updated: "2026-05-08"
 - [Two-Phase Commit vs Saga Pattern (Baeldung)](https://www.baeldung.com/cs/two-phase-commit-vs-saga-pattern) -- сравнение с 2PC
 - [Saga Pattern in a Microservices Architecture with Spring Boot (Baeldung)](https://www.baeldung.com/orkes-conductor-saga-pattern-spring-boot) -- реализация на Spring Boot с Orkes Conductor
 - [Saga Design Pattern (Microsoft Learn)](https://learn.microsoft.com/en-us/azure/architecture/patterns/saga) -- Azure Architecture Center
-- [Axon Framework Sagas (docs.axoniq.io)](https://docs.axoniq.io/axon-framework-reference/5.0/sagas/implementation/) -- реализация Saga в Axon
+- [Axon Framework Sagas (docs.axoniq.io)](https://docs.axoniq.io/axon-framework-reference/4.11/sagas/) -- реализация Saga в Axon
 - [Eventuate Tram Sagas (eventuate.io)](https://eventuate.io/docs/manual/eventuate-tram/latest/getting-started-eventuate-tram-sagas.html) -- фреймворк для orchestration-based Saga
 - [Transactional Outbox (microservices.io)](https://microservices.io/patterns/data/transactional-outbox.html) -- Outbox для atomic publish
 - [Developing Sagas Part 1--4 (Chris Richardson)](https://microservices.io/post/microservices/2019/07/09/developing-sagas-part-1.html) -- цикл статей с примерами
@@ -107,7 +107,7 @@ updated: "2026-05-08"
 
 ## Q1. (!) Что такое Saga Pattern и зачем он нужен?
 
-**Saga Pattern** -- это способ выполнить бизнес-операцию, затрагивающую несколько сервисов, без единой распределённой транзакции. Операция разбивается на последовательность локальных ACID-транзакций, и у каждой есть компенсирующее действие, отменяющее её эффект. Если какой-то шаг падает, оркестратор или реагирующие сервисы запускают компенсации для уже выполненных шагов -- система откатывается «назад по бизнес-смыслу».
+**Saga Pattern** -- это способ выполнить бизнес-операцию, затрагивающую несколько сервисов, без единой распределённой транзакции. Операция разбивается на последовательность локальных транзакций. Для шагов, за которыми возможен поздний бизнес-отказ, предусматривают допустимые компенсации. При сбое координация должна довести процесс до успешного итога, компенсации или явно наблюдаемого состояния для восстановления.
 
 Ключевая идея: вместо «всё или ничего» в один момент времени Saga даёт «всё или ничего» в конечном счёте, проходя через видимые промежуточные состояния.
 
@@ -134,11 +134,11 @@ graph LR
 ```
 
 **Зачем нужен:**
-- В микросервисах каждый сервис владеет своей БД (`Database per Service`), поэтому единая ACID-транзакция поверх нескольких БД невозможна в принципе
+- В микросервисах каждый сервис владеет своей БД (`Database per Service`), поэтому обычная локальная `@Transactional` не охватывает БД разных сервисов
 - `2PC` (двухфазная фиксация) технически возможен, но блокирует ресурсы на время операции и плохо масштабируется
 - Нужна согласованность данных между сервисами без глобальных блокировок -- Saga даёт её ценой потери изоляции
 
-**Гарантии:** `Saga` обеспечивает `ACD` (Atomicity через компенсации, Consistency, Durability), но теряет `Isolation` -- промежуточные состояния видны другим, поэтому нужны `countermeasures` (см. [Q18](#q18--почему-saga-не-обеспечивает-isolation-и-какие-возникают-аномалии)).
+**Гарантии:** локальные шаги сохраняют свойства ACID, но вся Saga не получает гарантии ACID общей транзакции: компенсации дают семантическое восстановление при предусмотренных сбоях, а промежуточные состояния видны другим -- промежуточные состояния видны другим, поэтому нужны `countermeasures` (см. [Q18](#q18--почему-saga-не-обеспечивает-isolation-и-какие-возникают-аномалии)).
 
 ## Q2. (!) Какую проблему решает Saga в микросервисной архитектуре?
 
@@ -148,16 +148,16 @@ Saga решает проблему атомарности бизнес-опер�
 
 | Решение | Проблема |
 |---|---|
-| `XA / 2PC` через `JTA` | Coordinator becomes SPOF, блокировки на уровне БД, медленно, плохо работает между разными типами СУБД и очередей |
+| `XA / 2PC` через `JTA` | Нужны совместимые участники и восстановление координатора; подготовленные ресурсы удерживаются до решения |
 | Единая БД на все сервисы | Нарушает принцип `Database per Service`, теряем независимость сервисов |
 | Синхронные REST-цепочки с try/catch | Нет атомарности: если упал сервис в середине -- данные в несогласованном состоянии; зависимость от времени жизни HTTP-соединения |
-| **Saga** | Атомарность через компенсации, `eventual consistency`, decoupling через события/команды |
+| **Saga** | Бизнес-согласованность через локальные коммиты, надёжную координацию и компенсации |
 
 `Saga` -- стандарт де-факто для бизнес-процессов типа `Place Order`, `Book Travel`, `Process Payment`, где нужно скоординировать несколько автономных сервисов без блокирующих глобальных транзакций.
 
 ## Q3. Что такое локальная транзакция в Saga?
 
-Локальная транзакция -- это атомарная операция в пределах одного сервиса и одной БД: выполняется под обычной `@Transactional` и удовлетворяет `ACID`. Saga -- это цепочка таких транзакций $T_1, T_2, \dots, T_n$ с компенсациями $C_1, C_2, \dots, C_{n-1}$ для всех шагов, которые можно откатить.
+Локальная транзакция -- это атомарная операция в пределах одного сервиса и одной БД: выполняется под обычной `@Transactional` и удовлетворяет `ACID`. Saga -- это цепочка таких транзакций $T_1, T_2, \dots, T_n$ с компенсациями $C_1, C_2, \dots, C_{n-1}$ для выполненных шагов, за которыми может следовать бизнес-отказ.
 
 **Ключевое условие:** каждая $T_i$ коммитит свои изменения немедленно, не удерживая блокировки до конца Saga. Именно это отличает Saga от долгой транзакции: шаги становятся видимыми другим транзакциям (отсюда нарушение `isolation`), но зато ресурсы не залочены на всё время процесса -- система держит высокую пропускную способность.
 
@@ -180,12 +180,12 @@ public class OrderService {
 
 | Свойство | В локальной транзакции | В Saga в целом |
 |---|---|---|
-| **A**tomicity | Да | Обеспечивается компенсациями (`semantic atomicity`) |
-| **C**onsistency | Да | Да -- в конечном счёте (`eventual consistency`) |
+| **A**tomicity | Да | Семантический эффект при успешных компенсациях, не атомарный коммит |
+| **C**onsistency | Да | Требует бизнес-инвариантов и надёжного завершения |
 | **I**solation | Да | **Нет** -- промежуточные состояния видны |
 | **D**urability | Да | Да -- каждый шаг коммитится в свою БД |
 
-Короткий ответ на собеседовании: Saga сохраняет три из четырёх свойств ACID -- Chris Richardson называет это `ACD`. Atomicity достигается не СУБД, а компенсациями; Consistency -- только в конечном счёте; Durability обеспечивает каждая локальная БД. Теряется именно Isolation, и это главная «головная боль» при разработке: два одновременных Saga видят промежуточные состояния друг друга, из-за чего возникают аномалии -- `lost update`, `dirty read`, `fuzzy read` (non-repeatable). Лечатся они не на уровне СУБД, а прикладными `countermeasures` ([Q19](#q19--что-такое-semantic-lock)--[Q21](#q21-что-такое-by-value-strategy)).
+Короткий ответ на собеседовании: Локальные шаги обладают ACID-гарантиями своей БД. Вся Saga не является одной ACID-транзакцией: компенсации могут семантически исправить результат уже выполненных шагов, если их удаётся довести до конца. Изоляции между шагами нет, и это главная «головная боль» при разработке: два одновременных Saga видят промежуточные состояния друг друга, из-за чего возникают аномалии -- `lost update`, `dirty read`, `fuzzy read` (non-repeatable). Лечатся они не на уровне СУБД, а прикладными `countermeasures` ([Q19](#q19--что-такое-semantic-lock)--[Q21](#q21-что-такое-by-value-strategy)).
 
 ## Q5. Что такое semantic consistency и чем она отличается от strong consistency?
 
@@ -193,7 +193,7 @@ public class OrderService {
 
 **Strong consistency** (сильная согласованность) -- после коммита транзакции любой следующий запрос видит обновлённые данные, промежуточных состояний нет. Это поведение ACID-транзакции.
 
-**Semantic consistency** (семантическая согласованность) -- система приходит к согласованности в конечном счёте, по бизнес-смыслу. Промежуточные состояния допустимы и наблюдаемы (заказ `PENDING`, товар «временно зарезервирован»), но бизнес-инвариант всегда соблюдается: процесс завершается либо полным успехом, либо полным откатом через компенсации. Несогласованность -- временная и ограниченная, «потерянных» денег или товара в финале не остаётся.
+**Semantic consistency** (семантическая согласованность) -- система приходит к согласованности в конечном счёте, по бизнес-смыслу. Промежуточные состояния допустимы и наблюдаемы (заказ `PENDING`, товар «временно зарезервирован»), но бизнес-инвариант восстанавливают успешным завершением или компенсациями; сбой компенсации требует отдельного восстановления. Несогласованность -- временная и ограниченная, проверка конечного состояния и обработка зависших саг обязательны.
 
 ```mermaid
 sequenceDiagram
@@ -404,17 +404,17 @@ public class InventoryEventHandler {
 | Критерий | Оркестрация | Хореография |
 |---|---|---|
 | Центр управления | Оркестратор | Нет -- распределён |
-| Количество шагов | Много (>4) -- удобнее | 2--4 -- не создаёт сложности |
+| Количество шагов | Само по себе не определяет выбор | Само по себе не определяет выбор |
 | Ветвления и условия | Легко -- в одном месте | Сложно -- размазано |
 | Сложность отладки | Проще -- логи оркестратора | Сложнее -- трассировка по брокеру |
 | Coupling | Participants ↔ Orchestrator | Все ↔ все через события |
-| Риск SPOF | Да -- нужен HA | Нет |
+| Риск SPOF | Координатор нужно восстанавливать | Зависит от инфраструктуры |
 | Антипаттерн | `god-orchestrator` с логикой | `distributed monolith` через события |
 | Наблюдаемость | Хорошая -- state в БД | Требует distributed tracing |
 
 **Эмпирическое правило:**
-- **Оркестрация** -- сложные многошаговые процессы с ветвлениями, BPMN-like workflows, где важен явный контроль и audit trail (обработка заказа с 7+ шагами, кредитные процессы, supply chain)
-- **Хореография** -- короткие реактивные цепочки из 2--4 шагов без сложного flow (notification pipeline, cache invalidation cascade, simple order flow)
+- **Оркестрация** -- сложные многошаговые процессы с ветвлениями, BPMN-like workflows, где важен явный контроль и audit trail (заказы с ветвлениями, кредитные процессы, supply chain)
+- **Хореография** -- понятные реактивные цепочки без сложных общих ветвлений (notification pipeline, cache invalidation cascade, simple order flow)
 - Можно комбинировать: крупный оркестратор, внутри отдельные хореографические цепочки
 
 ## Q13. Какой риск несёт хореография при росте числа сервисов?
@@ -428,7 +428,7 @@ public class InventoryEventHandler {
 - Отладка через брокер и распределённые логи, без общей view
 - Rollback при частичном сбое распределён и ненадёжен
 
-В книге Sam Newman'а это называют `distributed big ball of mud`. Когда цепочка выросла до 5+ шагов -- рассматривайте миграцию на оркестрацию.
+В книге Sam Newman'а это называют `distributed big ball of mud`. Когда ход процесса стал трудно проследить и безопасно изменить, рассмотрите более явную координацию.
 
 ## Q14. (!) Что такое compensating transaction?
 
@@ -456,10 +456,10 @@ Chris Richardson выделяет три типа локальных транз�
 **1. Compensable transactions** -- шаги, которые МОЖНО компенсировать. Если после них падает более поздний шаг, запускаем компенсацию.
 - Пример: «зарезервировать товар», «создать заказ в статусе PENDING»
 
-**2. Pivot transaction** -- «точка невозврата». После её успеха Saga считается успешной: следующие шаги только `retryable`. До неё -- все шаги compensable.
+**2. Pivot transaction** -- «точка невозврата». После её успеха откат назад по обычному пути не предусмотрен: оставшиеся шаги должны быть повторяемыми до успеха. До неё -- все шаги compensable.
 - Пример: «списать деньги с карты» (refund возможен, но это уже отдельный бизнес-процесс)
 
-**3. Retryable transactions** -- шаги после pivot, которые ТОЛЬКО retry до успеха (никогда не падают бизнесово).
+**3. Retryable transactions** -- шаги после pivot, для которых проектируют повторяемое завершение без ожидаемого бизнес-отказа.
 - Пример: «отправить email», «начислить бонусы», «обновить аналитику»
 
 ```mermaid
@@ -478,8 +478,8 @@ graph LR
 | Характеристика | DB rollback | Saga compensation |
 |---|---|---|
 | Уровень | СУБД | Приложение |
-| Когда возможен | До коммита | После коммита, всегда |
-| Видимость промежуточных состояний | Нет | Да -- другие могут их увидеть |
+| Когда возможен | До коммита | После коммита, если существует допустимое бизнес-действие |
+| Видимость промежуточных состояний | Нет для незакоммиченных изменений | Да — уже закоммиченные шаги видны |
 | Обратимость | Полная | Семантическая |
 | Реализация | Автомат через WAL/undo log | Ручная бизнес-логика |
 
@@ -491,16 +491,16 @@ graph LR
 
 ## Q17. Что делать, если compensating transaction тоже упала?
 
-Падение компенсации -- худший сценарий: Saga застряла между состояниями, не может ни завершиться, ни откатиться. Чисто автоматически выйти из него нельзя, поэтому стратегия многослойная -- от автоматического retry до ручного вмешательства оператора:
+Падение компенсации оставляет Saga незавершённой. Автоматическое восстановление возможно для части ошибок; для остальных нужны наблюдение и ручной разбор:
 
-1. **Retry с экспоненциальной задержкой** -- большинство падений transient (сеть, таймаут); retry 5--10 раз в течение часов решает 90% случаев
+1. **Retry с экспоненциальной задержкой** -- большинство падений transient (сеть, таймаут); частоту и предел повторов выбирают по типу ошибки и нагрузке
 2. **DLQ (Dead Letter Queue)** -- после исчерпания retry отправляем команду компенсации в DLQ для ручного разбора
 3. **Saga stuck alert** -- мониторинг по `lastUpdate` Saga: если старше threshold -- алерт оператору
 4. **Manual compensation** -- UI/runbook, в котором оператор может вручную запустить компенсацию или откорректировать данные
 5. **Backward recovery pipeline** -- отдельный компонент, который периодически находит зависшие Saga и пытается завершить их
 6. **Alternative compensation** -- если $C_i$ не работает, можно попробовать $C_i'$ (другую стратегию: вместо возврата товара -- списать как убыток)
 
-**Критичный принцип:** компенсации должны быть как можно более устойчивыми -- идемпотентными, минимально зависимыми, с простейшей логикой. Pivot transaction ставится как можно раньше, чтобы после неё шли только retryable steps и не нужны были компенсации.
+**Критичный принцип:** компенсации должны быть как можно более устойчивыми -- идемпотентными, минимально зависимыми, с простейшей логикой. Положение pivot выбирают по бизнес-инвариантам и возможности компенсировать предшествующие шаги, чтобы после неё шли только retryable steps и не нужны были компенсации.
 
 ## Q18. (!) Почему Saga не обеспечивает isolation и какие возникают аномалии?
 
@@ -552,24 +552,24 @@ public class Order {
 
 Это остальные countermeasures из классификации Chris Richardson -- набор приёмов, которые компенсируют отсутствие изоляции на уровне проектирования операций, а не блокировками:
 
-**Commutative updates** -- проектируем операции так, чтобы порядок применения не влиял на результат. Пример: вместо `balance = 100` (set) использовать `balance += delta` (increment) -- тогда компенсация `balance -= delta` всегда корректна, даже если порядок смешался.
+**Commutative updates** -- проектируем операции так, чтобы порядок применения не влиял на результат. Пример: вместо `balance = 100` (set) использовать `balance += delta` (increment) -- тогда компенсация `balance -= delta` может быть корректной при сохранении инвариантов и уникального ID операции, даже если порядок смешался.
 
-**Pessimistic view** -- переупорядочиваем шаги Saga так, чтобы «опасные» данные обновлялись в последнюю retryable-фазу, когда уже нет риска компенсации.
+**Pessimistic view** -- переупорядочиваем шаги, чтобы уменьшить бизнес-ущерб от чтения промежуточного состояния, когда уже нет риска компенсации.
 - Пример: не увеличиваем лимит кредитной линии клиента до одобрения платежа -- чтобы он не успел им воспользоваться и не пришлось отбирать обратно
 
 **Reread value** -- перед компенсацией заново читаем запись и проверяем, что значение не изменилось с момента $T_i$. Если изменилось -- не компенсируем, сигнализируем оператору или применяем альтернативную стратегию.
 
 **Version file** -- храним все операции над записью с их ID; компенсация применяется как `inverse operation` с привязкой к ID, а не к значению. Если между $T_i$ и $C_i$ прошли другие операции -- они не затираются.
 
-**By value** -- переключаемся на более строгую стратегию (например, sync 2PC) для high-risk бизнес-операций. Разные risk tiers для разных клиентов/сумм.
+**By value** -- выбираем стратегию обработки по цене возможной аномалии для конкретного запроса; это одна из мер против бизнес-риска.
 
 ## Q21. Что такое by value strategy?
 
-`By value` -- это не отдельный механизм отмены, а runtime-стратегия выбора *самого механизма транзакции* в зависимости от риска конкретной операции. Идея: не все операции одинаково опасны, поэтому дешёвые и массовые идут через Saga, а редкие и дорогие -- через более строгий, но затратный механизм.
+`By value` — мера из классификации Chris Richardson: выбираем тактику по бизнес-цене возможной аномалии конкретного запроса. Механизм может включать дополнительное подтверждение, резервирование или другой маршрут; переход на 2PC не является обязательным.
 - Маленькая сумма, retail-клиент → `Saga` с компенсациями, eventual consistency
-- Крупная сумма, VIP-клиент, high risk → синхронный `2PC` или отклонение с запросом ручного одобрения
+- Крупная сумма или высокий риск → дополнительное подтверждение, резервирование либо другой согласованный путь; выбор `2PC` возможен лишь при поддержке участников и короткой операции
 
-**Компромисс:** применяется редко -- усложняет код двумя путями исполнения, но иногда оправдано для финтеха и банкинга, где одна аномалия стоит миллионы.
+**Компромисс:** разные пути усложняют тестирование и эксплуатацию. Их вводят, когда разница в риске действительно оправдывает эту цену.
 
 ## Q22. (!) Saga vs 2PC -- ключевые отличия
 
@@ -578,15 +578,15 @@ public class Order {
 | Координация | `Transaction Coordinator` с двумя фазами (prepare, commit) | Оркестратор или события |
 | Блокировки | Блокирует ресурсы до конца фазы commit | Нет глобальных блокировок |
 | Согласованность | Strong -- атомарная (все или ничего) | Eventual -- через компенсации |
-| Isolation | ACID | ACD (без I) -- нужны countermeasures |
-| Производительность | Низкая -- синхронный блокирующий | Высокая -- асинхронный |
-| Fault tolerance | Coordinator = SPOF, зависшие `in-doubt` транзакции | Падение участника = retry/compensation |
-| Гетерогенные ресурсы | Только если все поддерживают XA (PostgreSQL, Oracle, JMS -- не все брокеры поддерживают) | Работает с любыми ресурсами |
-| Long-running | Невозможно -- блокировки | Подходит идеально (часы, дни) |
-| Сложность кода | Простая (одна `@Transactional`) | Высокая (компенсации, countermeasures) |
+| Isolation | Зависит от изоляции каждого участника | Нет общей изоляции между шагами; нужны меры против аномалий |
+| Производительность | Удержание ресурсов и дополнительные обмены | Зависит от длительности шагов и координации |
+| Восстановление | Нужны журнал координатора и разбор `in-doubt` | Нужны durable state, повторы и обработка зависших шагов |
+| Гетерогенные ресурсы | Все участники должны поддерживать нужный протокол | Участники реализуют локальные шаги и компенсации |
+| Long-running | Удержание подготовленных ресурсов обычно неприемлемо | Возможны часы и дни при durable state и восстановлении |
+| Сложность кода | Координатор и поддержка протокола у участников | Координация, компенсации и меры против аномалий |
 | Применимость | Монолит с несколькими БД, legacy | Микросервисы |
 
-**Вывод:** в микросервисах `2PC` практически не используется. Saga -- стандарт, несмотря на сложность.
+**Вывод:** в микросервисах `2PC` применим при совместимых участниках и коротких операциях. Saga часто выбирают для долгих межсервисных процессов, несмотря на сложность.
 
 Подробнее про проблемы 2PC -- в [consistency patterns](consistency-patterns-interview.md) и [distributed systems](distributed-systems-interview.md).
 
@@ -594,20 +594,20 @@ public class Order {
 
 Коротко: `2PC` требует синхронных блокировок и надёжного координатора -- два условия, которые в распределённой среде с независимыми сервисами и ненадёжной сетью почти невыполнимы. Конкретные причины:
 
-1. **Блокировки ресурсов** -- во время фазы prepare ресурсы залочены, и если один из участников тормозит, все остальные ждут; при массовой нагрузке -- deadlock
-2. **Single Point of Failure** -- coordinator падает после phase 1, участники остаются в `in-doubt` -- не знают, committ-ить или rollback, и держат локи
+1. **Блокировки ресурсов** -- во время фазы prepare ресурсы залочены, и если один из участников тормозит, все остальные ждут; при нагрузке растёт ожидание
+2. **Восстановление координатора** -- если он падает после prepare, участники остаются `in-doubt` до восстановления решения
 3. **Network partition** -- coordinator не может достучаться до участника; неизвестно, committ-ить или нет
 4. **Гетерогенность** -- многие современные брокеры (`Kafka`, modern NoSQL) не поддерживают XA/JTA
-5. **Производительность** -- ~3x overhead на каждую транзакцию из-за round-trips
+5. **Производительность** -- дополнительные сообщения и ожидание участников увеличивают задержку; размер зависит от среды
 6. **Масштабируемость** -- чем больше участников, тем больше вероятность таймаута и медленнее Commit
-7. **Long-running** -- невозможно -- никто не станет блокировать ресурсы на часы
+7. **Long-running** -- подготовленные ресурсы пришлось бы удерживать длительное время, что обычно неприемлемо
 
-Инженерный консенсус: в микросервисах `2PC` -- антипаттерн. Даже если ваши БД его поддерживают, лучше перепроектировать процесс под `Saga` или `Outbox`.
+Инженерный консенсус: в микросервисах `2PC` имеет существенную цену при долгих межсервисных операциях. Выбор между короткой распределённой транзакцией и Saga зависит от гарантий участников и требований процесса.
 
 ## Q24. Что такое TCC (Try-Confirm-Cancel) и чем он отличается от Saga?
 
-**TCC** (Try-Confirm-Cancel) -- вариация Saga, в которой каждый шаг разбит на три операции, чтобы уменьшить видимость промежуточных состояний. Вместо «сделать и потом компенсировать» ресурс сначала резервируется, а коммитится или освобождается отдельной фазой:
-- **Try** -- зарезервировать ресурс, не коммитя окончательно (например, «удержать 100 ₽ на карте»)
+**TCC** (Try-Confirm-Cancel) — близкая модель координации, в которой участник поддерживает три операции. Try создаёт локально зафиксированный резерв; Confirm завершает бизнес-действие, Cancel освобождает резерв. Резерв сам может быть виден другим запросам, поэтому изоляцию нужно проектировать отдельно:
+- **Try** -- локально зафиксировать временный резерв без финального бизнес-эффекта (например, «удержать 100 ₽ на карте»)
 - **Confirm** -- финализировать (спишем удержанные 100 ₽)
 - **Cancel** -- освободить резерв (снимем удержание 100 ₽)
 
@@ -633,95 +633,34 @@ sequenceDiagram
 | Критерий | Saga | TCC |
 |---|---|---|
 | Модель | T_i + C_i | Try + Confirm/Cancel |
-| Isolation | Нарушен -- нужны countermeasures | Лучше -- ресурсы «зарезервированы», не видны другим |
+| Isolation | Нет общей изоляции | Резерв ограничивает конкуренцию, но его видимость и защита зависят от реализации |
 | Сложность API | T_i -- одно действие | Три метода на шаг |
 | Применимость | Любые операции | Требует от сервисов поддерживать резервирование |
-| Видимость промежуточных состояний | Полная (ORDER=PENDING виден) | Меньше (резерв скрыт) |
+| Видимость промежуточных состояний | Зависит от модели данных | Зависит от видимости и срока резерва |
 
 TCC популярен в Alibaba Seata и в финтехе, где важна минимизация временных окон с видимыми промежуточными состояниями. Реализация сложнее -- каждый сервис должен поддерживать три операции.
 
 ## Q25. (!) Как реализовать оркестратор Saga на чистом Spring Boot + Kafka?
 
-Минимальная реализация без фреймворков:
+Оркестратор хранит durable state экземпляра Saga: идентификатор, текущий шаг, статус, версию и данные, нужные для компенсации. Обработчик ответа сначала проверяет `sagaId`, ожидаемый шаг и уже обработанный идентификатор сообщения. Затем в одной транзакции БД фиксирует новый state и исходящую команду в Outbox. Отдельный relay публикует команду в Kafka.
 
 ```java
-@Entity
-@Table(name = "saga_state")
-public class CreateOrderSagaState {
-    @Id private UUID sagaId;
-    private UUID orderId;
-    private BigDecimal amount;
-    @Enumerated(EnumType.STRING)
-    private SagaStep currentStep;
-    @Enumerated(EnumType.STRING)
-    private SagaStatus status;
-    @Version private Long version;
-    private Instant createdAt;
-    private Instant updatedAt;
-}
-
-@Component
-@RequiredArgsConstructor
-public class CreateOrderSagaOrchestrator {
-    private final SagaStateRepository repo;
-    private final KafkaTemplate<String, Object> kafka;
-
-    @Transactional
-    public UUID start(PlaceOrderRequest req) {
-        UUID sagaId = UUID.randomUUID();
-        CreateOrderSagaState state = new CreateOrderSagaState(
-            sagaId, req.orderId(), req.amount(),
-            SagaStep.CREATE_ORDER, SagaStatus.IN_PROGRESS
-        );
-        repo.save(state);
-        kafka.send("order.commands",
-            sagaId.toString(),
-            new CreateOrderCommand(sagaId, req.orderId(), req.items())
-        );
-        return sagaId;
-    }
-
-    @KafkaListener(topics = "order.replies")
-    @Transactional
-    public void onOrderReply(OrderCreatedReply reply) {
-        CreateOrderSagaState state = repo.findById(reply.sagaId()).orElseThrow();
-        if (reply.success()) {
-            state.setCurrentStep(SagaStep.RESERVE_INVENTORY);
-            kafka.send("inventory.commands",
-                new ReserveInventoryCommand(reply.sagaId(), ...)
-            );
-        } else {
-            state.setStatus(SagaStatus.FAILED);
-        }
-        repo.save(state);
-    }
-
-    @KafkaListener(topics = "payment.replies")
-    @Transactional
-    public void onPaymentReply(PaymentReply reply) {
-        CreateOrderSagaState state = repo.findById(reply.sagaId()).orElseThrow();
-        if (reply.success()) {
-            state.setStatus(SagaStatus.COMPLETED);
-        } else {
-            // компенсации
-            state.setStatus(SagaStatus.COMPENSATING);
-            kafka.send("inventory.commands",
-                new ReleaseInventoryCommand(reply.sagaId())
-            );
-            kafka.send("order.commands",
-                new CancelOrderCommand(reply.sagaId())
-            );
-        }
-        repo.save(state);
+@Transactional
+public void onOrderReply(OrderCreatedReply reply) {
+    SagaState state = sagaRepository.findById(reply.sagaId()).orElseThrow();
+    if (state.alreadyHandled(reply.messageId())) return;
+    state.requireStep(SagaStep.CREATE_ORDER);
+    state.record(reply.messageId());
+    state.transitionTo(reply.success() ? SagaStep.RESERVE_INVENTORY : SagaStep.FAILED);
+    sagaRepository.save(state);
+    if (reply.success()) {
+        outboxRepository.save(OutboxMessage.forSaga(reply.sagaId(),
+                new ReserveInventoryCommand(reply.sagaId())));
     }
 }
 ```
 
-**Критически важно:**
-- Публикация команды и обновление state -- в одной транзакции через Outbox ([Q26](#q26--как-связать-saga-с-outbox-pattern))
-- `@Version` для optimistic locking -- два reply одновременно не должны конфликтовать
-- Идемпотентность обработки reply (проверка `currentStep` и completed steps)
-- Таймауты на каждый шаг через scheduler
+Это схема взаимодействия, а не готовый API сущностей: `alreadyHandled`, `record` и `transitionTo` должны атомарно сохранять результат обработки вместе с бизнес-эффектом. `@Version` помогает обнаружить конкурентный переход, но конфликт нужно повторно прочитать и разобрать. Таймеры и recovery находят шаги без ответа; повтор команды безопасен только при идемпотентном участнике. Подробности Outbox — в [Q26](#q26--как-связать-saga-с-outbox-pattern).
 
 ## Q26. (!) Как связать Saga с Outbox pattern?
 
@@ -738,103 +677,36 @@ graph LR
     K --> P2[Payment Service]
 ```
 
-```java
-@Transactional
-public void sendCommand(UUID sagaId, Object command, String topic) {
-    // 1. Обновляем state
-    sagaRepo.save(currentState);
-
-    // 2. В той же транзакции пишем в outbox
-    OutboxMessage msg = new OutboxMessage(
-        UUID.randomUUID(),
-        topic,
-        sagaId.toString(),
-        jsonMapper.writeValueAsString(command),
-        Instant.now(),
-        OutboxStatus.PENDING
-    );
-    outboxRepo.save(msg);
-}
-
-// Отдельный publisher читает outbox и отправляет в Kafka
-@Scheduled(fixedDelay = 500)
-public void publishOutbox() {
-    List<OutboxMessage> pending = outboxRepo.findTop100ByStatus(OutboxStatus.PENDING);
-    for (OutboxMessage m : pending) {
-        kafka.send(m.getTopic(), m.getKey(), m.getPayload())
-            .whenComplete((result, ex) -> {
-                if (ex == null) {
-                    m.setStatus(OutboxStatus.PUBLISHED);
-                    outboxRepo.save(m);
-                }
-            });
-    }
-}
-```
+В транзакции оркестратора обновляют `saga_state` и вставляют сообщение в `outbox` с уникальным ID и ключом порядка. Relay читает committed записи и публикует их в Kafka. После подтверждения публикации он отмечает запись как доставленную; при сбое между публикацией и отметкой сообщение может уйти повторно. Поэтому потребитель должен атомарно защитить бизнес-эффект от дубля. При нескольких relay также нужны безопасное распределение записей и сохранение нужного порядка.
 
 Альтернатива -- `Debezium` + Kafka Connect: CDC читает транзакционный лог и автоматически публикует изменения таблицы outbox в Kafka. Такой подход используют `Eventuate Tram CDC` и многие production-решения. Подробнее -- в [event-driven паттернах](event-driven-patterns-interview.md).
 
 ## Q27. (!) Как реализовать Saga на Axon Framework?
 
-`Axon` даёт декларативную модель Saga:
+В **Axon Framework 4** Saga — класс `@Saga`, который получает события через `@SagaEventHandler`. `@StartSaga` создаёт экземпляр, `associationProperty` связывает событие с нужной сагой, `SagaLifecycle.associateWith` добавляет новый ключ корреляции, а `@EndSaga` завершает жизненный цикл. Команды участникам отправляют через `CommandGateway`; обработчик должен учитывать ошибки, повторы и компенсации.
 
 ```java
 @Saga
 public class CreateOrderSaga {
-    @Autowired
-    private transient CommandGateway commandGateway;
-
-    private UUID orderId;
-    private UUID paymentId;
+    @Autowired private transient CommandGateway commandGateway;
+    private String orderId;
 
     @StartSaga
     @SagaEventHandler(associationProperty = "orderId")
     public void on(OrderCreatedEvent event) {
-        this.orderId = event.orderId();
-        // Шаг 2: зарезервировать товар
-        commandGateway.send(new ReserveItemsCommand(event.orderId(), event.items()))
-            .exceptionally(ex -> {
-                commandGateway.send(new CancelOrderCommand(orderId));
-                return null;
-            });
-    }
-
-    @SagaEventHandler(associationProperty = "orderId")
-    public void on(ItemsReservedEvent event) {
-        // Шаг 3: списать деньги
-        paymentId = UUID.randomUUID();
-        SagaLifecycle.associateWith("paymentId", paymentId.toString());
-        commandGateway.send(new ChargePaymentCommand(paymentId, orderId, event.amount()));
-    }
-
-    @SagaEventHandler(associationProperty = "paymentId")
-    public void on(PaymentChargedEvent event) {
-        commandGateway.send(new ConfirmOrderCommand(orderId));
-    }
-
-    @SagaEventHandler(associationProperty = "paymentId")
-    public void on(PaymentFailedEvent event) {
-        // компенсация: освободить резерв и отменить заказ
-        commandGateway.send(new ReleaseItemsCommand(orderId));
-        commandGateway.send(new CancelOrderCommand(orderId));
+        orderId = event.orderId();
+        commandGateway.send(new ReserveItemsCommand(orderId));
     }
 
     @EndSaga
     @SagaEventHandler(associationProperty = "orderId")
     public void on(OrderConfirmedEvent event) {
-        // Saga завершена
+        // Завершаем только после подтверждения нужных бизнес-шагов.
     }
 }
 ```
 
-**Ключевые особенности Axon:**
-- `@StartSaga` + `@SagaEventHandler` -- Axon создаёт instance Saga по первому event'у с нужным `associationProperty`
-- State Saga автоматически персистится (JPA, JDBC, MongoDB)
-- `SagaLifecycle.associateWith` добавляет дополнительные ассоциации (paymentId, shipmentId), чтобы связывать будущие events с этим instance
-- `@EndSaga` помечает завершение -- state удаляется
-- Таймауты через `EventScheduler.schedule` -- подписка на `SchedulerEvent`
-
-Подробнее про Axon и CQRS/ES -- в [вопросах по CQRS и Event Sourcing](cqrs-event-sourcing-interview.md).
+В **Axon Framework 5** аннотированные Saga из четвёртой версии заменены другими средствами, в частности Workflows. Такой пример нельзя переносить в Axon 5 без миграции. Для новых проектов проверьте версию, лицензирование Workflow и требования к восстановлению. [Документация Axon 4](https://docs.axoniq.io/axon-framework-reference/4.11/sagas/associations/) и [миграция на Axon 5](https://docs.axoniq.io/axon-framework-reference/5.3/migration/paths/sagas/).
 
 ## Q28. Как использовать Eventuate Tram для orchestration Saga?
 
@@ -873,55 +745,19 @@ public class CreateOrderSaga implements SimpleSaga<CreateOrderSagaData> {
 **Особенности:**
 - DSL для декларативного описания steps и compensations
 - Встроенный Outbox (через Eventuate Tram CDC с Debezium)
-- Поддержка Spring Boot, Micronaut, Quarkus
-- Работает с MySQL/PostgreSQL (полагается на CDC) + Apache Kafka
-- Автоматическое управление persistence state, retry, idempotency
+- Поддержку конкретного стека проверяют по используемой версии
+- Поддерживаемые БД и брокеры зависят от выбранного модуля Eventuate Tram
+- Хранение состояния и координация шагов средствами фреймворка; идемпотентность бизнес-операций проверяют отдельно
 
 Плюс -- явный и компактный DSL; минус -- инфраструктурная зависимость от CDC и Kafka, сложнее отлаживать внутреннюю механику.
 
 ## Q29. Как использовать Camunda/BPMN для Saga?
 
-`Camunda 8` (`Zeebe`) и `Camunda 7` позволяют моделировать Saga как BPMN-процесс с явной визуальной схемой, compensation activities и boundary events.
+В Camunda 7 и 8 Saga можно описать BPMN-процессом: service tasks представляют шаги, compensation boundary event связывает завершённый шаг с обработчиком компенсации, а throw event запускает компенсации в нужной области процесса. Движок хранит состояние экземпляра и управляет маршрутом. Само бизнес-действие выполняет внешний обработчик; его идемпотентность и корректность компенсации остаются ответственностью приложения.
 
-```xml
-<bpmn:process id="createOrderSaga">
-  <bpmn:serviceTask id="createOrder" camunda:type="external" camunda:topic="create-order"/>
-  <bpmn:serviceTask id="reserveInventory" camunda:type="external" camunda:topic="reserve-inventory"/>
-  <bpmn:serviceTask id="chargePayment" camunda:type="external" camunda:topic="charge-payment"/>
+Camunda 7 использует, например, External Task Worker с расширениями `camunda:*`. Camunda 8 использует Zeebe job worker с собственным описанием task type. Эти атрибуты и Java API не следует смешивать в одном BPMN-примере. В Camunda 8 общий throw event может запустить обработчики завершённых задач одновременно; если нужен порядок, запускайте компенсацию конкретной задачи или моделируйте зависимость явно.
 
-  <!-- Compensation activities -->
-  <bpmn:serviceTask id="cancelOrder" isForCompensation="true"
-                    camunda:type="external" camunda:topic="cancel-order"/>
-  <bpmn:serviceTask id="releaseInventory" isForCompensation="true"
-                    camunda:type="external" camunda:topic="release-inventory"/>
-
-  <bpmn:boundaryEvent id="compensationTrigger" attachedToRef="chargePayment">
-    <bpmn:compensateEventDefinition/>
-  </bpmn:boundaryEvent>
-</bpmn:process>
-```
-
-На Java participant'ы реализуются как worker'ы:
-
-```java
-@ExternalTaskSubscription("reserve-inventory")
-public class ReserveInventoryHandler implements ExternalTaskHandler {
-    @Override
-    public void execute(ExternalTask task, ExternalTaskService svc) {
-        try {
-            inventoryService.reserve(task.getVariable("orderId"), ...);
-            svc.complete(task);
-        } catch (Exception e) {
-            svc.handleBpmnError(task, "INSUFFICIENT_STOCK");
-        }
-    }
-}
-```
-
-**Плюсы BPMN-подхода:** визуализация процесса, business-analyst может читать схему; встроенные compensation semantics; мощная персистентность и версионирование процессов.
-**Минусы:** runtime-overhead (BPMN-движок), сложность деплоя, lock-in на Camunda.
-
-Альтернативы с похожей моделью: `Temporal`, `Netflix Conductor`, `Orkes Conductor`, `AWS Step Functions`.
+[Компенсации Camunda 8](https://docs.camunda.io/docs/components/modeler/bpmn/compensation-events/) и [обработчики компенсации](https://docs.camunda.io/docs/components/modeler/bpmn/compensation-handler/).
 
 ## Q30. Как реализовать persistent state saga orchestrator?
 
@@ -957,19 +793,19 @@ public class SagaRecoveryJob {
 
 1. **Бизнес-логика в оркестраторе** -- оркестратор должен быть тупым координатором; бизнес-решения принимают агрегаты участников. Оркестратор = `workflow engine`, не `domain service`.
 
-2. **Синхронные REST-вызовы из оркестратора** -- оркестратор должен общаться async через брокер; sync-вызовы делают его зависимым от доступности и производительности участников.
+2. **Синхронная цепочка без восстановления** -- если оркестратор держит один HTTP-запрос на время всех шагов, сбой оставит процесс без durable состояния и безопасного продолжения. Синхронный вызов допустим при явных таймаутах и восстановлении.
 
-3. **Компенсация как `rollback` через `DELETE`** -- удаление записи теряет audit trail и не работает, если на неё уже сослались другие записи. Компенсация = `UPDATE status = CANCELLED`.
+3. **Компенсация как `rollback` через `DELETE`** -- удаление записи теряет audit trail и не работает, если на неё уже сослались другие записи. Компенсация — новое бизнес-действие: статус `CANCELLED`, возврат резерва или компенсирующая проводка по правилам домена.
 
 4. **Забыть про isolation** -- отсутствие countermeasures ведёт к lost update, dirty read в production (особенно под нагрузкой).
 
-5. **Нет pivot transaction** -- делать все шаги compensable до самого конца создаёт ненужные сценарии компенсации и увеличивает риск зависания.
+5. **Не определена граница обратимости** -- для каждого шага нужно знать, допустим ли поздний бизнес-отказ и как компенсировать уже выполненное.
 
-6. **Хореография с 10+ событиями** -- превращается в `distributed monolith`; мигрируйте на оркестрацию, когда цепочка вырастет.
+6. **Непрозрачная цепочка событий** -- если изменение процесса требует синхронных правок нескольких участников, пересмотрите контракты и способ координации.
 
 7. **Игнорировать DLQ и stuck sagas** -- без recovery-процесса в production накопятся зависшие саги, данные разойдутся.
 
-8. **Отсутствие correlation-id** -- без `sagaId` / `traceId` в каждом событии невозможно отладить цепочку.
+8. **Отсутствие correlation-id** -- без устойчивого `sagaId` в сообщениях трудно собрать события одного процесса; `traceId` решает другую задачу.
 
 9. **Компенсации не идемпотентны** -- retry после transient fail создаёт двойную компенсацию (двойной refund).
 
@@ -1005,10 +841,10 @@ Stuck saga -- это Saga, которая застряла: формально �
 
 **Ресолюшн:**
 1. **Автоматический retry** -- отдельный job находит stuck saga и повторно отправляет команду текущего шага (участник должен быть идемпотентен)
-2. **Timeout + force compensation** -- если saga висит > 1 час, принудительно переходим в `COMPENSATING`
-3. **Ручное разрешение через admin UI** -- оператор может перевести saga в любой state, запустить/пропустить шаг
+2. **Timeout + выяснение исхода** -- если ответ не пришёл, сначала проверяем, выполнил ли участник действие, затем выбираем повтор или компенсацию
+3. **Ручное разрешение через admin UI** -- оператор может после проверки фактических эффектов повторить шаг, инициировать компенсацию или зафиксировать ручное разрешение
 4. **Audit trail** -- логируем все переходы state для forensic-анализа
-5. **Alert + runbook** -- каждый stuck saga -- инцидент, runbook описывает шаги разбора
+5. **Alert + runbook** -- stuck saga требует разбора по порогу и критичности процесса, runbook описывает шаги разбора
 
 **Профилактика:**
 - Таймауты на каждый шаг (запрос и обработка)
@@ -1017,28 +853,13 @@ Stuck saga -- это Saga, которая застряла: формально �
 
 ## Q34. (!) Как обеспечить идемпотентность шагов Saga?
 
-Идемпотентность означает, что повторная обработка того же сообщения не меняет результат по сравнению с однократной. Для Saga это не опция, а необходимость: в асинхронной системе любое сообщение рано или поздно придёт дважды -- из-за retry продюсера, rebalance consumer'а или recovery после падения. Без идемпотентности это двойной резерв, двойной refund, дубль заказа.
+Идемпотентность означает, что повторная обработка того же сообщения не меняет результат по сравнению с однократной. Для шага с повторной доставкой это необходимое свойство: в асинхронной системе повторная доставка возможна -- из-за retry продюсера, rebalance consumer'а или recovery после падения. Без идемпотентности это двойной резерв, двойной refund, дубль заказа.
 
 **Подходы:**
 
-**1. Уникальный ключ запроса + табл. processed:**
-```java
-@Entity
-public class ProcessedCommand {
-    @Id private UUID messageId;
-    private String handler;
-    private Instant processedAt;
-}
+**1. Уникальный ключ операции + таблица обработанных сообщений:**
 
-@Transactional
-public void handle(ReserveInventoryCommand cmd) {
-    if (processedRepo.existsById(cmd.messageId())) {
-        return;  // уже обработали
-    }
-    inventoryService.reserve(cmd.orderId(), cmd.items());
-    processedRepo.save(new ProcessedCommand(cmd.messageId(), "reserve", Instant.now()));
-}
-```
+В одной транзакции БД резервируют уникальный `messageId` и выполняют бизнес-изменение. Конкурирующий повтор упирается в ограничение уникальности; после его обработки возвращают уже сохранённый результат. Проверка `existsById` до записи недостаточна: два обработчика могут одновременно увидеть «нет».
 
 **2. Идемпотентность на уровне бизнес-операции:**
 - «Create order with id=X» -- upsert by id, повтор не создаёт дубль
@@ -1062,12 +883,12 @@ WHERE id=? AND version=?
 
 **Стратегии:**
 
-1. **Partition key = aggregate id** -- в Kafka все события по одному `orderId` идут в одну партицию → строгий порядок внутри
+1. **Partition key = aggregate id** -- внутри одного топика события с одним `orderId` попадают в одну партицию и упорядочены там; между топиками общего порядка нет
 2. **Causal ordering через version/sequence** -- каждый event несёт `sequenceNo`; consumer буферизует out-of-order и обрабатывает в нужной последовательности
 3. **State check перед обработкой** -- при получении `ItemsReserved` проверяем, что в локальной read model Order уже существует; если нет -- откладываем (retry from DLQ)
 4. **Process Manager** -- маленький локальный state machine в каждом сервисе, который знает, какой event ожидается следующим
 
-**Анти-решение:** «просто ретраим» -- работает, но при массовом out-of-order создаёт хаос в DLQ. Лучше сразу спроектировать partitioning правильно.
+**Анти-решение:** «просто ретраим» -- работает, но при массовом out-of-order создаёт хаос в DLQ. Ключ партиции полезен в одном топике; между разными топиками нужны версия события и проверка состояния.
 
 ## Q36. Как тестировать Saga?
 
@@ -1082,7 +903,7 @@ void shouldTransitionToCompensatingWhenPaymentFails() {
     CreateOrderSagaState state = SagaFixture.atStep(PAYMENT_CHARGED);
     orchestrator.onPaymentReply(new PaymentReply(state.sagaId(), false));
     assertEquals(COMPENSATING, state.getStatus());
-    verify(kafka).send(eq("inventory.commands"), any(ReleaseInventoryCommand.class));
+    verify(outboxRepository).save(argThat(message -> message.isReleaseInventory()));
 }
 ```
 
@@ -1117,12 +938,12 @@ fixture.givenAggregate(orderId).published(new OrderCreatedEvent(...))
 
 **Логи:**
 - Каждый переход состояния с `sagaId`, `step`, `reason`
-- Все компенсации логируются с WARN
+- Компенсации логируются с уровнем по причине и критичности
 - Structured logs для поиска по `sagaId`
 
 **Алерты:**
-- Rate компенсаций выше нормы (индикатор проблемы в payment-service)
-- Stuck saga > 5 мин
+- Rate компенсаций выше собственной базовой линии (причину проверяют по шагам)
+- Возраст саги выше порога для конкретного шага
 - Saga duration p99 > threshold
 - Ratio `compensated / started` выше X%
 
@@ -1133,62 +954,17 @@ fixture.givenAggregate(orderId).published(new OrderCreatedEvent(...))
 
 ## Q38. Как трассировать Saga через distributed tracing?
 
-Суть в том, чтобы у всей цепочки был один сквозной идентификатор: каждая Saga получает `sagaId`, совпадающий с `correlationId`/`traceId`, и он пробрасывается во все команды и события через заголовки сообщений. Тогда трассировщик сошьёт разрозненные spans разных сервисов в один flow.
+`sagaId` — устойчивый бизнес-идентификатор процесса; `traceId` относится к трассе выполнения и не обязан совпадать с ним. Передавайте `sagaId` в командах, событиях и структурированных логах всех участников. Trace context (`traceparent`) передавайте отдельно через заголовки сообщений средствами инструментации OpenTelemetry или Micrometer Tracing.
 
-```java
-// Создание Saga
-String traceId = UUID.randomUUID().toString();
-MDC.put("sagaId", traceId);
-MDC.put("traceId", traceId);
-kafka.send("order.commands",
-    new CreateOrderCommand(sagaId, ...) {
-        Headers headers = new RecordHeaders()
-            .add("sagaId", sagaId.toString().getBytes())
-            .add("traceparent", currentSpan.context().toString().getBytes());
-    }
-);
-```
-
-**Инструменты:**
-- **OpenTelemetry** + Jaeger/Tempo/Zipkin -- автоматическая трассировка HTTP и Kafka spans
-- **Spring Cloud Sleuth** / **Micrometer Tracing** -- интеграция с Kafka headers
-- **Correlation ID** в логах + Kibana/Loki для поиска по всем сервисам
-
-В UI распределённой трассировки видно полный flow: `orchestrator → order-svc → inventory-svc → payment-svc → orchestrator`, время каждого шага, ошибки. Критично для отладки production-инцидентов.
+Долгая Saga может пережить несколько HTTP-запросов, очередей и дней ожидания. Поэтому один trace не всегда охватит весь процесс: отдельные трассы связывают по `sagaId` или span links. В UI трассировки видны конкретные обработанные шаги, а журнал состояний остаётся источником полного жизненного цикла Saga.
 
 ## Q39. (!) Как реализовать timeout и circuit breaker в Saga?
 
-**Timeout на шаг:** оркестратор при отправке команды планирует `timer event` через N секунд. Если reply не пришёл -- считаем шаг failed и запускаем компенсацию или retry.
+При отправке команды оркестратор фиксирует срок ожидания ответа. Если срок истёк, он **не знает**, выполнилась ли операция у участника: мог потеряться только reply. Сначала проверяют фактический результат или повторяют команду с тем же идемпотентным ключом, затем выбирают следующий переход, компенсацию либо ручной разбор.
 
-```java
-// Axon
-@StartSaga
-@SagaEventHandler(associationProperty = "orderId")
-public void on(OrderCreatedEvent event) {
-    commandGateway.send(new ReserveItemsCommand(event.orderId()));
-    // запланировать timeout через 30 секунд
-    String timerId = eventScheduler.schedule(
-        Duration.ofSeconds(30),
-        new ReserveItemsTimeoutEvent(event.orderId())
-    );
-    SagaLifecycle.associateWith("orderId", event.orderId().toString());
-}
+Circuit breaker полезен для синхронного вызова недоступного участника: он ограничивает новые попытки до восстановления. Он не заменяет таймер шага и не доказывает, что уже отправленная команда не выполнилась. Bulkhead отделяет ресурсы взаимодействия с разными участниками, если один медленный вызов способен занять общий пул. Для асинхронной доставки нужны отдельные ограничения очереди и политики повторов.
 
-@SagaEventHandler(associationProperty = "orderId")
-public void on(ReserveItemsTimeoutEvent event) {
-    // считаем, что резерв не получился
-    commandGateway.send(new CancelOrderCommand(event.orderId()));
-}
-```
-
-**Circuit Breaker перед участниками:**
-- Если Payment Service стабильно отвечает ошибками -- `Resilience4j` размыкает цепь, саги сразу идут в compensation без попыток списать
-- После cooldown пробует снова
-- Спасает от каскадных сбоев при деградации одного сервиса
-
-**Bulkhead:** отдельные thread pool'ы для каждого participant, чтобы тормозящий участник не выжрал все threads оркестратора.
-
-Подробнее про circuit breaker -- в [resilience patterns](resilience-patterns-interview.md).
+Подробнее о механизмах — в [resilience patterns](resilience-patterns-interview.md).
 
 ## Q40. Как Saga взаимодействует с CQRS и Event Sourcing?
 
@@ -1209,7 +985,7 @@ graph LR
     ES --> P[Projection / Read Model]
 ```
 
-В `Axon Framework` всё это работает нативно: Saga -- first-class citizen наряду с Aggregate и Projection. Детали -- в [CQRS + Event Sourcing](cqrs-event-sourcing-interview.md).
+В Axon Framework 4 аннотированные Saga поддерживают такое взаимодействие с событиями и командами; в Axon 5 модель API изменилась. Детали -- в [CQRS + Event Sourcing](cqrs-event-sourcing-interview.md).
 
 ## Q41. Как версионировать Saga при изменении бизнес-процесса?
 
@@ -1227,7 +1003,7 @@ public void handle(SagaEvent event, CreateOrderSagaState state) {
 
 2. **Zero-break changes** -- новые шаги добавляются в конец, не ломая существующие перехода; старые compensation действия сохраняются
 3. **Snapshot + migration** -- для long-running Saga делается migration script, переводящий старые instances в новую схему
-4. **Workflow-системы (Temporal, Camunda)** -- имеют встроенный versioning: версия процесса фиксируется в момент старта, новые instance'ы стартуют по новой версии
+4. **Workflow-системы** -- Camunda сохраняет версию определения запущенного процесса; Temporal требует стратегии совместимости replay или закрепления версии worker
 5. **Deprecation period** -- держим две версии параллельно, пока все старые instances не завершатся
 
 **Правило:** никогда не меняем семантику существующих команд/событий задним числом -- всегда новая версия команды (`ReserveItemsCommandV2`).
@@ -1242,13 +1018,13 @@ Long-running Saga -- это Saga, чьё время жизни измеряет�
 2. **Timeouts на шаги + watchdog** -- шаг может ждать несколько дней (подтверждение от пользователя)
 3. **Таймеры и отложенные события** -- `EventScheduler`, `@Scheduled`, Quartz; в workflow-движках (Temporal, Camunda) -- нативно
 4. **Idempotency -- критична** -- за неделю может много чего случиться: restart JVM, redeploy, миграция БД
-5. **Versioning обязателен** -- за время жизни одной Saga выходит 2--3 релиза приложения
+5. **Versioning обязателен** -- за время жизни одной Saga может выйти новая версия приложения
 6. **Humans in the loop** -- пользователь/оператор может влиять на процесс; нужны UI для просмотра state и manual интервенции
 7. **Externalize state -- DB, Redis, Temporal** -- не в памяти приложения
 8. **Observability** -- нужен persistent log всех переходов с timestamps для аудита и анализа
 9. **Compensation для старых шагов** -- компенсация, запускаемая через неделю, должна учитывать, что данные изменились; применяем `reread value`, `commutative updates`
 
-Для таких задач обычно выбирают специализированные решения: **Temporal**, **AWS Step Functions**, **Camunda** -- они закрывают большую часть этих пунктов автоматически (persistence, timers, versioning, UI), и писать всё руками не приходится.
+Для таких задач обычно выбирают специализированные решения: **Temporal**, **AWS Step Functions**, **Camunda** -- они предоставляют устойчивое исполнение и таймеры; совместимость версий и бизнес-идемпотентность всё равно нужно проектировать.
 
 ## Q43. Как объяснить eventual consistency клиенту/пользователю?
 
