@@ -29,9 +29,9 @@ updated: "2026-04-20"
 - [Visualgo: Minimum Spanning Tree](https://visualgo.net/)
 
 ### См. также
-- [`prim-algorithm.md`](prim-algorithm.md) — алгоритм Прима (`Prim`)
-- [`boruvka-algorithm.md`](boruvka-algorithm.md) — алгоритм Борувки (`Borůvka`)
-- [`../graphs/dijkstra.md`](../graphs/dijkstra.md) — алгоритм Дейкстры (`Dijkstra`)
+- [Алгоритм Прима](prim-algorithm.md) — алгоритм Прима (`Prim`)
+- [Алгоритм Борувки](boruvka-algorithm.md) — алгоритм Борувки (`Borůvka`)
+- [Алгоритм Дейкстры](../graphs/dijkstra.md) — алгоритм Дейкстры (`Dijkstra`)
 
 - [Обход бинарного дерева поиска (Binary Search Tree Traversal)](binary-search-tree-traversal.md)
 - [Проверка сбалансированности бинарного дерева (Balanced Binary Tree Check)](balanced-binary-tree-check.md)
