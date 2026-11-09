@@ -26,7 +26,7 @@ updated: "2026-05-05"
 ### Официальная документация
 
 - [Resilience4j Documentation](https://resilience4j.readme.io/docs) -- официальная документация `Resilience4j`
-- [Spring Cloud Circuit Breaker](https://docs.spring.io/spring-cloud-circuitbreaker/reference/html/) -- абстракция Spring Cloud над circuit breaker реализациями
+- [Spring Cloud Circuit Breaker](https://docs.spring.io/spring-cloud-circuitbreaker/reference/index.html) -- абстракция Spring Cloud над circuit breaker реализациями
 - [Resilience4j GitHub](https://github.com/resilience4j/resilience4j) -- исходный код и примеры
 - [Guide to Resilience4j (Baeldung)](https://www.baeldung.com/resilience4j) -- подробное руководство по всем модулям
 - [Resilience4j with Spring Boot (Baeldung)](https://www.baeldung.com/spring-boot-resilience4j) -- интеграция с Spring Boot
@@ -198,7 +198,7 @@ stateDiagram-v2
 **`CLOSED`** (замкнут -- нормальная работа): трафик идёт сквозь предохранитель к сервису.
 - Все запросы проходят к целевому сервису.
 - Результаты (успех/ошибка) записываются в скользящее окно (sliding window).
-- Как только процент ошибок в окне превышает `failureRateThreshold` -- переход в `OPEN`.
+- Когда доля ошибок или медленных вызовов в окне достигает настроенного порога после `minimumNumberOfCalls` -- переход в `OPEN`.
 
 **`OPEN`** (разомкнут -- защита): цепь разорвана, сервис изолирован.
 - Все запросы **немедленно отклоняются** с исключением `CallNotPermittedException` -- реальный вызов не выполняется.
@@ -580,7 +580,7 @@ graph TB
 `Resilience4j` предлагает две реализации `Bulkhead`, и различие у них принципиальное -- в том, **в каком потоке выполняется вызов**.
 
 - **Semaphore Bulkhead** -- просто счётчик (семафор) разрешений. Вызов идёт в потоке вызывающего кода; семафор лишь не пускает больше N параллельных вызовов. Дёшево, без переключения потоков -- но изоляции потоков нет.
-- **Thread Pool Bulkhead** -- выделяет зависимости отдельный пул потоков. Вызов уходит в этот пул, поэтому медленная зависимость "съедает" только свои потоки и не может занять чужие. Цена -- overhead на context switch и возврат только через `CompletableFuture`.
+- **Thread Pool Bulkhead** -- выделяет зависимости отдельный пул потоков. Вызов уходит в этот пул, поэтому медленная зависимость "съедает" только свои потоки и не может занять чужие. Цена -- overhead на переключение потоков и асинхронный результат.
 
 | Характеристика | Semaphore Bulkhead | Thread Pool Bulkhead |
 |---------------|-------------------|---------------------|
@@ -732,11 +732,11 @@ resilience4j:
 
 ## Q19. Что такое Time Limiter и зачем он нужен?
 
-**Time Limiter** -- паттерн, ограничивающий время выполнения операции: если она не завершилась за отведённый срок, вызов прерывается с `TimeoutException`. Смысл -- не дать одной зависшей операции держать поток и ресурсы бесконечно.
+**Time Limiter** ограничивает время ожидания результата `Future` или `CompletionStage`. По истечении срока вызывающий код получает таймаут; отмена `Future` зависит от настройки и не гарантирует прекращения внешней работы. Транспортные таймауты клиента нужны отдельно.
 
 **Зачем он нужен, если есть таймауты HTTP-клиента** -- `Time Limiter` работает на уровне бизнес-операции, а не транспорта:
 - Единая политика таймаутов на уровне операции, а не на каждый HTTP-клиент по отдельности.
-- Работает с любым типом вызова (БД, очередь, расчёт), а не только с HTTP.
+- Применим к Future/CompletionStage для работы с БД, очередью или расчётом, если вызов обёрнут в поддерживаемый асинхронный контракт.
 - Естественно комбинируется с другими паттернами `Resilience4j` и даёт метрики/события.
 
 ```java
@@ -839,18 +839,18 @@ private PaymentResponse paymentFallback(PaymentRequest req, Exception ex) {
 
 **Resilience4j** -- легковесная библиотека отказоустойчивости для Java в функциональном стиле (паттерны навешиваются декораторами, без наследования). Пришла на замену `Netflix Hystrix`, который перешёл в maintenance mode в 2018 году.
 
-Главные преимущества кратко: модульность (берёшь только нужные паттерны), минимум зависимостей (только `Vavr`), нативная интеграция со Spring Boot и Micrometer, поддержка реактивного стека и обоих типов `Bulkhead`. Hystrix же завязан на наследование `HystrixCommand`, тянет тяжёлые `Archaius`/`RxJava 1` и больше не развивается.
+Отдельные модули позволяют подключать нужные паттерны; есть интеграции со Spring Boot, Micrometer и Reactor. В Resilience4j 2.x обязательной зависимости от Vavr нет. Hystrix остаётся в режиме сопровождения и использует другую модель API. Выбор зависит от версии Java и проекта.
 
 | Характеристика | Resilience4j | Netflix Hystrix |
 |---------------|-------------|-----------------|
 | **Статус** | Активно развивается | Maintenance mode с 2018 |
-| **Зависимости** | Только `Vavr` | `Archaius`, `RxJava`, `HystrixCommand` |
+| **Зависимости** | Vavr не обязателен в 2.x | Зависимости и API семейства Hystrix |
 | **Подход** | Функциональный (декораторы) | Наследование (`HystrixCommand`) |
 | **Модульность** | Отдельные модули (бери только нужное) | Монолит |
 | **Spring Boot** | Нативная поддержка (стартер) | Через Spring Cloud Netflix |
 | **Конфигурация** | `application.yml` + Java Config | Archaius properties |
 | **Метрики** | Micrometer (Prometheus, Grafana) | Hystrix Dashboard |
-| **Bulkhead** | Semaphore + Thread Pool | Только Thread Pool |
+| **Изоляция** | Semaphore и Thread Pool bulkhead | Thread Pool и Semaphore isolation |
 | **Reactive** | Поддержка `Reactor`, `RxJava2/3` | Только `RxJava 1` |
 | **Java version** | Java 17+ (v2.x) | Java 8 |
 
@@ -878,11 +878,11 @@ Spring Cloud Netflix Hystrix был удалён из Spring Cloud 2020.x, и `R
 ```groovy
 // build.gradle
 dependencies {
-    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
-    implementation 'io.github.resilience4j:resilience4j-micrometer:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:${resilience4jVersion}'
+    implementation 'io.github.resilience4j:resilience4j-micrometer' // версия из BOM проекта
     // отдельные модули, если без Spring Boot
-    implementation 'io.github.resilience4j:resilience4j-circuitbreaker:2.2.0'
-    implementation 'io.github.resilience4j:resilience4j-retry:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-circuitbreaker:${resilience4jVersion}'
+    implementation 'io.github.resilience4j:resilience4j-retry:${resilience4jVersion}'
 }
 ```
 
@@ -895,7 +895,7 @@ dependencies {
 ```groovy
 // build.gradle (Spring Boot 3)
 dependencies {
-    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:${resilience4jVersion}'
     implementation 'org.springframework.boot:spring-boot-starter-aop' // обязательно для аннотаций
     implementation 'org.springframework.boot:spring-boot-starter-actuator' // для метрик
 }
@@ -956,7 +956,7 @@ GET /actuator/ratelimiters         -- состояния rate limiter
 
 ## Q24. (!) В каком порядке применяются паттерны отказоустойчивости?
 
-Когда на одном методе висит несколько аннотаций, важно, в какой последовательности они оборачивают вызов. В `Resilience4j` порядок аспектов фиксирован (от внешнего слоя к внутреннему):
+Когда на одном методе висит несколько аннотаций, важно, в какой последовательности они оборачивают вызов. В `Resilience4j` порядок аспектов по умолчанию следующий (от внешнего слоя к внутреннему); его можно изменить настройками aspectOrder:
 
 ```
 Retry → CircuitBreaker → RateLimiter → TimeLimiter → Bulkhead → Function
@@ -981,7 +981,7 @@ graph LR
 **Почему такой порядок важен:**
 - `Retry` снаружи `CircuitBreaker` -- повторная попытка может увидеть, что circuit уже открыт, и сразу получить `CallNotPermittedException`
 - `Bulkhead` внутри -- каждая retry-попытка проверяет наличие свободных ресурсов
-- Если нужен другой порядок, используйте программный API с явным декорированием
+- Если нужен другой порядок, используйте программный API с явным декорированием или настройте порядок аспектов
 
 ```java
 // Кастомный порядок через программный API
@@ -1034,7 +1034,7 @@ RetryConfig retryConfig = RetryConfig.custom()
 
 ## Q26. Как комбинировать несколько паттернов с помощью аннотаций Resilience4j?
 
-Несколько аннотаций просто навешиваются на один метод -- они применяются в фиксированном порядке из Q24. Тонкость в едином fallback: в него прилетает исключение от того слоя, который сработал первым, поэтому внутри полезно разветвлять ответ по типу исключения (`CallNotPermittedException` -- circuit открыт, `RequestNotPermitted` -- сработал rate limiter, `BulkheadFullException` -- кончились слоты).
+Несколько аннотаций просто навешиваются на один метод -- они применяются в порядке аспектов из Q24, который можно настроить. Тонкость в едином fallback: в него прилетает исключение от того слоя, который сработал первым, поэтому внутри полезно разветвлять ответ по типу исключения (`CallNotPermittedException` -- circuit открыт, `RequestNotPermitted` -- сработал rate limiter, `BulkheadFullException` -- кончились слоты).
 
 ```java
 @Service
@@ -1095,12 +1095,12 @@ resilience4j:
 
 ## Q27. Что такое Spring Cloud Circuit Breaker?
 
-**Spring Cloud Circuit Breaker** -- это абстракция (единый API) поверх разных реализаций circuit breaker. Аналогия: как `SLF4J` отвязывает код от конкретного логгера, так Spring Cloud CB отвязывает код от конкретной библиотеки -- сменить её можно, не трогая бизнес-логику.
+**Spring Cloud Circuit Breaker** предоставляет единый API для выполнения вызова через выбранную реализацию. Это уменьшает привязку прикладного кода к конкретной библиотеке, но смена реализации всё равно требует проверки конфигурации и поведения.
 
 Поддерживаемые реализации:
 - **Resilience4j** (рекомендуемая)
 - **Spring Retry**
-- **Sentinel** (Alibaba)
+- **Spring Framework Retry** (в актуальной документации Spring Cloud Circuit Breaker)
 
 ```java
 // Spring Cloud Circuit Breaker API
@@ -1143,7 +1143,7 @@ public class CircuitBreakerConfiguration {
 ```
 
 **Когда использовать Spring Cloud CB vs Resilience4j напрямую:**
-- `Spring Cloud CB` -- если нужна возможность смены реализации
+- `Spring Cloud CB` -- если нужен общий API в приложении Spring Cloud
 - `Resilience4j` напрямую -- если нужен полный набор паттернов (`Retry`, `Bulkhead`, `RateLimiter`), которые не входят в абстракцию Spring Cloud CB
 
 ## Q28. Почему Netflix Hystrix считается устаревшим?
@@ -1152,9 +1152,9 @@ public class CircuitBreakerConfiguration {
 
 **Причины перехода:**
 1. **Netflix перешёл на адаптивный подход** -- вместо статических порогов используется adaptive concurrency limits
-2. **Архитектурные ограничения** -- `HystrixCommand` требует наследования, что плохо ложится на функциональный стиль
+2. **Модель API** -- `HystrixCommand` обычно использует наследование; миграция на декораторы и аннотации требует адаптации кода
 3. **Зависимость от Archaius** -- тяжёлая библиотека конфигурации
-4. **Только Thread Pool изоляция** -- нет Semaphore Bulkhead в полном смысле
+4. **Изоляция** -- Hystrix поддерживает и Thread Pool, и Semaphore isolation; их настройки и семантика отличаются от Resilience4j
 5. **RxJava 1** -- устаревшая версия реактивных расширений
 
 **Путь миграции:**
@@ -1173,7 +1173,7 @@ Spring Cloud Netflix Hystrix был **удалён** из Spring Cloud начи�
 
 ```groovy
 dependencies {
-    implementation 'io.github.resilience4j:resilience4j-micrometer:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-micrometer' // версия из BOM проекта
     implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 ```
@@ -1182,27 +1182,27 @@ dependencies {
 
 | Метрика | Описание |
 |---------|----------|
-| `resilience4j_circuitbreaker_state` | Текущее состояние (0=CLOSED, 1=OPEN, 2=HALF_OPEN) |
+| `resilience4j_circuitbreaker_state` | Отдельная серия с тегом `state`; 1 — это состояние активно, 0 — нет |
 | `resilience4j_circuitbreaker_calls_seconds_count` | Количество вызовов |
 | `resilience4j_circuitbreaker_calls_seconds_sum` | Суммарное время вызовов |
 | `resilience4j_circuitbreaker_failure_rate` | Текущий процент ошибок |
-| `resilience4j_circuitbreaker_not_permitted_calls_total` | Отклонённые вызовы (CB открыт) |
+| `resilience4j_circuitbreaker_calls_total{kind="not_permitted"}` | Отклонённые вызовы в примере экспорта Prometheus |
 
 ### Ключевые метрики Retry, Bulkhead, Rate Limiter:
 
 | Метрика | Описание |
 |---------|----------|
-| `resilience4j_retry_calls_total` | Вызовы с указанием kind (successful_without_retry, successful_with_retry, failed_with_retry, failed_without_retry) |
+| `resilience4j_retry_calls` | Вызовы по тегу `kind`; имя с суффиксом зависит от типа метрики и экспорта |
 | `resilience4j_bulkhead_available_concurrent_calls` | Свободные слоты в Bulkhead |
 | `resilience4j_ratelimiter_available_permissions` | Доступные разрешения Rate Limiter |
 
 ### Пример Grafana dashboard:
 
 Настройте алерты на:
-- `resilience4j_circuitbreaker_state == 1` (OPEN) -- circuit breaker открылся
+- `resilience4j_circuitbreaker_state{state="open"} == 1` -- circuit breaker открыт
 - `resilience4j_circuitbreaker_failure_rate > 30` -- растёт процент ошибок
 - `resilience4j_bulkhead_available_concurrent_calls == 0` -- bulkhead заполнен
-- `resilience4j_retry_calls_total{kind="failed_with_retry"}` растёт -- ретраи не помогают
+- серия retry с тегом `kind="failed.with.retry"` растёт -- ретраи не помогают
 
 ### Spring Boot Actuator endpoints:
 
@@ -1406,21 +1406,8 @@ Chaos engineering верифицирует, что ваши `Circuit Breaker`, `
 ### Решения:
 
 **1. Idempotency Key:**
-```java
-@PostMapping("/orders")
-public ResponseEntity<Order> createOrder(
-        @RequestHeader("Idempotency-Key") String idempotencyKey,
-        @RequestBody OrderRequest request) {
 
-    // Проверяем, не обработан ли уже этот ключ
-    return orderRepository.findByIdempotencyKey(idempotencyKey)
-        .map(ResponseEntity::ok)
-        .orElseGet(() -> {
-            Order order = orderService.create(request, idempotencyKey);
-            return ResponseEntity.status(HttpStatus.CREATED).body(order);
-        });
-}
-```
+Сервер атомарно резервирует ключ операции и сверяет его с параметрами запроса. Результат первой обработки сохраняют вместе с ключом; повтор получает тот же результат или статус ещё выполняющейся операции. Ограничение уникальности в хранилище и транзакция закрывают гонку между параллельными запросами. Простая пара «найти ключ, затем создать заказ» без атомарности этого не гарантирует.
 
 **2. Используйте идемпотентные HTTP-методы** где возможно:
 - `GET`, `PUT`, `DELETE` -- идемпотентны по спецификации
@@ -1493,31 +1480,7 @@ startupProbe:
   periodSeconds: 10
 ```
 
-**Кастомный HealthIndicator:**
-
-```java
-@Component
-public class DatabaseHealthIndicator implements HealthIndicator {
-
-    private final DataSource dataSource;
-
-    @Override
-    public Health health() {
-        try (Connection conn = dataSource.getConnection()) {
-            conn.isValid(1);  // 1 second timeout
-            return Health.up()
-                .withDetail("database", "PostgreSQL")
-                .withDetail("response", "ok")
-                .build();
-        } catch (SQLException e) {
-            return Health.down()
-                .withException(e)
-                .withDetail("database", "unreachable")
-                .build();
-        }
-    }
-}
-```
+**Кастомная проверка:** дополнительный `HealthIndicator` добавляют в нужную группу только после решения, какой отказ должен исключать экземпляр из трафика. Проверку общей БД нельзя автоматически включать в liveness или readiness всех pod.
 
 **Разница liveness vs readiness:**
 
@@ -1533,40 +1496,35 @@ stateDiagram-v2
     note right of Restarting: Kubernetes\nперезапускает контейнер
 ```
 
-**Правило:** liveness проверяет только состояние самого процесса (нет deadlock, нет OOM), readiness — зависимости (БД, кэш, downstream-сервисы).
+**Правило:** liveness не должна падать из-за общей внешней зависимости. Readiness показывает способность экземпляра обслуживать трафик; включать в неё БД и downstream нужно осознанно. Если общая зависимость недоступна всем pod, их одновременное исключение может ухудшить ситуацию.
 
 ## Q35. Что такое graceful shutdown и как его реализовать в Spring Boot?
 
 **Graceful shutdown** -- завершение приложения, при котором оно сначала дорабатывает текущие запросы и аккуратно закрывает соединения, а не обрывается на полуслове. Особенно важно при деплое и масштабировании, когда поды перезапускаются постоянно.
 
-**Проблема без graceful shutdown** -- гонка между остановкой пода и обновлением балансировщика:
-```
-SIGTERM →  Kubernetes отправляет сигнал завершения
-           Балансировщик ещё маршрутизирует трафик на этот pod
-           Pod убивается мгновенно → HTTP 502 у клиентов
-```
+**Проблема при остановке** -- обновление маршрутов и завершение процесса происходят не мгновенно. Без достаточного времени на обработку текущих запросов часть клиентов может получить ошибку.
 
-**Spring Boot 2.3+ — встроенная поддержка:**
+**Spring Boot — встроенная поддержка:** В актуальной версии graceful shutdown включён по умолчанию для поддерживаемых встроенных серверов. В старых версиях проверьте необходимость `server.shutdown: graceful`.
 
 ```yaml
 # application.yml
 server:
-  shutdown: graceful  # ожидает завершения обработки текущих запросов
+  shutdown: graceful  # явная настройка для версий, где она требуется
 
 spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s  # максимальное время ожидания
 ```
 
-**Kubernetes + preStop hook для задержки:**
+**Kubernetes:** Сначала настройте достаточный `terminationGracePeriodSeconds`. `preStop` с задержкой нужен только после проверки конкретного маршрута трафика и задержки обновления endpoints; он расходует общий grace period.
 
 ```yaml
 # deployment.yaml
 lifecycle:
   preStop:
     exec:
-      command: ["sh", "-c", "sleep 5"]  # ждём 5с пока LB обновит endpoints
-terminationGracePeriodSeconds: 60       # суммарное время на завершение
+      command: ["sh", "-c", "sleep 5"]  # пример для измеренной задержки обновления маршрута
+terminationGracePeriodSeconds: 60       # включает время preStop и завершения приложения
 ```
 
 **Последовательность graceful shutdown в Spring Boot:**
@@ -1577,38 +1535,22 @@ sequenceDiagram
     participant App as Spring Boot App
     participant LB as Load Balancer
 
-    K8s->>App: SIGTERM
-    K8s->>LB: Remove pod from endpoints
-    App->>App: preStop hook (sleep 5s)
-    App->>App: Reject new requests (readiness=DOWN)
+    K8s->>LB: Pod terminating; обновление маршрута
+    K8s->>App: preStop hook, если настроен
+    K8s->>App: SIGTERM после preStop
+    App->>App: Reject new requests
     App->>App: Process in-flight requests (max 30s)
     App->>App: Close DB connections, consumers
     App->>K8s: Process exited (code 0)
 ```
 
-**Кастомные shutdown hooks для Kafka-потребителей:**
-
-```java
-@Component
-public class KafkaConsumerShutdown {
-
-    private final KafkaListenerEndpointRegistry registry;
-
-    @EventListener(ContextClosingEvent.class)
-    public void onShutdown() {
-        // Останавливаем Kafka-потребителей до закрытия Spring context
-        registry.getListenerContainers()
-            .forEach(container -> container.stop(() ->
-                log.info("Kafka consumer stopped: {}", container.getListenerId())));
-    }
-}
-```
+Kafka-потребители и другие фоновые задачи требуют отдельной проверки времени остановки. Если их жизненный цикл уже управляется Spring-контейнером, дополнительный обработчик закрытия может дублировать штатную остановку.
 
 ## Q36. (!) Что такое Hedged Request и когда его применять?
 
-**Hedged Request** (застрахованный запрос) -- паттерн борьбы с хвостовыми задержками (tail latency). Идея: не ждать медленный инстанс до конца, а подстраховаться -- если ответа нет за пороговое время, отправить такой же запрос на другой инстанс и взять тот ответ, что придёт первым. Второй запрос отменяется.
+**Hedged Request** (застрахованный запрос) -- паттерн борьбы с хвостовыми задержками (tail latency). Идея: не ждать медленный инстанс до конца, а подстраховаться -- если ответа нет за пороговое время, отправить такой же запрос на другой инстанс и взять тот ответ, что придёт первым. После выбора подходящего ответа клиент прекращает ожидание остальных попыток; отмена обработки на сервере не гарантирована.
 
-**Проблема, которую он решает** -- редкие, но болезненные "хвосты": p99-латентность в 5-10 раз превышает медиану из-за GC-пауз, перегрузки отдельных инстансов, сетевых флуктуаций. Большинству запросов быстро, но невезучим -- очень медленно, и именно они портят SLA. Hedged request "страхует" клиента от попадания на конкретный затормозивший инстанс.
+**Проблема, которую он решает** -- редкие, но болезненные "хвосты": p99-латентность заметно выше медианы из-за GC-пауз, перегрузки отдельных инстансов, сетевых флуктуаций. Большинству запросов быстро, но невезучим -- очень медленно, и именно они портят SLA. Hedged request "страхует" клиента от попадания на конкретный затормозивший инстанс.
 
 ```mermaid
 sequenceDiagram
@@ -1617,42 +1559,13 @@ sequenceDiagram
     participant S2 as Service Instance 2
 
     Client->>S1: Request
-    Note over Client,S1: Ждём 50ms...
+    Note over Client,S1: Ждём выбранный hedge delay...
     Client->>S2: Hedged Request (если S1 не ответил)
-    S2-->>Client: Response (200ms) ← победитель
+    S2-->>Client: Подходящий ответ ← победитель
     Client->>S1: Cancel (если S1 ещё обрабатывает)
 ```
 
-**Реализация с `CompletableFuture` и `ExecutorService`:**
-
-```java
-@Service
-public class HedgedProductService {
-
-    private final ProductServiceClient client;
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
-
-    public CompletableFuture<Product> getProduct(Long id) {
-        CompletableFuture<Product> primary = CompletableFuture.supplyAsync(
-            () -> client.getProduct(id));
-
-        // Через 50мс (hedge delay) запускаем второй запрос
-        CompletableFuture<Product> hedged = new CompletableFuture<>();
-        ScheduledFuture<?> hedgeTask = scheduler.schedule(
-            () -> CompletableFuture.supplyAsync(() -> client.getProduct(id))
-                .whenComplete((r, e) -> {
-                    if (e == null) hedged.complete(r);
-                    else hedged.completeExceptionally(e);
-                }),
-            50, TimeUnit.MILLISECONDS);
-
-        // Берём первый успешный ответ
-        return CompletableFuture.anyOf(primary, hedged)
-            .thenApply(r -> (Product) r)
-            .whenComplete((r, e) -> hedgeTask.cancel(true));
-    }
-}
-```
+**Реализация:** клиент запускает вторую попытку после выбранного порога на независимом инстансе, если первая ещё не дала подходящий ответ. Завершение одной попытки с ошибкой не должно автоматически проиграть второй успешной. После выбора ответа клиент отменяет ненужное ожидание и учитывает, что удалённая работа могла продолжиться. Для этого нужны ограничение параллелизма и бюджет на дополнительные запросы.
 
 **Когда применять:**
 
@@ -1664,13 +1577,13 @@ public class HedgedProductService {
 | Нагрузка близка к пределу | — | Нет (удвоит нагрузку) |
 | Нужна предсказуемая задержка | Да | — |
 
-**Google SRE рекомендует:** hedge delay = p95 нормальной латентности. Дополнительная нагрузка обычно < 5% при hedge delay ≥ p95.
+Порог запуска второй попытки выбирают по распределению задержек и допустимой дополнительной нагрузке. Отмена проигравшего запроса не гарантирует, что сервер прекратил обработку.
 
 ---
 
 ## Q37. Как настроить TimeLimiter в Resilience4j и чем он отличается от таймаута WebClient?
 
-**`TimeLimiter`** в `Resilience4j` оборачивает вызов в `Future` и через `ScheduledExecutorService` отменяет его, если тот не уложился в `timeoutDuration`, бросая `TimeoutException`.
+**`TimeLimiter`** ограничивает ожидание `Future` или `CompletionStage` по `timeoutDuration`. Отмена выполняющейся задачи зависит от типа Future и настройки; удалённая операция не обязана остановиться.
 
 Кажется, что таймаут `WebClient` делает то же самое, но это разные уровни: `WebClient` ограничивает HTTP-транспорт, а `TimeLimiter` -- логическую операцию целиком, давая при этом метрики, события и fallback.
 
@@ -1684,7 +1597,7 @@ public class HedgedProductService {
 | **События** | `onSuccess`, `onError`, `onTimeout` | Нет |
 | **Комбинирование** | Легко с CB / Retry | Отдельный pipe |
 
-`WebClient` таймаут срабатывает на уровне TCP/HTTP и не прерывает серверную обработку. `TimeLimiter` прерывает `Future` на клиенте, но если вызов блокирующий — поток всё равно занят до ответа сервера. Поэтому для блокирующих HTTP-клиентов (`RestTemplate`, `Feign`) правильнее использовать оба: таймаут клиента + `TimeLimiter` как дополнительный safety net.
+Таймаут WebClient ограничивает отдельные этапы HTTP-вызова в зависимости от конфигурации. TimeLimiter ограничивает ожидание результата операции. Для блокирующего клиента задавайте его собственные таймауты; дополнительный TimeLimiter применяйте только при подходящей асинхронной обёртке. Ни один клиентский таймаут сам по себе не гарантирует остановку серверной обработки.
 
 ### Конфигурация:
 
@@ -1715,7 +1628,7 @@ resilience4j:
 
 ## Q38. ThreadPoolBulkhead vs SemaphoreBulkhead — когда что выбрать на практике?
 
-Если Q15 объяснял механику различий, то здесь -- практический критерий выбора. Главный вопрос один: **блокирующий вызов или нет**. Блокирующий код (JDBC, `RestTemplate`, `Feign`) держит поток занятым, поэтому ему нужна изоляция отдельным пулом -- `ThreadPoolBulkhead`. Неблокирующий реактивный код потоки почти не держит, и заводить для него отдельный пул лишь добавит накладных расходов -- хватит `SemaphoreBulkhead`.
+Если Q15 объяснял механику различий, то здесь -- практический критерий выбора. Выбор зависит от модели выполнения и требуемой изоляции. `SemaphoreBulkhead` ограничивает конкурентность без смены потока и подходит многим синхронным и реактивным вызовам. `ThreadPoolBulkhead` выделяет пул и очередь, что полезно для изоляции блокирующего вызова, но добавляет переключение потоков и требует настройки ёмкости.
 
 ### Используйте SemaphoreBulkhead когда:
 - Приложение реактивное (WebFlux, Reactor) — переключение потоков дорого
@@ -1754,20 +1667,20 @@ resilience4j:
         writableStackTraceEnabled: true
 ```
 
-**Правило:** в `Spring MVC` (Tomcat thread pool) + блокирующие вызовы → `ThreadPoolBulkhead`. В `Spring WebFlux` (Netty event loop) + реактивные вызовы → `SemaphoreBulkhead`.
+**Правило:** для реактивного пути обычно выбирают семафор без лишнего переключения потоков; для блокирующего пути оценивают, нужна ли отдельная очередь и пул. Сам по себе синхронный вызов не делает ThreadPoolBulkhead обязательным.
 
 ---
 
 ## Q39. Какие стратегии Fallback существуют и как выбрать подходящую?
 
-**Fallback** -- реакция системы на недоступность зависимости. Универсальной стратегии нет: выбор диктуется тем, насколько критичны данные и допустима ли их подмена. Для некритичного контента сойдёт пустой ответ, для редко меняющихся данных -- кэш, а для мутаций (заказ, оплата) подменять ответ нельзя -- их откладывают в очередь на повтор.
+**Fallback** -- реакция системы на недоступность зависимости. Универсальной стратегии нет: выбор диктуется тем, насколько критичны данные и допустима ли их подмена. Для некритичного контента может подойти пустой ответ, для редко меняющихся данных -- кэш. Для мутаций нельзя сообщать об успехе без подтверждения результата; отложенная обработка допустима только как отдельный явно объявленный контракт с устойчивой записью и идемпотентностью.
 
 | Стратегия | Описание | Когда применять |
 |---|---|---|
 | **Статический ответ** | Возврат заранее заданного значения | Некритичные данные (баннеры, рекомендации) |
 | **Кэшированный ответ** | Последнее известное значение из кэша | Данные меняются редко (каталог, конфиг) |
-| **Деградация функциональности** | Упрощённая версия функции без зависимости | Поиск без фильтров, цена без скидок |
-| **Очередь на повтор** | Запрос помещается в очередь (Kafka) | Мутации (заказ, оплата) |
+| **Деградация функциональности** | Упрощённая версия функции без зависимости | Поиск по ограниченному набору полей, если это допустимо пользователю |
+| **Принятие к отложенной обработке** | Устойчивая запись команды и отдельный статус ожидания | Мутации, для которых продукт явно допускает асинхронный результат |
 | **Ошибка с подсказкой** | Понятное сообщение об ошибке | Когда деградация невозможна |
 
 ### Примеры реализации:
@@ -1808,9 +1721,9 @@ private List<Product> degradedSearch(SearchQuery query, Exception e) {
 
 ## Q40. Что такое Load Shedding и как реализовать приоритизацию запросов?
 
-**Load Shedding** (сброс нагрузки) -- намеренный отказ части запросов при перегрузке, чтобы остальные обслужить нормально. Логика "лучше отказать 20% сразу, чем уронить 100% медленно": приняв запросов больше, чем способен переварить, сервис деградирует для всех -- честнее отсечь лишнее на входе.
+**Load Shedding** (сброс нагрузки) -- намеренный отказ части запросов при перегрузке, чтобы остальные обслужить нормально. Логика: при перегрузке часть запросов лучше отклонить быстро, сохранив ресурс для остальных: приняв запросов больше, чем способен переварить, сервис деградирует для всех -- честнее отсечь лишнее на входе.
 
-**Когда применять:** когда `Rate Limiter` и `Bulkhead` уже не справляются, или нужна **приоритизация** -- сбрасывать в первую очередь дешёвое (статистику, отчёты), сохраняя критичное (платежи, заказы).
+**Когда применять:** когда ёмкость сервиса ограничена и нужна **приоритизация** -- сбрасывать в первую очередь дешёвое (статистику, отчёты), сохраняя критичное (платежи, заказы).
 
 ### Стратегии приоритизации:
 
@@ -1820,53 +1733,9 @@ Priority 2 (важные):     /api/products/**, /api/users/**
 Priority 3 (фоновые):    /api/reports/**, /api/analytics/**
 ```
 
-### Реализация через фильтр:
+### Реализация допуска запросов
 
-```java
-@Component
-@Order(1)
-public class LoadSheddingFilter implements Filter {
-
-    private final AtomicInteger activeRequests = new AtomicInteger(0);
-    private static final int MAX_REQUESTS = 100;
-    
-    // Критичные пути не сбрасываем
-    private static final Set<String> CRITICAL_PATHS = Set.of(
-        "/api/payments", "/api/orders"
-    );
-
-    @Override
-    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
-            throws IOException, ServletException {
-        HttpServletRequest request = (HttpServletRequest) req;
-        String path = request.getRequestURI();
-        
-        boolean isCritical = CRITICAL_PATHS.stream().anyMatch(path::startsWith);
-        int current = activeRequests.get();
-        
-        // Некритичные сбрасываем при 80% нагрузки
-        if (!isCritical && current > MAX_REQUESTS * 0.8) {
-            ((HttpServletResponse) res).setStatus(503);
-            ((HttpServletResponse) res).getWriter()
-                .write("{\"error\":\"Service overloaded, retry later\"}");
-            return;
-        }
-        
-        // Критичные сбрасываем только при 100%
-        if (current >= MAX_REQUESTS) {
-            ((HttpServletResponse) res).setStatus(503);
-            return;
-        }
-        
-        activeRequests.incrementAndGet();
-        try {
-            chain.doFilter(req, res);
-        } finally {
-            activeRequests.decrementAndGet();
-        }
-    }
-}
-```
+На входе нужен атомарный учёт занятых слотов и отдельные бюджеты для приоритетов. Решение о допуске должно приниматься до начала дорогой работы, а слот освобождаться после завершения запроса даже при исключении. При перегрузке низкоприоритетный трафик отклоняют раньше; критичный тоже отклоняют, если исчерпан его собственный бюджет. Порог и долю резервирования выбирают по нагрузочным измерениям, а не по универсальным «80%».
 
 ### Интеграция с Resilience4j Bulkhead:
 
@@ -1882,13 +1751,13 @@ resilience4j:
         maxWaitDuration: 0ms  # Немедленный отказ
 ```
 
-**Важно:** Load Shedding должен возвращать `503 Service Unavailable` с заголовком `Retry-After`, чтобы клиенты знали, когда повторить запрос.
+**Важно:** для временной перегрузки HTTP 503 часто подходит; `Retry-After` указывают, когда можно обоснованно сообщить время повторной попытки. Порог отказа определяют по измеренной ёмкости, а критичные запросы тоже могут быть отклонены при исчерпании ресурса.
 
 ---
 
 ## Q41. Как интегрировать Circuit Breaker с Spring Boot Actuator Health?
 
-При наличии `resilience4j-spring-boot3` и включённом `registerHealthIndicator: true` библиотека сама регистрирует `HealthIndicator` для каждого `Circuit Breaker` -- его состояние попадает в `/actuator/health`. Это позволяет видеть здоровье предохранителей рядом со здоровьем самого приложения, но требует осторожности: открытый CB не всегда повод считать приложение нездоровым (см. практику ниже).
+При наличии `resilience4j-spring-boot3` и включённом `registerHealthIndicator: true` состояние Circuit Breaker можно вывести в `/actuator/health` через библиотечный индикатор. Это позволяет видеть здоровье предохранителей рядом со здоровьем самого приложения, но требует осторожности: открытый CB не всегда повод считать приложение нездоровым (см. практику ниже).
 
 ### Конфигурация:
 
@@ -1959,7 +1828,7 @@ public class CircuitBreakerHealthAggregator implements HealthIndicator {
 }
 ```
 
-**Практика:** выносить CB-health в отдельную группу, не влияющую на liveness probe:
+**Практика:** отслеживать открытые CB отдельно от liveness. Добавлять их в readiness только тогда, когда экземпляр действительно не может обслуживать запросы; общий сбой downstream может сделать неготовыми все pod:
 
 ```yaml
 management:
@@ -1969,7 +1838,7 @@ management:
         liveness:
           include: livenessState
         readiness:
-          include: readinessState,db,circuitBreakers
+          include: readinessState  # внешние зависимости добавляют после оценки последствий
 ```
 
 ---
@@ -1980,12 +1849,15 @@ management:
 
 ### Chaos Monkey for Spring Boot
 
+Пример ниже относится к версии 4.0.0; перед применением сверьте совместимость с Spring Boot и доступ к Actuator.
+
 Библиотека, портированная на Spring Boot из подхода Netflix. Внедряет сбои (задержки, исключения) через AOP прямо в Spring-бины.
 
 ```xml
 <dependency>
     <groupId>de.codecentric</groupId>
     <artifactId>chaos-monkey-spring-boot</artifactId>
+    <version>4.0.0</version> <!-- сверить совместимость с версией Spring Boot -->
 </dependency>
 ```
 
@@ -1997,7 +1869,7 @@ chaos:
       service: true        # Атаковать @Service-бины
       rest-controller: true
     assaults:
-      level: 5             # 1-10: частота атак
+      level: 5             # в версии 4.x — в среднем 1 из 5 вызовов, если deterministic=false
       latency-active: true
       latency-range-start: 1000  # ms
       latency-range-end: 3000
@@ -2043,49 +1915,26 @@ curl -X POST http://localhost:8080/actuator/chaosmonkey/assaults \
 
 **Feature flags** дают деградацию, которой управляют **вручную и заранее**: ненадёжную или дорогую функциональность можно отключить на лету, без передеплоя, ещё до того как зависимость окончательно упала. Это дополняет `Circuit Breaker`, который реагирует уже постфактум -- только после серии ошибок.
 
-### Интеграция с Unleash / Spring @ConditionalOnProperty:
+### Проверка динамического флага в обработчике
 
 ```java
 @Service
 @RequiredArgsConstructor
 public class RecommendationService {
-
-    private final UnleashService unleash;
-    private final RecommendationClient client;
-    private final ProductRepository fallbackRepo;
+    private final FeatureFlagService flags;
+    private final PersonalizedRecommendationClient client;
+    private final ProductRepository repository;
 
     public List<Product> getRecommendations(Long userId) {
-        // Feature flag — если флаг выключен, используем деградированную логику
-        if (!unleash.isEnabled("recommendations.enabled")) {
-            return fallbackRepo.findTopSellers(10);  // Просто топ продаж
+        if (!flags.isEnabled("recommendations.enabled")) {
+            return repository.findTopSellers(10);
         }
-        
-        try {
-            return client.getPersonalized(userId);
-        } catch (Exception e) {
-            // Дополнительный fallback если сервис упал
-            return fallbackRepo.findTopSellers(10);
-        }
+        return client.getPersonalized(userId);
     }
 }
 ```
 
-### Комбинирование с Circuit Breaker:
-
-```java
-@CircuitBreaker(name = "mlService", fallbackMethod = "degradedRecommendations")
-public List<Product> getPersonalizedRecommendations(Long userId) {
-    if (!featureFlags.isEnabled("ml.recommendations")) {
-        throw new FeatureDisabledException("ML recommendations are disabled");
-    }
-    return mlClient.predict(userId);
-}
-
-private List<Product> degradedRecommendations(Long userId, Exception e) {
-    // Кэшированный топ продаж как деградированная версия
-    return cache.getOrLoad("top-sellers", () -> productRepo.findTopSellers(20));
-}
-```
+Для автоматической реакции на ошибки клиента применяют Circuit Breaker и осмысленный fallback отдельно. Если аннотация стоит на методе того же Spring-бина, внутренний вызов через `this` обойдёт AOP-прокси; защищаемый вызов размещают в отдельном бине либо используют программный API. Сам флаг проверяют при каждом вызове; возможность переключения без рестарта зависит от реализации хранилища флагов.
 
 ### Стратегии деградации в порядке приоритета:
 
@@ -2097,7 +1946,7 @@ private List<Product> degradedRecommendations(Long userId, Exception e) {
 5. Явная ошибка с понятным сообщением пользователю
 ```
 
-**Преимущество feature flags перед Circuit Breaker:** флаг можно выключить **превентивно** — до того как зависимость упала, например во время планового обслуживания или при повышенной нагрузке в пиковое время.
+`@ConditionalOnProperty` выбирает бины при создании контекста и сам по себе не переключает работающий сервис на лету. Для динамической деградации проверяйте состояние флага при вызове. Флаг можно выключить **превентивно** — до того как зависимость упала, например во время планового обслуживания или при повышенной нагрузке в пиковое время.
 
 ---
 
