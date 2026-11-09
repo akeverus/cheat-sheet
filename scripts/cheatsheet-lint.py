@@ -118,19 +118,17 @@ def check_file(path: Path, root: Path, md_index: dict[str, Path], rules: dict[st
         if RE_REAL_BACKTICK_LINK.search(line):
             rules["backtick-link"].add(path, i, line)
 
-        # r-md-link-internal: [text](file.md) с относительным путём
+        # r-md-link-internal: битая или неотносительная ссылка на .md внутри каталога
         for m in RE_MD_LINK.finditer(line):
             url = m.group(2)
-            if url.startswith(("http://", "https://", "/")):
+            if url.startswith(("http://", "https://")):
                 continue
-            # Проверим — ведёт ли в cheatsheets/
             try:
                 target = (path.parent / url).resolve()
-                if target.is_relative_to(root.resolve()) and target.exists():
-                    rules["md-link-internal"].add(path, i, line)
-                    break
-            except (ValueError, AttributeError):
-                pass
+                if not target.is_relative_to(root.resolve()) or not target.is_file():
+                    rules["md-link-internal"].add(path, i, f"{url} — {line}")
+            except (OSError, RuntimeError):
+                rules["md-link-internal"].add(path, i, f"{url} — путь нельзя разрешить")
 
         # r-wikilink-broken: [[X]] без существующего file.md
         # Проверяем оригинальную line (wikilinks не бывают внутри inline-кода)
@@ -238,7 +236,7 @@ def main():
         "heading-bold": Rule("heading-bold", "Жирный в заголовках"),
         "site-section": Rule("site-section", "Секция названа по сайту (Baeldung/Oracle/...)"),
         "backtick-link": Rule("backtick-link", "Backticks в тексте ссылки [`name`](...)"),
-        "md-link-internal": Rule("md-link-internal", "[text](file.md) вместо [[wikilink]]"),
+        "md-link-internal": Rule("md-link-internal", "Битая или неотносительная внутренняя .md-ссылка"),
         "wikilink-broken": Rule("wikilink-broken", "[[X]] указывает на несуществующий файл"),
         "bold-parens": Rule("bold-parens", "Жирный внутри скобок (**X**)"),
         "quotes-ru": Rule("quotes-ru", "Прямые \"кавычки\" в русской прозе"),
