@@ -31,8 +31,8 @@ updated: "2026-04-20"
 - [Visualgo: Quick Sort](https://visualgo.net/)
 
 ### См. также
-- [`merge-sort.md`](merge-sort.md) — сортировка слиянием
-- [`bubble-sort.md`](bubble-sort.md) — пузырьковая сортировка
+- [Сортировка слиянием](merge-sort.md) — сортировка слиянием
+- [Пузырьковая сортировка](bubble-sort.md) — пузырьковая сортировка
 
 - [Сортировка бусинами (Bead Sort) / гравитационная сортировка (Gravity Sort)](bead-sort.md)
 - [Сортировка выбором (Selection Sort)](selection-sort.md)

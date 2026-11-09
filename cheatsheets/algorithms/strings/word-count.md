@@ -26,8 +26,8 @@ updated: "2026-04-20"
 - [Pattern (Java Platform SE 8)](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html)
 
 ### См. также
-- [`first-non-repeating-character.md`](first-non-repeating-character.md) — поиск первого неповторяющегося символа
-- [`regex-token-replacement.md`](regex-token-replacement.md) — работа с регулярными выражениями
+- [Первый неповторяющийся символ](first-non-repeating-character.md) — поиск первого неповторяющегося символа
+- [Замена фрагментов по регулярному выражению](regex-token-replacement.md) — работа с регулярными выражениями
 
 - [Конвертация римских и арабских чисел (Roman-Arabic Numeral Conversion)](roman-arabic-numeral-conversion.md)
 - [Баланс скобок (Balanced Parentheses)](balanced-parentheses.md)
