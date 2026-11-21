@@ -14,8 +14,6 @@
 | `cheatsheet-add-wikilinks.py` | Дополняет `### См. также` до 5 wikilinks по пересечению тегов frontmatter. | ✓ |
 | `cheatsheet-autofix-all.py` | Единая точка входа: прогоняет все 3 прохода + regenerate-toc по порядку. | ✓ |
 | `healthcheck.sh` | Локальный smoke-test поднятого приложения: liveness/readiness probes + рендеринг страниц + static. Дефолт `http://localhost:8080`. | ✓ |
-| `verify-mcq-json.sh` | Проверяет JSON Schema, межполевые инварианты и парный Markdown через Python jsonschema. `--all` — весь корпус; без аргументов — staged paths. | ✓ |
-| `verify-md-no-mcq.sh` | Гарантирует отсутствие legacy MCQ-конструкций (`> [!mcq]`, эмодзи-маркеров) в `cheatsheets/interview/**.md`. MCQ должны жить только в JSON-сидерах. | ✓ |
 
 ## Запуск
 
@@ -83,21 +81,8 @@ python3 scripts/cheatsheet-lint.py cheatsheets --summary || {
 
 ## MCQ
 
-Стандарт: [mcq-quality-standard](../docs/mcq-quality-standard.md).
-Процесс для любой LLM: [PROMPT_PLAN_INTERVIEW](../PROMPT_PLAN_INTERVIEW.md).
-Переносимый запуск и формат результатов: [workflow](../docs/mcq-quality/workflow.md).
+Редактуру и самопроверку выполняет модель. На вход она получает полный production JSON одной темы, всю парную теорию и замечания Сергея. Результат — полный JSON для прямой замены с сохранением контракта Jackson и схемы приложения.
 
-- `python3 scripts/mcq-workflow.py doctor` — готовность локальных инструментов и evidence.
-- `python3 scripts/mcq-workflow.py next --size 4` — актуальный следующий пакет, без LLM.
-- `python3 scripts/mcq-workflow.py --help` — подготовка пакета, две фазы, регистрация результата, checkpoint.
-- `python3 scripts/mcq-workflow.py sync` — снимок, таблица и точка продолжения из доказательств.
-
-- `python3 -m pip install -r scripts/requirements-mcq.txt` — зависимости.
-- `bash scripts/verify-mcq-json.sh --all` — структурная проверка всего корпуса.
-- `bash scripts/mcq-tools/gates.sh <seed.json>` — предпроверки одной темы с сохранением exit codes.
-- `python3 scripts/mcq-audit.py --output docs/mcq-quality/audit-state.json --checklist-output docs/mcq-quality/file-checklist.md` — инвентарь, хеши и очередь.
-- `python3 -m unittest discover -s scripts/tests -p 'test_mcq*.py' -v` — контрпримеры валидаторов.
-
-Семантическое ревью обязательно отдельно. Мутирующие `mcq-form-balance.py`,
-`rebalance-mcq-rotation.py`, `mcq-tools/edit_*`, `mcq-struct/apply.py` не запускаются
-для диагностики. Исторические измерители в `audit/mcq/` сохранены для воспроизводимости.
+- [Единый промпт](../PROMPT_PLAN_INTERVIEW.md)
+- [Действующий процесс](../docs/mcq-quality/workflow.md)
+- [Стандарт качества](../docs/mcq-quality-standard.md)

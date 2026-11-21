@@ -4,7 +4,7 @@ description: >
   После любых изменений в репозитории — прогоняет верификации, которые
   применимы к изменённым областям, и возвращает отчёт «что зелёное, что
   красное». Знает локальные команды: gradle build/test, jacoco, ArchUnit,
-  MCQ schema validation, graphify rebuild, app boot smoke. Используй
+  проверка контракта MCQ, graphify rebuild, app boot smoke. Используй
   ПЕРЕД заявлением «готово / зафиксил / можно мержить» — не для отдельной
   компиляции, а для комплексной проверки готовности.
 tools: Bash, Read, Glob, Grep
@@ -18,8 +18,8 @@ tools: Bash, Read, Glob, Grep
 
 `git status` + `git diff --stat` → пойми, что менялось:
 - `modules/quiz-domain/`, `quiz-persistence/`, `quiz-app/` → Gradle build/test пайплайн.
-- `modules/quiz-app/src/main/resources/seed/mcq/**/*.json` → MCQ schema validation.
-- `cheatsheets/**` → frontmatter consistency + отсутствие MCQ-callouts (pre-commit).
+- `modules/quiz-app/src/main/resources/seed/mcq/**/*.json` → полная перегенерация темы по workflow с авторской самопроверкой.
+- `cheatsheets/**` → frontmatter consistency и отсутствие MCQ-callouts.
 - `scripts/**` → синтаксис shell/python.
 - `.claude/`, `~/.claude/` → корректность YAML frontmatter скиллов/агентов.
 
@@ -30,8 +30,8 @@ tools: Bash, Read, Glob, Grep
 1. **Сборка кода**: `./gradlew build -x test` (быстро). Если упало — стоп, репортить.
 2. **Архитектура**: уже внутри test-таски, отдельно — `./gradlew :quiz-app:test --tests "*LayeredArchitectureTest"`.
 3. **Тесты затронутого модуля**: `./gradlew :<module>:test`. Полный `./gradlew test` — только если просили.
-4. **MCQ schema**: `python scripts/validate-mcq.py` (если есть) или ручной jsonschema по `mcq-schema.json`.
-5. **Cheatsheet pre-commit**: запусти существующий pre-commit hook (`git diff --cached --name-only | xargs <linter>`), либо вручную grep на MCQ-маркеры в `.md`.
+4. **MCQ**. Автор MCQ сверяет полный результат с контрактом Jackson и схемой `modules/quiz-app/src/main/resources/seed/mcq-schema.json` по [единому промпту](../../PROMPT_PLAN_INTERVIEW.md) и [процессу MCQ](../../docs/mcq-quality/workflow.md). Самопроверку содержания, формы и пояснений выполняет модель.
+5. **Markdown**. Для изменённых шпаргалок используй `python3 scripts/cheatsheet-lint.py cheatsheets`.
 6. **Граф**: если менялся `modules/` — `ls graphify-out/graph.json` и при необходимости инкрементальный rebuild (`$(cat graphify-out/.graphify_python) -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"`).
 7. **Smoke (опционально, по запросу)**: `./gradlew bootRun &` + `curl localhost:8080/actuator/health`.
 
