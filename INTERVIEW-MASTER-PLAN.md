@@ -15,7 +15,7 @@ supersedes:
 
 > **Единственный источник истины** по interview-шпаргалкам (`cheatsheets/interview/`) и парным MCQ-сидерам (`modules/quiz-app/src/main/resources/seed/mcq/`). Объединяет 5 ранее раздельных планов без потери содержания. Старые планы удалены — их детальные пофайловые снимки остаются в git-истории.
 >
-> **Прогон правок:** проза `.md` — `/interview-writer`; JSON-сидеры — `/mcq-quality-fixer` либо детерминированные Python-правки/воркфлоу. Коммит по логической единице (1–3 файла или один батч), explicit pathspec. Граф `cheatsheets/` вне scope graphify — rebuild не требуется.
+> **Прогон правок:** проза `.md` — `/interview-writer`; JSON-сидеры — только целиком через `/mcq-quality-fixer`, без скриптов. Коммит по логической единице (1–3 файла или один батч), explicit pathspec. Граф `cheatsheets/` вне scope graphify — rebuild не требуется.
 
 ---
 
@@ -63,7 +63,7 @@ supersedes:
 2. **Класс дефекта «зарытые хвостовые вопросы»** (LANE 3/4): TOC обещает Q1..Qmax, заголовки — чистый префикс Q1..QK, Q(K+1)..Qmax зарыты в блобе последнего заголовка. Лечится split блоба (0 потери прозы) + регенерация полного JSON. Урок → **completeness-gate**: файл «полон» ⟺ `TOC == ## Q == json` И gate-PASS И sequential (старый gate `## Q == json` это не ловил).
 3. **Отказ ТОЛЬКО от mermaid** (LANE 8A): 0 ```mermaid фенсов и словоупоминаний. Критерий C6 старого ULTRATHINK («Mermaid diagrams 1–3 на файл») инвертирован В ЧАСТИ mermaid. **Уточнение пользователя (2026-06-16): все ОСТАЛЬНЫЕ диаграммы, которые рендерит markdown (ASCII/box-drawing в код-блоках, таблицы, списки-как-схемы), — приветствуются.** Бан касается исключительно mermaid; архитектуру/flow можно давать прозой, списками, таблицами ИЛИ ASCII-диаграммой — но не mermaid. См. [[feedback_diagrams_non_mermaid_ok]].
 4. **Seed-first рантайм:** MCQ грузятся из JSON-сидеров; AI в рантайме не зовётся (только при `AI_FALLBACK_ENABLED=true` + ключ). См. `CLAUDE.md`.
-5. **MCQ живут ТОЛЬКО в JSON** (`seed/mcq/<category>/<topic>.json`), c 2026-05-20. В `.md` — НИКОГДА `> [!mcq]` / Tier-1 маркеров (pre-commit `scripts/verify-md-no-mcq.sh` банит).
+5. **MCQ живут ТОЛЬКО в JSON** (`seed/mcq/<category>/<topic>.json`), c 2026-05-20. В `.md` — НИКОГДА `> [!mcq]` / Tier-1 маркеров.
 6. **Выравнивание по номеру:** приложение привязывает опции по `q_number` к `## Q<N>` (`MarkdownQuestionParser.QUESTION_PATTERN = ^##\s+Q(\d+)`). JSON `question_text` НЕ отображается. Поэтому JSON `q_number` ОБЯЗАН = `## Q<N>`, тему которого отвечают опции.
 7. **Concurrency воркфлоу:** ≤6 агентов/волна (>6 → rate-limit, агенты не дописывают; урок LANE 5). Одна тяжёлая волна за раз.
 
@@ -109,7 +109,7 @@ supersedes:
 - **C14 (полнота раскрытия темы — LANE 9):** ответ полно и корректно покрывает тему на senior-уровне; нет дыр (ключевой аспект пропущен), заглушек, ответа не на тот вопрос.
 
 ### D. Чистота markdown
-- **D1** 0 `> [!mcq]` callout-блоков. **D2** 0 Tier-1 эмодзи-маркеров. **D3** 0 `[[wikilinks]]` в `.md` (только `[text](path.md)`). **D4** парные code-fence (чётное число ```), валидные таблицы. **D5** `scripts/verify-md-no-mcq.sh <file>` exit 0.
+- **D1** 0 `> [!mcq]` callout-блоков. **D2** 0 Tier-1 эмодзи-маркеров. **D3** 0 `[[wikilinks]]` в `.md` (только `[text](path.md)`). **D4** парные code-fence (чётное число ```), валидные таблицы. **D5** редактор проверяет, что MCQ остались в JSON.
 
 ### E. Q count и важность
 - **E1** Минимум Q: базовая тема ≥20; широкая (Spring, collections) ≥25; system-design ≥30; mega-topic (postgresql, java-concurrency) 50+.
@@ -140,7 +140,7 @@ supersedes:
 
 ### H. Smoke
 - **H1** `./gradlew :quiz-app:test --tests '*McqJsonLoader*' -q` → BUILD SUCCESSFUL.
-- **H2** `scripts/verify-md-no-mcq.sh FILE.md` → OK.
+- **H2** Модель сверяет видимые Markdown-вопросы с полным production JSON.
 
 ### Синхронизация .md ↔ JSON
 - Номера совпадают; при правке `.md`-вопроса обновлять блок JSON. `related` ведут на существующие `[[<topic>#Q<N>]]`.
@@ -196,7 +196,6 @@ supersedes:
 - **`scripts/readability/slug.py [--selftest]`** — GitHub-slugger (cyrillic-aware); self-test на 293 файлах с TOC.
 - **`scripts/readability/regen_toc.py <md>`** — детерминированная регенерация `## Содержание` (идемпотентна, no-op для файлов без TOC).
 - **`scripts/readability/verify_nomermaid.py <md> [<json>]`** — 0 mermaid-фенсов, не-mermaid код+frontmatter == HEAD.
-- **`scripts/verify-md-no-mcq.sh <file>`** — pre-commit: 0 callouts/Tier-1.
 - **STRUCT-чек (inline Python):** ровно 1 `correct`/блок, уникальные label, order 0–3.
 - **mixed-script скан:** `LETTER_RUN=re.compile(r'[^\W\d_]+',re.U)`, флаг maximal letter-run с И кириллицей (`Ѐ`≤c≤`ӿ`) И латиницей. **ВАЖНО: сканировать строковые ЗНАЧЕНИЯ рекурсивно, не `json.dumps`** (`\n`-эскейпы → ложные `nИли`-срабатывания).
 - **Полнота прозы (LANE 9):** воркфлоу `md-completeness-review.js` — read-only вердикты `{rel, score, issues:[{q, kind, problem}]}`, kind ∈ completeness/factual/readability.
@@ -207,7 +206,7 @@ supersedes:
 ---
 
 ## 7. Workflow per-file (доводка)
-1. **READ** `.md` (+ JSON). 2. **CHECK** A–H + полнота (C14). 3. **FIX** проза `/interview-writer`, JSON `/mcq-quality-fixer` / Python. 4. **VERIFY** verify.py + gate_clean + STRUCT + mixed-script + (если правился JSON) smoke. 5. **COMMIT** логически, explicit pathspec, trailer `Co-Authored-By: Claude Opus 4.8 (1M context)`. 6. **regen_toc.py** после правок заголовков.
+1. **READ** `.md` (+ JSON). 2. **CHECK** A–H + полнота (C14). 3. **FIX** проза `/interview-writer`, полный JSON `/mcq-quality-fixer` без скриптов. 4. **VERIFY** verify.py + gate_clean + STRUCT + mixed-script; MCQ только руками LLM по каноническому workflow. 5. **COMMIT** логически, explicit pathspec, trailer `Co-Authored-By: Claude Opus 4.8 (1M context)`. 6. **regen_toc.py** после правок заголовков.
 
 ---
 

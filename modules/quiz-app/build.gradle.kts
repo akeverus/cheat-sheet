@@ -171,9 +171,4 @@ tasks.processResources {
     }
 }
 
-// Раньше тут жил task `seedOptions`, дёргавший удалённый SQLite-сидер для
-// офлайн-сидинга `answer_options` через Claude SDK напрямую в SQLite. После
-// миграции на PostgreSQL и переход к JSON-сидерам (modules/quiz-app/src/main/
-// resources/seed/mcq/) сам скрипт превращён в deprecation-stub. Workflow
-// генерации опций теперь через skill mcq-quality-fixer + правка JSON-сидеров;
-// загрузка в Postgres — на старте через McqJsonLoader.
+// Production MCQ импортируется при старте через McqJsonLoader.

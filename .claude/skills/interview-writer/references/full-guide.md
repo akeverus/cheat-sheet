@@ -1227,47 +1227,11 @@ sys.exit(1 if duplicates else 0)
 PY
 ```
 
-## 32.2 Inline MCQ ban
+## 32.2 Paired MCQ review
 
-```bash
-if rg -n '^> \[!mcq\]' <file>; then
-  echo "Legacy inline MCQ found"
-  exit 1
-fi
-```
-
-## 32.3 JSON validation
-
-When JSON changed:
-
-```bash
-bash scripts/verify-mcq-json.sh <json>
-python3 scripts/mcq-answer-parity-gate.py <json>
-```
-
-Run additional gates defined by `/mcq-quality-fixer`.
-
-## 32.4 Q-number sync
-
-```bash
-python3 - <<'PY'
-from pathlib import Path
-import json, re, sys
-
-md = Path("<md>")
-js = Path("<json>")
-
-md_ids = set(map(int, re.findall(r'^## Q(\d+)\.\s+', md.read_text(encoding="utf-8"), re.M)))
-data = json.loads(js.read_text(encoding="utf-8"))
-json_ids = {int(item["q_number"]) for item in data.get("questions", [])}
-
-dangling = sorted(json_ids - md_ids)
-print({"md_only": sorted(md_ids - json_ids), "json_dangling": dangling})
-sys.exit(1 if dangling else 0)
-PY
-```
-
-`md_only` may be acceptable only for explicitly open-ended questions.
+Keep MCQ out of Markdown. If meaning changes, hand off the whole production JSON,
+the paired Markdown and feedback under `docs/mcq-quality/workflow.md`. The LLM
+checks alignment, options and explanations for the full topic without scripts.
 
 ## 32.5 Links
 

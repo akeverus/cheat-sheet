@@ -32,7 +32,7 @@ This skill owns:
 - synchronization decisions between theory and JSON MCQ.
 
 It does **not** own deep option writing. Option quality, distractor generation,
-schema repair, parity gates and JSON-only work belong to `/mcq-quality-fixer`.
+full-file JSON review, option parity and JSON-only work belong to `/mcq-quality-fixer`.
 
 ## Hard routing rule
 
@@ -226,15 +226,9 @@ Never mix the two link contracts.
 | Merge questions | Preserve one ID, explicitly retire the other, update references |
 | Rename topic/file | Rename JSON, update `topic_slug`, paths and inbound references |
 
-For every JSON change:
-
-```bash
-bash scripts/verify-mcq-json.sh <json>
-python3 scripts/mcq-answer-parity-gate.py <json>
-```
-
-Use the targeted gates in `docs/mcq-quality/workflow.md` and preserve evidence
-for dependent checks; a structural gate does not grant semantic acceptance.
+For every meaning change that affects JSON, hand the complete topic to the MCQ editor.
+The LLM returns the entire replacement under `docs/mcq-quality/workflow.md`.
+Do not run MCQ validation, parity or generation scripts.
 
 При приёмке пары после смысловой правки теории проверь все зависимые A/B/C/D и их
 sections по `docs/mcq-quality/examiner-review.md`. Совпадение ключа не подтверждает

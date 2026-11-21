@@ -1,5 +1,5 @@
 ---
-description: MCQ quality and per-block acceptance in cheat-sheet; use for production JSON options and changes to their paired Markdown questions.
+description: Full-file LLM editorial workflow for production MCQ and its paired Markdown.
 globs:
   - "modules/quiz-app/src/main/resources/seed/mcq/**/*.json"
   - "cheatsheets/interview/**/*.md"
@@ -7,17 +7,8 @@ globs:
 alwaysApply: false
 ---
 
-The repository owns one MCQ standard and one evidence tracker. For MCQ work, read
-the relevant sections of `docs/mcq-quality-standard.md` and
-`docs/mcq-quality/workflow.md`; for a corpus-wide continuation use
-`PROMPT_PLAN_INTERVIEW.md` and `PLAN_INTERVIEW.md`. For a theory-only edit, follow
-the Markdown conventions and check whether the paired MCQ became stale.
-
-Use `python3 scripts/mcq-workflow.py status --topic <topic>` for one topic or
-`next --size 4` for the queue. Review the visible Markdown question, every Q/B,
-all A/B/C/D and their sections. Check facts, SFPL, ANSC and natural Russian
-separately. Automated form signals do not grant editorial PASS.
-
-After changes, run the relevant gates. Register independent two-phase results
-through `record`, then update `checkpoint` or `sync` at a control point.
-Keep accepted unchanged blocks and the user's existing edits intact.
+Use `docs/mcq-quality/workflow.md` and `PROMPT_PLAN_INTERVIEW.md`. Give one LLM the
+entire production JSON, paired Markdown, rules and comments. Return one complete
+JSON, checked by the LLM. Do not split the task or run MCQ generation/validation
+scripts or gates. Record LLM_READY only with full coverage and no open material
+issue. This is not independent acceptance. Protect other authors' changes.
