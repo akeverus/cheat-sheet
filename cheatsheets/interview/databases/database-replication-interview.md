@@ -370,8 +370,7 @@ db.getReplicationInfo()
 **Как обеспечить:**
 - **Sticky sessions** — направлять чтения пользователя на тот же узел, куда он писал.
 - **Read-after-write на primary** — первые X секунд после записи читать только с primary.
-- **LSN tracking** — клиент хранит `last_write_lsn`, а реплика ждёт, пока её `replay_lsn >= last_write_lsn`, прежде чем ответить.
-  - PostgreSQL: `pg_wal_replay_wait` (PG 18) или то же на уровне приложения.
+- **LSN tracking в PostgreSQL.** После успешного `COMMIT` приложение получает на primary целевую позицию через `pg_current_wal_insert_lsn()`. На выбранной физической реплике той же истории WAL оно ждёт применения WAL до этой позиции и затем читает с новым снимком на том же узле. В PostgreSQL 18 приложение с ограниченным временем ожидания опрашивает `pg_last_wal_replay_lsn()` и сравнивает результат с целью. Начиная с PostgreSQL 19, сама реплика может ждать через `WAIT FOR LSN '0/12345678' WITH (MODE 'standby_replay', TIMEOUT '2s')`, где LSN подставляется из приложения. При таймауте или смене роли узла приложение повторно выбирает источник чтения. [Функции WAL PostgreSQL 18](https://www.postgresql.org/docs/18/functions-admin.html#FUNCTIONS-RECOVERY-INFO-TABLE), [WAIT в PostgreSQL 19](https://www.postgresql.org/docs/19/sql-wait.html).
 - **Причинно-согласованная сессия MongoDB.** Выполняйте запись и последующее чтение последовательно в одной сессии с `causalConsistency: true`. Для записи задайте `writeConcern: { w: "majority" }`, для чтения — `readConcern: { level: "majority" }`. После успешной записи чтение с реплики дождётся состояния, которое учитывает эту запись, либо завершится ошибкой, если это состояние получить не удастся. Одна опция `causalConsistency` без обоих уровней `majority` такой гарантии не даёт. [Causal Consistency and Read and Write Concerns](https://www.mongodb.com/docs/manual/core/causal-consistency-read-write-concerns/).
 
 **Monotonic reads consistency** — пользователь не видит «откат во времени»: если он раз увидел значение, при следующем чтении оно не должно исчезнуть. Нарушается, когда два последовательных запроса попали на реплики с разным лагом (первая свежее второй).
@@ -1323,7 +1322,7 @@ PostgreSQL/MySQL/MongoDB ←─ Debezium Connector ─→ Kafka topics
 {
   "before": { "id": 42, "name": "Alice", "email": "a@x.com" },
   "after":  { "id": 42, "name": "Alice", "email": "alice@x.com" },
-  "source": { "version": "2.4.0", "ts_ms": 1716285600000, "lsn": "0/30000A0" },
+  "source": { "version": "2.4.0", "ts_ms": 1716285600000, "lsn": 50331808 },
   "op": "u",
   "ts_ms": 1716285600100
 }
