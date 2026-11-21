@@ -1185,46 +1185,31 @@ datastax-java-driver {
 
 ## Q34. Как выполнять миграции схемы в `Cassandra`?
 
-У `Cassandra` нет встроенного механизма версионирования схемы вроде `Flyway`, поэтому миграции выстраивают вручную: храните номер применённой версии в служебной таблице и накатывайте только новые скрипты. Подходы:
-
-**1. Скрипты CQL + таблица версий:**
+Храните CQL-миграции в системе контроля версий и применяйте их отдельным процессом деплоя. Журнал миграций фиксирует версию, контрольную сумму скрипта и время успешного применения. Один исполнитель применяет миграции последовательно, чтобы несколько экземпляров приложения не меняли схему одновременно.
 
 ```cql
--- Таблица для отслеживания миграций
-CREATE TABLE IF NOT EXISTS schema_migrations (
-    version INT PRIMARY KEY,
-    description TEXT,
-    applied_at TIMESTAMP
-);
-
--- V001__create_orders.cql
-CREATE TABLE IF NOT EXISTS orders (
+-- V001__create_orders_by_user.cql
+CREATE TABLE IF NOT EXISTS ecommerce.orders_by_user (
     user_id UUID,
     order_date TIMESTAMP,
     order_id UUID,
     total DECIMAL,
     PRIMARY KEY ((user_id), order_date, order_id)
-);
+) WITH CLUSTERING ORDER BY (order_date DESC, order_id ASC);
 
 -- V002__add_status_column.cql
-ALTER TABLE orders ADD status TEXT;
+ALTER TABLE ecommerce.orders_by_user ADD status TEXT;
 ```
 
-**2. Инструменты:**
-- **cassandra-migration** (библиотека для Java)
-- **cqlmigrate** (Sky UK)
-- Собственный скрипт при деплое, читающий `schema_migrations` и применяющий новые
-
-**Важно:**
-- Миграции должны быть **идемпотентными** (`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ... ADD ...`)
-- Изменение `partition key` невозможно без создания новой таблицы + перенос данных
-- Тестировать миграции на копии кластера перед production
+- **Повтор после сбоя.** DDL и запись версии могут завершиться по отдельности. Если исполнитель прервался после `ADD`, при повторе сначала проверьте, есть ли столбец и совпадает ли его тип. Обычный `ADD` с уже существующим именем может завершиться ошибкой. `CREATE TABLE IF NOT EXISTS` пропускает создание существующей таблицы, поэтому её определение нужно проверять отдельно.
+- **Согласование схемы.** После DDL дождитесь schema agreement перед следующим зависимым шагом. Java Driver 4.x проверяет совпадение версий схемы среди узлов, которые считает доступными. Результат проверки можно получить через `ExecutionInfo.isSchemaInAgreement()`.
+- **Изменение ключа.** Для нового partition key или набора кластеризующих столбцов создайте новую таблицу, перенесите исторические данные и согласуйте записи на время переноса. Переключайте чтение после проверки полноты переноса.
 
 ## Q35. Как обеспечить безопасность кластера `Cassandra`?
 
-Безопасность кластера строится по трём осям: кто подключается (аутентификация), что ему разрешено (авторизация) и защита трафика (шифрование). По умолчанию Cassandra пускает всех — для production это нужно явно включить.
+Защита кластера включает аутентификацию клиентов, права на ресурсы CQL, шифрование трафика и ограничение сетевого доступа. Стандартная конфигурация Cassandra 5.0 использует разрешающие реализации `AllowAllAuthenticator` и `AllowAllAuthorizer`, поэтому эти механизмы настраивают явно.
 
-**Аутентификация и авторизация:**
+**Аутентификация и права:**
 
 ```yaml
 # cassandra.yaml
@@ -1233,57 +1218,44 @@ authorizer: CassandraAuthorizer
 ```
 
 ```cql
--- Создание пользователя
-CREATE ROLE app_user WITH PASSWORD = 'strong_password'
+-- Пароль подставляет защищённый процесс настройки.
+CREATE ROLE app_user WITH PASSWORD = '<generated-password>'
     AND LOGIN = true;
 
--- Назначение прав
-GRANT SELECT ON KEYSPACE ecommerce TO app_user;
-GRANT MODIFY ON TABLE ecommerce.orders TO app_user;
+GRANT SELECT ON TABLE ecommerce.orders_by_user TO app_user;
+GRANT MODIFY ON TABLE ecommerce.orders_by_user TO app_user;
 ```
 
-**Шифрование:**
+Выдавайте отдельной роли приложения права на нужные таблицы. `MODIFY` включает удаление строк. Для кластера с парольной аутентификацией настройте репликацию `system_auth` через `NetworkTopologyStrategy` с достаточным RF в каждом обслуживающем ДЦ. После изменения RF выполните repair этого keyspace, чтобы существующие данные о ролях попали на новые реплики.
+
+**Фрагмент настроек TLS для Cassandra 5.0:**
 
 ```yaml
-# cassandra.yaml — шифрование между узлами
 server_encryption_options:
   internode_encryption: all
-  keystore: /path/to/keystore.jks
-  keystore_password: changeit
+  require_client_auth: true
 
-# Шифрование клиент-узел
 client_encryption_options:
   enabled: true
-  keystore: /path/to/keystore.jks
-  keystore_password: changeit
+  optional: false
 ```
 
-**Рекомендации:**
-- Отдельные учётные записи для каждого приложения (least privilege)
-- Регулярная ротация паролей
-- `TLS` для межузлового и клиентского трафика
-- Аудит доступа (в enterprise-версиях)
+Дополните фрагмент ключами и доверенными сертификатами. Для межузлового TLS с взаимной аутентификацией каждый узел предъявляет сертификат и проверяет сертификат другой стороны. Клиентский драйвер должен доверять сертификатам сервера и проверять имя узла. Ограничивайте доступ к межузловым и JMX-портам отдельно от доступа к CQL. Аудит запросов доступен в Apache Cassandra с 4.0.
 
 ## Q36. Какие метрики мониторить в production?
 
-**Ключевые метрики `Cassandra` (доступны через JMX, `Prometheus` exporter):**
+Начните с частоты запросов, задержки и ошибок на координаторах. Сопоставьте их с метриками узлов и таблиц, чтобы отличить перегрузку кластера от проблемы конкретного запроса или партиции.
 
-| Категория | Метрика | Что смотреть |
-|-----------|---------|-------------|
-| Латентность | `ReadLatency`, `WriteLatency` | p99 < целевого SLA |
-| Throughput | `ReadThroughput`, `WriteThroughput` | Тренды роста |
-| Ошибки | `Timeouts`, `Unavailables`, `Failures` | Всплески |
-| Compaction | `PendingCompactions` | Не должно расти постоянно |
-| Memory | `HeapUsage`, `OffHeapUsage` | GC pressure |
-| Disk | `LiveDiskSpaceUsed`, `TotalDiskSpaceUsed` | Планирование ёмкости |
-| Thread Pools | `PendingTasks` по пулам | Blocked/Dropped — проблема |
-| SSTable | `SSTableCount` per table | Рост = нужна компакция |
-| Tombstones | `TombstoneScannedHistogram` | Много = проблема моделирования |
+| Что смотреть | Метрики Cassandra 5.0 | Как интерпретировать |
+|--------------|-----------------------|-----------------------|
+| Клиентские запросы | `ClientRequest`: `Latency`, `Timeouts`, `Unavailables`, `Failures` с областями `Read` и `Write` | Смотрите p95/p99 и скорость роста счётчиков по координаторам. Метрики приложения отдельно показывают сетевую задержку и повторы драйвера. |
+| Компакция и сбросы | `Compaction.PendingTasks`, `Table.PendingCompactions`, `Table.PendingFlushes` | Устойчивый рост очередей вместе с ростом дисковой задержки указывает, что фоновые задачи отстают. |
+| Пулы и потери сообщений | `ThreadPools.PendingTasks`, `CurrentlyBlockedTasks`, `DroppedMessage.Dropped` | Сопоставляйте рост с типом пула или сообщения и временем всплеска таймаутов. |
+| Файлы и место | `Table.LiveSSTableCount`, `LiveDiskSpaceUsed`, `TotalDiskSpaceUsed` | Сравнивайте таблицы с учётом стратегии компакции. Свободное место проверяйте на файловой системе. |
+| Чтение таблицы | `Table.SSTablesPerReadHistogram`, `TombstoneScannedHistogram` | Рост числа прочитанных SSTable или tombstone помогает объяснить ухудшение задержки конкретной таблицы. |
+| Память и JVM | JVM `HeapMemoryUsage`, паузы GC, `Table.MemtableOffHeapSize` | Смотрите паузы и динамику памяти. Для off-heap дополнительно контролируйте RSS процесса. |
 
-**Инструменты:**
-- `nodetool status/tablestats/tpstats` — CLI
-- `Prometheus` + `Grafana` (через JMX exporter или Metrics reporter)
-- `DataStax OpsCenter` (коммерческий)
+Частоту чтений и записей можно получить из скорости роста числа наблюдений таймера `ClientRequest.Latency`. Для оперативной диагностики используйте `nodetool status`, `tablestats`, `tpstats` и `compactionstats`. Для истории и алертов собирайте JMX-метрики через экспортёр. Раздельно показывайте метрики приложения, координатора и локальной таблицы: они измеряют разные этапы запроса.
 
 ## Q37. Как масштабировать кластер `Cassandra`?
 
