@@ -1348,330 +1348,143 @@ PRIMARY KEY ((status, shard), user_id)
 
 ## Q40. (!) Как правильно обрабатывать коллекции в `CQL`?
 
-`Cassandra` поддерживает три типа коллекций в качестве типа колонки — `LIST`, `SET`, `MAP` — плюс `FROZEN`-обёртку и пользовательские типы (`UDT`). Коллекции удобны для небольших наборов значений «при строке», но не заменяют отдельную таблицу: они читаются целиком и плохо переносят большой размер.
-
-**Основные типы коллекций:**
+Коллекции хранят небольшие наборы значений в строке. `SET` хранит уникальные элементы, `LIST` сохраняет порядок и допускает дубли, `MAP` связывает ключи со значениями. Пользовательский тип (UDT) позволяет описать запись с именованными полями.
 
 ```cql
-CREATE TABLE user_profile (
-    user_id  UUID PRIMARY KEY,
-    emails   SET<TEXT>,          -- уникальные значения, неупорядоченные
-    tags     LIST<TEXT>,         -- упорядоченные, дубли допустимы
-    metadata MAP<TEXT, TEXT>,    -- ключ-значение
-    address  FROZEN<address_type> -- UDT как атомарный тип
-);
+CREATE TYPE address_type (street TEXT, city TEXT, zip TEXT);
 
--- Пользовательский тип
-CREATE TYPE address_type (
-    street TEXT,
-    city   TEXT,
-    zip    TEXT
+CREATE TABLE user_profile (
+    user_id UUID PRIMARY KEY,
+    emails SET<TEXT>,
+    tags LIST<TEXT>,
+    metadata MAP<TEXT, TEXT>,
+    address FROZEN<address_type>
 );
 ```
 
-**Операции с коллекциями:**
+Примеры подготовленных запросов, в которых `?` — идентификатор профиля:
 
 ```cql
--- SET: добавление/удаление элементов
 UPDATE user_profile SET emails = emails + {'new@example.com'} WHERE user_id = ?;
-UPDATE user_profile SET emails = emails - {'old@example.com'} WHERE user_id = ?;
-
--- LIST: append/prepend/удаление по индексу
 UPDATE user_profile SET tags = tags + ['kotlin'] WHERE user_id = ?;
-UPDATE user_profile SET tags[0] = 'java' WHERE user_id = ?;  -- по индексу
-
--- MAP: добавление/обновление/удаление ключей
+UPDATE user_profile SET tags[0] = 'java' WHERE user_id = ?;
 UPDATE user_profile SET metadata['key'] = 'value' WHERE user_id = ?;
 DELETE metadata['old_key'] FROM user_profile WHERE user_id = ?;
 ```
 
-**Ограничения и рекомендации:**
-- Коллекция **читается целиком** — достать один элемент, не подняв всю коллекцию, нельзя; поэтому большие коллекции бьют по производительности.
-- Технический потолок — **65 535** элементов, но на практике держите < 100.
-- `FROZEN` сериализует коллекцию как один blob: любое изменение перезаписывает её целиком (зато её можно использовать как часть ключа).
-- Нужны частые точечные правки элементов большого набора — это сигнал вынести их в **отдельную таблицу** (строка = элемент).
-- `SET` предпочтительнее `LIST`: у списка при частичных сбоях возможны дубли и неоднозначность операций по индексу.
-
-**Когда использовать FROZEN:**
-
-```cql
--- FROZEN нужен для вложенных коллекций и UDT как part of PRIMARY KEY
-CREATE TABLE orders (
-    order_id UUID PRIMARY KEY,
-    items    LIST<FROZEN<order_item>>,  -- список UDT
-    tags     FROZEN<SET<TEXT>>          -- frozen set как часть PK или для компакности
-);
-```
+- Для обычных коллекций доступны частичные изменения. Append и prepend списка неидемпотентны, а обновление по индексу требует чтения и зависит от позиции элемента.
+- `FROZEN` хранит значение целиком. Изменение поля или элемента требует записи нового значения. Например, в `LIST<FROZEN<address_type>>` внешний список можно пополнять, а его элементы заменяются целиком.
+- Ограничения зависят от типа и формата коллекции. Элементы внутри выбранной строки не образуют отдельные страницы результата. Для растущего набора или регулярных выборок по элементам используйте таблицу, где каждый элемент — отдельная строка с подходящим ключом.
 
 ## Q41. Как реализовать `pagination` в `Cassandra`?
 
-В `Cassandra` нет `OFFSET`, поэтому классический «пропусти N, возьми M» невозможен — и это сознательно: пропуск N строк потребовал бы их прочитать и выбросить. Вместо этого пейджинг **курсорный**: драйвер запоминает позицию (`paging state`) и продолжает с неё. Поэтому листать можно только вперёд и только последовательно.
+CQL не поддерживает `OFFSET`. Java Driver 4.x разбивает результат на страницы и получает от сервера непрозрачное состояние следующей страницы. Синхронный `ResultSet` продолжает чтение автоматически при итерации. Асинхронный `AsyncResultSet` отдаёт текущую страницу через `currentPage()`, а для следующей предоставляет `fetchNextPage()`.
 
-**Автоматический пейджинг через Java Driver:**
+**Пример получения одной страницы для API через синхронный драйвер:**
 
 ```java
-// Driver автоматически разбивает результаты на страницы
-SimpleStatement stmt = SimpleStatement.newInstance(
-    "SELECT * FROM events WHERE user_id = ?", userId)
-    .setPageSize(100);  // размер страницы
+SimpleStatement statement = SimpleStatement.newInstance(
+        "SELECT * FROM orders_by_user WHERE user_id = ?", userId)
+    .setPageSize(20);
 
-ResultSet rs = session.execute(stmt);
+if (previousState != null) {
+    statement = statement.setPagingState(previousState);
+}
 
-// Итерация — driver запрашивает следующую страницу автоматически
-for (Row row : rs) {
-    processRow(row);
+ResultSet result = session.execute(statement);
+PagingState nextState = result.getExecutionInfo().getSafePagingState();
+List<Row> page = new ArrayList<>();
+while (result.getAvailableWithoutFetching() > 0) {
+    page.add(result.one());
 }
 ```
 
-**Ручной пейджинг (для REST API):**
+`previousState` — сохранённый `PagingState` для того же запроса с теми же параметрами. `nextState == null` означает конец результата. Для внешнего API храните состояние на сервере под непрозрачным идентификатором либо выдавайте токен с защитой целостности, привязанный к пользователю и параметрам запроса. Последовательность страниц не является снимком данных.
 
-```java
-// Первая страница
-SimpleStatement stmt = SimpleStatement.newInstance(
-    "SELECT * FROM events WHERE user_id = ?", userId)
-    .setPageSize(20);
-
-ResultSet rs = session.execute(stmt);
-List<Row> page1 = rs.currentPage();
-
-// Сохраняем paging state для следующей страницы
-ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
-String token = Base64.getEncoder().encodeToString(pagingState.array());
-
-// API отдаёт: {"data": [...], "nextPageToken": "abc123=="}
-
-// Следующая страница по токену
-ByteBuffer savedState = ByteBuffer.wrap(Base64.getDecoder().decode(token));
-SimpleStatement stmt2 = stmt.copy().setPagingState(savedState);
-ResultSet rs2 = session.execute(stmt2);
-```
-
-**Пейджинг по clustering key (Token-based):**
+**Курсор по кластеризующим столбцам.** Для таблицы событий с ключом `PRIMARY KEY ((user_id), event_ts, event_id)` и обоими кластеризующими столбцами в порядке `DESC` курсор хранит пару значений последней строки:
 
 ```cql
--- Для time-series: используем clustering key как cursor
-SELECT * FROM events WHERE user_id = ? AND event_ts < ? ORDER BY event_ts DESC LIMIT 20;
--- event_ts = значение последнего элемента предыдущей страницы
+SELECT * FROM events_by_user
+WHERE user_id = ? AND (event_ts, event_id) < (?, ?)
+LIMIT 20;
 ```
 
-**Ограничения paging state:**
-- `PagingState` привязан к конкретному запросу и кластеру
-- Нельзя перейти сразу на страницу N (только последовательно)
-- Состояние может устареть при изменении схемы или данных
+`event_id` различает события с одинаковой отметкой времени. Такой курсор задаёт следующую позицию в порядке ключа, а переход к произвольному номеру страницы потребовал бы отдельно вычислить её границу.
 
 ## Q42. (!) Что такое `Token-aware routing` и почему он важен?
 
-**Token-aware routing** — политика выбора координатора, при которой драйвер сам вычисляет токен партиции и шлёт запрос **сразу на узел, который её хранит**. Это убирает лишний сетевой хоп: иначе случайный координатор был бы вынужден переслать запрос «правильному» узлу и дождаться его ответа. Координатор перестаёт быть посредником и становится исполнителем.
+При token-aware routing драйвер использует ключ маршрутизации, чтобы определить токен партиции и поставить её реплики первыми в плане запросов. Выбранная реплика становится координатором и при необходимости обращается к другим репликам согласно уровню согласованности.
 
 ```mermaid
 graph LR
-    Client -->|"Without token-aware: любой узел"| N1[Node 1 координатор]
-    N1 -->|"внутренний hops"| N3[Node 3 данные]
-
-    Client2[Client] -->|"With token-aware: напрямую"| N3
+    C1[Клиент] -->|Без предпочтения реплик| N1[Координатор вне набора реплик]
+    N1 --> R[Реплика партиции]
+    C2[Клиент] -->|Token-aware при известных метаданных| R
+    R -.->|Если нужны дополнительные ответы| R2[Другая реплика]
 ```
 
-Сравнение маршрутов запроса:
-
 ```
-   Without token-aware (лишний хоп):
-     Client ──"любой узел"──▶ Node 1 (координатор)
-                                │ внутренний hop
-                                ▼
-                             Node 3 (данные)
-
-   With token-aware (напрямую):
-     Client ──"напрямую"──────────────▶ Node 3 (данные)
+   Без предпочтения реплик: клиент → координатор → реплики
+   С token-aware:            клиент → реплика-координатор → другие реплики по CL
 ```
 
-**Настройка в Java Driver v4:**
+В Java Driver 4.x `DefaultLoadBalancingPolicy` учитывает локальный ДЦ и при наличии метаданных предпочитает реплики партиции. Драйвер обычно сам получает ключ маршрутизации у подготовленного запроса, когда привязаны все компоненты partition key.
 
 ```java
-CqlSession session = CqlSession.builder()
-    .addContactPoint(new InetSocketAddress("cassandra-host", 9042))
-    .withLocalDatacenter("dc1")
-    // TokenAwarePolicy включён по умолчанию в Driver v4
-    // Дополнительно: DC-aware для мульти-датацентровых кластеров
-    .withConfigLoader(DriverConfigLoader.fromClasspath("application.conf"))
-    .build();
-```
-
-**application.conf (Typesafe Config):**
-
-```hocon
-datastax-java-driver {
-  basic.load-balancing-policy {
-    class = DefaultLoadBalancingPolicy
-    local-datacenter = dc1
-  }
-  advanced.load-balancing-policy {
-    # Token-awareness включена по умолчанию
-    # Fallback при недоступности: другой реплика в том же DC
-  }
-}
-```
-
-**Почему важен:**
-- Снижает задержку на 1 сетевой хоп (с ~5 мс до ~1 мс в одном датацентре)
-- Уменьшает нагрузку на координирующие узлы
-- При `CL=ONE` запрос обрабатывается без координации — максимальная скорость
-- Требует корректного расчёта `routing key` (partition key в prepared statement)
-
-**Пример с Prepared Statement (обязателен для token-awareness):**
-
-```java
-// Prepared statement — driver знает binding variables и вычисляет token
 PreparedStatement prepared = session.prepare(
-    "SELECT * FROM orders WHERE user_id = ? AND order_date > ?");
-
+    "SELECT * FROM orders_by_user WHERE user_id = ? AND order_date > ?");
 BoundStatement bound = prepared.bind(userId, fromDate);
-// Driver автоматически вычисляет token(userId) и маршрутизирует к нужному узлу
-ResultSet rs = session.execute(bound);
+ResultSet result = session.execute(bound);
 ```
+
+Для `SimpleStatement` ключ маршрутизации и keyspace можно задать явно. Без этих сведений или карты токенов драйвер использует обычный план выбора координатора. Выигрыш зависит от числа обращений между узлами и профиля нагрузки.
 
 ## Q43. Как выполнять агрегации и аналитику поверх `Cassandra`?
 
-`Cassandra` намеренно ограничивает аналитические возможности (нет JOIN, GROUP BY, HAVING). Для аналитики используются внешние инструменты.
+Для запроса по известной партиции используйте агрегаты CQL из Q15. `GROUP BY` поддерживается с ограничениями по порядку столбцов первичного ключа. Запросы по всей таблице могут читать много партиций, даже если возвращают одну строку.
 
-**Встроенные агрегаты CQL (ограниченно):**
+- **Предрасчёт для API.** Храните готовые показатели под ключом запроса. Например, таблица с ключом `(day, category)` может отдавать дневной итог без сканирования заказов. При повторной обработке события учитывайте его идентификатор, чтобы не добавить сумму дважды.
+- **Пакетная аналитика.** Spark с Cassandra Connector может читать данные для ETL. Ограничивайте объём и конкуренцию чтения, чтобы сканирование не вытесняло рабочие запросы.
+- **Потоковая аналитика.** Потребитель CDC может отправлять изменения во внешнее аналитическое хранилище (Q44). Текущие суммы рассчитывает потоковый обработчик. Его состояние должно учитывать повторы и изменения уже учтённых записей.
 
-```cql
--- Только по одной партиции, не по кластеру
-SELECT COUNT(*), SUM(amount), AVG(amount), MIN(amount), MAX(amount)
-FROM orders
-WHERE user_id = 'd7c5db80-cf5e-4df1-8523-ebe9a8aa0b81';
-
--- User-defined aggregate (UDA) для кастомной логики
-CREATE FUNCTION state_add(state DOUBLE, val DOUBLE)
-    CALLED ON NULL INPUT RETURNS DOUBLE
-    LANGUAGE java AS 'return state + val;';
-```
-
-**Apache Spark + Cassandra (основной подход):**
-
-```scala
-// Spark Cassandra Connector
-val sc = new SparkContext(conf)
-val ordersRDD = sc.cassandraTable("shop", "orders")
-
-// Аналитика поверх всего кластера
-val revenueByCategory = ordersRDD
-  .filter(_.getDouble("amount") > 0)
-  .keyBy(_.getString("category"))
-  .aggregateByKey(0.0)(
-    (acc, row) => acc + row.getDouble("amount"),
-    _ + _
-  )
-  .collect()
-```
-
-**Apache Flink для stream аналитики:**
-
-```java
-// Flink Cassandra Sink — запись результатов обратно в Cassandra
-CassandraSink.addSink(stream)
-    .setQuery("INSERT INTO analytics.category_stats (category, total) VALUES (?, ?)")
-    .setClusterBuilder(clusterBuilder)
-    .build();
-```
-
-**Materialized Views vs Отдельные таблицы:**
-
-```cql
--- Materialized View (осторожно — experimental feature, лучше избегать в prod)
-CREATE MATERIALIZED VIEW orders_by_status AS
-    SELECT * FROM orders WHERE status IS NOT NULL AND order_id IS NOT NULL
-    PRIMARY KEY ((status), created_at, order_id);
-
--- Лучше: явная денормализация через приложение или Kafka streams
-```
-
-**Рекомендации:**
-- `Spark` + `Cassandra Connector` — для batch-аналитики, ETL
-- `Apache Flink` / `Kafka Streams` — для real-time агрегаций
-- `Presto` / `Trino` — для SQL-запросов ad-hoc поверх Cassandra
-- Избегать `ALLOW FILTERING` и cross-partition запросов в prod
+Materialized view создаёт дополнительный путь чтения с другим ключом и сама по себе не вычисляет агрегаты (Q14).
 
 ## Q44. Что такое `CDC` (`Change Data Capture`) в `Cassandra`?
 
-**CDC** (`Change Data Capture`) — захват потока изменений данных, чтобы реагировать на них вне Cassandra. Технически Cassandra просто сохраняет мутации из Commit Log в отдельную директорию `cdc_raw`, откуда их забирает внешний коннектор (обычно Debezium) и публикует в `Kafka`, а уже оттуда они расходятся по потребителям. Это типичный мост от Cassandra к поиску, аналитике и event-driven архитектуре.
-
-**Как работает CDC в Cassandra:**
+**CDC** (Change Data Capture) позволяет внешнему потребителю читать мутации таблиц, для которых включён захват изменений. В Cassandra 5.0 в `cdc_raw` появляются жёсткие ссылки на сегменты commit log. Файл `_cdc.idx` сообщает, до какого смещения данные синхронизированы с диском. Строка `COMPLETED` означает, что Cassandra закончила обработку сегмента.
 
 ```mermaid
 graph LR
-    App -->|"write"| Cassandra
-    Cassandra -->|"CommitLog"| CDC_Raw[cdc_raw директория]
-    CDC_Raw -->|"Debezium Connector"| Kafka
-    Kafka -->|"consume"| ES[Elasticsearch]
-    Kafka -->|"consume"| DW[Data Warehouse]
+    App[Приложение] -->|Запись| C[Cassandra]
+    C -->|Сегмент commit log и индекс| Raw[cdc_raw на узле]
+    Raw --> Reader[Внешний потребитель CDC]
+    Reader --> Kafka
+    Kafka --> ES[Поиск]
+    Kafka --> DW[Аналитическое хранилище]
 ```
 
-Цепочка захвата изменений:
-
 ```
-   App ──write──▶ Cassandra ──CommitLog──▶ cdc_raw директория
-                                                  │
-                                          Debezium Connector
-                                                  │
-                                                  ▼
-                                                Kafka
-                                          consume │ consume
-                                      ┌───────────┴───────────┐
-                                      ▼                       ▼
-                                Elasticsearch          Data Warehouse
+   Приложение → Cassandra → cdc_raw на узлах → внешний потребитель
+                                              └→ Kafka → поиск и аналитика
 ```
-
-**Включение CDC для таблицы:**
-
-```cql
--- Включить CDC при создании таблицы
-CREATE TABLE orders (
-    order_id UUID PRIMARY KEY,
-    status   TEXT,
-    amount   DECIMAL
-) WITH cdc = true;
-
--- Включить для существующей таблицы
-ALTER TABLE orders WITH cdc = true;
-```
-
-**cassandra.yaml настройки:**
 
 ```yaml
+# cassandra.yaml для Cassandra 5.0
 cdc_enabled: true
 cdc_raw_directory: /var/lib/cassandra/cdc_raw
-cdc_total_space_in_mb: 4096    # максимум места под CDC logs
-cdc_free_space_check_interval_ms: 250
+cdc_total_space: 4096MiB
+cdc_free_space_check_interval: 250ms
 ```
 
-**Debezium Connector для Cassandra (популярное решение):**
-
-```json
-{
-  "name": "cassandra-cdc-connector",
-  "config": {
-    "connector.class": "io.debezium.connector.cassandra.CassandraConnector",
-    "cassandra.config": "/etc/cassandra/cassandra.yaml",
-    "cassandra.hosts": "cassandra-host",
-    "kafka.producer.bootstrap.servers": "kafka:9092",
-    "topic.prefix": "cassandra",
-    "snapshot.mode": "initial"
-  }
-}
+```cql
+ALTER TABLE ecommerce.orders_by_user WITH cdc = true;
 ```
 
-**Сценарии использования CDC:**
-- Синхронизация Cassandra → Elasticsearch для поиска
-- Построение event-driven архитектуры (Cassandra как event store)
-- Репликация данных между кластерами
-- Аудит изменений
-- Cache invalidation при изменении данных
+Потребитель читает записанную часть сегмента, сохраняет прогресс доставки и удаляет обработанные файлы после завершения сегмента. Kafka здесь — возможный следующий шаг, который настраивает внешний потребитель. Исторические данные, записанные до включения CDC, при необходимости переносятся отдельно.
 
-**Подводные камни:**
-- CDC видит только явные мутации записи — TTL-истечения и события компакции в поток не попадают.
-- Растёт нагрузка на диск: директорию `cdc_raw` нужно мониторить, иначе при заполнении записи начнут отклоняться.
-- Гарантируется порядок изменений в пределах партиции, но не между разными партициями.
+- CDC работает с локальными журналами узлов. Одна мутация может встретиться на нескольких репликах, поэтому потребителю нужно обрабатывать повторы. Суммарный порядок событий, включая порядок для одной партиции при объединении журналов, требует отдельного решения.
+- TTL-истечение и компакция не порождают отдельные события удаления в commit log. Явная операция `DELETE` записывает мутацию.
+- При заполнении пространства под CDC новые записи в CDC-таблицы могут отклоняться. Следите за занятым местом, отставанием потребителя и ошибками записи.
 
 ---
 
