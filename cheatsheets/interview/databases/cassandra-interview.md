@@ -1007,7 +1007,9 @@ WHERE page_url = '/home' AND date = '2026-04-12';
 
 **Spring Data Cassandra** — модуль Spring Data для работы с `Cassandra` через репозитории и `CassandraTemplate`. Подробнее о Spring Data — в [вопросах по Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) (общие концепции репозиториев).
 
-**Зависимость (Gradle):**
+Примеры Q31–Q32 рассчитаны на Spring Boot 3.5 и Spring Data Cassandra 4.5. В Spring Boot 3.0 префикс настроек Cassandra перенесли с `spring.data.cassandra` на `spring.cassandra`.
+
+**Зависимость (Gradle, версия управляется Spring Boot):**
 
 ```groovy
 implementation 'org.springframework.boot:spring-boot-starter-data-cassandra'
@@ -1022,13 +1024,15 @@ spring:
     contact-points: cassandra-node1,cassandra-node2,cassandra-node3
     port: 9042
     local-datacenter: dc-moscow
-    schema-action: create_if_not_exists  # none для production
+    schema-action: none
     request:
       timeout: 5s
       consistency: LOCAL_QUORUM
 ```
 
-**Конфигурация через Java (для тонкой настройки):**
+`contact-points` — адреса для первичного подключения. `local-datacenter` должен совпадать с именем ДЦ кластера. При `schema-action: none` подготовьте keyspace и таблицы отдельно до запуска приложения (Q34).
+
+**Явная конфигурация без автоконфигурации Spring Boot:**
 
 ```java
 @Configuration
@@ -1046,53 +1050,48 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
     }
 
     @Override
+    protected String getLocalDataCenter() {
+        return "dc-moscow";
+    }
+
+    @Override
     public SchemaAction getSchemaAction() {
-        return SchemaAction.CREATE_IF_NOT_EXISTS;
+        return SchemaAction.NONE;
     }
 }
 ```
 
 ## Q32. Как определить `Entity` и `Repository` в `Spring Data Cassandra`?
 
-**Entity (модель):**
+Таблица `orders_by_user` из Q9 использует составной ключ. В Spring Data Cassandra 4.5 его можно вынести в `@PrimaryKeyClass` и использовать этот же тип как ID репозитория. Тогда `findById` принимает весь ключ, а запрос списка заказов использует только нужную часть ключа.
+
+**Модель и ключ (отдельные Java-файлы, импорты опущены):**
 
 ```java
-@Table("orders")
-public class Order {
+@PrimaryKeyClass
+public record OrderKey(
+    @PrimaryKeyColumn(name = "user_id", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
+    UUID userId,
+    @PrimaryKeyColumn(name = "order_date", ordinal = 1, type = PrimaryKeyType.CLUSTERED,
+                      ordering = Ordering.DESCENDING)
+    Instant orderDate,
+    @PrimaryKeyColumn(name = "order_id", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
+    UUID orderId
+) implements Serializable {}
 
-    @PrimaryKeyColumn(name = "user_id", ordinal = 0,
-                       type = PrimaryKeyType.PARTITIONED)
-    private UUID userId;
-
-    @PrimaryKeyColumn(name = "order_date", ordinal = 1,
-                       type = PrimaryKeyType.CLUSTERED,
-                       ordering = Ordering.DESCENDING)
-    private Instant orderDate;
-
-    @PrimaryKeyColumn(name = "order_id", ordinal = 2,
-                       type = PrimaryKeyType.CLUSTERED)
-    private UUID orderId;
-
-    @Column("total")
-    private BigDecimal total;
-
-    @Column("status")
-    private String status;
-
-    // getters, setters
-}
+@Table("orders_by_user")
+public record Order(@PrimaryKey OrderKey key, BigDecimal total) {}
 ```
 
-**Repository:**
+**Репозиторий:**
 
 ```java
-public interface OrderRepository
-        extends CassandraRepository<Order, UUID> {
+public interface OrderRepository extends CassandraRepository<Order, OrderKey> {
 
-    // Spring Data автоматически генерирует CQL
-    List<Order> findByUserId(UUID userId);
+    @Query("SELECT * FROM orders_by_user WHERE user_id = ?0")
+    List<Order> findByUser(UUID userId);
 
-    @Query("SELECT * FROM orders WHERE user_id = ?0 AND order_date > ?1")
+    @Query("SELECT * FROM orders_by_user WHERE user_id = ?0 AND order_date > ?1")
     List<Order> findRecentOrders(UUID userId, Instant since);
 }
 ```
@@ -1108,8 +1107,8 @@ public class OrderService {
 
     public List<Order> findByUser(UUID userId) {
         return cassandraTemplate.select(
-            Query.query(Criteria.where("user_id").is(userId))
-                 .limit(20),
+            SimpleStatement.newInstance(
+                "SELECT * FROM orders_by_user WHERE user_id = ? LIMIT 20", userId),
             Order.class
         );
     }
@@ -1125,22 +1124,22 @@ public class OrderService {
 
 ## Q33. Как `Cassandra Java Driver` работает с кластером?
 
-**DataStax Java Driver** (v4.x) — основной драйвер для взаимодействия с `Cassandra` из Java.
+Ветка Java Driver 4.x предоставляет синхронный и асинхронный API через `CqlSession`. Начиная с 4.18 драйвер выпускает Apache Cassandra. Maven-координаты ядра — `org.apache.cassandra:java-driver-core`. В Java сохранился пакет `com.datastax.oss.driver.api`. Spring Boot управляет версией драйвера через свой BOM.
 
 **Ключевые компоненты:**
 
 | Компонент | Описание |
 |-----------|----------|
-| `CqlSession` | Основной объект, пул соединений, **singleton** на приложение |
-| `PreparedStatement` | Подготовленный запрос, кэшируется на узлах |
-| `Load Balancing Policy` | Выбор координатора (`DCAwareRoundRobinPolicy`) |
-| `Retry Policy` | Стратегия повтора при сбоях |
+| `CqlSession` | Потокобезопасная сессия с пулами соединений. Обычно её переиспользуют для одного кластера и закрывают при остановке приложения. |
+| `PreparedStatement` | Подготовленный запрос с параметрами, который можно многократно привязывать и выполнять. |
+| `Load Balancing Policy` | `DefaultLoadBalancingPolicy` предпочитает реплики в локальном ДЦ, если известен ключ маршрутизации. |
+| `Retry Policy` | Условия повтора после сбоя. При неопределённом результате учитывается идемпотентность запроса. |
 | `Reconnection Policy` | Стратегия переподключения |
 
 **Пример использования:**
 
 ```java
-// Создание сессии (один раз на приложение)
+// Создание сессии для кластера. Закройте её при остановке приложения.
 CqlSession session = CqlSession.builder()
     .addContactPoint(new InetSocketAddress("cassandra-host", 9042))
     .withLocalDatacenter("dc-moscow")
@@ -1149,20 +1148,20 @@ CqlSession session = CqlSession.builder()
 
 // Prepared Statement (подготовить один раз, использовать много)
 PreparedStatement ps = session.prepare(
-    "INSERT INTO orders (user_id, order_date, order_id, total) " +
+    "INSERT INTO orders_by_user (user_id, order_date, order_id, total) " +
     "VALUES (?, ?, ?, ?)"
 );
 
 // Bind и выполнение
 BoundStatement bs = ps.bind(userId, Instant.now(), orderId, total)
-    .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
-session.execute(bs);
+    .setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM);
 
-// Асинхронное выполнение
-CompletionStage<AsyncResultSet> future = session.executeAsync(bs);
+// Выберите один способ выполнения.
+session.execute(bs);
+// CompletionStage<AsyncResultSet> future = session.executeAsync(bs);
 ```
 
-**Настройка в `application.conf`:**
+**Настройка драйвера в `application.conf` при самостоятельном создании сессии:**
 
 ```hocon
 datastax-java-driver {
