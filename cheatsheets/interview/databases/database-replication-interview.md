@@ -372,10 +372,7 @@ db.getReplicationInfo()
 - **Read-after-write на primary** — первые X секунд после записи читать только с primary.
 - **LSN tracking** — клиент хранит `last_write_lsn`, а реплика ждёт, пока её `replay_lsn >= last_write_lsn`, прежде чем ответить.
   - PostgreSQL: `pg_wal_replay_wait` (PG 18) или то же на уровне приложения.
-- **Causal consistency tokens** (`MongoDB`):
-  ```javascript
-  const session = client.startSession({ causalConsistency: true });
-  ```
+- **Причинно-согласованная сессия MongoDB.** Выполняйте запись и последующее чтение последовательно в одной сессии с `causalConsistency: true`. Для записи задайте `writeConcern: { w: "majority" }`, для чтения — `readConcern: { level: "majority" }`. После успешной записи чтение с реплики дождётся состояния, которое учитывает эту запись, либо завершится ошибкой, если это состояние получить не удастся. Одна опция `causalConsistency` без обоих уровней `majority` такой гарантии не даёт. [Causal Consistency and Read and Write Concerns](https://www.mongodb.com/docs/manual/core/causal-consistency-read-write-concerns/).
 
 **Monotonic reads consistency** — пользователь не видит «откат во времени»: если он раз увидел значение, при следующем чтении оно не должно исчезнуть. Нарушается, когда два последовательных запроса попали на реплики с разным лагом (первая свежее второй).
 
@@ -389,7 +386,7 @@ userRepo.save(user);              // primary
 User u = userRepo.findById(id);   // replica — может вернуть старое!
 return u;
 ```
-**Решение:** форсить primary для чтения сразу после save, либо использовать causal consistency token.
+**Решение:** после успешной записи читать с primary при подходящих гарантиях записи и чтения либо дождаться, пока реплика применит запись. В MongoDB для чтения с реплики используйте одну причинно-согласованную сессию с указанными выше уровнями `majority`.
 
 ---
 
