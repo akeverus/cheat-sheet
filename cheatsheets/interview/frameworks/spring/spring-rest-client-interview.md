@@ -85,7 +85,7 @@ graph LR
 **Как выбрать:**
 - Новый проект на Spring 6.1+, классический блокирующий стек (Spring MVC) → **RestClient**.
 - Spring WebFlux, высокая конкурентность, нужны `Mono`/`Flux` → **WebClient**.
-- Legacy-код, который ещё не мигрировали → **RestTemplate** (продолжает работать, но новых фич не получает и с 7.0 помечен `@Deprecated`).
+- Legacy-код, который ещё не мигрировали → **RestTemplate** (deprecation объявлена в справочной документации 7.0, аннотация `@Deprecated` появилась в 7.1).
 
 ---
 
@@ -106,6 +106,8 @@ graph LR
 ## Q3. (!) Как работает RestClient?
 
 `RestClient` — это синхронный fluent-клиент: вы собираете запрос цепочкой методов и в конце вызываете терминальную операцию, которая блокирующе выполняет HTTP-вызов и возвращает результат. Каждый вызов строится по одной схеме: выбрать метод (`get()`/`post()`/…) → задать URI и тело → `retrieve()` → извлечь ответ (`body()`, `toEntity()`, `toBodilessEntity()`).
+
+В Spring Framework 6.2 вызов `retrieve()` только возвращает `ResponseSpec`. Если цепочка DELETE заканчивается на `retrieve()`, сервер не получит запрос. В примере ниже `toBodilessEntity()` отправляет запрос и обрабатывает статус ответа. При HTTP 204 результат содержит статус и заголовки без тела, а при HTTP 404 стандартный обработчик выбросит исключение, даже если вызывающий код игнорирует возвращаемое значение. [Spring Framework 6.2 — получение ответа](https://docs.spring.io/spring-framework/reference/6.2/integration/rest-clients.html#rest-restclient-response) · [ResponseSpec.toBodilessEntity](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/web/client/RestClient.ResponseSpec.html#toBodilessEntity())
 
 `RestClient.builder()` создаёт переиспользуемый клиент с общими настройками (базовый URL, заголовки по умолчанию). Один такой клиент потокобезопасен — его создают один раз и держат как бин.
 
@@ -179,6 +181,8 @@ Optional<User> user = client.get()
 В лямбде `exchange()` ответ имеет тип `ConvertibleClientHttpResponse`: он даёт как сырой `getBody()`, так и `bodyTo(User.class)` через настроенные конвертеры. `bodyTo()` возвращает `null` при пустом теле, поэтому здесь нужен `Optional.ofNullable()`. Это расширение `ClientHttpResponse`, а не метод базового интерфейса. См. [Javadoc Spring Framework 6.2](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/web/client/RestClient.RequestHeadersSpec.ConvertibleClientHttpResponse.html).
 
 Помимо обработки статусов, `exchange()` даёт доступ к сырому ответу: чтению тела как `InputStream` и прочим низкоуровневым деталям. Заголовки при этом доступны и через `retrieve()` — их отдаёт `toEntity(...)` вместе с телом и статусом; разница не в самом доступе к заголовкам, а в том, что `exchange()` пускает к ответу до и помимо разбора тела.
+
+**Когда закрывается ответ.** В Spring Framework 6.2 обычный `exchange(callback)` закрывает HTTP-ответ после выхода из callback, в том числе при исключении. Если callback вернёт `response.getBody()`, вызывающий получит поток от уже закрытого ответа. При скачивании файла скопируйте тело в выходной поток внутри callback и верните, например, число записанных байт. У перегрузки `exchange(callback, false)` закрытие становится обязанностью вызывающего кода. Если чтение должно продолжаться за пределами callback, передавайте сам закрываемый ответ или объект, который им владеет. Закрывайте ответ и на пути ошибки, иначе незавершённое чтение может удерживать соединение из пула. [Spring Framework 6.2 — контракт exchange](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/web/client/RestClient.RequestHeadersSpec.html#exchange(org.springframework.web.client.RestClient.RequestHeadersSpec.ExchangeFunction,boolean)) · [DefaultRestClient 6.2.19 — закрытие в finally](https://github.com/spring-projects/spring-framework/blob/v6.2.19/spring-web/src/main/java/org/springframework/web/client/DefaultRestClient.java#L562-L572).
 
 Для обычного преобразования тела начинайте с `retrieve()`. Выбирайте `exchange()`, когда требуется контролировать сырой ответ или преобразовать статус в иной результат, например 404 в `Optional.empty()`. См. [Spring Framework 6.2: RestClient](https://docs.spring.io/spring-framework/reference/6.2/integration/rest-clients.html).
 
@@ -452,6 +456,7 @@ CloseableHttpClient httpClient = HttpClients.custom()
     .build();
 HttpComponentsClientHttpRequestFactory apacheFactory =
     new HttpComponentsClientHttpRequestFactory(httpClient);
+apacheFactory.setConnectionRequestTimeout(Duration.ofMillis(300));
 
 // RestClient с настройками:
 RestClient client = RestClient.builder()
@@ -462,6 +467,8 @@ RestClient client = RestClient.builder()
     .defaultUriVariables(Map.of("version", "2"))
     .build();
 ```
+
+**Ожидание соединения из пула.** Если все соединения для маршрута заняты и пул не может выдать ещё одно, запрос сначала ждёт выдачи соединения. В примере Spring Framework 6.2 с Apache HttpClient 5.6 это ожидание ограничено 300 мс через `setConnectionRequestTimeout`. Оно может закончиться ошибкой ещё до отправки запроса. `connectTimeout` относится к установлению нового соединения, а `socketTimeout` задаёт базовый таймаут сокета. Повторно используемое соединение не требует нового подключения. Общий бюджет вызова включает эти этапы вместе с обработкой ответа и возможными повторами (Q14). [Spring Framework 6.2 — фабрика Apache HttpClient](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/http/client/HttpComponentsClientHttpRequestFactory.html#setConnectionRequestTimeout(java.time.Duration)) · [Apache HttpClient 5.6 — параметры запроса](https://hc.apache.org/httpcomponents-client-5.6.x/current/httpclient5/apidocs/org/apache/hc/client5/http/config/RequestConfig.Builder.html#setConnectionRequestTimeout-org.apache.hc.core5.util.Timeout-).
 
 **Интерсептор для логирования.** `requestInterceptor` оборачивает каждый вызов: вы видите исходящий запрос, передаёте управление дальше через `execution.execute(...)` и затем читаете ответ. Удобно для логирования, добавления заголовков на лету или сбора метрик:
 ```java

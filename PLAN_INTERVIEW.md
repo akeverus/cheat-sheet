@@ -32,7 +32,7 @@
 диапазона, включая Notification System и Java Functional Interface, не входят
 в счётчик 55. Для учёта достаточно путей и записей о передаче полного файла.
 
-Из 55 файлов партии 13 восстановлены в `master`. Вне этой партии уже
+Из 55 файлов партии 14 восстановлены в `master`. Вне этой партии уже
 закоммичены Notification System, Java Functional Interface, Vector Databases
 и JDBC и пулы соединений.
 
@@ -664,6 +664,9 @@
   согласованный снимок `work/spring-rest-client-terminal-operation-theory-return/spring-rest-client-interview.md`,
   SHA-256 `eaec20aca46c476b28076c9a01a5ee7bc8cc1e77d7fab3d43e2da2f3f827dda2`.
   Ход автора Markdown `01a2041b-e663-74f3-88ff-56b49bec1593`.
+  MCQ-чат передал полный JSON в ходе `01a20422-d505-7e73-b52b-c85e1dd09954`
+  по пути `work/spring-rest-client-recovery-full-regeneration/spring-rest-client-interview.json`.
+  Пара JSON и Markdown перенесена в production и включена в коммит вместе с этой записью.
 
 - **Hibernate Q48** — накопительный Markdown передан в завершённом ходе
   `01a203ff-57ce-7f03-bd10-93b3990e6060`.
