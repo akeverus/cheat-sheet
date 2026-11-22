@@ -32,7 +32,7 @@
 диапазона, включая Notification System и Java Functional Interface, не входят
 в счётчик 55. Для учёта достаточно путей и записей о передаче полного файла.
 
-Из 55 файлов партии 17 восстановлены в `master`. Вне этой партии уже
+Из 55 файлов партии 18 восстановлены в `master`. Вне этой партии уже
 закоммичены Notification System, Java Functional Interface, Vector Databases
 и JDBC и пулы соединений.
 
@@ -909,3 +909,18 @@ python3 scripts/mcq-workflow.py sync
   из `b28a1c807`. JSON перенесён побайтно из
   `work/spring-data-jpa-recovery-full-regeneration/spring-data-jpa-interview.json`.
   Этот коммит содержит оба production-файла.
+
+- **Go Standard Library** — чат MCQ передал полный JSON после генерации
+  из исторического файла темы на `b28a1c807` и полного Markdown
+  `work/go-stdlib-header-timeout-theory-return/go-stdlib-interview.md`
+  (SHA-256 `a72846e462f296583c31804fe47b1bb29dddbb83ca9d5c01302cc197ceef8111`).
+  Результат передан в ходе `01a20463-18bc-78b1-bbcc-3283742473fc` по пути
+  `work/go-stdlib-recovery-full-regeneration/go-stdlib-interview.json`.
+  Полный JSON перенесён как есть вместе с согласованным Markdown.
+
+- **SQL** — чат шпаргалок передал накопительный Markdown
+  `work/sql-visible-conditions-theory-return/sql-interview.md` в ходе
+  `01a20462-ffbe-7c52-a632-2bffa48ff427`.
+  SHA-256 `5b65aed2c93575219082d8a82278f45b716cbc46e7d4e791d848f1cc25b6727e`.
+  Изменены Q1/Q4/Q5/Q14/Q21/Q22/Q24/Q27/Q29/Q31, прежний Q16 сохранён.
+  Снимок готов для полной генерации темы из исторического JSON.
