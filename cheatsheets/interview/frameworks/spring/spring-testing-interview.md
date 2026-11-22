@@ -78,6 +78,31 @@ Spring Boot предоставляет мощную тестовую инфра�
 
 Если конфигурация не задана явно, Boot ищет основную конфигурацию приложения, обычно класс с `@SpringBootApplication`. Spring TestContext может переиспользовать контекст для тестов с тем же ключом (Q13). [Spring Boot 3.5: Testing Spring Boot Applications](https://docs.spring.io/spring-boot/3.5/reference/testing/spring-boot-applications.html).
 
+**Сценарий для Boot 3.5.** Приложение добавляет профиль только в `main`. В тестовом окружении этот профиль больше нигде не задан. Что произойдёт при обычном `@SpringBootTest` и при запуске с `useMainMethod = ALWAYS`?
+
+```java
+@SpringBootApplication
+class OrdersApplication {
+    public static void main(String[] args) {
+        SpringApplication app = new SpringApplication(OrdersApplication.class);
+        app.setAdditionalProfiles("local-orders");
+        app.run(args);
+    }
+}
+
+@SpringBootTest(classes = OrdersApplication.class)
+class DefaultStartupTest {}
+
+@SpringBootTest(
+    classes = OrdersApplication.class,
+    useMainMethod = SpringBootTest.UseMainMethod.ALWAYS)
+class MainStartupTest {}
+```
+
+По умолчанию Boot создаёт контекст теста через `SpringApplication`, пропуская пользовательский `main`. В первом тесте профиль `local-orders` поэтому не активируется. Во втором Boot вызывает `main` и применяет добавленный там профиль. Режим `ALWAYS` требует наличия `main`; `WHEN_AVAILABLE` использует его при наличии и допускает обычную загрузку в остальных случаях. [Spring Boot 3.5: использование main в тестах](https://docs.spring.io/spring-boot/3.5/reference/testing/spring-boot-applications.html#testing.spring-boot-applications.using-main).
+
+**Пример интеграционного теста сервиса и репозитория.**
+
 ```java
 @SpringBootTest
 class OrderServiceIntegrationTest {
@@ -147,15 +172,13 @@ class OrderControllerHttpTest {
 
 `RANDOM_PORT` подходит для проверки через реальный HTTP. В режиме `MOCK` сервер не запускается. Для `MockMvc` в полном MVC-контексте добавьте `@AutoConfigureMockMvc`: сам `MOCK` клиент не подключает. [Spring Boot 3.5: Testing Spring Boot Applications](https://docs.spring.io/spring-boot/3.5/reference/testing/spring-boot-applications.html).
 
+**Граница транзакции при реальном HTTP.** В Spring Boot 3.5 с Servlet-сервером при `RANDOM_PORT` или `DEFINED_PORT` тестовый метод и обработчик запроса выполняются в разных потоках. Если добавить к тесту выше `@Transactional`, Spring TestContext по умолчанию откатит транзакцию теста. Если сервис уже зафиксировал заказ в собственной транзакции при обработке POST, заказ останется в БД. Для такого теста очищайте данные после запроса отдельной фиксируемой операцией или используйте изолированную БД. По той же причине тестовые данные, подготовленные в незавершённой транзакции теста, могут быть невидимы обработчику HTTP. [Spring Boot 3.5 — Testing Spring Boot Applications](https://docs.spring.io/spring-boot/3.5/reference/testing/spring-boot-applications.html).
+
 ## Q3. (!) Что такое test slices и зачем нужны?
 
 **Test slice** — тестовая конфигурация, которая ограничивает сканирование компонентов и набор автоконфигураций под конкретный слой. Например, MVC-срез подключает инфраструктуру MVC, а JPA-срез — инфраструктуру персистентности.
 
-```
-Полный @SpringBootTest:  [Web] + [Service] + [Persistence] + [Security] + ...
-@WebMvcTest:             [MVC] + нужные импорты или подмены
-@DataJpaTest:            [JPA] + нужные импорты или подмены
-```
+В Boot 3.5 есть два отдельных ограничения. Фильтры среза ограничивают компонентное сканирование, а аннотация среза подключает свой набор автоконфигураций. Явный `@Import` добавляет выбранную конфигурацию целиком, включая её `@Bean`-методы. Поэтому импорт общего класса с настройками HTTP и БД может потянуть зависимости БД в MVC-тест. Если основной класс использует собственный `@ComponentScan`, зарегистрируйте `TypeExcludeFilter`, чтобы сохранить фильтрацию срезов. [Spring Boot 3.5: Testing Spring Boot Applications](https://docs.spring.io/spring-boot/3.5/reference/testing/spring-boot-applications.html).
 
 **Зачем это нужно:**
 - **Скорость** — меньший контекст обычно быстрее запускается.
@@ -168,10 +191,11 @@ class OrderControllerHttpTest {
 
 `@WebMvcTest` ограничивает сканирование MVC-компонентами, например контроллерами, фильтрами и `WebMvcConfigurer`. Положенную вне среза зависимость можно добавить через `@Import` или подменить через `@MockitoBean`.
 
-`@WebMvcTest` автоматически настраивает `MockMvc`. Полная конфигурация приложения загружается через `@SpringBootTest`, где для `MockMvc` нужна `@AutoConfigureMockMvc`. В примере ниже Spring Security подключён. Цепочка должна разрешать `POST /api/orders` пользователю с `ROLE_USER`. При включённом CSRF запросу нужен валидный токен. [Spring Security: CSRF в MockMvc](https://docs.spring.io/spring-security/reference/servlet/test/mockmvc/csrf.html).
+`@WebMvcTest` автоматически настраивает `MockMvc`. Полная конфигурация приложения загружается через `@SpringBootTest`, где для `MockMvc` нужна `@AutoConfigureMockMvc`. В примере Spring Security подключён, а правила приложения объявлены в отдельном классе `OrderSecurityConfiguration` с бином `SecurityFilterChain`. Обычная конфигурация с таким фабричным методом может остаться за пределами сканирования среза. Импорт подключает именно эту цепочку. Она должна разрешать `POST /api/orders` пользователю с `ROLE_USER`. При включённом CSRF запросу нужен валидный токен. [Spring Security: CSRF в MockMvc](https://docs.spring.io/spring-security/reference/servlet/test/mockmvc/csrf.html).
 
 ```java
 @WebMvcTest(OrderController.class)
+@Import(OrderSecurityConfiguration.class)
 class OrderControllerTest {
 
     @Autowired
@@ -204,9 +228,11 @@ class OrderControllerTest {
 |---|---|---|
 | Загружаемые бины | MVC-срез и добавленные компоненты | Выбранная конфигурация приложения |
 | Сервисы/репозитории | При необходимости импорт или `@MockitoBean` | По конфигурации, возможны тестовые подмены |
-| Скорость | Быстрее | Медленнее |
+| Объём запуска | Обычно меньше бинов | Зависит от конфигурации и повторного использования кеша |
 | MockMvc | Автоматически | Нужен `@AutoConfigureMockMvc` |
 | Spring Security | Автоконфигурация при наличии Security, нужную цепочку можно импортировать | По конфигурации приложения |
+
+Если тест возвращает 401 или 403 при ожидаемом 201, проверьте, какая цепочка загружена, затем условия аутентификации, авторизации и CSRF. Валидный CSRF-токен выполняет только условие CSRF-проверки. [Spring Boot 3.5: конфигурация для тестовых срезов](https://docs.spring.io/spring-boot/3.5/how-to/testing.html).
 
 **Сценарии применения** — всё, что относится к web-контракту, а не к бизнес-логике:
 - Маршрутизация URL → метод контроллера
@@ -234,6 +260,7 @@ class UserRepositoryTest {
     void findByEmail_shouldReturnUser() {
         entityManager.persist(new User("alice@mail.com", "Alice"));
         entityManager.flush();
+        entityManager.clear();
 
         Optional<User> found = userRepository.findByEmail("alice@mail.com");
         assertThat(found).isPresent().get().extracting(User::getName).isEqualTo("Alice");
@@ -249,6 +276,10 @@ class UserRepositoryTest {
     }
 }
 ```
+
+В первом тесте `flush()` синхронизирует изменения с БД в текущей транзакции. Следующий `clear()` отсоединяет подготовленную сущность, чтобы при проверке чтения контекст не вернул тот же управляемый экземпляр. Порядок важен: при `clear()` до `flush()` несинхронизированные изменения теряются.
+
+Тест с дубликатом предполагает действующее ограничение уникальности email в тестовой схеме и проверку ограничения при записи. Если ограничение отложено до фиксации, `saveAndFlush()` может завершиться успешно, а ошибка проявится при commit. В таком сценарии проверяйте саму фиксацию. [Spring TestContext 6.2 — транзакционные тесты](https://docs.spring.io/spring-framework/reference/6.2/testing/testcontext-framework/tx.html).
 
 **Настройка для реальной БД:**
 
@@ -296,6 +327,10 @@ class OrderDtoJsonTest {
 }
 ```
 
+В Spring Boot 3.5 `@RestClientTest(OrdersClient.class)` подходит для компонента, который получает настроенный Spring `RestClient.Builder` или `RestTemplateBuilder`. Например, задайте в `MockRestServiceServer` ожидание GET к API заказов и ответ JSON, вызовите метод `OrdersClient`, проверьте разобранные данные и выполните `server.verify()`. Такой тест проверяет формирование запроса и обработку ответа без сетевого сервера.
+
+Если компонент сам вызывает `RestClient.create()`, он обходит настроенный Spring builder. Ожидания автоконфигурированного `MockRestServiceServer` к этому клиенту не привязаны. Передайте builder через конструктор, чтобы срез мог подключить заглушку к клиенту. [Spring Boot 3.5 — RestClientTest](https://docs.spring.io/spring-boot/3.5/api/java/org/springframework/boot/test/autoconfigure/web/client/RestClientTest.html)
+
 ## Q7. (!) Что такое `MockMvc` и как им пользоваться?
 
 `MockMvc` выполняет запрос через `DispatcherServlet` без запуска HTTP-сервера и сетевого соединения. Он проверяет обработку MVC и вызывает фильтры, подключённые к конкретной конфигурации `MockMvc`. [Spring MVC: фильтры MockMvc](https://docs.spring.io/spring-framework/reference/testing/mockmvc/hamcrest/filters.html).
@@ -304,12 +339,13 @@ class OrderDtoJsonTest {
 
 ```java
 @WebMvcTest(OrderController.class)
+@WithMockUser(roles = "USER")
 class OrderControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private OrderService service;
 
     @Test
@@ -324,7 +360,7 @@ class OrderControllerTest {
             .andExpect(content().contentType(APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(1))
             .andExpect(jsonPath("$.customerId").value("CUST-1"))
-            .andDo(print());  // вывести запрос/ответ в лог
+            .andDo(print());
     }
 
     @Test
@@ -337,15 +373,33 @@ class OrderControllerTest {
 }
 ```
 
+Пример рассчитан на Spring Boot 3.5. При подключённых Spring Security и `spring-security-test` аннотация `@WithMockUser` задаёт тестовую аутентификацию. Правила загруженной цепочки должны разрешать пользователю с ролью `USER` оба GET-запроса. Иначе цепочка может отклонить запрос до вызова контроллера. Для результата 404 также предполагается, что MVC-срез загружает обработчик, сопоставляющий `OrderNotFoundException` с этим статусом. [Boot 3.5 — WebMvcTest](https://docs.spring.io/spring-boot/3.5/api/java/org/springframework/boot/test/autoconfigure/web/servlet/WebMvcTest.html) · [Spring Security 6.5 — аутентификация в MockMvc](https://docs.spring.io/spring-security/reference/6.5/servlet/test/mockmvc/authentication.html)
+
 **Основные методы fluent API:**
 - `perform(request)` — выполнить смоделированный запрос
 - `andExpect(matcher)` — проверить ответ (статус, заголовок, тело через `jsonPath`); можно сцеплять несколько проверок
-- `andDo(handler)` — побочное действие, например `print()` для вывода запроса/ответа в лог при отладке
+- `andDo(handler)` — побочное действие, например `print()` для вывода деталей запроса и ответа в стандартный вывод
 - `andReturn()` — получить `MvcResult` для ручных проверок, когда стандартных matchers не хватает
 
 ## Q8. Как тестировать REST endpoint с JSON через MockMvc?
 
-Тело отправляют как `application/json`, а ответ проверяют через `jsonPath()`. `{}` — корректный JSON-объект. В примере DTO имеет обязательные поля, контроллер применяет `@Valid @RequestBody`, а ошибки валидации обрабатываются как 400. Оба POST должны пройти Security: цепочка разрешает запрос пользователю с `ROLE_USER`, а `csrf()` добавляет валидный токен при включённой защите. Иначе фильтры могут вернуть 403 до проверки тела. [Spring MVC: RequestBody](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-methods/requestbody.html) · [Spring Security: CSRF в MockMvc](https://docs.spring.io/spring-security/reference/servlet/test/mockmvc/csrf.html).
+В Spring Boot 3.5 тест запускает MVC с фильтрами Spring Security. Цепочка разрешает `POST /api/orders` пользователю с `ROLE_USER`, CSRF-защита включена, обработчик отказа стандартный. У DTO поле `customerId` помечено `@NotBlank`, аргумент контроллера объявлен как `@Valid @RequestBody` без `BindingResult`. Какой статус получит каждый запрос и на каком этапе завершится обработка?
+
+```java
+// Тест выполняется с @WithMockUser(roles = "USER").
+var first = mockMvc.perform(post("/api/orders")
+    .contentType(APPLICATION_JSON)
+    .content("{}"));
+
+var second = mockMvc.perform(post("/api/orders")
+    .with(csrf())
+    .contentType(APPLICATION_JSON)
+    .content("{}"));
+```
+
+В первом запросе CSRF-фильтр отклоняет POST со статусом 403 до вызова MVC. Во втором запросе `csrf()` добавляет действительный токен. Конвертер читает `{}` как корректный JSON и создаёт DTO с пустым обязательным полем. Валидация аргумента вызывает `MethodArgumentNotValidException`, который стандартная обработка MVC переводит в 400. В обоих случаях метод контроллера и сервис создания заказа остаются невызванными. [Spring Security 6.5: CSRF в MockMvc](https://docs.spring.io/spring-security/reference/6.5/servlet/test/mockmvc/csrf.html) · [Spring Framework 6.2: RequestBody](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-controller/ann-methods/requestbody.html).
+
+В полном тесте успешная ветка дополнительно проверяет статус 201, заголовок `Location` и поле ответа через `jsonPath()`. В ветке с ошибкой можно проверить разрешённое MVC-исключение, чтобы отличить отказ валидации DTO от других причин статуса 400.
 
 ```java
 @WebMvcTest(OrderController.class)
@@ -386,7 +440,10 @@ class OrderControllerTest {
                     .contentType(APPLICATION_JSON)
                     .content("{}")  // JSON-объект без обязательных полей DTO
             )
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isBadRequest())
+            .andExpect(result -> assertInstanceOf(
+                MethodArgumentNotValidException.class, result.getResolvedException()));
+        verifyNoInteractions(service);
     }
 }
 ```
@@ -401,12 +458,26 @@ class OrderControllerTest {
 |---|---|---|
 | Spring-контекст | Не участвует | Добавляет mock в ApplicationContext |
 | DI | Конструктор или `@InjectMocks` через Mockito | Spring DI |
-| Сброс стейта | После метода (с `@ExtendWith`) | После каждого теста |
+| Жизненный цикл мока | `MockitoExtension` инициализирует поля перед каждым тестом и завершает сессию Mockito после теста | Spring TestContext управляет сбросом мока отдельно от жизненного цикла контекста. Для `@MockBean` и `@MockitoBean` по умолчанию действует `MockReset.AFTER` |
 | Кеш контекста | Не влияет | Подмена бина участвует в ключе кеша |
 | Использование | Unit тесты | Slice тесты / `@SpringBootTest` |
 
+**Сценарий для Spring Framework 6.2.19.** В контексте два singleton-бина типа `OrderService`: `liveOrders` отмечен `@Primary`, а `archiveOrders` — нет. Какой бин подменит следующий тест? Как выбрать другой?
+
+```java
+@SpringBootTest
+class OrderRoutingTest {
+    @MockitoBean OrderService archiveOrders;
+}
+```
+
+Из оставшихся подходящих кандидатов реализация 6.2.19 проверяет `@Primary` перед резервным сопоставлением по имени поля. Поэтому тест заменит `liveOrders`. Чтобы подменить архивный сервис, укажите `@MockitoBean(name = "archiveOrders", enforceOverride = true)`. Тогда ошибка в имени приведёт к сбою подготовки контекста вместо появления нового мока. [Исходник Spring Framework 6.2.19](https://github.com/spring-projects/spring-framework/blob/v6.2.19/spring-test/src/main/java/org/springframework/test/context/bean/override/BeanOverrideBeanFactoryPostProcessor.java#L340-L366).
+
+**Сравнение локального мока и подмены бина.**
+
 ```java
 // @Mock — unit test без Spring:
+@ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
     @Mock OrderRepository repository;
     @InjectMocks OrderService service;
@@ -419,15 +490,35 @@ class OrderControllerTest {
 }
 ```
 
+[Исходник MockitoExtension](https://github.com/mockito/mockito/blob/main/mockito-extensions/mockito-junit-jupiter/src/main/java/org/mockito/junit/jupiter/MockitoExtension.java) · [Spring Framework: MockitoBean API](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/test/context/bean/override/mockito/MockitoBean.html).
+
 Подмены бинов участвуют в формировании ключа кеша. Тесты с одинаковым ключом могут переиспользовать живой контекст в том же JVM-процессе. Локальный мок Mockito через `@Mock` не меняет ключ (Q13). [Spring TestContext: кеширование](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/ctx-management/caching.html).
 
-**Актуальный статус.** С Spring Boot 3.4 `@MockBean` помечена **deprecated**, а в Boot 4.0 удалена. Замена — `@MockitoBean` из Spring Framework 6.2 (пакет `org.springframework.test.context.bean.override.mockito`). По умолчанию она **заменяет или создаёт** бин (`REPLACE_OR_CREATE`); `enforceOverride = true` требует существующий бин и выявляет ошибочный тестовый контекст. При нескольких кандидатах нужен qualifier или имя. Имя поля тоже может служить fallback qualifier и влиять на ключ кеша контекста, поэтому в соседних тестах его сохраняют одинаковым. Подменённый mock не проходит обычное создание AOP-прокси оригинального бина. [Spring Framework: bean overrides](https://docs.spring.io/spring-framework/reference/testing/annotations/integration-spring/annotation-mockitobean.html).
+**Актуальный статус.** С Spring Boot 3.4 `@MockBean` помечена **deprecated**, а в Boot 4.0 удалена. Замена — `@MockitoBean` из Spring Framework 6.2 (пакет `org.springframework.test.context.bean.override.mockito`). По умолчанию она **заменяет или создаёт** бин (`REPLACE_OR_CREATE`); `enforceOverride = true` требует существующий бин и выявляет ошибочный тестовый контекст. Если по типу подходят несколько бинов, Spring может выбрать единственный `@Primary`. Для адресной подмены можно указать имя бина в аннотации. Имя поля тоже может служить fallback qualifier и влиять на ключ кеша контекста, поэтому в соседних тестах его сохраняют одинаковым. Подменённый mock не проходит обычное создание AOP-прокси оригинального бина. [Spring Framework: bean overrides](https://docs.spring.io/spring-framework/reference/testing/annotations/integration-spring/annotation-mockitobean.html).
+
+**Подмена в иерархии контекстов.** В интеграционном тесте `RootConfig` задаёт корневой контекст, а `WebConfig` — дочерний, где объявлен единственный singleton-бин типа `OrderService`. Если мок нужен только в дочернем контексте, укажите имя уровня. Начиная со Spring Framework 6.2.6, `contextName` совпадает с `name` соответствующей `@ContextConfiguration`. С пустым `contextName` подмена применяется на всех уровнях, поэтому стратегия по умолчанию может создать лишний мок в корневом контексте.
+
+```java
+@ExtendWith(SpringExtension.class)
+@ContextHierarchy({
+    @ContextConfiguration(name = "root", classes = RootConfig.class),
+    @ContextConfiguration(name = "web", classes = WebConfig.class)
+})
+class OrderWebIntegrationTest {
+    @MockitoBean(contextName = "web", enforceOverride = true)
+    OrderService orderService;
+}
+```
+
+Если в `web` отсутствует подходящий бин, `enforceOverride = true` приводит к ошибке при подготовке контекста. Это помогает заметить, что тест загрузил другую конфигурацию. [Spring Framework 6.2: MockitoBean API](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/test/context/bean/override/mockito/MockitoBean.html#contextName()).
 
 ## Q10. Что такое `@SpyBean` и когда нужен?
 
 `@SpyBean` — это **частичный mock** (spy) в Spring-контексте: реальный бин со всей рабочей логикой, у которого можно перехватить отдельные методы — переопределить их поведение через `doReturn`/`doThrow` или проверить факт вызова через `verify`. Всё, что вы не переопределили, продолжает работать по-настоящему.
 
-Нужен в двух случаях: проверить, что бин был вызван (`verify`), не подменяя его логику; либо точечно сломать один метод реального бина, чтобы протестировать обработку ошибки, оставив остальное настоящим.
+Spy полезен в двух случаях: проверить, что бин был вызван (`verify`), не подменяя его логику; либо точечно сломать один метод реального бина, чтобы протестировать обработку ошибки, оставив остальное настоящим.
+
+В примере `OrderService.create()` синхронно вызывает `publish(...)` и отдельно обращается к `sendEmail(...)` через внедрённый `OrderEventPublisher`. По контракту сервиса сбой отправки письма не должен прерывать создание заказа.
 
 ```java
 @SpringBootTest
@@ -464,13 +555,15 @@ class OrderEventTest {
 - `@MockBean` — заглушка целиком: по умолчанию все методы возвращают `null`/`0`/пустую коллекцию, реальной логики нет
 - `@SpyBean` — реальный бин: логика работает, а замокать можно лишь те методы, которые вы явно переопределили
 
-Как и `@MockBean`, `@SpyBean` участвует в ключе кеша контекста — злоупотреблять им не стоит.
+Подмены Mockito входят в ключ кеша контекста. Для `@MockitoSpyBean` в Spring Framework 6.2 по умолчанию действует `MockReset.AFTER`: после каждого тестового метода сбрасываются настройки Mockito и история вызовов. Состояние, которое изменили реальные методы бина или внешние операции, сохраняется и требует собственной изоляции тестов.
 
-**Актуальный статус.** `@SpyBean` deprecated с Spring Boot 3.4 и удалена в Boot 4.0; замена — `@MockitoSpyBean` из Spring Framework 6.2. Её стратегия `WRAP` требует **ровно один существующий** подходящий бин; в отличие от `@MockitoBean`, отсутствующий бин она не создаёт. Для spy используйте `doReturn(...)`/`doThrow(...)` при заглушении: `when(spy.method())` может вызвать настоящий метод уже во время настройки теста. При AOP-прокси spy оборачивается прокси; учитывайте это при проверке вызовов. [Spring Framework: Mockito spy override](https://docs.spring.io/spring-framework/reference/testing/annotations/integration-spring/annotation-mockitobean.html).
+**Актуальный статус.** `@SpyBean` deprecated с Spring Boot 3.4 и удалена в Boot 4.0; замена — `@MockitoSpyBean` из Spring Framework 6.2. Её стратегия `WRAP` требует **ровно один существующий** подходящий singleton-бин; в отличие от `@MockitoBean`, отсутствующий бин она не создаёт. Для spy используйте `doReturn(...)`/`doThrow(...)` при заглушении: `when(spy.method())` может вызвать настоящий метод уже во время настройки теста. Для бина с Spring AOP точный порядок обёртывания зависит от того, на каком этапе создаётся spy. В реализации 6.2.19 Spring регистрирует слушатель Mockito, который при `verify(...)` раскрывает Spring AOP-прокси до целевого объекта, если Spring AOP доступен. Факт вызова метода и эффект advice, например открытие транзакции, проверяются отдельно. [Javadoc MockitoSpyBean 6.2](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/test/context/bean/override/mockito/MockitoSpyBean.html) · [Исходник Spring Framework 6.2.19](https://github.com/spring-projects/spring-framework/blob/v6.2.19/spring-test/src/main/java/org/springframework/test/context/bean/override/mockito/MockitoSpyBeanOverrideHandler.java).
 
 ## Q11. Что такое `@TestConfiguration` и зачем нужна?
 
-`@TestConfiguration` — конфигурационный класс, который добавляет или переопределяет бины **только в тестах**. Ключевое отличие от обычного `@Configuration`: он **не подхватывается component scan** основного приложения и подключается лишь явно — через `@Import` или как вложенный `static`-класс внутри теста. Это позволяет держать тестовые бины (заглушку Security, фиксированные `Clock`, тестовый клиент) рядом с тестом и не загрязнять ими production-контекст.
+В Spring Boot 3.5 `@TestConfiguration` добавляет определения бинов в тестовый контекст. Верхнеуровневый класс исключается штатным сканированием Boot. Для конкретного теста его можно подключить через `@Import`. Вложенный статический класс с `@TestConfiguration` Boot подключает вместе с основной конфигурацией теста. Вложенный обычный `@Configuration` при автоматическом поиске может занять место основной конфигурации. [Spring Boot 3.5 — тестовая конфигурация](https://docs.spring.io/spring-boot/3.5/reference/testing/spring-boot-applications.html#testing.spring-boot-applications.detecting-configuration).
+
+Импорт дополнительной конфигурации сам по себе сохраняет существующие определения. При регистрации второго определения с тем же именем действует политика переопределения бинов. В Boot 3.5 она по умолчанию запрещает такую замену. Для целевой подмены зависимости в тесте можно использовать `@MockitoBean` из Q9. [Spring Boot 3.5 — свойства приложения](https://docs.spring.io/spring-boot/3.5/appendix/application-properties/index.html#application-properties.core.spring.main.allow-bean-definition-overriding).
 
 ```java
 @TestConfiguration
@@ -478,8 +571,7 @@ public class TestSecurityConfig {
 
     @Bean
     public SecurityFilterChain testSecurity(HttpSecurity http) throws Exception {
-        return http.csrf(csrf -> csrf.disable())
-                   .authorizeHttpRequests(a -> a.anyRequest().permitAll())
+        return http.authorizeHttpRequests(a -> a.anyRequest().permitAll())
                    .build();
     }
 }
@@ -488,12 +580,14 @@ public class TestSecurityConfig {
 ```java
 @WebMvcTest(OrderController.class)
 @Import(TestSecurityConfig.class)  // подключить тестовый конфиг
-class OrderControllerSecurityTest {
-    // Security отключена для тестов
+class OrderControllerTest {
+    // Тесты GET-маршрутов контроллера
 }
 ```
 
-**Вложенный класс** — частый вариант, когда конфигурация нужна одному тесту: объявляют `@TestConfiguration static class` прямо внутри тест-класса, и Spring подхватит его автоматически.
+Если импортированная цепочка первой подходит запросу, её правило `permitAll()` разрешает доступ без аутентификации. Остальные фильтры цепочки продолжают выполняться, включая проверку CSRF для запросов, которым нужен токен. При нескольких цепочках результат зависит от их порядка и условий применимости. [Spring Security 6.5 — FilterChainProxy](https://docs.spring.io/spring-security/reference/6.5/servlet/architecture.html#servlet-filterchainproxy).
+
+Альтернативный способ подключения конфигурации для одного теста — вложенный статический класс.
 
 ```java
 @WebMvcTest(OrderController.class)
@@ -536,24 +630,30 @@ class DatabaseMigrationTest {
 | `AFTER_EACH_TEST_METHOD` | После каждого метода |
 | `BEFORE_EACH_TEST_METHOD` | До каждого метода |
 
-**Когда НЕ нужен.** В большинстве случаев `@DirtiesContext` избыточен: пересоздание контекста — дорогая операция, и оно бьёт по кешу (см. Q13), резко замедляя весь прогон. Сперва попробуйте более дешёвую изоляцию:
-- Транзакции с rollback (по умолчанию в `@DataJpaTest`, либо `@Transactional` на тесте)
-- Очистку данных в `@BeforeEach`/`@AfterEach`
-- Testcontainers — каждый прогон стартует с чистой БД
+**Область сброса.** У аннотации на методе по умолчанию действует `AFTER_METHOD`. При `@ContextHierarchy` режим `EXHAUSTIVE` может закрыть другие ветви кеша с общим предком. Например, два дочерних контекста используют один родительский. Если тест изменил состояние только своего дочернего контекста, `hierarchyMode = CURRENT_LEVEL` удалит его и его потомков, сохранив родителя и соседнюю ветвь. [Spring Framework 6.2 — DirtiesContext](https://docs.spring.io/spring-framework/reference/6.2/testing/annotations/integration-spring/annotation-dirtiescontext.html).
 
-После миграции внешнюю БД нужно очистить или восстановить отдельно. Закрытие контекста не меняет её схему.
+**Изоляция данных.** Повторная загрузка контекста занимает время. Если тест меняет только строки в БД, используйте откат тестовой транзакции для записей внутри неё или явно очищайте данные. Запись через HTTP на реальный сервер может зафиксироваться в другой транзакции, как в Q2. Один экземпляр контейнера с БД может обслуживать несколько тестов, пока они используют кешированный контекст. Для чистой БД согласуйте срок жизни контейнера с нужной границей изоляции или восстанавливайте исходные данные между тестами. [Spring Boot 3.5 — жизненный цикл контейнеров](https://docs.spring.io/spring-boot/3.5/reference/testing/testcontainers.html#testing.testcontainers.lifecycle).
+
 
 ## Q13. (!) Как Spring Boot кеширует ApplicationContext в тестах?
 
 Spring TestContext кеширует контексты в пределах JVM-процесса. В ключ входят параметры конфигурации, например её классы и загрузчик, активные профили, тестовые свойства и `ContextCustomizer`, в том числе подмены бинов. Живой контекст с тем же ключом можно использовать повторно. Произвольная аннотация влияет на кеш только если меняет один из параметров ключа. [Spring TestContext: кеширование](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/ctx-management/caching.html).
 
-```
-@SpringBootTest             → Key A
-@SpringBootTest + @MockBean X → Key B  (другой контекст!)
-@SpringBootTest + @MockBean Y → Key C  (ещё один контекст!)
+**Сценарий для Spring Boot 3.5 / Framework 6.2.** Два тестовых класса запускаются в одной JVM. Конфигурация приложения и профили совпадают. В приложении один бин типа `EmailService`. Могут ли классы использовать один контекст?
+
+```java
+@SpringBootTest
+class OrderTest {
+    @MockitoBean EmailService emailService;
+}
+
+@SpringBootTest
+class UserTest {
+    @MockitoBean EmailService mailer;
+}
 ```
 
-**Последствие:** разнобой в `@MockBean`, профилях и `@TestPropertySource` по тест-классам плодит десятки разных контекстов, каждый из которых поднимается с нуля — и прогон тестов резко замедляется.
+Обе подмены выбирают один тип бина. При этом имя поля может участвовать в выборе кандидата как резервный квалификатор и учитывается в конфигурации подмены для кеша. Разные имена полей здесь дают разные ключи контекста. Единое объявление подмены позволяет переиспользовать контекст, если совпадают и остальные части ключа. То же правило квалификаторов действует для `@MockitoSpyBean`. [Spring Framework 6.2: MockitoBean и MockitoSpyBean](https://docs.spring.io/spring-framework/reference/6.2/testing/annotations/integration-spring/annotation-mockitobean.html).
 
 **Оптимизация:**
 
@@ -561,16 +661,16 @@ Spring TestContext кеширует контексты в пределах JVM-�
 // Общий базовый класс для тестов с одинаковыми мок-бинами
 @SpringBootTest
 public abstract class BaseIntegrationTest {
-    @MockBean EmailService emailService;
-    @MockBean PaymentService paymentService;
+    @MockitoBean EmailService emailService;
+    @MockitoBean PaymentService paymentService;
 }
 
 class OrderTest extends BaseIntegrationTest {
-    // Использует кешированный контекст из BaseIntegrationTest
+    // Наследует тестовую конфигурацию и объявления подмен
 }
 
 class UserTest extends BaseIntegrationTest {
-    // Тот же кешированный контекст!
+    // Наследует тот же набор подмен
 }
 ```
 
@@ -579,9 +679,11 @@ class UserTest extends BaseIntegrationTest {
 - Размер кеша ограничен (`spring.test.context.cache.maxSize`, по умолчанию 32): при переполнении контексты закрываются при вытеснении по LRU и создаются снова при следующем запросе — ещё один повод не плодить варианты.
 - Чтобы увидеть промахи кеша и понять, почему контекст пересобирается, включите лог: `logging.level.org.springframework.test.context.cache=DEBUG`.
 
+**Динамические свойства и кеш.** Spring учитывает методы `@DynamicPropertySource` как часть конфигурации контекста. Значение, которое возвращает зарегистрированный `Supplier`, само по себе не меняет ключ кеша. Если два подкласса наследуют один метод, но используют разные адреса БД, уже созданный `DataSource` может сохранить старый адрес. Для отдельных контекстов можно пометить базовый класс `@DirtiesContext`. Если БД должна быть общей для тестов с одним контекстом, привяжите к нему и жизненный цикл контейнера, как в Q15. [Spring Framework 6.2: DynamicPropertySource](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/test/context/DynamicPropertySource.html).
+
 ## Q14. Как тестировать Spring Security (аутентификацию/авторизацию)?
 
-Модуль `spring-security-test` позволяет проверить авторизацию с подготовленной аутентификацией. В примере цепочка требует `ROLE_ADMIN` для `/admin/data` и использует HTTP Basic. Запрос без аутентификации получает 401 от `AuthenticationEntryPoint` этой цепочки. С form login он может получить редирект на страницу входа. [Spring Security: ExceptionTranslationFilter](https://docs.spring.io/spring-security/reference/7.1/api/java/org/springframework/security/web/access/ExceptionTranslationFilter.html).
+Модуль `spring-security-test` позволяет проверить авторизацию с подготовленной аутентификацией. В примере цепочка требует `ROLE_ADMIN` для `/admin/data` и использует HTTP Basic. Запрос без аутентификации получает 401 от `AuthenticationEntryPoint` этой цепочки. С form login он может получить редирект на страницу входа. [Spring Security: ExceptionTranslationFilter](https://docs.spring.io/spring-security/reference/6.5/api/java/org/springframework/security/web/access/ExceptionTranslationFilter.html).
 
 ```xml
 <dependency>
@@ -641,6 +743,18 @@ class AdminSecurityConfig {
 }
 ```
 
+**Проверка аутентификации HTTP Basic.** `@WithMockUser` заранее устанавливает аутентификацию, поэтому тест с ним проверяет правило доступа, но не проверяет пароль. Для проверки пароля используйте ту же цепочку и тестовый `UserDetailsService` с пользователем `admin`, ролью `ADMIN` и корректно закодированным паролем. В этих тестах уберите `@WithMockUser` и отправляйте заголовок через `httpBasic()`. [Spring Security 6.5: HTTP Basic в MockMvc](https://docs.spring.io/spring-security/reference/6.5/servlet/test/mockmvc/http-basic.html).
+
+```java
+when(service.getData()).thenReturn("admin data");
+
+mockMvc.perform(get("/admin/data").with(httpBasic("admin", testPassword)))
+    .andExpect(status().isOk());
+
+mockMvc.perform(get("/admin/data").with(httpBasic("admin", "wrong-password")))
+    .andExpect(status().isUnauthorized());
+```
+
 **Тест с OAuth2/JWT.** В отдельном тесте с цепочкой resource server `jwt()` подставляет подготовленную аутентификацию. Здесь правило для `/api/orders` требует `ROLE_USER`: authority нужно задать явно или передать конвертер, который его маппит. Claim `roles` сам по себе не даёт `ROLE_USER`.
 
 ```java
@@ -650,7 +764,7 @@ mockMvc.perform(get("/api/orders")
     .andExpect(status().isOk());
 ```
 
-`jwt()` позволяет проверить авторизацию с готовой аутентификацией. Для проверки декодирования, подписи и срока действия токена отдельно тестируют путь через `JwtDecoder`. [Spring Security: MockMvc OAuth2](https://docs.spring.io/spring-security/reference/7.0/servlet/test/mockmvc/oauth2.html).
+`jwt()` позволяет проверить авторизацию с готовой аутентификацией. Чтобы проверить прохождение bearer-токена через фильтр и преобразование claims в authorities, отправьте заголовок `Authorization: Bearer …` и настройте тестовый `JwtDecoder`, возвращающий нужный `Jwt`. Если декодер подменён, проверка подписи и срока действия остаётся за пределами теста. Для неё используйте реальный декодер и подписанные тестовые токены. [Spring Security: MockMvc OAuth2](https://docs.spring.io/spring-security/reference/6.5/servlet/test/mockmvc/oauth2.html).
 
 ## Q15. Как использовать Testcontainers с Spring Boot?
 
@@ -670,9 +784,9 @@ public class TestcontainersConfig {
     }
 
     @Bean
-    @ServiceConnection
-    RedisContainer redisContainer() {
-        return new RedisContainer("redis:7");
+    @ServiceConnection(name = "redis")
+    GenericContainer<?> redisContainer() {
+        return new GenericContainer<>("redis:7").withExposedPorts(6379);
     }
 }
 
@@ -689,9 +803,9 @@ class UserRepositoryTest {
 }
 ```
 
-Конфигурацию с `@Bean`-методами подключают обычным `@Import`. Отдельная аннотация `@ImportTestcontainers` — для другого случая: она подтягивает класс со **static-полями** контейнеров (без `@Bean`-методов), смешивать эти два механизма нельзя.
+Конфигурацию с `@Bean`-методами подключают обычным `@Import`. Отдельная аннотация `@ImportTestcontainers` — для другого случая: она подтягивает класс со **static-полями** контейнеров (без `@Bean`-методов для этих контейнеров).
 
-**Старый способ (до 3.1, без `@ServiceConnection`):** класс помечают `@Testcontainers` (JUnit-расширение, которое стартует и останавливает контейнеры с `@Container`), контейнер объявляют как `static`-поле (чтобы он стартовал один раз на класс), а адрес и креды прокидывают вручную через `@DynamicPropertySource`:
+**JUnit управляет контейнером, свойства регистрируются вручную.** класс помечают `@Testcontainers` (JUnit-расширение, которое стартует и останавливает контейнеры с `@Container`), контейнер объявляют как `static`-поле (чтобы он стартовал один раз на класс), а адрес и креды прокидывают вручную через `@DynamicPropertySource`:
 
 ```java
 @Testcontainers
@@ -712,33 +826,34 @@ class LegacyIntegrationTest {
 
 `@ServiceConnection` позволяет Boot создать `ConnectionDetails` для поддерживаемого контейнера. Автоконфигурация использует эти сведения с приоритетом над свойствами подключения. Для неподдерживаемого контейнера можно передать свойства через `@DynamicPropertySource`. [Spring Boot 3.5: Service Connections](https://docs.spring.io/spring-boot/3.5/reference/testing/testcontainers.html#testing.testcontainers.service-connections).
 
+**Когда тесты проходят отдельно, а вместе падают.** Два класса наследуют статический `@Container` и метод `@DynamicPropertySource` из общей базы. После первого класса JUnit-расширение останавливает PostgreSQL. Spring может сохранить контекст в кеше, а при старте второго класса контейнер может получить новый порт. Если второй класс получил тот же контекст, его пул подключений по-прежнему настроен на старый адрес. Сбой проявится при обращении к БД.
+
+Если классы должны переиспользовать и контекст, и БД, объявите контейнер Spring-бином, как в первом примере. В Boot 3.5 контейнеры-бины запускаются до остальных бинов и останавливаются после их уничтожения при закрытии контекста. `@ServiceConnection` передаёт параметры подключения и может использоваться также на поле `@Container`. В последнем случае контейнером по-прежнему управляет расширение JUnit. [Spring Boot 3.5: жизненный цикл контейнеров](https://docs.spring.io/spring-boot/3.5/reference/testing/testcontainers.html#testing.testcontainers.lifecycle).
+
 ## Q16. Что такое `RestTestClient` в Spring Framework 7 и когда он лучше `MockMvc`/`WebTestClient`?
 
-`RestTestClient` (`Spring Framework 7.0`) — новый тестовый HTTP-клиент с fluent builder-API; внутри использует `RestClient`, а снаружи даёт цепочку проверок ответа.
+`RestTestClient` появился в Spring Framework 7.0. Он строит синхронные запросы через `RestClient` и предоставляет fluent API для проверки HTTP-ответов. Для приложений на Boot 3.5 со штатным Spring Framework 6.2 применимы `MockMvc` и `WebTestClient`.
 
-Умеет привязываться к разным целям:
+- **Отдельный контроллер.** `bindToController(controller)` создаёт standalone-настройку MockMvc. Передайте нужные зависимости контроллера и явно добавьте компоненты MVC, от которых зависит проверяемое поведение.
+- **Servlet-конфигурация приложения.** `bindToApplicationContext(context)` строит MockMvc на основе `WebApplicationContext`. `bindTo(mockMvc)` использует уже настроенный MockMvc, например с подключённой цепочкой фильтров. Для функциональных маршрутов Spring MVC есть `bindToRouterFunction(routes)`. Эти режимы работают без сетевого соединения.
+- **Запущенное приложение.** `bindToServer().baseUrl(url)` отправляет настоящий HTTP-запрос. Этот режим подходит и для запущенного WebFlux-сервера. Выбор блокирующего клиента относится к тесту и сам по себе не определяет стек сервера.
 
-- к live-серверу по HTTP (полный сетевой стек и конвертация сообщений);
-- к `MockMvc` (mock-запрос/ответ, без сети);
-- к `WebApplicationContext`, к отдельным контроллерам или `RouterFunction`.
+Например, для проверки маршрута и JSON одного MVC-контроллера достаточно standalone-настройки. Чтобы проверить также настроенные приложением фильтры, можно переиспользовать MockMvc с этими фильтрами.
 
 ```java
-RestTestClient client = RestTestClient.bindToController(new OrderController()).build();
+RestTestClient client = RestTestClient.bindTo(mockMvc).build();
 
 client.get().uri("/orders/1")
     .exchange()
     .expectStatus().isOk()
-    .expectBody(Order.class);
+    .expectBody()
+    .jsonPath("$.id").isEqualTo(1);
 ```
 
-Когда лучше:
+Используйте API `MockMvc` напрямую, если тесту нужны специфичные MVC-проверки, например ошибки биндинга или атрибуты модели. `WebTestClient` подходит для реактивной проверки, включая потоковые ответы, и поддерживает mock-привязку к WebFlux. У обоих HTTP-клиентов пустое тело проверяется через `expectBody().isEmpty()`.
 
-- против `MockMvc` — более читаемый fluent-API проверок (как у `WebTestClient`), но для **блокирующего** стека.
-- против `WebTestClient` — тот тянет реактивные зависимости; `RestTestClient` нужен, когда стек не реактивный.
+[Spring Framework 7.0 — RestTestClient](https://docs.spring.io/spring-framework/reference/7.0/testing/resttestclient.html) · [WebTestClient](https://docs.spring.io/spring-framework/reference/7.0/testing/webtestclient.html).
 
-Пустое тело у обоих клиентов проверяется через `expectBody().isEmpty()`. API `WebTestClient` допускает `null` для отсутствующего тела. [WebTestClient.BodyContentSpec](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/test/web/reactive/server/WebTestClient.BodyContentSpec.html) · [RestTestClient](https://docs.spring.io/spring-framework/reference/testing/resttestclient.html).
-
-**Итог:** `RestTestClient` — лёгкий fluent-клиент для тестов блокирующего стека на `Spring Framework 7+`: читаемее `MockMvc` и без реактивных зависимостей `WebTestClient`.
 
 ## See also
 

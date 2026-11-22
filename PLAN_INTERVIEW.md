@@ -32,7 +32,7 @@
 диапазона, включая Notification System и Java Functional Interface, не входят
 в счётчик 55. Для учёта достаточно путей и записей о передаче полного файла.
 
-Из 55 файлов партии 14 восстановлены в `master`. Вне этой партии уже
+Из 55 файлов партии 15 восстановлены в `master`. Вне этой партии уже
 закоммичены Notification System, Java Functional Interface, Vector Databases
 и JDBC и пулы соединений.
 
@@ -667,6 +667,14 @@
   MCQ-чат передал полный JSON в ходе `01a20422-d505-7e73-b52b-c85e1dd09954`
   по пути `work/spring-rest-client-recovery-full-regeneration/spring-rest-client-interview.json`.
   Пара JSON и Markdown перенесена в production и включена в коммит вместе с этой записью.
+
+- **Spring Testing** — полный согласованный Markdown
+  `work/spring-testing-mockito-primary-theory-return/spring-testing-interview.md`,
+  SHA-256 `e94722d49eb16785795f2c6994a36e75e64bd9665269a045e57a7429a51a968d`.
+  MCQ-чат передал полный JSON в ходе `01a20429-d6ae-7142-9310-3cdadc8ee338`
+  по пути `work/spring-testing-recovery-full-regeneration/spring-testing-interview.json`.
+  JSON перенесён в production побайтно. Пара Markdown и JSON включена в
+  коммит вместе с этой записью.
 
 - **Hibernate Q48** — накопительный Markdown передан в завершённом ходе
   `01a203ff-57ce-7f03-bd10-93b3990e6060`.
