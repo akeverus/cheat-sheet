@@ -481,6 +481,8 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
 Идея JWT-аутентификации в том, чтобы сделать API **stateless**: вместо серверной сессии каждый запрос несёт самодостаточный подписанный токен, по которому сервер восстанавливает личность, ничего не храня у себя. Это упрощает горизонтальное масштабирование — любой узел кластера проверит токен сам.
 
+В этом примере API принимает учётные данные только из явно установленного клиентом заголовка `Authorization: Bearer <token>`. Браузер не подставляет этот токен автоматически, а API не принимает аутентификационные cookie или HTTP Basic.
+
 Схема состоит из двух частей: эндпоинт логина выдаёт токен, а фильтр на каждом последующем запросе его проверяет и наполняет `SecurityContext`.
 
 ```mermaid
@@ -502,14 +504,14 @@ sequenceDiagram
     API-->>Client: 200 OK {data}
 ```
 
-Конфигурация `SecurityFilterChain` под JWT отличается от сессионной тремя вещами: `csrf` отключён (токен не отправляется браузером автоматически, значит CSRF не грозит), сессии — `STATELESS`, и в цепочку добавлен собственный JWT-фильтр перед стандартным `UsernamePasswordAuthenticationFilter`:
+В показанной цепочке CSRF отключён из-за выбранного способа предъявления токена. Политика `STATELESS` отдельно задаёт работу Spring Security без сессионного контекста. Собственный JWT-фильтр установлен перед `UsernamePasswordAuthenticationFilter`:
 
 ```java
 @Bean
 public SecurityFilterChain securityFilterChain(HttpSecurity http,
         JwtAuthenticationFilter jwtFilter) throws Exception {
     return http
-        .csrf(csrf -> csrf.disable())  // stateless — CSRF не нужен
+        .csrf(csrf -> csrf.disable())
         .sessionManagement(session -> 
             session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
@@ -526,54 +528,58 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http,
 
 ## Q12. (!) Как написать `JWT`-фильтр (`JwtAuthenticationFilter`)?
 
-Задача фильтра — на каждом запросе достать токен из заголовка `Authorization`, проверить его и, если он валиден, положить аутентификацию в `SecurityContext`. Дальше по цепочке уже `AuthorizationFilter` решит, хватает ли прав. Алгоритм всегда один: нет токена — пропускаем запрос дальше как анонимный; токен есть и валиден — наполняем контекст; токен битый — тоже пропускаем (отказ выдаст authorization-слой ниже).
+**Условие.** Все запросы идут на защищённый маршрут. Декодер принимает `<valid-jwt>` и отвергает `<expired-jwt>`. Как фильтр обработает каждый запрос и кто сформирует отказ?
+
+```text
+Позиция: после загрузки SecurityContext, до авторизации
+Маршрут /api/data требует аутентификации.
+В начале каждого запроса SecurityContext пуст.
+В этой цепочке нет других способов аутентификации.
+Декодер принимает <valid-jwt> и отклоняет <expired-jwt>.
+
+Запрос A: GET /api/data
+Запрос B: GET /api/data | Authorization: Bearer <valid-jwt>
+Запрос C: GET /api/data | Authorization: Bearer <expired-jwt>
+```
+
+**Разбор.** В Spring Security 6.5 штатный вариант для JWT — OAuth2 Resource Server. В собственном фильтре можно использовать те же компоненты извлечения, аутентификации и формирования отказа. В примере `AuthenticationManager` настроен с `JwtAuthenticationProvider` и `JwtDecoder`, который проверяет подпись, срок действия, issuer и audience по политике API.
 
 ```java
-@Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
-    private final UserDetailsService userDetailsService;
+    private final AuthenticationManager authenticationManager;
+    private final BearerTokenResolver resolver = new DefaultBearerTokenResolver();
+    private final AuthenticationEntryPoint entryPoint =
+        new BearerTokenAuthenticationEntryPoint();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
             HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        String header = request.getHeader("Authorization");
-        if (header == null || !header.startsWith("Bearer ")) {
-            chain.doFilter(request, response);
-            return;
-        }
-
-        String token = header.substring(7);
-        String username = jwtService.extractUsername(token);
-
-        if (username != null && SecurityContextHolder.getContext()
-                .getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService
-                .loadUserByUsername(username);
-
-            if (jwtService.isTokenValid(token, userDetails)) {
-                var authToken = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(
-                    new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+        try {
+            String token = resolver.resolve(request);
+            if (token != null) {
+                Authentication result = authenticationManager.authenticate(
+                    new BearerTokenAuthenticationToken(token));
+                SecurityContext context = SecurityContextHolder.createEmptyContext();
+                context.setAuthentication(result);
+                SecurityContextHolder.setContext(context);
             }
+        } catch (AuthenticationException failure) {
+            SecurityContextHolder.clearContext();
+            entryPoint.commence(request, response, failure);
+            return;
         }
         chain.doFilter(request, response);
     }
 }
 ```
 
-Почему именно так:
+Без Bearer-токена фильтр продолжает цепочку с текущим контекстом. Для защищённого маршрута запрос без аутентификации может быть отклонён позднее, через настроенную точку входа. Ошибка разбора Bearer-заголовка или проверки токена обрабатывается в самом фильтре. `BearerTokenAuthenticationEntryPoint` формирует отказ и заголовок `WWW-Authenticate` по типу ошибки, например 401 с `invalid_token`. Вызов остальной цепочки находится за пределами этого обработчика ошибок.
 
-- Наследование от `OncePerRequestFilter` гарантирует ровно один вызов на запрос — иначе при forward/include фильтр сработал бы повторно.
-- Регистрация **перед** `UsernamePasswordAuthenticationFilter` (через `addFilterBefore`) нужна, чтобы контекст был готов до того, как до запроса доберётся проверка прав.
-- Проверка `getAuthentication() == null` не даёт перезаписать уже установленную аутентификацию.
-- При невалидном или отсутствующем токене фильтр **не бросает исключение**, а просто пропускает запрос — отказать должен authorization-слой, чтобы публичные эндпоинты остались доступны анонимам.
+Собственный фильтр добавляют только в нужную цепочку после загрузки контекста и до авторизации. При использовании `oauth2ResourceServer(...)` эту работу выполняет штатный `BearerTokenAuthenticationFilter`.
 
 ## Q13. Как реализовать endpoint выдачи `JWT`-токена?
 
@@ -630,10 +636,10 @@ Refresh-токен решает дилемму JWT: access-токен делаю
 
 ```java
 @PostMapping("/refresh")
-public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshRequest request) {
+public ResponseEntity<AccessTokenResponse> refresh(@RequestBody RefreshRequest request) {
     String refreshToken = request.refreshToken();
     
-    if (!jwtService.isTokenValid(refreshToken)) {
+    if (!jwtService.isRefreshTokenValid(refreshToken)) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
     
@@ -641,14 +647,13 @@ public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshRequest request)
     UserDetails user = userDetailsService.loadUserByUsername(username);
     
     String newAccessToken = jwtService.generateToken(user, Duration.ofMinutes(15));
-    // Ротация refresh-токена — старый становится невалидным
-    String newRefreshToken = jwtService.generateToken(user, Duration.ofDays(7));
-    
-    return ResponseEntity.ok(new AuthResponse(newAccessToken, newRefreshToken));
+    return ResponseEntity.ok(new AccessTokenResponse(newAccessToken));
 }
 ```
 
-**Ротация** (как в примере) — важная практика: при каждом обновлении старый refresh-токен инвалидируется, и выдаётся новый. Если злоумышленник украл refresh-токен и успел им воспользоваться, при следующей легитимной попытке обновления всплывёт повторное использование — это сигнал атаки.
+Это обновление access-токена **без ротации**. `isRefreshTokenValid` проверяет в том числе назначение токена, чтобы endpoint не принимал access-токен. Клиент продолжает использовать прежний refresh-токен до его истечения или отзыва, если отзыв предусмотрен.
+
+При ротации сервер атомарно погашает старый refresh-токен и выпускает новый, сохраняя связь в рамках одного grant. Повторное предъявление погашенного токена позволяет обнаружить повторное использование и отозвать действующий refresh-токен этого grant. Для публичных OAuth-клиентов RFC 9700 §4.14.2 требует ротацию либо привязку refresh-токена к отправителю.
 
 **Рекомендация:** для отзываемых токенов храните refresh-токены в БД или `Redis` и проверяйте их при каждом обновлении — чисто stateless JWT-refresh нельзя отозвать до истечения срока. Подробнее об OAuth2-потоках — в [вопросах по OAuth2](../../security/oauth2-interview.md).
 
@@ -962,30 +967,37 @@ public CorsConfigurationSource corsConfigurationSource() {
 
 ## Q22. (!) Как работает `CSRF`-защита и когда её отключать?
 
-CSRF (Cross-Site Request Forgery) — атака, при которой чужой сайт заставляет браузер жертвы отправить запрос к вашему приложению, используя её сессионную cookie (которую браузер прикрепляет автоматически). Защита `Spring Security` (включена по умолчанию) добавляет к state-changing запросам (`POST`, `PUT`, `DELETE`) секретный токен, которого чужой сайт знать не может — сервер сверяет его и отклоняет подделку.
+CSRF использует учётные данные, которые браузер прикладывает автоматически, например сессионную cookie или сохранённые HTTP Basic credentials. Spring Security по умолчанию требует CSRF-токен для небезопасных методов, таких как `POST`, `PUT` и `DELETE`.
 
-**Ключевая мысль про отключение:** CSRF опасен только там, где аутентификация привязана к запросу **автоматически** — то есть к cookie. Если же клиент сам кладёт токен в заголовок `Authorization` (как с JWT), чужой сайт его подставить не сможет, и CSRF-защита становится лишней.
+API ниже принимает только явно выставленный `Authorization: Bearer ...`. Web-часть использует form login и сессионную cookie. `securityMatcher` ограничивает каждую цепочку своим набором запросов, а `@Order` задаёт порядок их проверки. Маршруты примера находятся под `/api/**` и `/web/**`.
 
 ```java
-// Для stateless API (JWT) — CSRF не нужен
 @Bean
-public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+@Order(1)
+SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
     return http
-        .csrf(csrf -> csrf.disable())
+        .securityMatcher("/api/**")
+        .csrf(AbstractHttpConfigurer::disable)
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+        .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()))
         .build();
 }
 
-// Для традиционного приложения с сессиями — CSRF включён
 @Bean
-public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
+@Order(2)
+SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
     return http
-        .csrf(csrf -> csrf
-            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-            .ignoringRequestMatchers("/api/webhooks/**"))  // исключение для webhooks
+        .securityMatcher("/web/**")
+        .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+        .formLogin(form -> form.loginPage("/web/login")
+            .loginProcessingUrl("/web/login").permitAll())
+        .logout(logout -> logout.logoutUrl("/web/logout"))
         .build();
 }
 ```
+
+Приложение предоставляет страницу `GET /web/login`. Если есть маршруты вне этих двух областей, требуется отдельная цепочка для их защиты.
 
 | Сценарий | CSRF |
 |----------|------|
@@ -994,7 +1006,7 @@ public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
 | OAuth2 client (cookie-based) | **Включён** |
 | Public API без аутентификации | **Отключён** |
 
-Отсюда правило: **отключаете CSRF — убедитесь, что нет cookie-based аутентификации.** В `Thymeleaf` CSRF-токен подставляется в форму автоматически при использовании `th:action`, поэтому для серверных приложений защита почти бесплатна. Подробнее об атаках — в [OWASP Top 10](../../security/owasp-top10-interview.md).
+Отсюда правило: **отключайте CSRF на маршрутах, где браузер не может автоматически предъявить принимаемые сервером учётные данные.** В `Thymeleaf` CSRF-токен подставляется в форму автоматически при использовании `th:action`, поэтому для серверных приложений защита почти бесплатна. Подробнее об атаках — в [OWASP Top 10](../../security/owasp-top10-interview.md).
 
 ## Q23. Как управлять сессиями (session management)?
 
@@ -1230,28 +1242,70 @@ http.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class
 
 ## Q29. (!) Как тестировать защищённые эндпоинты?
 
-Тестировать безопасность нужно так же, как бизнес-логику: с моком текущего пользователя, без реального логина. Модуль `spring-security-test` даёт два подхода — аннотации (`@WithMockUser` ставит фиктивную аутентификацию в контекст до выполнения теста) и request-post-processors (`.with(jwt())`, `.with(csrf())` — добавляют аутентификацию или CSRF-токен прямо в конкретный `MockMvc`-запрос). Хороший набор тестов покрывает три исхода: успех с нужной ролью, `403` с недостаточной и `401` для анонима.
+**Условие.** Контроллер возвращает 200 при успешной операции. Как собрать четыре запроса `MockMvc` и какие ответы проверить при такой конфигурации?
+
+```java
+    // В MockMvc зарегистрированы оба маршрута. При успешном вызове контроллер возвращает 200.
+    // DELETE /api/articles/1 | роль ADMIN             | валидный CSRF-токен
+    // DELETE /api/articles/1 | анонимный запрос       | валидный CSRF-токен
+    // DELETE /api/articles/1 | роль USER              | валидный CSRF-токен
+    // GET    /api/profile    | JWT с ROLE_USER        | без CSRF-токена
+
+    @TestConfiguration
+    static class TestSecurity {
+        @Bean
+        SecurityFilterChain testChain(HttpSecurity http) throws Exception {
+            return http
+                .csrf(Customizer.withDefaults())
+                .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(HttpMethod.DELETE, "/api/articles/*").hasRole("ADMIN")
+                    .requestMatchers("/api/profile").hasRole("USER")
+                    .anyRequest().denyAll())
+                .exceptionHandling(errors -> errors.authenticationEntryPoint(
+                    new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .build();
+        }
+    }
+```
+
+**Разбор.** Тестировать безопасность нужно так же, как бизнес-логику: с моком текущего пользователя, без реального логина. Модуль `spring-security-test` даёт два подхода — аннотации (`@WithMockUser` ставит фиктивную аутентификацию в контекст до выполнения теста) и request-post-processors (`.with(jwt())`, `.with(csrf())` — добавляют аутентификацию или CSRF-токен прямо в конкретный `MockMvc`-запрос). В примере DELETE разрешён роли ADMIN, контроллер при успешном удалении возвращает 200, а точка входа для анонимного запроса возвращает 401. Все три DELETE передают CSRF-токен, чтобы проверять именно авторизацию.
 
 ```java
 @WebMvcTest(ArticleController.class)
-@Import(SecurityConfig.class)
+@Import(ArticleControllerTest.TestSecurity.class)
 class ArticleControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
+    @TestConfiguration
+    static class TestSecurity {
+        @Bean
+        SecurityFilterChain testChain(HttpSecurity http) throws Exception {
+            return http
+                .csrf(Customizer.withDefaults())
+                .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(HttpMethod.DELETE, "/api/articles/*").hasRole("ADMIN")
+                    .requestMatchers("/api/profile").hasRole("USER")
+                    .anyRequest().denyAll())
+                .exceptionHandling(errors -> errors.authenticationEntryPoint(
+                    new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .build();
+        }
+    }
+
     // Тест с мок-пользователем
     @Test
     @WithMockUser(roles = "ADMIN")
     void adminCanDeleteArticle() throws Exception {
-        mockMvc.perform(delete("/api/articles/1"))
+        mockMvc.perform(delete("/api/articles/1").with(csrf()))
             .andExpect(status().isOk());
     }
 
     // Тест без аутентификации — ожидаем 401
     @Test
     void anonymousCannotDeleteArticle() throws Exception {
-        mockMvc.perform(delete("/api/articles/1"))
+        mockMvc.perform(delete("/api/articles/1").with(csrf()))
             .andExpect(status().isUnauthorized());
     }
 
@@ -1259,7 +1313,7 @@ class ArticleControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     void userCannotDeleteArticle() throws Exception {
-        mockMvc.perform(delete("/api/articles/1"))
+        mockMvc.perform(delete("/api/articles/1").with(csrf()))
             .andExpect(status().isForbidden());
     }
 
@@ -1631,7 +1685,9 @@ public void deleteDocuments(List<Document> documents) {
 
 ## Q35. Как одновременно настроить `CORS` и `CSRF` в `SecurityFilterChain`?
 
-CORS и CSRF часто путают, но решают они разные задачи: CORS **разрешает** легитимные кросс-доменные запросы фронтенда, CSRF — **запрещает** поддельные запросы с чужих сайтов. В смешанном приложении (REST API + браузерные формы) их настраивают вместе, и здесь важны два правила: CORS должен быть сконфигурирован до CSRF, а preflight `OPTIONS` — всегда `permitAll`, иначе фронтенд не достучится.
+CORS определяет, какие origin браузер допускает к кросс-origin взаимодействию с сервером. CSRF защищает операции, для которых браузер автоматически предъявляет учётные данные. В Spring Security 6.5 интеграция через `http.cors(...)` обрабатывает допустимый preflight до аутентификации и отклоняет запросы вне настроенной политики. Общее правило `permitAll` для OPTIONS не требуется.
+
+В примере `/api/**` принимает только Bearer-токен из заголовка. Сессионный контекст используется только для web-цепочки. Если API принимает cookies, HTTP Basic или другие автоматически предъявляемые браузером credentials, исключать эти маршруты из CSRF по одному лишь префиксу нельзя.
 
 **Полная конфигурация CORS + CSRF:**
 
@@ -1641,22 +1697,27 @@ CORS и CSRF часто путают, но решают они разные за
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            // CORS — должен быть настроен до CSRF
+    @Order(1)
+    SecurityFilterChain apiChain(HttpSecurity http) throws Exception {
+        return http
+            .securityMatcher("/api/**")
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            // CSRF — для stateless JWT API отключаем, для form-based включаем
-            .csrf(csrf -> csrf
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                // Игнорировать CSRF для API-эндпоинтов (используют JWT)
-                .ignoringRequestMatchers("/api/**")
-            )
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // preflight
-                .anyRequest().authenticated()
-            )
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
-        return http.build();
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+            .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()))
+            .build();
+    }
+
+    @Bean
+    @Order(2)
+    SecurityFilterChain webChain(HttpSecurity http) throws Exception {
+        return http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.csrfTokenRepository(new HttpSessionCsrfTokenRepository()))
+            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+            .formLogin(Customizer.withDefaults())
+            .build();
     }
 
     @Bean
@@ -1667,7 +1728,7 @@ public class SecurityConfig {
             "http://localhost:3000"      // dev-фронтенд
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-XSRF-TOKEN"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-CSRF-TOKEN"));
         config.setExposedHeaders(List.of("X-Total-Count"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);         // кешировать preflight на 1 час
@@ -1679,17 +1740,9 @@ public class SecurityConfig {
 }
 ```
 
-**Когда отключать CSRF:**
-- REST API с `JWT`-аутентификацией (stateless) → `csrf.disable()`
-- Мобильные клиенты / `curl` → `csrf.disable()`
-- Web-приложения с формами → оставить включённым
+В этом примере отключение ограничено API-цепочкой и эквивалентно исключению `/api/**` из области проверки CSRF. Web-цепочка сохраняет CSRF-токен в сессии через `HttpSessionCsrfTokenRepository`. Формы передают `_csrf`, а CORS-конфигурация разрешает стандартный для этого репозитория заголовок `X-CSRF-TOKEN`.
 
-**Когда нужен CSRF:**
-- Браузерные клиенты с cookie-сессиями
-- Form-based логин
-- Любые мутирующие операции из браузера
-
-**Паттерн `Double Submit Cookie`** — стандартный способ отдать CSRF-токен в SPA. `Spring` кладёт токен в cookie `XSRF-TOKEN` (с `withHttpOnlyFalse`, чтобы JS мог его прочитать), фронтенд читает его и дублирует в заголовок `X-XSRF-TOKEN`. Сервер сверяет cookie и заголовок: чужой сайт не сможет прочитать cookie из-за same-origin policy, значит и подставить верный заголовок не сможет.
+**Паттерн `Double Submit Cookie`** — стандартный способ отдать CSRF-токен в SPA. `Spring` кладёт токен в cookie `XSRF-TOKEN` (с `withHttpOnlyFalse`, чтобы JS мог его прочитать), фронтенд читает его и дублирует в заголовок `X-XSRF-TOKEN`. Сервер сверяет cookie и заголовок. Для Spring Security 6.5 настройте обработчик SPA, который читает немаскированное значение из заголовка и обеспечивает выдачу свежего токена после логина и логаута. Фрагмент ниже показывает альтернативный репозиторий для SPA. При таком выборе добавьте `X-XSRF-TOKEN` в разрешённые CORS-заголовки web-цепочки и настройте описанный обработчик. [Spring Security 6.5 — CSRF](https://docs.spring.io/spring-security/reference/6.5/servlet/exploits/csrf.html)
 
 ```java
 // Frontend отправляет CSRF-токен в заголовке X-XSRF-TOKEN
@@ -1917,14 +1970,24 @@ spring:
 
 ## Q39. Как использовать JwtDecoder и BearerTokenAuthenticationFilter?
 
-Это два звена одной цепочки на стороне Resource Server. `BearerTokenAuthenticationFilter` — точка входа: он достаёт `Bearer`-токен из заголовка `Authorization` и запускает аутентификацию. `JwtDecoder` — рабочая лошадка проверки: он парсит токен, проверяет подпись и claim'ы, превращая строку в объект `Jwt`. Вы редко трогаете фильтр напрямую, но часто настраиваете `JwtDecoder` — выбираете источник ключей (JWKS, секрет, публичный ключ) и добавляете свои валидаторы.
+**Условие.** Resource Server защищает `/api/data` и использует такие настройки. Как распределяются извлечение токена, аутентификация и проверка JWT?
+
+```text
+GET /api/data
+Authorization: Bearer <jwt>
+
+spring.security.oauth2.resourceserver.jwt.issuer-uri=https://auth.example.com
+spring.security.oauth2.resourceserver.jwt.audiences[0]=my-api
+```
+
+**Разбор.** Это два звена одной цепочки на стороне Resource Server. `BearerTokenAuthenticationFilter` — точка входа: он вызывает `BearerTokenResolver` для извлечения токена и передаёт его в `AuthenticationManager`. Стандартный resolver читает заголовок `Authorization`. `JwtDecoder` — рабочая лошадка проверки: он парсит токен, проверяет подпись и claim'ы, превращая строку в объект `Jwt`. Вы редко трогаете фильтр напрямую, но часто настраиваете `JwtDecoder` — выбираете источник ключей (JWKS, секрет, публичный ключ) и добавляете свои валидаторы.
 
 ### Схема работы:
 
 ```
 HTTP Request
   → BearerTokenAuthenticationFilter
-  → BearerTokenExtractor (извлечение из Authorization header)
+  → BearerTokenResolver (извлечение из Authorization)
   → AuthenticationManager
   → JwtAuthenticationProvider
   → JwtDecoder (валидация подписи + claims)
@@ -1989,25 +2052,14 @@ public JwtDecoder jwtDecoder() {
 
 ## Q40. CSRF защита — когда отключать и SameSite cookies как альтернатива?
 
-Короткое правило: **CSRF нужен ровно там, где аутентификация привязана к запросу автоматически — то есть к cookie.** Если же токен кладётся в заголовок вручную (JWT), подделать запрос с чужого сайта нельзя, и защиту можно отключить. `SameSite`-cookie — это не замена CSRF-токену, а второй рубеж: атрибут говорит браузеру не отправлять cookie в кросс-доменных запросах, что само по себе срезает большинство CSRF-векторов.
-
-### Когда CSRF можно отключать:
-
-**Безопасно отключить** при соблюдении **всех** условий:
-1. API полностью **stateless** (нет session cookies, используется JWT в `Authorization` header)
-2. Нет форм с browser-based аутентификацией
-3. Клиенты — мобильные приложения или другие бэкенды (не браузер)
+Защиту CSRF можно отключить для маршрутов, которые принимают только токен, явно выставленный клиентом в `Authorization: Bearer ...`. Такой клиент может работать и в браузере. Проверьте, что маршруты не принимают сессионную cookie, токен из `HttpOnly` cookie или автоматически предъявляемые HTTP Basic credentials. Сама настройка `STATELESS` управляет использованием сессии и ничего не доказывает о способе передачи токена.
 
 ```java
-// Stateless REST API — CSRF не нужен
+// В цепочке, ограниченной API с Bearer-аутентификацией из заголовка
 http.csrf(AbstractHttpConfigurer::disable)
-    .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+    .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+    .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()));
 ```
-
-**Нельзя отключать**, если:
-- Используются session cookies (form login, OAuth2 login через browser)
-- Есть традиционные HTML-формы
-- Используется `HttpOnly` cookie для хранения токенов
 
 ### SameSite cookies как дополнительная защита:
 
@@ -2028,21 +2080,13 @@ public class SessionConfig {
 
 | SameSite значение | Защита от CSRF | Ограничение |
 |---|---|---|
-| `Strict` | Полная | Cookie не отправляется даже при навигации по ссылке |
+| `Strict` | Ограничивает отправку между сайтами | Cookie не отправляется при входной cross-site навигации. Разные origin могут относиться к одному сайту |
 | `Lax` | Частичная | Cookie отправляется при GET-навигации, но не при POST |
-| `None` | Нет | Cookie отправляется всегда (нужен `Secure`) |
+| `None` | Нет | Атрибут разрешает cross-site отправку при `Secure`, с учётом политики браузера |
 
-**Важно:** `SameSite=Strict/Lax` — это дополнение к CSRF-токену, а не замена. В `Spring Security 6` рекомендуется использовать оба механизма для браузерных приложений.
+`SameSite` дополняет CSRF-токен. Даже `Strict` допускает same-site запросы с другого origin, например с соседнего поддомена, и влияет на переходы по внешним ссылкам и на возвраты из внешнего входа.
 
-### Современная конфигурация CSRF для SPA:
-
-```java
-http.csrf(csrf -> csrf
-    .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-    // JS-клиент читает XSRF-TOKEN cookie и отправляет в X-XSRF-TOKEN header
-    .csrfTokenRequestHandler(new XorCsrfTokenRequestAttributeHandler())
-);
-```
+Для SPA на Spring Security 6.5 используйте конфигурацию из раздела [CSRF для JavaScript-приложений](https://docs.spring.io/spring-security/reference/6.5/servlet/exploits/csrf.html#csrf-integration-javascript-spa). Она отдельно обрабатывает маскированный токен для формы и исходное значение из заголовка SPA, а также обновление токена после входа и выхода.
 
 ---
 
@@ -2072,8 +2116,7 @@ class OrderControllerTest {
 
     @Test
     @WithMockUser(username = "admin",
-                  roles = {"USER", "ADMIN"},
-                  authorities = {"ROLE_ADMIN", "READ_ORDERS"})
+                  authorities = {"ROLE_USER", "ROLE_ADMIN", "READ_ORDERS"})
     void adminCanAccessAdminPanel() throws Exception {
         mockMvc.perform(get("/api/admin/orders"))
             .andExpect(status().isOk());
@@ -2153,30 +2196,40 @@ void adminCanDeleteOrder() throws Exception {
 
 Корень всех проблем — `ThreadLocal`: `SecurityContextHolder` привязывает контекст к потоку, поэтому он **не передаётся** в другие потоки автоматически. Это проявляется в трёх ситуациях с разными решениями: `@Async`-методы (другой поток пула), ручные `CompletableFuture` (тоже чужой поток) и реактивный `WebFlux`, где `ThreadLocal` неприменим в принципе и используется `Reactor Context`.
 
-### Проблема в @Async методах:
+### Контекст в @Async
+
+В примере включён `@EnableAsync`, а бин `taskExecutor` для первого запуска — обычный `ThreadPoolTaskExecutor` без переноса контекста. Аутентифицированный пользователь вызывает метод через Spring-прокси. Какое значение получит вызывающий код при завершении future?
 
 ```java
+// В конфигурации включён @EnableAsync. Стратегия SecurityContextHolder — MODE_THREADLOCAL.
+// Аутентифицированный вызывающий поток вызывает currentUsername() через Spring-прокси.
+// taskExecutor — обычный ThreadPoolTaskExecutor без переноса контекста.
+// Задача принята и выполняется на рабочем потоке пула.
+// Какое значение будет доступно вызывающему коду при завершении future?
+
 @Service
 public class ReportService {
 
-    @Async("taskExecutor")  // Выполняется в другом потоке
-    public CompletableFuture<Report> generateReport() {
-        // SecurityContextHolder.getContext() — ПУСТО! Другой поток.
+    @Async("taskExecutor")
+    public CompletableFuture<Optional<String>> currentUsername() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        // auth == null
+        return CompletableFuture.completedFuture(
+            Optional.ofNullable(auth).map(Authentication::getName));
     }
 }
 ```
+
+При стандартной стратегии `MODE_THREADLOCAL` аутентификация вызывающего потока не переносится в рабочий поток. В описанном запуске future возвращает пустой `Optional`.
 
 ### Решение 1 — DelegatingSecurityContextAsyncTaskExecutor:
 
 ```java
 @Bean
-public Executor taskExecutor() {
+public AsyncTaskExecutor taskExecutor() {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
     executor.setCorePoolSize(5);
     executor.initialize();
-    // Оборачиваем в делегат, который копирует SecurityContext в дочерний поток
+    // Делегат устанавливает контекст вызывающего потока на время задачи
     return new DelegatingSecurityContextAsyncTaskExecutor(executor);
 }
 ```
