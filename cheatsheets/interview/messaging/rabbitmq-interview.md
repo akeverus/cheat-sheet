@@ -194,21 +194,15 @@ factory.setVirtualHost("/my-app");
 ## Q5. (!) Какие типы Exchange существуют в RabbitMQ?
 
 ```mermaid
-graph TD
-    subgraph "Типы Exchange"
-        D[Direct Exchange]
-        F[Fanout Exchange]
-        T[Topic Exchange]
-        H[Headers Exchange]
-    end
-    D -->|точный routing key| Q1[Queue]
-    F -->|все binding| Q2[Queue]
-    F -->|все binding| Q3[Queue]
-    T -->|pattern match| Q4[Queue]
-    H -->|заголовки сообщения| Q5[Queue]
+graph LR
+    P["Публикация: eu.auth.error, format=json"] --> E["Exchange: тип выбирается"]
+    E --> A["Очередь A: точный ключ eu.auth.error"]
+    E --> B["Очередь B: шаблон eu.#"]
+    E --> C["Очередь C: условие format=json"]
+    E --> D["Очередь D: привязка без условия"]
 ```
 
-Тип `exchange` определяет **алгоритм маршрутизации** — как именно брокер решает, в какие очереди положить сообщение. Всего их четыре, и отличаются они только этим правилом выбора очередей:
+Тип `exchange` определяет **алгоритм маршрутизации** — как именно брокер решает, в какие очереди положить сообщение. AMQP 0-9-1 определяет четыре базовых типа. Для каждой строки таблицы представьте отдельную настройку exchange с подходящими привязками. RabbitMQ также поддерживает дополнительные типы через плагины. [RabbitMQ Exchanges](https://www.rabbitmq.com/docs/exchanges)
 
 | Тип | По чему маршрутизирует | Когда применять |
 |-----|---------------|------------|
@@ -216,8 +210,6 @@ graph TD
 | `fanout` | Игнорирует ключ, шлёт во **все** привязанные очереди | Pub/Sub, broadcast-рассылки |
 | `topic` | Паттерн `routing key` с `*` и `#` | Логи по категориям, события с иерархией |
 | `headers` | По заголовкам сообщения, а не по `routing key` | Маршрутизация по нескольким атрибутам сразу |
-
-На практике 90% задач закрываются `direct`, `fanout` и `topic`; `headers` нужен редко.
 
 ---
 
@@ -247,19 +239,17 @@ channel.basicPublish("logs.direct", "error", null, body);
 
 ## Q7. Как работает Fanout Exchange?
 
-**`Fanout Exchange`** полностью игнорирует `routing key` и копирует каждое сообщение во **все** привязанные к нему очереди. Это самый быстрый тип маршрутизации — брокеру не нужно ничего сравнивать.
+**`Fanout Exchange`** полностью игнорирует `routing key` и копирует каждое сообщение во **все** привязанные к нему очереди.
 
 **Сценарий применения:** broadcast и Pub/Sub, когда одно событие должно одновременно дойти до нескольких независимых подписчиков. Классический пример — уведомление, которое надо отправить и в push, и на email, и по SMS.
 
 ```java
 channel.exchangeDeclare("notifications", "fanout", true);
-// Привязка без routing key
 channel.queueBind("mobile-queue", "notifications", "");
 channel.queueBind("email-queue",  "notifications", "");
 channel.queueBind("sms-queue",    "notifications", "");
 
-// Публикация (routing key игнорируется)
-channel.basicPublish("notifications", "", null, body);
+channel.basicPublish("notifications", "order.created", null, body);
 ```
 
 Каждая привязанная очередь получает собственную копию сообщения — подписчики не конкурируют за него, а обрабатывают независимо.
@@ -272,7 +262,7 @@ channel.basicPublish("notifications", "", null, body);
 - `*` — заменяет ровно **одно** слово;
 - `#` — заменяет **ноль или более** слов.
 
-Это даёт иерархическую маршрутизацию: одно событие может одновременно попасть и в узкую очередь («ошибки auth в Европе»), и в широкую («всё из Европы»), и в сквозную («все ошибки»). Ниже один и тот же ключ `eu.auth.error` совпадает с тремя разными биндингами:
+Это даёт иерархическую маршрутизацию: одно событие может одновременно попасть и в узкую очередь («ошибки auth в Европе»), и в широкую («всё из Европы»), и в сквозную («все ошибки»). По каким из четырёх привязок будет доставлено сообщение с ключом `eu.auth.error`?
 
 ```mermaid
 graph LR
@@ -280,6 +270,7 @@ graph LR
     E -->|"*.*.error"| Q1[all-errors]
     E -->|"eu.#"| Q2[eu-all]
     E -->|"eu.auth.*"| Q3[eu-auth-logs]
+    E -->|"us.#"| Q4[us-all]
 ```
 
 ```java
@@ -288,9 +279,11 @@ channel.queueBind("all-errors",   "logs.topic", "*.*.error");
 channel.queueBind("eu-all",       "logs.topic", "eu.#");
 channel.queueBind("eu-auth-logs", "logs.topic", "eu.auth.*");
 
-// Сообщение "eu.auth.error" попадёт во все три очереди
+channel.queueBind("us-all", "logs.topic", "us.#");
 channel.basicPublish("logs.topic", "eu.auth.error", null, body);
 ```
+
+Сообщение получат `all-errors`, `eu-all` и `eu-auth-logs`. Привязка `us.#` требует первый сегмент `us` и не совпадает.
 
 ---
 
@@ -507,6 +500,14 @@ channel.basicConsume("my-queue", false, (consumerTag, delivery) -> {
 
 ## Q19. Чем отличаются nack и reject?
 
+В RabbitMQ 4.3 consumer quorum queue отклоняет одну доставку с `requeue=true`. Чем отличаются `basic.nack` и `basic.reject` по охвату и влиянию на счётчик неудачных доставок?
+
+```text
+RabbitMQ 4.3 · AMQP 0-9-1 · quorum queue
+A: basic.nack(deliveryTag, multiple=false, requeue=true)
+B: basic.reject(deliveryTag, requeue=true)
+```
+
 Оба метода сообщают брокеру о **неуспешной** обработке. Разница между ними — в одном параметре: `nack` умеет отклонять пачку сообщений, `reject` — только одно.
 
 | Метод | Параметры | Назначение |
@@ -516,7 +517,7 @@ channel.basicConsume("my-queue", false, (consumerTag, delivery) -> {
 | `basicReject` | `deliveryTag, requeue` | Неуспех; только одно сообщение (стандарт AMQP) |
 
 Ключевой для обоих — параметр `requeue`, он решает судьбу отклонённого сообщения:
-- `requeue=true` — вернуть в очередь и попробовать снова. **Подводный камень:** если ошибка стабильная (например, битые данные), это создаёт бесконечный цикл переобработки.
+- `requeue=true` — вернуть в очередь и попробовать снова. **Подводный камень:** если ошибка стабильная (например, битые данные), это может создать цикл переобработки.
 - `requeue=false` — сообщение не возвращается: либо отбрасывается, либо уходит в `DLX` (если он настроен). Обычно правильный выбор для «ядовитых» сообщений.
 
 Для **quorum queue** есть ещё версионный нюанс: с RabbitMQ **4.0** задан `delivery-limit=20` по умолчанию, но с **4.3** лимит считается по `delivery-count` неудачных доставок, а не по каждому получению сообщения. Явный `basic.nack` с повторной постановкой в очередь **не увеличивает** этот счётчик; `basic.reject` и потеря канала с неподтверждённым сообщением увеличивают. Поэтому встроенный лимит не заменяет ограничение повторов для цикла с `nack`. [RabbitMQ Quorum Queues: poison message handling](https://www.rabbitmq.com/docs/quorum-queues#poison-message-handling).
@@ -626,21 +627,17 @@ channel.queueDeclare("main-queue", true, false, false, args);
 
 **Полезный нюанс:** при каждом dead-lettering брокер обновляет `x-death` с причиной, исходной очередью и счётчиком событий для пары «очередь + причина». Это не общий счётчик всех попыток обработки: повторные доставки без dead-lettering в нём не отражаются. Для quorum queue `x-delivery-count` описывает другой механизм — неудачные доставки. [RabbitMQ Dead Letter Exchanges](https://www.rabbitmq.com/docs/dlx).
 
+**Что произойдёт, если DLQ временно недоступна?** В RabbitMQ 4.3 по умолчанию dead-lettering работает в режиме `at-most-once` даже для quorum queue. Для переноса с подтверждением настройте на исходной **quorum queue** политику с `dead-letter-strategy: at-least-once`, `overflow: reject-publish` и `dead-letter-exchange`. Нужен включённый feature flag `stream_queue`. С `drop-head` используется `at-most-once`, даже если лимит длины не задан.
+
+Например, consumer отправил `basicNack(..., false, false)`, а целевая очередь временно не подтверждает публикации. В режиме `at-least-once` внутренний consumer брокера повторяет отправку, а исходная очередь удерживает сообщение до подтверждения от всех целевых очередей. Так же брокер повторяет попытки, если DLX отсутствует или сообщение некуда маршрутизировать. Удержанные сообщения занимают лимит исходной очереди и при длительном сбое могут привести к отказу новых публикаций. Если одна целевая очередь уже приняла сообщение, а другая не подтвердила, повтор может создать дубль в первой. Подтверждение здесь означает приём целевой очередью. Обработчик DLQ подтверждает свою доставку отдельно. [RabbitMQ 4.3: At-least-once dead-lettering](https://www.rabbitmq.com/docs/4.3/quorum-queues#activating-at-least-once-dead-lettering).
+
 ---
 
 ## Q25. Как реализовать retry с использованием DLX и TTL?
 
 Идея паттерна **delayed retry**: при ошибке сообщение не возвращают в очередь сразу (это даёт мгновенный бесполезный повтор), а отправляют в отдельную retry-очередь с заданным `TTL`. Сообщение «отлёживается» там нужное время, затем по истечении TTL через `DLX` возвращается в основной exchange — и попадает на повторную обработку уже с задержкой.
 
-Получается замкнутый цикл `main → DLX → retry-queue (TTL) → main exchange → main`, где TTL retry-очереди и есть пауза между попытками:
-
-```mermaid
-graph LR
-    Q[Main Queue] -->|nack| DLX[DLX]
-    DLX --> RQ[Retry Queue\nx-message-ttl=5000]
-    RQ -->|после TTL| ME[Main Exchange]
-    ME --> Q
-```
+Куда попадёт сообщение после отклонения и после истечения TTL при таких привязках?
 
 ```java
 channel.exchangeDeclare("main-exchange", "direct", true);
@@ -652,7 +649,6 @@ mainArgs.put("x-dead-letter-routing-key", "retry");
 channel.queueDeclare("main", true, false, false, mainArgs);
 channel.queueBind("main", "main-exchange", "main-key");
 
-// Retry Queue — задержка 5 секунд, после истечения TTL → обратно в main exchange
 Map<String, Object> retryArgs = new HashMap<>();
 retryArgs.put("x-message-ttl", 5000);
 retryArgs.put("x-dead-letter-exchange", "main-exchange");
@@ -661,8 +657,10 @@ channel.queueDeclare("retry-queue", true, false, false, retryArgs);
 channel.queueBind("retry-queue", "dlx", "retry");
 
 // При ошибке в consumer
-channel.basicNack(deliveryTag, false, false); // requeue=false → в DLX → retry-queue
+channel.basicNack(deliveryTag, false, false);
 ```
+
+При заданных привязках путь проходит через `main → dlx → retry-queue → main-exchange → main`. TTL в 5000 мс задаёт срок хранения сообщения в retry-очереди. Фактическое время повторной доставки может быть больше.
 
 **Подводный камень:** без ограничения попыток такой цикл крутится бесконечно. Consumer может считать события `x-death` для нужной очереди и причины, а при достижении своего порога направлять сообщение в финальную DLQ. Не путайте этот счётчик dead-letter-переходов со встроенным `x-delivery-count` quorum queue: возврат через DLX/TTL и повторная доставка внутри одной очереди — разные механизмы. Для quorum queues RabbitMQ 4.3 также описывает встроенный delayed retry; выбирайте один понятный маршрут и проверяйте число попыток. [RabbitMQ Quorum Queues](https://www.rabbitmq.com/docs/quorum-queues#poison-message-handling).
 
@@ -673,7 +671,8 @@ channel.basicNack(deliveryTag, false, false); // requeue=false → в DLX → re
 **`Prefetch count`** (`basicQos`) — потолок числа `unacked`-сообщений, которые брокер «раздаст в кредит» consumer-у, не дожидаясь подтверждений. По сути это управление **обратным давлением (backpressure)**: брокер не заваливает медленного consumer-а работой, которую тот не успевает разгребать.
 
 ```java
-// Consumer получит не более 10 сообщений без подтверждения
+// Одна подписка с ручным подтверждением. У неё 10 unacked.
+// В очереди есть готовые сообщения. Что изменится после ack одной доставки?
 channel.basicQos(10);
 ```
 
@@ -681,15 +680,7 @@ channel.basicQos(10);
 
 **`prefetchCount=0`** отключает лимит кредита QoS на стороне клиента. Это не обещание немедленно доставить всё: действуют ограничения брокера, типа очереди и транспорта. Например, quorum queue ограничивает consumer prefetch 2000. Эта настройка относится к подпискам с подтверждениями и не ограничивает запросы `basic.get`. [Consumer Prefetch](https://www.rabbitmq.com/docs/4.3/consumer-prefetch), [Confirms](https://www.rabbitmq.com/docs/4.3/confirms).
 
-**`prefetchCount=1`** — честное распределение (fair dispatch): consumer получает следующее сообщение только после `ack` предыдущего. Так свободный consumer всегда забирает работу первым — нагрузка раскладывается по фактической скорости, а не поровну. На диаграмме быстрый воркер успевает обработать 80 сообщений, медленный — 20:
-
-```mermaid
-graph LR
-    Q[Queue: 100 msg] -->|prefetch=1| C1[Consumer 1\nbыстрый]
-    Q -->|prefetch=1| C2[Consumer 2\nмедленный]
-    C1 -->|обработал 80| R1[80 messages]
-    C2 -->|обработал 20| R2[20 messages]
-```
+`basicQos(10)` задаёт кредит в десять неподтверждённых доставок для этой подписки. После получения ack брокером освобождается место для следующей доставки. При `prefetchCount=1` каждая подписка с ручным подтверждением держит до одной неподтверждённой доставки. Быстрый consumer может чаще освобождать кредит, а итоговое распределение зависит от нагрузки и времени обработки.
 
 ---
 
@@ -749,6 +740,8 @@ graph TD
 
 ## Q30. (!) Что такое Quorum Queues и чем они лучше Mirrored?
 
+В RabbitMQ 4.3 сравните quorum queues с прежним classic mirroring. Какие TTL, приоритеты сообщений и предел неудачных доставок поддерживает quorum queue?
+
 **`Quorum Queues`** — современный, рекомендуемый тип реплицированных очередей. Их главное преимущество над Mirrored — в основе лежит проверенный алгоритм консенсуса **Raft** (тот же, что в `etcd` и `Consul`), а не самописная схема репликации.
 
 Что это даёт на практике: запись считается зафиксированной, только когда её подтвердило **большинство** узлов (quorum). Поэтому при split-brain меньшая часть кластера просто перестаёт принимать записи и данные не расходятся — это и есть устойчивость, которой не хватало Mirrored Queues.
@@ -763,7 +756,7 @@ graph TD
 | Poison messages | Нет встроенного delivery limit | `delivery-limit`, по умолчанию 20 с 4.0 |
 
 ```java
-// Spring AMQP: объявление Quorum Queue
+// Spring AMQP, брокер RabbitMQ 4.3. Дополнительные политики не заданы.
 @Bean
 public Queue quorumQueue() {
     return QueueBuilder.durable("my-quorum-queue")
@@ -920,6 +913,7 @@ public class OrderListener {
 В Spring AMQP есть два режима retry, и важно понимать разницу. **Stateless retry** — самый частый: повторы крутятся **в памяти** consumer-а, между ними сообщение не возвращается в брокер. Настраивается одним блоком в `application.yml`:
 
 ```yaml
+# Spring Boot 3.5
 spring:
   rabbitmq:
     listener:
@@ -932,6 +926,8 @@ spring:
           max-interval: 10000
         acknowledge-mode: auto
 ```
+
+В Spring Boot 3.5 `max-attempts: 3` включает первую попытку и два повтора. В Spring Boot 4.0 параметр `max-retries` считает только повторы. Эквивалент для того же бюджета — `max-retries: 2`. [Свойства Boot 3.5](https://docs.spring.io/spring-boot/3.5/appendix/application-properties/) · [Свойства Boot 4.0](https://docs.spring.io/spring-boot/4.0/appendix/application-properties/)
 
 **Stateful retry** связывает попытки при повторной доставке по стабильному `messageId` или ключу от `MessageKeyGenerator`. Состояние хранит retry-контекст; долговечное хранение счётчика по умолчанию не гарантируется. Stateful подходит, когда исключение должно выйти из обработки, чтобы транзакция откатилась и доставка могла повториться. Режим `MANUAL` для этого не обязателен. После исчерпания попыток `RejectAndDontRequeueRecoverer` просит контейнер отклонить доставку без requeue. Брокер маршрутизирует её в DLQ только при наличии настроенного DLX и маршрута. Ниже пример stateless retry для Spring AMQP 3.x с подтверждениями контейнера:
 
@@ -962,21 +958,21 @@ Spring `AcknowledgeMode.AUTO` означает подтверждение кон
 
 ```mermaid
 graph TD
-    subgraph "Work Queue (Task Queue)"
+    subgraph "Топология A"
         WP[Producer] --> WQ[Queue]
         WQ --> WC1[Worker 1]
         WQ --> WC2[Worker 2]
     end
 
-    subgraph "Pub/Sub"
-        PP[Producer] --> FE[Fanout Exchange]
+    subgraph "Топология B"
+        PP[Producer] --> FE[Exchange: fanout]
         FE --> FQ1[Queue 1 → Sub 1]
         FE --> FQ2[Queue 2 → Sub 2]
     end
 
-    subgraph "RPC"
-        RP[Client] -->|reply_to=callback.queue| RE[RPC Queue]
-        RE --> RS[RPC Server]
+    subgraph "Топология C"
+        RP[Client] -->|reply_to=callback.queue| RE[request.queue]
+        RE --> RS[Server]
         RS --> RQ[callback.queue]
         RQ --> RP
     end
@@ -1001,12 +997,11 @@ graph TD
 
 RPC поверх очередей строится на двух деталях: **`reply_to`** и **`correlationId`**. Клиент создаёт временную reply-очередь, кладёт её имя в свойство `reply_to` запроса, а в `correlationId` — уникальный идентификатор. Сервер обрабатывает запрос и отправляет ответ в очередь из `reply_to`, копируя тот же `correlationId`. Клиент по этому id сопоставляет пришедший ответ с конкретным запросом — это нужно, потому что в одну reply-очередь могут прилетать ответы на несколько параллельных запросов.
 
-```mermaid
-sequenceDiagram
-    Client->>RPC Queue: request (reply_to=callback-queue, correlationId=123)
-    RPC Server->>RPC Queue: consume
-    RPC Server->>Callback Queue: response (correlationId=123)
-    Client->>Callback Queue: consume (filter by correlationId=123)
+```text
+Запрос A: очередь rpc-queue, reply_to=callback-queue, correlationId=req-17
+Запрос B: очередь rpc-queue, reply_to=callback-queue, correlationId=req-18
+Оба запроса отправлены, ответы могут прийти в любом порядке.
+Как клиенту сопоставить ответы с запросами?
 ```
 
 ```java
@@ -1021,7 +1016,7 @@ AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
 
 channel.basicPublish("", "rpc-queue", props, request.getBytes());
 
-// Ожидание ответа с matching correlationId
+// Фрагмент клиента для одного ожидаемого ответа
 BlockingQueue<String> response = new ArrayBlockingQueue<>(1);
 channel.basicConsume(replyQueueName, true, (consumerTag, delivery) -> {
     if (correlationId.equals(delivery.getProperties().getCorrelationId())) {
@@ -1031,6 +1026,8 @@ channel.basicConsume(replyQueueName, true, (consumerTag, delivery) -> {
 
 return response.poll(10, TimeUnit.SECONDS);
 ```
+
+Для нескольких одновременных запросов клиент регистрирует ожидания по `correlationId` перед публикацией. Один consumer reply-очереди извлекает этот ID из каждого ответа, завершает соответствующее ожидание и обрабатывает истёкшие или неизвестные ID. [RabbitMQ RPC tutorial](https://www.rabbitmq.com/tutorials/tutorial-six-java)
 
 В `Spring AMQP` запрос и ожидание ответа скрывает `rabbitTemplate.convertSendAndReceive()`. При отсутствии явной reply-очереди и поддержке брокером шаблон обычно использует **Direct Reply-To**. `amq.rabbitmq.reply-to` — псевдоочередь без хранения ответов, доставка ответа имеет семантику at-most-once. При обрыве клиенту нужен таймаут и выбранная политика повторов. Обычная reply-очередь подходит, когда ответ нужно буферизовать. [Direct Reply-To](https://www.rabbitmq.com/docs/4.3/direct-reply-to), [Spring AMQP Request/Reply](https://docs.spring.io/spring-amqp/reference/amqp/request-reply.html).
 
@@ -1052,12 +1049,14 @@ return response.poll(10, TimeUnit.SECONDS);
 - **Admin** — пользователи, `vhost`, политики.
 
 ```bash
-# Просмотр очередей через CLI
+# rabbitmqadmin v1: просмотр очередей
 rabbitmqadmin list queues name messages consumers
 
 # Экспорт конфигурации
 rabbitmqadmin export config.json
 ```
+
+Для `rabbitmqadmin` v2 используйте синтаксис групп команд из [руководства RabbitMQ](https://www.rabbitmq.com/docs/4.3/management-cli).
 
 **Рекомендация для продакшна:** Management UI хорош для ручного разбора, но для постоянного мониторинга и алертинга подключают плагин `rabbitmq_prometheus` — он отдаёт метрики в `Prometheus`, поверх которого строят дашборды (Grafana) и правила оповещений.
 
@@ -1112,6 +1111,15 @@ rabbitmqadmin export config.json
 
 ## Q42. Чем RabbitMQ Streams отличаются от обычной очереди и когда они нужны?
 
+Сервис выбирает между обычной очередью и Stream. Что изменится для независимых читателей и что произойдёт при перезапуске описанного ниже потребителя?
+
+```text
+RabbitMQ 4.3, чтение Stream по AMQP 0-9-1.
+После перезапуска клиент задаёт x-stream-offset из своего checkpoint.
+В checkpoint сохранён offset следующей записи: 1200.
+После retention первая доступная позиция: 1350.
+```
+
 `RabbitMQ Stream` — **постоянный реплицированный append-only лог**. Consumer читает по позиции; подтверждение обработки не удаляет запись для остальных. `Classic` и `quorum` очереди устроены иначе: после ack сообщение считается обработанным и исчезает из очереди. Streams подходят, когда нужны replay, несколько независимых читателей, большой fan-out или длительный backlog. Stream объявляют с `x-queue-type=stream`; для полного набора возможностей и высокой пропускной способности документация рекомендует отдельный Stream protocol client. [RabbitMQ Streams](https://www.rabbitmq.com/docs/4.3/streams), [Stream plugin](https://www.rabbitmq.com/docs/4.3/stream).
 
 | Вопрос дизайна | Решение для Stream |
@@ -1122,6 +1130,8 @@ rabbitmqadmin export config.json
 | Что при отказе узла? | У stream есть leader и реплики; для работы нужен quorum доступных реплик. |
 
 При работе через AMQP 0-9-1 `ack` у stream участвует в продвижении потребления/кредитов, но **не удаляет запись из лога**. Для обычной очереди задач с точечным ack/requeue и DLQ выбирайте classic/quorum queue; для истории событий и replay — Stream, если подходят его ограничения и клиентская модель. Streams не означают бесконечного хранения: при проектировании задайте retention и сценарий, когда consumer отстал за его пределы. [RabbitMQ Streams: consumption, retention, super streams](https://www.rabbitmq.com/docs/4.3/streams), [quorum queues](https://www.rabbitmq.com/docs/4.3/quorum-queues).
+
+В показанном сценарии чтение начнётся с позиции 1350, а записи с позиций от 1200 до 1349 недоступны в этом Stream.
 
 **После перезапуска** позицию чтения нужно задавать осознанно. У AMQP 0-9-1 consumer-а без `x-stream-offset` чтение начнётся со следующей записи после подписки, поэтому история, пришедшая до старта, не будет обработана. Stream protocol поддерживает сохранение offset у брокера через Stream plugin; это отдельный механизм, не результат обычного AMQP `ack`. Если сохранённый offset уже удалён retention, RabbitMQ привяжет запрос к началу доступного лога. Сравните ожидаемую позицию с первой доступной: Java Stream Client 1.12 предоставляет `Environment.queryStreamStats(stream).firstOffset()`. У пустого stream `firstOffset()` может выбросить `NoOffsetException`; этот исход нужно обработать отдельно. Если есть разрыв, восстановите состояние из снимка или пропущенные события из внешнего архива; одно лишь повторное подключение не вернёт удалённые записи. [RabbitMQ Streams: consuming и offset tracking](https://www.rabbitmq.com/docs/4.3/streams), [Java Stream Client API](https://github.com/rabbitmq/rabbitmq-stream-java-client/blob/v1.12.0/src/main/java/com/rabbitmq/stream/StreamStats.java).
 

@@ -32,7 +32,7 @@
 диапазона, включая Notification System и Java Functional Interface, не входят
 в счётчик 55. Для учёта достаточно путей и записей о передаче полного файла.
 
-Из 55 файлов партии 15 восстановлены в `master`. Вне этой партии уже
+Из 55 файлов партии 16 восстановлены в `master`. Вне этой партии уже
 закоммичены Notification System, Java Functional Interface, Vector Databases
 и JDBC и пулы соединений.
 
@@ -673,6 +673,14 @@
   SHA-256 `e94722d49eb16785795f2c6994a36e75e64bd9665269a045e57a7429a51a968d`.
   MCQ-чат передал полный JSON в ходе `01a20429-d6ae-7142-9310-3cdadc8ee338`
   по пути `work/spring-testing-recovery-full-regeneration/spring-testing-interview.json`.
+  JSON перенесён в production побайтно. Пара Markdown и JSON включена в
+  коммит вместе с этой записью.
+
+- **RabbitMQ** — полный согласованный Markdown
+  `work/rabbitmq-visible-conditions-theory-return/rabbitmq-interview.md`,
+  SHA-256 `d0ddc98a8a7bd7fcc05aa4dce33131696424c2b0a9e4c93c5b79d6e76a5353ae`.
+  MCQ-чат передал полный JSON в ходе `01a2043c-3a7f-7fd1-aa44-fd94b9982069`
+  по пути `work/rabbitmq-recovery-full-regeneration/rabbitmq-interview.json`.
   JSON перенесён в production побайтно. Пара Markdown и JSON включена в
   коммит вместе с этой записью.
 
