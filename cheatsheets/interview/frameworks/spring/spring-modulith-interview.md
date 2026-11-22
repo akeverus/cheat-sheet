@@ -240,16 +240,18 @@ spring:
 
 Для этого есть аннотация `@ApplicationModuleTest`: она поднимает Boot-контекст, но регистрирует в нём **бины только того модуля, где лежит тест**, а не всех модулей приложения. Тест становится быстрым и по-настоящему изолированным — он проверяет логику одного модуля, не таща за собой соседей.
 
+В учебной модели конструктор `Order(UUID id)` принимает заранее заданный идентификатор заказа.
+
 ```java
 @ApplicationModuleTest
 class OrderModuleTests {
 
     @Test
     void placingOrderPublishesEvent(
-            OrderService orderService,
+            @Autowired OrderService orderService,
             PublishedEvents events) {
 
-        orderService.placeOrder(new Order(...));
+        orderService.placeOrder(new Order(UUID.fromString("00000000-0000-0000-0000-000000000001")));
 
         assertThat(events.ofType(OrderPlaced.class)).hasSize(1);
     }
@@ -258,6 +260,7 @@ class OrderModuleTests {
 
 **Что здесь происходит:**
 - `@ApplicationModuleTest` сам определяет, в каком модуле лежит тест, и загружает бины только этого модуля.
+- `SpringExtension` разрешает параметр `@Autowired OrderService` из тестового контекста.
 - Параметр `PublishedEvents` (из Spring Modulith, его подставляет сама `@ApplicationModuleTest`) перехватывает опубликованные события — можно ассертить *что* событие было выпущено, не дёргая реальный модуль-подписчик.
 - Зависимости от других модулей не поднимаются: их при необходимости мокируют (в Spring Boot 3.4+ это `@MockitoBean`, прежний `@MockBean` объявлен устаревшим).
 
@@ -290,23 +293,25 @@ class OrderIntegrationTests { ... }
 
 Scenarios API — высокоуровневый **DSL для тестирования событийных сценариев** между модулями. Он решает конкретную проблему: события из `@ApplicationModuleListener` обрабатываются *асинхронно* и *после коммита*, поэтому наивный тест («дёрнули метод — сразу проверили результат») проигрывает гонку с реальностью и флакает. Scenarios API умеет **дождаться** нужного события, прежде чем проверять. Параметр `Scenario` (`org.springframework.modulith.test.Scenario`) подставляет расширение `@ApplicationModuleTest`, а сам класс приезжает со стартером `spring-modulith-starter-test` в тестовой области.
 
+Тест расположен в пакете модуля `order`. Слушатель `@ApplicationModuleListener`, который реагирует на `OrderPlaced` и публикует `NotificationSent`, находится в модуле `notification`. При стандартном `STANDALONE` этот соседний модуль сам по себе не загрузится. `extraIncludes` явно включает его в контекст теста.
+
 Читается как фраза: «**подай** стимул → **дождись** события такого-то типа → **проверь** его»:
 
 ```java
-@ApplicationModuleTest
+@ApplicationModuleTest(extraIncludes = "notification")
 class OrderScenarios {
 
     @Autowired OrderService orderService;
 
     @Test
     void orderPlacedTriggersNotification(Scenario scenario) {
-        Order order = new Order(...);
+        Order order = new Order(UUID.fromString("00000000-0000-0000-0000-000000000001"));
 
         scenario
             .stimulate(() -> orderService.placeOrder(order))
             .andWaitForEventOfType(NotificationSent.class)
             .toArriveAndVerify(event ->
-                assertThat(event.orderId()).isEqualTo(order.id()));
+                assertThat(event.orderId()).isEqualTo(order.getId()));
     }
 }
 ```
@@ -410,11 +415,24 @@ package com.example.shop.order.api;
 Внедрять можно **инкрементально** — не нужно переписывать проект, прежде чем получить пользу. Порядок шагов:
 
 1. **Добавить зависимость** `spring-modulith-starter-core` (для самого `ApplicationModules.verify()` этого достаточно; `@ApplicationModuleTest` и `Documenter` приезжают со `spring-modulith-starter-test`).
-2. **Запустить `ApplicationModules.of(App.class).verify()`** в тесте — он, скорее всего, упадёт и выдаст агрегированный список уже имеющихся нарушений (если нарушений нет, тест просто зелёный): обращения к внутренностям, циклы. Просто осмотреть структуру, ничего не роняя, можно печатью самой модели (см. Q10).
-3. **Зафиксировать проверку в CI** — сразу после первого прогона, не дожидаясь чистого кода: так новые нарушения перестают появляться.
-4. **Параллельно, а не после, чинить накопленные нарушения** — переносить детали реализации в `internal/`, убирать нежелательные зависимости и циклы. Делать это можно по одному модулю за раз, при уже работающей проверке.
+2. **Получить список текущих нарушений** через `ApplicationModules.of(App.class).detectViolations().getMessages()`. Обычный `verify()` падает при любом обнаруженном нарушении.
+3. **Сохранить исходный список в репозитории.** Запишите согласованные сообщения в `src/test/resources/modulith-known-violations.txt`, по одному полному сообщению на строку, и подключите проверку в CI.
+4. **Устранять нарушения по одному.** Вместе с исправлением удаляйте соответствующую запись из списка. Когда список опустеет, можно перейти на обычный `verify()`.
 
-**Почему такой порядок ценен.** Даже до того, как вы вычистили *все* старые нарушения, поставленная в CI проверка уже работает как храповик: архитектура перестаёт деградировать дальше. Вы стопорите ухудшение сразу, а долг разгребаете постепенно — это и есть главное преимущество перед «большим переписыванием».
+```java
+@Test
+void moduleArchitectureHasNoUnlistedViolations() throws IOException {
+    var known = new HashSet<>(
+        Files.readAllLines(Path.of("src/test/resources/modulith-known-violations.txt")));
+
+    ApplicationModules.of(App.class)
+        .detectViolations()
+        .filter(violation -> !known.contains(violation.getMessage()))
+        .throwIfPresent();
+}
+```
+
+Пример запускается из корня модуля сборки. Фильтр оставляет нарушения, чьих сообщений нет в исходном списке, и CI падает, если такие нарушения есть. Список не обновляется автоматически при запуске.
 
 
 ## Q15. Как Spring Modulith соотносится с Hexagonal Architecture и DDD?
