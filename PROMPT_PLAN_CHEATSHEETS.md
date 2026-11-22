@@ -152,7 +152,11 @@ Q38 B0 и парный production JSON. Сверь каждый A/B/C/D с те�
 Q10 B0 исправлен по конструкторной DI. Старые hard-сигналы Spring
 Batch Q2/Q26/Q27/Q39/Q42 уже
 исправлены отдельным пакетом; они также ждут независимой проверки.
-Python 3.15 и PostgreSQL 19 перепроверять после GA; Stock Exchange остаётся кандидатом до подтверждения ценности.
+Python 3.15 GA подтверждён 09.10.2026, Core Q3/Q5/Q10–Q12, Typing Q4,
+Concurrency Q9 и Packaging Q5 написаны; следующий авторский кандидат —
+Python-доступ к БД.
+PostgreSQL 19 пока RC, перепроверять после GA. Stock Exchange остаётся
+кандидатом до подтверждения ценности.
 MongoDB `JobRepository` уже разобран в Batch Q6/Q28/Q38 без нового Q:
 различены resourceless/JDBC/MongoDB, транзакции metadata и данные шага.
 JSON Q2/Q6 B0/B1/Q26/Q27/Q28/Q38/Q39/Q42 синхронизирован;
@@ -502,14 +506,944 @@ Q36 без локальных hard/warnings, полный parity FAIL на ст�
 Полной проверки, runtime-прогона и независимой blind-приёмки нет.
 Коммит `46510e35f`.
 
-Следующий авторский пакет: Spring Data JPA Q37 B0 и парный JSON.
-Проверить `hasCategory(String)` против типа связи `category` в Q35,
-экранирование `%`/`_` в `nameContains` и пересечение с Q17;
-сверить официальный Specification API 4.1.1. Затем Q38.
-Независимую MCQ-приёмку
-вести отдельно: ближайший
-пункт для другого контекста — Spring Batch Q6 B0/B1, Q28 B0, Q38 B0,
-затем Uber Q6/Q7, Maps Q27, Spring Framework Q1/Q2/Q9/Q10 B0/B1 и
+02.11 Spring Data JPA Q37 B0: по официальным Specifications 4.1.2,
+EscapeCharacter API и Jakarta Persistence 3.2 исправлены фильтр
+по связанной `Category.name` и экранирование `%`/`_` в собственном
+Criteria-запросе. Теория, MCQ и freshness-sidecar синхронизированы;
+structure 43 Q/44 блока PASS, Q37 без локальных hard/warnings,
+полный parity файла FAIL на старых блоках. Полной проверки,
+компиляции примера и независимой blind-приёмки нет. Коммита нет.
+
+02.11 Spring Data JPA Q38 B0: по официальным Projections 4.1.2
+исправлено противоречие между `@Value`/SpEL с `target` и обещанием
+узкого SELECT. Пример использует закрытую проекцию с `default`-методом;
+уточнены DTO, динамический выбор результата и вложенные JOIN.
+Сопоставлены Q13/Q14/Q35; теория, MCQ и sidecar синхронизированы.
+Structure 43 Q/44 блока PASS, локальный Q38 без hard/warnings,
+полный parity файла FAIL на старых блоках. Полной проверки,
+runtime/SQL-прогона и независимой blind-приёмки нет. Коммита нет.
+
+02.11 Spring Data JPA Q40 B0: сопоставлены Q34/Q40 и Flyway Q10.
+По Spring Boot 3.5/4.1.2, Flyway baselineOnMigrate и Boot Replace
+уточнены порядок миграций до JPA, явный `ddl-auto: validate` при
+дефолте `none`, выключенный по умолчанию baseline и `NON_TEST` в
+`@DataJpaTest`. Теория, MCQ и sidecar синхронизированы. Structure
+43 Q/44 блока PASS, локальный Q40 без hard/warnings, полный parity
+файла FAIL на других блоках. Полной проверки, runtime-прогона и
+независимой blind-приёмки нет. Коммита нет.
+
+02.11 Spring Data JPA Q41 B0: сопоставлены Q15/Q24/Q35/Q41.
+По Spring Data JPA 4.1.2, Jakarta Persistence 3.2 и Hibernate 7.4
+исправлены безусловные обещания `LEFT JOIN`, отдельных SELECT для
+нескольких bags и правильной пагинации через граф с `countQuery`.
+Теория, MCQ и sidecar синхронизированы. Structure 43 Q/44 блока PASS,
+локальный Q41 без hard/warnings, полный parity файла FAIL на других
+блоках. Полной проверки, runtime/SQL-прогона и независимой
+blind-приёмки нет. Коммита нет.
+
+02.11 Spring Data JPA Q42 B0: сопоставлены Q8/Q33/Q42. По Spring
+Data JPA 4.1.2, Jakarta Persistence 3.2 и Hibernate HQL 7.4
+уточнены объявленный `@Query` против derived delete, транзакция,
+JPQL `UPDATE`/`DELETE` против нативного/HQL `INSERT`, flush/clear и
+состояние контекста. Исправлен пример нативной записи аудита.
+Теория, MCQ и sidecar синхронизированы. Structure 43 Q/44 блока PASS,
+локальный Q42 без hard/warnings, полный parity файла FAIL на других
+блоках. Полной проверки, runtime/SQL-прогона и независимой
+blind-приёмки нет. Коммита нет.
+
+02.11 Spring Data JPA Q43 B0: сопоставлены Q15/Q16/Q43. По Spring
+Data JPA 4.1.2 и PostgreSQL transaction isolation убраны обещания
+замены `Pageable` и постоянной скорости, уточнены состав ключа,
+ненулевые поля, проекция, индекс и конкурентные изменения.
+Теория, MCQ и sidecar синхронизированы. Structure 43 Q/44 блока,
+локальный Q43 без hard/warnings, полный skel/parity файла FAIL на
+других блоках. Полной проверки, runtime/SQL-прогона и независимой
+blind-приёмки нет. Инвентарь не менялся. Коммита нет.
+
+02.11 Spring Batch Q6 B0/B1: в теории уточнено, что персистентный
+`JobRepository` не гарантирует восстановления позиции reader/writer
+без сохранённого `ExecutionContext` через `ItemStream`; исправлены
+B0 A и объяснения B0, B1 точечно проверен. Structure, Markdown,
+parity, skel и JSON sidecar PASS. Общий gates FAIL из-за прежнего
+Q15 и других сигналов; Q6 B1 `NOVEL-TERM-WRONG` разобран вручную.
+Полной `П` и независимой приёмки нет. Blind-input Q6 B0/B1 готов:
+`docs/mcq-quality/runs/20261102-spring-batch-q6-b0-b1-r1/`.
+Фазы A/B и record не выполнялись. Коммита нет.
+
+02.11 Spring Batch Q28 B0: сопоставлены Q6/Q28/Q38. По Boot 3.5/4.1
+исправлено ложное обещание автозапуска всех `Job`: запускается один;
+при нескольких задают `spring.batch.job.name`. Разделены отключение
+автозапуска и инфраструктуры. Теория, MCQ и sidecar синхронизированы;
+structure, Markdown, parity, skel PASS. Общий gates FAIL на старом Q15
+и других сигналах. Формальный Q28 C «частей=1» проверен вручную:
+две смысловые части присутствуют. Полной `П` и независимой фазы A/B
+нет. Старый blind-input Q6 B0/B1 устарел: manifest не совпадает с
+хешами теории и JSON после Q28; для рецензирования его не использовать.
+Коммита нет.
+
+02.11 Spring Batch Q38 B0: сопоставлены Q6/Q28/Q38. По Batch
+5.0/5.2/6 уточнено различие менеджеров транзакций репозитория и
+шага и риск повторной обработки, когда данные и метаданные пишутся
+в разные БД. Теория, MCQ и sidecar синхронизированы; structure,
+Markdown, parity, skel PASS. Общий gates FAIL из-за прежнего Q15
+и других сигналов, по Q38 локальных hard/warnings нет. Полной `П`
+и независимой приёмки нет. Новый blind-input Q6 B0/B1, Q28 B0,
+Q38 B0: `docs/mcq-quality/runs/20261102-spring-batch-q6-q28-q38-r1/`;
+manifest совпадает с текущими хешами. Старый пакет Q6 устарел.
+Коммита нет.
+
+02.11 P4-пакет ёмкости LLM-сервиса написан: Architecture Q33 и MCQ B0,
+TOC, freshness-sidecar, инвентарь 33 Q/33 блока. Сверены официальные
+OpenAI/Claude rate limits, vLLM metrics и Kubernetes HPA. JSON и Markdown
+валидны, локальный skel Q33 чист; общие parity/skel файла FAIL из-за
+других Q. Авторская точечная проверка A/B/C/D выполнена, полной `П`
+и независимой MCQ-приёмки нет. Коммита нет.
+
+02.11 `DEEPEN` LLM Integration Patterns Q14 B0 выполнен на уровне `О`:
+исправлен подсчёт только выходных токенов, добавлены применимые лимиты
+OpenAI/Claude, оценка до вызова, сверка с usage и общая квота инстансов.
+Теория, production MCQ и freshness-sidecar синхронизированы; structure,
+Markdown и локальный skel Q14 PASS, общие parity/skel файла FAIL из-за
+других Q. A/B/C/D и sections авторски прочитаны; полной `П` и
+независимой приёмки нет. Инвентарь не менялся, коммита нет.
+
+02.11 Python 3.15 обработан одним вопросом Python Core Q10 о смене
+кодировки текстового I/O по умолчанию. Сверены финальные What's New,
+PEP 686 и `io`; Q8/соседняя concurrency-тема не дублируют сценарий.
+Теория, TOC, production MCQ Q10 B0, freshness-sidecar и инвентарь
+(10 Q/10 блоков) синхронизированы. Structure/Markdown/parity PASS,
+локальный skel Q10 без hard/warn; общий gates FAIL на старых Q1–Q9.
+A/B/C/D и sections прочитаны автором, полной `П` и независимой
+MCQ-приёмки нет. Коммита нет.
+
+02.11 Python Typing Q4 дополнен `closed=True` и `extra_items=T` по
+Python 3.15, PEP 728 и официальной документации `TypedDict`.
+Production MCQ Q4 B1 добавлен, B0 сохранён; sidecar обновлён.
+Structure/Markdown/parity/gates PASS для 4 Q/5 блоков. A/B/C/D и
+sections авторски прочитаны, полная `П` и независимая MCQ-приёмка
+не проведены. Инвентарь не менялся, коммита нет.
+
+02.11 Python Core Q11 про explicit lazy import написан по финальным
+What's New 3.15 и PEP 810. Core Q6/Q7/Q10 и Packaging Q1/Q4 сопоставлены
+по заголовкам и точечно по ответам: сценарий старта сервиса и первого
+запроса там отсутствовал. TOC, production MCQ Q11 B0, sidecar и инвентарь
+синхронизированы: 11 Q/11 блоков. Structure/Markdown/parity PASS,
+локальный skel Q11 без hard/warn; общий gates FAIL на старых Q1–Q9.
+A/B/C/D и sections авторски прочитаны, полной `П` и независимой MCQ-приёмки
+нет. Python 3.15 локально не установлен; пример сверен с документацией.
+Коммита нет.
+
+02.11 Python Core Q5 углублён по Python 3.15 `sentinel()`, PEP 661 и
+What's New. С Core Q5 и Typing Q1/Q4 сравнили заголовки и соседние
+ответы: недоставало различия пропуска и явного `None` в примере.
+Заголовок/TOC и production MCQ Q5 B0 синхронизированы, B1 добавлен;
+sidecar и инвентарь отражают 11 Q/12 блоков. Structure/Markdown/parity
+PASS; локальный skel B1 без hard/warn, общий skel FAIL на старых блоках,
+включая Q5 B0. A/B/C/D и sections B1 авторски прочитаны, полной `П`
+и независимой MCQ-приёмки нет. Python 3.15 локально не установлен;
+пример сверен с документацией. Коммита нет.
+
+02.11 Python Core Q3 углублён по Python 3.15 `frozendict`, PEP 814 и
+документации built-in types. Q3/Q4/Q5/Q9 сопоставлены по заголовкам и
+точечно по ответам: практического выбора immutable mapping не было.
+Заголовок/TOC и production MCQ Q3 B0 синхронизированы, B1 добавлен;
+sidecar и инвентарь отражают 11 Q/13 блоков. Structure/Markdown/parity
+PASS; локальный skel Q3 B1 без hard/warn, общий gates FAIL на старых
+блоках (`errors=1`, `warnings=9`, `manual_review=7`, skel `hard=8`).
+A/B/C/D и sections B1 авторски прочитаны, полной `П` и независимой
+MCQ-приёмки нет. Python 3.15 локально не установлен; пример сверен
+по документации. Коммита нет.
+
+02.11 Python Core Q12 добавлен по официальным Python 3.15
+`profiling.sampling`, `profiling.tracing` и What's New. Общий profiling
+Q1/Q2/Q14/Q25/Q27 и Python Core/Concurrency сопоставлены по заголовкам
+и точечно по ответам: сценарий attach к Python worker отсутствовал.
+TOC/See also, production MCQ Q12 B0, sidecar и инвентарь синхронизированы:
+12 Q/14 блоков. Structure/Markdown/parity PASS, локальный skel Q12
+без hard/warn; общий gates FAIL на прежних блоках (`errors=1`,
+`warnings=9`, `manual_review=7`, skel `hard=8`). A/B/C/D и sections
+авторски прочитаны, полной `П` и независимой MCQ-приёмки нет.
+Python 3.15 локально не установлен; команда сверена по документации.
+Коммита нет.
+
+Python Concurrency Q9 углублён по free-threading guide и PEP 803:
+проверка сборки, runtime GIL после импортов, wheel `abi3t`/`abi3.abi3t`.
+Production MCQ Q9 B1, sidecar и инвентарь синхронизированы: 9 Q/10 блоков.
+Structure/Markdown/parity PASS, локальный skel Q9 B1 без hard, с двумя
+предупреждениями формы; общий gates FAIL на прежних блоках (`skel hard=9`).
+Авторская проверка A/B/C/D и sections проведена, полной `П` и независимой
+MCQ-приёмки нет. CPython 3.15 локально не запускался. Коммита нет.
+
+Python Packaging Q5 написан по [документации `site`](https://docs.python.org/3.15/library/site.html)
+и [PEP 829](https://peps.python.org/pep-0829/): `.pth`, `.start`, парные
+файлы, порядок обработки и `-S`. Production MCQ Q5 B0, sidecar, TOC
+и инвентарь синхронизированы: 5 Q/5 блоков. Structure/Markdown/parity
+PASS, локальный skel Q5 без hard/warn; A/B/C/D и sections авторски
+проверены. Полной `П` и независимой MCQ-приёмки нет. Локально Python
+3.14; поведение 3.15 подтверждено документацией. Коммита нет.
+
+Python Core Q12 углублён по [What's New](https://docs.python.org/3.15/whatsnew/3.15.html#pep-831-frame-pointers-enabled-by-default),
+[perf profiling HOWTO](https://docs.python.org/3/howto/perf_profiling.html)
+и [PEP 831](https://peps.python.org/pep-0831/): frame pointers в
+поддерживаемых сборках, отдельный perf map, нативные расширения и
+Windows x64. Production MCQ Q12 B1, sidecar и инвентарь синхронизированы:
+12 Q/15 блоков. Structure/Markdown/parity PASS, локальный skel B1 без
+hard/warn; общий gates FAIL на прежних блоках. Авторская проверка
+A/B/C/D и sections проведена, полной `П` и независимой MCQ-приёмки нет.
+Python 3.15 и Linux `perf` локально не запускались. Коммита нет.
+
+Python Database Q1–Q3 написаны после точечной проверки FastAPI Q2/Q3,
+Database Transactions Q33/Q34 и Python Packaging Q3. Созданы три
+вопроса, четыре production MCQ-блока и freshness sidecar; TOC и
+инвентарь обновлены. Structure/Markdown/parity/style PASS; MCQ skel
+pre-check без hard, с предупреждениями. Авторская точечная проверка
+A/B/C/D выполнена; полная `П` и независимая MCQ-приёмка впереди.
+Коммита нет.
+
+Python Database Q4 добавлен после сверки Q2, Database Transactions
+Q33/Q34 и документации Python 3.15 `sqlite3`. Q4 объясняет, что
+`with con` управляет открытой транзакцией, но не закрывает соединение,
+и что при `autocommit=True` контекст ничего не фиксирует. Production
+MCQ B0, sidecar, TOC и инвентарь синхронизированы: 4 Q/5 блоков.
+Локальный Python 3.14.4 подтвердил оба режима, исключение и доступность
+соединения после блока. Structure/Markdown/parity/style PASS; skel
+pre-check без hard, с предупреждениями. Авторская проверка A/B/C/D
+и sections выполнена; полная `П` и независимая MCQ-приёмка открыты.
+Коммита нет.
+
+Python Database Q5 добавлен после сверки Python Database Q2/Q3,
+Database Transactions Q33/Q34 и FastAPI Q3. Q5 разводит жизненный
+цикл SQLAlchemy Engine/пула и Session, описывает возврат соединения
+и диагностику ожидания пула. Production MCQ B0, sidecar, TOC и
+инвентарь синхронизированы: 5 Q/6 блоков. Structure/Markdown/parity/
+style PASS, skel pre-check без hard, с предупреждениями; авторская
+проверка A/B/C/D и sections выполнена. SQLAlchemy локально не
+установлен; полной `П` и независимой MCQ-приёмки нет. Коммита нет.
+
+Python Database Q6 добавлен после сверки Python Database Q2/Q5,
+FastAPI Q4 и Hibernate Q22. Q6 объясняет `expire_on_commit`,
+отсоединение ORM-объекта при закрытии Session и подготовку DTO до
+выхода из её области. Production MCQ B0, sidecar, TOC и инвентарь
+синхронизированы: 6 Q/7 блоков. Structure/Markdown/parity/style
+PASS, skel pre-check без hard, с предупреждениями; авторская
+проверка A/B/C/D и sections выполнена. SQLAlchemy локально не
+установлен; полной `П` и независимой MCQ-приёмки нет. Коммита нет.
+
+Python Database Q7 добавлен после проверки Python Database Q3/Q6,
+FastAPI Q1/Q4 и Python Concurrency Q1. Q7 объясняет `MissingGreenlet`
+от неявного I/O на lazy-связи при открытой `AsyncSession`,
+`selectinload` и версионную границу `AsyncAttrs` 2.0.13.
+Production MCQ B0, sidecar, TOC и инвентарь синхронизированы:
+7 Q/8 блоков. Structure/Markdown/parity/style PASS, skel pre-check
+без hard, с предупреждениями; авторская проверка A/B/C/D и sections
+выполнена. SQLAlchemy локально не установлен; полной `П` и
+независимой MCQ-приёмки нет. Коммита нет.
+
+Python Database Q8 добавлен после сверки заголовков (`З`) и ответов
+(`О`) Python Database Q6/Q7 и Hibernate Q20/Q21. Q8 разбирает N+1,
+`selectinload` против `joinedload`, обязательный `Result.unique()`
+для JOIN коллекции и границу tuple IN. Production MCQ B0, sidecar,
+TOC и инвентарь синхронизированы: 8 Q/9 блоков. Structure/Markdown/parity/style PASS, skel pre-check без hard. Авторская проверка
+A/B/C/D и sections проведена. Полная `П`, запуск SQLAlchemy с БД
+и независимая MCQ-приёмка остаются открыты. Коммита нет.
+
+Python Database Q1–Q2 прошли авторскую полную `П` по PEP 249,
+Python sqlite3, Psycopg 3 parameters и SQLAlchemy Session Basics.
+Q1 дополнен примером `sql.Identifier` после allowlist; Q2 — границей
+режима autocommit и восстановлением Session после сбоя flush.
+Production MCQ Q1 B1 и Q2 B0 синхронизированы, Q2 B1 добавлен;
+sidecar и инвентарь обновлены: 8 Q/10 блоков. Structure/Markdown/
+parity/style PASS, skel pre-check без hard; A/B/C/D и sections
+проверены автором. Локального запуска с БД и независимой MCQ-приёмки
+нет. Коммита нет.
+
+Python Database Q3–Q4 прошли авторскую полную `П` по FastAPI,
+SQLAlchemy asyncio, Starlette/AnyIO worker threads и Python sqlite3.
+Q3 дополнен явным offload всей sync DB-операции с отдельной Session;
+Q4 — ручным SQL BEGIN при autocommit=True и SQL COMMIT/ROLLBACK.
+MCQ Q3 B1 и Q4 B1 добавлены, B0 sections синхронизированы;
+sidecar и инвентарь обновлены: 8 Q/12 блоков. Structure/Markdown/
+parity/style PASS, skel pre-check без hard; A/B/C/D и sections
+проверены автором. Q4 локально проверен на Python 3.14.4;
+интеграционного запуска FastAPI/SQLAlchemy и независимой MCQ-приёмки
+нет. Коммита нет.
+
+Python Database Q5–Q6 прошли авторскую полную `П` по SQLAlchemy
+Session Basics, Connection Pooling и DetachedInstanceError. Q5 пример
+исправлен: возвращает scalar IDs до закрытия Session, что согласовано
+с Q6; MCQ Q5 B0 вариант B, example/edge cases и freshness синхронизированы.
+Q6 проверен без смысловой правки, MCQ B0 авторски сверён. Счётчики
+остались 8 Q/12 блоков; инвентарь не менялся. Structure/Markdown/
+parity/style PASS, skel pre-check без hard. SQLAlchemy с БД локально
+не запускался; независимой MCQ-приёмки нет. Коммита нет.
+
+Python Database Q7–Q8 прошли авторскую полную `П` по SQLAlchemy
+asyncio, Errors и relationship loading. Q7 подтверждён без смысловой
+правки. Q8 уточняет LIMIT/OFFSET с joinedload: подзапрос сохраняет
+родителей страницы, но unique() для коллекции остаётся обязательным.
+MCQ Q8 B1 добавлен, B0 sections и freshness синхронизированы;
+инвентарь — 8 Q/13 блоков. Structure/Markdown/parity/style PASS,
+skel pre-check без hard; A/B/C/D и sections проверены автором.
+Вся Python Database Q1–Q8 прошла авторскую `П`. Интеграционного
+запуска SQLAlchemy с БД и независимой MCQ-приёмки нет. Коммита нет.
+
+Go database/sql Q22–Q23 прошли авторскую полную `П` по официальным
+Go querying, manage connections и database/sql API. Теория, production
+MCQ и freshness уточнены: полный проход Rows.Next закрывает Rows,
+Rows.Err проверяет ошибку итерации, SetMaxIdleConns не создаёт резерв
+сверх SetMaxOpenConns. Structure/parity PASS; локально Q22/Q23 без
+hard/warnings, общий pre-check старого файла FAIL (25 hard вне
+целевого пакета). A/B/C/D и sections проверены автором; blind review
+и запуска с реальной БД нет. Состав прежний — 31 Q/32 блока;
+инвентарь не менялся. Коммита нет.
+
+Go database/sql Q24–Q25 прошли авторскую полную `П` по Go prepared
+statements, transactions и database/sql API. Теория, production MCQ
+Q24/Q25 B0 и freshness уточнены: контекст подготовки не действует
+на последующее выполнение, tx.StmtContext привязывает statement к
+транзакции, ошибка Commit не подтверждает результаты. Структура
+31 Q/32 блока PASS, локально Q24/Q25 без hard/warnings. Общие parity
+и pre-check старого файла FAIL (23 hard вне Q24/Q25); A/B/C/D и sections
+проверены автором, независимого blind review и запуска с БД нет.
+Инвентарь не менялся, коммита нет. Вся Go database/sql Q22–Q25 прошла
+авторскую `П`.
+
+Go stdlib Q26–Q27 прошли авторскую полную `П` по официальным
+io, ioutil, os, bufio и Go 1.16 release notes. Теория, production MCQ
+Q26/Q27 B0 и freshness уточнены: Reader допускает короткое чтение и
+данные вместе с EOF, Writer сообщает ошибку при короткой записи,
+io.Copy работает потоково, os.ReadDir возвращает другой тип, а ioutil
+остаётся доступным. Структура 31 Q/32 блока PASS; локальный pre-check
+Q26/Q27 без hard/warnings. Общие parity и pre-check старого файла FAIL
+(21 hard вне Q26/Q27); A/B/C/D и sections проверены автором, blind
+review и запуска всех примеров нет. Инвентарь не менялся, коммита нет.
+
+Go stdlib Q28 прошёл авторскую полную `П` по официальным embed,
+io/fs, net/http и Go 1.16 release notes. В теории исправлен пример
+с необъявленной staticFS; показаны fs.Sub/http.StripPrefix для
+публикации только статики и уточнены правила директивы. Production
+MCQ Q28 B0 и freshness синхронизированы; неподтверждённые заявления
+о времени запуска убраны. Структура 31 Q/32 блока PASS, локальный
+pre-check Q28 без hard/warnings. Общие parity и pre-check старого
+файла FAIL (21 hard вне Q28); A/B/C/D и sections проверены автором.
+Go toolchain отсутствует, пример не компилировался; blind review нет.
+Инвентарь не менялся, коммита нет.
+
+Go stdlib Q29–Q30 прошли авторскую полную `П` по официальным
+sort, slices и Go 1.21–1.23 release/API docs. Исправлены примеры,
+сигнатуры компараторов, стабильность и границы Concat/Collect;
+убраны универсальные оценки скорости и дублирование maps.Keys.
+Production MCQ Q29/Q30 B0 и freshness синхронизированы. Структура
+31 Q/32 блока PASS, локальный pre-check Q29/Q30 без hard/warnings.
+Общие parity и pre-check старого файла FAIL (19 hard вне Q29/Q30);
+A/B/C/D и sections проверены автором. Go toolchain отсутствует,
+примеры не компилировались; blind review нет. Инвентарь не менялся,
+коммита нет.
+
+Go stdlib Q31 прошёл авторскую полную `П` по Go 1.27 release notes и
+официальным encoding/json, encoding/json/v2, jsontext API. Уточнены
+граница `UnmarshalRead` (одно значение, весь Reader до EOF), маршрут
+`UnmarshalDecode` для нескольких значений, nil slice/map и `[]byte`.
+Production MCQ Q31 B0/B1 и freshness синхронизированы; структура
+31 Q/32 блока PASS, локальный pre-check без hard/warnings. Общие
+parity и pre-check старого файла FAIL (21 блок вне коридора длины,
+19 hard вне Q31). Пример Go 1.27 не компилировался, blind review нет.
+
+Go stdlib Q7–Q10 прошли авторскую `П` по официальному encoding/json API
+и Go spec. Исправлены границы `omitempty`/`json:"-"`, синтаксическая
+проверка при `RawMessage`, потоковое чтение массива и разбор строки
+в `UnmarshalJSON`. Production MCQ Q7–Q10 B0 и freshness
+синхронизированы; структура 31 Q/32 блока PASS, локальный pre-check
+без hard/warnings. Общие parity/pre-check старого файла FAIL
+(18/32 correct самые длинные, 19 блоков вне коридора длины,
+16 hard). Go toolchain отсутствует, примеры не компилировались;
+blind review нет. Инвентарь не менялся, коммита нет.
+
+Go stdlib Q6 прошёл авторскую `П` по официальному encoding/json API.
+Пример переписан без повторного объявления `u` и с проверкой ошибок;
+уточнены экспортируемые поля, указатель для Unmarshal и неизвестные
+ключи. Production MCQ Q6 B0 и freshness синхронизированы. Структура
+31 Q/32 блока PASS, локальный pre-check без hard/warnings. Общие
+parity/pre-check старого файла FAIL (17/32 correct самые длинные,
+18 блоков вне коридора длины, 15 hard). Go toolchain отсутствует,
+пример не компилировался; blind review нет. Инвентарь не менялся,
+коммита нет.
+
+Go stdlib Q1–Q2 прошли авторскую `П` по официальным net/http,
+Go 1.22 release notes и блогу команды Go. Q1 показывает собственный
+mux, `http.Server`, таймауты и проверку ошибки запуска; Q2 объясняет
+специфичность паттернов вместо длины строки, GET/HEAD, wildcard,
+перенаправление со слэшем и конфликт регистрации. Production MCQ
+Q1–Q2 B0 и freshness синхронизированы; структура 31 Q/32 блока PASS,
+локальный pre-check без hard/warnings. Общие parity/pre-check старого
+файла FAIL (16/32 correct самые длинные, 17 блоков вне коридора длины,
+13 hard). Go toolchain отсутствует, примеры не компилировались;
+blind review нет. Инвентарь не менялся, коммита нет.
+
+Go stdlib Q3 прошёл авторскую `П` по официальным net/http Handler
+и HandlerFunc API. Пример middleware теперь использует определённую
+проверку `X-Request-ID`; уточнены порядок внешней и внутренней
+обёрток, прерывание цепочки и возврат во внешний `Logging`.
+Production MCQ Q3 B0 и freshness синхронизированы. Структура
+31 Q/32 блока PASS, локальный pre-check без hard/warnings; общие
+parity/pre-check старого файла FAIL (15/32 correct самые длинные,
+16 блоков вне коридора длины, 12 hard). Go toolchain отсутствует,
+пример не компилировался; blind review нет. Инвентарь не менялся,
+коммита нет.
+
+Go stdlib Q4 прошёл авторскую `П` по официальным net/http и блогу Go
+о повторном использовании HTTP/1 соединений. Уточнены общий срок
+`Client.Timeout`, контекст запроса, пул `DefaultTransport` и граница
+Go 1.27 при закрытии непрочитанного body. Пример проверяет ошибки
+создания запроса и чтения, а также HTTP-статус. Production MCQ
+Q4 B0 переписан, B1 добавлен; freshness синхронизирован.
+Структура 31 Q/33 блока PASS, локальный pre-check Q4 B0/B1 без
+hard/warnings. Общие parity/pre-check файла FAIL (14/33 correct
+самые длинные, 15 блоков вне коридора длины, 11 hard). Go toolchain
+отсутствует, пример не компилировался; blind review нет.
+Инвентарь не менялся, коммита нет.
+
+Go stdlib Q5 прошёл авторскую `П` по официальным net/http,
+os/signal и Kubernetes Pod lifecycle. Пример отдельно обрабатывает
+ошибку запуска и сигнал, ждёт возврата `Shutdown` с новым
+контекстом; уточнены граница таймаута и захваченные соединения.
+Заголовок и TOC соседнего Q4 уточнены под его B1 о `Transport`;
+STEM-DRIFT Q4 B1 устранён. Production MCQ Q5 B0 и freshness
+синхронизированы. Структура
+31 Q/33 блока PASS, локальный pre-check Q5 без hard/warnings.
+Общие parity/pre-check файла FAIL (13/33 correct самые длинные,
+14 блоков вне коридора длины, 10 hard). Go toolchain отсутствует,
+код не компилировался и сигналы не тестировались; blind review нет.
+Инвентарь не менялся, коммита нет.
+
+Go stdlib Q11–Q12 прошли авторскую `П` по официальным strings,
+bytes, исходному коду Builder и блогу Go о `go fix`. Q11 различает
+стоимость конкатенации в цикле и работу растущего буфера без
+непроверенного обещания выигрыша в каждом случае. Q12 объясняет
+`io.Reader`/`io.Writer`, непрочитанную часть `Bytes()` и то, что
+`Reset()` сохраняет память. Примеры и production MCQ Q11–Q12 B0
+обновлены, freshness синхронизирован. Структура 31 Q/33 блока
+PASS, локальный skel без hard/warnings. Общие parity/pre-check
+FAIL (11/33 correct самые длинные, 12 блоков вне коридора длины,
+9 hard skel; старый STEM-DRIFT Q7 B0). Go toolchain отсутствует,
+примеры не компилировались; blind review нет. Инвентарь не менялся,
+коммита нет.
+
+Go stdlib Q13–Q14 прошли авторскую `П` по официальному time API.
+Q13 теперь показывает проверяемый результат `Time.Add`/`Sub`,
+наносекунды `Duration` и монотонное время. Q14 проверяет ошибку
+парсинга и различает UTC без зоны у `Parse` и заданную локацию у
+`ParseInLocation`. Production MCQ Q13 B0 и Q14 B0/B1 обновлены,
+freshness синхронизирован. Структура 31 Q/34 блока PASS, локальный
+skel без hard/warnings. Общие parity/pre-check FAIL (9/34 correct
+самые длинные, 10 блоков вне коридора длины, 7 hard skel;
+старый STEM-DRIFT Q7 B0; Q14 B0/B1 имеют предупреждение о
+недословном заголовке блока, но оба сценария раскрыты в Q14).
+Go toolchain отсутствует, код не компилировался; blind review нет.
+Инвентарь не менялся, коммита нет.
+
+Go stdlib Q15–Q16 и Go Concurrency Q14 прошли авторскую `П` по
+официальным `time` API и Go 1.23 release notes. Исправлены пример
+с одним моментом в двух зонах, `Equal`/`==`, поиск IANA-зон и
+ошибочные утверждения об утечке `time.After` и дренировании канала
+после `Stop`. Указаны условия новой семантики (`go` главного модуля,
+`GODEBUG=asynctimerchan=1`). Три production MCQ-блока и два freshness
+синхронизированы. Структура двух тем 66 Q/70 блоков PASS, локальный
+skel без hard/warnings. Общие parity/pre-check FAIL из-за старого
+backlog; linkage сохраняет ошибки stdlib Q7 B0 и concurrency Q21 B0. Недословные
+заголовки изменённых MCQ дают предупреждения, сценарии есть в теории.
+Go toolchain отсутствует, код и оба режима таймеров не запускались;
+независимой blind-приёмки нет. Инвентарь не менялся, коммита нет.
+
+Go stdlib Q17 и Go Concurrency Q23–Q25 прошли авторскую `П` по
+официальным `context`, `CancelFunc`, `WithDeadline` и `go vet`.
+Исправлены примеры с повторными `ctx :=`, преждевременным `log.Fatal`
+и неиспользуемым `child`. Разделены отмена контекста, освобождение
+ресурсов и фактическое завершение горутины. Четыре production
+MCQ-блока и два freshness синхронизированы. Структура двух тем
+66 Q/70 блоков PASS, локальный skel без hard/warnings; общие gates
+FAIL из-за старого backlog, linkage сохраняет ошибки stdlib Q7 B0
+и concurrency Q21 B0. У новых MCQ остаются предупреждения о
+недословных заголовках, но каждый сценарий разобран в своём Q.
+Go toolchain отсутствует; код и `go vet` не запускались.
+Независимой blind-приёмки нет. Инвентарь не менялся, коммита нет.
+
+Go stdlib Q18–Q19 и связанный Go Core Q28 прошли авторскую `П` по
+официальным `errors`, `fmt`, `os` и Go 1.13/1.20 источникам. Q18
+различает `Is`/`As`, `%w`/`%v` и `AsType` с Go 1.26; Q19 объясняет
+ветви `Join` и границу `errors.Unwrap`. В Q28 исправлены версия
+`Join`, двойной `Close` и пропуск ошибки `os.Create`. Три production
+MCQ-блока и два freshness обновлены. Структура двух тем 67 Q/70
+блоков PASS, локальный skel без hard/warnings. Общие gates FAIL
+из-за старого backlog; linkage сохраняет ошибки stdlib Q7 B0 и
+Go Core Q8/Q25/Q31 B0. У изменённых блоков предупреждения о
+недословных заголовках, сценарии раскрыты в своих Q. Go toolchain
+отсутствует, код не компилировался; независимой blind-приёмки нет.
+Инвентарь не менялся, коммита нет.
+
+Go stdlib Q20–Q21 прошли авторскую полную `П`: исправлены пример
+`slog`, граница передачи контекста и выбор логгера без универсального
+рейтинга скорости. Production MCQ Q20–Q21 и freshness обновлены;
+structure PASS, локальный skel без замечаний, общие gates FAIL на
+старом backlog. Независимой blind-приёмки и компиляции примера нет.
+
+Go Core Q1–Q3 прошли авторскую полную `П`: условия сборки и `cgo`,
+сравнение Go с Java на JVM без фиксированных RAM/стартовых чисел,
+virtual threads и уместность mutex наряду с channels. Production MCQ
+Q1–Q3 и freshness обновлены; structure PASS (36 Q/36 блоков),
+локальные skel/parity/anti-tell/linkage без сигналов. Общие gates
+FAIL на прежнем backlog других блоков. Независимой blind-приёмки нет;
+замеров ресурсов и компиляции Go-примеров не было.
+
+Go Core Q4–Q7 прошли авторскую полную `П`: исправлены условия
+повторного объявления через `:=`, граница `string`/UTF-8, усечение
+при числовой конверсии и поведение `nil`-map/channel. Примеры Q5–Q7
+переписаны, production MCQ Q4–Q7 и freshness синхронизированы.
+Structure PASS (36 Q/36 блоков), локальные skel/parity/anti-tell/
+linkage без сигналов; общие gates FAIL на старом backlog. Go toolchain
+отсутствует, примеры не компилировались; blind-приёмки нет.
+
+Go Core Q8–Q9 прошли авторскую полную `П`: разделены конверсия
+переменной и присваивание константы, числовой текст и `string(int)`;
+для указателей уточнены nil-panic, `unsafe` и escape analysis без
+обязательной heap-аллокации. Примеры, production MCQ Q8–Q9 и freshness
+обновлены. Structure PASS (36 Q/36 блоков), локальные skel/parity/
+anti-tell/linkage без сигналов; общие gates FAIL на старом backlog.
+Go toolchain отсутствует, примеры не компилировались; blind-приёмки нет.
+
+Go Core Q10–Q12 прошли авторскую полную `П`: исправлены семантика
+копирования массива и среза, модель `len`/`cap` без обещания layout
+и коэффициента роста, некомпилируемый голый `append(s, x)` и пример
+перезаписи общего массива. Production MCQ Q10–Q12 B0 и freshness
+обновлены. Structure PASS (36 Q/36 блоков), локальные skel/parity/
+anti-tell/linkage без сигналов; общие gates FAIL на старом backlog.
+Go toolchain отсутствует, примеры не компилировались; независимой
+blind-приёмки нет. Инвентарь не менялся.
+
+Go Core Q13–Q14 прошли авторскую полную `П`: убраны устаревшие
+фиксированные бакеты карты, уточнены порядок `range`, конкурентный
+доступ и адресуемость элемента. Для embedding описаны продвижение
+селекторов, конфликты имён, наборы методов и отсутствие подтипизации.
+Production MCQ Q13–Q14 B0 и freshness обновлены. Structure PASS
+(36 Q/36 блоков), локальные skel/parity/anti-tell/linkage без сигналов;
+общие gates FAIL на других блоках. Go toolchain отсутствует, примеры
+не компилировались; независимой blind-приёмки нет. Инвентарь в этом
+пакете не менялся.
+
+Go Core Q15–Q16 прошли авторскую полную `П`: примеры множественных
+результатов переписаны в связную программу, а `error` в конце сигнатуры
+отмечен как идиома. Для методов уточнены поверхностная копия при
+value receiver, автоматическое взятие адреса и наборы методов `T`/`*T`.
+Production MCQ Q15–Q16 B0 и freshness обновлены. Structure PASS
+(36 Q/36 блоков), локальные skel/parity/anti-tell/linkage без сигналов;
+общие gates FAIL на других блоках. Go toolchain отсутствует, примеры
+не компилировались; независимой blind-приёмки нет. Инвентарь в этом
+пакете не менялся.
+
+Go Core Q17–Q18 прошли авторскую полную `П`: для variadic-функций
+уточнены `nil` без аргументов, общий массив при `f(s...)` и граница
+`[]int`/`...any`; для замыканий — версия языка модуля `go 1.22`,
+объявление переменной через `:=` и общая переменная до цикла. Примеры,
+production MCQ Q17–Q18 B0 и freshness обновлены. Structure PASS
+(36 Q/36 блоков), локальные skel/parity/anti-tell/linkage без сигналов;
+общие gates FAIL на других блоках. Go toolchain отсутствует, примеры
+не компилировались; независимой blind-приёмки нет. Инвентарь в этом
+пакете не менялся.
+
+Go Core Q19–Q20 прошли авторскую `П`: обновлены теория интерфейсов,
+цельные примеры, production MCQ B0 и freshness. Structure PASS
+(36 Q/36 блоков); независимой blind-приёмки нет. Локального Go
+toolchain нет, примеры не компилировались; состав Q/блоков прежний.
+
+Go Core Q21–Q22 прошли авторскую `П`: теория `any`, JSON и type
+assertion/type switch, цельные примеры, production MCQ B0 и freshness
+обновлены. Structure PASS (36 Q/36 блоков), локальные struct/skel/linkage
+без hard-сигналов; общие parity/gates FAIL на других блоках.
+Независимой blind-приёмки нет. Go toolchain отсутствует, примеры не
+компилировались; инвентарь в этом пакете не менялся.
+
+Go Core Q23–Q24 прошли авторскую `П`: структурная реализация
+интерфейсов, обработка ошибок, цельные примеры, production MCQ B0 и
+freshness обновлены. Structure PASS (36 Q/36 блоков), локальные
+struct/skel/linkage без сигналов на целевых блоках; общие gates/parity
+FAIL на других блоках. Независимой blind-приёмки нет. Go toolchain
+отсутствует, примеры не компилировались; инвентарь не менялся.
+
+Go Core Q25–Q26 прошли авторскую `П`: цепочки причин ошибок,
+`errors.Is`/`errors.As`/`errors.AsType`, `%w` и `panic`/`recover`/`defer`,
+цельные примеры, production MCQ B0 и freshness обновлены. Structure
+PASS (36 Q/36 блоков), локальные struct/skel/linkage без сигналов на
+целевых блоках; общие gates/parity FAIL на других блоках. Независимой
+blind-приёмки нет. Go toolchain отсутствует, примеры не компилировались;
+инвентарь не менялся.
+
+Go Core Q27 прошёл авторскую `П`: `defer`, цельный пример,
+production MCQ B0 и freshness обновлены. Structure PASS (36 Q/36
+блоков), локальные struct/skel/linkage без сигналов на Q27; общие
+gates/parity FAIL на других блоках. Независимой blind-приёмки нет.
+Go toolchain отсутствует, пример не компилировался; инвентарь не менялся.
+
+Go Core Q29–Q30 прошли авторскую `П`: исправлены модель G/M/P,
+`GOMAXPROCS`, границы GC/netpoll и кросс-сборки с cgo. Production MCQ
+B0 и freshness обновлены; structure PASS (36 Q/36 блоков), локальные
+struct/skel/linkage без сигналов. Общие gates/parity FAIL на других
+блоках. Независимой blind-приёмки нет; Go toolchain отсутствует,
+пример кросс-сборки не запускался. Инвентарь не менялся.
+
+Go Core Q31 прошёл авторскую `П`: уточнены линковка, cgo, `net`/`os/user`
+и ресурсы `scratch`; прежний STEM-DRIFT исправлен. Production MCQ B0
+и freshness синхронизированы. Structure PASS (36 Q/36 блоков),
+локальные struct/skel/linkage без сигналов, Markdown gate PASS;
+общие parity/skel FAIL на старых блоках. Независимой blind-приёмки
+нет; Go toolchain отсутствует, ELF и образ не собирались. Инвентарь
+не менялся.
+
+Go Core Q32–Q33 прошли авторскую `П`: убран недоказанный процент
+покрытия стандартной библиотекой, уточнены `database/sql`, `regexp`,
+`log/slog` и кооперативная отмена через `context.Context`. Production
+MCQ B0 и freshness обновлены; structure PASS (36 Q/36 блоков),
+локальные struct/skel/linkage без сигналов, Markdown gate PASS.
+Общие parity/skel FAIL на старых блоках, независимой blind-приёмки
+нет. Go toolchain отсутствует, пример с драйвером не компилировался;
+инвентарь не менялся.
+
+Go Core Q34–Q36 прошли авторскую `П`: production-примеры привязаны к
+Go FAQ, Prometheus FAQ и кейсу PayPal 2020 года; границы generic-методов
+сверены с Go 1.27, а сравнение GC, памяти и запуска с Java/Kotlin —
+с Go GC guide и документацией Java 21/JDK 25. Production MCQ B0 и
+freshness синхронизированы. 36 Q/36 блоков, JSON/Markdown и локальные
+struct/skel/linkage Q34–Q36 PASS; общий parity FAIL на старых Q23 и
+повторяющихся вариантах, linkage предупреждает о прежнем Q28.
+Независимой blind-приёмки нет, Go 1.27 локально не запускался;
+инвентарь не менялся.
+
+Go Memory & GC, вводный абзац и Q6/Q9–Q10/Q22–Q23 прошли авторскую `О`:
+убраны фиксированные пределы пауз и памяти, разделены STW и задержки
+запроса; Green Tea привязан к Go 1.26, поколенческий ZGC — к JDK 24+,
+цель G1 `MaxGCPauseMillis=200` — к JDK 25. Q23 теперь спрашивает, как
+сравнивать память; номер, MCQ и локальное оглавление сохранены.
+Production MCQ B0 и freshness обновлены: 27 Q/27 блоков, JSON/Markdown,
+struct и parity всего файла PASS. Linkage Q10 B — ручная проверка
+ложной линейной зависимости STW от heap; прежние warnings Q12/Q27
+остаются. Общий skel FAIL на старых Q11–Q13, изменённые блоки без
+сигналов. Остальные ответы файла не получили `П`; независимой
+blind-приёмки MCQ нет, Go 1.26+ локально не запускался.
+
+Go Memory & GC Q5/Q8/Q11–Q13 прошли авторскую `О`: убраны безусловные
+2 KiB и миллион goroutine, фиксированная стоимость write barrier,
+исправлена формула `GOGC` с учётом GC roots и пределы мягкого
+`GOMEMLIMIT`. Production MCQ B0 и freshness синхронизированы.
+Все 27 Q/27 блоков проходят JSON/Markdown, struct, skel и parity;
+прежние skel hard Q11–Q13 устранены. Linkage оставляет прежние warnings
+Q10/Q27, изменённые Q без сигналов. Независимой MCQ-приёмки и полной
+`П` остальных ответов файла нет; Go toolchain в PATH отсутствует.
+
+Go Memory & GC Q1–Q4 прошли авторскую `О`: GC сканирует стеки как
+корни, а `&x`, interface, closure и goroutine не означают безусловный
+escape; фиксированный порог 64 KB удалён. Диагностика `-gcflags=-m=2`
+отделена от измерения `allocs/op`. Учтена официальная публикация о
+малых аллокациях Go 1.27 от 16.09.2026. Production MCQ B0 и freshness
+обновлены; 27 Q/27 блоков, JSON/Markdown, struct, skel и parity всего
+файла PASS. Linkage Q10/Q27 оставляет прежние warnings, изменённые Q
+без сигналов. Полная `П` остальных ответов и независимая MCQ-приёмка
+ожидаются; Go toolchain в PATH отсутствует.
+
+Go Memory & GC Q16–Q20 прошли авторскую `О`: исправлены выводы из
+разницы heap-профилей и `allocs/op`, удержание большого массива через
+под-slice, версии реализации map после `delete` и расчёт памяти
+зависшей goroutine. Production MCQ B0 и freshness обновлены; независимая
+blind-приёмка и полная `П` файла ожидаются. Go toolchain отсутствует,
+примеры локально не исполнялись.
+
+Go Memory & GC Q7/Q14–Q15/Q21 прошли авторскую `О`: исправлены модель
+tri-color marking, пределы `runtime.GC()`, возраст heap-профиля и отличие
+`SetFinalizer` от `AddCleanup` с Go 1.24. Production MCQ B0 и freshness
+синхронизированы. Изменённые блоки без сигналов предпроверок;
+независимой blind-приёмки и полной `П` файла нет. Общий gate ещё
+возвращает прежний verbatim Q22, linkage Q10/Q27 требует разбора.
+
+Go Memory & GC Q24–Q27 прошли авторскую `О`: исправлены границы
+`sync.Pool`, два разных аргумента `make` для slice/map, пример inlining
+с `//go:noinline` и диагностика GC без фиксированного порога CPU.
+Production MCQ B0 и freshness обновлены; Q27 linkage warning исчез.
+Независимой blind-приёмки и полной `П` файла нет. Q10/Q22 прошли
+повторную авторскую `О`: linkage Q10 устранён, правильный вариант Q22
+перефразирован, verbatim 0. Q27 сопоставлен с Q17/Q24–Q26 и
+`runtime/metrics`, отдельной правки не потребовал. JSON/Markdown
+27 Q/27 блоков PASS, parity PASS, linkage 0 errors/warnings,
+skel 0 hard. Общий gate exit 1 остаётся из-за старых anti-tell
+Q3/Q5/Q6/Q23.
+
+Go Memory & GC Q3/Q5/Q6/Q23 прошли повторную авторскую проверку:
+Q3 уточнён в Markdown, MCQ Q3 A/Q5 D/Q6 A/Q23 B синхронизированы.
+После последовательной проверки Q1–Q27 теория получила авторскую
+`П`. Общий pre-check exit 0: anti-tell 0, linkage 0 errors/warnings,
+skel 0 hard/2 warn, verbatim 0. Независимой MCQ-приёмки ещё нет;
+Go-примеры локально не исполнялись без toolchain.
+
+Python Core Q1–Q5 прошли авторскую `О`: в Q4 уточнён контракт hash,
+в MCQ Q2 B0 исправлен второй правильный вариант; обновлены тексты
+и sections Q1/Q2/Q4/Q5. Q3 B0 теперь явно спрашивает о четырёх
+базовых контейнерах, Q3 B1 — о `frozendict`; предупреждение linkage
+о расхождении B0 с общим заголовком Q3 осмысленно. Изменённая группа
+без anti-tell и hard skel; общий gate exit 1 остаётся из-за Q6–Q9
+и Q12. Независимой MCQ-приёмки и полной `П` файла нет.
+
+Python Core Q6–Q9 прошли авторскую `О`: уточнены late binding,
+`iter()`/`next()`, пределы `finally`/`__exit__` и момент вызова
+`default_factory`; MCQ B0 и freshness синхронизированы. У группы
+anti-tell 0, hard skel 0, linkage 0 errors/warnings. Общий gate
+exit 1 оставляет Q12 B1 STEM-DRIFT; Q3 B0 — узкий stem с отдельным
+B1 про `frozendict`. Независимой MCQ-приёмки и полной `П` файла нет.
+
+Python Core Q10–Q12 проверены по официальной Python 3.15
+документации: уточнены глобальный режим и фильтр lazy imports,
+основной поток/`--all-threads` sampling и граница `--native`.
+Production MCQ Q11 B0/Q12 B0 обновлены; Q12 B1 больше не даёт
+STEM-DRIFT. Весь Markdown Q1–Q12 последовательно прочитан, авторская
+`П` получена. Gates exit 0 при 12 Q/15 блоках, parity PASS,
+anti-tell 0, skel 0 hard/1 warn, verbatim 0 и linkage errors 0;
+узкие Q3 B0 и Q12 B1 оставляют два осмысленных STEM-MISMATCH.
+Python 3.15 примеры локально не исполнялись; независимая MCQ-приёмка
+открыта.
+
+Python Typing Q1–Q4 прошли авторскую `П`: Q1 уточнён для eager,
+stringified и deferred аннотаций Python 3.11–3.15; Q2 показывает
+эквивалент `TypeVar` для 3.11; Q4 различает открытую структурную
+совместимость `TypedDict` и правила его конструктора. Q3 и Q4 B1
+повторно сверены с официальной спецификацией. Production MCQ Q1/Q2/
+Q4 B0 и Q4 B1 синхронизированы, все пять блоков автором проверены.
+Gates exit 0 при 4 Q/5 блоках, Markdown PASS. Python 3.11 и 3.15
+локально не запускались; независимая MCQ-приёмка открыта.
+
+Python Concurrency Q1–Q4 прошли авторскую `О` по официальной
+документации Python 3.11–3.15. Q3 уточняет eager Task с Python 3.14,
+Q4 — условия отмены в TaskGroup и gather; пример Q4 помещён внутрь
+функции. MCQ Q1–Q4 B0 переписаны для сравнимой формы, A/B/C/D и
+sections проверены. Для этой группы anti-tell 0 и skel hard 0;
+общий gates exit 1 остаётся из-за прежних сигналов Q5–Q9. Поведение
+coroutine, eager Task, TaskGroup и gather проверено на локальном
+CPython 3.14.4. Независимая MCQ-приёмка открыта.
+
+Python Concurrency Q5–Q9 прошли авторскую `О`, весь Markdown Q1–Q9
+последовательно перечитан до `П`. В Q5 уточнён `TimeoutError` снаружи
+`asyncio.timeout`, Q7 — порядок создания работы при bounded Queue,
+Q9 — конкретные wheel-теги Python 3.15 и синхронизация состояния.
+MCQ Q5–Q9 B0/Q9 B1 автором проверены и переписаны; общий gates exit 0,
+9 Q/10 блоков, parity PASS, anti-tell 0, skel 0 hard, linkage errors 0.
+Узкий Q9 B1 оставляет осмысленный STEM-MISMATCH. На локальном
+CPython 3.14.4 проверены timeout, Queue и отмена ожидания to_thread;
+Python 3.15/free-threaded локально не исполнялись. Независимая
+MCQ-приёмка остаётся открытой.
+
+Python Packaging Q1–Q5 прошли авторскую `П`: Markdown и все пять MCQ
+B0 прочитаны целиком, A/B/C/D и sections сверены с официальными PyPA,
+pip и Python 3.15 источниками. Q4 уточняет требование `--require-hashes`
+для каждой прямой и транзитивной зависимости, Q5 — повторные `.start`
+entry points и продолжение после ошибки hook. Парный MCQ и freshness
+обновлены; gates exit 0, 5 Q/5 блоков, parity PASS, anti-tell 0,
+skel hard 0, linkage errors 0, Markdown PASS. Python 3.15 локально не
+исполнялся, независимой blind-приёмки MCQ нет.
+
+Python Testing Q1–Q4 прошли авторскую `О`: Q1 уточняет ограничения
+`unittest.TestCase` под pytest, Q2 — teardown по scope и cleanup при
+ошибке до `yield`, Q3 — роль `pytest.param` id/marks, Q4 — target
+`patch` при разных формах импорта. MCQ Q1–Q4 B0 и все A/B/C/D/sections
+проверены; Q2/Q3 stem и Q2 scope исправлены. Markdown PASS, структура
+7 Q/7 блоков, parity PASS, linkage errors 0. Общий gates exit 1 только
+из-за anti-tell Q6, skel hard Q5–Q7 и linkage warnings Q5/Q6;
+для Q1–Q4 этих hard-сигналов нет. Freshness добавлен, независимой
+blind-приёмки нет.
+
+Python Testing Q5–Q7 и весь файл прошли авторскую `П`. Q5 уточняет
+срок подмены `monkeypatch`, `context()` и границу `autospec`; Q6 —
+strict/auto режимы pytest-asyncio, область loop и cleanup при отмене;
+Q7 — реальный `COMMIT` при внешней тестовой транзакции. MCQ Q5–Q7 B0
+переписаны и сверены по A/B/C/D/sections; Q6 stem синхронизирован.
+Весь Markdown Q1–Q7 перечитан. Общие gates exit 0, 7 Q/7 блоков,
+parity PASS, anti-tell 0, skel hard 0, linkage errors/warnings 0,
+Markdown PASS. Freshness обновлён. Примеры не запускались в тестовом
+окружении; независимой blind-приёмки MCQ нет.
+
+FastAPI Q1–Q4 прошли авторскую `О`. Q1/Q2 сверены с официальными
+разделами async и sub-dependencies; Q3 уточняет `yield` lifecycle:
+с 0.121.0 `scope="function"` закрывает до ответа, `request` — после,
+в 0.106.0–0.117.x обычный cleanup был до ответа. Q4 различает
+проверку `response_model` и прямой `Response` без Pydantic-фильтра.
+MCQ Q1–Q4 B0 и A/B/C/D/sections сверены и переписаны; Q2–Q4 stem
+совпадают с Markdown. Markdown PASS, структура 7 Q/7 блоков,
+parity PASS; Q1–Q4 anti-tell/skel hard/linkage warnings 0. Общие gates
+exit 1 только из-за Q5–Q7: anti-tell Q5/Q6, skel hard Q5–Q7 и
+stem warnings Q5–Q7. Freshness обновлён, независимой приёмки нет.
+
+FastAPI Q5–Q7 по официальным handling errors, lifespan и testing docs
+уточнены: 422 — стандартный, но заменяемый ответ на неверный вход;
+прежние dependency overrides в тесте восстанавливаются; `with TestClient`
+запускает lifespan. MCQ Q5–Q7 B0 и A/B/C/D/sections синхронизированы,
+противоречие Q6 C исправлено. Весь Markdown Q1–Q7 перечитан: авторская
+`П`. Общий pre-check exit 0: структура 7 Q/7 блоков, parity PASS,
+anti-tell 0, skel hard/warn 0, linkage errors/warnings 0. Примеры не
+исполнялись; независимая blind-приёмка MCQ ожидается.
+
+MySQL Q1–Q3 авторски проверены по официальной MySQL 8.4 документации.
+Q1 уточняет default engine и назначение redo/undo, Q2 — скрытый
+кластерный ключ и покрывающий индекс, Q3 — границу EXPLAIN и
+исполняемого EXPLAIN ANALYZE. Соседние SQL Q16/Q45 и Database
+Transactions Q9 не дублируют эти вопросы. MCQ Q1–Q3 B0 и все
+A/B/C/D/sections синхронизированы; 6 Q/6 блоков, parity PASS,
+в изменённой группе anti-tell 0, skel hard 0, linkage errors/warnings 0.
+Общий pre-check exit 1 относится к старым Q4–Q6: anti-tell Q4,
+skel hard Q4–Q6, linkage warning Q4. Независимая blind-приёмка MCQ
+ожидается.
+
+MySQL Q4–Q6 сверены с официальными InnoDB, charset, Connector/J и
+HikariCP источниками. Q4 различает snapshot и locking read с границей
+явной транзакции; Q5 разделяет кодировку входа и `character_set_results`;
+Q6 фиксирует неизвестный исход записи при потере ответа. MCQ Q4–Q6 B0,
+A/B/C/D и sections синхронизированы. Весь MySQL Markdown Q1–Q6
+перечитан: авторская `П`. Общий pre-check exit 0: 6 Q/6 блоков,
+parity PASS, anti-tell 0, skel hard/warn 0, linkage errors/warnings 0.
+Независимая содержательная и blind-приёмка MCQ не проводилась.
+
+JDBC/пулы Q1–Q3 проверены по Java SE 25 JDBC API и Spring
+DataSourceUtils. Q1 различает DataSource и пул, Q2 исправляет закрытие
+ResultSet через Statement и release Spring-managed connection, Q3
+уточняет auto-commit, close и неизвестный исход сбоя commit. Соседние
+SQL Q45, Database Transactions Q33–Q34 и Spring Data JDBC Q1/Q16
+не дублируют эти вопросы. MCQ Q1–Q3 B0 и A/B/C/D/sections
+синхронизированы: структура 6 Q/6 блоков и parity PASS, в изменённой
+группе anti-tell 0, skel hard 0, linkage errors/warnings 0. Общий
+pre-check exit 1 из-за старых Q4–Q6: linkage error Q5, warning Q4,
+skel hard Q4–Q6. Независимой MCQ-приёмки нет.
+
+JDBC/пулы Q4–Q6 и парный production JSON обновлены по Java SE 25 JDBC API, pgJDBC, Connector/J и HikariCP. Вся тема Q1–Q6 прошла авторскую `П`; общий pre-check exit 0, структура/parity PASS, anti-tell 0, skel hard/warn 0, linkage errors/warnings 0. Независимая содержательная и blind-приёмка Q1–Q6 ожидается. Инвентарь не менялся.
+
+Spring Batch Q6 B0/B1, Q28 B0 и Q38 B0 повторно сверены с официальными Batch 5.0/6.0 и Boot 3.5/4.1 документами. Q6 больше не обещает полный аудит; у resourceless уточнены ограничения, а у Q6/Q28 улучшена форма MCQ. Markdown, production JSON и freshness-sidecar обновлены. Структура/parity/Markdown PASS; общий pre-check FAIL из-за прежнего Q15 `NEIGHBOR-LEAK` и предупреждений Q15/Q16/Q23/Q43. Для независимого ревью подготовлен `docs/mcq-quality/runs/20261103-spring-batch-q6-q28-q38-r1/blind-input.jsonl`; phase-a/reveal/record не выполнялись. Авторский проход не считать blind или `FINAL`.
+
+Spring Batch Q14–Q16 и MCQ B0 исправлены по официальной документации Batch 4.3/5.1/6.0. Уточнены paging, потокобезопасность и restart JDBC reader, версия JPA cursor, detached сущности после JPA paging, заголовок и специальные значения CSV. `NEIGHBOR-LEAK` Q15 и `LOW-COVERAGE` Q15/Q16 устранены: структура/parity/Markdown PASS, общий pre-check exit 0, linkage errors 0 и warnings 2 на Q23/Q43. Freshness-sidecar обновлён. Старый blind-input Q6/Q28/Q38 r1 устарел из-за новой правки общего файла. Свежие blind-input: `docs/mcq-quality/runs/20261103-spring-batch-q6-q28-q38-r2/blind-input.jsonl` и `docs/mcq-quality/runs/20261103-spring-batch-q14-q16-r1/blind-input.jsonl`. Фазы A/B/record не проводились; `FINAL` нет.
+
+Spring Batch Q22–Q25 и MCQ B0 обновлены по официальным Batch 5.2/6.0 docs. Q22 допускает повтор `read()`, но не обещает тот же элемент. Q23 различает локальное/удалённое partitioning и новые local chunking/remote step. Q24 разделяет старый параллельный чанк и новую параллельную обработку `ItemProcessor`. Q25 ограничивает гарантию restart. Структура/parity/Markdown PASS, общий pre-check exit 0; linkage errors 0 и один warning на Q43. Freshness-sidecar обновлён, независимой приёмки нет. Старые blind-input Batch r2 Q6/Q28/Q38 и r1 Q14–Q16 устарели по полным хешам. Не передавать их ревьюеру; пересобрать после остальных правок файла.
+
+Spring Batch Q39–Q40 и B0 JSON исправлены по официальным Batch 5.2/6.0 и Spring Integration docs: Q39 убрал некорректные диапазоны из COUNT(*) и ложное равенство gridSize числу потоков; Q40 заменил пример remote partitioning на remote chunking builder-ы. Kafka-адаптеры и надёжность доставки отмечены как отдельная интеграционная настройка. Freshness-sidecar обновлён; Markdown PASS, структура/parity PASS, общий pre-check exit 0, linkage errors 0, warning Q43 один, skel hard 0. Это авторская `О`, не независимый `FINAL`; диагностические skel-сигналы Q39/Q40 остаются. Инвентарь не менялся.
+
+Spring Batch Q31/Q43 и B0 JSON исправлены по официальным Batch 5.2/6, Boot Actuator и Micrometer: режимы ObservationRegistry различены по версиям, таймеры не названы счётчиками элементов, ложный gauge и выдуманный health-ответ удалены. Markdown PASS, структура/parity PASS, общий pre-check exit 0; linkage errors/warnings 0, skel hard 0. Это авторская `О`, не независимый `FINAL`. Подготовлены свежие Batch blind-input: `20261103-spring-batch-q6-q28-q38-r3`, `20261103-spring-batch-q14-q16-r2`, `20261103-spring-batch-q22-q25-r1`, `20261103-spring-batch-q39-q40-r1`, `20261103-spring-batch-q31-q43-r1`. Phase-a/reveal/B/record ещё нет. Инвентарь не менялся.
+
+PostgreSQL 19 на 03.11.2026 остаётся RC1: официальный анонс назначил GA на 19.11. Q44–Q46 PostgreSQL 18 и B0 JSON исправлены по официальным WAL, standby, logical replication и slot docs: recovery.conf удалён в 12+, remote_commit требует synchronous standby, DDL/sequence не реплицируются логически, max_slot_wal_keep_size может инвалидировать слот. Freshness-sidecar обновлён. Markdown/structure/parity PASS; у Q44–Q46 linkage/skel сигналов нет. Общий pre-check exit 1 из-за прежних LOW-COVERAGE Q6/Q24/Q26/Q34; skel hard 0. Это авторская `О`, независимого `FINAL` нет. Инвентарь не менялся.
+
+PostgreSQL Q24/Q31/Q32/Q34 и B0 JSON исправлены по официальным EXPLAIN, planner cost, VACUUM и pgstattuple docs. Уточнены startup/total cost, условность random_page_cost, редкая обрезка хвоста VACUUM с ACCESS EXCLUSIVE и граница размеров файлов против bloat. Freshness-sidecar обновлён. Markdown/structure/parity PASS, локальные linkage/skel hard 0; общий pre-check exit 1 только из-за старых LOW-COVERAGE Q6/Q26, skel hard 0. Авторская `О`, независимого `FINAL` нет, инвентарь не менялся.
+
+PostgreSQL Q26–Q28 и B0 JSON исправлены по официальным PostgreSQL 18 Transaction Isolation, MVCC и System Columns: четыре названия/три режима, serialization anomaly в REPEATABLE READ, снимок по уровню, SSI/40001, ненулевой xmax у видимой строки и нестабильный ctid. Freshness-sidecar обновлён; Markdown/structure/parity PASS, у Q26–Q28 linkage warning 0 и skel hard 0. Общий pre-check exit 1 только из-за прежнего LOW-COVERAGE Q6. Авторская `О`, независимого `FINAL` нет; инвентарь не менялся.
+
+PostgreSQL Q5–Q7 и B0 JSON исправлены по официальным PostgreSQL 18 pg_hba.conf, Data Types, JSON Types, hstore, Network Address Types и Monetary Types. Q5 уточняет отсутствие fallback после ошибки аутентификации; Q6 отличает встроенные типы от расширения hstore и исправляет LOW-COVERAGE; Q7 убирает абсолютное утверждение, что json нельзя индексировать. Freshness-sidecar обновлён; Markdown/structure/parity PASS, linkage errors/warnings 0, skel hard 0, Q5–Q7 без локальных сигналов формы. Общий pre-check exit 1 из-за старого дословного совпадения Q32. Авторская `О`, независимого `FINAL` нет, инвентарь прежний.
+
+PostgreSQL Q8–Q10 и B0 JSON исправлены по официальным PostgreSQL 18 Arrays, GIN, hstore, Enum, Composite и Domain docs. GIN не обещан для `= ANY(array)`; hstore допускает значение SQL NULL, `exist`/`defined` различают его и отсутствие ключа; composite не наследует ограничения таблицы вне неё, а DOMAIN CHECK пропускает NULL, если не задан NOT NULL. Зависимая строка Q6 и её MCQ section синхронизированы. Freshness-sidecar обновлён. Markdown/structure/parity PASS, linkage errors/warnings 0, skel hard 0, у Q8–Q10 локальных tell/скелетных сигналов нет. Общий pre-check exit 1 только из-за старого дословного совпадения Q32; авторская `О`, независимого `FINAL` нет. Инвентарь прежний.
+
+PostgreSQL Q11–Q14 и B0 JSON исправлены по официальным PostgreSQL 18 Index Types, Multicolumn Indexes, ORDER BY, Operator Classes, GIN, GiST и Text Search Indexes: Q12 учитывает cost-based skip scan, Q13 — классы jsonb и pending list, Q14 — условность перепроверки строк у обоих методов. Freshness-sidecar обновлён; Markdown/structure/parity PASS, linkage errors/warnings 0, skel hard 0, локальных tell Q11–Q14 нет. Общий pre-check exit 1 только из-за старого дословного совпадения Q32. Авторская `О`, независимого `FINAL` нет, инвентарь прежний.
+
+PostgreSQL Q15–Q19 и B0 JSON исправлены по официальным PostgreSQL 18 BRIN, Partial Indexes, Expression Indexes, Index-Only Scans и CREATE INDEX: lossy BRIN и summarization, planner-time predicate, IMMUTABLE, visibility map/heap fetch, ожидания и INVALID concurrent-индекса. Freshness-sidecar обновлён; Markdown/structure/parity PASS, linkage errors/warnings 0, skel hard 0, локальных tell/скелетных сигналов Q15–Q19 нет. Общий pre-check exit 1 из-за старого дословного совпадения Q32. Авторская `О`, независимого `FINAL` нет, инвентарь прежний.
+
+PostgreSQL Q20–Q23 и B0 JSON исправлены по официальным PostgreSQL 18 Using EXPLAIN, EXPLAIN, Combining Multiple Indexes и Index-Only Scans: per-loop actual rows, стоимость, BUFFERS, Seq/Index выбор, bitmap-порядок и visibility map. Freshness-sidecar обновлён; Markdown/structure/parity PASS, linkage errors/warnings 0, skel hard 0, локальных TELL Q20–Q23 нет. Общий pre-check exit 1 только из-за старого Q32. Авторская `О`, независимого `FINAL` нет, инвентарь прежний.
+
+PostgreSQL Q29–Q30 и B0 JSON исправлены по официальным PostgreSQL 18 Transaction Isolation, SAVEPOINT, ROLLBACK TO и RELEASE SAVEPOINT: phantom не ограничен INSERT, READ UNCOMMITTED не даёт dirty read, частичный откат сохраняет точку, RELEASE не равен COMMIT. Freshness-sidecar обновлён; Markdown/structure/parity PASS, linkage errors/warnings 0, skel hard 0, локальных TELL Q29–Q30 нет. Общий pre-check exit 1 только из-за старого Q32. Авторская `О`, независимого `FINAL` нет, инвентарь прежний.
+
+PostgreSQL Q25 и Q33, B0 JSON исправлены по официальным PostgreSQL 18 Statistics Used by the Planner, pg_statistic/pg_stats, ANALYZE, Routine Vacuuming и Vacuuming Configuration: каталог вместо несуществующего pg_statistics, выборочная точность, разные пороги VACUUM/ANALYZE, cap, INSERT, XID и партиционированный parent. TOC и freshness-sidecar обновлены; Markdown/structure/parity PASS, linkage errors/warnings 0, skel hard 0, локальных TELL Q25/Q33 нет. Общий pre-check exit 1 только из-за старого Q32. Авторская `О`, независимого `FINAL` нет, инвентарь прежний.
+
+PostgreSQL Q35–Q37 и B0 JSON исправлены по официальным PostgreSQL 18 Table Partitioning и CREATE TABLE: границы RANGE, маршрутизация, HASH без гарантии нагрузки, три стадии pruning, DDL-блокировки и затраты множества частей. Freshness-sidecar обновлён; Markdown/structure/parity PASS, linkage errors/warnings 0, skel hard 0, локальных TELL Q35–Q37 нет. Общий pre-check exit 1 только из-за старого Q32. Авторская `О`, независимого `FINAL` нет, инвентарь прежний.
+
+PostgreSQL Q38–Q41 и B0 JSON исправлены по официальным PostgreSQL 18 Tutorial/Functions/Calls/Processing: peers и стандартная RANGE-рамка, стабильный tie-breaker, LAG/LEAD default против реального NULL, семь строк вместо семи дней. Freshness-sidecar обновлён; Markdown/structure/parity PASS, linkage errors/warnings 0, skel hard 0, локальных TELL Q38–Q41 нет. Общий pre-check exit 1 только из-за старого Q32. Авторская `О`, независимого `FINAL` нет, инвентарь прежний.
+
+PostgreSQL Q31–Q34 точечно сверены по PostgreSQL 18 Routine Vacuuming, VACUUM и pgstattuple. Q31 дополнен visibility map и защитой от XID wraparound; MCQ Q31/Q32 B0 переформулированы после сигналов TELL/literal-overlap. Схема/структура/parity PASS, linkage errors/warnings 0, skel hard 0, локальных TELL Q31–Q34 и literal Q32 нет. Общий pre-check exit 1 из-за Q21/Q23/Q30/Q38; TELL Q44 остаётся. Авторская `О`, независимого `FINAL` нет, инвентарь прежний.
+
+PostgreSQL Q20–Q24 точечно сверены по PostgreSQL 18 EXPLAIN, Using EXPLAIN, Combining Multiple Indexes и Index-Only Scans. Q21 различает опцию EXPLAIN ANALYZE и команду ANALYZE; Q23 различает bitmap по индексу и последующее чтение heap. MCQ Q21/Q23 B0 переформулированы после literal-overlap, в Q23 C исправлено противоречивое объяснение. Markdown/structure/parity PASS, linkage errors/warnings 0, skel hard 0, локальных TELL и literal-overlap Q20–Q24 нет. Общий pre-check exit 1 из-за Q30/Q38; TELL Q44 остаётся. Авторская `О`, независимого `FINAL` нет, инвентарь прежний.
+
+PostgreSQL Q29–Q30 сверены по PostgreSQL 18 Transaction Isolation, SAVEPOINT, ROLLBACK TO SAVEPOINT и RELEASE SAVEPOINT. Q29/B0 оставлены без правок. Q30 и B0 question_text уточнены до `ROLLBACK TO SAVEPOINT`, потому что прежний широкий заголовок допускал второй защитимый вариант про RELEASE; TOC обновлён. Теория добавляет удаление последующих активных точек при RELEASE. MCQ Q30 B0 переформулирован после literal-overlap, sections проверены. Markdown/structure/parity PASS, linkage errors/warnings 0, skel hard 0, локальных TELL и literal-overlap Q29–Q30 нет. Общий pre-check exit 1 из-за Q38; TELL Q44 остаётся. Авторская `О`, независимого `FINAL` нет, инвентарь прежний.
+
+PostgreSQL Q38–Q41 сверены по PostgreSQL 18 Window Functions, Window Function Calls и Window Function Processing. Q38 уточняет пример `running_total` для peers и явной ROWS; Q39–Q41 теория оставлена без правок. MCQ Q38 B0 переформулирован после literal-overlap, в Q40 B0 исправлен контрфактический текст дистрактора. Markdown/structure/parity PASS, linkage errors/warnings 0, skel hard 0, локальных TELL и literal-overlap Q38–Q41 нет; дословных correct во всём файле 0. Общий pre-check exit 1 из-за прежнего TELL Q44. Авторская `О`, независимого `FINAL` нет, инвентарь прежний.
+
+PostgreSQL Q44–Q46 сверены по PostgreSQL 18 Log-Shipping Standby Servers, Replication Configuration, Publication, Restrictions и pg_replication_slots. Q44 уточняет асинхронный режим по умолчанию; Q45 добавляет TRUNCATE к логической публикации и различает кластер от отдельной базы. Q46 теория оставлена без правок. MCQ Q44 B0 исправлен после TELL, Q45 B0 синхронизирован, Q46 B0 выровнен по форме; sections проверены. Freshness-sidecar исправляет неверную помету PgBouncer. Markdown/structure/parity PASS, linkage errors/warnings 0, skel hard 0, локальных TELL и literal-overlap нет, общий pre-check exit 0. Авторская `О`, независимого `FINAL` нет, инвентарь прежний.
+
+PostgreSQL Q1–Q4 точечно сверены по PostgreSQL 18 How Connections Are Established, Resource Consumption, Cumulative Statistics, WAL, WAL Configuration, WAL Settings и PostgreSQL 15 Release Notes. Q1 исправляет устаревший stats collector и общий «кэш планов»; Q2 — несуществующий потолок 8–16 GB, порог 99%, ложное равенство промаха shared_buffers физическому чтению и целочисленный расчёт доли попаданий; Q3 — порядок WAL и data-page flush, wal_compression и PITR; Q4 — redo-позицию, мягкий max_wal_size и распределение I/O. MCQ Q1–Q4 B0 и sections синхронизированы, варианты проверены автором. Markdown/structure/parity PASS, linkage errors/warnings 0, skel hard 0, TELL и literal-overlap 0, общий pre-check exit 0. Авторская `О` по всем Q1–Q55 завершена пакетами, полной `П` и независимого `FINAL` нет, инвентарь прежний.
+
+Metrics & Tracing Q9/Q28/Q37 точечно обновлены по официальным OpenTelemetry Sampling и Collector tail_sampling docs. Q9 остался вводным, Q28 стал отдельным production-выбором, Q37 уточняет неполноту доставки и требования к памяти/маршрутизации. Заголовок Q28, TOC, production MCQ, freshness-sidecar и точный дубликат в inventory.tsv синхронизированы; 41 Q сохранён. Markdown и structure/parity PASS; общий MCQ pre-check FAIL из-за прежних проблем файла (в том числе Q17 NEIGHBOR-LEAK), локальных hard/linkage-сигналов Q9/Q28/Q37 нет. Это авторская `О`, не полная `П` и не независимая MCQ-приёмка. В Q24/Q27 остаются широкие формулировки о tail sampling для будущей проверки.
+
+Java Collections Q19/Q43 разведены по смыслу: Q19 показывает реализацию LRU на LinkedHashMap, Q43 — риски конкурентного доступа и обхода. Сверены официальные Java SE 25 LinkedHashMap и Collections.synchronizedMap, а также Caffeine Eviction. Номера и 46 Q/46 MCQ сохранены; TOC, production JSON, freshness-sidecar и поле дубля в inventory.tsv обновлены. Markdown, structure/parity PASS, tell/linkage 0. Общий MCQ pre-check FAIL на прежних Q37/Q40 skel hard, локальных сигналов Q19/Q43 нет. Авторская точечная `О` выполнена, полная `П` и независимая MCQ-приёмка не выполнены.
+
+Kotlin Q5/Q30 оказались ложным точным дублем из-за удаления операторов при нормализации заголовков: Q5 про `?.`/`!!`, Q30 про `==`/`===`. Теория и B0 MCQ точечно обновлены по официальным Kotlin Null safety, Equality и Kotlin 1.4 docs. Q5 различает ожидаемый null и доказанный ненулевой инвариант; Q30 ограничивает `==` контрактом equals конкретного класса и убирает интернированные строковые литералы как пример ссылочного равенства. Номера, 45 Q/45 MCQ сохранены; freshness-sidecar и поле дубля в inventory.tsv обновлены. Markdown, структура/parity PASS; общий MCQ pre-check FAIL на старых блоках, локальных hard/linkage-сигналов Q5/Q30 нет. Это авторская `О`, не полная `П` и не независимая приёмка.
+
+Metrics & Tracing Q24/Q27 и B0 MCQ точечно исправлены по OpenTelemetry Sampling, Java SDK configuration, Attributes Processor, Collector architecture и Span Metrics Connector. Q24 теперь отвечает за поток до хранилища: лимиты span'ов задаются в SDK, а удаление атрибута в Collector не экономит трафик приложения до него. Q27 отвечает за retention и метрики: span_metrics получает поступившие span'ы до tail_sampling, иначе выборка смещает статистику; ранний head sampling остаётся ограничением. Универсальные 7–14 дней и гарантия сохранения всех ошибок убраны. Заголовок/TOC Q24, JSON и freshness-sidecar синхронизированы, 41 Q/41 MCQ, инвентарь прежний. Markdown/structure/parity PASS, локальных hard/linkage-сигналов Q24/Q27 нет; общий pre-check FAIL на других блоках, Q27 имеет диагностический skel-сигнал. Авторская `О`, не полная `П` и не независимый `FINAL`.
+
+Java Collections Q20/Q46 и B0 MCQ точечно исправлены по Java SE 25 WeakHashMap API и Caffeine Eviction. Q20 объясняет слабые ключи и негарантированный момент очистки, Q46 — сильную ссылку из значения к ключу, ненадёжность GC как TTL и отличие Caffeine weakKeys по сравнению ключей. Удалены повтор кода с System.gc, обобщение про interned String и безусловная очистка listener registry. Заголовок/TOC Q46, production JSON и freshness-sidecar синхронизированы; 46 Q/46 MCQ, инвентарь прежний. Markdown/structure/parity и tell/linkage PASS; общий MCQ pre-check FAIL на старых Q37/Q40, у Q20 диагностический skel-сигнал. Авторская `О`, не полная `П` и не независимая приёмка.
+
+Java Modules Q14–Q16/Q31 и MCQ B0 точечно исправлены по Java SE 25 JLS, ModuleDescriptor, JAR specification и параметрам `java`/`jar`. Q16 оставлен таблицей, Q31 теперь посвящён миграции конкретного classpath JAR; неверные утверждения о `requires transitive` и безусловном запрете runtime-чтения unnamed устранены. Markdown/structure/parity/linkage PASS, общий MCQ pre-check FAIL на прежних Q5/Q7/Q18/Q19/Q26/Q27/Q29/Q34; у изменённых Q skel hard нет. 38 Q/38 MCQ, инвентарь без изменений. Это авторская `О`; независимая SFPL/ANSC/RU и blind-приёмка `NOT_RUN`, полная `П` файла не проводилась.
+
+Java Modules Q13/Q17/Q32/Q33 и MCQ B0 точечно исправлены по официальной Java SE 25 документации. Q17 теперь механизм конфликта двух экспортёров для одного читателя, Q32 — диагностика и устранение; устаревший модуль JDK 10, неверное назначение `jdeps --check` и ошибочный статус `--illegal-access` удалены. Q33 проверяет фазу применения параметров и не повторяет Q5. Markdown/structure/parity/tell/linkage PASS; общий MCQ pre-check FAIL на прежних Q5/Q7/Q18/Q19/Q26/Q27/Q29/Q34, локальных hard нет. 38 Q/38 MCQ, инвентарь прежний. Это авторская `О`; независимая SFPL/ANSC/RU/blind-приёмка `NOT_RUN`, полная `П` файла не проводилась.
+
+Java Modules Q4/Q5/Q12 и MCQ B0 точечно исправлены по JLS Java SE 25, AccessibleObject и Oracle JDK Migration Guide. Q4 уточняет границы classpath/module path и смешанного запуска, Q5 — runtime-доступ при `opens` без compile-time экспорта, Q12 — переходные режимы Java 9–16 и сильную инкапсуляцию с Java 17. Markdown/structure/parity/tell/linkage PASS; общий MCQ pre-check FAIL на прежних Q7/Q18/Q19/Q26/Q27/Q29/Q34, локальных hard нет. 38 Q/38 MCQ, инвентарь прежний. Это авторская `О`; независимая SFPL/ANSC/RU/blind-приёмка `NOT_RUN`, полная `П` файла не проводилась.
+
+Java Modules Q18/Q19/Q34 и B0 MCQ точечно исправлены по Java SE 25 JAR File Specification, jlink и jdeps. Q18 допускает корневой или версионный дескриптор MRJAR, Q19 объясняет назначение образа, Q34 даёт практическую сборку модульного приложения. Неверные размеры, обязательный jdeps с --ignore-missing-deps и автоматическое включение classpath-JAR удалены. Markdown/структура/parity/tell/linkage PASS; общий MCQ pre-check FAIL на старых skel hard Q7/Q26/Q27/Q29, локальных hard нет. 38 Q/38 MCQ, инвентарь прежний. Авторская `О`; независимая приёмка и полная `П` — `NOT_RUN`.
+
+Java Modules Q20/Q26/Q27 и B0 MCQ точечно исправлены по Oracle jlink Java 25, Spring Framework 7.0, Spring Boot executable JAR, Hibernate ORM 7.1 и JLS. Q20 убирает универсальное значение --compress и ошибку о транзитивных модулях без --bind-services; Q26 разделяет exports/opens по действительным операциям Spring; Q27 различает field/property access и не обещает строго стартовую ошибку. Q18 B0 дополнительно выровнен по форме. Markdown/structure/parity/tell/linkage для изменённого пакета PASS; общий pre-check FAIL на старых skel hard Q7/Q29, Q33 имеет tell-сигнал. 38 Q/38 MCQ, инвентарь прежний. Авторская `О`; независимая приёмка и полная `П` — `NOT_RUN`.
+
+Java Modules Q7/Q8/Q29 и B0 MCQ точечно исправлены по JLS Java SE 25, ModuleDescriptor, javac, FindException и Configuration.resolve. Q7 разделяет читаемость и экспорт; Q8 уточняет requires static без ложной гарантии разрешения модуля и без смешения с annotation processing; Q29 диагностирует поиск, разрешение и рефлексивный доступ по разным симптомам. Markdown/structure/parity и локальные tell/linkage PASS, structural subcheck PASS (hard 0); общий MCQ pre-check exit=1 из-за прежнего TELL Q33 и иных диагностических сигналов. 38 Q/38 MCQ, инвентарь прежний. Авторская `О`; независимая приёмка и полная `П` — `NOT_RUN`.
+
+Java Modules Q9/Q30/Q33 и B0 MCQ точечно исправлены по JLS Java SE 25, Oracle Java 25 launcher/Migration Guide, Inside Java о Leyden и FFM API. Q9 разделяет runtime-доступ и компиляцию для open module. Q30 с новым заголовком объясняет реальные границы JPMS без прогнозов о Leyden/Panama; `--illegal-access` в Java 25 принимается, но игнорируется с предупреждением. Q33 MCQ лишён прежней подсказки формы. TOC и question_text Q30 синхронизированы; 38 Q/38 MCQ, инвентарь прежний. Markdown/structure/parity/tell/linkage pre-check PASS, общий MCQ pre-check exit=0. Авторская `О`; независимая приёмка и полная `П` — `NOT_RUN`.
+
+Java Modules Q21/Q22/Q23 и B0 MCQ точечно исправлены по JLS Java SE 25, Gradle Java Library Plugin, Maven Compiler/Surefire и ModuleLayer API. Q21 описывает Bottom-Up/Top-Down как условные порядки, Q22 проверяет фактический module path и непрозрачные classpath-JAR, Q23 объясняет создание загрузчика слоя без обещания автоматической выгрузки. 38 Q/38 MCQ, инвентарь прежний. Markdown/structure/parity/tell/linkage pre-check PASS, общий MCQ pre-check exit=0. Авторская `О`; независимая приёмка и полная `П` — `NOT_RUN`.
+
+Java Modules Q24/Q25/Q35 и B0 MCQ точечно исправлены по Configuration/JLS Java SE 25, Gradle Testing Java Modules, Maven Surefire JPMS и jdeps. Убраны вымышленные диагностические выводы и универсальные флаги тестирования; описаны classpath/blackbox/whitebox и пределы статического анализа. 38 Q/38 MCQ, инвентарь прежний. Markdown/structure/parity/tell/linkage и общий pre-check PASS. Авторская `О`; независимая приёмка и полная `П` — `NOT_RUN`.
+
+Java Modules Q36/Q37/Q38 и B0 MCQ точечно исправлены по ServiceLoader/JLS/JAR specification Java SE 25, Spring Framework 7.0, AccessibleObject, Jackson 3 module-info, jdeps и jlink. Q36 разделяет classpath/module path и создание провайдера, Q37 различает причины ошибок доступа, Q38 убирает повтор Q21 и неверный `jdeps --check`. 38 Q/38 MCQ, инвентарь прежний. Markdown/structure/parity/tell/linkage и общий pre-check PASS. Авторская `О`; независимая приёмка и полная `П` — `NOT_RUN`.
+
+Java Modules Q1/Q2/Q3 и B0 MCQ точечно исправлены по JLS/Configuration/ModuleDescriptor/java.sql/jdk.jlink/jlink Java SE 25. Q1 ограничивает обещания о конфликтах версий, Q2 различает явный и automatic module и уточняет `requires static`, Q3 показывает реальные связи JDK без приблизительного числа модулей. 38 Q/38 MCQ, инвентарь прежний. Markdown/structure/parity/tell/linkage и общий pre-check PASS. Авторская `О`; независимая приёмка и полная `П` — `NOT_RUN`.
+
+Java Modules Q6/Q10/Q11 и B0 MCQ точечно исправлены по JLS/ModuleDescriptor/ServiceLoader/DriverManager/JAR specification Java SE 25. Q6 уточняет qualified-доступ для named-получателей, Q10 ограничивает обещания поиска и создания провайдеров, Q11 разделяет named/unnamed/automatic и load(service)/load(layer, service). 38 Q/38 MCQ, инвентарь прежний. Markdown/structure/parity/tell/linkage и общий pre-check PASS. Авторская `О`; независимая приёмка и полная `П` — `NOT_RUN`.
+
+Java Modules Q28 и B0 MCQ исправлены по JLS/Configuration/ServiceLoader Java SE 25: практики привязаны к контракту и конкретному графу, учебные дескрипторы скомпилированы с минимальными типами. Адресно проверены ссылки и известные прежние категоричные формулы по Q1–Q38; это не полная `П`. 38 Q/38 MCQ, инвентарь прежний. Markdown/structure/parity/tell/linkage и общий pre-check PASS. Авторская `О`; независимая приёмка и полная `П` — `NOT_RUN`.
+
+Java Modules Q1–Q5 прошли авторскую полную содержательную `П` по JLS/Configuration/ModuleDescriptor Java SE 25, страницам модулей JDK и изменениям JDK 11. Уточнены classpath-видимость в Q1, директивы и сочетание `requires static transitive` в Q2, дата отделения JavaFX в Q3 и разница `opens`/`opens ... to` в Q5; Q4 проверен без содержательной правки. Парный MCQ Q1–Q5 B0 синхронизирован и автором проверен по вариантам и sections. 38 Q/38 MCQ, инвентарь прежний; независимая SFPL/ANSC/RU/blind-приёмка `NOT_RUN`, не `FINAL`.
+
+Java Modules Q6–Q9 прошли авторскую полную содержательную `П` по JLS/правилам разрешения модулей/java launcher Java SE 25. Q6 уточняет ненаблюдаемый при сборке адресат `to`, Q7 исправляет диаграмму, Q8 показывает runtime-поведение `requires static` и проверку графа, Q9 подтверждён без содержательной правки. Дескрипторы Q6/Q7/Q9 скомпилированы локальным `javac`; отдельный пример Q8 показал появление optional module в графе только после `--add-modules`. Парный MCQ Q6–Q9 B0 сверён по вариантам и sections, пояснения Q6/Q8 синхронизированы. 38 Q/38 MCQ, инвентарь прежний; Markdown/structure/parity и общий pre-check PASS; независимая SFPL/ANSC/RU/blind-приёмка `NOT_RUN`, не `FINAL`.
+
+Java Modules Q10–Q13 прошли авторскую полную содержательную `П` по ServiceLoader, AccessibleObject, java launcher, руководству миграции JDK и JLS Java SE 25. Q10 уточняет `ServiceConfigurationError` без `uses`, Q11 — context class loader и поиск named/unnamed, Q12 — границы диагностического примера и предупреждение Unsafe с JDK 24, Q13 — `--show-module-resolution`. Пересечения с Q5/Q9/Q33/Q36 сверены. На локальном JDK 22 воспроизведены Q10 с/без `uses` и ошибка Q12. Парный MCQ Q10–Q13 B0 сверён по A/B/C/D, дистракторам и sections, пояснения синхронизированы. 38 Q/38 MCQ, инвентарь прежний; Markdown/structure/parity и общий pre-check PASS; независимая SFPL/ANSC/RU/blind-приёмка `NOT_RUN`, не `FINAL`.
+
+Java Modules Q14–Q17 прошли авторскую полную содержательную `П` по JLS/ModuleDescriptor/ModuleFinder/JAR specification/Configuration Java SE 25. Q14 подтверждён без правки теории. Q15 ограничивает automatic module допустимым именем и содержимым JAR; Q16 отделяет явный именованный модуль от automatic и исправляет заголовок, оглавление, таблицу регистрации провайдеров; Q17 добавляет конфликт собственного пакета читающего модуля. На локальном JDK 22 `jar --describe-module` подтвердил имена `gson` и `commons.lang3`, для `42.jar` сообщил о недопустимом имени. Production MCQ Q14–Q17 B0 сверён по A/B/C/D, дистракторам и sections; формулировки и пояснения синхронизированы. 38 Q/38 MCQ, инвентарь прежний; Markdown/structure/parity и общий pre-check PASS после исправления OPTION_LENGTH_RATIO Q16. Независимая SFPL/ANSC/RU/blind-приёмка `NOT_RUN`, не `FINAL`.
+
+Java Modules Q18–Q20 прошли авторскую полную содержательную `П` по JAR specification/jlink/jdeps/Configuration Java SE 25. Q18 уточняет одинаковый экспортируемый API MRJAR, отсутствие обязательной runtime-проверки и запрет versioned `META-INF/services`; Q19 — предел связывания automatic modules; Q20 — значения `--compress=0/1/2` для JDK 25 и охват `--bind-services` используемыми сервисами. Соседние Q3/Q34/Q36 сверены. На локальном JDK 22 `jlink` отверг automatic module, а явный учебный модуль успешно связан и запущен. Production MCQ Q18–Q20 B0 сверён по A/B/C/D, дистракторам и sections, пояснения синхронизированы. 38 Q/38 MCQ, инвентарь прежний; Markdown/structure/parity и общий pre-check PASS после исправления OPTION_LENGTH_RATIO Q20. Независимая SFPL/ANSC/RU/blind-приёмка `NOT_RUN`, не `FINAL`.
+
+Java Modules Q21–Q23 прошли авторскую полную `П` по JLS Java SE 25, Gradle, Maven Compiler/Surefire и ModuleLayer/Configuration/ServiceLoader. Исправлены условие `inferModulePath` для Gradle, границы `jdeps` и требования к использованию типов плагина; Markdown и production MCQ синхронизированы, общий pre-check PASS, независимая MCQ-приёмка `NOT_RUN`.
+
+Java Modules Q24–Q27 прошли авторскую полную `П` по Java SE 25, Gradle, Maven Surefire, Spring Framework 7, Spring Boot, Hibernate ORM 7.1 и Jakarta Persistence 3.2. Исправлены границы `ServiceLoader` при цикле, запуск тестов через Gradle/IDE, описание Boot JAR и требования к сущности. Q27 — Hibernate/JPA, а не `ServiceLoader`. Markdown и production MCQ синхронизированы, общий pre-check PASS, независимая MCQ-приёмка `NOT_RUN`.
+
+Java Modules Q28–Q30 прошли авторскую полную `П` по JLS/ServiceLoader/FindException/Configuration и launcher Java SE 25. Уточнены требования к провайдеру, причины FindException, границы --illegal-access и native access. Markdown и production MCQ синхронизированы, общий pre-check PASS, независимая MCQ-приёмка `NOT_RUN`.
+
+Java Modules Q31–Q33 прошли авторскую полную `П` по ModuleFinder/Configuration, JLS 7.7.5 и java/javac Java SE 25. Исправлены границы automatic module, различие --validate-modules и --dry-run, а также ограничение --add-exports при javac --release. Markdown и production MCQ синхронизированы, общий pre-check PASS, независимая MCQ-приёмка `NOT_RUN`.
+
+Java Modules Q34–Q36 прошли авторскую полную `П` по jlink/jdeps, ServiceLoader и JLS Java SE 25. Уточнены разделитель module path, подписанные JAR, ограничение --generate-module-info и создание провайдера в automatic module. Markdown и production MCQ синхронизированы, общий pre-check PASS, независимая MCQ-приёмка `NOT_RUN`.
+
+Java Modules Q37–Q38 прошли авторскую полную `П` по первичным источникам Spring Framework, Hibernate ORM, Jackson 3 и Java SE 25. Сверены соседние Q21/Q26/Q27/Q31/Q33/Q34; Markdown и production MCQ синхронизированы. Обе проверки структуры и общий MCQ pre-check PASS; авторская `П` Q1–Q38 завершена. Независимая MCQ-приёмка `NOT_RUN`, файл не `FINAL`.
+
+PostgreSQL Q1–Q4 прошли авторскую полную `П` по официальной документации PostgreSQL 17/18. Уточнены выборка клиентских backend, изменение `shared_buffers`, условия PITR и диагностика checkpoint с различием счётчиков PostgreSQL 17/18. Markdown и production MCQ синхронизированы; `verify-md-no-mcq`, JSON structure/parity и общий MCQ pre-check PASS. Замечания общего pre-check к 11 другим блокам не затрагивают Q1–Q4. Независимая MCQ-приёмка `NOT_RUN`, файл не `FINAL`.
+
+PostgreSQL Q5 и Q49–Q50 прошли авторскую полную `П` по официальной документации PostgreSQL 18 и PgBouncer 1.26.1. Уточнены содержимое и reload `pg_hba.conf`, отдельная аутентификация PgBouncer и ограничение отслеживания `search_path`. Markdown и production MCQ синхронизированы. `verify-md-no-mcq`, JSON structure/parity и общий MCQ pre-check PASS; к пакету замечаний pre-check нет, к 9 другим блокам файла остались. Независимая MCQ-приёмка `NOT_RUN`, файл не `FINAL`.
+
+PostgreSQL Q6–Q10 прошли авторскую полную `П` по официальной документации PostgreSQL 18. Уточнены диапазоны и `EXCLUDE`, строгий ввод `jsonb`, размеры массива и `ANY` с `NULL`, индексы `hstore`, миграция `ENUM` и ограничения composite. Сверен Q48. Markdown и production MCQ синхронизированы; `verify-md-no-mcq`, JSON structure/parity и общий MCQ pre-check PASS. К Q6–Q10 замечаний pre-check нет, к 9 другим блокам файла остались. Независимая MCQ-приёмка `NOT_RUN`, файл не `FINAL`.
+
+PostgreSQL Q11–Q15 прошли авторскую полную `П` по официальной документации PostgreSQL 18. Уточнены bloom, смешанный ORDER BY, GIN pending list, GiST nearest-neighbor и BRIN summarization. Сверены Q16–Q19/Q20–Q24. Markdown и production MCQ синхронизированы; `verify-md-no-mcq`, JSON structure/parity и общий MCQ pre-check PASS. К Q11–Q15 замечаний pre-check нет, к 9 другим блокам файла остались. Независимая MCQ-приёмка `NOT_RUN`, файл не `FINAL`.
+
+PostgreSQL Q16–Q19 прошли авторскую полную `П` по документации PostgreSQL 18 и границе `NULLS NOT DISTINCT` с PostgreSQL 15. Уточнены условная уникальность, `IMMUTABLE`, `Heap Fetches`, мониторинг и ограничения concurrent-операций. Сверены Q11–Q15/Q20–Q24. Markdown и production MCQ синхронизированы; `verify-md-no-mcq`, JSON structure/parity и общий MCQ pre-check PASS. К Q16–Q19 замечаний pre-check нет, к 9 другим блокам файла остались. Независимая MCQ-приёмка `NOT_RUN`, файл не `FINAL`.
+
+PostgreSQL Q20–Q24 прошли авторскую полную `П` по PostgreSQL 18. Q20 уточняет сравнение `rows`/`actual rows` за запуск и вложенные `Buffers`, Q21 — замер времени и `SERIALIZE`, Q23 — exact/lossy bitmap и повторную проверку. Q22/Q24 содержательно сверены. Production MCQ Q20/Q21/Q23 B0 синхронизированы; все варианты Q20–Q24 автором перечитаны. Markdown, JSON structure/parity и общий MCQ pre-check PASS; Q20 B0 имеет мягкое предупреждение о числе частей, hard-сигналов в пакете нет, в целом файле 10 блоков вне мягкого коридора. Независимая MCQ-приёмка `NOT_RUN`, файл не `FINAL`, инвентарь прежний.
+
+PostgreSQL Q25 и Q53–Q54 прошли авторскую полную `П` по PostgreSQL 18. Q25 уточняет `CREATE STATISTICS`, `ANALYZE` и `dependencies`, Q53 — связь `shared_buffers` с `max_wal_size`, Q54 — нормализованные группы `pg_stat_statements`, `stats_reset`/`dealloc` и `track_planning`. Production MCQ Q25/Q53/Q54 B0 синхронизированы; A/B/C/D и sections проверены автором. Markdown, JSON structure/parity и общий MCQ pre-check PASS; в пакете нет замечаний pre-check, девять иных блоков файла вне мягкого коридора. Независимая MCQ-приёмка `NOT_RUN`, файл не `FINAL`, инвентарь прежний.
+
+PostgreSQL Q26–Q30 прошли авторскую полную `П` по PostgreSQL 18. Q26 исправляет пример `SET TRANSACTION` вне `BEGIN` и разграничивает конкурирующий UPDATE; Q27 учитывает HOT и очистку версий; Q28 — блокировку и MultiXact в `xmax`; Q30 — блокировки и курсоры при savepoint. Q29 содержательно сверен. Production MCQ Q26–Q28/Q30 B0 синхронизированы; все варианты Q26–Q30 автором перечитаны. Markdown, JSON structure/parity и общий MCQ pre-check PASS, замечаний к пакету нет, восемь иных блоков вне мягкого коридора. Независимая MCQ-приёмка `NOT_RUN`, файл не `FINAL`, инвентарь прежний.
+
+Точный следующий пакет: при отдельном проверяющем Spring Batch Q6 B0/B1, Q28 B0, Q38 B0 на независимую MCQ-приёмку. Иначе авторская полная содержательная `П` PostgreSQL Q31–Q34 (`VACUUM`, `VACUUM FULL`, autovacuum, bloat): сверить Q27–Q28 и ближайшие ответы, границы PostgreSQL 18 по официальной документации, синхронизировать Markdown с paired production MCQ и отдельно записать структурные и содержательные проверки. Java Modules Q1–Q38 ждут независимой MCQ-приёмки; PostgreSQL 19 — после GA 19.11.2026.
+
+Независимую приёмку Batch продолжать по новому blind-input: фаза A,
+reveal, фаза B, CONTENT/FACTS/LINKAGE/SECTIONS/SFPL/ANSC/RU и record.
+После Batch продолжить независимую приёмку Uber Q6/Q7, Maps Q27,
+Spring Framework Q1/Q2/Q9/Q10 B0/B1 и
 Database Transactions Q15/Q22/Q23/Q43 B0,
 Spring Rest Client Q4/Q6/Q7/Q11/Q12/Q13 B0
 и Java CompletableFuture
