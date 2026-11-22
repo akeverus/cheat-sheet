@@ -117,54 +117,42 @@ updated: "2026-05-14"
 
 - Брейкер ведёт **статистику последних вызовов** в скользящем окне (sliding window, см. Q5).
 - Пока доля отказов ниже порога — он в состоянии `CLOSED` и пропускает всё как есть.
-- Как только доля отказов превышает порог (`failureRateThreshold`) — переходит в `OPEN` и **мгновенно** отклоняет вызовы с `CallNotPermittedException`, давая упавшему сервису время восстановиться.
-- Через `waitDurationInOpenState` брейкер пробует несколько тестовых вызовов (`HALF_OPEN`) и по их результату решает, вернуться в `CLOSED` или снова в `OPEN`.
+- Как только набрана минимальная выборка и доля отказов достигает порога (`failureRateThreshold`) — переходит в `OPEN` и **мгновенно** отклоняет вызовы с `CallNotPermittedException`, давая упавшему сервису время восстановиться.
+- Через `waitDurationInOpenState` следующий вызов инициирует переход (или он происходит автоматически при соответствующей настройке). Брейкер допускает ограниченное число тестовых вызовов (`HALF_OPEN`) и по их результату решает, вернуться в `CLOSED` или снова в `OPEN`.
 
 **Зачем это нужно.** Без брейкера каждый вызов к зависшему сервису висит до таймаута, занимая поток. Под нагрузкой потоки кончаются — и падает уже ваш сервис, тянет за собой соседей. Брейкер обрывает эту цепочку: лучше быстро вернуть деградированный ответ, чем медленно умереть всем вместе.
 
 ```mermaid
-sequenceDiagram
-    participant Client
-    participant CB as CircuitBreaker
-    participant Service as External Service
-
-    Note over CB: State: CLOSED
-    Client->>CB: call()
-    CB->>Service: forward
-    Service-->>CB: ERROR
-    CB-->>Client: error (count++)
-
-    Note over CB: failures >= threshold → OPEN
-    Client->>CB: call()
-    CB-->>Client: CallNotPermittedException (fast fail)
-
-    Note over CB: after waitDuration → HALF_OPEN
-    Client->>CB: call()
-    CB->>Service: test call
-    Service-->>CB: SUCCESS
-    Note over CB: HALF_OPEN → CLOSED
+flowchart LR
+    A["COUNT_BASED: окно 4, минимум 4, порог ошибок 50%"]
+    B["Вызовы 1–4: успех, ошибка, успех, ошибка"]
+    C["Вызов 5 сразу после завершения вызова 4"]
+    A --> B --> C
 ```
+
+Если ошибки учитываются и порог медленных вызовов не достигнут, после четвёртого вызова доля ошибок составляет ровно 50%. Брейкер открывается, и пятый вызов в пределах периода ожидания получает `CallNotPermittedException`. [CircuitBreaker](https://resilience4j.readme.io/docs/circuitbreaker)
 
 ## Q4. (!) Какие состояния у CircuitBreaker?
 
-Три основных состояния образуют цикл `CLOSED → OPEN → HALF_OPEN → CLOSED`, плюс два специальных для ручного управления. Названия — из аналогии с электрической цепью: `CLOSED` = цепь замкнута, ток (запросы) идёт; `OPEN` = цепь разорвана, запросы не проходят.
+Три основных состояния образуют цикл `CLOSED → OPEN → HALF_OPEN → CLOSED`, плюс три специальных состояния. Названия — из аналогии с электрической цепью: `CLOSED` = цепь замкнута, ток (запросы) идёт; `OPEN` = цепь разорвана, запросы не проходят.
 
 | Состояние | Описание | Переход |
 |---|---|---|
 | `CLOSED` | Нормальная работа, запросы проходят | → OPEN при `failureRate >= threshold` |
 | `OPEN` | Все запросы отклоняются сразу | → HALF_OPEN после `waitDurationInOpenState` |
 | `HALF_OPEN` | Пропускается `permittedCalls` запросов для теста | → CLOSED или OPEN по результату теста |
+| `METRICS_ONLY` | Пропускает вызовы и ведёт статистику без автоматического открытия | Явный переход |
 | `DISABLED` | CircuitBreaker выключен, всё проходит | Ручной переход |
 | `FORCED_OPEN` | Принудительно разомкнут | Ручной переход |
 
 Логика переходов:
 
-- **CLOSED → OPEN** — доля отказов (или медленных вызовов) в окне превысила порог. Запросы перестают доходить до сервиса.
+- **CLOSED → OPEN** — доля отказов (или медленных вызовов) в окне достигла порога после набора минимальной выборки. Запросы перестают доходить до сервиса.
 - **OPEN → HALF_OPEN** — истёк `waitDurationInOpenState`. Брейкер осторожно пробует, ожил ли сервис, пропуская ограниченное число тестовых вызовов.
-- **HALF_OPEN → CLOSED** — тестовые вызовы прошли успешно, нагрузка возвращается полностью.
-- **HALF_OPEN → OPEN** — тестовые вызовы снова падают, начинается новый период ожидания.
+- **HALF_OPEN → CLOSED** — обе доли в тестовой выборке ниже своих порогов, нагрузка возвращается полностью.
+- **HALF_OPEN → OPEN** — хотя бы одна доля в тестовой выборке достигла своего порога, начинается новый период ожидания.
 
-**DISABLED и FORCED_OPEN** — это «ручной» режим (maintenance, отладка): автоматические переходы выключены. `DISABLED` пропускает всё мимо логики брейкера, `FORCED_OPEN` всё отклоняет. Метрики при этом продолжают собираться.
+**DISABLED и FORCED_OPEN** — это «ручной» режим (maintenance, отладка): автоматические переходы выключены. `DISABLED` пропускает всё мимо логики брейкера, `FORCED_OPEN` всё отклоняет. Статистика вызовов в этих состояниях не записывается. События переходов публикуются. [CircuitBreaker](https://resilience4j.readme.io/docs/circuitbreaker)
 
 ## Q5. Что такое sliding window в CircuitBreaker?
 
@@ -181,15 +169,17 @@ sequenceDiagram
 resilience4j:
   circuitbreaker:
     instances:
-      paymentService:
+      paymentByCount:
         sliding-window-type: COUNT_BASED
-        sliding-window-size: 10          # последние 10 вызовов
-        # ИЛИ
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+      paymentByTime:
         sliding-window-type: TIME_BASED
-        sliding-window-size: 10          # последние 10 секунд
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
 ```
 
-**Важно:** `minimum-number-of-calls` задаёт минимум вызовов прежде чем начать считать. Без этого первый же сбой может разомкнуть цепь.
+**Важно:** `minimum-number-of-calls` задаёт минимум вызовов прежде чем начать считать. При минимуме в один вызов первый учитываемый сбой может достичь порога.
 
 ## Q6. Какие ключевые параметры конфигурации CircuitBreaker?
 
@@ -198,8 +188,8 @@ resilience4j:
 Запомнить нужно эти:
 
 - `failure-rate-threshold` — при какой доле отказов (%) цепь размыкается.
-- `slow-call-rate-threshold` + `slow-call-duration-threshold` — медленный вызов тоже считается «сбоем»: брейкер реагирует не только на ошибки, но и на деградацию по времени.
-- `minimum-number-of-calls` — минимум вызовов в окне, прежде чем брейкер вообще начнёт считать долю отказов. Без него один первый сбой даёт failureRate = 100% и мгновенно размыкает цепь.
+- `slow-call-rate-threshold` + `slow-call-duration-threshold` — порог длительности и доли медленных вызовов. Успешный вызов может одновременно учитываться как медленный. Доли отказов и медленных вызовов сравниваются со своими порогами отдельно.
+- `minimum-number-of-calls` — минимум вызовов в окне, прежде чем брейкер вообще начнёт считать долю отказов. При значении 1 пороги можно проверить уже после первого учитываемого вызова.
 - `wait-duration-in-open-state` — сколько держать `OPEN`, прежде чем пробовать `HALF_OPEN`.
 - `record-exceptions` / `ignore-exceptions` — что считать сбоем, а что пропускать мимо статистики (например, бизнес-ошибки валидации — не повод размыкать цепь).
 
@@ -208,27 +198,37 @@ resilience4j:
   circuitbreaker:
     instances:
       myService:
-        failure-rate-threshold: 50           # % отказов для открытия (default: 50)
-        slow-call-rate-threshold: 100        # % медленных вызовов (default: 100)
-        slow-call-duration-threshold: 2s     # что считать "медленным" (default: 60s)
-        wait-duration-in-open-state: 10s     # ждать перед HALF_OPEN (default: 60s)
-        permitted-number-of-calls-in-half-open-state: 3  # тестовых вызовов
-        minimum-number-of-calls: 5           # мин. вызовов до анализа
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 2s
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        minimum-number-of-calls: 5
         sliding-window-size: 10
         sliding-window-type: COUNT_BASED
         automatic-transition-from-open-to-half-open-enabled: true
-        record-exceptions:                   # эти исключения считаются сбоями
+        record-exceptions:
           - java.io.IOException
           - java.util.concurrent.TimeoutException
-        ignore-exceptions:                   # эти игнорируются
+        ignore-exceptions:
           - com.example.BusinessException
 ```
 
 ## Q7. Как настроить CircuitBreaker в Spring Boot?
 
-Два шага: объявить инстанс в `application.yml` (параметры из Q6) и повесить аннотацию `@CircuitBreaker` на метод, указав то же имя инстанса. Аннотация работает через Spring AOP, поэтому метод должен быть `public` и вызываться извне бина (ограничения — в Q20).
+```java
+@Service
+public class PaymentService {
+    // Имя инстанса в application.yml: paymentService
+    public PaymentResult processPayment(Payment payment) {
+        return externalPaymentApi.process(payment);
+    }
+}
+```
 
-В аннотации почти всегда задают `fallbackMethod` — метод того же класса, который вернёт деградированный ответ, когда вызов не прошёл или цепь разомкнута:
+Два шага: объявить инстанс в `application.yml` (параметры из Q6) и повесить аннотацию `@CircuitBreaker` на метод, указав то же имя инстанса. Аннотация работает через Spring AOP, поэтому публичный метод в примере вызывают через прокси бина (ограничения — в Q20).
+
+В аннотации при необходимости задают `fallbackMethod` — метод того же класса, который вернёт деградированный ответ, когда вызов не прошёл или цепь разомкнута:
 
 ```java
 @Service
@@ -283,12 +283,13 @@ resilience4j:
   retry:
     instances:
       orderService:
-        max-attempts: 3                    # всего попыток (включая первую)
-        wait-duration: 500ms               # пауза между попытками
-        exponential-backoff-multiplier: 2  # 500ms, 1s, 2s
+        max-attempts: 3
+        wait-duration: 500ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
         retry-exceptions:
           - java.io.IOException
-          - org.springframework.web.client.RestClientException
+          - org.springframework.web.client.ResourceAccessException
         ignore-exceptions:
           - com.example.ValidationException
 ```
@@ -308,6 +309,8 @@ public class OrderService {
 }
 ```
 
+При трёх попытках выполняются две паузы: 500 мс и 1 с. [Конфигурация Retry](https://resilience4j.readme.io/docs/getting-started-3#configuration)
+
 ## Q10. (!) Как работает RateLimiter?
 
 `RateLimiter` ограничивает число вызовов за единицу времени. Две типичные задачи: защитить downstream от перегрузки (своё throttling) и не превысить квоту внешнего API, который сам вернёт 429, если слать слишком часто.
@@ -326,9 +329,9 @@ resilience4j:
   ratelimiter:
     instances:
       externalApi:
-        limit-for-period: 10         # 10 вызовов
-        limit-refresh-period: 1s     # в секунду
-        timeout-duration: 0          # не ждать, сразу ошибку
+        limit-for-period: 10
+        limit-refresh-period: 1s
+        timeout-duration: 0
 ```
 
 ```java
@@ -361,7 +364,7 @@ resilience4j:
       myService:
         limit-for-period: 5
         limit-refresh-period: 60s
-        timeout-duration: 500ms      # ждать до 500ms освобождения слота
+        timeout-duration: 500ms
         event-consumer-buffer-size: 50
 ```
 
@@ -439,15 +442,29 @@ resilience4j:
 ```java
 @Bulkhead(name = "asyncService", type = Bulkhead.Type.THREADPOOL)
 public CompletableFuture<String> asyncCall() {
-    return CompletableFuture.supplyAsync(() -> externalClient.fetch());
+    return CompletableFuture.completedFuture(externalClient.fetch());
 }
 ```
 
+Аспект запускает тело метода в пуле Bulkhead, поэтому и `fetch()` выполняется там. Вложенный `supplyAsync()` без явного executor передал бы сам вызов другому исполнителю. [BulkheadAspect 2.4.0](https://github.com/resilience4j/resilience4j/blob/v2.4.0/resilience4j-spring6/src/main/java/io/github/resilience4j/spring6/bulkhead/configure/BulkheadAspect.java)
+
 ## Q14. Когда нужен TimeLimiter?
 
-`TimeLimiter` навязывает timeout **асинхронным** вызовам (`CompletableFuture`, `Mono`, `Flux`): если результат не пришёл за `timeout-duration`, ожидание прерывается с `TimeoutException`, а опционально отменяется и сам `Future` (`cancel-running-future: true`), чтобы не держать поток в пуле.
+```java
+// Resilience4j 2.4.0. Вызов через Spring-прокси.
+// slowService: timeout-duration = 2s, cancel-running-future = true.
+// fetch() уже начался и вернёт результат через 5 секунд.
+@TimeLimiter(name = "slowService")
+public CompletableFuture<String> fetchSlowData() {
+    return CompletableFuture.supplyAsync(() -> slowExternalService.fetch(), ioExecutor);
+}
+```
 
-Почему именно для асинхронных: ограничить время чужого блокирующего вызова «снаружи» нельзя — поток всё равно висит до возврата. А вот у `Future`/`Mono` есть точка отмены, поэтому таймаут реально работает. Для **синхронных** вызовов аналог — `CircuitBreaker` с `slow-call-duration-threshold`: он не прервёт вызов, но засчитает его как медленный и со временем разомкнёт цепь. Часто TimeLimiter ставят в паре с CircuitBreaker: первый ограничивает каждый вызов, второй — реагирует на накопившиеся таймауты.
+Что получает вызывающий код через две секунды и что происходит с уже запущенным `fetch()`?
+
+В ветке `CompletionStage` TimeLimiter завершает future исключением `TimeoutException`, если результат ещё не получен. При вызове `join()` оно будет причиной `CompletionException`. Работа в `ioExecutor` может продолжиться и выполнить побочные эффекты. Прерывание ввода-вывода зависит от настроек и механизма отмены самого клиента.
+
+`cancel-running-future` влияет на отдельную ветку программного API с блокирующим `Future.get(timeout, unit)`, где по таймауту вызывается `Future.cancel(true)`. Даже прямой вызов `CompletableFuture.cancel(true)` меняет состояние future без прерывания выполняющейся задачи. Для `Mono` и `Flux` с подключённым модулем Reactor применяется реактивная ветка с отменой подписки. CircuitBreaker может учесть длительный вызов как медленный после его завершения. [TimeLimiterImpl 2.4.0](https://github.com/resilience4j/resilience4j/blob/v2.4.0/resilience4j-timelimiter/src/main/java/io/github/resilience4j/timelimiter/internal/TimeLimiterImpl.java) · [CompletableFuture.cancel](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html#cancel(boolean))
 
 ```yaml
 resilience4j:
@@ -455,29 +472,24 @@ resilience4j:
     instances:
       slowService:
         timeout-duration: 2s
-        cancel-running-future: true   # отменять Future при таймауте
+        cancel-running-future: true
 ```
 
-```java
-@TimeLimiter(name = "slowService", fallbackMethod = "timeoutFallback")
-public CompletableFuture<String> fetchSlowData() {
-    return CompletableFuture.supplyAsync(() -> slowExternalService.fetch());
-}
-
-public CompletableFuture<String> timeoutFallback(TimeoutException ex) {
-    return CompletableFuture.completedFuture("timeout fallback");
-}
-```
-
-Если fallback не задан, наружу полетит `TimeoutException` — на REST-слое его удобно маппить в HTTP 408 (Request Timeout):
-
-```java
-@ExceptionHandler(TimeoutException.class)
-@ResponseStatus(HttpStatus.REQUEST_TIMEOUT)  // 408
-public void handleTimeout() {}
-```
+При необходимости задайте `fallbackMethod` с совместимым возвращаемым типом, например `CompletableFuture<String> timeoutFallback(TimeoutException ex)`. Он может вернуть запасной ответ. HTTP-статус при отсутствии fallback задаёт обработчик ошибок приложения. Для шлюза, который не дождался upstream, подходит 504.
 
 ## Q15. (!) Как комбинировать несколько аннотаций?
+
+```java
+// Стандартный порядок аспектов. Retry допускает три попытки.
+// Брейкер остаётся закрытым, лимитер выдаёт разрешения.
+// Первые два вызова API завершаются учитываемой ошибкой, третий успешен.
+@CircuitBreaker(name = "paymentCB")
+@RateLimiter(name = "paymentRL")
+@Retry(name = "paymentRetry")
+public PaymentResult processPayment(Payment payment) {
+    return paymentApi.process(payment);
+}
+```
 
 На один метод можно повесить сразу несколько аннотаций — Resilience4j оборачивает вызов в цепочку декораторов. Частый вопрос на собеседовании: порядок применения не зависит от того, в какой последовательности аннотации написаны в коде, — его задаёт библиотека (а переопределяют — свойствами аспектов, см. ниже).
 
@@ -492,14 +504,6 @@ TimeLimiter → CircuitBreaker → RateLimiter → Bulkhead → Retry → Method
 
 Подводный камень: эта схема **неверна**. Она ставит `Retry` внутрь `CircuitBreaker` — как будто брейкер видит все попытки одного логического вызова как один результат. В реальном Resilience4j всё наоборот: внешний именно `Retry`, и брейкер считает каждую попытку отдельно.
 
-```java
-@CircuitBreaker(name = "paymentCB", fallbackMethod = "paymentFallback")
-@RateLimiter(name = "paymentRL")
-@Retry(name = "paymentRetry")
-public PaymentResult processPayment(Payment payment) {
-    return paymentApi.process(payment);
-}
-```
 
 **Читать как:** `Retry` запускает попытку → попытка проходит `CircuitBreaker` (цепь разомкнута — сразу `CallNotPermittedException`) и `RateLimiter` → вызывается метод. Попытка упала — брейкер записал failure, `Retry` выждал backoff и пошёл на следующий круг. Серия неудачных попыток может разомкнуть цепь ещё до исчерпания `max-attempts`.
 
@@ -519,6 +523,8 @@ Decorators.ofSupplier(() -> paymentApi.process(payment))
 
 Нюанс: в `Decorators` каждый следующий `with*` оборачивает предыдущий, поэтому в примере выше внешним будет `RateLimiter`, под ним `Retry`, а ближе всех к вызову — `CircuitBreaker`: каждая попытка, как и в дефолтном порядке, учитывается брейкером отдельно. Чтобы брейкер видел один результат на все попытки, `withCircuitBreaker` должен идти после `withRetry`.
 
+В указанном сценарии брейкер записывает два отказа и один успех. Если внутренний fallback вместо проброса ошибки вернёт результат, внешний Retry увидит этот результат. При стандартной политике, повторяющей вызов по исключению, дополнительной попытки тогда не будет. [Порядок аспектов и fallback](https://resilience4j.readme.io/docs/getting-started-3#aspect-order)
+
 ## Q16. Как работает fallback в Resilience4j?
 
 `fallbackMethod` — это метод того же класса, на который Resilience4j переключается, когда защищённый вызов бросает исключение. Срабатывает на любые исключения паттернов (`CallNotPermittedException` от разомкнутой цепи, `BulkheadFullException`, `RequestNotPermitted`, `TimeoutException`) и на «обычные» ошибки самого вызова. Это «план Б»: вернуть кэш, дефолт или заглушку вместо пятисотки.
@@ -528,20 +534,16 @@ Decorators.ofSupplier(() -> paymentApi.process(payment))
 - Может быть несколько перегрузок для разных типов исключений
 - Должен быть в том же классе (ограничение AOP — см. Q20)
 
-**Как выбирается перегрузка:** Resilience4j ищет fallback с **наиболее специфичным** типом исключения, подходящим под брошенное. Поэтому метод с `CallNotPermittedException` сработает именно на разомкнутую цепь, а общий с `Exception` — на всё остальное.
+**Как выбирается перегрузка:** Resilience4j ищет fallback с **наиболее специфичным** типом исключения, подходящим под брошенное. Поэтому метод с `CallNotPermittedException` сработает именно на разомкнутую цепь, а общий с `Exception` — на остальные совместимые исключения.
 
 ```java
 @CircuitBreaker(name = "userService", fallbackMethod = "userFallback")
 public User getUser(Long id) {
     return userApi.findById(id);
 }
-
-// Общий fallback — для любого исключения
 public User userFallback(Long id, Exception ex) {
     return User.anonymous();
 }
-
-// Специфичный fallback — выбирается первым если тип совпадает
 public User userFallback(Long id, CallNotPermittedException ex) {
     return User.cached(id);
 }
@@ -549,7 +551,7 @@ public User userFallback(Long id, CallNotPermittedException ex) {
 
 ## Q17. Как настроить Actuator метрики для Resilience4j?
 
-Нужны два звена: `spring-boot-starter-actuator` в зависимостях и `resilience4j-micrometer` (он входит в `resilience4j-spring-boot3`). После этого достаточно открыть нужные эндпоинты в `management.endpoints.web.exposure.include` и включить health-индикаторы. Health брейкеров по умолчанию выключен, поэтому `management.health.circuitbreakers.enabled: true` указывают явно:
+Для метрик нужны Actuator, интеграция `resilience4j-micrometer` (входит в `resilience4j-spring-boot3`) и настроенный `MeterRegistry`. Для вывода CircuitBreaker в health отдельно включите регистрацию индикатора через `management.health.circuitbreakers.enabled` и участие нужного инстанса через `register-health-indicator`. HTTP exposure управляет доступностью маршрута по HTTP. Допуск клиента задаётся конфигурацией безопасности.
 
 ```yaml
 management:
@@ -560,28 +562,34 @@ management:
   health:
     circuitbreakers:
       enabled: true
-    ratelimiters:
-      enabled: true
   metrics:
     tags:
       application: ${spring.application.name}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      svc:
+        register-health-indicator: true
 ```
 
 **Доступные эндпоинты:**
-- `GET /actuator/health` — состояние circuit breakers
-- `GET /actuator/circuitbreakers` — список CB с метриками
+- `GET /actuator/health` — общее здоровье и вклад включённых CircuitBreaker
+- `GET /actuator/circuitbreakers` — список зарегистрированных инстансов CircuitBreaker
 - `GET /actuator/retries` — список retry instances
 - `GET /actuator/metrics/resilience4j.circuitbreaker.state` — Micrometer метрики
 
 **Ключевые Micrometer метрики:**
 ```
-resilience4j.circuitbreaker.state{name="svc"} = CLOSED(0)/OPEN(1)/HALF_OPEN(2)
+resilience4j.circuitbreaker.state{name="svc", state="open"}
 resilience4j.circuitbreaker.calls{name="svc", kind="successful"}
 resilience4j.circuitbreaker.calls{name="svc", kind="failed"}
 resilience4j.circuitbreaker.failure.rate{name="svc"}
 resilience4j.retry.calls{name="svc", kind="successful_without_retry"}
 resilience4j.retry.calls{name="svc", kind="failed_with_retry"}
 ```
+
+Метрика `state` представляет отдельный gauge для каждого состояния и инстанса. Текущее состояние получает значение 1, остальные — 0. [Эндпоинты и метрики](https://resilience4j.readme.io/docs/getting-started-3#metrics-endpoint) · [Health indicator 2.4.0](https://github.com/resilience4j/resilience4j/blob/v2.4.0/resilience4j-spring-boot3/src/main/java/io/github/resilience4j/springboot3/circuitbreaker/monitoring/health/CircuitBreakersHealthIndicator.java) · [Реализация метрик 2.4.0](https://github.com/resilience4j/resilience4j/blob/v2.4.0/resilience4j-micrometer/src/main/java/io/github/resilience4j/micrometer/tagged/AbstractCircuitBreakerMetrics.java)
 
 ## Q18. Как работают события (Events) в Resilience4j?
 
@@ -602,9 +610,18 @@ circuitBreaker.getEventPublisher()
         log.warn("Call not permitted"));
 ```
 
-**В Spring Boot** те же события переброшены в `ApplicationEventPublisher`, поэтому их можно ловить и привычным `@EventListener` с типом `CircuitBreakerOnStateTransitionEvent` — без ручной подписки на `EventPublisher`.
+**В Spring Boot** автоконфигурация подписывает буфер событий на издателя инстанса. Этот буфер читает Actuator endpoint событий. Для обработки в `@EventListener` приложение может явно подписаться на издателя инстанса и опубликовать нужное событие через Spring `ApplicationEventPublisher`. [CircuitBreakerConfiguration 2.4.0](https://github.com/resilience4j/resilience4j/blob/v2.4.0/resilience4j-spring6/src/main/java/io/github/resilience4j/spring6/circuitbreaker/configure/CircuitBreakerConfiguration.java)
 
 ## Q19. Какие зависимости нужны для Spring Boot?
+
+```text
+Spring Boot 3.5
+В проекте подключены:
+  spring-boot-starter-web
+  resilience4j-spring-boot3
+
+Нужны аннотации @CircuitBreaker и @Retry, а также метрики Actuator.
+```
 
 Минимально нужны три артефакта, и про **AOP легко забыть** — без него аннотации `@CircuitBreaker`/`@Retry` молча не работают (proxy не создаётся, метод вызывается напрямую). Actuator подключают для метрик и health-индикаторов.
 
@@ -614,12 +631,10 @@ circuitBreaker.getEventPublisher()
     <groupId>io.github.resilience4j</groupId>
     <artifactId>resilience4j-spring-boot3</artifactId>
 </dependency>
-<!-- AOP обязателен для аннотаций -->
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-aop</artifactId>
 </dependency>
-<!-- Для метрик и health -->
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-actuator</artifactId>
@@ -638,22 +653,11 @@ circuitBreaker.getEventPublisher()
 
 ## Q20. Каковы ограничения аннотационного подхода?
 
-Аннотации Resilience4j реализованы через Spring AOP proxy, поэтому наследуют **ровно те же ограничения, что и `@Transactional`** — это удобная зацепка для ответа. Суть в том, что аннотация срабатывает, только если вызов проходит **через прокси-объект**; всё, что обходит прокси, остаётся незащищённым.
-
-1. **Self-invocation не работает:** если метод вызывает другой аннотированный метод того же бина напрямую (`this.method()`), вызов идёт мимо прокси — аннотация игнорируется.
-2. **Только `public` методы:** прокси перехватывает лишь публичные методы; `private`/`protected` не оборачиваются.
-3. **Финальные классы и методы:** CGLIB-прокси наследует класс, поэтому `final`-класс или `final`-метод обернуть нельзя.
-4. **Порядок декораторов задан по умолчанию** (`Retry` внешний — см. Q15): сами аннотации его не меняют, но его можно переопределить свойствами `resilience4j.<module>.<module>AspectOrder` (например, `resilience4j.retry.retryAspectOrder`) или взять программный API (`Decorators`) для полного контроля.
-
-**Решение self-invocation:**
 ```java
 @Service
 public class OrderService {
-    @Autowired
-    private OrderService self; // self-injection
-
     public void placeOrder(Order order) {
-        self.processWithCircuitBreaker(order); // вызов через proxy
+        this.processWithCircuitBreaker(order);
     }
 
     @CircuitBreaker(name = "orderService")
@@ -662,6 +666,15 @@ public class OrderService {
     }
 }
 ```
+
+Аннотации Resilience4j реализованы через аспекты Spring AOP. Суть в том, что аннотация срабатывает, только если вызов проходит **через прокси-объект**; всё, что обходит прокси, остаётся незащищённым.
+
+1. **Self-invocation не работает:** если метод вызывает другой аннотированный метод того же бина напрямую (`this.method()`), вызов идёт мимо прокси — аннотация игнорируется.
+2. **Методы и тип прокси:** JDK-прокси перехватывает вызовы через интерфейс, в том числе при `final`-реализации. CGLIB может перехватить доступный переопределяемый `protected`-метод. Прямой самовызов обходит оба типа прокси.
+3. **Финальные классы и методы:** CGLIB-прокси наследует класс, поэтому `final`-класс или `final`-метод обернуть нельзя.
+4. **Порядок декораторов задан по умолчанию** (`Retry` внешний — см. Q15): сами аннотации его не меняют, но его можно переопределить свойствами `resilience4j.<module>.<module>AspectOrder` (например, `resilience4j.retry.retryAspectOrder`) или взять программный API (`Decorators`) для полного контроля.
+
+Вынесите `processWithCircuitBreaker` в отдельный Spring-бин и вызовите его через внедрённую зависимость. Тогда вызов пройдёт через прокси. [Spring AOP](https://docs.spring.io/spring-framework/reference/6.2/core/aop/proxying.html)
 
 **Итог:** для сложных комбинаций или fine-grained control используй программный API через `CircuitBreakerRegistry`, `RetryRegistry` и `Decorators`.
 

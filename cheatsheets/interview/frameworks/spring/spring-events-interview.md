@@ -93,7 +93,7 @@ EmailListener.onOrderCreated()    InventoryListener.onOrderCreated()
 
 **Когда НЕ нужны:**
 - Логика должна выполниться синхронно и быть частью той же транзакции — проще и понятнее прямой вызов.
-- Нужен результат от обработчика — события работают по принципу fire-and-forget, ответа publisher не получает.
+- Нужен результат от обработчика — `publishEvent()` возвращает `void`. По умолчанию публикатор ждёт синхронных слушателей, а результат их работы через этот API не получает.
 - Взаимодействие между микросервисами — Spring Events живут внутри одной JVM; для разных процессов нужен message broker (Kafka, RabbitMQ).
 
 ## Q2. Как опубликовать и обработать событие?
@@ -129,12 +129,14 @@ public class OrderNotificationListener {
     @EventListener
     public void onOrderCreated(OrderCreatedEvent event) {
         log.info("Order created: {}", event.getOrderId());
-        // отправить email, обновить статистику и т.д.
+        // обновить счётчик попыток создания заказа
     }
 }
 ```
 
 Связывание идёт по типу: метод слушателя принимает `OrderCreatedEvent`, и Spring вызовет его именно на этом событии. Аннотацию `@Component` на слушателе не забывайте — обработчики ищутся только среди бинов.
+
+При стандартной синхронной доставке слушатель из примера вызывается до завершения транзакции создания заказа. Если действие нужно выполнять только после успешного commit, используйте фазу `AFTER_COMMIT` из Q6. [События Spring Framework](https://docs.spring.io/spring-framework/reference/6.2/core/beans/context-introduction.html#context-functionality-events)
 
 **Альтернатива — публиковать через `ApplicationContext`** (он тоже реализует `ApplicationEventPublisher`):
 
@@ -176,15 +178,24 @@ public class OrderCreatedEvent extends ApplicationEvent {
 }
 ```
 
-**Что выбрать:** POJO. Он проще, не тащит зависимость на Spring в domain-слой и его можно публиковать как есть. Наследование `ApplicationEvent` оставьте для легаси-кода — единственный его плюс в том, что он несёт `source` (ссылку на публикатора) и timestamp.
+**Что выбрать:** для доменного события обычно достаточно POJO или `record`. При вызове `publishEvent(Object)` Spring оборачивает такой объект в `PayloadApplicationEvent`. Метод `@EventListener` может принимать сам объект, например `OrderCreatedEvent`. Подкласс `ApplicationEvent` позволяет явно передать `source` при создании события. Его смысл задаёт публикатор, а базовый класс сохраняет время создания события. [ApplicationEventPublisher](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/context/ApplicationEventPublisher.html#publishEvent(java.lang.Object)).
 
-**Делайте событие immutable** (`record`, `@Value`, `final`-поля). Один и тот же объект события получают сразу несколько слушателей; если кто-то его изменит, остальные увидят искажённые данные. `record` подходит идеально:
+Для события удобно использовать неизменяемые данные. Слушатели могут получить ссылку на один объект, поэтому его изменение влияет на других получателей. `record` фиксирует ссылки компонентов. Если компонент содержит изменяемую коллекцию, при создании события можно сохранить её неизменяемую копию.
 
 ```java
 public record OrderCreatedEvent(Long orderId, String customerId, Instant occurredAt) { }
 ```
 
 ## Q4. Какие встроенные Spring-события (context events) существуют?
+
+Приложение на Spring Boot 3.5 должно закончить обязательный прогрев кеша до перехода readiness в `ACCEPTING_TRAFFIC`. В какой точке запуска выполнить прогрев и как она расположена относительно событий `ApplicationStartedEvent` и `ApplicationReadyEvent`?
+
+```text
+Spring Boot 3.5, веб-приложение
+cacheService.warmUp() выполняет обязательный синхронный прогрев.
+Маршрутизация трафика учитывает readiness приложения.
+```
+
 
 Spring сам публикует события на ключевых этапах жизненного цикла контекста и приложения — можно подписаться на них, чтобы выполнить код в нужный момент старта или остановки.
 
@@ -194,37 +205,29 @@ Spring сам публикует события на ключевых этапа
 | `ContextStartedEvent` | При вызове `context.start()` |
 | `ContextStoppedEvent` | При вызове `context.stop()` |
 | `ContextClosedEvent` | При закрытии контекста |
-| `ApplicationReadyEvent` | Когда приложение готово обслуживать запросы (Spring Boot) |
-| `ApplicationStartedEvent` | После запуска, до `CommandLineRunner` (Spring Boot) |
+| `ApplicationReadyEvent` | После успешного завершения `ApplicationRunner` и `CommandLineRunner` (Spring Boot) |
+| `ApplicationStartedEvent` | После refresh контекста, до вызова обоих типов runners (Spring Boot) |
 | `ApplicationFailedEvent` | При ошибке старта (Spring Boot) |
 | `RequestHandledEvent` | После обработки HTTP-запроса (Spring MVC) |
 
 ```java
-@Component
-public class StartupListener {
-
-    @EventListener(ApplicationReadyEvent.class)
-    public void onStartup() {
-        log.info("Application is ready! Warming up cache...");
-        cacheService.warmUp();
-    }
-
-    @EventListener(ContextClosedEvent.class)
-    public void onShutdown() {
-        log.info("Context is closing. Cleanup...");
-    }
+@Bean
+ApplicationRunner warmUpCache(CacheService cacheService) {
+    return args -> cacheService.warmUp();
 }
 ```
 
-**Рекомендация:** для действий «при старте» подписывайтесь на `ApplicationReadyEvent`, а не на `ContextRefreshedEvent`. К моменту `ApplicationReadyEvent` гарантированно всё готово: все бины инициализированы, веб-сервер (Tomcat) слушает порт, `CommandLineRunner` и `ApplicationRunner` уже отработали. `ContextRefreshedEvent` срабатывает раньше и может прийти несколько раз (например, при рефреше дочернего контекста).
+В Boot 3.5 контекст проходит refresh, затем Boot публикует `ApplicationStartedEvent` и вызывает runners. Если синхронный прогрев в `ApplicationRunner` завершился успешно и остальные runners отработали, Boot публикует `ApplicationReadyEvent`, затем событие доступности с `ReadinessState.ACCEPTING_TRAFFIC`. Если прогрев выбрасывает исключение из runner, запуск завершается ошибкой. Уже открытый порт сам по себе не доказывает завершение прогрева. [Жизненный цикл и события Spring Boot 3.5](https://docs.spring.io/spring-boot/3.5/reference/features/spring-application.html#features.spring-application.application-events-and-listeners)
+
+`ContextRefreshedEvent` относится к конкретному refresh контекста. В иерархии слушатель родительского контекста может получить события и своего, и дочернего контекста. Если действие должно выполняться для одного контекста, сравните контекст из события с нужным экземпляром.
 
 ## Q5. Как сделать обработку события асинхронной?
 
-По умолчанию Spring Events **синхронны**: `publishEvent()` блокирует публикатора и не возвращает управление, пока все слушатели не отработают — в том же потоке.
-
-Чтобы вынести обработку в отдельный поток, повесьте на метод слушателя `@Async` (и включите `@EnableAsync`). Тогда `publishEvent()` не будет ждать завершения этого слушателя, а его обработка уйдёт в фоновый пул потоков:
+В приложении используется стандартный синхронный multicaster. Как направить только этот слушатель в заданный пул и чего будет ждать публикатор?
 
 ```java
+// Как направить только этот слушатель в eventsExecutor?
+// Чего будет ждать вызов publishEvent() после изменения?
 @Configuration
 @EnableAsync
 public class AsyncConfig {
@@ -236,7 +239,6 @@ public class AsyncConfig {
         executor.setMaxPoolSize(20);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("event-");
-        executor.initialize();
         return executor;
     }
 }
@@ -244,14 +246,15 @@ public class AsyncConfig {
 @Component
 public class NotificationListener {
 
-    @Async("eventsExecutor")
     @EventListener
     public void onOrderCreated(OrderCreatedEvent event) {
-        // Выполнится в отдельном потоке, не блокируя публикатора
         emailService.send(event.getCustomerId(), "Order created");
     }
 }
 ```
+
+**Разбор.** Добавьте `@Async("eventsExecutor")` к методу `onOrderCreated`. Показанная конфигурация уже включает `@EnableAsync`. При успешной постановке задачи публикатор не ждёт завершения этого обработчика. Остальные обычные слушатели по-прежнему выполняются синхронно, и публикатор ждёт их выполнения. При отказе пула принять задачу ошибка отправки может дойти до публикатора. [Spring Framework: выполнение задач](https://docs.spring.io/spring-framework/reference/6.2/integration/scheduling.html#scheduling-annotation-support-async)
+
 
 **Подводные камни async-слушателей** (всё из-за того, что обработчик идёт в другом потоке):
 - **Исключение не доходит до публикатора** — оно остаётся в фоновом потоке. Обрабатывайте ошибки внутри слушателя или через `AsyncUncaughtExceptionHandler`, иначе они потеряются.
@@ -260,20 +263,16 @@ public class NotificationListener {
 
 ## Q6. Что такое `@TransactionalEventListener` и зачем он нужен?
 
-`@TransactionalEventListener` — слушатель, выполнение которого привязано к фазе транзакции публикатора (по умолчанию — после успешного commit). Он решает классическую проблему обычного `@EventListener`.
-
-**Проблема обычного `@EventListener`:** он синхронный и срабатывает прямо в момент `publishEvent()`, то есть **внутри ещё не закоммиченной транзакции**. Если дальше транзакция откатится, слушатель уже успел отработать — отправил клиенту письмо о «созданном» заказе, которого по факту в БД нет. Side effect случился, а данных нет.
-
-`@TransactionalEventListener` устраняет это: обработчик откладывается до завершения транзакции и при rollback (для дефолтной фазы `AFTER_COMMIT`) просто не выполняется.
+Метод сервиса вызван через Spring-прокси и выполняется в обычной транзакции, привязанной к потоку. Когда вызовется слушатель при commit и при rollback?
 
 ```java
+// Когда вызовется слушатель при commit и при rollback?
 @Service
 @Transactional
 public class OrderService {
     public Order createOrder(OrderRequest req) {
         Order order = repository.save(new Order(req));
         publisher.publishEvent(new OrderCreatedEvent(order.getId()));
-        // Если транзакция откатится — слушатель НЕ выполнится (при AFTER_COMMIT)
         return order;
     }
 }
@@ -281,30 +280,63 @@ public class OrderService {
 @Component
 public class OrderNotificationListener {
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener
     public void onOrderCreated(OrderCreatedEvent event) {
-        // Выполнится ТОЛЬКО если транзакция успешно закоммичена
         emailService.sendConfirmation(event.getOrderId());
     }
 }
 ```
 
+`@TransactionalEventListener` — слушатель, выполнение которого привязано к фазе транзакции публикатора (по умолчанию — после успешного commit). Он решает классическую проблему обычного `@EventListener`.
+
+**Проблема обычного `@EventListener`:** он синхронный и срабатывает прямо в момент `publishEvent()`, то есть **внутри ещё не закоммиченной транзакции**. Если дальше транзакция откатится, слушатель уже успел отработать — отправил клиенту письмо о «созданном» заказе, которого по факту в БД нет. Side effect случился, а данных нет.
+
+`@TransactionalEventListener` устраняет это: обработчик откладывается до завершения транзакции и при rollback (для дефолтной фазы `AFTER_COMMIT`) просто не выполняется.
+
+[Spring Framework: события, привязанные к транзакции](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/event.html).
+
+
+**Реактивная транзакция.** Пример выше использует транзакцию, привязанную к потоку. Начиная со Spring Framework 6.1 слушатели также поддерживают транзакции под управлением `ReactiveTransactionManager`. В этом случае транзакция хранится в Reactor Context, а источником опубликованного `ApplicationEvent` должен быть текущий `TransactionContext`. Обычный вызов `ApplicationEventPublisher.publishEvent(orderCreated)` с POJO сам этот контекст не переносит.
+
+Например, сервис сохраняет заказ через R2DBC и должен запланировать уведомление после успешного commit. Пусть `orderRepository.save(order)` возвращает `Mono<Order>`, а `transactionalOperator` настроен с реактивным менеджером транзакций для этого репозитория. Публикацию включаем в ту же цепочку:
+
+```java
+var events = new TransactionalEventPublisher(applicationEventPublisher);
+
+return transactionalOperator.transactional(
+    orderRepository.save(order)
+        .flatMap(saved -> events.publishEvent(new OrderCreatedEvent(saved.getId()))
+            .thenReturn(saved)));
+```
+
+`TransactionalEventPublisher` оборачивает полезную нагрузку и помещает текущий `TransactionContext` в источник события. Возвращённый `Mono<Void>` выполняет публикацию при подписке внутри транзакции. Слушатель с фазой по умолчанию вызовется при успешной фиксации, а при откате эта фаза пропускается. При раздельной подписке цепочка публикации может оказаться без нужного контекста. [Spring Framework 6.2 и реактивные события](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/event.html) · [TransactionalEventPublisher](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/transaction/reactive/TransactionalEventPublisher.html).
+
 **Подводный камень — операции с БД в `AFTER_COMMIT`.** Слушатель привязан к транзакции публикатора, но к фазе `AFTER_COMMIT` она уже закоммичена, хотя транзакционные ресурсы ещё могут быть доступны. Поэтому новые записи из такого слушателя могут использовать прежние ресурсы, но уже не будут закоммичены в исходной транзакции — если нужно что-то сохранить, открывайте новую транзакцию явно: `@Transactional(propagation = REQUIRES_NEW)`.
 
 ## Q7. Какие фазы транзакции поддерживает `@TransactionalEventListener`?
 
-Фаза задаётся параметром `phase` и определяет момент, в который сработает слушатель относительно жизненного цикла транзакции:
+В Spring Framework 6.2 событие опубликовано внутри активной транзакции. Менеджер дошёл до завершения, но передал синхронизациям статус `STATUS_UNKNOWN`. Какой из слушателей, привязанных к фазам завершения, вызовется?
 
 ```java
+// Spring Framework 6.2, статус в afterCompletion: STATUS_UNKNOWN
 @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+public void onCommit(OrderCreatedEvent event) { }
+
+@TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK)
+public void onRollback(OrderCreatedEvent event) { }
+
+@TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
+public void onCompletion(OrderCreatedEvent event) { }
 ```
 
 | Фаза | Когда выполняется | Типичное применение |
 |---|---|---|
 | `AFTER_COMMIT` (default) | После успешного commit | Side effects, которые валидны, только если данные реально сохранены: письма, публикация в Kafka |
 | `AFTER_ROLLBACK` | После rollback | Компенсация, алерты о неудаче |
-| `AFTER_COMPLETION` | После завершения (commit или rollback) | Очистка ресурсов в любом исходе |
+| `AFTER_COMPLETION` | При вызове `afterCompletion` с любым статусом, включая `STATUS_UNKNOWN` | Очистка ресурсов, которая не зависит от исхода |
 | `BEFORE_COMMIT` | Перед commit, ещё внутри транзакции | Дозапись в ту же транзакцию (аудит), которая должна откатиться вместе с ней |
+
+В этом сценарии вызовется только `onCompletion`. В Spring Framework 6.2 обе фазовые ветки, `AFTER_COMMIT` и `AFTER_ROLLBACK`, проверяют конкретный статус в `afterCompletion`. Например, при исключении во время commit менеджер может передать `STATUS_UNKNOWN`, если откат после такой ошибки отключён. `BEFORE_COMMIT` срабатывает на более раннем этапе и сам по себе не подтверждает успешную фиксацию. [Синхронизация слушателей, Spring Framework 6.2.19](https://github.com/spring-projects/spring-framework/blob/v6.2.19/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalApplicationListenerSynchronization.java) · [Обработка ошибки commit](https://github.com/spring-projects/spring-framework/blob/v6.2.19/spring-tx/src/main/java/org/springframework/transaction/support/AbstractPlatformTransactionManager.java#L759-L769).
 
 ```java
 // Для BEFORE_COMMIT — можно ещё участвовать в транзакции
@@ -322,7 +354,7 @@ public void onFailure(OrderCreatedEvent event) {
 }
 ```
 
-**Подводный камень:** `@TransactionalEventListener` завязан на наличие транзакции. Если событие опубликовано **вне транзакции**, слушатель по умолчанию молча не выполнится — частый источник «почему обработчик не сработал». Чтобы он отрабатывал и без транзакции, выставьте `fallbackExecution = true`:
+**Подводный камень:** `@TransactionalEventListener` завязан на наличие транзакции. Если событие опубликовано **вне транзакции**, слушатель по умолчанию молча не выполнится — частый источник «почему обработчик не сработал». С `fallbackExecution = true` при публикации вне транзакции адаптер запускает обработку события без ожидания указанной фазы. Такой запуск не подтверждает ни commit, ни rollback. [Адаптер слушателя, Spring Framework 6.2.19](https://github.com/spring-projects/spring-framework/blob/v6.2.19/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalApplicationListenerMethodAdapter.java#L76-L94).
 
 ```java
 @TransactionalEventListener(fallbackExecution = true)
@@ -331,67 +363,75 @@ public void handle(MyEvent event) { }
 
 ## Q8. Как управлять порядком обработчиков одного события?
 
-Порядком управляет аннотация `@Order` на методе-слушателе: меньшее число — выше приоритет, такой слушатель отработает раньше.
+Все три слушателя обрабатывают одно событие синхронно. В каком порядке Spring вызовет их?
 
 ```java
+// В каком порядке Spring вызовет эти синхронные слушатели?
 @Component
 public class OrderLifecycleListeners {
+
+    @Order(3)
+    @EventListener
+    public void notifyCustomer(OrderCreatedEvent event) {
+    }
 
     @Order(1)
     @EventListener
     public void validateOrder(OrderCreatedEvent event) {
-        // Выполнится первым
     }
 
     @Order(2)
     @EventListener
     public void auditOrder(OrderCreatedEvent event) {
-        // Выполнится вторым
-    }
-
-    @Order(3)
-    @EventListener
-    public void notifyCustomer(OrderCreatedEvent event) {
-        // Выполнится третьим
     }
 }
 ```
+
+Порядком управляет аннотация `@Order` на методе-слушателе: меньшее число — выше приоритет, такой слушатель отработает раньше.
+
+В примере порядок такой: `validateOrder`, `auditOrder`, `notifyCustomer`.
+
 
 Без `@Order` порядок вызова слушателей **не гарантирован** — не полагайтесь на него. Граничные значения: `Ordered.HIGHEST_PRECEDENCE = Integer.MIN_VALUE` (раньше всех), `Ordered.LOWEST_PRECEDENCE = Integer.MAX_VALUE` (позже всех).
 
-**Важно:** упорядочивание имеет смысл только для синхронных слушателей, которые выполняются последовательно в одном потоке. У async-слушателей (`@Async`) каждый уходит в свой поток и работает параллельно — `@Order` на них не даёт никаких гарантий порядка.
+**Важно.** При `@Async` порядок вызова прокси не гарантирует порядок начала или завершения задач в пуле.
 
 ## Q9. Как условно обработать событие?
 
-У `@EventListener` есть атрибут `condition` — SpEL-выражение, которое вычисляется до вызова метода. Если оно вернуло `false`, слушатель просто пропускается. Это позволяет фильтровать события по их содержимому, не загромождая тело метода проверками `if`:
+Как Spring применит условие к двум публикациям обычного объекта `OrderCreatedEvent` с суммами 10 000 и 12 500?
 
 ```java
+// Какое из двух событий будет обработано?
+record OrderCreatedEvent(long orderId, String customerId, int total) {}
+
 @Component
 public class PremiumOrderListener {
 
-    @EventListener(condition = "#event.total > 10000")
+    @EventListener(condition = "#a0.total > 10000")
     public void onLargeOrder(OrderCreatedEvent event) {
-        // Только для заказов на сумму > 10000
-        vipService.assignManager(event.getCustomerId());
-    }
-
-    @EventListener(condition = "#event.orderId != null && #event.customerId.startsWith('VIP')")
-    public void onVipOrder(OrderCreatedEvent event) {
-        priorityService.fastTrack(event.getOrderId());
+        vipService.assignManager(event.customerId());
     }
 }
+
+// Две отдельные публикации
+publisher.publishEvent(new OrderCreatedEvent(101L, "CUST-1", 10_000));
+publisher.publishEvent(new OrderCreatedEvent(102L, "CUST-1", 12_500));
 ```
 
-Что доступно внутри SpEL-выражения:
-- `#event` — сам объект события; имя переменной совпадает с именем параметра метода.
-- `#root.event` — то же событие через root object (полезно, если имена конфликтуют).
-- Любые поля и методы объекта события — например, `#event.total > 10000` или `#event.customerId.startsWith('VIP')`.
+Spring вычисляет SpEL-условие перед вызовом метода. Условие истинно для суммы 12 500, поэтому обработчик сработает только для второй публикации. Сумма 10 000 равна порогу, а в условии используется строгое сравнение.
+
+- `#a0`, `#p0` и `#root.args[0]` обращаются к первому аргументу метода. В примере это объект `OrderCreatedEvent`, переданный как полезная нагрузка.
+- `#root.event` обращается к объекту события Spring. Для опубликованного POJO это обёртка `PayloadApplicationEvent`. К её содержимому можно обратиться через `#root.event.payload`.
+- `#event` обращается к аргументу по имени параметра. Для этого имя должно быть доступно Spring, например через метаданные компиляции Java с `-parameters`. Индексный вариант `#a0` от имени параметра не зависит.
+
+[Spring Framework: контракт EventListener](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/context/event/EventListener.html#condition()).
 
 ## Q10. Может ли `@EventListener` возвращать значение?
 
-Да. Если метод-слушатель возвращает не-`null` объект, Spring трактует его как **новое событие** и публикует автоматически. Так можно выстраивать цепочки: одно событие порождает следующее, без явного вызова `publishEvent()`.
+Публикуется `OrderPaidEvent`, оба слушателя синхронные. Что Spring сделает с объектом, который вернёт `onOrderPaid()`?
 
 ```java
+// Что Spring сделает с объектом, который вернёт onOrderPaid()?
 @Component
 public class OrderEventChain {
 
@@ -399,7 +439,6 @@ public class OrderEventChain {
     public OrderShippedEvent onOrderPaid(OrderPaidEvent event) {
         shippingService.arrangeShipping(event.getOrderId());
         return new OrderShippedEvent(event.getOrderId(), LocalDate.now().plusDays(3));
-        // Spring автоматически опубликует OrderShippedEvent
     }
 
     @EventListener
@@ -408,6 +447,10 @@ public class OrderEventChain {
     }
 }
 ```
+
+Да. Если метод-слушатель возвращает не-`null` объект, Spring трактует его как **новое событие** и публикует автоматически. Так можно выстраивать цепочки: одно событие порождает следующее, без явного вызова `publishEvent()`.
+
+
 
 Если вернуть коллекцию или массив, **каждый элемент** публикуется как отдельное событие:
 
@@ -425,7 +468,15 @@ public List<NotificationEvent> onOrderCreated(OrderCreatedEvent event) {
 
 ## Q11. Что такое `@DomainEvents` в Spring Data?
 
-`@DomainEvents` — механизм Spring Data, позволяющий агрегату **накапливать события внутри себя** и публиковать их автоматически в момент сохранения через репозиторий. Это «правильный» способ генерировать domain events в DDD: событие рождается там же, где меняется состояние агрегата, а не в сервисе.
+Рассмотрите два независимых вызова репозитория. Перед каждым вызовом заказ существует в БД, а объект `order` содержит одно накопленное событие, доступное через метод с `@DomainEvents`. В каком случае Spring Data опубликует это событие?
+
+```java
+// Два независимых варианта. В каждом order уже содержит накопленное событие.
+orderRepository.delete(order);
+orderRepository.deleteById(order.getId());
+```
+
+`@DomainEvents` позволяет агрегату хранить события до вызова поддерживаемой операции репозитория. Метод без параметров возвращает одно событие или коллекцию. В первом варианте `delete(order)` получает сам агрегат и запускает публикацию. `deleteById(id)` принимает только идентификатор, поэтому контракт публикации через `@DomainEvents` его не включает. Это верно и в случае, когда реализация репозитория внутри операции загружает сущность. Аналогично передача агрегата в `save(order)` или списка агрегатов в `saveAll(orders)` позволяет опубликовать их события. [Spring Data JPA: Publishing Events from Aggregate Roots](https://docs.spring.io/spring-data/jpa/reference/repositories/core-domain-events.html)
 
 Простейший путь — унаследовать агрегат от `AbstractAggregateRoot` и регистрировать события методом `registerEvent()`:
 
@@ -451,7 +502,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> { }
 ```
 
 При вызове `orderRepository.save(order)` Spring Data сам делает три шага:
-1. Сохраняет агрегат в БД.
+1. Выполняет операцию сохранения. В открытой внешней транзакции запись может быть сброшена в БД позже, а публикация может состояться до commit. О привязке обработки к commit см. Q6–Q7.
 2. Достаёт накопленные события (метод, помеченный `@DomainEvents`) и публикует каждое через `ApplicationEventPublisher`.
 3. Вызывает метод с `@AfterDomainEventPublication`. В реализации `AbstractAggregateRoot` он очищает список, чтобы события не публиковались повторно при следующем `save()`.
 
@@ -472,7 +523,20 @@ public class Order {
 
 ## Q12. Зачем нужен `@AfterDomainEventPublication`?
 
-`@AfterDomainEventPublication` помечает метод, который Spring Data вызывает **после публикации** накопленных событий. В нём можно очистить список, чтобы те же события не публиковались при следующем `save()` того же объекта:
+Агрегат содержит два накопленных события. Первый синхронный слушатель выполнился, а при публикации второго события другой синхронный слушатель выбросил исключение. Ошибка дошла до вызова `publishEvent()`. Что произойдёт с буфером агрегата и что может произойти при повторном сохранении того же объекта?
+
+```text
+Spring Data Commons 3.5.13
+orderRepository.save(order)
+События агрегата: E1, E2
+publishEvent(E1) завершился
+publishEvent(E2) выбросил исключение
+Повторный save получает тот же объект
+```
+
+Spring Data Commons 3.5.13 вызывает метод с `@AfterDomainEventPublication` после того, как все вызовы `publishEvent()` для агрегата завершились штатно и прошла проверка списка событий. В примере исключение прерывает этот цикл до вызова очистки. Если буфер сохранился и повторный `save(order)` доходит до этапа публикации, `E1` может быть опубликовано повторно. Успешный возврат из `publishEvent()` означает завершение передачи события механизму публикации. Асинхронный слушатель может ещё работать, а внешняя транзакция может ещё оставаться открытой. [Исходник Spring Data Commons 3.5.13](https://github.com/spring-projects/spring-data-commons/blob/3.5.13/src/main/java/org/springframework/data/repository/core/support/EventPublishingRepositoryProxyPostProcessor.java#L180-L208)
+
+Для очистки буфера можно использовать такой callback.
 
 ```java
 public class Order {
@@ -487,15 +551,13 @@ public class Order {
 }
 ```
 
-**Зачем важен:** агрегат живёт дольше одного `save()`. Если события не вычистить, при каждом следующем сохранении того же объекта Spring Data опубликует **их заново** — отсюда дубли писем, повторные списания, лишние записи. Очистка предотвращает повторную публикацию этих событий при следующем `save()` того же объекта. Она не гарантирует доставку или ровно однократную обработку при сбоях.
-
-**Рекомендация:** не реализуйте это вручную без нужды — `AbstractAggregateRoot` уже содержит корректные `@DomainEvents` и `@AfterDomainEventPublication`. Ручная реализация нужна, только если унаследоваться от него нельзя.
+После штатной очистки следующий `save()` того же объекта публикует только новые накопленные события. При повторных попытках идемпотентность обработки обеспечивают отдельно. В `AbstractAggregateRoot` callback очистки уже предусмотрен.
 
 ## Q13. Что такое Spring Modulith и как события используются для межмодульного взаимодействия?
 
 **Spring Modulith** — библиотека для построения модульных монолитов: приложение делится на логические модули. Для взаимодействия между ними можно публиковать события, когда не нужен синхронный ответ от другого модуля. Так модули остаются развязанными (модуль `Inventory` не зависит от `OrderService`), но при этом всё ещё внутри одного процесса — без сложности микросервисов.
 
-Ключевой инструмент — аннотация `@ApplicationModuleListener`. Это сокращение для `@TransactionalEventListener` с фазой `AFTER_COMMIT`, `@Async` и `@Transactional(REQUIRES_NEW)`: обработчик выполняется после успешного commit в отдельном потоке и собственной транзакции. Аннотация сама по себе не запускает повторные попытки.
+В примере со Spring Boot 3.5 и Spring Modulith 1.4 используется `org.springframework.modulith.events.ApplicationModuleListener`. Она объединяет `@TransactionalEventListener` с фазой `AFTER_COMMIT` по умолчанию, `@Async` и `@Transactional(REQUIRES_NEW)`. После успешного commit Spring передаёт вызов настроенному исполнителю, если в контексте включена обработка `@Async`, например через `@EnableAsync`. Транзакционная инфраструктура открывает для работы слушателя новую транзакцию. Повторы настраиваются отдельно. [Spring Modulith 1.4](https://docs.spring.io/spring-modulith/reference/1.4/events.html#application-module-listener) · [Spring Framework 6.2](https://docs.spring.io/spring-framework/reference/6.2/integration/scheduling.html).
 
 ```java
 // Модуль Order публикует событие
@@ -519,101 +581,120 @@ public class InventoryModule {
 }
 ```
 
-**Externalization** позволяет направить выбранные события во внешний брокер при подключённом модуле интеграции и настроенной инфраструктуре:
+**Externalization** позволяет опубликовать выбранные события во внешний брокер. Допустим, потребители читают тему Kafka `orders.completed` и используют идентификатор заказа как ключ сообщения. Для этого подключите `spring-modulith-events-kafka`, настройте producer и поместите аннотированный тип события в пакет, охватываемый автоконфигурацией Spring Boot.
 
 ```java
-@Externalized("orders.completed")
+import org.springframework.modulith.events.Externalized;
+
+@Externalized("orders.completed::#{#this.orderId().toString()}")
 public record OrderCompleted(Long orderId) { }
 ```
+
+При публикации `new OrderCompleted(42L)` цель `orders.completed` задаёт тему Kafka, а выражение после `::` вычисляет строковый ключ `"42"`. Вариант `@Externalized("orders.completed")` задаёт только цель. Для AMQP смысл цели и ключа определяется соответствующей интеграцией. [Spring Modulith 1.4 — Externalizing Events](https://docs.spring.io/spring-modulith/reference/1.4/events.html#externalizing-events).
 
 При подключённом реестре публикаций Spring Modulith записывает публикации для транзакционных слушателей в исходной транзакции и отмечает успешную обработку. Необработанные публикации можно повторно отправить через API; автоматическая повторная публикация при старте включается отдельной настройкой. Для этого нужны хранилище реестра и корректная конфигурация. Само событие Spring Framework остаётся внутрипроцессным.
 
 ## Q14. Как тестировать публикацию и обработку Spring Events?
 
+Сервис публикует `OrderCreatedEvent` в потоке теста и присоединяется к тестовой транзакции с откатом по умолчанию. Обработчик подписан на `AFTER_COMMIT`. Какие наблюдения подтверждают публикацию и какие нужны для проверки обработчика?
+
+```text
+Spring Framework 6.2
+Тест использует @Transactional и @RecordApplicationEvents.
+orderService.createOrder(...) публикует OrderCreatedEvent внутри транзакции теста.
+Обработчик использует @TransactionalEventListener(phase = AFTER_COMMIT).
+Тест проверяет события сразу после возврата createOrder(...).
+```
+
+
 Есть два разных вопроса, и под них разные инструменты: **публикуется ли событие** (проверяем со стороны публикатора) и **вызывается ли слушатель** (проверяем со стороны обработчика).
 
-**Способ 1 — `@RecordApplicationEvents` (Spring Framework 5.3.3+).** Самый прямой способ проверить факт публикации: Spring записывает все события контекста, а в тест инжектится `ApplicationEvents`, по которому можно их перебрать и проверить.
+**Способ 1 — `@RecordApplicationEvents` (Spring Framework 5.3.3+).** TestContext предоставляет записи через `ApplicationEvents` в пределах текущего теста. В сценарии выше событие можно увидеть до commit. При откате по умолчанию обработчик `AFTER_COMMIT` не запускается. Для проверки его эффекта можно завершить тестовую транзакцию через `TestTransaction.flagForCommit()` и `TestTransaction.end()`, затем проверить результат. Если обработчик асинхронный, дождитесь наблюдаемого эффекта с ограниченным временем ожидания. [Запись событий](https://docs.spring.io/spring-framework/reference/6.2/testing/testcontext-framework/application-events.html) · [Тестовые транзакции](https://docs.spring.io/spring-framework/reference/6.2/testing/testcontext-framework/tx.html)
+
+В примерах используется `record OrderCreatedEvent(Long orderId, String customerId, Instant occurredAt)` из Q3.
 
 ```java
 @SpringBootTest
-@RecordApplicationEvents  // включить запись событий
+@Transactional
+@RecordApplicationEvents
 class OrderServiceTest {
 
     @Autowired OrderService orderService;
-    @Autowired ApplicationEvents events;
 
     @Test
-    void createOrder_shouldPublishOrderCreatedEvent() {
+    void createOrder_shouldPublishOrderCreatedEvent(ApplicationEvents events) {
         orderService.createOrder(new OrderRequest("CUST-1"));
 
-        assertThat(events.stream(OrderCreatedEvent.class)).hasSize(1);
-        OrderCreatedEvent event = events.stream(OrderCreatedEvent.class)
-            .findFirst().orElseThrow();
-        assertThat(event.getCustomerId()).isEqualTo("CUST-1");
+        assertThat(events.stream(OrderCreatedEvent.class)
+            .map(OrderCreatedEvent::customerId))
+            .containsExactly("CUST-1");
     }
 }
 ```
 
-**Способ 2 — `@MockitoSpyBean` на слушателе (Spring Framework 6.2+).** Когда нужно проверить, что обработчик реально был вызван (и сколько раз): оборачиваем бин-слушатель в spy и публикуем событие.
+**Способ 2 — `@MockitoSpyBean` на слушателе (Spring Framework 6.2+).** Для проверки фазы используем бин `NotificationListener`, у которого метод `onOrderCreated` помечен `@TransactionalEventListener(phase = AFTER_COMMIT)` и выполняется синхронно. Тест публикует событие напрямую, чтобы проверить доставку отдельно от создания заказа.
 
 ```java
 @SpringBootTest
+@Transactional
 class EventHandlingTest {
 
     @MockitoSpyBean NotificationListener notificationListener;
     @Autowired ApplicationEventPublisher publisher;
 
     @Test
-    void shouldCallNotificationOnOrderCreated() {
-        publisher.publishEvent(new OrderCreatedEvent(1L, "CUST-1"));
-        verify(notificationListener, times(1)).onOrderCreated(any());
+    void shouldCallNotificationListenerAfterCommit() {
+        var event = new OrderCreatedEvent(1L, "CUST-1", Instant.now());
+        publisher.publishEvent(event);
+        verify(notificationListener, never()).onOrderCreated(event);
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        verify(notificationListener).onOrderCreated(event);
     }
 }
 ```
 
-**Способ 3 — тестовый слушатель, собирающий события.** Регистрируем в тест-контексте отдельный `@TestComponent`, который накапливает пойманные события, — удобно для проверки содержимого и для async-сценариев (там пойманное проверяют через `Awaitility`, давая async-обработчику время отработать).
+Spy подтверждает вызов метода. Для проверки фактической отправки письма проверьте вызов тестового почтового адаптера или другой наблюдаемый эффект. Если тест фиксирует изменения в БД, используйте изолированные тестовые данные и очищайте их после проверки.
+
+**Способ 3 — тестовый слушатель, собирающий события.** Добавьте сборщик в тестовый контекст через `@Import(TestOrderCreatedListener.class)`. Для чтения из другого потока в примере используется потокобезопасная коллекция. Сборщик подтверждает получение события самим сборщиком. Чтобы проверить работу прикладного асинхронного слушателя, дождитесь его собственного эффекта.
 
 ```java
 @TestComponent
 public class TestOrderCreatedListener {
-    private final List<OrderCreatedEvent> receivedEvents = new ArrayList<>();
+    private final List<OrderCreatedEvent> receivedEvents = new CopyOnWriteArrayList<>();
 
     @EventListener
     public void capture(OrderCreatedEvent event) {
         receivedEvents.add(event);
     }
 
-    public List<OrderCreatedEvent> getEvents() { return receivedEvents; }
+    public List<OrderCreatedEvent> getEvents() { return List.copyOf(receivedEvents); }
 }
 ```
 
 ## Q15. Когда использовать Spring Events, а когда прямой вызов метода?
 
-Главный компромисс: события дают слабую связанность ценой неявности потока выполнения. Прямой вызов очевиден при чтении кода, но жёстко связывает компоненты.
+Сервис оформляет заказ в транзакции. Ему нужна цена до сохранения заказа. Письмо клиенту можно отправить только после успешного commit. Какие действия стоит выполнить прямым вызовом, а какие привязать к событию?
 
-| Критерий | Прямой вызов | Spring Events |
-|---|---|---|
-| Coupling | Тесная связь | Слабая связь |
-| Несколько получателей | Нужно вызывать все | Один publish → все слушатели |
-| Транзакционность | Контролируемая | Через `@TransactionalEventListener` |
-| Тестируемость | Мокируем зависимость | Мокируем publisher / spy listener |
-| Понятность | Очевидный flow | Неявный flow (нужно искать слушателей) |
-| Side effects | Смешиваются с логикой | Вынесены из публикатора |
+```text
+Spring Framework 6.2
+calculateTotal(order) возвращает итоговую цену.
+Заказ сохраняется с итоговой ценой.
+Почтовый сервис принимает команду отправки вне транзакции БД.
+После сохранения заказа транзакция ещё может откатиться.
+```
 
-**Использовать Events когда:**
-- Несколько компонентов реагируют на одно действие
-- Хотим отвязать модули (DDD domain events)
-- Side effect не должен выполняться при rollback (`@TransactionalEventListener`)
-- Side effect можно выполнить позже (async)
+Для расчёта цены подходит прямой вызов. Результат нужен вызывающему коду, чтобы продолжить оформление, а ошибка расчёта должна прервать операцию. Вызов сервиса делает эту зависимость явной.
 
-**Прямой вызов когда:**
-- Одна зависимость, простая логика
-- Нужен результат от "получателя"
-- Flow должен быть очевиден при чтении кода
+Уведомление можно привязать к событию `OrderPlaced` с помощью `@TransactionalEventListener(phase = AFTER_COMMIT)`. Сервис публикует событие внутри транзакции, а слушатель отправляет письмо после успешной фиксации. При rollback этот слушатель не отправит письмо. Обычный синхронный `@EventListener` выполнился бы внутри вызова `publishEvent()`, пока транзакция ещё может откатиться. Откат записи заказа не отменяет уже отправленное письмо. [Доставка событий Spring](https://docs.spring.io/spring-framework/reference/6.2/core/beans/context-introduction.html#context-functionality-events) · [События, привязанные к транзакции](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/event.html)
+
+События подходят, когда о факте должны узнать один или несколько независимых обработчиков, а результат их работы не нужен публикатору для принятия решения. Порядок вызовов при этом задаётся настройкой слушателей. Синхронная доставка может увеличить время вызова публикатора. Для выполнения в пуле нужна отдельная настройка, а для восстановления отправки после падения процесса — сохранённая публикация, как в Q16.
 
 ## Q16. В чём разница между Spring Events и Kafka/RabbitMQ-сообщениями?
 
-Коротко: Spring Events — это **внутрипроцессный** механизм (всё в памяти одной JVM, без встроенного долговременного хранения и восстановления), а Kafka/RabbitMQ — **межпроцессный** транспорт, у которого хранение и доставка зависят от конфигурации. Это не конкуренты, а инструменты для разных масштабов.
+Коротко: Spring Events без дополнительных интеграций — **внутрипроцессный** механизм (всё в памяти одной JVM, без встроенного долговременного хранения и восстановления), а Kafka/RabbitMQ — **межпроцессный** транспорт, у которого хранение и доставка зависят от конфигурации. Это не конкуренты, а инструменты для разных масштабов.
 
 | Параметр | Spring Events | Kafka/RabbitMQ |
 |---|---|---|
@@ -627,10 +708,9 @@ public class TestOrderCreatedListener {
 
 **Мост между мирами — Spring Modulith с реестром публикаций и модулем externalization.** При соответствующей конфигурации реестр сохраняет публикацию в исходной транзакции и позволяет повторить незавершённую отправку во внешний брокер. Семантика доставки зависит от выбранного брокера, обработчика и настроек повторной отправки.
 
-**Типичная архитектура:** внутри сервиса работают лёгкие Spring Events, а наружу, к другим сервисам, событие уходит через брокер уже после успешного commit:
-```
-Бизнес-логика → Spring Event → Modulith externalization → брокер
-```
+**Что произойдёт при падении процесса после commit заказа?** При обычном `@TransactionalEventListener` с фазой `AFTER_COMMIT` заказ уже сохранён. Если процесс упадёт до отправки, Spring Framework сам не восстановит событие из БД. С Event Publication Registry запись для слушателя сохраняется в транзакции заказа. Если заказ и запись реестра участвуют в одной транзакции, они фиксируются или откатываются вместе. После сбоя незавершённую публикацию можно повторить по настроенной политике. [Spring Modulith: Event Publication Registry](https://docs.spring.io/spring-modulith/reference/events.html#event-publication-registry).
+
+Если брокер уже принял сообщение, а процесс упал до записи о завершении публикации, повторная отправка может создать дубликат. Подтверждение брокера и отметка реестра происходят в разных системах. Для операции вроде начисления бонусов передайте стабильный идентификатор события. Потребитель может сохранить этот идентификатор с уникальным ограничением в той же транзакции, что и начисление. При повторной доставке уже обработанный идентификатор позволит пропустить начисление.
 
 ---
 

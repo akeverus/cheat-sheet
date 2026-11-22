@@ -1,22 +1,1205 @@
-{"topic_slug":"resilience4j-interview","questions":[
-{"q_number":1,"blocks":[{"block_idx":0,"question_text":"Что такое Resilience4j и чем отличается от Hystrix?","options":[{"order":0,"label":"A","text":"Модульная библиотека устойчивости с функциональными декораторами и отдельным выбором изоляции","correct":true,"sections":{"explanation":"Resilience4j добавляет независимые политики к вызовам.","example":"Можно обернуть клиент CircuitBreaker и отдельно выбрать Bulkhead.","when_to_apply":"Для защиты вызовов к зависимостям.","edge_cases":"CircuitBreaker сам не изолирует пул."}},{"order":1,"label":"B","text":"Преемник Hystrix с обязательным наследованием HystrixCommand и одним пулом на команду","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Библиотека сетевых повторов, неизменно запускающая каждый вызов в отдельном потоке","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Замена балансировщика, которая автоматически перенаправляет трафик при открытии circuit","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":2,"blocks":[{"block_idx":0,"question_text":"Какие модули входят в Resilience4j?","options":[{"order":0,"label":"A","text":"CircuitBreaker, Retry, RateLimiter и JPA repository для восстановления транзакций","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"CircuitBreaker, Retry, RateLimiter, Bulkhead, TimeLimiter и интеграции наблюдаемости","correct":true,"sections":{"explanation":"Модули покрывают разные стороны устойчивости.","example":"RateLimiter ограничивает частоту, Bulkhead — параллельную нагрузку.","when_to_apply":"Для выборочного составления политик.","edge_cases":"Границы каждого механизма нужно настраивать отдельно."}},{"order":2,"label":"C","text":"CircuitBreaker, Retry, DNS failover и брокер сообщений","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"CircuitBreaker, Retry, HTTP-клиент, сервер и scheduler задач","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":3,"blocks":[{"block_idx":0,"question_text":"Как работает CircuitBreaker?","options":[{"order":0,"label":"A","text":"Считает частоту запросов и задерживает каждый вызов после исчерпания разрешений","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Считает активные запросы и запрещает следующий, пока worker не освободится","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Считает исходы вызовов, размыкается по порогам и затем допускает пробные вызовы","correct":true,"sections":{"explanation":"После порога открытая цепь отклоняет новые обращения.","example":"В HALF_OPEN ограниченные пробы помогают оценить восстановление.","when_to_apply":"Для защиты от каскадной деградации.","edge_cases":"Порог оценивается при достижении минимального числа вызовов."}},{"order":3,"label":"D","text":"Считает исходы вызовов и автоматически повторяет каждый сбой до открытия цепи","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":4,"blocks":[{"block_idx":0,"question_text":"Какие состояния у CircuitBreaker?","options":[{"order":0,"label":"A","text":"CLOSED блокирует, OPEN выполняет, HALF_OPEN повторяет без лимита","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"CLOSED выполняет, OPEN пропускает пробы, HALF_OPEN блокирует все вызовы","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"CLOSED выполняет, OPEN блокирует, HALF_OPEN безусловно возвращает CLOSED","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"CLOSED пропускает и измеряет, OPEN отказывает, HALF_OPEN допускает ограниченные пробы","correct":true,"sections":{"explanation":"Переходы отражают текущее состояние зависимости.","example":"После ожидания пробные вызовы оценивают, закрыть цепь или снова открыть.","when_to_apply":"Для диагностики решений CircuitBreaker.","edge_cases":"Кроме основных есть специальные состояния, например METRICS_ONLY и FORCED_OPEN."}}]}]}
-,{"q_number":5,"blocks":[{"block_idx":0,"question_text":"Что такое sliding window в CircuitBreaker?","options":[{"order":0,"label":"A","text":"Окно агрегации исходов последних N вызовов или вызовов за последние N секунд","correct":true,"sections":{"explanation":"При сдвиге окна старые результаты перестают влиять на доли.","example":"COUNT_BASED на 100 вызовов учитывает последние 100 результатов.","when_to_apply":"Для оценки недавнего качества downstream.","edge_cases":"Минимум вызовов проверяется отдельно от размера окна."}},{"order":1,"label":"B","text":"Окно агрегации всех исходов с момента старта до первого открытия цепи","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Окно допустимой частоты вызовов, сбрасываемое независимо от их исхода","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Окно ожидания в OPEN, во время которого статистика заменяется паузой","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":6,"blocks":[{"block_idx":0,"question_text":"Какие ключевые параметры конфигурации CircuitBreaker?","options":[{"order":0,"label":"A","text":"Задать размер окна, число потоков и размер очереди, а пороги брать из retry","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Задать вид и размер окна, минимум вызовов, пороги ошибок и медленных вызовов, время OPEN и лимит проб","correct":true,"sections":{"explanation":"Параметры разделяют статистику, критерии размыкания и восстановление.","example":"Порог ошибок применяется после minimumNumberOfCalls.","when_to_apply":"Для адаптации защиты к объёму и задержкам зависимости.","edge_cases":"Классификация исключений влияет на статистику."}},{"order":2,"label":"C","text":"Задать частоту выдачи разрешений, время ожидания разрешения и максимальное число worker","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Задать timeout, backoff и число повторов, считая их порогами открытия","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":7,"blocks":[{"block_idx":0,"question_text":"Как настроить CircuitBreaker в Spring Boot?","options":[{"order":0,"label":"A","text":"Объявить бесконтрольный @CircuitBreaker и задать параметры в spring.datasource","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Объявить @CircuitBreaker и задать параметры только в настройках внешнего балансировщика","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Подключить интеграцию Boot и AOP, указать имя в аннотации и настроить одноимённый instance","correct":true,"sections":{"explanation":"Аннотация обращается к именованному CircuitBreaker в реестре.","example":"Имя customerApi связывает метод с resilience4j.circuitbreaker.instances.customerApi.","when_to_apply":"Для декларативной защиты Spring-бина.","edge_cases":"Self-invocation обходит аспект."}},{"order":3,"label":"D","text":"Подключить integration starter и меня́ть порядок аннотаций для выбора instance","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":8,"blocks":[{"block_idx":0,"question_text":"Чем Resilience4j Retry отличается от Spring Retry?","options":[{"order":0,"label":"A","text":"Spring Retry не умеет программные повторы, Resilience4j не умеет аннотации","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Spring Retry обрабатывает только результат, Resilience4j — только исключения","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Spring Retry и Resilience4j одинаковы по модулям и способам композиции","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Spring Retry предлагает RetryTemplate и богатые политики повторов, Resilience4j Retry встраивается в набор декораторов устойчивости","correct":true,"sections":{"explanation":"Оба решения позволяют задавать правила повторов.","example":"Resilience4j Retry комбинируют с CircuitBreaker, Spring Retry используют через template или advice.","when_to_apply":"Выбор зависит от API и интеграции приложения.","edge_cases":"Реактивная интеграция и stateful retry различаются."}}]}]}
-,{"q_number":9,"blocks":[{"block_idx":0,"question_text":"Как настроить Retry в Spring Boot?","options":[{"order":0,"label":"A","text":"Связать @Retry с именованной конфигурацией maxAttempts, интервала и классификации ошибок","correct":true,"sections":{"explanation":"Retry аспект использует настройки именованного экземпляра.","example":"Три попытки и короткий интервал подходят для выбранного временного сбоя.","when_to_apply":"Для контролируемого повторения операции.","edge_cases":"MaxAttempts включает первоначальный вызов."}},{"order":1,"label":"B","text":"Связать @Retry с именованной конфигурацией размера пула и очереди","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Связать @Retry с именованной конфигурацией failureRateThreshold и slidingWindowSize","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Связать @Retry с именованной конфигурацией timeoutDuration без политики повторов","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":10,"blocks":[{"block_idx":0,"question_text":"Как работает RateLimiter?","options":[{"order":0,"label":"A","text":"Ограничивает число одновременно работающих потоков, освобождая разрешение после завершения","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Выдаёт ограниченный бюджет разрешений за период и отказывает, если разрешение недоступно в пределах ожидания","correct":true,"sections":{"explanation":"RateLimiter задаёт частоту допусков, а не число запросов в обработке.","example":"Нулевой timeoutDuration позволяет отказать без ожидания.","when_to_apply":"Для квот внешнего API и защиты пропускной способности.","edge_cases":"Локальный экземпляр не даёт общий кластерный лимит."}},{"order":2,"label":"C","text":"Ограничивает долю ошибок за период и открывает цепь при превышении","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Выдаёт разрешение по длительности каждого вызова и отменяет его при таймауте","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":11,"blocks":[{"block_idx":0,"question_text":"Как настроить RateLimiter в Spring Boot?","options":[{"order":0,"label":"A","text":"Указать имя @RateLimiter и настроить slidingWindowSize и minimumNumberOfCalls","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Указать имя @RateLimiter и настроить maxConcurrentCalls и maxWaitDuration","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Указать имя @RateLimiter, задать limitForPeriod, limitRefreshPeriod и timeoutDuration для instance","correct":true,"sections":{"explanation":"Три параметра задают ёмкость, период пополнения и ожидание разрешения.","example":"externalApi может выдавать 10 разрешений за секунду.","when_to_apply":"Когда зависимость имеет ограничение частоты.","edge_cases":"Долгое ожидание разрешения увеличивает задержку."}},{"order":3,"label":"D","text":"Указать имя @RateLimiter и настроить waitDurationInOpenState и число проб","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":12,"blocks":[{"block_idx":0,"question_text":"Что такое Bulkhead и когда его использовать?","options":[{"order":0,"label":"A","text":"Bulkhead повторяет обработку одной команды на нескольких worker","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Bulkhead ограничивает частоту запросов в интервале","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Bulkhead останавливает вызовы после роста доли ошибок","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Bulkhead ограничивает конкуренцию, чтобы нагрузка на одну зависимость не заняла все ресурсы","correct":true,"sections":{"explanation":"Bulkhead изолирует ёмкость конкретного участка.","example":"Отдельный лимит на медленный API оставляет ресурсы другим операциям.","when_to_apply":"Когда один downstream может перегружать исполнитель.","edge_cases":"Выбор между семафором и пулом зависит от модели выполнения."}}]}]}
-,{"q_number":13,"blocks":[{"block_idx":0,"question_text":"Какие типы Bulkhead поддерживает Resilience4j?","options":[{"order":0,"label":"A","text":"SemaphoreBulkhead ограничивает активные вызовы, ThreadPoolBulkhead добавляет выделенный пул и очередь","correct":true,"sections":{"explanation":"Семафор ограничивает доступ без обязательной смены потока.","example":"ThreadPoolBulkhead выносит работу в свой ограниченный пул.","when_to_apply":"Для управления параллелизмом и при необходимости изоляцией потоков.","edge_cases":"Выделенный пул добавляет очередь и смену контекста."}},{"order":1,"label":"B","text":"SemaphoreBulkhead добавляет выделенный пул, ThreadPoolBulkhead только считает активные вызовы","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"SemaphoreBulkhead ограничивает частоту, ThreadPoolBulkhead открывает цепь при ошибках","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"SemaphoreBulkhead и ThreadPoolBulkhead всегда используют один общий executor","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":14,"blocks":[{"block_idx":0,"question_text":"Когда нужен TimeLimiter?","options":[{"order":0,"label":"A","text":"Ограничить количество попыток в асинхронной цепочке без таймаута","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Ограничить ожидание результата асинхронной операции и обработать timeout","correct":true,"sections":{"explanation":"TimeLimiter ограничивает ожидание завершения Future или CompletionStage соответствующим API.","example":"Вызов клиента возвращает timeout раньше зависшей операции.","when_to_apply":"Для явного бюджета ожидания результата.","edge_cases":"Отмена не гарантирует, что удалённая операция прекратилась."}},{"order":2,"label":"C","text":"Прервать любую блокирующую операцию на текущем потоке строго в момент истечения","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Задать частоту запусков асинхронных операций по времени","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":15,"blocks":[{"block_idx":0,"question_text":"Как комбинировать несколько аннотаций?","options":[{"order":0,"label":"A","text":"Расположить аннотации в исходнике в нужном порядке и полагаться на него","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Настроить каждой политике fallback, который всегда выполняется до внутренних декораторов","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Проверить порядок аспектов, при необходимости настроить приоритеты или явную композицию декораторов","correct":true,"sections":{"explanation":"Порядок определяет, что именно видит каждая политика.","example":"Breaker внутри Retry оценивает каждую физическую попытку.","when_to_apply":"Когда retry, timeout и breaker защищают один вызов.","edge_cases":"Fallback внутри композиции может скрыть ошибку для внешнего слоя."}},{"order":3,"label":"D","text":"Считать, что Spring объединяет защитные аннотации в один breaker со средним порогом","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":16,"blocks":[{"block_idx":0,"question_text":"Как работает fallback в Resilience4j?","options":[{"order":0,"label":"A","text":"Fallback подбирается по имени и только числу параметров, тип ошибки игнорируется","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Fallback может иметь несовместимый тип результата и вызывается до каждого повтора","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Fallback вызывается только при OPEN, исключения защищённой операции всегда уходят наружу","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Fallback выбирается по имени и совместимой сигнатуре, при нескольких ошибках используется наиболее специфичный подходящий тип","correct":true,"sections":{"explanation":"Fallback задаёт конечное поведение защищённого слоя.","example":"Для CallNotPermittedException можно вернуть ограниченный кэшированный ответ.","when_to_apply":"Когда деградация остаётся корректной для клиента.","edge_cases":"Заглушка может скрыть инцидент, отслеживайте причину."}}]}]}
-,{"q_number":17,"blocks":[{"block_idx":0,"question_text":"Как настроить Actuator метрики для Resilience4j?","options":[{"order":0,"label":"A","text":"Подключить Actuator и Micrometer-интеграцию, экспонировать нужный endpoint и смотреть метрики по имени instance","correct":true,"sections":{"explanation":"Resilience4j связывает реестры политик с MeterRegistry.","example":"По имени payment можно смотреть частоту ошибок и состояние breaker.","when_to_apply":"Для дашбордов и оповещений.","edge_cases":"Ограничьте доступ к management endpoint и контролируйте кардинальность."}},{"order":1,"label":"B","text":"Подключить Actuator и считать статус health единственной метрикой всех вызовов","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Подключить Actuator и получать статистику только из имени fallback-метода","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Подключить Actuator и публиковать отдельную метрику по каждому ID запроса","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":18,"blocks":[{"block_idx":0,"question_text":"Как работают события (Events) в Resilience4j?","options":[{"order":0,"label":"A","text":"События отправляются брокеру автоматически и восстанавливаются после рестарта","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"События доступны через EventPublisher политик для реакций на переходы, отказы и результаты","correct":true,"sections":{"explanation":"Политики публикуют типизированные сигналы о своей работе.","example":"Слушатель отмечает переход CircuitBreaker в OPEN.","when_to_apply":"Для диагностики и реакции наблюдаемости.","edge_cases":"Не блокируйте критический путь тяжёлым обработчиком."}},{"order":2,"label":"C","text":"События представляют только журналы ошибок Spring и не могут иметь слушателей","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"События автоматически изменяют конфигурацию политики после каждого сбоя","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":19,"blocks":[{"block_idx":0,"question_text":"Какие зависимости нужны для Spring Boot?","options":[{"order":0,"label":"A","text":"Подключить только Actuator, который регистрирует все аспекты Resilience4j","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Подключить только resilience4j-core и ожидать AOP без зависимостей Spring","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Подключить совместимую интеграцию для версии Boot и поддержку AOP, добавив Actuator и Reactor-интеграцию по потребности","correct":true,"sections":{"explanation":"Интеграция Boot настраивает реестры, свойства и аспекты.","example":"Для Boot 3 используют совместимый модуль resilience4j-spring-boot3.","when_to_apply":"Для аннотационной конфигурации.","edge_cases":"Для реактивных типов может понадобиться resilience4j-reactor."}},{"order":3,"label":"D","text":"Подключить Hystrix starter и настроить Resilience4j через его параметры","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":20,"blocks":[{"block_idx":0,"question_text":"Каковы ограничения аннотационного подхода?","options":[{"order":0,"label":"A","text":"Аннотации работают при любом вызове через this и на любом методе private","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Аннотации меняют порядок аспектов по расположению в тексте и открывают динамические instance на каждый аргумент","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Аннотации всегда дают одинаковую композицию, включая вызовы вне Spring и ручной new","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Аннотации зависят от прокси, декларативной конфигурации и порядка аспектов, сложная композиция может требовать программного API","correct":true,"sections":{"explanation":"AOP перехватывает вызов только на подходящей границе.","example":"Для Retry вокруг участка внутри метода удобнее явный декоратор.","when_to_apply":"Когда требуется гибкая политика или контролируемая вложенность.","edge_cases":"Self-invocation обходит прокси."}}]}]}
-]}
+{
+  "topic_slug": "resilience4j-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Resilience4j и чем отличается от Hystrix?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В Hystrix обычной изоляцией служит семафор, а Resilience4j переносит вызов в отдельный пул при подключении CircuitBreaker.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Hystrix стандартная стратегия выполнения команды использует пул. Брейкер Resilience4j анализирует результат, а отдельный пул предоставляет ThreadPoolBulkhead.",
+                "source_of_confusion": "В Hystrix есть стратегия SEMAPHORE. Её наличие легко принять за исходную настройку и приписать изоляцию потоками соседнему паттерну.",
+                "if_it_were_true": "Если бы CircuitBreaker создавал пул, один лишь переход на него изменил бы имя потока, в котором работает клиент.",
+                "how_it_should_be": "При переносе выбирай нужный тип Bulkhead явно. Для сохранения границы исполнителя применяй отдельный ограниченный пул."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Resilience4j собирает защиту из отдельных декораторов. Семафорный Bulkhead ограничивает параллелизм в потоке вызывающего, а Hystrix по умолчанию изолировал команды пулом.",
+              "correct": true,
+              "sections": {
+                "explanation": "В Resilience4j каждый декоратор отвечает за свой эффект. Семафор выдаёт разрешение на вход и освобождает его при завершении защищённой работы. Отдельный поток появляется при выборе ThreadPoolBulkhead.",
+                "example": "Семафор с двумя разрешениями пропустит два синхронных вызова на их исходных потоках. Третий вызов при нулевом ожидании получит BulkheadFullException.",
+                "when_to_apply": "При миграции определи, использовал ли исходный сервис изоляцию ресурсов или только ограничение конкуренции. Граница потока меняет передачу контекста и требования к размерам пула.",
+                "edge_cases": "Hystrix допускает стратегию SEMAPHORE. При её использовании различие в типе изоляции исчезает, поэтому проверь конфигурацию команды.",
+                "related": "CircuitBreaker решает, допустить ли вызов по состоянию автомата. Bulkhead защищает вместимость ресурсов даже при закрытом брейкере."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Resilience4j добавляет ограничения одним Spring-аспектом, а Hystrix распределяет эти ограничения между независимыми JVM-декораторами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ядро Resilience4j работает программно без контейнера, а Spring-аспекты предоставляют способ его подключения. Hystrix группировал защиту вокруг команды.",
+                "source_of_confusion": "В приложении Spring отдельные аспекты создаются автоматически, поэтому внешне они выглядят как одна возможность стартера.",
+                "if_it_were_true": "Если бы ядру требовался Spring, вызов через CircuitBreaker.decorateSupplier вне контейнера не смог бы использовать автомат состояний.",
+                "how_it_should_be": "Разделяй ядро и точку интеграции. Для CLI или общей библиотеки возьми только нужные JVM-артефакты."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Resilience4j защищает вызовы общим пулом по умолчанию, а Hystrix создавал выделенный поток на каждую попытку команды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Семафорный Bulkhead использует поток вызывающего. Hystrix с THREAD отправлял команды в пулы и переиспользовал их потоки.",
+                "source_of_confusion": "Отдельный исполнитель отделяет вызов от вызывающего потока. Это можно ошибочно принять за создание нового потока на каждую команду.",
+                "if_it_were_true": "Если бы каждой попытке соответствовал новый поток, последовательные команды не переиспользовали бы рабочих одного пула.",
+                "how_it_should_be": "Опиши поток выполнения и ёмкость независимо. Ограниченный выделенный пул подходит для асинхронной изоляции, семафор ограничивает вход на исходных потоках."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие модули входят в Resilience4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "CircuitBreaker и Retry входят в общий модуль Spring, а Bulkhead и TimeLimiter подключаются через отдельные адаптеры этого модуля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Брейкер, повторы, лимит частоты, Bulkhead и TimeLimiter поставляются отдельными JVM-артефактами. Boot-интеграция связывает их с конфигурацией и аспектами.",
+                "source_of_confusion": "В Boot один стартер приносит несколько артефактов в граф зависимостей, поэтому их можно принять за один Spring-модуль.",
+                "if_it_were_true": "Если бы брейкер был частью Spring-модуля, утилите с CircuitBreakerRegistry пришлось бы запускать Spring даже для программного вызова.",
+                "how_it_should_be": "Для автономной утилиты подключи конкретный артефакт и собери декоратор. Стартёр нужен на границе приложения с Boot."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Core-модули предоставляют Spring-аннотации, а стартер добавляет к ним JVM-реализации паттернов и реестр инстансов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Core содержит реализации, реестры и декораторы. Стартер использует их и подключает Spring-аспекты с привязкой настроек.",
+                "source_of_confusion": "Имя паттерна совпадает с именем аннотации. Из этого легко ошибочно вывести, что загрузка core сразу включает обработку метода.",
+                "if_it_were_true": "Если бы аннотационный перехват шёл из core, обычный вызов POJO с аннотацией уже получил бы retries без прокси.",
+                "how_it_should_be": "Определи точку вызова. Для программного варианта используй core API, для перехвата аннотаций добавь совместимый Spring-модуль и AOP."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Паттерны поставляются отдельными JVM-модулями, а стартер Spring Boot связывает их с конфигурацией, аспектами и интеграцией метрик.",
+              "correct": true,
+              "sections": {
+                "explanation": "CircuitBreaker, Retry, RateLimiter, Bulkhead и TimeLimiter решают разные задачи и имеют отдельные артефакты. Например, TimeLimiter ограничивает ожидание результата, а RateLimiter управляет выдачей разрешений по времени. Micrometer и Boot обеспечивают интеграцию поверх механизмов.",
+                "example": "CLI с временными сетевыми сбоями может подключить resilience4j-retry и выполнить вызов через Retry. То же правило в сервисе Boot можно привязать к имени инстанса в YAML и применять через @Retry.",
+                "when_to_apply": "Для библиотечного кода выбирай модули по требуемому поведению, чтобы вызывающее приложение само решало, нужен ли Spring.",
+                "edge_cases": "Для Reactor требуется соответствующая интеграция. Наличие Retry в classpath само по себе не добавляет оператор повторов в поток Mono.",
+                "related": "Модуль cache использует JSR-107. Кэширование результата и повтор обращения к источнику имеют разные семантику и требования к данным."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "RateLimiter и Bulkhead являются режимами CircuitBreaker, а Retry и TimeLimiter подключаются отдельными Spring-модулями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лимит частоты и ограничение параллелизма используют собственные разрешения. Им не нужна статистика ошибок CircuitBreaker для принятия решения.",
+                "source_of_confusion": "Все три механизма умеют отказать до входа в метод, поэтому их легко принять за режимы одной машины состояний.",
+                "if_it_were_true": "Если бы квоты зависели от автомата, два здоровых вызова после исчерпания лимита прошли бы через закрытый CircuitBreaker.",
+                "how_it_should_be": "Подбирай механизмы по измеряемой величине. Частота требует RateLimiter, одновременность требует Bulkhead, доля ошибок требует CircuitBreaker."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает CircuitBreaker?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Пятый вызов проходит. Брейкер открывается после накопления выборки, только когда доля ошибок станет больше 50%.",
+              "correct": false,
+              "sections": {
+                "what_actually": "После четвёртого результата выборка достигла минимума и доля ошибок равна 50%. Сравнение включает равенство, поэтому пятый вызов отклоняется.",
+                "source_of_confusion": "В разговоре «порог превышен» часто понимают как строгое неравенство, хотя API проверяет достижение порога.",
+                "if_it_were_true": "При строгом сравнении последовательность из пятидесяти отказов на сто вызовов оставляла бы цепь закрытой при пороге 50%.",
+                "how_it_should_be": "Для теста возьми отдельные случаи ниже порога и ровно на нём. Учитывай минимальную выборку в обоих случаях."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Пятый вызов проходит пробным. Брейкер использует очередное разрешение HALF_OPEN сразу после достижения порога ошибок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Достижение порога переводит CLOSED в OPEN. Пробные вызовы разрешаются после периода ожидания и перехода в HALF_OPEN.",
+                "source_of_confusion": "Оба перехода могут происходить при обработке вызовов. Из этого легко вывести, что первый же вызов после открытия является пробой.",
+                "if_it_were_true": "Если бы проба начиналась сразу, зависимый сервис получал бы трафик до окончания настроенного периода восстановления.",
+                "how_it_should_be": "Сначала вычисли состояние на момент начала вызова. Для проверки пробного режима сдвинь время за waitDurationInOpenState."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Пятый вызов отклонён. Брейкер распознаёт две ошибки в окне и после каждого следующего успеха сокращает паузу восстановления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Открытие произошло по доле 2 из 4 при достигнутом минимуме. Новые вызовы в OPEN отклоняются и не дают успешных результатов для расчёта длительности ожидания.",
+                "source_of_confusion": "Скользящее окно действительно обновляется по результатам допускаемых вызовов. Ошибка переносит работу окна в фазу, когда новые вызовы уже блокируются.",
+                "if_it_were_true": "Если бы новые успехи сокращали паузу, сервис мог бы закрыть цепь обычным трафиком до входа в HALF_OPEN.",
+                "how_it_should_be": "Отдельно настраивай критерий открытия и паузу. Для разных пауз после повторных открытий используй соответствующую функцию интервала."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Пятый вызов отклонён. По завершении четвёртого вызова набран минимум, а доля ошибок 2 из 4 достигла порога 50%.",
+              "correct": true,
+              "sections": {
+                "explanation": "Брейкер записывает завершившиеся учитываемые вызовы в окно. После четвёртого результата проверка доли переводит CLOSED в OPEN, поэтому пятая попытка получает CallNotPermittedException до обращения к API.",
+                "example": "При тех же параметрах последовательность из трёх успехов и одной ошибки даёт 25%. Если порог медленных вызовов также не достигнут, пятый вызов допущен.",
+                "when_to_apply": "Настраивай размер выборки и пороги по трафику конкретного downstream. Проверь последовательности с точным достижением порога и ошибки, исключённые из статистики.",
+                "edge_cases": "После истечения паузы первый вызов может инициировать HALF_OPEN, если автоматический переход выключен. Там число проб регулируется отдельной настройкой.",
+                "related": "Ограничение числа проб в HALF_OPEN относится к проверке восстановления. Для ограничения обычной конкуренции в CLOSED нужен Bulkhead."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие состояния у CircuitBreaker?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В штатном цикле работают CLOSED, OPEN и HALF_OPEN. METRICS_ONLY, DISABLED и FORCED_OPEN задают режимы наблюдения, обхода и принудительного отказа.",
+              "correct": true,
+              "sections": {
+                "explanation": "CLOSED пропускает вызовы и проверяет пороги. OPEN отклоняет вызовы. HALF_OPEN допускает ограниченную пробную выборку. METRICS_ONLY продолжает считать результаты без открытия, DISABLED пропускает вызовы без статистики, FORCED_OPEN отклоняет их без статистики.",
+                "example": "При испытании новой политики переключи один инстанс в METRICS_ONLY. Даже при доле отказов 80% вызовы продолжат доходить, а по измерениям можно подобрать порог.",
+                "when_to_apply": "Применяй специальные состояния осознанно для наблюдения или ручного управления. Возврат в штатный цикл задай явным переходом.",
+                "edge_cases": "В DISABLED и FORCED_OPEN события вызовов подавляются. События смены состояния сохраняются, поэтому переход можно увидеть даже без статистики вызовов.",
+                "related": "Проверяй допустимое число проб отдельно от минимальной выборки обычного окна. Это параметры разных фаз автомата."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В штатном цикле работают CLOSED, OPEN и METRICS_ONLY. HALF_OPEN, DISABLED и FORCED_OPEN включают для ручного управления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HALF_OPEN входит в нормальный цикл после OPEN. METRICS_ONLY задают отдельно для измерения без автоматического открытия.",
+                "source_of_confusion": "В HALF_OPEN тоже собираются метрики, отчего его легко спутать с режимом наблюдения.",
+                "if_it_were_true": "Если бы цикл переходил в METRICS_ONLY, после паузы полная нагрузка вернулась бы без ограничения тестовой партии.",
+                "how_it_should_be": "Для осторожного возобновления оставь штатный переход в HALF_OPEN и настрой количество допустимых проб."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В штатном цикле работают CLOSED, OPEN и HALF_OPEN. METRICS_ONLY и DISABLED собирают статистику, а FORCED_OPEN блокирует вызовы до окончания паузы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DISABLED пропускает вызовы без статистики, а FORCED_OPEN держит цепь принудительно открытой до явного управления. METRICS_ONLY нужен именно для метрик без открытия.",
+                "source_of_confusion": "FORCED_OPEN и OPEN одинаковы по отказу на входе. Из этого легко ошибочно перенести правило автоматического восстановления в принудительный режим.",
+                "if_it_were_true": "Если бы форсированное открытие учитывало паузу, ручной запрет во время обслуживания мог бы сам сняться раньше завершения работ.",
+                "how_it_should_be": "Для выдержки с пробами используй OPEN, для управляемого запрета используй FORCED_OPEN. Для наблюдения выбери METRICS_ONLY."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В штатном цикле работают CLOSED, OPEN и HALF_OPEN. DISABLED и FORCED_OPEN ведут журнал результатов, а METRICS_ONLY отключает публикацию событий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "METRICS_ONLY собирает статистику вызовов и публикует события с исключением событий автоматической смены состояния и отклонения по состоянию. DISABLED и FORCED_OPEN подавляют обычные события вызовов.",
+                "source_of_confusion": "Слово ONLY можно истолковать как выключение событий целиком, хотя оно описывает отказ от блокировки по результатам измерения.",
+                "if_it_were_true": "При таком поведении пробный запуск в METRICS_ONLY лишил бы наблюдателя событий ошибок, которые нужны для оценки порога.",
+                "how_it_should_be": "Разделяй события перехода и события вызова. Для оценки результатов без блокировки используй METRICS_ONLY и привяжи наблюдение к нужному инстансу."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое sliding window в CircuitBreaker?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Окно COUNT_BASED хранит результаты за 10 секунд, а TIME_BASED хранит 10 последних результатов. Минимум 5 относится к обоим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Единица размера COUNT_BASED — записи вызовов, TIME_BASED — секунды. Минимум задаётся числом учитываемых вызовов в обоих случаях.",
+                "source_of_confusion": "Одинаковое числовое значение в YAML скрывает различие единиц измерения.",
+                "if_it_were_true": "Если бы границы работали наоборот, редкая ошибка выпадала бы по часам именно в COUNT_BASED, хотя фактически она может оставаться до вытеснения вызовами.",
+                "how_it_should_be": "Сначала прочитай sliding-window-type, затем трактуй sliding-window-size. Проверь ожидаемый результат на редком трафике."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Окно COUNT_BASED использует до 10 последних результатов, а TIME_BASED использует результаты за 10 секунд. Минимум 5 нужен каждому для оценки долей.",
+              "correct": true,
+              "sections": {
+                "explanation": "Окна удерживают учитываемые исходы и обновляют агрегаты при вытеснении старых данных. В одном режиме вытеснение идёт по числу записей, в другом — по времени. Ниже минимума выборки пороги не оцениваются.",
+                "example": "Пять ошибок произошли на первой секунде, затем на двадцатой пришёл успешный вызов. При сравнении содержимого окон и без открытия цепи старые ошибки останутся в COUNT_BASED, а в TIME_BASED останется один свежий результат и выборки для оценки будет мало.",
+                "when_to_apply": "Выбирай временное окно, если важен возраст наблюдений. При редком трафике подбери длительность и минимум так, чтобы выборка успевала набраться.",
+                "edge_cases": "При плотном всплеске TIME_BASED может учесть сотни вызовов за 10 секунд. COUNT_BASED в этой конфигурации оставит только последние десять.",
+                "related": "Размер окна определяет статистику, а permitted-number-of-calls-in-half-open-state ограничивает размер пробной партии после открытия."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Оба окна используют последние 10 результатов. TIME_BASED дополнительно обновляет процент через каждую секунду, а COUNT_BASED после каждого вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TIME_BASED учитывает количество вызовов, попавших во временной интервал, и их может быть больше десяти. Его отличие состоит в сроке хранения, а не только в частоте расчёта.",
+                "source_of_confusion": "Временное окно делится на секундные сегменты. Это выглядит как периодический расчёт одной и той же выборки, хотя меняется её состав.",
+                "if_it_were_true": "Если бы оба режима брали десять записей, выборка после всплеска из двухсот вызовов имела бы одинаковый знаменатель.",
+                "how_it_should_be": "Для ограничения по объёму наблюдений используй COUNT_BASED. Для ограничения по возрасту используй TIME_BASED."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "COUNT_BASED использует до 10 результатов, а TIME_BASED использует 10 секунд. Минимум 5 позволяет учитывать только каждую пятую запись.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пять — порог объёма выборки для вычисления долей. Учитываемые результаты попадают в окно по одному, без прореживания.",
+                "source_of_confusion": "Порог часто принимают за частоту опроса, поскольку до его достижения процент аварий не участвует в решении.",
+                "if_it_were_true": "При записи каждого пятого вызова последовательность из пяти ошибок дала бы всего одну запись, и реакция задержалась бы.",
+                "how_it_should_be": "Настраивай минимум как требование к надёжности выборки. Для исключения отдельных результатов используй классификацию ошибок."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие ключевые параметры конфигурации CircuitBreaker?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Пороги задают допустимое число ошибок и медленных ответов. Размер окна служит лимитом параллельных обращений, а пауза управляет пробами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пороги выражены в процентах. Размер окна задаёт статистическую выборку, поэтому больше десяти одновременных вызовов могут стартовать в CLOSED.",
+                "source_of_confusion": "И окно, и лимит используют целое число. Без различения хранимых результатов и выполняемых задач эти числа кажутся взаимозаменяемыми.",
+                "if_it_were_true": "Если бы окно было семафором, одиннадцатый параллельный вызов получил бы отказ до завершения первых десяти.",
+                "how_it_should_be": "Для параллелизма настрой Bulkhead. Для брейкера выбери выборку, доли и условия перехода между состояниями."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Порог медленных вызовов учитывает лишь ошибки после 2 секунд. Классификация исключений добавляет успешные ответы в минимальную выборку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Длительность и статус учитываются независимо. Медленный успех может увеличить долю медленных вызовов, поэтому брейкер способен открыться при нулевой доле отказов.",
+                "source_of_confusion": "Медленный ответ часто заканчивается клиентским таймаутом. В этой частной ситуации одна запись одновременно попадает в обе группы.",
+                "if_it_were_true": "Если бы учитывались только ошибки, пять успешных ответов по три секунды оставили бы цепь закрытой при пороге медленных вызовов 100%.",
+                "how_it_should_be": "Настрой порог длительности исходя из допустимой задержки. Исключения классифицируй отдельно по сигналу о здоровье зависимости."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Пороги задают допустимые доли, окно и минимум определяют выборку, а пауза и число проб управляют восстановлением. Исключения классифицируются отдельно.",
+              "correct": true,
+              "sections": {
+                "explanation": "При минимум пяти вызовах брейкер оценивает долю ошибок и долю вызовов медленнее двух секунд. Достижение одной из заданных долей открывает цепь. Пауза в 10 секунд и три допуска в HALF_OPEN отвечают за последующую проверку.",
+                "example": "Пять вызовов завершились успехом за три секунды каждый. Доля ошибок равна нулю, доля медленных равна 100%, поэтому цепь откроется по второму порогу.",
+                "when_to_apply": "Отдельно моделируй деградацию задержки и ошибки. Для исключений валидации реши, должны ли они вообще попадать в статистическую выборку.",
+                "edge_cases": "Указание record-exceptions делает остальные исключения успешными для метрик, если их не исключает ignore-exceptions или другая применимая настройка. Игнорируемое исключение не даёт ни успеха, ни отказа.",
+                "related": "TimeLimiter ограничивает ожидание результата. Порог slow-call-duration-threshold классифицирует наблюдаемую длительность и сам вызов не прерывает."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Окно и минимум задают длину паузы после сбоя, а пороги и список исключений определяют число проб перед возвратом в CLOSED.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пауза управляется wait-duration-in-open-state, пробная партия — permitted-number-of-calls-in-half-open-state. Пороги применяются к вычисленным долям.",
+                "source_of_confusion": "Минимум вызовов и допуск проб влияют на момент принятия решения. Они относятся к разным этапам работы автомата.",
+                "if_it_were_true": "Если бы минимум управлял паузой, замена пяти записей на десять сама увеличивала бы заданные десять секунд ожидания.",
+                "how_it_should_be": "Сопоставляй параметры с состояниями. Для восстановления задай паузу и пробную выборку, а для срабатывания настрой пороги и окно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить CircuitBreaker в Spring Boot?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Достаточно зарегистрировать paymentService в YAML. Spring автоматически применит брейкер к публичным методам одноимённого бина.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя инстанса служит ключом конфигурации. Конфигурация создаёт объект политики, но применение к методу требует аннотации с AOP или явного декорирования.",
+                "source_of_confusion": "Имя бина paymentService может совпадать с именем политики. Совпадение похоже на привязку, хотя она определяется точкой перехвата.",
+                "if_it_were_true": "Если бы хватало имени бина, в статистику попадали бы и его обычные методы, которым защита не нужна.",
+                "how_it_should_be": "Свяжи политику с конкретным вызовом через @CircuitBreaker или через объект из CircuitBreakerRegistry."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В YAML укажи processPayment, а в @CircuitBreaker укажи имя Spring-бина. Стартер свяжет метод с настройками по его сигнатуре.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аспект определяет имя инстанса из name аннотации. Имя бина и сигнатура сами по себе не участвуют в поиске YAML-настроек.",
+                "source_of_confusion": "Spring часто подбирает зависимость по имени. Эту семантику легко ошибочно перенести на выбор именованного брейкера.",
+                "if_it_were_true": "При таком механизме переименование processPayment отделило бы метод от настроек даже при неизменном name.",
+                "how_it_should_be": "Дай бизнес-операции устойчивое имя политики и используй его и в instances, и в аннотации. Это отделит настройки от рефакторинга метода."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Добавь @CircuitBreaker с именем paymentService. Чтобы настройки применились, вызывай аннотированный метод напрямую на экземпляре PaymentService.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прямой вызов объекта, созданного через new, не проходит через Spring-аспект. Для аннотационного пути вызов должен пересечь Spring-прокси.",
+                "source_of_confusion": "Аннотация видна в исходнике и доступна через reflection. Её наличие легко принять за встроенный перехват Java.",
+                "if_it_were_true": "Если бы перехват работал на обычном объекте, new PaymentService() использовал бы реестр Spring даже вне контейнера.",
+                "how_it_should_be": "В приложении внедряй Spring-бин и вызывай его через прокси. В автономном объекте вызывай декорированный Supplier или executeSupplier."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Настрой инстанс paymentService в YAML, поставь @CircuitBreaker с тем же именем и вызывай processPayment через Spring-прокси.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring поднимает именованный инстанс по конфигурации. Аспект разрешает имя из аннотации, проверяет допуск и записывает результат вызова. При заданном подходящем fallback он может вернуть запасной результат.",
+                "example": "Инстанс paymentService открыт. При входе через прокси тело processPayment не вызовет внешний API. Без fallback вызывающий код получает CallNotPermittedException.",
+                "when_to_apply": "Задавай отдельные политики для зависимостей с разным профилем отказов. Для HTTP API реши, имеет ли бизнес-смысл запасной ответ или лучше явно отдать 503.",
+                "edge_cases": "Если имя аннотации не совпадает с конфигурацией, библиотека может подобрать или создать инстанс с другими настройками. Прямой self-invocation вообще обходит аспект.",
+                "related": "CircuitBreakerRegistry позволяет получить ту же именованную политику для явного декорирования при отсутствии подходящей границы прокси."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Resilience4j Retry отличается от Spring Retry?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Resilience4j Retry компонуется с его CircuitBreaker и экспортом Micrometer. Spring Retry предоставляет свой @Retryable, backoff и recovery.",
+              "correct": true,
+              "sections": {
+                "explanation": "Механизм повтора у библиотек похож. В Resilience4j единое семейство аспектов и именованных реестров упрощает цепочку с брейкером и метриками. Spring Retry применяет собственную конфигурацию и слушателей, включая MicrometerRetryListener в поддерживающих его версиях.",
+                "example": "В проекте уже есть Resilience4j CircuitBreaker. С Retry снаружи один вызов, закончившийся успехом после двух подходящих ошибок, даёт метрику успеха после повтора и три учитываемых результата у внутреннего брейкера.",
+                "when_to_apply": "Выбирай Resilience4j Retry, если нужна согласованная цепочка с его другими политиками или адаптер Reactor. Spring Retry уместен при уже используемых @Retryable, @Recover и RetryTemplate.",
+                "edge_cases": "Настроенный порядок аспектов может вынести брейкер наружу. Тогда он увидит итог логического вызова. В Spring Framework 7 есть собственные средства повтора, которые следует отличать от отдельного Spring Retry.",
+                "related": "Повтор по исключению и наблюдение попыток — разные контракты. Слушатель Spring Retry может экспортировать статистику без внедрения брейкера."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Resilience4j Retry требует CircuitBreaker для каждой попытки. Spring Retry позволяет повторять метод отдельно через @Retryable и RetryTemplate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Resilience4j Retry работает самостоятельно как декоратор, отдельная политика брейкера подключается при необходимости.",
+                "source_of_confusion": "Обе аннотации часто ставят на один клиентский метод. Это демонстрирует совместимость, но выглядит как обязательная связка.",
+                "if_it_were_true": "При обязательном брейкере CLI с одним resilience4j-retry не смог бы сделать вторую попытку после временной ошибки.",
+                "how_it_should_be": "Для отдельного повтора используй RetryConfig и Retry. Добавляй брейкер при самостоятельной задаче раннего отказа."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Spring Retry штатно связывает @Retryable с брейкером Resilience4j. Resilience4j Retry подключается отдельно и не участвует в общей цепочке аспектов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именно аспекты Resilience4j имеют согласованные порядки внутри одного набора. Spring Retry и внешний брейкер можно скомпоновать явно, но итог зависит от фактической вложенности.",
+                "source_of_confusion": "Spring умеет наложить разные advice на один метод. Из совместимости механизма AOP легко вывести готовый порядок двух независимых библиотек.",
+                "if_it_were_true": "Если бы порядок гарантировался автоматически, замена @Retry на @Retryable всегда оставляла бы у брейкера такое же число наблюдений.",
+                "how_it_should_be": "При смешении подходов проверь порядок аспектов или задай границы в коде. Используй один набор политик, если специальной причины для смешения нет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Resilience4j Retry и Spring Retry используют один API аннотаций. Различие сводится к разным именам экспортируемых метрик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "@Retry из Resilience4j ссылается на его именованную политику. @Retryable из Spring Retry использует другой API, собственные правила конфигурации и восстановления.",
+                "source_of_confusion": "Обе аннотации выглядят как краткий способ добавить попытки. Сходство назначения маскирует несовместимость настройки и семантики.",
+                "if_it_were_true": "Если бы API совпадал, подстановка @Recover в Resilience4j автоматически дала бы запасной ответ после исчерпания попыток.",
+                "how_it_should_be": "При миграции перенеси политики ошибок, интервалы, recovery и метрики по отдельности, затем соотнеси их с границей вызова."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить Retry в Spring Boot?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Свяжи метод с orderService через @Retry. При подходящих ошибках выполняются первый вызов и три повтора с паузами 500 мс, 1 с и 2 с.",
+              "correct": false,
+              "sections": {
+                "what_actually": "max-attempts: 3 включает исходную попытку, поэтому возможно лишь два повторных вызова.",
+                "source_of_confusion": "В обиходе «три ретрая» часто означает три дополнительных попытки. В YAML параметр задаёт общее число, хотя политика называется Retry.",
+                "if_it_were_true": "Если бы выполнялось четыре обращения, бюджет пауз при постоянном сбое составил бы 3,5 секунды вместо 1,5.",
+                "how_it_should_be": "Сначала выбери допустимое общее число обращений. Для трёх повторов после первого вызова выставляй max-attempts: 4 и пересчитывай бюджет времени."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Свяжи метод с orderService через @Retry. При подходящих ошибках возможны три попытки с паузами 500 мс и 1 с.",
+              "correct": true,
+              "sections": {
+                "explanation": "Первая попытка идёт сразу. При исключении из политики Retry ждёт базовый интервал, затем после второй подходящей ошибки умножает интервал на два. После третьего отказа дальнейшей паузы для попытки нет.",
+                "example": "Три IOException подряд дают вызовы примерно в 0, 500 и 1500 мс, если пренебречь их длительностью. После последней ошибки может быть вызван настроенный fallback.",
+                "when_to_apply": "Используй повторы для транзиентных ошибок и операций, безопасных при повторе. Для записи проверь идемпотентность и общий дедлайн вместе с задержками.",
+                "edge_cases": "При ValidationException из ignore-exceptions повтора не будет. Подходящий fallback всё ещё может обработать исключение, если оно дойдёт до его границы.",
+                "related": "Backoff уменьшает плотность повторов. Jitter или отдельная функция интервалов помогает развести одновременные обращения разных клиентов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Свяжи метод с orderService через @Retry. При подходящих ошибках возможны три попытки с одинаковой паузой 500 мс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Флаг enable-exponential-backoff включает рост паузы. В этом YAML первая пауза составляет 500 мс, следующая — 1 с.",
+                "source_of_confusion": "При обычной конфигурации wait-duration действительно задаёт постоянную задержку. Здесь режим изменён отдельным флагом.",
+                "if_it_were_true": "Если бы интервалы остались постоянными, третья попытка началась бы примерно через 1 с вместо 1,5 с без учёта работы вызовов.",
+                "how_it_should_be": "Проверяй базовый интервал, факт включения backoff и множитель вместе. Для постоянной паузы оставь экспоненциальный режим выключенным."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Свяжи метод с orderService через @Retry. При подходящих ошибках возможны три попытки с паузами 1 с и 2 с.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Множитель применяется после базового интервала. Первый повтор ждёт 500 мс, второй ждёт 1 с.",
+                "source_of_confusion": "При ручном расчёте легко начать с первой степени множителя, хотя первый интервал соответствует нулевой степени.",
+                "if_it_were_true": "Если бы первая пауза была удвоенной, даже единственный повтор откладывался бы на 1 с при базовом интервале 500 мс.",
+                "how_it_should_be": "Нумеруй паузы с первого повторного вызова и считай общий бюджет отдельно от времени работы самих попыток."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает RateLimiter?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Лимитер выдаёт десять разрешений на секунду и возвращает разрешение при завершении каждого вызова. Исчерпание квоты относится к одновременной работе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вызов расходует разрешение периода. Его завершение не восстанавливает разрешение, поэтому одиннадцатое обращение в том же цикле отклонят даже после завершения остальных.",
+                "source_of_confusion": "И RateLimiter, и Bulkhead используют слово «разрешение». У семафорного Bulkhead разрешение действительно возвращается после выполнения.",
+                "if_it_were_true": "Если бы завершение возвращало квоту RateLimiter, быстрый последовательный клиент превысил бы десять вызовов почти сразу.",
+                "how_it_should_be": "Для числа одновременно занятых ресурсов добавь Bulkhead. Для числа стартов за интервал оставь RateLimiter."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Лимитер выдаёт десять разрешений за любое окно длиной в секунду. Следующее разрешение появляется через секунду после самого старого вызова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "AtomicRateLimiter использует циклы фиксированной длины. Он не вычисляет интервал от времени каждого вызова.",
+                "source_of_confusion": "Фраза «10 в секунду» допускает бытовое прочтение как любое скользящее окно.",
+                "if_it_were_true": "При скользящем окне всплески по обе стороны границы цикла подавлялись бы, а фиксированные циклы могут их пропустить.",
+                "how_it_should_be": "Для строгого rolling window применяй реализацию с соответствующим алгоритмом. Для внешней квоты проверь её точную семантику."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Лимитер выделяет разрешения по циклам длиной в секунду. При исчерпании десяти разрешений нулевой timeout отклоняет следующий вызов до обращения к API.",
+              "correct": true,
+              "sections": {
+                "explanation": "Начало нового цикла обновляет доступный бюджет с учётом сделанных резервирований. В заданном режиме ждать новый цикл нельзя, поэтому отсутствие разрешения даёт RequestNotPermitted.",
+                "example": "Десять быстрых вызовов начались в первой половине одного цикла и завершились. Одиннадцатый в том же цикле получает отказ, а при новом цикле снова возможно получить разрешение.",
+                "when_to_apply": "Применяй локальный лимитер для сдерживания исходящего трафика процесса. Нулевое ожидание выбирай, если поток нельзя задерживать в очереди за разрешением.",
+                "edge_cases": "Положительный timeout разрешает ожидание, если расчётное время до разрешения укладывается в бюджет. Запросы на границе двух циклов способны образовать короткий всплеск.",
+                "related": "Bulkhead ограничивает одновременное выполнение. Для общей квоты нескольких экземпляров нужна общая точка координации или согласованное распределение бюджета."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Лимитер начинает отсчёт секунды при отказе в допуске. При исчерпании десяти разрешений он замораживает все вызовы до окончания этой паузы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Циклы идут по времени независимо от того, когда исчерпана квота. При timeout-duration: 0 отказ не запускает новую паузу очистки.",
+                "source_of_confusion": "OPEN в CircuitBreaker действительно запускает период ожидания после перехода. Эта модель не переносится на ограничитель частоты.",
+                "if_it_were_true": "При заморозке после первого отказа вызов перед границей периода сдвигал бы следующий допуск почти на целую секунду.",
+                "how_it_should_be": "Для ограничения частоты считай границы циклов. Для паузы после накопленных отказов настрой отдельный CircuitBreaker."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить RateLimiter в Spring Boot?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Укажи пять разрешений на 60 секунд. Значение 500 мс задаёт таймаут внешнего вызова, а 50 определяет запас разрешений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "500 мс ограничивают ожидание разрешения до запуска вызова. Буфер из 50 записей хранит события, а квота задаётся пятью разрешениями на период.",
+                "source_of_confusion": "Слово timeout часто относится к сетевому запросу, а buffer — к очереди входящих задач. В этих настройках оба имени описывают другие механизмы.",
+                "if_it_were_true": "Если бы ожидание лимитера управляло I/O, получивший разрешение вызов прервался бы через 500 мс даже при отсутствии конкуренции.",
+                "how_it_should_be": "Для длительности I/O настрой клиентский таймаут. Для квоты применяй limit-for-period, а для истории событий настрой буфер."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Укажи пять разрешений на 60 секунд. Значение 500 мс задаёт интервал пополнения одного разрешения, а 50 ограничивает ожидающих.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пополнение связано с границей периода в 60 секунд. 500 мс — верхняя граница ожидания допуска, а 50 — размер диагностического буфера.",
+                "source_of_confusion": "Некоторые лимитеры пополняют токены постепенно. Это может привести к чтению timeout-duration как периода выдачи очередного токена.",
+                "if_it_were_true": "При выдаче разрешения каждые 500 мс лимитер мог бы пропустить существенно больше пяти запросов за минуту.",
+                "how_it_should_be": "Подбирай параметры по их единицам. Период задаёт частоту обновления, бюджет периода — число разрешений, timeout — допустимую задержку входа."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Укажи пять разрешений на 60 секунд. Значение 500 мс позволяет подождать слот, а 50 задаёт максимальную длину очереди ожидающих запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Первые две настройки описаны верно, но event-consumer-buffer-size хранит события. Этот параметр не ограничивает число потоков, ожидающих разрешения.",
+                "source_of_confusion": "Кольцевой буфер действительно имеет ограниченную вместимость. Он расположен на пути наблюдения событий, а не на пути допуска запросов.",
+                "if_it_were_true": "Если бы буфер ограничивал ожидающих, его увеличение могло бы принять дополнительный поток под нагрузкой при тех же разрешениях.",
+                "how_it_should_be": "Для управления ожиданием настрой timeout-duration. Для ограничения очереди выполнения используй подходящую очередь исполнителя или ThreadPoolBulkhead."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Укажи пять разрешений на 60 секунд. Вызов может ждать разрешение до 500 мс, а буфер сохраняет до 50 событий лимитера.",
+              "correct": true,
+              "sections": {
+                "explanation": "В Spring Boot параметры связываются с инстансом myService. Аннотация или реестр выбирают этот инстанс. Ожидание возможно, если расчётное время получения разрешения укладывается в timeout-duration.",
+                "example": "Если квота текущего периода исчерпана, до его конца 300 мс и следующая квота доступна, вызов может дождаться допуска. Если до разрешения две секунды, он отклоняется.",
+                "when_to_apply": "Выбирай положительное ожидание при допустимой короткой задержке. Для чувствительного к латентности пути поставь ноль и обработай RequestNotPermitted.",
+                "edge_cases": "При нескольких ожидающих одна близкая граница сама по себе не гарантирует допуск каждому. Будущие разрешения также могут быть зарезервированы.",
+                "related": "RateLimiterConfig позволяет программно задать те же параметры допуска. Буфер событий относится к наблюдению в Spring Boot."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Bulkhead и когда его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Bulkhead ограничивает параллельные вызовы конкретной зависимости. Он полезен, когда ожидание одного downstream угрожает доступности других операций.",
+              "correct": true,
+              "sections": {
+                "explanation": "Раздельные квоты удерживают число занятых ресурсов в пределах бюджета зависимости. При заполнении квоты новые обращения ждут в пределах настройки или отклоняются до обращения к зависшему сервису.",
+                "example": "При 200 потоках и семафоре с 20 допусками к API-C в его работе занято не более 20 вызывающих потоков. Если max-wait-duration равен нулю, остальные не застревают в ожидании допуска к C.",
+                "when_to_apply": "Применяй для зависимостей с независимыми бюджетами и дорогими блокирующими вызовами. Сопоставляй лимит с ёмкостью общего пула и временем удержания разрешения.",
+                "edge_cases": "Положительное ожидание семафора может занять дополнительные потоки. При общей блокировке, общем пуле соединений или отсутствии таймаута одной квоты может быть мало.",
+                "related": "CircuitBreaker полезен после накопления сигнала о деградации. Bulkhead ограничивает ущерб уже при первом всплеске параллельных вызовов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Bulkhead ограничивает число стартов за интервал. Он полезен, когда downstream применяет минутную квоту и клиент должен соблюдать её.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Bulkhead учитывает выполняющиеся вызовы. После завершения одного вызова следующий может начаться без ожидания границы минутного интервала.",
+                "source_of_confusion": "Слово «лимит» выглядит одинаково для частоты и конкуренции. Расхождение видно, когда сами вызовы очень быстры.",
+                "if_it_were_true": "Если бы квота была минутной, десять коротких завершившихся вызовов могли бы блокировать одиннадцатый при пустом пуле.",
+                "how_it_should_be": "Для частоты добавь RateLimiter с подходящей семантикой окна, а Bulkhead используй для ограничения одновременно удерживаемых ресурсов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Bulkhead прекращает обращаться к зависимости после серии отказов. Он полезен, когда нужно возобновить вызовы небольшой пробной партией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Доступность разрешения зависит от занятой вместимости. Ошибка завершает вызов и освобождает его слот, но сама по себе не переводит Bulkhead в OPEN.",
+                "source_of_confusion": "Оба механизма могут быстро отказать. Различие состоит в сигнале решения, заполненности или истории результатов.",
+                "if_it_were_true": "Если бы серия отказов открывала Bulkhead, следующий вызов отклонялся бы даже при всех свободных слотах.",
+                "how_it_should_be": "Для паузы и ограниченных проб настрой CircuitBreaker, а для предотвращения насыщения выдели зависимости квоту Bulkhead."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Bulkhead останавливает вызов после достижения лимита времени. Он полезен, когда выполняющуюся работу требуется отменить по дедлайну.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исчерпание квоты управляет входом. Bulkhead не завершает уже допущенную работу на основании её длительности.",
+                "source_of_confusion": "У Bulkhead есть время ожидания разрешения. Его легко принять за время выполнения после допуска.",
+                "if_it_were_true": "Если бы ожидание являлось дедлайном операции, вызов, допущенный мгновенно при нулевом ожидании, сразу отменялся бы.",
+                "how_it_should_be": "Для ограничения времени используй дедлайн клиента и поддерживаемую им отмену. Bulkhead оставь для ограничения числа занятых мест."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие типы Bulkhead поддерживает Resilience4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "SEMAPHORE выполняет работу в отдельной очереди, а THREADPOOL сохраняет вызывающий поток и ограничивает вход числом рабочих.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Семафор ограничивает вход в синхронный вызов на текущем потоке. Пул отправляет работу на выделенного исполнителя с ограниченной очередью.",
+                "source_of_confusion": "В обеих конфигурациях есть лимит вместимости. Если ориентироваться только на это число, легко перепутать место выполнения.",
+                "if_it_were_true": "Если бы SEMAPHORE переносил работу, имя потока внутри синхронного inventoryApi.check отличалось бы от имени вызывающего при каждом выполнении.",
+                "how_it_should_be": "Выбирай семафор для ограничения без смены исполнителя. Выбирай ThreadPoolBulkhead, когда нужен отдельный исполнитель и асинхронная граница."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "SEMAPHORE ограничивает вход на вызывающем потоке, а THREADPOOL отправляет работу в выделенный пул с ограниченной очередью.",
+              "correct": true,
+              "sections": {
+                "explanation": "Семафор выдаёт разрешения без создания рабочих потоков. Spring-аспект THREADPOOL для поддерживаемого асинхронного типа ставит выполнение тела метода в выделенный пул. При насыщении получаем BulkheadFullException.",
+                "example": "В показанном asyncCall выражение externalClient.fetch() вычисляется на потоке Bulkhead до создания completedFuture. В синхронном checkInventory вызов остаётся на исходном потоке после получения семафорного разрешения.",
+                "when_to_apply": "Выбирай THREADPOOL для отделения блокирующей зависимости от вызывающего исполнителя. Согласуй очередь, число рабочих, бюджет времени и перенос контекста.",
+                "edge_cases": "Вложенный CompletableFuture.supplyAsync без явного executor обычно отправит fetch в общий ForkJoinPool. Сам факт входа метода через Bulkhead тогда не изолирует фактическое I/O на выделенных рабочих.",
+                "related": "ThreadPoolBulkhead управляет запуском и ёмкостью, а TimeLimiter — ожиданием результата. Оба бюджета надо учитывать, если запрос сначала стоит в очереди."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SEMAPHORE и THREADPOOL сохраняют вызывающий поток. Очередь THREADPOOL хранит futures и ограничивает только длительность их ожидания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ThreadPoolBulkhead планирует выполнение работы у себя. Ёмкость очереди ограничивает объём ожидающих задач, а не их длительность.",
+                "source_of_confusion": "Future представляет ожидаемый результат, поэтому очередь легко принять за хранилище уже запущенных работ.",
+                "if_it_were_true": "Если бы очередь контролировала время, долго ожидающая одиночная задача отклонялась бы даже при свободном месте без отдельного дедлайна.",
+                "how_it_should_be": "Используй вместимость и дедлайн как разные настройки. Для фактической изоляции проверь, на каком исполнителе работает тело вызова."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "SEMAPHORE даёт синхронный лимит, а THREADPOOL запускает любую работу, вложенную в CompletableFuture, на том же выделенном пуле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пул аспекта запускает тело вызова. Вложенная асинхронная операция сама выбирает исполнитель по переданному executor или правилам CompletableFuture.",
+                "source_of_confusion": "Граница пула относится к первому этапу, поэтому кажется, что она наследуется всем последующим асинхронным графом.",
+                "if_it_were_true": "Если бы вложенные этапы наследовали пул, supplyAsync без executor сохранял бы имя рабочего Bulkhead при фактическом сетевом вызове.",
+                "how_it_should_be": "Выполняй блокирующий вызов прямо внутри защищённого тела или явно подбирай исполнитель для вложенного этапа и учитывай его отдельную вместимость."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда нужен TimeLimiter?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Через две секунды future завершается TimeoutException, а работа fetch прекращается по прерыванию от cancel-running-future.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В ветке CompletionStage таймер завершает future исключением. Настройка отмены используется в другой ветке API, основанной на Future.get, и не останавливает показанный fetch.",
+                "source_of_confusion": "Отмена Future, созданного ExecutorService, может послать interrupt. Из этого легко ошибочно сделать такой же вывод для CompletableFuture и TimeLimiter.",
+                "if_it_were_true": "Если бы исключительное завершение прерывало fetch, задача увидела бы interrupt на второй секунде, а побочный эффект после неё исчезал бы даже без поддержки отмены в клиенте.",
+                "how_it_should_be": "Настрой дедлайн и отмену в клиенте, если требуется остановка работы. Отдельно обработай исключительное завершение future на стороне вызывающего."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Через две секунды future завершается отменой, а fetch продолжает работу до ответа сервиса или собственного таймаута.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вызывающий получает исключительное завершение с TimeoutException. Это отличается от CancellationException, которое даёт явная отмена CompletableFuture.",
+                "source_of_confusion": "Любой результат, отброшенный по времени, в логах часто описывается словом «отмена». Здесь различие наблюдаемо по типу исключения.",
+                "if_it_were_true": "Если бы future был отменён, join выбросил бы CancellationException, и обработчик TimeoutException не получил бы нужную причину.",
+                "how_it_should_be": "Проверяй тип отказа в используемом API. Для join учитывай CompletionException и его cause, а явную отмену обрабатывай отдельно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Через две секунды future завершается TimeoutException. Уже начавшийся fetch может продолжить работу на ioExecutor и выполнить побочные эффекты.",
+              "correct": true,
+              "sections": {
+                "explanation": "В Resilience4j 2.4.0 ветка CompletionStage планирует таймер. Если результат ещё не получен, он завершает future с TimeoutException. Это меняет состояние результата, а сетевой вызов подчиняется своему клиенту и исполнителю.",
+                "example": "Клиент вызывает join и получает CompletionException с причиной TimeoutException примерно через две секунды. Рабочий поток получает ответ через пять, но поздний результат не заменяет уже выданное исключение.",
+                "when_to_apply": "Применяй TimeLimiter для бюджета ожидания асинхронного результата. Если операция меняет состояние, спланируй идемпотентность и выяснение исхода после таймаута.",
+                "edge_cases": "Программная ветка Future.get(timeout, unit) при включённой опции вызывает cancel(true). Даже там фактическая остановка зависит от реализации Future и реакции задачи на прерывание.",
+                "related": "Реактивная ветка может отменить подписку. Гарантия прекращения I/O всё равно зависит от того, как источник обрабатывает отмену."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Через две секунды таймер помечает вызов медленным, а future завершается только после окончания fetch на пятой секунде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TimeLimiter завершает ожидаемый результат исключением в момент таймаута. Запись slow call в CircuitBreaker является отдельным механизмом.",
+                "source_of_confusion": "Обе настройки имеют порог времени. У CircuitBreaker этот порог действительно классифицирует длительность после получения исхода.",
+                "if_it_were_true": "Если бы TimeLimiter только отмечал длительность, join ждал бы пять секунд и затем вернул бы строку несмотря на двухсекундный бюджет.",
+                "how_it_should_be": "Для предела ожидания используй TimeLimiter или предел клиента. Для статистики медленных результатов настрой CircuitBreaker."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как комбинировать несколько аннотаций?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Брейкер оборачивает Retry. За три обращения к API он записывает один успешный итог, а лимитер выдаёт одно разрешение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Штатно Retry находится снаружи двух других аспектов. На каждой допущенной попытке работают брейкер и лимитер, поэтому видны две ошибки и один успех.",
+                "source_of_confusion": "Если обернуть Retry внешним брейкером, итог действительно будет единым. Порядок надписей в коде не создаёт такую вложенность.",
+                "if_it_were_true": "Если бы брейкер стоял снаружи, его выборка почти не видела бы транзиентные отказы, которые Retry компенсировал.",
+                "how_it_should_be": "Для одного измерения на логический вызов задай брейкеру меньший aspect order, чем Retry, или собери явный внешний декоратор."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Retry оборачивает брейкер, а лимитер стоит снаружи Retry. Брейкер пишет три результата, а лимитер расходует одно разрешение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лимитер в стандартной цепочке находится внутри брейкера и Retry. Каждая дошедшая до него попытка заново запрашивает разрешение.",
+                "source_of_confusion": "Программный Decorators позволяет поставить внешний RateLimiter и при этом оставить брейкер внутри Retry. Такой порядок возможен, но не является штатным для показанных аннотаций.",
+                "if_it_were_true": "При внешнем лимитере один допущенный логический запрос мог бы создать три обращения к upstream за одно разрешение.",
+                "how_it_should_be": "Если ограничиваешь фактические обращения к API, ставь лимитер внутрь Retry. Для квоты логических запросов перенеси его наружу явно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Брейкер и лимитер оборачивают первый вызов, а Retry при ошибке вызывает тело напрямую. Брейкер видит одну ошибку, а лимитер расходует одно разрешение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Retry повторно выполняет вложенную цепочку. Брейкер и лимитер получают каждую попытку, которая до них дошла.",
+                "source_of_confusion": "Ручной цикл внутри защищённого метода действительно повторяет внутренний вызов без повторного входа в аспекты. Здесь цикл находится во внешнем аспекте.",
+                "if_it_were_true": "Если бы повторы шли прямо в тело, даже открытие цепи после первой ошибки не блокировало бы следующие попытки Retry.",
+                "how_it_should_be": "Проверяй, где реализован цикл. Для одинаковой защиты каждой попытки оборачивай защищённую операцию внешним Retry."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Retry оборачивает брейкер и лимитер. На трёх допущенных попытках брейкер запишет две ошибки и один успех, а лимитер выдаст три разрешения.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стандартная вложенность для этого набора — Retry(CircuitBreaker(RateLimiter(метод))). Когда Retry повторяет вызов после первых двух подходящих ошибок, он входит во всю цепочку заново. Положение аннотации в исходнике порядок не меняет.",
+                "example": "При десяти доступных разрешениях три обращения оставят семь в текущем периоде. В статистике брейкера до вытеснения этих записей будут две ошибки и один успех от данного логического вызова.",
+                "when_to_apply": "Сначала определи единицу защиты. Если нужно учитывать каждый запрос к upstream, оставь брейкер и лимитер внутри Retry. Если нужна оценка итогов операций, собери иной порядок.",
+                "edge_cases": "Если внутренний fallback превратит ошибку в обычное возвращаемое значение, внешний Retry по исключениям остановится. Повтор по результату требует отдельного предиката.",
+                "related": "В программном Decorators каждый следующий with добавляет наружный слой. Чтобы брейкер видел итог, добавь его после withRetry."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает fallback в Resilience4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "На исключение брейкера вызывается userFallback с Exception, поскольку широкая сигнатура проверяется раньше специализированной.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По подходящим перегрузкам выбирается ближайший тип исключения. Для CallNotPermittedException берётся одноимённый параметр специализированного fallback.",
+                "source_of_confusion": "В цепочке обработчиков некоторых API важен порядок регистрации. В выборе этой перегрузки сравнивается тип ошибки.",
+                "if_it_were_true": "Если бы общий обработчик имел приоритет, специфический fallback к кэшу никогда не срабатывал бы при наличии Exception.",
+                "how_it_should_be": "Объявляй широкую перегрузку как запасную, а для известного отказа добавляй более конкретный тип и проверяй сценарий с этим исключением."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "На исключение брейкера вызывается userFallback с CallNotPermittedException, а исключение без более точной перегрузки может обработать userFallback с Exception.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аспект передаёт отказ в fallback-исполнитель. Тот ищет метод по указанному имени с совместимым возвращаемым типом и аргументами, затем выбирает ближайший тип исключения. Порядок объявления перегрузок решения не меняет.",
+                "example": "При OPEN getUser(42L) не обращается в userApi и получает User.cached(42L). Если при CLOSED клиент выбросит IllegalStateException, общий обработчик вернёт User.anonymous().",
+                "when_to_apply": "Используй разные запасные результаты, когда последствия отказов различаются. Выдавай кэш только при приемлемой свежести и допустимых правилах доступа.",
+                "edge_cases": "Без подходящей перегрузки исходный отказ может уйти вызывающему. Поддерживается и отдельная форма fallback с одним параметром исключения, если аргументы исходного метода не нужны.",
+                "related": "Fallback меняет наблюдаемый результат для внешнего слоя. Поэтому внутренний запасной ответ может остановить внешний Retry по исключениям."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "На исключение брейкера вызывается userFallback с CallNotPermittedException, а исключения userApi пробрасываются, поскольку возникли внутри тела метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fallback-исполнитель обрабатывает и исключение допуска, и исключение защищённого тела, если есть совместимый обработчик. Здесь IllegalStateException подходит к параметру Exception.",
+                "source_of_confusion": "Название CircuitBreaker настраивает конкретную защиту. Легко решить, что обработчик получает только ошибки, созданные самим брейкером.",
+                "if_it_were_true": "Если бы ошибки тела обходили fallback, общий обработчик не вернул бы anonymous при сбое userApi на закрытой цепи.",
+                "how_it_should_be": "Если нужен запасной ответ только для OPEN, оставь специализированную перегрузку и отдельно обрабатывай сбои клиента по правилам приложения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Обе перегрузки вызываются последовательно. Сначала библиотека получает cached, затем общий Exception определяет окончательный запасной ответ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выбирается один наиболее подходящий fallback. Успешное завершение этого метода возвращается вызывающему без пробного вызова остальных перегрузок.",
+                "source_of_confusion": "Иерархия типов напоминает цепочку обработчиков, хотя алгоритм прекращает поиск на ближайшем совпадении.",
+                "if_it_were_true": "Если бы выполнялись обе перегрузки, в одном запросе могли бы сработать два разных побочных эффекта и вернуться anonymous вместо cached.",
+                "how_it_should_be": "Если нужна цепочка «кэш, затем дефолт», реализуй её внутри одного выбранного fallback с понятным условием перехода."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 17,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить Actuator метрики для Resilience4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Подключи Actuator и включи health для инстанса. Метрики появятся благодаря индикатору, а exposure определит только детализацию health.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Micrometer регистрирует метрики независимо от здоровья брейкера. Exposure влияет на доступность endpoint по HTTP. Детализацию health определяют другие настройки.",
+                "source_of_confusion": "Статус брейкера можно увидеть и в health, и в gauge состояния. Эти два представления легко принять за один источник.",
+                "if_it_were_true": "Если бы метрики зависели от health, отключение индикатора удалило бы метрики сбоя и состояния из MeterRegistry.",
+                "how_it_should_be": "Сначала проверь интеграцию с MeterRegistry. Раздельно включай HTTP-экспорт и health в соответствии с назначением каждого."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Подключи Actuator и открой metrics. Health автоматически включится для каждого инстанса, если доступен HTTP-маршрут circuitbreakers.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP exposure не регистрирует индикаторы. Для участия нужны общий флаг health для circuitbreakers и register-health-indicator нужного инстанса.",
+                "source_of_confusion": "Список circuitbreakers раскрывает имена экземпляров, поэтому его доступность может выглядеть как признак участия в health.",
+                "if_it_were_true": "При такой связи открытие маршрута списка неожиданно изменило бы итоговый health и могло бы повлиять на внешний probe.",
+                "how_it_should_be": "Настраивай вклад брейкера в health отдельно и оценивай, должен ли отказ отдельного downstream влиять на доступность сервиса."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подключи Actuator и Micrometer. Метрика state является общим числовым счётчиком переходов, а health публикует состояние по имени инстанса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метрика state — набор gauge с тегами name и state. Текущее состояние имеет 1, остальные 0. Health — отдельный снимок, а переходы наблюдаются через события.",
+                "source_of_confusion": "В системе также есть счётчики вызовов и события переходов. Их легко смешать с метрикой, показывающей положение автомата.",
+                "if_it_were_true": "Если бы state был счётчиком, два возврата в CLOSED увеличивали бы его значение до двух вместо установки единицы для текущего состояния.",
+                "how_it_should_be": "Для проверки текущего состояния фильтруй gauge по name и state. Для подсчёта переходов подключи события и веди отдельный счётчик."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подключи Actuator и регистрацию метрик через Micrometer, открой нужные endpoints. Участие брейкера в health включи отдельными настройками.",
+              "correct": true,
+              "sections": {
+                "explanation": "Интеграция Resilience4j регистрирует измерения в MeterRegistry, а Boot предоставляет endpoints. HTTP exposure делает выбранные маршруты доступными по HTTP при разрешении политики безопасности. Health требует общего флага и регистрации индикатора для инстанса.",
+                "example": "Для svc в OPEN gauge с тегами name=svc и state=open показывает 1, а gauge closed — 0. Отключение register-health-indicator уберёт вклад svc в health и сохранит его метрики.",
+                "when_to_apply": "Используй метрики для графиков и алертов. Открывай endpoints также с учётом доступа, а включение health-индикатора согласуй с назначением probe.",
+                "edge_cases": "При экспорте Prometheus нужен соответствующий Micrometer registry и открытый prometheus endpoint. Формат имён там отличается от имён Actuator metrics.",
+                "related": "Endpoints circuitbreakers и retries перечисляют инстансы. Метрики показывают агрегаты, а endpoint событий обслуживает ограниченную историю."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 18,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают события (Events) в Resilience4j?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Подписывайся на EventPublisher инстанса. Для Spring @EventListener создай явный мост, а буфер Actuator используй для недавних событий.",
+              "correct": true,
+              "sections": {
+                "explanation": "Resilience4j создаёт события внутри своих политик и передаёт их подписчикам соответствующего инстанса. Spring Boot может подписать буфер для endpoint. Это не создает публикацию в ApplicationEventPublisher.",
+                "example": "Когда myService переходит из CLOSED в OPEN, его onStateTransition получает событие. Spring-слушатель увидит выбранное событие после того, как приложение опубликует его через мост.",
+                "when_to_apply": "Для локального алерта подпишись на переход состояния нужного инстанса. Для интеграции с несколькими Spring-слушателями явно определи тип и способ публикации события.",
+                "edge_cases": "Переполненный кольцевой буфер вытесняет старые записи. Для аудита с долговременным хранением нужен отдельный потребитель и соответствующее хранилище.",
+                "related": "События инстансов отражают исходы вызовов и переходы. У реестра есть отдельные события создания, удаления и замены его записей."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Подписывайся через Spring @EventListener. EventPublisher автоматически перенаправляет переходы брейкера всем слушателям ApplicationContext.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычная подписка через @EventListener видит Spring-события. EventPublisher брейкера использует отдельный список потребителей.",
+                "source_of_confusion": "Автоконфигурация создаёт оба механизма в одном контексте, но наличие в одном контейнере не связывает их шины событий.",
+                "if_it_were_true": "Если бы мост был штатным, Spring-слушатель того же типа получил бы переход без какой-либо подписки на инстанс.",
+                "how_it_should_be": "Для Spring-доставки подпишись на инстанс и явно опубликуй подходящее событие через ApplicationEventPublisher."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подписывайся на EventPublisher реестра. Он получает исходы и переходы всех инстансов под одним общим подписчиком.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Издатель реестра сообщает о его записях. Для переходов каждого автомата нужен publisher конкретного CircuitBreaker.",
+                "source_of_confusion": "Реестр действительно наблюдает коллекцию брейкеров. Это похоже на централизованный поток событий, но события описывают другой жизненный цикл.",
+                "if_it_were_true": "Если бы реестр транслировал исходы, одна подписка на добавление записей могла бы сообщать и о каждом CallNotPermittedException.",
+                "how_it_should_be": "Для динамических политик подпишись на появление инстанса в реестре, затем добавь потребителя к издателю этого инстанса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подписывайся на Actuator endpoint. Он служит источником событий для EventPublisher и запускает обработчики при каждом чтении буфера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сначала инстанс публикует событие, затем подписанный буфер сохраняет запись. GET читает уже собранные события и не управляет производителями.",
+                "source_of_confusion": "Диагностический endpoint является видимым API, поэтому его легко принять за источник. Фактически он читает историю.",
+                "if_it_were_true": "Если бы событие возникало при GET, один сбой вызывал бы повторные алерты при каждом запросе к endpoint.",
+                "how_it_should_be": "Для алертов используй подписку на событие. Для ручной диагностики прочитай недавний снимок буфера."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 19,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие зависимости нужны для Spring Boot?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Добавь resilience4j-circuitbreaker и resilience4j-retry. Стартер web уже обеспечивает проксирование этих аннотаций и endpoints метрик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Основные артефакты дают реализации паттернов. Наличие MVC само по себе не обеспечивает нужную AspectJ-интеграцию и Actuator endpoints.",
+                "source_of_confusion": "Web starter уже включает много частей Spring, в том числе инфраструктуру бинов. Из этого легко вывести, что все условные аспекты включены.",
+                "if_it_were_true": "Если бы web включал всё требуемое, Actuator metrics был бы доступен в обычном MVC-приложении без Actuator.",
+                "how_it_should_be": "К имеющемуся Boot3-стартеру дай AOP и Actuator. Core отдельно добавляй только по конкретной необходимости."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Добавь spring-boot-starter-actuator и resilience4j-reactor. Аспекты активируются после подключения реактивного адаптера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Actuator даёт endpoints, Reactor-модуль — интеграцию реактивных типов. Для перехвата аннотаций нужна конфигурация Spring AOP с поддержкой AspectJ.",
+                "source_of_confusion": "Оба адаптера расширяют стартер и иногда ставятся вместе в WebFlux. Reactor не заменяет перехват обычного Spring-метода.",
+                "if_it_were_true": "Если бы адаптер активировал аспекты, добавление реактивной зависимости начинало бы перехватывать даже синхронный MVC-сервис без AOP.",
+                "how_it_should_be": "Подключай AOP для аннотаций и Reactor-интеграцию только при необходимости работы с Mono и Flux."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Добавь spring-boot-starter-aop для аспектов и spring-boot-starter-actuator для метрик. Сохрани подключённый resilience4j-spring-boot3.",
+              "correct": true,
+              "sections": {
+                "explanation": "Для Boot 3.5 стартер Resilience4j предоставляет конфигурацию модулей и интеграцию Micrometer. AOP стартер даёт инфраструктуру аспектов, Actuator — инфраструктуру наблюдения и HTTP-endpoints.",
+                "example": "С AOP вызов Spring-бина через прокси проходит @Retry. Добавление Actuator и открытие metrics делает метрики инстанса доступны по HTTP при наличии прав.",
+                "when_to_apply": "Выбирай интеграционный модуль для линии Boot. При переносе со Spring Boot 2 на 3 отдельно проверь совместимость зависимостей и пакетов Spring.",
+                "edge_cases": "Для использования core API вручную прокси не нужен. В реактивном сценарии дополнительный resilience4j-reactor нужен для операторов Reactor.",
+                "related": "Стартер интеграции и BOM решают разные задачи. Первый приносит зависимости, второй согласует версии."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Добавь spring-boot-starter-aop и micrometer-registry-prometheus. Реестр Prometheus заменит Actuator и откроет маршрут с метриками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реестр принимает и экспортирует измерения в формате Prometheus. Сам по себе он не создаёт стандартные Actuator endpoints.",
+                "source_of_confusion": "Prometheus registry часто добавляют именно ради /actuator/prometheus. Endpoint появляется вместе с инфраструктурой Boot Actuator и его настройками.",
+                "if_it_were_true": "При взаимозаменяемости модулей маршрут /actuator/metrics появился бы после подключения одного реестра без Actuator.",
+                "how_it_should_be": "Для запрошенного Actuator подключи соответствующий стартер. Добавляй Prometheus registry, если нужен отдельный формат экспорта."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 20,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Каковы ограничения аннотационного подхода?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Вызов через this защищён при CGLIB, а JDK-прокси пропускает его. Для класса без интерфейса достаточно включить CGLIB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тело placeOrder вызывает метод на целевом объекте. Такой самовызов не пересекает границу прокси ни для CGLIB, ни для JDK.",
+                "source_of_confusion": "CGLIB строит подкласс и умеет перехватывать виртуальные методы. Это легко принять за перехват любого вызова в теле target.",
+                "if_it_were_true": "Если бы выбор CGLIB помогал, при открытом брейкере вызов placeOrder отказал бы до externalApi.create. В показанном пути такого отказа от аспекта не будет.",
+                "how_it_should_be": "Вынеси защищённую операцию в отдельный бин либо вызови её через программный API."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Вызов через this обходит аспект при обоих типах прокси. Вынеси защищённый метод в отдельный бин и вызывай его через внедрённую зависимость.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вход через прокси даёт аспектам точку перехвата. Внутри тела placeOrder получатель this — целевой объект. Повторного входа в прокси на строке this.processWithCircuitBreaker не происходит.",
+                "example": "При открытом orderService вызов placeOrder всё ещё доходит до externalApi.create. После выноса метода в отдельный проксируемый бин тот же путь получает CallNotPermittedException до вызова API.",
+                "when_to_apply": "Размещай границу защиты на межбинном вызове или используй явный декоратор. Тестируй фактический маршрут вызова, а не только наличие аннотации.",
+                "edge_cases": "CGLIB требует возможности переопределить метод, поэтому final ему мешает. JDK-прокси перехватывает вызовы через интерфейс даже при final-реализации метода целевого объекта.",
+                "related": "Порядок аспектов проявляется только на перехватываемом вызове. Замена aspect order не исправит самовызов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Вызов через this обходит аспект, потому что processWithCircuitBreaker отсутствует в интерфейсе. Добавь интерфейс и оставь маршрут вызова прежним.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Интерфейс создаёт возможную границу JDK-прокси для внешнего вызова. Внутренний this продолжает обращаться прямо к целевому объекту.",
+                "source_of_confusion": "JDK-прокси действительно требует вызова через интерфейс. Забывается отдельное условие, что получателем должен быть сам прокси.",
+                "if_it_were_true": "Если бы интерфейса было достаточно, изменение implements молча изменило бы поведение строки this.processWithCircuitBreaker.",
+                "how_it_should_be": "Вызывай метод через внедрённый интерфейс другого Spring-бина или явно оберни вызов в CircuitBreaker."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Вызов через this обходится без защиты, потому что placeOrder не аннотирован. Добавь брейкер на placeOrder, чтобы сработала и внутренняя политика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотация на placeOrder защитит внешнюю границу этого метода, если он вызван через прокси. Внутренний вызов всё равно не получит собственную обёртку.",
+                "source_of_confusion": "После добавления внешней аннотации запрос действительно начинает отклоняться. Этот эффект можно ошибочно приписать внутренней политике.",
+                "if_it_were_true": "Если бы оба аспекта сработали, два разных именованных брейкера записали бы один и тот же исход на своих границах.",
+                "how_it_should_be": "Если вся операция должна иметь одну политику, аннотируй внешний метод. Для отдельной политики downstream выбери самостоятельную точку перехвата или явный декоратор."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,18 +1,965 @@
-{"topic_slug":"spring-events-interview","questions":[
-{"q_number":1,"blocks":[{"block_idx":0,"question_text":"Что такое Spring Events и зачем нужны?","options":[{"order":0,"label":"A","text":"Локальная публикация событий Spring для связи издателя с несколькими независимыми слушателями","correct":true,"sections":{"explanation":"Издатель сообщает о факте через ApplicationEventPublisher.","example":"Подписчики на создание заказа выполняют независимые реакции.","when_to_apply":"Когда отправителю не нужен прямой вызов каждого получателя.","edge_cases":"Стандартный multicaster обычно вызывает слушателей синхронно."}},{"order":1,"label":"B","text":"Доставка событий между JVM через встроенный брокер Spring","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Персистентный журнал, из которого подписчики восстанавливают состояние после сбоя","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Планировщик событий, вызывающий один обработчик по имени","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":2,"blocks":[{"block_idx":0,"question_text":"Как опубликовать и обработать событие?","options":[{"order":0,"label":"A","text":"Вызвать метод слушателя напрямую и считать его публикацией","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Внедрить ApplicationEventPublisher, вызвать publishEvent и зарегистрировать слушатель по типу","correct":true,"sections":{"explanation":"Контекст маршрутизирует опубликованное событие слушателям.","example":"Бин с @EventListener принимает OrderCreated.","when_to_apply":"Для локальных уведомлений о бизнес-фактах.","edge_cases":"Слушатель должен быть зарегистрирован в Spring."}},{"order":2,"label":"C","text":"Передать событие в TaskScheduler и указать тип слушателя вместо триггера","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Создать ApplicationEvent вручную и ждать автоматической публикации конструктором","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":3,"blocks":[{"block_idx":0,"question_text":"Как создать кастомное событие?","options":[{"order":0,"label":"A","text":"Объявить только наследника ApplicationEvent, поскольку произвольные объекты не поддерживаются","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Объявить только сериализуемый Map, поскольку слушатели получают исключительно строки","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Объявить тип события как неизменяемый объект или наследника ApplicationEvent и опубликовать его","correct":true,"sections":{"explanation":"Publisher поддерживает типизированные payload и ApplicationEvent.","example":"Record OrderCreated несёт ID заказа.","when_to_apply":"Для явного контракта между издателем и слушателем.","edge_cases":"Собирайте данные, нужные подписчику, без передачи изменяемого состояния."}},{"order":3,"label":"D","text":"Объявить отдельный annotation processor для генерации слушателей каждого типа события","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":4,"blocks":[{"block_idx":0,"question_text":"Какие встроенные Spring-события (context events) существуют?","options":[{"order":0,"label":"A","text":"ContextRefreshedEvent на закрытии, ContextClosedEvent после refresh, ContextStartedEvent при stop","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"ContextRefreshedEvent после первого HTTP-запроса, ContextClosedEvent при rollback, ContextStoppedEvent при refresh","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"ContextStartedEvent при любом создании бина, ContextStoppedEvent при его удалении","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"ContextRefreshedEvent при refresh, ContextStartedEvent и ContextStoppedEvent при start и stop, ContextClosedEvent при закрытии","correct":true,"sections":{"explanation":"События отражают этапы жизненного цикла ApplicationContext.","example":"ContextClosedEvent позволяет выполнить очистку при закрытии.","when_to_apply":"Для реакций на жизненный цикл контейнера.","edge_cases":"ContextStartedEvent означает явный start контекста."}}]}]}
-,{"q_number":5,"blocks":[{"block_idx":0,"question_text":"Как сделать обработку события асинхронной?","options":[{"order":0,"label":"A","text":"Включить @EnableAsync и пометить подходящий слушатель @Async с выбранным executor","correct":true,"sections":{"explanation":"Async advice передаёт работу executor.","example":"@Async(\"eventsExecutor\") изолирует очередь обработчиков.","when_to_apply":"Когда издатель не должен ждать работы подписчика.","edge_cases":"Ошибки и контекст async-вызова требуют отдельного внимания."}},{"order":1,"label":"B","text":"Включить @EnableScheduling и пометить слушатель @EventListener","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Сделать метод слушателя возвращающим CompletableFuture без изменения способа вызова","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Добавить @Order, чтобы каждый слушатель получил отдельный worker","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":6,"blocks":[{"block_idx":0,"question_text":"Что такое `@TransactionalEventListener` и зачем он нужен?","options":[{"order":0,"label":"A","text":"Слушатель всегда выполняется сразу при publishEvent и открывает отдельную транзакцию","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Слушатель привязывает обработку к фазе транзакции, по умолчанию после успешного коммита","correct":true,"sections":{"explanation":"Аннотация связывает реакцию с исходом транзакции издателя.","example":"Уведомление об оформлении заказа отправляют после коммита.","when_to_apply":"Когда эффект допустим лишь для сохранённых данных.","edge_cases":"Без транзакции по умолчанию обработчика не будет."}},{"order":2,"label":"C","text":"Слушатель запускается только после rollback и отменяет исходный commit","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Слушатель гарантирует доставку после сбоя процесса без хранения события","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":7,"blocks":[{"block_idx":0,"question_text":"Какие фазы транзакции поддерживает `@TransactionalEventListener`?","options":[{"order":0,"label":"A","text":"BEFORE_COMMIT, AFTER_COMMIT и ON_RETRY, по умолчанию BEFORE_COMMIT","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"AFTER_COMMIT, AFTER_ROLLBACK и AFTER_RETRY, по умолчанию AFTER_ROLLBACK","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"BEFORE_COMMIT, AFTER_COMMIT, AFTER_ROLLBACK и AFTER_COMPLETION, по умолчанию AFTER_COMMIT","correct":true,"sections":{"explanation":"Фаза определяет время и исход транзакции для callback.","example":"AFTER_COMPLETION подходит для очистки после любого завершения.","when_to_apply":"Для явной привязки побочного эффекта к исходу.","edge_cases":"Событие вне транзакции требует fallbackExecution, если обработка допустима."}},{"order":3,"label":"D","text":"BEFORE_BEGIN, AFTER_COMMIT, AFTER_ROLLBACK и ON_TIMEOUT, по умолчанию AFTER_COMPLETION","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":8,"blocks":[{"block_idx":0,"question_text":"Как управлять порядком обработчиков одного события?","options":[{"order":0,"label":"A","text":"Поставить @Order, где большее число запускается первым","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Задать порядок через имена классов слушателей","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Поставить @Order и ожидать гарантированной последовательности завершения async-работ","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Поставить @Order с меньшим числом для более раннего вызова и не полагаться на порядок завершения async","correct":true,"sections":{"explanation":"Spring упорядочивает подходящих слушателей по приоритету.","example":"Order 10 обрабатывается раньше Order 20 при обычной синхронной доставке.","when_to_apply":"Для предсказуемого порядка независимых локальных обработчиков.","edge_cases":"Для строгой зависимости действий лучше явно оркестрировать шаги."}}]}]}
-,{"q_number":9,"blocks":[{"block_idx":0,"question_text":"Как условно обработать событие?","options":[{"order":0,"label":"A","text":"Указать condition в @EventListener и проверить аргумент события через SpEL","correct":true,"sections":{"explanation":"Condition вычисляется до вызова подходящего слушателя.","example":"Выражение проверяет признак vip у события заказа.","when_to_apply":"Для простого локального фильтра подписки.","edge_cases":"Для сложных условий удобнее явная логика или политика."}},{"order":1,"label":"B","text":"Указать condition в @EventListener и оценивать его после выполнения слушателя","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Указать @Order со значением поля события, чтобы отфильтровать вызов","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Указать условие только в имени метода, чтобы Spring интерпретировал его как фильтр","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":10,"blocks":[{"block_idx":0,"question_text":"Может ли `@EventListener` возвращать значение?","options":[{"order":0,"label":"A","text":"Слушатель возвращает значение издателю как результат publishEvent","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Синхронный @EventListener может вернуть объект или набор, который Spring опубликует как новые события","correct":true,"sections":{"explanation":"Ненулевой результат обычного слушателя может стать отдельной публикацией.","example":"Обработчик возвращает AuditRequested, его получает другой listener.","when_to_apply":"Для небольшой локальной цепочки событий.","edge_cases":"Асинхронный слушатель должен явно опубликовать следующее событие."}},{"order":2,"label":"C","text":"Любой @Async listener публикует возвращаемое значение автоматически после завершения Future","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Слушатель возвращает значение, которое Spring сохраняет как атрибут исходного события","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":11,"blocks":[{"block_idx":0,"question_text":"Что такое `@DomainEvents` в Spring Data?","options":[{"order":0,"label":"A","text":"Метка на сервисе, автоматически публикующем все изменения полей через dirty checking","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Метка на каждом поле агрегата, запускающая публикацию при вызове сеттера","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Метка на методе агрегата, возвращающем события, которые поддерживаемая операция репозитория публикует","correct":true,"sections":{"explanation":"Spring Data извлекает доменные события из экземпляра агрегата.","example":"Order накапливает OrderPlaced и возвращает его из метода @DomainEvents.","when_to_apply":"Когда факт создаётся в доменной модели и публикуется при сохранении агрегата.","edge_cases":"Прямой SQL и операция без экземпляра агрегата не дают такого же механизма."}},{"order":3,"label":"D","text":"Метка на методе агрегата, отправляющем события напрямую в Kafka после коммита","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":12,"blocks":[{"block_idx":0,"question_text":"Зачем нужен `@AfterDomainEventPublication`?","options":[{"order":0,"label":"A","text":"Запускает отправку событий повторно после любого save","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Удаляет записи агрегата после обработки всех слушателей","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Подтверждает коммит и удаляет сохранённое событие из брокера","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Вызывает callback после публикации доменных событий, например для очистки их коллекции","correct":true,"sections":{"explanation":"Аннотация задаёт действие после передачи накопленных событий publisher.","example":"Order очищает внутренний список после публикации.","when_to_apply":"Чтобы следующее сохранение не публиковало старый накопленный список.","edge_cases":"Callback публикации сам по себе не гарантирует commit или доставку вне процесса."}}]}]}
-,{"q_number":13,"blocks":[{"block_idx":0,"question_text":"Что такое Spring Modulith и как события используются для межмодульного взаимодействия?","options":[{"order":0,"label":"A","text":"Modulith задаёт проверяемые границы модулей, события связывают реакции с фактами, а реестр может сохранять публикации","correct":true,"sections":{"explanation":"Модули могут взаимодействовать через опубликованные доменные события.","example":"Inventory реагирует на OrderPlaced через @ApplicationModuleListener.","when_to_apply":"Для слабой связанности в одном развёртываемом приложении.","edge_cases":"Повтор незавершённых публикаций требует настройки и идемпотентности."}},{"order":1,"label":"B","text":"Modulith автоматически выделяет сервисы и доставляет все события через внешний брокер","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Modulith запрещает прямой публичный API и обязывает использовать Kafka для всех взаимодействий","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Modulith делает события синхронными на стороне слушателя и всегда выполняет их в транзакции издателя","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":14,"blocks":[{"block_idx":0,"question_text":"Как тестировать публикацию и обработку Spring Events?","options":[{"order":0,"label":"A","text":"Подменить все слушатели моками и считать это проверкой их фактических реакций","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Проверить факт публикации через ApplicationEvents и отдельно проверить наблюдаемый эффект обработчика","correct":true,"sections":{"explanation":"Публикацию и фактическую реакцию проверяют как разные границы.","example":"@RecordApplicationEvents позволяет найти OrderCreated в тесте.","when_to_apply":"Для проверки контракта издателя и регистрации обработчика.","edge_cases":"Для async ждите условие с таймаутом, для AFTER_COMMIT завершите транзакцию."}},{"order":2,"label":"C","text":"Вызвать обработчик напрямую и считать проверенной публикацию из сервиса","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Проверить обработчик сразу после publishEvent даже для async и AFTER_COMMIT","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":15,"blocks":[{"block_idx":0,"question_text":"Когда использовать Spring Events, а когда прямой вызов метода?","options":[{"order":0,"label":"A","text":"Выбирать события для обязательного синхронного результата, прямой вызов — при неизвестном числе подписчиков","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Выбирать события всегда, поскольку они гарантируют порядок и обработку после рестарта","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Выбирать события для необязательных независимых реакций, прямой вызов — для явного результата и порядка","correct":true,"sections":{"explanation":"Требования к управлению потоком определяют способ вызова.","example":"Сервис вызывает расчёт цены напрямую и публикует факт сохранения заказа.","when_to_apply":"Для ясных границ зависимостей и побочных эффектов.","edge_cases":"Обычный Spring Event не означает асинхронность или устойчивую доставку."}},{"order":3,"label":"D","text":"Выбирать прямой вызов только для внешних процессов, события — для любого локального изменения","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":16,"blocks":[{"block_idx":0,"question_text":"В чём разница между Spring Events и Kafka/RabbitMQ-сообщениями?","options":[{"order":0,"label":"A","text":"Spring Events и Kafka/RabbitMQ доставляют по сети и отличаются только сериализацией","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Spring Events всегда сохраняются на диске, сообщения Kafka/RabbitMQ живут только в памяти издателя","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Spring Events и брокеры дают одинаковые гарантии повторной доставки при одной аннотации listener","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Spring Events распространяются в контексте приложения, Kafka/RabbitMQ поддерживают межпроцессный обмен с инфраструктурой брокера","correct":true,"sections":{"explanation":"Локальная публикация не требует внешнего хранилища или сетевого протокола.","example":"Сервис публикует локальный аудит, а межсервисный заказ передаёт через брокер.","when_to_apply":"Для выбора границы доставки.","edge_cases":"У брокеров гарантии зависят от настроек публикации, хранения и подтверждения."}}]}]}
-]}
+{
+  "topic_slug": "spring-events-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Spring Events и зачем нужны?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Публикатор получает список слушателей через DI и сам вызывает их методы. Событие унифицирует аргументы этих вызовов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`OrderService` передаёт `OrderCreatedEvent` в `ApplicationEventPublisher`. Подходящие слушатели находит инфраструктура контекста. В сервисе отсутствует обход списка получателей.",
+                "source_of_confusion": "Spring действительно умеет внедрять `List<SomeHandler>`. В пайплайне с таким списком владелец кода сам вызывает обработчики, определяет правила ошибок и при необходимости собирает результаты.",
+                "if_it_were_true": "При таком устройстве точку вызова `EmailListener` можно было бы найти внутри цикла в `OrderService`. В показанной схеме её вызывает механизм рассылки Spring.",
+                "how_it_should_be": "Внедряйте список обработчиков, если сервису надо управлять шагами и их результатами. Для сообщения о свершившемся факте передайте типизированное событие издателю."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Публикатор сообщает о факте через контекст, а подходящие слушатели подписываются на тип события. Новую реакцию можно добавить отдельным бином.",
+              "correct": true,
+              "sections": {
+                "explanation": "Контекст передаёт опубликованное событие подходящим слушателям. `OrderService` знает о факте создания заказа и о контракте `OrderCreatedEvent`, а зависимость на конкретную реакцию принадлежит подписчику. По умолчанию такая развязка остаётся синхронной.",
+                "example": "Добавьте к `EmailListener` и `InventoryListener` бин с `@EventListener void count(OrderCreatedEvent event)`. После следующего `publishEvent` вырастет счётчик, хотя публикация в `OrderService` осталась прежней.",
+                "when_to_apply": "Сообщайте о факте, когда независимые модули реагируют на него по своим правилам и публикатору не нужно получать их ответы. Событие должно содержать данные, которыми получатели могут воспользоваться.",
+                "edge_cases": "При стандартной рассылке медленный синхронный подписчик задерживает возврат из `publishEvent`. Если требуется вынести работу в другой поток, настройте исполнитель отдельно и учтите границу транзакции.",
+                "related": "Observer объясняет подписку внутри процесса. Для доставки между экземплярами приложения нужен отдельный транспорт со своими правилами подтверждения и хранения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Публикатор регистрирует обработчики в контексте при каждой публикации. Рассылка освобождает их после обработки события.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@EventListener` на бине превращается в подписку при инициализации контекста. Публикация заказа использует уже зарегистрированные слушатели, и те остаются доступны для следующих заказов.",
+                "source_of_confusion": "Динамические шины могут предоставлять регистрацию и снятие подписок в рантайме. Из этого легко вывести лишнюю обязанность для обычного публикатора Spring.",
+                "if_it_were_true": "Если бы подписка действовала только на одну публикацию, второй заказ без повторной регистрации прошёл бы без аудита. Бин с `@EventListener` получит оба подходящих события.",
+                "how_it_should_be": "Объявляйте долгоживущую реакцию бином-слушателем. Управляйте регистрацией вручную только для действительно динамического жизненного цикла через соответствующее API контекста."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Публикатор передаёт событие контексту, который выбирает одного подходящего слушателя. Несколько бинов могут распределить события одного типа между собой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для одного `OrderCreatedEvent` контейнер может вызвать и почтовый, и складской слушатель. Подходящие подписки образуют веер. Это не выбор единственного исполнителя задачи.",
+                "source_of_confusion": "Очередь с конкурирующими потребителями обычно отдаёт конкретное сообщение одному получателю. Термин «подписчик» встречается и там, и в локальном multicaster.",
+                "if_it_were_true": "При распределении заказа одному исполнителю он мог бы попасть на склад без отправки письма только из-за выбора получателя. В обычной рассылке обе реакции получают событие.",
+                "how_it_should_be": "Для выбора одного обработчика в процессе делегируйте команду явно, например через таблицу маршрутов. Для разделения потока работы между процессами используйте очередь или одну группу потребителей брокера."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как опубликовать и обработать событие?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Передать объект в `ApplicationEventPublisher` и пометить метод бина `@EventListener`. Spring сопоставит событие с именем метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для обработчика с одним аргументом поддерживаемый тип выводится из параметра. `onOrderCreated(OrderCancelledEvent)` не получит `OrderCreatedEvent`, каким бы похожим ни было имя.",
+                "source_of_confusion": "Имя `onOrderCreated` принято выбирать по смыслу события. Кроме того, идентификатор слушателя по умолчанию связан с сигнатурой метода. Ни одно из этих свойств не меняет фильтрацию по типу.",
+                "if_it_were_true": "Если бы маршрутизация зависела от имени, переименование `onOrderCreated` в `audit` остановило бы получение заказов при неизменной сигнатуре. Аннотация и тип сохранят подписку.",
+                "how_it_should_be": "Выбирайте тип аргумента по доменному факту. Для нескольких типов укажите их в `@EventListener(classes = ...)` и соблюдайте ограничения на совместимость аргумента."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Передать объект в `ApplicationEventPublisher` и пометить метод экземпляра `@EventListener`. Spring найдёт обработчик и на объекте, созданном через `new`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обработчик аннотаций работает с бинами Spring. Произвольный `new OrderNotificationListener(...)` не станет слушателем автоматически даже при правильном типе аргумента.",
+                "source_of_confusion": "При ручном вызове аннотация не мешает обычному Java-методу. Отсюда легко перепутать тест тела метода с проверкой регистрации в контейнере.",
+                "if_it_were_true": "Если бы аннотация регистрировала все экземпляры, создание второго объекта в тесте вызвало бы дублирование уведомлений. Без регистрации контекст о таком объекте не узнает.",
+                "how_it_should_be": "Зарегистрируйте слушатель через компонентное сканирование или `@Bean`. Проверяйте автоматическую доставку в контексте, которому принадлежит зарегистрированный бин."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Передать объект в `ApplicationContext` и пометить метод бина `@EventListener`. Spring примет событие только от вызывающего кода с доступом ко всему контексту.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ApplicationContext` реализует `ApplicationEventPublisher`. Сервис может внедрить этот интерфейс и опубликовать заказ без зависимости на остальные методы контекста.",
+                "source_of_confusion": "В простых демонстрациях часто вызывают `context.publishEvent(...)` прямо из `main`. Это один из способов воспользоваться тем же интерфейсом.",
+                "if_it_were_true": "Если бы требовался весь контекст, сервис с единственным полем `ApplicationEventPublisher` не смог бы опубликовать `OrderCreatedEvent`. В примере именно эта узкая зависимость обеспечивает публикацию.",
+                "how_it_should_be": "Внедряйте `ApplicationEventPublisher`, когда компоненту нужна только публикация. Оставляйте `ApplicationContext` для кода, которому нужны и другие операции контекста."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Передать объект в `ApplicationEventPublisher` и пометить метод бина `@EventListener`. Spring подберёт обработчик по типу его аргумента.",
+              "correct": true,
+              "sections": {
+                "explanation": "Вызов `publishEvent` передаёт объект инфраструктуре событий. Контекст регистрирует адаптеры аннотированных методов бинов. Для метода с одним аргументом его объявленный тип определяет подходящие события.",
+                "example": "`publisher.publishEvent(new OrderCreatedEvent(42L));` активирует `@EventListener public void audit(OrderCreatedEvent e)` на бине. Слушатель с аргументом `OrderCancelledEvent` на такую публикацию не отреагирует.",
+                "when_to_apply": "Выберите узкий интерфейс публикации и зарегистрируйте реакцию как бин, когда публикатор сообщает о факте. Оставьте в событии стабильный идентификатор и данные, которые нужны получателям.",
+                "edge_cases": "В показанном `createOrder` обычный синхронный слушатель отработает до фиксации транзакции. Если после публикации произойдёт rollback, ранее выполненное внешнее действие автоматически не отменится.",
+                "related": "`ApplicationListener<E>` позволяет объявлять типизированный слушатель через интерфейс. `@EventListener` привязывает подписку к отдельному методу, поэтому один бин может содержать несколько реакций."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как создать кастомное событие?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Объявить класс или `record` с данными и передать объект в `publishEvent`. Spring обернёт полезную нагрузку, а слушатель может принимать её тип.",
+              "correct": true,
+              "sections": {
+                "explanation": "Начиная со Spring Framework 4.2 `publishEvent(Object)` принимает произвольный объект. Контекст оборачивает POJO в `PayloadApplicationEvent`, а адаптер `@EventListener` может передать в метод саму полезную нагрузку. Подкласс `ApplicationEvent` передаётся как событие напрямую.",
+                "example": "Для `record OrderCreated(long orderId) {}` вызов `publisher.publishEvent(new OrderCreated(42L))` доставит `OrderCreated` в `@EventListener void audit(OrderCreated event)`. В методе `event.orderId()` вернёт `42`.",
+                "when_to_apply": "Используйте небольшой неизменяемый снимок факта для доменных событий. Если нужен явно заданный `source` на уровне `ApplicationEvent`, предусмотрите этот контракт отдельно, например через подкласс.",
+                "edge_cases": "`record` защищает ссылки компонентов от переприсваивания. Компонент `List` всё ещё может ссылаться на изменяемый объект. Сохраните `List.copyOf(items)`, а при мутабельных элементах создайте снимки и для них.",
+                "related": "`ApplicationEvent` имеет `source` и время создания. Доменный `occurredAt` описывает момент бизнес-факта и может отличаться от времени, когда Spring создал обёртку."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Объявить подкласс `ApplicationEvent` с данными и передать объект в `publishEvent`. Spring отклонит класс без этого базового типа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring принимает POJO и оборачивает его. Метод с `@EventListener` и аргументом `OrderCreatedEvent` может получить такой объект без наследования.",
+                "source_of_confusion": "Старое API ориентировалось на `ApplicationEvent`. Такое наследование до сих пор встречается в событиях жизненного цикла и в коде, который читает `getSource()`.",
+                "if_it_were_true": "Если бы базовый тип был обязателен, `publishEvent(new OrderCreated(42L))` для `record` не доставил бы его слушателю. Современный интерфейс поддерживает этот вызов.",
+                "how_it_should_be": "Используйте `ApplicationEvent`, когда потребители сознательно работают с его контрактом. Для простой полезной нагрузки объявите отдельный тип данных и принимайте его в аннотированном методе."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Объявить класс с данными, `source` и временем в собственных полях. Spring прочитает их по именам и перенесёт в обёртку события.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный объект остаётся полезной нагрузкой целиком. Spring не переносит пользовательские поля с выбранными именами в поля `ApplicationEvent`. Время обёртки появляется при её создании.",
+                "source_of_confusion": "Имена `source` и `timestamp` совпадают с известными свойствами Spring-события, поэтому POJO легко принять за структурный аналог базового класса.",
+                "if_it_were_true": "Если бы перенос существовал, поле `timestamp` со вчерашней датой изменило бы `getTimestamp()` обёртки, созданной сейчас. Эти значения принадлежат разным объектам.",
+                "how_it_should_be": "Храните время и источник доменного факта в типе события и читайте их из полезной нагрузки. Если инфраструктура должна видеть конкретный `getSource()`, передайте его при создании `ApplicationEvent`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Объявить изменяемый класс с данными и передать объект в `publishEvent`. Spring выделит каждому слушателю независимую копию его полей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутри JVM подписчики могут получить одну и ту же полезную нагрузку. Если первый обработчик меняет поле или список, другой может наблюдать это изменение, а в разных потоках добавляются гонки.",
+                "source_of_confusion": "На границе брокера сообщение обычно сериализуется, и каждый процесс разбирает собственный объект. Локальная публикация не включает такую стадию копирования.",
+                "if_it_were_true": "При независимых копиях два слушателя могли бы расширить один список позиций без взаимного влияния. С общей ссылкой второй обработчик рискует получить чужие изменения.",
+                "how_it_should_be": "Передавайте неизменяемое событие и защищайте вложенные данные копированием при создании. Если обработчикам нужно изменяемое состояние, пусть каждый строит его из снимка."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие встроенные Spring-события (context events) существуют?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Запустить прогрев в `ApplicationRunner`. В Boot 3.5 раннер выполняется до `ApplicationStartedEvent`, а `ApplicationReadyEvent` приходит после прогрева.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ApplicationStartedEvent` уже опубликовано, когда Boot приступает к вызову runners. Синхронный `ApplicationRunner` удерживает дальнейший переход к готовности, но не задерживает публикацию `ApplicationStartedEvent`.",
+                "source_of_confusion": "Название `Started` звучит как отметка окончания всех стартовых работ. Boot использует его для другой границы, когда refresh контекста завершён.",
+                "if_it_were_true": "Если бы раннер предшествовал `Started`, слушатель этого события всегда мог бы читать уже прогретый кеш. В Boot 3.5 его вызов может прийти при пустом кеше.",
+                "how_it_should_be": "Для обязательного шага выберите `ApplicationRunner` и дождитесь окончания работы внутри него. Для метрики завершения refresh используйте `ApplicationStartedEvent`, не выводя из него готовность кеша."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Запустить прогрев в слушателе `ContextRefreshedEvent`. В Boot 3.5 он вызывается после `ApplicationStartedEvent` и до `ApplicationReadyEvent`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ContextRefreshedEvent` относится к завершению refresh конкретного контекста. Boot отправляет `ApplicationStartedEvent` после refresh, поэтому указанная последовательность перевёрнута.",
+                "source_of_confusion": "Два события приходятся на близкие этапы запуска. Кроме того, `ContextRefreshedEvent` в иерархии может прийти из дочернего контекста, что усложняет чтение общего журнала.",
+                "if_it_were_true": "При таком порядке в рамках одного запуска можно было бы считать `ApplicationStartedEvent` границей до refresh. На самом деле refresh уже завершён к этому событию Boot.",
+                "how_it_should_be": "Для действия, связанного с конкретным refresh, проверяйте источник `ContextRefreshedEvent`. Для обязательной работы в последовательности запуска Boot удобнее синхронный runner."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Запустить прогрев в `ApplicationRunner`. В Boot 3.5 он выполняется после `ApplicationStartedEvent` и завершается до `ApplicationReadyEvent`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Boot завершает refresh, публикует `ApplicationStartedEvent` и вызывает runners. Когда они завершились успешно, он публикует `ApplicationReadyEvent`, после чего переводит readiness в `ACCEPTING_TRAFFIC`. Обязательный прогрев входит в эту последовательность, пока runner реально ждёт его завершения.",
+                "example": "`@Bean ApplicationRunner cacheWarmup(CacheService cache) { return args -> cache.warmUp(); }` удерживает запуск на время синхронного прогрева. Если прогрев занял 3 секунды, `ApplicationReadyEvent` появится только после его окончания.",
+                "when_to_apply": "Используйте runner для обязательного шага после подготовки контекста, когда маршрутизация опирается на readiness. Длительная работа должна уложиться в ограничения запуска окружения.",
+                "edge_cases": "Если runner только отправил задачу в пул и вернулся, Boot может объявить готовность при ещё пустом кеше. Если обязательный синхронный прогрев выбросил исключение, нормальный переход к готовности прерывается.",
+                "related": "`ContextClosedEvent` относится к закрытию контекста, `ContextStoppedEvent` к `stop()`. Эти события Spring Framework описывают жизненный цикл контекста, а `ApplicationStartedEvent` и `ApplicationReadyEvent` отмечают шаги запуска Boot. [Spring Boot 3.5](https://docs.spring.io/spring-boot/3.5/reference/features/spring-application.html#features.spring-application.application-events-and-listeners)"
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Запустить прогрев в `ApplicationRunner`. В Boot 3.5 он выполняется после `ApplicationReadyEvent`, а readiness ожидает завершения раннера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Boot 3.5 runner стоит перед готовностью и его синхронная работа завершается до `ApplicationReadyEvent`. Успешная readiness следует за публикацией события готовности.",
+                "source_of_confusion": "Открытый сокет и лог о запущенном сервере могут появиться раньше runners. Внешний наблюдатель легко принимает возможность соединения за событие `ApplicationReadyEvent`.",
+                "if_it_were_true": "Если бы runner был вызван после `Ready`, подписчик этого события мог бы регулярно видеть непрогретый кеш при синхронном runner. Порядок Boot предотвращает именно этот сценарий.",
+                "how_it_should_be": "Различайте запуск веб-сервера, завершение runners и readiness. Обязательную работу выполняйте в runner, а допуск трафика проверяйте по readiness, если инфраструктура его учитывает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как сделать обработку события асинхронной?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Назначить `eventsExecutor` глобальному multicaster. В пул уйдёт только `onOrderCreated`, а остальных слушателей публикатор дождётся.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Исполнитель на `SimpleApplicationEventMulticaster` меняет политику рассылки для всех подходящих слушателей, поддерживающих асинхронное исполнение. На одном имени метода он не ограничивается.",
+                "source_of_confusion": "Оба варианта используют `Executor`, но глобальный multicaster планирует доставку, а `@Async` перехватывает вызов конкретного метода.",
+                "if_it_were_true": "Если бы настройка была адресной, аудит другого события в том же контексте остался бы в потоке публикации. С глобальным пулом обычный слушатель аудита тоже может перейти на worker.",
+                "how_it_should_be": "Сохраняйте синхронный multicaster и указывайте `@Async(\"eventsExecutor\")` на одном методе для локальной политики. Глобальный исполнитель выбирайте, только если подходят его последствия для контекста."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Добавить к `onOrderCreated` аннотацию `@Async(\"eventsExecutor\")`. Публикатор дождётся постановки задачи и обычных синхронных слушателей.",
+              "correct": true,
+              "sections": {
+                "explanation": "Синхронный multicaster вызывает адаптер и проксированный метод. Включённая обработка `@Async` направляет вызов этого метода в именованный пул. При обычном успешном принятии задачи прокси возвращает управление без ожидания отправки письма. Остальные синхронные вызовы по-прежнему занимают время публикатора.",
+                "example": "Для одного заказа аудит пишет запись за 10 мс, а уведомление отправляет письмо за секунду. После постановки задачи в `eventsExecutor` публикация может завершиться вместе с аудитом, пока отправка ещё выполняется в потоке с префиксом `event-`.",
+                "when_to_apply": "Используйте отдельный пул для фоновой реакции, если вызывающий код может продолжать без её результата. Планируйте ёмкость очереди, обработку отказов и отдельно задавайте транзакцию для изменений фонового обработчика.",
+                "edge_cases": "При отказе исполнителя принять задачу исключение отправки может дойти до публикатора. Исключение уже запущенного `void`-метода обрабатывается в фоне через `AsyncUncaughtExceptionHandler` или внутри метода.",
+                "related": "Граница исполнения и граница commit независимы. Если уведомление допустимо только после фиксации заказа, зарегистрируйте реакцию на `AFTER_COMMIT` и только затем выносите исполнение в пул."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Добавить к `onOrderCreated` аннотацию `@Async` без аргумента. Spring выберет `eventsExecutor` по имени события и дождётся результата отправки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `@Async` без квалификатора действует выбор исполнителя по конфигурации. Он не связан с именем `OrderCreatedEvent`. При успешной постановке `void`-метод не даёт публикатору результата отправки.",
+                "source_of_confusion": "Пул из примера может фактически оказаться исполнителем по умолчанию в конкретном контексте. Это свойство конфигурации легко принять за контракт именования событий.",
+                "if_it_were_true": "Если бы имя типа определяло поток, добавление второго бина `Executor` не влияло бы на выбор для `OrderCreatedEvent`. Без квалификатора изменение конфигурации может поменять выбор.",
+                "how_it_should_be": "Для стабильной адресации укажите имя бина в `@Async`. Если отправка должна вернуть результат в вызывающий код, используйте явный API с результатом или отдельно наблюдайте состояние фоновой операции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Добавить к `onOrderCreated` аннотацию `@Order` с приоритетом. Spring перенесёт поздний слушатель в `eventsExecutor` и отпустит публикатор.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Order` сортирует вызовы слушателей. Поздний синхронный обработчик всё равно вызывается в потоке публикации, который ждёт отправки письма.",
+                "source_of_confusion": "Порядок часто обсуждают рядом с асинхронностью, когда на одно событие реагируют несколько бинов. Но приоритет задаёт последовательность, а не место исполнения.",
+                "if_it_were_true": "Если бы высокий номер автоматически переводил работу в пул, увеличение `@Order(1)` до `@Order(10)` изменило бы имя потока. С синхронной доставкой меняется только порядок вызова.",
+                "how_it_should_be": "Применяйте `@Order` для явного порядка вызовов. Для отправки в показанный пул добавьте именованный `@Async` к зарегистрированному методу."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@TransactionalEventListener` и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "При commit слушатель сработает внутри `publishEvent()`. При rollback отправка тоже успеет завершиться до отката.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный синхронный `@EventListener` действительно может вызваться внутри `publishEvent()`. Показанный транзакционный адаптер при публикации регистрирует синхронизацию, а фазу по умолчанию запускает после успешного commit.",
+                "source_of_confusion": "Обе аннотации находят событие по типу. До завершения транзакции вызов адаптера выглядит как обычная доставка, хотя в этот момент он только регистрирует фазовый callback.",
+                "if_it_were_true": "Если бы тело вызывалось сразу, исключение после публикации могло бы откатить заказ, а клиент уже получил бы письмо. У указанного слушателя при таком откате письмо не отправляется.",
+                "how_it_should_be": "Проверьте аннотацию и выбранную фазу. Для внешнего побочного действия после фиксации публикуйте событие в активной транзакции и используйте `AFTER_COMMIT`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При commit слушатель сработает перед фиксацией. При rollback, начавшемся после выполнения слушателя, письмо уже будет отправлено.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотация без аргументов выбирает `AFTER_COMMIT`, поэтому письмо не отправляется перед фиксацией. Сценарий с выполнением до попытки commit относится к `BEFORE_COMMIT`.",
+                "source_of_confusion": "Фаза связана с транзакцией, поэтому её можно принять за способ добавить последний шаг непосредственно перед записью результата. Конкретная фаза определяет границу.",
+                "if_it_were_true": "При варианте с вызовом до commit ошибка ограничения на этапе фиксации оставила бы клиента с письмом без заказа. В показанном коде для вызова нужен успешный исход.",
+                "how_it_should_be": "Для записи аудита в рамках исходной транзакции рассмотрите `BEFORE_COMMIT` и ту же транзакционную область. Для письма, которое нельзя отозвать откатом БД, оставьте `AFTER_COMMIT`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При commit слушатель сработает после успешной фиксации. При rollback фаза по умолчанию пропустит обработчик.",
+              "correct": true,
+              "sections": {
+                "explanation": "В момент публикации адаптер привязывает событие к активной транзакции потока. Параметр `phase` по умолчанию равен `AFTER_COMMIT`. Callback завершения запускает обработчик только при статусе успешной фиксации.",
+                "example": "Если заказ №42 зафиксирован, слушатель получает его ID и вызывает `sendConfirmation(42)`. Если код после публикации пометил ту же транзакцию rollback-only и менеджер её откатил, почтовых вызовов для №42 не будет.",
+                "when_to_apply": "Привязывайте реакцию к `AFTER_COMMIT`, когда её смысл зависит от сохранённого бизнес-факта. Публикуйте внутри реальной транзакции, вызванной через прокси или открытую программно.",
+                "edge_cases": "Без активной транзакции слушатель по умолчанию пропускается. В реактивных транзакциях начиная со Spring 6.1 нужен текущий `TransactionContext` в источнике события. `TransactionalEventPublisher` помогает включить публикацию в ту же реактивную цепочку.",
+                "related": "После commit часть ресурсов ещё может быть доступна. Для собственной записи используйте новую транзакцию, например через отдельный сервис с `REQUIRES_NEW`. Для восстановления письма после падения нужен отдельно сохранённый факт отправки. [Spring Framework](https://docs.spring.io/spring-framework/reference/data-access/transaction/event.html)"
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При commit и rollback слушатель сработает после завершения. Фаза по умолчанию проверяет только окончание транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запуск при любом завершении относится к `AFTER_COMPLETION`. В примере `@TransactionalEventListener` без `phase` выбирает `AFTER_COMMIT`, поэтому при откате тело пропускается.",
+                "source_of_confusion": "Обе фазы вызываются через механизм завершения транзакции. Сходная точка входа легко скрывает различие между фильтром по статусу и отсутствием такого фильтра.",
+                "if_it_were_true": "Если бы слушатель вызывался после любого исхода, почтовый адаптер зарегистрировал бы отправку и в тесте с явным rollback. Для приведённого обработчика ожидается отсутствие отправки.",
+                "how_it_should_be": "Выбирайте фазу по смыслу реакции. Для очистки временных ресурсов независимо от исхода подойдёт `AFTER_COMPLETION`. Для подтверждения заказа нужен успешный commit."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие фазы транзакции поддерживает `@TransactionalEventListener`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Вызовутся `onCommit` и `onCompletion`. `STATUS_UNKNOWN` входит в ветку commit, пока менеджер не подтвердил rollback.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Framework 6.2 проверяет равенство `STATUS_COMMITTED` для `AFTER_COMMIT`. Неопределённый статус не проходит этот фильтр. `AFTER_COMPLETION` при этом получает уведомление.",
+                "source_of_confusion": "При ошибке связи во время commit БД действительно могла зафиксировать данные. Такая возможность не даёт менеджеру доказательства успешной фиксации.",
+                "if_it_were_true": "Если трактовать неопределённость как успех, отправка подтверждения возможна и для записи, которая не появилась в БД. Именно этого вывода фаза commit избегает.",
+                "how_it_should_be": "После `STATUS_UNKNOWN` выясняйте состояние по источнику истины, например по устойчивому ID операции. Запускайте действия успеха только после подтверждения результата."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Вызовутся `onRollback` и `onCompletion`. `STATUS_UNKNOWN` входит в ветку rollback, поскольку подтверждения commit нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AFTER_ROLLBACK` требует `STATUS_ROLLED_BACK`. `STATUS_UNKNOWN` не сообщает об откате, поэтому из этих двух методов запустится только общий обработчик завершения.",
+                "source_of_confusion": "Локальные ошибки часто ведут к автоматическому rollback. При сбое на границе фиксации отсутствие ответа может означать, что точный исход сейчас недоступен.",
+                "if_it_were_true": "Если бы отсутствие подтверждения считалось откатом, компенсация могла бы сработать даже для фактически зафиксированного заказа.",
+                "how_it_should_be": "Привязывайте компенсацию по известному откату к `AFTER_ROLLBACK`. При неопределённом исходе сначала сверяйте фактическое состояние и проектируйте компенсацию с учётом повторов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ни один слушатель не вызовется. Фазы завершения запускаются только для `STATUS_COMMITTED` и `STATUS_ROLLED_BACK`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `AFTER_COMPLETION` в Spring Framework 6.2 нет требования к конкретному коду в `afterCompletion`. Поэтому при `STATUS_UNKNOWN` сработает `onCompletion`.",
+                "source_of_confusion": "В кратких описаниях завершение часто формулируют как «после commit или rollback». Условие в реализации шире, когда менеджер вызвал синхронизации с неизвестным итогом.",
+                "if_it_were_true": "Если бы `AFTER_COMPLETION` пропускал неизвестный итог, локальная очистка, привязанная к этой фазе, осталась бы невыполненной после такого callback.",
+                "how_it_should_be": "Используйте `AFTER_COMPLETION` для работы, не зависящей от исхода. Для действия с обязательным известным результатом выбирайте отдельную фазу или сверяйте итог операции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Вызовется только `onCompletion`. `STATUS_UNKNOWN` не подтверждает commit или rollback, но остаётся статусом завершения.",
+              "correct": true,
+              "sections": {
+                "explanation": "В Spring Framework 6.2 ветки `AFTER_COMMIT` и `AFTER_ROLLBACK` сверяют статус с `STATUS_COMMITTED` и `STATUS_ROLLED_BACK` соответственно. Ветка `AFTER_COMPLETION` реагирует на сам вызов `afterCompletion`. Поэтому при `STATUS_UNKNOWN` выполняется только третий метод.",
+                "example": "Пусть три метода пишут названия фаз в журнал. При `STATUS_UNKNOWN` там будет `completion`. Если для той же регистрации менеджер передаст `STATUS_ROLLED_BACK`, появятся записи `rollback` и `completion` в порядке выполнения их синхронизаций.",
+                "when_to_apply": "Привязывайте освобождение ресурсов к `AFTER_COMPLETION`, когда оно безопасно для любого исхода. Разделяйте побочные действия успеха, компенсацию отката и работу по сверке неизвестного результата.",
+                "edge_cases": "`BEFORE_COMMIT` вызывается раньше, поэтому его выполнение не доказывает успех commit. При публикации без транзакции `fallbackExecution = true` позволяет запустить обработку, но сама фаза завершения в этом случае не наступает.",
+                "related": "`TransactionSynchronization` хранит статус завершения. Аннотация выбирает момент обработки, а проверка факта фиксации при неизвестном исходе требует прикладного протокола сверки. [Реализация Spring Framework 6.2.19](https://github.com/spring-projects/spring-framework/blob/v6.2.19/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalApplicationListenerSynchronization.java)"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как управлять порядком обработчиков одного события?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`validateOrder` → `auditOrder` → `notifyCustomer`. Меньшее значение `@Order` означает более ранний вызов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Адаптеры зарегистрированных методов учитывают `@Order`. При синхронной рассылке три подходящих слушателя вызываются последовательно по возрастанию значения, поэтому их место в классе не определяет результат.",
+                "example": "Если методы добавляют свои имена в общий список при вызове `publishEvent`, в списке появятся `validateOrder`, `auditOrder`, `notifyCustomer`. Перенос `auditOrder` в начало файла эту последовательность не изменит.",
+                "when_to_apply": "Задавайте разные значения, если нужен предсказуемый порядок локальных синхронных реакций. Шаги, от которых зависит бизнес-инвариант, удобнее выражать в явном сценарии выполнения.",
+                "edge_cases": "Одинаковые значения или отсутствие `@Order` не дают гарантии относительного порядка. При `@Async` даже разные значения не определяют порядок фактического завершения задач.",
+                "related": "`Ordered.HIGHEST_PRECEDENCE` соответствует минимальному `int`. У фазовых слушателей момент вызова сначала ограничивается фазой транзакции, поэтому число порядка не переносит обработчик из `AFTER_COMMIT` в `BEFORE_COMMIT`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`notifyCustomer` → `auditOrder` → `validateOrder`. Большее значение `@Order` означает более ранний вызов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring вызывает слушателя с `@Order(1)` раньше слушателей с `@Order(2)` и `@Order(3)`. Сортировка по убыванию дала бы обратный порядок.",
+                "source_of_confusion": "Во многих предметных областях большему числу соответствует более высокий приоритет. В Spring число задаёт позицию сортировки, и маленькое значение идёт раньше.",
+                "if_it_were_true": "Если бы порядок был обратным, уведомление из примера могло бы произойти раньше валидации. При указанных значениях валидация вызывается первой.",
+                "how_it_should_be": "Задавайте меньший номер для более ранней реакции. В тесте регистрируйте вызовы в список, чтобы наблюдать последовательность, когда она является частью контракта."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`notifyCustomer` → `validateOrder` → `auditOrder`. Синхронная рассылка использует порядок объявления методов в классе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Синхронность определяет, что вызовы идут в одном потоке, а очередность задаётся `@Order`. Порядок текста Java-класса для этого не используется.",
+                "source_of_confusion": "Прямые вызовы в Java-методе идут по порядку строк. Здесь в классе находятся объявления, а фактическими вызовами управляет контейнер.",
+                "if_it_were_true": "Если бы строки исходника управляли рассылкой, перенос `notifyCustomer` в конец изменил бы время отправки. Значение `@Order(3)` оставляет его последним и без такого переноса.",
+                "how_it_should_be": "Для локальной сортировки задайте `@Order`. Когда нужно гарантировать последовательность действий и управлять её ошибками напрямую, вызовите их из оркестратора одним явным потоком."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`auditOrder` → `validateOrder` → `notifyCustomer`. `@Order` разрешает совпадения приоритетов, а первичный порядок задаёт регистрация методов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В примере приоритеты различаются, поэтому порядок регистрации не нужен для выбора первого метода. `validateOrder` опережает `auditOrder` из-за значения `1`.",
+                "source_of_confusion": "Коллекции с равным ключом сортировки могут сохранять исходный порядок элементов. Это не повод переносить порядок регистрации выше ключа сортировки.",
+                "if_it_were_true": "Если бы регистрация была первичной, изменение `@Order(2)` на `@Order(0)` у `auditOrder` могло бы оставить его на прежней позиции. При различающихся значениях он стал бы первым.",
+                "how_it_should_be": "Выделяйте разные номера там, где относительный порядок существенен. Если завершение шагов должно быть строго последовательным, не заменяйте его параллельной отправкой задач с приоритетами."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как условно обработать событие?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Слушатель обработает обе публикации. `#a0.total > 10000` включает значение на границе при сравнении SpEL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Условие использует строгий оператор `>`. Сумма `10_000` равна правой части, поэтому адаптер пропустит первый вызов. Для `12_500` сравнение истинно.",
+                "source_of_confusion": "В требованиях фраза «от десяти тысяч» часто включает порог. Код использует другой оператор, и это видно только при проверке граничного значения.",
+                "if_it_were_true": "Если бы сравнение включало границу, клиент из примера получил бы два вызова `assignManager` вместо одного.",
+                "how_it_should_be": "Если правило должно включать заказ ровно на 10 000, используйте `#a0.total >= 10000`. Закрепите тестами порог, значение ниже и значение выше."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Слушатель отклонит обе публикации. `#a0` указывает на обёртку Spring, в которой нет свойства `total`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`#a0` ссылается на первый аргумент метода. Здесь это `OrderCreatedEvent` с доступным `total`. Контейнерная обёртка доступна через `#root.event`, а её полезная нагрузка через `payload`.",
+                "source_of_confusion": "POJO действительно публикуется через `PayloadApplicationEvent`. Ошибка возникает, если распространить тип объекта внутри multicaster на уже разрешённые аргументы метода.",
+                "if_it_were_true": "Если бы `#a0` был обёрткой, обращение к её отсутствующему `total` могло бы вызвать ошибку вычисления SpEL. В показанном коде значение успешно читается.",
+                "how_it_should_be": "Для фильтра по аргументу используйте `#a0` или `#root.args[0]`. Когда работаете с `#root.event`, учитывайте способ публикации и обращайтесь к payload явно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Слушатель обработает только вторую публикацию. `#a0` даёт аргумент `OrderCreatedEvent`, и только 12 500 строго больше порога.",
+              "correct": true,
+              "sections": {
+                "explanation": "После совпадения типа адаптер подготавливает аргументы метода и вычисляет SpEL до вызова. `#a0.total` читает сумму первого аргумента, поэтому `10_000` даёт `false`, а `12_500` даёт `true`.",
+                "example": "Если почтовый или VIP-адаптер записывает `orderId` тестового события, для двух публикаций попадёт только `102L`. При замене `>` на `>=` станут подходить оба идентификатора.",
+                "when_to_apply": "Используйте `condition` для короткого фильтра по данным события, когда неподходящий факт должен быть проигнорирован. Длинные правила с внешними зависимостями легче тестировать в обычном Java-коде.",
+                "edge_cases": "Индексная ссылка работает без имени параметра. Запись `#event.total` зависит от того, доступны ли Spring метаданные параметра `event`, например при компиляции с `-parameters`.",
+                "related": "`#root.event` указывает на Spring-событие, для POJO это `PayloadApplicationEvent`. Явная ссылка `#root.event.payload.total` проходит через обёртку, тогда как `#a0.total` читает уже разрешённый аргумент. [Контракт `@EventListener`](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/context/event/EventListener.html#condition())"
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Слушатель обработает обе публикации. SpEL отфильтрует только результат метода после вызова `assignManager`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Условие проверяется перед вызовом тела метода. У показанного `void`-слушателя и нет возвращаемого объекта, который можно было бы отфильтровать.",
+                "source_of_confusion": "Синхронный слушатель может вернуть новое событие. Из этой отдельной возможности легко ошибочно вывести, что `condition` управляет последующей публикацией результата.",
+                "if_it_were_true": "Если бы проверка была после метода, заказ на 10 000 уже успел бы вызвать `assignManager`, даже когда условие ложно. По факту первый вызов отсекается заранее.",
+                "how_it_should_be": "Чтобы решить, вызывать ли слушатель, задайте `condition`. Чтобы решить, какое новое событие публиковать после выполненной логики, формируйте результат внутри метода или публикуйте его явно."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Может ли `@EventListener` возвращать значение?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring опубликует возвращённый `OrderShippedEvent` как новое событие. Синхронный `onOrderShipped` получит его в следующей рассылке.",
+              "correct": true,
+              "sections": {
+                "explanation": "Адаптер `@EventListener` обрабатывает ненулевой результат синхронного метода как новую публикацию. Новый тип отбирает слушателей заново. В примере `onOrderPaid` сначала выполняет планирование, затем вернувшийся `OrderShippedEvent` доходит до метода отправки уведомления.",
+                "example": "Если публикация `OrderPaidEvent` для №42 успешно проходит оба обработчика, сначала вызывается `arrangeShipping(42)`, а потом `sendShippingNotification` с результатом для №42. Если `onOrderPaid` вернёт `null`, второго события не будет.",
+                "when_to_apply": "Используйте возвращаемое событие для короткой локальной цепочки, когда новый факт действительно следует из обработки и доменный тип выражает этот факт. В сложной цепочке явный вызов издателя облегчает трассировку.",
+                "edge_cases": "Если результатом является массив или коллекция, каждый элемент публикуется отдельно. Асинхронный слушатель не может пользоваться возвратом значения для новой публикации, ему нужен явный издатель.",
+                "related": "`publishEvent` возвращает `void`. Возврат из слушателя служит входом новой рассылки и не становится ответом вызывающему сервису. [Контракт `@EventListener`](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/context/event/EventListener.html)"
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spring вернёт `OrderShippedEvent` из исходного `publishEvent`. `onOrderShipped` выполнится, если публикатор повторит вызов с полученным объектом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "API `publishEvent` не возвращает результат. `OrderShippedEvent` публикует сам адаптер синхронного слушателя, поэтому клиентский код не перехватывает этот объект как возвращённое значение.",
+                "source_of_confusion": "Обычный Java-вызов `chain.onOrderPaid(event)` действительно вернёт объект. Событийный вызов добавляет поверх метода инфраструктурное правило обработки результата.",
+                "if_it_were_true": "Если бы интерфейс возвращал объект, сервис мог бы присвоить `var result = publisher.publishEvent(event)`. Такой код не компилируется для метода с `void`.",
+                "how_it_should_be": "Для результата, необходимого вызывающему коду, вызовите метод сервиса напрямую. Для продолжения событийной цепочки оставьте возвращаемый объект адаптеру `@EventListener`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Spring отбросит `OrderShippedEvent` как результат метода. Для вызова `onOrderShipped` слушатель должен сам вызвать `publishEvent`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В показанном синхронном случае адаптер распознаёт возвращённый объект и делает публикацию. Если добавить явную отправку и сохранить тот же результат, можно получить два события.",
+                "source_of_confusion": "У `@Async`-слушателя последующую публикацию действительно делают явно. Ограничение фонового вызова нельзя переносить на обычный синхронный метод.",
+                "if_it_were_true": "Если бы объект отбрасывался, уведомление не пришло бы при успешном `arrangeShipping`. В приведённой цепочке адаптер вызывает новую рассылку.",
+                "how_it_should_be": "При явной публикации используйте `void`, чтобы не продублировать событие через результат. Такой подход подходит, когда публикация происходит на ветке фоновой логики."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Spring добавит `OrderShippedEvent` в исходную рассылку как дополнительные данные `OrderPaidEvent`. Отдельный вызов `onOrderShipped` не произойдёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Результат не заменяет и не дополняет объект исходной рассылки. Он публикуется как отдельное событие типа `OrderShippedEvent` и подходит второму обработчику.",
+                "source_of_confusion": "Оба события обрабатываются в одном потоке, поэтому вложенная рассылка может выглядеть как продолжение одного вызова. Тип события при этом меняется.",
+                "if_it_were_true": "Если бы Spring присоединял результат к исходному событию, другие получатели `OrderPaidEvent` смогли бы прочесть дату доставки из него. Они по-прежнему получают исходное событие.",
+                "how_it_should_be": "Делайте факт этапа отдельным типом с нужными данными. Если получателям исходного факта требуются дополнительные поля, включайте их в контракт до публикации."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое `@DomainEvents` в Spring Data?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Событие выйдет из обеих операций. `delete` использует переданный объект, а `deleteById` загружает агрегат и вызовет тот же callback.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддержка `@DomainEvents` относится к вызовам методов репозитория, получающим агрегат. Внутреннее чтение сущности при `deleteById` не превращает ID в экземпляр `order`, доступный перехватчику публикации.",
+                "source_of_confusion": "У конкретной реализации `deleteById` может действительно быть чтение перед удалением. Это деталь алгоритма удаления, а не гарантия, что Spring Data публикует события загруженного агрегата.",
+                "if_it_were_true": "Если бы внутреннее чтение извлекало события, вызов только с ID мог бы опубликовать событие, накопленное в отдельном объекте вызывающего кода. Этот объект вообще не передавался.",
+                "how_it_should_be": "При удалении с накопленным доменным фактом передайте сам агрегат в `delete(order)`. Если нужна операция по ID и событие, явно смоделируйте чтение и изменение агрегата или запишите факт в своей транзакционной логике."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Событие выйдет только из `deleteById`. По идентификатору Spring Data проверит сохранённое состояние и восстановит события заказа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`deleteById` не входит в контракт публикации `@DomainEvents`. `delete(order)` получает агрегат и его накопленные события. Восстановление временного буфера по ID автоматически не выполняется.",
+                "source_of_confusion": "Идентификатор действительно позволяет найти строку заказа. Временный доменный буфер часто `@Transient`, поэтому чтение строки не восстанавливает факты, накопленные в другом экземпляре.",
+                "if_it_were_true": "Если бы ID был достаточен для восстановления, событие из объекта в памяти появилось бы после чтения строки даже без хранения его содержимого. Из строки заказа оно не выводится.",
+                "how_it_should_be": "Для локальной публикации передавайте агрегат с буфером. Для восстановления событий из хранилища сохраняйте их отдельно, например в журнале событий или outbox с выбранной схемой."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Событие не выйдет ни из одной операции. `@DomainEvents` поддерживает `save`, а публикацию при удалении всегда выполняет вызывающий сервис.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Data JPA включает `delete(aggregate)` в контракт. После штатного выполнения операции перехватчик может вызвать метод `@DomainEvents` на переданном экземпляре и опубликовать его события.",
+                "source_of_confusion": "`save` чаще встречается в примерах с `AbstractAggregateRoot`, а похожий по имени `deleteById` действительно исключён. У этих двух методов удаления разные аргументы.",
+                "if_it_were_true": "Если бы удаление не поддерживалось, обычный слушатель не увидел бы накопленный факт при независимом вызове `delete(order)`. Он может получить его от перехватчика репозитория.",
+                "how_it_should_be": "Сверяйте контракт конкретного метода и наличие агрегата среди аргументов. Добавляйте явную публикацию только там, где текущего механизма нет или требуется другая гарантия."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Событие выйдет только из `delete(order)`. Этот вызов передаёт экземпляр с буфером, а `deleteById` передаёт один идентификатор.",
+              "correct": true,
+              "sections": {
+                "explanation": "Перехватчик поддерживаемого метода репозитория использует аргумент-агрегат, вызывает его метод без параметров с `@DomainEvents` и передаёт результат в `ApplicationEventPublisher`. Поддержка `delete(order)` следует из этого контракта. Загрузка, которую реализация может выполнять внутри `deleteById`, его не расширяет.",
+                "example": "Агрегат заказа №42 накопил `OrderDeleted(42)`. При успешном `delete(order)` обычный слушатель может записать этот ID. В отдельном запуске с теми же данными `deleteById(42)` удалит запись, но не опубликует событие из буфера объекта `order`.",
+                "when_to_apply": "Храните факты изменения в агрегате и вызывайте `save`, `saveAll` или поддерживаемое удаление с агрегатами, когда публикация должна следовать за репозиторной операцией. Для накопления подходят собственные методы или `AbstractAggregateRoot.registerEvent`.",
+                "edge_cases": "Внешняя транзакция может быть ещё открыта после операции репозитория. Публикация показывает передачу события Spring, а действие после успешного commit требует отдельного фазового слушателя.",
+                "related": "`@AfterDomainEventPublication` вызывается после штатной публикации накопленного набора и может очищать буфер. В `AbstractAggregateRoot` такая очистка уже предусмотрена. [Spring Data JPA](https://docs.spring.io/spring-data/jpa/reference/repositories/core-domain-events.html)"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Зачем нужен `@AfterDomainEventPublication`?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Буфер очистится до публикации. При повторном `save` ни `E1`, ни `E2` из него уже не выйдут.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Spring Data Commons 3.5.13 callback очистки расположен после цикла публикации и проверки набора. Исключение из `publishEvent(E2)` прерывает работу до callback, поэтому стандартный буфер остаётся заполненным.",
+                "source_of_confusion": "Очереди в памяти иногда используют чтение с удалением или предварительное отделение партии от буфера. У `@DomainEvents` другая последовательность.",
+                "if_it_were_true": "Если бы существовало удаление до вызовов, при отказе второго слушателя повторный `save` уже не имел бы `E2` для повторной попытки.",
+                "how_it_should_be": "Для обычной очистки используйте callback после штатного полного прохода. Если нужна устойчивая очередь с состояниями, храните запись публикации за пределами временного списка агрегата."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Буфер не очистится. Если повторный `save` того же объекта дойдёт до публикации, `E1` может выйти ещё раз вместе с `E2`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В Spring Data Commons 3.5.13 перехватчик поочерёдно вызывает `publishEvent` для накопленных событий. После штатного завершения всех публикаций и проверки списка он вызывает `@AfterDomainEventPublication`. Исключение на `E2` прерывает цикл до очистки, а факт удачной публикации `E1` внутри буфера отдельно не отмечается.",
+                "example": "Агрегат хранит `E1` и `E2`. Аудит для `E1` уже принял команду, после чего обработка `E2` закончилась исключением. Следующий успешный проход по тому же буферу снова передаст аудиту `E1`. При внешнем эффекте это может быть заметным дублем.",
+                "when_to_apply": "Используйте callback для очистки после нормальной публикации набора. Если допускаете повтор операции, передавайте стабильные ID событий и определите, как обработчик распознаёт ранее зафиксированный эффект.",
+                "edge_cases": "Даже при штатной очистке внешний commit может не состояться, а async-слушатели ещё могут работать. Если повторный `save` сам упадёт до этапа публикации или получит другой экземпляр без событий, указанного повтора не будет.",
+                "related": "`AbstractAggregateRoot` предоставляет стандартный метод очистки. Его буфер не заменяет реестр публикаций с подтверждением отдельных обработчиков. [Spring Data Commons 3.5.13](https://github.com/spring-projects/spring-data-commons/blob/3.5.13/src/main/java/org/springframework/data/repository/core/support/EventPublishingRepositoryProxyPostProcessor.java#L180-L208)"
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Буфер сохранит только `E2`. При повторном `save` Spring Data пропустит `E1`, поскольку его публикация завершилась штатно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перехватчик не удаляет доставленные элементы по одному. После ошибки на втором событии единый callback очистки не вызывается, поэтому `E1` может повториться.",
+                "source_of_confusion": "Оптимизация понятна для очереди с подтверждением каждого сообщения. Возврат из `publishEvent` здесь не создаёт отметку о доставке отдельного элемента.",
+                "if_it_were_true": "Если бы `E1` было подтверждено поэлементно, при повторной попытке его синхронный слушатель не получил бы второй вызов. Обычный буфер агрегата этого не гарантирует.",
+                "how_it_should_be": "Для адресного повтора заведите устойчивое состояние каждой публикации и её получателя. Потребитель всё равно должен безопасно переносить дубль при сбое на границе подтверждения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Буфер очистится при обработке исключения. При повторном `save` Spring Data оставит решения о повторе уже вызванным слушателям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Очистка не стоит в `finally`. Исключение, вышедшее из `publishEvent(E2)`, прекращает вызов до `@AfterDomainEventPublication`, и в стандартном списке останутся оба факта.",
+                "source_of_confusion": "Callbacks очистки часто гарантируют финализацию при любом исходе. У этой аннотации название относится к успешно завершившейся публикации набора, а не к освобождению ресурсов после исключения.",
+                "if_it_were_true": "Очистка на ошибке привела бы к потере `E2` в объекте при повторном сохранении. В заданной реализации возможен обратный эффект, повтор уже переданного `E1`.",
+                "how_it_should_be": "Рассматривайте буфер как накопление событий до штатного прохода. Для решения, какие эффекты действительно завершились, храните устойчивые состояния и используйте идемпотентные обработчики."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Spring Modulith и как события используются для межмодульного взаимодействия?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "В модульном монолите событие помогает развязать модули. `@ApplicationModuleListener` выполняет реакцию внутри транзакции публикатора и откатывает её при ошибке слушателя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В показанной конфигурации фазовая часть аннотации выбирает `AFTER_COMMIT`, а транзакционная часть открывает новую транзакцию обработчика. Ошибка фоновой обработки не может откатить уже зафиксированный заказ.",
+                "source_of_confusion": "Обычный синхронный `@EventListener`, вызванный внутри транзакции, действительно может участвовать в общей работе. Аннотация Modulith специально задаёт другую границу.",
+                "if_it_were_true": "Если бы транзакция была общей, отказ модуля склада отменял бы статус заказа. При показанной схеме заказ уже завершён, а работа склада может остаться незавершённой.",
+                "how_it_should_be": "Если заказ и резерв обязаны измениться атомарно, выразите зависимость напрямую и проверьте общую транзакционную границу. Для независимой реакции после commit используйте `@ApplicationModuleListener`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В модульном монолите событие связывает отдельные процессы модулей. `@ApplicationModuleListener` отправляет его в брокер и открывает транзакцию у потребителя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@ApplicationModuleListener` оформляет внутрипроцессный слушатель. Даже с новым потоком другой процесс не появляется. Для публикации в Kafka нужна отдельная externalization и настроенный транспорт.",
+                "source_of_confusion": "Модули имеют явные границы и общаются фактами, как сервисы. Архитектурная аналогия не означает, что у каждого модуля свой процесс или брокер.",
+                "if_it_were_true": "Если бы аннотация отправляла сообщение сама, подписчик Kafka получил бы `OrderCompleted` без producer, темы и externalization. В примере срабатывает локальный бин.",
+                "how_it_should_be": "Для локальной реакции подпишитесь внутри монолита. Если факт нужен другому процессу, выберите события для внешней публикации, настройте интеграцию и договоритесь о контракте темы и ключа."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В модульном монолите событие помогает развязать модули. `@ApplicationModuleListener` запускает реакцию после commit в отдельной транзакции и при включённом `@Async` в пуле.",
+              "correct": true,
+              "sections": {
+                "explanation": "Модуль заказа публикует факт, а модуль склада зависит от типа события. В Modulith 1.4 `@ApplicationModuleListener` объединяет транзакционное событие с `AFTER_COMMIT`, асинхронный вызов и `REQUIRES_NEW`. При исправной инфраструктуре commit заказа допускает обработку в пуле, где открывается собственная транзакция склада.",
+                "example": "Для `OrderCompleted(42L)` после commit обработчик снимает резерв №42 в своей транзакции. Если заказ откатывается, реакция `AFTER_COMMIT` не запускается. Если складская транзакция падает, потребуется независимый повтор этой работы.",
+                "when_to_apply": "Применяйте локальные модульные события, если модулю-публикатору не нужен ответ для завершения команды, а задержка реакции допустима. Для восстановления настройте хранилище Event Publication Registry и политику повторов.",
+                "edge_cases": "Без включённой обработки `@Async` аннотация сама не создаёт перехода в пул. Даже с пулом автоматический повтор при старте зависит от настроек реестра, а повторная доставка требует безопасной обработки дублей.",
+                "related": "Externalization отправляет выбранные события наружу. Например, `@Externalized(\"orders.completed::#{#this.orderId().toString()}\")` для заказа №42 задаёт тему `orders.completed` и ключ `42` при настроенной интеграции Kafka. [Spring Modulith 1.4](https://docs.spring.io/spring-modulith/reference/1.4/events.html)"
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В модульном монолите событие помогает развязать модули. `@ApplicationModuleListener` гарантирует повтор после сбоя без отдельного реестра публикаций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотация определяет фазу, асинхронность и транзакцию слушателя. После падения процесса задача из памяти может пропасть. Повтор требует сохранённой записи и настроенного механизма восстановления.",
+                "source_of_confusion": "Modulith действительно умеет хранить незавершённые публикации. Эту функцию легко принять за гарантию одной аннотации, хотя она опирается на настроенный реестр.",
+                "if_it_were_true": "При обещанной гарантии после падения между commit и запуском слушателя резерв снялся бы после перезапуска даже без хранилища публикаций. Одной аннотации для этого недостаточно.",
+                "how_it_should_be": "Подключите устойчивый Event Publication Registry, обеспечьте запись в исходной транзакции и настройте повтор неоконченных публикаций. Обработчик должен учитывать возможные дубли."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать публикацию и обработку Spring Events?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Проверить `ApplicationEvents` сразу после вызова сервиса. Для проверки слушателя зафиксировать тестовую транзакцию и наблюдать его вызов или эффект.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@RecordApplicationEvents` регистрирует публикации, доступные в рамках текущего теста. Событие видно после возврата из сервиса, даже пока транзакция открыта. Синхронизация `AFTER_COMMIT` допускает вызов слушателя только после успешного commit. Откат по умолчанию эту ветку исключает.",
+                "example": "Проверьте `events.stream(OrderCreatedEvent.class)` на наличие ID заказа. Затем вызовите `TestTransaction.flagForCommit(); TestTransaction.end();` и для синхронного обработчика проверьте вызов почтового адаптера. До `end()` адаптер ещё не должен был вызываться.",
+                "when_to_apply": "Разделяйте контракт публикатора, фазу вызова и конечный побочный эффект. Подтверждение эффекта обычно лучше строить на тестовом адаптере, а вызов метода бина можно наблюдать через `@MockitoSpyBean`.",
+                "edge_cases": "`@RecordApplicationEvents` доступна с Framework 5.3.3, `@MockitoSpyBean` с 6.2. Для асинхронного слушателя после commit понадобится ожидание наблюдаемого эффекта с таймаутом. Зафиксированные тестовые записи нужно отдельно очистить.",
+                "related": "Тестовый слушатель-сборщик подтверждает доставку самому сборщику. Он не доказывает вызов прикладного `AFTER_COMMIT`-обработчика. [Тестовые транзакции Spring Framework 6.2](https://docs.spring.io/spring-framework/reference/6.2/testing/testcontext-framework/tx.html)"
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Проверить `ApplicationEvents` сразу после вызова сервиса. Наличие события подтверждает выполнение `AFTER_COMMIT`, поэтому тест может оставить откат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запись события возникает при публикации внутри открытой транзакции. Она показывает факт публикации, а при откате стандартный `AFTER_COMMIT`-обработчик не запустится.",
+                "source_of_confusion": "В тесте с обычным синхронным слушателем публикация и выполнение часто наблюдаются рядом. Фазовый слушатель разносит эти моменты.",
+                "if_it_were_true": "Если бы запись доказывала завершение обработчика, тест с откатом мог бы подтвердить отправку письма, хотя клиентский адаптер ни разу не вызван.",
+                "how_it_should_be": "Для публикации используйте `ApplicationEvents`. Для фазовой обработки доведите нужную транзакцию до commit и проверьте эффект отдельно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Дождаться завершения тестовой транзакции с откатом. После rollback проверить `ApplicationEvents` и состоявшийся вызов слушателя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При rollback вызов определяется фазой `AFTER_ROLLBACK` или `AFTER_COMPLETION`, если они заданы. У показанного `AFTER_COMMIT` тело не выполняется. Запись публикации при этом уже доступна до завершения.",
+                "source_of_confusion": "Название `@TransactionalEventListener` говорит о привязке к транзакции, но само по себе не означает реакцию на каждый исход.",
+                "if_it_were_true": "Если бы rollback активировал `AFTER_COMMIT`, тест подтвердил бы почтовую отправку для заказа, который только что исчез из БД.",
+                "how_it_should_be": "Проверяйте откат отдельным негативным сценарием. Для позитивного завершите транзакцию через `TestTransaction` с флагом commit и затем проверяйте обработку."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Проверить вызов через `@MockitoSpyBean` сразу после возврата сервиса. Наличие spy переводит `AFTER_COMMIT`-слушатель в обычный синхронный режим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spy позволяет наблюдать вызов, но не переносит его в другую фазу. Транзакция теста ещё открыта, даже если сервис вернул результат. Проверка положительного вызова сейчас преждевременна.",
+                "source_of_confusion": "В unit-тесте можно напрямую вызвать метод spy и тут же проверить взаимодействия. Это обходит публикацию и регистрацию callback.",
+                "if_it_were_true": "Если бы spy менял фазу, сам тест создавал бы письмо до commit и проверял поведение, отличное от рабочего приложения.",
+                "how_it_should_be": "В интеграционном тесте сначала убедитесь, что до commit вызова нет. Затем зафиксируйте транзакцию и проверьте вызов или эффект. Прямой вызов оставьте для теста тела метода."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда использовать Spring Events, а когда прямой вызов метода?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Рассчитать цену обычным `@EventListener`, а письмо отправить через `AFTER_COMMIT`. Результат расчёта вернётся в сервис из синхронной публикации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Синхронный `publishEvent` может ждать слушателя, но возвращает `void`. Даже ненулевое значение метода `@EventListener` служит новой публикацией, а не ценой в переменной сервиса. Выбор `AFTER_COMMIT` для письма подходит.",
+                "source_of_confusion": "Синхронность ассоциируется с обычным вызовом Java, где можно получить результат. Событийный API решает отдельную задачу рассылки.",
+                "if_it_were_true": "Если бы публикация возвращала цену, сервис присвоил бы результат `calculateTotal` из `publishEvent` и сразу сохранил заказ. Контракт метода такого присваивания не допускает.",
+                "how_it_should_be": "Когда результат участвует в следующем шаге, передайте работу явному методу с типизированным ответом. Для независимого уведомления зарегистрируйте подходящую фазу события."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Рассчитать цену прямым вызовом перед сохранением, а письмо отправить через `AFTER_COMMIT`. Цена нужна сразу, а уведомление допустимо после фиксации.",
+              "correct": true,
+              "sections": {
+                "explanation": "Расчёт цены определяет данные команды и должен вернуть значение вызывающему сервису. После сохранения сервис публикует `OrderPlaced` внутри транзакции. Фаза `AFTER_COMMIT` разрешает почтовую реакцию только после успешной фиксации, поэтому откат заказа письмо не запускает.",
+                "example": "Пусть цена заказа равна 1 250. Сервис записывает её и публикует `OrderPlaced(42)`. Если следующий шаг выбрасывает исключение и транзакция откатывается, письма нет. При успешном commit обработчик может передать почтовому адаптеру №42.",
+                "when_to_apply": "Оставляйте прямые вызовы для шагов, чьи результаты и ошибки нужны для принятия решения в команде. Выносите в фазовые события независимые реакции на факт, когда допустима выбранная граница согласованности.",
+                "edge_cases": "`AFTER_COMMIT` сам по себе не делает отправку асинхронной и не восстанавливает пропущенный вызов после падения процесса. Для долговечности сохраните намерение отправить письмо вместе с заказом.",
+                "related": "`@EventListener` даёт слабое связывание, но при стандартной рассылке выполняется до возврата из `publishEvent`. Выбор событийной связи и выбор транзакционной фазы решают разные задачи."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Рассчитать цену прямым вызовом, а письмо отправить обычным `@EventListener`. Раз публикация следует после `save`, почта увидит только зафиксированный заказ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вызов `save` в существующей транзакции не означает её commit. Синхронный `@EventListener` может отправить письмо до завершения исходной операции, и rollback БД внешний эффект не отменит.",
+                "source_of_confusion": "В коротком примере операция репозитория может сама завершать свою транзакцию. Здесь сервис владеет внешней границей, поэтому окончание `save` означает другой момент.",
+                "if_it_were_true": "Если бы `save` гарантировал commit, исключение в следующей строке не могло бы убрать заказ после отправки. В показанном сценарии такая гонка с rollback остаётся.",
+                "how_it_should_be": "Привяжите отправку к `AFTER_COMMIT` или запишите outbox в транзакции и доставляйте его после commit. Проверяйте, где начинается и заканчивается транзакция сервиса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Рассчитать цену прямым вызовом, а письмо отправить через `AFTER_COMPLETION`. Эта фаза дождётся конца транзакции и пропустит отправку при откате.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AFTER_COMPLETION` реагирует на завершение транзакции независимо от успешной фиксации. Для безусловной отправки из тела этого метода rollback оставляет риск письма о несуществующем заказе.",
+                "source_of_confusion": "Обе фазы позднее `save`, но слово «завершение» не говорит, каким был исход. Фильтр по успешному результату относится к `AFTER_COMMIT`.",
+                "if_it_were_true": "Если бы `AFTER_COMPLETION` пропускал rollback, обычная уборка временных ресурсов в такой фазе не произошла бы после отката. Назначение фазы включает и этот исход.",
+                "how_it_should_be": "Используйте `AFTER_COMPLETION` для работы, безопасной после любого завершения. Для письма о создании заказа выбирайте `AFTER_COMMIT`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 16,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "В чём разница между Spring Events и Kafka/RabbitMQ-сообщениями?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring Events и брокеры могут переиграть публикацию после падения. Для Spring достаточно выбрать `AFTER_COMMIT`, поскольку commit сохранит само событие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фаза слушателя сохраняется как синхронизация в памяти рантайма. Успешный commit фиксирует заказ, но без отдельного хранилища Spring Framework не восстановит пропущенную отправку письма или сообщения.",
+                "source_of_confusion": "Название `AFTER_COMMIT` выглядит как связь события с данными в БД. Оно определяет момент вызова и не добавляет сохранённую запись публикации.",
+                "if_it_were_true": "Если бы фаза сохраняла событие, после остановки процесса между commit и выполнением слушателя перезапуск возобновил бы отправку. Один фазовый слушатель этого не делает.",
+                "how_it_should_be": "Для восстановления сохраните запись outbox или публикацию Modulith в той же транзакции, что и заказ. После перезапуска нужен обработчик, который подбирает незавершённые записи."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spring Events работают внутри процесса, а брокер переносит сообщения между процессами. Подтверждение брокера автоматически связывает отправку с commit заказа и исключает повтор.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подтверждение брокера относится к его собственной операции. Оно не делает атомарными запись заказа, доставку и локальную отметку об окончании. Сбой после принятия сообщения и до отметки оставляет возможность повторной отправки.",
+                "source_of_confusion": "У Kafka есть идемпотентный producer и транзакции, у RabbitMQ подтверждения публикаций. Эти механизмы не охватывают произвольную транзакцию БД и внешние эффекты потребителя.",
+                "if_it_were_true": "Если бы подтверждение закрывало всю цепочку, повтор после падения перед обновлением outbox не мог бы дать второе начисление бонусов. Потребитель может увидеть дубль.",
+                "how_it_should_be": "Используйте устойчивый ID события. Если начисление и отметка об обработке хранятся в одной БД, записывайте их в одной транзакции с уникальным ограничением на ID."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Spring Events и брокеры различаются в основном способом запуска слушателя. Именованный `@Async`-пул даёт Spring Events ту же доставку в другой процесс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Async` задаёт исполнение в другом потоке текущего процесса. Он не сериализует событие, не соединяется с брокером и не адресует потребителей вне JVM.",
+                "source_of_confusion": "И очередь пула, и брокер могут откладывать потребление работы. Очередь исполнителя — локальная структура, а внешний транспорт имеет собственные адресацию и жизненный цикл.",
+                "if_it_were_true": "Если бы пул служил транспортом, приложение в другой JVM могло бы получить событие, зная имя `eventsExecutor`. Это имя разрешается только внутри настроенного Spring-контекста.",
+                "how_it_should_be": "Для фоновой реакции внутри приложения подойдёт `@Async`. Для другой JVM настройте межпроцессный транспорт, сериализацию, маршрут и правила подтверждения на стороне потребителя."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Spring Events доставляют событие внутри процесса и без реестра не восстанавливают его после сбоя. Kafka и RabbitMQ передают сообщения между процессами с гарантиями по настройкам транспорта.",
+              "correct": true,
+              "sections": {
+                "explanation": "Обычная Spring-публикация передаёт объект локальным слушателям. У брокера отдельные запись, маршрутизация и потребление сообщений, а надёжность зависит от конфигурации и подтверждений. Сохранённый outbox или реестр Modulith может связать бизнес-изменение и факт намерения опубликовать сообщение в одной БД.",
+                "example": "Заказ №42 и outbox-событие `evt-42` фиксируются вместе. Процесс падает до отправки, а после запуска relay видит `evt-42` и отправляет его в брокер. Если broker принял событие перед падением, но relay не отметил успех, повторная отправка возможна.",
+                "when_to_apply": "Для независимых реакций внутри работающего монолита используйте Spring Events, если потеря при сбое приемлема или реестр закрывает этот риск. Для связи разных приложений задайте брокерный контракт и учитывайте доставку, повторы и срок хранения.",
+                "edge_cases": "Kafka позволяет перечитать сохранённые записи при подходящей retention. У обычной очереди RabbitMQ подтверждённое потребление не даёт такого же журнала для произвольного повторного чтения. Долговечность сообщения и очереди зависит от конфигурации.",
+                "related": "Transactional outbox решает атомарность изменения и намерения отправить. Идемпотентный потребитель решает последствия повторной доставки, например фиксирует `event_id` и начисление бонусов одной транзакцией. [Event Publication Registry](https://docs.spring.io/spring-modulith/reference/events.html#event-publication-registry)"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
