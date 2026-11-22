@@ -48,72 +48,72 @@ updated: "2026-05-14"
 
 **Основы: типы, иерархия, создание**
 - [Q1. (!) В чём разница между read-only и mutable коллекциями в Kotlin?](#q1--в-чём-разница-между-read-only-и-mutable-коллекциями-в-kotlin)
-- [Q2. Как устроена иерархия интерфейсов коллекций в Kotlin?](#q2-как-устроена-иерархия-интерфейсов-коллекций-в-kotlin)
-- [Q3. Как устроены List, Set и Map в Kotlin и что под капотом на JVM?](#q3-как-устроены-list-set-и-map-в-kotlin-и-что-под-капотом-на-jvm)
-- [Q4. Как создать коллекцию: listOf, mutableListOf, emptyList?](#q4-как-создать-коллекцию-listof-mutablelistof-emptylist)
-- [Q5. (!) Что такое buildList, buildSet, buildMap и зачем они нужны?](#q5--что-такое-buildlist-buildset-buildmap-и-зачем-они-нужны)
+- [Q2. Наследует ли Map интерфейсы Collection и Iterable в Kotlin?](#q2-наследует-ли-map-интерфейсы-collection-и-iterable-в-kotlin)
+- [Q3. Какие реализации создают mutableListOf, mutableSetOf и mutableMapOf на JVM?](#q3-какие-реализации-создают-mutablelistof-mutablesetof-и-mutablemapof-на-jvm)
+- [Q4. Что возвращает emptyList() в Kotlin?](#q4-что-возвращает-emptylist-в-kotlin)
+- [Q5. (!) Как buildList создаёт read-only список?](#q5--как-buildlist-создаёт-read-only-список)
 
 **Mutable vs Immutable: глубокое погружение**
 - [Q6. (!) Является ли read-only коллекция действительно неизменяемой?](#q6--является-ли-read-only-коллекция-действительно-неизменяемой)
-- [Q7. Когда использовать kotlinx.collections.immutable?](#q7-когда-использовать-kotlinxcollectionsimmutable)
+- [Q7. Когда полезна persistent-коллекция из kotlinx.collections.immutable?](#q7-когда-полезна-persistent-коллекция-из-kotlinxcollectionsimmutable)
 
 **Sequence vs Collection**
-- [Q8. (!) Что такое Sequence и чем отличается от List при цепочке операций?](#q8--что-такое-sequence-и-чем-отличается-от-list-при-цепочке-операций)
-- [Q9. Какие есть способы создания Sequence?](#q9-какие-есть-способы-создания-sequence)
+- [Q8. (!) Чем цепочка операций на Sequence отличается от цепочки на List?](#q8--чем-цепочка-операций-на-sequence-отличается-от-цепочки-на-list)
+- [Q9. Чем создать потенциально бесконечную Sequence в Kotlin?](#q9-чем-создать-потенциально-бесконечную-sequence-в-kotlin)
 - [Q10. (!) Когда использовать Sequence, а когда List (практический выбор)?](#q10--когда-использовать-sequence-а-когда-list-практический-выбор)
 
 **Операции и преобразования**
-- [Q11. Какие типичные операции над коллекциями (map, filter, fold, reduce)?](#q11-какие-типичные-операции-над-коллекциями-map-filter-fold-reduce)
-- [Q12. В чём разница между map и flatMap?](#q12-в-чём-разница-между-map-и-flatmap)
-- [Q13. (!) Чем отличаются groupBy, associateBy, associateWith и partition?](#q13--чем-отличаются-groupby-associateby-associatewith-и-partition)
-- [Q14. Что такое groupingBy и чем отличается от groupBy?](#q14-что-такое-groupingby-и-чем-отличается-от-groupby)
-- [Q15. Как работают windowed, chunked и zipWithNext?](#q15-как-работают-windowed-chunked-и-zipwithnext)
-- [Q16. Как сортировать коллекции (sorted, sortedBy, sortWith)?](#q16-как-сортировать-коллекции-sorted-sortedby-sortwith)
-- [Q17. Что такое toList, toSet, toMutableList и когда что использовать?](#q17-что-такое-tolist-toset-tomutablelist-и-когда-что-использовать)
-- [Q18. Как работают zip и unzip?](#q18-как-работают-zip-и-unzip)
-- [Q19. Что делают mapNotNull, mapIndexed, mapKeys, mapValues?](#q19-что-делают-mapnotnull-mapindexed-mapkeys-mapvalues)
+- [Q11. Чем fold отличается от reduce на пустой коллекции?](#q11-чем-fold-отличается-от-reduce-на-пустой-коллекции)
+- [Q12. Чем map отличается от flatMap при преобразовании элементов?](#q12-чем-map-отличается-от-flatmap-при-преобразовании-элементов)
+- [Q13. (!) Что происходит с повторяющимися ключами в groupBy и associateBy?](#q13--что-происходит-с-повторяющимися-ключами-в-groupby-и-associateby)
+- [Q14. Что делает eachCount после groupingBy по сравнению с groupBy?](#q14-что-делает-eachcount-после-groupingby-по-сравнению-с-groupby)
+- [Q15. Чем zipWithNext отличается от chunked?](#q15-чем-zipwithnext-отличается-от-chunked)
+- [Q16. Чем sorted/sortedBy отличаются от sort/sortBy?](#q16-чем-sortedsortedby-отличаются-от-sortsortby)
+- [Q17. Какой контракт дают toList(), toSet() и toMutableList()?](#q17-какой-контракт-дают-tolist-toset-и-tomutablelist)
+- [Q18. Как zip и unzip преобразуют пары элементов?](#q18-как-zip-и-unzip-преобразуют-пары-элементов)
+- [Q19. Чем mapNotNull отличается от map { ... }.filterNotNull() для List?](#q19-чем-mapnotnull-отличается-от-map---filternotnull-для-list)
 
 **Scope-функции и коллекции**
-- [Q20. Как scope-функции (let, also, apply, run) используются с коллекциями?](#q20-как-scope-функции-let-also-apply-run-используются-с-коллекциями)
+- [Q20. Что возвращает also в цепочке операций над коллекцией?](#q20-что-возвращает-also-в-цепочке-операций-над-коллекцией)
 
 **Сравнение с Java**
-- [Q21. (!) Чем коллекции Kotlin отличаются от Java Collections Framework?](#q21--чем-коллекции-kotlin-отличаются-от-java-collections-framework)
-- [Q22. Как в Kotlin работать с Java-коллекциями (взаимодействие, nullability)?](#q22-как-в-kotlin-работать-с-java-коллекциями-взаимодействие-nullability)
+- [Q21. (!) Как Kotlin/JVM связывает свои интерфейсы коллекций с Java Collections?](#q21--как-kotlinjvm-связывает-свои-интерфейсы-коллекций-с-java-collections)
+- [Q22. Как учитывать nullability при получении Java-коллекции без аннотаций в Kotlin?](#q22-как-учитывать-nullability-при-получении-java-коллекции-без-аннотаций-в-kotlin)
 
 **ArrayDeque и специализированные коллекции**
-- [Q23. Что такое ArrayDeque в Kotlin?](#q23-что-такое-arraydeque-в-kotlin)
+- [Q23. Какие операции на концах поддерживает Kotlin ArrayDeque?](#q23-какие-операции-на-концах-поддерживает-kotlin-arraydeque)
 
 **Производительность и выбор**
-- [Q24. (!) Какие операции самые частые по сложности и как выбирать тип коллекции?](#q24--какие-операции-самые-частые-по-сложности-и-как-выбирать-тип-коллекции)
-- [Q25. (!) Как проектировать API: возвращать List, Sequence или Flow?](#q25--как-проектировать-api-возвращать-list-sequence-или-flow)
-- [Q26. Как работают `scan`, `runningFold` и `runningReduce`?](#q26-как-работают-scan-runningfold-и-runningreduce)
-- [Q27. Как работают `distinctBy`, `takeWhile`, `dropWhile` и `takeLastWhile`?](#q27-как-работают-distinctby-takewhile-dropwhile-и-takelastwhile)
+- [Q24. (!) Как выбрать между List, Set и Map по способу доступа к данным?](#q24--как-выбрать-между-list-set-и-map-по-способу-доступа-к-данным)
+- [Q25. (!) Как выбирать List, Sequence или Flow для результата API?](#q25--как-выбирать-list-sequence-или-flow-для-результата-api)
+- [Q26. Чем scan/runningFold отличаются от runningReduce?](#q26-чем-scanrunningfold-отличаются-от-runningreduce)
+- [Q27. Чем takeWhile отличается от filter при обходе коллекции?](#q27-чем-takewhile-отличается-от-filter-при-обходе-коллекции)
 
 **Специализированные Map и Set**
-- [Q28. Чем `LinkedHashMap` и `TreeMap` отличаются в Kotlin?](#q28-чем-linkedhashmap-и-treemap-отличаются-в-kotlin)
-- [Q29. Когда использовать `hashSetOf`, `linkedSetOf`, `sortedSetOf`?](#q29-когда-использовать-hashsetof-linkedsetof-sortedsetof)
+- [Q28. Чем LinkedHashMap отличается от TreeMap по порядку и доступу?](#q28-чем-linkedhashmap-отличается-от-treemap-по-порядку-и-доступу)
+- [Q29. Как различаются hashSetOf, linkedSetOf и sortedSetOf по порядку?](#q29-как-различаются-hashsetof-linkedsetof-и-sortedsetof-по-порядку)
 
 **Производительность: Sequence на практике**
-- [Q30. (!) Какой оверхед у `Sequence` и когда он перевешивает выгоду?](#q30--какой-оверхед-у-sequence-и-когда-он-перевешивает-выгоду)
-- [Q31. Как избежать лишних аллокаций при работе с коллекциями?](#q31-как-избежать-лишних-аллокаций-при-работе-с-коллекциями)
+- [Q30. (!) Когда накладные расходы Sequence могут превысить выгоду?](#q30--когда-накладные-расходы-sequence-могут-превысить-выгоду)
+- [Q31. Как any избегает промежуточного списка по сравнению с filter().isNotEmpty()?](#q31-как-any-избегает-промежуточного-списка-по-сравнению-с-filterisnotempty)
 
 **Потокобезопасность**
-- [Q32. (!) Безопасны ли Kotlin-коллекции для многопоточного доступа?](#q32--безопасны-ли-kotlin-коллекции-для-многопоточного-доступа)
+- [Q32. (!) Гарантирует ли read-only тип Kotlin потокобезопасность коллекции?](#q32--гарантирует-ли-read-only-тип-kotlin-потокобезопасность-коллекции)
 
 **Дополнительные операции**
-- [Q33. Что такое `associate` и чем он отличается от `associateBy` и `associateWith`?](#q33-что-такое-associate-и-чем-он-отличается-от-associateby-и-associatewith)
-- [Q34. Как работает `flatten` и чем отличается от `flatMap`?](#q34-как-работает-flatten-и-чем-отличается-от-flatmap)
-- [Q35. Что такое `coerceIn`, `minOrNull`, `maxOrNull`, `sumOf`, `averageOf`?](#q35-что-такое-coercein-minornull-maxornull-sumof-averageof)
-- [Q36. Как используются `first`, `last`, `single`, `elementAtOrElse` и их безопасные варианты?](#q36-как-используются-first-last-single-elementatorelse-и-их-безопасные-варианты)
+- [Q33. Чем лямбда associate отличается от аргументов associateBy?](#q33-чем-лямбда-associate-отличается-от-аргументов-associateby)
+- [Q34. Чем flatten отличается от flatMap?](#q34-чем-flatten-отличается-от-flatmap)
+- [Q35. Чем minOrNull отличается от min на пустой коллекции?](#q35-чем-minornull-отличается-от-min-на-пустой-коллекции)
+- [Q36. Чем singleOrNull отличается от single при пустой или многозначной коллекции?](#q36-чем-singleornull-отличается-от-single-при-пустой-или-многозначной-коллекции)
 
 **Immutable-коллекции и продвинутые темы**
-- [Q37. (!) Что такое `PersistentList` / `PersistentMap` и зачем нужен structural sharing?](#q37--что-такое-persistentlist--persistentmap-и-зачем-нужен-structural-sharing)
-- [Q38. (!) Чем отличаются `Collection`, `Iterable` и `Sequence` — когда что использовать?](#q38--чем-отличаются-collection-iterable-и-sequence--когда-что-использовать)
-- [Q39. В чём разница между `sortedBy`, `sortedWith` и `compareBy`?](#q39-в-чём-разница-между-sortedby-sortedwith-и-compareby)
+- [Q37. (!) Зачем persistent-коллекциям structural sharing при обновлении?](#q37--зачем-persistent-коллекциям-structural-sharing-при-обновлении)
+- [Q38. (!) Чем отличаются Iterable, Collection и Sequence как контракты?](#q38--чем-отличаются-iterable-collection-и-sequence-как-контракты)
+- [Q39. Как соотносятся sortedBy, sortedWith и compareBy?](#q39-как-соотносятся-sortedby-sortedwith-и-compareby)
 - [Q40. (!) Чем `groupingBy` отличается от `groupBy` — ленивый vs eager grouping?](#q40--чем-groupingby-отличается-от-groupby--ленивый-vs-eager-grouping)
-- [Q41. Как работают `chunked` и `windowed` — batch processing и скользящее окно?](#q41-как-работают-chunked-и-windowed--batch-processing-и-скользящее-окно)
-- [Q42. В чём разница между `associateBy`, `associateWith` и `associate`?](#q42-в-чём-разница-между-associateby-associatewith-и-associate)
-- [Q43. Что такое `scan` и как он отличается от `fold`?](#q43-что-такое-scan-и-как-он-отличается-от-fold)
+- [Q41. Чем chunked и windowed(size) различаются при шаге по умолчанию?](#q41-чем-chunked-и-windowedsize-различаются-при-шаге-по-умолчанию)
+- [Q42. Что задают основной селектор associateBy, лямбда associateWith и лямбда associate?](#q42-что-задают-основной-селектор-associateby-лямбда-associatewith-и-лямбда-associate)
+- [Q43. Чем scan отличается от fold по результату?](#q43-чем-scan-отличается-от-fold-по-результату)
 
 ---
 
@@ -123,7 +123,7 @@ updated: "2026-05-14"
 
 **Read-only** интерфейсы (`List`, `Set`, `Map`) дают только чтение: доступ по индексу/ключу, итерацию, `size`, `contains`. Методов `add`, `remove`, `clear` у них нет — через read-only тип их не вызвать.
 
-**Mutable** интерфейсы (`MutableList`, `MutableSet`, `MutableMap`) наследуют read-only собратьев и добавляют методы модификации. На `JVM` под капотом лежат те же классы `Java` (`ArrayList`, `HashSet`, `HashMap`) — отличается только то, какой интерфейс виден потребителю.
+**Mutable** интерфейсы (`MutableList`, `MutableSet`, `MutableMap`) наследуют read-only собратьев и добавляют методы модификации. На JVM обе ссылки могут указывать на один объект; видимый интерфейс не требует копирования коллекции.
 
 Из этого следует важный практический вывод: переменная типа `List` может указывать на `MutableList` (upcasting), но изменить коллекцию через ссылку типа `List` нельзя. Это контракт компилятора, а не защита в рантайме (см. Q6).
 
@@ -141,9 +141,9 @@ process(mutableListOf(1, 2, 3))
 
 > **Что хотят услышать на собеседовании**: read-only != immutable. Это ограничение на этапе компиляции, а не гарантия неизменяемости в рантайме (см. Q6).
 
-## Q2. Как устроена иерархия интерфейсов коллекций в Kotlin?
+## Q2. Наследует ли Map интерфейсы Collection и Iterable в Kotlin?
 
-Иерархия делится на две параллельные ветки — read-only и mutable, — где каждый mutable-интерфейс наследует свой read-only вариант и добавляет к нему методы изменения. Корень обеих веток — `Iterable<T>`.
+Для `List` и `Set` есть read-only и mutable интерфейсы: каждый mutable-интерфейс наследует соответствующий read-only вариант. `Collection<T>` наследует `Iterable<T>`. `Map<K, V>` образует отдельную ветку и не наследует ни `Collection`, ни `Iterable`.
 
 ```mermaid
 graph TD
@@ -178,24 +178,19 @@ graph TD
 - Read-only интерфейсы **ковариантны** (`out T`): `List<String>` можно присвоить переменной `List<Any>`. Это безопасно, потому что из read-only списка элементы только читаются.
 - Mutable интерфейсы **инвариантны**: `MutableList<String>` присвоить в `MutableList<Any>` нельзя. Иначе через ссылку `MutableList<Any>` можно было бы записать туда `Int`, сломав исходный список строк, — инвариантность это предотвращает.
 
-## Q3. Как устроены List, Set и Map в Kotlin и что под капотом на JVM?
+## Q3. Какие реализации создают mutableListOf, mutableSetOf и mutableMapOf на JVM?
 
-| Интерфейс | Характеристика | Реализация по умолчанию на JVM |
-|-----------|---------------|-------------------------------|
-| `List` | Упорядоченная коллекция, допускает дубликаты | `java.util.ArrayList` |
-| `Set` | Уникальные элементы, порядок вставки | `java.util.LinkedHashSet` |
-| `Map` | Пары ключ-значение, ключи уникальны | `java.util.LinkedHashMap` |
-| `MutableList` | Изменяемый список | `java.util.ArrayList` |
-| `MutableSet` | Изменяемое множество | `java.util.LinkedHashSet` |
-| `MutableMap` | Изменяемое отображение | `java.util.LinkedHashMap` |
+| Фабрика на JVM | Обычная реализация | Свойство |
+|---------------|--------------------|----------|
+| `mutableListOf()` | `ArrayList` | индексированный список с дубликатами |
+| `mutableSetOf()` | `LinkedHashSet` | уникальные элементы, порядок вставки |
+| `mutableMapOf()` | `LinkedHashMap` | уникальные ключи, порядок вставки |
 
-У `Kotlin` нет собственных реализаций коллекций — на `JVM` это те же классы `Java`. Своё у `Kotlin` только разделение интерфейсов на read-only/mutable и набор extension-функций поверх них.
+Это реализации обычных mutable-фабрик на JVM, а не обещание для любого объекта с интерфейсом `List`, `Set` или `Map`. Read-only фабрики и пустые коллекции могут использовать другие оптимизированные реализации. [Документация Kotlin](https://kotlinlang.org/docs/collection-types.html) отдельно называет эти реализации для `MutableList`, `MutableSet` и `MutableMap`.
 
-Фабрики `listOf()`, `setOf()`, `mapOf()` возвращают объекты, реализующие и Kotlin-, и Java-интерфейсы. Поэтому коллекции ходят в `Java`-код и обратно без конвертации.
+## Q4. Что возвращает emptyList() в Kotlin?
 
-**Важно**: `setOf()` и `mapOf()` по умолчанию сохраняют порядок вставки (`LinkedHashSet`, `LinkedHashMap`), тогда как в `Java` `HashSet`/`HashMap` порядок не гарантируют. Удобно для предсказуемого вывода, но опираться на это как на контракт не стоит — для гарантии используйте `linkedSetOf`/`linkedMapOf` явно.
-
-## Q4. Как создать коллекцию: listOf, mutableListOf, emptyList?
+`emptyList()` возвращает пустой read-only список; на JVM пустой экземпляр переиспользуется. Для списка с возможностью добавления элементов используйте `mutableListOf()`.
 
 ```kotlin
 // Read-only
@@ -222,9 +217,9 @@ val linkedMap = linkedMapOf("a" to 1)      // LinkedHashMap
 val sortedMap = sortedMapOf("b" to 2, "a" to 1)  // TreeMap
 ```
 
-`listOf()` для малого числа элементов (0–1) использует оптимизированные реализации: пустой список — синглтон, одноэлементный — обёртка без массива.
+`listOf()` может использовать оптимизированные реализации для пустого и малого результата. Не выводите конкретный класс объекта из интерфейса `List`.
 
-## Q5. (!) Что такое buildList, buildSet, buildMap и зачем они нужны?
+## Q5. (!) Как buildList создаёт read-only список?
 
 `buildList` / `buildSet` / `buildMap` строят **read-only** коллекцию, давая внутри lambda-блока временный **mutable**-builder. Внутри блока коллекция изменяема (`add`, `put`, условная логика), а на выходе фиксируется как read-only — без отдельного вызова `toList()`.
 
@@ -258,11 +253,11 @@ val set = buildSet {
 - Для `buildMap` — нет создания промежуточных `Pair`-объектов (в отличие от `mapOf(key to value)`)
 - **Типы выводятся** автоматически из операций в блоке
 
-> **На собеседовании**: `buildList` — идиоматический способ создания коллекции с условной логикой. Появился в Kotlin 1.6 как stable API.
+> **На собеседовании**: `buildList` удобен, когда содержимое списка зависит от условий внутри блока.
 
 ## Q6. (!) Является ли read-only коллекция действительно неизменяемой?
 
-**Нет.** Read-only в `Kotlin` — это ограничение на уровне типов, а **не** гарантия неизменяемости в рантайме. Объект под капотом остаётся изменяемым, и до него можно добраться: через приведение типа или из `Java`-кода содержимое меняется свободно.
+**Не обязательно.** Read-only в Kotlin ограничивает операции через интерфейс, но не гарантирует неизменяемость объекта. Если тот же объект доступен через изменяемую ссылку, его содержимое можно поменять. Приведение к `MutableList` не превращает действительно неизменяемую реализацию в изменяемую и может завершиться ошибкой.
 
 ```kotlin
 val readOnly: List<String> = mutableListOf("a", "b")
@@ -275,18 +270,18 @@ println(readOnly) // [a, b, c]
 // void modify(List<String> list) { list.add("oops"); }
 ```
 
-**Настоящие immutable-коллекции** даёт библиотека `kotlinx.collections.immutable` — при попытке модификации выбрасывается `UnsupportedOperationException` (для обёрток вроде `Collections.unmodifiableList`) или создаётся новая версия (для persistent-коллекций).
+Библиотека `kotlinx.collections.immutable` даёт persistent-коллекции: операция изменения возвращает новую версию, сохраняя прежнюю. Java-обёртка `Collections.unmodifiableList` запрещает запись через себя, но может отражать изменения исходной коллекции.
 
-Фабрики `listOf()`, `setOf()`, `mapOf()` для 0–1 элементов могут возвращать действительно неизменяемые реализации, но для 2+ элементов — `listOf` отдаёт `Arrays.asList`-обёртку (`Arrays$ArrayList`, фиксированного размера), а `setOf`/`mapOf` — обёртки над `LinkedHashSet` / `LinkedHashMap`.
+Конкретную реализацию `listOf()`, `setOf()` и `mapOf()` нельзя выводить только из read-only интерфейса: она может отличаться по размеру и платформе. Если нужна независимая копия или гарантия неизменяемости, выбирайте отдельный контракт и проверяйте его свойства.
 
-> **Подводный камень**: read-only не защищает от конкурентной модификации в многопоточном коде — это не потокобезопасность. Для shared state берите `kotlinx.collections.immutable` или `ConcurrentHashMap`.
+> **Подводный камень**: read-only не защищает от конкурентной модификации того же объекта. Для общего изменяемого состояния нужна синхронизация или подходящая concurrent-коллекция; persistent-снимки требуют безопасной публикации.
 
-## Q7. Когда использовать kotlinx.collections.immutable?
+## Q7. Когда полезна persistent-коллекция из kotlinx.collections.immutable?
 
-Берите её, когда нужна **настоящая** неизменяемость, а не compile-time-обёртка. Библиотека даёт **persistent-коллекции** (`PersistentList`, `PersistentMap`, `PersistentSet`) с функциональной моделью обновлений: каждая модификация возвращает новую коллекцию, но благодаря **structural sharing** не копирует всё содержимое целиком, а переиспользует неизменённые части — поэтому обновление дешёвое.
+Берите её, когда нужно хранить неизменяемые версии коллекции с эффективными обновлениями. Библиотека даёт **persistent-коллекции** (`PersistentList`, `PersistentMap`, `PersistentSet`) с функциональной моделью обновлений: каждая модификация возвращает новую коллекцию, но благодаря **structural sharing** не копирует всё содержимое целиком, а переиспользует неизменённые части — поэтому обновление дешёвое.
 
 ```kotlin
-// Зависимость: org.jetbrains.kotlinx:kotlinx-collections-immutable:0.3.7
+// Для этого примера нужна зависимость kotlinx-collections-immutable
 val list = persistentListOf(1, 2, 3)
 val updated = list.add(4)  // новый PersistentList, list не изменился
 
@@ -303,9 +298,9 @@ val updated2 = map.put("b", 2)
 - Локальные короткоживущие коллекции — обычные `MutableList` проще и быстрее
 - Маленькие коллекции — overhead структурного шаринга не окупается
 
-## Q8. (!) Что такое Sequence и чем отличается от List при цепочке операций?
+## Q8. (!) Чем цепочка операций на Sequence отличается от цепочки на List?
 
-`Sequence<T>` — **ленивая** последовательность. Ключевая разница с `List`: на `List` каждая операция в цепочке (`filter`, `map`) сразу прогоняет всю коллекцию и создаёт новый список; на `Sequence` промежуточные операции ничего не делают и не аллоцируют — пока не вызвана **терминальная** операция (`toList()`, `first()`, `count()`). Тогда каждый элемент по одному проходит всю цепочку до конца.
+`Sequence<T>` обрабатывает цепочку промежуточных операций лениво. Операции `filter` и `map` над `List` выполняются сразу и дают отдельные результаты; над `Sequence` они откладывают обработку до терминальной операции (`toList()`, `first()`, `count()`). При этом сама цепочка `Sequence` создаёт служебные объекты, хотя промежуточные списки для этих операций не нужны.
 
 ```mermaid
 graph LR
@@ -342,7 +337,7 @@ listOf(1, 2, 3, 4, 5).asSequence()
     .toList()  // терминальная операция запускает pipeline
 ```
 
-## Q9. Какие есть способы создания Sequence?
+## Q9. Чем создать потенциально бесконечную Sequence в Kotlin?
 
 Есть пять основных способов: из готовых элементов (`sequenceOf`), из существующей коллекции (`asSequence`), генератором (`generateSequence`), через builder с `yield` (`sequence { }`) и из итератора/Java-stream. Для бесконечных последовательностей подходят именно генератор и builder — они вычисляют элементы по требованию.
 
@@ -380,7 +375,7 @@ stream.asSequence()
 ## Q10. (!) Когда использовать Sequence, а когда List (практический выбор)?
 
 **Используйте `Sequence`, когда:**
-- Коллекция **большая** (тысячи+ элементов) и цепочка из 2+ промежуточных операций
+- Коллекция большая и цепочка содержит несколько промежуточных операций; выигрыш зависит от данных и операций
 - Нужен только **частичный результат** (`first()`, `take(n)`, `any()`) — lazy evaluation остановится раньше
 - Источник данных **потоковый** (файл, сеть, бесконечная генерация)
 
@@ -405,7 +400,9 @@ lines.asSequence()
 listOf(1, 2, 3).map { it * 2 }
 ```
 
-## Q11. Какие типичные операции над коллекциями (map, filter, fold, reduce)?
+## Q11. Чем fold отличается от reduce на пустой коллекции?
+
+`fold` принимает начальное значение и возвращает его на пустом входе. `reduce` начинает накопление с первого элемента, поэтому на пустой коллекции бросает исключение.
 
 | Операция | Описание | Пример |
 |----------|---------|--------|
@@ -440,7 +437,7 @@ val product = numbers.reduce { acc, n -> acc * n } // -120
 
 **`fold` vs `reduce`** — частый вопрос. `fold` принимает явное начальное значение и поэтому безопасен на пустой коллекции (вернёт его). `reduce` стартует с первого элемента и на пустой коллекции бросает `UnsupportedOperationException`. Берите `fold`, когда коллекция может оказаться пустой или когда тип аккумулятора отличается от типа элементов.
 
-## Q12. В чём разница между map и flatMap?
+## Q12. Чем map отличается от flatMap при преобразовании элементов?
 
 **`map`** преобразует каждый элемент в **одно** значение — размер результата совпадает с исходным. **`flatMap`** преобразует каждый элемент в **коллекцию** и затем «склеивает» все результаты в одну плоскую последовательность. Эквивалент: `map { ... }.flatten()`.
 
@@ -465,7 +462,7 @@ val allOrders: List<Order> = customers.flatMap { it.orders }
 - Нужно объединить вложенные структуры в плоскую
 - Работа с `Optional`/nullable через `listOfNotNull`
 
-## Q13. (!) Чем отличаются groupBy, associateBy, associateWith и partition?
+## Q13. (!) Что происходит с повторяющимися ключами в groupBy и associateBy?
 
 Все четыре функции преобразуют коллекцию в структурированный результат, но с разной семантикой:
 
@@ -503,7 +500,7 @@ val (devs, others) = users.partition { it.dept == "dev" }
 
 > **Подводный камень**: при дубликатах ключей `associateBy`/`associateWith`/`associate` молча оставляют только последний элемент. Если ключи могут повторяться и нужны все значения — берите `groupBy`.
 
-## Q14. Что такое groupingBy и чем отличается от groupBy?
+## Q14. Что делает eachCount после groupingBy по сравнению с groupBy?
 
 Короткий ответ: `groupBy` сразу собирает `Map<K, List<T>>` — все списки лежат в памяти. `groupingBy` ничего не материализует, а возвращает промежуточный объект `Grouping`, к которому потом применяют **агрегацию за один проход, без построения списков**. Это выгодно, когда нужны не сами группы, а агрегат по ним (число, сумма, максимум).
 
@@ -528,7 +525,7 @@ words.groupingBy { it.first() }.eachCount()
 
 `groupingBy` эффективнее для больших коллекций, когда нужен агрегат, а не сами списки элементов.
 
-## Q15. Как работают windowed, chunked и zipWithNext?
+## Q15. Чем zipWithNext отличается от chunked?
 
 Три функции для работы с «окнами» элементов:
 
@@ -579,7 +576,7 @@ numbers.zipWithNext { a, b -> a < b }.all { it } // true
 - `windowed` — скользящее среднее, поиск паттернов
 - `zipWithNext` — проверка переходов, вычисление разностей
 
-## Q16. Как сортировать коллекции (sorted, sortedBy, sortWith)?
+## Q16. Чем sorted/sortedBy отличаются от sort/sortBy?
 
 Ключевое различие двух семейств — что они возвращают. Функции `sorted*` (для любого `Iterable`) не трогают исходник и **возвращают новый список**; функции `sort*` работают только на `MutableList`, сортируют **на месте** и возвращают `Unit`. Внутри каждого семейства выбор — по натуральному порядку, по селектору (`...By`) или по компаратору (`...With`).
 
@@ -609,11 +606,11 @@ val mutable = mutableListOf(3, 1, 2)
 mutable.sort()  // изменяет mutable, возвращает Unit
 ```
 
-> **Важно**: `sorted*` для read-only списков всегда возвращают **новый** список. `sort*` для `MutableList` изменяют список на месте и возвращают `Unit`.
+> **Важно**: `sorted*` возвращают отсортированный `List` без изменения исходника; не проверяйте их по идентичности ссылок. `sort*` изменяют `MutableList` на месте и возвращают `Unit`.
 
-## Q17. Что такое toList, toSet, toMutableList и когда что использовать?
+## Q17. Какой контракт дают toList(), toSet() и toMutableList()?
 
-Функции `to*()` создают **копию** коллекции нужного типа:
+Функции `to*()` возвращают коллекцию с нужным интерфейсом и содержимым. Это поверхностное преобразование: вложенные изменяемые элементы остаются общими. Для пустых и одноэлементных результатов реализация может переиспользовать объект; обещать новую ссылку для каждого вызова нельзя.
 
 ```kotlin
 val sequence = (1..5).asSequence().filter { it % 2 == 0 }.map { it * 10 }
@@ -637,7 +634,7 @@ println(copy) // [1, 2, 3] — не затронут
 - `toSortedSet()` — уникальные элементы + сортировка
 - `toMap()` — из списка пар в `Map`
 
-## Q18. Как работают zip и unzip?
+## Q18. Как zip и unzip преобразуют пары элементов?
 
 **`zip`** объединяет два списка поэлементно в пары. Результат по длине равен **меньшему** из списков:
 
@@ -659,7 +656,7 @@ val (strings, ints) = pairs.unzip()
 // strings = [one, two, three], ints = [1, 2, 3]
 ```
 
-## Q19. Что делают mapNotNull, mapIndexed, mapKeys, mapValues?
+## Q19. Чем mapNotNull отличается от map { ... }.filterNotNull() для List?
 
 ```kotlin
 // mapNotNull — map + filterNotNull в одной операции
@@ -683,7 +680,7 @@ listOf("a", null, "c").mapIndexedNotNull { i, v -> v?.let { "$i:$it" } }
 
 > **Рекомендация**: `mapNotNull` эффективнее связки `map { ... }.filterNotNull()` — один проход вместо двух и без промежуточного списка (для `List`).
 
-## Q20. Как scope-функции (let, also, apply, run) используются с коллекциями?
+## Q20. Что возвращает also в цепочке операций над коллекцией?
 
 Scope-функции не специфичны для коллекций, но часто используются в цепочках:
 
@@ -716,18 +713,18 @@ list.takeIf { it.isNotEmpty() }?.first()
 - `apply` — инициализация mutable-коллекции
 - `takeIf` — заменяет `if (list.isNotEmpty()) list.first() else null`
 
-## Q21. (!) Чем коллекции Kotlin отличаются от Java Collections Framework?
+## Q21. (!) Как Kotlin/JVM связывает свои интерфейсы коллекций с Java Collections?
 
-Главное: `Kotlin` использует те же классы коллекций `Java` на `JVM`, но добавляет поверх разделение read-only/mutable, ковариантность read-only-типов, nullability в системе типов и богатый набор extension-функций. Java-код этого не различает и видит обычные изменяемые коллекции.
+На JVM интерфейсы коллекций Kotlin сопоставляются с Java-коллекциями без обязательного копирования объекта. Kotlin различает read-only и mutable интерфейсы и добавляет extension-функции; Java видит Java API конкретного объекта. Видимый тип Kotlin не обещает, что запись из Java пройдёт для любой реализации.
 
 | Аспект | Kotlin | Java |
 |--------|--------|------|
-| Мутабельность | Read-only + Mutable интерфейсы | Только mutable (`Collections.unmodifiable*` — в рантайме) |
+| Мутабельность | Отдельные read-only и mutable интерфейсы | Один набор интерфейсов; существуют и неизменяемые реализации (`List.of`) |
 | Ковариантность | `List<out T>` — ковариантна | `List<T>` — инвариантна |
 | Null-safety | `List<String>` vs `List<String?>` | Нет разделения на уровне типов |
 | Extension-функции | `map`, `filter`, `flatMap` встроены | Нужен `Stream API` (Java 8+) |
 | Фабрики | `listOf`, `buildList`, `emptyList` | `List.of()` (Java 9+), `Arrays.asList()` |
-| Порядок по умолчанию | `setOf` → `LinkedHashSet` (порядок вставки) | `HashSet` (без порядка) |
+| Порядок | Конкретные фабрики могут сохранять вставку | Зависит от реализации (`HashSet`, `LinkedHashSet`) |
 | Операторы | `+`, `-`, `in` для коллекций | Нет |
 | `Map` access | `map[key]`, `map[key] = value` | `map.get(key)`, `map.put(key, value)` |
 
@@ -742,16 +739,17 @@ val without = listOf(1, 2, 3) - 2          // [1, 3]
 
 Подробнее о совместимости — в [вопросах по Kotlin/Java Interop](kotlin-interop-java-interview.md).
 
-## Q22. Как в Kotlin работать с Java-коллекциями (взаимодействие, nullability)?
+## Q22. Как учитывать nullability при получении Java-коллекции без аннотаций в Kotlin?
 
-Главный риск интеропа — **платформенные типы** (`List<String!>`). Если в `Java`-коде нет аннотаций `@Nullable` / `@NotNull`, `Kotlin` не знает, может ли коллекция или её элементы быть `null`, и снимает проверки на null. NPE тогда «выстрелит» не в месте получения, а позже — при обращении к элементу. Поэтому тип нужно зафиксировать явно на границе.
+Без аннотаций nullability Java API может дать Kotlin платформенный тип с неизвестной допускаемостью `null` для самой коллекции и её элементов. Компилятор допускает использование как nullable и non-null, но выбранное non-null представление само по себе не проверяет каждый элемент. Проверяйте данные и явно задавайте тип на границе.
 
 ```kotlin
 // Java: List<String> getNames() — без аннотаций
 val names = javaObject.names  // тип: (Mutable)List<String!>!
 
 // Безопасный подход: явно объявить тип
-val safeNames: List<String> = javaObject.names  // NPE при null-элементе
+val rawNames: List<String?> = javaObject.names  // допускаем null-элементы
+val safeNames: List<String> = rawNames.filterNotNull()  // явная политика обработки null
 val nullableNames: List<String?> = javaObject.names  // безопасно
 
 // Конвертация
@@ -763,15 +761,15 @@ javaMethod(kotlinList)  // OK
 ```
 
 **Правила безопасности:**
-- Всегда явно указывайте тип при получении коллекций из `Java`
-- Используйте `toList()` для создания безопасной копии
+- Явно задавайте тип и политику обработки null на ненадёжной Java-границе
+- `toList()` копирует содержимое на уровне коллекции, но не проверяет и не копирует глубоко её элементы
 - Без аннотаций в `Java` — считайте элементы nullable (`List<String?>`)
 
 Подробнее — в [вопросах по Kotlin/Java Interop](kotlin-interop-java-interview.md) и [Java Collections](../java/java-collections-interview.md).
 
-## Q23. Что такое ArrayDeque в Kotlin?
+## Q23. Какие операции на концах поддерживает Kotlin ArrayDeque?
 
-`ArrayDeque` — двусторонняя очередь (deque): добавление и удаление с обоих концов за амортизированное O(1). Одна структура закрывает и стек (LIFO), и очередь (FIFO) — не нужно тащить `Stack` или `LinkedList`. Доступна в stdlib с Kotlin 1.3.70:
+`ArrayDeque` — двусторонняя очередь (deque): добавление и удаление с обоих концов за амортизированное O(1). Одна структура закрывает и стек (LIFO), и очередь (FIFO) — не нужно тащить `Stack` или `LinkedList`. Доступна в стандартной библиотеке Kotlin:
 
 ```kotlin
 val deque = ArrayDeque(listOf(1, 2, 3))
@@ -794,9 +792,9 @@ println(deque.last())  // 5
 
 **Отличия от `java.util.ArrayDeque`:**
 - Kotlin-версия — multiplatform (работает на JS, Native)
-- На JVM для `MutableList` может быть эффективнее `ArrayList` при частых вставках/удалениях в начало
+- `ArrayDeque` удобен для частых операций на обоих концах; вставка в начало `ArrayList` требует сдвига элементов
 
-## Q24. (!) Какие операции самые частые по сложности и как выбирать тип коллекции?
+## Q24. (!) Как выбрать между List, Set и Map по способу доступа к данным?
 
 Выбор сводится к двум вопросам: нужен ли доступ по ключу (→ `Map`), нужна ли уникальность (→ `Set`), иначе `List`. Дальше — нужен ли порядок (hash против tree/linked). Сложность ключевых операций задаёт ответ:
 
@@ -821,21 +819,21 @@ graph TD
     C -->|Да| D["Set"]
     C -->|Нет| E["List"]
     B -->|"Нужен порядок?"| F["TreeMap / sortedMapOf"]
-    B -->|"Нет"| G["HashMap / mapOf"]
+    B -->|"Нет"| G["HashMap / hashMapOf"]
     D -->|"Нужен порядок?"| H["TreeSet / sortedSetOf"]
-    D -->|"Нет"| I["HashSet / setOf"]
+    D -->|"Нет"| I["HashSet / hashSetOf"]
     E -->|"Частые вставки в начало?"| J["ArrayDeque"]
     E -->|"Нет"| K["ArrayList / listOf"]
 ```
 
-## Q25. (!) Как проектировать API: возвращать List, Sequence или Flow?
+## Q25. (!) Как выбирать List, Sequence или Flow для результата API?
 
 Правило простое: возвращайте самый простой контракт, который покрывает задачу, и усложняйте только при необходимости — `List` → `Sequence` → `Flow`. `List` — для готового конечного результата, `Sequence` — для ленивой синхронной обработки, `Flow` — когда данные асинхронные или потоковые.
 
 | Тип | Когда использовать | Характеристика |
 |-----|-------------------|---------------|
 | `List` | Результат конечен и нужен целиком | Eager, синхронный, random access |
-| `Sequence` | Ленивые синхронные вычисления | Lazy, синхронный, один проход |
+| `Sequence` | Ленивые синхронные вычисления | Промежуточные операции ленивы; повторный обход зависит от источника |
 | `Flow` | Асинхронные / потоковые данные | Lazy, async, backpressure, отмена |
 
 ```kotlin
@@ -843,7 +841,8 @@ graph TD
 fun getActiveUsers(): List<User> = repository.findAll().filter { it.isActive }
 
 // ✅ Sequence — ленивая обработка большого файла
-fun readLines(file: Path): Sequence<String> = file.bufferedReader().lineSequence()
+fun activeNames(users: List<User>): Sequence<String> =
+    users.asSequence().filter { it.isActive }.map { it.name }
 
 // ✅ Flow — стриминг из БД, WebSocket, события
 fun observeChanges(): Flow<Change> = callbackFlow {
@@ -855,7 +854,7 @@ fun observeChanges(): Flow<Change> = callbackFlow {
 
 **Принцип**: выбирайте самый простой контракт, покрывающий задачу. `List` → `Sequence` → `Flow` — по мере роста сложности. Подробнее о `Flow` — в [вопросах по Kotlin Coroutines](kotlin-coroutines-interview.md).
 
-## Q26. Как работают `scan`, `runningFold` и `runningReduce`?
+## Q26. Чем scan/runningFold отличаются от runningReduce?
 
 Эти операторы вычисляют **накопленные промежуточные результаты** на каждом шаге — в отличие от `fold`/`reduce`, которые возвращают только финальное значение.
 
@@ -899,7 +898,9 @@ generateSequence(1) { it + 1 }          // бесконечная последо
     .last()                              // последнее значение
 ```
 
-## Q27. Как работают `distinctBy`, `takeWhile`, `dropWhile` и `takeLastWhile`?
+## Q27. Чем takeWhile отличается от filter при обходе коллекции?
+
+`takeWhile` возвращает совпадающий начальный участок и прекращает проверку при первом несовпадении. `filter` продолжает проверять весь источник.
 
 **`distinctBy`** — удаляет дубликаты по ключу (сохраняет первое вхождение):
 
@@ -951,9 +952,9 @@ logs.dropLastWhile { it.startsWith("INFO") }  // ["INFO start", "INFO init", "ER
 - `takeWhile` — **раннее прерывание** (эффективно для отсортированных данных)
 - `filter` — **сплошное сканирование** (все элементы проверяются)
 
-## Q28. Чем `LinkedHashMap` и `TreeMap` отличаются в Kotlin?
+## Q28. Чем LinkedHashMap отличается от TreeMap по порядку и доступу?
 
-Оба — реализации `Map` из Java (своих у Kotlin нет), и различаются они порядком обхода и стоимостью операций. `LinkedHashMap` хранит порядок вставки и даёт O(1) на доступ; `TreeMap` держит ключи отсортированными (O(log n)) и предоставляет навигацию по диапазонам (`headMap`/`tailMap`/`subMap`).
+`LinkedHashMap` и `TreeMap` — JVM-реализации `Map` с разными порядком обхода и стоимостью операций. `LinkedHashMap` хранит порядок вставки и даёт O(1) на доступ; `TreeMap` держит ключи отсортированными (O(log n)) и предоставляет навигацию по диапазонам (`headMap`/`tailMap`/`subMap`).
 
 | Тип | Порядок | `get`/`put`/`containsKey` | Когда использовать |
 |-----|---------|--------------------------|-------------------|
@@ -962,7 +963,7 @@ logs.dropLastWhile { it.startsWith("INFO") }  // ["INFO start", "INFO init", "ER
 | `TreeMap` (`sortedMapOf`) | Натуральная сортировка ключей | O(log n) | Нужен отсортированный порядок |
 
 ```kotlin
-// mapOf → LinkedHashMap: порядок вставки гарантирован
+// Пример текущего результата mapOf; для явного контракта реализации используйте linkedMapOf
 val linked = mapOf("banana" to 2, "apple" to 1, "cherry" to 3)
 linked.keys.toList()  // [banana, apple, cherry]
 
@@ -981,16 +982,16 @@ tree.tailMap("c")      // {c=3, d=4} — ключи ≥ "c"
 tree.subMap("b", "d")  // {b=2, c=3}
 ```
 
-**Важно**: `setOf`, `mapOf` в Kotlin используют `LinkedHashSet` и `LinkedHashMap` — это отличие от Java, где `HashSet`/`HashMap` порядка не гарантируют. Не полагайтесь на это как на API-контракт — используйте `linkedSetOf`/`linkedMapOf` явно, если порядок критичен.
+**Важно**: интерфейсы `Set` и `Map` не обещают порядок обхода. Если порядок вставки является частью контракта кода, используйте явные `linkedSetOf` и `linkedMapOf`.
 
-## Q29. Когда использовать `hashSetOf`, `linkedSetOf`, `sortedSetOf`?
+## Q29. Как различаются hashSetOf, linkedSetOf и sortedSetOf по порядку?
 
 Аналогично Map-коллекциям, три варианта Set отличаются реализацией и поведением:
 
 | Функция | Реализация | Порядок | `contains` |
 |---------|-----------|---------|-----------|
 | `hashSetOf()` | `HashSet` | Произвольный | O(1)* |
-| `setOf()` / `linkedSetOf()` | `LinkedHashSet` | Порядок вставки | O(1)* |
+| `linkedSetOf()` | `LinkedHashSet` | Порядок вставки | O(1)* |
 | `sortedSetOf()` | `TreeSet` | Натуральная сортировка | O(log n) |
 
 ```kotlin
@@ -1014,7 +1015,7 @@ byLength.toList()  // [fig, apple, banana]
 
 **Правило выбора**: если нужен только быстрый `contains`/`add` — `hashSetOf`. Если нужен предсказуемый порядок итерации — `setOf`. Если нужна сортировка или `headSet`/`tailSet` — `sortedSetOf`.
 
-## Q30. (!) Какой оверхед у `Sequence` и когда он перевешивает выгоду?
+## Q30. (!) Когда накладные расходы Sequence могут превысить выгоду?
 
 `Sequence` экономит на промежуточных коллекциях, но не бесплатен: вместо аллокаций списков он платит за итераторы и потерю инлайнинга. Поэтому на маленьких данных и коротких цепочках оверхед итераторов перевешивает экономию, и обычный `List` оказывается быстрее.
 
@@ -1024,18 +1025,13 @@ byLength.toList()  // [fig, apple, banana]
 - Инлайнинг lambda-функций работает хуже из-за индиректных вызовов через итератор
 
 ```kotlin
-// Benchmark (условный): 1 000 000 элементов, 3 операции
-// List:     ~80 ms, 3 промежуточных списка, ~24 MB
-// Sequence: ~45 ms, 0 промежуточных списков, ~0 MB доп. памяти
-
-// Но для маленьких коллекций:
-// List  (10 элементов): ~0.1 µs
-// Sequence (10 элементов): ~0.4 µs  ← оверхед видим
+// Иллюстрация: итог зависит от размеров, операций и JVM.
+// Измеряйте конкретную цепочку, если выбор влияет на производительность.
 ```
 
 **Когда `Sequence` НЕ выгоден:**
-- Коллекция **< 100–1000 элементов** (overhead итераторов > выгода от lazy)
-- **Одна** операция — промежуточной коллекции нет в принципе
+- Небольшая коллекция, где стоимость ленивой цепочки может превысить экономию списков
+- Одна полная операция без ранней остановки: экономия промежуточных коллекций обычно мала
 - Операции **без early termination** и без длинных цепочек
 - Частые вызовы в tight loop — оверхед объектов накапливается
 
@@ -1053,9 +1049,9 @@ listOf(1, 2, 3).asSequence().filter { it > 1 }.toList()  // избыточно
 
 > **Совет**: профилируйте перед оптимизацией. `asSequence()` — не серебряная пуля, а инструмент для конкретных случаев.
 
-## Q31. Как избежать лишних аллокаций при работе с коллекциями?
+## Q31. Как any избегает промежуточного списка по сравнению с filter().isNotEmpty()?
 
-Большинство лишних аллокаций — это промежуточные коллекции, которые создаёт цепочка операций, и недо-/переразмеренные структуры. Общий приём: схлопывать связки операций в одну (`mapNotNull` вместо `map`+`filterNotNull`), использовать терминальные операции с ранним выходом (`any`/`none`) и задавать ёмкость заранее.
+Если нужен только факт наличия подходящего элемента, `any(predicate)` останавливается на первом совпадении и возвращает Boolean. `filter(predicate).isNotEmpty()` сначала строит список совпадений. Остальные приёмы ниже полезны, когда действительно нужен результат преобразования.
 
 ```kotlin
 // 1. Задайте начальную ёмкость, если размер известен
@@ -1068,11 +1064,12 @@ items.map { parse(it) }.filterNotNull()
 // ✅ Один проход
 items.mapNotNull { parse(it) }
 
-// 3. any/none/all вместо filter + isEmpty (early termination)
-// ❌ Создаёт полный список
-items.filter { it.isActive }.isEmpty()
-// ✅ Останавливается на первом
-items.none { it.isActive }
+// 3. any/none вместо filter + isNotEmpty/isEmpty
+// ❌ Создаёт полный список совпадений
+items.filter { it.isActive }.isNotEmpty()
+// ✅ Останавливается на первом совпадении
+items.any { it.isActive }
+// Для отсутствия подходящих элементов: items.none { it.isActive }
 
 // 4. sumOf/count вместо map + sum/size
 // ❌ Промежуточный список Int
@@ -1089,12 +1086,12 @@ a.any { it in b }
 // 6. Sequence для длинных цепочек (см. Q30)
 ```
 
-## Q32. (!) Безопасны ли Kotlin-коллекции для многопоточного доступа?
+## Q32. (!) Гарантирует ли read-only тип Kotlin потокобезопасность коллекции?
 
-**Нет.** Ни read-only, ни mutable коллекции Kotlin не являются потокобезопасными по умолчанию.
+**Нет.** Read-only интерфейс не синхронизирует доступ к объекту, который другой поток может менять через mutable-ссылку. Потокобезопасность зависит от конкретной реализации и способа публикации данных.
 
 **Read-only коллекции** (`List`, `Set`, `Map`):
-- Безопасны для **параллельного чтения** — нет гонки на чтение неизменяемых данных
+- Параллельное чтение неизменяемого и безопасно опубликованного снимка не требует записи в объект
 - Небезопасны, если другой поток модифицирует ту же коллекцию через `MutableList`-ссылку
 
 **Mutable коллекции** (`MutableList`, `MutableMap`, `MutableSet`):
@@ -1104,7 +1101,7 @@ a.any { it in b }
 ```kotlin
 // ✅ Вариант 1: ConcurrentHashMap из Java
 val concurrentMap = java.util.concurrent.ConcurrentHashMap<String, Int>()
-// thread-safe put/get/remove, но итерация может видеть "старый" снимок
+// thread-safe put/get/remove; итератор слабо согласован с конкурентными изменениями
 
 // ✅ Вариант 2: Collections.synchronizedList (полная синхронизация)
 val syncList = java.util.Collections.synchronizedList(mutableListOf<Int>())
@@ -1121,11 +1118,11 @@ val immutable = persistentListOf(1, 2, 3)
 // ✅ Вариант 5: StateFlow/SharedFlow в корутинах (для реактивных паттернов)
 ```
 
-> **Правило**: передавайте коллекции между потоками только как `List`/`Set`/`Map` (read-only). Для shared mutable state — используйте `ConcurrentHashMap`, `CopyOnWriteArrayList` или `kotlinx.collections.immutable`.
+> **Правило**: read-only тип сам по себе не делает общий изменяемый объект безопасным. Для shared mutable state нужна синхронизация или подходящая concurrent-коллекция; для версий состояния подходят persistent-коллекции с безопасной публикацией.
 
-## Q33. Что такое `associate` и чем он отличается от `associateBy` и `associateWith`?
+## Q33. Чем лямбда associate отличается от аргументов associateBy?
 
-Все три строят `Map` из коллекции, отличаясь тем, что лямбда задаёт — ключ, значение или обе части пары. `associate` — самый общий (вы задаёте и ключ, и значение), а `associateBy`/`associateWith` — его частные случаи: один берёт элемент как значение, другой — как ключ.
+`associate` принимает одну лямбду, возвращающую `Pair<K, V>`. У `associateBy` есть `keySelector` и необязательный `valueTransform`, поэтому он тоже может вычислить и ключ, и значение, но отдельными лямбдами. Вариант с `associate` создаёт краткоживущие `Pair`-объекты; это может иметь значение на горячем пути.
 
 | Функция | Сигнатура лямбды | Возвращает |
 |---------|-----------------|-----------|
@@ -1161,7 +1158,7 @@ users.associateWith { it.email }
 
 > **Внимание**: все три при дубликатах ключей молча перезаписывают значение (побеждает последний). Используйте `groupBy`, если дубликаты возможны.
 
-## Q34. Как работает `flatten` и чем отличается от `flatMap`?
+## Q34. Чем flatten отличается от flatMap?
 
 **`flatten`** принимает `Iterable<Iterable<T>>` (коллекцию коллекций) и «склеивает» их в одну плоскую коллекцию. Это терминальная операция без преобразования элементов.
 
@@ -1190,7 +1187,9 @@ posts.map { it.tags }.flatten().distinct()  // то же, но два шага
 
 **Разница в производительности**: `flatMap` — один проход, `map + flatten` — два прохода и промежуточный список вложенных коллекций.
 
-## Q35. Что такое `coerceIn`, `minOrNull`, `maxOrNull`, `sumOf`, `averageOf`?
+## Q35. Чем minOrNull отличается от min на пустой коллекции?
+
+`minOrNull()` возвращает `null` на пустой коллекции. `min()` требует элемент и в этом случае бросает `NoSuchElementException`.
 
 Агрегирующие и граничные операции над числовыми коллекциями:
 
@@ -1229,7 +1228,9 @@ val pageSize = requestedSize.coerceIn(10, 100)
 
 > **Важно**: `min()`/`max()` бросают `NoSuchElementException` на пустой коллекции; `minOrNull()`/`maxOrNull()` возвращают `null`. Предпочитайте `*OrNull`-варианты в production-коде.
 
-## Q36. Как используются `first`, `last`, `single`, `elementAtOrElse` и их безопасные варианты?
+## Q36. Чем singleOrNull отличается от single при пустой или многозначной коллекции?
+
+`singleOrNull()` возвращает `null`, если элементов нет или их больше одного. `single()` в обоих случаях бросает исключение.
 
 Функции доступа к конкретным элементам по позиции или предикату:
 
@@ -1274,7 +1275,9 @@ numbers.getOrNull(10)          // null
 
 ---
 
-## Q37. (!) Что такое `PersistentList` / `PersistentMap` и зачем нужен structural sharing?
+## Q37. (!) Зачем persistent-коллекциям structural sharing при обновлении?
+
+Structural sharing сохраняет прежнюю версию persistent-коллекции и переиспользует неизменённые части структуры в новой версии.
 
 **`kotlinx.collections.immutable`** — библиотека от JetBrains, добавляющая по-настоящему неизменяемые коллекции с поддержкой structural sharing.
 
@@ -1316,19 +1319,19 @@ list2 = [1, 2, 3, 4, 5, 6]
 - Функциональные алгоритмы с историей состояний
 - Kotlin Multiplatform (в отличие от `java.util.Collections.unmodifiableList`)
 
-**Отличие от `listOf()`**: `listOf()` возвращает read-only обёртку над `ArrayList` — под капотом изменяемая коллекция, доступная через приведение типа. `PersistentList` — гарантированно иммутабельна на уровне реализации.
+**Отличие от `listOf()`**: read-only тип результата `listOf()` сам по себе не обещает неизменяемую реализацию. `PersistentList` сохраняет прежнюю версию при обновлении и переиспользует неизменённые части структуры.
 
-## Q38. (!) Чем отличаются `Collection`, `Iterable` и `Sequence` — когда что использовать?
+## Q38. (!) Чем отличаются Iterable, Collection и Sequence как контракты?
 
-Это три контракта с разным объёмом гарантий, идущие по нарастающей: `Iterable` умеет только обход (one-shot for-loop, без `size`); `Collection` добавляет к нему `size` и `contains`; `Sequence` — отдельная ветка с ленивым, поэлементным вычислением без промежуточных коллекций. В API-сигнатурах берите самый слабый из подходящих — это даёт максимум гибкости вызывающему.
+`Iterable` предоставляет `iterator()`, а `Collection` добавляет `size` и `contains`. `Sequence` — отдельный контракт, чьи промежуточные операции обычно строят ленивую цепочку. Ни `Iterable`, ни `Sequence` не гарантируют повторный обход для любого источника. Выбирайте тип API по нужным операциям.
 
 | Критерий | `Iterable<T>` | `Collection<T>` | `Sequence<T>` |
 |----------|--------------|-----------------|---------------|
 | Знает `size`? | Нет | Да | Нет |
-| Многопроходной? | Как правило да | Да | Не гарантировано |
-| Вычисление | Eager | Eager | Lazy |
-| Промежуточные коллекции | Создаёт | Создаёт | Не создаёт |
-| Оптимален для | Любой обход | Случайный доступ, size | Длинные цепочки операций |
+| Повторный обход? | Не гарантирован интерфейсом | Зависит от реализации | Не гарантирован |
+| Вычисление | Зависит от реализации | Зависит от реализации | Промежуточные операции ленивы |
+| Промежуточные коллекции | Зависят от вызванных операций | Зависят от вызванных операций | Не нужны для обычных map/filter |
+| Подходит для | Обхода | size/contains | Ленивой цепочки операций |
 
 ```kotlin
 // Iterable — базовый контракт для for-цикла
@@ -1359,7 +1362,7 @@ fun processLargeFile(lines: Sequence<String>): List<String> =
 - Много промежуточных операций на большой коллекции → `Sequence<T>`
 - Асинхронный поток данных → `Flow<T>` из Coroutines
 
-## Q39. В чём разница между `sortedBy`, `sortedWith` и `compareBy`?
+## Q39. Как соотносятся sortedBy, sortedWith и compareBy?
 
 Коротко: `sortedBy` сортирует по одному ключу, `sortedWith` принимает произвольный `Comparator`, а `compareBy` — это фабрика таких компараторов из нескольких ключей. `sortedBy { x }` — просто сахар над `sortedWith(compareBy { x })`; для сортировки по нескольким полям нужен `compareBy(...)` или цепочка `thenBy`.
 
@@ -1446,7 +1449,7 @@ val countAndLongest = grouping.aggregate { _, acc: Pair<Int, String>?, s, first 
 
 `groupingBy` эффективнее по памяти: не создаёт промежуточные `List`.
 
-## Q41. Как работают `chunked` и `windowed` — batch processing и скользящее окно?
+## Q41. Чем chunked и windowed(size) различаются при шаге по умолчанию?
 
 **`chunked(size)`** — делит коллекцию на непересекающиеся блоки фиксированного размера:
 
@@ -1500,7 +1503,7 @@ val diffs: List<Int> = numbers.zipWithNext { a, b -> b - a }
 | `windowed(n, step)` | Настраиваемое | Семплирование потока |
 | `zipWithNext` | Пары соседних | Вычисление дельт |
 
-## Q42. В чём разница между `associateBy`, `associateWith` и `associate`?
+## Q42. Что задают основной селектор associateBy, лямбда associateWith и лямбда associate?
 
 Все три строят `Map`, но отличаются ролью лямбды: `associateBy` берёт из неё **ключ** (значение — сам элемент), `associateWith` — **значение** (ключ — сам элемент), `associate` задаёт **обе части** пары. Запомнить просто по «направлению»: `By` — ключ, `With` — значение, голый `associate` — полный контроль.
 
@@ -1512,7 +1515,7 @@ val users = listOf(User(1, "Alice", "a@x.com"), User(2, "Bob", "b@x.com"), User(
 val byId: Map<Int, User> = users.associateBy { it.id }
 // {1=User(1,"Alice",...), 2=User(2,"Bob",...)}
 
-// associateBy { keySelector } { valueTransform } — ключ и значение из элемента
+// associateBy(keySelector, valueTransform) — ключ и значение из элемента
 val idToName: Map<Int, String> = users.associateBy({ it.id }, { it.name })
 // {1="Alice", 2="Bob", 3="Carol"}
 
@@ -1541,7 +1544,7 @@ val emailToId: Map<String, Int> = users.associate { it.email to it.id }
 
 > При дублирующихся ключах выигрывает **последний** элемент. Если нужно сохранить все значения — используйте `groupBy`.
 
-## Q43. Что такое `scan` и как он отличается от `fold`?
+## Q43. Чем scan отличается от fold по результату?
 
 **`fold`** — сворачивает коллекцию в одно итоговое значение. **`scan`** — то же самое, но возвращает **все промежуточные результаты** (включая начальное значение).
 

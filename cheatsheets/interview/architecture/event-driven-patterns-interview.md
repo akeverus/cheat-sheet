@@ -15,27 +15,25 @@ aliases:
 prerequisites:
   - "[[event-driven]]"
 next: []
-updated: "2026-05-08"
+updated: "2026-11-09"
 ---
 # Вопросы на собеседовании: `Event-driven` паттерны
 
-Комплексное руководство по вопросам собеседования на тему event-driven паттернов для Senior Java Developer.
+Краткие ответы по архитектуре событий: порядок, повторная доставка, согласованность и эволюция контрактов. Гарантии брокера всегда рассматриваются вместе с настройками и внешними побочными эффектами.
 
 ## Полезные ссылки
 
-### Официальная документация
+### Источники
 
-- [Event-Driven Architecture — Martin Fowler](https://martinfowler.com/articles/201701-event-driven.html) — разница между event notification, event-carried state transfer, event sourcing, CQRS
-- [Event Sourcing — Martin Fowler](https://martinfowler.com/eaaDev/EventSourcing.html) — паттерн хранения состояния через события
-- [Spring Application Events](https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events) — механизм событий в Spring Framework
-- [Spring Kafka Reference](https://docs.spring.io/spring-kafka/reference/) — интеграция Spring Boot с Apache Kafka
-- [Spring Events — Baeldung](https://www.baeldung.com/spring-events) — практический гайд по Spring `ApplicationEvent`
-- [Intro to Apache Kafka with Spring — Baeldung](https://www.baeldung.com/spring-kafka) — producer/consumer в Spring Boot
-- [Kafka Streams With Spring Boot (Baeldung)](https://www.baeldung.com/spring-boot-kafka-streams) — обработка потоков событий через Kafka Streams
-- [Introduction to Spring Cloud Stream (Baeldung)](https://www.baeldung.com/spring-cloud-stream) — event-driven микросервисы через Spring Cloud Stream
-- [Event Externalization with Spring Modulith (Baeldung)](https://www.baeldung.com/spring-modulith-event-externalization) — публикация доменных событий в Kafka через Spring Modulith
-- [Saga Pattern in Microservices — Microservices.io](https://microservices.io/patterns/data/saga.html) — описание паттерна Saga
-- [Transactional Outbox — Microservices.io](https://microservices.io/patterns/data/transactional-outbox.html) — описание Outbox pattern
+- [Martin Fowler: What do you mean by “Event-Driven”?](https://martinfowler.com/articles/201701-event-driven.html) — виды событийного взаимодействия.
+- [Martin Fowler: Event Sourcing](https://martinfowler.com/eaaDev/EventSourcing.html) — история событий и восстановление состояния.
+- [Apache Kafka: Design](https://kafka.apache.org/44/design/design/) — порядок, репликация и границы exactly-once.
+- [RabbitMQ Streams](https://www.rabbitmq.com/docs/streams) — сохранённый поток и replay.
+- [Confluent Schema Evolution](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html) — направления совместимости и режимы.
+- [Spring Framework: Application Events](https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html) — локальные события приложения.
+- [Spring Kafka: Error Handling](https://docs.spring.io/spring-kafka/reference/kafka/annotation-error-handling.html) — retry и DLT.
+- [Debezium: Outbox Event Router](https://debezium.io/documentation/reference/stable/transformations/outbox-event-router.html) — CDC для outbox.
+- [Microservices.io: Saga](https://microservices.io/patterns/data/saga.html) и [Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html) — составные бизнес-процессы и локальная атомарность.
 
 ## Содержание
 
@@ -96,1466 +94,268 @@ updated: "2026-05-08"
 
 ## Q1. (!) Что такое event-driven архитектура и чем она отличается от синхронного REST?
 
-`Event-driven` архитектура (`EDA`) -- стиль проектирования, при котором компоненты обмениваются данными через события, публикуемые в брокер сообщений (`Kafka`, `RabbitMQ`), вместо прямых вызовов друг друга.
+Event-driven architecture (EDA) связывает компоненты сообщениями о произошедших фактах. Производитель может опубликовать событие и продолжить работу после подтверждения записи брокером, не дожидаясь бизнес-обработки всех потребителей. Публикация сама по себе не доказывает, что доставка и эффект потребителя завершились.
 
-Механика проста: производитель (producer) публикует событие и сразу продолжает работу -- он не ждёт обработки и даже не знает, кто его прочитает. Потребители (consumers) подписываются на топики/очереди и разбирают события асинхронно, каждый в своём темпе. Источник и приёмник связаны только контрактом события, а не сетевым адресом друг друга.
-
-```mermaid
-graph LR
-    subgraph "Синхронный REST"
-        A[Service A] -->|"POST /orders"| B[Service B]
-        B -->|"200 OK"| A
-    end
-
-    subgraph "Event-driven"
-        C[Producer] -->|"OrderCreated"| D[(Broker)]
-        D -->|poll/push| E[Consumer 1]
-        D -->|poll/push| F[Consumer 2]
-    end
-```
-
-Отличия от синхронного `REST`:
-
-| Критерий | `REST` | `EDA` |
-|----------|--------|-------|
-| Связность | Клиент знает адрес сервиса | Producer не знает consumers |
-| Масштабируемость | Нужен load balancer | Consumers масштабируются независимо |
-| Отказоустойчивость | Нужны retry и circuit breaker | Сообщения сохраняются в брокере |
-| Консистентность | Сильная в одной транзакции | Eventual consistency, нужны [паттерны согласованности](consistency-patterns-interview.md) (`Saga`, компенсации) |
-| Латентность | Немедленный ответ | Задержка обработки |
+Синхронный HTTP-запрос обычно даёт вызывающему ответ от адресата в рамках одного взаимодействия. EDA позволяет потребителям обрабатывать событие независимо и позже, но добавляет задержку согласования, повторную доставку и отдельный контроль ошибок. HTTP и события могут сочетаться: например, команда приходит по REST, а факт её выполнения публикуется в брокер. Ни один из подходов сам по себе не гарантирует глобальную сильную консистентность.
 
 ## Q2. Что такое событие (event) в контексте EDA? Какие атрибуты у события?
 
-Событие -- неизменяемая запись о факте, который **уже произошёл** в системе (например, «Заказ создан», «Платёж проведён»). Этим оно отличается от команды: событие констатирует свершившееся в прошедшем времени, а команда -- это запрос на будущее действие, который ещё может быть отклонён.
+Событие описывает уже произошедший факт, например `OrderCreated`. Команда `CreateOrder` просит выполнить действие и может быть отклонена. Опубликованное событие не меняют задним числом: исправление выражают новым событием или корректирующей операцией.
 
-Неизменяемость важна по смыслу: факт нельзя «переотправить иначе» -- если состояние поменялось, публикуется новое событие. Поэтому событие удобно хранить, реплеить и использовать как источник истины.
-
-**Рекомендуемые атрибуты** -- каждый решает свою задачу:
-- **Идентификатор события** -- уникальный `eventId`; по нему потребитель дедуплицирует повторные доставки и связывает запись с трассировкой
-- **Тип события** -- имя и версия; по ним брокер и потребитель маршрутизируют событие и проверяют совместимость схемы
-- **Временная метка** -- когда факт произошёл (часто в `UTC`, чтобы не зависеть от таймзоны узла)
-- **Агрегат** -- идентификатор сущности (`orderId`, `userId`); заодно это ключ партиционирования для порядка
-- **Полезная нагрузка** (payload) -- собственно данные события
-- **Метаданные** -- источник, `correlationId`, `traceId` для [распределённой трассировки](../monitoring/observability-interview.md)
-
-Пример структуры события на Java:
-
-```java
-public record OrderCreatedEvent(
-    UUID eventId,
-    String type,           // "order.created"
-    Instant timestamp,
-    UUID aggregateId,      // orderId
-    OrderPayload payload,
-    EventMetadata metadata
-) {
-    public record OrderPayload(
-        List<OrderItem> items,
-        BigDecimal totalAmount,
-        String currency
-    ) {}
-
-    public record EventMetadata(
-        String source,          // "order-service"
-        String correlationId,
-        String traceId
-    ) {}
-}
-```
+Полезные поля контракта: уникальный `eventId` для дедупликации, тип и версия схемы, время факта, `aggregateId` для связывания событий сущности, полезная нагрузка и корреляционные метаданные. Конкретный обязательный набор задаёт контракт системы; пустой `payload` тоже возможен, если факт определён типом и идентификатором. Время публикации и время бизнес-факта могут различаться.
 
 ## Q3. (!) Что такое брокер сообщений и чем отличаются Kafka и RabbitMQ для EDA?
 
-Брокер сообщений -- промежуточный посредник, который принимает сообщения от производителей, надёжно их хранит и доставляет потребителям. Он развязывает producer и consumer во времени: отправитель и получатель не обязаны быть онлайн одновременно, а сообщения переживают перезапуски. В зависимости от настроек брокер даёт гарантии персистентности, доставки и порядка.
+Брокер принимает сообщения и предоставляет механизм их доставки; гарантии сохранности зависят от типа очереди и настроек подтверждений. Kafka хранит записи в партиционированном логе до истечения retention или compaction. RabbitMQ classic/quorum queues обычно удаляют подтверждённое сообщение из очереди, а RabbitMQ Streams сохраняют лог и поддерживают replay в пределах retention.
 
-`Kafka` использует партиционированный лог. У `RabbitMQ` модель зависит от типа: `classic`/`quorum` queue — очередь задач с удалением после ack, а `Stream` — реплицированный лог с replay до истечения retention. [RabbitMQ Streams 4.3](https://www.rabbitmq.com/docs/streams), [Kafka topic configs](https://kafka.apache.org/43/configuration/topic-configs/).
-
-| Характеристика | `Kafka` | RabbitMQ classic/quorum queue | RabbitMQ Stream |
-|---|---|---|---|
-| Модель | Партиционированный лог. | Подтверждаемая очередь задач. | Реплицированный append-only лог. |
-| Хранение | По retention/compaction. | До ack обработки. | По retention времени/размера. |
-| Replay | Пока запись сохранена. | После ack недоступен. | Пока запись сохранена. |
-| Порядок | В пределах партиции. | Зависит от числа consumer-ов. | В пределах stream/партиции super stream. |
-| Основной сценарий | Event log и обработка потоков. | Work queue, RPC, routing. | Replay и независимые читатели в RabbitMQ. |
-
-**Как выбирать.** Для рабочей очереди с ack/requeue и гибким routing подойдут обычные очереди RabbitMQ. Для сохраняемого потока сравните Kafka и RabbitMQ Streams по retention, масштабу, клиентам и имеющейся инфраструктуре; replay сам по себе не исключает RabbitMQ. Подробнее: [Kafka](../messaging/kafka-interview.md) и [RabbitMQ Streams](../messaging/rabbitmq-interview.md#q42-чем-rabbitmq-streams-отличаются-от-обычной-очереди-и-когда-они-нужны).
+Kafka удобна для независимых consumer groups и обработки сохранённого потока. Обычные очереди RabbitMQ удобны для маршрутизации и распределения задач с ack/requeue; Streams дают иной режим чтения. Нельзя говорить, что RabbitMQ вообще не поддерживает replay или что Kafka удаляет запись при commit offset. [Kafka design](https://kafka.apache.org/44/design/design/) и [RabbitMQ Streams](https://www.rabbitmq.com/docs/streams) описывают разные модели.
 
 ## Q4. Как обеспечить порядок обработки событий в распределённой системе?
 
-Глобальный порядок в распределённом брокере недостижим без потери масштабируемости, поэтому на практике обеспечивают порядок **по агрегату**, а не по всему потоку. В `Kafka` порядок гарантируется только в пределах одной партиции -- значит, нужно следить, чтобы связанные события попадали в одну и ту же партицию. Отсюда правила:
-- Используйте ключ партиционирования (например, `orderId`), чтобы все события по одному заказу попадали в одну партицию и читались последовательно
-- Не увеличивайте число партиций без необходимости -- `partition = hash(key) % numPartitions`, поэтому смена их числа перетасует распределение ключей и разорвёт порядок
-- Глобального порядка обычно не добиваются осознанно: достаточно порядка в рамках одного агрегата
+Kafka сохраняет порядок записей внутри одной партиции. Для событий одного агрегата используют стабильный ключ, например `orderId`, и следят, чтобы все его события публиковались в нужном порядке. Один consumer в группе владеет партицией в данный момент, но асинхронная обработка внутри него может нарушить порядок завершения эффектов.
 
-```mermaid
-graph TD
-    P[Producer] -->|"key=order-1"| PA[Partition 0]
-    P -->|"key=order-2"| PB[Partition 1]
-    P -->|"key=order-3"| PA
-    PA -->|последовательно| C1[Consumer 1]
-    PB -->|последовательно| C2[Consumer 2]
-```
-
-В `RabbitMQ` порядок в одной очереди сохраняется при одном потребителе; при нескольких -- порядок не гарантирован. Решения: `single active consumer`, `message groups` для группировки по ключу.
+Глобальный порядок можно получить ценой одного последовательного потока, что ограничит параллелизм. При изменении числа партиций прежний ключ может начать попадать в другую партицию; простое `hash(key) % N` не является универсальной формулой всех partitioner-ов. Для строгого порядка по агрегату планируют миграцию ключей, порядок публикации и обработку повторов.
 
 ## Q5. (!) Что такое идемпотентность потребителя и зачем она нужна?
 
-Идемпотентность потребителя означает, что повторная обработка одного и того же сообщения даёт ровно тот же результат, что и однократная -- без двойного списания, двойного резервирования и дублей в БД.
+Идемпотентный потребитель повторно получает то же событие без повторного бизнес-эффекта. Это нужно при retry, ребалансе, сбое между записью результата и фиксацией offset и повторной публикации relay. At-least-once допускает дубли; сам флаг в брокере не делает внешнюю БД идемпотентной.
 
-Зачем это нужно: в распределённой системе дубли неизбежны. Брокеры дают семантику **at-least-once**, поэтому одно и то же событие может прийти повторно -- из-за retry продюсера, ребаланса или перезапуска потребителя до коммита offset. Идемпотентность -- это способ сделать дубли безвредными, а не пытаться их полностью исключить.
-
-**Практический критерий:** если операция связана с деньгами или резервированием, идемпотентность подтверждают интеграционным тестом с повторной доставкой одного и того же `eventId`.
-
-Способы реализации:
-
-```java
-@Service
-@RequiredArgsConstructor
-public class IdempotentEventHandler {
-
-    private final ProcessedEventRepository processedEvents;
-    private final OrderRepository orderRepository;
-
-    @Transactional
-    public void handle(OrderCreatedEvent event) {
-        // Проверка: уже обработано?
-        if (processedEvents.existsByEventId(event.eventId())) {
-            log.info("Event {} already processed, skipping", event.eventId());
-            return;
-        }
-
-        // Бизнес-логика
-        orderRepository.save(mapToOrder(event));
-
-        // Пометить как обработанное (в той же транзакции)
-        processedEvents.save(new ProcessedEvent(event.eventId(), Instant.now()));
-    }
-}
-```
-
-**Альтернативные подходы** -- когда отдельная таблица обработанных событий избыточна, идемпотентность можно встроить в саму бизнес-операцию:
-- **Бизнес-ключ**: если операция по `paymentId` уже выполнена -- пропустить (дедупликация по естественному ключу домена)
-- **Upsert** вместо `INSERT` -- повторное выполнение перезаписывает ту же строку, а не создаёт дубликат
-- **Conditional update**: `UPDATE ... WHERE version = :expected` -- повторная попытка не пройдёт условие и ничего не изменит (оптимистичная блокировка)
+Для локального эффекта удобно атомарно вставить `eventId` с уникальным ограничением и изменить бизнес-данные **в одной транзакции**. Простое `existsByEventId` перед записью не защищает от двух конкурентных обработчиков: оба могут увидеть отсутствие записи. Если эффект у внешнего API, передают устойчивый idempotency key или строят отдельный протокол повторов и сверки. `upsert` подходит, только когда повторная запись действительно не меняет семантику.
 
 ## Q6. (!) Что такое Event Sourcing?
 
-`Event Sourcing` -- подход, при котором источником истины служит не текущее состояние, а полная **последовательность событий**, его породивших. Вместо того чтобы хранить «баланс = 400», система хранит цепочку фактов («открыт счёт», «+500», «-200», «+100»), а текущее состояние **вычисляет** на лету, проигрывая эти события поверх «нулевого» состояния (или поверх снапшота + последующие события).
+Event Sourcing хранит историю событий агрегата как источник истины и восстанавливает состояние применением событий по версии. Команда проверяет инварианты текущего состояния, порождает новые события, а event store атомарно добавляет их при ожидаемой версии агрегата. Это защищает от конкурентной записи в одну цепочку.
 
-```mermaid
-graph LR
-    E1["AccountOpened<br/>balance=0"] --> E2["MoneyDeposited<br/>+500"]
-    E2 --> E3["MoneyWithdrawn<br/>-200"]
-    E3 --> E4["MoneyDeposited<br/>+100"]
-    E4 --> S["Текущий баланс:<br/>400"]
-```
-
-Пример реализации на Java:
-
-```java
-public class BankAccount {
-    private UUID id;
-    private BigDecimal balance = BigDecimal.ZERO;
-    private final List<DomainEvent> uncommittedEvents = new ArrayList<>();
-
-    // Восстановление из событий
-    public static BankAccount fromEvents(List<DomainEvent> events) {
-        var account = new BankAccount();
-        events.forEach(account::apply);
-        return account;
-    }
-
-    // Команда -> генерация события
-    public void deposit(BigDecimal amount) {
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Amount must be positive");
-        }
-        raise(new MoneyDeposited(id, amount, Instant.now()));
-    }
-
-    public void withdraw(BigDecimal amount) {
-        if (balance.compareTo(amount) < 0) {
-            throw new InsufficientFundsException(id, amount, balance);
-        }
-        raise(new MoneyWithdrawn(id, amount, Instant.now()));
-    }
-
-    // Применение события (мутация состояния)
-    private void apply(DomainEvent event) {
-        switch (event) {
-            case AccountOpened e -> { this.id = e.accountId(); this.balance = BigDecimal.ZERO; }
-            case MoneyDeposited e -> this.balance = balance.add(e.amount());
-            case MoneyWithdrawn e -> this.balance = balance.subtract(e.amount());
-            default -> throw new IllegalStateException("Unknown event: " + event);
-        }
-    }
-
-    private void raise(DomainEvent event) {
-        apply(event);
-        uncommittedEvents.add(event);
-    }
-}
-```
-
-**Плюсы:** полная история изменений «из коробки» (готовый аудит), возможность пересчитать состояние на любой момент прошлого и построить новые проекции из исторических данных, не теряя ничего.
-**Минусы:** запросы усложняются -- состояние не лежит готовым, поэтому нужны проекции (read-модели); схему событий нельзя просто поменять (старые события остаются в хранилище навсегда); лог только растёт, поэтому для скорости восстановления требуются снапшоты.
+Снапшот может ускорить восстановление, но не заменяет историю, если она нужна для аудита и новых проекций. События становятся долговременным контрактом: при изменении кода нужно уметь читать старые версии или мигрировать их осознанно. Event Sourcing не требуется для любого event-driven сервиса и не равен побочному audit log.
 
 ## Q7. Что такое CQRS и как он сочетается с EDA?
 
-`CQRS` (`Command Query Responsibility Segregation`) -- разделение модели на две независимые части: запись (command side) и чтение (query side). Идея в том, что у этих сторон разные требования: запись должна обеспечивать консистентность и бизнес-правила, а чтение -- быстро отдавать данные в удобной форме. Поэтому command side обновляет хранилище и публикует события, а query side обслуживается из отдельного хранилища, заранее заточенного под конкретные запросы.
+CQRS разделяет модель изменения состояния и модель чтения. Отдельные базы не обязательны: разделение может быть на уровне объектов и API. В событийной реализации command side фиксирует состояние или события, а projection обновляет read-модель по опубликованным фактам.
 
-С `EDA` это сочетается естественно: именно события связывают две стороны -- command side их публикует, а проекция на query side подписывается и обновляет read-модель.
-
-```mermaid
-graph TB
-    Client -->|"CreateOrder"| CS[Command Side]
-    CS -->|"INSERT event"| ES[(Event Store)]
-    ES -->|"OrderCreated"| Proj[Projection]
-    Proj -->|"UPDATE"| RM[(Read Model<br/>Denormalized)]
-    Client -->|"GET /orders"| QS[Query Side]
-    QS -->|"SELECT"| RM
-```
-
-Пример реализации проекции на `Spring`:
-
-```java
-@Component
-@RequiredArgsConstructor
-public class OrderProjection {
-
-    private final OrderViewRepository orderViewRepository;
-
-    @EventHandler  // или @KafkaListener
-    public void on(OrderCreatedEvent event) {
-        var view = new OrderView(
-            event.orderId(),
-            event.customerId(),
-            event.totalAmount(),
-            OrderStatus.CREATED,
-            event.timestamp()
-        );
-        orderViewRepository.save(view);
-    }
-
-    @EventHandler
-    public void on(OrderShippedEvent event) {
-        orderViewRepository.updateStatus(event.orderId(), OrderStatus.SHIPPED);
-    }
-}
-```
-
-**Преимущества:** чтение и запись масштабируются независимо (read-нагрузка обычно на порядок выше); read-модели оптимизируются под конкретные запросы (денормализация, нужные индексы); из одного потока событий можно построить сколько угодно разных представлений -- список заказов, статистику, аналитику -- не трогая command side.
-
-**Компромисс:** между записью и появлением данных в read-модели есть лаг (eventual consistency) и заметный рост сложности -- `CQRS` оправдан там, где выигрыш от разделения перевешивает эти издержки.
+Если проекция работает асинхронно, чтение отстаёт от команды. Для неё нужны повторная обработка, идемпотентность, порядок по агрегату и измерение lag. Проекция Spring может использовать `@KafkaListener` для внешнего потока; `@EventHandler` относится к конкретным библиотекам, а не к базовому Spring Framework. Публикацию изменения из той же БД координируют через outbox, а не обычным `kafka.send()` внутри локальной транзакции.
 
 ## Q8. (!) Что такое Saga и когда её используют?
 
-`Saga` -- способ выполнить бизнес-операцию, охватывающую несколько [распределённых](distributed-systems-interview.md) сервисов, без единой ACID-транзакции. Длинная операция разбивается на последовательность локальных шагов: каждый сервис атомарно фиксирует свою часть и публикует событие, запускающее следующий шаг. Если шаг падает, общий откат невозможен (каждый предыдущий шаг уже закоммичен), поэтому Saga выполняет **компенсирующие действия** -- семантически отменяет уже сделанное.
+Saga координирует долгую бизнес-операцию из локальных транзакций разных сервисов. Успешный шаг уже зафиксирован в своём сервисе, поэтому ошибка следующего шага требует нового компенсирующего действия или продолжения вперёд, а не общего rollback БД.
 
-Saga нужна именно там, где двухфазный коммит (`2PC`) непрактичен: сервисы автономны, у каждого своя БД, а блокировать их все на время операции недопустимо.
-
-```mermaid
-sequenceDiagram
-    participant OS as Order Service
-    participant IS as Inventory Service
-    participant PS as Payment Service
-    participant SS as Shipping Service
-
-    OS->>IS: OrderCreated
-    IS->>PS: InventoryReserved
-    PS->>SS: PaymentProcessed
-    SS-->>OS: OrderShipped
-
-    Note over PS,IS: При сбое платежа:
-    PS->>IS: PaymentFailed
-    IS->>OS: InventoryReleased
-    OS->>OS: OrderCancelled
-```
-
-Два подхода:
-
-| | Хореография | Оркестрация |
-|---|---|---|
-| Координация | Децентрализованная (события) | Центральный оркестратор |
-| Связность | Слабая | Средняя |
-| Отладка | Сложнее (распределённый поток) | Проще (один координатор) |
-| Точка отказа | Нет единой | Оркестратор |
-| Когда | Простые потоки, 2-3 сервиса | Сложные потоки, много шагов |
-
-Пример оркестратора Saga:
-
-```java
-@Service
-@RequiredArgsConstructor
-public class OrderSagaOrchestrator {
-
-    private final InventoryClient inventoryClient;
-    private final PaymentClient paymentClient;
-    private final OrderRepository orderRepository;
-
-    @Transactional
-    public void execute(CreateOrderCommand cmd) {
-        var order = Order.create(cmd);
-        orderRepository.save(order);
-
-        try {
-            inventoryClient.reserve(order.getItems());
-            paymentClient.charge(order.getPaymentDetails());
-            order.markConfirmed();
-        } catch (InventoryException e) {
-            order.markCancelled("Insufficient inventory");
-        } catch (PaymentException e) {
-            // Компенсация: откатить резервирование
-            inventoryClient.release(order.getItems());
-            order.markCancelled("Payment failed");
-        }
-
-        orderRepository.save(order);
-    }
-}
-```
-
-**На что обратить внимание на собеседовании.** Три вещи определяют рабочую Saga: идемпотентность шагов (событие может прийти повторно), корректные компенсирующие действия (отмена должна быть семантически верной и тоже идемпотентной) и наблюдаемость всего потока через `traceId` и метрики -- иначе застрявшую сагу невозможно диагностировать.
+Хореография распределяет переходы между участниками, оркестрация хранит состояние и следующий шаг в координаторе. У обоих вариантов нужны устойчивые идентификаторы процесса, идемпотентные команды, таймауты, повторные попытки и наблюдаемость. `@Transactional` вокруг вызовов `inventoryClient` и `paymentClient` не делает их одной транзакцией: удалённые эффекты могут сохраниться при откате локальной БД.
 
 ## Q9. (!) Что такое Outbox pattern?
 
-`Outbox` pattern решает проблему **двойной записи**: нельзя атомарно и сохранить данные в БД, и опубликовать событие в брокер -- это два разных хранилища, и сбой между ними оставит систему в рассогласованном состоянии (заказ создан, а событие потеряно, или наоборот).
+Transactional outbox решает двойную запись в БД и брокер. Бизнес-данные и строку outbox сохраняют в одной локальной транзакции. Relay или CDC позже публикует событие; после сбоя он может повторить публикацию, поэтому потребитель должен обрабатывать дубли.
 
-Решение: исходящее событие записывают в таблицу `outbox` в той же БД и в той же транзакции, что и бизнес-данные. Раз это одна локальная транзакция, либо сохраняется и заказ, и событие, либо ничего. А отдельный процесс (`polling` или `CDC`) уже надёжно читает `outbox` и публикует события в брокер с гарантией at-least-once.
-
-```mermaid
-graph LR
-    subgraph "Одна транзакция"
-        A[Service] -->|"INSERT order"| B[(orders)]
-        A -->|"INSERT event"| C[(outbox_events)]
-    end
-    D[CDC / Polling] -->|"читает"| C
-    D -->|"публикует"| E[(Kafka)]
-```
-
-Пример на `Spring Boot`:
-
-```java
-// Сущность outbox
-@Entity
-@Table(name = "outbox_events")
-public class OutboxEvent {
-    @Id private UUID id;
-    private String aggregateType;  // "Order"
-    private UUID aggregateId;
-    private String eventType;      // "OrderCreated"
-    @Column(columnDefinition = "TEXT")
-    private String payload;        // JSON
-    private Instant createdAt;
-    private boolean published;
-}
-
-// Сервис: бизнес-логика + outbox в одной транзакции
-@Service
-@RequiredArgsConstructor
-public class OrderService {
-
-    private final OrderRepository orderRepository;
-    private final OutboxEventRepository outboxRepository;
-    private final ObjectMapper objectMapper;
-
-    @Transactional
-    public Order createOrder(CreateOrderRequest request) {
-        var order = Order.from(request);
-        orderRepository.save(order);
-
-        var event = new OutboxEvent(
-            UUID.randomUUID(), "Order", order.getId(),
-            "OrderCreated",
-            objectMapper.writeValueAsString(order),
-            Instant.now(), false
-        );
-        outboxRepository.save(event);
-
-        return order;
-    }
-}
-
-// Поллер: периодически читает и публикует
-@Component
-@RequiredArgsConstructor
-public class OutboxPoller {
-
-    private final OutboxEventRepository outboxRepository;
-    private final KafkaTemplate<String, String> kafkaTemplate;
-
-    @Scheduled(fixedDelay = 1000)
-    @Transactional
-    public void pollAndPublish() {
-        var events = outboxRepository.findByPublishedFalseOrderByCreatedAt();
-        for (var event : events) {
-            kafkaTemplate.send(event.getAggregateType(), 
-                              event.getAggregateId().toString(), 
-                              event.getPayload());
-            event.setPublished(true);
-        }
-    }
-}
-```
-
-Альтернатива polling -- `CDC` через `Debezium`: читает транзакционный лог БД и публикует изменения таблицы `outbox` в `Kafka` с минимальной задержкой.
+Polling relay выбирает строки с учётом конкурирующих экземпляров, отправляет их, **дожидается подтверждения брокера** и лишь затем фиксирует отметку о публикации. Если отметка не успела записаться, отправка повторится. Нельзя вызывать асинхронный `kafkaTemplate.send()` и сразу отмечать строку `published=true` в той же транзакции: сбой отправки оставит событие потерянным. CDC через Debezium читает изменения outbox из журнала БД; оно не устраняет необходимость дедупликации. [Debezium Outbox Event Router](https://debezium.io/documentation/reference/stable/transformations/outbox-event-router.html).
 
 ## Q10. (!) Что такое dead letter queue (DLQ) и когда его использовать?
 
-`Dead Letter Queue` (`DLQ`) -- отдельная очередь, куда сообщение перемещают после N неудачных попыток обработки. Главная её ценность -- не дать «ядовитому» сообщению (poison pill) заблокировать всю очередь: без `DLQ` сообщение, которое стабильно падает, будет бесконечно ретраиться и держать партицию, останавливая обработку всех следующих за ним событий. `DLQ` убирает такое сообщение с горячего пути и сохраняет его для последующего ручного разбора.
+Dead-letter queue/topic (DLQ/DLT) сохраняет запись, которую обработчик не смог успешно обработать после выбранной политики retry. Она позволяет продолжить поток, но пропуск события может нарушить порядок и оставить состояние агрегата неполным. Поэтому сначала различают временную ошибку и постоянную, задают backoff, лимит попыток и критерий ручного возврата.
 
-Используют `DLQ`, когда сбой не временный (битый payload, несовместимая схема, баг в обработчике), а ретраи бессмысленны.
-
-В `Spring Kafka` настройка `DLQ` через `DefaultErrorHandler`:
-
-```java
-@Configuration
-public class KafkaConsumerConfig {
-
-    @Bean
-    public DefaultErrorHandler errorHandler(KafkaTemplate<String, String> template) {
-        var recoverer = new DeadLetterPublishingRecoverer(template,
-            (record, ex) -> new TopicPartition(record.topic() + ".DLT", -1));
-
-        // Retry 3 раза с backoff, потом в DLQ
-        return new DefaultErrorHandler(recoverer, 
-            new FixedBackOff(1000L, 3));
-    }
-}
-```
-
-В `RabbitMQ` -- через `x-dead-letter-exchange`:
-
-```java
-@Bean
-public Queue mainQueue() {
-    return QueueBuilder.durable("orders.queue")
-        .withArgument("x-dead-letter-exchange", "orders.dlx")
-        .withArgument("x-dead-letter-routing-key", "orders.dlq")
-        .build();
-}
-```
-
-**Мониторинг DLQ.** Размер `DLQ` -- прямой индикатор здоровья обработки: в норме он близок к нулю, а любой рост сигнализирует о проблеме (баг, несовместимая схема, сбой downstream). Поэтому на размер `DLQ` ставят алерт по порогу. Подробнее -- в [вопросах по наблюдаемости](../monitoring/observability-interview.md).
+В Spring Kafka `DefaultErrorHandler` с `DeadLetterPublishingRecoverer` может публиковать запись в DLT; число попыток задаёт `BackOff`. Для RabbitMQ dead-letter routing настраивается на очереди. После отправки в DLT нужен владелец разбора, мониторинг возраста/числа записей и безопасный replay. [Spring Kafka error handling](https://docs.spring.io/spring-kafka/reference/kafka/annotation-error-handling.html).
 
 ## Q11. Что такое Schema Registry и зачем он в EDA?
 
-`Schema Registry` -- централизованное хранилище схем событий (`Avro`, `JSON Schema`, `Protobuf`), которое выступает контрактом между producer и consumer. Проблема, которую он решает: в `EDA` producer и consumer развязаны и деплоятся независимо, поэтому ничто не мешает выкатить producer с несовместимым изменением схемы и сломать всех потребителей в рантайме. Registry переносит эту проверку «влево» -- несовместимую схему он просто не даёт зарегистрировать.
+Schema Registry хранит версии схем по subject и проверяет выбранную совместимость при регистрации новой схемы. Он поддерживает Avro, Protobuf и JSON Schema, но не гарантирует, что бизнес-смысл полей не изменился. Producer и consumer должны использовать совместимые сериализаторы и обновляться в подходящем порядке.
 
-Confluent `Schema Registry` для `Kafka` обеспечивает:
-- Централизованное управление схемами -- единый источник истины вместо дублирования контракта в каждом сервисе
-- Проверку совместимости (`BACKWARD`, `FORWARD`, `FULL`) при регистрации новой версии
-- Версионирование схем -- каждая схема получает номер версии, история сохраняется
-- Контракты между сервисами -- producer и consumer договариваются через зарегистрированную схему
-- Предотвращение breaking changes -- несовместимое изменение отклоняется ещё до деплоя
-
-Пример `Avro` схемы:
-
-```json
-{
-  "type": "record",
-  "name": "OrderCreated",
-  "namespace": "com.example.events",
-  "fields": [
-    {"name": "orderId", "type": "string"},
-    {"name": "amount", "type": "double"},
-    {"name": "currency", "type": "string", "default": "RUB"},
-    {"name": "discount", "type": ["null", "double"], "default": null}
-  ]
-}
-```
-
-Режимы совместимости:
-- `BACKWARD` -- новый consumer читает старые данные (можно добавлять опциональные поля, удалять поля с default)
-- `FORWARD` -- старый consumer читает новые данные (можно удалять опциональные поля, добавлять поля с default)
-- `FULL` -- оба направления
+В Confluent Schema Registry `BACKWARD` означает: **новый reader** может читать данные старого writer. `FORWARD`: **старый reader** может читать данные нового writer. `FULL` проверяет оба направления. Суффикс `_TRANSITIVE` проверяет совместимость со всеми прежними версиями subject; без него обычно сравнивают с последней. Допустимость добавления/удаления поля зависит от формата и default/optional, а не от одного универсального правила. [Документация Confluent](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html).
 
 ## Q12. (!) Как в EDA добиться exactly-once семантики?
 
-`Exactly-once` -- гарантия, что каждое событие учтено в результате ровно один раз: ни потерь, ни дублей. Это самая сильная и самая дорогая из трёх семантик доставки (рядом с at-most-once и at-least-once).
+Exactly-once нужно формулировать по границе эффекта. Kafka transactions позволяют атомарно записать выходные записи и offsets входного потока в Kafka в рамках read-process-write, если producer/consumer настроены соответствующим образом. `acks=all` и idempotent producer сами по себе этой гарантии не дают.
 
-**Главная мысль для ответа:** настоящий end-to-end exactly-once в распределённой системе почти недостижим и дорог. Поэтому на практике его **эмулируют**: используют надёжную доставку at-least-once (дубли допускаются), а «ровно один раз» обеспечивают на стороне потребителя через идемпотентность. С точки зрения наблюдаемого результата это эквивалентно exactly-once, но проще и дешевле.
-
-**Компромисс:** строгая exactly-once повышает сложность и latency; в большинстве production-сценариев берут `at-least-once` + идемпотентный consumer и дедупликацию.
-
-Подходы:
-- **`Kafka` транзакции**: `enable.idempotence=true`, `acks=all`, `transactional.id` для продюсера; `isolation.level=read_committed` для потребителя -- даёт exactly-once в пределах read-process-write внутри `Kafka`
-- **Идемпотентность потребителя**: дедупликация по `eventId`, бизнес-проверки -- работает при любой доставке и закрывает дубли на границе с внешними системами
-- **`Outbox` pattern**: атомарная запись в БД + публикация в `Kafka` -- устраняет двойную запись на стороне продюсера
-
-```java
-// Kafka producer с exactly-once настройками
-@Bean
-public ProducerFactory<String, String> producerFactory() {
-    var props = Map.<String, Object>of(
-        ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers,
-        ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true,
-        ProducerConfig.ACKS_CONFIG, "all",
-        ProducerConfig.TRANSACTIONAL_ID_CONFIG, "order-tx-",
-        ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
-        ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class
-    );
-    return new DefaultKafkaProducerFactory<>(props);
-}
-```
+Для внешней БД или HTTP-вызова Kafka-транзакция не включает внешний эффект. Обычно используют at-least-once доставку и устойчивую идемпотентность либо согласуют offset с внешним результатом отдельным протоколом. Outbox атомарно фиксирует локальное намерение публикации, но relay может отправить его повторно. «Обработано ровно один раз» без указания границы — не проверяемое обещание. [Kafka design](https://kafka.apache.org/44/design/design/).
 
 ## Q13. Что такое consumer lag и как с ним работать?
 
-`Consumer lag` -- отставание потребителя от продюсера: разница между последним offset в партиции (сколько записано) и текущим committed offset consumer group (сколько обработано). Например, lag 10000 означает, что в очереди скопилось 10000 необработанных сообщений. По сути это главный сигнал, что потребитель не успевает за входящим потоком.
+Consumer lag обычно считают как разницу между концом лога партиции и зафиксированным offset группы. Это число записей, а не миллисекунды и не точное число необработанных бизнес-операций: обработчик мог выполнить эффект до commit offset или прочитать записи в память. Для оценки задержки реакции измеряют возраст самого старого ожидающего события и время publish-to-effect.
 
-Чем опасен растущий lag: данные в read-моделях устаревают, реакция системы запаздывает, а если lag дорастёт до retention limit -- `Kafka` удалит ещё не прочитанные сообщения, и они потеряются безвозвратно.
-
-**Причины роста:** медленная обработка, потребителей меньше, чем нужно, перегрузка downstream-сервисов.
-
-**Как работать:**
-- **Мониторинг**: метрика `kafka_consumer_lag` в `Prometheus`, инструмент `Burrow` -- сначала нужно lag видеть
-- **Масштабирование**: добавить потребителей, но не больше числа партиций (лишние будут простаивать)
-- **Оптимизация обработки**: увеличить `max.poll.records`, перейти на batch-обработку, вынести медленные операции в async
-- **Алерты**: при lag выше порога или при опасном приближении к retention limit
+Растущий lag проверяют вместе с входящим throughput, скоростью обработки, ошибками и состоянием downstream. Масштабирование группы помогает до числа партиций, если узкое место — CPU/параллелизм, но не поможет при медленной общей БД. Когда непрочитанные записи выйдут за retention, replay с нужного offset уже невозможен.
 
 ## Q14. Чем event-driven отличается от message-driven?
 
-Разница не в технологии, а в **семантике сообщения и направлении знания**. `Event-driven` строится вокруг событий-фактов («что уже произошло»): producer публикует `OrderCreated`, не зная и не заботясь, кто его прочитает, а потребители сами подписываются на нужные типы. `Message-driven` строится вокруг сообщений-команд («что нужно сделать»): отправитель адресует `CreateOrder` конкретному получателю и ожидает, что тот выполнит действие.
+Event-driven описывает реакцию на факты, уже произошедшие в домене. Message-driven — более широкое описание взаимодействия через сообщения: сообщением может быть событие, команда или ответ. Поэтому категории пересекаются; Kafka не делает сообщение автоматически событием, а RabbitMQ не делает его автоматически командой.
 
-Отсюда и остальные различия: события дают fan-out на многих потребителей и слабую связность, команды -- адресную доставку обычно одному получателю.
-
-| | Event-driven | Message-driven |
-|---|---|---|
-| Семантика | Факт: `OrderCreated` | Команда: `CreateOrder` |
-| Связность | Producer не знает consumers | Sender знает receiver |
-| Fan-out | Множество consumers | Обычно один receiver |
-| Replay | Возможен | Обычно нет |
-| Пример | `Kafka` (лог событий) | `RabbitMQ` (task queue) |
-
-Граница размыта: события тоже передаются сообщениями. На практике часто комбинируют оба подхода.
+`OrderCreated` сообщает о факте и может иметь несколько независимых потребителей. `CreateOrder` адресует намерение выполнить действие и требует определить получателя и результат. Fan-out, replay и гарантия доставки зависят от брокера и настройки, а не только от названия архитектурного стиля.
 
 ## Q15. Как обеспечить обратную совместимость при изменении схемы события?
 
-Корень проблемы: producer и consumers деплоятся независимо и в любой момент в системе сосуществуют сообщения старой и новой схемы, причём в `Kafka` старые события лежат в логе ещё долго. Значит, изменения схемы должны быть такими, чтобы и старый код читал новые данные, и новый код читал старые. Отсюда правила:
-- Добавлять новые поля только с значениями по умолчанию -- старый потребитель их просто не заметит (backward compatible)
-- Не удалять поля сразу, а помечать `@Deprecated` и убирать позже, когда все потребители перестанут их читать
-- Использовать `Schema Registry` для автоматической проверки совместимости и версионирование типа события (`order.created.v2`) для несовместимых изменений
-- Потребители должны быть устойчивы к неизвестным полям (игнорировать) и к отсутствующим опциональным (подставлять дефолт) -- это правило Постеля «будь либерален к тому, что принимаешь»
+Совместимость схемы проверяют в нужном направлении. Для безопасного rolling deployment выясняют, кто первым обновится, какие версии уже лежат в логе и что способен читать каждый consumer. `BACKWARD` в Schema Registry означает способность нового reader читать старые данные; она сама по себе не доказывает, что старый reader прочитает новые сообщения.
 
-```mermaid
-graph LR
-    subgraph "Backward compatible"
-        V1["v1: orderId, amount"] --> V2["v2: orderId, amount, discount?"]
-        V2 --> note1["Старые consumers<br/>игнорируют discount"]
-    end
-    subgraph "Breaking change"
-        V3["v1: amount (int)"] --> V4["v2: amount (string)"]
-        V4 --> note2["Требует новый<br/>топик или тип"]
-    end
-```
-
-**Breaking changes** (удаление поля, изменение типа) -- требуют версионирования типа события или отдельного топика.
+Для Avro/Protobuf/JSON Schema правила optional/default различаются. Удаление, изменение типа и добавление поля нельзя объявить всегда безопасными или всегда breaking без формата и режима совместимости. При несовместимом контракте используют новую версию события/subject или отдельный поток с периодом совместного чтения. [Правила Confluent](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html).
 
 ## Q16. Что такое partition key в Kafka и как он влияет на порядок?
 
-`Partition key` -- ключ, по которому `Kafka` детерминированно выбирает партицию для сообщения: `partition = hash(key) % numPartitions`. Раз функция детерминированная, все сообщения с одним ключом гарантированно попадают в одну и ту же партицию -- а значит, обрабатываются одним потребителем в группе строго в порядке публикации.
+Kafka producer выбирает партицию по явному partition, ключу и реализации partitioner. Стабильный `orderId` обычно направляет события заказа в одну партицию при неизменной конфигурации; конкретную формулу `hash(key) % N` не следует считать универсальным контрактом.
 
-Именно так ключ связывает порядок с бизнес-смыслом: выбрав `orderId` ключом, вы получаете гарантию, что все события одного заказа обработаются по очереди, при этом события разных заказов идут параллельно по разным партициям.
-
-```java
-// Spring Kafka: отправка с ключом
-kafkaTemplate.send("orders", orderId.toString(), orderEventJson);
-
-// Все события для order-123 попадут в одну партицию
-// и будут обработаны последовательно
-```
-
-Правила выбора ключа:
-- Идентификатор агрегата (`orderId`, `userId`) -- даёт порядок по агрегату и равномерное распределение нагрузки
-- `null` ключ -- сообщения раскидываются round-robin по партициям, порядок не гарантируется (подходит, когда порядок не важен)
-- Не менять число партиций после запуска -- `numPartitions` входит в формулу, поэтому его изменение перетасует распределение существующих ключей и разорвёт порядок
+Внутри партиции Kafka хранит порядок append. Порядок бизнес-эффектов зависит также от последовательности публикации, retry и обработчика: асинхронная работа может завершаться не по порядку. Изменение числа партиций может изменить назначение ключа для новых сообщений. `null`-ключ не даёт гарантии порядка по заказу.
 
 ## Q17. Когда использовать топик с одной партицией, а когда с несколькими?
 
-Выбор -- это компромисс между **строгим порядком** и **параллелизмом**: партиция одновременно и единица упорядочивания, и единица параллелизма, поэтому одно достигается за счёт другого.
+Одна партиция даёт единый порядок append в топике и не больше одного владельца в consumer group за раз; это ограничивает параллельное чтение. Несколько партиций увеличивают параллелизм, но порядок остаётся локальным каждой партиции. Если порядок нужен только по заказу, выбирают несколько партиций и стабильный ключ `orderId`.
 
-**Одна партиция** -- когда нужен глобальный порядок абсолютно всех сообщений, а одного потребителя хватает по нагрузке. Платой становится отсутствие масштабирования: всё читает один consumer.
-
-**Несколько партиций** -- когда нужны параллельная обработка и высокий throughput. Порядок при этом сохраняется только внутри партиции (по ключу), а число партиций задаёт потолок параллелизма: потребителей в группе не может быть больше, чем партиций.
-
-**Рекомендация:** по умолчанию берут несколько партиций для масштабирования и обеспечивают порядок по агрегату через ключ партиционирования -- глобальный порядок нужен редко. Число партиций планируют с запасом заранее: увеличить его на живом топике сложно, потому что это сломает раскладку существующих ключей.
+Число партиций планируют с учётом throughput и миграций: его увеличение может изменить раскладку ключей, а уменьшить число у существующего топика обычно нельзя напрямую. Даже одна партиция не гарантирует порядок завершения внешних эффектов, если обработчик запускает их параллельно.
 
 ## Q18. Что такое consumer group и как распределяются партиции?
 
-`Consumer group` -- набор потребителей с общим `group.id`, которые совместно делят между собой обработку топика. Ключевое правило: каждая партиция назначается ровно одному потребителю в группе. Именно это даёт масштабирование без нарушения порядка -- партиции делятся между инстансами, а внутри каждой партиции сообщения по-прежнему читаются последовательно одним потребителем.
+Consumer group объединяет потребителей с общим `group.id`. В рамках группы партиция назначена одному активному участнику, а разные группы читают один топик независимо и ведут собственные offsets. При изменении состава группы назначение перераспределяется; вид и длительность паузы зависят от протокола rebalance и обработчика.
 
-Через consumer group реализуются обе модели сразу: одна группа = work queue (нагрузка делится), а несколько групп на одном топике = publish/subscribe (каждая группа читает весь поток независимо).
-
-```mermaid
-graph TD
-    subgraph "Topic: orders (3 партиции)"
-        P0[Partition 0]
-        P1[Partition 1]
-        P2[Partition 2]
-    end
-    subgraph "Consumer Group A"
-        C1[Consumer 1]
-        C2[Consumer 2]
-    end
-    P0 --> C1
-    P1 --> C1
-    P2 --> C2
-```
-
-При добавлении или отказе потребителя происходит **rebalance** -- партиции автоматически перераспределяются между живыми инстансами (на время ребаланса обработка приостанавливается). Если потребителей больше, чем партиций, лишние просто простаивают -- параллелизм ограничен числом партиций. Offset (прогресс чтения) хранится по consumer group, поэтому при перезапуске потребитель продолжает с последнего закоммиченного offset, а не с начала.
+Если участников больше партиций, лишние не получают назначения. После сбоя возможна повторная доставка записей после последнего зафиксированного offset, поэтому внешний эффект потребителя должен выдерживать повторы. Коммит offset означает прогресс чтения группы, а не автоматически подтверждённый бизнес-эффект.
 
 ## Q19. Как в EDA обеспечить мониторинг и наблюдаемость?
 
-Главная сложность EDA для наблюдаемости -- асинхронность и отсутствие сквозного вызова: запрос «растворяется» в потоке событий, поэтому стандартного стектрейса одного вызова нет, и связность приходится восстанавливать вручную. Покрывают это четырьмя слоями:
-- **Метрики** -- здоровье потока в цифрах: consumer lag, throughput, latency (publish-to-consume), error rate, DLQ size
-- **Распределённая трассировка** -- сшивает разрозненные шаги в один путь: `traceId` кладут в заголовки сообщения и восстанавливают в `MDC` при обработке (см. [Observability](../monitoring/observability-interview.md))
-- **Логирование** -- ключевые события (публикация, обработка, ошибки), но без чувствительных данных в payload
-- **Алерты** -- срабатывают на симптомы деградации: рост lag, падение throughput, рост error rate, несовместимость схем
+Наблюдаемость EDA соединяет технический поток с бизнес-эффектом: throughput, lag и возраст старейшего сообщения, время от публикации до эффекта, ошибки, retry и DLT. Метрики брокера и потребителя дополняют трассами producer → broker → consumer → downstream.
 
-```java
-// Передача traceId через Kafka headers
-@KafkaListener(topics = "orders")
-public void consume(ConsumerRecord<String, String> record) {
-    var traceId = new String(record.headers()
-        .lastHeader("X-Trace-Id").value());
-    MDC.put("traceId", traceId);
-    try {
-        processOrder(record.value());
-    } finally {
-        MDC.clear();
-    }
-}
-```
-
-Инструменты: `Prometheus` + `Grafana` для метрик; `Jaeger`/`Zipkin` для трассировки; `Kafka Manager`/`AKHQ` для управления [Kafka](../messaging/kafka-interview.md).
+Контекст трассировки передают в headers согласованным форматом и восстанавливают при обработке; для этого используют инструментацию и OpenTelemetry, а не ручное чтение `lastHeader(...).value()` без проверки null. В логах фиксируют eventId, aggregateId, тип, версию и correlationId без секретов и полного чувствительного payload. Алерты задают по допустимой задержке конкретного процесса.
 
 ## Q20. Какие антипаттерны в event-driven архитектуре стоит избегать?
 
-Общий корень большинства антипаттернов EDA -- попытка использовать асинхронную систему как синхронную и тем самым потерять то, ради чего EDA выбирали.
+Риски EDA возникают, когда контракт и модель отказов остаются неявными. Синхронный request-reply через брокер может быть оправдан отдельным сценарием, но не получает преимуществ асинхронности автоматически. Крупные бинарные payload усложняют хранение и replay; для них оценивают Claim Check с версионированной ссылкой и сроком хранения объекта.
 
-**Главный антипаттерн:** использовать события как замену синхронному RPC и ждать «мгновенный» ответ -- это возвращает жёсткую связность и убивает отказоустойчивость, оставляя лишь накладные расходы брокера.
-
-Остальные типичные ошибки:
-- **Большие сообщения** -- не гонять через брокер крупные бинарные данные; класть их в объектное хранилище (S3) и передавать в событии только ссылку (Claim Check pattern), иначе брокер деградирует
-- **Синхронные вызовы внутри потребителя** -- длинные `REST`-запросы в обработчике блокируют партицию и растят lag; выносить в async или отдельные воркеры
-- **Отсутствие идемпотентности** -- при at-least-once повторная доставка превращается в дублирующиеся операции (двойное списание)
-- **Игнорирование схемы** -- менять формат события без версионирования = молча сломать потребителей в рантайме
-- **Один гигантский топик на всё** -- мешает независимое масштабирование и права доступа; разделять по доменам и критичности
-- **Event soup** -- слишком много мелких событий без чёткого контракта: поток невозможно понять и сопровождать
+Нужны явные ключи порядка, идемпотентность, версия схемы, retry/DLT и владелец ошибки. Вызов HTTP из consumer не запрещён: его время, timeout, повтор и влияние на партицию надо учитывать. Топики делят по контрактам, retention и правам доступа, а не по правилу «один топик всегда плохо».
 
 ## Q21. Что такое event replay и когда его использовать?
 
-`Event replay` -- повторная обработка событий из истории (из топика `Kafka` или event store) для восстановления состояния или пересчёта проекций. Это становится возможным именно потому, что лог событий сохраняется и неизменяем: события можно прочитать заново с любого offset, как будто они приходят впервые.
+Event replay повторно читает сохранённую историю для восстановления проекции, исправления обработки или создания новой модели. Оно возможно только пока события доступны и их старые схемы читаются текущим кодом. Kafka retention и compaction могут удалить историю, а RabbitMQ Streams поддерживает replay по своим правилам; обычная ack-очередь после подтверждения истории не даёт.
 
-**Где это спасает:**
-- Восстановление read-модели после её повреждения или потери -- просто проиграть события заново
-- Исправление бага в обработчике: чинят логику и реплеят историю, получая корректные данные задним числом
-- Создание совершенно новой проекции из уже накопленных исторических событий
-- Тестирование обработчиков на реальных продакшен-данных
-
-В `Kafka`: сброс offset consumer group на начало топика:
-
-```bash
-kafka-consumer-groups.sh --bootstrap-server localhost:9092 \
-  --group order-projections \
-  --topic orders \
-  --reset-offsets --to-earliest \
-  --execute
-```
+Replay запускают отдельной группой или управляемым сбросом offset после остановки потребителей. Перед запуском изолируют внешние эффекты, обеспечивают идемпотентность и фиксируют контрольную точку. Нельзя просто прогнать платежи или письма заново как безопасную проекцию.
 
 ## Q22. Как обеспечить транзакционность в event-driven системе?
 
-Транзакционность в `EDA` сложнее, чем в монолите, потому что одна ACID-транзакция не накрывает сразу и БД, и брокер, и другие сервисы. Поэтому атомарность собирают из специализированных приёмов, каждый закрывает свою границу:
-- **`Outbox` pattern** -- атомарность на границе «БД ↔ брокер»: бизнес-данные и событие пишутся в одну транзакцию БД, исключая двойную запись
-- **`Saga`** -- атомарность на границе «несколько сервисов»: вместо общей транзакции -- компенсирующие действия при сбоях
-- **`CDC`** -- `Debezium` читает transaction log БД, превращая закоммиченные изменения в события без отдельной публикации
-- **`Kafka` транзакции** -- атомарность на границе `read-process-write` внутри `Kafka`: чтение, обработка и запись коммитятся вместе
+Локальная ACID-транзакция защищает изменения одной БД. Outbox атомарно сохраняет бизнес-данные и событие в этой БД, но публикация relay остаётся асинхронной и допускает повторы. Kafka transactions связывают входные offsets и выходные записи Kafka; они не включают произвольную внешнюю БД.
 
-На практике ключевой момент -- **eventual consistency это норма** для `EDA`; сильная консистентность достигается через синхронные вызовы или [паттерны согласованности](consistency-patterns-interview.md). В интервью стоит показать, как система ведёт себя при ретраях и дублирующей доставке.
+Saga координирует несколько локальных транзакций через компенсации или продолжение вперёд, а не делает распределённую операцию атомарной. CDC читает зафиксированные изменения из журнала БД; сам CDC не заменяет проектирование события и идемпотентность. Для каждого эффекта явно указывают, что коммитится вместе, что может повториться и как обнаружить зависший шаг.
 
 ## Q23. Что такое event versioning и как управлять изменениями схемы?
 
-`Event versioning` -- управление изменениями схемы событий так, чтобы старый и новый код продолжали работать одновременно. Это критично, потому что в `EDA` нельзя обновить producer и всех consumers атомарно: какое-то время они сосуществуют в разных версиях, и в логе лежат события разных схем.
+Версионирование событий нужно из-за независимых релизов producer/consumer и долгоживущей истории. Версию схемы хранят в контракте или заголовке/идентификаторе схемы; отдельно различают версию бизнес-смысла события и технический номер схемы.
 
-**Стратегии** делятся по тому, в какую сторону должна работать совместимость:
-- **Backward compatible** -- новый формат, который читают старые потребители: новые поля опциональны, старые не удаляются
-- **Forward compatible** -- старый формат, который читают новые потребители: они переживают отсутствие новых полей за счёт значений по умолчанию
-- **Версионирование типа** -- когда совместимость невозможна, заводят `order.created.v1`, `order.created.v2` и поддерживают обе версии
-- **`Schema Registry`** -- автоматизирует контроль: централизованно хранит схемы (`Avro`, `JSON Schema`) и не даёт зарегистрировать несовместимое изменение
-
-**Рекомендация:** держать совместимые (backward/forward) изменения под контролем `Schema Registry`, а неизбежные breaking changes выносить в новую версию типа или отдельный топик.
+`BACKWARD`: новый reader читает старые данные; `FORWARD`: старый reader читает новые. Конкретные изменения optional/default проверяют для выбранного Avro, Protobuf или JSON Schema и режима transitive. При несовместимом смысле создают новый тип или поток и планируют переход потребителей. Нельзя считать, что суффикс `.v2` сам решает миграцию старых сообщений.
 
 ## Q24. Как обработать события в правильном порядке при параллельной обработке?
 
-Порядок и параллелизм кажутся противоречием, но `Kafka` примиряет их через партицию -- она одновременно единица упорядочивания и единица параллелизма. Порядок гарантируется внутри партиции, поэтому связанные события держат в одной партиции, а несвязанные раскидывают по разным и обрабатывают параллельно. Конкретно:
-- Ключ партиционирования (`orderId`) направляет все события одного заказа в одну партицию -- их относительный порядок сохранён
-- Один поток потребителя владеет одной партицией и обрабатывает её строго последовательно
+Для параллелизма события разных агрегатов отправляют в разные партиции, а события одного агрегата — по стабильному ключу в одну. Потребитель держит обработку конкретной партиции последовательной до фиксации эффекта и offset. Если внутри обработчика запускать асинхронные задачи без ожидания, порядок их завершения снова теряется.
 
-В `Spring Kafka`:
-
-```java
-@Bean
-public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory(
-        ConsumerFactory<String, String> consumerFactory) {
-    var factory = new ConcurrentKafkaListenerContainerFactory<String, String>();
-    factory.setConsumerFactory(consumerFactory);
-    factory.setConcurrency(3); // по числу партиций
-    return factory;
-}
-```
-
-Каждый поток обрабатывает свои партиции последовательно; между партициями -- параллельно.
+`concurrency` у Spring Kafka создаёт несколько consumer-потоков для разных назначенных партиций; значение больше числа партиций не увеличит параллелизм этой группы. При переходе ключа в другую партицию нужна отдельная стратегия сохранения порядка по агрегату.
 
 ## Q25. Что такое event store и чем он отличается от обычной БД?
 
-`Event store` -- специализированное хранилище для событий в `Event Sourcing`. Принципиальное отличие от обычной БД: оно хранит не текущее состояние, а полную историю фактов, и эта история неизменяема. Отсюда его свойства:
-- `Append-only` -- события только дописываются и никогда не меняются и не удаляются (это и обеспечивает аудит и replay)
-- Поддерживает чтение по агрегату и временному диапазону -- типичный запрос «дай все события заказа X по порядку»
-- Оптимизирован под запись и последовательное чтение цепочек событий, а не под произвольные ad-hoc запросы
+Event store хранит последовательность событий по агрегату и даёт атомарное добавление при ожидаемой версии, чтобы конкурентные команды не потеряли изменения. Он может быть реализован поверх обычной реляционной БД с уникальным `(aggregate_id, version)`; отличие в контракте хранения и чтения, а не обязательно в типе СУБД.
 
-| | Обычная БД (CRUD) | Event Store |
-|---|---|---|
-| Хранит | Текущее состояние | Историю изменений |
-| Операции | `INSERT`/`UPDATE`/`DELETE` | Только `APPEND` |
-| Версия | Одна (текущая) | Все версии (события) |
-| Текущее состояние | Прямое чтение | Вычисляется из событий |
-
-Примеры: `EventStoreDB`, `Axon Server`, `Kafka` как event store (с retention `infinite`).
+Kafka может хранить журнал событий, но retention, compaction, ключи, транзакции и чтение по агрегату должны соответствовать требованиям Event Sourcing. Нельзя объявить любой Kafka-топик бесконечным полным event store. Снапшоты ускоряют восстановление и не отменяют историю там, где она нужна.
 
 ## Q26. Как обеспечить мониторинг и алертинг в event-driven системе?
 
-Алертинг в `EDA` строят на симптомах деградации потока, а не на ошибках отдельных запросов. Ниже -- минимальный набор метрик и пороги, на которые ставят алерты (подробнее в [мониторинге](../monitoring/observability-interview.md)):
+Алерты выводят из SLO конкретного процесса: допустимого времени от события до эффекта и риска выхода непрочитанных данных за retention. Поэтому вместе смотрят lag в записях, возраст старейшего сообщения, скорость входа/обработки, ошибки, retry и DLT. Универсальные пороги «lag > 10000» или «p99 > 5s» не подходят всем системам.
 
-| Метрика | Описание | Алерт |
-|---------|----------|-------|
-| Consumer lag | Отставание потребителя | Lag > 10000 или растёт |
-| Throughput | msg/s входящие и обработанные | Падение > 50% |
-| Latency | Время от publish до consume | P99 > 5s |
-| Error rate | Частота ошибок обработки | > 1% |
-| DLQ size | Размер dead letter queue | > 0 (или > порога) |
-
-Инструменты: `Prometheus` + `Grafana` для метрик; `Jaeger`/`Zipkin` для trace id в событиях; `AKHQ`/`Confluent Control Center` для управления `Kafka`.
+Отдельно мониторят relay outbox, ошибки сериализации/схемы и зависшие Saga/Process Manager. Алерт должен приводить к действию: есть владелец, причина, способ повторной обработки и проверка результата.
 
 ## Q27. Что такое event choreography vs orchestration?
 
-Это два способа координировать многошаговый процесс между сервисами. Разница в том, **где живёт логика потока**: размазана по участникам или собрана в одном месте.
+При choreography каждый участник реагирует на событие и публикует следующий факт или команду; управляющая логика распределена. При orchestration отдельный координатор хранит состояние процесса и выбирает следующий шаг. Обе схемы могут использовать брокер и обе требуют устойчивой доставки и идемпотентности.
 
-**Хореография** -- децентрализованная координация: логики процесса как единого целого нигде нет, каждый сервис лишь реагирует на входящие события и публикует свои. Плюс -- сервисы слабо связаны и легко добавляются; минус -- поток нигде не виден целиком, поэтому отладка и мониторинг сложнее.
-
-**Оркестрация** -- логика потока собрана в центральном оркестраторе, который вызывает сервисы и ведёт их по шагам. Плюс -- процесс виден и управляем в одном месте, отладка проще; минус -- оркестратор становится точкой отказа и узлом более жёсткой связности.
-
-```mermaid
-graph LR
-    subgraph "Хореография"
-        A1[Order] -->|event| B1[Inventory]
-        B1 -->|event| C1[Payment]
-        C1 -->|event| D1[Shipping]
-    end
-    subgraph "Оркестрация"
-        O[Orchestrator] -->|cmd| A2[Order]
-        O -->|cmd| B2[Inventory]
-        O -->|cmd| C2[Payment]
-        O -->|cmd| D2[Shipping]
-    end
-```
-
-В контексте `Saga`: хореографическая -- каждый сервис публикует события; оркестрируемая -- оркестратор управляет потоком и компенсацией. Для сложных потоков с 4+ сервисами предпочитают оркестрацию.
+Оркестратор можно сделать отказоустойчивым через персистентное состояние и несколько экземпляров; «центральный компонент» не означает неизбежный SPOF. Хореография не даёт автоматически слабую связанность: участники всё равно зависят от контрактов и последовательности. Выбор определяется сложностью переходов, видимостью состояния и ответственностью за компенсации, а не фиксированным числом сервисов.
 
 ## Q28. Как обработать события с разной скоростью обработки?
 
-Проблема -- **head-of-line blocking**: партиция обрабатывается строго по порядку, поэтому одно медленное событие задерживает все следующие за ним быстрые. Лечат это, разводя потоки разной скорости, чтобы они не делили один путь обработки:
-- **Разделение по топикам** -- отдельные топики для быстрых и медленных событий, чтобы они не мешали друг другу
-- **Приоритетные очереди** -- `RabbitMQ` priority queues, где срочное обходит несрочное
-- **Отдельные consumer groups** -- разные группы со своим темпом для разных типов событий
-- **Backpressure** -- замедление продюсера, когда потребитель не успевает, чтобы не переполнять систему
-- **Rate limiting** -- сознательное ограничение скорости обработки для защиты downstream
+Когда медленная операция блокирует обработку партиции, сначала выясняют, нужен ли порядок между быстрыми и медленными событиями одного агрегата. Если нет, потоки можно разделить по топикам, очередям или группам с независимыми ресурсами. Если порядок нужен, асинхронное выполнение требует буферизации и согласованной фиксации offset.
 
-В `Kafka`: настройка `max.poll.records` для контроля батча; использование разных consumer groups; `pause`/`resume` партиций при перегрузке.
+Backpressure ограничивает вход или чтение при перегрузке, rate limiting защищает downstream. `max.poll.records` управляет размером получаемого батча, но сам по себе не ускоряет медленный обработчик. Priority queue подходит не для каждого порядка: срочное сообщение может обойти более раннее.
 
 ## Q29. Что такое event sourcing snapshot и зачем он нужен?
 
-`Snapshot` -- сохранённый «слепок» состояния агрегата на определённую версию события. Он решает главную проблему производительности `Event Sourcing`: лог событий растёт бесконечно, и восстанавливать состояние, проигрывая тысячи событий с нуля при каждой загрузке, становится слишком дорого. Снапшот превращает это из O(N) в почти O(1): загружают последний снапшот и доигрывают только события, появившиеся после него.
+Snapshot в Event Sourcing хранит состояние агрегата и версию последнего применённого события. При восстановлении загружают снапшот и применяют только события **после** этой версии. Число оставшихся событий влияет на время, поэтому «почти O(1)» справедливо лишь при ограниченном хвосте.
 
-```mermaid
-graph LR
-    E1[Event 1] --> E2[Event 2] --> E3["..."] --> E100[Event 100]
-    E100 --> SNAP["Snapshot<br/>version=100"]
-    SNAP --> E101[Event 101] --> E102[Event 102]
-    E102 --> STATE[Текущее<br/>состояние]
-```
-
-Стратегии создания:
-- Периодически (каждые N событий или по времени)
-- По требованию (при достижении определённого размера)
-- Хранение снапшотов отдельно от событий
-
-```java
-public class SnapshotStrategy {
-    private static final int SNAPSHOT_THRESHOLD = 100;
-
-    public BankAccount load(UUID accountId, EventStore eventStore, 
-                            SnapshotStore snapshotStore) {
-        var snapshot = snapshotStore.findLatest(accountId);
-        var events = snapshot != null 
-            ? eventStore.loadAfter(accountId, snapshot.version())
-            : eventStore.loadAll(accountId);
-
-        var account = snapshot != null 
-            ? BankAccount.fromSnapshot(snapshot) 
-            : new BankAccount();
-        events.forEach(account::apply);
-
-        if (events.size() >= SNAPSHOT_THRESHOLD) {
-            snapshotStore.save(account.toSnapshot());
-        }
-        return account;
-    }
-}
-```
+Снапшот проверяют на совместимость с текущим кодом, а его запись согласуют с версией агрегата. Повреждённый снапшот можно пересоздать из полной истории, если она сохранена. Снапшот не является разрешением удалять обязательную историю и не должен создаваться после каждого события без измеренной причины.
 
 ## Q30. Как обеспечить безопасность событий в event-driven системе?
 
-Особенность безопасности в `EDA`: события долго хранятся в брокере и доступны многим потребителям, поэтому одно чувствительное поле в payload -- это утечка с длинным временем жизни. Меры выстраивают по слоям -- транзит, доступ, сами данные:
-- **Шифрование**: TLS для транзита (между клиентами и брокером), encryption at rest для хранилища
-- **Аутентификация и авторизация**: `SASL`/`SSL` для подтверждения личности клиента в `Kafka`, `RBAC`/ACL для разграничения прав
-- **Данные**: не класть пароли и `PII` в события; если без чувствительного поля никак -- шифровать его отдельно внутри payload
-- **Схемы**: контроль формата через `Schema Registry`, чтобы исключить инъекции мусора
-- **Изоляция**: отдельные топики и кластеры по окружениям, чтобы dev не видел prod-данные
-- **Сеть**: брокер в приватной сети, ACL на уровне топиков для ограничения доступа
+События часто хранятся долго и читаются разными сервисами. Минимизируют чувствительные данные, задают retention и права на topic/consumer group, защищают соединения TLS и используют аутентификацию и ACL брокера. Шифрование at rest настраивают отдельно от TLS в пути передачи.
 
-```yaml
-# Kafka producer SSL/SASL настройки (application.yml)
-spring:
-  kafka:
-    properties:
-      security.protocol: SASL_SSL
-      sasl.mechanism: SCRAM-SHA-256
-      sasl.jaas.config: >
-        org.apache.kafka.common.security.scram.ScramLoginModule required
-        username="${KAFKA_USER}" password="${KAFKA_PASSWORD}";
-    ssl:
-      trust-store-location: classpath:kafka-truststore.jks
-      trust-store-password: ${TRUSTSTORE_PASSWORD}
-```
+Schema Registry проверяет формат и совместимость, но не заменяет валидацию бизнес-данных и не предотвращает инъекции сам по себе. Для PII оценивают удаление, шифрование поля, управление ключами и требования к удалению данных при replay. В логах и DLT секреты также не должны утекать.
 
 ## Q31. (!) Как работает механизм событий в Spring Framework?
 
-`Spring` предоставляет встроенный механизм событий через `ApplicationEventPublisher` -- лёгкий способ развязать бины внутри одного приложения. Принципиально важно понимать его границу: это **внутрипроцессный** pub/sub, работающий в памяти одной JVM, а не распределённый брокер. Поэтому события `Spring` не переживают рестарт, не доставляются между сервисами и не дают гарантий брокера -- путать их с `Kafka` нельзя. Подробнее о Spring -- в [вопросах по Spring Framework](../frameworks/spring/spring-framework-interview.md).
+`ApplicationEventPublisher` и `@EventListener` связывают компоненты одного Spring ApplicationContext. По умолчанию слушатель выполняется синхронно; `@Async` меняет поток при настроенном executor. Это не распределённый брокер и не долговечная очередь.
 
-Публикация и обработка кастомного события:
-
-```java
-// 1. Определение события
-public record OrderCreatedEvent(UUID orderId, BigDecimal amount) {}
-
-// 2. Публикация события
-@Service
-@RequiredArgsConstructor
-public class OrderService {
-    private final ApplicationEventPublisher eventPublisher;
-
-    @Transactional
-    public Order createOrder(CreateOrderRequest request) {
-        var order = orderRepository.save(Order.from(request));
-        eventPublisher.publishEvent(new OrderCreatedEvent(order.getId(), order.getAmount()));
-        return order;
-    }
-}
-
-// 3. Синхронный обработчик (в той же транзакции)
-@Component
-public class InventoryEventListener {
-
-    @EventListener
-    public void onOrderCreated(OrderCreatedEvent event) {
-        inventoryService.reserve(event.orderId());
-    }
-}
-
-// 4. Асинхронный обработчик (вне транзакции)
-@Component
-public class NotificationEventListener {
-
-    @Async
-    @EventListener
-    public void onOrderCreated(OrderCreatedEvent event) {
-        emailService.sendConfirmation(event.orderId());
-    }
-}
-
-// 5. Выполнение ПОСЛЕ коммита транзакции
-@Component
-public class KafkaPublishListener {
-
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onOrderCreated(OrderCreatedEvent event) {
-        kafkaTemplate.send("orders", event.orderId().toString(),
-                           toJson(event));
-    }
-}
-```
-
-Ключевые аннотации:
-- `@EventListener` -- синхронный обработчик (по умолчанию в том же потоке)
-- `@Async @EventListener` -- асинхронный обработчик (требует `@EnableAsync`)
-- `@TransactionalEventListener` -- привязка к фазе транзакции (`AFTER_COMMIT`, `AFTER_ROLLBACK`, `BEFORE_COMMIT`)
-
-**Важно:** `@TransactionalEventListener(phase = AFTER_COMMIT)` гарантирует, что обработчик выполнится только после успешного коммита. Это идеальное место для отправки в `Kafka` или отправки уведомлений.
+`@TransactionalEventListener(AFTER_COMMIT)` запускает слушатель после успешного локального коммита. Он **не гарантирует доставку внешнего сообщения**: процесс может упасть после коммита и до вызова Kafka. Для надёжной публикации нужен outbox или иной устойчивый протокол. Действия слушателя после commit требуют собственной транзакции, если они пишут в БД. [Spring events](https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html).
 
 ## Q32. Как создать Kafka producer и consumer в Spring Boot?
 
-`Spring Kafka` сводит работу с брокером к декларативной конфигурации и аннотациям: сериализаторы и группа задаются в `application.yml`, отправка идёт через `KafkaTemplate`, а приём -- через `@KafkaListener`, который сам управляет poll-циклом и коммитом offset.
-
-Минимальная настройка `Spring Kafka`:
-
-```yaml
-# application.yml
-spring:
-  kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-    consumer:
-      group-id: order-service
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "com.example.events"
-```
-
-Producer:
+Spring Kafka даёт `KafkaTemplate` для отправки и `@KafkaListener` для приёма. Сериализаторы, consumer group, режим commit/ack и обработку ошибок настраивают явно. `send()` асинхронен: успешное возвращение future не означает подтверждённую запись, результат проверяют по completion.
 
 ```java
-@Service
-@RequiredArgsConstructor
-public class OrderEventProducer {
+kafkaTemplate.send("orders", orderId.toString(), event)
+    .whenComplete((result, error) -> { /* подтвердить или зафиксировать сбой */ });
 
-    private final KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate;
-
-    public CompletableFuture<SendResult<String, OrderCreatedEvent>> publish(
-            OrderCreatedEvent event) {
-        return kafkaTemplate
-            .send("orders", event.orderId().toString(), event)
-            .whenComplete((result, ex) -> {
-                if (ex != null) {
-                    log.error("Failed to send event {}", event.orderId(), ex);
-                } else {
-                    log.info("Sent event {} to partition {} offset {}",
-                        event.orderId(),
-                        result.getRecordMetadata().partition(),
-                        result.getRecordMetadata().offset());
-                }
-            });
-    }
-}
+@KafkaListener(topics = "orders", groupId = "order-projection")
+void on(OrderCreated event) { projection.apply(event); }
 ```
 
-Consumer:
-
-```java
-@Component
-@RequiredArgsConstructor
-public class OrderEventConsumer {
-
-    private final OrderProjection orderProjection;
-
-    @KafkaListener(topics = "orders", groupId = "order-projections")
-    public void consume(@Payload OrderCreatedEvent event,
-                        @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
-                        @Header(KafkaHeaders.OFFSET) long offset) {
-        log.info("Received event {} from partition {} offset {}",
-                 event.orderId(), partition, offset);
-        orderProjection.handle(event);
-    }
-
-    // Batch consumer для высокого throughput
-    @KafkaListener(topics = "orders", groupId = "order-analytics",
-                   containerFactory = "batchFactory")
-    public void consumeBatch(List<ConsumerRecord<String, OrderCreatedEvent>> records) {
-        log.info("Received batch of {} records", records.size());
-        records.forEach(r -> analyticsService.process(r.value()));
-    }
-}
-```
+Если projection пишет во внешнюю БД, её идемпотентность и момент фиксации offset проектируют отдельно. Автоматическое управление poll-циклом не делает бизнес-эффект exactly-once.
 
 ## Q33. (!) Как реализовать Outbox pattern на Spring Boot и Kafka?
 
-Суть реализации: бизнес-сущность и `OutboxEvent` сохраняются в **одной `@Transactional`-транзакции** (это и даёт атомарность), а отдельный relay асинхронно публикует накопленные события в `Kafka` и помечает их как отправленные. Ниже полный пример с `@Scheduled` polling; для production его заменяют на `Debezium` CDC.
+В Spring Boot бизнес-сервис в одной `@Transactional`-операции сохраняет заказ и строку outbox с `eventId`, `aggregateId`, типом и payload. Relay отдельно читает только готовые строки, публикует по `aggregateId` как ключу и фиксирует подтверждение отправки. При нескольких relay-экземплярах нужны блокировка/claim строк или CDC, чтобы не создавать лишнюю конкуренцию.
 
 ```java
-// DDL для таблицы outbox
-// CREATE TABLE outbox_events (
-//     id UUID PRIMARY KEY,
-//     aggregate_type VARCHAR(255) NOT NULL,
-//     aggregate_id VARCHAR(255) NOT NULL,
-//     event_type VARCHAR(255) NOT NULL,
-//     payload TEXT NOT NULL,
-//     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-//     published BOOLEAN NOT NULL DEFAULT FALSE
-// );
-
-@Entity
-@Table(name = "outbox_events")
-@Getter @Setter @NoArgsConstructor
-public class OutboxEvent {
-    @Id private UUID id;
-    private String aggregateType;
-    private String aggregateId;
-    private String eventType;
-    @Column(columnDefinition = "TEXT") private String payload;
-    private Instant createdAt;
-    private boolean published;
-
-    public static OutboxEvent create(String aggregateType, String aggregateId,
-                                      String eventType, String payload) {
-        var event = new OutboxEvent();
-        event.setId(UUID.randomUUID());
-        event.setAggregateType(aggregateType);
-        event.setAggregateId(aggregateId);
-        event.setEventType(eventType);
-        event.setPayload(payload);
-        event.setCreatedAt(Instant.now());
-        event.setPublished(false);
-        return event;
-    }
-}
-
-// Бизнес-сервис: данные + outbox в одной транзакции
-@Service
-@RequiredArgsConstructor
-public class OrderService {
-    private final OrderRepository orderRepo;
-    private final OutboxEventRepository outboxRepo;
-    private final ObjectMapper mapper;
-
-    @Transactional
-    public Order createOrder(CreateOrderRequest req) {
-        var order = orderRepo.save(Order.from(req));
-        outboxRepo.save(OutboxEvent.create(
-            "Order", order.getId().toString(),
-            "OrderCreated", mapper.writeValueAsString(order)
-        ));
-        return order;
-    }
-}
-
-// Polling relay: читает и публикует неотправленные события
-@Component
-@RequiredArgsConstructor
-public class OutboxRelay {
-    private final OutboxEventRepository outboxRepo;
-    private final KafkaTemplate<String, String> kafka;
-
-    @Scheduled(fixedDelay = 500)
-    @Transactional
-    public void relay() {
-        outboxRepo.findTop100ByPublishedFalseOrderByCreatedAt()
-            .forEach(event -> {
-                kafka.send(event.getAggregateType().toLowerCase(),
-                           event.getAggregateId(), event.getPayload())
-                     .whenComplete((res, ex) -> {
-                         if (ex == null) {
-                             event.setPublished(true);
-                             outboxRepo.save(event);
-                         }
-                     });
-            });
-    }
+@Transactional
+void createOrder(Command command) {
+    orderRepository.save(order);
+    outboxRepository.save(OutboxEvent.from(order));
 }
 ```
 
-Для production рекомендуется `CDC` через `Debezium` вместо polling -- меньше задержка, нет нагрузки на БД от постоянных запросов.
+Не помещайте `kafka.send(...).whenComplete(...)` внутрь открытой JPA-транзакции с ожиданием, что callback надёжно изменит её entity: отправка и callback асинхронны, а транзакция может завершиться раньше. Даже после подтверждённой публикации запись отметки может не успеть сохраниться, поэтому relay допускает дубли. Debezium Outbox Event Router — один из вариантов relay. [Документация Debezium](https://debezium.io/documentation/reference/stable/transformations/outbox-event-router.html).
 
 ## Q34. Как реализовать Event Sourcing на Java?
 
-Каркас Event Sourcing складывается из трёх частей: иерархии событий (`sealed interface DomainEvent` + record'ы фактов), агрегата, который порождает события и восстанавливает себя их применением, и event store, который только дописывает события (`append`) и читает их по агрегату в порядке версии (`load`). Полный пример с event store, агрегатом и восстановлением:
+На Java Event Sourcing обычно включает неизменяемые типизированные события, агрегат с `apply(event)` и event store с чтением по `aggregateId` в порядке версии. Команда создаёт новые события после проверки инвариантов; сохранение делает compare-and-append при ожидаемой версии.
 
-```java
-// Базовый интерфейс события
-public sealed interface DomainEvent permits 
-        AccountOpened, MoneyDeposited, MoneyWithdrawn {
-    UUID eventId();
-    UUID aggregateId();
-    Instant timestamp();
-    int version();
-}
-
-// Конкретные события
-public record AccountOpened(UUID eventId, UUID aggregateId, 
-                             String owner, Instant timestamp, 
-                             int version) implements DomainEvent {}
-
-public record MoneyDeposited(UUID eventId, UUID aggregateId, 
-                              BigDecimal amount, Instant timestamp, 
-                              int version) implements DomainEvent {}
-
-public record MoneyWithdrawn(UUID eventId, UUID aggregateId, 
-                              BigDecimal amount, Instant timestamp, 
-                              int version) implements DomainEvent {}
-
-// Event Store (репозиторий событий)
-@Repository
-@RequiredArgsConstructor
-public class JdbcEventStore implements EventStore {
-
-    private final JdbcTemplate jdbc;
-    private final ObjectMapper mapper;
-
-    @Override
-    public void append(UUID aggregateId, List<DomainEvent> events) {
-        for (var event : events) {
-            jdbc.update("""
-                INSERT INTO domain_events 
-                (event_id, aggregate_id, event_type, payload, version, created_at)
-                VALUES (?, ?, ?, ?::jsonb, ?, ?)
-                """,
-                event.eventId(), aggregateId,
-                event.getClass().getSimpleName(),
-                mapper.writeValueAsString(event),
-                event.version(), event.timestamp()
-            );
-        }
-    }
-
-    @Override
-    public List<DomainEvent> load(UUID aggregateId) {
-        return jdbc.query("""
-            SELECT event_type, payload FROM domain_events
-            WHERE aggregate_id = ? ORDER BY version
-            """,
-            (rs, i) -> deserialize(rs.getString("event_type"), 
-                                    rs.getString("payload")),
-            aggregateId
-        );
-    }
-}
+```text
+load(aggregateId) → replay(snapshot, events) → handle(command)
+→ append(aggregateId, expectedVersion, newEvents)
 ```
+
+В БД нужен уникальный ключ `(aggregate_id, version)` и транзакционный append, иначе две команды могут записать несовместимые цепочки. `sealed interface` и `record` удобны для типов событий, но сами по себе не обеспечивают порядок, совместимость старых payload и конкурентную запись.
 
 ## Q35. (!) Как реализовать CQRS с проекциями на Spring?
 
-```mermaid
-graph TB
-    subgraph "Command Side"
-        CMD[REST Controller] -->|"CreateOrder"| SVC[OrderCommandService]
-        SVC -->|"save events"| ES[(Event Store)]
-        SVC -->|"publish"| KF[(Kafka)]
-    end
-    subgraph "Query Side"
-        KF -->|"consume"| PROJ[OrderProjection]
-        PROJ -->|"upsert"| RM[(Read DB<br/>PostgreSQL/Redis)]
-        QRY[REST Controller] -->|"GET"| RS[OrderQueryService]
-        RS -->|"select"| RM
-    end
+CQRS в Spring разделяет обработчик команд и query service. Command side фиксирует изменение и outbox в одной локальной транзакции; relay публикует событие; `@KafkaListener` строит read-модель идемпотентно по ключу и версии агрегата. Query side читает эту модель и может видеть прежнее состояние до обработки события.
+
+```text
+POST → command service → DB + outbox → relay → Kafka → projection → read DB → GET
 ```
 
-Command side (запись):
-
-```java
-@RestController
-@RequestMapping("/api/orders")
-@RequiredArgsConstructor
-public class OrderCommandController {
-
-    private final OrderCommandService commandService;
-
-    @PostMapping
-    public ResponseEntity<UUID> createOrder(@RequestBody CreateOrderRequest req) {
-        var orderId = commandService.handle(new CreateOrderCommand(
-            req.customerId(), req.items(), req.shippingAddress()
-        ));
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(orderId);
-    }
-}
-
-@Service
-@RequiredArgsConstructor
-public class OrderCommandService {
-    private final EventStore eventStore;
-    private final KafkaTemplate<String, String> kafka;
-    private final ObjectMapper mapper;
-
-    @Transactional
-    public UUID handle(CreateOrderCommand cmd) {
-        var orderId = UUID.randomUUID();
-        var event = new OrderCreatedEvent(UUID.randomUUID(), orderId,
-            cmd.customerId(), cmd.items(), Instant.now(), 1);
-
-        eventStore.append(orderId, List.of(event));
-        kafka.send("orders", orderId.toString(), 
-                   mapper.writeValueAsString(event));
-        return orderId;
-    }
-}
-```
-
-Query side (чтение через проекцию):
-
-```java
-// Проекция: обновляет read-модель по событиям из Kafka
-@Component
-@RequiredArgsConstructor
-public class OrderProjection {
-    private final OrderViewRepository viewRepo;
-
-    @KafkaListener(topics = "orders", groupId = "order-view-projection")
-    public void on(ConsumerRecord<String, String> record) {
-        var event = parseEvent(record.value());
-        switch (event) {
-            case OrderCreatedEvent e -> viewRepo.save(new OrderView(
-                e.orderId(), e.customerId(), 
-                OrderStatus.CREATED, e.timestamp()));
-            case OrderShippedEvent e -> viewRepo.updateStatus(
-                e.orderId(), OrderStatus.SHIPPED);
-            case OrderCancelledEvent e -> viewRepo.updateStatus(
-                e.orderId(), OrderStatus.CANCELLED);
-        }
-    }
-}
-
-// Query service: быстрое чтение из read-модели
-@Service
-@RequiredArgsConstructor
-public class OrderQueryService {
-    private final OrderViewRepository viewRepo;
-
-    public OrderView getOrder(UUID orderId) {
-        return viewRepo.findById(orderId)
-            .orElseThrow(() -> new OrderNotFoundException(orderId));
-    }
-
-    public List<OrderView> getOrdersByCustomer(UUID customerId) {
-        return viewRepo.findByCustomerIdOrderByCreatedAtDesc(customerId);
-    }
-}
-```
-
-Преимущество `CQRS`: read-модель `OrderView` может быть денормализованной таблицей с индексами под конкретные запросы, тогда как command side хранит только события. Можно создать несколько проекций (список заказов, аналитика, поиск) из одного потока событий.
+Обычный `kafkaTemplate.send()` внутри `@Transactional`-метода, который пишет event store в БД, не образует общую транзакцию с Kafka. Если нужен ответ клиента сразу после POST, возвращают ID/статус принятой команды и определяют контракт ожидания проекции; `200` или `202` выбирают по фактической семантике операции.
 
 ## Q36. (!) Чем отличается Saga Orchestration от Choreography?
 
-Оба подхода реализуют Saga -- длинную распределённую транзакцию из локальных шагов с компенсациями, -- но по-разному распределяют ответственность за управление потоком: хореография размазывает её по участникам, оркестрация концентрирует в одном компоненте.
+Saga choreography распределяет реакции на события между участниками. Orchestration хранит состояние процесса и решение о следующей команде в координаторе. В обоих случаях локальные шаги уже коммитятся, а компенсации являются отдельными действиями и могут повторяться.
 
-**Choreography (хореография)** — каждый сервис самостоятельно слушает события и публикует следующие. Нет центрального координатора, логика процесса не собрана в одном месте.
-
-```mermaid
-graph LR
-    O[Order Service] -->|OrderCreated| B[(Broker)]
-    B -->|OrderCreated| P[Payment Service]
-    P -->|PaymentDone| B
-    B -->|PaymentDone| I[Inventory Service]
-    I -->|Reserved| B
-    B -->|Reserved| D[Delivery Service]
-```
-
-**Orchestration (оркестрация)** — центральный `Saga Orchestrator` явно управляет шагами, вызывая команды и ожидая событий.
-
-```mermaid
-graph TD
-    Orch[Saga Orchestrator] -->|ProcessPayment| P[Payment Service]
-    P -->|PaymentDone| Orch
-    Orch -->|ReserveInventory| I[Inventory Service]
-    I -->|Reserved| Orch
-    Orch -->|CreateDelivery| D[Delivery Service]
-    D -->|DeliveryCreated| Orch
-```
-
-| Критерий | Choreography | Orchestration |
-|----------|-------------|---------------|
-| Связность | Низкая (только через broker) | Выше (оркестратор знает всех) |
-| Наблюдаемость | Сложно отследить весь флоу | Статус виден в оркестраторе |
-| Сложность | Растёт с числом шагов | Явная и локализованная |
-| SPOF | Нет | Оркестратор (нужна HA) |
-| Тестирование | Сложнее (нужна вся цепочка) | Проще (unit тест оркестратора) |
-| Подходит для | 2-3 шага, простой флоу | Сложные бизнес-процессы (5+ шагов) |
-
-**Рекомендация:** для сложных бизнес-процессов (заказ, онбординг) выбирайте **оркестрацию** — статус процесса виден в одном месте, компенсации явно описаны. Хореографию применяйте для простых событийных цепочек (уведомления, аудит-лог).
+Связность есть в обоих вариантах: события имеют контракт и ожидаемую последовательность, оркестратор знает команды участников. Хореография не освобождает от наблюдаемости, а оркестратор не обязан быть единой точкой отказа при персистентном состоянии и резервных экземплярах. Выбор зависит от ветвлений, таймаутов и владельца процесса, а не правила «после пяти сервисов обязательно оркестрация».
 
 ## Q37. Что такое Process Manager и когда его использовать?
 
-`Process Manager` (также `Saga Orchestrator`, `Workflow Engine`) — компонент, который хранит состояние долгосрочного бизнес-процесса и координирует сервисы, реагируя на их события. Ключевое в нём -- именно **персистентное состояние**: процесс может идти часами и днями, переживать перезапуски и ждать внешних событий, поэтому его статус нельзя держать в памяти, его пишут в БД.
+Process Manager хранит состояние долгого процесса, связывает входящие события по `processId`/`correlationId` и выдаёт следующие команды. Он переживает рестарт, умеет таймауты, повторные попытки и компенсации. Его состояние и намерение отправить команду также должны пережить сбой между записью и публикацией.
 
-**Отличие от простого Saga Orchestrator** -- в сложности управляемого потока:
-- `Saga Orchestrator` — линейный или слегка ветвящийся флоу с явными шагами
-- `Process Manager` — полноценная state machine с таймаутами, параллельными ветками, компенсациями и перезапусками
-
-```mermaid
-stateDiagram-v2
-    [*] --> OrderCreated
-    OrderCreated --> PaymentPending: ProcessPayment
-    PaymentPending --> PaymentFailed: PaymentFailed
-    PaymentPending --> InventoryPending: PaymentDone
-    PaymentFailed --> OrderCancelled: CompensateOrder
-    InventoryPending --> InventoryFailed: ReservationFailed
-    InventoryPending --> DeliveryPending: InventoryReserved
-    InventoryFailed --> RefundPending: RefundPayment
-    RefundPending --> OrderCancelled: RefundDone
-    DeliveryPending --> OrderCompleted: DeliveryCreated
-    OrderCompleted --> [*]
-    OrderCancelled --> [*]
-```
-
-**Персистентное состояние** — Process Manager хранит текущий статус в БД (устойчив к перезапускам):
-
-```java
-@Entity
-public class OrderProcess {
-    @Id private UUID processId;
-    private UUID orderId;
-    @Enumerated(EnumType.STRING)
-    private ProcessState state;  // PAYMENT_PENDING, INVENTORY_PENDING, ...
-    private Instant createdAt;
-    private Instant timeoutAt;
-    // поля для компенсации
-    private BigDecimal paidAmount;
-    private List<UUID> reservedItems;
-}
-```
-
-**Когда использовать:** бизнес-процессы с несколькими ветками, таймаутами, повторными попытками и частичными отказами. Инструменты: `Temporal.io`, `Axon Framework`, `Camunda`, Spring State Machine.
+Термины Process Manager и Saga Orchestrator часто пересекаются; жёсткого определения «линейный против сложной state machine» нет. Полезно явно назвать конкретную ответственность компонента, его хранилище, переходы и механизм дедупликации входящих событий.
 
 ## Q38. (!) Что такое Event-Carried State Transfer (ECST)?
 
-`Event-Carried State Transfer` (ECST) — паттерн, при котором событие несёт в себе **состояние** изменившейся сущности (нужные данные), а не только её идентификатор. Смысл -- избавить потребителя от обратного запроса к источнику: всё необходимое уже встроено в событие.
+Event-Carried State Transfer (ECST) передаёт в событии достаточно данных о новом состоянии для потребителя, чтобы он мог обновить свою локальную модель без запроса к источнику. Это не обязательно **всё** состояние агрегата: контракт выбирают по потребностям потребителей и чувствительности данных.
 
-Зачем это нужно: при «тонком» событии (`OrderUpdated {orderId: 42}`) каждый потребитель вынужден дёргать источник за деталями. Это возвращает синхронную связность (источник должен быть доступен) и создаёт N запросов на N событий. ECST разрывает эту зависимость -- потребитель становится автономным.
-
-**Сравнение с Event Notification:**
-
-```mermaid
-graph LR
-    subgraph "Event Notification (ссылка)"
-        P1[Producer] -->|"OrderUpdated {orderId: 42}"| B1[(Broker)]
-        B1 --> C1[Consumer]
-        C1 -->|"GET /orders/42"| P1
-    end
-
-    subgraph "Event-Carried State Transfer (данные)"
-        P2[Producer] -->|"OrderUpdated {id:42, status:'SHIPPED', items:[...]}"| B2[(Broker)]
-        B2 --> C2[Consumer]
-        Note2[Обратный вызов не нужен]
-    end
-```
-
-**Преимущества:**
-- Слабая связность: потребители автономны, не зависят от доступности источника
-- Производительность: нет N запросов при N событиях
-- Replay: при пересоздании проекции все данные уже в событиях
-
-**Недостатки:**
-- Размер сообщений больше (payload крупнее)
-- Нельзя убрать поле из события без нарушения совместимости потребителей
-- При большом числе полей события раздуваются
-
-**Практический подход:** включать в событие **данные, необходимые потребителям**, не весь агрегат. Оставить `aggregateId` для случаев, когда нужны детали.
-
-```java
-// Event Notification — потребитель должен сделать запрос
-public record OrderStatusChangedEvent(UUID orderId, String newStatus) {}
-
-// Event-Carried State Transfer — всё нужное в событии
-public record OrderShippedEvent(
-    UUID orderId,
-    String status,          // "SHIPPED"
-    String trackingNumber,
-    Address shippingAddress,
-    List<OrderItem> items,
-    Instant shippedAt
-) {}
-```
+Уменьшается синхронная зависимость от источника, но растут payload и ответственность за версионирование, порядок и защиту PII. Тонкое уведомление с одним ID оставляет потребителю запрос к источнику; оба подхода допустимы для разных сценариев. Replay возможен лишь при сохранённой полной последовательности нужных данных.
 
 ## Q39. Как проектировать стратегии компенсации в EDA?
 
-Компенсирующие транзакции в `EDA` — механизм «отмены» уже выполненных шагов при сбое в Saga. Ключевое отличие от `2PC`: откатить нечего -- каждый шаг уже закоммичен в своей БД. Поэтому компенсация **семантически** обращает эффект новым действием (возврат денег вместо отмены списания), а не делает технический rollback. Это меняет требования к проектированию: компенсация -- такая же полноценная операция, как и прямая, и её тоже надо делать надёжной.
+Компенсация в Saga создаёт новый бизнес-эффект, который семантически исправляет уже подтверждённый шаг: `ReserveInventory → ReleaseInventory`, `ChargePayment → RefundPayment`. Она не является техническим rollback и не всегда полностью восстанавливает внешний мир (письмо уже отправлено, платежные комиссии или сроки изменились).
 
-**Принципы проектирования:**
-
-1. **Идемпотентность** — компенсация должна выполняться безопасно несколько раз:
-```java
-// Плохо: дважды вернёт деньги
-void refund(UUID orderId) {
-    payment.refund(amount);
-}
-
-// Хорошо: idempotency key предотвращает повтор
-void refund(UUID orderId) {
-    if (refundRepo.existsByOrderId(orderId)) return;
-    payment.refund(amount);
-    refundRepo.save(new Refund(orderId, amount));
-}
-```
-
-2. **Не всегда возможна** — «нельзя разослать неразосланные письма»; для таких шагов используют **pivot transaction** (точку невозврата):
-```
-OrderCreated → PaymentCharged (PIVOT) → EmailSent → DeliveryCreated
-                    ↑
-         До этой точки — компенсации возможны
-         После — только компенсации вперёд (forward recovery)
-```
-
-3. **Явные компенсирующие команды** в протоколе:
-
-| Прямая транзакция | Компенсирующая |
-|-------------------|----------------|
-| `ReserveInventory` | `ReleaseInventory` |
-| `ChargePayment` | `RefundPayment` |
-| `CreateOrder` | `CancelOrder` |
-| `LockAccount` | `UnlockAccount` |
-
-4. **Таймауты и Dead Letter Queue** — если компенсация зависает, необходимо переместить событие в `DLQ` для ручного разбора инцидента.
+Компенсации делают идемпотентными по устойчивому ключу, с retry и мониторингом. Проверка `existsByOrderId` перед внешним refund не атомарна: два исполнителя могут вернуть деньги дважды. Используют idempotency key у платёжного провайдера и собственное состояние операции с уникальным ограничением/сверкой. Для необратимых шагов заранее задают точку невозврата и стратегию продолжения вперёд или ручного разбора.
 
 ## Q40. Как организовать версионирование топиков Kafka при эволюции схемы?
 
-Эволюция схемы событий — неизбежная проблема долгоживущих `EDA`-систем: требования меняются, а несовместимое изменение схемы молча ломает потребителей в рантайме. Стратегия зависит от того, совместимо изменение или нет: совместимые держат в одном топике под контролем Schema Registry, несовместимые (мажорные) разводят по версиям топика. Ниже -- оба механизма.
+В существующем Kafka-топике обычно публикуют совместимые версии схем под управлением Schema Registry и subject. `BACKWARD` означает, что новый reader читает прежние данные; `FORWARD` — старый reader читает новые. `FULL` сочетает оба направления, а `_TRANSITIVE` сравнивает со всеми старыми версиями. Разрешённость изменения поля зависит от Avro/Protobuf/JSON Schema и настройки subject.
 
-**Стратегии совместимости (Confluent Schema Registry):**
-
-| Тип совместимости | Что можно | Что нельзя |
-|-------------------|-----------|-----------|
-| **BACKWARD** | Добавить поле с default | Удалить обязательное поле |
-| **FORWARD** | Удалить поле с default | Добавить обязательное поле |
-| **FULL** | Только добавление с default | Удаление, смена типа |
-| **NONE** | Всё | — (только при мажорной версии) |
-
-**Паттерн версионирования через заголовок:**
-
-```java
-// Producer: добавляет версию в заголовок
-ProducerRecord<String, byte[]> record = new ProducerRecord<>(topic, key, payload);
-record.headers().add("schema-version", "2".getBytes());
-
-// Consumer: маршрутизация по версии
-@KafkaListener(topics = "orders")
-public void consume(ConsumerRecord<String, byte[]> record) {
-    String version = new String(record.headers().lastHeader("schema-version").value());
-    switch (version) {
-        case "1" -> handleV1(deserializeV1(record.value()));
-        case "2" -> handleV2(deserializeV2(record.value()));
-        default -> dlqSender.send(record, "unknown-version");
-    }
-}
-```
-
-**Топик-per-версия** (для мажорных несовместимых изменений):
-```
-orders.v1   — старый контракт (потребители мигрируют постепенно)
-orders.v2   — новый контракт
-```
-
-```mermaid
-graph LR
-    P[Producer v2] -->|"orders.v1 (bridge)"| BV1[(orders.v1)]
-    P -->|"orders.v2"| BV2[(orders.v2)]
-    BV1 --> C1[Consumer v1<br/>старый]
-    BV2 --> C2[Consumer v2<br/>новый]
-    Note[Bridge: конвертер v2→v1<br/>для обратной совместимости]
-```
-
-**Правила эволюции схемы Avro/Protobuf:**
-- Всегда добавляйте новые поля с `default` значением
-- Никогда не меняйте тип существующего поля
-- Никогда не удаляйте поля — только помечайте как `deprecated`
-- Для несовместимых изменений — новый топик + миграция потребителей
+При несовместимом бизнес-контракте можно создать новый тип события или новый топик и временно вести обе версии. Это решение требует миграции потребителей, правил двойной публикации, retention и последующего удаления старого пути. Заголовок `schema-version` — один из вариантов передачи версии, а не обязательное требование Kafka или Schema Registry. Нельзя считать, что Registry автоматически преобразует уже записанные сообщения. [Confluent Schema Evolution](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html).
 
 ---
 

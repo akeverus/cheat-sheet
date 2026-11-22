@@ -18,19 +18,21 @@ updated: "2026-06-25"
 
 # Вопросы на собеседовании: `Тестирование на Kotlin (MockK, Kotest)`
 
-Тестовый стек Kotlin отличается от Java: классы по умолчанию `final`, есть корутины, `suspend`-функции, top-level и extension-функции — всё это плохо ложится на Mockito и классический JUnit-стиль. Поэтому в экосистеме выросли Kotlin-native инструменты: `MockK` для мокинга и `Kotest` как фреймворк со спецификациями, matchers и property-based тестами. На собеседовании проверяют, понимаете ли вы, чем именно эти инструменты лучше Java-аналогов и как корректно тестировать асинхронный код.
+Тестовый стек Kotlin учитывает классы `final` по умолчанию, корутины, `suspend`-функции, top-level и extension-функции. MockK предлагает для них отдельный Kotlin API, а Kotest — стили спецификаций, matchers и property-based тесты. Mockito 5 тоже умеет мокать `final`-классы; выбор инструмента зависит от нужных операций и состава проекта.
 
-Дата последнего обновления: 2026-06-25
+Дата последнего обновления: 2026-11-06
 
 ## Полезные ссылки
 
 ### Официальная документация
 
 - [MockK](https://mockk.io/) — официальный сайт и справочник по API мокинга
+- [Mockito](https://github.com/mockito/mockito/blob/main/README.md) и [Mockito-Kotlin](https://github.com/mockito/mockito-kotlin) — inline mock maker и Kotlin API
 - [Kotest](https://kotest.io/) — документация фреймворка: стили, matchers, property testing
 - [kotlinx-coroutines-test](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/) — `runTest`, `TestDispatcher`, виртуальное время
 - [Turbine](https://github.com/cashapp/turbine) — библиотека для тестирования `Flow`
 - [JUnit 5 User Guide](https://junit.org/junit5/docs/current/user-guide/) — `@TestInstance`, жизненный цикл, расширения
+- [Testcontainers JUnit 5](https://java.testcontainers.org/test_framework_integration/junit_5/) — static и instance контейнеры
 - [Baeldung: Тестирование на Kotlin (MockK, Kotest)](https://www.baeldung.com/kotlin/mockk) — туториал
 
 ## Содержание
@@ -39,7 +41,7 @@ updated: "2026-06-25"
 - [See also](#see-also)
 
 **MockK: основы мокинга**
-- [Q1. (!) Что такое MockK и почему для Kotlin предпочитают его, а не Mockito](#q1--что-такое-mockk-и-почему-для-kotlin-предпочитают-его-а-не-mockito)
+- [Q1. (!) Чем API MockK удобен для Kotlin и что уже умеет Mockito 5](#q1--чем-api-mockk-удобен-для-kotlin-и-что-уже-умеет-mockito-5)
 - [Q2. Как работают every / returns / verify в MockK](#q2-как-работают-every--returns--verify-в-mockk)
 - [Q3. Что такое relaxed mock и когда он нужен](#q3-что-такое-relaxed-mock-и-когда-он-нужен)
 - [Q4. Что делает spyk и чем спай отличается от мока](#q4-что-делает-spyk-и-чем-спай-отличается-от-мока)
@@ -48,8 +50,8 @@ updated: "2026-06-25"
 **MockK: продвинутое**
 - [Q6. (!) Как мокать suspend-функции через coEvery и coVerify](#q6--как-мокать-suspend-функции-через-coevery-и-coverify)
 - [Q7. Как подключить MockKExtension в JUnit 5](#q7-как-подключить-mockkextension-в-junit-5)
-- [Q8. (!) Почему MockK мокает final-классы, а Mockito буксует](#q8--почему-mockk-мокает-final-классы-а-mockito-буксует)
-- [Q9. Как мокать top-level, extension- и static-функции](#q9-как-мокать-top-level-extension--и-static-функции)
+- [Q8. (!) Почему MockK и Mockito 5 могут мокать final-классы Kotlin](#q8--почему-mockk-и-mockito-5-могут-мокать-final-классы-kotlin)
+- [Q9. Как мокать top-level, module-wide extension и Java static функции на JVM](#q9-как-мокать-top-level-module-wide-extension-и-java-static-функции-на-jvm)
 - [Q10. В чём разница clearAllMocks, unmockkAll и confirmVerified](#q10-в-чём-разница-clearallmocks-unmockkall-и-confirmverified)
 
 **Kotest: спецификации и matchers**
@@ -58,7 +60,7 @@ updated: "2026-06-25"
 - [Q13. (!) Что такое property-based testing и как его делать через checkAll и Arb](#q13--что-такое-property-based-testing-и-как-его-делать-через-checkall-и-arb)
 - [Q14. Как писать data-driven тесты через withData](#q14-как-писать-data-driven-тесты-через-withdata)
 - [Q15. Какие lifecycle hooks есть в Kotest](#q15-какие-lifecycle-hooks-есть-в-kotest)
-- [Q16. Чем Kotest отличается от JUnit 5](#q16-чем-kotest-отличается-от-junit-5)
+- [Q16. Какие возможности Kotest добавляет поверх запуска через JUnit Platform](#q16-какие-возможности-kotest-добавляет-поверх-запуска-через-junit-platform)
 
 **JUnit 5 и тестирование асинхронного кода**
 - [Q17. Что даёт kotlin.test и assertFailsWith](#q17-что-даёт-kotlintest-и-assertfailswith)
@@ -66,18 +68,11 @@ updated: "2026-06-25"
 - [Q19. (!) Как тестировать Flow с помощью Turbine](#q19--как-тестировать-flow-с-помощью-turbine)
 - [Q20. Как использовать Testcontainers в Kotlin-тестах](#q20-как-использовать-testcontainers-в-kotlin-тестах)
 
-## Q1. (!) Что такое MockK и почему для Kotlin предпочитают его, а не Mockito
+## Q1. (!) Чем API MockK удобен для Kotlin и что уже умеет Mockito 5
 
-`MockK` — это библиотека мокинга, написанная на Kotlin и под Kotlin. Mockito создавался для Java, и при работе с Kotlin он спотыкается о несколько особенностей языка.
+`MockK` даёт отдельные операции для Kotlin-кода: `coEvery` и `coVerify` для `suspend`-методов, `mockkObject` для `object`, `mockkStatic` для top-level и module-wide extension-функций. Его DSL использует `every { } returns` и `verify { }`.
 
-Ключевые проблемы Mockito на Kotlin:
-
-- Классы в Kotlin по умолчанию `final`. Исторически Mockito без `mock-maker-inline` их вообще не мокал; с Mockito 5 inline-мейкер стал дефолтом `mockito-core`, так что этот пункт закрыт — но остальные ниже актуальны.
-- Нет нативной поддержки `suspend`-функций — корутины приходится обходить вручную.
-- Top-level и extension-функции компилируются в статические методы, которые Mockito не умеет мокать из коробки.
-- DSL Mockito (`when(...).thenReturn(...)`) выглядит чужеродно: `when` — зарезервированное слово Kotlin, его приходится экранировать бэктиками.
-
-MockK решает это нативным DSL и встроенной поддержкой Kotlin-фич:
+Mockito 5 по умолчанию использует inline mock maker и умеет мокать `final`-классы. Mockito также поддерживает статические моки через `mockStatic`; Kotlin-обёртка Mockito-Kotlin поддерживает сценарии с `suspend`-методами. Поэтому сравнивать библиотеки стоит по нужному API, а не по прежнему ограничению на `final`.
 
 ```kotlin
 val repo = mockk<UserRepository>()
@@ -91,13 +86,13 @@ verify { repo.findById(1) }
 
 | Критерий | MockK | Mockito |
 |----------|-------|---------|
-| `final`-классы | из коробки | до v5 — нужен `mockito-inline`; с v5 из коробки |
-| `suspend`-функции | `coEvery` / `coVerify` | вручную, костыли |
-| top-level / extension | `mockkStatic` | нет нативной поддержки |
-| `object` (синглтоны) | `mockkObject` | нет |
-| DSL | Kotlin-native | Java-стиль, бэктики на `when` |
+| `final`-классы | поддерживаются | поддерживаются с inline mock maker по умолчанию в v5 |
+| `suspend`-функции | отдельный API `coEvery` / `coVerify` | возможны через Mockito-Kotlin |
+| top-level / module-wide extension | `mockkStatic` | статические методы можно мокать через `mockStatic` |
+| `object` (синглтоны) | `mockkObject` | отдельного одноимённого API нет |
+| DSL | `every { } returns` | API Mockito-Kotlin, в Java API `when` требует бэктиков |
 
-**Итог:** MockK выбирают, потому что он покрывает корутины, `object`, статические и extension-функции «из коробки»; Mockito даже с дефолтным inline-мейкером (v5+) закрывает только `final`-классы, а для остального нужны обходные пути.
+**Итог:** MockK удобен специализированным Kotlin API. Mockito 5 уже поддерживает `final`-классы и статические моки, а Mockito-Kotlin — сценарии с корутинами.
 
 ## Q2. Как работают every / returns / verify в MockK
 
@@ -122,20 +117,19 @@ verify(atLeast = 2) { calc.next() }       // минимум два раза
 verifyOrder { calc.add(2, 3); calc.next() } // в этом порядке
 ```
 
-Матчеры аргументов: `any()`, `eq(value)`, `range(...)`, `match { it > 0 }`. Если хотя бы один аргумент задан матчером, все остальные тоже должны быть матчерами — нельзя смешивать «сырое» значение и `any()` в одном вызове.
+Матчеры аргументов: `any()`, `eq(value)`, `range(...)`, `match { it > 0 }`. MockK разрешает смешивать обычные аргументы и матчеры в одном вызове: обычное значение сопоставляется через `eq()`. Например, `calc.divide(any(), 0)` в примере выше — допустимый вызов.
 
 **Подвох:** для не-relaxed мока вызов метода, у которого нет `every`, бросит исключение `MockKException: no answer found`. Это намеренно: тест падает, если код пошёл неожиданным путём.
 
 ## Q3. Что такое relaxed mock и когда он нужен
 
-Relaxed mock — это мок, который не требует описывать поведение каждого метода. На незастабленные вызовы он возвращает «разумные пустышки»: `0` для чисел, `false` для `Boolean`, пустую строку, а для объектов — вложенный relaxed-мок (chained mocks).
+Relaxed mock не требует описывать поведение каждого метода. На незастабленные вызовы он возвращает значения по умолчанию; для подходящих объектных типов может создать вложенный мок. Для generic-методов возможны ограничения и `ClassCastException`, поэтому нужное поведение лучше стабить явно.
 
 Создание:
 
 ```kotlin
 val repo = mockk<UserRepository>(relaxed = true)
-// можно сразу использовать, не описывая каждый метод
-val users = repo.findAll() // вернёт пустой список / дефолт, не упадёт
+// нужные возвращаемые значения лучше стабить явно
 
 // relaxUnitFun — мягкий вариант: дефолты только для Unit-функций
 val logger = mockk<Logger>(relaxUnitFun = true)
@@ -247,7 +241,7 @@ coVerify(exactly = 1) { repo.fetchAll() }
 
 ## Q7. Как подключить MockKExtension в JUnit 5
 
-`MockKExtension` интегрирует MockK с жизненным циклом JUnit 5: инициализирует моки по аннотациям и сам чистит их после тестов.
+`MockKExtension` интегрирует MockK с жизненным циклом JUnit 5: инициализирует моки по аннотациям и по умолчанию чистит их после тестового класса.
 
 ```kotlin
 @ExtendWith(MockKExtension::class)
@@ -281,11 +275,11 @@ class UserServiceTest {
 
 Альтернатива без расширения — `MockKAnnotations.init(this)` в `@BeforeEach`. Расширение чище: меньше boilerplate и гарантированная очистка.
 
-## Q8. (!) Почему MockK мокает final-классы, а Mockito буксует
+## Q8. (!) Почему MockK и Mockito 5 могут мокать final-классы Kotlin
 
 В Kotlin классы и методы по умолчанию `final` — чтобы сделать класс наследуемым, нужно явно писать `open`. Это сознательное решение языка (предпочтение композиции наследованию), но оно ломает классический мокинг.
 
-Mockito исторически мокал через генерацию подкласса в рантайме (CGLIB/ByteBuddy-прокси). Подкласс нельзя создать от `final`-класса — значит, «голый» Mockito 4.x и старше такие классы не мокал: требовался отдельный артефакт `mockito-inline` (mock-maker-inline), подменяющий классы инструментацией байткода. С Mockito 5.0 этот inline-мейкер стал поведением по умолчанию в `mockito-core`: артефакт `mockito-inline` заморожен (последняя версия 5.2.0), а старый subclass-мейкер вынесен в отдельный `mockito-subclass` для тех, кому он нужен (например, GraalVM native image).
+Mockito исторически мокал через генерацию подкласса в рантайме. Подкласс нельзя создать от `final`-класса, поэтому в Mockito 4.x требовалось отдельно включить inline mock maker, например через `mockito-inline`. Начиная с Mockito 5 inline mock maker используется в `mockito-core` по умолчанию.
 
 `MockK` изначально построен на инструментации байткода (агент/инлайн-mock-maker), поэтому `final` для него не препятствие — не нужны ни `open`, ни дополнительные зависимости.
 
@@ -298,17 +292,13 @@ val gateway = mockk<PaymentGateway>()        // MockK — ок
 every { gateway.charge(100) } returns true   // работает без open
 ```
 
-```kotlin
-// Mockito 4.x без mockito-inline на таком классе падал:
-// "Cannot mock/spy class ... it is a final class"
-// Mockito 5+ мокает final из коробки, но не suspend/top-level/object
-```
+В Mockito 4.x для такого класса требовалось включить inline mock maker. Mockito 5 использует его по умолчанию, поэтому тоже может мокать `PaymentGateway` без `open`.
 
-**Итог:** в Java мок-фреймворки рассчитаны на нефинальные по умолчанию классы; в Kotlin всё наоборот. MockK спроектирован под эту реальность изначально; Mockito пришёл к тому же лишь в v5, сделав inline-мейкер дефолтом.
+**Итог:** оба инструмента могут мокать финальные классы с помощью инструментации байткода; в Mockito 5 inline mock maker включён по умолчанию.
 
-## Q9. Как мокать top-level, extension- и static-функции
+## Q9. Как мокать top-level, module-wide extension и Java static функции на JVM?
 
-Top-level и extension-функции в Kotlin компилируются в статические методы JVM в классе-обёртке (`<ИмяФайла>Kt`). Обычный `mockk<>()` мокает только инстанс-методы объекта, а статику — нет. Для неё есть `mockkStatic`, для `object` — `mockkObject`.
+Top-level функции и module-wide extension-функции на JVM компилируются в статические методы класса файла (обычно `<ИмяФайла>Kt`). Их мокают через `mockkStatic`. Extension, объявленную внутри класса или `object`, мокают через обычный `mockk` владельца. Для Java static тоже используют `mockkStatic` по классу.
 
 Top-level функция (например, в файле `Utils.kt`):
 
@@ -322,7 +312,20 @@ mockkStatic("com.example.UtilsKt") // имя файла + суффикс Kt
 every { currentTimeMillis() } returns 1_700_000_000_000L
 ```
 
-Extension-функция мокается так же — по классу-обёртке файла, где она объявлена.
+Module-wide extension, объявленная на верхнем уровне файла, мокается так же — по сгенерированному классу файла или ссылке на функцию. `@file:JvmName` и multifile class могут изменить имя этого класса, поэтому его нельзя всегда получать простым добавлением `Kt`.
+
+```kotlin
+class Ext {
+    fun String.decorate() = "[$this]"
+}
+
+val ext = mockk<Ext>()
+with(ext) {
+    every { "x".decorate() } returns "подмена"
+}
+```
+
+В этом примере extension объявлена внутри `Ext`: `mockkStatic` для неё не нужен.
 
 `object` (синглтон) и его методы:
 
@@ -342,7 +345,7 @@ mockkStatic(UUID::class)
 every { UUID.randomUUID() } returns UUID.fromString("...")
 ```
 
-**Подвох:** статические и object-моки глобальны — после теста обязательно снимайте их (`unmockkStatic`, `unmockkObject` или `unmockkAll`), иначе мок «протечёт» в соседние тесты. Mockito этого почти не умеет (нужен PowerMock), что и делает MockK предпочтительным для Kotlin-кода с top-level/extension-функциями.
+**Подвох:** статические и object-моки MockK затрагивают общее состояние — после теста снимайте их (`unmockkStatic`, `unmockkObject` или `unmockkAll`), иначе мок может повлиять на соседние тесты. Mockito предлагает статические моки через `mockStatic`, но использует другой API и область действия.
 
 ## Q10. В чём разница clearAllMocks, unmockkAll и confirmVerified
 
@@ -554,9 +557,9 @@ class RepoSpec : FunSpec({
 
 Размещать общую инициализацию (поднятие контейнера, очистка состояния) лучше в `beforeSpec`/`afterSpec`, чтобы не платить за неё на каждом тесте, а сброс изменяемого состояния — в `beforeTest`/`beforeEach`.
 
-## Q16. Чем Kotest отличается от JUnit 5
+## Q16. Какие возможности Kotest добавляет поверх запуска через JUnit Platform
 
-Это частый vs-вопрос. Оба — фреймворки запуска тестов, но Kotest предлагает заметно больше «из коробки» и Kotlin-идиоматичный синтаксис.
+Kotest добавляет стили спецификаций, matchers и property-тесты. Его JVM-спецификации можно запускать через JUnit Platform.
 
 | Критерий | Kotest | JUnit 5 |
 |----------|--------|---------|
@@ -609,7 +612,7 @@ fun testNegativeAge() {
 
 ## Q18. (!) Как тестировать корутины через runTest и TestDispatcher
 
-Тестировать `suspend`-код напрямую нельзя — нужен корутинный контекст. Библиотека `kotlinx-coroutines-test` даёт `runTest`, который запускает тело в `TestScope` и управляет *виртуальным временем*: задержки не ждут по-настоящему.
+Для вызова `suspend`-кода нужен корутинный контекст. Библиотека `kotlinx-coroutines-test` даёт `runTest`, который запускает тело в `TestScope` и управляет виртуальным временем для задач на тестовых диспетчерах. Задержки на внешних диспетчерах и реальные операции могут ждать по-настоящему.
 
 ```kotlin
 @Test
@@ -627,7 +630,7 @@ fun testLoad() = runTest {
 | `StandardTestDispatcher` | дочерние корутины НЕ стартуют сразу; нужно явно продвинуть время |
 | `UnconfinedTestDispatcher` | дочерние стартуют немедленно (eager), удобно для простых тестов |
 
-По умолчанию `runTest` использует `StandardTestDispatcher`, поэтому фоновые корутины нужно «прокрутить»:
+По умолчанию `runTest` использует `StandardTestDispatcher`, поэтому запланированные дочерние задачи можно «прокрутить»:
 
 ```kotlin
 @Test
@@ -635,7 +638,7 @@ fun testFireAndForget() = runTest {
     val vm = MyViewModel()
     vm.startBackgroundWork() // launch внутри — ещё не выполнилось
 
-    advanceUntilIdle()       // прогоняет все корутины до завершения
+    advanceUntilIdle()       // прогоняет запланированные дочерние задачи
 
     assertTrue(vm.isDone)
 }
@@ -643,15 +646,15 @@ fun testFireAndForget() = runTest {
 
 Важные правила:
 
-- В тесте должен быть **один** `TestCoroutineScheduler`, общий для всех `TestDispatcher`. Внутри `runTest` его берут из `testScheduler` и передают в дополнительно создаваемые диспетчеры — иначе виртуальное время не синхронизируется.
+- Когда тест использует несколько `TestDispatcher`, им нужен общий `TestCoroutineScheduler` для согласованного виртуального времени. Внутри `runTest` его берут из `testScheduler` и передают дополнительно создаваемым диспетчерам.
 - Продакшен-код не должен хардкодить `Dispatchers.IO`/`Default`. Внедряйте диспетчер (через конструктор), чтобы в тесте подставить `TestDispatcher` — иначе виртуальным временем не поуправляешь.
-- `advanceUntilIdle()` — выполнить всё; `advanceTimeBy(ms)` — продвинуть на конкретный интервал; `runCurrent()` — выполнить уже запланированное на текущий момент.
+- `advanceUntilIdle()` — выполнить запланированные задачи обычной тестовой области; `advanceTimeBy(ms)` — продвинуть на конкретный интервал; `runCurrent()` — выполнить уже запланированное на текущий момент. Бесконечную работу в `backgroundScope` этот вызов не прокручивает до завершения; область отменяется после теста.
 
 **Подвох:** старый API (`runBlockingTest`, `TestCoroutineDispatcher`) устарел — на собеседовании ждут `runTest` + `TestScope` (актуально с coroutines 1.6+).
 
 ## Q19. (!) Как тестировать Flow с помощью Turbine
 
-`Flow` — холодный поток, и тестировать его через `toList()` неудобно: бесконечные или зависящие от времени потоки так не проверишь. `Turbine` (`app.cash.turbine`) превращает push-модель Flow в pull-модель suspend-функций.
+Холодный `Flow` может завершиться, а `StateFlow` и `SharedFlow` работают иначе и часто не завершаются сами. `toList()` ждёт завершения потока, поэтому для проверки отдельных событий и бесконечных потоков удобен `Turbine` (`app.cash.turbine`). Он позволяет получать события по одному через suspend-функции.
 
 ```kotlin
 // зависимость: testImplementation("app.cash.turbine:turbine:...")
@@ -706,7 +709,7 @@ class UserRepositoryIT {
 
     companion object {
         @Container
-        @JvmStatic // важно: @Container на static-поле — один контейнер на класс
+        @JvmField // важно: JUnit ищет static-поле с @Container
         val postgres = PostgreSQLContainer("postgres:16-alpine")
     }
 
@@ -722,8 +725,8 @@ class UserRepositoryIT {
 
 Kotlin-нюансы:
 
-- `@Container` на статическом поле = **один контейнер на класс** (запускается раз, переиспользуется тестами). В Kotlin статика живёт в `companion object`, поэтому нужны `@JvmStatic` и `@Container` на нём. На уровне instance-поля контейнер пересоздаётся для каждого теста — медленнее.
-- Удобный трюк со Spring Boot: специальный JDBC-URL `jdbc:tc:postgresql:16-alpine:///dbname` поднимает контейнер автоматически без явного объявления `@Container` — этот подход используется в данном проекте (`application-test.yml`).
+- `@Container` на статическом поле = **один контейнер на класс** (запускается раз, переиспользуется тестами). В Kotlin свойство объявляют в `companion object` с `@JvmField`, чтобы JUnit увидел static-поле; `@JvmStatic` создаёт метод доступа и не заменяет поле. На уровне instance-поля контейнер пересоздаётся для каждого теста — медленнее.
+- Специальный JDBC-URL `jdbc:tc:postgresql:16-alpine:///dbname` может поднять контейнер автоматически без явного `@Container`.
 - Часто заводят базовый абстрактный класс (`AbstractPostgresRepositoryTest`) с одним контейнером на JVM и `TRUNCATE` между тестами — это убирает накладные расходы на повторный старт.
 
 **Trade-off:** Testcontainers требуют запущенного Docker-демона и стартуют дольше unit-тестов (секунды на поднятие). Зато ловят то, что моки не видят: реальные SQL-диалекты, миграции, транзакции, ограничения БД. Это сдвиг по «пирамиде тестирования» вверх — таких тестов должно быть меньше, чем unit.

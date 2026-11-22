@@ -16,7 +16,7 @@ updated: "2026-05-23"
 ---
 # Вопросы на собеседовании: Наблюдаемость ИИ и LLM
 
-**LLM Observability** — это специализированная ветка observability для систем на базе больших языковых моделей. Классические APM-инструменты (Datadog, New Relic) видят только поверхность — latency и status code, но не отвечают на главные вопросы: **«а ответ-то хороший?»**, **«почему модель галлюцинирует на этом промпте?»**, **«куда ушло $20 000 за неделю?»**. LLM-специфичный observability закрывает эту дыру: tracing цепочек и агентов, метрики токенов и стоимости, evals прямо в проде, версионирование промптов и A/B-тесты.
+**Наблюдаемость LLM-приложения** объединяет обычные сигналы сервиса с данными о работе модели: вызовами модели и инструментов, извлечённым контекстом, расходом токенов и оценками качества ответа. Успешный HTTP-ответ подтверждает выполнение запроса на уровне протокола, но сам по себе не доказывает полезность ответа. Эти данные можно собирать средствами существующего APM и OpenTelemetry или через специализированную платформу; выбор продукта зависит от задачи и правил обработки чувствительных данных.
 
 **Дата актуализации:** 2026-05-23
 
@@ -60,194 +60,105 @@ updated: "2026-05-23"
 
 ---
 
-## Q1. Почему для LLM нужен отдельный observability, мало классического APM? (!)
+## Q1. Почему одних технических метрик недостаточно для наблюдаемости LLM-приложения? (!)
 
-Классический APM измеряет, *доехал* ли запрос; LLM-observability измеряет, *хорош* ли ответ. Это два разных вопроса, и второй классическими инструментами не покрывается.
+Успешный HTTP-статус, задержка и частота ошибок показывают работу сервиса, но не доказывают, что ответ модели решает задачу пользователя. Это верно и для других приложений: бизнес-корректность нельзя вывести только из кода ответа. Для LLM особенно важны оценки фактической точности, полезности, безопасности и качества ответа в контексте задачи.
 
-**Классический APM** (Datadog APM, New Relic, Dynatrace) заточен под детерминированные сервисы: запрос → ответ → код 200/500, метрики latency / throughput / error rate, логи со stack trace при ошибке. Здесь «200 OK» означает «всё хорошо».
+Трейс с инструментированными вызовами может показать шаги агента: обращение к модели, поиск данных и выполнение инструмента. Метрики токенов и времени помогают оценивать ресурсы; оценка ответа по заданному критерию и обратная связь пользователей помогают обнаруживать качественные сбои. Содержание промптов и ответов собирают только при необходимости и с учётом приватности.
 
-**Почему этого не хватает для LLM** — у языковых моделей «всё хорошо» не выводится из HTTP-кода:
-
-1. **Недетерминированный вывод.** Один и тот же prompt при `temperature > 0` даёт разные ответы, поэтому HTTP 200 не равно «ответ корректен». APM не отличит `"Париж — столица Франции"` от `"Берлин — столица Франции"` — для него оба «успех».
-2. **Качество — это бизнес-метрика.** В обычном сервисе всё бинарно: работает или нет. В LLM нужна **шкала качества** — faithfulness, relevancy, hallucination rate, удовлетворённость пользователя.
-3. **Многошаговые цепочки.** Один агентский запрос — это, например, 10 вызовов модели + 5 tool calls + 3 retrieval. APM увидит только внешний HTTP, но не внутреннюю структуру и не поймёт, на каком шаге всё пошло не так.
-4. **Контекст и эмбеддинги.** Для RAG критично знать, какие чанки достали из базы, что модель реально использовала, а что проигнорировала. Классический трейс этого не хранит.
-5. **Стоимость как первоклассная метрика.** В обычном APM нет понятия «$ за запрос». В LLM один плохо настроенный prompt сжигает тысячи долларов за день — стоимость нужно видеть в реальном времени.
-6. **Промпты живут как код.** Версионирование промпта — это версионирование кода: нужны diff между версиями и A/B-сравнение, чего APM не предлагает.
-
-**Вывод:** LLM observability — это **APM + eval-платформа + cost-tracker + prompt-management** в одном продукте.
+Для этого не обязательно покупать отдельный продукт: существующие APM и OpenTelemetry можно расширить нужными спанами, метриками и оценками. Специализированные платформы объединяют эти возможности, но набор сигналов определяется вопросом, который нужно диагностировать. Основание: [OpenTelemetry, Signals](https://opentelemetry.io/docs/concepts/signals/), [LangSmith, Evaluation types](https://docs.langchain.com/langsmith/evaluation-types), [Datadog, Trace-level evaluations](https://docs.datadoghq.com/llm_observability/evaluations/custom_llm_as_a_judge_evaluations/trace_level_evaluations/).
 
 ---
 
-## Q2. Какие три pillars у LLM observability? Чем отличается от классических metrics/logs/traces? (!)
+## Q2. Как соотносятся трейсы, метрики, логи и оценки качества в LLM-приложении? (!)
 
-Классические три столпа — **metrics, logs, traces**. В LLM-мире набор смещается: логи растворяются внутри трейсов, а на их место встаёт новый столп — **evals** (оценки качества). Получается **tracing, metrics, evals**.
+Трейсы показывают путь запроса и связи операций; метрики — агрегаты вроде задержки, числа токенов и ошибок; логи — события и детали диагностики. Это разные сигналы OpenTelemetry, и LLM-приложение не отменяет ни один из них. Логи можно связать с трейсами через идентификаторы trace и span.
 
-**LLM-специфичные три столпа:**
+**Оценки качества (evals)** проверяют ответ или весь ход работы по заданному критерию: например, точность ответа, выполнение задачи или корректность вызова инструмента. Результат оценки можно прикрепить к трейсу и агрегировать как метрику. Оценка не возникает автоматически из HTTP-статуса, числа токенов или задержки.
 
-1. **Tracing** — структура запроса: chain → spans (вызов модели, retrieval, tool call), иерархия parent-child, атрибуты (model, tokens, latency, cost).
-2. **Metrics** — агрегаты по трафику: tokens/min, $/hour, p95 latency, eval-оценки, cache hit rate.
-3. **Evals** — оценки качества ответа: LLM-as-judge, RAGAS, обратная связь пользователей, регрессия против golden dataset. Этого столпа в классике нет вообще.
-
-**Куда делись логи?** В LLM сама пара `prompt + completion` и есть лог — она кладётся прямо в spans как `gen_ai.prompt` / `gen_ai.completion` (с маскировкой PII). Поэтому отдельный текстовый лог дублировал бы трейс и не нужен.
-
-| Классика     | LLM эквивалент                                  |
-| ------------ | ----------------------------------------------- |
-| `INFO log`   | Span с `gen_ai.system.message`                  |
-| `ERROR log`  | Span с `status=error` + `gen_ai.response.finish_reasons` |
-| HTTP-метрики | Token metrics, cost, latency per span           |
-| APM trace    | LLM trace (chain + spans)                       |
-| —            | **Eval scores** (новый pillar)                  |
+Промпты, ответы и сообщения могут храниться как данные спана, события или записи журнала в зависимости от инструментирования. Полный текст часто содержит чувствительные данные; его запись, фильтрацию и срок хранения выбирают отдельно. Утверждение, что «логи растворились в трейсе», неверно: корреляция сигналов не уничтожает логи. Основание: [OpenTelemetry, Signals](https://opentelemetry.io/docs/concepts/signals/), [OpenTelemetry, Log correlation](https://opentelemetry.io/docs/specs/otel/logs/), [LangSmith, Evaluation types](https://docs.langchain.com/langsmith/evaluation-types/).
 
 ---
 
-## Q3. Что такое trace и span в контексте LLM? (!)
+## Q3. Как соотносятся trace и span при трассировке одного запроса к LLM-приложению? (!)
 
-**Trace** — это вся жизнь одного пользовательского запроса от начала до конца. Пример: пользователь спросил «расскажи про Spring» и получил ответ — всё, что произошло между этими двумя точками, и есть один trace.
+**Трейс** представляет путь одной операции через приложение. Для одного пользовательского запроса к LLM-сервису обычно создают трейс, в который входят действия приложения и внешние вызовы. **Спан** описывает отдельную операцию внутри трейса: у него есть начало, конец, атрибуты и, кроме корневого спана, родитель.
 
-**Span** — отдельный шаг внутри trace, его «кадр». В LLM-системе шаги типизированы:
+Пример возможной структуры:
 
-- **Root span** — внешняя точка входа: HTTP-запрос или сессия чата.
-- **LLM call span** — вызов модели (`gpt-4o`, `claude-3-7`).
-- **Retrieval span** — поход в vector store за контекстом.
-- **Tool call span** — выполнение функции (web search, calculator).
-- **Embedding span** — генерация вектора.
-- **Guardrail span** — проверка safety/PII.
-
-Spans складываются в **дерево** через ссылку `parent_span_id` — это и даёт картину «что внутри чего»:
-
-```
-trace_id=abc123
-└── chat_request (root)
-    ├── retrieve_context (vector search)
-    │   └── embedding (text → vector)
-    ├── llm_call (gpt-4o)
-    │   └── stream_tokens
-    └── guardrail (PII check)
+```text
+chat_request (корневой спан)
+├── retrieve_context
+├── call_model
+└── check_answer
 ```
 
-**Атрибуты span:**
-
-- `gen_ai.system` = `openai`
-- `gen_ai.request.model` = `gpt-4o`
-- `gen_ai.usage.input_tokens` = 1500
-- `gen_ai.usage.output_tokens` = 230
-- `latency_ms` = 1200
-- `cost_usd` = 0.012
-- `trace.user_id` = `user_42`
-- `trace.session_id` = `sess_xyz`
+Спаны образуют дерево причинно связанных операций; инструментированный вызов поиска или модели можно развернуть на дочерние спаны. Данные о модели, токенах и результате записывают по выбранной схеме инструментирования. Полный текст сообщений не является обязательным атрибутом и может содержать персональные данные. Идентификатор сессии может связывать несколько трейсов, но сам по себе не задаёт границу каждого трейса. Основание: [OpenTelemetry, Tracing API](https://opentelemetry.io/docs/specs/otel/trace/api/), [OpenTelemetry, Context propagation](https://opentelemetry.io/docs/concepts/context-propagation/).
 
 ---
 
 ## Q4. Как устроена parent-child иерархия в trace для агента?
 
-У агента каждый шаг рассуждения и каждый инструмент — отдельный span, вложенный в корневой `agent_invoke`. Иерархия и есть та структура, по которой потом считают стоимость, ищут затыки и ловят зацикливания.
+Корневой спан может описывать один запуск агента. Под ним создают спаны наблюдаемых шагов — вызовов модели, поиска и инструментов. Если инструмент делает HTTP-запрос, его спан может быть дочерним к спану вызова инструмента. Название `agent_invoke` в примере — локальное имя операции, а не обязательное имя из стандарта.
 
-Для **ReAct-агента** с tool calls trace выглядит так:
-
-```
-trace_id=t1
-└── agent_invoke (parent=null, type=AGENT)
-    ├── llm_call #1 (parent=agent_invoke, decides tool)
-    │   → output: "use search('Spring AOP')"
-    ├── tool_call: search (parent=agent_invoke)
-    │   ├── http_get (parent=tool_call)
-    │   └── result: [docs]
-    ├── llm_call #2 (parent=agent_invoke, reasoning)
-    │   → output: "use calculator(2+2)"
-    ├── tool_call: calculator (parent=agent_invoke)
-    │   → result: 4
-    └── llm_call #3 (parent=agent_invoke, final answer)
-        → output: "ответ пользователю"
+```text
+agent_invoke (корень)
+├── call_model
+├── execute_tool
+│   └── http_request
+└── call_model
 ```
 
-**Зачем нужна иерархия:**
+Иерархия помогает найти медленный шаг, повторные вызовы и связанные ошибки. Стоимость вызовов модели можно агрегировать по трейсу, но она не появляется у корневого спана автоматически и требует данных о потреблении и тарифе; нельзя без разбора суммировать уже агрегированные значения. Длительность корня также не равна сумме длительностей детей при параллельном выполнении.
 
-1. **Свёртка стоимости.** Стоимость `agent_invoke` = сумма стоимостей всех вложенных span'ов — её не нужно считать отдельно, она «всплывает» из детей.
-2. **Разбор latency.** Сразу видно, где затык: модель, tool или retrieval.
-3. **Отладка циклов.** Если агент зациклился, в дереве будут десятки child-вызовов модели — это видно глазом.
-4. **Воспроизведение.** По сохранённому дереву можно восстановить все шаги для разбора инцидента.
-
-**Span links** (между разными trace) нужны для асинхронных границ. Если агент A зовёт агента B через очередь, span B ссылается на span A через `links`, а не через `parent` — так сохраняется причинно-следственная связь, но без ложной вложенности (B выполняется в своём trace, а не «внутри» A).
+Асинхронная очередь сама по себе не требует разрывать трейс. При передаче контекста потребитель может создать дочерний спан; для пакетной обработки или связи нескольких причинных контекстов применяют span links. Выбор зависит от семантики операции и инструментирования. Основание: [OpenTelemetry, Tracing API](https://opentelemetry.io/docs/specs/otel/trace/api/), [Context propagation](https://opentelemetry.io/docs/concepts/context-propagation/), [Messaging spans](https://opentelemetry.io/docs/specs/semconv/messaging/messaging-spans/).
 
 ---
 
-## Q5. Какие атрибуты обязательны для LLM-span? (!)
+## Q5. Какие атрибуты обязательны для span вызова модели по OTel GenAI?
 
-Атрибуты делятся на два слоя: **метаданные запроса/ответа** (что попросили, что получили, сколько токенов) кладут в атрибуты span'а; **сам текст** prompt/completion — в span events, потому что он большой и часто содержит PII. Разделение даёт аналитику по токенам и стоимости без раздувания каждого span'а текстом.
+Для **inference span** спецификация OTel GenAI помечает как `Required` два атрибута: `gen_ai.operation.name` (например, `chat`) и `gen_ai.provider.name` (например, `openai`). `gen_ai.request.model` требуется **при доступности** имени модели. Для ошибки, идентификатора диалога и некоторых параметров запроса действуют собственные условия; остальные поля могут иметь уровень `Recommended` или `Opt-In`. Поэтому «полезно для анализа» не означает «обязательно для каждого вызова».
 
-**Минимальный набор** (OTel GenAI conventions):
+| Атрибут | Уровень для inference span | Что описывает |
+| --- | --- | --- |
+| `gen_ai.operation.name` | Required | Операцию, например `chat` |
+| `gen_ai.provider.name` | Required | Провайдера, известного инструментации |
+| `gen_ai.request.model` | Conditionally Required, если доступна | Запрошенную модель |
+| `gen_ai.response.model` | Recommended | Модель, фактически давшую ответ |
+| `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens` | Recommended | Потребление токенов, если оно известно |
+| `gen_ai.request.temperature`, `gen_ai.response.finish_reasons` | Recommended | Параметр генерации и причину завершения |
 
-| Атрибут                          | Пример          | Зачем                              |
-| -------------------------------- | --------------- | ---------------------------------- |
-| `gen_ai.system`                  | `openai`        | Какой провайдер                    |
-| `gen_ai.operation.name`          | `chat`          | Тип операции (chat/embeddings)     |
-| `gen_ai.request.model`           | `gpt-4o`        | Что попросили                      |
-| `gen_ai.response.model`          | `gpt-4o-2024-08-06` | Что реально ответило           |
-| `gen_ai.request.temperature`     | `0.7`           | Параметры запроса                  |
-| `gen_ai.request.max_tokens`      | `1000`          |                                    |
-| `gen_ai.usage.input_tokens`      | `1523`          | Cost calc                          |
-| `gen_ai.usage.output_tokens`     | `412`           |                                    |
-| `gen_ai.response.finish_reasons` | `["stop"]`      | `stop` / `length` / `tool_calls`   |
-| `gen_ai.response.id`             | `chatcmpl-xxx`  | Для корреляции с провайдером       |
+Содержимое инструкций, входных и выходных сообщений (`gen_ai.system_instructions`, `gen_ai.input.messages`, `gen_ai.output.messages`) имеет уровень **Opt-In**: оно бывает объёмным и чувствительным. По умолчанию инструментация не должна его захватывать. При явном включении содержимое можно записать в атрибуты span, в события/логи или вынести во внешнее хранилище со ссылкой — с учётом возможностей SDK и правил доступа к данным.
 
-**Опциональные, но полезные:**
-
-- `gen_ai.conversation.id` — для сессий
-- `gen_ai.prompt` — full prompt (как span event, не attribute — большой)
-- `gen_ai.completion` — ответ модели
-- `cost_usd` — посчитанная стоимость
-- `eval.score` — асинхронный eval result
+Основание: [OpenTelemetry GenAI inference spans и уровни обязательности](https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-spans.md#inference), [правила захвата содержимого](https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-spans.md#capturing-instructions-inputs-and-outputs).
 
 ---
 
-## Q6. Что такое OpenTelemetry GenAI Semantic Conventions? Зачем они? (!)
+## Q6. Что задают OTel GenAI Semantic Conventions и гарантируют ли они поддержку полей в любом хранилище?
 
-**OpenTelemetry GenAI Semantic Conventions** — это утверждённый CNCF **стандартный словарь атрибутов** для LLM-трейсов (статус прошёл путь Experimental → Stable в 2025). Проще говоря, это договорённость, как именовать поля трейса, чтобы все инструменты понимали их одинаково.
+**OpenTelemetry GenAI Semantic Conventions** описывают имена, смысл и уровни обязательности телеметрии генеративного ИИ: например, `gen_ai.operation.name`, `gen_ai.provider.name`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`. Общие названия помогают инструментировать операции согласованно. На момент проверки спецификация GenAI spans имеет статус **Development**, поэтому при обновлении инструментации нужно сверять её версию и выбранный режим семантических конвенций.
 
-**Зачем нужны:** без общего словаря каждый SDK называл бы «модель» по-своему, и трейсы были бы несовместимы между инструментами.
+Конвенции **не собирают и не отправляют** данные сами. Для этого нужны инструментация, SDK и экспорт. Они также не гарантируют, что любое хранилище распознает поля как специальные, построит одинаковые запросы или поддержит все типы значений. При смене хранилища проверяют приём, индексацию и запросы на реальных трейсах. OTLP решает задачу передачи телеметрии, а не задаёт смысл каждого `gen_ai.*` поля.
 
-1. **Независимость от вендора.** Один и тот же код кладёт `gen_ai.request.model` независимо от бэкенда — Datadog, Jaeger, Langfuse, Phoenix понимают это поле одинаково.
-2. **Аналитика поверх любого инструмента.** Запрос `sum(gen_ai.usage.input_tokens) by gen_ai.request.model` работает в любом OTel-совместимом хранилище.
-3. **Защита от смены вендора.** Меняешь backend — трейсы остаются валидными, переписывать инструментацию не нужно.
+Захват текста сообщений зависит от настроек конкретной инструментации. В действующих конвенциях он относится к Opt-In; универсального флага для всех языков, SDK и версий нет.
 
-**Ключевые namespaces:**
-
-```yaml
-gen_ai.system: openai | anthropic | google | cohere | azure | ...
-gen_ai.operation.name: chat | text_completion | embeddings
-gen_ai.request.*: model, temperature, top_p, max_tokens, presence_penalty
-gen_ai.response.*: model, id, finish_reasons
-gen_ai.usage.*: input_tokens, output_tokens
-gen_ai.conversation.id: <session id>
-```
-
-**Span events** хранят содержимое сообщений — отдельно от атрибутов, чтобы текст не раздувал каждый span:
-
-```yaml
-gen_ai.system.message      # system prompt
-gen_ai.user.message        # user input
-gen_ai.assistant.message   # assistant output
-gen_ai.tool.message        # tool call result
-gen_ai.choice              # модельный choice (n>1)
-```
-
-**Захват содержимого можно отключить** флагом `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=false` — это штатный способ не писать в трейсы PII.
+Основание: [спецификация OTel GenAI spans](https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-spans.md), [документация инструментации OpenAI для Python и её режимов](https://opentelemetry-python-contrib.readthedocs.io/en/latest/instrumentation-genai/openai.html).
 
 ---
 
-## Q7. Как использовать OTel GenAI на практике (Python пример)?
+## Q7. Что делает `OpenAIInstrumentor().instrument()` в Python-примере?
 
-На практике есть два пути. **Автоинструментация** оборачивает SDK провайдера и сама создаёт span'ы с правильными атрибутами — менять код вызовов не нужно. **Ручные span'ы** нужны там, где автоинструментации нет или хочется добавить свои поля.
+На практике есть два пути. **Автоинструментация** подключается к поддерживаемому SDK провайдера и создаёт span для его вызовов. **Ручная инструментация** нужна для неподдерживаемого клиента или операций приложения, которые инструментор не видит. В обоих случаях экспорт настраивают отдельно.
 
-Автоинструментация (OpenLLMetry-style) — три шага: настроить OTel pipeline, навесить инструментор на SDK, дальше писать обычный код:
+Пример для [инструментации OpenAI из OpenTelemetry Python Contrib](https://opentelemetry-python-contrib.readthedocs.io/en/latest/instrumentation-genai/openai.html):
 
 ```python
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from openinference.instrumentation.openai import OpenAIInstrumentor
+from opentelemetry.instrumentation.openai_v2 import OpenAIInstrumentor
+from openai import OpenAI
 
 # 1. Настроить OTel pipeline
 provider = TracerProvider()
@@ -256,949 +167,382 @@ provider.add_span_processor(
 )
 trace.set_tracer_provider(provider)
 
-# 2. Авто-инструментировать OpenAI SDK
+# 2. Подключить инструментор к OpenAI SDK
 OpenAIInstrumentor().instrument()
 
-# 3. Обычный код OpenAI — спаны создаются автоматически
-import openai
-client = openai.OpenAI()
-resp = client.chat.completions.create(
-    model="gpt-4o",
-    messages=[{"role": "user", "content": "Hello"}]
+# 3. Вызов клиента остаётся обычным
+client = OpenAI()
+response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Привет"}],
 )
-# Span создан с атрибутами:
-#   gen_ai.system=openai
-#   gen_ai.request.model=gpt-4o
-#   gen_ai.usage.input_tokens=8
-#   gen_ai.usage.output_tokens=12
 ```
 
-Ручное создание span:
+Инструментация создаст span вызова; конкретные атрибуты зависят от версии и полученного ответа. Эта реализация по умолчанию использует конвенции версии 1.30.0 и не захватывает текст сообщений. Для более новых экспериментальных полей предусмотрен режим `OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental`; для содержимого — отдельная настройка этой инструментации. Перед использованием в продакшене проверяют версию, настройки и фактический экспорт.
+
+Альтернативный ручной пример для отдельного запуска без подключённого инструментора:
 
 ```python
 tracer = trace.get_tracer(__name__)
 
-with tracer.start_as_current_span("custom_llm_call") as span:
-    span.set_attribute("gen_ai.system", "anthropic")
-    span.set_attribute("gen_ai.request.model", "claude-3-7-sonnet")
-    span.set_attribute("gen_ai.request.temperature", 0.7)
-
-    response = anthropic_client.messages.create(...)
-
-    span.set_attribute("gen_ai.usage.input_tokens", response.usage.input_tokens)
-    span.set_attribute("gen_ai.usage.output_tokens", response.usage.output_tokens)
-    span.add_event("gen_ai.completion", {"content": response.content[0].text})
+with tracer.start_as_current_span("chat gpt-4o-mini", kind=trace.SpanKind.CLIENT) as span:
+    span.set_attribute("gen_ai.operation.name", "chat")
+    span.set_attribute("gen_ai.provider.name", "openai")
+    span.set_attribute("gen_ai.request.model", "gpt-4o-mini")
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": "Привет"}],
+    )
+    if response.usage is not None:
+        span.set_attribute("gen_ai.usage.input_tokens", response.usage.prompt_tokens)
+        span.set_attribute("gen_ai.usage.output_tokens", response.usage.completion_tokens)
 ```
+
+Пакет OpenInference тоже использует OpenTelemetry для трейсов, но следует [собственным семантическим конвенциям](https://github.com/Arize-ai/openinference/blob/main/spec/semantic_conventions.md), например `openinference.span.kind` и `llm.*`. Его инструментор нельзя без проверки выдавать за источник атрибутов OTel GenAI `gen_ai.*`.
 
 ---
 
-## Q8. Что такое LangSmith? Когда выбирать? (!)
+## Q8. При включённой отправке трейсов какая связка нужна для трассировки Python-функции вне LangChain и оценок в LangSmith?
 
-**LangSmith** — observability- и eval-платформа от создателей LangChain. Главная её фишка — бесшовная связка с экосистемой LangChain: если вы уже на этом стеке, трейсинг и оценки включаются почти без кода.
+**LangSmith** — платформа для трейсинга и оценки AI-приложений от команды LangChain. Интеграция с LangChain и LangGraph — один из простых путей подключения, но платформа работает и с приложениями на другом стеке через SDK, обёртки клиентов и `@traceable`.
 
 **Сильные стороны:**
 
-- **Автоинструментация LangChain/LangGraph** — нулевая настройка, если уже на этом стеке.
+- **Интеграция с LangChain/LangGraph** — трейсинг можно включить переменной окружения после настройки аккаунта и ключа.
 - **Datasets и experiments** — встроенное версионируемое хранилище тестовых кейсов.
 - **Оценки как код** — готовые evaluator'ы (correctness, conciseness) плюс свой LLM-judge.
 - **Prompts hub** — версии промптов с diff и откатом.
 - **Annotation queue** — UI для разметки человеком.
 - **A/B-тестирование** — сравнение цепочек на одном датасете.
 
-**Декоратор `@traceable`** работает и вне LangChain — навешиваешь на любую функцию, и её вызовы попадают в трейс:
+Для сравнения запусков на датасете или оценки production-трейсов задают критерий и запускают соответствующую оценку; наличие платформы само по себе не оценивает каждый ответ.
+
+**Декоратор `@traceable`** работает и вне LangChain. Для отправки трейсов настраивают `LANGSMITH_API_KEY` и включают `LANGSMITH_TRACING=true`; ключ OpenAI нужен отдельно для вызова модели. После этого декоратор записывает вызов функции в трейс LangSmith. Оценки результатов настраивают отдельно в LangSmith:
 
 ```python
 from langsmith import traceable
+from openai import OpenAI
+
+client = OpenAI()
 
 @traceable(run_type="llm", name="answer_question")
 def answer(question: str) -> str:
-    response = openai.chat.completions.create(
-        model="gpt-4o",
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
         messages=[{"role": "user", "content": question}]
     )
-    return response.choices[0].message.content
+    return response.choices[0].message.content or ""
 ```
 
 **Минусы:**
 
-- **Привязка к вендору** — лучше всего раскрывается в экосистеме LangChain (хотя SDK есть и для другого стека).
-- **По умолчанию только облако** — self-host существует, но он платный, в enterprise-тарифе.
-- **Цена** — Plus tier для команд начинается от $39/seat.
+- **Зависимость от платформы** — данные, оценки и доступ управляются через LangSmith; условия размещения и выгрузки нужно проверять при выборе.
+- **Размещение и стоимость** — Developer и Plus используют облако; варианты self-hosted и hybrid предлагаются в Enterprise. Тарифы и квоты меняются, поэтому их сверяют перед внедрением.
 
-**Когда выбирать:** уже сидите на LangChain/LangGraph, хотите eval и observability в одном продукте и готовы платить за SaaS.
+**Когда выбирать:** нужен общий рабочий процесс для трейсов, наборов примеров и оценок, а условия размещения и стоимость подходят команде. Уже используемый LangChain/LangGraph упрощает подключение, но не является обязательным условием.
+
+Основание: [LangSmith tracing quickstart](https://docs.langchain.com/langsmith/observability-quickstart), [тарифы и варианты размещения](https://www.langchain.com/pricing).
 
 ---
 
 ## Q9. Что такое Langfuse? Чем отличается от LangSmith? (!)
 
-**Langfuse** — open-source LLM observability под лицензией MIT, который можно поднять у себя (Docker / k8s). Его ключевое отличие от LangSmith: open-source и self-host из коробки плюс generic SDK, не привязанный к одному фреймворку.
+**Langfuse** — платформа для трассировки LLM-приложений, оценок, наборов данных и управления промптами. Основная часть исходного кода открыта под MIT; каталог `ee` содержит функции с отдельной лицензией. Сервер можно развернуть у себя или использовать облако. Python SDK v4 основан на OpenTelemetry и работает с разными фреймворками.
 
-**Модель данных** (как Langfuse раскладывает запрос на сущности):
+В отличие от LangSmith, для собственного развёртывания Langfuse есть открытая версия. Это не значит, что LangSmith работает только с LangChain: его `@traceable` применим и к обычным Python-функциям. Оба продукта поддерживают оценки и управление промптами; сравнивать их по якобы отсутствующей функции или неизменной цене тарифа нельзя.
 
-- **Traces** — корневые запросы с `user_id`, `session_id`, `tags`.
-- **Observations** — аналог span'а (типы `LLM`, `GENERATION`, `SPAN`, `EVENT`).
-- **Sessions** — группировка трейсов одной беседы.
-- **Users** — группировка по конечному пользователю.
-- **Prompts** — версионируемые шаблоны с метками (`production`, `staging`).
-- **Scores** — результаты оценок (числовые, категориальные, boolean).
-
-**Пример SDK:**
+**Пример для Python SDK v4:**
 
 ```python
-from langfuse import Langfuse
-from langfuse.decorators import observe, langfuse_context
+from langfuse import get_client, observe
 
-langfuse = Langfuse(
-    public_key="pk-lf-...",
-    secret_key="sk-lf-...",
-    host="https://cloud.langfuse.com"
-)
+# LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY и LANGFUSE_BASE_URL заданы в окружении.
+langfuse = get_client()
 
 @observe(as_type="generation")
 def call_llm(question: str) -> str:
-    response = openai.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": question}]
+    answer = model_client.generate(question)
+    langfuse.update_current_generation(
+        model="example-model", input=question, output=answer
     )
-    langfuse_context.update_current_observation(
-        model="gpt-4o",
-        input=question,
-        output=response.choices[0].message.content,
-        usage={"input": response.usage.prompt_tokens,
-               "output": response.usage.completion_tokens}
-    )
-    return response.choices[0].message.content
+    return answer
 ```
 
-**Чем отличается от LangSmith:**
+Здесь `model_client` — клиент модели приложения, а не часть Langfuse. Для self-host адрес задают через `LANGFUSE_BASE_URL`; пример не отправляет запрос к модели сам по себе.
 
-| Критерий           | LangSmith              | Langfuse                       |
-| ------------------ | ---------------------- | ------------------------------ |
-| Open-source        | Нет                    | **Да (MIT)**                   |
-| Self-host          | Enterprise only        | **Free, Docker compose**       |
-| Vendor-lock        | LangChain-centric      | **Generic SDK**                |
-| Prompt management  | Да (Hub)               | Да (с labels)                  |
-| Eval               | Сильнее, code-first    | Есть, но проще                 |
-| Cost               | $39+/seat              | Free self-host / $29+ cloud    |
-| EU-hosting / GDPR  | Опционально            | EU region из коробки           |
-
-**Когда выбирать Langfuse:** нужен контроль над данными (self-host), бюджет ограничен или вы не на LangChain.
+**Когда выбирать:** если нужен контролируемый собственный сервер и инструментирование без привязки к одному LLM-фреймворку. Перед внедрением проверяют версию SDK, лицензию нужной функции и политику хранения содержимого трейсов.
 
 ---
 
-## Q10. Что такое Arize Phoenix? Чем уникален?
+## Q10. Что такое Arize Phoenix и как он помогает оценивать LLM-приложение?
 
-**Arize Phoenix** — open-source LLM observability от Arize AI с упором на **глубину оценок и кластерный анализ ошибок**. Если LangSmith — про экосистему, а Langfuse — про self-host, то Phoenix — про то, чтобы находить *целые сегменты* плохих ответов, а не разбирать их по одному.
+**Arize Phoenix** — открытая платформа для трассировки, поиска ошибок, оценок и экспериментов с LLM-приложениями. Phoenix принимает трейсы по OTLP; инструменты OpenInference помогают создавать спаны с данными об LLM, retrieval и инструментах. OpenInference и OTel GenAI — разные наборы семантических соглашений, хотя оба используют OpenTelemetry.
 
-**Чем выделяется:**
+В Phoenix можно изучать отдельные шаги трейса, добавлять оценки, собирать наборы примеров из наблюдений и сравнивать варианты приложения в экспериментах. Есть клиентские и серверные оценки, включая детерминированные правила и LLM-as-a-judge. Результат оценки связан с данными, на которых она запущена; полезность метрики зависит от выбранного критерия и качества набора данных.
 
-- **Нативный OpenTelemetry.** Использует OpenInference (расширение OTel GenAI), поэтому встраивается в уже существующий OTel-pipeline без отдельного агента.
-- **Кластеризация эмбеддингов.** Группирует ответы в embedding-пространстве и подсвечивает «плохие» кластеры — например, видно, что все запросы про API-документацию стабильно получают низкий score, и проблема не в отдельных ответах, а в целом классе.
-- **RAG-дашборды.** Context relevance, retrieval precision/recall — первоклассные метрики, а не самописные.
-- **Локальный запуск.** `phoenix.launch_app()` поднимает UI прямо в notebook — внешний backend не нужен, удобно для исследования.
-- **Готовые evaluator'ы** — `HallucinationEvaluator`, `QAEvaluator`, `RelevanceEvaluator`.
+**Локальный старт:** `uvx arize-phoenix serve` запускает сервер Phoenix. Инструментированное приложение отправляет ему трейсы по OTLP; пакет `arize-phoenix-otel` предоставляет `register(project_name="my-llm-app")` для настройки OpenTelemetry. Пакеты клиента и оценок устанавливают отдельно, когда они нужны.
 
-**Пример:**
-
-```python
-import phoenix as px
-from phoenix.otel import register
-
-tracer_provider = register(project_name="my-llm-app")
-
-# Запустить UI локально (или Phoenix Cloud)
-session = px.launch_app()
-# Открой http://localhost:6006
-
-# Eval после сбора трейсов
-from phoenix.evals import HallucinationEvaluator, run_evals
-df = px.Client().get_spans_dataframe()
-results = run_evals(df, [HallucinationEvaluator(eval_model="gpt-4o")])
-```
-
-**Когда выбирать Phoenix:** команда серьёзно занимается оценками качества, нужна кластеризация ошибок, инфраструктура уже на OTel.
+**Когда выбирать:** если команде нужны локальные или собственные трассы вместе с воспроизводимыми оценками и экспериментами. Кластеризация эмбеддингов может быть отдельным способом анализа данных, но не является обязательным свойством каждого трейса или уникальным механизмом Phoenix.
 
 ---
 
-## Q11. Что такое Helicone? Когда стоит выбирать?
+## Q11. Как Helicone AI Gateway подключается к OpenAI-совместимому клиенту?
 
-**Helicone** — observability через прокси. Идея в том, что вместо правки кода вы перенаправляете запросы к модели через прокси Helicone (меняете `base_url`), и он трейсит каждый вызов «по пути». Это самый дешёвый по усилиям способ подключить observability, но ценой лишнего сетевого хопа.
+**Helicone** предоставляет AI Gateway с OpenAI-совместимым API и наблюдением за проходящими через него запросами. Для совместимого клиента можно изменить адрес API и ключ; запросы начнут идти через шлюз, а не напрямую к провайдеру. Это изменение конфигурации клиента, а не автоматическое наблюдение за всеми вызовами приложения.
 
 ```python
-import openai
+import os
+from openai import OpenAI
 
-client = openai.OpenAI(
-    api_key="sk-...",
-    base_url="https://oai.helicone.ai/v1",  # вместо api.openai.com
-    default_headers={"Helicone-Auth": f"Bearer {HELICONE_KEY}"}
+client = OpenAI(
+    base_url="https://ai-gateway.helicone.ai",
+    api_key=os.environ["HELICONE_API_KEY"],
 )
-# Всё, дальше обычный SDK — Helicone видит каждый запрос
+response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Привет"}],
+)
 ```
 
-**Плюсы:**
+Это схема из текущего quickstart AI Gateway. При использовании собственного ключа провайдера или прежнего провайдерского прокси настройка отличается; её следует брать из документации выбранного режима. Шлюз добавляет компонент в путь вызова модели, поэтому при выборе проверяют требования к доступности, задержке и передаче данных. Численное значение задержки зависит от сети и маршрута.
 
-- **Нулевая правка кода** — поменял URL и заголовок, и всё.
-- **Работает с любым LLM-SDK**, совместимым с OpenAI API.
-- **Кэш из коробки** — повторяющиеся запросы возвращаются мгновенно и бесплатно.
-- **Rate limiting на пользователя** прямо на уровне прокси.
-
-**Минусы:**
-
-- **Лишний сетевой хоп** — добавляет +30-80 мс латентности.
-- **Единая точка отказа** — если Helicone лёг, вместе с ним лёг и ваш доступ к модели.
-- **Меньше глубины** — полноценного eval/dataset-процесса нет.
-
-**Когда выбирать:** нужен быстрый старт без рефакторинга, встроенный кэш и rate limit, и вы готовы заплатить за это лишним хопом.
+**Когда выбирать:** если приложение может направлять совместимые вызовы через шлюз и команде нужны централизованные запросы и наблюдение за ними. Для глубокого трассирования внутренних шагов агента одного прокси недостаточно: требуются дополнительные спаны или интеграция.
 
 ---
 
-## Q12. Сравни популярные LLM observability frameworks. (!)
+## Q12. Как выбрать инструмент для OTLP-трейсов, собственного размещения и экспериментов? (!)
 
-Главные оси выбора — open-source vs проприетарный, способ подключения (SDK / OTel / прокси) и баланс между глубиной оценок и простотой старта. Таблица ниже расставляет инструменты по этим осям.
+Сравнивать инструменты полезно по нескольким независимым осям: размещение и лицензия, способ подключения, уровень детализации трейсов, процесс оценок и операционные требования. Наличие открытого кода само по себе не определяет глубину оценок или способ подключения.
 
-| Tool          | Open-source | Self-host    | Approach          | Сильная сторона                | Слабость                  |
-| ------------- | ----------- | ------------ | ----------------- | ------------------------------ | ------------------------- |
-| **LangSmith** | Нет         | Enterprise   | SDK / @traceable  | LangChain ecosystem, evals     | Vendor-lock, цена         |
-| **Langfuse**  | Да (MIT)    | Free Docker  | Generic SDK       | Self-host, prompt mgmt         | Глубина оценок чуть слабее |
-| **Phoenix**   | Да          | Free         | OTel-native       | Eval, cluster analysis         | UX чуть инженерный        |
-| **Helicone**  | Частично    | Да           | Proxy             | Zero code change, cache        | Extra hop, мало eval      |
-| **OpenLLMetry** | Да (Apache) | Free         | OTel SDK          | Vendor-neutral, экспорт куда угодно | Не самостоятельный backend |
-| **W&B Prompts** | Нет        | Cloud        | SDK               | Combined с ML training         | Дорого, тяжёлый           |
-| **TruLens**   | Да          | Free         | SDK + decorators  | RAG-eval first                 | Меньше production-features|
-| **Datadog LLM** | Нет        | Cloud        | SDK + APM         | Уже в Datadog → 1 UI           | Дорого, vendor-lock       |
+| Инструмент | Подключение | Размещение и характер работы |
+| --- | --- | --- |
+| **LangSmith** | SDK, `@traceable`, интеграции | Облачный сервис и варианты собственного размещения по условиям продукта; трассировка и оценки. |
+| **Langfuse** | Python SDK на OpenTelemetry, интеграции | Облако или собственный сервер; открытая основная часть, трейсы, промпты и оценки. |
+| **Phoenix** | OTLP и инструменты OpenInference | Локально, собственный сервер или облако; трейсы, наборы данных и эксперименты. |
+| **Helicone** | OpenAI-совместимый AI Gateway | Шлюз стоит на пути запросов к модели и собирает сведения об этих вызовах. |
+| **OpenLLMetry** | Инструментация OpenTelemetry | Библиотека для экспорта телеметрии; визуализацию и хранение обеспечивает выбранный приёмник. |
 
-**Правило выбора:**
+**Пример требования:** приложение уже создаёт спаны и отправляет их по OTLP; данные нужно хранить на своём сервере, а версии приложения сравнивать на одном наборе примеров. Значит, выбранный инструмент должен поддерживать все три условия: собственное размещение, приём этих трейсов и эксперименты на наборе. Один только прокси вызовов модели не принимает существующие спаны приложения; облачный регион не заменяет свой сервер; ручной просмотр отдельных ответов не заменяет воспроизводимый эксперимент.
 
-- **LangChain-стек + бюджет есть** → LangSmith.
-- **Контроль данных / GDPR / self-host** → Langfuse.
-- **Серьёзный eval + кластеризация** → Phoenix.
-- **Минимум усилий, нет SDK-доступа** → Helicone.
-- **Уже OTel-инфра** → OpenLLMetry → любой OTel-backend (Tempo, Jaeger, Datadog).
+**Правило выбора:** сначала определить, нужны ли внутренние шаги агента или достаточно вызовов модели, где могут храниться данные и как будут проводиться оценки. Затем проверить интеграцию с текущим стеком, доступность, стоимость эксплуатации и условия конкретного развёртывания. Шлюз, SDK и OTLP решают разные задачи подключения; наличие одного не исключает другие.
 
 ---
 
-## Q13. Какие метрики обязательно собирать с LLM-системы? (!)
+## Q13. Какие группы метрик нужны для LLM-системы? (!)
 
-Метрики LLM-системы группируются по шести измерениям: токены/стоимость, задержки, качество, надёжность, эффективность, бизнес. Ключевая мысль — классических latency/error rate мало: без метрик качества и стоимости вы слепы к двум самым дорогим проблемам (галлюцинации и сжигание бюджета).
+Для LLM-сервиса сохраняют обычные сигналы **доступности, ошибок и задержки**, а к ним добавляют расход модели и проверку качества ответов. HTTP 200 не доказывает, что ответ полезен; низкая задержка не показывает стоимость вызова. Конкретный набор зависит от пользовательской задачи и SLO.
 
-**Токены и стоимость:**
+- **Использование и расходы:** число входных и выходных токенов по модели и операции, оценочная стоимость по действующему тарифу. Кэшированные токены и другие категории тарифа учитывают отдельно, если их выделяет провайдер. Агрегаты по конкретному пользователю не стоит бездумно делать метками метрик: высокая кардинальность и приватность требуют отдельного решения.
+- **Время и надёжность:** длительность вызова и процентили распределения, таймауты, ошибки, rate limit, повторы и переключения на резервную модель. Для потоковой выдачи полезно время до первого токена (TTFT). Среднее время само по себе скрывает медленный хвост.
+- **Качество:** результаты оценки по определённому критерию задачи, обратная связь пользователей и доля проблемных ответов среди *оценённых* примеров. Эти показатели зависят от выборки и качества evaluator; они не возникают автоматически из трейса и не обязаны считаться синхронно для каждого запроса.
+- **Продуктовый результат:** доля завершённых задач или эскалаций, если такое событие определено продуктом.
 
-- `input_tokens_total`, `output_tokens_total` — в разрезе модели, пользователя, эндпоинта.
-- `cost_usd_total` = `input_tokens × $price_in` + `output_tokens × $price_out`.
-- `cost_per_user_hourly`, `cost_per_endpoint_daily` — основа для алертов.
-
-**Задержки:**
-
-- **TTFT** (time-to-first-token) — критично для streaming UX: пользователь видит первое слово.
-- **Total latency** — время полного ответа.
-- Перцентили **p50 / p95 / p99** — именно перцентили, среднее (mean) скрывает хвост и врёт.
-
-**Качество:**
-
-- `eval_score` (faithfulness, relevancy) — посчитанные асинхронно.
-- `user_feedback_thumbs` — `up`/`down`/null.
-- `hallucination_rate` — доля ответов с галлюцинациями (по результатам eval).
-
-**Надёжность:**
-
-- `error_rate` — суммарно и в разбивке 4xx / 5xx / timeout / rate-limit.
-- `retry_count` — сколько раз повторяли запрос.
-- `fallback_triggered_count` — сколько раз переключались на резервную модель.
-
-**Эффективность:**
-
-- `cache_hit_rate` — доля запросов из кэша (semantic / exact).
-- `prompt_token_overhead` — отношение system prompt к user input; если 80% контекста — это служебный system prompt, это плохо.
-- `tool_call_avg` — среднее число tool calls на запрос (для агентов).
-
-**Бизнес:**
-
-- `tasks_completed_rate`, `user_retention`, `escalation_to_human` — если за системой стоит пользовательский продукт.
+Отдельные метрики эффективности, например попадание в кэш и число вызовов инструментов на запрос, добавляют при наличии соответствующих механизмов. Не следует выдавать произвольные имена метрик или единые пороги за обязательный стандарт всех LLM-приложений.
 
 ---
 
-## Q14. Как считать стоимость LLM-вызова и отслеживать spike?
+## Q14. Как считать стоимость с кэшированными токенами и часовой расход?
 
-Стоимость вызова линейна по токенам: умножаем входные и выходные токены на цену за миллион для конкретной модели. Главное в проде — не сама формула, а отслеживание всплесков (spike) в реальном времени, потому что зацикленный агент или забытый `max_tokens` сжигают бюджет за минуты, а счёт от провайдера придёт только в конце месяца.
+Для простого текстового тарифа оценка стоимости вызова равна сумме стоимости входных и выходных токенов:
 
-**Формула:**
-
-```
-cost_usd = (input_tokens / 1_000_000) × price_per_million_input
-        + (output_tokens / 1_000_000) × price_per_million_output
+```text
+estimated_cost = input_tokens / 1_000_000 × input_price_per_million
+               + output_tokens / 1_000_000 × output_price_per_million
 ```
 
-Цены либо зашиты в библиотеку, либо подтягиваются из конфига (чтобы менять без релиза):
+Если отчёт показывает 1000 входных токенов, **включая** 200 кэшированных, обычный вход равен 800. При 100 выходных токенах и ставках `in`, `cache`, `out` за миллион оценка равна `(800 × in + 200 × cache + 100 × out) / 1_000_000` (в вариантах записи `1e6` — миллион). Кэшированную часть нельзя добавить поверх всех 1000 ещё раз. Для часового прироста монотонного счётчика оценочных расходов подходит `increase(cost_total[1h])`.
 
-```python
-PRICING = {
-    "gpt-4o":            {"in": 2.50, "out": 10.00},
-    "gpt-4o-mini":       {"in": 0.15, "out": 0.60},
-    "claude-3-7-sonnet": {"in": 3.00, "out": 15.00},
-    "claude-3-5-haiku":  {"in": 0.80, "out": 4.00},
-    "deepseek-chat":     {"in": 0.27, "out": 1.10},
-}
+Цену выбирают по **модели, провайдеру и действующему тарифу**. Это приближение: кэшированный вход, reasoning tokens, мультимодальность, batch-скидки и другие категории могут оплачиваться иначе. Нужные категории берут из ответа провайдера и его актуального прайс-листа. Для сверки финансового итога используют биллинг провайдера, а локальная оценка помогает реагировать до его окончательного расчёта.
 
-def calc_cost(model: str, in_tok: int, out_tok: int) -> float:
-    p = PRICING[model]
-    return (in_tok / 1e6) * p["in"] + (out_tok / 1e6) * p["out"]
-```
+Для сигнала о всплеске приложение может накапливать **монотонный счётчик оценочных затрат**. Тогда `increase(llm_estimated_cost_usd_total[1h])` показывает прирост за час; его сравнивают с бюджетным лимитом и исторической базой с учётом обычного объёма трафика. Если хранится расход за отдельный запрос, сначала определяют способ его агрегации: `rate()` применяется к счётчикам, а не к произвольному gauge. Порог и окно выбирают по бюджету и рабочему ритму сервиса, проверяя ложные срабатывания на малой базе.
 
-**Алерт на всплеск** (Prometheus / VictoriaMetrics) — сравниваем среднечасовую стоимость с недельной нормой:
-
-```promql
-# Среднечасовая стоимость за последний час > 3× ср. за неделю
-( sum(rate(llm_cost_usd[1h])) )
-/
-( sum(rate(llm_cost_usd[7d])) )
-> 3
-```
-
-**Что обычно вызывает всплеск:**
-
-1. Зацикленный агент — 10 000 вызовов модели за минуту.
-2. Кто-то выкатил prompt с `max_tokens=16000`.
-3. Бот-абуз публичного API.
-4. Случайный переход с дешёвой `gpt-4o-mini` на дорогую `gpt-4o`.
-5. Перестройка RAG-индекса с эмбеддингами без батчинга.
+Причины всплеска разбирают по модели, операции и характеру трафика: рост запросов, изменение промпта, длинная выдача, повторные вызовы или цикл агента. Само число запросов не заменяет подсчёт токенов: одинаковое число вызовов может стоить по-разному.
 
 ---
 
-## Q15. Какие алерты обязательно настроить для LLM в проде? (!)
+## Q15. Как считать долю низких оценок для алерта при выборочном eval? (!)
 
-Алерты раскладывают по трём уровням приоритета: критические (бьют по деньгам и доступности), деградация качества (ответы стали хуже, но сервис «жив») и операционные (эффективность поплыла). Главная мысль ответа — для LLM мало алертить на 5xx, потому что «200 OK с галлюцинацией» хуже падения.
+Алерты строят из **цели сервиса и риска**. Технические ошибки и задержка важны, но HTTP 200 может содержать плохой ответ, а работающий сервис может быстро превысить бюджет. Поэтому отдельно рассматривают доступность, оценочный расход, качество и признаки неэффективного цикла.
 
-**Уровень 1 — критические:**
+- **Доступность и задержка:** доля сбоев, таймаутов и rate limit, перцентили длительности и, для потоковой выдачи, время до первого токена. Порог привязывают к SLO и объёму запросов.
+- **Расход:** резкий рост оценочной стоимости относительно бюджета или нормальной нагрузки. Сигнал проверяют по модели и операции, чтобы отличить перерасход от ожидаемого увеличения трафика.
+- **Качество:** снижение выбранной оценки, рост отказов или отрицательной обратной связи на репрезентативной выборке. Если evaluator проверяет только часть ответов, долю низких оценок считают как число низких оценок / число **оценённых** ответов. Условие минимального объёма применяют к тому же знаменателю; число всех HTTP-запросов не делает малую оценочную выборку надёжной. Оценки могут приходить позже и ошибаться; у алерта нужны достаточный объём данных и проверяемый критерий.
+- **Операционные симптомы:** частые fallback, повторы, падение попадания в кэш и необычно много вызовов инструментов, если эти механизмы есть в приложении.
 
-1. **Всплеск стоимости** — `hourly_cost > 3× weekly_avg` → SMS дежурному.
-2. **Latency p99** — `p99 > 30s` или `p99 > 2× baseline`.
-3. **Error rate** — `5xx > 5%` за 5 минут.
-4. **Упёрлись в rate limit** — `429 > N` → сигнал расширить квоту или включить очередь.
-5. **Просадка eval-оценки** — `avg_faithfulness < threshold` за 1 час → вероятная регрессия промпта.
-
-**Уровень 2 — деградация качества:**
-
-6. **Всплеск галлюцинаций** — `hallucination_rate > baseline + 3σ`.
-7. **Доля дизлайков** — `negative_feedback / total > 10%`.
-8. **Пустые ответы и отказы** — модель массово отказывается отвечать.
-
-**Уровень 3 — операционные:**
-
-9. **Падение cache hit** — `cache_hit_rate < 30%` (было 60%) → кэш инвалидируется слишком часто.
-10. **Цикл tool calls** — `tool_calls_per_request > 20` → агент зациклился.
-11. **Деградация провайдера** — `latency by provider` показывает рост у OpenAI → пора включать fallback.
-
-**Главный анти-паттерн:** алертить только на 5xx. Для LLM «200 OK с галлюцинацией» опаснее честной 500-ки, потому что проходит мимо мониторинга.
+Срочность зависит от влияния на пользователя и бюджета ошибки. Не всякое ухудшение оценки должно будить дежурного, а условные числа вроде «p99 > 30 секунд» или «минус 10%» не являются универсальными правилами.
 
 ---
 
-## Q16. Что такое sampling в трейсинге и какую стратегию выбрать?
+## Q16. Чем отличаются head-based и tail-based sampling трейсов?
 
-**Семплирование** — это выбор, какую долю запросов трейсить полностью. На масштабе писать в хранилище 100% трейсов дорого (storage) и тормозит сеть, поэтому пишут выборку. Ключевой выбор — *когда* принимать решение о сохранении: до запроса (head-based, дёшево, но можно пропустить редкую ошибку) или после ответа (tail-based, дороже, зато гарантированно ловит медленные и дорогие запросы).
+**Семплирование** выбирает, какие трейсы сохранить, чтобы управлять объёмом и стоимостью телеметрии. В head-based sampling решение принимают при начале трейса, до того как известен его итог. Это проще и может уменьшить передачу данных, но редкая ошибка может попасть в отброшенный трейс.
 
-**Стратегии:**
+В tail-based sampling решение принимают **после накопления спанов в течение заданного окна**. Политика может опираться на статус ошибки, длительность или атрибут, который уже присутствует в полученных спанах. Для этого процессор буферизирует спаны и должен получить связанные спаны одного trace ID в один экземпляр коллектора. Если upstream уже отбросил спаны head sampling, tail-процессор не восстановит их.
 
-| Стратегия            | Описание                                                | Когда                              |
-| -------------------- | ------------------------------------------------------- | ---------------------------------- |
-| **Always-on (100%)** | Все запросы трейсятся                                   | Low-volume (<100 req/min), dev     |
-| **Head-based**       | Решение принимается до запроса (random N%)              | High-volume, простой uniform       |
-| **Tail-based**       | Решение после ответа (на основе latency / error / cost) | Хочешь все медленные / дорогие      |
-| **Adaptive**         | Динамический процент по нагрузке                         | Spike-prone системы                |
-| **Always-errors**    | Все ошибки + N% успешных                                 | Default рекомендация               |
+Tail sampling не гарантирует сохранение *всех* ошибок и полных трейсов: поздние спаны, длинные операции, переполненный буфер, неверная маршрутизация и конфликты политик могут менять результат. Значение стоимости можно использовать как критерий только если оно известно и записано до момента решения. Конкретный процент обычного трафика, окно ожидания и политику выбирают по нагрузке и проверяют на реальных трассах.
 
-**Рекомендуемый рецепт для прода** — гарантированно ловим всё «интересное», обычный трафик семплируем на 5%:
-
-```python
-# Sampling rules
-SAMPLE_RULES = [
-    ("error", 1.0),              # все ошибки
-    ("slow", 1.0),               # все > p99
-    ("high_cost", 1.0),          # все > $0.50
-    ("eval_flagged", 1.0),       # all low-score
-    ("default", 0.05),           # 5% обычных
-]
-```
-
-**Подводный камень tail-based:** решение принимается после ответа, значит span'ы надо буферизировать до конца trace. Это требует collector'а с tail-sampling-процессором (OTel Collector это умеет) и памяти под буфер.
+Если метрики строятся из спанов, их желательно считать до отбрасывания трейсов или учитывать долю семплирования, иначе показатели вызовов и ошибок будут смещены.
 
 ---
 
 ## Q17. Как защитить PII при трейсинге prompts/completions? (!)
 
-**Проблема:** prompt и ответ часто содержат персональные данные (email, номер карты, паспорт). Без защиты они попадают в span как обычный текст — и любой, у кого есть доступ к obs-платформе, получает доступ к ПД. Это утечка.
+**Риск:** промпт, ответ и метаданные могут содержать персональные данные. Если записать их в трейс, доступ к платформе наблюдаемости открывает доступ и к этим данным. Самый надёжный исходный режим — не собирать содержимое, если для диагностики хватает метаданных. В [конвенциях OpenTelemetry GenAI](https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-spans.md) атрибуты содержимого, например `gen_ai.input.messages` и `gen_ai.output.messages`, относятся к opt-in: инструментирование не должно включать их по умолчанию. Конкретный переключатель зависит от используемой библиотеки.
 
-**Стратегии** (от самой надёжной аналитики до самой жёсткой защиты):
+Когда текст необходим, **удаляйте или маскируйте чувствительные значения до экспорта** в платформу. Например, для диагностики шаблона можно отправить `Заказ для [ИМЯ], почта [EMAIL]` вместо исходного текста. Проверяйте весь путь: вход, выход, атрибуты спана, события, логи, вложения и ошибки. Редактор должен покрывать нужные языки и типы данных; регулярные выражения для известных форматов полезны, но не находят все ПД. Пример поддерживаемого механизма — [хуки маскирования Langfuse](https://langfuse.com/docs/observability/features/masking), которые меняют атрибуты перед экспортом этим клиентом. Нельзя рассчитывать на изменение уже завершённого спана в обычном `BatchSpanProcessor.on_end`.
 
-1. **Редакция на уровне SDK.** Перед отправкой span'а прогоняем `gen_ai.prompt` через redactor, который заменяет ПД на плейсхолдеры.
-
-```python
-from presidio_analyzer import AnalyzerEngine
-from presidio_anonymizer import AnonymizerEngine
-
-analyzer = AnalyzerEngine()
-anonymizer = AnonymizerEngine()
-
-def redact(text: str) -> str:
-    results = analyzer.analyze(text=text, language="en")
-    return anonymizer.anonymize(text=text, analyzer_results=results).text
-
-# Hook в span processor
-class RedactingSpanProcessor(BatchSpanProcessor):
-    def on_end(self, span):
-        for event in span.events:
-            if event.name in ("gen_ai.user.message", "gen_ai.completion"):
-                event.attributes["content"] = redact(event.attributes["content"])
-        super().on_end(span)
-```
-
-2. **Regex-редакция до отправки** (быстрее ML-движка) — для известных форматов: email, номер карты, IP.
-
-3. **Вообще не логировать содержимое** — флаг `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=false`. Тогда в span'е остаются только метаданные, текста нет.
-
-4. **Хеш вместо сырого текста** — `sha256(prompt)` даёт уникальность запроса (можно дедуплицировать, кэшировать) без раскрытия содержимого.
-
-5. **По уровням доступа** — для VIP-пользователей содержимое не сохраняется вовсе, для остальных — частично.
-
-6. **Право на удаление (GDPR).** Система обязана уметь по `user_id` стереть все связанные трейсы. Langfuse и Phoenix поддерживают это штатно.
-
-**Аудит:** регулярно сэмплируем ~1% трейсов и проверяем, не просочились ли в них ПД (для детекции тоже можно использовать LLM-as-judge).
+После минимизации данных задают права доступа, сроки хранения и процедуру поиска и удаления связанных записей с учётом применимых требований. Эти меры дополняют редактирование, но не устраняют уже отправленный сырой текст. Простой `sha256(prompt)` тоже не гарантирует анонимность: предсказуемые или повторяющиеся значения можно сопоставить по словарю, а весь промпт может содержать иные идентификаторы. Проверки сохранённых трейсов на случайные утечки нужны, но не заменяют защиту до записи.
 
 ---
 
-## Q18. Что такое masked prompts и зачем GDPR-режим?
+## Q18. Как masked prompts снижают риск раскрытия ПД в трейсах?
 
-**Masked prompts** (маскированные промпты) — это хранение структуры промпта без значений переменных. Шаблон остаётся, конкретные данные пользователя заменяются на плейсхолдеры:
+**Masked prompts** — промпты, в которых чувствительные значения заменены плейсхолдерами, а полезная для анализа структура сохранена:
 
 ```text
 Original:  "Find restaurants near 123 Main St for John Doe (john@example.com)"
 Masked:    "Find restaurants near {ADDRESS} for {NAME} ({EMAIL})"
 ```
 
-**Зачем это нужно:**
+Так можно сравнивать частоту шаблонов и версии промпта, не сохраняя подставленные значения в этом поле. Маскирование нужно выполнять до отправки трейса; оно не защищает копии исходного текста в других атрибутах, логах или хранилищах. Даже оставшийся шаблон и метаданные иногда позволяют узнать человека, поэтому результат проверяют на реальных примерах.
 
-- Аналитика «какие шаблоны промптов чаще всего использует пользователь» работает без хранения ПД.
-- A/B-тесты сравнивают шаблоны, а не индивидуальные запросы — и не требуют доступа к сырым данным.
-- Соответствие GDPR: даже при утечке наружу попадёт только структура, без персональных данных.
-
-**Что включает GDPR-режим в Langfuse / LangSmith:**
-
-- Хранение данных только в ЕС-регионе (EU data residency).
-- Шифрование at rest и in transit (TLS 1.3, AES-256).
-- DSAR API — экспорт всех данных по `user_id` за срок до 30 дней.
-- API права на удаление — удаление за срок до 30 дней.
-- Соглашения с субподрядчиками (Vercel, AWS и т.д.).
-- Подписанный DPA (Data Processing Agreement).
-
-**Приём для прода:** хранить `user_id` как `sha256(raw_user_id + salt)` и держать **обратное соответствие** (reverse map) в отдельном защищённом хранилище. При запросе на удаление достаточно стереть одну строку в этом хранилище — после этого `user_id` в трейсах больше не связан с реальным человеком (фактическое удаление без переписывания всех трейсов).
+**GDPR не задаёт универсального «режима» Langfuse или LangSmith.** Регион хранения, сроки, права доступа, договоры и обработка запросов субъекта данных определяются конкретной конфигурацией и обязанностями организации. Маскирование снижает риск раскрытия, но само по себе не доказывает соблюдение закона. По [разъяснению EDPB](https://www.edpb.europa.eu/news/edpb-adopts-pseudonymisation-guidelines-and-paves-the-way-to-improve-cooperation-with_en) псевдонимизированные сведения могут оставаться персональными данными, если человека можно установить с помощью дополнительной информации. Удаление таблицы соответствий для хешированного `user_id` само по себе не означает удаление всех связанных трейсов: в них могут оставаться текст, метаданные и иные способы связи с человеком. Для запроса на удаление оценивают и обрабатывают все относящиеся к нему данные и копии по применимым правилам.
 
 ---
 
 ## Q19. Что такое continuous eval в production? (!)
 
-**Continuous eval** — это постоянное измерение качества LLM-системы прямо на живом трафике, а не только во время релиза. Зачем непрерывно: поведение модели дрейфует и после деплоя (провайдер незаметно обновил модель, в трафике появился новый класс запросов), поэтому одной проверки на релизе мало.
+**Continuous eval** — регулярная оценка качества ответов на текущем производственном трафике. Проверка перед релизом на фиксированном наборе остаётся полезной, но не показывает новые типы запросов и изменения поведения уже работающей системы. [LangSmith различает offline и online eval](https://docs.langchain.com/langsmith/evaluation-types): первая помогает сравнивать версии до выпуска, вторая — следить за качеством на реальных запросах.
 
-**Конвейер:**
+Один возможный конвейер: получить трейс → выбрать подходящие запросы → оценить ответ по заранее заданному критерию → связать результат с исходным запросом → агрегировать показатели по времени и сегментам → разобрать отклонения. Оценку вызовом модели обычно выносят из пути ответа пользователю. Долю выборки, фильтры и частоту определяют стоимость, нагрузка и риск; универсальных 1–5% нет. [LangSmith позволяет настраивать фильтры и долю выборки](https://docs.langchain.com/langsmith/online-evaluations-llm-as-judge).
 
-```mermaid
-flowchart LR
-    A[Production request] --> B[Trace collected]
-    B --> C{Sample N%}
-    C -->|Yes| D[Async eval queue]
-    C -->|No| Z[Store trace only]
-    D --> E[LLM-as-judge / RAGAS]
-    E --> F[Eval score attached to trace]
-    F --> G[Metrics aggregation]
-    G --> H[Dashboard / Alert]
-    H --> I{Regression?}
-    I -->|Yes| J[PagerDuty + auto-rollback]
-    I -->|No| K[Store for analysis]
-```
-
-**Ключевые принципы:**
-
-1. **Семплируем 1-5%.** Сам eval — это ещё один вызов модели, он стоит денег, поэтому оценивать весь трафик нерационально.
-2. **Асинхронно.** Eval не должен блокировать ответ пользователю — он идёт в фоне после отдачи ответа.
-3. **Независимая judge-модель.** Оценивает другая модель (Claude, если основная GPT, и наоборот) — это снижает self-bias, когда модель завышает оценку собственным ответам.
-4. **Несколько метрик сразу.** Не одна оценка, а набор: faithfulness + relevancy + harmfulness — одна метрика не ловит все виды деградации.
-5. **Оценка → метрика → алерт.** Каждый score уходит в Prometheus, а оттуда уже срабатывает алерт на просадку.
-
-**Пример** (LangSmith feedback API):
-
-```python
-from langsmith import Client
-client = Client()
-
-# После каждого ответа — асинхронный eval
-@async_task
-def evaluate_response(run_id, question, answer, context):
-    score = llm_judge_faithfulness(question, answer, context)
-    client.create_feedback(
-        run_id=run_id,
-        key="faithfulness",
-        score=score,
-        comment="async LLM-as-judge"
-    )
-```
+Критерии выбирают по задаче: например, соответствие извлечённому контексту для RAG и соблюдение политики для поддержки. Судью проверяют на человеческой разметке и трудных случаях; выбор другой модели сам по себе не устраняет ошибки оценки. Порог тревоги и действие после него задают отдельно. Автоматический откат возможен лишь после надёжной проверки сигнала и явной настройки, а не является частью определения continuous eval.
 
 ---
 
-## Q20. Как интегрировать user feedback в observability?
+## Q20. Как связать отзыв о конкретном ответе с его трейсом для последующего разбора?
 
-Обратную связь пользователя привязывают к конкретному trace через `trace_id` и сохраняют как score — тогда жалобу можно связать с реальным запросом и разобрать. Сигналы бывают трёх типов, от прямых до косвенных.
+Если пользователь оценивает конкретный ответ, сохраните оценку и комментарий с идентификатором соответствующего трейса или запуска. Тогда жалобу можно открыть вместе с контекстом запроса. Для оценки разговора целиком может подходить идентификатор сессии, но он не заменяет связь с отдельным ответом. Идентификатор, возвращаемый клиенту, проверяйте на сервере: нельзя разрешать пользователю записывать отзыв к произвольному чужому трейсу.
 
-**Каналы обратной связи:**
+**Явный сигнал** — лайк, дизлайк, рейтинг, текст жалобы. **Неявный сигнал** — повтор вопроса, копирование, закрытие чата; его смысл неоднозначен и требует проверки. Отложенный бизнес-результат тоже полезен, если можно корректно связать его с ответом. Долю негативных оценок сравнивают с числом полученных оценок и учитывают смещение: откликнувшиеся пользователи могут отличаться от остальных.
 
-1. **Явные** — лайк/дизлайк, оценка по 5 звёздам, текстовый комментарий.
-2. **Неявные** — поведение пользователя: переформулировал вопрос (значит, ответ не понял), скопировал ответ (значит, пригодился), резко закрыл чат (возможна фрустрация).
-3. **Отложенные бизнес-сигналы** — конверсия, retention, доля возвратов (refund rate).
-
-**Привязка к trace:**
+Например, сервер, получив проверенный `trace_id` и дизлайк, записывает score через актуальный [Python API Langfuse](https://langfuse.com/docs/observability/features/user-feedback):
 
 ```python
-# Frontend отправляет feedback с trace_id
-POST /api/feedback
-{
-  "trace_id": "abc123",
-  "rating": "thumbs_down",
-  "comment": "Wrong product link"
-}
+from langfuse import get_client
 
-# Backend пишет в Langfuse / LangSmith
-langfuse.score(
-    trace_id="abc123",
+langfuse = get_client()
+langfuse.create_score(
+    trace_id=trace_id,
     name="user_feedback",
-    value=0,  # 0 для thumbs_down, 1 для up
-    comment="Wrong product link"
+    value=0,
+    data_type="BOOLEAN",
+    comment=comment,
 )
 ```
 
-**Что выводить на дашборд:**
-
-- `thumbs_down_rate by endpoint` — какой эндпоинт чаще всего собирает негатив.
-- `thumbs_down by model` — какая модель получает больше дизлайков (A против B).
-- `correlation(eval_score, user_rating)` — главный индикатор калибровки: если judge ставит 0.9, а пользователь жмёт дизлайк, значит judge откалиброван плохо и ему нельзя доверять.
-
-**Превращение разбора в датасет:**
-
-```text
-Thumbs-down trace → ручной разбор → если eval подтверждает плохой ответ
-→ добавляем в golden-dataset → используем для регресс-тестов будущих версий промпта
-```
+Ручной разбор низких оценок помогает пополнить набор регрессионных случаев. Несогласие оценки судьи с отзывом — повод изучить конкретные примеры, критерии и смещение выборки; один дизлайк не доказывает плохую калибровку судьи.
 
 ---
 
 ## Q21. Как из production-трейсов собрать golden dataset для регрессионного тестирования?
 
-**Golden dataset** — это вручную выверенный набор пар `(вход, ожидаемый ответ / критерий)`, по которому проверяют, не сломала ли новая версия промпта то, что работало раньше. Ценность production-трафика в том, что реальные запросы покрывают случаи, которые разработчик не придумает за столом.
+**Golden dataset** — проверенный набор случаев для воспроизводимой оценки изменений. У элемента есть вход; ожидаемый ответ или критерий проверки зависит от задачи и может отсутствовать у оценки без эталона. Производственные трейсы дают реальные случаи, но сырые ответы модели нельзя автоматически объявлять эталоном.
 
-**Что брать из прода** (приоритет — по тому, что чаще бьёт по пользователю):
+Сначала отбирают разные классы запросов: обычные, неудачные по подтверждённым отзывам, редкие и критичные. Затем человек проверяет причину сбоя, очищает вход от чувствительных данных, при необходимости пишет ожидаемый результат или критерии и сохраняет связь с исходным трейсом. Дизлайк — повод для разбора, а не доказательство неверного ответа; синтетические примеры могут дополнить реальные после такой же проверки.
 
-1. **Частые запросы** — топ-100 самых частых (выделяются кластеризацией эмбеддингов).
-2. **Низкие оценки** — все трейсы с `eval_score < 0.5`, подтверждённые человеком.
-3. **Отмеченные пользователями** — все дизлайки с разметкой.
-4. **Граничные случаи** — самые длинные и самые короткие промпты, нестандартные языки.
-5. **Состязательные** — попытки jailbreak, prompt injection, вопросы вне распределения (OOD).
-
-**Процесс** (Langfuse / LangSmith):
+В актуальном [Langfuse Dataset API](https://langfuse.com/docs/evaluation/experiments/datasets) элемент можно связать с исходным трейсом:
 
 ```python
-# 1. Curate из трейсов
-from langfuse import Langfuse
-lf = Langfuse()
+from langfuse import get_client
 
-traces = lf.fetch_traces(
-    tags=["thumbs_down"],
-    from_timestamp="2026-04-01",
-    limit=500
+langfuse = get_client()
+langfuse.create_dataset_item(
+    dataset_name="support-regression",
+    input={"question": reviewed_question},
+    expected_output={"answer": expert_answer},
+    source_trace_id=source_trace_id,
 )
-
-# 2. Создать dataset
-dataset = lf.create_dataset(name="regression-v2", description="...")
-for trace in traces:
-    lf.create_dataset_item(
-        dataset_name="regression-v2",
-        input=trace.input,
-        expected_output=trace.input_human_corrected,  # курируется человеком
-        metadata={"source_trace": trace.id}
-    )
-
-# 3. Запустить новую версию промпта на dataset
-results = run_experiment(
-    dataset="regression-v2",
-    prompt_version="v3",
-    evaluators=[faithfulness, relevancy]
-)
-
-# 4. Сравнить с baseline v2 — pass/fail regression test
 ```
 
-**Встройка в CI/CD:** при попытке смержить изменение промпта запускается `evaluate` против этого датасета; если средний score упал больше чем на 5% — мерж блокируется.
+Здесь `reviewed_question` и `expert_answer` — уже проверенные значения, а набор создан заранее. Для сравнения двух версий используют одну версию набора и одинаковые критерии оценки, разбирая как общие показатели, так и отдельные случаи с ухудшением. [Langfuse рекомендует фиксировать версии набора и оценщика](https://langfuse.com/docs/evaluation/experiments/compare-experiments).
 
 ---
 
 ## Q22. Как регрессионный пайплайн встроен в CI/CD для промптов?
 
-Идея простая: **промпт — это код**, значит у него должен быть тот же конвейер, что у кода — PR, проверка качества на голден-датасете, постепенная раскатка через canary и авто-откат при просадке. Так правка промпта не уезжает в прод «на глазок».
+Изменение промпта или модели проверяют до продвижения: на PR либо другом событии CI запускает текущую версию приложения на **фиксированной версии набора** и оценивает ответы по тем же критериям, что и согласованный baseline. Сравнивают общий результат и новые провалы в критичных случаях. Порог и правило принятия выбирают заранее для задачи; универсального «минус 5%» нет. При нарушении правила job завершается ошибкой и блокирует соответствующий gate, а отчёт показывает примеры ухудшения.
 
-```mermaid
-flowchart TD
-    A[Dev меняет prompt v3] --> B[Push PR]
-    B --> C[CI: run eval on golden dataset]
-    C --> D{Avg score >= baseline - 5%?}
-    D -->|No| E[Block merge, post diff to PR]
-    D -->|Yes| F[Merge to staging]
-    F --> G[Canary 5% traffic]
-    G --> H[Continuous eval 24h]
-    H --> I{Quality stable?}
-    I -->|No| J[Auto-rollback]
-    I -->|Yes| K[Promote 100%]
-    K --> L[Tag v3 production in registry]
-```
-
-**GitHub Actions пример:**
-
-```yaml
-name: prompt-regression
-on: [pull_request]
-jobs:
-  eval:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run eval
-        run: |
-          python scripts/evaluate.py \
-            --prompt-file prompts/customer_support.txt \
-            --dataset langfuse://datasets/regression-v2 \
-            --baseline-prompt main:prompts/customer_support.txt \
-            --threshold 0.05
-      - name: Comment results
-        uses: actions/github-script@v7
-        with:
-          script: |
-            // Postаем таблицу score'ов в PR
-```
-
-**Алерт после canary** (в стиле Prometheus) — сравниваем eval-оценку новой версии со старой за тот же час:
-
-```promql
-( avg_over_time(eval_score{prompt_version="v3"}[1h]) )
-< ( avg_over_time(eval_score{prompt_version="v2"}[1h]) * 0.95 )
-```
+В [Langfuse Experiments in CI/CD](https://langfuse.com/docs/evaluation/experiments/experiments-ci-cd) для этого есть `langfuse/experiment-action`: он загружает набор, запускает эксперимент и может завершить job ошибкой при `RegressionError`. Версии датасета и оценщика фиксируют для воспроизводимого сравнения. Отдельно после CI можно развернуть кандидата на часть трафика и следить за качеством; canary и автоматический откат требуют собственных правил и не возникают от одного запуска эвала. Сводный score нельзя слепо отправить в Prometheus: метрику нужно явно экспортировать, определить её охват и учитывать объём выборки.
 
 ---
 
 ## Q23. Как трейсить агент и находить infinite loops? (!)
 
-**Проблема:** ReAct-агент может зациклиться — `think → tool → think → tool → ...` без конца — и сжечь огромное число токенов. Поскольку HTTP-ответа всё ещё нет, классический мониторинг этого не видит; ловить зацикливание надо по форме трейса.
+Трейс агентского запроса связывает вызовы модели, инструментов и управляющие шаги одной задачи. [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/tracing/) показывает такие шаги отдельными span-ами; при собственном инструментировании важно сохранять причинную связь между ними. Для поиска петли смотрят не только на общее время HTTP-запроса, но и на **повторение одного действия без прогресса**: те же вызовы инструмента с эквивалентными аргументами, растущее число шагов, расход токенов и время до завершения.
 
-**По каким сигналам в трейсе видно зацикливание:**
+Глубина вложенности сама по себе не равна числу итераций: последовательные шаги могут быть соседними span-ами. Порог по числу шагов, времени и расходу задают по задаче и бюджету, а не универсальными значениями. Лимит итераций и тайм-аут принудительно останавливают зациклившийся запрос; завершение по лимиту отмечают отдельным исходом, чтобы его можно было разобрать и посчитать. Обычные метрики сервиса могут показать долгий запрос, но без шагов трейса не объясняют причину.
 
-1. **Большая глубина** — `span.depth > 20`.
-2. **Повторяющиеся tool calls** — один и тот же инструмент вызывается с похожими аргументами много раз подряд.
-3. **Всплеск токенов на trace** — `total_tokens > 100_000` в одном trace.
-4. **Аномальная длительность** — `duration > 5 min`.
-
-**Метрика для алерта:**
-
-```promql
-# Алерт: средняя глубина агентского trace выросла
-avg(llm_agent_depth) by (agent_name) > 15
-```
-
-**Дашборд для агентов** (Langfuse / Phoenix) — что отслеживать:
-
-- `avg_tool_calls_per_task` — растёт ли среднее число вызовов инструментов на задачу.
-- `cost_per_completed_task` — растёт ли стоимость одной выполненной задачи.
-- `infinite_loop_count` — сколько трейсов было принудительно прервано по `max_iterations`.
-- `tool_call_distribution` — какой инструмент вызывается чаще, чем ожидалось.
-
-**Как разметить span'ы агента:**
-
-```python
-@traceable(run_type="chain", name="react_agent")
-def react_agent(question, max_iter=10):
-    for i in range(max_iter):
-        with tracer.start_as_current_span(f"iter_{i}") as span:
-            thought = think(question)
-            span.set_attribute("agent.thought", thought)
-            tool, args = decide_action(thought)
-            span.set_attribute("agent.tool", tool)
-            span.set_attribute("agent.args", str(args))
-            result = execute_tool(tool, args)
-            if is_done(result):
-                return result
-    raise MaxIterationsExceeded(f"agent={i+1} iterations")
-```
-
-**Жёсткие лимиты в проде:** `max_iter`, `max_total_tokens`, `max_cost_per_request` — на каждый навешен алерт, чтобы зацикленный агент упёрся в потолок и не сжёг бюджет.
+Для диагностики обычно достаточно имени инструмента, безопасных категорий аргументов, статуса, длительности и расхода. Не следует автоматически писать сырой текст мыслей модели, входы инструмента и ответы: они могут содержать чувствительные данные. Настройки захвата содержимого зависят от SDK; например, [OpenAI Agents SDK позволяет отключить чувствительные данные в трейсе](https://openai.github.io/openai-agents-python/config/).
 
 ---
 
 ## Q24. Как трейсить RAG-pipeline? Какие метрики ловить? (!)
 
-В RAG ошибка может быть в любом из двух звеньев: плохо *достали* контекст (retrieval) или хорошо достали, но модель *плохо им воспользовалась* (generation). Поэтому RAG-трейс разбивают на отдельные span'ы (эмбеддинг → поиск → реранк → генерация → проверка), а метрики группируют по этим звеньям — иначе непонятно, что чинить.
+В RAG качество зависит и от найденного контекста, и от того, как модель использовала его в ответе. Один span на весь запрос скрывает место ошибки. Стройте связанный трейс по фактическим шагам: эмбеддинг запроса, поиск, необязательное ранжирование, генерация и проверка ответа. У шага поиска полезны идентификаторы возвращённых документов, порядок, оценка релевантности и длительность; у генерации — версия модели, расход токенов, длительность и результат оценки. Содержимое документов и запросов записывают только по правилам защиты данных. [Phoenix описывает отдельные span-ы для retriever, reranker и LLM](https://arize.com/docs/phoenix/learn/tracing).
 
-**Из чего состоит RAG-trace:**
-
-```
-chat_request
-├── embed_query (text → vector)
-├── vector_search (top-k)
-│   └── attribute: retrieved_chunks=[id1, id2, ...]
-├── rerank (опционально)
-├── llm_call (prompt = query + context)
-│   └── attribute: gen_ai.context.chunks_used=[id1, id3]
-└── post_check (citation validation)
-```
-
-**Ключевые RAG-метрики** (по звеньям конвейера):
-
-1. **Качество retrieval — то, что достали:**
-   - `retrieval_precision@k` — сколько из top-k чанков действительно релевантны (по эвалу).
-   - `retrieval_recall` — сколько релевантных нашли из всех существующих в базе.
-   - `mrr` (mean reciprocal rank) — насколько высоко в выдаче оказался нужный чанк.
-
-2. **Использование контекста — что из достатого пригодилось:**
-   - `chunks_retrieved` против `chunks_cited_in_answer` — если из 10 чанков в ответ вошли 2, контекст избыточен и мы зря за него платим.
-   - `context_relevance_score` (RAGAS).
-
-3. **Качество ответа:**
-   - `faithfulness` — опирается ли ответ на контекст, а не выдуман (RAGAS).
-   - `answer_relevancy` — отвечает ли вообще на заданный вопрос.
-   - `citation_correctness` — действительно ли цитируемый чанк поддерживает утверждение.
-
-4. **Операционные:**
-   - `embedding_latency_p95`, `vector_search_latency_p95`.
-   - `cache_hit_rate` для эмбеддингов.
-   - `unfound_query_rate` — доля запросов, где retrieval вернул меньше порога релевантных чанков; растущее значение указывает на пробел в базе знаний.
-
-**Дашборд кластеризации** (Phoenix): группирует эмбеддинги запросов и подсвечивает кластеры с `avg(faithfulness) < 0.5` — это целые сегменты запросов, на которых система стабильно плоха, а не отдельные сбои.
-
-**Пример атрибутов span'а для retrieval-шага:**
-
-```python
-span.set_attribute("retrieval.top_k", 10)
-span.set_attribute("retrieval.chunks_returned", 8)
-span.set_attribute("retrieval.avg_similarity", 0.78)
-span.set_attribute("rag.chunks_cited", ["doc1#p3", "doc2#p1"])
-span.set_attribute("rag.context_tokens", 4200)
-```
+**Для поиска** оценивают релевантность возвращённых документов и, при наличии разметки, precision@k или MRR. Recall можно вычислить только при известном наборе релевантных документов для запроса; в обычном живом трафике он часто неизвестен. **Для ответа** отдельно проверяют соответствие вопросу и опору на предоставленный контекст (faithfulness). Релевантный поиск ещё не гарантирует правильный ответ — [Phoenix явно разделяет retrieval eval и оценку итогового ответа](https://arize.com/docs/phoenix/learn/retrieval-and-infrences/benchmarking-retrieval). Цитирование документа не доказывает, что модель использовала его корректно: при необходимости проверяют поддержку конкретных утверждений. Дополнительно следят за задержкой и расходом по шагам, чтобы отличить проблему качества от стоимости или скорости.
 
 ---
 
-## Q25. Как считать «context utilization» в RAG и зачем?
+## Q25. Какой показатель помогает исследовать использование контекста в RAG?
 
-**Context utilization** (утилизация контекста) — это доля переданного модели контекста, который реально вошёл в ответ. По сути метрика отвечает на вопрос: не платим ли мы за чанки, которые модель проигнорировала.
+Сначала задайте определение метрики: название *context utilization* само по себе не задаёт единой формулы. Например, [Ragas 0.1.21](https://docs.ragas.io/en/v0.1.21/concepts/metrics/context_utilization.html) употреблял его для оценки ранжирования релевантных ответу чанков. Не следует выдавать долю цитат за эту библиотечную метрику или за точное измерение того, что модель «прочитала».
 
-**Зачем измерять:**
+Если ответ содержит проверяемые ссылки на идентификаторы чанков, можно считать **долю процитированных чанков**: число уникальных переданных чанков, упомянутых в ссылках, делённое на число переданных чанков. Это наблюдаемый *косвенный показатель*. Ссылка может не подтверждать утверждение, а ответ без ссылки всё же может опираться на контекст. При пустом наборе чанков значение доли не определено; такой случай учитывают отдельно.
 
-- Если из 10 чанков использовано только 2 — мы зря оплачиваем обработку 8 лишних (это и деньги, и латентность).
-- Зная это, можно безопасно уменьшить `top_k` без потери качества.
-- А если использовано 0 из 10 — модель вообще проигнорировала контекст, и ответ почти наверняка галлюцинация.
-
-**Как считать** (от точного к приблизительному):
-
-1. **По цитированию.** Модель обязана ссылаться на чанки (`[1]`, `[2]`); после ответа парсим эти ссылки и считаем, сколько уникальных чанков задействовано.
-
-```python
-def context_utilization(retrieved_chunks, citations_in_answer):
-    if not retrieved_chunks:
-        return 0.0
-    used = set(citations_in_answer) & set(c.id for c in retrieved_chunks)
-    return len(used) / len(retrieved_chunks)
-```
-
-2. **Через LLM-as-judge** — отдельным промптом спрашиваем модель-судью: «какие из чанков реально использованы в ответе»?
-
-3. **Через attention** (если есть доступ к весам модели) — анализируем, на какие chunk-токены модель смотрела при генерации.
-
-**Метрика в проде:**
-
-```promql
-avg(rag_context_utilization) by (endpoint) < 0.3
-# → alert: top_k слишком большой, уменьшаем
-```
+Для решения об изменении `top_k` дополнительно оценивают релевантность найденных документов и опору утверждений ответа на контекст. [Phoenix разделяет оценку извлечения и итогового ответа](https://arize.com/docs/phoenix/learn/retrieval-and-infrences/benchmarking-retrieval). Сравнивайте качество, задержку и расход токенов до и после изменения на репрезентативных запросах. Низкая доля цитат лишь повод исследовать поиск и генерацию: автоматически сокращать `top_k` или объявлять ответ галлюцинацией по ней нельзя.
 
 ---
 
-## Q26. Как делать A/B тестирование промптов в проде? (!)
+## Q26. Как проводить A/B-тест промптов, если ответы одному пользователю влияют на его дальнейший опыт?
 
-**Цель:** доказать, что prompt v2 действительно лучше v1, а не «мне так показалось на паре примеров». Суть подхода — детерминированно делим трафик по хешу `user_id` на две группы, тегируем трейсы вариантом, копим оценки и принимаем решение по статистической значимости, а не по тому, у кого среднее выше.
+Зафиксируйте контрольный и новый промпты, основную метрику результата, защитные метрики качества, задержки и стоимости, единицу рандомизации и правило остановки до начала эксперимента. Если один пользователь обращается повторно и его опыт может влиять на следующие ответы, закрепляйте вариант за пользователем на весь эксперимент. Платформа экспериментов или стабильное бакетирование по идентификатору эксперимента и пользователя даст воспроизводимое назначение: [Statsig описывает выбор единицы рандомизации и закрепление варианта](https://docs.statsig.com/experiments/overview). Встроенный Python `hash()` для строковых и байтовых идентификаторов по умолчанию не подходит: [его значение может различаться между запусками процесса](https://docs.python.org/3/reference/datamodel.html#object.__hash__). Для независимых запросов допустима другая единица рандомизации, если она соответствует проверяемой гипотезе.
 
-**Конвейер:**
+В трейсе фиксируйте версию промпта и эксперимент, а результаты сравнивайте по заранее выбранным метрикам и сопоставимым сегментам. Оценка моделью-судьёй может быть одним сигналом; при необходимости сверяйте её с ручной разметкой или обратной связью. Размер выборки рассчитывают из базового уровня и разброса метрики, минимально значимого эффекта и допустимых ошибок. Решение по одному лишь большему среднему, фиксированному числу запросов или календарному сроку ненадёжно. Если смотрите на результат до плановой остановки, используйте предусмотренный для этого метод анализа: [Statsig описывает риск повторного просмотра обычного теста](https://docs.statsig.com/experiments/advanced-setup/sequential-testing).
 
-```mermaid
-flowchart TD
-    A[Request приходит] --> B{Bucket by user_id_hash}
-    B -->|50%| C[Prompt v1 - control]
-    B -->|50%| D[Prompt v2 - treatment]
-    C --> E[Trace tagged variant=v1]
-    D --> F[Trace tagged variant=v2]
-    E --> G[Continuous eval]
-    F --> G
-    G --> H[Aggregated metrics by variant]
-    H --> I{Stat sig diff?}
-    I -->|Yes, v2 wins| J[Promote v2 to 100%]
-    I -->|No| K[Continue collecting]
-    I -->|v1 wins| L[Discard v2, keep v1]
-```
-
-**Реализация:**
-
-```python
-def get_prompt(user_id: str) -> tuple[str, str]:
-    bucket = hash(user_id) % 100
-    if bucket < 50:
-        return prompt_v1, "v1"
-    else:
-        return prompt_v2, "v2"
-
-prompt, variant = get_prompt(request.user_id)
-span.set_attribute("experiment.variant", variant)
-response = llm.call(prompt + request.question)
-```
-
-**По каким метрикам решать:**
-
-- `avg(eval_score) by variant` — основной критерий качества.
-- `avg(thumbs_up_rate) by variant` — пользовательская оценка.
-- `avg(latency_ms) by variant`, `avg(cost_usd) by variant` — операционная цена варианта.
-- **Статистическая значимость** — Mann-Whitney U test или байесовский подход, а не просто «среднее больше».
-
-**Размер выборки:** чтобы поймать эффект в 5% при мощности 80%, обычно нужно 1000-3000 примеров на вариант. Посчитать можно через `statsmodels.stats.power`.
-
-**Анти-паттерн:** «за день v2 дала score выше» — это могло быть случайностью или дневной аномалией. Ждать минимум 7 дней и проверять недельную сезонность (weekly seasonality).
+Офлайн-набор помогает отсеять явные регрессии до запуска, но не заменяет сравнение на живом трафике. Выкатывайте победивший вариант только после проверки основной и защитных метрик; при неопределённом результате продолжайте эксперимент либо завершайте его без победителя согласно заранее заданному правилу.
 
 ---
 
-## Q27. Как obs помогает оптимизировать costs? (!)
+## Q27. Как по трейсам адресно снижать стоимость LLM-вызовов?
 
-Observability превращает оптимизацию стоимости из догадок в адресную работу: сначала находим, *где* утекают деньги (топ дорогих эндпоинтов), затем разбираем *почему* (раздутый prompt, отсутствие `max_tokens`, слишком дорогая модель) и применяем точечные приёмы — кэш, downgrade модели, батчинг, prompt caching.
+Свяжите каждый вызов с маршрутом или задачей, версией модели, числом входных и выходных токенов и стоимостью по действующему тарифу. Если провайдер учитывает кэшированные токены отдельно, сохраните и эту категорию. [OpenTelemetry задаёт атрибуты расхода токенов для GenAI-вызова](https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-spans.md). Итоговый счёт полезен для сверки, но не показывает, какой путь и шаг цепочки создаёт расход.
 
-**Пошагово:**
+1. Найдите маршруты с наибольшими **суммарными** затратами и стоимостью одной успешно выполненной задачи. Разделите изменение цены одного запроса и рост числа запросов.
+2. Откройте характерные дорогие трейсы: определите вклад входа, выхода, повторных вызовов, инструментов и выбранной модели. Одиночный максимум может быть выбросом; сравнивайте распределение и сегменты.
+3. Выберите адресное изменение: убрать лишний контекст, проверить кэширование повторяющихся безопасных запросов, скорректировать маршрут модели либо ограничить ненужный вывод. Возможность и выгоду каждого приёма проверяйте в конкретном сервисе.
+4. Сравните стоимость за успешную задачу, качество и задержку до и после изменения. Экономия, ухудшившая полезность ответа или нарушившая ограничения на данные, не является успехом.
 
-1. **Найти топ-10 самых дорогих эндпоинтов:**
-   ```sql
-   SELECT endpoint, SUM(cost_usd) as total
-   FROM traces WHERE date > now() - 7d
-   GROUP BY endpoint ORDER BY total DESC LIMIT 10
-   ```
-   → видим: 80% бюджета — на `/api/summarize`.
-
-2. **Разобрать профиль одного запроса** в дорогом эндпоинте — куда уходят токены:
-   - input_tokens 12 000 (раздутый system prompt) → **сократить system prompt**.
-   - output_tokens 3 000 (нет `max_tokens`) → **поставить лимит**.
-   - используется `gpt-4o` → **попробовать gpt-4o-mini для некритичных запросов**.
-
-3. **Поискать возможности для кэша:**
-   - `cache_hit_rate=15%` → много повторов, стоит добавить semantic cache (Redis + эмбеддинги).
-   - 30% запросов одинаковы по структуре и отличаются только датой → вынести в шаблон с параметром.
-
-4. **Понизить модель по маршруту запроса:**
-   - 70% запросов — простой Q&A → перевести на дешёвую модель.
-   - 30% — сложный reasoning → оставить флагманскую.
-   - Логика маршрутизации в коде, контроль через метрику `model_distribution`.
-
-5. **Батчинг и асинхронность:**
-   - Считать эмбеддинги для 1000 документов поодиночке дорого; батчинг даёт примерно пятикратную экономию.
-
-6. **Prompt caching (Anthropic / OpenAI):**
-   - Длинный неизменный system prompt можно закэшировать → до -90% стоимости на закэшированных токенах.
-   - Контролируется метриками `cache_read_tokens` против `cache_create_tokens`.
-
-**Что держать на дашборде оптимизации стоимости:**
-
-- `cost_per_endpoint` — снижается ли по тренду.
-- `cost_per_active_user` — хорошо ли масштабируется с ростом аудитории.
-- `cost_per_completed_task` — для агентов: падает ли стоимость одной задачи.
-- `cache_savings_usd` — сколько денег реально сэкономил кэш.
+Общий средний чек может подсказать тренд, но скрывает дорогой маршрут. Латентность сама по себе не равна стоимости. Универсальных процентов экономии и обязательного выбора модели для всех задач нет.
 
 ---
 
-## Q28. Какие анти-паттерны в LLM observability? (!)
+## Q28. Какой анти-паттерн скрывает некачественные ответы при HTTP 200?
 
-Сквозная мысль всех ошибок ниже: команды переносят на LLM привычки классического APM, где «работает = 200 OK», и упускают то, что специфично для моделей — качество, стоимость и структуру цепочки. Каждый пункт — типичная ошибка и её исправление.
+Успешный HTTP-ответ говорит, что сервис обработал запрос по протоколу. Он не подтверждает, что ответ модели верен, полезен или опирается на найденные документы. Поэтому **считать 200 OK доказательством качества и не измерять результат** — анти-паттерн LLM-наблюдаемости. [Phoenix связывает трейсы с оценками результата](https://arize.com/docs/phoenix/quickstart); для RAG отдельно оценивают поиск и готовый ответ.
 
-**1. Логировать полные промпты без редакции PII.** Прямая утечка персональных данных. Решение: Presidio / regex или вообще отключить захват содержимого для нужных уровней доступа.
+Практическая проверка включает метрику результата для конкретной задачи, репрезентативную разметку или проверенные оценки, пользовательскую обратную связь там, где она доступна, и разрезы по версии промпта, модели и маршруту. Автоматическая оценка нуждается в проверке на размеченных примерах. Сохраняйте связь оценки с трейсом, чтобы разобрать причины плохого ответа; содержимое запросов и документов записывайте только по правилам защиты данных. Одновременно наблюдайте обычные сигналы сервиса: ошибки, задержку и расход.
 
-**2. Семплировать 100% на масштабе.** При 10 000 req/min трейсы съедают хранилище и денег больше, чем сам LLM. Решение: tail-based sampling.
-
-**3. Хранить сырые эмбеддинги в трейсе.** Один эмбеддинг — 1500 float × 4 байта = 6 КБ; при 1 млн запросов в день это 6 ГБ только под векторы. Решение: хранить только `embedding_id` (ссылку в vector store) или хеш.
-
-**4. Нет связи между LLM-трейсом и бизнес-контекстом.** Пользователь жалуется «15 минут назад ответ был плохой» — без `user_id` / `session_id` / `request_id` этот трейс не найти. Решение: протаскивать контекст через все span'ы.
-
-**5. Мерить только латентность, без качества.** «p99 = 800ms» ничего не говорит о галлюцинациях. Решение: eval-метрики обязательны наравне с латентностью.
-
-**6. Оценивать только в CI, не в проде.** После деплоя поведение модели дрейфует (провайдер обновил модель, появился новый класс запросов), и CI этого уже не ловит. Решение: continuous eval с асинхронным judge.
-
-**7. Один judge на всё.** Если основная модель GPT и judge тоже GPT, возникает self-preference bias — модель завышает оценку «своим» ответам. Решение: cross-judge — оценивать моделью другого семейства.
-
-**8. Промпты захардкожены в коде.** Любая правка требует деплоя, а A/B невозможен в принципе. Решение: держать промпты в hub (LangSmith / Langfuse) и подтягивать по имени и версии в рантайме.
-
-**9. Считать стоимость только по счёту провайдера в конце месяца.** За месяц можно незаметно сжечь $50 000. Решение: учёт стоимости в реальном времени плюс почасовой алерт.
-
-**10. Игнорировать tool calls агента в трейсе.** Цепочка из 50 tool calls сворачивается в один root span без деталей — отлаживать нечего. Решение: каждый tool call — отдельный span.
-
-**11. Нет SLO для LLM-системы.** «У нас всё хорошо» неизмеримо. Решение: формальные цели вроде `99% запросов с eval_score > 0.8`, `p95 latency < 3s`, `cost_per_request < $0.01`.
-
-**12. Доверять judge без калибровки.** Judge ставит 0.9, а пользователь — 1 из 5. Решение: периодически размечать N трейсов вручную, считать корреляцию judge ↔ человек и перекалибровывать судью.
-
----
-
-## Диаграмма: структура LLM trace
-
-```mermaid
-flowchart TD
-    Root[chat_request<br/>trace_id=abc123<br/>user_id=u42] --> Retr[retrieve_context<br/>top_k=10]
-    Root --> LLM1[llm_call: chat<br/>model=gpt-4o<br/>in=1500 out=412 cost=0.012]
-    Root --> Guard[guardrail<br/>pii_check + safety]
-    Retr --> Embed[embed_query<br/>model=text-embedding-3]
-    Retr --> Vec[vector_search<br/>store=qdrant]
-    LLM1 --> Stream[stream_tokens]
-    LLM1 -.async eval.-> Judge[llm_judge<br/>faithfulness=0.87]
-    Judge --> Score[Score attached<br/>to trace abc123]
-```
-
----
-
-## Диаграмма: continuous eval pipeline
+Другие анти-паттерны относятся к отдельным рискам: бесконтрольный захват чувствительного содержимого, хранение больших сырых данных без задачи, потеря связи шагов цепочки и оценок с запросом, решение об экономии только по общему счёту. Объём трассировки и способ выборки выбирают по нагрузке и задаче; полный сбор не является ошибкой сам по себе. Ни одна платформа автоматически не решает вопросы качества, приватности и корректности оценщика.
 
 ```mermaid
 flowchart LR
-    A[Prod LLM call] --> B[OTel span exported]
-    B --> C{Sample 5%?}
-    C -->|No| Z[Store only]
-    C -->|Yes| D[Eval queue]
-    D --> E[LLM-as-judge<br/>faithfulness + relevancy]
-    E --> F[Score → trace]
-    F --> G[Prometheus metric]
-    G --> H[Grafana dashboard]
-    G --> I{score < threshold?}
-    I -->|Yes| J[PagerDuty alert]
-    I -->|No| K[Trend monitoring]
-    F --> L[Curate low-score to dataset]
-    L --> M[Regression test in CI]
-```
-
----
-
-## Диаграмма: OTel GenAI attributes
-
-```mermaid
-flowchart TB
-    subgraph Span["LLM Span (gen_ai)"]
-        direction LR
-        SystemAttr["gen_ai.system=openai<br/>gen_ai.operation.name=chat"]
-        RequestAttr["gen_ai.request.model=gpt-4o<br/>gen_ai.request.temperature=0.7<br/>gen_ai.request.max_tokens=1000"]
-        ResponseAttr["gen_ai.response.model=gpt-4o-2024-08-06<br/>gen_ai.response.id=chatcmpl-xxx<br/>gen_ai.response.finish_reasons=stop"]
-        UsageAttr["gen_ai.usage.input_tokens=1523<br/>gen_ai.usage.output_tokens=412"]
-    end
-    Span --> Events["Span Events"]
-    Events --> E1["gen_ai.system.message"]
-    Events --> E2["gen_ai.user.message"]
-    Events --> E3["gen_ai.assistant.message"]
-    Events --> E4["gen_ai.tool.message"]
+    Request[Запрос] --> Trace[Трейс шагов и HTTP-результат]
+    Trace --> Outcome[Ответ пользователю]
+    Outcome --> Eval[Проверка качества на выборке]
+    Eval --> Linked[Оценка связана с трейсом]
+    Linked --> Review[Разбор ошибки и регрессионный набор]
 ```
 
 ---

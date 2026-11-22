@@ -103,23 +103,36 @@ Go предоставляет несколько способов работы �
 
 ```go
 import (
+    "context"
     "database/sql"
-    _ "github.com/lib/pq"  // PostgreSQL драйвер
+    "fmt"
+    "time"
+
+    _ "github.com/lib/pq"
 )
 
-func main() {
-    db, err := sql.Open("postgres", "user=postgres dbname=mydb sslmode=disable")
+func openPostgres(ctx context.Context, dsn string) (*sql.DB, error) {
+    db, err := sql.Open("postgres", dsn)
     if err != nil {
-        log.Fatal(err)
+        return nil, fmt.Errorf("open PostgreSQL pool: %w", err)
     }
-    defer db.Close()
 
-    // Проверка подключения
-    if err := db.Ping(); err != nil {
-        log.Fatal(err)
+    pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+    defer cancel()
+    if err := db.PingContext(pingCtx); err != nil {
+        _ = db.Close()
+        return nil, fmt.Errorf("ping PostgreSQL: %w", err)
     }
+
+    return db, nil
 }
 ```
+
+Пустой импорт регистрирует драйвер `lib/pq` под именем `postgres`. DSN передаёт вызывающий код из конфигурации. Для удалённого PostgreSQL с TLS параметр `sslmode=verify-full` проверяет доверие к сертификату и совпадение имени сервера. Настройте доверенный CA для сертификата сервера.
+
+`sql.Open` возвращает дескриптор пула и может завершиться до установки соединения. `PingContext` проверяет доступность БД в момент запуска. Его таймаут относится к проверке. У последующих запросов свои контексты. Приложение переиспользует успешно открытый пул для запросов и закрывает его при завершении. Если проверка не прошла, функция закрывает пул сама.
+
+[Go — sql.Open](https://pkg.go.dev/database/sql#Open) · [Go — PingContext](https://pkg.go.dev/database/sql#DB.PingContext) · [lib/pq — параметры подключения](https://pkg.go.dev/github.com/lib/pq#hdr-Connection_String_Parameters)
 
 ### Выполнение запросов
 
@@ -133,21 +146,26 @@ _, err := db.Exec("CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT)")
 _, err := db.Exec("INSERT INTO users (name) VALUES ($1)", "Alice")
 
 // Выполнение запроса с результатом
-rows, err := db.Query("SELECT id, name FROM users")
-if err != nil {
-    log.Fatal(err)
-}
-defer rows.Close()
-
-for rows.Next() {
-    var id int
-    var name string
-    if err := rows.Scan(&id, &name); err != nil {
-        log.Fatal(err)
+func printUsers(ctx context.Context, db *sql.DB) error {
+    rows, err := db.QueryContext(ctx, "SELECT id, name FROM users")
+    if err != nil {
+        return err
     }
-    fmt.Printf("ID: %d, Name: %s\n", id, name)
+    defer rows.Close()
+
+    for rows.Next() {
+        var id int
+        var name string
+        if err := rows.Scan(&id, &name); err != nil {
+            return err
+        }
+        fmt.Printf("ID: %d, Name: %s\n", id, name)
+    }
+    return rows.Err()
 }
 ```
+
+`Scan` сообщает об ошибке чтения текущей строки, например при несовместимом типе столбца. `Next` возвращает `false` и при исчерпании строк, и при ошибке итерации. Поэтому после цикла проверяют `Rows.Err()`: если соединение оборвалось после нескольких строк, вызывающий код получит ошибку, хотя часть вывода уже появилась. Для запроса с одним набором результатов `database/sql` закрывает `Rows` при исчерпании строк. Отложенный `Close` закрывает их и при раннем выходе. [Документация Rows](https://pkg.go.dev/database/sql#Rows).
 
 ### Запрос одной строки
 
@@ -155,42 +173,53 @@ for rows.Next() {
 var user User
 err := db.QueryRow("SELECT id, name FROM users WHERE id = $1", 1).
     Scan(&user.ID, &user.Name)
-if err != nil {
-    log.Fatal(err)
+switch {
+case err == sql.ErrNoRows:
+    fmt.Println("Пользователь отсутствует")
+case err != nil:
+    log.Print(err)
+default:
+    fmt.Println(user.Name)
 }
 ```
+
+`QueryRow` откладывает ошибки до `Scan`. При пустом результате `Scan` возвращает `sql.ErrNoRows`, а при нескольких строках читает первую и отбрасывает остальные. Здесь уникальность поиска обеспечивает первичный ключ `users.id`. [Документация QueryRow](https://pkg.go.dev/database/sql#DB.QueryRow).
 
 ### Подготовленные запросы
 
-```go
-stmt, err := db.Prepare("SELECT id, name FROM users WHERE id = $1")
-if err != nil {
-    log.Fatal(err)
-}
-defer stmt.Close()
+Подготовьте часто используемое выражение один раз и передайте `Stmt` коду, который выполняет запросы. В примере PostgreSQL контекст запуска ограничивает подготовку, а каждый вызов `userNameByID` получает контекст своего запроса.
 
-var user User
-err = stmt.QueryRow(1).Scan(&user.ID, &user.Name)
-if err != nil {
-    log.Fatal(err)
+```go
+func prepareUserNameQuery(ctx context.Context, db *sql.DB) (*sql.Stmt, error) {
+    return db.PrepareContext(ctx, "SELECT name FROM users WHERE id = $1")
+}
+
+func userNameByID(ctx context.Context, stmt *sql.Stmt, id int64) (string, error) {
+    var name string
+    if err := stmt.QueryRowContext(ctx, id).Scan(&name); err != nil {
+        return "", err
+    }
+    return name, nil
 }
 ```
 
+Код, который владеет `Stmt`, вызывает `Close` после завершения работы с ним. Подготовленный через `DB.PrepareContext` объект можно использовать одновременно из нескольких горутин. Если для выполнения понадобится другое физическое соединение, `database/sql` подготовит выражение и на нём. Контекст подготовки не задаёт таймаут для последующих вызовов `QueryRowContext`. [DB.PrepareContext](https://pkg.go.dev/database/sql#DB.PrepareContext) · [Документация Stmt](https://pkg.go.dev/database/sql#Stmt)
+
+В транзакции подготовьте выражение через `tx.PrepareContext` или получите привязанную к транзакции версию через `tx.StmtContext(ctx, stmt)`. Прямой вызов исходного `stmt`, подготовленного на `db`, выполнится через пул вне транзакции. Выражение, подготовленное на `Tx` или `Conn`, привязано к одному соединению и перестаёт быть пригодным после завершения `Tx` или закрытия `Conn`. [Tx.StmtContext](https://pkg.go.dev/database/sql#Tx.StmtContext)
+
 ## sqlx
 
-Пакет `sqlx` расширяет `database/sql` дополнительными возможностями.
+Пакет `sqlx` расширяет `database/sql` сопоставлением колонок с полями структур и именованными параметрами. Правила работы с пулом и транзакциями сохраняются.
 
 ### Подключение
 
 ```go
-import "github.com/jmoiron/sqlx"
-
-db, err := sqlx.Connect("postgres", "user=postgres dbname=mydb sslmode=disable")
-if err != nil {
-    log.Fatal(err)
+func openSQLX(ctx context.Context, dsn string) (*sqlx.DB, error) {
+    return sqlx.ConnectContext(ctx, "postgres", dsn)
 }
-defer db.Close()
 ```
+
+Пример предполагает импорт `github.com/jmoiron/sqlx` и регистрацию драйвера через пустой импорт `github.com/lib/pq`. `ConnectContext` открывает дескриптор БД и проверяет подключение. Вызывающий код передаёт DSN из конфигурации и закрывает успешно открытый пул при остановке приложения.
 
 ### Запросы с автоматическим маппингом
 
@@ -200,103 +229,147 @@ type User struct {
     Name string `db:"name"`
 }
 
-// Запрос одной строки
-var user User
-err := db.Get(&user, "SELECT * FROM users WHERE id = $1", 1)
+func findUser(ctx context.Context, db *sqlx.DB, id int) (User, error) {
+    var user User
+    err := db.GetContext(ctx, &user, "SELECT id, name FROM users WHERE id = $1", id)
+    return user, err
+}
 
-// Запрос множества строк
-var users []User
-err := db.Select(&users, "SELECT * FROM users")
+func listUsers(ctx context.Context, db *sqlx.DB, limit int) ([]User, error) {
+    var users []User
+    err := db.SelectContext(ctx, &users,
+        "SELECT id, name FROM users ORDER BY id LIMIT $1", limit)
+    return users, err
+}
 ```
+
+По умолчанию sqlx возвращает ошибку, если колонке результата не соответствует поле структуры. Явный список колонок сохраняет контракт при добавлении полей в таблицу. `GetContext` возвращает `sql.ErrNoRows`, когда строка отсутствует. `SelectContext` собирает весь результат в слайс, поэтому в примере вызывающий код передаёт ограниченный размер выборки.
 
 ### Именованные запросы
 
 ```go
-type User struct {
-    ID   int    `db:"id"`
-    Name string `db:"name"`
+func findUserByName(ctx context.Context, db *sqlx.DB, id int, name string) (User, error) {
+    const query = "SELECT id, name FROM users WHERE id = :id AND name = :name"
+    bound, args, err := db.BindNamed(query, map[string]any{"id": id, "name": name})
+    if err != nil {
+        return User{}, err
+    }
+
+    var user User
+    err = db.GetContext(ctx, &user, bound, args...)
+    return user, err
 }
-
-// Именованные параметры
-query := "SELECT * FROM users WHERE id = :id AND name = :name"
-namedQuery, args, _ := sqlx.Named(query, map[string]interface{}{
-    "id":   1,
-    "name": "Alice",
-})
-
-var user User
-err := db.Get(&user, db.Rebind(namedQuery), args...)
 ```
+
+`BindNamed` подбирает плейсхолдеры для драйвера и возвращает значения отдельными аргументами. Для PostgreSQL это плейсхолдеры вида `$1`. Ошибку сопоставления, например при отсутствии ключа в map, обрабатывают до выполнения SQL.
+
+[Документация sqlx](https://pkg.go.dev/github.com/jmoiron/sqlx) · [Руководство sqlx](https://jmoiron.github.io/sqlx/)
 
 ## GORM
 
-**GORM** — это популярный **ORM** для Go.
+**GORM** сопоставляет структуры Go с таблицами и строит SQL для чтения и изменения данных. Ниже используется традиционный API GORM v2, где ошибки операций доступны через поле `.Error`.
 
 ### Подключение
 
+Драйвер PostgreSQL для GORM умеет создать собственный пул или использовать уже открытый `*sql.DB`. Ниже используем пул из примера `openPostgres`, который уже проверил соединение с таймаутом.
+
 ```go
 import (
+    "context"
+    "database/sql"
+
     "gorm.io/driver/postgres"
     "gorm.io/gorm"
 )
 
-dsn := "host=localhost user=postgres dbname=mydb sslmode=disable"
-db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-if err != nil {
-    log.Fatal(err)
+func openGORM(ctx context.Context, dsn string) (*gorm.DB, *sql.DB, error) {
+    pool, err := openPostgres(ctx, dsn)
+    if err != nil {
+        return nil, nil, err
+    }
+
+    db, err := gorm.Open(postgres.New(postgres.Config{Conn: pool}), &gorm.Config{
+        DisableAutomaticPing: true,
+    })
+    if err != nil {
+        _ = pool.Close()
+        return nil, nil, err
+    }
+
+    return db, pool, nil
 }
 ```
+
+`DisableAutomaticPing` убирает повторную проверку внутри `gorm.Open`. Здесь драйвер пула — `lib/pq`, зарегистрированный в `openPostgres`. При `postgres.Open(dsn)` без переданного пула драйвер GORM по умолчанию использует pgx. После успешного запуска приложение настраивает и закрывает общий `pool`. В операции GORM передавайте контекст запроса через `WithContext(ctx)`.
+
+[Подключение GORM к PostgreSQL](https://gorm.io/docs/connecting_to_the_database.html#PostgreSQL) · [Автоматическая проверка соединения](https://gorm.io/docs/gorm_config.html#DisableAutomaticPing) · [Контекст GORM](https://gorm.io/docs/context.html)
 
 ### Определение моделей
 
 ```go
 type User struct {
-    ID   uint   `gorm:"primaryKey"`
-    Name string
+    ID    uint   `gorm:"primaryKey"`
+    Name  string
     Email string `gorm:"uniqueIndex"`
+    Age   int
 }
 
-// Автоматическая миграция
-db.AutoMigrate(&User{})
+// Для отдельного шага настройки схемы в локальном окружении.
+if err := db.AutoMigrate(&User{}); err != nil {
+    return err
+}
 ```
 
 ### CRUD операции
 
 ```go
-// Создание
-user := User{Name: "Alice", Email: "alice@example.com"}
-db.Create(&user)
+func userCRUD(ctx context.Context, db *gorm.DB) error {
+    db = db.WithContext(ctx)
 
-// Чтение
-var user User
-db.First(&user, 1)  // по ID
-db.First(&user, "name = ?", "Alice")  // по условию
+    user := User{Name: "Alice", Email: "alice@example.com", Age: 24}
+    if err := db.Create(&user).Error; err != nil {
+        return err
+    }
 
-// Обновление
-db.Model(&user).Update("name", "Bob")
-db.Model(&user).Updates(User{Name: "Bob", Email: "bob@example.com"})
+    var loaded User
+    if err := db.First(&loaded, user.ID).Error; err != nil {
+        return err
+    }
 
-// Удаление
-db.Delete(&user)
+    if err := db.Model(&loaded).Updates(map[string]any{
+        "name": "Bob",
+        "age":  0,
+    }).Error; err != nil {
+        return err
+    }
+
+    return db.Delete(&loaded).Error
+}
 ```
+
+Пример показывает отдельные операции. Чтобы объединить их в одну транзакцию, используйте `db.Transaction` и выполняйте операции через переданный `tx`.
+
+При отсутствии строки `First` возвращает ошибку, которую можно распознать через `errors.Is(err, gorm.ErrRecordNotFound)`. У `Find` пустая выборка успешна. Проверяйте `.Error`, затем длину результата или `.RowsAffected`. [Чтение и ошибки GORM](https://gorm.io/docs/query.html)
+
+`Updates` со структурой по умолчанию пропускает нулевые значения. В примере карта позволяет записать `age = 0`. Традиционный `Save` обновляет все поля и при нуле затронутых строк может перейти к вставке. Для операции, которая должна только обновлять существующую запись, используйте `Update` или `Updates` с нужным условием. [Обновление в GORM](https://gorm.io/docs/update.html)
 
 ### Запросы
 
 ```go
-// Where условия
 var users []User
-db.Where("name = ?", "Alice").Find(&users)
-db.Where("age > ?", 18).Find(&users)
-
-// Сортировка
-db.Order("name desc").Find(&users)
-
-// Лимит и оффсет
-db.Limit(10).Offset(20).Find(&users)
-
-// Выбор полей
-db.Select("name", "email").Find(&users)
+result := db.WithContext(ctx).
+    Where("age > ?", 18).
+    Select("id", "name", "email").
+    Order("name DESC, id ASC").
+    Limit(10).
+    Offset(20).
+    Find(&users)
+if result.Error != nil {
+    return result.Error
+}
 ```
+
+`id` задаёт порядок между пользователями с одинаковым именем. Поля вне `Select` отсутствуют в результате запроса. Для фильтра по нулевому значению используйте явное условие вроде `Where("age = ?", 0)` или карту. Условие `Where(&User{Age: 0})` пропустит поле `Age`. [Условия и выбор полей GORM](https://gorm.io/docs/query.html)
 
 ## Транзакции
 
@@ -304,46 +377,53 @@ db.Select("name", "email").Find(&users)
 
 ### database/sql транзакции
 
+В PostgreSQL обе вставки выполняются через один `sql.Tx`. Функция возвращает успех после успешного `Commit`, чтобы вызывающий код мог обработать ошибку фиксации.
+
 ```go
-tx, err := db.Begin()
-if err != nil {
-    log.Fatal(err)
-}
-
-defer func() {
+func insertUsers(ctx context.Context, db *sql.DB) error {
+    tx, err := db.BeginTx(ctx, nil)
     if err != nil {
-        tx.Rollback()
-        return
+        return err
     }
-    tx.Commit()
-}()
+    defer tx.Rollback()
 
-_, err = tx.Exec("INSERT INTO users (name) VALUES ($1)", "Alice")
-if err != nil {
-    return err
-}
-
-_, err = tx.Exec("INSERT INTO users (name) VALUES ($1)", "Bob")
-if err != nil {
-    return err
+    const query = "INSERT INTO users (name) VALUES ($1)"
+    if _, err := tx.ExecContext(ctx, query, "Alice"); err != nil {
+        return err
+    }
+    if _, err := tx.ExecContext(ctx, query, "Bob"); err != nil {
+        return err
+    }
+    return tx.Commit()
 }
 ```
+
+Если вторая вставка вернёт ошибку, отложенный `Rollback` отменит первую. После успешного `Commit` отложенный вызов уже не меняет результат транзакции. Контекст `BeginTx` действует до завершения транзакции, а при его отмене `database/sql` откатывает её. [Транзакции в Go](https://go.dev/doc/database/execute-transactions) · [Контракт BeginTx](https://pkg.go.dev/database/sql#DB.BeginTx).
+
+**Что делать, если `Commit` вернул ошибку?** Различайте отказ БД и потерю подтверждения. Например, если соединение оборвалось после отправки `COMMIT`, сервер мог зафиксировать изменения до того, как клиент получил ответ. Отложенный `Rollback` не отменит уже зафиксированную транзакцию.
+
+Для команды создания заказа запишите уникальный идентификатор запроса вместе с заказом в той же транзакции. При повторе используйте прежний идентификатор. Если первая попытка уже зафиксировалась, ограничение уникальности предотвратит второй заказ, а приложение сможет вернуть результат первой попытки. Одиночное чтение с отстающей реплики не подтверждает, что заказа нет.
+
+[Go — контракт `Commit`](https://go.dev/doc/database/execute-transactions) · [PostgreSQL — коды ошибок транзакций и соединений](https://www.postgresql.org/docs/current/errcodes-appendix.html)
 
 ### GORM транзакции
 
 ```go
-db.Transaction(func(tx *gorm.DB) error {
-    if err := tx.Create(&user1).Error; err != nil {
-        return err
-    }
-
-    if err := tx.Create(&user2).Error; err != nil {
-        return err
-    }
-
-    return nil
-})
+func createUsers(ctx context.Context, db *gorm.DB, first, second User) error {
+    return db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+        if err := tx.Create(&first).Error; err != nil {
+            return err
+        }
+        return tx.Create(&second).Error
+    })
+}
 ```
+
+Если вторая вставка нарушит уникальность email, ошибка выйдет из callback и GORM откатит обе вставки. При `nil` из callback GORM попытается зафиксировать транзакцию. Возвращаемое значение `Transaction` нужно проверить, поскольку ошибка возможна и при фиксации. Все операции, которые входят в этот блок, выполняйте через `tx`, включая вызовы из вспомогательных функций. Запрос через исходный `db` выполняется вне этой транзакции.
+
+В PostgreSQL вложенный вызов `tx.Transaction(...)` при стандартной конфигурации GORM использует savepoint. Ошибка вложенного блока откатывает его изменения до этой точки. Если внешняя функция тоже вернёт ошибку, откатится вся транзакция. Успех вложенного блока становится видимым другим транзакциям по правилам изоляции после внешнего commit. При `DisableNestedTransaction: true` GORM не создаёт savepoint автоматически, поэтому рассчитывать на частичный откат нельзя.
+
+[Транзакции GORM](https://gorm.io/docs/transactions.html) · [Настройки сессии GORM](https://gorm.io/docs/session.html#DisableNestedTransaction)
 
 ## Миграции
 
@@ -352,33 +432,42 @@ db.Transaction(func(tx *gorm.DB) error {
 ### Использование migrate
 
 ```go
-import "github.com/golang-migrate/migrate/v4"
+import (
+    "errors"
 
-m, err := migrate.New(
-    "file://migrations",
-    "postgres://user:pass@localhost/dbname?sslmode=disable",
+    "github.com/golang-migrate/migrate/v4"
+    _ "github.com/golang-migrate/migrate/v4/database/postgres"
+    _ "github.com/golang-migrate/migrate/v4/source/file"
 )
-if err != nil {
-    log.Fatal(err)
-}
 
-// Применение миграций
-if err := m.Up(); err != nil {
-    log.Fatal(err)
+func migratePostgres(databaseURL string) (err error) {
+    m, err := migrate.New("file://migrations", databaseURL)
+    if err != nil {
+        return err
+    }
+    defer func() {
+        sourceErr, databaseErr := m.Close()
+        err = errors.Join(err, sourceErr, databaseErr)
+    }()
+
+    if err := m.Up(); !errors.Is(err, migrate.ErrNoChange) {
+        return err
+    }
+    return nil
 }
 ```
+
+Передайте URL подключения из конфигурации. Импорты с `_` регистрируют драйверы PostgreSQL и файлового источника. При повторном запуске `ErrNoChange` означает, что новых миграций нет. Если инструмент сообщает о состоянии `dirty`, сначала сопоставьте версию и фактическую схему с SQL проблемной миграции. `Force` меняет записанную версию и снимает признак `dirty`. Исправление схемы выполняют отдельно. Для `errors.Join` нужен Go 1.20+. [API golang-migrate](https://pkg.go.dev/github.com/golang-migrate/migrate/v4) · [FAQ о состоянии dirty](https://github.com/golang-migrate/migrate/blob/master/FAQ.md)
 
 ### GORM миграции
 
 ```go
-// Автоматическая миграция
-db.AutoMigrate(&User{}, &Post{})
-
-// Ручная миграция
-db.Migrator().CreateTable(&User{})
-db.Migrator().AddColumn(&User{}, "Email")
-db.Migrator().DropColumn(&User{}, "Email")
+if err := db.AutoMigrate(&User{}, &Post{}); err != nil {
+    return fmt.Errorf("migrate schema: %w", err)
+}
 ```
+
+`AutoMigrate` приводит поддерживаемые элементы схемы в соответствие с моделями и сохраняет лишние столбцы. Для удаления столбца нужна явная операция, например `Migrator().DropColumn` в отдельной миграции. Если порядок изменений важен для совместимости версий приложения, храните шаги в версионируемых миграциях. [Миграции GORM](https://gorm.io/docs/migration.html)
 
 ### Настройка пула соединений
 
@@ -390,33 +479,45 @@ func configureConnectionPool(db *sql.DB) {
     // Максимальное количество неактивных соединений
     db.SetMaxIdleConns(5)
 
-    // Максимальное время жизни соединения
+    // Предельный возраст соединения для повторного использования
     db.SetConnMaxLifetime(5 * time.Minute)
 
     // Максимальное время простоя соединения
-    db.SetConnMaxIdleTime(10 * time.Minute)
+    db.SetConnMaxIdleTime(1 * time.Minute)
 }
 ```
+
+Числа в примере условные. `SetMaxOpenConns` ограничивает общее число открытых соединений одного `sql.DB`, включая занятые и свободные. `SetMaxIdleConns` ограничивает число свободных соединений, которые пул сохраняет. При исчерпании лимита новая операция ждёт освобождения соединения или отмены своего контекста. `SetConnMaxLifetime` и `SetConnMaxIdleTime` управляют повторным использованием соединений. Дедлайн запроса задают отдельно, например через контекст `QueryContext`. [Управление соединениями](https://go.dev/doc/database/manage-connections) · [Контракт SetConnMaxLifetime](https://pkg.go.dev/database/sql#DB.SetConnMaxLifetime).
+
+**Пример с одним соединением.** При `SetMaxOpenConns(1)` открытая транзакция занимает единственное соединение. Если её код вызывает `db.QueryContext` и ждёт результат до завершения транзакции, запрос ждёт то же соединение. Дедлайн прервёт ожидание. Если запрос относится к этой транзакции, выполняйте его через `tx.QueryContext`. Чтобы обнаружить регулярное ожидание в рабочем приложении, сравнивайте прирост `DB.Stats().WaitCount` и `WaitDuration` за один и тот же интервал. [Статистика пула](https://pkg.go.dev/database/sql#DBStats).
+
+**Бюджет соединений при раскатке.** Допустим, приложение напрямую подключается к одному серверу PostgreSQL. Из 150 подключений 10 зарезервированы сервером для привилегированных ролей, а ещё 20 выделены другим клиентам. Во время раскатки одновременно могут работать до 12 экземпляров сервиса, у каждого один `sql.DB`. Тогда потолок для одного пула — `(150 - 10 - 20) / 12 = 10` соединений. При нескольких пулах к тому же серверу учитывайте сумму их лимитов. Лимит 25 из примера ниже в таком сценарии допускал бы до 300 соединений приложения, и сервер мог бы отклонять новые подключения под нагрузкой.
+
+Полученные 10 соединений — верхняя граница для этих исходных условий. Рабочее значение выбирайте по времени ожидания в пуле и нагрузке на БД. Например, при росте `WaitDuration` проверьте, сколько времени операции держат соединения и есть ли у сервера запас. Увеличение пула при уже перегруженной БД может усилить конкуренцию за её ресурсы. [Параметры соединений PostgreSQL](https://www.postgresql.org/docs/19/runtime-config-connection.html#RUNTIME-CONFIG-CONNECTION-SETTINGS) · [Управление соединениями в Go](https://go.dev/doc/database/manage-connections)
 
 ### Batch операции
 
 ```go
 // Batch insert с database/sql
-func batchInsert(db *sql.DB, users []User) error {
-    tx, err := db.Begin()
+func batchInsert(ctx context.Context, db *sql.DB, users []User) error {
+    if len(users) == 0 {
+        return nil
+    }
+
+    tx, err := db.BeginTx(ctx, nil)
     if err != nil {
         return err
     }
     defer tx.Rollback()
 
-    stmt, err := tx.Prepare("INSERT INTO users (name, email) VALUES ($1, $2)")
+    stmt, err := tx.PrepareContext(ctx, "INSERT INTO users (name, email) VALUES ($1, $2)")
     if err != nil {
         return err
     }
     defer stmt.Close()
 
     for _, user := range users {
-        _, err := stmt.Exec(user.Name, user.Email)
+        _, err := stmt.ExecContext(ctx, user.Name, user.Email)
         if err != nil {
             return err
         }
@@ -426,81 +527,109 @@ func batchInsert(db *sql.DB, users []User) error {
 }
 ```
 
+Один подготовленный оператор выполняется отдельно для каждого пользователя в общей транзакции. Если вторая вставка нарушит ограничение уникальности, отложенный `Rollback` отменит и первую. Ошибка `Commit` возвращается вызывающему коду.
+
+[Go — выполнение транзакций](https://go.dev/doc/database/execute-transactions)
+
 ### Batch операции с sqlx
 
 ```go
-func batchInsertWithSqlx(db *sqlx.DB, users []User) error {
+func batchInsertWithSqlx(ctx context.Context, db *sqlx.DB, users []User) error {
+    if len(users) == 0 {
+        return nil
+    }
+
     query := `INSERT INTO users (name, email) VALUES (:name, :email)`
-    _, err := db.NamedExec(query, users)
+    _, err := db.NamedExecContext(ctx, query, users)
     return err
 }
 ```
 
+В sqlx 1.4.0 для этого шаблона библиотека разворачивает срез в один `INSERT` с группой `VALUES` на пользователя. Проверка пустого среза предотвращает ошибку привязки параметров. Для большого списка учитывайте предел числа параметров и размер запроса.
+
+[sqlx 1.4.0 — привязка параметров среза](https://github.com/jmoiron/sqlx/blob/v1.4.0/named.go)
+
 ### Batch операции с GORM
 
 ```go
-func batchInsertWithGORM(db *gorm.DB, users []User) error {
-    return db.CreateInBatches(users, 100).Error
+func batchInsertWithGORM(ctx context.Context, db *gorm.DB, users []User) error {
+    if len(users) == 0 {
+        return nil
+    }
+
+    return db.WithContext(ctx).CreateInBatches(&users, 100).Error
 }
 ```
 
+Размер 100 задаёт число записей в порции. Если импорт разбит на несколько самостоятельных вызовов, для атомарности всего импорта объедините их одной транзакцией и выполняйте каждый вызов через её объект.
+
+[GORM — пакетная вставка](https://gorm.io/docs/create.html#Batch-Insert)
+
 ### Сложные запросы с JOIN
 
+Пример для PostgreSQL. Сначала выбираем страницу из 50 пользователей с положительными ID, затем присоединяем их публикации. Для первой страницы передайте `afterID = 0`, для следующей — ID последнего пользователя.
+
 ```go
-// database/sql
-func getUsersWithPosts(db *sql.DB) ([]UserWithPosts, error) {
-    query := `
+type JoinedPost struct {
+    ID    int64
+    Title sql.NullString
+}
+
+type UserWithPosts struct {
+    ID    int64
+    Name  string
+    Posts []JoinedPost
+}
+
+func getUsersWithPosts(ctx context.Context, db *sql.DB, afterID int64) ([]UserWithPosts, error) {
+    const query = `
         SELECT u.id, u.name, p.id, p.title
-        FROM users u
-        LEFT JOIN posts p ON u.id = p.user_id
+        FROM (
+            SELECT id, name
+            FROM users
+            WHERE id > $1
+            ORDER BY id
+            LIMIT 50
+        ) u
+        LEFT JOIN posts p ON p.user_id = u.id
         ORDER BY u.id, p.id
     `
 
-    rows, err := db.Query(query)
+    rows, err := db.QueryContext(ctx, query, afterID)
     if err != nil {
         return nil, err
     }
     defer rows.Close()
 
-    var results []UserWithPosts
-    currentUser := &UserWithPosts{}
-
+    var users []UserWithPosts
     for rows.Next() {
-        var userID int
-        var userName string
+        var user UserWithPosts
         var postID sql.NullInt64
-        var postTitle sql.NullString
-
-        if err := rows.Scan(&userID, &userName, &postID, &postTitle); err != nil {
+        var title sql.NullString
+        if err := rows.Scan(&user.ID, &user.Name, &postID, &title); err != nil {
             return nil, err
         }
 
-        if currentUser.ID != userID {
-            if currentUser.ID != 0 {
-                results = append(results, *currentUser)
-            }
-            currentUser = &UserWithPosts{
-                ID:   userID,
-                Name: userName,
-                Posts: []Post{},
-            }
+        if len(users) == 0 || users[len(users)-1].ID != user.ID {
+            users = append(users, user)
         }
-
         if postID.Valid {
-            currentUser.Posts = append(currentUser.Posts, Post{
-                ID:    int(postID.Int64),
-                Title: postTitle.String,
-            })
+            current := &users[len(users)-1]
+            current.Posts = append(current.Posts, JoinedPost{ID: postID.Int64, Title: title})
         }
     }
-
-    if currentUser.ID != 0 {
-        results = append(results, *currentUser)
+    if err := rows.Err(); err != nil {
+        return nil, err
     }
-
-    return results, nil
+    return users, nil
 }
 ```
+
+`ORDER BY u.id, p.id` собирает строки одного пользователя рядом. Если публикаций нет, `LEFT JOIN` всё равно возвращает пользователя, а поля публикации приходят как `NULL`. Проверяем первичный ключ публикации, чтобы отличить отсутствие публикации от публикации с пустым или `NULL`-заголовком. Пример предполагает, что `users.name` задано. Если чтение прерывается после получения нескольких строк, `rows.Err()` позволяет вернуть ошибку вместо неполной страницы.
+
+Лимит в подзапросе действует на пользователей. Объём публикаций на странице может быть существенно больше. Если запрос должен ограничивать и его, задайте отдельную пагинацию публикаций.
+
+[Документация PostgreSQL по JOIN](https://www.postgresql.org/docs/current/queries-table-expressions.html#QUERIES-JOIN) · [Документация Go по Rows.Err](https://pkg.go.dev/database/sql#Rows.Err)
 
 ### Сложные запросы с GORM
 
@@ -517,90 +646,108 @@ type Post struct {
     UserID uint
 }
 
-func getUsersWithPostsGORM(db *gorm.DB) ([]User, error) {
+func getUsersWithPostsGORM(ctx context.Context, db *gorm.DB, afterID uint) ([]User, error) {
     var users []User
-    err := db.Preload("Posts").Find(&users).Error
-    return users, err
+    err := db.WithContext(ctx).
+        Where("id > ?", afterID).
+        Order("id").
+        Limit(50).
+        Preload("Posts").
+        Find(&users).Error
+    if err != nil {
+        return nil, err
+    }
+    return users, nil
 }
 ```
 
+Передайте `afterID = 0` для первой страницы с положительными ID. Для следующей страницы передайте последний ID из полученного списка. Для непустой страницы GORM загружает пользователей одним запросом и их публикации отдельным запросом с условием `user_id IN (...)`. Это заменяет отдельный запрос публикаций для каждого пользователя. Ограничение в 50 строк относится только к пользователям. Если у одного пользователя тысячи публикаций, для них нужна отдельная пагинация.
+
+Условие внутри `Preload("Posts", ...)` фильтрует публикации. Чтобы выбрать только пользователей, у которых есть подходящая публикация, добавьте условие в запрос пользователей, например через `EXISTS`. `Join Preload` в GORM рассчитан на связи «один к одному», такие как `has one` и `belongs to`. При ручном SQL JOIN для связи «один ко многим» лимит на объединённый результат ограничивает пары «пользователь — публикация». Чтобы сохранить размер страницы пользователей, сначала выберите страницу родительских строк.
+
+[Загрузка связей GORM](https://gorm.io/docs/preload.html) · [Связь has many](https://gorm.io/docs/has_many.html)
+
 ### Работа с NULL значениями
 
-```go
-import "database/sql"
+В примере PostgreSQL столбцы `id` и `name` имеют ограничение `NOT NULL`, а `email` и `age` допускают `NULL`.
 
-type User struct {
-    ID    int
+```go
+type UserContact struct {
+    ID    int64
     Name  string
     Email sql.NullString
     Age   sql.NullInt64
 }
 
-func handleNullValues(db *sql.DB) {
-    var user User
-    err := db.QueryRow("SELECT id, name, email, age FROM users WHERE id = $1", 1).
-        Scan(&user.ID, &user.Name, &user.Email, &user.Age)
+func findUserContact(ctx context.Context, db *sql.DB, id int64) (UserContact, error) {
+    var user UserContact
+    err := db.QueryRowContext(ctx,
+        "SELECT id, name, email, age FROM users WHERE id = $1", id,
+    ).Scan(&user.ID, &user.Name, &user.Email, &user.Age)
     if err != nil {
-        log.Fatal(err)
+        return UserContact{}, err
     }
-
-    if user.Email.Valid {
-        fmt.Println("Email:", user.Email.String)
-    } else {
-        fmt.Println("Email is NULL")
-    }
-
-    if user.Age.Valid {
-        fmt.Println("Age:", user.Age.Int64)
-    }
+    return user, nil
 }
 ```
+
+- Если строки с таким ID нет, `Scan` возвращает `sql.ErrNoRows`.
+- Если строка найдена и `email IS NULL`, чтение проходит успешно и `Email.Valid == false`.
+- Для пустой строки `Email.Valid == true` и `Email.String == ""`. Для записанного возраста `0` получим `Age.Valid == true` и `Age.Int64 == 0`.
+
+Проверяйте `Valid` после успешного `Scan`. Чтение SQL `NULL` напрямую в `string` или `int64` приводит к ошибке преобразования. При записи параметра `sql.NullString{Valid: false}` передаёт SQL `NULL` через интерфейс `driver.Valuer`. Если используете `COALESCE(email, '')`, то намеренно сводите два разных состояния к пустой строке.
+
+[Контракт Row.Scan](https://pkg.go.dev/database/sql#Row.Scan) · [Тип NullString](https://pkg.go.dev/database/sql#NullString) · [Преобразование значений в database/sql](https://go.dev/src/database/sql/convert.go)
 
 ### Работа с JSON в PostgreSQL
 
-```go
-// Сохранение JSON
-type User struct {
-    ID    int
-    Name  string
-    Metadata json.RawMessage
-}
+Пусть `users.metadata` имеет тип `jsonb` и допускает SQL `NULL`. Передавайте документ как текстовый параметр с явным приведением к `jsonb`. Значение `nil` записывает SQL `NULL`, а `json.RawMessage("null")` записывает JSON `null`.
 
-func saveJSON(db *sql.DB, user User) error {
-    _, err := db.Exec(
-        "INSERT INTO users (name, metadata) VALUES ($1, $2)",
-        user.Name, user.Metadata,
-    )
+```go
+func saveJSON(ctx context.Context, db *sql.DB, name string, metadata json.RawMessage) error {
+    var param any
+    if metadata != nil {
+        param = string(metadata)
+    }
+    _, err := db.ExecContext(ctx,
+        "INSERT INTO users (name, metadata) VALUES ($1, $2::jsonb)", name, param)
     return err
 }
 
-// Чтение JSON
-func readJSON(db *sql.DB, id int) (*User, error) {
-    var user User
-    err := db.QueryRow(
-        "SELECT id, name, metadata FROM users WHERE id = $1",
-        id,
-    ).Scan(&user.ID, &user.Name, &user.Metadata)
-    return &user, err
+func readJSON(ctx context.Context, db *sql.DB, id int64) (json.RawMessage, error) {
+    var metadata sql.NullString
+    err := db.QueryRowContext(ctx,
+        "SELECT metadata::text FROM users WHERE id = $1", id).Scan(&metadata)
+    if err != nil {
+        return nil, err
+    }
+    if !metadata.Valid {
+        return nil, nil
+    }
+    return json.RawMessage(metadata.String), nil
 }
 ```
 
+Если строки нет, `Scan` возвращает `sql.ErrNoRows`. Для SQL `NULL` существующей строки функция возвращает `nil, nil`. Для JSON `null` она возвращает байты текста `null`. PostgreSQL проверяет вход при приведении к `jsonb`. Тип `jsonb` не сохраняет исходное форматирование и порядок ключей объекта.
+
+См. [типы JSON в PostgreSQL 19](https://www.postgresql.org/docs/19/datatype-json.html) и [sql.NullString](https://pkg.go.dev/database/sql#NullString).
+
 ### Работа с массивами в PostgreSQL
 
+В примере `users.tags` имеет тип `text[]`. Непустые массивы одномерные, с нижней границей 1 и без `NULL` внутри. `pq.Array` кодирует слайс как параметр SQL и декодирует результат через `Scan`.
+
 ```go
-// Сохранение массива
-func saveArray(db *sql.DB, userID int, tags []string) error {
-    _, err := db.Exec(
+func saveArray(ctx context.Context, db *sql.DB, userID int, tags []string) error {
+    _, err := db.ExecContext(ctx,
         "UPDATE users SET tags = $1 WHERE id = $2",
         pq.Array(tags), userID,
     )
     return err
 }
 
-// Чтение массива
-func readArray(db *sql.DB, userID int) ([]string, error) {
+func readArray(ctx context.Context, db *sql.DB, userID int) ([]string, error) {
     var tags []string
-    err := db.QueryRow(
+    err := db.QueryRowContext(ctx,
         "SELECT tags FROM users WHERE id = $1",
         userID,
     ).Scan(pq.Array(&tags))
@@ -608,45 +755,39 @@ func readArray(db *sql.DB, userID int) ([]string, error) {
 }
 ```
 
+- При записи `nil`-слайс передаёт SQL `NULL`, а `[]string{}` передаёт пустой массив. При чтении они возвращаются как `nil` и ненулевой слайс длины 0 соответственно. Если строки пользователя нет, `Scan` возвращает `sql.ErrNoRows`.
+- Если внутри массива допустимы `NULL`-элементы, сканируйте в `[]sql.NullString` через `pq.Array(&tags)`. Поле `Valid` отличает `NULL` от пустой строки. При сканировании в `[]string` такой элемент вызовет ошибку.
+- PostgreSQL поддерживает многомерные массивы и нижнюю границу индекса, отличную от 1. Сканирование через `pq.Array` эти случаи не поддерживает.
+
+[Массивы PostgreSQL](https://www.postgresql.org/docs/current/arrays.html) · [lib/pq Array](https://pkg.go.dev/github.com/lib/pq#Array)
+
 ### Оптимизация запросов
 
-```go
-// Использование индексов
-func createIndexes(db *sql.DB) error {
-    _, err := db.Exec("CREATE INDEX idx_users_email ON users(email)")
-    if err != nil {
-        return err
-    }
+Допустим, приложение часто ищет пользователя по `email`. Сначала проверьте существующие индексы и план запроса на репрезентативных данных. Если ограничение `UNIQUE (email)` уже создало подходящий индекс, второй индекс на ту же колонку добавит работу при записи. На маленькой таблице или при низкой селективности PostgreSQL может выбрать последовательное чтение даже при наличии индекса.
 
-    _, err = db.Exec("CREATE INDEX idx_users_name ON users(name)")
-    return err
-}
+На большой таблице с активными записями создание индекса вынесите в миграцию. Для обычной непартиционированной таблицы PostgreSQL можно использовать:
 
-// EXPLAIN для анализа запросов
-func explainQuery(db *sql.DB, query string) error {
-    rows, err := db.Query("EXPLAIN ANALYZE " + query)
-    if err != nil {
-        return err
-    }
-    defer rows.Close()
-
-    for rows.Next() {
-        var plan string
-        if err := rows.Scan(&plan); err != nil {
-            return err
-        }
-        fmt.Println(plan)
-    }
-    return nil
-}
+```sql
+CREATE INDEX CONCURRENTLY idx_users_email ON public.users (email);
 ```
+
+Обычный `CREATE INDEX` блокирует запись в таблицу до конца построения. `CONCURRENTLY` позволяет продолжать запись, но делает дополнительные проходы и может ждать завершения транзакций. Запустите эту команду вне транзакционного блока, включая блок, который мог бы открыть инструмент миграций. После сбоя проверьте, не остался ли индекс в состоянии `INVALID`: такой индекс не используется для чтения, но может создавать накладные расходы при записи. Перед повторной миграцией устраните причину сбоя и удалите невалидный индекс либо перестройте его.
+
+После миграции сравните планы и время операции. [Пример диагностики использует фиксированный SELECT с параметром](#практические-примеры-оптимизация-запросов-через-explain). `EXPLAIN ANALYZE` выполняет переданный запрос, поэтому ограничьте диагностический код заранее выбранным SQL.
+
+[PostgreSQL — CREATE INDEX](https://www.postgresql.org/docs/current/sql-createindex.html) · [PostgreSQL — EXPLAIN](https://www.postgresql.org/docs/current/sql-explain.html)
 
 ### Работа с большими результатами
 
+Для экспорта пользователей можно обрабатывать строки по одной, не собирая весь результат в слайс. Такой цикл ограничивает объём данных, который накапливает сам обработчик. Буферизация в драйвере и на сервере зависит от реализации и плана запроса.
+
 ```go
-// Streaming больших результатов
-func streamLargeResults(db *sql.DB, callback func(User) error) error {
-    rows, err := db.Query("SELECT id, name FROM users")
+func streamLargeResults(
+    ctx context.Context,
+    db *sql.DB,
+    consume func(context.Context, User) error,
+) error {
+    rows, err := db.QueryContext(ctx, "SELECT id, name FROM users")
     if err != nil {
         return err
     }
@@ -657,25 +798,29 @@ func streamLargeResults(db *sql.DB, callback func(User) error) error {
         if err := rows.Scan(&user.ID, &user.Name); err != nil {
             return err
         }
-
-        if err := callback(user); err != nil {
+        if err := consume(ctx, user); err != nil {
             return err
         }
     }
-
     return rows.Err()
 }
 ```
+
+`defer rows.Close()` освобождает результат и при досрочном выходе. `Rows.Err()` отличает конец результата от ошибки чтения. Уже переданные обработчику строки могут быть записаны к моменту ошибки, поэтому экспорт с возможностью повтора должен учитывать частичный результат. Дедлайн задаёт вызывающий код. Для прерывания работы обработчик должен сам учитывать переданный контекст.
+
+Пока результат открыт, запрос занимает соединение. При `SetMaxOpenConns(1)` обработчик, который сам обращается к той же `sql.DB`, может ждать это соединение до истечения дедлайна. Если обработка требует новых запросов или медленного внешнего вызова, читайте ограниченную страницу, закрывайте результат и только затем обрабатывайте данные. При таком обходе отдельно определите требования к снимку данных: несколько страниц могут прочитать разные состояния таблицы.
+
+[Go — Rows](https://pkg.go.dev/database/sql#Rows) · [Go — управление пулом](https://go.dev/doc/database/manage-connections) · [Go — отмена запросов](https://go.dev/doc/database/cancel-operations)
 
 ### Pagination
 
 ```go
 // Offset-based pagination
-func getUsersPaginated(db *sql.DB, page, pageSize int) ([]User, error) {
+func getUsersPaginated(ctx context.Context, db *sql.DB, page, pageSize int) ([]User, error) {
     offset := (page - 1) * pageSize
     query := "SELECT id, name FROM users ORDER BY id LIMIT $1 OFFSET $2"
 
-    rows, err := db.Query(query, pageSize, offset)
+    rows, err := db.QueryContext(ctx, query, pageSize, offset)
     if err != nil {
         return nil, err
     }
@@ -690,21 +835,24 @@ func getUsersPaginated(db *sql.DB, page, pageSize int) ([]User, error) {
         users = append(users, user)
     }
 
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
     return users, nil
 }
 
 // Cursor-based pagination
-func getUsersCursor(db *sql.DB, cursor int, limit int) ([]User, int, error) {
+func getUsersCursor(ctx context.Context, db *sql.DB, cursor int, limit int) ([]User, int, error) {
     query := "SELECT id, name FROM users WHERE id > $1 ORDER BY id LIMIT $2"
 
-    rows, err := db.Query(query, cursor, limit)
+    rows, err := db.QueryContext(ctx, query, cursor, limit)
     if err != nil {
         return nil, 0, err
     }
     defer rows.Close()
 
     var users []User
-    var lastID int
+    lastID := cursor
     for rows.Next() {
         var user User
         if err := rows.Scan(&user.ID, &user.Name); err != nil {
@@ -714,9 +862,32 @@ func getUsersCursor(db *sql.DB, cursor int, limit int) ([]User, int, error) {
         lastID = user.ID
     }
 
+    if err := rows.Err(); err != nil {
+        return nil, cursor, err
+    }
     return users, lastID, nil
 }
 ```
+
+В обоих примерах `id` — уникальный ключ, а вызывающий код заранее проверяет положительный размер страницы и допустимость смещения. При ошибке чтения функция возвращает ошибку целиком, чтобы клиент не принял обрезанную страницу за полную.
+
+`OFFSET` позволяет перейти к произвольной странице, но сервер всё равно вычисляет пропускаемые строки. Вставка или удаление перед смещением между запросами может сдвинуть границу страницы. Запрос по курсору продолжает чтение после последнего полученного `id` и может использовать индекс по этому ключу. Для первого запроса передайте 0, если все ID положительные. Пустая страница сохраняет предыдущий курсор. Между запросами данные могут измениться, поэтому курсор сам по себе не фиксирует единый снимок.
+
+[PostgreSQL — LIMIT и OFFSET](https://www.postgresql.org/docs/19/queries-limit.html) · [Go — Rows.Err](https://pkg.go.dev/database/sql#Rows.Err)
+
+Если список отсортирован от новых записей к старым, передавайте в курсоре оба поля сортировки. В примере `created_at` задан как `NOT NULL`, а уникальный `id` различает записи с одинаковым временем. Для первой страницы опустите условие `WHERE`. Для следующих передайте время и ID последней строки плюс размер страницы.
+
+```sql
+SELECT id, name, created_at
+FROM users
+WHERE (created_at, id) < ($1, $2)
+ORDER BY created_at DESC, id DESC
+LIMIT $3;
+```
+
+Если предыдущая страница закончилась на ID 42, запись с тем же временем и ID 41 попадёт за курсор. Курсор из одного `created_at` с условием `created_at < $1` пропустил бы её. Сравнение пары подходит для двух полей, отсортированных по убыванию. При смешанных направлениях запишите условие явно по правилам каждого поля. Изменение поля сортировки между запросами всё ещё может привести к пропуску или повторному появлению строки.
+
+[PostgreSQL — сравнение строк](https://www.postgresql.org/docs/19/functions-comparisons.html#ROW-WISE-COMPARISON)
 
 ### Repository Pattern
 
@@ -760,36 +931,47 @@ func (r *userRepository) Create(user *User) error {
 
 ### Unit of Work Pattern
 
-```go
-type UnitOfWork struct {
-    db     *sql.DB
-    tx     *sql.Tx
-    users  UserRepository
-    posts  PostRepository
-}
+В этом примере создание пользователя и его первой публикации образуют одну операцию. `sql.Tx` задаёт общую транзакционную границу.
 
-func NewUnitOfWork(db *sql.DB) (*UnitOfWork, error) {
-    tx, err := db.Begin()
+```go
+func createUserWithFirstPost(
+    ctx context.Context,
+    db *sql.DB,
+    name, email, title string,
+) (int64, error) {
+    tx, err := db.BeginTx(ctx, nil)
     if err != nil {
-        return nil, err
+        return 0, err
+    }
+    defer tx.Rollback()
+
+    var userID int64
+    err = tx.QueryRowContext(ctx,
+        `INSERT INTO users (name, email) VALUES ($1, $2) RETURNING id`,
+        name, email,
+    ).Scan(&userID)
+    if err != nil {
+        return 0, err
     }
 
-    return &UnitOfWork{
-        db:    db,
-        tx:    tx,
-        users: NewUserRepositoryWithTx(tx),
-        posts: NewPostRepositoryWithTx(tx),
-    }, nil
-}
+    _, err = tx.ExecContext(ctx,
+        `INSERT INTO posts (user_id, title) VALUES ($1, $2)`,
+        userID, title,
+    )
+    if err != nil {
+        return 0, err
+    }
 
-func (uow *UnitOfWork) Commit() error {
-    return uow.tx.Commit()
-}
-
-func (uow *UnitOfWork) Rollback() error {
-    return uow.tx.Rollback()
+    if err := tx.Commit(); err != nil {
+        return 0, err
+    }
+    return userID, nil
 }
 ```
+
+Если вставка публикации нарушит ограничение, отложенный `Rollback` отменит и создание пользователя. Идентификатор возвращается только после успешного `Commit`. Если операции вынесены в репозитории, передайте им тот же `*sql.Tx`. Вызов через `*sql.DB` выполнится за пределами этой транзакции.
+
+[Go — выполнение транзакций](https://go.dev/doc/database/execute-transactions)
 
 ### Практические примеры: Connection Pooling
 
@@ -798,7 +980,7 @@ type DBManager struct {
     db *sql.DB
 }
 
-func NewDBManager(dsn string) (*DBManager, error) {
+func NewDBManager(ctx context.Context, dsn string) (*DBManager, error) {
     db, err := sql.Open("postgres", dsn)
     if err != nil {
         return nil, err
@@ -809,11 +991,18 @@ func NewDBManager(dsn string) (*DBManager, error) {
     db.SetMaxIdleConns(5)
     db.SetConnMaxLifetime(5 * time.Minute)
 
-    if err := db.Ping(); err != nil {
+    pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+    defer cancel()
+    if err := db.PingContext(pingCtx); err != nil {
+        _ = db.Close()
         return nil, err
     }
 
     return &DBManager{db: db}, nil
+}
+
+func (m *DBManager) Close() error {
+    return m.db.Close()
 }
 
 func (m *DBManager) Stats() sql.DBStats {
@@ -821,104 +1010,74 @@ func (m *DBManager) Stats() sql.DBStats {
 }
 ```
 
+При неудачной проверке конструктор закрывает созданный пул. После успешного запуска вызывающий код закрывает его при завершении приложения.
+
 ### Практические примеры: Health Check
 
 ```go
-func (m *DBManager) HealthCheck() error {
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (m *DBManager) HealthCheck(ctx context.Context) error {
+    ctx, cancel := context.WithTimeout(ctx, time.Second)
     defer cancel()
 
     return m.db.PingContext(ctx)
 }
 ```
 
+HTTP-обработчик передаёт `r.Context()`, чтобы проверка учитывала отмену запроса. Если пул исчерпан, ожидание соединения может израсходовать весь бюджет даже при работающей БД. Если без БД сервис не может обрабатывать трафик, используйте этот сигнал для readiness. Для liveness проверяйте состояние самого процесса, чтобы временная недоступность БД не приводила к перезапускам.
+
+[Go — DB.PingContext](https://pkg.go.dev/database/sql#DB.PingContext) · [Kubernetes — пробы контейнера](https://kubernetes.io/docs/concepts/workloads/pods/probes/)
+
 ### Практические примеры: Query Builder
 
+В списке пользователей клиент выбирает сортировку по имени или по времени создания. Код сопоставляет этот выбор с фиксированным SQL-фрагментом, а параметры фильтра и пагинации передаёт отдельно.
+
 ```go
-type QueryBuilder struct {
-    table   string
-    where   []string
-    orderBy string
-    limit   int
-    offset  int
-}
-
-func NewQueryBuilder(table string) *QueryBuilder {
-    return &QueryBuilder{table: table}
-}
-
-func (qb *QueryBuilder) Where(condition string) *QueryBuilder {
-    qb.where = append(qb.where, condition)
-    return qb
-}
-
-func (qb *QueryBuilder) OrderBy(field string) *QueryBuilder {
-    qb.orderBy = field
-    return qb
-}
-
-func (qb *QueryBuilder) Limit(n int) *QueryBuilder {
-    qb.limit = n
-    return qb
-}
-
-func (qb *QueryBuilder) Build() string {
-    query := "SELECT * FROM " + qb.table
-
-    if len(qb.where) > 0 {
-        query += " WHERE " + strings.Join(qb.where, " AND ")
+func listUsers(ctx context.Context, db *sql.DB, domain string, order string, limit, offset int) (*sql.Rows, error) {
+    var orderBy string
+    switch order {
+    case "", "newest":
+        orderBy = "created_at DESC, id DESC"
+    case "name":
+        orderBy = "name ASC, id ASC"
+    default:
+        return nil, fmt.Errorf("unknown sort order: %q", order)
     }
 
-    if qb.orderBy != "" {
-        query += " ORDER BY " + qb.orderBy
+    if limit < 1 || limit > 100 || offset < 0 {
+        return nil, fmt.Errorf("invalid pagination: limit=%d, offset=%d", limit, offset)
     }
 
-    if qb.limit > 0 {
-        query += fmt.Sprintf(" LIMIT %d", qb.limit)
-    }
+    query := `SELECT id, email, name, created_at
+              FROM users
+              WHERE split_part(email, '@', 2) = $1
+              ORDER BY ` + orderBy + `
+              LIMIT $2 OFFSET $3`
 
-    if qb.offset > 0 {
-        query += fmt.Sprintf(" OFFSET %d", qb.offset)
-    }
-
-    return query
+    return db.QueryContext(ctx, query, domain, limit, offset)
 }
 ```
+
+`ORDER BY $1` передаёт значение выражения, поэтому через него нельзя выбрать имя столбца или направление сортировки. В примере допустимые варианты перечислены в `switch`, а уникальный `id` разрешает совпадения по первому ключу сортировки. Ограничение в 100 строк задаёт приложение. Вызывающий код закрывает `Rows` и проверяет `Rows.Err()` после обхода. [Сортировка в PostgreSQL](https://www.postgresql.org/docs/19/queries-order.html) · [Параметры PostgreSQL](https://www.postgresql.org/docs/19/sql-prepare.html) · [Чтение строк в Go](https://go.dev/doc/database/querying#querying-for-multiple-rows)
 
 ### Практические примеры: Database Migrations
 
-```go
-type Migration struct {
-    Version int
-    Up      func(*sql.DB) error
-    Down    func(*sql.DB) error
-}
+В PostgreSQL добавим необязательное поле для имени, которое видит пользователь. Старая версия сервиса может продолжать записывать строки, если её запросы перечисляют столбцы явно.
 
-type Migrator struct {
-    db         *sql.DB
-    migrations []Migration
-}
+`migrations/000007_add_display_name.up.sql`
 
-func NewMigrator(db *sql.DB) *Migrator {
-    return &Migrator{
-        db:         db,
-        migrations: []Migration{},
-    }
-}
-
-func (m *Migrator) Add(migration Migration) {
-    m.migrations = append(m.migrations, migration)
-}
-
-func (m *Migrator) Up() error {
-    for _, migration := range m.migrations {
-        if err := migration.Up(m.db); err != nil {
-            return err
-        }
-    }
-    return nil
-}
+```sql
+ALTER TABLE public.users ADD COLUMN display_name text;
 ```
+
+`migrations/000007_add_display_name.down.sql`
+
+```sql
+ALTER TABLE public.users DROP COLUMN display_name;
+```
+
+Запустите `Up()` из отдельной задачи деплоя для целевой базы. `golang-migrate` применяет ожидающие версии по порядку и хранит текущую версию. При повторном запуске с тем же набором файлов и чистым состоянием ожидайте `migrate.ErrNoChange`. Проверяйте совместимость старого приложения с новой схемой до раскатки. Обратная миграция удаляет и столбец, и записанные в него данные, поэтому при откате приложения обычно можно оставить добавленный совместимый столбец.
+
+Документация: [формат миграций golang-migrate](https://github.com/golang-migrate/migrate/blob/master/MIGRATIONS.md).
 
 ### Практические примеры: Repository паттерн с database/sql
 
@@ -991,7 +1150,7 @@ func (r *UserRepository) Delete(ctx context.Context, id int) error {
 func (r *UserRepository) FindAll(ctx context.Context, limit, offset int) ([]User, error) {
     query := `SELECT id, email, name, created_at
               FROM users
-              ORDER BY created_at DESC
+              ORDER BY created_at DESC, id DESC
               LIMIT $1 OFFSET $2`
     rows, err := r.db.QueryContext(ctx, query, limit, offset)
     if err != nil {
@@ -1008,9 +1167,14 @@ func (r *UserRepository) FindAll(ctx context.Context, limit, offset int) ([]User
         users = append(users, user)
     }
 
-    return users, rows.Err()
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
+    return users, nil
 }
 ```
+
+`FindAll` возвращает страницу только после успешного чтения всех её строк. Если чтение оборвалось посередине, вызывающий код получает ошибку и может повторить запрос. Уникальный `id` фиксирует порядок пользователей с одинаковым `created_at`. При вставке или удалении строк между запросами страницы с `OFFSET` всё равно могут смещаться. [Чтение строк в Go](https://go.dev/doc/database/querying#querying-for-multiple-rows) · [LIMIT и OFFSET в PostgreSQL](https://www.postgresql.org/docs/19/queries-limit.html)
 
 ### Практические примеры: Batch операции с транзакциями
 
@@ -1039,6 +1203,16 @@ func BatchInsertUsers(ctx context.Context, db *sql.DB, users []User) error {
 }
 
 func BatchUpdateUsers(ctx context.Context, db *sql.DB, updates map[int]User) error {
+    if len(updates) == 0 {
+        return nil
+    }
+
+    ids := make([]int, 0, len(updates))
+    for id := range updates {
+        ids = append(ids, id)
+    }
+    sort.Ints(ids)
+
     tx, err := db.BeginTx(ctx, nil)
     if err != nil {
         return err
@@ -1052,7 +1226,8 @@ func BatchUpdateUsers(ctx context.Context, db *sql.DB, updates map[int]User) err
     }
     defer stmt.Close()
 
-    for id, user := range updates {
+    for _, id := range ids {
+        user := updates[id]
         if _, err := stmt.ExecContext(ctx, user.Email, user.Name, id); err != nil {
             return err
         }
@@ -1062,264 +1237,171 @@ func BatchUpdateUsers(ctx context.Context, db *sql.DB, updates map[int]User) err
 }
 ```
 
+Для `sort.Ints` подключите пакет `sort`. Если две транзакции обновляют пользователей 10 и 20 в разном порядке, каждая может удерживать блокировку строки, нужную другой. Единый порядок по ID устраняет этот сценарий, когда все участники захватывают те же блокировки в том же порядке. Другие операции, например выполняемые триггерами, могут захватывать дополнительные блокировки. [Порядок обхода map в Go](https://go.dev/ref/spec#For_range) · [Взаимные блокировки в PostgreSQL](https://www.postgresql.org/docs/19/explicit-locking.html#LOCKING-DEADLOCKS)
+
 ### Практические примеры: Запросы с динамическими условиями
 
+Для PostgreSQL формируйте условия из заранее заданных фрагментов. Значения фильтров передавайте отдельно через аргументы `QueryContext`.
+
 ```go
-type QueryBuilder struct {
-    conditions []string
-    args       []interface{}
-}
+func queryUsers(ctx context.Context, db *sql.DB, email *string, minAge *int) (*sql.Rows, error) {
+    query := `SELECT id, email, age FROM users`
+    var conditions []string
+    var args []any
 
-func NewQueryBuilder() *QueryBuilder {
-    return &QueryBuilder{
-        conditions: make([]string, 0),
-        args:       make([]interface{}, 0),
+    if email != nil {
+        args = append(args, *email)
+        conditions = append(conditions, fmt.Sprintf("email = $%d", len(args)))
     }
-}
-
-func (qb *QueryBuilder) Where(condition string, arg interface{}) *QueryBuilder {
-    qb.conditions = append(qb.conditions, condition)
-    qb.args = append(qb.args, arg)
-    return qb
-}
-
-func (qb *QueryBuilder) Build(baseQuery string) (string, []interface{}) {
-    if len(qb.conditions) > 0 {
-        baseQuery += " WHERE " + strings.Join(qb.conditions, " AND ")
+    if minAge != nil {
+        args = append(args, *minAge)
+        conditions = append(conditions, fmt.Sprintf("age >= $%d", len(args)))
     }
-    return baseQuery, qb.args
-}
+    if len(conditions) > 0 {
+        query += " WHERE " + strings.Join(conditions, " AND ")
+    }
 
-// Использование
-builder := NewQueryBuilder()
-query := "SELECT * FROM users"
-
-if email != "" {
-    builder.Where("email = $?", email)
+    return db.QueryContext(ctx, query, args...)
 }
-if age > 0 {
-    builder.Where("age >= $?", age)
-}
-
-finalQuery, args := builder.Build(query)
-rows, err := db.Query(finalQuery, args...)
 ```
+
+Если задан только минимальный возраст, условие будет `age >= $1`. Если заданы оба фильтра, получится `email = $1 AND age >= $2`. `nil` означает отсутствие фильтра, поэтому нулевой возраст можно передать как значение. Без фильтров запрос читает всю таблицу. Вызывающий код закрывает `Rows` и проверяет `Rows.Err()` после обхода. Параметры PostgreSQL обозначают значения. Имена таблиц и столбцов для динамического запроса выбирайте из заранее заданных SQL-фрагментов. [Параметры PostgreSQL](https://www.postgresql.org/docs/19/sql-prepare.html) · [Передача значений в Go](https://go.dev/doc/database/sql-injection)
 
 ### Практические примеры: Миграции с проверкой
 
+Для большой обычной таблицы PostgreSQL можно строить индекс без блокировки записи на всё время построения. Выделите команду в отдельный файл версии и выполняйте её вне явного блока `BEGIN … COMMIT`. Проверьте, что выбранный драйвер и настройки запуска не оборачивают файл в транзакцию.
+
+`migrations/000008_index_users_created_at.up.sql`
+
+```sql
+CREATE INDEX CONCURRENTLY users_created_at_idx ON public.users (created_at);
+```
+
+Если запуск прервался и инструмент сообщил о грязной версии, сначала остановите повторные запуски и проверьте состояние схемы. Например, после неудачного построения индекс может остаться в каталоге с `indisvalid = false`.
+
+```sql
+SELECT i.indisvalid, pg_get_indexdef(i.indexrelid) AS definition
+FROM pg_index AS i
+WHERE i.indrelid = 'public.users'::regclass
+  AND i.indexrelid = to_regclass('public.users_created_at_idx');
+```
+
+Отсутствие строки означает, что проверка не нашла этот индекс на указанной таблице. Если индекс валиден, сравните его определение с миграцией. Если остался невалидный индекс, определите причину сбоя и спланируйте его удаление перед повторным построением. Для этого обычного индекса можно использовать `DROP INDEX CONCURRENTLY` отдельной командой вне транзакционного блока. Согласуйте номер версии с фактической схемой перед `Force`. Сам вызов меняет метаданные мигратора и не выполняет SQL. `IF NOT EXISTS` здесь может скрыть невалидный индекс или совпадение имени при другом определении.
+
+Документация: [CREATE INDEX](https://www.postgresql.org/docs/19/sql-createindex.html), [DROP INDEX](https://www.postgresql.org/docs/19/sql-dropindex.html), [pg_index](https://www.postgresql.org/docs/19/catalog-pg-index.html).
+
+### Практические примеры: Оптимизация запросов
+
+Если поиск пользователя по email замедлился, сначала измерьте время операции в приложении. Для запроса, возвращающего несколько строк, измерение должно охватывать чтение результата. При превышении выбранного порога пишите в журнал имя операции, например `users.find_by_email`, длительность и результат. Значения параметров и необработанный SQL могут содержать персональные данные.
+
+Сравните измерение приложения с планом PostgreSQL из раздела «Практические примеры: Оптимизация запросов через EXPLAIN». Время в приложении включает ожидание соединения из пула, сетевой обмен и обработку результата. Если серверное выполнение быстрое, проверьте эти этапы отдельно.
+
+## Лучшие практики
+
+1. **Переиспользуйте пул.** Обычно `*sql.DB` создают один раз на конфигурацию подключения и закрывают при остановке приложения. Согласуйте лимит открытых соединений всех реплик приложения с бюджетом БД. Следите за ростом `WaitCount` и `WaitDuration` в `DB.Stats()`.
+2. **Передавайте значения параметрами.** Для этого достаточно аргументов `QueryContext` или `ExecContext`. Явный `PrepareContext` позволяет переиспользовать `Stmt` для повторяющегося SQL. Оцените выигрыш на своей нагрузке и закройте `Stmt`, когда он больше не нужен.
+3. **Освобождайте ресурсы и проверяйте ошибки.** Закрывайте `Rows` при досрочном выходе, проверяйте `Rows.Err()` после обхода, возвращайте выделенный через `DB.Conn` ресурс в пул через `Conn.Close()`. Передавайте контекст операции, чтобы ограничить время ожидания соединения и запроса.
+4. **Задавайте транзакционную границу явно.** Если несколько операций должны фиксироваться вместе, выполняйте их через один `Tx` и проверяйте результат `Commit`. Для массовых операций выбирайте размер пачки с учётом времени транзакции и допустимости частичной фиксации.
+5. **Измеряйте стоимость запросов.** Считайте запросы на бизнес-операцию, чтобы заметить N+1. Сравнивайте пакетную загрузку со связями через `JOIN`, учитывая кратность результата. Проверяйте план на репрезентативных данных перед добавлением индекса и оформляйте изменение схемы миграцией.
+6. **Выбирайте границу слоя доступа по задаче.** Repository оправдан, когда он изолирует детали хранения и упрощает проверку доменных сценариев.
+
+[Go — управление пулом](https://go.dev/doc/database/manage-connections) · [Go — параметры SQL](https://go.dev/doc/database/sql-injection) · [Go — подготовленные запросы](https://go.dev/doc/database/prepared-statements) · [Go — транзакции](https://go.dev/doc/database/execute-transactions)
+
+### Практические примеры: Оптимизация запросов через EXPLAIN
+
+Для поиска пользователя по email начните с обычного `EXPLAIN`, чтобы увидеть оценки планировщика без выполнения запроса. Если нужны наблюдаемые значения, измерьте конкретный запрос на среде с репрезентативными данными. `EXPLAIN ANALYZE` исполняет запрос, поэтому его стоимость и побочные эффекты реальны. Пример ограничен известным `SELECT`, а email передаётся как параметр PostgreSQL.
+
 ```go
-type Migration struct {
-    Version int
-    Name    string
-    Up      string
-    Down    string
-}
+func ExplainUserLookup(ctx context.Context, db *sql.DB, email string) ([]string, error) {
+    ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+    defer cancel()
 
-type MigrationManager struct {
-    db         *sql.DB
-    migrations []Migration
-}
-
-func (mm *MigrationManager) EnsureMigrationsTable() error {
-    query := `CREATE TABLE IF NOT EXISTS schema_migrations (
-        version INTEGER PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`
-    _, err := mm.db.Exec(query)
-    return err
-}
-
-func (mm *MigrationManager) GetAppliedMigrations() (map[int]bool, error) {
-    rows, err := mm.db.Query("SELECT version FROM schema_migrations")
+    const query = `EXPLAIN (ANALYZE, BUFFERS)
+        SELECT id, email FROM public.users WHERE email = $1`
+    rows, err := db.QueryContext(ctx, query, email)
     if err != nil {
         return nil, err
     }
     defer rows.Close()
 
-    applied := make(map[int]bool)
+    var plan []string
     for rows.Next() {
-        var version int
-        if err := rows.Scan(&version); err != nil {
+        var line string
+        if err := rows.Scan(&line); err != nil {
             return nil, err
         }
-        applied[version] = true
+        plan = append(plan, line)
     }
-
-    return applied, rows.Err()
-}
-
-func (mm *MigrationManager) ApplyMigration(migration Migration) error {
-    tx, err := mm.db.Begin()
-    if err != nil {
-        return err
+    if err := rows.Err(); err != nil {
+        return nil, err
     }
-    defer tx.Rollback()
-
-    if _, err := tx.Exec(migration.Up); err != nil {
-        return fmt.Errorf("migration %d (%s) failed: %w",
-            migration.Version, migration.Name, err)
-    }
-
-    if _, err := tx.Exec(
-        "INSERT INTO schema_migrations (version, name) VALUES ($1, $2)",
-        migration.Version, migration.Name); err != nil {
-        return err
-    }
-
-    return tx.Commit()
-}
-
-func (mm *MigrationManager) Migrate() error {
-    if err := mm.EnsureMigrationsTable(); err != nil {
-        return err
-    }
-
-    applied, err := mm.GetAppliedMigrations()
-    if err != nil {
-        return err
-    }
-
-    for _, migration := range mm.migrations {
-        if applied[migration.Version] {
-            continue
-        }
-
-        if err := mm.ApplyMigration(migration); err != nil {
-            return err
-        }
-    }
-
-    return nil
+    return plan, nil
 }
 ```
 
-### Практические примеры: Оптимизация запросов
+Две секунды здесь служат примером бюджета диагностики. Поддержка отмены уже отправленного запроса зависит от драйвера. План может включать значение фильтра, поэтому просматривайте его в защищённом канале. Сопоставьте оценку `rows` с `actual rows`, учитывая, что при нескольких `loops` фактическое число строк показано в среднем за запуск узла. Счётчик `shared read` означает чтение блока в общие буферы PostgreSQL и может включать чтение из кэша ОС.
 
-```go
-// Использование EXPLAIN для анализа запросов
-func ExplainQuery(db *sql.DB, query string, args ...interface{}) error {
-    explainQuery := "EXPLAIN ANALYZE " + query
-    rows, err := db.Query(explainQuery, args...)
-    if err != nil {
-        return err
-    }
-    defer rows.Close()
-
-    for rows.Next() {
-        var plan string
-        if err := rows.Scan(&plan); err != nil {
-            return err
-        }
-        fmt.Println(plan)
-    }
-
-    return rows.Err()
-}
-
-// Мониторинг медленных запросов
-type SlowQueryLogger struct {
-    threshold time.Duration
-    logger    *log.Logger
-}
-
-func (sql *SlowQueryLogger) LogQuery(query string, duration time.Duration) {
-    if duration > sql.threshold {
-        sql.logger.Printf("Slow query (%.2fms): %s",
-            duration.Seconds()*1000, query)
-    }
-}
-```
-
-## Лучшие практики
-
-1. **Используйте пулы соединений** — настраивайте **SetMaxOpenConns**, **SetMaxIdleConns**
-2. **Используйте подготовленные запросы** — для повторяющихся запросов
-3. **Обрабатывайте ошибки** — всегда проверяйте ошибки при работе с БД
-4. **Используйте транзакции** — для атомарных операций
-5. **Закрывайте ресурсы** — используйте **defer** для закрытия **rows** и **connections**
-6. **Используйте context** — для отмены долгих запросов
-7. **Используйте индексы** — для оптимизации запросов
-8. **Избегайте N+1 проблем** — используйте **JOIN** или **Preload**
-9. **Используйте batch операции** — для массовых вставок
-10. **Мониторьте производительность** — отслеживайте медленные запросы
-11. **Используйте `Repository` паттерн** — для абстракции доступа к данным
-12. **Используйте миграции** — для управления схемой БД
-13. **Тестируйте запросы** — проверяйте производительность запросов
-14. **Используйте connection pooling** — правильно настраивайте пулы
-15. **Используйте prepared statements** — для безопасности и производительности
-
-### Практические примеры: Оптимизация запросов через EXPLAIN
-
-```go
-func AnalyzeQuery(db *sql.DB, query string, args ...interface{}) error {
-    explainQuery := "EXPLAIN ANALYZE " + query
-
-    rows, err := db.Query(explainQuery, args...)
-    if err != nil {
-        return err
-    }
-    defer rows.Close()
-
-    for rows.Next() {
-        var plan string
-        if err := rows.Scan(&plan); err != nil {
-            return err
-        }
-        log.Printf("Query plan: %s", plan)
-    }
-
-    return rows.Err()
-}
-
-// Использование
-func OptimizeSlowQuery(db *sql.DB) error {
-    query := `SELECT * FROM users WHERE email = $1`
-    return AnalyzeQuery(db, query, "user@example.com")
-}
-```
+См. [EXPLAIN в PostgreSQL 19](https://www.postgresql.org/docs/19/sql-explain.html) и [QueryContext в database/sql](https://pkg.go.dev/database/sql#DB.QueryContext).
 
 ### Практические примеры: Кэширование результатов запросов
 
+Для небольшого справочника можно хранить результат чтения в памяти процесса. Запись содержит значение и срок действия. Если приложение дважды записывает один ключ, второе значение получает собственный срок. За чтение, обновление и удаление отвечает одна блокировка.
+
 ```go
+type cacheEntry struct {
+    value     string
+    expiresAt time.Time
+}
+
 type QueryCache struct {
-    cache map[string]interface{}
-    mu    sync.RWMutex
-    ttl   time.Duration
+    mu      sync.Mutex
+    entries map[string]cacheEntry
 }
 
-func NewQueryCache(ttl time.Duration) *QueryCache {
-    return &QueryCache{
-        cache: make(map[string]interface{}),
-        ttl:   ttl,
+func (c *QueryCache) Get(key string) (string, bool) {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+
+    entry, ok := c.entries[key]
+    if !ok {
+        return "", false
     }
+    if !time.Now().Before(entry.expiresAt) {
+        delete(c.entries, key)
+        return "", false
+    }
+    return entry.value, true
 }
 
-func (qc *QueryCache) Get(key string) (interface{}, bool) {
-    qc.mu.RLock()
-    defer qc.mu.RUnlock()
-    value, ok := qc.cache[key]
-    return value, ok
-}
+func (c *QueryCache) Set(key, value string, ttl time.Duration) {
+    c.mu.Lock()
+    defer c.mu.Unlock()
 
-func (qc *QueryCache) Set(key string, value interface{}) {
-    qc.mu.Lock()
-    defer qc.mu.Unlock()
-    qc.cache[key] = value
-
-    // Автоматическое удаление через TTL
-    time.AfterFunc(qc.ttl, func() {
-        qc.mu.Lock()
-        delete(qc.cache, key)
-        qc.mu.Unlock()
-    })
+    if ttl <= 0 {
+        delete(c.entries, key)
+        return
+    }
+    if c.entries == nil {
+        c.entries = make(map[string]cacheEntry)
+    }
+    c.entries[key] = cacheEntry{value: value, expiresAt: time.Now().Add(ttl)}
 }
 ```
+
+При промахе приложение читает БД и кеширует успешный результат. Ключ должен учитывать все параметры запроса и область данных, например пару из идентификатора арендатора и идентификатора записи. При обновлении БД TTL оставляет окно, в котором кеш может вернуть прежнее значение. Одновременные промахи также могут запустить несколько одинаковых запросов.
+
+Пример удаляет просроченную запись при следующем чтении её ключа. Для множества меняющихся ключей нужна политика, ограничивающая память, поскольку записи без повторного чтения остаются в map. Для сравнения времени внутри процесса `time.Now().Add(ttl)` сохраняет показание монотонных часов. [Документация time](https://pkg.go.dev/time#hdr-Monotonic_Clocks) и [документация sync.Mutex](https://pkg.go.dev/sync#Mutex).
 
 
 ## Решение проблем
 
-Типичные проблемы и решения см. в официальной документации (блок «Полезные ссылки» в начале документа).
+**Запрос зависает после открытия транзакции.** Допустим, у пула `MaxOpenConns = 1`. Вызов `BeginTx` занимает единственное соединение. Если вспомогательная функция внутри транзакционного сценария обращается к `db.QueryRowContext(...).Scan(...)`, она ждёт ещё одно соединение, а вызывающий код ждёт её результата перед `Commit`. При заданном дедлайне ожидание закончится ошибкой контекста. При большем лимите тот же сценарий возможен, когда все соединения заняты такими транзакциями.
+
+Снимите `db.Stats()` несколько раз во время сбоя. Если `InUse` держится у лимита, а `WaitCount` растёт, операции ждут соединение из пула. Эти метрики сами по себе не показывают причину. Проверьте, через какой объект выполняется зависший запрос, как долго открыты транзакции и закрываются ли `Rows` при раннем выходе.
+
+Если операция должна видеть изменения текущей транзакции, передайте вспомогательной функции `*sql.Tx` или интерфейс с нужными методами и выполняйте запрос через транзакцию. Увеличение пула может отсрочить исчерпание. Вызов через `*sql.DB` всё равно выполняется вне этой транзакции и может видеть другое состояние данных.
+
+[Go — управление соединениями](https://go.dev/doc/database/manage-connections) · [Go — выполнение транзакций](https://go.dev/doc/database/execute-transactions)
 
 ## Частые вопросы
 

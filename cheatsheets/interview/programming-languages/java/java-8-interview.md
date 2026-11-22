@@ -101,7 +101,7 @@ updated: "2026-05-20"
 - [Q39. (!) Как написать собственный `Collector`?](#q39--как-написать-собственный-collector)
 - [Q40. Какие типы `Method Reference` существуют и чем отличаются?](#q40-какие-типы-method-reference-существуют-и-чем-отличаются)
 - [Q41. Как правильно использовать `Optional` и каких антипаттернов избегать?](#q41-как-правильно-использовать-optional-и-каких-антипаттернов-избегать)
-- [Q42. Что такое `Stream Pipeline` и как работает ленивость?](#q42-что-такое-stream-pipeline-и-как-работает-ленивость)
+- [Q42. Когда выполняются операции Stream и как работает досрочная остановка?](#q42-когда-выполняются-операции-stream-и-как-работает-досрочная-остановка)
 
 ---
 
@@ -633,7 +633,7 @@ boolean empty = StringUtils.isNullOrEmpty("");
 
 ```java
 // Stream не модифицирует источник
-List<String> names = new ArrayList<>(List.of("Alice", "Bob", "Charlie"));
+List<String> names = new ArrayList<>(Arrays.asList("Alice", "Bob", "Charlie"));
 List<String> filtered = names.stream()
     .filter(n -> n.length() > 3)
     .map(String::toUpperCase)
@@ -670,7 +670,7 @@ graph LR
 - `collect()`, `forEach()`, `reduce()`, `count()`, `findFirst()`, `findAny()`, `anyMatch()`, `allMatch()`, `noneMatch()`, `toArray()`, `min()`, `max()`
 
 ```java
-List<String> names = List.of("Alice", "Bob", "Charlie", "David");
+List<String> names = Arrays.asList("Alice", "Bob", "Charlie", "David");
 
 // Ничего не выполняется — нет терминальной операции!
 Stream<String> lazy = names.stream()
@@ -698,10 +698,10 @@ List<String> result = employees.stream()          // источник
     .collect(Collectors.toList());                 // терминальная
 ```
 
-**Как это выполняется (и почему эффективно).** Главная идея: элементы идут через весь конвейер **по одному**, а не «сначала все через `filter`, потом все через `map`». Из этого вытекают оптимизации:
+**Как это выполняется.** У stateless-операций вроде `filter` и `map` элементы могут проходить цепочку по одному. Stateful-операции вроде `sorted` могут накапливать элементы перед выдачей результата:
 
-- **Loop fusion** — все операции сливаются в один проход по данным. Промежуточные коллекции не создаются: один элемент проходит `filter` → `map` → `sorted` за один «спуск».
-- **Short-circuiting** (досрочный выход) — операции вроде `limit()`, `findFirst()`, `anyMatch()` позволяют остановиться, не дойдя до конца источника: как только нужный результат найден, обработка прекращается. Именно это делает возможной работу с бесконечными стримами.
+- **Loop fusion** — stateless-операции могут обрабатывать элемент в одном проходе без отдельной коллекции после каждого шага. `sorted` обычно читает и упорядочивает вход перед выдачей первого результата.
+- **Short-circuiting** (досрочный выход) — `limit()`, `findFirst()` и `anyMatch()` могут остановить обход до конца источника. Stateful-шаги перед ними могут потребовать прочитать больше элементов.
 
 ## Q21. (!) В чём разница между `map()` и `flatMap()`?
 
@@ -710,16 +710,16 @@ List<String> result = employees.stream()          // источник
 
 ```java
 // map: String → Integer (1:1)
-List<String> words = List.of("Hello", "World");
+List<String> words = Arrays.asList("Hello", "World");
 List<Integer> lengths = words.stream()
     .map(String::length)
     .collect(Collectors.toList()); // [5, 5]
 
 // flatMap: List<String> → Stream<String> (1:N, "разворачивание")
-List<List<String>> nested = List.of(
-    List.of("a", "b"),
-    List.of("c", "d"),
-    List.of("e")
+List<List<String>> nested = Arrays.asList(
+    Arrays.asList("a", "b"),
+    Arrays.asList("c", "d"),
+    Arrays.asList("e")
 );
 List<String> flat = nested.stream()
     .flatMap(Collection::stream)
@@ -751,15 +751,15 @@ graph LR
 // Три формы reduce:
 
 // 1. С identity — всегда возвращает результат
-int sum = List.of(1, 2, 3, 4, 5).stream()
+int sum = Arrays.asList(1, 2, 3, 4, 5).stream()
     .reduce(0, Integer::sum); // 15
 
 // 2. Без identity — возвращает Optional (поток может быть пустым)
-Optional<Integer> max = List.of(1, 2, 3).stream()
+Optional<Integer> max = Arrays.asList(1, 2, 3).stream()
     .reduce(Integer::max); // Optional[3]
 
 // 3. С identity, accumulator и combiner (для parallel)
-String concatenated = List.of("a", "b", "c").stream()
+String concatenated = Arrays.asList("a", "b", "c").stream()
     .reduce("",
         (partial, element) -> partial + element,  // accumulator
         (left, right) -> left + right);            // combiner
@@ -824,8 +824,7 @@ IntSummaryStatistics stats = employees.stream()
     .collect(Collectors.summarizingInt(Employee::getAge));
 // stats.getAverage(), stats.getMax(), stats.getCount()
 
-// toUnmodifiableList (Java 10+) — неизменяемый список
-List<String> immutable = names.stream().collect(Collectors.toUnmodifiableList());
+// С Java 10 доступен отдельный Collectors.toUnmodifiableList().
 ```
 
 ## Q25. Что такое `Stream.peek()` и когда его использовать?
@@ -913,7 +912,7 @@ IntStream random = new Random().ints(10, 1, 100); // 10 чисел от 1 до 9
 
 ```java
 // Создание
-List<String> names = List.of("Alice", "Bob", "Charlie");
+List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
 Stream<String> parallel = names.parallelStream();
 // или: names.stream().parallel()
 
@@ -951,24 +950,24 @@ List<String> safe = names.parallelStream()
 
 ## Q29. Можно ли повторно использовать `Stream`?
 
-**Нет.** После вызова терминальной операции стрим «закрывается» и не может быть использован повторно:
+**Нет.** После терминальной операции стрим считается потреблённым и не предназначен для повторного обхода. Терминальная операция сама по себе не вызывает close(); поток с I/O-источником закрывают явно:
 
 ```java
-Stream<String> stream = List.of("a", "b", "c").stream();
+Stream<String> stream = Arrays.asList("a", "b", "c").stream();
 
 stream.forEach(System.out::println); // OK — первый раз
 
-// IllegalStateException: stream has already been operated upon or closed
-stream.forEach(System.out::println); // ОШИБКА!
+// Повторный обход нарушает контракт Stream; реализация может бросить IllegalStateException.
+stream.forEach(System.out::println);
 ```
 
 **Решение** — создавать стрим заново при каждом использовании:
 
 ```java
-Supplier<Stream<String>> streamFactory = () -> List.of("a", "b", "c").stream();
+Supplier<Stream<String>> streamFactory = () -> Arrays.asList("a", "b", "c").stream();
 
 long count = streamFactory.get().count();
-List<String> upper = streamFactory.get().map(String::toUpperCase).toList();
+List<String> upper = streamFactory.get().map(String::toUpperCase).collect(Collectors.toList());
 ```
 
 ## Q30. Как создать `Stream` из различных источников?
@@ -989,11 +988,9 @@ Stream<String> s5 = Stream.empty();
 Stream<Double> s6 = Stream.generate(Math::random).limit(10);
 Stream<Integer> s7 = Stream.iterate(0, n -> n + 2).limit(5); // 0, 2, 4, 6, 8
 
-// Java 9: iterate с предикатом
-Stream<Integer> s8 = Stream.iterate(1, n -> n < 100, n -> n * 2); // 1, 2, 4, 8, 16, 32, 64
 
 // Из файла
-Stream<String> lines = Files.lines(Path.of("data.txt"));
+Stream<String> lines = Files.lines(Paths.get("data.txt"));
 
 // Из строки
 IntStream chars = "hello".chars();
@@ -1001,8 +998,7 @@ IntStream chars = "hello".chars();
 // Из Map
 Stream<Map.Entry<String, Integer>> entries = map.entrySet().stream();
 
-// Из Optional (Java 9)
-Stream<String> s9 = Optional.of("value").stream();
+// Optional.stream() добавили только в Java 9.
 ```
 
 ## Q31. (!) Какие ключевые классы входят в новый `Date/Time API`?
@@ -1054,7 +1050,7 @@ LocalDateTime fromLegacy = LocalDateTime.ofInstant(fromDate, ZoneId.systemDefaul
 | | `LocalDateTime` | `ZonedDateTime` |
 |---|---|---|
 | Временная зона | Нет | Есть (`ZoneId`) |
-| Использование | Для локальных операций, UI | Для хранения, API, конвертации зон |
+| Использование | Локальные расписания и значения без зоны | Моменты с правилами зоны, конвертация зон |
 | Сравнение времени | Только если зона одна | Корректно между зонами |
 
 ```java
@@ -1071,7 +1067,7 @@ ZonedDateTime tokyo = moscow.withZoneSameInstant(ZoneId.of("Asia/Tokyo"));
 Instant instant = moscow.toInstant(); // UTC момент
 ```
 
-**Правило**: для хранения и передачи по сети всегда использовать `Instant` или `ZonedDateTime`/`OffsetDateTime`. `LocalDateTime` — только для отображения пользователю в его локальной зоне.
+**Правило**: тип выбирают по смыслу данных. Для однозначного момента подходят `Instant` и значения с зоной или смещением. `LocalDateTime` подходит для локального расписания и данных, где зона задана отдельным контрактом; сам по себе он не задаёт момент на временной шкале.
 
 ## Q33. Чем `Duration` отличается от `Period`?
 
@@ -1161,13 +1157,13 @@ CompletableFuture<Double> finalPrice = priceFuture
 // allOf — ждать завершения всех
 List<CompletableFuture<String>> futures = urls.stream()
     .map(url -> CompletableFuture.supplyAsync(() -> fetch(url)))
-    .toList();
+    .collect(Collectors.toList());
 
 CompletableFuture<List<String>> allResults = CompletableFuture
     .allOf(futures.toArray(new CompletableFuture[0]))
     .thenApply(v -> futures.stream()
         .map(CompletableFuture::join)
-        .toList());
+        .collect(Collectors.toList()));
 
 // anyOf — первый завершившийся
 CompletableFuture<Object> fastest = CompletableFuture.anyOf(
@@ -1185,7 +1181,7 @@ CompletableFuture<Object> fastest = CompletableFuture.anyOf(
 
 - `exceptionally` — перехватывает **только** ошибку и подставляет fallback-значение; при успехе не вызывается. Аналог `catch`.
 - `handle` — вызывается **всегда** и получает пару `(результат, ошибка)`, одно из которых `null`; может вернуть новое значение. Аналог `try/catch/finally` с возвратом.
-- `whenComplete` — тоже вызывается всегда, но результат **не меняет**; нужен для побочного эффекта (логирование, метрики).
+- `whenComplete` — вызывается при успехе и ошибке; предназначен для побочного эффекта. При нормальном завершении обработчика исход сохраняется, но исключение из самого обработчика может сделать зависимую стадию ошибочной.
 
 ```java
 CompletableFuture<String> future = CompletableFuture
@@ -1223,7 +1219,7 @@ CompletableFuture<String> logged = CompletableFuture
 |-------|-----------------|-----------------|-------------------|
 | `exceptionally` | Да (при ошибке) | Да | Нет |
 | `handle` | Да | Да | Да |
-| `whenComplete` | Нет | Да | Да |
+| `whenComplete` | Не подменяет исход при нормальном завершении callback | Да | Да |
 
 ## Q37. Как обработать `checked`-исключения в лямбдах и `Stream`?
 
@@ -1239,7 +1235,7 @@ List<URL> urls = paths.stream()
             throw new UncheckedIOException(new IOException(e));
         }
     })
-    .toList();
+    .collect(Collectors.toList());
 
 // Подход 2: вспомогательный метод-обёртка
 @FunctionalInterface
@@ -1260,14 +1256,14 @@ static <T, R> Function<T, R> unchecked(ThrowingFunction<T, R> f) {
 // Использование
 List<URL> urls = paths.stream()
     .map(unchecked(URL::new))
-    .toList();
+    .collect(Collectors.toList());
 
 // Подход 3: библиотека Vavr — Try
 List<URL> urls = paths.stream()
     .map(path -> Try.of(() -> new URL(path)))
     .filter(Try::isSuccess)
     .map(Try::get)
-    .toList();
+    .collect(Collectors.toList());
 ```
 
 ## Q38. Какие типичные ошибки допускают при работе со `Stream API`?
@@ -1312,7 +1308,7 @@ list.forEach(item -> sendToKafka(item));
 **5. Неэффективное использование для простых операций:**
 ```java
 // ❌ Излишне для одного элемента
-Optional<String> first = List.of("one").stream().findFirst();
+Optional<String> first = Arrays.asList("one").stream().findFirst();
 
 // ✅ Проще
 String first = list.get(0);
@@ -1331,17 +1327,27 @@ Collector<Map.Entry<String, Integer>, LinkedHashMap<String, Integer>, Map<String
         LinkedHashMap::new,                          // supplier — создаём аккумулятор
         (map, e) -> map.put(e.getKey(), e.getValue()), // accumulator — добавляем элемент
         (left, right) -> { left.putAll(right); return left; }, // combiner — merge (parallel)
-        Collections::unmodifiableMap,                // finisher — финальное преобразование
-        Collector.Characteristics.IDENTITY_FINISH    // (убрать если есть finisher)
+        Collections::unmodifiableMap                 // finisher — результат другого типа
     );
 
 // Использование
 Map<String, Integer> result = Stream.of(
-    Map.entry("b", 2), Map.entry("a", 1), Map.entry("c", 3)
+    new AbstractMap.SimpleEntry<>("b", 2),
+    new AbstractMap.SimpleEntry<>("a", 1),
+    new AbstractMap.SimpleEntry<>("c", 3)
 ).collect(toLinkedMap);
 
 // Практичный пример: статистика по словам
-record WordStat(String word, long count, double avgLength) {}
+class WordStat {
+    final String word;
+    final long count;
+    final double avgLength;
+    WordStat(String word, long count, double avgLength) {
+        this.word = word;
+        this.count = count;
+        this.avgLength = avgLength;
+    }
+}
 
 Collector<String, ?, WordStat> wordStatCollector = Collector.of(
     () -> new long[]{0L, 0L}, // [count, totalLength]
@@ -1351,7 +1357,7 @@ Collector<String, ?, WordStat> wordStatCollector = Collector.of(
 );
 
 WordStat stat = Stream.of("hello", "world", "java").collect(wordStatCollector);
-// WordStat[word=result, count=3, avgLength=4.666...]
+// stat.count == 3; stat.avgLength — средняя длина
 ```
 
 **Характеристики `Collector`** — подсказки для оптимизации, особенно в параллельном режиме:
@@ -1377,13 +1383,13 @@ Map<Integer, Long> countByLength = words.stream()
 // Тип 1: Ссылка на статический метод (ClassName::staticMethod)
 Function<String, Integer> parseInt = Integer::parseInt;
 // эквивалент: s -> Integer.parseInt(s)
-List<Integer> nums = Stream.of("1", "2", "3").map(Integer::parseInt).toList();
+List<Integer> nums = Stream.of("1", "2", "3").map(Integer::parseInt).collect(Collectors.toList());
 
 // Тип 2: Ссылка на метод экземпляра конкретного объекта (object::instanceMethod)
 String prefix = "Hello, ";
 Function<String, String> greet = prefix::concat;
 // эквивалент: s -> prefix.concat(s)
-List<String> greetings = names.stream().map(prefix::concat).toList();
+List<String> greetings = names.stream().map(prefix::concat).collect(Collectors.toList());
 
 // Тип 3: Ссылка на метод экземпляра произвольного объекта (ClassName::instanceMethod)
 Function<String, String> lower = String::toLowerCase;
@@ -1436,19 +1442,11 @@ String computed = email.orElseGet(() -> generateDefaultEmail(userId));
 // ✅ orElseThrow — бросить исключение если пусто
 String required = email.orElseThrow(() -> new UserNotFoundException(userId));
 
-// ✅ ifPresentOrElse (Java 9)
-email.ifPresentOrElse(
-    e -> sendEmail(e),
-    () -> log.warn("Email отсутствует для userId={}", userId)
-);
-
 // ✅ flatMap — когда метод сам возвращает Optional
 Optional<Address> address = userRepo.findById(userId)
     .flatMap(User::getAddress); // User::getAddress возвращает Optional<Address>
 
-// ✅ or() — альтернативный Optional (Java 9)
-Optional<String> result = primarySource.findEmail(userId)
-    .or(() -> fallbackSource.findEmail(userId));
+// Optional.ifPresentOrElse() и Optional.or() появились в Java 9.
 ```
 
 **Антипаттерны:**
@@ -1477,20 +1475,20 @@ String s = email.orElseGet(() -> expensiveDefault()); // только при о�
 Optional<Optional<User>> nested = ...; // используй flatMap
 ```
 
-## Q42. Что такое `Stream Pipeline` и как работает ленивость?
+## Q42. Когда выполняются операции Stream и как работает досрочная остановка?
 
-`Stream Pipeline` — цепочка: **источник → промежуточные операции → терминальная операция**. Промежуточные операции **ленивые** (lazy): они не выполняются до вызова терминальной операции.
+Вызов промежуточной операции, например `filter` или `map`, только строит следующий шаг цепочки. Обработка элементов начинается при терминальной операции. Досрочная операция может остановить обход раньше конца источника, но `sorted` перед ней обычно должен прочитать весь вход.
 
 ```java
 // Демонстрация ленивости
-List<String> names = List.of("Alice", "Bob", "Charlie", "David");
+List<String> names = Arrays.asList("Alice", "Bob", "Charlie", "David");
 
 Stream<String> pipeline = names.stream()
     .filter(s -> { System.out.println("filter: " + s); return s.length() > 3; })
     .map(s -> { System.out.println("map: " + s); return s.toUpperCase(); });
 
 System.out.println("Pipeline создан — ещё ничего не выполнялось");
-// После этой строки: ни одна строка не напечатана!
+// filter и map ещё ничего не напечатали
 
 String first = pipeline.findFirst().orElse(""); // ТЕПЕРЬ запускается
 // Вывод:
@@ -1503,7 +1501,7 @@ String first = pipeline.findFirst().orElse(""); // ТЕПЕРЬ запускае
 | Категория | Примеры | Характеристики |
 |---|---|---|
 | Промежуточные stateless | `filter`, `map`, `peek`, `flatMap` | Элементы независимы |
-| Промежуточные stateful | `sorted`, `distinct`, `limit`, `skip` | Нужно накопить элементы |
+| Промежуточные stateful | `sorted`, `distinct`, `limit`, `skip` | Хранят состояние; `sorted` буферизует набор, а `limit` может остановиться досрочно |
 | Терминальные | `collect`, `forEach`, `reduce`, `count`, `findFirst`, `anyMatch` | Запускают pipeline |
 
 ```java
@@ -1519,9 +1517,9 @@ long count = Stream.iterate(0, i -> i + 1) // бесконечный стрим
 
 // Оптимизация: filter до map (уменьшаем количество трансформаций)
 // ❌ Неоптимально
-names.stream().map(String::toUpperCase).filter(s -> s.startsWith("A")).toList();
+names.stream().map(String::toUpperCase).filter(s -> s.length() > 3).collect(Collectors.toList());
 // ✅ Оптимально
-names.stream().filter(s -> s.startsWith("A")).map(String::toUpperCase).toList();
+names.stream().filter(s -> s.length() > 3).map(String::toUpperCase).collect(Collectors.toList());
 ```
 
 ---

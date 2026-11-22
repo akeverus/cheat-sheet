@@ -106,7 +106,7 @@ updated: "2026-05-05"
 
 **Front Controller** — паттерн с единой точкой входа: один компонент принимает все запросы, маршрутизирует их к нужным обработчикам и берёт на себя сквозную логику (безопасность, логирование, локализация). Без него каждый сервлет дублировал бы эту обвязку; с ним она лежит в одном месте.
 
-В `Spring MVC` роль Front Controller играет `DispatcherServlet`. Получив HTTP-запрос, он находит подходящий контроллер через `HandlerMapping`, вызывает его через `HandlerAdapter`, а результат превращает в представление через `ViewResolver`.
+Здесь рассматриваются Spring Framework 6.2 и Spring Boot 3.5. Роль Front Controller играет `DispatcherServlet`. Он выбирает обработчик через `HandlerMapping` и вызывает его через `HandlerAdapter`. Если результат — логическое имя представления, MVC разрешает его через `ViewResolver`. Если обработчик возвращает сериализуемое тело, запись обычно выполняет `HttpMessageConverter`. [DispatcherServlet](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-servlet.html).
 
 ```mermaid
 graph LR
@@ -126,8 +126,8 @@ graph LR
 
 **Spring MVC** — веб-фреймворк поверх Servlet API, реализующий паттерн `Model-View-Controller` в [Spring Framework](spring-framework-interview.md). Три роли разделяют ответственность:
 
-- **Model** — данные и бизнес-логика (сервисы, DTO, доменные объекты)
-- **View** — отображение (`Thymeleaf`, `JSP`, `JSON` через `Jackson`)
+- **Model** — атрибуты, которые контроллер передаёт представлению. Бизнес-логику обычно держат в сервисах.
+- **View** — представление, которое рендерит модель, например шаблон Thymeleaf или JSP. Для типичного JSON-ответа с `@ResponseBody` используется другой путь: запись через конвертер.
 - **Controller** — принимает запрос, вызывает сервисы, кладёт данные в модель и выбирает представление
 
 Что фреймворк берёт на себя, чтобы не писать это руками:
@@ -141,9 +141,9 @@ graph LR
 
 ## Q3. Как получить `ServletContext` и `ServletConfig` внутри бина?
 
-Есть два способа, и оба дают те же экземпляры, что использует `DispatcherServlet`.
+`ServletContext` относится к веб-приложению, а `ServletConfig` — к конкретному сервлету. Последний доступен в веб-контексте, связанном с этим сервлетом. Например, корневой контекст может иметь `ServletContext` без `ServletConfig`. [ServletConfigAware](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/web/context/ServletConfigAware.html).
 
-1. **Внедрение зависимостей** — объявить параметр конструктора (или поле с `@Autowired`) типа `ServletContext` / `ServletConfig`. Контейнер подставит нужный объект сам.
+1. **Внедрение зависимости** — параметры конструктора или поля с `@Autowired` разрешаются, если соответствующий объект доступен в этом контексте.
 
 2. **Aware-интерфейсы** — реализовать `ServletContextAware` или `ServletConfigAware`. На этапе инициализации бина `Spring` вызовет `setServletContext()` / `setServletConfig()` и передаст объект.
 
@@ -168,7 +168,7 @@ public class MyComponent implements ServletContextAware {
 - **Файлы ресурсов** — `messages_en.properties`, `messages_ru.properties` и т.д.: один ключ — разные переводы по файлам
 - **MessageSource** — бин, который по ключу и локали достаёт нужную строку
 - **LocaleResolver** — определяет текущую локаль (из `Accept-Language`, cookie или сессии)
-- **LocaleChangeInterceptor** — позволяет переключать локаль параметром запроса (`?lang=ru`)
+- **LocaleChangeInterceptor** — принимает новый язык из параметра, например `?lang=ru`. Для изменения локали нужен резолвер с поддержкой записи, например `SessionLocaleResolver` или `CookieLocaleResolver`. `AcceptHeaderLocaleResolver` использует заголовок запроса и смену через интерцептор не поддерживает. [Spring MVC Locale](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-servlet/localeresolver.html).
 
 ```java
 @Configuration
@@ -193,11 +193,11 @@ public class LocaleConfig implements WebMvcConfigurer {
 
 ## Q5. (!) Что такое `Interceptor`?
 
-**HandlerInterceptor** — перехватчик, который вклинивается до и после контроллера и выполняет сквозную логику (логирование, аутентификация, метрики), не засоряя ей сами контроллеры. У него три точки подключения по ходу запроса:
+`HandlerInterceptor` выполняется внутри MVC для выбранного обработчика. Он подходит, например, для логирования и замеров. Аутентификация Spring Security обычно происходит раньше, в цепочке Servlet-фильтров.
 
 - `preHandle()` — до вызова контроллера; возвращает `boolean`: `true` — продолжить, `false` — прервать цепочку
 - `postHandle()` — после контроллера, но до рендеринга `View` (можно дополнить модель)
-- `afterCompletion()` — после полного завершения запроса, включая рендеринг (место для очистки ресурсов и замеров)
+- `afterCompletion()` — после завершения обработки для интерцепторов, чей `preHandle()` вернул `true`. При исключении `postHandle()` может не вызываться. При переходе в async первоначальный dispatch завершается через `afterConcurrentHandlingStarted` у `AsyncHandlerInterceptor`, а при последующем dispatch хуки запускаются снова. [HandlerInterceptor](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/web/servlet/HandlerInterceptor.html).
 
 ```mermaid
 graph LR
@@ -231,7 +231,7 @@ public class WebConfig implements WebMvcConfigurer {
 
 `@ModelAttribute` работает по-разному в зависимости от того, где стоит — на параметре или на методе.
 
-**На параметре метода** — `Spring` создаёт объект и заполняет его поля параметрами запроса (сопоставляя по именам и вызывая сеттеры):
+**На параметре метода** MVC получает существующий объект модели или создаёт его. Данные запроса могут использоваться для аргументов конструктора и привязки свойств через `WebDataBinder`:
 
 ```java
 @PostMapping("/register")
@@ -241,7 +241,7 @@ public String register(@ModelAttribute("user") User user) {
 }
 ```
 
-**На методе** — такой метод вызывается перед каждым обработчиком контроллера, а его результат попадает в модель (удобно для данных, нужных всем View — справочников, текущего пользователя):
+**На методе** аннотация подготавливает модель до вызова обработчика. Если именованный атрибут уже есть, этот метод подготовки может быть пропущен:
 
 ```java
 @ModelAttribute("categories")
@@ -250,7 +250,7 @@ public List<Category> populateCategories() {
 }
 ```
 
-**Что происходит под капотом** на параметре: `Spring` создаёт объект → привязывает данные запроса через `WebDataBinder` → валидирует (если стоит `@Valid`) → кладёт в модель. На этом и держится форм-биндинг в `Spring MVC`.
+После привязки MVC может проверить атрибут через `@Valid` и предоставить его контроллеру вместе с ошибками привязки и валидации (Q12). [Model Attributes](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-controller/ann-methods/modelattrib-method-args.html).
 
 ## Q7. В чём разница между `Model`, `ModelMap` и `ModelAndView`?
 
@@ -259,7 +259,7 @@ public List<Category> populateCategories() {
 | Тип | Что это | Типичное использование |
 |-----|----------|----------------------|
 | `Model` | Интерфейс с методами `addAttribute()` | Параметр метода контроллера |
-| `ModelMap` | Класс, реализует `Map` + `Model` | Когда нужны map-операции (`get`, `remove`) |
+| `ModelMap` | Наследует `LinkedHashMap<String, Object>`. Подкласс `ExtendedModelMap` также реализует `Model` | Когда нужны операции карты |
 | `ModelAndView` | Объект, объединяющий модель и имя View | Возврат из метода контроллера |
 
 ```java
@@ -281,16 +281,18 @@ public ModelAndView list() {
 
 ## Q8. В чем разница между `model.put()` и `model.addAttribute()`?
 
-Оба кладут атрибут в модель, но `addAttribute()` строже и удобнее, потому что приходит из API самого `Spring`, а не из голого `Map`:
+`Model` предоставляет `addAttribute()`. Для `put()` нужна переменная типа `ModelMap` или другого подходящего `Map`.
 
 - **`put(key, value)`** — метод интерфейса `Map`; примет любой ключ, включая `null` (а `null`-ключ в модели — это скрытый баг)
 - **`addAttribute(name, value)`** — метод интерфейса `Model`: бросает исключение на `null`-ключе, возвращает сам `Model` (можно строить цепочку вызовов), а перегрузка `addAttribute(value)` сама придумывает имя по типу объекта
 
 ```java
+Model model = new ExtendedModelMap();
 model.addAttribute("user", user)
      .addAttribute("roles", roles); // chaining
 
-model.put("user", user); // без chaining
+ModelMap modelMap = new ModelMap();
+modelMap.put("user", user);
 ```
 
 **Рекомендация:** используйте `addAttribute()` — он защищает от `null`-ключей и даёт fluent-интерфейс.
@@ -319,7 +321,7 @@ public String register(@ModelAttribute("user") @Valid User user,
 </form>
 ```
 
-**Подводный камень (безопасность):** биндер заполнит любое поле, чьё имя пришло в запросе, — даже скрытое от формы (например, `role` или `isAdmin`). Это уязвимость mass assignment. Защита — явный белый список полей через `@InitBinder` + `setAllowedFields()`.
+Для привязки используйте DTO с полями, которые пользователь вправе задавать. `setAllowedFields()` в `@InitBinder` дополнительно ограничивает привязку свойств. Этот список не ограничивает аргументы конструктора. [Model Attribute Arguments](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-controller/ann-methods/modelattrib-method-args.html).
 
 ## Q10. Что такое `@PathVariable`?
 
@@ -353,17 +355,18 @@ public Order getOrder(@PathVariable Map<String, String> vars) {
 
 ## Q11. (!) Что такое `Validation`?
 
-Валидация в `Spring MVC` строится на декларативном **Bean Validation** (`JSR 380`, реализация — `Hibernate Validator`): правила описывают аннотациями на полях DTO, а не пишут проверки руками в контроллере. Чтобы `Spring` запустил проверку, аргумент в контроллере помечают `@Valid`:
+Spring MVC 6.2 использует Jakarta Validation при наличии провайдера. `@Valid` на DTO запускает проверку аргумента, а прямые ограничения на параметрах или возвращаемом значении могут включить встроенную валидацию всего метода.
 
 ```mermaid
 graph LR
-    Req["HTTP Request"] --> Bind["Data Binding<br/>(WebDataBinder)"]
-    Bind --> Val["Bean Validation<br/>(@Valid)"]
-    Val -->|Ошибки есть| BR["BindingResult<br/>(ошибки полей)"]
-    Val -->|Ошибок нет| Ctrl["Бизнес-логика"]
-    BR --> Resp["400 Bad Request"]
-    Ctrl --> Resp2["200 OK"]
+    Req["Вход контроллера"] --> V{"Вид валидации"}
+    V --> DTO["DTO: @Valid"]
+    V --> Method["Метод: прямые ограничения"]
+    DTO --> E1["MethodArgumentNotValidException<br/>если ошибка не обработана через BindingResult"]
+    Method --> E2["HandlerMethodValidationException<br/>при необработанных нарушениях"]
 ```
+
+Если на классе контроллера стоит `@Validated`, обычно применяется валидация через AOP. Для встроенной валидации методов MVC уберите эту аннотацию с класса. [MVC Validation](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-controller/ann-validation.html).
 
 ```java
 public record UserCreateDto(
@@ -405,23 +408,24 @@ public String createUser(@Valid @ModelAttribute User user,
 ```
 
 **Развилка поведения при провале валидации:**
-- **`BindingResult` объявлен** — исключения нет, ошибки лежат в нём, контроллер обрабатывает их сам (типично для форм: вернуть ту же страницу с подсветкой полей).
-- **`BindingResult` не объявлен** — `Spring` бросает исключение: `MethodArgumentNotValidException` для `@RequestBody` или `BindException` для `@ModelAttribute`. Его ловит `@ControllerAdvice` (типично для REST: единый JSON-ответ об ошибке).
+- **`BindingResult` сразу после аргумента.** Контроллер может обработать его ошибки, например повторно показать форму. HTTP-статус определяется результатом контроллера. При валидации метода он вызывается только если все нарушения относятся к параметрам с соседним `Errors` или `BindingResult`.
+- **Ошибки без соседнего `BindingResult`.** В MVC 6.2 индивидуальная проверка аргумента может дать `MethodArgumentNotValidException`, в том числе для `@ModelAttribute`. При встроенной проверке метода возможен `HandlerMethodValidationException` (Q11).
 
 ## Q13. Что такое аннотации `@RequestBody` и `@ResponseBody`?
 
 Эта пара отвечает за две стороны работы с телом HTTP: `@RequestBody` — на входе, `@ResponseBody` — на выходе, и обе используют `HttpMessageConverter`.
 
-**`@RequestBody`** — десериализует тело HTTP-запроса в Java-объект. `Spring` подбирает `HttpMessageConverter` по `Content-Type` (например, `MappingJackson2HttpMessageConverter` для `JSON/XML`):
+**`@RequestBody`** читает тело с помощью конвертера, поддерживающего тип аргумента и `Content-Type`. Jackson JSON и Jackson XML используют разные конвертеры. Для XML нужен подходящий XML-конвертер:
 
 ```java
 @PostMapping("/users")
+@ResponseBody
 public User create(@RequestBody UserCreateDto dto) {
     return userService.create(dto);
 }
 ```
 
-**`@ResponseBody`** — говорит `Spring`, что возвращаемое значение надо записать прямо в тело ответа, а не трактовать как имя View. Объект сериализуется через `HttpMessageConverter` (формат выбирается по `Accept`):
+**`@ResponseBody`** указывает записать тело ответа. MVC согласует медиатип, затем выбирает конвертер, умеющий записать значение этого типа:
 
 ```java
 @GetMapping("/users/{id}")
@@ -439,10 +443,10 @@ public User getUser(@PathVariable Long id) {
 
 | Аспект | `@Controller` | `@RestController` |
 |--------|---------------|-------------------|
-| Что возвращает метод | Имя View (строка) | Объект → сериализуется в JSON/XML |
-| `@ResponseBody` | Нужен явно на каждом методе | Включён автоматически на классе |
+| Что возвращает метод | Представление или тело, в зависимости от возвращаемого типа и аннотаций | Значение обычно записывается в тело |
+| `@ResponseBody` | Можно указать на методе. `ResponseEntity` и так представляет HTTP-ответ | Включён на классе |
 | Типичное применение | Веб-страницы (Thymeleaf, JSP) | REST API |
-| ViewResolver | Участвует | Не участвует |
+| ViewResolver | Нужен для логического имени представления. Метод может вернуть тело через `@ResponseBody` или `ResponseEntity` | Обычно не участвует при записи тела |
 
 ```java
 // Для веб-страниц
@@ -517,7 +521,7 @@ public String dashboard(@SessionAttribute("user") User currentUser) {
 - Когда нужен полный ручной контроль над всей MVC-инфраструктурой
 
 **Когда НЕ использовать (важно):**
-- В `Spring Boot` — автоконфигурация уже всё настроила. `@EnableWebMvc` **полностью отключает** `WebMvcAutoConfiguration`, и вы теряете её дефолты (настроенный Jackson, отдачу статических ресурсов, обработку ошибок). То есть берёте на себя всю конфигурацию вручную, обычно не желая этого.
+- В Boot 3.5 при `@EnableWebMvc` отступает `WebMvcAutoConfiguration`. Её настройки MVC, например обработчики статических ресурсов и интеграция настроенных конвертеров, больше не добавляются этим классом. Базовая инфраструктура MVC появляется через `@EnableWebMvc`, а другие автоконфигурации Boot оцениваются отдельно. [Boot Servlet Web](https://docs.spring.io/spring-boot/3.5/reference/web/servlet.html).
 
 **Рекомендация для Spring Boot:** для точечной настройки реализуйте `WebMvcConfigurer` без `@EnableWebMvc` — так вы дополняете автоконфигурацию, а не отключаете её:
 
@@ -555,7 +559,7 @@ graph LR
 | `ContentNegotiatingViewResolver` | Делегирует другим резолверам по `Accept` |
 | `BeanNameViewResolver` | Ищет бин с именем View |
 
-В чисто REST-приложениях с `@RestController` `ViewResolver` не участвует — ответ формируется через `HttpMessageConverter` (например, `Jackson` для JSON). Подробнее о Content Negotiation — в Q29.
+Для логического имени нужен `ViewResolver`. Если контроллер уже возвращает объект `View`, дополнительное разрешение имени не требуется. Обычный ответ через `@ResponseBody` записывается конвертером.
 
 ## Q18. Что такое `POJO`?
 
@@ -599,7 +603,9 @@ graph TB
     end
 ```
 
-`Spring MVC` — это модель 2. Разделение ответственности окупается на практике: слои тестируются независимо, бизнес-логика переиспользуется разными контроллерами, а View-технологию (JSP → Thymeleaf → JSON) можно заменить, не трогая контроллеры.
+`Spring MVC` — это модель 2. Разделение ответственности окупается на практике: слои тестируются независимо, бизнес-логика переиспользуется разными контроллерами, а при замене JSP на Thymeleaf можно сохранить контроллер, если его модель и логическое имя остаются прежними.
+
+Для Model 2 шаблон — один из вариантов представления результата. Переход с HTML на JSON может изменить медиатип, структуру тела и аннотации контроллера.
 
 ## Q20. (!) Что такое `DispatcherServlet` и `ContextLoaderListener`?
 
@@ -629,26 +635,13 @@ graph TB
     I2 --> DS
 ```
 
-**ContextLoaderListener** — при старте создаёт **корневой** `ApplicationContext` с общими бинами (сервисы, репозитории, инфраструктура). `DispatcherServlet` поверх него заводит свой **дочерний** контекст веб-слоя (контроллеры, `ViewResolver`, `HandlerMapping`). Иерархия односторонняя: бины веб-слоя видят корневые, но не наоборот — поэтому сервисы не зависят от веб-обвязки.
+`ContextLoaderListener` может создать корневой `WebApplicationContext` с общими бинами. `DispatcherServlet` может работать с дочерним контекстом или с одним общим веб-контекстом. При иерархии дочерний контекст видит родительские бины. [DispatcherServlet Context Hierarchy](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-servlet/context-hierarchy.html).
 
 **В Spring Boot** этого разделения не видно: используется один контекст, а `DispatcherServlet` регистрируется автоматически через `DispatcherServletAutoConfiguration`.
 
 ## Q21. Что такое `MultipartResolver`?
 
-**MultipartResolver** — стратегия разбора multipart-запросов (`multipart/form-data`, то есть загрузка файлов). Он распознаёт такой запрос и оборачивает его так, чтобы части были доступны как `MultipartFile`. Две реализации:
-
-- **`StandardServletMultipartResolver`** — поверх Servlet 3.0+ API; дефолт в `Spring Boot`, без внешних зависимостей
-- **`CommonsMultipartResolver`** — поверх Apache Commons FileUpload (нужен для старых контейнеров)
-
-```java
-@PostMapping("/upload")
-public String upload(@RequestParam("file") MultipartFile file) {
-    String name = file.getOriginalFilename();
-    long size = file.getSize();
-    // file.transferTo(Path.of("/uploads/" + name));
-    return "uploaded";
-}
-```
+`MultipartResolver` разбирает multipart-запрос и предоставляет части, например как `MultipartFile`. В Spring Framework 6.2 есть `StandardServletMultipartResolver` поверх Servlet multipart API. Прежний `CommonsMultipartResolver` убран в Framework 6. [Multipart Resolver](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-servlet/multipart.html).
 
 Настройка лимитов в `application.yml`:
 
@@ -660,11 +653,11 @@ spring:
       max-request-size: 50MB
 ```
 
-**Граничный случай:** при превышении лимита `Spring` бросает `MaxUploadSizeExceededException` — перехватите его в `@ControllerAdvice` и верните понятный `413 Payload Too Large`, иначе клиент получит сырую 500-ю.
+У `MaxUploadSizeExceededException` в Spring Framework 6.2 статус 413. При необходимости обработчик задаёт своё тело ошибки. Контейнер или прокси могут отклонить слишком большой запрос раньше MVC. [MaxUploadSizeExceededException](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/web/multipart/MaxUploadSizeExceededException.html).
 
 ## Q22. Что такое `@InitBinder`?
 
-Метод с `@InitBinder` вызывается перед каждым запросом контроллера и настраивает `WebDataBinder` — компонент, который привязывает данные запроса к объектам. Через него управляют тремя вещами: какие поля разрешены (защита от mass assignment), как конвертировать типы и какие валидаторы применять:
+Метод с `@InitBinder` запускается при инициализации подходящего `WebDataBinder`. Он настраивает привязку свойств, преобразование типов и валидаторы. [InitBinder](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-controller/ann-initbinder.html).
 
 ```java
 @Controller
@@ -694,7 +687,7 @@ public class UserController {
 
 ## Q23. (!) Как происходит обработка исключений в веб-приложениях?
 
-`Spring MVC` ищет обработчик исключения сверху вниз по трём уровням и останавливается на первом подходящем. Если не нашёл ни одного — отдаёт `500`.
+MVC передаёт исключение цепочке `HandlerExceptionResolver`. Каждый резолвер может обработать его или пропустить. Если ни один не обработал исключение, оно может дойти до Servlet-контейнера. [Spring MVC Exception Handling](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-servlet/exceptionhandlers.html).
 
 ```mermaid
 graph TB
@@ -705,7 +698,8 @@ graph TB
     L2 -->|Да| H2["Глобальный обработчик"]
     L2 -->|Нет| L3{"@ResponseStatus<br/>на классе исключения?"}
     L3 -->|Да| H3["HTTP-код из аннотации"]
-    L3 -->|Нет| H4["DefaultHandlerExceptionResolver<br/>→ 500 Internal Server Error"]
+    L3 -->|Нет| H4["DefaultHandlerExceptionResolver<br/>статус по типу стандартного исключения"]
+    H4 -->|не обработано| Container["Обработка контейнером"]
 ```
 
 1. **`@ResponseStatus` на классе исключения** — самый простой вариант: `Spring` сам вернёт указанный HTTP-код, без отдельного обработчика. Подходит, когда тело ответа не важно:
@@ -744,7 +738,8 @@ public class GlobalExceptionHandler {
         pd.setTitle("Ошибка валидации");
         Map<String, String> errors = ex.getBindingResult().getFieldErrors().stream()
             .collect(Collectors.toMap(
-                FieldError::getField, FieldError::getDefaultMessage));
+                FieldError::getField, FieldError::getDefaultMessage,
+                (first, ignored) -> first));
         pd.setProperty("errors", errors);
         return pd;
     }
@@ -754,6 +749,8 @@ public class GlobalExceptionHandler {
 `ProblemDetail` (Spring 6+ / Spring Boot 3+) — встроенная реализация этого формата: media type `application/problem+json`, поля `type`, `title`, `status`, `detail`, `instance` + произвольные свойства. Актуальный номер стандарта — RFC 9457: в июле 2023 года он заменил RFC 7807, добавив уточнения и реестр типов ошибок, но набор полей остался тем же. В обиходе и в имени класса стандарт до сих пор часто называют «7807».
 
 **Подводный камень:** в одном `@ControllerAdvice` нельзя объявить два обработчика для одного и того же типа исключения — `Spring` не поймёт, какой выбрать.
+
+Для встроенной валидации Spring MVC 6.2 учитывайте и `HandlerMethodValidationException`. `MethodArgumentNotValidException` описывает ошибки отдельного аргумента, а `HandlerMethodValidationException` предоставляет результаты по параметрам или возвращаемому значению. [MVC Validation](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-controller/ann-validation.html).
 
 ## Q25. (!) Что такое `@ControllerAdvice`?
 
@@ -807,6 +804,8 @@ spring:
 **Как это связывается:** контроллер возвращает короткое имя (`return "userList"`), а `ViewResolver` достраивает путь префиксом и суффиксом → `/templates/userList.html`. В чисто REST-приложениях с `@RestController` шаблонов нет вовсе — ответ собирает `HttpMessageConverter` (JSON/XML).
 
 **Рекомендация:** для серверного рендеринга сегодня стандарт — `Thymeleaf` (layout-фрагменты, интеграция с [Spring Security](spring-security-interview.md), валидный HTML, открывающийся в браузере как обычный файл). `JSP` в новых проектах не берут.
+
+JSP в Boot 3.5 поддерживается с Tomcat или Jetty при WAR-упаковке, включая executable WAR. Executable JAR для JSP не поддерживается. [Boot Servlet Web](https://docs.spring.io/spring-boot/3.5/reference/web/servlet.html).
 
 ## Q27. (!) В чём разница между `@RequestBody` и `@RequestParam`?
 
@@ -871,7 +870,8 @@ public class ValidationAdvice {
             MethodArgumentNotValidException ex) {
         Map<String, String> errors = ex.getBindingResult().getFieldErrors().stream()
             .collect(Collectors.toMap(
-                FieldError::getField, FieldError::getDefaultMessage));
+                FieldError::getField, FieldError::getDefaultMessage,
+                (first, ignored) -> first));
         return ResponseEntity.badRequest().body(errors);
     }
 }
@@ -880,6 +880,8 @@ public class ValidationAdvice {
 **Когда стандартных аннотаций мало:**
 - **Своё правило** — собственная аннотация + `ConstraintValidator` (например, проверка уникальности email в БД).
 - **Разные правила для создания и обновления** — группы валидации и `@Validated(OnCreate.class)`.
+
+При встроенной проверке всего метода обработайте также `HandlerMethodValidationException`. Для ошибки входного параметра стандартный статус — 400, для нарушения ограничения на возвращаемом значении — 500. [MVC Validation](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-controller/ann-validation.html).
 
 ## Q29. Что такое `Content Negotiation` и как его настроить?
 
@@ -913,7 +915,7 @@ public class WebConfig implements WebMvcConfigurer {
 }
 ```
 
-**По умолчанию** `Spring Boot` ориентируется на заголовок `Accept` — это «правильный» HTTP-способ. JSON работает из коробки (Jackson на classpath), а для XML нужно добавить зависимость `jackson-dataformat-xml`.
+По умолчанию учитывается `Accept`. В примере включён параметр `format`: настроенная стратегия параметра проверяется перед стратегией заголовка. Для XML нужен зарегистрированный XML-конвертер, например Jackson XML. [Content Negotiation](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-config/content-negotiation.html).
 
 ## Q30. Как тестировать контроллеры с помощью `MockMvc`?
 
@@ -926,7 +928,7 @@ class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private UserService userService;
 
     @Test
@@ -942,12 +944,13 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     void shouldReturn400OnInvalidInput() throws Exception {
         String invalidJson = """
             {"name": "", "email": "not-an-email"}
             """;
 
-        mockMvc.perform(post("/api/users")
+        mockMvc.perform(post("/api/users").with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidJson))
             .andExpect(status().isBadRequest())
@@ -957,10 +960,12 @@ class UserControllerTest {
 ```
 
 **Два режима запуска:**
-- `@WebMvcTest` — тонкий срез: поднимает только веб-слой (контроллер, фильтры, `ControllerAdvice`), сервисы подменяются `@MockBean`. Быстрее, изолирует контроллер от БД и бизнес-логики.
+- `@WebMvcTest` — тонкий срез: поднимает только веб-слой (контроллер, фильтры, `ControllerAdvice`), сервисы подменяются `@MockitoBean`. Быстрее, изолирует контроллер от БД и бизнес-логики.
 - `@SpringBootTest` + `@AutoConfigureMockMvc` — полный контекст приложения с `MockMvc`. Медленнее, но ближе к боевому поведению.
 
 **Полезное:** `@WithMockUser` — тесты с [аутентификацией](spring-security-interview.md). Подробнее — [модульное тестирование](../../testing/unit-testing-interview.md) и [интеграционное тестирование](../../testing/integration-testing-interview.md).
+
+Пример POST предполагает `spring-security-test`, запрос с ролью, которой цепочка разрешает этот маршрут, и включённый CSRF. `csrf()` добавляет токен, чтобы тест дошёл до проверки DTO.
 
 ## Q31. (!) Как устроен pipeline обработки запроса в `DispatcherServlet`?
 
@@ -984,10 +989,12 @@ sequenceDiagram
     Ctrl-->>HA: ModelAndView
     HA-->>DS: ModelAndView
     DS->>DS: postHandle() — Interceptor'ы в обратном порядке
-    DS->>VR: resolveViewName(viewName, locale)
-    VR-->>DS: View
-    DS->>DS: render(model, view)
-    DS->>DS: afterCompletion() — Interceptor'ы (даже при исключении)
+    opt Возвращено логическое имя View
+        DS->>VR: resolveViewName(viewName, locale)
+        VR-->>DS: View
+        DS->>DS: render(model, view)
+    end
+    DS->>DS: afterCompletion() для preHandle=true
     DS-->>C: HTTP Response
 ```
 
@@ -1003,6 +1010,8 @@ sequenceDiagram
 | `MultipartResolver` | Разбирает multipart-запросы |
 
 **Важный нюанс:** при `@ResponseBody` (и значит во всём `@RestController`) шаг с `ViewResolver` выпадает — `HandlerAdapter` сразу пишет тело ответа через `HttpMessageConverter`, минуя рендеринг View.
+
+Диаграмма показывает синхронную MVC-ветку после Servlet-фильтров, где обычно выполняется аутентификация. Для исключений используется цепочка резолверов, а при async первоначальный dispatch может закончиться до обработки результата (Q5, Q23, Q41).
 
 ## Q32. (!) Как настроить `@RequestMapping`: все варианты маппинга?
 
@@ -1066,6 +1075,8 @@ public class UserController {
 - `params` — обязательные / запрещённые параметры запроса
 - `headers` — обязательные заголовки
 
+В Spring MVC 6.2 по умолчанию используются `PathPattern`: `*` работает внутри сегмента, `**` и `{*path}` допускаются в конце паттерна. Если приложение явно переключено на `AntPathMatcher`, его правила отличаются. `consumes` ограничивает медиатип входа, `produces` участвует в согласовании выхода. [Request Mapping](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-controller/ann-requestmapping.html).
+
 ## Q33. (!) Как работает `HandlerInterceptor` и чем отличается от `Filter`?
 
 **HandlerInterceptor** — перехватчик Spring MVC, который работает **внутри** `DispatcherServlet` и потому видит выбранный handler (метод контроллера). Это его ключевое отличие от Servlet-фильтра: фильтр стоит снаружи MVC и о контроллере не знает. Интерцептор реализует до трёх хуков — `preHandle`, `postHandle`, `afterCompletion`:
@@ -1127,14 +1138,16 @@ public class WebConfig implements WebMvcConfigurer {
 
 **Сравнение Filter vs HandlerInterceptor:**
 
-| Характеристика | `javax.servlet.Filter` | `HandlerInterceptor` |
+| Характеристика | `jakarta.servlet.Filter` | `HandlerInterceptor` |
 |---------------|----------------------|---------------------|
 | Уровень | Servlet Container (вне Spring) | Spring MVC (внутри DispatcherServlet) |
 | Доступ к handler | Нет | Да (`handler` — метод контроллера) |
 | Доступ к ModelAndView | Нет | Да (`postHandle`) |
-| Spring Beans | Только через `DelegatingFilterProxy` | Полный доступ |
+| Spring Beans | Возможны при регистрации Spring-бина или делегировании через `DelegatingFilterProxy` | Доступны для зарегистрированного Spring-бина |
 | Применение | Аутентификация, кодировка, CORS | Логирование, авторизация на уровне MVC |
-| При исключении | postHandle не вызывается, afterCompletion — вызывается | afterCompletion — всегда |
+| Завершение | Очистка через `finally` вокруг `chain.doFilter`. MVC-хуков нет | `afterCompletion` для интерцепторов с `preHandle=true`, с отдельной веткой async |
+
+`DelegatingFilterProxy` связывает зарегистрированный в Servlet-контейнере фильтр с бином Spring. Это один из способов интеграции. Порядок работы фильтров зависит от регистрации и типов dispatch. [Spring Security Servlet Architecture](https://docs.spring.io/spring-security/reference/servlet/architecture.html).
 
 ## Q34. Как обрабатывать загрузку файлов (`Multipart`) в `Spring MVC`?
 
@@ -1168,13 +1181,8 @@ public class FileController {
         if (file.isEmpty()) {
             throw new BadRequestException("Файл не выбран");
         }
-        String contentType = file.getContentType();
-        if (!List.of("image/jpeg", "image/png", "application/pdf").contains(contentType)) {
-            throw new BadRequestException("Неподдерживаемый тип: " + contentType);
-        }
-
-        String savedPath = storage.save(file);
-        return ResponseEntity.ok(new FileResponse(savedPath, file.getOriginalFilename()));
+        String id = storage.saveValidated(file);
+        return ResponseEntity.ok(new FileResponse(id, null));
     }
 
     // Несколько файлов
@@ -1182,7 +1190,7 @@ public class FileController {
     public List<FileResponse> uploadBatch(
             @RequestParam("files") List<MultipartFile> files) {
         return files.stream()
-            .map(storage::save)
+            .map(storage::saveValidated)
             .map(path -> new FileResponse(path, null))
             .toList();
     }
@@ -1193,8 +1201,8 @@ public class FileController {
     public ResponseEntity<FileResponse> uploadWithMeta(
             @RequestPart("file") MultipartFile file,
             @RequestPart("metadata") @Valid FileMetadata metadata) {
-        String path = storage.save(file, metadata);
-        return ResponseEntity.ok(new FileResponse(path, metadata.name()));
+        String path = storage.saveValidated(file, metadata);
+        return ResponseEntity.ok(new FileResponse(path, null));
     }
 
     // Скачивание файла
@@ -1209,6 +1217,8 @@ public class FileController {
     }
 }
 ```
+
+`saveValidated` — условный API приложения. Он проверяет фактическое содержимое по разрешённым форматам и сохраняет файл под серверным идентификатором. Имя и `Content-Type` из запроса недоверенные. Для скачивания в примере `resource.getFilename()` возвращает серверное имя. [MultipartFile](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/web/multipart/MultipartFile.html).
 
 ## Q35. (!) Как настроить `CORS` в `Spring MVC`?
 
@@ -1262,9 +1272,9 @@ public CorsFilter corsFilter() {
 }
 ```
 
-**Preflight-запрос:** для «непростых» запросов (нестандартные заголовки, методы кроме GET/POST/HEAD) браузер сначала шлёт пробный `OPTIONS` — спрашивает разрешение. `Spring` отвечает на него сам: `200 OK` с нужными CORS-заголовками, не вызывая контроллер.
+Браузер отправляет preflight через `OPTIONS`, чтобы проверить разрешение на кросс-доменный запрос. При допустимом запросе CORS-обработка возвращает нужные заголовки без вызова контроллера. Политика может отклонить запрос, например ответом 403.
 
-**Подводный камень:** при подключённом [Spring Security](spring-security-interview.md) фильтр безопасности стоит раньше MVC, поэтому `@CrossOrigin` и `addCorsMappings` могут не сработать. Нужен вариант 3 (`CorsFilter`) или включение CORS в самой security-конфигурации.
+Preflight должен обрабатываться до требований Spring Security об аутентификации. Включите CORS в цепочке Security с подходящим источником конфигурации либо зарегистрируйте CORS-фильтр в нужном порядке. При сочетании глобальной и локальной конфигурации списки обычно объединяются, а одиночные значения вроде `allowCredentials` и `maxAge` переопределяются локально. [Spring MVC CORS](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc-cors.html).
 
 ## Q36. (!) Что такое `@ControllerAdvice` и как строить глобальную обработку ошибок?
 
@@ -1333,9 +1343,11 @@ public record ValidationErrorResponse(String code, Map<String, String> errors) {
 @ControllerAdvice(assignableTypes = {UserController.class, OrderController.class})
 ```
 
+Если для API нужен единый формат ошибок, обработайте обе ветки валидации MVC (Q11): `MethodArgumentNotValidException` и `HandlerMethodValidationException`. Для возврата методной ошибки проверяйте, относится ли она ко входу или к результату.
+
 ## Q37. Что такое `@ModelAttribute` на уровне метода и как он взаимодействует с моделью?
 
-`@ModelAttribute` на методе — способ предзаполнить модель данными, которые нужны **всем** обработчикам контроллера (а в `@ControllerAdvice` — всем контроллерам сразу). Такой метод `Spring` вызывает перед каждым `@RequestMapping`-методом, поэтому он избавляет от дублирования: справочники для выпадающих списков, текущего пользователя или версию API кладут в модель один раз.
+Методы `@ModelAttribute` подготавливают данные модели перед выполнением обработчика. Для именованного атрибута метод может быть пропущен, если этот атрибут уже есть в модели. Методы из `@ControllerAdvice` применяются к контроллерам, соответствующим селекторам. [Model Attributes](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-controller/ann-modelattrib-methods.html).
 
 ```java
 @Controller
@@ -1345,7 +1357,7 @@ public class OrderController {
     private final CategoryService categoryService;
     private final UserService userService;
 
-    // Вызывается ПЕРЕД каждым @RequestMapping-методом в этом контроллере
+    // Подготавливает атрибут, если он ещё не добавлен
     // Добавляет "categories" в модель автоматически
     @ModelAttribute("categories")
     public List<Category> populateCategories() {
@@ -1380,12 +1392,12 @@ public class OrderController {
 ```
 
 **Порядок выполнения в `DispatcherServlet`:**
-1. Вызываются все методы `@ModelAttribute` (заполняют модель)
+1. Инициализируется модель, включая подходящие методы `@ModelAttribute`
 2. Вызывается `@RequestMapping`-метод
 3. `postHandle` Interceptor'ов
 4. Рендеринг View с полной моделью
 
-**В `@ControllerAdvice`** `@ModelAttribute` применяется глобально ко всем контроллерам:
+Без селекторов в `@ControllerAdvice` метод применяется глобально:
 ```java
 @ControllerAdvice
 public class GlobalModelEnricher {
@@ -1401,9 +1413,9 @@ public class GlobalModelEnricher {
 
 ## Q38. (!) Как устроен lifecycle DispatcherServlet — инициализация и выбор HandlerMapping?
 
-У `DispatcherServlet` две фазы: одноразовая инициализация (загружает стратегии) и обработка каждого запроса (выбирает нужную стратегию). Понимать разделение важно, чтобы видеть, где подключаются кастомные `HandlerMapping` и `HandlerAdapter`.
+`DispatcherServlet` инициализирует стратегии по конфигурации контекста, затем выбирает обработчик и адаптер на каждом запросе.
 
-**Инициализация** происходит при первом запросе или при старте контейнера (если `load-on-startup=1`). На фазе `initStrategies()` сервлет один раз вычитывает из контекста все бины стратегий:
+Сервлет может инициализироваться на старте или при первом запросе. `initStrategies()` вызывается при инициализации MVC-контекста и при соответствующем refresh. Сервлет использует настроенные стратегии или стандартные варианты. Иерархия root/child в схеме — один из вариантов конфигурации.
 
 ```
 ContextLoaderListener → WebApplicationContext (Root)
@@ -1416,8 +1428,7 @@ onRefresh() → initStrategies()
     ├── initHandlerExceptionResolvers()
     ├── initViewResolvers()
     ├── initMultipartResolver()
-    ├── initLocaleResolver()
-    └── initThemeResolver()
+    └── initLocaleResolver()
 ```
 
 **Выбор HandlerMapping при запросе.** На каждый запрос `doDispatch()` перебирает зарегистрированные `HandlerMapping` по приоритету (`@Order`) и берёт первый, который сопоставил запрос с обработчиком; затем подбирает подходящий `HandlerAdapter`:
@@ -1428,9 +1439,9 @@ HTTP Request
 DispatcherServlet.doDispatch()
     ↓
 getHandler(request) — перебирает HandlerMappings по priority (Order)
-    ├── RequestMappingHandlerMapping  (приоритет 0) — @RequestMapping
-    ├── BeanNameUrlHandlerMapping     (приоритет 2) — по имени бина
-    └── RouterFunctionMapping         (реактивный)
+    ├── RequestMappingHandlerMapping — @RequestMapping
+    ├── BeanNameUrlHandlerMapping — по имени бина
+    └── RouterFunctionMapping         — функциональные Servlet-маршруты
     ↓
 HandlerExecutionChain (handler + interceptors)
     ↓
@@ -1445,12 +1456,14 @@ applyPreHandle() → handle() → applyPostHandle() → processDispatchResult()
 ```java
 // Кастомный HandlerMapping (пример: маршрутизация по subdomain)
 @Bean
-@Order(Ordered.HIGHEST_PRECEDENCE)
 public HandlerMapping subdomainHandlerMapping() {
-    // Перехватывает запросы ДО RequestMappingHandlerMapping
-    return new SubdomainHandlerMapping();
+    var mapping = new SubdomainHandlerMapping();
+    mapping.setOrder(Ordered.HIGHEST_PRECEDENCE);
+    return mapping;
 }
 ```
+
+Порядок конкретных маппингов зависит от инфраструктуры MVC и настройки приложения. `RouterFunctionMapping` здесь относится к WebMvc.fn. [WebMvc.fn](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc-functional.html).
 
 ## Q39. (!) Как работают @RequestBody и @ResponseBody через цепочку HttpMessageConverter?
 
@@ -1459,7 +1472,7 @@ public HandlerMapping subdomainHandlerMapping() {
 - **`@RequestBody`** — `Spring` десериализует тело запроса в объект.
 - **`@ResponseBody`** — `Spring` сериализует объект в тело ответа.
 
-Ключевой момент — конвертер выбирается не наугад: `Spring` идёт по списку зарегистрированных конвертеров и берёт первый, способный обработать нужный медиатип (`Content-Type` на входе, `Accept` на выходе). Порядок в списке поэтому имеет значение.
+На входе проверяются тип аргумента и `Content-Type`. На выходе MVC сначала согласует медиатип с учётом стратегии и `produces`, затем перебирает зарегистрированные конвертеры для записи. [Message Conversion](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/message-converters.html).
 
 **Процесс выбора конвертера (`Content Negotiation`):**
 
@@ -1477,7 +1490,7 @@ public HandlerMapping subdomainHandlerMapping() {
     Jackson.readValue(requestBody, TargetClass.class)
 
 @ResponseBody:
-    Accept: application/json (или */* → первый подходящий)
+    Согласованный медиатип, например application/json
         ↓
     выбор по canWrite(returnType, mediaType)
         ↓
@@ -1538,11 +1551,8 @@ public ResponseEntity<String> uploadFile(
         return ResponseEntity.badRequest().body("File is empty");
     }
 
-    String filename = StringUtils.cleanPath(file.getOriginalFilename());
-    Path target = uploadDir.resolve(filename);
-    Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
-
-    return ResponseEntity.ok("Uploaded: " + filename);
+    String id = storage.saveValidated(file);
+    return ResponseEntity.ok("Uploaded: " + id);
 }
 
 // @RequestPart — для сложных multipart (JSON + файл)
@@ -1553,14 +1563,15 @@ public ResponseEntity<ProductDto> uploadWithMeta(
         @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail) {
 
     // metadata десериализуется через MappingJackson2HttpMessageConverter
-    return ResponseEntity.ok(productService.create(metadata, image));
+    String imageId = storage.saveValidated(image);
+    return ResponseEntity.ok(productService.create(metadata, imageId));
 }
 
 // Загрузка нескольких файлов
 @PostMapping("/upload-multiple")
 public List<String> uploadMultiple(@RequestParam("files") List<MultipartFile> files) {
     return files.stream()
-        .map(this::saveFile)
+        .map(storage::saveValidated)
         .collect(toList());
 }
 ```
@@ -1590,6 +1601,8 @@ public class FileUploadExceptionHandler {
     }
 }
 ```
+
+Все пути загрузки используют проверку фактического содержимого и сохраняют файл под серверным именем. Исходное имя и заявленный `Content-Type` не используются как путь или подтверждение формата (Q34).
 
 ## Q41. (!) Как реализовать асинхронные запросы в Spring MVC — Callable, DeferredResult, @Async?
 
@@ -1662,7 +1675,7 @@ public class AsyncConfig implements WebMvcConfigurer {
     }
 
     @Bean("reportExecutor")
-    public TaskExecutor asyncExecutor() {
+    public AsyncTaskExecutor asyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(5);
         executor.setMaxPoolSize(20);
@@ -1681,31 +1694,15 @@ public class AsyncConfig implements WebMvcConfigurer {
 | `DeferredResult` | События, push, SSE | Внешний код/поток |
 | `@Async` | Сервисный слой, Fire-and-forget | Spring AsyncTaskExecutor |
 
+`@Async` отправляет сервисный вызов в выбранный исполнитель. Servlet async MVC запускает, когда контроллер возвращает поддерживаемый результат, например `CompletionStage`, `Callable` или `DeferredResult`. `setTaskExecutor` принимает `AsyncTaskExecutor` и настраивает исполнение MVC, а `@Async` имеет собственный выбор исполнителя. [MVC Async Requests](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-ann-async.html).
+
 ## Q42. (!) Каков порядок применения ExceptionHandler — @ControllerAdvice vs локальный?
 
 `Spring MVC` ищет обработчик исключения в строгом порядке и берёт первый подходящий. Главное правило для собеседования: локальный `@ExceptionHandler` в самом контроллере всегда бьёт `@ControllerAdvice`, а среди нескольких advice выигрывает более приоритетный (`@Order`) и более конкретный по типу исключения.
 
-**Порядок поиска обработчика:**
+При стандартном порядке резолверов MVC сначала ищет подходящий локальный `@ExceptionHandler`. Затем проверяет применимые advice в порядке их приоритета. `basePackages` определяет применимость advice и не добавляет ему приоритет. В пределах одного advice совпадение по корневому исключению предпочтительнее совпадения по причине. Между разными advice совпадение по причине в более приоритетном бине может выиграть у корневого совпадения в менее приоритетном.
 
-```
-Исключение в Controller
-    ↓
-1. @ExceptionHandler в САМОМ контроллере (высший приоритет)
-    ↓ (не найден)
-2. @ExceptionHandler в @ControllerAdvice
-    └── Сортировка @ControllerAdvice по:
-        ├── @Order / Ordered.getOrder() — меньше = приоритетнее
-        ├── Специфичность basePackages (более конкретный — раньше)
-        └── Специфичность типа исключения (более конкретный — раньше)
-    ↓ (не найден)
-3. ResponseStatusExceptionResolver — @ResponseStatus на классе исключения
-    ↓ (не найден)
-4. DefaultHandlerExceptionResolver — стандартные Spring исключения
-    ↓ (не найден)
-5. SimpleMappingExceptionResolver (если настроен)
-    ↓ (не найден)
-6. Servlet контейнер (страница ошибки 500)
-```
+Если подходящего метода нет, продолжается цепочка резолверов (Q23). В Spring Framework 6.2 для одного типа исключения допустимы разные методы с различающимся `produces`. [ExceptionHandler](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-controller/ann-exceptionhandler.html) · [ControllerAdvice](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/web/bind/annotation/ControllerAdvice.html).
 
 ```java
 // Локальный @ExceptionHandler — только для данного контроллера
@@ -1751,32 +1748,13 @@ public class PaymentExceptionHandler {
 }
 ```
 
-> **Важно**: Локальный `@ExceptionHandler` **всегда** имеет приоритет над `@ControllerAdvice` для исключений из того же контроллера.
+Локальный обработчик имеет преимущество среди методов, которые подходят этому исключению и согласованному медиатипу.
 
 ## Q43. (!) Когда переходить с Spring MVC на Spring WebFlux?
 
-Короткий ответ: переходят на **WebFlux** только когда узкое место — именно блокировка потоков на I/O при тысячах одновременных соединений. Во всех остальных случаях `Spring MVC` проще и совместимее. Разница стеков — в модели работы с потоками:
+Выбор между Spring MVC и WebFlux зависит от измерений и доступных зависимостей. MVC работает поверх Servlet API, поддерживает Servlet async и может использовать `WebClient`. WebFlux предоставляет реактивный неблокирующий стек. Для сохранения его модели операции ввода-вывода на критическом пути должны поддерживать неблокирующую работу или выполняться на подходящем выделенном исполнителе.
 
-| Аспект | Spring MVC | Spring WebFlux |
-|--------|-----------|---------------|
-| Модель | Blocking, Servlet API | Non-blocking, Reactive Streams |
-| Сервер | Tomcat, Jetty (thread-per-request) | Netty, Undertow (event loop) |
-| API | Sync: `@RequestMapping`, `ResponseEntity` | Sync + Reactive: `Mono<T>`, `Flux<T>` |
-| Пул потоков | Большой (200+ threads) | Маленький (cpu cores × 2) |
-| Высокие нагрузки | Ограничен числом потоков | Эффективен при I/O-bound задачах |
-| Экосистема | Зрелая, полная совместимость | Растущая, не все библиотеки поддерживают |
-
-**Когда оставаться на Spring MVC:**
-- CRUD-приложения с умеренной нагрузкой
-- Команда не знакома с реактивным программированием
-- Зависимости не поддерживают reactive (JDBC, legacy libs)
-- Простота важнее масштабируемости
-
-**Когда переходить на WebFlux:**
-- Тысячи одновременных соединений (WebSocket, SSE, streaming)
-- Много I/O-bound операций (HTTP-запросы к другим сервисам, медленные БД)
-- Уже используете R2DBC, WebClient, реактивные Kafka-клиенты
-- Нужен backpressure (контроль потока данных)
+Сравните задержку, конкурентность, нагрузку на пулы и ограничения внешних систем на профиле вашего сервиса. Фиксированного порога соединений для перехода нет. [Spring WebFlux Overview](https://docs.spring.io/spring-framework/reference/6.2/web/webflux/new-framework.html).
 
 ```java
 // Spring MVC — блокирующий вызов
@@ -1805,7 +1783,7 @@ public Flux<ServerSentEvent<String>> streamEvents() {
 }
 ```
 
-**Золотое правило**: не смешивайте блокирующий код с реактивным в одном стеке. Переход — это решение для всей команды и всего сервиса, не частичное.
+Блокирующий вызов на event loop может затормозить другие запросы. Для отдельных неблокирующих клиентов или асинхронных ответов можно сохранить MVC и проверить эффект без смены всего веб-стека.
 
 ---
 

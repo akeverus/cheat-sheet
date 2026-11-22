@@ -1,6 +1,6 @@
 ---
 title: "Вопросы на собеседовании: REST-клиенты Spring"
-description: "HTTP-клиенты Spring: RestTemplate (deprecated с 7.0), RestClient (Spring 6.1), WebClient, @HttpExchange декларативный интерфейс"
+description: "HTTP-клиенты Spring: RestTemplate (deprecation в документации 7.0, @Deprecated с 7.1), RestClient (Spring 6.1), WebClient, @HttpExchange декларативный интерфейс"
 tags:
   - interview
   - frameworks
@@ -18,7 +18,7 @@ updated: "2026-10-07"
 ---
 # Вопросы на собеседовании: REST-клиенты Spring
 
-В Spring существует три основных HTTP-клиента: `RestTemplate` (классический; maintenance mode в Spring 6, формально deprecated с 7.0), `WebClient` (реактивный, Spring 5+), и `RestClient` (новый синхронный, Spring 6.1). На собеседованиях проверяют понимание различий, миграцию с RestTemplate и декларативный подход через `@HttpExchange`.
+В Spring существует три основных HTTP-клиента: `RestTemplate` (классический синхронный клиент, deprecation в документации Spring 7.0, аннотация `@Deprecated` с 7.1), `WebClient` (реактивный, Spring 5+), и `RestClient` (новый синхронный, Spring 6.1). На собеседованиях проверяют понимание различий, миграцию с RestTemplate и декларативный подход через `@HttpExchange`.
 
 Дата последнего обновления: 2026-10-07
 
@@ -69,7 +69,7 @@ updated: "2026-10-07"
 |---|---|---|---|
 | Версия | Spring 3+ | Spring 6.1+ | Spring 5+ (WebFlux) |
 | Стиль | Синхронный | Синхронный fluent | Реактивный |
-| Статус | Maintenance mode в 6.x, deprecated с 7.0 | Актуальный | Актуальный |
+| Статус | Maintenance mode в 6.x, deprecation в документации 7.0, `@Deprecated` с 7.1 | Актуальный | Актуальный |
 | Стиль API | Методы перегрузки | Fluent builder chain | Reactive (Mono/Flux) |
 | Зависимость | spring-web | spring-web | spring-webflux |
 | Применение | Legacy код | Новые Spring 6 проекты | Реактивный стек |
@@ -78,7 +78,7 @@ updated: "2026-10-07"
 
 ```mermaid
 graph LR
-    RT["RestTemplate<br/>deprecated с 7.0"] -->|"заменяется; отдаёт конвертеры,<br/>фабрику запросов, интерсепторы"| RC["RestClient<br/>Spring 6.1"]
+    RT["RestTemplate<br/>deprecation в docs 7.0<br/>@Deprecated с 7.1"] -->|"заменяется; отдаёт конвертеры,<br/>фабрику запросов, интерсепторы"| RC["RestClient<br/>Spring 6.1"]
     WC["WebClient<br/>reactive"] -.->|"заимствован только стиль fluent-API"| RC
 ```
 
@@ -99,7 +99,7 @@ graph LR
 
 `RestClient` решает всё это единым fluent builder и при этом совместим с той же инфраструктурой — `HttpMessageConverter`, `ClientHttpRequestFactory`. Поэтому миграция дёшева: ту же фабрику запросов и конвертеры можно передать в новый клиент.
 
-**Важно про статус — он зависит от версии.** В Spring 6.x `RestTemplate` не был помечен `@Deprecated`: он находился в режиме поддержки (maintenance mode) — работал, но новых фич не получал. **Начиная со Spring Framework 7.0 он формально объявлен deprecated** в пользу `RestClient` и будет удалён в одной из будущих версий; для асинхронных и потоковых сценариев там же рекомендуется `WebClient`. Практический вывод: рабочий код не ломается и переписывать его в авральном режиме не нужно, но новый код пишут на `RestClient`, а миграцию существующего стоит планировать, а не откладывать бессрочно.
+**Статус по версиям.** В Spring Framework 6.x `RestTemplate` был в режиме поддержки. В 7.0 deprecation объявили в справочной документации. В 7.1 класс получил `@Deprecated(since = "7.1", forRemoval = true)`. Для нового синхронного кода Spring рекомендует `RestClient`, для реактивных и потоковых сценариев — `WebClient`. [Release Notes 7.0](https://github.com/spring-projects/spring-framework/wiki/Spring-Framework-7.0-Release-Notes/d2df491db0e5856e31b1694e5c6efdf727bcb517) · [RestTemplate 7.1 Javadoc](https://docs.spring.io/spring-framework/docs/7.1.x-SNAPSHOT/javadoc-api/org/springframework/web/client/RestTemplate.html).
 
 ---
 
@@ -192,20 +192,6 @@ Optional<User> user = client.get()
 - **`defaultStatusHandler(...)` на builder'е клиента** — глобальное правило для всех запросов этого клиента (например, 429 → `RateLimitException`).
 
 ```java
-// onStatus — для конкретных кодов
-User user = client.get()
-    .uri("/users/{id}", id)
-    .retrieve()
-    .onStatus(HttpStatusCode::is4xxClientError,
-        (request, response) -> {
-            throw new UserNotFoundException("User not found: " + id);
-        })
-    .onStatus(HttpStatusCode::is5xxServerError,
-        (request, response) -> {
-            throw new ServiceUnavailableException("Remote service error");
-        })
-    .body(User.class);
-
 // Глобальный обработчик через defaultStatusHandler:
 RestClient client = RestClient.builder()
     .baseUrl("https://api.example.com")
@@ -214,9 +200,25 @@ RestClient client = RestClient.builder()
         (req, resp) -> { throw new RateLimitException(); }
     )
     .build();
+
+// onStatus — для конкретных кодов
+User user = client.get()
+    .uri("/users/{id}", id)
+    .retrieve()
+    .onStatus(status -> status.value() == 404,
+        (request, response) -> {
+            throw new UserNotFoundException("User not found: " + id);
+        })
+    .onStatus(HttpStatusCode::is5xxServerError,
+        (request, response) -> {
+            throw new ServiceUnavailableException("Remote service error");
+        })
+    .body(User.class);
 ```
 
-Если свой обработчик не задан, `retrieve()` сам бросает стандартные исключения: `HttpClientErrorException` для 4xx и `HttpServerErrorException` для 5xx (оба — наследники `RestClientException`). То есть «ничего не делать» — это тоже стратегия: ошибки не проглатываются молча, а превращаются в исключения.
+Обработчики `onStatus` для конкретного ответа проверяются раньше обработчиков `defaultStatusHandler` клиента. Предикат на все 4xx перехватил бы и 429 до глобального правила. [RestClient.Builder](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/web/client/RestClient.Builder.html).
+
+Если ни один обработчик не подошёл, `retrieve()` сам бросает стандартные исключения: `HttpClientErrorException` для 4xx и `HttpServerErrorException` для 5xx (оба — наследники `RestClientException`). То есть «ничего не делать» — это тоже стратегия: ошибки не проглатываются молча, а превращаются в исключения.
 
 ---
 
@@ -279,7 +281,7 @@ Flux<User> allUsers = webClient.get()
 
 ## Q8. Как сделать синхронный вызов через WebClient?
 
-Синхронный результат из реактивного `WebClient` получают блокирующим ожиданием: у `Mono` это `.block()`, у `Flux` — `blockFirst()` и `blockLast()`. Вызов ждёт завершения и возвращает развёрнутое значение. Но это сознательный мост из реактивного мира в блокирующий, и применять его можно далеко не везде (см. ниже).
+Синхронный результат из `WebClient` получают блокирующим ожиданием. `Mono.block()` ждёт значение или пустое завершение. `Flux.blockFirst()` ждёт первый элемент либо пустое завершение, а `blockLast()` ждёт завершения и возвращает последний элемент, если он был. Ошибки потока передаются вызывающему коду. [Reactor Flux Javadoc](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Flux.html#blockFirst()).
 
 ```java
 // .block() превращает реактивный вызов в блокирующий
@@ -287,12 +289,12 @@ User user = webClient.get()
     .uri("/users/{id}", id)
     .retrieve()
     .bodyToMono(User.class)
-    .block();  // АНТИПАТТЕРН в WebFlux-окружении!
+    .block();  // блокирующая граница на подходящем потоке
 ```
 
-**Почему это опасно:** если вызвать `.block()` прямо на потоке event loop (внутри реактивной цепочки WebFlux), вы заблокируете поток, который должен обслуживать множество запросов. Reactor это распознаёт и бросает `IllegalStateException`, а в худшем случае вы получаете deadlock и просадку всего сервиса.
+На потоках, где Reactor запрещает блокирующие API, `block()`, `blockFirst()` и `blockLast()` приводят к `IllegalStateException`. На других потоках вызов может ждать и занимать поток исполнителя. Это снижает пропускную способность при большом числе одновременных запросов. [Reactor Schedulers Javadoc](https://projectreactor.io/docs/core/release/api/reactor/core/scheduler/Schedulers.html#isInNonBlockingThread()).
 
-**Где допустимо:** в тестах и в чисто блокирующем коде, где нет реактивного контекста. Но если код и так блокирующий, правильнее сразу взять `RestClient` и не тащить реактивный стек ради одного вызова.
+Блокирующее ожидание подходит для явно синхронной границы на потоке, где оно разрешено. В реактивном обработчике обычно возвращают `Mono` или `Flux` и дают фреймворку управлять подпиской.
 
 ---
 
@@ -357,16 +359,16 @@ public class OrderService {
 | Аннотация | Описание |
 |---|---|
 | `@PathVariable` | Переменная в пути URL |
-| `@RequestParam` | Query-параметр |
+| `@RequestParam` | Параметр тела при `application/x-www-form-urlencoded`, иначе query-параметр |
 | `@RequestHeader` | HTTP-заголовок |
 | `@RequestBody` | Тело запроса |
 | `@CookieValue` | Cookie |
 | `@RequestPart` | Часть multipart-запроса |
-| `URI` | Динамический URL (переопределяет baseUrl) |
-| `UriBuilderFactory` | Своя фабрика URI для этого вызова |
+| `URI` | URL запроса вместо URL из аннотации |
+| `UriBuilderFactory` | Фабрика для подстановки другого базового URI с сохранением сегментов пути из аннотации |
 | `HttpMethod` | Динамический метод HTTP |
 
-Отдельно стоят параметры без аннотаций — `URI`, `UriBuilderFactory` и `HttpMethod`: они распознаются по типу аргумента и задают цель и метод динамически в рантайме, переопределяя то, что прописано в аннотациях интерфейса.
+`URI`, `UriBuilderFactory` и `HttpMethod` распознаются по типу аргумента. `HttpMethod` переопределяет метод из аннотации. [Spring Framework 6.2 REST Clients](https://docs.spring.io/spring-framework/reference/6.2/integration/rest-clients.html) · [HttpExchange Javadoc](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/web/service/annotation/HttpExchange.html).
 
 ```java
 @HttpExchange
@@ -483,7 +485,7 @@ RestClient client = RestClient.builder()
 
 Миграция дешёвая, потому что у клиентов общая инфраструктура. Есть два пути, и обычно их сочетают.
 
-**Шаг 1 — переиспользовать настройки.** `RestClient.create(oldTemplate)` создаёт клиент на основе конфигурации `RestTemplate`: конвертеров сообщений, фабрики запросов (включая её таймауты), интерсепторов, URI builder и обработчика ошибок. При переходе на новую ручную сборку через `RestClient.builder()` эти настройки нужно перенести явно.
+**Шаг 1 — переиспользовать настройки.** `RestClient.create(oldTemplate)` переносит конвертеры сообщений, фабрику запросов с её таймаутами, интерсепторы и обработчик ошибок. В Spring Framework 6.2 настроенный `UriTemplateHandler` переносится, если он реализует `UriBuilderFactory`. Обычный `UriTemplateHandler` без этого интерфейса не переносится. Если фабрика использует стандартные настройки `RestTemplate`, клиент выбирает свои настройки URI по умолчанию. Проверь URI-шаблоны и кодирование переменных при миграции. [DefaultRestClientBuilder 6.2.19](https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.19/spring-web/src/main/java/org/springframework/web/client/DefaultRestClientBuilder.java).
 
 ```java
 RestTemplate oldTemplate = ...; // уже настроенный с interceptors, converters

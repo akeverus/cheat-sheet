@@ -101,7 +101,7 @@ updated: "2026-05-14"
 
 ## Q1. (!) Что такое API Gateway и зачем он нужен?
 
-**API Gateway** -- единая точка входа для всех клиентских запросов в микросервисной архитектуре. Он принимает входящий запрос, маршрутизирует его к нужному backend-сервису (или сразу к нескольким), при необходимости агрегирует ответы и возвращает результат клиенту. По сути это фасад перед группой сервисов: клиент видит один API, а за ним скрыта вся внутренняя структура системы.
+**API Gateway** -- серверный вход для выбранных клиентских API в микросервисной архитектуре. Он принимает запрос, маршрутизирует его к нужному backend-сервису и может применить общие политики. Для некоторых сценариев отдельный BFF или сервис композиции собирает ответы нескольких сервисов. Клиент видит согласованный API, а топология backend остаётся внутренней деталью.
 
 ```mermaid
 graph LR
@@ -128,12 +128,12 @@ graph LR
 
 ## Q2. (!) Какие основные обязанности API Gateway?
 
-API Gateway берёт на себя инфраструктурные задачи (cross-cutting concerns), которые иначе пришлось бы реализовывать в каждом сервисе. Их удобно разбить на три группы: маршрутизация трафика, безопасность и контроль нагрузки, наблюдаемость.
+API Gateway может выполнять общие задачи на границе API. Нужный набор зависит от архитектуры: часть политик остаётся на ingress, часть — в отдельных сервисах. Доменную авторизацию сервис-владелец проверяет сам.
 
 | Обязанность | Описание |
 |---|---|
 | **Маршрутизация** | Направление запросов к нужному backend-сервису по URL, заголовкам, параметрам |
-| **Аутентификация/Авторизация** | Проверка `JWT`, `OAuth 2.0` токенов до передачи запроса сервису |
+| **Аутентификация/Авторизация** | Проверка личности и доступа к маршруту до передачи запроса сервису; права на доменный объект проверяет сервис-владелец |
 | **Rate Limiting** | Ограничение количества запросов от клиента за единицу времени |
 | **Трансформация запросов** | Модификация заголовков, тела, query-параметров |
 | **Агрегация** | Объединение ответов нескольких сервисов в один для клиента |
@@ -144,24 +144,24 @@ API Gateway берёт на себя инфраструктурные задач
 | **CORS** | Управление Cross-Origin Resource Sharing |
 | **SSL Termination** | Завершение TLS на уровне Gateway |
 
-**Что важно на собеседовании.** Граница ответственности проходит между инфраструктурной и бизнес-логикой. Всё из таблицы выше -- инфраструктура, ей место в Gateway. Бизнес-правила (расчёт цены, валидация заказа, права на конкретный ресурс) **никогда** не должны жить в Gateway: это превращает его в «толстый» God Gateway -- классический anti-паттерн (см. Q27). Если для маршрутизации нужно знать бизнес-смысл данных -- это сигнал, что логику тянут не туда.
+**Что важно на собеседовании.** Таблица описывает возможные функции, а не обязательный набор одного Gateway. Расчёт цены, валидацию заказа и проверку прав на конкретный заказ сохраняют в доменных сервисах. Когда для маршрутизации требуется знать бизнес-смысл данных, границу ответственности стоит пересмотреть.
 
 ---
 
 ## Q3. (!) Чем API Gateway отличается от Reverse Proxy?
 
-Короткий ответ: **Reverse Proxy** просто перенаправляет и балансирует трафик, а **API Gateway** управляет всем жизненным циклом API. Gateway -- это reverse proxy «на стероидах»: он умеет всё то же самое плюс аутентификацию, rate limiting по пользователю, агрегацию ответов и API-менеджмент. Это частый вопрос: интервьюер проверяет, понимаете ли вы границу между инфраструктурным компонентом и архитектурным паттерном.
+**Reverse proxy** принимает запросы и пересылает их внутренним узлам. **API Gateway** описывает роль границы клиентского API: маршруты и политики задают с учётом его потребителей. Reverse proxy тоже может выполнять TLS, аутентификацию, лимиты и преобразование запроса; различие нельзя сводить к отсутствию у него этих возможностей. Один продукт может выполнять обе роли.
 
 | Аспект | Reverse Proxy | API Gateway |
 |---|---|---|
 | **Уровень работы** | L4/L7 (TCP/HTTP) | L7 (Application) |
 | **Основная задача** | Проксирование и балансировка | Управление API lifecycle |
 | **Маршрутизация** | По URL/IP, простая | Сложная: по заголовкам, query, телу запроса |
-| **Аутентификация** | Базовая или отсутствует | Полная: OAuth 2.0, JWT, API keys |
+| **Аутентификация** | Зависит от продукта и конфигурации | Политика доступа для клиентов API |
 | **Трансформация** | Минимальная (заголовки) | Полная: заголовки, тело, протоколы |
-| **Rate Limiting** | Базовый (по IP) | Продвинутый (по пользователю, API key, плану) |
-| **Агрегация** | Нет | Да, объединение ответов нескольких сервисов |
-| **API Management** | Нет | Версионирование, документация, аналитика |
+| **Rate Limiting** | Зависит от продукта и конфигурации | Лимит по выбранной идентичности клиента или маршруту |
+| **Агрегация** | Возможна с расширениями | Возможна, когда этого требует контракт клиента |
+| **API Management** | Зависит от продукта и конфигурации | Может включать версионирование, документацию и аналитику |
 | **Примеры** | `Nginx`, `HAProxy`, `Envoy` | `Kong`, `Spring Cloud Gateway`, `AWS API Gateway` |
 
 **Где граница размывается.** Различие не абсолютное, а по объёму функциональности: reverse proxy решает задачу транспорта, Gateway -- задачу управления API. Хорошая иллюстрация -- `Kong`: это `Nginx` (reverse proxy), на который навесили плагины аутентификации, rate limiting и аналитики, и так он стал полноценным API Gateway. То есть один продукт может играть обе роли в зависимости от конфигурации.
@@ -223,37 +223,11 @@ graph TD
 
 ## Q6. (!) Что такое Spring Cloud Gateway и на чём он основан?
 
-**Spring Cloud Gateway** -- реактивный API Gateway из экосистемы `Spring Cloud`, построенный на `Spring WebFlux` и `Project Reactor`. Ключевой момент: он работает на `Netty`, а не на `Tomcat`, поэтому обработка неблокирующая. Один поток не «висит» в ожидании ответа от backend, а обслуживает множество соединений -- это критично для Gateway, который по природе своей в основном ждёт ответы downstream-сервисов (I/O-bound нагрузка).
+`Spring Cloud Gateway` — проект Spring для маршрутизации запросов и сквозных задач на границе API. У **Server WebFlux** стек основан на Spring WebFlux и Project Reactor; при типовой конфигурации он использует Reactor Netty. Это неблокирующая обработка сетевого I/O, поэтому внутри такого Gateway нельзя бездумно выполнять блокирующие операции.
 
-```mermaid
-graph LR
-    CLIENT[Client] --> SCG[Spring Cloud Gateway<br/>Netty + WebFlux]
-    SCG --> HM[Handler Mapping]
-    HM --> WH[Web Handler]
-    WH --> PRE[Pre-Filters]
-    PRE --> PROXY[Proxied Service]
-    PROXY --> POST[Post-Filters]
-    POST --> CLIENT
-```
+У проекта есть и отдельный вариант **Server Web MVC** на Servlet-стеке. Утверждение «Spring Cloud Gateway несовместим с Spring MVC» неверно для семейства в целом: конфигурация, фильтры и зависимости зависят от выбранного варианта и версии. Старый `spring-cloud-starter-gateway` относится к WebFlux-варианту, а в новых выпусках используются отдельные starter-артефакты. Не смешивайте документацию WebFlux и MVC при копировании примеров.
 
-**Ключевые характеристики:**
-
-- **Реактивный стек** -- `WebFlux` + `Reactor Netty`, неблокирующий I/O
-- **Интеграция с Spring Cloud** -- `Eureka`, `Consul`, `Resilience4j`, `Spring Security`
-- **Декларативная и программная конфигурация** -- YAML или Java DSL
-- **Расширяемость** -- кастомные фильтры и предикаты
-- **Поддержка WebSocket** -- проксирование WebSocket соединений
-
-**Частая ошибка на собеседовании и в коде:** `Spring Cloud Gateway` несовместим с `Spring MVC` (Servlet-стек). Gateway живёт на реактивном WebFlux-стеке, а `spring-boot-starter-web` тянет Servlet-контейнер -- два стека в одном приложении конфликтуют, и Gateway не стартует. Поэтому в зависимостях должен быть только реактивный стартер:
-
-```xml
-<!-- pom.xml -->
-<dependency>
-    <groupId>org.springframework.cloud</groupId>
-    <artifactId>spring-cloud-starter-gateway</artifactId>
-</dependency>
-<!-- НЕ добавлять spring-boot-starter-web! -->
-```
+Источник: [Spring Cloud Gateway Reference](https://docs.spring.io/spring-cloud-gateway/reference/index.html).
 
 ---
 
@@ -287,7 +261,7 @@ graph LR
 
 ## Q8. Как настроить маршрутизацию через YAML и Java DSL?
 
-Маршруты задаются двумя способами: декларативно в YAML или программно через Java DSL. Логика одна и та же -- набор `Route` с предикатами и фильтрами; различается только форма записи.
+Маршруты задаются декларативно в YAML или программно через Java DSL. Логика одна и та же -- набор `Route` с предикатами и фильтрами. Пример YAML ниже использует путь свойств Spring Cloud Gateway 4.x; в Server WebFlux 5.x маршруты находятся под `spring.cloud.gateway.server.webflux.routes`. Перед копированием конфигурации сверяют версию и выбранный вариант Gateway.
 
 **YAML-конфигурация** (декларативный подход):
 
@@ -342,7 +316,7 @@ public class GatewayConfig {
 }
 ```
 
-**Что выбрать.** YAML удобен для простых статичных маршрутов: его правят DevOps, он легко выносится в Config Server и меняется без пересборки. Java DSL берут, когда в маршрутизации появляются условия, динамические значения, циклы или ссылки на бины кастомных фильтров -- то, что в YAML выразить неудобно или невозможно.
+**Что выбрать.** YAML удобен для простых маршрутов и может храниться в Config Server. Обновление без перезапуска требует настроенного механизма refresh. Java DSL берут, когда маршрутизация опирается на код или бины кастомных фильтров; изменение кода требует новой сборки.
 
 ---
 
@@ -528,7 +502,7 @@ graph TD
 1. **Pre-фаза** -- фильтры идут в порядке возрастания `order` (от меньшего к большему).
 2. **Post-фаза** -- в обратном порядке (от большего к меньшему), как при разворачивании стека.
 3. `GlobalFilter` и `GatewayFilter` сортируются **вместе** в одной цепочке -- глобальный фильтр с `order = 5` встанет между двумя маршрутными с `order = 4` и `order = 6`.
-4. Без явного `order` фильтры выполняются в порядке объявления.
+4. Для фильтров с одинаковым порядком не полагайтесь на порядок объявления: задайте явный `order`, если последовательность важна.
 
 **Практический вывод:** чем меньше `order`, тем «снаружи» фильтр -- он первым видит запрос и последним трогает ответ. Поэтому аутентификации дают сильно отрицательный `order` (например, `-100`), чтобы она отсекала неавторизованные запросы до всей остальной обработки.
 
@@ -588,84 +562,22 @@ public RouteLocator routes(RouteLocatorBuilder builder) {
 
 ## Q15. (!) Как реализовать аутентификацию и авторизацию через API Gateway?
 
-Главная идея: аутентификацию выгодно вынести в Gateway, чтобы каждый сервис не валидировал токен заново. Gateway проверяет токен один раз на границе системы, а внутрь сервисам отдаёт уже доверенную информацию о пользователе. Есть два способа это сделать.
+Для WebFlux Gateway обычный путь — Spring Security: `SecurityWebFilterChain` задаёт доступ к маршрутам, а OAuth2 Resource Server валидирует Bearer JWT по настроенному issuer/JWK. Если Gateway действует как OAuth2 client, `TokenRelay` может передать токен downstream. Права на конкретный заказ или другой доменный объект остаются обязанностью сервиса, который владеет этим объектом.
 
-**Подход 1: Gateway как точка аутентификации** (рекомендуемый)
-
-Gateway сам проверяет токен и прокидывает извлечённые данные пользователя downstream-сервисам через заголовки. Сервисы внутри периметра доверяют этим заголовкам и больше не разбирают JWT -- логика валидации живёт в одном месте:
+Проверять JWT вручную в `GlobalFilter` без необходимости опасно: легко ошибиться в проверке подписи, issuer, audience, сроков и ротации ключей. Передача личности через `X-User-*` допустима только при защищённой границе доверия: клиентские одноимённые заголовки удаляют, а сервисы не должны быть доступны в обход Gateway. Для cookie-сессий отдельно оценивают CSRF; отключение CSRF не является правилом для всех Gateway.
 
 ```java
-@Component
-public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
-
-    private final JwtDecoder jwtDecoder;
-
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        String authHeader = exchange.getRequest().getHeaders()
-            .getFirst(HttpHeaders.AUTHORIZATION);
-
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
-        }
-
-        try {
-            String token = authHeader.substring(7);
-            Jwt jwt = jwtDecoder.decode(token);
-
-            ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                .header("X-User-Id", jwt.getSubject())
-                .header("X-User-Roles", String.join(",", jwt.getClaimAsStringList("roles")))
-                .build();
-
-            return chain.filter(exchange.mutate().request(mutatedRequest).build());
-        } catch (JwtException e) {
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
-        }
-    }
-
-    @Override
-    public int getOrder() {
-        return -100; // выполняется одним из первых
-    }
+@Bean
+SecurityWebFilterChain security(ServerHttpSecurity http) {
+    return http.authorizeExchange(ex -> ex
+            .pathMatchers("/public/**").permitAll()
+            .anyExchange().authenticated())
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+        .build();
 }
 ```
 
-**Подход 2: Spring Security с OAuth 2.0 Resource Server**
-
-Вместо ручного фильтра можно отдать всю работу `Spring Security`: настроить Gateway как OAuth 2.0 Resource Server, и он сам провалидирует JWT, проверит подпись по ключам из `issuer-uri` и сопоставит роли с правилами доступа. Меньше своего кода, но и меньше контроля над тем, что прокидывается downstream.
-
-```yaml
-spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: https://auth.example.com/realms/my-realm
-```
-
-```java
-@Configuration
-@EnableWebFluxSecurity
-public class SecurityConfig {
-
-    @Bean
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-        return http
-            .authorizeExchange(exchanges -> exchanges
-                .pathMatchers("/api/public/**").permitAll()
-                .pathMatchers("/api/admin/**").hasRole("ADMIN")
-                .anyExchange().authenticated())
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
-            .csrf(ServerHttpSecurity.CsrfSpec::disable)
-            .build();
-    }
-}
-```
-
-**Что выбрать.** Подход 2 на Spring Security -- стандарт для production: проверка подписи, ротация ключей и сопоставление ролей работают «из коробки». Подход 1 берут, когда нужен полный контроль над тем, что именно прокидывается downstream, или когда токен нестандартный. Обратите внимание: `csrf().disable()` здесь уместен, потому что Gateway -- это stateless API без cookie-сессий, для которого CSRF неактуален.
+Источники: [Spring Cloud Gateway Security](https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway-server-webflux/spring-security.html), [Spring Security Reactive Resource Server](https://docs.spring.io/spring-security/reference/reactive/oauth2/resource-server/jwt.html).
 
 ---
 
@@ -875,6 +787,7 @@ resilience4j:
     instances:
       orderServiceCB:
         slidingWindowSize: 10
+        minimumNumberOfCalls: 10
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
         permittedNumberOfCallsInHalfOpenState: 3
@@ -883,6 +796,8 @@ resilience4j:
       orderServiceCB:
         timeoutDuration: 3s
 ```
+
+`minimumNumberOfCalls` нужен, чтобы порог отказов начал применяться после достаточного числа вызовов; одного размера окна для этого недостаточно. Порядок `Retry` и `CircuitBreaker` влияет на число вызовов, которые видит breaker, поэтому его проверяют при настройке конкретного маршрута. Источник: [Resilience4j CircuitBreaker](https://resilience4j.readme.io/docs/circuitbreaker).
 
 **Fallback-контроллер** -- то, что Gateway вернёт клиенту, когда «рубильник» открыт. Параметр `fallbackUri: forward:/fallback/orders` внутренне перенаправляет запрос на этот эндпоинт. Главное -- отдать осмысленный деградированный ответ (заглушку, кэш, понятную ошибку), а не повисший таймаут:
 
@@ -907,7 +822,7 @@ public class FallbackController {
 
 ## Q20. (!) Как API Gateway интегрируется с Service Discovery?
 
-Без Service Discovery адреса backend-сервисов пришлось бы хардкодить, что невозможно в облаке, где инстансы постоянно создаются и умирают с новыми IP. Интеграция строится вокруг префикса `lb://` в `uri`: вместо конкретного хоста Gateway пишет `lb://service-name` и на лету спрашивает реестр (`Eureka`, `Consul`, `Kubernetes`), где сейчас живые инстансы этого сервиса, после чего балансирует запросы между ними.
+При динамическом наборе инстансов DiscoveryClient избавляет Gateway от ручного перечня адресов. При подключённом Spring Cloud LoadBalancer маршрут с `uri: lb://service-name` выбирает инстанс из доступных в реестре, например Eureka или Consul. Способ получения адресов Kubernetes зависит от подключённого discovery-адаптера или сетевой конфигурации.
 
 ```yaml
 spring:
@@ -1023,9 +938,9 @@ spring:
 
 ## Q23. Как реализовать версионирование API через Gateway?
 
-Преимущество версионирования на Gateway в том, что разные версии API можно направлять на **физически разные сервисы** (`v1` и `v2` развёрнуты отдельно), а клиент об этом не знает -- он видит единый адрес. Есть три рабочие стратегии.
+Gateway может направлять версии API на разные сервисы, если версии развёрнуты отдельно. Клиент при этом обращается к одному домену. Ниже два способа выбрать версию по запросу и отдельный приём для постепенного перевода трафика.
 
-**1. Через URL-путь** -- самая явная: версия зашита в URL, маршрутизация тривиальна.
+**1. Через URL-путь** -- самая явная: версия зашита в URL, маршрутизация тривиальна. `StripPrefix` или `RewritePath` применяют, только если backend ожидает другой путь.
 
 ```yaml
 spring:
@@ -1037,7 +952,7 @@ spring:
           predicates:
             - Path=/api/v1/users/**
           filters:
-            - StripPrefix=2  # убирает /api/v1
+            - StripPrefix=2  # если backend ожидает /users/** вместо /api/v1/users/**
 
         - id: user-service-v2
           uri: lb://user-service-v2
@@ -1081,17 +996,17 @@ routes:
       - Weight=user-group, 10  # 10% трафика
 ```
 
-Предикат `Weight` распределяет запросы по указанным долям (90/10), позволяя плавно наращивать процент трафика на новую версию и быстро откатиться, если на ней полезли ошибки.
+Предикат `Weight` распределяет запросы по указанным долям (90/10). Это подходит для canary-проверки совместимой реализации; он не выбирает версию контракта по запросу конкретного клиента. При версии в заголовке кэш должен учитывать этот заголовок.
 
 ---
 
 ## Q24. Что такое API Composition/Aggregation и как реализовать через Gateway?
 
-**API Composition** -- паттерн, при котором на один запрос клиента Gateway сам обращается к нескольким backend-сервисам, собирает их ответы и возвращает единый результат. Зачем: вместо 5 round-trip'ов от мобильного клиента по медленной сети делается 1, а параллельные внутренние вызовы происходят по быстрой сети дата-центра. Клиент получает готовую «склейку» для своего экрана.
+**API Composition** -- паттерн, при котором на один запрос клиента BFF или другой слой композиции обращается к нескольким backend-сервисам, собирает их ответы и возвращает единый результат. Зачем: вместо 5 round-trip'ов от мобильного клиента по медленной сети делается 1, а параллельные внутренние вызовы происходят по быстрой сети дата-центра. Клиент получает готовую «склейку» для своего экрана.
 
 ```mermaid
 graph LR
-    C[Client] -->|"GET /api/dashboard"| GW[API Gateway]
+    C[Client] -->|"GET /api/dashboard"| GW[BFF / composition service]
     GW -->|parallel| US[User Service]
     GW -->|parallel| OS[Order Service]
     GW -->|parallel| RS[Recommendation Service]
@@ -1101,57 +1016,15 @@ graph LR
     GW -->|aggregated response| C
 ```
 
-**Реализация через WebClient в кастомном фильтре.** Ключевой приём -- `Mono.zip`: оба вызова стартуют параллельно, и Gateway ждёт оба сразу, а не последовательно. Так общая задержка равна максимуму из двух запросов, а не их сумме:
+**Где выполнять композицию.** Если ответ собирается под конкретный экран, обычно проще выделить BFF или composition service. Gateway продолжает маршрутизировать и применять общие политики. В WebFlux композицию можно выполнить неблокирующими вызовами `WebClient` и `Mono.zip`, когда ответы независимы. Для всех вызовов нужны таймауты; заранее решают, можно ли вернуть частичный результат.
 
-```java
-@Component
-public class DashboardAggregationFilter implements GlobalFilter, Ordered {
-
-    private final WebClient.Builder webClientBuilder;
-
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        if (!exchange.getRequest().getURI().getPath().equals("/api/dashboard")) {
-            return chain.filter(exchange);
-        }
-
-        WebClient webClient = webClientBuilder.build();
-
-        Mono<JsonNode> userInfo = webClient.get()
-            .uri("lb://user-service/users/me")
-            .retrieve().bodyToMono(JsonNode.class);
-
-        Mono<JsonNode> recentOrders = webClient.get()
-            .uri("lb://order-service/orders/recent")
-            .retrieve().bodyToMono(JsonNode.class);
-
-        return Mono.zip(userInfo, recentOrders)
-            .flatMap(tuple -> {
-                ObjectNode result = JsonNodeFactory.instance.objectNode();
-                result.set("user", tuple.getT1());
-                result.set("orders", tuple.getT2());
-
-                byte[] bytes = result.toString().getBytes(StandardCharsets.UTF_8);
-                DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
-                exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                return exchange.getResponse().writeWith(Mono.just(buffer));
-            });
-    }
-
-    @Override
-    public int getOrder() {
-        return 0;
-    }
-}
-```
-
-**Подводный камень.** Агрегация раздувает Gateway: в нём появляется знание о том, какие данные нужны конкретному экрану, -- по сути, бизнес-логика, которой здесь не место (см. anti-паттерн «толстый Gateway», Q27). Поэтому простую склейку держат в Gateway, а сложную -- выносят в отдельный BFF-сервис или решают через [CQRS](cqrs-event-sourcing-interview.md) с заранее посчитанными представлениями, где готовый ответ читается одним запросом.
+Параллельные независимые вызовы дают время, близкое к самому медленному из них, а зависимые выполняются последовательно. Бизнес-правила и владение контрактом лучше сохранять в соответствующем сервисе. Пример архитектурного разделения см. в Q5 и Q27.
 
 ---
 
 ## Q25. (!) Сравните Spring Cloud Gateway, Kong и Nginx как API Gateway
 
-Если в двух словах: выбор определяется стеком команды и требованиями к производительности. `Spring Cloud Gateway` -- для Java-команд на Spring, `Kong` -- universal-решение с плагинами для polyglot-окружения, `Nginx` -- максимальная скорость на уровне инфраструктуры.
+Выбор зависит от стека команды, нужных политик и требований к эксплуатации. `Spring Cloud Gateway` хорошо встраивается в Spring-приложение, `Kong` предлагает модель плагинов и управления маршрутами, а `Nginx` может работать как reverse proxy или как основа API Gateway с дополнительной конфигурацией. Производительность сравнивают на своей нагрузке.
 
 | Аспект | Spring Cloud Gateway | Kong | Nginx |
 |---|---|---|---|
@@ -1163,7 +1036,7 @@ public class DashboardAggregationFilter implements GlobalFilter, Ordered {
 | **Rate Limiting** | Redis Token Bucket | Встроенный (Redis/PostgreSQL) | `ngx_http_limit_req_module` |
 | **Аутентификация** | Spring Security | Плагины (JWT, OAuth, LDAP) | Базовая / модули |
 | **GUI** | Нет (только код) | Kong Manager / Konga | Nginx Plus Dashboard |
-| **Производительность** | Хорошая (JVM warmup) | Очень высокая | Максимальная |
+| **Производительность** | Зависит от конфигурации и нагрузки | Зависит от конфигурации и нагрузки | Зависит от конфигурации и нагрузки |
 | **Экосистема Spring** | Нативная | Нет | Нет |
 | **Лицензия** | Apache 2.0 | Apache 2.0 / Enterprise | BSD / Nginx Plus |
 
@@ -1171,7 +1044,7 @@ public class DashboardAggregationFilter implements GlobalFilter, Ordered {
 
 - **Spring Cloud Gateway** -- когда backend на Spring, нужна глубокая интеграция с Spring Security, Eureka, Resilience4j. Идеален для Java-команд
 - **Kong** -- когда нужен language-agnostic Gateway с богатой экосистемой плагинов, GUI и enterprise-поддержкой
-- **Nginx** -- когда нужна максимальная производительность, SSL termination, статический контент. Часто используется **перед** API Gateway как reverse proxy
+- **Nginx** -- когда нужны настроенные на нём проксирование, TLS и обработка статического контента; при необходимости его расширяют для политик API
 
 На практике часто встречается комбинация: `Nginx/Envoy` (L4/L7 балансировка) -> `Kong/Spring Cloud Gateway` (API management).
 
@@ -1179,75 +1052,11 @@ public class DashboardAggregationFilter implements GlobalFilter, Ordered {
 
 ## Q26. Как организовать мониторинг и логирование API Gateway?
 
-Gateway -- первая точка контакта со всем трафиком, поэтому его наблюдаемость особенно важна: проблема здесь видна раньше, чем где-либо ещё. Стандартный набор -- метрики (Micrometer + Prometheus), распределённая трассировка и централизованные access-логи.
+Для Spring Cloud Gateway Server WebFlux подключают Actuator и Micrometer. Метрика `spring.cloud.gateway.requests` включает длительность и теги вроде route ID, статуса и метода; экспорт в Prometheus требует соответствующего registry. Кардинальность тегов контролируют: полный URL с произвольными ID нельзя без проверки добавлять как метку. Доступность `/actuator/prometheus` и других endpoint настраивают отдельно.
 
-**Метрики через Micrometer + Prometheus:**
+Трейсы на современных Spring Boot используют Micrometer Tracing с мостом к OpenTelemetry или Brave; Spring Cloud Sleuth не применяется в Boot 3+. Логи связывают с trace ID и не пишут секреты и тела запросов по умолчанию. Процент семплирования выбирают по нагрузке и цели диагностики, универсального значения для production нет.
 
-```yaml
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus,gateway
-  metrics:
-    tags:
-      application: api-gateway
-    distribution:
-      percentiles-histogram:
-        spring.cloud.gateway.requests: true
-```
-
-**Ключевые метрики Gateway:**
-
-| Метрика | Описание |
-|---|---|
-| `spring.cloud.gateway.requests` | Количество запросов (по маршруту, статусу) |
-| `gateway.requests.duration` | Время обработки запроса |
-| `resilience4j.circuitbreaker.state` | Состояние Circuit Breaker |
-| `spring.cloud.gateway.routes.count` | Количество активных маршрутов |
-
-**Distributed Tracing через Spring Cloud Sleuth / Micrometer Tracing:**
-
-```yaml
-management:
-  tracing:
-    sampling:
-      probability: 1.0  # 100% трейсов в dev, 10-20% в prod
-  zipkin:
-    tracing:
-      endpoint: http://zipkin:9411/api/v2/spans
-```
-
-Здесь Gateway играет ключевую роль в трассировке: как точка входа он **порождает** `traceId` (или принимает его от клиента) и прокидывает `traceId`/`spanId` дальше по заголовкам. Благодаря этому один запрос можно проследить сквозь все сервисы и увидеть, на каком звене он тормозит. Семплинг (`probability`) держат на 100% в dev и снижают до 10-20% в prod, чтобы не раздувать объём трейсов.
-
-**Централизованное логирование:**
-
-```java
-@Component
-public class AccessLogGlobalFilter implements GlobalFilter, Ordered {
-
-    private static final Logger log = LoggerFactory.getLogger("ACCESS_LOG");
-
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        long start = System.nanoTime();
-        return chain.filter(exchange).then(Mono.fromRunnable(() -> {
-            long duration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
-            log.info("{} {} {} {} {}ms",
-                exchange.getRequest().getMethod(),
-                exchange.getRequest().getURI().getPath(),
-                exchange.getResponse().getStatusCode(),
-                exchange.getRequest().getRemoteAddress(),
-                duration);
-        }));
-    }
-
-    @Override
-    public int getOrder() {
-        return Ordered.LOWEST_PRECEDENCE;
-    }
-}
-```
+Источники: [метрики Spring Cloud Gateway](https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway-server-webflux/global-filters.html), [трейсинг Spring Boot](https://docs.spring.io/spring-boot/reference/actuator/tracing.html).
 
 ---
 
@@ -1281,9 +1090,9 @@ graph LR
 
 Сложная агрегация данных в Gateway увеличивает latency и coupling. Для сложных сценариев используйте отдельный BFF-сервис.
 
-**5. Один Gateway на все типы клиентов**
+**5. Один слой без учёта потребностей клиентов**
 
-Разные клиенты (web, mobile, IoT, партнёры) имеют разные требования к формату данных, безопасности и rate limiting. Используйте паттерн BFF.
+Разные клиенты (web, mobile, IoT, партнёры) могут иметь разные требования к формату данных и безопасности. Если общий Gateway обрастает множеством клиентских веток, выделяют BFF. Один общий Gateway сам по себе не является anti-паттерном.
 
 **6. Хранение состояния в Gateway**
 
@@ -1297,109 +1106,19 @@ Gateway -- первая точка контакта. Без метрик, тре
 
 ## Q28. (!) Как реализовать request/response трансформацию на уровне Gateway?
 
-**Request/Response трансформация** -- правка входящих запросов (заголовки, путь, параметры) и исходящих ответов (фильтрация полей, смена формата) прямо на Gateway, **не трогая backend**. Это позволяет адаптировать внутренний API под внешний контракт, скрыть служебные детали и не плодить изменения в самих сервисах. Заголовки и путь покрываются встроенными фильтрами, тело -- кастомным кодом.
+Для пути, заголовков и параметров Spring Cloud Gateway Server WebFlux предоставляет готовые фильтры: `RewritePath`, `StripPrefix`, `AddRequestHeader`, `RemoveResponseHeader` и другие. Тело запроса и ответа меняют через `ModifyRequestBody` и `ModifyResponseBody` в Java DSL. Эти фабрики уже учитывают реактивное чтение и запись тела; вручную писать декораторы `ServerHttpRequest` и `ServerHttpResponse` для обычной трансформации не требуется.
 
-**Spring Cloud Gateway -- встроенные фильтры трансформации:**
+Менять тело на Gateway стоит только при ясной границе ответственности. Нужно учитывать кодировку, content type, пустые тела, размер буфера и ошибки преобразования. Если меняется бизнес-смысл объекта, эту логику лучше держать в BFF или сервисе, владеющем контрактом.
 
-```yaml
-spring:
-  cloud:
-    gateway:
-      routes:
-        - id: order-service
-          uri: lb://order-service
-          predicates:
-            - Path=/api/v2/orders/**
-          filters:
-            # Замена префикса пути: /api/v2/orders → /orders
-            - StripPrefix=2
+Источники: [ModifyRequestBody](https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway-server-webflux/gatewayfilter-factories/modifyrequestbody-factory.html), [ModifyResponseBody](https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway-server-webflux/gatewayfilter-factories/modifyresponsebody-factory.html).
 
-            # Добавление заголовка к запросу (propagate user info)
-            - AddRequestHeader=X-Source, api-gateway
-            - AddRequestHeader=X-Request-Id, #{T(java.util.UUID).randomUUID()}
-
-            # Удаление чувствительного заголовка из ответа
-            - RemoveResponseHeader=X-Internal-Service-Name
-
-            # Добавление параметра запроса
-            - AddRequestParameter=version, v2
-
-            # Переписывание пути с regex
-            - RewritePath=/api/v2/(?<segment>.*), /$\{segment}
-```
-
-**Кастомный фильтр для трансформации тела запроса.** Тело -- особый случай: в реактивном стеке это поток `DataBuffer`, который читается один раз, поэтому после изменения тело нужно «закэшировать» (`CachedBodyOutputMessage`) и подменить запрос декоратором. Ниже -- добавление поля `tenantId` из JWT в JSON-тело:
-
-```java
-@Component
-public class RequestBodyTransformFilter implements GlobalFilter, Ordered {
-
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        ServerRequest request = ServerRequest.create(exchange,
-            HandlerStrategies.withDefaults().messageReaders());
-
-        Mono<String> modifiedBody = request.bodyToMono(String.class)
-            .map(body -> {
-                // Трансформация: добавить поле tenantId из JWT
-                JsonNode node = objectMapper.readTree(body);
-                ((ObjectNode) node).put("tenantId",
-                    extractTenantFromJwt(exchange.getRequest()));
-                return node.toString();
-            });
-
-        BodyInserter<Mono<String>, ReactiveHttpOutputMessage> bodyInserter =
-            BodyInserters.fromPublisher(modifiedBody, String.class);
-
-        // Обновляем запрос с изменённым телом
-        CachedBodyOutputMessage outputMessage = new CachedBodyOutputMessage(exchange,
-            exchange.getRequest().getHeaders());
-        return bodyInserter.insert(outputMessage, new BodyInserterContext())
-            .then(Mono.defer(() -> {
-                ServerHttpRequest decorator = decorate(exchange, outputMessage);
-                return chain.filter(exchange.mutate().request(decorator).build());
-            }));
-    }
-
-    @Override
-    public int getOrder() { return -1; }
-}
-```
-
-**Трансформация ответа (скрытие внутренних полей).** Симметричная задача -- вычистить из ответа служебные поля, которые клиенту видеть не нужно. Делается через `ServerHttpResponseDecorator`: перехватываем поток тела ответа в `writeWith`, читаем, санируем и отдаём клиенту уже очищенный JSON:
-
-```java
-@Component
-public class ResponseSanitizationFilter implements GlobalFilter {
-
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        ServerHttpResponseDecorator responseDecorator =
-            new ServerHttpResponseDecorator(exchange.getResponse()) {
-                @Override
-                public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
-                    return super.writeWith(
-                        Flux.from(body).map(buf -> {
-                            // Читаем, трансформируем, возвращаем
-                            String json = readBuffer(buf);
-                            String sanitized = removeInternalFields(json);
-                            return exchange.getResponse().bufferFactory()
-                                .wrap(sanitized.getBytes(StandardCharsets.UTF_8));
-                        })
-                    );
-                }
-            };
-        return chain.filter(exchange.mutate()
-            .response(responseDecorator).build());
-    }
-}
-```
+---
 
 ## Q29. Как настроить Kong API Gateway для rate limiting и аутентификации?
 
 **Kong** -- высокопроизводительный API Gateway на базе `Nginx` + `OpenResty`. Главное отличие от Spring Cloud Gateway: вся функциональность собирается из **плагинов**, которые декларативно навешиваются на сервис или маршрут (`jwt`, `rate-limiting`, `http-log` и т.д.), -- свой код почти не нужен. Конфигурация задаётся декларативно (`kong.yml`) или динамически через Admin API. Это делает Kong удобным для polyglot-архитектур, где backend написаны на разных языках.
 
-**Декларативная конфигурация (kong.yml / deck).** Один сервис, на него навешаны три плагина -- JWT-аутентификация, rate limiting и логирование:
+**Декларативная конфигурация (kong.yml / decK).** Один сервис, на него навешаны три плагина -- JWT-аутентификация, rate limiting и логирование. Для работающей JWT-проверки также нужен Consumer с JWT credential; пример ниже показывает только конфигурацию маршрута и плагинов:
 
 ```yaml
 # kong.yml
@@ -1424,7 +1143,7 @@ services:
             - exp
           key_claim_name: iss
 
-      # Rate Limiting (скользящее окно)
+      # Rate Limiting (фиксированные окна)
       - name: rate-limiting
         config:
           minute: 100       # 100 запросов в минуту
@@ -1458,100 +1177,9 @@ services:
 
 ## Q30. (!) Как организовать observability (метрики, трейсинг, логи) для API Gateway?
 
-Observability для API Gateway критична потому, что он -- единая точка входа: любая проблема здесь бьёт по всему трафику, и именно здесь её видно первым. Observability стоит на трёх столпах -- **метрики** (что происходит в агрегате), **трейсинг** (путь конкретного запроса) и **логи** (детали отдельного события); по-настоящему полезны они вместе.
+Наблюдаемость Gateway соединяет три вида данных. Метрики показывают нагрузку, ошибки и распределение задержек по маршрутам. Трейсы связывают входящий запрос с вызовом backend и помогают локализовать задержку. Структурированные логи дают детали события по trace ID без записи токенов и персональных данных. Для Spring Cloud Gateway подходит Actuator/Micrometer, Micrometer Tracing и выбранные экспортеры метрик и трейсов.
 
-**Три столпа observability:**
-
-```mermaid
-graph TB
-    GW[API Gateway] --> Metrics[Метрики\nPrometheus + Grafana]
-    GW --> Traces[Трейсинг\nOpenTelemetry + Jaeger]
-    GW --> Logs[Логи\nELK / Loki]
-```
-
-**Spring Cloud Gateway + Micrometer + OpenTelemetry:**
-
-```yaml
-# application.yml
-management:
-  metrics:
-    tags:
-      application: api-gateway
-    distribution:
-      percentiles-histogram:
-        spring.cloud.gateway.requests: true
-      slo:
-        spring.cloud.gateway.requests: 50ms,200ms,500ms,1s,2s
-
-  tracing:
-    sampling:
-      probability: 0.1  # 10% в prod (100% в dev)
-
-otel:
-  exporter:
-    otlp:
-      endpoint: http://otel-collector:4318
-```
-
-**Ключевые метрики API Gateway (Prometheus/Grafana):**
-
-```promql
-# RPS по маршрутам
-sum(rate(spring_cloud_gateway_requests_total[1m])) by (routeId)
-
-# Процент ошибок
-sum(rate(spring_cloud_gateway_requests_total{outcome="SERVER_ERROR"}[5m]))
-/ sum(rate(spring_cloud_gateway_requests_total[5m])) * 100
-
-# p99 latency по маршрутам
-histogram_quantile(0.99,
-  sum(rate(spring_cloud_gateway_requests_seconds_bucket[5m])) by (le, routeId)
-)
-
-# Количество активных circuit breakers (OPEN)
-spring_cloud_circuit_breaker_state{state="OPEN"}
-```
-
-**Структурированное логирование запросов:**
-
-```java
-@Component
-public class AccessLogFilter implements GlobalFilter, Ordered {
-
-    private static final Logger log = LoggerFactory.getLogger("ACCESS_LOG");
-
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        long startTime = System.currentTimeMillis();
-        ServerHttpRequest request = exchange.getRequest();
-
-        return chain.filter(exchange).doFinally(signal -> {
-            long duration = System.currentTimeMillis() - startTime;
-            HttpStatusCode status = exchange.getResponse().getStatusCode();
-
-            log.info("""
-                method={} path={} status={} duration={}ms traceId={} clientIp={}
-                """.stripIndent().trim(),
-                request.getMethod(),
-                request.getPath(),
-                status != null ? status.value() : "unknown",
-                duration,
-                exchange.getRequest().getHeaders().getFirst("traceparent"),
-                request.getRemoteAddress()
-            );
-        });
-    }
-
-    @Override
-    public int getOrder() { return Ordered.LOWEST_PRECEDENCE; }
-}
-```
-
-**SLO для API Gateway (рекомендации).** Важно мерить именно **оверхед Gateway** -- сколько он добавляет поверх backend, -- а не общую latency, иначе медленный сервис «спрячет» проблемы самого Gateway:
-- **Availability**: 99.9% (< 8.7 ч. даунтайма/год).
-- **Latency p50**: < 10 мс оверхеда Gateway.
-- **Latency p99**: < 50 мс оверхеда Gateway.
-- **Error rate**: < 0.1% 5xx-ошибок, вызванных именно Gateway, а не backend.
+SLO задают под требования сервиса и измеряют отдельно доступность Gateway и успешность всей цепочки. Нельзя объявить универсальные 99.9% доступности, 50 мс p99 или 10% семплирования для всех систем. У метки маршрута должна быть контролируемая кардинальность; иначе мониторинг сам становится дорогим. Источники: [Spring Gateway metrics](https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway-server-webflux/global-filters.html), [Spring Boot tracing](https://docs.spring.io/spring-boot/reference/actuator/tracing.html).
 
 ---
 
@@ -1585,7 +1213,7 @@ filters:
       key-resolver: "#{@userKeyResolver}"
 ```
 
-Gateway хранит состояние ведра в Redis с помощью атомарного Lua-скрипта (два ключа: `{key}.tokens` и `{key}.timestamp`).
+При Redis-реализации Gateway хранит состояние токенов и времени пополнения в Redis; точные ключи — внутренняя деталь версии.
 
 ### Leaky Bucket
 
@@ -1636,8 +1264,8 @@ ZCARD key  →  compare with limit
 rate = prev_window_count × (1 - elapsed/window) + curr_window_count
 ```
 
-**Плюсы:** O(1) память, хорошая точность.  
-**Применение:** Cloudflare использует этот подход.
+**Плюсы:** O(1) память; оценка приближённая, потому что события внутри соседних окон распределяются неравномерно.
+**Применение:** когда нужен компромисс между расходом памяти и приближённой оценкой числа запросов.
 
 ### Сравнение алгоритмов
 
@@ -1647,7 +1275,7 @@ rate = prev_window_count × (1 - elapsed/window) + curr_window_count
 | Leaky Bucket | выравнивает | высокая | O(queue) | средняя |
 | Fixed Window | граничный всплеск | низкая | O(1) | низкая |
 | Sliding Log | нет | максимальная | O(N) | высокая |
-| Sliding Counter | минимальный | высокая | O(1) | средняя |
+| Sliding Counter | меньше, чем у Fixed Window | приближённая | O(1) | средняя |
 
 ---
 
@@ -1671,7 +1299,7 @@ Internet → [API Gateway] → Service A
 
 ### Service Mesh
 
-Работает на **East-West** трафике (сервис ↔ сервис внутри кластера). Реализуется через sidecar-прокси (Envoy) рядом с каждым подом.
+Работает на **East-West** трафике (сервис ↔ сервис внутри кластера). Может использовать sidecar-прокси рядом с pod или ambient-режим без sidecar у каждого pod.
 
 ```
 Service A → [Envoy sidecar] → [Envoy sidecar] → Service B
@@ -1679,7 +1307,7 @@ Service A → [Envoy sidecar] → [Envoy sidecar] → Service B
 
 **Функции:** mTLS между сервисами, observability (трейсинг, метрики), retry/circuit breaker, traffic splitting (канареечный деплой), load balancing.
 
-**Примеры:** Istio (Envoy), Linkerd (Rust proxy), Consul Connect.
+**Примеры:** Istio, Linkerd, Consul Connect. В Istio ambient для трафика применяются инфраструктурные прокси без sidecar у каждого pod.
 
 ### Сравнение
 
@@ -1688,16 +1316,16 @@ Service A → [Envoy sidecar] → [Envoy sidecar] → Service B
 | Трафик | North-South | East-West |
 | Аутентификация | внешних клиентов | между сервисами (mTLS) |
 | Rate Limiting | внешние лимиты | между сервисами |
-| Операционная сложность | низкая | высокая |
+| Операционная сложность | зависит от выбранного продукта | зависит от выбранного режима |
 | Область применения | граница кластера | внутри кластера |
 
 ### Когда что выбирать
 
-**Только API Gateway** — стартап или небольшая система без мощной mesh-инфраструктуры; нет команды DevOps для операционного обслуживания Istio.
+**Только API Gateway** — если достаточно политик внешнего входа, а сетевые вызовы между сервисами не требуют отдельного mesh-слоя.
 
-**Только Service Mesh** — сервисы общаются преимущественно между собой; нужен mTLS без кода в приложениях; нужен observability out-of-the-box.
+**Только Service Mesh** — если требуется управлять вызовами между сервисами и нет отдельного клиентского API на этой границе.
 
-**Оба вместе** (наиболее частый production-сценарий):
+**Оба вместе**, когда нужны обе группы политик:
 
 ```
 Internet → API Gateway (аутентификация, rate limit, SSL)
@@ -1705,7 +1333,7 @@ Internet → API Gateway (аутентификация, rate limit, SSL)
          → Service A, B, C
 ```
 
-API Gateway не заменяет Service Mesh и наоборот — они дополняют друг друга.
+При совместном использовании согласуют таймауты и повторы, чтобы политики не умножали число вызовов неожиданно. Источник: [Istio ambient](https://istio.io/latest/docs/ambient/overview/).
 
 ---
 
@@ -1765,131 +1393,28 @@ Envoy/Kong выполняют транскодинг по `.proto`-дескри�
 
 ## Q34. WebSocket через API Gateway: sticky sessions и масштабирование
 
-### Проблема
+После HTTP Upgrade WebSocket работает как длительное соединение. Load balancer и Gateway удерживают **существующее соединение** на выбранных инстансах без отдельной sticky-сессии: отдельные кадры не балансируются как новые HTTP-запросы. Sticky affinity может понадобиться при новом подключении клиента, если приложение хранит состояние только локально, но это следствие архитектуры состояния, а не требование протокола.
 
-WebSocket -- это **постоянное** соединение (поднятое через HTTP Upgrade): после рукопожатия клиент и сервер обмениваются сообщениями по одному и тому же каналу, не переустанавливая его. Отсюда конфликт с горизонтальным масштабированием: обычный HTTP stateless и любой запрос идёт на любой инстанс, а WebSocket «прибит» к конкретному инстансу на всё время жизни соединения.
-
-### Sticky Sessions
-
-Раз соединение живёт на конкретном инстансе Gateway, который держит его состояние, балансировщик обязан направлять все пакеты этого клиента на тот же инстанс. Это и есть sticky sessions (липкие сессии).
-
-```
-Client → [Load Balancer]
-              → Gateway-1 (держит WS соединение клиента A)
-              → Gateway-2 (держит WS соединение клиента B)
+```text
+Client A ── Load Balancer ── Gateway 1 ── Chat Service 1
+Client B ── Load Balancer ── Gateway 2 ── Chat Service 2
 ```
 
-**Решение — IP Hash или Cookie-based sticky:**
+Маршрут Spring Cloud Gateway Server WebFlux может проксировать WebSocket через `ws://` или `wss://` URI. Если backend выбирают через service discovery, используют схему `lb:ws://` и проверяют её поддержку в выбранной версии.
 
-```nginx
-upstream gateways {
-    ip_hash;  # один клиент → один upstream
-    server gateway-1:8080;
-    server gateway-2:8080;
-}
-```
-
-В Kubernetes: `sessionAffinity: ClientIP` в Service, или аннотации Ingress (`nginx.ingress.kubernetes.io/affinity: cookie`).
-
-### Spring Cloud Gateway + WebSocket
-
-Spring Cloud Gateway поддерживает WebSocket проксирование нативно (Reactor Netty):
-
-```yaml
-spring:
-  cloud:
-    gateway:
-      routes:
-        - id: ws-route
-          uri: ws://chat-service:8080
-          predicates:
-            - Path=/ws/**
-```
-
-### Проблемы при масштабировании
-
-**1. In-memory state:** если сервер хранит состояние соединения в памяти (список активных соединений) — при рестарте соединения рвутся.
-
-**Решение:** externalize state в Redis. Spring WebSocket с `spring-session` + Redis Pub/Sub для распределённого broadcast.
-
-```java
-// Broadcaster через Redis Pub/Sub
-redisTemplate.convertAndSend("ws-channel", message);
-```
-
-**2. Health checks:** балансировщик должен проверять health именно на уровне L7, т.к. WebSocket keepalive ≠ HTTP health.
-
-**3. Timeout:** большинство load balancer'ов имеют timeout на idle соединения (AWS ALB: 60 сек по умолчанию). Нужно настроить `ping/pong` heartbeat или увеличить таймаут:
-
-```yaml
-# AWS ALB idle timeout
-aws_lb.idle_timeout = 3600  # 1 hour
-```
-
-**4. Horizontal Pod Autoscaler:** при добавлении новых подов существующие соединения не перераспределяются — клиенты остаются на старых подах. Нужно изящное завершение (`graceful shutdown`):
-
-```java
-// Отправить close frame перед остановкой
-session.close(CloseStatus.SERVICE_RESTARTED);
-```
+При масштабировании новые соединения направляют на новые инстансы, а старые остаются там, где открыты, до закрытия. Для доставки сообщений между инстансами используют внешний broker или общее хранилище состояния по требованиям приложения. Проверяют idle timeout, heartbeat, лимит соединений и graceful shutdown; переподключение клиента должно быть предусмотрено.
 
 ---
 
 ## Q35. API Gateway в serverless архитектуре (AWS API Gateway)
 
-В serverless главное отличие в том, что Gateway -- управляемый сервис без своих инстансов: AWS сам масштабирует его и берёт плату за запросы. Это снимает эксплуатацию, но накладывает жёсткие рамки (timeout, cold start), которые нужно знать.
+AWS API Gateway предлагает REST, HTTP и WebSocket API с разными возможностями. HTTP API поддерживает JWT authorizer и route/stage throttling; REST API нужен, например, для API keys, usage plans и request validation. WebSocket API управляет соединениями и предоставляет connection ID, но хранение прикладного состояния или адресов подписок в DynamoDB — выбор приложения, не встроенное обязательное поведение Gateway.
 
-### AWS API Gateway -- варианты
+Lambda proxy integration передаёт событие в функцию и возвращает ответ по контракту выбранного типа API. REST Lambda authorizer и HTTP Lambda authorizer имеют разные форматы ответа, поэтому пример IAM policy нельзя без проверки переносить между ними. Usage plans относятся к REST API; HTTP API имеет другие механизмы throttling. Цена зависит от региона, объёма и типа API — фиксированный процент экономии не годится как правило.
 
-**REST API** -- полнофункциональный Gateway с моделями данных, валидацией и кастомными авторизаторами (Lambda Authorizer). Самый гибкий, но дороже.
+Для синхронной интеграции есть отдельный таймаут API Gateway: у HTTP API максимум 30 секунд, а для регионального и private REST API некоторые лимиты можно повысить. Таймаут Lambda в 15 минут не продлевает ожидание клиента через Gateway. Долгие операции проектируют асинхронно. Источники: [сравнение типов AWS API](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-vs-rest.html), [квоты HTTP API](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-quotas.html), [квоты REST API](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-execution-service-limits-table.html).
 
-**HTTP API** -- легковесный и дешёвый (~на 70% дешевле REST API), с нативной JWT-авторизацией, но с минимумом возможностей трансформации. Выбор по умолчанию, если не нужны фишки REST API.
-
-**WebSocket API** -- управляет WebSocket-соединениями, храня их connection ID в DynamoDB (см. проблему состояния из Q34).
-
-### Интеграция с Lambda
-
-```
-Client → API Gateway → Lambda Function → Response
-```
-
-**Lambda Proxy Integration:** весь запрос передаётся в Lambda как JSON, ответ тоже JSON:
-
-```json
-{
-  "statusCode": 200,
-  "headers": {"Content-Type": "application/json"},
-  "body": "{\"message\": \"ok\"}"
-}
-```
-
-**Lambda Authorizer:** кастомная функция для аутентификации/авторизации перед вызовом основной Lambda. Возвращает IAM Policy:
-
-```json
-{
-  "principalId": "user123",
-  "policyDocument": {
-    "Statement": [{"Effect": "Allow", "Action": "execute-api:Invoke", "Resource": "arn:..."}]
-  }
-}
-```
-
-### Особенности serverless Gateway
-
-**Cold Start:** Lambda функция «засыпает» при отсутствии трафика — первый запрос медленнее (100-500мс). Решение: Provisioned Concurrency.
-
-**Тайм-аут:** у AWS API Gateway лимит на интеграцию по умолчанию 29 секунд. Для REST API его можно увеличить выше 29 с через запрос на повышение квоты (Service Quotas); для HTTP API 29 с -- фиксированный максимум. Для синхронных запросов Lambda не может выполняться дольше этого лимита.
-
-**Rate Limiting:** встроен на уровне Usage Plans — `throttlingBurstLimit` (burst) + `throttlingRateLimit` (steady-state rps).
-
-**Стоимость:** оплата за вызов (~$1.0 за млн запросов для HTTP API, ~$3.5 для REST API). При высоком трафике сравнивать с Fargate/EKS.
-
-### Когда AWS API Gateway уместен
-
-- Событийная архитектура с Lambda
-- Прототипирование и MVP
-- Нерегулярный трафик (serverless экономит при idle)
-- Нужен быстрый старт без операционного overhead
+Например, REST Lambda proxy integration может вернуть ответ с `statusCode`, `headers` и строковым `body`. Для HTTP API формат события и ответа зависит от выбранной payload format version; его проверяют в контракте интеграции, а не копируют из REST-примера.
 
 ---
 
@@ -1897,9 +1422,9 @@ Client → API Gateway → Lambda Function → Response
 
 ### Зачем GraphQL через Gateway
 
-GraphQL-endpoint всегда один (обычно `POST /graphql`), но за ним данные могут жить в разных сервисах. Возникает вопрос: как из одного запроса собрать ответ, части которого владеют разные команды? Это и решает Gateway -- объединяет схемы, маршрутизирует подзапросы к нужным сервисам и добавляет аутентификацию и rate limiting (который для GraphQL нетривиален -- см. ниже). Есть два подхода к объединению схем.
+GraphQL часто доступен через один endpoint (обычно `POST /graphql`), но за ним данные могут жить в разных сервисах. Возникает вопрос: как из одного запроса собрать ответ, части которого владеют разные команды? Это может решать GraphQL router, а внешний Gateway добавляет маршрутизацию, аутентификацию и rate limiting (который для GraphQL нетривиален -- см. ниже). Есть два подхода к объединению схем.
 
-### Schema Stitching (устаревший подход)
+### Schema Stitching
 
 Gateway объединяет несколько GraphQL схем в одну, делегируя запросы к нужному сервису:
 
@@ -1908,9 +1433,9 @@ Client → Gateway (merged schema) → UserService (User schema)
                                  → ProductService (Product schema)
 ```
 
-**Проблемы:** хрупкость при изменении схем, сложная отладка, Gateway знает о внутренних схемах.
+**Компромисс:** слой композиции знает удалённые схемы и правила делегирования. Их изменения требуют согласования, но stitching остаётся рабочим подходом.
 
-### Apollo Federation (современный подход)
+### Apollo Federation
 
 Каждый сервис владеет своей частью схемы. Специальная `@key` директива позволяет ссылаться на типы из других сервисов:
 
@@ -1928,7 +1453,7 @@ type Order {
 }
 ```
 
-**Apollo Router** (или Gateway) строит план выполнения запроса:
+**Apollo Router** строит план выполнения запроса по supergraph:
 
 ```
 Query { order { user { name } } }
@@ -1939,7 +1464,7 @@ Query { order { user { name } } }
 
 ### Rate Limiting для GraphQL
 
-Здесь привычный лимит «N запросов в секунду» не работает: в GraphQL один-единственный запрос может быть сколь угодно тяжёлым -- глубоко вложенным и тянущим тысячи объектов. Считать надо не количество запросов, а их «вес»:
+Одного лимита «N запросов в секунду» недостаточно: в GraphQL один-единственный запрос может быть сколь угодно тяжёлым -- глубоко вложенным и тянущим тысячи объектов. Помимо числа запросов оценивают их «вес»:
 
 ```graphql
 { users { orders { items { product { reviews { ... } } } } } }
@@ -1953,18 +1478,20 @@ Query { order { user { name } } }
 .instrumentation(new MaxQueryDepthInstrumentation(10))
 ```
 
-**Persisted Queries:** клиент отправляет только hash запроса, Gateway кэширует и проксирует. Предотвращает произвольные запросы:
+**Persisted Queries:** клиент может передавать идентификатор заранее зарегистрированного запроса. Запрет произвольных операций требует отдельной allowlist-политики:
 
 ```
 POST /graphql
 {"id": "abc123hash"}  // вместо полного query body
 ```
 
+Источники: [Apollo Federation](https://www.apollographql.com/docs/graphos/schema-design/federated-schemas/schema-types), [миграция со stitching](https://www.apollographql.com/docs/graphos/schema-design/guides/migrating-from-stitching).
+
 ---
 
 ## Q37. (!) Стратегии версионирования API через Gateway
 
-Есть четыре способа сообщить серверу нужную версию API; различаются они тем, **где** прячется номер версии -- в пути, заголовке, Accept-типе или query-параметре. Gateway на основе этого выбирает маршрут. Дальше -- по нарастанию «чистоты» и убыванию удобства.
+Есть четыре способа передать версию API: в пути, отдельном заголовке, media type или query-параметре. Gateway может выбрать маршрут по этим данным. Выбор зависит от клиентов, кэша и способа описания контракта.
 
 ### 1. URI Versioning
 
@@ -1988,7 +1515,7 @@ routes:
 ```
 
 **Плюсы:** явность, простота кэширования, легко тестировать.  
-**Минусы:** нарушает REST (URI должен идентифицировать ресурс, не версию).
+**Минусы:** версия становится частью URI, поэтому при её смене клиентам приходится обновлять ссылки и настройки.
 
 ### 2. Header Versioning
 
@@ -2021,7 +1548,7 @@ GET /api/users
 Accept: application/vnd.company.api+json;version=2
 ```
 
-Чистый REST-подход, но сложнее в реализации и тестировании.
+Связывает версию с представлением ресурса, но требует аккуратной настройки клиентов, кэша и тестов.
 
 ### 4. Query Parameter Versioning
 
@@ -2029,7 +1556,7 @@ Accept: application/vnd.company.api+json;version=2
 GET /api/users?version=2
 ```
 
-Простой, но загрязняет URL — не рекомендуется.
+Простой для отладки, но параметр нужно учитывать в кэшировании и документации.
 
 ### Стратегии управления версиями на Gateway
 
@@ -2053,117 +1580,36 @@ exchange.getResponse().getHeaders()
     .add("Deprecation", "true");
 ```
 
-**Рекомендация:** URI versioning — де-факто стандарт для публичных API. Header versioning — для внутренних или partner API. Поддерживать не более 2 версий одновременно, устанавливать deadline для депрекации.
+Срок поддержки каждой версии определяют по обязательствам перед клиентами. Об устаревании сообщают заранее и указывают срок миграции; универсального ограничения в две версии нет.
 
 ---
 
 ## Q38. (!) Retry и Circuit Breaker на уровне API Gateway
 
-Retry и Circuit Breaker решают разные задачи и работают вместе: **Retry** борется с **кратковременными** сбоями (мигнула сеть, один инстанс перегружен), повторяя запрос, а **Circuit Breaker** -- с **устойчивыми** (сервис лёг надолго), быстро отказывая, чтобы не копить зависшие запросы. Грубо: сначала несколько повторов, и если всё равно не вышло -- размыкаем цепь.
+`Retry` помогает пережить кратковременный сбой, а `CircuitBreaker` ограничивает новые вызовы к сервису, который устойчиво ошибается. Для Retry задают число попыток, условия, backoff и общий бюджет времени; для CircuitBreaker — окно, порог отказов, ожидание в OPEN и пробные вызовы в HALF_OPEN. `fallbackUri` возможен, но должен давать корректный ответ для конкретной операции.
 
-### Retry на уровне Gateway
-
-Retry помогает при временных сбоях (сетевые ошибки, 503 от перегруженного сервиса). Ключевые параметры: число попыток, условия повтора (статусы и методы) и стратегия backoff.
-
-**Spring Cloud Gateway — Retry фильтр:**
+Безопасность повторов зависит от **идемпотентности операции**, а не только HTTP-метода: GET обычно можно повторять; POST тоже можно при надёжном idempotency key и контракте backend. Повтор запроса с телом может требовать буферизации и увеличивать память Gateway. Таймауты обязательны, иначе одна попытка способна занять весь бюджет. Сочетание Retry и CircuitBreaker зависит от порядка фильтров: Gateway повторяет фильтры, стоящие после Retry; нельзя утверждать, что Resilience4j автоматически всегда блокирует повторы при открытой цепи.
 
 ```yaml
 filters:
   - name: Retry
     args:
       retries: 3
-      statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE   # 502, 503
-      methods: GET,HEAD                            # только идемпотентные!
+      statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE
+      methods: GET,HEAD
       backoff:
         firstBackoff: 50ms
         maxBackoff: 500ms
         factor: 2
-        basedOnPreviousValue: false
-```
-
-**Важно:** retry только для идемпотентных методов (GET, HEAD, OPTIONS). POST/PUT с retry без идемпотентности могут создавать дублирующиеся записи.
-
-**Exponential Backoff с Jitter:**
-
-```
-retry 1: wait 50ms  + random(0-25ms)
-retry 2: wait 100ms + random(0-50ms)
-retry 3: wait 200ms + random(0-100ms)
-```
-
-Jitter предотвращает «thundering herd» — одновременный шторм повторных запросов от тысяч клиентов.
-
-### Circuit Breaker на уровне Gateway
-
-Circuit Breaker защищает от каскадных сбоев. Три состояния: CLOSED (работа в норме) → OPEN (запросы отклоняются) → HALF-OPEN (проверка).
-
-**Spring Cloud Gateway + Resilience4j:**
-
-```yaml
-filters:
   - name: CircuitBreaker
     args:
-      name: payment-cb
-      fallbackUri: forward:/fallback/payment
-      statusCodes:
-        - 500
-        - 503
+      name: downstream-cb
+      fallbackUri: forward:/fallback/downstream
 ```
 
-```java
-@Bean
-public Customizer<ReactiveResilience4JCircuitBreakerFactory> cbConfig() {
-    return factory -> factory.configure(builder -> builder
-        .circuitBreakerConfig(CircuitBreakerConfig.custom()
-            .slidingWindowSize(10)
-            .failureRateThreshold(50)          // 50% ошибок → OPEN
-            .waitDurationInOpenState(Duration.ofSeconds(10))
-            .permittedNumberOfCallsInHalfOpenState(3)
-            .build()
-        ), "payment-cb");
-}
-```
+Это пример для чтения параметров, а не универсальный порядок фильтров: вместе с ним проверяют таймауты, число фактических вызовов и результат fallback. Для POST добавляют повтор лишь после проверки идемпотентного контракта.
 
-**Fallback endpoint:**
-
-```java
-@RestController
-public class FallbackController {
-    @GetMapping("/fallback/payment")
-    public Mono<ResponseEntity<Map<String, String>>> paymentFallback() {
-        return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-            .body(Map.of(
-                "message", "Payment service is temporarily unavailable",
-                "retryAfter", "30"
-            )));
-    }
-}
-```
-
-### Retry vs Circuit Breaker — взаимодействие
-
-```
-Request → [Circuit Breaker: CLOSED?]
-              → yes → [Retry: attempt 1,2,3]
-                           → success → response
-                           → all failed → Circuit Breaker records failure
-              → no (OPEN) → fallback immediately (fail fast)
-```
-
-**Антипаттерн:** retry поверх открытого Circuit Breaker — Resilience4j предотвращает это автоматически (CB перехватывает до retry).
-
-**Таймауты:** всегда устанавливать timeout на уровне Gateway + retry:
-
-```yaml
-spring:
-  cloud:
-    gateway:
-      httpclient:
-        connect-timeout: 1000   # 1s на установку соединения
-        response-timeout: 5s    # 5s на ответ
-```
-
-Без таймаутов retry может «зависнуть» ожидая ответа.
+Источники: [Spring Gateway Retry](https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway-server-webflux/gatewayfilter-factories/retry-factory.html), [Spring Gateway CircuitBreaker](https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway-server-webflux/gatewayfilter-factories/circuitbreaker-filter-factory.html).
 
 ---
 

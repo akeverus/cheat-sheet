@@ -125,12 +125,12 @@ updated: "2026-11-05"
 Написан на `Erlang/OTP` — языке, созданном для телеком-систем с требованием почти непрерывной работы. Отсюда два практических следствия: брокер устойчив к сбоям отдельных процессов (supervision trees) и легко собирается в кластер. Обратная сторона — диагностируется он не JVM-инструментами, а `rabbitmq-diagnostics`; Java-тюнинг (Heap, GC) к нему неприменим.
 
 **`AMQP 0-9-1`** — бинарный протокол прикладного уровня для асинхронного обмена сообщениями. Что он даёт:
-- **Надёжность** — подтверждения доставки встроены в сам протокол (`ack` от consumer-а, `Publisher Confirms` от брокера).
+- **Надёжность** — AMQP 0-9-1 определяет подтверждения от consumer-а. `Publisher Confirms` от брокера — расширение RabbitMQ к AMQP 0-9-1.
 - **Гибкая маршрутизация** — сообщение публикуется не в очередь напрямую, а в `exchange`, который по правилам `binding` решает, в какие очереди его положить.
 - **Безопасность** — `TLS` для шифрования канала, `SASL` для аутентификации.
 - **Совместимость** — это открытый стандарт, не привязанный к конкретной реализации.
 
-Помимо `AMQP 0-9-1`, через плагины `RabbitMQ` поддерживает `STOMP`, `MQTT` и `AMQP 1.0` — но это дополнительные протоколы, а не основной.
+Начиная с RabbitMQ 4.0, `AMQP 1.0` поддерживается брокером напрямую. Он отличается от AMQP 0-9-1 и требует соответствующего клиента. MQTT и STOMP доступны через плагины. [AMQP 1.0 в RabbitMQ 4.3](https://www.rabbitmq.com/docs/4.3/amqp), [расширения AMQP 0-9-1](https://www.rabbitmq.com/docs/4.3/extensions).
 
 ---
 
@@ -163,7 +163,7 @@ graph LR
 
 **`Virtual Host`** (`vhost`) — логическая изоляция ресурсов внутри одного `RabbitMQ`-сервера. Хорошая аналогия — отдельная база данных внутри `PostgreSQL`: один физический сервер, но независимые пространства имён.
 
-- Каждый `vhost` держит собственные `exchange`, `queue`, `binding`, пользователей и права доступа. Очередь `orders` в `/app-a` и очередь `orders` в `/app-b` — это разные очереди.
+- Каждый `vhost` имеет собственные `exchange`, `queue` и `binding`. Пользователи существуют на уровне брокера, а разрешения `configure`, `write`, `read` назначают пользователю отдельно для каждого vhost. Очередь `orders` в `/app-a` и очередь `orders` в `/app-b` — это разные очереди.
 - По умолчанию создаётся `vhost` `/`.
 - **Сценарий применения:** несколько приложений (или окружений — dev/stage) делят один брокер, но не видят и не задевают ресурсы друг друга. Права выдаются на конкретный `vhost`.
 
@@ -172,6 +172,8 @@ graph LR
 ConnectionFactory factory = new ConnectionFactory();
 factory.setVirtualHost("/my-app");
 ```
+
+[Виртуальные хосты RabbitMQ](https://www.rabbitmq.com/docs/vhosts), [управление доступом](https://www.rabbitmq.com/docs/access-control).
 
 ---
 
@@ -340,7 +342,7 @@ channel.basicPublish("", "task-queue", null, body);
 |----------|-----|----------|
 | `durable` | boolean | Очередь (как объект) переживает перезапуск брокера. Без неё пропадает само определение очереди |
 | `exclusive` | boolean | Очередь видна только создавшему её `Connection` и удаляется при его закрытии |
-| `autoDelete` | boolean | Очередь удаляется автоматически, когда от неё отписался последний `consumer` |
+| `autoDelete` | boolean | Очередь удаляется, когда у неё был хотя бы один подписанный consumer и последний consumer исчез. Опрос через `basic.get` сам по себе это условие не создаёт. |
 | `arguments` | Map | Расширенные параметры: `x-message-ttl`, `x-max-length`, `x-dead-letter-exchange`, `x-queue-type` и др. |
 
 ```java
@@ -358,28 +360,25 @@ channel.queueDeclare(
 );
 ```
 
+[Свойства очередей RabbitMQ](https://www.rabbitmq.com/docs/queues).
+
 ---
 
 ## Q12. Что такое durable queue и persistent message?
 
-Это два **разных** уровня сохранности, и для надёжности нужны оба сразу — частая путаница на собеседовании.
+`durable` задаёт сохранность определения очереди при перезапуске. `deliveryMode=2` помечает публикацию как persistent. Эти параметры применяются по-разному для разных типов очередей:
 
-**`durable queue`** — флаг очереди. Гарантирует, что переживёт перезапуск брокера само **определение очереди** (её имя, свойства, биндинги). Без `durable=true` после рестарта очередь придётся объявлять заново.
-
-**`persistent message`** — свойство **сообщения** (`deliveryMode=2`). Заставляет брокер записать сообщение на диск, а не держать только в памяти.
-
-Эти флаги независимы, и работают они лишь в паре:
+- **Classic queue.** После перезапуска сохраняются принятые persistent-сообщения в durable-очереди. Transient-сообщения (`deliveryMode=1`) восстановлению не подлежат, даже если временно были записаны на диск. В RabbitMQ 4.3 неэксклюзивные transient classic queues по умолчанию отключены.
+- **Quorum queue.** Очередь всегда durable, а сообщения записываются на диск независимо от `deliveryMode`. При dead-lettering исходный delivery mode сохраняется, поэтому в целевой classic queue он снова важен.
 
 ```java
-// Persistent message
 AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
-    .deliveryMode(2) // persistent
+    .deliveryMode(2)
     .build();
-
 channel.basicPublish("my-exchange", "key", props, body);
 ```
 
-> **Подводный камень:** `durable` очередь без `persistent`-сообщений ничего не гарантирует — переживёт рестарт сама очередь, но её содержимое (оставшееся только в памяти) пропадёт. Обратное тоже бесполезно: `persistent`-сообщение в не-`durable` очереди исчезнет вместе с очередью.
+Сам `deliveryMode` не сообщает издателю, была ли публикация принята и маршрутизирована. Для границы приёма используйте publisher confirms (Q21). Для quorum queue подтверждение требует принятия публикации кворумом реплик, а устойчивость к отказу зависит от сохранности этого кворума. [Очереди](https://www.rabbitmq.com/docs/4.3/queues), [Quorum Queues](https://www.rabbitmq.com/docs/4.3/quorum-queues).
 
 ---
 
@@ -435,14 +434,14 @@ args.put("x-expires", 300000); // удалить очередь через 5 м�
 `max-length` ограничивает размер очереди — по числу сообщений или по объёму в байтах. Это защита от неограниченного роста очереди, когда producer-ы пишут быстрее, чем consumer-ы успевают читать. Ключевой выбор — что делать при переполнении, его задаёт `x-overflow`:
 
 ```java
-args.put("x-max-length", 1000);           // максимум 1000 сообщений
+args.put("x-max-length", 1000);           // максимум 1000 ready-сообщений
 args.put("x-max-length-bytes", 1048576);  // максимум 1 МБ
 args.put("x-overflow", "drop-head");      // при переполнении: удалить самое старое (default)
 // или
 args.put("x-overflow", "reject-publish"); // отклонить новое сообщение
 ```
 
-Разница принципиальна: `drop-head` жертвует **старыми** данными ради приёма свежих (подходит для метрик, где важна актуальность), а `reject-publish` отказывает **новым** и сохраняет уже принятые (подходит для задач, которые нельзя терять). При `drop-head` и настроенном `DLX` вытесненные сообщения не пропадают, а уходят в dead letter очередь.
+Разница принципиальна: `drop-head` жертвует **старыми** данными ради приёма свежих (подходит для метрик, где важна актуальность), а `reject-publish` отказывает **новым** и сохраняет уже принятые (подходит для задач, которые нельзя терять). Лимит учитывает сообщения в состоянии `ready`; доставленные `unacked` в него не входят. При `drop-head` брокер пытается отправить вытесненное сообщение через настроенный DLX. Для попадания в DLQ нужен существующий exchange и подходящий маршрут. Обычный dead-lettering не гарантирует доставку в цель. При `reject-publish` издатель с включёнными confirms получает `basic.nack`, даже если другая очередь по тому же маршруту уже приняла сообщение. [Queue Length Limit](https://www.rabbitmq.com/docs/4.3/maxlength), [DLX](https://www.rabbitmq.com/docs/4.3/dlx).
 
 ---
 
@@ -487,17 +486,19 @@ sequenceDiagram
     Queue->>Queue: удалить сообщение
 ```
 
-Именно это даёт устойчивость к падению consumer-а: если он упал (или закрылось соединение) до отправки `ack`, брокер возвращает «зависшее» `unacked`-сообщение обратно в состояние `ready` и передаёт его другому consumer-у. Сообщение не теряется — отсюда гарантия at-least-once.
+`basicAck` отправляется асинхронно, без ответа брокера на каждый ack. При закрытии канала или соединения брокер автоматически возвращает неподтверждённые доставки в очередь. Если обработка успела записать результат, а ack не дошёл, сообщение может прийти повторно. Это основа at-least-once при сохранности очереди и успешной публикации. Обработчик должен учитывать дубли. [Consumer Acknowledgements](https://www.rabbitmq.com/docs/4.3/confirms).
 
 ```java
 channel.basicConsume("my-queue", false, (consumerTag, delivery) -> {
     try {
         process(delivery.getBody());
-        channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
     } catch (Exception e) {
-        channel.basicNack(delivery.getEnvelope().getDeliveryTag(), false, true);
+        channel.basicNack(delivery.getEnvelope().getDeliveryTag(), false, false);
+        return;
     }
+    channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
 }, consumerTag -> {});
+// При ошибке requeue=false: применяется настроенный маршрут DLX, если он есть.
 ```
 
 **Нюанс:** `deliveryTag` — это порядковый номер доставки в рамках канала, не глобальный ID сообщения. Параметр `multiple=true` в `basicAck` подтверждает разом все сообщения с `deliveryTag` меньше или равным указанному — удобно для батч-подтверждения.
@@ -527,12 +528,12 @@ channel.basicConsume("my-queue", false, (consumerTag, delivery) -> {
 Разница в том, **в какой момент** брокер считает сообщение доставленным — и отсюда вытекает компромисс между скоростью и надёжностью.
 
 **`auto-ack`** (`autoAck=true`) — брокер считает сообщение обработанным сразу, как только отправил его в сеть, не дожидаясь подтверждения.
-- **Плюс:** максимальная скорость, нет round-trip на подтверждение.
-- **Минус:** никаких гарантий. Если consumer упадёт во время обработки (или сообщение не дойдёт), оно уже удалено из очереди и **теряется безвозвратно**. Это семантика at-most-once.
+- **Плюс:** меньше служебных сообщений: consumer не отправляет ack.
+- **Минус:** брокер не знает, завершилась ли обработка. При обрыве после отправки сообщение может быть потеряно для consumer-а, поскольку брокер уже считает его доставленным.
 
 **`manual ack`** (`autoAck=false`) — consumer сам решает, когда подтвердить, явно вызывая `basicAck` / `basicNack` / `basicReject` после обработки.
-- **Плюс:** гарантия at-least-once — упавшее сообщение вернётся в очередь (см. Q18).
-- **Минус:** медленнее и требует аккуратной обработки ошибок (иначе можно зависнуть на `unacked` или зациклить requeue).
+- **Плюс:** при закрытии канала или соединения неподтверждённые сообщения возвращаются в очередь. Это позволяет повторить доставку, если очередь и сообщения сохранились. Подтверждайте после фиксации результата и учитывайте повторную доставку (Q18).
+- **Цена:** требуется обработка ошибок и ограничение `unacked`. Ack асинхронный; отдельного синхронного round-trip на каждое подтверждение нет. [Consumer Acknowledgements](https://www.rabbitmq.com/docs/4.3/confirms).
 
 > **Рекомендация:** в продакшне для любой значимой обработки используйте `manual ack`. `auto-ack` оправдан только там, где потеря отдельных сообщений допустима (метрики, логи best-effort).
 
@@ -540,7 +541,7 @@ channel.basicConsume("my-queue", false, (consumerTag, delivery) -> {
 
 ## Q21. Что такое Publisher Confirms?
 
-**`Publisher Confirms`** — подтверждение в обратную сторону: брокер сообщает **producer-у**, что принял сообщение и взял на себя ответственность за него (положил в очередь или записал на диск). Это зеркало consumer-ского `ack`: тот закрывает «последнюю милю» (брокер → consumer), а Publisher Confirms — «первую» (producer → брокер). Без них producer не знает, дошло ли сообщение вообще.
+**`Publisher Confirms`** — подтверждение в обратную сторону: брокер сообщает **producer-у**, результат обработки публикации. Для маршрутизированного сообщения критерий подтверждения зависит от очередей назначения и режима сохранности. Это зеркало consumer-ского `ack`: тот закрывает «последнюю милю» (брокер → consumer), а Publisher Confirms — «первую» (producer → брокер). Без них producer не знает, дошло ли сообщение вообще.
 
 ```java
 channel.confirmSelect(); // включить режим подтверждений
@@ -561,21 +562,21 @@ channel.basicPublish("exchange", "key", null, body);
 
 **Нюанс:** синхронный `waitForConfirms` прост, но блокирует поток на каждом сообщении — на потоке это убивает throughput. Асинхронный `ConfirmListener` подтверждает пачками и не блокирует publish, поэтому в нагруженных сценариях предпочтительнее. `Publisher Confirms` и транзакции `AMQP` нельзя включить на одном `channel` одновременно.
 
+**Confirm и возврат отвечают на разные вопросы.** Для немаршрутизируемой публикации с `mandatory=true` брокер отправляет `basic.return`, а затем может подтвердить её через `basic.ack`. Без `mandatory` такая публикация может получить confirm даже при отсутствии очереди назначения. Для контроля маршрутизации обрабатывайте returns и confirms отдельно; confirm ничего не говорит об обработке consumer-ом. [Publisher Confirms](https://www.rabbitmq.com/docs/4.3/confirms).
+
 ---
 
 ## Q22. Чем Publisher Confirms отличаются от транзакций AMQP?
 
-Оба механизма решают одну задачу — убедиться, что брокер принял сообщение, — но платят за это по-разному. Транзакции блокируют producer на каждом `txCommit`, а Publisher Confirms работают асинхронно.
+Confirms сообщают издателю результат приёма публикации брокером. AMQP-транзакция группирует публикации и подтверждения потребителя на одном канале до `txCommit`; незавершённые операции группы можно отменить через `txRollback`. На одном канале эти режимы взаимоисключающие.
 
-| Аспект | `Publisher Confirms` | Транзакции (`txSelect`) |
-|--------|---------------------|------------------------|
-| Производительность | Высокая (можно асинхронно) | Низкая (синхронный блокирующий commit) |
-| Семантика | At-least-once | At-least-once |
-| Батч | Да | Да (`txCommit`) |
-| Rollback | Нет | Да (`txRollback`) |
-| Рекомендуется | Да | Нет (фактически устарело) |
+| Аспект | Publisher Confirms | AMQP-транзакция |
+|--------|--------------------|-----------------|
+| Подтверждение | Асинхронные `basic.ack` / `basic.nack` от брокера | Клиент ждёт ответа на `txCommit` |
+| Группировка | Можно держать несколько публикаций в полёте и получать групповые confirms | Публикации и consumer ack копятся до commit |
+| Граница | Приём публикации согласно типу очереди | Операции AMQP этого канала. Бизнес-операция и транзакция в БД находятся за этой границей. |
 
-**Эмпирическое правило:** единственное реальное преимущество транзакций — возможность `txRollback`, но за неё платят падением пропускной способности примерно в **250 раз**. Поэтому в подавляющем большинстве случаев выбирают `Publisher Confirms`; транзакции `AMQP` считаются устаревшими.
+RabbitMQ не обещает атомарного результата при сбое посреди `txCommit`: даже в одной очереди после рестарта может оказаться только часть публикаций. Для нескольких очередей тем более нельзя рассчитывать на общий атомарный commit. Транзакции добавляют ожидание, но разница в throughput зависит от размера пакета, диска, сети и типа очереди. [Broker Semantics](https://www.rabbitmq.com/docs/4.3/semantics), [Publisher Confirms](https://www.rabbitmq.com/docs/4.3/confirms).
 
 ---
 
@@ -642,6 +643,15 @@ graph LR
 ```
 
 ```java
+channel.exchangeDeclare("main-exchange", "direct", true);
+channel.exchangeDeclare("dlx", "direct", true);
+
+Map<String, Object> mainArgs = new HashMap<>();
+mainArgs.put("x-dead-letter-exchange", "dlx");
+mainArgs.put("x-dead-letter-routing-key", "retry");
+channel.queueDeclare("main", true, false, false, mainArgs);
+channel.queueBind("main", "main-exchange", "main-key");
+
 // Retry Queue — задержка 5 секунд, после истечения TTL → обратно в main exchange
 Map<String, Object> retryArgs = new HashMap<>();
 retryArgs.put("x-message-ttl", 5000);
@@ -669,7 +679,7 @@ channel.basicQos(10);
 
 Почему это важно при нескольких consumer-ах. По умолчанию брокер раздаёт сообщения round-robin, не глядя на занятость. Если один consumer быстрый, а другой медленный, без prefetch медленному «налипнет» полная пачка, и быстрый будет простаивать.
 
-**`prefetchCount=0`** — без ограничений: брокер отправляет всё сразу, перегружая consumer-а и память.
+**`prefetchCount=0`** отключает лимит кредита QoS на стороне клиента. Это не обещание немедленно доставить всё: действуют ограничения брокера, типа очереди и транспорта. Например, quorum queue ограничивает consumer prefetch 2000. Эта настройка относится к подпискам с подтверждениями и не ограничивает запросы `basic.get`. [Consumer Prefetch](https://www.rabbitmq.com/docs/4.3/consumer-prefetch), [Confirms](https://www.rabbitmq.com/docs/4.3/confirms).
 
 **`prefetchCount=1`** — честное распределение (fair dispatch): consumer получает следующее сообщение только после `ack` предыдущего. Так свободный consumer всегда забирает работу первым — нагрузка раскладывается по фактической скорости, а не поровну. На диаграмме быстрый воркер успевает обработать 80 сообщений, медленный — 20:
 
@@ -685,16 +695,11 @@ graph LR
 
 ## Q27. Как prefetch влияет на производительность и нагрузку?
 
-Значение `prefetchCount` — это компромисс между **throughput** и **равномерностью**: чем оно выше, тем меньше сетевых round-trip-ов (быстрее), но тем неравномернее распределяется нагрузка и больше сообщений «зависает» у одного consumer-а при его падении.
+Повышение prefetch позволяет перекрыть сетевую задержку и время обработки несколькими доставками в полёте. Когда обработчик уже насыщен, рост prefetch может увеличить объём памяти, время ожидания у consumer-а и число повторных доставок после сбоя.
 
-| `prefetchCount` | Поведение | Когда применять |
-|-----------------|-----------|------------|
-| `0` | Без ограничений, все сообщения сразу | Не рекомендуется — риск перегрузки |
-| `1` | Строго по одному, fair dispatch | Долгие задачи, сильно неравномерная нагрузка |
-| `10–100` | Баланс throughput и честности | Большинство случаев |
-| Высокий (>100) | Максимальный throughput | Быстрая обработка коротких задач, батчи |
+`prefetch=1` оставляет по одной неподтверждённой доставке на consumer-а. Это полезная точка сравнения для длительных и неравномерных задач. Для коротких задач проверьте больший кредит под реальной нагрузкой. Сравните throughput, задержку обработки и число `unacked`. Универсального диапазона для всех очередей нет.
 
-**Нюанс про область действия.** При `global=false` (по умолчанию) лимит применяется к **каждому consumer-у** канала отдельно. При `global=true` — это общий потолок на весь `channel`, который consumer-ы делят между собой.
+При `global=false` RabbitMQ применяет кредит отдельно к каждому consumer-у. В RabbitMQ 4.3 общий кредит канала (`global=true`) устарел и отключён по умолчанию. Quorum queues его не поддерживают. Для Streams проверяйте управление кредитом отдельно по используемому протоколу. [Consumer Prefetch](https://www.rabbitmq.com/docs/4.3/consumer-prefetch), [Quorum Queues](https://www.rabbitmq.com/docs/4.3/quorum-queues).
 
 ---
 
@@ -705,9 +710,9 @@ graph LR
 ```mermaid
 graph TD
     subgraph "RabbitMQ Cluster"
-        N1[Node 1\nram]
-        N2[Node 2\ndisc]
-        N3[Node 3\ndisc]
+        N1[Node 1]
+        N2[Node 2]
+        N3[Node 3]
         N1 <--> N2
         N2 <--> N3
         N1 <--> N3
@@ -720,11 +725,9 @@ graph TD
 - **Метаданные реплицируются** на все узлы: `exchange`, `binding`, `vhost`, пользователи, политики. Поэтому к любому узлу можно подключиться и увидеть одну и ту же топологию.
 - **Содержимое очередей по умолчанию НЕ реплицируется**: каждая classic-очередь физически живёт на **одном** узле. Если этот узел упадёт, очередь и её сообщения станут недоступны. Чтобы это исправить, нужны реплицированные очереди — `Quorum Queues` (см. Q30).
 
-**Типы узлов:**
-- `disc` — хранит метаданные на диске; в кластере нужен минимум один такой, иначе после полного рестарта топология потеряется.
-- `ram` — держит метаданные только в памяти: операции с топологией быстрее, но узел не переживает рестарт самостоятельно.
+**Метаданные и partition в RabbitMQ 4.3.** Khepri — единственное хранилище метаданных. Оно использует Raft, и для изменения топологии нужно большинство узлов кластера. Для quorum queue большинство считается отдельно по репликам этой очереди. Сторона без большинства реплик конкретной очереди не может продолжить работу с ней. Доступность classic queue зависит от узла, где она размещена, и состояния кластера.
 
-**Подводный камень — network partition (split-brain).** При обрыве связи кластер может расщепиться на части, которые продолжают работать независимо и расходятся в данных. Поведение задаётся стратегией: `ignore` (ничего не делать), `pause-minority` (меньшая часть замирает — обычно безопасный выбор) или `autoheal` (после восстановления связи выбрать «победителя» и откатить остальных).
+Типы Mnesia-узлов `ram`/`disc` и стратегии `pause_minority`, `autoheal`, `ignore` относятся к прежним релизам с Mnesia. В 4.3 Mnesia и её стратегии обработки разделения сети удалены. [RabbitMQ 4.3](https://www.rabbitmq.com/blog/2026/04/23/rabbitmq-4.3-release), [сетевые разделения](https://www.rabbitmq.com/docs/4.3/partitions).
 
 ---
 
@@ -777,14 +780,14 @@ public Queue quorumQueue() {
 
 Оба плагина связывают **разные брокеры** (например, в разных датацентрах) — в отличие от кластеризации, которая объединяет узлы в одном. Разница между ними — в уровне абстракции.
 
-**`Federation`** — «прозрачная» связь на уровне `exchange` или `queue`: локальный exchange как бы расширяется на удалённый брокер, и сообщения подтягиваются с него **по запросу** — только когда на этой стороне есть consumer. Это декларативный, слабосвязанный способ.
+**Exchange Federation** передаёт публикации с upstream exchange на downstream exchange по подходящим привязкам. Локальный consumer для срабатывания связи сам по себе не обязателен. **Queue Federation** переносит сообщения из upstream queue в downstream queue при спросе на downstream и отсутствии подходящих локальных потребителей upstream для этих сообщений.
 
 **`Shovel`** — низкоуровневая «труба»: непрерывно вычитывает сообщения из конкретной очереди-источника и перекладывает в конкретный пункт назначения (в том числе на удалённом брокере). Сценарии применения:
 - разовая миграция сообщений между брокерами;
 - репликация потока между датацентрами;
 - переброска накопившихся сообщений из `DLQ` обратно в обработку после починки бага.
 
-**Кратко:** `Federation` — это логическая связь exchange/queue «по требованию»; `Shovel` — явное, точечное перемещение сообщений из A в B.
+[Federation](https://www.rabbitmq.com/docs/4.3/federation), [Shovel](https://www.rabbitmq.com/docs/4.3/shovel).
 
 ---
 
@@ -809,13 +812,13 @@ MyResponse response = (MyResponse) rabbitTemplate.convertSendAndReceive(
 );
 ```
 
-**`MessageConverter`** превращает Java-объект в байты `AMQP Message` и обратно. По умолчанию стоит `SimpleMessageConverter`, который использует Java-сериализацию — её **не стоит применять** для межсервисного обмена (хрупкая, небезопасная, привязана к classpath). **Рекомендация:** подключите `Jackson2JsonMessageConverter`, тогда сообщения едут в JSON — читаемо, переносимо между языками и версиями.
+**`MessageConverter`** преобразует объект и тело AMQP-сообщения. Стандартный `SimpleMessageConverter` передаёт `byte[]` как байты, кодирует `String` как текст и использует Java-сериализацию для других поддерживаемых `Serializable` объектов. При чтении он выбирает преобразование по `contentType`, а для неизвестного типа возвращает `byte[]`. Для JSON в Spring AMQP 4.x используйте `JacksonJsonMessageConverter` на Jackson 3. В Spring AMQP 3.x для Jackson 2 используется `Jackson2JsonMessageConverter`. [Spring AMQP Message Converters](https://docs.spring.io/spring-amqp/reference/4.0/amqp/message-converters.html).
 
 ---
 
 ## Q33. Как объявить очередь и exchange через Spring AMQP?
 
-Топологию (`exchange`, `queue`, `binding`) в Spring AMQP объявляют **декларативно — как `@Bean`-ы**. При старте контекста `RabbitAdmin` находит эти бины и автоматически создаёт соответствующие объекты в брокере (если их ещё нет). Удобные билдеры `ExchangeBuilder`, `QueueBuilder`, `BindingBuilder` делают объявление читаемым; обратите внимание на `MessageConverter` и `RabbitTemplate` — без явного конвертера сообщения по умолчанию поедут Java-сериализацией (см. Q32).
+Топологию (`exchange`, `queue`, `binding`) в Spring AMQP объявляют **декларативно — как `@Bean`-ы**. При старте контекста `RabbitAdmin` находит эти бины и автоматически создаёт соответствующие объекты в брокере (если их ещё нет). Удобные билдеры `ExchangeBuilder`, `QueueBuilder`, `BindingBuilder` делают объявление читаемым; обратите внимание на `MessageConverter` и `RabbitTemplate` — пример ниже рассчитан на Spring AMQP 4.x. Для JSON согласуйте конвертер на стороне издателя и listener-контейнера (Q32).
 
 ```java
 @Configuration
@@ -846,7 +849,7 @@ public class RabbitMQConfig {
 
     @Bean
     public MessageConverter messageConverter() {
-        return new Jackson2JsonMessageConverter();
+        return new JacksonJsonMessageConverter();
     }
 
     @Bean
@@ -857,6 +860,8 @@ public class RabbitMQConfig {
     }
 }
 ```
+
+Для dead-lettering дополнительно объявите `orders.dlx` и привяжите к нему целевую DLQ подходящим routing key. Ссылка в аргументах очереди сама эти объекты не создаёт. [DLX](https://www.rabbitmq.com/docs/4.3/dlx).
 
 ---
 
@@ -875,7 +880,7 @@ public class OrderListener {
     }
 
     // С доступом к заголовкам и метаданным
-    @RabbitListener(queues = "orders.queue")
+    @RabbitListener(queues = "orders.queue", ackMode = "MANUAL")
     public void handleWithHeaders(
         @Payload Order order,
         @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag,
@@ -883,10 +888,11 @@ public class OrderListener {
         Channel channel) throws IOException {
         try {
             orderService.process(order);
-            channel.basicAck(deliveryTag, false);
         } catch (Exception e) {
-            channel.basicNack(deliveryTag, false, false); // в DLQ
+            channel.basicNack(deliveryTag, false, false);
+            return;
         }
+        channel.basicAck(deliveryTag, false);
     }
 
     // Динамическое объявление очереди и exchange
@@ -904,6 +910,8 @@ public class OrderListener {
 **Какой контейнер под капотом — `SimpleMessageListenerContainer` или `DirectMessageListenerContainer`:**
 - `Simple` (по умолчанию) — держит собственный пул потоков, каждый consumer работает в отдельном thread. Гибче в настройке (динамическое изменение числа consumer-ов), но с дополнительным overhead на передачу сообщений между потоками.
 - `Direct` — обрабатывает сообщения прямо в потоке amqp-клиента, без промежуточного пула. Меньше overhead и латентность, но число consumer-ов фиксированное.
+
+Три метода показаны как альтернативы; два listener-а на `orders.queue` будут конкурировать за сообщения. Для ручного подтверждения нужен режим `MANUAL`. `basicNack(..., false, false)` отклоняет сообщение без requeue. До DLQ оно дойдёт при настроенном DLX и подходящем binding. [Spring AMQP: listener containers](https://docs.spring.io/spring-amqp/reference/amqp/containerAttributes.html), [DLX](https://www.rabbitmq.com/docs/4.3/dlx).
 
 ---
 
@@ -925,7 +933,7 @@ spring:
         acknowledge-mode: auto
 ```
 
-**Stateful retry** — счётчик попыток хранится не в памяти, а привязан к сообщению (по его ID), и сообщение реально возвращается в брокер между попытками. Нужен для `manual ack` и для сценариев, где между ретраями есть транзакции. Обратите внимание на `recoverer`: `RejectAndDontRequeueRecoverer` после исчерпания попыток отправляет сообщение в `DLQ`, а не зацикливает его:
+**Stateful retry** связывает попытки при повторной доставке по стабильному `messageId` или ключу от `MessageKeyGenerator`. Состояние хранит retry-контекст; долговечное хранение счётчика по умолчанию не гарантируется. Stateful подходит, когда исключение должно выйти из обработки, чтобы транзакция откатилась и доставка могла повториться. Режим `MANUAL` для этого не обязателен. После исчерпания попыток `RejectAndDontRequeueRecoverer` просит контейнер отклонить доставку без requeue. Брокер маршрутизирует её в DLQ только при наличии настроенного DLX и маршрута. Ниже пример stateless retry для Spring AMQP 3.x с подтверждениями контейнера:
 
 ```java
 @Bean
@@ -935,16 +943,18 @@ public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
     SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
     factory.setConnectionFactory(connectionFactory);
     factory.setMessageConverter(converter);
-    factory.setAcknowledgeMode(AcknowledgeMode.MANUAL);
+    factory.setAcknowledgeMode(AcknowledgeMode.AUTO);
 
     RetryInterceptorBuilder<?> builder = RetryInterceptorBuilder.stateless()
         .maxAttempts(3)
         .backOffOptions(1000, 2.0, 10000)
-        .recoverer(new RejectAndDontRequeueRecoverer()); // в DLQ после исчерпания попыток
+        .recoverer(new RejectAndDontRequeueRecoverer()); // отклонить без requeue
     factory.setAdviceChain(builder.build());
     return factory;
 }
 ```
+
+Spring `AcknowledgeMode.AUTO` означает подтверждение контейнером после успешного вызова listener-а. Это отличается от брокерного `autoAck=true`. `RepublishMessageRecoverer` реализует другой маршрут: приложение публикует сообщение в настроенный exchange, а контейнер подтверждает исходную доставку при успешном завершении recoverer-а. [Spring AMQP: Resilience](https://docs.spring.io/spring-amqp/reference/amqp/resilience-recovering-from-errors-and-broker-failures.html).
 
 ---
 
@@ -1022,7 +1032,7 @@ channel.basicConsume(replyQueueName, true, (consumerTag, delivery) -> {
 return response.poll(10, TimeUnit.SECONDS);
 ```
 
-В `Spring AMQP` всю эту механику (временная очередь, `correlationId`, ожидание ответа) скрывает один вызов `rabbitTemplate.convertSendAndReceive()` — вручную её писать не нужно.
+В `Spring AMQP` запрос и ожидание ответа скрывает `rabbitTemplate.convertSendAndReceive()`. При отсутствии явной reply-очереди и поддержке брокером шаблон обычно использует **Direct Reply-To**. `amq.rabbitmq.reply-to` — псевдоочередь без хранения ответов, доставка ответа имеет семантику at-most-once. При обрыве клиенту нужен таймаут и выбранная политика повторов. Обычная reply-очередь подходит, когда ответ нужно буферизовать. [Direct Reply-To](https://www.rabbitmq.com/docs/4.3/direct-reply-to), [Spring AMQP Request/Reply](https://docs.spring.io/spring-amqp/reference/amqp/request-reply.html).
 
 **Подводный камень:** синхронный RPC через брокер противоречит идее асинхронного messaging — клиент блокируется в ожидании ответа, добавляется лишний сетевой хоп, а таймауты надо обрабатывать явно. Для синхронных вызовов часто уместнее прямой HTTP/gRPC; RPC-over-AMQP берут, когда уже есть брокер и нужна его маршрутизация или развязка от адресов сервисов.
 

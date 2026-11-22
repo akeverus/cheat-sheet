@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[java-io-nio]]"
 next: []
-updated: "2026-10-05"
+updated: "2026-11-07"
 ---
 # Вопросы на собеседовании: Ввод-вывод Java (IO/NIO)
 
@@ -104,19 +104,19 @@ updated: "2026-10-05"
 
 ## Q1. (!) Что такое `Java IO` и `Java NIO` и в чём их ключевое различие?
 
-Это два разных API ввода-вывода. Ключевое различие: `IO` обрабатывает данные **по одному элементу за раз** через потоки, а `NIO` — **порциями** через каналы и буферы и умеет работать неблокирующе.
+Это два разных API ввода-вывода. `java.io` предлагает потоковые абстракции, а `java.nio` добавляет каналы и буферы; выбираемые сетевые каналы можно использовать с `Selector` в неблокирующем режиме. Оба API умеют читать данные порциями.
 
-`Java IO` (`java.io`) — классический API, основанный на **потоковой модели** (stream-oriented). Данные обрабатываются последовательно, байт за байтом или символ за символом, всегда блокирующе.
+`Java IO` (`java.io`) — классический API, основанный на **потоковой модели** (stream-oriented). Данные обрабатываются последовательно; методы могут читать как один элемент, так и массив байтов или символов. Обычные методы чтения блокируют вызывающий поток.
 
-`Java NIO` (`java.nio`, появился в Java 1.4) — API на **буферах и каналах** (buffer-oriented). Данные читаются порциями в буфер, затем обрабатываются из него. Канал двунаправленный и может работать в неблокирующем режиме, а один поток через `Selector` обслуживает множество соединений.
+`Java NIO` (`java.nio`, появился в Java 1.4) — API на **буферах и каналах** (buffer-oriented). Данные читаются порциями в буфер, затем обрабатываются из него. Свойства канала зависят от его вида: `FileChannel` не становится неблокирующим, а сетевые `SelectableChannel` можно зарегистрировать в `Selector`.
 
 ```mermaid
 graph LR
     subgraph "Java IO — потоковая модель"
-        A[Источник] -->|байт за байтом| B[InputStream]
+        A[Источник] -->|последовательно| B[InputStream]
         B --> C[Программа]
         C --> D[OutputStream]
-        D -->|байт за байтом| E[Приёмник]
+        D -->|последовательно| E[Приёмник]
     end
 ```
 
@@ -135,25 +135,25 @@ graph LR
 | Характеристика | `Java IO` | `Java NIO` |
 |---|---|---|
 | Модель | Потоково-ориентированная | Буферо-ориентированная |
-| Направление | Однонаправленные потоки | Двунаправленные каналы |
-| Блокировка | Только блокирующий | Блокирующий и неблокирующий |
-| Мультиплексирование | Нет (поток на соединение) | `Selector` (один поток — много каналов) |
+| Направление | Отдельные потоки чтения и записи | Есть читаемые, записываемые и двунаправленные каналы |
+| Блокировка | Обычные методы чтения блокируют | Зависит от вида канала; неблокирующий режим есть у выбираемых каналов |
+| Мультиплексирование | Нет встроенного Selector | `Selector` для неблокирующих сетевых каналов |
 | Появился | Java 1.0 | Java 1.4 |
 
 ## Q2. (!) В чём разница между потоково-ориентированным и буферо-ориентированным подходом?
 
 Разница в том, **где живут данные во время обработки** и можно ли по ним перемещаться.
 
-**Потоково-ориентированный** (`Java IO`): данные читаются/записываются последовательно, прямо из потока. Перемотать назад нельзя — прочитанный байт ушёл навсегда. Если нужно вернуться к данным, придётся самому сложить их в структуру (буфер, список, строку).
+**Потоково-ориентированный** (`Java IO`): данные читаются/записываются последовательно, прямо из потока. Некоторые потоки поддерживают `mark()`/`reset()` в пределах сохранённых данных, а `RandomAccessFile` умеет позиционное чтение. В общем случае поток читают последовательно; доступ назад зависит от конкретного источника и буферизации.
 
-**Буферо-ориентированный** (`Java NIO`): данные сначала попадают в `Buffer`, и уже там их обрабатывают. По буферу можно двигаться вперёд и назад (`position`, `mark`, `reset`), перечитывать. Это гибче, но накладывает ответственность: нужно самому проверять, что в буфере накопились все нужные данные (например, целая строка или весь заголовок протокола).
+**Буферо-ориентированный** (`Java NIO`): данные сначала попадают в `Buffer`, и уже там их обрабатывают. По уже полученным данным буфера можно перемещаться через `position`, `mark` и `reset`, пока нужные данные остаются в буфере. Это гибче, но накладывает ответственность: нужно самому проверять, что в буфере накопились все нужные данные (например, целая строка или весь заголовок протокола).
 
 ```java
 // Java IO — потоковое чтение
 try (BufferedReader reader = new BufferedReader(new FileReader("data.txt"))) {
     String line;
     while ((line = reader.readLine()) != null) {
-        System.out.println(line); // данные обработаны, назад не вернуться
+        System.out.println(line); // последовательная обработка строк
     }
 }
 
@@ -163,7 +163,7 @@ try (FileChannel channel = FileChannel.open(Path.of("data.txt"), StandardOpenOpt
     while (channel.read(buffer) != -1) {
         buffer.flip(); // переключаем в режим чтения
         while (buffer.hasRemaining()) {
-            System.out.print((char) buffer.get());
+            byte value = buffer.get(); // байты текста нужно декодировать с Charset
         }
         buffer.clear(); // готовим к следующей записи
     }
@@ -176,12 +176,12 @@ try (FileChannel channel = FileChannel.open(Path.of("data.txt"), StandardOpenOpt
 
 **Блокирующий I/O** (`Java IO`): вызов `read()`/`write()` приостанавливает поток до завершения операции. Если данных ещё нет — поток просто стоит и ждёт. Отсюда модель «поток на соединение»: пока поток висит на одном медленном клиенте, он ничего больше не делает, и при тысячах соединений нужны тысячи потоков — это плохо масштабируется.
 
-**Неблокирующий I/O** (`Java NIO`): `read()`/`write()` возвращают управление немедленно, сколько бы данных ни было готово. Результат — индикатор состояния, а не блокировка:
+**Неблокирующий I/O** у выбираемых каналов NIO: `read()`/`write()` могут завершиться без передачи данных, если операция сейчас не готова. Результат — индикатор состояния, а не блокировка:
 
 ```java
 // Неблокирующий канал
 SocketChannel channel = SocketChannel.open();
-channel.configureBlocking(false); // неблокирующий режим
+channel.configureBlocking(false); // после connect нужно дождаться завершения соединения
 
 ByteBuffer buffer = ByteBuffer.allocate(256);
 int bytesRead = channel.read(buffer); // возвращает сразу, даже если данных нет
@@ -192,25 +192,25 @@ int bytesRead = channel.read(buffer); // возвращает сразу, даж
 
 Поскольку вызов больше не блокирует, один поток может опросить много каналов и заняться тем, который готов. Это и есть основа масштабируемости `NIO`: один поток через `Selector` обслуживает тысячи соединений (см. Q16).
 
-**Подводный камень:** `FileChannel` неблокирующий режим **не поддерживает** — он всегда блокирующий. Неблокирующий режим есть только у сетевых каналов (`SocketChannel`, `ServerSocketChannel`, `DatagramChannel`).
+**Подводный камень:** `FileChannel` не поддерживает `configureBlocking(false)` и не регистрируется в `Selector`. Неблокирующий режим есть у выбираемых каналов, включая `SocketChannel`, `ServerSocketChannel`, `DatagramChannel` и каналы `Pipe`.
 
 ## Q4. (!) Какие преимущества и недостатки у `Java IO` и `Java NIO`?
 
-Коротко: `IO` выигрывает в простоте, `NIO` — в масштабируемости и контроле над памятью. За эту мощь `NIO` платит сложностью API, где легко допустить ошибку.
+Коротко: потоки удобны для последовательных операций, а Selector помогает обслуживать множество сетевых каналов ограниченным числом потоков. За эту мощь `NIO` платит сложностью API, где легко допустить ошибку.
 
 | | `Java IO` | `Java NIO` |
 |---|---|---|
 | **Плюсы** | Простой API, легко читается | Неблокирующий I/O, масштабируемость |
 | | Широкая поддержка типов данных | Эффективная работа с буферами |
 | | Много готовых обёрток (`Buffered*`, `Data*`) | `Selector` для мультиплексирования |
-| | Хорошо для простого файлового I/O | Direct buffers — zero-copy с ОС |
+| | Хорошо для простого файлового I/O | Direct buffers могут сократить копирование при I/O |
 | **Минусы** | Блокирующий — поток на соединение | Сложный API, легко допустить ошибку |
 | | Плохо масштабируется для серверов | `flip()`/`clear()` — частый источник багов |
 | | Нет мультиплексирования | Отладка сложнее |
 
 **Когда что выбирать:**
 - **`Java IO`** — простые файловые операции, работа с текстом, небольшое число соединений
-- **`Java NIO`** — высоконагруженные серверы, тысячи одновременных соединений, обработка больших файлов
+- **`Java NIO`** — неблокирующая сеть, позиционный доступ и отображение файлов, когда эти возможности нужны
 - **На практике** — часто используют фреймворки поверх NIO: `Netty`, `Spring WebFlux`, которые скрывают сложность API
 
 ## Q5. Какие основные классы и интерфейсы используются в `Java IO`?
@@ -256,11 +256,11 @@ graph TD
 
 ## Q6. (!) В чём разница между байтовыми и символьными потоками?
 
-Разница в единице данных: байтовые потоки оперируют сырыми байтами, символьные — символами `Unicode` с учётом кодировки. Отсюда правило выбора: бинарные данные — байтовый поток, текст — символьный.
+Разница в единице данных: байтовые потоки оперируют сырыми байтами, символьные — кодовыми единицами `char`; кодировка нужна при преобразовании байтов в текст. Отсюда правило выбора: бинарные данные — байтовый поток, текст — символьный.
 
 **Байтовые потоки** (`InputStream` / `OutputStream`) работают с сырыми байтами и ничего не знают о кодировке. Подходят для бинарных данных: изображения, архивы, сериализованные объекты.
 
-**Символьные потоки** (`Reader` / `Writer`) работают с символами `Unicode` (16-битный `char`) и сами выполняют преобразование байты↔символы по указанной кодировке. Подходят для текста — иначе пришлось бы вручную декодировать байты.
+**Символьные потоки** (`Reader` / `Writer`) работают с кодовыми единицами UTF-16 (`char`). Преобразование байтов выполняют мосты `InputStreamReader` и `OutputStreamWriter` с выбранной кодировкой. Подходят для текста — иначе пришлось бы вручную декодировать байты.
 
 ```java
 // Байтовый поток — работа с бинарными данными
@@ -294,12 +294,11 @@ try (BufferedReader reader = new BufferedReader(
 
 ```java
 // Каждый слой добавляет своё поведение
-InputStream raw = new FileInputStream("data.bin");        // сырое чтение из файла
-InputStream buffered = new BufferedInputStream(raw);       // + буферизация
-DataInputStream data = new DataInputStream(buffered);      // + чтение примитивов
-
-int value = data.readInt();    // читает 4 байта как int
-double d = data.readDouble();  // читает 8 байт как double
+try (DataInputStream data = new DataInputStream(
+        new BufferedInputStream(new FileInputStream("data.bin")))) {
+    int value = data.readInt();    // 4 байта как int
+    double d = data.readDouble();  // 8 байт как double
+}
 ```
 
 ```mermaid
@@ -322,7 +321,7 @@ graph LR
 В современном коде для текстовых файлов берут `Files` из `NIO.2` — короче и безопаснее. `BufferedReader`/`BufferedWriter` оставляют для построчной обработки, а `Scanner` — для парсинга по токенам. Ниже подходы в порядке предпочтения (от современного к классическому):
 
 ```java
-// 1. NIO.2 Files (рекомендуемый способ, Java 7+)
+// 1. NIO.2 Files; конкретные методы появились в разные версии Java
 Path path = Path.of("data.txt");
 
 // Чтение всех строк
@@ -376,8 +375,8 @@ try (ServerSocket serverSocket = new ServerSocket(8080)) {
         Socket client = serverSocket.accept(); // блокирующий вызов
         new Thread(() -> {
             try (BufferedReader in = new BufferedReader(
-                     new InputStreamReader(client.getInputStream()));
-                 PrintWriter out = new PrintWriter(client.getOutputStream(), true)) {
+                     new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
+                 PrintWriter out = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), true)) {
                 String request = in.readLine();
                 out.println("Echo: " + request);
             } catch (IOException e) {
@@ -388,13 +387,13 @@ try (ServerSocket serverSocket = new ServerSocket(8080)) {
 }
 ```
 
-Проблема: каждое соединение требует отдельного потока. При 10 000 соединений — 10 000 потоков, что неэффективно. Именно эту проблему решает `NIO` с `Selector` (см. Q16–Q18).
+В этом примере каждое соединение получает отдельный платформенный поток. Для большого числа соединений подходят иные модели: `Selector` с неблокирующими каналами или виртуальные потоки с блокирующим кодом.
 
 ## Q10. (!) Что такое `Channel` и `Buffer` в `Java NIO` и как они связаны?
 
-Это два кирпичика `NIO`, и они всегда работают в паре: **канал — это труба к источнику данных, буфер — контейнер, через который данные проходят**. Программа никогда не читает из канала напрямую — только через буфер.
+Канал описывает источник или приёмник данных, а буфер хранит байты для операций `read` и `write`. У отдельных каналов есть и другие операции, например `transferTo`, `lock` и `map`.
 
-**`Channel`** — двунаправленный канал к файлу или сокету. В отличие от одностороннего потока `IO`, через один канал можно и читать, и писать. Но сам он данные не хранит — обмен идёт через `Buffer`.
+**`Channel`** бывает читаемым, записываемым или двунаправленным. Например, у `Pipe` разные каналы для чтения и записи, а `FileChannel` поддерживает направления согласно опциям открытия. Но сам он данные не хранит — обмен идёт через `Buffer`.
 
 **`Buffer`** — контейнер фиксированного размера, посредник между каналом и программой. Канал читает данные в буфер (`channel.read(buffer)`), программа достаёт их из буфера (`buffer.get()`), и наоборот при записи.
 
@@ -446,10 +445,10 @@ DatagramChannel datagramChannel = DatagramChannel.open();
 
 ## Q12. (!) Как устроен `ByteBuffer`: `capacity`, `position`, `limit`, `mark`?
 
-У `ByteBuffer` нет отдельных режимов «чтение» и «запись» — есть четыре указателя, и операции работают между `position` и `limit`. Понимание этих четырёх чисел снимает почти всю «магию» буферов. Всегда выполняется инвариант — указатели упорядочены и не выходят за `capacity`:
+У `ByteBuffer` нет отдельных режимов «чтение» и «запись» — есть четыре указателя, и операции работают между `position` и `limit`. Понимание этих четырёх чисел снимает почти всю «магию» буферов. Всегда выполняется инвариант для позиции, предела и ёмкости; отметка может быть не задана:
 
 ```
-Инвариант: 0 <= mark <= position <= limit <= capacity
+Инвариант: 0 <= position <= limit <= capacity; если mark задан, 0 <= mark <= position
 ```
 
 | Атрибут | Описание |
@@ -499,9 +498,9 @@ buffer.clear();           // position=0, limit=10 — готов к записи
 
 ## Q13. Что делают методы `flip()`, `clear()`, `compact()`, `rewind()` в `ByteBuffer`?
 
-Все четыре метода переставляют указатели `position` и `limit`, переключая буфер между «записью» и «чтением» — данные при этом не копируются и не стираются, меняются только границы. Запомнить проще через сценарии: записал → `flip()` → прочитал → `clear()` (начать заново) или `compact()` (дописать к остатку).
+`flip()`, `clear()` и `rewind()` меняют состояние буфера без стирания данных. `compact()` переносит непрочитанный остаток в начало, поэтому копирует эти байты. Запомнить проще через сценарии: записал → `flip()` → прочитал → `clear()` (начать заново) или `compact()` (дописать к остатку).
 
-**Самый частый баг:** забыть `flip()` после записи перед чтением — тогда `get()` читает мусор из «пустой» части буфера или сразу упирается в `limit`.
+**Самый частый баг:** забыть `flip()` после записи перед чтением — тогда `get()` может читать не ту область буфера или сразу упереться в `limit`.
 
 | Метод | `position` | `limit` | Когда использовать |
 |---|---|---|---|
@@ -527,20 +526,22 @@ buffer.get(dst);                // position=3, limit=5
 buffer.compact();               // position=2, limit=10
 // буфер содержит: ['l', 'o', ?, ?, ...], position=2
 
-// rewind(): перечитать с начала
-buffer.rewind();                // position=0, limit не меняется
+// После compact дописываем данные и снова готовим к чтению
+buffer.put((byte) '!');
+buffer.flip();                 // position=0, limit=3
+buffer.rewind();               // position=0, limit остаётся 3
 ```
 
 ## Q14. (!) В чём разница между `direct buffer` и `heap buffer`?
 
-Разница в том, **где физически лежат данные**: heap buffer — в куче JVM, direct buffer — в нативной памяти ОС. Отсюда компромисс: direct быстрее в I/O (ОС работает с памятью напрямую, без лишнего копирования), но дороже в создании и не управляется GC напрямую.
+Heap buffer хранит данные в Java heap, direct buffer — вне неё. Direct buffer может сократить копирование при I/O, но создание и доступ к нему могут стоить дороже. Выбор проверяют на конкретной нагрузке.
 
 | Характеристика | `Heap Buffer` | `Direct Buffer` |
 |---|---|---|
 | Создание | `ByteBuffer.allocate(size)` | `ByteBuffer.allocateDirect(size)` |
-| Расположение | В куче JVM | В нативной памяти ОС |
+| Расположение | В куче JVM | Во вне-кучевой памяти |
 | GC | Управляется GC | Освобождается при GC обёртки |
-| Скорость I/O | Требует копирования в нативную память | Нет лишних копирований (zero-copy) |
+| Скорость I/O | Может требовать промежуточного копирования | Может сократить число копирований; zero-copy не гарантирован |
 | Скорость создания | Быстрое | Медленное |
 | `isDirect()` | `false` | `true` |
 
@@ -565,7 +566,7 @@ System.out.println(directBuffer.isDirect()); // true
 - Когда нужен доступ к внутреннему массиву (`array()`)
 - Небольшие объёмы данных
 
-На собеседовании важно упомянуть: при I/O с heap buffer JVM всё равно копирует данные во временный direct buffer — именно поэтому для частых I/O операций direct buffer эффективнее.
+При частом I/O direct buffer может быть выгоден, но само наличие direct buffer не гарантирует отсутствие копирования или ускорение.
 
 ## Q15. Что такое `scatter/gather` операции в `NIO`?
 
@@ -600,7 +601,7 @@ try (FileChannel outChannel = FileChannel.open(Path.of("out.bin"),
 
 ## Q16. (!) Как работает механизм `Selector` в `Java NIO`?
 
-`Selector` — это мультиплексор: он позволяет **одному потоку** следить сразу за множеством каналов и просыпаться только когда какой-то из них готов к чтению, записи или приёму соединения. Вместо «поток на соединение» получается «один поток на тысячи соединений» — это и есть паттерн **Reactor** (подробнее в [Design Patterns](../../design-patterns/design-patterns-interview.md)).
+`Selector` — это мультиплексор: он позволяет потоку следить за множеством каналов и получать сведения об их готовности к чтению, записи или приёму соединения. Вместо «поток на соединение» получается «ограниченное число потоков на множество соединений» — это и есть паттерн **Reactor** (подробнее в [Design Patterns](../../design-patterns/design-patterns-interview.md)).
 
 ```mermaid
 graph TD
@@ -684,78 +685,69 @@ key.interestOps(SelectionKey.OP_READ); // теперь только чтение
 
 ## Q18. (!) Как реализовать неблокирующий сервер на `NIO`?
 
-Схема всегда одна: неблокирующий `ServerSocketChannel` регистрируется на `OP_ACCEPT`, а в бесконечном event loop селектор раздаёт готовые ключи — новые соединения принимаются в `handleAccept`, входящие данные читаются в `handleRead`. Полный echo-сервер:
+Базовая схема: перевести `ServerSocketChannel` в неблокирующий режим, зарегистрировать `OP_ACCEPT`, принимать готовые соединения и регистрировать клиентов на `OP_READ`. При чтении `-1` означает конец входящего потока. Для ответа нужно сохранять непрочитанные и недописанные байты между событиями, а `OP_WRITE` включать только при наличии ожидающих данных. Иначе частичная запись в неблокирующий сокет потеряет ответ.
 
 ```java
-public class NioEchoServer {
-    public static void main(String[] args) throws IOException {
-        Selector selector = Selector.open();
-        ServerSocketChannel serverChannel = ServerSocketChannel.open();
-        serverChannel.bind(new InetSocketAddress(8080));
-        serverChannel.configureBlocking(false);
-        serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+try (Selector selector = Selector.open();
+     ServerSocketChannel server = ServerSocketChannel.open()) {
+    server.bind(new InetSocketAddress(8080));
+    server.configureBlocking(false);
+    server.register(selector, SelectionKey.OP_ACCEPT);
 
-        System.out.println("Сервер запущен на порту 8080");
-
-        while (true) {
-            selector.select();
-            Iterator<SelectionKey> it = selector.selectedKeys().iterator();
-
-            while (it.hasNext()) {
-                SelectionKey key = it.next();
-                it.remove();
-
+    while (!Thread.currentThread().isInterrupted()) {
+        selector.select();
+        Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
+        while (keys.hasNext()) {
+            SelectionKey key = keys.next();
+            keys.remove(); // selectedKeys не очищается автоматически
+            try {
                 if (key.isAcceptable()) {
-                    handleAccept(selector, key);
+                    SocketChannel client = server.accept();
+                    if (client != null) {
+                        client.configureBlocking(false);
+                        client.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(4096));
+                    }
                 } else if (key.isReadable()) {
-                    handleRead(key);
+                    SocketChannel client = (SocketChannel) key.channel();
+                    ByteBuffer input = (ByteBuffer) key.attachment();
+                    int count = client.read(input);
+                    if (count < 0) {
+                        key.cancel();
+                        client.close();
+                    } else if (count > 0) {
+                        input.flip();
+                        processAvailableBytes(input); // обрабатывает полные сообщения
+                        input.compact(); // сохраняет неполный хвост
+                    }
                 }
+            } catch (IOException failure) {
+                key.cancel();
+                key.channel().close();
             }
         }
-    }
-
-    private static void handleAccept(Selector selector, SelectionKey key) throws IOException {
-        ServerSocketChannel server = (ServerSocketChannel) key.channel();
-        SocketChannel client = server.accept();
-        client.configureBlocking(false);
-        client.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(256));
-        System.out.println("Клиент подключён: " + client.getRemoteAddress());
-    }
-
-    private static void handleRead(SelectionKey key) throws IOException {
-        SocketChannel client = (SocketChannel) key.channel();
-        ByteBuffer buffer = (ByteBuffer) key.attachment();
-        int bytesRead = client.read(buffer);
-
-        if (bytesRead == -1) {
-            client.close();
-            return;
-        }
-
-        buffer.flip();
-        client.write(buffer); // echo обратно
-        buffer.compact();
     }
 }
 ```
 
-В реальных проектах вместо написания NIO-серверов вручную используют `Netty` или `Spring WebFlux`, которые строятся поверх NIO, но предоставляют удобный API. Подробнее в [Java Concurrency](java-concurrency-interview.md).
+`processAvailableBytes` здесь обозначает обработчик протокола: он читает только полные сообщения, оставляя неполный хвост в буфере. Для отправки ответа добавляют очередь выходных буферов и обработку `OP_WRITE` до полного опустошения каждого буфера.
+
+В сложных серверах готовые библиотеки вроде Netty помогают управлять состоянием соединений, частичными операциями и закрытием ресурсов. Подробнее в [Java Concurrency](java-concurrency-interview.md).
 
 ## Q19. (!) Что такое `NIO.2` и чем он отличается от классического `NIO`?
 
-`NIO.2` (Java 7, пакет `java.nio.file`) — это **высокоуровневый файловый API**, а не замена классическому `NIO`. Если оригинальный `NIO` дал низкоуровневые каналы, буферы и селекторы, то `NIO.2` решает другую задачу — удобную работу с файлами и каталогами, заменяя громоздкий и небезопасный `java.io.File` на `Path` + `Files`.
+`NIO.2` появился в Java 7 и добавил файловый API `java.nio.file` и асинхронные каналы из `java.nio.channels`. Он дополняет классический `NIO`. Если оригинальный `NIO` дал низкоуровневые каналы, буферы и селекторы, то `NIO.2` решает другую задачу — удобную работу с файлами и каталогами, предлагая `Path` и `Files` для операций, которые прежде выполняли через `java.io.File`.
 
 | | Классический `NIO` (Java 1.4) | `NIO.2` (Java 7) |
 |---|---|---|
-| Пакет | `java.nio`, `java.nio.channels` | `java.nio.file` |
+| Пакет | `java.nio`, `java.nio.channels` | `java.nio.file` и асинхронные каналы в `java.nio.channels` |
 | Фокус | Каналы, буферы, селекторы | Файловые операции |
 | Ключевые классы | `Channel`, `Buffer`, `Selector` | `Path`, `Files`, `FileSystem` |
-| Замена для | `java.net.Socket` | `java.io.File` |
+| Пример альтернативы | Сетевые каналы наряду с `java.net.Socket` | `Path` и `Files` наряду с `java.io.File` |
 | Асинхронность | Неблокирующий I/O через `Selector` | `AsynchronousFileChannel`, `AsynchronousSocketChannel` |
 | Дополнительно | — | `WatchService`, `FileVisitor`, атрибуты файлов |
 
 ```java
-// NIO.2 заменяет устаревший java.io.File
+// NIO.2 предлагает Path и Files для работы с файлами
 // Старый способ
 File file = new File("/path/to/file.txt");
 boolean exists = file.exists();
@@ -769,7 +761,7 @@ boolean exists2 = Files.exists(path);
 
 ## Q20. Как работать с `Path` и `Paths`?
 
-`Path` — это интерфейс-представление пути в файловой системе, замена `java.io.File`. Важно: сам `Path` — лишь описание пути, он не обращается к диску; реальные операции (чтение, проверка существования) делает класс `Files`. `Paths.get(...)` — старая фабрика, в Java 11+ её заменил статический `Path.of(...)`.
+`Path` — интерфейс, представляющий путь в файловой системе. Он часто удобнее `java.io.File` для новых файловых операций. Важно: сам `Path` — лишь описание пути, он не обращается к диску; реальные операции (чтение, проверка существования) делает класс `Files`. `Paths.get(...)` доступен с Java 7, а `Path.of(...)` — с Java 11; оба создают `Path`.
 
 Большинство методов `Path` — чисто строковые манипуляции с путём:
 
@@ -820,7 +812,9 @@ boolean isReadable = Files.isReadable(path);
 byte[] bytes = Files.readAllBytes(path);
 List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
 String content = Files.readString(path); // Java 11+
-Stream<String> lineStream = Files.lines(path); // ленивое чтение
+try (Stream<String> lineStream = Files.lines(path)) {
+    lineStream.forEach(System.out::println);
+}
 
 // Запись
 Files.write(path, bytes);
@@ -860,9 +854,8 @@ try (OutputStream out = Files.newOutputStream(dst)) {
     Files.copy(src, out);
 }
 
-// Перемещение (атомарное, если на одной файловой системе)
-Files.move(src, dst, StandardCopyOption.REPLACE_EXISTING,
-    StandardCopyOption.ATOMIC_MOVE);
+// Запрос атомарного перемещения: поддержку определяет FileSystem-провайдер
+Files.move(src, dst, StandardCopyOption.ATOMIC_MOVE); // может бросить AtomicMoveNotSupportedException
 
 // Удаление
 Files.delete(path);              // бросает NoSuchFileException если нет файла
@@ -919,7 +912,7 @@ try (Stream<Path> paths = Files.find(Path.of("src"), 10,
 }
 ```
 
-Четыре коллбэка `FileVisitor` (вызываются в этом порядке для каждого каталога):
+Четыре коллбэка `FileVisitor` (для каждого элемента вызывается подходящий; при ошибке вместо `visitFile` вызывается `visitFileFailed`):
 - `preVisitDirectory()` — перед входом в каталог (здесь можно вернуть `SKIP_SUBTREE`, чтобы не заходить внутрь);
 - `visitFile()` — на каждый файл внутри;
 - `visitFileFailed()` — если файл не удалось прочитать (нет прав, удалён в процессе);
@@ -927,11 +920,10 @@ try (Stream<Path> paths = Files.find(Path.of("src"), 10,
 
 ## Q24. Что такое `WatchService` и как отслеживать изменения файлов?
 
-`WatchService` (NIO.2, Java 7) — встроенный механизм слежения за изменениями в каталоге: создание, удаление, изменение файлов. Под капотом он использует событийный механизм ОС (inotify в Linux, аналоги в других системах), а не периодический опрос — поэтому работает дёшево. Схема использования: зарегистрировать каталог на нужные виды событий, в цикле забирать `WatchKey` через `take()` и после обработки обязательно вызывать `key.reset()`.
+`WatchService` (NIO.2, Java 7) — встроенный механизм слежения за изменениями в каталоге: создание, удаление, изменение файлов. Конкретный способ получения событий зависит от провайдера и платформы; не стоит предполагать фиксированную задержку или отсутствие polling. Схема использования: зарегистрировать каталог на нужные виды событий, в цикле забирать `WatchKey` через `take()` и после обработки обязательно вызывать `key.reset()`.
 
 ```java
-WatchService watchService = FileSystems.getDefault().newWatchService();
-
+try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
 Path dir = Path.of("/tmp/watched");
 dir.register(watchService,
     StandardWatchEventKinds.ENTRY_CREATE,
@@ -945,13 +937,16 @@ while (true) {
 
     for (WatchEvent<?> event : key.pollEvents()) {
         WatchEvent.Kind<?> kind = event.kind();
+        if (kind == StandardWatchEventKinds.OVERFLOW) continue;
         Path fileName = (Path) event.context();
 
-        System.out.printf("Событие: %s, файл: %s%n", kind.name(), fileName);
+        Path changed = dir.resolve(fileName);
+        System.out.printf("Событие: %s, файл: %s%n", kind.name(), changed);
     }
 
     boolean valid = key.reset(); // сбрасываем ключ для следующих событий
-    if (!valid) break;           // каталог стал недоступен
+    if (!valid) break;           // регистрация больше не действует
+}
 }
 ```
 
@@ -961,11 +956,11 @@ while (true) {
 - синхронизация каталогов;
 - автоматическая пересборка при изменении исходников (как в IDE).
 
-**Подводный камень:** `WatchService` следит **только за одним уровнем** каталога, не рекурсивно. Чтобы наблюдать за вложенными папками, нужно регистрировать каждый подкаталог отдельно (и регистрировать новые подкаталоги при их появлении).
+**Подводный камень:** `WatchService` следит за зарегистрированным каталогом, а не за всем деревом автоматически. Чтобы наблюдать за вложенными папками, нужно регистрировать каждый подкаталог отдельно (и регистрировать новые подкаталоги при их появлении).
 
 ## Q25. Как работает `FileChannel` и чем он отличается от потоков?
 
-`FileChannel` — канал `NIO` для работы с файлами, который умеет то, чего нет у обычных файловых потоков: произвольный доступ по позиции, memory-mapping, блокировку файла и zero-copy передачу между каналами. Поток (`FileInputStream`) читает строго последовательно от начала к концу; канал позволяет прыгать по файлу и работает на более низком уровне. При этом `FileChannel` всегда блокирующий.
+`FileChannel` — файловый канал NIO с позиционным доступом, отображением участка файла в память, файловыми блокировками и передачей между каналами. Поток (`FileInputStream`) обычно читают последовательно; канал позволяет прыгать по файлу и работает на более низком уровне. При этом `FileChannel` нельзя перевести в неблокирующий режим `SelectableChannel`.
 
 Чем `FileChannel` богаче потоков:
 
@@ -974,7 +969,7 @@ while (true) {
 | Произвольный доступ | Нет (только последовательный) | Да (`position(long)`) |
 | Memory-mapping | Нет | Да (`map()`) |
 | Блокировка файла | Нет | Да (`lock()`, `tryLock()`) |
-| `transferTo/From` | Нет | Да (zero-copy между каналами) |
+| `transferTo/From` | Нет | Да; оптимизация передачи зависит от реализации |
 | Scatter/Gather | Нет | Да |
 
 ```java
@@ -993,7 +988,7 @@ try (FileChannel channel = FileChannel.open(Path.of("data.bin"),
     // Усечение файла
     channel.truncate(1024);
 
-    // Принудительная запись на диск
+    // Принудительная запись изменений
     channel.force(true); // включая метаданные
 
     // Блокировка файла (для координации между процессами)
@@ -1005,7 +1000,7 @@ try (FileChannel channel = FileChannel.open(Path.of("data.bin"),
 
 ## Q26. (!) Как использовать `Memory-mapped` files (`MappedByteBuffer`)?
 
-`MappedByteBuffer` — это файл (или его участок), **отображённый прямо в адресное пространство процесса**. Работаешь с ним как с обычным `ByteBuffer` в памяти, а операционная система сама подгружает нужные страницы файла с диска по обращению и сбрасывает изменения обратно. Никакого явного `read()`/`write()` — чтение и запись превращаются в обращения к памяти. Это очень эффективно для больших файлов с частым произвольным доступом.
+`MappedByteBuffer` — это файл (или его участок), **отображённый прямо в адресное пространство процесса**. Работаешь с ним как с обычным `ByteBuffer` в памяти, а операционная система сама подгружает нужные страницы файла с диска по обращению и сбрасывает изменения обратно. Никакого явного `read()`/`write()` — чтение и запись превращаются в обращения к памяти. Такой подход может быть полезен для больших файлов с частым произвольным доступом, но стоимость отображения и освобождения зависит от ОС.
 
 Получают его через `channel.map(mode, offset, size)`:
 
@@ -1013,7 +1008,9 @@ try (FileChannel channel = FileChannel.open(Path.of("data.bin"),
 try (FileChannel channel = FileChannel.open(Path.of("large-file.dat"),
         StandardOpenOption.READ, StandardOpenOption.WRITE)) {
 
-    // Отображение первых 1 МБ файла в память
+    if (channel.size() == 0) throw new IOException("Пустой файл");
+
+    // Отображение первых максимум 1 МБ файла
     MappedByteBuffer mappedBuffer = channel.map(
         FileChannel.MapMode.READ_WRITE,  // режим
         0,                                // начало (offset)
@@ -1026,7 +1023,7 @@ try (FileChannel channel = FileChannel.open(Path.of("large-file.dat"),
     // Запись
     mappedBuffer.put(0, (byte) 0xFF);
 
-    // Принудительная запись на диск
+    // Принудительная запись изменений
     mappedBuffer.force();
 }
 ```
@@ -1039,19 +1036,25 @@ try (FileChannel channel = FileChannel.open(Path.of("large-file.dat"),
 **Когда использовать:**
 - Большие файлы с частым произвольным доступом (индексы, базы данных)
 - Межпроцессное взаимодействие через общий файл
-- **Не использовать** для маленьких файлов — overhead маппинга не окупится
+- Для маленьких файлов маппинг обычно не окупается; проверяйте измерением
 
 ## Q27. Что такое `transferTo()` / `transferFrom()` в `FileChannel`?
 
-Это методы **zero-copy** передачи данных напрямую между двумя каналами, минуя память JVM. `transferTo()` шлёт данные из текущего канала в целевой, `transferFrom()` — наоборот. Главное — данные не проходят через пользовательское пространство (user space): обычное копирование делает 4 переключения буферов (диск → kernel → JVM → kernel → диск), а zero-copy перекладывает данные внутри ядра через DMA. Это разгружает CPU и память, что особенно заметно на больших файлах и сетевой отдаче.
+Это методы передачи данных между `FileChannel` и другим подходящим каналом. Реализация может использовать оптимизированный путь без промежуточного пользовательского буфера. `transferTo()` шлёт данные из текущего канала в целевой, `transferFrom()` — наоборот. Публичный API не гарантирует конкретный системный вызов и число копирований. Вызов может передать меньше запрошенного, поэтому результат проверяют и при необходимости повторяют.
 
 ```java
-// Копирование файла через transferTo (zero-copy)
+// Передача файла через transferTo; проверяем частичный результат
 try (FileChannel src = FileChannel.open(Path.of("source.dat"), StandardOpenOption.READ);
      FileChannel dst = FileChannel.open(Path.of("target.dat"),
-         StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
+         StandardOpenOption.WRITE, StandardOpenOption.CREATE,
+         StandardOpenOption.TRUNCATE_EXISTING)) {
 
-    long transferred = src.transferTo(0, src.size(), dst);
+    long position = 0;
+    while (position < src.size()) {
+        long transferred = src.transferTo(position, src.size() - position, dst);
+        if (transferred == 0) throw new IOException("Передача не продвигается");
+        position += transferred;
+    }
     // Или наоборот:
     // dst.transferFrom(src, 0, src.size());
 }
@@ -1070,16 +1073,16 @@ graph LR
 ```mermaid
 graph LR
     subgraph "Zero-copy transferTo"
-        A2[Файл] -->|DMA| B2[Kernel Buffer]
-        B2 -->|DMA| C2[Файл]
+        A2[Файл] -->|возможная оптимизация ОС| B2[Kernel Buffer]
+        B2 -->|передача без user-space буфера| C2[Целевой канал]
     end
 ```
 
-На диаграммах видно суть: обычный путь гоняет данные через kernel- и user-буферы (множество копирований), zero-copy передаёт их между дескрипторами напрямую через DMA.
+Диаграмма показывает возможную оптимизацию, а не гарантированный путь `transferTo()` на всех ОС и провайдерах.
 
 ## Q28. Как обрабатывать большие файлы, не загружая их целиком в память?
 
-Главный принцип — **не читать файл целиком** (`readAllLines`/`readAllBytes` на гигабайтном файле дадут `OutOfMemoryError`), а обрабатывать его порциями с постоянным потреблением памяти. Выбор инструмента зависит от характера данных:
+Главный принцип — **не читать файл целиком** (`readAllLines`/`readAllBytes` на гигабайтном файле дадут `OutOfMemoryError`), а обрабатывать его порциями без накопления всего содержимого. Память всё равно зависит от размера текущей строки или окна и последующих операций. Выбор инструмента зависит от характера данных:
 
 - **текст построчно** → `Files.lines()` (ленивый стрим) или `BufferedReader`;
 - **бинарные данные порциями** → `FileChannel` + переиспользуемый `ByteBuffer`;
@@ -1088,7 +1091,7 @@ graph LR
 ```java
 Path largePath = Path.of("huge-file.log");
 
-// 1. Потоковое чтение строк (ленивое, O(1) по памяти)
+// 1. Ленивое чтение строк без накопления результата
 try (Stream<String> lines = Files.lines(largePath, StandardCharsets.UTF_8)) {
     long errorCount = lines
         .filter(line -> line.contains("ERROR"))
@@ -1125,11 +1128,11 @@ try (FileChannel channel = FileChannel.open(largePath, StandardOpenOption.READ))
 }
 ```
 
-Для работы со `Stream<String>` см. [Java Stream API](java-stream-interview.md).
+Окна `MappedByteBuffer` могут оставаться отображёнными до сборки мусора, поэтому при строгом лимите адресного пространства учитывают срок их жизни. Для `Stream<String>` см. [Java Stream API](java-stream-interview.md).
 
 ## Q29. (!) Что такое `AsynchronousFileChannel` и как он работает?
 
-`AsynchronousFileChannel` (NIO.2, Java 7) — асинхронный канал для файлов: вызов `read()`/`write()` сразу возвращает управление, а сама операция выполняется в фоновом пуле потоков. Результат вы получаете одним из двух способов: либо через `Future` (запросить позже методом `get()`), либо через `CompletionHandler` (коллбэк вызовется по завершении). Это отличается от неблокирующего `SocketChannel`: там нужен `Selector` и event loop, а здесь фоновый пул сам выполнит операцию и уведомит вас.
+`AsynchronousFileChannel` (NIO.2, Java 7) — асинхронный канал для файлов: вызов `read()`/`write()` сразу возвращает управление, а выполнение и уведомление о результате организует провайдер канала. Конкретный механизм зависит от реализации. Результат вы получаете одним из двух способов: либо через `Future` (запросить позже методом `get()`), либо через `CompletionHandler` (коллбэк вызовется по завершении). Это отличается от неблокирующего `SocketChannel`: там нужен `Selector` и event loop, а здесь API сообщает о завершении через `Future` или обработчик.
 
 ```java
 // Вариант 1: через Future
@@ -1144,18 +1147,21 @@ Future<Integer> result = channel.read(buffer, 0); // position = 0
 int bytesRead = result.get(); // блокируется до завершения
 buffer.flip();
 
-// Вариант 2: через CompletionHandler (полностью асинхронно)
-channel.read(buffer, 0, buffer, new CompletionHandler<Integer, ByteBuffer>() {
+// Вариант 2: через CompletionHandler; отдельный буфер для нового чтения
+ByteBuffer callbackBuffer = ByteBuffer.allocate(1024);
+channel.read(callbackBuffer, 0, callbackBuffer, new CompletionHandler<Integer, ByteBuffer>() {
     @Override
     public void completed(Integer bytesRead, ByteBuffer attachment) {
         attachment.flip();
         // обработка прочитанных данных
         System.out.println("Прочитано: " + bytesRead + " байт");
+        try { channel.close(); } catch (IOException closeError) { /* обработать */ }
     }
 
     @Override
     public void failed(Throwable exc, ByteBuffer attachment) {
         System.err.println("Ошибка чтения: " + exc.getMessage());
+        try { channel.close(); } catch (IOException closeError) { /* обработать */ }
     }
 });
 ```
@@ -1170,59 +1176,44 @@ AsynchronousFileChannel writeChannel = AsynchronousFileChannel.open(
 ByteBuffer data = ByteBuffer.wrap("Асинхронная запись".getBytes(StandardCharsets.UTF_8));
 Future<Integer> writeResult = writeChannel.write(data, 0);
 writeResult.get(); // ожидаем завершения
+writeChannel.close();
 ```
 
 ## Q30. Что такое `AsynchronousSocketChannel` и `AsynchronousServerSocketChannel`?
 
-Это асинхронные аналоги `SocketChannel` и `ServerSocketChannel` из NIO.2. Они позволяют писать сетевые серверы **без ручного `Selector` и event loop**: вместо опроса готовности каналов вы передаёте `CompletionHandler`, и JDK сам вызовет `completed()`, когда соединение принято или данные прочитаны. Под капотом работает встроенный пул потоков, а не один selector-поток. Типичный приём — в обработчике `accept` сразу вызвать `server.accept(this)`, чтобы продолжить принимать следующие соединения:
+Это асинхронные аналоги `SocketChannel` и `ServerSocketChannel` из NIO.2. Они позволяют писать сетевые серверы **без ручного `Selector` и event loop**: вместо опроса готовности каналов вы передаёте `CompletionHandler`, и JDK сам вызовет `completed()`, когда соединение принято или данные прочитаны. Обработчики исполняются потоками группы асинхронных каналов; детали I/O зависят от реализации. `AsynchronousServerSocketChannel.accept()` и операции клиентского `AsynchronousSocketChannel` доступны через `Future` или `CompletionHandler`. Типичный приём — в обработчике результата вызвать `server.accept(null, this)`, чтобы продолжить принимать следующие соединения:
 
 ```java
-// Асинхронный TCP-сервер
+// Схема приёма; handleClient запускает обработку принятого канала.
 AsynchronousServerSocketChannel server =
     AsynchronousServerSocketChannel.open().bind(new InetSocketAddress(8080));
 
 server.accept(null, new CompletionHandler<AsynchronousSocketChannel, Void>() {
     @Override
-    public void completed(AsynchronousSocketChannel client, Void att) {
-        // Принимаем следующее соединение
-        server.accept(null, this);
-
-        // Обрабатываем текущее
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
-        client.read(buffer, buffer, new CompletionHandler<Integer, ByteBuffer>() {
-            @Override
-            public void completed(Integer bytesRead, ByteBuffer buf) {
-                buf.flip();
-                client.write(buf); // echo
-            }
-
-            @Override
-            public void failed(Throwable exc, ByteBuffer buf) {
-                try { client.close(); } catch (IOException e) { /* ignore */ }
-            }
-        });
+    public void completed(AsynchronousSocketChannel client, Void attachment) {
+        server.accept(null, this); // следующий accept запускают отдельно
+        handleClient(client);       // чтение/запись и закрытие клиента — в обработчике
     }
 
     @Override
-    public void failed(Throwable exc, Void att) {
-        System.err.println("Accept failed: " + exc.getMessage());
+    public void failed(Throwable error, Void attachment) {
+        handleAcceptFailure(error); // решение о повторе или остановке сервера
     }
 });
-
-// Не даём main завершиться
-Thread.currentThread().join();
 ```
+
+Здесь `handleClient` и `handleAcceptFailure` обозначают методы приложения. Сам обработчик не должен надолго занимать поток группы асинхронных каналов; запись тоже может завершиться частично и требует проверки результата.
 
 **Компромисс vs `Selector`:** коллбэки избавляют от ручного event loop и читаются проще на старте, но при цепочках операций (принять → прочитать → записать → снова прочитать) превращаются во вложенные обработчики — тот самый callback hell. Поэтому в продакшене высоконагруженные серверы чаще строят на `Netty` поверх `Selector`, а не на голом асинхронном канале.
 
 ## Q31. В чём разница между `Future` и `CompletionHandler` в асинхронных каналах?
 
-Это два способа получить результат асинхронной операции. `Future` — модель «спросить позже»: вы запускаете операцию, а потом сами зовёте `get()` (который заблокирует поток) или опрашиваете `isDone()`. `CompletionHandler` — модель «уведомить меня»: операция сама вызовет ваш коллбэк `completed()` или `failed()`, не блокируя ни один из ваших потоков. То есть `Future` — лишь полу-асинхронность (блокировка просто отложена), а `CompletionHandler` — полная асинхронность.
+Это два способа получить результат асинхронной операции. `Future` — модель «спросить позже»: вы запускаете операцию, а потом сами зовёте `get()` (который заблокирует поток) или опрашиваете `isDone()`. `CompletionHandler` — модель «уведомить меня»: операция сама вызовет ваш коллбэк `completed()` или `failed()`, без необходимости вызывать `get()`. Обработчик может выполниться и в инициирующем потоке, если операция завершилась сразу; блокировка внутри самого обработчика остаётся ответственностью приложения.
 
 | | `Future<Integer>` | `CompletionHandler<Integer, A>` |
 |---|---|---|
-| Стиль | Полу-асинхронный (polling / blocking get) | Полностью асинхронный (callback) |
-| Блокировка | `get()` блокирует поток | Никогда не блокирует |
+| Стиль | Опрос завершения или ожидание через `get()` | Уведомление через callback |
+| Блокировка | `get()` может блокировать | Для получения результата ожидать через `get()` не нужно |
 | Обработка ошибок | `ExecutionException` при `get()` | Метод `failed()` |
 | Состояние | Можно проверить `isDone()` | Передаётся через attachment |
 | Композиция | Нет встроенной | Через вложенные коллбэки |
@@ -1238,8 +1229,9 @@ while (!future.isDone()) {
 }
 int bytesRead = future.get(); // может бросить ExecutionException
 
-// CompletionHandler — полностью асинхронно
-ch.read(buf, 0, "context", new CompletionHandler<Integer, String>() {
+// CompletionHandler — уведомление без вызова Future.get()
+ByteBuffer callbackBuf = ByteBuffer.allocate(4096);
+ch.read(callbackBuf, 0, "context", new CompletionHandler<Integer, String>() {
     @Override
     public void completed(Integer result, String attachment) {
         System.out.println(attachment + ": прочитано " + result + " байт");
@@ -1251,11 +1243,11 @@ ch.read(buf, 0, "context", new CompletionHandler<Integer, String>() {
 });
 ```
 
-**Эмпирическое правило:** `CompletionHandler` — для серверов и сценариев, где блокировать поток нельзя; `Future` — для простых одноразовых операций, где не жалко подождать на `get()`.
+Выбор зависит от продолжения работы: обработчик удобен, когда результат должен запустить следующий шаг без `get()`, а `Future` — когда вызывающий код может позже проверить результат или подождать. Канал и буферы закрывают или переиспользуют только после завершения операции.
 
 ## Q32. Как работает кодировка при чтении/записи текста (`Charset`)?
 
-`Charset` — это таблица соответствия между байтами на диске и символами в памяти. На диске и в сети текст всегда живёт байтами, а в Java — `char`'ами; кодировка задаёт, как одно превращается в другое. Когда при записи берут одну кодировку, а при чтении другую, и получаются «кракозябры» — байты декодируются по неверной таблице.
+`Charset` — это таблица соответствия между байтами на диске и символами в памяти. На диске и в сети текст всегда живёт байтами, а в Java — `char`'ами; кодировка задаёт, как одно превращается в другое. Если при записи и чтении выбраны разные кодировки, появляются «кракозябры» — байты декодируются по неверной таблице.
 
 ```java
 // Стандартные кодировки (не бросают исключений)
@@ -1285,7 +1277,7 @@ try (BufferedReader reader = new BufferedReader(
 }
 ```
 
-Важно: **всегда** указывайте кодировку явно. Конструкторы `FileReader(String)` и `FileWriter(String)` до Java 18 использовали кодировку платформы (`file.encoding`), что приводило к багам при переносе между ОС. Подробнее о `String` см. [Java String](java-string-interview.md).
+Важно: **всегда** указывайте кодировку явно. В JDK 18+ стандартная кодировка по умолчанию — UTF-8, но настройки совместимости и старые версии Java могут дать другой результат; формат внешних данных лучше задавать явно. Подробнее о `String` см. [Java String](java-string-interview.md).
 
 ## Q33. Какие классы используются для сериализации и десериализации объектов?
 
@@ -1297,6 +1289,7 @@ public class User implements Serializable {
     private static final long serialVersionUID = 1L;
     private String name;
     private transient String password; // не сериализуется
+    public User(String name) { this.name = name; }
 }
 
 // Запись объекта
@@ -1313,11 +1306,11 @@ try (ObjectInputStream ois = new ObjectInputStream(
 ```
 
 Ключевые моменты для собеседования:
-- Класс должен реализовывать `Serializable` (маркерный интерфейс)
+- Сериализуемый класс реализует `Serializable` (маркерный интерфейс)
 - `serialVersionUID` — версия сериализации, при несовпадении → `InvalidClassException`
 - `transient` — поле не сериализуется
 - `Externalizable` — полный контроль через `writeExternal()`/`readExternal()`
-- Стандартная сериализация Java считается **устаревшей** — предпочтительнее JSON/Protobuf
+- Десериализация недоверенных байтов опасна; применяют фильтрацию допустимых классов и проверяют, подходит ли формат с явной схемой для конкретного контракта
 
 ## Q34. Какие классы используются для работы с архивами (`ZIP`, `GZIP`)?
 
@@ -1340,7 +1333,7 @@ try (ZipInputStream zis = new ZipInputStream(
     ZipEntry entry;
     while ((entry = zis.getNextEntry()) != null) {
         System.out.println("Файл: " + entry.getName());
-        byte[] content = zis.readAllBytes();
+        zis.transferTo(OutputStream.nullOutputStream()); // пример потоковой обработки entry
         zis.closeEntry();
     }
 }
@@ -1348,7 +1341,7 @@ try (ZipInputStream zis = new ZipInputStream(
 // GZIP — сжатие одного файла
 try (GZIPOutputStream gos = new GZIPOutputStream(
         new FileOutputStream("data.gz"))) {
-    gos.write(Files.readAllBytes(Path.of("data.txt")));
+    Files.copy(Path.of("data.txt"), gos);
 }
 
 // NIO.2: работа с ZIP как файловой системой (!)
@@ -1363,7 +1356,7 @@ try (FileSystem zipFs = FileSystems.newFileSystem(Path.of("archive.zip"))) {
 
 ## Q35. (!) Как правильно закрывать ресурсы (`try-with-resources`)?
 
-Правильный ответ один: `try-with-resources` (Java 7+). Любой ресурс, реализующий `AutoCloseable` (потоки, каналы, сокеты), держит дескриптор ОС, и его нужно гарантированно закрыть — иначе утечка файловых дескрипторов рано или поздно положит приложение. `try-with-resources` закрывает ресурсы автоматически, в обратном порядке открытия, и корректно работает даже при исключении. Ручной `finally` для этого ненадёжен. Подробнее об обработке ошибок см. [Java Exceptions](java-exceptions-interview.md).
+Правильный ответ один: `try-with-resources` (Java 7+). Потоки, каналы и сокеты могут держать системные ресурсы, поэтому их нужно своевременно закрывать. `AutoCloseable` также применяется к ресурсам без файлового дескриптора. `try-with-resources` закрывает ресурсы автоматически, в обратном порядке открытия, и корректно работает даже при исключении. Ручной `finally` для этого ненадёжен. Подробнее об обработке ошибок см. [Java Exceptions](java-exceptions-interview.md).
 
 Что важно знать про этот синтаксис:
 - ресурсы закрываются в порядке, **обратном** объявлению;
@@ -1406,7 +1399,7 @@ try {
 
 ## Q36. Какие исключения типичны для `Java IO/NIO` и как их обрабатывать?
 
-Корень всей иерархии — `IOException` (checked, обязывает обработать). Дальше идёт деление по слоям: `java.io` даёт `FileNotFoundException`/`EOFException`, NIO.2 (`java.nio.file`) — более точные `NoSuchFileException`, `AccessDeniedException`, `DirectoryNotEmptyException`, а слой каналов и буферов — `ClosedChannelException`, `BufferOverflowException`/`BufferUnderflowException`. Принцип обработки — ловить **конкретное** исключение раньше общего `IOException`, чтобы реагировать осмысленно (отдельно «нет прав», отдельно «файл уже есть»).
+Многие ошибки ввода-вывода наследуют checked-исключение `IOException`, но ошибки состояния буфера, например `BufferOverflowException`, являются unchecked. Дальше идёт деление по слоям: `java.io` даёт `FileNotFoundException`/`EOFException`, NIO.2 (`java.nio.file`) — более точные `NoSuchFileException`, `AccessDeniedException`, `DirectoryNotEmptyException`, а слой каналов и буферов — `ClosedChannelException`, `BufferOverflowException`/`BufferUnderflowException`. Принцип обработки — ловить **конкретное** исключение раньше общего `IOException`, чтобы реагировать осмысленно (отдельно «нет прав», отдельно «файл уже есть»).
 
 | Исключение | Пакет | Когда возникает |
 |---|---|---|
@@ -1437,15 +1430,15 @@ try {
 
 ## Q37. В чём разница между `FileInputStream` и `Files.newInputStream`?
 
-Оба открывают поток чтения файла, но `Files.newInputStream()` — современный NIO.2-вариант и в новом коде предпочтительнее. Он принимает `Path` и `OpenOption`, интегрирован с произвольными `FileSystem` (например, внутри ZIP) и, в отличие от старого `FileInputStream`, не тащит за собой `finalize()`, создававший лишнее давление на GC.
+Оба открывают поток чтения файла, но `Files.newInputStream()` — вариант NIO.2, удобный, когда код уже работает с `Path`. Он принимает `Path`, работает через соответствующий `FileSystem`-провайдер и допускает поддерживаемые этим провайдером опции открытия для чтения.
 
 | | `FileInputStream` | `Files.newInputStream()` |
 |---|---|---|
 | API | `java.io` (Java 1.0) | `java.nio.file` (Java 7) |
 | Аргумент | `File` или `String` | `Path` + `OpenOption...` |
 | Гибкость | Минимальная | Опции открытия, интеграция с `FileSystem` |
-| Finalizer | Имеет `finalize()` (deprecated!) | Нет |
-| Рекомендация | Устаревший подход | **Предпочтительный** в новом коде |
+| Провайдер | Обычный путь к файлу | Провайдер указанного `Path` |
+| Выбор | Удобен при существующем API с `File`/`String` | Удобен при работе с `Path` и провайдерами |
 
 ```java
 // Старый способ
@@ -1455,11 +1448,11 @@ InputStream old = new FileInputStream("/path/to/file");
 InputStream modern = Files.newInputStream(Path.of("/path/to/file"), StandardOpenOption.READ);
 ```
 
-Практический аргумент: `FileInputStream` имел метод `finalize()`, который создавал давление на GC. В Java 18+ `finalize()` помечен как deprecated for removal. `Files.newInputStream()` не использует финализацию.
+Оба способа требуют закрытия потока. Выбирайте `Files.newInputStream()` для работы с `Path` и файловыми провайдерами; не считайте конкретную реализацию или скорость гарантией API.
 
 ## Q38. (!) Когда предпочесть `InputStream`/`OutputStream`, а когда `Channel`/`ByteBuffer`?
 
-Эмпирическое правило: **по умолчанию берите `Files` + потоки/`Reader`** — они проще и покрывают 90% задач. Переходите на `Channel`/`ByteBuffer`, только когда нужна конкретная их возможность: неблокирующий сетевой I/O (`Selector`), zero-copy, memory-mapping или произвольный доступ к большому файлу. Не усложняйте код NIO там, где хватает `Files.readString()`.
+Эмпирическое правило: **по умолчанию берите `Files` + потоки/`Reader`** — они проще для многих задач. Переходите на `Channel`/`ByteBuffer`, только когда нужна конкретная их возможность: неблокирующий сетевой I/O (`Selector`), zero-copy, memory-mapping или произвольный доступ к большому файлу. Не усложняйте код NIO там, где хватает `Files.readString()`.
 
 ```mermaid
 graph TD
@@ -1493,7 +1486,7 @@ Pipe pipe = Pipe.open();
 Thread producer = new Thread(() -> {
     try {
         Pipe.SinkChannel sink = pipe.sink();
-        ByteBuffer buffer = ByteBuffer.wrap("Hello from producer".getBytes());
+        ByteBuffer buffer = ByteBuffer.wrap("Hello from producer".getBytes(StandardCharsets.UTF_8));
         sink.write(buffer);
         sink.close();
     } catch (IOException e) {
@@ -1564,7 +1557,7 @@ HttpResponse<Path> fileResponse = client.send(
 
 **Возможности:** с Java 11 — HTTP/1.1 и HTTP/2, синхронные и асинхронные вызовы, `WebSocket`, настраиваемые таймауты и редиректы, `BodyHandlers` под разные типы ответов (`String`, `byte[]`, `Path`, `InputStream`). С JDK 26 клиент также поддерживает HTTP/3; его включение и ограничения разобраны в Q41.
 
-**Когда применять:** как замену `HttpURLConnection` и лёгкую альтернативу сторонним клиентам, когда хватает базовой функциональности. **В Spring-приложениях** обычно предпочитают `WebClient` или `RestClient` — они лучше интегрированы с экосистемой.
+**Когда применять:** как современную альтернативу `HttpURLConnection` и лёгкую альтернативу сторонним клиентам, когда хватает базовой функциональности. **В Spring-приложениях** обычно предпочитают `WebClient` или `RestClient` — они лучше интегрированы с экосистемой.
 
 ## Q41. Как включить HTTP/3 в `HttpClient` JDK 26 и проверить фактически выбранный протокол?
 
@@ -1591,7 +1584,9 @@ System.out.println(response.version()); // фактически использо
 | `ALT_SVC` | HTTP/3 выбирается после объявления сервером альтернативного `h3` endpoint; первые запросы могут идти по HTTP/1.1 или HTTP/2. |
 | `HTTP_3_URI_ONLY` | Пробует HTTP/3 только на host/port исходного URI; не использует `Alt-Svc` и не допускает обычный fallback. |
 
-Ограничения JDK 26: для URI без `https` HTTP/3 не применяется. Встроенный клиент не использует HTTP/3 через прокси: обычно перейдёт на HTTP/2 или HTTP/1.1, а с `HTTP_3_URI_ONLY` запрос завершится ошибкой. Неподходящие `SSLContext`/`SSLParameters` тоже могут привести к `UnsupportedProtocolVersionException`. Поэтому сценарий миграции проверяют на реальном сервере, с теми же прокси и TLS-настройками, что и в эксплуатации.
+Ограничения JDK 26: для URI без `https` HTTP/3 не применяется. Встроенный клиент не использует HTTP/3 через прокси: обычно перейдёт на HTTP/2 или HTTP/1.1, а с `HTTP_3_URI_ONLY` запрос завершится ошибкой. Если конфигурация `SSLContext` или `SSLParameters` несовместима с HTTP/3, `UnsupportedProtocolVersionException` возможен уже при сборке клиента с предпочитаемой версией `HTTP_3`. При задании HTTP/3 на отдельном запросе с `HTTP_3_URI_ONLY` ошибка может возникнуть при отправке. [Javadoc HttpClient для JDK 26](https://docs.oracle.com/en/java/javase/26/docs/api/java.net.http/java/net/http/HttpClient.html).
+
+**Сценарий миграции.** Если прямой запрос к тестовому серверу вернул `HTTP_3`, а запрос из сервиса вернул `HTTP_2`, проверьте, выбрал ли `ProxySelector` прокси именно для этого URI. Отсутствие явно настроенного селектора в коде само по себе не гарантирует прямое соединение: клиент может использовать системный селектор по умолчанию. Сравните `response.version()` при той же сетевой и TLS-конфигурации, что используется в эксплуатации.
 
 **Итог:** включить HTTP/3 недостаточно; для вывода о реально использованном протоколе смотрят `response.version()` и условия соединения.
 

@@ -14,21 +14,21 @@ aliases:
   - "Java 21 pattern matching"
 prerequisites: []
 next: []
-updated: "2026-08-12"
+updated: "2026-11-05"
 ---
 # Вопросы на собеседовании: Паттерн-матчинг в Java
 
 `Pattern Matching` — серия JEP начиная с Java 16, заметно расширяющая `instanceof` и `switch`: проверка типа теперь сразу даёт типизированную переменную, а `switch` умеет матчить типы и деконструировать records. Сюда входят type patterns, record patterns, guarded patterns и exhaustiveness checking по sealed-типам. Частая тема современных Java-собеседований.
 
-Дата последнего обновления: 2026-08-12
+Дата последнего обновления: 2026-11-05
 
 ## Полезные ссылки
 
 ### Официальная документация
 
-- [JEP 441: Pattern Matching for switch](https://openjdk.org/jeps/441) — JEP для switch
-- [JEP 440: Record Patterns](https://openjdk.org/jeps/440) — JEP для record patterns
-- [Baeldung: Pattern Matching](https://www.baeldung.com/java-pattern-matching-instanceof) — практическое введение
+- [Oracle: Pattern Matching for switch](https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html) — ветки, guards и полнота.
+- [Oracle: Record Patterns](https://docs.oracle.com/en/java/javase/21/language/record-patterns.html) — деконструкция и вывод аргументов типа.
+- [Oracle: Unnamed Variables and Patterns](https://docs.oracle.com/en/java/javase/22/language/unnamed-variables-and-patterns.html) — `_` в Java 22.
 
 ## Содержание
 
@@ -413,12 +413,12 @@ String handle(Result r) {
     };
 }
 
-// Для Object — нужен default
+// Для Object нужно закрыть остаток: default или тотальный шаблон
 String handleAny(Object o) {
     return switch (o) {
         case Integer i -> "int";
         case String s -> "string";
-        default -> "other";  // требуется, т.к. Object — неограничен
+        default -> "other";  // один из способов закрыть открытый тип Object
     };
 }
 
@@ -467,7 +467,7 @@ if (box instanceof Box<String>(String value)) {
 // В switch
 String describe(Box<?> box) {
     return switch (box) {
-        case Box(Integer i) -> "Integer box: " + i;  // сырой шаблон, параметр выводится
+        case Box(Integer i) -> "Integer box: " + i;  // аргумент типа выводится компилятором
         case Box(String s) -> "String box: " + s;
         case Box(Object value) -> "Generic box: " + value;
     };
@@ -535,7 +535,7 @@ Pattern matching пришёл в Java позже, чем в Scala и Kotlin, и 
 
 **Итог:** Java закрыла основную потребность — деконструкцию records и exhaustive switch по sealed-типам, — но Scala остаётся богаче по набору шаблонов (например, list patterns с `_*`), а в Kotlin деконструкция структур идёт отдельным механизмом destructuring, а не внутри матчинга.
 
-## Q14. Как pattern matching взаимодействует с unboxing и преобразованием типов?
+## Q14. Как pattern matching взаимодействует с unboxing в Java 21 без preview?
 
 Сам шаблон в Java 21 ничего не распаковывает. Тип, написанный в шаблоне, обязан быть **применим к объявленному типу компонента**: примитив совпадает с примитивом, ссылочный — со ссылочным. Распаковка, которую видно в коде, — обычный auto-unboxing в месте использования переменной, а не работа матчинга.
 
@@ -553,7 +553,7 @@ if (obj instanceof Integer i) {
     int j = i + 1;  // auto-unboxing
 }
 
-// Deconstruction автоматически делает auto-unboxing
+// Примитивный компонент связывается без распаковки
 record Box(int value) {}  // int primitive
 Box b = new Box(42);
 if (b instanceof Box(int v)) {  // v — int, не Integer

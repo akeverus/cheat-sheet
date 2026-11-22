@@ -302,13 +302,21 @@ func TestDivide(t *testing.T) {
 
 ### Базовый benchmark
 
+В Go 1.24 и новее для нового последовательного бенчмарка используйте `for b.Loop()`. Первый вызов сбрасывает таймер, а вызов, вернувший `false`, останавливает его. Подготовка входных данных перед циклом и освобождение ресурсов после него остаются вне измерения.
+
 ```go
 func BenchmarkAdd(b *testing.B) {
-    for i := 0; i < b.N; i++ {
+    for b.Loop() {
         Add(2, 3)
     }
 }
 ```
+
+В этом примере результат `Add` не используется. Для тела, записанного именно как `for b.Loop() { ... }`, Go сохраняет аргументы и результаты вызовов и присваиваемые переменные, чтобы компилятор не устранил измеряемую работу целиком.
+
+В старых примерах ниже используется цикл из `b.N` итераций. При таком подходе раннер может несколько раз вызвать всю функцию с разными значениями `b.N`. Если подготовка дорогая, перед циклом вызывают `b.ResetTimer()`. Выбирайте один стиль цикла на функцию. Для измерения конкурентной работы используйте `b.RunParallel` с циклом `for pb.Next()`.
+
+[Документация Go testing](https://pkg.go.dev/testing#B.Loop) · [Блог Go о B.Loop](https://go.dev/blog/testing-b-loop)
 
 ### Запуск benchmarks
 
@@ -551,10 +559,16 @@ func TestUserHandler(t *testing.T) {
 
 ### Property-Based Testing
 
-**Property-based testing** позволяет тестировать свойства функций вместо конкретных примеров.
+**Property-based testing** проверяет выбранный инвариант на множестве сгенерированных входов. Контрпример можно сохранить отдельным регрессионным тестом. Встроенный fuzzing Go 1.18+ также позволяет проверять инварианты, а при запуске с `-fuzz` использует обратную связь по покрытию для поиска новых путей. Обычный `go test` прогоняет сохранённый стартовый корпус. [Документация Go Fuzzing](https://go.dev/doc/security/fuzz/) · [Вопросы интервью о fuzzing](../../interview/programming-languages/go/go-testing-interview.md#q20--что-такое-fuzzing-в-go-118).
 
 ```go
-import "github.com/leanovate/gopter"
+import (
+    "testing"
+
+    "github.com/leanovate/gopter"
+    "github.com/leanovate/gopter/gen"
+    "github.com/leanovate/gopter/prop"
+)
 
 func TestAddCommutative(t *testing.T) {
     properties := gopter.NewProperties(nil)
@@ -772,21 +786,11 @@ func TestSequential(t *testing.T) {
 }
 ```
 
+`t.Setenv` (Go 1.17+) и `t.Chdir` (Go 1.24+) меняют состояние всего процесса и восстанавливают прежнее значение через `t.Cleanup`. Эти методы нельзя вызывать в тесте с `t.Parallel()` или в подтесте с параллельным предком. Если два сценария проверяют разные значения одной переменной окружения, запустите их последовательно и задайте значение через `t.Setenv` в каждом подтесте. Для параллельной проверки логики обработки конфигурации передавайте значения в проверяемую функцию явно. В тестах работы с файлами можно выделить каждому подтесту свой `t.TempDir()` и передавать абсолютный путь без смены рабочей директории. [Документация testing.T.Setenv](https://pkg.go.dev/testing#T.Setenv) · [Документация testing.T.Chdir](https://pkg.go.dev/testing#T.Chdir).
+
 ### Тестирование с использованием cleanup
 
-```go
-func TestWithCleanup(t *testing.T) {
-    // Настройка
-    tempFile := createTempFile(t)
-
-    // Cleanup выполнится после теста
-    t.Cleanup(func() {
-        os.Remove(tempFile)
-    })
-
-    // Тест код
-}
-```
+`t.Cleanup` (Go 1.14+) вызывает зарегистрированные функции после завершения теста и всех его подтестов, начиная с последней зарегистрированной. Это подходит для общего ресурса, который нужен параллельным подтестам. Они приостанавливаются на `t.Parallel()` до возврата родительской функции, поэтому её `defer` успеет закрыть ресурс раньше. Для локального ресурса, используемого только внутри одной функции, достаточно `defer`. [Документация testing.T.Cleanup](https://pkg.go.dev/testing#T.Cleanup) · [Параллельные подтесты](https://go.dev/blog/subtests#control-of-parallelism).
 
 ### Тестирование с использованием skip
 
@@ -802,17 +806,24 @@ func TestSkipOnCondition(t *testing.T) {
 
 ### Тестирование с использованием fatal
 
+`t.Fatal` и `t.Fatalf` отмечают тест как неуспешный и завершают текущую тестовую горутину через `runtime.Goexit`. Её отложенные вызовы `defer` выполняются, а запущенные ею горутины продолжают работать. Вызывайте эти методы из горутины самого теста. Если ошибка возникла в фоновой работе, передайте её в тест и решите там, продолжать ли проверку.
+
 ```go
-func TestWithFatal(t *testing.T) {
-    result, err := criticalOperation()
-    if err != nil {
-        t.Fatalf("Critical operation failed: %v", err)
-        // Код после Fatal не выполнится
+func TestWorkerResult(t *testing.T) {
+    result := make(chan error, 1)
+    go func() {
+        result <- runWorker()
+    }()
+
+    if err := <-result; err != nil {
+        t.Fatalf("worker failed: %v", err)
     }
 
-    // Продолжение теста
+    // Здесь можно проверять результат работы.
 }
 ```
+
+В примере `runWorker` возвращает ошибку после завершения работы. Если вместо отправки ошибки вызвать в работнике `t.Fatal`, он завершит свою горутину до отправки, а тест может зависнуть на чтении канала. Для долгоживущих работников отдельно предусмотрите отмену и дождитесь их выхода. [Документация testing.T.FailNow](https://pkg.go.dev/testing#T.FailNow) · [Проверка testinggoroutine](https://pkg.go.dev/golang.org/x/tools/go/analysis/passes/testinggoroutine).
 
 ### Практические примеры: тестирование сервисов
 
@@ -896,6 +907,47 @@ func TestWithTime(t *testing.T) {
     assert.Equal(t, expectedResult, result)
 }
 ```
+
+Для проверки таймаута в конкурентном коде подходит `testing/synctest`. Стабильный API доступен с Go 1.25. В примере тест проверяет, что работник остаётся активен до дедлайна и обрабатывает отмену после него.
+
+```go
+import (
+    "context"
+    "testing"
+    "testing/synctest"
+    "time"
+)
+
+func TestWorkerStopsOnDeadline(t *testing.T) {
+    synctest.Test(t, func(t *testing.T) {
+        ctx, cancel := context.WithTimeout(t.Context(), time.Second)
+        defer cancel()
+
+        stopped := false
+        go func() {
+            <-ctx.Done()
+            stopped = true
+        }()
+
+        synctest.Wait()
+        if stopped {
+            t.Fatal("работник остановился до дедлайна")
+        }
+
+        time.Sleep(time.Second)
+        synctest.Wait()
+        if !stopped {
+            t.Fatal("работник продолжил работу после дедлайна")
+        }
+    })
+}
+```
+
+`synctest.Test` создаёт изолированную группу горутин с виртуальными часами. Первый `Wait` дожидается, пока работник заблокируется на чтении `ctx.Done()`. Затем `time.Sleep` позволяет продвинуть виртуальное время без секундной паузы. Второй `Wait` даёт работнику обработать отмену и синхронизирует чтение флага с записью. В Go 1.27+ два последних вызова можно заменить на `synctest.Sleep(time.Second)`.
+
+Часы продвигаются, когда все горутины группы заблокированы на операциях, разблокирование которых зависит от событий внутри неё. Реальный сетевой ввод-вывод и ожидание захвата мьютекса не относятся к таким операциям. Для проверки сетевого таймаута в этом сценарии используйте управляемую заглушку.
+
+[Go 1.25](https://go.dev/doc/go1.25#new-testingsynctest-package) · [Документация testing/synctest](https://pkg.go.dev/testing/synctest)
 
 ### Практические примеры: Тестирование HTTP handlers
 
@@ -1000,28 +1052,43 @@ func TestRaceCondition(t *testing.T) {
 
 ### Практические примеры: Тестирование с cleanup
 
+Подготовим общий HTTP-сервер и запустим два параллельных подтеста. Сервер останется доступен до завершения обоих запросов.
+
 ```go
-func TestWithCleanup(t *testing.T) {
-    tempFile, err := os.CreateTemp("", "test-*.txt")
-    if err != nil {
-        t.Fatalf("failed to create temp file: %v", err)
-    }
-    defer os.Remove(tempFile.Name())
-    defer tempFile.Close()
+package example
 
-    // Использование t.Cleanup (Go 1.14+)
-    t.Cleanup(func() {
-        os.Remove(tempFile.Name())
-        tempFile.Close()
-    })
+import (
+    "fmt"
+    "net/http"
+    "net/http/httptest"
+    "testing"
+)
 
-    // Тест с использованием tempFile
-    _, err = tempFile.WriteString("test data")
-    if err != nil {
-        t.Fatalf("failed to write: %v", err)
+func TestSharedServer(t *testing.T) {
+    server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        w.WriteHeader(http.StatusNoContent)
+    }))
+    t.Cleanup(server.Close)
+
+    for i := 0; i < 2; i++ {
+        t.Run(fmt.Sprintf("client-%d", i), func(t *testing.T) {
+            t.Parallel()
+
+            resp, err := server.Client().Get(server.URL)
+            if err != nil {
+                t.Fatal(err)
+            }
+            defer resp.Body.Close()
+
+            if resp.StatusCode != http.StatusNoContent {
+                t.Errorf("status = %d, want %d", resp.StatusCode, http.StatusNoContent)
+            }
+        })
     }
 }
 ```
+
+Для файлов, которые можно удалить вместе с временным каталогом, используйте `t.TempDir()` (Go 1.15+). Он удаляет каталог после теста и его подтестов. Открытые файловые дескрипторы по-прежнему нужно закрывать. [Документация testing.T.TempDir](https://pkg.go.dev/testing#T.TempDir).
 
 ### Практические примеры: Тестирование с проверкой ошибок
 
@@ -1119,15 +1186,28 @@ func TestWithDatabase(t *testing.T) {
 
 ### Практические примеры: Property-based тестирование
 
+`quick.Check` вызывает проверку на сгенерированных значениях и возвращает ошибку с контрпримером, если свойство нарушено. Задайте область входов и добавьте контрольные примеры с ожидаемым результатом. Проверку двойного разворота пройдёт даже функция, которая всегда возвращает вход без изменений. Аналогично коммутативность сложения соблюдает функция, которая всегда возвращает ноль. [Документация testing/quick.Check](https://pkg.go.dev/testing/quick#Check).
+
 ```go
 import (
     "testing"
     "testing/quick"
+    "unicode/utf8"
 )
 
+// reverseString разворачивает последовательность рун в валидной UTF-8 строке.
 func TestReverse(t *testing.T) {
+    if got := reverseString("aя"); got != "яa" {
+        t.Fatalf("reverseString(%q) = %q, want %q", "aя", got, "яa")
+    }
     f := func(s string) bool {
+        if !utf8.ValidString(s) {
+            return true // За пределами контракта reverseString.
+        }
         reversed := reverseString(s)
+        if !utf8.ValidString(reversed) {
+            return false
+        }
         doubleReversed := reverseString(reversed)
         return s == doubleReversed
     }

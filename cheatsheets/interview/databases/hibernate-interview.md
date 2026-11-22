@@ -232,9 +232,9 @@ graph TB
 
 ## Q4. Что такое `Session` и `SessionFactory`?
 
-**`SessionFactory`** — тяжёлый потокобезопасный объект, создаётся один раз при старте приложения. Хранит метаданные маппинга, кэш второго уровня, пулы соединений. Создание `SessionFactory` — дорогая операция (парсинг маппингов, валидация).
+**`SessionFactory`** — дорогая в создании потокобезопасная фабрика сессий. Она хранит метаданные маппинга и обращается к настроенным сервисам, включая опциональный L2 cache и поставщика JDBC-соединений. Фабрику обычно создают при старте и переиспользуют. Если сервис работает с отдельными базами заказов и аудита через две единицы персистентности, у каждой может быть своя фабрика с собственным маппингом и настройками. [Hibernate ORM 7.4 — архитектура](https://docs.hibernate.org/stable/core/userguide/html_single/#architecture).
 
-**`Session`** — лёгкий объект, представляющий единицу работы с БД. Содержит **кэш первого уровня** (Persistence Context): все загруженные сущности хранятся в памяти сессии и повторно не запрашиваются из БД. Типичный жизненный цикл: открыть → выполнить операции → закрыть.
+**`Session`** — лёгкий объект, представляющий единицу работы с БД. Содержит **кэш первого уровня** (Persistence Context): управляемая сущность представлена одним экземпляром для данной идентичности. Повторный поиск той же сущности по ID может использовать уже управляемый экземпляр, а JPQL-запрос по-прежнему может выполнить SQL. Типичный жизненный цикл: открыть → выполнить операции → закрыть.
 
 ```java
 // Классический подход (без Spring)
@@ -319,7 +319,7 @@ graph TB
 3. **Internal APIs** — `JDBC`, `JTA` (Java Transaction API), `JNDI`: через них `Hibernate` реально общается с БД и менеджером транзакций.
 4. **Database** — `PostgreSQL`, `MySQL`, `Oracle` и др.
 
-Как это работает вместе: `SessionFactory` (один на приложение) по запросу выдаёт `Session`. `Session` держит persistence context (L1 cache), отслеживает изменения сущностей (dirty checking) и сбрасывает их в БД при flush. `Transaction` гарантирует атомарность набора операций. Всё это в конечном счёте транслируется в обычные `JDBC`-вызовы — `Hibernate` не заменяет драйвер, а надстраивается над ним.
+Как это работает вместе. Приложение переиспользует `SessionFactory` выбранной конфигурации и получает из неё `Session` для единицы работы. `Session` держит persistence context (L1 cache), отслеживает изменения сущностей (dirty checking) и сбрасывает их в БД при flush. `Transaction` задаёт границы транзакции, внутри которых СУБД или менеджер транзакций обеспечивает атомарность участвующих операций. Всё это в конечном счёте транслируется в обычные `JDBC`-вызовы — `Hibernate` не заменяет драйвер, а надстраивается над ним.
 
 ## Q7. (!) Какие состояния может иметь `Entity`?
 
@@ -328,52 +328,41 @@ graph TB
 ```mermaid
 stateDiagram-v2
     [*] --> Transient: new Entity()
-    Transient --> Persistent: persist() / save()
+    Transient --> Persistent: persist()
     Persistent --> Detached: detach() / close() / clear()
-    Persistent --> Removed: remove() / delete()
-    Detached --> Persistent: merge()
+    Persistent --> Removed: remove()
+    note right of Detached
+        merge() возвращает управляемый экземпляр
+        Исходный объект остаётся detached
+    end note
     Removed --> Persistent: persist()
     Removed --> [*]
 ```
 
-Те же переходы как диаграмма состояний (`[*]` — начало/конец жизни объекта):
-
-```
-   [*]
-    │ new Entity()
-    ▼
-┌───────────┐  persist() / save()  ┌────────────┐
-│ Transient │─────────────────────▶│ Persistent │
-└───────────┘                      └────┬───┬────┘
-                  detach()/close()/clear()│   │ remove() / delete()
-                          ▼               │   ▼
-                    ┌──────────┐          │ ┌─────────┐
-                    │ Detached │          │ │ Removed │──▶ [*]
-                    └────┬─────┘          │ └────┬────┘
-                merge()  │                │      │ persist()
-                         └────────────────┴──────┘
-                              (обратно в Persistent)
-```
+У одного и того же объекта возможны переходы `Transient → Managed → Detached` и `Managed → Removed`. Ветка `merge(detached)` показывает передачу состояния между экземплярами. Исходный объект остаётся detached, а результатом будет уже управляемый экземпляр с тем же ID или новая управляемая копия (см. Q9).
 
 | Состояние | Описание | В Persistence Context? | Есть в БД? |
 |-----------|----------|----------------------|------------|
 | **Transient** | Новый объект, не связан с сессией | Нет | Нет |
-| **Persistent** (Managed) | Привязан к сессии, tracked dirty checking | Да | Да (или будет при flush) |
-| **Detached** | Был persistent, но сессия закрыта | Нет | Да |
-| **Removed** | Помечен на удаление | Да | Будет удалён при flush |
+| **Persistent** (Managed) | Привязан к сессии, tracked dirty checking | Да | Строка может уже существовать или ещё ожидать INSERT |
+| **Detached** | Ранее был управляемым, теперь вне контекста | Нет | Состояние объекта не подтверждает наличие строки |
+| **Removed** | Помечен на удаление | Да | Удаление синхронизируется при flush |
 
 ```java
-User user = new User("Alice"); // Transient
+// Внутри активной транзакции. Пользователь с ID 1 уже существует.
+User user = session.find(User.class, 1L);
+session.detach(user);
+user.setName("Bob");
 
-session.persist(user);         // Persistent (managed)
-user.setName("Bob");           // dirty checking отследит изменение
+User merged = session.merge(user);
+assert merged != user;
+assert session.contains(merged);
+assert !session.contains(user);
 
-session.detach(user);          // Detached — изменения не синхронизируются
-
-User merged = session.merge(user); // снова Persistent (merged — новый managed объект)
-
-session.remove(merged);        // Removed — удалится при flush/commit
+merged.setName("Robert"); // это изменение будет синхронизировано при flush
 ```
+
+В Hibernate 7.0 методы `Session.save()` и `Session.delete()` удалены. Для этих переходов используют `persist()` и `remove()`. [Jakarta Persistence 3.2 — жизненный цикл сущностей](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#entity-instance-life-cycle). [Hibernate 7.0 Migration Guide](https://docs.hibernate.org/orm/7.0/migration-guide/).
 
 ## Q8. (!) Что такое `Dirty Checking` и как работает `flush`?
 
@@ -381,7 +370,9 @@ session.remove(merged);        // Removed — удалится при flush/comm
 
 **Как это работает**: в обычном diff-based механизме Hibernate хранит последнее известное состояние сущности и при `flush` сравнивает с текущим. При включённом bytecode enhancement возможен in-line dirty tracking: изменённые атрибуты отмечает сама сущность, а Hibernate запрашивает их при flush. В обоих случаях изменение managed-сущности может привести к `UPDATE` без вызова `update()`. [Hibernate ORM 7.4, in-line dirty tracking](https://docs.hibernate.org/orm/7.4/userguide/html_single/).
 
-**`flush()`** — синхронизация persistence context с БД без подтверждения транзакции. При стандартном `AUTO` Hibernate выполняет её перед commit и перед JPQL/HQL-запросом, **если он пересекается с ожидающими изменениями**; нативный SQL без зарегистрированной синхронизации тоже может вызвать flush. Явно вызвать его можно через `session.flush()`.
+**`flush()`** — синхронизация persistence context с БД без подтверждения транзакции. При стандартном `AUTO` Hibernate выполняет её перед commit и перед JPQL/HQL-запросом, **если он пересекается с ожидающими изменениями**. Явно вызвать его можно через `session.flush()`.
+
+Для **нативного SQL** в Hibernate 7.4 имеет значение режим совместимости. В активной транзакции при `AUTO`, если Hibernate не знает таблиц запроса, в JPA-совместимом режиме он выполняет flush перед запросом. В нативном режиме без JPA-совместимости такой запрос сам по себе flush не запускает. Если задать затронутые таблицы, Hibernate проверяет их пересечение с ожидающими изменениями. Например, после добавления пользователя запрос `SELECT count(*) FROM users` в нативном режиме может вернуть прежний счётчик. Вызов `addSynchronizedEntityClass(User.class)` на `NativeQuery` сообщает Hibernate таблицы маппинга `User` и позволяет ему выполнить необходимый flush. Явный `flush()` перед запросом тоже синхронизирует изменения в текущей транзакции. [Hibernate 7.4, NativeQuery](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/query/NativeQuery.html).
 
 ```java
 @Transactional
@@ -456,9 +447,9 @@ entityManager.persist(order);
 
 ## Q11. Зачем `Entity` нужен конструктор без аргументов?
 
-`Hibernate` создаёт экземпляры сущностей через **рефлексию** при загрузке из БД. Для этого необходим конструктор без аргументов (`no-arg constructor`). Это **требование спецификации JPA**.
+Jakarta Persistence требует у класса сущности конструктор без аргументов с доступом `public` или `protected`. Провайдер использует его при создании экземпляра. Для бизнес-кода можно добавить конструкторы с аргументами. Если объявить такой конструктор без явного no-arg, Java больше не сгенерирует конструктор по умолчанию.
 
-Конструктор может быть `public` или `protected` (для инкапсуляции). Если его нет — `Hibernate` выбросит `InstantiationException`.
+Hibernate 7.4 допускает менее широкую видимость. Для прокси-подкласса конструктор должен быть доступен подклассу. `protected` подходит и для проксирования, и для переносимого JPA-маппинга. [Hibernate ORM 7.4 — требования к конструктору](https://docs.hibernate.org/orm/7.4/userguide/html_single/#entity-pojo-constructor).
 
 ```java
 @Entity
@@ -468,7 +459,7 @@ public class User {
     private Long id;
     private String name;
 
-    protected User() {} // для Hibernate — может быть protected
+    protected User() {} // доступ для провайдера JPA
 
     public User(String name) { // для бизнес-логики
         this.name = name;
@@ -478,25 +469,19 @@ public class User {
 
 ## Q12. (!) Можно ли объявить `Entity` класс `final`?
 
-**Не рекомендуется.** `Hibernate` создаёт **прокси-подклассы** для ленивой загрузки (`lazy loading`). Если класс `final` — его нельзя расширить, и прокси создать невозможно.
+Для переносимого маппинга Jakarta Persistence класс сущности должен быть открытым для наследования. Hibernate допускает сохранение экземпляров `final`-класса, но не может создать прокси как подкласс такой сущности.
 
-Последствия:
-- Ленивая загрузка для ассоциаций к этой сущности **не будет работать**
-- `load()` / `getReference()` вернёт реальный объект вместо прокси
-- Потенциальное снижение производительности
+Например, при `Order.customer` с `@ManyToOne(fetch = LAZY)` и `final class Customer` обычный прокси-подкласс `Customer` невозможен. Hibernate может загрузить связь раньше, чем ожидает приложение. Bytecode enhancement предоставляет другой механизм ленивой загрузки. Проверяйте SQL для конкретного маппинга и конфигурации. [Hibernate ORM 7.4 — классы сущностей и прокси](https://docs.hibernate.org/orm/7.4/userguide/html_single/#entity-pojo-final).
+
+Если задача состоит в том, чтобы Hibernate не записывал изменения состояния справочника через dirty checking, можно обозначить это в маппинге:
 
 ```java
-// ❌ Плохо — Hibernate не сможет создать proxy
-@Entity
-public final class User { ... }
-
-// ✅ Хорошо — @Immutable для данных «только чтение»
 @Entity
 @Immutable
 public class Country { ... }
 ```
 
-Если нужна неизменяемость данных — используйте `@Immutable`, а не `final` на классе.
+`@Immutable` управляет обработкой изменений в Hibernate. Java-объект при этом может оставаться изменяемым, а защита строк от записи другими клиентами требует отдельного контроля. [Hibernate ORM 7.4 — immutability](https://docs.hibernate.org/orm/7.4/userguide/html_single/#immutability).
 
 ## Q13. Какие основные аннотации `JPA` используются для маппинга?
 
@@ -535,11 +520,16 @@ public class Order {
 }
 ```
 
-Ключевые стратегии `@GeneratedValue`:
-- **`IDENTITY`** — автоинкремент БД (не подходит для batch insert)
-- **`SEQUENCE`** — sequence в БД (рекомендуется для `PostgreSQL`)
-- **`TABLE`** — отдельная таблица для генерации (медленнее всего)
-- **`AUTO`** — `Hibernate` выбирает стратегию сам
+Jakarta Persistence 3.2 определяет пять стратегий `@GeneratedValue`.
+
+- **`IDENTITY`** — идентификатор выдаёт столбец identity при вставке. В Hibernate 7.4 для таких сущностей отключён JDBC insert batching в обычной `Session` (Q36).
+- **`SEQUENCE`** — идентификаторы берутся из последовательности БД. Hibernate может получить их до вставки, поэтому эта стратегия совместима с JDBC batching при подходящей конфигурации.
+- **`TABLE`** — значения выделяются через отдельную таблицу. Стоимость зависит от частоты обращений к генератору и конкуренции за его строки.
+- **`UUID`** — провайдер генерирует UUID для поля типа `UUID` или `String`. Стандартная стратегия доступна с Jakarta Persistence 3.1.
+- **`AUTO`** — для `UUID` и `String` в Jakarta Persistence 3.2 эквивалентна `UUID`. Для `Long` и `Integer` провайдер выбирает между `TABLE`, `SEQUENCE` и `IDENTITY` с учётом БД.
+
+[Jakarta Persistence 3.2, GeneratedValue](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html), [Hibernate 7.4, JDBC batching](https://docs.hibernate.org/orm/7.4/userguide/html_single/#batch).
+
 
 ## Q14. (!) Что такое `Hibernate Inheritance Mapping`?
 
@@ -620,7 +610,7 @@ public class Car extends Vehicle {
 
 ## Q15. Как маппить связь `One-To-Many` / `Many-To-One`?
 
-Связь `@OneToMany` / `@ManyToOne` — самая распространённая в JPA. Владелец связи (owning side) — сторона с `@JoinColumn` (обычно `@ManyToOne`).
+Связь `@OneToMany` / `@ManyToOne` — самая распространённая в JPA. Владелец связи (owning side) — сторона `@ManyToOne` в двусторонней связи. `@JoinColumn` задаёт колонку внешнего ключа в этом примере. Если её имя подходит по умолчанию, аннотацию можно опустить.
 
 ```java
 @Entity
@@ -633,14 +623,12 @@ public class Department {
     @OneToMany(mappedBy = "department", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Employee> employees = new ArrayList<>();
 
-    // Вспомогательные методы для поддержания консистентности обеих сторон
-    public void addEmployee(Employee e) {
-        employees.add(e);
-        e.setDepartment(this);
+    void linkEmployee(Employee employee) {
+        employees.add(employee);
     }
-    public void removeEmployee(Employee e) {
-        employees.remove(e);
-        e.setDepartment(null);
+
+    void unlinkEmployee(Employee employee) {
+        employees.remove(employee);
     }
 }
 
@@ -653,14 +641,29 @@ public class Employee {
     @ManyToOne(fetch = FetchType.LAZY) // LAZY — best practice для @ManyToOne
     @JoinColumn(name = "department_id")
     private Department department;
+
+    public void moveTo(Department target) {
+        if (department == target) {
+            return;
+        }
+        if (department != null) {
+            department.unlinkEmployee(this);
+        }
+        department = target;
+        if (target != null) {
+            target.linkEmployee(this);
+        }
+    }
 }
 ```
+
+В транзакции вызовите `employee.moveTo(newDepartment)` для сущностей из одного контекста персистентности. При flush Hibernate сохранит новый внешний ключ из `Employee.department`. В памяти сотрудник исчезнет из коллекции старого отдела и появится в новом. Передача `null` подходит, если схема допускает сотрудника без отдела.
 
 **Важно:** `@ManyToOne` по умолчанию `EAGER`; обычно полезно задать `LAZY` явно и выбирать нужный fetch-план для запроса. Сам `LAZY` не гарантирует отсутствие N+1 при последующем обходе связей (см. Q19–Q21). `orphanRemoval` подходит для приватно принадлежащих детей, например `OrderItem` у `Order`, но не для сотрудника, которого можно переводить между отделами. [Jakarta Persistence 3.2, orphan removal](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
 
 ## Q16. Как маппить связь `Many-To-Many`?
 
-`@ManyToMany` маппится через **промежуточную (join) таблицу** с двумя внешними ключами — отдельной сущности для связи нет. Одна сторона владеет связью (задаёт `@JoinTable`), вторая помечается `mappedBy`:
+`@ManyToMany` маппится через **промежуточную (join) таблицу** с двумя внешними ключами — отдельной сущности для связи нет. В двунаправленной связи владельцем может быть любая сторона. В примере это `Student.courses`: он задаёт маппинг таблицы через `@JoinTable`. Если аннотацию опустить, применятся стандартные имена. `Course.students` указывает на поле владельца через `mappedBy`. В однонаправленной связи есть только владелец.
 
 ```java
 @Entity
@@ -674,7 +677,7 @@ public class Student {
         joinColumns = @JoinColumn(name = "student_id"),
         inverseJoinColumns = @JoinColumn(name = "course_id")
     )
-    private Set<Course> courses = new HashSet<>(); // Set отражает уникальность курсов
+    private Set<Course> courses = new HashSet<>();
 }
 
 @Entity
@@ -687,8 +690,10 @@ public class Course {
 }
 ```
 
-**Best practices**:
-- Выбирайте `Set` для уникальных значений, `List` — если важен порядок/повторы и настроена соответствующая семантика. Не выводите стоимость обновления join-таблицы только из Java-типа: проверьте SQL конкретного маппинга.
+Чтобы записать зачисление, добавьте курс в `Student.courses`. Если приложение читает связь в обе стороны в том же контексте, обновите также `Course.students`. Изменение одной обратной коллекции не гарантирует запись связи.
+
+**Практические детали**
+- Выбирайте `Set` для уникальных значений, `List` — если важен порядок/повторы и настроена соответствующая семантика. Не выводите стоимость обновления join-таблицы только из Java-типа. Если каждую пару студент–курс можно записать лишь один раз, закрепите это составным первичным ключом или ограничением `UNIQUE (student_id, course_id)` в миграции. Тогда инвариант действует и при параллельных транзакциях.
 - Не задавайте `CascadeType.ALL` / `REMOVE` для разделяемых сущностей в `@ManyToMany`: каскад при `remove` владельца затронет сами связанные сущности, а удаление элемента коллекции меняет таблицу связи; `cascade=REMOVE` вне `@OneToOne`/`@OneToMany` непереносим по Jakarta Persistence.
 - Для join-таблиц с дополнительными полями (дата записи, оценка и т.д.) — создавайте отдельную `@Entity`
 
@@ -696,9 +701,9 @@ public class Course {
 
 ## Q17. В чём разница между `@JoinColumn` и `mappedBy`?
 
-**`@JoinColumn`** — маркер **owning side** (владелец связи). Определяет FK-колонку в таблице владельца.
+**`@JoinColumn`** задаёт колонку соединения, обычно внешний ключ. Таблица, в которой находится колонка, определяется видом маппинга. Например, в двусторонней связи `ManyToOne` / `OneToMany` владельцем является сторона `ManyToOne`. Она может использовать имя колонки по умолчанию, если `@JoinColumn` опущена.
 
-**`mappedBy`** — маркер **inverse side** (обратная сторона). Указывает имя поля на стороне владельца.
+**`mappedBy`** — маркер **inverse side** (обратная сторона). Указывает имя поля или свойства на стороне владельца в зависимости от выбранного способа доступа.
 
 ```java
 // Owning side — Employee владеет связью, в таблице employee есть FK department_id
@@ -711,11 +716,13 @@ private Department department;
 private List<Employee> employees;
 ```
 
-**Правило**: FK всегда хранится на стороне с `@JoinColumn`. Изменения на стороне `mappedBy` **не синхронизируются** с БД — нужно обновлять owning side.
+За запись связи отвечает атрибут владельца. Например, при переводе сотрудника в другой отдел обновите `Employee.department` и приведите коллекции обоих отделов в соответствие. Если изменить только `Department.employees`, перенос сотрудника в БД не гарантирован.
+
+В односторонней связи `@OneToMany @JoinColumn(name = "department_id")` владельцем будет коллекция отдела, а колонка `department_id` находится в таблице сотрудников. Если связь использует `@JoinTable`, колонки соединения задают в промежуточной таблице. [Jakarta Persistence 3.2, разделы 2.11 и 11.1.26](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).
 
 ## Q18. Что такое `@Embeddable` и `@Embedded`?
 
-`@Embeddable` — value object, который не имеет собственного id и таблицы. Его поля встраиваются в таблицу родительской сущности.
+`@Embeddable` объявляет тип значения без собственной идентичности в контексте персистентности. `@Embedded` отмечает одиночный атрибут этого типа. Для атрибута с типом, помеченным `@Embeddable`, Jakarta Persistence применяет такой же маппинг по умолчанию, даже если `@Embedded` опущена. В примере ниже простые поля адреса занимают колонки строки `Customer`.
 
 ```java
 @Embeddable
@@ -745,6 +752,8 @@ public class Customer {
 ```
 
 Результат — **одна таблица** `customer` с колонками: `id`, `city`, `street`, `zip_code`, `work_city`, `work_street`, `work_zip`.
+
+Если у клиента несколько дополнительных адресов, `@ElementCollection` хранит их в таблице коллекции. Каждая строка содержит внешний ключ на клиента и колонки адреса. Элементы по-прежнему остаются значениями без собственного идентификатора сущности. [Jakarta Persistence 3.2, разделы 2.7, 2.8 и 2.10](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).
 
 ## Q19. (!) Что такое `Lazy Loading` и `Eager Loading`?
 
@@ -781,11 +790,11 @@ List<Author> authors = session.createQuery("FROM Author", Author.class).list();
 
 // N запросов: для каждого автора — SELECT * FROM books WHERE author_id = ?
 for (Author author : authors) {
-    System.out.println(author.getBooks().size()); // каждый вызов — отдельный SELECT
+    System.out.println(author.getBooks().size()); // отдельный SELECT при указанных ниже условиях
 }
 ```
 
-В этом примере без пакетной загрузки и попаданий в кэш получается **1 + N запросов** вместо одного. При N = 1000 авторов — 1001 запрос к БД.
+В этом примере все коллекции при входе в цикл ещё не загружены, сессия открыта, а batch fetch, subselect fetch и попадания в кэш исключены. В таком случае на список авторов и их книги приходится **1 + N запросов**. При 1000 авторах это 1001 запрос к БД.
 
 ```
 -- 1-й запрос
@@ -835,11 +844,12 @@ List<Author> authors = entityManager
 @Entity
 public class Author {
     @OneToMany(mappedBy = "author")
-    @BatchSize(size = 25) // загружает книги пачками по 25 авторов
+    @BatchSize(size = 25) // до 25 ещё не загруженных коллекций за раз
     private List<Book> books;
 }
-// Вместо N отдельных дозагрузок обычно около ceil(N/25) пакетных SELECT
 ```
+
+При первой дозагрузке Hibernate подбирает другие ещё не загруженные коллекции этого маппинга из той же сессии. Если авторов читают и обрабатывают по одному, подходящих коллекций для пакета может не оказаться. Размер 25 задаёт верхнюю границу пакета. Число SELECT зависит от того, какие коллекции доступны для группировки в момент каждого обращения. [Hibernate ORM 7.4, BatchSize](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/annotations/BatchSize.html).
 
 **4. `@Fetch(FetchMode.SUBSELECT)`**:
 
@@ -854,26 +864,26 @@ private List<Book> books;
 
 ## Q22. Что такое `LazyInitializationException` и как его избежать?
 
-**`LazyInitializationException`** возникает, когда вы обращаетесь к lazy-ассоциации (прокси или коллекции) уже после закрытия `Session`. Причина в том, что для дозагрузки данных прокси нужна живая сессия и соединение с БД — а их больше нет. Классический сценарий: данные загрузили в сервисе, сессию закрыли, а lazy-поле «развернули» уже в контроллере или сериализаторе.
+`LazyInitializationException` возникает, когда операция требует загрузить ещё не полученные данные, а прокси или коллекция уже не связаны с открытой stateful `Session`. Так бывает после закрытия сессии или отсоединения сущности. Уже загруженные данные доступны после выхода из сессии.
+
+В примере пользователь с ID 1 существует, а коллекция `orders` отображена как `LAZY` и осталась неинициализированной в момент закрытия сессии.
 
 ```java
 User user;
 try (Session session = sf.openSession()) {
     user = session.get(User.class, 1L);
-} // Session закрыта
+}
 
-user.getOrders().size(); // LazyInitializationException!
+user.getOrders().size(); // Требует дозагрузки и вызывает LazyInitializationException
 ```
 
-Способы решения:
-1. **`JOIN FETCH`** в запросе — загрузить нужные данные заранее (рекомендуется)
-2. **`@EntityGraph`** — декларативно указать что загружать
-3. **`Open Session in View`** (`spring.jpa.open-in-view=true`) — Session остаётся открытой до конца HTTP-запроса (anti-pattern для production, может привести к N+1)
-4. **DTO projection** — возвращать DTO с нужными полями вместо entity
+Если контроллеру нужны заказы, сервис может загрузить их через `JOIN FETCH` или `@EntityGraph` и собрать DTO внутри транзакции. Если нужны только поля для ответа API, можно выбрать их DTO-проекцией сразу. В обоих случаях сериализатор получает данные, которые уже доступны.
+
+В Spring Boot для Servlet-приложения с JPA `spring.jpa.open-in-view=true` оставляет `EntityManager` открытым на время HTTP-запроса. Это позволяет дозагрузить данные при сериализации, но запросы могут попасть за границу сервисной транзакции и дать N+1. Открытый контекст сам по себе не продлевает транзакцию. [Hibernate ORM 7.4, LazyInitializationException](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/LazyInitializationException.html), [Spring Boot 3.5, Open EntityManager in View](https://docs.spring.io/spring-boot/3.5/reference/data/sql.html).
 
 ## Q23. Что такое `Entity Graph`?
 
-**Entity Graph** — механизм `JPA` 2.1+ для декларативного определения, какие ассоциации загрузить вместе с сущностью. Альтернатива `JOIN FETCH` в `JPQL`.
+**Entity Graph** — механизм `JPA` 2.1+ для декларативного определения, какие атрибуты загрузить вместе с сущностью. Узлы графа могут описывать как связи, так и базовые атрибуты.
 
 ```java
 // Через аннотацию
@@ -897,13 +907,25 @@ Order order = entityManager.find(Order.class, orderId, hints);
 - **`fetchgraph`** — указанные атрибуты считаются `EAGER`, остальные — `LAZY`-подсказкой;
 - **`loadgraph`** — указанные атрибуты считаются `EAGER`, остальные сохраняют настройки маппинга.
 
-Граф не задаёт число JOIN/SELECT; спецификация разрешает провайдеру загрузить дополнительные данные сверх графа. [Jakarta Persistence 3.2, entity graphs](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
+Эти правила применяются рекурсивно. Первичный ключ и версию провайдер загружает независимо от перечисленных узлов. Если в граф включена связь с сущностью без подграфа, провайдер загружает целевые сущности по их графу загрузки по умолчанию. Он включает атрибуты, помеченные `EAGER` явно или по умолчанию.
+
+Например, граф выше требует загрузить `Order.items`. Если в `OrderItem` связь `product` имеет `LAZY`-маппинг, одного узла `items` для обязательной загрузки товара недостаточно. Её можно запросить через подграф.
+
+```java
+EntityGraph<Order> detailGraph = entityManager.createEntityGraph(Order.class);
+detailGraph.addAttributeNodes("user");
+detailGraph.addSubgraph("items", OrderItem.class).addAttributeNodes("product");
+```
+
+Граф определяет требуемые данные. Форму SQL и число запросов выбирает провайдер, который также вправе загрузить дополнительные данные сверх графа. [Jakarta Persistence 3.2, entity graphs](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
 
 В [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) Entity Graph используется через аннотацию `@EntityGraph` на методе репозитория.
 
 ## Q24. (!) В чём разница между `First Level Cache` и `Second Level Cache`?
 
-Ключевое различие — **область видимости и время жизни**. L1 привязан к одной stateful `Session`/`EntityManager` и живёт до закрытия или `clear()`, не обязательно до границы транзакции. L2 привязан к `SessionFactory` и переживает отдельные сессии. Без cache-провайдера L2 выключен; если настроен `RegionFactory`, `hibernate.cache.use_second_level_cache` по умолчанию `true`. L1 не требует отдельной настройки; `StatelessSession` не имеет persistence context.
+Ключевое различие — **область видимости и время жизни**. L1 привязан к контексту персистентности обычной `Session`/`EntityManager`. Вручную открытая сессия может пережить одну транзакцию. `detach(entity)` исключает конкретную сущность из контекста, `clear()` отсоединяет все сущности, а закрытие сессии завершает работу контекста. L2 привязан к `SessionFactory` и переживает отдельные сессии. Без cache-провайдера L2 выключен; если настроен `RegionFactory`, `hibernate.cache.use_second_level_cache` по умолчанию `true`. L1 не требует отдельной настройки. У `StatelessSession` нет контекста персистентности. Начиная с Hibernate 7.0 такая сессия по умолчанию может использовать настроенный L2 (см. Q46). [Hibernate ORM 7.4, StatelessSession](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/StatelessSession.html).
+
+При обычной загрузке по идентификатору Hibernate сначала проверяет контекст текущей сессии. При промахе он может проверить L2, если тип кэшируется и режим чтения разрешает использовать кэш. Если состояние получить из кэша не удалось, Hibernate загружает его из БД.
 
 ```mermaid
 graph TB
@@ -921,7 +943,7 @@ graph TB
     L2C -.->|miss| DB[(Database)]
 ```
 
-Те же уровни и поток при промахе как схема:
+Та же схема поиска при загрузке по идентификатору. Она предполагает, что Hibernate может читать эту сущность из L2.
 
 ```
   First Level Cache (L1)        Second Level Cache (L2)
@@ -950,22 +972,21 @@ graph TB
 |--------|------------------|-------------------|
 | Область | Одна `Session` | `SessionFactory` (все сессии) |
 | По умолчанию | Есть у stateful `Session` | Выключен без провайдера; с ним обычно включён |
-| Жизненный цикл | До `clear()`/закрытия `Session` | Связан с `SessionFactory` и провайдером |
+| Жизненный цикл | Пока сущность остаётся управляемой в данном контексте | Связан с `SessionFactory` и провайдером |
 | Настройка | Не нужна | Требует провайдера (Ehcache, Infinispan) |
-| Потокобезопасность | Нет (одна сессия = один поток) | Да |
+| Совместное использование | Сессию нельзя использовать одновременно из нескольких потоков | Регионами пользуются разные сессии. Согласованность зависит от провайдера и стратегии из Q27 |
 
-Порядок поиска: **L1 cache → L2 cache → Database**.
+В примере строка пользователя существует, тип `User` не кэшируется в L2, а код выполняется в новой сессии без запроса блокировки.
 
 ```java
-// L1 cache в действии
-Session session = sf.openSession();
-User u1 = session.get(User.class, 1L); // SELECT из БД, сохраняется в L1
-User u2 = session.get(User.class, 1L); // Берётся из L1, SQL не выполняется
-assert u1 == u2; // true — один и тот же объект
-session.close(); // контекст этой Session закрыт
+try (Session session = sf.openSession()) {
+    User u1 = session.find(User.class, 1L); // SELECT из БД
+    User u2 = session.find(User.class, 1L); // Уже управляемый экземпляр, без повторного SQL
+    assert u1 == u2;
+}
 ```
 
-Проверка L1 всегда предшествует обращению к L2. Попадание L2 не означает общий Java-объект между сессиями: каждая сессия создаёт своё managed-представление. [Hibernate ORM 7.4, caching](https://docs.hibernate.org/orm/7.4/userguide/html_single/).
+При попадании в L2 разные сессии всё равно управляют собственными экземплярами сущности. Если вместо второго `find()` выполнить JPQL-запрос с тем же ID, Hibernate при выключенном Query Cache выполнит SQL для получения результата. Если строка вошла в результат, для неё будет переиспользован уже управляемый экземпляр из L1. Кэширование самого результата запроса разобрано в Q26. [Hibernate ORM 7.4 — Caching](https://docs.hibernate.org/orm/7.4/userguide/html_single/#caching).
 
 ## Q25. Как настроить кэш второго уровня?
 
@@ -985,37 +1006,55 @@ spring:
       hibernate:
         cache:
           use_second_level_cache: true
-          region.factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+          region.factory_class: jcache
         javax:
           cache:
             provider: org.ehcache.jsr107.EhcacheCachingProvider
+            uri: ehcache.xml
+            missing_cache_strategy: fail
 ```
 
-**3. Аннотации на сущности**:
+**3. Регион в `src/main/resources/ehcache.xml`**:
+
+```xml
+<config xmlns="http://www.ehcache.org/v3">
+    <cache alias="countries">
+        <heap unit="entries">1000</heap>
+    </cache>
+</config>
+```
+
+Пример предполагает, что префикс имён регионов не задан. Размер heap здесь условный.
+
+**4. Аннотации на сущности**:
 ```java
 @Entity
 @Cacheable                                           // JPA стандарт
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)  // Hibernate — стратегия
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "countries")
 public class Country {
     @Id
     private Long id;
     private String name;
+    private String region; // Используется в JPQL-примере из Q26
 }
 ```
 
+
+**5. Проверка на двух сессиях.** В тестовой конфигурации включите `hibernate.generate_statistics=true`. Возьмите существующий `Country` из холодного региона и прочитайте его по ID в первой сессии. Завершите транзакцию и закройте сессию. Затем прочитайте тот же ID во второй сессии той же фабрики. При стандартном режиме кэша и без вытеснения записи второй вызов должен увеличить `getSecondLevelCacheHitCount()`. Сверьте также SQL для загрузки строки `Country`. Два чтения в одной сессии из примера Q24 могут пройти через L1, поэтому такой тест ничего не доказывает о попадании в L2. Счётчики относятся ко всей фабрике, поэтому проверяйте их изменение в изолированном тесте. [Hibernate ORM 7.4, Statistics](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/stat/Statistics.html).
+
 L2 cache наиболее эффективен для сущностей, которые **часто читаются и редко изменяются** (справочники, конфигурации).
 
-`hibernate-jcache` и реализация JCache нужны для приведённого примера. При настроенном `RegionFactory` Hibernate 7.4 включает L2 по умолчанию; явный `use_second_level_cache=true` здесь служит для наглядности. По умолчанию кэшируются только выбранные сущности (`ENABLE_SELECTIVE`). Области и политику размера/eviction задают у провайдера; если не заданы, автоматически созданный кэш может не подходить для production. [Hibernate ORM 7.4, JCache](https://docs.hibernate.org/orm/7.4/userguide/html_single/).
+`hibernate-jcache` и реализация JCache нужны для приведённого примера. При настроенном `RegionFactory` Hibernate 7.4 включает L2 по умолчанию; явный `use_second_level_cache=true` здесь служит для наглядности. По умолчанию кэшируются только выбранные сущности (`ENABLE_SELECTIVE`). В Hibernate 7.4 интеграция JCache по умолчанию использует `missing_cache_strategy=fail`. Если при инициализации региона Hibernate не найдёт `countries` у провайдера, настройка завершится ошибкой. Поэтому имя в `@Cache` должно совпадать с alias в Ehcache. Для Q26 с включённым кэшем запросов потребуется определить также его регионы. [Hibernate ORM 7.4, ConfigSettings](https://github.com/hibernate/hibernate-orm/blob/7.4/hibernate-jcache/src/main/java/org/hibernate/cache/jcache/ConfigSettings.java), [Ehcache 3.11, JCache и XML](https://www.ehcache.org/documentation/3.11/107.html).
 
 ## Q26. Что такое `Query Cache`?
 
-**Query Cache** кэширует **результаты запросов** (список ID сущностей), а не сами сущности. Работает в паре с L2 cache — по ID из query cache достаются сущности из L2 cache.
+**Query Cache** сохраняет результат конкретного запроса с его параметрами. Скалярная проекция может храниться как значения результата. Для сущностей и коллекций состав записи зависит от формата кэша. В Hibernate 7.4 формат `AUTO` по умолчанию выбирает `SHALLOW` для объектов, настроенных на кэширование в L2, и `FULL` для остальных. `SHALLOW` хранит идентификатор сущности или ключ владельца коллекции. При промахе L2 Hibernate может дополнительно обратиться к БД по этому ключу. `FULL` хранит данные, загруженные исходным запросом. Настройка формата доступна с Hibernate 6.5.
+
+В конфигурации из Q25 добавьте `spring.jpa.properties.hibernate.cache.use_query_cache: true`. При `missing_cache_strategy=fail` в том же `ehcache.xml` должны быть объявлены ещё два alias. Без префикса регионов это `default-query-results-region` для результатов и `default-update-timestamps-region` для меток обновления таблиц. При отсутствии нужного региона Hibernate завершит инициализацию с ошибкой.
+
+Затем пометьте конкретный запрос кэшируемым. В примере он использует регион результатов по умолчанию.
 
 ```java
-// Включение
-// hibernate.cache.use_query_cache = true
-
-// Использование
 List<Country> countries = entityManager
     .createQuery("SELECT c FROM Country c WHERE c.region = :region", Country.class)
     .setParameter("region", "Europe")
@@ -1023,9 +1062,17 @@ List<Country> countries = entityManager
     .getResultList();
 ```
 
-**Когда использовать**: для запросов, которые выполняются часто с одинаковыми параметрами, по сущностям, которые редко меняются. При любом `INSERT`/`UPDATE`/`DELETE` в таблице — Query Cache для этой таблицы **инвалидируется целиком**.
+**Когда использовать.** Например, один и тот же запрос справочника с параметром `Europe` выполняется часто, а данные меняются редко. Hibernate проверяет актуальность записи по меткам изменений таблиц, от которых зависит запрос. Изменение, учтённое Hibernate, может сделать устаревшими результаты с разными параметрами, даже если конкретные строки в них не поменялись.
 
-**Когда НЕ использовать**: для часто изменяемых таблиц — частая инвалидация сведёт на нет выигрыш.
+Если внешний импорт после commit переносит страну из `Europe` в другой регион, устареть могут и список стран в Query Cache, и состояние `Country` в L2. Для конфигурации из Q25 после подтверждения commit обработчик может удалить изменённую сущность через `sessionFactory.getCache().evictEntityData(Country.class, countryId)` и очистить регион результатов через `evictDefaultQueryRegion()`. Если запросы используют именованные регионы, очистите затронутые регионы через `evictQueryRegion(regionName)`. При локальном кэше обработчик нужен в каждом экземпляре приложения, который хранит эти записи.
+
+Инвалидация общих регионов не обновляет объекты, уже управляемые открытой сессией. Между commit и обработкой события остаётся окно устаревших чтений. Если такая задержка недопустима, исключите затронутые данные из общего кэширования и отдельно учитывайте снимок транзакции и состояние текущей сессии. [Hibernate ORM 7.4, Cache API](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/Cache.html).
+
+Пользу кэша проверяйте по попаданиям и по фактическому числу SQL-запросов.
+
+Регион результатов и регион меток изменений настраиваются отдельно. Например, результат запроса стран можно хранить с TTL пять минут. Если провайдер раньше удалит из `default-update-timestamps-region` метку обновления таблицы стран, Hibernate может принять ещё живой результат за актуальный. Поэтому для региона меток Hibernate рекомендует отключить TTL и вытеснение по размеру, включая LRU. Политику очистки задавайте для региона результатов.
+
+[Hibernate ORM 7.4 — Query Cache](https://docs.hibernate.org/orm/7.4/userguide/html_single/#caching-query), [CacheLayout API](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/annotations/CacheLayout.html).
 
 ## Q27. (!) Какие `Concurrency Strategy` доступны для кэша?
 
@@ -1033,10 +1080,12 @@ List<Country> countries = entityManager
 
 | Стратегия | Описание | Когда использовать |
 |-----------|----------|--------------------|
-| **`READ_ONLY`** | Только чтение, сущность никогда не обновляется | Справочники, enum-таблицы |
-| **`NONSTRICT_READ_WRITE`** | Кэш обновляется после commit, возможно чтение устаревших данных | Данные, которые редко меняются и eventual consistency допустима |
-| **`READ_WRITE`** | Soft-lock при обновлении; согласованный доступ к одной сущности, без гарантии serializable | Данные, которые иногда меняются |
+| **`READ_ONLY`** | Для неизменяемых данных. Обновление сущности через Hibernate с этой стратегией приводит к исключению | Справочники, enum-таблицы |
+| **`NONSTRICT_READ_WRITE`** | Инвалидация записи кэша до и после завершения обновляющей транзакции. Возможны устаревшие данные | Данные, которые редко меняются и eventual consistency допустима |
+| **`READ_WRITE`** | Soft-lock помечает запись кэша на время обновления. Другой читатель обращается к БД | Версионированные сущности, которые обновляются |
 | **`TRANSACTIONAL`** | Транзакционная стратегия с JTA при поддержке cache-провайдера | Сценарий, где требуется и доступна такая интеграция |
+
+`NONE` в `CacheConcurrencyStrategy` оставляет выбор стратегии по умолчанию. Это значение само по себе не отключает L2-кэш.
 
 ```java
 @Entity
@@ -1045,10 +1094,18 @@ public class Currency { ... }
 
 @Entity
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public class Product { ... }
+public class Product {
+    @Id
+    private Long id;
+
+    @Version
+    private long version;
+}
 ```
 
-`TRANSACTIONAL` не следует понимать как автоматическое включение XA или кластерного кэша одним значением enum. Поддержку и границы транзакций проверяют у конкретного провайдера. [Hibernate ORM 7.4, cache concurrency strategies](https://docs.hibernate.org/orm/7.4/userguide/html_single/).
+При обновлении `Product` soft-lock действует на запись L2-кэша. Он не блокирует строку в БД. Что увидит читатель, который обратился к БД, определяется её изоляцией транзакций. Hibernate указывает, что `READ_WRITE` и `NONSTRICT_READ_WRITE` несовместимы с гарантиями `SERIALIZABLE`. Уровень изоляции СУБД распространяется на операции в БД. При попадании в общий L2-кэш чтение состояния сущности проходит мимо механизмов изоляции СУБД, поэтому одного уровня изоляции JDBC для такого чтения недостаточно.
+
+`TRANSACTIONAL` не следует понимать как автоматическое включение XA или кластерного кэша одним значением enum. Поддержку и границы транзакций проверяют у конкретного провайдера. [Hibernate ORM 7.4 — CacheConcurrencyStrategy](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/annotations/CacheConcurrencyStrategy.html).
 
 ## Q28. Что такое `HQL` и `JPQL`?
 
@@ -1068,7 +1125,8 @@ List<User> users = query.getResultList();
 // JPQL — агрегация
 List<Object[]> stats = entityManager.createQuery(
     "SELECT u.department, COUNT(u), AVG(u.salary) " +
-    "FROM User u GROUP BY u.department HAVING COUNT(u) > 5"
+    "FROM User u GROUP BY u.department HAVING COUNT(u) > 5",
+    Object[].class
 ).getResultList();
 
 // JPQL — JOIN FETCH
@@ -1077,18 +1135,24 @@ List<Author> authors = entityManager.createQuery(
     Author.class
 ).getResultList();
 
-// JPQL — UPDATE (bulk)
+// JPQL — bulk UPDATE внутри активной транзакции
 int updated = entityManager.createQuery(
     "UPDATE User u SET u.active = false WHERE u.lastLogin < :date"
 ).setParameter("date", cutoffDate)
  .executeUpdate();
 ```
 
+В Hibernate 7.4 можно заменить `u.name LIKE :name` на `u.name ILIKE :name`, чтобы искать по шаблону без учёта регистра. `ILIKE` здесь — расширение HQL. Для JPQL используйте `LOWER(u.name) LIKE LOWER(:name)` с учётом правил преобразования регистра в СУБД. [Hibernate ORM 7.4 — String pattern matching](https://docs.hibernate.org/orm/7.4/querylanguage/html_single/#string-pattern-matching).
+
+В примере `JOIN FETCH` исключает авторов без книг. Чтобы вернуть и их, используйте `LEFT JOIN FETCH`. `DISTINCT` в примере явно задаёт уникальность результата JPQL. Начиная с Hibernate 6, провайдер сам убирает повторные ссылки на корневую сущность, возникшие из-за `JOIN FETCH`. Для этой цели `DISTINCT` при работе с Hibernate больше не нужен. [Hibernate ORM 7.4 — Duplicate removal](https://docs.hibernate.org/orm/7.4/querylanguage/html_single/#hql-distinct).
+
+Массовый `UPDATE` выполняется напрямую в БД, минуя обычные проверки оптимистической блокировки. Уже загруженный `User` может сохранить прежнее значение `active` в контексте. Выполняйте такую операцию до загрузки затронутых сущностей либо явно обновите нужный экземпляр через `refresh()`. [Jakarta Persistence 3.2 — Bulk Update and Delete Operations](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).
+
 ## Q29. Что такое `Criteria API`?
 
-**Criteria API** — типобезопасный, программный способ построения запросов. Особенно полезен для **динамических запросов** (фильтры, сортировки, которые зависят от пользовательского ввода).
+**Criteria API** — программный способ построения запросов с типизированным результатом. Статическая метамодель позволяет проверять имена и типы атрибутов при компиляции. При обращении по строке, например `root.get("name")`, имя проверяется во время выполнения. Особенно полезен для **динамических запросов** (фильтры, сортировки, которые зависят от пользовательского ввода).
 
-С `Hibernate 5.2+` устаревший `org.hibernate.Criteria` заменён на стандартный `JPA Criteria API`:
+Собственный `org.hibernate.Criteria` объявили устаревшим в Hibernate 5.x и удалили в 6.0. Для переносимых запросов используйте Jakarta Persistence Criteria API. [Hibernate ORM 6.0 Migration Guide](https://docs.hibernate.org/orm/6.0/migration-guide/migration-guide/).
 
 ```java
 CriteriaBuilder cb = entityManager.getCriteriaBuilder();
@@ -1099,7 +1163,11 @@ Root<User> root = cq.from(User.class);
 List<Predicate> predicates = new ArrayList<>();
 
 if (nameFilter != null) {
-    predicates.add(cb.like(root.get("name"), "%" + nameFilter + "%"));
+    String escaped = nameFilter.replace("!", "!!")
+                               .replace("%", "!%")
+                               .replace("_", "!_");
+    String namePattern = "%" + escaped + "%";
+    predicates.add(cb.like(root.get("name"), namePattern, '!'));
 }
 if (minAge != null) {
     predicates.add(cb.greaterThanOrEqualTo(root.get("age"), minAge));
@@ -1114,18 +1182,20 @@ cq.orderBy(cb.asc(root.get("name")));
 List<User> users = entityManager.createQuery(cq).getResultList();
 ```
 
+Фильтр по имени ищет буквальную подстроку. Для ввода `A_B` шаблон `%A!_B%` с escape-символом `!` ищет само подчёркивание. Сначала экранируется сам `!`, затем специальные символы `LIKE` — `%` и `_`. [Jakarta Persistence 3.2 — CriteriaBuilder](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/criteria/CriteriaBuilder.html).
+
 **С Metamodel** (compile-time проверка полей):
 
 ```java
-// User_.name — сгенерированный metamodel, ошибка компиляции при опечатке
-predicates.add(cb.like(root.get(User_.name), "%" + nameFilter + "%"));
+// Замена вызова cb.like внутри блока if из примера выше
+predicates.add(cb.like(root.get(User_.name), namePattern, '!'));
 ```
 
 В [Spring Data JPA](../frameworks/spring/spring-data-jpa-interview.md) для динамических запросов чаще используют `Specification` API, который оборачивает `Criteria API`.
 
 ## Q30. Что такое `NamedQuery`?
 
-**NamedQuery** — предварительно определённый запрос, привязанный к сущности по имени. Проверяется при старте приложения (ошибки видны сразу, а не в рантайме).
+**`@NamedQuery`** объявляет JPQL-запрос под именем. Имя доступно в пределах persistence unit, даже если аннотация стоит на конкретной сущности. Для именованного SQL-запроса есть `@NamedNativeQuery`. [Jakarta Persistence 3.2 — Named Queries](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).
 
 ```java
 @Entity
@@ -1144,36 +1214,71 @@ public class User { ... }
 // Использование
 TypedQuery<User> query = entityManager.createNamedQuery("User.findByEmail", User.class);
 query.setParameter("email", "alice@example.com");
-User user = query.getSingleResult();
+User user = query.getSingleResultOrNull();
 ```
 
-**Преимущества**: валидация при старте, кэширование плана запроса, единое место объявления, удобство для ревью.
+В примере email уникален по ограничению БД, но пользователь с таким адресом может отсутствовать. В Jakarta Persistence 3.2 `getSingleResultOrNull()` возвращает `null`, если результат пуст. При нескольких результатах он выбрасывает `NonUniqueResultException`. Для запроса, который должен вернуть ровно одну запись, `getSingleResult()` дополнительно сигнализирует об отсутствии результата через `NoResultException`. [Jakarta Persistence 3.2 — TypedQuery](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/TypedQuery.html).
+
+В Hibernate ORM 7.4 проверка именованных запросов при запуске фабрики включена по умолчанию. Её можно отключить через `hibernate.query.startup_check`. Именованный запрос удобно переиспользовать и проверять в одном месте. План исполнения в СУБД зависит от её настроек и условий выполнения. [Hibernate ORM 7.4 — QuerySettings](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/cfg/QuerySettings.html#QUERY_STARTUP_CHECKING).
+
+При стартовой проверке Hibernate разбирает именованный JPQL/HQL и сверяет его с моделью. Например, опечатка `u.emali` при наличии только атрибута `email` приведёт к ошибке при создании фабрики. Проверка проходит без выполнения запроса в СУБД. Ошибка в имени столбца в `@NamedNativeQuery` может обнаружиться при обращении к БД, поэтому такой запрос проверяют интеграционным тестом с целевой схемой. [Hibernate ORM 7.4 — проверка именованных запросов](https://github.com/hibernate/hibernate-orm/blob/7.4/hibernate-core/src/main/java/org/hibernate/query/internal/NamedObjectRepositoryImpl.java#L268).
 
 ## Q31. Поддерживает ли `Hibernate` нативные `SQL`-запросы?
 
-Да. Нативные SQL-запросы полезны для сложных запросов, оптимизации под конкретную СУБД или вызова хранимых процедур.
+Да. Нативный SQL удобен, когда запрос использует возможности конкретной СУБД. Для вызова хранимой процедуры Jakarta Persistence предоставляет отдельный API `createStoredProcedureQuery()`.
+
+### Сущность или скалярные значения
 
 ```java
-// Нативный SQL с маппингом на Entity
-List<User> users = entityManager.createNativeQuery(
-    "SELECT * FROM users WHERE created_at > :date", User.class
-).setParameter("date", cutoffDate)
+// Все столбцы, необходимые для маппинга User, входят в SELECT.
+List<?> users = entityManager.createNativeQuery(
+    "SELECT u.* FROM users u WHERE u.created_at > ?", User.class
+).setParameter(1, cutoffDate)
  .getResultList();
 
-// Нативный SQL с маппингом на DTO (через @SqlResultSetMapping или Tuple)
-List<Object[]> results = entityManager.createNativeQuery(
-    "SELECT u.name, COUNT(o.id) as order_count " +
-    "FROM users u LEFT JOIN orders o ON u.id = o.user_id " +
-    "GROUP BY u.name"
-).getResultList();
+// Каждая строка результата — Object[] с именем и количеством заказов.
+List<?> rows = entityManager.createNativeQuery("""
+    SELECT u.name AS user_name, COUNT(o.id) AS order_count
+    FROM users u LEFT JOIN orders o ON u.id = o.user_id
+    GROUP BY u.id, u.name
+    """).getResultList();
+```
 
-// Через @NamedNativeQuery
+Первый запрос возвращает экземпляры `User`, управляемые текущим контекстом. Для полного маппинга нужны и колонки внешних ключей, если они входят в маппинг сущности. Второй запрос группирует по идентификатору, поэтому пользователи с одинаковым именем получают отдельные строки. `COUNT(o.id)` даёт ноль для пользователя без заказов.
+
+### Именованный запрос с маппингом на DTO
+
+```java
+// Аннотации размещаются на существующей сущности User.
+@SqlResultSetMapping(
+    name = "UserWithOrderCount",
+    classes = @ConstructorResult(
+        targetClass = UserOrderCount.class,
+        columns = {
+            @ColumnResult(name = "user_name", type = String.class),
+            @ColumnResult(name = "order_count", type = Long.class)
+        }
+    )
+)
 @NamedNativeQuery(
     name = "User.findWithOrderCount",
-    query = "SELECT u.*, COUNT(o.id) as order_count FROM users u ...",
+    query = """
+        SELECT u.name AS user_name, COUNT(o.id) AS order_count
+        FROM users u LEFT JOIN orders o ON u.id = o.user_id
+        GROUP BY u.id, u.name
+        """,
     resultSetMapping = "UserWithOrderCount"
 )
+// DTO объявляется отдельно: public record UserOrderCount(String name, Long count) {}
 ```
+
+Порядок и типы колонок в `@ConstructorResult` соответствуют параметрам конструктора DTO. Для переносимого нативного SQL используйте плейсхолдер `?` и привязку через `setParameter(1, value)`. [Jakarta Persistence 3.2 — SQL Queries](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).
+
+### Когда нативный запрос видит изменения текущей транзакции
+
+Предположим, транзакция меняет статус управляемого заказа, а затем считает оплаченные заказы через нативный `SELECT COUNT(*)`. Пока изменение остаётся в контексте, SQL читает старый статус. Чтобы получить актуальный счётчик, в присоединённой к транзакции сессии можно вызвать `entityManager.flush()` перед запросом. После этого SQL видит запись текущей транзакции. Её по-прежнему можно откатить.
+
+В Hibernate 7.4 при `AUTO` способ синхронизации зависит от режима совместимости с JPA и известных Hibernate таблиц запроса. Если контекст присоединён к активной транзакции и таблицы запроса неизвестны, Hibernate 7.4 при `AUTO` делает flush, когда фабрика создана через JPA bootstrap. При нативном bootstrap в этом случае запрос выполняется без автоматического flush. Это различие определяется способом создания фабрики, поэтому один лишь вызов через `EntityManager` или `Session` не определяет поведение. Без активной транзакции или при неприсоединённом контексте провайдер не сбрасывает изменения в БД. [Hibernate ORM 7.4 — NativeQueryImpl](https://github.com/hibernate/hibernate-orm/blob/7.4/hibernate-core/src/main/java/org/hibernate/query/sql/internal/NativeQueryImpl.java#L672-L705), [Jakarta Persistence 3.2 — Queries and Flush Mode](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a4370). Для примера со счётчиком вызов `NativeQuery.addSynchronizedEntityClass(Order.class)` указывает Hibernate таблицы заказа. При `AUTO` Hibernate учитывает их, решая, нужен ли flush. Для запроса, который зависит и от других таблиц, нужно объявить и эти зависимости. [Hibernate ORM 7.4: NativeQuery](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/query/NativeQuery.html).
 
 Подробнее о SQL-оптимизации — в [вопросах по SQL](sql-interview.md).
 
@@ -1190,15 +1295,17 @@ session.createQuery(hql); // SQL Injection возможен!
 session.createQuery("FROM User WHERE name = :name")
        .setParameter("name", userInput);
 
-// ✅ БЕЗОПАСНО — Criteria API (параметры автоматически экранируются)
-cb.equal(root.get("name"), userInput);
+// ✅ БЕЗОПАСНО — Criteria API с явным параметром
+ParameterExpression<String> name = cb.parameter(String.class, "name");
+cq.where(cb.equal(root.get("name"), name));
+entityManager.createQuery(cq).setParameter(name, userInput);
 
 // ✅ БЕЗОПАСНО — нативный SQL с параметрами
-entityManager.createNativeQuery("SELECT * FROM users WHERE name = ?1")
+entityManager.createNativeQuery("SELECT * FROM users WHERE name = ?")
              .setParameter(1, userInput);
 ```
 
-**Правило**: всегда используйте параметризованные запросы (`setParameter()`), никогда не конкатенируйте пользовательский ввод в HQL/SQL строку.
+**Правило**: всегда используйте параметризованные запросы (`setParameter()`), никогда не конкатенируйте пользовательский ввод в HQL/SQL строку. Параметр передаёт значение. Для управляемой пользователем сортировки сопоставляйте внешний ключ сортировки с заранее определённым полем и направлением. [Jakarta Persistence 3.2 — Query Parameters](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html).
 
 ## Q33. (!) Что такое `@Version` и оптимистичная блокировка?
 
@@ -1238,16 +1345,20 @@ public void changePrice(Long id, BigDecimal newPrice) {
 
 При конфликте провайдер выбрасывает `OptimisticLockException` и помечает текущую транзакцию к откату. Повторять нужно **всю операцию в новой транзакции**: заново прочитать сущность и проверить бизнес-условия. Обработка исключения после `flush` внутри того же метода не восстанавливает транзакцию. Массовые JPQL `UPDATE` обходят обычную проверку `@Version`; при таких запросах версию нужно проверять и обновлять явно, если требуется защита от потерянного обновления.
 
+После массового JPQL UPDATE уже загруженный управляемый объект может содержать прежние данные. Например, если сначала загрузить товар, а затем массовым запросом изменить его цену, повторный `find()` в том же контексте может вернуть ранее загруженный объект со старой ценой. Выполняйте массовую операцию до загрузки затронутых сущностей или в отдельном контексте. Если нужно перечитать одну сущность, `refresh()` заменит её состояние данными из БД и затрёт её несохранённые изменения. Если нужно очистить весь контекст через `clear()`, сначала выполните `flush()` для изменений, которые требуется сохранить. [Jakarta Persistence 3.2, массовые обновления и удаления](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a5636).
+
 **Тип поля `@Version` в Jakarta Persistence 3.2**: `int`/`Integer`, `short`/`Short`, `long`/`Long`, `LocalDateTime`, `Instant` или `Timestamp`. Обычно выбирают числовую версию: её сравнение не зависит от точности временной метки в БД.
 
 ## Q34. В чём разница между оптимистичной и пессимистичной блокировкой?
 
 Разница — в том, **когда согласуется конкурентное изменение**. При оптимистичной блокировке `@Version` чтение сущности не удерживает заранее блокировку строки; Hibernate проверяет версию при записи, например во время `flush`, в том числе перед коммитом. Для detached-сущности проверка может произойти и при `merge`. При пессимистичной `PESSIMISTIC_WRITE` провайдер запрашивает блокировку БД при чтении для изменения. В PostgreSQL это обычно `SELECT ... FOR UPDATE`: конкурентные записи и несовместимые блокировки ждут, но обычный MVCC `SELECT` не обязан ждать.
 
+У версионированной сущности можно явно запросить проверку при чтении. Например, внутри активной транзакции `find(Product.class, id, LockModeType.OPTIMISTIC)` требует проверки версии даже тогда, когда код только читает товар и меняет другую сущность. Провайдер может отложить проверку до коммита. Если нужно ещё и принудительно изменить версию товара без изменения его полей, используйте `OPTIMISTIC_FORCE_INCREMENT`. Это пометит прежнюю версию товара устаревшей для других транзакций. [Jakarta Persistence 3.2, режимы блокировок](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a2068).
+
 | Аспект | Оптимистичная | Пессимистичная |
 |--------|---------------|----------------|
 | Контроль конфликта | `@Version` проверяется при `merge`/`flush`/коммите; заранее строка не заблокирована | `PESSIMISTIC_WRITE` запрашивает блокировку строки до её изменения |
-| Блокировки БД | SQL `UPDATE`/`DELETE` всё равно использует обычные блокировки | Блокировка удерживается после запроса до завершения транзакции |
+| Блокировки БД | SQL `UPDATE`/`DELETE` всё равно использует обычные блокировки | Блокировка обычно удерживается до завершения транзакции; в PostgreSQL откат к savepoint освобождает блокировки, полученные после него |
 | Сбой | Устаревшая версия вызывает `OptimisticLockException` и откат текущей транзакции | Возможны ожидание, timeout или deadlock; после отката иногда нужен повтор |
 | Цена | Проверка версии и повтор всей операции при конфликте | Ожидание и более долгое удержание блокировки |
 
@@ -1259,7 +1370,9 @@ private Integer version;
 // Пессимистичная — через JPA внутри активной транзакции
 Product product = entityManager.find(Product.class, id,
     LockModeType.PESSIMISTIC_WRITE); // для PostgreSQL обычно SELECT ... FOR UPDATE
-product.setStock(product.getStock() - 1);
+if (product != null && product.getStock() > 0) {
+    product.setStock(product.getStock() - 1);
+}
 // Конкурентная запись может ждать; обычное MVCC-чтение — продолжиться.
 
 // Пессимистичная — через JPQL
@@ -1269,14 +1382,20 @@ entityManager.createQuery("SELECT p FROM Product p WHERE p.id = :id")
     .getSingleResult();
 ```
 
+В этом примере товар впервые загружается в текущем persistence context. В PostgreSQL при `READ COMMITTED` второй запрос с блокировкой той же строки дождётся завершения первой транзакции и при успешном захвате увидит обновлённый остаток. Если осталась одна единица, после первого списания проверка во второй транзакции не даст списать её повторно. [PostgreSQL, блокировки строк](https://www.postgresql.org/docs/current/explicit-locking.html#LOCKING-ROWS).
+
+Если товар уже загружен в текущий persistence context, `find(Product.class, id, PESSIMISTIC_WRITE)` возвращает тот же managed-экземпляр и запрашивает блокировку. Сам захват блокировки не гарантирует перечитывания полей. Если бизнес-проверке нужен остаток из БД под блокировкой, вызовите `entityManager.refresh(product, LockModeType.PESSIMISTIC_WRITE)` до изменения остатка. `refresh` перечитывает состояние и перезаписывает несброшенные изменения объекта. Для версионированной сущности запрос пессимистичной блокировки также включает проверку версии и может завершиться `OptimisticLockException`. [Jakarta Persistence 3.2, EntityManager](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/EntityManager.html).
+
+Jakarta Persistence 3.2 различает последствия сбоя при захвате блокировки. При откате только SQL-оператора провайдер выбрасывает `LockTimeoutException` и не помечает транзакцию для отката. При сбое с откатом всей транзакции он выбрасывает `PessimisticLockException` и помечает транзакцию для отката. Настройка `jakarta.persistence.lock.timeout` задаёт подсказку, которую конкретные провайдер и БД могут не выполнить. [Jakarta Persistence 3.2, режимы блокировок](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a2068).
+
 Оптимистичный `UPDATE` тоже может ждать и участвовать в deadlock, если транзакции изменяют несколько строк в разном порядке. Пессимистичная блокировка не гарантирует успешного коммита: возможны timeout, deadlock и другие ошибки. Для обеих стратегий нужны короткие транзакции и обработка сбоя; при повторе заново читайте данные и проверяйте бизнес-условия. Универсального победителя по throughput или правила «финансы — значит пессимистичная» нет: измеряйте конкуренцию и цену повтора для конкретной операции. Оба подхода защищают отдельную сущность от перезаписи, но не заменяют проверку инварианта между несколькими строками (см. [Database Transactions Q14/Q40](database-transactions-interview.md)).
 
 ## Q35. Как работают транзакции в `Hibernate`?
 
-`Hibernate` поддерживает локальные транзакции через JDBC и транзакции под управлением JTA. JTA может координировать несколько ресурсов, но его применение не означает, что транзакция обязательно распределённая. Для Jakarta Persistence по умолчанию в Java SE выбирается `RESOURCE_LOCAL`, а в Jakarta EE — `JTA`. В Spring границу транзакции обычно задают через `@Transactional`:
+`Hibernate` поддерживает локальные транзакции через JDBC и транзакции под управлением JTA. JTA может координировать несколько ресурсов, но его применение не означает, что транзакция обязательно распределённая. Для Jakarta Persistence по умолчанию в Java SE выбирается `RESOURCE_LOCAL`, а в Jakarta EE — `JTA`. В Spring границу транзакции обычно задают через `@Transactional`. Для одной `EntityManagerFactory` подходит `JpaTransactionManager`. Он также позволяет включить JDBC-операции с тем же `DataSource`, если JDBC-код получает соединение через Spring и настроен подходящий `JpaDialect`. Для общей транзакции с несколькими независимыми ресурсами в модели JTA нужно настроить менеджер и участие каждого ресурса. [Spring, JpaTransactionManager](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/orm/jpa/JpaTransactionManager.html).
 
 ```java
-// Без Spring — ручное управление
+// Локальная JDBC-транзакция — ручное управление
 try (Session session = sf.openSession()) {
     Transaction tx = session.beginTransaction();
     try {
@@ -1302,13 +1421,13 @@ public class UserService {
 }
 ```
 
-По умолчанию Spring использует `REQUIRED`: метод присоединяется к существующей транзакции или открывает новую. Транзакцию фиксирует её владелец при успешном завершении; `RuntimeException` и `Error` по умолчанию вызывают откат, а checked-исключения — нет, если не задано правило `rollbackFor`. При стандартном proxy-режиме внутренний вызов метода того же объекта обходит `@Transactional` на вызываемом методе. `flush` отправляет изменения в БД, но сам по себе не фиксирует транзакцию. При обычном режиме `AUTO` Hibernate выполняет необходимый `flush` перед коммитом; отдельный `flush()` ради фиксации не нужен.
+По умолчанию Spring использует `REQUIRED`: метод присоединяется к существующей транзакции выбранного менеджера или открывает новую. Транзакцию фиксирует её владелец при успешном завершении; `RuntimeException` и `Error` по умолчанию вызывают откат, а checked-исключения — нет, если не переопределены правила отката. Например, можно задать `rollbackFor` для конкретного исключения или с Spring Framework 6.2 изменить общий режим на `ALL_EXCEPTIONS`. При стандартном proxy-режиме внутренний вызов метода того же объекта обходит `@Transactional` на вызываемом методе. `flush` отправляет изменения в БД, но сам по себе не фиксирует транзакцию. При обычном режиме `AUTO` Hibernate выполняет необходимый `flush` перед коммитом; отдельный `flush()` ради фиксации не нужен.
 
-**Уровни изоляции** можно задать через `@Transactional(isolation = Isolation.READ_COMMITTED)`, если транзакционный менеджер и БД поддерживают этот уровень. Подробнее — в [вопросах по архитектуре БД](database-architecture-interview.md).
+**Уровень изоляции** в `@Transactional(isolation = Isolation.READ_COMMITTED)` применяется при открытии новой транзакции, если менеджер и БД поддерживают этот уровень. Если внешний сервис уже открыл `REPEATABLE_READ` и вызвал `createUsers` с `REQUIRED`, операции сохранят изоляцию внешней транзакции, даже если внутренний метод объявляет `READ_COMMITTED`. При включённом `validateExistingTransaction` менеджер Spring может отклонить такое несовпадение. [Spring, распространение транзакций](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html) · [Spring 6.2, @Transactional](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/annotations.html). Подробнее — в [вопросах по архитектуре БД](database-architecture-interview.md).
 
 ## Q36. (!) Что такое `Batch Processing` в `Hibernate`?
 
-JDBC batching передаёт несколько совместимых SQL-операций одного `PreparedStatement` драйверу пакетом. Это может сократить сетевые вызовы при массовых `INSERT`/`UPDATE`; конкретный выигрыш зависит от драйвера, SQL и БД. `hibernate.jdbc.batch_size` задаёт максимальное число операций в пакете для stateful session; положительное значение включает batching.
+JDBC batching передаёт несколько совместимых SQL-операций одного `PreparedStatement` драйверу пакетом. Это может сократить сетевые вызовы при массовых `INSERT`/`UPDATE`; конкретный выигрыш зависит от драйвера, SQL и БД. `hibernate.jdbc.batch_size` задаёт максимальное число операций в пакете для stateful session; положительное значение включает batching, ноль или отрицательное отключают его. Для конкретной `Session` настройку можно переопределить через `setJdbcBatchSize()`.
 
 **Конфигурация:**
 ```yaml
@@ -1324,6 +1443,8 @@ spring:
 
 **Важно:** Hibernate 7.4 отключает JDBC **insert** batching при `GenerationType.IDENTITY`: ID получается после INSERT. `SEQUENCE` позволяет получить ID заранее и применять batching, если он настроен и поддерживается БД. Это не означает, что любая операция с `IDENTITY` отключает batching всех `UPDATE`.
 
+Пример рассчитан на самостоятельный импорт в собственном persistence context. При вызове через Spring-прокси без внешней транзакции импорт выполняется в одной транзакции.
+
 ```java
 @Transactional
 public void batchInsert(List<UserDto> dtos) {
@@ -1334,14 +1455,16 @@ public void batchInsert(List<UserDto> dtos) {
 
         if (count % 50 == 0) {
             entityManager.flush();  // выполнить SQL внутри транзакции
-            entityManager.clear();  // освободить persistence context
+            entityManager.clear();  // отсоединить все управляемые сущности
         }
     }
     // Оставшиеся изменения выполнит flush перед commit.
 }
 ```
 
-Периодические `flush()`/`clear()` ограничивают размер persistence context в большом цикле, но не включают JDBC batching: для него нужен положительный `batch_size`. `flush()` не делает `commit`; длинная транзакция продолжает удерживать соединение и ресурсы до завершения. `order_inserts`/`order_updates` сортируют операции для повышения заполнения пакетов и могут добавить свою стоимость, поэтому их проверяют измерением. [Hibernate ORM 7.4, JDBC и session batching](https://docs.hibernate.org/orm/7.4/userguide/html_single/#batch).
+Здесь число 50 в конфигурации ограничивает размер JDBC-пакета, а в цикле задаёт частоту очистки контекста. Число вызовов `persist()` не определяет число SQL-операций: каскады, разные таблицы и разные формы SQL могут дать несколько пакетов. `flush()` синхронизирует весь контекст, а `clear()` отсоединяет все его сущности. Если импорт присоединится к внешней транзакции с тем же контекстом, эти вызовы затронут и сущности вызывающего кода.
+
+Записи после промежуточного `flush()` остаются частью той же транзакции и откатываются вместе с ней. Чтобы фиксировать импорт порциями и раньше освобождать ресурсы, каждой порции нужна отдельная транзакция. При сбое уже зафиксированные порции сохраняются, поэтому повтор должен учитывать частичный результат. `order_inserts`/`order_updates` сортируют операции для повышения заполнения пакетов и могут добавить свою стоимость, поэтому их проверяют измерением. [Hibernate ORM 7.4, JDBC и session batching](https://docs.hibernate.org/orm/7.4/userguide/html_single/#batch).
 
 ## Q37. В чём разница между `setMaxResults()` и `setFetchSize()`?
 
@@ -1352,13 +1475,16 @@ public void batchInsert(List<UserDto> dtos) {
 | `setMaxResults(n)` | Ограничивает число результатов | `LIMIT n` в PostgreSQL | Результат запроса |
 | `setFetchSize(n)` | Задаёт подсказку о размере порции | Не является SQL-пределом | Чтение результата драйвером |
 
+При `join fetch` коллекции одна корневая сущность может занять несколько строк SQL. Например, при выборке страницы заказов вместе с позициями лимит в десять строк соединения мог бы вернуть меньше десяти заказов и обрезать позиции последнего. В Hibernate 6 и 7.0–7.3 такой запрос с пагинацией ограничивается в JVM после чтения результата. Hibernate 7.4 может применить пагинацию в БД, если диалект поддерживает лимит и смещение в подзапросах. Настройка `hibernate.query.fail_on_pagination_over_collection_fetch=true` заставляет Hibernate выбросить исключение, если лимит пришлось бы применить в памяти. [Hibernate ORM 7.4: Limits and Fetch Joins](https://docs.hibernate.org/orm/7.4/whats-new/#limits-and-fetch-joins) · [Hibernate ORM 7.4: QuerySettings](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/cfg/QuerySettings.html#FAIL_ON_PAGINATION_OVER_COLLECTION_FETCH).
+
 ```java
 // setMaxResults — получить первые 10 записей
-List<User> top10 = entityManager.createQuery("SELECT u FROM User u ORDER BY u.rating DESC", User.class)
+List<User> top10 = entityManager.createQuery("SELECT u FROM User u ORDER BY u.rating DESC, u.id", User.class)
     .setMaxResults(10)
     .getResultList();
 
-// Метод вызывается внутри транзакции без autocommit.
+// Читать внутри транзакции с отключённым JDBC autocommit.
+// process читает данные и не сохраняет ссылки на обработанные сущности.
 Session session = entityManager.unwrap(Session.class);
 try (ScrollableResults<LogEntry> results = session
         .createSelectionQuery("from LogEntry", LogEntry.class)
@@ -1372,7 +1498,9 @@ try (ScrollableResults<LogEntry> results = session
 }
 ```
 
-Для серверного курсора pgJDBC нужны положительный `fetchSize`, отключённый autocommit, прямой `ResultSet` и один SQL-запрос. Иначе драйвер может загрузить результат целиком. Даже при чтении порциями `Session` удерживает загруженные managed-сущности в persistence context: при длинном обходе их нужно отсоединять или ограничивать объём работы другим способом. `setFetchSize()` не делает `getResultList()` потоковым и не гарантирует снижение памяти. Курсор и транзакция остаются открыты до завершения обхода, поэтому ресурсы следует закрывать сразу после работы. [Hibernate ORM 7.4: `SelectionQuery` и `ScrollableResults`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/query/SelectionQuery.html), [pgJDBC: чтение через курсор](https://jdbc.postgresql.org/documentation/query/).
+Для курсорной выборки pgJDBC нужны положительный `fetchSize`, соединение без autocommit, `ResultSet.TYPE_FORWARD_ONLY` и один SQL-оператор. При неподходящей конфигурации драйвер может прочитать весь результат сразу. Например, удерживаемый после коммита `ResultSet` (`HOLD_CURSORS_OVER_COMMIT`) исключает этот курсорный режим pgJDBC даже с положительным `fetchSize`. [pgJDBC, условия включения курсорного чтения](https://github.com/pgjdbc/pgjdbc/blob/REL42.7.8/pgjdbc/src/main/java/org/postgresql/jdbc/PgStatement.java). Значение `fetchSize = 0` отключает порционное чтение через курсор. Даже при чтении порциями `Session` удерживает загруженные managed-сущности в persistence context: при длинном обходе их нужно отсоединять или ограничивать объём работы другим способом. Даже если JDBC читает строки порциями, `getResultList()` собирает весь результат запроса в список. При обходе через `ScrollableResults` потребление памяти также зависит от загружаемых связей и от того, сохраняет ли обработчик ссылки на записи.
+
+`try-with-resources` закрывает `ScrollableResults` при полном обходе, досрочном выходе или исключении. Транзакция живёт до собственной границы. Если чтение выполняется внутри внешней транзакции, закрытие курсора освобождает ресурсы запроса, а завершение транзакции остаётся за вызывающим кодом. [Hibernate ORM 7.4: `SelectionQuery`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/query/SelectionQuery.html) · [Hibernate ORM 7.4: `ScrollableResults.close()`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/ScrollableResults.html#close()) · [pgJDBC: чтение через курсор](https://jdbc.postgresql.org/documentation/query/).
 
 ## Q38. Что такое `@Immutable`?
 
@@ -1390,9 +1518,13 @@ public class Country {
 }
 ```
 
+Область аннотации меняет поведение. Для обычного атрибута изменяемой сущности `@Immutable` исключает этот атрибут из dirty checking. Для коллекции, на которой явно стоит `@Immutable`, добавление или удаление элемента приводит к `HibernateException` при синхронизации. Например, изменение имени загруженного `Country` останется в памяти, а добавление элемента в отдельно помеченную неизменяемую коллекцию приведёт к ошибке при `flush()`. [Hibernate ORM 7.4, @Immutable](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/annotations/Immutable.html).
+
 **Применение**: справочники и исторические данные, которые действительно не обновляются после создания. Пропуск dirty checking уменьшает работу при `flush` и объём хранимого состояния. Если для такой сущности настроен провайдер L2 cache, `READ_ONLY` — подходящая стратегия; одна аннотация `@Cache` не подключает провайдера и не делает данные неизменяемыми вне Hibernate.
 
-`merge(detached)` не является проигнорированным вызовом: он возвращает managed-экземпляр по общему контракту `merge` (см. Q9). Но изменение уже существующей `@Immutable` сущности через него не сохраняется обычным dirty checking. Новую сущность можно вставить. `Session.update()` удалён в Hibernate 7.0, поэтому совет вызывать его здесь устарел. `@Immutable` не служит защитой таблицы от любого SQL: в Hibernate 7 массовый HQL/JPQL `UPDATE` такой сущности по умолчанию вызывает исключение, но этот режим можно изменить; прямой SQL зависит от ограничений БД.
+`merge(detached)` не является проигнорированным вызовом: он возвращает managed-экземпляр по общему контракту `merge` (см. Q9). Но изменение уже существующей `@Immutable` сущности через него не сохраняется обычным dirty checking. Новую сущность можно вставить. `Session.update()` удалён в Hibernate 7.0, поэтому совет вызывать его здесь устарел.
+
+В Hibernate 7.4 массовые HQL/JPQL `UPDATE` и `DELETE` для неизменяемой сущности регулирует `hibernate.query.immutable_entity_update_query_handling_mode`. Значение по умолчанию `exception` приводит к `HibernateException`, а `allow` разрешает такие запросы. В Hibernate 6.6 массовый `UPDATE` такой сущности по умолчанию выполняется с предупреждением (`warning`). При обновлении Hibernate проверьте bulk-запросы, которые полагались на это поведение. [Hibernate ORM 6.6, QuerySettings](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/cfg/QuerySettings.html#IMMUTABLE_ENTITY_UPDATE_QUERY_HANDLING_MODE). Прямой SQL подчиняется правам и ограничениям БД. [Hibernate ORM 7.4, QuerySettings](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/cfg/QuerySettings.html#IMMUTABLE_ENTITY_UPDATE_QUERY_HANDLING_MODE).
 
 ## Q39. Как использовать `Hibernate Statistics` для мониторинга?
 
@@ -1403,8 +1535,7 @@ public class Country {
 spring:
   jpa:
     properties:
-      hibernate:
-        generate_statistics: true
+      "[hibernate.generate_statistics]": true
 ```
 
 ```java
@@ -1423,25 +1554,28 @@ if (hits + misses > 0) {
 }
 ```
 
-`getQueryExecutionCount()` считает исполнения запросов, учтённые Hibernate; это **не число всех SQL statement**. Для расследования N+1 сопоставляйте счётчики запросов, загрузок сущностей (`getEntityFetchCount()`) и подготовленных statement (`getPrepareStatementCount()`) с конкретной операцией и SQL-логом. Рост одного глобального счётчика сам по себе не доказывает N+1. L2 hit/miss относятся к кэшируемым сущностям и коллекциям, а не к query cache; долю попаданий считают как `hits / (hits + misses)` при ненулевом знаменателе. `stats.clear()` сбрасывает общую статистику `SessionFactory`, поэтому его не вызывают посреди постоянного мониторинга.
+`getQueryExecutionCount()` считает исполнения запросов, учтённые Hibernate; это **не число всех SQL statement**. Для расследования N+1 сопоставляйте счётчики запросов, загрузок сущностей (`getEntityFetchCount()`) и подготовленных statement (`getPrepareStatementCount()`) с конкретной операцией и SQL-логом. Один подготовленный JDBC statement можно использовать для нескольких операций, например при batching. Чтобы измерить одну операцию, сравните значения счётчиков до и после неё на изолированной фабрике и сверьте разницу с SQL. На общей фабрике в этот интервал могут попасть действия других сессий. Для ленивых коллекций дополнительно смотрите `getCollectionFetchCount()`. Например, в изолированном тесте с холодным кэшем загрузка 20 заказов и обход каждой коллекции позиций могут дать один SELECT заказов и 20 однотипных SELECT позиций. Сравните SQL до и после изменения плана загрузки при одинаковых данных.
 
-Сбор статистики добавляет работу приложению: в production включайте его осознанно и измеряйте накладные расходы. Для автоматического экспорта Hibernate-метрик через Spring Boot нужны `hibernate-micrometer` в classpath, включённая статистика и настройка Actuator/Micrometer. [Hibernate 7.4 `Statistics`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/stat/Statistics.html), [Spring Boot Actuator: Hibernate Metrics](https://docs.spring.io/spring-boot/reference/actuator/metrics.html).
+Показанный hit ratio охватывает L2 cache сущностей и коллекций. Для кэша результатов запросов есть отдельные `getQueryCacheHitCount()` и `getQueryCacheMissCount()`, а для кэша соответствий натуральных ключей — `getNaturalIdCacheHitCount()` и `getNaturalIdCacheMissCount()`. Для выбранного кэша долю попаданий считайте как `hits / (hits + misses)` при ненулевом знаменателе. [Hibernate ORM 7.4, реализация счётчиков](https://github.com/hibernate/hibernate-orm/blob/7.4/hibernate-core/src/main/java/org/hibernate/stat/internal/StatisticsImpl.java). `stats.clear()` сбрасывает общую статистику `SessionFactory`, поэтому его не вызывают посреди постоянного мониторинга.
+
+Сбор статистики добавляет работу приложению: в production включайте его осознанно и измеряйте накладные расходы. В Spring Boot 3.5 при наличии `org.hibernate.orm:hibernate-micrometer` автоконфигурация Micrometer регистрирует метрики каждой доступной Hibernate `EntityManagerFactory` с включённой статистикой. Метрики различаются тегом с именем фабрики, производным от имени бина. Для отправки в систему мониторинга настройте соответствующий реестр или endpoint сбора. [Hibernate 7.4 Statistics](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/stat/Statistics.html), [Spring Boot 3.5 Hibernate Metrics](https://docs.spring.io/spring-boot/3.5/reference/actuator/metrics.html#actuator.metrics.supported.hibernate).
+
 
 ## Q40. Как настроить `Hibernate` в `Spring Boot`?
 
-`spring-boot-starter-data-jpa` подключает Spring Data JPA и позволяет Spring Boot настроить `EntityManagerFactory` с Hibernate, если он выбран JPA-провайдером. Параметры `spring.jpa.*` управляют интеграцией Boot, а `spring.jpa.properties.*` передаются провайдеру как его настройки. Пример для PostgreSQL и проекта, где схемой управляют миграции:
+`spring-boot-starter-data-jpa` подключает Spring Data JPA и позволяет Spring Boot настроить `EntityManagerFactory` с Hibernate, если он выбран JPA-провайдером. Параметры `spring.jpa.*` управляют интеграцией Boot, а `spring.jpa.properties.*` передаются провайдеру как его настройки. Под `spring.jpa.properties.*` нужны точные имена Hibernate: Spring Boot не преобразует `batch-size` или `batchSize` в `batch_size`. Пример для Spring Boot 3.5, PostgreSQL и проекта, где схемой управляют миграции:
 
 ```yaml
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/mydb
     username: app_user
-    password: secret
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: validate  # проверка схемы; вместо неё можно выбрать none
     show-sql: false
-    open-in-view: false   # не держать EntityManager открытым в web view
+    open-in-view: false   # отключить автонастройку Open EntityManager in View
     properties:
       hibernate:
         default_batch_fetch_size: 25   # пакетная загрузка связей при чтении
@@ -1456,28 +1590,37 @@ spring:
 - `create` — создаёт схему заново; существующие данные могут быть потеряны.
 - `create-drop` — создаёт схему при старте и удаляет при закрытии фабрики; подходит для изолированных тестов.
 
-В Spring Boot default для `ddl-auto` зависит от БД и наличия Flyway/Liquibase: для встроенной БД без менеджера миграций это `create-drop`, в остальных случаях — `none`. При миграциях выбирайте `none` или дополнительную проверку через `validate` по требованиям проекта. `open-in-view` по умолчанию включён в web-приложении и держит `EntityManager` открытым во время обработки view, позволяя ленивые загрузки вне сервисной транзакции. Для API часто выбирают `false` и заранее загружают нужные данные в сервисе; это архитектурное решение, а не обязательное правило для каждого production-приложения.
+При стандартной автоконфигурации Spring Boot 3.5 выбирает `create-drop` для встроенной БД, если её схемой не управляет Flyway или Liquibase. В остальных случаях по умолчанию действует `none`. В примере миграции создают схему, а `validate` проверяет маппинг при создании фабрики. Если миграция не добавила колонку, которую ожидает Hibernate, проверка может остановить запуск.
 
-`hibernate.default_batch_fetch_size` задаёт глобальный размер пакетной загрузки ещё не загруженных сущностей и коллекций по ID, аналогично применению `@BatchSize` на отдельных маппингах. Он не включает JDBC batching `INSERT`/`UPDATE`: за него отвечает `hibernate.jdbc.batch_size` (см. Q36). Эффект обоих параметров нужно проверить на запросах конкретного приложения. [Spring Boot: инициализация БД](https://docs.spring.io/spring-boot/how-to/data-initialization.html), [JPA и Open EntityManager in View](https://docs.spring.io/spring-boot/reference/data/sql.html), [Hibernate 7.4 `Session` API](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/Session.html).
+В Servlet-приложении со Spring MVC Boot 3.5 по умолчанию регистрирует `OpenEntityManagerInViewInterceptor`, если приложение не настроило собственный интерцептор или фильтр. Он привязывает `EntityManager` к HTTP-запросу. Сервисная транзакция при этом может завершиться раньше. Например, сериализация JSON может обратиться к ленивой связи после выхода из сервиса и вызвать дополнительные SELECT. При `open-in-view: false` и отсутствии собственной настройки нужные данные можно загрузить в сервисной транзакции и передать контроллеру как DTO.
+
+`hibernate.default_batch_fetch_size` задаёт глобальный размер пакетной загрузки ещё не загруженных сущностей и коллекций по ID, аналогично применению `@BatchSize` на отдельных маппингах. Он не включает JDBC batching `INSERT`/`UPDATE`: за него отвечает `hibernate.jdbc.batch_size` (см. Q36). Эффект обоих параметров нужно проверить на запросах конкретного приложения. [Spring Boot: инициализация БД](https://docs.spring.io/spring-boot/3.5/how-to/data-initialization.html), [Свойства JPA в Boot 3.5](https://docs.spring.io/spring-boot/3.5/how-to/data-access.html#howto.data-access.jpa-properties), [Условия автонастройки Open EntityManager in View](https://docs.spring.io/spring-boot/3.5/api/java/org/springframework/boot/autoconfigure/orm/jpa/JpaBaseConfiguration.JpaWebConfiguration.html), [Hibernate 7.4 `Session` API](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/Session.html).
 
 Подробнее о конфигурации — в [вопросах по Spring Boot](../frameworks/spring/spring-boot-interview.md).
 
 ## Q41. В чём разница между `getCurrentSession()` и `openSession()`?
 
-`getCurrentSession()` возвращает `Session` из настроенного **текущего контекста**. Что значит «текущая» и кто закрывает сессию, задаёт реализация `CurrentSessionContext`: Hibernate поддерживает контекст JTA-транзакции, потока и внешний managed-контекст. `openSession()` создаёт новую `Session` с отдельным persistence context; её жизненным циклом управляет вызывающий код. Новая `Session` не означает автоматически новую независимую транзакцию.
+`getCurrentSession()` возвращает `Session` из настроенного **текущего контекста**. Что значит «текущая» и кто закрывает сессию, задаёт реализация `CurrentSessionContext`: Hibernate поддерживает контекст JTA-транзакции, потока и внешний managed-контекст. `openSession()` создаёт новую `Session` с отдельным persistence context; её жизненным циклом управляет вызывающий код. Открытие сессии само по себе не начинает отдельную транзакцию. Момент получения JDBC-соединения зависит от режима его использования. В Hibernate 7.4 при стандартном режиме для `RESOURCE_LOCAL` вызов `beginTransaction()` обычно уже берёт соединение из пула, чтобы отключить auto-commit. Если поставщик гарантирует `autoCommit=false` для каждого выданного соединения, настройка `hibernate.connection.provider_disables_autocommit=true` позволяет отложить получение соединения до первого обращения к JDBC. Этот флаг сообщает Hibernate о гарантии поставщика, а состояние соединения задаёт сам поставщик. [Hibernate 7.4 — управление JDBC-соединениями](https://docs.hibernate.org/orm/7.4/userguide/html_single/#transactions-connection-handling).
+
+В нативной конфигурации эту область задаёт свойство `hibernate.current_session_context_class`. Например, `hibernate.current_session_context_class=thread` выбирает `ThreadLocalSessionContext`. Допустимы также `jta`, `managed` и имя собственного класса. Если Hibernate не настроил ни один контекст, вызов `getCurrentSession()` выбросит `HibernateException`. В той же конфигурации `openSession()` по-прежнему позволяет явно открыть сессию. [Настройка контекста в Hibernate 7.4](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/cfg/AvailableSettings.html#CURRENT_SESSION_CONTEXT_CLASS), [реализация SessionFactory](https://github.com/hibernate/hibernate-orm/blob/7.4/hibernate-core/src/main/java/org/hibernate/internal/SessionFactoryImpl.java).
+
 
 | Аспект | `getCurrentSession()` | `openSession()` |
 |--------|----------------------|-----------------|
 | Привязка | К области, заданной `CurrentSessionContext` | Новая `Session` и отдельный persistence context |
 | Закрытие | Зависит от контекста: JTA/thread управляют сроком сессии, managed требует внешнего управления | Вызывающий код закрывает сессию |
-| Конфигурация | Нужен подходящий `CurrentSessionContext`; при включённом JTA Hibernate может выбрать JTA-контекст по умолчанию | Контекст текущей сессии не нужен |
+| Конфигурация | Нужен подходящий `CurrentSessionContext`; без явного контекста при включённом JTA Hibernate выбирает JTA-контекст | Контекст текущей сессии не нужен |
 | Применение | Когда приложение настроило контекст текущей сессии | Когда код явно управляет новой сессией |
 
 ```java
-// Работает только при настроенном CurrentSessionContext.
+// Внутри активной JTA-транзакции при использовании JTASessionContext.
+// Контекст повторно возвращает ту же сессию для этой транзакции.
 Session current = sf.getCurrentSession();
+```
 
-// Явное управление новой Session и её локальной транзакцией.
+```java
+
+// Отдельный пример для resource-local: границы задаёт вызывающий код.
 try (Session session = sf.openSession()) {
     Transaction tx = session.beginTransaction();
     try {
@@ -1490,7 +1633,11 @@ try (Session session = sf.openSession()) {
 }
 ```
 
-В `ManagedSessionContext` приложение само привязывает, отвязывает и закрывает `Session`; в `JTASessionContext` она ограничена JTA-транзакцией. `ThreadLocalSessionContext` привязывает её к потоку, но это только один из вариантов, а не общий контракт метода. В обычном Spring Data JPA код работает через внедрённый `EntityManager` или репозиторий и `@Transactional`; прямой `getCurrentSession()` нужен лишь при соответствующей настройке нативной интеграции Hibernate. Также существует `openStatelessSession()` без persistence context и dirty checking (см. Q24). [Hibernate 7.4 User Guide](https://docs.hibernate.org/orm/7.4/userguide/html_single/), [`SessionFactory` API](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/SessionFactory.html), [Spring JPA](https://docs.spring.io/spring-framework/reference/data-access/orm/jpa.html).
+В `ManagedSessionContext` приложение само привязывает, отвязывает и закрывает `Session`; в `JTASessionContext` она ограничена JTA-транзакцией. `ThreadLocalSessionContext` привязывает её к потоку, но это только один из вариантов, а не общий контракт метода.
+
+В штатном контексте `thread` Hibernate 7.4 первый `getCurrentSession()` создаёт сессию и привязывает её к потоку и фабрике. Вызов `find()` на такой автоматически созданной сессии до `beginTransaction()` завершится ошибкой. После коммита или отката контекст снимает привязку, а Hibernate закрывает сессию. Следующий `getCurrentSession()` в том же потоке может создать новую сессию. [Исходник ThreadLocalSessionContext в Hibernate 7.4](https://github.com/hibernate/hibernate-orm/blob/7.4/hibernate-core/src/main/java/org/hibernate/context/internal/ThreadLocalSessionContext.java).
+
+В обычном Spring Data JPA код работает через внедрённый `EntityManager` или репозиторий и `@Transactional`; прямой `getCurrentSession()` нужен лишь при соответствующей настройке нативной интеграции Hibernate. Для нативного кода с локальной транзакцией Hibernate 7.4 также предоставляет `sf.inTransaction(session -> session.persist(user))`: фабрика открывает и закрывает сессию и управляет завершением транзакции. Также существует `openStatelessSession()` без persistence context и dirty checking (см. Q46). [Hibernate 7.4 User Guide](https://docs.hibernate.org/orm/7.4/userguide/html_single/), [`SessionFactory` API](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/SessionFactory.html#getCurrentSession()), [Spring JPA](https://docs.spring.io/spring-framework/reference/data-access/orm/jpa.html).
 
 ## Q42. Что такое `Hibernate Dialect`?
 
@@ -1502,21 +1649,29 @@ try (Session session = sf.openSession()) {
 | `MySQL` | `org.hibernate.dialect.MySQLDialect` |
 | `Oracle` | `org.hibernate.dialect.OracleDialect` |
 | `H2` | `org.hibernate.dialect.H2Dialect` |
-| `SQLite` | Требует сторонний dialect |
+| `SQLite` | `SQLiteDialect` из отдельного модуля `org.hibernate.orm:hibernate-community-dialects` |
 
-```yaml
-spring:
-  jpa:
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+Таблица указывает классы для Hibernate 7.4. Для встроенных диалектов Hibernate публикует минимальные поддерживаемые версии СУБД. Например, для `PostgreSQLDialect` в 7.4 это PostgreSQL 14. Диалекты из community-модуля имеют отдельный уровень поддержки.
+
+В Hibernate 6+ для поддерживаемой СУБД обычно достаточно настроить подключение. Hibernate определяет диалект при запуске по информации JDBC, включая метаданные продукта и его версии. Свойство `hibernate.dialect` применяют, например, для собственного диалекта. Оно выбирает реализацию класса, а сведения о версии поступают из метаданных или явных настроек запуска. Проверьте также тексты native SQL: выбор диалекта влияет на SQL, который строит Hibernate, а переносимость написанных вручную запросов зависит от их синтаксиса и функций.
+
+Если при старте Hibernate 7.4 нельзя подключиться к БД для чтения метаданных, платформу и версию можно передать явно. Например, при подготовке SQL для PostgreSQL 18:
+
+```properties
+hibernate.boot.allow_jdbc_metadata_access=false
+jakarta.persistence.database-product-name=PostgreSQL
+jakarta.persistence.database-major-version=18
+jakarta.persistence.database-minor-version=0
 ```
 
-Начиная с **Hibernate 6**, диалект определяется **автоматически** на основе URL подключения — явное указание обычно не требуется. Явное указание полезно, когда нужно зафиксировать конкретную версию диалекта или использовать кастомный.
+Имя продукта берут из `DatabaseMetaData.getDatabaseProductName()`. В примере числа описывают целевой PostgreSQL 18.0. При другой версии укажите её значения, поскольку Hibernate использует версию при выборе возможностей платформы. Настройка отключает чтение JDBC-метаданных на старте Hibernate. Проверка или применение схемы и миграции, которым требуется соединение, настраиваются отдельно.
+
+[Hibernate ORM 7.4 — Dialects](https://docs.hibernate.org/orm/7.4/dialect/), [JdbcSettings](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/cfg/JdbcSettings.html#DIALECT), [запуск без JDBC-метаданных](https://docs.hibernate.org/orm/7.4/introduction/html_single/).
+
 
 ## Q43. (!) Что такое `Open-in-View` антипаттерн и как его избежать?
 
-**Open-in-View** (`OSIV` — Open Session In View) оставляет `Hibernate Session` или JPA `EntityManager` открытым на время обработки web-запроса, включая слой представления. Это позволяет лениво загрузить связь после завершения сервисной транзакции. В Spring Boot для web-приложений Open EntityManager in View **включён по умолчанию**; он удобен в отдельных сценариях, но в API может скрыть запросы к БД за сериализацией или маппингом ответа.
+**Open-in-View** (`OSIV` — Open Session In View) оставляет `Hibernate Session` или JPA `EntityManager` открытым на время обработки web-запроса, включая слой представления. Это позволяет лениво загрузить связь после завершения сервисной транзакции. В Spring Boot 3.5 автоконфигурация JPA регистрирует `OpenEntityManagerInViewInterceptor` по умолчанию для Servlet-приложения со Spring MVC, если свойство `spring.jpa.open-in-view` не отключено и приложение не зарегистрировало собственный фильтр или интерцептор OSIV. В API запросы к БД тогда могут выполняться во время сериализации или маппинга ответа.
 
 **Проблемы OSIV:**
 
@@ -1554,6 +1709,8 @@ graph LR
 1. **Скрытые запросы к БД в web-слое** — lazy-загрузка может произойти после завершения сервисной транзакции.
 2. **Долгоживущий persistence context** — `EntityManager` остаётся открытым до завершения обработки запроса; JDBC-соединение при этом не обязательно удерживается всё время. Его получение и освобождение зависят от транзакций и режима управления соединением.
 3. **Непредсказуемое число запросов** — оно зависит от того, какие связи читает mapper, view или сериализатор.
+
+**Пример с PostgreSQL.** Сервис в транзакции читает пользователя, оставляя список заказов незагруженным. После фиксации этой транзакции другой запрос добавляет заказ. Если сериализатор впервые читает список после фиксации нового заказа, дополнительный `SELECT` может увидеть его. Открытый `EntityManager` сохраняет контекст объектов, но сам по себе не задаёт единый снимок БД для HTTP-ответа. Если нужен согласованный снимок, загрузите данные и соберите DTO внутри одной транзакции с подходящим уровнем изоляции. В PostgreSQL при `READ COMMITTED` даже два `SELECT` в одной транзакции могут видеть разные снимки. [PostgreSQL 18: уровни изоляции](https://www.postgresql.org/docs/18/transaction-iso.html).
 
 **Диагностика:**
 
@@ -1613,11 +1770,13 @@ public UserSummaryDto getUserSummary(Long id) {
 Optional<UserSummaryDto> findUserSummaryById(@Param("id") Long id);
 ```
 
-[Spring Boot: Open EntityManager in View](https://docs.spring.io/spring-boot/reference/data/sql.html), [Spring `OpenEntityManagerInViewInterceptor`](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/orm/jpa/support/OpenEntityManagerInViewInterceptor.html), [Hibernate 7.4: управление соединением](https://docs.hibernate.org/orm/7.4/userguide/html_single/), [`LazyInitializationException`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/LazyInitializationException.html).
+[Spring Boot 3.5: Open EntityManager in View](https://docs.spring.io/spring-boot/3.5/reference/data/sql.html#data.sql.jpa-and-spring-data.open-entity-manager-in-view), [условия автоконфигурации](https://github.com/spring-projects/spring-boot/blob/v3.5.0/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/orm/jpa/JpaBaseConfiguration.java#L220-L225), [Spring `OpenEntityManagerInViewInterceptor`](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/orm/jpa/support/OpenEntityManagerInViewInterceptor.html), [Hibernate 7.4: управление соединением](https://docs.hibernate.org/orm/7.4/userguide/html_single/), [`LazyInitializationException`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/LazyInitializationException.html).
 
 ## Q44. Что такое `Hibernate Envers` и как организовать аудит изменений?
 
-**Hibernate Envers** — модуль истории для сущностей, помеченных `@Audited`. При обычных операциях Hibernate над такой сущностью Envers записывает ревизии добавления, изменения и удаления в отдельную audit-таблицу. Это история зафиксированного состояния, а не запись каждого вызова setter. Массовые `CriteriaUpdate`/`CriteriaDelete` и прямой SQL обходят события жизненного цикла сущности и не дают полной истории Envers.
+**Hibernate Envers** — модуль истории для сущностей, помеченных `@Audited`. При обычных операциях Hibernate над такой сущностью Envers записывает ревизии добавления, изменения и удаления в отдельную audit-таблицу. При обычной работе одна транзакция с аудируемыми изменениями получает общую ревизию для всех затронутых сущностей. Например, если в транзакции изменили цены двух товаров, их audit-строки ссылаются на один номер ревизии. Если транзакцию откатили, её audit-записи тоже откатываются. Несколько изменений поля до фиксации могут отразиться в одной версии. [Hibernate ORM 7.4: Envers](https://docs.hibernate.org/orm/7.4/userguide/html_single/#envers).
+
+**Граница аудита.** Envers опирается на события изменения отдельных сущностей. Массовые `UPDATE` и `DELETE` в JPQL/HQL или Criteria, а также прямой SQL обходят эти события. Например, массовое снижение цены через `UPDATE Product p SET p.price = p.price * 0.9` изменит строки в БД, но само по себе не создаст ревизии цен в `products_AUD`. Если история Envers должна включать эту операцию, обновляйте управляемые `Product` и сохраняйте изменения через обычный flush. [Hibernate ORM 7.4: границы аудита Envers](https://docs.hibernate.org/orm/7.4/userguide/html_single/#envers-basics), [Jakarta Persistence 3.2: массовое обновление и удаление](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a5636).
 
 **Подключение:**
 
@@ -1652,6 +1811,8 @@ public class Product {
 
 **Структура таблиц:** по умолчанию Envers использует таблицу вида `products_AUD` для истории Product и `REVINFO` для номера и времени ревизии. Audit-строка содержит ID, `REV`, `REVTYPE` (`ADD`, `MOD`, `DEL`) и аудируемые поля, включая ID связи с Category. Конкретные имена и DDL зависят от настроек и диалекта. Envers создаёт audit-таблицы через Hibernate schema generation только при `create`, `create-drop` или `update`; при управляемой схеме их добавляют миграцией. `@NotAudited` исключает `thumbnail`. При `targetAuditMode=NOT_AUDITED` историческая ссылка ведёт к **текущей** Category, а не к её состоянию на дату ревизии.
 
+**Как хранится история между ревизиями.** Если цена товара менялась в ревизиях 10 и 15, запрос состояния на существующую ревизию 12 вернёт цену из ревизии 10. Стратегия по умолчанию хранит начальную ревизию каждой версии и ищет последнюю подходящую запись. `ValidityAuditStrategy` хранит также конец интервала: при записи ревизии 15 она обновляет предыдущую audit-строку, чтобы её интервал стал `[10, 15)`. Это добавляет обновление при записи, зато запрос состояния может проверять границы интервала. Выбор стратегии имеет смысл проверять на реальных запросах к истории. [Hibernate ORM 7.4: стратегии аудита Envers](https://docs.hibernate.org/orm/7.4/userguide/html_single/#envers-configuration).
+
 **Расширение RevisionEntity для доп. метаданных:**
 
 ```java
@@ -1660,6 +1821,10 @@ public class Product {
 @RevisionEntity(AuditRevisionListener.class)
 public class AuditRevision extends RevisionMapping {
     private String username;
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
 }
 
 public class AuditRevisionListener implements RevisionListener {
@@ -1674,7 +1839,7 @@ public class AuditRevisionListener implements RevisionListener {
 }
 ```
 
-В Hibernate 7.4 `DefaultRevisionEntity` — `final`; для пользовательской revision-сущности наследуют `RevisionMapping`, который уже содержит номер и timestamp. `RevisionListener` должен иметь конструктор без аргументов. Источник пользователя в фоновой задаче может отсутствовать, поэтому пример задаёт `system` вместо обращения к `null`.
+В Hibernate 7.4 `DefaultRevisionEntity` — `final`; для пользовательской revision-сущности наследуют `RevisionMapping`, который уже содержит номер и timestamp. `RevisionListener` должен иметь конструктор без аргументов. Пример берёт пользователя из контекста того потока, в котором Envers создаёт ревизию. В фоновой задаче инициатора операции передают отдельно, если его нужно сохранить для аудита. Значение `system` здесь означает отсутствие установленного пользователя. Timestamp фиксирует создание ревизии и сам по себе не задаёт порядок фиксации параллельных транзакций. [RevisionListener](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/envers/RevisionListener.html), [RevisionTimestamp](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/envers/RevisionTimestamp.html).
 
 **Чтение истории через AuditReader:**
 
@@ -1700,17 +1865,18 @@ public class ProductAuditService {
     @Transactional(readOnly = true)
     public Product getProductAt(Long productId, Date date) {
         AuditReader reader = AuditReaderFactory.get(em);
-        Number revNumber = reader.getRevisionNumberForDate(date);
-        return reader.find(Product.class, productId, revNumber);
+        return reader.find(Product.class, productId, date);
     }
 }
 ```
 
-[Hibernate ORM 7.4 Envers](https://docs.hibernate.org/orm/7.4/userguide/html_single/), [`DefaultRevisionEntity`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/envers/DefaultRevisionEntity.html), [`RevisionMapping`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/envers/RevisionMapping.html), [`AuditQueryCreator`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/envers/query/AuditQueryCreator.html).
+У выборок разные задачи. Список ревизий показывает события для конкретного товара. Например, при создании, изменении цены и удалении будут строки `ADD`, `MOD` и `DEL`. У строки удаления по умолчанию сохраняется идентификатор, а значения аудируемых полей можно сохранить настройкой `org.hibernate.envers.store_data_at_delete=true`. Поиск по дате показывает состояние товара на последней общей ревизии не позднее этой даты. Если товар тогда ещё не существовал или уже был удалён, результатом будет `null`. Если дата предшествует первой ревизии вообще, метод бросит `RevisionDoesNotExistException`.
+
+[Hibernate ORM 7.4 Envers](https://docs.hibernate.org/orm/7.4/userguide/html_single/), [`DefaultRevisionEntity`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/envers/DefaultRevisionEntity.html), [`RevisionMapping`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/envers/RevisionMapping.html), [`AuditReader`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/envers/AuditReader.html), [`AuditQueryCreator`](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/envers/query/AuditQueryCreator.html).
 
 ## Q45. (!) Как использовать `Projections` для оптимизации запросов?
 
-Проекция задаёт форму результата: скалярные поля, `Tuple` или DTO вместо управляемой Entity. Если запрос выбирает только нужные колонки, это может уменьшить объём данных и работу по созданию сущностей. Выигрыш зависит от SQL, связей и нагрузки: проверяйте сгенерированный запрос и план.
+Проекция задаёт форму результата, например набор скалярных полей, `Tuple` или DTO. Если запрос выбирает только нужные колонки, это может уменьшить объём данных и работу по созданию сущностей. Выигрыш зависит от SQL, связей и нагрузки: проверяйте сгенерированный запрос и план.
 
 **1. Закрытая интерфейсная проекция Spring Data JPA:**
 
@@ -1732,6 +1898,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 Spring Data знает поля закрытой проекции и может ограничить выборку полями корневой сущности. `@Value` со SpEL превращает её в открытую: выражение может обратиться к любому полю `target`, поэтому такой оптимизации нет. Вложенные свойства могут привести к загрузке всего связанного объекта через join. Виды проекций подробнее разобраны в [Spring Data JPA Q13](../frameworks/spring/spring-data-jpa-interview.md#q13--что-такое-projections-и-какие-виды-бывают).
 
+Для списка сотрудников отдела при прямом маппинге `departmentId` на `department_id` ожидаемая форма запроса — `SELECT id, first_name, last_name FROM users WHERE department_id = ?`. `getFullName()` вычисляется в Java из уже выбранных полей. Если добавить вложенную проекцию отдела с путём `getDepartment().getName()`, SQL может выбрать всю связанную сущность. Когда нужны ровно имя сотрудника и имя отдела, задайте оба скалярных поля явно в DTO-запросе с `JOIN`.
+
+Если у `User` есть и скалярное свойство `departmentId`, и связь `department` с идентификатором `id`, Spring Data сначала находит прямое совпадение `departmentId`. Поэтому `findByDepartmentId(42L)` фильтрует по скалярному свойству. Чтобы явно пройти по связи и фильтровать по `department.id`, объявите `List<UserSummary> findByDepartment_Id(Long departmentId)`. В обоих случаях `UserSummary` задаёт форму результата, а имя метода задаёт условие поиска. [Spring Data JPA — разбор пути свойства](https://docs.spring.io/spring-data/jpa/reference/repositories/query-methods-details.html#repositories.query-methods.query-property-expressions).
+
+Если идентификатор сущности называется `id`, объявите отдельный метод `Optional<UserSummary> findProjectedById(Long id)`. Унаследованный `findById(Long)` выполняет базовый CRUD-поиск по идентификатору и возвращает `Optional<User>`.
+
+Предположим, у `User` ключ помечен `@Id` и называется `pk`, а отдельное поле `id` содержит внешний номер. Тогда `findById(42L)` ищет по `pk`, а производный `findProjectedById(42L)` — по внешнему номеру `id`. Для проекции по первичному ключу объявите `findProjectedByPk(Long pk)`. В этом варианте интерфейс проекции должен объявить `getPk()`, если результату нужен первичный ключ. [Spring Data JPA — зарезервированные имена методов](https://docs.spring.io/spring-data/jpa/reference/repositories/query-methods-details.html#repositories.query-methods.reserved), [проекции](https://docs.spring.io/spring-data/jpa/reference/repositories/projections.html).
+
 **2. JPQL-конструктор для DTO с агрегатами:**
 
 ```java
@@ -1748,7 +1922,10 @@ public record OrderStats(String categoryName, Long count, BigDecimal totalRevenu
 List<OrderStats> findOrderStats(@Param("from") LocalDateTime from);
 ```
 
-`SELECT new` создаёт DTO через подходящий конструктор; типы аргументов должны совпадать с его параметрами. Здесь `categoryName` — строковое поле, а `amount` — `BigDecimal`. DTO не становится управляемой Entity.
+`SELECT new` создаёт DTO через подходящий конструктор; типы аргументов должны совпадать с его параметрами. Здесь `categoryName` — строковое поле, а `amount` — `BigDecimal`. `COUNT(o)` возвращает `Long` и считает все заказы в группе. `SUM(o.amount)` возвращает `BigDecimal` и пропускает `null`. Если в категории три заказа с суммами 100, 200 и `null`, DTO получит `count = 3` и `totalRevenue = 300`. Если у всех заказов в группе сумма `null`, итоговая сумма тоже будет `null`. Категория без заказов, прошедших фильтр, в этом запросе не образует группу. DTO не становится управляемой Entity. [Jakarta Persistence 3.2, §4.9.5](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#aggregate-functions-in-the-select-clause).
+
+
+**Граница оптимизации.** Конструктор DTO можно вызвать и с сущностью в аргументе. Например, `SELECT new com.example.dto.UserCard(u, d.name) FROM User u JOIN u.department d` передаёт в DTO управляемый `User` в текущем persistence context. Сам DTO остаётся обычным объектом. Если экрану нужны только ID и имя сотрудника, передайте `u.id` и `u.firstName`: эти аргументы не требуют возвращать управляемый `User`. Для `Tuple` также важно, выбраны ли отдельные поля или целая сущность. [Jakarta Persistence 3.2: выражения конструктора](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#constructor-expressions-in-the-select-clause).
 
 **3. `Tuple` через Criteria API:**
 
@@ -1776,7 +1953,7 @@ results.forEach(t -> {
 
 ## Q46. Что такое `StatelessSession` и когда его использовать?
 
-`StatelessSession` выполняет явные операции с отсоединёнными объектами без persistence context, L1-кэша, dirty checking и write-behind. `insert()`, `update()` и `delete()` обращаются к БД при вызове; изменение прочитанного объекта само по себе не записывается. Операции не каскадируют на связанные сущности. Это полезно при потоковой обработке большого объёма строк, когда не нужна управляемая модель обычной `Session`.
+`StatelessSession` выполняет явные операции с отсоединёнными объектами без persistence context, L1-кэша, dirty checking и write-behind. `insert()`, `update()` и `delete()` по умолчанию обращаются к БД синхронно при вызове; изменение прочитанного объекта само по себе не записывается. Операции не каскадируют на связанные сущности. Это полезно при потоковой обработке большого объёма строк, когда не нужна управляемая модель обычной `Session`.
 
 | Аспект | `Session` | `StatelessSession` |
 |--------|-----------|--------------------|
@@ -1785,7 +1962,11 @@ results.forEach(t -> {
 | Каскады | По настройкам маппинга | Операции не каскадируют |
 | Ленивая связь | Загрузка через контекст | Явный `fetch()` либо выборка с join fetch |
 
-Отсутствие L1 не означает отсутствия *всех* кэшей: начиная с Hibernate 7 stateless-сессия по умолчанию использует L2-кэш. При необходимости его обходят через `setCacheMode(CacheMode.IGNORE)`. `fetch()` для ленивой связи существует, но без identity map возможны разные Java-объекты для одной строки. Логику версий и блокировок нельзя механически переносить из обычной сессии: для версионированных сущностей проверяйте SQL и сценарий конкурентного обновления.
+Отсутствие L1 не означает отсутствия *всех* кэшей: начиная с Hibernate 7 stateless-сессия по умолчанию взаимодействует с L2-кэшем, если он настроен для сущности. При необходимости его обходят через `setCacheMode(CacheMode.IGNORE)`. `fetch()` для ленивой связи существует, но без identity map возможны разные Java-объекты для одной строки. В Hibernate 7.4 явный `update()` сущности с обычным числовым `@Version` использует прежнюю версию как условие записи и назначает новую. Если обе копии товара прочитаны с версией 5 и первая запись уже подняла её до 6, запись второй копии с версией 5 обнаружит конфликт. При повторе прочитайте товар заново и заново примените нужное изменение. [Реализация StatelessSession в Hibernate 7.4](https://github.com/hibernate/hibernate-orm/blob/7.4/hibernate-core/src/main/java/org/hibernate/internal/StatelessSessionImpl.java#L431-L467).
+
+**Пример с повторным чтением.** Импорт дважды загружает товар с одним ID и получает два отдельных объекта. Если код меняет цену в первом объекте, второй сохраняет прежнее значение. Явный `update()` второго объекта может затереть новую цену, если нет проверки версии и SQL обновляет колонку цены. Если на ID должны действовать несколько изменений, соберите их в одном объекте либо обновляйте только нужные столбцы с явной проверкой конкуренции.
+
+Отсутствие каскада на связанные сущности не исключает SQL для управляемой маппингом коллекции. Например, при обновлении владельца Hibernate 7.4 может удалить и заново записать строки принадлежащей ему коллекции значений. Для импорта, который должен менять только цену, проверяйте фактический SQL по маппингу. [Обновление коллекций в Hibernate 7.4](https://github.com/hibernate/hibernate-orm/blob/7.4/hibernate-core/src/main/java/org/hibernate/internal/StatelessSessionImpl.java#L474-L499).
 
 **Пакетная запись в Hibernate 7+:**
 
@@ -1804,13 +1985,15 @@ try (StatelessSession session = sessionFactory.openStatelessSession()) {
         if (!batch.isEmpty()) session.insertMultiple(batch);
         tx.commit();
     } catch (RuntimeException e) {
-        tx.rollback();
+        if (tx.isActive()) tx.rollback();
         throw e;
     }
 }
 ```
 
-С Hibernate 7 свойство `hibernate.jdbc.batch_size` не управляет stateless-сессией; для явной пакетной работы предусмотрены `insertMultiple()`/`updateMultiple()`/`deleteMultiple()`. Обычная `Session` с периодическими `flush()`/`clear()` тоже остаётся вариантом. Выбор делайте по требованиям к каскадам, связям, кэшу и замерам на своей нагрузке. Отсутствие L1 не защищает от переполнения памяти, если весь вход уже собран в `List`.
+С Hibernate 7 свойство `hibernate.jdbc.batch_size` не управляет stateless-сессией; автоматический batching можно включить для конкретной сессии через `setJdbcBatchSize(...)`, и тогда выполнение пакетируемых операций может откладываться. Для явной пакетной работы предусмотрены `insertMultiple()`/`updateMultiple()`/`deleteMultiple()`. В Hibernate 7.4 `insertMultiple()` временно задаёт размер JDBC-пакета по числу переданных объектов, выполняет накопленный пакет перед возвратом и восстанавливает настройку сессии. Это граница выполнения записи, а границу фиксации задаёт `tx.commit()`. Размер 100 в примере ограничивает буфер входных объектов. Число SQL-операторов и сетевых обменов зависит от маппинга, генерации ID и драйвера. [Реализация insertMultiple() в Hibernate 7.4](https://github.com/hibernate/hibernate-orm/blob/7.4/hibernate-core/src/main/java/org/hibernate/internal/StatelessSessionImpl.java#L199-L212). Если третья порция завершается ошибкой, явный rollback откатывает и предыдущие порции этой транзакции. Исключение из операции stateless-сессии само по себе не помечает транзакцию для отката на уровне этого API. Фактическое состояние транзакции после ошибки также зависит от СУБД.
+
+Обычная `Session` с периодическими `flush()`/`clear()` тоже остаётся вариантом. Выбор делайте по требованиям к каскадам, связям, кэшу и замерам на своей нагрузке. Отсутствие L1 не защищает от переполнения памяти, если весь вход уже собран в `List`.
 
 Источники: [Hibernate ORM 7.4 — StatelessSession](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/StatelessSession.html), [Hibernate ORM 7.0 — What's New](https://docs.hibernate.org/orm/7.0/whats-new/).
 
@@ -1829,7 +2012,7 @@ List<String> findAllUserNames();
 
 **3. Безусловный `EAGER` там, где связь нужна не всегда.** `@OneToMany` по умолчанию `LAZY`; явный `EAGER` расширяет загрузку. Для конкретного чтения задайте план выборки и проверьте SQL. Просто переключить всё на `LAZY` недостаточно: это может вернуть N+1.
 
-**4. Параллельная загрузка двух коллекций через `join fetch`.** Если у пользователя `m` заказов и `n` ролей, SQL может вернуть порядка `m × n` строк на пользователя. Два bag-маппинга могут дополнительно вызвать `MultipleBagFetchException`. `@EntityGraph` с теми же двумя коллекциями сам по себе не устраняет эту проблему. Разделите загрузку или используйте batch/subselect fetching для одной связи и измерьте результат.
+**4. Параллельная загрузка двух коллекций через `join fetch`.** Два независимых `LEFT JOIN FETCH` дают по строке на каждую комбинацию элементов. Например, для пользователя с 40 заказами и 10 ролями это 400 строк SQL. Если ролей нет, левое соединение всё равно вернёт 40 строк. Если запрос выполняется, Hibernate 6+ удаляет дубли корневой сущности в Java-результате после чтения строк. Поэтому размер списка пользователей не показывает, сколько строк вернула БД. Два bag-маппинга могут дополнительно вызвать `MultipleBagFetchException`. `@EntityGraph` с теми же двумя коллекциями сам по себе не устраняет эту проблему. Разделите загрузку или используйте batch/subselect fetching для одной связи и измерьте результат.
 
 ```java
 @Query("SELECT u FROM User u " +
@@ -1840,7 +2023,7 @@ List<User> findWithTwoCollections(); // возможны раздувание с
 
 **5. `flush()` после каждой записи.** Это может разрушить эффект JDBC batching. В обычной `Session` делайте `flush()`/`clear()` порциями и задайте разумный размер пачки; порцию определяйте по памяти и драйверу, а не по магическому числу. Для `StatelessSession` правила другие — см. [Q46](#q46-что-такое-statelesssession-и-когда-его-использовать).
 
-**6. Неверные ожидания от `@Transactional(readOnly = true)`.** В связке Spring Data JPA и Hibernate этот признак может установить flush mode `MANUAL` и сократить dirty checking. Он не запрещает все операции записи и не гарантирует ускорения каждого чтения; проверяйте конкретную транзакцию и провайдер.
+**6. Неверные ожидания от `@Transactional(readOnly = true)`.** В Spring Framework 6.2 `HibernateJpaDialect` устанавливает для read-only транзакции режим `MANUAL`, который подавляет автоматический flush. Для `EntityManager`, созданного на время этой транзакции, диалект дополнительно вызывает `setDefaultReadOnly(true)`. Тогда обычные сущности, загруженные с этим умолчанием, Hibernate не проверяет на изменения. Явный flush и прямые операции записи имеют собственные правила, а возможность записи зависит также от JDBC-соединения и СУБД. Если метод присоединяется к уже открытой транзакции через `REQUIRED`, учитывайте настройки внешней транзакции. [Spring Framework 6.2.19, HibernateJpaDialect](https://raw.githubusercontent.com/spring-projects/spring-framework/v6.2.19/spring-orm/src/main/java/org/springframework/orm/jpa/vendor/HibernateJpaDialect.java), [Hibernate 7.4, FlushMode](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/FlushMode.html).
 
 **7. Отсутствие или неверная настройка JDBC batching.** Для обычной `Session` `hibernate.jdbc.batch_size` задаёт верхнюю границу пакета; `order_inserts`/`order_updates` могут помочь сгруппировать однотипные SQL. Эти настройки не обещают пакетную запись сами по себе и не действуют так же для `StatelessSession` в Hibernate 7+.
 
@@ -1858,12 +2041,19 @@ spring:
 **8. `IDENTITY` в потоке stateful-вставок.** Hibernate не может пакетировать INSERT сущностей с `GenerationType.IDENTITY`, потому что идентификатор нужен после вставки. Если схема позволяет, sequence-based генерация может сохранить batching; `allocationSize` настраивают в соответствии с генератором и нагрузкой.
 
 ```java
-@SequenceGenerator(name = "product_seq", allocationSize = 50)
-@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "product_seq")
+@Id
+@SequenceGenerator(name = "productIdGenerator", sequenceName = "product_seq", allocationSize = 50)
+@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "productIdGenerator")
 private Long id;
 ```
 
-Источники: [Hibernate ORM 7.4 — User Guide](https://docs.hibernate.org/orm/7.4/userguide/html_single/), [Hibernate ORM 7.4 — HQL fetch joins](https://docs.hibernate.org/orm/7.4/querylanguage/html_single/), [Spring Data JPA — Transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html).
+В схеме PostgreSQL под управлением миграций создайте `product_seq` с `START WITH 1 INCREMENT BY 50`: начальное значение соответствует умолчанию `initialValue = 1`, шаг — `allocationSize = 50`. Для уже существующей последовательности проверьте её параметры до смены маппинга. Hibernate получает идентификаторы блоками, поэтому частота вызовов последовательности и размер JDBC-пакета INSERT настраиваются независимо. [Hibernate 7.4 — Generated identifiers](https://docs.hibernate.org/orm/7.4/introduction/html_single/#generated-identifiers).
+
+**Как проверить причину на одном запросе приложения.** Если эндпоинт возвращает 100 пользователей, повторите его на одинаковых данных и с одинаковым состоянием кеша. Соберите SQL именно этого запроса приложения. Если видите 101 SELECT (один список и 100 однотипных чтений связей с разными идентификаторами), сначала проверьте N+1. Если после замены плана загрузки остаётся один SELECT, но он возвращает 40 000 строк для тех же 100 пользователей, проверьте размножение строк в соединениях. Одного счётчика SQL для сравнения этих вариантов мало.
+
+В PostgreSQL выполните `EXPLAIN (ANALYZE, BUFFERS)` для соответствующего SELECT с репрезентативными параметрами на тестовых данных. Сравните фактическую кратность узлов соединения и буферные обращения. При нескольких запусках узла `actual rows` усреднён по `loops`. План показывает работу СУБД, а время передачи результата и сборки объектов Hibernate измеряйте в приложении. Счётчики Hibernate `Statistics` суммируют работу сессий всей `SessionFactory`. Их разность подходит для изолированного прогона, а при параллельной нагрузке используйте трассу конкретного запроса.
+
+Источники: [Hibernate ORM 7.4 — User Guide](https://docs.hibernate.org/orm/7.4/userguide/html_single/), [Hibernate ORM 7.4 — HQL fetch joins](https://docs.hibernate.org/orm/7.4/querylanguage/html_single/), [Spring Data JPA — Transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html), [Hibernate ORM 7.4 — Statistics](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/stat/Statistics.html), [PostgreSQL 18 — Using EXPLAIN](https://www.postgresql.org/docs/18/using-explain.html).
 
 ## Q48. Как тестировать `Hibernate`-код?
 
@@ -1914,22 +2104,29 @@ class UserRepositoryTest {
     @Test
     void findByDepartment_shouldReturnCorrectUsers() {
         Department dept = new Department("Engineering");
+        Department sales = new Department("Sales");
         em.persist(dept);
+        em.persist(sales);
         em.persist(new User("Ivan", dept));
+        em.persist(new User("Anna", sales));
         em.flush();
         em.clear(); // чтение не должно пройти только через L1
 
         List<User> result = userRepository.findByDepartment(dept);
-        assertThat(result).hasSize(1).extracting("name").contains("Ivan");
+        assertThat(result).extracting(User::getName).containsExactly("Ivan");
     }
 }
 ```
 
-`@DataJpaTest` поднимает JPA-срез и по умолчанию откатывает тестовую транзакцию. При наличии embedded-БД в classpath он может подменить настроенный `DataSource`; `Replace.NONE` сохраняет подключение к контейнеру. Обе настройки здесь важны. Запускайте реальные миграции схемы и готовьте данные так, чтобы тест проходил через нужный SQL-путь.
+`@DataJpaTest` поднимает JPA-срез и по умолчанию откатывает тестовую транзакцию. В Spring Boot 3.4+ политика `NON_TEST` по умолчанию сохраняет автоконфигурируемый `DataSource`, если подключение распознано как тестовое, включая JDBC URL контейнера, заданный через `@DynamicPropertySource`. Здесь `Replace.NONE` явно запрещает подмену `DataSource`. Данные содержат сотрудника из другого отдела, поэтому тест упадёт, если запрос вернёт всех пользователей. После `clear()` объект `dept` отсоединён, но его первичный ключ доступен для сравнения с сущностью в запросе. Запускайте реальные миграции схемы и готовьте данные так, чтобы тест проходил через нужный SQL-путь.
 
-**3. Проверка N+1 и кэша.** После подготовки данных очистите persistence context, затем измеряйте *конкретное действие*. Hibernate `Statistics` доступна при `hibernate.generate_statistics=true`; `stats.clear()` обнуляет накопленные счётчики. `getPrepareStatementCount()` считает подготовленные JDBC statements, а не только SELECT. Для точного числа SELECT используйте счётчик на уровне `DataSource` или SQL-логи с проверяемым сценарием. Для L2-кэша выполняйте два чтения в **разных** persistence context: повторное чтение в одном контексте докажет лишь попадание в L1. Не фиксируйте «ровно один запрос» без учёта миграций, подготовки данных, ленивых связей и условий кэширования.
+**Проверка фиксации.** `flush()` отправляет накопленный SQL в текущей транзакции, а `clear()` отсоединяет сущности. Например, в PostgreSQL вставка с нарушением внешнего ключа в режиме `DEFERRED` может пройти `flush()`, а транзакция завершится ошибкой при `COMMIT`. Чтобы проверить этот сценарий в транзакционном тесте Spring, вызовите `TestTransaction.flagForCommit()`, затем проверяйте результат вызова `TestTransaction.end()`. При успешной фиксации данные переживают тестовый rollback, поэтому используйте изолированную БД или явно очищайте данные.
 
-Источники: [Spring Boot — Data JPA Tests](https://docs.spring.io/spring-boot/reference/testing/spring-boot-applications.html), [Spring Boot — Testcontainers](https://docs.spring.io/spring-boot/reference/testing/testcontainers.html), [Hibernate ORM 7.4 — Statistics](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/stat/Statistics.html).
+**3. Проверка N+1 и кэша.** После подготовки данных очистите persistence context, затем измеряйте *конкретное действие*. Hibernate `Statistics` доступна при `hibernate.generate_statistics=true`; `stats.clear()` обнуляет накопленные счётчики. `getPrepareStatementCount()` считает подготовленные JDBC statements, а не только SELECT. Для точного числа SELECT используйте счётчик на уровне `DataSource` или SQL-логи с проверяемым сценарием. Для проверки L2-кэша включите его для тестируемой сущности. Подготовьте зафиксированные данные и начните с пустого региона. Загрузите сущность по ID в одной транзакции, завершите её и повторите чтение в другом persistence context. Проверьте прирост попаданий в L2 для нужного региона во время второго чтения. Разные контексты исключают повторное использование объекта из L1, но сами по себе ещё не доказывают попадание в L2. Снимайте разность счётчиков в изолированном прогоне, поскольку они общие для `SessionFactory`. Не фиксируйте «ровно один запрос» без учёта миграций, подготовки данных, ленивых связей и условий кэширования.
+
+В `@DataJpaTest` два вызова репозитория по умолчанию выполняются в одной тестовой транзакции. Даже два вызова `TransactionTemplate` с распространением `REQUIRED` присоединятся к ней. Для отдельного теста L2 поставьте на тестовый метод `@Transactional(propagation = Propagation.NOT_SUPPORTED)`. Подготовьте зафиксированную строку в изолированной БД и очистите регион после подготовки. Затем выполните два последовательных вызова `TransactionTemplate` с `JpaTransactionManager` и обычным транзакционным `EntityManager`. Каждый вызов открывает и завершает свою транзакцию со своим persistence context. Снимите `stats.getDomainDataRegionStatistics(regionName).getHitCount()` сразу после первого чтения и после второго. Первое чтение заполняет пустой регион при включённой записи в кеш, прирост после второго подтверждает попадание в L2. Фиксацию тестовых данных нужно учитывать при очистке БД. [Spring Framework 6.2, транзакции в тестах](https://docs.spring.io/spring-framework/reference/6.2/testing/testcontext-framework/tx.html), [Hibernate 7.4, статистика региона](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/stat/Statistics.html#getDomainDataRegionStatistics(java.lang.String)).
+
+Источники: [Spring Boot 3.5 — Data JPA Tests](https://docs.spring.io/spring-boot/3.5/reference/testing/spring-boot-applications.html), [Spring Boot 3.5 — политика NON_TEST](https://docs.spring.io/spring-boot/3.5/api/java/org/springframework/boot/test/autoconfigure/jdbc/AutoConfigureTestDatabase.Replace.html), [Spring TestContext — управление транзакциями](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/tx.html), [PostgreSQL 16 — SET CONSTRAINTS](https://www.postgresql.org/docs/16/sql-set-constraints.html), [Spring Boot — Testcontainers](https://docs.spring.io/spring-boot/reference/testing/testcontainers.html), [Hibernate ORM 7.4 — Statistics](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/stat/Statistics.html), [Jakarta Persistence 3.2 — сравнение сущностей](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#equality-and-comparison-semantics).
 
 ## Q49. (!) Как маппить JSON-колонки в Hibernate 6 через `@JdbcTypeCode`?
 
@@ -1947,9 +2144,45 @@ public class Product {
 }
 ```
 
-`@Column(columnDefinition = "jsonb")` здесь привязывает DDL к PostgreSQL. Для `@Embeddable` аннотацию `@JdbcTypeCode` размещают на **поле сущности**, а не на классе embeddable. Другие Java-типы зависят от выбранного mapper и формы данных; коллекция внутри JSON-документа и отдельное поле `@ElementCollection` — разные маппинги. Проверяйте сериализацию и чтение на целевой версии Hibernate и БД.
+`@Column(columnDefinition = "jsonb")` здесь привязывает DDL к PostgreSQL. Для агрегатного JSON-маппинга `@Embeddable`, доступного с Hibernate 6.2 при поддержке диалекта, аннотацию `@JdbcTypeCode` размещают на **поле сущности**, а не на классе embeddable. Другие Java-типы зависят от выбранного mapper и формы данных; коллекция внутри JSON-документа и отдельное поле `@ElementCollection` — разные маппинги. Проверяйте сериализацию и чтение на целевой версии Hibernate и БД.
 
-В PostgreSQL `jsonb` обычно удобнее для поиска и поддерживает индексы, но теряет порядок ключей, пробелы и повторяющиеся ключи исходного JSON. Если нужно сохранить исходное представление, рассмотрите `json`. Выбор формата колонки и нужного индекса проверяйте по запросам.
+В PostgreSQL `jsonb` обычно удобнее для поиска и поддерживает индексы, но теряет порядок ключей, пробелы и повторяющиеся ключи исходного JSON. Если ключ повторяется, `jsonb` сохраняет последнее значение. Тип `json` сохраняет текст, который получила БД, включая все повторы. При извлечении поля из `json` PostgreSQL также использует последнее значение. Например, для `{"color":"red","color":"blue"}` оператор `->> 'color'` вернёт `blue` с обоими типами. Если приложение сначала разобрало запрос в `Map` и Hibernate сериализовал карту заново, замена `jsonb` на `json` не восстановит пробелы и повторяющиеся ключи исходного запроса. Для сохранения исходного текста передавайте его в БД без преобразования в карту. Выбор формата колонки и нужного индекса проверяйте по запросам.
+
+**Пример фильтра в PostgreSQL.** Если каталог часто ищет товары с заданной парой ключ–значение, индекс добавляют миграцией. Маппинг Hibernate отвечает за чтение и запись колонки.
+
+```sql
+CREATE INDEX product_attributes_gin ON product USING gin (attributes);
+
+SELECT id FROM product WHERE attributes @> '{"color": "blue"}'::jsonb;
+```
+
+Запрос вернёт товары с парой `"color": "blue"`, в том числе если документ содержит другие ключи. GIN с классом операторов по умолчанию поддерживает `@>`; какой план выберет PostgreSQL, зависит от данных и оценки стоимости. Если запросы используют только `attributes ->> 'color' = 'blue'`, для этого выражения можно рассмотреть отдельный B-tree индекс. [PostgreSQL 18 — индексация jsonb](https://www.postgresql.org/docs/18/datatype-json.html#JSON-INDEXING).
+
+Например, фильтр по текстовому значению цвета может использовать индекс на результате извлечения ключа.
+
+```sql
+CREATE INDEX product_color_idx ON product ((attributes ->> 'color'));
+
+SELECT id FROM product WHERE attributes ->> 'color' = 'blue';
+```
+
+При выборе индекса учитывайте семантику фильтра. `->>` возвращает текст, поэтому в документах с неоднородными типами JSON-число `123` и JSON-строка `"123"` дадут одинаковый текст. Условие `@> '{"color": "123"}'::jsonb` найдёт строковое значение, а числовое пропустит. На практике сначала определите допустимые типы данных и нужное сравнение, затем проверьте план запроса. [PostgreSQL 18 — операторы JSON](https://www.postgresql.org/docs/18/functions-json.html), [индексы по выражениям](https://www.postgresql.org/docs/18/indexes-expressional.html).
+
+**Отсутствующий ключ и явный JSON `null`.** Например, в каталоге ключ `color` может отсутствовать, потому что цвет ещё не заполнен, или иметь значение `null`, потому что цвет неприменим. При извлечении через `attributes ->> 'color'` оба случая дают SQL `NULL`. Для колонки с JSON-объектами различайте их отдельными условиями.
+
+```sql
+-- Ключ отсутствует в существующем объекте
+SELECT id FROM product
+WHERE jsonb_typeof(attributes) = 'object' AND NOT (attributes ? 'color');
+
+-- Ключ присутствует и содержит JSON null
+SELECT id FROM product WHERE attributes @> '{"color": null}'::jsonb;
+
+-- Сама колонка содержит SQL NULL
+SELECT id FROM product WHERE attributes IS NULL;
+```
+
+Такое различие важно учесть и в Java. Если mapper сохранил запись с `null`, вызов `map.get("color")` вернёт `null` и при её наличии, и при отсутствии ключа. Для различения используйте `containsKey` и проверьте, что настройки сериализации сохраняют явные `null`. [PostgreSQL 18 — типы JSON](https://www.postgresql.org/docs/18/datatype-json.html), [операторы JSON](https://www.postgresql.org/docs/18/functions-json.html).
 
 Источники: [Hibernate ORM 7.4 — JSON mapping](https://docs.hibernate.org/orm/7.4/userguide/html_single/), [PostgreSQL 18 — JSON types](https://www.postgresql.org/docs/18/datatype-json.html).
 
@@ -1973,9 +2206,30 @@ public class Customer {
 }
 ```
 
-Для PostgreSQL схеме нужен совместимый тип, например `CREATE TYPE address_type AS (street varchar(255), city varchar(255), zip varchar(255))`, и колонка `address` этого типа. Порядок и SQL-типы атрибутов должны совпадать с ожидаемыми Hibernate. Для `record` порядок задаёт канонический конструктор; для класса его можно явно задать через `@Struct(attributes = {...})`. Реальный DDL и маппинг проверяйте миграцией и интеграционным тестом.
+Для PostgreSQL схеме нужен совместимый тип, например `CREATE TYPE address_type AS (street varchar(255), city varchar(255), zip varchar(255))`, и колонка `address` этого типа. Порядок и SQL-типы атрибутов должны совпадать с ожидаемыми Hibernate. По умолчанию для `record` Hibernate использует порядок компонентов канонического конструктора, а для обычного класса — алфавитный порядок имён Java-атрибутов. Если заменить `Address` из примера обычным классом, Hibernate по умолчанию ожидает `city, street, zip`. Чтобы оставить приведённый DDL, задайте `@Struct(name = "address_type", attributes = {"street", "city", "zip"})`.
 
-Если структурного типа в схеме нет, обычный `@Embeddable` с колонками таблицы проще и переносимее. [Hibernate ORM 7.4 — Aggregate embeddable mapping](https://docs.hibernate.org/orm/7.4/userguide/html_single/).
+При миграции проверьте обе стороны маппинга с разными значениями полей. Если поменять местами `street` и `city`, оба значения по-прежнему подходят по SQL-типу, поэтому ошибка порядка может остаться незаметной. Запишите через Hibernate клиента с ID 42 и адресом `new Address("Tverskaya", "Moscow", "125009")` и проверьте значения напрямую в PostgreSQL.
+
+```sql
+SELECT (address).street, (address).city, (address).zip
+FROM customer
+WHERE id = 42;
+```
+
+Для проверки чтения вставьте строку с другим идентификатором напрямую через SQL, используя `ROW('Tverskaya', 'Moscow', '125009')::address_type`, и прочитайте её в новом persistence context. Чтение через тот же маппинг сразу после записи может скрыть одинаковую перестановку в обе стороны. [PostgreSQL 18 — составные типы](https://www.postgresql.org/docs/18/rowtypes.html).
+
+**Ограничения составного значения.** PostgreSQL `CREATE TYPE … AS` задаёт имена и типы полей. Он не принимает `NOT NULL` или `CHECK` для отдельных полей. Если в таблице каждый клиент должен иметь адрес и индекс, первое условие задайте на колонке, а второе — через проверку её поля.
+
+```sql
+ALTER TABLE customer
+    ALTER COLUMN address SET NOT NULL,
+    ADD CONSTRAINT customer_address_zip_not_null
+        CHECK ((address).zip IS NOT NULL);
+```
+
+Одного `address NOT NULL` недостаточно. Например, `ROW('Tverskaya', 'Moscow', NULL)::address_type` создаёт составное значение с отсутствующим индексом. Проверка поля отклонит такую запись. Проверка `CHECK (address IS NOT NULL)` имела бы другую семантику: для составного значения она требует, чтобы все поля были ненулевыми. Если `address` и `zip` обязательны, а `city` может отсутствовать, оставьте `NOT NULL` на колонке и отдельную проверку `zip`. [PostgreSQL 18 — сравнение составных значений с NULL](https://www.postgresql.org/docs/18/functions-comparison.html). Если ограничение должно переиспользоваться в нескольких таблицах, PostgreSQL позволяет определить домен над составным типом. Совместимость домена с маппингом Hibernate проверяйте отдельно на целевой связке диалекта и драйвера. [PostgreSQL 18 — определение составных типов](https://www.postgresql.org/docs/18/rowtypes.html#ROWTYPES-DECLARING).
+
+Если структурного типа в схеме нет, обычный `@Embeddable` с колонками таблицы проще и переносимее. [Hibernate ORM 7.4 — Aggregate embeddable mapping](https://docs.hibernate.org/orm/7.4/userguide/html_single/#embeddable-aggregate-mapping).
 
 ---
 

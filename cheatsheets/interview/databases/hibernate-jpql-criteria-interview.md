@@ -281,7 +281,7 @@ public class UserService {
     @Autowired private UserRepository repository;
 
     public List<User> search(UserFilter filter) {
-        Specification<User> spec = Specification.where(null);
+        Specification<User> spec = Specification.unrestricted();
 
         if (filter.email() != null) {
             spec = spec.and(UserSpecifications.hasEmail(filter.email()));
@@ -298,7 +298,7 @@ public class UserService {
 }
 ```
 
-Здесь каждый необязательный параметр фильтра добавляет свой `Specification` только если он задан, а `Specification.where(null)` даёт нейтральную стартовую точку — итог получается читаемым и легко расширяемым.
+Здесь каждый необязательный параметр фильтра добавляет свой `Specification` только если он задан, а `Specification.unrestricted()` даёт нейтральную стартовую точку: при `.and()` и `.or()` она не добавляет предикат. Метод доступен начиная со Spring Data JPA **3.5.2**, в том числе в 4.x. В ветке 3.5 прежний вызов `Specification.where(null)` устарел; в 4.x полагаться на передачу `null` нельзя. Для более ранней версии можно начать с ненулевой спецификации `(root, query, cb) -> null`, которая не вносит предикат при композиции. [Spring Data JPA 3.5: Specification](https://docs.spring.io/spring-data/jpa/docs/3.5.x/api/org/springframework/data/jpa/domain/Specification.html).
 
 **Преимущество**: динамические фильтры без громоздкого ручного Criteria, плюс переиспользование отдельных спецификаций между запросами.
 
@@ -375,15 +375,15 @@ List<User> findRecentUsers(@Param("since") LocalDateTime since);
 ```
 
 **Когда использовать**:
-- **БД-специфичные возможности** — PostgreSQL PIVOT, SQL Server рекурсивные CTE и прочее, чего нет в JPQL.
+- **БД-специфичные возможности** — `crosstab()` из расширения PostgreSQL `tablefunc`, рекурсивные CTE в SQL Server и прочее, чего нет в JPQL.
 - **Сложные CTE** — стандартный JPQL их не поддерживает.
-- **Критичные по производительности запросы** — когда нужно полностью контролировать SQL без накладных расходов ORM-слоя.
+- **Критичные по производительности запросы** — когда нужен контроль над SQL. Накладные расходы маппинга зависят от выбранной формы результата.
 
-**Подводный камень**: native SQL привязывает код к конкретной СУБД и не участвует в кэшировании/dirty-checking так прозрачно, как JPQL, поэтому держите его как крайнее средство.
+Native `SELECT` с маппингом на entity может вернуть сущность, управляемую текущим persistence context. Изменения её состояния подлежат обычной проверке при синхронизации, если сущность остаётся managed и доступна для записи. Значения скалярной или DTO-проекции не становятся сущностями. Для именованного параметра в native SQL, как в примере, проверьте поддержку провайдером: переносимый вариант Jakarta Persistence — позиционный параметр. [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2), [PostgreSQL `tablefunc`](https://www.postgresql.org/docs/19/tablefunc.html).
 
 ## Q11. Что такое @EntityGraph и как он предотвращает проблему N+1?
 
-**@EntityGraph** декларативно описывает, какие связи загрузить вместе с entity одним запросом, не переписывая сам запрос. Hibernate генерирует JOIN под эти связи, поэтому коллекции приходят сразу — и проблема N+1 (отдельный SQL на каждую lazy-связь) исчезает. Граф можно задать заранее через `@NamedEntityGraph` или собрать ad-hoc списком `attributePaths`.
+**`@EntityGraph`** задаёт, какие атрибуты и связи должны быть загружены, не меняя текст запроса. Провайдер может выполнить join или дополнительные запросы. Граф помогает управлять загрузкой, а число SQL и устранение N+1 проверяются на фактическом плане и логах SQL. Граф можно задать заранее через `@NamedEntityGraph` или собрать ad-hoc списком `attributePaths`.
 
 ```java
 // Определение graph
@@ -399,7 +399,7 @@ public class User { ... }
 
 // Использование в Spring Data
 @EntityGraph("User.withOrdersAndProfile")
-@Query("FROM User WHERE u.id = :id")
+@Query("SELECT u FROM User u WHERE u.id = :id")
 Optional<User> findByIdWithDetails(@Param("id") Long id);
 
 // Ad-hoc graph
@@ -416,9 +416,9 @@ Map<String, Object> hints = Map.of("jakarta.persistence.fetchgraph", graph);
 User user = em.find(User.class, 1L, hints);
 ```
 
-**@EntityGraph vs JOIN FETCH** — оба решают N+1, но по-разному:
+**`@EntityGraph` и `JOIN FETCH`** помогают управлять загрузкой связей:
 - `@EntityGraph` — декларативный: что грузить, указано аннотацией отдельно от текста запроса, поэтому один граф переиспользуется разными методами.
-- `JOIN FETCH` — императивный: fetch встроен прямо в JPQL, виден в самом запросе, но привязан к нему.
+- `JOIN FETCH` — императивный: fetch встроен прямо в JPQL, виден в самом запросе и привязан к нему. [Entity Graphs в Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
 
 ## Q12. Какие типичные ошибки при работе с JPQL?
 
@@ -435,15 +435,14 @@ em.createQuery("SELECT u FROM User u", User.class)
 // или: "FROM User" (short form)
 ```
 
-2. **`IN` с коллекцией** — передавайте список через named parameter; positional `?1` с коллекцией ведёт себя непредсказуемо:
+2. **`IN` с коллекцией.** В JPQL подходят и именованный, и позиционный параметры, когда параметр стоит целиком справа от `IN`. Пустой список обработайте отдельно: переносимое поведение для него стандарт не определяет.
 
 ```java
-// ОШИБКА — кажется логичным
-"FROM User u WHERE u.email IN ?1"  // positional с коллекцией может не работать
+em.createQuery("SELECT u FROM User u WHERE u.email IN ?1", User.class)
+    .setParameter(1, List.of("alice@x.com", "bob@x.com"));
 
-// ХОРОШО — named parameter
-"FROM User u WHERE u.email IN :emails"
-query.setParameter("emails", List.of("alice@x.com", "bob@x.com"))
+em.createQuery("SELECT u FROM User u WHERE u.email IN :emails", User.class)
+    .setParameter("emails", List.of("alice@x.com", "bob@x.com"));
 ```
 
 3. **`UPDATE`/`DELETE` без `@Modifying`** — без этой аннотации Spring Data попытается выполнить запрос как `SELECT` и упадёт; вдобавок методу нужна транзакция:
@@ -468,15 +467,13 @@ em.createQuery("FROM User u JOIN FETCH u.orders", User.class)
     .setFirstResult(0).setMaxResults(10);
 ```
 
-5. **Забытый `DISTINCT` при `JOIN FETCH` коллекции** — JOIN размножает родителя по числу детей, и без `DISTINCT` в списке окажутся дубли:
+5. **Дубли при `JOIN FETCH` коллекции.** SQL-соединение даёт несколько строк для одного родителя. Hibernate 6 после материализации сам убирает повторы корневых сущностей, вызванные fetch join. Для этого случая добавлять `DISTINCT` вручную не требуется. Это свойство Hibernate 6 для результата с корневой сущностью. Для скалярных и DTO-проекций кратность следует проверять отдельно.
 
 ```java
-// Без distinct — дубли пользователей с каждым его заказом
-em.createQuery("FROM User u JOIN FETCH u.orders", User.class)
-
-// С distinct — уникальные пользователи
-em.createQuery("SELECT DISTINCT u FROM User u JOIN FETCH u.orders", User.class)
+em.createQuery("SELECT u FROM User u JOIN FETCH u.orders", User.class);
 ```
+
+[Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2), [Hibernate 6.6 HQL](https://docs.hibernate.org/orm/6.6/querylanguage/html_single/).
 
 ## Q13. Что такое Projection в JPQL/Criteria?
 
@@ -590,22 +587,31 @@ Optional<User> findActiveByEmail(@Param("email") String email);
 
 ## Q16. (!) Что HQL 6 добавляет поверх стандартного JPQL (set-операции, оконные функции, CTE)?
 
-`HQL` (язык запросов Hibernate) — надмножество `JPQL`. В `Hibernate 6` он получил возможности, которых в стандартном `JPQL` нет:
-
-- **Set-операции** — `UNION`/`UNION ALL`, `INTERSECT`, `EXCEPT` между подзапросами.
-- **Оконные функции** — `over()` с `row_number()`, `rank()`, `dense_rank()`, агрегатами и т.д.
-- **CTE** — общие табличные выражения `with x as (...)`, включая **рекурсивные** (`with recursive`).
+`HQL` — язык запросов Hibernate. Граница стандартного JPQL зависит от версии Jakarta Persistence. В версии **3.2** JPQL включает `UNION`, `INTERSECT`, `EXCEPT` и варианты с `ALL`. Провайдер должен поддерживать эту версию спецификации, чтобы на неё можно было рассчитывать. Оконные функции и CTE остаются расширениями HQL относительно JPQL 3.2. [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
 
 ```java
-// Оконная функция в HQL 6
-List<?> rows = session.createQuery(
+// Оконная функция в HQL 6.6
+List<Object[]> rows = session.createQuery(
     "select e.name, rank() over (partition by e.dept order by e.salary desc) " +
     "from Employee e", Object[].class).getResultList();
 ```
 
-Это снимает прежнее ограничение: раньше для `CTE`, `UNION` и оконных функций приходилось уходить в native SQL.
+Рекурсивный CTE в HQL 6.6 начинается с `with`. Hibernate распознаёт рекурсию по ссылке CTE на самого себя и добавляет нужный синтаксис при генерации SQL. Пример предполагает, что `Employee.manager` ссылается на другого сотрудника, а иерархия не содержит циклов:
 
-**Итог:** в `Hibernate 6` многое из «БД-специфичного SQL» (set-операции, window-функции, рекурсивные CTE) доступно прямо в `HQL` — переносимо между диалектами и без падения в native query. Стандартный `JPQL` этого по-прежнему не умеет.
+```sql
+with team as (
+    select e.id as id
+    from Employee e
+    where e.id = :managerId
+    union all
+    select e.id as id
+    from team t
+    join Employee e on e.manager.id = t.id
+)
+select t.id from team t
+```
+
+Hibernate может преобразовать некоторые нерекурсивные CTE в подзапрос, если диалект не поддерживает CTE. Для рекурсивного CTE нужна поддержка рекурсии самой СУБД. Доступность оконных функций также зависит от диалекта. [Hibernate 6.6 HQL](https://docs.hibernate.org/orm/6.6/querylanguage/html_single/).
 
 ## See also
 

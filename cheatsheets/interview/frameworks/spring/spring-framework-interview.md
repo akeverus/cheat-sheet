@@ -251,7 +251,7 @@ graph TB
 
 | Характеристика | `BeanFactory` | `ApplicationContext` |
 |----------------|--------------|---------------------|
-| Инициализация бинов | **Ленивая** (lazy) — при вызове `getBean()` | **Жадная** (eager) — при старте контекста |
+| Инициализация бинов | По запросу. У `DefaultListableBeanFactory` есть явный `preInstantiateSingletons()` | При `refresh()` заранее создаются non-lazy singleton |
 | Events | Нет | `ApplicationEvent` / `@EventListener` |
 | i18n | Нет | `MessageSource` |
 | AOP | Нет | Полная поддержка |
@@ -262,7 +262,7 @@ graph TB
 
 ## Q6. (!) Какой жизненный цикл у `Context`?
 
-Жизненный цикл `ApplicationContext` можно разделить на три основные фазы:
+Жизненный цикл `ApplicationContext` включает создание, refresh, работу и закрытие:
 
 ```mermaid
 graph LR
@@ -272,7 +272,7 @@ graph LR
 
     subgraph "Фаза Refresh (ключевая)"
         B1["Загрузка BeanDefinitions"] --> B2["Регистрация BeanPostProcessors"]
-        B2 --> B3["Инициализация singleton-бинов"]
+        B2 --> B3["Инициализация non-lazy singleton"]
         B3 --> B4["Публикация ContextRefreshedEvent"]
     end
 ```
@@ -288,15 +288,15 @@ graph LR
 7. **`initApplicationEventMulticaster()`** — настройка механизма событий
 8. **`onRefresh()`** — хук для подклассов (например, `ServletWebServerApplicationContext` запускает Tomcat)
 9. **`registerListeners()`** — регистрация `ApplicationListener`
-10. **`finishBeanFactoryInitialization()`** — создание всех singleton-бинов (самый тяжёлый этап)
+10. **`finishBeanFactoryInitialization()`** — предварительное создание non-lazy singleton. При разрешении их зависимостей могут быть запрошены также lazy-бины и prototype.
 11. **`finishRefresh()`** — публикация `ContextRefreshedEvent`, запуск lifecycle-процессоров
 
 ## Q7. (!) В чем разница между `BeanFactory` и `ApplicationContext`?
 
-`BeanFactory` — базовый контейнер, предоставляющий функции DI. Реализация по умолчанию — `DefaultListableBeanFactory`. Создаёт бины **лениво** при вызове `getBean()`.
+`BeanFactory` — базовый интерфейс контейнера. При обычном использовании `DefaultListableBeanFactory` создаёт бины по запросу. Чтобы заранее создать non-lazy singleton, можно явно вызвать `preInstantiateSingletons()`. [DefaultListableBeanFactory API](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/beans/factory/support/DefaultListableBeanFactory.html#preInstantiateSingletons()).
 
 `ApplicationContext` — расширение `BeanFactory`, добавляющее:
-- **Жадную инициализацию** singleton-бинов при старте (поведение можно переопределить через `@Lazy`)
+- **Предварительную инициализацию** non-lazy singleton при `refresh()`
 - **Механизм событий** — `ApplicationEvent` / `@EventListener`
 - **Интернационализацию** — `MessageSource`
 - **Доступ к ресурсам** — `ResourceLoader` (classpath, filesystem, URL)
@@ -312,11 +312,11 @@ MyService service = factory.getBean(MyService.class); // бин создаётс
 
 // ApplicationContext — жадная загрузка
 ApplicationContext ctx = new AnnotationConfigApplicationContext(AppConfig.class);
-// все singleton-бины уже созданы
-MyService service = ctx.getBean(MyService.class);
+// non-lazy singleton уже созданы
+MyService contextService = ctx.getBean(MyService.class);
 ```
 
-**На собеседовании:** часто спрашивают, когда `ApplicationContext` создаёт бины лениво. Ответ: при `@Lazy` на бине или `@Lazy` на `@Configuration`-классе, а также для `prototype`-scope бинов (они всегда ленивые).
+`@Lazy` на определении откладывает создание бина до запроса. Если он нужен для создания eager singleton, этот запрос происходит при старте. `@Lazy` в точке внедрения имеет другую роль: оно позволяет внедрить прокси и отложить разрешение цели. Prototype создаётся при запросе, который тоже может произойти при старте. [Spring: Lazy-initialized Beans](https://docs.spring.io/spring-framework/reference/core/beans/dependencies/factory-lazy-init.html).
 
 ## Q8. (!) Как завершить работу `Context`?
 
@@ -455,29 +455,30 @@ public class CacheWarmer implements InitializingBean, DisposableBean {
 
 ## Q11. Как создать статический `Bean`?
 
-Статический `@Bean`-метод объявляется с модификатором `static` внутри `@Configuration`-класса. `Spring` вызывает его **до** полной инициализации `@Configuration`-класса.
+Модификатор `static` позволяет контейнеру вызвать фабричный `@Bean`-метод без создания экземпляра конфигурационного класса. Момент вызова зависит от роли и жизненного цикла результирующего бина.
 
 ```java
 @Configuration
 public class InfraConfig {
 
-    // Статический Bean — создаётся раньше остальных
+    // Контейнер запрашивает этот BeanFactoryPostProcessor до обычных бинов
     @Bean
     public static PropertySourcesPlaceholderConfigurer propertyConfigurer() {
         return new PropertySourcesPlaceholderConfigurer();
     }
 
-    // Обычный Bean — @Configuration-класс уже проксирован
     @Bean
     public DataSource dataSource(@Value("${db.url}") String url) {
-        return new HikariDataSource(new HikariConfig(url));
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(url);
+        return new HikariDataSource(config);
     }
 }
 ```
 
 **Когда нужен статический `@Bean`:**
-- **`BeanFactoryPostProcessor`** и **`BeanDefinitionRegistryPostProcessor`** — они обрабатывают `BeanDefinition` до создания остальных бинов. Если определить их как нестатические, `Spring` выдаст предупреждение, потому что для вызова метода нужно создать `@Configuration`-класс, что форсирует раннюю инициализацию
-- `PropertySourcesPlaceholderConfigurer` — классический пример; без `static` значения `@Value` не будут разрешены вовремя
+- `BeanFactoryPostProcessor` и `BeanDefinitionRegistryPostProcessor` нужны рано для обработки определений. Статическая фабрика позволяет получить их без преждевременного создания конфигурационного бина.
+- В примере именно роль `PropertySourcesPlaceholderConfigurer` как `BeanFactoryPostProcessor` определяет ранний вызов. Произвольный статический `@Bean` не получает такой приоритет. [Spring @Bean Javadoc](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/context/annotation/Bean.html).
 
 ## Q12. Как внедрить `Bean`?
 
@@ -850,9 +851,11 @@ graph LR
 | Характеристика | JDK Dynamic Proxy | CGLIB Proxy |
 |----------------|-------------------|-------------|
 | Механизм | `java.lang.reflect.Proxy` | Генерация подкласса |
-| Требование | Бин реализует интерфейс | Любой класс (не `final`) |
-| Производительность | Чуть медленнее | Чуть быстрее |
-| Spring Boot default | — | **Да** (с 2.0) |
+| Требование | Вызов через интерфейс прокси | Наследуемый целевой класс и переопределяемый метод |
+| Граница перехвата | Методы интерфейсов прокси, включая вызов `final` реализации | Методы, доступные для переопределения. `final` и `private` не перехватываются |
+| Выбор механизма | По умолчанию Spring AOP выбирает JDK-прокси при наличии интерфейса, если инфраструктура не требует прокси класса | Spring AOP использует подкласс для цели без интерфейса. Конкретная конфигурация может принудительно выбрать подкласс |
+
+В автоконфигурации Spring Boot AOP выбор по умолчанию может отличаться. В Boot 3.5 он управляется `spring.aop.proxy-target-class`. Производительность сравнивают на конкретной нагрузке. [Spring AOP: Proxying Mechanisms](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) · [Spring Boot 3.5: AOP](https://docs.spring.io/spring-boot/3.5/reference/features/aop.html).
 
 ```java
 // JDK Proxy — проксируется интерфейс
@@ -1073,7 +1076,7 @@ public class AlertService {
 }
 ```
 
-**Приоритет разрешения:** `@Qualifier` > `@Primary` > имя параметра > ошибка.
+Сначала контейнер ищет кандидатов, совместимых с типом зависимости. `@Qualifier` сужает множество по признаку, которым может быть и имя совместимого бина. При одиночной зависимости единственный подходящий `@Primary` помогает выбрать один бин. Если выбор остаётся неоднозначным, Spring может сопоставить имя точки внедрения с именем или alias бина при отсутствии более сильного указания. Для имени параметра с Spring Framework 6.1 требуется компиляция с `-parameters`. С 6.2 для подходящего совпадения имени возможен быстрый путь, когда выбор не меняют условия по типу, квалификатору, primary или fallback. При нерешённой неоднозначности возникает ошибка. [Spring: Autowiring Qualifiers](https://docs.spring.io/spring-framework/reference/core/beans/annotation-config/autowired-qualifiers.html).
 
 **Кастомные квалификаторы:** можно создать собственную аннотацию вместо строковых имён:
 ```java
@@ -1150,7 +1153,7 @@ public class ProdDataSourceConfig {
 
 ## Q30. Что такое `@LookUp`?
 
-`@Lookup` — аннотация для инъекции **нового экземпляра** `prototype`-бина из `singleton`-бина при каждом вызове метода. `Spring` подменяет аннотированный метод через CGLIB, вызывая `getBean()` при каждом обращении.
+`@Lookup` переопределяет метод в сгенерированном подклассе. При каждом вызове метод запрашивает бин у контейнера. Для `prototype` это новый экземпляр. Для singleton возвращается тот же бин, а для request scope — бин текущего запроса.
 
 ```java
 @Service
@@ -1169,10 +1172,10 @@ public abstract class OrderProcessor {
 ```
 
 **Когда использовать:**
-- `Singleton`-бину нужен каждый раз **новый** `prototype`/`request`-scoped бин
+- Долгоживущему бину нужно разрешать зависимость при каждом обращении, например получать новый prototype или бин текущего запроса.
 - Альтернатива — `ObjectProvider<T>` или `Provider<T>` (более явный подход)
 
-**Ограничения:** класс с `@Lookup` должен быть non-final (CGLIB-прокси) или метод — абстрактный.
+Класс должен допускать наследование, а метод — переопределение. Метод может быть абстрактным, но класс всё равно должен допускать создание подкласса. Lookup method injection не работает для экземпляра, возвращённого фабричным `@Bean`-методом. Для него удобно использовать `ObjectProvider`. [Spring: Lookup Method Injection](https://docs.spring.io/spring-framework/reference/core/beans/dependencies/factory-method-injection.html).
 
 ## Q31. (!) Что такое `@Conditional` и как `Spring Boot` использует условные бины?
 
@@ -1622,7 +1625,7 @@ public AlgorithmV2 algorithmV2() { return new AlgorithmV2(); }
 
 ## Q38. (!) Как работает `@Async` и что нужно настроить для асинхронных методов?
 
-`@Async` позволяет выполнять метод в отдельном потоке из пула. Spring оборачивает бин AOP-прокси, поэтому действуют те же ограничения (нет self-invocation).
+В стандартном режиме `@Async` отправляет вызов, прошедший через прокси, в выбранный executor. Выполнение на другом потоке зависит от executor и политики отклонения.
 
 **Необходимая конфигурация:**
 
@@ -1638,7 +1641,7 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.setMaxPoolSize(20);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("async-");
-        executor.setRejectedExecutionHandler(new CallerRunsPolicy());
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.initialize();
         return executor;
     }
@@ -1659,7 +1662,7 @@ public class NotificationService {
     // Void — fire-and-forget
     @Async
     public void sendEmail(String to, String body) {
-        emailClient.send(to, body); // в отдельном потоке
+        emailClient.send(to, body);
     }
 
     // CompletableFuture — можно дождаться результата
@@ -1677,7 +1680,7 @@ public class OrderService {
 
     public void placeOrder(Order order) {
         orderRepo.save(order);
-        notifications.sendEmail(order.getEmail(), "Order confirmed"); // не блокирует
+        notifications.sendEmail(order.getEmail(), "Order confirmed"); // при насыщении пула здесь возможно синхронное выполнение
     }
 
     public void processWithResult() throws Exception {
@@ -1688,10 +1691,12 @@ public class OrderService {
 ```
 
 **Ловушки:**
-- `@Async` на `private` или `final` методах — не работает (прокси не перехватывает)
+- Прокси-подкласс не перехватывает `final` и `private` методы. JDK-прокси перехватывает вызов через интерфейс даже при `final` у реализации соответствующего метода.
 - Self-invocation — не работает (обходит прокси)
 - Исключения из `void`-методов нужно перехватывать через `AsyncUncaughtExceptionHandler`
-- Без явного `Executor` в чистом `Spring Framework` берётся `SimpleAsyncTaskExecutor` — **создаёт поток на каждый вызов**, что опасно в production. В `Spring Boot` этот случай закрыт автоконфигурацией: она регистрирует бин сразу под двумя именами — `applicationTaskExecutor` и `taskExecutor` (второе — то, куда смотрит `@Async` при отсутствии `AsyncConfigurer`), и на платформенных потоках это ограниченный `ThreadPoolTaskExecutor`, а при `spring.threads.virtual.enabled=true` — `SimpleAsyncTaskExecutor` на виртуальных потоках
+- В Spring Framework executor можно указать в `@Async("имя")` или настроить через `AsyncConfigurer`. При поиске по умолчанию Framework ищет единственный `TaskExecutor` или `Executor` с именем `taskExecutor`. Если подходящего бина нет, используется `SimpleAsyncTaskExecutor`.
+- Spring Boot 3.5 при стандартной автоконфигурации создаёт `ThreadPoolTaskExecutor`, а при включённых виртуальных потоках на Java 21+ — `SimpleAsyncTaskExecutor` на виртуальных потоках. Фактический выбор зависит от пользовательских бинов и настроек, включая `spring.task.execution.mode`. [Spring Boot 3.5: Task Execution and Scheduling](https://docs.spring.io/spring-boot/3.5/reference/features/task-execution-and-scheduling.html).
+- В примере при насыщении работающего пула `CallerRunsPolicy` может выполнить задачу прямо в вызывающем потоке. Если executor закрыт, эта политика отбрасывает задачу. [Java 21: CallerRunsPolicy](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.CallerRunsPolicy.html).
 
 ## Q39. (!) Что такое `@EventListener` и как публиковать события асинхронно?
 

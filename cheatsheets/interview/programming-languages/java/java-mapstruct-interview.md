@@ -19,7 +19,7 @@ updated: "2026-04-25"
 ---
 # Вопросы на собеседовании: `MapStruct`
 
-`MapStruct` — annotation processor, который на этапе компиляции генерирует реализации маппинга между Java Bean. В отличие от рефлексивных фреймворков, код получается быстрым (без оверхеда рантайма), явным и типобезопасным — ошибки видны ещё при сборке.
+`MapStruct` генерирует реализации маппинга Java Bean на этапе компиляции. Получается обычный Java-код без рефлексии для самого преобразования; ошибки известных свойств и методов видны при сборке, а поведение собственных правил проверяют тестами.
 
 ## Полезные ссылки
 
@@ -34,7 +34,7 @@ updated: "2026-04-25"
 - [Custom Mapper with MapStruct](https://www.baeldung.com/mapstruct-custom-mapper)
 - [Nested Mapping](https://www.baeldung.com/java-mapstruct-nested-mapping)
 - [Mapping Collections](https://www.baeldung.com/java-mapstruct-mapping-collections)
-- [Using MapStruct With Lombok](https://www.baeldung.com/java-mapstruct-lombok)
+- [MapStruct reference: Lombok integration](https://mapstruct.org/documentation/stable/reference/html/#lombok)
 
 ## Содержание
 
@@ -42,46 +42,48 @@ updated: "2026-04-25"
 - [See also](#see-also)
 
 **Основы**
-- [Q1. (!) Что такое MapStruct и как он работает?](#q1--что-такое-mapstruct-и-как-он-работает)
-- [Q2. Как подключить MapStruct к Maven/Gradle-проекту?](#q2-как-подключить-mapstruct-к-mavengradle-проекту)
-- [Q3. (!) Чем MapStruct отличается от ModelMapper и Dozer?](#q3--чем-mapstruct-отличается-от-modelmapper-и-dozer)
-- [Q4. Что такое `@Mapper` и какие параметры он принимает?](#q4-что-такое-mapper-и-какие-параметры-он-принимает)
-- [Q5. Что такое `componentModel` в `@Mapper`?](#q5-что-такое-componentmodel-в-mapper)
+- [Q1. Что такое `MapStruct` и как он работает?](#q1)
+- [Q2. Как подключить `MapStruct` к Maven/Gradle-проекту?](#q2)
+- [Q3. Чем `MapStruct` отличается от `ModelMapper` и `Dozer`?](#q3)
+- [Q4. Что такое `@Mapper` и какие параметры он принимает?](#q4)
+- [Q5. Что такое `componentModel` в `@Mapper`?](#q5)
 
 **Маппинг полей**
-- [Q6. (!) Как маппить поля с разными именами?](#q6--как-маппить-поля-с-разными-именами)
-- [Q7. Как игнорировать поле при маппинге?](#q7-как-игнорировать-поле-при-маппинге)
-- [Q8. Как задать константу или значение по умолчанию?](#q8-как-задать-константу-или-значение-по-умолчанию)
-- [Q9. Как использовать Java-выражение в маппинге?](#q9-как-использовать-java-выражение-в-маппинге)
-- [Q10. Как замаппить вложенные объекты (nested mapping)?](#q10-как-замаппить-вложенные-объекты-nested-mapping)
+- [Q6. Как маппить поля с разными именами?](#q6)
+- [Q7. Как игнорировать поле при маппинге?](#q7)
+- [Q8. Как задать константу или значение по умолчанию?](#q8)
+- [Q9. Как использовать Java-выражение в маппинге?](#q9)
+- [Q10. Как замаппить вложенные объекты (nested mapping)?](#q10)
 
 **Коллекции и enum**
-- [Q11. Как маппить коллекции (List, Set, Map)?](#q11-как-маппить-коллекции-list-set-map)
-- [Q12. Что такое `@IterableMapping` и когда он нужен?](#q12-что-такое-iterablemapping-и-когда-он-нужен)
-- [Q13. Как маппить enum?](#q13-как-маппить-enum)
+- [Q11. Как маппить коллекции (`List`, `Set`, `Map`)?](#q11)
+- [Q12. Что такое `@IterableMapping` и когда он нужен?](#q12)
+- [Q13. Как маппить enum?](#q13)
 
 **Продвинутые возможности**
-- [Q14. (!) Как маппить несколько source-объектов в один target?](#q14--как-маппить-несколько-source-объектов-в-один-target)
-- [Q15. Что такое `@MappingTarget` и зачем он нужен?](#q15-что-такое-mappingtarget-и-зачем-он-нужен)
-- [Q16. Что такое `@InheritConfiguration` и `@InheritInverseConfiguration`?](#q16-что-такое-inheritconfiguration-и-inheritinverseconfiguration)
-- [Q17. Как использовать `@BeforeMapping` и `@AfterMapping`?](#q17-как-использовать-beforemapping-и-aftermapping)
-- [Q18. Что такое `@BeanMapping` и `NullValuePropertyMappingStrategy`?](#q18-что-такое-beanmapping-и-nullvaluepropertymappingstrategy)
-- [Q19. Как подключить внешний / custom mapper через `uses`?](#q19-как-подключить-внешний--custom-mapper-через-uses)
-- [Q20. Что такое `@Qualifier` и `@Named` в MapStruct?](#q20-что-такое-qualifier-и-named-в-mapstruct)
-- [Q21. Что такое Decorator-паттерн в MapStruct?](#q21-что-такое-decorator-паттерн-в-mapstruct)
-- [Q22. Как работает маппинг в абстрактном классе вместо интерфейса?](#q22-как-работает-маппинг-в-абстрактном-классе-вместо-интерфейса)
+- [Q14. Как маппить несколько source-объектов в один target?](#q14)
+- [Q15. Что такое `@MappingTarget` и зачем он нужен?](#q15)
+- [Q16. Что такое `@InheritConfiguration` и `@InheritInverseConfiguration`?](#q16)
+- [Q17. Как использовать `@BeforeMapping` и `@AfterMapping`?](#q17)
+- [Q18. Что такое `@BeanMapping` и `NullValuePropertyMappingStrategy`?](#q18)
+- [Q19. Как подключить внешний / custom mapper через `uses`?](#q19)
+- [Q20. Что такое `@Qualifier` и `@Named` в `MapStruct`?](#q20)
+- [Q21. Что такое Decorator-паттерн в `MapStruct`?](#q21)
+- [Q22. Как работает маппинг в абстрактном классе вместо интерфейса?](#q22)
 
 **Интеграция и инфраструктура**
-- [Q23. (!) Как интегрировать MapStruct со Spring?](#q23--как-интегрировать-mapstruct-со-spring)
-- [Q24. (!) Какие проблемы возникают при использовании MapStruct вместе с Lombok?](#q24--какие-проблемы-возникают-при-использовании-mapstruct-вместе-с-lombok)
-- [Q25. Как MapStruct поддерживает Lombok `@Builder`?](#q25-как-mapstruct-поддерживает-lombok-builder)
-- [Q26. Как тестировать MapStruct-маппер?](#q26-как-тестировать-mapstruct-маппер)
-- [Q27. Какие стратегии обработки `null` есть в MapStruct?](#q27-какие-стратегии-обработки-null-есть-в-mapstruct)
-- [Q28. Как настроить маппинг с условием (conditional mapping)?](#q28-как-настроить-маппинг-с-условием-conditional-mapping)
+- [Q23. Как интегрировать `MapStruct` со Spring?](#q23)
+- [Q24. Какие проблемы возникают при использовании `MapStruct` вместе с `Lombok`?](#q24)
+- [Q25. Как `MapStruct` поддерживает Lombok `@Builder`?](#q25)
+- [Q26. Как тестировать `MapStruct`-маппер?](#q26)
+- [Q27. Какие стратегии обработки `null` есть в `MapStruct`?](#q27)
+- [Q28. Как настроить маппинг с условием (conditional mapping)?](#q28)
 
 ---
 
-## Q1. (!) Что такое MapStruct и как он работает?
+<a id="q1"></a>
+
+## Q1. Что такое `MapStruct` и как он работает?
 
 `MapStruct` — это annotation processor (JSR 269), который во время компиляции генерирует код маппинга между Java Bean. Вместо рефлексии в рантайме он один раз, при сборке, пишет за вас обычный `.java`-класс с явными вызовами геттеров и сеттеров.
 
@@ -114,14 +116,16 @@ public class UserMapperImpl implements UserMapper {
 ```
 
 **Почему это удобно:**
-- Нет рефлексии → код такой же быстрый, как написанный вручную, без оверхеда в рантайме.
-- Ошибки маппинга (несовпадение полей, отсутствие конвертера) ловятся на этапе компиляции, а не падают в проде.
+- Сгенерированный код использует прямые вызовы; выигрыш по времени проверяют на конкретной нагрузке.
+- Ошибки известных свойств и отсутствие нужного метода видны при компиляции; корректность бизнес-преобразования проверяют тестами.
 - Сгенерированный код — обычный читаемый Java: его можно открыть, прочитать и поставить точку останова.
 - Полная поддержка IDE: автодополнение, навигация, рефакторинг работают как с любым кодом.
 
 **Итог:** MapStruct переносит маппинг с рантайма на этап компиляции — отсюда и скорость, и ранняя проверка ошибок.
 
-## Q2. Как подключить MapStruct к Maven/Gradle-проекту?
+<a id="q2"></a>
+
+## Q2. Как подключить `MapStruct` к Maven/Gradle-проекту?
 
 Нужны две вещи: зависимость на runtime-библиотеку с аннотациями и подключение annotation processor к компилятору. Без процессора аннотации просто проигнорируются, и реализация маппера не сгенерируется.
 
@@ -131,7 +135,7 @@ public class UserMapperImpl implements UserMapper {
 <dependency>
     <groupId>org.mapstruct</groupId>
     <artifactId>mapstruct</artifactId>
-    <version>1.6.0</version>
+    <version>1.6.3</version>
 </dependency>
 
 <plugin>
@@ -142,7 +146,7 @@ public class UserMapperImpl implements UserMapper {
             <path>
                 <groupId>org.mapstruct</groupId>
                 <artifactId>mapstruct-processor</artifactId>
-                <version>1.6.0</version>
+                <version>1.6.3</version>
             </path>
         </annotationProcessorPaths>
     </configuration>
@@ -153,28 +157,32 @@ public class UserMapperImpl implements UserMapper {
 
 ```kotlin
 dependencies {
-    implementation("org.mapstruct:mapstruct:1.6.0")
-    annotationProcessor("org.mapstruct:mapstruct-processor:1.6.0")
+    implementation("org.mapstruct:mapstruct:1.6.3")
+    annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
 }
 ```
 
 **Ключевой момент:** MapStruct поставляется двумя jar. `mapstruct` (аннотации и runtime-интерфейсы) попадает в зависимости приложения, а `mapstruct-processor` (сам генератор кода) подключается только к компилятору — в рантайме он не нужен, поэтому его и кладут в `annotationProcessor`, а не в `implementation`.
 
-## Q3. (!) Чем MapStruct отличается от ModelMapper и Dozer?
+<a id="q3"></a>
+
+## Q3. Чем `MapStruct` отличается от `ModelMapper` и `Dozer`?
 
 Главное различие в моменте работы: MapStruct генерирует код при компиляции, а ModelMapper и Dozer выполняют маппинг в рантайме через рефлексию. Отсюда вытекает всё остальное — скорость, момент обнаружения ошибок и прозрачность.
 
 | Критерий | MapStruct | ModelMapper | Dozer |
 |---|---|---|---|
 | Как работает | Compile-time codegen | Runtime рефлексия | Runtime рефлексия |
-| Производительность | Как ручной код | Медленнее (рефлексия) | Медленнее |
-| Обнаружение ошибок | Compile-time | Runtime | Runtime |
+| Производительность | Прямые вызовы в сгенерированном коде | Зависит от конфигурации и нагрузки | Зависит от конфигурации и нагрузки |
+| Обнаружение ошибок | Ошибки известных свойств и методов видны при компиляции | Ошибки правил маппинга обычно видны при выполнении | Ошибки правил маппинга обычно видны при выполнении |
 | Прозрачность | Сгенерированный код читаем | «Магия» внутри | XML конфиг |
-| Размер проекта/deps | Только during compile | Runtime jar | Runtime jar |
+| Зависимости | API-библиотека и процессор при компиляции, сгенерированный класс при выполнении | Библиотека при выполнении | Библиотека при выполнении |
 | Кастомизация | Аннотации, `uses` | Converter, PropertyMap | XML / код |
-| Поддержка Lombok | С настройкой процессора | Нет | Нет |
+| Поддержка Lombok | Через настройку совместной обработки аннотаций | Проверяют по конкретной конфигурации | Проверяют по конкретной конфигурации |
 
-**Вывод:** MapStruct — де-факто стандарт в современных Java/Spring проектах. У ModelMapper ниже порог входа (меньше настройки на старте), но в production он проигрывает: ошибки маппинга всплывают только в рантайме и сам он медленнее из-за рефлексии. Dozer практически вытеснен и считается legacy.
+**Вывод:** MapStruct удобен, когда важны проверяемый при сборке код и предсказуемый путь преобразования. Сравнение скорости с динамическими мапперами проверяют на конкретных объектах и настройках.
+
+<a id="q4"></a>
 
 ## Q4. Что такое `@Mapper` и какие параметры он принимает?
 
@@ -198,6 +206,8 @@ public interface OrderMapper {
 
 **Рекомендация:** ставьте `unmappedTargetPolicy = ERROR`. Тогда компиляция упадёт, если в target-объекте останется поле, которое никуда не замаппилось. Это защищает от «тихих» потерь данных — самой коварной ошибки в маппинге, когда новое поле в DTO добавили, а заполнить его забыли, и оно молча приходит `null`.
 
+<a id="q5"></a>
+
 ## Q5. Что такое `componentModel` в `@Mapper`?
 
 `componentModel` определяет, как создаётся экземпляр маппера и как его потом получить в коде. По сути это выбор между «достать вручную» и «отдать управление DI-контейнеру».
@@ -207,7 +217,7 @@ public interface OrderMapper {
 | `"default"` | Вручную: `Mappers.getMapper(MyMapper.class)` или синглтон `INSTANCE` |
 | `"spring"` | Генерирует `@Component`-бин — инжектится через `@Autowired` / конструктор |
 | `"cdi"` | Генерирует `@ApplicationScoped`-бин для CDI |
-| `"jakarta"` | То же, что `cdi`, но для Jakarta CDI |
+| `"jakarta"` | Jakarta Inject (`@Named`/`@Singleton`); для Jakarta CDI есть `"jakarta-cdi"` |
 
 ```java
 // с componentModel = "spring"
@@ -224,7 +234,9 @@ public class UserService {
 
 Чтобы не повторять `componentModel = "spring"` в каждом маппере, задайте его глобально в опциях компилятора: `-Amapstruct.defaultComponentModel=spring`. Тогда значение применится ко всем маппинг-интерфейсам проекта.
 
-## Q6. (!) Как маппить поля с разными именами?
+<a id="q6"></a>
+
+## Q6. Как маппить поля с разными именами?
 
 Аннотацией `@Mapping(source = "...", target = "...")` на методе маппера — она явно связывает поле источника с полем результата:
 
@@ -239,6 +251,8 @@ public interface PersonMapper {
 ```
 
 `@Mapping` нужен только для расхождений. Поля с одинаковыми именами MapStruct связывает сам (имена сравниваются с учётом регистра). Если типы разные, но конвертация очевидна (`int`→`long`, `String`→`int`) — он тоже справится автоматически. А вот для неочевидных преобразований придётся подсказать ему через `expression` или подключённый маппер в `uses`.
+
+<a id="q7"></a>
 
 ## Q7. Как игнорировать поле при маппинге?
 
@@ -261,6 +275,8 @@ PersonDto toDto(Person person);
 PersonDto toDtoPartial(Person person);
 ```
 
+<a id="q8"></a>
+
 ## Q8. Как задать константу или значение по умолчанию?
 
 Через атрибуты `@Mapping`: `constant` (жёсткое значение), `defaultValue` или `defaultExpression` (значение-заглушка на случай `null`). Важно различать «всегда» и «только если пусто»:
@@ -276,6 +292,8 @@ PersonDto toDto(Person person);
 - `constant` — подставляет значение всегда, source при этом не читается вообще.
 - `defaultValue` — берёт значение source, но если оно `null`, подставляет указанное (строковый литерал).
 - `defaultExpression` — то же, что `defaultValue`, но дефолт вычисляется Java-выражением (когда литерала недостаточно).
+
+<a id="q9"></a>
 
 ## Q9. Как использовать Java-выражение в маппинге?
 
@@ -296,15 +314,18 @@ public interface OrderMapper {
 
 **Подводный камень:** выражение — это просто строка, его не проверяет компилятор маппера и не подсвечивает IDE. Опечатку вы увидите только при сборке сгенерированного кода. Поэтому держите выражения короткими, а сложную логику выносите в обычные `default`-методы или классы в `uses`.
 
+<a id="q10"></a>
+
 ## Q10. Как замаппить вложенные объекты (nested mapping)?
 
 Есть три подхода в зависимости от того, нужна ли вложенность в результате или вы её, наоборот, разворачиваете в плоскую структуру.
 
-**Вариант 1 — автоматический (вложенность сохраняется)**: MapStruct видит у source поле типа `Address`, а у target — `AddressDto`, и сам подбирает маппер для этой пары (его надо предоставить методом или через `uses`):
+**Вариант 1 — автоматический (вложенность сохраняется)**: MapStruct выбирает доступный метод преобразования вложенного типа; подходящий метод можно объявить в маппере или подключить через `uses`. В простом случае MapStruct может сгенерировать вложенный метод сам:
 
 ```java
 @Mapper(uses = AddressMapper.class)
 public interface UserMapper {
+    @Mapping(source = "address", target = "addressDto")
     UserDto toDto(User user); // address → addressDto через AddressMapper
 }
 ```
@@ -322,14 +343,18 @@ UserFlatDto toFlatDto(User user);
 ```java
 @Mapper
 public abstract class UserMapper {
-    public UserDto toDto(User user) {
-        // вызов другого метода
+    @Mapping(source = "address", target = "addressDto")
+    public abstract UserDto toDto(User user);
+
+    protected AddressDto toAddressDto(Address address) {
+        return new AddressDto(address.getCity()); // собственное правило
     }
-    protected abstract AddressDto toAddressDto(Address address);
 }
 ```
 
-## Q11. Как маппить коллекции (List, Set, Map)?
+<a id="q11"></a>
+
+## Q11. Как маппить коллекции (`List`, `Set`, `Map`)?
 
 Достаточно объявить метод с коллекцией в сигнатуре — MapStruct сгенерирует его сам, если уже знает, как маппить один элемент:
 
@@ -342,7 +367,7 @@ public interface OrderMapper {
 }
 ```
 
-Под капотом он просто создаёт новую коллекцию того же типа, проходит по элементам и вызывает для каждого `toDto()` — ровно то, что вы написали бы руками в цикле.
+Под капотом он создаёт подходящую целевую коллекцию, проходит по элементам и вызывает для каждого `toDto()` — без ручного цикла в маппере.
 
 Для `Map` он маппит отдельно ключи и значения:
 
@@ -350,7 +375,9 @@ public interface OrderMapper {
 Map<String, OrderDto> toDtoMap(Map<String, Order> map);
 ```
 
-**Подводный камень:** если ключ — пользовательский тип, который тоже нужно преобразовать (`Map<Entity, Dto>`), автоматики не хватит — придётся писать собственный метод конверсии ключа.
+**Подводный камень:** если ключ — пользовательский тип, проверьте, нашёл ли MapStruct нужное преобразование. При неоднозначности или особой логике добавьте явный метод конверсии ключа.
+
+<a id="q12"></a>
 
 ## Q12. Что такое `@IterableMapping` и когда он нужен?
 
@@ -375,6 +402,8 @@ public interface StringMapper {
 ```
 
 Здесь оба метода `String → String`, поэтому без `@IterableMapping` MapStruct увидел бы неоднозначность и упал с ошибкой компиляции. Помимо выбора метода, `@IterableMapping` умеет задавать и другие параметры элемента — например, формат даты или стратегию обработки `null`.
+
+<a id="q13"></a>
 
 ## Q13. Как маппить enum?
 
@@ -403,11 +432,13 @@ public interface StatusMapper {
 ```
 
 Специальные источники для «catch-all»-правил:
-- `MappingConstants.ANY_REMAINING` — все значения, не перечисленные явно (включая совпадающие по имени).
-- `MappingConstants.ANY_UNMAPPED` — только те, что не нашли пару (значения, совпавшие по имени, остаются как есть).
+- `MappingConstants.ANY_REMAINING` — сначала сохраняет сопоставление по одинаковым именам, затем отправляет остальные значения в указанный target.
+- `MappingConstants.ANY_UNMAPPED` — все значения без явного правила отправляет в указанный target, не пытаясь сопоставить их по имени.
 - `MappingConstants.NULL` — позволяет задать, во что превращается `null`.
 
-## Q14. (!) Как маппить несколько source-объектов в один target?
+<a id="q14"></a>
+
+## Q14. Как маппить несколько source-объектов в один target?
 
 Объявите метод с несколькими source-параметрами, и MapStruct соберёт результат из всех них. Чтобы он понял, какое поле из какого параметра брать, в `source` указывается имя параметра через точку (`order.id`, `address.city`):
 
@@ -426,6 +457,8 @@ public interface DeliveryMapper {
 
 **Подводный камень:** если в разных параметрах есть одноимённые поля (`order.name` и `customer.name`), MapStruct не знает, какое из них взять, и падает с ошибкой компиляции. Лечится явным указанием полного пути в `source` для каждого спорного target-поля.
 
+<a id="q15"></a>
+
 ## Q15. Что такое `@MappingTarget` и зачем он нужен?
 
 `@MappingTarget` помечает параметр как уже существующий объект, в который нужно записать данные — то есть метод **обновляет** переданный экземпляр, а не создаёт и возвращает новый. Такой метод обычно объявляют `void`:
@@ -443,7 +476,9 @@ public interface UserMapper {
 }
 ```
 
-**Сценарий применения:** `partialUpdate` со стратегией `IGNORE` — классический паттерн для PATCH-эндпоинтов. Из request переносятся только заполненные (non-null) поля, а те, что в запросе отсутствуют, остаются в сущности нетронутыми. Без `IGNORE` пустые поля запроса затёрли бы данные в `null`.
+**Сценарий применения:** `partialUpdate` со стратегией `IGNORE` подходит, если в DTO значение `null` означает «поле не передано». Тогда эти поля не меняют существующую сущность. Если API различает явный `null` и отсутствие поля, одного `IGNORE` недостаточно: это различие нужно сохранить в модели запроса.
+
+<a id="q16"></a>
 
 ## Q16. Что такое `@InheritConfiguration` и `@InheritInverseConfiguration`?
 
@@ -469,6 +504,8 @@ public interface ProductMapper {
 
 **Сценарий применения:** двунаправленный маппинг Entity ↔ DTO. Описываете правила один раз в `toDto()`, а `toEntity()` получает их автоматически в обратную сторону — меньше дублирования и ниже риск рассинхронизации правил.
 
+<a id="q17"></a>
+
 ## Q17. Как использовать `@BeforeMapping` и `@AfterMapping`?
 
 Это хуки жизненного цикла: метод с `@BeforeMapping` вызывается до основного маппинга, с `@AfterMapping` — сразу после. MapStruct встраивает их вызовы в сгенерированный код. Удобно для валидации входа и пост-обработки результата:
@@ -479,7 +516,9 @@ public abstract class UserMapper {
 
     @BeforeMapping
     protected void validate(User user) {
-        if (user.getEmail() == null) throw new IllegalArgumentException("email required");
+        if (user != null && user.getEmail() == null) {
+            throw new IllegalArgumentException("email required");
+        }
     }
 
     @AfterMapping
@@ -491,9 +530,11 @@ public abstract class UserMapper {
 }
 ```
 
-**Ограничение:** хуки нужно где-то реализовать телом метода, а в чистом интерфейсе обычные методы тела не имеют. Поэтому их размещают в абстрактном классе-маппере, в его `default`-методах либо в отдельном классе, подключённом через `@Mapper(uses = ...)`.
+Хуки можно реализовать в `default`-методах интерфейса, в абстрактном классе-маппере или в отдельном классе из `@Mapper(uses = ...)`. Время вызова `@BeforeMapping` зависит от параметров хука: метод без `@MappingTarget` может запускаться ещё до проверки source на `null`, а метод с `@MappingTarget` — после создания target.
 
 Параметр `@MappingTarget` в `@AfterMapping` даёт доступ к уже заполненному результату — именно так в него дописывают вычисляемые или аудит-поля.
+
+<a id="q18"></a>
 
 ## Q18. Что такое `@BeanMapping` и `NullValuePropertyMappingStrategy`?
 
@@ -501,10 +542,11 @@ public abstract class UserMapper {
 
 ```java
 @BeanMapping(
-    nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT, // null source → пустой target
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE, // null поле → не трогать
     ignoreByDefault = true  // не маппить никакие поля без явного @Mapping
 )
+@Mapping(target = "name", source = "name")
+@Mapping(target = "email", source = "email")
 void partialUpdate(UserPatchRequest request, @MappingTarget User user);
 ```
 
@@ -517,6 +559,8 @@ void partialUpdate(UserPatchRequest request, @MappingTarget User user);
 | `SET_TO_DEFAULT` | Поставить значение по умолчанию (`0`, `""`, пустую коллекцию) |
 
 **Эмпирическое правило:** для PATCH-операций над существующей сущностью берите `IGNORE` — иначе незаполненные поля запроса затрут уже сохранённые данные.
+
+<a id="q19"></a>
 
 ## Q19. Как подключить внешний / custom mapper через `uses`?
 
@@ -544,7 +588,9 @@ public interface OrderMapper {
 
 Выбор метода идёт по сигнатуре — типу параметра и типу возвращаемого значения. Поэтому никаких аннотаций на сам конвертер вешать не нужно: достаточно, чтобы метод принимал нужный source-тип и возвращал нужный target-тип.
 
-## Q20. Что такое `@Qualifier` и `@Named` в MapStruct?
+<a id="q20"></a>
+
+## Q20. Что такое `@Qualifier` и `@Named` в `MapStruct`?
 
 Это механизм разрешения неоднозначности. Если один и тот же тип можно преобразовать несколькими методами, MapStruct не угадает нужный — вы помечаете методы именами (`@Named("...")`) и в `@Mapping` указываете, какой брать, через `qualifiedByName`:
 
@@ -576,7 +622,9 @@ public interface PriceMapper {
 public @interface WithTax {}
 ```
 
-## Q21. Что такое Decorator-паттерн в MapStruct?
+<a id="q21"></a>
+
+## Q21. Что такое Decorator-паттерн в `MapStruct`?
 
 Это способ обернуть сгенерированный маппер своим классом и дописать логику, не вмешиваясь в генерацию. Аннотация `@DecoratedWith` указывает класс-декоратор, который вызывает оригинальный маппер через делегат, а вокруг этого вызова добавляет нужное поведение:
 
@@ -589,7 +637,7 @@ public interface UserMapper {
 
 public abstract class UserMapperDecorator implements UserMapper {
     @Autowired
-    @Delegate   // делегирует все методы в сгенерированный маппер
+    @Qualifier("delegate") // исходная сгенерированная реализация
     private UserMapper delegate;
 
     @Override
@@ -603,6 +651,8 @@ public abstract class UserMapperDecorator implements UserMapper {
 ```
 
 **Сценарий применения:** обогащение результата данными из сторонних сервисов (например, собрать URL аватара по id), когда такую логику не выразить декларативными `@Mapping`. Простой маппинг полей остаётся в чистом интерфейсе и генерируется автоматически, а вся «грязная» логика изолирована в декораторе.
+
+<a id="q22"></a>
 
 ## Q22. Как работает маппинг в абстрактном классе вместо интерфейса?
 
@@ -624,9 +674,11 @@ public abstract class UserMapper {
 }
 ```
 
-**Почему именно абстрактный класс:** в интерфейс нельзя внедрить Spring-зависимость — поля и `@Autowired` там невозможны. Для абстрактного класса MapStruct генерирует наследника, и уже этот наследник становится Spring-бином: его поля Spring заполняет как обычно. Поэтому, как только маппингу нужны зависимости или состояние, переходят с интерфейса на абстрактный класс.
+**Когда нужен абстрактный класс:** если собственная логика маппера хранит поля или использует внедрённую зависимость, его реализация удобнее интерфейса. MapStruct генерирует подкласс, а при `componentModel = "spring"` Spring регистрирует его как бин. Для отдельных преобразований можно оставить интерфейс и подключить отдельный mapper через `uses`.
 
-## Q23. (!) Как интегрировать MapStruct со Spring?
+<a id="q23"></a>
+
+## Q23. Как интегрировать `MapStruct` со Spring?
 
 Достаточно сказать MapStruct, чтобы он сделал маппер Spring-бином, и дальше он живёт в контейнере как любой другой компонент. Три шага:
 
@@ -653,13 +705,15 @@ public class ProductService {
 
 **Глобальная конфигурация** (Gradle/Maven): `-Amapstruct.defaultComponentModel=spring` — применяется ко всем маппинг-интерфейсам без необходимости указывать в каждом `@Mapper`.
 
-## Q24. (!) Какие проблемы возникают при использовании MapStruct вместе с Lombok?
+<a id="q24"></a>
 
-Корень всех бед — порядок annotation processors. Оба (Lombok и MapStruct) работают на этапе компиляции, и если MapStruct отрабатывает раньше Lombok, то геттеров и сеттеров, которые должен сгенерировать Lombok, ещё нет — MapStruct «не видит» полей и не может построить маппинг.
+## Q24. Какие проблемы возникают при использовании `MapStruct` вместе с `Lombok`?
+
+MapStruct должен увидеть свойства, которые Lombok создаёт во время обработки аннотаций. Без согласования двух процессоров MapStruct может не распознать геттеры, сеттеры или builder и отклонить маппинг. Порядок строк с процессорами в конфигурации сам по себе не задаёт надёжный порядок их работы.
 
 **Симптом:** ошибка вида `No property named "fieldName" exists in source parameter...`, хотя на классе честно стоят `@Getter`/`@Setter`.
 
-**Решение (Maven):** явно задать порядок процессоров так, чтобы Lombok шёл первым:
+**Решение (Maven):** подключить оба процессора и `lombok-mapstruct-binding` в `annotationProcessorPaths`:
 
 ```xml
 <annotationProcessorPaths>
@@ -673,6 +727,11 @@ public class ProductService {
         <artifactId>mapstruct-processor</artifactId>
         <version>${mapstruct.version}</version>
     </path>
+    <path>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok-mapstruct-binding</artifactId>
+        <version>0.2.0</version>
+    </path>
 </annotationProcessorPaths>
 ```
 
@@ -681,16 +740,14 @@ public class ProductService {
 ```kotlin
 annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
 annotationProcessor("org.mapstruct:mapstruct-processor:${mapstructVersion}")
-// Lombok должен быть ПЕРВЫМ
-```
-
-Кроме порядка, нужна зависимость `lombok-mapstruct-binding` — это «мостик», который заставляет два процессора корректно дождаться друг друга:
-
-```kotlin
 annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
 ```
 
-## Q25. Как MapStruct поддерживает Lombok `@Builder`?
+Для Lombok 1.18.16+ официальный справочник MapStruct прямо требует `lombok-mapstruct-binding`. Версии и обработку аннотаций нужно проверить на сборке проекта.
+
+<a id="q25"></a>
+
+## Q25. Как `MapStruct` поддерживает Lombok `@Builder`?
 
 Начиная с версии 1.3, MapStruct распознаёт builder и при наличии предпочитает его обычному конструктору с сеттерами. Это и нужно для immutable-DTO (`@Value` + `@Builder`), у которых сеттеров нет вовсе:
 
@@ -713,9 +770,11 @@ public class UserDto {
 UserDto toDto(User user);
 ```
 
-**Граничный случай:** для `@SuperBuilder` (билдер с поддержкой наследования) стандартного распознавания не хватает — нужен собственный `BuilderProvider`.
+**Граничный случай:** для `@SuperBuilder` и нестандартных builder API проверьте сгенерированный код. При необходимости настройте `@Builder(buildMethod = ...)`, отключите builder для метода или используйте расширение `BuilderProvider`; необходимость собственного провайдера не следует из одного лишь `@SuperBuilder`.
 
-## Q26. Как тестировать MapStruct-маппер?
+<a id="q26"></a>
+
+## Q26. Как тестировать `MapStruct`-маппер?
 
 Маппер — обычный класс с детерминированной логикой, поэтому тестируется как чистая функция: подали вход, проверили выход. Контекст Spring почти никогда не нужен, и большинство мапперов покрываются быстрыми unit-тестами без него.
 
@@ -744,7 +803,7 @@ class UserMapperTest {
 
 `Mappers.getMapper()` поднимает экземпляр напрямую, минуя Spring-контекст, — отсюда и скорость.
 
-**Вариант 2 — Spring slice test** (нужен, только если маппер инжектит зависимости через `componentModel = "spring"`):
+**Вариант 2 — Spring slice test** (полезен для проверки инъекции при `componentModel = "spring"`):
 
 ```java
 @ExtendWith(SpringExtension.class)
@@ -761,7 +820,9 @@ class UserMapperSpringTest {
 - кастомные конверсии
 - partial update (PATCH-сценарии)
 
-## Q27. Какие стратегии обработки `null` есть в MapStruct?
+<a id="q27"></a>
+
+## Q27. Какие стратегии обработки `null` есть в `MapStruct`?
 
 Есть три независимых рычага, и важно их не путать: один отвечает за `null` всего объекта, второй — за `null` отдельного поля, третий — за то, добавлять ли null-проверку перед конверсией.
 
@@ -770,22 +831,24 @@ class UserMapperSpringTest {
 | Значение | Поведение |
 |---|---|
 | `RETURN_NULL` (default) | вернуть `null` |
-| `RETURN_DEFAULT` | вернуть пустой объект (new UserDto()) |
+| `RETURN_DEFAULT` | для Bean создать объект по умолчанию, для коллекции или Map — пустой результат |
 
-**`NullValuePropertyMappingStrategy`** — что делать, если `null` лишь отдельное поле source:
+**`NullValuePropertyMappingStrategy`** — что делать, если `null` у отдельного поля source при обновлении существующего target через `@MappingTarget`:
 
 | Значение | Поведение |
 |---|---|
 | `SET_TO_NULL` (default) | target.setField(null) |
 | `IGNORE` | не трогать target-поле |
-| `SET_TO_DEFAULT` | установить default (0, "", Collections.empty()) |
+| `SET_TO_DEFAULT` | установить значение по умолчанию (`0`, `""`, новую пустую коллекцию) |
 
 **`NullValueCheckStrategy`** — когда проверять null перед конверсией:
 
 | Значение | Поведение |
 |---|---|
 | `ON_IMPLICIT_CONVERSION` (default) | проверка только при неявных конверсиях |
-| `ALWAYS` | всегда добавлять null-check |
+| `ALWAYS` | запрашивать проверку null для свойства, кроме случаев с отдельным presence checker |
+
+<a id="q28"></a>
 
 ## Q28. Как настроить маппинг с условием (conditional mapping)?
 
@@ -806,18 +869,18 @@ public interface UserMapper {
 }
 ```
 
-До 1.5 то же делали через `conditionExpression` — условие прописывали строкой прямо в `@Mapping`, отдельно для каждого поля:
+Альтернатива в MapStruct 1.5+ — `conditionExpression`: условие прописывают строкой прямо в `@Mapping` для конкретного поля:
 
 ```java
 @Mapping(
     target = "phone",
     source = "phone",
-    conditionExpression = "java(source.getPhone() != null && !source.getPhone().isBlank())"
+    conditionExpression = "java(user.getPhone() != null && !user.getPhone().isBlank())"
 )
 UserDto toDto(User user);
 ```
 
-**Сравнение:** `@Condition` чище и безопаснее. Условие пишется один раз обычным Java-методом (его проверяет компилятор) и автоматически применяется ко всем полям подходящего типа, тогда как `conditionExpression` — непроверяемая строка, которую приходится дублировать на каждом поле.
+**Сравнение:** метод с `@Condition` переиспользуется и проверяется компилятором как Java-код; `conditionExpression` задаёт условие для конкретного поля, а его содержимое проверяется при компиляции сгенерированного маппера. Выбор зависит от того, нужно ли одно правило для нескольких свойств.
 
 ## See also
 

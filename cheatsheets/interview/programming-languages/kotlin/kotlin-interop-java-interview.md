@@ -49,78 +49,80 @@ updated: "2026-05-15"
 - [See also](#see-also)
 
 **Основы интеропа и байткод**
-- [Q1. (!) Как из `Java` вызвать код, написанный на `Kotlin`?](#q1--как-из-java-вызвать-код-написанный-на-kotlin)
-- [Q2. (!) Для чего нужны аннотации `@JvmStatic`, `@JvmOverloads` и `@JvmField`?](#q2--для-чего-нужны-аннотации-jvmstatic-jvmoverloads-и-jvmfield)
-- [Q3. Как из `Java` вызвать `companion object` и его члены?](#q3-как-из-java-вызвать-companion-object-и-его-члены)
-- [Q4. Как из `Java` вызывать функции `Kotlin` с default-параметрами?](#q4-как-из-java-вызывать-функции-kotlin-с-default-параметрами)
-- [Q5. Как из `Java` вызвать extension-функцию `Kotlin`?](#q5-как-из-java-вызвать-extension-функцию-kotlin)
+- [Q1. Как Java вызывает top-level функцию `f()` из файла `Utils.kt` без аннотаций?](#q1)
+- [Q2. Как `@JvmStatic`, `@JvmOverloads` и `@JvmField` меняют Java-доступ к Kotlin API?](#q2)
+- [Q3. Как Java получает метод и поля из Kotlin `companion object` с `@JvmStatic` и `@JvmField`?](#q3)
+- [Q4. Как из `Java` вызывать функции `Kotlin` с default-параметрами?](#q4)
+- [Q5. Как из `Java` вызвать extension-функцию `Kotlin`?](#q5)
 
 **Nullability и platform types**
-- [Q6. (!) Что такое `platform types` и как с ними работать?](#q6--что-такое-platform-types-и-как-с-ними-работать)
-- [Q7. (!) Как работают nullability-аннотации `@Nullable`/`@NotNull` на границе `Kotlin` и `Java`?](#q7--как-работают-nullability-аннотации-nullablenotnull-на-границе-kotlin-и-java)
-- [Q8. Как в `Kotlin` объявить API, чтобы из `Java` были видны корректные nullability-контракты?](#q8-как-в-kotlin-объявить-api-чтобы-из-java-были-видны-корректные-nullability-контракты)
+- [Q6. Что такое `platform types` и как с ними работать?](#q6)
+- [Q7. Что меняет `-Xjsr305=strict` для nullability Java API?](#q7)
+- [Q8. Как в `Kotlin` объявить API, чтобы из `Java` были видны корректные nullability-контракты?](#q8)
 
 **Аннотации `@JvmName`, `@JvmSynthetic`, `@Throws`**
-- [Q9. Для чего нужна аннотация `@JvmName` и когда её использовать?](#q9-для-чего-нужна-аннотация-jvmname-и-когда-её-использовать)
-- [Q10. Зачем нужна `@JvmSynthetic`?](#q10-зачем-нужна-jvmsynthetic)
-- [Q11. Когда и зачем использовать `@Throws`?](#q11-когда-и-зачем-использовать-throws)
+- [Q9. Для чего нужна аннотация `@JvmName` и когда её использовать?](#q9)
+- [Q10. Зачем нужна аннотация `@JvmSynthetic`?](#q10)
+- [Q11. Что даёт `@Throws(IOException::class)` Java-клиенту Kotlin-функции?](#q11)
 
 **SAM-конверсии и функциональные интерфейсы**
-- [Q12. (!) Что такое SAM-conversion при интеропе `Kotlin` и `Java`?](#q12--что-такое-sam-conversion-при-интеропе-kotlin-и-java)
-- [Q13. Чем отличается `fun interface` в `Kotlin` от `Java` SAM-интерфейса?](#q13-чем-отличается-fun-interface-в-kotlin-от-java-sam-интерфейса)
+- [Q12. Что такое SAM-conversion при интеропе `Kotlin` и `Java`?](#q12)
+- [Q13. Чем отличается `fun interface` в `Kotlin` от `Java` SAM-интерфейса?](#q13)
 
 **Generics: variance, wildcards**
-- [Q14. (!) Как соотносятся `in`/`out` в `Kotlin` и `? extends`/`? super` в `Java`?](#q14--как-соотносятся-inout-в-kotlin-и--extends-super-в-java)
-- [Q15. Когда нужны `@JvmSuppressWildcards` и `@JvmWildcard`?](#q15-когда-нужны-jvmsuppresswildcards-и-jvmwildcard)
+- [Q14. Как связаны `out`/`in` Kotlin и `? extends`/`? super` Java?](#q14)
+- [Q15. Когда нужны аннотации `@JvmSuppressWildcards` и `@JvmWildcard`?](#q15)
 
 **Коллекции и потоки**
-- [Q16. (!) Как работает интероп коллекций между `Kotlin` и `Java`?](#q16--как-работает-интероп-коллекций-между-kotlin-и-java)
-- [Q17. `Java Streams` vs `Kotlin Sequences`: в чём разница и когда что использовать?](#q17-java-streams-vs-kotlin-sequences-в-чём-разница-и-когда-что-использовать)
+- [Q16. Как работает интероп коллекций между `Kotlin` и `Java`?](#q16)
+- [Q17. Чем `Stream` и `Sequence` отличаются по повторному обходу и параллелизму?](#q17)
 
 **Свойства и доступ к полям**
-- [Q18. Как `Kotlin`-свойства выглядят из `Java`?](#q18-как-kotlin-свойства-выглядят-из-java)
+- [Q18. Какие Java-методы дают обычные Kotlin-свойства `val`, `var` и Boolean `isActive`?](#q18)
 
 **Top-level функции и `object`**
-- [Q19. Как из `Java` вызывать top-level функции `Kotlin`?](#q19-как-из-java-вызывать-top-level-функции-kotlin)
+- [Q19. Как Java вызывает top-level Kotlin-функцию без аннотаций и с `@file:JvmName`?](#q19)
 
 **`inline`-классы и `Java`**
-- [Q20. (!) Как `value class` (`@JvmInline`) работает при интеропе с `Java`?](#q20--как-value-class-jvminline-работает-при-интеропе-с-java)
+- [Q20. Как открыть Java-клиенту API с Kotlin `value class` в современных версиях?](#q20)
 
 **Корутины и `suspend`-функции**
-- [Q21. (!) Как из `Java` вызвать `suspend`-функцию `Kotlin`?](#q21--как-из-java-вызвать-suspend-функцию-kotlin)
+- [Q21. Как предоставить Java-клиенту удобный вызов Kotlin `suspend`-функции?](#q21)
 
 **Перегрузка и разрешение методов**
-- [Q22. Как из `Kotlin` вызывать перегруженные методы `Java`?](#q22-как-из-kotlin-вызывать-перегруженные-методы-java)
+- [Q22. Как Kotlin выбирает перегрузку Java-метода и что будет при `process(null)` для `String` и `Integer`?](#q22)
 
 **Checked exceptions**
-- [Q23. Как `Kotlin` работает с checked exceptions из `Java`?](#q23-как-kotlin-работает-с-checked-exceptions-из-java)
+- [Q23. Как `Kotlin` работает с checked exceptions из `Java`?](#q23)
 
 **Kotlin-специфичные конструкции из `Java`**
-- [Q24. Как из `Java` работать с `sealed class`/`sealed interface` из `Kotlin`?](#q24-как-из-java-работать-с-sealed-classsealed-interface-из-kotlin)
-- [Q25. Как из `Java` использовать `data class` из `Kotlin`?](#q25-как-из-java-использовать-data-class-из-kotlin)
+- [Q24. Как Java 21 разбирает Kotlin `sealed interface`, скомпилированный с JVM target 17?](#q24)
+- [Q25. Как из `Java` использовать `data class` из `Kotlin`? В частности, как создать копию, изменив одно поле?](#q25)
 
 **Смешанные проекты: best practices**
-- [Q26. (!) Какие практики делают `Kotlin` API удобным для `Java`-клиентов?](#q26--какие-практики-делают-kotlin-api-удобным-для-java-клиентов)
-- [Q27. Как организовать смешанный `Kotlin`/`Java` проект в `Gradle`?](#q27-как-организовать-смешанный-kotlinjava-проект-в-gradle)
-- [Q28. Как работать с `Java records` из `Kotlin` и использовать `@JvmRecord`?](#q28-как-работать-с-java-records-из-kotlin-и-использовать-jvmrecord)
-- [Q29. Как работает интероп `Kotlin` с `Java` аннотациями (`@Target`, `@Retention`, use-site targets)?](#q29-как-работает-интероп-kotlin-с-java-аннотациями-target-retention-use-site-targets)
+- [Q26. Какие практики делают `Kotlin` API удобным для `Java`-клиентов (fluent API без знания про `Companion`)?](#q26)
+- [Q27. Как Gradle собирает смешанный Kotlin/Java модуль и нужны ли Java stubs для `javac`?](#q27)
+- [Q28. Как из Kotlin прочитать `x` у Java record `Point(int x, int y)`?](#q28)
+- [Q29. Куда ставить `@Column` в Kotlin JPA entity с field access через `@field:Id`?](#q29)
 
 **Platform types, `inline`, sealed и null safety**
-- [Q30. Почему platform types опасны и как их избежать в реальных проектах?](#q30-почему-platform-types-опасны-и-как-их-избежать-в-реальных-проектах)
-- [Q31. Почему `inline`-функции недоступны из `Java` и как это обойти?](#q31-почему-inline-функции-недоступны-из-java-и-как-это-обойти)
-- [Q32. `Sealed classes` в `Java 17` vs `Kotlin sealed`: ключевые отличия при интеропе](#q32-sealed-classes-в-java-17-vs-kotlin-sealed-ключевые-отличия-при-интеропе)
-- [Q33. `Java Optional` vs `Kotlin` null safety: что лучше и как работать на границе двух языков?](#q33-java-optional-vs-kotlin-null-safety-что-лучше-и-как-работать-на-границе-двух-языков)
+- [Q30. Как безопаснее читать nullable значение из неаннотированного Java API?](#q30)
+- [Q31. Почему Java не может вызвать Kotlin `inline`-функцию с `reified T` и как дать замену?](#q31)
+- [Q32. Как JVM target влияет на `PermittedSubclasses` у Kotlin `sealed`?](#q32)
+- [Q33. Как превратить Java `Optional<String>` в Kotlin `String?` для дальнейшей обработки?](#q33)
 
 **Lombok, companion object и generics**
-- [Q34. Почему `Lombok` несовместим с `Kotlin` при использовании `kapt` и как это решить?](#q34-почему-lombok-несовместим-с-kotlin-при-использовании-kapt-и-как-это-решить)
-- [Q35. Как работает `companion object` с `@JvmStatic` из `Java`: детали и подводные камни?](#q35-как-работает-companion-object-с-jvmstatic-из-java-детали-и-подводные-камни)
-- [Q36. Как extension-функции `Kotlin` выглядят в байткоде и чем это важно для `Java`?](#q36-как-extension-функции-kotlin-выглядят-в-байткоде-и-чем-это-важно-для-java)
-- [Q37. `Java Optional` и Kotlin: паттерны интеграции при работе с `Spring Data`](#q37-java-optional-и-kotlin-паттерны-интеграции-при-работе-с-spring-data)
-- [Q38. Kotlin generics variance (`in`/`out`) и Java wildcards: практические примеры при интеропе](#q38-kotlin-generics-variance-inout-и-java-wildcards-практические-примеры-при-интеропе)
+- [Q34. Почему Kotlin-код в смешанном модуле может не видеть Lombok `builder()` и как исправить?](#q34)
+- [Q35. Как работает `companion object` с `@JvmStatic` из `Java`? Как из Java получить `val DEFAULT_TIMEOUT = Duration.ofSeconds(30)` и `const val MAX_ITEMS = 100`?](#q35)
+- [Q36. Как extension-функции `Kotlin` выглядят в байткоде? Что вернёт `Java`-вызов `AnimalExtKt.speak(new Dog())` при `fun Animal.speak() = "generic"` и `fun Dog.speak() = "woof"`?](#q36)
+- [Q37. Что означает `User?` в методе Kotlin Spring Data репозитория по сравнению с `Optional<User>`?](#q37)
+- [Q38. Почему Java видит `List<? extends Handler>` в Kotlin-конструкторе и как получить `List<Handler>`?](#q38)
 
 ---
 
-## Q1. (!) Как из `Java` вызвать код, написанный на `Kotlin`?
+<a id="q1"></a>
+
+## Q1. Как Java вызывает top-level функцию `f()` из файла `Utils.kt` без аннотаций?
 
 Никакого моста не нужно: `Kotlin` компилируется в тот же байткод `JVM`, что и `Java`, поэтому `Kotlin`-классы видны из `Java` как обычные классы. Вся сложность — не в вызове, а в том, что одна `Kotlin`-конструкция может превратиться в неожиданный для `Java` элемент байткода: top-level функция станет статическим методом класса-обёртки, `object` — синглтоном с полем `INSTANCE`, свойство — парой геттер/сеттер. Чтобы вызывать `Kotlin` идиоматично, надо знать эти соответствия.
 
@@ -148,11 +150,13 @@ graph TD
 
 **Ключевая мысль:** без специальных аннотаций код всё равно вызывается — просто синтаксис на стороне `Java` получается громоздким (`Companion.method()`, `INSTANCE.method()`, `getName()`). Аннотации `@JvmStatic`, `@JvmOverloads`, `@JvmField`, `@JvmName` не меняют поведение, а делают `Java`-вызовы короче и привычнее. В чисто `Kotlin`-проекте они не нужны.
 
-## Q2. (!) Для чего нужны аннотации `@JvmStatic`, `@JvmOverloads` и `@JvmField`?
+<a id="q2"></a>
+
+## Q2. Как `@JvmStatic`, `@JvmOverloads` и `@JvmField` меняют Java-доступ к Kotlin API?
 
 Каждая из трёх аннотаций убирает один конкретный источник «уродливого» синтаксиса на стороне `Java`: лишний `Companion`, обязательную передачу всех аргументов и вызов геттера вместо чтения поля.
 
-**`@JvmStatic`** — генерирует настоящий статический метод (или поле) в самом классе, а не во вложенном `Companion`. Без неё члены `companion object` доступны только через `MyClass.Companion.method()`:
+**`@JvmStatic`** — генерирует статический метод для функции или статический accessor для свойства в самом классе, а не во вложенном `Companion`. Без неё члены `companion object` доступны только через `MyClass.Companion.method()`:
 
 ```kotlin
 class ConnectionPool {
@@ -170,7 +174,7 @@ ConnectionPool.Companion.create(10);
 ConnectionPool.create(10);  // идиоматичный Java-вызов
 ```
 
-**`@JvmOverloads`** — для функции с default-параметрами генерирует набор перегрузок, отсекая аргументы справа. `Java` не умеет default-значения, поэтому без этой аннотации пришлось бы всегда передавать все параметры:
+**`@JvmOverloads`** — для функции с default-параметрами генерирует набор перегрузок, отсекая параметры с default-значениями справа. `Java` не умеет default-значения, поэтому без этой аннотации пришлось бы всегда передавать все параметры:
 
 ```kotlin
 class HttpClient {
@@ -210,7 +214,9 @@ config.debugMode = true;           // поле, не setDebugMode()
 
 > **Что подчеркнуть на собеседовании:** все три аннотации меняют только форму вызова на стороне `Java`, а не семантику кода. Они нужны исключительно когда `Kotlin`-модуль потребляется из `Java`; в чисто `Kotlin`-проекте они бессмысленны.
 
-## Q3. Как из `Java` вызвать `companion object` и его члены?
+<a id="q3"></a>
+
+## Q3. Как Java получает метод и поля из Kotlin `companion object` с `@JvmStatic` и `@JvmField`?
 
 `companion object` компилируется во вложенный класс-синглтон `Companion`, поэтому по умолчанию из `Java` к его членам обращаются через `MyClass.Companion.method()`. Форма доступа меняется в зависимости от того, какой аннотацией помечен член:
 
@@ -258,9 +264,11 @@ MyRegistry.getItems();
 - `const val` — только для примитивов и `String`, значение подставляется по месту использования в compile-time (как `static final` в `Java`). Всегда видна из `Java` напрямую, без аннотаций.
 - `@JvmField val` — работает с любым типом, но значение читается из поля в runtime. Нужна, когда тип не примитив и не `String` (например, `Set`, `Duration`).
 
+<a id="q4"></a>
+
 ## Q4. Как из `Java` вызывать функции `Kotlin` с default-параметрами?
 
-Коротко: либо передавайте из `Java` все аргументы, либо повесьте `@JvmOverloads`. Default-значения — это фича `Kotlin`-компилятора, в байткоде их нет: по умолчанию `Kotlin` генерирует одну-единственную сигнатуру со **всеми** параметрами, и `Java` обязан заполнить каждый.
+Коротко: либо передавайте из `Java` все аргументы, либо повесьте `@JvmOverloads`. Default-значения — это фича `Kotlin`-компилятора, в байткоде их нет: по умолчанию для `Java` доступна сигнатура со **всеми** параметрами, и `Java` обязан заполнить каждый.
 
 `@JvmOverloads` решает это, заставляя компилятор сгенерировать дополнительные перегрузки — каждая отбрасывает крайний правый параметр:
 
@@ -294,6 +302,8 @@ class HttpRequest @JvmOverloads constructor(
 )
 ```
 
+<a id="q5"></a>
+
 ## Q5. Как из `Java` вызвать extension-функцию `Kotlin`?
 
 Extension-функция — это не метод класса, а статический метод, у которого receiver передан первым параметром. Никакой «магии» здесь нет: `String.toSlug()` в байткоде превращается в `toSlug(String)`, и из `Java` его так и вызывают — как статический метод класса-обёртки:
@@ -326,7 +336,9 @@ String slug = Strings.toSlug("Hello World!");
 
 Если несколько файлов используют одно `@JvmName`, нужно добавить `@file:JvmMultifileClass` — тогда все функции объединяются в один фасадный класс.
 
-## Q6. (!) Что такое `platform types` и как с ними работать?
+<a id="q6"></a>
+
+## Q6. Что такое `platform types` и как с ними работать?
 
 **Platform type** — это тип, пришедший из `Java`, про который компилятор `Kotlin` не знает, nullable он или нет (в `Java`-сигнатуре нет аннотации nullability). Чтобы не ломать интероп ложными ошибками, `Kotlin` снимает с такого типа проверки на `null` и доверяет их разработчику. В IDE это видно по восклицательному знаку: `String!`, `List<User>!`.
 
@@ -369,7 +381,9 @@ val name: String? = javaObject.getName()
 
 Подробнее о nullability — в [вопросах по основам Kotlin](kotlin-interview.md).
 
-## Q7. (!) Как работают nullability-аннотации `@Nullable`/`@NotNull` на границе `Kotlin` и `Java`?
+<a id="q7"></a>
+
+## Q7. Что меняет `-Xjsr305=strict` для nullability Java API?
 
 Эти аннотации — способ убрать platform types: если `Java`-элемент помечен `@Nullable`/`@NotNull`, `Kotlin` перестаёт «угадывать» и видит точный тип (`String?` или `String`) с полным контролем `null`. Компилятор понимает аннотации из множества библиотек:
 
@@ -408,6 +422,8 @@ val nick = userService.nickname               // String! — platform type
 
 **Строгий режим (`-Xjsr305=strict`):** флаг управляет только тем, насколько строго компилятор реагирует на JSR-305-аннотации — включая default-квалификаторы вроде `@ParametersAreNonnullByDefault`, которые задают nullability сразу для всего пакета/класса. По умолчанию нарушение таких контрактов — warning, в strict-режиме — ошибка компиляции. Важный нюанс: типы вообще без аннотаций флаг не трогает — они как были, так и остаются platform types.
 
+<a id="q8"></a>
+
 ## Q8. Как в `Kotlin` объявить API, чтобы из `Java` были видны корректные nullability-контракты?
 
 Хорошая новость: специально делать почти ничего не нужно — `Kotlin`-компилятор сам кодирует контракт nullability в байткоде из обычных типов `Kotlin`:
@@ -430,6 +446,8 @@ UserKt.process(null);
 ```
 
 **Рекомендация:** для публичных `Kotlin`-библиотек контракт nullability всё равно стоит документировать словами — старые или нестандартные `Java`-IDE могут не показать предупреждение по байткодной аннотации, и `Java`-клиент узнает о non-null только в виде падения в runtime.
+
+<a id="q9"></a>
 
 ## Q9. Для чего нужна аннотация `@JvmName` и когда её использовать?
 
@@ -488,7 +506,9 @@ Utils.foo(); // оба метода в одном классе
 Utils.bar();
 ```
 
-## Q10. Зачем нужна `@JvmSynthetic`?
+<a id="q10"></a>
+
+## Q10. Зачем нужна аннотация `@JvmSynthetic`?
 
 `@JvmSynthetic` помечает элемент (метод, свойство, поле) флагом `synthetic` в байткоде, и `Java`-компилятор перестаёт его видеть — будто элемента нет. Из `Kotlin` он при этом доступен как обычно. Смысл — спрятать от `Java` то, что без `Kotlin`-синтаксиса всё равно бесполезно или опасно.
 
@@ -507,9 +527,11 @@ class KotlinDsl {
 
 3. **Предотвращение случайного использования** служебных методов, сгенерированных для `inline`-классов или `operator`-функций.
 
-> **Чем отличается от `internal`:** модификатор `internal` компилируется в `public` с искажённым именем (name-mangling) — то есть элемент технически доступен из `Java`, просто с уродливым именем. `@JvmSynthetic` убирает видимость по-настоящему: вызвать такой элемент из `Java` нельзя никак.
+> **Чем отличается от `internal`:** модификатор `internal` компилируется в `public` с искажённым именем (name-mangling) — то есть элемент технически доступен из `Java`, просто с уродливым именем. `@JvmSynthetic` скрывает элемент от обычного вызова в Java-исходнике; в байткоде он остаётся и может быть виден через reflection.
 
-## Q11. Когда и зачем использовать `@Throws`?
+<a id="q11"></a>
+
+## Q11. Что даёт `@Throws(IOException::class)` Java-клиенту Kotlin-функции?
 
 `@Throws` нужна, чтобы добавить `throws` в сигнатуру `Kotlin`-метода в байткоде. Причина: в `Kotlin` все исключения unchecked, поэтому компилятор не пишет `throws` сам. Но `Java`-компилятор считает `catch (IOException e)` ошибкой, если в сигнатуре нет соответствующего `throws` — он не верит, что метод вообще может бросить `IOException`. Без `@Throws` `Java`-клиент не сможет точечно поймать checked-исключение из `Kotlin`-кода.
 
@@ -533,7 +555,9 @@ try {
 
 Без `@Throws` `Java`-код может только ловить `Exception` или `Throwable`, что менее точно. Подробнее об обработке ошибок — в [вопросах по исключениям Kotlin](kotlin-exceptions-interview.md).
 
-## Q12. (!) Что такое SAM-conversion при интеропе `Kotlin` и `Java`?
+<a id="q12"></a>
+
+## Q12. Что такое SAM-conversion при интеропе `Kotlin` и `Java`?
 
 **SAM-conversion** (Single Abstract Method) — автоматическое превращение лямбды `Kotlin` в реализацию `Java`-интерфейса с ровно одним абстрактным методом (`Runnable`, `Comparator`, `Callable`, `Consumer` и т.д.). Благодаря ему не нужно писать `object : Runnable { override fun run() ... }` — достаточно лямбды, а компилятор сам обернёт её в анонимную реализацию интерфейса.
 
@@ -573,7 +597,9 @@ graph LR
 executor.submit(Runnable { println("task") })
 ```
 
-4. **Подводный камень:** каждый вызов с лямбдой создаёт **новый** объект-реализацию. Поэтому для пар `addListener`/`removeListener` лямбду нужно сохранить в переменную — иначе во второй вызов уйдёт другая ссылка и слушатель не снимется.
+4. **Подводный камень:** два отдельно записанных лямбда-выражения не гарантируют одну и ту же ссылку на SAM-объект. Для `addListener`/`removeListener` сохраните переданный экземпляр и используйте его повторно. Не делайте вывод о числе аллокаций без проверки конкретной реализации.
+
+<a id="q13"></a>
 
 ## Q13. Чем отличается `fun interface` в `Kotlin` от `Java` SAM-интерфейса?
 
@@ -598,43 +624,17 @@ val upper: Transformer<String, String> = Transformer { it.uppercase() }
 
 **Типичная ошибка:** объявить обычный `Kotlin interface` с одним методом и ожидать SAM-conversion — без ключевого слова `fun` это не работает, нужно создавать `object : Interface { }`.
 
-## Q14. (!) Как соотносятся `in`/`out` в `Kotlin` и `? extends`/`? super` в `Java`?
+<a id="q14"></a>
 
-Это два способа выразить одно и то же — безопасную вариантность дженериков в иерархии типов. Разница в том, **где** задаётся вариантность: `Kotlin` использует **declaration-site variance** — `out`/`in` пишут один раз при объявлении класса. `Java` использует **use-site variance** — `? extends`/`? super` указывают в каждом месте использования. Поэтому `Kotlin`-вариант лаконичнее (объявил — забыл), а `Java`-вариант гибче, но многословнее.
+## Q14. Как связаны `out`/`in` Kotlin и `? extends`/`? super` Java?
 
-| `Kotlin` | `Java` | Название | Смысл |
-|---|---|---|---|
-| `out T` | `? extends T` | Ковариантность | Можно только **читать** `T` |
-| `in T` | `? super T` | Контравариантность | Можно только **писать** `T` |
-| `T` (без модификатора) | `T` | Инвариантность | Чтение и запись |
-| `*` | `?` | Star projection / Unbounded | Тип неизвестен |
+`out T` разрешает отдавать `T` (producer), а `in T` — принимать `T` (consumer). По смыслу это соответствует Java `? extends T` и `? super T`. Kotlin задаёт вариантность при объявлении типа и поддерживает проекции в месте использования; Java wildcard указывает в месте использования.
 
-```kotlin
-// Kotlin: declaration-site variance
-interface Source<out T> {    // Producer — только отдаёт T
-    fun next(): T
-}
+Это соответствие описывает безопасность типов, а не обещает буквальный wildcard в каждой JVM-сигнатуре. Компилятор учитывает позицию типа и может убрать избыточный wildcard для конкретного `final`-типа. Для Java API проверяйте сгенерированную сигнатуру, особенно если её читает DI или reflection. `@JvmSuppressWildcards` и `@JvmWildcard` управляют этим представлением (Q15).
 
-interface Sink<in T> {       // Consumer — только принимает T
-    fun put(item: T)
-}
-```
+<a id="q15"></a>
 
-При компиляции `Kotlin` транслирует `out T` в `? extends T` в `Java`-сигнатурах:
-
-```kotlin
-// Kotlin
-fun copy(from: Source<Any>, to: Sink<Any>) { /* ... */ }
-```
-
-```java
-// Java видит:
-void copy(Source<? extends Object> from, Sink<? super Object> to)
-```
-
-**Главное для собеседования:** правило **PECS** из `Java` (Producer Extends, Consumer Super) и пара `out`/`in` из `Kotlin` выражают один и тот же принцип. `out` (producer) — тип только отдаётся, значит читать безопасно. `in` (consumer) — тип только принимается, значит писать безопасно. Покажите, что видите за разным синтаксисом общую идею. Подробнее о дженериках — в [вопросах по дженерикам Java](../java/java-generics-interview.md).
-
-## Q15. Когда нужны `@JvmSuppressWildcards` и `@JvmWildcard`?
+## Q15. Когда нужны аннотации `@JvmSuppressWildcards` и `@JvmWildcard`?
 
 Поскольку у `Java` нет declaration-site variance, `Kotlin`-компилятору приходится переводить свои `out T`/`in T` в `Java`-сигнатурах через wildcards (`? extends T` / `? super T`). Важно: автоматически это происходит только **в позициях параметров** — в return-типах wildcards по умолчанию не генерируются (чтобы не заставлять `Java`-клиентов с ними возиться). Обычно перевод правильный, но иногда лишний wildcard ломает код, который ожидает точный тип. Эти две аннотации дают ручное управление переводом.
 
@@ -664,7 +664,9 @@ fun process(items: List<@JvmWildcard String>) { /* ... */ }
 
 Используется реже — в основном для совместимости с `Java`-API, ожидающими wildcard-типы.
 
-## Q16. (!) Как работает интероп коллекций между `Kotlin` и `Java`?
+<a id="q16"></a>
+
+## Q16. Как работает интероп коллекций между `Kotlin` и `Java`?
 
 Суть в одном факте: разделение на read-only и mutable существует только в системе типов `Kotlin` на этапе компиляции, а в байткоде остаётся один и тот же `java.util.List`. `Kotlin` даёт два интерфейса — read-only (`List`, `Set`, `Map`) без мутирующих методов и `Mutable*` с ними, — но оба отображаются на одни и те же `Java`-классы. Из-за этого граница между языками теряет информацию о мутабельности, и отсюда растут все подводные камни ниже.
 
@@ -689,11 +691,11 @@ graph TD
 
 - `java.util.List` → `(Mutable)List<T!>!` — platform type, `Kotlin` не знает, mutable она или нет
 - Разработчик сам решает: принять как `List<String>` (read-only) или `MutableList<String>`
-- Если принять как `List`, а `Java`-код потом мутирует коллекцию — будет `UnsupportedOperationException` или неожиданное поведение
+- Если принять изменяемую Java-коллекцию как `List`, другая ссылка всё ещё может изменить её содержимое
 
 **Из `Kotlin` в `Java`:**
 
-- `listOf(1, 2, 3)` возвращает read-only список, но из `Java` это обычный `java.util.List` — `add()` вызвать можно, но будет `UnsupportedOperationException`
+- `listOf(1, 2, 3)` возвращает read-only API, но из `Java` это `java.util.List`; результат мутации зависит от конкретной реализации, неизменяемость этим типом не гарантируется
 - `mutableListOf(1, 2, 3)` — из `Java` мутация работает нормально
 
 ```kotlin
@@ -713,13 +715,15 @@ mutable.add("Charlie");      // OK
 
 > **Частая ошибка на собеседованиях:** считать, что `Kotlin` read-only коллекции immutable. Они не immutable — просто интерфейс не содержит мутирующих методов. Под капотом может быть `MutableList`, и `Java`-код может его мутировать. Подробнее — в [вопросах по коллекциям Kotlin](kotlin-collections-interview.md).
 
-## Q17. `Java Streams` vs `Kotlin Sequences`: в чём разница и когда что использовать?
+<a id="q17"></a>
 
-Обе дают ленивую (отложенную) обработку цепочки операций, но создавались под разные приоритеты: `Java Streams` делает ставку на встроенный параллелизм, а `Kotlin Sequences` — на простоту, переиспользуемость и единый API с коллекциями. Отличия в деталях:
+## Q17. Чем `Stream` и `Sequence` отличаются по повторному обходу и параллелизму?
+
+Обе дают ленивую (отложенную) обработку цепочки операций, но создавались под разные приоритеты: `Java Streams` делает ставку на встроенный параллелизм, а `Kotlin Sequences` — на ленивые цепочки и единый API с коллекциями. Отличия в деталях:
 
 | Аспект | `Java Streams` | `Kotlin Sequences` |
 |---|---|---|
-| Повторное использование | Нет (терминальная операция закрывает поток) | Да (можно итерировать многократно) |
+| Повторное использование | Нет (повторное использование не гарантируется) | Обычно да; отдельные Sequence ограничены одним проходом |
 | Параллелизм | `parallelStream()` из коробки | Нет встроенного параллелизма |
 | API | `filter`, `map`, `reduce`, `collect` | `filter`, `map`, `fold`, `toList` |
 | Null-элементы | Допускает (но не рекомендует) | Допускает |
@@ -743,12 +747,14 @@ val result2 = listOf(1, 2, 3, 4, 5)
 ```
 
 **Когда использовать что:**
-- В чисто `Kotlin`-коде: `Sequence` — идиоматичнее, безопаснее (повторное использование), достаточно для большинства случаев
+- В чисто `Kotlin`-коде: `Sequence` — идиоматичен для ленивой обработки; возможность повторного обхода зависит от источника
 - Параллельная обработка больших данных: `Java Streams` с `parallelStream()`
 - Взаимодействие с `Java`-API, ожидающим `Stream`: `collection.stream()`
 - `Kotlin`-коллекции уже имеют `filter`/`map`/`flatMap` напрямую (eager) — `Sequence` нужна только для больших коллекций или цепочек операций
 
-## Q18. Как `Kotlin`-свойства выглядят из `Java`?
+<a id="q18"></a>
+
+## Q18. Какие Java-методы дают обычные Kotlin-свойства `val`, `var` и Boolean `isActive`?
 
 Из `Java` `Kotlin`-свойство выглядит не как поле, а как пара методов: приватное backing-поле плюс геттер `getX()` и (для `var`) сеттер `setX()`. Особый случай — `Boolean`-свойства с префиксом `is`: для них геттер называется не `getIsActive()`, а `isActive()`, что часто удивляет на собеседовании.
 
@@ -767,7 +773,7 @@ u.getName();          // "Alice"
 u.getAge();           // 30
 u.setAge(31);
 u.isActive();         // true — не getIsActive()!
-u.isVerified();       // true
+u.isVerified();       // false до вызова setVerified(true)
 u.setVerified(true);  // не setIsVerified()!
 ```
 
@@ -783,7 +789,9 @@ u.setVerified(true);  // не setIsVerified()!
 
 > **Нюанс с `lateinit`:** из `Java` видно поле напрямую (`user.name`), т.к. `lateinit` генерирует публичное поле. Если поле не инициализировано, при доступе из `Java` будет `null` (без `Kotlin`-проверки `UninitializedPropertyAccessException`).
 
-## Q19. Как из `Java` вызывать top-level функции `Kotlin`?
+<a id="q19"></a>
+
+## Q19. Как Java вызывает top-level Kotlin-функцию без аннотаций и с `@file:JvmName`?
 
 У `JVM` нет «функций вне класса», поэтому `Kotlin` для каждого файла создаёт класс-обёртку и складывает туда все top-level функции и свойства как статические члены. Имя класса по умолчанию — имя файла плюс суффикс `Kt` (`MathUtils.kt` → `MathUtilsKt`). Свойства превращаются в статические геттеры:
 
@@ -828,58 +836,24 @@ MathUtils.gcd(12, 8);
 MathUtils.areaOfCircle(5.0);
 ```
 
-## Q20. (!) Как `value class` (`@JvmInline`) работает при интеропе с `Java`?
+<a id="q20"></a>
 
-Короткий ответ: вызывать `Kotlin`-методы с `value class`-параметрами из `Java` почти невозможно, и причина — оптимизация, ради которой `value class` существует. Это обёртка над одним значением, которую компилятор **по возможности** разворачивает прямо в underlying-тип (например, `UserId` → `long`), чтобы не аллоцировать объект:
+## Q20. Как открыть Java-клиенту API с Kotlin `value class` в современных версиях?
 
-```kotlin
-@JvmInline
-value class UserId(val value: Long)
+`@JvmInline value class` обычно передаётся на JVM как underlying-тип. Функции с таким параметром получают mangled-имя, чтобы не столкнуться с перегрузкой, принимающей underlying-тип. Поэтому обычный Java-исходник не получает привычный конструктор и метод с простым именем автоматически.
 
-@JvmInline
-value class Email(val value: String)
-
-fun findUser(id: UserId): User? = TODO()
-fun sendEmail(to: Email, body: String) = TODO()
-```
-
-**Как это выглядит из `Java`:**
-
-```java
-// Имя метода манглируется для избежания конфликтов!
-User user = MyKt.findUser-<hashcode>(42L);  // передаётся long, не UserId
-```
-
-**Проблемы интеропа:**
-
-1. **Name mangling** — раз параметр в байткоде разворачивается в `long`, компилятор не может оставить методу обычное имя (иначе он столкнулся бы с настоящим `findUser(long)`). Поэтому к имени добавляется хеш, и из `Java` метод просто не вызвать по понятному имени — без `@JvmName` это тупик.
-
-2. **Boxing** — разворачивание работает не всегда. Когда тип нужен «как объект» (generic-параметр, nullable, реализация интерфейса), `value class` боксится обратно в полноценный объект, и оптимизация теряется:
+Для Java API есть три осознанных пути: объявить фасад с обычным `Long`/`String`, дать unboxed-методу читаемое имя через `@JvmName` или в Kotlin 2.2+ использовать экспериментальную `@JvmExposeBoxed` с opt-in. Последняя генерирует публичный boxed-конструктор и boxed-вариант помеченной функции; аналогичный эффект для модуля даёт `-Xjvm-expose-boxed`.
 
 ```kotlin
-@JvmInline
-value class Score(val value: Int)
-
-fun process(score: Score) { }     // score → int в байткоде
-fun processNullable(score: Score?) { } // score → Score объект (boxed)
-fun <T> generic(item: T) { }     // Score → Score объект (boxed)
-```
-
-3. **Решение для `Java`-совместимости:** создавать фасадные методы с `@JvmName` или обычными типами:
-
-```kotlin
-@JvmInline
-value class UserId(val value: Long)
-
-// Для Java-клиентов:
-@JvmName("findUser")
-fun findUser(id: UserId): User? = TODO()
-
-// Или фасад:
+@JvmInline value class UserId(val value: Long)
 fun findUserById(id: Long): User? = findUser(UserId(id))
 ```
 
-## Q21. (!) Как из `Java` вызвать `suspend`-функцию `Kotlin`?
+Боксинг возможен и без этих аннотаций, например для nullable, generic или интерфейсной позиции, но это не делает весь API автоматически удобным из Java. Выбирайте Java-представление явно и проверяйте сгенерированную сигнатуру.
+
+<a id="q21"></a>
+
+## Q21. Как предоставить Java-клиенту удобный вызов Kotlin `suspend`-функции?
 
 Напрямую — почти никак: правильный ответ в том, что из `Java` нужно вызывать не саму `suspend`-функцию, а её адаптер. Под капотом `suspend fun foo(): User` компилируется в `Object foo(Continuation<User>)` — компилятор добавляет скрытый параметр `Continuation` (механизм CPS, Continuation Passing Style) и меняет тип возврата на `Object`. Чтобы вызвать такой метод из `Java`, пришлось бы вручную реализовать `Continuation` и разобраться с маркером `COROUTINE_SUSPENDED` — на практике так не делают.
 
@@ -893,24 +867,27 @@ graph LR
 
 **Способы вызова из `Java`:**
 
-**1. Обёртка с `CompletableFuture`** (рекомендуемый способ):
+**1. Обёртка с `CompletableFuture`** (если Java API ожидает future):
+
+Для `future` нужен модуль `kotlinx-coroutines-jdk8`; `scope` предоставляет код, который управляет жизненным циклом операции.
 
 ```kotlin
 // Kotlin: suspend-функция
 suspend fun fetchUser(id: Long): User = /* ... */
 
 // Адаптер для Java
-fun fetchUserAsync(id: Long): CompletableFuture<User> =
-    GlobalScope.future { fetchUser(id) }  // kotlinx-coroutines-jdk8
+fun fetchUserAsync(id: Long, scope: CoroutineScope): CompletableFuture<User> =
+    scope.future { fetchUser(id) }  // scope имеет явный жизненный цикл
 ```
 
 ```java
 // Java
-CompletableFuture<User> future = UserServiceKt.fetchUserAsync(42L);
+// scope передан вызывающему коду владельцем жизненного цикла корутин
+CompletableFuture<User> future = UserServiceKt.fetchUserAsync(42L, scope);
 User user = future.get();
 ```
 
-**2. Обёртка с `runBlocking`** (блокирует поток — только для тестов или простых случаев):
+**2. Обёртка с `runBlocking`** (блокирует поток; допустима лишь при явно синхронном контракте):
 
 ```kotlin
 fun fetchUserBlocking(id: Long): User = runBlocking {
@@ -929,44 +906,15 @@ fun fetchUserMono(id: Long): Mono<User> = mono {
 
 > **Рекомендация:** держать `suspend`-функции внутри `Kotlin`-слоя, а для `Java`-потребителей публиковать адаптеры: `CompletableFuture`, `Mono` или синхронные обёртки. Подробнее — в [вопросах по корутинам Kotlin](kotlin-coroutines-interview.md).
 
-## Q22. Как из `Kotlin` вызывать перегруженные методы `Java`?
+<a id="q22"></a>
 
-В обычном случае никаких усилий не требуется: `Kotlin`-компилятор разрешает перегрузки `Java`-методов по типам аргументов так же, как это делает `javac`. Проблемы начинаются только там, где `Kotlin` добавляет nullable-типы и platform types — тогда выбор перегрузки может стать неоднозначным.
+## Q22. Как Kotlin выбирает перегрузку Java-метода и что будет при `process(null)` для `String` и `Integer`?
 
-```java
-// Java
-public class TextProcessor {
-    public String format(String text) { /* ... */ }
-    public String format(String text, Locale locale) { /* ... */ }
-    public String format(int number) { /* ... */ }
-}
-```
+Kotlin вызывает перегруженные Java-методы по статическим типам аргументов. Если Java объявляет `process(String)` и `process(Integer)`, литерал `null` подходит обоим несвязанным ссылочным типам, поэтому `process(null)` неоднозначен. Выбор можно задать типом выражения, например `process(null as String?)`.
 
-```kotlin
-// Kotlin — компилятор выбирает правильную перегрузку
-processor.format("hello")           // format(String)
-processor.format("hello", Locale.US) // format(String, Locale)
-processor.format(42)                // format(int)
-```
+Иная ситуация с `process(String)` и `process(Object)`: `String` специфичнее `Object`, так что один только nullable-тип не создаёт неоднозначность. Не советуйте безусловный `as String` для значения, которое может быть `null`: такое приведение само может упасть.
 
-**Когда возникает неоднозначность:**
-
-```java
-// Java
-public void process(Object obj) { /* ... */ }
-public void process(String str) { /* ... */ }
-```
-
-```kotlin
-val value: String? = "hello"
-processor.process(value)  // Ошибка: неоднозначность (String? может быть Object или String)
-
-// Решение: явное приведение
-processor.process(value as String)
-processor.process(value as Any)
-```
-
-Здесь `String?` подходит и под `process(String)`, и под `process(Object)`, и компилятор не может выбрать. **Рецепт:** при любой неоднозначности (особенно с platform types и nullable) явно приводите аргумент к нужному типу через `as`, тем самым однозначно указывая перегрузку.
+<a id="q23"></a>
 
 ## Q23. Как `Kotlin` работает с checked exceptions из `Java`?
 
@@ -995,37 +943,31 @@ try {
 
 Подробнее об обработке ошибок — в [вопросах по исключениям Kotlin](kotlin-exceptions-interview.md).
 
-## Q24. Как из `Java` работать с `sealed class`/`sealed interface` из `Kotlin`?
+<a id="q24"></a>
 
-Из `Java` `sealed`-иерархия `Kotlin` видна как обычная иерархия классов: `sealed class` компилируется в абстрактный класс с приватным конструктором, подклассы — в обычные классы. Разбирать варианты приходится через цепочку `instanceof`. Главная потеря — exhaustiveness: `Kotlin`-`when` гарантирует, что все ветки покрыты, а `Java` `if-else` ничего не проверяет, и забытый вариант обнаружится только в runtime:
+## Q24. Как Java 21 разбирает Kotlin `sealed interface`, скомпилированный с JVM target 17?
+
+Представление Kotlin `sealed` зависит от целевой JVM. При JVM target 17 Kotlin 2.4.10 записывает в class file `PermittedSubclasses`; Java 21 видит закрытую иерархию. В локальной проверке `javac --release 21` собрал `switch` по всем двум наследникам без `default`.
 
 ```kotlin
-sealed class Result {
-    data class Success(val data: String) : Result()
-    data class Error(val message: String) : Result()
-    data object Loading : Result()
+sealed interface Result {
+    data class Success(val value: String) : Result
+    data class Failure(val message: String) : Result
 }
 ```
 
 ```java
-// Java: instanceof-проверки
-Result result = getResult();
-if (result instanceof Result.Success success) {
-    System.out.println(success.getData());
-} else if (result instanceof Result.Error error) {
-    System.out.println(error.getMessage());
-} else if (result instanceof Result.Loading) {
-    System.out.println("Loading...");
-}
+String text = switch (result) {
+    case Result.Success s -> s.getValue();
+    case Result.Failure f -> f.getMessage();
+};
 ```
 
-**Нюансы:**
+При более старой целевой JVM Java sealed-атрибут не представлен; это не означает, что Kotlin теряет собственную проверку `when`. Для Java pattern switch без preview ориентируйтесь на Java 21. Проверяйте сочетание версии Kotlin, `jvmTarget` и версии `javac` перед обещанием exhaustive `switch`.
 
-- В `Java` нет гарантии exhaustiveness (`when` в `Kotlin` проверяет все ветки, `Java` `if-else` — нет)
-- `sealed interface` (Kotlin 1.5+) компилируется в обычный интерфейс — sealed-ограничения существуют только на этапе компиляции `Kotlin`
-- С `Java 17+` и `sealed` классами/интерфейсами `Java`: `Kotlin` sealed и `Java` sealed — разные механизмы, не связанные друг с другом
+<a id="q25"></a>
 
-## Q25. Как из `Java` использовать `data class` из `Kotlin`?
+## Q25. Как из `Java` использовать `data class` из `Kotlin`? В частности, как создать копию, изменив одно поле?
 
 `data class` — это обычный `Java`-класс, в котором компилятор за вас сгенерировал геттеры, `equals`/`hashCode`/`toString`, `copy()` и `componentN()`. Все они доступны из `Java`, но с одной оговоркой по `copy()` (см. ниже):
 
@@ -1055,7 +997,9 @@ User updated = user.copy("Bob", user.getAge()); // нельзя пропусти
 
 Чтобы упростить, можно добавить builder-паттерн или фабричные методы вручную для `Java`-потребителей.
 
-## Q26. (!) Какие практики делают `Kotlin` API удобным для `Java`-клиентов?
+<a id="q26"></a>
+
+## Q26. Какие практики делают `Kotlin` API удобным для `Java`-клиентов (fluent API без знания про `Companion`)?
 
 Главный принцип — «Kotlin inside, Java-friendly edge»: внутри модуля пишите идиоматичный `Kotlin`, а на публичной границе адаптируйте API под `Java`. Конкретные правила сводятся к тому, чтобы расставить JVM-аннотации и не протаскивать наружу `Kotlin`-специфичные конструкции, недоступные из `Java`:
 
@@ -1084,49 +1028,17 @@ graph TD
 9. **Документировать nullability** — даже если `Kotlin`-компилятор добавляет аннотации автоматически
 10. **Принцип "Kotlin inside, Java-friendly edge"** — внутри модуля писать идиоматичный `Kotlin`, на границе — адаптировать для `Java`
 
-## Q27. Как организовать смешанный `Kotlin`/`Java` проект в `Gradle`?
+<a id="q27"></a>
 
-В `Gradle` `Kotlin`-плагин для `Gradle` поддерживает совместную компиляцию: `Kotlin`-код видит `Java`-код и наоборот, без ручной настройки порядка сборки. Достаточно подключить оба плагина:
+## Q27. Как Gradle собирает смешанный Kotlin/Java модуль и нужны ли Java stubs для `javac`?
 
-```kotlin
-// build.gradle.kts
-plugins {
-    kotlin("jvm") version "2.0.0"
-    java
-}
+В обычном смешанном JVM-модуле есть отдельные задачи `compileKotlin` и `compileJava`. Kotlin-компилятор может анализировать Java-исходники того же source set; Java-компилятор затем получает уже созданные Kotlin `.class`-файлы. Специальные Java stubs Kotlin-классов для `javac` не нужны. Не путайте это со stubs, которые `kapt` создаёт для Java annotation processors над Kotlin-кодом.
 
-// Kotlin видит Java, Java видит Kotlin
-sourceSets {
-    main {
-        java.srcDirs("src/main/java", "src/main/kotlin")
-    }
-}
-```
+Размещайте Java-исходники в `src/main/java`, Kotlin-исходники в `src/main/kotlin` и согласуйте JVM target связанных задач. Kotlin Gradle plugin проверяет несовпадение их целевых версий. Если включён JPMS, для доступа `javac` к Kotlin output может понадобиться описанный в документации `--patch-module`.
 
-**Порядок компиляции:**
+<a id="q28"></a>
 
-```mermaid
-graph LR
-    A["Kotlin compiler<br/>(kotlinc)"] --> B["Stubs для Java"]
-    B --> C["Java compiler<br/>(javac)"]
-    A --> D["Kotlin .class файлы"]
-    C --> E["Java .class файлы"]
-    D --> F["JVM Runtime"]
-    E --> F
-    style A fill:#e8f5e9
-    style C fill:#e3f2fd
-```
-
-Порядок решает проблему «курицы и яйца» — оба компилятора нуждаются в результатах друг друга. `Kotlin`-компилятор идёт первым и генерирует stubs (заглушки `Java`-классов только с сигнатурами), чтобы `javac` мог сослаться на `Kotlin`-типы. Затем `javac` компилирует `Java`-файлы, уже видя `Kotlin`-классы.
-
-**Практические рекомендации:**
-
-- Размещайте `Kotlin`-файлы в `src/main/kotlin`, `Java` — в `src/main/java` (стандартная конвенция)
-- Миграция пофайловая: конвертируйте `Java`-файлы в `Kotlin` один за другим
-- Используйте `kapt` или `KSP` вместо `annotationProcessor` для `Kotlin`-файлов (для Lombok, Dagger, MapStruct и т.д.)
-- В `IntelliJ IDEA` есть автоматический конвертер `Java` → `Kotlin` (Ctrl+Alt+Shift+K), но результат нужно ревьюить — конвертер не всегда генерирует идиоматичный код
-
-## Q28. Как работать с `Java records` из `Kotlin` и использовать `@JvmRecord`?
+## Q28. Как из Kotlin прочитать `x` у Java record `Point(int x, int y)`?
 
 Два направления, и оба простые. `Java record` (с `Java 16`) — компактный неизменяемый DTO; из `Kotlin` он используется напрямую, с одной особенностью: accessor-методы записи идут без `get`-префикса (`point.x()`, а не `getX()`). В обратную сторону аннотация `@JvmRecord` заставляет `Kotlin`-`data class` скомпилироваться в настоящий `Java record`, чтобы `Java`-клиенты видели именно record (важно для pattern matching и некоторых библиотек).
 
@@ -1138,8 +1050,8 @@ public record Point(int x, int y) {}
 
 // Kotlin — доступ через accessor-методы без get-префикса (особенность records)
 val point = Point(10, 20)
-println(point.x())  // 10 — record accessor (не getX())
-println(point.y())  // 20
+println(point.x)    // 10 — Kotlin property-синтаксис вызывает x()
+println(point.y)    // 20
 println(point)      // Point[x=10, y=20] — toString из record
 ```
 
@@ -1163,7 +1075,6 @@ data class Coordinates(val latitude: Double, val longitude: Double)
 - Класс должен быть `data class`
 - Не может быть `open`, `abstract`, `sealed`
 - Все свойства только в primary constructor, только `val`
-- Не может иметь backing field с нестандартным геттером
 
 ```kotlin
 // build.gradle.kts
@@ -1172,11 +1083,11 @@ kotlin {
 }
 
 // Kotlin data class (без @JvmRecord) — не record, геттеры с get-префиксом
-data class UserDto(val name: String)  // Java видит: getName()
+data class PlainUserDto(val name: String)  // Java видит: getName()
 
 // С @JvmRecord — настоящий record
 @JvmRecord
-data class UserDto(val name: String)  // Java видит: name()
+data class RecordUserDto(val name: String)  // Java видит: name()
 ```
 
 **Когда использовать `@JvmRecord`:**
@@ -1184,54 +1095,25 @@ data class UserDto(val name: String)  // Java видит: name()
 - Интеграция с фреймворками, работающими специфично с `record` (некоторые JSON-библиотеки)
 - В чисто Kotlin-проектах предпочтителен обычный `data class`
 
-## Q29. Как работает интероп `Kotlin` с `Java` аннотациями (`@Target`, `@Retention`, use-site targets)?
+<a id="q29"></a>
 
-Проблема в том, что одно `Kotlin`-свойство порождает несколько байткод-элементов (backing field, геттер, сеттер, параметр конструктора), и неясно, на какой из них вешать аннотацию вроде `@Column` или `@JsonProperty`. Для разных фреймворков ответ разный: JPA читает аннотацию с поля, Jackson — с геттера или с параметра. Поэтому `Kotlin` вводит **use-site targets** — синтаксис `@field:`, `@get:`, `@param:` и т.д., которым вы прямо указываете целевой элемент:
+## Q29. Куда ставить `@Column` в Kotlin JPA entity с field access через `@field:Id`?
 
-```kotlin
-data class User(
-    @field:Column("user_name")     // на JVM поле
-    @get:JsonProperty("name")      // на геттер
-    @set:JsonProperty("name")      // на сеттер
-    @param:JsonProperty("name")    // на параметр конструктора
-    val name: String
-)
-```
-
-**Полный список use-site targets:**
-
-| Target | Применение |
-|---|---|
-| `field` | Backing field свойства |
-| `get` | Геттер |
-| `set` | Сеттер |
-| `param` | Параметр конструктора |
-| `setparam` | Параметр сеттера |
-| `delegate` | Поле делегата |
-| `receiver` | Extension function receiver |
-| `file` | Весь файл (только у top-level аннотаций) |
-
-**Правило по умолчанию** (когда target не указан): если аннотация применима к нескольким элементам, `Kotlin` выбирает первый подходящий в порядке `param` → `property` → `field`. Из-за этого аннотация легко «промахивается» мимо нужного элемента — поэтому для фреймворков target почти всегда указывают явно.
+JPA/Hibernate выбирает default access по месту `@Id`: `@field:Id` задаёт field access, а `@get:Id` — property access через геттер. Для field access размещайте `@Column` на backing field явно: `@field:Column`. При property access нужна аннотация на геттере.
 
 ```kotlin
-// Jackson: нужен @JsonProperty на геттере (или param для десериализации)
-data class Response(
-    @get:JsonProperty("user_id")
-    val userId: Long,
-
-    @field:JsonIgnore
-    val internalData: String = ""
-)
-
-// JPA: @Column нужна на поле
 @Entity
 class ProductEntity(
-    @field:Column(name = "product_name", nullable = false)
-    val name: String = ""
+    @field:Id val id: Long,
+    @field:Column(name = "product_name") val name: String,
 )
 ```
 
-## Q30. Почему platform types опасны и как их избежать в реальных проектах?
+Kotlin-свойство может соответствовать полю, геттеру и параметру конструктора. Use-site target фиксирует нужный JVM-элемент и не зависит от изменяемых правил выбора target по умолчанию. Конструктор entity и ограничения JPA требуют отдельной настройки; сам `@field:Column` их не решает.
+
+<a id="q30"></a>
+
+## Q30. Как безопаснее читать nullable значение из неаннотированного Java API?
 
 Platform types (`T!`) опасны тем, что отключают главную защиту `Kotlin` — гарантии null-safety — и делают это молча. Для platform type компилятор разрешает и non-null, и nullable присваивание, ничего не подсвечивая, так что весь контроль `null` ложится на разработчика. В смешанных `Kotlin`/`Java` проектах это становится главным источником `NullPointerException`: код выглядит «безопасным по-котлиновски», но на деле проверок нет.
 
@@ -1289,107 +1171,32 @@ class UserServiceAdapter(private val javaService: JavaUserService) {
 }
 ```
 
-## Q31. Почему `inline`-функции недоступны из `Java` и как это обойти?
+<a id="q31"></a>
 
-Формулировка «недоступны» требует уточнения. Компилятор **всегда** оставляет в байткоде обычную (не-inline) версию `inline`-функции — и из `Java` она вызываема как обычный метод, просто без инлайнинга: лямбда-параметры придётся передавать объектами `Function0`/`Function1`. Реально недоступны из `Java` только функции с `reified`-параметрами: их не-inline версия не может узнать конкретный тип `T`, поэтому осмысленный вызов возможен лишь через инлайнинг, которого `Java` не умеет.
+## Q31. Почему Java не может вызвать Kotlin `inline`-функцию с `reified T` и как дать замену?
 
-```kotlin
-// Kotlin
-inline fun <reified T> fromJson(json: String): T =
-    objectMapper.readValue(json, T::class.java)
+Обычная `inline`-функция может оставить вызываемый JVM-метод, но Java-вызов не получает инлайнинг. `reified T` требует подстановки конкретного типа в Kotlin call-site, которой Java-исходник не выполняет. Локальный Kotlin/JVM 2.4.10 оставил у такой функции метод в class file с флагом `ACC_SYNTHETIC`; утверждение «inline-метода нет в байткоде» неверно.
 
-// Java — НЕ СКОМПИЛИРУЕТСЯ:
-// UserDto user = JsonUtils.fromJson(json); // cannot call inline function
-```
-
-**Почему страдает `reified`:** `reified` работает ровно потому, что функция inlined — после подстановки конкретный тип `T` известен в точке вызова, и его можно использовать как `T::class.java`. Раз из `Java` inlining невозможен, то и `reified` принципиально недоступен — это две стороны одного механизма.
-
-**Решения для `Java`-совместимости:**
+Для Java-клиента публикуют отдельную обычную функцию с `Class<T>` или другой явной передачей типа:
 
 ```kotlin
-// Вариант 1: перегрузка с Class<T> параметром
-inline fun <reified T> fromJson(json: String): T =
-    fromJson(json, T::class.java)
-
-fun <T> fromJson(json: String, type: Class<T>): T =
-    objectMapper.readValue(json, type)
-
-// Java:
-UserDto user = JsonUtils.fromJson(json, UserDto.class); // OK
-
-// Вариант 2: @JvmStatic фасад
-object JsonUtils {
-    @JvmStatic
-    fun <T> fromJson(json: String, type: Class<T>): T =
-        objectMapper.readValue(json, type)
-}
+inline fun <reified T : Any> decode(text: String): T = decode(text, T::class.java)
+fun <T : Any> decode(text: String, type: Class<T>): T = /* ... */
 ```
 
-**Что в итоге доступно из `Java`:**
-- Обычные `inline`-функции (в т.ч. с лямбда-параметрами, `noinline`, `crossinline`) — **вызываемы**: не-inline версия всегда лежит в байткоде, лямбды передаются как объекты `Function0`/`Function1`
-- Функции с `reified`-параметрами — **недоступны**: без инлайнинга тип `T` взять неоткуда
-- Инлайнинга при вызове из `Java` не происходит никогда — теряется только оптимизация, а не сама функция
+Java вызывает `decode(text, User.class)`. Доступность и имя JVM-метода полезно сверить после компиляции, если API уже опубликован.
 
-**Рекомендация:** проектируя публичное API, которое будет вызываться из `Java`, избегайте `reified` в публичных сигнатурах и помните, что `inline`-выгоды для `Java`-клиентов не работают. Предоставляйте `Java`-friendly перегрузки с `Class<T>`.
+<a id="q32"></a>
 
-## Q32. `Sealed classes` в `Java 17` vs `Kotlin sealed`: ключевые отличия при интеропе
+## Q32. Как JVM target влияет на `PermittedSubclasses` у Kotlin `sealed`?
 
-Главное, что нужно понять: хотя слово `sealed` одинаковое, это два независимых механизма, которые **не знают друг о друге**. `Kotlin`-компилятор не считает `Java 17 sealed`-иерархию запечатанной для своих целей, и наоборот. Практическое следствие — exhaustiveness не переносится через границу языков: `when` над `Java sealed`-классом всё равно требует `else`.
+Java sealed-механизм представлен атрибутом `PermittedSubclasses` в class file версии 61 (Java 17). Локальный Kotlin/JVM 2.4.10 при `-jvm-target 17` создал этот атрибут для `sealed interface`; `javap -v` показал `major version: 61` и `PermittedSubclasses`. При target 8 такой Java 17-атрибут в байткоде отсутствует.
 
-**Ключевые отличия:**
+Поэтому утверждение «Kotlin sealed всегда выглядит для Java как обычный открытый тип» неверно. Возможность Java проверить `switch` зависит от фактического байткода и версии Java. Обратное направление тоже зависит от версии Kotlin: локальный Kotlin 2.4.10 принял исчерпывающий `when` по Java sealed interface с двумя наследниками без `else`. Для конкретного проекта проверяйте настроенный `jvmTarget` и компилятор.
 
-| Аспект | `Kotlin sealed` | `Java 17 sealed` |
-|--------|-----------------|------------------|
-| Ограничение подклассов | В одном пакете/модуле | Объявлено через `permits` |
-| Exhaustiveness check | Только в `Kotlin` (`when`) | Только в `Java` (pattern matching) |
-| Компиляция | В абстрактный класс с приватным конструктором | В настоящий `sealed`-класс в байткоде |
-| Вложенные объекты | `data object`, `data class` | `record`, обычные классы |
+<a id="q33"></a>
 
-**Kotlin sealed из Java:**
-
-```kotlin
-// Kotlin
-sealed class NetworkResult {
-    data class Success(val data: String) : NetworkResult()
-    data class Failure(val error: Exception) : NetworkResult()
-    data object Loading : NetworkResult()
-}
-```
-
-```java
-// Java 21: pattern matching работает, но javac не видит Kotlin sealed как sealed.
-// Поэтому switch-выражение считает тип «открытым» и ТРЕБУЕТ ветку default,
-// даже когда все наследники уже перечислены:
-NetworkResult result = getResult();
-String msg = switch (result) {
-    case NetworkResult.Success s -> "OK: " + s.getData();
-    case NetworkResult.Failure f -> "Error: " + f.getError().getMessage();
-    case NetworkResult.Loading l -> "Loading...";
-    default -> throw new IllegalStateException("Unexpected: " + result);
-};
-```
-
-**Java sealed из Kotlin:**
-
-```java
-// Java 17: record не может наследовать класс, поэтому корень иерархии — sealed interface
-public sealed interface Shape permits Circle, Rectangle {}
-public record Circle(double radius) implements Shape {}
-public record Rectangle(double w, double h) implements Shape {}
-```
-
-```kotlin
-// Kotlin: when НЕ является exhaustive для Java sealed классов
-val area = when (shape) {
-    is Circle -> Math.PI * shape.radius * shape.radius
-    is Rectangle -> shape.w() * shape.h()
-    else -> error("Unknown shape") // else обязателен!
-}
-```
-
-**Важно:** `Kotlin`-компилятор не распознаёт `Java sealed` как sealed для целей exhaustiveness-проверки. Поэтому `when`-выражения над `Java sealed`-иерархиями требуют `else`-ветки.
-
-## Q33. `Java Optional` vs `Kotlin` null safety: что лучше и как работать на границе двух языков?
+## Q33. Как превратить Java `Optional<String>` в Kotlin `String?` для дальнейшей обработки?
 
 Обе конструкции выражают «значения может не быть», но на разных уровнях: `Java Optional<T>` — это runtime-обёртка (отдельный объект-аллокация), а `Kotlin T?` — свойство системы типов, проверяемое в compile-time без накладных расходов. Отсюда вывод для границы языков: внутри `Kotlin`-кода предпочтительнее nullable, а `Optional` оставлять только как формат обмена с `Java`-API, который его ожидает.
 
@@ -1413,13 +1220,13 @@ val optional: Optional<String> = javaService.findName(id)
 // Способ 1: orElse/orElseGet
 val name: String = optional.orElse("default")
 
-// Способ 2: getOrNull() — расширение из kotlin-stdlib (Kotlin 1.7+),
+// Способ 2: getOrNull() — расширение из kotlin-stdlib (Kotlin 1.8+),
 // import kotlin.jvm.optionals.getOrNull
 val name: String? = optional.getOrNull()
 // или вручную:
 val name: String? = if (optional.isPresent) optional.get() else null
 
-// Способ 3: свой extension, если Kotlin старее 1.7
+// Способ 3: свой extension, если Kotlin старее 1.8
 fun <T> Optional<T>.orNull(): T? = orElse(null)
 ```
 
@@ -1442,70 +1249,26 @@ fun findUserOptional(id: Long): Optional<User> =
     Optional.ofNullable(findUser(id))
 ```
 
-## Q34. Почему `Lombok` несовместим с `Kotlin` при использовании `kapt` и как это решить?
+<a id="q34"></a>
 
-Проблема — в порядке компиляции, а не в самом `Lombok`. `Lombok` генерирует код через `Java Annotation Processing API (APT)`, который запускается на стадии `javac`. Но `javac` идёт **после** `Kotlin`-компилятора, поэтому к моменту, когда `Lombok` создаст, например, метод `builder()`, `Kotlin`-код уже скомпилирован и сгенерированного метода не увидел. `kapt` (Kotlin Annotation Processing Tool) обрабатывает только `Kotlin`-файлы и `Lombok`-классы из `Java` не трогает — мостом между ними он не служит. Каноничное решение — официальный плагин компилятора `kotlin("plugin.lombok")` (с Kotlin 1.5.20): он учит `Kotlin`-компилятор понимать `Lombok`-аннотации (`@Getter`/`@Setter`, `@Data`, `@Value`, `@Builder`, конструкторные и др.) в `Java`-классах того же модуля ещё до `javac`.
+## Q34. Почему Kotlin-код в смешанном модуле может не видеть Lombok `builder()` и как исправить?
 
-**Конкретные проблемы:**
+Lombok создаёт члены Java-класса во время Java-компиляции. Если Kotlin-код того же модуля анализируется раньше, вызов `UserRequest.builder()` может быть недоступен компилятору. Один лишь `kapt` не заменяет поддержку Lombok-членов Java-исходника.
 
-```kotlin
-// Kotlin видит Java-класс с @Builder от Lombok
-// НО: Lombok генерирует код ПОСЛЕ kapt-прохода,
-// поэтому Kotlin-компилятор не видит сгенерированный Builder
+Официальный Kotlin Lombok compiler plugin позволяет Kotlin-коду использовать Lombok-декларации Java из того же смешанного модуля. В Gradle подключают `kotlin("plugin.lombok")` и отдельно сохраняют обычную настройку самого Lombok для Java-компиляции. Плагин поддерживает, в частности, `@Builder`, `@Data`, геттеры и конструкторные аннотации; его поддержка зависит от версии. Если Java-класс уже скомпилирован в отдельном модуле, потребителю Kotlin обычно не нужен этот plugin.
 
-// Java:
-@Builder
-@Data
-public class UserRequest { /* ... */ }
+Замена `kapt` на KSP сама по себе проблему Lombok не решает. Не связывайте её с MapStruct автоматически: у процессоров и сгенерированных классов могут быть иные пути компиляции.
 
-// Kotlin: пытаемся использовать Builder
-val request = UserRequest.builder() // Ошибка: метод не найден (kapt ещё не обработал)
-    .name("Alice")
-    .build()
-```
+<a id="q35"></a>
 
-**Корень проблемы:** порядок компиляции:
-1. `kapt` обрабатывает Kotlin-аннотации
-2. `kotlinc` компилирует Kotlin-файлы (используя stubs)
-3. `javac` + `APT (Lombok)` компилирует Java-файлы
-4. К этому моменту Kotlin уже скомпилирован, сгенерированный Lombok-код ему недоступен
+## Q35. Как работает `companion object` с `@JvmStatic` из `Java`? Как из Java получить `val DEFAULT_TIMEOUT = Duration.ofSeconds(30)` и `const val MAX_ITEMS = 100`?
 
-**Решения:**
-
-| Решение | Когда использовать |
-|---------|-------------------|
-| **Плагин `kotlin("plugin.lombok")`** | Официальный плагин компилятора (с Kotlin 1.5.20): Kotlin видит Lombok-генерируемые методы Java-классов того же модуля — первое, что стоит попробовать |
-| **Мигрировать Java → Kotlin** | Постепенная миграция, долгосрочно |
-| **Использовать `data class`** | Вместо `@Data`/`@Value` Lombok |
-| **KSP вместо kapt** | Не помогает с Lombok, но быстрее для Kotlin-only процессоров |
-| **Изолировать Lombok-классы** | Java-only модуль с Lombok, Kotlin зависит от него как скомпилированного JAR |
-| **Delombok** | Раскрыть Lombok до компиляции (сложно интегрировать) |
-
-```kotlin
-// Лучший подход: Java-модуль с Lombok отдельно
-// java-domain/src/main/java/UserRequest.java (Lombok тут работает)
-// kotlin-service/src/main/kotlin/UserService.kt (зависит от java-domain как JAR)
-
-// В Kotlin вместо @Data/@Builder:
-data class UserRequest(
-    val name: String,
-    val email: String,
-    val age: Int = 0
-)
-// .copy() — аналог @Builder для immutable объектов
-val updated = request.copy(age = 30)
-```
-
-**Mapstruct с kapt** — аналогичная проблема: `MapStruct` тоже APT-процессор. Рекомендуется KSP-совместимая альтернатива или разделение модулей.
-
-## Q35. Как работает `companion object` с `@JvmStatic` из `Java`: детали и подводные камни?
-
-`companion object` — это привязанный к классу синглтон, который компилируется во вложенный класс `Companion`. Главный подводный камень для `Java`: по умолчанию **всё** в нём (методы, не-`const` свойства) доступно только через `MyClass.Companion.x()`, и каждый член переносится в плоский статический доступ своей аннотацией. Разберём, что во что превращается.
+`companion object` — это привязанный к классу синглтон, который компилируется во вложенный класс `Companion`. Главный подводный камень для `Java`: по умолчанию **всё** в нём (методы, не-`const` свойства) доступно только через `MyClass.Companion.x()`, и статический доступ создают аннотации `@JvmStatic` и `@JvmField` в разных формах. Разберём, что во что превращается.
 
 **Подробная механика:**
 
 ```kotlin
-class OrderService {
+class Order {
     companion object {
         const val MAX_ITEMS = 100               // всегда static final в Java
         val DEFAULT_TIMEOUT = Duration.ofSeconds(30) // НЕ const → только через Companion
@@ -1514,7 +1277,7 @@ class OrderService {
         val ALLOWED_STATUSES = setOf("PENDING", "CONFIRMED") // статическое поле
 
         @JvmStatic
-        fun create(): OrderService = OrderService() // статический метод
+        fun create(): Order = Order() // статический метод
 
         fun validate(order: Order): Boolean = TODO() // только через Companion
     }
@@ -1523,12 +1286,14 @@ class OrderService {
 
 ```java
 // Java-вызовы:
-int max = OrderService.MAX_ITEMS;                    // const val → static final, всегда
-Duration timeout = OrderService.Companion.getDEFAULT_TIMEOUT(); // без @JvmField
-Set<String> statuses = OrderService.ALLOWED_STATUSES; // @JvmField → статическое поле
-OrderService svc = OrderService.create();             // @JvmStatic → статический метод
-boolean ok = OrderService.Companion.validate(order);  // без @JvmStatic
+int max = Order.MAX_ITEMS;                    // const val → static final, всегда
+Duration timeout = Order.Companion.getDEFAULT_TIMEOUT(); // без @JvmField
+Set<String> statuses = Order.ALLOWED_STATUSES; // @JvmField → статическое поле
+Order svc = Order.create();             // @JvmStatic → статический метод
+boolean ok = Order.Companion.validate(order);  // без @JvmStatic
 ```
+
+`@JvmStatic` на обычном `val` добавляет статический геттер, а не статическое поле. Для поля нужен `@JvmField` (если применим).
 
 **Подводные камни:**
 
@@ -1549,67 +1314,24 @@ class Config {
 
 4. **Наследование**: `companion object` нельзя переопределить в подклассе — только скрыть. Для полиморфного поведения используйте интерфейсы.
 
-## Q36. Как extension-функции `Kotlin` выглядят в байткоде и чем это важно для `Java`?
+<a id="q36"></a>
 
-Extension-функция — это синтаксический сахар: компилятор превращает её в статический метод, где receiver передан первым параметром. Из этого факта следует всё важное. Раз функция не становится членом класса, она **диспетчеризуется статически** (по объявленному типу, а не реальному), не участвует в полиморфизме, не может быть переопределена и не видит `private`/`protected`-члены расширяемого класса. Из `Java` это просто вызов статического метода с объектом первым аргументом — никакой магии не остаётся.
+## Q36. Как extension-функции `Kotlin` выглядят в байткоде? Что вернёт `Java`-вызов `AnimalExtKt.speak(new Dog())` при `fun Animal.speak() = "generic"` и `fun Dog.speak() = "woof"`?
 
-**Как выглядит в байткоде:**
-
-```kotlin
-// Kotlin
-fun String.toKebabCase(): String =
-    lowercase().replace(' ', '-').replace(Regex("[^a-z0-9-]"), "")
-
-fun List<Int>.median(): Double {
-    val sorted = sorted()
-    return if (sorted.size % 2 == 0)
-        (sorted[sorted.size / 2 - 1] + sorted[sorted.size / 2]) / 2.0
-    else sorted[sorted.size / 2].toDouble()
-}
-```
-
-```java
-// Java: статический метод, receiver — первый параметр
-String slug = StringExtensionsKt.toKebabCase("Hello World"); // String receiver
-double med = CollectionExtensionsKt.median(Arrays.asList(1, 2, 3, 4, 5));
-```
-
-**Контроль имени Java-класса:**
+Extension-функции компилируются в статические методы с receiver первым параметром. Два объявления ниже дают перегрузки `speak(Animal)` и `speak(Dog)`; они не переопределяют друг друга виртуально.
 
 ```kotlin
-@file:JvmName("Strings")
-package com.example.extensions
-
-fun String.toKebabCase(): String = /* ... */
-```
-
-```java
-String slug = Strings.toKebabCase("Hello World"); // читаемое имя
-```
-
-**Что нельзя с extension-функциями из Java:**
-- Не видят `private`/`protected` члены расширяемого класса
-- Не участвуют в полиморфизме (виртуальная диспетчеризация не работает)
-- Не могут быть переопределены — в `Java` просто нет механизма «выбрать» другую статическую функцию
-
-```kotlin
-// Это НЕ полиморфизм — extension не переопределяется
 open class Animal
 class Dog : Animal()
-
-fun Animal.speak() = "..."
-fun Dog.speak() = "Woof!"
-
-fun makeSpeak(animal: Animal) = animal.speak()
-
-// Kotlin:
-makeSpeak(Dog()) // "..." — статическая диспетчеризация по объявленному типу!
-
-// Java:
-AnimalExtKt.speak(new Dog()); // "..." — тот же эффект
+fun Animal.speak() = "generic"
+fun Dog.speak() = "woof"
 ```
 
-## Q37. `Java Optional` и Kotlin: паттерны интеграции при работе с `Spring Data`
+Java разрешает статическую перегрузку по compile-time типу выражения. У `new Dog()` тип `Dog`, поэтому `AnimalExtKt.speak(new Dog())` вызовет `speak(Dog)` и вернёт `"woof"`. Если аргумент — переменная `Animal animal = new Dog()`, выберется `speak(Animal)` и вернётся `"generic"`. То же правило статического выбора важно при вызове extension из Kotlin через переменную базового типа.
+
+<a id="q37"></a>
+
+## Q37. Что означает `User?` в методе Kotlin Spring Data репозитория по сравнению с `Optional<User>`?
 
 У `Spring Data` исторически `findById` возвращает `Optional<T>`, и в `Kotlin` это смотрится чужеродно. Есть два пути: либо аккуратно «приземлять» `Optional` (через `orElseThrow`/`orElse(null)`/`getOrNull()` из kotlin-stdlib), либо вообще от него уйти — объявлять методы репозитория с nullable-возвратом, который `Spring Data` понимает нативно (см. ниже). Второй путь идиоматичнее.
 
@@ -1628,16 +1350,16 @@ class UserService(private val repo: UserRepository) {
     // Стиль 2: orElse с nullable
     fun findUser(id: Long): User? = repo.findById(id).orElse(null)
 
-    // Стиль 3: Kotlin-идиоматичный findById — getOrNull() из kotlin-stdlib (1.7+),
+    // Стиль 3: Kotlin-идиоматичный findById — getOrNull() из kotlin-stdlib (1.8+),
     // import kotlin.jvm.optionals.getOrNull
     fun findUserKotlin(id: Long): User? = repo.findById(id).getOrNull()
 }
 
-// До Kotlin 1.7 такого хелпера в stdlib не было — писали свой extension:
+// До Kotlin 1.8 такого хелпера в stdlib не было — писали свой extension:
 fun <T> Optional<T>.orNull(): T? = orElse(null)
 ```
 
-**`Spring Data` + Kotlin null safety:** начиная со Spring Data 2.x, репозитории поддерживают Kotlin nullable-возвращаемые типы:
+**`Spring Data` + Kotlin null safety:** Spring Data поддерживает Kotlin nullable-возвращаемые типы в query methods; для runtime-интроспекции nullability нужен `kotlin-reflect`:
 
 ```kotlin
 interface UserRepository : JpaRepository<User, Long> {
@@ -1653,91 +1375,15 @@ fun findByEmail(email: String): User? = repo.findByEmail(email)
 // Никаких Optional — идиоматичный Kotlin!
 ```
 
-## Q38. Kotlin generics variance (`in`/`out`) и Java wildcards: практические примеры при интеропе
+<a id="q38"></a>
 
-На практике разница между declaration-site (`Kotlin`) и use-site (`Java`) вариантностью почти не видна, пока обобщённый тип не пересекает границу языков. Тогда `Kotlin`-вариантность приходится «переводить» в `Java`-wildcards, и именно на этом переводе чаще всего ломаются DI-фреймворки — они сопоставляют типы буквально и не приравнивают `List<? extends T>` к `List<T>`. Лечится это аннотацией `@JvmSuppressWildcards` (см. Q15). Ниже — конкретные ситуации.
+## Q38. Почему Java видит `List<? extends Handler>` в Kotlin-конструкторе и как получить `List<Handler>`?
 
-**Как Kotlin транслирует variance в байткод:**
-
-```kotlin
-// Kotlin: declaration-site variance
-class Box<out T>(val value: T)    // Producer<T> → ? extends T в Java
-class Sink<in T> {                // Consumer<T> → ? super T в Java
-    fun put(item: T) {}
-}
-
-fun copyBoxes(source: Box<String>): Box<Any> = source // OK — out-ковариантность
-```
-
-```java
-// Как это видит Java: сам тип остаётся Box<String> — Java не знает
-// про declaration-site variance. Но там, где Box<out T> встречается
-// в позиции параметра, Kotlin-компилятор сам генерирует wildcards
-// в Java-сигнатурах: Box<T> → Box<? extends T>. В return-типах
-// wildcards по умолчанию НЕ генерируются — для этого есть @JvmWildcard
-
-void processBox(Box<? extends Object> box) {} // Java-сигнатура функции, принимающей Box<out T>
-```
-
-**Практическая проблема: DI-фреймворки и wildcards:**
+`List` в Kotlin ковариантен. Если `Handler` — интерфейс, Kotlin/JVM 2.4.10 для `class Service(val handlers: List<Handler>)` сгенерировал Java-конструктор с `List<? extends Handler>`. DI-инструмент, сопоставляющий generic-типы буквально, может не приравнять его к `List<Handler>`.
 
 ```kotlin
-// Kotlin: out T генерирует wildcards в Java-сигнатурах
-interface Repository<out T> {
-    fun findAll(): List<T>
-}
+interface Handler
+class Service(val handlers: List<@JvmSuppressWildcards Handler>)
 ```
 
-```java
-// Проблема: Dagger/Guice видит List<? extends T>
-// и не может сопоставить с List<T> для инжекции
-@Inject List<? extends UserDto> users; // не совпадает с List<UserDto>
-```
-
-```kotlin
-// Решение: @JvmSuppressWildcards
-interface Repository<out T> {
-    fun findAll(): List<@JvmSuppressWildcards T> // List<T> в Java-сигнатуре
-}
-```
-
-**Star projection (`*`) vs Java unbounded wildcard (`?`):**
-
-```kotlin
-fun printAll(list: List<*>) { // List<*> в Kotlin
-    list.forEach { println(it) }
-}
-```
-
-```java
-// Java видит: List<?> — unbounded wildcard
-// Можно передать List<String>, List<Integer>, любой List
-printAll(new ArrayList<String>());
-```
-
-**Инвариантность (invariance) на практике:**
-
-```kotlin
-// Kotlin MutableList инвариантен — как Java List
-val strings: MutableList<String> = mutableListOf("a")
-// val objects: MutableList<Any> = strings // Ошибка — инвариантность
-
-// Kotlin List ковариантен (out T):
-val readOnly: List<String> = listOf("a")
-val objects: List<Any> = readOnly // OK — ковариантность работает
-```
-
----
-
-## See also
-
-- [Основы Kotlin](kotlin-interview.md) — базовые конструкции Kotlin, которые влияют на интероп
-- [Коллекции Kotlin](kotlin-collections-interview.md) — как read-only/mutable разделение работает из Java
-- [Корутины Kotlin](kotlin-coroutines-interview.md) — вызов suspend-функций из Java через CompletableFuture
-- [Исключения в Kotlin](kotlin-exceptions-interview.md) — аннотация @Throws для корректного интеропа
-- [DSL в Kotlin](kotlin-dsl-interview.md) — как DSL выглядит при вызове из Java-кода
-- [Сериализация в Kotlin](kotlin-serialization-interview.md) — использование kotlinx.serialization в Java-проектах
-- [Java Core](../java/java-core-interview.md) — базовые концепции Java для понимания интеропа
-- [Java Concurrency](../java/java-concurrency-interview.md) — использование Java-примитивов синхронизации из Kotlin
-- [Spring Boot](../../frameworks/spring/spring-boot-interview.md) — смешанные Kotlin+Java проекты в Spring
-- [Шпаргалка: Kotlin Interop with Java](../../../languages/kotlin/kotlin-interop-java.md) — теория
+В локальной проверке `javap` показал для такого конструктора `List<Handler>`. Для `final`-типа элемента компилятор может убрать wildcard и без аннотации. Поэтому сначала проверьте реальную JVM-сигнатуру, а затем ставьте `@JvmSuppressWildcards` там, где действительно нужен точный тип. Замена `List` на `Provider<List<...>>` меняет контракт DI, но не исправляет исходный wildcard.

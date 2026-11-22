@@ -15,13 +15,13 @@ aliases:
 prerequisites:
   - "[[spring-ai]]"
 next: []
-updated: 2026-10-05
+updated: 2026-11-05
 ---
 # Вопросы на собеседовании: `Spring AI`
 
 `Spring AI` — официальный модуль экосистемы Spring для интеграции AI-моделей. Унифицированный API поверх разных провайдеров (OpenAI, Anthropic, Vertex AI, Mistral, Ollama). Предоставляет `ChatClient`, `EmbeddingModel`, `VectorStore` и поддержку RAG. Горячая тема в 2024-2025 интервью.
 
-Дата последнего обновления: 2026-10-05
+Дата последнего обновления: 2026-11-05
 
 ## Полезные ссылки
 
@@ -38,9 +38,9 @@ updated: 2026-10-05
 
 ## Q1. Что такое Spring AI и какие задачи он решает?
 
-**Spring AI** — официальный модуль экосистемы Spring, который даёт единый API для работы с AI-моделями. Главная идея — спрятать различия между провайдерами (OpenAI, Anthropic, Vertex AI, Mistral, Ollama и др.) за общими интерфейсами, чтобы код приложения не зависел от конкретного вендора.
+**Spring AI** — проект экосистемы Spring с общими интерфейсами для моделей, инструментов и векторных хранилищ. `ChatModel`, `EmbeddingModel` и `VectorStore` позволяют сохранить значительную часть прикладного кода при смене реализации, но возможности моделей, параметры запросов и устройство хранилищ различаются. [Chat Model API](https://docs.spring.io/spring-ai/reference/api/chatmodel.html), [Vector Stores](https://docs.spring.io/spring-ai/reference/api/vectordbs.html).
 
-**Какую проблему решает.** Без Spring AI вы пишете код под HTTP API конкретного провайдера: свои DTO, своя обработка ошибок, свой клиент. Сменить OpenAI на Anthropic — переписать всё это заново. Spring AI убирает эту привязку: смена провайдера сводится к замене starter-зависимости и пары строк в `application.yml`, бизнес-логика остаётся той же.
+**Какую проблему решает.** Вместо отдельного HTTP-клиента и DTO для каждого провайдера приложение работает через интерфейсы Spring AI. При переходе с OpenAI на Anthropic обычный вызов `ChatClient` может сохраниться; при этом нужно выбрать совместимую модель, перенести настройки и проверить функции, на которые опирается приложение: structured output, tool calling, ограничения контекста и тарифы. Общий интерфейс сокращает миграцию, но не заменяет её проверку.
 
 **Ключевые абстракции** (под каждой — общий интерфейс, реализации подставляет конкретный starter):
 
@@ -50,22 +50,22 @@ updated: 2026-10-05
 - **`ImageModel`** — генерация изображений (DALL-E, Stable Diffusion).
 - **`AudioTranscriptionModel`** — транскрипция аудио (Whisper).
 
-Поверх этих примитивов Spring AI строит и более высокоуровневые вещи: RAG, function calling, chat memory, advisors. **Главная ценность** — переносимость: переключение между провайдерами без правки кода приложения.
+Поверх этих примитивов Spring AI строит RAG, tool calling, chat memory и advisors. Общий API упрощает перенос, а объём изменений зависит от использованных возможностей и выбранных реализаций.
 
-## Q2. Как настроить Spring AI для работы с OpenAI?
+## Q2. Как настроить Spring AI 2.0.2 для работы с OpenAI?
 
-Настройка состоит из трёх шагов: подключить starter, задать ключ и модель в конфиге, инжектить готовый бин.
+Для **Spring AI 2.0.2** подключите актуальный OpenAI starter, задайте ключ и параметры модели, затем создайте `ChatClient` из автонастроенного `ChatClient.Builder`. Версию Spring AI задавайте через BOM проекта. См. [OpenAI Chat](https://docs.spring.io/spring-ai/reference/api/chat/openai-chat.html) и [Chat Client API](https://docs.spring.io/spring-ai/reference/api/chatclient.html).
 
-**Шаг 1. Зависимость.** Один starter включает автоконфигурацию: на старте Spring сам создаст бины `ChatClient.Builder`, `EmbeddingModel` и т.д.
+**Шаг 1. Зависимость.** В ветке 2.x имя starter изменилось. Он включает автоконфигурацию OpenAI `ChatModel` и `EmbeddingModel`; Spring Boot также создаёт `ChatClient.Builder`. Старое имя `spring-ai-openai-spring-boot-starter` относится к прежним выпускам.
 
 ```xml
 <dependency>
     <groupId>org.springframework.ai</groupId>
-    <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+    <artifactId>spring-ai-starter-model-openai</artifactId>
 </dependency>
 ```
 
-**Шаг 2. Конфигурация.** API-ключ берём из переменной окружения (не хардкодим в репозиторий), модель и параметры генерации задаём дефолтами — их можно переопределить на уровне отдельного запроса.
+**Шаг 2. Конфигурация.** Ключ берём из окружения. В Spring AI 2.0 свойства модели записываются без прежнего промежуточного `options`: например, `spring.ai.openai.chat.model` и `spring.ai.openai.embedding.model`. `max-tokens` в примере относится к выбранной нерезонирующей модели `gpt-4o`; для reasoning-моделей документация указывает `max-completion-tokens`, и эти два параметра нельзя задавать вместе. Дефолтные chat options можно переопределить в отдельном запросе. [Свойства OpenAI Chat](https://docs.spring.io/spring-ai/reference/api/chat/openai-chat.html#configuration-properties), [OpenAI Embeddings](https://docs.spring.io/spring-ai/reference/api/embeddings/openai-embeddings.html#configuration-properties).
 
 ```yaml
 spring:
@@ -73,13 +73,11 @@ spring:
     openai:
       api-key: ${OPENAI_API_KEY}
       chat:
-        options:
-          model: gpt-4o
-          temperature: 0.7
-          max-tokens: 2000
+        model: gpt-4o
+        temperature: 0.7
+        max-tokens: 2000
       embedding:
-        options:
-          model: text-embedding-3-small
+        model: text-embedding-3-small
 ```
 
 **Шаг 3. Использование.** Инжектируем `ChatClient` и работаем через fluent API: `prompt()` начинает запрос, `user()` задаёт сообщение пользователя, `call()` отправляет синхронно, `content()` достаёт текст ответа.
@@ -99,7 +97,7 @@ public class ChatService {
 }
 ```
 
-Сам `ChatClient` обычно собирают из автоконфигурированного `ChatClient.Builder` — здесь же удобно задать общий system-промпт, который будет применяться ко всем запросам этого клиента.
+Сам `ChatClient` обычно собирают из автоконфигурированного `ChatClient.Builder` — здесь же можно задать общий system-промпт. Если в приложении несколько `ChatModel`, выберите модель явно и проверьте конфигурацию builder: простой вызов `ChatClient.builder(chatModel)` обходит автоконфигурированные customizers и observability. [Chat Client API](https://docs.spring.io/spring-ai/reference/api/chatclient.html#working-with-multiple-chat-models).
 
 ```java
 // Fluent builder для ChatClient
@@ -116,6 +114,8 @@ public ChatClient chatClient(ChatClient.Builder builder) {
 **Prompt Template** — это промпт с плейсхолдерами `{name}`, которые подставляются через `.param()`. Именованные параметры сохраняют промпт читаемым и позволяют вынести его в ресурс. Подстановка не делает недоверенный текст безопасным от prompt injection: границы доступа к данным и инструментам проверяет приложение.
 
 В примере ниже `{language}` используется в system- и user-шаблонах. Значение задаётся отдельно для каждого сообщения; внутри одного шаблона плейсхолдер можно повторять.
+
+По умолчанию `ChatClient` использует `StTemplateRenderer` с разделителями `{` и `}`. Если сам текст промпта содержит JSON, его фигурные скобки могут быть приняты за переменные шаблона. Для такого промпта задайте другие разделители через `.templateRenderer(StTemplateRenderer.builder().startDelimiterToken('<').endDelimiterToken('>').build())` и обозначайте переменные как `<code>`; либо используйте `NoOpTemplateRenderer`, если подстановка не нужна. Настройка renderer для `ChatClient` не меняет внутренние шаблоны advisors. [Chat Client: Prompt Templates](https://docs.spring.io/spring-ai/reference/api/chatclient.html#prompt-templates).
 
 ```java
 @Service
@@ -152,9 +152,9 @@ public record CodeReview(
 ) {}
 ```
 
-**Структурированный ответ через `.entity()`.** В Spring AI 2.0.1 схема генерируется из типа, добавляется к инструкциям модели, затем ответ преобразуется в объект. Обычный `.entity(CodeReview.class)` — режим best effort: схема в промпте сама по себе не гарантирует ни валидный JSON, ни соблюдение всех ограничений.
+**Структурированный ответ через `.entity()`.** В Spring AI 2.0.2 схема генерируется из типа, добавляется к инструкциям модели, затем ответ преобразуется в объект. Обычный `.entity(CodeReview.class)` — режим best effort: схема в промпте сама по себе не гарантирует ни валидный JSON, ни соблюдение всех ограничений.
 
-Если результат определяет дальнейшую логику, `useProviderStructuredOutput()` передаёт схему через API провайдера, который поддерживает этот режим; `validateSchema()` проверяет ответ в приложении и повторяет запрос при нарушении схемы (по умолчанию до трёх попыток). Их можно сочетать:
+Если результат определяет дальнейшую логику, `useProviderStructuredOutput()` передаёт схему через API провайдера, который поддерживает этот режим. Если chat options модели не реализуют `StructuredOutputChatOptions`, флаг **молча игнорируется** и остаётся обычная схема в промпте. Поэтому проверяйте поддержку конкретной модели и формат ответа, не выводя её из одного успешного вызова. `validateSchema()` проверяет ответ в приложении и при нарушении схемы добавляет описание ошибки к пользовательскому сообщению для следующего запроса. Их можно сочетать: [Provider-Native Structured Output](https://docs.spring.io/spring-ai/reference/api/structured-output/native.html).
 
 ```java
 CodeReview review = chatClient.prompt()
@@ -165,15 +165,15 @@ CodeReview review = chatClient.prompt()
         .validateSchema());
 ```
 
-Поддержка и ограничения нативной схемы зависят от провайдера; проверка с повтором увеличивает число вызовов и расход токенов, а после исчерпания попыток ошибку всё равно нужно обработать. `.entity()` работает с завершённым ответом через `.call()`, не с фрагментами `.stream()`. [Structured Output](https://docs.spring.io/spring-ai/reference/api/structured-output.html), [Schema Validation](https://docs.spring.io/spring-ai/reference/api/structured-output/validation.html).
+В Spring AI 2.0.2 проверка допускает до **трёх повторов после первого запроса**, то есть до четырёх проходов через оставшуюся цепочку advisors. Например, если ответ вернул массив в поле, где схема ожидает строку, следующий запрос сообщает модели о несовпадении типа. Каждый повтор добавляет задержку и расход токенов. При исчерпании повторов advisor возвращает последний ответ, а `.entity()` пытается его преобразовать. Если преобразование получилось, это ещё не доказывает соответствие схеме. Когда результат запускает бизнес-операцию, приложению нужна явная проверка перед действием. [Исходный код валидатора Spring AI 2.0.2](https://github.com/spring-projects/spring-ai/blob/v2.0.2/spring-ai-client-chat/src/main/java/org/springframework/ai/chat/client/advisor/StructuredOutputValidationAdvisor.java), [ChatClient Spring AI 2.0.2](https://github.com/spring-projects/spring-ai/blob/v2.0.2/spring-ai-client-chat/src/main/java/org/springframework/ai/chat/client/DefaultChatClient.java).
+
+Поддержка JSON Schema на стороне провайдера зависит от модели. Проверка схемы отвечает за **форму**, а не за достоверность выводов: комментарий `score // 1-10` в record не задаёт ограничение диапазона, его и применимость оценки проверяет код приложения. `.entity()` работает с завершённым ответом через `.call()`, не с фрагментами `.stream()`. [Structured Output](https://docs.spring.io/spring-ai/reference/api/structured-output.html), [Schema Validation](https://docs.spring.io/spring-ai/reference/api/structured-output/validation.html).
 
 ## Q4. Что такое Embedding и как получить векторное представление текста?
 
-**Embedding** — числовой вектор (массив float), который кодирует смысл текста. Ключевое свойство: близкие по смыслу тексты дают близкие векторы, даже если слова разные («автомобиль» и «машина» окажутся рядом). Именно это и делает возможным семантический поиск — мы сравниваем не слова, а смысл.
+**Embedding** — числовой вектор, который модель строит из текста для поиска по смысловой близости. Например, запрос «автомобиль» может найти документ со словом «машина», даже если точного совпадения нет. Близость не гарантирована для каждой пары текстов: результат зависит от модели, языка и данных. Сравнивать следует векторы совместимой размерности, полученные одной и той же моделью и конфигурацией. [Embedding Model API](https://docs.spring.io/spring-ai/reference/api/embeddings.html).
 
-«Близость» измеряют косинусным сходством: чем меньше угол между векторами, тем ближе тексты по смыслу (метрика в диапазоне примерно от −1 до 1).
-
-В Spring AI за это отвечает `EmbeddingModel`: `embed(text)` возвращает вектор для одной строки, `embedForResponse(...)` — батч за один запрос (дешевле и быстрее, чем по одному).
+В Spring AI 2.0.2 `EmbeddingModel.embed(String)` возвращает `float[]`, а `embed(List<String>)` — список векторов. `embedForResponse(List<String>)` нужен, когда вместе с векторами требуются данные `EmbeddingResponse`, например метаданные ответа. Список передаёт несколько текстов одним вызовом интерфейса, но число сетевых запросов, стоимость, ограничения размера и скорость зависят от реализации и провайдера. [EmbeddingModel Javadoc 2.0.2](https://docs.spring.io/spring-ai/docs/current/api/org/springframework/ai/embedding/EmbeddingModel.html).
 
 ```java
 @Service
@@ -186,41 +186,39 @@ public class EmbeddingService {
     }
 
     public List<float[]> embedBatch(List<String> texts) {
-        // embedForResponse принимает List<String> напрямую
-        EmbeddingResponse response = embeddingModel.embedForResponse(texts);
-        return response.getResults().stream()
-            .map(r -> r.getOutput())
-            .toList();
-    }
-
-    // Косинусное сходство двух эмбеддингов (считаем сами — это просто формула)
-    public double similarity(float[] a, float[] b) {
-        double dot = 0, na = 0, nb = 0;
-        for (int i = 0; i < a.length; i++) {
-            dot += a[i] * b[i];
-            na  += a[i] * a[i];
-            nb  += b[i] * b[i];
-        }
-        return dot / (Math.sqrt(na) * Math.sqrt(nb));
+        return embeddingModel.embed(texts);
     }
 }
 ```
 
-**Сценарии применения:** семантический поиск, поиск дубликатов и near-duplicate, кластеризация, классификация по смыслу и фундамент для RAG (Q6).
+Для поиска не нужно вручную вычислять косинусную формулу: `VectorStore.similaritySearch(...)` из Q5 использует метрику конкретного хранилища. Косинусное сходство — один из вариантов сравнения векторов; формула требует одинаковой размерности и ненулевых векторов. Применения: семантический поиск, поиск похожих документов и RAG (Q6). [Understanding Vectors](https://docs.spring.io/spring-ai/reference/api/vectordbs/understand-vectordbs.html).
 
-## Q5. Что такое VectorStore и как его использовать?
+## Q5. Как использовать VectorStore с PGvector в Spring AI 2.0.2 и что меняется в 2.1.0-RC1?
 
-**VectorStore** — единый интерфейс Spring AI поверх векторных хранилищ: он хранит документы вместе с их embedding-векторами и умеет искать похожие по смыслу. Обычная БД ищет по точному совпадению или `LIKE`, а VectorStore — по близости векторов (ANN-поиск), то есть по смыслу запроса.
+**`VectorStore` даёт общий API для записи документов и поиска по близости векторов.** Поиск может быть точным или приближённым: для PGvector это зависит, в частности, от выбранного индекса (`NONE`, `IVFFlat` или `HNSW`). Близость векторов помогает искать по смыслу, а метаданные ограничивают область поиска. См. [Vector Stores](https://docs.spring.io/spring-ai/reference/api/vectordbs.html) и [PGvector](https://docs.spring.io/spring-ai/reference/api/vectordbs/pgvector.html).
 
-Важная деталь: при `add()` вы передаёте текст, а embedding VectorStore считает сам через переданный `EmbeddingModel` — вручную векторизовать документы не нужно. За реализацией стоит конкретное хранилище, но API один и тот же — сменить PgVector на Pinecone можно без правки логики поиска.
+В **Spring AI 2.0.2** при `add(List<Document>)` реализация использует настроенный `EmbeddingModel` для текста документа. Для PGvector подключите starter хранилища вместе с starter модели из Q2, задайте PostgreSQL datasource и внедрите автонастроенный `VectorStore`. Схема и расширения PostgreSQL должны существовать заранее: `spring.ai.vectorstore.pgvector.initialize-schema` по умолчанию `false`; включайте автоматическую инициализацию осознанно. Размерность столбца должна совпадать с размерностью эмбеддингов.
 
-```java
-// Поддерживаемые: PgVector, ChromaDB, Weaviate, Pinecone, Redis, Elasticsearch, Milvus
-@Bean
-public VectorStore vectorStore(EmbeddingModel embeddingModel, JdbcTemplate jdbc) {
-    return new PgVectorStore(jdbc, embeddingModel);
-}
+```xml
+<dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-starter-vector-store-pgvector</artifactId>
+</dependency>
 ```
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/app
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  ai:
+    vectorstore:
+      pgvector:
+        initialize-schema: false
+```
+
+Если starter с автоконфигурацией не подходит, в ручной конфигурации используют `PgVectorStore.builder(jdbcTemplate, embeddingModel).build()` с отдельным модулем `spring-ai-pgvector-store`; прежний `new PgVectorStore(jdbc, embeddingModel)` из примера к 2.x не подходит. [Ручная настройка PGvector](https://docs.spring.io/spring-ai/reference/api/vectordbs/pgvector.html#manual-configuration).
 
 ```java
 @Service
@@ -249,28 +247,31 @@ public class DocumentService {
 
     // Поиск с метаданным фильтром
     public List<Document> searchByTopic(String query, String topic) {
+        FilterExpressionBuilder filter = new FilterExpressionBuilder();
         return vectorStore.similaritySearch(
             SearchRequest.builder()
                 .query(query)
                 .topK(5)
-                .filterExpression("topic == '" + topic + "'")
+                .filterExpression(filter.eq("topic", topic).build())
                 .build()
         );
     }
 }
 ```
 
-Два параметра поиска стоит понимать:
+Три параметра поиска стоит понимать:
 
 - **`topK`** — сколько ближайших документов вернуть.
-- **`similarityThreshold`** — порог близости (0..1): документы ниже порога отбрасываются. Защищает от мусора, когда релевантного в базе нет: лучше вернуть пусто, чем подсунуть случайный документ.
-- **`filterExpression`** — фильтр по метаданным (тема, автор, дата) поверх семантического поиска — сужает выдачу до нужного среза до сравнения векторов.
+- **`similarityThreshold`** — нижняя граница похожести: документы ниже неё отбрасываются. Порог настраивают по реальным запросам и качеству ответов.
+- **`filterExpression`** — фильтр по метаданным (тема, автор, дата). Для значения из запроса удобен `FilterExpressionBuilder`: не нужно собирать строковое выражение конкатенацией.
+
+Общий интерфейс помогает менять хранилище, но при переходе с PGvector на Pinecone нужно проверить схему метаданных, размерность, тип индекса, поддержку фильтра и поведение поиска. В предварительной ветке **Spring AI 2.1**, начиная с [2.1.0-M1](https://spring.io/blog/2026/09/25/spring-ai-2-1-0-M1-available-now/), появился `VectorStore.upsert(List<EmbeddedDocument>)` для уже вычисленных векторов; он не вызывает настроенный `EmbeddingModel` и реализован не во всех хранилищах. В `2.1.0-RC1` PGvector поддерживает этот метод, но на 05.11.2026 ветка 2.1 ещё предварительная. Обычный `add()` по-прежнему вычисляет вектор текста. [Анонс и пример `upsert`](https://spring.io/blog/2026/10/28/spring-ai-upsert-own-embeddings/).
 
 ## Q6. Как построить RAG-pipeline в Spring AI?
 
-**RAG (Retrieval-Augmented Generation)** решает проблему: модель не знает ваших данных и не имеет свежей информации, а отвечать «от себя» — значит галлюцинировать. Идея RAG — сначала найти релевантные документы в VectorStore, вставить их текст в промпт и попросить модель отвечать **только по этому контексту**. Модель из «всезнайки» превращается в «читателя предоставленных документов».
+**RAG (Retrieval-Augmented Generation)** дополняет запрос к модели найденными данными без изменения её весов. Типичный путь: найти документы, добавить подходящие фрагменты в контекст и сгенерировать ответ. Это даёт модели доступ к данным приложения, но само по себе не гарантирует правильность ответа или следование инструкции «только по контексту». [Spring AI RAG reference](https://docs.spring.io/spring-ai/reference/api/retrieval-augmented-generation.html).
 
-Пайплайн всегда из трёх шагов: **retrieve** (найти) → **augment** (вставить в промпт) → **generate** (сгенерировать ответ). Ручная реализация показывает все три явно:
+Простой вариант полезно разобрать вручную, чтобы видеть границу между поиском и генерацией:
 
 ```java
 @Service
@@ -280,17 +281,19 @@ public class RagService {
     private final VectorStore vectorStore;
 
     public String answerWithContext(String question) {
-        // 1. Поиск релевантных документов
         List<Document> docs = vectorStore.similaritySearch(
-            SearchRequest.builder().query(question).topK(5).build()
+            SearchRequest.builder().query(question).topK(5)
+                .similarityThreshold(0.7).build()
         );
 
-        // 2. Формирование контекста
+        if (docs.isEmpty()) {
+            return "В найденных документах нет ответа.";
+        }
+
         String context = docs.stream()
             .map(Document::getText)
             .collect(Collectors.joining("\n\n"));
 
-        // 3. Генерация ответа с контекстом
         return chatClient.prompt()
             .system("""
                 Answer based solely on the provided context.
@@ -304,27 +307,27 @@ public class RagService {
 }
 ```
 
-На практике три шага вручную не пишут — за них отвечает `QuestionAnswerAdvisor` (см. Q9). Он перехватывает запрос, сам делает поиск по VectorStore и подмешивает найденное в контекст. Логика та же, но вызов чистый — про RAG думает advisor, а не сервис:
+Для простого RAG можно подключить `QuestionAnswerAdvisor`: он ищет документы в `VectorStore` и добавляет их к пользовательскому запросу перед вызовом модели. В Spring AI 2.0.2 для него нужен модуль `spring-ai-vector-store-advisor` в дополнение к starter хранилища из Q5. При настройке `defaultAdvisors` поиск применяется ко всем вызовам этого `ChatClient` (см. Q9). [RAG reference](https://docs.spring.io/spring-ai/reference/api/retrieval-augmented-generation.html#questionansweradvisor).
 
 ```java
-// Автоматический RAG через QuestionAnswerAdvisor
 @Bean
 public ChatClient ragChatClient(ChatClient.Builder builder, VectorStore vectorStore) {
     return builder
         .defaultAdvisors(QuestionAnswerAdvisor.builder(vectorStore)
-            .searchRequest(SearchRequest.builder().topK(5).build())
+            .searchRequest(SearchRequest.builder().topK(5)
+                .similarityThreshold(0.7).build())
             .build())
         .build();
 }
 ```
 
-**Подводный камень:** качество RAG упирается в качество retrieval. Если поиск вернул нерелевантные документы, модель ответит по ним — «garbage in, garbage out». Поэтому важны разбивка на чанки (Q12), порог близости и `topK`.
+`QuestionAnswerAdvisor` реализует простой RAG. Когда нужны переписывание запроса, фильтрация или повторное ранжирование фрагментов, Spring AI предлагает `RetrievalAugmentationAdvisor` из отдельного модуля `spring-ai-rag`. Качество проверяют на реальных вопросах: настраивают чанки (Q12), `topK`, порог и метаданные, оценивают найденные фрагменты и ответы. Найденный текст остаётся недоверенным вводом: инструкция в документе может попытаться изменить поведение модели. При отсутствии подходящих документов нужен явный сценарий отказа; показанный ручной вариант делает это до вызова модели, а настройки встроенных advisors следует проверять отдельно. [RAG reference](https://docs.spring.io/spring-ai/reference/api/retrieval-augmented-generation.html#retrievalaugmentationadvisor).
 
 ## Q7. Что такое Function Calling и как его использовать?
 
 **Function Calling (tool calling)** даёт модели доступ к вашему коду. Сама по себе модель не умеет ходить в БД, дёргать API или узнавать текущую погоду — она лишь генерирует текст. Function calling это решает: вы описываете функции, а модель, видя их сигнатуры, сама решает, какую вызвать и с какими аргументами.
 
-Важно понимать, что **модель не выполняет код** — она лишь возвращает «вызови `getWeather` с такими аргументами». В Spring AI 2.0 `ChatClient` автоматически включает `ToolCallingAdvisor`: тот обрабатывает запросы модели, передаёт их `ToolCallingManager`, возвращает результат модели и повторяет цикл до ответа без вызова инструмента. Приложение остаётся владельцем кода и его прав доступа.
+Важно понимать, что **модель не выполняет код** — она лишь возвращает «вызови `getWeather` с такими аргументами». В Spring AI 2.0.2 `ChatClient` автоматически включает `ToolCallingAdvisor`: тот обрабатывает запросы модели, передаёт их `ToolCallingManager`, возвращает результат модели и обычно повторяет цикл до ответа без вызова инструмента. Инструмент с `returnDirect = true` может вернуть результат вызывающему коду без нового обращения к модели. Цикл поддерживает и `.call()`, и `.stream()`; прямой вызов `ChatModel` с инструментами не запускает его автоматически. Приложение остаётся владельцем кода и его прав доступа. [Tool Calling](https://docs.spring.io/spring-ai/reference/api/tools.html#the-tool-calling-loop), [Return Direct](https://docs.spring.io/spring-ai/reference/api/tools.html#return-direct).
 
 Инструмент объявляют методом с аннотацией `@Tool`. Ключевой элемент — `description`: модель по этому тексту понимает, **когда** инструмент звать, поэтому описание должно быть осмысленным. Типы аргументов и результата (record-ы) Spring AI превращает в JSON-схему для модели.
 
@@ -362,11 +365,17 @@ public class AssistantService {
 }
 ```
 
-`.tools(weatherTools)` подключает Spring-бин с `@Tool`-методами к конкретному запросу. Можно передать несколько инструментов или явные `ToolCallback`; модель может не выбрать ни одного. В Spring AI 2.0 прежнее разрешение обычного `Function`-бина по имени через `.toolNames(...)` удалено: для такого сценария зарегистрируйте явный `ToolCallback`. Порядок advisor-ов определяет, увидит ли memory каждый шаг цикла или только итоговый обмен; проверьте это при настройке истории. [Tool Calling](https://docs.spring.io/spring-ai/reference/api/tools.html), [ToolCallingAdvisor](https://docs.spring.io/spring-ai/reference/api/tools/tool-calling-advisor.html).
+`.tools(weatherTools)` подключает Spring-бин с `@Tool`-методами к конкретному запросу. Можно передать несколько инструментов или явные `ToolCallback`; модель может не выбрать ни одного. **Само наличие Spring-бина не делает инструмент доступным для любого запроса.** Начиная с 2.0.1, fallback к общему `ToolCallbackResolver` выключен по умолчанию: выполняются инструменты, переданные через `.tools(...)`, `.defaultTools(...)` или `ToolCallingChatOptions.toolCallbacks(...)`. Не включайте глобальный fallback ради удобства, не оценив область доступа к инструментам. [Upgrade Notes 2.0.1](https://docs.spring.io/spring-ai/reference/upgrade-notes.html#tool-resolution-fallback-disabled-by-default).
 
-## Q8. Как работает потоковая генерация (Streaming)?
+В Spring AI 2.0 прежнее разрешение обычного `Function`-бина по имени через `.toolNames(...)` удалено: для такого сценария зарегистрируйте явный `ToolCallback`. Порядок advisor-ов определяет, увидит ли memory каждый шаг цикла или только итоговый обмен; проверьте это при настройке истории. [Tool Calling](https://docs.spring.io/spring-ai/reference/api/tools.html), [ToolCallingAdvisor](https://docs.spring.io/spring-ai/reference/api/tools/tool-calling-advisor.html).
 
-**Streaming** отдаёт ответ по мере генерации, токен за токеном, а не целиком после завершения. Это тот же эффект «печатающегося ответа», что в ChatGPT. Технически разница в методе: `.call()` блокирует поток до полного ответа, а `.stream()` возвращает `Flux<String>`, где каждый элемент — очередной фрагмент.
+Если у `ChatClient` большой набор инструментов, их описания занимают контекст ещё до выбора нужного. В Spring AI 2.0.2 отдельный starter `spring-ai-starter-tool-search-advisor` и свойство `spring.ai.chat.client.tool-search-advisor.enabled=true` заменяют обычный цикл на `ToolSearchToolCallingAdvisor`: сначала модель видит `toolSearchTool`, затем найденные через `ToolIndex` определения добавляются в следующие итерации. Это способ **выбора доступных инструментов**, а не автоматическая выдача прав: список, зарегистрированный для запроса, и проверки внутри каждого инструмента остаются ответственностью приложения. [Tool Search Tool](https://docs.spring.io/spring-ai/reference/api/tools/tool-search-tool.html), [Spring AI 2.0 GA](https://spring.io/blog/2026/06/12/spring-ai-2-0-0-GA-available-now/).
+
+Индекс привязан к сессии: передавайте ID в advisor context при каждом запросе, по умолчанию через `ChatMemory.CONVERSATION_ID`. Без корректной границы сессии нельзя рассчитывать на изоляцию каталогов инструментов. При малом наборе инструментов обычный `ToolCallingAdvisor` проще: поиск требует дополнительного обращения к модели, а промах индекса может скрыть нужный инструмент. Выберите `RegexToolIndex`, `LuceneToolIndex` или `VectorToolIndex` под названия и описания своих инструментов; проверяйте качество поиска, задержку и затраты на реальных запросах, а не переносите цифры из чужого benchmark. [Tool Search Tool: session and strategies](https://docs.spring.io/spring-ai/reference/api/tools/tool-search-tool.html#session-scoping).
+
+## Q8. Как передать потоковый ответ Spring AI 2.0.2 через SSE?
+
+`ChatClient.prompt()...call().content()` возвращает готовую строку после завершения вызова. `...stream().content()` возвращает `Flux<String>` с текстовыми фрагментами по мере генерации. **Фрагмент не обязан совпадать с одним токеном модели.** Если нужны объекты ответа, включая метаданные, используйте `...stream().chatResponse()` с типом `Flux<ChatResponse>`. Для streaming Spring AI нужен reactive stack даже в приложении с императивным веб-стеком. [Chat Client API](https://docs.spring.io/spring-ai/reference/api/chatclient.html#streaming-responses), [Implementation Notes](https://docs.spring.io/spring-ai/reference/api/chatclient.html#implementation-notes).
 
 ```java
 @Service
@@ -374,23 +383,22 @@ public class AssistantService {
 public class StreamingChatService {
     private final ChatClient chatClient;
 
-    // Streaming через Project Reactor Flux
     public Flux<String> streamAnswer(String question) {
         return chatClient.prompt()
             .user(question)
             .stream()
-            .content();  // Flux<String> — каждый элемент = токен
+            .content();
     }
 }
 ```
 
-Чтобы поток дошёл до браузера, его отдают через Server-Sent Events: `produces = TEXT_EVENT_STREAM_VALUE` заставляет Spring слать каждый элемент `Flux` отдельным SSE-событием, и фронтенд показывает их сразу.
+В WebFlux контроллере `text/event-stream` позволяет отдавать элементы `Flux` как SSE по мере поступления; для одних только данных обёртка `ServerSentEvent` не обязательна. Если нужны поля события, например `id` или `event`, используйте `ServerSentEvent<String>`. [Spring WebFlux Return Values](https://docs.spring.io/spring-framework/reference/web/webflux/controller/ann-methods/return-types.html).
 
 ```java
-// В WebFlux контроллере — Server-Sent Events
 @RestController
 @RequiredArgsConstructor
 public class ChatController {
+    private final StreamingChatService streamingChatService;
 
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> streamChat(@RequestParam String question) {
@@ -399,46 +407,57 @@ public class ChatController {
 }
 ```
 
-**Зачем это важно:** при длинном ответе модель генерирует его несколько секунд. Без стриминга пользователь смотрит на пустой экран всё это время; со стримингом первые слова появляются почти сразу — воспринимаемая скорость кардинально выше. **Компромисс:** стриминг сложнее обрабатывать на бэкенде (например, не получится распарсить ответ в POJO до его завершения), поэтому для структурированных ответов он не подходит.
+Поток сокращает ожидание **первого фрагмента**, но сам по себе не ускоряет генерацию полного ответа. `ChatClient` не предоставляет `.stream().entity(...)`: для типизированного результата используйте `.call().entity(...)` либо накопите полный поток и явно примените конвертер. Разбор незавершённого JSON как готового POJO ненадёжен. [Structured Output](https://docs.spring.io/spring-ai/reference/api/structured-output.html).
 
-## Q9. Что такое Advisors в Spring AI?
+Ошибку до отправки первого события ещё можно вернуть обычным HTTP-ответом. После начала SSE-ответа статус уже может быть зафиксирован: приложению нужно определить, как сообщить клиенту о прерывании, не выдавая частичный текст за завершённый ответ. Логируйте ошибку потока и проверяйте поведение при отключении клиента. [Spring WebFlux Return Values](https://docs.spring.io/spring-framework/reference/web/webflux/controller/ann-methods/return-types.html).
 
-**Advisors** — это перехватчики (interceptor / middleware) для `ChatClient`. Каждый запрос и ответ проходит через цепочку advisor-ов, и каждый может его модифицировать или даже оборвать. По сути это аналог Servlet-фильтров или Spring-интерсепторов, но для AI-вызовов: они выносят сквозную логику (RAG, память, логирование, модерацию) из бизнес-кода в переиспользуемые компоненты.
+## Q9. Как работают Advisors в Spring AI 2.0.2?
 
-Spring AI поставляет готовые advisor-ы — их достаточно зарегистрировать через `defaultAdvisors`, и поведение применится ко всем запросам клиента:
+**Advisors** добавляют сквозную логику к вызову `ChatClient`: память диалога, RAG, логирование или проверку запроса. Они образуют цепочку вокруг обращения к модели; advisor может изменить запрос, обработать ответ или завершить вызов раньше модели. В Spring AI 2.0.2 `CallAdvisor` работает с `.call()`, `StreamAdvisor` — с `.stream()`. Для обоих важны `getName()` и `getOrder()`; меньший order выполняется раньше на входе, порядок регистрации сам по себе не задаёт порядок выполнения. [Advisors API](https://docs.spring.io/spring-ai/reference/api/advisors.html).
+
+Готовые advisors можно зарегистрировать через `defaultAdvisors` для всех вызовов данного клиента; для одного вызова есть `.advisors(...)`. В сочетании памяти и RAG memory advisor должен получить историю до поискового advisor, чтобы поиск мог учитывать продолжение разговора. При вызове с памятью обязательно передавать `ChatMemory.CONVERSATION_ID` (Q10). [ChatClient API](https://docs.spring.io/spring-ai/reference/api/chatclient.html).
 
 ```java
-// Встроенные Advisors
 @Bean
 public ChatClient chatClient(ChatClient.Builder builder, VectorStore vectorStore,
                               ChatMemory chatMemory) {
     return builder
-        // RAG: автоматически добавляет релевантные документы в контекст
-        .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore))
-        // Память: сохраняет историю разговора
-        .defaultAdvisors(new MessageChatMemoryAdvisor(chatMemory))
-        // Логирование: выводит запросы/ответы
-        .defaultAdvisors(new SimpleLoggerAdvisor())
+        .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build(),
+            QuestionAnswerAdvisor.builder(vectorStore).build())
         .build();
 }
 ```
 
-Можно написать и свой advisor. Метод `adviseCall` получает запрос и цепочку: проверив условие, advisor либо вызывает `chain.nextCall()` (пропускает дальше), либо возвращает ответ сам, не доходя до модели. В примере ниже — модерация: запрещённый ввод сразу разворачивается отказом, экономя вызов к LLM.
+В этой конфигурации memory advisor идёт перед `QuestionAnswerAdvisor`; точный порядок определяется `getOrder()`, поэтому при своей конфигурации его нужно проверять. Для `QuestionAnswerAdvisor` нужен модуль `spring-ai-vector-store-advisor` (Q6).
+
+Свой `CallAdvisor` может вернуть ответ без `chain.nextCall(request)`. Ниже политика `ModerationPolicy` считается прикладным сервисом; пример показывает контракт advisor, а не реализацию правил модерации. Для потоковых вызовов нужен также `StreamAdvisor` с `adviseStream(...)`: реализация только `CallAdvisor` не защищает путь `.stream()`.
 
 ```java
-// Кастомный Advisor (например, для Content Moderation)
 @Component
+@RequiredArgsConstructor
 public class ModerationAdvisor implements CallAdvisor {
+    private final ModerationPolicy moderationPolicy;
+
+    @Override
+    public String getName() {
+        return "moderationAdvisor";
+    }
+
+    @Override
+    public int getOrder() {
+        return Ordered.HIGHEST_PRECEDENCE + 100;
+    }
 
     @Override
     public ChatClientResponse adviseCall(ChatClientRequest request, CallAdvisorChain chain) {
         String userInput = request.prompt().getUserMessage().getText();
-        if (containsProhibitedContent(userInput)) {
+        if (moderationPolicy.isProhibited(userInput)) {
             return ChatClientResponse.builder()
                 .chatResponse(ChatResponse.builder()
                     .generations(List.of(new Generation(
                         new AssistantMessage("I cannot help with that."))))
                     .build())
+                .context(request.context())
                 .build();
         }
         return chain.nextCall(request);
@@ -446,29 +465,21 @@ public class ModerationAdvisor implements CallAdvisor {
 }
 ```
 
-## Q10. Как реализовать многоходовой диалог (Chat Memory)?
+## Q10. Как реализовать многоходовой диалог с Chat Memory в Spring AI 2.0.2?
 
-LLM **не имеет состояния** — каждый запрос обрабатывается изолированно, без памяти о предыдущих. Чтобы модель «помнила» диалог, всю историю нужно слать ей заново при каждом сообщении. `ChatMemory` автоматизирует это: хранит сообщения разговора и сам подмешивает их в промпт через `MessageChatMemoryAdvisor` (Q9).
-
-Реализацию выбирают по окружению через `ChatMemoryRepository`: `InMemoryChatMemoryRepository` живёт в памяти процесса (теряется при рестарте — годится для разработки и тестов), а персистентные `JdbcChatMemoryRepository` / `CassandraChatMemoryRepository` переживают рестарт и работают на нескольких инстансах — это для production. Сам `ChatMemory` собирают через `MessageWindowChatMemory`, передав ему нужный repository.
+**Модель не хранит историю между вызовами.** В Spring AI 2.0.2 `MessageChatMemoryAdvisor` читает сообщения из `ChatMemory`, добавляет их к запросу и сохраняет новые сообщения после ответа. `MessageWindowChatMemory` решает, какие сообщения оставить, а `ChatMemoryRepository` хранит их. Выберите repository по требованиям к сохранности: `InMemoryChatMemoryRepository` исчезает при рестарте; JDBC и другие постоянные реализации используют внешнее хранилище. [Chat Memory](https://docs.spring.io/spring-ai/reference/api/chat-memory.html).
 
 ```java
-// InMemoryChatMemoryRepository — для разработки/тестирования
 @Bean
-public ChatMemory chatMemory() {
-    return MessageWindowChatMemory.builder()
-        .chatMemoryRepository(new InMemoryChatMemoryRepository())
-        .build();
-}
-
-// JdbcChatMemoryRepository, CassandraChatMemoryRepository — для production
-@Bean
-public ChatMemory persistentChatMemory(JdbcChatMemoryRepository repository) {
+public ChatMemory chatMemory(ChatMemoryRepository repository) {
     return MessageWindowChatMemory.builder()
         .chatMemoryRepository(repository)
+        .maxMessages(20)
         .build();
 }
 ```
+
+Если другой repository не настроен, Spring AI создаёт `InMemoryChatMemoryRepository`. Для JDBC подключают `spring-ai-starter-model-chat-memory-repository-jdbc` и настраивают datasource и создание схемы. Это сохраняет обычные сообщения после рестарта, но в Spring AI 2.0.2 JDBC repository не сохраняет сообщения вызовов инструментов; выбор постоянного хранилища не означает сохранение полного tool transcript. [JDBC Chat Memory](https://docs.spring.io/spring-ai/reference/api/chat-memory.html#jdbcchatmemoryrepository), [Tool Calling](https://docs.spring.io/spring-ai/reference/api/tools.html#memory-and-the-tool-loop).
 
 ```java
 @Service
@@ -486,65 +497,65 @@ public class ConversationService {
 }
 ```
 
-Выборкой истории управляют два механизма:
+`ChatMemory.CONVERSATION_ID` передают на **каждом** вызове с memory advisor. В 2.0.2 при отсутствии ключа возникает `IllegalArgumentException`; общего разговора по умолчанию нет. Ключ определяет, какие сообщения читать и записывать, но не проверяет права: приложение должно получить его из серверной пользовательской сессии или проверить принадлежность диалога текущему пользователю. Просто принимать произвольный `conversationId` из запроса опасно. [Chat Memory: conversation IDs](https://docs.spring.io/spring-ai/reference/api/chat-memory.html#working-with-conversation-ids).
 
-- **`conversationId`** (per-request) изолирует диалоги: история привязана к этому ключу, поэтому пользователи (или сессии) не видят чужих сообщений. Передавать его обязательно — без него все запросы смешаются в одну ленту.
-- **Размер окна** задаётся при сборке памяти — `MessageWindowChatMemory.builder().maxMessages(N)` (по умолчанию последние 20 сообщений): сколько последних сообщений подмешать в контекст. Это компромисс: больше истории — лучше связность, но дороже (платим за каждый токен) и риск упереться в context window модели. (Параметр `TOP_K` есть только у `VectorStoreChatMemoryAdvisor` для vector-store-памяти, не у оконной.)
+`maxMessages(N)` ограничивает размер окна; значение по умолчанию — 20. При вытеснении память сохраняет `SystemMessage` и удаляет целые ходы, поэтому фактическое число обычных сообщений может быть меньше N. Окно ограничивает расходы на повторную передачу истории, но не служит долговременным архивом. По умолчанию memory advisor находится снаружи цикла `ToolCallingAdvisor` и сохраняет итоговые user/assistant сообщения, а не промежуточные tool calls. Если перемещать его внутрь цикла ради полного transcript, сначала проверьте поддержку этих типов сообщений выбранным repository. [Message window](https://docs.spring.io/spring-ai/reference/api/chat-memory.html#message-window-chat-memory), [Tool Calling: memory](https://docs.spring.io/spring-ai/reference/api/tools.html#memory-and-the-tool-loop).
 
-## Q11. Как тестировать Spring AI приложения?
+В **2.0.2**, если полная история вызовов инструментов нужна между пользовательскими ходами, разместите `MessageChatMemoryAdvisor` **внутри** цикла с `order` больше `ToolCallingAdvisor.DEFAULT_ORDER` (например, `HIGHEST_PRECEDENCE + 400`). Тогда memory видит запросы модели к инструментам и их ответы. Из встроенных `ChatMemoryRepository` этот набор сообщений сохраняют `InMemoryChatMemoryRepository`, `RedisChatMemoryRepository` и `Neo4jChatMemoryRepository`; JDBC его отбрасывает. Поддержка tool messages не равна автоматической авторизации доступа к истории: `conversationId` по-прежнему проверяет приложение. [Tool Calling: memory and backend compatibility](https://docs.spring.io/spring-ai/reference/api/tools.html#memory-and-the-tool-loop), [Chat Memory: JDBC](https://docs.spring.io/spring-ai/reference/api/chat-memory.html#jdbcchatmemoryrepository).
 
-Главный принцип — **не звать настоящую модель в тестах**. Реальный вызов медленный, платный и недетерминированный (ответ меняется от запуска к запуску), что делает тесты ненадёжными. Вместо этого подменяют `ChatModel` — низкоуровневый интерфейс, через который `ChatClient` ходит к провайдеру.
-
-**Вариант 1 — мок через Mockito.** Подменяем `ChatModel` бином-моком и задаём, что он вернёт. Тестируем свою логику (что сервис правильно собрал промпт и разобрал ответ), а не саму модель:
+Например, при `ChatClient` с автоматически добавленным `ToolCallingAdvisor` достаточно вложить memory advisor с нужным порядком:
 
 ```java
-// Мок ChatModel для unit-тестов
-@SpringBootTest
-class ChatServiceTest {
+MessageChatMemoryAdvisor memoryInsideLoop = MessageChatMemoryAdvisor.builder(chatMemory)
+    .order(BaseAdvisor.HIGHEST_PRECEDENCE + 400)
+    .build();
+ChatClient client = ChatClient.builder(chatModel)
+    .defaultAdvisors(memoryInsideLoop)
+    .build();
+```
 
-    @MockBean
-    private ChatModel chatModel;
+При таком расположении историю внутри `ToolCallingAdvisor` не нужно вести второй раз. `DefaultChatClient` сам отключает её у автоматически добавленного advisor, когда обнаруживает `MemoryAdvisor` внутри цикла; если вы создаёте `ToolCallingAdvisor` вручную, вызовите у builder `.disableInternalConversationHistory()`. Иначе возможна повторная передача одних и тех же сообщений модели. Это настройка передачи истории, а не отключение лимитов вызовов инструментов. [Tool Calling: inside the loop](https://docs.spring.io/spring-ai/reference/api/tools.html#memory-and-the-tool-loop), [ToolCallingAdvisor reference](https://docs.spring.io/spring-ai/reference/api/tools/tool-calling-advisor.html).
 
-    @Autowired
-    private ChatService chatService;
+В предварительной **Spring AI 2.1.0-RC1** появилась session memory с журналом событий и compaction по границам ходов; `ChatMemory` и связанные реализации там помечены deprecated для удаления в 3.0.0. Для стабильной 2.0.2 приведённый выше `ChatMemory` остаётся действующим API. [Анонс RC1 от 23.10.2026](https://spring.io/blog/2026/10/23/spring-ai-2-1-0-RC1-available-now/).
+
+## Q11. Как тестировать приложение на Spring AI 2.0.2?
+
+**Разделяйте проверку своего кода и проверку качества модели.** В быстрых тестах сервиса подмените `ChatModel`, оставив настоящий `ChatClient`: так можно проверить сборку промпта, передачу параметров и обработку ответа без сетевого вызова. В Spring AI 2.0.2 `ChatModel.call(Prompt)` возвращает `ChatResponse`; ответ содержит `Generation` с `AssistantMessage`. [ChatModel API](https://docs.spring.io/spring-ai/docs/current/api/org/springframework/ai/chat/model/ChatModel.html), [ChatResponse API](https://docs.spring.io/spring-ai/docs/current/api/org/springframework/ai/chat/model/ChatResponse.html).
+
+Например, `ReviewService` из Q3 можно проверить обычным JUnit/Mockito-тестом без загрузки Spring-контекста. Мок возвращает заданный ответ, а захваченный `Prompt` показывает, какое сообщение действительно ушло бы в модель:
+
+```java
+@ExtendWith(MockitoExtension.class)
+class ReviewServiceTest {
+    @Mock ChatModel chatModel;
 
     @Test
-    void shouldReturnAiResponse() {
-        ChatResponse mockResponse = ChatResponse.builder()
-            .withGenerations(List.of(new Generation("Mocked answer")))
-            .build();
+    void includesLanguageInUserPrompt() {
+        ChatResponse response = new ChatResponse(List.of(
+            new Generation(new AssistantMessage("Review complete"))));
+        when(chatModel.call(any(Prompt.class))).thenReturn(response);
+        ReviewService service = new ReviewService(ChatClient.builder(chatModel).build());
 
-        when(chatModel.call(any(Prompt.class))).thenReturn(mockResponse);
+        assertThat(service.reviewCode("class A {}", "Java"))
+            .isEqualTo("Review complete");
 
-        String result = chatService.ask("What is Spring AI?");
-
-        assertThat(result).isEqualTo("Mocked answer");
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(prompt.capture());
+        assertThat(prompt.getValue().getUserMessage().getText())
+            .contains("Java", "class A {}");
     }
 }
 ```
 
-**Вариант 2 — собственный стаб `ChatModel`.** Готового тестового класса Spring AI не поставляет, но интерфейс `ChatModel` маленький — его легко реализовать самому: функция «по входу — выход». Удобно для интеграционных тестов, где ответ должен зависеть от запроса, но без похода к реальному API.
+Если тесту нужен Spring-контекст, модель можно заменить `@MockitoBean` из Spring Framework Test; старый Spring Boot `@MockBean` удалён в Boot 4. Для сценариев с несколькими ответами подойдёт собственный стаб `ChatModel` с реализацией `call(Prompt)`, но не стоит писать новый дублёр, если достаточно Mockito. [Spring Boot testing](https://docs.spring.io/spring-boot/reference/testing/spring-boot-applications.html), [MockitoBean](https://docs.spring.io/spring-framework/reference/testing/annotations/integration-spring/annotation-mockitobean.html).
 
-```java
-// свой stub: реализуем интерфейс ChatModel лямбдо-подобным классом
-@Bean
-@Profile("test")
-public ChatModel stubChatModel() {
-    return prompt -> {   // ChatModel.call(Prompt): ответ зависит от входа
-        String userMessage = prompt.getUserMessage().getText();
-        return new ChatResponse(List.of(new Generation(
-                new AssistantMessage("Test response for: " + userMessage))));
-    };
-}
-```
+Отдельные интеграционные проверки с реальной моделью нужны для качества ответа и RAG: фиксируют набор вопросов, контекст и критерии, контролируют стоимость и допускают вариативность текста. Например, Spring AI предоставляет `RelevancyEvaluator` для проверки связи ответа с найденными документами. Такой тест не заменяется моковым ответом и не должен требовать буквального совпадения произвольной формулировки модели. [Evaluation Testing](https://docs.spring.io/spring-ai/reference/api/testing.html).
 
-## Q12. Как устроен Document ETL-пайплайн для индексирования документов?
+## Q12. Как устроить Document ETL для индексирования в Spring AI 2.0.2?
 
-Прежде чем VectorStore сможет искать по документам, их надо туда загрузить — этим занимается **ETL-пайплайн** Spring AI. Это та же триада, что в классическом ETL, но под векторный поиск:
+**Document ETL читает источник, преобразует документы и записывает их в `VectorStore`.** В Spring AI 2.0.2 роли разделены между `DocumentReader`, `DocumentTransformer` и `DocumentWriter`; `TokenTextSplitter` — трансформер, а `VectorStore` — writer. `vectorStore.add(chunks)` вычисляет векторы через настроенный `EmbeddingModel` (Q5), поэтому отдельный вызов `embed()` в этом пути не нужен. [ETL Pipeline](https://docs.spring.io/spring-ai/reference/api/etl-pipeline.html), [Vector Stores](https://docs.spring.io/spring-ai/reference/api/vectordbs.html).
 
-- **Extract** — прочитать сырой документ через `DocumentReader` (PDF, Markdown, HTML, JSON). Реализация знает формат: `PagePdfDocumentReader` достаёт текст постранично, можно отрезать колонтитулы.
-- **Transform** — разбить текст на чанки через `TextSplitter`. Это **ключевой шаг**: целый документ не влезет в context window, а слишком крупные чанки размывают релевантность. `TokenTextSplitter` собирают билдером: `withChunkSize(512)` задаёт целевой размер чанка в токенах (по умолчанию 800), `withMinChunkSizeChars(350)` — минимум символов, до которого чанк дорезается по границе предложения. Перекрытия (overlap) у этого сплиттера нет — границы он сглаживает за счёт разрезания по знакам препинания.
-- **Load** — `vectorStore.add(chunks)` сам считает embedding для каждого чанка и сохраняет. Отдельно векторизовать не нужно (см. Q5).
+Для PDF `PagePdfDocumentReader` возвращает документы по страницам; `PdfDocumentReaderConfig` позволяет менять извлечение текста. Затем `TokenTextSplitter` делит длинный текст на части и переносит метаданные исходного документа в чанки. Это важно для последующей фильтрации и указания источника в RAG. `withChunkSize(512)` задаёт целевой размер в токенах; значение по умолчанию — 800. `withMinChunkSizeChars(350)` задаёт нижнюю границу в символах для поиска подходящего знака препинания при разбиении длинного текста, а не размер перекрытия и не обещание, что любой чанк будет длиннее 350 символов. [TokenTextSplitter](https://docs.spring.io/spring-ai/reference/api/etl-pipeline.html#tokentextsplitter).
 
 ```java
 @Service
@@ -552,100 +563,87 @@ public ChatModel stubChatModel() {
 public class DocumentIndexingService {
     private final VectorStore vectorStore;
 
-    // Извлечение из разных источников
     public void indexPdfDocuments(Resource pdfFile) {
-        // Extract
         DocumentReader reader = new PagePdfDocumentReader(pdfFile,
             PdfDocumentReaderConfig.builder()
-                .withPageTopMargin(0)
-                .withPageExtractedTextFormatter(new ExtractedTextFormatter.Builder()
+                .withPageExtractedTextFormatter(ExtractedTextFormatter.builder()
                     .withNumberOfBottomTextLinesToDelete(3)
                     .build())
                 .build());
 
-        // Transform (разбивка на чанки)
         TextSplitter splitter = TokenTextSplitter.builder()
-                .withChunkSize(512)          // целевой размер чанка в токенах
-                .withMinChunkSizeChars(350)  // дорезка по границе предложения
+                .withChunkSize(512)
                 .build();
 
-        // Load (индексирование с автоматическим embedding)
         List<Document> chunks = splitter.apply(reader.get());
         vectorStore.add(chunks);
     }
 
-    // Загрузка из URL или текстовых файлов
     public void indexMarkdown(Resource mdFile, Map<String, Object> metadata) {
-        DocumentReader reader = new MarkdownDocumentReader(mdFile);
-        List<Document> docs = reader.get().stream()
-            .map(d -> new Document(d.getText(), metadata))
-            .toList();
+        MarkdownDocumentReaderConfig config = MarkdownDocumentReaderConfig.builder()
+            .withAdditionalMetadata(metadata)
+            .build();
+        DocumentReader reader = new MarkdownDocumentReader(mdFile, config);
         TextSplitter splitter = TokenTextSplitter.builder().build();
-        vectorStore.add(splitter.apply(docs));
+        vectorStore.add(splitter.apply(reader.get()));
     }
 }
 ```
 
+`MarkdownDocumentReader` требует конфигурацию при передаче `Resource`; `withAdditionalMetadata(metadata)` добавляет метаданные ко всем прочитанным документам без их пересоздания; при совпадении ключей проверьте итоговые значения. Оба reader требуют отдельных модулей `spring-ai-pdf-document-reader` и `spring-ai-markdown-document-reader`. Размер чанка, метаданные, качество извлечения и результаты поиска проверяют на собственном наборе документов; само индексирование не гарантирует релевантный ответ. [MarkdownDocumentReader Javadoc](https://docs.spring.io/spring-ai/docs/current/api/org/springframework/ai/reader/markdown/MarkdownDocumentReader.html), [Markdown config](https://docs.spring.io/spring-ai/docs/current/api/org/springframework/ai/reader/markdown/config/MarkdownDocumentReaderConfig.Builder.html).
+
+`TokenTextSplitter` в 2.0.2 по умолчанию считает токены в кодировке `CL100K_BASE`; через `withEncodingType(...)` можно выбрать, например, `O200K_BASE`. Эти токены не следует без проверки приравнивать к токенам любой выбранной embedding- или chat-модели. `chunkSize` — цель разбиения, а не доказательство, что сумма найденных чанков, инструкций и истории поместится в контекст генерации. Сверяйте фактический размер запросов и качество извлечения с конкретными моделями. [ETL: TokenTextSplitter](https://docs.spring.io/spring-ai/reference/api/etl-pipeline.html#tokentextsplitter), [RAG reference](https://docs.spring.io/spring-ai/reference/api/retrieval-augmented-generation.html).
+
+При повторном индексировании изменённого файла сохраняйте в метаданных каждого чанка идентификатор источника и версию. Например, передайте `Map.of("source_id", sourceId, "version", version)` в показанный выше `indexMarkdown`. Иначе новый `add(chunks)` может оставить в поиске старые чанки рядом с новыми: контракт `VectorStore.add()` не обещает замену всех частей источника и допускает ошибку при дублирующихся ID в зависимости от реализации. В 2.0.2 старую версию можно удалить по сохранённым ID через `delete(List<String>)` или по метаданным через `delete(Filter.Expression)`; поиск и удаление ограничивайте тем же источником и областью доступа. Для обновления без промежутка с пустым индексом запишите новую версию, переключите фильтр поиска на неё и затем удалите старую, но согласованность переключения и поведение хранилища проверяйте отдельно: общий `VectorStore` не обещает атомарной замены набора чанков. [VectorStore API 2.0.2](https://docs.spring.io/spring-ai/docs/current/api/org/springframework/ai/vectorstore/VectorStore.html), [Vector Stores: delete and updates](https://docs.spring.io/spring-ai/reference/api/vectordbs.html#deleting-documents-from-vector-store).
+
+В стабильной **2.0.2** builder `TokenTextSplitter` не содержит настройки overlap. В предварительной **2.1.0-RC1** перекрытие добавлено как опция с нулевым значением по умолчанию; этот API не следует показывать как доступный в 2.0.2. [Анонс RC1 от 23.10.2026](https://spring.io/blog/2026/10/23/spring-ai-2-1-0-RC1-available-now/).
+
 ## Q13. Чем Spring AI отличается от прямого использования OpenAI SDK?
 
-Короткий ответ: OpenAI SDK — это тонкий клиент к одному провайдеру, а Spring AI — это фреймворк интеграции, который берёт на себя инфраструктурную обвязку (переносимость, RAG, память, retry) и встраивается в Spring-приложение через автоконфигурацию.
+**Spring AI 2.0.2 добавляет к вызову провайдера общие интерфейсы и компоненты для Spring-приложения.** Для OpenAI он сам использует официальный `openai-java` SDK. Практический выбор зависит от того, нужен ли приложению общий слой для нескольких моделей, RAG и памяти или удобнее работать напрямую с API OpenAI. [Spring AI OpenAI Chat](https://docs.spring.io/spring-ai/reference/api/chat/openai-chat.html), [официальный OpenAI Java SDK](https://github.com/openai/openai-java).
 
-| Критерий | OpenAI SDK (прямой) | Spring AI |
-|----------|---------------------|-----------|
-| Портируемость | Только OpenAI | 10+ провайдеров |
-| Интеграция с Spring | Вручную | Автоконфигурация |
-| RAG / VectorStore | Нет | Встроено |
-| Function Calling | Вручную | Декларативно (`@Tool`) |
-| Тестируемость | Сложнее (HTTP клиент) | Легко (мок ChatModel) |
-| Retry / Resilience | Вручную | Встроено через Spring |
-| Chat Memory | Нет | Встроено |
+| Задача | Прямой `openai-java` | Spring AI 2.0.2 |
+|--------|----------------------|----------------|
+| Вызов OpenAI | Типизированный клиент и доступ к API провайдера | `ChatModel` и `ChatClient` поверх того же SDK |
+| Повторы запросов | SDK уже умеет retry; число попыток настраивается | Свои настройки retry и OpenAI-клиента; итоговую политику нужно проверить |
+| Tools и structured output | SDK поддерживает оба механизма; вызовы своего кода обрабатывает приложение | `@Tool`, `ToolCallingAdvisor` и преобразование ответа через `ChatClient` |
+| RAG и память | Можно собрать в приложении и подключить нужное хранилище | Готовые `VectorStore`, advisors и `ChatMemory` с отдельными модулями |
+| Spring-интеграция | `OpenAIClient` можно объявить бином самому | Starter автонастраивает модель и `ChatClient.Builder` |
 
-Итог: Spring AI берёт на себя инфраструктуру, и вы пишете бизнес-логику, а не клиент к API. **Когда прямой SDK всё же уместен:** если приложение завязано на один провайдер и использует его специфичные фичи, которых ещё нет в абстракции Spring AI, — тогда лишний слой не нужен.
+Например, если сервису нужен RAG с PGvector и памятью диалога, Spring AI даёт готовые интерфейсы и advisors (Q5, Q6, Q10). С прямым SDK такой сценарий также возможен, но связывание поиска, истории и вызова модели остаётся кодом приложения. Если нужна специфичная возможность OpenAI, которой ещё нет в Spring AI, или приложение работает только с OpenAI, прямой SDK может быть проще. Официальный `openai-java-spring-boot-starter` рассчитан на Boot 2.7 и больше не поддерживается; в новом Spring-приложении прямой SDK можно подключить обычным бином `OpenAIClient`. Оба пути тестируются: можно подменить `ChatModel` (Q11) либо изолировать собственный код вокруг `OpenAIClient`. Смена провайдера через Spring AI всё равно требует проверки параметров и возможностей моделей (Q1). [RAG reference](https://docs.spring.io/spring-ai/reference/api/retrieval-augmented-generation.html), [OpenAI Java SDK: retries и structured outputs](https://github.com/openai/openai-java).
 
-## Q14. Как управлять стоимостью и токенами?
+## Q14. Как управлять стоимостью и токенами в Spring AI 2.0.2?
 
-Провайдеры берут плату **за токены** — единицы текста (примерно ¾ слова), причём отдельно за входные (промпт) и выходные (ответ). Значит, управление стоимостью — это управление количеством токенов. Сначала их надо измерять: каждый `ChatResponse` несёт метаданные `Usage` с разбивкой по input/output/total — их логируют для мониторинга и расчёта затрат.
+**Сначала измерьте расход по конкретной модели и тарифу, затем ограничивайте ненужный контекст и длину ответа.** Для обычных текстовых вызовов OpenAI входные и выходные токены тарифицируются отдельно; стоимость также зависит от модели, кешированных токенов, режима обслуживания и дополнительных инструментов. Число токенов нельзя надёжно переводить в слова одним коэффициентом. [OpenAI API pricing](https://developers.openai.com/api/docs/pricing).
+
+`ChatResponse` может содержать `Usage`: `getPromptTokens()`, `getCompletionTokens()` и `getTotalTokens()`. В 2.0.2 метода `getGenerationTokens()` нет. Перед учётом проверьте наличие ответа и метаданных; для потокового OpenAI-вызова получение итогового usage зависит от `spring.ai.openai.chat.stream-usage` и завершения потока. [Usage API 2.0.2](https://docs.spring.io/spring-ai/docs/current/api/org/springframework/ai/chat/metadata/Usage.html), [OpenAI Chat properties](https://docs.spring.io/spring-ai/reference/api/chat/openai-chat.html#configuration-properties).
 
 ```java
-// Получение метаданных использования токенов
-ChatResponse response = chatClient.prompt()
-    .user(question)
-    .call()
-    .chatResponse();
-
-Usage usage = response.getMetadata().getUsage();
-log.info("Tokens: input={}, output={}, total={}",
-    usage.getPromptTokens(),
-    usage.getGenerationTokens(),
-    usage.getTotalTokens());
+ChatResponse response = chatClient.prompt().user(question).call().chatResponse();
+if (response != null && response.getMetadata() != null) {
+    Usage usage = response.getMetadata().getUsage();
+    if (usage != null) {
+        log.info("Tokens: input={}, output={}, total={}",
+            usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens());
+    }
+}
 ```
 
-Дальше количество токенов и поведение модели регулируют параметрами генерации:
+Для нерезонирующей `gpt-4o` свойства Spring AI 2.0.2 лежат непосредственно под `spring.ai.openai.chat`, без `options`. У reasoning-моделей вместо `max-tokens` требуется `max-completion-tokens`: этот предел включает и видимые токены ответа, и reasoning-токены. Два параметра нельзя задавать вместе. `temperature` влияет на выбор токенов, но даже ноль не обещает одинаковый текст при каждом вызове. `top-p` — альтернативная настройка выборки; документация советует менять один из этих двух параметров, а не оба сразу. [OpenAI Chat properties](https://docs.spring.io/spring-ai/reference/api/chat/openai-chat.html#configuration-properties).
 
 ```yaml
-# Ограничение токенов в конфигурации
 spring:
   ai:
     openai:
       chat:
-        options:
-          max-tokens: 1000      # лимит генерации
-          temperature: 0.3      # детерминированность (0=детерм, 1=креативно)
-          top-p: 0.9            # nucleus sampling
-          presence-penalty: 0.1 # штраф за повторение тем
+        model: gpt-4o
+        max-tokens: 1000
+        temperature: 0.3
 ```
 
-Что из этого влияет на стоимость и качество:
+`max-tokens` ограничивает число генерируемых токенов для этой модели, но не уменьшает уже переданный вход. Для расходов на вход проверьте объём system-промпта, истории (Q10), найденных RAG-фрагментов (Q6) и описаний инструментов (Q7). Для расходов на выход подберите модель, разумный лимит и число вариантов `n`; итоговые суммы сверяйте с отчётом провайдера, а не только с одним `Usage`.
 
-- **`max-tokens`** — жёсткий потолок на длину ответа: прямой контроль расходов на output (и защита от «простыни»).
-- **`temperature`** — разброс ответов: низкая (0.3) для фактических задач, где нужна стабильность; высокая — для креатива.
-- **`top-p`** (nucleus sampling) и **`presence-penalty`** — тонкая настройка случайности и борьба с повторами.
-
-Помимо этих параметров стоимость снижают и архитектурно: дешёвая модель там, где хватает её качества; компактный system-промпт; ограничение истории в chat memory (Q10); кеширование повторяющихся запросов.
-
-**Кеш готового ответа и prompt caching — разные механизмы.** Кеш ответа может вообще не вызывать модель при точном повторе запроса. Prompt caching у провайдера всё равно выполняет новый вызов, но повторно использует неизменный префикс контекста (например, system-сообщение или описания tools); новый user-вопрос и ответ модели остаются новыми. В модуле Anthropic Spring AI это настраивается через `AnthropicChatOptions.cacheOptions`: стратегии `SYSTEM_ONLY`, `TOOLS_ONLY`, `SYSTEM_AND_TOOLS`, `CONVERSATION_HISTORY` или `NONE` (по умолчанию), а также TTL и минимальную длину блока. Динамический текст в начале префикса снижает шанс попадания в кеш; при сочетании статических и динамических инструкций полезно разделять блоки. У Anthropic действует предел **четыре cache breakpoint на запрос**.
-
-Измеряйте эффект по нативному `Usage`: `cacheCreationInputTokens` показывает запись префикса, `cacheReadInputTokens` — чтение при следующем запросе с совпадающим префиксом. Проверяйте TTL, порог длины, число breakpoint и цену записи/чтения по тарифу конкретного провайдера; само включение стратегии ещё не гарантирует экономию. [Spring AI Anthropic Chat reference](https://docs.spring.io/spring-ai/reference/api/chat/anthropic-chat.html#prompt-caching).
+**Prompt caching переиспользует обработанный префикс запроса, а не готовый ответ.** У Anthropic в Spring AI можно выбрать `AnthropicCacheStrategy` и TTL; нативный `Usage` показывает `cacheCreationInputTokens` и `cacheReadInputTokens`. В общем интерфейсе `Usage` есть `getCacheWriteInputTokens()` и `getCacheReadInputTokens()`, но они могут вернуть `null`, если провайдер не сообщает эти данные. У OpenAI механизм и тариф отличаются: для поддерживаемых моделей кеширование управляется провайдером, а доступные показатели кеша смотрят в его usage. Сохраняйте стабильный префикс, проверяйте фактический hit, срок жизни и цену записи/чтения по выбранному провайдеру. [Spring AI Anthropic caching](https://docs.spring.io/spring-ai/reference/api/chat/anthropic-chat.html#prompt-caching), [OpenAI prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching).
 
 ## Q15. Как реализовать AI-агента на Spring AI?
 
@@ -689,55 +687,75 @@ public class OrderTools {
 
 Некоторые модели могут запросить несколько независимых инструментов за один шаг. Не следует предполагать такое поведение для любого провайдера или строить на порядке вызовов бизнес-инварианты.
 
-**Подводный камень:** инструмент, меняющий состояние (создание тикета, изменение данных), проверяет права, аргументы и допустимость операции на стороне приложения; для повторяемых вызовов нужна идемпотентность, для критичных действий — подтверждение. Ограничивайте число шагов и наблюдайте вызовы инструментов: ошибка или зацикливание может увеличить расход токенов и вызвать действие несколько раз. [Tool Calling](https://docs.spring.io/spring-ai/reference/api/tools.html).
+**Подводный камень:** инструмент, меняющий состояние (создание тикета, изменение данных), проверяет права, аргументы и допустимость операции на стороне приложения; для повторяемых вызовов нужна идемпотентность, для критичных действий — подтверждение. В 2.0.2 `DefaultToolCallingManager` ограничивает число вызовов за один пользовательский ход: по умолчанию не более 40 на инструмент и 150 суммарно. Это ограничение вызовов инструментов, а не гарантия бюджета токенов или числа обращений к модели. При превышении лимита обработайте результат как незавершённый сценарий; ранее выполненные действия могли уже изменить состояние. [Tool Call Limits](https://docs.spring.io/spring-ai/reference/api/tools.html#tool-call-limits), [Upgrade Notes 2.0.2](https://docs.spring.io/spring-ai/reference/upgrade-notes.html#new-tool-call-limits).
 
-## Q16. (!) Как Spring AI интегрируется с MCP (Model Context Protocol)?
+Обычные `.call().content()` и `.stream().content()` отдают вызывающему коду итоговый текст, а не готовый журнал шагов агента; при `returnDirect` итогом может стать результат инструмента. Для отправки промежуточного прогресса в SSE или аудит разместите свой `CallAdvisor`/`StreamAdvisor` **внутри** цикла: его `order` должен быть больше `ToolCallingAdvisor.DEFAULT_ORDER`. Такой advisor видит ответы отдельных итераций, а потоковый вариант — чанки; приложение само решает, какие события безопасно показать клиенту. Когда нужно приостановить выполнение инструмента или управлять каждой итерацией, отключите auto-registration для запроса через `AdvisorParams.toolCallingAdvisorAutoRegister(false)` и самостоятельно обрабатывайте `ChatResponse`, `ToolCallingManager` и историю. Не выключайте цикл лишь ради наблюдения: для этого достаточно вложенного advisor. [ToolCallingAdvisor: Observing the Loop](https://docs.spring.io/spring-ai/reference/api/tools/tool-calling-advisor.html#observing-the-tool-calling-loop), [User-Controlled Tool Execution](https://docs.spring.io/spring-ai/reference/api/tools.html#user-controlled-tool-execution).
 
-`MCP` (Model Context Protocol) — открытый протокол (от Anthropic) для подключения инструментов и источников данных к `LLM` по единому стандарту. `Spring AI` поддерживает обе роли.
+В 2.0.2 финальный `Usage` после `ToolCallingAdvisor` суммирует токены всех внутренних вызовов модели. При оценке стоимости агента сверяйте его с данными провайдера и не принимайте за расход только последней итерации. [Upgrade Notes 2.0.2](https://docs.spring.io/spring-ai/reference/upgrade-notes.html#changed-toolcallingadvisor-usage-now-accumulated-across-the-loop).
 
-- **MCP-клиент** (`spring-ai-starter-mcp-client`): приложение подключается к внешним MCP-серверам (например, Brave Search, Filesystem, GitHub), и их инструменты автоматически становятся доступны `ChatClient` как function callbacks — модель может их вызывать.
-- **MCP-сервер** (`spring-ai-starter-mcp-server`): приложение экспонирует свои `@Tool`-методы как MCP-инструменты для любых MCP-клиентов (в том числе для Claude Desktop, IDE и других).
+## Q16. (!) Как Spring AI 2.0 интегрируется с MCP и что проверить по версии протокола?
 
-Транспорты: `stdio` (локальный процесс) и `SSE`/HTTP (сетевой).
+**Spring AI может быть MCP-клиентом и MCP-сервером.** Клиентский starter подключается к внешним серверам и предоставляет их инструменты как `ToolCallbackProvider`; приложение передаёт этот provider в `ChatClient`, когда хочет открыть инструменты модели. Серверный starter публикует операции и данные приложения через MCP. Это две роли одного протокола, а не два способа вызвать `ChatClient`. См. [руководство Spring AI по MCP](https://docs.spring.io/spring-ai/reference/guides/getting-started-mcp.html).
 
-```java
-// Клиент: tools с MCP-серверов подключаются к ChatClient
-ChatClient.builder(chatModel)
-    .defaultTools(mcpToolCallbackProvider.getToolCallbacks())
-    .build();
-```
-
-**Итог:** `MCP` стандартизирует «как модель получает инструменты и контекст». `Spring AI` умеет и потреблять чужие MCP-инструменты (клиент), и предоставлять свои (сервер) — это снимает необходимость писать интеграцию под каждый инструмент вручную.
-
-## Q17. Что такое Evaluators в Spring AI?
-
-Evaluator — компонент для автоматической проверки качества ответа `LLM` (в тестах или в рантайме). `Spring AI` даёт готовые реализации, особенно полезные для `RAG`.
-
-- `RelevancyEvaluator` — проверяет, релевантен ли ответ предоставленному контексту (использовала ли модель retrieved-документы, а не выдумала).
-- `FactCheckingEvaluator` — проверяет фактическую согласованность ответа с контекстом (anti-hallucination).
+Для клиента достаточно `spring-ai-starter-mcp-client` и настройки соединения. Например, после настройки `spring.ai.mcp.client.streamable-http.connections` можно передать автонастроенный provider в запрос:
 
 ```java
-EvaluationResponse response = relevancyEvaluator.evaluate(
-    new EvaluationRequest(userQuestion, retrievedDocuments, aiAnswer));
-
-assertThat(response.isPass()).isTrue();
+String answer = chatClient.prompt()
+    .user("Найди заказ 42")
+    .tools(mcpTools) // ToolCallbackProvider из MCP client starter
+    .call()
+    .content();
 ```
 
-Их встраивают в интеграционные тесты RAG-пайплайна: прогнали набор вопросов → evaluator проверил релевантность/фактичность → провал отлавливает регрессию качества.
+На сервере `spring-ai-starter-mcp-server` обслуживает локальный `stdio`, а `spring-ai-starter-mcp-server-webmvc` или `-webflux` — сетевой Streamable HTTP. Методы Spring-бинов с `@McpTool`, `@McpResource` и `@McpPrompt` регистрирует сканер MCP-аннотаций. Обычный `@Tool` предназначен для tool calling в Spring AI; если его нужно открыть через MCP, сначала предоставьте соответствующий `ToolCallback` или `ToolCallbackProvider`, который серверный starter умеет преобразовать в MCP tool. Простое наличие `@Tool` на произвольном методе не равно публикации метода сервером. См. [аннотации](https://docs.spring.io/spring-ai/reference/api/mcp/mcp-annotations-overview.html) и [серверный starter](https://docs.spring.io/spring-ai/reference/api/mcp/mcp-server-boot-starter-docs.html).
 
-**Итог:** evaluators дают воспроизводимую проверку качества генерации. Без них регрессии в промптах или ретривере видны только при ручном просмотре ответов.
+```java
+@Component
+class OrderMcpTools {
+    @McpTool(name = "find_order", description = "Find an order by ID")
+    String findOrder(@McpToolParam(description = "Order ID", required = true) String id) {
+        return "Order " + id; // пример обработчика; доступ к реальным данным проверяйте отдельно
+    }
+}
+```
 
-## Q18. Какие паттерны построения агентов документирует Spring AI (Building Effective Agents)?
+**Версию MCP проверяйте отдельно от транспорта.** [Анонс Spring AI 2.0 GA](https://spring.io/blog/2026/06/12/spring-ai-2-0-0-GA-available-now/) указывал Java SDK 2.0.0 и соответствие MCP `2025-11-25`. В [анонсе Spring AI 2.1.0-M1](https://spring.io/blog/2026/09/25/spring-ai-2-1-0-M1-available-now/) поддержка редакции `2026-07-28` ещё названа работой в процессе. Поэтому режим `STATELESS` в starter 2.0 или наличие Streamable HTTP сами по себе не доказывают поддержку нового `server/discover` и stateless-жизненного цикла. Перед подключением сверяйте версии Spring AI, Java SDK, клиента и сервера; октябрьский [Java SDK 2.2.0-M1](https://github.com/modelcontextprotocol/java-sdk/releases/tag/v2.2.0-M1) предоставляет предварительный modern server, но пока без modern client. Старый HTTP+SSE в Spring AI 2.0 помечен deprecated; для нового сетевого сервера выбирайте Streamable HTTP и проверяйте совместимость редакций. См. [клиентский](https://docs.spring.io/spring-ai/reference/api/mcp/mcp-client-boot-starter-docs.html) и [серверный](https://docs.spring.io/spring-ai/reference/api/mcp/mcp-server-boot-starter-docs.html) starters.
 
-По мотивам подхода Anthropic «Building Effective Agents» `Spring AI` описывает набор паттернов компоновки на базе `ChatClient` — не отдельный API, а способы собрать предсказуемого агента из простых шагов.
+Сетевой MCP endpoint серверного starter по умолчанию не добавляет аутентификацию и авторизацию. Перед внешним доступом поставьте защиту endpoint и проверку прав внутри операций. В приложении с несколькими пользователями также не считайте общий `McpSyncClient` границей пользователя: клиентский бин и его сессия разделяются между запросами приложения. [Безопасность сервера](https://docs.spring.io/spring-ai/reference/api/mcp/mcp-server-boot-starter-docs.html#securing-the-mcp-server), [границы клиентской сессии](https://docs.spring.io/spring-ai/reference/api/mcp/mcp-client-boot-starter-docs.html#client-scope-and-session-boundaries).
 
-- **Chain workflow** — последовательность шагов, выход одного → вход следующего.
-- **Routing** — классификатор направляет запрос в подходящую ветку обработки.
-- **Parallelization** — параллельные вызовы модели с последующей агрегацией результатов.
-- **Orchestrator-workers** — оркестратор декомпозирует задачу, воркеры исполняют подзадачи.
-- **Evaluator-optimizer** — цикл «генерация → оценка → улучшение» до приемлемого результата.
+## Q17. Как оценивать RAG-ответы с Evaluator в Spring AI 2.0.2?
 
-**Итог:** «эффективный агент» — это композиция простых, предсказуемых и тестируемых шагов, а не один всемогущий промпт. Эти паттерны помогают строить надёжные пайплайны вместо непредсказуемого «авто-агента».
+**`Evaluator` проверяет выбранное свойство ответа на переданных ему данных.** В Spring AI 2.0.2 `evaluate(EvaluationRequest)` возвращает `EvaluationResponse` с `isPass()`. `EvaluationRequest` содержит исходный вопрос, список `Document` с контекстом и ответ модели. Для RAG важно передать именно те фрагменты, которые попали в запрос генерации, иначе проверяется другой сценарий. [Evaluation Testing](https://docs.spring.io/spring-ai/reference/api/testing.html), [EvaluationRequest Javadoc](https://docs.spring.io/spring-ai/docs/current/api/org/springframework/ai/evaluation/EvaluationRequest.html).
+
+- `RelevancyEvaluator` спрашивает модель-судью, согласуется ли ответ с вопросом и контекстом. Он не измеряет полноту выдачи `VectorStore` и не доказывает внешнюю истинность ответа.
+- `FactCheckingEvaluator` проверяет, поддерживает ли переданный контекст утверждение из ответа. Он не проверяет факты без опорного документа; в 2.0.2 создаётся через `FactCheckingEvaluator.builder(judgeBuilder).build()` или `forBespokeMinicheck(judgeBuilder)` для соответствующей модели. [RelevancyEvaluator](https://docs.spring.io/spring-ai/docs/current/api/org/springframework/ai/chat/evaluation/RelevancyEvaluator.html), [FactCheckingEvaluator](https://docs.spring.io/spring-ai/docs/current/api/org/springframework/ai/chat/evaluation/FactCheckingEvaluator.html).
+
+В интеграционном тесте после генерации можно передать вопрос, фактически использованные фрагменты и ответ отдельной модели-судье. `judgeModel` здесь настроен для оценки; `retrievedDocuments` — тот же набор, который получил RAG-вызов, а не результат повторного поиска:
+
+```java
+EvaluationRequest request = new EvaluationRequest(
+    userQuestion, retrievedDocuments, aiAnswer);
+RelevancyEvaluator evaluator =
+    new RelevancyEvaluator(ChatClient.builder(judgeModel));
+EvaluationResponse result = evaluator.evaluate(request);
+assertThat(result.isPass()).isTrue();
+```
+
+Тестовый набор хранит вопросы, ожидаемые документы или ответы и случаи отказа при отсутствии подходящего источника. Сначала проверяют retrieval: нашёлся ли нужный документ, не попал ли чужой и актуальна ли его версия. Затем оценивают ответ относительно **того же** контекста. Например, ответ по устаревшей политике может быть согласован с найденным документом и получить `pass`, но оставаться неверным для действующей политики. [RAG reference](https://docs.spring.io/spring-ai/reference/api/retrieval-augmented-generation.html), [рекомендации по оценкам](https://developers.openai.com/api/docs/guides/evaluation-best-practices).
+
+Оба готовых evaluator вызывают модель для оценки, поэтому добавляют задержку и стоимость, а их `pass` зависит от судьи, промпта и входных данных. Полезно сверять вердикты с размеченными человеком примерами и повторять проверку при смене модели, индекса или документов. Тест с моковым `ChatModel` из Q11 проверяет сборку запроса; здесь оценивается качество живой цепочки. Положительный вердикт оставляет открытыми проверку источников и риск галлюцинаций. [Исходный код RelevancyEvaluator 2.0.2](https://github.com/spring-projects/spring-ai/blob/v2.0.2/spring-ai-client-chat/src/main/java/org/springframework/ai/chat/evaluation/RelevancyEvaluator.java), [FactCheckingEvaluator 2.0.2](https://github.com/spring-projects/spring-ai/blob/v2.0.2/spring-ai-client-chat/src/main/java/org/springframework/ai/chat/evaluation/FactCheckingEvaluator.java).
+
+## Q18. Какие workflow-паттерны из Building Effective Agents показывает Spring AI 2.0.2?
+
+В [руководстве Spring AI](https://docs.spring.io/spring-ai/reference/api/effective-agents.html) показаны пять способов собрать прикладной процесс из вызовов `ChatClient`. Классы `ChainWorkflow`, `RoutingWorkflow` и другие находятся в [репозитории примеров](https://github.com/spring-projects/spring-ai-examples/tree/main/agentic-patterns): это примеры реализации, а не отдельный API паттернов в Spring AI core. По [разделению Anthropic](https://www.anthropic.com/research/building-effective-agents), **workflow** ведёт модель и инструменты по заданному в коде маршруту, а **агент** сам выбирает дальнейшие действия и инструменты. Подробнее об этом различии — в [AI Agents Q2](../../ai-ml/ai-agents-interview.md).
+
+- **Chain workflow** — фиксированная последовательность: результат одного вызова становится входом следующего. Подходит, когда этапы известны заранее и каждый можно проверить отдельно.
+- **Routing** — классификация входа и выбор одной из подготовленных веток. Например, запрос о платеже идёт в обработчик платежей, технический вопрос — в другую ветку; ошибку классификации нужно учитывать отдельно.
+- **Parallelization** — независимые задачи запускаются параллельно, затем приложение собирает результаты. Набор задач известен до запуска; нужны правила объединения результатов и ограничения на одновременные вызовы.
+- **Orchestrator-workers** — модель-оркестратор определяет подзадачи по конкретному запросу, воркеры выполняют их, приложение собирает ответ. В отличие от parallelization, состав подзадач заранее неизвестен.
+- **Evaluator-optimizer** — генератор предлагает результат, оценщик даёт обратную связь, генератор дорабатывает его. Нужны ясный критерий качества и ограничение числа повторов; вызов `Evaluator` из Q17 сам по себе не запускает такой цикл.
+
+Начинайте с простого вызова или фиксированного workflow и усложняйте процесс только под проверенную задачу. Дополнительные вызовы повышают стоимость и задержку, а параллельность сама по себе не улучшает качество. Для операций с побочными эффектами отдельно контролируйте права и повторные вызовы инструментов (Q7/Q15). [Spring AI Building Effective Agents](https://docs.spring.io/spring-ai/reference/api/effective-agents.html), [Anthropic Building effective agents](https://www.anthropic.com/research/building-effective-agents).
 
 ## See also
 
@@ -752,3 +770,4 @@ assertThat(response.isPass()).isTrue();
 - [Spring WebFlux](spring-webflux-interview.md) — streaming ответов через Flux
 - [PostgreSQL](../../databases/postgresql-interview.md) — pgvector как VectorStore
 - [LangChain4j](../../ai-ml/langchain4j-interview.md) — фреймворк-нейтральная альтернатива Spring AI для LLM на JVM (AI Services, RAG, @Tool).
+- [MCP](../../ai-ml/mcp-interview.md) — примитивы, транспорты и границы ревизий протокола.

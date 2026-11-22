@@ -14,7 +14,7 @@ aliases:
   - "Java Annotations собеседование"
 prerequisites: []
 next: []
-updated: "2026-05-08"
+updated: "2026-11-07"
 ---
 # Вопросы на собеседовании: Аннотации Java
 
@@ -100,7 +100,7 @@ updated: "2026-05-08"
 - [Q40. Как MapStruct генерирует маппинги через APT?](#q40-как-mapstruct-генерирует-маппинги-через-apt)
 - [Q41. Что такое KSP (Kotlin Symbol Processing) и чем лучше KAPT?](#q41-что-такое-ksp-kotlin-symbol-processing-и-чем-лучше-kapt)
 - [Q42. Что такое Repeatable аннотации (@Repeatable) и container annotation?](#q42-что-такое-repeatable-аннотации-repeatable-и-container-annotation)
-- [Q43. Аннотации на TYPE_USE — @NonNull и Checker Framework](#q43-аннотации-на-type_use--nonnull-и-checker-framework)
+- [Q43. Как TYPE_USE и Checker Framework помогают проверять @NonNull?](#q43-как-type_use-и-checker-framework-помогают-проверять-nonnull)
 
 ## Q1. (!) Что такое `Annotation` в Java?
 
@@ -109,16 +109,16 @@ updated: "2026-05-08"
 Кто и когда читает аннотацию -- зависит от того, на каком этапе она «живёт» (см. `RetentionPolicy`, Q8):
 - **Компилятор** -- `@Override` заставляет проверить, что метод действительно переопределяет метод суперкласса (иначе ошибка компиляции).
 - **Инструменты этапа компиляции** -- `Lombok` по аннотации генерирует геттеры/сеттеры, `MapStruct` -- код мапперов.
-- **Runtime-фреймворки** -- `Spring` через рефлексию читает аннотации и на их основе делает `dependency injection`, оборачивает бины в прокси и т.д.
+- **Runtime-фреймворки** -- `Spring` читает метаданные классов при поиске компонентов, а при создании бинов и вызовах использует аннотации для настройки внедрения зависимостей и прокси.
 
 ```mermaid
 graph TD
     A["Аннотация в исходном коде"] --> B{"RetentionPolicy?"}
-    B -->|SOURCE| C["Только компиляция<br/>Lombok, MapStruct"]
+    B -->|SOURCE| C["Только компиляция<br/>Override, Lombok"]
     B -->|CLASS| D["Сохранена в .class<br/>Bytecode-инструментация"]
     B -->|RUNTIME| E["Доступна через Reflection<br/>Spring, JPA, Jackson"]
     C --> F["Удалена после компиляции"]
-    D --> G["Не загружается JVM"]
+    D --> G["Не видна через Reflection API"]
     E --> H["Читается в runtime"]
 ```
 
@@ -358,13 +358,13 @@ graph LR
 
 | `RetentionPolicy` | Где доступна | Примеры использования |
 |-------------------|-------------|----------------------|
-| `SOURCE` | Только исходный код | `@Override`, `@SuppressWarnings`, `Lombok`, `MapStruct` |
-| `CLASS` | Исходный код + `.class` файл | `AspectJ` bytecode weaving, анализ байт-кода |
+| `SOURCE` | Только исходный код | `@Override`, `@SuppressWarnings`, аннотации `Lombok` |
+| `CLASS` | Исходный код + `.class` файл | `MapStruct @Mapper`, анализ байт-кода |
 | `RUNTIME` | Исходный код + `.class` + JVM | `Spring`, `JPA`, `Jackson`, `Bean Validation` |
 
 **Как выбрать** (по принципу «минимально необходимая retention»):
 - **`SOURCE`** -- аннотация нужна только компилятору или `Annotation Processor` для генерации кода и проверок; в байт-коде её быть не должно. Самый «лёгкий» вариант.
-- **`CLASS`** (значение по умолчанию, если `@Retention` не указан) -- нужна инструментация байт-кода, но не runtime-рефлексия. Лежит в `.class`, но JVM её в память не загружает.
+- **`CLASS`** (значение по умолчанию, если `@Retention` не указан) -- аннотация сохраняется в `.class` и доступна инструментам, читающим байт-код, но не стандартной runtime-рефлексии. Такую политику использует, например, `MapStruct @Mapper`.
 - **`RUNTIME`** -- единственный вариант, при котором аннотацию видно через рефлексию; обязателен для `Spring`, `JPA`, `Jackson` и любого кода, который читает аннотации во время выполнения.
 
 ```java
@@ -590,7 +590,7 @@ private String name;
 
 ## Q16. (!) Как получить аннотации через `Reflection`?
 
-Через `Reflection API` -- вызовом методов вроде `getAnnotation()` / `isAnnotationPresent()` на `Class`, `Method` или `Field`. Главное условие: аннотация обязана иметь `@Retention(RetentionPolicy.RUNTIME)`, иначе в скомпилированном классе её просто нет и рефлексия её не увидит. Основные методы:
+Через `Reflection API` -- вызовом методов вроде `getAnnotation()` / `isAnnotationPresent()` на `Class`, `Method` или `Field`. Эти типы реализуют `AnnotatedElement`. Аннотация должна иметь `@Retention(RetentionPolicy.RUNTIME)`: `SOURCE` не попадает в `.class`, а `CLASS` может в нём храниться, но через обычную рефлексию не читается. Основные методы:
 
 ```java
 @Retention(RetentionPolicy.RUNTIME)
@@ -627,7 +627,7 @@ Annotation[] declared = User.class.getDeclaredAnnotations(); // только с�
 
 ## Q17. В чём разница между `getAnnotation()` и `getDeclaredAnnotation()`?
 
-Разница в одном слове -- `Declared`: методы с `Declared` смотрят **только на собственные аннотации элемента** и игнорируют унаследованные через `@Inherited`. Методы без `Declared` поднимаются по иерархии классов и учитывают `@Inherited`. Сводно:
+Методы с `Declared` смотрят **только на собственные аннотации элемента**. Для классов методы без `Declared` могут найти аннотацию суперкласса, если её тип помечен `@Inherited`. Аннотации методов и полей так не наследуются. Сводно:
 
 | Метод | Учитывает `@Inherited` | Повторяемые |
 |-------|----------------------|-------------|
@@ -865,7 +865,7 @@ public boolean process(Set<? extends TypeElement> annotations,
 
 ## Q24. Как зарегистрировать `Annotation Processor`?
 
-`javac` находит процессоры через механизм SPI (`ServiceLoader`): нужно лишь объявить класс процессора в специальном файле сервисов. Сделать это можно вручную или сгенерировать автоматически -- отсюда два способа.
+Процессор можно указать явно через `-processor` или зарегистрировать через SPI. Файл сервисов можно создать вручную либо сгенерировать с помощью `@AutoService`. Начиная с JDK 23 одного присутствия процессора в classpath недостаточно: обработку аннотаций нужно явно включить в настройках компиляции.
 
 **Способ 1 -- файл `META-INF/services` (стандартный SPI, вручную):**
 
@@ -906,7 +906,7 @@ dependencies {
 1. **Нельзя модифицировать существующие файлы** -- только генерировать новые. Это принципиальное ограничение API.
 2. **Нельзя удалять файлы** -- только создавать
 3. `Lombok` обходит это ограничение, напрямую манипулируя AST через internal API (`com.sun.tools.javac`), что делает его "хаком"
-4. Процессор не может зависеть от кода, который он сам генерирует
+4. Код самого процессора компилируется отдельно и не может прямо ссылаться на классы, которые появятся лишь в сборке потребителя
 5. Порядок вызова процессоров не гарантирован
 
 ```java
@@ -937,11 +937,11 @@ processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "!");  // OK
 | `Micronaut` | `@Controller`, `@Inject` | DI и маршрутизация без рефлексии |
 | `JPA Metamodel` | `@Entity` | Метамодель для `Criteria API` |
 
-`Micronaut` и `Quarkus` используют `Annotation Processing` вместо runtime-рефлексии, что обеспечивает быстрый старт и низкое потребление памяти (важно для cloud-native и GraalVM).
+`Micronaut` использует обработку аннотаций при компиляции. `Quarkus` переносит значительную часть подготовки приложения на этап сборки через свой механизм build-time augmentation. Эти механизмы не следует отождествлять с одним и тем же Java Annotation Processing API.
 
 ## Q27. (!) Как аннотации используются в `Spring`?
 
-Аннотации в `Spring` -- это декларативный способ настроить контейнер: вместо XML-конфигурации вы помечаете классы и методы, а `Spring` при старте контекста сканирует classpath и через рефлексию читает эти пометки. Поэтому все «спринговые» аннотации имеют `RetentionPolicy.RUNTIME` -- без этого фреймворк бы их не увидел.
+Аннотации в `Spring` задают конфигурацию контейнера на классах и методах. При сканировании classpath Spring может читать метаданные `.class` без загрузки каждого класса. Для действий во время выполнения, например настройки бинов и прокси, используются аннотации с `RetentionPolicy.RUNTIME`; конкретную политику нужно проверять у типа аннотации.
 
 ```mermaid
 graph TD
@@ -1222,7 +1222,7 @@ public class Order {
 
 Обе -- стандартные аннотации-обещания компилятору, но про разные вещи.
 
-`@SafeVarargs` -- это ваше обещание, что метод с varargs-параметром дженерик-типа не вызовет **heap pollution** (порчу кучи из-за стирания типов, см. [дженерики](java-generics-interview.md)); компилятор в ответ убирает соответствующее предупреждение. Ставится только на методы/конструкторы, которые нельзя переопределить, -- `final`, `static` или `private`:
+`@SafeVarargs` -- обещание автора, что тело метода или конструктора не выполняет небезопасных операций с varargs-параметром нереифицируемого типа (см. [дженерики](java-generics-interview.md)). Компилятор подавляет связанные предупреждения. Аннотация допустима на конструкторах, а среди методов -- на `static`, `final` и `private`:
 
 ```java
 @SafeVarargs
@@ -1302,34 +1302,9 @@ public @interface CacheResult {
 
 ## Q37. Как аннотации влияют на производительность?
 
-Короткий ответ: сами по себе -- почти никак. Аннотации `SOURCE` и `CLASS` в runtime вообще не существуют (JVM их не загружает), поэтому стоят ноль. Реальная цена возникает только при **чтении** `RUNTIME`-аннотаций через рефлексию, и фреймворки её гасят кэшированием.
+Сама аннотация не добавляет вызовов в программу. `SOURCE` исчезает после компиляции; `CLASS` остаётся в файле класса и доступна инструментам, читающим байт-код; `RUNTIME` доступна также через рефлексию. Поэтому стоимость зависит от того, как конкретный инструмент обрабатывает аннотацию: обработка при компиляции увеличивает время сборки, сканирование classpath и создание метаданных могут увеличить время запуска, а повторная рефлексия в горячем пути — время выполнения.
 
-Что именно стоит у `RUNTIME`-аннотаций:
-- **Хранение** -- незначительный overhead: метаданные загружаются в `PermGen`/`Metaspace` вместе с классом
-- **Чтение** -- рефлексия медленнее прямого вызова, но результат обычно кэшируется фреймворками
-- **`Spring`** -- читает аннотации **при старте** контекста, не при каждом запросе
-- **`JPA`** -- маппинг строится один раз при создании `EntityManagerFactory`
-- **`Jackson`** -- `AnnotationIntrospector` кэширует результаты для каждого типа
-
-```java
-// Spring кэширует метаданные аннотаций:
-// BeanDefinition создаётся один раз при component scan
-// TransactionInterceptor кэширует TransactionAttribute
-
-// Если нужна максимальная производительность:
-// 1. Используйте Annotation Processing вместо рефлексии (Micronaut, Quarkus)
-// 2. Кэшируйте результаты рефлексии, если обрабатываете аннотации вручную
-
-// Пример кэширования:
-private static final Map<Method, MyAnnotation> CACHE = new ConcurrentHashMap<>();
-
-public MyAnnotation getAnnotation(Method method) {
-    return CACHE.computeIfAbsent(method,
-        m -> m.getAnnotation(MyAnnotation.class));
-}
-```
-
-Для GraalVM native image рефлексия аннотаций требует явной конфигурации в `reflect-config.json`, поэтому фреймворки `Micronaut` и `Quarkus` предпочитают compile-time annotation processing.
+Spring при поиске компонентов может читать метаданные `.class` без загрузки каждого класса. Spring, JPA и Jackson обычно подготавливают и кешируют результаты анализа метаданных, но конкретную стоимость нужно измерять в приложении. Если свой код часто ищет аннотацию через рефлексию, результат можно кешировать; при этом отсутствие аннотации надо хранить явно, поскольку `ConcurrentHashMap.computeIfAbsent` не сохраняет `null`.
 
 ---
 
@@ -1346,7 +1321,7 @@ public MyAnnotation getAnnotation(Method method) {
    - Анализируют аннотированные элементы
    - Генерируют новые .java или .class файлы
 3. Если сгенерированы новые файлы → Round 2 (повторить)
-4. ...последний round: процессоры вызываются с isLastRound() == true
+4. Завершающий раунд: `roundEnv.processingOver()` возвращает `true`; новые исходники уже не обрабатываются
 5. Финальная компиляция всех исходников (в т.ч. сгенерированных)
 ```
 
@@ -1411,24 +1386,9 @@ resources/META-INF/services/javax.annotation.processing.Processor
 // 3. AST модифицирован → javac продолжает компиляцию с новым содержимым
 ```
 
-**Проблемы с Kotlin:**
+**Работа с Kotlin:**
 
-1. **KAPT (Kotlin Annotation Processing)**: Kotlin компилирует код в заглушки Java перед APT. Lombok-аннотации на Kotlin-классах **не работают** — KAPT не может видеть сгенерированные Lombok-методы в заглушках.
-
-```kotlin
-// НЕ работает:
-@Data  // Lombok
-class User(val name: String)
-
-// Kotlin data class сам генерирует equals/hashCode/toString/copy — используйте их
-data class User(val name: String)
-```
-
-2. **Interop Java → Kotlin**: Java-класс с `@Data` → Kotlin видит lombok-геттеры, но `val` Kotlin-свойство не биндится автоматически к Lombok-геттеру без `-Xlint:` конфигурации.
-
-3. **KSP vs KAPT**: KSP работает напрямую с Kotlin AST и не имеет описанных проблем с Lombok. При переходе на KSP Lombok-интеграция ещё менее стабильна.
-
-**Рекомендация:** в Kotlin-проектах не использовать Lombok — data class, `@JvmField`, `@JvmStatic` решают те же задачи нативно.
+Kotlin-компилятор не применяет Lombok-аннотации к Kotlin-классам. Для самих Kotlin-классов используют средства языка, например `data class`. В смешанном модуле Kotlin может обращаться к членам Java-классов, которые генерирует Lombok; для этого существует Kotlin Lombok compiler plugin. Если одновременно нужен `kapt`, конфигурацию Java-процессоров нужно проверять отдельно: плагин Kotlin не заменяет `javac`-процессор Lombok. KSP предоставляет Kotlin-процессорам модель символов, но не выполняет преобразования Java AST вместо Lombok.
 
 ---
 
@@ -1469,7 +1429,9 @@ public class UserMapperImpl implements UserMapper {
 
         UserDto dto = new UserDto();
         dto.setName(user.getFirstName());            // @Mapping source→target
-        dto.setCity(user.getAddress().getCity());    // nested access
+        if (user.getAddress() != null) {
+            dto.setCity(user.getAddress().getCity()); // упрощённый пример проверки nested source
+        }
         dto.setCreatedAt(LocalDateTime.now());        // expression
         // passwordHash — ignore
         return dto;
@@ -1499,25 +1461,12 @@ default void setDefaults(@MappingTarget UserDto dto) {
 
 ## Q41. Что такое KSP (Kotlin Symbol Processing) и чем лучше KAPT?
 
-**KSP** (Kotlin Symbol Processing) — официальный от JetBrains движок обработки аннотаций для Kotlin (с Kotlin 1.5+), пришедший на смену KAPT. Главное преимущество: KSP работает **напрямую с символами Kotlin**, тогда как KAPT сначала генерирует Java-заглушки для всего кода и гоняет по ним обычный Java-APT -- лишний и медленный шаг.
+**KSP** (Kotlin Symbol Processing) предоставляет процессорам модель символов Kotlin без генерации Java-заглушек. `kapt` создаёт Java-заглушки и запускает обычные Java annotation processors. KSP может сократить работу при сборке, но результат зависит от проекта и поддержки KSP конкретной библиотекой; Java-процессор нельзя просто подключить как KSP-процессор.
 
-**Проблемы KAPT:**
-
+```text
+Kotlin → kapt → Java-заглушки → Java annotation processor
+Kotlin → KSP → модель символов → KSP-процессор
 ```
-Kotlin → (KAPT stubs) → Java stubs → APT (Java annotation processors) → Generated Java
-```
-- Генерирует заглушки Java для всего Kotlin-кода — **медленно**
-- До 2x замедление компиляции на больших проектах
-- Не понимает Kotlin-специфичные конструкции (extension functions, inline classes)
-
-**KSP-подход:**
-
-```
-Kotlin → KSP (Kotlin IR) → Generated Kotlin/Java
-```
-- Работает напрямую с Kotlin AST — нет Java-заглушек
-- **В 2-4 раза быстрее** KAPT
-- Нативная поддержка Kotlin: suspend functions, value class, sealed class, etc.
 
 **API KSP:**
 ```kotlin
@@ -1547,13 +1496,7 @@ class MyProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) : Sym
 }
 ```
 
-**Поддержка библиотек:**
-- **Room** (Android) — мигрировал с KAPT на KSP
-- **Moshi** — поддерживает KSP
-- **Dagger/Hilt** — поддерживает KSP с Dagger 2.51+
-- **MapStruct** — пока работает через KAPT (активно ведётся KSP-поддержка)
-
-**Когда использовать:** новые Kotlin-проекты → KSP. Если библиотека не поддерживает KSP — KAPT неизбежен.
+**Выбор процессора:** проверьте документацию конкретной библиотеки и её версии. Если доступен KSP-процессор, он может работать с Kotlin-символами без Java-заглушек. Если библиотека предоставляет только Java annotation processor, используйте `kapt` либо обработку Java-исходников через `javac`.
 
 ---
 
@@ -1627,7 +1570,7 @@ public void sendReport() { ... }
 
 ---
 
-## Q43. Аннотации на TYPE_USE — @NonNull и Checker Framework
+## Q43. Как TYPE_USE и Checker Framework помогают проверять @NonNull?
 
 `TYPE_USE` (`ElementType.TYPE_USE`, Java 8+) -- цель `@Target`, разрешающая ставить аннотацию на **любое упоминание типа**, а не только на объявление переменной: на аргумент дженерика, элемент массива, тип в `cast` и в `throws`. Это нужно прежде всего инструментам проверки nullability (`Checker Framework`, `NullAway`), которые на основе таких аннотаций ловят NPE ещё на этапе компиляции.
 
@@ -1674,32 +1617,9 @@ public class UserService {
 }
 ```
 
-**Jakarta EE Bean Validation vs Spring аннотации:**
+**Различие контрактов:**
 
-```java
-// Jakarta EE (javax.validation → jakarta.validation)
-@NotNull    // runtime validation через Validator
-@NonNull    // Jakarta @NonNull (TYPE_USE, для Lombok и IDE)
-
-// Spring Framework
-@NonNull    // org.springframework.lang.NonNull (TYPE_USE)
-@Nullable   // org.springframework.lang.Nullable
-
-// Lombok
-@NonNull    // lombok.NonNull — генерирует null-check в конструкторе/методе
-
-// Смешивание в Spring проекте:
-public @org.springframework.lang.NonNull User getUser(
-        @jakarta.validation.constraints.NotNull @RequestParam String id) {
-    // @NotNull — валидируется Bean Validation
-    // @NonNull — подсказка для IDE/анализатора
-}
-```
-
-**Важное различие:**
-- `@NotNull` (Bean Validation) — **runtime** проверка через `Validator.validate()`
-- `@NonNull` (TYPE_USE) — **compile-time** подсказка для IDE и статических анализаторов (NullAway, Checker Framework)
-- Они дополняют друг друга: `@NonNull` предупредит при компиляции, `@NotNull` — при вызове API с некорректными данными
+`jakarta.validation.constraints.NotNull` проверяется Bean Validation при вызове `Validator` или при настроенной интеграции с фреймворком. `org.checkerframework.checker.nullness.qual.NonNull` участвует в статической проверке, когда запущен соответствующий Checker Framework checker. Одна только пользовательская аннотация `@NonNull` из примера выше не добавляет проверку. Одноимённые аннотации Spring и Lombok имеют собственные цели и механизмы; их нельзя считать взаимозаменяемыми без проверки конкретного пакета и подключённого инструмента.
 
 ---
 

@@ -50,7 +50,7 @@ updated: "2026-05-20"
 - [Q9. Что такое `Reifiable` и `Non-Reifiable` типы?](#q9-что-такое-reifiable-и-non-reifiable-типы)
 
 **Bounded Types (ограниченные типы)**
-- [Q10. (!) Что такое `Bounded Type Parameter`?](#q10--что-такое-bounded-type-parameter)
+- [Q10. (!) Что такое `Bounded Type Parameter` (ограниченный параметр типа)?](#q10--что-такое-bounded-type-parameter-ограниченный-параметр-типа)
 - [Q11. (!) Что такое `Multiple Bounds` (`T extends A & B`)?](#q11--что-такое-multiple-bounds-t-extends-a--b)
 - [Q12. Что такое `Recursive Type Bound` (`T extends Comparable<T>`)?](#q12-что-такое-recursive-type-bound-t-extends-comparablet)
 
@@ -76,7 +76,7 @@ updated: "2026-05-20"
 
 **Generic-методы, varargs и статика**
 - [Q25. Как работают дженерики с `varargs` (`T... args`)?](#q25-как-работают-дженерики-с-varargs-t-args)
-- [Q26. Дженерики в статических методах и полях?](#q26-дженерики-в-статических-методах-и-полях)
+- [Q26. Как дженерики работают в статических методах и полях?](#q26-как-дженерики-работают-в-статических-методах-и-полях)
 
 **Ограничения и практика**
 - [Q27. (!) Можно ли использовать примитивы как generic-тип?](#q27--можно-ли-использовать-примитивы-как-generic-тип)
@@ -87,7 +87,7 @@ updated: "2026-05-20"
 - [Q32. Как сериализовать объекты с generic-полями?](#q32-как-сериализовать-объекты-с-generic-полями)
 - [Q33. (!) Что такое `Super Type Token` и как это используется?](#q33--что-такое-super-type-token-и-как-это-используется)
 - [Q34. Дженерики и `instanceof` — какие проверки допустимы?](#q34-дженерики-и-instanceof--какие-проверки-допустимы)
-- [Q35. Какие изменения в дженериках появились в Java 10+?](#q35-какие-изменения-в-дженериках-появились-в-java-10)
+- [Q35. Как `var` с Java 10 влияет на типы дженериков?](#q35-как-var-с-java-10-влияет-на-типы-дженериков)
 
 **Wildcards, Type Erasure, Comparable**
 - [Q36. (!) В чём разница между `? extends T` и `? super T`? Когда что выбирать?](#q36--в-чём-разница-между--extends-t-и--super-t-когда-что-выбирать)
@@ -364,7 +364,7 @@ if (obj instanceof List<String>) { } // Compilation error
 List<String>[] arr = new List<String>[10]; // Compilation error
 ```
 
-## Q10. (!) Что такое `Bounded Type Parameter`?
+## Q10. (!) Что такое `Bounded Type Parameter` (ограниченный параметр типа)?
 
 **Bounded Type Parameter** — параметр типа с верхней границей, заданной через `extends`: `<T extends Number>` принимает только `Number` и его подтипы. Граница даёт две вещи сразу: сужает допустимые аргументы и позволяет вызывать методы граничного типа внутри generic-кода (иначе `T` стирался бы в `Object` и кроме методов `Object` ничего не было бы доступно).
 
@@ -796,7 +796,7 @@ for (Method m : MyDate.class.getDeclaredMethods()) {
 
 ```java
 List<String> strings = new ArrayList<>();
-List rawList = strings;           // raw type — unchecked warning
+List rawList = strings;           // raw type
 rawList.add(42);                  // Heap pollution! Integer в List<String>
 
 String s = strings.get(0);       // ClassCastException в runtime
@@ -807,8 +807,7 @@ Heap pollution также возникает при использовании v
 ```java
 @SafeVarargs // подавляет предупреждение
 static <T> List<T> asList(T... elements) {
-    // elements имеет тип T[], но в runtime это Object[]
-    // Потенциальное heap pollution
+    // В объявлении тип T[]; реальный компонент массива зависит от вызова
     return Arrays.asList(elements);
 }
 ```
@@ -817,7 +816,7 @@ static <T> List<T> asList(T... elements) {
 
 ## Q25. Как работают дженерики с `varargs` (`T... args`)?
 
-Дженерики и varargs конфликтуют по своей природе. Varargs под капотом — это массив, а массивы должны знать тип элементов в runtime; но `T` стёрт, поэтому компилятор создаёт `Object[]` вместо `T[]`. Отсюда предупреждение о возможном heap pollution на каждом таком методе:
+Varargs передаёт аргументы в массиве. Для нереифицируемого типа элемента компилятор не всегда может проверить безопасность массива, поэтому выдаёт предупреждение. Реальный компонент массива зависит от вызова и стирания границы `T`: это не обязательно `Object[]`.
 
 ```java
 // Предупреждение: Possible heap pollution from parameterized vararg type
@@ -830,7 +829,7 @@ static <T> List<T> listOf(T... elements) {
 }
 ```
 
-**Когда безопасно** — `@SafeVarargs` подавляет предупреждение:
+**Когда безопасно** — `@SafeVarargs` подавляет предупреждение, если автор проверил, что метод не выполняет опасных операций с массивом:
 
 ```java
 @SafeVarargs
@@ -839,19 +838,20 @@ static <T> List<T> safeListOf(T... elements) {
 }
 ```
 
-**Когда опасно** — массив передаётся наружу:
+**Когда опасно** — массив с параметризованными элементами доступен через `Object[]`, и туда можно подложить список другого типа:
 
 ```java
-// ОПАСНО — не помечайте @SafeVarargs!
-static <T> T[] toArray(T... args) {
-    return args; // возвращает Object[] под видом T[]
+static void unsafe(List<String>... lists) {
+    Object[] array = lists;
+    array[0] = List.of(42);
+    String value = lists[0].get(0); // ClassCastException
 }
 
-String[] result = toArray("a", "b"); // ClassCastException!
-// Object[] нельзя привести к String[]
+// Вызов toArray("a", "b") сам по себе не доказывает ошибку:
+// для аргументов String компилятор может передать String[].
 ```
 
-## Q26. Дженерики в статических методах и полях?
+## Q26. Как дженерики работают в статических методах и полях?
 
 Ключевой момент: статика принадлежит классу, а параметр типа — экземпляру. **Статическое поле** не может использовать параметр типа класса, потому что поле одно на все экземпляры, а у `Box<String>` и `Box<Integer>` его тип был бы разным — противоречие:
 
@@ -1085,7 +1085,7 @@ System.out.println(ref.getType());
 
 ## Q34. Дженерики и `instanceof` — какие проверки допустимы?
 
-`instanceof` работает только с reifiable-типами (теми, что JVM знает в runtime). Поэтому проверка с параметризованным типом (`instanceof List<String>`) **запрещена** — в runtime отличить `List<String>` от `List<Integer>` нечем. Разрешены только формы, информация о которых полностью доступна: raw type, unbounded wildcard и конкретные классы:
+Для ссылки типа `Object` проверка `instanceof List<String>` запрещена: в runtime нельзя отличить `List<String>` от `List<Integer>`. Можно проверить реифицируемый тип, например `List<?>`, raw `List` или конкретный класс. Начиная с Java 16 проверка нереифицируемого типа допустима в отдельных случаях, когда статический тип выражения уже делает приведение безопасным; она не проверяет тип элементов в runtime.
 
 ```java
 Object obj = new ArrayList<String>();
@@ -1095,7 +1095,7 @@ if (obj instanceof List<String>) { }    // Compilation error!
 
 // Можно — reifiable тип
 if (obj instanceof List<?>) { }         // OK
-if (obj instanceof List) { }            // OK (raw type, с предупреждением)
+if (obj instanceof List) { }            // OK (raw type)
 if (obj instanceof ArrayList<?>) { }    // OK
 
 // Pattern matching (Java 16+) — аналогично
@@ -1119,9 +1119,9 @@ public static <T> List<T> checkedList(List<?> raw, Class<T> type) {
 // Или использовать Collections.checkedList для runtime-проверок
 ```
 
-## Q35. Какие изменения в дженериках появились в Java 10+?
+## Q35. Как `var` с Java 10 влияет на типы дженериков?
 
-Сама модель дженериков (стирание, инвариантность) с Java 5 не менялась. Но вокруг неё добавляли синтаксический сахар и новые конструкции, которые с дженериками сочетаются.
+`var` выводит статический тип локальной переменной из инициализатора. Он сохраняет параметры дженерика при проверке компилятором.
 
 **Java 10 — `var` (вывод типа локальной переменной):**
 
@@ -1132,21 +1132,6 @@ var map = Map.of("key", 1);          // тип: Map<String, Integer>
 ```
 
 `var` не стирает generic-информацию — компилятор выводит полный параметризованный тип. Но `var` нельзя использовать для полей класса, параметров методов и возвращаемых типов.
-
-**Java 17+ — sealed classes с дженериками:**
-
-```java
-sealed interface Result<T> permits Success, Failure {
-    T value();
-}
-
-record Success<T>(T value) implements Result<T> { }
-record Failure<T>(Exception error) implements Result<T> {
-    public T value() { throw new IllegalStateException(error); }
-}
-```
-
-**Будущее — Project Valhalla:** в перспективе Java может получить специализированные дженерики для примитивов (без autoboxing), что устранит одно из ключевых ограничений текущей системы дженериков.
 
 ## Q36. (!) В чём разница между `? extends T` и `? super T`? Когда что выбирать?
 
@@ -1224,10 +1209,10 @@ public class Pair {
 **Практические последствия стирания:**
 
 ```java
-// 1. Нельзя использовать instanceof с параметрическим типом
-List<String> strings = List.of("a");
-if (strings instanceof List<String>) { } // ✅ Java 16+ (reified pattern)
-// if (x instanceof List<String> ls) { } — ✅ Java 21 sealed+pattern
+// 1. Тип элементов нельзя проверить через instanceof в runtime
+Object value = List.of("a");
+if (value instanceof List<?>) { }      // OK: проверяется только List
+// if (value instanceof List<String>) { } // Ошибка: тип элементов не проверяется
 
 // 2. Перегрузка по generic не работает — обе сигнатуры одинаковы после стирания
 void process(List<String> list) { }

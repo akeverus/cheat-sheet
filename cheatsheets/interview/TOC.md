@@ -372,8 +372,9 @@ updated: "2026-10-05"
 
 ## programming-languages/python
 
-- [Вопросы на собеседовании: Python — основы](programming-languages/python/python-interview.md) — `9` вопросов
+- [Вопросы на собеседовании: Python — основы](programming-languages/python/python-interview.md) — `12` вопросов
 - [Вопросы на собеседовании: Конкурентность в Python](programming-languages/python/python-concurrency-interview.md) — `9` вопросов
+- [Вопросы на собеседовании: Работа с БД в Python](programming-languages/python/python-database-interview.md) — `8` вопросов
 - [Вопросы на собеседовании: Тестирование в Python](programming-languages/python/python-testing-interview.md) — `7` вопросов
 - [Вопросы на собеседовании: Упаковка Python-приложений](programming-languages/python/python-packaging-interview.md) — `5` вопросов
 - [Вопросы на собеседовании: Типизация в Python](programming-languages/python/python-typing-interview.md) — `4` вопроса
@@ -428,13 +429,14 @@ updated: "2026-10-05"
 - [Вопросы на собеседовании: Системный дизайн](system-design/system-design-interview.md) — `41` вопрос
 - [Вопросы на собеседовании: Генератор уникальных ID](system-design/design-unique-id-generator-interview.md) — `4` вопроса
 - [Вопросы на собеседовании: Система уведомлений](system-design/design-notification-system-interview.md) — `4` вопроса
-- [Вопросы на собеседовании: Система бронирования отеля](system-design/design-reservation-system-interview.md) — `4` вопроса
+- [Вопросы на собеседовании: Система бронирования отеля](system-design/design-reservation-system-interview.md) — `5` вопросов
 - [Вопросы на собеседовании: Объектное хранилище](system-design/design-object-storage-interview.md) — `4` вопроса
 - [Вопросы на собеседовании: Игровой лидерборд](system-design/design-leaderboard-interview.md) — `5` вопросов
 - [Вопросы на собеседовании: Платформа метрик и алертов](system-design/design-metrics-platform-interview.md) — `4` вопроса
 - [Вопросы на собеседовании: Агрегация рекламных событий](system-design/design-event-aggregation-interview.md) — `4` вопроса
 - [Вопросы на собеседовании: Распределённый почтовый сервис](system-design/design-email-service-interview.md) — `4` вопроса
 - [Вопросы на собеседовании: Цифровой кошелёк](system-design/design-digital-wallet-interview.md) — `4` вопроса
+- [Вопросы на собеседовании: Сопоставление биржевых заявок](system-design/design-exchange-interview.md) — `4` вопроса
 - [Вопросы на собеседовании: `Design URL Shortener`](system-design/design-url-shortener-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Design Pastebin`](system-design/design-pastebin-interview.md) — `30` вопросов
 - [Вопросы на собеседовании: `Design Rate Limiter`](system-design/design-rate-limiter-interview.md) — `30` вопросов

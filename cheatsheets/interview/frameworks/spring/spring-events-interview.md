@@ -19,7 +19,7 @@ updated: "2026-05-15"
 ---
 # Вопросы на собеседовании: События Spring
 
-`Spring Events` — механизм слабого связывания компонентов через события: публикатор не знает о подписчиках. По умолчанию синхронны и транзакционны. `@TransactionalEventListener` — ключевой инструмент для domain events в DDD-архитектуре.
+`Spring Events` — механизм слабого связывания компонентов через события: публикатор не знает о подписчиках. По умолчанию слушатели вызываются синхронно; они участвуют в транзакционном контексте публикатора, только если событие опубликовано внутри транзакции. `@TransactionalEventListener` — ключевой инструмент для domain events в DDD-архитектуре.
 
 ## Полезные ссылки
 
@@ -222,7 +222,7 @@ public class StartupListener {
 
 По умолчанию Spring Events **синхронны**: `publishEvent()` блокирует публикатора и не возвращает управление, пока все слушатели не отработают — в том же потоке.
 
-Чтобы вынести обработку в отдельный поток, повесьте на метод слушателя `@Async` (и включите `@EnableAsync`). Тогда `publishEvent()` вернётся сразу, а слушатель отработает в фоновом пуле потоков:
+Чтобы вынести обработку в отдельный поток, повесьте на метод слушателя `@Async` (и включите `@EnableAsync`). Тогда `publishEvent()` не будет ждать завершения этого слушателя, а его обработка уйдёт в фоновый пул потоков:
 
 ```java
 @Configuration
@@ -271,7 +271,7 @@ public class NotificationListener {
 @Transactional
 public class OrderService {
     public Order createOrder(OrderRequest req) {
-        Order order = repository.save(order);
+        Order order = repository.save(new Order(req));
         publisher.publishEvent(new OrderCreatedEvent(order.getId()));
         // Если транзакция откатится — слушатель НЕ выполнится (при AFTER_COMMIT)
         return order;
@@ -289,7 +289,7 @@ public class OrderNotificationListener {
 }
 ```
 
-**Подводный камень — операции с БД в `AFTER_COMMIT`.** Слушатель привязан к транзакции публикатора, но к фазе `AFTER_COMMIT` она уже закоммичена и закрыта. Поэтому записи в БД из такого слушателя по умолчанию не попадут в исходную транзакцию (она завершена) — если нужно что-то сохранить, открывайте новую транзакцию явно: `@Transactional(propagation = REQUIRES_NEW)`.
+**Подводный камень — операции с БД в `AFTER_COMMIT`.** Слушатель привязан к транзакции публикатора, но к фазе `AFTER_COMMIT` она уже закоммичена, хотя транзакционные ресурсы ещё могут быть доступны. Поэтому новые записи из такого слушателя могут использовать прежние ресурсы, но уже не будут закоммичены в исходной транзакции — если нужно что-то сохранить, открывайте новую транзакцию явно: `@Transactional(propagation = REQUIRES_NEW)`.
 
 ## Q7. Какие фазы транзакции поддерживает `@TransactionalEventListener`?
 
@@ -453,7 +453,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> { }
 При вызове `orderRepository.save(order)` Spring Data сам делает три шага:
 1. Сохраняет агрегат в БД.
 2. Достаёт накопленные события (метод, помеченный `@DomainEvents`) и публикует каждое через `ApplicationEventPublisher`.
-3. Очищает список событий в агрегате (метод с `@AfterDomainEventPublication`), чтобы они не опубликовались повторно при следующем `save()`.
+3. Вызывает метод с `@AfterDomainEventPublication`. В реализации `AbstractAggregateRoot` он очищает список, чтобы события не публиковались повторно при следующем `save()`.
 
 **Без `AbstractAggregateRoot`** те же `@DomainEvents` и `@AfterDomainEventPublication` можно реализовать вручную на любом классе:
 
@@ -472,12 +472,12 @@ public class Order {
 
 ## Q12. Зачем нужен `@AfterDomainEventPublication`?
 
-`@AfterDomainEventPublication` помечает метод, который Spring Data вызывает **сразу после публикации** накопленных событий, — его задача очистить их список в агрегате:
+`@AfterDomainEventPublication` помечает метод, который Spring Data вызывает **после публикации** накопленных событий. В нём можно очистить список, чтобы те же события не публиковались при следующем `save()` того же объекта:
 
 ```java
-public class Order extends AbstractAggregateRoot<Order> {
-    // AbstractAggregateRoot уже реализует @AfterDomainEventPublication
-    // Но если вручную:
+public class Order {
+    @Transient
+    private final List<Object> events = new ArrayList<>();
 
     @DomainEvents
     Collection<Object> domainEvents() { return List.copyOf(events); }
@@ -487,15 +487,15 @@ public class Order extends AbstractAggregateRoot<Order> {
 }
 ```
 
-**Зачем важен:** агрегат живёт дольше одного `save()`. Если события не вычистить, при каждом следующем сохранении того же объекта Spring Data опубликует **их заново** — отсюда дубли писем, повторные списания, лишние записи. Очистка делает публикацию идемпотентной: каждое событие уходит ровно один раз.
+**Зачем важен:** агрегат живёт дольше одного `save()`. Если события не вычистить, при каждом следующем сохранении того же объекта Spring Data опубликует **их заново** — отсюда дубли писем, повторные списания, лишние записи. Очистка предотвращает повторную публикацию этих событий при следующем `save()` того же объекта. Она не гарантирует доставку или ровно однократную обработку при сбоях.
 
 **Рекомендация:** не реализуйте это вручную без нужды — `AbstractAggregateRoot` уже содержит корректные `@DomainEvents` и `@AfterDomainEventPublication`. Ручная реализация нужна, только если унаследоваться от него нельзя.
 
 ## Q13. Что такое Spring Modulith и как события используются для межмодульного взаимодействия?
 
-**Spring Modulith** — библиотека для построения модульных монолитов: приложение делится на логические модули, и **основной способ их общения — события**, а не прямые вызовы. Так модули остаются развязанными (модуль `Inventory` не зависит от `OrderService`), но при этом всё ещё внутри одного процесса — без сложности микросервисов.
+**Spring Modulith** — библиотека для построения модульных монолитов: приложение делится на логические модули. Для взаимодействия между ними можно публиковать события, когда не нужен синхронный ответ от другого модуля. Так модули остаются развязанными (модуль `Inventory` не зависит от `OrderService`), но при этом всё ещё внутри одного процесса — без сложности микросервисов.
 
-Ключевой инструмент — аннотация `@ApplicationModuleListener`. Это готовая комбинация `@TransactionalEventListener(AFTER_COMMIT)` + `@Async` + повторные попытки: межмодульный обработчик выполняется после успешного commit, в отдельном потоке и с ретраями.
+Ключевой инструмент — аннотация `@ApplicationModuleListener`. Это сокращение для `@TransactionalEventListener` с фазой `AFTER_COMMIT`, `@Async` и `@Transactional(REQUIRES_NEW)`: обработчик выполняется после успешного commit в отдельном потоке и собственной транзакции. Аннотация сама по себе не запускает повторные попытки.
 
 ```java
 // Модуль Order публикует событие
@@ -510,7 +510,7 @@ public class OrderService {
 }
 
 // Модуль Inventory обрабатывает событие — без зависимости на OrderService
-@ApplicationModuleListener  // = @TransactionalEventListener + @Async + retries
+@Component
 public class InventoryModule {
     @ApplicationModuleListener
     void onOrderCompleted(OrderCompleted event) {
@@ -519,20 +519,20 @@ public class InventoryModule {
 }
 ```
 
-**Externalization** — тот же модульный event можно одной аннотацией пробросить во внешний брокер (Kafka, RabbitMQ), когда модуль вырастает в отдельный сервис:
+**Externalization** позволяет направить выбранные события во внешний брокер при подключённом модуле интеграции и настроенной инфраструктуре:
 
 ```java
-@Externalized("orders.completed")  // → Kafka topic
+@Externalized("orders.completed")
 public record OrderCompleted(Long orderId) { }
 ```
 
-Под капотом Spring Modulith реализует **transactional outbox из коробки**: незавершённые события сохраняются в БД в той же транзакции, что и бизнес-данные, и публикуются только после commit. Это даёт гарантию доставки — событие не потеряется, даже если приложение упадёт сразу после коммита.
+При подключённом реестре публикаций Spring Modulith записывает публикации для транзакционных слушателей в исходной транзакции и отмечает успешную обработку. Необработанные публикации можно повторно отправить через API; автоматическая повторная публикация при старте включается отдельной настройкой. Для этого нужны хранилище реестра и корректная конфигурация. Само событие Spring Framework остаётся внутрипроцессным.
 
 ## Q14. Как тестировать публикацию и обработку Spring Events?
 
 Есть два разных вопроса, и под них разные инструменты: **публикуется ли событие** (проверяем со стороны публикатора) и **вызывается ли слушатель** (проверяем со стороны обработчика).
 
-**Способ 1 — `@RecordApplicationEvents` (Spring 6 / Spring Boot 2.7+).** Самый прямой способ проверить факт публикации: Spring записывает все события контекста, а в тест инжектится `ApplicationEvents`, по которому можно их перебрать и проверить.
+**Способ 1 — `@RecordApplicationEvents` (Spring Framework 5.3.3+).** Самый прямой способ проверить факт публикации: Spring записывает все события контекста, а в тест инжектится `ApplicationEvents`, по которому можно их перебрать и проверить.
 
 ```java
 @SpringBootTest
@@ -554,13 +554,13 @@ class OrderServiceTest {
 }
 ```
 
-**Способ 2 — `@SpyBean` на слушателе.** Когда нужно проверить, что обработчик реально был вызван (и сколько раз): оборачиваем бин-слушатель в spy и публикуем событие.
+**Способ 2 — `@MockitoSpyBean` на слушателе (Spring Framework 6.2+).** Когда нужно проверить, что обработчик реально был вызван (и сколько раз): оборачиваем бин-слушатель в spy и публикуем событие.
 
 ```java
 @SpringBootTest
 class EventHandlingTest {
 
-    @SpyBean NotificationListener notificationListener;
+    @MockitoSpyBean NotificationListener notificationListener;
     @Autowired ApplicationEventPublisher publisher;
 
     @Test
@@ -613,24 +613,23 @@ public class TestOrderCreatedListener {
 
 ## Q16. В чём разница между Spring Events и Kafka/RabbitMQ-сообщениями?
 
-Коротко: Spring Events — это **внутрипроцессный** механизм (всё в памяти одной JVM, без персистентности и гарантий), а Kafka/RabbitMQ — **межпроцессный** транспорт с хранением и доставкой. Это не конкуренты, а инструменты для разных масштабов.
+Коротко: Spring Events — это **внутрипроцессный** механизм (всё в памяти одной JVM, без встроенного долговременного хранения и восстановления), а Kafka/RabbitMQ — **межпроцессный** транспорт, у которого хранение и доставка зависят от конфигурации. Это не конкуренты, а инструменты для разных масштабов.
 
 | Параметр | Spring Events | Kafka/RabbitMQ |
 |---|---|---|
 | Scope | Внутри JVM-процесса | Между процессами/сервисами |
-| Персистентность | Нет (in-memory) | Да |
-| Гарантия доставки | При ошибке — потеряно | At-least-once / exactly-once |
-| Replay | Нет | Да (Kafka) |
-| Масштабирование | Не нужно (один JVM) | Горизонтальное |
-| Latency | Микросекунды | Миллисекунды |
+| Персистентность | Нет (in-memory) | Возможна при настройке хранения |
+| Гарантия доставки | Зависит от обработчика; без реестра нет восстановления | Зависит от брокера, настроек и подтверждений |
+| Replay | Нет | Зависит от брокера и хранения |
+| Масштабирование | Ограничено одним процессом | Зависит от брокера и потребителей |
+| Latency | Зависит от слушателей | Зависит от брокера и сети |
 | Setup | Zero config | Внешняя инфраструктура |
 
-**Мост между мирами — Spring Modulith Outbox.** Он соединяет оба подхода: событие сначала надёжно сохраняется в БД в той же транзакции, что и бизнес-данные (гарантия), и только после commit публикуется в Kafka/RabbitMQ. Так теряется лишь то, что и должно теряться, — события несостоявшихся транзакций.
+**Мост между мирами — Spring Modulith с реестром публикаций и модулем externalization.** При соответствующей конфигурации реестр сохраняет публикацию в исходной транзакции и позволяет повторить незавершённую отправку во внешний брокер. Семантика доставки зависит от выбранного брокера, обработчика и настроек повторной отправки.
 
 **Типичная архитектура:** внутри сервиса работают лёгкие Spring Events, а наружу, к другим сервисам, событие уходит через брокер уже после успешного commit:
 ```
-Бизнес-логика → Spring Event → @TransactionalEventListener → publish to Kafka
-                                                             (в отдельной транзакции)
+Бизнес-логика → Spring Event → Modulith externalization → брокер
 ```
 
 ---
@@ -643,7 +642,7 @@ public class TestOrderCreatedListener {
 - [Spring Data JPA](spring-data-jpa-interview.md) — @DomainEvents, AbstractAggregateRoot, @AfterDomainEventPublication
 - [Spring Scheduling](spring-scheduling-interview.md) — @Scheduled vs события для периодических задач
 - [Event-Driven Patterns](../../architecture/event-driven-patterns-interview.md) — общие паттерны event-driven архитектуры
-- [Apache Kafka](../../messaging/kafka-interview.md) — для межсервисных событий с гарантией доставки
+- [Apache Kafka](../../messaging/kafka-interview.md) — для межсервисных событий с настраиваемой доставкой
 - [Domain-Driven Design](../../architecture/ddd-interview.md) — domain events, aggregates, bounded context
 - [Распределённые системы](../../architecture/distributed-systems-interview.md) — transactional outbox, at-least-once delivery
 - [Unit Testing](../../testing/unit-testing-interview.md) — @RecordApplicationEvents, ApplicationEvents, тестирование listeners

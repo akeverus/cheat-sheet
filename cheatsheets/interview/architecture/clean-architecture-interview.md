@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[clean-architecture]]"
 next: []
-updated: "2026-04-25"
+updated: "2026-11-09"
 ---
 # Вопросы на собеседовании: Чистая архитектура
 
@@ -25,14 +25,15 @@ updated: "2026-04-25"
 
 ## Полезные ссылки
 
-### Официальная документация
+### Первичные источники
 
-- [Clean Architecture with Spring Boot (Baeldung)](https://www.baeldung.com/spring-boot-clean-architecture) -- реализация Clean Architecture на Spring Boot
-- [Hexagonal Architecture, DDD, and Spring (Baeldung)](https://www.baeldung.com/hexagonal-architecture-ddd-spring) -- Hexagonal Architecture с DDD и Spring
-- [The Clean Architecture (Robert C. Martin)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) -- оригинальная статья Роберта Мартина
-- [Hexagonal Architecture (Alistair Cockburn)](https://alistair.cockburn.us/hexagonal-architecture/) -- оригинальная статья Алистера Кокбёрна
-- [Vertical Slice Architecture (Baeldung)](https://www.baeldung.com/java-vertical-slice-architecture) -- альтернативный подход Vertical Slices
-- [ArchUnit (Baeldung)](https://www.baeldung.com/java-archunit-intro) -- автоматическая проверка архитектурных правил
+- [Robert C. Martin: The Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) — слои и Dependency Rule.
+- [Alistair Cockburn: Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/) — порты и адаптеры.
+- [Jeffrey Palermo: Onion Architecture](https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/) — внутренние политики и внешние детали.
+- [Spring Framework: `@Transactional`](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html) — proxy, внешние вызовы и self-invocation.
+- [ArchUnit User Guide](https://www.archunit.org/userguide/html/000_Index.html) — правила зависимостей.
+- [Robert C. Martin: Screaming Architecture](https://blog.cleancoder.com/uncle-bob/2011/09/30/Screaming-Architecture.html) — структура по предметной области.
+- [Jimmy Bogard: Vertical Slice Architecture](https://www.jimmybogard.com/vertical-slice-architecture/) — группировка по сценариям.
 
 ## Содержание
 
@@ -409,6 +410,8 @@ public class OrderController {
 2. **Легко заменяем** -- смена БД с `PostgreSQL` на `MongoDB` в идеале задевает только этот слой
 3. **Дом для конфигурации** Spring: `@Configuration`, `@Bean`, `application.yml`
 
+Frameworks & Drivers размещает web/ORM-драйверы и composition root. Entities и Use Cases не импортируют этот слой, поэтому Spring Boot собирает компоненты, но не владеет бизнес-правилами.
+
 ```java
 @Configuration
 public class OrderConfiguration {
@@ -651,43 +654,9 @@ graph TB
 
 ## Q13. Что такое Onion Architecture?
 
-**Onion Architecture -- подход с теми же зависимостями-внутрь, но с более дробным делением ядра на слои.** Предложен Джеффри Палермо (Jeffrey Palermo) в 2008 году как развитие идей Hexagonal Architecture.
+**Onion Architecture** Джеффри Палермо помещает доменную модель в центр, а инфраструктуру и UI — на периферию. Внутренний код может зависеть только от более центральных слоёв; число промежуточных колец зависит от приложения. Контракты хранения задают в ядре, а конкретную БД подключают снаружи.
 
-Слои Onion Architecture (от ядра к периферии):
-
-1. **Domain Model** -- сущности и value objects
-2. **Domain Services** -- доменные сервисы, работающие с несколькими сущностями
-3. **Application Services** -- сценарии использования, оркестрация
-4. **Infrastructure** -- внешний слой (БД, UI, API)
-
-```mermaid
-graph TB
-    subgraph "Infrastructure"
-        I1[UI] 
-        I2[Database]
-        I3[External Services]
-    end
-    subgraph "Application Services"
-        AS[Use Cases<br/>DTOs]
-    end
-    subgraph "Domain Services"
-        DS[Domain Services<br/>Repositories interfaces]
-    end
-    subgraph "Domain Model"
-        DM[Entities<br/>Value Objects]
-    end
-    I1 --> AS --> DS --> DM
-    I2 --> AS
-    I3 --> AS
-    style DM fill:#2d5016,color:#fff
-    style DS fill:#4a7c2e,color:#fff
-    style AS fill:#6ba34a,color:#fff
-    style I1 fill:#8cc665,color:#000
-    style I2 fill:#8cc665,color:#000
-    style I3 fill:#8cc665,color:#000
-```
-
-Ключевое отличие от Hexagonal: Onion явно разводит **Domain Model** (сущности и value objects) и **Domain Services** (логику над несколькими сущностями), тогда как Hexagonal сваливает их в общий "Application Core". Практический смысл этого деления -- не дать доменным сервисам разрастись и проглотить логику, которая должна жить в самих сущностях.
+С Hexagonal подход разделяет идею изоляции приложения от внешних деталей. Onion делает акцент на концентрических слоях и доменной модели, Hexagonal — на целевых разговорах приложения с внешними агентами через порты. Это не фиксированные альтернативы друг другу. [Palermo](https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/), [Cockburn](https://alistair.cockburn.us/hexagonal-architecture/).
 
 ## Q14. Сравните Clean, Hexagonal и Onion Architecture
 
@@ -710,30 +679,9 @@ graph TB
 
 ## Q15. (!) Чем Clean Architecture отличается от традиционной слоистой архитектуры?
 
-**Главное отличие -- направление зависимостей.** В традиционной слоистой архитектуре (Layered / N-tier) зависимости идут **сверху вниз**: `Presentation → Business Logic → Data Access`, и бизнес-слой в итоге зависит от слоя данных. В Clean Architecture зависимости идут **снаружи внутрь**, к домену, и домен не зависит ни от чего.
+Clean Architecture и обычная слоистая структура различаются не именами пакетов, а **направлением зависимостей исходного кода**. В типичной N-tier реализации бизнес-сервис напрямую знает `JpaRepository` и ORM-модель. Тогда изменение механизма хранения может затронуть правила сценария.
 
-```mermaid
-graph TB
-    subgraph "Layered (традиционная)"
-        L1[Presentation Layer] --> L2[Business Logic Layer] --> L3[Data Access Layer] --> L4[(Database)]
-    end
-    subgraph "Clean Architecture"
-        C4[Frameworks] --> C3[Adapters] --> C2[Use Cases] --> C1[Entities]
-    end
-```
-
-Отсюда расходятся все остальные различия:
-
-| Аспект | Layered Architecture | Clean Architecture |
-|--------|---------------------|-------------------|
-| **Направление зависимостей** | Сверху вниз (UI → BL → DA) | Снаружи внутрь (Infra → Domain) |
-| **Домен зависит от БД** | Да (BL → DA) | Нет (Domain ничего не знает о БД) |
-| **Замена БД** | Требует изменения BL | Только адаптер |
-| **Тестирование домена** | Нужна БД или моки DA | Чистые unit-тесты |
-| **Доменные сущности** | Часто совпадают с ORM-сущностями | Отделены от ORM |
-| **Где бизнес-логика** | Размазана по слоям | Сконцентрирована в Entities/Use Cases |
-
-Корень проблемы Layered Architecture: **бизнес-слой зависит от слоя данных**. Поэтому смена `Hibernate` на `jOOQ` тянет за собой правку сервисов, а unit-тест бизнес-логики требует мокать data-access. Clean Architecture разрывает эту зависимость: бизнес-логика объявляет интерфейсы, инфраструктура их реализует -- и БД становится сменной деталью.
+Слоистое приложение тоже может использовать DIP и сохранить чистое ядро; ярлык `Layered` сам по себе не означает нарушение. Проверяют конкретные импорты и контракты: высокоуровневый сценарий зависит от своей абстракции, а JPA-адаптер реализует её. UI и БД остаются работающими деталями, а не запрещёнными технологиями.
 
 ## Q16. Что такое Vertical Slice Architecture и когда она предпочтительнее?
 
@@ -778,146 +726,15 @@ features/
 
 ## Q17. Как организовать пакетную структуру Spring Boot проекта по Clean Architecture?
 
-Главный принцип -- **пакет верхнего уровня = слой**, и зависимости между пакетами проверяемы. Рекомендуемая структура:
+Структуру пакетов выбирают так, чтобы было видно бизнес-области и можно было проверить границы зависимостей. Например, внутри `orders/` могут находиться `domain`, `application`, `adapter/in/web`, `adapter/out/persistence` и `config`. Для небольшого модуля можно обойтись меньшим числом папок.
 
-```
-com.example.myapp/
-├── domain/                          # Entities (ядро)
-│   ├── model/
-│   │   ├── Order.java              # Доменная сущность
-│   │   ├── OrderId.java            # Value Object
-│   │   ├── OrderStatus.java        # Enum
-│   │   └── Money.java              # Value Object
-│   ├── service/
-│   │   └── PricingService.java     # Доменный сервис
-│   └── exception/
-│       └── OrderNotFoundException.java
-│
-├── application/                     # Use Cases
-│   ├── port/
-│   │   ├── in/                     # Input Ports
-│   │   │   ├── CreateOrderUseCase.java
-│   │   │   └── CancelOrderUseCase.java
-│   │   └── out/                    # Output Ports
-│   │       ├── OrderRepository.java
-│   │       ├── PaymentGateway.java
-│   │       └── NotificationSender.java
-│   ├── service/
-│   │   ├── CreateOrderService.java # Interactor
-│   │   └── CancelOrderService.java
-│   └── dto/
-│       ├── CreateOrderRequest.java
-│       └── CreateOrderResponse.java
-│
-├── adapter/                         # Interface Adapters
-│   ├── in/
-│   │   ├── web/
-│   │   │   ├── OrderController.java
-│   │   │   └── OrderDtoMapper.java
-│   │   └── messaging/
-│   │       └── OrderEventListener.java
-│   └── out/
-│       ├── persistence/
-│       │   ├── OrderJpaEntity.java
-│       │   ├── OrderJpaRepository.java
-│       │   ├── OrderPersistenceAdapter.java
-│       │   └── OrderPersistenceMapper.java
-│       └── external/
-│           └── StripePaymentAdapter.java
-│
-└── config/                          # Frameworks & Drivers
-    ├── BeanConfiguration.java
-    ├── WebConfiguration.java
-    └── PersistenceConfiguration.java
-```
-
-Правила зависимостей между пакетами (по убыванию свободы):
-- `domain` -- **нулевые внешние зависимости** (ни Spring, ни JPA, ни Lombok)
-- `application` -- зависит только от `domain`
-- `adapter` -- зависит от `application` и `domain`, но не наоборот
-- `config` -- зависит от всех (это место сборки, Composition Root)
-
-**Рекомендация:** в крупных проектах вынесите каждый пакет в отдельный **Gradle/Maven модуль**. Тогда нарушение направления зависимостей просто не скомпилируется -- это надёжнее, чем соглашение «не импортируй adapter из domain», которое легко нарушить по невнимательности. Для одномодульных проектов ту же проверку даёт ArchUnit (см. Q25, Q33).
+Важнее дерево импортов: доменные классы не знают Spring MVC и JPA; use case зависит от контракта нужного ему порта; адаптер импортирует этот контракт. `@SpringBootApplication` и конфигурацию component scan размещают так, чтобы нужные адаптеры и composition root действительно собирались. Один универсальный набор четырёх верхнеуровневых пакетов архитектура не предписывает.
 
 ## Q18. Как реализовать Input Port и Use Case Interactor в Java?
 
-Схема всегда одинакова: интерфейс Use Case (Input Port) + команда на вход + результат на выход + класс-реализация (Interactor), который оркеструет домен. Полный пример:
+Входной порт описывает действие приложения, например `TransferMoney.execute(command)`. Interactor реализует сценарий: загружает данные через выходной порт, вызывает доменные операции и сохраняет результат. Его зависимости передают через конструктор; HTTP DTO и JPA-классы не входят в контракт сценария.
 
-```java
-// === Input Port (интерфейс Use Case) ===
-public interface TransferMoneyUseCase {
-    TransferResult execute(TransferMoneyCommand command);
-}
-
-// === Command (входные данные) ===
-public record TransferMoneyCommand(
-    AccountId fromAccount,
-    AccountId toAccount,
-    Money amount
-) {
-    // Self-validating command
-    public TransferMoneyCommand {
-        Objects.requireNonNull(fromAccount, "fromAccount required");
-        Objects.requireNonNull(toAccount, "toAccount required");
-        Objects.requireNonNull(amount, "amount required");
-        if (fromAccount.equals(toAccount)) {
-            throw new IllegalArgumentException(
-                "Cannot transfer to same account");
-        }
-    }
-}
-
-// === Result (выходные данные) ===
-public record TransferResult(
-    String transactionId,
-    Money newBalanceFrom,
-    Money newBalanceTo,
-    Instant timestamp
-) {}
-
-// === Interactor (реализация Use Case) ===
-public class TransferMoneyService implements TransferMoneyUseCase {
-
-    private final LoadAccountPort loadAccount;
-    private final UpdateAccountPort updateAccount;
-    private final TransactionIdGenerator idGenerator;
-
-    public TransferMoneyService(
-            LoadAccountPort loadAccount,
-            UpdateAccountPort updateAccount,
-            TransactionIdGenerator idGenerator) {
-        this.loadAccount = loadAccount;
-        this.updateAccount = updateAccount;
-        this.idGenerator = idGenerator;
-    }
-
-    @Override
-    public TransferResult execute(TransferMoneyCommand command) {
-        Account from = loadAccount.load(command.fromAccount());
-        Account to = loadAccount.load(command.toAccount());
-
-        // Бизнес-логика в доменной модели
-        from.withdraw(command.amount());
-        to.deposit(command.amount());
-
-        // Сохранение через Output Port
-        updateAccount.update(from);
-        updateAccount.update(to);
-
-        return new TransferResult(
-            idGenerator.generate(),
-            from.getBalance(),
-            to.getBalance(),
-            Instant.now()
-        );
-    }
-}
-```
-
-Два момента, на которые стоит обратить внимание:
-
-- **Команда самовалидируется** в компактном конструкторе record (`fromAccount != toAccount`) -- до Use Case доходит уже структурно корректный запрос.
-- **`TransferMoneyService` не содержит аннотаций Spring** (`@Service`, `@Transactional`). Это обычный Java-класс, который собирается через `new` и тестируется без Spring Context за миллисекунды.
+Интерфейс входного порта полезен, когда есть несколько вызывающих адаптеров, декоратор или отдельная модульная граница. Для простого случая класс use case тоже может быть достаточным. Аннотация `@Service` на классе application — осознанная зависимость от Spring, а не логическое доказательство неправильной архитектуры; степень независимости выбирают явно.
 
 ## Q19. Как реализовать Output Port и его адаптер?
 
@@ -997,166 +814,25 @@ class AccountPersistenceMapper {
 
 Ключевой момент всей конструкции: доменная модель `Account` и JPA-модель `AccountJpaEntity` -- **два разных класса**, между которыми стоит маппер. Да, это лишний класс и лишний маппинг. Но взамен схема БД может меняться (денормализация, переименование колонок), не задевая домен, а домен может иметь поля, которых в БД нет вовсе. Адаптер (`@Repository`) и маппер -- единственное место, которое знает обе модели сразу.
 
+Application объявляет output port по потребности сценария, а внешний JPA- или HTTP-адаптер реализует контракт. Use case не импортирует JpaRepository; бизнес-инварианты не переносят в persistence adapter.
+
 ## Q20. (!) Как Spring Boot вписывается в Clean Architecture?
 
-**Spring Boot в Clean Architecture -- это деталь самого внешнего слоя (Frameworks & Drivers), а не центр приложения.** Цель -- использовать удобства Spring (DI, транзакции, web), не пуская его аннотации внутрь домена и Use Cases. Тогда ядро остаётся переносимым и тестируемым без контейнера.
+Spring Boot создаёт web и persistence адаптеры, связывает их с use cases и управляет инфраструктурными механизмами. Домен может оставаться обычными Java-классами без Spring-аннотаций. Use case также может быть чистым POJO, который собирает `@Configuration`.
 
-Три практических правила:
-
-**1. DI-контейнер -- для wiring, но домен создаём явно, а не аннотациями:**
-
-```java
-// ПРАВИЛЬНО: Use Case создаётся через @Bean
-@Configuration
-public class UseCaseConfig {
-
-    @Bean
-    public TransferMoneyUseCase transferMoney(
-            LoadAccountPort loadAccount,
-            UpdateAccountPort updateAccount) {
-        return new TransferMoneyService(loadAccount, updateAccount,
-            new UuidTransactionIdGenerator());
-    }
-}
-
-// НЕПРАВИЛЬНО: Use Case аннотирован @Service
-@Service  // домен зависит от Spring!
-public class TransferMoneyService { ... }
-```
-
-Здесь `@Bean`-метод создаёт Use Case через `new`, поэтому сам класс `TransferMoneyService` остаётся свободным от Spring. Цена -- немного ручного wiring в `@Configuration`; выгода -- чистый домен.
-
-**2. `@Transactional` -- на адаптере или в конфигурации, но не внутри Use Case:**
-
-```java
-// Вариант 1: Transactional Adapter
-@Repository
-public class TransactionalAccountAdapter implements UpdateAccountPort {
-    @Transactional
-    @Override
-    public void update(Account account) { ... }
-}
-
-// Вариант 2: Transactional Use Case Proxy
-@Configuration
-public class UseCaseConfig {
-    @Bean
-    public TransferMoneyUseCase transferMoney(...) {
-        return new TransactionalUseCaseProxy<>(
-            new TransferMoneyService(...));
-    }
-}
-```
-
-**3. Spring-аннотации -- только в `adapter` и `config`:** простое правило, которое легко проверить ArchUnit-ом.
-
-| Аннотация | Допустимый слой |
-|-----------|----------------|
-| `@RestController`, `@RequestMapping` | `adapter.in.web` |
-| `@Repository`, `@Entity` | `adapter.out.persistence` |
-| `@Configuration`, `@Bean` | `config` |
-| `@Service`, `@Component` | `config` (если нужно) |
-| Ничего из Spring | `domain`, `application` |
+Другой допустимый компромисс — `@Service` на application-классе ради простой сборки. Тогда нужно честно понимать зависимость application от Spring и проверять, что бизнес-правила не переехали в controller или JPA-адаптер. Граница транзакции должна реально охватить нужные локальные изменения; Spring proxy применяется к внешним вызовам через proxy, а self-invocation его обходит. [Spring](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html).
 
 ## Q21. Как правильно передавать данные между слоями (DTO, Domain Model, Entity)?
 
-Главное правило: **у каждого слоя своя модель данных, и преобразование между ними происходит ровно на границе слоёв.** Один объект не путешествует через всю систему -- он перекладывается из формата в формат на каждом переходе.
+На границе переводят данные, если внешнее представление имеет другой контракт: HTTP-запрос, прикладная команда, доменный объект и JPA-запись могут быть разными типами. Это защищает бизнес-правила от изменения JSON, схемы БД и ошибок сериализации.
 
-```mermaid
-graph LR
-    HTTP["HTTP DTO<br/>(JSON)"] -->|Controller Mapper| REQ[Use Case<br/>Request]
-    REQ -->|Interactor| DOM[Domain<br/>Model]
-    DOM -->|Persistence Mapper| JPA[JPA Entity<br/>(DB row)]
-    DOM -->|Interactor| RESP[Use Case<br/>Response]
-    RESP -->|Controller Mapper| JSON["HTTP DTO<br/>(JSON)"]
-```
-
-Три типа моделей:
-
-```java
-// 1. HTTP DTO -- для API (adapter.in.web)
-public record CreateOrderApiRequest(
-    @NotBlank String customerId,
-    @NotEmpty List<OrderLineDto> items
-) {}
-
-// 2. Use Case Request/Response -- для бизнес-логики (application)
-public record CreateOrderRequest(
-    CustomerId customerId,
-    List<OrderLineData> items
-) {}
-
-// 3. JPA Entity -- для персистентности (adapter.out.persistence)
-@Entity
-@Table(name = "orders")
-class OrderJpaEntity {
-    @Id @GeneratedValue
-    private Long id;
-    private String customerId;
-    // ...
-}
-```
-
-Зачем три модели вместо одной: **внутренний слой никогда не видит модель внешнего**. Домен не знает ни о `@NotBlank` (валидация API), ни о `@Entity` (JPA) -- значит, изменение формата JSON или схемы таблицы не доходит до бизнес-логики.
-
-**Компромисс:** да, появляется бойлерплейт с мапперами. Но это осознанная плата: цена маппинга = цена независимости слоёв. На простом CRUD эта плата не окупается (см. Q27), на сложном долгоживущем домене -- окупается с лихвой.
+Отдельный класс на каждый переход не обязателен. Если простая внутренняя структура не несёт внешних аннотаций и не связывает независимые контракты, её можно передать без дополнительного маппера. Решение принимают по реальной границе изменений, а не по числу нарисованных колец.
 
 ## Q22. Как обрабатывать транзакции в Clean Architecture?
 
-**Транзакция -- инфраструктурная концепция, поэтому она не должна просачиваться в домен.** Но границу транзакции естественно проводить вокруг Use Case: один сценарий = одна атомарная операция. Задача -- задать эту границу снаружи, не зашивая `@Transactional` в чистый класс Interactor-а. Три способа:
+Транзакционная граница обычно охватывает **локальные** операции одного сценария, которые должны коммититься вместе. Само бизнес-правило не обязано знать `PlatformTransactionManager` или JDBC. Границу можно задать на вызываемом Spring-фасаде, декораторе, конфигурации или через явный исполнитель транзакции снаружи ядра.
 
-**1. `@Transactional` на фасаде/адаптере-обёртке:**
-
-```java
-@Component
-public class TransactionalCreateOrderFacade implements CreateOrderUseCase {
-
-    private final CreateOrderService delegate;
-
-    @Transactional
-    @Override
-    public CreateOrderResponse execute(CreateOrderRequest request) {
-        return delegate.execute(request);
-    }
-}
-```
-
-**2. Аспект (AOP) для Use Cases:**
-
-```java
-@Aspect
-@Component
-public class TransactionalUseCaseAspect {
-
-    @Around("execution(* com.example..application.port.in.*UseCase.*(..))")
-    public Object wrapInTransaction(ProceedingJoinPoint pjp)
-            throws Throwable {
-        return executeInTransaction(() -> {
-            try { return pjp.proceed(); }
-            catch (Throwable t) { throw new RuntimeException(t); }
-        });
-    }
-}
-```
-
-**3. Явный `TransactionTemplate` (Spring) в конфигурации:**
-
-```java
-@Configuration
-public class UseCaseConfig {
-
-    @Bean
-    public CreateOrderUseCase createOrder(
-            OrderRepository repo,
-            TransactionTemplate txTemplate) {
-        var service = new CreateOrderService(repo);
-        return request -> txTemplate.execute(
-            status -> service.execute(request));
-    }
-}
-```
-
-**Компромиссы:** фасад -- понятно, но многословно (класс на каждый Use Case); AOP -- лаконично, но «магия», которую трудно отследить в коде; `TransactionTemplate` -- максимально явно, ценой зависимости от Spring в `@Configuration` (а это допустимый слой). Чаще всего на практике выбирают AOP-обёртку для всех Use Cases или прагматичный `@Transactional` на сервисе, если команда сознательно идёт на лёгкое присутствие Spring в application-слое.
+`@Transactional` на application-сервисе — возможный прагматичный выбор, если зависимость от Spring принята. Проверяют реальный путь вызова: в proxy-режиме self-invocation не открывает новую транзакцию. Вызовы другой БД или внешнего HTTP-сервиса не становятся частью локального commit; для межсервисного процесса нужна отдельная схема согласования. [Spring transactions](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html).
 
 ## Q23. Какие преимущества для тестирования даёт Clean Architecture?
 
@@ -1416,25 +1092,9 @@ public ResponseEntity<OrderDto> create(@RequestBody CreateOrderDto dto) {
 
 ## Q27. Когда Clean Architecture -- это overkill?
 
-**Clean Architecture окупается только тогда, когда сложность домена перевешивает накладные расходы на слои, интерфейсы и мапперы.** Если домена почти нет, эти слои -- чистый налог без выгоды. Где она не оправдана:
+Полный набор интерфейсов, DTO и мапперов может стоить больше, чем защищает, если приложение почти не содержит бизнес-правил. Для простого CRUD или короткоживущего прототипа часто достаточно ясного разделения web, сценария и хранения без отдельного класса на каждое кольцо.
 
-**1. Простые CRUD-приложения** -- если вся логика сводится к "прочитай из БД / запиши в БД", дополнительные слои абстракции не несут ценности.
-
-**2. Прототипы и MVP** -- на этапе валидации идеи скорость разработки важнее архитектурной чистоты.
-
-**3. Маленькие микросервисы** -- сервис с 2-3 эндпоинтами и минимальной логикой будет перегружен слоями Clean Architecture.
-
-**4. Утилитарные библиотеки и инструменты** -- где нет сложного домена.
-
-**Когда Clean Architecture оправдана:**
-
-- Сложная бизнес-логика (финансы, логистика, ERP)
-- Долгоживущий проект (5+ лет)
-- Большая команда (нужны чёткие границы между модулями)
-- Высокая вероятность смены технологий
-- Необходимость обширного unit-тестирования домена
-
-> Совет на собеседовании: покажите, что видите компромисс. «Clean Architecture -- всегда правильно» -- слабый ответ. «Применяю, когда сложность домена оправдывает overhead, и не применяю на CRUD» -- сильный, потому что демонстрирует инженерное суждение, а не следование моде.
+Граница определяется не числом endpoints и не размером команды, а ожидаемыми изменениями, инвариантами и стоимостью тестирования. Можно начать с одной явной границы к внешней системе и усилить модульность по мере роста домена. `Clean Architecture` — набор правил зависимостей, а не обязательный шаблон каталога.
 
 ## Q28. (!) Как избежать анемичной доменной модели в Clean Architecture?
 
@@ -1606,421 +1266,41 @@ modules/
 
 ## Q31. (!) Как правильно реализовать Use Case Interactor с несколькими портами?
 
-**Interactor с несколькими портами строится по одному правилу: каждая внешняя потребность -- отдельный Output Port, и все они инжектируются через конструктор.** Реализуя Input Port, Interactor оркеструет работу: проверяет бизнес-условия, дёргает домен и обращается наружу через узкие порты (репозиторий, инвентарь, уведомления). Сам он по-прежнему не знает ни о JPA, ни о Kafka -- только об интерфейсах.
+Interactor получает только нужные ему порты через конструктор. Он решает, в каком порядке проверять правила и вызывать доменные операции; конкретные JPA, HTTP и брокерные классы остаются в адаптерах. Если список портов разрастается, проверяют, не объединены ли несколько сценариев в один класс.
 
-```java
-// --- Input Port (интерфейс Use Case) ---
-public interface PlaceOrderUseCase {
-    PlaceOrderResult execute(PlaceOrderCommand command);
-}
-
-// --- Output Ports (зависимости Use Case) ---
-public interface OrderRepository {
-    void save(Order order);
-    Optional<Order> findById(OrderId id);
-}
-
-public interface InventoryPort {
-    boolean checkAvailability(ProductId productId, int quantity);
-    void reserve(ProductId productId, int quantity);
-}
-
-public interface OrderNotificationPort {
-    void notifyOrderPlaced(Order order);
-}
-
-// --- Use Case Interactor (Application слой) ---
-@UseCase  // кастомная аннотация = @Service
-@Transactional
-public class PlaceOrderService implements PlaceOrderUseCase {
-
-    private final OrderRepository orderRepository;
-    private final InventoryPort inventory;
-    private final OrderNotificationPort notifier;
-
-    public PlaceOrderService(
-            OrderRepository orderRepository,
-            InventoryPort inventory,
-            OrderNotificationPort notifier) {
-        this.orderRepository = orderRepository;
-        this.inventory = inventory;
-        this.notifier = notifier;
-    }
-
-    @Override
-    public PlaceOrderResult execute(PlaceOrderCommand command) {
-        // 1. Бизнес-валидация (не инфраструктурная)
-        if (!inventory.checkAvailability(command.productId(), command.quantity())) {
-            return PlaceOrderResult.failure("Product not available");
-        }
-
-        // 2. Создание агрегата через фабричный метод
-        Order order = Order.create(command.productId(),
-                                   command.quantity(),
-                                   command.customerId());
-
-        // 3. Резервирование инвентаря
-        inventory.reserve(command.productId(), command.quantity());
-
-        // 4. Сохранение агрегата
-        orderRepository.save(order);
-
-        // 5. Side-effect через Output Port
-        notifier.notifyOrderPlaced(order);
-
-        return PlaceOrderResult.success(order.getId());
-    }
-}
-```
-
-```mermaid
-graph LR
-    Controller -->|PlaceOrderCommand| PlaceOrderUseCase
-    PlaceOrderService -->|implements| PlaceOrderUseCase
-    PlaceOrderService -->|uses| OrderRepository
-    PlaceOrderService -->|uses| InventoryPort
-    PlaceOrderService -->|uses| OrderNotificationPort
-    JpaOrderRepository -->|implements| OrderRepository
-    KafkaNotifier -->|implements| OrderNotificationPort
-    InventoryServiceAdapter -->|implements| InventoryPort
-```
-
-Обратите внимание на порядок шагов в `execute`: сначала бизнес-валидация (проверка наличия), потом создание агрегата, и только затем побочные эффекты (резерв, сохранение, уведомление). Это не случайность -- дешёвую проверку делаем раньше дорогих операций, чтобы не резервировать инвентарь под заведомо неудачный заказ.
-
-**Ключевые правила:**
-- **Один порт -- одна потребность:** `OrderRepository`, `InventoryPort`, `OrderNotificationPort` разделены, а не свалены в «god-сервис». Так каждый порт легко мокать и подменять.
-- `PlaceOrderService` **не знает** о `JPA`, `Kafka`, `HTTP` -- только о портах
-- Все зависимости инжектируются через конструктор -- это и делает класс тестируемым через `new` без контейнера
-- `@Transactional` на Use Case допустим, только если команда сознательно считает transaction management частью application-слоя (компромисс из Q22)
+Граница локальной транзакции охватывает только ресурсы, которые действительно участвуют в ней. Вызов внешнего Inventory API и последующая публикация сообщения не становятся атомарными от `@Transactional` на interactor. Для надёжного события используют outbox или другой согласованный механизм; для межсервисной компенсации проектируют отдельный процесс. [Spring transactions](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html).
 
 ## Q32. Как организовать обработку ошибок в Use Case без исключений инфраструктуры?
 
-**Главное правило: инфраструктурные исключения (`SQLException`, `IOException`, `HttpClientException`) не должны просачиваться в Use Case или домен.** Иначе домен косвенно узнаёт о технологии хранения. Различают два вида ошибок и обрабатывают их по-разному: ожидаемые бизнес-исходы и технические сбои.
+Ожидаемый бизнес-исход, например «недостаточно средств», выражают прикладным результатом или доменным исключением. Web-адаптер переводит его в HTTP-ответ; use case не возвращает `ResponseEntity`.
 
-**Ожидаемый бизнес-исход -- паттерн Result/Either (явный возврат):** если «товара нет» -- это нормальная ветка сценария, а не авария, её честнее вернуть значением, а не бросать исключение.
-
-```java
-// Sealed interface для типизированного результата
-public sealed interface PlaceOrderResult {
-    record Success(OrderId orderId) implements PlaceOrderResult {}
-    record Failure(String reason, ErrorCode code) implements PlaceOrderResult {}
-
-    static PlaceOrderResult success(OrderId id) { return new Success(id); }
-    static PlaceOrderResult failure(String reason) {
-        return new Failure(reason, ErrorCode.BUSINESS_RULE_VIOLATION);
-    }
-}
-
-// Использование в контроллере (Adapter слой)
-@PostMapping("/orders")
-public ResponseEntity<?> placeOrder(@RequestBody PlaceOrderRequest request) {
-    PlaceOrderResult result = placeOrderUseCase.execute(
-        new PlaceOrderCommand(request.productId(), request.quantity(), currentUserId())
-    );
-    return switch (result) {
-        case PlaceOrderResult.Success s ->
-            ResponseEntity.ok(new OrderCreatedResponse(s.orderId()));
-        case PlaceOrderResult.Failure f ->
-            ResponseEntity.badRequest().body(new ErrorResponse(f.reason()));
-    };
-}
-```
-
-Бонус: компилятор через `sealed`-интерфейс и `switch` заставляет контроллер обработать все исходы -- забыть ветку `Failure` не выйдет.
-
-**Доменные исключения -- допустимы, но только определённые внутри домена:** для нарушения инвариантов исключение уместно, если оно «своё», а не инфраструктурное. А вот инфраструктурные ошибки адаптер обязан перехватить и перевести в доменные на границе.
-
-```java
-// Исключение определено в domain слое — допустимо
-public class InsufficientInventoryException extends DomainException {
-    public InsufficientInventoryException(ProductId id) {
-        super("Product " + id + " not available");
-    }
-}
-
-// Output Port оборачивает инфраструктурные ошибки:
-public class JpaOrderRepository implements OrderRepository {
-    @Override
-    public void save(Order order) {
-        try {
-            jpaRepo.save(mapper.toEntity(order));
-        } catch (DataIntegrityViolationException e) {
-            // Преобразуем инфраструктурное исключение в доменное
-            throw new OrderAlreadyExistsException(order.getId());
-        }
-    }
-}
-```
+Технический сбой БД или сети не нужно маскировать под нарушение бизнес-правила. Адаптер может преобразовать низкоуровневое исключение в прикладной тип сбоя с сохранением причины. Слой обработки ошибок выбирает retry, отказ или недоступность, а журнал сохраняет диагностику. Один `null` для всех ошибок теряет смысл и не даёт надёжного контракта.
 
 ## Q33. (!) Как проверить соблюдение Dependency Rule через ArchUnit?
 
-**ArchUnit описывает Dependency Rule как набор JUnit-правил, и нарушение валит сборку на CI -- без опоры на бдительность ревьюера.** Ниже -- готовый набор: отдельные правила «домен не зависит от X», комплексное `layeredArchitecture()` для всей системы слоёв и структурное правило «все порты -- интерфейсы».
+ArchUnit проверяет зависимости скомпилированных Java-классов обычным тестом. Правила можно выразить как запрет домену зависеть от web/JPA-пакетов и application зависеть от адаптеров, либо описать допустимые слои. Проверка должна охватывать **реальные** пакеты проекта, включая вложенные feature-пакеты.
 
-```java
-@AnalyzeClasses(packages = "com.example.order",
-                importOptions = ImportOption.DoNotIncludeTests.class)
-class DependencyRuleTest {
-
-    @ArchTest
-    static final ArchRule domain_должен_не_зависеть_от_инфраструктуры =
-        noClasses()
-            .that().resideInAPackage("..domain..")
-            .should().dependOnClassesThat()
-            .resideInAnyPackage("..adapter..", "..infrastructure..",
-                                "org.springframework..", "jakarta.persistence..")
-            .because("Domain layer must be framework-independent");
-
-    @ArchTest
-    static final ArchRule usecase_не_должен_зависеть_от_adapter =
-        noClasses()
-            .that().resideInAPackage("..application..")
-            .should().dependOnClassesThat()
-            .resideInAPackage("..adapter..")
-            .because("Use cases must not depend on adapters");
-
-    @ArchTest
-    static final ArchRule слоистая_архитектура =
-        layeredArchitecture()
-            .consideringAllDependencies()
-            .layer("Domain").definedBy("..domain..")
-            .layer("Application").definedBy("..application..")
-            .layer("Adapter").definedBy("..adapter..")
-            .layer("Config").definedBy("..config..")
-            .whereLayer("Domain").mayNotAccessAnyLayer()
-            .whereLayer("Application").mayOnlyAccessLayers("Domain")
-            .whereLayer("Adapter").mayOnlyAccessLayers("Application", "Domain")
-            .whereLayer("Config").mayAccessLayers("Domain", "Application", "Adapter");
-
-    @ArchTest
-    static final ArchRule порты_должны_быть_интерфейсами =
-        classes()
-            .that().resideInAPackage("..application.port..")
-            .should().beInterfaces()
-            .because("All ports must be interfaces for Dependency Inversion");
-}
-```
-
-**Структура пакетов для работы правил:**
-
-```
-com.example.order
-  domain/
-    model/         Order, OrderId, OrderStatus
-    exception/     DomainException, InsufficientInventoryException
-  application/
-    port/
-      in/          PlaceOrderUseCase, CancelOrderUseCase
-      out/         OrderRepository, InventoryPort, OrderNotificationPort
-    service/       PlaceOrderService, CancelOrderService
-  adapter/
-    in/
-      web/         OrderController, OrderRequest, OrderResponse
-    out/
-      persistence/ JpaOrderRepository, OrderJpaEntity, OrderMapper
-      messaging/   KafkaOrderNotifier
-  config/          BeanConfiguration, SecurityConfig
-```
-
-Правила работают только при дисциплине именования пакетов: `layeredArchitecture()` и шаблоны вроде `..domain..` опираются именно на эту структуру. Запуск -- обычный `./gradlew test`: нарушение Dependency Rule валит сборку с понятным указанием, какой класс какой пакет импортировал нелегально.
+Перед CI проверяют, что правило выбрало ожидаемые классы и падает на намеренном нарушении; пустая область проверки создаёт ложное чувство защиты. Архитектурный тест не оценивает смысл бизнес-решения и не заменяет ревью. [ArchUnit User Guide](https://www.archunit.org/userguide/html/000_Index.html).
 
 ## Q34. (!) Чем Clean Architecture отличается от Hexagonal (Ports & Adapters) — ключевые отличия?
 
-**Обе решают одну задачу -- изолировать бизнес-логику от инфраструктуры через инверсию зависимостей -- и отличаются в основном детализацией.** Если в двух словах: Hexagonal проще и абстрактнее (ядро + порты + адаптеры), Clean детальнее режет само ядро на Entities и Use Cases.
+Оба подхода отделяют приложение от внешних деталей. **Hexagonal Architecture** называет границу портом, а технологическую реализацию адаптером; внешние агенты могут инициировать сценарий или обслуживать потребность приложения. **Clean Architecture** дополнительно показывает отдельные политики Entities и Use Cases, а также слои Interface Adapters и Frameworks.
 
-| Аспект | Clean Architecture | Hexagonal Architecture |
-|--------|-------------------|----------------------|
-| Автор / год | Robert C. Martin, 2012 | Alistair Cockburn, 2005 |
-| Терминология | Entities, Use Cases, Interface Adapters, Frameworks | Application, Ports, Adapters |
-| Число слоёв | 4 концентрических слоя | 2 зоны: Application + External |
-| Центр | Entities (бизнес-правила) | Application (Use Cases) |
-| Тип портов | Явно разделены на Input/Output | Driving (primary) / Driven (secondary) |
-| Детализация | Описывает каждый слой детально | Более абстрактна, фокус на портах |
-| Визуальная метафора | Концентрические окружности | Шестиугольник с портами по граням |
-
-**Ключевое сходство:** оба паттерна реализуют Dependency Inversion — бизнес-логика не зависит ни от чего внешнего.
-
-**Ключевое отличие:** Clean Architecture дополнительно разделяет Enterprise Business Rules (Entities) и Application Business Rules (Use Cases), тогда как Hexagonal видит их как единое ядро Application.
-
-```mermaid
-graph LR
-    subgraph "Clean Architecture"
-        E[Entities] --> UC[Use Cases] --> IA[Interface Adapters] --> FW[Frameworks]
-    end
-    subgraph "Hexagonal"
-        AP[Application Core] -->|Output Port| DA[Driven Adapter]
-        PA[Driving Adapter] -->|Input Port| AP
-    end
-```
-
-**На практике** разница почти стирается: большинство команд называют это «Clean/Hexagonal» взаимозаменяемо и берут лучшее из обоих -- слово «порт» из Hexagonal и явное разделение Entities/Use Cases из Clean. Спорить, «что правильнее», на собеседовании смысла нет; ценнее показать, что вы понимаете общий принцип за обоими названиями.
+Это не взаимоисключающие схемы. Порты и адаптеры можно использовать внутри Clean Architecture. В обоих случаях исходные зависимости направляют к ядру: `Controller → Use Case → Entity`, а для внешней потребности — `Use Case → Port ← Persistence Adapter`. Стрелка вызова во время работы может идти в обратную сторону. Количество пакетов и способ деплоя ни один подход не фиксирует. [Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html), [Cockburn](https://alistair.cockburn.us/hexagonal-architecture/).
 
 ## Q35. Как реализовать Presenter паттерн в Clean Architecture?
 
-**Presenter -- компонент слоя Interface Adapters, который превращает результат Use Case в формат View (UI, REST-ответ), чтобы сам Use Case не знал о формате вывода.** Хитрость в инверсии: Use Case не возвращает результат, а отдаёт его в Output Port, который реализует Presenter. Так направление вывода тоже подчиняется правилу зависимостей.
+Presenter преобразует результат use case в форму, удобную конкретному внешнему представлению. В классическом варианте Clean Architecture use case вызывает выходную границу, а presenter реализует её и строит view model.
 
-**Классический поток (Uncle Bob):**
+Для обычного REST endpoint отдельный presenter не всегда нужен: use case может вернуть прикладной результат, а controller или mapper превратит его в HTTP DTO. Важно, чтобы сам use case не импортировал `ResponseEntity`, JSON-аннотации и компоненты UI. Выбор формы зависит от сложности презентации, а не от обязательного шаблона.
 
-```
-Controller → Use Case → Output Port ← Presenter → View Model → View
-```
-
-Use Case вызывает Output Port (интерфейс), Presenter реализует его и формирует View Model.
-
-```java
-// Output Port — интерфейс в application layer
-public interface PlaceOrderOutputPort {
-    void present(PlaceOrderResult result);
-}
-
-// Use Case Interactor
-@Service
-public class PlaceOrderInteractor implements PlaceOrderUseCase {
-    private final PlaceOrderOutputPort outputPort;
-    private final OrderRepository orderRepository;
-
-    public void placeOrder(PlaceOrderCommand cmd) {
-        Order order = Order.create(cmd.getItems(), cmd.getCustomerId());
-        orderRepository.save(order);
-        // Вызываем Output Port — не знаем кто будет обрабатывать
-        outputPort.present(PlaceOrderResult.success(order.getId()));
-    }
-}
-
-// Presenter в adapter layer
-public class PlaceOrderJsonPresenter implements PlaceOrderOutputPort {
-    private OrderResponse viewModel;
-
-    @Override
-    public void present(PlaceOrderResult result) {
-        // Формируем View Model для HTTP ответа
-        this.viewModel = OrderResponse.builder()
-            .orderId(result.getOrderId().value())
-            .status("CREATED")
-            .message("Order placed successfully")
-            .build();
-    }
-
-    public OrderResponse getViewModel() {
-        return viewModel;
-    }
-}
-
-// Controller
-@RestController
-public class OrderController {
-    private final PlaceOrderUseCase useCase;
-    private final PlaceOrderJsonPresenter presenter;
-
-    @PostMapping("/orders")
-    public ResponseEntity<OrderResponse> placeOrder(@RequestBody OrderRequest request) {
-        useCase.placeOrder(new PlaceOrderCommand(request.getItems()));
-        return ResponseEntity.ok(presenter.getViewModel());
-    }
-}
-```
-
-**Альтернатива -- Return Value подход:** Use Case просто возвращает Response Model, минуя Presenter. Проще и привычнее, но Use Case теперь знает о структуре ответа. В Spring Boot большинство команд берут именно этот вариант -- классический Presenter с состоянием плохо ложится на stateless-бины.
-
-**Когда оправдан полноценный Presenter:** когда один Use Case должен выдавать несколько форматов вывода (JSON, XML, gRPC, разные view-модели) без правок в самом Use Case. Если формат один -- лишняя церемония, берите Return Value.
+Presenter не является доменной Entity и не форматирует JSON внутри ядра. Для простого ответа controller может построить view model из прикладного DTO без отдельного output boundary.
 
 ## Q36. Как организовать тестирование на каждом уровне Clean Architecture?
 
-**Каждый слой тестируется своим типом теста, и чем ближе слой к ядру, тем дешевле и многочисленнее тесты.** Clean Architecture даёт это «бесплатно»: раз зависимости направлены внутрь, внутренние слои можно проверять без внешних. Пять уровней снизу вверх:
+Разделённые границы позволяют проверить доменные правила обычными unit-тестами без Spring и БД. Use case тестируют с fake или mock реализациями нужных портов. Адаптер хранения проверяют с настоящим механизмом доступа к данным, web-адаптер — с HTTP-маршрутизацией и сериализацией.
 
-**Уровень 1 -- Domain (Entities): чистые unit-тесты.** Ни моков, ни Spring -- только конструктор и assert:
-
-```java
-// Нет моков, нет Spring — только бизнес-логика
-class OrderTest {
-    @Test
-    void should_calculate_total_correctly() {
-        Order order = Order.create(List.of(
-            new OrderItem(new Money(100, "RUB"), 2),
-            new OrderItem(new Money(50, "RUB"), 1)
-        ));
-        assertThat(order.getTotal()).isEqualTo(new Money(250, "RUB"));
-    }
-
-    @Test
-    void should_not_allow_empty_order() {
-        assertThatThrownBy(() -> Order.create(Collections.emptyList()))
-            .isInstanceOf(EmptyOrderException.class);
-    }
-}
-```
-
-**Уровень 2 -- Application (Use Cases): unit-тесты с мок-портами.** Реальная инфраструктура заменена моками Output Ports:
-
-```java
-class PlaceOrderInteractorTest {
-    @Mock OrderRepository orderRepository;
-    @Mock InventoryPort inventoryPort;
-    @Mock PlaceOrderOutputPort outputPort;
-    @InjectMocks PlaceOrderInteractor interactor;
-
-    @Test
-    void should_save_order_and_notify() {
-        when(inventoryPort.isAvailable(any())).thenReturn(true);
-
-        interactor.placeOrder(new PlaceOrderCommand(List.of(item1)));
-
-        verify(orderRepository).save(any(Order.class));
-        verify(outputPort).present(argThat(r -> r.isSuccess()));
-    }
-}
-```
-
-**Уровень 3 -- Adapter (Infrastructure): интеграционные тесты.** Здесь как раз нужна реальная БД (Testcontainers), но изолированно от бизнес-логики:
-
-```java
-// Тест JPA адаптера с реальной БД (Testcontainers)
-@DataJpaTest
-@Import(JpaOrderRepository.class)
-class JpaOrderRepositoryTest {
-    @Autowired JpaOrderRepository repository;
-
-    @Test
-    void should_persist_and_retrieve_order() {
-        Order order = TestOrderBuilder.defaultOrder().build();
-        repository.save(order);
-        Optional<Order> found = repository.findById(order.getId());
-        assertThat(found).isPresent();
-    }
-}
-```
-
-**Уровень 4 -- Controller (Adapter In): тесты с MockMvc.** Use Case замокан, проверяется только web-слой (маршрутизация, сериализация, статусы):
-
-```java
-@WebMvcTest(OrderController.class)
-class OrderControllerTest {
-    @MockBean PlaceOrderUseCase useCase;
-    @Autowired MockMvc mvc;
-
-    @Test
-    void should_return_201_on_successful_order() throws Exception {
-        mvc.perform(post("/orders").contentType(APPLICATION_JSON)
-            .content("{\"items\":[...]}"))
-           .andExpect(status().isCreated());
-        verify(useCase).placeOrder(any());
-    }
-}
-```
-
-**Уровень 5 -- E2E: полные сценарии через API.** Самые медленные и немногочисленные -- реальный путь HTTP → Spring → БД:
-
-```java
-@SpringBootTest(webEnvironment = RANDOM_PORT)
-@Testcontainers
-class PlaceOrderE2ETest {
-    // Тест реального HTTP → Spring → DB сценария
-}
-```
-
-**Почему такая пирамида выгодна:**
-- Domain и Use Case тесты идут секунды -- нет Spring Context, нет БД; их можно держать тысячами
-- Инфраструктурные тесты изолированы от бизнес-логики и не дублируют её проверки
-- Смена БД ломает только тесты адаптеров, но не тесты Use Cases -- логика проверена отдельно от хранилища
+Сквозные тесты остаются нужны для конфигурации, транзакций и ключевых пользовательских потоков. Никакая схема пакетов не создаёт тесты «бесплатно»: нужно проверить, что fake действительно отражает контракт порта, а wiring связывает правильные реализации. Для Spring можно использовать подходящие test slices, например `@DataJpaTest` для JPA и `@WebMvcTest` для MVC, если они соответствуют фактическому стеку.
 
 ## Q37. Как реализовать Dependency Injection без Spring IoC контейнера?
 
@@ -2081,272 +1361,27 @@ class PlaceOrderIntegrationTest {
 
 ## Q38. Как интегрировать агрегаты и Domain Events в Clean Architecture?
 
-**Агрегаты из DDD ложатся прямо в слой Entities, а Domain Events решают тонкий вопрос: агрегат должен сообщить о случившемся, но не имеет права знать о Kafka.** Решение -- разделить генерацию и доставку: агрегат лишь накапливает события в себе, Use Case забирает их и отдаёт в Output Port, а транспорт прячется за адаптером.
+Агрегат может регистрировать доменные факты во время изменения своего состояния, не зная Kafka или HTTP. Use case получает эти факты после проверки инвариантов и передаёт наружу через подходящий порт или сохраняет их вместе с изменением агрегата.
 
-**Агрегат генерирует события, но не публикует их:**
-
-```java
-// Domain layer — нет зависимостей от инфраструктуры
-public class Order {
-    private final OrderId id;
-    private OrderStatus status;
-    private final List<OrderItem> items;
-
-    // Список событий — хранится в агрегате до публикации
-    private final List<DomainEvent> domainEvents = new ArrayList<>();
-
-    public static Order place(PlaceOrderCommand cmd) {
-        Order order = new Order(OrderId.newId(), cmd.getItems());
-        // Регистрируем событие — не публикуем напрямую
-        order.domainEvents.add(new OrderPlacedEvent(order.id, order.items));
-        return order;
-    }
-
-    public void confirm() {
-        if (this.status != OrderStatus.PENDING) {
-            throw new OrderStateException("Can only confirm PENDING orders");
-        }
-        this.status = OrderStatus.CONFIRMED;
-        this.domainEvents.add(new OrderConfirmedEvent(this.id));
-    }
-
-    public List<DomainEvent> pullDomainEvents() {
-        List<DomainEvent> events = List.copyOf(this.domainEvents);
-        this.domainEvents.clear();
-        return events;
-    }
-}
-```
-
-Приём с `pullDomainEvents()` важен: агрегат отдаёт накопленные события и очищает список, поэтому событие не опубликуется дважды и агрегат остаётся чистым после сохранения.
-
-**Use Case забирает события и публикует их через Output Port:**
-
-```java
-// Output Port в application layer
-public interface DomainEventPublisher {
-    void publish(List<DomainEvent> events);
-}
-
-// Use Case Interactor
-@Service
-public class PlaceOrderInteractor implements PlaceOrderUseCase {
-    private final OrderRepository orderRepository;
-    private final DomainEventPublisher eventPublisher;
-
-    @Override
-    @Transactional
-    public void placeOrder(PlaceOrderCommand cmd) {
-        Order order = Order.place(cmd);
-        orderRepository.save(order);
-        // После сохранения — публикуем события
-        eventPublisher.publish(order.pullDomainEvents());
-    }
-}
-
-// Adapter реализует публикацию через Spring Events или Kafka
-@Component
-public class SpringDomainEventPublisher implements DomainEventPublisher {
-    private final ApplicationEventPublisher publisher;
-
-    @Override
-    public void publish(List<DomainEvent> events) {
-        events.forEach(publisher::publishEvent);
-    }
-}
-```
-
-**Ключевые правила:**
-- Агрегат генерирует события, но ничего не знает о транспорте (Kafka, Spring Events) -- это разделяет «что произошло» и «как доставить»
-- Output Port `DomainEventPublisher` -- граница между Use Case и инфраструктурой; сменить Spring Events на Kafka можно одним новым адаптером
-- Публикация идёт **после** успешной записи в БД (в той же транзакции либо через Outbox Pattern) -- иначе подписчики узнают о заказе, которого в БД нет
+`repository.save(order)` и затем `publisher.publish(events)` — два независимых эффекта, даже если метод помечен `@Transactional`: при отказе между ними сообщение может потеряться, а публикация до commit может сообщить о незафиксированном изменении. Если событие должно надёжно уйти после commit, его записывают в outbox той же локальной транзакцией и публикуют отдельно. Domain Event не обязательно означает Event Sourcing.
 
 ## Q39. Что такое Screaming Architecture и как она связана с Clean Architecture?
 
-**Screaming Architecture -- принцип Роберта Мартина: структура проекта должна кричать о предметной области, а не о технологиях.** Идея проста: открыв корневые пакеты, новый разработчик должен сразу понять, что делает система (заказы, платежи, каталог), а не на каком фреймворке она написана. Верхний уровень -- это бизнес, а не `controllers/services/repositories`.
+**Screaming Architecture** означает, что верхний уровень проекта рассказывает о предметной области и сценариях, а не только о фреймворке. Папки `orders`, `payments`, `inventory` помогают увидеть назначение системы раньше, чем `controllers`, `services`, `repositories`.
 
-**Плохо — структура кричит о технологиях:**
-
-```
-com.example
-  controllers/      ← видны технологии
-    UserController
-    OrderController
-  services/
-    UserService
-    OrderService
-  repositories/
-    UserRepository
-    OrderRepository
-```
-
-**Хорошо — структура кричит о предметной области:**
-
-```
-com.example
-  orders/           ← видна предметная область
-    PlaceOrderUseCase
-    CancelOrderUseCase
-    Order
-    OrderRepository
-  users/
-    RegisterUserUseCase
-    User
-    UserRepository
-  catalog/
-    SearchProductsUseCase
-    Product
-```
-
-**Связь с Clean Architecture:** это два ортогональных решения. Clean Architecture определяет *направление зависимостей* между слоями, Screaming Architecture -- *как назвать и сгруппировать пакеты* верхнего уровня. Можно соблюдать Dependency Rule, но иметь «кричащую о технологиях» структуру -- и наоборот. Сильнее всего они вместе: features наверху, слои Clean Architecture -- внутри каждой feature.
-
-**Практическая реализация в Spring Boot:**
-
-```
-com.example.ordering
-  domain/              # Domain Entities
-    Order, OrderItem, OrderStatus
-  application/         # Use Cases
-    PlaceOrderUseCase, PlaceOrderCommand
-    PlaceOrderInteractor
-  adapter/
-    in/web/            # REST adapter
-      OrderController
-    out/persistence/   # JPA adapter
-      JpaOrderRepository
-```
-
-**Screaming Architecture + Feature слайсы:** организация по features (`orders/`, `users/`, `catalog/`) с внутренней Clean Architecture структурой внутри каждой feature — наиболее распространённый подход в современных проектах.
+Этот принцип совместим с Clean Architecture: внутри бизнес-области по-прежнему можно проверять направление зависимостей между доменом, сценарием и адаптерами. Сами названия папок ничего не гарантируют — важны реальные импорты и границы изменений. [Martin](https://blog.cleancoder.com/uncle-bob/2011/09/30/Screaming-Architecture.html).
 
 ## Q40. (!) Как эволюционировать от Clean Architecture к Vertical Slice Architecture?
 
-**Vertical Slice -- альтернатива, где код режут по фичам (use cases), а не по слоям; каждый «срез» самодостаточен: контроллер, логика, доступ к данным в одном месте.** Переход от Clean Architecture к Vertical Slices -- это не «отказ от чистоты», а смена приоритета: с переиспользования общих слоёв на локальность изменений внутри фичи. Делать его стоит, когда слои Clean Architecture начинают мешать, а не помогать.
+Vertical Slice группирует код по бизнес-сценарию, чтобы изменение одной фичи требовало меньше переходов между общими техническими папками. Переход можно делать постепенно: новый сценарий разместить рядом со своим входом, обработчиком и адаптерами, а старый код переносить по мере работы над ним.
 
-**Сравнение подходов:**
-
-| Аспект | Clean Architecture | Vertical Slice |
-|--------|-------------------|----------------|
-| Организация | По слоям (Domain, Application, Adapter) | По фичам (PlaceOrder, CancelOrder) |
-| Связность | Высокая между слоями одного модуля | Высокая внутри фичи, низкая между фичами |
-| Переиспользование | Domain и Use Cases переиспользуются | Общий код вынесен в shared/ |
-| Сложность | Высокая (много абстракций) | Ниже для простых CRUD фич |
-| Изменения | Затрагивают несколько слоёв | Локализованы внутри фичи |
-
-**Эволюционный переход:**
-
-**Шаг 1 — Screaming Architecture (промежуточный шаг):**
-```
-feature/
-  orders/            # организовано по доменам
-    domain/
-    application/
-    adapter/
-  users/
-```
-
-**Шаг 2 — Vertical Slices (полный переход):**
-```
-feature/
-  place-order/
-    PlaceOrderController.java
-    PlaceOrderCommand.java
-    PlaceOrderHandler.java      # содержит бизнес-логику
-    PlaceOrderValidator.java
-    OrderCreatedEvent.java
-  cancel-order/
-    CancelOrderController.java
-    CancelOrderHandler.java
-  shared/
-    domain/Order.java           # общие доменные объекты
-    persistence/OrderRepository.java
-```
-
-**Когда Vertical Slices лучше Clean Architecture:**
-- Команда маленькая (2-5 человек)
-- Фичи независимы и редко переиспользуют бизнес-логику
-- Нужно быстро добавлять новые endpoints
-- Проект не предполагает смены технологий
-
-**Когда Clean Architecture лучше:**
-- Сложная доменная логика, требующая изоляции
-- Нужна тестируемость Use Cases без инфраструктуры
-- Команда большая, несколько команд работают над одним модулем
-- Планируется смена БД или фреймворка
-
-**Гибридный подход (чаще всего и побеждает):** Vertical Slices задают верхнеуровневую разбивку по фичам, а внутри сложных фич применяется Clean Architecture. Простые CRUD-срезы остаются плоскими, сложные -- получают слои. Так платишь за абстракции только там, где они окупаются.
+Общие доменные инварианты не дублируют механически в каждом срезе. Внутри сложной фичи по-прежнему могут действовать Dependency Rule и чистая модель; простая CRUD-фича может быть плоской. Цель — локальность изменения при ясных границах, а не отказ от независимости ядра по факту переименования папок. [Bogard](https://www.jimmybogard.com/vertical-slice-architecture/).
 
 ## Q41. Как правильно реализовать пакетную структуру Spring Boot проекта в стиле Clean Architecture на практике?
 
-**На практике вся структура сводится к четырём пакетам верхнего уровня (`domain`, `application`, `adapter`, `config`), и весь вопрос -- что именно класть в каждый и куда направлять зависимости.** Ниже -- эталонная раскладка одной feature и правила, по которым в неё попадают классы.
+Практичная структура Spring Boot показывает **предметные области и зависимости**. Например, в `orders/` могут быть `domain/Order`, `application/PlaceOrder`, `application/OrderStore`, `adapter/in/OrderController`, `adapter/out/JpaOrderStore` и внешняя конфигурация. Это пример, а не стандарт из фиксированных четырёх пакетов.
 
-**Полная структура проекта:**
-
-```
-src/main/java/com/example/ordering/
-│
-├── domain/                          # Слой 1: Enterprise Business Rules
-│   ├── model/
-│   │   ├── Order.java               # Агрегат
-│   │   ├── OrderId.java             # Value Object
-│   │   ├── OrderItem.java
-│   │   ├── OrderStatus.java
-│   │   └── Money.java
-│   ├── event/
-│   │   ├── OrderPlacedEvent.java    # Domain Events
-│   │   └── OrderConfirmedEvent.java
-│   └── exception/
-│       ├── InsufficientInventoryException.java
-│       └── OrderNotFoundException.java
-│
-├── application/                     # Слой 2: Application Business Rules
-│   ├── port/
-│   │   ├── in/                      # Input Ports (Use Case интерфейсы)
-│   │   │   ├── PlaceOrderUseCase.java
-│   │   │   └── CancelOrderUseCase.java
-│   │   └── out/                     # Output Ports (зависимости)
-│   │       ├── OrderRepository.java
-│   │       ├── InventoryPort.java
-│   │       └── DomainEventPublisher.java
-│   ├── service/                     # Use Case Interactors
-│   │   ├── PlaceOrderService.java
-│   │   └── CancelOrderService.java
-│   └── dto/                         # Command/Response объекты
-│       ├── PlaceOrderCommand.java
-│       └── PlaceOrderResult.java
-│
-├── adapter/                         # Слой 3: Interface Adapters
-│   ├── in/
-│   │   └── web/                     # REST адаптеры (Driving)
-│   │       ├── OrderController.java
-│   │       ├── OrderRequest.java
-│   │       ├── OrderResponse.java
-│   │       └── OrderMapper.java
-│   └── out/
-│       ├── persistence/             # JPA адаптеры (Driven)
-│       │   ├── JpaOrderRepository.java
-│       │   ├── OrderJpaEntity.java
-│       │   └── OrderEntityMapper.java
-│       ├── messaging/               # Kafka адаптеры
-│       │   └── KafkaOrderEventPublisher.java
-│       └── inventory/               # HTTP адаптеры
-│           └── InventoryHttpAdapter.java
-│
-└── config/                          # Слой 4: Frameworks & Config
-    ├── BeanConfiguration.java       # Composition Root
-    ├── SecurityConfig.java
-    └── PersistenceConfig.java
-```
-
-**Правила раскладки (по слоям, от ядра наружу):**
-1. `domain/` -- ноль аннотаций Spring, ноль `jakarta.persistence`, Lombok по вкусу. Здесь живёт самое стабильное.
-2. `application/port/in/` -- интерфейсы Use Cases; `@Transactional` допустим на реализациях как осознанный компромисс (Q22)
-3. `application/port/out/` -- интерфейсы для инфраструктуры, чистая Java; их реализуют адаптеры
-4. `adapter/` -- единственное место для `@Component`, `@Repository`, `@RestController` и знания о конкретных технологиях
-5. `config/` -- Composition Root: `@Configuration`, `@Bean`, Spring Security
-
-**Как удержать это в порядке:** правила легко нарушить по невнимательности, поэтому их проверку выносят в ArchUnit (см. Q33) -- тогда нарушение направления зависимостей валит сборку на CI, а не всплывает на code review через полгода.
-
----
+Сборка адаптеров живёт у внешней границы; component scan или явные `@Bean` должны находить нужные реализации. Домен не импортирует Spring MVC и JPA, application зависит от своих контрактов, а адаптер реализует их. Модульные зависимости и ArchUnit могут закрепить правило; одно название пакета не доказывает его соблюдение.
 
 ## See also
 

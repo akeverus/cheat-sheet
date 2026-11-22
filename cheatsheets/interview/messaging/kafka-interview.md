@@ -247,6 +247,12 @@ graph LR
     C1 -->|metadata updates| B3[Broker 3]
 ```
 
+**Сценарий обновления с Kafka 3.9 на 4.3.** Если кластер использует ZooKeeper, сначала перенесите метаданные в KRaft и завершите миграцию на 3.9. Kafka 4.x запускается только в режиме KRaft.
+
+При rolling upgrade KRaft-кластера обновляйте узлы по одному, сохраняя кворум контроллеров. На прежнем уровне `metadata.version` проверьте состояние кворума и реплик, чтение и запись приложений. Затем финализируйте обновление через `kafka-features.sh --bootstrap-server localhost:9092 upgrade --release-version 4.3`. После повышения уровня возможность понижения зависит от изменений формата метаданных между текущей и целевой версиями. Проверьте путь отката до финализации.
+
+[Миграция ZooKeeper → KRaft в Kafka 3.9](https://kafka.apache.org/39/operations/kraft/) · [Обновление Kafka до 4.3](https://kafka.apache.org/43/getting-started/upgrade/)
+
 ## Q6. (!) Что такое `Partition` и как она устроена?
 
 `Partition` — основная единица параллелизма и хранения в Kafka. Физически это упорядоченный append-only лог на диске брокера: новые записи всегда дописываются в конец, а уже записанные не меняются. Именно деление топика на партиции позволяет одновременно писать и читать с разных брокеров — но платой за это становится то, что порядок гарантируется только внутри одной партиции, а не по топику целиком.
@@ -278,18 +284,14 @@ graph LR
 
 ## Q7. Что такое `Offset`?
 
-`Offset` — порядковый номер сообщения внутри партиции, который монотонно растёт и никогда не переиспользуется. Важно: offset уникален только в пределах своей партиции, а не топика. Consumer хранит свою позицию в логе как offset и по нему понимает, с какого места продолжить чтение после рестарта или rebalance.
+`Offset` — позиция записи в одной партиции. Смещения упорядочены, но не обязаны идти подряд: в логе могут быть пропуски после compaction, а потребителю, например, не выдаются управляющие записи и отменённые транзакции при `read_committed`.
 
-**Типы offset:**
-- **Current offset** — позиция следующего сообщения, которое вернёт `poll()`
-- **Committed offset** — позиция, подтверждённая consumer'ом (сохранена в `__consumer_offsets`)
-- **Log-end offset (LEO)** — позиция последнего записанного сообщения
-- **High Watermark (HW)** — позиция последнего сообщения, реплицированного на все ISR
+- **Position** — позиция следующей записи для получения этим consumer-ом. `poll()` может продвинуть её до окончания прикладной обработки.
+- **Committed offset** — сохранённая для группы позиция возобновления. После обработки записи с offset 42 обычно сохраняют 43, даже если следующей существующей записью окажется 45.
+- **LEO** (`log end offset`) — позиция следующей записи в локальном логе реплики, то есть исключающая граница этого лога.
+- **HW** (`high watermark`) — исключающая граница реплицированного префикса. `read_uncommitted` может читать записи с offset ниже HW. Для `read_committed` граница — LSO (`last stable offset`), который может быть ниже HW, пока есть открытая транзакция.
 
-**Стратегии начала чтения** (`auto.offset.reset`):
-- `earliest` — с самого начала
-- `latest` — только новые сообщения
-- `none` — ошибка, если нет сохранённого offset
+Если сохранённой позиции нет или она вышла за пределы доступного лога, применяется `auto.offset.reset`: `earliest`, `latest`, `none` или поддерживаемое в Kafka 4.3 смещение по времени `by_duration:<duration>`. [KafkaConsumer 4.3](https://kafka.apache.org/43/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html), [настройки consumer](https://kafka.apache.org/43/generated/consumer_config.html).
 
 ## Q8. (!) Как обеспечить порядок сообщений в `Kafka`?
 
@@ -297,16 +299,18 @@ graph LR
 
 Способы обеспечить порядок там, где он нужен:
 
-1. **Один ключ → одна партиция:** сообщения с одинаковым ключом всегда идут в одну партицию. На практике это и есть рабочий приём — например, ключом берут `customerId` или `orderId`, и события одной сущности упорядочены, а разные сущности параллелятся.
+1. **Один ключ → одна партиция:** при стандартной маршрутизации совпадающие сериализованные байты ключа попадают в одну партицию, если число партиций неизменно, ключ учитывается и партиция не задана явно. На практике это и есть рабочий приём — например, ключом берут `customerId` или `orderId`, и события одной сущности упорядочены, а разные сущности параллелятся.
 2. **Одна партиция на топик:** даёт строгий глобальный порядок, но убивает параллелизм — применимо только для низконагруженных потоков.
 3. **`max.in.flight.requests.per.connection = 1`** — предотвращает перестановку сообщений при retry. Лучшая альтернатива — идемпотентный producer (Q12): он сохраняет порядок даже при нескольких параллельных запросах в полёте.
 
 ```java
-// Все заказы одного клиента попадут в одну партицию
+// При неизменных условиях маршрутизации события клиента идут в одну партицию.
 kafkaTemplate.send("orders", customerId, orderEvent);
 ```
 
 > На собеседовании часто спрашивают: «Можно ли обеспечить глобальный порядок?» — ответ: только при одной партиции, что убивает масштабируемость.
+
+Порядок в логе соответствует записи в партицию, поэтому параллельная обработка на стороне приложения может нарушить порядок завершения эффектов. Несколько producer-ов также не гарантируют бизнес-порядок событий одной сущности. [Настройки producer Kafka 4.3](https://kafka.apache.org/43/generated/producer_config.html).
 
 ## Q9. Как выбирается `Partition` при отправке сообщения?
 
@@ -314,9 +318,8 @@ Producer сам решает, в какую партицию положить з
 
 | Сценарий | Стратегия |
 |----------|-----------|
-| Указан ключ | `hash(key) % numPartitions` (по умолчанию `Murmur2`) |
-| Нет ключа (Kafka < 2.4) | Round-robin |
-| Нет ключа (Kafka ≥ 2.4) | Sticky partitioning (в рамках batch) |
+| Указан ключ и применяется стандартный выбор по ключу | Положительный Murmur2 от сериализованных байтов ключа по модулю числа партиций |
+| Нет ключа или включён `partitioner.ignore.keys` при встроенном выборе | Sticky batching. Выбор может учитывать доступность и производительность брокеров. |
 | Указан partition явно | Используется указанная партиция |
 | Custom Partitioner | Реализация интерфейса `Partitioner` |
 
@@ -325,12 +328,15 @@ public class OrderPartitioner implements Partitioner {
     @Override
     public int partition(String topic, Object key, byte[] keyBytes,
                          Object value, byte[] valueBytes, Cluster cluster) {
-        List<PartitionInfo> partitions = cluster.partitionsForTopic(topic);
-        // Своя логика распределения
-        return Math.abs(key.hashCode()) % partitions.size();
+        int partitionCount = cluster.partitionCountForTopic(topic);
+        // Стабильные байты ключа; для null задаём отдельную политику.
+        return keyBytes == null ? 0
+            : Math.floorMod(Arrays.hashCode(keyBytes), partitionCount);
     }
 }
 ```
+
+Пример предполагает полученные метаданные и положительное число партиций. `floorMod` даёт индекс в диапазоне `[0, partitionCount)`, в том числе для минимального `int`. Для реального custom partitioner проверьте распределение null-ключей и совместимость с прежней схемой. Изменение хеширования или числа партиций может переназначить ключ. [Настройки producer Kafka 4.3](https://kafka.apache.org/43/generated/producer_config.html).
 
 ## Q10. (!) Что такое `Producer` и как он работает?
 
@@ -453,6 +459,12 @@ graph TB
 - Если consumers < partitions → один consumer обрабатывает несколько партиций
 - Разные `Consumer Group` читают **независимо** (каждая получает все сообщения)
 
+**Когда вместо consumer group выбрать share group?** В Kafka 4.2 share groups готовы к промышленному использованию. В обычной consumer group партиция назначается одному участнику за раз. В share group несколько участников могут одновременно обрабатывать разные записи одной партиции, поэтому работников может быть больше, чем партиций. Подтверждение относится к отдельной записи, а завершение обработки может идти в другом порядке, чем запись в лог.
+
+Например, независимые задания генерации превью можно раздать через `KafkaShareConsumer`. Брокер выдаёт запись с временной блокировкой. После успешной обработки работник подтверждает её (`ACCEPT`), при временном сбое возвращает для новой попытки (`RELEASE`), а при постоянной ошибке может прекратить попытки для этой записи (`REJECT`). Если работник записал превью и потерял блокировку до подтверждения, другой работник может получить то же задание. Запись результата по стабильному ID задания позволяет повторно обработать его без создания второго превью. Для потока событий, где важен последовательный эффект по ключу, сохраняйте обычную consumer group и последовательную обработку внутри партиции.
+
+[Kafka 4.2 Upgrade Guide](https://kafka.apache.org/42/getting-started/upgrade/) · [KafkaShareConsumer 4.3.1](https://kafka.apache.org/43/javadoc/org/apache/kafka/clients/consumer/KafkaShareConsumer.html)
+
 ## Q15. (!) Как происходит `Rebalance`?
 
 `Rebalance` — процесс перераспределения партиций между потребителями группы. Он нужен, чтобы при изменении состава группы или топика партиции всегда были закреплены ровно за одним живым consumer'ом. Цена rebalance — пауза в обработке, поэтому важно понимать, что его запускает и как минимизировать downtime.
@@ -475,6 +487,8 @@ graph TB
 - `RoundRobinAssignor` — равномерное распределение
 - `StickyAssignor` — минимизация перемещений
 - `CooperativeStickyAssignor` — cooperative + sticky (рекомендуемый)
+
+Таблица и клиентские assignor-ы относятся к `group.protocol=classic`. В Kafka 4.3 можно выбрать `group.protocol=consumer` (KIP-848, GA с 4.0). Это инкрементальный протокол с назначением на стороне брокера: вместо `partition.assignment.strategy` используется серверный список assignor-ов и при необходимости `group.remote.assignor`. Интервалы heartbeat и session timeout задаются на брокере или в настройках группы. [Consumer Rebalance Protocol](https://kafka.apache.org/43/operations/consumer-rebalance-protocol/).
 
 ## Q16. В чём разница между auto-commit и manual commit?
 
@@ -505,7 +519,7 @@ while (true) {
 `CooperativeStickyAssignor` — стратегия назначения партиций, которая делает rebalance почти бесшовным. Обычный (eager) rebalance — это «stop-the-world»: все consumer'ы отпускают все партиции и ждут нового назначения. Cooperative-вариант устроен иначе:
 1. Минимизирует перемещения — за consumer'ом остаются те же партиции, что и были (sticky)
 2. Использует cooperative протокол — отпускаются только те партиции, которые реально переезжают; остальные продолжают обрабатываться
-3. Результат: **rebalance без остановки** для большинства consumer'ов при стабильном составе группы — это рекомендуемый assignor для production
+3. Результат: меньше пауз для незатронутых партиций. Перемещаемые партиции всё равно требуют отзыва и назначения, иногда в несколько раундов
 
 ```yaml
 # application.yml для Spring Kafka
@@ -516,9 +530,11 @@ spring:
         partition.assignment.strategy: org.apache.kafka.clients.consumer.CooperativeStickyAssignor
 ```
 
+Этот клиентский assignor относится к classic-протоколу. У нового Consumer protocol свой серверный assignor (Q15). Для перехода classic-группы все участники должны согласовать совместимую стратегию. [Kafka 4.3 Consumer Rebalance Protocol](https://kafka.apache.org/43/operations/consumer-rebalance-protocol/).
+
 ## Q18. (!) Как работает репликация в `Kafka`?
 
-Репликация — основа отказоустойчивости Kafka. Каждая партиция хранится в нескольких копиях на разных брокерах (`replication.factor`). Одна реплика назначается `Leader` — через неё идёт вся запись и чтение, остальные `Followers` лишь догоняют её, постоянно вычитывая новые записи. Если брокер с Leader падает, одна из синхронных реплик становится новым Leader — данные не теряются (см. Q20).
+Репликация — основа отказоустойчивости Kafka. Каждая партиция хранится в нескольких копиях на разных брокерах (`replication.factor`). Одна реплика назначается `Leader` — она принимает запись, а follower-реплики догоняют её через fetch. При безопасной смене лидера сохраняется реплицированный префикс до HW. Записи выше HW могут быть усечены (Q19–Q21).
 
 ```mermaid
 graph LR
@@ -534,7 +550,7 @@ graph LR
 ```
 
 **Правила:**
-- **Только Leader** обслуживает запись и чтение (Kafka < 2.4; с 2.4 followers могут обслуживать чтение при настройке `replica.selector.class`)
+- **Leader** обслуживает запись. Чтение с подходящей follower-реплики возможно при настроенном `replica.selector.class` и поддержке клиентом
 - Followers постоянно fetch'ат данные у Leader
 - Если Follower отстаёт — он выпадает из ISR
 
@@ -542,11 +558,11 @@ graph LR
 
 Эти три понятия описывают, какие данные Kafka считает «надёжно записанными» и доступными для чтения.
 
-**`ISR` (In-Sync Replicas)** — набор реплик, которые успевают за Leader. Сообщение считается committed (надёжным), только когда оно записано на все реплики из ISR — поэтому потеря одного брокера из ISR не приводит к потере данных.
+**`ISR` (In-Sync Replicas)** — лидер и follower-реплики, которые выдерживают требования синхронизации. Продвижение HW зависит от состояния ISR и от правил минимального ISR, в том числе при включённом ELR.
 
 **`OSR` (Out-of-Sync Replicas)** — реплики, отставшие от Leader более чем на `replica.lag.time.max.ms` (по умолчанию 30 сек). Они временно выпадают из ISR и не учитываются при подтверждении записи, пока не догонят Leader.
 
-**`High Watermark (HW)`** — offset последнего сообщения, реплицированного на все ISR. Consumer может читать только до HW — это гарантирует, что он никогда не увидит запись, которая ещё не закреплена на репликах и может пропасть при сбое Leader.
+**`High Watermark (HW)`** — исключающая граница реплицированного префикса. При HW=6 `read_uncommitted` читает доступные записи ниже 6. `read_committed` дополнительно ограничен LSO и пропускает записи отменённых транзакций.
 
 ```
 Leader:     [0] [1] [2] [3] [4] [5] [6]    ← LEO = 7
@@ -556,31 +572,33 @@ Follower 2: [0] [1] [2] [3]                ← LEO = 4 (OSR — отстал)
                         High Watermark = 6
 ```
 
-**`min.insync.replicas`** — минимальное число ISR для принятия записи при `acks=all`. Если ISR < `min.insync.replicas`, broker вернёт `NotEnoughReplicasException`.
+**`min.insync.replicas`** — минимальное число ISR для принятия записи при `acks=all`. Если ISR уже ниже минимума до записи с `acks=all`, возможен `NotEnoughReplicasException`. Если ISR уменьшился после добавления записи, пока запрос ждал подтверждения, возможен `NotEnoughReplicasAfterAppendException`. Ошибка второго типа не доказывает, что записи в логе не было. [Конфигурация топиков Kafka 4.3](https://kafka.apache.org/43/generated/topic_config.html), [ELR](https://kafka.apache.org/43/operations/eligible-leader-replicas/).
 
 ## Q20. Что произойдёт при падении Leader-брокера?
 
-При падении брокера, который был Leader для каких-то партиций, Kafka автоматически выбирает им замену из синхронных реплик — клиенты лишь на короткое время видят ошибку и переключаются на нового Leader.
+При падении брокера, который был Leader для каких-то партиций, контроллер пытается назначить безопасного преемника. Пока нового лидера нет, чтение и запись могут быть недоступны.
 
 Последовательность:
 1. `Controller` обнаруживает, что брокер недоступен (через heartbeat)
-2. Controller выбирает нового Leader из ISR — у синхронной реплики данные актуальны, поэтому потери нет
-3. Метаданные обновляются в metadata log (KRaft) или ZooKeeper
+2. Контроллер ищет лидера среди доступных ISR. Если включён ELR, может использовать подходящую реплику из ELR. Безопасный выбор сохраняет реплицированный префикс, но хвост за HW может быть усечён.
+3. Контроллер фиксирует смену лидера и эпохи партиции в metadata log KRaft.
 4. Producers и Consumers получают обновлённые метаданные и переключаются на нового Leader
-5. Если ISR пуст (ни одной синхронной реплики не осталось), поведение зависит от `unclean.leader.election.enable` — здесь как раз встаёт выбор между доступностью и сохранностью данных (см. Q21)
+5. Если нет доступного безопасного кандидата, партиция ждёт его возвращения либо допускается unclean election с риском потери данных (Q21).
 
-**Время восстановления** (failover) обычно составляет несколько секунд.
+Время восстановления зависит от обнаружения отказа, состояния контроллера, реплик и обновления клиентских метаданных. [Eligible Leader Replicas](https://kafka.apache.org/43/operations/eligible-leader-replicas/).
 
 ## Q21. Что такое `Unclean Leader Election`?
 
-`Unclean Leader Election` — выбор нового Leader из реплик, **не входящих в ISR** (т.е. отставших). Возникает в критической ситуации: упали все синхронные реплики, и остались только отставшие. Это прямой выбор из CAP-теоремы — пожертвовать целостностью ради доступности или наоборот. Управляется параметром `unclean.leader.election.enable`.
+`Unclean Leader Election` — выбор нового Leader из реплик, **не входящих в ISR** (т.е. отставших). Применяется, когда доступного безопасного преемника нет. ELR при включённой функции может дать безопасного кандидата вне ISR; это отдельный механизм. Это прямой выбор из CAP-теоремы — пожертвовать целостностью ради доступности или наоборот. Управляется параметром `unclean.leader.election.enable`.
 
 | Значение | Поведение |
 |----------|-----------|
 | `true` | Допускается выбор отставшей реплики → доступность выше, но **возможна потеря данных** |
-| `false` (по умолчанию) | Партиция остаётся недоступной, пока ISR-реплика не вернётся → **данные не теряются** |
+| `false` (по умолчанию) | Если безопасного кандидата нет, партиция остаётся недоступной. Запрет unclean election исключает потерю реплицированного префикса из-за выбора произвольной отставшей реплики. |
 
 **Рекомендация:** `false` для финансовых и критичных данных, `true` для систем, где доступность важнее целостности.
+
+Проверьте отдельно состояние ISR, наличие кандидатов ELR и действующую политику выбора лидера. [Kafka 4.3 ELR](https://kafka.apache.org/43/operations/eligible-leader-replicas/).
 
 ## Q22. (!) Какие семантики доставки поддерживает `Kafka`?
 
@@ -588,14 +606,14 @@ Follower 2: [0] [1] [2] [3]                ← LEO = 4 (OSR — отстал)
 
 | Семантика | Описание | Реализация |
 |-----------|----------|------------|
-| **At-most-once** | Сообщение может потеряться, но не дублируется | `acks=0` или auto-commit до обработки |
-| **At-least-once** | Сообщение не теряется, но может дублироваться | `acks=all` + commit после обработки |
-| **Exactly-once** | Сообщение доставлено и обработано ровно один раз | Идемпотентный producer + транзакции |
+| **At-most-once** | Сообщение может потеряться, но не дублируется | Сохранить позицию до обработки и не повторять её после сбоя. `acks=0` на publisher означает отсутствие подтверждения, а не гарантию at-most-once. |
+| **At-least-once** | Запись может быть обработана повторно после сбоя | `acks=all` + commit после обработки |
+| **Exactly-once** | Сообщение доставлено и обработано ровно один раз | Kafka-транзакция для результата и входных offset, чтение через `read_committed` |
 
 **Выбор семантики** зависит от требований:
 - Метрики, логи → `at-most-once` (допустимы потери)
 - Заказы, платежи → `at-least-once` + идемпотентная обработка на стороне consumer
-- Финансовые транзакции → `exactly-once` (Kafka Transactions)
+- Для Kafka → обработка → Kafka используйте EOS, если требуется атомарность результата и offset. Внешняя БД и HTTP-вызовы не входят в Kafka-транзакцию; защищайте их эффекты отдельно.
 
 ## Q23. (!) Как реализовать `Exactly-Once` семантику?
 
@@ -728,18 +746,23 @@ public class OrderEventConsumer {
     public void consume(
             @Payload OrderEvent event,
             @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
-            @Header(KafkaHeaders.OFFSET) long offset) {
+            @Header(KafkaHeaders.OFFSET) long offset,
+            Acknowledgment acknowledgment) {
 
         log.info("Received order {} from partition {} at offset {}",
                 event.getOrderId(), partition, offset);
         processOrder(event);
+        acknowledgment.acknowledge();
     }
 
     // Batch listener
-    @KafkaListener(topics = "events", groupId = "batch-processor")
-    public void consumeBatch(List<ConsumerRecord<String, String>> records) {
+    @KafkaListener(topics = "events", groupId = "batch-processor",
+                   containerFactory = "batchKafkaListenerContainerFactory")
+    public void consumeBatch(List<ConsumerRecord<String, String>> records,
+                             Acknowledgment acknowledgment) {
         log.info("Received batch of {} records", records.size());
         records.forEach(this::processRecord);
+        acknowledgment.acknowledge();
     }
 }
 ```
@@ -757,6 +780,8 @@ public ConcurrentKafkaListenerContainerFactory<String, OrderEvent>
     return factory;
 }
 ```
+
+Для примера batch listener объявите отдельную фабрику с совместимой десериализацией, `setBatchListener(true)` и ручным ack-режимом, указанным в примере. Подтверждение без индекса относится ко всему пакету. Для частичного подтверждения действуют дополнительные условия Spring Kafka. [Batch Listeners](https://docs.spring.io/spring-kafka/reference/kafka/receiving-messages/listener-annotation.html).
 
 ## Q28. Как обрабатывать ошибки в `Spring Kafka`?
 
@@ -790,11 +815,13 @@ public DefaultErrorHandler errorHandler(KafkaTemplate<String, Object> kafkaTempl
 - **Skip** — пропуск проблемного сообщения
 - **Stop** — остановка consumer
 
+Ошибку десериализации до вызова record listener передают через `ErrorHandlingDeserializer`, оборачивающий фактический десериализатор. Для batch listener проверяйте заголовок ошибки и сообщайте индекс или запись через `BatchListenerFailedException`. Само значение `null` может быть tombstone. DLT должен существовать с нужным числом партиций, а producer должен сериализовать исходные `byte[]` при ошибках десериализации. Recovery считается успешным, только если требуемая публикация состоялась; настройте recoverer проверять результат отправки и выбрасывать ошибку при сбое. В транзакционном контейнере recovery после отката настраивается отдельно через `DefaultAfterRollbackProcessor`. [Spring Kafka Error Handling](https://docs.spring.io/spring-kafka/reference/kafka/annotation-error-handling.html).
+
 ## Q29. Как тестировать `Kafka` в `Spring Boot`?
 
 Есть два подхода, и выбор между ними — компромисс «скорость против реалистичности».
 
-**1. `EmbeddedKafka`** (spring-kafka-test) — лёгкий брокер прямо в JVM теста. Быстро стартует, но это не настоящая Kafka, поэтому не все нюансы (версии брокера, поведение под нагрузкой) воспроизводятся точно:
+**1. `EmbeddedKafka`** (spring-kafka-test) — запускает настоящий Kafka-брокер в процессе теста. Обычно это небольшая конфигурация; она не воспроизводит production-топологию, сетевые отказы и нагрузку:
 ```java
 @SpringBootTest
 @EmbeddedKafka(partitions = 1, topics = {"orders"})
@@ -817,7 +844,7 @@ class OrderEventConsumerTest {
 }
 ```
 
-**2. `Testcontainers`** — запускает настоящую Kafka в Docker-контейнере. Старт медленнее, зато тест работает против реального брокера той же версии, что и в production:
+**2. `Testcontainers`** — запускает настоящую Kafka в Docker-контейнере. Старт медленнее, зато образ позволяет явно выбрать версию брокера. Совпадение с production зависит от выбранного образа и параметров:
 ```java
 @SpringBootTest
 @Testcontainers
@@ -841,7 +868,7 @@ class KafkaIntegrationTest {
 
 **Ключевые особенности:**
 - **Без внешней инфраструктуры** — только Kafka
-- **Exactly-once** обработка из коробки
+- **Exactly-once** на границах Kafka включается явно через `processing.guarantee=exactly_once_v2`; по умолчанию — `at_least_once`
 - **Stateful** операции с локальным хранилищем (`RocksDB`)
 - **Горизонтальное масштабирование** — запускаем больше инстансов
 - **Fault tolerance** — state-store реплицируется через changelog-топики
@@ -960,12 +987,12 @@ graph LR
 
 ## Q36. (!) Что такое `Consumer Lag` и как его измерить?
 
-`Consumer Lag` — разница между последним записанным offset (LEO) и последним committed offset consumer'а. По сути это «сколько сообщений ждут обработки» — главный индикатор здоровья consumer'а. Стабильный нулевой lag означает, что consumer успевает за producer'ом; растущий lag — сигнал, что обработка не справляется с потоком и скоро начнётся отставание данных.
+`Consumer Lag` измеряется в единицах offset относительно выбранной границы. Для группы обычно считают end offset минус committed offset. Клиентский `records-lag` использует позицию получения записей, которая может опережать завершённую обработку. В зависимости от метрики end может означать локальный LEO, HW или LSO для `read_committed`. Из-за пропусков и невидимых записей разность не равна точному числу рабочих сообщений.
 
 ```
-LEO (Log End Offset):        150
+Выбранная граница (end):     150
 Committed Offset:            120
-Consumer Lag:                 30 сообщений
+Разность:                     30 позиций
 ```
 
 **Способы измерения:**
@@ -1078,6 +1105,8 @@ public DefaultErrorHandler errorHandler(KafkaTemplate<String, Object> template) 
 - Мониторить DLT — алерт при появлении сообщений (DLT не должен молча копиться)
 - Реализовать механизм replay из DLT — починили причину, переиграли накопившееся
 
+DLT — соглашение приложения и фреймворка. Для record listener recovery зависит от результата recoverer-а и настроек коммита. При сбое публикации не пропускайте исходную запись как успешно восстановленную: у `DeadLetterPublishingRecoverer` можно включить `setFailIfSendResultIsError(true)`. При `ErrorHandlingDeserializer` в DLT может уйти исходный `byte[]`; настройте подходящую сериализацию. Публикация в DLT и коммит исходной позиции атомарны только при специально настроенном транзакционном recovery. [Spring Kafka: Handling Exceptions](https://docs.spring.io/spring-kafka/reference/kafka/annotation-error-handling.html).
+
 ## Q41. (!) Как спроектировать правильную топологию топиков?
 
 Хорошая топология топиков напрямую вытекает из свойств Kafka: порядок живёт в партиции, а партиция выбирается по ключу. Поэтому решения о топиках и ключах — это решения о масштабируемости, упорядоченности и эволюции контрактов.
@@ -1086,7 +1115,7 @@ public DefaultErrorHandler errorHandler(KafkaTemplate<String, Object> template) 
 
 1. **Один event-type — один топик** — не мешать разнородные события, иначе consumer'ы вынуждены фильтровать чужое и теряют чёткий контракт
 2. **Naming convention:** `<domain>.<entity>.<event>`, например `shop.order.created` — единый шаблон делает топики самодокументируемыми
-3. **Ключ сообщения = entity ID** — обеспечивает порядок событий одной сущности и равномерное распределение по партициям
+3. **Ключ сообщения = entity ID** — помогает сохранить порядок в партиции при стабильных условиях маршрутизации (Q8/Q9). Популярный идентификатор может перегрузить одну партицию, а увеличение числа партиций может переназначить часть ключей
 4. **Retention** — под SLA: 7 дней для обычных потоков, бесконечный (или compaction) для event-sourcing
 5. **Compacted topics** — для справочников и current state, где важно только последнее значение по ключу
 
@@ -1111,9 +1140,10 @@ Replay сам по себе не делает Kafka единственным в�
 
 ## Q43. Какие паттерны retry применяются с `Kafka`?
 
-Главная сложность retry в Kafka — порядок: пока consumer повторяет одно сообщение, вся партиция стоит. Отсюда два класса решений. Blocking retry прост, но останавливает обработку; non-blocking retry через отдельные топики не блокирует партицию ценой потери строгого порядка.
+`Blocking retry` повторяет обработку в исходном контейнере и задерживает продвижение по затронутым партициям. В Spring Kafka для него используют, например, `DefaultErrorHandler` с `BackOff` (Q28).
 
-**1. Blocking Retry** — повторная обработка прямо в consumer'е. Просто, но на время ретраев partition заблокирована — остальные сообщения ждут:
+`@RetryableTopic` реализует **non-blocking retry** через отдельные топики. Основной listener может продолжить обработку, а listener retry-топика проверяет время следующей попытки в заголовке. Если оно ещё не наступило, Spring приостанавливает соответствующую партицию retry-топика и возобновляет её позже. Kafka сама не планирует задержку на основании timestamp записи.
+
 ```java
 @RetryableTopic(
     attempts = "3",
@@ -1126,15 +1156,7 @@ public void consume(OrderEvent event) {
 }
 ```
 
-**2. Non-Blocking Retry (Retry Topics)** — Spring Kafka переносит сбойное сообщение в отдельный retry-топик и сразу идёт дальше, поэтому основная партиция не простаивает; для каждой попытки заводится свой топик:
-```
-orders → orders-retry-0 → orders-retry-1 → orders-DLT
-```
-
-**3. Manual Retry** — отправка в retry-топик с задержкой:
-- Используйте `ScheduledExecutorService` или Kafka timestamp для delayed retry
-
-**Рекомендация:** `@RetryableTopic` в Spring Kafka — самый удобный вариант для non-blocking retry.
+Например, маршрут может выглядеть как `orders → orders-retry-* → orders-dlt`. Число retry-топиков зависит от стратегии переиспользования. Более новые записи основной партиции могут быть обработаны раньше отложенной записи, так что первоначальный порядок эффектов теряется. Non-blocking retry Spring Kafka не поддерживается для batch listeners и не совмещается с транзакциями контейнера. [Retry Topic Pattern](https://docs.spring.io/spring-kafka/reference/retrytopic/how-the-pattern-works.html).
 
 ## Q44. (!) Какие практические советы для production-использования `Kafka`?
 
@@ -1215,7 +1237,7 @@ spring:
         session.timeout.ms: 60000   # даём больше времени на рестарт
 ```
 
-Со статическим ID consumer при перезапуске **переиспользует** прежнее членство в группе, и если он вернулся до истечения `session.timeout.ms`, его партиции никуда не передавались — rebalance просто не нужен. Это особенно ценно для stateful Kafka Streams приложений: за инстансом сохраняется тот же набор партиций, а значит и локальные state store не приходится восстанавливать из changelog.
+Стабильный уникальный `group.instance.id` позволяет участнику после краткого перезапуска продолжить членство и может сократить ненужные перераспределения. Это зависит от истечения session timeout и изменений группы. Два активных участника с одинаковым статическим ID конфликтуют. В примере настройки таймаута относятся к classic-протоколу; при `group.protocol=consumer` исполняется KIP-848 и session/heartbeat задаются серверной конфигурацией группы (Q15).
 
 **Параметры влияющие на rebalance:**
 
@@ -1226,9 +1248,11 @@ spring:
 | `max.poll.interval.ms` | Макс. время между poll() вызовами | 300000 (5 мин) |
 | `group.instance.id` | Статический ID для Static Membership | Имя pod/instance |
 
+[Kafka 4.3 Consumer Rebalance Protocol](https://kafka.apache.org/43/operations/consumer-rebalance-protocol/), [Consumer Configs](https://kafka.apache.org/43/generated/consumer_config.html).
+
 ## Q46. (!) Что такое `Log Compaction` и как работает `__consumer_offsets`?
 
-**Log Compaction** — альтернативная политика очистки топика, при которой Kafka хранит только **последнее значение для каждого ключа**, а устаревшие версии по тому же ключу удаляет. Это принципиально иной подход, чем `retention.ms`: обычное удаление выбрасывает старые сообщения по времени независимо от содержимого, а compaction смотрит на ключ и сохраняет актуальное состояние сколь угодно долго. Благодаря этому compacted-топик превращается в «таблицу последних значений» — основа для current-state потоков и восстановления состояния.
+**Log Compaction** — альтернативная политика очистки топика, при которой Kafka в фоне удаляет устаревшие версии ключей на подходящих сегментах. До прохода cleaner в логе может оставаться несколько версий. Это принципиально иной подход, чем `retention.ms`: обычное удаление выбрасывает старые сообщения по времени независимо от содержимого, а compaction смотрит на ключ. При политике `compact,delete` удаление сегментов по retention тоже действует, а tombstone может быть убран после `delete.retention.ms`. Благодаря этому compacted-топик превращается в «таблицу последних значений» — основа для current-state потоков и восстановления состояния.
 
 ```
 До compaction:
@@ -1246,12 +1270,14 @@ kafka-topics.sh --create \
   --topic user-profiles \
   --config cleanup.policy=compact \
   --config min.cleanable.dirty.ratio=0.5 \
-  --config segment.ms=3600000
+  --config segment.ms=3600000 \
+  --bootstrap-server localhost:9092
 
 # Tombstone: null-value удаляет ключ из compacted log
-kafka-console-producer.sh --topic user-profiles \
+kafka-console-producer.sh --bootstrap-server localhost:9092 --topic user-profiles \
   --property "parse.key=true" \
-  --property "key.separator=:" <<< "user:123:null"
+  --property "key.separator=|" \
+  --property "null.marker=<NULL>" <<< "user:123|<NULL>"
 ```
 
 **Применение:**
@@ -1292,7 +1318,7 @@ kafka-consumer-groups.sh \
 # my-grp orders    1          2300            2300            0
 ```
 
-**Compaction для `__consumer_offsets`:** при commit нового offset старый удаляется из топика — хранится только актуальный offset для каждой `(group, topic, partition)` тройки.
+**Compaction для `__consumer_offsets`:** новый commit добавляет запись. Cleaner позже может убрать старые версии ключа. Compaction сохраняет состояние, а история всех коммитов не гарантируется. [Log Compaction](https://kafka.apache.org/43/design/design/#log_compaction).
 
 ## Q47. Как `Schema Registry` хранит схемы и обеспечивает совместимость?
 
@@ -1374,7 +1400,7 @@ curl -X POST http://schema-registry:8081/compatibility/subjects/orders-value/ver
 
 | Уровень | Конфигурация | Риск |
 |---------|-------------|------|
-| At-most-once | `acks=0`, auto-commit | Потеря сообщений |
+| At-most-once | Коммит позиции до обработки без повторной обработки | Потеря эффекта при сбое после коммита |
 | At-least-once | `acks=all`, manual commit | Дубликаты |
 | Exactly-once | Транзакции + `enable.idempotence` | Overhead |
 
@@ -1408,7 +1434,7 @@ try {
     producer.send(new ProducerRecord<>("output-topic", key, processedValue));
 
     // Commit offsets как часть транзакции
-    producer.sendOffsetsToTransaction(currentOffsets, consumerGroupMetadata);
+    producer.sendOffsetsToTransaction(nextOffsets, consumerGroupMetadata); // позиции возобновления
 
     producer.commitTransaction();
 } catch (ProducerFencedException | OutOfOrderSequenceException e) {
@@ -1438,21 +1464,21 @@ spring:
         processing.guarantee: exactly_once_v2  # Kafka 2.5+
 ```
 
-`exactly_once_v2` использует одну транзакцию на партицию (vs одна на task в v1) — меньше overhead.
+В режиме `exactly_once_v2` Kafka Streams использует транзакционного producer-а на stream thread. Одна транзакция может охватывать несколько tasks этого потока. Гарантия охватывает Kafka-offset, выходные записи и changelog состояния. Пользовательский callback после сбоя может выполниться повторно; внешние эффекты требуют отдельной защиты. [Kafka Streams Configs](https://kafka.apache.org/43/streams/developer-guide/config-streams/), [Spring Kafka EOS](https://docs.spring.io/spring-kafka/reference/kafka/exactly-once.html).
 
 ## Q49. Что такое `Kafka Streams State Store` и как реализовать `stateful`-обработку?
 
-**State Store** — локальное хранилище (RocksDB или in-memory) при экземпляре Kafka Streams, в котором живёт состояние между сообщениями. Оно нужно любой stateful-операции: чтобы посчитать агрегат, сделать join или окно, приложению надо где-то держать промежуточный результат. Главный вопрос — что будет с этим состоянием при падении инстанса; ответ Kafka Streams в том, что каждый store зеркалируется в compacted changelog-топик, из которого состояние полностью восстанавливается после рестарта.
+**State Store** — локальное хранилище (RocksDB или in-memory) при экземпляре Kafka Streams, в котором живёт состояние между сообщениями. Оно нужно любой stateful-операции: чтобы посчитать агрегат, сделать join или окно, приложению надо где-то держать промежуточный результат. Главный вопрос — что будет с этим состоянием при падении инстанса; ответ Kafka Streams в том, что store с включённым журналированием восстанавливается из changelog. Некоторые топологии могут переиспользовать источник; если logging отключён, эта гарантия для store пропадает.
 
 **Типы State Store:**
 
 | Тип | Реализация | Персистентность |
 |-----|-----------|----------------|
 | Persistent (default) | RocksDB | Да (changelog топик) |
-| In-memory | ConcurrentHashMap | Нет |
+| In-memory | Хранилище в памяти | Локально нет; возможно восстановление из changelog, если он включён |
 | Versioned | RocksDB + версии | Да |
 
-**Changelog топик:** Kafka Streams автоматически создаёт backing топик для каждого State Store с `cleanup.policy=compact`. При рестарте приложение восстанавливает state из changelog.
+**Changelog топик:** обычный key-value store с журналированием использует compaction. У оконного store changelog обычно сочетает compaction и удаление по retention, чтобы истекали устаревшие окна. Срок хранения состояния должен покрывать окно и допустимое опоздание событий, а политика changelog учитывает также запас для восстановления.
 
 **Пример: подсчёт заказов по категории (aggregation):**
 
@@ -1496,7 +1522,7 @@ public class StateQueryController {
 **Windowed Aggregation:**
 
 ```java
-// Скользящее окно: заказы за последние 5 минут
+// Неперекрывающиеся (tumbling) окна по 5 минут, без grace-периода
 KTable<Windowed<String>, Long> windowedCounts = orders
     .groupBy((k, v) -> v.getCategory())
     .windowedBy(TimeWindows.ofSizeWithNoGrace(Duration.ofMinutes(5)))
@@ -1513,9 +1539,11 @@ spring:
         num.standby.replicas: 1  # 1 standby replica для каждого state store
 ```
 
+Interactive Queries обращаются к локально доступным частям store. Для произвольного ключа сначала найдите владельца через метаданные Streams, затем выполните запрос на этом инстансе через свой RPC/HTTP. Локальный `null` сам по себе не доказывает отсутствие ключа в распределённом store. [Interactive Queries](https://kafka.apache.org/43/streams/developer-guide/interactive-queries/).
+
 ## Q50. Как организовать мониторинг `__consumer_offsets` и `Consumer Lag` алертинг?
 
-**Consumer Lag** = `log-end-offset - committed-offset` — ключевая метрика здоровья системы. Грамотный мониторинг строится в два шага: сначала надёжно вычислить lag (через CLI, `AdminClient` или Micrometer-метрики), затем повесить на него алерт с порогами и временем срабатывания (`for`), чтобы реагировать на устойчивое отставание, а не на разовые всплески.
+**Lag группы** — разность между выбранным end offset и committed offset группы. Это расстояние в пространстве offset, а не точный размер очереди сообщений. Грамотный мониторинг строится в два шага: сначала надёжно вычислить lag (через CLI, `AdminClient` или Micrometer-метрики), затем повесить на него алерт с порогами и временем срабатывания (`for`), чтобы реагировать на устойчивое отставание, а не на разовые всплески.
 
 **Инструменты мониторинга:**
 
@@ -1532,7 +1560,7 @@ Map<TopicPartition, OffsetAndMetadata> offsets =
     admin.listConsumerGroupOffsets("my-group")
          .partitionsToOffsetAndMetadata().get();
 
-// Получить log-end-offsets
+// Получить end offsets через ListOffsets; уровень изоляции влияет на границу
 Map<TopicPartition, Long> endOffsets =
     admin.listOffsets(offsets.keySet().stream()
         .collect(Collectors.toMap(tp -> tp, tp -> OffsetSpec.latest())))
@@ -1557,8 +1585,8 @@ management:
 ```
 
 Метрики доступны автоматически:
-- `kafka.consumer.fetch.manager.records.lag` — текущий lag
-- `kafka.consumer.fetch.manager.records.lag.max` — максимальный lag
+- `kafka.consumer.fetch.manager.records.lag` — текущий lag по позиции fetch, независимо от сохранённого коммита группы
+- `kafka.consumer.fetch.manager.records.lag.max` — максимальный клиентский lag; это отдельный сигнал, а не замена lag группы
 - `kafka.producer.record.send.rate` — скорость отправки
 
 **Алертинг (пример для Victoria Metrics / Prometheus):**
@@ -1590,6 +1618,8 @@ groups:
 2. `max.poll.records` слишком велик — уменьшите или оптимизируйте обработку
 3. Downstream-зависимость (БД, внешний API) — circuit breaker, async processing
 4. GC паузы в JVM — настройка heap и GC-алгоритма
+
+Для сопоставления метрик проверьте, какая исключающая граница используется: LEO у реплики, HW для `read_uncommitted` или LSO для `read_committed`. В `ListOffsetsOptions` можно задать `IsolationLevel.READ_COMMITTED` для LSO. Если у группы нет committed offset, показывайте состояние отдельно. Пропуски после compaction и служебные или отменённые записи делают разницу offset приблизительной мерой прикладного отставания. [KafkaConsumer 4.3](https://kafka.apache.org/43/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html), [ListOffsetsOptions](https://kafka.apache.org/43/javadoc/org/apache/kafka/clients/admin/ListOffsetsOptions.html).
 
 ---
 

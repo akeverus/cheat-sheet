@@ -164,7 +164,7 @@ dependencies {
 </dependency>
 ```
 
-Других зависимостей не нужно — стартер сам подтягивает `Micrometer` и автоконфигурацию. Сразу после старта `Actuator` регистрирует все эндпоинты, но **наружу через HTTP по умолчанию открыт только `/actuator/health`** — это сделано из соображений безопасности, чтобы случайно не выставить наружу `/env` или `/beans`. Чтобы открыть остальные эндпоинты, их нужно явно перечислить в конфигурации (см. Q5).
+Стартер подключает Micrometer и автоконфигурацию Actuator. Конкретные эндпоинты зависят от настроек и нужных бинов или зависимостей. В Spring Boot 3.5 по умолчанию экспонируется только `health`: по HTTP и по JMX, если JMX включён. [Spring Boot 3.5 Endpoints](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html).
 
 ---
 
@@ -186,7 +186,7 @@ dependencies {
 | `loggers` | Конфигурация логгеров (чтение и изменение) |
 | `conditions` | Результат evaluation автоконфигурации |
 | `threaddump` | Дамп потоков |
-| `heapdump` | Дамп кучи (HPROF) — только web |
+| `heapdump` | Дамп кучи в формате JVM — только web |
 | `scheduledtasks` | Запланированные задачи |
 | `caches` | Доступные кэши |
 | `flyway` | Применённые Flyway-миграции |
@@ -194,7 +194,7 @@ dependencies {
 | `sessions` | Управление HTTP-сессиями |
 | `shutdown` | Graceful shutdown (по умолчанию отключён) |
 | `startup` | Данные о шагах запуска, если настроен `BufferingApplicationStartup` (см. Q44) |
-| `httpexchanges` | Последние 100 HTTP-запросов |
+| `httpexchanges` | Записи HTTP-обменов при наличии `HttpExchangeRepository`. Репозиторий в памяти по умолчанию хранит 100 записей |
 | `prometheus` | Метрики в формате Prometheus — только web |
 | `quartz` | Информация о задачах Quartz Scheduler |
 
@@ -204,7 +204,7 @@ dependencies {
 
 ## Q4. Что такое discovery endpoint?
 
-**Discovery endpoint** — это корневой эндпоинт `/actuator`, который возвращает каталог всех доступных эндпоинтов в виде HATEOAS-ссылок. По сути это «оглавление» Actuator: клиент (например, Spring Boot Admin) обращается к `/actuator` и узнаёт, какие эндпоинты включены и по каким URL они доступны, не зная их заранее.
+**Discovery endpoint** — это корневой эндпоинт `/actuator`, который возвращает каталог эндпоинтов, экспонированных по HTTP в виде HATEOAS-ссылок. По сути это «оглавление» Actuator: клиент (например, Spring Boot Admin) обращается к `/actuator` и узнаёт, какие эндпоинты экспонированы по HTTP и по каким URL они доступны, не зная их заранее.
 
 ```json
 {
@@ -217,7 +217,7 @@ dependencies {
 }
 ```
 
-Можно отключить:
+Пример предполагает явную HTTP-экспозицию `metrics` и `info`. В Spring Boot 3.5 по умолчанию экспонируется только `health`. Discovery-страницу можно отключить:
 
 ```yaml
 management:
@@ -231,7 +231,7 @@ management:
 
 ## Q5. (!) Как управлять экспозицией эндпоинтов (web/JMX)?
 
-Экспозиция (exposure) управляет тем, какие из включённых эндпоинтов реально видны снаружи — отдельно для web (HTTP) и для JMX. По умолчанию через HTTP открыт только `health`, а через JMX — все. Управляется через `include` (что показать) и `exclude` (что скрыть); при конфликте `exclude` имеет приоритет.
+Экспозиция (exposure) определяет, через какие транспорты доступен эндпоинт. В Spring Boot 3.5 по умолчанию только `health` экспонируется по HTTP и JMX, если JMX включён. `include` задаёт список экспозиции, а `exclude` имеет приоритет.
 
 ```yaml
 management:
@@ -296,35 +296,26 @@ management:
 
 ## Q7. Как включить/выключить отдельный эндпоинт?
 
-Включённость (`enabled`) и экспозиция (`exposure`) — два независимых уровня, и их часто путают. **Включённость** определяет, создаётся ли бин эндпоинта вообще; **экспозиция** — виден ли он снаружи через HTTP/JMX. Эндпоинт может быть включён, но не экспонирован (бин есть, но наружу не отдаётся) — и наоборот, выключенный эндпоинт нельзя экспонировать, как ни перечисляй его в `include`.
-
-Включением управляют свойства `management.endpoint.<id>.enabled`:
-
-```yaml
-management:
-  endpoint:
-    shutdown:
-      enabled: true     # включить shutdown (по умолчанию выключен)
-    health:
-      enabled: true     # health включён по умолчанию
-  endpoints:
-    enabled-by-default: false   # выключить все, затем включить нужные
-```
-
-**Подход opt-in** — самый безопасный для production: выключаем все эндпоинты разом через `enabled-by-default: false`, а затем поимённо включаем только нужные. Так случайно появившийся в classpath новый эндпоинт не окажется доступен по умолчанию.
+В Spring Boot 3.4+ доступ к операциям управляется через `management.endpoint.<id>.access`. Уровень `none` удаляет эндпоинт из контекста. Чтобы доступный эндпоинт отвечал по HTTP или JMX, его нужно также экспонировать на нужном транспорте.
 
 ```yaml
 management:
   endpoints:
-    enabled-by-default: false
+    access:
+      default: none
+    web:
+      exposure:
+        include: health,info,prometheus
   endpoint:
     health:
-      enabled: true
+      access: read-only
     info:
-      enabled: true
-    metrics:
-      enabled: true
+      access: read-only
+    prometheus:
+      access: read-only
 ```
+
+В этом примере для `prometheus` нужна также зависимость для Prometheus registry. `management.endpoint.<id>.enabled` и `management.endpoints.enabled-by-default` относятся к прежнему булеву API. [Spring Boot 3.4 Release Notes](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.4-Release-Notes) · [Spring Boot 3.5 Endpoints](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html).
 
 ---
 
@@ -353,13 +344,15 @@ management:
 
 Уровни доступа — это дополнительный слой защиты поверх [Spring Security](spring-security-interview.md), а не замена ему: они ограничивают, какие операции в принципе разрешены эндпоинту, тогда как Security отвечает за то, кто имеет право их вызывать. `max-permitted` удобно выставить в `read-only` глобально, чтобы гарантированно запретить любые write-операции на весь сервис.
 
+В примере глобальный предел блокирует `shutdown` и изменение уровней через `loggers`, даже при `access: unrestricted` у обоих. Чтение `loggers` остаётся доступным при соответствующей экспозиции и авторизации.
+
 ---
 
 ## Q9. (!) Как работает эндпоинт /health?
 
-`/health` агрегирует состояние приложения и всех его зависимостей в один статус и HTTP-код. Это самый используемый эндпоинт: на него опираются балансировщики и `Kubernetes` liveness/readiness-пробы, чтобы решать, направлять ли трафик на инстанс и не нужно ли его перезапустить.
+Общий `/actuator/health` агрегирует состояние приложения и зарегистрированных зависимостей. Liveness и readiness в Kubernetes обычно направляют на отдельные группы `/actuator/health/liveness` и `/actuator/health/readiness`.
 
-**Как формируется итоговый статус:** Actuator опрашивает все зарегистрированные `HealthIndicator` (db, diskSpace, redis и т.д.), а `StatusAggregator` сворачивает их в общий статус по принципу «худший побеждает» — если хоть один компонент `DOWN`, всё приложение `DOWN`.
+**Как формируется итоговый статус.** `StatusAggregator` упорядочивает статусы компонентов по настроенному приоритету и выбирает первый известный. По умолчанию `DOWN` выше `OUT_OF_SERVICE` и `UP`. Отображение итогового статуса в HTTP-код настраивается отдельно.
 
 **Уровни детализации** управляют тем, сколько информации видно в ответе. По умолчанию наружу отдаётся только общий статус (`{"status":"UP"}`) — детали компонентов скрыты, чтобы не раскрывать внутреннее устройство неавторизованным:
 
@@ -408,7 +401,7 @@ management:
 | `OUT_OF_SERVICE` | 503 | Компонент выведен из обслуживания |
 | `UNKNOWN` | 200 | Статус неизвестен |
 
-**Важно про HTTP-коды:** для readiness-пробы значим именно код, а не тело — Kubernetes считает pod готовым при 200 и не готовым при 503. Поэтому маппинг статуса в код (`DOWN` → 503) — ключевой механизм интеграции.
+HTTP-проба Kubernetes считает успехом коды 200–399. После порога неудачных проверок liveness или startup kubelet перезапускает контейнер. Неудачная readiness меняет готовность Pod без перезапуска. [Kubernetes Probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/).
 
 **Kubernetes probes** автоматически регистрируются при запуске в `Kubernetes` (Spring обнаруживает среду по переменным окружения) и добавляют группы `liveness`/`readiness`:
 
@@ -481,7 +474,7 @@ public class ExternalServiceHealthIndicator implements HealthIndicator {
 }
 ```
 
-Для реактивных приложений на [WebFlux](spring-webflux-interview.md) используется `ReactiveHealthIndicator`.
+В [WebFlux](spring-webflux-interview.md) для неблокирующей проверки реализуют `ReactiveHealthIndicator`. Spring Boot адаптирует и обычные `HealthIndicator`, запуская их на отдельном планировщике.
 
 ---
 
@@ -503,7 +496,7 @@ management:
           include: readinessState,db,redis
           show-details: always
         critical:
-          include: db,redis,kafka
+          include: db,redis
           show-details: always
 ```
 
@@ -524,8 +517,9 @@ graph LR
     R --> RD[redis]
     C --> DB2[db]
     C --> RD2[redis]
-    C --> KF[kafka]
 ```
+
+Группа проверяет только указанных участников. Добавляйте внешнюю зависимость в readiness с учётом её роли: отказ общей БД может одновременно убрать из балансировки все реплики.
 
 ---
 
@@ -540,7 +534,7 @@ graph LR
 | `RedisHealthIndicator` | Есть `RedisConnectionFactory` |
 | `MongoHealthIndicator` | Есть `MongoTemplate` |
 | `RabbitHealthIndicator` | Есть `RabbitTemplate` |
-| `KafkaHealthIndicator` | Есть `KafkaAdmin` |
+
 | `ElasticsearchRestClientHealthIndicator` | Есть `RestClient` (Elasticsearch) |
 | `MailHealthIndicator` | Есть `JavaMailSender` |
 | `LdapHealthIndicator` | Есть `LdapTemplate` |
@@ -556,6 +550,8 @@ management:
       enabled: false
 ```
 
+Spring Boot 3.5 не поставляет встроенный `KafkaHealthIndicator`. Для Kafka нужна отдельная проверка, если она требуется приложению.
+
 ---
 
 ## Q13. Как настроить эндпоинт /info?
@@ -564,9 +560,13 @@ management:
 
 Данные собираются из нескольких независимых источников через механизм `InfoContributor` — каждый контрибьютор добавляет свой кусок в общий JSON:
 
-**1. Файл `application.yml`:**
+**1. Файл `application.yml`.** Для публикации свойств `info.*` включите `management.info.env.enabled=true`:
 
 ```yaml
+management:
+  info:
+    env:
+      enabled: true
 info:
   app:
     name: "My Service"
@@ -617,6 +617,8 @@ public class CustomInfoContributor implements InfoContributor {
 }
 ```
 
+В Spring Boot 3.5 contributors для build и Git включены по умолчанию при наличии соответствующих ресурсов. Для HTTP отдельно проверьте экспозицию `info`.
+
 ---
 
 ## Q14. Как работает эндпоинт /env и sanitization?
@@ -639,7 +641,7 @@ management:
 | `when-authorized` | Видны только авторизованным пользователям с нужной ролью |
 | `always` | Все значения видны (опасно для prod!) |
 
-Даже при `show-values: always` остаётся базовая защита: `Spring Boot` автоматически маскирует значения ключей, чьё имя содержит `password`, `secret`, `key`, `token`, `credential`. Но полагаться только на это в production не стоит — рекомендуется `never` или `when-authorized`.
+В Spring Boot 3.5 режим `always` разрешает показывать значения, если их не маскирует применимая `SanitizingFunction`. На автоматическую фильтрацию по словам `password` или `token` полагаться нельзя. [Spring Boot 3.5 Sanitization](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html#actuator.endpoints.sanitizing).
 
 ---
 
@@ -734,9 +736,7 @@ Content-Type: application/json
 POST /actuator/loggers/com.example.service
 Content-Type: application/json
 
-{
-  "configuredLevel": null
-}
+{}
 ```
 
 **Подводный камень:** изменения живут только в памяти и сбрасываются при перезапуске — после рестарта уровни вернутся к значениям из конфигурации. Поэтому это инструмент диагностики, а не способ постоянной настройки. И обязательно закрывайте `POST /loggers` авторизацией: возможность менять логирование в чужих руках — это и DoS (включить `TRACE` всему), и утечка чувствительных данных в логи.
@@ -788,6 +788,8 @@ public class FeaturesEndpoint {
 
 `@Selector` превращает параметр в path-переменную: `/actuator/features/{name}`.
 
+Аннотация `@Endpoint` определяет операции. Доступность по HTTP и JMX дополнительно зависит от access и exposure.
+
 ---
 
 ## Q18. Чем отличаются @Endpoint, @WebEndpoint и @JmxEndpoint?
@@ -817,6 +819,8 @@ public class WebStatusEndpoint {
 
 Также есть `@EndpointWebExtension` для расширения существующих эндпоинтов web-специфичными данными.
 
+«Да» в таблице означает, что транспорт поддерживается. Для конкретного эндпоинта нужны подходящие access, exposure и, для JMX, включённый JMX.
+
 ---
 
 ## Q19. Как расширить существующий эндпоинт?
@@ -836,7 +840,7 @@ public class InfoWebExtension {
 
     @ReadOperation
     public WebEndpointResponse<Map<String, Object>> info() {
-        Map<String, Object> info = this.delegate.info();
+        Map<String, Object> info = new LinkedHashMap<>(this.delegate.info());
         // Добавить дополнительные данные
         info.put("serverTime", Instant.now());
         return new WebEndpointResponse<>(info, 200);
@@ -976,6 +980,8 @@ public class CacheMetrics implements MeterBinder {
 }
 ```
 
+Для `@Timed` на методе Spring-бина нужна инструментация аннотаций, например `TimedAspect` и вызов через AOP-прокси. Метрики, записываемые непосредственно через `MeterRegistry`, такой настройки не требуют.
+
 ---
 
 ## Q23. Как работает аннотация @Timed?
@@ -1009,7 +1015,7 @@ public class MetricsConfig {
 }
 ```
 
-> Для контроллеров `@Timed` работает "из коробки" через `WebMvcMetricsFilter`. `TimedAspect` нужен только для сервисов и других бинов.
+В Spring Boot 3 встроенное измерение HTTP-запросов через Observation даёт `http.server.requests`. Прежний `WebMvcMetricsFilter` удалён. Для отдельного таймера метода контроллера через `@Timed` можно подключить `TimedAspect` и выбрать другое имя метрики. [Spring Boot 3.0 Migration Guide](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.0-Migration-Guide).
 
 Результат доступен через `/actuator/metrics/users.find.time`:
 
@@ -1091,6 +1097,8 @@ graph LR
     C --> E[Alerts]
 ```
 
+В Spring Boot 3.5 встроенные HTTP-метрики появляются через Observation. Для PromQL по сериям `_bucket` отдельно включите публикацию гистограммы для нужной метрики.
+
 ---
 
 ## Q25. Как настроить Grafana-дашборд для Spring Boot?
@@ -1105,7 +1113,7 @@ graph LR
 **Ключевые PromQL-запросы:**
 
 ```promql
-# Средняя задержка HTTP-запросов (p95)
+# p95 задержки HTTP-запросов
 histogram_quantile(0.95,
   rate(http_server_requests_seconds_bucket{application="my-app"}[5m])
 )
@@ -1122,11 +1130,13 @@ jvm_threads_live_threads{application="my-app"}
 
 Для production-сценариев рекомендуется сочетать метрики с трейсингом и логированием — подробнее в [Observability](../../monitoring/observability-interview.md).
 
+Запрос `histogram_quantile` использует серии `_bucket`. Для `http.server.requests` их можно включить через `management.metrics.distribution.percentiles-histogram[http.server.requests]=true`. При объединении классических гистограмм нескольких экземпляров сохраняйте границу бакета `le` в группировке.
+
 ---
 
 ## Q26. (!) Как защитить эндпоинты Actuator с помощью Spring Security?
 
-Как только `spring-boot-starter-security` оказывается в classpath, Actuator-эндпоинты перестают быть открытыми: по умолчанию аутентификации требуют **все** из них, включая `/health` и `/info`. Поэтому, если health- и info-пробы должны оставаться публичными (для load balancer'а, kubelet'а, мониторинга), их доступ открывают явно через `permitAll()` — как в примере ниже. Чтобы задать тонкие правила — кому какой эндпоинт доступен — пишут отдельный `SecurityFilterChain`.
+В Spring Boot 3.5 при наличии Spring Security и отсутствии собственной `SecurityFilterChain` автоконфигурация защищает Actuator-эндпоинты, кроме `health`. `info`, если экспонирован, по умолчанию тоже защищён. После объявления собственной цепочки автоматические правила уступают место вашим.
 
 Ключевая идея — **специальный matcher `EndpointRequest`**: он адресует эндпоинты по их id, а не по «зашитым» URL. Это устойчиво к смене `base-path` или `path-mapping` (см. Q6): правило `EndpointRequest.to("health")` продолжит работать, даже если health переехал на другой путь.
 
@@ -1163,6 +1173,8 @@ public class ActuatorSecurityConfig {
 
 > На production нередко используют отдельный порт для Actuator (Q27), что позволяет закрыть его на уровне сети.
 
+Для цепочки с `EndpointRequest.toAnyEndpoint()` задайте приоритет на методе-бине, например `@Order(1)`. Отдельная цепочка должна определять правила для остального приложения. [Spring Boot 3.5 Actuator Security](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html#actuator.endpoints.security).
+
 ---
 
 ## Q27. Как вынести Actuator на отдельный порт?
@@ -1193,6 +1205,8 @@ graph LR
 ```
 
 При использовании отдельного порта `Actuator` запускает собственный embedded-сервер с независимой конфигурацией SSL и адресов.
+
+Привязка к `127.0.0.1` рассчитана на локальный доступ. Удалённый Prometheus и HTTP-пробы kubelet по IP Pod до такого listener не достучатся. Для них используйте доступный сетевой адрес и ограничьте доступ сетевыми правилами и авторизацией.
 
 ---
 
@@ -1231,7 +1245,6 @@ management:
       show-values: never
   server:
     port: 9090
-    address: 127.0.0.1
   metrics:
     tags:
       application: ${spring.application.name}
@@ -1243,6 +1256,8 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 30s
 ```
+
+В примере порт должен быть доступен kubelet и системе сбора метрик. Loopback подходит только клиенту из того же сетевого пространства.
 
 ---
 
@@ -1313,7 +1328,7 @@ management:
         max-age: 3600
 ```
 
-**Ключевой нюанс:** CORS включается только при заданном `allowed-origins`. Если свойство не указано, Actuator вообще не отправляет CORS-заголовки — и любой кросс-доменный запрос из браузера будет заблокирован. То есть CORS здесь работает по принципу opt-in: пока явно не разрешишь origin, он закрыт.
+Для Actuator CORS включается при заданном `allowed-origins` или `allowed-origin-patterns`. Первое свойство задаёт конкретные origin, второе поддерживает шаблоны. [Spring Boot 3.5 Properties](https://docs.spring.io/spring-boot/3.5/appendix/application-properties/).
 
 ## Q31. (!) Как реализовать кастомный `HealthIndicator` с детальной диагностикой?
 
@@ -1333,63 +1348,38 @@ public class PaymentApiHealthIndicator implements HealthIndicator {
     private final RestTemplate restTemplate;
     private final String paymentApiUrl;
 
+    public PaymentApiHealthIndicator(
+            RestTemplateBuilder builder,
+            @Value("${payment.api.base-url}") String paymentApiUrl) {
+        this.restTemplate = builder
+            .connectTimeout(Duration.ofMillis(300))
+            .readTimeout(Duration.ofMillis(500))
+            .build();
+        this.paymentApiUrl = paymentApiUrl;
+    }
+
     @Override
     public Health health() {
+        long start = System.nanoTime();
         try {
-            ResponseEntity<String> response = restTemplate.getForEntity(
-                paymentApiUrl + "/health", String.class);
-            
-            if (response.getStatusCode().is2xxSuccessful()) {
-                return Health.up()
-                    .withDetail("url", paymentApiUrl)
-                    .withDetail("status", response.getStatusCode().value())
-                    .withDetail("latencyMs", measureLatency())
-                    .build();
-            } else {
-                return Health.down()
-                    .withDetail("url", paymentApiUrl)
-                    .withDetail("httpStatus", response.getStatusCode().value())
-                    .build();
-            }
-        } catch (Exception e) {
-            return Health.down(e)
-                .withDetail("url", paymentApiUrl)
-                .withDetail("error", e.getMessage())
+            ResponseEntity<Void> response = restTemplate.getForEntity(
+                paymentApiUrl + "/health", Void.class);
+            Health.Builder health = response.getStatusCode().is2xxSuccessful()
+                ? Health.up() : Health.down();
+            return health
+                .withDetail("status", response.getStatusCode().value())
+                .withDetail("latencyMs", Duration.ofNanos(System.nanoTime() - start).toMillis())
+                .build();
+        } catch (RestClientException e) {
+            return Health.down()
+                .withDetail("latencyMs", Duration.ofNanos(System.nanoTime() - start).toMillis())
                 .build();
         }
     }
-    
-    private long measureLatency() {
-        long start = System.currentTimeMillis();
-        restTemplate.headForHeaders(paymentApiUrl + "/ping");
-        return System.currentTimeMillis() - start;
-    }
 }
 ```
 
-**`ReactiveHealthIndicator` для WebFlux.** В реактивном стеке блокирующий `HealthIndicator` недопустим — он займёт event-loop-поток. Поэтому возвращают `Mono<Health>`, а проверку выстраивают неблокирующе, обрабатывая ошибку через `onErrorResume`:
-
-```java
-@Component("kafkaStream")
-public class KafkaHealthIndicator implements ReactiveHealthIndicator {
-
-    private final ReactiveKafkaProducerTemplate<?, ?> kafkaTemplate;
-
-    @Override
-    public Mono<Health> health() {
-        return kafkaTemplate.send("health-check-topic", "ping")
-            .map(result -> Health.up()
-                .withDetail("topic", "health-check-topic")
-                .withDetail("partition", result.getRecordMetadata().partition())
-                .build())
-            .onErrorResume(e -> Mono.just(
-                Health.down(e)
-                    .withDetail("error", e.getMessage())
-                    .build()
-            ));
-    }
-}
-```
+В WebFlux Spring Boot адаптирует обычный `HealthIndicator` и запускает его на отдельном планировщике. Когда клиент неблокирующий, возвращайте `Mono<Health>` через `ReactiveHealthIndicator` и ограничивайте время цепочки, например оператором `timeout`.
 
 **Результат `/actuator/health` с деталями:**
 
@@ -1400,7 +1390,6 @@ public class KafkaHealthIndicator implements ReactiveHealthIndicator {
     "externalPaymentApi": {
       "status": "UP",
       "details": {
-        "url": "https://payment.example.com",
         "status": 200,
         "latencyMs": 45
       }
@@ -1427,15 +1416,13 @@ management:
 
 Механизм такой: build-плагин на этапе сборки кладёт в jar файлы `build-info.properties` и `git.properties`, а в рантайме `BuildInfoContributor` и `GitInfoContributor` подхватывают их и добавляют в ответ `/info`. То есть половина работы — это конфигурация Gradle/Maven, а не Spring.
 
-**Шаг 1 — включить info-контрибьюторы в `application.yml`** (по умолчанию git и build выключены):
+**Шаг 1 — настроить `/info`.** В Spring Boot 3.5 build и Git contributors включены по умолчанию при наличии `build-info.properties` и `git.properties`. `env` включите явно, если нужны свойства `info.*`.
 
 ```yaml
 management:
   info:
     git:
       mode: full        # simple (коммит+ветка) или full (все поля)
-    build:
-      enabled: true     # включить информацию о сборке
     env:
       enabled: true     # включить переменные из Environment
     java:
@@ -1522,11 +1509,11 @@ public class AppInfoContributor implements InfoContributor {
 
 ## Q33. (!) Как работает `/actuator/prometheus` и что экспортируется?
 
-`/actuator/prometheus` отдаёт все метрики Micrometer в текстовом exposition-формате Prometheus (`text/plain; version=0.0.4`). Это точка интеграции pull-модели: сервер Prometheus периодически делает scrape этого эндпоинта и складывает значения в свою time-series базу с привязкой ко времени.
+`/actuator/prometheus` отдаёт метрики, зарегистрированные в Prometheus registry. Формат зависит от заголовка `Accept`: например, текстовый Prometheus или OpenMetrics. Сервер Prometheus периодически собирает показатели через scrape.
 
-**Важно понимать про снимок:** эндпоинт возвращает не историю, а **текущий мгновенный снимок** всех метрик. Историю и временные ряды строит уже Prometheus из последовательности scrape'ов, поэтому частота scrape (`scrape_interval`) определяет разрешение графиков.
+**Важно понимать про снимок:** эндпоинт возвращает не историю, а **текущий мгновенный снимок** метрик этого registry. Историю и временные ряды строит уже Prometheus из последовательности scrape'ов, поэтому частота scrape (`scrape_interval`) определяет разрешение графиков.
 
-Эндпоинт появляется автоматически при наличии `micrometer-registry-prometheus` в classpath.
+Для эндпоинта нужен Prometheus registry, разрешённый доступ и HTTP-экспозиция.
 
 **Подключение:**
 
@@ -1624,6 +1611,21 @@ public class FeatureFlagEndpoint {
 }
 ```
 
+**Экспозиция для HTTP-примеров:**
+
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,features,cache-control
+  endpoint:
+    features:
+      access: unrestricted
+    cache-control:
+      access: unrestricted
+```
+
 **HTTP-запросы к эндпоинту:**
 
 ```bash
@@ -1651,8 +1653,7 @@ public class CacheControlEndpoint {
 
     private final CacheManager cacheManager;
 
-    @ReadOperation
-    @Produces(MediaType.APPLICATION_JSON_VALUE)
+    @ReadOperation(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<String> listCaches() {
         return new ArrayList<>(cacheManager.getCacheNames());
     }
@@ -1696,25 +1697,12 @@ Spring Boot автоматически активирует probes, если о�
 переменные окружения KUBERNETES_SERVICE_HOST или KUBERNETES_SERVICE_PORT.
 ```
 
-**Кастомная readiness-логика:**
+**Обязательный прогрев при старте.** Синхронный `ApplicationRunner` выполняется до автоматического перехода Boot в `ACCEPTING_TRAFFIC`. Если прогрев обязателен, дайте его ошибке прервать запуск. Если прогрев идёт асинхронно, добавьте его состояние отдельным индикатором в readiness-группу, поскольку переход Boot не ждёт фоновой задачи. Для изменения состояния уже работающего приложения предусмотрен `AvailabilityChangeEvent.publish(context, ReadinessState.REFUSING_TRAFFIC)`. [Spring Boot 3.5 Application Availability](https://docs.spring.io/spring-boot/3.5/reference/features/spring-application.html#features.spring-application.application-availability).
 
 ```java
-@Component
-public class WarmupReadinessIndicator implements ApplicationListener<ApplicationStartedEvent> {
-
-    private final ApplicationAvailability availability;
-    private final DataLoader dataLoader;
-
-    @Override
-    public void onApplicationEvent(ApplicationStartedEvent event) {
-        try {
-            dataLoader.preloadCache();
-            // Сигнализируем, что приложение готово
-            availability.recordState(ReadinessState.ACCEPTING_TRAFFIC);
-        } catch (Exception e) {
-            availability.recordState(ReadinessState.REFUSING_TRAFFIC);
-        }
-    }
+@Bean
+ApplicationRunner warmup(DataLoader dataLoader) {
+    return args -> dataLoader.preloadCache();
 }
 ```
 
@@ -1750,7 +1738,7 @@ readinessProbe:
 
 `/actuator/loggers` позволяет читать и динамически менять уровень логирования без перезапуска — незаменимо при диагностике инцидента в production, когда нужно временно поднять детализацию логов конкретного пакета. Это расширенная версия Q16 с акцентом на безопасную эксплуатацию.
 
-**Production-сценарий целиком:** через `POST` точечно включаем `DEBUG`/`TRACE` для проблемного пакета → воспроизводим проблему и собираем логи → возвращаем уровень в `null` (сброс к дефолту). Ниже — полный набор операций и обязательная защита доступа.
+**Production-сценарий целиком:** через `POST` точечно включаем `DEBUG`/`TRACE` для проблемного пакета → воспроизводим проблему и собираем логи → сбрасываем явно заданный уровень пустым JSON `{}`. Ниже — полный набор операций и обязательная защита доступа.
 
 **Включение:**
 
@@ -1810,7 +1798,7 @@ curl -X POST http://localhost:8080/actuator/loggers/org.springframework.security
 # Сбросить к настройкам по умолчанию
 curl -X POST http://localhost:8080/actuator/loggers/com.cheatsheet.quiz.service \
   -H "Content-Type: application/json" \
-  -d '{"configuredLevel": null}'
+  -d '{}'
 ```
 
 **Защита через Spring Security:**
@@ -1822,6 +1810,8 @@ curl -X POST http://localhost:8080/actuator/loggers/com.cheatsheet.quiz.service 
 ```
 
 **Важно:** изменения **не персистируются** — после перезапуска приложения все уровни возвращаются к исходным значениям из конфигурации.
+
+Пустой объект сбрасывает явно заданный уровень, после чего действует наследуемый уровень. [Actuator Loggers API](https://docs.spring.io/spring-boot/3.5/api/rest/actuator/loggers.html).
 
 ---
 
@@ -1861,7 +1851,7 @@ public class ObservabilityConfig {
     }
 }
 
-// Использование — автоматически создаёт span + метрику
+// Вызов через Spring AOP-прокси создаёт observation
 @Service
 public class OrderService {
 
@@ -1869,7 +1859,6 @@ public class OrderService {
               contextualName = "creating-order",
               lowCardinalityKeyValues = {"service", "order"})
     public Order createOrder(CreateOrderRequest request) {
-        // Span автоматически открывается и закрывается
         return orderRepository.save(new Order(request));
     }
 }
@@ -1895,13 +1884,15 @@ public class PaymentService {
 
 **Результат:** каждый `@Observed` метод создаёт **и трейс-спан, и метрику** (`{name}.seconds` timer). Данные доступны через `/actuator/metrics` и в Jaeger/Zipkin.
 
+`ObservedAspect` требует Spring AOP и вызова через прокси. Какие данные появятся, зависит от зарегистрированных `ObservationHandler`. Метрики и трейсы требуют своих обработчиков, а экспорт span также зависит от sampling. [Spring Boot 3.5 Observability](https://docs.spring.io/spring-boot/3.5/reference/actuator/observability.html).
+
 ---
 
 ## Q38. Как работают /actuator/heapdump и /actuator/threaddump в production?
 
 ### /actuator/heapdump
 
-Отдаёт полный дамп кучи JVM в бинарном формате HPROF — снимок всех живых объектов для последующего анализа memory leak. В production его применяют **точечно и осторожно**: снятие дампа дорого и небезопасно.
+Отдаёт бинарный дамп кучи. Формат зависит от JVM: HPROF на HotSpot, PHD на OpenJ9. [Actuator Heap Dump API](https://docs.spring.io/spring-boot/3.5/api/rest/actuator/heapdump.html).
 
 ```bash
 # Скачать heapdump
@@ -1917,7 +1908,7 @@ curl -O http://localhost:8080/actuator/heapdump
 - При наличии алёрта на heap usage > 85%
 
 **Риски production:**
-- Останавливает JVM на время дампа (STW) — от секунд до минут
+- Может вызвать паузу JVM. Стоимость зависит от JVM и объёма кучи
 - Файл может весить несколько GB
 - Содержит чувствительные данные (пароли в памяти, токены)
 
@@ -1929,33 +1920,29 @@ curl -O http://localhost:8080/actuator/heapdump
 
 ### /actuator/threaddump
 
-Возвращает снимок состояния всех потоков JVM со стек-трейсами — то же, что даёт `jstack`, но по HTTP. Формат — текст (для чтения человеком) или JSON (для инструментов). В отличие от heapdump, снять threaddump дёшево и безопасно.
+Возвращает снимок состояния всех потоков JVM со стек-трейсами — то же, что даёт `jstack`, но по HTTP. Формат — текст (для чтения человеком) или JSON (для инструментов). Снятие thread dump обычно требует меньше ресурсов, чем дамп кучи.
 
 ```bash
 # Текстовый формат (для человека)
-curl http://localhost:8080/actuator/threaddump
+curl -H "Accept: text/plain" http://localhost:8080/actuator/threaddump
 
 # JSON формат
 curl -H "Accept: application/json" http://localhost:8080/actuator/threaddump
 ```
 
 **Когда использовать:**
-- Подозрение на deadlock (поток в состоянии BLOCKED)
+- Подозрение на deadlock. Проверьте цикл ожидания блокировок. Само состояние `BLOCKED` показывает ожидание монитора
 - Высокое CPU при малом числе запросов (busy spin)
 - Зависание приложения (потоки в WAITING/TIMED_WAITING)
 
-**Threaddump безопаснее heapdump** — не останавливает приложение, не содержит данных пользователей. Можно снимать несколько раз подряд для анализа динамики.
+Последовательные снимки помогают отличить кратковременное ожидание от устойчивого блокирования. Дамп раскрывает внутренние имена классов, методов и потоков. [Actuator Thread Dump API](https://docs.spring.io/spring-boot/3.5/api/rest/actuator/threaddump.html).
 
-```bash
-# Автоматическая диагностика deadlock
-curl http://localhost:8080/actuator/threaddump | grep -A5 "BLOCKED"
-```
 
 ---
 
 ## Q39. Как реализовать CompositeHealthContributor для группировки индикаторов?
 
-`CompositeHealthContributor` собирает несколько индикаторов под одним родительским именем, создавая в `/health` вложенную структуру (`paymentSystem` → `gateway`, `fraud`, `database`). Это нужно, когда у вас есть логическая подсистема из нескольких зависимостей: вместо плоского списка из десятка компонентов получается осмысленная группировка, а статус подсистемы агрегируется автоматически («худший дочерний побеждает»).
+`CompositeHealthContributor` собирает несколько индикаторов под одним родительским именем, создавая в `/health` вложенную структуру (`paymentSystem` → `gateway`, `fraud`, `database`). Это нужно, когда у вас есть логическая подсистема из нескольких зависимостей: вместо плоского списка из десятка компонентов получается осмысленная группировка, а статус подсистемы агрегируется автоматически по порядку статусов `StatusAggregator`.
 
 ### Пример — группировка зависимостей Payment-сервиса:
 
@@ -2008,7 +1995,7 @@ public class PaymentSystemHealthContributor implements CompositeHealthContributo
 }
 ```
 
-**Преимущество:** родительский компонент `paymentSystem` автоматически агрегирует статус дочерних. Если хоть один `DOWN` — родитель тоже `DOWN` (по умолчанию стратегия `StatusAggregator`).
+Родитель агрегирует дочерние статусы по заданному порядку. Если дочерние индикаторы объявлены отдельными бинами `HealthContributor`, Boot может зарегистрировать их также на верхнем уровне. Пример JSON показывает вложенную часть ответа.
 
 ### Кастомная стратегия агрегации:
 
@@ -2030,7 +2017,6 @@ public StatusAggregator statusAggregator() {
 
 ```java
 @RestController
-@Timed("http.server.requests")  // Применяется ко всем методам класса
 public class OrderController {
 
     @GetMapping("/orders/{id}")
@@ -2045,7 +2031,7 @@ public class OrderController {
 }
 ```
 
-**Важно:** `@Timed` работает через AOP — нужен `TimedAspect` bean:
+Для отдельного таймера метода подключите Spring AOP и бин `TimedAspect`. Инструментация срабатывает при вызове через прокси. Встроенная HTTP-метрика `http.server.requests` собирается средствами Observation.
 
 ```java
 @Bean
@@ -2078,13 +2064,16 @@ public class OrderService {
             .record(() -> processOrder(request));
     }
 
-    public void updateInventory(Long productId, int delta) {
-        // Gauge — текущее значение
-        Gauge.builder("inventory.level", this,
-            svc -> inventoryRepo.findByProductId(productId)
-                .map(Inventory::getQuantity).orElse(0))
-            .tag("product_id", productId.toString())
+    private final AtomicInteger inventoryLevel = new AtomicInteger();
+
+    @PostConstruct
+    void bindInventoryGauge() {
+        Gauge.builder("inventory.level", inventoryLevel, AtomicInteger::get)
             .register(meterRegistry);
+    }
+
+    public void recordInventoryLevel(int quantity) {
+        inventoryLevel.set(quantity);
     }
 }
 ```
@@ -2107,16 +2096,19 @@ management:
     web:
       exposure:
         include: prometheus, health, info
-  metrics:
-    export:
-      prometheus:
+  prometheus:
+    metrics:
+      export:
         enabled: true
+  metrics:
     distribution:
       percentiles-histogram:
         "[http.server.requests]": true
       slo:
         "[http.server.requests]": 50ms, 100ms, 200ms, 500ms
 ```
+
+Зарегистрируйте Gauge один раз при инициализации. Он читает локальное значение без обращения к БД во время scrape. Идентификатор товара создавал бы отдельный временной ряд для каждого значения, поэтому его здесь нет.
 
 ---
 
@@ -2126,9 +2118,9 @@ management:
 
 1. **Whitelist экспозиции** — наружу выставлены только нужные эндпоинты (`health`, `info`, `prometheus`, `loggers`), а `env`, `beans`, `heapdump`, `shutdown` не открыты в принципе.
 2. **Spring Security** — то, что открыто, требует аутентификации и разграничено по ролям.
-3. **Сетевой уровень** — management-порт закрыт от внешнего ingress NetworkPolicy и доступен только Prometheus и kubelet.
+3. **Сетевой уровень** ограничивает доступ к management-порту. Область допуска зависит от селекторов NetworkPolicy и реализации сети кластера.
 
-Даже если один слой даст осечку (например, в Security закрался баг), остальные не дадут эксплуатировать опасный эндпоинт.
+Экспозиция, авторизация и сетевые правила применяются независимо.
 
 ### Минимальный whitelist для production:
 
@@ -2145,7 +2137,7 @@ management:
       show-details: when-authorized
       show-components: when-authorized
     loggers:
-      enabled: true
+      access: unrestricted
   server:
     port: 8081  # Actuator на отдельном порту (закрытом снаружи)
 ```
@@ -2154,10 +2146,10 @@ management:
 
 ```java
 @Configuration
-@Order(1)  // Выше основного SecurityFilterChain
 public class ActuatorSecurityConfig {
 
     @Bean
+    @Order(1)
     public SecurityFilterChain actuatorSecurityFilterChain(HttpSecurity http)
             throws Exception {
         http
@@ -2165,7 +2157,7 @@ public class ActuatorSecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Kubernetes probes — без аутентификации
                 .requestMatchers(EndpointRequest.to(
-                    HealthEndpoint.class, InfoEndpoint.class)).permitAll()
+                    HealthEndpoint.class)).permitAll()
                 // Prometheus scrape — network-level защита или basic auth
                 .requestMatchers(EndpointRequest.to(
                     PrometheusScrapeEndpoint.class)).hasRole("PROMETHEUS")
@@ -2175,8 +2167,7 @@ public class ActuatorSecurityConfig {
                 // Остальные эндпоинты — только ops-команда
                 .anyRequest().hasRole("ACTUATOR_ADMIN")
             )
-            .httpBasic(Customizer.withDefaults())
-            .csrf(AbstractHttpConfigurer::disable);
+            .httpBasic(Customizer.withDefaults());
         return http.build();
     }
 }
@@ -2186,35 +2177,39 @@ public class ActuatorSecurityConfig {
 
 ```yaml
 # Actuator-порт 8081 закрыт для ingress-трафика
-# Открыт только для Prometheus и kubelet
+# Допускает Pod из namespace с нужной меткой
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
+metadata:
+  name: my-app-management
 spec:
   podSelector:
     matchLabels:
       app: my-app
   ingress:
     - ports: [{port: 8080}]  # App port — открыт всем
-    - ports: [{port: 8081}]  # Actuator — только от Prometheus и K8s
+    - ports: [{port: 8081}]  # Actuator — от Pod разрешённого namespace
       from:
         - namespaceSelector:
             matchLabels:
               name: monitoring
 ```
 
+Для остальных URL нужна отдельная цепочка. CSRF остаётся включённым. Для POST к `loggers` учитывайте CSRF-токен или настройте узкое исключение после выбора модели аутентификации. Один `namespaceSelector` разрешает доступ всем подходящим Pod в namespace. Для ограничения конкретными Pod добавьте `podSelector` в тот же элемент `from`.
+
 ---
 
 ## Q42. Liveness vs Readiness vs Startup проба Kubernetes — в чём разница?
 
-Все три пробы Kubernetes отвечают на разные вопросы и приводят к разным действиям — путать их опасно. Главное различие: **liveness при провале перезапускает pod, readiness просто убирает его из-под трафика (не перезапуская), а startup откладывает две первых пробы, пока приложение долго стартует.**
+Все три пробы Kubernetes отвечают на разные вопросы и приводят к разным действиям — путать их опасно. Главное различие: **liveness после порога ошибок приводит к перезапуску контейнера, readiness меняет готовность Pod, а startup откладывает две другие пробы до успешного запуска.**
 
 ### Три типа проб:
 
 | Проба | Вопрос | Действие при ошибке | Когда проверяется |
 |---|---|---|---|
-| **Liveness** | Жив ли контейнер? | Перезапуск Pod | После старта, всё время |
+| **Liveness** | Жив ли контейнер? | Перезапуск контейнера после `failureThreshold` | После старта, всё время |
 | **Readiness** | Готов ли принимать трафик? | Исключить из Service endpoints | После старта, всё время |
-| **Startup** | Запустился ли? | Перезапуск Pod | Только при старте |
+| **Startup** | Запустился ли? | Перезапуск контейнера после `failureThreshold` | Только при старте |
 
 **Типичная ошибка:** включать проверку внешних зависимостей (БД, соседний сервис) в **liveness**. Если БД ненадолго недоступна, liveness начнёт падать и Kubernetes перезапустит все pod'ы — каскадный рестарт вместо ожидания. Внешние зависимости — это про **readiness** (временно не принимаем трафик), а liveness должна проверять только «жив ли сам процесс».
 
@@ -2278,19 +2273,14 @@ spec:
 @RequiredArgsConstructor
 public class WarmupService implements ApplicationRunner {
 
-    private final ApplicationContext context;
-
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        // Прогрев кэша (во время этого readiness = OUT_OF_SERVICE)
-        warmUpCache();
-        
-        // Сигнал что готовы принимать трафик
-        AvailabilityChangeEvent.publish(context,
-            ReadinessState.ACCEPTING_TRAFFIC);
+        warmUpCache(); // Boot выставит ACCEPTING_TRAFFIC после завершения runners
     }
 }
 ```
+
+HTTP-проба считает успехом статусы 200–399. Readiness отмечает Pod как неготовый, когда достигнут порог ошибок, без перезапуска контейнера. [Kubernetes Probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/).
 
 ---
 
@@ -2303,9 +2293,7 @@ public class WarmupService implements ApplicationRunner {
 ```groovy
 implementation 'org.springframework.boot:spring-boot-starter-actuator'
 implementation 'io.micrometer:micrometer-tracing-bridge-otel'
-implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter:2.x'
 implementation 'io.micrometer:micrometer-registry-otlp'        // Метрики через OTLP
-// ИЛИ для трейсов:
 implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 ```
 
@@ -2314,6 +2302,8 @@ implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 ```yaml
 management:
   otlp:
+    tracing:
+      endpoint: http://otel-collector:4318/v1/traces
     metrics:
       export:
         url: http://otel-collector:4318/v1/metrics
@@ -2326,18 +2316,7 @@ spring:
   application:
     name: my-service                       # Используется как service.name в трейсах
 
-# OTel настройки через системные переменные (или application.yml)
-otel:
-  exporter:
-    otlp:
-      endpoint: http://otel-collector:4317  # gRPC
-      # или http://otel-collector:4318      # HTTP/protobuf
-  service:
-    name: ${spring.application.name}
-  resource:
-    attributes:
-      deployment.environment: production
-      service.version: ${app.version:unknown}
+
 ```
 
 ### Архитектура экспорта:
@@ -2361,7 +2340,9 @@ Spring Boot App
   traceId=%X{traceId} spanId=%X{spanId} - %msg%n</pattern>
 ```
 
-**Что проверяют на собеседовании:** понимание разницы между push (OTLP) и pull (Prometheus scrape) моделями экспорта метрик; знание что Micrometer Tracing — абстракция над OTel/Brave; умение настроить sampling в production (обычно 1-10%).
+**Что проверяют на собеседовании:** понимание разницы между push (OTLP) и pull (Prometheus scrape) моделями экспорта метрик; знание роли Micrometer Tracing и умение выбрать sampling с учётом нагрузки и требуемой детализации.
+
+Пример использует автоконфигурацию Spring Boot 3.5. Для трассировки и метрик заданы отдельные HTTP-адреса коллектора. [Spring Boot 3.5 Properties](https://docs.spring.io/spring-boot/3.5/appendix/application-properties/).
 
 ---
 
@@ -2377,9 +2358,10 @@ app.run(args);
 
 ```properties
 management.endpoints.web.exposure.include=health,startup
+management.endpoint.startup.access=read-only
 ```
 
-`GET /actuator/startup` возвращает снимок накопленных шагов, `POST /actuator/startup` возвращает их и **очищает буфер**. В ответе есть длительность шага, его имя, `id`/`parentId` и теги: так можно найти, например, дорогую инициализацию бина или сканирование пакетов. Буфер ограничен ёмкостью: когда она исчерпана, новые шаги не записываются. Эндпоинт по умолчанию не открыт по HTTP (обычно открыт только `health`); доступ к деталям запуска надо защищать как к диагностическим данным. [Spring Boot: Application Startup tracking](https://docs.spring.io/spring-boot/reference/features/spring-application.html), [Actuator startup API](https://docs.spring.io/spring-boot/api/rest/actuator/startup.html).
+`GET /actuator/startup` возвращает снимок накопленных шагов, `POST /actuator/startup` возвращает их и **очищает буфер**. В Spring Boot 3.5 настройка read-only оставляет GET и отключает POST. Экспозиция открывает маршрут, а права на чтение определяет конфигурация безопасности. [Уровни доступа Actuator](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html#actuator.endpoints.access). В ответе есть длительность шага, его имя, `id`/`parentId` и теги: так можно найти, например, дорогую инициализацию бина или сканирование пакетов. Буфер ограничен ёмкостью: когда она исчерпана, новые шаги не записываются. Эндпоинт по умолчанию не открыт по HTTP (обычно открыт только `health`); доступ к деталям запуска надо защищать как к диагностическим данным. [Spring Boot: Application Startup tracking](https://docs.spring.io/spring-boot/reference/features/spring-application.html), [Actuator startup API](https://docs.spring.io/spring-boot/api/rest/actuator/startup.html).
 
 Для корреляции шагов с событиями JVM (GC, загрузка классов, аллокации) используйте `FlightRecorderApplicationStartup` и запись JFR. Он решает другую задачу и сам по себе не является источником JSON для `/actuator/startup`, которому нужен именно `BufferingApplicationStartup`. Метрики `application.started.time` и `application.ready.time` дают итоговые длительности, но не разбивку по шагам. Не путайте эту диагностику с **Kubernetes startup probe** из Q42: проба определяет, когда приложение готово пройти проверки, а не объясняет, почему старт затянулся. [Spring Boot reference](https://docs.spring.io/spring-boot/reference/features/spring-application.html), [Spring Boot metrics](https://docs.spring.io/spring-boot/reference/actuator/metrics.html).
 

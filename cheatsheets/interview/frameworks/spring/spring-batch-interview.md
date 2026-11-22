@@ -15,7 +15,7 @@ aliases:
 prerequisites:
   - "[[spring-batch]]"
 next: []
-updated: "2026-10-07"
+updated: "2026-11-03"
 ---
 # Вопросы на собеседовании: `Spring Batch`
 
@@ -301,9 +301,9 @@ public FlatFileItemReader<Transaction> reader(
 
 ## Q6. (!) Что такое JobRepository и какую роль он играет?
 
-**`JobRepository`** — интерфейс для хранения метаданных `Spring Batch`: статуса, параметров, времени запуска, счётчиков шагов и ошибок. Персистентные реализации сохраняют эту «память» между запусками; resourceless-реализация предназначена для одноразовых заданий без перезапуска.
+**`JobRepository`** — интерфейс для хранения метаданных `Spring Batch`: статуса, параметров, времени запуска, счётчиков шагов и сообщений о завершении. Персистентные реализации сохраняют эту «память» между запусками; resourceless-реализация предназначена для одноразовых заданий без перезапуска. [Spring Batch, схема метаданных](https://docs.spring.io/spring-batch/reference/schema-appendix.html).
 
-Для задания с требованием перезапуска нужен персистентный `JobRepository`: без сохранённого состояния между процессами нельзя восстановить точку сбоя, проверить прежний успешный запуск или получить долговечный аудит. Resourceless-вариант подходит для других, одноразовых сценариев.
+Для задания с требованием перезапуска нужен персистентный `JobRepository`: без сохранённого состояния между процессами нельзя проверить прежний успешный запуск или восстановить состояние шага. Но одного репозитория недостаточно, чтобы продолжить чтение с нужной записи: `ItemReader` или `ItemWriter` со своим состоянием должен сохранять позицию в `ExecutionContext` через `ItemStream`, а источник данных и запись результата должны выдерживать повторное выполнение. Например, у `FlatFileItemReader` настройка `saveState(false)` отключает сохранение позиции для перезапуска. Resourceless-вариант подходит для одноразового задания без таких требований. [Spring Batch, ItemStream](https://docs.spring.io/spring-batch/reference/readers-and-writers/item-stream.html); [FlatFileItemReaderBuilder 6.0](https://docs.spring.io/spring-batch/reference/api/org/springframework/batch/infrastructure/item/file/builder/FlatFileItemReaderBuilder.html).
 
 **Таблицы метаданных JDBC-реализации:**
 
@@ -317,14 +317,16 @@ public FlatFileItemReader<Transaction> reader(
 | `BATCH_STEP_EXECUTION_CONTEXT` | Контекст Step |
 
 **Зачем нужен персистентный `JobRepository`:**
-- **Перезапуск** — знает, на каком шаге и элементе произошёл сбой
+- **Перезапуск** — хранит выполнение шага и его `ExecutionContext`; точность восстановления позиции зависит от reader/writer и сохранённого состояния
 - **Мониторинг** — хранит статистику каждого запуска
 - **Предотвращение дублей** — не позволяет запустить уже успешный `JobInstance`
-- **Аудит** — полная история запусков
+- **Разбор запусков** — история сохранённых попыток и шагов в пределах доступных метаданных; для обязательного аудита проверьте срок хранения и состав записей отдельно
 
-**Выбор хранилища и граница версий:** в Spring Batch 5.0–5.1 ручная конфигурация `@EnableBatchProcessing` использовала JDBC-репозиторий. В Batch 5.2 появились MongoDB-репозиторий и `ResourcelessJobRepository`; последний уже тогда не сохранял метаданные. В Batch 6 изменилось **поведение по умолчанию**: `@EnableBatchProcessing` или `DefaultBatchConfiguration` без отдельного выбора хранилища даёт resourceless-репозиторий, который не подходит для перезапуска и конкурентного исполнения. Для ручной настройки персистентного хранилища в Batch 6 используют `@EnableJdbcJobRepository` или `@EnableMongoJobRepository`. Spring Boot 4.1 умеет автоконфигурировать in-memory, JDBC или MongoDB store; явный `@EnableBatchProcessing` либо наследование `DefaultBatchConfiguration` отключает эту автоконфигурацию.
+**Выбор хранилища и граница версий:** в Spring Batch 5.0–5.1 ручная конфигурация `@EnableBatchProcessing` использовала JDBC-репозиторий. В Batch 5.2 появились MongoDB-репозиторий и `ResourcelessJobRepository`; последний уже тогда не сохранял метаданные. В Batch 6 изменилось **поведение по умолчанию**: `@EnableBatchProcessing` или `DefaultBatchConfiguration` без отдельного выбора хранилища даёт resourceless-репозиторий, который не подходит для перезапуска, конкурентного исполнения и обмена состоянием через `ExecutionContext`. Для ручной настройки персистентного хранилища в Batch 6 используют `@EnableJdbcJobRepository` или `@EnableMongoJobRepository`. Spring Boot 4.1 умеет автоконфигурировать in-memory, JDBC или MongoDB store; явный `@EnableBatchProcessing` либо наследование `DefaultBatchConfiguration` отключает эту автоконфигурацию.
 
 MongoDB-репозиторий хранит **метаданные задания**, а не входные или выходные записи: например, читать CSV и писать в PostgreSQL можно при `JobRepository` в MongoDB. Для его транзакций нужны `MongoTransactionManager` и серверная конфигурация с поддержкой многодокументных транзакций (например, replica set); коллекции и индексы должны существовать до выполнения задания (в Boot 4.1 их создание можно включить свойством `spring.batch.data.mongodb.schema.initialize=true`). Транзакция метаданных MongoDB сама по себе не делает запись в отдельный PostgreSQL атомарной вместе с ней: после сбоя повторная обработка требует идемпотентной записи или другого явно спроектированного механизма согласования. Сверяй [Spring Batch 5.2: новые реализации](https://docs.spring.io/spring-batch/reference/5.2/whatsnew.html), [Spring Batch 6 JobRepository](https://docs.spring.io/spring-batch/reference/job/configuring-repository.html), [Spring Boot 4.1 Batch](https://docs.spring.io/spring-boot/reference/io/spring-batch.html) и [MongoDB transactions](https://docs.spring.io/spring-data/mongodb/reference/mongodb/client-session-transactions.html).
+
+При ручной настройке `MongoTemplate`, который использует репозиторий, задайте на его `MappingMongoConverter` замену точки в ключах `Map`, например `setMapKeyDotReplacement("_")`. Это нужно для сохранения ключей `ExecutionContext` вроде `batch.version`. При выборе замены проверьте, что разные ключи, например `batch.version` и `batch_version`, не превращаются в одно и то же имя поля. [Spring Batch: настройка MongoDB JobRepository](https://docs.spring.io/spring-batch/reference/job/configuring-repository.html#configuring-a-mongodb-jobrepository)
 
 ```java
 @Configuration
@@ -620,7 +622,7 @@ public class CleanupTasklet implements Tasklet {
 
 ## Q14. Как работают JdbcCursorItemReader и JdbcPagingItemReader?
 
-**`JdbcCursorItemReader`** — открывает один JDBC-курсор и читает строки последовательно из одного `ResultSet`. Простой и быстрый на одном потоке, но **не thread-safe**: курсор и соединение одни на всех, поэтому параллельное чтение из нескольких потоков ломает позицию. Для многопоточности он не годится.
+**`JdbcCursorItemReader`** — открывает один JDBC-курсор и читает строки последовательно из одного `ResultSet`. Он удерживает соединение на время чтения и не рассчитан на совместное использование несколькими потоками. Фактическая буферизация строк зависит от JDBC-драйвера и настроек fetch.
 
 ```java
 @Bean
@@ -638,7 +640,7 @@ public JdbcCursorItemReader<Customer> cursorReader(DataSource dataSource) {
 }
 ```
 
-**`JdbcPagingItemReader`** — читает данные страницами отдельными SQL-запросами с `LIMIT`/`OFFSET` (или аналогами). Каждая страница — независимый запрос с явной сортировкой, поэтому reader **thread-safe** и подходит для многопоточных шагов и партиционирования. Платой за это становится повторное выполнение запроса на каждую страницу.
+**`JdbcPagingItemReader`** — запрашивает данные страницами. `PagingQueryProvider` строит SQL с учётом СУБД; считать каждый запрос `LIMIT/OFFSET` нельзя. Для стабильной пагинации задайте уникальный ключ сортировки: при перезапуске reader ориентируется на последний сохранённый ключ. Реализация потокобезопасна между вызовами `open(ExecutionContext)`, но при многопоточном использовании документация требует `saveState(false)`, поэтому обычный перезапуск с сохранённой позицией недоступен. На каждую новую страницу выполняется запрос, а владение физическим соединением зависит от транзакции и `DataSource`.
 
 ```java
 @Bean
@@ -664,11 +666,12 @@ public JdbcPagingItemReader<Customer> pagingReader(DataSource dataSource) {
 
 | Критерий | CursorReader | PagingReader |
 |----------|-------------|-------------|
-| Thread-safety | Нет | Да |
-| Соединение | Одно, держится открытым | Новое на каждую страницу |
-| Сортировка | Не требуется | Обязательна (`sortKeys`) |
-| Масштабирование | Один поток | Многопоточность, партиционирование |
-| Производительность | Быстрее на одном потоке | Чуть медленнее из-за пагинации |
+| Совместное чтение | Один поток на экземпляр | Между `open()` потокобезопасен; для многопоточности `saveState(false)` |
+| Доступ к БД | Курсор и соединение удерживаются при чтении | Отдельный запрос на страницу; соединение зависит от транзакции |
+| Сортировка | `ORDER BY` нужен, если важен детерминированный порядок | Уникальный ключ сортировки обязателен для корректного перезапуска |
+| Компромисс | Долгое удержание соединения | Повторные запросы; без сохранения состояния нет обычного restart |
+
+Проверяйте поведение на своём драйвере и БД: количество запросов, время удержания соединения и устойчивость к изменению данных между страницами. [Spring Batch, database readers](https://docs.spring.io/spring-batch/reference/readers-and-writers/database.html), [JdbcPagingItemReader API](https://docs.spring.io/spring-batch/reference/api/org/springframework/batch/infrastructure/item/database/JdbcPagingItemReader.html).
 
 ## Q15. Как использовать JpaPagingItemReader для чтения из БД?
 
@@ -687,7 +690,9 @@ public JpaPagingItemReader<Order> jpaReader(EntityManagerFactory emf) {
 }
 ```
 
-Начиная с `Spring Batch 5.0`, доступен также `JpaCursorItemReader` — потоковое чтение через JPA-курсор, что эффективнее для больших объёмов:
+Запрос задают на JPQL с именованным параметром `:status`, а значение передают отдельно через `parameterValues`. `pageSize` задаёт число сущностей в одной выборке, а не только размер внутреннего буфера или метрику.
+
+Начиная с **Spring Batch 4.3**, доступен также `JpaCursorItemReader`: он итерирует результат `Query.getResultStream()` без постраничных запросов. Экономия памяти и фактическое потоковое чтение зависят от JPA-провайдера и JDBC-драйвера; экземпляр reader не потокобезопасен.
 
 ```java
 @Bean
@@ -701,7 +706,7 @@ public JpaCursorItemReader<Order> jpaCursorReader(EntityManagerFactory emf) {
 }
 ```
 
-> **Совет:** при работе с `JPA` читателями учитывайте, что сущности попадают в persistence context. Для read-only операций используйте проекции или `@Transactional(readOnly = true)`, чтобы избежать dirty checking. Подробнее в [Spring Data JPA](spring-data-jpa-interview.md).
+`JpaPagingItemReader` использует свой `EntityManager` и отдельную транзакцию чтения. После каждой страницы он вызывает `flush()` и `clear()`, поэтому возвращённые сущности становятся detached. Изменения этих объектов не сохранятся сами: для записи нужен явный путь через writer, например `merge()`. Внешний `@Transactional(readOnly = true)` не меняет автоматически транзакцию reader. Для тяжёлых сущностей оцените проекцию, размер страницы и возможности провайдера. [JpaPagingItemReader API](https://docs.spring.io/spring-batch/reference/api/org/springframework/batch/infrastructure/item/database/JpaPagingItemReader.html), [JpaCursorItemReader API](https://docs.spring.io/spring-batch/reference/api/org/springframework/batch/infrastructure/item/database/JpaCursorItemReader.html). Подробнее о JPA — в [Spring Data JPA](spring-data-jpa-interview.md).
 
 ## Q16. Как читать и писать плоские файлы (CSV, TSV)?
 
@@ -754,6 +759,8 @@ public FlatFileItemReader<LegacyRecord> fixedWidthReader() {
             .build();
 }
 ```
+
+`linesToSkip(1)` явно пропускает заголовок при чтении; имена полей направляют маппинг, но сами не распознают строку заголовка. Для TSV меняется разделитель на `"\t"`; fixed-width использует диапазоны колонок вместо разделителя. При записи `DelimitedLineAggregator` по умолчанию не заключает поля в кавычки. Если данные могут содержать разделитель, кавычки или перевод строки, проверьте формат на round trip с реальными значениями; начиная с Batch 5.1 у builder есть `quoteCharacter`, а для записей с переводами строк может потребоваться настройка `RecordSeparatorPolicy`. [FlatFileItemReader](https://docs.spring.io/spring-batch/reference/readers-and-writers/flat-files/file-item-reader.html), [FlatFileItemWriter](https://docs.spring.io/spring-batch/reference/readers-and-writers/flat-files/file-item-writer.html), [DelimitedBuilder API](https://docs.spring.io/spring-batch/reference/api/org/springframework/batch/infrastructure/item/file/builder/FlatFileItemWriterBuilder.DelimitedBuilder.html).
 
 ## Q17. (!) Какие стандартные ItemWriter предоставляет Spring Batch?
 
@@ -1031,7 +1038,7 @@ public class SkipTracker implements SkipListener<RawRecord, ProcessedRecord> {
 
 **Retry-логика** позволяет повторить обработку элемента при **транзиентных** (временных) ошибках — таймаутах, дедлоках, кратковременной недоступности внешнего сервиса. Логика проста: ошибка, скорее всего, разовая, поэтому повтор через мгновение, вероятно, пройдёт успешно.
 
-Ретраить имеет смысл только то, что реально может «само починиться»: дедлок, таймаут БД, сетевой сбой. Ошибки валидации (`noRetry`) повторять бессмысленно — данные не изменятся, и каждый повтор лишь зря тратит попытки.
+Ретраить имеет смысл только то, что реально может «само починиться»: дедлок, таймаут БД, сетевой сбой. Ошибки валидации (`noRetry`) повторять бессмысленно — данные не изменятся, и каждый повтор лишь зря тратит попытки. Примеры конфигурации ниже относятся к Spring Batch 5.2; в Batch 6.0 используется новый builder `chunk(int).transactionManager(...)`; официальный пример повторов показывает `retryPolicy(...)`.
 
 ```java
 @Bean
@@ -1074,66 +1081,54 @@ public Step stepWithBackoff(JobRepository jobRepository,
             .faultTolerant()
             .retryLimit(3)
             .retry(RemoteServiceException.class)
-            .backOffPolicy(new ExponentialBackOffPolicy()) // 100ms, 200ms, 400ms...
+            .backOffPolicy(new ExponentialBackOffPolicy()) // растущие паузы между повторами
             .build();
 }
 ```
 
-> **Важно:** retry применяется только к `ItemProcessor` и `ItemWriter`. Ошибки в `ItemReader` не ретраятся — для них используйте skip или обработку в самом reader.
+**Повтор чтения требует отдельной проверки.** В Batch 6 после ошибки `read()` шаг может вызвать тот же reader снова, но это не гарантирует повтор того же элемента. Если reader сдвинул позицию до исключения, следующая попытка может молча перейти к следующей записи. Paging reader, который сдвигает позицию только после успешной выборки страницы, допускает повтор временного сбоя; живой курсор после потери соединения восстановить тем же вызовом нельзя. Проверяйте контракт конкретного reader и идемпотентность записи. [Spring Batch 6, retry и ItemReader](https://docs.spring.io/spring-batch/reference/step/chunk-oriented-processing/retry-logic.html).
 
 ## Q23. (!) Какие стратегии масштабирования поддерживает Spring Batch?
 
-`Spring Batch` предлагает четыре стратегии масштабирования — от простых к сложным. Принцип выбора: берите минимально достаточную. Первые две работают в одной JVM и не требуют инфраструктуры; партиционирование и remote chunking распределяют работу, но усложняют деплой и требуют брокера/общей БД.
+Сначала измерьте обычный однопоточный Job и найдите узкое место. В Spring Batch 5.2 доступны многопоточный Step, параллельные Step, remote chunking и **локальное или удалённое** партиционирование. Первые два варианта работают в одной JVM; локальное партиционирование тоже работает без брокера. Remote chunking переносит обработку чанков в другие процессы через сообщения. Для удалённого партиционирования и remote chunking нужны соответствующий транспорт и координация, а не для любой формы масштабирования.
 
-```mermaid
-graph TB
-    subgraph "1. Multi-threaded Step"
-        MT[TaskExecutor<br/>Один Step, N потоков]
-    end
-    subgraph "2. Parallel Steps"
-        PS[Split/Flow<br/>Несколько Step параллельно]
-    end
-    subgraph "3. Partitioning"
-        PA[Master → Slave Steps<br/>Данные делятся на разделы]
-    end
-    subgraph "4. Remote Chunking"
-        RC[Master читает<br/>Slaves обрабатывают/пишут<br/>через middleware]
-    end
+Spring Batch 6.0 добавил **local chunking**: чтение остаётся у manager, а обработка чанков выполняется локальными worker через `TaskExecutor`. В этой версии есть и remote step, который запускает целый Step в другом процессе. Выбирайте вариант по тому, где находится узкое место — чтение, обработка или запись — и по требованиям к повторному запуску.
 
-    MT --> PS --> PA --> RC
-    style MT fill:#e1f5fe
-    style PS fill:#e8f5e9
-    style PA fill:#fff3e0
-    style RC fill:#fce4ec
-```
+| Стратегия | Где выполняется работа | Что разделяется |
+|-----------|------------------------|-----------------|
+| Multi-threaded Step | Одна JVM | В Batch 5.2 — чанки; в 6.0 — обработка элементов |
+| Parallel Steps (`split`) | Одна JVM | Независимые Step |
+| Local chunking (с 6.0) | Одна JVM | Чанки через локальный `TaskExecutor` |
+| Partitioning | Локальные потоки или удалённые worker | Непересекающиеся разделы данных с отдельными `StepExecution` |
+| Remote chunking | Несколько процессов | Чтение у manager, обработка/запись у worker |
+| Remote step (с 6.0) | Несколько процессов | Целый Step |
 
-| Стратегия | Сложность | Когда использовать |
-|-----------|-----------|-------------------|
-| **Multi-threaded Step** | Низкая | Ускорить один Step, reader thread-safe |
-| **Parallel Steps** (Split/Flow) | Низкая | Независимые Step-ы можно выполнять одновременно |
-| **Partitioning** | Средняя | Данные естественно делятся на разделы (по ID, региону, дате) |
-| **Remote Chunking** | Высокая | Обработка = узкое место, распределение на несколько JVM |
+Партиционирование не равно remote chunking: первое раздаёт разделам отдельные Step и состояние, второе посылает чанки worker. Сравнивайте стоимость инфраструктуры и восстановления после сбоя. [Spring Batch 5.2, Scaling](https://docs.spring.io/spring-batch/reference/5.2/scalability.html), [Spring Batch 6, Scaling](https://docs.spring.io/spring-batch/reference/scalability.html).
 
 ## Q24. Как настроить многопоточный Step?
 
-**Multi-threaded Step** — простейшая стратегия масштабирования: один и тот же `Step` обрабатывает chunks параллельно в нескольких потоках через `TaskExecutor`. Узкое место смещается на reader — поэтому он обязан быть thread-safe.
+Добавьте `TaskExecutor` к Step и ограничьте его пулом с конечной очередью. **Семантика зависит от версии:** в Batch 5.2 отдельные потоки читают, обрабатывают и пишут целые чанки, поэтому все совместно используемые `ItemReader`, `ItemProcessor` и `ItemWriter` должны выдерживать конкурентный доступ. Порядок элементов не гарантирован; для общего stateful reader проверьте `saveState(false)` и продумайте идемпотентный повтор после сбоя. `throttleLimit()` с Batch 5.0 deprecated и не должен быть основным способом ограничения нагрузки.
+
+В Batch 6.0 `taskExecutor(...)` распараллеливает вызовы `ItemProcessor`, а чтение и запись остаются последовательными в основном потоке. Поэтому потокобезопасность критична прежде всего для processor. Его вызов в worker не участвует автоматически в привязанной к основному потоку chunk-транзакции; если процессору нужна собственная транзакция, задайте её явно. Если нужно распараллелить **целый чанк**, используйте local chunking или партиционирование (Q23/Q25).
 
 ```java
+// Spring Batch 6.0: параллельная обработка элементов
 @Bean
 public Step multiThreadedStep(JobRepository jobRepository,
-                               PlatformTransactionManager txManager) {
+                              PlatformTransactionManager txManager,
+                              ThreadPoolTaskExecutor taskExecutor) {
     return new StepBuilder("multiThreadedStep", jobRepository)
-            .<Customer, Customer>chunk(100, txManager)
-            .reader(pagingReader())              // ОБЯЗАТЕЛЬНО thread-safe reader!
+            .<Customer, Customer>chunk(100)
+            .transactionManager(txManager)
+            .reader(reader())
             .processor(processor())
             .writer(writer())
-            .taskExecutor(taskExecutor())
-            .throttleLimit(8)                    // макс. одновременных потоков
+            .taskExecutor(taskExecutor)
             .build();
 }
 
 @Bean
-public TaskExecutor taskExecutor() {
+public ThreadPoolTaskExecutor taskExecutor() {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
     executor.setCorePoolSize(4);
     executor.setMaxPoolSize(8);
@@ -1143,24 +1138,11 @@ public TaskExecutor taskExecutor() {
 }
 ```
 
-**Ограничения (плата за простоту):**
-- `ItemReader` **должен быть thread-safe** — `JdbcPagingItemReader` подходит, `JdbcCursorItemReader` — нет
-- Порядок обработки **не гарантируется** — потоки читают и пишут вперемешку
-- Надёжный перезапуск (restart) **не поддерживается**: позиция чтения в `ExecutionContext` обновляется несколькими потоками одновременно, поэтому сохранённое состояние некорректно — при сбое не получится точно продолжить с места падения
-- Для `FlatFileItemReader` (не thread-safe по природе) его оборачивают в `SynchronizedItemStreamReader`, чтобы сериализовать вызовы `read()`
-
-```java
-@Bean
-public SynchronizedItemStreamReader<Customer> synchronizedReader() {
-    SynchronizedItemStreamReader<Customer> syncReader = new SynchronizedItemStreamReader<>();
-    syncReader.setDelegate(flatFileReader());
-    return syncReader;
-}
-```
+Для Batch 5.2 `.chunk(100, txManager).taskExecutor(taskExecutor)` сохраняет старую семантику параллельного чанка. `SynchronizedItemStreamReader` может сериализовать `read()` у reader, который сам не потокобезопасен, но это не делает остальные компоненты безопасными и может нарушить точный перезапуск при повторной обработке элемента. Проверяйте число одновременных запросов к БД и ёмкость пула соединений. [Spring Batch 5.2, Scaling](https://docs.spring.io/spring-batch/reference/5.2/scalability.html), [Spring Batch 6, Scaling](https://docs.spring.io/spring-batch/reference/scalability.html), [SynchronizedItemStreamReader API](https://docs.spring.io/spring-batch/reference/api/org/springframework/batch/infrastructure/item/support/SynchronizedItemStreamReader.html).
 
 ## Q25. (!) Как работает партиционирование (Partitioning)?
 
-**Partitioning** — стратегия масштабирования, при которой данные заранее делятся на непересекающиеся разделы (partitions), и каждый раздел обрабатывается отдельным экземпляром `Step` (slave/worker) параллельно. В отличие от многопоточного шага, разделы изолированы по данным (например, по диапазону ID), поэтому у каждого свой `ExecutionContext` и restart работает корректно. Master-шаг только нарезает разделы и раздаёт их — сам данные не обрабатывает.
+**Partitioning** — стратегия масштабирования, при которой данные заранее делятся на непересекающиеся разделы (partitions), и каждый раздел обрабатывается отдельным экземпляром `Step` (slave/worker) параллельно. У каждого раздела есть свой `StepExecution` и `ExecutionContext`, что позволяет отдельно сохранять прогресс. Корректный restart всё равно требует стабильных границ разделов, сохранения состояния reader и безопасной повторной записи. Master-шаг только нарезает разделы и раздаёт их — сам данные не обрабатывает.
 
 ```mermaid
 graph TB
@@ -1184,10 +1166,20 @@ public class CustomerPartitioner implements Partitioner {
 
     private final JdbcTemplate jdbcTemplate;
 
+    public CustomerPartitioner(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
     @Override
     public Map<String, ExecutionContext> partition(int gridSize) {
         Long min = jdbcTemplate.queryForObject("SELECT MIN(id) FROM customers", Long.class);
         Long max = jdbcTemplate.queryForObject("SELECT MAX(id) FROM customers", Long.class);
+        if (gridSize <= 0) {
+            throw new IllegalArgumentException("gridSize must be positive");
+        }
+        if (min == null || max == null) {
+            return Map.of(); // пустой источник
+        }
         long range = (max - min) / gridSize + 1;
 
         Map<String, ExecutionContext> partitions = new HashMap<>();
@@ -1240,7 +1232,7 @@ public Step masterStep(JobRepository jobRepository, Step slaveStep,
 }
 ```
 
-> **Преимущества партиционирования** перед многопоточным Step: поддержка restart, каждый slave имеет свой `ExecutionContext`, данные естественно изолированы.
+> **Преимущество партиционирования:** у каждого worker свой `StepExecution` и `ExecutionContext`. Это помогает возобновлять отдельные разделы при персистентном `JobRepository`, но не заменяет проверку стабильности разделов и идемпотентности записи.
 
 ## Q26. Как настроить параллельные шаги через Split/Flow?
 
@@ -1347,7 +1339,7 @@ public class WeekdayDecider implements JobExecutionDecider {
 
 ## Q28. (!) Как интегрировать Spring Batch со Spring Boot?
 
-`Spring Boot` снимает почти всю инфраструктурную возню: стартер и автоконфигурация поднимут инфраструктурные бины, включая `JobRepository` и `JobLauncher`. Для JDBC-репозитория при соответствующей настройке Boot инициализирует таблицы `BATCH_*`; для MongoDB используются коллекции и индексы. Разработчику остаётся описать бизнес-часть — `Job` и `Step`. Подробнее об автоконфигурации — в [Spring Boot](spring-boot-interview.md).
+При выполнении условий автоконфигурации `Spring Boot` создаёт инфраструктуру Batch, включая `JobRepository` и `JobLauncher`. Для JDBC-репозитория Boot может инициализировать таблицы `BATCH_*`; для MongoDB используются коллекции и индексы. `Job` и `Step` с бизнес-логикой описывает разработчик. Подробнее об автоконфигурации — в [Spring Boot](spring-boot-interview.md).
 
 Пример ниже относится к **Spring Boot 3 / Spring Batch 5 с JDBC**. В Boot 4.1 тип хранилища метаданных выбирается между in-memory, JDBC и MongoDB; MongoDB использует коллекции/индексы вместо таблиц. Явный `@EnableBatchProcessing` отключает Boot-автоконфигурацию, включая инициализацию схемы, поэтому для ручной конфигурации инфраструктуру надо задать отдельно (см. Q6).
 
@@ -1409,9 +1401,11 @@ public class ImportJobConfig {
 
 **Ключевые свойства автоконфигурации `Spring Boot`:**
 - Автоматически создаёт `JobRepository`, `JobLauncher`, `JobExplorer`
-- `spring.batch.job.enabled=true` (по умолчанию) — запускает все `Job` при старте
+- `spring.batch.job.enabled=true` (по умолчанию) — запускает единственный `Job` при старте; если бинов `Job` несколько, укажите нужный через `spring.batch.job.name`. `false` отключает автозапуск, но не создание инфраструктуры
 - `spring.batch.jdbc.initialize-schema` — `always` / `embedded` / `never`
 - Начиная со `Spring Boot 3.x`, `@EnableBatchProcessing` **не нужна** — автоконфигурация включена по умолчанию
+
+Автозапуск действует только при Boot-автоконфигурации; добавление `@EnableBatchProcessing` или наследование `DefaultBatchConfiguration` передаёт настройку Batch приложению. [Spring Boot 3.5, Batch Applications](https://docs.spring.io/spring-boot/3.5/how-to/batch.html); [Spring Boot 4.1, Spring Batch](https://docs.spring.io/spring-boot/reference/io/spring-batch.html).
 
 > **Важно:** в `Spring Boot 3.x` / `Spring Batch 5.x` конфигурация Job изменилась: `JobBuilderFactory` и `StepBuilderFactory` deprecated — используйте `JobBuilder` и `StepBuilder` с явным `JobRepository`.
 
@@ -1618,18 +1612,18 @@ public class BatchMonitoringService {
 }
 ```
 
-**Метрики через `Micrometer`** — `Spring Batch` автоматически экспортирует метрики:
+**Метрики через `Micrometer`** — в Batch 5.2 встроенные измерения регистрируются автоматически. В Batch 6 для них нужен подключённый `ObservationRegistry`; условия настройки см. в Q43.
 
 | Метрика | Описание |
 |---------|----------|
 | `spring.batch.job.active` | Активные Job |
 | `spring.batch.job` (timer) | Длительность Job |
 | `spring.batch.step` (timer) | Длительность Step |
-| `spring.batch.item.read` | Количество прочитанных элементов |
-| `spring.batch.item.process` | Количество обработанных элементов |
-| `spring.batch.chunk.write` | Количество записанных chunk |
+| `spring.batch.item.read` | Длительность чтения элемента |
+| `spring.batch.item.process` | Длительность обработки элемента |
+| `spring.batch.chunk.write` | Длительность записи chunk |
 
-Эти метрики доступны через [Spring Boot Actuator](spring-boot-actuator-interview.md) эндпоинт `/actuator/metrics`.
+При подключённом Actuator и HTTP-экспозиции endpoint их можно изучить через `/actuator/metrics`. Количество прочитанных и записанных элементов конкретного запуска берите из `StepExecution` через `JobExplorer`, а не из этих таймеров. Подробнее — в Q43 и [Spring Boot Actuator](spring-boot-actuator-interview.md).
 
 **`Spring Cloud Task`** — расширение для управления короткоживущими микросервисами (задачами):
 
@@ -2244,6 +2238,8 @@ return new StepBuilder("importStep", jobRepository)
 2. **Менеджер транзакций.** `@EnableBatchProcessing` больше не публикует bean менеджера транзакций для приложения. В ручной конфигурации JDBC-репозитория нужны `DataSource` и `PlatformTransactionManager` как бины; для транзакционного tasklet/chunk-шага менеджер передают в builder явно. Им может быть подходящий JDBC-менеджер, но Batch 5.0 не требует поголовно заменять пользовательский `DataSourceTransactionManager` на `JdbcTransactionManager`.
 3. **Параметры задания.** `JobParameter<T>` стал generic и поддерживает произвольные типы через конвертеры; тип и значение сохраняются в новой схеме параметров. Проверь конвертацию пользовательских типов и миграцию таблицы до первого запуска обновлённого задания.
 
+Менеджер транзакций `JobRepository` отвечает за метаданные, а менеджер `Step` — за обработку элементов. Это могут быть разные менеджеры: сам факт их наличия не делает запись в двух хранилищах атомарной. Если данные уже зафиксированы, а обновление метаданных не прошло, перезапуск может обработать их повторно. Для такого сценария нужна идемпотентная запись или отдельно настроенная общая транзакция, например JTA; проверяйте границу на своей конфигурации. [Spring Batch 5.2, Configuring a Step](https://docs.spring.io/spring-batch/reference/5.2/step/chunk-oriented-processing/configuring.html).
+
 **Два способа ручной конфигурации в Batch 5** — `@EnableBatchProcessing` с атрибутами `dataSourceRef`, `transactionManagerRef`, `tablePrefix` либо наследование `DefaultBatchConfiguration` с переопределением нужных методов. Их не комбинируют в одном приложении. В Boot 3 при подходящей автоконфигурации оба способа обычно не нужны; если выбрать один из них, настройка инфраструктуры и схемы переходит к приложению.
 
 Источники: [Spring Batch 5.0: изменения инфраструктуры и параметров](https://docs.spring.io/spring-batch/docs/5.0.1/reference/html/whatsnew.html), [Spring Batch 5.2: Java Configuration](https://docs.spring.io/spring-batch/reference/5.2/job/java-config.html), [Spring Batch 5.2: MongoDB и resourceless](https://docs.spring.io/spring-batch/reference/5.2/whatsnew.html), [Spring Boot 3.5: Batch Applications](https://docs.spring.io/spring-boot/3.5/how-to/batch.html), [Spring Batch 6: изменения инфраструктуры](https://docs.spring.io/spring-batch/reference/whatsnew.html).
@@ -2266,60 +2262,32 @@ Manager Step
 ```java
 @Bean
 public Step managerStep(JobRepository jobRepository,
-                        Step workerStep,
-                        Partitioner partitioner) {
+                        Partitioner partitioner,
+                        PartitionHandler partitionHandler) {
     return new StepBuilder("managerStep", jobRepository)
         .partitioner("workerStep", partitioner)
-        .partitionHandler(partitionHandler(workerStep))
+        .partitionHandler(partitionHandler)
         .build();
 }
 
 @Bean
-public PartitionHandler partitionHandler(Step workerStep) {
+public PartitionHandler partitionHandler(Step workerStep, TaskExecutor taskExecutor) {
     TaskExecutorPartitionHandler handler = new TaskExecutorPartitionHandler();
     handler.setStep(workerStep);
-    handler.setGridSize(10);  // количество партиций (Workers)
-    handler.setTaskExecutor(new SimpleAsyncTaskExecutor());
+    handler.setGridSize(10);  // запрашиваемое число разделов
+    handler.setTaskExecutor(taskExecutor); // настроенный ограниченный пул
     return handler;
-}
-
-// Partitioner — создаёт ExecutionContext для каждой партиции
-@Bean
-public Partitioner rangePartitioner(DataSource dataSource) {
-    return gridSize -> {
-        Map<String, ExecutionContext> partitions = new HashMap<>();
-        int total = getTotalRecords(dataSource);
-        int partitionSize = (total + gridSize - 1) / gridSize;
-
-        for (int i = 0; i < gridSize; i++) {
-            ExecutionContext ctx = new ExecutionContext();
-            ctx.putInt("minId", i * partitionSize + 1);
-            ctx.putInt("maxId", Math.min((i + 1) * partitionSize, total));
-            partitions.put("partition" + i, ctx);
-        }
-        return partitions;
-    };
-}
-
-// Worker Step читает данные по диапазону из ExecutionContext
-@Bean
-@StepScope
-public JdbcPagingItemReader<Order> workerReader(
-        DataSource dataSource,
-        @Value("#{stepExecutionContext['minId']}") Integer minId,
-        @Value("#{stepExecutionContext['maxId']}") Integer maxId) {
-    // читает ORDER WHERE id BETWEEN :minId AND :maxId
 }
 ```
 
-**GridSize** — количество параллельных партиций. Определяет степень параллелизма. Оптимальное значение зависит от числа CPU, размера данных и I/O.
+`Partitioner` и `@StepScope`-reader с диапазонами показаны в Q25. Границы надо строить по фактическим `MIN(id)`/`MAX(id)` или другому устойчивому ключу, а не по `COUNT(*)`: ID могут иметь пропуски и начинаться не с 1. Пустой источник и `gridSize <= 0` обрабатывают отдельно. `gridSize` не заставляет `Partitioner` вернуть ровно столько разделов; число одновременных worker-шагов задаётся ресурсами исполнителя. Подбирайте его по размеру данных, CPU и I/O, измеряя результат.
 
 ## Q40. (!) Что такое Remote Chunking и как реализовать Master-Worker через Kafka?
 
 **Remote Chunking** — распределённая обработка для случая, когда узкое место — это **обработка/запись**, а чтение дешёвое. Master читает данные сам, а тяжёлую работу раздаёт worker-ам через брокер сообщений:
 - **Master** читает данные (`ItemReader`) и рассылает chunks worker-ам через брокер (например, `Kafka`)
 - **Workers** обрабатывают (`ItemProcessor`) и записывают (`ItemWriter`) полученные chunks
-- Синхронный вариант: master ждёт подтверждения от worker-ов, прежде чем считать chunk завершённым
+- Manager получает ответы worker-ов и учитывает завершение отправленных chunk-ов
 
 В отличие от партиционирования (где reader живёт на каждом worker), здесь reader **только на master** — поэтому по сети гоняются сами данные, и брокер становится критичной точкой пропускной способности.
 
@@ -2334,7 +2302,7 @@ Master:
     [Kafka: replies topic] → подтверждение завершения
 ```
 
-**Конфигурация через spring-batch-integration:**
+**Схема конфигурации через `spring-batch-integration` (Batch 5.2/6):**
 
 ```xml
 <!-- pom.xml -->
@@ -2349,56 +2317,45 @@ Master:
 ```
 
 ```java
-// Master конфигурация
-@Configuration
-public class MasterConfig {
-
-    @Bean
-    public Step masterStep(JobRepository jobRepository,
-                           ItemReader<Order> reader,
-                           MessageChannelPartitionHandler partitionHandler) {
-        return new StepBuilder("masterStep", jobRepository)
-            .partitioner("workerStep", new SimplePartitioner())
-            .partitionHandler(partitionHandler)
+// Manager: reader остаётся здесь; writer для отправки chunk-ов создаёт builder
+@Bean
+public Step managerStep(JobRepository jobRepository,
+                        PlatformTransactionManager transactionManager,
+                        ItemReader<Order> reader,
+                        MessageChannel outgoingRequests,
+                        PollableChannel incomingReplies) {
+    return new RemoteChunkingManagerStepBuilder<Order, Order>("managerStep", jobRepository)
+            .chunk(100)
+            .transactionManager(transactionManager)
+            .reader(reader)
+            .outputChannel(outgoingRequests)
+            .inputChannel(incomingReplies)
             .build();
-    }
-
-    @Bean
-    public MessageChannelPartitionHandler partitionHandler(
-            MessageChannel requestsChannel,
-            PollableChannel repliesChannel) {
-        MessageChannelPartitionHandler handler = new MessageChannelPartitionHandler();
-        handler.setStepName("workerStep");
-        handler.setGridSize(4);
-        handler.setReplyChannel(repliesChannel);
-        handler.setMessagingOperations(kafkaTemplate());
-        return handler;
-    }
 }
 
-// Worker конфигурация
-@Configuration
-public class WorkerConfig {
-
-    @Bean
-    public IntegrationFlow workerFlow(Step workerStep) {
-        return IntegrationFlow
-            .from(kafkaRequestsChannel())
-            .handle(stepExecutionRequestHandler(workerStep))
-            .channel(kafkaRepliesChannel())
-            .get();
-    }
+// Worker: получает сами элементы, обрабатывает, записывает и шлёт ответ
+@Bean
+public IntegrationFlow workerFlow(MessageChannel incomingRequests,
+                                  MessageChannel outgoingReplies,
+                                  ItemProcessor<Order, Order> processor,
+                                  ItemWriter<Order> writer) {
+    return new RemoteChunkingWorkerBuilder<Order, Order>()
+            .inputChannel(incomingRequests)
+            .outputChannel(outgoingReplies)
+            .itemProcessor(processor)
+            .itemWriter(writer)
+            .build();
 }
 ```
 
-> **Нюанс:** показанный код — на самом деле remote **partitioning** (`partitioner` + `MessageChannelPartitionHandler`, почти как в Q36): по каналам рассылаются метаданные партиций, а не данные. Для remote chunking в `spring-batch-integration` используются другие классы: на master — `RemoteChunkingManagerStepBuilderFactory`, который строит шаг с обычным `ItemReader` и `ChunkMessageChannelItemWriter` (он отправляет прочитанные элементы в канал запросов); на worker — `RemoteChunkingWorkerBuilder` с `ChunkProcessorChunkHandler`, который принимает chunk-и из канала, прогоняет их через `ItemProcessor`/`ItemWriter` и шлёт подтверждение в канал ответов.
+Каналы в примере — граница Batch и транспорта. Для Kafka отдельно подключают исходящий адаптер к requests topic и входящий адаптер от replies topic на manager; на worker направление меняется. Настройка [Kafka-адаптеров](https://docs.spring.io/spring-integration/reference/kafka.html), сериализации `ChunkRequest`/`ChunkResponse`, сохранения заголовков, таймаутов, доставки каждого запроса одному worker-у и идемпотентной записи зависит от транспорта и требует интеграционного теста. Один лишь builder не превращает локальный канал в Kafka. См. [Spring Batch Integration](https://docs.spring.io/spring-batch/reference/spring-batch-integration/externalizing-execution.html), [API manager builder](https://docs.spring.io/spring-batch/reference/api/org/springframework/batch/integration/chunk/RemoteChunkingManagerStepBuilder.html) и [API worker builder](https://docs.spring.io/spring-batch/reference/api/org/springframework/batch/integration/chunk/RemoteChunkingWorkerBuilder.html).
 
 **Remote Chunking vs Partitioning:**
 | Аспект | Remote Chunking | Partitioning |
 |--------|----------------|-------------|
 | Reader | Только на Master | На каждом Worker |
 | Writer | На Workers | На каждом Worker |
-| Связь | Постоянная (сообщения per chunk) | Только раздача партиций |
+| Связь | Запросы и ответы для chunk-ов | Задания на разделы и сведения об их завершении |
 | Сложность | Выше | Ниже |
 | Применение | Узкое место — обработка/запись, чтение дешёвое | Узкое место — чтение/I/O, данные делятся на диапазоны |
 
@@ -2561,33 +2518,33 @@ class OrderItemReaderTest {
 
 ## Q43. Как мониторить Spring Batch через метрики и Spring Boot Actuator?
 
-**Spring Batch 5** публикует метрики через **Micrometer** автоматически — достаточно добавить `spring-boot-starter-actuator`, отдельный код не нужен. Дальше метрики уходят в любой бэкенд Micrometer (Prometheus, Graphite и т. д.) и доступны через `/actuator/metrics`. Свои бизнес-метрики (длительность Job, число записанных записей) добавляют через `MeterRegistry` в слушателе.
+**Spring Batch 5.2** регистрирует встроенные метрики в глобальном реестре Micrometer без специальной настройки Batch. **Spring Batch 6** по умолчанию отключает сбор: ему нужен `ObservationRegistry` с обработчиком, записывающим измерения в `MeterRegistry`. При ручной конфигурации без `@EnableBatchProcessing` и `DefaultBatchConfiguration` также нужен `BatchObservabilityBeanPostProcessor`, чтобы связать registry с `Job` и `Step`. Spring Boot Actuator предоставляет инфраструктуру наблюдаемости и endpoint, но наличие стартера само по себе не доказывает, что Batch 6 подключил свой registry. Проверяйте конфигурацию и появление метрики после пробного запуска. [Batch 5.2](https://docs.spring.io/spring-batch/reference/5.2/monitoring-and-metrics.html), [Batch 6](https://docs.spring.io/spring-batch/reference/spring-batch-observability/micrometer.html).
+
+`/actuator/metrics` показывает измерения работающего приложения, а историю отдельных выполнений хранит персистентный `JobRepository` (Q31). Краткоживущее batch-приложение может завершиться до очередного опроса Prometheus. Для экспорта в Prometheus нужны `micrometer-registry-prometheus`, HTTP-экспозиция `/actuator/prometheus` и доступ сборщика к endpoint; для иных бэкендов — их registry и настройки. [Spring Boot Actuator endpoints](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html).
 
 **Автоматические метрики:**
 
 ```yaml
-# Включить endpoint метрик
+# Открыть endpoint только в контролируемой сети; Prometheus требует отдельный registry
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
-  metrics:
-    export:
-      prometheus:
-        enabled: true
+        include: health,metrics,prometheus
 ```
 
 **Ключевые метрики Spring Batch (Micrometer):**
 
 | Метрика | Описание |
 |---------|---------|
-| `spring.batch.job` | Количество и статус запусков Job (timer) |
-| `spring.batch.step` | Длительность и статус Step |
-| `spring.batch.item.read` | Количество прочитанных элементов |
-| `spring.batch.item.process` | Количество обработанных элементов |
-| `spring.batch.item.write` | Количество записанных элементов |
-| `spring.batch.chunk.write` | Размер и длительность записи chunk |
+| `spring.batch.job` | Timer длительности Job; `COUNT` — число наблюдений, теги `name`, `status` |
+| `spring.batch.job.active` | Long task timer активных Job |
+| `spring.batch.step` | Timer длительности Step |
+| `spring.batch.item.read` | Timer длительности чтения элемента |
+| `spring.batch.item.process` | Timer длительности обработки элемента |
+| `spring.batch.chunk.write` | Timer длительности записи chunk |
+
+В Batch 6 есть также `spring.batch.job.launch.count`. Метрики `spring.batch.item.write` в документированном перечне нет. Тег `status` для Job/Step содержит exit status; для чтения, обработки и записи — `SUCCESS` или `FAILURE`. Число записанных элементов конкретного выполнения — `StepExecution.writeCount`, а не значение таймера записи chunk.
 
 ```java
 // Доступ к метрикам через /actuator/metrics/spring.batch.job
@@ -2601,60 +2558,35 @@ management:
   ]
 }
 
-// Prometheus query: количество упавших job за час
+// Prometheus: скорость завершившихся с FAILED Job при работающем scrape
 rate(spring_batch_job_seconds_count{status="FAILED"}[1h])
 ```
 
-**Кастомные метрики в Listener:**
+**Кастомная бизнес-метрика в listener:** стандартную длительность Job повторно измерять не нужно. Если нужен суммарный объём записи по завершённым исполнениям, используйте `Counter`; `Gauge` для числа завершённых записей не подходит. Имя Job — тег с ограниченным набором значений, `executionId` в теги добавлять не надо.
+Listener нужно зарегистрировать на конкретном `Job` через `.listener(batchBusinessMetricsListener)`; одного bean-компонента недостаточно.
 
 ```java
 @Component
-@JobScope
-public class BatchMetricsListener implements JobExecutionListener {
+public class BatchBusinessMetricsListener implements JobExecutionListener {
 
     private final MeterRegistry registry;
-    private Timer.Sample sample;
 
-    @Override
-    public void beforeJob(JobExecution jobExecution) {
-        sample = Timer.start(registry);
-        registry.counter("batch.job.started",
-            "jobName", jobExecution.getJobInstance().getJobName()
-        ).increment();
+    public BatchBusinessMetricsListener(MeterRegistry registry) {
+        this.registry = registry;
     }
 
     @Override
     public void afterJob(JobExecution jobExecution) {
-        sample.stop(Timer.builder("batch.job.duration")
-            .tag("jobName", jobExecution.getJobInstance().getJobName())
-            .tag("status", jobExecution.getStatus().name())
-            .register(registry));
-
         long written = jobExecution.getStepExecutions().stream()
             .mapToLong(StepExecution::getWriteCount).sum();
-        registry.gauge("batch.job.records.written", written);
+        registry.counter("batch.records.written",
+            "jobName", jobExecution.getJobInstance().getJobName()
+        ).increment(written);
     }
 }
 ```
 
-**Spring Boot Actuator — `/actuator/health`:**
-
-```json
-{
-  "status": "UP",
-  "components": {
-    "batchJob": {
-      "status": "UP",
-      "details": {
-        "importJob": "COMPLETED",
-        "dailyReportJob": "COMPLETED"
-      }
-    }
-  }
-}
-```
-
-**Интеграция с Spring Cloud Task** для мониторинга краткоживущих задач в распределённой среде (запись в централизованную БД Task Application Manager).
+Этот counter отражает сумму по завершённым `JobExecution` в жизни процесса; при рестарте процесса накопленное значение теряется. Для точной истории и повторных запусков обращайтесь к `JobExplorer`. `/actuator/health` по умолчанию сообщает о здоровье приложения, а не о статусе каждого Job; для отдельного `batchJob` нужен собственный `HealthIndicator`. `Spring Cloud Task` хранит жизненный цикл короткоживущей задачи, а не заменяет историю Batch Job (Q31). [Micrometer: Gauge vs Counter](https://docs.micrometer.io/micrometer/reference/concepts/gauges.html).
 
 ---
 
