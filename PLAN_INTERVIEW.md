@@ -32,9 +32,17 @@
 диапазона, включая Notification System и Java Functional Interface, не входят
 в счётчик 55. Для учёта достаточно путей и записей о передаче полного файла.
 
-Из 55 файлов партии 27 восстановлены в `master`. Вне этой партии уже
+Из 55 файлов партии 28 восстановлены в `master`. Вне этой партии уже
 закоммичены Notification System, Java Functional Interface, Vector Databases
 и JDBC и пулы соединений.
+
+- **Spring WebFlux** — MCQ-чат передал полный JSON в ходе
+  `01a204ea-106d-7092-ad10-323966203352` по согласованному Markdown
+  `work/spring-webflux-theory-recovery/spring-webflux-interview.md`
+  (SHA-256 `2d60a09951071153b47cb65b5eb7a04e5aa9f40a69edc557dae540aaee4a0c35`)
+  и историческому JSON из `b28a1c807`. Полный JSON перенесён как есть из
+  `work/spring-webflux-recovery-full-regeneration/spring-webflux-interview.json`.
+  Оба production-файла входят в этот коммит.
 
 - **Spring Vault** — MCQ-чат передал полный JSON в ходе
   `01a204df-4c5f-7210-b02c-8a994eefff40` по согласованному Markdown
