@@ -1,17 +1,905 @@
-{"topic_slug":"spring-session-interview","questions":[
-{"q_number":1,"blocks":[{"block_idx":0,"question_text":"Что такое Spring Session и какую проблему он решает?","options":[{"order":0,"label":"A","text":"Отделяет хранение HTTP-сессии от узла, чтобы реплики читали её по одному ID","correct":true,"sections":{"explanation":"SessionRepository предоставляет общее хранилище состояния.","example":"После смены узла запрос находит сессию в Redis.","when_to_apply":"Для stateful-приложения с несколькими репликами.","edge_cases":"Доступность хранилища становится частью доступности приложения."}},{"order":1,"label":"B","text":"Копирует локальные HTTP-сессии между узлами через балансировщик","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Переносит все атрибуты сессии в cookie, чтобы сервер не читал хранилище","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Заменяет аутентификацию и хранит только пароль пользователя в сессии","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":2,"blocks":[{"block_idx":0,"question_text":"Как настроить Redis Session Store?","options":[{"order":0,"label":"A","text":"Подключить Spring Session Data Redis, настроить JDBC DataSource и создать таблицу сессий","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Подключить Spring Session Data Redis, настроить соединение Redis и активировать соответствующий репозиторий","correct":true,"sections":{"explanation":"Boot может сконфигурировать хранилище по класспату и параметрам подключения.","example":"Сессии сохраняются в общем Redis namespace.","when_to_apply":"Для быстрого разделяемого хранилища.","edge_cases":"Для индексации пользователей и событий нужен подходящий тип репозитория."}},{"order":2,"label":"C","text":"Подключить Spring Session Data Redis и оставить идентификатор привязанным к локальной памяти каждого узла","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Подключить Spring Session Data Redis и настроить только CookieSerializer без соединения Redis","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":3,"blocks":[{"block_idx":0,"question_text":"Как настроить JDBC Session Store?","options":[{"order":0,"label":"A","text":"Добавить JDBC Session и использовать таблицу пользователей без схемы сессий","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Добавить JDBC Session и хранить все атрибуты только в памяти до рестарта","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Добавить JDBC Session, настроить DataSource и применить схему таблиц сессий и атрибутов","correct":true,"sections":{"explanation":"JDBC-репозиторий хранит метаданные и атрибуты в базе.","example":"SPRING_SESSION и SPRING_SESSION_ATTRIBUTES создаются подходящей миграцией.","when_to_apply":"Когда удобнее использовать реляционное хранилище.","edge_cases":"Просроченные записи очищает задача, поскольку таблица сама не удаляет их по TTL."}},{"order":3,"label":"D","text":"Добавить JDBC Session, настроить RedisConnectionFactory и создать индекс ключей","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":4,"blocks":[{"block_idx":0,"question_text":"Как Spring Session интегрируется с Spring Security?","options":[{"order":0,"label":"A","text":"Spring Session заменяет фильтры Spring Security и проверяет credentials в Redis","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Spring Session хранит только principal, а SecurityContext восстанавливается повторной проверкой пароля","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Spring Security сериализует весь контекст в cookie, Spring Session проверяет подпись","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Spring Security может сохранять SecurityContext как атрибут HTTP-сессии, Spring Session помещает её во внешний репозиторий","correct":true,"sections":{"explanation":"Фреймворки разделяют аутентификацию и хранение её состояния.","example":"Запрос на второй реплике восстанавливает Authentication из общей сессии.","when_to_apply":"Для stateful-входа в кластере.","edge_cases":"Stateless-политика может вообще не сохранять контекст в HTTP-сессию."}}]}]}
-,{"q_number":5,"blocks":[{"block_idx":0,"question_text":"Что такое FindByIndexNameSessionRepository и зачем он нужен?","options":[{"order":0,"label":"A","text":"Расширение SessionRepository для поиска сессий по индексу, например по principal","correct":true,"sections":{"explanation":"Индекс помогает выбрать набор сессий по значению, отличному от ID.","example":"FindByPrincipalName возвращает сессии пользователя для выхода со всех устройств.","when_to_apply":"Для административных операций и контроля числа сессий.","edge_cases":"Репозиторий должен реализовывать индекс, простой Redis-вариант его не предоставляет."}},{"order":1,"label":"B","text":"Расширение SessionRepository для поиска пользователя по паролю из сессии","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Расширение SessionRepository для автоматической публикации всех сетевых запросов","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Расширение SessionRepository для чтения всех атрибутов только по session ID","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":6,"blocks":[{"block_idx":0,"question_text":"Как обрабатывать события сессий?","options":[{"order":0,"label":"A","text":"Обрабатывать истечение через вызов @EventListener на каждом getSession","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Обрабатывать события создания, удаления и истечения через Spring listener при поддержке репозитория","correct":true,"sections":{"explanation":"Публикация событий зависит от реализации хранилища.","example":"Indexed Redis repository может сообщать SessionExpiredEvent по keyspace notifications.","when_to_apply":"Для аудита и освобождения связанных ресурсов.","edge_cases":"Обработчики не должны полагаться на точное время прихода события."}},{"order":2,"label":"C","text":"Обрабатывать истечение опросом cookie клиента, получая событие при её удалении","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Обрабатывать события Redis по любой реализации репозитория без настройки уведомлений","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":7,"blocks":[{"block_idx":0,"question_text":"Как настроить timeout сессии?","options":[{"order":0,"label":"A","text":"Задать spring.session.timeout как абсолютный срок от момента первого входа","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Задать только срок жизни cookie, считая, что он удаляет серверную сессию","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Задать spring.session.timeout для простоя и при необходимости изменить maxInactiveInterval конкретной сессии","correct":true,"sections":{"explanation":"Max inactive interval измеряется от последней активности.","example":"spring.session.timeout=30m задаёт стандартный период простоя.","when_to_apply":"Когда нужно ограничить неактивные сессии.","edge_cases":"Изменённую напрямую через репозиторий сессию требуется сохранить."}},{"order":3,"label":"D","text":"Задать таймаут через сетевые параметры Redis, чтобы закрытие соединения завершало сессию","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":8,"blocks":[{"block_idx":0,"question_text":"Как реализовать кастомную сериализацию сессии?","options":[{"order":0,"label":"A","text":"Переопределить сериализатор CookieSerializer и изменить формат всех атрибутов Redis","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Переопределить Jackson HTTP mapper и ожидать автоматического изменения Redis-формата","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Переопределить Redis-сериализатор и считать старые значения автоматически совместимыми","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Переопределить springSessionDefaultRedisSerializer и запланировать совместимость или переход хранимого формата","correct":true,"sections":{"explanation":"Сериализатор Spring Session преобразует атрибуты при сохранении и чтении.","example":"JSON-сериализатор настраивают с модулями для разрешённых типов.","when_to_apply":"Для контроля формата и совместимости развёртываний.","edge_cases":"Особенно проверьте SecurityContext и данные старых сессий."}}]}]}
-,{"q_number":9,"blocks":[{"block_idx":0,"question_text":"Как использовать Spring Session с WebFlux (реактивный стек)?","options":[{"order":0,"label":"A","text":"Использовать WebSession с реактивным репозиторием сессий и реактивным Redis-клиентом","correct":true,"sections":{"explanation":"WebFlux обращается к сессии через WebSessionManager и реактивный store.","example":"Реактивная Redis-интеграция сохраняет атрибуты без блокирующих вызовов.","when_to_apply":"Для stateful WebFlux-приложения.","edge_cases":"Выбирайте реактивную конфигурацию, соответствующую версии Boot."}},{"order":1,"label":"B","text":"Использовать HttpSession с JDBC SessionRepository прямо на event loop","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Использовать WebSession с блокирующим RedisTemplate и вызывать block при каждом доступе","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Использовать @EnableRedisHttpSession и регистрировать Servlet-фильтр в WebFlux","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":10,"blocks":[{"block_idx":0,"question_text":"Как Spring Session работает в кластере?","options":[{"order":0,"label":"A","text":"Реплики делят одну JVM-сессию через sticky routing с автоматическим failover","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Реплики связывают один session ID с записью в общем репозитории","correct":true,"sections":{"explanation":"Любой узел может прочитать серверное состояние по ID.","example":"Балансировщик направляет повторный запрос на другой pod.","when_to_apply":"Для горизонтального масштабирования с серверным состоянием.","edge_cases":"Конкурентные записи и отказ общего хранилища требуют отдельной оценки."}},{"order":2,"label":"C","text":"Реплики копируют сессию в cookie и поэтому не обращаются к хранилищу","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Реплики независимо создают сессии и синхронизируют их через название cookie","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":11,"blocks":[{"block_idx":0,"question_text":"Как мигрировать с HTTP Session на Spring Session Redis?","options":[{"order":0,"label":"A","text":"Добавить Redis Session и считать, что старые локальные сессии автоматически скопируются","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Добавить одновременно MapSessionRepository и RedisSessionRepository и ждать автоматического dual-write","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Переключить репозиторий на Redis и выбрать повторный вход или явную стратегию сохранения старых сессий","correct":true,"sections":{"explanation":"Смена хранилища не переносит записи контейнера автоматически.","example":"Можно запланировать переключение с повторным входом.","when_to_apply":"Когда stateful-сервис переходит на общее хранилище.","edge_cases":"Миграция без выхода пользователей требует доступа к прежнему состоянию и явной логики."}},{"order":3,"label":"D","text":"Переключить только имя cookie, оставив локальные сессии контейнера","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":12,"blocks":[{"block_idx":0,"question_text":"Что такое Session Concurrency Control?","options":[{"order":0,"label":"A","text":"Ограничение числа параллельных HTTP-запросов на одну сессию","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Ограничение числа пользовательских атрибутов в каждой активной сессии","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Ограничение числа сессий на одну реплику без учёта пользователя","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Ограничение числа одновременных сессий пользователя с учётом общего реестра в кластере","correct":true,"sections":{"explanation":"Spring Security сравнивает активные сессии пользователя с заданным пределом.","example":"При новом входе можно отказать или завершить старую сессию.","when_to_apply":"Для политики числа активных входов.","edge_cases":"В кластере локальный реестр не видит сессии соседей."}}]}]}
-,{"q_number":13,"blocks":[{"block_idx":0,"question_text":"Чем Spring Session отличается от Tomcat Session Manager?","options":[{"order":0,"label":"A","text":"Spring Session подменяет доступ к HttpSession на уровне приложения, Tomcat Manager управляет сессиями контейнера","correct":true,"sections":{"explanation":"Spring Session привязывает API приложения к выбранному репозиторию.","example":"Одно приложение может применять Redis-backed сессии при смене Servlet-контейнера.","when_to_apply":"Когда нужна независимая от контейнера политика хранения.","edge_cases":"Менеджер Tomcat тоже может поддерживать persistence или replication, если настроен."}},{"order":1,"label":"B","text":"Spring Session управляет только внутренними сессиями Tomcat, Manager — любым репозиторием Spring","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Spring Session и Tomcat Manager записывают в одно хранилище через один фильтр","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Spring Session работает только на Tomcat, а Manager переносится между Servlet-контейнерами","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":14,"blocks":[{"block_idx":0,"question_text":"Как настроить мониторинг сессий через Actuator?","options":[{"order":0,"label":"A","text":"Использовать tomcat.sessions как точное число Redis-сессий и открывать actuator публично","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Использовать поддерживаемый sessions endpoint для управления и отдельные метрики хранилища для мониторинга","correct":true,"sections":{"explanation":"Actuator и метрики решают разные задачи.","example":"Индексированный репозиторий позволяет получить сессии пользователя через подходящий endpoint.","when_to_apply":"Для диагностики состояния сессий и операций поддержки.","edge_cases":"Операции просмотра и удаления требуют строгого контроля доступа."}},{"order":2,"label":"C","text":"Использовать стандартный Health endpoint как точный список сессий по пользователям","correct":false,"sections":{"what_actually":""}},{"order":3,"label":"D","text":"Использовать только логины приложения для точного подсчёта живых сессий","correct":false,"sections":{"what_actually":""}}]}]},
-{"q_number":15,"blocks":[{"block_idx":0,"question_text":"Когда не стоит использовать Spring Session?","options":[{"order":0,"label":"A","text":"Когда браузерное приложение должно сохранять сессию между репликами без sticky routing","correct":false,"sections":{"what_actually":""}},{"order":1,"label":"B","text":"Когда нужно централизованно находить сессии пользователя и отзывать их","correct":false,"sections":{"what_actually":""}},{"order":2,"label":"C","text":"Когда API не использует серверные HTTP-сессии либо одному узлу достаточно локальных сессий","correct":true,"sections":{"explanation":"Внешнее хранилище даёт выгоду только при наличии соответствующей потребности.","example":"Bearer API со stateless-аутентификацией не хранит HttpSession между запросами.","when_to_apply":"Когда можно избежать дополнительной зависимости.","edge_cases":"Если нужна немедленная отзывность токенов, её проектируют отдельно."}},{"order":3,"label":"D","text":"Когда состояние должно переживать пересоздание реплики без повторного входа","correct":false,"sections":{"what_actually":""}}]}]}
-]}
+{
+  "topic_slug": "spring-session-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Spring Session и какую проблему он решает?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring Session закрепляет сессию за узлом приложения, чтобы балансировщик мог вернуть клиента к тому же состоянию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фильтр Spring Session ищет сессию в настроенном репозитории. Идентификатор `SESSION` годится на A и B при общем хранилище и одинаковом способе его разрешения.",
+                "source_of_confusion": "При локальном `HttpSession` балансировщик действительно может удерживать клиента на узле. Это механизм маршрутизации, который легко принять за свойство библиотеки сессий.",
+                "if_it_were_true": "Если бы требовалась привязка, после исключения A из балансировки B потерял бы корзину с уже сохранённым состоянием даже при доступном Redis.",
+                "how_it_should_be": "Выбирайте affinity для локальных сессий, когда допустима их потеря вместе с узлом. Для свободной маршрутизации настройте общий репозиторий."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spring Session отделяет хранение сессии от контейнера, чтобы любой узел мог загрузить её из общего репозитория.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Session предоставляет реализацию сессии поверх `SessionRepository`. В servlet-приложении фильтр оборачивает запрос, а при обращении к `HttpSession` идентификатор клиента используется для поиска в репозитории. Если репозиторий общий, состояние доступно каждому совместимо настроенному узлу.",
+                "example": "Запрос на A сохраняет `cartId=42` в сессии Redis и отдаёт cookie `SESSION`. Следующий запрос с этой cookie попадает на B. Вызов `getAttribute(\"cartId\")` возвращает `42`, хотя B ещё не обслуживал клиента.",
+                "when_to_apply": "Подключайте общий репозиторий, если состояние должно переживать смену узла. Инстансам нужны доступ к одному хранилищу, согласованные настройки идентификатора сессии и совместимый формат атрибутов.",
+                "edge_cases": "Сбой Redis может сделать сессии недоступными на всех узлах. Взаимозаменяемость приложения помогает при сбое A, пока запись сессии успела сохраниться и внешний репозиторий отвечает.",
+                "related": "Sticky sessions сохраняют локальную сессию доступной за счёт маршрутизации. Spring Session с Redis или JDBC даёт ту же непрерывность при смене маршрута через общее хранилище."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Spring Session синхронизирует локальные сессии контейнеров, чтобы каждый узел держал свою копию состояния.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Узлы читают и пишут сессию через общий репозиторий. Spring Session не рассылает копии локального `HttpSession` соседним JVM.",
+                "source_of_confusion": "Tomcat умеет реплицировать сессии между менеджерами кластера, и такая схема тоже позволяет обслужить клиента на другом узле.",
+                "if_it_were_true": "При репликации новый узел должен был бы получить состояние от соседей, прежде чем смог бы обслужить сессию. Внешнего запроса к Redis в этой схеме могло бы не быть.",
+                "how_it_should_be": "Различайте репликацию внутри Redis и репликацию сессий контейнера. Первую настраивают для доступности хранилища, вторую используют как отдельную архитектуру."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Spring Session переносит атрибуты сессии в cookie, чтобы каждый узел мог восстановить их из запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cookie `SESSION` обычно содержит закодированный идентификатор, по которому сервер ищет атрибуты. Значение `cartId` остаётся в репозитории.",
+                "source_of_confusion": "Пользователь действительно приносит cookie на любой узел. Из этого легко сделать вывод, что запрос уже содержит всё состояние.",
+                "if_it_were_true": "При переносе атрибутов в cookie размер запроса менялся бы с размером корзины, а запрос мог бы восстановить её даже при недоступном репозитории.",
+                "how_it_should_be": "Для серверной сессии держите в cookie идентификатор, а нужные атрибуты храните в репозитории. Подписанный токен с claims выбирают отдельно для ограниченного состояния, которое можно проверять на каждом запросе."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить Redis Session Store?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Подключить Redis и выбрать его через `spring.session.store-type`. Boot зарегистрирует фильтр после чтения этого свойства.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Boot 3 свойство `spring.session.store-type` удалено. Репозиторий выбирает автоконфигурация по доступным зависимостям, а при явной настройке её может заменить пользовательская конфигурация.",
+                "source_of_confusion": "Проекты Boot 2 могли задавать тип хранилища таким свойством. Старый рецепт внешне похож на остальные переключатели Boot.",
+                "if_it_were_true": "При таком правиле приложение с модулем Redis и рабочей фабрикой соединений оставалось бы на контейнерных сессиях до добавления свойства.",
+                "how_it_should_be": "Для Boot 3 и новее проверяйте состав зависимостей и созданные бины. Если нужен конкретный режим, настройте его поддерживаемым свойством или подходящей аннотацией включения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Подключить Redis и настроить `RedisTemplate` в контроллерах. Через него приложение будет читать атрибуты своей `HttpSession`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Атрибуты читает и сохраняет репозиторий Spring Session. Контроллер продолжает пользоваться `HttpSession`, которую подставляет фильтр.",
+                "source_of_confusion": "Переезд собственных данных в Redis обычно требует переписать DAO на новый клиент. Здесь библиотека уже предоставила адаптацию servlet API.",
+                "if_it_were_true": "Если бы работа шла только через `RedisTemplate`, вызовы `request.getSession()` продолжали бы создавать сессию контейнера, а новые атрибуты не появлялись бы в Redis автоматически.",
+                "how_it_should_be": "Проверьте регистрацию `springSessionRepositoryFilter`. Используйте `RedisTemplate` для собственных структур данных, если они действительно не являются атрибутами сессии."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подключить Redis и использовать `spring.data.redis` для настроек сессии. Этот же префикс определяет namespace и режим записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Свойства `spring.data.redis.*` настраивают подключение Redis. Namespace и режим сброса относятся к настройкам Spring Session и имеют отдельный префикс.",
+                "source_of_confusion": "Обе группы параметров описывают работу с Redis. При копировании конфигурации название соединения легко перенести на настройки репозитория.",
+                "if_it_were_true": "Если бы этот префикс задавал namespace, изменение `spring.data.redis.namespace` поменяло бы префикс новых hash-ключей.",
+                "how_it_should_be": "Для адреса и порта задавайте параметры подключения. Для namespace и `flush-mode` сверяйте справочник Spring Boot нужной версии."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подключить модуль Spring Session для Redis и настроить соединение. Boot поднимет репозиторий и фильтр при подходящих условиях автоконфигурации.",
+              "correct": true,
+              "sections": {
+                "explanation": "В Boot 3 автоконфигурация выбирает реализацию по зависимостям и доступным бинам. При подключённых Spring Session Data Redis и Redis-инфраструктуре servlet-фильтр оборачивает запрос, а `HttpSession` сохраняется через Redis-репозиторий. Прикладные вызовы `getSession()` менять не требуется.",
+                "example": "В Boot 3.5 задайте `spring.session.redis.namespace=checkout:session`. После первого запроса, который создаёт и сохраняет сессию, появится hash `checkout:session:sessions:<id>`, а клиент получит идентификатор для следующего запроса.",
+                "when_to_apply": "Задайте отдельный namespace приложениям, которые делят Redis и не должны читать сессии друг друга. Для работы узлов одного приложения согласуйте namespace и клиентскую cookie. В Boot 4 свойства репозитория Redis переехали в `spring.session.data.redis.*`.",
+                "edge_cases": "С `ON_SAVE` изменения обычно видны другому запросу после сохранения сессии фильтром при завершении обработки или фиксации ответа. `IMMEDIATE` ускоряет запись отдельных изменений, но не превращает несколько операций с атрибутами в транзакцию.",
+                "related": "`DefaultCookieSerializer` задаёт имя, область и `SameSite` cookie. `HttpSessionIdResolver` определяет сам транспорт идентификатора, например `X-Auth-Token` вместо cookie. Оба механизма независимы от выбора Redis."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить JDBC Session Store?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Подключить Spring Session JDBC, подготовить таблицы сессий и атрибутов и настроить периодическую очистку по `EXPIRY_TIME`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`JdbcIndexedSessionRepository` работает через `DataSource`. Стандартная схема хранит метаданные в `SPRING_SESSION`, а сериализованные атрибуты в `SPRING_SESSION_ATTRIBUTES`, связанных по `PRIMARY_ID`. Репозиторий учитывает логическое истечение при чтении, а периодическая задача удаляет просроченные записи физически.",
+                "example": "Сессия истекла в 10:30:05. Запрос в 10:30:30 уже не получает действующую сессию, хотя её строка может оставаться до следующего запуска очистки, например в 10:31.",
+                "when_to_apply": "Используйте JDBC, когда есть подходящая реляционная БД и приемлема дополнительная нагрузка от сессий. В production удобно применить штатный SQL для вашего диалекта через миграции. В Boot 3.x расписание задаёт `spring.session.jdbc.cleanup-cron`.",
+                "edge_cases": "При нестандартном имени основной таблицы подготовьте согласованное имя таблицы атрибутов с суффиксом `_ATTRIBUTES`. Если отключить периодическую очистку и не заменить её другой, записи давно неактивных пользователей будут накапливаться.",
+                "related": "Redis умеет удалять ключи по TTL. JDBC-репозиторий хранит срок в колонке, поэтому штатная схема требует отдельной задачи на удаление, даже когда время жизни настроено правильно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Подключить Spring Session JDBC, подготовить таблицы сессий и атрибутов и поручить базе удалять записи по встроенному TTL.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`EXPIRY_TIME` содержит срок, который интерпретирует репозиторий и использует задача очистки. Стандартная схема не настраивает встроенное автоудаление строк по этому полю.",
+                "source_of_confusion": "TTL ключа Redis похож на дедлайн в строке таблицы, хотя для второго нужен исполнитель операции удаления.",
+                "if_it_were_true": "При встроенном TTL строка исчезла бы без работающего Spring-приложения и без заданий в БД.",
+                "how_it_should_be": "Настройте очистку Spring Session или явную задачу в БД. При собственной реализации сохраните корректное сравнение времени и удаление зависимых атрибутов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подключить Spring Session JDBC, подготовить общую таблицу с JSON-атрибутами и настроить периодическую очистку по `EXPIRY_TIME`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартные запросы Spring Session JDBC обращаются к двум таблицам. В каждой строке атрибутов хранятся имя и сериализованное значение, привязанные к первичному ID сессии.",
+                "source_of_confusion": "Прикладной объект сессии выглядит как один набор метаданных и карта, поэтому его естественно представить одной строкой JSON.",
+                "if_it_were_true": "При схеме с одной строкой обновление `locale` меняло бы JSON основного объекта, а отдельного SQL по `ATTRIBUTE_NAME` не было бы.",
+                "how_it_should_be": "Применяйте рекомендованную схему в вашем диалекте. Хранение одним JSON требует собственной реализации или полного согласования схемы, запросов и сериализации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подключить Spring Session JDBC, подготовить таблицы сессий и атрибутов и удалять просроченные записи при обращении клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При прямом поиске истёкшей сессии JDBC-репозиторий может удалить её. Этого пути недостаточно для записей клиентов, которые больше не возвращаются.",
+                "source_of_confusion": "`findById` действительно проверяет срок и умеет убрать обнаруженную просроченную запись. Промах при чтении выглядит как полноценный механизм очистки.",
+                "if_it_were_true": "Если бы обращения клиентов гарантировали уборку всей таблицы, записи пользователей, удаливших cookie и не вернувшихся, тоже исчезали бы вовремя.",
+                "how_it_should_be": "Оставьте регулярное удаление по `EXPIRY_TIME`, даже если чтение выбрасывает просроченные записи. Устройте расписание так, чтобы оно не перегружало основную БД."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Spring Session интегрируется с Spring Security?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring Security записывает контекст в отдельный Redis-репозиторий, а `HttpSession` используется только для прикладных атрибутов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартное session-based сохранение Security использует HTTP-сессию. При подмене этой сессии операция записи её атрибута уходит через репозиторий Spring Session.",
+                "source_of_confusion": "Названия `SecurityContextRepository` и `SessionRepository` похожи на два независимых физических хранилища. Первый в этом случае использует абстракцию второго через `HttpSession`.",
+                "if_it_were_true": "При отдельном Redis-репозитории смена backend сессий на JDBC не переносила бы контекст безопасности вместе с остальными атрибутами.",
+                "how_it_should_be": "Если нужна отдельная модель хранения контекста, её задают собственной реализацией `SecurityContextRepository`. Для общего входа по сессии достаточно корректной интеграции фильтра."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spring Security записывает контекст в cookie, а `HttpSession` используется только для регистрации одновременных входов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Браузер передаёт ID сессии. При session-based входе principal и authorities извлекаются из сохранённого `SecurityContext` на стороне сервера.",
+                "source_of_confusion": "Cookie сопровождает каждый запрос после входа. Это похоже на самостоятельно проверяемый токен, который иногда упаковывают в cookie.",
+                "if_it_were_true": "Если бы cookie содержала контекст, удаление серверной записи не прекращало бы аутентификацию по этой cookie без дополнительной проверки.",
+                "how_it_should_be": "Различайте cookie-идентификатор серверной сессии и подписанный токен. Для отзыва конкретной серверной сессии удалите её запись, учитывая уже начатые запросы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Spring Security записывает контекст в `HttpSession`, а Spring Session сохраняет его в общем репозитории вместе с остальными атрибутами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Когда вход сохраняет контекст через `HttpSessionSecurityContextRepository`, контекст попадает в атрибут `SPRING_SECURITY_CONTEXT`. Фильтр Spring Session уже передал цепочке запрос с обёрнутой `HttpSession`, поэтому это состояние сохраняется в том же репозитории, что и другие атрибуты.",
+                "example": "Пользователь входит на A. Аутентификация сохраняется в сессии Redis. На B запрос с той же `SESSION` и живой сессией восстанавливает `Authentication`, поэтому защищённая страница обслуживается без повторного входа.",
+                "when_to_apply": "Используйте связку для stateful-входа на нескольких узлах. Проследите порядок фильтра Spring Session перед Spring Security и совместимость сериализации principal и контекста на всех узлах.",
+                "edge_cases": "При `SessionCreationPolicy.STATELESS` для Bearer API Security не использует сессию для получения контекста. Наличие Spring Session и общей cookie само по себе не меняет этот выбор.",
+                "related": "`SpringSessionBackedSessionRegistry` дополнительно помогает находить сессии одного principal для лимитов. Восстановлению контекста конкретной сессии достаточно её ID."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Spring Security записывает контекст в локальную сессию контейнера, а Spring Session сохраняет в Redis только атрибуты приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба вида атрибутов записываются в одну и ту же обёрнутую `HttpSession`. Фильтр Spring Session не делит атрибуты по подсистемам.",
+                "source_of_confusion": "Контекст безопасности устанавливается в `SecurityContextHolder` на время запроса. Его локальность в потоке легко спутать с местом хранения между запросами.",
+                "if_it_were_true": "Если бы контекст оставался в контейнере на A, B восстановил бы, например, корзину из Redis, но счёл бы того же пользователя анонимным.",
+                "how_it_should_be": "При такой диагностике проверьте, где и когда Security сохраняет контекст, приходит ли та же cookie и может ли B прочитать атрибут из репозитория."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое FindByIndexNameSessionRepository и зачем он нужен?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Расширяет `SessionRepository` поиском по атрибутам, обходя все сессии и сравнивая сохранённый principal на стороне приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У интерфейса есть запрос по имени и значению поддерживаемого индекса. Indexed Redis использует связь principal с ID и затем загружает подходящие сессии.",
+                "source_of_confusion": "Поиск произвольных атрибутов без индекса иногда реализуют сканированием с фильтром. Название метода может создать впечатление, что этот обход предусмотрен для любого поля.",
+                "if_it_were_true": "При полном обходе поиск одного пользователя вынужден был бы читать данные всех пользователей, а работа росла бы вместе с размером всего namespace.",
+                "how_it_should_be": "Используйте поддерживаемые индексы. Поиск по произвольному атрибуту потребует собственного индекса или отдельно спроектированного запроса с приемлемой стоимостью."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Расширяет `SessionRepository` поиском по поддерживаемому индексу, чтобы по имени principal получить несколько сессий пользователя.",
+              "correct": true,
+              "sections": {
+                "explanation": "`FindByIndexNameSessionRepository` добавляет контракт `findByIndexNameAndIndexValue`. Метод `findByPrincipalName` обращается к стандартному индексу principal и возвращает карту `sessionId → Session`. Конкретный репозиторий отвечает за построение и обслуживание индекса.",
+                "example": "У `anna` активны сессии `s1` и `s2`. Вызов `repo.findByPrincipalName(\"anna\")` может вернуть обе записи. Если пользователь просит завершить эти входы, приложение удаляет найденные ID через `deleteById`.",
+                "when_to_apply": "Выбирайте indexed-реализацию для поиска активных устройств, отзыва сессий по пользователю и глобального обзора для Security. Проверьте, под каким именем репозиторий индексирует principal.",
+                "edge_cases": "`RedisSessionRepository` в базовом режиме не реализует этот интерфейс. Если индексируемый репозиторий есть, но principal для сессии ещё не разрешён, `findById` может найти её, а поиск по имени её не вернёт.",
+                "related": "В Redis индекс обслуживается отдельными ключами. `SessionRegistry` использует поиск для политики входов. Сам индекс допускает несколько сессий одного principal и не задаёт лимит."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Расширяет `SessionRepository` поиском по principal текущего запроса, возвращая только сессию вызвавшего клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запрос принимает имя principal явно и может вернуть несколько сессий. Он не читает идентификатор сессии из текущего HTTP-запроса.",
+                "source_of_confusion": "`SecurityContextHolder` показывает principal текущего запроса, а `HttpSession` даёт именно его текущую сессию. Оба понятия легко перенести на метод поиска.",
+                "if_it_were_true": "Если бы запрос возвращал только текущую сессию, фоновая задача отзыва сессий после смены пароля не смогла бы найти устройства пользователя.",
+                "how_it_should_be": "Для текущей сессии используйте запрос или `findById`. Для поиска по имени передайте principal в индексируемый репозиторий и проверяйте права на просмотр или отзыв."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Расширяет `SessionRepository` поиском по уникальному principal, заменяя прежний ID сессии при каждом входе пользователя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Principal служит группировкой, а ID отличает сессии устройств. Новый вход сам по себе не удаляет прежнюю сессию с тем же principal.",
+                "source_of_confusion": "В реляционной схеме индекс иногда означает уникальный индекс. Конкретный индекс Spring Session допускает несколько значений для одного имени.",
+                "if_it_were_true": "Если бы principal был уникальным ключом сессии, вход с телефона лишал бы браузер сессии даже без настройки лимита Spring Security.",
+                "how_it_should_be": "Ограничивайте входы через `maximumSessions` и подходящий реестр. Для строгого лимита при одновременных входах нужна согласованная операция допуска."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать события сессий?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Подписаться через `@EventListener` и включить базовый Redis-репозиторий. Он публикует события при сохранении и удалении сессии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Базовый `RedisSessionRepository` хранит и читает сессии, но не публикует этих событий. Слушатель приложения сам не добавляет механизм Redis Pub/Sub.",
+                "source_of_confusion": "У обоих репозиториев одинаковый общий контракт создания, сохранения и удаления. Поэтому легко ожидать одинаковых событий при тех же вызовах.",
+                "if_it_were_true": "Если бы базовый репозиторий публиковал события, переключение с indexed на basic сохранило бы вызовы `SessionExpiredEvent` при прежней конфигурации Redis.",
+                "how_it_should_be": "Когда нужны события, подключите `RedisIndexedSessionRepository` и проверьте путь уведомлений. Если нужны только CRUD по ID, проще использовать базовый режим."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Подписаться через `@EventListener` и включить indexed Redis-репозиторий. Таймер Spring публикует события независимо от уведомлений Redis.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Плановая работа с ключами истечения помогает Redis вовремя обнаруживать их, но не заменяет подписку на уведомления об удалении и истечении.",
+                "source_of_confusion": "У indexed-реализации есть механизм периодической обработки сроков. Его легко принять за автономный источник Java-событий.",
+                "if_it_were_true": "Если бы таймер сам публиковал все события, отключение keyevent notifications не меняло бы вызовы слушателя после `DEL` или истечения.",
+                "how_it_should_be": "Настройте на Redis как минимум необходимые keyevent-категории и проверьте подписку. Для критичной фоновой работы храните дедлайны и обрабатывайте их независимо от Pub/Sub."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подписаться через `@EventListener` и включить indexed Redis-репозиторий. Для событий истечения и удаления настроить Redis keyevent notifications.",
+              "correct": true,
+              "sections": {
+                "explanation": "`RedisIndexedSessionRepository` преобразует уведомления о жизненном цикле сессии в Spring-события. Создание новой сессии использует канал публикации репозитория. Истечение и удаление опираются на Redis keyevent notifications. `Egx` включает канал `E`, события общего типа `g` и истечение `x`.",
+                "example": "Задайте `notify-keyspace-events Egx` и подключите `@EventListener` для `SessionExpiredEvent`. При истечении ключа сессии `s7` обработчик получает её ID и может освободить связанный ресурс. Для явного удаления предусмотрен `SessionDeletedEvent`.",
+                "when_to_apply": "Используйте события для обработки, которая допускает повторы или пропуски. Обработчик должен быть идемпотентным. На управляемом Redis с запрещённой настройкой через `CONFIG` задайте флаги в инфраструктуре и отключите попытку настройки со стороны приложения через `ConfigureRedisAction.NO_OP`.",
+                "edge_cases": "Логическое истечение может наступить раньше, чем подписчик увидит уведомление. При обрыве Pub/Sub сообщения не воспроизводятся, а в Redis Cluster важно, события каких узлов получает listener.",
+                "related": "TTL защищает чтение от использования истёкшей сессии. Уведомление запускает побочный эффект. Если очистка обязательна, добавьте независимую сверку по дедлайну или надёжный журнал для явно инициированных действий."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подписаться через `@EventListener` и включить indexed Redis-репозиторий. Чтобы получить события, прочитать истёкшие сессии при очередном запросе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Уведомления об истечении сессии приходят через Redis. У пользователя может не быть запросов после ухода, а слушатель при рабочей подписке всё равно получит событие.",
+                "source_of_confusion": "Репозиторий проверяет срок при поиске ID, и видимый промах в `getSession(false)` похож на момент, когда должна запускаться очистка.",
+                "if_it_were_true": "Если бы событие зависело от HTTP-чтения, ресурс пользователя мог бы оставаться занятым после истечения до его следующего визита.",
+                "how_it_should_be": "Для сигналов на границе TTL используйте подписку, а для гарантированного освобождения добавьте периодическую сверку. От HTTP-запросов очистку отделяйте."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить timeout сессии?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Задать глобальный интервал бездействия и при необходимости переопределить его у конкретной сессии через `setMaxInactiveInterval`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Максимальный интервал бездействия измеряется от последнего доступа к сессии. В Boot глобальный `spring.session.timeout` задаёт обычное значение, а `HttpSession.setMaxInactiveInterval(int)` меняет его в секундах для данного экземпляра. У репозиторного `Session` аналогичный метод принимает `Duration`.",
+                "example": "У сессии интервал 30 минут. Она создана в 10:00 и используется в 10:25, поэтому при сохранении нового времени доступа сессия остаётся действительной в 10:40. Если новых обращений нет, в 10:56 она уже истекла.",
+                "when_to_apply": "Устанавливайте значение для роли после успешной аутентификации, когда роли известны. При работе с `HttpSession` в запросе изменение сохраняет фильтр. При получении `Session` непосредственно из репозитория вызовите `save`.",
+                "edge_cases": "`SessionCreatedEvent` может прийти до сохранения контекста аутентификации. Если политика зависит от роли, одного listener создания недостаточно. Обработчик успешного входа позволяет применить её после определения principal.",
+                "related": "Возраст cookie управляет поведением браузера, а `maxInactiveInterval` определяет актуальность серверной записи. Для жёсткого срока от логина нужна дополнительная серверная проверка независимо от активности."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Задать глобальный срок от создания и при необходимости переопределить этот абсолютный дедлайн через `setMaxInactiveInterval`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`setMaxInactiveInterval` задаёт допустимую паузу после последнего доступа. У активного пользователя сессия может прожить дольше длительности, указанной в этой настройке.",
+                "source_of_confusion": "Истечение Redis-ключа выглядит как фиксированная отметка времени. При сохранении сессии её срок пересчитывается с учётом последнего доступа.",
+                "if_it_were_true": "Если бы интервал считался от создания, запись с интервалом 30 минут и обращениями каждые пять минут перестала бы работать ровно через полчаса.",
+                "how_it_should_be": "Для idle timeout используйте `maxInactiveInterval`. Для абсолютного ограничения храните дату входа или дедлайн и завершайте сессию по собственной политике."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Задать интервал бездействия глобально и разделить пользователей на разные приложения, чтобы роли получили разные сроки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Глобальный параметр даёт значение по умолчанию, но отдельной сессии можно назначить свой интервал. Для разных ролей достаточно программного решения в одном приложении.",
+                "source_of_confusion": "Параметр в YAML задан один раз на deployment. Из него легко сделать вывод, что он считывается для всех сессий при каждой проверке.",
+                "if_it_were_true": "Если бы интервал определялся только глобально, вызов `setMaxInactiveInterval(300)` не менял бы судьбу сессии при 10 минутах бездействия.",
+                "how_it_should_be": "Настройте безопасное значение по умолчанию и переопределяйте его после аутентификации в тех случаях, где предусмотрено исключение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Задать интервал бездействия через срок cookie и при необходимости переопределить его у отдельного пользователя в браузере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cookie может исчезнуть раньше серверной записи или сохраниться с уже истёкшим ID. Браузерный срок не определяет, какую запись репозиторий считает действующей.",
+                "source_of_confusion": "Оба механизма могут проявиться одинаково: следующий запрос не восстанавливает вход. Из этого легко вывести, что их таймер общий.",
+                "if_it_were_true": "Если бы срок cookie управлял сессией на сервере, предъявление скопированного ID после исчезновения cookie всегда было бы отклонено независимо от срока в репозитории.",
+                "how_it_should_be": "Задавайте idle timeout на сервере. Срок cookie настраивайте согласно клиентской политике и отдельно удаляйте серверную сессию при logout."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как реализовать кастомную сериализацию сессии?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Задать `ObjectMapper` для HTTP-конвертеров. Redis возьмёт этот формат для сессий и прочитает записи Java при первом обращении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring MVC использует свой `ObjectMapper` для тел HTTP-сообщений. Репозиторий Spring Session выбирает Redis-сериализатор отдельно и продолжит использовать дефолт без своего бина.",
+                "source_of_confusion": "Оба пути преобразуют Java-объекты в байты и могут использовать Jackson, поэтому кажется, что глобальная JSON-настройка охватывает оба.",
+                "if_it_were_true": "Если бы mapper MVC задавал формат Redis, включение новой политики JSON для REST-контроллера изменило бы байты при следующем сохранении сессии.",
+                "how_it_should_be": "Настройте именованный Redis-сериализатор. Для переезда прежних данных отдельно проверяйте чтение Java-формата и совместимость сериализованных классов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Задать сериализатор в прикладном `RedisTemplate`. Spring Session подхватит его, а при чтении сверит формат по ID сессии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Настройка произвольного `RedisTemplate` распространяется на операции через этот template. Spring Session настраивает свои Redis-операции, а ID лишь определяет ключ сессии.",
+                "source_of_confusion": "Приложение и Spring Session могут использовать одну фабрику соединений. Из общего соединения легко вывести общие сериализаторы.",
+                "if_it_were_true": "Если бы выбор шёл по ID, смена template не нарушала бы чтение старых сессий даже без явного формата или дополнительного декодера.",
+                "how_it_should_be": "Переопределите сериализатор через официальную именованную точку расширения. Если нужны разные форматы в одном namespace, задайте распознаваемые форматы и совместимый декодер."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Задать бин `springSessionDefaultRedisSerializer`. Он изменит формат записи сессий, а чтение прежних Java-байтов останется встроенным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именованный бин действует и при сериализации, и при десериализации. `GenericJackson2JsonRedisSerializer` сам не делегирует чтение `JdkSerializationRedisSerializer`.",
+                "source_of_confusion": "Некоторые библиотеки поддерживают совместимое чтение при изменениях схемы JSON. Здесь меняется сам протокол представления байтов.",
+                "if_it_were_true": "Если бы сохранился встроенный Java-fallback, новый узел мог бы восстановить сессию, созданную старым, без дополнительного кода. Показанный бин такой возможности не реализует.",
+                "how_it_should_be": "Согласуйте миграцию и на стороне читателей, и на стороне писателей. Пока старые узлы умеют читать только Java, сохраняйте старый формат либо изолируйте их."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Задать бин `springSessionDefaultRedisSerializer`. Он изменит формат записи и чтения, поэтому прежние Java-байты требуют отдельной совместимости.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Session Data Redis ищет `RedisSerializer<Object>` под именем `springSessionDefaultRedisSerializer`. Он используется для значений сессии вместо стандартной Java-сериализации. В примере для Spring Session 3.5 новый JSON-сериализатор получает уже записанные байты, но Java stream не является JSON и автоматически не декодируется.",
+                "example": "Узел A сохраняет сессию `s1` стандартным сериализатором. Узел B с показанным бином получает `SESSION` для `s1`. Поиск доходит до Redis, но десериализация старого значения завершается ошибкой. Итог запроса зависит от обработки сбоя в приложении.",
+                "when_to_apply": "Если нужно сохранить сессии в rolling deploy, сначала разверните чтение обоих форматов при прежней записи. После обновления всех читателей переключите запись на JSON. Предусмотрите перезапись или истечение оставшихся старых значений.",
+                "edge_cases": "У общего hash с дельта-сохранением изменённые поля могут стать JSON, пока другие поля ещё содержат Java-байты. Поддерживайте совместимость на уровне сериализуемых значений. Для `SecurityContext` проверьте подходящие модули Jackson и допустимые типы.",
+                "related": "Namespace изолирует два формата, но смена префикса сама не переносит активные сессии. Это годится для планового повторного входа или как основа отдельной миграции с явным копированием."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как использовать Spring Session с WebFlux (реактивный стек)?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Включить `@EnableRedisHttpSession`, получать `HttpSession` из запроса WebFlux и оборачивать доступ в `Mono`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Servlet-фильтр не подменяет `WebSessionManager` в WebFlux. У `HttpSession` и `WebSession` разные контракты интеграции.",
+                "source_of_confusion": "Один Redis-модуль поддерживает оба стека и приложения могут работать на одном сервере Tomcat. Это скрывает различие API настройки.",
+                "if_it_were_true": "Если бы такая обёртка работала, реактивный handler на Netty получил бы `HttpSession`, хотя servlet-запроса там нет.",
+                "how_it_should_be": "В WebFlux берите `WebSession` из параметра контроллера или через `ServerWebExchange`. Оборачивать servlet-вызов в `Mono` недостаточно для реактивной интеграции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Включить `@EnableRedisWebSession`, получать `WebSession` в WebFlux и использовать реактивный репозиторий Redis для операций хранения.",
+              "correct": true,
+              "sections": {
+                "explanation": "WebFlux обращается к сессии через `WebSessionManager`. `@EnableRedisWebSession` подключает интеграцию Spring Session поверх `ReactiveSessionRepository`. У `exchange.getSession()` результат `Mono<WebSession>`, а простые операции над уже загруженными атрибутами синхронны и не требуют Redis-вызова каждая по отдельности.",
+                "example": "Контроллер может принять `WebSession` и выполнить `session.getAttributes().put(\"lang\", \"ru\")`. При сохранении ответа менеджер запишет состояние через реактивный репозиторий. Следующий запрос с той же cookie получит `lang=ru`.",
+                "when_to_apply": "Используйте Spring Session Data Redis и реактивную фабрику соединений в приложении на WebFlux. Продолжайте цепочку операторами Reactor без `block()` на event loop.",
+                "edge_cases": "Получение экземпляра `WebSession` само по себе не обязательно создаёт сохранённую запись и cookie. Добавление атрибута запускает сессию, а пустую можно запустить явным `start()`.",
+                "related": "`@EnableRedisHttpSession` конфигурирует servlet-фильтр для MVC. Для реактивного стека в Spring Session 3.3 и новее есть также indexed-вариант `@EnableRedisIndexedWebSession`, когда нужен поиск по principal."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Включить `@EnableRedisWebSession`, получать `WebSession` в WebFlux и использовать блокирующий `RedisSessionRepository` для операций хранения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Штатная реактивная настройка строит репозиторий на реактивных Redis-операциях. `RedisSessionRepository` реализует синхронный контракт `SessionRepository`.",
+                "source_of_confusion": "Оба репозитория используют Redis-ключи и выполняют похожие CRUD-действия. Имя `WebSession` может казаться только обёрткой поверх того же I/O.",
+                "if_it_were_true": "Если бы синхронные Redis-вызовы выполнялись на потоке обработки, медленный store мог бы задержать другие запросы на том же event loop.",
+                "how_it_should_be": "Для сетевого доступа используйте `ReactiveRedisConnectionFactory` и реактивный репозиторий. Если приходится обращаться к блокирующему внешнему API, изоляция на другом scheduler решает вопрос потока, но не меняет контракт сессии."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Включить `@EnableRedisHttpSession`, получать `WebSession` из обмена WebFlux и использовать реактивный клиент для записи servlet-сессии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реактивный клиент сам не связывает servlet-фильтр с `WebSession`. Нужна конфигурация WebFlux, которая подменяет хранилище `WebSessionManager`.",
+                "source_of_confusion": "Присутствие реактивного Redis-клиента похоже на достаточное условие, поскольку доступ к Redis уже неблокирующий.",
+                "if_it_were_true": "При такой схеме приложение могло бы отвечать через WebFlux, но новый узел не нашёл бы старую сессию, если менеджер продолжает хранить её локально.",
+                "how_it_should_be": "Проверьте, что Spring Session подключён именно к реактивному менеджеру. Настройки `HttpSession` оставьте приложениям с servlet pipeline."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как Spring Session работает в кластере?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Узел хранит рабочую копию локально, а после ответа отправляет её соседям. Новый узел принимает запросы после синхронизации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Экземпляр сессии на узле обслуживает запрос. Штатная коммуникация идёт через репозиторий, а рассылки состояния соседям после ответа нет.",
+                "source_of_confusion": "Tomcat clustering может передавать дельты между процессами. Внешний store тоже позволяет сменить узел, хотя путь данных другой.",
+                "if_it_were_true": "Если бы узлы держали реплику, свежий App2 пришлось бы синхронизировать до обработки cookie существующих пользователей.",
+                "how_it_should_be": "Масштабируйте экземпляры приложения после проверки подключения к общему репозиторию. Репликацию самого Redis настраивайте отдельно согласно требованиям к потере данных."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Узел хранит рабочую копию локально, а Redis сообщает балансировщику владельца ID. Запросы по этой сессии идут к владельцу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Redis хранит сеанс по ID, и в типовой схеме балансировщик не обращается к нему за владельцем. Любой узел с тем же доступом может прочитать запись.",
+                "source_of_confusion": "Сессии контейнера совместно со sticky sessions действительно имеют узел-владелец. Внешний store легко принять за реестр этой привязки.",
+                "if_it_were_true": "Если бы за сессией был закреплён владелец, исключение его из маршрутов привело бы к потере входа даже при наличии записи в Redis.",
+                "how_it_should_be": "Сохраняйте affinity только ради других локальных данных или в переходном режиме. Для сессии в общем store маршрутизация на владельца не требуется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Узел загружает сессию из общего репозитория по ID и сохраняет изменения обратно. Следующий запрос может обработать другой узел.",
+              "correct": true,
+              "sections": {
+                "explanation": "Когда запрос обращается к сессии, `SessionRepositoryFilter` использует ID из resolver и загружает состояние из общего репозитория. В обычном `ON_SAVE` обновления сохраняются при завершении обработки запроса или перед фиксацией ответа. Новый узел способен загрузить уже сохранённое состояние по тому же ID.",
+                "example": "Запрос на App1 меняет `locale` на `ru-RU` и завершает ответ. Балансировщик отправляет следующий запрос с той же cookie на App2. App2 читает `locale=ru-RU` из Redis, хотя App1 больше не принимает запросы.",
+                "when_to_apply": "Уберите affinity, если состояние сессий полностью вынесено в общий репозиторий и согласованы cookie, namespace и версии сериализуемых типов. Остальное локальное состояние приложения оценивайте отдельно.",
+                "edge_cases": "Общий store не делает параллельные операции атомарными. Если два запроса читают `items=1` и оба сохраняют `items=2`, возможна потеря одного инкремента. Для счётчика используйте отдельную атомарную операцию.",
+                "related": "Доступность узлов и отказоустойчивость Redis решаются отдельно. Падение App1 после сохранения переживает App2, а потеря записи на failover хранилища зависит от его параметров надёжности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Узел загружает сессию из общего репозитория по ID и сохраняет изменения в cookie. Следующий узел восстанавливает атрибуты из cookie.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В cookie передаётся идентификатор. Изменение атрибута записывается в общий store и не обязано менять cookie.",
+                "source_of_confusion": "При создании сессии клиент получает `Set-Cookie` возле момента сохранения. Эти операции легко принять за одну запись всего объекта клиенту.",
+                "if_it_were_true": "При хранении атрибутов в cookie новый запрос содержал бы новый `locale` даже при отключении Redis.",
+                "how_it_should_be": "Оставляйте данные серверной сессии в репозитории. Для маленького клиентского состояния выбирайте отдельный формат и учитывайте целостность, конфиденциальность и срок жизни."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как мигрировать с HTTP Session на Spring Session Redis?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Узел C загрузит сессию A по прежнему ID. Для переноса достаточно передавать одинаковую cookie старому и новому пулу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже если новый resolver принимает прежнюю cookie, данные `a17` остаются в памяти A. Redis на C не имеет записи, которую можно загрузить по этому ID.",
+                "source_of_confusion": "При миграции cookie действительно нужно согласовать. Сопоставление идентификаторов легко принять за перенос самой записи.",
+                "if_it_were_true": "Если бы ID был достаточен, Redis вернул бы атрибуты, которых туда никогда не записывали. C продолжил бы видеть корзину даже после отключения A.",
+                "how_it_should_be": "Перед переключением обеспечьте либо маршрут к старому узлу, либо явный перенос записи. При перевыпуске ID обновите cookie и не оставляйте старый вход активным сверх нужного срока."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Узел C не найдёт локальную сессию A в Redis. Сохранить вход можно дренажом старых сессий или явным переносом их состояния.",
+              "correct": true,
+              "sections": {
+                "explanation": "В старом пуле сессия существует в памяти конкретного контейнера. На C Spring Session обрабатывает `HttpSession` через Redis, поэтому даже предъявление того же ID не делает старую запись доступной. Чтобы не прервать активный вход, нужно сохранить путь к старому состоянию до истечения сессии либо перенести его явно.",
+                "example": "Сессия `a17` на A содержит `cartId=42` и контекст входа. Прямой запрос с `a17` на C не восстанавливает их. При дренировании балансировщик ещё отправляет клиента на A, а новые сессии создаются в C/D. После окончания срока `a17` эта привязка больше не нужна.",
+                "when_to_apply": "Для дренажа сохраните маршрутизацию по владельцу и прекратите создавать новые локальные сессии. Если A/B нужно вывести до истечения активных записей, прочитайте данные на узле-владельце, перенесите нужные атрибуты и остаток срока в Redis, а затем согласуйте ID либо перевыпустите cookie.",
+                "edge_cases": "При параллельном изменении сессии чтение на A и последующая запись в Redis могут перенести устаревшее состояние. Нужна согласованная граница записи, например краткая блокировка или версионное переключение владельца для конкретной сессии.",
+                "related": "`SessionRepositoryFilter` даёт прозрачный API после перехода. Маршрутизация и миграция уже созданных записей находятся за пределами этой прозрачности."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Узел C не найдёт сессию в Redis и загрузит её через `MapSessionRepository`. Для переноса достаточно зарегистрировать второй репозиторий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MapSessionRepository` работает с собственной картой. Он не читает `HttpSession` контейнера на A и не становится fallback-репозиторием для Redis от одного объявления бина.",
+                "source_of_confusion": "Контейнер и `MapSessionRepository` оба могут хранить сессии в памяти. Похожие свойства хранения не дают доступа к одной и той же карте.",
+                "if_it_were_true": "Если бы второй бин автоматически предоставлял fallback, C нашёл бы локальную запись A даже при пустых Redis и собственной карте.",
+                "how_it_should_be": "Для двух путей чтения настройте явную маршрутизацию либо миграционный сервис с доступом к старому состоянию. Объявление второго репозитория само по себе этих связей не создаёт."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Узел C не найдёт сессию до обновления A. После включения фильтра на A он сможет выгрузить существующие сессии контейнера в Redis.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Добавление фильтра меняет реализацию сессии для новых запросов. Spring Session не выгружает существующие сессии Tomcat в Redis при старте.",
+                "source_of_confusion": "Снаружи `getSession()` имеет тот же тип до и после переезда. Такая прозрачность API похожа на прозрачное обновление данных.",
+                "if_it_were_true": "Если бы запись переносилась при старте, старые ID появились бы в Redis сразу после включения фильтра и C восстановил бы контекст без участия миграционного кода.",
+                "how_it_should_be": "Экспортируйте состояние до отключения старого доступа либо дождитесь завершения сессий через дренирование. При допустимом разлогине заранее согласуйте повторный вход."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Session Concurrency Control?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Это лимит активных сессий на каждом узле. Локальный `SessionRegistry` применяет его независимо от общего Redis.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бизнес-лимит задаётся для пользователя. Локальный `SessionRegistryImpl` позволяет применить его только к тем сессиям, которые зарегистрированы на данном узле.",
+                "source_of_confusion": "На одном узле локальный реестр достаточен, и настройка DSL выглядит так же в кластере. Изменение физического хранилища само локальный реестр не меняет.",
+                "if_it_were_true": "Если бы лимит задумывался как узловой, при трёх устройствах на каждом из двух узлов шесть входов считались бы нормой даже для одного аккаунта.",
+                "how_it_should_be": "Для политики на principal во всём кластере используйте реестр над общим индексируемым репозиторием. Локальный вариант оставляйте для одноузловой конфигурации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это лимит активных сессий на пользователя. Redis-репозиторий применяет его при сохранении новой записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RedisIndexedSessionRepository` сохраняет сессии и индексирует principal. Он не знает значения `maximumSessions` и не отклоняет произвольное сохранение сессии по этой политике.",
+                "source_of_confusion": "Раз Redis видит полный набор записей, кажется естественным проверять лимит там же. В штатной схеме репозиторий предоставляет данные, а выбор делает стратегия Security.",
+                "if_it_were_true": "Если бы лимит применялся при сохранении, даже прямой вызов `repository.save` для четвёртой сессии мог бы завершиться отказом по этому лимиту.",
+                "how_it_should_be": "Настройте concurrency control в `SecurityFilterChain`. Для настраиваемой строгой квоты вынесите операцию допуска в собственный согласованный механизм."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это лимит активных сессий на пользователя. Общий `SessionRegistry` гарантирует его атомарность при любых одновременных входах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Общий реестр устраняет слепую зону другого узла, но не делает проверку и создание одной операцией. Параллельные запросы могут увидеть одинаковое число сессий.",
+                "source_of_confusion": "Запросы к Redis проходят через общее хранилище. Атомарность отдельной команды легко принять за атомарность всей последовательности входа.",
+                "if_it_were_true": "Если бы допуск был атомарным, при двух входах на последнее место один гарантированно увидел бы исчерпание лимита до создания своей сессии.",
+                "how_it_should_be": "Когда лимит строгий, сериализуйте допуск по principal или используйте атомарную регистрацию слота. Предусмотрите освобождение слота при отменённом входе и истечении сессии."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это лимит активных сессий на пользователя. Spring Security применяет политику на входе, а общий `SessionRegistry` даёт список сессий с разных узлов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Security при аутентификации сверяет число сессий данного principal с `maximumSessions`. `SpringSessionBackedSessionRegistry` получает общий список через `FindByIndexNameSessionRepository`. `maxSessionsPreventsLogin(true)` отклоняет новый вход при заполненном лимите, а `false` допускает вход и помечает подходящую прежнюю сессию как истёкшую.",
+                "example": "У пользователя три активных сессии на A и B. При входе на C показанная конфигурация находит все три по principal и отклоняет четвёртый вход. С `false` выбранная старая сессия обычно прекращает обслуживаться при следующем запросе через `ConcurrentSessionFilter`.",
+                "when_to_apply": "Подключайте общий реестр для политики входов в кластере. Проверьте индекс principal и то, что используемый механизм логина вызывает стратегии управления сессией.",
+                "edge_cases": "Проверка списка и создание сессии разделены. Два одновременных входа могут оба увидеть свободное место. Строгий глобальный предел требует атомарного допуска, например транзакции или согласованной блокировки на principal вокруг проверки и регистрации.",
+                "related": "`maximumSessions` ограничивает входы, а `maxInactiveInterval` завершает неактивную сессию по времени. Удаление сессии вручную освобождает место, но запрос, уже выполняющийся, не прерывает."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Чем Spring Session отличается от Tomcat Session Manager?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Tomcat управляет `HttpSession` своими менеджерами, а Spring Session переносит реализацию хранения в репозиторий, общий для разных узлов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tomcat Session Manager — часть конкретного контейнера. Например, стандартный менеджер держит активные сессии процесса, а для кластера Tomcat предлагает другие менеджеры. Spring Session интегрируется на уровне приложения и предоставляет `HttpSession` поверх выбранного `SessionRepository`, поэтому общее состояние может жить вне контейнеров.",
+                "example": "Запрос с `SESSION=s9` уходит с Tomcat A на Jetty B. Если оба приложения используют один Redis, совместимые cookie и код сериализации, Jetty читает ту же сессию через Spring Session. Обмен сессиями между менеджерами контейнеров не требуется.",
+                "when_to_apply": "Используйте внешний репозиторий, когда узлы будут пересоздаваться или нужно отделить инфраструктуру сессий от контейнера. Для одного Tomcat без требования переживать перезапуск локальная сессия обычно проще.",
+                "edge_cases": "Tomcat поддерживает persistence и кластерные режимы. При сравнении называйте конкретный менеджер. Преимущество Spring Session состоит в едином прикладном контракте и выборе backend, а не в отсутствии других способов кластеризации.",
+                "related": "Spring Session отдельно интегрируется с `WebSession` в WebFlux. Поиск по principal и Actuator sessions endpoint требуют нужной индексируемой реализации, они не следуют из самого выбора servlet-контейнера."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Tomcat и Spring Session управляют `HttpSession` через один менеджер, а внешний репозиторий добавляет слой экспорта метрик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В servlet-стеке Spring Session оборачивает запрос. Код получает её `HttpSession`, а атрибуты загружаются из настроенного репозитория вне Tomcat Session Manager.",
+                "source_of_confusion": "Сигнатура `HttpSession` остаётся той же, и приложению не видно смены реализации. Это похоже на подключение плагина наблюдаемости к прежнему менеджеру.",
+                "if_it_were_true": "Если бы менеджер оставался владельцем сессии, удаление внешней записи не отозвало бы локальную сессию Tomcat, а новый контейнер всё равно зависел бы от старого.",
+                "how_it_should_be": "Разделяйте контракт Servlet API и реализацию хранения. Для метрик контейнера используйте его инструменты, а для Spring Session смотрите данные соответствующего backend."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Tomcat и Spring Session управляют `HttpSession` через разные хранилища, но в обоих случаях менеджер привязан к экземпляру Tomcat.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Session опирается на Servlet API, поэтому совместимая настройка работает и в другом servlet-контейнере. Хранилищем управляет прикладной репозиторий.",
+                "source_of_confusion": "Boot часто поставляется с Tomcat, и встроенный сервер легко принять за условие работы любой `HttpSession`.",
+                "if_it_were_true": "Если бы интеграция зависела от Tomcat Manager, смена Tomcat на Jetty потребовала бы заново перенести данные в менеджер Jetty даже при общем Redis.",
+                "how_it_should_be": "При смене контейнера проверьте поддерживаемый стек, фильтр, cookie, сериализацию и хранилище. Контейнерный менеджер настройте отдельно, только если он действительно владеет сессиями."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Tomcat управляет серверной `HttpSession`, а Spring Session заменяет её полностью клиентским состоянием, общим для разных узлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Session сохраняет серверную сессию, а клиент передаёт её идентификатор. При недоступном репозитории наличие cookie не восстанавливает атрибуты.",
+                "source_of_confusion": "Свободная балансировка характерна и для подписанных токенов, и для общего сервера сессий. Внешний эффект похож, а место хранения состояния различается.",
+                "if_it_were_true": "При переносе всего состояния на клиент загружать атрибуты из Redis при обращении к сессии не потребовалось бы.",
+                "how_it_should_be": "Выбирайте токены, если нужные данные можно проверять на каждом запросе. Если требуется общий изменяемый серверный сеанс, используйте его репозиторий."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить мониторинг сессий через Actuator?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Доступны чтение и удаление. Уровень `unrestricted` у `sessions` имеет приоритет над глобальным `read-only`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Глобальный `max-permitted` задаёт потолок и ограничивает более широкий уровень отдельного endpoint. `unrestricted` не возвращает операцию удаления.",
+                "source_of_confusion": "Во многих настройках Boot более конкретное свойство перекрывает глобальное значение по умолчанию. Здесь глобальная настройка служит верхней границей.",
+                "if_it_were_true": "Если бы частный параметр выигрывал, один endpoint смог бы публиковать запись и удаление при общем запрете таких операций.",
+                "how_it_should_be": "Настройте допустимый общий потолок и затем точечный access. Разрешайте DELETE только там, где он нужен, с отдельной авторизацией и учётом CSRF."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Недоступны чтение и удаление. Уровень `read-only` исключает endpoint `sessions` целиком, поскольку у него есть операция удаления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`read-only` оставляет read-операции и исключает операции записи или удаления. Для полного отключения используется `none`.",
+                "source_of_confusion": "Список `exposure.include` действует на endpoint целиком. Из этого легко заключить, что и уровень доступа только включает или выключает endpoint.",
+                "if_it_were_true": "Если бы endpoint удалялся целиком, запрос списка пользователя не находил бы операцию даже при корректной экспозиции и правах.",
+                "how_it_should_be": "Проверяйте отдельно HTTP-экспозицию и уровень доступа к операциям. Для просмотра оставьте `read-only`, а для отключения используйте `none` или исключите HTTP-экспозицию по задаче."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Доступно чтение, а удаление недоступно. Глобальный `read-only` ограничивает операции `sessions` даже при `unrestricted` у endpoint.",
+              "correct": true,
+              "sections": {
+                "explanation": "В Boot 3.5 `management.endpoints.access.max-permitted=read-only` ограничивает доступ даже для endpoints со своим `access=unrestricted`. Операция чтения остаётся доступной при включённой HTTP-экспозиции. Операция удаления выходит за пределы эффективного access и не публикуется, хотя `sessions` есть в `exposure.include`.",
+                "example": "При индексируемом репозитории и нужных правах `GET /actuator/sessions?username=john.doe%40example.com` возвращает сессии этого пользователя. `DELETE /actuator/sessions/abc123` не выполнит удаление при показанном глобальном потолке. Наличие записи `abc123` этого не меняет.",
+                "when_to_apply": "Для группы операторов, которым нужен только просмотр, оставьте уровень `read-only` и ограничьте доступ к пути через Spring Security. Для управляемого удаления должен быть разрешён effective `unrestricted`, опубликован endpoint и авторизован сам запрос.",
+                "edge_cases": "Даже при `unrestricted` удаление могут остановить правила доступа или CSRF. Если убрать `sessions` из HTTP-экспозиции, разрешённые операции перестанут быть доступны по этому транспорту.",
+                "related": "Actuator sessions даёт операции по индексируемому репозиторию. Для графика общего числа активных сессий нужна метрика самого внешнего стора. В JDBC считайте строки с будущим `EXPIRY_TIME`, а в Redis учитывайте служебные ключи и отложенную очистку."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Доступно удаление, а чтение по пользователю недоступно. В HTTP экспонируется только операция с идентификатором сессии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поиск по имени относится к чтению. DELETE с ID относится к удалению и исключён глобальным потолком, который не зависит от места аргумента в URL.",
+                "source_of_confusion": "Маршруты по ID и списки с query-параметрами выглядят как разные режимы экспозиции. На деле Actuator различает операции в первую очередь по их типу.",
+                "if_it_were_true": "Если бы наличие ID разрешало удаление при `read-only`, оператор смог бы менять данные, просто зная идентификатор сессии.",
+                "how_it_should_be": "Сопоставьте HTTP-операцию с уровнем доступа. Для `GET` по имени нужен поддерживаемый индекс, а для `DELETE` дополнительно требуются разрешение мутации и права оператора."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Когда не стоит использовать Spring Session?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Spring Session стоит подключать к Bearer API, чтобы сохранять успешно проверенный токен и пропускать проверку на остальных узлах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Stateless resource server проверяет предъявленный токен на каждом запросе. Сохранённый результат проверки в общей HTTP-сессии меняет модель аутентификации и вводит дополнительное состояние.",
+                "source_of_confusion": "Кэшировать строки конфигурации, JWK или результат интроспекции иногда полезно. Кэш вспомогательных данных легко принять за необходимость сохранять весь HTTP-сеанс.",
+                "if_it_were_true": "Если бы подтверждённый однажды токен можно было принимать по сессии без проверки, истечение токена или изменение его допустимости могли бы обходиться до конца сессии.",
+                "how_it_should_be": "Кэшируйте вспомогательные данные с подходящими сроками и проверяйте токены по политике. Серверную сессию заводите только там, где она нужна по контракту входа или приложения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spring Session избыточен, когда сервис проверяет каждый запрос сам и не хранит общего HTTP-сеанса или когда достаточно локальной сессии одного узла.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Session нужен для управления серверной сессией вне одного процесса. Если API заново проверяет Bearer token и не держит прикладных данных в HTTP-сессии, сохранять такой сеанс незачем. На одном узле с допустимой потерей состояния при перезапуске можно оставить обычную `HttpSession`.",
+                "example": "Сервис расчёта доставки принимает `Authorization: Bearer …`, проверяет подпись, срок и audience, выполняет расчёт по телу запроса и возвращает ответ. Обработка одинаково работает на A и B без cookie и Redis-репозитория сессий.",
+                "when_to_apply": "Проверьте, зависят ли запросы от состояния предыдущего HTTP-сеанса. Если зависимости нет, используйте stateless-конфигурацию Security и не создавайте сессию приложением. Для локальной сессии оцените, допустимы ли повторный вход и потеря временных данных при сбое узла.",
+                "edge_cases": "OAuth2-клиент или BFF может использовать серверную сессию для входа браузера, хотя его downstream API принимает Bearer tokens. В этом случае Spring Session может понадобиться BFF и остаться лишним для resource servers.",
+                "related": "`SessionCreationPolicy.STATELESS` отключает использование `HttpSession` для `SecurityContext` в этой цепочке Security. Прикладной `getSession()` всё ещё может создать сессию, поэтому отсутствие серверного состояния зависит и от приложения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Spring Session стоит подключать к одноузловому сервису, чтобы каждый запрос с существующей сессией мог попасть в тот же процесс.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У одного устоявшегося процесса локальная сессия доступна при повторном запросе с правильной cookie. Внешний store решает задачу пережить смену процесса или распределить состояние.",
+                "source_of_confusion": "В контейнерной среде даже один экземпляр может быть пересоздан. Это подталкивает считать внешнее хранилище обязательным даже без требования сохранять вход при сбое.",
+                "if_it_were_true": "Если бы локальный `HttpSession` не переживал обычный следующий запрос в том же процессе, приложение разлогинивало бы пользователя на каждом переходе страницы.",
+                "how_it_should_be": "Оставьте локальное хранение, если потеря состояния при пересоздании приемлема. Если вход должен переживать рестарт или failover, подключите подходящее долговечное хранилище."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Spring Session избыточен для приложения с общими изменяемыми сессиями, если чтение из Redis добавляет задержку к запросу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Задержка обращения к Redis влияет на стоимость решения, но сама не устраняет необходимость общего изменяемого состояния. Без альтернативы узел B потеряет данные, записанные на A.",
+                "source_of_confusion": "Сокращение сетевых вызовов действительно полезно на горячем пути. Из этого легко вывести, что любую работу с сессией можно убрать без изменения поведения.",
+                "if_it_were_true": "Если бы store был избыточен, отключение Redis сохранило бы на всех узлах, например, состояние незавершённой регистрации между запросами.",
+                "how_it_should_be": "Сначала определите, нужно ли состояние на следующем запросе. Если да, оптимизируйте доступ и объём данных либо спроектируйте другой надёжный механизм хранения. Убирать репозиторий можно после переноса ответственности."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

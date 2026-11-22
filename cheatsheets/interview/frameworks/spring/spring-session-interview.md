@@ -275,32 +275,26 @@ public void onSessionCreated(SessionCreatedEvent event) {
 
 ## Q8. Как реализовать кастомную сериализацию сессии?
 
-Атрибуты сессии нужно сериализовать, чтобы положить в Redis. По умолчанию используется Java serialization, но в production обычно переходят на JSON.
-
-**Почему не Java serialization:** она хрупкая (несовместимости при смене `serialVersionUID`/структуры классов), непрозрачная при отладке (бинарь не прочитать глазами) и потенциально небезопасная при десериализации недоверенных данных. JSON через `GenericJackson2JsonRedisSerializer` читаем, переносим между версиями и языками.
-
-Переопределить сериализатор можно бином с именем `springSessionDefaultRedisSerializer`:
+**Условие.** Идёт rolling deploy Spring Boot 3.5 со Spring Session 3.5. В Redis уже есть активные сессии, записанные стандартным Java-сериализатором. Старые и новые узлы используют один Redis, namespace и cookie. У новых узлов добавлен следующий бин. Что произойдёт при чтении существующей сессии на новом узле?
 
 ```java
-@Bean
-public RedisSerializer<Object> springSessionDefaultRedisSerializer() {
-    return new GenericJackson2JsonRedisSerializer();
+@Configuration
+class SessionConfig {
+
+    @Bean
+    RedisSerializer<Object> springSessionDefaultRedisSerializer() {
+        return new GenericJackson2JsonRedisSerializer();
+    }
 }
 ```
 
-```java
-// Или через конфигурацию
-@Bean
-public RedisSessionRepository redisSessionRepository(
-        RedisOperations<String, Object> sessionRedisOperations) {
-    RedisSessionRepository repository =
-        new RedisSessionRepository(sessionRedisOperations);
-    repository.setDefaultMaxInactiveInterval(Duration.ofMinutes(30));
-    return repository;
-}
-```
+**Разбор.** Spring Session для Redis по умолчанию использует Java Serialization. Бин с именем `springSessionDefaultRedisSerializer` переопределяет сериализатор. JSON упрощает отладку, но совместимость типов и версий классов всё равно нужно проверять. Для объектов Spring Security может потребоваться `ObjectMapper` с соответствующими модулями Jackson.
 
-**Подводный камень.** Старые сессии в Redis были записаны прежним сериализатором — после переключения новый код не сможет их прочитать, и активные пользователи разлогинятся. Нужна стратегия миграции: rolling deploy в сочетании с версионированием ключей (новый namespace/префикс), либо плановое обслуживание с принудительным повторным входом.
+Новый сериализатор не читает старые Java-байты, а старые узлы не читают данные, записанные в JSON. В зависимости от обработки сбоя пользователь может получить ошибку запроса или потерять доступ к сессии.
+
+Для сохранения сессий можно сначала развернуть на всех узлах совместимое чтение обоих форматов с записью в старом формате. Затем переключить запись на JSON, сохраняя чтение старых данных до их миграции или истечения TTL. Новый namespace изолирует форматы, но сам по себе не переносит сессии. Если повторный вход допустим, можно переключиться на новый namespace и завершить прежние сессии.
+
+[Spring Session 3.5 — Redis Configurations](https://docs.spring.io/spring-session/reference/3.5/configuration/redis.html)
 
 ## Q9. Как использовать Spring Session с WebFlux (реактивный стек)?
 
@@ -362,28 +356,19 @@ Browser ─── LB ─┬─ App1 ─┐
 
 ## Q11. Как мигрировать с HTTP Session на Spring Session Redis?
 
-Технически миграция тривиальна — добавить зависимость и конфигурацию. Вся сложность в одном: старые in-memory сессии в Redis не попадут, поэтому при деплое активные пользователи рискуют потерять сессию. Стратегия миграции — это в первую очередь план, как этого избежать.
+**Условие.** Приложение переводят на Spring Session Redis поэтапно. Уже вошедшие пользователи должны сохранить активные сессии при выводе старых узлов. Что произойдёт при отправке запроса пользователя на узел C и что понадобится для миграции?
 
-**Варианты подхода** (в коде ниже — комментариями; «решение 2» — лишь набросок, см. оговорку после кода):
-
-```java
-// 1. Добавить зависимость и конфигурацию (steps above)
-// 2. Проблема: существующие пользователи потеряют сессии при деплое
-
-// Решение 1: rolling restart — новые сессии сразу в Redis
-// Старые in-memory сессии истекут при перезапуске каждого узла
-
-// Решение 2: двойное хранилище во время миграции
-@Bean
-public SessionRepository<MapSession> migrationSessionRepository() {
-    // временный in-memory для пользователей с старыми сессиями
-    return new MapSessionRepository(new ConcurrentHashMap<>());
-}
+```text
+Старый пул A/B: HttpSession контейнера, отдельная память каждого узла
+Новый пул C/D: Spring Session, общий Redis
+Активная сессия пользователя создана и обновлялась на узле A
 ```
 
-**Честная оговорка про «двойное хранилище».** Объявленный выше бин `MapSessionRepository` сам по себе ничего не мигрирует: это просто второй стор без какой-либо маршрутизации между старым и новым — Spring не станет автоматически читать «сначала тут, потом там». Рабочий миграционный паттерн выглядит иначе: либо **дренаж старого стора** (новые сессии сразу пишутся в Redis, старый источник живёт read-only с коротким TTL, пока активные сессии в нём естественно не истекут), либо **dual-write на уровне кастомного `SessionRepository`** — обёртки, которая читает из Redis с фоллбэком в старый стор и пишет в оба. Второй путь заметно дороже в реализации и оправдан только при жёстком требовании «никого не разлогинивать».
+**Разбор.** Фильтр Spring Session подменяет контейнерную реализацию `HttpSession`. Переход на Redis не переносит локальные данные, поэтому C не найдёт сессию A даже при передаче того же идентификатора. Пустой `MapSessionRepository` имеет собственное хранилище и не получает доступ к сессиям контейнера.
 
-**На практике** выбирают один из двух сценариев: плановое обслуживание с принудительным logout всех пользователей (просто и предсказуемо) либо rolling restart с заметным сообщением о необходимости повторного входа (без простоя, но часть пользователей разлогинится в момент перезапуска их узла).
+При постепенном выводе старых узлов можно направлять прежние сессии на их узлы до естественного завершения, а новые создавать в Redis. Если старые узлы нужно отключить раньше, потребуется явный перенос. Для этого миграционный слой должен прочитать прежнюю сессию, перенести нужные атрибуты и остаток срока жизни, согласовать идентификатор или перевыпустить cookie и учесть параллельные обновления. Если повторный вход допустим, можно переключить пользователей без переноса состояния.
+
+[Spring Session 3.5 — HttpSession Integration](https://docs.spring.io/spring-session/reference/3.5/http-session.html)
 
 ## Q12. Что такое Session Concurrency Control?
 
@@ -429,28 +414,33 @@ public SessionRegistry sessionRegistry() {
 
 ## Q14. Как настроить мониторинг сессий через Actuator?
 
-Главный инструмент — endpoint `/actuator/sessions` для просмотра и удаления сессий конкретного пользователя. Он требует, чтобы под капотом был `FindByIndexNameSessionRepository` (поиск сессий по пользователю), и его нужно явно открыть в `exposure.include`.
+**Условие.** Приложение использует Spring Boot 3.5 и `FindByIndexNameSessionRepository`. Сессия `abc123` существует и принадлежит `john.doe@example.com`. Оператор аутентифицирован, правила Spring Security разрешают оба запроса, а для DELETE выполнены требования CSRF. Какие операции доступны при такой конфигурации?
 
 ```yaml
 management:
   endpoints:
+    access:
+      max-permitted: read-only
     web:
       exposure:
         include: sessions, health, metrics
   endpoint:
     sessions:
-      enabled: true
+      access: unrestricted
 ```
 
-```bash
-# Информация о сессии конкретного пользователя
-GET /actuator/sessions?username=john.doe@example.com
-
-# Удалить конкретную сессию
-DELETE /actuator/sessions/{sessionId}
+```http
+GET /actuator/sessions?username=john.doe%40example.com
+DELETE /actuator/sessions/abc123
 ```
 
-**Метрики.** Готовых Micrometer-метрик у Spring Session out-of-the-box **нет** — а привычные `tomcat.sessions.*` при включённом Spring Session как раз перестают что-либо показывать (сессии контейнера больше не используются). Число активных сессий мониторят самостоятельно: кастомный gauge по количеству ключей в namespace Redis (подсчёт по префиксу через `SCAN`) или `COUNT(*)` по таблице `SPRING_SESSION` для JDBC. На такой gauge вешают алерт: резкий рост может сигналить об утечке сессий или о DDoS, резкое падение — о проблеме со стором.
+**Разбор.** GET возвращает сессии пользователя. DELETE недоступен, потому что глобальный потолок `read-only` ограничивает даже endpoint с уровнем `unrestricted`. Для удаления эффективный уровень должен быть `unrestricted`. При уровне `none` endpoint недоступен целиком.
+
+HTTP-экспозиция публикует разрешённые операции по HTTP. Права оператора определяет Spring Security. При собственной `SecurityFilterChain` приложение задаёт правила доступа к Actuator, включая права на просмотр и удаление. При включённой CSRF-защите запрос DELETE должен пройти её проверку.
+
+**Метрики.** Метрики `tomcat.sessions.*` относятся к сессиям контейнера. Для Spring Session можно добавить метрику по внешнему хранилищу. В JDBC следует считать записи с неистёкшим сроком, а в Redis учитывать формат ключей и правила очистки выбранного репозитория. Подсчёт всех ключей namespace включает служебные записи.
+
+[Spring Boot 3.5 — Application Properties](https://docs.spring.io/spring-boot/3.5/appendix/application-properties/index.html) · [Actuator Endpoints](https://docs.spring.io/spring-boot/3.5/reference/actuator/endpoints.html) · [Sessions API](https://docs.spring.io/spring-boot/3.5/api/rest/actuator/sessions.html)
 
 ## Q15. Когда не стоит использовать Spring Session?
 
