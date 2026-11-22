@@ -121,7 +121,7 @@ public class OrderProducer {
 
 Помечаете метод `@KafkaListener(topics = ..., groupId = ...)` — и Spring запускает контейнер, который в фоне опрашивает брокер и вызывает ваш метод на каждое сообщение. Десериализация значения в нужный тип (здесь `OrderEvent`) происходит автоматически, по настроенному десериализатору.
 
-Сигнатуру метода Spring подстраивает под ваши нужды:
+Ниже три альтернативы. Регистрируйте только выбранный класс. Если зарегистрировать несколько слушателей одного топика с общим `groupId`, они будут делить партиции этой группы.
 
 - **Только payload** — самый частый вариант: метод принимает уже распарсенный объект.
 - **Payload + метаданные** — через `@Header` достаются топик, партиция, offset (полезно для логирования и идемпотентности).
@@ -137,18 +137,28 @@ public class OrderConsumer {
         log.info("Received: {}", event.orderId());
         processOrder(event);
     }
+}
+```
 
-    // С доступом к метаданным записи
+```java
+@Component
+@Slf4j
+class OrderConsumerWithMetadata {
     @KafkaListener(topics = "orders", groupId = "order-service")
     public void handleWithMeta(
             @Payload OrderEvent event,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
-            @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
+            @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
             @Header(KafkaHeaders.OFFSET) long offset) {
         log.info("topic={}, partition={}, offset={}: {}", topic, partition, offset, event);
     }
+}
+```
 
-    // Batch listener
+```java
+@Component
+@Slf4j
+class OrderBatchConsumer {
     @KafkaListener(topics = "orders", containerFactory = "batchFactory")
     public void handleBatch(List<OrderEvent> events) {
         log.info("Received batch of {}", events.size());
@@ -175,11 +185,11 @@ Topic "orders" (3 partitions)
 
 ## Q5. Как обрабатывать ошибки в @KafkaListener?
 
-Главный механизм — `DefaultErrorHandler` на уровне контейнера: при исключении в листенере он по политике backoff повторяет обработку записи, а когда попытки исчерпаны — передаёт запись recoverer'у (как правило, отправляет в DLT). Без него непрошедшее сообщение бесконечно перечитывалось бы и блокировало партицию.
+Главный механизм — `DefaultErrorHandler` на уровне контейнера: при исключении в листенере он по политике backoff повторяет обработку записи, а когда попытки исчерпаны — передаёт запись recoverer'у (как правило, отправляет в DLT). Число повторов и дальнейшая судьба записи зависят от настроенного обработчика.
 
 Из чего складывается настройка:
 
-- **Политика повторов (backoff)** — сколько раз и с какими паузами повторять. `ExponentialBackOffWithMaxRetries` даёт растущие интервалы, чтобы не долбить падающую зависимость.
+- **Политика повторов (backoff)** — сколько раз и с какими паузами повторять. `ExponentialBackOffWithMaxRetries` задаёт растущие интервалы. Аргумент `3` означает до трёх повторов после первой попытки.
 - **Recoverer** — что делать после исчерпания попыток. `DeadLetterPublishingRecoverer` публикует запись в DLT (здесь — в топик с суффиксом `.DLT`).
 - **Классификация исключений** — `addNotRetryableExceptions(...)` помечает ошибки, которые повторять бессмысленно (например, `ValidationException`): такая запись уходит в DLT сразу, без повторов.
 
@@ -189,7 +199,6 @@ Topic "orders" (3 partitions)
 // 1. DefaultErrorHandler — retry + DLT
 @Bean
 public DefaultErrorHandler errorHandler(KafkaTemplate<?, ?> template) {
-    // 3 попытки с экспоненциальным backoff
     ExponentialBackOffWithMaxRetries backOff = new ExponentialBackOffWithMaxRetries(3);
     backOff.setInitialInterval(1000L);
     backOff.setMultiplier(2.0);
@@ -203,8 +212,8 @@ public DefaultErrorHandler errorHandler(KafkaTemplate<?, ?> template) {
 }
 
 @Bean
-public ConcurrentKafkaListenerContainerFactory<?, ?> kafkaListenerContainerFactory(
-        ConsumerFactory<?, ?> cf, DefaultErrorHandler errorHandler) {
+public ConcurrentKafkaListenerContainerFactory<Object, Object> kafkaListenerContainerFactory(
+        ConsumerFactory<Object, Object> cf, DefaultErrorHandler errorHandler) {
     ConcurrentKafkaListenerContainerFactory<Object, Object> factory =
         new ConcurrentKafkaListenerContainerFactory<>();
     factory.setConsumerFactory(cf);
@@ -275,9 +284,7 @@ public void processAndPublish(OrderCommand cmd) {
 
 Параллелизм задаётся параметром `concurrency` — это число потоков-консьюмеров внутри одного экземпляра приложения. Каждый поток берёт свой набор партиций, и они обрабатываются независимо. Установить можно на фабрике (`setConcurrency(3)`) или прямо в аннотации (`concurrency = "3"`).
 
-Ключевой нюанс: **толку от concurrency не больше, чем партиций**. Если в топике 3 партиции, то `concurrency=3` даёт по партиции на поток; четвёртый поток просто будет простаивать. Поэтому потолок параллелизма — это число партиций (с учётом всех экземпляров в группе вместе).
-
-В примере включён ручной коммит (`AckMode.MANUAL` + `Acknowledgment`): offset подтверждается только после успешной обработки. Если бросить исключение и не вызвать `ack.acknowledge()`, сообщение не закоммитится и будет перечитано — это защита от потери при сбое.
+В примере у топика `orders` три партиции. В группе `order-service` работает один экземпляр приложения, и группа читает только этот топик.
 
 ```java
 @Bean
@@ -286,22 +293,22 @@ public ConcurrentKafkaListenerContainerFactory<String, OrderEvent> factory(
     ConcurrentKafkaListenerContainerFactory<String, OrderEvent> factory =
         new ConcurrentKafkaListenerContainerFactory<>();
     factory.setConsumerFactory(cf);
-    factory.setConcurrency(3); // 3 потока = 3 consumer, по одному на партицию
+    factory.setConcurrency(3);
+    factory.setCommonErrorHandler(new DefaultErrorHandler(new FixedBackOff(1000L, 2L)));
     factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
     return factory;
 }
 
-@KafkaListener(topics = "orders", concurrency = "3")
+@KafkaListener(topics = "orders", groupId = "order-service", containerFactory = "factory")
 public void handle(OrderEvent event, Acknowledgment ack) {
-    try {
-        processOrder(event);
-        ack.acknowledge(); // ручной коммит offset
-    } catch (Exception e) {
-        log.error("Processing failed", e);
-        // не вызываем ack → сообщение будет перечитано
-    }
+    processOrder(event);
+    ack.acknowledge();
 }
 ```
+
+После распределения партиций каждый из трёх потребителей получает по одной. Четвёртый потребитель в этой группе остался бы без партиции.
+
+При `AckMode.MANUAL` вызов `acknowledge()` передаёт подтверждение контейнеру, который фиксирует offsets по правилам пакетного коммита. Если `processOrder` выбрасывает исключение, оно доходит до `DefaultErrorHandler`. Для ошибок, допускающих повтор, политика выше даёт до двух повторов с паузой в секунду. После исчерпания применяется стандартный recoverer, который журналирует запись. Если перехватить исключение внутри метода, контейнер его не увидит. Само отсутствие ack не заставляет потребителя немедленно перечитать запись.
 
 ## Q9. Как управлять offset коммитами?
 
@@ -449,11 +456,20 @@ Kafka гарантирует порядок **только внутри одно
 - **Партиционирование по ключу (основной приём)** — отправляем связанные события с одинаковым ключом (`customerId`, `orderId`). Kafka хешем ключа кладёт их в одну партицию, сохраняя порядок, и при этом разные ключи параллелятся по разным партициям. Лучший баланс порядка и throughput.
 - **Sequence-номер в заголовке** — пробрасываем порядковый номер, чтобы потребитель мог сам обнаружить пропуск или переупорядочить. Применяют, когда строгий порядок на стороне продюсера обеспечить нельзя.
 
-**Подводный камень:** при включённых повторах без идемпотентности продюсер может переставить сообщения местами (см. Q14). Порядок «внутри партиции» гарантирован, только если продюсер настроен корректно.
+**Подводный камень:** при включённых повторах без идемпотентности продюсер может переставить сообщения местами (см. Q14). Потребитель читает записи партиции в порядке журнала. Чтобы этот порядок совпадал с порядком отправки при повторах, важны настройки продюсера.
+
+В первом сценарии топик `critical-orders` создан с одной партицией. Аннотация задаёт явное назначение партиции и начальную позицию чтения. Назначение партиции 0 применимо и к многопартиционному топику.
 
 ```java
-// 1. Один partition на топик (low throughput, high ordering)
-@KafkaListener(topics = "critical-orders", partitionOffsets = @PartitionOffset(partition = "0", initialOffset = "0"))
+@KafkaListener(topicPartitions = @TopicPartition(
+        topic = "critical-orders",
+        partitionOffsets = @PartitionOffset(partition = "0", initialOffset = "0")))
+public void handleCritical(OrderEvent event) {
+    processOrder(event);
+}
+```
+
+```java
 
 // 2. Одинаковый ключ для связанных сообщений (partition per key)
 kafkaTemplate.send("orders", order.getCustomerId(), event);  // все события одного клиента в одну партицию
@@ -482,14 +498,14 @@ spring:
 
 ## Q15. Как работает Pause/Resume для @KafkaListener?
 
-Pause/Resume позволяет временно остановить выборку новых сообщений, не разрывая соединение и не покидая consumer group. Это важно: при `pause()` контейнер просто перестаёт отдавать вам новые записи, но продолжает посылать heartbeat'ы брокеру — поэтому ребаланс не запускается и партиции остаются за консьюмером. После `resume()` чтение продолжается с того же offset.
+Pause/Resume позволяет временно остановить выборку новых сообщений, не разрывая соединение и не покидая consumer group. Контейнер продолжает вызывать `poll()`, поэтому сама пауза не выводит потребителя из группы. Ребаланс по другим причинам всё ещё возможен. По умолчанию контейнер сначала обрабатывает уже полученные записи из предыдущего `poll()`. Возобновление продолжает чтение с текущей позиции потребителя.
 
 Типичный сценарий — **backpressure**: внешняя зависимость (БД, downstream-сервис) перегружена или недоступна, и нет смысла вычитывать новые сообщения, которые всё равно упадут. Ставим паузу, ждём восстановления, возобновляем.
 
 Управлять можно на двух уровнях:
 
 - **Весь контейнер** — через `KafkaListenerEndpointRegistry` находим контейнер по id и вызываем `pause()`/`resume()`.
-- **Отдельные партиции** — внедрив `Consumer` в метод листенера, паузим конкретные партиции (`consumer.pause(consumer.assignment())`), оставляя остальные работать.
+- **Отдельные партиции** — контейнер принимает `pausePartition(partition)` и `resumePartition(partition)`. Остальные назначенные партиции продолжают работать.
 
 ```java
 @Autowired
@@ -509,10 +525,10 @@ public void resumeConsumer() {
 
 // Пауза на уровне конкретной партиции
 @KafkaListener(id = "ordersContainer", topics = "orders")
-public void handle(ConsumerRecord<String, OrderEvent> record,
-                   Consumer<String, OrderEvent> consumer) {
+public void handle(ConsumerRecord<String, OrderEvent> record) {
     if (isBackpressure()) {
-        consumer.pause(consumer.assignment());
+        TopicPartition partition = new TopicPartition(record.topic(), record.partition());
+        registry.getListenerContainer("ordersContainer").pausePartition(partition);
     }
     // ...
 }

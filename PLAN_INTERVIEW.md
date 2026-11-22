@@ -32,9 +32,17 @@
 диапазона, включая Notification System и Java Functional Interface, не входят
 в счётчик 55. Для учёта достаточно путей и записей о передаче полного файла.
 
-Из 55 файлов партии 19 восстановлены в `master`. Вне этой партии уже
+Из 55 файлов партии 20 восстановлены в `master`. Вне этой партии уже
 закоммичены Notification System, Java Functional Interface, Vector Databases
 и JDBC и пулы соединений.
+
+- **Spring Kafka** — MCQ-чат передал полный JSON в ходе
+  `01a2048b-ef1f-75d0-91de-e27a89925034` по согласованному Markdown
+  `work/spring-kafka-theory-recovery/spring-kafka-interview.md`
+  (SHA-256 `2e359709c7e1715ebd2ae886c9f4e79eee8f3bfaa8fd7dc53d15847d3feb8269`)
+  и историческому JSON из `b28a1c807`. Полный JSON перенесён как есть из
+  `work/spring-kafka-recovery-full-regeneration/spring-kafka-interview.json`.
+  Оба production-файла входят в этот коммит.
 
 - **Notification System** — в Q2/B0 отсутствовал правильный вариант. Автор
   передал полный новый файл по согласованной теории. Файл перенесён

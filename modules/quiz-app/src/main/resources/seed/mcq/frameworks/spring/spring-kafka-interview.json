@@ -1,17 +1,905 @@
-{"topic_slug":"spring-kafka-interview","questions":[
-{"q_number":1,"blocks":[{"block_idx":0,"question_text":"Что такое Spring Kafka и какие ключевые абстракции он предоставляет?","options":[{"order":0,"label":"A","text":"Интеграция с Kafka: KafkaTemplate отправляет записи, контейнер вызывает @KafkaListener","correct":true,"sections":{"explanation":"Spring оборачивает клиентские API продюсера и консьюмера.","example":"Сервис отправляет OrderCreated, а контейнер передаёт его обработчику.","when_to_apply":"Для интеграции приложений Spring с брокером.","edge_cases":"Семантика партиций и offset остаётся семантикой Kafka.","related":"Фабрики создают клиентские объекты."}},{"order":1,"label":"B","text":"Интеграция с Kafka: KafkaTemplate читает записи, контейнер вызывает @KafkaListener для отправки","correct":false,"sections":{"what_actually":"Роли отправителя и обработчика поменяны местами.","source_of_confusion":"Обе абстракции работают с записями.","if_it_were_true":"KafkaTemplate должен был бы управлять poll.","how_it_should_be":"Отправлять через template, читать через listener."}},{"order":2,"label":"C","text":"Встроенный брокер: KafkaTemplate хранит записи, @KafkaListener читает их из памяти","correct":false,"sections":{"what_actually":"Spring Kafka использует брокер Kafka.","source_of_confusion":"В тестах возможен встроенный брокер.","if_it_were_true":"Клиентские приложения могли бы обмениваться сообщениями без Kafka.","how_it_should_be":"Настроить адрес брокера."}},{"order":3,"label":"D","text":"Менеджер топиков: KafkaTemplate создаёт топики, @KafkaListener назначает реплики","correct":false,"sections":{"what_actually":"Управление топиками относится к Admin API.","source_of_confusion":"Инфраструктура Spring умеет создавать топики.","if_it_were_true":"Listener управлял бы размещением данных брокера.","how_it_should_be":"Разделять KafkaAdmin и клиентское чтение."}}]}]},
-{"q_number":2,"blocks":[{"block_idx":0,"question_text":"Как настроить KafkaTemplate и отправить сообщение?","options":[{"order":0,"label":"A","text":"Настроить ConsumerFactory с десериализаторами и вызвать send с топиком и ключом","correct":false,"sections":{"what_actually":"ConsumerFactory создаёт потребителей.","source_of_confusion":"Обе фабрики получают настройки подключения.","if_it_were_true":"Консьюмер должен был бы сериализовать исходящую запись.","how_it_should_be":"Настроить ProducerFactory."}},{"order":1,"label":"B","text":"Настроить ProducerFactory с сериализаторами и вызвать send с топиком, ключом и значением","correct":true,"sections":{"explanation":"KafkaTemplate использует продюсер из ProducerFactory.","example":"send(\"orders\", orderId, event) возвращает future с итогом отправки.","when_to_apply":"Для публикации записи из сервиса.","edge_cases":"Возврат future сам по себе не подтверждает запись брокером.","related":"Из результата можно взять метаданные записи."}},{"order":2,"label":"C","text":"Настроить ProducerFactory с сериализаторами и вызвать poll с топиком и ключом","correct":false,"sections":{"what_actually":"Poll используется для чтения.","source_of_confusion":"Клиентские API оба работают с брокером.","if_it_were_true":"Запись отправлялась бы во время опроса.","how_it_should_be":"Вызвать send."}},{"order":3,"label":"D","text":"Настроить KafkaAdmin с сериализаторами и вызвать send с топиком, ключом и значением","correct":false,"sections":{"what_actually":"KafkaAdmin предназначен для административных операций.","source_of_confusion":"Топик можно создать перед отправкой.","if_it_were_true":"Отправка зависела бы от административного клиента.","how_it_should_be":"Внедрить KafkaTemplate."}}]}]},
-{"q_number":3,"blocks":[{"block_idx":0,"question_text":"Как написать Kafka Consumer с @KafkaListener?","options":[{"order":0,"label":"A","text":"Пометить бин @KafkaListener, настроить сериализаторы отправителя и получать payload в методе","correct":false,"sections":{"what_actually":"Сериализаторы применяются на отправке.","source_of_confusion":"Оба конца должны согласовать формат.","if_it_were_true":"Получатель сам преобразовывал бы Java-объект в байты.","how_it_should_be":"Настроить десериализатор."}},{"order":1,"label":"B","text":"Пометить метод @KafkaListener, передать имя топика в KafkaTemplate и вручную вызывать poll","correct":false,"sections":{"what_actually":"Контейнер сам вызывает poll.","source_of_confusion":"KafkaTemplate работает с тем же топиком.","if_it_were_true":"Метод пришлось бы запускать собственным циклом.","how_it_should_be":"Подписать контейнер на топик."}},{"order":2,"label":"C","text":"Пометить метод Spring-бина @KafkaListener, задать топик и группу, настроить десериализацию","correct":true,"sections":{"explanation":"Контейнер управляет poll и вызывает зарегистрированный обработчик.","example":"Метод с @KafkaListener(topics=\"orders\", groupId=\"billing\") получает событие.","when_to_apply":"Для обработки записей потребителем.","edge_cases":"Тип аргумента должен соответствовать настройкам десериализации или конвертации.","related":"Метаданные доступны через ConsumerRecord или заголовки."}},{"order":3,"label":"D","text":"Пометить метод @KafkaListener, задать топик и указать транзакционный ID продюсера вместо группы","correct":false,"sections":{"what_actually":"ID продюсера не определяет членство в группе.","source_of_confusion":"Оба идентификатора задаются строками.","if_it_were_true":"Продюсер управлял бы назначением партиций потребителю.","how_it_should_be":"Настроить groupId."}}]}]},
-{"q_number":4,"blocks":[{"block_idx":0,"question_text":"Что такое Consumer Group и почему это важно?","options":[{"order":0,"label":"A","text":"Группа выдаёт каждую партицию всем участникам, а offset ведёт отдельно для каждого","correct":false,"sections":{"what_actually":"Репликация чтения достигается разными группами.","source_of_confusion":"Каждый экземпляр выполняет один и тот же код.","if_it_were_true":"Горизонтальное масштабирование дублировало бы события.","how_it_should_be":"Разделить обработчиков по назначению групп."}},{"order":1,"label":"B","text":"Группа закрепляет топик за одним участником, а offset ведёт отдельно для каждой реплики","correct":false,"sections":{"what_actually":"Назначение происходит по партициям.","source_of_confusion":"Подписка указывается именем топика.","if_it_were_true":"Один потребитель получал бы весь топик при любом числе партиций.","how_it_should_be":"Распределять работу внутри группы."}},{"order":2,"label":"C","text":"Группа назначает партиции участникам, но использует общий offset для всех групп топика","correct":false,"sections":{"what_actually":"Offset хранится в разрезе группы и партиции.","source_of_confusion":"Все группы читают один журнал.","if_it_were_true":"Billing мог бы продвигать позицию analytics.","how_it_should_be":"Использовать отдельные groupId."}},{"order":3,"label":"D","text":"Группа распределяет партиции между участниками и хранит прогресс отдельно от других групп","correct":true,"sections":{"explanation":"В рамках обычной подписки партиция назначается одному участнику группы в момент времени.","example":"Группы analytics и billing независимо читают orders.","when_to_apply":"Для масштабирования обработки и независимых подписчиков.","edge_cases":"Число активных читателей ограничено доступными партициями.","related":"Изменения членства могут привести к ребалансу."}}]}]}
-,{"q_number":5,"blocks":[{"block_idx":0,"question_text":"Как обрабатывать ошибки в @KafkaListener?","options":[{"order":0,"label":"A","text":"Перехватывать исключение в listener, завершать метод успешно и ждать повтора контейнера","correct":false,"sections":{"what_actually":"Проглоченная ошибка выглядит как успех.","source_of_confusion":"Локальное логирование исключения полезно.","if_it_were_true":"Контейнер должен был бы угадать результат обработки.","how_it_should_be":"Позволить исключению дойти до политики контейнера."}},{"order":1,"label":"B","text":"Передавать исключение обработчику контейнера, настроить повторы и recovery","correct":true,"sections":{"explanation":"Для нетранзакционного контейнера DefaultErrorHandler управляет повторными попытками и восстановлением.","example":"Временный сбой БД повторяется, невалидное событие направляется в DLT.","when_to_apply":"Для классификации ошибок обработки.","edge_cases":"У транзакционного контейнера повтор после rollback обычно настраивает AfterRollbackProcessor.","related":"Recovery можно реализовать через DeadLetterPublishingRecoverer."}},{"order":2,"label":"C","text":"Передавать исключение KafkaTemplate, настроить retries продюсера и повторить чтение","correct":false,"sections":{"what_actually":"Retries продюсера относится к записи в Kafka.","source_of_confusion":"Оба механизма повторяют операции.","if_it_were_true":"Повтор отправки запускал бы чтение заново.","how_it_should_be":"Настроить обработчик consumer."}},{"order":3,"label":"D","text":"Передавать исключение KafkaAdmin, настроить backoff ребаланса и повторить чтение","correct":false,"sections":{"what_actually":"Админ-клиент не управляет ошибками listener.","source_of_confusion":"Ребаланс может привести к повторному чтению.","if_it_were_true":"Обработка каждой ошибки меняла бы состав группы.","how_it_should_be":"Использовать retry/backoff обработчика."}}]}]},
-{"q_number":6,"blocks":[{"block_idx":0,"question_text":"Что такое Dead Letter Topic (DLT) и как его использовать?","options":[{"order":0,"label":"A","text":"Отдельный топик для необработанных записей, куда recoverer публикует событие и контекст ошибки","correct":true,"sections":{"explanation":"DLT отделяет проблемные записи от основного потока.","example":"Recoverer публикует событие с исходными topic, partition и offset в заголовках.","when_to_apply":"Для разбора исчерпанных попыток и ошибок данных.","edge_cases":"Неудачная отправка в DLT требует явной обработки.","related":"Повторный запуск из DLT проектируют отдельно."}},{"order":1,"label":"B","text":"Отдельный топик для необработанных записей, куда брокер автоматически переносит событие при исключении listener","correct":false,"sections":{"what_actually":"Брокер не видит исключение Java-обработчика.","source_of_confusion":"Брокер управляет хранением топиков.","if_it_were_true":"DLT заполнялся бы без recovery-политики.","how_it_should_be":"Настроить recoverer."}},{"order":2,"label":"C","text":"Отдельный топик для необработанных записей, куда offset commit переносит событие без публикации","correct":false,"sections":{"what_actually":"Коммит сохраняет позицию группы.","source_of_confusion":"Коммит может следовать за recovery.","if_it_were_true":"Изменение offset создавало бы новую запись.","how_it_should_be":"Опубликовать запись через продюсер."}},{"order":3,"label":"D","text":"Отдельный топик для необработанных записей, из которого исходный listener автоматически повторяет обработку","correct":false,"sections":{"what_actually":"DLT требует явной подписки и политики повтора.","source_of_confusion":"Повторы могут быть реализованы несколькими топиками.","if_it_were_true":"После recovery обработчик сам зацикливался бы на ошибке.","how_it_should_be":"Выделить процесс разбора или повторной публикации."}}]}]}
-,{"q_number":7,"blocks":[{"block_idx":0,"question_text":"Как работают транзакции в Spring Kafka?","options":[{"order":0,"label":"A","text":"Продюсер атомарно завершает отправки, а read_uncommitted скрывает откаты","correct":false,"sections":{"what_actually":"Read_uncommitted видит и отменённые записи.","source_of_confusion":"Режимы читают один журнал.","if_it_were_true":"Выбор режима не менял бы видимость отката.","how_it_should_be":"Использовать read_committed."}},{"order":1,"label":"B","text":"Продюсер атомарно завершает отправки и автоматически объединяет коммит с БД","correct":false,"sections":{"what_actually":"Менеджеры Kafka и БД коммитят отдельные ресурсы.","source_of_confusion":"Spring поддерживает синхронизацию ресурсов.","if_it_were_true":"Сбой между коммитами не мог бы оставить расхождение.","how_it_should_be":"Учитывать окно сбоя или применять outbox."}},{"order":2,"label":"C","text":"Продюсер атомарно завершает отправки, а read_committed скрывает откаты","correct":true,"sections":{"explanation":"Транзакция связывает записи и может включать коммит offset.","example":"KafkaTemplate отправляет записи в executeInTransaction.","when_to_apply":"Для атомарных изменений внутри Kafka.","edge_cases":"Синхронизация с БД не даёт распределённого атомарного коммита.","related":"Границы видимости определяет isolation.level."}},{"order":3,"label":"D","text":"Продюсер атомарно завершает отправки в пределах одной партиции","correct":false,"sections":{"what_actually":"Транзакция может охватывать несколько партиций.","source_of_confusion":"Порядок действительно локален для партиции.","if_it_were_true":"Отправки в разные топики фиксировались бы независимо.","how_it_should_be":"Использовать транзакционного продюсера."}}]}]},
-{"q_number":8,"blocks":[{"block_idx":0,"question_text":"Как настроить Kafka Listener для конкурентного чтения?","options":[{"order":0,"label":"A","text":"Задать concurrency контейнера и обеспечить достаточное число партиций для группы","correct":true,"sections":{"explanation":"ConcurrentMessageListenerContainer запускает дочерние контейнеры с отдельными консьюмерами.","example":"@KafkaListener(concurrency=\"3\") запрашивает три дочерних контейнера.","when_to_apply":"Когда нужно параллельно обрабатывать разные партиции.","edge_cases":"При избытке консьюмеров часть может остаться без партиций.","related":"Проверьте потокобезопасность listener."}},{"order":1,"label":"B","text":"Задать max.poll.records и обеспечить достаточное число партиций для группы","correct":false,"sections":{"what_actually":"Max.poll.records ограничивает размер выборки.","source_of_confusion":"Параметр влияет на пропускную способность.","if_it_were_true":"Размер пакета определял бы число потоков.","how_it_should_be":"Настроить concurrency."}},{"order":2,"label":"C","text":"Задать concurrency контейнера и выделить группу каждому потоку","correct":false,"sections":{"what_actually":"Для разделения работы нужна одна группа.","source_of_confusion":"Разные группы тоже дают параллельное чтение.","if_it_were_true":"Каждая группа получила бы полную копию потока.","how_it_should_be":"Сохранить общий groupId."}},{"order":3,"label":"D","text":"Задать число партиций и использовать один KafkaConsumer из нескольких потоков","correct":false,"sections":{"what_actually":"KafkaConsumer не предназначен для произвольного многопоточного доступа.","source_of_confusion":"Контейнеры поддерживают параллельность.","if_it_were_true":"Несколько потоков одновременно вызывали бы poll одного клиента.","how_it_should_be":"Делегировать создание клиентов контейнеру."}}]}]}
-,{"q_number":9,"blocks":[{"block_idx":0,"question_text":"Как управлять offset коммитами?","options":[{"order":0,"label":"A","text":"Выключить авто-коммит и выбрать auto.offset.reset для момента коммита","correct":false,"sections":{"what_actually":"Reset определяет старт без пригодного offset.","source_of_confusion":"Оба параметра работают с позицией чтения.","if_it_were_true":"Earliest влиял бы на каждый коммит.","how_it_should_be":"Настроить AckMode."}},{"order":1,"label":"B","text":"Выключить авто-коммит и выбрать AckMode, при ручном режиме вызывать acknowledge","correct":true,"sections":{"explanation":"Прогресс фиксирует контейнер по выбранной политике подтверждения.","example":"BATCH подтверждает прогресс после обработки записей из poll.","when_to_apply":"Когда нужно явно определить границу успешной обработки.","edge_cases":"Сбой до коммита может привести к повторному чтению.","related":"Обработчик побочных эффектов полезно сделать идемпотентным."}},{"order":2,"label":"C","text":"Включить авто-коммит и выбрать AckMode для момента коммита","correct":false,"sections":{"what_actually":"Авто-коммит управляется клиентом.","source_of_confusion":"Автоматическое подтверждение есть и у контейнера.","if_it_were_true":"AckMode перехватывал бы автокоммит клиента.","how_it_should_be":"Выключить enable.auto.commit."}},{"order":3,"label":"D","text":"Выключить авто-коммит и выбрать isolation.level для момента коммита","correct":false,"sections":{"what_actually":"Isolation.level управляет видимостью транзакционных записей.","source_of_confusion":"Он меняет доступный диапазон чтения.","if_it_were_true":"Read_committed определял бы момент фиксации прогресса.","how_it_should_be":"Выбрать AckMode."}}]}]},
-{"q_number":10,"blocks":[{"block_idx":0,"question_text":"Как работает сериализация/десериализация в Spring Kafka?","options":[{"order":0,"label":"A","text":"Продюсер кодирует ключ и значение в байты, консьюмер декодирует их совместимыми десериализаторами","correct":true,"sections":{"explanation":"Брокер переносит байты без знания Java-типов.","example":"Строковый ключ кодирует StringSerializer, а событие кодируется JSON-сериализатором.","when_to_apply":"Для согласования формата данных между сервисами.","edge_cases":"Тип, заголовки и доверенные типы должны соответствовать настройкам декодирования.","related":"Ошибка десериализации возникает до вызова listener."}},{"order":1,"label":"B","text":"Продюсер кодирует ключ в байты, значение преобразует брокер по типу listener","correct":false,"sections":{"what_actually":"Брокер не видит Java-сигнатуру обработчика.","source_of_confusion":"Spring может преобразовать payload перед вызовом метода.","if_it_were_true":"Значение меняло бы формат в зависимости от подписчика.","how_it_should_be":"Настроить сериализатор значения."}},{"order":2,"label":"C","text":"Продюсер кодирует ключ и значение в байты, брокер декодирует их перед передачей","correct":false,"sections":{"what_actually":"Декодирование происходит у потребителя.","source_of_confusion":"Брокер разбирает собственный протокол и метаданные записи.","if_it_were_true":"Брокер должен был бы знать прикладную схему.","how_it_should_be":"Настроить десериализатор клиента."}},{"order":3,"label":"D","text":"Консьюмер кодирует ключ и значение в байты, продюсер выбирает тип результата по заголовкам","correct":false,"sections":{"what_actually":"Направление преобразований обратное.","source_of_confusion":"Оба клиента настраивают форматы ключа и значения.","if_it_were_true":"Отправитель получал бы объект из байтов.","how_it_should_be":"Кодировать на отправке и декодировать при чтении."}}]}]}
-,{"q_number":11,"blocks":[{"block_idx":0,"question_text":"Как тестировать Spring Kafka без реального брокера?","options":[{"order":0,"label":"A","text":"Замокать KafkaTemplate и проверить доставку записи listener через этот мок","correct":false,"sections":{"what_actually":"Mock не доставляет запись по протоколу Kafka.","source_of_confusion":"Он полезен для теста взаимодействия.","if_it_were_true":"Интеграционный тест проходил бы без Kafka.","how_it_should_be":"Поднять тестовый брокер."}},{"order":1,"label":"B","text":"Поднять @EmbeddedKafka и направить клиентов на адрес production-брокера","correct":false,"sections":{"what_actually":"Клиент должен подключиться к тестовому адресу.","source_of_confusion":"Свойство подключения одинаково в разных окружениях.","if_it_were_true":"Тест затрагивал бы внешний кластер.","how_it_should_be":"Передать адрес встроенного брокера."}},{"order":2,"label":"C","text":"Поднять @EmbeddedKafka и направить клиентов на адрес тестового брокера","correct":true,"sections":{"explanation":"Встроенный брокер позволяет провести интеграционный тест без внешнего кластера.","example":"Тест отправляет событие и ждёт наблюдаемого эффекта с таймаутом.","when_to_apply":"Для проверки фактической отправки и чтения.","edge_cases":"Разделяйте топики или группы между тестами.","related":"Mock подходит для изолированной проверки вызова клиента."}},{"order":3,"label":"D","text":"Запустить @KafkaListener в тестовом контексте и проверить доставку без брокера","correct":false,"sections":{"what_actually":"Listener-контейнер читает записи через брокер.","source_of_confusion":"Контекст создаёт listener автоматически.","if_it_were_true":"Контекст сам стал бы каналом Kafka.","how_it_should_be":"Использовать встроенный брокер для полной доставки."}}]}]}
-,{"q_number":12,"blocks":[{"block_idx":0,"question_text":"Что такое Kafka Streams в контексте Spring?","options":[{"order":0,"label":"A","text":"Библиотека обработки потоков, запуском топологии которой управляет Spring","correct":true,"sections":{"explanation":"Spring управляет жизненным циклом KafkaStreams и предоставляет StreamsBuilder.","example":"Топология агрегирует события по ключу и пишет итог в топик.","when_to_apply":"Для join, оконных вычислений и агрегаций.","edge_cases":"Stateful-операции требуют учитывать состояние и перераспределение.","related":"@EnableKafkaStreams включает инфраструктуру."}},{"order":1,"label":"B","text":"Библиотека обработки потоков, для которой Spring создаёт брокер на каждую топологию","correct":false,"sections":{"what_actually":"Топология выполняется клиентским приложением.","source_of_confusion":"Исполнение связано с топиками брокера.","if_it_were_true":"Каждой топологии понадобился бы отдельный брокер.","how_it_should_be":"Подключить приложение к Kafka."}},{"order":2,"label":"C","text":"Библиотека обработки потоков, которая выполняет топологию внутри KafkaTemplate","correct":false,"sections":{"what_actually":"Template отправляет записи.","source_of_confusion":"Streams тоже записывает результаты в топики.","if_it_were_true":"Вызов send запускал бы обработку входного потока.","how_it_should_be":"Объявить топологию через StreamsBuilder."}},{"order":3,"label":"D","text":"Библиотека обработки потоков, которая строит топологию из методов @KafkaListener","correct":false,"sections":{"what_actually":"Listener работает вне API Streams.","source_of_confusion":"Оба механизма потребляют записи.","if_it_were_true":"Топология выводилась бы из обычных обработчиков.","how_it_should_be":"Использовать KStream и KTable."}}]}]},
-{"q_number":13,"blocks":[{"block_idx":0,"question_text":"Какие стратегии обеспечения порядка сообщений есть в Kafka?","options":[{"order":0,"label":"A","text":"Использовать один ключ и распределять его записи по партициям","correct":false,"sections":{"what_actually":"Разные партиции читаются независимо.","source_of_confusion":"Ключ управляет маршрутизацией.","if_it_were_true":"Брокер должен был бы синхронизировать журналы.","how_it_should_be":"Направлять связанные записи в одну партицию."}},{"order":1,"label":"B","text":"Направлять записи одного ключа в одну партицию и сохранять последовательность обработки","correct":true,"sections":{"explanation":"Kafka упорядочивает записи в отдельной партиции.","example":"События заказа публикуются с ключом orderId.","when_to_apply":"Когда нужен порядок по сущности.","edge_cases":"Изменение числа партиций может изменить маршрутизацию ключей.","related":"Одна партиция даёт общий порядок ценой параллелизма."}},{"order":2,"label":"C","text":"Использовать разные партиции и одну consumer group для глобального порядка","correct":false,"sections":{"what_actually":"Группа распределяет работу, но не задаёт глобальный порядок.","source_of_confusion":"Членство координируется группой.","if_it_were_true":"Независимые чтения стали бы последовательными.","how_it_should_be":"Определить нужную область порядка."}},{"order":3,"label":"D","text":"Использовать разные партиции и сортировать записи по offset для глобального порядка","correct":false,"sections":{"what_actually":"Offset имеет смысл в одной партиции.","source_of_confusion":"В каждой партиции он растёт.","if_it_were_true":"Offset из разных партиций задавали бы единую позицию.","how_it_should_be":"Не сравнивать их как глобальные."}}]}]},
-{"q_number":14,"blocks":[{"block_idx":0,"question_text":"Как настроить idempotent producer?","options":[{"order":0,"label":"A","text":"Включить enable.idempotence, оставить acks=1 и ограничить max.in.flight до пяти","correct":false,"sections":{"what_actually":"Идемпотентность требует acks=all.","source_of_confusion":"Acks=1 ждёт подтверждения лидера.","if_it_were_true":"Клиент принял бы несовместимое сочетание свойств.","how_it_should_be":"Использовать acks=all."}},{"order":1,"label":"B","text":"Включить enable.idempotence, задать acks=all и отключить retries","correct":false,"sections":{"what_actually":"Требуется положительное число повторов.","source_of_confusion":"Отключение повторов кажется способом избежать дублей.","if_it_were_true":"Продюсер не повторял бы временный сбой.","how_it_should_be":"Оставить retries положительным."}},{"order":2,"label":"C","text":"Включить enable.idempotence, задать acks=all, retries больше нуля и max.in.flight не выше пяти","correct":true,"sections":{"explanation":"Брокер различает повторные отправки по идентификатору продюсера и последовательности в партиции.","example":"Продюсер повторяет запрос после сетевого таймаута без дублирования записи при соблюдении условий.","when_to_apply":"Для безопасных повторов сетевой отправки.","edge_cases":"Независимые прикладные вызовы send могут создавать дубликаты.","related":"Для атомарной записи нескольких сообщений нужны транзакции."}},{"order":3,"label":"D","text":"Включить enable.idempotence, задать acks=all, retries больше нуля и max.in.flight не ниже шести","correct":false,"sections":{"what_actually":"Отключение retries кажется способом избежать дублей.","source_of_confusion":"Producer не повторял бы временный сбой.","if_it_were_true":"Оставить retries положительным."}}]}]},
-{"q_number":15,"blocks":[{"block_idx":0,"question_text":"Как работает Pause/Resume для @KafkaListener?","options":[{"order":0,"label":"A","text":"Пауза приостанавливает выборку записей, сохраняя poll, resume возобновляет чтение","correct":true,"sections":{"explanation":"Контейнер продолжает вызывать poll при приостановленных партициях.","example":"Контейнер получают из KafkaListenerEndpointRegistry и вызывают pause или resume.","when_to_apply":"Для временного ограничения нагрузки на получателя.","edge_cases":"Записи, полученные до паузы, могут ещё обрабатываться.","related":"При необходимости можно приостановить конкретную партицию."}},{"order":1,"label":"B","text":"Пауза останавливает контейнер и выводит его из группы, resume создаёт нового участника","correct":false,"sections":{"what_actually":"Пауза не равна остановке контейнера.","source_of_confusion":"Обе операции прекращают обработку новых записей.","if_it_were_true":"Каждая пауза меняла бы членство в группе.","how_it_should_be":"Использовать pause для временной остановки выборки."}},{"order":2,"label":"C","text":"Пауза оставляет poll, но продвигает offset мимо непрочитанных записей","correct":false,"sections":{"what_actually":"Пауза не подтверждает непрочитанные записи.","source_of_confusion":"Подтверждение обработки тоже выполняет контейнер.","if_it_were_true":"Часть входных событий терялась бы при паузе.","how_it_should_be":"Управлять коммитом отдельно."}},{"order":3,"label":"D","text":"Пауза блокирует отправку в топик, resume снова разрешает продюсерам запись","correct":false,"sections":{"what_actually":"Пауза меняет выборку у потребителя.","source_of_confusion":"Lag может расти во время паузы.","if_it_were_true":"Один потребитель управлял бы доступностью топика для отправителей.","how_it_should_be":"Для управления отправкой использовать отдельные настройки."}}]}]}
-]}
+{
+  "topic_slug": "spring-kafka-interview",
+  "questions": [
+    {
+      "q_number": 1,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Spring Kafka и какие ключевые абстракции он предоставляет?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`KafkaTemplate` отправляет через producer, `@KafkaListener` принимает через контейнер, а Kafka хранит записи в отдельном кластере.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Kafka оборачивает `kafka-clients`. Шаблон получает producer у `ProducerFactory`, а экземпляр listener container вызывает `poll()` у consumer и передаёт данные прикладному методу. Партиции, хранение и координация групп остаются механизмами Kafka.",
+                "example": "Сервис заказов вызывает `template.send(\"orders\", \"42\", event)`. После успешной записи `SendResult` содержит метаданные Kafka. Контейнер сервиса доставки читает запись из брокера и передаёт событие методу с `@KafkaListener`.",
+                "when_to_apply": "Выбирайте эту интеграцию для Spring-приложений, которым нужны управляемые клиенты Kafka, декларативная подписка и настраиваемые коммиты. Топики, права и адреса брокеров должны быть доступны приложению.",
+                "edge_cases": "При недоступном кластере бин `KafkaTemplate` может существовать, но наличие бина не подтверждает отправку. Проверяйте завершение future и состояние клиента.",
+                "related": "`KafkaListenerContainerFactory` задаёт параметры создаваемых контейнеров, например режим подтверждений и потоковость. `KafkaTransactionManager` управляет транзакциями, а не настройкой подписки."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`KafkaTemplate` принимает через consumer, `@KafkaListener` запускает отправку, а Kafka хранит записи в отдельном кластере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Шаблон оборачивает API producer. Получение записи инициирует контейнер подписки через `KafkaConsumer.poll()`.",
+                "source_of_confusion": "Обе абстракции работают с событиями и конфигурацией одних брокеров. Шаблон с именем Kafka легко принять за универсальный клиент чтения и записи.",
+                "if_it_were_true": "Если бы аннотация управляла отправкой, вызов метода с ней мог бы добавлять записи в топик без producer. Регистрация слушателя создаёт подписку.",
+                "how_it_should_be": "Для отправки используйте `KafkaTemplate.send`. Для непрерывного получения зарегистрируйте слушатель с нужной группой и укажите топик."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`KafkaTemplate` отправляет через встроенный брокер, `@KafkaListener` читает его журнал, а внешний кластер нужен для репликации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В production шаблон обращается к брокерам через клиентский протокол Kafka. Обычная конфигурация Spring не создаёт лог топика внутри процесса.",
+                "source_of_confusion": "Boot создаёт инфраструктурные бины автоматически. В тестах `@EmbeddedKafka` действительно может поднять брокер в JVM.",
+                "if_it_were_true": "Если бы процесс приложения владел журналом, он мог бы принять и хранить записи без подключения к `bootstrap.servers`. Созданный шаблон этой возможности не даёт.",
+                "how_it_should_be": "Выделяйте брокер отдельно. Для теста явно поднимайте embedded broker или контейнер Kafka и подключайте к его адресу обе клиентские стороны."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`KafkaTemplate` отправляет через producer, `@KafkaListener` принимает через контейнер, а контейнер назначает порядок между партициями.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контейнер читает назначенные партиции. У offsets из разных партиций нет общей шкалы, поэтому контейнер не может восстановить общий порядок публикаций.",
+                "source_of_confusion": "С одним потоком вызовы метода последовательны, и этот порядок легко принять за порядок всего топика.",
+                "if_it_were_true": "Если бы существовал общий порядок, два потребителя с разными наборами партиций могли бы воспроизвести одну и ту же последовательность из одних offsets.",
+                "how_it_should_be": "Если нужен порядок по заказу, привязывайте его события к одной партиции и сохраняйте последовательность обработки. Для единого порядка всего потока нужна одна точка упорядочивания, например одна партиция."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 2,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить KafkaTemplate и отправить сообщение?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Настроить адрес брокеров и сериализаторы, вызвать `send` с ключом и считать возврат future подтверждением записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Future может быть ещё не завершён, когда `send` вернул управление. Ошибка доставки может появиться позднее.",
+                "source_of_confusion": "Вызов принимается клиентом локально. Эту успешную передачу работы в буфер легко принять за подтверждение записи брокером.",
+                "if_it_were_true": "Если бы возврат future означал успех доставки, callback никогда не получал бы ошибку после нормального возврата `send`.",
+                "how_it_should_be": "Учитывайте и исключения самого вызова, и итог future. Для бизнес-ответа, зависящего от Kafka, привязывайте решение к подтверждённому результату."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Настроить адрес брокеров и сериализаторы, вызвать `send` с ключом и использовать `flush()` как результат отправки этой записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`flush()` ускоряет отправку буферизованных записей и ждёт завершения предшествующих отправок. Индивидуальный результат или ошибка находятся в future конкретной записи.",
+                "source_of_confusion": "Ожидание завершения пакета похоже на подтверждение успеха всех его элементов, хотя завершение включает и отказ.",
+                "if_it_were_true": "Если бы `flush()` подтверждал каждую запись, после него все ранее полученные futures обязаны были бы завершиться успешно.",
+                "how_it_should_be": "Сохраняйте futures отправок и обрабатывайте результат каждого. Используйте `flush()` при необходимости отправить накопленный пакет до срабатывания `linger.ms`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Настроить адрес брокеров и сериализаторы, вызвать `send` с ключом и обработать завершение future через callback или ожидание.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Boot может создать `ProducerFactory` и `KafkaTemplate` из `spring.kafka.*`. В Spring Kafka 3.0+ `send` возвращает `CompletableFuture<SendResult<K,V>>`. Результат отражает исход отправки по правилам `acks`. Ключ участвует в выборе партиции при стандартном партиционировании.",
+                "example": "Вызовите `template.send(\"orders\", \"42\", event).get(2, TimeUnit.SECONDS)`. При нормальном подтверждении можно прочитать `result.getRecordMetadata().offset()`. С `whenComplete` те же метаданные или исключение обрабатываются в callback.",
+                "when_to_apply": "Возвращайте future или ставьте обработчик завершения при пакетной или асинхронной отправке. Ждите с ограниченным таймаутом, когда дальнейшее действие зависит от подтверждения этой записи.",
+                "edge_cases": "`send` может сам задержаться при получении метаданных или ожидании места в буфере. Таймаут `get` прекращает ожидание потока, поэтому окончательный исход отправки в этот момент может быть неизвестен.",
+                "related": "`acks` задаёт уровень подтверждения брокера. Даже успешное завершение future не сообщает, что listener обработал событие или сохранил заказ."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Настроить адрес брокеров и сериализаторы, вызвать `send` с ключом и читать успешность по offset, который метод возвращает сразу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Позицию назначает брокер при добавлении записи в партицию. `send` возвращает future, из результата которого можно получить `RecordMetadata`.",
+                "source_of_confusion": "Клиент может выбрать партицию заранее. Предсказуемая партиция создаёт впечатление, что клиент уже знает точное место записи.",
+                "if_it_were_true": "Если бы клиент знал offset на входе в send, два продюсера могли бы независимо вычислить позиции в одной партиции без арбитража брокера.",
+                "how_it_should_be": "Дождитесь `SendResult` и прочитайте метаданные после завершения. При `acks=0` у клиента нет подтверждённого offset."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 3,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как написать Kafka Consumer с @KafkaListener?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Объявить `@KafkaListener` на Spring-бине, а в методе вызывать `poll()` и передавать результат в `processOrder`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`poll()` выполняется контейнером до входа в обработчик. Листенер уже получает запись или её значение.",
+                "source_of_confusion": "Низкоуровневый клиент действительно требует явного цикла чтения. В контейнере этот цикл принадлежит инфраструктуре.",
+                "if_it_were_true": "Если бы `poll()` вызывал сам метод, слушатель с единственным параметром `OrderEvent` и вызовом `processOrder` не мог бы получить первое событие.",
+                "how_it_should_be": "Оставьте `poll()` контейнеру. Если нужен собственный цикл, используйте отдельный клиент вне `@KafkaListener` и управляйте его жизненным циклом явно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Объявить `@KafkaListener` на Spring-бине, указать топик и группу, а методу передать `OrderEvent`, полученный через настроенную фабрику.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring регистрирует endpoint аннотированного метода и создаёт для него контейнер. Контейнер опрашивает Kafka, а адаптер вызывает record listener для каждой записи и передаёт ему десериализованный или сконвертированный payload.",
+                "example": "При `@KafkaListener(topics = \"orders\", groupId = \"order-service\")` и десериализаторе для `OrderEvent` две записи из `poll()` вызовут `handle(OrderEvent)` дважды. Каждому вызову передаётся соответствующий объект.",
+                "when_to_apply": "Используйте record listener для поштучной бизнес-логики. Настройте фабрику и преобразование payload под схему событий до запуска consumer.",
+                "edge_cases": "Для пакетной обработки включите batch-режим и объявите параметр списка, например `List<OrderEvent>`. Регистрация второго слушателя с той же группой распределит партиции между ними.",
+                "related": "Метаданные можно взять из `ConsumerRecord` или параметров `@Header`, например `KafkaHeaders.RECEIVED_PARTITION` и `KafkaHeaders.OFFSET`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Объявить `@KafkaListener` на Spring-бине, указать топик и группу, а методу передать список записей из каждого `poll()` в обычном режиме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пакет, полученный от `poll()`, контейнер раскладывает на вызовы record listener. Список передаётся при выбранном пакетном режиме.",
+                "source_of_confusion": "Kafka-клиент и правда получает `ConsumerRecords`, а `AckMode.BATCH` тоже оперирует пачкой. Режим подтверждения и сигнатура вызова настраиваются отдельно.",
+                "if_it_were_true": "Если бы список доставлялся в обычном режиме, метод `handle(OrderEvent)` не смог бы принять две записи одного `poll()`.",
+                "how_it_should_be": "Для списка включите `batchListener` на фабрике или выберите поддерживаемый режим `batch` на аннотации. Для поштучного вызова используйте одиночный payload."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Объявить `@KafkaListener` на Spring-бине, указать топик и группу, а тип `OrderEvent` получить без настройки десериализации по сигнатуре метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тип параметра не настраивает Kafka `Deserializer`. Если клиенту задан десериализатор в `byte[]`, DTO появится только при наличии подходящего конвертера.",
+                "source_of_confusion": "Адаптер Spring действительно умеет использовать тип параметра при конвертации. Это отдельный этап после клиентской десериализации.",
+                "if_it_were_true": "Если бы сигнатура сама настраивала `Deserializer`, любой consumer с той же фабрикой автоматически понимал бы формат и класс назначения.",
+                "how_it_should_be": "Настройте `Deserializer` для нужного wire-формата либо совместимую пару из десериализатора и Spring `RecordMessageConverter`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 4,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Consumer Group и почему это важно?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Группа назначает каждую партицию всем её участникам, поэтому добавление consumer тиражирует обработку внутри группы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В одном назначении группу обслуживают consumer с непересекающимися наборами партиций. Повтор после сбоя возможен, но fan-out внутри одной группы так не устроен.",
+                "source_of_confusion": "Все consumer подписываются на топик с одним именем. Подписку на топик легко принять за персональное назначение всех его партиций.",
+                "if_it_were_true": "Если бы все три читали каждую партицию, одна запись при нормальной работе регулярно вызывала бы три независимые обработки.",
+                "how_it_should_be": "Для независимого чтения разными обработчиками заведите разные группы. Для распределения нагрузки между копиями одного обработчика используйте общую группу."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Группа делит партиции между всеми подписчиками топика, поэтому consumer с другим `groupId` забирает часть работы первой группы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Две группы получают собственные назначения партиций. Участник `analytics` не лишает `order-service` доступа к какой-либо партиции.",
+                "source_of_confusion": "На уровне одной группы новый участник действительно отбирает часть назначения. Это правило не распространяется между группами.",
+                "if_it_were_true": "Если бы группы делили партиции между собой, запуск аналитики мог бы лишить сервис заказов части событий.",
+                "how_it_should_be": "Определяйте группу по независимому прогрессу обработки. Для чтения старых записей новой группой отдельно проверьте начальную позицию и retention."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Группа делит записи каждой партиции между свободными участниками, поэтому число активных consumer может превосходить число партиций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka распределяет партиции, а не отдельные записи в партиции. При трёх партициях на одном подписанном топике задействованы максимум три участника.",
+                "source_of_confusion": "Общая очередь задач может выдавать свободному worker следующую запись. Consumer group привычного типа работает с участками журнала и общим прогрессом по каждому участку.",
+                "if_it_were_true": "Если бы запись распределялась отдельно, участники могли бы коммитить разные позиции одной партиции независимо друг от друга.",
+                "how_it_should_be": "Масштабируйте через число партиций и распределение ключей. Если обработка внутри одной партиции распараллеливается в приложении, отдельно обеспечьте порядок эффектов и коммит без пропусков."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Группа распределяет партиции между своими участниками, поэтому добавление consumer помогает до предела назначаемых партиций.",
+              "correct": true,
+              "sections": {
+                "explanation": "При групповой подписке Kafka назначает партицию одному участнику группы в устойчивом назначении. У разных групп отдельные назначения и committed offsets. Это даёт параллелизм по партициям внутри группы и независимое чтение между группами.",
+                "example": "У `orders` три партиции. В `order-service` три consumer читают по одной, а четвёртый без назначения не добавит параллелизма. Consumer группы `analytics` может читать все три независимо.",
+                "when_to_apply": "Используйте общий `groupId` для экземпляров одной обработки, а разные идентификаторы для независимых задач, которым нужен собственный темп и собственный прогресс.",
+                "edge_cases": "После падения consumer новый участник продолжает от committed offset. Если запись уже изменила БД, но позиция ещё не зафиксирована, обработка может повториться. Для одного бизнес-эффекта используйте идемпотентную запись или дедупликацию по идентификатору события.",
+                "related": "Ребаланс изменяет владение партициями. `auto.offset.reset` выбирает позицию при отсутствии пригодного коммита для группы и не влияет на число участников."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 5,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как обрабатывать ошибки в @KafkaListener?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Настроить `DefaultErrorHandler` на фабрике, применять один `BackOff` ко всем исключениям, затем передавать запись recoverer.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`addNotRetryableExceptions` исключает указанные ошибки из ожидания и повторной обработки. Recoverer вызывается уже после первой неудачи.",
+                "source_of_confusion": "Backoff задан на уровне handler, поэтому кажется, что он определяет общее расписание для всех типов сбоев.",
+                "if_it_were_true": "Если бы классификация не влияла на доставку, постоянная ошибка валидации задерживала бы партицию столько же, сколько повторяемый таймаут.",
+                "how_it_should_be": "Повторяйте сбои, которые могут исчезнуть между вызовами. Ошибки формата и валидации без изменения входа направляйте по пути recovery."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Настроить `DefaultErrorHandler` на фабрике, повторять временные сбои по `BackOff`, а неповторяемые сразу передавать recoverer.",
+              "correct": true,
+              "sections": {
+                "explanation": "Контейнер получает исключение listener. `DefaultErrorHandler` классифицирует его и применяет backoff к ошибкам, для которых разрешены retries. Повтор выполняется в клиентской обработке. Когда политика завершается, handler вызывает recoverer для проблемной записи.",
+                "example": "При `ExponentialBackOffWithMaxRetries(3)` с интервалом 1 с и множителем 2 повторяемый сбой даёт до четырёх вызовов обработчика всего. Три повтора происходят после пауз 1, 2 и 4 с. `ValidationException` из списка неповторяемых передаётся DLT recoverer после первого сбоя.",
+                "when_to_apply": "Для нетранзакционного record listener ограничивайте retries временных отказов и оставляйте отдельную классификацию для неисправимых данных. Проверьте, что фабрика с handler действительно используется endpoint.",
+                "edge_cases": "Если listener поймал исключение и нормально вернулся, контейнер не запускает этот механизм по факту внутреннего сбоя. Если recovery выбрасывает исключение, обработчик может заново обработать проблемную запись.",
+                "related": "В транзакционном listener исключение обычно должно откатить Kafka-транзакцию. Поведение после отката задаёт `DefaultAfterRollbackProcessor`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Настроить `DefaultErrorHandler` на фабрике, считать первую доставку первым повтором `BackOff`, затем передавать запись recoverer.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Начальная доставка предшествует вызову handler. Значение `3` у `ExponentialBackOffWithMaxRetries` ограничивает последующие повторы, а не суммарные вызовы.",
+                "source_of_confusion": "Параметры с именами attempts и retries часто отличаются всего на единицу. Первую попытку легко включить в счётчик повторов.",
+                "if_it_were_true": "Если бы первая доставка считалась повтором, recoverer сработал бы уже после третьего неудачного вызова listener, а паузы 4 с не было бы.",
+                "how_it_should_be": "Считайте бюджет как один исходный вызов плюс разрешённые повторы. Подбирайте задержки и лимит по допустимому времени блокировки обработки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Настроить `DefaultErrorHandler` на фабрике, просить брокер повторять доставку по `BackOff`, затем передавать запись recoverer.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Брокер хранит запись и обслуживает запросы consumer. Он не классифицирует `ValidationException` и не знает локальное расписание handler.",
+                "source_of_confusion": "Повтор может быть реализован через seek и новый fetch того же offset. Это похоже на повторную доставку, инициированную брокером.",
+                "if_it_were_true": "Если бы брокер управлял `BackOff`, два клиента с разными обработчиками получали бы одинаковые интервалы retry для одной записи.",
+                "how_it_should_be": "Настраивайте повторы обработки в контейнере. Для ожидания без блокировки исходного потока рассмотрите retry topics и учтите изменение порядка."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 6,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Dead Letter Topic (DLT) и как его использовать?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "DLT хранит ссылку на исходный offset и возвращает запись в основной listener после следующего успешного `poll()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный recoverer отправляет саму запись с контекстом. Consumer DLT читает её как новую запись отдельного топика.",
+                "source_of_confusion": "Original offset действительно есть в заголовке. Диагностические системы иногда сохраняют только ссылку и догружают payload по запросу.",
+                "if_it_were_true": "Если бы существовала только ссылка, удаление исходного сегмента по retention сделало бы payload недоступным даже при долгом хранении DLT.",
+                "how_it_should_be": "Для самостоятельного разбора храните полезную нагрузку и метаданные. Если сознательно храните ссылку, обеспечьте независимое сохранение исходных данных на нужный срок."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "DLT хранит копию неуспешной записи и освобождает партицию после удаления исходной записи из журнала.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka сохраняет исходную запись в журнале согласно политике топика. Recovery управляет дальнейшей обработкой этой группой и создаёт вторую запись в DLT.",
+                "source_of_confusion": "В обычной очереди перемещение в DLQ часто выглядит как извлечение из исходной очереди. В Kafka независимые группы могут продолжать читать тот же журнал.",
+                "if_it_were_true": "Если бы запись удалялась после recovery, другая группа потеряла бы к ней доступ из-за решения чужого listener.",
+                "how_it_should_be": "Отделяйте продвижение offset группы от хранения журнала. Используйте политику retention или compaction для хранения, а error handler для маршрутизации обработки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DLT хранит копию неуспешной записи с контекстом сбоя, а основная обработка может продолжиться после успешного recovery.",
+              "correct": true,
+              "sections": {
+                "explanation": "`DeadLetterPublishingRecoverer` публикует новую запись в отдельный топик. В заголовках сохраняются идентификаторы источника и сведения об ошибке. После признания исходной записи восстановленной контейнер может перейти к следующей, а команда разбирает сбой отдельно.",
+                "example": "Запись `orders-2@48` не прошла повторы. Recoverer публикует её в `orders.DLT`, а диагностический listener группы `orders-dlt-handler` получает payload и исходные топик, партицию и offset из заголовков. Основной consumer может обработать `orders-2@49`.",
+                "when_to_apply": "Выносите неисправимые события из основного потока, когда бизнес допускает обработку последующих записей. Планируйте retention, алерты, ACL и отдельный контролируемый replay.",
+                "edge_cases": "При том же номере целевой партиции подготовьте подходящую топологию DLT. Если важен факт сохранения, настройте recoverer так, чтобы ошибка отправки считалась неудачным recovery, например через `setFailIfSendResultIsError(true)`.",
+                "related": "Повтор из DLT создаёт новую запись с новым offset. Дедупликация по бизнес-идентификатору и проверка допустимости переигрывания нужны независимо от наличия исходного offset в заголовке."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "DLT хранит копию неуспешной записи с контекстом сбоя, а основной listener автоматически получает её обратно при восстановлении зависимости.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DLT сам не подписан на состояние зависимости. После публикации запись остаётся в отдельном топике, пока её не прочитает явно настроенный потребитель или не удалит retention.",
+                "source_of_confusion": "Retry topics могут автоматически передавать запись на следующую попытку после backoff. У конечного DLT другая роль.",
+                "if_it_were_true": "Если бы возврат был автоматическим, после восстановления downstream события снова пошли бы в основной поток без кода replay и решения об их порядке.",
+                "how_it_should_be": "Для временных сбоев настройте контролируемые retries. Для DLT организуйте отдельный сценарий replay с проверкой исправления причины и идемпотентности."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 7,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работают транзакции в Spring Kafka?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Транзакционный producer группирует отправки в одном топике, а для записи в два топика нужны два независимых коммита.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Одна Kafka-транзакция может охватывать несколько партиций разных топиков. Для этого записи нужно отправлять тем же транзакционным producer в её границах.",
+                "source_of_confusion": "Порядок чтения ограничен партицией. Из локальности порядка легко вывести ошибочное ограничение для области коммита.",
+                "if_it_were_true": "Если бы коммиты по топикам были обязательны, можно было бы зафиксировать `orders`, а затем потерять `audit` при падении между коммитами.",
+                "how_it_should_be": "Объединяйте связанные отправки одним `KafkaTransactionManager` или `executeInTransaction` на подходящем шаблоне. Раздельные вызовы со своим началом и концом создают отдельные транзакции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Транзакционный producer группирует отправки по одному `send`, а успешный `SendResult` делает запись видимой при `read_committed`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SendResult` может подтвердить запись данных в журнал до разрешения транзакции. `read_committed` ждёт её исхода и не выдаёт отменённую запись.",
+                "source_of_confusion": "Без транзакции успешный ack часто предшествует быстрому появлению записи у читателя. В транзакции к записи данных добавляется отдельный барьер видимости.",
+                "if_it_were_true": "Если бы каждый успешный `send` сразу открывал видимость, consumer мог бы выполнить бизнес-действие по событию, которое producer позже откатит.",
+                "how_it_should_be": "Смотрите на завершение всей транзакции. В транзакционном читателе явно задавайте `isolation.level=read_committed`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Транзакционный producer группирует отправки и изменения JPA под одним коммитом, а откат Kafka отменяет уже зафиксированную БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring может связать жизненные циклы, но уже выполненный JDBC/JPA commit не откатывается по Kafka commit exception. У этих ресурсов свои координаторы.",
+                "source_of_confusion": "Одна аннотация `@Transactional` и совместный rollback при исключении внутри метода выглядят как единое решение о коммите на обеих сторонах.",
+                "if_it_were_true": "Если бы второй коммит мог отменить первый, после ошибки Kafka сохранённый заказ исчез бы из БД, хотя её транзакция уже завершилась.",
+                "how_it_should_be": "Для гарантии согласованной записи состояния и намерения publish применяйте transactional outbox в той же БД. Публикацию и обработку повторов проектируйте отдельно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Транзакционный producer группирует отправки в пределах Kafka, а `read_committed` выдаёт их после коммита и пропускает при откате.",
+              "correct": true,
+              "sections": {
+                "explanation": "Настройте transaction-capable `ProducerFactory` через `transactionIdPrefix` и используйте тот же factory для шаблона и `KafkaTransactionManager`. Отправки одной Kafka-транзакции имеют общий исход по затронутым партициям и топикам. `read_committed` скрывает незавершённые и отменённые записи. Выданные записи могут попасть в разные `poll()`.",
+                "example": "`template.executeInTransaction(t -> { t.send(\"orders\", \"42\", order); t.send(\"audit\", \"42\", audit); return null; });` на транзакционном шаблоне. Если действие выбрасывает исключение до коммита и транзакция откатывается, `read_committed` не выдаст ни событие заказа, ни его аудит.",
+                "when_to_apply": "Используйте Kafka-транзакцию, когда выходные записи должны иметь общий исход. Для read-process-write в Kafka включайте offsets потребления в ту же транзакцию и настройте выходных consumer на `read_committed`. У реплик приложения должны быть разные префиксы `transactional.id`.",
+                "edge_cases": "Если `KafkaTemplate` синхронизирован с основной JPA-транзакцией, при успешном выходе обычно сначала коммитится БД, затем Kafka. Сбой второго коммита оставит БД зафиксированной. Для надёжной доставки сохраните событие outbox вместе с изменением БД и сделайте обработку повтора идемпотентной.",
+                "related": "Идемпотентный producer отсеивает дубли внутренних retries. Для атомарного исхода выходных записей и committed offsets нужен транзакционный протокол."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 8,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить Kafka Listener для конкурентного чтения?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Задать `concurrency` на фабрике или в `@KafkaListener`, получив до одного активного consumer группы на партицию.",
+              "correct": true,
+              "sections": {
+                "explanation": "`ConcurrentMessageListenerContainer` создаёт дочерние контейнеры, у каждого свой consumer и поток обработки. При групповой подписке координатор распределяет между ними партиции. Сколько реально занято, зависит от общего назначения группы.",
+                "example": "Показанный endpoint явно выбирает фабрику `factory` с `setConcurrency(3)`. Если ему доступны три партиции `orders`, три consumer одного экземпляра могут работать одновременно. При `concurrency=4` как минимум один останется без работы на этом топике.",
+                "when_to_apply": "Увеличивайте concurrency, когда есть lag, свободные ресурсы обработчика и достаточно назначаемых партиций. Учитывайте все экземпляры группы, распределение ключей и лимиты downstream.",
+                "edge_cases": "В примере `MANUAL` подтверждает успешно обработанные записи. Исключение из `processOrder` получает настроенный handler с двумя повторами для повторяемой ошибки. Перехваченное исключение и пропущенный ack сами по себе немедленный retry не запускают.",
+                "related": "Один экземпляр Spring-бина может вызываться из нескольких потоков. Состояние listener должно быть потокобезопасным даже при последовательной обработке внутри каждой назначенной партиции."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Задать `concurrency` на фабрике или в `@KafkaListener`, получив общий пул вызовов, который распределяет одну партицию между worker.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый дочерний consumer получает своё назначение. Контейнер не раздаёт записи одной партиции свободным worker конкурирующего пула.",
+                "source_of_confusion": "Слово concurrency часто означает executor с очередью задач. В Kafka этот параметр меняет число участников группы.",
+                "if_it_were_true": "Если бы это был пул вызовов, один partition при `concurrency=3` мог бы одновременно выполнять три записи на трёх consumer.",
+                "how_it_should_be": "Для параллелизма listener распределяйте поток по партициям. Если используете собственный executor, отдельно обеспечьте порядок эффектов и продвижение offset до непрерывно обработанной позиции."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Задать `concurrency` на фабрике или в `@KafkaListener`, ограничив число партиций на consumer и поручив фабрике выбрать число consumer.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`setConcurrency(3)` задаёт число дочерних контейнеров. Число партиций на каждом рассчитывается группой и может меняться после ребаланса.",
+                "source_of_confusion": "В симметричном примере равны число партиций и число consumer. При другой конфигурации это равенство уже не выполняется.",
+                "if_it_were_true": "Если бы значение было лимитом партиций на consumer, один consumer смог бы сохранить все три партиции при `concurrency=3`.",
+                "how_it_should_be": "Сначала определите требуемое число consumer на экземпляр, затем оцените назначение по подписке и настройкам assignor."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Задать `concurrency` на фабрике или в `@KafkaListener`, увеличив число экземпляров приложения и оставив по одному consumer на экземпляр.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Фабрика создаёт несколько consumer в одной JVM. Инстансы приложения создаёт инфраструктура развертывания.",
+                "source_of_confusion": "Увеличение реплик и `concurrency` оба увеличивают членство в группе. Источник этого изменения различается.",
+                "if_it_were_true": "Если бы фабрика управляла репликами, `setConcurrency(3)` менял бы число процессов или pod при старте Spring-контекста.",
+                "how_it_should_be": "Для масштабирования внутри процесса меняйте concurrency. Для отдельных инстансов меняйте реплики deployment, сохраняя общий `groupId`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 9,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как управлять offset коммитами?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Оставить `enable.auto.commit=true`, а `AckMode` использовать для регулировки интервала фонового коммита клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При включённом авто-коммите позицию фиксирует Kafka-клиент. `AckMode` не становится регулятором `auto.commit.interval.ms`.",
+                "source_of_confusion": "У клиента и контейнера есть режимы с привязкой ко времени. Они принадлежат разным уровням управления.",
+                "if_it_were_true": "Если бы `AckMode.MANUAL` управлял авто-коммитом, consumer мог бы оставить его включённым и гарантированно не двигать позицию до ack.",
+                "how_it_should_be": "Отключите авто-коммит и проверьте настройки контейнера. Тогда выбор ack-режима действительно задаёт границу фиксации прогресса."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Отключить `enable.auto.commit`, а `AckMode` использовать для задания числа записей, возвращаемых клиентом за `poll()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`AckMode` задаёт условие фиксации offset. Тот же `poll()` может вернуть несколько записей при `RECORD`, а listener и коммит будут выполняться поштучно.",
+                "source_of_confusion": "Слова `BATCH` и `COUNT` напоминают настройку размера выдачи. Они описывают накопление обработанных позиций.",
+                "if_it_were_true": "Если бы `RECORD` менял fetch, он ограничивал бы `poll()` одной записью независимо от `max.poll.records`.",
+                "how_it_should_be": "Ограничивайте размер выдачи через `max.poll.records` и выбирайте record или batch listener отдельно от режима коммита."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Отключить `enable.auto.commit`, а `auto.offset.reset` использовать для фиксации позиции после подтверждения записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`auto.offset.reset` выбирает начальную позицию, когда сохранённая отсутствует или больше непригодна. Коммит делает consumer под управлением контейнера.",
+                "source_of_confusion": "`earliest` и `latest` выглядят как указание того, какой offset хранить после обработки. Это политика старта или восстановления позиции.",
+                "if_it_were_true": "Если бы `latest` фиксировал прогресс после вызова, изменение reset-политики могло бы заменить `acknowledge()` при ручном режиме.",
+                "how_it_should_be": "Разделяйте стартовую позицию и фиксацию прогресса. Для продвижения используйте ack-режим, а для чтения истории новой группой проверьте retention и reset-политику."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Отключить `enable.auto.commit`, а `AckMode` контейнера использовать для выбора момента фиксации обработанной позиции.",
+              "correct": true,
+              "sections": {
+                "explanation": "В нетранзакционном контейнере с `enable.auto.commit=false` коммит управляется Spring. `BATCH` фиксирует после успешной обработки записей из `poll()`, `RECORD` после возврата record listener. При `MANUAL` подтверждение поступает контейнеру, дальнейший коммит следует пакетным правилам. Committed offset обозначает следующую позицию.",
+                "example": "Группа начинала с committed offset 10. Listener выполнил внешний эффект для записи с offset 10, но упал до отправки нового коммита. Новый consumer начнёт с 10. Если успел сохраниться offset 11, эта запись при обычном возобновлении пропускается.",
+                "when_to_apply": "Выбирайте `RECORD` для меньшего окна повтора с record listener и `BATCH` для амортизации коммитов. Подтверждайте вручную после устойчивого бизнес-эффекта, когда момент его завершения известен только приложению.",
+                "edge_cases": "`MANUAL_IMMEDIATE` инициирует коммит при ack на consumer thread. Вызов из другого потока ставит подтверждение в очередь. При обработке не по порядку нужно явно учитывать незакрытые позиции, иначе коммит поздней записи может перескочить раннюю.",
+                "related": "`auto.offset.reset` нужен при отсутствии пригодной позиции. Для атомарности offset и Kafka-выхода используйте Kafka-транзакцию, а для внешнего эффекта обычно нужна идемпотентная обработка."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 10,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает сериализация/десериализация в Spring Kafka?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Сериализовать значение в JSON-байты, а у consumer выбирать тип всегда из `spring.json.value.default.type`, даже при пригодном `__TypeId__`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Заданный default type нужен именно для случая, когда нет используемой информации о типе. При действующем доверенном `__TypeId__` решение обычно принимает mapper заголовков.",
+                "source_of_confusion": "Явное свойство выглядит приоритетнее метаданных, поскольку многие настройки Spring именно так переопределяют defaults.",
+                "if_it_were_true": "Если бы default type всегда побеждал, подстановка другого разрешённого `__TypeId__` не меняла бы тип полученного объекта при тех же байтах.",
+                "how_it_should_be": "Для безусловного выбора DTO отключите использование заголовков через `spring.json.use.type.headers=false` и укажите тип назначения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Сериализовать значение в JSON-байты, а у consumer использовать разрешённый `__TypeId__` или заданный тип при отсутствии используемого заголовка.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring JSON serializer пишет байты и может добавлять тип в Kafka header. JSON deserializer по умолчанию использует сведения из заголовка, если они доступны. При его отсутствии нужен целевой тип, например `spring.json.value.default.type`. Trusted packages ограничивают разрешение типов из заголовков.",
+                "example": "В показанной конфигурации сторонний producer отправил JSON `{\"orderId\":\"42\"}` без `__TypeId__`. При совместимой схеме consumer собирает `com.example.OrderEvent` из настроенного fallback. С пригодным доверенным заголовком он сначала применяет заголовок.",
+                "when_to_apply": "Закрепите целевой DTO и отключите чтение type headers для однородного топика, особенно при обмене между языками. Для нескольких типов согласуйте type mappings либо явный дискриминатор схемы.",
+                "edge_cases": "Если header присутствует, но тип из него недопустим или неразрешим, deserializer может завершиться ошибкой. Наличие fallback само по себе ошибочный header не исправляет. Для управляемого recovery на этапе чтения используйте `ErrorHandlingDeserializer`.",
+                "related": "Имена `JsonSerializer` и `JsonDeserializer` относятся к Jackson 2, как в конфигурации темы. В Spring Kafka 4.x для Jackson 3 предусмотрены `JacksonJsonSerializer` и `JacksonJsonDeserializer`. Выбирайте совместимую пару с версией приложения."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Сериализовать значение в JSON-байты, а у consumer выбирать тип по набору JSON-полей, используя `__TypeId__` для диагностики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычный JSON deserializer не выводит Java-класс из множества имён полей. Одна структура может соответствовать нескольким типам.",
+                "source_of_confusion": "Некоторые библиотеки поддерживают полиморфизм с явным дискриминатором или дополнительными правилами. Одних совпавших полей стандартному механизму недостаточно.",
+                "if_it_were_true": "Если бы форма данных однозначно задавала тип, Java-пакет и класс можно было бы восстановить даже из JSON с одним полем `id`.",
+                "how_it_should_be": "Назначьте DTO по контракту топика или используйте согласованный механизм разрешения типов. Проверку бизнес-схемы выполняйте отдельно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Сериализовать значение в JSON-байты, а у consumer выбирать тип из `spring.json.trusted.packages`, используя `__TypeId__` для проверки схемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Trusted packages ограничивают допустимость имён классов при разрешении типа. Список не назначает DTO и не проверяет содержание JSON.",
+                "source_of_confusion": "В конфигурации список пакетов и имя default type выглядят как два способа выбрать семейство классов.",
+                "if_it_were_true": "Если бы список сам выбирал тип, при двух DTO одного пакета consumer должен был бы определить нужный класс без заголовка и без fallback.",
+                "how_it_should_be": "Раздельно настройте политику допустимых типов и выбор DTO. Для одного типа предпочтительно фиксированное назначение, а для доверенных событий разных типов ограничьте mapping и пакеты."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 11,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как тестировать Spring Kafka без реального брокера?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Подключить `spring-kafka-test`, поручить `@EmbeddedKafka` заменить `KafkaTemplate` заглушкой и проверить вызов `send`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотация запускает брокер, а `KafkaTemplate` остаётся клиентом Kafka. Проверка вызова с mock не проверяет чтение записи.",
+                "source_of_confusion": "Тестовая зависимость часто даёт моки и тестовые double. Embedded broker является ресурсом интеграционного теста.",
+                "if_it_were_true": "Если бы отправку заменяли заглушкой, consumer не получил бы запись после успешного вызова мокированного `send`.",
+                "how_it_should_be": "Мокируйте producer только в тесте отправителя. Для проверки пути через брокер используйте встроенную Kafka и независимый признак результата listener."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Подключить `spring-kafka-test`, поручить `@EmbeddedKafka` выбрать внешний брокер и проверить обработку после ответа на `send`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@EmbeddedKafka` запускает свой брокер и предоставляет его адрес. Если приложение всё-таки читает внешний `bootstrap.servers`, это ошибка связывания тестовой конфигурации.",
+                "source_of_confusion": "Адрес присутствует и у встроенного брокера. Наличие сетевого порта легко принять за зависимость от заранее поднятого сервиса.",
+                "if_it_were_true": "Если бы аннотации требовался внешний брокер, тест не смог бы запуститься на машине с закрытым портом 9092 и без отдельной Kafka.",
+                "how_it_should_be": "Подключите producer и consumer через адрес embedded broker, предоставленный тестовым контекстом. Не полагайтесь на захардкоженный локальный адрес."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подключить `spring-kafka-test`, поднять брокер через `@EmbeddedKafka` и дождаться наблюдаемого эффекта listener.",
+              "correct": true,
+              "sections": {
+                "explanation": "Встроенный брокер реализует реальный протокол Kafka и запускается в JVM теста. Отправитель и listener подключаются к его адресу. Подтверждение записи брокером и завершение обработки listener происходят независимо, поэтому результат проверяют отдельным ожиданием.",
+                "example": "Тест запускает `@EmbeddedKafka(partitions = 1, topics = \"orders\")` с адресом, переданным Spring Boot как `spring.kafka.bootstrap-servers`. Он отправляет событие с новым UUID и через Awaitility ждёт появления этого UUID в хранилище не дольше пяти секунд.",
+                "when_to_apply": "Используйте embedded broker для интеграционной проверки сериализации, маршрутизации и бизнес-эффекта listener без отдельной установки Kafka. Давайте тестам уникальные топики или идентификаторы данных, когда разделяете брокер.",
+                "edge_cases": "Для KRaft embedded broker в новых версиях Spring Kafka `listeners` и фиксированные `ports` не служат способом назначить порт как в старом ZooKeeper-варианте. Используйте фактический адрес, предоставленный тестовой инфраструктурой.",
+                "related": "Unit-тест обработчика можно выполнить без брокера. Testcontainers полезен отдельно, когда важно проверить версию образа и параметры окружения. Ни один из вариантов сам по себе не моделирует отказ нескольких узлов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Подключить `spring-kafka-test`, поднять брокер через `@EmbeddedKafka` и считать успешный future подтверждением работы listener.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`send().get()` сообщает о результате отправки. Listener может ещё ждать назначения партиции или обрабатывать запись.",
+                "source_of_confusion": "Оба события обычно разделены коротким интервалом, поэтому на быстрой машине немедленная проверка иногда проходит.",
+                "if_it_were_true": "Если бы future включал обработку, недоступная БД в отдельном consumer делала бы producer future ошибочным даже после успешной записи в топик.",
+                "how_it_should_be": "После подтверждения отправки отдельно дождитесь эффекта, связанного с уникальным ID события. Ограничьте время ожидания и анализируйте таймаут как сбой интеграции."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 12,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Что такое Kafka Streams в контексте Spring?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Объявить топологию через `StreamsBuilder`, а запуск, состояние и обработку по партициям поручить `KafkaStreams`, управляемому Spring.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@EnableKafkaStreams` регистрирует инфраструктуру с `StreamsBuilderFactoryBean`. Приложение описывает топологию `KStream` и `KTable`, а Spring управляет запуском и остановкой клиента. Stateful операции обновляют локальные stores. Для журналируемых stores Kafka хранит changelog для восстановления.",
+                "example": "Для веток из примера задайте Serde строкового ключа и `OrderEvent` на входе, а для `order-counts` явно используйте `Produced.with(Serdes.String(), Serdes.Long())`. События `PENDING` и `COMPLETED` одного ключа увеличат счётчик до 2, а в `completed-orders` попадёт только второе.",
+                "when_to_apply": "Выбирайте Streams для непрерывной агрегации, окон, join и преобразований Kafka в Kafka. Настройте `application.id` и Serde по фактическим типам на входах, repartition и выходах.",
+                "edge_cases": "При переносе task на другой экземпляр state store восстанавливается из журнала, если логирование включено. На объём и время восстановления влияют размер состояния и доступность standby replica.",
+                "related": "`KStream` представляет последовательность событий, а `KTable` обновления значений по ключу. `toStream()` выводит изменения таблицы как записи, при этом кеширование может объединять промежуточные обновления."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Объявить обработчики через `@KafkaListener`, а запуск, состояние и обработку поручить топологии, которую Spring выводит из методов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотированный listener и Kafka Streams идут разными путями. Для Streams приложение строит топологию через DSL или Processor API.",
+                "source_of_confusion": "Обе технологии входят в экосистему Spring Kafka и читают события из брокера. Это сходство не делает методы listener узлами топологии.",
+                "if_it_were_true": "Если бы топология выводилась из `@KafkaListener`, отдельный бин с `stream.filter(...).to(...)` не был бы нужен для фильтрации.",
+                "how_it_should_be": "Используйте listener для отдельного императивного обработчика, а `StreamsBuilder` для графа связанных операторов с состоянием."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Объявить топологию через `StreamsBuilder`, а запуск и остановку `KafkaStreams` выполнять вручную после каждого изменения Spring-контекста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`StreamsBuilderFactoryBean` управляет жизненным циклом `KafkaStreams` в Spring. Отдельные `start` и `close` нужны при самостоятельном владении клиентом.",
+                "source_of_confusion": "В обычном Kafka Streams без Spring конструктор, запуск и корректное завершение настраиваются явно.",
+                "if_it_were_true": "Если бы Spring только передавал свойства, создание контекста с `@EnableKafkaStreams` не запускало бы обработку до пользовательского вызова `start()`.",
+                "how_it_should_be": "Дайте фабрике собрать топологию до старта. Если нужен управляемый старт, настройте её lifecycle вместо параллельного запуска второго клиента."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Объявить топологию через `StreamsBuilder`, а состояние агрегаций вычислять заново из changelog при каждом входном событии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Агрегат обновляется в локальном хранилище по мере входа записей. Changelog нужен прежде всего для восстановления и переноса состояния, если он настроен.",
+                "source_of_confusion": "Changelog содержит изменения состояния. Его роль в восстановлении легко спутать с основным чтением при каждом вычислении.",
+                "if_it_were_true": "Если бы на каждое событие читалась вся история, время обработки одного обновления росло бы вместе с числом уже принятых событий.",
+                "how_it_should_be": "Для регулярных агрегаций оставляйте инкрементальный state store. Настройте восстановление и резервирование с учётом объёма состояния."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 13,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Какие стратегии обеспечения порядка сообщений есть в Kafka?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Для общего порядка читать все партиции в одной группе, для порядка по ключу сравнивать offsets разных партиций в listener.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Группа назначает партиции, но не сравнивает их записи по единой шкале. Offset 5 в двух партициях обозначает две независимые позиции.",
+                "source_of_confusion": "Offsets возрастают и выглядят как глобальные номера, пока читатель смотрит на одну партицию.",
+                "if_it_were_true": "Если бы offsets разных партиций задавали порядок, две записи с номером 5 уже потребовали бы неизвестного правила разрешения совпадений.",
+                "how_it_should_be": "Для общего порядка фиксируйте события в одной партиции или вводите прикладной источник сквозной последовательности. Для локального порядка сохраняйте один ключ и одну партицию."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для общего порядка добавлять `sequence` в header, для порядка по ключу распределять записи одного ключа по свободным партициям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Kafka хранит пользовательский `sequence` как данные заголовка. Он не влияет на порядок append или выдачу записей из партиций.",
+                "source_of_confusion": "Внутренний протокол producer действительно использует sequence для идемпотентной записи. Пользовательский header относится к другому уровню.",
+                "if_it_were_true": "Если бы брокер сортировал по header, запись `sequence=2` из одной партиции могла бы удерживаться до записи `sequence=1` из другой.",
+                "how_it_should_be": "Используйте sequence для обнаружения пропуска, буферизации или отбрасывания устаревшей версии в приложении. Для базового порядка маршрутизируйте связанные события в одну партицию."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для общего порядка использовать одну партицию, для порядка по ключу направлять связанные записи в одну партицию и сохранять очерёдность обработки.",
+              "correct": true,
+              "sections": {
+                "explanation": "Kafka упорядочивает записи в пределах каждой партиции. Одна партиция создаёт общий порядок записи в журнал. Для порядка по сущности стандартное партиционирование с неизменным числом партиций направляет одинаковый сериализованный ключ в одну партицию. Последовательность бизнес-действий ещё зависит от producer и обработчика.",
+                "example": "`template.send(\"orders\", \"42\", created)` и затем `template.send(\"orders\", \"42\", paid)` из одного корректно настроенного идемпотентного producer. При стабильном разбиении consumer получает обе записи из одной партиции в порядке журнала. События заказа `99` могут обрабатываться в другом потоке.",
+                "when_to_apply": "Выбирайте ключ по единице упорядочивания. Если в бизнесе допустим параллелизм между заказами, ключуйте по ID заказа. Для одного хронологического журнала используйте одну партицию и оцените предел пропускной способности.",
+                "edge_cases": "Увеличение количества партиций может переназначить ключ, хотя старые записи остаются в своих партициях. У нескольких независимых producer порядок поступления в журнал может расходиться с бизнес-версией. Для обнаружения пропуска добавляйте монотонный номер и проверяйте его в consumer.",
+                "related": "`topicPartitions = @TopicPartition(...)` задаёт явное назначение listener, а `initialOffset` начальную позицию чтения. Выбор партиции для записи обеспечивается отдельно на стороне producer."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для общего порядка использовать один consumer на все партиции, для порядка по ключу направлять события одного ключа в один топик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Один consumer обслуживает все назначенные партиции, но его локальный порядок обхода в `poll()` не задаёт общий порядок публикаций. Один топик тоже может иметь несколько журналов.",
+                "source_of_confusion": "Один поток обрабатывает записи последовательно, поэтому в логах всегда видна некоторая последовательность. Она может измениться при повторном чтении.",
+                "if_it_were_true": "Если бы число consumer задавало глобальный порядок, изменение fetch и скорости партиций не влияло бы на последовательность между ними.",
+                "how_it_should_be": "Для общего порядка ограничьте сам журнал одной партицией. Для порядка по ключу задайте устойчивое партиционирование и избегайте произвольной параллельной обработки одного ключа."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 14,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как настроить idempotent producer?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "Включить `enable.idempotence`, сохранить `acks=1` и повторы, а дубли отсекать брокером по номеру записи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С явным `enable.idempotence=true` значение `acks=1` конфликтует с требованиями клиента. Автоматического сохранения этого компромисса нет.",
+                "source_of_confusion": "`acks=1` даёт подтверждение лидера, поэтому локально кажется достаточным для определения, записывался ли batch.",
+                "if_it_were_true": "Если бы режим был совместим, producer успешно запускался бы с обоими параметрами даже при смене лидера после записи только на прежний лидер.",
+                "how_it_should_be": "Оставьте `acks=all` и проверьте ISR-политику. Если выбираете `acks=1`, оценивайте потерю соответствующих гарантий отдельно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Включить `enable.idempotence`, соблюдать `acks=all`, `retries>0` и `max.in.flight.requests.per.connection<=5`, чтобы брокер распознавал ретраи producer.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идемпотентный producer присваивает batch последовательные номера в разрезе партиции. Брокер сопоставляет повтор с состоянием producer ID, epoch и sequence. Для актуального Kafka-клиента явный `enable.idempotence=true` требует совместимых acks, retries и in-flight. Конфликтующие значения вызовут ошибку конфигурации.",
+                "example": "Брокер добавил batch с событием `order-42`, но ответ потерялся. Kafka-клиент повторяет ту же отправку с прежней последовательностью. При выполненных условиях брокер распознаёт повтор и второй записи в журнале не появляется.",
+                "when_to_apply": "Убедитесь, что идемпотентность включена и совместимые значения не переопределены, если разрешены retries после временного сетевого отказа. В современных клиентах она обычно включена по умолчанию при отсутствии конфликтующих настроек.",
+                "edge_cases": "Второй пользовательский `send` с тем же payload и ключом получает новую последовательность. Это новая запись с точки зрения протокола. Чтобы защитить бизнес-эффект, передавайте стабильный event ID и делайте запись в хранилище идемпотентной.",
+                "related": "`acks=all` связывает подтверждение с текущими in-sync replicas и настройкой `min.insync.replicas`. Идемпотентность добавляет распознавание повторов, а атомарность набора отправок добавляет транзакция."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Включить `enable.idempotence`, отключить retries и оставить `acks=all`, чтобы брокер отбрасывал повторные вызовы `send` с тем же ключом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Идемпотентный режим требует положительное число retries. Одинаковый Kafka key не является идентификатором операции для дедупликации `send`.",
+                "source_of_confusion": "Kafka key участвует в маршрутизации и позже может участвовать в compaction. Это похоже на уникальный ключ базы, но append-журнал допускает повторения.",
+                "if_it_were_true": "Если бы key запрещал повторный append, поток с двумя изменениями одного заказа лишился бы второго изменения.",
+                "how_it_should_be": "Позвольте клиенту повторять конкретную отправку. Для повторов бизнес-команды настройте дедупликацию по ID операции, а ключ партиционирования выбирайте по границе порядка."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Включить `enable.idempotence`, оставить `acks=all` и retries, а число запросов in flight увеличить выше пяти для сохранения порядка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Явно включённая идемпотентность несовместима с in-flight выше пяти. У брокера ограниченное состояние недавних batches для распознавания повторов.",
+                "source_of_confusion": "Большая глубина конвейера может повысить throughput. Кажется, что sequence позволяет расширять её без ограничений.",
+                "if_it_were_true": "Если бы более высокий предел поддерживался, `enable.idempotence=true` и `max.in.flight.requests.per.connection=6` образовывали бы валидную конфигурацию.",
+                "how_it_should_be": "Держите in-flight в допустимом диапазоне. Для ускорения прежде проверьте batching, compression, размеры сообщений и распределение ключей."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "q_number": 15,
+      "blocks": [
+        {
+          "block_idx": 0,
+          "question_text": "Как работает Pause/Resume для @KafkaListener?",
+          "options": [
+            {
+              "order": 0,
+              "label": "A",
+              "text": "`pause` выводит consumer из группы, а `resume` создаёт подписку заново и продолжает от committed offset.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обычная пауза оставляет consumer в цикле чтения и сама не требует нового вступления. Возобновление при неизменном назначении использует текущую позицию.",
+                "source_of_confusion": "При `stop` клиент действительно закрывается, а его партиции могут перейти другим участникам. Пауза используется для другого уровня управления.",
+                "if_it_were_true": "Если бы каждая пауза означала выход, другой member мог бы забрать партицию сразу после перегрузки и свести действие backpressure к перераспределению.",
+                "how_it_should_be": "Для короткого ограничения потока используйте `pause`/`resume`. Останавливайте контейнер, когда задача состоит в выключении listener и освобождении владения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`pause` останавливает цикл `poll`, а `resume` продолжает после heartbeat и сбрасывает позицию на последнюю доступную запись.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контейнер продолжает вызывать `poll`. Возобновление не делает `seekToEnd`. При стабильном назначении записи, накопленные во время паузы и ещё доступные, можно прочитать.",
+                "source_of_confusion": "Пустые результаты poll похожи на остановку самого цикла. Отдельно `latest` действительно задаёт старт в конце при отсутствии пригодного offset.",
+                "if_it_were_true": "Если бы возобновление прыгало в конец, пять записей, поступивших за паузу, оказались бы пропущены без явной политики потери данных.",
+                "how_it_should_be": "Сохраняйте текущую позицию для backpressure. Если бизнес допускает пропуск backlog, оформляйте его отдельной управляемой операцией seek или reset."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`pause` блокирует весь `groupId`, а `pausePartition` останавливает чтение одноимённой партиции у всех подписчиков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Вызовы действуют на целевой контейнер и его назначения. Kafka не публикует глобальную команду остановки партиции для других групп.",
+                "source_of_confusion": "В группе за одну партицию отвечает один активный участник. Локальная пауза этого владельца выглядит как остановка чтения партиции группой, пока владение не изменилось.",
+                "if_it_were_true": "Если бы пауза распространялась на всех подписчиков, независимая группа аудита остановилась бы после вызова в `ordersContainer` сервиса заказов.",
+                "how_it_should_be": "Для локальной перегрузки паузируйте выбранный контейнер или назначение. Для остановки всех приложений нужна координация их собственных endpoint."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`pause` приостанавливает выборку в контейнере при продолжающемся `poll`, а `pausePartition` ограничивает паузу указанной партицией.",
+              "correct": true,
+              "sections": {
+                "explanation": "Контейнер применяет запрос паузы в потоке consumer. Он прекращает выборку новых записей по поставленным на паузу назначениям, но продолжает `poll()`, поддерживая участие в группе. При `resume` текущая позиция сохраняется, пока назначение не изменилось.",
+                "example": "Получите `container = registry.getListenerContainer(\"ordersContainer\")` и вызовите `container.pausePartition(new TopicPartition(\"orders\", 2))`. После применения паузы новые записи партиции 2 временно не выдаются, а партиции 0 и 1 продолжают работу. `resumePartition` включает чтение накопившихся записей.",
+                "when_to_apply": "Используйте паузу при кратковременной перегрузке downstream. Ставьте на паузу весь endpoint при общем отказе или отдельную партицию при локальной проблеме и наблюдайте за лагом и фактическим статусом.",
+                "edge_cases": "По умолчанию контейнер может обработать уже полученные записи перед применением общей паузы. Параметр `pauseImmediate` позволяет для record listener поставить общую паузу после текущей записи, сохранив остальные записи прошлого `poll()` до возобновления.",
+                "related": "`pause` не является коммитом, `seek` или `stop`. При внешнем ребалансе позиция нового владельца определяется committed offset либо reset-политикой, а не старой локальной позицией."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
