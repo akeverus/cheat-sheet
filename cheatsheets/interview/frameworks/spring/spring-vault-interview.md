@@ -164,9 +164,16 @@ public class AppConfig {
 
 ## Q4. Что такое Dynamic Secrets и как их использовать?
 
-**Dynamic Secrets** — учётные данные, которые Vault создаёт по запросу под конкретного клиента и автоматически уничтожает по истечении TTL. Ключевое отличие от обычного секрета: пароля БД физически не существует, пока приложение его не запросит, и он не переиспользуется — у каждого инстанса свой временный пользователь.
+В Vault настроена роль PostgreSQL `my-role` с TTL аренды по умолчанию один час. Что выдаёт этот вызов и что происходит после истечения аренды?
 
-**Как это работает на примере PostgreSQL**: Vault сам выполняет `CREATE ROLE` в базе при запросе и `DROP ROLE` по истечении lease. Приложение получает свежую пару username/password и срок их жизни:
+```java
+VaultResponseSupport<Map<String, Object>> response =
+    vaultTemplate.read("database/creds/my-role");
+```
+
+**Разбор.** **Dynamic Secrets** — учётные данные, которые Vault создаёт по запросу и выдаёт на ограниченный срок. Для этого сценария каждый запрос создаёт отдельную пару для временного пользователя PostgreSQL.
+
+**Как это работает на примере PostgreSQL**: Vault выполняет SQL создания роли и возвращает пару `username` / `password`, идентификатор аренды и её длительность. При истечении аренды Vault запускает отзыв. Будет ли пользователь удалён, зависит от настроенных команд отзыва и результата их выполнения в PostgreSQL.
 
 ```java
 // Dynamic PostgreSQL credentials
@@ -175,7 +182,7 @@ public class AppConfig {
 public class DynamicDbService {
     private final VaultTemplate vaultTemplate;
 
-    public DataSource createDataSource() {
+    public void readCredentials() {
         VaultResponseSupport<Map<String, Object>> lease =
             vaultTemplate.read("database/creds/my-role");
 
@@ -185,8 +192,6 @@ public class DynamicDbService {
         long leaseSeconds = lease.getLeaseDuration();  // секунды, тип long
 
         log.info("Got dynamic credentials, TTL: {}s", leaseSeconds);
-        // username = vault-token-abc123, TTL = 1 hour
-        // Vault автоматически удалит этого пользователя из PostgreSQL
     }
 }
 ```
@@ -200,13 +205,21 @@ public class DynamicDbService {
 #   max_ttl="24h"
 ```
 
-**Зачем это нужно**: радиус поражения при утечке минимален. Даже если динамические credentials попадут в чужие руки, через час (TTL) они станут бесполезны — Vault уже удалит этого пользователя из БД. Плюс полная трассируемость: каждый инстанс работает под своим именем, и по логам БД видно, кто что делал.
+**Зачем это нужно**: радиус поражения при утечке минимален. Отдельная роль позволяет связать действия в журналах БД с конкретной выдачей. В приведённой настройке `VALID UNTIL` ограничивает новые подключения по паролю независимо от успешности удаления роли. Этот срок сам по себе не завершает существующие подключения.
 
 ## Q5. Что такое SecretLeaseContainer и зачем он нужен?
 
-`SecretLeaseContainer` — фоновый компонент Spring Vault, который следит за жизненным циклом lease (аренды секрета) и сам продлевает или ротирует его до истечения TTL. Без него динамические секреты — это бомба замедленного действия: TTL истечёт, Vault отзовёт credentials, и приложение упадёт на следующем запросе к БД.
+Приложение получает учётные данные БД с ограниченным TTL. Пул нужно настроить при первой выдаче и обновлять после получения новой пары. Как связать жизненный цикл секрета с обновлением пула?
 
-Контейнер работает по порогу: когда до истечения остаётся меньше заданного запаса времени (`expiryThreshold`), он либо продлевает текущий lease, либо — для секрета, зарегистрированного как `RequestedSecret.rotating` — запрашивает новый и публикует событие `SecretLeaseCreatedEvent` с обновлёнными данными:
+```text
+Путь: database/creds/my-role
+TTL аренды при выдаче: 1 час
+Получатель пары: пул соединений с PostgreSQL
+```
+
+**Разбор.** `SecretLeaseContainer` — компонент Spring Vault, который отслеживает аренду секрета и продлевает её, когда это поддерживается. Он также может запросить новую пару после истечения аренды.
+
+Порог `expiryThreshold` участвует в расчёте момента продления и определении истечения аренды. Режим `RequestedSecret.rotating` запрашивает новый секрет после истечения. Для выделенного контейнера этого примера зарегистрируйте слушатель до добавления запроса секрета, чтобы получить и первоначальное событие.
 
 ```java
 @Configuration
@@ -216,7 +229,7 @@ public class VaultLeaseConfig {
     public SecretLeaseContainer leaseContainer(VaultOperations vaultOperations,
                                                TaskScheduler scheduler) {
         SecretLeaseContainer container = new SecretLeaseContainer(vaultOperations, scheduler);
-        container.setExpiryThreshold(Duration.ofMinutes(1));  // ротировать за минуту до истечения
+        container.setExpiryThreshold(Duration.ofMinutes(1));
         return container;
     }
 }
@@ -228,7 +241,6 @@ public class DatabaseCredentialService {
 
     @PostConstruct
     public void requestCredentials() {
-        leaseContainer.addRequestedSecret(RequestedSecret.rotating("database/creds/my-role"));
         leaseContainer.addLeaseListener(event -> {
             if (event instanceof SecretLeaseCreatedEvent created) {
                 // вызывается при получении или ротации
@@ -239,15 +251,25 @@ public class DatabaseCredentialService {
                 );
             }
         });
+        leaseContainer.addRequestedSecret(RequestedSecret.rotating("database/creds/my-role"));
     }
 }
 ```
 
-**Суть**: слушатель из `addLeaseListener` получает `SecretLeaseCreatedEvent` и при первом получении секрета, и при каждой ротации — поэтому логику переконфигурации `DataSource` пишешь один раз, а контейнер обеспечивает, что соединения всегда работают на актуальных credentials.
+**Суть**: слушатель из `addLeaseListener` получает `SecretLeaseCreatedEvent` и при первом получении секрета, и при каждой ротации. Обработчик применяет новую пару к пулу. Ошибки выдачи или продления и переход уже открытых соединений требуют отдельной обработки.
 
 ## Q6. Как работает Transit Secrets Engine (шифрование как сервис)?
 
-Transit Engine — это «шифрование как сервис»: приложение отправляет данные в Vault, получает шифротекст, а сам ключ шифрования **никогда не покидает Vault**. В этом весь смысл — приложение умеет шифровать и расшифровывать, но не хранит ключ, поэтому его компрометация не раскрывает данные. Vault при этом ничего не хранит из переданных данных, только выполняет криптооперацию.
+Ключ `my-key` уже существует. Как повлияет ротация на попытку расшифровать ранее полученный шифротекст?
+
+```java
+VaultTransitOperations transit = vaultTemplate.opsForTransit();
+Ciphertext saved = transit.encrypt("my-key", Plaintext.of("example"));
+transit.rotate("my-key");
+Plaintext restored = transit.decrypt("my-key", saved);
+```
+
+**Разбор.** Transit Engine — это «шифрование как сервис»: приложение отправляет данные в Vault, получает шифротекст, а для обычных операций шифрования и расшифровки приложение не получает ключ. Доступ к операции расшифровки регулируется политикой Vault. Vault при этом ничего не хранит из переданных данных, только выполняет криптооперацию.
 
 ```java
 @Service
@@ -256,27 +278,26 @@ public class EncryptionService {
     private final VaultTemplate vaultTemplate;
 
     public String encrypt(String plaintext) {
-        TransitOperations transit = vaultTemplate.opsForTransit();
+        VaultTransitOperations transit = vaultTemplate.opsForTransit();
         Plaintext input = Plaintext.of(plaintext);
         Ciphertext result = transit.encrypt("my-key", input);
         return result.getCiphertext();  // vault:v1:abc123...
     }
 
     public String decrypt(String ciphertext) {
-        TransitOperations transit = vaultTemplate.opsForTransit();
+        VaultTransitOperations transit = vaultTemplate.opsForTransit();
         Ciphertext input = Ciphertext.of(ciphertext);
         Plaintext result = transit.decrypt("my-key", input);
         return result.asString();
     }
 
-    // Ротация ключа (старые данные остаются расшифровываемыми)
     public void rotateKey() {
         vaultTemplate.opsForTransit().rotate("my-key");
     }
 }
 ```
 
-**Зачем версия ключа в шифротексте**: префикс `vault:v1:...` хранит версию ключа прямо в шифротексте. Благодаря этому ротация (`rotate`) безопасна — новые данные шифруются ключом `v2`, но старые `vault:v1:...` по-прежнему расшифровываются, потому что Vault видит версию и берёт нужный ключ. Перешифровывать историю не нужно.
+**Зачем версия ключа в шифротексте**: префикс `vault:v1:...` хранит версию ключа прямо в шифротексте. Благодаря этому ротация (`rotate`) безопасна — новые данные шифруются ключом `v2`, но старые `vault:v1:...` по-прежнему расшифровываются, потому что Vault видит версию и берёт нужный ключ. Это работает, пока версия ключа сохранена и разрешена для расшифровки, в частности пока она не ниже `min_decryption_version`. Если старую версию планируют вывести из использования, шифротекст можно заранее обновить через `rewrap`.
 
 ## Q7. Какие методы аутентификации поддерживает Spring Vault?
 
@@ -324,11 +345,11 @@ public class CertificateService {
             .build();
 
         return vaultTemplate.opsForPki().issueCertificate("myapp-role", request);
-        // путь {mount}/issue/{roleName} шаблон строит сам; mount по умолчанию — "pki"
-        // Возвращает: certificate, private_key, issuing_ca, serial_number
     }
 }
 ```
+
+**Разбор.** `opsForPki()` использует точку монтирования `pki` по умолчанию. Вызов обращается к `POST /v1/pki/issue/myapp-role`. В данных ответа Vault есть `certificate`, `private_key`, `issuing_ca` и `serial_number`.
 
 **Где это применяют**:
 - **mTLS между сервисами** — каждый сервис получает свой сертификат от общего CA, и они аутентифицируют друг друга по нему.
@@ -432,16 +453,24 @@ class SecretServiceTest {
 
 ## Q11. Как реализовать автоматическую ротацию секретов?
 
-Ручная ротация (этот вопрос) — альтернатива `SecretLeaseContainer` из Q5, когда нужен полный контроль над моментом и логикой обновления. По расписанию (`@Scheduled`) сервис запрашивает у Vault новую пару credentials и обновляет ими пул соединений.
+HikariCP подключается через JDBC `DataSource`. В пуле есть свободные и занятые соединения. Vault выдал новую пару. Новые соединения должны использовать её, а занятые должны завершить текущую работу. Как обновить пул?
 
-**Ключевой момент** — `softEvictConnections()`: новые credentials прописываются в `HikariDataSource`, но активные соединения не рвутся резко. Hikari помечает старые соединения на «мягкое» закрытие — они дорабатывают текущие операции и заменяются новыми с обновлёнными учётными данными. Так ротация не вызывает всплеска ошибок. Нюанс: HikariCP сознательно не «запечатывает» `setUsername`/`setPassword` после старта пула — именно чтобы поддержать такую ротацию (новые соединения создаются уже с новыми кредами); те же операции доступны и через `HikariConfigMXBean`, в том числе по JMX:
+```text
+Источник новой пары: database/creds/my-role
+Состояние пула: есть свободные и занятые соединения
+Требование: дать занятым соединениям завершить работу
+```
+
+**Разбор.** Ротация по расписанию — альтернатива `SecretLeaseContainer` из Q5, когда нужен полный контроль над моментом и логикой обновления. По расписанию (`@Scheduled`) сервис запрашивает у Vault новую пару credentials и обновляет ими пул соединений.
+
+**Ключевой момент** — `softEvictConnections()`: новые credentials прописываются в `HikariDataSource`, но активные соединения не рвутся резко. Hikari помечает старые соединения на «мягкое» закрытие — они дорабатывают текущие операции и заменяются новыми с обновлёнными учётными данными. Мягкое вытеснение управляет соединениями внутри пула. Срок старой пары и момент её отзыва определяет Vault, поэтому завершение работы нужно согласовать с действием старой аренды и настройками БД. В примере используется версия HikariCP с `HikariConfigMXBean.setCredentials`, которая обновляет пару вместе. Изменение применяется при создании новых соединений через JDBC `DataSource`.
 
 ```java
 @Component
 @RequiredArgsConstructor
 public class SecretRotationManager {
     private final VaultTemplate vault;
-    private final DataSource dataSource;
+    private final HikariDataSource dataSource;
 
     // Ротация каждые 30 минут через Spring Scheduling
     @Scheduled(fixedDelay = 30 * 60 * 1000)
@@ -454,9 +483,9 @@ public class SecretRotationManager {
             String newPassword = (String) response.getData().get("password");
 
             // Обновление connection pool без рестарта
-            ((HikariDataSource) dataSource).setUsername(newUsername);
-            ((HikariDataSource) dataSource).setPassword(newPassword);
-            ((HikariDataSource) dataSource).getHikariPoolMXBean().softEvictConnections();
+            dataSource.getHikariConfigMXBean()
+                .setCredentials(Credentials.of(newUsername, newPassword));
+            dataSource.getHikariPoolMXBean().softEvictConnections();
 
             log.info("DB credentials rotated successfully");
         } catch (Exception e) {
@@ -515,35 +544,37 @@ spring:
 
 ## Q14. Как обрабатывать ошибки при недоступности Vault?
 
-Vault становится критической зависимостью: если он недоступен, приложение не получит секреты и может не подняться или начать падать на запросах. Защита строится на двух уровнях — **кэш последних успешных значений** и **Circuit Breaker**, чтобы при недоступности Vault отдавать закэшированное, а не валить запросы таймаутами.
+Сервис читает секрет из Vault. Сейчас обращение завершилось временным сетевым сбоем. Как обработать каждый случай?
+
+```text
+A: в памяти есть последнее значение, срок его использования ещё не истёк.
+B: пригодного значения в памяти нет.
+```
+
+**Разбор.** При временном сбое можно использовать последнее успешно прочитанное значение, если оно ещё пригодно и политика приложения допускает такое использование. Без пригодного секрета зависимая операция завершается явной ошибкой. Для обязательного при старте секрета сервис может оставаться неготовым. Пустая строка скрывает причину и передаёт потребителю некорректные учётные данные.
+
+Circuit Breaker ограничивает обращения при повторяющихся временных сбоях. В примере адаптер `vaultReader` различает временную недоступность, отсутствие секрета и отказ в доступе. Последние два исхода передаются вызывающему коду напрямую и исключены из расчёта Circuit Breaker. Кэш хранит значение в памяти с установленной границей допустимого использования. Для арендованного секрета эта граница не должна выходить за срок аренды.
 
 ```java
-// Circuit Breaker (Resilience4j) + кэш последних успешных секретов
-@Service
-@RequiredArgsConstructor
-public class ResilientSecretService {
-    private final VaultTemplate vaultTemplate;
-    private final CircuitBreaker circuitBreaker;
-    private final Map<String, String> secretCache = new ConcurrentHashMap<>();
+public String getSecret(String path) {
+    Supplier<CachedSecret> readFromVault = CircuitBreaker.decorateSupplier(
+        circuitBreaker, () -> vaultReader.read(path));
 
-    public String getSecret(String path) {
-        Supplier<String> readFromVault = CircuitBreaker.decorateSupplier(circuitBreaker, () -> {
-            String value = (String) vaultTemplate.read(path).getData().get("value");
-            secretCache.put(path, value);  // запоминаем последнее успешное значение
-            return value;
-        });
-        try {
-            return readFromVault.get();
-        } catch (Exception e) {
-            // Vault недоступен или circuit разомкнут (CallNotPermittedException)
-            log.error("Vault unavailable, using cached value", e);
-            return secretCache.getOrDefault(path, "");
+    try {
+        CachedSecret fresh = readFromVault.get();
+        secretCache.put(path, fresh);
+        return fresh.value();
+    } catch (VaultTemporarilyUnavailableException | CallNotPermittedException failure) {
+        CachedSecret cached = secretCache.get(path);
+        if (cached != null && cached.usableUntil().isAfter(clock.instant())) {
+            return cached.value();
         }
+        throw new SecretUnavailableException(path, failure);
     }
 }
 ```
 
-**Рекомендация**: кэшируй последние успешно полученные секреты в памяти. При недоступности Vault приложение продолжает работать на кэше, а команда узнаёт о проблеме через алерт — а не через каскад упавших запросов. Кэш в памяти (не на диске), чтобы секреты не оседали на файловой системе.
+Отслеживайте временные сбои и переходы Circuit Breaker по метрикам и оповещениям. Значения секретов в записи об ошибках не включайте.
 
 ## Q15. Какие best practices при работе с Spring Vault?
 
