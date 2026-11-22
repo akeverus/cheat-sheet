@@ -137,7 +137,6 @@ updated: "2026-05-07"
 | `TCL` (Transaction Control Language) | Управление транзакциями | `COMMIT`, `ROLLBACK`, `SAVEPOINT` |
 
 ```sql
--- DDL: создание таблицы
 CREATE TABLE employees (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -146,18 +145,14 @@ CREATE TABLE employees (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- DML: вставка данных
 INSERT INTO employees (name, department_id, salary)
 VALUES ('Иванов', 1, 150000.00);
 
--- DCL: выдача прав
 GRANT SELECT, INSERT ON employees TO app_user;
 
--- TCL: управление транзакцией
 BEGIN;
 UPDATE employees SET salary = salary * 1.1 WHERE department_id = 1;
 SAVEPOINT after_raise;
--- если что-то пошло не так:
 ROLLBACK TO after_raise;
 COMMIT;
 ```
@@ -223,13 +218,15 @@ PostgreSQL 15+ поддерживает UNIQUE NULLS NOT DISTINCT: NULL счит
 CREATE TABLE employees (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    manager_id INT REFERENCES employees(id) -- может быть NULL (CEO)
+    manager_id INT REFERENCES employees(id)
 );
 
-INSERT INTO employees (name, manager_id) VALUES ('CEO', NULL);     -- OK
-INSERT INTO employees (name, manager_id) VALUES ('Manager', 1);   -- OK
-INSERT INTO employees (name, manager_id) VALUES ('Dev', 999);     -- ОШИБКА: нет id=999
+INSERT INTO employees (name, manager_id) VALUES ('CEO', NULL);
+INSERT INTO employees (name, manager_id) VALUES ('Manager', 1);
+INSERT INTO employees (name, manager_id) VALUES ('Dev', 999);
 ```
+
+При выполнении команд в указанном порядке в новой таблице первые две вставки проходят. У CEO внешний ключ равен `NULL`, у Manager он ссылается на CEO с `id = 1`. Для Dev вставка отклоняется, поскольку строки с `id = 999` нет.
 
 ## Q5. Что означает `NULL` в `SQL` и как с ним работать?
 
@@ -241,19 +238,18 @@ INSERT INTO employees (name, manager_id) VALUES ('Dev', 999);     -- ОШИБК�
 - Агрегатные функции (`SUM`, `AVG`, `COUNT(column)`) игнорируют `NULL` — это часто источник сюрпризов: `AVG` считает среднее только по непустым значениям
 
 ```sql
--- Неправильно:
-SELECT * FROM users WHERE email = NULL;       -- всегда пусто!
+SELECT * FROM users WHERE email = NULL;
 
--- Правильно:
 SELECT * FROM users WHERE email IS NULL;
 
--- Обработка NULL:
 SELECT
     name,
-    COALESCE(phone, 'не указан') AS phone,   -- замена NULL
-    NULLIF(discount, 0) AS discount            -- 0 → NULL
+    COALESCE(phone, 'не указан') AS phone,
+    NULLIF(discount, 0) AS discount
 FROM customers;
 ```
+
+Первый запрос не возвращает строк. Второй выбирает строки, где `email` равен `NULL`. В третьем запросе `COALESCE` заменяет отсутствующий телефон, а `NULLIF` превращает нулевую скидку в `NULL`.
 
 Трёхзначная логика `NULL`:
 
@@ -465,29 +461,20 @@ INSERT INTO orders (id, customer_id) VALUES (nextval('order_seq'), 42);
 
 ## Q14. Порядок выполнения `SELECT`-запроса
 
-`SELECT` пишется не в том порядке, в котором СУБД его *логически* обрабатывает. Понимание реального порядка снимает половину «странностей» SQL — почему алиас не виден в `WHERE`, почему `WHERE` нельзя фильтровать по агрегату, почему `LIMIT` применяется последним. Логический порядок:
-
-```mermaid
-graph TD
-    A["1. FROM / JOIN"] --> B["2. WHERE"]
-    B --> C["3. GROUP BY / агрегаты"]
-    C --> D["4. HAVING"]
-    D --> E["5. Выходные выражения SELECT"]
-    E --> F["6. DISTINCT"]
-    F --> G["7. ORDER BY"]
-    G --> H["8. LIMIT / OFFSET"]
-```
+`SELECT` пишется не в том порядке, в котором СУБД его *логически* обрабатывает. Понимание реального порядка снимает половину «странностей» SQL — почему алиас не виден в `WHERE`, почему `WHERE` нельзя фильтровать по агрегату, почему `LIMIT` применяется последним. Рассмотрим запрос:
 
 ```sql
-SELECT department, COUNT(*) AS cnt    -- 5. Вычисление выражений
-FROM employees                         -- 1. Источник данных
-JOIN departments ON ...                -- 1. Соединение
-WHERE salary > 50000                   -- 2. Фильтрация строк
-GROUP BY department                    -- 3. Группировка
-HAVING COUNT(*) > 5                   -- 4. Фильтрация групп
-ORDER BY cnt DESC                      -- 7. Сортировка
-LIMIT 10;                              -- 8. Ограничение
+SELECT d.name AS department, COUNT(*) AS cnt
+FROM employees AS e
+JOIN departments AS d ON d.id = e.department_id
+WHERE e.salary > 50000
+GROUP BY d.id, d.name
+HAVING COUNT(*) > 5
+ORDER BY cnt DESC
+LIMIT 10;
 ```
+
+Логический порядок для этого запроса: `FROM / JOIN` → `WHERE` → `GROUP BY` и агрегаты → `HAVING` → выходные выражения `SELECT` → `ORDER BY` → `LIMIT`. Если запрос содержит `DISTINCT`, логически он применяется после проекции и до сортировки.
 
 Понимание этого порядка объясняет, почему нельзя использовать алиас из `SELECT` в `WHERE`, но можно в `ORDER BY`.
 
@@ -551,6 +538,8 @@ RETURNING id;
 У `DO SELECT` можно добавить `WHERE`: если условие для конфликтующей строки ложно или даёт `NULL`, `RETURNING` её пропустит. Если последующим действиям в той же транзакции нужна блокировка найденной строки, её можно запросить через `DO SELECT FOR UPDATE`.
 
 В PostgreSQL 18 этого синтаксиса нет. При конфликте `DO NOTHING RETURNING` не возвращает существующую строку. Для чтения её нужно запросить отдельно и учесть возможные конкурентные изменения. [INSERT в PostgreSQL 19](https://www.postgresql.org/docs/19/sql-insert.html) · [Изоляция транзакций](https://www.postgresql.org/docs/19/transaction-iso.html#XACT-READ-COMMITTED).
+
+**Пограничный случай при конкуренции.** В PostgreSQL 18 обходной вариант `WITH ins AS (INSERT ... ON CONFLICT DO NOTHING RETURNING id) SELECT id FROM ins UNION ALL SELECT id FROM products WHERE sku = ...` может вернуть пустую выдачу. Пусть другая транзакция вставила тот же `sku` и зафиксировалась, пока текущая команда ждала проверки уникальности. Вставка пропускается из-за конфликта, но чтение `products` в той же команде использует снимок, сделанный до чужого commit. При `READ COMMITTED` следующий отдельный `SELECT` получит новый снимок. Если запись могла быть удалена между командами, приложению нужен повтор операции. В PostgreSQL 19 `DO SELECT` в этом же сценарии возвращает конфликтующую строку после commit, в том числе когда она отсутствовала в исходном снимке команды. [Изоляция PostgreSQL 19](https://www.postgresql.org/docs/19/transaction-iso.html#XACT-READ-COMMITTED) · [Модифицирующие CTE](https://www.postgresql.org/docs/19/queries-with.html#QUERIES-WITH-MODIFYING)
 
 В Spring Data JPA для такого UPSERT используют нативный запрос. `saveAndFlush()` сохраняет сущность и выполняет flush, но сам по себе не даёт семантики `ON CONFLICT` по уникальному ключу.
 
@@ -692,45 +681,40 @@ RETURNING user_id;
 -- employees: (1, 'Иванов', department_id=1), (2, 'Петров', department_id=2), (3, 'Сидоров', department_id=NULL)
 -- departments: (1, 'IT'), (2, 'HR'), (4, 'Finance')
 
--- INNER JOIN: только совпадения (2 строки: Иванов+IT, Петров+HR)
 SELECT e.name, d.name FROM employees e
 INNER JOIN departments d ON e.department_id = d.id;
 
--- LEFT JOIN: все из левой + совпадения (3 строки, Сидоров с NULL)
 SELECT e.name, d.name FROM employees e
 LEFT JOIN departments d ON e.department_id = d.id;
 
--- RIGHT JOIN: все из правой + совпадения (3 строки, Finance с NULL)
 SELECT e.name, d.name FROM employees e
 RIGHT JOIN departments d ON e.department_id = d.id;
 
--- FULL OUTER JOIN: всё из обеих таблиц (4 строки)
 SELECT e.name, d.name FROM employees e
 FULL OUTER JOIN departments d ON e.department_id = d.id;
 
--- CROSS JOIN: декартово произведение (3×3 = 9 строк)
 SELECT e.name, d.name FROM employees e
 CROSS JOIN departments d;
 ```
+
+Для этих данных `INNER JOIN` даёт 2 строки. `LEFT JOIN` добавляет Сидорова без отдела, а `RIGHT JOIN` добавляет Finance без сотрудника. `FULL OUTER JOIN` включает оба несовпадения и даёт 4 строки. `CROSS JOIN` даёт 9 пар.
 
 ## Q22. В чём разница между `WHERE` и `ON` в `JOIN`?
 
 В логике запроса `ON` определяет, какие пары считаются совпадениями, а `WHERE` фильтрует результат соединения. При `LEFT JOIN` условие `WHERE d.active = true` отбрасывает строки без совпадения: для них `d.active` равно `NULL`, и условие не истинно. Условие `WHERE d.id IS NULL` действует иначе: если `d.id` гарантированно не бывает `NULL` в исходной таблице, оно оставит именно строки без пары. Для `RIGHT JOIN` рассуждение симметрично. [Соединения в PostgreSQL 19](https://www.postgresql.org/docs/19/queries-table-expressions.html#QUERIES-JOIN).
 
 ```sql
--- ON: фильтрация при соединении (NULL-строки остаются)
 SELECT e.name, d.name
 FROM employees e
 LEFT JOIN departments d ON d.id = e.department_id AND d.active = true;
--- Сотрудники без отдела или с неактивным отделом → d.name = NULL
 
--- WHERE: фильтрация после соединения (превращает LEFT JOIN в INNER)
 SELECT e.name, d.name
 FROM employees e
 LEFT JOIN departments d ON d.id = e.department_id
 WHERE d.active = true;
--- Остаются только сотрудники с активным отделом
 ```
+
+Первый запрос сохраняет всех сотрудников. Для сотрудника с неактивным или отсутствующим отделом `d.name` будет `NULL`. Второй возвращает только строки сотрудников, для которых нашёлся активный отдел.
 
 ## Q23. (!) Что лучше — `JOIN` или подзапросы?
 
@@ -755,16 +739,19 @@ LEFT JOIN departments d ON d.id = e.department_id;
 Оба «склеивают» результаты нескольких `SELECT` в один набор (по вертикали, в отличие от `JOIN`). Разница одна, но важная для производительности: `UNION` дополнительно удаляет дубликаты, по всем выходным столбцам. `UNION ALL` сохраняет повторы.
 
 ```sql
--- UNION: удаляет дубликаты (порядок строк не задан)
+-- employees (name, email): ('Анна', 'anna@example.com'), ('Борис', 'boris@example.com')
+-- contractors (name, email): ('Анна', 'anna@example.com'), ('Вера', 'vera@example.com')
+
 SELECT name, email FROM employees
 UNION
 SELECT name, email FROM contractors;
 
--- UNION ALL: сохраняет дубликаты
-SELECT name, 'employee' AS type FROM employees
+SELECT name, email FROM employees
 UNION ALL
-SELECT name, 'contractor' AS type FROM contractors;
+SELECT name, email FROM contractors;
 ```
+
+В первой выборке строка Анны появится один раз, а во второй — дважды. Сравниваются обе колонки проекции.
 
 Требования: одинаковое количество столбцов, совместимые типы. Выбирайте `UNION ALL`, когда повторы допустимы или их отсутствие гарантировано.
 
@@ -815,9 +802,9 @@ SELECT department,
        AVG(salary) AS avg_salary,
        MAX(salary) AS max_salary
 FROM employees
-WHERE status = 'ACTIVE'          -- фильтрация строк (до GROUP BY)
+WHERE status = 'ACTIVE'
 GROUP BY department
-HAVING COUNT(*) > 3              -- фильтрация групп (после GROUP BY)
+HAVING COUNT(*) > 3
 ORDER BY avg_salary DESC;
 ```
 
@@ -861,12 +848,14 @@ DISTINCT может применяться к результату, которы
 -- Строки: (1,10,5), (2,10,NULL), (3,20,10), (4,20,5)
 
 SELECT
-    COUNT(*) AS all_rows,                 -- 4 (все строки)
-    COUNT(discount) AS non_null,          -- 3 (без NULL)
-    COUNT(DISTINCT customer_id) AS unique_customers,  -- 2
-    COUNT(DISTINCT discount) AS unique_discounts       -- 2 (5 и 10)
+    COUNT(*) AS all_rows,
+    COUNT(discount) AS non_null,
+    COUNT(DISTINCT customer_id) AS unique_customers,
+    COUNT(DISTINCT discount) AS unique_discounts
 FROM orders;
 ```
+
+Для показанных строк результаты по порядку: 4, 3, 2 и 2. Два уникальных ненулевых значения скидки — 5 и 10.
 
 ## Q30. (!) Что такое оконные функции (`Window Functions`)?
 
@@ -921,11 +910,13 @@ graph LR
 ```sql
 -- Данные: зарплаты 100, 100, 90, 80
 SELECT name, salary,
-    ROW_NUMBER() OVER (ORDER BY salary DESC) AS row_num,   -- 1, 2, 3, 4
-    RANK()       OVER (ORDER BY salary DESC) AS rank,      -- 1, 1, 3, 4
-    DENSE_RANK() OVER (ORDER BY salary DESC) AS dense_rank -- 1, 1, 2, 3
+    ROW_NUMBER() OVER (ORDER BY salary DESC) AS row_num,
+    RANK()       OVER (ORDER BY salary DESC) AS rank,
+    DENSE_RANK() OVER (ORDER BY salary DESC) AS dense_rank
 FROM employees;
 ```
+
+В порядке убывания зарплат номера `ROW_NUMBER` составят 1, 2, 3, 4, ранги `RANK` — 1, 1, 3, 4, а `DENSE_RANK` — 1, 1, 2, 3. Без дополнительного ключа порядок двух строк с зарплатой 100 для `ROW_NUMBER` не задан.
 
 | Функция | Дубликаты | Пропуски | Типичный use-case |
 |---|---|---|---|

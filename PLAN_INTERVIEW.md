@@ -32,7 +32,7 @@
 диапазона, включая Notification System и Java Functional Interface, не входят
 в счётчик 55. Для учёта достаточно путей и записей о передаче полного файла.
 
-Из 55 файлов партии 18 восстановлены в `master`. Вне этой партии уже
+Из 55 файлов партии 19 восстановлены в `master`. Вне этой партии уже
 закоммичены Notification System, Java Functional Interface, Vector Databases
 и JDBC и пулы соединений.
 
@@ -924,3 +924,9 @@ python3 scripts/mcq-workflow.py sync
   SHA-256 `5b65aed2c93575219082d8a82278f45b716cbc46e7d4e791d848f1cc25b6727e`.
   Изменены Q1/Q4/Q5/Q14/Q21/Q22/Q24/Q27/Q29/Q31, прежний Q16 сохранён.
   Снимок готов для полной генерации темы из исторического JSON.
+
+- **SQL** — MCQ-чат передал полный JSON в ходе
+  `01a2046f-9cb1-77a2-afbd-9a5a1e531e2f` по согласованной теории и
+  исходному JSON из `b28a1c807`. Полный файл перенесён из
+  `work/sql-recovery-full-regeneration/sql-interview.json`
+  вместе с согласованным Markdown. Оба production-файла входят в этот коммит.
