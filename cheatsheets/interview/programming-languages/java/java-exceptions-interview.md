@@ -105,7 +105,18 @@ updated: "2026-05-27"
 
 Исключение (`Exception`) — это событие во время выполнения программы, которое прерывает нормальный поток инструкций (например, обращение к `null` или ошибка чтения файла). В Java любое исключение — это объект, и все они наследуются от класса `Throwable`, поэтому исключение можно создать, бросить, поймать и передать как обычный объект.
 
-Иерархия исключений в Java:
+Условие. Расположите указанные типы в иерархии и определите, какие из них относятся к checked.
+
+```mermaid
+graph LR
+    T["Throwable"]
+    E["Exception"]
+    R["RuntimeException"]
+    I["IOException"]
+    X["Error"]
+```
+
+Разбор иерархии:
 
 ```mermaid
 graph TD
@@ -138,8 +149,8 @@ graph TD
 Ключевые моменты:
 - `Throwable` — корень иерархии; имеет два прямых наследника: `Error` и `Exception`
 - `Error` — серьёзные проблемы JVM, от которых обычно невозможно восстановиться
-- `Exception` → **checked** (проверяемые): компилятор требует обработки
-- `RuntimeException` → **unchecked** (непроверяемые): обработка не обязательна
+- `RuntimeException` и `Error` со всеми их подклассами относятся к **unchecked**.
+- `Throwable` и его подклассы вне этих двух веток относятся к **checked**. Для потенциально выбрасываемого checked-исключения компилятор требует подходящего обработчика или объявления в `throws`.
 
 ## Q2. Какова цель ключевых слов `throw` и `throws`?
 
@@ -238,6 +249,8 @@ try {
 
 ## Q5. (!) В чём разница между `Checked` и `Unchecked Exception`?
 
+В условии сравните компиляцию этих двух методов. Первый при чтении может выбросить `IOException`, второй при таком аргументе выбрасывает `NullPointerException`. В первом методе нужно обработать или объявить `IOException`. Второй метод компилируется и при вызове выбрасывает исключение.
+
 | Критерий | `Checked Exception` | `Unchecked Exception` |
 |----------|--------------------|-----------------------|
 | Наследование | `Throwable` и его подклассы вне веток `RuntimeException` и `Error` | `RuntimeException` и `Error` с их подклассами |
@@ -247,14 +260,12 @@ try {
 | Восстановимость | Определяется конкретной ошибкой и контрактом | Тоже определяется конкретной ошибкой и контрактом |
 
 ```java
-// Checked — компилятор заставляет обрабатывать
-public void readConfig() throws IOException {  // ОБЯЗАТЕЛЬНО
+void readConfig() {
     Files.readString(Path.of("app.conf"));
 }
 
-// Unchecked — компилятор не требует обработки
-public void process(String value) {
-    Objects.requireNonNull(value); // бросает NullPointerException
+void process() {
+    Objects.requireNonNull(null);
 }
 ```
 
@@ -388,16 +399,15 @@ public class PaymentException extends RuntimeException {
 `try-with-resources` (`Java 7+`) — конструкция, которая автоматически закрывает ресурсы, реализующие интерфейс `AutoCloseable`, после выхода из блока `try`:
 
 ```java
-// Java 7+ — ресурс объявляется в try(...)
-try (var reader = new BufferedReader(new FileReader("data.csv"));
-     var writer = new BufferedWriter(new FileWriter("output.csv"))) {
+try (BufferedReader reader = new BufferedReader(new FileReader("data.csv"));
+     BufferedWriter writer = new BufferedWriter(new FileWriter("output.csv"))) {
 
     String line;
     while ((line = reader.readLine()) != null) {
         writer.write(transform(line));
         writer.newLine();
     }
-} // reader и writer закрываются автоматически, в обратном порядке
+}
 ```
 
 ```java
@@ -408,23 +418,21 @@ try (reader) {  // reader — effectively final
 }
 ```
 
-Порядок работы:
+В примере объявлены `reader` и `writer`. Определите, что произойдёт при выходе из тела и при ошибке создания второго ресурса.
+
+После выхода из тела Java пытается вызвать `close()` для каждого успешно инициализированного ненулевого ресурса в обратном порядке. Если создание `writer` завершится исключением, закрывается уже созданный `reader`. При наличии основного исключения ошибки закрытия добавляются к нему как suppressed, если suppression включён.
 
 ```mermaid
-graph TD
-    A["Создание ресурсов<br/>(в порядке объявления)"] --> B["Выполнение блока try"]
-    B -->|"Нормальное завершение"| C["Закрытие ресурсов<br/>(в обратном порядке)"]
-    B -->|"Исключение в try"| D["Закрытие ресурсов<br/>(в обратном порядке)"]
-    D -->|"close() успешен"| E["Выброс основного исключения"]
-    D -->|"close() тоже бросает"| F["Исключение close() добавляется<br/>как suppressed к основному"]
-    F --> E
-    C --> G["Продолжение выполнения"]
+graph LR
+    A["data.csv"]
+    B["output.csv"]
+    C["transform(line)"]
 ```
 
 Преимущества перед ручным `finally`:
 - Нет boilerplate-кода проверки на `null` и вызова `close()`
-- Гарантия закрытия даже при исключении
-- Suppressed exceptions не теряются (в отличие от ручного `finally`, где исключение в `close()` затирает основное)
+- Попытка закрытия уже созданных ненулевых ресурсов даже при исключении
+- Сохранение ошибок закрытия при включённом suppression
 
 ## Q13. (!) Что такое `Suppressed Exceptions` в `try-with-resources`?
 
@@ -445,10 +453,9 @@ public class FaultyResource implements AutoCloseable {
 try (var resource = new FaultyResource()) {
     resource.doWork();
 }
-// Результат:
-// Exception: "Ошибка в doWork"
-//   Suppressed: "Ошибка в close"
 ```
+
+В примере наружу выходит исключение с сообщением «Ошибка в doWork». Исключение «Ошибка в close» доступно через `getSuppressed()`. Попытка закрытия выполняется для успешно инициализированного ненулевого ресурса.
 
 Доступ к suppressed:
 
@@ -550,28 +557,36 @@ files.forEach(unchecked(path -> Files.readString(path)));
 
 ## Q16. Как переопределить метод, выбрасывающий `Exception`?
 
-Правила контракта `throws` при переопределении (контравариантность по исключениям):
-
-| Родительский метод | Дочерний метод может |
-|---|---|
-| Нет `throws` | Только unchecked (любые) |
-| `throws IOException` | `throws FileNotFoundException` (уже или равно), не `throws Exception` (шире) |
-| `throws RuntimeException` | Любые unchecked |
+Какие из трёх переопределений компилируются? Оцените каждый класс отдельно вместе с `Parent`.
 
 ```java
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.sql.SQLException;
+
 class Parent {
     void process() throws IOException { }
 }
 
-class Child extends Parent {
+class ChildA extends Parent {
     @Override
-    void process() throws FileNotFoundException { }  // OK: подтип IOException
-    // void process() throws Exception { }           // ОШИБКА: шире чем IOException
-    // void process() throws SQLException { }        // ОШИБКА: другой checked
+    void process() throws FileNotFoundException { }
+}
+
+class ChildB extends Parent {
+    @Override
+    void process() throws Exception { }
+}
+
+class ChildC extends Parent {
+    @Override
+    void process() throws SQLException { }
 }
 ```
 
-Причина: вызывающий код работает с типом `Parent` и обрабатывает только `IOException`. Если бы `Child` мог бросать `SQLException`, обработчик бы его не поймал.
+**Разбор.** `ChildA` компилируется, поскольку `FileNotFoundException` наследует `IOException`. В `ChildB` объявлен более широкий checked-тип `Exception`, а в `ChildC` — checked-тип из другой ветки. Оба переопределения компилятор отклоняет.
+
+В этом примере каждое checked-исключение переопределения должно совпадать с типом из `throws` родительского метода или быть его подтипом. Дочерний метод может убрать `throws` или объявить unchecked-исключение. Если у родительского метода нет checked-исключений, дочерний метод не может их добавить. Поэтому код, вызывающий метод через ссылку типа `Parent`, по-прежнему может ограничиться обработкой `IOException`. [JLS §8.4.8.3](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.4.8.3)
 
 Это связано с принципом подстановки Лисков (LSP) — подробнее в [вопросах по Java OOP](java-oop-interview.md).
 
@@ -587,22 +602,28 @@ void doSomething() {
 
 ## Q18. Есть ли способ выбросить checked `Exception` из метода без `throws`?
 
-Да, через трюк с дженериками и стиранием типов (**sneaky throw**):
+Компилируется ли этот класс? Если вызвать `methodWithoutThrows()`, какой фактический тип будет у выброшенного исключения?
 
 ```java
-@SuppressWarnings("unchecked")
-public static <T extends Throwable> void sneakyThrow(Throwable ex) throws T {
-    throw (T) ex;  // компилятор выводит T = RuntimeException
-}
+import java.io.IOException;
 
-public void methodWithoutThrows() {
-    sneakyThrow(new IOException("Checked, но без throws!"));
-    // Компилятор считает, что бросается RuntimeException
-    // В runtime реально летит IOException
+class Example {
+    @SuppressWarnings("unchecked")
+    public static <T extends Throwable> void sneakyThrow(Throwable ex) throws T {
+        throw (T) ex;
+    }
+
+    public void methodWithoutThrows() {
+        sneakyThrow(new IOException("Read failed"));
+    }
 }
 ```
 
-Этот подход используется в библиотеках (`Lombok @SneakyThrows`, `Vavr`). Однако это **антипаттерн** в бизнес-коде — вызывающий код не ожидает checked exception и не обрабатывает его.
+**Разбор.** Код компилируется. Аргумент имеет формальный тип `Throwable` и не задаёт нижнюю границу для `T`. При разрешении переменной типа, участвующей в `throws`, с верхней границей `Throwable` компилятор в данном вызове выводит `RuntimeException`. Поэтому `methodWithoutThrows()` не обязан объявлять checked-исключение. [JLS §18.4](https://docs.oracle.com/javase/specs/jls/se25/html/jls-18.html#jls-18.4)
+
+Стирание `T` здесь даёт `Throwable`. Приведение `(T) ex` не превращает переданный объект в `RuntimeException`. Вызов выбрасывает исходный `IOException`. [JLS §4.6](https://docs.oracle.com/javase/specs/jls/se25/html/jls-4.html#jls-4.6)
+
+Этот приём называют **sneaky throw**. Его используют, например, в Lombok `@SneakyThrows`. В прикладном коде он скрывает checked-исключение из контракта вызова.
 
 ## Q19. (!) Когда создавать кастомное исключение и как его правильно оформить?
 
@@ -696,29 +717,18 @@ try {
 
 Сначала выполняется `try`. При исключении выбирается подходящий `catch`; после его обработки выполняется `finally`. Если обработчик не найден, `finally` всё равно выполняется, а затем исключение передаётся вызывающему коду. При обычном завершении `try` блок `finally` также выполняется.
 
-```mermaid
-graph TD
-    A["try блок"] -->|"Нет исключения"| B["finally блок"]
-    A -->|"Исключение"| C{"catch соответствует?"}
-    C -->|"Да"| D["catch блок"]
-    C -->|"Нет"| E["finally блок"]
-    D --> F["finally блок"]
-    B --> G["Продолжение программы"]
-    F --> G
-    E --> H["Исключение пробрасывается выше"]
-```
+
 
 ```java
 public String readFirstLine(String path) {
     BufferedReader reader = null;
     try {
         reader = new BufferedReader(new FileReader(path));
-        return reader.readLine(); // (1) return здесь
+        return reader.readLine();
     } catch (IOException ex) {
         log.error("Ошибка чтения", ex);
-        return "default";          // (2) или return здесь
+        return "default";
     } finally {
-        // (3) Выполнится ВСЕГДА — даже после return!
         if (reader != null) {
             try { reader.close(); } catch (IOException ignored) {}
         }
@@ -737,10 +747,12 @@ public int getValue() {
     try {
         return 1;
     } finally {
-        return 2; // ВСЕГДА вернёт 2!
+        return 2;
     }
 }
 ```
+
+В первом примере метод вернёт `2`.
 
 Ещё хуже — `return` в `finally` **подавляет исключения**:
 
@@ -845,6 +857,18 @@ Thread.setDefaultUncaughtExceptionHandler((thread, ex) -> {
 4. Если не найден — стек-трейс в `System.err`
 
 ## Q27. (!) Как правильно логировать исключения?
+
+```java
+void handleOrder(long orderId) {
+    try {
+        orderService.process(orderId);
+    } catch (OrderProcessingException exception) {
+        // Точка обработки сбоя.
+    }
+}
+```
+
+**Разбор примеров:**
 
 ```java
 // ПРАВИЛЬНО — передаём исключение как последний аргумент
@@ -997,7 +1021,7 @@ public int factorial(int n) {
 | Критерий | `Fail-fast` | `Fail-safe` |
 |----------|------------|-------------|
 | Поведение | При ошибке немедленно бросить исключение | Продолжить работу, избежав сбоя |
-| Пример в коллекциях | `ArrayList` iterator → `ConcurrentModificationException` | `CopyOnWriteArrayList` — работает с копией |
+| Пример в коллекциях | Итератор `ArrayList` обнаруживает структурные изменения по возможности (best effort) | `CopyOnWriteArrayList` — работает с копией |
 | Пример в API | `Objects.requireNonNull()` в начале метода | Возврат default-значения или `Optional.empty()` |
 | Когда использовать | Баги должны обнаруживаться рано | Доступность важнее строгой корректности |
 
@@ -1014,16 +1038,31 @@ public void createUser(String email, String name) {
 
 // Fail-fast в коллекциях
 List<String> list = new ArrayList<>(List.of("a", "b", "c"));
-for (String s : list) {
-    list.remove(s); // ConcurrentModificationException!
-}
+Iterator<String> iterator = list.iterator();
+list.remove("b");
+iterator.next();
 ```
+
+Для этого фрагмента `ArrayList` в OpenJDK проверяет структурное изменение в `next()` и выбрасывает `ConcurrentModificationException`. Fail-fast диагностика работает по принципу best effort. На неё нельзя опираться для корректности программы или синхронизации потоков.
 
 Рекомендация: в бизнес-логике — **fail-fast** (обнаруживать баги рано); на границах системы — **fail-safe** с логированием (не ронять весь сервис из-за одного запроса).
 
 ## Q33. Как обрабатывать исключения в `Spring` (`@ExceptionHandler`, `@ControllerAdvice`)?
 
 `Spring MVC` предоставляет централизованный механизм обработки исключений для REST API:
+
+```java
+@RestController
+class OrderController {
+    @GetMapping("/api/orders/{id}")
+    Order getOrder(@PathVariable long id) {
+        return orderService.findById(id)
+            .orElseThrow(() -> new OrderNotFoundException(id));
+    }
+}
+```
+
+**Разбор примеров:**
 
 ```java
 @RestControllerAdvice
@@ -1178,8 +1217,9 @@ try {
     } catch (Exception closeException) {
         if (primaryException != null) {
             primaryException.addSuppressed(closeException);  // не теряем info
+        } else {
+            throw closeException;
         }
-        // Иначе просто пробрасываем closeException
     }
 }
 // try-with-resources делает это автоматически!
@@ -1214,11 +1254,13 @@ try {
 try {
     processRequest(request);
 } catch (IOException | ParseException e) {
-    // e имеет тип: наиболее специфичный общий предок (Throwable, если нет общего)
+    // e имеет тип: lub(IOException, ParseException), здесь Exception
     log.error("Processing error", e);
     throw new ServiceException(e);
 }
 ```
+
+Тип параметра multi-catch определяется как `lub` (наименьшая общая верхняя граница) типов альтернатив.
 
 **Ограничения multi-catch.** Три ключевых правила, которые часто спрашивают:
 
@@ -1227,7 +1269,7 @@ try {
 try { ... }
 catch (Exception | IOException e) { }  // ОШИБКА КОМПИЛЯЦИИ: IOException extends Exception
 
-// 2. Переменная e в multi-catch — effectively final (нельзя переприсвоить)
+// 2. Переменная e в multi-catch — неявно final (нельзя переприсвоить)
 catch (IOException | ParseException e) {
     e = new IOException("other");  // ОШИБКА КОМПИЛЯЦИИ
 }
@@ -1249,22 +1291,21 @@ catch (JdbcException | DataAccessException e) {
 
 ## Q37. Как работает try-with-resources с `AutoCloseable` и в каком порядке закрываются ресурсы?
 
-`try-with-resources` компилятор разворачивает в обычный `try-finally` с вызовом `close()` и `addSuppressed()` под капотом — это синтаксический сахар, а не отдельная конструкция JVM. Ресурсы закрываются в **обратном порядке** объявления (LIFO): последний открытый закрывается первым. Это важно, когда ресурсы зависят друг от друга — например, `ResultSet` должен закрыться раньше `Statement` и `Connection`.
+`try-with-resources` компилятор разворачивает в обычный `try-finally` с вызовом `close()` и `addSuppressed()` под капотом — это синтаксический сахар, а не отдельная конструкция JVM. Java пытается вызвать `close()` для успешно инициализированных ненулевых ресурсов в **обратном порядке** объявления (LIFO). Это важно, когда ресурсы зависят друг от друга — например, `ResultSet` должен закрыться раньше `Statement` и `Connection`.
 
 ```java
-// Несколько ресурсов — закрытие в обратном порядке (LIFO)
 try (
-    Connection conn = dataSource.getConnection();      // открыт первым
-    PreparedStatement stmt = conn.prepareStatement(sql);  // открыт вторым
-    ResultSet rs = stmt.executeQuery()                 // открыт третьим
+    Connection conn = dataSource.getConnection();
+    PreparedStatement stmt = conn.prepareStatement(sql);
+    ResultSet rs = stmt.executeQuery()
 ) {
     while (rs.next()) {
         process(rs.getString("name"));
     }
 }
-// Закрытие: rs.close() → stmt.close() → conn.close()
-// Каждый close() вызывается даже если предыдущий бросил исключение
 ```
+
+В примере порядок попыток закрытия — `rs`, `stmt`, `conn`. Исключение при закрытии одного ресурса не отменяет попытки закрыть оставшиеся.
 
 **Кастомный AutoCloseable:**
 ```java
@@ -1300,29 +1341,22 @@ try (AutoLock lock = new AutoLock(reentrantLock)) {
 ```
 
 **Что происходит при исключении в close():**
-- Если тело блока бросило исключение И close() тоже — основное исключение пробрасывается, исключение из close() добавляется через `addSuppressed`.
+- Если тело блока бросило исключение И close() тоже — основное исключение пробрасывается, исключение из close() добавляется через `addSuppressed`, если у основного исключения включён suppression.
 - Если тело не бросало исключений — исключение из close() пробрасывается как основное.
 
 ---
 
 ## Q38. Как правильно создавать кастомные исключения и зачем нужен `serialVersionUID`?
 
-Кастомное исключение должно нести доменный смысл и весь контекст, нужный для обработки и диагностики. Ключевые правила сведены в комментариях кода ниже:
+Кастомное исключение должно нести доменный смысл и весь контекст, нужный для обработки и диагностики. Пример объявления:
 
 ```java
-// 1. Расширяй подходящий базовый тип
-// RuntimeException — unchecked (не требует объявления throws)
-// Exception        — checked (требует объявления или обработки)
-
 public class OrderNotFoundException extends RuntimeException {
-    // 2. Явный serialVersionUID полезен при совместимости сериализованных форм
     @Serial
     private static final long serialVersionUID = 1L;
 
-    // 3. Включать бизнес-контекст в конструктор
     private final Long orderId;
 
-    // 4. Конструкторы: message, message+cause, cause
     public OrderNotFoundException(Long orderId) {
         super("Order not found: " + orderId);
         this.orderId = orderId;
@@ -1333,11 +1367,9 @@ public class OrderNotFoundException extends RuntimeException {
         this.orderId = orderId;
     }
 
-    // 5. Геттер для контекстных данных (для логирования/обработки)
     public Long getOrderId() { return orderId; }
 }
 
-// 6. Иерархия: базовое исключение домена + конкретные подтипы
 public abstract class DomainException extends RuntimeException {
     protected DomainException(String message) { super(message); }
     protected DomainException(String message, Throwable cause) { super(message, cause); }
@@ -1365,9 +1397,8 @@ public class InsufficientStockException extends DomainException {
 **Проблема:** стандартные функциональные интерфейсы (`Function`, `Consumer`, `Supplier`) не объявляют checked exceptions в сигнатуре, поэтому компилятор запрещает бросать их из лямбды. А многие полезные методы (тот же `Files.readString`) как раз бросают checked `IOException`.
 
 ```java
-// ПРОБЛЕМА: Files.readString бросает IOException (checked)
 List<String> contents = paths.stream()
-    .map(path -> Files.readString(path))  // ОШИБКА КОМПИЛЯЦИИ
+    .map(path -> Files.readString(path))
     .collect(toList());
 ```
 
@@ -1431,8 +1462,20 @@ throw new UncheckedIOException(ioException);
 Главная цель — чтобы по логу можно было восстановить, что, где и при каких данных сломалось, не открывая дебаггер. Ключевые правила (подробности в комментариях кода):
 
 ```java
+void handleOrder(long orderId, long userId, String requestId) {
+    try {
+        orderService.process(orderId);
+    } catch (OrderProcessingException e) {
+        // Точка обработки сбоя.
+    }
+}
+```
+
+**Разбор примеров:**
+
+```java
 // ПРАВИЛО 1: передавать exception как второй аргумент (не в строку!)
-// ПЛОХО — теряем стектрейс в некоторых logback appenders
+// ПЛОХО — логгер получает только строку без объекта исключения
 log.error("Error processing order: " + e.getMessage());
 
 // ХОРОШО — логгер сам форматирует стектрейс
@@ -1466,7 +1509,7 @@ MDC.put("userId", String.valueOf(userId));
 try {
     processOrder();
 } catch (Exception e) {
-    log.error("Order processing failed", e);  // MDC-поля автоматически включены
+    log.error("Order processing failed", e);  // MDC-поля попадут в запись, если вывод настроен их включать
 } finally {
     MDC.clear();
 }
@@ -1518,7 +1561,20 @@ public class LightweightException extends RuntimeException {
 
 ## Q42. Как организовать глобальную обработку исключений в Spring (`@ControllerAdvice`, `ProblemDetail`)?
 
-`@ControllerAdvice` + `@ExceptionHandler` дают единую точку обработки исключений для всех контроллеров: бизнес-код просто бросает доменное исключение, а advice превращает его в корректный HTTP-ответ с нужным статусом. Это убирает try-catch из контроллеров и гарантирует единый формат ошибок по всему API.
+`@ControllerAdvice` + `@ExceptionHandler` дают единую точку обработки исключений для всех контроллеров: бизнес-код просто бросает доменное исключение, а advice превращает его в корректный HTTP-ответ с нужным статусом. Это убирает try-catch из контроллеров и позволяет унифицировать ответы для исключений, которые Spring MVC обрабатывает через этот advice. Сбои вне обработки MVC, например в Servlet-фильтре, требуют отдельной обработки.
+
+```java
+@RestController
+class OrderController {
+    @GetMapping("/api/orders/{id}")
+    Order getOrder(@PathVariable long id) {
+        return orderService.findById(id)
+            .orElseThrow(() -> new OrderNotFoundException(id));
+    }
+}
+```
+
+**Разбор примеров:**
 
 ```java
 @RestControllerAdvice
@@ -1562,12 +1618,8 @@ public class GlobalExceptionHandler {
 }
 ```
 
-**ProblemDetail (RFC 9457, бывший RFC 7807; Spring 6+):**
+**ProblemDetail (RFC 9457, заменивший RFC 7807, Spring 6+).** Ручной возврат `ProblemDetail` из обработчика не требует `spring.mvc.problemdetails.enabled=true`. Это свойство Boot включает автоконфигурацию обработки встроенных исключений MVC в формате Problem Details.
 ```java
-// Тип ProblemDetail есть в Spring 6, но автоотдачу problem+json включают явно:
-// application.yml:
-// spring.mvc.problemdetails.enabled: true
-
 // Стандартный формат ответа:
 // {
 //   "type": "https://example.com/errors/order-not-found",
@@ -1582,7 +1634,7 @@ problem.setType(URI.create("https://api.example.com/errors/order-not-found"));
 problem.setInstance(URI.create(request.getRequestURI()));
 ```
 
-**Порядок приоритетов обработчиков:** более специфичный тип исключения имеет приоритет над более общим. Если несколько `@ControllerAdvice` — использовать `@Order` для управления порядком.
+**Порядок приоритетов обработчиков.** Сначала Spring MVC ищет подходящий метод в самом контроллере. Затем проверяет применимые advice в их порядке, который можно задать через `@Order`. Совпадение по причине в более приоритетном advice может выиграть у совпадения по корневому исключению в менее приоритетном. Внутри одного advice при совпадении с корневым исключением оно имеет приоритет над совпадением по причине.
 
 ---
 

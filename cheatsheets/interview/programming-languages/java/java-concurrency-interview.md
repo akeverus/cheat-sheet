@@ -161,6 +161,15 @@ public class ThreadFailureExample {
 
 ## Q2. Как создать поток и запустить его?
 
+```java
+Runnable task = () -> System.out.println(Thread.currentThread().getName());
+Thread first = Thread.ofPlatform().name("first").unstarted(task);
+Thread second = Thread.ofPlatform().name("second").unstarted(task);
+first.run();
+second.start();
+second.join();
+```
+
 Поток создаётся объектом `Thread`, а запускается методом `start()`. Есть два способа задать его работу.
 
 **1. Через `Runnable` (предпочтительный):**
@@ -184,11 +193,11 @@ new MyThread().start();
 
 **Почему предпочтителен `Runnable`.** Java не поддерживает множественное наследование классов: если унаследоваться от `Thread`, класс уже не сможет расширить ничего другого. Реализуя `Runnable`, вы отделяете задачу (что делать) от механизма запуска (поток) — класс остаётся свободным для наследования и легче тестируется.
 
-**Подводный камень.** Вызов `run()` напрямую вместо `start()` выполнит код в текущем потоке, не создавая новый. Новый поток ОС появляется только при `start()` — это частая ошибка на собеседовании.
+**Подводный камень.** В показанном примере с platform threads прямой вызов `first.run()` выполняет задачу в вызывающем потоке. Вызов `second.start()` запускает её в потоке `second`.
 
 ## Q3. (!) Какие состояния есть у `Thread`?
 
-У потока шесть состояний из перечисления `Thread.State`. Поток проходит их по жизненному циклу: создан → запущен → (попеременно работает и ждёт) → завершён.
+У потока шесть состояний из перечисления `Thread.State`. Конкретный поток может посетить только часть состояний.
 
 1. **`NEW`** — поток создан, но `start()` ещё не вызван
 2. **`RUNNABLE`** — поток выполняется или готов к выполнению (ждёт, когда планировщик даст ему CPU). Java не различает «выполняется» и «готов» — оба попадают в `RUNNABLE`
@@ -199,20 +208,13 @@ new MyThread().start();
 
 **Тонкость для собеседования.** Поток, ждущий блокирующего I/O или сетевого ответа, остаётся в `RUNNABLE` — с точки зрения JVM он не заблокирован на мониторе. `BLOCKED` относится только к ожиданию монитора `synchronized`.
 
-```mermaid
-stateDiagram-v2
-    [*] --> NEW: new Thread()
-    NEW --> RUNNABLE: start()
-    RUNNABLE --> BLOCKED: ждёт монитора
-    BLOCKED --> RUNNABLE: монитор получен
-    RUNNABLE --> WAITING: wait() / join() / park()
-    WAITING --> RUNNABLE: notify() / unpark()
-    RUNNABLE --> TIMED_WAITING: sleep(ms) / wait(ms)
-    TIMED_WAITING --> RUNNABLE: таймаут / notify()
-    RUNNABLE --> TERMINATED: run() завершён
-    WAITING --> TERMINATED: interrupt()
-    TIMED_WAITING --> TERMINATED: interrupt()
+```text
+Создали Thread → вызвали start() → поток вызвал wait() под монитором
+Другой поток вызвал interrupt(), пока монитор ещё занят
+Поток снова получил монитор → обработал исключение → вышел из run()
 ```
+
+**Что происходит после прерывания.** Сам вызов `interrupt()` не завершает поток. При прерванном `Object.wait()` поток восстанавливает захват монитора, затем получает `InterruptedException`. Пока монитор занят, возможен `BLOCKED`. Состояние `TERMINATED` наступает после завершения выполнения. [JLS §17.2](https://docs.oracle.com/en/java/javase/26/docs/specs/jls/jls-17.html#jls-17.2)
 
 ## Q4. Что такое `Thread Priority`?
 
@@ -245,18 +247,16 @@ t.setPriority(Thread.MAX_PRIORITY);
 `Thread` принимает только `Runnable`: чтобы запустить `Callable`, его отдают в `ExecutorService.submit()` и получают результат через `Future`.
 
 ```java
-// Runnable — без результата
 Runnable task = () -> System.out.println("Running");
 new Thread(task).start();
 
-// Callable — с результатом
 Callable<Integer> callable = () -> {
     TimeUnit.SECONDS.sleep(1);
     return 42;
 };
 ExecutorService executor = Executors.newSingleThreadExecutor();
 Future<Integer> future = executor.submit(callable);
-Integer result = future.get(); // 42
+Integer result = future.get();
 executor.shutdown();
 ```
 
@@ -267,10 +267,9 @@ executor.shutdown();
 ```java
 Thread daemon = new Thread(() -> {
     while (true) {
-        // фоновая очистка кэша
     }
 });
-daemon.setDaemon(true); // ВАЖНО: до start()
+daemon.setDaemon(true);
 daemon.start();
 ```
 
@@ -294,10 +293,8 @@ daemon.start();
 Thread worker = new Thread(() -> {
     while (!Thread.currentThread().isInterrupted()) {
         try {
-            // выполняем работу
             Thread.sleep(100);
         } catch (InterruptedException e) {
-            // sleep сбрасывает флаг → восстанавливаем
             Thread.currentThread().interrupt();
             break;
         }
@@ -305,21 +302,22 @@ Thread worker = new Thread(() -> {
     System.out.println("Поток корректно завершён");
 });
 worker.start();
-// ...
-worker.interrupt(); // сигнал на завершение
+worker.interrupt();
 ```
 
 **Рекомендация.** В `catch (InterruptedException)` всегда либо восстанавливайте флаг (`Thread.currentThread().interrupt()`), либо пробрасывайте исключение выше. Молча «глотать» `InterruptedException` — антипаттерн: вышестоящий код потеряет сигнал об отмене и не сможет корректно завершиться.
 
+При прерывании в `Object.wait()` поток сначала снова захватывает отпущенный монитор и только затем получает `InterruptedException`.
+
 ## Q8. В чем разница между `yield()`, `join()` и `sleep()`?
 
-Все три влияют на ход выполнения, но решают разные задачи. **Ключевой момент: ни один из них не освобождает удерживаемый монитор** — если поток зашёл в `synchronized` и вызвал `sleep()`, блокировку он не отдаёт (в отличие от `wait()`, который монитор отпускает).
+Все три влияют на ход выполнения, но решают разные задачи. Все три сохраняют захваченные посторонние мониторы. Реализация `join()` для platform thread может ждать через `this.wait()` и отпускать монитор самого объекта `Thread` на время ожидания.
 
 | Метод | Что делает | Освобождает монитор? | Бросает `InterruptedException`? |
 |---|---|---|---|
 | `yield()` | Подсказка планировщику уступить CPU | Нет | Нет |
 | `sleep(ms)` | Приостанавливает поток на N мс | Нет | Да |
-| `join()` | Ждёт завершения другого потока | Нет | Да |
+| `join()` | Ждёт завершения другого потока | Посторонние мониторы сохраняются | Да |
 
 - **`yield()`** — лишь намёк планировщику «можешь дать поработать другим»; ОС вправе его проигнорировать. На практике почти не нужен.
 - **`sleep(ms)`** — пауза на заданное время, поток переходит в `TIMED_WAITING`.
@@ -327,10 +325,9 @@ worker.interrupt(); // сигнал на завершение
 
 ```java
 Thread t = new Thread(() -> {
-    // долгая работа
 });
 t.start();
-t.join(); // текущий поток ждёт завершения t
+t.join();
 System.out.println("t завершён");
 ```
 
@@ -345,30 +342,24 @@ JMM оперирует четырьмя понятиями:
 3. **Атомарность** — неделимость операции (например, запись `long` без `volatile` на 32-битных платформах атомарной не гарантируется)
 4. **`happens-before`** — базовое отношение: если оно установлено между двумя действиями, видимость гарантирована
 
-**Почему это вообще проблема.** Без синхронизации JVM **не обязана** показывать одному потоку изменения другого — значения могут оставаться в регистрах и кэшах L1/L2 конкретного ядра. Поэтому поток в цикле `while(flag)` может крутиться вечно, не замечая, что другой поток давно выставил `flag = false`. Синхронизация (`volatile`, `synchronized`, `Lock`) как раз и проталкивает изменения через эти кэши.
+**Почему это важно.** Без отношения happens-before между записью и чтением общей переменной цикл может так и не увидеть обновление. Для обмена состоянием нужен подходящий механизм синхронизации.
 
 Подробнее о том, как `JMM` связана с устройством `JVM`, см. в [вопросах по JVM](../../jvm/jvm-interview.md).
 
 ## Q10. (!) Что такое `volatile`? Что гарантирует `JMM` для `volatile` полей?
 
-`volatile` — модификатор поля, который решает проблему **видимости и переупорядочения**, но не атомарности. Запись и чтение `volatile`-поля идут напрямую в общую память, минуя кэш конкретного ядра. Конкретно он даёт три гарантии:
-
-1. **Видимость** — запись в `volatile`-поле сразу видна всем потокам при следующем чтении
-2. **Запрет переупорядочения** — операции до записи в `volatile` нельзя перенести после неё, а чтения после `volatile`-чтения — до него (барьеры памяти)
-3. **`happens-before`** — запись в `volatile` `happens-before` любого последующего чтения этого поля; значит, всё, что было записано до `volatile`-записи, тоже становится видно читателю
+`volatile` задаёт правила видимости и порядка операций. По JMM запись в volatile-поле happens-before каждого последующего чтения этого поля в порядке синхронизации. Через транзитивность действия перед записью упорядочены и перед действиями читателя после чтения. Составное обновление вроде `count++` по-прежнему состоит из чтения, вычисления и записи.
 
 ```java
 public class VolatileFlag {
     private volatile boolean running = true;
 
     public void stop() {
-        running = false; // видимо всем потокам
+        running = false;
     }
 
     public void work() {
         while (running) {
-            // без volatile поток может закэшировать running=true
-            // и никогда не увидеть изменение
         }
     }
 }
@@ -390,7 +381,6 @@ public class ImmutableHolder {
     public ImmutableHolder(int value, List<String> items) {
         this.value = value;
         this.items = Collections.unmodifiableList(new ArrayList<>(items));
-        // НЕ публикуем this до конца конструктора!
     }
 }
 ```
@@ -417,15 +407,22 @@ public class ImmutableHolder {
 `synchronized` — встроенный в язык механизм взаимного исключения: поток входит в защищённую секцию, только захватив **монитор** (intrinsic lock) объекта. Монитором владеет лишь один поток в момент времени, остальные ждут в состоянии `BLOCKED`. У каждого Java-объекта есть такой монитор.
 
 ```java
-// synchronized метод — монитор = this (или Class для static)
-public synchronized void increment() {
-    count++;
+class MethodCounter {
+    private int count;
+
+    synchronized void increment() {
+        count++;
+    }
 }
 
-// synchronized блок — монитор = указанный объект
-public void increment() {
-    synchronized (lock) {
-        count++;
+class BlockCounter {
+    private final Object lock = new Object();
+    private int count;
+
+    void increment() {
+        synchronized (lock) {
+            count++;
+        }
     }
 }
 ```
@@ -440,6 +437,11 @@ public void increment() {
 Именно поэтому `synchronized` достаточно для большинства задач: он закрывает и атомарность секции, и видимость её результатов одним механизмом.
 
 ## Q14. В чем преимущество `synchronized` блока перед методом?
+
+```text
+У счёта есть баланс и история. Чтение баланса должно продолжаться, пока другой поток пишет историю.
+Операции с каждым ресурсом требуют взаимного исключения. Как ограничить область блокировки?
+```
 
 Блок даёт более тонкий контроль, и всё это снижает конкуренцию (contention) за блокировку:
 
@@ -466,27 +468,34 @@ public class BankAccount {
 
 ## Q15. (!) Разница между блокировкой на уровне класса и объекта
 
+Какие вызовы конкурируют за монитор, если два потока работают с `first` и `second`?
+
 Различие сводится к тому, **какой монитор захватывается**. Экземплярная блокировка использует монитор конкретного объекта (`this`), классовая — единственный монитор `Class`-объекта, общий для всех экземпляров. Это два разных монитора, и они **не пересекаются**: поток в экземплярном `synchronized`-методе и поток в статическом `synchronized`-методе того же класса друг друга не блокируют.
 
 | Тип блокировки | Монитор | Область действия |
 |---|---|---|
 | Уровень объекта | `this` | Только один экземпляр |
-| Уровень класса | `ClassName.class` | Все экземпляры |
+| Уровень класса | `ClassName.class` | Статические синхронизированные методы этого класса |
 
 ```java
-// Уровень объекта — разные экземпляры не блокируют друг друга
-public synchronized void instanceMethod() { /* монитор = this */ }
+class Counter {
+    synchronized void instanceMethod() {}
+    static synchronized void classMethod() {}
+}
 
-// Уровень класса — блокирует для ВСЕХ экземпляров
-public static synchronized void classMethod() { /* монитор = MyClass.class */ }
-
-// Эквивалент через блок:
-synchronized (MyClass.class) { /* уровень класса */ }
+Counter first = new Counter();
+Counter second = new Counter();
 ```
 
-Если два потока вызывают `synchronized` экземплярный метод для **разных** объектов — они **не блокируют** друг друга. Для **статических** `synchronized` методов — всегда блокируют, так как монитор один на класс.
+Если два потока вызывают `synchronized` экземплярный метод для **разных** объектов — они **не блокируют** друг друга. Для **статических** `synchronized` методов — конкурируют при одновременном захвате монитора одного и того же класса.
 
 ## Q16. Какова цель `wait()`, `notify()` и `notifyAll()`?
+
+```text
+Поток A должен ждать, пока общий флаг ready станет true.
+Поток B меняет флаг, когда данные готовы. Оба используют один объект monitor.
+Как организовать ожидание и уведомление?
+```
 
 Это три метода класса `Object` для межпоточной координации по схеме «жди условие — сигналь о его выполнении». Все они **обязаны вызываться внутри `synchronized` на том же мониторе**, иначе будет `IllegalMonitorStateException`.
 
@@ -536,9 +545,9 @@ synchronized (sharedObject) {
 
 ```java
 AtomicInteger counter = new AtomicInteger(0);
-counter.incrementAndGet();     // атомарный ++
-counter.compareAndSet(1, 10);  // если значение == 1, установить 10
-counter.getAndUpdate(x -> x * 2); // атомарное преобразование
+boolean first = counter.compareAndSet(0, 10);
+int second = counter.compareAndExchange(0, 20);
+int third = counter.compareAndExchange(10, 30);
 ```
 
 **Как работает CAS.** Это одна атомарная аппаратная инструкция: «если текущее значение == ожидаемому, запиши новое и верни успех, иначе ничего не меняй и верни текущее». `incrementAndGet()` под капотом — это цикл: прочитать значение, посчитать +1, попробовать CAS; если кто-то опередил, начать заново с нового значения. Поток не засыпает и не блокирует других — он лишь крутится в коротком retry-цикле.
@@ -559,16 +568,20 @@ counter.getAndUpdate(x -> x * 2); // атомарное преобразован
 
 `LongAdder` быстрее `AtomicLong` при высокой конкуренции, потому что разбивает счётчик на несколько ячеек (striping): потоки пишут в разные ячейки и не конкурируют за одну переменную, а итог считается суммированием при чтении. Минус — нет атомарного «прочитать-и-обновить», поэтому он годится для счётчиков, но не как замена `AtomicLong` везде.
 
+В примере `compareAndSet` возвращает `true` при успешной записи. `compareAndExchange` возвращает наблюдавшееся значение и записывает новое только при совпадении с ожидаемым. Поэтому `second == 10`, `third == 10`, итоговое значение счётчика равно 30.
+
 ## Q19. Чем `AtomicInteger` лучше `synchronized int`?
 
 ```java
-// synchronized — поток блокируется при конкуренции
-private int count;
-public synchronized void increment() { count++; }
+class MonitorCounter {
+    private int count;
+    synchronized void increment() { count++; }
+}
 
-// AtomicInteger — lock-free, без блокировки
-private final AtomicInteger count = new AtomicInteger();
-public void increment() { count.incrementAndGet(); }
+class AtomicCounter {
+    private final AtomicInteger count = new AtomicInteger();
+    void increment() { count.incrementAndGet(); }
+}
 ```
 
 Суть: `synchronized` при конкуренции **усыпляет** поток (context switch, переход в `BLOCKED`), а `AtomicInteger` лишь повторяет CAS, оставаясь на CPU. Отсюда преимущества:
@@ -580,6 +593,12 @@ public void increment() { count.incrementAndGet(); }
 **Подводный камень.** При очень высокой конкуренции CAS постоянно промахивается и вырождается в spin-loop, сжигающий CPU. Тогда выгоднее `LongAdder`. И помни: атомарность одной операции (`incrementAndGet`) не делает атомарной связку из двух атомиков — для составной логики всё равно нужен `Lock` или `synchronized`.
 
 ## Q20. (!) Что такое `ReentrantLock` и чем он лучше `synchronized`?
+
+```text
+Обновление общей структуры требует взаимного исключения.
+Ожидание захвата должно прерываться. Если захват состоялся, освобождение обязательно и при исключении.
+Какой механизм и какой порядок действий подойдут?
+```
 
 `ReentrantLock` — это явная блокировка из `java.util.concurrent.locks` с той же семантикой взаимного исключения, что и `synchronized` (тоже реентерабельная), но с гораздо большей гибкостью: блокировкой управляют руками через `lock()`/`unlock()`, а не через границы блока.
 
@@ -616,6 +635,12 @@ public void update() {
 **Эмпирическое правило.** По умолчанию берите `synchronized` — он проще и не забудешь освободить. Переходите на `ReentrantLock`, только когда реально нужны таймаут, прерываемость, fairness или несколько `Condition`.
 
 ## Q21. (!) Что такое `ReadWriteLock` и `StampedLock`?
+
+```text
+Несколько потоков читают один кеш, другой поток периодически обновляет записи.
+Чтения могут выполняться параллельно. Как организовать чтение и запись?
+Что нужно проверить, если чтение началось без захвата обычной блокировки чтения?
+```
 
 Оба решают одну задачу — ускорить сценарий «много чтений, мало записей», где обычный взаимоисключающий замок избыточно сериализует читателей.
 
@@ -661,6 +686,11 @@ return Math.sqrt(x * x + y * y);
 
 ## Q22. Что такое `Condition` в `java.util.concurrent.locks`?
 
+```text
+Кольцевой буфер ёмкостью 4. Отправители ждут свободного места, получатели ждут элемент.
+Нужно отдельно уведомлять ожидающих в двух группах. Как организовать ожидание с одним Lock?
+```
+
 `Condition` — это `wait()`/`notify()` для `Lock`: `await()` усыпляет поток и отпускает замок, `signal()`/`signalAll()` будят ожидающих. Ключевое преимущество — на одном `Lock` можно завести **несколько** независимых очередей ожидания (по одной на каждое условие), тогда как `synchronized` даёт лишь одну на монитор:
 
 ```java
@@ -673,6 +703,7 @@ public void put(E item) throws InterruptedException {
     try {
         while (count == capacity) notFull.await();
         items[putIndex] = item;
+        putIndex = (putIndex + 1) % capacity;
         count++;
         notEmpty.signal();
     } finally {
@@ -685,6 +716,8 @@ public E take() throws InterruptedException {
     try {
         while (count == 0) notEmpty.await();
         E item = items[takeIndex];
+        items[takeIndex] = null;
+        takeIndex = (takeIndex + 1) % capacity;
         count--;
         notFull.signal();
         return item;
@@ -701,17 +734,14 @@ public E take() throws InterruptedException {
 `Deadlock` (взаимоблокировка) — два или более потока навсегда зависают, потому что каждый ждёт ресурс, удерживаемый другим, и никто не готов отпустить свой. Классический случай — два потока берут две блокировки в **противоположном порядке**:
 
 ```java
-// Классический deadlock
 Object lock1 = new Object(), lock2 = new Object();
 
-// Поток 1: lock1 → lock2
 new Thread(() -> {
     synchronized (lock1) {
         synchronized (lock2) { /* ... */ }
     }
 }).start();
 
-// Поток 2: lock2 → lock1  (обратный порядок!)
 new Thread(() -> {
     synchronized (lock2) {
         synchronized (lock1) { /* ... */ }
@@ -731,15 +761,7 @@ Deadlock возможен, только когда **одновременно** 
 - Избегать вложенных `synchronized` — не держать одну блокировку, запрашивая другую
 - Использовать готовые средства `java.util.concurrent` вместо ручной синхронизации
 
-```mermaid
-graph LR
-    T1[Поток 1] -->|держит| L1[Lock A]
-    T1 -->|ждёт| L2[Lock B]
-    T2[Поток 2] -->|держит| L2
-    T2 -->|ждёт| L1
-    style T1 fill:#f99
-    style T2 fill:#f99
-```
+Если первый поток уже держит A, а второй держит B, каждый будет ждать освобождения монитора, который удерживает другой.
 
 ## Q24. В чем разница между `Deadlock`, `Livelock` и `Starvation`?
 
@@ -759,6 +781,8 @@ graph LR
 
 
 ## Q25. (!) Что такое `Race Condition`?
+
+В обоих запусках работают по два потока. Считайте, что оба участника первого запуска достигли барьера до таймаута и прерываний не было. Сравните значения счётчика после каждого запуска.
 
 **Race condition** — нарушение корректности, зависящее от порядка конкурирующих действий. Типичные составные последовательности — **check-then-act** («проверить, затем действовать») и **read-modify-write** («прочитать, изменить, записать»). Даже если отдельные методы потокобезопасны, вся последовательность не становится атомарной.
 
@@ -793,13 +817,13 @@ public class RaceConditionExample {
                 Thread.currentThread().interrupt();
                 return;
             }
-            counter.set(previous + 1); // два потока записывают 1
+            counter.set(previous + 1);
         });
-        System.out.println(counter.get()); // 1: потерянное обновление
+        System.out.println(counter.get());
 
         counter.set(0);
-        runTwo(counter::incrementAndGet);   // одна атомарная read-modify-write операция
-        System.out.println(counter.get()); // 2
+        runTwo(counter::incrementAndGet);
+        System.out.println(counter.get());
     }
 }
 ```
@@ -818,7 +842,7 @@ private static final ThreadLocal<SimpleDateFormat> dateFormat =
     ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd"));
 
 public String formatDate(Date date) {
-    return dateFormat.get().format(date); // каждый поток — свой экземпляр
+    return dateFormat.get().format(date);
 }
 ```
 
@@ -828,7 +852,7 @@ public String formatDate(Date date) {
 
 ## Q27. В чем разница между `ThreadLocal` и `InheritableThreadLocal`?
 
-Разница в одном: **передаётся ли значение дочернему потоку при его создании.** Обычный `ThreadLocal` видит только тот поток, что его выставил; `InheritableThreadLocal` копирует значение в новый поток в момент `start()` — удобно, чтобы протащить контекст (id запроса) в порождённые потоки.
+Разница в одном: **передаётся ли значение дочернему потоку при его создании.** Обычный `ThreadLocal` видит только тот поток, что его выставил; `InheritableThreadLocal` инициализирует значение для нового потока при его создании, если наследование включено — удобно, чтобы протащить контекст (id запроса) в порождённые потоки.
 
 | Характеристика | `ThreadLocal` | `InheritableThreadLocal` |
 |---|---|---|
@@ -836,45 +860,31 @@ public String formatDate(Date date) {
 | Область | Только текущий поток | Текущий + дочерние потоки |
 
 ```java
-InheritableThreadLocal<String> ctx = new InheritableThreadLocal<>();
-ctx.set("request-123");
-
-new Thread(() -> {
-    System.out.println(ctx.get()); // "request-123" — унаследовано
-}).start();
+var ctx = new InheritableThreadLocal<String>();
+ctx.set("before-creation");
+Thread child = new Thread(() -> System.out.println(ctx.get()));
+ctx.set("before-start");
+child.start();
+child.join();
 ```
 
-**Главное ограничение.** `InheritableThreadLocal` **не работает с пулами потоков**: наследование происходит лишь в момент создания потока, а в пуле потоки создаются один раз и переиспользуются — новые задачи не получат актуальный контекст, зато могут увидеть устаревший. Для передачи контекста в пулы и virtual threads в `Java 21+` рекомендуется `ScopedValue` (см. Q50).
+В примере дочерний поток печатает `before-creation`. По умолчанию наследуется та же ссылка на значение. [InheritableThreadLocal](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/lang/InheritableThreadLocal.html)
+
+**Главное ограничение.** `InheritableThreadLocal` **не работает с пулами потоков**: наследование происходит лишь в момент создания потока, а в пуле потоки создаются один раз и переиспользуются — новые задачи не получат актуальный контекст, зато могут увидеть устаревший. Для переиспользуемых исполнителей передавайте контекст явно вместе с задачей. Для структурированных подзадач см. Q50.
 
 ## Q28. (!) Что такое `Executor` и `ExecutorService`?
+
+```text
+Клиент A передаёт задачу без результата с выбранной политикой исполнения.
+Клиент B отправляет вычисление, получает результат позже и управляет завершением исполнителя.
+Какие интерфейсы подходят этим клиентам?
+```
 
 `Executor` — базовый интерфейс с единственным методом `execute(Runnable)`. Его смысл — **отделить задачу (что выполнить) от механизма выполнения (как и где)**: код, отправляющий задачу, не знает, выполнится ли она в новом потоке, в пуле или синхронно. Это снимает с разработчика ручное управление `Thread`.
 
 `ExecutorService` — расширение `Executor`, добавляющее то, чего не хватает для реальной работы: управление жизненным циклом (`shutdown`), получение результатов (`submit` → `Future`) и пакетные операции (`invokeAll`/`invokeAny`):
 
-```mermaid
-classDiagram
-    class Executor {
-        <<interface>>
-        +execute(Runnable)
-    }
-    class ExecutorService {
-        <<interface>>
-        +submit(Callable~T~) Future~T~
-        +shutdown()
-        +shutdownNow() List~Runnable~
-        +awaitTermination(long, TimeUnit)
-        +invokeAll(Collection) List~Future~
-        +invokeAny(Collection) T
-    }
-    class ThreadPoolExecutor
-    class ScheduledThreadPoolExecutor
-    class ForkJoinPool
-    Executor <|-- ExecutorService
-    ExecutorService <|.. ThreadPoolExecutor
-    ThreadPoolExecutor <|-- ScheduledThreadPoolExecutor
-    ExecutorService <|.. ForkJoinPool
-```
+
 
 ## Q29. (!) Какие реализации `ExecutorService` есть в стандартной библиотеке?
 
@@ -904,12 +914,9 @@ classDiagram
 ```java
 ExecutorService executor = Executors.newFixedThreadPool(4);
 
-// 1. Graceful shutdown — не принимает новые задачи, дорабатывает текущие
 executor.shutdown();
 
-// 2. Ждём завершения
 if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
-    // 3. Принудительная остановка — прерывает текущие задачи
     List<Runnable> pending = executor.shutdownNow();
     System.out.println("Не завершённые задачи: " + pending.size());
 }
@@ -943,7 +950,7 @@ import java.util.concurrent.*;
 
 public class SubmissionExample {
     public static void main(String[] args) throws InterruptedException {
-        Executor direct = Runnable::run; // допустимо выполнение в вызывающем потоке
+        Executor direct = Runnable::run;
         direct.execute(() -> System.out.println("direct"));
 
         try (ExecutorService pool = Executors.newSingleThreadExecutor()) {
@@ -959,7 +966,7 @@ public class SubmissionExample {
             FutureTask<Void> wrapped = new FutureTask<>(() -> {
                 throw new IllegalStateException("wrapped");
             });
-            pool.execute(wrapped); // execute ничего не возвращает; Future у нас уже есть
+            pool.execute(wrapped);
             try {
                 wrapped.get();
             } catch (ExecutionException e) {
@@ -1053,13 +1060,13 @@ public class FutureOutcomeExample {
     public static void main(String[] args) throws Exception {
         try (ExecutorService pool = Executors.newSingleThreadExecutor()) {
             Future<String> future = pool.submit(() -> "result");
-            System.out.println(future.get(5, TimeUnit.SECONDS)); // result
-            System.out.println(future.resultNow());             // result: успех уже известен
+            System.out.println(future.get(5, TimeUnit.SECONDS));
+            System.out.println(future.resultNow());
         }
 
         FutureTask<Integer> task = new FutureTask<>(() -> 42);
         new Thread(task).start();
-        System.out.println(task.get()); // 42
+        System.out.println(task.get());
     }
 }
 ```
@@ -1092,7 +1099,7 @@ public class CompletableStageExample {
                 .supplyAsync(() -> "user-7", pool)
                 .thenApply(String::toUpperCase)
                 .exceptionally(error -> "UNAVAILABLE");
-            System.out.println(message.join()); // USER-7
+            System.out.println(message.join());
         }
     }
 }
@@ -1131,11 +1138,11 @@ public class StageCompositionExample {
         CompletableFuture<Integer> right = new CompletableFuture<>();
         CompletableFuture<Integer> total = left.thenCombine(right, Integer::sum);
         left.complete(4);
-        right.complete(5); // допустимо последовательное завершение входов
+        right.complete(5);
 
-        System.out.println(name.join());    // User-7
-        System.out.println(profile.join()); // Profile-7
-        System.out.println(total.join());   // 9
+        System.out.println(name.join());
+        System.out.println(profile.join());
+        System.out.println(total.join());
     }
 }
 ```
@@ -1147,31 +1154,39 @@ public class StageCompositionExample {
 
 ## Q36. Как обрабатывать исключения в `CompletableFuture`?
 
+Рассмотрите четыре независимых запуска с новым `source`: завершение со строкой `"ok"` и завершение с ошибкой. Для каждого определите исход `a`, `b` и `c`, если `observe` завершается штатно или выбрасывает исключение.
+
 Исключение в любом этапе цепочки не пробрасывается сразу — оно «переносится» дальше по цепочке как «завершение с ошибкой», пока его не перехватит один из трёх методов. Выбор между ними зависит от того, нужен ли fallback и хотите ли вы менять результат:
 
 ```java
-CompletableFuture<String> cf = supplyAsync(() -> riskyOperation());
+void run(boolean sourceFails, boolean observerFails) {
+    CompletableFuture<String> source = new CompletableFuture<>();
+    var a = source.exceptionally(ex -> "default");
+    var b = source.handle((value, ex) -> ex == null ? value.toUpperCase(Locale.ROOT) : "error");
+    var c = source.whenComplete((value, ex) -> {
+        if (observerFails) throw new IllegalArgumentException("observer");
+    });
 
-// 1. exceptionally — только ошибки, возвращает fallback
-cf.exceptionally(ex -> "default");
+    if (sourceFails) {
+        source.completeExceptionally(new IllegalStateException("source"));
+    } else {
+        source.complete("ok");
+    }
+}
 
-// 2. handle — и успех, и ошибка, возвращает значение
-cf.handle((result, ex) -> {
-    if (ex != null) return "error: " + ex.getMessage();
-    return result.toUpperCase();
-});
-
-// 3. whenComplete — побочный эффект (логирование), не меняет результат
-cf.whenComplete((result, ex) -> {
-    if (ex != null) log.error("Failed", ex);
-});
+run(false, false);
+run(true, false);
+run(false, true);
+run(true, true);
 ```
 
 | Метод | Доступ к результату | Доступ к ошибке | Может изменить результат |
 |---|---|---|---|
 | `exceptionally()` | Нет | Да | Да (fallback) |
 | `handle()` | Да | Да | Да |
-| `whenComplete()` | Да | Да | Нет |
+| `whenComplete()` | Да | Да | Может завершить зависимую стадию ошибкой |
+
+При успешном источнике исключение наблюдателя завершает `c` с ошибкой. При ошибке источника она имеет приоритет перед исключением наблюдателя. [CompletionStage](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CompletionStage.html)
 
 **Как выбрать.** Нужен только запасной результат при ошибке — `exceptionally()`. Нужно по-разному обработать успех и ошибку и вернуть значение — `handle()`. Нужен лишь побочный эффект (лог, метрика) без изменения результата — `whenComplete()`.
 
@@ -1195,10 +1210,10 @@ public class MultiStageExample {
 
             CompletableFuture<List<String>> results = CompletableFuture.allOf(a, b, c)
                 .thenApply(ignored -> List.of(a.join(), b.join(), c.join()));
-            System.out.println(results.join()); // [A, B, C]: порядок задаёт сборщик
+            System.out.println(results.join());
 
             CompletableFuture<Object> first = CompletableFuture.anyOf(a, b, c);
-            System.out.println(Set.of("A", "B", "C").contains(first.join())); // true
+            System.out.println(Set.of("A", "B", "C").contains(first.join()));
         }
     }
 }
@@ -1213,6 +1228,8 @@ public class MultiStageExample {
 
 ## Q38. (!) Что такое `CountDownLatch` и `CyclicBarrier`?
 
+В примере пул имеет три доступных рабочих потока. Сравните, кто ждёт в каждой части, если подготовка проходит успешно.
+
 Оба координируют потоки через счётчик, но семантика «кто кого ждёт» у них разная. `CountDownLatch` — «один (или несколько) ждут, пока произойдёт N событий». `CyclicBarrier` — «N потоков ждут друг друга в общей точке встречи».
 
 | Характеристика | `CountDownLatch` | `CyclicBarrier` |
@@ -1225,48 +1242,48 @@ public class MultiStageExample {
 Два ключевых отличия для собеседования: **(1)** `CountDownLatch` одноразовый — после обнуления счётчик не сбросить; `CyclicBarrier` переиспользуется в цикле (отсюда «cyclic»). **(2)** В `CountDownLatch` уменьшают счётчик одни потоки, а ждут — другие (роли разделены); в `CyclicBarrier` каждый участник и считает, и ждёт через один `await()`.
 
 ```java
-// CountDownLatch — главный поток ждёт N воркеров
-CountDownLatch latch = new CountDownLatch(3);
+// У executor три доступных рабочих потока. Подготовка во всех задачах проходит успешно.
+void run(ExecutorService executor) throws InterruptedException {
+    var latch = new CountDownLatch(3);
+    for (int i = 0; i < 3; i++) {
+        executor.submit(() -> {
+            try { doWork(); } finally { latch.countDown(); }
+        });
+    }
+    latch.await();
 
-for (int i = 0; i < 3; i++) {
-    executor.submit(() -> {
-        doWork();
-        latch.countDown(); // уменьшаем счётчик
-    });
-}
-latch.await(); // блокируется пока счётчик > 0
-System.out.println("Все воркеры завершены");
-
-// CyclicBarrier — потоки ждут друг друга
-CyclicBarrier barrier = new CyclicBarrier(3, () ->
-    System.out.println("Все потоки достигли барьера"));
-
-for (int i = 0; i < 3; i++) {
-    executor.submit(() -> {
-        prepareData();
-        barrier.await(); // ждёт остальных
-        processData();   // все продолжают одновременно
-    });
+    var barrier = new CyclicBarrier(3);
+    for (int i = 0; i < 3; i++) {
+        executor.submit(() -> {
+            prepareData();
+            barrier.await();
+            processData();
+            return null;
+        });
+    }
 }
 ```
+
+После достижения барьера участники снова могут выполняться. Фактический порядок определяет планировщик. Задачи второго цикла имеют форму `Callable`: ошибки `await()` доступны через возвращённые `Future`. [CyclicBarrier](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/CyclicBarrier.html)
 
 ## Q39. Что такое `Semaphore`?
 
 `Semaphore` — счётчик разрешений (permits), ограничивающий, **сколько потоков одновременно** могут пользоваться ресурсом. `acquire()` забирает разрешение (или блокируется, если их нет), `release()` возвращает. По сути это «турникет» на N мест: пускаем не больше N потоков, остальные ждут освобождения. Типичное применение — ограничение параллелизма: пул соединений, лимит одновременных вызовов к внешнему API:
 
 ```java
-// Ограничиваем параллельный доступ к БД до 5 соединений
-Semaphore semaphore = new Semaphore(5);
+private final Semaphore permits = new Semaphore(5);
 
-public Connection getConnection() throws InterruptedException {
-    semaphore.acquire(); // ждёт если нет свободных permits
-    try {
-        return pool.borrowConnection();
+void query() throws InterruptedException, SQLException {
+    permits.acquire();
+    try (Connection connection = dataSource.getConnection()) {
+        readRows(connection);
     } finally {
-        semaphore.release(); // возвращаем permit
+        permits.release();
     }
 }
 ```
+
+При управляемом пулом `DataSource` закрытие полученного соединения возвращает его в пул. Разрешение удерживается от начала получения соединения до завершения его закрытия. [Semaphore](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/concurrent/Semaphore.html)
 
 **Отличие от `Lock`.** При `permits = 1` семафор работает как mutex, но с важным нюансом: у него **нет понятия владельца**. `Lock` обязан освобождать тот же поток, что захватил, а `release()` у `Semaphore` может вызвать любой поток. Это делает семафор удобным для сигнальных сценариев (один поток «выдаёт» разрешения другим), но снимает защиту от ошибочного двойного `release()`.
 
@@ -1277,17 +1294,15 @@ public Connection getConnection() throws InterruptedException {
 **`Phaser`** — гибкая замена `CyclicBarrier` и `CountDownLatch`. Его два козыря, которых нет у тех: **динамическое число участников** (можно `register()`/`deregister()` на лету) и **много фаз** (потоки синхронизируются на каждом этапе многоступенчатого алгоритма). Удобен, когда участники появляются и исчезают, а работа идёт волнами-фазами:
 
 ```java
-Phaser phaser = new Phaser(3); // 3 участника
+Phaser phaser = new Phaser(3);
 
 for (int i = 0; i < 3; i++) {
     executor.submit(() -> {
-        // Фаза 0
         doPhase0Work();
-        phaser.arriveAndAwaitAdvance(); // ждём всех
+        phaser.arriveAndAwaitAdvance();
 
-        // Фаза 1
         doPhase1Work();
-        phaser.arriveAndDeregister(); // выходим из phaser
+        phaser.arriveAndDeregister();
     });
 }
 ```
@@ -1325,27 +1340,25 @@ String received = exchanger.exchange("Данные от потока 2");
 
 ## Q42. Как работает `ConcurrentHashMap`?
 
+```text
+OpenJDK 26, ConcurrentHashMap.put. Таблица инициализирована, расширение сейчас не идёт.
+A. Бакет пуст. Вставляется новый ключ.
+B. В бакете уже есть цепочка из восьми узлов. Вставляется девятый отличный ключ в тот же бакет.
+Для B сравните ёмкости таблицы 32 и 64. Других записей нет.
+Как выполняется вставка в каждом случае и что происходит с цепочкой?
+```
+
 Главная идея — **блокировать как можно меньше**. До Java 8 это были сегменты (lock striping); с Java 8 синхронизация стала ещё тоньше — на уровне отдельного бакета. Конкретно:
 
 1. **CAS** для вставки в пустой бакет — без всякой блокировки, оптимистично
-2. **`synchronized` на первом узле бакета** — блокируется только при коллизии, и только этот бакет; остальная map остаётся доступной
-3. **Красно-чёрные деревья** при длинных цепочках (> 8 элементов) — поиск в бакете деградирует с O(n) до O(log n)
+2. **`synchronized` на первом узле бакета** — записи в непустой обычный бакет могут использовать его первый узел как монитор
+3. **Красно-чёрные деревья** для длинных цепочек при достаточной ёмкости таблицы. Стоимость поиска зависит в том числе от хешей и сравнимости ключей
 
 Поскольку конфликтуют лишь операции с одним бакетом, потоки, работающие с разными ключами, почти не мешают друг другу — отсюда высокая масштабируемость.
 
-```java
-ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
 
-// Атомарные операции — не нужна внешняя синхронизация
-map.putIfAbsent("key", 0);
-map.computeIfAbsent("key", k -> expensiveComputation(k));
-map.merge("key", 1, Integer::sum); // атомарный инкремент
 
-// ОПАСНО — race condition:
-if (map.containsKey("key")) {    // проверка
-    map.get("key").doSomething(); // между ними другой поток мог удалить!
-}
-```
+При вставке в пустой бакет `putVal` пробует CAS. Для обычного непустого бакета он захватывает монитор головного узла, проверяет, что тот по-прежнему возглавляет бакет, и добавляет новый узел. При добавлении восьмого узла в цепочку счётчик обхода равен семи, поэтому преобразования ещё нет. При добавлении девятого `binCount` достигает восьми и вызывается `treeifyBin`. При ёмкости ниже 64 этот путь запрашивает расширение таблицы, при достаточной ёмкости цепочка может стать деревом. [ConcurrentHashMap в OpenJDK 26](https://github.com/openjdk/jdk/blob/jdk-26%2B35/src/java.base/share/classes/java/util/concurrent/ConcurrentHashMap.java)
 
 ## Q43. Что такое `BlockingQueue`?
 
@@ -1363,59 +1376,83 @@ if (map.containsKey("key")) {    // проверка
 
 ## Q44. Как решить `Producer-Consumer` проблему?
 
+```text
+Есть один производитель, один потребитель и очередь ёмкостью 100.
+Они работают в отдельных задачах. При запросе немедленной остановки любой из них может ждать на очереди.
+Как передавать элементы и как вывести обе задачи из ожидания?
+```
+
 Producer-Consumer — это паттерн, где одни потоки производят данные, другие их обрабатывают, а между ними стоит буфер. Задача — согласовать их скорости и потокобезопасно передать элементы. Самое простое и правильное решение — `BlockingQueue`: она сама блокирует producer на полной очереди и consumer на пустой, так что ручной `wait/notify` не нужен:
 
 ```java
 BlockingQueue<Task> queue = new LinkedBlockingQueue<>(100);
 
-// Producer
-executor.submit(() -> {
-    while (running) {
-        Task task = generateTask();
-        queue.put(task); // блокируется если очередь полна
+Future<?> producer = executor.submit(() -> {
+    while (!Thread.currentThread().isInterrupted()) {
+        try {
+            queue.put(generateTask());
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            return;
+        }
     }
 });
 
-// Consumer
-executor.submit(() -> {
-    while (running) {
-        Task task = queue.take(); // блокируется если очередь пуста
-        process(task);
+Future<?> consumer = executor.submit(() -> {
+    while (!Thread.currentThread().isInterrupted()) {
+        try {
+            process(queue.take());
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            return;
+        }
     }
 });
 ```
 
 **Почему именно `BlockingQueue`.** Ограниченная вместимость (в примере 100) даёт back-pressure: если producer быстрее consumer, очередь заполнится и `put()` притормозит producer, не давая памяти разрастись. Масштабировать можно горизонтально — добавляя потоки producer/consumer на ту же очередь.
 
-**Корректная остановка.** Чтобы консьюмеры не зависли вечно на `take()` пустой очереди, применяют «ядовитую пилюлю» (poison pill) — специальный объект-маркер: получив его, consumer завершает цикл. На каждого consumer кладут по одной пилюле.
+**Остановка.** Для немедленного запроса остановки вызовите `producer.cancel(true)` и `consumer.cancel(true)`. Прерывание выводит из `put()` и `take()`; завершение другой работы зависит от `generateTask()` и `process()`. Для штатного дочитывания сначала завершите отправителей, затем поставьте по маркеру на потребителя.
+
+**Маркер завершения.** Чтобы консьюмеры не зависли вечно на `take()` пустой очереди, применяют «ядовитую пилюлю» (poison pill) — специальный объект-маркер: получив его, consumer завершает цикл. На каждого consumer кладут по одной пилюле.
 
 ## Q45. Что такое `Java Thread Dump` и как его получить?
 
-`Thread Dump` — мгновенный снимок состояния всех потоков JVM: для каждого показаны имя, состояние (`RUNNABLE`/`BLOCKED`/`WAITING`...), стек вызовов и какие блокировки он держит или ждёт. Это главный инструмент диагностики «зависаний»: по дампу видно, кто застрял в `synchronized`, кто кого ждёт, а блок `Found one Java-level deadlock` прямо называет участников взаимоблокировки.
+```text
+JDK 26. Сервис перестал обрабатывать запросы.
+1. Нужно выяснить, где ждут platform threads и какие мониторы они держат.
+2. Нужно посмотреть стеки virtual threads, включая размонтированные.
+Какие средства подходят каждой задаче?
+```
 
-Способы получения:
+`Thread Dump` — диагностический снимок потоков JVM, охват которого зависит от инструмента: для каждого показаны имя, состояние (`RUNNABLE`/`BLOCKED`/`WAITING`...), стек вызовов и какие блокировки он держит или ждёт. Это главный инструмент диагностики «зависаний»: по дампу видно, кто застрял в `synchronized`, кто кого ждёт, а блок `Found one Java-level deadlock` прямо называет участников взаимоблокировки.
+
+Сценарий для JDK 26. Нужно проверить ожидания platform threads и отдельно увидеть virtual threads, включая размонтированные.
 
 ```bash
-# 1. jstack
-jstack <PID>
+jstack "$pid"
+kill -QUIT "$pid"
+jcmd "$pid" Thread.print
+jcmd "$pid" Thread.dump_to_file -format=json /tmp/threads.json
+```
 
-# 2. kill -3 (SIGQUIT) — дамп в stdout/stderr
-kill -3 <PID>
-
-# 3. jcmd (предпочтительный в Java 17+)
-jcmd <PID> Thread.print
-
-# 4. Из кода
+```java
 ThreadMXBean bean = ManagementFactory.getThreadMXBean();
 ThreadInfo[] infos = bean.dumpAllThreads(true, true);
-
-# 5. Обнаружение deadlock
 long[] deadlocked = bean.findDeadlockedThreads();
 ```
 
-**Совет.** `jcmd <PID> Thread.print` — предпочтительный способ в Java 17+ (работает без отдельного агента). Для удобного анализа дампов с графикой есть инструменты [тюнинга JVM](../../performance/jvm-performance-tuning-interview.md): `VisualVM` и `JFR` (`Java Flight Recorder`). А `bean.findDeadlockedThreads()` позволяет обнаруживать deadlock программно — например, в healthcheck.
+`ThreadMXBean` работает с platform threads. Для обзора virtual threads используйте `Thread.dump_to_file`. Охват зависит от настройки отслеживания потоков, а формат отличается от традиционного дампа. [Диагностика virtual threads в JDK 26](https://docs.oracle.com/en/java/javase/26/core/virtual-threads.html)
+
+**Совет.** `jcmd <PID> Thread.print` — предпочтительный способ в Java 17+ (работает без отдельного агента). Для удобного анализа дампов с графикой есть инструменты [тюнинга JVM](../../performance/jvm-performance-tuning-interview.md): `VisualVM` и `JFR` (`Java Flight Recorder`). А `bean.findDeadlockedThreads()` позволяет обнаруживать deadlock программно среди platform threads.
 
 ## Q46. (!) Что такое `Virtual Threads` и чем они отличаются от platform threads?
+
+```text
+Две версии сервиса запускают по одному потоку на запрос. Первая использует platform threads, вторая virtual threads.
+Тысячи запросов ждут сетевого ответа. Операция ожидания поддерживает размонтирование, pinning отсутствует.
+Что происходит с выполняющими потоками во время ожидания и после получения ответа?
+```
 
 **Virtual thread** — экземпляр `Thread`, планируемый JVM поверх carrier-потоков; **platform thread** в обычной реализации связан с потоком ОС на всё время жизни. Virtual thread не получает отдельную Java-кучу и не является переиспользуемым OS-потоком из прикладного пула. В Java 21 это стандартный API. См. [Thread Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html).
 
@@ -1438,10 +1475,10 @@ public class VirtualThreadExample {
         Thread thread = Thread.ofVirtual().name("vt-example").unstarted(() -> {});
         thread.start();
         thread.join();
-        System.out.println(thread.isVirtual() + ":" + thread.isDaemon()); // true:true
+        System.out.println(thread.isVirtual() + ":" + thread.isDaemon());
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            System.out.println(executor.submit(() -> Thread.currentThread().isVirtual()).get()); // true
+            System.out.println(executor.submit(() -> Thread.currentThread().isVirtual()).get());
         }
     }
 }
@@ -1451,13 +1488,7 @@ public class VirtualThreadExample {
 
 **Граница версий.** В JDK 24 изменение JEP 491 позволяет virtual threads освобождать carrier при блокировке в `synchronized`; ограничение Java 21 нельзя переносить на все новые JDK. Native/foreign случаи остаются отдельной темой. См. [изменения JDK 24](https://docs.oracle.com/en/java/javase/25/migrate/significant-changes-jdk-24.html) и [руководство Java 24](https://docs.oracle.com/en/java/javase/24/core/virtual-threads.html). Это уточнение версии, а не результат локального запуска JDK 24.
 
-```mermaid
-graph TD
-    VT[Virtual thread] -->|mounted| C[Carrier / platform thread]
-    C --> OS[OS thread]
-    VT -.->|supported blocking operation: unmount| WAIT[Waiting virtual thread]
-    WAIT -.->|resume: carrier may differ| C
-```
+При поддерживаемом блокирующем ожидании JVM может размонтировать virtual thread и использовать освободившийся carrier для другой задачи. После ожидания virtual thread снова монтируется, возможно на другом carrier.
 
 
 ## Q47. Когда использовать и когда НЕ использовать `Virtual Threads`?
@@ -1475,7 +1506,6 @@ graph TD
 - `ThreadLocal` для кэширования дорогих объектов — virtual threads создаются миллионами, и каждый заведёт свою копию, что «съест» память (используйте `ScopedValue`, Q50)
 
 ```java
-// Хороший кейс — параллельные HTTP-вызовы
 try (var exec = Executors.newVirtualThreadPerTaskExecutor()) {
     List<Future<String>> futures = urls.stream()
         .map(url -> exec.submit(() -> httpClient.send(
@@ -1491,22 +1521,26 @@ try (var exec = Executors.newVirtualThreadPerTaskExecutor()) {
 
 ## Q48. (!) Что такое thread pinning в контексте `Virtual Threads`?
 
+```text
+JDK 21 и JDK 24+. Виртуальный поток выполняет блокирующую операцию, которая при отсутствии pinning допускает размонтирование.
+Сравните выполнение внутри synchronized и под ReentrantLock. Других причин pinning нет.
+```
+
+Сравните блокирующий вызов из virtual thread под монитором и под `ReentrantLock` в JDK 21 и JDK 24+.
+
 **Pinning** («пришпиливание») — ситуация, когда virtual thread на блокирующей операции **не может сняться** с carrier thread и удерживает его занятым. Это убивает главное преимущество virtual threads: carrier простаивает вместе с заблокированным VT вместо того, чтобы обслуживать другие задачи. Если таких pinning-точек много, пул carrier-потоков исчерпывается и пропускная способность падает. В Java 21 существенны два случая:
 
 1. **Внутри `synchronized` блока/метода** при выполнении блокирующей операции — реализация монитора привязана к carrier
 2. **Внутри нативного метода (JNI)** или `foreign function` — JVM не контролирует нативный стек
 
 ```java
-// Java 21: synchronized + блокирующий I/O может удерживать carrier
-synchronized (lock) {
-    var result = httpClient.send(request, bodyHandler); // carrier заблокирован!
+synchronized (monitor) {
+    var response = httpClient.send(request, bodyHandler);
 }
 
-// Java 21: возможная замена после проверки проблемы
-private final ReentrantLock lock = new ReentrantLock();
 lock.lock();
 try {
-    var result = httpClient.send(request, bodyHandler); // carrier освобождён
+    var response = httpClient.send(request, bodyHandler);
 } finally {
     lock.unlock();
 }
@@ -1516,10 +1550,18 @@ try {
 
 ## Q49. Что такое `Structured Concurrency`?
 
+```text
+JDK 21 Preview. Два независимых запроса загружают пользователя и заказ. Для ответа нужны оба результата.
+При ошибке любого запроса нужно запросить остановку второго. При выходе из операции дочерние задачи должны завершиться.
+Как организовать запуск и ожидание?
+```
+
+В JDK 21 Preview два независимых запроса нужны для одного ответа. При ошибке любой подзадачи остальным нужно передать сигнал остановки. Как ограничить время жизни подзадач областью вызова?
+
 `Structured Concurrency` (Preview в Java 21, JEP 453) — подход, при котором **время жизни параллельных подзадач привязано к лексическому блоку**, который их породил. Принцип тот же, что у `try-with-resources` для ресурсов: подзадачи нельзя «забыть» — `close()` дождётся завершения подзадач до выхода из блока. Это лечит главную боль ручной работы с `ExecutorService`/`Future` — утечку потоков и потерю ошибок при разветвлённой асинхронности:
 
 ```java
-// Java 21+ (preview)
+// JDK 21 Preview
 try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
     Subtask<String> user = scope.fork(() -> fetchUser(userId));
     Subtask<String> order = scope.fork(() -> fetchOrder(orderId));
@@ -1534,30 +1576,31 @@ try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
 
 Что это даёт:
 - **Контроль времени жизни** — `close()` ждёт завершения подзадач; длительность зависит от их реакции на прерывание
-- **Политика остановки** — `ShutdownOnFailure` запрашивает остановку при ошибке, `ShutdownOnSuccess` — при первом успехе; базовый `StructuredTaskScope` сам эти политики не выбирает
+- **Политика остановки в JDK 21 Preview** — `ShutdownOnFailure` запрашивает остановку при ошибке, `ShutdownOnSuccess` — при первом успехе; базовый `StructuredTaskScope` сам эти политики не выбирает
 - **Читаемый стек** — в thread dump видна иерархия «родитель → подзадачи», а не плоский набор анонимных потоков пула
 
 Два готовых варианта политики:
 - **`ShutdownOnFailure`** — нужны все результаты: первая же ошибка отменяет остальные подзадачи
-- **`ShutdownOnSuccess`** — нужен любой первый успех: первый успешный результат отменяет остальные (аналог `anyOf`, паттерн «кто быстрее»)
+- **`ShutdownOnSuccess`** — нужен любой первый успех: первый успешный результат запрашивает остановку остальных
+
+Пример относится к JDK 21 Preview. Для другой версии проверьте API её preview. [StructuredTaskScope в JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html)
 
 ## Q50. Что такое `Scoped Values` и чем они лучше `ThreadLocal`?
 
-`ScopedValue` (Preview в Java 21, JEP 446) подходит для неизменяемого контекста вызова, в том числе с virtual threads. Привязка значения действует во время `runWhere` и восстанавливается после выхода из него. Сам ключ не позволяет менять привязанное значение через `set()`; если значение ссылается на изменяемый объект, он от этого не становится неизменяемым:
+`ScopedValue` (окончательный API с JDK 25, JEP 506) подходит для неизменяемого контекста вызова, в том числе с virtual threads. Привязка значения действует на время выполнения `ScopedValue.where(...).run(...)` и восстанавливается после выхода из него. Сам ключ не позволяет менять привязанное значение через `set()`; если значение ссылается на изменяемый объект, он от этого не становится неизменяемым:
 
 ```java
 private static final ScopedValue<String> REQUEST_ID = ScopedValue.newInstance();
 
 void handleRequest(String reqId) {
-    ScopedValue.runWhere(REQUEST_ID, reqId, () -> {
-        processRequest(); // внутри доступен REQUEST_ID.get()
+    ScopedValue.where(REQUEST_ID, reqId).run(() -> {
+        processRequest();
     });
-    // за пределами runWhere — значение недоступно
 }
 
 void processRequest() {
-    String id = REQUEST_ID.get(); // "req-123"
-    callService(); // в том же scope значение доступно по REQUEST_ID.get()
+    String id = REQUEST_ID.get();
+    callService();
 }
 ```
 
@@ -1632,6 +1675,19 @@ public class ForkJoinDetailExample {
 
 
 ## Q52. (!) Как построить сложную цепочку `CompletableFuture` с обработкой ошибок?
+
+Спроектируйте три параллельных запроса. Пользователь обязателен, лимит его ветки 2 секунды. Для заказов и отзывов лимит по 1 секунде, при ошибке или таймауте нужен пустой список. Итоговый лимит ожидания 3 секунды.
+
+```java
+// Пользователь обязателен: лимит 2 с, при сбое профиль недоступен.
+// Заказы и отзывы: по 1 с на ветку, при сбое или таймауте — пустой список.
+// Общий лимит ожидания профиля — 3 с.
+interface ProfileLoader {
+    CompletableFuture<UserProfile> loadProfile(
+        Executor executor, Supplier<User> loadUser,
+        Supplier<List<String>> loadOrders, Supplier<List<String>> loadReviews);
+}
+```
 
 Один из вариантов — явно разделить запуск запросов, политику отдельных веток и сборку результата. В примере пользователь обязателен; ошибки или timeout заказов/отзывов заменяются пустыми списками. Это выбранная политика приложения, а не универсальное требование `CompletableFuture`.
 
@@ -1708,6 +1764,12 @@ public class ProfilePipelineExample {
 
 ## Q53. Что такое `StampedLock` и когда его использовать вместо `ReadWriteLock`?
 
+```text
+Начальные координаты точки: x = 3, y = 4. Писатель сдвигает их на dx = 2 и dy = 1.
+Читателю нужны обе координаты одного состояния для расчёта расстояния до начала координат.
+Записи редки. Как прочитать пару и что делать, если одновременно прошла запись?
+```
+
 `StampedLock` (Java 8) — альтернатива `ReentrantReadWriteLock` с **оптимистичным чтением**: в read-heavy сценарии читатели в идеале вообще не берут блокировку. Каждая операция получает «штамп» — токен, подтверждающий версию состояния; по нему потом проверяют, не было ли записи. Три режима: эксклюзивная запись (`writeLock`), пессимистичное чтение (`readLock`) и оптимистичное чтение (`tryOptimisticRead`).
 
 ```java
@@ -1776,6 +1838,12 @@ class Point {
 
 ## Q54. Что такое `Phaser` и чем он отличается от `CountDownLatch` и `CyclicBarrier`?
 
+```text
+Пять работников начинают загрузку данных. После первой фазы двое заканчивают участие.
+Оставшиеся трое переходят к обработке. Перед сохранением к ним присоединяется ещё один работник.
+Как согласовать переходы при изменении числа участников?
+```
+
 `Phaser` — гибкий многоразовый синхронизатор фаз. В отличие от `CountDownLatch` (одноразовый) и `CyclicBarrier` (фиксированное число участников), `Phaser` поддерживает **динамическое добавление участников** и **произвольное количество фаз**.
 
 ```java
@@ -1824,7 +1892,13 @@ Phaser customPhaser = new Phaser(3) {
 
 ## Q55. Что такое `Exchanger` и в каких сценариях применяется?
 
-`Exchanger<V>` — точка синхронизации для **обмена данными между двумя потоками**. Поток вызывает `exchange(V)` и блокируется, пока второй поток не вызовет `exchange()` с своим значением. После этого оба получают данные друг друга.
+```text
+У производителя есть полный буфер из десяти чисел, у потребителя — пустой буфер.
+После передачи потребитель обрабатывает и очищает полученный буфер. Производитель продолжает писать в полученный пустой.
+Как двум потокам обмениваться буферами без копирования?
+```
+
+`Exchanger<V>` — точка синхронизации для **обмена данными между двумя потоками**. Поток вызывает `exchange(V)` и блокируется, пока второй поток не вызовет `exchange()` с своим значением. После этого оба получают данные друг друга. В примере потребитель ожидает ровно десять партий по десять чисел.
 
 ```java
 Exchanger<List<Integer>> exchanger = new Exchanger<>();
@@ -1849,7 +1923,7 @@ Thread producer = Thread.ofVirtual().start(() -> {
 Thread consumer = Thread.ofVirtual().start(() -> {
     List<Integer> buffer = new ArrayList<>();
     try {
-        while (true) {
+        for (int batch = 0; batch < 10; batch++) {
             buffer = exchanger.exchange(buffer); // получаем полный буфер
             process(buffer);
             buffer.clear(); // очищаем и возвращаем при следующем exchange
@@ -1868,6 +1942,21 @@ Thread consumer = Thread.ofVirtual().start(() -> {
 `exchanger.exchange(value, timeout, unit)` — вариант с таймаутом, бросает `TimeoutException` если второй поток не пришёл вовремя.
 
 ## Q56. Как использовать `StructuredTaskScope` для параллельных запросов с отменой?
+
+Условия для JDK 21 Preview. В первом сценарии нужны оба результата, при ошибке любой подзадачи запросите остановку остальных. Во втором достаточно первого успешного ответа. Для третьего задайте общий дедлайн ожидания в 5 секунд.
+
+```java
+// JDK 21 Preview.
+// fetchAllOrFail: нужны пользователь и заказ. При ошибке запросить остановку другой задачи.
+// fetchFastest: вернуть первый успешный ответ и запросить остановку остальных.
+// fetchWithTimeout: нужны пользователь и настройки. Общий дедлайн ожидания — 5 с.
+// Дедлайн относится к ожиданию перед закрытием scope.
+interface Queries {
+    Response fetchAllOrFail(long userId, long orderId) throws Exception;
+    String fetchFastest(List<String> endpoints) throws Exception;
+    Response fetchWithTimeout(long userId) throws Exception;
+}
+```
 
 `StructuredTaskScope` (Java 21 Preview, JEP 453) — рабочий API структурированной конкурентности. Подзадачи запускают через `fork()`, дожидаются через `join()`, а scope гарантирует, что при выходе из `try` `close()` дожидается их завершения; прерывание не обещает немедленной остановки. На основе этого строятся два готовых сценария плюс вариант с таймаутом:
 
@@ -1896,7 +1985,7 @@ String fetchFastest(List<String> endpoints) throws Exception {
     }
 }
 
-// Сценарий 3: Кастомный scope с таймаутом
+// Сценарий 3: ShutdownOnFailure с дедлайном ожидания
 Response fetchWithTimeout(long userId) throws Exception {
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
         Subtask<User> userTask = scope.fork(() -> fetchUser(userId));

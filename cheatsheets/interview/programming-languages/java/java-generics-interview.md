@@ -138,17 +138,18 @@ public class IntegerConsumer implements Consumer<Integer> {
 **1. Типобезопасность на этапе компиляции** — ошибки типов обнаруживаются до запуска программы:
 
 ```java
-// Без дженериков — ClassCastException в runtime
 List list = new ArrayList();
 list.add("hello");
 list.add(42);
-Integer value = (Integer) list.get(0); // Runtime error!
+Integer value = (Integer) list.get(0);
 
-// С дженериками — ошибка компиляции
 List<String> typedList = new ArrayList<>();
 typedList.add("hello");
-typedList.add(42); // Compilation error!
+typedList.add(42);
 ```
+
+Raw-список допускает обе вставки с предупреждениями. Приведение первого элемента к `Integer` при выполнении выбросит `ClassCastException`. В отдельном фрагменте с `List<String>` вставку `42` отвергнет компилятор.
+
 
 **2. Устранение явного приведения типов:**
 
@@ -178,13 +179,11 @@ public static <T extends Comparable<T>> T max(List<T> list) {
 - **Generic-метод** — параметр объявлен перед возвращаемым типом (`static <T> T first(...)`) и живёт только внутри метода. Тип выводится заново на каждом вызове.
 
 ```java
-// Generic-тип — T доступен во всём классе
 public class Box<T> {
     private T value;
     public T getValue() { return value; }
 }
 
-// Generic-метод — T ограничен методом
 public class Utils {
     public static <T> T firstOrNull(List<T> list) {
         return list.isEmpty() ? null : list.get(0);
@@ -207,14 +206,11 @@ String first = Utils.<String>firstOrNull(someList);
 **Type Inference** (вывод типов) — способность компилятора сам определить параметр типа из контекста, чтобы его не приходилось писать руками. Компилятор смотрит на типы аргументов метода и на целевой тип (тип переменной слева, ожидаемый тип параметра) и подставляет подходящий `T`.
 
 ```java
-// Вывод из аргумента метода
-Integer result = returnType(42);      // T = Integer
-String text = returnType("hello");    // T = String
+Integer result = returnType(42);
+String text = returnType("hello");
 
-// Diamond operator (Java 7+) — вывод из левой части
-List<String> list = new ArrayList<>(); // вместо new ArrayList<String>()
+List<String> list = new ArrayList<>();
 
-// Улучшенный вывод в Java 8 — вывод из контекста лямбды
 List<String> sorted = sort(list, Comparator.comparing(String::length));
 ```
 
@@ -238,46 +234,41 @@ List<String> sorted = sort(list, Comparator.comparing(String::length));
 
 ## Q6. (!) Что такое `Type Erasure` и зачем оно нужно?
 
-**Type Erasure** (стирание типов) — компилятор использует параметры типа для проверок на этапе компиляции, а затем стирает их из байт-кода. В runtime JVM не видит, что это был `List<String>` — для неё это просто `List`.
+**Type Erasure** (стирание типов) преобразует generic-типы в стёртые типы для исполнения. Аргументы типа могут сохраняться в метаданных объявлений, как в Q8. В runtime JVM не видит, что это был `List<String>` — для неё это просто `List`.
 
 **Зачем так сделали:** обратная совместимость. Дженерики добавили в Java 5, а до этого код десять лет писали на raw-коллекциях. Чтобы старый и новый байт-код работали вместе (старый `List` и новый `List<String>` — один и тот же класс), generic-информацию решили не тащить в runtime.
 
 ```mermaid
 graph LR
-    A["List&lt;String&gt;<br/>исходный код"] -->|"Компилятор<br/>(type erasure)"| B["List<br/>байт-код"]
-    C["List&lt;Integer&gt;<br/>исходный код"] -->|"Компилятор<br/>(type erasure)"| B
-    B -->|"JVM"| D["Один и тот же<br/>List.class"]
+    A["Исходный тип List&lt;String&gt;"]
+    B["Исходный тип List&lt;Integer&gt;"]
 ```
 
 Это значит, что `List<String>` и `List<Integer>` — это **один и тот же класс** в runtime:
 
-```java
-List<String> strings = new ArrayList<>();
-List<Integer> integers = new ArrayList<>();
 
-// true! В runtime оба — просто ArrayList
-System.out.println(strings.getClass() == integers.getClass()); // true
-```
+    List<String> strings = new ArrayList<>();
+    List<Integer> integers = new ArrayList<>();
+
+    // true! В runtime оба — просто ArrayList
+    System.out.println(strings.getClass() == integers.getClass()); // true
+
 
 ## Q7. (!) Как `Type Erasure` преобразует generic-код?
 
-При стирании компилятор делает три вещи: заменяет параметры типа на их границу, а где после этого пропадает каст — вставляет его обратно. Разберём каждое преобразование.
+Компилятор заменяет параметр типа его первой границей и при необходимости вставляет приведения. Для сохранения полиморфизма могут понадобиться bridge-методы, как в Q23.
 
 **1. Неограниченный тип заменяется на `Object`:**
 
 ```java
-// До стирания
 public class Box<T> {
     private T value;
     public T get() { return value; }
 }
-
-// После стирания
-public class Box {
-    private Object value;
-    public Object get() { return value; }
-}
 ```
+
+После стирания поле `value` и возвращаемое значение `get()` имеют тип `Object`. Компилятор при необходимости добавляет приведение в месте вызова.
+
 
 **2. Ограниченный тип заменяется на первую границу:**
 
@@ -310,13 +301,17 @@ String s = (String) list.get(0); // вставленный каст
 В общем случае **нет** — параметр типа стирается, и в runtime его не достать. Но есть важное исключение: если generic-аргумент «зашит» в **сигнатуру класса** при наследовании (например, `class CatCage implements Cage<Cat>`), он попадает в метаданные класса и доступен через рефлексию. Стирается параметр типа переменной (`List<String> x`), а не конкретизация в `extends`/`implements`.
 
 ```java
-// Тип Cat сохраняется в метаданных CatCage.class
-public class CatCage implements Cage<Cat> { }
-
-// Можно извлечь через рефлексию
-ParameterizedType pt = (ParameterizedType) CatCage.class.getGenericSuperclass();
-Type actualType = pt.getActualTypeArguments()[0]; // Cat.class
+interface Cage<T> {}
+class Cat {}
+class CatCage implements Cage<Cat> {}
 ```
+
+Для этого класса `CatCage.class.getGenericSuperclass()` возвращает `Object.class`. Приведение этого результата к `ParameterizedType` выбросит `ClassCastException`. Объявление `Cage<Cat>` находится среди непосредственно реализованных интерфейсов. [Class.getGenericInterfaces](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/lang/Class.html#getGenericInterfaces())
+
+    ParameterizedType cage =
+        (ParameterizedType) CatCage.class.getGenericInterfaces()[0];
+    Type argument = cage.getActualTypeArguments()[0]; // Cat.class
+
 
 Полный пример получения generic-типа:
 
@@ -341,7 +336,7 @@ System.out.println(ref.getType()); // java.util.List<java.lang.String>
 
 ## Q9. Что такое `Reifiable` и `Non-Reifiable` типы?
 
-Разница в том, доживает ли полная информация о типе до runtime. **Reifiable** («овеществляемый») — тип, который JVM знает полностью; **non-reifiable** — тип, часть информации о котором стёрта. Практический смысл: с reifiable-типами работают `instanceof` и создание массивов, с non-reifiable — нет.
+Разница в том, доживает ли полная информация о типе до runtime. **Reifiable** («овеществляемый») — тип, который JVM знает полностью; **non-reifiable** — тип, часть информации о котором стёрта. Тип элемента при создании массива должен быть реифицируемым. Для `instanceof` с Java 16 допускаются и нереифицируемые типы, если статический тип операнда позволяет проверяемое приведение без unchecked conversion. Тип аргумента в рантайме при этом не проверяется. [JLS §15.20.2](https://docs.oracle.com/javase/specs/jls/se26/html/jls-15.html#jls-15.20.2)
 
 **Reifiable** тип — полностью доступен в runtime:
 - Примитивы: `int`, `double`
@@ -355,32 +350,32 @@ System.out.println(ref.getType()); // java.util.List<java.lang.String>
 - `List<? extends Number>` — становится `List`
 
 ```java
-// Можно — reifiable типы
-if (obj instanceof List<?>) { }     // OK
-String[] arr = new String[10];       // OK
+Object obj = new ArrayList<String>();
+boolean a = obj instanceof List<?>;
+boolean b = obj instanceof List<String>;
 
-// Нельзя — non-reifiable типы
-if (obj instanceof List<String>) { } // Compilation error
-List<String>[] arr = new List<String>[10]; // Compilation error
+String[] strings = new String[10];
+List<String>[] lists = new List<String>[10];
 ```
+
+Проверка `a` допустима. Для `b` компилятор не может подтвердить аргумент `String` у ссылки типа `Object`. Массив `String[]` создать можно. Выражение `new List<String>[10]` запрещено.
 
 ## Q10. (!) Что такое `Bounded Type Parameter` (ограниченный параметр типа)?
 
 **Bounded Type Parameter** — параметр типа с верхней границей, заданной через `extends`: `<T extends Number>` принимает только `Number` и его подтипы. Граница даёт две вещи сразу: сужает допустимые аргументы и позволяет вызывать методы граничного типа внутри generic-кода (иначе `T` стирался бы в `Object` и кроме методов `Object` ничего не было бы доступно).
 
 ```java
-// T должен быть подтипом Number
 public class MathBox<T extends Number> {
     private T value;
 
     public double doubleValue() {
-        return value.doubleValue(); // метод Number доступен!
+        return value.doubleValue();
     }
 }
 
-MathBox<Integer> intBox = new MathBox<>();   // OK
-MathBox<Double> dblBox = new MathBox<>();    // OK
-MathBox<String> strBox = new MathBox<>();    // Compilation error!
+MathBox<Integer> intBox = new MathBox<>();
+MathBox<Double> dblBox = new MathBox<>();
+MathBox<String> strBox = new MathBox<>();
 ```
 
 Ограничение типа в generic-методе:
@@ -398,12 +393,11 @@ public static <T extends Comparable<T>> T max(T a, T b) {
 Параметр типа может требовать сразу нескольких границ, разделённых `&` — тогда аргумент должен удовлетворять всем им одновременно. Класс (если есть) идёт первым, далее — интерфейсы. Зачем: чтобы внутри метода были доступны методы всех заявленных типов (например, и `Comparable`, и собственные методы класса).
 
 ```java
-// T должен наследовать Animal И реализовать Serializable И Comparable
 public class SmartCage<T extends Animal & Serializable & Comparable<T>> {
     private List<T> animals = new ArrayList<>();
 
     public T getOldest() {
-        return Collections.max(animals); // Comparable доступен
+        return Collections.max(animals);
     }
 }
 ```
@@ -420,7 +414,6 @@ public class SmartCage<T extends Animal & Serializable & Comparable<T>> {
 **Recursive Type Bound** — граница параметра типа ссылается на сам параметр (`T extends Comparable<T>`). Читается как «`T` — это тип, который умеет сравниваться с объектами того же типа `T`». Так выражают требование «элемент сопоставим сам с собой», не теряя точности типа. Самый известный пример — `Comparable`:
 
 ```java
-// T сравним с самим собой
 public static <T extends Comparable<T>> T max(List<T> list) {
     T result = list.get(0);
     for (T item : list) {
@@ -464,14 +457,10 @@ public abstract class Builder<T extends Builder<T>> {
 Три вида wildcards:
 
 ```mermaid
-graph TD
-    W["Wildcard Types"] --> UB["Upper Bounded<br/>? extends T<br/>читаем как T"]
-    W --> UN["Unbounded<br/>?<br/>читаем как Object"]
-    W --> LB["Lower Bounded<br/>? super T<br/>пишем T"]
-
-    style UB fill:#d4edda
-    style UN fill:#fff3cd
-    style LB fill:#d1ecf1
+graph LR
+    A["Списки Integer, Number и Object"]
+    B["Клиентский метод"]
+    C["Чтение элемента и передача Integer"]
 ```
 
 | Вид | Синтаксис | Чтение | Запись | Пример |
@@ -488,17 +477,14 @@ graph TD
 public class Farm {
     private List<Animal> animals = new ArrayList<>();
 
-    // Без wildcard — принимает ТОЛЬКО Collection<Animal>
-    // public void addAnimals(Collection<Animal> newAnimals) { ... }
 
-    // С wildcard — принимает Collection<Cat>, Collection<Dog> и т.д.
     public void addAnimals(Collection<? extends Animal> newAnimals) {
         animals.addAll(newAnimals);
     }
 }
 
 List<Cat> cats = List.of(new Cat("Мурка"), new Cat("Барсик"));
-farm.addAnimals(cats); // OK — Cat extends Animal
+farm.addAnimals(cats);
 ```
 
 **Подводный камень:** в `List<? extends Animal>` нельзя добавлять элементы (кроме `null`). За `? extends Animal` может скрываться `List<Cat>`, и добавить туда `Dog` было бы небезопасно — поэтому компилятор запрещает `add` вообще:
@@ -522,13 +508,13 @@ public static void addIntegers(List<? super Integer> list) {
 }
 
 List<Number> numbers = new ArrayList<>();
-addIntegers(numbers); // OK — Number super Integer
+addIntegers(numbers);
 
 List<Object> objects = new ArrayList<>();
-addIntegers(objects); // OK — Object super Integer
+addIntegers(objects);
 
 List<Double> doubles = new ArrayList<>();
-addIntegers(doubles); // Compilation error! Double не super Integer
+addIntegers(doubles);
 ```
 
 **Подводный камень при чтении:** из `List<? super Integer>` элементы читаются только как `Object`. Компилятор не знает, что это — `List<Integer>`, `List<Number>` или `List<Object>`, а общий супертип для всех вариантов один — `Object`:
@@ -547,15 +533,14 @@ Integer i = list.get(0);   // Compilation error!
 - метод трогает лишь API самого контейнера (`size()`, `clear()`, `isEmpty()`), не заглядывая внутрь элементов.
 
 ```java
-// Принимает список любого типа
 public static void printList(List<?> list) {
     for (Object item : list) {
         System.out.println(item);
     }
 }
 
-printList(List.of("a", "b"));  // OK
-printList(List.of(1, 2, 3));   // OK
+printList(List.of("a", "b"));
+printList(List.of(1, 2, 3));
 ```
 
 **Важное отличие** — `List<?>` и `List<Object>` — это **не одно и то же**:
@@ -581,14 +566,11 @@ List<Object> objectList = new ArrayList<String>();    // Compilation error!
 **Эмпирическое правило:** если тип нужно использовать дважды (например, вернуть то же, что приняли), берите `<T>`; если тип нужен только чтобы «пропустить» значение, хватит `<?>`.
 
 ```java
-// <T> — можно связать входной и выходной тип
 public static <T> T firstElement(List<T> list) {
-    return list.get(0); // возвращаемый тип связан с T
+    return list.get(0);
 }
 
-// <?> — тип неизвестен, нельзя типизировать возврат
 public static void printAll(List<?> list) {
-    // list.get(0) возвращает Object
 }
 ```
 
@@ -604,49 +586,41 @@ public static void printAll(List<?> list) {
 
 ```mermaid
 graph LR
-    subgraph "Producer Extends"
-        P["Collection&lt;? extends T&gt;"] -->|"get() → T"| C["Наш код"]
-    end
-    subgraph "Consumer Super"
-        C2["Наш код"] -->|"add(T)"| CS["Collection&lt;? super T&gt;"]
-    end
-
-    style P fill:#d4edda
-    style CS fill:#d1ecf1
+    A["Список Integer"] -->|"входные данные"| B["Операция копирования"] -->|"место назначения"| C["Список Number"]
 ```
 
 Примеры из JDK, следующие принципу PECS:
 
-```java
-// Collections.copy — src производит (extends), dest потребляет (super)
-public static <T> void copy(List<? super T> dest, List<? extends T> src) { ... }
 
-// Collection.addAll — параметр производит элементы
-boolean addAll(Collection<? extends E> c);
+    // Collections.copy — src производит (extends), dest потребляет (super)
+    public static <T> void copy(List<? super T> dest, List<? extends T> src) { ... }
 
-// Collections.sort — Comparator потребляет элементы для сравнения
-public static <T> void sort(List<T> list, Comparator<? super T> c) { ... }
+    // Collection.addAll — параметр производит элементы
+    boolean addAll(Collection<? extends E> c);
 
-// Stream.forEach — Consumer потребляет элементы
-void forEach(Consumer<? super T> action);
-```
+    // Collections.sort — Comparator потребляет элементы для сравнения
+    public static <T> void sort(List<T> list, Comparator<? super T> c) { ... }
+
+    // Stream.forEach — Consumer потребляет элементы
+    void forEach(Consumer<? super T> action);
+
 
 Практический пример:
 
-```java
-public static <T> void transfer(
-        List<? extends T> source,   // Producer — читаем из неё
-        List<? super T> destination // Consumer — пишем в неё
-) {
-    for (T item : source) {
-        destination.add(item);
-    }
-}
 
-List<Integer> ints = List.of(1, 2, 3);
-List<Number> nums = new ArrayList<>();
-transfer(ints, nums); // Integer extends Number, Number super Integer
-```
+    public static <T> void transfer(
+            List<? extends T> source,   // Producer — читаем из неё
+            List<? super T> destination // Consumer — пишем в неё
+    ) {
+        for (T item : source) {
+            destination.add(item);
+        }
+    }
+
+    List<Integer> ints = List.of(1, 2, 3);
+    List<Number> nums = new ArrayList<>();
+    transfer(ints, nums); // Integer extends Number, Number super Integer
+
 
 **Подводный камень:** если коллекция одновременно и producer, и consumer (и читаем, и пишем), wildcard не подойдёт — используйте точный тип `List<T>` без `?`.
 
@@ -656,7 +630,7 @@ transfer(ints, nums); // Integer extends Number, Number super Integer
 
 ```java
 List<String> strings = new ArrayList<>();
-List<Object> objects = strings; // Compilation error!
+List<Object> objects = strings;
 ```
 
 **Почему это запрещено?** Если бы присваивание прошло, можно было бы испортить типобезопасность: через ссылку `List<Object>` положить в список `Integer`, а потом получить `ClassCastException` при чтении через исходную ссылку `List<String>`. Покажем эту дыру:
@@ -688,49 +662,38 @@ List<? super String> contravariant = strings;    // OK — контравари�
 | **Инвариантность** | `F<A>` и `F<B>` не связаны вообще | `List<T>` | — |
 
 ```mermaid
-graph TD
-    subgraph "Иерархия типов"
-        O["Object"] --> N["Number"]
-        N --> I["Integer"]
-        N --> D["Double"]
-    end
-
-    subgraph "Ковариантность (? extends Number)"
-        LN["List&lt;? extends Number&gt;"]
-        LI["List&lt;Integer&gt;"] -.->|подтип| LN
-        LD["List&lt;Double&gt;"] -.->|подтип| LN
-    end
-
-    subgraph "Контравариантность (? super Integer)"
-        LSI["List&lt;? super Integer&gt;"]
-        LN2["List&lt;Number&gt;"] -.->|подтип| LSI
-        LO["List&lt;Object&gt;"] -.->|подтип| LSI
-    end
+graph LR
+    A["List&lt;Integer&gt;"]
+    B["List&lt;Number&gt;"]
+    C["List&lt;Object&gt;"]
+    D["List&lt;? extends Number&gt;"]
+    E["List&lt;? super Integer&gt;"]
 ```
 
 **Подводный камень:** массивы в Java ковариантны (в отличие от дженериков), и за это приходится платить runtime-проверкой при каждой записи — а при нарушении прилетает `ArrayStoreException`. Именно из-за этой дыры дженерики сделали инвариантными:
 
-```java
-Object[] array = new String[3]; // OK — массивы ковариантны
-array[0] = 42; // Компилируется, но ArrayStoreException в runtime!
-```
+
+    Object[] array = new String[3]; // OK — массивы ковариантны
+    array[0] = 42; // Компилируется, но ArrayStoreException в runtime!
+
 
 ## Q21. (!) Что такое `Raw Type` и зачем избегать?
 
 **Raw Type** — generic-класс, использованный без аргумента типа: `List` вместо `List<String>`. Это не то же самое, что `List<Object>` — raw type отключает generic-проверки целиком, как будто дженериков нет. Существует только ради совместимости с кодом, написанным до Java 5.
 
 ```java
-// Raw type — НЕ рекомендуется
 List rawList = new ArrayList();
 rawList.add("hello");
-rawList.add(42);               // никаких ошибок компиляции
-String s = (String) rawList.get(1); // ClassCastException в runtime!
+rawList.add(42);
+String s = (String) rawList.get(1);
 
-// Параметризованный тип — рекомендуется
 List<String> typedList = new ArrayList<>();
 typedList.add("hello");
-typedList.add(42);             // Compilation error!
+typedList.add(42);
 ```
+
+В raw-примере второй элемент имеет тип `Integer`, поэтому приведение к `String` выбросит `ClassCastException`. В отдельном примере с `List<String>` ошибка обнаруживается уже при компиляции.
+
 
 **Почему избегать raw types:**
 1. Теряется типобезопасность — ошибки обнаруживаются только в runtime
@@ -744,12 +707,15 @@ typedList.add(42);             // Compilation error!
 Да, скомпилируется — но с **предупреждениями** (unchecked warnings), а не ошибками. Компилятор сознательно не запрещает raw types ради обратной совместимости с кодом до Java 5; предупреждение — его способ сказать «так делать нежелательно»:
 
 ```java
-List list = new ArrayList();       // raw type — предупреждение
+List list = new ArrayList();
 list.add("text");
 
-List<String> typed = list;         // unchecked assignment — предупреждение
-String s = typed.get(0);           // работает, но не гарантировано
+List<String> typed = list;
+String s = typed.get(0);
 ```
+
+Присваивание raw-ссылки переменной `List<String>` даёт unchecked-предупреждение. В показанном запуске первый элемент действительно строка, поэтому чтение проходит.
+
 
 Хотя обратная совместимость и стирание типов позволяют опускать параметры типа, это **плохая практика**. Всегда указывайте параметр типа или хотя бы `<?>`.
 
@@ -796,10 +762,10 @@ for (Method m : MyDate.class.getDeclaredMethods()) {
 
 ```java
 List<String> strings = new ArrayList<>();
-List rawList = strings;           // raw type
-rawList.add(42);                  // Heap pollution! Integer в List<String>
+List rawList = strings;
+rawList.add(42);
 
-String s = strings.get(0);       // ClassCastException в runtime
+String s = strings.get(0);
 ```
 
 Heap pollution также возникает при использовании varargs с дженериками:
@@ -819,7 +785,6 @@ static <T> List<T> asList(T... elements) {
 Varargs передаёт аргументы в массиве. Для нереифицируемого типа элемента компилятор не всегда может проверить безопасность массива, поэтому выдаёт предупреждение. Реальный компонент массива зависит от вызова и стирания границы `T`: это не обязательно `Object[]`.
 
 ```java
-// Предупреждение: Possible heap pollution from parameterized vararg type
 static <T> List<T> listOf(T... elements) {
     List<T> list = new ArrayList<>();
     for (T e : elements) {
@@ -857,8 +822,8 @@ static void unsafe(List<String>... lists) {
 
 ```java
 public class Box<T> {
-    private static T value;      // Compilation error!
-    private static List<T> list; // Compilation error!
+    private static T value;
+    private static List<T> list;
 }
 ```
 
@@ -878,11 +843,11 @@ public class Utils {
 **Нет.** Причина прямо вытекает из стирания: `T` превращается в `Object`, а примитивы (`int`, `double`) не наследуются от `Object` и в `Object`-переменную не помещаются. Поэтому вместо примитивов используют **классы-обёртки** (`Integer`, `Double`), а Java автоматически конвертирует туда-обратно (autoboxing):
 
 ```java
-List<int> ints = new ArrayList<>();      // Compilation error!
-List<Integer> ints = new ArrayList<>();  // OK — autoboxing
+List<int> primitiveInts = new ArrayList<>();
+List<Integer> ints = new ArrayList<>();
 
-Map<String, double> map = new HashMap<>();     // Compilation error!
-Map<String, Double> map = new HashMap<>();     // OK
+Map<String, double> primitiveMap = new HashMap<>();
+Map<String, Double> map = new HashMap<>();
 ```
 
 **Компромисс — производительность:** autoboxing создаёт объект-обёртку на каждое значение, что увеличивает потребление памяти и нагрузку на GC. В горячих циклах и на больших объёмах данных это заметно. Для таких сценариев используйте специализированные API без боксинга:
@@ -903,12 +868,18 @@ LongStream.of(1L, 2L, 3L).average();
 **Нельзя:** `new T[]` не компилируется. Массив в runtime обязан знать тип своих элементов (он проверяет его при каждой записи), а `T` к этому моменту уже стёрт — JVM просто не знает, массив чего создавать. Есть три обходных пути:
 
 ```java
-public class Box<T> {
-    // private T[] items = new T[10]; // Compilation error!
+class Box<T> {
+    private T[] items = new T[10];
+}
+```
 
+**Разбор примера**
+
+```java
+public class Box<T> {
     // Обходной путь 1 — каст с подавлением предупреждения
     @SuppressWarnings("unchecked")
-    private T[] items = (T[]) new Object[10]; // работает, но небезопасно
+    private T[] uncheckedItems = (T[]) new Object[10]; // работает, но небезопасно
 
     // Обходной путь 2 — через Class<T>
     @SuppressWarnings("unchecked")
@@ -928,14 +899,14 @@ public class Box<T> {
 Тут сталкиваются два несовместимых свойства. Массивы ковариантны и **проверяют** тип элемента в runtime (reifiable). А `List<String>` после стирания — просто `List` (non-reifiable), runtime-проверке его не подвергнуть. Разреши Java создавать `List<String>[]` — массив проверял бы лишь «это `List`?», пропуская подмену `List<Integer>`, и type-safety бы рухнула:
 
 ```java
-// Если бы было разрешено (не компилируется):
-List<String>[] stringLists = new List<String>[1]; // Compilation error!
-
-// Гипотетически, что могло бы пойти не так:
-Object[] objects = stringLists;         // массивы ковариантны
-objects[0] = List.of(42);              // List<Integer> вместо List<String>
-String s = stringLists[0].get(0);      // ClassCastException!
+List<String>[] stringLists = new List<String>[1];
+Object[] objects = stringLists;
+objects[0] = List.of(42);
+String value = stringLists[0].get(0);
 ```
+
+Первая строка запрещена. Если бы она была разрешена, ссылка `Object[]` позволила бы записать `List<Integer>` в массив с ожидаемыми элементами `List<String>`. При чтении значения как `String` это привело бы к `ClassCastException`.
+
 
 **Решение:** используйте `List<List<String>>` вместо массива списков:
 
@@ -999,10 +970,8 @@ List<User> users = restTemplate.exchange(url, HttpMethod.GET, null,
 `@SuppressWarnings("unchecked")` глушит предупреждение компилятора о приведении, корректность которого он проверить не может (из-за стирания типов). Аннотация не делает каст безопасным — она лишь говорит «я, автор, отвечаю за корректность здесь». Поэтому применять её нужно прицельно и с обоснованием.
 
 ```java
-// Без аннотации — предупреждение компилятора
-List<String> list = (List<String>) someObject; // unchecked cast
+List<String> unsuppressed = (List<String>) someObject;
 
-// С аннотацией — предупреждение подавлено
 @SuppressWarnings("unchecked")
 List<String> list = (List<String>) someObject;
 ```
@@ -1027,19 +996,22 @@ T result = (T) deserializer.deserialize(data, targetClass);
 
 Сериализация (объект → JSON) проблем не вызывает: библиотека видит реальные объекты и их классы. Сложность — в десериализации (JSON → объект): по JSON-строке нельзя восстановить, что внутри `Wrapper` лежал именно `User`, ведь `T` стёрт. Решение — явно передать тип через Super Type Token (Q33).
 
-**Jackson — `TypeReference`:**
+**Исходная модель и сериализация**
 
 ```java
-public class Wrapper<T> {
-    private T data;
-    private String metadata;
-    // getters, setters
+class Wrapper<T> {
+    public T data;
+    public String metadata;
 }
 
-// Сериализация — без проблем
-String json = objectMapper.writeValueAsString(wrapper);
+Wrapper<User> original = new Wrapper<>();
+original.data = user;
+String json = objectMapper.writeValueAsString(original);
+```
 
-// Десериализация — нужен TypeReference
+**Разбор примера**
+
+```java
 Wrapper<User> wrapper = objectMapper.readValue(json,
     new TypeReference<Wrapper<User>>() {});
 ```
@@ -1056,6 +1028,14 @@ Wrapper<User> wrapper = gson.fromJson(json, type);
 ## Q33. (!) Что такое `Super Type Token` и как это используется?
 
 **Super Type Token** — приём, позволяющий «протащить» полный generic-тип (включая вложенный, как `Map<String, List<Integer>>`) в runtime в обход стирания. Идея: стирается тип переменной, но не аргумент типа, зашитый в `extends` суперкласса (см. Q8). Создав анонимный подкласс `new TypeReference<...>() {}`, мы фиксируем нужный тип в его сигнатуре и затем достаём рефлексией.
+
+```java
+String json = "{\"group\":[1,2,3]}";
+Map<String, List<Integer>> result;
+// Заполните result данными из json, сохранив тип элементов списка.
+```
+
+**Разбор примера**
 
 ```java
 // Абстрактный Super Type Token
@@ -1076,6 +1056,8 @@ System.out.println(ref.getType());
 // java.util.Map<java.lang.String, java.util.List<java.lang.Integer>>
 ```
 
+В примере с JSON можно передать Jackson его собственный `TypeReference<Map<String, List<Integer>>>` через `new com.fasterxml.jackson.core.type.TypeReference<Map<String, List<Integer>>>() {}` в `objectMapper.readValue(json, ...)`. Так десериализатор получает и тип карты, и тип её значений.
+
 **Где используется:**
 - **Jackson:** `new TypeReference<List<User>>() {}` для десериализации
 - **Spring:** `new ParameterizedTypeReference<List<User>>() {}` в `RestTemplate` и `WebClient`
@@ -1090,18 +1072,18 @@ System.out.println(ref.getType());
 ```java
 Object obj = new ArrayList<String>();
 
-// Нельзя — non-reifiable тип
-if (obj instanceof List<String>) { }    // Compilation error!
+if (obj instanceof List<String>) { }
 
-// Можно — reifiable тип
-if (obj instanceof List<?>) { }         // OK
-if (obj instanceof List) { }            // OK (raw type)
-if (obj instanceof ArrayList<?>) { }    // OK
+if (obj instanceof List<?>) { }
+if (obj instanceof List) { }
+if (obj instanceof ArrayList<?>) { }
 
-// Pattern matching (Java 16+) — аналогично
-if (obj instanceof List<?> list) {       // OK
+if (obj instanceof List<?> list) {
     System.out.println(list.size());
 }
+
+List<Integer> integers = new ArrayList<>();
+boolean arrayList = integers instanceof ArrayList<Integer>;
 ```
 
 Если нужно проверить тип элементов, приходится делать это явно:
@@ -1119,6 +1101,8 @@ public static <T> List<T> checkedList(List<?> raw, Class<T> type) {
 // Или использовать Collections.checkedList для runtime-проверок
 ```
 
+Последняя проверка допустима с Java 16. У выражения уже есть статический тип `List<Integer>`, поэтому в рантайме достаточно проверить класс `ArrayList`. [JLS §15.20.2](https://docs.oracle.com/javase/specs/jls/se26/html/jls-15.html#jls-15.20.2)
+
 ## Q35. Как `var` с Java 10 влияет на типы дженериков?
 
 `var` выводит статический тип локальной переменной из инициализатора. Он сохраняет параметры дженерика при проверке компилятором.
@@ -1126,16 +1110,26 @@ public static <T> List<T> checkedList(List<?> raw, Class<T> type) {
 **Java 10 — `var` (вывод типа локальной переменной):**
 
 ```java
-// Компилятор выводит тип из правой части
-var list = new ArrayList<String>();   // тип: ArrayList<String>
-var map = Map.of("key", 1);          // тип: Map<String, Integer>
+var list = new ArrayList<String>();
+var map = Map.of("key", 1);
 ```
+
+В первом объявлении тип переменной — `ArrayList<String>`, во втором — `Map<String, Integer>`. `var` фиксирует статический тип по выражению справа.
+
 
 `var` не стирает generic-информацию — компилятор выводит полный параметризованный тип. Но `var` нельзя использовать для полей класса, параметров методов и возвращаемых типов.
 
 ## Q36. (!) В чём разница между `? extends T` и `? super T`? Когда что выбирать?
 
 `? extends T` (upper bounded) — «тип `T` или его подтип», из такой коллекции безопасно читать. `? super T` (lower bounded) — «тип `T` или его супертип», в такую коллекцию безопасно писать. Выбор между ними определяет принцип **PECS** (`Producer Extends, Consumer Super`): смотрите, чем коллекция является для вашего метода — источником (читаем → extends) или приёмником (пишем → super).
+
+```java
+List<Number> dest = new ArrayList<>(List.of(0, 0, 0));
+List<Integer> src = List.of(1, 2, 3);
+Collections.copy(dest, src);
+```
+
+В сигнатуре `copy(List<? super T> dest, List<? extends T> src)` источник выдаёт значения, а назначение принимает их. В примере `dest` уже содержит три элемента и поддерживает `set`, поэтому после вызова он содержит `[1, 2, 3]`. Если заменить его пустым `ArrayList`, вызов по-прежнему скомпилируется, но выбросит `IndexOutOfBoundsException`. `copy` заменяет существующие элементы без расширения списка. [Collections.copy](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/util/Collections.html#copy(java.util.List,java.util.List))
 
 ```java
 // ? extends T — из этой коллекции ЧИТАЕМ (producer)
@@ -1154,13 +1148,6 @@ static void addNumbers(List<? super Integer> list) {
     // Integer n = list.get(0); // ОШИБКА — возвращает Object, не Integer
 }
 // Работает с List<Integer>, List<Number>, List<Object>
-
-// Пример из JDK: Collections.copy
-// <T> void copy(List<? super T> dest, List<? extends T> src)
-//                     consumer ^            producer ^
-List<Number> dest = new ArrayList<>();
-List<Integer> src = List.of(1, 2, 3);
-Collections.copy(dest, src); // OK — Integer extends Number, Number super Integer
 ```
 
 **Правило PECS в одном примере:**
@@ -1189,22 +1176,16 @@ stack.popAll(dest);                      // Collection<Object> super Number ✅
 `Type Erasure` — удаление generic-информации при компиляции: каждый параметр типа заменяется на свою верхнюю границу (`Object`, если границы нет, иначе — первый bound). Дальше важны не столько детали процесса, сколько его последствия — что из-за стирания становится невозможным. Их и спрашивают на собеседовании.
 
 ```java
-// Исходный код
 public class Pair<A, B> {
     private A first;
     private B second;
     public Pair(A first, B second) { this.first = first; this.second = second; }
     public A getFirst() { return first; }
 }
-
-// После стирания (байткод выглядит как):
-public class Pair {
-    private Object first;   // A → Object (нет ограничения)
-    private Object second;  // B → Object
-    public Pair(Object first, Object second) { ... }
-    public Object getFirst() { return first; } // + каст на стороне вызывающего кода
-}
 ```
+
+После стирания поля, параметры конструктора и результат `getFirst()` имеют тип `Object`. Если вызывающий код использует `Pair<String, Integer>`, компилятор добавляет приведение результата к `String` там, где это нужно.
+
 
 **Практические последствия стирания:**
 
@@ -1244,14 +1225,11 @@ TypeSafeContainer<String> c = new TypeSafeContainer<>(String.class);
 Generic-метод объявляет собственные параметры типа (в `<>` перед возвращаемым типом), независимые от класса-контейнера. На каждом вызове компилятор выводит их заново через **type inference** — по типам аргументов и по целевому типу (тип переменной слева, ожидаемый тип параметра). Поэтому явно писать `<...>` почти никогда не нужно.
 
 ```java
-// Generic-метод в обычном классе
-class Collections {
-    // <T> — параметр метода, T extends Comparable — ограничение
+class CollectionExamples {
     public static <T extends Comparable<T>> T max(List<T> list) {
         return list.stream().max(Comparator.naturalOrder()).orElseThrow();
     }
 
-    // Несколько параметров типа
     public static <K, V> Map<V, K> invertMap(Map<K, V> original) {
         Map<V, K> result = new HashMap<>();
         original.forEach((k, v) -> result.put(v, k));
@@ -1259,11 +1237,9 @@ class Collections {
     }
 }
 
-// Вызов — тип выводится автоматически
-String maxStr = Collections.max(List.of("apple", "mango", "banana")); // T = String
-Integer maxInt = Collections.max(List.of(3, 1, 4, 1, 5));              // T = Integer
+String maxStr = CollectionExamples.max(List.of("apple", "mango", "banana"));
+Integer maxInt = CollectionExamples.max(List.of(3, 1, 4, 1, 5));
 
-// Явное указание типа (редко нужно)
 List<String> empty = Collections.<String>emptyList();
 ```
 
@@ -1287,12 +1263,24 @@ List<Object> mixed = Stream.of("str", 42)
 
 ## Q39. Что такое `Comparable<T>` vs `Comparator<T>` с точки зрения дженериков?
 
-Оба задают порядок сравнения, но с разных сторон. `Comparable<T>` — «внутренний» естественный порядок: класс сам реализует его и знает, как сравнить себя с другим объектом того же типа (`compareTo`). `Comparator<T>` — «внешняя» сменная стратегия: отдельный объект, который сравнивает два чужих объекта (`compare`) и которых для одного типа может быть много. Параметр типа у них тоже значит разное, что и видно в generic-ограничениях ниже.
+Оба задают порядок сравнения, но с разных сторон. `Comparable<T>` — «внутренний» естественный порядок: класс сам реализует его и знает, как сравнить себя с объектом допустимого типа (`compareTo`). `Comparator<T>` — «внешняя» сменная стратегия: отдельный объект, который сравнивает два чужих объекта (`compare`) и которых для одного типа может быть много. У `Comparable<T>` параметр `T` задаёт тип аргумента `compareTo`. Им может быть супертип класса-реализации. У `Comparator<T>` параметр задаёт тип обоих аргументов `compare`. [Comparable](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/lang/Comparable.html)
+
+```java
+record Version(int major, int minor, int patch) {}
+
+List<Version> versions = List.of(
+    new Version(2, 1, 0), new Version(1, 5, 0), new Version(2, 0, 3)
+);
+// Естественный порядок: major, minor, patch по возрастанию.
+// Порядок для отчёта: major по возрастанию, затем minor по убыванию.
+```
+
+**Разбор примера**
 
 ```java
 // Comparable — класс "знает" как себя сравнивать
 class Version implements Comparable<Version> {
-    private final int major, minor, patch;
+    final int major, minor, patch;
 
     Version(int major, int minor, int patch) {
         this.major = major; this.minor = minor; this.patch = patch;
@@ -1316,7 +1304,7 @@ static <T extends Comparable<T>> T min(T a, T b) {
 // Более гибкое ограничение: T extends Comparable<? super T>
 // Позволяет использовать Comparable, объявленный в суперклассе
 static <T extends Comparable<? super T>> void sort(List<T> list) {
-    // ...
+    list.sort(Comparator.naturalOrder());
 }
 
 // Comparator — функциональный интерфейс, поддерживает композицию
@@ -1336,10 +1324,10 @@ versions.sort(compound);
 | Аспект | `Comparable<T>` | `Comparator<T>` |
 |---|---|---|
 | Тип | Интерфейс в `java.lang` | Функциональный интерфейс в `java.util` |
-| Параметр | `T` — тип самого класса | `T` — тип сравниваемых объектов |
+| Параметр | `T` — тип аргумента `compareTo` | `T` — тип сравниваемых объектов |
 | Метод | `int compareTo(T o)` | `int compare(T o1, T o2)` |
 | Цепочки | Нет | `thenComparing`, `reversed`, `nullsFirst` |
-| Лямбды | Нельзя | Да — `Comparator<String> c = (a,b) -> a.length() - b.length()` |
+| Лямбды | Да, один аргумент. Например, `Comparable<String> c = "x"::compareTo` | Да, два аргумента. Например, `Comparator<String> c = String::compareTo` |
 
 ## Q40. Что такое wildcards (`?`) и когда использовать unbounded `<?>`?
 
@@ -1350,30 +1338,25 @@ versions.sort(compound);
 Бонус по сравнению с `List<Object>`: `<?>` принимает `List<String>`, `List<Integer>` и любой другой, тогда как `List<Object>` из-за инвариантности (Q19) — только буквально `List<Object>`.
 
 ```java
-// Unbounded wildcard — работаем с контейнером, не с содержимым
 void printAll(List<?> list) {
-    // list.add("x"); // ОШИБКА — тип неизвестен
-    for (Object obj : list) { // можно читать как Object
+    for (Object obj : list) {
         System.out.println(obj);
     }
 }
 
-// Работает с любым List<X>
-printAll(List.of(1, 2, 3));       // List<Integer>
-printAll(List.of("a", "b"));      // List<String>
-printAll(List.of(1.0, 2.0));      // List<Double>
+printAll(List.of(1, 2, 3));
+printAll(List.of("a", "b"));
+printAll(List.of(1.0, 2.0));
 
-// Полезно для проверки метаданных
 static <T> boolean isHomogeneous(List<?> list) {
     if (list.isEmpty()) return true;
     Class<?> type = list.get(0).getClass();
     return list.stream().allMatch(e -> e.getClass() == type);
 }
 
-// Когда List<?> лучше List<Object>:
 List<Integer> ints = List.of(1, 2, 3);
-List<Object> objs = ints; // ОШИБКА — List<Integer> не является List<Object>!
-List<?> wild = ints;      // OK — List<Integer> является List<?>
+List<Object> objs = ints;
+List<?> wild = ints;
 ```
 
 **Сравнение трёх форм wildcards:**

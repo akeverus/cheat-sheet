@@ -329,23 +329,23 @@ for (EventListener listener : listeners) {
 
 | Характеристика | `List.of()` (Java 9+) | `Arrays.asList()` |
 |---------------|----------------------|-------------------|
-| Изменяемость | Полностью immutable | `set()` работает, `add()`/`remove()` — нет |
+| Изменяемость | Структурно неизменяемый | `set()` работает, `add()`/`remove()` — нет |
 | `null` элементы | Запрещены (`NPE`) | Разрешены |
-| Связь с массивом | Нет (независимая копия) | Да (`backed` массивом) |
-| Память | Оптимизирован (0–2 элемента — спец. классы) | Обёртка над массивом |
+| Связь с массивом | Без связи с массивом аргументов | Да (`backed` массивом) |
+| Память | Зависит от реализации | Обёртка над массивом |
 
 ```java
-// List.of — полностью неизменяемый
-List<String> immutable = List.of("a", "b", "c");
-immutable.set(0, "x");  // UnsupportedOperationException
-immutable.add("d");     // UnsupportedOperationException
-
-// Arrays.asList — частично изменяемый, backed массивом
 String[] arr = {"a", "b", "c"};
+List<String> immutable = List.of("a", "b", "c");
 List<String> backed = Arrays.asList(arr);
-backed.set(0, "x");  // OK, arr[0] тоже станет "x"
-backed.add("d");     // UnsupportedOperationException
+
+Runnable first = () -> immutable.set(0, "x");
+Runnable second = () -> immutable.add("d");
+Runnable third = () -> backed.set(0, "x");
+Runnable fourth = () -> backed.add("d");
 ```
+
+Запустите каждый сценарий отдельно. Первый, второй и четвёртый выбрасывают `UnsupportedOperationException`. Третий заменяет элемент списка и записывает `"x"` в `arr[0]`. Неизменяемость списка относится к его структуре и ссылкам на элементы. Состояние изменяемых элементов может меняться.
 
 ## Q10. (!) В чем разница между `HashSet` и `TreeSet`?
 
@@ -434,51 +434,41 @@ Integer age = map.get("Alice"); // hash → bucket → equals → value
 
 ## Q13. (!) Что происходит при коллизиях в `HashMap` и как работает treeification?
 
-При коллизии (два ключа попали в один bucket) элементы хранятся в **цепочке** (`linked list`). В `Java 8+` введён механизм **treeification** — преобразование цепочки в красно-чёрное дерево:
-
-```mermaid
-graph LR
-    subgraph "Linked List (< 8 элементов)"
-        N1["Node1"] --> N2["Node2"] --> N3["Node3"]
-    end
-
-    subgraph "Red-Black Tree (≥ 8 элементов)"
-        T1["TreeNode"] --> T2["TreeNode"]
-        T1 --> T3["TreeNode"]
-        T2 --> T4["TreeNode"]
-        T2 --> T5["TreeNode"]
-    end
-```
-
-**Ключевые константы:**
-
-| Константа | Значение | Описание |
-|-----------|----------|----------|
-| `TREEIFY_THRESHOLD` | **8** | Длина цепочки, при которой список → дерево |
-| `UNTREEIFY_THRESHOLD` | **6** | Длина, при которой дерево → список |
-| `MIN_TREEIFY_CAPACITY` | **64** | Минимальная ёмкость таблицы для treeification |
-
-Если цепочка достигла 8 элементов, но ёмкость таблицы < 64, вместо treeification произойдёт **resize** (удвоение таблицы). Это важный нюанс, который часто спрашивают на собеседованиях.
+В OpenJDK 26 при коллизии новые записи сначала добавляются в цепочку бакета. Схема показывает ветвление для вставки через `HashMap.put`:
 
 ```java
-// Пример плохого hashCode — все ключи в одном bucket
 class BadKey {
     private final int id;
     BadKey(int id) { this.id = id; }
 
     @Override
-    public int hashCode() { return 42; } // Все в один bucket!
+    public int hashCode() { return 42; }
 
     @Override
     public boolean equals(Object o) {
         return o instanceof BadKey bk && bk.id == this.id;
     }
 }
-
-// Производительность деградирует: O(1) → O(n), а с Java 8 → O(log n)
 ```
 
-> **Важно для собеседования:** до `Java 8` коллизии всегда обрабатывались через `linked list` (`O(n)` в худшем случае). С `Java 8` — через `red-black tree` (`O(log n)` в худшем случае), что было сделано для защиты от HashDoS-атак.
+```mermaid
+graph TD
+    A["put добавляет новый ключ в цепочку из восьми узлов"] --> B{"Ёмкость таблицы меньше 64?"}
+    B -->|Да| C["Расширение таблицы"]
+    B -->|Нет| D["Преобразование цепочки в красно-чёрное дерево"]
+```
+
+**Ключевые константы:**
+
+| Константа | Значение | Описание |
+|-----------|----------|----------|
+| `TREEIFY_THRESHOLD` | **8** | Число уже имеющихся узлов цепочки, при котором новая вставка через `put` вызывает попытку преобразования |
+| `UNTREEIFY_THRESHOLD` | **6** | Максимальный размер группы при разбиении дерева во время расширения, при котором она превращается в цепочку |
+| `MIN_TREEIFY_CAPACITY` | **64** | Минимальная ёмкость таблицы для treeification |
+
+Обновление уже существующего ключа не добавляет узел. Само преобразование зависит от пути вставки и ёмкости массива бакетов.
+
+У `BadKey` все хеши одинаковы и нет порядка `Comparable`. Поиск по сбалансированному дереву бакета может просматривать обе ветви, если одинаковый хеш и сравнение ключей не позволяют выбрать одну. Поэтому для произвольных ключей возможен линейный поиск даже после treeification. [OpenJDK 26 — HashMap](https://github.com/openjdk/jdk/blob/jdk-26%2B35/src/java.base/share/classes/java/util/HashMap.java).
 
 ## Q14. (!) Какова цель параметров `initialCapacity` и `loadFactor`?
 
@@ -723,38 +713,32 @@ for (Map.Entry<String, Integer> e : concMap.entrySet()) { ... } // Безопа�
 
 ## Q23. Какие методы `Java 8+` добавлены в `Map`?
 
-`Java 8` добавила в `Map` набор default-методов, которые заменяют громоздкий шаблон «проверь наличие ключа → достань → измени → положи обратно» одним атомарным вызовом. Особенно ценны они в `ConcurrentHashMap`, где такой составной паттерн без атомарного метода был бы небезопасен в многопоточной среде.
+`Java 8` добавила в `Map` набор default-методов, которые заменяют громоздкий шаблон «проверь наличие ключа → достань → измени → положи обратно» одним вызовом. Default-реализации `Map` сами по себе не дают гарантию атомарности. Например, `ConcurrentHashMap.merge` выполняет обновление одного ключа атомарно.
 
 ```java
 Map<String, Integer> map = new HashMap<>();
 map.put("a", 1);
 
-// getOrDefault — значение по умолчанию
-int val = map.getOrDefault("b", 0); // 0
+int val = map.getOrDefault("b", 0);
 
-// putIfAbsent — вставить, только если ключа нет
-map.putIfAbsent("a", 99); // Не изменит, "a" уже есть
+map.putIfAbsent("a", 99);
 
-// computeIfAbsent — ленивое вычисление значения
-map.computeIfAbsent("b", k -> k.length()); // "b" → 1
+map.computeIfAbsent("b", k -> k.length());
 
-// computeIfPresent — обновить, только если ключ есть
-map.computeIfPresent("a", (k, v) -> v + 10); // "a" → 11
+map.computeIfPresent("a", (k, v) -> v + 10);
 
-// compute — вычислить значение (для любого ключа)
 map.compute("a", (k, v) -> v == null ? 1 : v + 1);
 
-// merge — объединить значения
-map.merge("a", 5, Integer::sum); // "a" → 16
+map.merge("a", 5, Integer::sum);
 
-// replaceAll — изменить все значения
 map.replaceAll((k, v) -> v * 2);
 
-// forEach
 map.forEach((k, v) -> System.out.println(k + "=" + v));
 ```
 
-Эти методы особенно полезны для подсчёта частот, группировок и атомарных обновлений. Подробнее о `Stream API` и `Collectors` — в [вопросах по Stream API](java-stream-interview.md).
+Эти методы особенно полезны для подсчёта частот и группировок. Подробнее о `Stream API` и `Collectors` — в [вопросах по Stream API](java-stream-interview.md).
+
+В этом примере `getOrDefault` возвращает 0 для отсутствующего ключа, `putIfAbsent` сохраняет исходное значение `a`, а `computeIfAbsent` добавляет `b = 1`. Для `a` последовательность после `computeIfPresent`, `compute` и `merge` равна 11 → 12 → 17. После `replaceAll` получаются `a = 34` и `b = 2`. Порядок обхода `HashMap` не гарантирован.
 
 ## Q24. Что такое `Queue` и какие реализации?
 
@@ -815,22 +799,25 @@ deque.peekLast();  // "Z"
 `BlockingQueue` — интерфейс очереди с **блокирующими** операциями для координации потоков. `put()` блокирует при полной очереди, `take()` — при пустой.
 
 ```java
-// Producer-Consumer паттерн
 BlockingQueue<Task> queue = new ArrayBlockingQueue<>(100);
 
-// Producer поток
 Runnable producer = () -> {
-    while (true) {
-        Task task = generateTask();
-        queue.put(task); // Блокируется, если очередь полна
+    try {
+        while (!Thread.currentThread().isInterrupted()) {
+            queue.put(generateTask());
+        }
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
     }
 };
 
-// Consumer поток
 Runnable consumer = () -> {
-    while (true) {
-        Task task = queue.take(); // Блокируется, если очередь пуста
-        process(task);
+    try {
+        while (!Thread.currentThread().isInterrupted()) {
+            process(queue.take());
+        }
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
     }
 };
 ```
@@ -843,6 +830,8 @@ Runnable consumer = () -> {
 | `PriorityBlockingQueue` | Безграничная | Приоритетная очередь |
 
 `ThreadPoolExecutor` использует `BlockingQueue` для очереди задач — подробнее в [вопросах по Java Concurrency](java-concurrency-interview.md).
+
+При заполнении очереди `put()` ждёт свободного места. При пустой очереди `take()` ждёт элемент. Если ожидание прервано, задача восстанавливает флаг прерывания и завершается.
 
 ## Q27. В чём разница между `ArrayDeque` и `LinkedList`?
 
@@ -895,39 +884,25 @@ descriptions.put(Permission.WRITE, "Запись файлов");
 
 ## Q29. (!) В чем разница между `fail-fast` и `fail-safe` итераторами?
 
-Разница в реакции на изменение коллекции во время итерации. **`fail-fast`** немедленно бросает `ConcurrentModificationException`, как только замечает структурную модификацию — это страховка от трудноуловимых багов, а не средство потокобезопасности. **`fail-safe`** (точнее — `weakly consistent`) работает со снимком или сегментами данных и не падает, но может не увидеть самых свежих изменений.
+Fail-fast итератор обнаруживает неподдерживаемую структурную модификацию на основе best effort. Использовать `ConcurrentModificationException` как гарантию корректности нельзя.
 
-| Характеристика | `fail-fast` | `fail-safe` (weakly consistent) |
-|---------------|-----------|-------------------------------|
-| Исключение | `ConcurrentModificationException` | Нет |
-| Механизм | Проверяет `modCount` | Работает со снимком / сегментами |
-| Многопоточность | Небезопасно | Безопасно |
-| Актуальность данных | Свежие | Может видеть устаревшие |
-| Примеры | `ArrayList`, `HashMap`, `TreeMap` | `CopyOnWriteArrayList`, `ConcurrentHashMap` |
+| Пример | Что видит итератор | Правило изменения |
+|---|---|---|
+| `ArrayList`, `HashMap`, `TreeMap` | Обычный обход с проверкой структурных изменений | Поддерживаемый `Iterator.remove()` обновляет состояние итератора |
+| `CopyOnWriteArrayList` | Снимок массива на момент создания итератора | Изменения списка не попадают в этот снимок. `Iterator.remove()` запрещён |
+| `ConcurrentHashMap` | Weakly consistent обход, который может видеть часть последующих изменений | Обход допустим при параллельных обновлениях и не выбрасывает `ConcurrentModificationException` |
 
 ```java
-// fail-fast — бросит ConcurrentModificationException
-List<String> list = new ArrayList<>(List.of("a", "b", "c"));
-for (String s : list) {
-    list.remove(s); // CME!
-}
-
-// fail-safe — не бросит исключение
-List<String> cowList = new CopyOnWriteArrayList<>(List.of("a", "b", "c"));
-for (String s : cowList) {
-    cowList.remove(s); // OK, итератор на снимке
-}
-
-// Правильное удаление в fail-fast коллекции
-Iterator<String> it = list.iterator();
-while (it.hasNext()) {
-    if (it.next().equals("b")) {
-        it.remove(); // Безопасно — через Iterator.remove()
-    }
-}
+List<String> first = new ArrayList<>(List.of("a", "b", "c"));
+List<String> second = new CopyOnWriteArrayList<>(first);
+Iterator<String> left = first.iterator();
+Iterator<String> right = second.iterator();
+first.remove("a");
+second.remove("a");
+String a = left.next();
 ```
 
-> **Важно:** термин `fail-safe` не является официальным в `Java` — в документации `ConcurrentHashMap` используется `weakly consistent`. Итератор может видеть часть изменений, произведённых после его создания.
+В OpenJDK 26 вызов `left.next()` выбрасывает `ConcurrentModificationException`. Отдельный вызов `right.next()` вернул бы `"a"` из снимка. Weakly consistent обход `ConcurrentHashMap` не фиксирует состояние всей карты на момент создания итератора. Термин fail-safe часто используют неформально для обоих контрактов.
 
 ## Q30. Как итерировать и удалять элементы?
 
@@ -957,40 +932,36 @@ List<String> filtered = list.stream()
 
 ## Q31. Что такое `Spliterator`?
 
-`Spliterator` (`splittable iterator`) — итератор для разбиения данных на части, используется внутри `Stream API` для параллельной обработки. Ключевой метод `trySplit()` делит данные на две части — одну для текущего потока, другую — для нового.
+`Spliterator` (`splittable iterator`) — итератор для разбиения данных на части, используется внутри `Stream API` для параллельной обработки. Ключевой метод `trySplit()` отделяет часть оставшихся элементов в новый `Spliterator` или возвращает `null`, если разделить обход не удалось. Выполнение в отдельных потоках организует вызывающий код.
 
 ```java
 List<Integer> numbers = List.of(1, 2, 3, 4, 5, 6, 7, 8);
 Spliterator<Integer> full = numbers.spliterator();
-Spliterator<Integer> half = full.trySplit(); // Разделение
+Spliterator<Integer> half = full.trySplit();
 
-// Характеристики сплитератора
-full.characteristics(); // SIZED | ORDERED | SUBSIZED | IMMUTABLE
-full.estimateSize();    // Оценка количества оставшихся элементов
+full.characteristics();
+full.estimateSize();
 ```
 
 **Характеристики** (`characteristics`): `SIZED`, `ORDERED`, `SORTED`, `DISTINCT`, `NONNULL`, `IMMUTABLE`, `CONCURRENT`, `SUBSIZED`. Они влияют на оптимизации в `Stream API` — подробнее в [вопросах по Stream API](java-stream-interview.md).
 
+В OpenJDK 26 сплитератор из примера сообщает `ORDERED | SIZED | SUBSIZED`. Признак `IMMUTABLE` у него отсутствует, хотя сам список из `List.of` структурно неизменяемый. Проверяйте флаги конкретного сплитератора.
+
 ## Q32. Что такое `ConcurrentModificationException`?
 
-`ConcurrentModificationException` возникает при структурной модификации коллекции во время итерации (кроме через `Iterator.remove()`). Причина: итератор сохраняет `expectedModCount` при создании, а коллекция увеличивает `modCount` при каждом изменении. При расхождении — исключение.
+Fail-fast итераторы могут выбросить `ConcurrentModificationException`, если заметят структурное изменение коллекции в обход поддерживаемых операций итератора. Например, `ArrayList.Itr` сравнивает `expectedModCount` с `modCount` в `next()`. Это проверка best effort: она применима и в одном потоке.
 
 ```java
-// Типичная ошибка — модификация в enhanced for-loop
 List<String> list = new ArrayList<>(List.of("a", "b", "c"));
 for (String s : list) {
+    System.out.println(s);
     if (s.equals("b")) {
-        list.remove(s); // ConcurrentModificationException!
+        list.remove(s);
     }
 }
-
-// Решения:
-// 1. Iterator.remove()
-// 2. list.removeIf(s -> s.equals("b"))
-// 3. Использовать CopyOnWriteArrayList / ConcurrentHashMap
 ```
 
-> Несмотря на название, `ConcurrentModificationException` чаще возникает в **однопоточном** коде — при изменении коллекции внутри `for-each` цикла.
+В OpenJDK 26 после чтения и удаления `"b"` курсор и новый размер списка равны 2. Метод `hasNext()` возвращает `false`. Цикл пропускает `"c"` и завершается без исключения. Если удалить `"a"` на первом шаге, следующий `next()` заметит расхождение счётчиков. Для удаления используйте поддерживаемый `Iterator.remove()` или отдельный вызов `list.removeIf(...)`. При конкурентной работе выбирайте структуру с подходящим контрактом обхода (Q29). [OpenJDK 26 — ArrayList](https://github.com/openjdk/jdk/blob/jdk-26%2B35/src/java.base/share/classes/java/util/ArrayList.java).
 
 ## Q33. (!) Как использовать `Comparable` и `Comparator`?
 
@@ -1061,14 +1032,13 @@ Arrays.parallelSort(large); // Параллельная сортировка
 ```java
 List<String> original = new ArrayList<>(List.of("a", "b"));
 List<String> readOnly = Collections.unmodifiableList(original);
-
-readOnly.add("c");   // UnsupportedOperationException
-original.add("c");   // OK! readOnly тоже покажет "c"
-
-System.out.println(readOnly); // [a, b, c]
+original.add("c");
+System.out.println(readOnly);
 ```
 
-Для настоящей неизменяемой копии используйте `List.copyOf()` (Java 10+) или `Collections.unmodifiableList(new ArrayList<>(original))`.
+Будет выведено `[a, b, c]`. Отдельный вызов `readOnly.add("d")` выбросит `UnsupportedOperationException`.
+
+Для структурно неизменяемой копии используйте `List.copyOf()` (Java 10+) или `Collections.unmodifiableList(new ArrayList<>(original))`.
 
 ## Q36. (!) Что такое Immutable коллекции в `Java 9+`?
 
@@ -1108,35 +1078,31 @@ list.set(0, "x");   // UnsupportedOperationException
 ```java
 List<Integer> list = new ArrayList<>(List.of(3, 1, 4, 1, 5));
 
-// Сортировка
 Collections.sort(list);
 Collections.sort(list, Comparator.reverseOrder());
 
-// Поиск (только в отсортированном списке!)
-int index = Collections.binarySearch(list, 4);
+int index = Collections.binarySearch(list, 4, Comparator.reverseOrder());
 
-// Модификация
 Collections.reverse(list);
 Collections.shuffle(list);
 Collections.swap(list, 0, 1);
-Collections.rotate(list, 2); // Циклический сдвиг
+Collections.rotate(list, 2);
 Collections.fill(list, 0);
 
-// Агрегация
 int min = Collections.min(list);
 int max = Collections.max(list);
-int freq = Collections.frequency(list, 1); // Количество вхождений
+int freq = Collections.frequency(list, 1);
 
-// Обёртки
 List<Integer> synced = Collections.synchronizedList(list);
 List<Integer> unmod = Collections.unmodifiableList(list);
 List<Integer> checked = Collections.checkedList(list, Integer.class);
 
-// Фабричные
 List<String> empty = Collections.emptyList();
 Set<String> single = Collections.singleton("only");
 List<String> nCopies = Collections.nCopies(10, "default");
 ```
+
+Поиск использует тот же порядок, в котором отсортирован список. Для поиска по естественному порядку предварительно отсортируйте список по естественному порядку.
 
 ## Q38. Почему нельзя использовать мутабельные объекты как ключи `HashMap`?
 
@@ -1234,11 +1200,11 @@ java.util.SequencedMap         → SortedMap, LinkedHashMap
 **Проблема до Java 21:** не было единого API для доступа к первому/последнему элементу:
 ```java
 // Разные способы для разных коллекций — до Java 21
-list.get(0);                   // ArrayList
-list.get(list.size() - 1);     // ArrayList
-deque.peekFirst();             // ArrayDeque
-sortedSet.first();             // TreeSet
-linkedHashSet.iterator().next(); // LinkedHashSet — неудобно!
+list.get(0);
+list.get(list.size() - 1);
+deque.peekFirst();
+sortedSet.first();
+linkedHashSet.iterator().next();
 ```
 
 **Единый API после Java 21:**
@@ -1270,7 +1236,7 @@ SequencedCollection<String> reversed = list.reversed();
 Map.Entry<String, Integer> first = map.firstEntry();
 Map.Entry<String, Integer> last = map.lastEntry();
 Map.Entry<String, Integer> poll = map.pollFirstEntry(); // удаляет и возвращает
-LinkedHashMap<String, Integer> rev = (LinkedHashMap<String, Integer>) map.reversed();
+SequencedMap<String, Integer> rev = map.reversed();
 ```
 
 **Ключевые особенности:**
@@ -1281,39 +1247,39 @@ LinkedHashMap<String, Integer> rev = (LinkedHashMap<String, Integer>) map.revers
 
 ## Q42. (!) Как устроен `ConcurrentHashMap` изнутри и почему он быстрее `Hashtable`?
 
-`ConcurrentHashMap` (Java 8+) использует **сегментированную блокировку** на уровне отдельных бакетов вместо блокировки всей таблицы, как в `Hashtable`.
+`ConcurrentHashMap` (Java 8+) может обновлять разные бакеты независимо, тогда как операции `Hashtable` синхронизируются на общей карте. Выигрыш зависит от нагрузки.
 
 **Внутренняя структура (Java 8+):**
 - Массив нод (`Node<K,V>[]`) — аналогично `HashMap`
-- Запись/обновление блокирует только первую ноду бакета (`synchronized(bin)`)
-- Чтение — **вообще без блокировки** (поля `val` и `next` объявлены `volatile`)
-- При заполнении бакет переходит от `LinkedList` к `TreeBin` (красно-чёрное дерево) при 8+ элементах
+- В пустом бакете вставка может использовать CAS. Для ряда обновлений занятого бакета реализация синхронизируется на его головном узле
+- Операции чтения, например `get`, обычно выполняются без захвата монитора
+- Длинная цепочка узлов может перейти в `TreeBin`. Решение зависит от пути обновления и ёмкости таблицы
 
 ```java
 ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
 
-// Потокобезопасные атомарные операции
-map.putIfAbsent("key", 1);                     // атомарно
-map.computeIfAbsent("key", k -> expensive(k)); // атомарно
-map.merge("counter", 1, Integer::sum);         // инкремент счётчика
-map.compute("key", (k, v) -> v == null ? 1 : v + 1); // обновление
+map.putIfAbsent("key", 1);
+map.computeIfAbsent("key", k -> expensive(k));
+map.merge("counter", 1, Integer::sum);
+map.compute("key", (k, v) -> v == null ? 1 : v + 1);
 
-// Параллельная обработка
-map.forEach(4, (k, v) -> process(k, v));       // parallelismThreshold = 4
-long sum = map.reduceValues(4, Integer::sum);
+map.forEach(4, (k, v) -> process(k, v));
+long sum = map.reduceValuesToLong(4, Integer::longValue, 0L, Long::sum);
 ```
 
 **Ключевые отличия от конкурентов:**
 
 | Характеристика | `Hashtable` | `synchronizedMap` | `ConcurrentHashMap` |
 |---|---|---|---|
-| Блокировка | Вся таблица | Вся таблица | Один бакет |
-| Чтение | Блокирует | Блокирует | **Без блокировки** |
-| `null` ключи/значения | Нет | Нет | **Нет** |
-| `size()` точность | Точно | Точно | Приблизительно |
+| Блокировка | Монитор карты | Монитор обёртки | Зависит от операции и бакета |
+| Чтение | Синхронизировано | Синхронизировано | `get` обычно без блокировки |
+| `null` ключи/значения | Нет | По контракту исходной карты | **Нет** |
+| `size()` точность | Точно на момент вызова | Точно на момент вызова через обёртку | При обновлениях отражает переходное состояние |
 | Итератор | Fail-fast | Fail-fast | **Weakly consistent** |
 
 **Почему нет `null`:** при `get()` невозможно различить "ключ отсутствует" и "значение равно `null`" в конкурентном контексте без дополнительной синхронизации.
+
+Обёртка `synchronizedMap(new HashMap<>())` допускает `null` по правилам исходной карты. При обходе через её представления нужно синхронизироваться на обёртке. В примере `reduceValuesToLong` возвращает 0 для пустой карты. Обобщённый `reduceValues` на пустой карте вернул бы `null`, и распаковка результата в `long` вызвала бы `NullPointerException`.
 
 ## Q43. (!) Какие ограничения у LRU-кэша на `LinkedHashMap` при конкурентном доступе?
 

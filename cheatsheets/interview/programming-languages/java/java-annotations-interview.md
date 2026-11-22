@@ -448,10 +448,7 @@ public @interface Tracked {}
 @Tracked
 public interface Processable {}
 
-public class Processor implements Processable {
-    // Processor.class.getAnnotation(Tracked.class) == null!
-    // @Inherited НЕ работает с интерфейсами
-}
+public class Processor implements Processable {}
 
 public class Base {
     @Tracked
@@ -461,10 +458,17 @@ public class Base {
 public class Child extends Base {
     @Override
     public void execute() {}
-    // Child.execute().getAnnotation(Tracked.class) == null!
-    // @Inherited НЕ работает с методами
+}
+
+class Example {
+    static void inspect() throws NoSuchMethodException {
+        var classAnnotation = Processor.class.getAnnotation(Tracked.class);
+        var methodAnnotation = Child.class.getDeclaredMethod("execute").getAnnotation(Tracked.class);
+    }
 }
 ```
+
+Оба вызова возвращают `null`. В первом случае `@Tracked` объявлена на интерфейсе `Processable`. Во втором рефлексия проверяет объявление `Child.execute()`, где аннотации нет.
 
 `Spring` решает это через `AnnotatedElementUtils.findMergedAnnotation()`, который обходит иерархию типов вручную.
 
@@ -647,9 +651,11 @@ public @interface Label { String value(); }
 public class Base {}
 public class Child extends Base {}
 
-Child.class.getAnnotation(Label.class);         // @Label("base") -- от Base
-Child.class.getDeclaredAnnotation(Label.class);  // null -- нет собственной
+Child.class.getAnnotation(Label.class);
+Child.class.getDeclaredAnnotation(Label.class);
 ```
+
+`getAnnotation(Label.class)` возвращает `@Label("base")` из `Base`. `getDeclaredAnnotation(Label.class)` возвращает `null`, поскольку на `Child` нет собственного объявления `@Label`.
 
 ## Q18. Как сканировать аннотации по пакету в runtime?
 
@@ -1259,13 +1265,15 @@ public interface Transformer<T, R> {
 Нет. Дублирование константы `ElementType` в `@Target` вызывает ошибку компиляции:
 
 ```java
-// ОШИБКА: duplicate element ElementType.FIELD
 @Target({ElementType.FIELD, ElementType.TYPE, ElementType.FIELD})
-public @interface Broken {}
+public @interface Marker {}
+```
 
-// Правильно:
+Компилятор отклонит объявление из-за повторного `ElementType.FIELD`. Чтобы сохранить обе области применения, укажите каждую константу один раз.
+
+```java
 @Target({ElementType.FIELD, ElementType.TYPE})
-public @interface Correct {}
+public @interface Marker {}
 ```
 
 ## Q36. (!) Best practices при создании кастомных аннотаций?

@@ -106,19 +106,21 @@ updated: "2026-05-19"
 | Локальная переменная | Значение нельзя изменить после первого присваивания |
 
 ```java
-public final class UtilityClass {           // нельзя наследовать
-    private final String name = "MyApp";    // неизменяемое поле
+public final class UtilityClass {
+    private final String name = "MyApp";
 
-    public final void process() { }         // нельзя переопределить
+    public final void process() { }
 
     public void demo() {
         final int max = 3;
-        // max = 5; // ошибка компиляции
+        max = 5;
     }
 }
 ```
 
 **Главная ловушка:** `final` фиксирует только саму ссылку, а не объект, на который она указывает. Ссылку нельзя перенаправить на другой объект, но **сам объект остаётся изменяемым** — например, в `final List<String> list` по-прежнему можно добавлять и удалять элементы. Чтобы запретить и это, берут неизменяемые коллекции: `List.of()` или `Collections.unmodifiableList()`.
+
+Присваивание `max = 5` вызывает ошибку компиляции. Остальное объявление корректно.
 
 ## Q2. Что такое метод по умолчанию (`default method`) в интерфейсе?
 
@@ -144,7 +146,6 @@ class ConsoleLogger implements Loggable {
     public void log(String message) {
         System.out.println(message);
     }
-    // logInfo() и logError() доступны без переопределения
 }
 ```
 
@@ -160,11 +161,11 @@ class ConsoleLogger implements Loggable {
 
 ```java
 public class Counter {
-    private static int count = 0;   // общее для всех экземпляров
+    private static int count = 0;
 
     public Counter() { count++; }
 
-    public static int getCount() {  // вызов: Counter.getCount()
+    public static int getCount() {
         return count;
     }
 }
@@ -183,7 +184,6 @@ public class Counter {
 
 ```java
 public abstract class AbstractRepository {
-    // Нет abstract-методов, но нельзя создать new AbstractRepository()
     public void save(Object entity) {
         validate(entity);
         persist(entity);
@@ -196,7 +196,7 @@ public abstract class AbstractRepository {
 
 ## Q5. Что такое `Constructor Chaining` (цепочка конструкторов)?
 
-Цепочка конструкторов — это вызов другого конструктора того же класса через `this(...)` или родителя через `super(...)`. До Java 25 явный вызов должен был быть первым оператором. В Java 25 перед ним разрешён ограниченный пролог, который не обращается к создаваемому объекту. Цепочка помогает сосредоточить общую инициализацию в одном конструкторе.
+Цепочка конструкторов — это вызов другого конструктора того же класса через `this(...)` или родителя через `super(...)`. До Java 25 в стандартном синтаксисе явный вызов должен был быть первым оператором. В Java 25 перед ним разрешён ограниченный пролог, например для проверки параметров. Цепочка помогает сосредоточить общую инициализацию в одном конструкторе.
 
 ```java
 public class Connection {
@@ -224,7 +224,7 @@ public class Connection {
 }
 ```
 
-**Правила:** в теле конструктора допускается не более одного явного вызова `this(...)` или `super(...)`. Если их нет, компилятор добавляет `super()` без аргументов; при отсутствии доступного конструктора родителя без параметров код не скомпилируется. В прологе Java 25 нельзя обращаться к `this`, `super` или состоянию создаваемого объекта.
+**Правила:** в теле конструктора допускается не более одного явного вызова `this(...)` или `super(...)`. Если их нет, компилятор добавляет `super()` без аргументов; при отсутствии доступного конструктора родителя без параметров код не скомпилируется. В раннем контексте конструирования запрещено читать поля создаваемого объекта или вызывать его методы экземпляра. Допустимо простое присваивание собственному полю экземпляра без инициализатора, например `this.host = host;` перед явным `super(...)`. Для `final` действуют правила определённого присваивания. [JLS §8.8.7](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.8.7).
 
 ## Q6. В чём разница между `Overriding` (переопределением) и `Overloading` (перегрузкой) методов?
 
@@ -239,7 +239,7 @@ class Animal {
 
 class Cat extends Animal {
     @Override
-    public String sound() { return "Мяу"; }  // runtime-полиморфизм
+    public String sound() { return "Мяу"; }
 }
 ```
 
@@ -276,13 +276,15 @@ class Child extends Parent {
     public static void greet() { System.out.println("Child"); }
 }
 
-Parent.greet();             // Parent
-Child.greet();              // Child
+Parent.greet();
+Child.greet();
 Parent ref = new Child();
-ref.greet();                // Parent — по типу ссылки, не объекта!
+ref.greet();
 ```
 
 Это принципиальное отличие от `overriding`: нет динамической диспетчеризации, нет полиморфизма.
+
+Порядок вывода — `Parent`, `Child`, `Parent`. Для последнего вызова важен объявленный тип `ref`.
 
 ## Q8. Что такое модификаторы доступа (`visibility modifiers`): `public`, `private`, `protected`, package-private?
 
@@ -308,11 +310,11 @@ ref.greet();                // Parent — по типу ссылки, не об�
 - Вызова другого конструктора (`this(args)`)
 - Передачи текущего объекта в метод (`callback.accept(this)`)
 
-`super` — ссылка на суперкласс. Используется для:
+`super` входит в специальные формы доступа к членам суперкласса и вызова его конструктора. Получателем доступа к члену остаётся текущий объект. Примеры:
 - Вызова конструктора суперкласса (`super(args)`)
 - Вызова переопределённого метода суперкласса (`super.method()`)
 
-`this(...)` и `super(...)` нельзя вызвать вместе в одном теле конструктора. До Java 25 явный вызов должен был стоять первым; с Java 25 перед ним допустим ограниченный пролог без обращения к создаваемому объекту.
+`this(...)` и `super(...)` нельзя вызвать вместе в одном теле конструктора. В Java 25 перед явным вызовом допустим ограниченный пролог, как в Q5. [JLS §15.11.2](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.11.2).
 
 ## Q10. Можно ли переопределить `private`-метод в подклассе?
 
@@ -326,14 +328,15 @@ class Parent {
 }
 
 class Child extends Parent {
-    // Это НЕ override, это новый метод
     private void doWork() { System.out.println("Child"); }
 }
 
-new Child().execute(); // "Parent" — вызывается Parent.doWork()
+new Child().execute();
 ```
 
 Вывод: полиморфизм работает только для методов, видимых снаружи класса (`public`, `protected`, а также package-private в пределах одного пакета). Для `private` динамической диспетчеризации нет.
+
+Вызов `execute()` печатает `Parent`: тело метода обращается к закрытому `Parent.doWork()`.
 
 ## Q11. Что такое класс `Object` и какие ключевые методы он определяет?
 
@@ -365,12 +368,12 @@ new Child().execute(); // "Parent" — вызывается Parent.doWork()
 String s1 = new String("hello");
 String s2 = new String("hello");
 
-System.out.println(s1 == s2);      // false — разные объекты в heap
-System.out.println(s1.equals(s2)); // true  — одинаковое содержимое
+System.out.println(s1 == s2);
+System.out.println(s1.equals(s2));
 
 String s3 = "hello";
 String s4 = "hello";
-System.out.println(s3 == s4);      // true  — один объект из String Pool
+System.out.println(s3 == s4);
 ```
 
 Контракт `equals()` (пять свойств):
@@ -379,6 +382,8 @@ System.out.println(s3 == s4);      // true  — один объект из Strin
 3. **Транзитивность**: `x.equals(y)` и `y.equals(z)` → `x.equals(z)`
 4. **Консистентность**: многократные вызовы дают одинаковый результат
 5. **Null-безопасность**: `x.equals(null)` → `false`
+
+Результаты сравнений — `false`, `true`, `true`: два новых объекта, равное содержимое и один канонический объект для одинаковых литералов.
 
 ## Q13. Что такое контракт `equals()` и `hashCode()` и почему его важно соблюдать?
 
@@ -412,23 +417,40 @@ public class Employee {
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, id);  // ОБЯЗАТЕЛЬНО при переопределении equals
+        return Objects.hash(name, id);
     }
 }
 ```
 
-**Типичная ошибка** — переопределить `equals()`, но забыть `hashCode()`. Тогда два логически равных объекта дадут разный хеш, попадут в **разные бакеты** `HashMap`, и поиск по ключу их не найдёт. Этот баг привёл к потерям данных в LinkedIn и Uber при миграции с Hashtable на HashMap.
+Для двух экземпляров `new Employee("Иван", 1)` равенство и хеш согласованы. Поиск по второму найдёт запись, добавленную по первому. Если переопределить только `equals()`, у равных ключей могут оказаться разные хеши. Следующий тип намеренно задаёт разные хеши для равных ключей.
 
 ```java
-// Без hashCode() — объект "потеряется" в HashMap
-Map<Employee, String> map = new HashMap<>();
-Employee e1 = new Employee("Иван", 1);
-map.put(e1, "отдел продаж");
+final class BrokenEmployeeKey {
+    private final int id;
+    private final int hash;
 
-Employee e2 = new Employee("Иван", 1); // equals(e1) = true
-map.get(e2); // null! — потому что hashCode разный, ищет в другом бакете
-// Результат: потеря данных или дубликаты в БД
+    BrokenEmployeeKey(int id, int hash) {
+        this.id = id;
+        this.hash = hash;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof BrokenEmployeeKey key && id == key.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return hash;
+    }
+}
+
+Map<BrokenEmployeeKey, String> map = new HashMap<>();
+map.put(new BrokenEmployeeKey(1, 1), "отдел продаж");
+String department = map.get(new BrokenEmployeeKey(1, 2));
 ```
+
+Поиск в показанном `HashMap` возвращает `null`. Разные хеши равных ключей нарушают контракт. [Object.hashCode()](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#hashCode()).
 
 ## Q14. Что такое метод `clone()` и как правильно клонировать объект?
 
@@ -474,25 +496,25 @@ class Department {
     String name;
     List<String> employees;
 
-    // Shallow copy — employees указывает на тот же список
-    Department shallowCopy() {
+    Department copyA() {
         Department copy = new Department();
         copy.name = this.name;
-        copy.employees = this.employees; // та же ссылка!
+        copy.employees = this.employees;
         return copy;
     }
 
-    // Deep copy — employees — новый независимый список
-    Department deepCopy() {
+    Department copyB() {
         Department copy = new Department();
         copy.name = this.name;
-        copy.employees = new ArrayList<>(this.employees); // новый список
+        copy.employees = new ArrayList<>(this.employees);
         return copy;
     }
 }
 ```
 
 `Object.clone()` по умолчанию делает `shallow copy`. Для `deep copy` — ручная реализация, сериализация или библиотеки (`Apache Commons`, `Cloner`).
+
+`copyA()` разделяет список с оригиналом. `copyB()` создаёт отдельный список. Сами элементы `String` можно переиспользовать благодаря их неизменяемости.
 
 ## Q16. Что такое иммутабельный (`Immutable`) класс и как его правильно создать?
 
@@ -514,12 +536,12 @@ public final class Money {
     public Money(BigDecimal amount, Currency currency, List<String> tags) {
         this.amount = amount;
         this.currency = currency;
-        this.tags = List.copyOf(tags); // защитная копия
+        this.tags = List.copyOf(tags);
     }
 
     public BigDecimal getAmount() { return amount; }
     public Currency getCurrency() { return currency; }
-    public List<String> getTags() { return tags; } // List.copyOf уже immutable
+    public List<String> getTags() { return tags; }
 }
 ```
 
@@ -538,8 +560,8 @@ public final class Money {
 enum Status { ACTIVE, INACTIVE, PENDING }
 
 Status s = Status.ACTIVE;
-if (s == Status.ACTIVE) { /* предпочтительно */ }
-if (s.equals(Status.ACTIVE)) { /* работает, но менее идиоматично */ }
+if (s == Status.ACTIVE) {  }
+if (s.equals(Status.ACTIVE)) {  }
 ```
 
 ## Q18. Что такое маркерный интерфейс (`Marker Interface`)?
@@ -574,9 +596,9 @@ public int sum(int... numbers) {
     return total;
 }
 
-sum(1, 2, 3);  // → 6
-sum();          // → 0
-sum(new int[]{1, 2}); // можно передать массив
+sum(1, 2, 3);
+sum();
+sum(new int[]{1, 2});
 ```
 
 Ограничения:
@@ -584,63 +606,54 @@ sum(new int[]{1, 2}); // можно передать массив
 2. Только **один** `varargs`-параметр на метод
 3. При перегрузке может возникнуть неоднозначность (`ambiguity`) — компилятор выдаст ошибку
 
+Вызовы возвращают `6`, `0` и `3`. Последний передаёт готовый массив.
+
 ## Q20. Что такое блоки инициализации (`instance` и `static`) и в каком порядке они выполняются?
 
-Блоки инициализации — это куски кода, которые JVM выполняет автоматически при загрузке класса или при создании объекта, помимо конструктора. Их два вида:
-
-**Instance initializer block** `{ ... }` — срабатывает при создании **каждого** экземпляра, перед телом конструктора. Удобен, чтобы вынести общую для всех конструкторов инициализацию.
-
-**Static initializer block** `static { ... }` — выполняется **один раз**, при инициализации класса. Используется для настройки статических полей, которую нельзя уместить в одну строку объявления.
-
-**Порядок инициализации** (отвечает на популярный вопрос «что выведется первым»):
-1. Статические поля и `static`-блоки (сверху вниз, один раз)
-2. Instance-поля и instance-блоки (сверху вниз, при каждом `new`)
-3. Конструктор
+Какие метки напечатает программа в новой JVM?
 
 ```java
-public class InitOrder {
-    private static final String STATIC_FIELD;
-    private String instanceField;
-
+class InitOrder {
     static {
-        STATIC_FIELD = "загружено";
-        System.out.println("1. static блок");
+        System.out.println("A");
     }
 
     {
-        instanceField = "создано";
-        System.out.println("2. instance блок");
+        System.out.println("B");
     }
 
-    public InitOrder() {
-        System.out.println("3. конструктор");
+    InitOrder() {
+        System.out.println("C");
+    }
+
+    public static void main(String[] args) {
+        new InitOrder();
+        new InitOrder();
     }
 }
-// new InitOrder() выведет: 1 → 2 → 3 (при первом вызове)
-// new InitOrder() выведет: 2 → 3 (при последующих)
 ```
+
+Вывод — `A, B, C, B, C`. Класс инициализируется перед запуском `main`. Загрузка создаёт представление класса в JVM и может произойти раньше. При инициализации класса статические инициализаторы и блоки выполняются в порядке объявления с учётом специальных правил для константных переменных.
+
+При создании объекта инициализаторы полей экземпляра и блоки текущего класса выполняются в порядке объявления после возврата из конструктора суперкласса и перед оставшейся частью конструктора. Java 25 допускает ограниченный пролог до явного вызова конструктора, как в Q5. [JLS §12.4–12.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.4).
 
 ## Q21. Как работает загрузка классов в JVM и какие ClassLoader'ы участвуют?
 
-`ClassLoader` — компонент JVM, который по требованию находит `.class`-файл, читает его байткод и превращает в объект `Class` в памяти. Классы грузятся лениво — только когда впервые понадобятся. Три стандартных загрузчика образуют иерархию «родитель → потомок»:
+`ClassLoader` — компонент JVM, который по требованию находит `.class`-файл, читает его байткод и превращает в объект `Class` в памяти. Загрузка может произойти до первого активного использования класса.
 
-```mermaid
-graph TD
-    A["Bootstrap ClassLoader<br/>(нативный, C++)"] --> B["Platform ClassLoader<br/>(бывш. Extension)"]
-    B --> C["Application ClassLoader<br/>(System)"]
-    C --> D["Custom ClassLoader<br/>(пользовательский)"]
-
-    style A fill:#e8d5b7,stroke:#8b6914
-    style B fill:#d4e8d4,stroke:#2e7d32
-    style C fill:#d4d4e8,stroke:#3f51b5
-    style D fill:#e8d4d4,stroke:#c62828
+```text
+Приложение обращается к java.lang.String, java.sql.Driver
+и com.example.Report из своего classpath.
+Какие загрузчики определяют эти классы в стандартной конфигурации JDK?
 ```
 
 | ClassLoader | Загружает |
 |-------------|-----------|
 | **Bootstrap** | `java.lang.*`, `java.util.*` — базовые классы JDK |
 | **Platform** (Extension) | Модули платформы (`java.sql`, `java.xml`) |
-| **Application** (System) | Классы из `classpath` приложения |
+| **Application** (System) | Классы приложения из `classpath` и модули, назначенные этому загрузчику |
+
+В стандартной конфигурации JDK классы из примера определяют соответственно bootstrap, platform и системный загрузчик. [JVMS §5](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-5.html).
 
 Каждый класс проходит три фазы:
 1. **Loading** — загрузчик находит и читает байткод `.class`-файла, создаёт объект `Class`.
@@ -651,24 +664,16 @@ graph TD
 
 ## Q22. Что такое делегирование загрузки классов (`Delegation Model`)?
 
-**Parent-first delegation** (модель делегирования) — базовый принцип работы `ClassLoader`: прежде чем грузить класс самому, загрузчик **поднимает запрос вверх** — отдаёт его родителю, тот своему родителю, и так до самого верхнего `Bootstrap`. Сам загрузчик берётся за дело только если ни один из родителей класс не нашёл. То есть поиск идёт сверху вниз по иерархии.
-
-```mermaid
-graph TD
-    A["Запрос: загрузить MyClass"] --> B["Application ClassLoader"]
-    B -->|"делегирует"| C["Platform ClassLoader"]
-    C -->|"делегирует"| D["Bootstrap ClassLoader"]
-    D -->|"не найден"| C
-    C -->|"не найден"| B
-    B -->|"загружает из classpath"| E["MyClass.class"]
-
-    style E fill:#d4e8d4,stroke:#2e7d32
+```text
+У загрузчика приложения есть родительский загрузчик.
+Оба могут найти байткод com.example.Report.
+Приложение запрашивает класс через стандартный ClassLoader.loadClass.
+Рассмотрите первый и повторный запросы.
 ```
 
-Зачем так сделано:
-- **Безопасность** — пользовательский класс с именем `java.lang.String` никогда не подменит настоящий: его сначала найдёт и загрузит `Bootstrap` из JDK.
-- **Уникальность** — каждый класс загружается лишь одним загрузчиком и не дублируется; иначе один и тот же по имени класс из разных загрузчиков JVM считала бы разными типами.
-- **Предсказуемость** — системные классы всегда приходят из JDK, а не из случайной точки classpath.
+Стандартная реализация `ClassLoader.loadClass(name, resolve)` сначала вызывает `findLoadedClass(name)`. Затем обращается к родителю или к bootstrap, если родителя нет. При промахе делегирования вызывается собственный `findClass(name)`. При `resolve=true` найденный класс связывается через `resolveClass`. В примере первый запрос получает класс от родителя, а повторный может вернуть класс, уже известный загрузчику.
+
+Делегирование помогает нескольким загрузчикам использовать одни и те же типы общих API. Идентичность класса определяется парой «бинарное имя и определяющий загрузчик». Два загрузчика, которые самостоятельно определили `com.example.Report`, получают разные типы. Пользовательский загрузчик может реализовать другой порядок. [ClassLoader.loadClass](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ClassLoader.html#loadClass(java.lang.String,boolean)), [JVMS §5.3](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-5.html#jvms-5.3).
 
 ## Q23. Можно ли написать собственный `ClassLoader` и где это применяется?
 
@@ -706,21 +711,17 @@ public class HotReloadClassLoader extends ClassLoader {
 
 ## Q24. Что такое `Reflection` и зачем он нужен?
 
-`Reflection API` — это способ **изучать и менять** структуру программы во время выполнения: узнавать классы, методы, поля и аннотации, создавать объекты, вызывать методы и читать поля, даже не зная типов на этапе компиляции. Точка входа — объект `Class`, а вокруг него работают `Method`, `Field`, `Constructor` из пакета `java.lang.reflect`. Именно благодаря рефлексии фреймворки умеют работать с вашими классами, ничего о них заранее не зная.
+`Reflection API` — это способ **исследовать объявления** и работать с существующими членами во время выполнения: узнавать классы, методы, поля и аннотации, создавать объекты, вызывать методы и читать поля, даже не зная типов на этапе компиляции. Точка входа — объект `Class`, а вокруг него работают `Method`, `Field`, `Constructor` из пакета `java.lang.reflect`. Эти операции сохраняют набор полей и методов загруженного класса. В примере у `User` публичный конструктор без параметров. Класс находится в именованном модуле `app.model`, который экспортирует и открывает пакет `com.example` для читающего его модуля `app.inspect`. Открытие пакета разрешает этому модулю подавить проверку доступа к показанным `private`-членам. [AccessibleObject](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/reflect/AccessibleObject.html#setAccessible(boolean)).
 
 ```java
-// Получение класса
 Class<?> clazz = Class.forName("com.example.User");
 
-// Создание объекта
 Object user = clazz.getDeclaredConstructor().newInstance();
 
-// Вызов private метода
 Method method = clazz.getDeclaredMethod("secretMethod");
-method.setAccessible(true);  // обход private
+method.setAccessible(true);
 Object result = method.invoke(user);
 
-// Чтение private поля
 Field field = clazz.getDeclaredField("name");
 field.setAccessible(true);
 String name = (String) field.get(user);
@@ -737,13 +738,10 @@ String name = (String) field.get(user);
 Три способа получить объект `Class<?>`:
 
 ```java
-// 1. По имени класса (строка)
 Class<?> c1 = Class.forName("java.util.ArrayList");
 
-// 2. Через литерал класса
 Class<?> c2 = ArrayList.class;
 
-// 3. Через экземпляр
 Class<?> c3 = new ArrayList<>().getClass();
 ```
 
@@ -798,12 +796,12 @@ Class<?>[] interfaces = clazz.getInterfaces();
 `Autoboxing` — автоматическое преобразование примитива в обёртку (`int` → `Integer`), `unboxing` — обратное (`Integer` → `int`). Компилятор подставляет преобразования сам, например при `list.add(10)` или `int x = boxed`. Упаковка может использовать кешированный объект или создать новый; распаковка `null` вызывает `NullPointerException`.
 
 ```java
-Integer boxed = 42;            // autoboxing: int → Integer (может взять объект из кеша)
-int unboxed = boxed;           // unboxing: Integer → int
+Integer boxed = 42;
+int unboxed = boxed;
 
 List<Integer> list = new ArrayList<>();
-list.add(10);                  // autoboxing
-int value = list.get(0);      // unboxing
+list.add(10);
+int value = list.get(0);
 ```
 
 **Ловушки:**
@@ -836,18 +834,20 @@ for (long i = 0; i < 1_000_000; i++) {
 `String Pool` (пул строк) — специальная область в `heap` (с `Java 7`; до этого был в PermGen), где JVM хранит по одному экземпляру каждого строкового литерала. Когда в коде встречается уже знакомый литерал, JVM не создаёт новую строку, а возвращает ссылку на существующую из пула. Это работает именно потому, что строки иммутабельны — общий объект безопасно делить между всеми.
 
 ```java
-String s1 = "hello";          // создаётся в Pool
-String s2 = "hello";          // берётся из Pool
-String s3 = new String("hello"); // новый объект в heap, НЕ из Pool
+String s1 = "hello";
+String s2 = "hello";
+String s3 = new String("hello");
 
-System.out.println(s1 == s2);  // true  — одна ссылка из Pool
-System.out.println(s1 == s3);  // false — разные объекты
+System.out.println(s1 == s2);
+System.out.println(s1 == s3);
 
-String s4 = s3.intern();       // помещает в Pool / возвращает из Pool
-System.out.println(s1 == s4);  // true
+String s4 = s3.intern();
+System.out.println(s1 == s4);
 ```
 
 **Зачем нужен:** экономия памяти — одинаковые строки хранятся в одном экземпляре (у LinkedIn это 1.5M строк в пуле). Плюс быстрое сравнение литералов через `==`, так как они ссылаются на один объект. Подробнее — в [вопросах по String](java-string-interview.md).
+
+В примере сравнения дают `true`, `false` и `true`. Вызов `intern()` возвращает каноническую строку.
 
 ## Q30. Что такое `null` и какие есть стратегии избежать `NullPointerException`?
 
@@ -856,21 +856,15 @@ System.out.println(s1 == s4);  // true
 **Стратегии защиты** — не латать NPE постфактум, а не пускать `null` дальше границ:
 
 ```java
-// 1. Objects.requireNonNull — fail-fast в конструкторе
 public UserService(UserRepository repo) {
     this.repo = Objects.requireNonNull(repo, "repo must not be null");
 }
 
-// 2. Optional для возвращаемого значения
 public Optional<User> findById(Long id) {
     return Optional.ofNullable(repo.find(id));
 }
 
-// 3. Аннотации @NonNull / @Nullable (IDE + static analysis)
-public void process(@NonNull String input) { ... }
-
-// 4. Helpful NullPointerExceptions (Java 14+)
-// Сообщение: "Cannot invoke String.length() because this.name is null"
+public int length(@NonNull String input) { return input.length(); }
 ```
 
 **Рекомендации:**
@@ -918,17 +912,14 @@ User user = findUser(id)
 `Record` (окончательно доступен с Java 16 после preview в Java 14–15) — компактный синтаксис для носителей данных. Компилятор генерирует `private final`-поля, канонический конструктор, аксессоры с именами компонентов, `equals()`, `hashCode()` и `toString()`. Для компонента `x` аксессор называется `x()`, а не JavaBean `getX()`. Ссылки на мутабельные компоненты остаются мутабельными: record не гарантирует глубокую неизменяемость.
 
 ```java
-// Объявление — одна строка вместо 50+
 public record Point(int x, int y) { }
 
-// Использование
 Point p = new Point(3, 4);
-int x = p.x();              // геттер без префикса get
-System.out.println(p);      // Point[x=3, y=4]
+int x = p.x();
+System.out.println(p);
 
-// equals / hashCode — автоматически по всем полям
 Point p2 = new Point(3, 4);
-System.out.println(p.equals(p2)); // true
+System.out.println(p.equals(p2));
 ```
 
 **Ограничения `Record`** (вытекают из его сути — нести данные неизменяемо):
@@ -939,6 +930,8 @@ System.out.println(p.equals(p2)); // true
 
 **Сценарий применения:** `DTO`, ключи `Map`, value-объекты, ответы `API` — когда данные удобно описать фиксированным набором компонентов. Если компоненты изменяемы, продумайте защитные копии.
 
+`p.x()` возвращает `3`, а сравнение двух экземпляров с одинаковыми компонентами даёт `true`.
+
 ## Q33. Что такое compact constructors (компактные конструкторы) в `Records`?
 
 Компактный конструктор — это специальная форма канонического конструктора `Record`, записываемая **без списка параметров** (он подразумевается из компонентов записи). Он нужен для одного: валидации и нормализации входных данных перед тем, как они станут полями. Присваивание `this.x = x` дописывать не надо — компилятор подставляет его автоматически в конце тела.
@@ -946,23 +939,20 @@ System.out.println(p.equals(p2)); // true
 ```java
 public record Email(String address) {
 
-    // Компактный конструктор — валидация и нормализация
     public Email {
         Objects.requireNonNull(address, "address must not be null");
         if (!address.contains("@")) {
             throw new IllegalArgumentException("Invalid email: " + address);
         }
-        address = address.toLowerCase().strip(); // нормализация
-        // this.address = address; — генерируется автоматически!
+        address = address.toLowerCase().strip();
     }
 }
 
-// Использование
 Email e = new Email("  USER@Example.COM  ");
-System.out.println(e.address()); // "user@example.com"
+System.out.println(e.address());
 ```
 
-**Ключевой нюанс:** в компактном конструкторе писать `this.address = ...` не нужно и нельзя — финальное присваивание полей JVM делает сама после тела. Но можно переприсвоить сам параметр (`address = address.toLowerCase()`) — именно это, уже нормализованное, значение и попадёт в поле.
+**Ключевой нюанс:** в компактном конструкторе писать `this.address = ...` не нужно и нельзя — компилятор добавляет присваивание полей после тела. Но можно переприсвоить сам параметр (`address = address.toLowerCase()`) — именно это, уже нормализованное, значение и попадёт в поле.
 
 ## Q34. Что такое `Sealed` classes (`Java 17`) и зачем они нужны?
 
@@ -1012,18 +1002,15 @@ double area = switch (shape) {
 Паттерн-матчинг для `instanceof` объединяет проверку типа и приведение в одну конструкцию: если проверка прошла, переменная-биндинг сразу получает нужный тип, и явный cast не нужен. Это убирает классический шаблон «проверил `instanceof` → вручную скастовал → присвоил» и заодно исключает ошибку рассинхрона между проверяемым и приводимым типом.
 
 ```java
-// До Java 16
 if (obj instanceof String) {
-    String s = (String) obj;  // явный cast
+    String s = (String) obj;
     System.out.println(s.length());
 }
 
-// Java 16+
 if (obj instanceof String s) {
-    System.out.println(s.length());  // s уже String
+    System.out.println(s.length());
 }
 
-// Можно использовать в условиях
 if (obj instanceof String s && s.length() > 5) {
     process(s);
 }
@@ -1045,20 +1032,18 @@ process(s);
 `Switch expression` — это `switch`, который вычисляет значение. Стрелочные ветки `->` не проваливаются в следующие ветки. Допустимы и ветки с двоеточием; для значения в блочной ветке используют `yield`, а при написании двоеточных веток учитывают возможность `fall-through`.
 
 ```java
-// Switch expression — компактно и безопасно
 String label = switch (day) {
     case MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY -> "Рабочий день";
     case SATURDAY, SUNDAY -> "Выходной";
 };
 
-// yield для блоков
 int numericGrade = switch (grade) {
     case "A" -> 5;
     case "B" -> 4;
     case "C" -> 3;
     default -> {
         log.warn("Unknown grade: {}", grade);
-        yield 0;  // yield вместо return
+        yield 0;
     }
 };
 ```
@@ -1067,7 +1052,8 @@ int numericGrade = switch (grade) {
 - Нет `fall-through` — не нужен `break`, а значит исчезает целый класс багов с забытым `break`.
 - Компилятор проверяет **исчерпываемость** — для `enum` и `sealed`-типов требует покрыть все варианты (иначе ошибка компиляции).
 - Несколько меток в одном `case` через запятую.
-- Поддержка `null` отдельной веткой `case null ->` (раньше `null` всегда падал с NPE).
+
+`switch expression` стандартизован в Java 14. Метка `case null` появилась в стандартном синтаксисе Java 21. В показанных выражениях такой ветки нет, поэтому `null` в селекторе приводит к `NullPointerException`. В блочной ветке `yield 0` задаёт значение выражения. [JLS Java 14 §15.28](https://docs.oracle.com/javase/specs/jls/se14/html/jls-15.html#jls-15.28), [JLS Java 21 §14.11](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.11).
 
 ## Q37. Что такое `Text Blocks` (`Java 15`)?
 
@@ -1080,7 +1066,11 @@ String json = "{\n" +
     "    \"age\": 30\n" +
     "}";
 
-// Java 15+
+```
+
+Тот же JSON в отдельном примере для Java 15 и новее.
+
+```java
 String json = """
         {
             "name": "Иван",
@@ -1101,14 +1091,19 @@ String sql = """
 **Особенности:**
 - **Incidental whitespace** — общий отступ, выровненный по закрывающим `"""`, считается «случайным» и автоматически отрезается, так что в строку попадает только содержательный текст, а не отступы исходника.
 - Поддерживает спецпоследовательности `\s` (сохранить концевой пробел) и `\` в конце строки (продолжение без переноса).
-- Сочетается с `String.formatted()` для подстановки: `"""Hello, %s""".formatted(name)`.
+После открывающих тройных кавычек и допустимых пробельных символов нужен перевод строки. [JLS §3.10.6](https://docs.oracle.com/javase/specs/jls/se25/html/jls-3.html#jls-3.10.6).
+
+```java
+String greeting = """
+        Hello, %s
+        """.formatted(name);
+```
 
 ## Q38. Что такое `Pattern Matching` for `switch` (`Java 21`)?
 
 В `Java 21` паттерн-матчинг для `switch` стал стабильной фичей. Теперь `switch` умеет ветвиться **по типу объекта**, а не только по константам: каждая ветка `case Type t` одновременно проверяет тип и связывает переменную. Дополнительно через `when` можно навесить условие (guarded pattern), а `null` обработать отдельной веткой. Это превращает громоздкие цепочки `if (x instanceof ...)` в компактный и проверяемый компилятором `switch`:
 
 ```java
-// Матчинг по типу
 String describe(Object obj) {
     return switch (obj) {
         case Integer i when i > 0  -> "положительное число: " + i;
@@ -1120,7 +1115,6 @@ String describe(Object obj) {
     };
 }
 
-// Вместе с sealed-классами — исчерпывающий switch
 sealed interface Result permits Success, Failure {}
 record Success(String data) implements Result {}
 record Failure(String error) implements Result {}
@@ -1129,7 +1123,6 @@ String handle(Result result) {
     return switch (result) {
         case Success s -> "OK: " + s.data();
         case Failure f -> "Error: " + f.error();
-        // default не нужен — sealed + exhaustive
     };
 }
 ```
@@ -1143,6 +1136,16 @@ String handle(Result result) {
 ## Q39. Что такое SequencedCollection (Java 21) и что возвращает reversed()?
 
 `SequencedCollection` и родственные интерфейсы решают давнюю проблему: у коллекций с понятным порядком элементов не было единого API для работы с «началом» и «концом». У `List`, включая `ArrayList` и `LinkedList`, первый элемент обычно брали через `get(0)`, у `Deque` — через `getFirst()`, а у `LinkedHashSet` доступа к концу не было вовсе. `Java 21` добавила в иерархию `Collections Framework` три унифицирующих интерфейса (см. [Java Collections](java-collections-interview.md)):
+
+```java
+List<String> list = new ArrayList<>(List.of("a", "b", "c"));
+List<String> reverse = list.reversed();
+reverse.addFirst("d");
+System.out.println(list);
+System.out.println(reverse);
+```
+
+Вывод — `[a, b, c, d]` и `[d, c, b, a]`. В обратном представлении `ArrayList` добавление в начало соответствует добавлению в конец исходного списка.
 
 ```
 SequencedCollection → List, Deque, LinkedHashSet
@@ -1179,8 +1182,6 @@ set.getFirst(); // элемент с наименьшим порядком вс�
 - Методы `getFirst()`/`getLast()` унифицируют доступ — раньше нужны были `list.get(0)` и `list.get(list.size()-1)`
 - `reversed()` возвращает представление в обратном порядке, а не независимую копию; видимость изменений исходной коллекции зависит от реализации
 - `SequencedMap` добавляет `firstEntry()`, `lastEntry()`, `pollFirstEntry()`, `pollLastEntry()`, `reversed()`
-
-Комбинация `Sealed classes` + `Records` + `Pattern Matching` формирует мощную альтернативу паттерну Visitor из [ООП](java-oop-interview.md).
 
 ---
 
