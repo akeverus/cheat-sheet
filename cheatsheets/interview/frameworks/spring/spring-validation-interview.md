@@ -190,7 +190,27 @@ public class EventRequest {
 
 ## Q3. Чем `@Valid` отличается от `@Validated`?
 
-Коротко: `@Valid` — из стандарта Jakarta, умеет **каскадную** валидацию (заходит внутрь вложенных объектов), но не знает про группы. `@Validated` — Spring-аннотация, умеет **группы** и включает валидацию методов на бине, который Spring может проксировать (нужен `MethodValidationPostProcessor`, вызов снаружи бина и не-final метод), но сама каскад не запускает. Это не конкуренты, а инструменты для разных задач, их часто используют вместе.
+Что проверяется в каждом из трёх фрагментов и какую роль играют аннотации?
+
+```java
+public class OrderRequest {
+    @Valid
+    @NotNull
+    private Address address;
+}
+
+@PutMapping("/{id}")
+public ResponseEntity<User> update(
+        @Validated(UpdateGroup.class) @RequestBody UserRequest req) { ... }
+
+@Service
+@Validated
+public class UserService {
+    public User create(@Valid @NotNull UserRequest req) { ... }
+}
+```
+
+**Разбор.** Коротко: `@Valid` — из стандарта Jakarta, умеет **каскадную** валидацию (заходит внутрь вложенных объектов), но не знает про группы. `@Validated` — Spring-аннотация, умеет **группы** и включает валидацию методов на бине, который Spring может проксировать (нужен `MethodValidationPostProcessor`, вызов снаружи бина и не-final метод), но сама каскад не запускает. Это не конкуренты, а инструменты для разных задач, их часто используют вместе.
 
 | Параметр | `@Valid` (`jakarta.validation`) | `@Validated` (Spring) |
 |---|---|---|
@@ -199,27 +219,6 @@ public class EventRequest {
 | Каскадная валидация | Да | Нет (только маркер) |
 | Применимость | Поля, параметры, методы | Класс, параметры, методы |
 | Использование в MVC | Для request body, параметров | Для request body + группы |
-
-```java
-// @Valid — каскадная валидация вложенного объекта
-public class OrderRequest {
-    @Valid   // валидировать Address тоже
-    @NotNull
-    private Address address;
-}
-
-// @Validated — с группами в контроллере
-@PutMapping("/{id}")
-public ResponseEntity<User> update(
-        @Validated(UpdateGroup.class) @RequestBody UserRequest req) { ... }
-
-// @Validated на классе — включает метод-уровень валидацию
-@Service
-@Validated
-public class UserService {
-    public User create(@Valid @NotNull UserRequest req) { ... }
-}
-```
 
 **Эмпирическое правило:** `@Valid` — когда надо провалидировать вложенные объекты, `@Validated` — когда нужны группы или валидация методов сервиса. На request body в контроллере чаще ставят `@Valid`; `@Validated(Group.class)` подключают, как только появляются разные правила для create/update.
 
@@ -417,7 +416,16 @@ public class UserRequest {
 
 ## Q8. Как реализовать кросс-field валидацию?
 
-Обычное ограничение видит только одно поле. Когда правило связывает **несколько полей** (`password == confirmPassword`, `startDate < endDate`), валидатору нужен доступ ко всему объекту. Поэтому аннотацию вешают на **класс**, а не на поле, и валидатор реализуют как `ConstraintValidator<..., Object>` — на вход приходит весь объект, из которого через `BeanWrapperImpl` достают нужные поля по имени.
+Пароли должны совпадать. При несовпадении ошибка должна относиться к полю `confirmPassword`. Как задать и реализовать такую проверку?
+
+```java
+public class RegisterRequest {
+    @NotBlank private String password;
+    @NotBlank private String confirmPassword;
+}
+```
+
+**Разбор.** Обычное ограничение видит только одно поле. Когда правило связывает **несколько полей** (`password == confirmPassword`, `startDate < endDate`), валидатору нужен доступ ко всему объекту. Поэтому аннотацию вешают на **класс**, а не на поле, и валидатор реализуют как `ConstraintValidator<..., Object>` — на вход приходит весь объект, из которого через `BeanWrapperImpl` достают нужные поля по имени.
 
 ```java
 // Аннотация на уровне класса
@@ -514,7 +522,25 @@ public @interface UniqueEmail {
 
 ## Q10. Как работает композиция constraints?
 
-Композиция — это способ собрать несколько готовых ограничений в одну переиспользуемую аннотацию. Если один и тот же набор проверок (`@NotBlank + @Size + @Pattern`) повторяется на многих полях, вместо копипасты создают мета-аннотацию `@PersonName` и вешают только её. Своего валидатора у неё нет (`validatedBy = {}`) — она лишь «разворачивается» в составляющие ограничения.
+Два поля имени должны соблюдать одинаковые правила. Как собрать эти ограничения в одну переиспользуемую аннотацию и управлять тем, какие нарушения получит клиент?
+
+```java
+public class UserRequest {
+    @NotNull
+    @NotBlank
+    @Size(min = 2, max = 50)
+    @Pattern(regexp = "^[a-zA-Zа-яА-ЯёЁ ]+$")
+    private String firstName;
+
+    @NotNull
+    @NotBlank
+    @Size(min = 2, max = 50)
+    @Pattern(regexp = "^[a-zA-Zа-яА-ЯёЁ ]+$")
+    private String lastName;
+}
+```
+
+**Разбор.** Композиция — это способ собрать несколько готовых ограничений в одну переиспользуемую аннотацию. Если один и тот же набор проверок (`@NotBlank + @Size + @Pattern`) повторяется на многих полях, вместо копипасты создают мета-аннотацию `@PersonName` и вешают только её. Своего валидатора у неё нет (`validatedBy = {}`) — она лишь «разворачивается» в составляющие ограничения.
 
 ```java
 @NotNull
@@ -523,8 +549,8 @@ public @interface UniqueEmail {
 @Pattern(regexp = "^[a-zA-Zа-яА-ЯёЁ ]+$")
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = {})   // нет своего validator
-@ReportAsSingleViolation        // одно сообщение вместо нескольких
+@Constraint(validatedBy = {})
+@ReportAsSingleViolation
 public @interface PersonName {
     String message() default "Некорректное имя";
     Class<?>[] groups() default {};
@@ -543,7 +569,7 @@ public class UserRequest {
 
 **Роль `@ReportAsSingleViolation`** — определяет детализацию ошибок:
 - **без него** — каждое нарушенное вложенное ограничение даёт свою ошибку (клиент увидит и «слишком короткое», и «недопустимый символ» по отдельности);
-- **с ним** — при любом нарушении возвращается одно общее сообщение мета-аннотации («Некорректное имя»), детали скрыты.
+- **с ним** — проверка составляющих ограничений останавливается при первом нарушении. Возвращается нарушение составного ограничения `@PersonName` с его сообщением («Некорректное имя»). Отдельные нарушения составляющих в результат не попадают.
 
 Выбор зависит от того, что удобнее пользователю: точные подсказки по каждому правилу или единый лаконичный вердикт.
 

@@ -32,9 +32,17 @@
 диапазона, включая Notification System и Java Functional Interface, не входят
 в счётчик 55. Для учёта достаточно путей и записей о передаче полного файла.
 
-Из 55 файлов партии 25 восстановлены в `master`. Вне этой партии уже
+Из 55 файлов партии 26 восстановлены в `master`. Вне этой партии уже
 закоммичены Notification System, Java Functional Interface, Vector Databases
 и JDBC и пулы соединений.
+
+- **Spring Validation** — MCQ-чат передал полный JSON в ходе
+  `01a204cf-8aec-7a41-8eae-351bfe63d8e1` по согласованному Markdown
+  `work/spring-validation-theory-recovery/spring-validation-interview.md`
+  (SHA-256 `e93ef7074167715d2689d24f6f21f85bd3fe557fae86d5d576f8f58899d1063d`)
+  и историческому JSON из `b28a1c807`. Полный JSON перенесён как есть из
+  `work/spring-validation-recovery-full-regeneration/spring-validation-interview.json`.
+  Оба production-файла входят в этот коммит.
 
 - **Spring Transaction** — MCQ-чат передал полный JSON в ходе
   `01a204c9-fc7d-7621-abc1-3ed5819f119d` по согласованному Markdown
