@@ -32,7 +32,7 @@
 диапазона, включая Notification System и Java Functional Interface, не входят
 в счётчик 55. Для учёта достаточно путей и записей о передаче полного файла.
 
-Из 55 файлов партии 16 восстановлены в `master`. Вне этой партии уже
+Из 55 файлов партии 17 восстановлены в `master`. Вне этой партии уже
 закоммичены Notification System, Java Functional Interface, Vector Databases
 и JDBC и пулы соединений.
 
@@ -899,3 +899,13 @@ python3 scripts/mcq-workflow.py sync
 Итоговый успех требует `sync --require-complete`, актуального PASS каждого блока и
 отсутствия скрытых незавершённых состояний. При прерывании сохраняется точный остаток;
 достижение лимита не является завершением задачи.
+
+
+- **Spring Data JPA** — полный Markdown
+  `work/spring-data-jpa-visible-conditions-theory-return/spring-data-jpa-interview.md`
+  (SHA-256 `d329f2ba394ea8cf821907293da84e3429f896373e9988e9d7c40d2d3a57538c`).
+  MCQ-чат передал полный JSON в завершённом ходе
+  `01a2044c-3818-7693-a56b-cf6c3e033e3d` по этому снимку и старому JSON
+  из `b28a1c807`. JSON перенесён побайтно из
+  `work/spring-data-jpa-recovery-full-regeneration/spring-data-jpa-interview.json`.
+  Этот коммит содержит оба production-файла.

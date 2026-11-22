@@ -50,7 +50,7 @@ updated: "2026-10-07"
 - [Q1. (!) Что такое `Spring Data JPA` и зачем он нужен?](#q1--что-такое-spring-data-jpa-и-зачем-он-нужен)
 - [Q2. (!) Какова иерархия репозиториев в `Spring Data`?](#q2--какова-иерархия-репозиториев-в-spring-data)
 - [Q3. Что такое `JPQL` и чем он отличается от `SQL`?](#q3-что-такое-jpql-и-чем-он-отличается-от-sql)
-- [Q4. Как `Spring Data JPA` создаёт реализацию репозиториев?](#q4-как-spring-data-jpa-создаёт-реализацию-репозиториев)
+- [Q4. Как Spring Data JPA 4.1.1 реализует методы репозитория при обычном запуске и с AOT?](#q4-как-spring-data-jpa-411-реализует-методы-репозитория-при-обычном-запуске-и-с-aot)
 
 **Query Methods и @Query**
 - [Q5. (!) Что такое `Query Methods` и какие ключевые слова поддерживаются?](#q5--что-такое-query-methods-и-какие-ключевые-слова-поддерживаются)
@@ -198,6 +198,15 @@ public class UserService {
 
 ## Q2. (!) Какова иерархия репозиториев в `Spring Data`?
 
+```java
+interface Accounts extends Repository<User, Long> {}
+interface Orders extends CrudRepository<Order, Long> {}
+interface Products extends PagingAndSortingRepository<Product, Long> {}
+interface Customers extends JpaRepository<Customer, Long> {}
+```
+
+Какие операции доступны каждому интерфейсу по наследованию в Spring Data JPA 4.1.1?
+
 Иерархия интерфейсов репозиториев — от общего к конкретному:
 
 ```mermaid
@@ -263,12 +272,9 @@ public interface JpaRepository<T, ID> extends
 | Функции | Набор стандарта; у провайдера могут быть расширения | Возможности целевой БД |
 
 ```java
-// JPQL — имена сущностей и полей Java
 @Query("SELECT u FROM User u WHERE u.status = :status AND u.lastName LIKE :pattern")
 List<User> findActiveByLastName(@Param("status") UserStatus status,
                                  @Param("pattern") String pattern);
-
-// SQL — имена таблиц и колонок БД
 @Query(value = "SELECT * FROM users WHERE status = :status AND last_name LIKE :pattern",
        nativeQuery = true)
 List<User> findActiveByLastNameNative(@Param("status") String status,
@@ -277,9 +283,23 @@ List<User> findActiveByLastNameNative(@Param("status") String status,
 
 Для запросов, которые неудобно выразить через `Query Methods`, используйте стандартный `JPQL`, если важна переносимость. Для CTE и оконных функций можно выбрать расширения Hibernate HQL, учитывая зависимость от провайдера и диалекта; для возможностей конкретной БД используйте нативный `SQL`. [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2); [Hibernate HQL 7.0](https://docs.hibernate.org/orm/7.0/querylanguage/html_single/).
 
-## Q4. Как `Spring Data JPA` создаёт реализацию репозиториев?
+## Q4. Как Spring Data JPA 4.1.1 реализует методы репозитория при обычном запуске и с AOT?
 
-В обычном запуске приложения `Spring` сканирует интерфейсы-репозитории и создаёт для каждого **прокси-объект** — вы никогда не пишете реализацию руками. Базовый CRUD при этом делегируется в готовый класс `SimpleJpaRepository`, а query methods превращаются в запросы.
+```java
+interface UserSearch {
+    void refreshSearchIndex(long userId);
+}
+
+interface UserRepository extends JpaRepository<User, Long>, UserSearch {
+    Optional<User> findByEmail(String email);
+}
+```
+
+Сравните унаследованный `save`, `findByEmail` и метод подключённого пользовательского фрагмента `refreshSearchIndex`.
+
+<a id="q4-как-spring-data-jpa-создаёт-реализацию-репозиториев"></a>
+
+В обычном запуске приложения `Spring` сканирует интерфейсы-репозитории и создаёт для каждого **прокси-объект**. Базовый CRUD при этом делегируется в готовый класс `SimpleJpaRepository`, query methods превращаются в запросы, а `refreshSearchIndex` делегируется подключённой реализации пользовательского фрагмента.
 
 Понимание этого механизма помогает на собеседовании объяснить, почему интерфейс без реализации «волшебным образом» работает: магии нет — есть фабрика прокси и парсер имён методов.
 
@@ -514,12 +534,8 @@ abstract class ActiveEntity {
 
 @NoRepositoryBean
 public interface BaseRepository<T extends ActiveEntity> extends JpaRepository<T, Long> {
-
-    // Один запрос для любой сущности с полем "active"
     @Query("SELECT e FROM #{#entityName} e WHERE e.active = true")
     List<T> findAllActive();
-
-    // Подсчёт активных записей
     @Query("SELECT COUNT(e) FROM #{#entityName} e WHERE e.active = true")
     long countActive();
 }
@@ -529,19 +545,13 @@ class User extends ActiveEntity { }
 
 @Entity
 class Product extends ActiveEntity { }
-
-// #{#entityName} для этого репозитория = "User"
 public interface UserRepository extends BaseRepository<User> {
-    // findAllActive() → SELECT e FROM User e WHERE e.active = true
 }
-
-// #{#entityName} для этого репозитория = "Product"
 public interface ProductRepository extends BaseRepository<Product> {
-    // findAllActive() → SELECT e FROM Product e WHERE e.active = true
 }
 ```
 
-`#{#entityName}` привязан к типу конкретного репозитория. Выражения для значений аргументов, например `?#{[0]}` или `:#{#name}`, оцениваются при выполнении запроса; для простой привязки обычно достаточно `@Param`. В обобщённом интерфейсе нужна `@NoRepositoryBean`, чтобы Spring не пытался создать репозиторий для абстрактного `T`. [Spring Data JPA templated queries](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html); [repository interfaces](https://docs.spring.io/spring-data/jpa/reference/repositories/definition.html).
+`#{#entityName}` привязан к типу конкретного репозитория. В запросе `findAllActive()` подставится `User` для `UserRepository` и `Product` для `ProductRepository`. Выражения для значений аргументов, например `?#{[0]}` или `:#{#name}`, оцениваются при выполнении запроса; для простой привязки обычно достаточно `@Param`. В обобщённом интерфейсе нужна `@NoRepositoryBean`, чтобы Spring не пытался создать репозиторий для абстрактного `T`. [Spring Data JPA templated queries](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html); [repository interfaces](https://docs.spring.io/spring-data/jpa/reference/repositories/definition.html).
 
 ## Q10. (!) Что такое `@Transactional` и как она работает через прокси?
 
@@ -865,6 +875,23 @@ public class UserService {
 
 ## Q15. (!) Как работает пагинация в `Spring Data JPA`?
 
+```java
+// Order.lines — коллекция позиций. Для первой страницы нужны 20 заказов.
+// Настройки Hibernate по умолчанию, hint org.hibernate.limitInMemory не задан.
+// Где применится лимит в Hibernate 6.6 и в Hibernate 7.4
+// на СУБД с поддержкой лимита и смещения в подзапросе?
+// Изменит ли countQuery способ выполнения запроса данных?
+interface OrderWithLinesRepository extends JpaRepository<Order, Long> {
+
+    @Query(value = "select o from Order o left join fetch o.lines order by o.id",
+           countQuery = "select count(o) from Order o")
+    Page<Order> findWithLines(Pageable pageable);
+    default Page<Order> firstPageWithLines() {
+        return findWithLines(PageRequest.of(0, 20));
+    }
+}
+```
+
 Пагинация — выдача результата частями. Метод репозитория принимает `Pageable` (`PageRequest.of(page, size, sort)`), а Spring Data JPA применяет offset, лимит и сортировку через JPA-провайдер и SQL-диалект. Номер первой страницы — `0`; конкретный SQL может отличаться от `LIMIT/OFFSET`.
 
 `Page<T>` даёт общее число элементов и страниц; для этого **может** потребоваться отдельный count-запрос. `Slice<T>` сообщает лишь, есть ли следующая часть, и не требует общего count (подробнее в Q16). Для устойчивого порядка добавьте уникальный tie-breaker, например `id`: сортировки только по `createdAt` недостаточно при одинаковом времени. Даже так offset-страницы могут смещаться между запросами при конкурентных вставках и удалениях; для большого смещения рассмотрите keyset scrolling.
@@ -902,7 +929,7 @@ public class OrderController {
 }
 ```
 
-**`JOIN FETCH` коллекции + `Pageable` проверяйте отдельно.** В Hibernate 6 и версиях 7 до 7.4 такой запрос мог загрузить все подходящие строки и применить лимит в JVM. С Hibernate 7.4 пагинация с collection fetch join выполняется корректно в БД, если СУБД поддерживает лимит/offset во вложенном запросе; для неподдерживаемого диалекта остаётся дорогой вариант в памяти. Независимо от этого для `Page` проверьте count-запрос и фактический SQL. Если важна переносимая предсказуемость, сначала выберите страницу ID родителей, затем отдельным запросом загрузите их коллекции и восстановите порядок страницы. [Spring Data Paging](https://docs.spring.io/spring-data/jpa/reference/repositories/query-methods-details.html), [Hibernate 7.4 What's New](https://docs.hibernate.org/orm/7.4/whats-new/).
+**`JOIN FETCH` коллекции + `Pageable` проверяйте отдельно.** В Hibernate 6 и версиях 7 до 7.4 такой запрос мог загрузить все подходящие строки и применить лимит в JVM. В Hibernate 6.6 настройка `hibernate.query.fail_on_pagination_over_collection_fetch=true` вместо пагинации в памяти приводит к исключению. С Hibernate 7.4 пагинация с collection fetch join выполняется корректно в БД, если СУБД поддерживает лимит/offset во вложенном запросе; для неподдерживаемого диалекта остаётся дорогой вариант в памяти. В примере `LEFT JOIN FETCH` сохраняет заказы без позиций, а строки заказов с несколькими позициями размножаются в результате соединения. Размер страницы задан в заказах. `countQuery` считает заказы для метаданных `Page` и выполняется отдельно, когда нужен общий итог. Сам запрос данных и место применения лимита от `countQuery` не меняются. Если важна переносимая предсказуемость, сначала выберите страницу ID родителей, затем отдельным запросом загрузите их коллекции и восстановите порядок страницы. [Spring Data Paging](https://docs.spring.io/spring-data/jpa/reference/repositories/query-methods-details.html), [Hibernate 6.6 QuerySettings](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/cfg/QuerySettings.html#FAIL_ON_PAGINATION_OVER_COLLECTION_FETCH), [Hibernate 7.4 What's New](https://docs.hibernate.org/orm/7.4/whats-new/#limits-and-fetch-joins).
 
 **В `Spring MVC` при включённой Spring Data web support** можно принять `Pageable` напрямую как параметр контроллера: resolver создаст его из query-параметров `page`, `size`, `sort`. Spring Boot включает web support автоконфигурацией при нужных зависимостях:
 
@@ -932,14 +959,8 @@ public Page<UserDto> getUsers(Pageable pageable) {
 
 ```java
 public interface UserRepository extends JpaRepository<User, Long> {
-
-    // Page — данные + total; count выполняется, когда он нужен
     Page<User> findByStatus(UserStatus status, Pageable pageable);
-
-    // Slice — один запрос (запрашивает size+1 записей, чтобы определить hasNext)
     Slice<User> findByCity(String city, Pageable pageable);
-
-    // List — один запрос, без метаданных
     List<User> findByLastName(String lastName, Pageable pageable);
 }
 ```
@@ -1106,6 +1127,32 @@ public class Product extends AuditableEntity {
 - **Detached** — был managed, но контекст закрылся; изменения больше не отслеживаются.
 - **Removed** — помечен на удаление, `DELETE` уйдёт при flush/commit.
 
+| Состояние | Описание | Отслеживается EM | В БД |
+|-----------|----------|:----------------:|:----:|
+| **New** (Transient) | Создан, ещё не передан под управление JPA; ID может быть назначен приложением | Нет | Назначенный ID сам не вставляет строку |
+| **Managed** (Persistent) | Связан с `EntityManager` | Да | Новая запись может ожидать flush |
+| **Detached** | Был managed, но больше не связан с текущим контекстом | Нет | Состояние БД не обязано совпадать с объектом |
+| **Removed** | Помечен на удаление | Да, до завершения операции | Удаление синхронизируется при flush/commit |
+
+```java
+@Transactional
+public void entityLifecycleDemo() {
+    User user = new User("John");
+
+    entityManager.persist(user);
+    user.setEmail("john@example.com");
+
+    entityManager.flush();
+
+    entityManager.detach(user);
+    user.setEmail("new@example.com");
+
+    User merged = entityManager.merge(user);
+
+    entityManager.remove(merged);
+}
+```
+
 ```mermaid
 stateDiagram-v2
     [*] --> New: new Entity()
@@ -1127,33 +1174,6 @@ stateDiagram-v2
         Изменения не попадут в БД.
         merge не меняет исходный экземпляр.
     end note
-```
-
-| Состояние | Описание | Отслеживается EM | В БД |
-|-----------|----------|:----------------:|:----:|
-| **New** (Transient) | Создан, ещё не передан под управление JPA; ID может быть назначен приложением | Нет | Назначенный ID сам не вставляет строку |
-| **Managed** (Persistent) | Связан с `EntityManager` | Да | Новая запись может ожидать flush |
-| **Detached** | Был managed, но больше не связан с текущим контекстом | Нет | Состояние БД не обязано совпадать с объектом |
-| **Removed** | Помечен на удаление | Да, до завершения операции | Удаление синхронизируется при flush/commit |
-
-```java
-@Transactional
-public void entityLifecycleDemo() {
-    User user = new User("John");      // NEW — не отслеживается
-
-    entityManager.persist(user);        // MANAGED — теперь в persistence context
-    user.setEmail("john@example.com");  // dirty checking — изменение обнаружится
-
-    entityManager.flush();              // синхронизация с БД: возможен один INSERT
-
-    entityManager.detach(user);         // DETACHED — изменения не отслеживаются
-    user.setEmail("new@example.com");   // НЕ попадёт в БД!
-
-    User merged = entityManager.merge(user); // MANAGED — результат merge
-    // ВНИМАНИЕ: user всё ещё detached; дальнейшие изменения вносите в merged
-
-    entityManager.remove(merged);       // REMOVED — будет DELETE при commit
-}
 ```
 
 **Семантика `save()` поверх этих состояний.** Spring Data JPA выбирает `EntityManager.persist()` для сущности, которую считает новой, и `EntityManager.merge()` для остальных. После `persist()` сам аргумент становится managed. При `merge(detached)` состояние копируется в **возвращённый** managed-экземпляр (он может уже существовать в контексте), а аргумент остаётся detached. При `merge(managed)` возвращается тот же экземпляр. Поэтому при неизвестном состоянии объекта используйте результат `save()`.
@@ -1294,13 +1314,9 @@ public class User {
 
     @Id
     private Long id;
-
-    // Явно откладываем to-one связь вместо JPA-умолчания EAGER
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")
     private Department department;
-
-    // LAZY — умолчание для @OneToMany
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<Order> orders;
 }
@@ -1332,20 +1348,20 @@ flowchart TD
 Способ решения выбирают по нужным данным: `JOIN FETCH` загружает связь с корнем, `@EntityGraph` задаёт требуемый граф загрузки, batch/subselect объединяют дополнительные запросы, а DTO-проекция позволяет вообще не материализовать связи. `@EntityGraph` не гарантирует конкретный JOIN или ровно один SQL — проверяйте реальные запросы.
 
 ```java
-// ПРОБЛЕМА: N+1
 @Transactional(readOnly = true)
 public List<UserDto> getAllUsersWithOrders() {
-    List<User> users = userRepository.findAll(); // 1 запрос: SELECT * FROM users
+    List<User> users = userRepository.findAll();
 
     return users.stream()
         .map(user -> new UserDto(
             user.getName(),
-            user.getOrders().size() // N запросов: SELECT * FROM orders WHERE user_id = ?
+            user.getOrders().size()
         ))
         .toList();
-    // Итого: 1 + N запросов!
 }
 ```
+
+В показанном коде для N пользователей при незагруженных коллекциях, без кэша и пакетной загрузки Hibernate может выполнить один SELECT за пользователями и N SELECT за заказами.
 
 ### Решения
 
@@ -2143,7 +2159,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 ## Q37. (!) Как использовать `Specification` API для построения динамических запросов?
 
-`Specification` — функциональный интерфейс Spring Data над JPA `Criteria API`. Один объект описывает предикат (`WHERE`-условие), а лямбда получает `root` (корень запроса), `query` и `cb` (`CriteriaBuilder`). Строковые имена полей, как `root.get("name")`, проверяются при выполнении; для проверки имён компилятором используют сгенерированную статическую метамодель.
+`Specification` — функциональный интерфейс Spring Data, тонкая обёртка над JPA `Criteria API`. Один объект `Specification` описывает один предикат (`WHERE`-условие), а лямбда внутри получает `root` (корень запроса), `query` и `cb` (`CriteriaBuilder`) для построения этого условия типобезопасно.
 
 Сила — в композиции: спецификации комбинируются через `.and()`/`.or()`, поэтому динамический фильтр собирается из независимых, переиспользуемых кусочков. Включается это наследованием репозитория от `JpaSpecificationExecutor`, который добавляет метод `findAll(Specification, Pageable)`.
 
@@ -2204,23 +2220,20 @@ public class ProductSpecs {
 
 ```java
 @Service
-@RequiredArgsConstructor
 public class ProductSearchService {
 
     private final ProductRepository repository;
 
     public Page<Product> search(ProductFilter filter, Pageable pageable) {
-        Specification<Product> spec = Specification.where(ProductSpecs.isActive())
-            .and(ProductSpecs.hasCategoryName(filter.getCategory()))
-            .and(ProductSpecs.priceBetween(filter.getMinPrice(), filter.getMaxPrice()))
-            .and(ProductSpecs.nameContains(filter.getKeyword()));
+        Specification<Product> spec = Specification.where(isActive())
+            .and(hasCategory(filter.getCategory()))
+            .and(priceBetween(filter.getMinPrice(), filter.getMaxPrice()))
+            .and(nameContains(filter.getKeyword()));
 
         return repository.findAll(spec, pageable);
     }
 }
 ```
-
-В этом примере `category` — связь с сущностью `Category`. Фильтр сравнивает её `name` после `join`, а не саму сущность со строкой. `EscapeCharacter.DEFAULT.escape(...)` экранирует стандартные символы шаблона `%` и `_`; `CriteriaBuilder.like` получает тот же escape-символ третьим аргументом. Если во входе встречается сам escape-символ или диалект поддерживает дополнительные шаблоны, обработку нужно проверить отдельно. [Spring Data JPA 4.1.2, Specifications](https://docs.spring.io/spring-data/jpa/reference/jpa/specifications.html); [EscapeCharacter API](https://docs.spring.io/spring-data/jpa/reference/api/java/org/springframework/data/jpa/repository/query/EscapeCharacter.html).
 
 **Избегание дублирования JOIN (для агрегированных запросов):**
 
@@ -2237,13 +2250,14 @@ public static Specification<Product> withDistinctRoot() {
 
 ## Q38. (!) Как работают `Projection`-интерфейсы в Spring Data JPA?
 
-Проекция возвращает представление сущности через интерфейс или DTO. Закрытая проекция может сократить выборку до нужных полей верхнего уровня; открытая проекция с `@Value`/SpEL такой оптимизации не обещает. Для вложенных свойств Spring Data JPA может материализовать весь `JOIN`. [Spring Data JPA 4.1.2, Projections](https://docs.spring.io/spring-data/jpa/reference/repositories/projections.html).
+`Projection` — способ вернуть из репозитория только нужные поля, а не весь объект-сущность. Меньше данных тянется из БД, меньше трафика и памяти — особенно ощутимо на широких таблицах.
 
 **Варианты проекций:**
 
 ### 1. Interface-based Projection
 
 ```java
+// Интерфейс — Spring Data создаёт прокси
 public interface UserSummary {
     Long getId();
     String getFirstName();
@@ -2260,8 +2274,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 }
 ```
 
-Геттеры `UserSummary` ссылаются на свойства `User`; `default`-метод использует уже выбранные значения. Поэтому Spring Data знает, какие поля нужны интерфейсному прокси, и может ограничить выборку. Точный SQL зависит от запроса и провайдера — его проверяют в тесте. Вариант с `@Value("#{target.firstName + ' ' + target.lastName}")` был бы **открытой** проекцией: выражение может обратиться к любому свойству `target`, поэтому оптимизация закрытой проекции недоступна.
-
 ### 2. Class-based Projection (DTO-проекция)
 
 ```java
@@ -2274,8 +2286,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<UserDto> findDtoByStatus(@Param("status") UserStatus status);
 }
 ```
-
-DTO создаётся конструктором. Для JPQL `SELECT new` указывают полное имя класса; это не доказывает, что DTO быстрее интерфейсной проекции в любом запросе.
 
 ### 3. Dynamic Projection (выбор проекции в runtime)
 
@@ -2324,7 +2334,7 @@ public interface OrderSummary {
 
 ## Q40. (!) Как интегрировать `Flyway` со Spring Data JPA?
 
-`Flyway` применяет миграции схемы, а Spring Data JPA работает с полученной схемой через JPA. В приложении на Spring Boot с автоконфигурацией Flyway миграции выполняются до инициализации JPA `EntityManagerFactory`. У собственного способа инициализации или нескольких `DataSource` этот порядок и целевую БД проверяют отдельно. [Spring Boot 4.1.2, Database Initialization](https://docs.spring.io/spring-boot/how-to/data-initialization.html); [Data Access](https://docs.spring.io/spring-boot/how-to/data-access.html).
+`Flyway` версионирует схему БД через нумерованные SQL-миграции, а Spring Data JPA работает уже поверх готовой схемы. Разделение ответственности чёткое: за структуру таблиц отвечает Flyway, за маппинг и доступ — JPA.
 
 Ключевой момент порядка: Flyway должен накатить миграции **до** того, как Hibernate инициализирует `EntityManagerFactory`. Поэтому `ddl-auto` ставят в `validate` (не `create`/`update`!) — Hibernate не трогает схему, а лишь сверяет, что таблицы соответствуют сущностям. Стандартная автоконфигурация Spring Boot настраивает эту зависимость.
 
@@ -2335,8 +2345,6 @@ implementation 'org.springframework.boot:spring-boot-starter-flyway'
 // Для PostgreSQL дополнительно:
 implementation 'org.flywaydb:flyway-database-postgresql'
 ```
-
-В Spring Boot 4.1 вместо прямой зависимости от `flyway-core` можно использовать `spring-boot-starter-flyway`; модуль PostgreSQL всё равно добавляют отдельно. [Spring Boot 3.5](https://docs.spring.io/spring-boot/3.5/how-to/data-initialization.html); [Spring Boot 4.1](https://docs.spring.io/spring-boot/how-to/data-initialization.html).
 
 **Конфигурация:**
 
@@ -2390,8 +2398,12 @@ CREATE INDEX idx_products_created_by ON products(created_by);
 
 ```java
 @DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@TestPropertySource(properties = {
+    "spring.flyway.locations=classpath:db/migration,classpath:db/testdata"
+})
 class ProductRepositoryTest {
-    // Репозиторий проверяется после миграций тестовой БД.
+    // Flyway выполнит и prod-миграции, и тестовые данные
 }
 ```
 
@@ -2399,7 +2411,7 @@ class ProductRepositoryTest {
 
 ## Q41. (!) Как работает `@EntityGraph` и когда он предпочтительнее `JOIN FETCH`?
 
-`@EntityGraph` задаёт план загрузки атрибутов для метода репозитория, **не меняя `FetchType` в маппинге сущности**. `@NamedEntityGraph` можно использовать в нескольких методах, а `attributePaths` — описать граф прямо на методе. Граф удобен с derived-запросами и там, где набор загружаемых связей хочется отделить от текста JPQL. Базовая семантика `FETCH` и `LOAD` разобрана в [Q24](#q24-что-такое-entitygraph-и-как-он-работает). [Spring Data JPA 4.1.2](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html#jpa.entity-graph).
+`@EntityGraph` — декларативный способ задать, какие связи подтянуть в конкретном запросе, **не меняя `FetchType` в маппинге сущности**. Сущность остаётся с `LAZY`-связями (как и должно быть), а нужный набор связей догружается точечно, под конкретный метод.
 
 Граф отделён от текста запроса. Именованный граф можно использовать в нескольких методах, включая derived-методы. Граф задаёт обязательные для загрузки атрибуты, а способ загрузки и SQL выбирает провайдер. В `JOIN FETCH` тип соединения задаётся явно через `INNER` или `LEFT`. [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#use-of-entity-graphs-in-find-and-query-operations).
 
@@ -2491,11 +2503,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 }
 ```
 
-Объявленный метод репозитория сам по себе не получает транзакционную конфигурацию. Для изменения БД задайте границу через `@Transactional` на методе или в вызывающем сервисе. `@Modifying` не создаёт транзакцию. [Spring Data JPA, transactions](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html).
+**Критически важно: синхронизация с Persistence Context**
 
-**Синхронизация с persistence context**
-
-После bulk-запроса загруженные сущности могут быть устаревшими. `flushAutomatically` вызывает flush **до** запроса; `clearAutomatically` очищает **весь** контекст после него, отсоединяя и не затронутые запросом объекты. Если перед clear были несброшенные изменения, они потеряются. Эти флаги по умолчанию выключены.
+Hibernate кэширует сущности в `PersistenceContext` (1-й уровень кэша). После выполнения `@Modifying`-запроса (который идёт напрямую в БД, минуя кэш) кэш становится устаревшим.
 
 ```java
 @Modifying(
@@ -2544,19 +2554,18 @@ int insertPriceAuditEntries(
 
 ## Q43. (!) Что такое Scroll API и keyset-пагинация в Spring Data (`ScrollPosition`)?
 
-Scroll API (Spring Data 3.1+) читает результат последовательными окнами без обязательного подсчёта `total`. Метод репозитория возвращает `Window<T>` и принимает `ScrollPosition`. Он дополняет `Page`/`Pageable`: окна удобны для прохода вперёд, а нумерованные страницы и общее число записей остаются задачей `Page`. [Spring Data JPA 4.1.2, Scrolling](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html#scrolling).
+Scroll API (`Spring Data 3.1+`, `Spring Boot 3.1+`) — современная замена `Pageable` для последовательного «пролистывания» больших результатов. Метод репозитория возвращает `Window<T>`, а позиция передаётся через `ScrollPosition`.
 
 Два режима:
 
-| Режим | Как определяется следующее окно | Цена |
+| Режим | Как | Глубокие страницы |
 |-------|-----|-------------------|
 | Offset-based | `ScrollPosition.offset()` | `OFFSET N` деградирует на больших N (БД отбрасывает N строк) |
 | Keyset-based (seek) | `ScrollPosition.keyset()` | фильтрует по последнему ключу, стоимость зависит от плана и индекса |
 
 ```java
 interface OrderRepository extends Repository<Order, Long> {
-    Window<Order> findFirst20ByStatusOrderByIdAsc(
-        OrderStatus status, ScrollPosition position);
+    Window<Order> findFirst20ByOrderByIdAsc(ScrollPosition position);
 }
 
 Window<Order> window = repo.findFirst20ByOrderByIdAsc(ScrollPosition.keyset());
