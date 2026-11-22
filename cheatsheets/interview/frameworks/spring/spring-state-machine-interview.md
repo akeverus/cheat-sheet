@@ -49,7 +49,7 @@ updated: "2026-05-15"
 
 **Когда не стоит.** Для простого enum-поля без условных переходов и побочных эффектов FSM — избыточная инфраструктура: пара строк с `switch`/`if` понятнее и дешевле в поддержке. State Machine оправдан там, где правил переходов много и они меняются.
 
-**Статус проекта — обязательная оговорка на собеседовании.** Открытая разработка `Spring State Machine` остановлена: последний релиз в Maven Central — **`4.0.0` от декабря 2023**, а репозиторий переехал в архивную организацию `spring-attic` и переведён в режим только для чтения **в июле 2026**. Код никуда не делся и продолжает работать, платная линия с исправлениями безопасности живёт в коммерческой подписке, но новых возможностей в открытой версии не будет. Поэтому на вопрос «взяли бы вы его в новый проект» правильный ответ — назвать статус вслух: для существующих систем это рабочий инструмент, для нового кода стоит взвесить собственный автомат на enum'ах или движок процессов.
+**Статус проекта — обязательная оговорка на собеседовании.** Открытая разработка `Spring State Machine` остановлена: последний релиз в Maven Central — [**`4.0.2`**](https://central.sonatype.com/artifact/org.springframework.statemachine/spring-statemachine-core/4.0.2), а репозиторий переехал в архивную организацию `spring-attic` и переведён в режим только для чтения **в июле 2026**. Код никуда не делся и продолжает работать, платная линия с исправлениями безопасности живёт в коммерческой подписке, но новых возможностей в открытой версии не будет. Поэтому на вопрос «взяли бы вы его в новый проект» правильный ответ — назвать статус вслух: для существующих систем это рабочий инструмент, для нового кода стоит взвесить собственный автомат на enum'ах или движок процессов.
 
 ## Q2. Как настроить базовую State Machine?
 
@@ -61,6 +61,7 @@ updated: "2026-05-15"
 <dependency>
     <groupId>org.springframework.statemachine</groupId>
     <artifactId>spring-statemachine-core</artifactId>
+    <version>4.0.2</version>
 </dependency>
 ```
 
@@ -71,7 +72,7 @@ enum OrderState { PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED }
 enum OrderEvent { CONFIRM, SHIP, DELIVER, CANCEL }
 ```
 
-**3. Конфигурация.** `@EnableStateMachine` создаёт один bean `StateMachine`. В первом `configure` объявляются начальное состояние (`initial`), полный набор состояний и финальные (`end`) — попав в них, машина считается завершённой. Во втором `configure` каждый `withExternal()` описывает одно ребро графа: из какого состояния (`source`), в какое (`target`), по какому событию (`event`). Цепочки разделяются `.and()`.
+**3. Конфигурация.** `@EnableStateMachine` создаёт один bean `StateMachine`. В первом `configure` объявляются начальное состояние (`initial`), полный набор состояний и необязательное конечное состояние (`end`). В 4.0.x его можно объявить один раз для отдельной машины или региона. Здесь `DELIVERED` завершает машину, а `CANCELLED` остаётся обычным состоянием без исходящих переходов. Во втором `configure` каждый `withExternal()` описывает одно ребро графа: из какого состояния (`source`), в какое (`target`), по какому событию (`event`). Цепочки разделяются `.and()`.
 
 ```java
 @Configuration
@@ -85,8 +86,7 @@ public class OrderStateMachineConfig
         states.withStates()
             .initial(OrderState.PENDING)
             .states(EnumSet.allOf(OrderState.class))
-            .end(OrderState.DELIVERED)
-            .end(OrderState.CANCELLED);
+            .end(OrderState.DELIVERED);
     }
 
     @Override
@@ -113,45 +113,41 @@ public class OrderStateMachineConfig
 
 ## Q3. Как отправить событие и получить текущее состояние?
 
-Событие передаётся машине как `Message` — это позволяет приложить к нему заголовки (например, `orderId`), которые потом будут доступны в guard'ах и action'ах. Поток работы такой:
-
-- **Запуск.** Перед первым событием машину нужно стартовать — `startReactively()` (в современном API; реактивный вызов, поэтому `.subscribe()` / `.block()`).
-- **Отправка события.** `sendEvent(...)` возвращает `StateMachineEventResult`. Ключевое поле — `getResultType()`: `ACCEPTED` означает, что переход разрешён и выполнен, `DENIED` — что из текущего состояния такого перехода нет (или его заблокировал guard). Значений у него три: есть ещё `DEFERRED` — событие отложено до подходящего состояния. Сам `sendEvent(...)` в современном API **никакого `boolean` не возвращает** — его возвращает уже ваш метод-обёртка, сводя `resultType` к «приняла или нет», как в примере ниже.
-- **Чтение состояния.** `stateMachine.getState().getId()` возвращает текущее состояние (enum-константу).
-
-Важно: машина **не бросает исключение** на недопустимое событие — она его молча отклоняет, и узнать об этом можно только по `resultType` (см. Q11 про `eventNotAccepted`).
+**Условие.** Машина стартует в `PENDING`. В ней настроен переход по `CONFIRM`. Как отправить сообщение, дождаться обработки и прочитать состояние?
 
 ```java
-@Service
-@RequiredArgsConstructor
-public class OrderFsmService {
-    private final StateMachine<OrderState, OrderEvent> stateMachine;
+stateMachine.startReactively().block();
 
-    @PostConstruct
-    public void init() {
-        stateMachine.startReactively().subscribe();
-    }
-
-    public boolean sendEvent(OrderEvent event, Map<String, Object> variables) {
-        Message<OrderEvent> message = MessageBuilder.withPayload(event)
-            .setHeader("orderId", variables.get("orderId"))
-            .build();
-
-        Flux<StateMachineEventResult<OrderState, OrderEvent>> result =
-            stateMachine.sendEvent(Mono.just(message));
-
-        return result.blockFirst().getResultType() == ResultType.ACCEPTED;
-    }
-
-    public OrderState getCurrentState() {
-        return stateMachine.getState().getId();
-    }
-}
+Message<OrderEvent> message = MessageBuilder.withPayload(OrderEvent.CONFIRM)
+    .setHeader("orderId", "order-42")
+    .build();
 ```
+
+**Разбор.** Перед отправкой нужно дождаться запуска. Реактивный `sendEvent(Mono.just(message))` возвращает поток результатов по регионам. Обработка начинается при подписке. `ACCEPTED` означает приём события к обработке, `DENIED` — отказ в приёме, `DEFERRED` — откладывание. Приём сам по себе не подтверждает переход. Чтобы дождаться завершения обработки, нужно дождаться `complete()` каждого результата. Ошибка обработки может прийти через этот publisher.
+
+```java
+List<StateMachineEventResult<OrderState, OrderEvent>> results =
+    stateMachine.sendEvent(Mono.just(message))
+        .concatMap(result -> result.complete().thenReturn(result))
+        .collectList()
+        .block();
+
+OrderState current = stateMachine.getState().getId();
+```
+
+Здесь `block()` используется на синхронной границе. В реактивном обработчике верните цепочку вызывающему коду и читайте состояние после завершения обработки.
 
 ## Q4. Что такое Guard и для чего он нужен?
 
-**Guard** — булево условие, привязанное к переходу: переход выполняется, только если guard вернул `true`. Если `false` — переход блокируется, событие отклоняется (`DENIED`), машина остаётся в прежнем состоянии.
+**Условие.** Машина в `PENDING`, других переходов по `CONFIRM` нет. Что произойдёт с состоянием и что покажет результат приёма события в 4.0.x?
+
+```text
+PENDING -- CONFIRM [paymentService.isVerified(orderId)] --> CONFIRMED
+Входное событие: CONFIRM
+Для этого заказа isVerified(orderId) возвращает false
+```
+
+**Разбор.** **Guard** — булево условие, привязанное к переходу: переход выполняется, только если guard вернул `true`. Если `false` — переход блокируется. В этом примере машина остаётся в `PENDING`. В 4.0.x совпавший триггер может дать `ACCEPTED` после постановки события на обработку, хотя guard затем заблокирует переход. Проверяйте состояние после `result.complete()`. [Исходник AbstractStateMachine 4.0.2](https://github.com/spring-attic/spring-statemachine/blob/v4.0.2/spring-statemachine-core/src/main/java/org/springframework/statemachine/support/AbstractStateMachine.java)
 
 Назначение guard'а — не дать совершить недопустимый переход по бизнес-правилу. Граф переходов задаёт, *какие* переходы вообще возможны, а guard добавляет *условие*, при котором конкретный возможный переход разрешён прямо сейчас. Классический пример: переход `PENDING → CONFIRMED` существует в графе, но допустим только когда оплата подтверждена.
 
@@ -357,7 +353,17 @@ sm.startReactively().block();
 
 ## Q9. Как реализовать иерархические состояния?
 
-**Иерархические (вложенные) состояния** — это состояние-контейнер с собственными подсостояниями внутри. Их используют, чтобы вынести общее поведение группы подсостояний на уровень родителя и не дублировать переходы.
+**Условие.** Активно `PAYMENT_PENDING` внутри `PROCESSING`. У подсостояния нет собственного перехода или откладывания по `CANCEL`. Как машина обработает `CANCEL`?
+
+```text
+PROCESSING
+  Активное подсостояние: PAYMENT_PENDING
+  Другое подсостояние: PAYMENT_CONFIRMED
+Переход родителя: PROCESSING -- CANCEL --> CANCELLED
+Вход: CANCEL
+```
+
+**Разбор.** **Иерархические (вложенные) состояния** — это состояние-контейнер с собственными подсостояниями внутри. Их используют, чтобы вынести общее поведение группы подсостояний на уровень родителя и не дублировать переходы.
 
 Как устроено: объявляете родительское состояние (`PROCESSING`), а затем во втором `withStates()` через `.parent(PROCESSING)` описываете его внутренний автомат — со своим `initial` и `end`. Внешняя машина «видит» `PROCESSING` как одно состояние, но внутри него идёт собственная под-жизнь (`PAYMENT_PENDING → PAYMENT_CONFIRMED`).
 
@@ -372,22 +378,30 @@ states.withStates()
         .state(PAYMENT_CONFIRMED)
         .end(PAYMENT_FAILED);
 
-// Переход из любого подсостояния PROCESSING
 transitions
     .withExternal()
-        .source(PROCESSING).target(CANCELLED).event(CANCEL);  // работает для всех подсостояний
+        .source(PROCESSING).target(CANCELLED).event(CANCEL);
 ```
 
-**Выгода:** переход `PROCESSING → CANCELLED` по событию `CANCEL`, объявленный на родителе, срабатывает из *любого* его подсостояния. Без иерархии пришлось бы прописывать отмену для `PAYMENT_PENDING`, `PAYMENT_CONFIRMED` и каждого нового подсостояния отдельно — общее правило поднимается на уровень контейнера.
+**Выгода:** переход `PROCESSING → CANCELLED` по событию `CANCEL`, объявленный на родителе, может обработать событие, если активное подсостояние не обработало и не отложило его. Без иерархии пришлось бы прописывать отмену для `PAYMENT_PENDING`, `PAYMENT_CONFIRMED` и каждого нового подсостояния отдельно — общее правило поднимается на уровень контейнера.
 
 ## Q10. Что такое regions (параллельные регионы)?
 
-**Regions** — несколько независимых подавтоматов, работающих *одновременно* внутри одного составного состояния. Если иерархия (Q9) — это «в один момент времени мы в одном из подсостояний», то регионы — «мы одновременно в нескольких ветках сразу». Это способ смоделировать параллельные подпроцессы одного объекта.
+**Условие.** Как поведёт себя join в этой конфигурации?
+
+```text
+PROCESSING
+  PAYMENT: активное PAY_DONE, конец PAY_DONE
+  INVENTORY: активное INV_PENDING, конец INV_DONE
+Join: PROCESSING -> JOIN_STATE
+```
+
+**Разбор.** **Regions** — несколько независимых подавтоматов, активных одновременно внутри одного составного состояния. Если иерархия (Q9) — это «в один момент времени мы в одном из подсостояний», то регионы — «мы одновременно в нескольких ветках сразу». Это способ смоделировать параллельные подпроцессы одного объекта.
 
 Пример: внутри `PROCESSING` заказ одновременно проходит оплату (регион `PAYMENT`) и резервирование товара (регион `INVENTORY`) — это два самостоятельных автомата.
 
 Управляют параллелизмом два псевдосостояния:
-- **fork** — расщепляет один поток на несколько регионов (запускает их параллельно).
+- **fork** — расщепляет один поток на несколько регионов (активирует несколько регионов).
 - **join** — синхронизирует: переход за `join` срабатывает только когда **все** регионы дошли до своих финальных состояний (`PAY_DONE` и `INV_DONE`).
 
 ```java
@@ -408,26 +422,37 @@ states.withStates()
 transitions
     .withFork().source(FORK_STATE).target(PROCESSING).and()
     .withJoin().source(PROCESSING).target(JOIN_STATE).and()
-    .withExternal().source(JOIN_STATE).target(CONFIRMED).event(CONFIRM);
+    .withExternal().source(JOIN_STATE).target(CONFIRMED);
 ```
 
 ## Q11. Как добавить StateMachineListener?
 
-`StateMachineListener` — единая точка наблюдения за жизнью машины: переходы, ошибки, отклонённые события. Удобно расширять `StateMachineListenerAdapter` и переопределять только нужные методы. Типичные применения — логирование и метрики переходов, алертинг на ошибки и, что особенно важно, отлов **отклонённых событий**.
+**Условие.** Нужно наблюдать смену состояний, отказы в приёме событий и ошибки. Как реализовать и подключить наблюдатель?
+
+```java
+@Configuration
+@EnableStateMachine
+class OrderConfig extends StateMachineConfigurerAdapter<OrderState, OrderEvent> {
+    // Граф переходов задан в конфигурации.
+}
+```
+
+**Разбор.** `StateMachineListener` — единая точка наблюдения за жизнью машины: переходы, ошибки, отклонённые события. Удобно расширять `StateMachineListenerAdapter` и переопределять только нужные методы. Типичные применения — логирование и метрики переходов, алертинг на ошибки и, что особенно важно, отлов **отклонённых событий**.
 
 Ключевые колбэки:
 - `stateChanged(from, to)` — каждый успешный переход (хорошая точка для аудита/метрик).
-- `eventNotAccepted(event)` — событие, которое машина отвергла (нет такого перехода или его заблокировал guard). Без этого колбэка такие события теряются молча — это одна из главных ловушек (см. Q15).
+- `eventNotAccepted(event)` — событие, которое машина отвергла (например, нет подходящего триггера). Без этого колбэка такие события теряются молча — это одна из главных ловушек (см. Q15).
 - `stateMachineError(sm, e)` — исключение внутри обработки; здесь уместны алерт и метрика.
 
 ```java
 @Component
+@Slf4j
 public class OrderStateMachineListener extends StateMachineListenerAdapter<OrderState, OrderEvent> {
 
     @Override
     public void stateChanged(State<OrderState, OrderEvent> from,
                              State<OrderState, OrderEvent> to) {
-        log.info("State changed: {} → {}", from.getId(), to.getId());
+        log.info("State changed: {} → {}", from == null ? null : from.getId(), to.getId());
     }
 
     @Override
@@ -453,47 +478,41 @@ public void configure(StateMachineConfigurationConfigurer<OrderState, OrderEvent
 
 ## Q12. Как тестировать Spring State Machine?
 
-Машину тестируют как чёрный ящик: отправляют событие и проверяют два факта — приняла ли его машина (`resultType == ACCEPTED`) и в какое состояние перешла (`getState().getId()`). Стоит покрывать обе ветки: **happy path** (валидный переход прошёл) и **negative path** (недопустимое событие отклонено, состояние не изменилось).
-
-Практика:
-- Перед каждым тестом стартуйте машину (`startReactively().block()`), иначе события не обработаются.
-- Если в проекте `StateMachineFactory`, берите свежий экземпляр на тест — singleton накапливает состояние между тестами и делает их зависимыми друг от друга.
+**Условие.** Каждый сценарий использует новую машину с начальным состоянием `PENDING` и графом Q2. Что проверить после каждого события?
 
 ```java
-@SpringBootTest
-class OrderStateMachineTest {
+@Autowired
+StateMachineFactory<OrderState, OrderEvent> factory;
 
-    @Autowired
-    private StateMachine<OrderState, OrderEvent> stateMachine;
-
-    @BeforeEach
-    void setUp() {
-        stateMachine.startReactively().block();
-    }
-
-    @Test
-    void shouldConfirmPendingOrder() {
-        assertThat(stateMachine.getState().getId()).isEqualTo(PENDING);
-
-        boolean accepted = stateMachine.sendEvent(
-            Mono.just(MessageBuilder.withPayload(CONFIRM).build())
-        ).blockFirst().getResultType() == ResultType.ACCEPTED;
-
-        assertThat(accepted).isTrue();
-        assertThat(stateMachine.getState().getId()).isEqualTo(CONFIRMED);
-    }
-
-    @Test
-    void shouldNotShipPendingOrder() {
-        boolean accepted = stateMachine.sendEvent(
-            Mono.just(MessageBuilder.withPayload(SHIP).build())
-        ).blockFirst().getResultType() == ResultType.ACCEPTED;
-
-        assertThat(accepted).isFalse();
-        assertThat(stateMachine.getState().getId()).isEqualTo(PENDING);
-    }
+StateMachine<OrderState, OrderEvent> freshMachine() {
+    var machine = factory.getStateMachine(UUID.randomUUID().toString());
+    machine.startReactively().block();
+    return machine;
 }
+
+// Два независимых сценария
+var confirmMachine = freshMachine();
+var confirm = MessageBuilder.withPayload(OrderEvent.CONFIRM).build();
+
+var shipMachine = freshMachine();
+var ship = MessageBuilder.withPayload(OrderEvent.SHIP).build();
 ```
+
+**Разбор.** С тестовой конфигурацией `@EnableStateMachineFactory` получите новый экземпляр в каждом тесте. Отправьте сообщение и дождитесь завершения результата, как в Q3. Проверяйте приём события и фактическое состояние отдельно.
+
+```java
+assertThat(machine.getState().getId()).isEqualTo(PENDING);
+
+var result = machine.sendEvent(Mono.just(message))
+    .concatMap(r -> r.complete().thenReturn(r))
+    .single()
+    .block();
+
+assertThat(result.getResultType()).isEqualTo(expectedResult);
+assertThat(machine.getState().getId()).isEqualTo(expectedState);
+```
+
+Для `CONFIRM` из `PENDING` ожидаются `ACCEPTED` и `CONFIRMED`. Для `SHIP` из свежего `PENDING` ожидаются `DENIED` и `PENDING`. В тестовом графе Q2 для `CONFIRM` нет guard.
 
 ## Q13. State Machine vs Saga Pattern — когда что применять?
 
@@ -514,7 +533,17 @@ class OrderStateMachineTest {
 
 ## Q14. Как использовать @WithStateMachine для декларативной обработки событий?
 
-`@WithStateMachine` — аннотация на bean'е, которая позволяет вешать обработчики прямо на методы, без ручной регистрации Action-бинов в графе переходов. Метод помечается аннотацией момента жизненного цикла, и Spring сам вызывает его в нужный момент:
+**Условие.** Как подключить методы обработчика к переходу в `CONFIRMED`, входу в `SHIPPED` и выходу из `PENDING`? При подтверждении методу нужен заголовок `orderId`.
+
+```java
+@Configuration
+@EnableStateMachine
+class OrderConfig extends StateMachineConfigurerAdapter<OrderState, OrderEvent> {
+    // Состояния и переходы заданы в конфигурации.
+}
+```
+
+**Разбор.** `@WithStateMachine` — аннотация на bean'е, которая позволяет вешать обработчики прямо на методы, без ручной регистрации Action-бинов в графе переходов. Метод помечается аннотацией момента жизненного цикла, и Spring сам вызывает его в нужный момент:
 - `@OnTransition(target = "...")` — при переходе в указанное состояние (можно задавать и `source`).
 - `@OnStateEntry(target = "...")` / `@OnStateExit(source = "...")` — при входе в состояние / выходе из него.
 
