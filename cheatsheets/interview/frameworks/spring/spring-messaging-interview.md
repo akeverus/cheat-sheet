@@ -19,7 +19,7 @@ updated: 2026-05-31
 ---
 # Вопросы на собеседовании: `Spring Messaging`
 
-`Spring Messaging` — общая абстракция Spring для работы с JMS и RabbitMQ (AMQP). Предоставляет унифицированные `JmsTemplate`/`RabbitTemplate` для отправки и `@JmsListener`/`@RabbitListener` для потребления. Часто требуется в enterprise Java вакансиях.
+В теме рассматриваются общая модель Spring Messaging и две интеграции с брокерами: Spring JMS для Jakarta Messaging и Spring AMQP для RabbitMQ. Примеры рассчитаны на Spring Boot 3.5, Spring Framework 6.2, Spring AMQP 3.2 и RabbitMQ по AMQP 0-9-1. Отличия других версий указаны в соответствующих ответах.
 
 Дата последнего обновления: 2026-04-20
 
@@ -38,23 +38,31 @@ updated: 2026-05-31
 
 ## Q1. Что такое Spring Messaging и какие брокеры он поддерживает?
 
-**Spring Messaging** — слой абстракции Spring над разными системами обмена сообщениями. Он вводит единую модель: тип `Message<T>` (тело + заголовки), `MessageChannel` для передачи и аннотации вроде `@MessageMapping`. Смысл — писать код продюсера/консьюмера одинаково, независимо от того, что под капотом: ActiveMQ, RabbitMQ или WebSocket. Конкретный брокер подключается отдельным стартером.
+**Spring Messaging** – модуль Spring Framework с общими контрактами для обмена сообщениями. `Message<T>` хранит тело и заголовки, `MessageChannel` задаёт контракт отправки, а `@MessageMapping` связывает входящее сообщение с методом обработчика в поддерживающей эту аннотацию инфраструктуре.
 
-**Поддерживаемые транспорты** (каждый — свой модуль):
+Подключение к конкретной системе требует своего модуля и настройки:
 
-- **JMS** (Java Message Service, ныне Jakarta Messaging) — ActiveMQ, IBM MQ, Oracle AQ; модуль `spring-jms`. Это стандарт Jakarta EE, единый API для всех JMS-брокеров; начиная со Spring 6 пакеты переехали из `javax.jms` в `jakarta.jms`.
-- **AMQP** (RabbitMQ) — модули `spring-amqp` / `spring-rabbit`. Даёт exchanges и routing keys, которых в JMS нет.
-- **STOMP поверх WebSocket** — модуль `spring-websocket`; для push-сообщений в браузер.
-- **Apache Kafka** — модуль `spring-kafka` (отдельный проект). Event streaming, а не классические очереди.
-- **Redis Pub/Sub** — модуль `spring-data-redis`; лёгкий broadcast без гарантий доставки.
+- **Jakarta Messaging (JMS)** – `spring-jms`, `JmsTemplate` и `@JmsListener` для совместимых брокеров, например ActiveMQ. Spring Framework 6 использует пространство имён `jakarta.jms`.
+- **RabbitMQ по AMQP 0-9-1** – Spring AMQP, `RabbitTemplate` и `@RabbitListener`. Здесь приложение настраивает exchange, routing key и очередь.
+- **STOMP поверх WebSocket** – `spring-messaging` вместе с `spring-websocket`. Spring может обслуживать подписки встроенным простым брокером или передавать сообщения внешнему STOMP-брокеру.
+- **Kafka** и **Redis Pub/Sub** подключают отдельными интеграциями Spring for Apache Kafka и Spring Data Redis.
 
-**Важно для собеседования:** под зонтиком «Spring Messaging» чаще всего имеют в виду именно JMS и AMQP — две классические очереди. Kafka и Redis формально тоже сюда относятся, но у них своя семантика (лог событий и fire-and-forget), поэтому их обычно обсуждают отдельно.
+Например, при переносе обработки заказов с JMS на RabbitMQ бизнес-метод может остаться прежним. Точки отправки и приёма, маршрутизацию и поведение при ошибке нужно настроить для нового брокера. Общая модель сообщения помогает передать данные в бизнес-метод, а гарантии доставки определяет выбранная интеграция.
+
+Источники – [Spring Framework 6.2 Messaging API](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/messaging/package-summary.html), [Spring Framework 6.2 STOMP](https://docs.spring.io/spring-framework/reference/6.2/web/websocket/stomp/enable.html).
 
 ## Q2. Как настроить JMS и отправить сообщение?
 
-Достаточно трёх шагов: подключить стартер, прописать брокер в `application.yml` и впрыснуть `JmsTemplate`. Spring Boot сам создаст `ConnectionFactory` и `JmsTemplate` через auto-configuration — настраивать их руками не нужно.
+```text
+Spring Boot 3.5, внешний ActiveMQ Classic по tcp://localhost:61616.
+Публикуем JSON заказа в orders-queue. Нужны прикладное свойство
+priority = HIGH и срок жизни сообщения 60 секунд.
+Что подключить и на каком уровне задать эти параметры?
+```
 
-Отправка идёт через `convertAndSend`: объект автоматически сериализуется `MessageConverter`-ом (по умолчанию — Java-сериализация, в проде обычно меняют на JSON). Если нужно задать заголовки (properties) — передают `MessagePostProcessor` (лямбда, дорабатывающая `Message` перед отправкой). А вот TTL так задать **нельзя** — см. нюанс после примера.
+Достаточно трёх шагов: подключить стартер, прописать брокер в `application.yml` и внедрить `JmsTemplate`. Spring Boot сам создаст `ConnectionFactory` и `JmsTemplate` через auto-configuration – настраивать их руками не нужно.
+
+Отправка идёт через `convertAndSend`: `SimpleMessageConverter` преобразует строку в `TextMessage`, массив байтов в `BytesMessage`, а подходящий `Serializable`-объект в `ObjectMessage`. В примере ниже отправляем JSON строкой, чтобы не зависеть от Java-сериализации класса `Order`. Если нужно задать заголовки (properties) – передают `MessagePostProcessor` (лямбда, дорабатывающая `Message` перед отправкой). А вот TTL так задать **нельзя** – см. нюанс после примера.
 
 **1. Зависимость:**
 
@@ -65,22 +73,18 @@ updated: 2026-05-31
 </dependency>
 ```
 
-**2. Конфигурация** (адрес брокера, режим подтверждения, пул консьюмеров):
+**2. Конфигурация** (адрес брокера, очередь по умолчанию и TTL для отправки):
 
 ```yaml
 spring:
   activemq:
     broker-url: tcp://localhost:61616
-    user: admin
-    password: admin
+    user: ${ACTIVEMQ_USER}
+    password: ${ACTIVEMQ_PASSWORD}
   jms:
     template:
       default-destination: orders-queue
-    listener:
-      session:
-        acknowledge-mode: client  # или auto, dups-ok
-      min-concurrency: 3          # диапазон consumers задаётся двумя свойствами
-      max-concurrency: 10
+      time-to-live: 60s
 ```
 
 **3. Продюсер:**
@@ -91,46 +95,56 @@ spring:
 public class OrderProducer {
     private final JmsTemplate jmsTemplate;
 
-    public void sendOrder(Order order) {
-        jmsTemplate.convertAndSend("orders-queue", order);
+    public void sendOrder(String orderJson) {
+        jmsTemplate.convertAndSend(orderJson);
     }
 
-    public void sendWithHeaders(Order order) {
-        jmsTemplate.convertAndSend("orders-queue", order, message -> {
+    public void sendWithHeaders(String orderJson) {
+        jmsTemplate.convertAndSend("orders-queue", orderJson, message -> {
             message.setStringProperty("priority", "HIGH");
-            message.setJMSExpiration(60_000);  // 1 минута
             return message;
         });
     }
 }
 ```
 
-**Подводный камень:** вызов `setJMSExpiration(60_000)` в `MessagePostProcessor` из примера на деле **не сработает**. По спецификации JMS заголовок `JMSExpiration` выставляет сам провайдер в момент `send()`, перезаписывая значение, заданное вручную (то же касается `JMSPriority` и `JMSDeliveryMode`). TTL задают на шаблоне: `jmsTemplate.setTimeToLive(60_000)` **плюс** `jmsTemplate.setExplicitQosEnabled(true)` — без явного включения QoS шаблон проигнорирует и `timeToLive`, и `priority`, и `deliveryMode`.
+**TTL и приоритет.** При наличии стандартной автоконфигурации Boot 3.5 свойство `spring.jms.template.time-to-live` включает явный QoS для шаблона, если его не отключили явно. При ручной настройке `JmsTemplate` задайте `setTimeToLive(60_000)` и `setExplicitQosEnabled(true)`. Провайдер вычисляет `JMSExpiration` при отправке из TTL. Запись этого заголовка в `MessagePostProcessor` TTL не меняет. Прикладное свойство `priority` можно использовать в selector, а приоритет доставки задают через JMS QoS.
+
+Документация: [Spring Boot 3.5 JMS](https://docs.spring.io/spring-boot/3.5/reference/messaging/jms.html), [свойства Boot 3.5](https://docs.spring.io/spring-boot/3.5/appendix/application-properties/index.html), [Jakarta Messaging 3.1](https://jakarta.ee/specifications/messaging/3.1/jakarta-messaging-spec-3.1.html).
 
 ## Q3. Как получать JMS-сообщения?
 
-Метод помечается `@JmsListener(destination = "...")` — Spring сам подписывается на очередь, десериализует тело в тип параметра и вызывает метод на каждое сообщение. `concurrency = "3-10"` поднимает от 3 до 10 параллельных консьюмеров под нагрузку.
+```text
+Spring Framework 6.2, очередь orders-queue, сообщение TextMessage с JSON.
+Обработчик завершает работу исключением RuntimeException.
+Случай A: DefaultMessageListenerContainer без транзакции, AUTO_ACKNOWLEDGE.
+Случай B: стандартная JMS-фабрика Spring Boot 3.5 без JTA.
+Как подключить обработчик и что делает каждый контейнер при сбое?
+```
+
+Метод помечается `@JmsListener(destination = "...")` – Spring сам подписывается на очередь, преобразует тело через настроенный конвертер и вызывает метод на каждое сообщение. Для очереди с `DefaultMessageListenerContainer` настройка `concurrency = "3-10"` задаёт три базовых потребителя и предел масштабирования в десять.
 
 Из аргументов метода можно вытащить всё нужное:
 
-- **`@Payload`** — тело сообщения (можно опустить, если параметр один).
-- **`@Header("priority")`** — конкретный заголовок; **`@Headers Map`** — все заголовки.
+- `@Payload` связывает параметр с телом сообщения. При одном параметре для тела аннотацию можно опустить.
+- `@Header("priority")` извлекает прикладное свойство с этим именем. `@Headers Map` предоставляет все заголовки.
 - **`Message` / `Session`** — нативные JMS-объекты, когда нужен полный контроль.
 
-**Подтверждение (ACK).** Частая ошибка на собеседовании — считать, что дефолтный `auto` «подтверждает после успешной обработки». Для `DefaultMessageListenerContainer` (именно его создаёт Spring Boot) всё наоборот:
+**Подтверждение JMS.** Для нетранзакционного `DefaultMessageListenerContainer` Spring Framework режим `AUTO_ACKNOWLEDGE` подтверждает сообщение до вызова обработчика. Исключение обработчика само по себе не приводит к повторной доставке. При `CLIENT_ACKNOWLEDGE` контейнер подтверждает после успешного вызова и пытается обеспечить повторную доставку при ошибке.
 
-- **`AUTO_ACKNOWLEDGE` (дефолт)** — сообщение подтверждается **до** выполнения listener-а. Исключение в методе redelivery **не даёт**: брокер уже считает сообщение доставленным, и оно теряется.
-- **`CLIENT_ACKNOWLEDGE`** (`spring.jms.listener.session.acknowledge-mode: client`) — контейнер подтверждает **после** успешного выхода из метода; при исключении — best-effort redelivery: сообщение, как правило, вернётся в очередь.
-- **`sessionTransacted=true`** (транзакционная сессия) — самый надёжный вариант: получение и ACK входят в локальную транзакцию JMS-сессии. Коммит — после успешной обработки, при исключении — rollback и **гарантированный** redelivery.
+В стандартной JMS-автоконфигурации Spring Boot 3.5 контейнер транзакционный: если доступен `JtaTransactionManager`, Boot связывает его с фабрикой, иначе включает `sessionTransacted`. С локальной транзакцией контейнер фиксирует сессию после успешного вызова и откатывает её при исключении. Дальнейшая судьба сообщения зависит от политики брокера, включая задержку, предел попыток и перевод в очередь недоставленных сообщений. [Spring JMS Listener Container](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/jms/listener/AbstractMessageListenerContainer.html) · [Spring Boot 3.5 JMS](https://docs.spring.io/spring-boot/3.5/reference/messaging/jms.html).
 
-Вывод: если при ошибке сообщение обязано вернуться в очередь, дефолтный `auto` не подходит — нужен `client` или транзакционная сессия (детали транзакций — в Q8).
+Продюсер из Q2 передаёт JSON-строку. Стандартный JMS `SimpleMessageConverter` восстанавливает из `TextMessage` строку. В примере ниже JSON разбирает `ObjectMapper`. Чтобы принимать `Order` напрямую, нужно настроить совместимое преобразование в фабрике слушателей. [Spring Framework 6.2 SimpleMessageConverter](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/jms/support/converter/SimpleMessageConverter.html).
 
 ```java
 @Component
+@RequiredArgsConstructor
 public class OrderConsumer {
+    private final ObjectMapper objectMapper;
 
     @JmsListener(destination = "orders-queue", concurrency = "3-10")
-    public void handleOrder(Order order) {
+    public void handleOrder(String orderJson) throws JsonProcessingException {
+        Order order = objectMapper.readValue(orderJson, Order.class);
         log.info("Received: {}", order);
         processOrder(order);
     }
@@ -138,31 +152,31 @@ public class OrderConsumer {
     // С доступом к заголовкам
     @JmsListener(destination = "orders-queue")
     public void handleWithHeaders(
-            @Payload Order order,
-            @Header("priority") String priority,
+            @Payload String orderJson,
+            @Header(name = "priority", required = false) String priority,
             @Headers Map<String, Object> allHeaders,
-            Message jmsMessage) {
+            jakarta.jms.Message jmsMessage) throws JsonProcessingException {
+        Order order = objectMapper.readValue(orderJson, Order.class);
         log.info("Priority={}, Order={}", priority, order);
+        processOrder(order);
     }
 
-    // Ручной ACK
-    @JmsListener(destination = "orders-queue")
-    public void handleManualAck(Order order, Session session) throws JMSException {
-        try {
-            processOrder(order);
-            session.commit();
-        } catch (Exception e) {
-            session.rollback();  // сообщение вернётся в очередь
-        }
-    }
 }
 ```
 
-**Нюанс:** `session.commit()` / `session.rollback()` из последнего примера работают только на **транзакционной** сессии — у контейнера должен быть включён `sessionTransacted=true`, иначе эти вызовы бросят `IllegalStateException`. В режиме `CLIENT_ACKNOWLEDGE` ручное подтверждение выглядит иначе: вызывается `message.acknowledge()` на самом сообщении, а методов `commit`/`rollback` у нетранзакционной сессии по сути нет.
+В примере `priority` необязателен: `sendOrder` из Q2 его не задаёт. При транзакционной фабрике исключение из разбора JSON или из `processOrder` должно выйти из слушателя. Контейнер управляет `commit` и `rollback`. Два обработчика одной очереди в примере показывают альтернативные сигнатуры. Если зарегистрировать оба, они будут конкурировать за сообщения.
 
 ## Q4. Как настроить RabbitMQ и отправить сообщение?
 
-Ключевое отличие от JMS: в RabbitMQ продюсер шлёт **не в очередь напрямую, а в exchange** с routing key. Exchange по правилам binding-ов решает, в какие очереди положить сообщение. Поэтому при настройке описывают триаду: `Queue` + `Exchange` + `Binding`, который их связывает. Эти бины Spring AMQP сам объявит в брокере при старте (auto-declare).
+```text
+Spring Boot 3.5, RabbitMQ доступен по localhost:5672.
+Планируемые имена: orders.exchange и orders.queue. Топологии пока нет.
+В очередь должны попадать события с ключами по шаблону orders.created.#.
+Есть JSON заказа и прикладной заголовок source = api.
+Что нужно объявить и какие аргументы передать при публикации?
+```
+
+Ключевое отличие от JMS: в RabbitMQ продюсер шлёт **не в очередь напрямую, а в exchange** с routing key. Exchange по правилам binding-ов решает, в какие очереди положить сообщение. Для собственной топологии объявляют `Queue`, `Exchange` и связывающий их `Binding`. Публикация по имени очереди использует встроенный default exchange (Q5). При включённом auto-declare `RabbitAdmin` объявляет эти бины при открытии соединения с брокером.
 
 `spring-boot-starter-amqp` поднимает `ConnectionFactory` и `RabbitTemplate`. Отправка — снова `convertAndSend`, но первый аргумент теперь имя exchange, второй — routing key.
 
@@ -184,8 +198,10 @@ spring:
     port: 5672
     username: guest
     password: guest
-    publisher-confirm-type: correlated  # подтверждение отправки
+    publisher-confirm-type: correlated  # подтверждение от брокера
     publisher-returns: true              # уведомления о возврате
+    template:
+      mandatory: true                     # возврат при отсутствии маршрута
     listener:
       simple:
         acknowledge-mode: auto
@@ -193,7 +209,7 @@ spring:
         max-concurrency: 10
 ```
 
-**3. Топология** (очередь с привязанной DLQ через TTL, exchange и binding по шаблону):
+**3. Топология** (очередь с TTL, exchange и binding по шаблону. Объявления DLX, DLQ и их binding приведены в Q7. Определение `ordersQueue` из Q7 повторно регистрировать не нужно):
 
 ```java
 @Configuration
@@ -222,7 +238,7 @@ public class RabbitConfig {
 }
 ```
 
-**4. Публикация** (в exchange с routing key, заголовки задаёт `MessagePostProcessor`):
+**4. Публикация.** Для примера на Boot 3.5 зарегистрируйте JSON-конвертер из Q11. Он сериализует `Order` и задаёт медиатип. `MessagePostProcessor` добавляет прикладной заголовок после конвертации.
 
 ```java
 @Service
@@ -235,7 +251,6 @@ public class OrderPublisher {
             "orders.created.retail",
             order,
             message -> {
-                message.getMessageProperties().setContentType("application/json");
                 message.getMessageProperties().setHeader("source", "api");
                 return message;
             });
@@ -243,9 +258,21 @@ public class OrderPublisher {
 }
 ```
 
+Источники: [Spring Boot 3.5 – AMQP](https://docs.spring.io/spring-boot/3.5/reference/messaging/amqp.html), [Spring AMQP 3.2 – Configuring the Broker](https://docs.spring.io/spring-amqp/reference/3.2/amqp/broker-configuration.html).
+
 ## Q5. Какие типы Exchange в RabbitMQ?
 
-Exchange — это «маршрутизатор» между продюсером и очередями. Тип exchange определяет, **по какому правилу** сообщение раскладывается по очередям на основе binding-ов. Всего четыре типа:
+```text
+RabbitMQ, AMQP 0-9-1. Четыре независимые задачи:
+A. Сопоставлять routing key с полным ключом привязки буквально,
+   даже когда в нём встречаются символы * или #.
+B. Доставить события orders.created.eu и orders.cancelled.eu по общему шаблону.
+C. Отправить копию во все подключённые очереди.
+D. Выбрать маршрут по region = EU и format = json.
+Какой базовый тип exchange выбрать для каждой задачи?
+```
+
+Exchange – это «маршрутизатор» между продюсером и очередями. Тип exchange определяет, **по какому правилу** сообщение раскладывается по очередям на основе binding-ов. Четыре базовых типа AMQP 0-9-1:
 
 | Тип | Маршрутизация | Применение |
 |-----|---------------|------------|
@@ -254,7 +281,7 @@ Exchange — это «маршрутизатор» между продюсеро
 | `fanout` | Broadcast во все связанные очереди | Событийная модель pub-sub |
 | `headers` | По заголовкам сообщения | Сложная маршрутизация без routing key |
 
-Как читать шаблоны у `topic`: routing key — это слова через точку (`orders.created.eu`). В binding `*` заменяет **ровно одно** слово, `#` — **ноль или больше** слов. Поэтому `orders.*.eu` ловит `orders.created.eu`, но не `orders.created.de.eu`, а `orders.#` — вообще всё, что начинается на `orders`.
+Как читать шаблоны у `topic`: routing key – это слова через точку (`orders.created.eu`). В binding `*` заменяет **ровно одно** слово, `#` – **ноль или больше** слов. Поэтому `orders.*.eu` ловит `orders.created.eu`, но не `orders.created.de.eu`, а `orders.#` – ключ `orders` и ключи, начинающиеся с сегмента `orders`, например `orders.created`. Ключ `orders2.created` не подходит.
 
 Практический выбор: `direct` — когда маршрут известен точно (статусы заказа); `topic` — когда нужна гибкая фильтрация по иерархии; `fanout` — широковещание (нотификации всем подписчикам); `headers` — редкий случай, когда маршрут зависит от нескольких атрибутов сразу, а не от одной строки.
 
@@ -275,15 +302,30 @@ Exchange — это «маршрутизатор» между продюсеро
 @Bean FanoutExchange fanoutEx() { return new FanoutExchange("events.fanout"); }
 ```
 
+**Default exchange** – встроенный `direct` exchange с именем `""` при публикации. RabbitMQ автоматически привязывает к нему каждую объявленную очередь с ключом, равным имени очереди. Например, `rabbitTemplate.convertAndSend("", "orders.queue", body)` маршрутизирует сообщение в существующую очередь `orders.queue` без собственного binding. RabbitMQ также поддерживает дополнительные типы exchange.
+
+Источник – [RabbitMQ Exchanges](https://www.rabbitmq.com/docs/exchanges).
+
 ## Q6. Как получать RabbitMQ сообщения?
 
-Метод помечается `@RabbitListener(queues = "...")` — отличие от JMS в том, что подписка идёт на **очередь**, а не на destination. Дальше всё привычно: тело десериализуется в тип параметра, `concurrency` масштабирует консьюмеров.
+```text
+Spring AMQP 3.2, RabbitMQ, очередь orders.queue с рабочим маршрутом в DLQ.
+Один обработчик получает заказ. Возможны успешная обработка,
+временная ошибка и ошибка, при которой повтор не поможет.
+Как задать исход доставки вручную для каждого случая?
+От чего зависит возврат в очередь при исключении в режиме AUTO?
+```
 
-Три типичных режима:
+Метод помечается `@RabbitListener(queues = "...")` – он подписывает обработчик на очередь RabbitMQ. Конвертер адаптирует тело сообщения к параметру метода. Для `SimpleMessageListenerContainer` настройка `concurrency = "3-10"` задаёт диапазон числа потребителей.
 
-- **Авто-ACK** (по умолчанию) — Spring подтверждает после успешного выхода из метода; исключение возвращает сообщение в очередь.
-- **`@SendTo`** — метод возвращает значение, и оно автоматически уходит в reply-очередь (request-reply, см. Q10).
-- **Ручной ACK** (`ackMode = "MANUAL"`) — даёт точный контроль над судьбой сообщения. Принципиально различаются три исхода через `Channel`: `basicAck` (успех), `basicNack(..., requeue=true)` (вернуть в очередь — для временных сбоев) и `basicNack(..., requeue=false)` (отправить в DLQ — для неисправимых ошибок). Именно это разделение временных и фатальных ошибок и есть суть надёжной обработки.
+Подтверждение в контейнере и отправка ответа настраиваются отдельно:
+
+- **Авто-ACK** (по умолчанию) – Spring подтверждает после успешного выхода из метода; при исключении решение о возврате зависит от `defaultRequeueRejected` и классификации ошибки. Например, `AmqpRejectAndDontRequeueException` исключает возврат. [Spring AMQP 3.2 Exception Handling](https://docs.spring.io/spring-amqp/reference/3.2/amqp/exception-handling.html).
+- **Ручной ACK** (`ackMode = "MANUAL"`) – даёт точный контроль над судьбой сообщения. Принципиально различаются три исхода через `Channel`: `basicAck` (успех), `basicNack(..., requeue=true)` (вернуть в очередь – для временных сбоев) и `basicNack(..., requeue=false)` (отклонить без возврата. DLQ получит сообщение при настроенном DLX и подходящем маршруте, см. Q7). Именно это разделение временных и фатальных ошибок и есть суть надёжной обработки.
+
+Режим `NONE` соответствует автоматическому подтверждению доставки самим брокером без ожидания ACK от клиента. `@SendTo` задаёт адрес для ответа, когда в запросе нет `replyTo` (см. Q10).
+
+Обычный и ручной обработчики одной очереди показаны как альтернативы. Если зарегистрировать оба, они будут конкурировать за доставки.
 
 ```java
 @Component
@@ -311,7 +353,7 @@ public class OrderProcessor {
         } catch (RetryableException e) {
             channel.basicNack(tag, false, true);  // вернуть в очередь
         } catch (NonRetryableException e) {
-            channel.basicNack(tag, false, false); // отправить в DLQ
+            channel.basicNack(tag, false, false); // отклонить без возврата
         }
     }
 }
@@ -319,15 +361,20 @@ public class OrderProcessor {
 
 ## Q7. Как работает Dead Letter Queue (DLQ)?
 
-**DLQ** — отдельная очередь, куда брокер автоматически складывает сообщения, которые не удалось обработать. Без неё «отравленное» сообщение либо теряется, либо бесконечно крутится в очереди, блокируя нормальные. DLQ изолирует проблемные сообщения, чтобы их можно было разобрать руками или отдельным процессом.
+```text
+RabbitMQ, AMQP 0-9-1, classic queue orders.queue.
+A. Слушатель отклоняет доставку с requeue=false.
+B. Истекает TTL сообщения, пока оно находится в очереди.
+C. Новая публикация превышает x-max-length; overflow = drop-head.
+Есть очередь orders.dlq. Какие настройки нужны для доставки в неё?
+Что изменится в C при overflow = reject-publish?
+```
 
-**Что отправляет сообщение в DLQ:**
+**DLQ** – обычная очередь, привязанная к dead-letter exchange (DLX). Она позволяет отдельно разбирать сообщения, которые брокер исключил из основной очереди.
 
-- Превышен TTL (`x-message-ttl`) — сообщение протухло, не дождавшись обработки.
-- Consumer отклонил с `requeue=false` (`basicNack`/`basicReject`) — то самое решение «это неисправимо» из Q6.
-- Очередь переполнена (`x-max-length`) — лишние сообщения вытесняются.
+RabbitMQ выполняет dead lettering при истечении TTL сообщения, отклонении с `requeue=false`, вытеснении из-за лимита длины или превышении `delivery-limit` у quorum queue. При стандартном `drop-head` переполнение вытесняет старые сообщения. Для classic queue в условии `reject-publish` отклоняет новую публикацию без отправки в DLX. В режиме `reject-publish-dlx` брокер также отправляет отклонённую публикацию в настроенный DLX. Quorum queue не поддерживает `reject-publish-dlx`.
 
-**Как это устроено механически:** у основной очереди задают аргументы `x-dead-letter-exchange` и `x-dead-letter-routing-key`. Когда срабатывает одно из условий выше, RabbitMQ перепубликует сообщение в указанный DLX, а тот по routing key кладёт его в DLQ. То есть DLQ — это обычная очередь, просто привязанная к dead-letter exchange.
+У основной очереди задают DLX и при необходимости отдельный ключ через политику либо аргументы из примера. Для попадания сообщения в DLQ нужны существующий DLX и маршрут к очереди. При `nack` с `requeue=false` без DLX сообщение отбрасывается. При отсутствии отдельного ключа RabbitMQ использует исходные ключи маршрутизации. Наличие маршрута само по себе не гарантирует доставку при сбое приёмной очереди. Для quorum queue можно отдельно настроить режим at-least-once dead lettering. [RabbitMQ Dead Letter Exchanges](https://www.rabbitmq.com/docs/dlx) · [Queue Length Limit](https://www.rabbitmq.com/docs/maxlength).
 
 **Полезный нюанс:** при перемещении в DLQ RabbitMQ добавляет заголовок `x-death` с историей — сколько раз и почему сообщение «умирало». По нему в консьюмере DLQ видно первопричину и можно принять решение (алерт, ручной разбор, повторная отправка).
 
@@ -367,61 +414,82 @@ public void processDlq(Order order,
 
 ## Q8. Как работают транзакции в Spring Messaging?
 
-Цель транзакции в messaging — связать обработку сообщения с записью в БД так, чтобы они подтверждались или откатывались **вместе**. Иначе возможна рассинхронизация: сообщение подтверждено (consumed), но запись в БД не сохранилась, или наоборот.
+```text
+Два независимых запуска. В каждом метод вызывается через прокси
+с активной локальной транзакцией JpaTransactionManager; XA не настроен.
 
-**JMS.** Контейнер с `sessionTransacted=true` открывает транзакционную JMS-сессию (та самая семантика из Q3): ACK коммитится после успешной обработки, при исключении — rollback, и брокер возвращает сообщение в очередь. Если метод дополнительно помечен `@Transactional`, Spring **синхронизирует** локальную JMS-транзакцию с транзакцией JPA: при исключении откатываются обе — JPA отменяет запись, JMS возвращает сообщение.
+A. JMS-слушатель получает заказ в контейнере с sessionTransacted=true
+   и сохраняет заказ через JPA.
+B. Сервис сохраняет заказ через JPA и на том же потоке вызывает
+   RabbitTemplate с channelTransacted=true.
 
-Но честная формулировка такая: без XA это **не одна общая транзакция**, а transaction synchronization — best-effort 1PC поверх двух разных ресурсов. Коммиты идут последовательно (сначала БД, затем JMS-сессия), и между ними есть зазор: если процесс упадёт в этот момент, БД уже закоммитилась, а ACK не прошёл — после рестарта сообщение придёт **повторно**. Поэтому такая связка даёт at-least-once, и listener обязан быть идемпотентным.
+Какие ресурсы участвуют в каждой транзакции?
+Что может произойти при отказе после фиксации БД?
+```
+
+**JMS.** При `sessionTransacted=true` контейнер управляет локальной JMS-транзакцией. Она охватывает получение сообщения и отправку через ту же JMS-сессию. Запись через JPA выполняется в отдельной транзакции БД. В примере при исключении, подпадающем под правила rollback JPA и вышедшем из обработчика, БД откатывается, затем контейнер откатывает JMS-сессию. При успехе JPA может зафиксироваться раньше подтверждения JMS. Сбой между коммитами допускает повторную обработку уже записанного заказа. Обработчик должен учитывать дубликаты. Общая транзакция требует XA-совместимых ресурсов и JTA-координатора. [Spring JMS – обработка транзакций](https://docs.spring.io/spring-framework/reference/6.2/integration/jms/receiving.html).
 
 ```java
-// JMS транзакции
-@JmsListener(destination = "orders", containerFactory = "transactionalJmsFactory")
-@Transactional  // общий контекст с JPA
-public void process(Order order) {
-    orderRepository.save(order);           // JPA
-    emailService.sendConfirmation(order);  // отправка в другую очередь
-    // При ошибке — rollback обоих: JMS вернёт сообщение, JPA откатит
+// transactionalJmsFactory настроена с sessionTransacted=true.
+// @Transactional выбирает менеджер транзакций JPA.
+@JmsListener(destination = "orders-queue", containerFactory = "transactionalJmsFactory")
+@Transactional("jpaTransactionManager")
+public void process(String orderJson) throws JsonProcessingException {
+    Order order = objectMapper.readValue(orderJson, Order.class);
+    orderRepository.save(order);
 }
 ```
 
-**RabbitMQ.** Аналогично: `setChannelTransacted(true)` включает транзакционный канал, и публикация попадает в транзакцию Spring. Отправка в брокер «зафиксируется» только при коммите внешней транзакции.
+**RabbitMQ.** В этом отдельном примере используйте бин `transactionalRabbitTemplate` и фабрику соединений без publisher confirms. Транзакции канала и confirms относятся к разным режимам работы канала. Для публикации объекта `Order` передайте JSON-конвертер из Q11 и объявите указанный exchange и binding. `setChannelTransacted(true)` включает локальную транзакцию канала. Без активной внешней транзакции шаблон завершает транзакцию канала в рамках операции. Если на вызывающем потоке активна транзакция Spring и канал синхронизирован с ней, завершение транзакции RabbitMQ откладывается до завершения внешней транзакции. [Spring AMQP 3.2 Transactions](https://docs.spring.io/spring-amqp/reference/3.2/amqp/transactions.html).
 
 ```java
 // RabbitMQ транзакции
 @Bean
-public RabbitTemplate transactionalRabbitTemplate(ConnectionFactory cf) {
+public RabbitTemplate transactionalRabbitTemplate(
+        ConnectionFactory cf, MessageConverter converter) {
     RabbitTemplate template = new RabbitTemplate(cf);
+    template.setMessageConverter(converter);
     template.setChannelTransacted(true);
     return template;
 }
 
-@Transactional
+@Transactional("jpaTransactionManager")
 public void processAndPublish(OrderCommand cmd) {
     Order order = orderRepository.save(new Order(cmd));
-    rabbitTemplate.convertAndSend("events", "order.created", order);
-    // всё в одной транзакции
+    transactionalRabbitTemplate.convertAndSend("orders.exchange", "orders.created.eu", order);
 }
 ```
 
-**Подводный камень — это не настоящий 2PC.** Транзакция канала RabbitMQ и транзакция БД остаются **разными** ресурсами: между их коммитами есть зазор, где возможен сбой (БД закоммитилась, а publish — нет). AMQP вообще не поддерживает 2PC. JMS умеет через XA-транзакции с координатором, но XA сложен и медленен, и в микросервисах его избегают.
+**Окно отказа.** Коммиты БД и канала отдельные. Если БД зафиксировалась, а коммит RabbitMQ после неё завершился ошибкой, запись в БД останется, а результат публикации может быть неизвестен.
 
-**Рекомендация:** для строгой гарантии «БД и сообщение согласованы» используют **Transactional Outbox Pattern** — сообщение пишется в таблицу-outbox в той же транзакции, что и бизнес-данные, а отдельный процесс дочитывает её и публикует в брокер. Это надёжнее и дешевле XA.
+**Рекомендация:** для строгой гарантии «БД и сообщение согласованы» используют **Transactional Outbox Pattern** – сообщение пишется в таблицу-outbox в той же транзакции, что и бизнес-данные, а отдельный процесс дочитывает её и публикует в брокер. Публикация из outbox допускает повторную отправку. Потребителю нужна идемпотентная обработка.
 
 ## Q9. Что такое Publisher Confirms в RabbitMQ?
 
-**Publisher Confirms** — асинхронное подтверждение от брокера, что он принял сообщение и взял на себя ответственность за него. По умолчанию `convertAndSend` ничего не гарантирует: метод вернёт управление, даже если сообщение не дошло до брокера из-за обрыва сети, — и сообщение молча потеряется. Confirms закрывают именно эту дыру.
+```text
+Spring AMQP 3.2, RabbitMQ. Exchange orders.exchange существует,
+единственная привязка принимает ключи orders.created.#.
+Publisher confirms в режиме correlated, publisher returns и mandatory включены.
+Публикация A: orders.created.eu. Публикация B: orders.deleted.eu.
+Очередь доступна, внутреннего сбоя брокера нет.
+Какие сигналы получит издатель и что они говорят об обработке потребителем?
+```
 
-Здесь нужно различать **два разных колбэка**, потому что они ловят разные проблемы:
+**Publisher Confirms** сообщают издателю результат публикации со стороны RabbitMQ. Сам возврат из `convertAndSend` такого результата не даёт.
 
-- **Confirm callback** (`setConfirmCallback`) — дошло ли сообщение **до брокера**. `ack=true` — принято; `ack=false` — брокер отказал (нет места, внутренняя ошибка), нужен retry или алерт.
-- **Returns callback** (`setReturnsCallback`) — сообщение дошло до брокера, но exchange **не нашёл ни одной очереди** для него (нет подходящего binding-а). Без этого колбэка такие сообщения тихо отбрасываются.
+- **Confirm callback** связывает `ack` или `nack` с публикацией через `CorrelationData`. В условии A получает `ack`, B получает и `basic.return` с `NO_ROUTE`, и `ack`: брокер обработал публикацию B и установил отсутствие маршрута. При закрытии канала или соединения результат некоторых отправок может остаться неизвестным. Повтор в таком случае может создать дубликат.
+- **Returns callback** получает публикацию, которую exchange не смог направить ни в одну очередь, при включённых publisher returns и флаге `mandatory`. Для одной публикации возможны и return, и положительный confirm. Отсутствие exchange приводит к ошибке канала, а не к return о ненайденной очереди.
+- **Consumer ACK** относится к обработке доставки потребителем. Publisher confirm её не подтверждает.
 
-`publisher-confirm-type: correlated` позволяет привязать к каждому сообщению `CorrelationData` (например, id заказа) — тогда в колбэке видно, какое именно сообщение подтвердилось или провалилось. Это основа надёжной публикации: продюсер знает судьбу каждого отправленного сообщения.
+[Spring AMQP 3.2: Confirms and Returns](https://docs.spring.io/spring-amqp/reference/3.2/amqp/template.html) · [RabbitMQ – Publisher Confirms](https://www.rabbitmq.com/docs/confirms).
 
 ```yaml
 spring:
   rabbitmq:
-    publisher-confirm-type: correlated  # или simple
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
 ```
 
 ```java
@@ -448,20 +516,30 @@ public class ReliableOrderPublisher {
     }
 
     public void sendReliably(Order order) {
-        CorrelationData correlation = new CorrelationData(order.getId());
+        CorrelationData correlation = new CorrelationData(UUID.randomUUID().toString());
         rabbitTemplate.convertAndSend("orders.exchange", "orders.created",
             order, correlation);
     }
 }
 ```
 
-**Итог:** confirms — это разница между «надеюсь, дошло» и «знаю, что дошло». Для критичных сообщений (платежи, заказы) их включают всегда; для некритичной телеметрии можно опустить ради скорости.
+Вызов `sendReliably` инициирует публикацию. Прикладной результат определяют по confirm и return, а успешную обработку потребителем отслеживают отдельно. Пример использует нетранзакционный канал. Для request-reply из Q10 используйте шаблон без установленного здесь `ReturnsCallback`, если хотите, чтобы возврат немаршрутизированного запроса преобразовался в исключение ожидающего вызова.
 
 ## Q10. Что такое Request-Reply Pattern в Spring Messaging?
 
-**Request-Reply** — синхронный по ощущениям вызов поверх асинхронного брокера: клиент шлёт запрос и **блокируется в ожидании ответа**, как при RPC, но транспорт — очередь. Полезно, когда нужен ответ (результат расчёта, валидация), но хочется развязать сервисы через брокер, а не звать друг друга напрямую по HTTP.
+```text
+Spring AMQP 3.2, RabbitMQ, очередь orders.requests.
+Клиент отправляет OrderRequest, сервис рассчитывает OrderResult.
+Одновременно отправлены запросы A и B. Сервис может ответить
+в ином порядке или не успеть за 5 секунд.
+Как связать каждый ответ с запросом и что увидит клиент при таймауте?
+```
 
-На клиенте используют `convertSendAndReceive` — он внутри делает всю магию. На сервере — обычный `@RabbitListener`, но метод **возвращает значение**, которое уходит обратно как ответ (`@SendTo` задаёт reply-очередь явно, но если в заголовке сообщения есть `replyTo`, ответ уйдёт туда автоматически).
+**Request-Reply** связывает запрос через брокер с ответом сервиса. В синхронном варианте клиент блокируется до получения результата или таймаута. Асинхронное ожидание сохраняет ту же связь запроса и ответа.
+
+В синхронном примере `RabbitTemplate.convertSendAndReceive` конвертирует запрос и ответ, настраивает адрес ответа и сопоставляет его с ожидающим вызовом. На сервере `@RabbitListener` возвращает результат, который Spring отправляет по адресу `replyTo` из запроса. `@SendTo` может задать резервный адрес для сообщений без `replyTo`.
+
+Пример использует очередь `orders.requests` и default exchange из Q5. Объявите очередь через `RabbitAdmin`, как в Q4, или заранее создайте её в брокере. На клиенте и сервере настройте совместимый JSON-конвертер по Q11 для `OrderRequest` и `OrderResult`.
 
 ```java
 // Синхронный вызов через RabbitTemplate
@@ -471,17 +549,20 @@ public class OrderClient {
     private final RabbitTemplate rabbitTemplate;
 
     public OrderResult requestOrder(OrderRequest request) {
-        return (OrderResult) rabbitTemplate.convertSendAndReceive(
-            "orders.exchange",
+        OrderResult result = (OrderResult) rabbitTemplate.convertSendAndReceive(
+            "",
             "orders.requests",
             request
         );
+        if (result == null) {
+            throw new IllegalStateException("Order response timed out");
+        }
+        return result;
     }
 }
 
 // Серверная сторона
 @RabbitListener(queues = "orders.requests")
-@SendTo("orders.responses")  // @SendTo не нужен если replyTo установлен в заголовке
 public OrderResult handleRequest(OrderRequest request) {
     return orderService.process(request);
 }
@@ -491,65 +572,66 @@ public OrderResult handleRequest(OrderRequest request) {
 
 **Direct Reply-To — современный дефолт.** Актуальный `RabbitTemplate.sendAndReceive` / `convertSendAndReceive` по умолчанию использует **не** временную очередь, а механизм RabbitMQ **Direct Reply-To**: в заголовок `replyTo` подставляется псевдоочередь `amq.rabbitmq.reply-to`. Реальная очередь при этом не объявляется вовсе — брокер доставляет ответ напрямую в канал, с которого пришёл запрос. Это заметно дешевле: нет накладных расходов на создание и удаление временной очереди на каждый запрос. Spring AMQP включает Direct Reply-To автоматически, если брокер его поддерживает (RabbitMQ 3.4+); вернуться к временным очередям можно через `setUseTemporaryReplyQueues(true)`, а фиксированную reply-очередь задают через `setReplyAddress(...)` с контейнером-слушателем.
 
-**Подводный камень:** это блокирующий вызов с таймаутом — у `RabbitTemplate` по умолчанию 5 секунд (`setReplyTimeout`), по истечении вернётся `null`. Если сервер недоступен или медленный, клиент висит и тратит поток. Для долгих операций или высокого RPS лучше асинхронный fire-and-forget с отдельным колбэком, а не request-reply.
+**Потеря ответа и таймаут.** Direct Reply-To доставляет ответы по модели at-most-once. Брокер их не буферизует. Если соединение оборвалось после обработки заказа, клиент может остаться без ответа. По умолчанию `RabbitTemplate` ждёт ответ до 5 секунд и при истечении срока возвращает `null`. Таймаут сам по себе оставляет результат операции неизвестным. Для отдельного обнаружения отсутствующего маршрута в Spring AMQP 3.2 включите publisher returns и `mandatory`. На шаблоне request-reply без собственного `ReturnsCallback` возврат немаршрутизированного запроса приводит к `AmqpMessageReturnedException` вместо ожидания до таймаута. Для безопасного повтора передайте тот же идентификатор операции и дедуплицируйте обработку на стороне сервиса. Если ответ должен пережить разрыв соединения, рассмотрите отдельную очередь с подходящими настройками хранения и подтверждения. `AsyncRabbitTemplate` позволяет ждать ответ без блокировки потока вызывающего кода, сохраняя протокол request-reply.
+
+Источники: [Spring AMQP 3.2 – Request/Reply Messaging](https://docs.spring.io/spring-amqp/reference/3.2/amqp/request-reply.html), [RabbitMQ – Direct Reply-To](https://www.rabbitmq.com/docs/direct-reply-to).
 
 ## Q11. Как настроить кастомный MessageConverter?
 
-`MessageConverter` отвечает за то, как Java-объект превращается в байты сообщения (`toMessage`) и обратно (`fromMessage`). По умолчанию Spring AMQP использует Java-сериализацию — она хрупкая (требует одинаковых классов на обеих сторонах) и не читается другими языками. Поэтому в проде почти всегда ставят JSON-конвертер: JSON кросс-языковой, человекочитаемый и не ломается от мелких изменений класса. В `spring-amqp` 4.x это `JacksonJsonMessageConverter` (Jackson 3); прежний `Jackson2JsonMessageConverter` под Jackson 2 помечен как устаревший.
+```text
+Spring Boot 3.5, Spring AMQP 3.2.
+Издатель работает с shop.Order, получатель с warehouse.Order.
+DTO имеют одинаковую структуру JSON, тип в обоих сервисах
+должен обозначаться в сообщении строкой order.
+Как настроить преобразование тела и указать соответствие типов?
+```
 
-**Зачем нужен `ClassMapper`:** при десериализации Jackson нужно знать, в какой класс восстанавливать JSON. По умолчанию имя класса берётся из заголовка `__TypeId__` — но если на стороне продюсера пакет другой, десериализация упадёт. `ClassMapper` явно сопоставляет логическое имя типа с классом, делая контракт стабильным между сервисами.
+`MessageConverter` преобразует объект в тело AMQP-сообщения и обратно. По умолчанию `SimpleMessageConverter` обрабатывает текст, массивы байтов и объекты `Serializable`. Смена `contentType` после конвертации не меняет байты тела.
+
+В Spring Boot 3.5 со Spring AMQP 3.2 для JSON можно объявить один бин `Jackson2JsonMessageConverter`. Автоконфигурация подключит его к шаблону и фабрике обработчиков по умолчанию. При собственных шаблоне или фабрике передайте нужный конвертер явно. В Spring AMQP 4.x используйте `JacksonJsonMessageConverter` для Jackson 3.
 
 ```java
-// JSON конвертер по умолчанию
 @Bean
 public MessageConverter jsonMessageConverter() {
-    JacksonJsonMessageConverter converter = new JacksonJsonMessageConverter();
-    converter.setClassMapper(idClassMapper());  // для type-safe десериализации
+    DefaultClassMapper mapper = new DefaultClassMapper();
+    mapper.setIdClassMapping(Map.of(
+        "order", Order.class,
+        "order-request", OrderRequest.class,
+        "order-result", OrderResult.class
+    ));
+    mapper.afterPropertiesSet();
+
+    Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
+    converter.setClassMapper(mapper);
     return converter;
 }
-
-// RabbitTemplate использует конвертер
-@Bean
-public RabbitTemplate rabbitTemplate(ConnectionFactory cf, MessageConverter converter) {
-    RabbitTemplate template = new RabbitTemplate(cf);
-    template.setMessageConverter(converter);
-    return template;
-}
 ```
 
-Свой конвертер пишут под бинарные форматы вроде Protobuf или Avro (компактнее JSON, со схемой): реализуют интерфейс `MessageConverter` и переопределяют оба метода.
+В примере `Order` из Q4 и оба DTO из Q10 имеют логические идентификаторы для заголовка `__TypeId__`. Поскольку mapper создаётся внутри фабричного метода и сам не является Spring-бином, вызов `afterPropertiesSet()` строит обратное отображение из Java-класса в идентификатор. На принимающей стороне сопоставьте те же идентификаторы с локальными DTO с совместимой структурой JSON. Для конвертера без явного `ClassMapper` Spring AMQP также может вывести целевой тип из конкретного параметра метода `@RabbitListener`. Сопоставление типов и совместимость полей JSON требуют отдельного контракта.
 
-```java
-// Кастомный конвертер (например, Protobuf)
-@Component
-public class ProtobufMessageConverter implements MessageConverter {
+Для Protobuf или Avro можно реализовать `MessageConverter` самостоятельно. Например, при одной схеме Protobuf `toMessage` записывает `OrderEvent.toByteArray()` с согласованным медиатипом, а `fromMessage` проверяет медиатип и вызывает `OrderEvent.parseFrom(message.getBody())`. Ошибку разбора оберните в `MessageConversionException`. Если на маршруте несколько схем, задайте способ однозначно выбрать версию и тип сообщения.
 
-    @Override
-    public Message toMessage(Object object, MessageProperties properties) {
-        if (object instanceof com.google.protobuf.Message proto) {
-            properties.setContentType("application/x-protobuf");
-            return new Message(proto.toByteArray(), properties);
-        }
-        throw new MessageConversionException("Not a protobuf message");
-    }
-
-    @Override
-    public Object fromMessage(Message message) {
-        // парсинг protobuf
-    }
-}
-```
+Источники – [Spring AMQP 3.2 Message Converters](https://docs.spring.io/spring-amqp/reference/3.2/amqp/message-converters.html), [исходник DefaultClassMapper в ветке 3.2.x](https://raw.githubusercontent.com/spring-projects/spring-amqp/3.2.x/spring-amqp/src/main/java/org/springframework/amqp/support/converter/DefaultClassMapper.java).
 
 ## Q12. Как реализовать retry механизм?
 
-Зачем retry: многие сбои **временные** (БД на секунду недоступна, сетевой таймаут). Мгновенно сбрасывать такое сообщение в DLQ расточительно — разумнее повторить через паузу. Spring AMQP даёт встроенный механизм на основе `RetryTemplate`.
+```text
+Spring AMQP 3.2, Spring Retry, слушатель orders.queue.
+Для одной доставки разрешено максимум три вызова обработчика, включая первоначальный.
+Повторять только при TransientException, в том числе в cause.
+Первая пауза 1 с, множитель 2, потолок 10 с.
+При окончательном отказе доставка не должна возвращаться в рабочую очередь.
+Как настроить обработку и сколько пауз будет при трёх сбоях подряд?
+```
+
+Зачем retry: многие сбои **временные** (БД на секунду недоступна, сетевой таймаут). Мгновенно сбрасывать такое сообщение в DLQ расточительно – разумнее повторить через паузу. Пример рассчитан на Spring AMQP 3.2 и Spring Retry.
 
 **Как это собирается:**
 
 - `maxAttempts(3)` — не больше трёх попыток, чтобы не зациклиться.
-- `exponentialBackoff(1000, 2, 10000)` — пауза растёт: 1с, 2с, 4с… (множитель 2, потолок 10с). Экспоненциальный backoff не добивает уже перегруженный ресурс частыми повторами.
+- `exponentialBackoff(1000, 2, 10000)` – при трёх попытках возможны две паузы: 1 и 2 секунды. Для более длинной серии интервал удваивается до потолка в 10 секунд. Экспоненциальный backoff не добивает уже перегруженный ресурс частыми повторами.
 - `retryOn(...)` — повторять **только** на «лечащихся» исключениях; неисправимые ошибки нет смысла повторять.
-- `recoverer` — что делать после исчерпания попыток. `RejectAndDontRequeueRecoverer` отклоняет сообщение с `requeue=false`, и оно уходит в DLQ (см. Q7).
+- `recoverer` – что делать после исчерпания попыток. `RejectAndDontRequeueRecoverer` отклоняет сообщение с `requeue=false`, после исчерпания разрешённых попыток или при неповторяемой ошибке. Для доставки в DLQ нужен настроенный DLX и маршрут (см. Q7).
 
 ```java
 // Автоматический retry через RetryTemplate
@@ -564,21 +646,24 @@ public SimpleRabbitListenerContainerFactory retryContainerFactory(
         .maxAttempts(3)
         .exponentialBackoff(1000, 2, 10000)
         .retryOn(TransientException.class)
+        .traversingCauses()
         .build();
 
     factory.setAdviceChain(RetryInterceptorBuilder.stateless()
         .retryOperations(retryTemplate)
-        .recoverer(new RejectAndDontRequeueRecoverer())  // после 3 попыток → DLQ
+        .recoverer(new RejectAndDontRequeueRecoverer())  // отклонить без requeue
         .build());
 
     return factory;
 }
 
-@RabbitListener(queues = "orders", containerFactory = "retryContainerFactory")
+@RabbitListener(queues = "orders.queue", containerFactory = "retryContainerFactory")
 public void handleOrder(Order order) {
     orderService.process(order);  // при ошибке — retry с backoff
 }
 ```
+
+**Граница транзакции.** Stateless retry подходит, когда обработка идёт без внешней транзакции либо каждая попытка открывает свою транзакцию внутри callback. Если транзакция уже начата снаружи и после ошибки должна откатиться, используйте stateful retry со стабильным уникальным ключом сообщения, например `messageId`. Тогда очередная доставка продолжает учёт попыток после отката предыдущей. [Spring AMQP 3.2 – Retry and Recovery](https://docs.spring.io/spring-amqp/reference/3.2/amqp/resilience-recovering-from-errors-and-broker-failures.html).
 
 **Компромисс — где живёт пауза.** Описанный `RetryTemplate` повторяет **внутри консьюмера**: поток блокируется на время backoff и не берёт другие сообщения. Для коротких пауз это нормально, для долгих — съедает пропускную способность.
 
@@ -586,90 +671,102 @@ public void handleOrder(Order order) {
 
 ## Q13. Как тестировать Spring Messaging?
 
-Главная трудность тестов на messaging — **асинхронность**: после отправки сообщения обработка происходит в другом потоке, и проверять результат сразу нельзя. Поэтому используют polling-ожидание (`Awaitility`: `await().untilAsserted(...)`) вместо `Thread.sleep` — оно дожидается условия и не флакает.
+```text
+Spring Boot 3.5, два интеграционных теста.
+A. JMS: ActiveMQ Classic должен работать в JVM теста, внешнего брокера нет.
+B. AMQP: тесту доступен Docker, постоянного RabbitMQ нет.
+Нужно проверить обмен через реальный брокер. У отдельного теста слушателя
+есть наблюдаемый эффект: после отправки заказа появляется запись в БД.
+Как запустить брокеры и проверить оба вида результата?
+```
 
-Два подхода к брокеру:
+Выберите наблюдаемый результат теста. Чтобы проверить подключение, маршрутизацию и конвертер, отправьте сообщение через шаблон и прочитайте его из выделенной очереди с таймаутом. Чтобы проверить listener, отправьте сообщение во входную очередь и дождитесь его бизнес-эффекта, например записи в БД. У теста должен быть свой идентификатор заказа, а у ожидания – верхняя граница. Awaitility повторяет проверку до успеха или таймаута. Тест всё ещё зависит от доступности брокера и выделенного времени.
 
-- **JMS — embedded ActiveMQ.** Брокер поднимается прямо в JVM теста, без Docker. Быстро, удобно для unit-уровня интеграции.
-- **RabbitMQ — Testcontainers.** У RabbitMQ нет полноценного embedded-варианта, поэтому поднимают реальный брокер в Docker-контейнере и через `@DynamicPropertySource` подставляют его host/port в конфиг. Тест работает против настоящего RabbitMQ — максимально близко к проду.
+**ActiveMQ Classic в Spring Boot 3.5.** Для встроенного брокера добавьте `org.apache.activemq:activemq-broker` в тестовые зависимости. Используйте тестовую конфигурацию без `spring.activemq.broker-url`: URL внешнего брокера отключает режим embedded. Пример проверяет обмен сообщением через брокер. Очередь `jms-roundtrip-test` зарезервирована для этого теста и не используется listener приложения.
 
 ```java
-// JMS с EmbeddedActiveMQ
-@SpringBootTest
+@SpringBootTest(properties = "spring.jms.template.receive-timeout=5s")
 class JmsIntegrationTest {
 
     @Autowired
-    private JmsTemplate jmsTemplate;
-
-    @Autowired
-    private OrderProcessor orderProcessor;
+    JmsTemplate jmsTemplate;
 
     @Test
-    void shouldProcessOrderFromQueue() {
-        Order order = new Order("customer-1", BigDecimal.TEN);
+    void shouldReceivePublishedText() {
+        String queue = "jms-roundtrip-test";
+        String payload = UUID.randomUUID().toString();
 
-        jmsTemplate.convertAndSend("orders-queue", order);
+        jmsTemplate.convertAndSend(queue, payload);
 
-        await().atMost(5, SECONDS).untilAsserted(() ->
-            verify(orderRepository).save(argThat(o -> o.customerId().equals("customer-1")))
-        );
+        assertEquals(payload, jmsTemplate.receiveAndConvert(queue));
     }
 }
 ```
 
+**RabbitMQ в Testcontainers.** Для Boot 3.5 добавьте `spring-boot-testcontainers` и модули Testcontainers для JUnit Jupiter и RabbitMQ. `@ServiceConnection` предоставляет настройки подключения автонастроенным клиентам Boot. Пример явно объявляет очередь, публикует через default exchange и проверяет чтение. Для воспроизводимого CI закрепите конкретную версию образа, согласованную с окружением проекта.
+
 ```java
-// RabbitMQ с Testcontainers
 @SpringBootTest
 @Testcontainers
 class RabbitIntegrationTest {
 
     @Container
+    @ServiceConnection
     static RabbitMQContainer rabbit = new RabbitMQContainer("rabbitmq:4-management");
 
-    @DynamicPropertySource
-    static void props(DynamicPropertyRegistry registry) {
-        registry.add("spring.rabbitmq.host", rabbit::getHost);
-        registry.add("spring.rabbitmq.port", rabbit::getAmqpPort);
+    @Autowired
+    AmqpAdmin admin;
+
+    @Autowired
+    RabbitTemplate rabbitTemplate;
+
+    @Test
+    void shouldRouteToDeclaredQueue() {
+        String queue = "rabbit-roundtrip-" + UUID.randomUUID();
+        admin.declareQueue(new Queue(queue, false, false, false));
+        try {
+            rabbitTemplate.convertAndSend("", queue, "order-created");
+
+            assertEquals("order-created", rabbitTemplate.receiveAndConvert(queue, 5_000));
+        } finally {
+            admin.deleteQueue(queue);
+        }
     }
 }
 ```
 
+Оба теста проверяют обмен через брокер. Для проверок повторной доставки, DLQ и конкурентных обработчиков задайте топологию и условия сбоя отдельно.
+
+Документация: [Spring Boot 3.5 JMS](https://docs.spring.io/spring-boot/3.5/reference/messaging/jms.html), [Spring Boot 3.5 Testcontainers](https://docs.spring.io/spring-boot/3.5/reference/testing/testcontainers.html), [RabbitMQ default exchange](https://www.rabbitmq.com/docs/exchanges#default-exchange).
+
 ## Q14. Чем Spring JMS отличается от Spring AMQP?
 
-Корень всех различий — **разный уровень абстракции**. JMS — это Java-**стандарт** (API), под который подстраиваются вендоры брокеров; продюсер шлёт прямо в очередь или топик. AMQP — это сетевой **протокол** с богатой моделью маршрутизации: между продюсером и очередью всегда стоит exchange с routing key. Отсюда и таблица отличий:
+**Spring JMS** работает через Java API Jakarta Messaging. Поставщик реализует этот API и сам определяет протокол связи с брокером. Отправитель выбирает destination: `Queue` или `Topic`. Очередь обслуживает конкурирующих потребителей, а topic доставляет публикации подходящим подпискам. JMS selector фильтрует доставку получателю по заголовкам и свойствам сообщения. Например, потребитель очереди может запросить только сообщения с `region = 'EU'`. Неподходящее сообщение остаётся доступным для другого получателя.
 
-| Критерий | JMS (ActiveMQ) | AMQP (RabbitMQ) |
-|----------|----------------|-----------------|
-| Стандарт | Jakarta EE (ранее Java EE) | Open protocol |
-| Exchanges | Нет (direct queue) | Да (direct/topic/fanout/headers) |
-| Routing | Queue name + selector | Routing key + exchange |
-| Message model | Queue или Topic | Exchange → Queue(s) |
-| Вендоры | Один стандарт, разные реализации | Специфично для AMQP брокеров |
-| Спецификация | Jakarta Messaging 3.1 | AMQP 0.9.1 / 1.0 |
-| Полезность | Legacy enterprise | Современные микросервисы |
+**Spring AMQP в примерах этой шпаргалки** работает с RabbitMQ по AMQP 0-9-1. Отправитель публикует в exchange. Тип exchange и bindings определяют маршрут в одну или несколько очередей. Например, topic exchange может направить `orders.eu` в очередь европейского обработчика и одновременно в очередь аудита. При публикации через default exchange имя очереди служит routing key благодаря её автоматической привязке. AMQP 1.0 имеет другой протокол и модель взаимодействия.
 
-**Практический вывод:** JMS берут, когда уже есть Java EE-инфраструктура или корпоративный брокер (IBM MQ) и нужна совместимость со стандартом. AMQP/RabbitMQ — когда важна гибкая маршрутизация (exchanges, routing keys) и брокер выбирают с нуля под микросервисы. Ключевое: маршрутизацию в JMS делают селекторами и именами очередей, в AMQP — связкой exchange + routing key, что мощнее и нагляднее.
+Выбирайте интеграцию по API и возможностям используемого брокера, а также по тому, где нужна фильтрация: при маршрутизации публикации между очередями или при выборе получателя внутри destination.
 
-## Q15. Когда использовать Spring Messaging vs Kafka?
+Документация: [Jakarta Messaging 3.1](https://jakarta.ee/specifications/messaging/3.1/jakarta-messaging-spec-3.1.html), [RabbitMQ Exchanges](https://www.rabbitmq.com/docs/exchanges).
 
-Фундаментальное различие в модели: **очередь (JMS/AMQP) — это «задача», лог (Kafka) — это «факт»**. В очереди сообщение доставляется одному консьюмеру и после ACK исчезает (queue semantics) — идеально для команд и задач, выполняемых ровно один раз. Kafka — это append-only лог: сообщение не удаляется после чтения, его независимо читают сколько угодно consumer groups и можно перечитать историю (replay). Из этой разницы и вытекает выбор:
+## Q15. Когда использовать очереди JMS или RabbitMQ, а когда Kafka?
 
 ```text
-Spring Messaging (JMS/AMQP) подходит когда:
-✓ Нужна гарантия доставки одному consumer-у (queue semantics)
-✓ Request-Reply pattern
-✓ Малый объём, задержка важнее throughput
-✓ Сообщения = commands/tasks, выполненные один раз
-
-Kafka подходит когда:
-✓ Event streaming, append-only log
-✓ Множество consumer groups читают те же данные независимо
-✓ Re-read исторических данных (replay)
-✓ Высокий throughput (>100K msg/sec)
-✓ Stream processing (Kafka Streams, Flink)
+A. Воркеры распределяют задания на создание PDF. Каждый экземпляр
+задания должен давать один бизнес-результат, в том числе после сбоя воркера.
+B. Биллинг и аналитика обрабатывают один поток событий независимо.
+После исправления расчёта аналитике нужно заново прочитать доступную историю.
+Что подходит для каждой задачи и какие ограничения останутся?
 ```
 
-**Практика — это не «или/или».** В современных системах часто живут оба: RabbitMQ для task queues (распределение долгих job-ов между воркерами), Kafka для event streaming и audit logs (события, которые нужно перечитывать и отдавать многим потребителям). Выбор делают по характеру данных, а не по моде.
+Здесь сравниваем работу с обычными очередями через Spring JMS или Spring AMQP и чтение журнала через Spring for Apache Kafka.
+
+- **Очередь для работы.** Несколько воркеров могут конкурировать за сообщения одной очереди. Подтверждение завершает обработку конкретной доставки на стороне брокера. Если воркер записал результат в БД и потерял соединение до того, как RabbitMQ принял ACK, другой воркер может получить ту же задачу. Для единственного бизнес-эффекта обработчик может записать идентификатор задачи и результат в одной транзакции БД.
+- **Kafka для независимого чтения истории.** Группы потребителей ведут собственные позиции по разделам. Фиксация позиции одной группы не удаляет запись. После исправления проекции можно перечитать историю начиная с выбранного offset, пока нужные записи доступны по политике хранения. При compaction старые значения одного ключа могут исчезнуть даже в сохранённом диапазоне offset.
+
+Например, очередь подходит для распределения заданий на формирование PDF, а журнал – для восстановления отчёта по событиям заказов. Если нужен replay в RabbitMQ, рассмотрите Streams с хранением по времени или размеру. Для потоковых преобразований Kafka также предоставляет Kafka Streams. Производительность сравнивайте на целевой нагрузке с учётом размера сообщения, подтверждений, репликации и допустимой задержки.
+
+Документация: [RabbitMQ Consumer Acknowledgements](https://www.rabbitmq.com/docs/confirms), [RabbitMQ Streams](https://www.rabbitmq.com/docs/streams), [Apache Kafka Topic Configs](https://kafka.apache.org/43/configuration/topic-configs/).
 
 ## See also
 
