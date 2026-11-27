@@ -32,9 +32,14 @@
 диапазона, включая Notification System и Java Functional Interface, не входят
 в счётчик 55. Для учёта достаточно путей и записей о передаче полного файла.
 
-Из 55 файлов партии 50 восстановлено в `master`. Вне этой партии уже
+Из 55 файлов партии 51 восстановлен в `master`. Вне этой партии уже
 закоммичены Notification System, Java Functional Interface, Vector Databases
 и JDBC и пулы соединений.
+
+- **Метрики и трассировка**. MCQ-чат передал полный JSON в ходе
+  `01a21e81-b4cb-7f90-8f6b-05a5986a5157`. Использованы исходный JSON из `b28a1c807` и согласованный Markdown (SHA-256 `60d6bec08ec4b08c241265c03056ed76826f24126b4d39b679dc12ef1ff96b5b`).
+  Полный JSON перенесён как есть из
+  `work/metrics-tracing-recovery-full-regeneration/metrics-tracing-interview.json`.
 
 - **Spring Scheduling**. MCQ-чат передал полный JSON в ходе
   `01a21e7b-a38d-7ea2-bf1d-ea80a367f216`. Использованы исходный JSON из `b28a1c807` и согласованный Markdown (SHA-256 `710c4f8bd7c1da65b2d50aa5f6755e0a31a4a36b7035a6610e3ec97ab4ba07bc`).
