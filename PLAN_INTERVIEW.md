@@ -949,6 +949,7 @@
 
 ## Полные MCQ за пределами закрытой партии
 
+- **Python Testing**. MCQ-чат передал полный JSON в ходе `01a21f28-4cf7-7300-8a3b-52a0edcca3db`. Входной JSON: `b28a1c807`. Markdown: `6fd9c8163160dbfca18a844723dbf71d56ae1587a760a3aa75071d135c8e5fa7`. Результат из `work/python-testing-corpus-coverage-full-regeneration/python-testing-interview.json` перенесён в production целиком, без проверки.
 - **MySQL**. MCQ-чат передал полный JSON в ходе `01a21f20-3993-7d90-9072-517046b7d885`. Входной JSON: `b28a1c807`. Markdown: `7bff7f2ba7236ab09e5aad662ef49a6531561c1fdc97439411849becb69ef00e`. Результат из `work/mysql-corpus-coverage-full-regeneration/mysql-interview.json` перенесён в production целиком, без проверки.
 - **Stock Exchange**. MCQ-чат передал полный JSON в ходе `01a21f1c-048e-7be2-b8ba-b5ead60fbb8e`. Входной JSON: `ecf3fcc41`. Markdown: `9094d3b68`. Результат из `work/design-exchange-corpus-coverage-full-regeneration/design-exchange-interview.json` перенесён в production целиком, без проверки.
 - **Python Database**. MCQ-чат передал полный JSON в ходе `01a21f15-aead-7521-861b-fe27521f8642`. Входной JSON: `ecf3fcc41`. Markdown: `5b84cd63f5ef0d1abe1def93a689008597fb77bcca64b42d7d34f48fb3c67722`. Результат из `work/python-database-corpus-coverage-full-regeneration/python-database-interview.json` перенесён в production целиком, без проверки.
