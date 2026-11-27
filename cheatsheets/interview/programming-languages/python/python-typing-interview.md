@@ -74,6 +74,8 @@ assert get_annotations(save_price, format=Format.STRING)["price"] == "Decimal"
 
 Если предикат дополнительно проверяет `value.isdecimal()`, результат `False` уже не исключает строки. Для такой проверки подходит `TypeGuard[str]` (Python 3.10+): анализатор уточняет тип только в положительной ветке. Во время выполнения проверку делает тело предиката. [Спецификация Python typing](https://typing.python.org/en/latest/spec/narrowing.html).
 
+**Граница при конкурентном доступе.** Представьте, что одна корутина проверила, что все идентификаторы в общей очереди имеют тип `int`, а затем приостановилась на `await`. Другая корутина добавила в тот же список `None`. После возобновления `sum(ids)` может вызвать `TypeError`, хотя в исходной ветке анализатор уточнил тип элементов. Даже параметр типа `Sequence` оставляет список изменяемым через другую ссылку. Если для расчёта подходит снимок очереди, создайте `tuple(ids)` до точки приостановки, проверьте элементы снимка и используйте его после `await`. Если нужна именно актуальная очередь, согласуйте проверку и чтение с кодом, который её меняет. [Руководство Python Typing о сужении типов](https://typing.python.org/en/latest/guides/type_narrowing.html#invalidated-assumptions).
+
 ## Q2. Как generic-функция сохраняет связь типов и что меняет Python 3.12?
 
 Параметр типа выражает **связь** между входом и выходом. В `first[T](items: Sequence[T]) -> T` результат имеет тип элемента переданной последовательности; запись `-> object` эту связь теряет. Начиная с Python 3.12 параметр можно объявить прямо в `def` или `class`. Для кода, который должен запускаться на Python 3.11, используйте `TypeVar` и обычный синтаксис.
@@ -154,7 +156,56 @@ assert not isinstance(proxy, Closable)  # Python 3.12+
 
 **Проверка класса при регистрации плагина.** Для runtime-протокола, состоящего из методов, доступен и `issubclass`. Если контракт `NamedPlugin` содержит метод `run()` и атрибут `name: str`, проверка `issubclass(Plugin, NamedPlugin)` вызовет `TypeError`. Поле `name` может появиться только у экземпляра после `__init__`. Проверка `isinstance(Plugin(), NamedPlugin)` в таком случае может пройти, если у экземпляра есть оба члена. Она проверяет присутствие поля, поэтому тип его значения и сигнатуру метода по-прежнему проверяет статический анализатор или явная валидация. [Спецификация runtime-протоколов](https://typing.python.org/en/latest/spec/protocol.html#runtime-checkable-decorator-and-narrowing-types-by-isinstance).
 
+**Атрибут для чтения и записи.** Адаптер хранит строковый адрес `url: str`, а логгеру достаточно вывести его. Если в протоколе записать `url: object`, тип поля будет инвариантным: код с таким контрактом мог бы присвоить полю любое значение, например `None`, и нарушить контракт адаптера. Если логгер только читает адрес, объявите свойство без setter.
+
+```python
+from typing import Protocol
+
+class WritableEndpoint(Protocol):
+    url: object
+
+class ReadableEndpoint(Protocol):
+    @property
+    def url(self) -> object: ...
+
+class HttpEndpoint:
+    url: str = "https://api.example.test"
+
+endpoint: ReadableEndpoint = HttpEndpoint()  # Допустимо
+# writable: WritableEndpoint = HttpEndpoint()  # Ошибка анализатора типов
+```
+
+Свойство ограничивает операции через тип `ReadableEndpoint`. Код, который держит ссылку типа `HttpEndpoint`, по-прежнему может записать в поле другую строку. [Спецификация Python typing: члены протокола](https://typing.python.org/en/latest/spec/protocol.html#protocol-members).
+
 ## Q4. Когда TypedDict полезен для словарного DTO и где его предел?
+
+Какие присваивания A–D примет анализатор с поддержкой Python 3.15? Рассмотрите каждое независимо. Что произойдёт при выполнении этих строк в CPython 3.15?
+
+```python
+from typing import TypedDict
+
+class OpenOrder(TypedDict):
+    order_id: int
+
+class FixedOrder(TypedDict, closed=True):
+    order_id: int
+
+class PartnerOrder(TypedDict, extra_items=str):
+    order_id: int
+
+class ImportedOrder(TypedDict, closed=True):
+    order_id: int
+    source: str
+
+imported: ImportedOrder = {"order_id": 42, "source": "partner"}
+
+a: OpenOrder = imported
+b: OpenOrder = {"order_id": 42, "source": "partner"}
+c: FixedOrder = imported
+d: PartnerOrder = {"order_id": 42, "source": "partner"}
+```
+
+Анализатор примет A и D. В A уже типизированный словарь структурно совместим с открытым типом: у него есть обязательный изменяемый ключ `order_id` с тем же типом. В B анализатор проверяет литерал по объявлению `OpenOrder` и отклоняет незаявленный ключ. В C закрытый тип назначения исключает дополнительный ключ `source`. В D `extra_items=str` разрешает строковое значение дополнительного ключа. При выполнении все четыре присваивания работают с обычными словарями, а A и C сохраняют ссылку на `imported`. [Спецификация TypedDict](https://typing.python.org/en/latest/spec/typeddict.html) · [PEP 728](https://peps.python.org/pep-0728/).
 
 `TypedDict` описывает известные ключи и типы значений **обычного `dict`** для статической проверки. Он полезен, когда код действительно обменивается словарями, например после декодирования JSON или между слоями с dict-контрактом. Ключи обязательны по умолчанию; `NotRequired` (Python 3.11+) делает конкретный ключ необязательным.
 
@@ -214,6 +265,8 @@ def parse[T](schema: TypeForm[T], raw: object) -> T:
 ```
 
 Вызов `parse(str | None, raw)` связывает тип результата с `str | None` для анализатора типов. `TypeForm` описывает **статический контракт API**, а не готовый движок проверки. Само выражение `TypeForm(x)` во время выполнения возвращает `x`; из аннотации нельзя заключить, что `raw` проверен. Для внешнего JSON реализация должна отдельно обработать вложенные контейнеры, `TypedDict`, объединения и ошибки, либо использовать подходящий валидатор. Для Python 3.11–3.14 `TypeForm` отсутствует в стандартном `typing`; поддержку бэкпорта и анализатора типов проверяют отдельно. [PEP 747](https://peps.python.org/pep-0747/), [Python 3.15 `typing.TypeForm`](https://docs.python.org/3.15/library/typing.html#typing.TypeForm).
+
+**Схема из кода и схема из конфигурации.** Анализатор с поддержкой PEP 747 может вывести `TypeForm[list[int]]` для `TypeForm("list[int]")`. Во время выполнения этот вызов возвращает строку `"list[int]"`. При вызове `TypeForm(list[int])` реализация получает объект обобщённого типа. Если ваш парсер поддерживает только объекты типов, явно отклоняйте строковые формы. Для схем, которые приходят из внешнего JSON, можно сопоставлять разрешённые имена с заранее заданными объектами, например `"int-list"` с `list[int]`. Так приложение определяет набор доступных схем без исполнения входной строки. [PEP 747: явная форма типа](https://peps.python.org/pep-0747/#explicit-typeform-evaluation) · [PEP 747: ограничения произвольных форм](https://peps.python.org/pep-0747/#challenges-when-accepting-all-typeforms).
 
 **Пример на входе API.** Если вызывающий код передал схему `list[int]`, анализатор ожидает результат типа `list[int]`. Допустим, контракт требует принимать только целые JSON-числа без преобразования строк и логических значений. Тогда `[1, 2]` проходит, а `[1, "2"]` и `[true]` отклоняются. Для этой конкретной схемы проверка после декодирования выглядит так.
 
